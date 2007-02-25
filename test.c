@@ -136,8 +136,8 @@ int main(void)
        {
          for (unsigned long i = 0; i<DEGREE+1; i++)
          {
-          mpz_urandomb(aVec.coords[i],state,BITS);
-          mpz_urandomb(bVec.coords[i],state,BITS); 
+          mpz_urandomb(aVec->coords[i],state,BITS);
+          mpz_urandomb(bVec->coords[i],state,BITS); 
          }
          /*printf("[");
          for (unsigned long i = 0; i<DEGREE; i++)

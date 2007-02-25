@@ -6,7 +6,7 @@ DRIVER2OBJ = mpn_extras.o radixmul.o Z.o driver2.o
 DRIVER3OBJ = profiler.o ssfft.o mpn_extras.o Z-ssmul.o driver3.o
 TESTOBJ = ssfft.o mpn_extras.o Z.o ssmul.o Z-ssmul.o ssmul-test.o
 PROFOBJ = mpn_extras.o ssmulprof.o test.o profiler.o
-FLINTOBJ = Zvec.o Z.o flint.o 
+FLINTOBJ = Zvec.o Z.o ssmul.o ssfft.o Z-ssmul.o mpn_extras.o flint.o 
 ifndef FLINT_GMP_INCLUDE_DIR
 	FLINT_GMP_INCLUDE_DIR = "/home/dmharvey/gmp/install/include"
 endif
@@ -95,8 +95,8 @@ driver2.o: driver2.c
 driver3.o: driver3.c
 	$(CPP) -c driver3.c -o driver3.o $(CXXFLAGS)
 
-flint.o: test.cpp
-	$(CPP) -c test.cpp -o flint.o $(CXXFLAGS)
+flint.o: test.c
+	$(CPP) -c test.c -o flint.o $(CXXFLAGS)
 
 Zvec.o: Zvec.c
 	$(CPP) -c Zvec.c -o Zvec.o $(CXXFLAGS)
