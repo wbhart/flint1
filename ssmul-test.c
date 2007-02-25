@@ -136,12 +136,12 @@ void test_negate_limbs()
    }
 }
 
-struct signed_add_test_case
+typedef struct signed_add_test_case
 {
    mp_limb_signed_t input[3];
    mp_limb_signed_t limb;
    mp_limb_signed_t output[3];
-};
+} signed_add_test_case;
 
 /*
 todo: this should be moved to an mpn_extras-test.c file...?
@@ -603,12 +603,12 @@ void test_SSMul(unsigned long num_trials, unsigned long length,
       Zvec a;
       Zvec b;
       Zvec d;
-      a.coords = data1;
-      b.coords = data2;
-      a.length = length;
-      b.length = length;
-      d.coords = data4;
-      d.length = 2*length-1;
+      a->coords = data1;
+      b->coords = data2;
+      a->length = length;
+      b->length = length;
+      d->coords = data4;
+      d->length = 2*length-1;
       // compute product using SSMul
       SSMul(d, a, b, coeff_bits, 1);
       
@@ -651,6 +651,7 @@ void test_KSMul(unsigned long num_trials, unsigned long lengtha, unsigned length
 {
    unsigned long length2 = 1;
    while (length2 < lengtha) length2*=2;
+   while (length2 < lengthb) length2*=2;
    // alloc some space
    mpz_t* data1 = (mpz_t*) malloc(length2 * sizeof(mpz_t));
    mpz_t* data2 = (mpz_t*) malloc(length2 * sizeof(mpz_t));
@@ -668,10 +669,10 @@ void test_KSMul(unsigned long num_trials, unsigned long lengtha, unsigned length
    }
       
    Zvec a, b, c, d;
-   a.coords = data1;
-   b.coords = data2;
-   c.coords = data3;
-   d.coords = data4;
+   a->coords = data1;
+   b->coords = data2;
+   c->coords = data3;
+   d->coords = data4;
    
    for (unsigned long i = 0; i < num_trials; i++)
    {
@@ -731,11 +732,13 @@ void test_KSMul(unsigned long num_trials, unsigned long lengtha, unsigned length
          Zvec_SSMul(c, a, b, coeff_bits, 0);*/
       //}
       
-      a.length = lengtha;
-      b.length = lengthb;
+      a->length = lengtha;
+      b->length = lengthb;
+      c->length = lengtha+lengthb-1;
+      d->length = lengtha+lengthb-1;
 
-      unsigned long log_length = 0;
-      while ((1<<log_length) < lengtha) log_length++;
+      /*unsigned long log_length = 0;
+      while ((1<<log_length) < lengtha) log_length++;*/
 
       Zvec_karamul(c,a,b,coeff_bits);
       // compute product using SSMul
@@ -751,7 +754,7 @@ void test_KSMul(unsigned long num_trials, unsigned long lengtha, unsigned length
       for (unsigned j = 0; j < lengtha + lengthb - 1; j++)
       {
          //gmp_printf("%Zx ",data4[j]);
-         assert(!mpz_cmp(c.coords[j], d.coords[j]));
+         assert(!mpz_cmp(c->coords[j], d->coords[j]));
       }
       //printf("\n\n\n\n");
       

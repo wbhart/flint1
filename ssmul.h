@@ -52,10 +52,10 @@ void ifft_butterfly_bits(mp_limb_t** a, mp_limb_t** b, mp_limb_t** scratch,
 void fft_main(mp_limb_t** start, unsigned long skip,
               unsigned long start_r, unsigned long skip_r,
               unsigned long depth, mp_limb_t** scratch,
-              unsigned long n, int first, ...);
+              unsigned long n, int first, int crossover);
 void ifft_main(mp_limb_t** start, unsigned long skip,
                unsigned long start_r, unsigned long skip_r,
                unsigned long depth, mp_limb_t** scratch,
-               unsigned long n, ...);
+               unsigned long n, int crossover);
 
 #endif

@@ -2117,13 +2117,8 @@ cache if possible, then switch to a simple recursive algorithm
 void fft_main(mp_limb_t** start, unsigned long skip,
               unsigned long start_r, unsigned long skip_r,
               unsigned long depth, mp_limb_t** scratch,
-              unsigned long n, int first, ...)
+              unsigned long n, int first, int crossover)
 {
-   int crossover = -1;
-   va_list ap;
-   va_start(ap,first);
-   crossover = va_arg(ap,int);
-   va_end(ap);
    pthread_t thread_arr[THREADS];
    pthread_attr_t attr;
    pthread_attr_init(&attr);
@@ -2421,13 +2416,8 @@ ifft_recursive on the pieces. It is the inverse of fft_main.
 void ifft_main(mp_limb_t** start, unsigned long skip,
                unsigned long start_r, unsigned long skip_r,
                unsigned long depth, mp_limb_t** scratch,
-               unsigned long n, ...)
+               unsigned long n, int crossover)
 {
-   int crossover = -1;
-   va_list ap;
-   va_start(ap,n);
-   crossover = va_arg(ap,int);
-   va_end(ap);
    pthread_t thread_arr[THREADS];
    pthread_attr_t attr;
    pthread_attr_init(&attr);
@@ -3348,8 +3338,8 @@ void ssmul_main_old(mp_limb_t** array1, mp_limb_t** array2, mp_limb_t* array3,
    
    // do FFT's
 
-   fft_main(array1, 1, 0, r, log_length+1, scratch, n, 1);
-   fft_main(array2, 1, 0, r, log_length+1, scratch, n, 1);
+   fft_main(array1, 1, 0, r, log_length+1, scratch, n, 1, -1);
+   fft_main(array2, 1, 0, r, log_length+1, scratch, n, 1, -1);
 
    for (unsigned long i = 0; i < threads; i++)
    {
@@ -3377,7 +3367,7 @@ void ssmul_main_old(mp_limb_t** array1, mp_limb_t** array2, mp_limb_t* array3,
 #endif
 
    // do inverse FFT
-   ifft_main(array1, 1, 0, r, log_length+1, scratch, n);  
+   ifft_main(array1, 1, 0, r, log_length+1, scratch, n, -1);  
 }
 
 /* 
@@ -3390,6 +3380,9 @@ void KSHZ_mul(mpz_t* res, mpz_t* data1, mpz_t* data2,
            const unsigned long orig_length, const unsigned long length2,
            const unsigned long coeff_bits, unsigned long log_length, int sign)
 {
+   //printf("Here1\n");
+   //mpz_set_ui(res[0],0);
+   //printf("Here2\n");
    unsigned long output_bits = 2*coeff_bits + log_length;
    if (sign) output_bits+=2;
    unsigned long orig_output_bits = output_bits;
