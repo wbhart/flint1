@@ -1,3 +1,6 @@
+#ifndef SSFFT_H
+#define SSFFT_H
+
 #include <gmp.h>
 
 // todo: I had to put this here so that I could export the function
@@ -37,9 +40,9 @@ void ssfft_ifft(mp_limb_t** x, unsigned long t,
 
 // temporary while the function lives in this file:
 
-void naive_KS_mul(mpz_t* y,
+/*void naive_KS_mul(mpz_t* y,
                   mpz_t* x1, unsigned long len1,
-                  mpz_t* x2, unsigned long len2);
+                  mpz_t* x2, unsigned long len2);*/
 
 
 
@@ -154,4 +157,4 @@ void ssfft_ifft_size8_z8g8_limbs(
        mp_limb_t** x, unsigned long t,
        unsigned long ru_limbs, unsigned long rU_limbs, unsigned long n,
        mp_limb_t** scratch);
-
+#endif

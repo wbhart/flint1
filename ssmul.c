@@ -53,6 +53,8 @@ multiplication modulo p.
 #include <string.h>
 #include <gmp.h>
 #include <pthread.h>
+#include <sys/types.h>
+#include <stdarg.h>
 #include "flint.h"
 #include "Z-ssmul.h"
 #include "mpn_extras.h"
@@ -159,9 +161,9 @@ FLINT_BITS_PER_LIMB, the bits which overhang are all just zero padding in the bi
 when a right shift is done, zeroes are shifted in. Thus we never need to 
 explicitly keep track of the overhanging bits.
 */
-void ssmul_convert_in_bits(mp_limb_t* array, const mpz_t* data, 
-          const unsigned long n, const unsigned long bundle, 
-          const unsigned long bits, const unsigned long coeffs_per_limb)
+void ssmul_convert_in_bits(mp_limb_t* array, mpz_t* data, 
+          unsigned long n, unsigned long bundle, 
+          unsigned long bits, unsigned long coeffs_per_limb)
 {   
    unsigned long k, l, skip;
 
@@ -269,9 +271,9 @@ Assumes n is set to the length of the array in limbs and that coeffs_per_limb
 is the maximum number of whole coefficients that can be packed into a limb 
 given bitfields of the given number of bits wide.
 */
-void ssmul_convert_in_bits_signed(mp_limb_t* array, const mpz_t* data, 
-          const unsigned long n, const unsigned long bundle, 
-          const unsigned long bits, const unsigned long coeffs_per_limb, int sign_extend)
+void ssmul_convert_in_bits_signed(mp_limb_t* array, mpz_t* data, 
+          unsigned long n, unsigned long bundle, 
+          unsigned long bits, unsigned long coeffs_per_limb, int sign_extend)
 {   
     unsigned long k, l, m, skip;
 
@@ -1576,6 +1578,17 @@ correctness, each function's documentation describes exactly how much of the
 last limb can get chewed up.
 
 ===============================================================================*/
+/* 
+Swaps arrays of limbs efficiently
+
+*/
+static inline void swap_limb_ptrs(mp_limb_t** x, mp_limb_t** y)
+{
+    mp_limb_t* temp;
+    temp = *x;
+    *x = *y;
+    *y = temp;
+}
 
 /*
 Divides a coefficient by 2^s mod p. The shift s MUST be in the range 0 < s < B;
@@ -1758,18 +1771,6 @@ and *b is the second output (and *scratch points to whatever the third
 remaining buffer is).
 
 ============================================================================*/
-
-/* 
-Swaps arrays of limbs efficiently
-
-*/
-inline void swap_limb_ptrs(mp_limb_t** x, mp_limb_t** y)
-{
-    mp_limb_t* temp;
-    temp = *x;
-    *x = *y;
-    *y = temp;
-}
 
 
 /*
@@ -2116,8 +2117,13 @@ cache if possible, then switch to a simple recursive algorithm
 void fft_main(mp_limb_t** start, unsigned long skip,
               unsigned long start_r, unsigned long skip_r,
               unsigned long depth, mp_limb_t** scratch,
-              unsigned long n, int first, int crossover = -1)
+              unsigned long n, int first, ...)
 {
+   int crossover = -1;
+   va_list ap;
+   va_start(ap,first);
+   crossover = va_arg(ap,int);
+   va_end(ap);
    pthread_t thread_arr[THREADS];
    pthread_attr_t attr;
    pthread_attr_init(&attr);
@@ -2415,8 +2421,13 @@ ifft_recursive on the pieces. It is the inverse of fft_main.
 void ifft_main(mp_limb_t** start, unsigned long skip,
                unsigned long start_r, unsigned long skip_r,
                unsigned long depth, mp_limb_t** scratch,
-               unsigned long n, int crossover = -1)
+               unsigned long n, ...)
 {
+   int crossover = -1;
+   va_list ap;
+   va_start(ap,n);
+   crossover = va_arg(ap,int);
+   va_end(ap);
    pthread_t thread_arr[THREADS];
    pthread_attr_t attr;
    pthread_attr_init(&attr);
@@ -2862,9 +2873,9 @@ Kronecker-Schonhage routines
 
 =============================================================================*/
 
-void KSMul_bits(mpz_t* res, const mpz_t* data1, const mpz_t* data2, 
-           const unsigned long orig_length, const unsigned long length2,
-           const unsigned long coeff_bits, const unsigned long log_length)
+void KSMul_bits(mpz_t* res, mpz_t* data1, mpz_t* data2, 
+           unsigned long orig_length, unsigned long length2,
+           unsigned long coeff_bits, unsigned long log_length)
 {
    unsigned long output_bits = 2*coeff_bits+log_length;
    const unsigned long array_bits = output_bits*orig_length;
@@ -3609,13 +3620,13 @@ todo: write an SSSqr for squaring instead of multiplying
 */
 void SSMul(Zvec outpoly, Zvec poly1, Zvec poly2, unsigned long coeff_bits, int sign)
 {
-   mpz_t* data1 = poly1.coords;
-   mpz_t* data2 = poly2.coords;
-   unsigned long orig_length = poly1.length;;
-   unsigned long length2 = poly2.length;;
+   mpz_t* data1 = poly1->coords;
+   mpz_t* data2 = poly2->coords;
+   unsigned long orig_length = poly1->length;;
+   unsigned long length2 = poly2->length;;
    unsigned long trunc_length;
 
-   mpz_t* res = outpoly.coords;
+   mpz_t* res = outpoly->coords;
    
    unsigned long log_length=0;
    while ((1<<log_length) < orig_length) log_length++;
@@ -3769,7 +3780,7 @@ void SSMul(Zvec outpoly, Zvec poly1, Zvec poly2, unsigned long coeff_bits, int s
    
    // output_bits: number of bits required for each fft output coefficient (multiple of B)
    // input_limbs: number of limbs per fft coeff
-   // orig_limbs: orig no. limbs per full orig coefficient
+   // orig_limbs: orig no limbs per full orig coefficient
    // orig_length: length of orig input poly
    // log_length: log of the new total fft input length
    // length: 2^(log_length+1)

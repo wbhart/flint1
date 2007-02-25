@@ -1,12 +1,13 @@
-#define TRIALS 20
-#define LENGTH 16384
-#define BITS 5
+#define TRIALS 10
+#define LENGTH 2560
+#define BITS 6000
 
 #include <gmp.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include "flint.h"
 #include "ssmul.h"
+#include "Zvec.h"
 
 /* Runs SSMul through random data.
 
@@ -33,11 +34,19 @@ void run_SSMul(unsigned long num_trials, unsigned long length,
    
    gmp_randstate_t state;
    gmp_randinit_default(state);
-    
+   
+   Zvec a,b,c;
+   a->coords = data1;
+   b->coords = data2;
+   c->coords = data3;
+   a->length = length;
+   b->length = length;
+   c->length = 2*length-1;
+   
    for (unsigned i = 0; i < num_trials; i++)
    {
       // make up random polys
-      if (i%20==0)
+      if (i%2==0)
       {
          for (unsigned j = 0; j < length; j++)
          {
@@ -51,7 +60,8 @@ void run_SSMul(unsigned long num_trials, unsigned long length,
       }
       
       // compute product using SSMul
-      SSMul(data3, data1, data2, length, coeff_bits);
+      Zvec_mul(c,a,b);
+      printf("Polynomial multiplication %ld completed.\n",i+1);
    }
    
    // clean up

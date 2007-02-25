@@ -31,6 +31,7 @@ that understand them).
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include <gmp.h>
 #include "flint.h"
 #include "Z-ssmul.h"
@@ -565,8 +566,13 @@ cache if possible, then switch to a simple recursive algorithm
 void Z_fft_main(mp_limb_t** start, unsigned long skip,
               unsigned long start_r, unsigned long skip_r,
               unsigned long depth, mp_limb_t** scratch,
-              unsigned long n, int first, int crossover = -1)
+              unsigned long n, int first, ...)
 {
+   int crossover = -1;
+   va_list ap;
+   va_start(ap,first);
+   crossover = va_arg(ap,int);
+   va_end(ap);
    if (crossover == -1)
    {
       // work out crossover = optimal depth to switch over to plain
@@ -689,8 +695,13 @@ Z_ifft_recursive on the pieces. It is the inverse of Z_fft_main.
 void Z_ifft_main(mp_limb_t** start, unsigned long skip,
                unsigned long start_r, unsigned long skip_r,
                unsigned long depth, mp_limb_t** scratch,
-               unsigned long n, int crossover = -1)
+               unsigned long n, ...)
 {
+   int crossover = -1;
+   va_list ap;
+   va_start(ap,n);
+   crossover = va_arg(ap,int);
+   va_end(ap);
    if (crossover == -1)
    {
       // work out crossover = optimal depth to switch over to plain

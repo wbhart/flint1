@@ -120,7 +120,7 @@ A very silly implementation of KS multiplication.
 x1 and x2 should be polys of length len1 and len2
 y should be exactly len1+len2-1 long, and already mpz_init'd
 */
-void naive_KS_mul(mpz_t* y,
+/*void naive_KS_mul(mpz_t* y,
                   mpz_t* x1, unsigned long len1,
                   mpz_t* x2, unsigned long len2)
 {
@@ -141,7 +141,7 @@ void naive_KS_mul(mpz_t* y,
    
    mpz_clear(z1);
    mpz_clear(z2);
-}
+}*/
 
 
 // ************************ end temporary block
@@ -540,7 +540,7 @@ buffer. They may permute the buffers passed to them.
 /* 
 Swaps arrays of limbs efficiently
 */
-inline void swap_limb_ptrs(mp_limb_t** x, mp_limb_t** y)
+static inline void ssfft_swap_limb_ptrs(mp_limb_t** x, mp_limb_t** y)
 {
    mp_limb_t* temp;
    temp = *x;
@@ -569,7 +569,7 @@ void coeff_forward_simple_butterfly(
 
    basic_sub(*scratch, *a, *b, n);
    basic_add(*a, *a, *b, n);
-   swap_limb_ptrs(scratch, b);
+   ssfft_swap_limb_ptrs(scratch, b);
 }
 
 
@@ -604,7 +604,7 @@ void coeff_forward_butterfly_limbs(
 
    basic_sub_rotate_limbs(*scratch, *a, *b, s, n);
    basic_add(*a, *a, *b, n);
-   swap_limb_ptrs(scratch, b);
+   ssfft_swap_limb_ptrs(scratch, b);
 }
 
 
@@ -634,7 +634,7 @@ void coeff_inverse_butterfly_limbs(
 
    basic_unrotate_sub_limbs(*scratch, *a, *b, s, n);
    basic_unrotate_add_limbs(*a, *a, *b, s, n);
-   swap_limb_ptrs(scratch, b);
+   ssfft_swap_limb_ptrs(scratch, b);
 }
 
 
@@ -702,7 +702,7 @@ void coeff_forward_butterfly_bits(
 
    coeff_sub_rotate_bits(scratch, a, b, s, n);
    basic_add(*a, *a, *b, n);
-   swap_limb_ptrs(scratch, b);
+   ssfft_swap_limb_ptrs(scratch, b);
 }
 
 
@@ -744,7 +744,7 @@ void coeff_inverse_butterfly_bits(
       basic_sub(*scratch, *a, *b, n);
       basic_add(*a, *a, *b, n);
    }
-   swap_limb_ptrs(scratch, b);
+   ssfft_swap_limb_ptrs(scratch, b);
 }
 
 
@@ -821,7 +821,7 @@ void coeff_cross_butterfly_bits(
    basic_add(*a, *a, *a, n);
    basic_sub(*a, *a, *b, n);
    basic_fast_reduce(*a, n);    // just to be safe
-   swap_limb_ptrs(b, scratch);
+   ssfft_swap_limb_ptrs(b, scratch);
 }
 
 
@@ -870,7 +870,7 @@ void coeff_sqrt2_helper(mp_limb_t** b, mp_limb_t** a, unsigned long n)
       else
       {
          basic_rotate_sub_limbs(*a, *a, *b, (n >> 1) + 1, n);
-         swap_limb_ptrs(a, b);
+         ssfft_swap_limb_ptrs(a, b);
       }
    }
    else
@@ -966,7 +966,7 @@ void coeff_rotate_arbitrary(mp_limb_t** b, mp_limb_t** a, mp_limb_t** scratch,
          if (bits)
             basic_unrotate_bits(*scratch, *scratch, bits, n);
          
-         swap_limb_ptrs(b, scratch);
+         ssfft_swap_limb_ptrs(b, scratch);
       }
       else
       {
@@ -1773,7 +1773,7 @@ void ssfft_fft_threaded(
                          scratch_buf_ptrs[j] < scratch_bufs_end); j++);
 
       // copy the data from the scratch slot to the input slot
-      swap_limb_ptrs(x + i, scratch_buf_ptrs + j);
+      ssfft_swap_limb_ptrs(x + i, scratch_buf_ptrs + j);
       basic_copy(x[i], scratch_buf_ptrs[j], n);
       
       i++; j++;

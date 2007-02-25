@@ -26,12 +26,11 @@ Do not rely on it to exist in future versions of FLINT!
 It is exported for purposes of test code only.
 
 =============================================================================*/
-
 void ssmul_convert_in_bytes(mp_limb_t* array, mpz_t* coeffs, 
             const unsigned long bundle, const unsigned long coeff_bytes, const unsigned long total_limbs);
             
 void ssmul_convert_out_bytes(mpz_t* output, mp_limb_t* array, 
-               unsigned long bundle, unsigned long coeff_bytes);
+               unsigned long bundle, unsigned long coeff_bytes, mpz_t temp);
 
 void rotate_right_bits(mp_limb_t* dest, mp_limb_t* src,
                        unsigned long s, unsigned long n);
@@ -53,10 +52,10 @@ void ifft_butterfly_bits(mp_limb_t** a, mp_limb_t** b, mp_limb_t** scratch,
 void fft_main(mp_limb_t** start, unsigned long skip,
               unsigned long start_r, unsigned long skip_r,
               unsigned long depth, mp_limb_t** scratch,
-              unsigned long n, int first, int crossover);
+              unsigned long n, int first, ...);
 void ifft_main(mp_limb_t** start, unsigned long skip,
                unsigned long start_r, unsigned long skip_r,
                unsigned long depth, mp_limb_t** scratch,
-               unsigned long n, int crossover);
+               unsigned long n, ...);
 
 #endif

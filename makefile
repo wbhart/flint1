@@ -1,19 +1,12 @@
-ifdef FLINT_32BIT
-   BITFLAG = 
-else
-   BITFLAG = -m64
-endif
-
-CPP = g++ $(BITFLAG)
-CC = gcc -std=c99 $(BITFLAG)
+CPP = gcc -std=c99
+CC = gcc -std=c99
 LINKOBJ  = ssmul.o driver.o
 DRIVEROBJ = Z.o Zvec.o ssfft.o mpn_extras.o profiler.o ssmul.o Z-ssmul.o driver.o
 DRIVER2OBJ = mpn_extras.o radixmul.o Z.o driver2.o
-DRIVER3OBJ = mpn_extras.o Z-ssmul.o driver3.o
+DRIVER3OBJ = profiler.o ssfft.o mpn_extras.o Z-ssmul.o driver3.o
 TESTOBJ = ssfft.o mpn_extras.o Z.o ssmul.o Z-ssmul.o ssmul-test.o
 PROFOBJ = mpn_extras.o ssmulprof.o test.o profiler.o
 FLINTOBJ = Zvec.o Z.o flint.o 
-
 ifndef FLINT_GMP_INCLUDE_DIR
 	FLINT_GMP_INCLUDE_DIR = "/home/dmharvey/gmp/install/include"
 endif
@@ -21,16 +14,15 @@ endif
 ifndef FLINT_GMP_LIB_DIR
 	FLINT_GMP_LIB_DIR = "/home/dmharvey/gmp/install/lib"
 endif
-
-LIBS = -L$(FLINT_GMP_LIB_DIR) -lgmp -lpthread -lm
+LIBS = -L$(FLINT_GMP_LIB_DIR) -lgmp -lpthread
 INCS =  -I"/usr/include" -I$(FLINT_GMP_INCLUDE_DIR)
-CXXINCS = -I$(FLINT_GMP_INCLUDE_DIR)
+CXXINCS = -I"/home/dmharvey/gmp/install/include" 
 BIN  = ssmul
 BIN2 = radixmul
 BIN3  = Zssmul
 FBIN = FLINT
-CFLAGS = $(INCS) $(BITFLAG) -funroll-loops -fexpensive-optimizations -O3
-CXXFLAGS = $(CXXINCS) $(BITFLAG) -funroll-loops -fexpensive-optimizations -O3
+CFLAGS = $(INCS) -funroll-loops -fexpensive-optimizations -O3
+CXXFLAGS = $(CXXINCS) -funroll-loops -fexpensive-optimizations -O3
 RM = rm -f
 
 .PHONY: all all-before all-after clean clean-custom driver test

@@ -1,4 +1,7 @@
+#include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+#include <sys/types.h>
 #include <gmp.h>
 
 #ifndef FLINT_Z_H
@@ -54,7 +57,7 @@ static inline void Z_set_f(Z_t res, mpf_t op)
 
 static inline int Z_set_str(Z_t res, char *str, int base)
 {
-   mpz_set_str(res, str, base);
+   return mpz_set_str(res, str, base);
 }
 
 static inline void Z_swap(Z_t op1, Z_t op2)
@@ -70,27 +73,27 @@ static inline void Z_swap(Z_t op1, Z_t op2)
 
 static inline unsigned long Z_get_ui(Z_t op)
 {
-   mpz_get_ui(op);
+   return mpz_get_ui(op);
 }
 
 static inline signed long Z_get_si(Z_t op)
 {
-   mpz_get_si(op);
+   return mpz_get_si(op);
 }
 
 static inline double Z_get_d(Z_t op)
 {
-   mpz_get_d(op);
+   return mpz_get_d(op);
 }
 
 static inline double Z_get_d_2exp(signed long *exp, Z_t op)
 {
-   mpz_get_d_2exp(exp, op);
+   return mpz_get_d_2exp(exp, op);
 }
 
 static inline char * Z_get_str(char *str, int base, Z_t op)
 {
-   mpz_get_str(str, base, op);
+   return mpz_get_str(str, base, op);
 }
      
 /*-----------------------------------------------------------------------------
@@ -197,22 +200,22 @@ static inline void Z_cdiv_qr(Z_t q, Z_t r, Z_t n, Z_t d)
  
 static inline unsigned long Z_cdiv_q_ui(Z_t q, Z_t n, unsigned long d)
 {
-   mpz_cdiv_q_ui(q, n, d);
+   return mpz_cdiv_q_ui(q, n, d);
 }
  
 static inline unsigned long Z_cdiv_r_ui(Z_t r, Z_t n, unsigned long d)
 {
-   mpz_cdiv_r_ui(r, n, d);
+   return mpz_cdiv_r_ui(r, n, d);
 }
  
 static inline unsigned long Z_cdiv_qr_ui(Z_t q, Z_t r, Z_t n, unsigned long d)
 {
-   mpz_cdiv_qr_ui(q, r, n, d);
+   return mpz_cdiv_qr_ui(q, r, n, d);
 }
  
 static inline unsigned long Z_cdiv_ui(Z_t n, unsigned long d)
 {
-   mpz_cdiv_ui(n, d);
+   return mpz_cdiv_ui(n, d);
 }
  
 static inline void Z_cdiv_q_2exp(Z_t q, Z_t n, unsigned long exp)
@@ -242,22 +245,22 @@ static inline void Z_fdiv_qr(Z_t q, Z_t r, Z_t n, Z_t d)
  
 static inline unsigned long Z_fdiv_q_ui(Z_t q, Z_t n, unsigned long d)
 {
-   mpz_fdiv_q_ui(q, n, d);
+   return mpz_fdiv_q_ui(q, n, d);
 }
  
 static inline unsigned long Z_fdiv_r_ui(Z_t r, Z_t n, unsigned long d)
 {
-   mpz_fdiv_r_ui(r, n, d);
+   return mpz_fdiv_r_ui(r, n, d);
 }
  
 static inline unsigned long Z_fdiv_qr_ui(Z_t q, Z_t r, Z_t n, unsigned long d)
 {
-   mpz_fdiv_qr_ui(q, r, n, d);
+   return mpz_fdiv_qr_ui(q, r, n, d);
 }
  
 static inline unsigned long Z_fdiv_ui(Z_t n, unsigned long d)
 {
-   mpz_fdiv_ui(n, d);
+   return mpz_fdiv_ui(n, d);
 }
 
 static inline void Z_fdiv_q_2exp(Z_t q, Z_t n, unsigned long exp)
@@ -287,22 +290,22 @@ static inline void Z_tdiv_qr(Z_t q, Z_t r, Z_t n, Z_t d)
  
 static inline unsigned long Z_tdiv_q_ui(Z_t q, Z_t n, unsigned long d)
 {
-   mpz_tdiv_q_ui(q, n, d);
+   return mpz_tdiv_q_ui(q, n, d);
 }
  
 static inline unsigned long Z_tdiv_r_ui(Z_t r, Z_t n, unsigned long d)
 {
-   mpz_tdiv_r_ui(r, n, d);
+   return mpz_tdiv_r_ui(r, n, d);
 }
  
 static inline unsigned long Z_tdiv_qr_ui(Z_t q, Z_t r, Z_t n, unsigned long d)
 {
-   mpz_tdiv_qr_ui(q, r, n, d);
+   return mpz_tdiv_qr_ui(q, r, n, d);
 }
  
 static inline unsigned long Z_tdiv_ui(Z_t n, unsigned long d)
 {
-   mpz_tdiv_ui(n, d);
+   return mpz_tdiv_ui(n, d);
 }
  
 static inline void Z_tdiv_q_2exp(Z_t q, Z_t n, unsigned long exp)
@@ -338,7 +341,7 @@ static inline void Z_mod(Z_t res, Z_t n, Z_t d)
 
 static inline unsigned long Z_mod_ui(Z_t res, Z_t n, unsigned long d)
 {
-   mpz_mod_ui(res, n, d);
+   return mpz_mod_ui(res, n, d);
 }
 
 void Z_mulmod(Z_t, Z_t, Z_t, Z_t);
@@ -357,32 +360,32 @@ unsigned long Z_mulmod_ui(Z_t, Z_t, Z_t, unsigned long);
 
 static inline int Z_congruent_p(Z_t n, Z_t c, Z_t d)
 {
-   mpz_congruent_p(n, c, d);
+   return mpz_congruent_p(n, c, d);
 }
 
 static inline int Z_congruent_ui_p(Z_t n, unsigned long c, unsigned long d)
 {
-   mpz_congruent_ui_p(n, c, d);
+   return mpz_congruent_ui_p(n, c, d);
 }
 
 static inline int Z_congruent_2exp_p(Z_t n, Z_t c, unsigned long exp)
 {
-   mpz_congruent_2exp_p(n, c, exp);
+   return mpz_congruent_2exp_p(n, c, exp);
 }
 
 static inline int Z_divisible_p(Z_t n, Z_t d)
 {
-   mpz_divisible_p(n, d);
+   return mpz_divisible_p(n, d);
 }
 
 static inline int Z_divisible_ui_p(Z_t n, unsigned long d)
 {
-   mpz_divisible_ui_p(n, d);
+   return mpz_divisible_ui_p(n, d);
 }
 
 static inline int Z_divisible_2exp_p(Z_t n, unsigned long exp)
 {
-   mpz_divisible_2exp_p(n, exp);
+   return mpz_divisible_2exp_p(n, exp);
 }
 
 long Z_powm_long(long, long, long);
@@ -401,7 +404,7 @@ unsigned long Z_invert_long(unsigned long, unsigned long);
 
 static inline int Z_invert(Z_t res, Z_t a, Z_t p)
 {
-   mpz_invert(res, a, p);
+   return mpz_invert(res, a, p);
 }
 
 int Z_sqrtmod(Z_t, Z_t, Z_t);
@@ -438,7 +441,7 @@ static inline void Z_ui_pow_ui(Z_t res, unsigned long base, unsigned long exp)
 
 static inline int Z_root(Z_t res, Z_t op, unsigned long n)
 {
-   mpz_root(res, op, n);
+   return mpz_root(res, op, n);
 }
 
 static inline void Z_rootrem(Z_t root, Z_t rem, Z_t op, unsigned long n)
@@ -458,12 +461,12 @@ static inline void Z_sqrtrem(Z_t rop, Z_t rem, Z_t op)
 
 static inline int Z_perfect_power_p(Z_t op)
 {
-   mpz_perfect_power_p(op);
+   return mpz_perfect_power_p(op);
 }
 
 static inline int Z_perfect_square_p(Z_t op)
 {
-   mpz_perfect_square_p(op);
+   return mpz_perfect_square_p(op);
 }
 
 /*-----------------------------------------------------------------------------
@@ -483,7 +486,7 @@ void Z_randomprime(Z_t, unsigned long);
 
 static inline int Z_probab_prime_p(Z_t n, int reps)
 {
-   mpz_probab_prime_p(n, reps);
+   return mpz_probab_prime_p(n, reps);
 }
 
 long Z_extgcd_long(long*, long*, long, long);
@@ -497,7 +500,7 @@ static inline void Z_gcd(Z_t res, Z_t op1, Z_t op2)
 
 static inline unsigned long Z_gcd_ui(Z_t res, Z_t op1, unsigned long op2)
 {
-   mpz_gcd_ui(res, op1, op2);
+   return mpz_gcd_ui(res, op1, op2);
 }
 
 static inline void Z_gcdext(Z_t g, Z_t s, Z_t t, Z_t a, Z_t b)
@@ -517,42 +520,42 @@ static inline void Z_lcm_ui(Z_t res, Z_t op1, unsigned long op2)
 
 static inline int Z_jacobi(Z_t a, Z_t b)
 {
-   mpz_jacobi(a, b);
+   return mpz_jacobi(a, b);
 }
 
 static inline int Z_legendre(Z_t a, Z_t p)
 {
-   mpz_legendre(a, p);
+   return mpz_legendre(a, p);
 }
 
 static inline int Z_kronecker(Z_t a, Z_t b)
 {
-   mpz_kronecker(a, b);
+   return mpz_kronecker(a, b);
 }
 
 static inline int Z_kronecker_si(Z_t a, long b)
 {
-   mpz_kronecker_si(a, b);
+   return mpz_kronecker_si(a, b);
 }
 
 static inline int Z_kronecker_ui(Z_t a, unsigned long b)
 {
-   mpz_kronecker_ui(a, b);
+   return mpz_kronecker_ui(a, b);
 }
 
 static inline int Z_si_kronecker(long a, Z_t b)
 {
-   mpz_si_kronecker(a, b);
+   return mpz_si_kronecker(a, b);
 }
 
 static inline int Z_ui_kronecker(unsigned long a, Z_t b)
 {
-   mpz_ui_kronecker(a, b);
+   return mpz_ui_kronecker(a, b);
 }
 
 static inline unsigned long Z_remove(Z_t res, Z_t op, Z_t n)
 {
-   mpz_remove(res, op, n);
+   return mpz_remove(res, op, n);
 }
 
 static inline void Z_fac_ui(Z_t res, unsigned long op)
@@ -600,42 +603,42 @@ void Z_CRT(Z_t, Z_t, Z_t, Z_t, Z_t, Z_t);
 
 static inline int Z_cmp(Z_t op1, Z_t op2)
 {
-   mpz_cmp(op1, op2);
+   return mpz_cmp(op1, op2);
 }
 
 static inline int Z_cmp_d(Z_t op1, double op2)
 {
-   mpz_cmp_d(op1, op2);
+   return mpz_cmp_d(op1, op2);
 }
 
 static inline int Z_cmp_si(Z_t op1, signed long op2)
 {
-   mpz_cmp_si(op1, op2);
+   return mpz_cmp_si(op1, op2);
 }
 
 static inline int Z_cmp_ui(Z_t op1, unsigned long op2)
 {
-   mpz_cmp_ui(op1, op2);
+  return  mpz_cmp_ui(op1, op2);
 }
 
 static inline int Z_cmpabs(Z_t op1, Z_t op2)
 {
-   mpz_cmpabs(op1, op2);
+   return mpz_cmpabs(op1, op2);
 }
 
 static inline int Z_cmpabs_d(Z_t op1, double op2)
 {
-   mpz_cmpabs_d(op1, op2);
+   return mpz_cmpabs_d(op1, op2);
 }
 
 static inline int Z_cmpabs_ui(Z_t op1, unsigned long op2)
 {
-   mpz_cmpabs_ui(op1, op2);
+   return mpz_cmpabs_ui(op1, op2);
 }
 
 static inline int Z_sgn(Z_t op)
 {
-   mpz_sgn(op);
+   return mpz_sgn(op);
 }
 
 /*-----------------------------------------------------------------------------
@@ -666,22 +669,22 @@ static inline void Z_com(Z_t res, Z_t op)
 
 static inline unsigned long Z_popcount(Z_t op)
 {
-   mpz_popcount(op);
+   return mpz_popcount(op);
 }
 
 static inline unsigned long Z_hamdist(Z_t op1, Z_t op2)
 {
-   mpz_hamdist(op1, op2);
+   return mpz_hamdist(op1, op2);
 }
 
 static inline unsigned long Z_scan0(Z_t op, unsigned long starting_bit)
 {
-   mpz_scan0(op, starting_bit);
+   return mpz_scan0(op, starting_bit);
 }
 
 static inline unsigned long Z_scan1(Z_t op, unsigned long starting_bit)
 {
-   mpz_scan1(op, starting_bit);
+   return mpz_scan1(op, starting_bit);
 }
 
 static inline void Z_setbit(Z_t res, unsigned long bit_index)
@@ -701,7 +704,7 @@ static inline void Z_combit(Z_t res, unsigned long bit_index)
 
 static inline int Z_tstbit(Z_t op, unsigned long bit_index)
 {
-   mpz_tstbit(op, bit_index);
+   return mpz_tstbit(op, bit_index);
 }
 
 /*-----------------------------------------------------------------------------
@@ -712,22 +715,22 @@ static inline int Z_tstbit(Z_t op, unsigned long bit_index)
 
 static inline size_t Z_out_str(FILE *stream, int base, Z_t op)
 {
-   mpz_out_str(stream, base, op);
+   return mpz_out_str(stream, base, op);
 }
 
 static inline size_t Z_inp_str(Z_t res, FILE *stream, int base)
 {
-   mpz_inp_str(res, stream, base);
+   return mpz_inp_str(res, stream, base);
 }
 
 static inline size_t Z_out_raw(FILE *stream, Z_t op)
 {
-   mpz_out_raw(stream, op);
+   return mpz_out_raw(stream, op);
 }
 
 static inline size_t Z_inp_raw(Z_t res, FILE *stream)
 {
-   mpz_inp_raw(res, stream);
+   return mpz_inp_raw(res, stream);
 }
 
 /*-----------------------------------------------------------------------------
@@ -768,52 +771,52 @@ static inline void * Z_export(void *rop, size_t *countp, int order, int size,
 
 static inline int Z_fits_ulong_p(Z_t op)
 {
-   mpz_fits_ulong_p(op);
+   return mpz_fits_ulong_p(op);
 }
 
 static inline int Z_fits_slong_p(Z_t op)
 {
-   mpz_fits_slong_p(op);
+   return mpz_fits_slong_p(op);
 }
 
 static inline int Z_fits_uint_p(Z_t op)
 {
-   mpz_fits_uint_p(op);
+   return mpz_fits_uint_p(op);
 }
 
 static inline int Z_fits_sint_p(Z_t op)
 {
-   mpz_fits_sint_p(op);
+   return mpz_fits_sint_p(op);
 }
 
 static inline int Z_fits_ushort_p(Z_t op)
 {
-   mpz_fits_ushort_p(op);
+   return mpz_fits_ushort_p(op);
 }
 
 static inline int Z_fits_sshort_p(Z_t op)
 {
-   mpz_fits_sshort_p(op);
+   return mpz_fits_sshort_p(op);
 }
 
 static inline int Z_odd_p(Z_t op)
 {
-   mpz_odd_p(op);
+   return mpz_odd_p(op);
 }
 
 static inline int Z_even_p(Z_t op)
 {
-   mpz_even_p(op);
+   return mpz_even_p(op);
 }
 
 static inline size_t Z_sizeinbase(Z_t op, int base)
 {
-   mpz_sizeinbase(op, base);
+   return mpz_sizeinbase(op, base);
 }
 
 static inline size_t Z_size(Z_t op)
 {
-   mpz_size(op);
+   return mpz_size(op);
 }
 
 #endif // #ifndef FLINT_Z_H
