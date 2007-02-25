@@ -3380,9 +3380,6 @@ void KSHZ_mul(mpz_t* res, mpz_t* data1, mpz_t* data2,
            const unsigned long orig_length, const unsigned long length2,
            const unsigned long coeff_bits, unsigned long log_length, int sign)
 {
-   //printf("Here1\n");
-   //mpz_set_ui(res[0],0);
-   //printf("Here2\n");
    unsigned long output_bits = 2*coeff_bits + log_length;
    if (sign) output_bits+=2;
    unsigned long orig_output_bits = output_bits;

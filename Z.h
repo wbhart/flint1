@@ -713,7 +713,7 @@ static inline int Z_tstbit(Z_t op, unsigned long bit_index)
     
 -----------------------------------------------------------------------------*/
 
-static inline size_t Z_out_str(FILE *stream, int base, Z_t op)
+/*static inline size_t Z_out_str(FILE *stream, int base, Z_t op)
 {
    return mpz_out_str(stream, base, op);
 }
@@ -731,7 +731,7 @@ static inline size_t Z_out_raw(FILE *stream, Z_t op)
 static inline size_t Z_inp_raw(Z_t res, FILE *stream)
 {
    return mpz_inp_raw(res, stream);
-}
+}*/
 
 /*-----------------------------------------------------------------------------
 
