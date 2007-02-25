@@ -22,13 +22,15 @@
 CPP  = g++
 OBJ  = ModuloArith.o TonelliShanks.o F2matrix.o lanczos.o QS.o $(RES)
 LINKOBJ  = ModuloArith.o TonelliShanks.o F2matrix.o lanczos.o QS.o $(RES)
-LIBS =  -L"/home/dmharvey/gmp/install/lib" -lgmp 
-CXXINCS = -I"/home/dmharvey/gmp/install/include"  
+LIBS =  -L"/usr/lib" -lgmp 
+CXXINCS = -I"/usr/include"
 BIN  = QuadraticSieve QuadraticSieve.exe
+CXXFLAGS = $(CXXINCS) -Wall -Wno-sign-compare -fomit-frame-pointer -O2
+CXXFLAGS2 = $(CXXINCS) -Wall -Wno-sign-compare -fomit-frame-pointer -O3
 #CXXFLAGS = $(CXXINCS) -Wall -Wno-sign-compare -march=athlon-xp -fomit-frame-pointer -O2
 #CXXFLAGS2 = $(CXXINCS) -Wall -Wno-sign-compare -march=athlon-xp -fomit-frame-pointer -O3
-CXXFLAGS = $(CXXINCS) -Wall -Wno-sign-compare -march=opteron -fomit-frame-pointer -O2
-CXXFLAGS2 = $(CXXINCS) -Wall -Wno-sign-compare -march=opteron -fomit-frame-pointer -O3
+#CXXFLAGS = $(CXXINCS) -Wall -Wno-sign-compare -march=opteron -fomit-frame-pointer -O2
+#CXXFLAGS2 = $(CXXINCS) -Wall -Wno-sign-compare -march=opteron -fomit-frame-pointer -O3
 RM = rm -f
 
 .PHONY: all clean clean-custom
