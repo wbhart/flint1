@@ -258,7 +258,9 @@ long Z_extgcd_long(long* a, long* b, long x, long y)
    long u2=0, v2=1;
    long t1, t2;
    long u3, v3;
-   long quot, rem, xsign, ysign;
+   long quot, rem;
+   long xsign = 0;
+   long ysign = 0;
    
    if (x < 0) {
       x = -x;
@@ -332,8 +334,6 @@ unsigned long Z_gcd_long(long x, long y)
       y = -y;
    }
 
-   long u1=1, v1=0;
-   long u2=0, v2=1;
    long u3 = x, v3 = y;
    long quot, rem;
 

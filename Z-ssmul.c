@@ -1011,7 +1011,7 @@ void Z_SSMul(mp_limb_t* res, mp_limb_t* data1, mp_limb_t* data2,
    // conditions are satisfied if we set r = nB / (length/2).
    // (Recall l = length/2).
    
-   unsigned long r = n*FLINT_BITS_PER_LIMB * 2 / length;
+   //unsigned long r = n*FLINT_BITS_PER_LIMB * 2 / length;
 
    // We need the following memory allocated:
    //
@@ -1039,14 +1039,12 @@ void Z_SSMul(mp_limb_t* res, mp_limb_t* data1, mp_limb_t* data2,
       
    // ...and pointwise multiplication working space
    
-   mp_limb_t* array3 = array + (2*length+1)*(n+1);   
-
    mp_limb_t** array1 = pointarr;
    mp_limb_t** array2 = pointarr + length;
    mp_limb_t** scratch = pointarr + 2*length;
    
    // convert data for first FFT
-   for (skip = 0, i = 0; i < length/2, skip+input_limbs <= limbs; i++, skip+=input_limbs)
+   for (skip = 0, i = 0; (i < length/2) && (skip+input_limbs <= limbs); i++, skip+=input_limbs)
    {
       clear_limbs(array1[i],n+1);
       // prefetch entire bundled coefficient
@@ -1060,7 +1058,7 @@ void Z_SSMul(mp_limb_t* res, mp_limb_t* data1, mp_limb_t* data2,
    for (; i < length/2; i++) clear_limbs(array1[i],n+1);
       
    // convert data for second FFT
-   for (skip = 0, i = 0; i < length/2, skip+input_limbs <= limbs; i++, skip+=input_limbs)
+   for (skip = 0, i = 0; (i < length/2) && (skip+input_limbs <= limbs); i++, skip+=input_limbs)
    {
       clear_limbs(array2[i],n+1);
       // prefetch entire bundled coefficient
@@ -1080,7 +1078,7 @@ void Z_SSMul(mp_limb_t* res, mp_limb_t* data1, mp_limb_t* data2,
    
    clear_limbs(res,2*limbs);
     
-   for (skip = 0, i = 0; i < 2*trunc_length - 1, skip+n <= 2*limbs; i++, skip+=input_limbs)
+   for (skip = 0, i = 0; (i < 2*trunc_length - 1) && (skip+n <= 2*limbs); i++, skip+=input_limbs)
    { 
       // divide by appropriate normalising power of 2
       // (I'm assuming here that the transform length will always be 

@@ -57,8 +57,6 @@ void* limb_alloc(unsigned long length, int reserved)
 {
    static limb_mem_t* curr;
    static limb_mem_t* temp;
-   static limb_memp_t* ptemp;
-   static mp_limb_t* temparr;
    static int initialised = 0; //has limb_alloc been initialised
    static unsigned int currentalloc = 0; //total number of limb_memp_t's in reservoir_mpn
    static limb_memp_t* tempres;
@@ -184,7 +182,6 @@ void* limb_alloc(unsigned long length, int reserved)
 
 void limb_release()
 {
-    static limb_memp_t* ptemp;
     unsigned long length = top_mpn->length;
     
     //adjust record to reflect the fact that the limbs have been released back to the stack

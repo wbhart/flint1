@@ -444,10 +444,10 @@ static inline int Z_root(Z_t res, Z_t op, unsigned long n)
    return mpz_root(res, op, n);
 }
 
-static inline void Z_rootrem(Z_t root, Z_t rem, Z_t op, unsigned long n)
+/*static inline void Z_rootrem(Z_t root, Z_t rem, Z_t op, unsigned long n)
 {
    mpz_rootrem(root, rem, op, n);
-}
+}*/
 
 static inline void Z_sqrt(Z_t rop, Z_t op)
 {
@@ -697,10 +697,10 @@ static inline void Z_clrbit(Z_t res, unsigned long bit_index)
    mpz_clrbit(res, bit_index);
 }
 
-static inline void Z_combit(Z_t res, unsigned long bit_index)
+/*static inline void Z_combit(Z_t res, unsigned long bit_index)
 {
    mpz_combit(res, bit_index);
-}
+}*/
 
 static inline int Z_tstbit(Z_t op, unsigned long bit_index)
 {
@@ -760,7 +760,7 @@ static inline void Z_import(Z_t rop, size_t count, int order, int size,
 static inline void * Z_export(void *rop, size_t *countp, int order, int size,
                        int endian, size_t nails, Z_t op)
 {
-   mpz_export(rop, countp, order, size, endian, nails, op);
+   return mpz_export(rop, countp, order, size, endian, nails, op);
 }
 
 /*-----------------------------------------------------------------------------

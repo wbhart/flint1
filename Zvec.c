@@ -103,8 +103,6 @@ void Zvec_alloc(Zvec vect, unsigned long length, unsigned long size, int reserve
 {
    static Zvec_mem_t* curr;
    static Zvec_mem_t* temp;
-   static Zvec_memp_t* ptemp;
-   static mpz_t* temparr;
    static int initialised = 0; //has Zvec_alloc been initialised
    static unsigned int currentalloc = 0; //total number of Zvec_memp_t's in reservoir_Zvec
    static Zvec_memp_t* tempres;
@@ -238,8 +236,6 @@ void Zvec_alloc(Zvec vect, unsigned long length, unsigned long size, int reserve
 
 void Zvec_release(Zvec vec)
 {
-    static Zvec_memp_t* ptemp;
-    
     //adjust record to reflect the fact that the mpz_t's have been released back to the stack
     top_Zvec->point->point-=vec->length;
     top_Zvec->point->remaining+=vec->length;
@@ -576,8 +572,6 @@ void Zvec_radixMul(Zvec res, Zvec a, Zvec b, unsigned long size)
    
    unsigned long temp2;
     
-   mp_limb_t quot[100];
-   
    Zvec A, B, C; // Zvec's to hold a, b and the product modulo a prime p
    
    /* 
@@ -755,7 +749,6 @@ void Zvec_fft(Zvec a, unsigned long r, unsigned long l, mpz_t p, unsigned long n
 
 void Zvec_fft3(mpz_t* a, unsigned long l, unsigned long m, mpz_t p, unsigned long n, unsigned long r)
 {
-     unsigned long mmul;
      unsigned long mmulinc=m/l;
      mmulinc*=r;
      
@@ -832,7 +825,6 @@ void Zvec_ifft(Zvec a, unsigned long r, unsigned long l, mpz_t p, unsigned long 
 
 void Zvec_ifft3(mpz_t* a, unsigned long l, unsigned long m, mpz_t p, unsigned long n, unsigned long r)
 {
-     unsigned long mmul;
      unsigned long mmulinc=m/l;
      mmulinc*=r;
      
@@ -1062,7 +1054,6 @@ void Zvec_mul(Zvec res, Zvec a, Zvec b)
    {
       sign = 0;
       unsigned long new_bits;
-      unsigned long mask = -2UL;
       max_bits = 1;
       for (i = 0; i < a->length; i++)
       {

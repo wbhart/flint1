@@ -3,40 +3,21 @@
 
 #include <gmp.h>
 
-// todo: I had to put this here so that I could export the function
-// ssfft_fft to both C callers and C++ callers (e.g. my profiling code).
-// We need to figure out a simple way to do this FLINT-wide. -- david
-#if defined (__cplusplus)
-#define STUPID_ANNOYING_THING  extern "C"
-#else
-#define STUPID_ANNOYING_THING
-#endif
-
-
-#if 1
-STUPID_ANNOYING_THING
 void ssfft_fft(mp_limb_t** x, unsigned long t,
                unsigned long m, unsigned long z, unsigned long g,
                unsigned long ru, unsigned long rU,
                unsigned long n, mp_limb_t** scratch);
 
-STUPID_ANNOYING_THING
 void ssfft_fft_threaded(
                mp_limb_t** x, unsigned long t,
                unsigned long m, unsigned long z, unsigned long g,
                unsigned long ru, unsigned long rU,
                unsigned long n);
-#endif
 
-
-#if 1
-STUPID_ANNOYING_THING
 void ssfft_ifft(mp_limb_t** x, unsigned long t,
                unsigned long m, unsigned long z, unsigned long g, int e,
                unsigned long ru, unsigned long rU, unsigned long n,
                mp_limb_t** scratch);
-#endif
-
 
 // temporary while the function lives in this file:
 

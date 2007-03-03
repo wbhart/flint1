@@ -275,11 +275,11 @@ void ssmul_convert_in_bits_signed(mp_limb_t* array, mpz_t* data,
           unsigned long n, unsigned long bundle, 
           unsigned long bits, unsigned long coeffs_per_limb, int sign_extend)
 {   
-    unsigned long k, l, m, skip;
+    unsigned long k, l, skip;
 
     unsigned long temp = 0;
     half_ulong lower;
-    long coeff;
+    long coeff = 0UL;
     long borrow = 0UL;
 
     const unsigned long mask = (1UL<<bits)-1;
@@ -463,7 +463,6 @@ void ssmul_convert_out_bits(mpz_t* res, const mp_limb_t* array,
 
     unsigned long temp = 0;
     unsigned long full_limb;
-    half_ulong lower;
     
     const unsigned long mask = (1UL<<bits)-1;
 
@@ -551,7 +550,6 @@ void ssmul_convert_out_bits_signed(mpz_t* res, const mp_limb_t* array,
     unsigned long temp2 = 0;
     unsigned long temp;
     unsigned long full_limb;
-    half_ulong lower;
     unsigned long carry = 0UL;
     
     const unsigned long mask = (1UL<<bits)-1;
@@ -856,7 +854,6 @@ inline unsigned long ssmul_unpack_signed_bytes(mp_limb_t* output, mp_limb_t* arr
 
     unsigned long shift_1, shift_2;
     
-    unsigned long i, j;
     
     shift_1 = (byte_start<<3);
     shift_2 = FLINT_BITS_PER_LIMB - shift_1;
@@ -957,7 +954,6 @@ inline void ssmul_unpack_bytes(mp_limb_t* output, mp_limb_t* array,
 
     unsigned long shift_1, shift_2;
     
-    unsigned long i, j;
     
     shift_1 = (byte_start<<3);
     shift_2 = FLINT_BITS_PER_LIMB - shift_1;
@@ -1167,7 +1163,7 @@ inline void ssmul_convert_in_split(mp_limb_t** array, mpz_t data,
    unsigned long k, l, m;
    const unsigned long size = mpz_size(data);
    
-   for (k = 0, l = 0; k < split-1, l + input_limbs < size; k++, l+= input_limbs)
+   for (k = 0, l = 0; (k < split-1) && (l + input_limbs < size); k++, l+= input_limbs)
    {
        clear_limbs(array[k],n+1);
        for (m = 0; m < n; m += 8) FLINT_PREFETCH(array[k+1], m);
@@ -1192,7 +1188,7 @@ inline void ssmul_convert_in_split_signed(mp_limb_t** array, mpz_t data,
    
    if (mpz_sgn(data) >= 0) // positive coefficient
    {
-      for (k = 0, l = 0; k < split-1, l + input_limbs < size; k++, l+= input_limbs)
+      for (k = 0, l = 0; (k < split-1) && (l + input_limbs < size); k++, l+= input_limbs)
       {
          clear_limbs(array[k], n + 1);
          for (m = 0; m < n; m += 8) FLINT_PREFETCH(array[k+1], m);
@@ -1204,7 +1200,7 @@ inline void ssmul_convert_in_split_signed(mp_limb_t** array, mpz_t data,
       for (;k < 2*split - 1; k++) clear_limbs(array[k], n + 1);
    } else // negative coefficient
    {
-      for (k = 0, l = 0; k < split - 1, l + input_limbs < size; k++, l+= input_limbs)
+      for (k = 0, l = 0; (k < split - 1) && (l + input_limbs < size); k++, l+= input_limbs)
       {
          for (m = 0; m < n; m += 8) FLINT_PREFETCH(array[k+1], m);
          negate_limbs(array[k], (data->_mp_d) + l, input_limbs);  
@@ -2071,6 +2067,7 @@ void* fft_loop(void* fft_p)
    {
       fft_recursive(start, skip, start_r, next_skip_r, depth, scratch, n, first);
    }
+   return NULL;
 }
 
 void* fft_loop2(void* fft_p)
@@ -2100,6 +2097,7 @@ void* fft_loop2(void* fft_p)
    {
       fft_recursive(start, next_skip, start_r, next_skip_r, depth, scratch, n, first);
    }
+   return NULL;
 }
 
 /*
@@ -2119,6 +2117,7 @@ void fft_main(mp_limb_t** start, unsigned long skip,
               unsigned long depth, mp_limb_t** scratch,
               unsigned long n, int first, int crossover)
 {
+#if USE_THREADS
    pthread_t thread_arr[THREADS];
    pthread_attr_t attr;
    pthread_attr_init(&attr);
@@ -2131,6 +2130,7 @@ void fft_main(mp_limb_t** start, unsigned long skip,
    unsigned long lg_threads;
    
    fft_t fft_params[THREADS];
+#endif
    
    if (crossover == -1)
    {
@@ -2291,7 +2291,9 @@ void fft_main(mp_limb_t** start, unsigned long skip,
                depth2, scratch, n, 0, crossover);
       }
    }
+#if USE_THREADS
    pthread_attr_destroy(&attr);
+#endif
 }
 
 /*
@@ -2379,6 +2381,7 @@ void* ifft_loop2(void* fft_p)
    {
       ifft_recursive(start, skip, start_r, next_skip_r, depth, scratch, n);
    }
+   return NULL;
 }
 
 void* ifft_loop(void* fft_p)
@@ -2406,6 +2409,7 @@ void* ifft_loop(void* fft_p)
    {
       ifft_recursive(start, next_skip, start_r, next_skip_r, depth, scratch, n);
    }
+   return NULL;
 }
 
 /*
@@ -2418,6 +2422,7 @@ void ifft_main(mp_limb_t** start, unsigned long skip,
                unsigned long depth, mp_limb_t** scratch,
                unsigned long n, int crossover)
 {
+#if USE_THREADS
    pthread_t thread_arr[THREADS];
    pthread_attr_t attr;
    pthread_attr_init(&attr);
@@ -2430,6 +2435,7 @@ void ifft_main(mp_limb_t** start, unsigned long skip,
    unsigned long threads;
    
    fft_t fft_params[THREADS];
+#endif
    
    if (crossover == -1)
    {
@@ -2575,7 +2581,9 @@ void ifft_main(mp_limb_t** start, unsigned long skip,
            ifft_main(next_start, next_skip, next_start_r, next_skip_r,
                 depth1, scratch, n, crossover);
    }
+#if USE_THREADS
    pthread_attr_destroy(&attr);
+#endif
 }
 
 /*=============================================================================
@@ -2640,17 +2648,20 @@ void* fft_inner(void* fft_p)
    fft_params1.start = start;
    
    fft_inner((void*)&fft_params1);
+   return NULL;
 }
 
 void fft(mp_limb_t** start, unsigned long length, mp_limb_t** scratch,
          unsigned long r, unsigned long n)
 {
+#if USE_THREADS
    pthread_t thread1;
    pthread_t thread2;
    
    pthread_attr_t attr;
    pthread_attr_init(&attr);
    pthread_attr_setscope(&attr,PTHREAD_SCOPE_SYSTEM);
+#endif
     
    unsigned long half = length >> 1;
    mp_limb_t** middle = start + half;
@@ -2771,17 +2782,20 @@ void * ifft_inner(void* ifft_params)
          ifft_butterfly_limbs(start + offset, middle + offset,
                               scratch, r_mult, n);
    }
+   return NULL;
 }
 
 void ifft(mp_limb_t** start, unsigned long length, mp_limb_t** scratch,
           unsigned long r, unsigned long n)
 {
+#if USE_THREADS
    pthread_t thread1;
    pthread_t thread2;
    
    pthread_attr_t attr;
    pthread_attr_init(&attr);
    pthread_attr_setscope(&attr,PTHREAD_SCOPE_SYSTEM);
+#endif
    
    unsigned long half = length >> 1;
    mp_limb_t** middle = start + half;
@@ -3190,6 +3204,7 @@ void* pointwise_mult(void* point_params)
          array1[i][n] = -mpn_sub_n(array1[i], array3, array3 + n, n);
       }
    }
+   return NULL;
 }
 
 /*
@@ -3216,7 +3231,7 @@ void ssmul_main(mp_limb_t** array1, unsigned long length1,
                  mp_limb_t** scratch, unsigned long log_length,
                  unsigned long n)
 {
-    unsigned long i, j;
+    unsigned long i;
 
     // root of unity is sqrt2^r
     // todo: add assertion here to check divisibility by 2^log_length
@@ -3333,9 +3348,7 @@ void ssmul_main_old(mp_limb_t** array1, mp_limb_t** array2, mp_limb_t* array3,
 #endif
 
    point_t point[threads];
-   
-   unsigned long i, j;
-   
+    
    // do FFT's
 
    fft_main(array1, 1, 0, r, log_length+1, scratch, n, 1, -1);
@@ -3614,7 +3627,7 @@ void SSMul(Zvec outpoly, Zvec poly1, Zvec poly2, unsigned long coeff_bits, int s
    mpz_t* data2 = poly2->coords;
    unsigned long orig_length = poly1->length;;
    unsigned long length2 = poly2->length;;
-   unsigned long trunc_length;
+   unsigned long trunc_length = 0;
 
    mpz_t* res = outpoly->coords;
    
@@ -3648,8 +3661,9 @@ void SSMul(Zvec outpoly, Zvec poly1, Zvec poly2, unsigned long coeff_bits, int s
    //----------------------------------------------------------------------------
    // Start of general SS/KS code
    
-   unsigned long h, i, j, k, l, m, skip, skip2; 
-   unsigned long length, skip_limbs, input_limbs, orig_limbs, coeff_sign;
+   unsigned long i; 
+   unsigned long length, input_limbs, orig_limbs;
+   unsigned long skip_limbs = 1;
    
    // the Schoenhage-Strassen technique as implemented below, handles
    // the situtation where the output coefficient size is *bigger* than the 
@@ -3664,7 +3678,7 @@ void SSMul(Zvec outpoly, Zvec poly1, Zvec poly2, unsigned long coeff_bits, int s
    
    // First we determine how many coefficients should be bundled together
    // we start with a default of 1 and then compute what is optimal
-   unsigned long bundle; 
+   unsigned long bundle = 1; 
    
    // number of smaller coefficients into which each original coefficient will be split
    unsigned long split;
@@ -3735,7 +3749,9 @@ void SSMul(Zvec outpoly, Zvec poly1, Zvec poly2, unsigned long coeff_bits, int s
    // and we already ensured nB was a multiple of l, so these two 
    // conditions are satisfied if we set r = nB / (length/2).
    // (Recall l = length/2).
+#if !USE_TRUNCATED_FFT
    unsigned long r = n*FLINT_BITS_PER_LIMB * 2 / length;
+#endif
 
    // We need the following memory allocated:
    //
@@ -3762,7 +3778,9 @@ void SSMul(Zvec outpoly, Zvec poly1, Zvec poly2, unsigned long coeff_bits, int s
       
    // ...and pointwise multiplication working space
    
-   mp_limb_t* array3 = array + (2*length+16)*(n+1);   
+#if !USE_TRUNCATED_FFT
+   mp_limb_t* array3 = array + (2*length+16)*(n+1);  
+#endif 
 
    mp_limb_t** array1 = pointarr;
    mp_limb_t** array2 = pointarr + length;
