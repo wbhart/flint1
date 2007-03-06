@@ -29,7 +29,7 @@ free memory faster, possibly at the expense of greater fragmentation
 void* flint_malloc_limbs(unsigned long limbs);
 void* flint_malloc(unsigned long bytes);
 void* flint_realloc_limbs(void* block, unsigned long limbs);
-void* flint_realloc(void* block, unsigned long byts);
+void* flint_realloc(void* block, unsigned long bytes);
 void flint_free(void* block);
 //////////////////////////////////////////////////////////
 
@@ -78,12 +78,30 @@ typedef Zpoly_mpz_struct Zpoly_mpz_t[1];
 // functions in Zpoly_mpz_raw_* layer
 
 // returns x^n coefficient with no bounds checking
-mpz_t* Zpoly_mpz_raw_get_coeff_ptr(Zpoly_mpz_t poly, unsigned long n);
+static inline
+mpz_t* Zpoly_mpz_raw_get_coeff_ptr(Zpoly_mpz_t poly, unsigned long n)
+{
+    return &poly->coeffs[n];
+}
 
 // copies out x^n coefficient (via mpz_set) with no bounds checking
+static inline
 void Zpoly_mpz_raw_get_coeff(mpz_t output, Zpoly_mpz_t poly,
-                             unsigned long n);
-unsigned long Zpoly_mpz_raw_get_coeff_ui(Zpoly_mpz_t poly, unsigned long n);
+                             unsigned long n)
+{
+    mpz_set(output, poly->coeffs[n]);
+}
+
+// copies out x^n coefficient (via mpz_get_ui) with no bounds checking
+// the coefficient is assumed to fit into an unsigned long
+static inline
+unsigned long Zpoly_mpz_raw_get_coeff_ui(Zpoly_mpz_t poly, unsigned long n)
+{
+    // todo: check mpz_get_ui is a macro; if not, write our own non-GMP_COMPLIANT version
+    return mpz_get_ui(poly->coeffs[n]);
+}
+
+// todo: do we want a signed version of the above? i.e. Zpoly_mpz_raw_get_coeff_si
 
 // sets x^n coefficient (via mpz_set) with no bounds checking
 void Zpoly_mpz_raw_set_coeff(Zpoly_mpz_t poly, unsigned long n, mpz_t x);
