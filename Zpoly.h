@@ -259,7 +259,34 @@ void Zpoly_mpz_init2(Zpoly_mpz_t poly, unsigned long alloc);
 void Zpoly_mpz_init3(Zpoly_mpz_t poly, unsigned long alloc,
                      unsigned long coeff_bits);
 
-// todo: need a function to expand available space to requested size
+
+// Changes allocated space to be alloc.
+// Current value is preserved if it fits, or truncated if it doesn't fit.
+void Zpoly_mpz_realloc(Zpoly_mpz_t poly, unsigned long alloc);
+
+// todo: should have available a version of Zpoly_mpz_realloc() that also
+// allows the user to specify the space allocated for new mpz's
+
+
+// This is the actual implementation that's called for Zpoly_mpz_ensure_space()
+// (see below) if a reallocation is required
+void Zpoly_mpz_ensure_space_IMPL(Zpoly_mpz_t poly, unsigned long alloc);
+
+// Ensures that the polynomial has at least alloc coefficients allocated.
+// If the polynomial already has enough space allocated, nothing happens.
+// If more space is required, then a realloc occurs, and the space allocated
+// will at least *double* from its current amount. This strategy ensures that
+// repeated calls have amortised constant cost.
+// (NOTE: I'm making only the initial comparison inline, since this will
+// happen very frequently; the actual reallocation will be less frequent,
+// and will chew up too many bytes of code if I make it inline.)
+static inline
+void Zpoly_mpz_ensure_space(Zpoly_mpz_t poly, unsigned long alloc)
+{
+   if (poly->alloc < alloc)
+      Zpoly_mpz_ensure_space_IMPL(poly, alloc);
+}
+
 
 // deallocates space (poly becomes uninitialised)
 void Zpoly_mpz_clear(Zpoly_mpz_t poly);
@@ -279,6 +306,14 @@ unsigned long Zpoly_mpz_get_coeff_ui(Zpoly_mpz_t poly, unsigned long n);
 void Zpoly_mpz_set_coeff(Zpoly_mpz_t poly, unsigned long n, mpz_t x);
 void Zpoly_mpz_set_coeff_ui(Zpoly_mpz_t poly, unsigned long n, unsigned long x);
 void Zpoly_mpz_set_coeff_si(Zpoly_mpz_t poly, unsigned long n, long x);
+
+
+// sets poly from a string, where the string is just a sequence of
+// coefficients in decimal notation, separated by whitespace.
+// An example string: "0 -3 45" represents 45x^2 - 3x
+void Zpoly_mpz_set_from_string(Zpoly_mpz_t output, char* s);
+
+
 
 void Zpoly_mpz_normalise(Zpoly_mpz_t poly);
 void Zpoly_mpz_set(Zpoly_mpz_t output, Zpoly_mpz_t input);
