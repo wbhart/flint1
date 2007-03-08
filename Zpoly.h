@@ -104,10 +104,24 @@ unsigned long Zpoly_mpz_raw_get_coeff_ui(Zpoly_mpz_t poly, unsigned long n)
 // todo: do we want a signed version of the above? i.e. Zpoly_mpz_raw_get_coeff_si
 
 // sets x^n coefficient (via mpz_set) with no bounds checking
-void Zpoly_mpz_raw_set_coeff(Zpoly_mpz_t poly, unsigned long n, mpz_t x);
-void Zpoly_mpz_raw_set_coeff_ui(Zpoly_mpz_t poly, unsigned long n, unsigned long x);
-void Zpoly_mpz_raw_set_coeff_si(Zpoly_mpz_t poly, unsigned long n, long x);
+static inline
+void Zpoly_mpz_raw_set_coeff(Zpoly_mpz_t poly, unsigned long n, mpz_t x)
+{
+    mpz_set(poly->coeffs[n], x);
+}
 
+static inline
+void Zpoly_mpz_raw_set_coeff_ui(Zpoly_mpz_t poly, unsigned long n,
+                                unsigned long x)
+{
+    mpz_set_ui(poly->coeffs[n], x);
+}
+
+static inline
+void Zpoly_mpz_raw_set_coeff_si(Zpoly_mpz_t poly, unsigned long n, long x)
+{
+    mpz_set_si(poly->coeffs[n], x);
+}
 
 
 // Decreases poly.length to point at the last non-zero coefficient
@@ -119,12 +133,31 @@ void Zpoly_mpz_raw_normalise(Zpoly_mpz_t poly);
 void Zpoly_mpz_raw_set(Zpoly_mpz_t output, Zpoly_mpz_t input);
 
 // swaps coeffs, alloc, length
-void Zpoly_mpz_raw_swap(Zpoly_mpz_t x, Zpoly_mpz_t y);
+static inline
+void Zpoly_mpz_raw_swap(Zpoly_mpz_t x, Zpoly_mpz_t y)
+{
+    mpz_t* temp1;
+    unsigned long temp2;
+
+    temp1 = y->coeffs;
+    y->coeffs = x->coeffs;
+    x->coeffs = coeffs_temp;
+    
+    temp2 = x->alloc;
+    x->alloc = y->alloc;
+    y->alloc = temp2;
+
+    temp2 = x->length;
+    x->length = y->length;
+    y->length = temp2;
+}
 
 
 // output = input1 + input2
 // Assumes output.alloc >= max(input1.length, input2.length)
 // all combinations of parameter aliasing are allowed
+// output.length is set to the maximum of the two lengths, and no normalisation
+// is performed (so the output may have leading zeroes)
 void Zpoly_mpz_raw_add(Zpoly_mpz_t output, Zpoly_mpz_t input1,
                        Zpoly_mpz_t input2);
 void Zpoly_mpz_raw_sub(Zpoly_mpz_t output, Zpoly_mpz_t input1,
@@ -221,10 +254,12 @@ void Zpoly_mpz_raw_xgcd(Zpoly_mpz_t a, Zpoly_mpz_t b, Zpoly_mpz_t output,
 void Zpoly_mpz_init(Zpoly_mpz_t poly);
 // allocate coeffs to given length, sets length = 0 (i.e. zero polynomial)
 void Zpoly_mpz_init2(Zpoly_mpz_t poly, unsigned long alloc);
-// allocate coeffs to given length, with space for coeff_size limbs in each
+// allocate coeffs to given length, with space for coeff_size bits in each
 // coefficient, sets length = 0 (i.e. zero polynomial)
 void Zpoly_mpz_init3(Zpoly_mpz_t poly, unsigned long alloc,
-                     unsigned long coeff_size);
+                     unsigned long coeff_bits);
+
+// todo: need a function to expand available space to requested size
 
 // deallocates space (poly becomes uninitialised)
 void Zpoly_mpz_clear(Zpoly_mpz_t poly);

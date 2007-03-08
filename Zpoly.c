@@ -50,57 +50,95 @@ void flint_free(void* block)
 ****************************************************************************/
 
 
-mpz_t* Zpoly_mpz_raw_get_coeff_ptr(Zpoly_mpz_t poly, unsigned long n)
-{
-}
-
-void Zpoly_mpz_raw_get_coeff(mpz_t output, Zpoly_mpz_t poly,
-                             unsigned long n)
-{
-}
-
-unsigned long Zpoly_mpz_raw_get_coeff_ui(Zpoly_mpz_t poly, unsigned long n)
-{
-}
-
-void Zpoly_mpz_raw_set_coeff(Zpoly_mpz_t poly, unsigned long n, mpz_t x)
-{
-}
-
-void Zpoly_mpz_raw_set_coeff_ui(Zpoly_mpz_t poly, unsigned long n,
-                                unsigned long x)
-{
-}
-
-void Zpoly_mpz_raw_set_coeff_si(Zpoly_mpz_t poly, unsigned long n, long x)
-{
-}
-
 void Zpoly_mpz_raw_normalise(Zpoly_mpz_t poly)
 {
+    while (poly->length && !mpz_sgn(poly->coeffs[poly->length-1]))
+        poly->length--;
 }
 
 void Zpoly_mpz_raw_set(Zpoly_mpz_t output, Zpoly_mpz_t input)
 {
+    FLINT_ASSERT(output->alloc >= input->length);
+    
+    for (unsigned long i = 0; i < input->length; i++)
+        mpz_set(output->coeffs[i], input->coeffs[i]);
 }
 
-void Zpoly_mpz_raw_swap(Zpoly_mpz_t x, Zpoly_mpz_t y)
-{
-}
 
 void Zpoly_mpz_raw_add(Zpoly_mpz_t output, Zpoly_mpz_t input1,
                        Zpoly_mpz_t input2)
 {
+    FLINT_ASSERT(output->alloc >= input1->length);
+    FLINT_ASSERT(output->alloc >= input2->length);
+
+    Zpoly_mpz_struct* short_poly, long_poly;
+    if (input1->length < input2->length)
+    {
+        short_poly = input1;
+        long_poly = input2;
+    }
+    else
+    {
+        short_poly = input2;
+        long_poly = input1;
+    }
+    
+    unsigned long i;
+    for (i = 0; i < short_poly->length; i++)
+        mpz_add(output->coeffs[i], input1->coeffs[i], input2->coeffs[i]);
+    for (; i < long_poly->length; i++)
+        mpz_set(output->coeffs[i], long_poly->coeffs[i]);
+
+    output->length = long_poly->length;
 }
+
 
 void Zpoly_mpz_raw_sub(Zpoly_mpz_t output, Zpoly_mpz_t input1,
                        Zpoly_mpz_t input2)
 {
+    FLINT_ASSERT(output->alloc >= input1->length);
+    FLINT_ASSERT(output->alloc >= input2->length);
+
+    Zpoly_mpz_struct* short_poly, long_poly;
+    if (input1->length < input2->length)
+    {
+        short_poly = input1;
+        long_poly = input2;
+    }
+    else
+    {
+        short_poly = input2;
+        long_poly = input1;
+    }
+    
+    unsigned long i;
+    for (i = 0; i < short_poly->length; i++)
+        mpz_sub(output->coeffs[i], input1->coeffs[i], input2->coeffs[i]);
+    if (long_poly == input1)
+    {
+        for (; i < long_poly->length; i++)
+            mpz_set(output->coeffs[i], long_poly->coeffs[i]);
+    }
+    else
+    {
+        for (; i < long_poly->length; i++)
+            mpz_neg(output->coeffs[i], long_poly->coeffs[i]);
+    }
+
+    output->length = long_poly->length;
 }
+
 
 void Zpoly_mpz_raw_negate(Zpoly_mpz_t output, Zpoly_mpz_t input)
 {
+    FLINT_ASSERT(output->alloc >= input->length);
+    
+    for (unsigned long i = 0; i < input->length; i++)
+        mpz_neg(output->coeffs[i], input->coeffs[i]);
+
+    output->length = input->length;
 }
+
 
 void Zpoly_mpz_raw_scalar_mul(Zpoly_mpz_t poly, mpz_t x)
 {
@@ -191,28 +229,52 @@ void Zpoly_mpz_raw_xgcd(Zpoly_mpz_t a, Zpoly_mpz_t b, Zpoly_mpz_t output,
 
 void Zpoly_mpz_init(Zpoly_mpz_t poly)
 {
+    poly->coeffs = (mpz_t*) flint_malloc(sizeof(mpz_t));
+    mpz_init(poly->coeffs[0]);
+    poly->alloc = 1;
+    poly->length = 0;
 }
 
 void Zpoly_mpz_init2(Zpoly_mpz_t poly, unsigned long alloc)
 {
+    poly->coeffs = (mpz_t*) flint_malloc(sizeof(mpz_t) * alloc);
+    for (unsigned long i = 0; i < alloc; i++)
+        mpz_init(poly->coeffs[i]);
+    poly->alloc = alloc;
+    poly->length = 0;
 }
 
 void Zpoly_mpz_init3(Zpoly_mpz_t poly, unsigned long alloc,
-                     unsigned long coeff_size)
+                     unsigned long coeff_bits)
 {
+    poly->coeffs = (mpz_t*) flint_malloc(sizeof(mpz_t) * alloc);
+    for (unsigned long i = 0; i < alloc; i++)
+        mpz_init2(poly->coeffs[i], coeff_bits);
+    poly->alloc = alloc;
+    poly->length = 0;
 }
 
 void Zpoly_mpz_clear(Zpoly_mpz_t poly)
 {
+    for (unsigned long i = 0; i < poly->alloc; i++)
+        mpz_clear(poly->coeffs[i]);
+    flint_free(poly->coeffs);
 }
 
 mpz_t* Zpoly_mpz_get_coeff_ptr(Zpoly_mpz_t poly, unsigned long n)
 {
+    if (n >= poly->length)
+        return NULL;
+    return poly->coeffs[n];
 }
 
 void Zpoly_mpz_get_coeff(mpz_t output, Zpoly_mpz_t poly,
                          unsigned long n)
 {
+    if (n >= poly->length)
+        mpz_set_ui(output, 0);
+    else
+        mpz_set(output, poly->coeffs[n]);
 }
 
 unsigned long Zpoly_mpz_get_coeff_ui(Zpoly_mpz_t poly, unsigned long n)
@@ -331,3 +393,5 @@ void Zpoly_mpz_xgcd(Zpoly_mpz_t a, Zpoly_mpz_t b, Zpoly_mpz_t output,
                     Zpoly_mpz_t input1, Zpoly_mpz_t input2)
 {
 }
+
+// end of file
