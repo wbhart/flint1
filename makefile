@@ -108,6 +108,17 @@ profiler.o: profiler.c profiler.h
 	$(CC) -c profiler.c -o profiler.o $(CFLAGS)
 
 
+Zpoly.o: Zpoly.c Zpoly.h
+	$(CC) -c Zpoly.c -o Zpoly.o $(CFLAGS)
+	
+Zpoly-test.o: Zpoly-test.c Zpoly.h
+	$(CC) -c Zpoly-test.c -o Zpoly-test.o $(CFLAGS)
+	
+Zpoly-test: Zpoly-test.o Zpoly.o
+	$(CC) Zpoly.o Zpoly-test.o -o Zpoly-test $(CFLAGS) $(LIBS)
+	
+
+
 # umm yeah I'm just keeping these entirely independent from everything else
 # until someone makes everything else compile with C99 :-)
 

@@ -13,6 +13,9 @@ There are two entirely separate data formats for polynomials over Z:
 
 *****************************************************************************/
 
+#include <stdlib.h>
+#include <gmp.h>
+
 
 //////////////////////////////////////////////////////////
 /*
@@ -101,7 +104,15 @@ unsigned long Zpoly_mpz_raw_get_coeff_ui(Zpoly_mpz_t poly, unsigned long n)
     return mpz_get_ui(poly->coeffs[n]);
 }
 
-// todo: do we want a signed version of the above? i.e. Zpoly_mpz_raw_get_coeff_si
+// copies out x^n coefficient (via mpz_get_si) with no bounds checking
+// the coefficient is assumed to fit into a long
+static inline
+long Zpoly_mpz_raw_get_coeff_si(Zpoly_mpz_t poly, unsigned long n)
+{
+    // todo: check mpz_get_si is a macro; if not, write our own non-GMP_COMPLIANT version
+    return mpz_get_si(poly->coeffs[n]);
+}
+
 
 // sets x^n coefficient (via mpz_set) with no bounds checking
 static inline
@@ -128,6 +139,13 @@ void Zpoly_mpz_raw_set_coeff_si(Zpoly_mpz_t poly, unsigned long n, long x)
 // (i.e. so that the degree really is length-1)
 void Zpoly_mpz_raw_normalise(Zpoly_mpz_t poly);
 
+// Normalises the polynomial, and returns its degree
+// (the zero polynomial has degree -1 by convention)
+long Zpoly_mpz_get_degree(Zpoly_mpz_t poly);
+
+// Normalises the polynomial, and returns its length
+unsigned long Zpoly_mpz_get_length(Zpoly_mpz_t poly);
+
 // output = input
 // assumes output.alloc >= input.length
 void Zpoly_mpz_raw_set(Zpoly_mpz_t output, Zpoly_mpz_t input);
@@ -141,7 +159,7 @@ void Zpoly_mpz_raw_swap(Zpoly_mpz_t x, Zpoly_mpz_t y)
 
     temp1 = y->coeffs;
     y->coeffs = x->coeffs;
-    x->coeffs = coeffs_temp;
+    x->coeffs = temp1;
     
     temp2 = x->alloc;
     x->alloc = y->alloc;
@@ -172,6 +190,7 @@ void Zpoly_mpz_raw_negate(Zpoly_mpz_t output, Zpoly_mpz_t input);
 // scalar multiplication by x
 void Zpoly_mpz_raw_scalar_mul(Zpoly_mpz_t poly, mpz_t x);
 void Zpoly_mpz_raw_scalar_mul_ui(Zpoly_mpz_t poly, unsigned long x);
+void Zpoly_mpz_raw_scalar_mul_si(Zpoly_mpz_t poly, long x);
 // scalar division by x
 // todo: what about all the variations... floor, ceiling, truncating,
 // exact division, etc?
@@ -299,6 +318,7 @@ mpz_t* Zpoly_mpz_get_coeff_ptr(Zpoly_mpz_t poly, unsigned long n);
 void Zpoly_mpz_get_coeff(mpz_t output, Zpoly_mpz_t poly,
                          unsigned long n);
 unsigned long Zpoly_mpz_get_coeff_ui(Zpoly_mpz_t poly, unsigned long n);
+long Zpoly_mpz_get_coeff_si(Zpoly_mpz_t poly, unsigned long n);
 
 // and the rest of them are just like the mpz_raw versions, but reallocate
 // on demand
@@ -311,8 +331,21 @@ void Zpoly_mpz_set_coeff_si(Zpoly_mpz_t poly, unsigned long n, long x);
 // sets poly from a string, where the string is just a sequence of
 // coefficients in decimal notation, separated by whitespace.
 // An example string: "0 -3 45" represents 45x^2 - 3x
-void Zpoly_mpz_set_from_string(Zpoly_mpz_t output, char* s);
+// Returns 1 on success, 0 on failure. If failure occurs, then only some
+// of the coefficients have been read, and then some garbage was encountered
+// that could not be read.
+// This is NOT intended to be fast; it's for convenience of debugging only.
+int Zpoly_mpz_set_from_string(Zpoly_mpz_t output, char* s);
 
+// converts poly to a string, in the same format as accepted by
+// Zpoly_mpz_set_from_string. The output buffer must be large enough for
+// the output and the null terminator. See Zpoly_mpz_get_string_size().
+// This is NOT intended to be fast; it's for convenience of debugging only.
+void Zpoly_mpz_get_as_string(char* output, Zpoly_mpz_t poly);
+
+// Returns the number of bytes necessary to store this poly as a string
+// via Zpoly_mpz_get_as_string(). The returned value may be an overestimate.
+unsigned long Zpoly_mpz_get_string_size(Zpoly_mpz_t poly);
 
 
 void Zpoly_mpz_normalise(Zpoly_mpz_t poly);
@@ -323,6 +356,7 @@ void Zpoly_mpz_sub(Zpoly_mpz_t output, Zpoly_mpz_t input1, Zpoly_mpz_t input2);
 void Zpoly_mpz_negate(Zpoly_mpz_t output, Zpoly_mpz_t input);
 void Zpoly_mpz_scalar_mul(Zpoly_mpz_t poly, mpz_t x);
 void Zpoly_mpz_scalar_mul_ui(Zpoly_mpz_t poly, unsigned long x);
+void Zpoly_mpz_scalar_mul_si(Zpoly_mpz_t poly, unsigned long x);
 void Zpoly_mpz_scalar_div(Zpoly_mpz_t poly, mpz_t x);
 void Zpoly_mpz_scalar_div_ui(Zpoly_mpz_t poly, unsigned long x);
 void Zpoly_mpz_mul(Zpoly_mpz_t output, Zpoly_mpz_t input1, Zpoly_mpz_t input2);
