@@ -32,14 +32,6 @@ this could be very handy throughout this file?
 #endif
 
 
-// todo: get these assertion macros happening uniformly throughout FLINT
-#if 0
-#define FLINT_ASSERT assert
-#else
-#define FLINT_ASSERT(condition)
-#endif
-
-
 // ****************************************************
 // This block is temporarily here until we move it somewhere else
 // (probably into Zvec.c?)

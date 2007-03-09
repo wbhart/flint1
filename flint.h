@@ -12,6 +12,21 @@
 #ifndef FLINT_H
 #define FLINT_H
 
+
+// todo: need to select which version based on some kind of debug compile flag?
+#if 0
+#define FLINT_ASSERT assert
+#else
+#define FLINT_ASSERT(condition)
+#endif
+
+
+
+#define FLINT_MAX(zzz1, zzz2) ((zzz1) > (zzz2) ? (zzz1) : (zzz2))
+#define FLINT_MIN(zzz1, zzz2) ((zzz1) > (zzz2) ? (zzz2) : (zzz1))
+
+
+
 /*
  FLINT_BITS_PER_LIMB is the number of bits per limb.
 
