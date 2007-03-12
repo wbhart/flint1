@@ -4,8 +4,7 @@ Zpoly.c: Polynomials over Z
 
 Copyright (C) 2007, William Hart and David Harvey
 
-!!!!! this code is not even at the "compile" stage.... it's strictly for
-amusement for the moment
+(Development code)
 
 *****************************************************************************/
 
@@ -19,29 +18,53 @@ amusement for the moment
 Temporary baby implementations of memory management functions
 */
 
+
+/*
+This function gets called if malloc fails (i.e. returns NULL).
+For now we just die via abort(); if we change this to do nothing, then
+anyone who calls flint_malloc() etc will get a NULL pointer returned, and
+perhaps get a chance to clean up before completely dying...
+*/
+void flint_memory_failure()
+{
+   abort();
+}
+
 void* flint_malloc_limbs(unsigned long limbs)
 {
-    return malloc(limbs * sizeof(mp_limb_t));
+   void* buf = malloc(limbs * sizeof(mp_limb_t));
+   if (!buf)
+      flint_memory_failure();
+   return buf;
 }
 
 void* flint_malloc(unsigned long bytes)
 {
-    return malloc(bytes);
+   void* buf = malloc(bytes);
+   if (!buf)
+      flint_memory_failure();
+   return buf;
 }
 
 void* flint_realloc_limbs(void* block, unsigned long limbs)
 {
-    return realloc(block, limbs * sizeof(mp_limb_t));
+   void* buf = realloc(block, limbs * sizeof(mp_limb_t));
+   if (!buf)
+      flint_memory_failure();
+   return buf;
 }
 
 void* flint_realloc(void* block, unsigned long bytes)
 {
-    return realloc(block, bytes);
+   void* buf = realloc(block, bytes);
+   if (!buf)
+      flint_memory_failure();
+   return buf;
 }
 
 void flint_free(void* block)
 {
-    free(block);
+   free(block);
 }
 
 //////////////////////////////////////////////////////////
@@ -67,6 +90,33 @@ void Zpoly_mpz_raw_set(Zpoly_mpz_t output, Zpoly_mpz_t input)
     
    for (unsigned long i = 0; i < input->length; i++)
       mpz_set(output->coeffs[i], input->coeffs[i]);
+   
+   output->length = input->length;
+}
+
+
+int Zpoly_mpz_raw_equal(Zpoly_mpz_t input1, Zpoly_mpz_t input2)
+{
+   int is_input1_longer = (input1->length > input2->length);
+
+   unsigned long short_length =
+           is_input1_longer ? input2->length : input1->length;
+
+   unsigned long i;
+   for (i = 0; i < short_length; i++)
+      if (mpz_cmp(input1->coeffs[i], input2->coeffs[i]))
+         return 0;
+
+   if (is_input1_longer)
+      for (; i < input1->length; i++)
+         if (mpz_sgn(input1->coeffs[i]))
+            return 0;
+   else
+      for (; i < input2->length; i++)
+         if (mpz_sgn(input2->coeffs[i]))
+            return 0;
+
+   return 1;
 }
 
 
@@ -135,85 +185,103 @@ void Zpoly_mpz_raw_negate(Zpoly_mpz_t output, Zpoly_mpz_t input)
 
 void Zpoly_mpz_raw_scalar_mul(Zpoly_mpz_t poly, mpz_t x)
 {
+   abort();
 }
 
 void Zpoly_mpz_raw_scalar_mul_ui(Zpoly_mpz_t poly, unsigned long x)
 {
+   abort();
 }
 
 void Zpoly_mpz_raw_scalar_mul_si(Zpoly_mpz_t poly, long x)
 {
+   abort();
 }
 
 void Zpoly_mpz_raw_scalar_div(Zpoly_mpz_t poly, mpz_t x)
 {
+   abort();
 }
 
 void Zpoly_mpz_raw_scalar_div_ui(Zpoly_mpz_t poly, unsigned long x)
 {
+   abort();
 }
 
 void Zpoly_mpz_raw_mul(Zpoly_mpz_t output, Zpoly_mpz_t input1,
                        Zpoly_mpz_t input2)
 {
+   abort();
 }
                            
 void Zpoly_mpz_raw_mul_naive(Zpoly_mpz_t output, Zpoly_mpz_t input1,
                              Zpoly_mpz_t input2)
 {
+   abort();
 }
 
 void Zpoly_mpz_raw_mul_karatsuba(Zpoly_mpz_t output, Zpoly_mpz_t input1,
                                  Zpoly_mpz_t input2)
 {
+   abort();
 }
 
 void Zpoly_mpz_raw_sqr(Zpoly_mpz_t output, Zpoly_mpz_t input)
 {
+   abort();
 }
 
 void Zpoly_mpz_raw_sqr_naive(Zpoly_mpz_t output, Zpoly_mpz_t input)
 {
+   abort();
 }
 
 void Zpoly_mpz_raw_sqr_karatsuba(Zpoly_mpz_t output, Zpoly_mpz_t input)
 {
+   abort();
 }
 
 void Zpoly_mpz_raw_left_shift(Zpoly_mpz_t output, Zpoly_mpz_t input,
                               unsigned long n)
 {
+   abort();
 }
 
 void Zpoly_mpz_raw_right_shift(Zpoly_mpz_t output, Zpoly_mpz_t input,
                                unsigned long n)
 {
+   abort();
 }
 
 
 void Zpoly_mpz_raw_div(Zpoly_mpz_t quotient, Zpoly_mpz_t input1,
                        Zpoly_mpz_t input2)
 {
+   abort();
 }
 
 void Zpoly_mpz_raw_rem(Zpoly_mpz_t remainder, Zpoly_mpz_t input1,
                        Zpoly_mpz_t input2)
 {
+   abort();
 }
 
 void Zpoly_mpz_raw_div_rem(Zpoly_mpz_t quotient, Zpoly_mpz_t remainder,
                            Zpoly_mpz_t input1, Zpoly_mpz_t input2)
 {
+   abort();
 }
 
 void Zpoly_mpz_raw_gcd(Zpoly_mpz_t output, Zpoly_mpz_t input1,
                        Zpoly_mpz_t input2)
 {
+   abort();
 }
 
 void Zpoly_mpz_raw_xgcd(Zpoly_mpz_t a, Zpoly_mpz_t b, Zpoly_mpz_t output,
                         Zpoly_mpz_t input1, Zpoly_mpz_t input2)
 {
+   abort();
 }
 
 
@@ -259,7 +327,7 @@ void Zpoly_mpz_realloc(Zpoly_mpz_t poly, unsigned long alloc)
 {
    if (alloc < poly->alloc)
    {
-      // shrink available space; need to clear mpz's in the tail
+      // shrink available space; need to mpz_clear mpz's in the tail
       for (unsigned long i = alloc; i < poly->alloc; i++)
          mpz_clear(poly->coeffs[i]);
    }
@@ -371,34 +439,42 @@ void Zpoly_mpz_get_as_string(char* output, Zpoly_mpz_t poly)
 
 unsigned long Zpoly_mpz_get_coeff_ui(Zpoly_mpz_t poly, unsigned long n)
 {
+   abort();
 }
 
 long Zpoly_mpz_get_coeff_si(Zpoly_mpz_t poly, unsigned long n)
 {
+   abort();
 }
 
 void Zpoly_mpz_set_coeff(Zpoly_mpz_t poly, unsigned long n, mpz_t x)
 {
+   abort();
 }
 
 void Zpoly_mpz_set_coeff_ui(Zpoly_mpz_t poly, unsigned long n, unsigned long x)
 {
+   abort();
 }
 
 void Zpoly_mpz_set_coeff_si(Zpoly_mpz_t poly, unsigned long n, long x)
 {
+   abort();
 }
 
 void Zpoly_mpz_normalise(Zpoly_mpz_t poly)
 {
+   abort();
 }
 
 void Zpoly_mpz_set(Zpoly_mpz_t output, Zpoly_mpz_t input)
 {
+   abort();
 }
 
 void Zpoly_mpz_swap(Zpoly_mpz_t x, Zpoly_mpz_t y)
 {
+   abort();
 }
 
 void Zpoly_mpz_add(Zpoly_mpz_t output, Zpoly_mpz_t input1, Zpoly_mpz_t input2)
@@ -409,87 +485,107 @@ void Zpoly_mpz_add(Zpoly_mpz_t output, Zpoly_mpz_t input1, Zpoly_mpz_t input2)
 
 void Zpoly_mpz_sub(Zpoly_mpz_t output, Zpoly_mpz_t input1, Zpoly_mpz_t input2)
 {
+   Zpoly_mpz_ensure_space(output, FLINT_MAX(input1->length, input2->length));
+   Zpoly_mpz_raw_sub(output, input1, input2);
 }
 
 void Zpoly_mpz_negate(Zpoly_mpz_t output, Zpoly_mpz_t input)
 {
+   abort();
 }
 
 void Zpoly_mpz_scalar_mul(Zpoly_mpz_t poly, mpz_t x)
 {
+   abort();
 }
 
 void Zpoly_mpz_scalar_mul_ui(Zpoly_mpz_t poly, unsigned long x)
 {
+   abort();
 }
 
 void Zpoly_mpz_scalar_div(Zpoly_mpz_t poly, mpz_t x)
 {
+   abort();
 }
 
 void Zpoly_mpz_scalar_div_ui(Zpoly_mpz_t poly, unsigned long x)
 {
+   abort();
 }
 
 void Zpoly_mpz_mul(Zpoly_mpz_t output, Zpoly_mpz_t input1, Zpoly_mpz_t input2)
 {
+   abort();
 }
 
 void Zpoly_mpz_mul_naive(Zpoly_mpz_t output, Zpoly_mpz_t input1,
                          Zpoly_mpz_t input2)
 {
+   abort();
 }
 
 void Zpoly_mpz_mul_karatsuba(Zpoly_mpz_t output, Zpoly_mpz_t input1,
                              Zpoly_mpz_t input2)
 {
+   abort();
 }
 
 void Zpoly_mpz_sqr(Zpoly_mpz_t output, Zpoly_mpz_t input)
 {
+   abort();
 }
 
 void Zpoly_mpz_sqr_naive(Zpoly_mpz_t output, Zpoly_mpz_t input)
 {
+   abort();
 }
 
 void Zpoly_mpz_sqr_karatsuba(Zpoly_mpz_t output, Zpoly_mpz_t input)
 {
+   abort();
 }
 
 void Zpoly_mpz_left_shift(Zpoly_mpz_t output, Zpoly_mpz_t input,
                           unsigned long n)
 {
+   abort();
 }
 
 void Zpoly_mpz_right_shift(Zpoly_mpz_t output, Zpoly_mpz_t input,
                            unsigned long n)
 {
+   abort();
 }
 
 void Zpoly_mpz_div(Zpoly_mpz_t quotient, Zpoly_mpz_t input1,
                    Zpoly_mpz_t input2)
 {
+   abort();
 }
 
 void Zpoly_mpz_rem(Zpoly_mpz_t remainder, Zpoly_mpz_t input1,
                    Zpoly_mpz_t input2)
 {
+   abort();
 }
 
 void Zpoly_mpz_div_rem(Zpoly_mpz_t quotient, Zpoly_mpz_t remainder,
                        Zpoly_mpz_t input1, Zpoly_mpz_t input2)
 {
+   abort();
 }
 
 void Zpoly_mpz_gcd(Zpoly_mpz_t output, Zpoly_mpz_t input1,
                        Zpoly_mpz_t input2)
 {
+   abort();
 }
 
 void Zpoly_mpz_xgcd(Zpoly_mpz_t a, Zpoly_mpz_t b, Zpoly_mpz_t output,
                     Zpoly_mpz_t input1, Zpoly_mpz_t input2)
 {
+   abort();
 }
 
 // *************** end of file

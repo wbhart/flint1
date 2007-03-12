@@ -100,7 +100,6 @@ void Zpoly_mpz_raw_get_coeff(mpz_t output, Zpoly_mpz_t poly,
 static inline
 unsigned long Zpoly_mpz_raw_get_coeff_ui(Zpoly_mpz_t poly, unsigned long n)
 {
-    // todo: check mpz_get_ui is a macro; if not, write our own non-GMP_COMPLIANT version
     return mpz_get_ui(poly->coeffs[n]);
 }
 
@@ -109,7 +108,6 @@ unsigned long Zpoly_mpz_raw_get_coeff_ui(Zpoly_mpz_t poly, unsigned long n)
 static inline
 long Zpoly_mpz_raw_get_coeff_si(Zpoly_mpz_t poly, unsigned long n)
 {
-    // todo: check mpz_get_si is a macro; if not, write our own non-GMP_COMPLIANT version
     return mpz_get_si(poly->coeffs[n]);
 }
 
@@ -169,6 +167,11 @@ void Zpoly_mpz_raw_swap(Zpoly_mpz_t x, Zpoly_mpz_t y)
     x->length = y->length;
     y->length = temp2;
 }
+
+
+// returns true if input1 is equal to input2. (If the lengths are different, it
+// checks that the overhanging coefficients are zero.)
+int Zpoly_mpz_raw_equal(Zpoly_mpz_t input1, Zpoly_mpz_t input2);
 
 
 // output = input1 + input2
@@ -271,8 +274,10 @@ void Zpoly_mpz_raw_xgcd(Zpoly_mpz_t a, Zpoly_mpz_t b, Zpoly_mpz_t output,
 
 // allocate coeffs to length 1, sets length = 0 (i.e. zero polynomial)
 void Zpoly_mpz_init(Zpoly_mpz_t poly);
+
 // allocate coeffs to given length, sets length = 0 (i.e. zero polynomial)
 void Zpoly_mpz_init2(Zpoly_mpz_t poly, unsigned long alloc);
+
 // allocate coeffs to given length, with space for coeff_size bits in each
 // coefficient, sets length = 0 (i.e. zero polynomial)
 void Zpoly_mpz_init3(Zpoly_mpz_t poly, unsigned long alloc,
@@ -350,6 +355,12 @@ unsigned long Zpoly_mpz_get_string_size(Zpoly_mpz_t poly);
 
 void Zpoly_mpz_normalise(Zpoly_mpz_t poly);
 void Zpoly_mpz_set(Zpoly_mpz_t output, Zpoly_mpz_t input);
+
+static inline int Zpoly_mpz_equal(Zpoly_mpz_t x, Zpoly_mpz_t y)
+{
+   return Zpoly_mpz_raw_equal(x, y);
+}
+
 void Zpoly_mpz_swap(Zpoly_mpz_t x, Zpoly_mpz_t y);
 void Zpoly_mpz_add(Zpoly_mpz_t output, Zpoly_mpz_t input1, Zpoly_mpz_t input2);
 void Zpoly_mpz_sub(Zpoly_mpz_t output, Zpoly_mpz_t input1, Zpoly_mpz_t input2);
