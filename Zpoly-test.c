@@ -42,6 +42,54 @@ int test_Zpoly_mpz_get_coeff()
 }
 
 
+int test_Zpoly_mpz_get_coeff_ui()
+{
+   Zpoly_mpz_t poly;
+   mpz_t x;
+
+   Zpoly_mpz_init2(poly, 3);
+   mpz_init(x);
+   int success = 1;
+   
+   poly->length = 2;
+   mpz_set_ui(poly->coeffs[0], 47);
+   mpz_set_ui(poly->coeffs[1], 48);
+   mpz_set_ui(poly->coeffs[2], 49);
+   
+   success = success && (Zpoly_mpz_get_coeff_ui(poly, 0) == 47);
+   success = success && (Zpoly_mpz_get_coeff_ui(poly, 1) == 48);
+   success = success && (Zpoly_mpz_get_coeff_ui(poly, 2) == 0);
+   
+   Zpoly_mpz_clear(poly);
+   mpz_clear(x);
+   return success;
+}
+
+
+int test_Zpoly_mpz_get_coeff_si()
+{
+   Zpoly_mpz_t poly;
+   mpz_t x;
+
+   Zpoly_mpz_init2(poly, 3);
+   mpz_init(x);
+   int success = 1;
+   
+   poly->length = 2;
+   mpz_set_si(poly->coeffs[0], 47);
+   mpz_set_si(poly->coeffs[1], -48);
+   mpz_set_si(poly->coeffs[2], 49);
+   
+   success = success && (Zpoly_mpz_get_coeff_si(poly, 0) == 47);
+   success = success && (Zpoly_mpz_get_coeff_si(poly, 1) == -48);
+   success = success && (Zpoly_mpz_get_coeff_si(poly, 2) == 0);
+   
+   Zpoly_mpz_clear(poly);
+   mpz_clear(x);
+   return success;
+}
+
+
 
 #define RUN_TEST(targetfunc) \
    printf("Testing " #targetfunc "()... ");            \
@@ -56,6 +104,8 @@ void Zpoly_test_all()
    int success, all_success = 1;
 
    RUN_TEST(Zpoly_mpz_get_coeff);
+   RUN_TEST(Zpoly_mpz_get_coeff_ui);
+   RUN_TEST(Zpoly_mpz_get_coeff_si);
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!!\n");

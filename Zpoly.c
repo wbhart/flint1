@@ -380,6 +380,22 @@ void Zpoly_mpz_get_coeff(mpz_t output, Zpoly_mpz_t poly,
 }
 
 
+unsigned long Zpoly_mpz_get_coeff_ui(Zpoly_mpz_t poly, unsigned long n)
+{
+   if (n >= poly->length)
+      return 0;
+   return mpz_get_ui(poly->coeffs[n]);
+}
+
+
+long Zpoly_mpz_get_coeff_si(Zpoly_mpz_t poly, unsigned long n)
+{
+   if (n >= poly->length)
+      return 0;
+   return mpz_get_si(poly->coeffs[n]);
+}
+
+
 int Zpoly_mpz_set_from_string(Zpoly_mpz_t output, char* s)
 {
    const char* whitespace = " \t\n\r";
@@ -436,16 +452,6 @@ void Zpoly_mpz_get_as_string(char* output, Zpoly_mpz_t poly)
    *output = ' ';
 }
 
-
-unsigned long Zpoly_mpz_get_coeff_ui(Zpoly_mpz_t poly, unsigned long n)
-{
-   abort();
-}
-
-long Zpoly_mpz_get_coeff_si(Zpoly_mpz_t poly, unsigned long n)
-{
-   abort();
-}
 
 void Zpoly_mpz_set_coeff(Zpoly_mpz_t poly, unsigned long n, mpz_t x)
 {
