@@ -108,13 +108,17 @@ int Zpoly_mpz_raw_equal(Zpoly_mpz_t input1, Zpoly_mpz_t input2)
          return 0;
 
    if (is_input1_longer)
+   {
       for (; i < input1->length; i++)
          if (mpz_sgn(input1->coeffs[i]))
             return 0;
+   }
    else
+   {
       for (; i < input2->length; i++)
          if (mpz_sgn(input2->coeffs[i]))
             return 0;
+   }
 
    return 1;
 }
@@ -211,13 +215,23 @@ void Zpoly_mpz_raw_scalar_div_ui(Zpoly_mpz_t poly, unsigned long x)
 void Zpoly_mpz_raw_mul(Zpoly_mpz_t output, Zpoly_mpz_t input1,
                        Zpoly_mpz_t input2)
 {
-   abort();
+   // naive multiplication for now....
+   // todo: plug in actual multiplication code :-)
+   Zpoly_mpz_raw_mul_naive(output, input1, input2);
 }
                            
 void Zpoly_mpz_raw_mul_naive(Zpoly_mpz_t output, Zpoly_mpz_t input1,
                              Zpoly_mpz_t input2)
 {
-   abort();
+   output->length = input1->length + input2->length - 1;
+   FLINT_ASSERT(output->alloc >= output_length);
+
+   for (unsigned long i = 0; i < output->length; i++)
+      mpz_set_ui(output->coeffs[i], 0);
+   
+   for (unsigned long i = 0; i < input1->length; i++)
+      for (unsigned long j = 0; j < input2->length; j++)
+         mpz_addmul(output->coeffs[i+j], input1->coeffs[i], input2->coeffs[j]);
 }
 
 void Zpoly_mpz_raw_mul_karatsuba(Zpoly_mpz_t output, Zpoly_mpz_t input1,
@@ -449,38 +463,32 @@ void Zpoly_mpz_get_as_string(char* output, Zpoly_mpz_t poly)
    }
    
    output--;
-   *output = ' ';
+   *output = 0;
 }
 
 
 void Zpoly_mpz_set_coeff(Zpoly_mpz_t poly, unsigned long n, mpz_t x)
 {
-   abort();
+   Zpoly_mpz_ensure_space(poly, n+1);
+   Zpoly_mpz_raw_set_coeff(poly, n, x);
 }
 
 void Zpoly_mpz_set_coeff_ui(Zpoly_mpz_t poly, unsigned long n, unsigned long x)
 {
-   abort();
+   Zpoly_mpz_ensure_space(poly, n+1);
+   Zpoly_mpz_raw_set_coeff_ui(poly, n, x);
 }
 
 void Zpoly_mpz_set_coeff_si(Zpoly_mpz_t poly, unsigned long n, long x)
 {
-   abort();
-}
-
-void Zpoly_mpz_normalise(Zpoly_mpz_t poly)
-{
-   abort();
+   Zpoly_mpz_ensure_space(poly, n+1);
+   Zpoly_mpz_raw_set_coeff_si(poly, n, x);
 }
 
 void Zpoly_mpz_set(Zpoly_mpz_t output, Zpoly_mpz_t input)
 {
-   abort();
-}
-
-void Zpoly_mpz_swap(Zpoly_mpz_t x, Zpoly_mpz_t y)
-{
-   abort();
+   Zpoly_mpz_ensure_space(output, input->length);
+   Zpoly_mpz_raw_set(output, input);
 }
 
 void Zpoly_mpz_add(Zpoly_mpz_t output, Zpoly_mpz_t input1, Zpoly_mpz_t input2)
@@ -497,7 +505,8 @@ void Zpoly_mpz_sub(Zpoly_mpz_t output, Zpoly_mpz_t input1, Zpoly_mpz_t input2)
 
 void Zpoly_mpz_negate(Zpoly_mpz_t output, Zpoly_mpz_t input)
 {
-   abort();
+   Zpoly_mpz_ensure_space(output, input->length);
+   Zpoly_mpz_raw_negate(output, input);
 }
 
 void Zpoly_mpz_scalar_mul(Zpoly_mpz_t poly, mpz_t x)
@@ -506,6 +515,11 @@ void Zpoly_mpz_scalar_mul(Zpoly_mpz_t poly, mpz_t x)
 }
 
 void Zpoly_mpz_scalar_mul_ui(Zpoly_mpz_t poly, unsigned long x)
+{
+   abort();
+}
+
+void Zpoly_mpz_scalar_mul_si(Zpoly_mpz_t poly, long x)
 {
    abort();
 }
@@ -522,13 +536,15 @@ void Zpoly_mpz_scalar_div_ui(Zpoly_mpz_t poly, unsigned long x)
 
 void Zpoly_mpz_mul(Zpoly_mpz_t output, Zpoly_mpz_t input1, Zpoly_mpz_t input2)
 {
-   abort();
+   Zpoly_mpz_ensure_space(output, input1->length + input2->length - 1);
+   Zpoly_mpz_raw_mul(output, input1, input2);
 }
 
 void Zpoly_mpz_mul_naive(Zpoly_mpz_t output, Zpoly_mpz_t input1,
                          Zpoly_mpz_t input2)
 {
-   abort();
+   Zpoly_mpz_ensure_space(output, input1->length + input2->length - 1);
+   Zpoly_mpz_raw_mul_naive(output, input1, input2);
 }
 
 void Zpoly_mpz_mul_karatsuba(Zpoly_mpz_t output, Zpoly_mpz_t input1,
@@ -583,7 +599,7 @@ void Zpoly_mpz_div_rem(Zpoly_mpz_t quotient, Zpoly_mpz_t remainder,
 }
 
 void Zpoly_mpz_gcd(Zpoly_mpz_t output, Zpoly_mpz_t input1,
-                       Zpoly_mpz_t input2)
+                   Zpoly_mpz_t input2)
 {
    abort();
 }

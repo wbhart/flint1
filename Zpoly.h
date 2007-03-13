@@ -353,21 +353,32 @@ void Zpoly_mpz_get_as_string(char* output, Zpoly_mpz_t poly);
 unsigned long Zpoly_mpz_get_string_size(Zpoly_mpz_t poly);
 
 
-void Zpoly_mpz_normalise(Zpoly_mpz_t poly);
+static inline
+void Zpoly_mpz_normalise(Zpoly_mpz_t poly)
+{
+   Zpoly_mpz_raw_normalise(poly);
+}
+
 void Zpoly_mpz_set(Zpoly_mpz_t output, Zpoly_mpz_t input);
 
-static inline int Zpoly_mpz_equal(Zpoly_mpz_t x, Zpoly_mpz_t y)
+static inline
+int Zpoly_mpz_equal(Zpoly_mpz_t x, Zpoly_mpz_t y)
 {
    return Zpoly_mpz_raw_equal(x, y);
 }
 
-void Zpoly_mpz_swap(Zpoly_mpz_t x, Zpoly_mpz_t y);
+static inline
+void Zpoly_mpz_swap(Zpoly_mpz_t x, Zpoly_mpz_t y)
+{
+   Zpoly_mpz_raw_swap(x, y);
+}
+
 void Zpoly_mpz_add(Zpoly_mpz_t output, Zpoly_mpz_t input1, Zpoly_mpz_t input2);
 void Zpoly_mpz_sub(Zpoly_mpz_t output, Zpoly_mpz_t input1, Zpoly_mpz_t input2);
 void Zpoly_mpz_negate(Zpoly_mpz_t output, Zpoly_mpz_t input);
 void Zpoly_mpz_scalar_mul(Zpoly_mpz_t poly, mpz_t x);
 void Zpoly_mpz_scalar_mul_ui(Zpoly_mpz_t poly, unsigned long x);
-void Zpoly_mpz_scalar_mul_si(Zpoly_mpz_t poly, unsigned long x);
+void Zpoly_mpz_scalar_mul_si(Zpoly_mpz_t poly, long x);
 void Zpoly_mpz_scalar_div(Zpoly_mpz_t poly, mpz_t x);
 void Zpoly_mpz_scalar_div_ui(Zpoly_mpz_t poly, unsigned long x);
 void Zpoly_mpz_mul(Zpoly_mpz_t output, Zpoly_mpz_t input1, Zpoly_mpz_t input2);
