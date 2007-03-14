@@ -239,13 +239,119 @@ int test_Zpoly_mpz_raw_equal()
 
 int test_Zpoly_mpz_raw_add()
 {
-   return 0;
+   int success = 1;
+   Zpoly_mpz_t poly[3];
+   Zpoly_mpz_init2(poly[0], 10);
+   Zpoly_mpz_init2(poly[1], 10);
+   Zpoly_mpz_init2(poly[2], 10);
+
+   // try various combinations of argument aliasing
+   for (int i = 0; i < 3; i++)
+   {
+      Zpoly_mpz_t* target = &poly[i];
+
+      Zpoly_mpz_set_from_string(poly[0], "");
+      Zpoly_mpz_set_from_string(poly[1], "");
+      Zpoly_mpz_raw_add(*target, poly[0], poly[1]);
+      success = success && Zpoly_equal(*target, "");
+
+      Zpoly_mpz_set_from_string(poly[0], "1");
+      Zpoly_mpz_set_from_string(poly[1], "");
+      Zpoly_mpz_raw_add(*target, poly[0], poly[1]);
+      success = success && Zpoly_equal(*target, "1");
+
+      Zpoly_mpz_set_from_string(poly[0], "");
+      Zpoly_mpz_set_from_string(poly[1], "1");
+      Zpoly_mpz_raw_add(*target, poly[0], poly[1]);
+      success = success && Zpoly_equal(*target, "1");
+
+      Zpoly_mpz_set_from_string(poly[0], "-1");
+      Zpoly_mpz_set_from_string(poly[1], "1");
+      Zpoly_mpz_raw_add(*target, poly[0], poly[1]);
+      success = success && Zpoly_equal(*target, "");
+
+      Zpoly_mpz_set_from_string(poly[0], "-1 0 47");
+      Zpoly_mpz_set_from_string(poly[1], "0 0 0 0 8");
+      Zpoly_mpz_raw_add(*target, poly[0], poly[1]);
+      success = success && Zpoly_equal(*target, "-1 0 47 0 8");
+
+      Zpoly_mpz_set_from_string(poly[0], "0 0 0 0 8");
+      Zpoly_mpz_set_from_string(poly[1], "-1 0 47");
+      Zpoly_mpz_raw_add(*target, poly[0], poly[1]);
+      success = success && Zpoly_equal(*target, "-1 0 47 0 8");
+   }
+
+   Zpoly_mpz_set_from_string(poly[0], "2 3 4");
+   Zpoly_mpz_raw_add(poly[1], poly[0], poly[0]);
+   success = success && Zpoly_equal(poly[1], "4 6 8");
+
+   Zpoly_mpz_set_from_string(poly[0], "2 3 4");
+   Zpoly_mpz_raw_add(poly[0], poly[0], poly[0]);
+   success = success && Zpoly_equal(poly[0], "4 6 8");
+
+   Zpoly_mpz_clear(poly[0]);
+   Zpoly_mpz_clear(poly[1]);
+   Zpoly_mpz_clear(poly[2]);
+   return success;
 }
 
 
 int test_Zpoly_mpz_raw_sub()
 {
-   return 0;
+   int success = 1;
+   Zpoly_mpz_t poly[3];
+   Zpoly_mpz_init2(poly[0], 10);
+   Zpoly_mpz_init2(poly[1], 10);
+   Zpoly_mpz_init2(poly[2], 10);
+
+   // try various combinations of argument aliasing
+   for (int i = 0; i < 3; i++)
+   {
+      Zpoly_mpz_t* target = &poly[i];
+
+      Zpoly_mpz_set_from_string(poly[0], "");
+      Zpoly_mpz_set_from_string(poly[1], "");
+      Zpoly_mpz_raw_sub(*target, poly[0], poly[1]);
+      success = success && Zpoly_equal(*target, "");
+
+      Zpoly_mpz_set_from_string(poly[0], "1");
+      Zpoly_mpz_set_from_string(poly[1], "");
+      Zpoly_mpz_raw_sub(*target, poly[0], poly[1]);
+      success = success && Zpoly_equal(*target, "1");
+
+      Zpoly_mpz_set_from_string(poly[0], "");
+      Zpoly_mpz_set_from_string(poly[1], "1");
+      Zpoly_mpz_raw_sub(*target, poly[0], poly[1]);
+      success = success && Zpoly_equal(*target, "-1");
+
+      Zpoly_mpz_set_from_string(poly[0], "-1");
+      Zpoly_mpz_set_from_string(poly[1], "1");
+      Zpoly_mpz_raw_sub(*target, poly[0], poly[1]);
+      success = success && Zpoly_equal(*target, "-2");
+
+      Zpoly_mpz_set_from_string(poly[0], "-1 0 47");
+      Zpoly_mpz_set_from_string(poly[1], "0 0 0 0 8");
+      Zpoly_mpz_raw_sub(*target, poly[0], poly[1]);
+      success = success && Zpoly_equal(*target, "-1 0 47 0 -8");
+
+      Zpoly_mpz_set_from_string(poly[0], "0 0 0 0 8");
+      Zpoly_mpz_set_from_string(poly[1], "-1 0 47");
+      Zpoly_mpz_raw_sub(*target, poly[0], poly[1]);
+      success = success && Zpoly_equal(*target, "1 0 -47 0 8");
+   }
+
+   Zpoly_mpz_set_from_string(poly[0], "2 3 4");
+   Zpoly_mpz_raw_sub(poly[1], poly[0], poly[0]);
+   success = success && Zpoly_equal(poly[1], "");
+
+   Zpoly_mpz_set_from_string(poly[0], "2 3 4");
+   Zpoly_mpz_raw_sub(poly[0], poly[0], poly[0]);
+   success = success && Zpoly_equal(poly[0], "");
+
+   Zpoly_mpz_clear(poly[0]);
+   Zpoly_mpz_clear(poly[1]);
+   Zpoly_mpz_clear(poly[2]);
+   return success;
 }
 
 
