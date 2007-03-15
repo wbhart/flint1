@@ -215,6 +215,9 @@ void Zpoly_mpz_raw_scalar_div_ui(Zpoly_mpz_t poly, unsigned long x)
 void Zpoly_mpz_raw_mul(Zpoly_mpz_t output, Zpoly_mpz_t input1,
                        Zpoly_mpz_t input2)
 {
+   FLINT_ASSERT(output != input1);
+   FLINT_ASSERT(output != input2);
+
    // naive multiplication for now....
    // todo: plug in actual multiplication code :-)
    Zpoly_mpz_raw_mul_naive(output, input1, input2);
@@ -223,6 +226,9 @@ void Zpoly_mpz_raw_mul(Zpoly_mpz_t output, Zpoly_mpz_t input1,
 void Zpoly_mpz_raw_mul_naive(Zpoly_mpz_t output, Zpoly_mpz_t input1,
                              Zpoly_mpz_t input2)
 {
+   FLINT_ASSERT(output != input1);
+   FLINT_ASSERT(output != input2);
+
    if (!input1->length || !input2->length)
    {
       // one of the inputs is zero
@@ -240,6 +246,7 @@ void Zpoly_mpz_raw_mul_naive(Zpoly_mpz_t output, Zpoly_mpz_t input1,
       for (unsigned long j = 0; j < input2->length; j++)
          mpz_addmul(output->coeffs[i+j], input1->coeffs[i], input2->coeffs[j]);
 }
+
 
 void Zpoly_mpz_raw_mul_karatsuba(Zpoly_mpz_t output, Zpoly_mpz_t input1,
                                  Zpoly_mpz_t input2)
@@ -474,22 +481,38 @@ void Zpoly_mpz_get_as_string(char* output, Zpoly_mpz_t poly)
 }
 
 
+void Zpoly_mpz_print(FILE* output, Zpoly_mpz_t poly)
+{
+   unsigned long size = Zpoly_mpz_get_string_size(poly);
+   char* buf = flint_malloc(size);
+   Zpoly_mpz_get_as_string(buf, poly);
+   fprintf(output, buf);
+   flint_free(buf);
+}
+
+
 void Zpoly_mpz_set_coeff(Zpoly_mpz_t poly, unsigned long n, mpz_t x)
 {
    Zpoly_mpz_ensure_space(poly, n+1);
    Zpoly_mpz_raw_set_coeff(poly, n, x);
+   if (poly->length <= n)
+      poly->length = n+1;
 }
 
 void Zpoly_mpz_set_coeff_ui(Zpoly_mpz_t poly, unsigned long n, unsigned long x)
 {
    Zpoly_mpz_ensure_space(poly, n+1);
    Zpoly_mpz_raw_set_coeff_ui(poly, n, x);
+   if (poly->length <= n)
+      poly->length = n+1;
 }
 
 void Zpoly_mpz_set_coeff_si(Zpoly_mpz_t poly, unsigned long n, long x)
 {
    Zpoly_mpz_ensure_space(poly, n+1);
    Zpoly_mpz_raw_set_coeff_si(poly, n, x);
+   if (poly->length <= n)
+      poly->length = n+1;
 }
 
 void Zpoly_mpz_set(Zpoly_mpz_t output, Zpoly_mpz_t input)
@@ -543,18 +566,193 @@ void Zpoly_mpz_scalar_div_ui(Zpoly_mpz_t poly, unsigned long x)
 
 void Zpoly_mpz_mul(Zpoly_mpz_t output, Zpoly_mpz_t input1, Zpoly_mpz_t input2)
 {
-   // todo: this is WRONG, because output cannot be inplace
-   Zpoly_mpz_ensure_space(output, input1->length + input2->length - 1);
-   Zpoly_mpz_raw_mul(output, input1, input2);
+   if (!input1->length || !input2->length)
+   {
+      // one of the inputs is zero
+      output->length = 0;
+      return;
+   }
+   
+   unsigned long output_length = input1->length + input2->length - 1;
+
+   if (output == input1 || output == input2)
+   {
+      // if output is inplace, need a temporary
+      Zpoly_mpz_t temp;
+      Zpoly_mpz_init2(temp, output_length);
+      Zpoly_mpz_raw_mul(temp, input1, input2);
+      Zpoly_mpz_raw_swap(output, temp);
+      Zpoly_mpz_clear(temp);
+   }
+   else
+   {
+      // not inplace; just call directly
+      Zpoly_mpz_ensure_space(output, output_length);
+      Zpoly_mpz_raw_mul(output, input1, input2);
+   }
 }
+
 
 void Zpoly_mpz_mul_naive(Zpoly_mpz_t output, Zpoly_mpz_t input1,
                          Zpoly_mpz_t input2)
 {
-   // todo: this is WRONG, because output cannot be inplace
-   Zpoly_mpz_ensure_space(output, input1->length + input2->length - 1);
-   Zpoly_mpz_raw_mul_naive(output, input1, input2);
+   if (!input1->length || !input2->length)
+   {
+      // one of the inputs is zero
+      output->length = 0;
+      return;
+   }
+   
+   unsigned long output_length = input1->length + input2->length - 1;
+
+   if (output == input1 || output == input2)
+   {
+      // if output is inplace, need a temporary
+      Zpoly_mpz_t temp;
+      Zpoly_mpz_init2(temp, output_length);
+      Zpoly_mpz_raw_mul_naive(temp, input1, input2);
+      Zpoly_mpz_raw_swap(output, temp);
+      Zpoly_mpz_clear(temp);
+   }
+   else
+   {
+      // not inplace; just call directly
+      Zpoly_mpz_ensure_space(output, output_length);
+      Zpoly_mpz_raw_mul_naive(output, input1, input2);
+   }
 }
+
+
+// ----------------------------------------------------------------------------
+// A few support functions for naive KS multiplication.
+
+/*
+Sets y = \sum_{i=0}^{len-1} x[i] * 2^(ki)
+Running time should be O(k*len*log(len))
+*/
+void Zpoly_mpz_mul_naive_KS_pack(mpz_t y, mpz_t* x, unsigned long len,
+                                 unsigned long k)
+{
+   if (len == 1)
+      mpz_set(y, x[0]);
+   else
+   {
+      mpz_t temp;
+      mpz_init(temp);
+      unsigned long half = len/2;
+      Zpoly_mpz_mul_naive_KS_pack(temp, x, half, k);
+      Zpoly_mpz_mul_naive_KS_pack(y, x + half, len - half, k);
+      mpz_mul_2exp(y, y, half*k);
+      mpz_add(y, y, temp);
+      mpz_clear(temp);
+   }
+}
+
+
+/*
+Inverse operation of Zpoly_mpz_mul_naive_KS_pack
+(note: y is destroyed)
+*/
+void Zpoly_mpz_mul_naive_KS_unpack(mpz_t* x, unsigned long len, mpz_t y,
+                                   unsigned long k)
+{
+   if (len == 1)
+      mpz_set(x[0], y);
+   else
+   {
+      mpz_t temp;
+      mpz_init(temp);
+      unsigned long half = len/2;
+      if (mpz_tstbit(y, k*half - 1))
+      {
+         mpz_cdiv_q_2exp(temp, y, half*k);
+         mpz_cdiv_r_2exp(y, y, half*k);
+      }
+      else
+      {
+         mpz_fdiv_q_2exp(temp, y, half*k);
+         mpz_fdiv_r_2exp(y, y, half*k);
+      }
+      Zpoly_mpz_mul_naive_KS_unpack(x, half, y, k);
+      Zpoly_mpz_mul_naive_KS_unpack(x + half, len - half, temp, k);
+      mpz_clear(temp);
+   }
+}
+
+
+/*
+Counts maximum number of bits in abs(x->coeffs[i])
+*/
+unsigned long Zpoly_mpz_mul_naive_KS_get_max_bits(Zpoly_mpz_t x)
+{
+   unsigned long bits = 0, temp, i;
+   for (i = 0; i < x->length; i++)
+   {
+      temp = mpz_sizeinbase(x->coeffs[i], 2);
+      if (temp > bits)
+         bits = temp;
+   }
+   return bits;
+}
+
+
+void Zpoly_mpz_mul_naive_KS(Zpoly_mpz_t output, Zpoly_mpz_t input1,
+                            Zpoly_mpz_t input2)
+{
+   if (!input1->length || !input2->length)
+   {
+      // one of the inputs is zero
+      output->length = 0;
+      return;
+   }
+   
+   mpz_t z1;
+   mpz_t z2;
+   mpz_init(z1);
+   mpz_init(z2);
+
+   unsigned long output_len = input1->length + input2->length - 1;
+   unsigned long bits1 = Zpoly_mpz_mul_naive_KS_get_max_bits(input1);
+   unsigned long bits2 = Zpoly_mpz_mul_naive_KS_get_max_bits(input2);
+   unsigned long bits = bits1 + bits2 + 2 + ceil_log2(output_len);
+
+   Zpoly_mpz_mul_naive_KS_pack(z1, input1->coeffs, input1->length, bits);
+   Zpoly_mpz_mul_naive_KS_pack(z2, input2->coeffs, input2->length, bits);
+   mpz_mul(z1, z1, z2);
+   Zpoly_mpz_ensure_space(output, output_len);
+   Zpoly_mpz_mul_naive_KS_unpack(output->coeffs, output_len, z1, bits);
+   output->length = output_len;
+
+   mpz_clear(z1);
+   mpz_clear(z2);
+}
+
+
+void Zpoly_mpz_naive_KS_sqr(Zpoly_mpz_t output, Zpoly_mpz_t input)
+{
+   if (!input->length)
+   {
+      // input is zero
+      output->length = 0;
+      return;
+   }
+   
+   mpz_t z;
+   mpz_init(z);
+
+   unsigned long output_len = 2*input->length - 1;
+   unsigned long bits = 2 * Zpoly_mpz_mul_naive_KS_get_max_bits(input)
+                          + 2 + ceil_log2(output_len);
+
+   Zpoly_mpz_mul_naive_KS_pack(z, input->coeffs, input->length, bits);
+   mpz_mul(z, z, z);
+   Zpoly_mpz_ensure_space(output, output_len);
+   Zpoly_mpz_mul_naive_KS_unpack(output->coeffs, output_len, z, bits);
+   output->length = output_len;
+   
+   mpz_clear(z);
+}
+
 
 void Zpoly_mpz_mul_karatsuba(Zpoly_mpz_t output, Zpoly_mpz_t input1,
                              Zpoly_mpz_t input2)

@@ -12,6 +12,9 @@ Copyright (C) 2007, William Hart and David Harvey
 #include <string.h>
 
 
+gmp_randstate_t Zpoly_test_randstate;
+
+
 // tests whether the given polynomial is equal to the one given by the string
 // (only for testing purposes in this file)
 int Zpoly_equal(Zpoly_mpz_t poly, char* s)
@@ -129,6 +132,9 @@ int test_Zpoly_mpz_set_from_string()
    success = success && (Zpoly_mpz_get_coeff_ui(poly, 0) == 47);
    success = success && (Zpoly_mpz_get_coeff_ui(poly, 1) == 0);
    success = success && (Zpoly_mpz_get_coeff_si(poly, 2) == -23);
+   
+   // todo: also test a few cases where Zpoly_mpz_set_from_string()
+   // should return 0
    
    Zpoly_mpz_clear(poly);
    return success;
@@ -498,6 +504,59 @@ int test_Zpoly_mpz_mul_naive()
 }
 
 
+int test_Zpoly_mpz_mul_naive_KS()
+{
+   // todo: test inplace multiplication too
+
+   int success = 1;
+   
+   unsigned long max_degree = 10;
+   unsigned long max_bitsize = 10;
+   Zpoly_mpz_t poly[4];
+   for (unsigned long i = 0; i < 4; i++)
+      Zpoly_mpz_init2(poly[i], max_degree*2 + 1);
+   mpz_t temp;
+   mpz_init(temp);
+
+   unsigned long degree[2];
+   unsigned long bitsize[2];
+
+   for (degree[0] = 1; degree[0] <= max_degree; degree[0]++)
+      for (degree[1] = 1; degree[1] <= max_degree; degree[1]++)
+         for (bitsize[0] = 1; bitsize[0] <= max_bitsize; bitsize[0]++)
+            for (bitsize[1] = 1; bitsize[1] <= max_bitsize; bitsize[1]++)
+               for (unsigned long trial = 0; trial < 10; trial++)
+               {
+                  // generate random polys
+                  for (unsigned long j = 0; j < 2; j++)
+                  {
+                     Zpoly_mpz_zero(poly[j]);
+                     for (unsigned long i = 0; i < degree[j]; i++)
+                     {
+                        unsigned long bits = gmp_urandomm_ui(
+                                       Zpoly_test_randstate, bitsize[j]+1);
+                        mpz_rrandomb(temp, Zpoly_test_randstate, bits);
+                        if (gmp_urandomb_ui(Zpoly_test_randstate, 1))
+                           mpz_neg(temp, temp);
+                        Zpoly_mpz_set_coeff(poly[j], i, temp);
+                     }
+                  }
+                  
+                  // compute product using naive multiplication and by
+                  // naive KS, and compare answers
+                  Zpoly_mpz_mul_naive(poly[2], poly[0], poly[1]);
+                  Zpoly_mpz_mul_naive_KS(poly[3], poly[0], poly[1]);
+                  success = success && Zpoly_mpz_equal(poly[2], poly[3]);
+               }
+
+   for (unsigned long i = 0; i < 4; i++)
+      Zpoly_mpz_clear(poly[i]);
+   mpz_clear(temp);
+
+   return success;
+}
+
+
 #define RUN_TEST(targetfunc) \
    printf("Testing " #targetfunc "()... ");            \
    fflush(stdout);                                     \
@@ -536,6 +595,7 @@ void Zpoly_test_all()
    RUN_TEST(Zpoly_mpz_negate);
    RUN_TEST(Zpoly_mpz_mul);
    RUN_TEST(Zpoly_mpz_mul_naive);
+   RUN_TEST(Zpoly_mpz_mul_naive_KS);
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");
@@ -544,6 +604,7 @@ void Zpoly_test_all()
 
 int main()
 {
+   gmp_randinit_default(Zpoly_test_randstate);
    Zpoly_test_all();
 
    return 0;

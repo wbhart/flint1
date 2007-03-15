@@ -19,14 +19,6 @@ void ssfft_ifft(mp_limb_t** x, unsigned long t,
                unsigned long ru, unsigned long rU, unsigned long n,
                mp_limb_t** scratch);
 
-// temporary while the function lives in this file:
-
-/*void naive_KS_mul(mpz_t* y,
-                  mpz_t* x1, unsigned long len1,
-                  mpz_t* x2, unsigned long len2);*/
-
-
-
 // exported for testing only:
 
 void ssfft_signed_add_1(mp_limb_t* x, unsigned long count,

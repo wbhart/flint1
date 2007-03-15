@@ -2518,88 +2518,6 @@ void test_ssfft_ifft()
 
 
 // ============================================================================
-// test function for naive_KS_mul, just here temporarily until it finds a home
-
-void test_naive_KS_mul()
-{
-   printf("testing naive_KS_mul... ");
-   fflush(stdout);
-   
-   int success = 1;
-   
-   unsigned long max_degree = 10;
-   unsigned long max_bitsize = 10;
-   mpz_t* poly1 = malloc((max_degree + 1) * sizeof(mpz_t));
-   mpz_t* poly2 = malloc((max_degree + 1) * sizeof(mpz_t));
-   mpz_t* poly3 = malloc((max_degree*2 + 1) * sizeof(mpz_t));
-   mpz_t* poly4 = malloc((max_degree*2 + 1) * sizeof(mpz_t));
-   for (unsigned long i = 0; i <= max_degree; i++)
-   {
-      mpz_init(poly1[i]);
-      mpz_init(poly2[i]);
-   }
-   for (unsigned long i = 0; i <= 2*max_degree; i++)
-   {
-      mpz_init(poly3[i]);
-      mpz_init(poly4[i]);
-   }
-
-   for (unsigned long degree1 = 1; degree1 <= max_degree; degree1++)
-      for (unsigned long degree2 = 1; degree2 <= max_degree; degree2++)
-         for (unsigned long bitsize1 = 1; bitsize1 <= max_bitsize; bitsize1++)
-            for (unsigned long bitsize2 = 1; bitsize2 <= max_bitsize; bitsize2++)
-               for (unsigned long trial = 0; trial < 10; trial++)
-               {
-                  // generate random polys
-                  for (unsigned long i = 0; i <= degree1; i++)
-                  {
-                     mpz_rrandomb(poly1[i], ssfft_test_randstate,
-                           gmp_urandomm_ui(ssfft_test_randstate, bitsize1+1));
-                     if (gmp_urandomb_ui(ssfft_test_randstate, 1))
-                        mpz_neg(poly1[i], poly1[i]);
-                  }
-                  for (unsigned long i = 0; i <= degree2; i++)
-                  {
-                     mpz_rrandomb(poly2[i], ssfft_test_randstate,
-                           gmp_urandomm_ui(ssfft_test_randstate, bitsize2+1));
-                     if (gmp_urandomb_ui(ssfft_test_randstate, 1))
-                        mpz_neg(poly2[i], poly2[i]);
-                  }
-                  
-                  // compute naive product
-                  unsigned long degree3 = degree1 + degree2;
-                  for (unsigned long i = 0; i <= degree3; i++)
-                     mpz_set_ui(poly3[i], 0);
-                  for (unsigned long i = 0; i <= degree1; i++)
-                     for (unsigned long j = 0; j <= degree2; j++)
-                        mpz_addmul(poly3[i+j], poly1[i], poly2[j]);
-                  
-                  // try with naive_KS_mul
-                  naive_KS_mul(poly4, poly1, degree1 + 1, poly2, degree2 + 1);
-                  
-                  // compare results
-                  for (unsigned long i = 0; i <= degree3; i++)
-                     success = success && !mpz_cmp(poly3[i], poly4[i]);
-               }
-
-   for (unsigned long i = 0; i <= 2*max_degree; i++)
-   {
-      mpz_clear(poly3[i]);
-      mpz_clear(poly4[i]);
-   }
-   for (unsigned long i = 0; i <= max_degree; i++)
-   {
-      mpz_clear(poly1[i]);
-      mpz_clear(poly2[i]);
-   }
-   free(poly2);
-   free(poly1);
-
-   printf("%s\n", success ? "ok" : "FAIL");
-}
-
-
-// ============================================================================
 // Main function (calls all test functions)
 
 int main()
@@ -2607,8 +2525,6 @@ int main()
    gmp_randinit_default(ssfft_test_randstate);
 
    test_ssfft_fft_threaded();
-
-   test_naive_KS_mul();
 
    test_ssfft_signed_add_1();
    test_basic_fast_reduce();
