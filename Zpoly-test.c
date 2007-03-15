@@ -252,36 +252,43 @@ int test_Zpoly_mpz_raw_add()
 
       Zpoly_mpz_set_from_string(poly[0], "");
       Zpoly_mpz_set_from_string(poly[1], "");
+      Zpoly_mpz_set_from_string(poly[2], "123 456 789 123 456");
       Zpoly_mpz_raw_add(*target, poly[0], poly[1]);
       success = success && Zpoly_equal(*target, "");
 
       Zpoly_mpz_set_from_string(poly[0], "1");
       Zpoly_mpz_set_from_string(poly[1], "");
+      Zpoly_mpz_set_from_string(poly[2], "123 456 789 123 456");
       Zpoly_mpz_raw_add(*target, poly[0], poly[1]);
       success = success && Zpoly_equal(*target, "1");
 
       Zpoly_mpz_set_from_string(poly[0], "");
       Zpoly_mpz_set_from_string(poly[1], "1");
+      Zpoly_mpz_set_from_string(poly[2], "123 456 789 123 456");
       Zpoly_mpz_raw_add(*target, poly[0], poly[1]);
       success = success && Zpoly_equal(*target, "1");
 
       Zpoly_mpz_set_from_string(poly[0], "-1");
       Zpoly_mpz_set_from_string(poly[1], "1");
+      Zpoly_mpz_set_from_string(poly[2], "123 456 789 123 456");
       Zpoly_mpz_raw_add(*target, poly[0], poly[1]);
       success = success && Zpoly_equal(*target, "");
 
       Zpoly_mpz_set_from_string(poly[0], "-1 0 47");
       Zpoly_mpz_set_from_string(poly[1], "0 0 0 0 8");
+      Zpoly_mpz_set_from_string(poly[2], "123 456 789 123 456");
       Zpoly_mpz_raw_add(*target, poly[0], poly[1]);
       success = success && Zpoly_equal(*target, "-1 0 47 0 8");
 
       Zpoly_mpz_set_from_string(poly[0], "0 0 0 0 8");
       Zpoly_mpz_set_from_string(poly[1], "-1 0 47");
+      Zpoly_mpz_set_from_string(poly[2], "123 456 789 123 456");
       Zpoly_mpz_raw_add(*target, poly[0], poly[1]);
       success = success && Zpoly_equal(*target, "-1 0 47 0 8");
    }
 
    Zpoly_mpz_set_from_string(poly[0], "2 3 4");
+   Zpoly_mpz_set_from_string(poly[1], "123 456 789 123 456");
    Zpoly_mpz_raw_add(poly[1], poly[0], poly[0]);
    success = success && Zpoly_equal(poly[1], "4 6 8");
 
@@ -311,36 +318,43 @@ int test_Zpoly_mpz_raw_sub()
 
       Zpoly_mpz_set_from_string(poly[0], "");
       Zpoly_mpz_set_from_string(poly[1], "");
+      Zpoly_mpz_set_from_string(poly[2], "123 456 789 123 456");
       Zpoly_mpz_raw_sub(*target, poly[0], poly[1]);
       success = success && Zpoly_equal(*target, "");
 
       Zpoly_mpz_set_from_string(poly[0], "1");
       Zpoly_mpz_set_from_string(poly[1], "");
+      Zpoly_mpz_set_from_string(poly[2], "123 456 789 123 456");
       Zpoly_mpz_raw_sub(*target, poly[0], poly[1]);
       success = success && Zpoly_equal(*target, "1");
 
       Zpoly_mpz_set_from_string(poly[0], "");
       Zpoly_mpz_set_from_string(poly[1], "1");
+      Zpoly_mpz_set_from_string(poly[2], "123 456 789 123 456");
       Zpoly_mpz_raw_sub(*target, poly[0], poly[1]);
       success = success && Zpoly_equal(*target, "-1");
 
       Zpoly_mpz_set_from_string(poly[0], "-1");
       Zpoly_mpz_set_from_string(poly[1], "1");
+      Zpoly_mpz_set_from_string(poly[2], "123 456 789 123 456");
       Zpoly_mpz_raw_sub(*target, poly[0], poly[1]);
       success = success && Zpoly_equal(*target, "-2");
 
       Zpoly_mpz_set_from_string(poly[0], "-1 0 47");
       Zpoly_mpz_set_from_string(poly[1], "0 0 0 0 8");
+      Zpoly_mpz_set_from_string(poly[2], "123 456 789 123 456");
       Zpoly_mpz_raw_sub(*target, poly[0], poly[1]);
       success = success && Zpoly_equal(*target, "-1 0 47 0 -8");
 
       Zpoly_mpz_set_from_string(poly[0], "0 0 0 0 8");
       Zpoly_mpz_set_from_string(poly[1], "-1 0 47");
+      Zpoly_mpz_set_from_string(poly[2], "123 456 789 123 456");
       Zpoly_mpz_raw_sub(*target, poly[0], poly[1]);
       success = success && Zpoly_equal(*target, "1 0 -47 0 8");
    }
 
    Zpoly_mpz_set_from_string(poly[0], "2 3 4");
+   Zpoly_mpz_set_from_string(poly[1], "123 456 789 123 456");
    Zpoly_mpz_raw_sub(poly[1], poly[0], poly[0]);
    success = success && Zpoly_equal(poly[1], "");
 
@@ -357,19 +371,76 @@ int test_Zpoly_mpz_raw_sub()
 
 int test_Zpoly_mpz_raw_negate()
 {
-   return 0;
+   int success = 1;
+   Zpoly_mpz_t poly1, poly2;
+   Zpoly_mpz_init2(poly1, 10);
+   Zpoly_mpz_init2(poly2, 10);
+
+   // out-of-place
+
+   Zpoly_mpz_set_from_string(poly1, "");
+   Zpoly_mpz_set_from_string(poly2, "123 456 789 123 456");
+   Zpoly_mpz_raw_negate(poly2, poly1);
+   success = success && Zpoly_equal(poly2, "");
+
+   Zpoly_mpz_set_from_string(poly1, "0 2 -5 6");
+   Zpoly_mpz_set_from_string(poly2, "123 456 789 123 456");
+   Zpoly_mpz_raw_negate(poly2, poly1);
+   success = success && Zpoly_equal(poly2, "0 -2 5 -6");
+
+   // in-place
+
+   Zpoly_mpz_set_from_string(poly1, "");
+   Zpoly_mpz_raw_negate(poly1, poly1);
+   success = success && Zpoly_equal(poly1, "");
+
+   Zpoly_mpz_set_from_string(poly1, "0 2 -5 6");
+   Zpoly_mpz_raw_negate(poly1, poly1);
+   success = success && Zpoly_equal(poly1, "0 -2 5 -6");
+
+   Zpoly_mpz_clear(poly1);
+   Zpoly_mpz_clear(poly2);
+   return success;
 }
 
 
+#if 0
 int test_Zpoly_mpz_raw_mul()
 {
    return 0;
 }
+#endif
 
 
 int test_Zpoly_mpz_raw_mul_naive()
 {
-   return 0;
+   int success = 1;
+   Zpoly_mpz_t poly1, poly2, poly3;
+   Zpoly_mpz_init(poly1);
+   Zpoly_mpz_init(poly2);
+   Zpoly_mpz_init2(poly3, 20);
+
+   Zpoly_mpz_set_from_string(poly1, "");
+   Zpoly_mpz_set_from_string(poly2, "");
+   Zpoly_mpz_raw_mul_naive(poly3, poly1, poly2);
+   success = success && Zpoly_equal(poly3, "");
+   
+   Zpoly_mpz_set_from_string(poly1, "1 2 3");
+   Zpoly_mpz_set_from_string(poly2, "");
+   Zpoly_mpz_raw_mul_naive(poly3, poly1, poly2);
+   success = success && Zpoly_equal(poly3, "");
+   
+   Zpoly_mpz_set_from_string(poly1, "1 2 3");
+   Zpoly_mpz_set_from_string(poly2, "2");
+   Zpoly_mpz_raw_mul_naive(poly3, poly1, poly2);
+   success = success && Zpoly_equal(poly3, "2 4 6");
+   
+   Zpoly_mpz_set_from_string(poly1, "-3 4 0 2 56");
+   Zpoly_mpz_set_from_string(poly2, "48 -2 3");
+   Zpoly_mpz_raw_mul_naive(poly3, poly1, poly2);
+   success = success && Zpoly_equal(poly3, "-144 198 -17 108 2684 -106 168");
+
+   return success;
 }
 
 
@@ -450,7 +521,11 @@ void Zpoly_test_all()
    RUN_TEST(Zpoly_mpz_raw_add);
    RUN_TEST(Zpoly_mpz_raw_sub);
    RUN_TEST(Zpoly_mpz_raw_negate);
+#if 0
+   // disabled for the moment, since implementation is currently the same
+   // as Zpoly_mpz_raw_mul_naive
    RUN_TEST(Zpoly_mpz_raw_mul);
+#endif
    RUN_TEST(Zpoly_mpz_raw_mul_naive);
    RUN_TEST(Zpoly_mpz_set_coeff);
    RUN_TEST(Zpoly_mpz_set_coeff_ui);
@@ -469,40 +544,7 @@ void Zpoly_test_all()
 
 int main()
 {
-
    Zpoly_test_all();
-
-/*
-   char *s;
-
-   Zpoly_mpz_t poly1, poly2, poly3;
-   Zpoly_mpz_init(poly1);
-   Zpoly_mpz_init(poly2);
-   Zpoly_mpz_init(poly3);
-
-   Zpoly_mpz_set_from_string(poly1, " -1 2 0  34   -123123123123123123 34 ");
-   Zpoly_mpz_set_from_string(poly2, "0 49 28");
-   Zpoly_mpz_add(poly3, poly1, poly2);
-
-   s = malloc(Zpoly_mpz_get_string_size(poly1));
-   Zpoly_mpz_get_as_string(s, poly1);
-   printf(" first poly is: %s\n", s);
-   free(s);
-   
-   s = malloc(Zpoly_mpz_get_string_size(poly2));
-   Zpoly_mpz_get_as_string(s, poly2);
-   printf("second poly is: %s\n", s);
-   free(s);
-   
-   s = malloc(Zpoly_mpz_get_string_size(poly3));
-   Zpoly_mpz_get_as_string(s, poly3);
-   printf("  their sum is: %s\n", s);
-   free(s);
-   
-   Zpoly_mpz_clear(poly1);
-   Zpoly_mpz_clear(poly2);
-   Zpoly_mpz_clear(poly3);
-*/
 
    return 0;
 }

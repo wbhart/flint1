@@ -223,6 +223,13 @@ void Zpoly_mpz_raw_mul(Zpoly_mpz_t output, Zpoly_mpz_t input1,
 void Zpoly_mpz_raw_mul_naive(Zpoly_mpz_t output, Zpoly_mpz_t input1,
                              Zpoly_mpz_t input2)
 {
+   if (!input1->length || !input2->length)
+   {
+      // one of the inputs is zero
+      output->length = 0;
+      return;
+   }
+   
    output->length = input1->length + input2->length - 1;
    FLINT_ASSERT(output->alloc >= output_length);
 
@@ -536,6 +543,7 @@ void Zpoly_mpz_scalar_div_ui(Zpoly_mpz_t poly, unsigned long x)
 
 void Zpoly_mpz_mul(Zpoly_mpz_t output, Zpoly_mpz_t input1, Zpoly_mpz_t input2)
 {
+   // todo: this is WRONG, because output cannot be inplace
    Zpoly_mpz_ensure_space(output, input1->length + input2->length - 1);
    Zpoly_mpz_raw_mul(output, input1, input2);
 }
@@ -543,6 +551,7 @@ void Zpoly_mpz_mul(Zpoly_mpz_t output, Zpoly_mpz_t input1, Zpoly_mpz_t input2)
 void Zpoly_mpz_mul_naive(Zpoly_mpz_t output, Zpoly_mpz_t input1,
                          Zpoly_mpz_t input2)
 {
+   // todo: this is WRONG, because output cannot be inplace
    Zpoly_mpz_ensure_space(output, input1->length + input2->length - 1);
    Zpoly_mpz_raw_mul_naive(output, input1, input2);
 }

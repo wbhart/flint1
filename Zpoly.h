@@ -203,7 +203,7 @@ void Zpoly_mpz_raw_scalar_div_ui(Zpoly_mpz_t poly, unsigned long x);
 
 // output = input1 * input2
 // assumes output.alloc >= input1.length + input2.length - 1
-// output may NOT alias either input
+// output may **NOT** alias either input
 void Zpoly_mpz_raw_mul(Zpoly_mpz_t output, Zpoly_mpz_t input1,
                        Zpoly_mpz_t input2);
 // as above, but always uses naive multiplication algorithm
