@@ -95,6 +95,10 @@ void Zpoly_mpz_raw_set(Zpoly_mpz_t output, Zpoly_mpz_t input)
 }
 
 
+// todo: probably the "raw" version of this should assume something like:
+// input1 is at least as long as input2. The hand-holding one would then
+// call it with the parameters in the correct order.
+
 int Zpoly_mpz_raw_equal(Zpoly_mpz_t input1, Zpoly_mpz_t input2)
 {
    int is_input1_longer = (input1->length > input2->length);
@@ -124,6 +128,13 @@ int Zpoly_mpz_raw_equal(Zpoly_mpz_t input1, Zpoly_mpz_t input2)
 }
 
 
+
+// todo: we need several versions of this:
+// 1) the lowest layer should assume that input1 is at least as long as input2
+// 2) a middle layer which doesn't assume anything about the lengths, but assumes
+//    the output has enough room for the result
+// 3) the hand-holding layer does memory reallocation and everything.
+
 void Zpoly_mpz_raw_add(Zpoly_mpz_t output, Zpoly_mpz_t input1,
                        Zpoly_mpz_t input2)
 {
@@ -149,6 +160,11 @@ void Zpoly_mpz_raw_add(Zpoly_mpz_t output, Zpoly_mpz_t input1,
    output->length = i;
 }
 
+
+
+// todo: see remarks above for Zpoly_mpz_raw_add, but for sub we need even an
+// extra version, since things behave differently when the parameter order is
+// switched.
 
 void Zpoly_mpz_raw_sub(Zpoly_mpz_t output, Zpoly_mpz_t input1,
                        Zpoly_mpz_t input2)
