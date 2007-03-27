@@ -3488,6 +3488,12 @@ void KSHZ_mul(mpz_t* res, mpz_t* data1, mpz_t* data2,
    
    ssmul_main(array1, trunc_length, array2, trunc_length, scratch, log_length+1, n);
    
+#if USE_TRUNCATED_FFT
+   unsigned long next_coeff;
+   next_coeff = (orig_length-1)/bundle+1+(length2-1)/bundle;
+   for (long j = n; j >= 0; j--) array1[next_coeff][j] = 0;
+#endif
+ 
    // We have to clear the output polynomial, since we have to add to its
    // coefficients rather than just copy into them
    
@@ -3881,7 +3887,7 @@ void SSMul(Zvec outpoly, Zvec poly1, Zvec poly2, unsigned long coeff_bits, int s
    
 #if USE_TRUNCATED_FFT
    unsigned long next_coeff;
-   next_coeff = (orig_length-1)/bundle+1+(length2-1)/bundle+1-1;
+   next_coeff = (orig_length-1)/bundle+1+(length2-1)/bundle;
    for (long j = n; j >= 0; j--) array1[next_coeff][j] = 0;
 #endif
    
