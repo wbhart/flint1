@@ -3578,7 +3578,7 @@ inline unsigned long get_bundle_tuning_parameters(unsigned long * skip_limbs,
    unsigned long bundle = 1;
    
    // if we should use KS (bundle coefficients)
-   if (1 || (4*coeff_bits < orig_length) || ((coeff_bits < orig_length) && (coeff_bits < 256)))
+   if ((4*coeff_bits < orig_length) || ((coeff_bits < orig_length) && (coeff_bits < 256)))
    {
       // the coefficients will be put in bundles with each coefficient
       // starting this many limbs from the start of the previous one
@@ -3681,7 +3681,7 @@ void SSMul(Zvec outpoly, Zvec poly1, Zvec poly2, unsigned long coeff_bits, int s
    // Check if we want to use special high speed KS routine if output 
    // coefficients fit into FLINT_BITS_PER_LIMB bits
    
-   /*if ((output_bits < FLINT_BITS_PER_LIMB) && (orig_length < 4096))
+   if ((output_bits < FLINT_BITS_PER_LIMB) && (orig_length < 4096))
    {
       if (!sign) KSMul_bits(res, data1, data2, orig_length, length2, coeff_bits, log_length);
       else KSMul_bits_signed(res, data1, data2, orig_length, length2, coeff_bits, log_length);
@@ -3693,7 +3693,7 @@ void SSMul(Zvec outpoly, Zvec poly1, Zvec poly2, unsigned long coeff_bits, int s
       if (!sign) KSMul_bytes(res, data1, data2, orig_length, length2, coeff_bits, log_length);
       else KSMul_bytes_signed(res, data1, data2, orig_length, length2, coeff_bits, log_length);
       return;
-   }*/
+   }
    
    //----------------------------------------------------------------------------
    // Start of general SS/KS code
@@ -3724,11 +3724,11 @@ void SSMul(Zvec outpoly, Zvec poly1, Zvec poly2, unsigned long coeff_bits, int s
    int bit_pack = 0; 
    
    // If we should bit pack
-   /*if (output_bits < FLINT_BITS_PER_LIMB)
+   if (output_bits < FLINT_BITS_PER_LIMB)
    {
       KSHZ_mul(res, data1, data2, orig_length, length2, coeff_bits, log_length, sign);
       return;
-   } */
+   } 
    
    split = get_split_tuning_parameters(&input_limbs, &orig_limbs, &output_bits,
                     &log_length, coeff_bits, orig_length, sign);
@@ -3780,7 +3780,6 @@ void SSMul(Zvec outpoly, Zvec poly1, Zvec poly2, unsigned long coeff_bits, int s
 #if USE_TRUNCATED_FFT
    if ((bundle == 1) && (split == 1)) trunc_length = orig_length; 
    if (bundle != 1) trunc_length = (orig_length-1)/bundle + 1; 
-   //if (bundle != 1) trunc_length = length/2; 
    if (split != 1) trunc_length = split*orig_length; 
 #endif
    
