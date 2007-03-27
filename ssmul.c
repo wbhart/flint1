@@ -1,9 +1,29 @@
+/*============================================================================
+    
+    (C) 2006 William Hart and David Harvey
+    
+    This file is part of FLINT.
+
+    FLINT is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    FLINT is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with FLINT; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+
+============================================================================*/
+
 /******************************************************************************
 
 Code for Schoenhage-Strassen and Kronecker-Schoenhage polynomial 
          multiplication over Z.
-
- (C) 2006 William Hart and David Harvey
 
 This implementation of SS/KS multiplication uses the following optimisations.
 
@@ -72,6 +92,9 @@ multiplication modulo p.
 // Whether we should use the new truncated FFT where possible
 // Note: if using threads this should be 0 for now
 #define USE_TRUNCATED_FFT 1
+
+// Prints inputs and outputs of FFT and bundle data if set to 1
+#define DEBUG 0
 
 #if FLINT_BITS_PER_LIMB == 32
 #define half_ulong u_int16_t
@@ -668,6 +691,7 @@ to the nearest byte. Each coefficient is to take up coeff_bytes.
 limb. This is no restriction, since it wouldn't be efficient for smaller
 coefficients anyway.   
 */
+      
 void ssmul_convert_in_bytes(mp_limb_t* array, mpz_t* coeffs, 
             const unsigned long bundle, const unsigned long coeff_bytes, const unsigned long total_limbs)
 {
@@ -1239,7 +1263,7 @@ inline void ssmul_convert_in(mp_limb_t** array, mpz_t* data, unsigned long lengt
             if (!sign) ssmul_convert_in_bits(array[i], data+k, n, orig_length - k, orig_output_bits, coeffs_per_limb);
             else ssmul_convert_in_bits_signed(array[i], data+k, n, orig_length - k, orig_output_bits, coeffs_per_limb, 1);
          }
-      }       
+      }        
    } else if (split != 1) // we need to split coefficients
    {
       // for each orig coefficient
@@ -3273,8 +3297,14 @@ void ssmul_main(mp_limb_t** array1, unsigned long length1,
     // do FFTs
 
     ssfft_fft(array1, 1, log_length, length1, output_length, 0, r, n, scratch);
+#if DEBUG
+    printf("array1: length1 = %ld, log_length = %ld, output_length = %ld, r = %ld, n = %ld\n",length1, log_length, output_length, r, n);
+#endif
     ssfft_fft(array2, 1, log_length, length2, output_length, 0, r, n, scratch);
-
+#if DEBUG
+    printf("array2: length2 = %ld, log_length = %ld, output_length = %ld, r = %ld, n = %ld\n",length2, log_length, output_length, r, n);
+#endif
+    
     // pointwise multiplies
 
     mp_limb_t* mul_scratch = (mp_limb_t*) limb_alloc(2*n*threads, 0);
@@ -3314,6 +3344,9 @@ void ssmul_main(mp_limb_t** array1, unsigned long length1,
     // do inverse FFT
     ssfft_ifft(array1, 1, log_length, output_length, output_length, 0,
                0, r, n, scratch);
+#if DEBUG
+    printf("ifft: log_length = %ld, output_length = %ld, r = %ld, n = %ld\n",log_length, output_length, r, n);
+#endif
 }
 
 /* 
@@ -3408,10 +3441,12 @@ void KSHZ_mul(mpz_t* res, mpz_t* data1, mpz_t* data2,
       
    length = (orig_length-1)/bundle + 1;
    while ((1<<log_length) > length) log_length--;
-      
+    
    //recompute a more optimal bundle size
    length = 1<<log_length;
    bundle = (orig_length-1)/length+1;
+   
+   unsigned long trunc_length = (orig_length-1)/bundle + 1;
       
    unsigned long bundle_bits;
    
@@ -3424,7 +3459,7 @@ void KSHZ_mul(mpz_t* res, mpz_t* data1, mpz_t* data2,
    output_bits = (((output_bits - 1) >> log_length) + 1) << log_length;
    unsigned long n = (output_bits - 1) / FLINT_BITS_PER_LIMB + 1;
    length = 1 << (log_length + 1);
-   unsigned long r = n*FLINT_BITS_PER_LIMB * 2 / length;
+   //unsigned long r = n*FLINT_BITS_PER_LIMB * 2 / length;
 
    mp_limb_t* array = (mp_limb_t*) limb_alloc((2*length + 16) * (n+1) + 2*n*THREADS,0);
    mp_limb_t** pointarr = (mp_limb_t**) limb_alloc(2*length + 16*16,0);
@@ -3439,7 +3474,7 @@ void KSHZ_mul(mpz_t* res, mpz_t* data1, mpz_t* data2,
       
    // ...and pointwise multiplication working space
    
-   mp_limb_t* array3 = array + (2*length+16)*(n+1);   
+   //mp_limb_t* array3 = array + (2*length+16)*(n+1);   
 
    mp_limb_t** array1 = pointarr;
    mp_limb_t** array2 = pointarr + length;
@@ -3451,7 +3486,7 @@ void KSHZ_mul(mpz_t* res, mpz_t* data1, mpz_t* data2,
    ssmul_convert_in(array2, data2, length, sign, 1, 1, bundle, length2, 
                           n, 0, 0, orig_output_bits, coeffs_per_limb);
    
-   ssmul_main_old(array1, array2, array3, length, log_length, n, r, scratch);
+   ssmul_main(array1, trunc_length, array2, trunc_length, scratch, log_length+1, n);
    
    // We have to clear the output polynomial, since we have to add to its
    // coefficients rather than just copy into them
@@ -3543,7 +3578,7 @@ inline unsigned long get_bundle_tuning_parameters(unsigned long * skip_limbs,
    unsigned long bundle = 1;
    
    // if we should use KS (bundle coefficients)
-   if ((4*coeff_bits < orig_length) || ((coeff_bits < orig_length) && (coeff_bits < 256)))
+   if (1 || (4*coeff_bits < orig_length) || ((coeff_bits < orig_length) && (coeff_bits < 256)))
    {
       // the coefficients will be put in bundles with each coefficient
       // starting this many limbs from the start of the previous one
@@ -3625,9 +3660,11 @@ void SSMul(Zvec outpoly, Zvec poly1, Zvec poly2, unsigned long coeff_bits, int s
 {
    mpz_t* data1 = poly1->coords;
    mpz_t* data2 = poly2->coords;
-   unsigned long orig_length = poly1->length;;
-   unsigned long length2 = poly2->length;;
+   unsigned long orig_length = poly1->length;
+   unsigned long length2 = poly2->length;
+#if USE_TRUNCATED_FFT
    unsigned long trunc_length = 0;
+#endif
 
    mpz_t* res = outpoly->coords;
    
@@ -3644,7 +3681,7 @@ void SSMul(Zvec outpoly, Zvec poly1, Zvec poly2, unsigned long coeff_bits, int s
    // Check if we want to use special high speed KS routine if output 
    // coefficients fit into FLINT_BITS_PER_LIMB bits
    
-   if ((output_bits < FLINT_BITS_PER_LIMB) && (orig_length < 4096))
+   /*if ((output_bits < FLINT_BITS_PER_LIMB) && (orig_length < 4096))
    {
       if (!sign) KSMul_bits(res, data1, data2, orig_length, length2, coeff_bits, log_length);
       else KSMul_bits_signed(res, data1, data2, orig_length, length2, coeff_bits, log_length);
@@ -3656,7 +3693,7 @@ void SSMul(Zvec outpoly, Zvec poly1, Zvec poly2, unsigned long coeff_bits, int s
       if (!sign) KSMul_bytes(res, data1, data2, orig_length, length2, coeff_bits, log_length);
       else KSMul_bytes_signed(res, data1, data2, orig_length, length2, coeff_bits, log_length);
       return;
-   }
+   }*/
    
    //----------------------------------------------------------------------------
    // Start of general SS/KS code
@@ -3687,11 +3724,11 @@ void SSMul(Zvec outpoly, Zvec poly1, Zvec poly2, unsigned long coeff_bits, int s
    int bit_pack = 0; 
    
    // If we should bit pack
-   if (output_bits < FLINT_BITS_PER_LIMB)
+   /*if (output_bits < FLINT_BITS_PER_LIMB)
    {
       KSHZ_mul(res, data1, data2, orig_length, length2, coeff_bits, log_length, sign);
       return;
-   } 
+   } */
    
    split = get_split_tuning_parameters(&input_limbs, &orig_limbs, &output_bits,
                     &log_length, coeff_bits, orig_length, sign);
@@ -3721,9 +3758,15 @@ void SSMul(Zvec outpoly, Zvec poly1, Zvec poly2, unsigned long coeff_bits, int s
       output_bits = (((output_bits - 1) >> log_length) + 1) << log_length;
    
    } else
-   // Round up to a multiple of the minimum coefficient size supported by a 
+   {// Round up to a multiple of the minimum coefficient size supported by a 
    // transform able to deal with that length input adjusting for sqrt(2) trick
-   output_bits = (((output_bits - 1) >> log_length) + 1) << log_length;
+#if USE_TRUNCATED_FFT
+      if (2*coeff_bits <= orig_length)
+      output_bits = (((output_bits - 1) >> (log_length-1)) + 1) << (log_length-1);
+      else 
+#endif
+      output_bits = (((output_bits - 1) >> log_length) + 1) << log_length;
+   }
    
    // make nB larger than the output coefficient size (B = FLINT_BITS_PER_LIMB)
    // this effectively rounds the output coefficients up to a multiple of the 
@@ -3736,8 +3779,20 @@ void SSMul(Zvec outpoly, Zvec poly1, Zvec poly2, unsigned long coeff_bits, int s
    
 #if USE_TRUNCATED_FFT
    if ((bundle == 1) && (split == 1)) trunc_length = orig_length; 
-   if (bundle != 1) trunc_length = (orig_length - 1)/bundle + 1; 
+   if (bundle != 1) trunc_length = (orig_length-1)/bundle + 1; 
+   //if (bundle != 1) trunc_length = length/2; 
    if (split != 1) trunc_length = split*orig_length; 
+#endif
+   
+#if DEBUG
+   printf("log_length = %ld, length = %ld, n = %ld, output_bits = %ld\n",log_length, length, n, output_bits);
+   printf("coeff_bits = %ld, orig_length = %ld, length2 = %ld ",coeff_bits, orig_length, length2);
+   #if USE_TRUNCATED_FFT
+   printf("trunc_length = %ld\n",trunc_length);
+   #else
+   printf("\n");
+   #endif
+   printf("split = %ld, bundle = %ld, bit_pack = %d, sign = %d\n",split, bundle, bit_pack, sign);
 #endif
    
    // We want p = 2^rm+1 to be just larger than the largest output
@@ -3798,10 +3853,19 @@ void SSMul(Zvec outpoly, Zvec poly1, Zvec poly2, unsigned long coeff_bits, int s
    // Convert data in from mpz_t's
    ssmul_convert_in(array1, data1, length, sign, bit_pack, split, bundle, orig_length, 
                           n, input_limbs, skip_limbs, orig_output_bits, coeffs_per_limb);
-          
+                          
+#if DEBUG
+   printf("Array1:\n");
+   for (i=0; i<length; i++) {for (long j = n; j >= 0; j--) printf("%lx ",array1[i][j]); printf("\n");}
+#endif
+         
    ssmul_convert_in(array2, data2, length, sign, bit_pack, split, bundle, length2,
                           n, input_limbs, skip_limbs, orig_output_bits, coeffs_per_limb);
-             
+#if DEBUG
+   printf("Array2:\n");
+   for (i=0; i<length; i++) {for (long j = n; j >= 0; j--) printf("%lx ",array2[i][j]); printf("\n");}
+#endif
+            
    // Do main ssmul (FFT's, pointwise mults, IFFT)
    
 #if USE_TRUNCATED_FFT
@@ -3810,9 +3874,20 @@ void SSMul(Zvec outpoly, Zvec poly1, Zvec poly2, unsigned long coeff_bits, int s
    ssmul_main_old(array1, array2, array3, length, log_length, n, r, scratch);
 #endif
 
+#if DEBUG
+   printf("IFFT Output:\n");
+   for (i=0; i<length; i++) {printf("%ld: ",i); for (long j = n; j >= 0; j--) printf("%lx ",array1[i][j]); printf("\n");}
+   printf("\n");
+#endif
+   
+#if USE_TRUNCATED_FFT
+   unsigned long next_coeff;
+   next_coeff = (orig_length-1)/bundle+1+(length2-1)/bundle+1-1;
+   for (long j = n; j >= 0; j--) array1[next_coeff][j] = 0;
+#endif
+   
    // We have to clear the output polynomial, since we have to add to its
    // coefficients rather than just copy into them
-   
    for (i = 0; i < orig_length + length2 - 1; i++) mpz_set_ui(res[i],0);
     
    // Convert data out to mpz_t's
