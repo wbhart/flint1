@@ -708,7 +708,7 @@ void test_KSMul(unsigned long num_trials, unsigned long lengtha, unsigned length
          gmp_printf("%Zd ",data1[j]);
       }
       printf("\n\n");
-      for (unsigned j = 0; j < lengthb; j++)
+      for (unsigned j = 0; j < 1; j++)
       {
          gmp_printf("%Zd ",data2[j]);
       }
@@ -740,10 +740,10 @@ void test_KSMul(unsigned long num_trials, unsigned long lengtha, unsigned length
       /*unsigned long log_length = 0;
       while ((1<<log_length) < lengtha) log_length++;*/
 
-      Zvec_karamul(c,a,b,coeff_bits);
       // compute product using SSMul
       Zvec_mul(d, a, b);
-      //SSMul(data4, data1, data2, length, coeff_bits);
+      if ((a->length > 32) && (b->length > 32)) Zvec_SSMul(c,a,b, coeff_bits, 1);
+      else Zvec_karamul(c,a,b,coeff_bits);
       /*for (unsigned j = 0; j < lengtha+lengthb-1; j++)
       {
          gmp_printf("%Zx ",c.coords[j]);
@@ -754,10 +754,10 @@ void test_KSMul(unsigned long num_trials, unsigned long lengtha, unsigned length
       for (unsigned j = 0; j < lengtha + lengthb - 1; j++)
       {
          //gmp_printf("%Zx ",data4[j]);
-         assert(!mpz_cmp(c->coords[j], d->coords[j]));
+         assert(!mpz_cmp(c->coords[j], d->coords[j])); 
+         //if (mpz_cmp(c->coords[j], d->coords[j])!=0) printf("%ld, ",j);
       }
       //printf("\n\n\n\n");
-      
    }
    
    // clean up
@@ -785,8 +785,8 @@ int main()
    printf("Testing ssmul.c...\n");
    gmp_randinit_default(test_state);
 
-   test_negate_limbs();
-   test_signed_add_1();
+   /*test_negate_limbs();
+   test_signed_add_1();*
    
   // printf("   testing convert_in_bytes and convert_out_bytes...\n");
    
@@ -799,7 +799,7 @@ int main()
    
    //test_rotate_right_bits();
    //test_reduce_mod_p_exact();
-   test_rotate_mod_p_limbs();
+   /*test_rotate_mod_p_limbs();
    test_rotate_mod_p_bits();
    
    test_fft_butterfly_limbs();
@@ -808,11 +808,11 @@ int main()
    test_ifft_butterfly_bits();
    
    test_fft_main();
-   test_ifft_main();
+   test_ifft_main();*/
    
    printf("   testing SSMul...\n");
 
-   for (unsigned long i = 1; i <= 1000000; i+=((i/2)+2))
+   for (unsigned long i = 69; i <= 1000000; i+=((i/2)+2))
      for (unsigned long j = 1; j <= 10000; j+=((j/2)+2)) 
       for (unsigned long k = 1; k <= j; k+=((k/2)+2))  
       {
@@ -820,10 +820,10 @@ int main()
         //while ((1UL<<k) < j) k++;
         //if ((2*i + k + 2 >= 64) && (i > j))
         //{
-           FILE* outfile = fopen("testdata15","a");
-           fprintf(outfile,"%ld, %ld, %ld\n",i, j, k);
-           test_KSMul(10, j, k, i);
-           fclose(outfile);
+           //FILE* outfile = fopen("testdata15","a");
+           printf("%ld, %ld, %ld\n",j, k, i);
+           test_KSMul(1, j, k, i);
+           //fclose(outfile);
         //}
       }
 
