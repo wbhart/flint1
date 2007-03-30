@@ -90,7 +90,6 @@ multiplication modulo p.
 #define THREADS (1<<LG_THREADS)
 
 // Whether we should use the new truncated FFT where possible
-// Note: if using threads this should be 0 for now
 #define USE_TRUNCATED_FFT 1
 
 // Prints inputs and outputs of FFT and bundle data if set to 1
@@ -1984,7 +1983,6 @@ Basecase of the FFT. Once the FFT has been broken up into small enough pieces
 this function actually performs the FFT recursively for each of those pieces.
 
 */
-
 void fft_recursive(mp_limb_t** start, unsigned long skip,
                    unsigned long start_r, unsigned long skip_r,
                    unsigned long depth, mp_limb_t** scratch,
@@ -2065,63 +2063,6 @@ void fft_recursive(mp_limb_t** start, unsigned long skip,
                  scratch, n, 0);
 }
 
-void* fft_loop(void* fft_p)
-{
-   unsigned long i;
-   
-   fft_t fft_params = *((fft_t*) fft_p);
-   
-   unsigned long length = fft_params.length;
-   
-   mp_limb_t** start = fft_params.start;
-   unsigned long skip = fft_params.skip;
-   unsigned long next_skip = fft_params.next_skip;
-   
-   unsigned long start_r = fft_params.start_r; 
-   unsigned long next_skip_r = fft_params.next_skip_r;
-   
-   unsigned long depth = fft_params.depth;
-   unsigned long n = fft_params.n;
-   mp_limb_t** scratch = fft_params.scratch+*fft_params.thread;
-   
-   int first = fft_params.first;
-   
-   for (i = 0; i < length; i++, start += next_skip)
-   {
-      fft_recursive(start, skip, start_r, next_skip_r, depth, scratch, n, first);
-   }
-   return NULL;
-}
-
-void* fft_loop2(void* fft_p)
-{
-   unsigned long i;
-   
-   fft_t fft_params = *((fft_t*) fft_p);
-   
-   unsigned long length = fft_params.length;
-   
-   mp_limb_t** start = fft_params.start;
-   unsigned long skip = fft_params.skip;
-   unsigned long next_skip = fft_params.next_skip;
-   
-   unsigned long start_r = fft_params.start_r; 
-   unsigned long next_skip_r = fft_params.next_skip_r;
-   unsigned long skip_r = fft_params.skip_r;
-   
-   unsigned long depth = fft_params.depth;
-   
-   unsigned long n = fft_params.n;
-   mp_limb_t** scratch = fft_params.scratch+*fft_params.thread;
-   
-   int first = fft_params.first;
-
-   for (i = 0; i < length; i++, start += skip, start_r += skip_r)
-   {
-      fft_recursive(start, next_skip, start_r, next_skip_r, depth, scratch, n, first);
-   }
-   return NULL;
-}
 
 /*
 transform of length 2^depth
@@ -2140,21 +2081,6 @@ void fft_main(mp_limb_t** start, unsigned long skip,
               unsigned long depth, mp_limb_t** scratch,
               unsigned long n, int first, int crossover)
 {
-#if USE_THREADS
-   pthread_t thread_arr[THREADS];
-   pthread_attr_t attr;
-   pthread_attr_init(&attr);
-   pthread_attr_setscope(&attr,PTHREAD_SCOPE_SYSTEM);
-   
-   unsigned long thread_num[16] = {0,16,32,48,64,80,96,112,128,144,160,176,192,208,224,240};
-   unsigned long i;
-   
-   unsigned long threads;
-   unsigned long lg_threads;
-   
-   fft_t fft_params[THREADS];
-#endif
-   
    if (crossover == -1)
    {
       // work out crossover = optimal depth to switch over to plain
@@ -2164,12 +2090,12 @@ void fft_main(mp_limb_t** start, unsigned long skip,
       for (crossover = 0; cache_length > 0; cache_length >>= 1, crossover++);
       if (crossover == 0)
          crossover = 1;
-         
-      if (depth <= crossover)
-      {
-         fft_recursive(start, skip, start_r, skip_r, depth, scratch, n, first);
-         return;
-      }
+   }
+
+   if (depth <= crossover)
+   {
+      fft_recursive(start, skip, start_r, skip_r, depth, scratch, n, first);
+      return;
    }
 
    // Factor FFT into two pieces.
@@ -2193,130 +2119,18 @@ void fft_main(mp_limb_t** start, unsigned long skip,
    unsigned long next_start_r = start_r;
    unsigned long next_skip_r = skip_r << depth2;
 
-   if (depth1 <= crossover)
-   {
-#if USE_THREADS
-      threads = THREADS;
-      lg_threads = LG_THREADS;
-      while (threads > length2) 
-      {
-         lg_threads--;
-         threads >>= 1;
-      }
-      
-      unsigned long new_length2 = ((length2-1)>>lg_threads)+1;
-      for (i = 0; i < threads; i++)
-      {
-         fft_params[i].next_skip = next_skip;
-         fft_params[i].skip = skip;
-         fft_params[i].next_skip_r = next_skip_r;
-         fft_params[i].skip_r = skip_r;
-         fft_params[i].depth = depth1;
-         fft_params[i].scratch = scratch;
-         fft_params[i].n = n;
-         fft_params[i].first = 0;
-      }
-      for (i = 0; i < threads-1; i++)
-      {
-         fft_params[i].length = new_length2;
-         fft_params[i].start = next_start + i*new_length2*skip;
-         fft_params[i].start_r = next_start_r + i*new_length2*skip_r;
-      }
-      fft_params[i].length = length2 - new_length2*i;
-      fft_params[i].start = next_start + i*new_length2*skip;
-      fft_params[i].start_r = next_start_r + i*new_length2*skip_r;
-      
-      for (i = 0; i < threads; i++)
-      {
-         fft_params[i].thread = thread_num+i;
-         pthread_create(thread_arr+i, &attr, fft_loop2, (void*) (fft_params+i));
-             
-      }
-      for (unsigned long i = 0; i < threads; i++)
-      {
-         pthread_join(thread_arr[i], NULL);
-      } 
-      
-#else
-      for (unsigned long i = 0; i < length2; i++, next_start += skip, 
-              next_start_r += skip_r)
-      {
-         fft_recursive(next_start, skip, next_start_r, skip_r, depth1, scratch, n, 0);
-      }    
-#endif
-   } else
-   {
-      for (unsigned long i = 0; i < length2; i++, next_start += skip,
-          next_start_r += skip_r)
-      {
-          fft_main(next_start, next_skip, next_start_r, next_skip_r,
+   for (unsigned long i = 0; i < length2; i++, next_start += skip,
+        next_start_r += skip_r)
+      fft_main(next_start, next_skip, next_start_r, next_skip_r,
                depth1, scratch, n, first, crossover);
-      }
-   }
-   
+
    next_start = start;
    next_start_r = start_r << depth1;
    next_skip_r = skip_r << depth1;
-   
-   if (depth2 <= crossover)
-   {
-#if USE_THREADS
-      threads = THREADS;
-      lg_threads = LG_THREADS;
-      while (threads > length1) 
-      {
-         lg_threads--;
-         threads >>= 1;
-      }
-      
-      unsigned long new_length1 = ((length1-1)>>lg_threads)+1;
-      for (i = 0; i < threads; i++)
-      {
-         fft_params[i].next_skip = next_skip;
-         fft_params[i].skip = skip;
-         fft_params[i].next_skip_r = next_skip_r;
-         fft_params[i].start_r = next_start_r;
-         fft_params[i].depth = depth2;
-         fft_params[i].scratch = scratch;
-         fft_params[i].n = n;
-         fft_params[i].first = 0;
-      }
-      for (i = 0; i < threads-1; i++)
-      {
-         fft_params[i].length = new_length1;
-         fft_params[i].start = next_start + i*new_length1*next_skip;
-      }
-      fft_params[i].length = length1 - new_length1*i;
-      fft_params[i].start = next_start + i*new_length1*next_skip;
-      
-      for (i = 0; i < threads; i++)
-      {
-         fft_params[i].thread = thread_num+i;
-         pthread_create(thread_arr+i, &attr, fft_loop, (void*) (fft_params+i));
-             
-      }
-      for (unsigned long i = 0; i < threads; i++)
-      {
-         pthread_join(thread_arr[i], NULL);
-      } 
-      
-#else
-      for (unsigned long i = 0; i < length1; i++, next_start += next_skip)
-      {
-         fft_recursive(next_start, skip, next_start_r, skip_r, depth2, scratch, n, 0);
-      }    
-#endif  
-   } else
-   {
-      for (unsigned long i = 0; i < length1; i++, next_start += next_skip)
-      {
-         fft_main(next_start, skip, next_start_r, next_skip_r,
+
+   for (unsigned long i = 0; i < length1; i++, next_start += next_skip)
+      fft_main(next_start, skip, next_start_r, next_skip_r,
                depth2, scratch, n, 0, crossover);
-      }
-   }
-#if USE_THREADS
-   pthread_attr_destroy(&attr);
-#endif
 }
 
 /*
@@ -2381,60 +2195,6 @@ void ifft_recursive(mp_limb_t** start, unsigned long skip,
    }
 }
 
-void* ifft_loop2(void* fft_p)
-{
-   unsigned long i;
-   
-   fft_t fft_params = *((fft_t*) fft_p);
-   
-   unsigned long length = fft_params.length;
-   
-   mp_limb_t** start = fft_params.start;
-   unsigned long skip = fft_params.skip;
-   unsigned long next_skip = fft_params.next_skip;
-   
-   unsigned long start_r = fft_params.start_r; 
-   unsigned long next_skip_r = fft_params.next_skip_r;
-   
-   unsigned long depth = fft_params.depth;
-   unsigned long n = fft_params.n;
-   mp_limb_t** scratch = fft_params.scratch+*fft_params.thread;
-   
-   for (i = 0; i < length; i++, start += next_skip)
-   {
-      ifft_recursive(start, skip, start_r, next_skip_r, depth, scratch, n);
-   }
-   return NULL;
-}
-
-void* ifft_loop(void* fft_p)
-{
-   unsigned long i;
-   
-   fft_t fft_params = *((fft_t*) fft_p);
-   
-   unsigned long length = fft_params.length;
-   
-   mp_limb_t** start = fft_params.start;
-   unsigned long skip = fft_params.skip;
-   unsigned long next_skip = fft_params.next_skip;
-   
-   unsigned long start_r = fft_params.start_r; 
-   unsigned long next_skip_r = fft_params.next_skip_r;
-   unsigned long skip_r = fft_params.skip_r;
-   
-   unsigned long depth = fft_params.depth;
-   
-   unsigned long n = fft_params.n;
-   mp_limb_t** scratch = fft_params.scratch+*fft_params.thread;
-   
-   for (i = 0; i < length; i++, start += skip, start_r += skip_r)
-   {
-      ifft_recursive(start, next_skip, start_r, next_skip_r, depth, scratch, n);
-   }
-   return NULL;
-}
-
 /*
 Main IFFT routine. It breaks the IFFT up into pieces and calls 
 ifft_recursive on the pieces. It is the inverse of fft_main.
@@ -2445,21 +2205,6 @@ void ifft_main(mp_limb_t** start, unsigned long skip,
                unsigned long depth, mp_limb_t** scratch,
                unsigned long n, int crossover)
 {
-#if USE_THREADS
-   pthread_t thread_arr[THREADS];
-   pthread_attr_t attr;
-   pthread_attr_init(&attr);
-   pthread_attr_setscope(&attr,PTHREAD_SCOPE_SYSTEM);
-   
-   unsigned long thread_num[16] = {0,16,32,48,64,80,96,112,128,144,160,176,192,208,224,240};
-   unsigned long i;
-   
-   unsigned long lg_threads;
-   unsigned long threads;
-   
-   fft_t fft_params[THREADS];
-#endif
-   
    if (crossover == -1)
    {
       // work out crossover = optimal depth to switch over to plain
@@ -2469,15 +2214,15 @@ void ifft_main(mp_limb_t** start, unsigned long skip,
       for (crossover = 0; cache_length > 0; cache_length >>= 1, crossover++);
       if (crossover == 0)
          crossover = 1;
-      
-      if (depth <= crossover)
-      {
-         ifft_recursive(start, skip, start_r, skip_r, depth, scratch, n);
-         return;
-      }
    }
 
    // do the forward FFT backwards
+
+   if (depth <= crossover)
+   {
+      ifft_recursive(start, skip, start_r, skip_r, depth, scratch, n);
+      return;
+   }
 
    unsigned long depth2 = crossover;
    unsigned long depth1 = depth - depth2;
@@ -2490,407 +2235,19 @@ void ifft_main(mp_limb_t** start, unsigned long skip,
    unsigned long next_start_r = start_r << depth1;
    unsigned long next_skip_r = skip_r << depth1;
 
-   if (depth2 <= crossover)
-   {
-#if USE_THREADS
-      threads = THREADS;
-      lg_threads = LG_THREADS;
-      while (threads > length1) 
-      {
-         lg_threads--;
-         threads >>= 1;
-      }
-      
-      unsigned long new_length1 = ((length1-1)>>lg_threads)+1;
-      for (i = 0; i < threads; i++)
-      {
-         fft_params[i].next_skip = next_skip;
-         fft_params[i].skip = skip;
-         fft_params[i].next_skip_r = next_skip_r;
-         fft_params[i].start_r = next_start_r;
-         fft_params[i].depth = depth2;
-         fft_params[i].scratch = scratch;
-         fft_params[i].n = n;
-      }
-      for (i = 0; i < threads-1; i++)
-      {
-         fft_params[i].length = new_length1;
-         fft_params[i].start = next_start + i*new_length1*next_skip;
-      }
-      fft_params[i].length = length1 - new_length1*i;
-      fft_params[i].start = next_start + i*new_length1*next_skip;
-      
-      for (i = 0; i < threads; i++)
-      {
-         fft_params[i].thread = thread_num+i;
-         pthread_create(thread_arr+i, &attr, ifft_loop2, (void*) (fft_params+i));
-             
-      }
-      for (unsigned long i = 0; i < threads; i++)
-      {
-         pthread_join(thread_arr[i], NULL);
-      } 
-      
-#else
-      for (unsigned long i = 0; i < length1; i++, next_start += next_skip)
-      {
-         ifft_recursive(next_start, skip, next_start_r, skip_r, depth2, scratch, n);
-      }    
-#endif
-   } else
-   {
-      for (unsigned long i = 0; i < length1; i++, next_start += next_skip)
-         ifft_main(next_start, skip, next_start_r, next_skip_r,
+   for (unsigned long i = 0; i < length1; i++, next_start += next_skip)
+      ifft_main(next_start, skip, next_start_r, next_skip_r,
                 depth2, scratch, n, crossover);
-   }
+
    next_start = start;
    next_start_r = start_r;
    next_skip_r = skip_r << depth2;
 
-   if (depth1 <= crossover)
-   {
-#if USE_THREADS
-      threads = THREADS;
-      lg_threads = LG_THREADS;
-      while (threads > length2) 
-      {
-         lg_threads--;
-         threads >>= 1;
-      }
-      
-      unsigned long new_length2 = ((length2-1)>>lg_threads)+1;
-      for (i = 0; i < threads; i++)
-      {
-         fft_params[i].next_skip = next_skip;
-         fft_params[i].skip = skip;
-         fft_params[i].next_skip_r = next_skip_r;
-         fft_params[i].skip_r = skip_r;
-         fft_params[i].depth = depth1;
-         fft_params[i].scratch = scratch;
-         fft_params[i].n = n;
-      }
-      for (i = 0; i < threads-1; i++)
-      {
-         fft_params[i].length = new_length2;
-         fft_params[i].start = next_start + i*new_length2*skip;
-         fft_params[i].start_r = next_start_r + i*new_length2*skip_r;
-      }
-      fft_params[i].length = length2 - new_length2*i;
-      fft_params[i].start = next_start + i*new_length2*skip;
-      fft_params[i].start_r = next_start_r + i*new_length2*skip_r;
-      
-      for (i = 0; i < threads; i++)
-      {
-         fft_params[i].thread = thread_num+i;
-         pthread_create(thread_arr+i, &attr, ifft_loop, (void*) (fft_params+i));
-             
-      }
-      for (unsigned long i = 0; i < threads; i++)
-      {
-         pthread_join(thread_arr[i], NULL);
-      } 
-      
-#else
-      for (unsigned long i = 0; i < length2; i++, next_start += skip, 
-              next_start_r += skip_r)
-      {
-         ifft_recursive(next_start, skip, next_start_r, skip_r, depth1, scratch, n);
-      }    
-#endif  
-   } else
-   {
-       for (unsigned long i = 0; i < length2; i++, next_start += skip,
+   for (unsigned long i = 0; i < length2; i++, next_start += skip,
         next_start_r += skip_r)
-           ifft_main(next_start, next_skip, next_start_r, next_skip_r,
+   {
+      ifft_main(next_start, next_skip, next_start_r, next_skip_r,
                 depth1, scratch, n, crossover);
-   }
-#if USE_THREADS
-   pthread_attr_destroy(&attr);
-#endif
-}
-
-/*=============================================================================
-
-Old recursive FFT code, but parallelised
-
-==============================================================================*/
-
-void* fft_inner(void* fft_p)
-{
-   fft_s* fft_params = (fft_s*) fft_p;
-   
-   mp_limb_t** start = fft_params->start;
-   unsigned long length = fft_params->length;
-   mp_limb_t** scratch = fft_params->scratch;
-   unsigned long r = fft_params->r; 
-   unsigned long n = fft_params->n;
-   
-   unsigned long half = length >> 1;
-   mp_limb_t** middle = start + half;
-   unsigned long offset, r_mult;
-    
-   
-      // scratch = a - b
-      mpn_sub_n(scratch[0], start[0], middle[0], n + 1);
-      
-      // a += b
-      mpn_add_n(start[0], start[0], middle[0], n + 1);
-      
-      swap_limb_ptrs(middle, scratch);
-      
-      if (half == 1)
-         return NULL;
-      
-      if (r & (FLINT_BITS_PER_LIMB - 1))
-      {
-         // not shifting by a multiple of the limb length
-         for (offset = 1, r_mult = r; offset < half; offset++, r_mult += r)
-            fft_butterfly_bits(start + offset, middle + offset,
-                               scratch, r_mult, n);
-      }
-      else
-      {
-         // shifting by a multiple of the limb length
-         unsigned long rdivB = r / FLINT_BITS_PER_LIMB;
-         for (offset = 1, r_mult = rdivB; offset < half;
-              offset++, r_mult += rdivB)
-            fft_butterfly_limbs(start + offset, middle + offset,
-                                scratch, r_mult, n);
-      }
-   
-   fft_s fft_params1;
-   
-   fft_params1.start = middle;
-   fft_params1.length = (length >> 1);
-   fft_params1.scratch = scratch;
-   fft_params1.r = (r << 1); 
-   fft_params1.n = n;
-   
-   fft_inner((void*)&fft_params1);
-   
-   fft_params1.start = start;
-   
-   fft_inner((void*)&fft_params1);
-   return NULL;
-}
-
-void fft(mp_limb_t** start, unsigned long length, mp_limb_t** scratch,
-         unsigned long r, unsigned long n)
-{
-#if USE_THREADS
-   pthread_t thread1;
-   pthread_t thread2;
-   
-   pthread_attr_t attr;
-   pthread_attr_init(&attr);
-   pthread_attr_setscope(&attr,PTHREAD_SCOPE_SYSTEM);
-#endif
-    
-   unsigned long half = length >> 1;
-   mp_limb_t** middle = start + half;
-   unsigned long offset, r_mult;
-    
-   
-      copy_limbs(middle[0], start[0], n + 1);
-      
-      if (r & (FLINT_BITS_PER_LIMB - 1))
-      {
-         // not shifting by a multiple of the limb length
-         for (offset = 1, r_mult = r; offset < half; offset++, r_mult += r)
-            rotate_mod_p_bits(middle[offset], start[offset], r_mult, n);
-      }
-      else
-      {
-         // shifting by a multiple of the limb length
-         unsigned long rdivB = r / FLINT_BITS_PER_LIMB;
-         for (offset = 1, r_mult = rdivB; offset < half;
-              offset++, r_mult += rdivB)
-            rotate_mod_p_limbs(middle[offset], start[offset], r_mult, n);
-      }
-      
-   fft_s fft_params1;
-   fft_s fft_params2;
-   
-   fft_params1.start = middle;
-   fft_params1.length = (length >> 1);
-   fft_params1.scratch = scratch;
-   fft_params1.r = (r << 1); 
-   fft_params1.n = n;
-   
-   fft_params2.start = start;
-   fft_params2.length = (length >> 1);
-   fft_params2.scratch = scratch+16;
-   fft_params2.r = (r << 1); 
-   fft_params2.n = n;
-   
-#if USE_THREADS
-   pthread_create(&thread1, &attr, fft_inner, (void*) &fft_params1);
-   pthread_create(&thread2, &attr, fft_inner, (void*) &fft_params2);
-   
-   pthread_join(thread1, NULL);
-   pthread_join(thread2, NULL);
-    
-   pthread_attr_destroy(&attr);         
-#else
-   fft_inner((void*) &fft_params1);
-   fft_inner((void*) &fft_params2);
-#endif
-}
-
-void * ifft_inner(void* ifft_params)
-{
-   fft_s * ifft_p = (fft_s*) ifft_params;
-    
-   mp_limb_t** start = ifft_p->start;
-   unsigned long length = ifft_p->length;
-   mp_limb_t** scratch = ifft_p->scratch;
-   unsigned long r = ifft_p->r;
-   unsigned long n = ifft_p->n;  
-     
-   unsigned long half = length >> 1;
-   mp_limb_t** middle = start + half;
-   unsigned long offset, r_mult = 0;
-   unsigned long nB = FLINT_BITS_PER_LIMB * n;
-   
-   if (half == 1)
-   {
-      // scratch = a - b
-      mpn_sub_n(scratch[0], start[0], middle[0], n + 1);
-      
-      // a += b
-      mpn_add_n(start[0], start[0], middle[0], n + 1);
-      
-      swap_limb_ptrs(middle, scratch);
-      
-      return NULL;
-   }
-   
-   fft_s ifft_params1;
-   
-   ifft_params1.start = middle;
-   ifft_params1.length = half;
-   ifft_params1.scratch = scratch;
-   ifft_params1.r = (r << 1); 
-   ifft_params1.n = n;
-   
-   ifft_inner((void*)&ifft_params1);
-   
-   ifft_params1.start = start;
-   
-   ifft_inner((void*)&ifft_params1);
-   
-   // scratch = a - b
-   mpn_sub_n(scratch[0], start[0], middle[0], n + 1);
-   
-   // a += b
-   mpn_add_n(start[0], start[0], middle[0], n + 1);
-   
-   swap_limb_ptrs(middle, scratch);
-   
-   if (r & (FLINT_BITS_PER_LIMB - 1))
-   {
-      // not shifting by a multiple of the limb length
-      for (offset = 1, r_mult = nB - r; offset < half; offset++, r_mult -= r)
-      {
-         ifft_butterfly_bits(start + offset, middle + offset,
-                             scratch, r_mult, n);
-      }
-   }
-   else
-   {
-      // shifting by a multiple of the limb length
-      unsigned long rdivB = r / FLINT_BITS_PER_LIMB;
-      for (offset = 1, r_mult = n - rdivB; offset < half;
-           offset++, r_mult -= rdivB)
-         ifft_butterfly_limbs(start + offset, middle + offset,
-                              scratch, r_mult, n);
-   }
-   return NULL;
-}
-
-void ifft(mp_limb_t** start, unsigned long length, mp_limb_t** scratch,
-          unsigned long r, unsigned long n)
-{
-#if USE_THREADS
-   pthread_t thread1;
-   pthread_t thread2;
-   
-   pthread_attr_t attr;
-   pthread_attr_init(&attr);
-   pthread_attr_setscope(&attr,PTHREAD_SCOPE_SYSTEM);
-#endif
-   
-   unsigned long half = length >> 1;
-   mp_limb_t** middle = start + half;
-   unsigned long offset, r_mult = 0;
-   unsigned long nB = FLINT_BITS_PER_LIMB * n;
-   
-   if (half == 1)
-   {
-      // scratch = a - b
-      mpn_sub_n(scratch[0], start[0], middle[0], n + 1);
-      
-      // a += b
-      mpn_add_n(start[0], start[0], middle[0], n + 1);
-      
-      swap_limb_ptrs(middle, scratch);
-      
-      return;
-   }
-   
-   fft_s ifft_params1;
-   fft_s ifft_params2;
-   
-   ifft_params1.start = middle;
-   ifft_params1.length = half;
-   ifft_params1.scratch = scratch;
-   ifft_params1.r = (r << 1); 
-   ifft_params1.n = n;
-   
-   ifft_params2.start = start;
-   ifft_params2.length = half;
-   ifft_params2.scratch = scratch+16;
-   ifft_params2.r = (r << 1); 
-   ifft_params2.n = n;
-   
-#if USE_THREADS
-   pthread_create(&thread1, &attr, ifft_inner, (void*) &ifft_params1);
-   pthread_create(&thread2, &attr, ifft_inner, (void*) &ifft_params2);
-   
-   pthread_join(thread1, NULL);
-   pthread_join(thread2, NULL);
-    
-   pthread_attr_destroy(&attr);         
-#else
-   ifft_inner((void*) &ifft_params1);
-   ifft_inner((void*) &ifft_params2);
-#endif
-   
-   // scratch = a - b
-   mpn_sub_n(scratch[0], start[0], middle[0], n + 1);
-   
-   // a += b
-   mpn_add_n(start[0], start[0], middle[0], n + 1);
-   
-   swap_limb_ptrs(middle, scratch);
-   
-   if (r & (FLINT_BITS_PER_LIMB - 1))
-   {
-      // not shifting by a multiple of the limb length
-      for (offset = 1, r_mult = nB - r; offset < half; offset++, r_mult -= r)
-      {
-         ifft_butterfly_bits(start + offset, middle + offset,
-                             scratch, r_mult, n);
-      }
-   }
-   else
-   {
-      // shifting by a multiple of the limb length
-      unsigned long rdivB = r / FLINT_BITS_PER_LIMB;
-      for (offset = 1, r_mult = n - rdivB; offset < half;
-           offset++, r_mult -= rdivB)
-         ifft_butterfly_limbs(start + offset, middle + offset,
-                              scratch, r_mult, n);
    }
 }
 
@@ -2931,7 +2288,7 @@ void KSMul_bits(mpz_t* res, mpz_t* data1, mpz_t* data2,
    
    if (array_bits > 164000)
    {   
-      Z_SSMul(output, array1, array2, array_limbs);  
+      Z_SSMul(output, array1, array2, array_limbs, array_limbs);  
    } else 
    {
       mpn_mul_n(output, array1, array2, array_limbs);
@@ -3009,7 +2366,7 @@ void KSMul_bits_signed(mpz_t* res, mpz_t* data1, mpz_t* data2,
 
    if (array_bits > 164000)
    {
-      Z_SSMul(output, array1, array2, array_limbs);
+      Z_SSMul(output, array1, array2, array_limbs, array_limbs);
    } else
    {
       mpn_mul_n(output, array1, array2, array_limbs);
@@ -3062,7 +2419,7 @@ void KSMul_bytes(mpz_t* res, mpz_t* data1, mpz_t* data2,
    
    if (array_bits > 164000)
    {   
-      Z_SSMul(output, array1, array2, array_limbs);  
+      Z_SSMul(output, array1, array2, array_limbs, array_limbs);  
    } else 
    {
       mpn_mul_n(output, array1, array2, array_limbs);
@@ -3141,7 +2498,7 @@ void KSMul_bytes_signed(mpz_t* res, mpz_t* data1, mpz_t* data2,
    
    if (array_bits > 164000)
    {   
-      Z_SSMul(output, array1, array2, array_limbs);  
+      Z_SSMul(output, array1, array2, array_limbs, array_limbs);  
    } else 
    {
       mpn_mul_n(output, array1, array2, array_limbs);
@@ -3214,7 +2571,7 @@ void* pointwise_mult(void* point_params)
          // usual case, just do the multiplication
          if (n > 164000/FLINT_BITS_PER_LIMB)
          {   
-             Z_SSMul(array3, array1[i], array2[i], n);  
+             Z_SSMul(array3, array1[i], array2[i], n, n);  
          } else 
          {
             mpn_mul_n(array3, array1[i], array2[i], n);
@@ -3458,22 +2815,25 @@ void KSHZ_mul(mpz_t* res, mpz_t* data1, mpz_t* data2,
    output_bits = (((output_bits - 1) >> log_length) + 1) << log_length;
    unsigned long n = (output_bits - 1) / FLINT_BITS_PER_LIMB + 1;
    length = 1 << (log_length + 1);
-   //unsigned long r = n*FLINT_BITS_PER_LIMB * 2 / length;
 
-   mp_limb_t* array = (mp_limb_t*) limb_alloc((2*length + 16) * (n+1) + 2*n*THREADS,0);
-   mp_limb_t** pointarr = (mp_limb_t**) limb_alloc(2*length + 16*16,0);
+#if !USE_TRUNCATED_FFT
+   unsigned long r = n*FLINT_BITS_PER_LIMB * 2 / length;
+#endif
+
+   mp_limb_t* array = (mp_limb_t*) limb_alloc((2*length + 1) * (n+1) + 2*n*THREADS,0);
+   mp_limb_t** pointarr = (mp_limb_t**) limb_alloc(2*length + 1,0);
 
    // partition up array into coefficient buffers of length n+1...
    
    pointarr[0] = array;
-   for (i = 0; i < 2*length-1; i++)
-      pointarr[i+1] = pointarr[i] + (n+1);
-   for (i = 0; i < 16; i++)
-      pointarr[2*length+16*i] = array+(2*length+i)*(n+1);
+   for (i = 0; i < 2*length; i++)
+   pointarr[i+1] = pointarr[i] + (n+1);
       
    // ...and pointwise multiplication working space
    
-   //mp_limb_t* array3 = array + (2*length+16)*(n+1);   
+#if !USE_TRUNCATED_FFT
+   mp_limb_t* array3 = array + (2*length+1)*(n+1);  
+#endif 
 
    mp_limb_t** array1 = pointarr;
    mp_limb_t** array2 = pointarr + length;
@@ -3485,7 +2845,11 @@ void KSHZ_mul(mpz_t* res, mpz_t* data1, mpz_t* data2,
    ssmul_convert_in(array2, data2, length, sign, 1, 1, bundle, length2, 
                           n, 0, 0, orig_output_bits, coeffs_per_limb);
    
+#if USE_TRUNCATED_FFT
    ssmul_main(array1, trunc_length, array2, trunc_length, scratch, log_length+1, n);
+#else
+   ssmul_main_old(array1, array2, array3, length, log_length, n, r, scratch);
+#endif
    
 #if USE_TRUNCATED_FFT
    unsigned long next_coeff;
@@ -3827,27 +3191,26 @@ void SSMul(Zvec outpoly, Zvec poly1, Zvec poly2, unsigned long coeff_bits, int s
    //
    //   We use n+1 limbs instead of n so that we can allow
    //   carries to build up without reducing mod p all the time
-   
-   mp_limb_t* array = (mp_limb_t*) limb_alloc((2*length + 16) * (n+1) + 2*n*THREADS,0);
-   mp_limb_t** pointarr = (mp_limb_t**) limb_alloc(2*length + 16*16,0);
+     
+   mp_limb_t* array = (mp_limb_t*) limb_alloc((2*length + 1) * (n+1) + 2*n*THREADS,0);
+   mp_limb_t** pointarr = (mp_limb_t**) limb_alloc(2*length + 1,0);
 
    // partition up array into coefficient buffers of length n+1...
    
    pointarr[0] = array;
-   for (i = 0; i < 2*length-1; i++)
-      pointarr[i+1] = pointarr[i] + (n+1);
-   for (i = 0; i < 16; i++)
-      pointarr[2*length+16*i] = array+(2*length+i)*(n+1);
+   for (i = 0; i < 2*length; i++)
+   pointarr[i+1] = pointarr[i] + (n+1);
       
    // ...and pointwise multiplication working space
    
 #if !USE_TRUNCATED_FFT
-   mp_limb_t* array3 = array + (2*length+16)*(n+1);  
+   mp_limb_t* array3 = array + (2*length+1)*(n+1);  
 #endif 
 
    mp_limb_t** array1 = pointarr;
    mp_limb_t** array2 = pointarr + length;
    mp_limb_t** scratch = pointarr + 2*length;
+   
    
    // output_bits: number of bits required for each fft output coefficient (multiple of B)
    // input_limbs: number of limbs per fft coeff

@@ -743,7 +743,8 @@ void test_KSMul(unsigned long num_trials, unsigned long lengtha, unsigned length
       // compute product using SSMul
       Zvec_mul(d, a, b);
       if ((a->length > 32) && (b->length > 32)) Zvec_SSMul(c,a,b, coeff_bits, 1);
-      else Zvec_karamul(c,a,b,coeff_bits);
+      else 
+      Zvec_karamul(c,a,b,coeff_bits);
       /*for (unsigned j = 0; j < lengtha+lengthb-1; j++)
       {
          gmp_printf("%Zx ",c.coords[j]);
@@ -812,7 +813,7 @@ int main()
    
    printf("   testing SSMul...\n");
 
-   for (unsigned long i = 69; i <= 1000000; i+=((i/2)+2))
+   for (unsigned long i = 106356; i <= 1000000; i+=((i/2)+2))
      for (unsigned long j = 1; j <= 10000; j+=((j/2)+2)) 
       for (unsigned long k = 1; k <= j; k+=((k/2)+2))  
       {

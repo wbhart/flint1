@@ -1,8 +1,28 @@
+/*============================================================================
+    
+    (C) 2006 William Hart and David Harvey
+    
+    This file is part of FLINT.
+
+    FLINT is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    FLINT is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with FLINT; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+
+============================================================================*/
+
 /****************************************************************************
 
 Zvec.cpp: Routines for polynomials, implemented as vectors of mpz_t's.
-
-Copyright 2006 William Hart and David Harvey
 
 *****************************************************************************/
 
@@ -902,7 +922,7 @@ void Zvec_SSMul(Zvec res, Zvec a, Zvec b, unsigned long size, int type)
      mpz_set_ui(tempZvec1,a->length+b->length-1);
      unsigned long l = mpz_sizeinbase(tempZvec1,2)-1;
      unsigned long m2 = 1L << (l+1);
-     unsigned long templ1 = ((a->length < b->length) ? a->length - 1 : b->length - 1);
+     unsigned long templ1 = ((a->length > b->length) ? a->length-1 : b->length-1);
      mpz_set_ui(tempZvec1,templ1);
      templ1 = mpz_sizeinbase(tempZvec1,2);
      unsigned long bound = 2 + templ1 + 2*size;
@@ -952,9 +972,18 @@ void Zvec_SSMul(Zvec res, Zvec a, Zvec b, unsigned long size, int type)
         Zvec_fft(bb, r, l+1, p, mr);
      }
      /* perform pointwise mults */
+     //mpz_t testmpz;
+     //mpz_init(testmpz);
      for (i=0; i<m2; i++)
      {
+         //mpz_mul(testmpz,aa->coords[i],bb->coords[i]);
          Z_fast_mul(tempZvec2,aa->coords[i],bb->coords[i]);
+         //if (mpz_cmp(tempZvec2,testmpz)!=0) 
+         //{
+         //   printf("It fails!! %ld\n",i);
+         //   printf("sizes: %ld, %ld\n",mpz_sizeinbase(aa->coords[i],2),mpz_sizeinbase(bb->coords[i],2));
+         //   printf("words: %ld, %ld\n",aa->coords[i]->_mp_size,bb->coords[i]->_mp_size);
+         //}
          if (mpz_sizeinbase(tempZvec2,2) >= mr)
          {
             mpz_div_2exp(tempZvec1,tempZvec2,mr);
@@ -966,6 +995,7 @@ void Zvec_SSMul(Zvec res, Zvec a, Zvec b, unsigned long size, int type)
          }
          mpz_set(aa->coords[i],tempZvec2);
      }
+     //mpz_clear(testmpz);
      
      /* perform inverse FFT */
      

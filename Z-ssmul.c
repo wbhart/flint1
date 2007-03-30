@@ -925,7 +925,8 @@ void Z_ssmul_main(mp_limb_t** array1, unsigned long length1,
        else
        {
           // usual case, just do the multiplication
-          mpn_mul_n(mul_scratch, array1[i], array2[i], n);
+          if (n >= 1796) Z_SSMul(mul_scratch, array1[i], array2[i], n, n);
+          else mpn_mul_n(mul_scratch, array1[i], array2[i], n);
           // reduce the result mod p
           array1[i][n] = -mpn_sub_n(array1[i], mul_scratch, mul_scratch + n, n);
        }
@@ -967,10 +968,14 @@ from the given poly inputs
 
 */
 void Z_SSMul(mp_limb_t* res, mp_limb_t* data1, mp_limb_t* data2,
-              unsigned long limbs)
+              unsigned long limbs, unsigned long limbs2)
 {
+   unsigned long twk;
+   
+   twk = 2;   
+      
    unsigned long i, j, skip;
-   unsigned long input_limbs = limbs; 
+   unsigned long input_limbs = limbs;
    
    unsigned long coeff_bits = limbs*FLINT_BITS_PER_LIMB;
    // number of bits that output coefficients would normally require:
@@ -979,17 +984,19 @@ void Z_SSMul(mp_limb_t* res, mp_limb_t* data1, mp_limb_t* data2,
    unsigned long log_length = 0; 
    unsigned long length = 1;
    
-   while ((32*length <= output_bits)&&(input_limbs>1)) 
+   while ((twk*length <= 2*output_bits)&&(input_limbs>1)) 
    {
          length<<=1;
          log_length++;
          input_limbs = (input_limbs+1)>>1;
          output_bits = 2*FLINT_BITS_PER_LIMB*input_limbs+log_length;
    }
-   coeff_bits = FLINT_BITS_PER_LIMB*input_limbs;
-   
    // round up to a multiple of the bits that will support the convolution length
-   output_bits = (((output_bits - 1) >> log_length) + 1) << log_length;
+   output_bits = (((output_bits - 1) >> (log_length-1)) + 1) << (log_length-1);
+   coeff_bits = (output_bits-log_length)/2;
+   input_limbs = (coeff_bits)/FLINT_BITS_PER_LIMB;
+   coeff_bits = FLINT_BITS_PER_LIMB*input_limbs;
+   //printf("%ld %ld %ld %ld \n",coeff_bits,input_limbs,output_bits,log_length);
    
    // make nB larger than the output coefficient size (B = FLINT_BITS_PER_LIMB)
    // this effectively rounds the output coefficients up to a multiple of the 
@@ -1000,6 +1007,7 @@ void Z_SSMul(mp_limb_t* res, mp_limb_t* data1, mp_limb_t* data2,
    // since the input polynomial length is not needed further
    length = 1 << (log_length + 1);
    unsigned long trunc_length = (limbs-1)/input_limbs + 1;
+   unsigned long trunc_length2 = (limbs2-1)/input_limbs + 1;
    
    // We want p = 2^rm+1 to be just larger than the largest output
    // coefficient and where m=2^k is bigger than B = FLINT_BITS_PER_LIMB
@@ -1058,7 +1066,7 @@ void Z_SSMul(mp_limb_t* res, mp_limb_t* data1, mp_limb_t* data2,
    for (; i < length/2; i++) clear_limbs(array1[i],n+1);
       
    // convert data for second FFT
-   for (skip = 0, i = 0; (i < length/2) && (skip+input_limbs <= limbs); i++, skip+=input_limbs)
+   for (skip = 0, i = 0; (i < length/2) && (skip+input_limbs <= limbs2); i++, skip+=input_limbs)
    {
       clear_limbs(array2[i],n+1);
       // prefetch entire bundled coefficient
@@ -1067,18 +1075,18 @@ void Z_SSMul(mp_limb_t* res, mp_limb_t* data1, mp_limb_t* data2,
       copy_limbs(array2[i], data2+skip, input_limbs);
    }
    if (i < length/2) clear_limbs(array2[i],n+1);
-   if (limbs>skip) copy_limbs(array2[i], data2+skip, limbs-skip);
+   if (limbs2>skip) copy_limbs(array2[i], data2+skip, limbs2-skip);
    i++;
    for (; i < length/2; i++) clear_limbs(array2[i],n+1);
      
-   Z_ssmul_main(array1, trunc_length, array2, trunc_length, scratch, log_length+1, n);
+   Z_ssmul_main(array1, trunc_length, array2, trunc_length2, scratch, log_length+1, n);
    
    // We have to clear the output polynomial, since we have to add to its
    // coefficients rather than just copy into them
    
    clear_limbs(res,2*limbs);
     
-   for (skip = 0, i = 0; (i < 2*trunc_length - 1) && (skip+n <= 2*limbs); i++, skip+=input_limbs)
+   for (skip = 0, i = 0; (i < trunc_length + trunc_length2 - 1) && (skip+n <= 2*limbs); i++, skip+=input_limbs)
    { 
       // divide by appropriate normalising power of 2
       // (I'm assuming here that the transform length will always be 
@@ -1094,7 +1102,7 @@ void Z_SSMul(mp_limb_t* res, mp_limb_t* data1, mp_limb_t* data2,
    } 
    while (skip < 2*limbs)
    {
-      if ((2*limbs > skip) && (i < 2*trunc_length - 1))
+      if ((2*limbs > skip) && (i < trunc_length+trunc_length2 - 1))
       {
          for (j = 0; j < n; j += 8) FLINT_PREFETCH(array1[i+1], j);
          Z_rotate_right_bits(array1[i], array1[i], log_length+1, n);
@@ -1115,12 +1123,13 @@ void Z_SSMul(mp_limb_t* res, mp_limb_t* data1, mp_limb_t* data2,
 void Z_fast_mul(mpz_t res, mpz_t a, mpz_t b)
 {
    unsigned long int limbs;
-   if (a->_mp_size > 164000/FLINT_BITS_PER_LIMB)
+   if (a->_mp_size > (1796*64)/FLINT_BITS_PER_LIMB)
    {
-      if (a->_mp_size >= b->_mp_size) limbs = a->_mp_size;
-      else limbs = b->_mp_size;
+      if (a->_mp_size >= b->_mp_size) limbs = a->_mp_size; 
+      else limbs = b->_mp_size; 
       mp_limb_t* output = (mp_limb_t*) limb_alloc(2*limbs,0);
-      Z_SSMul(output, a->_mp_d, b->_mp_d, limbs);
+      if (a->_mp_size > b->_mp_size) Z_SSMul(output, a->_mp_d, b->_mp_d, a->_mp_size, b->_mp_size);
+      else Z_SSMul(output, b->_mp_d, a->_mp_d, b->_mp_size, a->_mp_size);
       Z_convert_raw_to_mpz(res,output,2*limbs);
       if (mpz_sgn(res) != mpz_sgn(a)*mpz_sgn(b)) mpz_neg(res,res);
       limb_release();
