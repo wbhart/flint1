@@ -7,7 +7,7 @@ Copyright (C) 2007, William Hart and David Harvey
 !!!!! only PROPOSED data formats and interface
 
 There are two entirely separate data formats for polynomials over Z:
-  -- Zpoly_mpz_t uses an array of mpz_t's
+  -- Zpoly_t uses an array of mpz_t's
   -- Zpoly_mpn_t uses a single block of memory with each coefficient occupying
      the same number of limbs.
 
@@ -40,10 +40,10 @@ void flint_free(void* block);
 
 /****************************************************************************
 
-   Zpoly_mpz_t
+   Zpoly_t
    -----------
 
-Zpoly_mpz_t represents a dense polynomial in Z[x] using a single mpz_t for each
+Zpoly_t represents a dense polynomial in Z[x] using a single mpz_t for each
 coefficient.
 
 "coeffs" is an array of mpz_t's of length "alloc". They are all mpz_init'd.
@@ -54,14 +54,14 @@ polynomial; i.e. it's a polynomial of degree at most length-1. There is no
 requirement for coeff[length-1] to be nonzero. If length == 0, this is the
 zero polynomial. Obviously always alloc >= length.
 
-There are two classes of functions operating on Zpoly_mpz_t:
+There are two classes of functions operating on Zpoly_t:
 
--- The Zpoly_mpz_raw_* functions NEVER free or reallocate "coeffs", so they
+-- The _Zpoly_* functions NEVER free or reallocate "coeffs", so they
    don't care how "coeffs" was allocated, and they never even look at the
    "alloc" attribute. They always assume the output has enough mpz_t's for
    the result.
 
--- The Zpoly_mpz_* functions ASSUME that "coeffs" was allocated via
+-- The Zpoly_* functions ASSUME that "coeffs" was allocated via
    flint_malloc, and they MAY free or reallocate "coeffs" using flint_realloc,
    flint_free etc, whenever they feel the need. Furthermore they assume that
    always alloc >= 1.
@@ -72,25 +72,25 @@ typedef struct
    mpz_t* coeffs;
    unsigned long alloc;
    unsigned long length;
-} Zpoly_mpz_struct;
+} Zpoly_struct;
 
-// Zpoly_mpz_t allows reference-like semantics for Zpoly_mpz_struct:
-typedef Zpoly_mpz_struct Zpoly_mpz_t[1];
+// Zpoly_t allows reference-like semantics for Zpoly_struct:
+typedef Zpoly_struct Zpoly_t[1];
 
 
 // ============================================================================
-// functions in Zpoly_mpz_raw_* layer
+// functions in _Zpoly_* layer
 
 // returns x^n coefficient with no bounds checking
 static inline
-mpz_t* Zpoly_mpz_raw_get_coeff_ptr(Zpoly_mpz_t poly, unsigned long n)
+mpz_t* _Zpoly_get_coeff_ptr(Zpoly_t poly, unsigned long n)
 {
     return &poly->coeffs[n];
 }
 
 // copies out x^n coefficient (via mpz_set) with no bounds checking
 static inline
-void Zpoly_mpz_raw_get_coeff(mpz_t output, Zpoly_mpz_t poly,
+void _Zpoly_get_coeff(mpz_t output, Zpoly_t poly,
                              unsigned long n)
 {
     mpz_set(output, poly->coeffs[n]);
@@ -99,7 +99,7 @@ void Zpoly_mpz_raw_get_coeff(mpz_t output, Zpoly_mpz_t poly,
 // copies out x^n coefficient (via mpz_get_ui) with no bounds checking
 // the coefficient is assumed to fit into an unsigned long
 static inline
-unsigned long Zpoly_mpz_raw_get_coeff_ui(Zpoly_mpz_t poly, unsigned long n)
+unsigned long _Zpoly_get_coeff_ui(Zpoly_t poly, unsigned long n)
 {
     return mpz_get_ui(poly->coeffs[n]);
 }
@@ -107,7 +107,7 @@ unsigned long Zpoly_mpz_raw_get_coeff_ui(Zpoly_mpz_t poly, unsigned long n)
 // copies out x^n coefficient (via mpz_get_si) with no bounds checking
 // the coefficient is assumed to fit into a long
 static inline
-long Zpoly_mpz_raw_get_coeff_si(Zpoly_mpz_t poly, unsigned long n)
+long _Zpoly_get_coeff_si(Zpoly_t poly, unsigned long n)
 {
     return mpz_get_si(poly->coeffs[n]);
 }
@@ -116,20 +116,20 @@ long Zpoly_mpz_raw_get_coeff_si(Zpoly_mpz_t poly, unsigned long n)
 // sets x^n coefficient (via mpz_set) with no bounds checking
 // does NOT update poly->length if the index is beyond the end of the poly
 static inline
-void Zpoly_mpz_raw_set_coeff(Zpoly_mpz_t poly, unsigned long n, mpz_t x)
+void _Zpoly_set_coeff(Zpoly_t poly, unsigned long n, mpz_t x)
 {
     mpz_set(poly->coeffs[n], x);
 }
 
 static inline
-void Zpoly_mpz_raw_set_coeff_ui(Zpoly_mpz_t poly, unsigned long n,
+void _Zpoly_set_coeff_ui(Zpoly_t poly, unsigned long n,
                                 unsigned long x)
 {
     mpz_set_ui(poly->coeffs[n], x);
 }
 
 static inline
-void Zpoly_mpz_raw_set_coeff_si(Zpoly_mpz_t poly, unsigned long n, long x)
+void _Zpoly_set_coeff_si(Zpoly_t poly, unsigned long n, long x)
 {
     mpz_set_si(poly->coeffs[n], x);
 }
@@ -137,29 +137,29 @@ void Zpoly_mpz_raw_set_coeff_si(Zpoly_mpz_t poly, unsigned long n, long x)
 
 // Decreases poly.length to point at the last non-zero coefficient
 // (i.e. so that the degree really is length-1)
-void Zpoly_mpz_raw_normalise(Zpoly_mpz_t poly);
+void _Zpoly_normalise(Zpoly_t poly);
 
 // Normalises the polynomial, and returns its degree
 // (the zero polynomial has degree -1 by convention)
-long Zpoly_mpz_get_degree(Zpoly_mpz_t poly);
+long Zpoly_get_degree(Zpoly_t poly);
 
 // Normalises the polynomial, and returns its length
-unsigned long Zpoly_mpz_get_length(Zpoly_mpz_t poly);
+unsigned long Zpoly_get_length(Zpoly_t poly);
 
 // output = input
 // assumes output.alloc >= input.length
-void Zpoly_mpz_raw_set(Zpoly_mpz_t output, Zpoly_mpz_t input);
+void _Zpoly_set(Zpoly_t output, Zpoly_t input);
 
 // output = 0
 static inline
-void Zpoly_mpz_raw_zero(Zpoly_mpz_t output)
+void _Zpoly_zero(Zpoly_t output)
 {
    output->length = 0;
 }
 
 // swaps coeffs, alloc, length
 static inline
-void Zpoly_mpz_raw_swap(Zpoly_mpz_t x, Zpoly_mpz_t y)
+void _Zpoly_swap(Zpoly_t x, Zpoly_t y)
 {
     mpz_t* temp1;
     unsigned long temp2;
@@ -180,7 +180,7 @@ void Zpoly_mpz_raw_swap(Zpoly_mpz_t x, Zpoly_mpz_t y)
 
 // returns true if input1 is equal to input2. (If the lengths are different, it
 // checks that the overhanging coefficients are zero.)
-int Zpoly_mpz_raw_equal(Zpoly_mpz_t input1, Zpoly_mpz_t input2);
+int _Zpoly_equal(Zpoly_t input1, Zpoly_t input2);
 
 
 // output = input1 + input2
@@ -188,56 +188,56 @@ int Zpoly_mpz_raw_equal(Zpoly_mpz_t input1, Zpoly_mpz_t input2);
 // all combinations of parameter aliasing are allowed
 // output.length is set to the maximum of the two lengths, and no normalisation
 // is performed (so the output may have leading zeroes)
-void Zpoly_mpz_raw_add(Zpoly_mpz_t output, Zpoly_mpz_t input1,
-                       Zpoly_mpz_t input2);
-void Zpoly_mpz_raw_sub(Zpoly_mpz_t output, Zpoly_mpz_t input1,
-                       Zpoly_mpz_t input2);
+void _Zpoly_add(Zpoly_t output, Zpoly_t input1,
+                       Zpoly_t input2);
+void _Zpoly_sub(Zpoly_t output, Zpoly_t input1,
+                       Zpoly_t input2);
 
 // output = -input
 // assumes output.alloc >= input.length
 // output may alias input
-void Zpoly_mpz_raw_negate(Zpoly_mpz_t output, Zpoly_mpz_t input);
+void _Zpoly_negate(Zpoly_t output, Zpoly_t input);
 
 
 // scalar multiplication by x
-void Zpoly_mpz_raw_scalar_mul(Zpoly_mpz_t poly, mpz_t x);
-void Zpoly_mpz_raw_scalar_mul_ui(Zpoly_mpz_t poly, unsigned long x);
-void Zpoly_mpz_raw_scalar_mul_si(Zpoly_mpz_t poly, long x);
+void _Zpoly_scalar_mul(Zpoly_t poly, mpz_t x);
+void _Zpoly_scalar_mul_ui(Zpoly_t poly, unsigned long x);
+void _Zpoly_scalar_mul_si(Zpoly_t poly, long x);
 // scalar division by x
 // todo: what about all the variations... floor, ceiling, truncating,
 // exact division, etc?
-void Zpoly_mpz_raw_scalar_div(Zpoly_mpz_t poly, mpz_t x);
-void Zpoly_mpz_raw_scalar_div_ui(Zpoly_mpz_t poly, unsigned long x);
+void _Zpoly_scalar_div(Zpoly_t poly, mpz_t x);
+void _Zpoly_scalar_div_ui(Zpoly_t poly, unsigned long x);
 
 
 // output = input1 * input2
 // assumes output.alloc >= input1.length + input2.length - 1
 // output may **NOT** alias either input
-void Zpoly_mpz_raw_mul(Zpoly_mpz_t output, Zpoly_mpz_t input1,
-                       Zpoly_mpz_t input2);
+void _Zpoly_mul(Zpoly_t output, Zpoly_t input1,
+                       Zpoly_t input2);
 // as above, but always uses naive multiplication algorithm
-void Zpoly_mpz_raw_mul_naive(Zpoly_mpz_t output, Zpoly_mpz_t input1,
-                             Zpoly_mpz_t input2);
+void _Zpoly_mul_naive(Zpoly_t output, Zpoly_t input1,
+                             Zpoly_t input2);
 // as above, but always uses karatsuba
-void Zpoly_mpz_raw_mul_karatsuba(Zpoly_mpz_t output, Zpoly_mpz_t input1,
-                                 Zpoly_mpz_t input2);
+void _Zpoly_mul_karatsuba(Zpoly_t output, Zpoly_t input1,
+                                 Zpoly_t input2);
 
 // output = input * input
 // output may NOT alias input
-void Zpoly_mpz_raw_sqr(Zpoly_mpz_t output, Zpoly_mpz_t input);
-void Zpoly_mpz_raw_sqr_naive(Zpoly_mpz_t output, Zpoly_mpz_t input);
-void Zpoly_mpz_raw_sqr_karatsuba(Zpoly_mpz_t output, Zpoly_mpz_t input);
+void _Zpoly_sqr(Zpoly_t output, Zpoly_t input);
+void _Zpoly_sqr_naive(Zpoly_t output, Zpoly_t input);
+void _Zpoly_sqr_karatsuba(Zpoly_t output, Zpoly_t input);
 
 
 // output = x^n * input
 // assumes output.alloc >= input.length + n
 // output may alias input
-void Zpoly_mpz_raw_left_shift(Zpoly_mpz_t output, Zpoly_mpz_t input,
+void _Zpoly_left_shift(Zpoly_t output, Zpoly_t input,
                               unsigned long n);
 // output = input / x^n (truncating division)
 // assumes output.alloc >= input.length - n >= 0
 // output may alias input
-void Zpoly_mpz_raw_right_shift(Zpoly_mpz_t output, Zpoly_mpz_t input,
+void _Zpoly_right_shift(Zpoly_t output, Zpoly_t input,
                                unsigned long n);
 
 
@@ -251,30 +251,30 @@ void Zpoly_mpz_raw_right_shift(Zpoly_mpz_t output, Zpoly_mpz_t input,
 
 // quotient = input1 / input2 (throw away remainder)
 // asumes quotient.alloc >= max(0, input1.length - input2.length)
-void Zpoly_mpz_raw_div(Zpoly_mpz_t quotient, Zpoly_mpz_t input1,
-                       Zpoly_mpz_t input2);
+void _Zpoly_div(Zpoly_t quotient, Zpoly_t input1,
+                       Zpoly_t input2);
 // remainder = input1 % input2 (throw away quotient)
 // assumes remainder.alloc >= input2.length
-void Zpoly_mpz_raw_rem(Zpoly_mpz_t remainder, Zpoly_mpz_t input1,
-                       Zpoly_mpz_t input2);
-void Zpoly_mpz_raw_div_rem(Zpoly_mpz_t quotient, Zpoly_mpz_t remainder,
-                           Zpoly_mpz_t input1, Zpoly_mpz_t input2);
+void _Zpoly_rem(Zpoly_t remainder, Zpoly_t input1,
+                       Zpoly_t input2);
+void _Zpoly_div_rem(Zpoly_t quotient, Zpoly_t remainder,
+                           Zpoly_t input1, Zpoly_t input2);
 
 
 // output = gcd(input1, input2)
 // assumes output.alloc >= max(input1.length, input2.length)
 // (or perhaps only requires output.alloc >= length of gcd?)
-void Zpoly_mpz_raw_gcd(Zpoly_mpz_t output, Zpoly_mpz_t input1,
-                       Zpoly_mpz_t input2);
+void _Zpoly_gcd(Zpoly_t output, Zpoly_t input1,
+                       Zpoly_t input2);
 // also sets a, b so that a*input1 + b*input2 = output
 // (is this even always possible in Z[x]?)
-void Zpoly_mpz_raw_xgcd(Zpoly_mpz_t a, Zpoly_mpz_t b, Zpoly_mpz_t output,
-                        Zpoly_mpz_t input1, Zpoly_mpz_t input2);
+void _Zpoly_xgcd(Zpoly_t a, Zpoly_t b, Zpoly_t output,
+                        Zpoly_t input1, Zpoly_t input2);
 
 
 
 // ============================================================================
-// Zpoly_mpz_* layer ("non-raw" functions)
+// Zpoly_* layer ("non-raw" functions)
 
 // note: the implementation of many of these functions will be essentially:
 // check for available space in output, reallocate if necessary, then call
@@ -283,28 +283,28 @@ void Zpoly_mpz_raw_xgcd(Zpoly_mpz_t a, Zpoly_mpz_t b, Zpoly_mpz_t output,
 
 
 // allocate coeffs to length 1, sets length = 0 (i.e. zero polynomial)
-void Zpoly_mpz_init(Zpoly_mpz_t poly);
+void Zpoly_init(Zpoly_t poly);
 
 // allocate coeffs to given length, sets length = 0 (i.e. zero polynomial)
-void Zpoly_mpz_init2(Zpoly_mpz_t poly, unsigned long alloc);
+void Zpoly_init2(Zpoly_t poly, unsigned long alloc);
 
 // allocate coeffs to given length, with space for coeff_size bits in each
 // coefficient, sets length = 0 (i.e. zero polynomial)
-void Zpoly_mpz_init3(Zpoly_mpz_t poly, unsigned long alloc,
+void Zpoly_init3(Zpoly_t poly, unsigned long alloc,
                      unsigned long coeff_bits);
 
 
 // Changes allocated space to be alloc.
 // Current value is preserved if it fits, or truncated if it doesn't fit.
-void Zpoly_mpz_realloc(Zpoly_mpz_t poly, unsigned long alloc);
+void Zpoly_realloc(Zpoly_t poly, unsigned long alloc);
 
-// todo: should have available a version of Zpoly_mpz_realloc() that also
+// todo: should have available a version of Zpoly_realloc() that also
 // allows the user to specify the space allocated for new mpz's
 
 
-// This is the actual implementation that's called for Zpoly_mpz_ensure_space()
+// This is the actual implementation that's called for Zpoly_ensure_space()
 // (see below) if a reallocation is required
-void Zpoly_mpz_ensure_space_IMPL(Zpoly_mpz_t poly, unsigned long alloc);
+void Zpoly_ensure_space_IMPL(Zpoly_t poly, unsigned long alloc);
 
 // Ensures that the polynomial has at least alloc coefficients allocated.
 // If the polynomial already has enough space allocated, nothing happens.
@@ -315,32 +315,32 @@ void Zpoly_mpz_ensure_space_IMPL(Zpoly_mpz_t poly, unsigned long alloc);
 // happen very frequently; the actual reallocation will be less frequent,
 // and will chew up too many bytes of code if I make it inline.)
 static inline
-void Zpoly_mpz_ensure_space(Zpoly_mpz_t poly, unsigned long alloc)
+void Zpoly_ensure_space(Zpoly_t poly, unsigned long alloc)
 {
    if (poly->alloc < alloc)
-      Zpoly_mpz_ensure_space_IMPL(poly, alloc);
+      Zpoly_ensure_space_IMPL(poly, alloc);
 }
 
 
 // deallocates space (poly becomes uninitialised)
-void Zpoly_mpz_clear(Zpoly_mpz_t poly);
+void Zpoly_clear(Zpoly_t poly);
 
 
 // returns x^n coefficient, or NULL if out of range
-mpz_t* Zpoly_mpz_get_coeff_ptr(Zpoly_mpz_t poly, unsigned long n);
+mpz_t* Zpoly_get_coeff_ptr(Zpoly_t poly, unsigned long n);
 
 // copies out x^n coefficient (via mpz_set), or retrieves zero if out of range
-void Zpoly_mpz_get_coeff(mpz_t output, Zpoly_mpz_t poly,
+void Zpoly_get_coeff(mpz_t output, Zpoly_t poly,
                          unsigned long n);
-unsigned long Zpoly_mpz_get_coeff_ui(Zpoly_mpz_t poly, unsigned long n);
-long Zpoly_mpz_get_coeff_si(Zpoly_mpz_t poly, unsigned long n);
+unsigned long Zpoly_get_coeff_ui(Zpoly_t poly, unsigned long n);
+long Zpoly_get_coeff_si(Zpoly_t poly, unsigned long n);
 
 // and the rest of them are just like the mpz_raw versions, but reallocate
 // on demand
 
-void Zpoly_mpz_set_coeff(Zpoly_mpz_t poly, unsigned long n, mpz_t x);
-void Zpoly_mpz_set_coeff_ui(Zpoly_mpz_t poly, unsigned long n, unsigned long x);
-void Zpoly_mpz_set_coeff_si(Zpoly_mpz_t poly, unsigned long n, long x);
+void Zpoly_set_coeff(Zpoly_t poly, unsigned long n, mpz_t x);
+void Zpoly_set_coeff_ui(Zpoly_t poly, unsigned long n, unsigned long x);
+void Zpoly_set_coeff_si(Zpoly_t poly, unsigned long n, long x);
 
 
 // sets poly from a string, where the string is just a sequence of
@@ -350,91 +350,91 @@ void Zpoly_mpz_set_coeff_si(Zpoly_mpz_t poly, unsigned long n, long x);
 // of the coefficients have been read, and then some garbage was encountered
 // that could not be read.
 // This is NOT intended to be fast; it's for convenience of debugging only.
-int Zpoly_mpz_set_from_string(Zpoly_mpz_t output, char* s);
+int Zpoly_set_from_string(Zpoly_t output, char* s);
 
 // converts poly to a string, in the same format as accepted by
-// Zpoly_mpz_set_from_string. The output buffer must be large enough for
-// the output and the null terminator. See Zpoly_mpz_get_string_size().
+// Zpoly_set_from_string. The output buffer must be large enough for
+// the output and the null terminator. See Zpoly_get_string_size().
 // This is NOT intended to be fast; it's for convenience of debugging only.
-void Zpoly_mpz_get_as_string(char* output, Zpoly_mpz_t poly);
+void Zpoly_get_as_string(char* output, Zpoly_t poly);
 
 // Returns the number of bytes necessary to store this poly as a string
-// via Zpoly_mpz_get_as_string(). The returned value may be an overestimate.
-unsigned long Zpoly_mpz_get_string_size(Zpoly_mpz_t poly);
+// via Zpoly_get_as_string(). The returned value may be an overestimate.
+unsigned long Zpoly_get_string_size(Zpoly_t poly);
 
 // Prints polynomial to output (e.g. stdout) in same format as generated by
-// Zpoly_mpz_get_as_string().
-void Zpoly_mpz_print(FILE* output, Zpoly_mpz_t poly);
+// Zpoly_get_as_string().
+void Zpoly_print(FILE* output, Zpoly_t poly);
 
 
 static inline
-void Zpoly_mpz_normalise(Zpoly_mpz_t poly)
+void Zpoly_normalise(Zpoly_t poly)
 {
-   Zpoly_mpz_raw_normalise(poly);
+   _Zpoly_normalise(poly);
 }
 
-void Zpoly_mpz_set(Zpoly_mpz_t output, Zpoly_mpz_t input);
+void Zpoly_set(Zpoly_t output, Zpoly_t input);
 
 static inline
-void Zpoly_mpz_zero(Zpoly_mpz_t output)
+void Zpoly_zero(Zpoly_t output)
 {
-   Zpoly_mpz_raw_zero(output);
-}
-
-static inline
-int Zpoly_mpz_equal(Zpoly_mpz_t x, Zpoly_mpz_t y)
-{
-   return Zpoly_mpz_raw_equal(x, y);
+   _Zpoly_zero(output);
 }
 
 static inline
-void Zpoly_mpz_swap(Zpoly_mpz_t x, Zpoly_mpz_t y)
+int Zpoly_equal(Zpoly_t x, Zpoly_t y)
 {
-   Zpoly_mpz_raw_swap(x, y);
+   return _Zpoly_equal(x, y);
 }
 
-void Zpoly_mpz_add(Zpoly_mpz_t output, Zpoly_mpz_t input1, Zpoly_mpz_t input2);
-void Zpoly_mpz_sub(Zpoly_mpz_t output, Zpoly_mpz_t input1, Zpoly_mpz_t input2);
-void Zpoly_mpz_negate(Zpoly_mpz_t output, Zpoly_mpz_t input);
-void Zpoly_mpz_scalar_mul(Zpoly_mpz_t poly, mpz_t x);
-void Zpoly_mpz_scalar_mul_ui(Zpoly_mpz_t poly, unsigned long x);
-void Zpoly_mpz_scalar_mul_si(Zpoly_mpz_t poly, long x);
-void Zpoly_mpz_scalar_div(Zpoly_mpz_t poly, mpz_t x);
-void Zpoly_mpz_scalar_div_ui(Zpoly_mpz_t poly, unsigned long x);
-void Zpoly_mpz_mul(Zpoly_mpz_t output, Zpoly_mpz_t input1, Zpoly_mpz_t input2);
-void Zpoly_mpz_mul_naive(Zpoly_mpz_t output, Zpoly_mpz_t input1,
-                         Zpoly_mpz_t input2);
-void Zpoly_mpz_mul_karatsuba(Zpoly_mpz_t output, Zpoly_mpz_t input1,
-                             Zpoly_mpz_t input2);
+static inline
+void Zpoly_swap(Zpoly_t x, Zpoly_t y)
+{
+   _Zpoly_swap(x, y);
+}
+
+void Zpoly_add(Zpoly_t output, Zpoly_t input1, Zpoly_t input2);
+void Zpoly_sub(Zpoly_t output, Zpoly_t input1, Zpoly_t input2);
+void Zpoly_negate(Zpoly_t output, Zpoly_t input);
+void Zpoly_scalar_mul(Zpoly_t poly, mpz_t x);
+void Zpoly_scalar_mul_ui(Zpoly_t poly, unsigned long x);
+void Zpoly_scalar_mul_si(Zpoly_t poly, long x);
+void Zpoly_scalar_div(Zpoly_t poly, mpz_t x);
+void Zpoly_scalar_div_ui(Zpoly_t poly, unsigned long x);
+void Zpoly_mul(Zpoly_t output, Zpoly_t input1, Zpoly_t input2);
+void Zpoly_mul_naive(Zpoly_t output, Zpoly_t input1,
+                         Zpoly_t input2);
+void Zpoly_mul_karatsuba(Zpoly_t output, Zpoly_t input1,
+                             Zpoly_t input2);
 // mul_naive_KS uses a "naive" KS multiplication algorithm (i.e. it doesn't
 // try very hard to pack coefficients efficiently, and it uses GMP for the
 // underlying multiplication. It's for testing purposes only. The idea is to
 // provide a very stable algorithm which can still keep up asymptotically with
 // any other multiplication code.)
-void Zpoly_mpz_mul_naive_KS(Zpoly_mpz_t output, Zpoly_mpz_t input1,
-                            Zpoly_mpz_t input2);
-void Zpoly_mpz_sqr(Zpoly_mpz_t output, Zpoly_mpz_t input);
-void Zpoly_mpz_sqr_naive(Zpoly_mpz_t output, Zpoly_mpz_t input);
-void Zpoly_mpz_sqr_karatsuba(Zpoly_mpz_t output, Zpoly_mpz_t input);
-void Zpoly_mpz_sqr_naive_KS(Zpoly_mpz_t output, Zpoly_mpz_t input1,
-                            Zpoly_mpz_t input2);
+void Zpoly_mul_naive_KS(Zpoly_t output, Zpoly_t input1,
+                            Zpoly_t input2);
+void Zpoly_sqr(Zpoly_t output, Zpoly_t input);
+void Zpoly_sqr_naive(Zpoly_t output, Zpoly_t input);
+void Zpoly_sqr_karatsuba(Zpoly_t output, Zpoly_t input);
+void Zpoly_sqr_naive_KS(Zpoly_t output, Zpoly_t input1,
+                            Zpoly_t input2);
 
-void Zpoly_mpz_left_shift(Zpoly_mpz_t output, Zpoly_mpz_t input,
+void Zpoly_left_shift(Zpoly_t output, Zpoly_t input,
                           unsigned long n);
-void Zpoly_mpz_right_shift(Zpoly_mpz_t output, Zpoly_mpz_t input,
+void Zpoly_right_shift(Zpoly_t output, Zpoly_t input,
                            unsigned long n);
 
-void Zpoly_mpz_div(Zpoly_mpz_t quotient, Zpoly_mpz_t input1,
-                   Zpoly_mpz_t input2);
-void Zpoly_mpz_rem(Zpoly_mpz_t remainder, Zpoly_mpz_t input1,
-                   Zpoly_mpz_t input2);
-void Zpoly_mpz_div_rem(Zpoly_mpz_t quotient, Zpoly_mpz_t remainder,
-                       Zpoly_mpz_t input1, Zpoly_mpz_t input2);
+void Zpoly_div(Zpoly_t quotient, Zpoly_t input1,
+                   Zpoly_t input2);
+void Zpoly_rem(Zpoly_t remainder, Zpoly_t input1,
+                   Zpoly_t input2);
+void Zpoly_div_rem(Zpoly_t quotient, Zpoly_t remainder,
+                       Zpoly_t input1, Zpoly_t input2);
 
-void Zpoly_mpz_gcd(Zpoly_mpz_t output, Zpoly_mpz_t input1,
-                       Zpoly_mpz_t input2);
-void Zpoly_mpz_xgcd(Zpoly_mpz_t a, Zpoly_mpz_t b, Zpoly_mpz_t output,
-                    Zpoly_mpz_t input1, Zpoly_mpz_t input2);
+void Zpoly_gcd(Zpoly_t output, Zpoly_t input1,
+                       Zpoly_t input2);
+void Zpoly_xgcd(Zpoly_t a, Zpoly_t b, Zpoly_t output,
+                    Zpoly_t input1, Zpoly_t input2);
 
 
 
@@ -447,7 +447,7 @@ Zpoly_mpn_t represents a dense polynomial in Z[x] using a single block of
 memory to hold all the coefficients.
 
 This type is better suited to handling very dense polynomials with relatively
-small coefficients, where the memory management overhead of Zpoly_mpz_t would
+small coefficients, where the memory management overhead of Zpoly_t would
 be too expensive.
 
 "coeffs" is an array of limbs of length (alloc * (coeff_size+1)). Each
