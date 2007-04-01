@@ -4,39 +4,16 @@ Zpoly.h: Polynomials over Z
 
 Copyright (C) 2007, William Hart and David Harvey
 
-!!!!! only PROPOSED data formats and interface
-
 There are two entirely separate data formats for polynomials over Z:
   -- Zpoly_t uses an array of mpz_t's
   -- Zpoly_mpn_t uses a single block of memory with each coefficient occupying
-     the same number of limbs.
+     the same number of limbs (see Zpoly_mpn files)
 
 *****************************************************************************/
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <gmp.h>
-
-
-//////////////////////////////////////////////////////////
-/*
-These allocation functions should eventually go in another file....
-
-flint_malloc_limbs and flint_malloc use the same memory manager, they just
-measure the size in different units
-
-At first they would just be a wrapper for malloc/free, but eventually we
-probably want an extra layer in between flint_malloc and malloc, which finds
-free memory faster, possibly at the expense of greater fragmentation
-*/
-
-void* flint_malloc_limbs(unsigned long limbs);
-void* flint_malloc(unsigned long bytes);
-void* flint_realloc_limbs(void* block, unsigned long limbs);
-void* flint_realloc(void* block, unsigned long bytes);
-void flint_free(void* block);
-//////////////////////////////////////////////////////////
-
 
 /****************************************************************************
 
@@ -66,7 +43,8 @@ There are two classes of functions operating on Zpoly_t:
    flint_free etc, whenever they feel the need. Furthermore they assume that
    always alloc >= 1.
 
- */
+*/
+
 typedef struct
 {
    mpz_t* coeffs;
@@ -78,8 +56,11 @@ typedef struct
 typedef Zpoly_struct Zpoly_t[1];
 
 
-// ============================================================================
-// functions in _Zpoly_* layer
+/*============================================================================
+  
+    Functions in _Zpoly_* layer
+    
+===============================================================================*/
 
 // returns x^n coefficient with no bounds checking
 static inline
@@ -141,10 +122,10 @@ void _Zpoly_normalise(Zpoly_t poly);
 
 // Normalises the polynomial, and returns its degree
 // (the zero polynomial has degree -1 by convention)
-long Zpoly_get_degree(Zpoly_t poly);
+long _Zpoly_get_degree(Zpoly_t poly);
 
 // Normalises the polynomial, and returns its length
-unsigned long Zpoly_get_length(Zpoly_t poly);
+unsigned long _Zpoly_get_length(Zpoly_t poly);
 
 // output = input
 // assumes output.alloc >= input.length
@@ -271,7 +252,9 @@ void _Zpoly_gcd(Zpoly_t output, Zpoly_t input1,
 void _Zpoly_xgcd(Zpoly_t a, Zpoly_t b, Zpoly_t output,
                         Zpoly_t input1, Zpoly_t input2);
 
+// Gaussian content of polynomial
 
+void _Zpoly_content(mpz_t content, Zpoly_t a);
 
 // ============================================================================
 // Zpoly_* layer ("non-raw" functions)
@@ -435,70 +418,8 @@ void Zpoly_gcd(Zpoly_t output, Zpoly_t input1,
                        Zpoly_t input2);
 void Zpoly_xgcd(Zpoly_t a, Zpoly_t b, Zpoly_t output,
                     Zpoly_t input1, Zpoly_t input2);
-
-
-
-/****************************************************************************
-
-   Zpoly_mpn_t
-   -----------
-
-Zpoly_mpn_t represents a dense polynomial in Z[x] using a single block of
-memory to hold all the coefficients.
-
-This type is better suited to handling very dense polynomials with relatively
-small coefficients, where the memory management overhead of Zpoly_t would
-be too expensive.
-
-"coeffs" is an array of limbs of length (alloc * (coeff_size+1)). Each
-coefficient uses coeff_size+1 limbs. For each coefficient, the first limb is
-a sign limb: 0 means positive and 1 means negative. (Zero may be stored as
-either positive or negative.) The remaining "coeff_size" limbs represent the
-absolute value of the coefficient, stored in GMP's mpn format.
-
-Only the first "length" coefficients actually represent coefficients of the
-polynomial; i.e. it's a polynomial of degree at most length-1. There is no
-requirement for coeff[length-1] to be nonzero. If length == 0, this is the
-zero polynomial. Obviously always alloc >= length.
-
-There are two classes of functions operating on Zpoly_mpn_t:
-
--- The Zpoly_mpn_raw_* functions NEVER free or reallocate "coeffs", so they
-   don't care how "coeffs" was allocated, and they never even look at the
-   "alloc" attribute. They always assume the output has enough space for
-   the result. They also NEVER modify the coeff_size attribute (since this
-   would screw up the block size).
-
--- The Zpoly_mpn_* functions ASSUME that "coeffs" was allocated via
-   flint_malloc, and they MAY free or reallocate "coeffs" using flint_realloc,
-   flint_free etc, whenever they feel the need. Furthermore they assume that
-   always alloc >= 1.
-
- */
-typedef struct
-{
-   mp_limb_t* coeffs;
-   unsigned long alloc;
-   unsigned long length;
-   unsigned long coeff_size;
-} Zpoly_mpn_struct;
-
-// Zpoly_mpn_t allows reference-like semantics for Zpoly_mpn_struct:
-typedef Zpoly_mpn_struct Zpoly_mpn_t[1];
-
-
-// ============================================================================
-// functions in Zpoly_mpn_raw_* layer
-
-
-// ... hmmmmmm ...
-
-
-// ============================================================================
-// functions in Zpoly_mpn_* layer (non-raw stuff)
-
-
-// ... hmmmmmm ...
+                    
+void Zpoly_content(mpz_t content, Zpoly_t a);
 
 
 // *************** end of file

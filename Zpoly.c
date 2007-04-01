@@ -11,68 +11,11 @@ Copyright (C) 2007, William Hart and David Harvey
 #include <string.h>
 #include "flint.h"
 #include "Zpoly.h"
-
-
-//////////////////////////////////////////////////////////
-/*
-Temporary baby implementations of memory management functions
-*/
-
-
-/*
-This function gets called if malloc fails (i.e. returns NULL).
-For now we just die via abort(); if we change this to do nothing, then
-anyone who calls flint_malloc() etc will get a NULL pointer returned, and
-perhaps get a chance to clean up before completely dying...
-*/
-void flint_memory_failure()
-{
-   abort();
-}
-
-void* flint_malloc_limbs(unsigned long limbs)
-{
-   void* buf = malloc(limbs * sizeof(mp_limb_t));
-   if (!buf)
-      flint_memory_failure();
-   return buf;
-}
-
-void* flint_malloc(unsigned long bytes)
-{
-   void* buf = malloc(bytes);
-   if (!buf)
-      flint_memory_failure();
-   return buf;
-}
-
-void* flint_realloc_limbs(void* block, unsigned long limbs)
-{
-   void* buf = realloc(block, limbs * sizeof(mp_limb_t));
-   if (!buf)
-      flint_memory_failure();
-   return buf;
-}
-
-void* flint_realloc(void* block, unsigned long bytes)
-{
-   void* buf = realloc(block, bytes);
-   if (!buf)
-      flint_memory_failure();
-   return buf;
-}
-
-void flint_free(void* block)
-{
-   free(block);
-}
-
-//////////////////////////////////////////////////////////
-
+#include "flint-manager.h"
 
 /****************************************************************************
 
-   Zpoly_mpz_raw_* layer
+   _Zpoly_* layer
 
 ****************************************************************************/
 
@@ -337,7 +280,10 @@ void _Zpoly_xgcd(Zpoly_t a, Zpoly_t b, Zpoly_t output,
    abort();
 }
 
-
+void _Zpoly_content(mpz_t content, Zpoly_t a)
+{
+   abort();
+}
 
 /****************************************************************************
 
@@ -453,7 +399,7 @@ unsigned long Zpoly_get_coeff_ui(Zpoly_t poly, unsigned long n)
    return mpz_get_ui(poly->coeffs[n]);
 }
 
-/* Return the given coefficient as a short int (or zero) */
+/* Return the given coefficient as a signed int (or zero) */
 
 long Zpoly_get_coeff_si(Zpoly_t poly, unsigned long n)
 {
@@ -553,7 +499,7 @@ void Zpoly_set_coeff_ui(Zpoly_t poly, unsigned long n, unsigned long x)
       poly->length = n+1;
 }
 
-/* Set the given polynomial coefficient to the given short int */
+/* Set the given polynomial coefficient to the given signed int */
 
 void Zpoly_set_coeff_si(Zpoly_t poly, unsigned long n, long x)
 {
@@ -877,6 +823,11 @@ void Zpoly_gcd(Zpoly_t output, Zpoly_t input1,
 
 void Zpoly_xgcd(Zpoly_t a, Zpoly_t b, Zpoly_t output,
                     Zpoly_t input1, Zpoly_t input2)
+{
+   abort();
+}
+
+void Zpoly_content(mpz_t content, Zpoly_t a)
 {
    abort();
 }
