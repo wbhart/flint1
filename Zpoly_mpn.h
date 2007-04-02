@@ -140,14 +140,13 @@ static inline unsigned long _Zpoly_mpn_get_coeff_size(Zpoly_mpn_t poly);
 void _Zpoly_mpn_set(Zpoly_mpn_t output, Zpoly_mpn_t input);
 
 /* 
-   Zero the polynomial by setting the sign of each coefficient to zero.
+   Zero the polynomial by setting the length to zero.
    Does not set the actual limbs to zero.
 */
 
 void _Zpoly_mpn_zero(Zpoly_mpn_t output)
 {
-   for (unsigned long i = 0; i < poly->length; i++) 
-              poly->coeffs[i*(poly->coeff_size+1)] = 0L;
+   output->length = 0;
 }
 
 void _Zpoly_mpn_swap(Zpoly_mpn_t x, Zpoly_mpn_t y);

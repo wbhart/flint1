@@ -102,3 +102,134 @@ void _Zpoly_mpn_swap(Zpoly_mpn_t x, Zpoly_mpn_t y)
    x->coeff_size = y->coeff_size;
    y->coeff_size = temp_l;
 }
+
+int _Zpoly_mpn_equal(Zpoly_mpn_t input1, Zpoly_mpn_t input2)
+{
+   if (input1->length != input2-> length) return 0;
+   if (input1->coeff_size == input2->coeff_size)
+   {
+      for (unsigned long i = 0; i < input1->length*(input1->coeff_size+1); i++)
+         if (input1->coeffs[i] != input2->coeffs[i]) return 0;
+      return 1;
+   }
+    
+   unsigned long i,j;
+   if (input1->coeff_size > input2->coeff_size)
+   {
+      for (i = 0; i < input1->length; i++)
+      {
+         for (j = 0; j < input2->coeff_size+1; j++)
+         {
+            if (input1[i*(input1->coeff_size+1)+j] != input2[i*(input2->coeff_size+1)+j])
+               return 0;
+         }
+         for (j = input2->coeff_size + 1; j < input1->coeff_size + 1; j++)
+         {
+            if (input1[i*(input1->coeff_size+1)+j] != 0) return 0;
+         }
+      }
+      return 1;
+   } else
+   {
+      for (i = 0; i < input1->length; i++)
+      {
+         for (j = 0; j < input1->coeff_size+1; j++)
+         {
+            if (input1[i*(input1->coeff_size+1)+j] != input2[i*(input2->coeff_size+1)+j])
+               return 0;
+         }
+         for (j = input1->coeff_size + 1; j < input2->coeff_size + 1; j++)
+         {
+            if (input2[i*(input1->coeff_size+1)+j] != 0) return 0;
+         }
+      }
+      return 1;
+   }
+}
+
+void _Zpoly_mpn_negate(Zpoly_mpn_t output, Zpoly_mpn_t input)
+{
+   if (input->coeffs == output->coeffs)
+   {
+      for (unsigned long i = 0; i < input->length; i++)
+         output->coeffs[i*(output->coeff_size+1)] = -output->coeffs[i*(output->coeff_size+1)];
+   } else if (input->coeff_size == output->coeff_size)
+   {
+      copy_limbs(output->coeffs, input->coeffs, input->length*(input->coeff_size+1));
+      for (unsigned long i = 0; i < input->length; i++)
+         output->coeffs[i*(input->coeff_size+1)] = -input->coeffs[i*(input->coeff_size+1)];
+   } else
+   {
+      unsigned long diff_size = output->coeff_size - input->coeff->size;
+      unsigned long input_size = input->coeff_size + 1;
+      unsigned long output_size = output->coeff_size + 1;
+      for (unsigned long i = 0; i < input->length; i++)
+      {
+         output->coeffs[i*output_size] = -input->coeffs[i*input_size];
+         copy_limbs(output->coeffs+i*output_size+1, input->coeffs+i*input_size+1, input_size-1);
+         clear_limbs(output->coeffs+i*output_size+input_size, diff_size);
+      }
+   }
+   output->length = input->length;
+}
+
+/* 
+   Multiplies input by x^n and sets output to the result
+   Assumes output is large enough to contain the result
+   If input and output are part of the same polynomial, but 
+   not starting at the same point, we assume they do not 
+   overlap in a bad way
+*/
+void _Zpoly_mpn_left_shift(Zpoly_mpn_t output, Zpoly_mpn_t input, 
+                                                 unsigned long n)
+{
+   if (n == 0) return;
+   
+   Zpoly_mpn_t part;   
+   if ((input->coeffs == output->coeffs) && (n < output_length))
+   {
+      Zpoly part2;
+      part->length = input->length - n;
+      part->coeff_size = input->coeff_size;
+      part->coeffs = input->coeffs + n*(input->coeff_size+1);
+      part2->length = input->length - n;
+      part2->coeff_size = input->coeff_size;
+      part2->coeffs = input->coeffs + 2*n*(input->coeff_size+1);
+      _Zpoly_mpn_set(part2, part);
+      part->length = n;
+      part2->length = n;
+      part2->coeffs = input->coeffs;
+      _Zpoly_mpn_set(part2, part);
+      clear_limbs(output->coeffs, n*(output->coeff_size+1);
+   } else
+   {
+      part->length = input->length;
+      part->coeff_size = output->coeff_size;
+      part->coeffs = output->coeffs + n*(output->coeff_size+1);
+      _Zpoly_mpn_set(part, input);
+      clear_limbs(output->coeffs, n*(output->coeff_size+1);
+   }
+   output->length = input->length + n;
+}
+
+/* 
+   Divides input by x^n losing the remainder and sets output to the result
+   Assumes output is large enough to contain the result
+*/
+
+void _Zpoly_mpn_right_shift(Zpoly_mpn_t output, Zpoly_mpn_t input, unsigned long n)
+{
+   if (input->length <= n) 
+   {
+      _Zpoly_mpn_zero(output);
+      return;
+   }
+   Zpoly_mpn_t part;
+   part->length = input->length - n;
+   part->coeff_size = output->coeff_size;
+   part->coeffs = input->coeffs + n*(output->coeff_size + 1);
+   _Zpoly_mpn_set(part, input);
+   clear_limbs(output->coeffs, n*(output->coeff_size+1);  
+   output->length = part->length; 
+}
+
