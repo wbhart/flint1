@@ -8,6 +8,7 @@ Copyright (C) 2007, William Hart and David Harvey
 
 #include "flint.h"
 #include "Zpoly.h"
+#include "flint-manager.h"
 #include <stdio.h>
 #include <string.h>
 
