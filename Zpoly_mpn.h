@@ -72,6 +72,13 @@ typedef Zpoly_mpn_struct Zpoly_mpn_t[1];
     
 ===============================================================================*/
 
+void _Zpoly_mpn_init(Zpoly_mpn_t poly, unsigned long alloc,
+                                              unsigned long coeff_size);
+                                              
+void _Zpoly_mpn_convert_out(Zpoly_t poly_mpz, Zpoly_mpn_t poly_mpn);
+
+void _Zpoly_mpn_convert_in(Zpoly_mpn_t poly_mpn, Zpoly_t poly_mpz);
+                     
 static inline
 mp_limb_t * _Zpoly_mpn_get_coeff_ptr(Zpoly_mpn_t poly, unsigned long n)
 {

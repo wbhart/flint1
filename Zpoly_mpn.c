@@ -20,14 +20,69 @@ Copyright (C) 2007, William Hart and David Harvey
 ****************************************************************************/
 
 /* 
+   Create a polynomial of length zero with "alloc" allocated coefficients
+   each with enough space for coeff_size limbs
+*/
+
+void _Zpoly_mpn_init(Zpoly_mpn_t poly, unsigned long alloc,
+                     unsigned long coeff_size)
+{
+   poly->coeffs = (mp_limb_t *) flint_malloc(sizeof(mp_limb_t)*alloc*(coeff_size+1));
+   poly->alloc = alloc;
+   poly->length = 0;
+   poly->coeff_size = coeff_size;
+}
+
+void _Zpoly_mpn_convert_out(Zpoly_t poly_mpz, Zpoly_mpn_t poly_mpn)
+{
+   poly_mpz->length = poly_mpn->length;
+   for (unsigned long i = 0; i < poly_mpn->length; i++)
+   {
+       if (poly_mpn->coeffs[i*(poly_mpn->coeff_size+1)] == 0) 
+          mpz_set_ui(poly_mpz->coeffs[i],0);
+       else 
+       {
+          mpz_import(poly_mpz->coeffs[i], poly_mpn->coeff_size, -1, 
+          sizeof(mp_limb_t), 0, 0, poly_mpn->coeffs+i*(poly_mpn->coeff_size+1)+1);
+          if (poly_mpn->coeffs[i*(poly_mpn->coeff_size+1)] < 0)
+             mpz_neg(poly_mpz->coeffs[i],poly_mpz->coeffs[i]);
+       }
+   }
+}
+
+void _Zpoly_mpn_convert_in(Zpoly_mpn_t poly_mpn, Zpoly_t poly_mpz)
+{
+   poly_mpn->length = poly_mpz->length;
+   for (unsigned long i = 0; i < poly_mpz->length; i++)
+   {
+      if (mpz_sgn(poly_mpz->coeffs[i]) == 0) 
+          _Zpoly_set_coeff_ui(poly_mpn,i,0);
+      else
+      {
+          size_t countp;
+          mpz_export(poly_mpn->coeffs+i*(poly_mpn->coeff_size+1)+1, &countp, 
+             -1, sizeof(mp_limb_t), 0, 0, poly_mpz->coeffs[i]);
+          if (mpz_sgn(poly_mpz->coeffs[i]) < 0) 
+             poly_mpn->coeffs[i*(poly_mpn->coeff_size+1)] = -1L;
+          else poly_mpn->coeffs[i*(poly_mpn->coeff_size+1)] = 1L;
+      }
+   }
+}
+
+/* 
    Set a coefficient to the given unsigned value.
-   Clears dirty limbs. Sets the sign to 1 if x is positive, else to zero.
+   Clears dirty limbs unless the coefficient is set to zero. 
+   Sets the sign to 1 if x is positive, else to zero.
 */
 
 void _Zpoly_mpn_set_coeff_ui(Zpoly_mpn_t poly, unsigned long n, unsigned long x)
 {
-   if (x == 0) poly->coeffs[n*(poly->coeff_size+1)] = 0UL;
-   else poly->coeffs[n*(poly->coeff_size+1)] = 1UL;
+   if (x == 0) 
+   {
+      poly->coeffs[n*(poly->coeff_size+1)] = 0UL;
+      return;
+   }
+   poly->coeffs[n*(poly->coeff_size+1)] = 1UL;
    poly->coeffs[n*(poly->coeff_size+1)+1] = x;
    if (poly->coeff_size > 1) 
           clear_limbs(poly->coeffs+n*(poly->coeff_size+1)+2, poly->coeff_size - 1);
@@ -37,7 +92,7 @@ void _Zpoly_mpn_set_coeff_si(Zpoly_mpn_t poly, unsigned long n, long x)
 {
    if (x == 0)
    {
-      clear_limbs(poly->coeffs+n*(poly->coeff_size+1), poly->coeff_size+1);
+      poly->coeffs[n*(poly->coeff_size+1)] = 0UL;
       return;
    }
    if (x > 0)
@@ -51,6 +106,14 @@ void _Zpoly_mpn_set_coeff_si(Zpoly_mpn_t poly, unsigned long n, long x)
    } 
    if (poly->coeff_size > 1) 
           clear_limbs(poly->coeffs+n*(poly->coeff_size+1)+2, poly->coeff_size - 1);
+}
+
+void _Zpoly_mpn_normalise(Zpoly_mpn_t poly)
+{
+   while (poly->coeffs[(poly_length-1)*(poly->coeff_size+1)] == 0)
+   {
+      poly->length--;
+   }
 }
 
 /* 
