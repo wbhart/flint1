@@ -336,7 +336,7 @@ void Zpoly_realloc(Zpoly_t poly, unsigned long alloc)
          mpz_clear(poly->coeffs[i]);
    }
    
-   poly->coeffs = (mpz_t*) flint_realloc(poly->coeffs, sizeof(mpz_t) * alloc);
+   if (alloc > 0) poly->coeffs = (mpz_t*) flint_realloc(poly->coeffs, sizeof(mpz_t) * alloc);
 
    // create new mpz's if necessary
    for (unsigned long i = poly->alloc; i < alloc; i++)

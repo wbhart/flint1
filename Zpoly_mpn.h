@@ -77,6 +77,8 @@ typedef Zpoly_mpn_struct Zpoly_mpn_t[1];
 
 void _Zpoly_mpn_init(Zpoly_mpn_t poly, unsigned long alloc,
                                               unsigned long coeff_size);
+                                              
+void _Zpoly_mpn_realloc(Zpoly_mpn_t poly, unsigned long alloc);
 
 void _Zpoly_mpn_clear(Zpoly_mpn_t poly);
                                               

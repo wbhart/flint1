@@ -34,6 +34,20 @@ void _Zpoly_mpn_init(Zpoly_mpn_t poly, unsigned long alloc,
    poly->coeff_size = coeff_size;
 }
 
+/* Shrink or expand a polynomial to "alloc" coefficients */
+
+void _Zpoly_mpn_realloc(Zpoly_mpn_t poly, unsigned long alloc)
+{
+   if (alloc > 0)
+      poly->coeffs = (mp_limb_t*) flint_realloc(poly->coeffs, sizeof(mp_limb_t)*alloc*(poly->coeff_size+1));
+   
+   poly->alloc = alloc;
+   
+   // truncate actual data if necessary
+   if (poly->length > alloc)
+      poly->length = alloc;
+}
+
 void _Zpoly_mpn_clear(Zpoly_mpn_t poly)
 {
    flint_free(poly->coeffs);
