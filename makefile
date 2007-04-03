@@ -106,21 +106,27 @@ Z.o: Z.c Z.h
 
 profiler.o: profiler.c profiler.h
 	$(CC) -c profiler.c -o profiler.o $(CFLAGS)
+	
+flint-manager.o: flint-manager.c flint-manager.h
+	$(CC) -c flint-manager.c -o flint-manager.o $(CFLAGS)
 
-
-Zpoly.o: Zpoly.c Zpoly.h
+Zpoly.o: Zpoly.c Zpoly.h flint-manager.o 
 	$(CC) -c Zpoly.c -o Zpoly.o $(CFLAGS)
 	
-Zpoly-test.o: Zpoly-test.c Zpoly.h
+Zpoly-test.o: Zpoly-test.c Zpoly.h flint-manager.o 
 	$(CC) -c Zpoly-test.c -o Zpoly-test.o $(CFLAGS)
 	
-Zpoly-test: Zpoly-test.o Zpoly.o
-	$(CC) Zpoly.o Zpoly-test.o -o Zpoly-test $(CFLAGS) $(LIBS)
+Zpoly-test: Zpoly-test.o Zpoly.o flint-manager.o 
+	$(CC) Zpoly.o Zpoly-test.o flint-manager.o -o Zpoly-test $(CFLAGS) $(LIBS)
 	
-
-
-# umm yeah I'm just keeping these entirely independent from everything else
-# until someone makes everything else compile with C99 :-)
+Zpoly_mpn.o: Zpoly_mpn.c Zpoly_mpn.h Zpoly.h flint-manager.o 
+	$(CC) -c Zpoly_mpn.c -o Zpoly_mpn.o $(CFLAGS)
+	
+Zpoly_mpn-test.o: Zpoly_mpn-test.c Zpoly_mpn.h Zpoly.h flint-manager.o 
+	$(CC) -c Zpoly_mpn-test.c -o Zpoly_mpn-test.o $(CFLAGS)
+	
+Zpoly_mpn-test: Zpoly_mpn-test.o Zpoly.o Zpoly_mpn.o Zpoly.h flint-manager.o 
+	$(CC) Zpoly_mpn.o Zpoly.o Zpoly_mpn-test.o flint-manager.o -o Zpoly_mpn-test $(CFLAGS) $(LIBS)
 
 ssfft.o: ssfft.c ssfft.h
 	$(CC) -c ssfft.c -o ssfft.o $(CFLAGS)

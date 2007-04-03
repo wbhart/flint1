@@ -17,7 +17,7 @@
 #if 0
 #define FLINT_ASSERT assert
 #else
-#define FLINT_ASSERT(condition)
+#define FLINT_ASSERT if
 #endif
 
 

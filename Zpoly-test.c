@@ -18,7 +18,7 @@ gmp_randstate_t Zpoly_test_randstate;
 
 // tests whether the given polynomial is equal to the one given by the string
 // (only for testing purposes in this file)
-int Zpoly_equal(Zpoly_t poly, char* s)
+int Zpoly_equal_str(Zpoly_t poly, char* s)
 {
    Zpoly_t poly2;
    Zpoly_init(poly2);
@@ -195,7 +195,7 @@ int test__Zpoly_set()
 
    Zpoly_set_from_string(poly1, "42 -5 0 3");
    _Zpoly_set(poly2, poly1);
-   success = success && Zpoly_equal(poly2, "42 -5 0 3");
+   success = success && Zpoly_equal_str(poly2, "42 -5 0 3");
 
    Zpoly_clear(poly1);
    Zpoly_clear(poly2);
@@ -261,47 +261,47 @@ int test__Zpoly_add()
       Zpoly_set_from_string(poly[1], "");
       Zpoly_set_from_string(poly[2], "123 456 789 123 456");
       _Zpoly_add(*target, poly[0], poly[1]);
-      success = success && Zpoly_equal(*target, "");
+      success = success && Zpoly_equal_str(*target, "");
 
       Zpoly_set_from_string(poly[0], "1");
       Zpoly_set_from_string(poly[1], "");
       Zpoly_set_from_string(poly[2], "123 456 789 123 456");
       _Zpoly_add(*target, poly[0], poly[1]);
-      success = success && Zpoly_equal(*target, "1");
+      success = success && Zpoly_equal_str(*target, "1");
 
       Zpoly_set_from_string(poly[0], "");
       Zpoly_set_from_string(poly[1], "1");
       Zpoly_set_from_string(poly[2], "123 456 789 123 456");
       _Zpoly_add(*target, poly[0], poly[1]);
-      success = success && Zpoly_equal(*target, "1");
+      success = success && Zpoly_equal_str(*target, "1");
 
       Zpoly_set_from_string(poly[0], "-1");
       Zpoly_set_from_string(poly[1], "1");
       Zpoly_set_from_string(poly[2], "123 456 789 123 456");
       _Zpoly_add(*target, poly[0], poly[1]);
-      success = success && Zpoly_equal(*target, "");
+      success = success && Zpoly_equal_str(*target, "");
 
       Zpoly_set_from_string(poly[0], "-1 0 47");
       Zpoly_set_from_string(poly[1], "0 0 0 0 8");
       Zpoly_set_from_string(poly[2], "123 456 789 123 456");
       _Zpoly_add(*target, poly[0], poly[1]);
-      success = success && Zpoly_equal(*target, "-1 0 47 0 8");
+      success = success && Zpoly_equal_str(*target, "-1 0 47 0 8");
 
       Zpoly_set_from_string(poly[0], "0 0 0 0 8");
       Zpoly_set_from_string(poly[1], "-1 0 47");
       Zpoly_set_from_string(poly[2], "123 456 789 123 456");
       _Zpoly_add(*target, poly[0], poly[1]);
-      success = success && Zpoly_equal(*target, "-1 0 47 0 8");
+      success = success && Zpoly_equal_str(*target, "-1 0 47 0 8");
    }
 
    Zpoly_set_from_string(poly[0], "2 3 4");
    Zpoly_set_from_string(poly[1], "123 456 789 123 456");
    _Zpoly_add(poly[1], poly[0], poly[0]);
-   success = success && Zpoly_equal(poly[1], "4 6 8");
+   success = success && Zpoly_equal_str(poly[1], "4 6 8");
 
    Zpoly_set_from_string(poly[0], "2 3 4");
    _Zpoly_add(poly[0], poly[0], poly[0]);
-   success = success && Zpoly_equal(poly[0], "4 6 8");
+   success = success && Zpoly_equal_str(poly[0], "4 6 8");
 
    Zpoly_clear(poly[0]);
    Zpoly_clear(poly[1]);
@@ -327,47 +327,47 @@ int test__Zpoly_sub()
       Zpoly_set_from_string(poly[1], "");
       Zpoly_set_from_string(poly[2], "123 456 789 123 456");
       _Zpoly_sub(*target, poly[0], poly[1]);
-      success = success && Zpoly_equal(*target, "");
+      success = success && Zpoly_equal_str(*target, "");
 
       Zpoly_set_from_string(poly[0], "1");
       Zpoly_set_from_string(poly[1], "");
       Zpoly_set_from_string(poly[2], "123 456 789 123 456");
       _Zpoly_sub(*target, poly[0], poly[1]);
-      success = success && Zpoly_equal(*target, "1");
+      success = success && Zpoly_equal_str(*target, "1");
 
       Zpoly_set_from_string(poly[0], "");
       Zpoly_set_from_string(poly[1], "1");
       Zpoly_set_from_string(poly[2], "123 456 789 123 456");
       _Zpoly_sub(*target, poly[0], poly[1]);
-      success = success && Zpoly_equal(*target, "-1");
+      success = success && Zpoly_equal_str(*target, "-1");
 
       Zpoly_set_from_string(poly[0], "-1");
       Zpoly_set_from_string(poly[1], "1");
       Zpoly_set_from_string(poly[2], "123 456 789 123 456");
       _Zpoly_sub(*target, poly[0], poly[1]);
-      success = success && Zpoly_equal(*target, "-2");
+      success = success && Zpoly_equal_str(*target, "-2");
 
       Zpoly_set_from_string(poly[0], "-1 0 47");
       Zpoly_set_from_string(poly[1], "0 0 0 0 8");
       Zpoly_set_from_string(poly[2], "123 456 789 123 456");
       _Zpoly_sub(*target, poly[0], poly[1]);
-      success = success && Zpoly_equal(*target, "-1 0 47 0 -8");
+      success = success && Zpoly_equal_str(*target, "-1 0 47 0 -8");
 
       Zpoly_set_from_string(poly[0], "0 0 0 0 8");
       Zpoly_set_from_string(poly[1], "-1 0 47");
       Zpoly_set_from_string(poly[2], "123 456 789 123 456");
       _Zpoly_sub(*target, poly[0], poly[1]);
-      success = success && Zpoly_equal(*target, "1 0 -47 0 8");
+      success = success && Zpoly_equal_str(*target, "1 0 -47 0 8");
    }
 
    Zpoly_set_from_string(poly[0], "2 3 4");
    Zpoly_set_from_string(poly[1], "123 456 789 123 456");
    _Zpoly_sub(poly[1], poly[0], poly[0]);
-   success = success && Zpoly_equal(poly[1], "");
+   success = success && Zpoly_equal_str(poly[1], "");
 
    Zpoly_set_from_string(poly[0], "2 3 4");
    _Zpoly_sub(poly[0], poly[0], poly[0]);
-   success = success && Zpoly_equal(poly[0], "");
+   success = success && Zpoly_equal_str(poly[0], "");
 
    Zpoly_clear(poly[0]);
    Zpoly_clear(poly[1]);
@@ -388,22 +388,22 @@ int test__Zpoly_negate()
    Zpoly_set_from_string(poly1, "");
    Zpoly_set_from_string(poly2, "123 456 789 123 456");
    _Zpoly_negate(poly2, poly1);
-   success = success && Zpoly_equal(poly2, "");
+   success = success && Zpoly_equal_str(poly2, "");
 
    Zpoly_set_from_string(poly1, "0 2 -5 6");
    Zpoly_set_from_string(poly2, "123 456 789 123 456");
    _Zpoly_negate(poly2, poly1);
-   success = success && Zpoly_equal(poly2, "0 -2 5 -6");
+   success = success && Zpoly_equal_str(poly2, "0 -2 5 -6");
 
    // in-place
 
    Zpoly_set_from_string(poly1, "");
    _Zpoly_negate(poly1, poly1);
-   success = success && Zpoly_equal(poly1, "");
+   success = success && Zpoly_equal_str(poly1, "");
 
    Zpoly_set_from_string(poly1, "0 2 -5 6");
    _Zpoly_negate(poly1, poly1);
-   success = success && Zpoly_equal(poly1, "0 -2 5 -6");
+   success = success && Zpoly_equal_str(poly1, "0 -2 5 -6");
 
    Zpoly_clear(poly1);
    Zpoly_clear(poly2);
@@ -430,22 +430,22 @@ int test__Zpoly_mul_naive()
    Zpoly_set_from_string(poly1, "");
    Zpoly_set_from_string(poly2, "");
    _Zpoly_mul_naive(poly3, poly1, poly2);
-   success = success && Zpoly_equal(poly3, "");
+   success = success && Zpoly_equal_str(poly3, "");
    
    Zpoly_set_from_string(poly1, "1 2 3");
    Zpoly_set_from_string(poly2, "");
    _Zpoly_mul_naive(poly3, poly1, poly2);
-   success = success && Zpoly_equal(poly3, "");
+   success = success && Zpoly_equal_str(poly3, "");
    
    Zpoly_set_from_string(poly1, "1 2 3");
    Zpoly_set_from_string(poly2, "2");
    _Zpoly_mul_naive(poly3, poly1, poly2);
-   success = success && Zpoly_equal(poly3, "2 4 6");
+   success = success && Zpoly_equal_str(poly3, "2 4 6");
    
    Zpoly_set_from_string(poly1, "-3 4 0 2 56");
    Zpoly_set_from_string(poly2, "48 -2 3");
    _Zpoly_mul_naive(poly3, poly1, poly2);
-   success = success && Zpoly_equal(poly3, "-144 198 -17 108 2684 -106 168");
+   success = success && Zpoly_equal_str(poly3, "-144 198 -17 108 2684 -106 168");
 
    return success;
 }

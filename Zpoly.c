@@ -205,7 +205,7 @@ void _Zpoly_mul_naive(Zpoly_t output, Zpoly_t input1,
    }
    
    output->length = input1->length + input2->length - 1;
-   FLINT_ASSERT(output->alloc >= output_length);
+   FLINT_ASSERT(output->alloc >= output->length);
 
    for (unsigned long i = 0; i < output->length; i++)
       mpz_set_ui(output->coeffs[i], 0);

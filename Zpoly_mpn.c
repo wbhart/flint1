@@ -11,6 +11,7 @@ Copyright (C) 2007, William Hart and David Harvey
 #include <string.h>
 #include "flint.h"
 #include "Zpoly_mpn.h"
+#include "Zpoly.h"
 #include "flint-manager.h"
 
 /****************************************************************************
@@ -31,6 +32,11 @@ void _Zpoly_mpn_init(Zpoly_mpn_t poly, unsigned long alloc,
    poly->alloc = alloc;
    poly->length = 0;
    poly->coeff_size = coeff_size;
+}
+
+void _Zpoly_mpn_clear(Zpoly_mpn_t poly)
+{
+   flint_free(poly->coeffs);
 }
 
 void _Zpoly_mpn_convert_out(Zpoly_t poly_mpz, Zpoly_mpn_t poly_mpn)
@@ -56,7 +62,7 @@ void _Zpoly_mpn_convert_in(Zpoly_mpn_t poly_mpn, Zpoly_t poly_mpz)
    for (unsigned long i = 0; i < poly_mpz->length; i++)
    {
       if (mpz_sgn(poly_mpz->coeffs[i]) == 0) 
-          _Zpoly_set_coeff_ui(poly_mpn,i,0);
+          _Zpoly_mpn_set_coeff_ui(poly_mpn,i,0);
       else
       {
           size_t countp;
@@ -110,7 +116,7 @@ void _Zpoly_mpn_set_coeff_si(Zpoly_mpn_t poly, unsigned long n, long x)
 
 void _Zpoly_mpn_normalise(Zpoly_mpn_t poly)
 {
-   while (poly->coeffs[(poly_length-1)*(poly->coeff_size+1)] == 0)
+   while (poly->coeffs[(poly->length-1)*(poly->coeff_size+1)] == 0)
    {
       poly->length--;
    }
@@ -128,10 +134,10 @@ void _Zpoly_mpn_set(Zpoly_mpn_t output, Zpoly_mpn_t input)
    {
       if (input->coeff_size == output->coeff_size)
       {
-         copy_limbs(output->coeffs, input_coeffs, input->length*(input->coeff_size+1));
+         copy_limbs(output->coeffs, input->coeffs, input->length*(input->coeff_size+1));
       } else
       {
-         unsigned long diff_size = output->coeff_size - input->coeff->size;
+         unsigned long diff_size = output->coeff_size - input->coeff_size;
          unsigned long input_size = input->coeff_size + 1;
          unsigned long output_size = output->coeff_size + 1;
          for (unsigned long i = 0; i < input->length; i++)
@@ -151,7 +157,7 @@ void _Zpoly_mpn_swap(Zpoly_mpn_t x, Zpoly_mpn_t y)
    
    temp_p = x->coeffs;
    x->coeffs = y->coeffs;
-   y->coeffs = temp->coeffs;
+   y->coeffs = temp_p;
    
    temp_l = x->alloc;
    x->alloc = y->alloc;
@@ -183,12 +189,12 @@ int _Zpoly_mpn_equal(Zpoly_mpn_t input1, Zpoly_mpn_t input2)
       {
          for (j = 0; j < input2->coeff_size+1; j++)
          {
-            if (input1[i*(input1->coeff_size+1)+j] != input2[i*(input2->coeff_size+1)+j])
+            if (input1->coeffs[i*(input1->coeff_size+1)+j] != input2->coeffs[i*(input2->coeff_size+1)+j])
                return 0;
          }
          for (j = input2->coeff_size + 1; j < input1->coeff_size + 1; j++)
          {
-            if (input1[i*(input1->coeff_size+1)+j] != 0) return 0;
+            if (input1->coeffs[i*(input1->coeff_size+1)+j] != 0) return 0;
          }
       }
       return 1;
@@ -198,12 +204,12 @@ int _Zpoly_mpn_equal(Zpoly_mpn_t input1, Zpoly_mpn_t input2)
       {
          for (j = 0; j < input1->coeff_size+1; j++)
          {
-            if (input1[i*(input1->coeff_size+1)+j] != input2[i*(input2->coeff_size+1)+j])
+            if (input1->coeffs[i*(input1->coeff_size+1)+j] != input2->coeffs[i*(input2->coeff_size+1)+j])
                return 0;
          }
          for (j = input1->coeff_size + 1; j < input2->coeff_size + 1; j++)
          {
-            if (input2[i*(input1->coeff_size+1)+j] != 0) return 0;
+            if (input2->coeffs[i*(input1->coeff_size+1)+j] != 0) return 0;
          }
       }
       return 1;
@@ -223,7 +229,7 @@ void _Zpoly_mpn_negate(Zpoly_mpn_t output, Zpoly_mpn_t input)
          output->coeffs[i*(input->coeff_size+1)] = -input->coeffs[i*(input->coeff_size+1)];
    } else
    {
-      unsigned long diff_size = output->coeff_size - input->coeff->size;
+      unsigned long diff_size = output->coeff_size - input->coeff_size;
       unsigned long input_size = input->coeff_size + 1;
       unsigned long output_size = output->coeff_size + 1;
       for (unsigned long i = 0; i < input->length; i++)
@@ -249,9 +255,9 @@ void _Zpoly_mpn_left_shift(Zpoly_mpn_t output, Zpoly_mpn_t input,
    if (n == 0) return;
    
    Zpoly_mpn_t part;   
-   if ((input->coeffs == output->coeffs) && (n < output_length))
+   if ((input->coeffs == output->coeffs) && (n < output->length))
    {
-      Zpoly part2;
+      Zpoly_mpn_t part2;
       part->length = input->length - n;
       part->coeff_size = input->coeff_size;
       part->coeffs = input->coeffs + n*(input->coeff_size+1);
@@ -263,14 +269,14 @@ void _Zpoly_mpn_left_shift(Zpoly_mpn_t output, Zpoly_mpn_t input,
       part2->length = n;
       part2->coeffs = input->coeffs;
       _Zpoly_mpn_set(part2, part);
-      clear_limbs(output->coeffs, n*(output->coeff_size+1);
+      clear_limbs(output->coeffs, n*(output->coeff_size+1));
    } else
    {
       part->length = input->length;
       part->coeff_size = output->coeff_size;
       part->coeffs = output->coeffs + n*(output->coeff_size+1);
       _Zpoly_mpn_set(part, input);
-      clear_limbs(output->coeffs, n*(output->coeff_size+1);
+      clear_limbs(output->coeffs, n*(output->coeff_size+1));
    }
    output->length = input->length + n;
 }
@@ -292,7 +298,7 @@ void _Zpoly_mpn_right_shift(Zpoly_mpn_t output, Zpoly_mpn_t input, unsigned long
    part->coeff_size = output->coeff_size;
    part->coeffs = input->coeffs + n*(output->coeff_size + 1);
    _Zpoly_mpn_set(part, input);
-   clear_limbs(output->coeffs, n*(output->coeff_size+1);  
+   clear_limbs(output->coeffs, n*(output->coeff_size+1));  
    output->length = part->length; 
 }
 

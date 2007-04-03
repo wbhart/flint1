@@ -1,3 +1,5 @@
+#ifndef FLINT_MANAGER_H
+#define FLINT_MANAGER_H
 //////////////////////////////////////////////////////////
 /*
 flint_malloc_limbs and flint_malloc use the same memory manager, they just
@@ -14,3 +16,5 @@ void* flint_realloc_limbs(void* block, unsigned long limbs);
 void* flint_realloc(void* block, unsigned long bytes);
 void flint_free(void* block);
 //////////////////////////////////////////////////////////
+
+#endif

@@ -1,3 +1,7 @@
+#include <stdlib.h>
+#include <gmp.h>
+#include "flint-manager.h"
+
 //////////////////////////////////////////////////////////
 /*
 Temporary baby implementations of memory management functions

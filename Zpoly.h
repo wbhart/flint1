@@ -10,10 +10,13 @@ There are two entirely separate data formats for polynomials over Z:
      the same number of limbs (see Zpoly_mpn files)
 
 *****************************************************************************/
+#ifndef ZPOLY_H
+#define ZPOLY_H
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <gmp.h>
+#include "flint-manager.h"
 
 /****************************************************************************
 
@@ -423,3 +426,4 @@ void Zpoly_content(mpz_t content, Zpoly_t a);
 
 
 // *************** end of file
+#endif

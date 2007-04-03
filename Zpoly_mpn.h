@@ -10,11 +10,14 @@ There are two entirely separate data formats for polynomials over Z:
      the same number of limbs 
 
 *****************************************************************************/
+#ifndef ZPOLY_MPN_H
+#define ZPOLY_MPN_H
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <gmp.h>
 #include "flint-manager.h"
+#include "Zpoly.h"
 #include "mpn_extras.h"
 
 /****************************************************************************
@@ -74,6 +77,8 @@ typedef Zpoly_mpn_struct Zpoly_mpn_t[1];
 
 void _Zpoly_mpn_init(Zpoly_mpn_t poly, unsigned long alloc,
                                               unsigned long coeff_size);
+
+void _Zpoly_mpn_clear(Zpoly_mpn_t poly);
                                               
 void _Zpoly_mpn_convert_out(Zpoly_t poly_mpz, Zpoly_mpn_t poly_mpn);
 
@@ -139,7 +144,7 @@ static inline unsigned long _Zpoly_mpn_get_length(Zpoly_mpn_t poly)
    return poly->length;
 }
 
-static inline unsigned long _Zpoly_mpn_get_coeff_size(Zpoly_mpn_t poly);
+static inline unsigned long _Zpoly_mpn_get_coeff_size(Zpoly_mpn_t poly)
 {
    return poly->coeff_size;
 }
@@ -151,7 +156,7 @@ void _Zpoly_mpn_set(Zpoly_mpn_t output, Zpoly_mpn_t input);
    Does not set the actual limbs to zero.
 */
 
-void _Zpoly_mpn_zero(Zpoly_mpn_t output)
+static inline void _Zpoly_mpn_zero(Zpoly_mpn_t output)
 {
    output->length = 0;
 }
@@ -212,3 +217,4 @@ void _Zpoly_mpn_xgcd(Zpoly_mpn_t a, Zpoly_mpn_t b, Zpoly_mpn_t output,
 void _Zpoly_mpn_content(mp_limb_t * content, Zpoly_mpn_t a);
 
 // *************** end of file
+#endif
