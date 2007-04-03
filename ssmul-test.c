@@ -813,7 +813,7 @@ int main()
    
    printf("   testing SSMul...\n");
 
-   for (unsigned long i = 106356; i <= 1000000; i+=((i/2)+2))
+   for (unsigned long i = 1; i <= 1000000; i+=((i/2)+2))
      for (unsigned long j = 1; j <= 10000; j+=((j/2)+2)) 
       for (unsigned long k = 1; k <= j; k+=((k/2)+2))  
       {
