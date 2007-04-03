@@ -38,8 +38,8 @@ void _Zpoly_mpn_init(Zpoly_mpn_t poly, unsigned long alloc,
 
 void _Zpoly_mpn_realloc(Zpoly_mpn_t poly, unsigned long alloc)
 {
-   if (alloc > 0)
-      poly->coeffs = (mp_limb_t*) flint_realloc(poly->coeffs, sizeof(mp_limb_t)*alloc*(poly->coeff_size+1));
+   if (alloc <= 0) alloc = 1;
+   poly->coeffs = (mp_limb_t*) flint_realloc(poly->coeffs, sizeof(mp_limb_t)*alloc*(poly->coeff_size+1));
    
    poly->alloc = alloc;
    
