@@ -2,6 +2,19 @@
 
 === general stuff ===
 
+ * add some kind of debug flag to the makefile, which will enable/disable
+   FLINT_ASSERT
+   
+ * we should be checking somewhere (at build time?) that FLINT_BITS_PER_LIMB
+   really is the same as GMP's bits per limb
+   
+ * add some documentation for cache hint macros in flint.h
+ 
+ * determine cache size at build time, instead of #defined in flint.h!!!!
+     * possibly determine size of each cache in hierarchy?
+ 
+ * generally clean up the makefile -- it's really grossly disgusting right now
+
  * Write some decent profiling code.
 
  * Make sure to use mpz_rrandomb for all randomised testing, it's much better

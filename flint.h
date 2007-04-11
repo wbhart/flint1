@@ -13,7 +13,6 @@
 #define FLINT_H
 
 
-// todo: need to select which version based on some kind of debug compile flag?
 #if 0
 #define FLINT_ASSERT assert
 #else
@@ -26,28 +25,29 @@
 #define FLINT_MIN(zzz1, zzz2) ((zzz1) > (zzz2) ? (zzz2) : (zzz1))
 
 
-
 /*
  FLINT_BITS_PER_LIMB is the number of bits per limb.
-
- todo: shouldn't we be checking this is the same as GMP's limb size?
 */
-
 #if ULONG_MAX == 4294967295U
 #define FLINT_BITS_PER_LIMB 32
+#define FLINT_LG_BITS_PER_LIMB 5
 #define FLINT_BYTES_PER_LIMB 4
 #define FLINT_LG_BYTES_PER_LIMB 2
+
 #elif ULONG_MAX == 18446744073709551615U
 #define FLINT_BITS_PER_LIMB 64
+#define FLINT_LG_BITS_PER_LIMB 6
 #define FLINT_BYTES_PER_LIMB 8
 #define FLINT_LG_BYTES_PER_LIMB 3
+
 #else
 // only 32 and 64 bits are supported
 #error FLINT requires that unsigned long is 32 bits or 64 bits
 #endif
 
+
 /* 
-FLINT cache hints to speed up reads from data in memory
+Cache hints to speed up reads from data in memory
 */
 #if defined(__GNUC__) && __GNUC__ >= 3
 #define FLINT_PREFETCH(addr,n) __builtin_prefetch((unsigned long*)addr+n,0,1) 
@@ -59,12 +59,6 @@ FLINT cache hints to speed up reads from data in memory
 
 /*
 Cache size in bytes.
-
-todo: determine this constant at build time
-
-todo: we really need one of these for a hierarchy of caches. e.g. the
-cache-friendly FFT code only really takes into account the L1 cache.
-
 */
 #define FLINT_CACHE_SIZE 65536
 
