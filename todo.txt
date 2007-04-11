@@ -63,7 +63,9 @@ just use `gmp_bits_per_limb` because that's a const, not a #define)
  * Figure out FLINT_CACHE_SIZE
 
 
-=== ssmul module ===
+=== ssfft module ===
+
+* continue working on ssfft3 branch
 
 * GMP has a cool idea for doing very long butterflies. Instead of doing
 a call to mpn_add_n and mpn_sub_n separately, it works in chunks to ensure
@@ -74,17 +76,18 @@ coefficients are so large they don't even fit in L1 any more. To do this
 * Is there a way to do reduce_mod_p_exact with one pass over the data in the
 worst case? (Currently the worst case is two passes.)
 
-* In the rotations, it might be better to have THREE cases: rotations by
-whole number of limbs, by whole number of bytes, and by arbitrary bitlengths.
-Currently we only have limbs and bits. Need to investigate whether byte-
-aligned copies are any faster than actual bit rotations. If there are any
-common architectures for which this is true, it might be worth implementing.
+* study the the overflow bit guarantees more carefully in the
+  inverse transform. The cross butterflies seem to add a factor of 3 rather
+  than 2 to the errors. Currently we are being too conservative in doing
+  fast reductions; we could get away with fewer, but would need to do a
+  safety reduction pass over the data after a certain number of layers.
+
+
+=== ssmul module ===
 
 * maybe it's not optimal to store the coefficients n+1 limbs apart. Bill
 mentioned some potential cache-thrashing issues on intels. Might be better
 to add a bit of padding.
-
-* Consider writing some x86 assembly for the butterflies
 
 * the 0th and (n/2)th fourier coefficients are always about half the size of
   the others. (These are the two stored first in the bit-reversed array.)
@@ -94,20 +97,16 @@ to add a bit of padding.
   large enough. Also chase up that reference in the paper by Zimmerman et al
   for some kind of wrapped-around toom cook.
 
-* in ssfft.c, write specialised length 16 (and possibly 32) transforms,
-  especially for the totally non-truncating case, especially for the full
-  limb rotation case.
-
-* in ssfft.c study the the overflow bit guarantees more carefully in the
-  inverse transform. The cross butterflies seem to add a factor of 3 rather
-  than 2 to the errors. Currently we are being too conservative in doing
-  fast reductions; we could get away with fewer, but would need to do a
-  safety reduction pass over the data after a certain number of layers.
-
 * for KS, try the idea where we evaluate X1 = f(2^n)g(2^n), X2 = f(-2^n)g(-2^n) and then reconstruct output from X1+X2 and X1-X2
 
-* in ssfft_fft() and ssfft_ifft(), rename m1 and m2 variables to something
-  like log2_rows and log2_cols
+
+
+=== Zpoly_mpn module ===
+
+* clarify the meaning of the sign limb. The documentation in the header
+  doesn't agree with what the code seems to do.
+
+
 
 === modpmul module ===
 
