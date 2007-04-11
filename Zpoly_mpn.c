@@ -28,6 +28,9 @@ Copyright (C) 2007, William Hart and David Harvey
 void _Zpoly_mpn_init(Zpoly_mpn_t poly, unsigned long alloc,
                      unsigned long limbs)
 {
+   FLINT_ASSERT(alloc >= 1);
+   FLINT_ASSERT(limbs >= 1);
+
    poly->coeffs = (mp_limb_t *) flint_malloc(sizeof(mp_limb_t)*alloc*(limbs+1));
    poly->alloc = alloc;
    poly->length = 0;
