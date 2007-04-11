@@ -32,10 +32,10 @@ This type is better suited to handling very dense polynomials with relatively
 small coefficients, where the memory management overhead of Zpoly_t would
 be too expensive.
 
-"coeffs" is an array of limbs of length (alloc * (coeff_size+1)). Each
-coefficient uses coeff_size+1 limbs. For each coefficient, the first limb is
+"coeffs" is an array of limbs of length (alloc * (limbs+1)). Each
+coefficient uses limbs+1 limbs. For each coefficient, the first limb is
 a sign limb: 0 means positive and 1 means negative. (Zero may be stored as
-either positive or negative.) The remaining "coeff_size" limbs represent the
+either positive or negative.) The remaining "limbs" limbs represent the
 absolute value of the coefficient, stored in GMP's mpn format.
 
 Only the first "length" coefficients actually represent coefficients of the
@@ -48,7 +48,7 @@ There are two classes of functions operating on Zpoly_mpn_t:
 -- The _Zpoly_mpn_* functions NEVER free or reallocate "coeffs", so they
    don't care how "coeffs" was allocated, and they never even look at the
    "alloc" attribute. They always assume the output has enough space for
-   the result. They also NEVER modify the coeff_size attribute (since this
+   the result. They also NEVER modify the limbs attribute (since this
    would screw up the block size).
 
 -- The Zpoly_mpn_* functions ASSUME that "coeffs" was allocated via
@@ -63,7 +63,7 @@ typedef struct
    mp_limb_t* coeffs;
    unsigned long alloc;
    unsigned long length;
-   unsigned long coeff_size;
+   unsigned long limbs;
 } Zpoly_mpn_struct;
 
 // Zpoly_mpn_t allows reference-like semantics for Zpoly_mpn_struct:
@@ -76,7 +76,7 @@ typedef Zpoly_mpn_struct Zpoly_mpn_t[1];
 ===============================================================================*/
 
 void _Zpoly_mpn_init(Zpoly_mpn_t poly, unsigned long alloc,
-                                              unsigned long coeff_size);
+                                              unsigned long limbs);
                                               
 void _Zpoly_mpn_realloc(Zpoly_mpn_t poly, unsigned long alloc);
 
@@ -89,45 +89,45 @@ void _Zpoly_mpn_convert_in(Zpoly_mpn_t poly_mpn, Zpoly_t poly_mpz);
 static inline
 mp_limb_t * _Zpoly_mpn_get_coeff_ptr(Zpoly_mpn_t poly, unsigned long n)
 {
-   return poly->coeffs+n*(poly->coeff_size+1);
+   return poly->coeffs+n*(poly->limbs+1);
 }
 
 /* 
    Set "output" to the given coefficient and return the sign
-   Assumes length of output is coeff_size limbs long.  
+   Assumes length of output is limbs limbs long.  
 */
    
 static inline long _Zpoly_mpn_get_coeff(mp_limb_t * output, Zpoly_mpn_t poly, 
                                                                 unsigned long n)
 {
-   copy_limbs(output, poly->coeffs+n*(poly->coeff_size+1)+1, poly->coeff_size);
-   return poly->coeffs[n*(poly->coeff_size+1)];
+   copy_limbs(output, poly->coeffs+n*(poly->limbs+1)+1, poly->limbs);
+   return poly->coeffs[n*(poly->limbs+1)];
 }
 
 static inline unsigned long _Zpoly_mpn_get_coeff_ui(Zpoly_mpn_t poly, unsigned long n)
 {
-   return poly->coeffs[n*(poly->coeff_size+1)+1];
+   return poly->coeffs[n*(poly->limbs+1)+1];
 }
 
 static inline long _Zpoly_mpn_get_coeff_si(Zpoly_mpn_t poly, unsigned long n)
 {
-   if (poly->coeffs[n*(poly->coeff_size+1)] < 0) 
-                                 return poly->coeffs[n*(poly->coeff_size+1)+1];
-   else return -poly->coeffs[n*(poly->coeff_size+1)+1];
+   if (poly->coeffs[n*(poly->limbs+1)] < 0) 
+                                 return poly->coeffs[n*(poly->limbs+1)+1];
+   else return -poly->coeffs[n*(poly->limbs+1)+1];
 }
 
 /* 
    Set a coefficient to the given value having "size" limbs.
-   Assumes that the poly coeff_size is at least "size".
+   Assumes that the poly limbs is at least "size".
 */
 
 static inline void _Zpoly_mpn_set_coeff(Zpoly_mpn_t poly, unsigned long n, 
                                   mp_limb_t * x, long sign, unsigned long size)
 {
-   copy_limbs(poly->coeffs+n*(poly->coeff_size+1)+1, x, size);
-   poly->coeffs[n*(poly->coeff_size+1)] = sign;
-   if (poly->coeff_size > size) 
-     clear_limbs(poly->coeffs+n*(poly->coeff_size+1)+size+1, poly->coeff_size-size);
+   copy_limbs(poly->coeffs+n*(poly->limbs+1)+1, x, size);
+   poly->coeffs[n*(poly->limbs+1)] = sign;
+   if (poly->limbs > size) 
+     clear_limbs(poly->coeffs+n*(poly->limbs+1)+size+1, poly->limbs-size);
 }
 
 void _Zpoly_mpn_set_coeff_ui(Zpoly_mpn_t poly, unsigned long n, unsigned long x);
@@ -146,9 +146,9 @@ static inline unsigned long _Zpoly_mpn_get_length(Zpoly_mpn_t poly)
    return poly->length;
 }
 
-static inline unsigned long _Zpoly_mpn_get_coeff_size(Zpoly_mpn_t poly)
+static inline unsigned long _Zpoly_mpn_get_limbs(Zpoly_mpn_t poly)
 {
-   return poly->coeff_size;
+   return poly->limbs;
 }
 
 void _Zpoly_mpn_set(Zpoly_mpn_t output, Zpoly_mpn_t input);
