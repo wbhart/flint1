@@ -1,6 +1,6 @@
 /****************************************************************************
 
-Zpoly.h: Polynomials over Z
+Zpoly_mpn.h: Polynomials over Z
 
 Copyright (C) 2007, William Hart and David Harvey
 
@@ -10,8 +10,8 @@ There are two entirely separate data formats for polynomials over Z:
      the same number of limbs 
 
 *****************************************************************************/
-#ifndef ZPOLY_MPN_H
-#define ZPOLY_MPN_H
+#ifndef FLINT_ZPOLY_MPN_H
+#define FLINT_ZPOLY_MPN_H
 
 #include <stdlib.h>
 #include <stdio.h>

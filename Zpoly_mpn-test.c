@@ -1,6 +1,6 @@
 /****************************************************************************
 
-Zpoly-test.c: Test code for Zpoly.c and Zpoly.h
+Zpoly_mpn-test.c: Test code for Zpoly_mpn.c and Zpoly_mpn.h
 
 Copyright (C) 2007, William Hart and David Harvey
 
@@ -81,7 +81,7 @@ int test_Zpoly_mpn_convert()
    return result;
 }
 
-void Zpoly_test_all()
+void Zpoly_mpn_test_all()
 {
    int success, all_success = 1;
 
@@ -94,7 +94,7 @@ void Zpoly_test_all()
 int main()
 {
    gmp_randinit_default(Zpoly_test_randstate);
-   Zpoly_test_all();
+   Zpoly_mpn_test_all();
 
    return 0;
 }
