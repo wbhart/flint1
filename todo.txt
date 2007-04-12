@@ -2,8 +2,12 @@
 
 === general stuff ===
 
+ * try GREDC algorithm
+
  * add some kind of debug flag to the makefile, which will enable/disable
    FLINT_ASSERT
+   
+ * figure out why "#define FLINT_ASSERT(dummy)" wouldn't compile.
    
  * we should be checking somewhere (at build time?) that FLINT_BITS_PER_LIMB
    really is the same as GMP's bits per limb
@@ -106,6 +110,10 @@ to add a bit of padding.
 * clarify the meaning of the sign limb. The documentation in the header
   doesn't agree with what the code seems to do.
 
+* move _Zpoly_mpn_init out of raw layer
+
+* implement _get_length(), _get_degree(), get_length(), get_degree()
+  for both mpz and mpn, as discussed by email
 
 
 === modpmul module ===
