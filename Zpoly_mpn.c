@@ -97,7 +97,7 @@ void _Zpoly_mpn_set_coeff_si(Zpoly_mpn_t poly, unsigned long n, long x)
 
 void _Zpoly_mpn_normalise(Zpoly_mpn_t poly)
 {
-   while (poly->coeffs[(poly->length-1)*(poly->limbs+1)] == 0)
+   while (poly->length && poly->coeffs[(poly->length-1)*(poly->limbs+1)] == 0)
    {
       poly->length--;
    }
