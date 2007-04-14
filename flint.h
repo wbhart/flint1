@@ -16,7 +16,7 @@
 #if 0
 #define FLINT_ASSERT assert
 #else
-#define FLINT_ASSERT if
+#define FLINT_ASSERT(zzz_dummy)
 #endif
 
 
