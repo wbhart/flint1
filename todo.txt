@@ -109,9 +109,6 @@ to add a bit of padding.
 * clarify the meaning of the sign limb. The documentation in the header
   doesn't agree with what the code seems to do.
 
-* implement _get_length(), _get_degree(), get_length(), get_degree()
-  for both mpz and mpn, as discussed by email
-
 
 === modpmul module ===
 
