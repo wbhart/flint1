@@ -129,20 +129,25 @@ void _Zpoly_mpn_set_coeff_si(Zpoly_mpn_t poly, unsigned long n, long x);
 
 void _Zpoly_mpn_normalise(Zpoly_mpn_t poly);
 
-static inline long _Zpoly_mpn_get_degree(Zpoly_mpn_t poly)
+static inline long _Zpoly_mpn_degree(Zpoly_mpn_t poly)
 {
    return poly->length - 1;
 }
 
-static inline unsigned long _Zpoly_mpn_get_length(Zpoly_mpn_t poly)
+static inline unsigned long _Zpoly_mpn_length(Zpoly_mpn_t poly)
 {
    return poly->length;
 }
 
-static inline unsigned long _Zpoly_mpn_get_limbs(Zpoly_mpn_t poly)
+static inline unsigned long _Zpoly_mpn_limbs(Zpoly_mpn_t poly)
 {
    return poly->limbs;
 }
+
+// these two are the same as above, but normalise the poly first
+long Zpoly_mpn_degree(Zpoly_mpn_t poly);
+unsigned long Zpoly_mpn_length(Zpoly_mpn_t poly);
+
 
 void _Zpoly_mpn_set(Zpoly_mpn_t output, Zpoly_mpn_t input);
 

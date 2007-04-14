@@ -325,3 +325,14 @@ void Zpoly_mpn_clear(Zpoly_mpn_t poly)
    flint_free(poly->coeffs);
 }
 
+long Zpoly_mpn_degree(Zpoly_mpn_t poly)
+{
+   _Zpoly_mpn_normalise(poly);
+   return poly->length - 1;
+}
+
+unsigned long Zpoly_mpn_length(Zpoly_mpn_t poly)
+{
+   _Zpoly_mpn_normalise(poly);
+   return poly->length;
+}
