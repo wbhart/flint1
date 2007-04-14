@@ -40,14 +40,14 @@ int test_Zpoly_mpn_convert()
    {
       bits = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 1;
       
-      _Zpoly_mpn_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      Zpoly_mpn_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
           length = gmp_urandomm_ui(Zpoly_test_randstate,1000);
 #if DEBUG
           printf("%ld, %ld\n",length, bits);
 #endif
-          _Zpoly_mpn_realloc(test_mpn_poly, length);
+          Zpoly_mpn_realloc(test_mpn_poly, length);
           Zpoly_realloc(test_poly, length);
           Zpoly_realloc(test_poly2, length);
           test_poly->length = length;
@@ -71,7 +71,7 @@ int test_Zpoly_mpn_convert()
           
           result = Zpoly_equal(test_poly, test_poly2);
       }   
-      _Zpoly_mpn_clear(test_mpn_poly);
+      Zpoly_mpn_clear(test_mpn_poly);
    }
    
    mpz_clear(temp);

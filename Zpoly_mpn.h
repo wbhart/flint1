@@ -75,13 +75,6 @@ typedef Zpoly_mpn_struct Zpoly_mpn_t[1];
     
 ===============================================================================*/
 
-void _Zpoly_mpn_init(Zpoly_mpn_t poly, unsigned long alloc,
-                                              unsigned long limbs);
-                                              
-void _Zpoly_mpn_realloc(Zpoly_mpn_t poly, unsigned long alloc);
-
-void _Zpoly_mpn_clear(Zpoly_mpn_t poly);
-                                              
 void _Zpoly_mpn_convert_out(Zpoly_t poly_mpz, Zpoly_mpn_t poly_mpn);
 
 void _Zpoly_mpn_convert_in(Zpoly_mpn_t poly_mpn, Zpoly_t poly_mpz);
@@ -217,6 +210,21 @@ void _Zpoly_mpn_xgcd(Zpoly_mpn_t a, Zpoly_mpn_t b, Zpoly_mpn_t output,
                                       Zpoly_mpn_t input1, Zpoly_mpn_t input2);
 
 void _Zpoly_mpn_content(mp_limb_t * content, Zpoly_mpn_t a);
+
+
+/*============================================================================
+  
+    Functions in Zpoly_mpn_* layer
+    
+===============================================================================*/
+
+void Zpoly_mpn_init(Zpoly_mpn_t poly, unsigned long alloc,
+                                              unsigned long limbs);
+                                              
+void Zpoly_mpn_realloc(Zpoly_mpn_t poly, unsigned long alloc);
+
+void Zpoly_mpn_clear(Zpoly_mpn_t poly);
+                                              
 
 // *************** end of file
 #endif

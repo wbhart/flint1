@@ -52,7 +52,6 @@ compare it speedwise to MAGMA (which presumably is very fast :-) )
  * line endings. All of bill's files have DOS/Windows line endings :-) Some of
 the other files don't. Is this a problem?
 
- * get rid of "(check%5==0)" test in mpn_extras -- unnecessary division here
  * follow up issue related to arithmetic right shifts --- see NTL's #define for this. Add test code to the build process to check for this.
 
  * write threadsafe limb allocator (does this even make sense at all with a
@@ -109,8 +108,6 @@ to add a bit of padding.
 
 * clarify the meaning of the sign limb. The documentation in the header
   doesn't agree with what the code seems to do.
-
-* move _Zpoly_mpn_init out of raw layer
 
 * implement _get_length(), _get_degree(), get_length(), get_degree()
   for both mpz and mpn, as discussed by email

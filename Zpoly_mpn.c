@@ -20,42 +20,6 @@ Copyright (C) 2007, William Hart and David Harvey
 
 ****************************************************************************/
 
-/* 
-   Create a polynomial of length zero with "alloc" allocated coefficients
-   each with enough space for limbs limbs
-*/
-
-void _Zpoly_mpn_init(Zpoly_mpn_t poly, unsigned long alloc,
-                     unsigned long limbs)
-{
-   FLINT_ASSERT(alloc >= 1);
-   FLINT_ASSERT(limbs >= 1);
-
-   poly->coeffs = (mp_limb_t *) flint_malloc(sizeof(mp_limb_t)*alloc*(limbs+1));
-   poly->alloc = alloc;
-   poly->length = 0;
-   poly->limbs = limbs;
-}
-
-/* Shrink or expand a polynomial to "alloc" coefficients */
-
-void _Zpoly_mpn_realloc(Zpoly_mpn_t poly, unsigned long alloc)
-{
-   if (alloc <= 0) alloc = 1;
-   poly->coeffs = (mp_limb_t*) flint_realloc(poly->coeffs, sizeof(mp_limb_t)*alloc*(poly->limbs+1));
-   
-   poly->alloc = alloc;
-   
-   // truncate actual data if necessary
-   if (poly->length > alloc)
-      poly->length = alloc;
-}
-
-void _Zpoly_mpn_clear(Zpoly_mpn_t poly)
-{
-   flint_free(poly->coeffs);
-}
-
 void _Zpoly_mpn_convert_out(Zpoly_t poly_mpz, Zpoly_mpn_t poly_mpn)
 {
    poly_mpz->length = poly_mpn->length;
@@ -317,5 +281,47 @@ void _Zpoly_mpn_right_shift(Zpoly_mpn_t output, Zpoly_mpn_t input, unsigned long
    _Zpoly_mpn_set(part, input);
    clear_limbs(output->coeffs, n*(output->limbs+1));  
    output->length = part->length; 
+}
+
+
+/****************************************************************************
+
+   Zpoly_mpn_* layer
+
+****************************************************************************/
+
+/* 
+   Create a polynomial of length zero with "alloc" allocated coefficients
+   each with enough space for limbs limbs
+*/
+
+void Zpoly_mpn_init(Zpoly_mpn_t poly, unsigned long alloc, unsigned long limbs)
+{
+   FLINT_ASSERT(alloc >= 1);
+   FLINT_ASSERT(limbs >= 1);
+
+   poly->coeffs = (mp_limb_t *) flint_malloc(sizeof(mp_limb_t)*alloc*(limbs+1));
+   poly->alloc = alloc;
+   poly->length = 0;
+   poly->limbs = limbs;
+}
+
+/* Shrink or expand a polynomial to "alloc" coefficients */
+
+void Zpoly_mpn_realloc(Zpoly_mpn_t poly, unsigned long alloc)
+{
+   if (alloc <= 0) alloc = 1;
+   poly->coeffs = (mp_limb_t*) flint_realloc(poly->coeffs, sizeof(mp_limb_t)*alloc*(poly->limbs+1));
+   
+   poly->alloc = alloc;
+   
+   // truncate actual data if necessary
+   if (poly->length > alloc)
+      poly->length = alloc;
+}
+
+void Zpoly_mpn_clear(Zpoly_mpn_t poly)
+{
+   flint_free(poly->coeffs);
 }
 
