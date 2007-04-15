@@ -22,36 +22,50 @@ Copyright (C) 2007, William Hart and David Harvey
 
 void _Zpoly_mpn_convert_out(Zpoly_t poly_mpz, Zpoly_mpn_t poly_mpn)
 {
+   FLINT_ASSERT(poly_mpz->alloc >= poly_mpn->length);
+
    poly_mpz->length = poly_mpn->length;
    for (unsigned long i = 0; i < poly_mpn->length; i++)
    {
        if (poly_mpn->coeffs[i*(poly_mpn->limbs+1)] == 0) 
-          mpz_set_ui(poly_mpz->coeffs[i],0);
+          mpz_set_ui(poly_mpz->coeffs[i], 0);
        else 
        {
           mpz_import(poly_mpz->coeffs[i], poly_mpn->limbs, -1, 
-          sizeof(mp_limb_t), 0, 0, poly_mpn->coeffs+i*(poly_mpn->limbs+1)+1);
+                     sizeof(mp_limb_t), 0, 0,
+                     poly_mpn->coeffs + i*(poly_mpn->limbs+1) + 1);
+
           if (poly_mpn->coeffs[i*(poly_mpn->limbs+1)] < 0)
-             mpz_neg(poly_mpz->coeffs[i],poly_mpz->coeffs[i]);
+             mpz_neg(poly_mpz->coeffs[i], poly_mpz->coeffs[i]);
        }
    }
 }
 
 void _Zpoly_mpn_convert_in(Zpoly_mpn_t poly_mpn, Zpoly_t poly_mpz)
 {
+   FLINT_ASSERT(poly_mpn->alloc >= poly_mpz->length);
+
    poly_mpn->length = poly_mpz->length;
    for (unsigned long i = 0; i < poly_mpz->length; i++)
    {
       if (mpz_sgn(poly_mpz->coeffs[i]) == 0) 
-          _Zpoly_mpn_set_coeff_ui(poly_mpn,i,0);
+          poly_mpn->coeffs[i*(poly_mpn->limbs+1)] = 0L;
       else
       {
           size_t countp;
-          mpz_export(poly_mpn->coeffs+i*(poly_mpn->limbs+1)+1, &countp, 
-             -1, sizeof(mp_limb_t), 0, 0, poly_mpz->coeffs[i]);
+          
+          // todo: there's a bug here.... I think mpz_export stores the
+          // number of written limbs in countp; don't we need to zero-pad
+          // the rest? Also, what happens if the answer doesn't fit? Are we
+          // ignoring the latter for speed reasons? Even so there should
+          // perhaps be an assert to check.
+          mpz_export(poly_mpn->coeffs + i*(poly_mpn->limbs+1) + 1, &countp, 
+                     -1, sizeof(mp_limb_t), 0, 0, poly_mpz->coeffs[i]);
+
           if (mpz_sgn(poly_mpz->coeffs[i]) < 0) 
              poly_mpn->coeffs[i*(poly_mpn->limbs+1)] = -1L;
-          else poly_mpn->coeffs[i*(poly_mpn->limbs+1)] = 1L;
+          else
+             poly_mpn->coeffs[i*(poly_mpn->limbs+1)] = 1L;
       }
    }
 }
@@ -61,7 +75,6 @@ void _Zpoly_mpn_convert_in(Zpoly_mpn_t poly_mpn, Zpoly_t poly_mpz)
    Clears dirty limbs unless the coefficient is set to zero. 
    Sets the sign to 1 if x is positive, else to zero.
 */
-
 void _Zpoly_mpn_set_coeff_ui(Zpoly_mpn_t poly, unsigned long n, unsigned long x)
 {
    if (x == 0) 
@@ -72,9 +85,14 @@ void _Zpoly_mpn_set_coeff_ui(Zpoly_mpn_t poly, unsigned long n, unsigned long x)
    poly->coeffs[n*(poly->limbs+1)] = 1UL;
    poly->coeffs[n*(poly->limbs+1)+1] = x;
    if (poly->limbs > 1) 
-          clear_limbs(poly->coeffs+n*(poly->limbs+1)+2, poly->limbs - 1);
+      clear_limbs(poly->coeffs + n*(poly->limbs+1) + 2, poly->limbs - 1);
 }
 
+/* 
+   Set a coefficient to the given signed value.
+   Clears dirty limbs unless the coefficient is set to zero. 
+   Sets the sign to 1 if x is positive, -1 if negative, else to zero.
+*/
 void _Zpoly_mpn_set_coeff_si(Zpoly_mpn_t poly, unsigned long n, long x)
 {
    if (x == 0)
@@ -82,25 +100,25 @@ void _Zpoly_mpn_set_coeff_si(Zpoly_mpn_t poly, unsigned long n, long x)
       poly->coeffs[n*(poly->limbs+1)] = 0UL;
       return;
    }
+
    if (x > 0)
    {
       poly->coeffs[n*(poly->limbs+1)] = 1L;
       poly->coeffs[n*(poly->limbs+1)+1] = x;
-   } else if (x < 0)
+   }
+   else
    {
       poly->coeffs[n*(poly->limbs+1)] = -1L;
       poly->coeffs[n*(poly->limbs+1)+1] = -x;
    } 
    if (poly->limbs > 1) 
-          clear_limbs(poly->coeffs+n*(poly->limbs+1)+2, poly->limbs - 1);
+      clear_limbs(poly->coeffs + n*(poly->limbs+1) + 2, poly->limbs - 1);
 }
 
 void _Zpoly_mpn_normalise(Zpoly_mpn_t poly)
 {
    while (poly->length && poly->coeffs[(poly->length-1)*(poly->limbs+1)] == 0)
-   {
       poly->length--;
-   }
 }
 
 /* 
