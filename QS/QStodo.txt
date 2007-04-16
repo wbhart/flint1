@@ -31,6 +31,8 @@ QStodo
 28. Rename .cpp to .c and make compile with gcc
 29. Integrate into FLINT makefile
 30. Remove sievediv
+31. Use unique filenames
+32. Write README file
 
 a. 
 b. Optimise for other architectures

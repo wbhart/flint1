@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <gmp.h>
+#include <unistd.h>
 #include "lprels.h"
 
 #define min_bufspace 120UL  /* use new buffer when < min_bufspace left */
@@ -53,6 +54,39 @@ char * get_filename(char *dir, char *s)
   sprintf(buf, "%s/%s", dir,s);
 #endif
   return buf;
+}
+
+char * unique_filename(char *s)
+{
+  char *buf, suf[64];
+  size_t lsuf;
+
+  sprintf(suf,".%ld.%ld", (long)getuid(), (long)getpid());
+
+  lsuf = strlen(suf);
+  /* room for s + suffix '\0' */
+  buf = (char*) malloc(8 + lsuf + 1);
+  
+  sprintf(buf, "%.8s%s", s, suf);
+  return buf;
+}
+
+
+FILE * flint_fopen(char * name, char * mode)
+{
+#if defined(WINCE) || defined(macintosh)
+  char * tmp_dir = NULL;
+#else
+  char * tmp_dir = getenv("TMPDIR");
+#endif
+  if (tmp_dir == NULL) tmp_dir = "./";
+  FILE * temp_file = fopen(get_filename(tmp_dir,unique_filename(name)),mode);
+  if (!temp_file)
+  {
+     printf("Unable to open temporary file\n");
+     abort();
+  }
+  return temp_file;
 }
 
 /* 
@@ -106,7 +140,7 @@ long sort_lp_file(char *filename)
   
   *buflist++ = NULL; /* flag this as last and only buflist block */
   
-  TMP = fopen(filename, "r");
+  TMP = flint_fopen(filename, "r");
   
   /* allocate first buffer and read first line, if any, into it */
   buf = (char*) malloc(MPQS_STRING_LENGTH * sizeof(char));
@@ -194,7 +228,7 @@ long sort_lp_file(char *filename)
   qsort(sort_table, i, sizeof(char*), relations_cmp);
 
   /* copy results back to the original file, skipping exact duplicates */
-  TMP = fopen(filename, "w");
+  TMP = flint_fopen(filename, "w");
   old_s = sort_table[0];
   flint_fputs(sort_table[0], TMP);
   count = 1;
@@ -455,16 +489,29 @@ long mergesort_lp_file_internal(FILE *LPREL, FILE *LPNEW, FILE *COMB, FILE *TMP)
 
 long mergesort_lp_file(char *REL_str, char *NEW_str, char *TMP_str, FILE *COMB)
 {
-  FILE *REL = fopen(REL_str, "r");
-  FILE *NEW = fopen(NEW_str, "r");
-  FILE *TMP = fopen(TMP_str, "w");
-  long tp;
+  FILE *NEW = flint_fopen(NEW_str, "r");
   
-  tp = mergesort_lp_file_internal(REL, NEW, COMB, TMP);
+#if defined(WINCE) || defined(macintosh)
+  char * tmp_dir = NULL;
+#else
+  char * tmp_dir = getenv("TMPDIR");
+#endif
+  if (tmp_dir == NULL) tmp_dir = "./";
+  char * TMP_name = get_filename(tmp_dir,unique_filename(TMP_str));
+  char * REL_name = get_filename(tmp_dir,unique_filename(REL_str));
+  FILE * TMP = fopen(TMP_name,"w");
+  FILE * REL = fopen(REL_name,"r");
+  if ((!TMP) || (!REL))
+  {
+     printf("Unable to open temporary file\n");
+     abort();
+  }
+  
+  long tp = mergesort_lp_file_internal(REL, NEW, COMB, TMP);
   fclose(REL);
   fclose(NEW);
-  //free(REL_str);
-  if (rename(TMP_str,REL_str))
+  
+  if (rename(TMP_name,REL_name))
   {
      printf("Cannot rename file %s to %s", TMP_str, REL_str);
      abort();
@@ -687,7 +734,6 @@ long combine_large_primes(unsigned long numPrimes,
        gmp_sprintf(buf, "%Zd\0", new_Y); 
        strcpy(new_relation, buf);
        strcat(new_relation, " :");
-       //if (ei[1] & 1) strcat(new_relation, " 1 1");
        for (l = 0; l < ei_size; l++)
           if (ei[l])
           {

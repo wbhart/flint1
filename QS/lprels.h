@@ -45,5 +45,7 @@ void set_exponents(unsigned long *ei, char *r);
 void set_lp_entry(mpqs_lp_entry *e, char *buf);
 long combine_large_primes(unsigned long numPrimes, FILE *COMB, FILE *FNEW, mpz_t N, mpz_t factor);
 void read_matrix(unsigned long ** relations, FILE *FREL, la_col_t* colarray, unsigned long * relsFound, unsigned long relSought, mpz_t * XArr, mpz_t n, unsigned long * factorBase);
+FILE * flint_fopen(char * name, char * mode);
+char * unique_filename(char *s);
 
 #endif

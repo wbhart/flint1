@@ -43,7 +43,7 @@ Contact: hart_wb {at-thingy} yahoo.com
 //===========================================================================
 //Uncomment these for various pieces of debugging information
 
-//#define COUNT    // Shows the number of relations generated and curves used during sieving
+#define COUNT    // Shows the number of relations generated and curves used during sieving
 //#define RELPRINT     // Shows the actual factorizations of the relations
 //#define ERRORS   // Error if relation should be divisible by a prime but isn't 
 //#define POLS     // Shows the polynomials being used by the sieve
@@ -1037,7 +1037,7 @@ void mainRoutine(unsigned long Mdiv2, mpz_t n, unsigned long multiplier)
     if (exponents==NULL) 
     {
        printf("Unable to allocate memory!\n");
-       exit(1);
+       abort();
     }
     unsigned long factors[200];
     char rel_str[MPQS_STRING_LENGTH];
@@ -1054,14 +1054,14 @@ void mainRoutine(unsigned long Mdiv2, mpz_t n, unsigned long multiplier)
     FILE * RELS;
     FILE * FRELS;
     FILE * FLPRELS;
-    LPNEW = fopen("lpnew","w");
-    LPRELS = fopen("lprels","w");
-    RELS = fopen("rels","w");
-    FNEW = fopen("fnew","w");
+    LPNEW = flint_fopen("lpnew","w");
+    LPRELS = flint_fopen("lprels","w");
+    RELS = flint_fopen("rels","w");
+    FNEW = flint_fopen("fnew","w");
     fclose(FNEW);
-    FLPRELS = fopen("flprels","w");
+    FLPRELS = flint_fopen("flprels","w");
     fclose(FLPRELS);
-    FRELS = fopen("frels","w");
+    FRELS = flint_fopen("frels","w");
     fclose(LPRELS);
     fclose(FRELS);
     
@@ -1080,7 +1080,7 @@ void mainRoutine(unsigned long Mdiv2, mpz_t n, unsigned long multiplier)
     if (Ainv2B==NULL) 
     {
        printf("Unable to allocate memory!\n");
-       exit(1);
+       abort();
     }
     for (long i=0; i<s; i++)
     {
@@ -1088,7 +1088,7 @@ void mainRoutine(unsigned long Mdiv2, mpz_t n, unsigned long multiplier)
        if (Ainv2B[i]==NULL) 
        {
           printf("Unable to allocate memory!\n");
-          exit(1);
+          abort();
        }
     } 
      
@@ -1106,7 +1106,7 @@ void mainRoutine(unsigned long Mdiv2, mpz_t n, unsigned long multiplier)
     if (sieve==NULL) 
     {
        printf("Unable to allocate memory for sieve!\n");
-       exit(1);
+       abort();
     }                
  
      
@@ -1323,18 +1323,18 @@ void mainRoutine(unsigned long Mdiv2, mpz_t n, unsigned long multiplier)
            {
               fclose(LPNEW); 
               sort_lp_file("lpnew");
-              COMB = fopen("comb","w");
+              COMB = flint_fopen("comb","w");
               mergesort_lp_file("lprels", "lpnew", "tmp", COMB);
               fclose(COMB);
-              LPNEW = fopen("lpnew","w");
+              LPNEW = flint_fopen("lpnew","w");
               
               fclose(RELS);
               sort_lp_file("rels");
               relsFound = mergesort_lp_file("frels","rels","tmp2",NULL);
-              RELS = fopen("rels","w");
+              RELS = flint_fopen("rels","w");
               
-              COMB = fopen("comb", "r");
-              FNEW = fopen("fnew","w");
+              COMB = flint_fopen("comb", "r");
+              FNEW = flint_fopen("fnew","w");
               combine_large_primes(numPrimes, COMB, FNEW, n, factor);
               fclose(FNEW);
               fclose(COMB);
@@ -1382,12 +1382,13 @@ void mainRoutine(unsigned long Mdiv2, mpz_t n, unsigned long multiplier)
    printf("%ld relations found in total!\n",totcomb+relsFound);
 #endif
 
-   FRELS = fopen("frels","r");
+   FRELS = flint_fopen("frels","r");
    relsFound = 0;
    read_matrix(relations, FRELS, colarray, &relsFound, relSought, XArr, n, factorBase);
-   FNEW = fopen("flprels","r");
-   read_matrix(relations, FNEW, colarray, &relsFound, relSought, XArr, n, factorBase);
-   fclose(FNEW);
+   fclose(FRELS);
+   FLPRELS = flint_fopen("flprels","r");
+   read_matrix(relations, FLPRELS, colarray, &relsFound, relSought, XArr, n, factorBase);
+   fclose(FLPRELS);
    
 #ifdef ERRORS   
    for (unsigned long j = 0; j<relSought; j++)
@@ -1574,7 +1575,7 @@ int main(int argc, unsigned char *argv[])
     if (decdigits < 40) 
     {
        printf("Error in input or number has too few digits.\n");
-       exit(1);
+       abort();
     }
     
     multiplier = knuthSchroeppel(n);
@@ -1634,7 +1635,30 @@ int main(int argc, unsigned char *argv[])
     
     mainRoutine(Mdiv2, n,multiplier);
     
-    getchar();     
+    getchar();
+#if defined(WINCE) || defined(macintosh)
+    char * tmp_dir = NULL;
+#else
+    char * tmp_dir = getenv("TMPDIR");
+#endif
+    if (tmp_dir == NULL) tmp_dir = "./";
+    char * delfile;
+    
+    delfile = get_filename(tmp_dir,unique_filename("comb"));
+    remove(delfile);
+    delfile = get_filename(tmp_dir,unique_filename("frels"));
+    remove(delfile);
+    delfile = get_filename(tmp_dir,unique_filename("flprels"));
+    remove(delfile);
+    delfile = get_filename(tmp_dir,unique_filename("lpnew"));
+    remove(delfile);
+    delfile = get_filename(tmp_dir,unique_filename("rels"));
+    remove(delfile);
+    delfile = get_filename(tmp_dir,unique_filename("fnew"));
+    remove(delfile);
+    delfile = get_filename(tmp_dir,unique_filename("lprels"));
+    remove(delfile);
+      
     return 0;
 }
 

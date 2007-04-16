@@ -187,10 +187,8 @@ void reduce_matrix(unsigned long *nrows,
 
 	} while (r != reduced_rows);
 
-#ifdef REPORT
 	printf("reduce to %ld x %ld in %ld passes\n", 
 			reduced_rows, reduced_cols, passes);
-#endif
 
 	free(counts);
 
@@ -450,8 +448,10 @@ static unsigned long find_nonsingular_sub(u_int64_t *t, unsigned long *s,
 		}
 				
 		if (j == 64) {
+#ifdef ERRORS
 			printf("lanczos error: submatrix "
 					"is not invertible\n");
+#endif
 			return 0;
 		}
 			
@@ -487,7 +487,9 @@ static unsigned long find_nonsingular_sub(u_int64_t *t, unsigned long *s,
 		mask |= bitmask[last_s[i]];
 
 	if (mask != (u_int64_t)(-1)) {
+#ifdef ERRORS
 		printf("lanczos error: not all columns used\n");
+#endif
 		return 0;
 	}
 
@@ -912,9 +914,7 @@ u_int64_t * block_lanczos(unsigned long nrows,
 		dim1 = dim0;
 	}
 
-#ifdef REPORT
 	printf("lanczos halted after %ld iterations\n", iter);
-#endif
 
 	/* free unneeded storage */
 
@@ -937,7 +937,9 @@ u_int64_t * block_lanczos(unsigned long nrows,
 	   over again */
 
 	if (dim0 == 0) {
+#ifdef ERRORS
 		printf("linear algebra failed; retrying...\n");
+#endif
 		free(x);
 		free(v[0]);
 		free(v[1]);
