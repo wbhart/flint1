@@ -18,7 +18,7 @@ QStodo
 15. Ensure polynomial chooser can't pick wrong A factors
 16. ***Count actual number of relations, not including duplicates
 17. ***Check more often near end of sieving if we are done
-18. Replace all errors with aborts
+18. ***Replace all errors with aborts
 19. Replace all file operations with safe ones
 20. Clean up after a run, i.e. free memory allocated
 21. Introduce hash tables for computers with large caches
@@ -31,7 +31,7 @@ QStodo
 28. Rename .cpp to .c and make compile with gcc
 29. Integrate into FLINT makefile
 30. Remove sievediv
-31. Use unique filenames
+31. ***Use unique filenames
 32. Write README file
 
 a. 
