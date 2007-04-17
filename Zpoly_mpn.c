@@ -54,13 +54,15 @@ void _Zpoly_mpn_convert_in(Zpoly_mpn_t poly_mpn, Zpoly_t poly_mpz)
       {
           size_t countp;
           
-          // todo: there's a bug here.... I think mpz_export stores the
-          // number of written limbs in countp; don't we need to zero-pad
-          // the rest? Also, what happens if the answer doesn't fit? Are we
-          // ignoring the latter for speed reasons? Even so there should
-          // perhaps be an assert to check.
+          FLINT_ASSERT(poly_mpn->limbs >= mpz_size(poly_mpz->coeffs[i]));
+          
           mpz_export(poly_mpn->coeffs + i*(poly_mpn->limbs+1) + 1, &countp, 
                      -1, sizeof(mp_limb_t), 0, 0, poly_mpz->coeffs[i]);
+                     
+          for (unsigned long pad = countp; pad < poly_mpn->limbs; pad++)
+          {
+              poly_mpn->coeffs[i*(poly_mpn->limbs+1)+pad+1] = 0L;
+          }
 
           if (mpz_sgn(poly_mpz->coeffs[i]) < 0) 
              poly_mpn->coeffs[i*(poly_mpn->limbs+1)] = -1L;
@@ -93,6 +95,7 @@ void _Zpoly_mpn_set_coeff_ui(Zpoly_mpn_t poly, unsigned long n, unsigned long x)
    Clears dirty limbs unless the coefficient is set to zero. 
    Sets the sign to 1 if x is positive, -1 if negative, else to zero.
 */
+
 void _Zpoly_mpn_set_coeff_si(Zpoly_mpn_t poly, unsigned long n, long x)
 {
    if (x == 0)
@@ -248,6 +251,7 @@ void _Zpoly_mpn_negate(Zpoly_mpn_t output, Zpoly_mpn_t input)
    not starting at the same point, we assume they do not 
    overlap in a bad way
 */
+
 void _Zpoly_mpn_left_shift(Zpoly_mpn_t output, Zpoly_mpn_t input, 
                                                  unsigned long n)
 {

@@ -18,6 +18,33 @@ Copyright (C) 2007, William Hart and David Harvey
 
 gmp_randstate_t Zpoly_test_randstate;
 
+unsigned long randint(unsigned long randsup) 
+{
+    static unsigned long randval = 4035456057U;
+    randval = ((unsigned long)randval*1025416097U+286824428U)%(unsigned long)4294967291U;
+    
+    return (unsigned long)randval%randsup;
+}
+
+void randpoly(Zpoly_t pol, unsigned long length, unsigned long maxbits)
+{
+   unsigned long bits;
+   mpz_t temp;
+   mpz_init(temp);
+   
+   if (pol->coeffs) Zpoly_clear(pol);
+   Zpoly_init3(pol, length, maxbits);
+   for (unsigned long i = 0; i < length; i++)
+   {
+       bits = randint(maxbits);
+       if (bits == 0) mpz_set_ui(temp,0);
+       else mpz_rrandomb(temp, Zpoly_test_randstate, bits);
+       Zpoly_set_coeff(pol, i, temp);
+   }
+   
+   mpz_clear(temp);
+} 
+
 #define RUN_TEST(targetfunc) \
    printf("Testing " #targetfunc "()... ");            \
    fflush(stdout);                                     \
@@ -48,18 +75,12 @@ int test_Zpoly_mpn_convert()
           printf("%ld, %ld\n",length, bits);
 #endif
           Zpoly_mpn_realloc(test_mpn_poly, length);
-          Zpoly_realloc(test_poly, length);
           Zpoly_realloc(test_poly2, length);
-          test_poly->length = length;
-          for (unsigned long i = 0; i < length; i++)
-          {
-             mpz_rrandomb(temp, Zpoly_test_randstate, bits);
-             Zpoly_set_coeff(test_poly, i, temp);
-          } 
+          randpoly(test_poly, length, bits); 
 #if DEBUG
           for (unsigned j = 0; j < test_poly->length; j++)
              gmp_printf("%Zd, ",test_poly->coeffs[j]);
-          printf("\n\n");*/
+          printf("\n\n");
 #endif
           _Zpoly_mpn_convert_in(test_mpn_poly, test_poly);
           _Zpoly_mpn_convert_out(test_poly2, test_mpn_poly);
