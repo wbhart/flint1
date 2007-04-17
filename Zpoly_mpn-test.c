@@ -15,6 +15,7 @@ Copyright (C) 2007, William Hart and David Harvey
 #include "flint-manager.h"
 
 #define DEBUG 0 // prints debug information
+#define DEBUG2 0 
 
 gmp_randstate_t Zpoly_test_randstate;
 
@@ -102,11 +103,57 @@ int test_Zpoly_mpn_convert()
    return result;
 }
 
+int test_Zpoly_mpn_getset_ui()
+{
+   Zpoly_t test_poly;
+   Zpoly_mpn_t test_mpn_poly;
+   int result = 1;
+   unsigned long bits, length;
+   unsigned long coeff, coeff_bits, coeff_num;
+   
+   Zpoly_init(test_poly); 
+   
+   for (unsigned long count1 = 1; (count1 < 200) && (result == 1) ; count1++)
+   {
+      bits = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 1;
+      
+      Zpoly_mpn_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
+      { 
+          length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1;        
+#if DEBUG2
+          printf("length = %ld, bits = %ld\n",length, bits);
+#endif
+          Zpoly_mpn_realloc(test_mpn_poly, length);
+          randpoly(test_poly, length, bits); 
+
+          _Zpoly_mpn_convert_in(test_mpn_poly, test_poly);
+          
+          for (unsigned long count3 = 1; (count3 < 1000) && result == 1; count3++)
+          {
+              coeff_bits = randint(FLINT_BITS_PER_LIMB);
+              if (coeff_bits == 0) coeff = 0;
+              else coeff = gmp_urandomb_ui(Zpoly_test_randstate, coeff_bits);
+              coeff_num = randint(length);
+#if DEBUG2
+              printf("Index = %ld, bits = %ld, coeff = %ld\n", coeff_num, coeff_bits, coeff);
+#endif
+              _Zpoly_mpn_set_coeff_ui(test_mpn_poly, coeff_num, coeff);
+              result = (_Zpoly_mpn_get_coeff_ui(test_mpn_poly, coeff_num) == coeff);
+          }
+      }
+   }
+   
+   return result; 
+}
+
+
 void Zpoly_mpn_test_all()
 {
    int success, all_success = 1;
 
    RUN_TEST(Zpoly_mpn_convert);
+   RUN_TEST(Zpoly_mpn_getset_ui);
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");

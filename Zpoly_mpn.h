@@ -87,23 +87,26 @@ mp_limb_t * _Zpoly_mpn_get_coeff_ptr(Zpoly_mpn_t poly, unsigned long n)
 
 /* 
    Set "output" to the given coefficient and return the sign
-   Assumes length of output is limbs limbs long.  
+   Assumes length of output is poly->limbs limbs long.  
 */
    
 static inline long _Zpoly_mpn_get_coeff(mp_limb_t * output, Zpoly_mpn_t poly, 
                                                                 unsigned long n)
 {
+   if (poly->coeffs[n*(poly->limbs+1)] == 0) clear_limbs(output, poly->limbs);
    copy_limbs(output, poly->coeffs+n*(poly->limbs+1)+1, poly->limbs);
    return poly->coeffs[n*(poly->limbs+1)];
 }
 
 static inline unsigned long _Zpoly_mpn_get_coeff_ui(Zpoly_mpn_t poly, unsigned long n)
 {
-   return poly->coeffs[n*(poly->limbs+1)+1];
+   if (poly->coeffs[n*(poly->limbs+1)] == 0) return 0;
+   else return poly->coeffs[n*(poly->limbs+1)+1];
 }
 
 static inline long _Zpoly_mpn_get_coeff_si(Zpoly_mpn_t poly, unsigned long n)
 {
+   if (poly->coeffs[n*(poly->limbs+1)] == 0) return 0;
    if (poly->coeffs[n*(poly->limbs+1)] < 0) 
                                  return poly->coeffs[n*(poly->limbs+1)+1];
    else return -poly->coeffs[n*(poly->limbs+1)+1];
