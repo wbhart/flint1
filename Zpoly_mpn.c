@@ -35,8 +35,10 @@ void _Zpoly_mpn_convert_out(Zpoly_t poly_mpz, Zpoly_mpn_t poly_mpn)
                      sizeof(mp_limb_t), 0, 0,
                      poly_mpn->coeffs + i*(poly_mpn->limbs+1) + 1);
 
-          if (poly_mpn->coeffs[i*(poly_mpn->limbs+1)] < 0)
+          if (poly_mpn->coeffs[i*(poly_mpn->limbs+1)] == -1L)
+          {
              mpz_neg(poly_mpz->coeffs[i], poly_mpz->coeffs[i]);
+          }
        }
    }
 }
@@ -65,8 +67,9 @@ void _Zpoly_mpn_convert_in(Zpoly_mpn_t poly_mpn, Zpoly_t poly_mpz)
           }
 
           if (mpz_sgn(poly_mpz->coeffs[i]) < 0) 
+          {
              poly_mpn->coeffs[i*(poly_mpn->limbs+1)] = -1L;
-          else
+          } else
              poly_mpn->coeffs[i*(poly_mpn->limbs+1)] = 1L;
       }
    }
@@ -76,9 +79,11 @@ void _Zpoly_mpn_convert_in(Zpoly_mpn_t poly_mpn, Zpoly_t poly_mpz)
    Set a coefficient to the given unsigned value.
    Clears dirty limbs unless the coefficient is set to zero. 
    Sets the sign to 1 if x is positive, else to zero.
+   Assumes the polynomial length is greater than n.
 */
 void _Zpoly_mpn_set_coeff_ui(Zpoly_mpn_t poly, unsigned long n, unsigned long x)
 {
+   FLINT_ASSERT(poly->length > n);
    if (x == 0) 
    {
       poly->coeffs[n*(poly->limbs+1)] = 0UL;
@@ -94,10 +99,12 @@ void _Zpoly_mpn_set_coeff_ui(Zpoly_mpn_t poly, unsigned long n, unsigned long x)
    Set a coefficient to the given signed value.
    Clears dirty limbs unless the coefficient is set to zero. 
    Sets the sign to 1 if x is positive, -1 if negative, else to zero.
+   Assumes the polynomial length is greater than n.
 */
 
 void _Zpoly_mpn_set_coeff_si(Zpoly_mpn_t poly, unsigned long n, long x)
 {
+   FLINT_ASSERT(poly->length > n);
    if (x == 0)
    {
       poly->coeffs[n*(poly->limbs+1)] = 0UL;

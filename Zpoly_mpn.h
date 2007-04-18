@@ -107,19 +107,20 @@ static inline unsigned long _Zpoly_mpn_get_coeff_ui(Zpoly_mpn_t poly, unsigned l
 static inline long _Zpoly_mpn_get_coeff_si(Zpoly_mpn_t poly, unsigned long n)
 {
    if (poly->coeffs[n*(poly->limbs+1)] == 0) return 0;
-   if (poly->coeffs[n*(poly->limbs+1)] < 0) 
+   if (poly->coeffs[n*(poly->limbs+1)] == 1L) 
                                  return poly->coeffs[n*(poly->limbs+1)+1];
    else return -poly->coeffs[n*(poly->limbs+1)+1];
 }
 
 /* 
    Set a coefficient to the given value having "size" limbs.
-   Assumes that the poly limbs is at least "size".
+   Assumes that the poly->limbs is at least "size".
 */
 
 static inline void _Zpoly_mpn_set_coeff(Zpoly_mpn_t poly, unsigned long n, 
                                   mp_limb_t * x, long sign, unsigned long size)
 {
+   FLINT_ASSERT(poly->limbs >= size);
    copy_limbs(poly->coeffs+n*(poly->limbs+1)+1, x, size);
    poly->coeffs[n*(poly->limbs+1)] = sign;
    if (poly->limbs > size) 
@@ -147,8 +148,10 @@ static inline unsigned long _Zpoly_mpn_limbs(Zpoly_mpn_t poly)
    return poly->limbs;
 }
 
-// these two are the same as above, but normalise the poly first
+// These two are the same as above, but normalise the poly first
+
 long Zpoly_mpn_degree(Zpoly_mpn_t poly);
+
 unsigned long Zpoly_mpn_length(Zpoly_mpn_t poly);
 
 
