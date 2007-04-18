@@ -60,6 +60,11 @@ the other files don't. Is this a problem?
 
 === Build process ===
 
+ * on the G5 architecture, the flags 
+      -mcpu=970 -mtune=970 -mpowerpc64 -falign-loops=16 -falign-functions=16 -falign-labels=16 -falign-jumps=16
+   seem to make a helluva difference, at least for the ssfft_fft_iterative()
+   function I was profiling.
+
  * Figure out `FLINT_BITS_PER_LIMB`, put it in a header somewhere (do ''not''
 just use `gmp_bits_per_limb` because that's a const, not a #define)
 
