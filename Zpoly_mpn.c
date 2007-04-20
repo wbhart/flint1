@@ -183,44 +183,111 @@ void _Zpoly_mpn_swap(Zpoly_mpn_t x, Zpoly_mpn_t y)
 
 int _Zpoly_mpn_equal(Zpoly_mpn_t input1, Zpoly_mpn_t input2)
 {
-   if (input1->length != input2-> length) return 0;
+   int shorter_poly;
+   unsigned long shorter_length;
+   unsigned long i,j;
+   
+   if (input1->length > input2->length)
+   {
+      shorter_length = input2->length;
+      shorter_poly = 2;
+   } else
+   {
+      shorter_length = input1->length;
+      shorter_poly = 1;
+   }
+   
    if (input1->limbs == input2->limbs)
    {
-      for (unsigned long i = 0; i < input1->length*(input1->limbs+1); i++)
-         if (input1->coeffs[i] != input2->coeffs[i]) return 0;
+      for (i = 0; i < shorter_length; i++)
+      {  
+         if (input1->coeffs[i*(input1->limbs+1)] == 0)
+         {
+             if (input2->coeffs[i*(input2->limbs+1)] != 0) 
+                return 0;
+         } else                                    
+         {  
+            for (j = 0; j < input1->limbs+1; j++)
+               if (input1->coeffs[i*(input1->limbs+1)+j] != input2->coeffs[i*(input1->limbs+1)+j]) 
+                  return 0;
+         }
+      }
+      if (shorter_poly == 1) 
+      {   
+         for (i = input1->length; i < input2->length; i++)
+            if (input2->coeffs[i*(input2->limbs+1)] != 0L) return 0;
+      } else
+      {   
+         for (i = input2->length; i < input1->length; i++)
+            if (input1->coeffs[i*(input1->limbs+1)] != 0L) return 0;
+      }
+      
       return 1;
    }
     
-   unsigned long i,j;
    if (input1->limbs > input2->limbs)
    {
-      for (i = 0; i < input1->length; i++)
+      for (i = 0; i < shorter_length; i++)
       {
-         for (j = 0; j < input2->limbs+1; j++)
+         if (input1->coeffs[i*(input1->limbs+1)] == 0)
          {
-            if (input1->coeffs[i*(input1->limbs+1)+j] != input2->coeffs[i*(input2->limbs+1)+j])
-               return 0;
-         }
-         for (j = input2->limbs + 1; j < input1->limbs + 1; j++)
+             if (input2->coeffs[i*(input2->limbs+1)] != 0) 
+                return 0; 
+         } else
          {
-            if (input1->coeffs[i*(input1->limbs+1)+j] != 0) return 0;
+            for (j = 0; j < input2->limbs+1; j++)
+            {
+               if (input1->coeffs[i*(input1->limbs+1)+j] != input2->coeffs[i*(input2->limbs+1)+j]) 
+                  return 0; 
+            }
+            for (j = input2->limbs + 1; j < input1->limbs + 1; j++)
+            {
+               if (input1->coeffs[i*(input1->limbs+1)+j] != 0)
+                  return 0; 
+            }
          }
       }
+      if (shorter_poly == 1) 
+      {   
+         for (unsigned long i = input1->length; i < input2->length; i++)
+            if (input2->coeffs[i*(input2->limbs+1)] != 0L) return 0;
+      } else
+      {   
+         for (unsigned long i = input2->length; i < input1->length; i++)
+            if (input1->coeffs[i*(input1->limbs+1)] != 0L) return 0;
+      }
+      
       return 1;
    } else
    {
-      for (i = 0; i < input1->length; i++)
+      for (i = 0; i < shorter_length; i++)
       {
-         for (j = 0; j < input1->limbs+1; j++)
+         if (input1->coeffs[i*(input1->limbs+1)] == 0)
          {
-            if (input1->coeffs[i*(input1->limbs+1)+j] != input2->coeffs[i*(input2->limbs+1)+j])
-               return 0;
-         }
-         for (j = input1->limbs + 1; j < input2->limbs + 1; j++)
+             if (input2->coeffs[i*(input2->limbs+1)] != 0) return 0;
+         } else
          {
-            if (input2->coeffs[i*(input1->limbs+1)+j] != 0) return 0;
+            for (j = 0; j < input1->limbs+1; j++)
+            {
+               if (input1->coeffs[i*(input1->limbs+1)+j] != input2->coeffs[i*(input2->limbs+1)+j])
+                  return 0;
+            }
+            for (j = input1->limbs + 1; j < input2->limbs + 1; j++)
+            {
+               if (input2->coeffs[i*(input2->limbs+1)+j] != 0) return 0;
+            }
          }
       }
+      if (shorter_poly == 1) 
+      {   
+         for (unsigned long i = input1->length; i < input2->length; i++)
+            if (input2->coeffs[i*(input2->limbs+1)] != 0L) return 0;
+      } else
+      {   
+         for (unsigned long i = input2->length; i < input1->length; i++)
+            if (input1->coeffs[i*(input1->limbs+1)] != 0L) return 0;
+      }
+      
       return 1;
    }
 }
