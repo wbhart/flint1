@@ -360,7 +360,7 @@ int test_Zpoly_mpn_setequal()
       bits = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 1;
       
       Zpoly_mpn_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
-      Zpoly_mpn_init(test_mpn_poly2, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      Zpoly_mpn_init(test_mpn_poly2, 1, (bits-1)/FLINT_BITS_PER_LIMB+1+randint(30));
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
           length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1;        
@@ -443,6 +443,95 @@ int test_Zpoly_mpn_setequal()
    return result; 
 }
 
+int test_Zpoly_mpn_swap()
+{
+   Zpoly_t test_poly;
+   Zpoly_mpn_t test_mpn_poly, test_mpn_poly2, test_mpn_poly3;
+   int result = 1;
+   unsigned long bits, length, length2;
+   
+   Zpoly_init(test_poly); 
+   
+   for (unsigned long count1 = 1; (count1 < 200) && (result == 1) ; count1++)
+   {
+      bits = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 1;
+      
+      Zpoly_mpn_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      Zpoly_mpn_init(test_mpn_poly2, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      Zpoly_mpn_init(test_mpn_poly3, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
+      { 
+          length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1; 
+          length2 = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1;        
+#if DEBUG
+          printf("length = %ld, bits = %ld\n",length, bits);
+#endif
+          Zpoly_mpn_realloc(test_mpn_poly, length);
+          randpoly(test_poly, length, bits); 
+
+          _Zpoly_mpn_convert_in(test_mpn_poly, test_poly);
+          Zpoly_mpn_realloc(test_mpn_poly2, length2);
+          Zpoly_mpn_realloc(test_mpn_poly3, length);
+          randpoly(test_poly, length2, bits); 
+
+          _Zpoly_mpn_convert_in(test_mpn_poly2, test_poly);
+          
+          _Zpoly_mpn_set(test_mpn_poly3, test_mpn_poly);
+          _Zpoly_mpn_swap(test_mpn_poly, test_mpn_poly2);
+          result = _Zpoly_mpn_equal(test_mpn_poly2, test_mpn_poly3);
+      }
+      Zpoly_mpn_clear(test_mpn_poly);
+      Zpoly_mpn_clear(test_mpn_poly2);
+      Zpoly_mpn_clear(test_mpn_poly3);
+   }
+   
+   return result; 
+}
+
+int test_Zpoly_mpn_shift()
+{
+   Zpoly_t test_poly;
+   Zpoly_mpn_t test_mpn_poly, test_mpn_poly2, test_mpn_poly3;
+   int result = 1;
+   unsigned long bits, length;
+   unsigned long shift;
+   
+   Zpoly_init(test_poly); 
+   
+   for (unsigned long count1 = 1; (count1 < 200) && (result == 1) ; count1++)
+   {
+      bits = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 1;
+      
+      Zpoly_mpn_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      Zpoly_mpn_init(test_mpn_poly2, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      Zpoly_mpn_init(test_mpn_poly3, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
+      { 
+          length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1;        
+#if DEBUG
+          printf("length = %ld, bits = %ld\n",length, bits);
+#endif
+          shift = randint(100);
+          Zpoly_mpn_realloc(test_mpn_poly, length+shift);
+          Zpoly_mpn_realloc(test_mpn_poly2, length+shift);
+          Zpoly_mpn_realloc(test_mpn_poly3, length+shift);
+          randpoly(test_poly, length, bits); 
+
+          _Zpoly_mpn_convert_in(test_mpn_poly, test_poly);
+          _Zpoly_mpn_set(test_mpn_poly2, test_mpn_poly);
+          _Zpoly_mpn_left_shift(test_mpn_poly3, test_mpn_poly, shift);
+          _Zpoly_mpn_right_shift(test_mpn_poly, test_mpn_poly3, shift);
+                
+          result = _Zpoly_mpn_equal(test_mpn_poly2, test_mpn_poly);
+      }
+      Zpoly_mpn_clear(test_mpn_poly);
+      Zpoly_mpn_clear(test_mpn_poly2);
+      Zpoly_mpn_clear(test_mpn_poly3);
+   }
+   
+   return result; 
+}
+
 
 
 void Zpoly_mpn_test_all()
@@ -456,6 +545,8 @@ void Zpoly_mpn_test_all()
    RUN_TEST(Zpoly_mpn_normalise);
    RUN_TEST(Zpoly_mpn_getset_coeff);
    RUN_TEST(Zpoly_mpn_setequal);
+   RUN_TEST(Zpoly_mpn_swap);
+   RUN_TEST(Zpoly_mpn_shift);
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");

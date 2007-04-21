@@ -329,8 +329,6 @@ void _Zpoly_mpn_negate(Zpoly_mpn_t output, Zpoly_mpn_t input)
 void _Zpoly_mpn_left_shift(Zpoly_mpn_t output, Zpoly_mpn_t input, 
                                                  unsigned long n)
 {
-   if (n == 0) return;
-   
    Zpoly_mpn_t part;   
    if ((input->coeffs == output->coeffs) && (n < output->length))
    {
@@ -372,11 +370,9 @@ void _Zpoly_mpn_right_shift(Zpoly_mpn_t output, Zpoly_mpn_t input, unsigned long
    }
    Zpoly_mpn_t part;
    part->length = input->length - n;
-   part->limbs = output->limbs;
-   part->coeffs = input->coeffs + n*(output->limbs + 1);
-   _Zpoly_mpn_set(part, input);
-   clear_limbs(output->coeffs, n*(output->limbs+1));  
-   output->length = part->length; 
+   part->limbs = input->limbs;
+   part->coeffs = input->coeffs + n*(input->limbs + 1);
+   _Zpoly_mpn_set(output, part);
 }
 
 
