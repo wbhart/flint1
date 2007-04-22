@@ -134,26 +134,33 @@ void _Zpoly_mpn_normalise(Zpoly_mpn_t poly)
 /* 
    Sets the output poly to equal the input poly 
    Assumes the output poly is at least as big as the input poly
-   Assumes polynomials don't overlap in a bad way
 */
 
 void _Zpoly_mpn_set(Zpoly_mpn_t output, Zpoly_mpn_t input)
 {
    if (output->coeffs != input->coeffs) 
    {
-      if (input->limbs == output->limbs)
+      if ((output->coeffs < input->coeffs) || (output->coeffs >= input->coeffs + input->length*(input->limbs+1)))
       {
-         copy_limbs(output->coeffs, input->coeffs, input->length*(input->limbs+1));
+         if (input->limbs == output->limbs)
+         {
+            forward_copy_limbs(output->coeffs, input->coeffs, input->length*(input->limbs+1));
+         } else
+         {
+            unsigned long diff_size = output->limbs - input->limbs;
+            unsigned long input_size = input->limbs + 1;
+            unsigned long output_size = output->limbs + 1;
+            for (unsigned long i = 0; i < input->length; i++)
+            {
+               forward_copy_limbs(output->coeffs+i*output_size, input->coeffs+i*input_size, input_size);
+               clear_limbs(output->coeffs+i*output_size+input_size, diff_size);
+            }
+         }
       } else
       {
-         unsigned long diff_size = output->limbs - input->limbs;
-         unsigned long input_size = input->limbs + 1;
-         unsigned long output_size = output->limbs + 1;
-         for (unsigned long i = 0; i < input->length; i++)
-         {
-             copy_limbs(output->coeffs+i*output_size, input->coeffs+i*input_size, input_size);
-             clear_limbs(output->coeffs+i*output_size+input_size, diff_size);
-         }
+         unsigned long shift_limbs = output->coeffs - input->coeffs;
+         copy_limbs(output->coeffs+shift_limbs, output->coeffs, input->length*(input->limbs+1)-shift_limbs);
+         copy_limbs(output->coeffs, input->coeffs, shift_limbs);
       }
    }
    output->length = input->length;
@@ -321,38 +328,20 @@ void _Zpoly_mpn_negate(Zpoly_mpn_t output, Zpoly_mpn_t input)
 /* 
    Multiplies input by x^n and sets output to the result
    Assumes output is large enough to contain the result
-   If input and output are part of the same polynomial, but 
-   not starting at the same point, we assume they do not 
-   overlap in a bad way
 */
 
 void _Zpoly_mpn_left_shift(Zpoly_mpn_t output, Zpoly_mpn_t input, 
                                                  unsigned long n)
 {
    Zpoly_mpn_t part;   
-   if ((input->coeffs == output->coeffs) && (n < output->length))
-   {
-      Zpoly_mpn_t part2;
-      part->length = input->length - n;
-      part->limbs = input->limbs;
-      part->coeffs = input->coeffs + n*(input->limbs+1);
-      part2->length = input->length - n;
-      part2->limbs = input->limbs;
-      part2->coeffs = input->coeffs + 2*n*(input->limbs+1);
-      _Zpoly_mpn_set(part2, part);
-      part->length = n;
-      part2->length = n;
-      part2->coeffs = input->coeffs;
-      _Zpoly_mpn_set(part2, part);
-      clear_limbs(output->coeffs, n*(output->limbs+1));
-   } else
-   {
-      part->length = input->length;
-      part->limbs = output->limbs;
-      part->coeffs = output->coeffs + n*(output->limbs+1);
-      _Zpoly_mpn_set(part, input);
-      clear_limbs(output->coeffs, n*(output->limbs+1));
-   }
+   
+   part->length = input->length;
+   part->limbs = output->limbs;
+   part->coeffs = output->coeffs + n*(output->limbs+1);
+      
+   _Zpoly_mpn_set(part, input);
+   clear_limbs(output->coeffs, n*(output->limbs+1));
+   
    output->length = input->length + n;
 }
 

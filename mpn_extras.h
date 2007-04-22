@@ -66,6 +66,14 @@ static inline void copy_limbs(mp_limb_t* dest, mp_limb_t* src, unsigned long cou
    }
 }
 
+static inline void forward_copy_limbs(mp_limb_t* dest, mp_limb_t* src, unsigned long count)
+{
+   for (long i = 0; i < count; i++)
+   {
+      dest[i] = src[i];
+   }
+}
+
 
 /*
 Sets a bunch of limbs to zero.

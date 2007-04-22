@@ -150,6 +150,8 @@ int test_Zpoly_mpn_getset_ui()
       Zpoly_mpn_clear(test_mpn_poly);
    }
    
+   Zpoly_clear(test_poly);
+   
    return result; 
 }
 
@@ -197,6 +199,8 @@ int test_Zpoly_mpn_getset_si()
       }
       Zpoly_mpn_clear(test_mpn_poly);
    }
+   
+   Zpoly_clear(test_poly);
    
    return result; 
 }
@@ -247,6 +251,8 @@ int test_Zpoly_mpn_get_coeff_ptr()
       Zpoly_mpn_clear(test_mpn_poly);
    }
    
+   Zpoly_clear(test_poly);
+   
    return result; 
 }
 
@@ -291,6 +297,8 @@ int test_Zpoly_mpn_normalise()
       }
       Zpoly_mpn_clear(test_mpn_poly);
    }
+   
+   Zpoly_clear(test_poly);
    
    return result; 
 }
@@ -341,6 +349,8 @@ int test_Zpoly_mpn_getset_coeff()
       }
       Zpoly_mpn_clear(test_mpn_poly);
    }
+   
+   Zpoly_clear(test_poly);
    
    return result; 
 }
@@ -440,6 +450,8 @@ int test_Zpoly_mpn_setequal()
       Zpoly_mpn_clear(test_mpn_poly2);         
    }
    
+   Zpoly_clear(test_poly);
+   
    return result; 
 }
 
@@ -485,6 +497,8 @@ int test_Zpoly_mpn_swap()
       Zpoly_mpn_clear(test_mpn_poly3);
    }
    
+   Zpoly_clear(test_poly);
+   
    return result; 
 }
 
@@ -500,34 +514,56 @@ int test_Zpoly_mpn_shift()
    
    for (unsigned long count1 = 1; (count1 < 200) && (result == 1) ; count1++)
    {
-      bits = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 1;
+      bits = gmp_urandomm_ui(Zpoly_test_randstate,100)+ 1;
       
       Zpoly_mpn_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
       Zpoly_mpn_init(test_mpn_poly2, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
-      Zpoly_mpn_init(test_mpn_poly3, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      
+      for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
+      { 
+          length = gmp_urandomm_ui(Zpoly_test_randstate,10)+1;        
+#if DEBUG
+          printf("length = %ld, bits = %ld\n",length, bits);
+#endif
+          shift = randint(3);
+          Zpoly_mpn_realloc(test_mpn_poly, length+shift);
+          Zpoly_mpn_realloc(test_mpn_poly2, length+shift);
+          
+          randpoly(test_poly, length, bits); 
+
+          _Zpoly_mpn_convert_in(test_mpn_poly, test_poly);
+          _Zpoly_mpn_set(test_mpn_poly2, test_mpn_poly);
+          _Zpoly_mpn_left_shift(test_mpn_poly, test_mpn_poly, shift); 
+          _Zpoly_mpn_right_shift(test_mpn_poly, test_mpn_poly, shift);
+          
+          result = _Zpoly_mpn_equal(test_mpn_poly2, test_mpn_poly);
+      }
+      
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
           length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1;        
 #if DEBUG
           printf("length = %ld, bits = %ld\n",length, bits);
 #endif
-          shift = randint(100);
+          shift = randint(length);
           Zpoly_mpn_realloc(test_mpn_poly, length+shift);
           Zpoly_mpn_realloc(test_mpn_poly2, length+shift);
-          Zpoly_mpn_realloc(test_mpn_poly3, length+shift);
           randpoly(test_poly, length, bits); 
 
           _Zpoly_mpn_convert_in(test_mpn_poly, test_poly);
-          _Zpoly_mpn_set(test_mpn_poly2, test_mpn_poly);
-          _Zpoly_mpn_left_shift(test_mpn_poly3, test_mpn_poly, shift);
-          _Zpoly_mpn_right_shift(test_mpn_poly, test_mpn_poly3, shift);
+          test_mpn_poly3->limbs = test_mpn_poly->limbs;
+          test_mpn_poly3->length = test_mpn_poly->length-shift;
+          test_mpn_poly3->coeffs = test_mpn_poly->coeffs+shift*(test_mpn_poly->limbs+1);
+          _Zpoly_mpn_right_shift(test_mpn_poly2, test_mpn_poly, shift);
                 
-          result = _Zpoly_mpn_equal(test_mpn_poly2, test_mpn_poly);
+          result = _Zpoly_mpn_equal(test_mpn_poly3, test_mpn_poly2);
       }
+      
       Zpoly_mpn_clear(test_mpn_poly);
       Zpoly_mpn_clear(test_mpn_poly2);
-      Zpoly_mpn_clear(test_mpn_poly3);
    }
+   
+   Zpoly_clear(test_poly);
    
    return result; 
 }
