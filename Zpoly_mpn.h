@@ -171,11 +171,11 @@ void _Zpoly_mpn_swap(Zpoly_mpn_t x, Zpoly_mpn_t y);
 
 int _Zpoly_mpn_equal(Zpoly_mpn_t input1, Zpoly_mpn_t input2);
 
+void _Zpoly_mpn_negate(Zpoly_mpn_t output, Zpoly_mpn_t input);
+
 void _Zpoly_mpn_add(Zpoly_mpn_t output, Zpoly_mpn_t input1, Zpoly_mpn_t input2);
 
 void _Zpoly_mpn_sub(Zpoly_mpn_t output, Zpoly_mpn_t input1, Zpoly_mpn_t input2);
-
-void _Zpoly_mpn_negate(Zpoly_mpn_t output, Zpoly_mpn_t input);
 
 void _Zpoly_mpn_scalar_mul(Zpoly_mpn_t poly, mp_limb_t * x);
 
