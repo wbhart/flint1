@@ -726,6 +726,114 @@ int test_Zpoly_mpn_add()
    return result; 
 }
 
+int test_Zpoly_mpn_sub()
+{
+   Zpoly_t test_poly, test_poly2, test_poly3, test_poly4;
+   Zpoly_mpn_t test_mpn_poly, test_mpn_poly2, test_mpn_poly3;
+   int result = 1;
+   unsigned long bits, bits2, bits3, length, length2, max_length;
+   
+   Zpoly_init(test_poly); 
+   Zpoly_init(test_poly2); 
+   Zpoly_init(test_poly3); 
+   Zpoly_init(test_poly4); 
+   
+   for (unsigned long count1 = 1; (count1 < 200) && (result == 1) ; count1++)
+   {
+      bits = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 1;
+      bits2 = bits+gmp_urandomm_ui(Zpoly_test_randstate,200);
+      bits3 = bits2+gmp_urandomm_ui(Zpoly_test_randstate,200)+ 1;
+      
+      Zpoly_mpn_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      Zpoly_mpn_init(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS_PER_LIMB+1);
+      Zpoly_mpn_init(test_mpn_poly3, 1, (bits3-1)/FLINT_BITS_PER_LIMB+1);
+      for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
+      { 
+          length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1; 
+          length2 = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1;        
+#if DEBUG
+          printf("length = %ld, length2 = %ld, bits = %ld\n",length, length2, bits);
+#endif
+          Zpoly_mpn_realloc(test_mpn_poly, length);
+          Zpoly_mpn_realloc(test_mpn_poly2, length2);
+          max_length = (length > length2) ? length : length2;
+          Zpoly_mpn_realloc(test_mpn_poly3, max_length);
+          
+          randpoly(test_poly, length, bits); 
+          randpoly(test_poly2, length2, bits2); 
+          Zpoly_sub(test_poly3, test_poly, test_poly2);
+
+          _Zpoly_mpn_convert_in(test_mpn_poly, test_poly);
+          _Zpoly_mpn_convert_in(test_mpn_poly2, test_poly2);
+          
+          _Zpoly_mpn_sub(test_mpn_poly3, test_mpn_poly, test_mpn_poly2);
+          Zpoly_init3(test_poly4, max_length, bits3+1);
+          _Zpoly_mpn_convert_out(test_poly4, test_mpn_poly3);
+#if DEBUG
+          for (unsigned j = 0; j < test_poly3->length; j++)
+             gmp_printf("%Zd, ",test_poly3->coeffs[j]);
+          printf("\n\n");
+          for (unsigned j = 0; j < test_poly4->length; j++)
+             gmp_printf("%Zd, ",test_poly4->coeffs[j]);
+          printf("\n\n");
+#endif    
+          result = Zpoly_equal(test_poly4, test_poly3);
+          Zpoly_clear(test_poly4);
+      }
+      Zpoly_mpn_clear(test_mpn_poly);
+      Zpoly_mpn_clear(test_mpn_poly2);
+      Zpoly_mpn_clear(test_mpn_poly3);
+   }
+   
+   for (unsigned long count1 = 1; (count1 < 200) && (result == 1) ; count1++)
+   {
+      bits = gmp_urandomm_ui(Zpoly_test_randstate,1000) + 1;
+      bits2 = bits+gmp_urandomm_ui(Zpoly_test_randstate,200) + 1;
+      
+      Zpoly_mpn_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      Zpoly_mpn_init(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS_PER_LIMB+1);
+      for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
+      { 
+          length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1; 
+          length2 = length + gmp_urandomm_ui(Zpoly_test_randstate,1000);        
+#if DEBUG
+          printf("length = %ld, length2 = %ld, bits = %ld, bits2 = %ld\n",length, length2, bits, bits2);
+#endif
+          Zpoly_mpn_realloc(test_mpn_poly, length);
+          Zpoly_mpn_realloc(test_mpn_poly2, length2);
+          
+          randpoly(test_poly, length, bits); 
+          randpoly(test_poly2, length2, bits2-1); 
+          Zpoly_sub(test_poly3, test_poly, test_poly2);
+          
+          _Zpoly_mpn_convert_in(test_mpn_poly, test_poly);
+          _Zpoly_mpn_convert_in(test_mpn_poly2, test_poly2);
+          
+          _Zpoly_mpn_sub(test_mpn_poly2, test_mpn_poly, test_mpn_poly2);
+          Zpoly_init3(test_poly4, length2, bits2);
+          _Zpoly_mpn_convert_out(test_poly4, test_mpn_poly2);
+          
+#if DEBUG
+          for (unsigned j = 0; j < test_poly3->length; j++)
+             gmp_printf("%Zd, ",test_poly3->coeffs[j]);
+          printf("\n\n");
+          for (unsigned j = 0; j < test_poly4->length; j++)
+             gmp_printf("%Zd, ",test_poly4->coeffs[j]);
+          printf("\n\n");
+#endif    
+          result = Zpoly_equal(test_poly4, test_poly3);
+          Zpoly_clear(test_poly4);
+      }
+      Zpoly_mpn_clear(test_mpn_poly);
+      Zpoly_mpn_clear(test_mpn_poly2);
+   }
+   
+   Zpoly_clear(test_poly);
+   Zpoly_clear(test_poly2);
+   Zpoly_clear(test_poly3);
+   
+   return result; 
+}
 
 void Zpoly_mpn_test_all()
 {
@@ -742,6 +850,7 @@ void Zpoly_mpn_test_all()
    RUN_TEST(Zpoly_mpn_shift);
    RUN_TEST(Zpoly_mpn_negate);
    RUN_TEST(Zpoly_mpn_add);
+   RUN_TEST(Zpoly_mpn_sub);
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");

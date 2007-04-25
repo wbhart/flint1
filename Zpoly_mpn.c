@@ -466,6 +466,116 @@ void _Zpoly_mpn_add(Zpoly_mpn_t output, Zpoly_mpn_t input1, Zpoly_mpn_t input2)
    output->length = (input1->length > input2->length) ? input1->length : input2->length;
 }
 
+/* 
+    Set output poly to input1 - input2 
+*/
+
+void _Zpoly_mpn_sub(Zpoly_mpn_t output, Zpoly_mpn_t input1, Zpoly_mpn_t input2)
+{
+   unsigned long size1, size2, shorter, size_out;
+   int in_order = 1;
+   mp_limb_t * coeffs1, * coeffs2, * coeffs_out;
+   
+   if (input1->limbs > input2->limbs)
+   {
+      size1 = input1->limbs+1;
+      size2 = input2->limbs+1;
+      coeffs1 = input1->coeffs;
+      coeffs2 = input2->coeffs;
+   } else
+   {
+      size1 = input2->limbs+1;
+      size2 = input1->limbs+1;
+      coeffs1 = input2->coeffs;
+      coeffs2 = input1->coeffs;
+      in_order = 0;
+   }
+   
+   size_out = output->limbs+1;
+   coeffs_out = output->coeffs;
+   
+   mp_limb_t carry;
+   
+   shorter = (input1->length > input2->length) ? input2->length : input1->length;
+   
+   for (unsigned long i = 0; i < shorter; i++)
+   {
+       if (!coeffs1[i*size1])
+       {
+          if (!coeffs2[i*size2]) coeffs_out[i*size_out] = 0L;
+          else
+          {
+              copy_limbs(coeffs_out+i*size_out, coeffs2+i*size2, size2);
+              if (size_out > size2) clear_limbs(coeffs_out+i*size_out+size2, size_out - size2);
+              if (in_order) coeffs_out[i*size_out] = -coeffs_out[i*size_out];
+          }
+       } else if (!coeffs2[i*size2])
+       {
+          copy_limbs(coeffs_out+i*size_out, coeffs1+i*size1, size1);
+          if (size_out > size1) clear_limbs(coeffs_out+i*size_out+size1, size_out - size1);
+          if (!in_order) coeffs_out[i*size_out] = -coeffs_out[i*size_out];
+       } else if (coeffs1[i*size1] != coeffs2[i*size2])
+       {
+          if (in_order) coeffs_out[i*size_out] = coeffs1[i*size1];
+          else coeffs_out[i*size_out] = -coeffs1[i*size1];
+          carry = mpn_add(coeffs_out+i*size_out+1, coeffs1+i*size1+1, size1-1, coeffs2+i*size2+1, size2-1);
+          if (size_out > size1) clear_limbs(coeffs_out+i*size_out+size1, size_out - size1);
+          if (carry) coeffs_out[i*size_out+size1] = carry;
+       } else
+       {
+          carry = mpn_sub(coeffs_out+i*size_out+1, coeffs1+i*size1+1, size1-1, coeffs2+i*size2+1, size2-1);
+          if (!carry) 
+          {
+             for (unsigned long j = 1; (!carry) && (j < size1); j++)
+             {
+                carry |= coeffs_out[i*size_out+j];
+             }
+             if (!carry) coeffs_out[i*size_out] = 0L;
+             else 
+             {
+                if (in_order) coeffs_out[i*size_out] = coeffs1[i*size1];
+                else coeffs_out[i*size_out] = -coeffs1[i*size1];
+                if (size_out > size1) clear_limbs(coeffs_out+i*size_out+size1, size_out - size1);
+             }
+          }
+          else
+          {
+             negate_limbs(coeffs_out+i*size_out+1, coeffs_out+i*size_out+1, size1-1);
+             if (in_order) coeffs_out[i*size_out] = -coeffs1[i*size1];
+             else coeffs_out[i*size_out] = coeffs1[i*size1];
+             if (size_out > size1) clear_limbs(coeffs_out+i*size_out+size1, size_out - size1);
+          }
+       }
+   }
+   
+   coeffs1 = input1->coeffs;
+   coeffs2 = input2->coeffs;
+   size1 = input1->limbs+1;
+   size2 = input2->limbs+1;
+   
+   for (unsigned long i = shorter; i < input1->length; i++)
+   {
+       if (!coeffs1[i*size1]) coeffs_out[i*size_out] = 0L;
+       else
+       {
+           copy_limbs(coeffs_out+i*size_out, coeffs1+i*size1, size1);
+           if (size_out > size1) clear_limbs(coeffs_out+i*size_out+size1, size_out - size1);   
+       }
+   }
+   for (unsigned long i = shorter; i < input2->length; i++)
+   {
+       if (!coeffs2[i*size2]) coeffs_out[i*size_out] = 0L;
+       else
+       {
+           copy_limbs(coeffs_out+i*size_out, coeffs2+i*size2, size2);
+           if (size_out > size2) clear_limbs(coeffs_out+i*size_out+size2, size_out - size2);   
+           coeffs_out[i*size_out] = -coeffs_out[i*size_out];
+       }
+   }
+   
+   output->length = (input1->length > input2->length) ? input1->length : input2->length;
+}
+
 
 /****************************************************************************
 
