@@ -835,6 +835,123 @@ int test_Zpoly_mpn_sub()
    return result; 
 }
 
+int test_Zpoly_mpn_scalar_mul_ui()
+{
+   Zpoly_t test_poly, test_poly2;
+   Zpoly_mpn_t test_mpn_poly, test_mpn_poly2;
+   int result = 1;
+   unsigned long bits, length;
+   unsigned long mult;
+   mpz_t temp;
+   mpz_init(temp);
+   
+   Zpoly_init(test_poly); 
+   Zpoly_init(test_poly2); 
+   
+   for (unsigned long count1 = 1; (count1 < 200) && (result == 1) ; count1++)
+   {
+      bits = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 1;
+      
+      Zpoly_mpn_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      Zpoly_mpn_init(test_mpn_poly2, 1, (bits-1)/FLINT_BITS_PER_LIMB+2);
+      for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
+      { 
+          length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1;        
+#if DEBUG
+          printf("length = %ld, bits = %ld\n",length, bits);
+#endif
+          Zpoly_mpn_realloc(test_mpn_poly, length);
+          Zpoly_mpn_realloc(test_mpn_poly2, length);
+          randpoly(test_poly, length, bits); 
+
+          _Zpoly_mpn_convert_in(test_mpn_poly, test_poly);
+          
+          mult = randint(34682739);
+          _Zpoly_mpn_scalar_mul_ui(test_mpn_poly2, test_mpn_poly, mult);
+         
+          Zpoly_init3(test_poly2, length, bits+FLINT_BITS_PER_LIMB);
+          _Zpoly_mpn_convert_out(test_poly2, test_mpn_poly2); 
+          
+#if DEBUG
+          printf("length = %ld\n",_Zpoly_mpn_length(test_mpn_poly));
+#endif              
+          for (unsigned long i = 0; i < test_poly->length; i++)
+          {
+              mpz_mul_ui(temp, test_poly->coeffs[i], mult);
+              result &= (mpz_cmp(temp, test_poly2->coeffs[i]) == 0);
+          }          
+          Zpoly_clear(test_poly2);
+      }
+      Zpoly_mpn_clear(test_mpn_poly);
+      Zpoly_mpn_clear(test_mpn_poly2);
+   }
+   
+   Zpoly_clear(test_poly);
+   mpz_clear(temp);
+   
+   return result; 
+}
+
+int test_Zpoly_mpn_scalar_mul_si()
+{
+   Zpoly_t test_poly, test_poly2;
+   Zpoly_mpn_t test_mpn_poly, test_mpn_poly2;
+   int result = 1;
+   unsigned long bits, length, sign;
+   long mult;
+   mpz_t temp;
+   mpz_init(temp);
+   
+   Zpoly_init(test_poly); 
+   Zpoly_init(test_poly2); 
+   
+   for (unsigned long count1 = 1; (count1 < 200) && (result == 1) ; count1++)
+   {
+      bits = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 1;
+      
+      Zpoly_mpn_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      Zpoly_mpn_init(test_mpn_poly2, 1, (bits-1)/FLINT_BITS_PER_LIMB+2);
+      for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
+      { 
+          length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1;        
+#if DEBUG
+          printf("length = %ld, bits = %ld\n",length, bits);
+#endif
+          Zpoly_mpn_realloc(test_mpn_poly, length);
+          Zpoly_mpn_realloc(test_mpn_poly2, length);
+          randpoly(test_poly, length, bits); 
+
+          _Zpoly_mpn_convert_in(test_mpn_poly, test_poly);
+          
+          mult = (long) randint(34682739);
+          sign = randint(2);
+          if (sign) mult = -mult;
+          
+          _Zpoly_mpn_scalar_mul_si(test_mpn_poly2, test_mpn_poly, mult);
+         
+          Zpoly_init3(test_poly2, length, bits+FLINT_BITS_PER_LIMB);
+          _Zpoly_mpn_convert_out(test_poly2, test_mpn_poly2); 
+          
+#if DEBUG
+          printf("length = %ld\n",_Zpoly_mpn_length(test_mpn_poly));
+#endif    
+          for (unsigned long i = 0; i < test_poly->length; i++)
+          {
+              mpz_mul_si(temp, test_poly->coeffs[i], mult);
+              result &= (mpz_cmp(temp, test_poly2->coeffs[i]) == 0);
+          }          
+          Zpoly_clear(test_poly2);
+      }
+      Zpoly_mpn_clear(test_mpn_poly);
+      Zpoly_mpn_clear(test_mpn_poly2);
+   }
+   
+   Zpoly_clear(test_poly);
+   mpz_clear(temp);
+   
+   return result; 
+}
+
 void Zpoly_mpn_test_all()
 {
    int success, all_success = 1;
@@ -851,6 +968,8 @@ void Zpoly_mpn_test_all()
    RUN_TEST(Zpoly_mpn_negate);
    RUN_TEST(Zpoly_mpn_add);
    RUN_TEST(Zpoly_mpn_sub);
+   RUN_TEST(Zpoly_mpn_scalar_mul_ui);
+   RUN_TEST(Zpoly_mpn_scalar_mul_si);
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");

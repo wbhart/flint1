@@ -572,6 +572,69 @@ void _Zpoly_mpn_sub(Zpoly_mpn_t output, Zpoly_mpn_t input1, Zpoly_mpn_t input2)
    output->length = (input1->length > input2->length) ? input1->length : input2->length;
 }
 
+void _Zpoly_mpn_scalar_mul_ui(Zpoly_mpn_t output, Zpoly_mpn_t poly, unsigned long x)
+{
+     if (x == 0) 
+     {
+        output->length = 0;
+        return;
+     }
+     
+     mp_limb_t * coeffs1 = poly->coeffs;
+     mp_limb_t * coeffs_out = output->coeffs;
+     unsigned long size1 = poly->limbs+1;
+     unsigned long size_out = output->limbs+1;
+     mp_limb_t mslimb;
+     
+     for (unsigned long i = 0; i < poly->length; i++)
+     {
+        if ((coeffs_out[i*size_out] = coeffs1[i*size1]))
+        {
+           mslimb = mpn_mul_1(coeffs_out+i*size_out+1, coeffs1+i*size1+1, size1-1, x);
+           if (size_out > size1) clear_limbs(coeffs_out+i*size_out+size1, size_out - size1);
+           if (mslimb) coeffs_out[i*size_out+size1] = mslimb;     
+        }
+     }
+     output->length = poly->length;
+}
+
+void _Zpoly_mpn_scalar_mul_si(Zpoly_mpn_t output, Zpoly_mpn_t poly, long x)
+{
+     if (x == 0) 
+     {
+        output->length = 0;
+        return;
+     }
+     
+     mp_limb_t * coeffs1 = poly->coeffs;
+     mp_limb_t * coeffs_out = output->coeffs;
+     unsigned long size1 = poly->limbs+1;
+     unsigned long size_out = output->limbs+1;
+     mp_limb_t mslimb;
+     
+     for (unsigned long i = 0; i < poly->length; i++)
+     {
+        if (x < 0)
+        {
+           if ((coeffs_out[i*size_out] = -coeffs1[i*size1]))
+           {
+              mslimb = mpn_mul_1(coeffs_out+i*size_out+1, coeffs1+i*size1+1, size1-1, -x);
+              if (size_out > size1) clear_limbs(coeffs_out+i*size_out+size1, size_out - size1);
+              if (mslimb) coeffs_out[i*size_out+size1] = mslimb;     
+           }
+        } else 
+        {
+           if ((coeffs_out[i*size_out] = coeffs1[i*size1]))
+           {
+              mslimb = mpn_mul_1(coeffs_out+i*size_out+1, coeffs1+i*size1+1, size1-1, x);
+              if (size_out > size1) clear_limbs(coeffs_out+i*size_out+size1, size_out - size1);
+              if (mslimb) coeffs_out[i*size_out+size1] = mslimb;     
+           }
+        }
+     }
+     output->length = poly->length;
+}
+
 
 /****************************************************************************
 
