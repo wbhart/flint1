@@ -635,6 +635,56 @@ void _Zpoly_mpn_scalar_mul_si(Zpoly_mpn_t output, Zpoly_mpn_t poly, long x)
      output->length = poly->length;
 }
 
+void _Zpoly_mpn_scalar_div_exact_ui(Zpoly_mpn_t output, Zpoly_mpn_t poly, unsigned long x)
+{
+   unsigned long size_out = output->limbs+1;
+   unsigned long size1 = poly->limbs+1;
+   mp_limb_t * coeffs_out = output->coeffs;
+   mp_limb_t * coeffs1 = poly->coeffs;
+      
+   if (size_out != size1)
+   {
+      for (unsigned long i = 0; i < poly->length; i++)
+      {
+         coeffs_out[i*size_out] = coeffs1[i*size1];
+         mpn_divmod_1(coeffs_out+i*size_out+1, coeffs1+i*size1+1, size1-1, x);
+         if (size_out > size1) clear_limbs(coeffs_out+i*size_out+size1, size_out-size1);
+      }
+   } else
+   {
+      if (coeffs_out != coeffs1)
+      {
+         copy_limbs(coeffs_out, coeffs1, size1*poly->length); 
+         for (unsigned long i = 0; i < poly->length; i++)
+         {
+            if (!coeffs_out[i*size_out]) clear_limbs(coeffs_out+i*size_out+1, size_out-1);
+            else coeffs_out[i*size_out] = 0L;
+         }
+         mpn_divmod_1(coeffs_out, coeffs_out, size_out*poly->length, x);
+         for (unsigned long i = 0; i < poly->length; i++)
+         {
+            coeffs_out[i*size_out] = coeffs1[i*size1];
+         }
+      } else
+      {
+         mp_limb_t * signs = (mp_limb_t *) flint_malloc_limbs(poly->length);
+         for (unsigned long i = 0; i < poly->length; i++)
+         {
+            signs[i] = coeffs_out[i*size_out];
+            if (!coeffs_out[i*size_out]) clear_limbs(coeffs_out+i*size_out+1, size_out-1);
+            else coeffs_out[i*size_out] = 0L;
+         }
+         mpn_divmod_1(coeffs_out, coeffs_out, size_out*poly->length, x);
+         for (unsigned long i = 0; i < poly->length; i++)
+         {
+            coeffs_out[i*size_out] = signs[i];
+         }
+         flint_free(signs);
+      }
+   }
+   output->length = poly->length;
+}
+
 
 /****************************************************************************
 
