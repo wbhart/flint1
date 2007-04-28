@@ -809,6 +809,46 @@ void _Zpoly_mpn_scalar_div_ui(Zpoly_mpn_t output, Zpoly_mpn_t poly, unsigned lon
    output->length = poly->length;
 }
 
+void _Zpoly_mpn_scalar_div_si(Zpoly_mpn_t output, Zpoly_mpn_t poly, long x)
+{
+   unsigned long size_out = output->limbs+1;
+   unsigned long size1 = poly->limbs+1;
+   mp_limb_t * coeffs_out = output->coeffs;
+   mp_limb_t * coeffs1 = poly->coeffs;
+   int sign = (x < 0);
+   if (sign) x = -x; 
+      
+   if (poly->length > FLINT_POL_DIV_1_LENGTH)
+   {
+      unsigned long norm;
+      mp_limb_t xinv;
+      
+      count_leading_zeros (norm, x);
+      x <<= norm;
+      invert_limb(xinv,x);
+      x >>= norm;
+      
+      for (unsigned long i = 0; i < poly->length; i++)
+      {
+         if (sign) coeffs_out[i*size_out] = -coeffs1[i*size1];
+         else coeffs_out[i*size_out] = coeffs1[i*size1];
+         mpn_divmod_1_preinv(coeffs_out+i*size_out+1, coeffs1+i*size1+1, size1-1, x, xinv, norm);
+         if (size_out > size1) clear_limbs(coeffs_out+i*size_out+size1, size_out-size1);
+      }
+   } else
+   {
+      for (unsigned long i = 0; i < poly->length; i++)
+      {
+         if (sign) coeffs_out[i*size_out] = -coeffs1[i*size1];
+         else coeffs_out[i*size_out] = coeffs1[i*size1];
+         mpn_divmod_1(coeffs_out+i*size_out+1, coeffs1+i*size1+1, size1-1, x);
+         if (size_out > size1) clear_limbs(coeffs_out+i*size_out+size1, size_out-size1);
+      }
+   }
+   
+   output->length = poly->length;
+}
+
 /****************************************************************************
 
    Zpoly_mpn_* layer
