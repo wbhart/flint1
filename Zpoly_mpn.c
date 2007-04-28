@@ -793,7 +793,7 @@ void _Zpoly_mpn_scalar_div_ui(Zpoly_mpn_t output, Zpoly_mpn_t poly, unsigned lon
       for (unsigned long i = 0; i < poly->length; i++)
       {
          coeffs_out[i*size_out] = coeffs1[i*size1];
-         mpn_divmod_1_preinv(coeffs_out+i*size_out+1, coeffs1+i*size1+1, size1-1, x, xinv);
+         mpn_divmod_1_preinv(coeffs_out+i*size_out+1, coeffs1+i*size1+1, size1-1, x, xinv, norm);
          if (size_out > size1) clear_limbs(coeffs_out+i*size_out+size1, size_out-size1);
       }
    } else

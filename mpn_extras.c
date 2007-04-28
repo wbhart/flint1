@@ -207,14 +207,14 @@ void limb_release()
 /* 
     Performs division by a limb d and places the quotient in qp and returns the 
     remainder. Requires a single limb approximation to 1/d as input. If the most
-    significant bit of d is not 1 it expects a single limb approximation to 1/d'
-    where d' is d shifted left until the most significant bit is 1. The original d
-    with the normalised 1/d' should be supplied to the function.
+    significant bit of d is not 1 it expects d to be shifted left (by norm bits)
+    until the most significant bit is 1 before the inverse is computed. However 
+    the original d should be supplied to the function, not the shifted d. 
     
     This code has been adapted from code found in the GMP package (divrem_1.c)
 */
 mp_limb_t mpn_divmod_1_preinv(mp_limb_t * qp, mp_limb_t * up, 
-                                  unsigned long un, mp_limb_t d, mp_limb_t dinv)
+                                  unsigned long un, mp_limb_t d, mp_limb_t dinv, unsigned long norm)
 {
   mp_size_t  n;
   mp_size_t  i;
@@ -252,8 +252,7 @@ mp_limb_t mpn_divmod_1_preinv(mp_limb_t * qp, mp_limb_t * up,
   } else
   {
      /* Most significant bit of divisor == 0.  */
-     int norm;
-
+     
      /* Skip a division if high < divisor (high quotient 0).  Testing here
 	 before normalizing will still skip as often as possible.  */
      if (un != 0)
@@ -269,19 +268,18 @@ mp_limb_t mpn_divmod_1_preinv(mp_limb_t * qp, mp_limb_t * up,
         }
 	 }  
 
-     count_leading_zeros(norm, d);
      d <<= norm;
      r <<= norm;
 
      if (un != 0)
      {
         n1 = up[un - 1];
-        r |= r_shift(n1,(FLINT_BITS_PER_LIMB - norm));
+        r |= (n1 >> (FLINT_BITS_PER_LIMB - norm));
         for (i = un - 2; i >= 0; i--)
 		{
 		  n0 = up[i];
 		  udiv_qrnnd_preinv (*qp, r, r, 
-				     ((n1 << norm) | r_shift(n0,(FLINT_BITS_PER_LIMB - norm))), d, dinv);
+				     ((n1 << norm) | (n0 >> (FLINT_BITS_PER_LIMB - norm))), d, dinv);
 		  qp--;
 		  n1 = n0;
 		}

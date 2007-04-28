@@ -137,7 +137,7 @@ void signed_add_1(mp_limb_t* dest, unsigned long count, mp_limb_signed_t limb)
 }
 
 mp_limb_t mpn_divmod_1_preinv(mp_limb_t * qp, mp_limb_t * up, 
-                                  unsigned long un, mp_limb_t d, mp_limb_t dinv);
+             unsigned long un, mp_limb_t d, mp_limb_t dinv, unsigned long norm);
 
 #endif
 
