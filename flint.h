@@ -62,6 +62,7 @@ Cache size in bytes.
 */
 #define FLINT_CACHE_SIZE 65536
 
+#define FLINT_POL_DIV_1_LENGTH 10
 
 /*
 If this flag is set, we are strictly only using GMP's documented interface.

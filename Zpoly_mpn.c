@@ -12,6 +12,9 @@ Copyright (C) 2007, William Hart and David Harvey
 #include "flint.h"
 #include "Zpoly_mpn.h"
 #include "Zpoly.h"
+#include "mpn_extras.h"
+#include "extras.h"
+#include "longlong_wrapper.h"
 #include "flint-manager.h"
 
 /****************************************************************************
@@ -762,6 +765,47 @@ void _Zpoly_mpn_scalar_div_exact_si(Zpoly_mpn_t output, Zpoly_mpn_t poly, long x
          flint_free(signs);
       }
    }
+   output->length = poly->length;
+}
+
+/* 
+    Does scalar division of a polynomial by a limb x. Currently rounding is done towards
+    zero.
+*/
+
+void _Zpoly_mpn_scalar_div_ui(Zpoly_mpn_t output, Zpoly_mpn_t poly, unsigned long x)
+{
+   unsigned long size_out = output->limbs+1;
+   unsigned long size1 = poly->limbs+1;
+   mp_limb_t * coeffs_out = output->coeffs;
+   mp_limb_t * coeffs1 = poly->coeffs;
+      
+   if (poly->length > FLINT_POL_DIV_1_LENGTH)
+   {
+      unsigned long norm;
+      mp_limb_t xinv;
+      
+      count_leading_zeros (norm, x);
+      x <<= norm;
+      invert_limb(xinv,x);
+      x >>= norm;
+      
+      for (unsigned long i = 0; i < poly->length; i++)
+      {
+         coeffs_out[i*size_out] = coeffs1[i*size1];
+         mpn_divmod_1_preinv(coeffs_out+i*size_out+1, coeffs1+i*size1+1, size1-1, x, xinv);
+         if (size_out > size1) clear_limbs(coeffs_out+i*size_out+size1, size_out-size1);
+      }
+   } else
+   {
+      for (unsigned long i = 0; i < poly->length; i++)
+      {
+         coeffs_out[i*size_out] = coeffs1[i*size1];
+         mpn_divmod_1(coeffs_out+i*size_out+1, coeffs1+i*size1+1, size1-1, x);
+         if (size_out > size1) clear_limbs(coeffs_out+i*size_out+size1, size_out-size1);
+      }
+   }
+   
    output->length = poly->length;
 }
 

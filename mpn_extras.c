@@ -11,7 +11,11 @@
 #include <gmp.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 #include "flint.h"
+#include "extras.h"
+#include "longlong_wrapper.h"
+#include "longlong.h"
 
 /*
    Memory manager to allocate an array of limbs of the given length. It returns a (void*)
@@ -197,3 +201,95 @@ void limb_release()
     top_mpn--;
     rescount_mpn--;
 }
+
+/*=======================================================================================*/
+
+/* 
+    Performs division by a limb d and places the quotient in qp and returns the 
+    remainder. Requires a single limb approximation to 1/d as input. If the most
+    significant bit of d is not 1 it expects a single limb approximation to 1/d'
+    where d' is d shifted left until the most significant bit is 1. The original d
+    with the normalised 1/d' should be supplied to the function.
+    
+    This code has been adapted from code found in the GMP package (divrem_1.c)
+*/
+mp_limb_t mpn_divmod_1_preinv(mp_limb_t * qp, mp_limb_t * up, 
+                                  unsigned long un, mp_limb_t d, mp_limb_t dinv)
+{
+  mp_size_t  n;
+  mp_size_t  i;
+  mp_limb_t  n1, n0;
+  mp_limb_t  r = 0;
+
+  n = un;
+  if (n == 0)
+    return 0;
+  
+  qp += (n - 1);   /* Make qp point at most significant quotient limb */
+
+  if ((d & (1L<<(FLINT_BITS_PER_LIMB-1))) != 0)
+  {
+     if (un != 0)
+     {
+        /* High quotient limb is 0 or 1, skip a divide step. */
+	    mp_limb_t q;
+	    r = up[un - 1];
+	    q = (r >= d);
+	    *qp-- = q;
+	    r -= (d & -q);
+	    n--;
+	    un--;
+	 }
+
+     /* Multiply-by-inverse, divisor already normalized. */
+     for (i = un - 1; i >= 0; i--)
+     {
+        n0 = up[i];
+        udiv_qrnnd_preinv (*qp, r, r, n0, d, dinv);
+        qp--;
+     }
+     return r;
+  } else
+  {
+     /* Most significant bit of divisor == 0.  */
+     int norm;
+
+     /* Skip a division if high < divisor (high quotient 0).  Testing here
+	 before normalizing will still skip as often as possible.  */
+     if (un != 0)
+	 {
+	    n1 = up[un - 1];
+	    if (n1 < d)
+        {
+           r = n1;
+	       *qp-- = 0;
+	       n--;
+	       if (n == 0) return r;
+	       un--;
+        }
+	 }  
+
+     count_leading_zeros(norm, d);
+     d <<= norm;
+     r <<= norm;
+
+     if (un != 0)
+     {
+        n1 = up[un - 1];
+        r |= r_shift(n1,(FLINT_BITS_PER_LIMB - norm));
+        for (i = un - 2; i >= 0; i--)
+		{
+		  n0 = up[i];
+		  udiv_qrnnd_preinv (*qp, r, r, 
+				     ((n1 << norm) | r_shift(n0,(FLINT_BITS_PER_LIMB - norm))), d, dinv);
+		  qp--;
+		  n1 = n0;
+		}
+        udiv_qrnnd_preinv (*qp, r, r, n1 << norm, d, dinv);
+        qp--;
+     }
+     
+     return r >> norm;
+  }
+}
+
