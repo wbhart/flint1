@@ -823,10 +823,10 @@ void _Zpoly_mpn_scalar_div_si(Zpoly_mpn_t output, Zpoly_mpn_t poly, long x)
       unsigned long norm;
       mp_limb_t xinv;
       
-      count_leading_zeros (norm, x);
-      x <<= norm;
-      invert_limb(xinv,x);
-      x >>= norm;
+      count_leading_zeros (norm, (unsigned long) x);
+      x = ((unsigned long) x) << norm;
+      invert_limb(xinv,(unsigned long) x);
+      x = ((unsigned long) x) >> norm;
       
       for (unsigned long i = 0; i < poly->length; i++)
       {
