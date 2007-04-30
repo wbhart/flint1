@@ -294,3 +294,19 @@ mp_limb_t mpn_divmod_1_preinv(mp_limb_t * qp, mp_limb_t * up,
   }
 }
 
+mp_limb_t mpn_addmul(mp_limb_t * rp, mp_limb_t * s1p, unsigned long s1n, 
+                                      mp_limb_t * s2p, unsigned long s2n)
+{
+   if (s2n == 0) return 0;
+   
+   mp_limb_t carry;
+   
+   carry = mpn_addmul_1(rp, s1p, s1n, s2p[0]);
+   for (unsigned long i = 1; i < s2n; i++)
+   {
+      carry = mpn_add_1(rp+i+s1n-1, rp+i+s1n-1, 1, carry); 
+      carry += mpn_addmul_1(rp+i, s1p, s1n, s2p[i]);
+   }
+   return carry;
+}
+

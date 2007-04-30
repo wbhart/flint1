@@ -627,7 +627,6 @@ int test_Zpoly_mpn_add()
    Zpoly_init(test_poly); 
    Zpoly_init(test_poly2); 
    Zpoly_init(test_poly3); 
-   Zpoly_init(test_poly4); 
    
    for (unsigned long count1 = 1; (count1 < 200) && (result == 1) ; count1++)
    {
@@ -736,7 +735,6 @@ int test_Zpoly_mpn_sub()
    Zpoly_init(test_poly); 
    Zpoly_init(test_poly2); 
    Zpoly_init(test_poly3); 
-   Zpoly_init(test_poly4); 
    
    for (unsigned long count1 = 1; (count1 < 200) && (result == 1) ; count1++)
    {
@@ -846,7 +844,6 @@ int test_Zpoly_mpn_scalar_mul_ui()
    mpz_init(temp);
    
    Zpoly_init(test_poly); 
-   Zpoly_init(test_poly2); 
    
    for (unsigned long count1 = 1; (count1 < 200) && (result == 1) ; count1++)
    {
@@ -903,7 +900,6 @@ int test_Zpoly_mpn_scalar_mul_si()
    mpz_init(temp);
    
    Zpoly_init(test_poly); 
-   Zpoly_init(test_poly2); 
    
    for (unsigned long count1 = 1; (count1 < 200) && (result == 1) ; count1++)
    {
@@ -1176,7 +1172,6 @@ int test_Zpoly_mpn_scalar_div_ui()
    mpz_init(temp);
    
    Zpoly_init(test_poly); 
-   Zpoly_init(test_poly2); 
    
    for (unsigned long count1 = 1; (count1 < 200) && (result == 1) ; count1++)
    {
@@ -1233,7 +1228,6 @@ int test_Zpoly_mpn_scalar_div_si()
    mpz_init(temp);
    
    Zpoly_init(test_poly); 
-   Zpoly_init(test_poly2); 
    
    for (unsigned long count1 = 1; (count1 < 200) && (result == 1) ; count1++)
    {
@@ -1285,6 +1279,64 @@ int test_Zpoly_mpn_scalar_div_si()
    return result; 
 }
 
+int test_Zpoly_mpn_mul_naieve()
+{
+   Zpoly_t test_poly, test_poly2, test_poly3, test_poly4;
+   Zpoly_mpn_t test_mpn_poly, test_mpn_poly2, test_mpn_poly3;
+   int result = 1;
+   unsigned long bits, bits2, length, length2;
+   
+   Zpoly_init(test_poly); 
+   Zpoly_init(test_poly2); 
+   Zpoly_init(test_poly3); 
+   
+   for (unsigned long count1 = 1; (count1 < 200) && (result == 1) ; count1++)
+   {
+      bits = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 1;
+      bits2 = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 1;
+      
+      Zpoly_mpn_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      Zpoly_mpn_init(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS_PER_LIMB+1);
+      for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
+      { 
+          length = gmp_urandomm_ui(Zpoly_test_randstate,200)+1; 
+          length2 = gmp_urandomm_ui(Zpoly_test_randstate,200)+1;        
+#if DEBUG
+          printf("length = %ld, length2 = %ld, bits = %ld, bits2 = %ld\n", length, length2, bits, bits2);
+#endif
+          randpoly(test_poly, length, bits); 
+          randpoly(test_poly2, length2, bits2); 
+          
+          Zpoly_mpn_realloc(test_mpn_poly, length);
+          Zpoly_mpn_realloc(test_mpn_poly2, length2);
+          _Zpoly_mpn_convert_in(test_mpn_poly, test_poly);
+          _Zpoly_mpn_convert_in(test_mpn_poly2, test_poly2);
+          
+          Zpoly_mul_naive(test_poly3, test_poly, test_poly2);
+          
+          Zpoly_init3(test_poly4, length+length2-1, bits+bits2+FLINT_BITS_PER_LIMB);
+          Zpoly_mpn_init(test_mpn_poly3, length+length2-1, (bits+bits2-1)/FLINT_BITS_PER_LIMB+2);
+          
+          _Zpoly_mpn_mul_naive(test_mpn_poly3, test_mpn_poly, test_mpn_poly2);
+          
+          _Zpoly_mpn_convert_out(test_poly4, test_mpn_poly3); 
+          
+          result = _Zpoly_equal(test_poly4, test_poly3);
+          Zpoly_clear(test_poly4);
+          Zpoly_mpn_clear(test_mpn_poly3);
+      }
+      Zpoly_mpn_clear(test_mpn_poly);
+      Zpoly_mpn_clear(test_mpn_poly2);
+   }
+   
+   Zpoly_clear(test_poly);
+   Zpoly_clear(test_poly2);
+   Zpoly_clear(test_poly3);
+   
+   return result; 
+}
+
+
 void Zpoly_mpn_test_all()
 {
    int success, all_success = 1;
@@ -1307,6 +1359,7 @@ void Zpoly_mpn_test_all()
    RUN_TEST(Zpoly_mpn_scalar_div_exact_si);
    RUN_TEST(Zpoly_mpn_scalar_div_ui);
    RUN_TEST(Zpoly_mpn_scalar_div_si);
+   RUN_TEST(Zpoly_mpn_mul_naieve);
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");

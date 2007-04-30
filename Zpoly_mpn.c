@@ -849,6 +849,122 @@ void _Zpoly_mpn_scalar_div_si(Zpoly_mpn_t output, Zpoly_mpn_t poly, long x)
    output->length = poly->length;
 }
 
+void _Zpoly_mpn_mul_naive(Zpoly_mpn_t output, Zpoly_mpn_t input1, Zpoly_mpn_t input2)
+{
+   mp_limb_t * coeffs_out = output->coeffs;
+   unsigned long size_out = output->limbs+1;
+   mp_limb_t * coeffs1, * coeffs2;
+   unsigned long size1, size2;
+   unsigned long len1, len2; 
+   unsigned long lenm1;
+   if (input1->limbs > input2->limbs)
+   {
+      coeffs1 = input1->coeffs;
+      coeffs2 = input2->coeffs;
+      size1 = input1->limbs+1;
+      size2 = input2->limbs+1;
+      lenm1 = input1->length-1;
+      len1 = input1->length;
+      len2 = input2->length;
+   } else
+   {
+      coeffs1 = input2->coeffs;
+      coeffs2 = input1->coeffs;
+      size1 = input2->limbs+1;
+      size2 = input1->limbs+1;
+      lenm1 = input2->length-1;
+      len1 = input2->length;
+      len2 = input1->length;
+   }
+
+   mp_limb_t carry;
+   long sign1, sign2;
+   mp_limb_t data;
+   
+   mp_limb_t * temp = (mp_limb_t *) flint_malloc_limbs(size1+size2-2);
+      
+   for (unsigned long i = 0; i < len1; i++)
+   {
+      /* Set out[i] = in1[i]*in2[0] */
+      if ((coeffs1[i*size1] == 0) || (coeffs2[0] == 0))
+      {
+         clear_limbs(coeffs_out+i*size_out, size_out);
+      } else
+      {
+         if (coeffs2[0] == 1L) coeffs_out[i*size_out] = coeffs1[i*size1];
+         else coeffs_out[i*size_out] = -coeffs1[i*size1]; 
+         mpn_mul(coeffs_out+i*size_out+1, coeffs1+i*size1+1, size1-1, coeffs2+1, size2-1);
+         if (size_out > size1+size2-1) clear_limbs(coeffs_out+i*size_out+size1+size2-1, size_out-size1-size2+1);
+      }
+   }
+   for (unsigned long i = 1; i < len2; i++)
+   {
+      /* Set out[i+in1->length-1] = in1[in1->length-1]*in2[i] */
+      if ((coeffs1[lenm1*size1] == 0) || (coeffs2[i*size2] == 0))
+      {
+         clear_limbs(coeffs_out+(i+lenm1)*size_out, size_out);
+      } else
+      {
+         if (coeffs1[lenm1*size1] == 1L) coeffs_out[(i+lenm1)*size_out] = coeffs2[i*size2];
+         else coeffs_out[(i+lenm1)*size_out] = -coeffs2[i*size2]; 
+         mpn_mul(coeffs_out+(i+lenm1)*size_out+1, coeffs1+lenm1*size1+1, size1-1, coeffs2+i*size2+1, size2-1);
+         if (size_out > size1+size2-1) clear_limbs(coeffs_out+(i+lenm1)*size_out+size1+size2-1, size_out-size1-size2+1);
+      }
+        
+   }
+   for (unsigned long i = 0; i < lenm1; i++)
+   {
+      for (unsigned long j = 1; j < len2; j++)
+      {
+         /* out[i+j] += in1[i]*in2[j] */
+         if ((coeffs1[i*size1] != 0) && (coeffs2[j*size2] != 0))
+         {
+            if (coeffs1[i*size1] == coeffs2[j*size2]) sign1 = 1L;
+            else sign1 = -1L;
+            if (coeffs_out[(i+j)*size_out] == -1L) sign2 = -1L;
+            else sign2 = 1L;
+            if (sign2 == sign1)
+            {
+               carry = mpn_addmul(coeffs_out+(i+j)*size_out+1, coeffs1+i*size1+1, size1-1, coeffs2+j*size2+1, size2-1);
+               if (carry) mpn_add_1(coeffs_out+(i+j)*size_out+size1+size2-2, coeffs_out+(i+j)*size_out+size1+size2-2, size_out-size1-size2+2, carry);         
+               coeffs_out[(i+j)*size_out] = sign1;
+            } else 
+            {
+               mpn_mul(temp, coeffs1+i*size1+1, size1-1, coeffs2+j*size2+1, size2-1);
+               data = 0;
+               for (unsigned long k = size1+size2-1; (!data) && (k < size_out); k++) data |= coeffs_out[(i+j)*size_out+k];
+               if (data) data = 1;
+               else data = mpn_cmp(coeffs_out+(i+j)*size_out+1, temp, size1+size2-2); 
+          
+               if (data == 0) 
+               {
+                  clear_limbs(coeffs_out+(i+j)*size_out, size_out);
+               } else if ((long) data > 0) 
+               {
+                  mpn_sub(coeffs_out+(i+j)*size_out+1, coeffs_out+(i+j)*size_out+1, size_out-1, temp, size1+size2-2);
+                  coeffs_out[(i+j)*size_out] = sign2;
+               } else
+               {
+                  mpn_sub_n(coeffs_out+(i+j)*size_out+1, temp, coeffs_out+(i+j)*size_out+1, size1+size2-2);
+                  coeffs_out[(i+j)*size_out] = -sign2;
+               }
+            } 
+         }
+      }
+   } 
+   data = 0L;
+   for (unsigned i = 0; i < len1 + len2 - 1; i++)
+   {
+       for (unsigned long j = 1; (j < size_out) && (!data); j++)
+       {
+          data |= coeffs_out[i*size_out+j];
+       }
+       if (!data) coeffs_out[i*size_out] = 0L;
+   }
+   output->length = len1 + len2 - 1;
+   flint_free(temp);
+}
+
 /****************************************************************************
 
    Zpoly_mpn_* layer

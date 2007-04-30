@@ -8,6 +8,7 @@
 ******************************************************************************/
 
 #include <limits.h>
+#include <assert.h>
 
 #ifndef FLINT_H
 #define FLINT_H
