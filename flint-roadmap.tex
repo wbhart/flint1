@@ -1,0 +1,373 @@
+\documentclass[a4paper,10pt]{article}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{eucal}
+\usepackage{amscd}
+\usepackage{url}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{wrapfig}
+\urlstyle{sf}
+
+\addtolength{\oddsidemargin}{-0.75in}
+\addtolength{\evensidemargin}{-0.75in}
+\addtolength{\textwidth}{1.5in}
+
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\HH}{\mathcal{H}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\I}{\mathbb{I}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Pee}{\mathbb{P}}
+\newcommand{\EuO}{\mathcal{O}}
+\newcommand{\Qbar}{\overline{\mathbb{Q}}}
+\newcommand{\fn}{\hfill[Function]}
+\newcommand{\macro}{\hfill[Macro]}
+\newcommand{\gmp}{\hfill[GMP]}
+
+\newcommand{\ljk}[2]{\left(\frac{#1}{#2}\right)}
+\newcommand{\modulo}[1]{\;\left(\mbox{mod}\;#1\right)}
+\newcommand{\fr}{\mathfrak}
+
+\def\notdivides{\mathrel{\kern-3pt\not\!\kern4.5pt\bigm|}}
+\def\nmid{\notdivides}
+\def\nsubseteq{\mathrel{\kern-3pt\not\!\kern2.5pt\subseteq}}
+
+\parindent=0pt
+\parskip 4pt plus 2pt minus 2pt
+
+%\email{w.b.hart@maths.warwick.ac.uk}
+
+\title{FLINT: Fast Library for Number Theory}
+\author{William B. Hart}
+
+\begin{document}
+\maketitle
+\lstset{language=c}
+\lstset{escapeinside=\%\%}
+
+\section{Introduction}
+FLINT is a C library for doing number theory. It is released under the GPL and we encourage interested people to contribute and/or fork our code.
+
+FLINT will eventually have implementations of algorithms in number theory, specifically algebraic number theory, including p-adics. We have no plans to implement algebraic geometry, group theory or elliptic curve algorithms, but this may change if a suitable maintainer is found who would like to oversee such a project.
+
+FLINT is currently maintained by Bill Hart from Warwick University and David Harvey from Harvard.
+
+Although FLINT is designed as a standalone C library for direct use in C programs by number theorists, parts of FLINT will be made available for use in SAGE, maintained by William Stein. 
+
+FLINT 0.5, which includes fast polynomial multiplication (which has been incorporated into the SAGE version of Pari) and fast integer factorisation via the MPQS (multiple polynomial quadratic sieve) have been incorporated into SAGE (the sieve is the qsieve command which appears in SAGE 1.6 and following and the SAGE version of Pari makes use of FLINT from SAGE 2.5.1 onwards).
+
+The intention is to release a series of improvements to Pari and the standalone quadratic sieve starting with FLINT 0.5 and onwards. These releases, FLINT 0.5, 0.6, etc., will be prereleases only. 
+
+FLINT 1.0 will be the first version of FLINT which will be a standalone C library with a documented interface which can be used by an end user. Its anticipated release date is July 1st 2007. 
+
+\subsection{Code Base}
+FLINT is written entirely in C and all code must conform to the C99 standard. It must compile with the GCC toolset, available on most unix based systems. FLINT should have as few dependencies as possible, but any function from GMP may be used.
+
+The code is maintained at a sourceforge SVN repository. The main development code is available at:
+
+https://svn.sourceforge.net/svnroot/fastlibnt/trunk
+
+Released versions of FLINT are forked from the main trunk and stored in separate folders in the repository, e.g. FLINT 0.5 is at
+
+https://svn.sourceforge.net/svnroot/fastlibnt/flint-0.5
+
+Various experimental branches are held at:
+
+https://svn.sourceforge.net/svnroot/fastlibnt/branches
+
+Programmers who wish to fiddle with some new ideas can start a branch ad libitum and play with FLINT files there without affecting the main development code.
+
+\subsection{Website}
+The FLINT website is found at:
+
+http://www.flintlib.org/
+
+Information about FLINT (pre)releases, progress updates and future directions can be found there. Profiles will also be linked to from the website for comparison with other comparable packages and projects.
+
+In addition, programmers can access the FLINT sourceforge project at:
+
+http://www.sourceforge.org/flintlibnt/
+
+\subsection{Development forums}
+Sourceforge provides us with a development forum. Developers who wish to be added to the FLINT development list can send an email requesting addition to hart\_wb@yahoo.com
+
+In addition, on occasion, FLINT developers find it useful to discuss things on IRC. The channel for this is flint-dev on the irc.freenode.net server. A web based IRC client is available at:
+
+http://www.rlscnetwork.com/sharedresources/chat.html
+ 
+\subsection{Performance}
+The aim is for all FLINT functions to be at least as fast as the comparable functions available in the open source projects of a similar nature. The more elaborate functions will be faster in FLINT than in other open source projects where possible, and sometimes significantly faster.
+
+In particular FLINT will perform as well as or better than NTL, Pari and LiDIA, which seem to be the most popular open source alternatives. FLINT will be regularly profiled and compared against these packages on a function by function basis. The more elaborate functions will have more elaborate profiles.
+
+We also aim to beat MAGMA where possible, however it won't be a condition for a release of FLINT to be made that all functions in FLINT perform better than their MAGMA counterparts. 
+
+Profiles comparing FLINT with MAGMA will also be done regularly. However such a comparison is not fair to either FLINT or MAGMA, since MAGMA is an interpreted package, not a C library, and MAGMA is closed source and non-free, whereas FLINT is free and open source.
+
+\subsection{Testing}
+All functions available to an end user in FLINT will have a corresponding test function (to be written by the person who wrote the function, if no one else volunteers to do it for them). Also, all sufficiently sophisticated internal FLINT functions must have a corresponding test function. One line functions, which for example just return the value of some field of a structure, need not have a test function.
+
+The general strategies used for testing FLINT functions are:
+
+1) Send a large amount of random data of varying sizes and parameters to the function where possible. 
+
+2) Use the special GMP functions for generating random integers with long strings of 1's and 0's where this is possible.
+
+3) If there is an associated function which should undo the effect of the function being tested (e.g. an addition function and a corresponding subtraction function), test the functions against one another.
+
+4) If possible, get the function to do a standard computation, the result of which can be checked, e.g. check a factoring function by feeding numbers which are the known product of random integers and check the result. 
+
+5) If no other form of testing is possible, write a very simple version of the function which performs very poorly perhaps, or which uses a much simpler algorithm but produces the same result and compare the outputs. 
+
+6) Always do sufficient "eyeball" tests, i.e. get the function to print its output to the screen and look at the output to see if it looks like it is returning vaguely reasonable looking results to the eye.
+
+7) Check boundary cases and just either side of them.
+
+If it is only possible to test a function in situ (i.e. as part of a larger function which calls it), and a simpler version cannot be implemented to test against, insert checkpoints within each branch of the function and run random data through the function until such time as all branches have been worked. Explicitly check that all branches did what they were supposed to. FLINT\_ASSERT's can be used to check that certain conditions were met after the branch executed.
+
+The functions for testing the functions in ssmul.c should all be in a file called ssmul-test.c, etc.
+
+The final version of a test file should take 1-2 seconds to test each function in the file being test, where possible (sometimes a much longer time may be necessary). However, much more extensive tests should be run by the programmer when the function is first written, to ensure that the function works as expected in every conceivable situation, especially if the function is very involved. Such test code should be retained, but need not execute when a user executes a make test.
+
+Each final test function should print which function is being tested and then ok or fail. Examples of easy ways to set up such a test file can be found in the trunk of the development code, e.g. Zpoly\_mpn-test.c 
+
+\subsection{Parallel Processing}
+FLINT will support parallel processing at the thread level using pthreads. All functions that are sufficiently complicated will allow threads to be used. A global \#define USE\_THREADS in flint.h specifies whether threads should be used, and flint files using threads should contain 
+
+\begin{verbatim}#include "flint.h"
+
+#ifdef USE_THREADS
+//code that makes use of threads
+#else
+//code that doesn't use threads
+#endif\end{verbatim}
+
+The files flint-threads.h and flint-threads.c will contain a flint thread manager. It will have a function which can be accessed which gives an upper limit on the number of new threads that should be created by a function which wants to create some new threads. All threaded functions should check how many threads it is allowed to create before creating any.
+
+It will also have various other helper functions for implementing more complicated threaded scenarios where threads will be kept hanging around waiting for work and woken up when work is available for them, or for implementing work stealing etc.
+
+\subsection{Memory Manager}
+FLINT has a memory manager. When we were implementing polynomial multiplication, we found that just allocating memory as needed with malloc, was too slow. It is hopelessly bad if the function is recursive.
+
+At the very least, functions should allocate as much of the memory as they need up front, then break it up as needed, rather than allocate lots of small chunks. But even this approach slows some things down. Thus we introduced a memory manager.
+
+The FLINT memory manager is included in files flint-manager.h and flint-manager.c. It is a stack based memory manager (or will be). 
+
+Since stack based memory management is not ideal for threaded programs, it is implemented in a slightly strange way. Flint memory allocation functions require a thread number. So if there are numerous threads running within a FLINT function (or indeed a program running multiple threads, each calling different FLINT functions), each thread that is started will have a different stack of memory allocated to it. However the memory manager will be able to transfer blocks of memory from one thread to another if they become available. 
+
+However, the implementation details of the memory manager are irrelevant, since it will just work, regardless of how it is implemented. The only constraint in actual programming is that since the memory manager is stack based, any given thread should free memory in the reverse order to what it was allocated in the first place, e.g.
+
+\begin{verbatim}mp_limb_t * data1 = (mp_limb_t *) flint_malloc(1000);
+mp_limb_t * data2 = (mp_limb_t *) flint_malloc(2000);
+mp_limb_t * data3 = (mp_limb_t *) flint_malloc(300);
+
+// intervening code
+
+flint_free(data3);
+flint_free(data2);
+flint_free(data1);\end{verbatim}
+
+Flint will automatically determine which thread made the call and allocate/deallocate from the correct stack.
+
+\subsection{FLINT modules}
+FLINT is implemented as a series of modules which perform related functions. Examples of modules are Z, Zvec, Zpoly, Zpoly\_mpn, Zmod, Zp, etc.
+
+Each module has associated .c and .h files named after it, and an associated test file. E.g. the module Zpoly contains functions for doing arithmetic with polynomials over the integers all of which are contained in Zpoly.c and Zpoly.h. Other files may be associated with Zpoly (e.g. ssmul) and these can be determined by looking at the \#includes at the top of Zpoly.h. The test file for Zpoly will be called Zpoly-test.h. Running ``make test'' will compile and run all test files in FLINT. To run a specific test program, one can just type the name of the module, e.g. ./Zpoly-test, after all the test files have compiled. 
+
+Files with names like Zpoly-profile.c are for generating profiles for functions in Zpoly. These must be edited by hand to select which function(s) to spit out profile times for. But all such profile files are similar. To make all the profile files, one types ``make profile''. To run a specific profile, one types for example ./Zpoly-profile once they have all compiled.
+
+Eventually FLINT will have all of the following modules:
+
+Z - Arithmetic for GMP mpz\_t integers
+
+Z\_mpn - Arithmetic for integers at the GMP mpn level, but in sign magnitude format
+
+ZLong - Arithmetic for long/unsigned long integers
+
+ZTwosComp - Arithmetic for multi precision integers in twos complement format
+
+ZFermat - Arithmetic for integers modulo a Fermat number $p = 2^n+1$ where $n = 2^l$
+
+Zmod - Arithmetic for $Z/nZ$ for a multi precision modulus $n$
+
+ZmodLong - Arithmetic for $Z/nZ$ for a modulus n which fits into an unsigned long
+
+Zp - padic arithmetic
+
+FF - Arithmetic for finite fields 
+
+GF2 - Helper functions for arithmetic over GF2
+
+\vspace{5mm}
+
+Zpoly - Polynomials over mpz\_t integers
+
+Zpoly\_mpn - Polynomials over integers in mpn sign magnitude format
+
+ZpolyTwosComp - Polynomial functions for polys over the twos complement format
+
+ZpolyFermat - Polynomial functions for polys mod a Fermat number
+
+ZmodPoly - Polynomials over $Z/nZ$ for multiprecision $n$
+
+ZmodPolyLong - Polynomials over $Z/nZ$ for $n$ an unsigned long
+
+ZpPoly - Polys over padics
+
+GF2Poly - Polys over GF2
+
+\vspace{5mm}
+
+ZMat - Linear Algebra over mpz\_t integers
+
+ZMat\_mpn - Linear Algebra over integers in mpn sign magnitude format
+
+ZmodMat - Linear Algebra over $Z/nZ$ for multiprecision $n$
+
+ZmodLongMat - Linear Algebra over $Z/nZ$ for an unsigned long $n$
+
+ZpMat - Linear Algebra over padics
+
+GF2Poly - Linear Algebra over GF2
+
+\vspace{5mm}
+
+Lattice - Functions for lattices, including lattice based reduction (LLL)
+
+\vspace{5mm}
+
+QFB - Binary quadratic forms
+
+QNF - Quadratic number fields
+
+QZeta - Cyclotomic number fields
+
+NF - General Number Fields
+
+\vspace{5mm}
+
+R - Some basic helper functions for floating point reals
+
+C - Some basic helper functions for multi precision complex numbers
+
+Q - Some basic functions for the rationals
+
+\subsection{Introduction to the FLINT C files}
+The file flint.h contains all the univeral \#defines for flint, including ones that specify how many bits per limb the machine has, whether threads should be used and many other useful pieces of information.
+
+\section{Zpoly}
+The Zpoly interface has functions for doing arithmetic with polynomials defined over integers implemented as GMP mpz\_t's. 
+
+The ``alloc'' field of the Zpoly\_t type specifies the number of coefficients which have been allocated and the ``length'' field specifies the current length of the polynomial. Alloc must be at least 1 but length can be 0 for the zero polynomial. Alloc should always be less than or equal to length.
+
+The module is divided into two halves. The first half implements functions beginning Zpoly, which manage everything for the user. In particular, if the result of a function returns a polynomial which is too long to fit in the allocated space of the output polynomial the whole output polynomial is reallocated automatically.
+
+The other half of the module implements functions beginning \_Zpoly. These functions do not allocate extra space and require the user to do the allocation in advance.
+
+The Zpoly module will contain the following functions:
+
+mpz\_t* \_Zpoly\_get\_coeff\_ptr(Zpoly\_t poly, unsigned long n)
+
+void \_Zpoly\_get\_coeff(mpz\_t output, Zpoly\_t poly, unsigned long n)
+
+unsigned long \_Zpoly\_get\_coeff\_ui(Zpoly\_t poly, unsigned long n)
+
+long \_Zpoly\_get\_coeff\_si(Zpoly\_t poly, unsigned long n)
+
+void \_Zpoly\_set\_coeff(Zpoly\_t poly, unsigned long n, mpz\_t x)
+
+void \_Zpoly\_set\_coeff\_ui(Zpoly\_t poly, unsigned long n,
+
+void \_Zpoly\_set\_coeff\_si(Zpoly\_t poly, unsigned long n, long x)
+
+void \_Zpoly\_normalise(Zpoly\_t poly);
+
+long \_Zpoly\_get\_degree(Zpoly\_t poly);
+
+unsigned long \_Zpoly\_get\_length(Zpoly\_t poly);
+
+void \_Zpoly\_set(Zpoly\_t output, Zpoly\_t input);
+
+void \_Zpoly\_zero(Zpoly\_t output)
+
+void \_Zpoly\_swap(Zpoly\_t x, Zpoly\_t y)
+
+int \_Zpoly\_equal(Zpoly\_t input1, Zpoly\_t input2);
+
+void \_Zpoly\_add(Zpoly\_t output, Zpoly\_t input1, Zpoly\_t input2);
+
+void \_Zpoly\_sub(Zpoly\_t output, Zpoly\_t input1, Zpoly\_t input2);
+
+void \_Zpoly\_negate(Zpoly\_t output, Zpoly\_t input);
+
+void \_Zpoly\_scalar\_mul(Zpoly\_t poly, mpz\_t x);
+
+void \_Zpoly\_scalar\_mul\_ui(Zpoly\_t poly, unsigned long x);
+
+void \_Zpoly\_scalar\_mul\_si(Zpoly\_t poly, long x);
+
+void \_Zpoly\_scalar\_div(Zpoly\_t poly, mpz\_t x);
+
+void \_Zpoly\_scalar\_div\_ui(Zpoly\_t poly, unsigned long x);
+
+void \_Zpoly\_mul(Zpoly\_t output, Zpoly\_t input1, Zpoly\_t input2);
+
+void \_Zpoly\_mul\_naive(Zpoly\_t output, Zpoly\_t input1, Zpoly\_t input2);
+
+void \_Zpoly\_mul\_karatsuba(Zpoly\_t output, Zpoly\_t input1, Zpoly\_t input2);
+
+void \_Zpoly\_sqr(Zpoly\_t output, Zpoly\_t input);
+
+void \_Zpoly\_sqr\_naive(Zpoly\_t output, Zpoly\_t input);
+
+void \_Zpoly\_sqr\_karatsuba(Zpoly\_t output, Zpoly\_t input);
+
+void \_Zpoly\_left\_shift(Zpoly\_t output, Zpoly\_t input, unsigned long n);
+
+void \_Zpoly\_right\_shift(Zpoly\_t output, Zpoly\_t input, unsigned long n);
+
+void \_Zpoly\_div(Zpoly\_t quotient, Zpoly\_t input1, Zpoly\_t input2);
+
+void \_Zpoly\_rem(Zpoly\_t remainder, Zpoly\_t input1, Zpoly\_t input2);
+
+void \_Zpoly\_div\_rem(Zpoly\_t quotient, Zpoly\_t remainder, Zpoly\_t input1, Zpoly\_t input2);
+
+void \_Zpoly\_gcd(Zpoly\_t output, Zpoly\_t input1, Zpoly\_t input2);
+
+void \_Zpoly\_xgcd(Zpoly\_t a, Zpoly\_t b, Zpoly\_t output, Zpoly\_t input1, Zpoly\_t input2);
+
+void \_Zpoly\_content(mpz\_t content, Zpoly\_t a);
+
+\vspace{10mm}
+
+void Zpoly\_init(Zpoly\_t poly);
+
+void Zpoly\_init2(Zpoly\_t poly, unsigned long alloc);
+
+void Zpoly\_init3(Zpoly\_t poly, unsigned long alloc, unsigned long coeff\_bits);
+
+void Zpoly\_realloc(Zpoly\_t poly, unsigned long alloc);
+
+void Zpoly\_ensure\_space(Zpoly\_t poly, unsigned long alloc)
+
+void Zpoly\_clear(Zpoly\_t poly);
+
+\vspace{5mm}
+
+along with Zpoly versions of all the \_Zpoly functions.
+
+\section{Zpoly\_mpn}
+The Zpoly\_mpn interface has functions for doing arithmetic with polynomials defined over integers implemented as a special flint type which has a sign and magnitude. Each coefficient has a sign limb, followed by zero or more limbs (the number of which is specified by the absolute value of the sign limb) which contain a multiprecision coefficient. If the coefficient is zero, the sign limb is zero. If the sign limb is negative, the coefficient is interpreted to be negative, etc.
+
+However, each coefficient is allocated exactly the same number of limbs (even if not all of them are used in each coefficient). The number of limbs allocated for each limb (excluding the sign limb) is specified in the ``limbs'' field of the Zpoly\_mpn\_t type. The length of the polynomial is given by the ``length'' field and the ``alloc'' field specifies the number of currently allocated coefficients (length should always be less than or equal to alloc). Alloc must be at least 1 but length can be 0 for the zero polynomial. 
+
+The Zpoly\_mpn module is divided into two halves. The first half implements functions beginning Zpoly\_mpn, which manage everything for the user. In particular, if the result of a function returns a polynomial which is too long to fit in the allocated space of the output polynomial the whole output polynomial is reallocated automatically.
+
+The other half of the module implements functions beginning \_Zpoly\_mpn. These functions do not allocate extra space and require the user to do the allocation in advance. This includes increasing the number of allocated coefficients and increasing the number of limbs allocated for each coefficient, as necessary.
+
+
+
+\end{document}
