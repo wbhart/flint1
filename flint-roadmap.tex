@@ -368,6 +368,111 @@ The Zpoly\_mpn module is divided into two halves. The first half implements func
 
 The other half of the module implements functions beginning \_Zpoly\_mpn. These functions do not allocate extra space and require the user to do the allocation in advance. This includes increasing the number of allocated coefficients and increasing the number of limbs allocated for each coefficient, as necessary.
 
+The useful feature of the \_Zpoly\_mpn functions is that one can specify a subset of the coefficients of a polynomial and operate on just those coefficients without copying them out to another polynomial first. As such, no such function should modify the ``limbs'' field of any Zpoly\_mpn\_t's that are passed to it. These functions should also never even look at the ``alloc'' field, since it is not even guaranteed to be set. 
+
+The Zpoly\_mpn module will contain the following functions:
+
+\vspace{5mm}
+
+void \_Zpoly\_mpn\_convert\_out(Zpoly\_t poly\_mpz, Zpoly\_mpn\_t poly\_mpn);
+
+void \_Zpoly\_mpn\_convert\_in(Zpoly\_mpn\_t poly\_mpn, Zpoly\_t poly\_mpz);
+                     
+mp\_limb\_t \* \_Zpoly\_mpn\_get\_coeff\_ptr(Zpoly\_mpn\_t poly, unsigned long n)
+
+long \_Zpoly\_mpn\_get\_coeff(mp\_limb\_t \* output, Zpoly\_mpn\_t poly, unsigned long n)
+
+unsigned long \_Zpoly\_mpn\_get\_coeff\_ui(Zpoly\_mpn\_t poly, unsigned long n)
+
+long \_Zpoly\_mpn\_get\_coeff\_si(Zpoly\_mpn\_t poly, unsigned long n)
+
+void \_Zpoly\_mpn\_set\_coeff(Zpoly\_mpn\_t poly, unsigned long n, mp\_limb\_t \* x, long sign, unsigned long size)
+
+void \_Zpoly\_mpn\_set\_coeff\_ui(Zpoly\_mpn\_t poly, unsigned long n, unsigned long x);
+
+void \_Zpoly\_mpn\_set\_coeff\_si(Zpoly\_mpn\_t poly, unsigned long n, long x);
+
+void \_Zpoly\_mpn\_normalise(Zpoly\_mpn\_t poly);
+
+long \_Zpoly\_mpn\_degree(Zpoly\_mpn\_t poly)
+
+unsigned long \_Zpoly\_mpn\_length(Zpoly\_mpn\_t poly)
+
+unsigned long \_Zpoly\_mpn\_limbs(Zpoly\_mpn\_t poly)
+
+long Zpoly\_mpn\_degree(Zpoly\_mpn\_t poly);
+
+unsigned long Zpoly\_mpn\_length(Zpoly\_mpn\_t poly);
+
+void \_Zpoly\_mpn\_set(Zpoly\_mpn\_t output, Zpoly\_mpn\_t input);
+
+void \_Zpoly\_mpn\_zero(Zpoly\_mpn\_t output)
+
+void \_Zpoly\_mpn\_swap(Zpoly\_mpn\_t x, Zpoly\_mpn\_t y);
+
+int \_Zpoly\_mpn\_equal(Zpoly\_mpn\_p input1, Zpoly\_mpn\_p input2);
+
+void \_Zpoly\_mpn\_negate(Zpoly\_mpn\_t output, Zpoly\_mpn\_t input);
+
+void \_Zpoly\_mpn\_add(Zpoly\_mpn\_t output, Zpoly\_mpn\_t input1, Zpoly\_mpn\_t input2);
+
+void \_Zpoly\_mpn\_sub(Zpoly\_mpn\_t output, Zpoly\_mpn\_t input1, Zpoly\_mpn\_t input2);
+
+void \_Zpoly\_mpn\_scalar\_mul(Zpoly\_mpn\_t output, Zpoly\_mpn\_t poly, mp\_limb\_t \* x);
+
+void \_Zpoly\_mpn\_scalar\_mul\_ui(Zpoly\_mpn\_t output, Zpoly\_mpn\_t poly, unsigned long x);
+
+void \_Zpoly\_mpn\_scalar\_mul\_si(Zpoly\_mpn\_t output, Zpoly\_mpn\_t poly, long x);
+
+void \_Zpoly\_mpn\_scalar\_div(Zpoly\_mpn\_t output, Zpoly\_mpn\_t poly, mp\_limb\_t \* x);
+
+void \_Zpoly\_mpn\_scalar\_div\_ui(Zpoly\_mpn\_t output, Zpoly\_mpn\_t poly, unsigned long x);
+
+void \_Zpoly\_mpn\_scalar\_div\_si(Zpoly\_mpn\_t output, Zpoly\_mpn\_t poly, long x);
+
+void \_Zpoly\_mpn\_scalar\_div\_exact\_ui(Zpoly\_mpn\_t output, Zpoly\_mpn\_t poly, unsigned long x);
+
+void \_Zpoly\_mpn\_scalar\_div\_exact\_si(Zpoly\_mpn\_t output, Zpoly\_mpn\_t poly, long x);
+
+void \_Zpoly\_mpn\_mul(Zpoly\_mpn\_t output, Zpoly\_mpn\_t input1, Zpoly\_mpn\_t input2);
+
+void \_Zpoly\_mpn\_mul\_naive(Zpoly\_mpn\_t output, Zpoly\_mpn\_t input1, Zpoly\_mpn\_t input2);
+
+void \_Zpoly\_mpn\_mul\_karatsuba(Zpoly\_mpn\_t output, Zpoly\_mpn\_t input1, Zpoly\_mpn\_t input2);
+
+void \_Zpoly\_mpn\_sqr(Zpoly\_mpn\_t output, Zpoly\_mpn\_t input);
+
+void \_Zpoly\_mpn\_sqr\_naive(Zpoly\_mpn\_t output, Zpoly\_mpn\_t input);
+
+void \_Zpoly\_mpn\_sqr\_karatsuba(Zpoly\_mpn\_t output, Zpoly\_mpn\_t input);
+
+void \_Zpoly\_mpn\_left\_shift(Zpoly\_mpn\_t output, Zpoly\_mpn\_t input, unsigned long n);
+
+void \_Zpoly\_mpn\_right\_shift(Zpoly\_mpn\_t output, Zpoly\_mpn\_t input, unsigned long n);
+
+void \_Zpoly\_mpn\_div(Zpoly\_mpn\_t quotient, Zpoly\_mpn\_t input1, Zpoly\_mpn\_t input2);
+
+void \_Zpoly\_mpn\_rem(Zpoly\_mpn\_t remainder, Zpoly\_mpn\_t input1, Zpoly\_mpn\_t input2);
+
+void \_Zpoly\_mpn\_div\_rem(Zpoly\_mpn\_t quotient, Zpoly\_mpn\_t remainder, Zpoly\_mpn\_t input1, Zpoly\_mpn\_t input2);
+
+void \_Zpoly\_mpn\_gcd(Zpoly\_mpn\_t output, Zpoly\_mpn\_t input1, Zpoly\_mpn\_t input2);
+
+void \_Zpoly\_mpn\_xgcd(Zpoly\_mpn\_t a, Zpoly\_mpn\_t b, Zpoly\_mpn\_t output, Zpoly\_mpn\_t input1, Zpoly\_mpn\_t input2);
+
+void \_Zpoly\_mpn\_content(mp\_limb\_t \* content, Zpoly\_mpn\_t a);
+
+\vspace{10mm}
+
+void Zpoly\_mpn\_init(Zpoly\_mpn\_t poly, unsigned long alloc, unsigned long limbs);
+                                              
+void Zpoly\_mpn\_realloc(Zpoly\_mpn\_t poly, unsigned long alloc);
+
+void Zpoly\_mpn\_clear(Zpoly\_mpn\_t poly);
+
+\vspace{5mm}
+
+along with versions of all the \_Zpoly\_mpn functions for the Zpoly layer.
 
 
 \end{document}
