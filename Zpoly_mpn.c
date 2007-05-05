@@ -23,22 +23,56 @@ Copyright (C) 2007, William Hart and David Harvey
 
 ****************************************************************************/
 
+#define NORM(coeff) \
+do { \
+   if ((coeff)[0]) \
+   { \
+      if ((long) (coeff)[0] < 0) \
+      { \
+         while ((!(coeff)[-(coeff)[0]]) && (coeff)[0]) (coeff)[0]++; \
+      } else \
+      { \
+         while ((!(coeff)[(coeff)[0]]) && (coeff)[0]) (coeff)[0]--; \
+      } \
+   } \
+} while (0);
+
+#define ABS(x) (((long) x < 0) ? -x : x)
+
+#define SWAP(x_dummy, y_dummy) \
+do { \
+   Zpoly_mpn_p swap_temp = x_dummy; \
+   x_dummy = y_dummy; \
+   y_dummy = swap_temp; \
+} while(0);
+
+#define SWAP_PTRS(x_dummy_p, y_dummy_p) \
+do { \
+   mp_limb_t * swap_temp_p = x_dummy_p; \
+   x_dummy_p = y_dummy_p; \
+   y_dummy_p = swap_temp_p; \
+} while(0);
+
+
 void _Zpoly_mpn_convert_out(Zpoly_t poly_mpz, Zpoly_mpn_t poly_mpn)
 {
    FLINT_ASSERT(poly_mpz->alloc >= poly_mpn->length);
 
+   long size;
+   
    poly_mpz->length = poly_mpn->length;
    for (unsigned long i = 0; i < poly_mpn->length; i++)
    {
-       if (poly_mpn->coeffs[i*(poly_mpn->limbs+1)] == 0) 
+       size = poly_mpn->coeffs[i*(poly_mpn->limbs+1)];
+       if (size == 0) 
           mpz_set_ui(poly_mpz->coeffs[i], 0);
        else 
        {
-          mpz_import(poly_mpz->coeffs[i], poly_mpn->limbs, -1, 
+          mpz_import(poly_mpz->coeffs[i], ABS(size), -1, 
                      sizeof(mp_limb_t), 0, 0,
                      poly_mpn->coeffs + i*(poly_mpn->limbs+1) + 1);
 
-          if (poly_mpn->coeffs[i*(poly_mpn->limbs+1)] == -1L)
+          if (size < 0)
           {
              mpz_neg(poly_mpz->coeffs[i], poly_mpz->coeffs[i]);
           }
@@ -64,16 +98,11 @@ void _Zpoly_mpn_convert_in(Zpoly_mpn_t poly_mpn, Zpoly_t poly_mpz)
           mpz_export(poly_mpn->coeffs + i*(poly_mpn->limbs+1) + 1, &countp, 
                      -1, sizeof(mp_limb_t), 0, 0, poly_mpz->coeffs[i]);
                      
-          for (unsigned long pad = countp; pad < poly_mpn->limbs; pad++)
-          {
-              poly_mpn->coeffs[i*(poly_mpn->limbs+1)+pad+1] = 0L;
-          }
-
           if (mpz_sgn(poly_mpz->coeffs[i]) < 0) 
           {
-             poly_mpn->coeffs[i*(poly_mpn->limbs+1)] = -1L;
+             poly_mpn->coeffs[i*(poly_mpn->limbs+1)] = -countp;
           } else
-             poly_mpn->coeffs[i*(poly_mpn->limbs+1)] = 1L;
+             poly_mpn->coeffs[i*(poly_mpn->limbs+1)] = countp;
       }
    }
 }
@@ -94,8 +123,6 @@ void _Zpoly_mpn_set_coeff_ui(Zpoly_mpn_t poly, unsigned long n, unsigned long x)
    }
    poly->coeffs[n*(poly->limbs+1)] = 1UL;
    poly->coeffs[n*(poly->limbs+1)+1] = x;
-   if (poly->limbs > 1) 
-      clear_limbs(poly->coeffs + n*(poly->limbs+1) + 2, poly->limbs - 1);
 }
 
 /* 
@@ -124,8 +151,6 @@ void _Zpoly_mpn_set_coeff_si(Zpoly_mpn_t poly, unsigned long n, long x)
       poly->coeffs[n*(poly->limbs+1)] = -1L;
       poly->coeffs[n*(poly->limbs+1)+1] = -x;
    } 
-   if (poly->limbs > 1) 
-      clear_limbs(poly->coeffs + n*(poly->limbs+1) + 2, poly->limbs - 1);
 }
 
 void _Zpoly_mpn_normalise(Zpoly_mpn_t poly)
@@ -136,34 +161,29 @@ void _Zpoly_mpn_normalise(Zpoly_mpn_t poly)
 
 /* 
    Sets the output poly to equal the input poly 
-   Assumes the output poly is at least as big as the input poly
+   Assumes the output poly is big enough to hold the nonzero limbs of the input poly
 */
 
 void _Zpoly_mpn_set(Zpoly_mpn_t output, Zpoly_mpn_t input)
 {
    if (output->coeffs != input->coeffs) 
    {
+      unsigned long input_size = input->limbs + 1;
+      unsigned long output_size = output->limbs + 1;
       if ((output->coeffs < input->coeffs) || (output->coeffs >= input->coeffs + input->length*(input->limbs+1)))
       {
-         if (input->limbs == output->limbs)
+         for (unsigned long i = 0; i < input->length; i++)
          {
-            forward_copy_limbs(output->coeffs, input->coeffs, input->length*(input->limbs+1));
-         } else
-         {
-            unsigned long diff_size = output->limbs - input->limbs;
-            unsigned long input_size = input->limbs + 1;
-            unsigned long output_size = output->limbs + 1;
-            for (unsigned long i = 0; i < input->length; i++)
-            {
-               forward_copy_limbs(output->coeffs+i*output_size, input->coeffs+i*input_size, input_size);
-               clear_limbs(output->coeffs+i*output_size+input_size, diff_size);
-            }
+            if (!input->coeffs[i*input_size]) output->coeffs[i*output_size] = 0;
+            else copy_limbs(output->coeffs+i*output_size, input->coeffs+i*input_size, ABS(input->coeffs[i*input_size])+1);
          }
       } else
       {
-         unsigned long shift_limbs = output->coeffs - input->coeffs;
-         copy_limbs(output->coeffs+shift_limbs, output->coeffs, input->length*(input->limbs+1)-shift_limbs);
-         copy_limbs(output->coeffs, input->coeffs, shift_limbs);
+         for (long i = input->length - 1; i >= 0; i--)
+         {
+            if (!input->coeffs[i*input_size]) output->coeffs[i*output_size] = 0;
+            else copy_limbs(output->coeffs+i*output_size, input->coeffs+i*input_size, ABS(input->coeffs[i*input_size])+1);
+         }
       }
    }
    output->length = input->length;
@@ -191,7 +211,7 @@ void _Zpoly_mpn_swap(Zpoly_mpn_t x, Zpoly_mpn_t y)
    y->limbs = temp_l;
 }
 
-int _Zpoly_mpn_equal(Zpoly_mpn_t input1, Zpoly_mpn_t input2)
+int _Zpoly_mpn_equal(Zpoly_mpn_p input1, Zpoly_mpn_p input2)
 {
    int shorter_poly;
    unsigned long shorter_length;
@@ -199,107 +219,23 @@ int _Zpoly_mpn_equal(Zpoly_mpn_t input1, Zpoly_mpn_t input2)
    
    if (input1->length > input2->length)
    {
-      shorter_length = input2->length;
-      shorter_poly = 2;
-   } else
-   {
-      shorter_length = input1->length;
-      shorter_poly = 1;
-   }
+      SWAP(input1, input2);
+   }  
    
-   if (input1->limbs == input2->limbs)
-   {
-      for (i = 0; i < shorter_length; i++)
-      {  
-         if (input1->coeffs[i*(input1->limbs+1)] == 0)
-         {
-             if (input2->coeffs[i*(input2->limbs+1)] != 0) 
-                return 0;
-         } else                                    
-         {  
-            for (j = 0; j < input1->limbs+1; j++)
-               if (input1->coeffs[i*(input1->limbs+1)+j] != input2->coeffs[i*(input1->limbs+1)+j]) 
-                  return 0;
-         }
-      }
-      if (shorter_poly == 1) 
-      {   
-         for (i = input1->length; i < input2->length; i++)
-            if (input2->coeffs[i*(input2->limbs+1)] != 0L) return 0;
-      } else
-      {   
-         for (i = input2->length; i < input1->length; i++)
-            if (input1->coeffs[i*(input1->limbs+1)] != 0L) return 0;
-      }
+   for (unsigned long i = input1->length; i < input2->length; i++)
+      if (input2->coeffs[i*(input2->limbs+1)] != 0L) return 0;
       
-      return 1;
-   }
-    
-   if (input1->limbs > input2->limbs)
+   for (i = 0; i < input1->length; i++)
    {
-      for (i = 0; i < shorter_length; i++)
+      for (j = 0; j < ABS(input1->coeffs[i*(input1->limbs+1)])+1; j++)
       {
-         if (input1->coeffs[i*(input1->limbs+1)] == 0)
-         {
-             if (input2->coeffs[i*(input2->limbs+1)] != 0) 
-                return 0; 
-         } else
-         {
-            for (j = 0; j < input2->limbs+1; j++)
-            {
-               if (input1->coeffs[i*(input1->limbs+1)+j] != input2->coeffs[i*(input2->limbs+1)+j]) 
-                  return 0; 
-            }
-            for (j = input2->limbs + 1; j < input1->limbs + 1; j++)
-            {
-               if (input1->coeffs[i*(input1->limbs+1)+j] != 0)
-                  return 0; 
-            }
-         }
+         if (input1->coeffs[i*(input1->limbs+1)+j] != input2->coeffs[i*(input2->limbs+1)+j]) 
+            return 0; 
       }
-      if (shorter_poly == 1) 
-      {   
-         for (unsigned long i = input1->length; i < input2->length; i++)
-            if (input2->coeffs[i*(input2->limbs+1)] != 0L) return 0;
-      } else
-      {   
-         for (unsigned long i = input2->length; i < input1->length; i++)
-            if (input1->coeffs[i*(input1->limbs+1)] != 0L) return 0;
-      }
-      
-      return 1;
-   } else
-   {
-      for (i = 0; i < shorter_length; i++)
-      {
-         if (input1->coeffs[i*(input1->limbs+1)] == 0)
-         {
-             if (input2->coeffs[i*(input2->limbs+1)] != 0) return 0;
-         } else
-         {
-            for (j = 0; j < input1->limbs+1; j++)
-            {
-               if (input1->coeffs[i*(input1->limbs+1)+j] != input2->coeffs[i*(input2->limbs+1)+j])
-                  return 0;
-            }
-            for (j = input1->limbs + 1; j < input2->limbs + 1; j++)
-            {
-               if (input2->coeffs[i*(input2->limbs+1)+j] != 0) return 0;
-            }
-         }
-      }
-      if (shorter_poly == 1) 
-      {   
-         for (unsigned long i = input1->length; i < input2->length; i++)
-            if (input2->coeffs[i*(input2->limbs+1)] != 0L) return 0;
-      } else
-      {   
-         for (unsigned long i = input2->length; i < input1->length; i++)
-            if (input1->coeffs[i*(input1->limbs+1)] != 0L) return 0;
-      }
-      
-      return 1;
    }
+      
+   return 1;
+
 }
 
 void _Zpoly_mpn_negate(Zpoly_mpn_t output, Zpoly_mpn_t input)
@@ -308,21 +244,18 @@ void _Zpoly_mpn_negate(Zpoly_mpn_t output, Zpoly_mpn_t input)
    {
       for (unsigned long i = 0; i < input->length; i++)
          output->coeffs[i*(output->limbs+1)] = -output->coeffs[i*(output->limbs+1)];
-   } else if (input->limbs == output->limbs)
-   {
-      copy_limbs(output->coeffs, input->coeffs, input->length*(input->limbs+1));
-      for (unsigned long i = 0; i < input->length; i++)
-         output->coeffs[i*(input->limbs+1)] = -input->coeffs[i*(input->limbs+1)];
    } else
    {
-      unsigned long diff_size = output->limbs - input->limbs;
       unsigned long input_size = input->limbs + 1;
       unsigned long output_size = output->limbs + 1;
       for (unsigned long i = 0; i < input->length; i++)
       {
-         output->coeffs[i*output_size] = -input->coeffs[i*input_size];
-         copy_limbs(output->coeffs+i*output_size+1, input->coeffs+i*input_size+1, input_size-1);
-         clear_limbs(output->coeffs+i*output_size+input_size, diff_size);
+         if (!input->coeffs[i*input_size]) output->coeffs[i*output_size] = 0;
+         else 
+         {
+            output->coeffs[i*output_size] = -input->coeffs[i*input_size];
+            copy_limbs(output->coeffs+i*output_size+1, input->coeffs+i*input_size+1, ABS(input->coeffs[i*input_size]));
+         }
       }
    }
    output->length = input->length;
@@ -343,7 +276,7 @@ void _Zpoly_mpn_left_shift(Zpoly_mpn_t output, Zpoly_mpn_t input,
    part->coeffs = output->coeffs + n*(output->limbs+1);
       
    _Zpoly_mpn_set(part, input);
-   clear_limbs(output->coeffs, n*(output->limbs+1));
+   for (unsigned long i = 0; i < n; i++) output->coeffs[i*(output->limbs+1)] = 0;
    
    output->length = input->length + n;
 }
@@ -367,213 +300,221 @@ void _Zpoly_mpn_right_shift(Zpoly_mpn_t output, Zpoly_mpn_t input, unsigned long
    _Zpoly_mpn_set(output, part);
 }
 
+/*
+    Adds two coefficients together
+*/
+
+void __Zpoly_mpn_add_coeffs(mp_limb_t * coeffs_out, mp_limb_t * coeffs1, mp_limb_t * coeffs2)
+{
+   long carry;
+   unsigned long size1 = ABS(coeffs1[0]);
+   unsigned long size2 = ABS(coeffs2[0]);
+   
+   if (size1 < size2) 
+   {
+      SWAP_PTRS(coeffs1, coeffs2);
+      size1 = ABS(coeffs1[0]);
+      size2 = ABS(coeffs2[0]);
+   } 
+   
+   if (!size1)
+   {
+      if (!size2) coeffs_out[0] = 0L;
+      else
+      {
+         copy_limbs(coeffs_out, coeffs2, size2+1);
+      }
+   } else if (!size2)
+   {
+      copy_limbs(coeffs_out, coeffs1, size1+1);
+   } else if ((long) (coeffs1[0] ^ coeffs2[0]) >= 0)
+   {
+      coeffs_out[0] = coeffs1[0];
+      carry = mpn_add(coeffs_out+1, coeffs1+1, size1, coeffs2+1, size2);
+      if (carry) 
+      {
+         coeffs_out[size1+1] = carry;
+         if ((long) coeffs_out[0] < 0) coeffs_out[0]--;
+         else coeffs_out[0]++;
+      }
+   } else
+   {
+      carry = 0;
+      if (size1 != size2) carry = 1;
+      else carry = mpn_cmp(coeffs1+1, coeffs2+1, size1); 
+          
+      if (carry == 0) coeffs_out[0] = 0L;
+      else if (carry > 0) 
+      {
+         mpn_sub(coeffs_out+1, coeffs1+1, size1, coeffs2+1, size2);
+         coeffs_out[0] = coeffs1[0];
+         NORM(coeffs_out);
+      }
+      else
+      {
+         mpn_sub_n(coeffs_out+1, coeffs2+1, coeffs1+1, size1);
+         coeffs_out[0] = -coeffs1[0];
+         NORM(coeffs_out);
+      }
+   }
+}
+
 /* 
     Add two polynomials together 
 */
 
-void _Zpoly_mpn_add(Zpoly_mpn_t output, Zpoly_mpn_t input1, Zpoly_mpn_t input2)
+void _Zpoly_mpn_add(Zpoly_mpn_t output, Zpoly_mpn_p input1, Zpoly_mpn_p input2)
 {
    unsigned long size1, size2, shorter, size_out;
    mp_limb_t * coeffs1, * coeffs2, * coeffs_out;
    
-   if (input1->limbs > input2->limbs)
-   {
-      size1 = input1->limbs+1;
-      size2 = input2->limbs+1;
-      coeffs1 = input1->coeffs;
-      coeffs2 = input2->coeffs;
-   } else
-   {
-      size1 = input2->limbs+1;
-      size2 = input1->limbs+1;
-      coeffs1 = input2->coeffs;
-      coeffs2 = input1->coeffs;
-   }
+   size1 = input1->limbs+1;
+   size2 = input2->limbs+1;
+   coeffs1 = input1->coeffs;
+   coeffs2 = input2->coeffs;
    
    size_out = output->limbs+1;
    coeffs_out = output->coeffs;
-   
-   long carry;
    
    shorter = (input1->length > input2->length) ? input2->length : input1->length;
    
    for (unsigned long i = 0; i < shorter; i++)
    {
-       if (!coeffs1[i*size1])
-       {
-          if (!coeffs2[i*size2]) coeffs_out[i*size_out] = 0L;
-          else
-          {
-              copy_limbs(coeffs_out+i*size_out, coeffs2+i*size2, size2);
-              if (size_out > size2) clear_limbs(coeffs_out+i*size_out+size2, size_out - size2);
-          }
-       } else if (!coeffs2[i*size2])
-       {
-          copy_limbs(coeffs_out+i*size_out, coeffs1+i*size1, size1);
-          if (size_out > size1) clear_limbs(coeffs_out+i*size_out+size1, size_out - size1);
-       } else if (coeffs1[i*size1] == coeffs2[i*size2])
-       {
-          coeffs_out[i*size_out] = coeffs1[i*size1];
-          carry = mpn_add(coeffs_out+i*size_out+1, coeffs1+i*size1+1, size1-1, coeffs2+i*size2+1, size2-1);
-          if (size_out > size1) clear_limbs(coeffs_out+i*size_out+size1, size_out - size1);
-          if (carry) coeffs_out[i*size_out+size1] = carry;
-       } else
-       {
-          carry = 0;
-          for (unsigned long j = size2; (!carry) && (j < size1); j++) carry |= coeffs1[i*size1+j];
-          if (carry) carry = 1;
-          else carry = mpn_cmp(coeffs1+i*size1+1, coeffs2+i*size2+1, size2-1); 
-          
-          if (carry == 0) coeffs_out[i*size_out] = 0L;
-          else if (carry > 0) 
-          {
-             mpn_sub(coeffs_out+i*size_out+1, coeffs1+i*size1+1, size1-1, coeffs2+i*size2+1, size2-1);
-             coeffs_out[i*size_out] = coeffs1[i*size1];
-             if (size_out > size1) clear_limbs(coeffs_out+i*size_out+size1, size_out - size1);
-          }
-          else
-          {
-             mpn_sub(coeffs_out+i*size_out+1, coeffs2+i*size2+1, size2-1, coeffs1+i*size1+1, size2-1);
-             coeffs_out[i*size_out] = -coeffs1[i*size1];
-             if (size_out > size2) clear_limbs(coeffs_out+i*size_out+size2, size_out - size2);
-          }
-       }
+      __Zpoly_mpn_add_coeffs(coeffs_out+i*size_out, coeffs1+i*size1, coeffs2+i*size2);
    }
-   
-   coeffs1 = input1->coeffs;
-   coeffs2 = input2->coeffs;
-   size1 = input1->limbs+1;
-   size2 = input2->limbs+1;
    
    for (unsigned long i = shorter; i < input1->length; i++)
    {
-       if (!coeffs1[i*size1]) coeffs_out[i*size_out] = 0L;
-       else
-       {
-           copy_limbs(coeffs_out+i*size_out, coeffs1+i*size1, size1);
-           if (size_out > size1) clear_limbs(coeffs_out+i*size_out+size1, size_out - size1);   
-       }
+       copy_limbs(coeffs_out+i*size_out, coeffs1+i*size1, ABS(coeffs1[i*size1])+1);
    }
    for (unsigned long i = shorter; i < input2->length; i++)
    {
-       if (!coeffs2[i*size2]) coeffs_out[i*size_out] = 0L;
-       else
-       {
-           copy_limbs(coeffs_out+i*size_out, coeffs2+i*size2, size2);
-           if (size_out > size2) clear_limbs(coeffs_out+i*size_out+size2, size_out - size2);   
-       }
+       copy_limbs(coeffs_out+i*size_out, coeffs2+i*size2, ABS(coeffs2[i*size2])+1);
+   }
+   
+   output->length = (input1->length > input2->length) ? input1->length : input2->length;
+}
+
+void __Zpoly_mpn_sub_coeffs(mp_limb_t * coeffs_out, mp_limb_t * coeffs1, mp_limb_t * coeffs2)
+{
+   long carry;
+   unsigned long size1 = ABS(coeffs1[0]);
+   unsigned long size2 = ABS(coeffs2[0]);
+   int in_order = 1;
+   
+   if (size1 < size2) 
+   {
+      SWAP_PTRS(coeffs1, coeffs2);
+      size1 = ABS(coeffs1[0]);
+      size2 = ABS(coeffs2[0]);
+      in_order = 0;
+   } 
+   
+   if (!size1)
+   {
+      if (!size2) coeffs_out[0] = 0L;
+      else
+      {
+         copy_limbs(coeffs_out, coeffs2, size2+1);
+         if (in_order) coeffs_out[0] = -coeffs_out[0];
+      }
+   } else if (!size2)
+   {
+      copy_limbs(coeffs_out, coeffs1, size1+1);
+      if (!in_order) coeffs_out[0] = -coeffs_out[0];
+   } else if ((long) (coeffs1[0] ^ coeffs2[0]) < 0)
+   {
+      if (in_order) coeffs_out[0] = coeffs1[0];
+      else coeffs_out[0] = -coeffs1[0];
+      carry = mpn_add(coeffs_out+1, coeffs1+1, size1, coeffs2+1, size2);
+      if (carry) 
+      {
+         coeffs_out[size1+1] = carry;
+         if ((long) coeffs_out[0] < 0) coeffs_out[0]--;
+         else coeffs_out[0]++;
+      }
+   } else
+   {
+      carry = 0;
+      if (size1 != size2) carry = 1;
+      else carry = mpn_cmp(coeffs1+1, coeffs2+1, size1); 
+          
+      if (carry == 0) coeffs_out[0] = 0L;
+      else if (carry > 0) 
+      {
+         mpn_sub(coeffs_out+1, coeffs1+1, size1, coeffs2+1, size2);
+         if (in_order) coeffs_out[0] = coeffs1[0];
+         else coeffs_out[0] = -coeffs1[0];
+         NORM(coeffs_out);
+      }
+      else
+      {
+         mpn_sub_n(coeffs_out+1, coeffs2+1, coeffs1+1, size1);
+         if (in_order) coeffs_out[0] = -coeffs1[0];
+         else coeffs_out[0] = coeffs1[0];
+         NORM(coeffs_out);
+      }
+   }
+}
+
+/* 
+    Add two polynomials together 
+*/
+
+void _Zpoly_mpn_sub(Zpoly_mpn_t output, Zpoly_mpn_p input1, Zpoly_mpn_p input2)
+{
+   unsigned long size1, size2, shorter, size_out;
+   mp_limb_t * coeffs1, * coeffs2, * coeffs_out;
+   
+   size1 = input1->limbs+1;
+   size2 = input2->limbs+1;
+   coeffs1 = input1->coeffs;
+   coeffs2 = input2->coeffs;
+   
+   size_out = output->limbs+1;
+   coeffs_out = output->coeffs;
+   
+   shorter = (input1->length > input2->length) ? input2->length : input1->length;
+   
+   for (unsigned long i = 0; i < shorter; i++)
+   {
+      __Zpoly_mpn_sub_coeffs(coeffs_out+i*size_out, coeffs1+i*size1, coeffs2+i*size2);
+   }
+   
+   for (unsigned long i = shorter; i < input1->length; i++)
+   {
+       copy_limbs(coeffs_out+i*size_out, coeffs1+i*size1, ABS(coeffs1[i*size1])+1);
+   }
+   for (unsigned long i = shorter; i < input2->length; i++)
+   {
+       copy_limbs(coeffs_out+i*size_out+1, coeffs2+i*size2+1, ABS(coeffs2[i*size2]));
+       coeffs_out[i*size_out] = -coeffs2[i*size2];
    }
    
    output->length = (input1->length > input2->length) ? input1->length : input2->length;
 }
 
 /* 
-    Set output poly to input1 - input2 
+   Multiplies two coefficient
+   Assumes no overlap
 */
 
-void _Zpoly_mpn_sub(Zpoly_mpn_t output, Zpoly_mpn_t input1, Zpoly_mpn_t input2)
+void __Zpoly_mpn_mul_coeffs(mp_limb_t * res, mp_limb_t * a, mp_limb_t * b) 
 {
-   unsigned long size1, size2, shorter, size_out;
-   int in_order = 1;
-   mp_limb_t * coeffs1, * coeffs2, * coeffs_out;
-   
-   if (input1->limbs > input2->limbs)
-   {
-      size1 = input1->limbs+1;
-      size2 = input2->limbs+1;
-      coeffs1 = input1->coeffs;
-      coeffs2 = input2->coeffs;
-   } else
-   {
-      size1 = input2->limbs+1;
-      size2 = input1->limbs+1;
-      coeffs1 = input2->coeffs;
-      coeffs2 = input1->coeffs;
-      in_order = 0;
-   }
-   
-   size_out = output->limbs+1;
-   coeffs_out = output->coeffs;
-   
-   long carry;
-   
-   shorter = (input1->length > input2->length) ? input2->length : input1->length;
-   
-   for (unsigned long i = 0; i < shorter; i++)
-   {
-       if (!coeffs1[i*size1])
-       {
-          if (!coeffs2[i*size2]) coeffs_out[i*size_out] = 0L;
-          else
-          {
-              copy_limbs(coeffs_out+i*size_out, coeffs2+i*size2, size2);
-              if (size_out > size2) clear_limbs(coeffs_out+i*size_out+size2, size_out - size2);
-              if (in_order) coeffs_out[i*size_out] = -coeffs_out[i*size_out];
-          }
-       } else if (!coeffs2[i*size2])
-       {
-          copy_limbs(coeffs_out+i*size_out, coeffs1+i*size1, size1);
-          if (size_out > size1) clear_limbs(coeffs_out+i*size_out+size1, size_out - size1);
-          if (!in_order) coeffs_out[i*size_out] = -coeffs_out[i*size_out];
-       } else if (coeffs1[i*size1] != coeffs2[i*size2])
-       {
-          if (in_order) coeffs_out[i*size_out] = coeffs1[i*size1];
-          else coeffs_out[i*size_out] = -coeffs1[i*size1];
-          carry = mpn_add(coeffs_out+i*size_out+1, coeffs1+i*size1+1, size1-1, coeffs2+i*size2+1, size2-1);
-          if (size_out > size1) clear_limbs(coeffs_out+i*size_out+size1, size_out - size1);
-          if (carry) coeffs_out[i*size_out+size1] = carry;
-       } else
-       {
-          carry = 0;
-          for (unsigned long j = size2; (!carry) && (j < size1); j++) carry |= coeffs1[i*size1+j];
-          if (carry) carry = 1;
-          else carry = mpn_cmp(coeffs1+i*size1+1, coeffs2+i*size2+1, size2-1); 
-          
-          if (carry == 0) coeffs_out[i*size_out] = 0L;
-          else if (carry > 0) 
-          {
-             mpn_sub(coeffs_out+i*size_out+1, coeffs1+i*size1+1, size1-1, coeffs2+i*size2+1, size2-1);
-             if (in_order) coeffs_out[i*size_out] = coeffs1[i*size1];
-             else coeffs_out[i*size_out] = -coeffs1[i*size1];
-             if (size_out > size1) clear_limbs(coeffs_out+i*size_out+size1, size_out - size1);
-          }
-          else
-          {
-             mpn_sub(coeffs_out+i*size_out+1, coeffs2+i*size2+1, size2-1, coeffs1+i*size1+1, size2-1);
-             if (in_order) coeffs_out[i*size_out] = -coeffs1[i*size1];
-             else coeffs_out[i*size_out] = coeffs1[i*size1];
-             if (size_out > size2) clear_limbs(coeffs_out+i*size_out+size2, size_out - size2);
-          }
-       }
-   }
-   
-   coeffs1 = input1->coeffs;
-   coeffs2 = input2->coeffs;
-   size1 = input1->limbs+1;
-   size2 = input2->limbs+1;
-   
-   for (unsigned long i = shorter; i < input1->length; i++)
-   {
-       if (!coeffs1[i*size1]) coeffs_out[i*size_out] = 0L;
-       else
-       {
-           copy_limbs(coeffs_out+i*size_out, coeffs1+i*size1, size1);
-           if (size_out > size1) clear_limbs(coeffs_out+i*size_out+size1, size_out - size1);   
-       }
-   }
-   for (unsigned long i = shorter; i < input2->length; i++)
-   {
-       if (!coeffs2[i*size2]) coeffs_out[i*size_out] = 0L;
-       else
-       {
-           copy_limbs(coeffs_out+i*size_out, coeffs2+i*size2, size2);
-           if (size_out > size2) clear_limbs(coeffs_out+i*size_out+size2, size_out - size2);   
-           coeffs_out[i*size_out] = -coeffs_out[i*size_out];
-       }
-   }
-   
-   output->length = (input1->length > input2->length) ? input1->length : input2->length;
-}
+      unsigned long sizea = ABS(a[0]);
+      unsigned long sizeb = ABS(b[0]);
+      mp_limb_t mslimb;
+      if ((sizea == 0) || (sizeb == 0))
+      {
+        res[0] = 0;
+      } else
+      {
+         if (sizea >= sizeb) mslimb = mpn_mul(res+1, a+1, sizea, b+1, sizeb);
+         else mslimb = mpn_mul(res+1, b+1, sizeb, a+1, sizea);
+         res[0] = sizea+sizeb - (mslimb == 0);
+         if ((long) (a[0] ^ b[0]) < 0) res[0] = -res[0];
+      }
+}      
 
 void _Zpoly_mpn_scalar_mul_ui(Zpoly_mpn_t output, Zpoly_mpn_t poly, unsigned long x)
 {
@@ -593,9 +534,13 @@ void _Zpoly_mpn_scalar_mul_ui(Zpoly_mpn_t output, Zpoly_mpn_t poly, unsigned lon
      {
         if ((coeffs_out[i*size_out] = coeffs1[i*size1]))
         {
-           mslimb = mpn_mul_1(coeffs_out+i*size_out+1, coeffs1+i*size1+1, size1-1, x);
-           if (size_out > size1) clear_limbs(coeffs_out+i*size_out+size1, size_out - size1);
-           if (mslimb) coeffs_out[i*size_out+size1] = mslimb;     
+           mslimb = mpn_mul_1(coeffs_out+i*size_out+1, coeffs1+i*size1+1, ABS(coeffs1[i*size1]), x);
+           if (mslimb) 
+           {
+              coeffs_out[i*size_out+ABS(coeffs1[i*size1])+1] = mslimb; 
+              if ((long) coeffs_out[i*size_out] > 0) coeffs_out[i*size_out]++;
+              else coeffs_out[i*size_out]--;  
+           }
         }
      }
      output->length = poly->length;
@@ -621,17 +566,25 @@ void _Zpoly_mpn_scalar_mul_si(Zpoly_mpn_t output, Zpoly_mpn_t poly, long x)
         {
            if ((coeffs_out[i*size_out] = -coeffs1[i*size1]))
            {
-              mslimb = mpn_mul_1(coeffs_out+i*size_out+1, coeffs1+i*size1+1, size1-1, -x);
-              if (size_out > size1) clear_limbs(coeffs_out+i*size_out+size1, size_out - size1);
-              if (mslimb) coeffs_out[i*size_out+size1] = mslimb;     
+              mslimb = mpn_mul_1(coeffs_out+i*size_out+1, coeffs1+i*size1+1, ABS(coeffs1[i*size1]), -x);
+              if (mslimb) 
+              {
+                 coeffs_out[i*size_out+ABS(coeffs1[i*size1])+1] = mslimb; 
+                 if ((long) coeffs_out[i*size_out] > 0) coeffs_out[i*size_out]++;
+                 else coeffs_out[i*size_out]--;
+              }    
            }
         } else 
         {
            if ((coeffs_out[i*size_out] = coeffs1[i*size1]))
            {
-              mslimb = mpn_mul_1(coeffs_out+i*size_out+1, coeffs1+i*size1+1, size1-1, x);
-              if (size_out > size1) clear_limbs(coeffs_out+i*size_out+size1, size_out - size1);
-              if (mslimb) coeffs_out[i*size_out+size1] = mslimb;     
+              mslimb = mpn_mul_1(coeffs_out+i*size_out+1, coeffs1+i*size1+1, ABS(coeffs1[i*size1]), x);
+              if (mslimb) 
+              {
+                 coeffs_out[i*size_out+ABS(coeffs1[i*size1])+1] = mslimb; 
+                 if ((long) coeffs_out[i*size_out] > 0) coeffs_out[i*size_out]++;
+                 else coeffs_out[i*size_out]--;
+              }    
            }
         }
      }
@@ -649,38 +602,45 @@ void _Zpoly_mpn_scalar_div_exact_ui(Zpoly_mpn_t output, Zpoly_mpn_t poly, unsign
    {
       for (unsigned long i = 0; i < poly->length; i++)
       {
+         mpn_divmod_1(coeffs_out+i*size_out+1, coeffs1+i*size1+1, ABS(coeffs1[i*size1]), x);
          coeffs_out[i*size_out] = coeffs1[i*size1];
-         mpn_divmod_1(coeffs_out+i*size_out+1, coeffs1+i*size1+1, size1-1, x);
-         if (size_out > size1) clear_limbs(coeffs_out+i*size_out+size1, size_out-size1);
+         NORM(coeffs_out+i*size_out);
       }
    } else
    {
       if (coeffs_out != coeffs1)
       {
-         copy_limbs(coeffs_out, coeffs1, size1*poly->length); 
-         for (unsigned long i = 0; i < poly->length; i++)
+         coeffs_out[0] = 0;
+         for (unsigned long i = 0; i < poly->length-1; i++)
          {
-            if (!coeffs_out[i*size_out]) clear_limbs(coeffs_out+i*size_out+1, size_out-1);
-            else coeffs_out[i*size_out] = 0L;
-         }
+            copy_limbs(coeffs_out+i*size_out+1, coeffs1+i*size1+1, ABS(coeffs1[i*size1]));
+            clear_limbs(coeffs_out+i*size_out+ABS(coeffs1[i*size1])+1, size_out-ABS(coeffs1[i*size1]));
+         } 
+         copy_limbs(coeffs_out+(poly->length-1)*size_out+1, coeffs1+(poly->length-1)*size1+1, ABS(coeffs1[(poly->length-1)*size1]));
+         if (size_out > ABS(coeffs1[(poly->length-1)*size1])+1) clear_limbs(coeffs_out+(poly->length-1)*size_out+ABS(coeffs1[(poly->length-1)*size1])+1, size_out-ABS(coeffs1[(poly->length-1)*size1])-1);
+         
          mpn_divmod_1(coeffs_out, coeffs_out, size_out*poly->length, x);
          for (unsigned long i = 0; i < poly->length; i++)
          {
             coeffs_out[i*size_out] = coeffs1[i*size1];
+            NORM(coeffs_out+i*size_out);
          }
       } else
       {
          mp_limb_t * signs = (mp_limb_t *) flint_malloc_limbs(poly->length);
-         for (unsigned long i = 0; i < poly->length; i++)
+         signs[0] = coeffs1[0];
+         coeffs_out[0] = 0;
+         for (unsigned long i = 0; i < poly->length-1; i++)
          {
-            signs[i] = coeffs_out[i*size_out];
-            if (!coeffs_out[i*size_out]) clear_limbs(coeffs_out+i*size_out+1, size_out-1);
-            else coeffs_out[i*size_out] = 0L;
-         }
+             signs[i+1] = coeffs1[(i+1)*size1];
+             clear_limbs(coeffs_out+i*size_out+ABS(signs[i])+1, size_out-ABS(signs[i]));
+         } 
+         if (size_out > ABS(signs[poly->length-1])+1) clear_limbs(coeffs_out+(poly->length-1)*size_out+ABS(signs[poly->length-1])+1, size_out-ABS(signs[poly->length-1])-1);
          mpn_divmod_1(coeffs_out, coeffs_out, size_out*poly->length, x);
          for (unsigned long i = 0; i < poly->length; i++)
          {
             coeffs_out[i*size_out] = signs[i];
+            NORM(coeffs_out+i*size_out);
          }
          flint_free(signs);
       }
@@ -699,68 +659,56 @@ void _Zpoly_mpn_scalar_div_exact_si(Zpoly_mpn_t output, Zpoly_mpn_t poly, long x
    {
       for (unsigned long i = 0; i < poly->length; i++)
       {
-         if (x < 0) 
+         if (x < 0)
          {
+            mpn_divmod_1(coeffs_out+i*size_out+1, coeffs1+i*size1+1, ABS(coeffs1[i*size1]), -x);
             coeffs_out[i*size_out] = -coeffs1[i*size1];
-            mpn_divmod_1(coeffs_out+i*size_out+1, coeffs1+i*size1+1, size1-1, -x);
-         }
-         else 
+         } else
          {
+            mpn_divmod_1(coeffs_out+i*size_out+1, coeffs1+i*size1+1, ABS(coeffs1[i*size1]), x);
             coeffs_out[i*size_out] = coeffs1[i*size1];
-            mpn_divmod_1(coeffs_out+i*size_out+1, coeffs1+i*size1+1, size1-1, x);
          }
-         if (size_out > size1) clear_limbs(coeffs_out+i*size_out+size1, size_out-size1);
+         NORM(coeffs_out+i*size_out);
       }
    } else
    {
       if (coeffs_out != coeffs1)
       {
-         copy_limbs(coeffs_out, coeffs1, size1*poly->length); 
+         coeffs_out[0] = 0;
+         for (unsigned long i = 0; i < poly->length-1; i++)
+         {
+            copy_limbs(coeffs_out+i*size_out+1, coeffs1+i*size1+1, ABS(coeffs1[i*size1]));
+            clear_limbs(coeffs_out+i*size_out+ABS(coeffs1[i*size1])+1, size_out-ABS(coeffs1[i*size1]));
+         } 
+         copy_limbs(coeffs_out+(poly->length-1)*size_out+1, coeffs1+(poly->length-1)*size1+1, ABS(coeffs1[(poly->length-1)*size1]));
+         if (size_out > ABS(coeffs1[(poly->length-1)*size1])+1) clear_limbs(coeffs_out+(poly->length-1)*size_out+ABS(coeffs1[(poly->length-1)*size1])+1, size_out-ABS(coeffs1[(poly->length-1)*size1])-1);
+         
+         if (x < 0) mpn_divmod_1(coeffs_out, coeffs_out, size_out*poly->length, -x);
+         else mpn_divmod_1(coeffs_out, coeffs_out, size_out*poly->length, x);
          for (unsigned long i = 0; i < poly->length; i++)
          {
-            if (!coeffs_out[i*size_out]) clear_limbs(coeffs_out+i*size_out+1, size_out-1);
-            else coeffs_out[i*size_out] = 0L;
-         }
-         if (x < 0) 
-         {
-            mpn_divmod_1(coeffs_out, coeffs_out, size_out*poly->length, -x);
-            for (unsigned long i = 0; i < poly->length; i++)
-            {
-               coeffs_out[i*size_out] = -coeffs1[i*size1];
-            }
-         }
-         else 
-         {
-            mpn_divmod_1(coeffs_out, coeffs_out, size_out*poly->length, x);
-            for (unsigned long i = 0; i < poly->length; i++)
-            {
-               coeffs_out[i*size_out] = coeffs1[i*size1];
-            }
+            if (x < 0) coeffs_out[i*size_out] = -coeffs1[i*size1];
+            else coeffs_out[i*size_out] = coeffs1[i*size1];
+            NORM(coeffs_out+i*size_out);
          }
       } else
       {
          mp_limb_t * signs = (mp_limb_t *) flint_malloc_limbs(poly->length);
+         signs[0] = coeffs1[0];
+         coeffs_out[0] = 0;
+         for (unsigned long i = 0; i < poly->length-1; i++)
+         {
+             signs[i+1] = coeffs1[(i+1)*size1];
+             clear_limbs(coeffs_out+i*size_out+ABS(signs[i])+1, size_out-ABS(signs[i]));
+         } 
+         if (size_out > ABS(signs[poly->length-1])+1) clear_limbs(coeffs_out+(poly->length-1)*size_out+ABS(signs[poly->length-1])+1, size_out-ABS(signs[poly->length-1])-1);
+         if (x < 0) mpn_divmod_1(coeffs_out, coeffs_out, size_out*poly->length, -x);
+         else mpn_divmod_1(coeffs_out, coeffs_out, size_out*poly->length, x);
          for (unsigned long i = 0; i < poly->length; i++)
          {
-            signs[i] = coeffs_out[i*size_out];
-            if (!coeffs_out[i*size_out]) clear_limbs(coeffs_out+i*size_out+1, size_out-1);
-            else coeffs_out[i*size_out] = 0L;
-         }
-         if (x < 0) 
-         {
-            mpn_divmod_1(coeffs_out, coeffs_out, size_out*poly->length, -x);
-            for (unsigned long i = 0; i < poly->length; i++)
-            {
-               coeffs_out[i*size_out] = -signs[i];
-            }
-         }
-         else 
-         {
-            mpn_divmod_1(coeffs_out, coeffs_out, size_out*poly->length, x);
-            for (unsigned long i = 0; i < poly->length; i++)
-            {
-               coeffs_out[i*size_out] = signs[i];
-            }
+            if (x < 0) coeffs_out[i*size_out] = -signs[i];
+            else coeffs_out[i*size_out] = signs[i];
+            NORM(coeffs_out+i*size_out);
          }
          flint_free(signs);
       }
@@ -793,16 +741,14 @@ void _Zpoly_mpn_scalar_div_ui(Zpoly_mpn_t output, Zpoly_mpn_t poly, unsigned lon
       for (unsigned long i = 0; i < poly->length; i++)
       {
          coeffs_out[i*size_out] = coeffs1[i*size1];
-         mpn_divmod_1_preinv(coeffs_out+i*size_out+1, coeffs1+i*size1+1, size1-1, x, xinv, norm);
-         if (size_out > size1) clear_limbs(coeffs_out+i*size_out+size1, size_out-size1);
+         mpn_divmod_1_preinv(coeffs_out+i*size_out+1, coeffs1+i*size1+1, ABS(coeffs1[i*size1]), x, xinv, norm);
       }
    } else
    {
       for (unsigned long i = 0; i < poly->length; i++)
       {
          coeffs_out[i*size_out] = coeffs1[i*size1];
-         mpn_divmod_1(coeffs_out+i*size_out+1, coeffs1+i*size1+1, size1-1, x);
-         if (size_out > size1) clear_limbs(coeffs_out+i*size_out+size1, size_out-size1);
+         mpn_divmod_1(coeffs_out+i*size_out+1, coeffs1+i*size1+1, ABS(coeffs1[i*size1]), x);
       }
    }
    
@@ -832,8 +778,7 @@ void _Zpoly_mpn_scalar_div_si(Zpoly_mpn_t output, Zpoly_mpn_t poly, long x)
       {
          if (sign) coeffs_out[i*size_out] = -coeffs1[i*size1];
          else coeffs_out[i*size_out] = coeffs1[i*size1];
-         mpn_divmod_1_preinv(coeffs_out+i*size_out+1, coeffs1+i*size1+1, size1-1, x, xinv, norm);
-         if (size_out > size1) clear_limbs(coeffs_out+i*size_out+size1, size_out-size1);
+         mpn_divmod_1_preinv(coeffs_out+i*size_out+1, coeffs1+i*size1+1, ABS(coeffs1[i*size1]), x, xinv, norm);
       }
    } else
    {
@@ -841,8 +786,7 @@ void _Zpoly_mpn_scalar_div_si(Zpoly_mpn_t output, Zpoly_mpn_t poly, long x)
       {
          if (sign) coeffs_out[i*size_out] = -coeffs1[i*size1];
          else coeffs_out[i*size_out] = coeffs1[i*size1];
-         mpn_divmod_1(coeffs_out+i*size_out+1, coeffs1+i*size1+1, size1-1, x);
-         if (size_out > size1) clear_limbs(coeffs_out+i*size_out+size1, size_out-size1);
+         mpn_divmod_1(coeffs_out+i*size_out+1, coeffs1+i*size1+1, ABS(coeffs1[i*size1]), x);
       }
    }
    
@@ -857,44 +801,26 @@ void _Zpoly_mpn_mul_naive(Zpoly_mpn_t output, Zpoly_mpn_t input1, Zpoly_mpn_t in
    unsigned long size1, size2;
    unsigned long len1, len2; 
    unsigned long lenm1;
-   if (input1->limbs > input2->limbs)
-   {
-      coeffs1 = input1->coeffs;
-      coeffs2 = input2->coeffs;
-      size1 = input1->limbs+1;
-      size2 = input2->limbs+1;
-      lenm1 = input1->length-1;
-      len1 = input1->length;
-      len2 = input2->length;
-   } else
-   {
-      coeffs1 = input2->coeffs;
-      coeffs2 = input1->coeffs;
-      size1 = input2->limbs+1;
-      size2 = input1->limbs+1;
-      lenm1 = input2->length-1;
-      len1 = input2->length;
-      len2 = input1->length;
-   }
-
-   mp_limb_t carry;
-   long sign1, sign2;
-   mp_limb_t data;
-   
-   mp_limb_t * temp = (mp_limb_t *) flint_malloc_limbs(size1+size2-2);
       
+   coeffs1 = input1->coeffs;
+   coeffs2 = input2->coeffs;
+   size1 = input1->limbs+1;
+   size2 = input2->limbs+1;
+   lenm1 = input1->length-1;
+   len1 = input1->length;
+   len2 = input2->length;
+      
+   mp_limb_t * temp = (mp_limb_t *) limb_alloc(size1+size2-1,0);
+         
    for (unsigned long i = 0; i < len1; i++)
    {
       /* Set out[i] = in1[i]*in2[0] */
       if ((coeffs1[i*size1] == 0) || (coeffs2[0] == 0))
       {
-         clear_limbs(coeffs_out+i*size_out, size_out);
+         coeffs_out[i*size_out]=0;
       } else
       {
-         if (coeffs2[0] == 1L) coeffs_out[i*size_out] = coeffs1[i*size1];
-         else coeffs_out[i*size_out] = -coeffs1[i*size1]; 
-         mpn_mul(coeffs_out+i*size_out+1, coeffs1+i*size1+1, size1-1, coeffs2+1, size2-1);
-         if (size_out > size1+size2-1) clear_limbs(coeffs_out+i*size_out+size1+size2-1, size_out-size1-size2+1);
+         __Zpoly_mpn_mul_coeffs(coeffs_out+i*size_out, coeffs1+i*size1, coeffs2);
       }
    }
    for (unsigned long i = 1; i < len2; i++)
@@ -902,68 +828,197 @@ void _Zpoly_mpn_mul_naive(Zpoly_mpn_t output, Zpoly_mpn_t input1, Zpoly_mpn_t in
       /* Set out[i+in1->length-1] = in1[in1->length-1]*in2[i] */
       if ((coeffs1[lenm1*size1] == 0) || (coeffs2[i*size2] == 0))
       {
-         clear_limbs(coeffs_out+(i+lenm1)*size_out, size_out);
+         coeffs_out[(i+lenm1)*size_out]=0;
       } else
       {
-         if (coeffs1[lenm1*size1] == 1L) coeffs_out[(i+lenm1)*size_out] = coeffs2[i*size2];
-         else coeffs_out[(i+lenm1)*size_out] = -coeffs2[i*size2]; 
-         mpn_mul(coeffs_out+(i+lenm1)*size_out+1, coeffs1+lenm1*size1+1, size1-1, coeffs2+i*size2+1, size2-1);
-         if (size_out > size1+size2-1) clear_limbs(coeffs_out+(i+lenm1)*size_out+size1+size2-1, size_out-size1-size2+1);
-      }
-        
+         __Zpoly_mpn_mul_coeffs(coeffs_out+(i+lenm1)*size_out, coeffs1+lenm1*size1, coeffs2+i*size2);
+      }      
    }
    for (unsigned long i = 0; i < lenm1; i++)
-   {
+   {      
       for (unsigned long j = 1; j < len2; j++)
       {
          /* out[i+j] += in1[i]*in2[j] */
          if ((coeffs1[i*size1] != 0) && (coeffs2[j*size2] != 0))
          {
-            if (coeffs1[i*size1] == coeffs2[j*size2]) sign1 = 1L;
-            else sign1 = -1L;
-            if (coeffs_out[(i+j)*size_out] == -1L) sign2 = -1L;
-            else sign2 = 1L;
-            if (sign2 == sign1)
+            if (!coeffs_out[(i+j)*size_out])
             {
-               carry = mpn_addmul(coeffs_out+(i+j)*size_out+1, coeffs1+i*size1+1, size1-1, coeffs2+j*size2+1, size2-1);
-               if (carry) mpn_add_1(coeffs_out+(i+j)*size_out+size1+size2-2, coeffs_out+(i+j)*size_out+size1+size2-2, size_out-size1-size2+2, carry);         
-               coeffs_out[(i+j)*size_out] = sign1;
+               __Zpoly_mpn_mul_coeffs(coeffs_out+(i+j)*size_out, coeffs1+i*size1, coeffs2+j*size2);
             } else 
             {
-               mpn_mul(temp, coeffs1+i*size1+1, size1-1, coeffs2+j*size2+1, size2-1);
-               data = 0;
-               for (unsigned long k = size1+size2-1; (!data) && (k < size_out); k++) data |= coeffs_out[(i+j)*size_out+k];
-               if (data) data = 1;
-               else data = mpn_cmp(coeffs_out+(i+j)*size_out+1, temp, size1+size2-2); 
-          
-               if (data == 0) 
-               {
-                  clear_limbs(coeffs_out+(i+j)*size_out, size_out);
-               } else if ((long) data > 0) 
-               {
-                  mpn_sub(coeffs_out+(i+j)*size_out+1, coeffs_out+(i+j)*size_out+1, size_out-1, temp, size1+size2-2);
-                  coeffs_out[(i+j)*size_out] = sign2;
-               } else
-               {
-                  mpn_sub_n(coeffs_out+(i+j)*size_out+1, temp, coeffs_out+(i+j)*size_out+1, size1+size2-2);
-                  coeffs_out[(i+j)*size_out] = -sign2;
-               }
+               __Zpoly_mpn_mul_coeffs(temp, coeffs1+i*size1, coeffs2+j*size2);
+               __Zpoly_mpn_add_coeffs(coeffs_out+(i+j)*size_out, temp, coeffs_out+(i+j)*size_out);
             } 
          }
       }
    } 
-   data = 0L;
-   for (unsigned i = 0; i < len1 + len2 - 1; i++)
-   {
-       for (unsigned long j = 1; (j < size_out) && (!data); j++)
-       {
-          data |= coeffs_out[i*size_out+j];
-       }
-       if (!data) coeffs_out[i*size_out] = 0L;
-   }
    output->length = len1 + len2 - 1;
-   flint_free(temp);
+   limb_release();
 }
+
+void __Zpoly_mpn_karamul_recursive(Zpoly_mpn_t res, Zpoly_mpn_t a, Zpoly_mpn_t b, Zpoly_mpn_t scratch, Zpoly_mpn_t scratchb)
+{
+   Zpoly_mpn_t temp;
+   
+   if ((a->length <= 1) || (b->length <= 1)) 
+   {
+      _Zpoly_mpn_mul_naive(res, a, b);
+      
+      return;
+   }
+   
+   if (a->length ==2 && b->length == 2) {
+      const unsigned long asize = a->limbs+1;
+      const unsigned long bsize = b->limbs+1;
+      const unsigned long rsize = res->limbs+1;
+      const unsigned long ssize = scratchb->limbs+1;
+      
+      __Zpoly_mpn_mul_coeffs(res->coeffs, a->coeffs, b->coeffs); 
+      __Zpoly_mpn_add_coeffs(scratchb->coeffs, a->coeffs, a->coeffs+asize);
+      __Zpoly_mpn_mul_coeffs(res->coeffs+2*rsize, a->coeffs+asize, b->coeffs+bsize); 
+      __Zpoly_mpn_add_coeffs(scratchb->coeffs+ssize, b->coeffs, b->coeffs+bsize);
+      __Zpoly_mpn_mul_coeffs(res->coeffs+rsize, scratchb->coeffs, scratchb->coeffs+ssize); 
+      __Zpoly_mpn_sub_coeffs(res->coeffs+rsize, res->coeffs+rsize, res->coeffs);
+      __Zpoly_mpn_sub_coeffs(res->coeffs+rsize, res->coeffs+rsize, res->coeffs+2*rsize);
+      
+      res->length = a->length + b->length - 1;
+      
+      return;
+   }
+
+   /* 
+      As we may have dirty limbs in our res polynomial (it might be part of the
+      original scratch polynomial) we need to clean it before using it 
+   */
+   
+   for (unsigned long i = 0, j = 0; i < a->length + b->length - 1; i++, j+= (scratch->limbs+1))
+   {
+      res->coeffs[j] = 0;
+   }
+      
+   Zpoly_mpn_t a1,a2,b1,b2;
+      
+   unsigned long l2 = 0;
+      
+   a1->length = (a->length+1)/2;
+   a2->length = a->length-a1->length;
+   a1->coeffs = a->coeffs;
+   a2->coeffs = a->coeffs+a1->length*(a->limbs+1);
+   a1->limbs = a->limbs;
+   a2->limbs = a->limbs;
+   
+   if (a1->length < b->length) //ordinary case
+   {
+      /*
+         (a1+a2*x)*(b1+b2*x) = a1*b1 + a2*b2*x^2 + (a1+a2)*(b1+b2)*x-a1*b1*x-a2*b2*x;
+      */
+      
+      b1->length = a1->length;
+      b2->length = b->length - b1->length;
+      b1->coeffs = b->coeffs;
+      b2->coeffs = b->coeffs + b1->length*(b->limbs+1);
+      b1->limbs = b->limbs;
+      b2->limbs = b->limbs;
+      
+      Zpoly_mpn_t asum, bsum, prodsum, scratch2, scratch3;
+     
+      asum->length = a1->length;
+      asum->coeffs = scratchb->coeffs;
+      asum->limbs = scratchb->limbs;
+      bsum->length = a1->length;
+      bsum->coeffs = scratchb->coeffs + a1->length*(scratchb->limbs+1);
+      bsum->limbs = scratchb->limbs;
+      prodsum->length = (a1->length<<1)-1;
+      prodsum->coeffs = scratch->coeffs + (a1->length<<1)*(scratch->limbs+1);
+      prodsum->limbs = scratch->limbs;
+      
+      // res_lo = a1*b1
+      scratch2->limbs = scratch->limbs;
+      scratch2->coeffs = scratch->coeffs+((a1->length<<2)-1)*(scratch->limbs+1);
+      __Zpoly_mpn_karamul_recursive(res, a1, b1, scratch2, scratchb);
+     
+      // res_hi = a2*b2
+      temp->coeffs = res->coeffs+(a1->length<<1)*(res->limbs+1);
+      temp->limbs = res->limbs;
+      __Zpoly_mpn_karamul_recursive(temp, a2, b2, scratch2, scratchb);
+      
+      // asum = a1+a2
+      _Zpoly_mpn_add(asum, a1, a2);
+      // bsum = b1+b2
+      _Zpoly_mpn_add(bsum, b1, b2);
+      // prodsum = asum*bsum
+      scratch3->coeffs = scratchb->coeffs+(a1->length<<1)*(scratchb->limbs+1);
+      scratch3->limbs = scratchb->limbs;
+      
+      __Zpoly_mpn_karamul_recursive(prodsum, asum, bsum, scratch2, scratch3);
+      
+      // prodsum = prodsum - res_lo
+      temp->coeffs = res->coeffs;
+      temp->length = (a1->length<<1)-1;
+      _Zpoly_mpn_sub(prodsum, prodsum, temp);
+       
+      // prodsum = prodsum - res_hi
+      temp->coeffs = res->coeffs + (a1->length<<1)*(res->limbs+1);
+      temp->length = a2->length+b2->length-1;
+      _Zpoly_mpn_sub(prodsum, prodsum, temp);
+      
+      // res_mid += prodsum
+      temp->coeffs = res->coeffs + a1->length*(res->limbs+1);
+      temp->length = prodsum->length;
+      _Zpoly_mpn_add(temp, temp, prodsum);
+      
+      res->length = a->length + b->length - 1;
+     
+   } else 
+   {
+      Zpoly_mpn_t scratch2, temp1; 
+
+      while ((1<<l2)<a1->length) l2++;
+      if ((1<<l2) < a->length) a1->length = (1<<l2);
+      a2->length = a->length-a1->length;
+      a1->coeffs = a->coeffs;
+      a2->coeffs = a->coeffs+a1->length*(a->limbs+1);
+
+      // res_lo = a1*b
+      __Zpoly_mpn_karamul_recursive(res,a1,b,scratch,scratchb);
+      
+      //temp = a2*b
+      temp->coeffs = scratch->coeffs;
+      temp->length = a2->length + b->length - 1;
+      temp->limbs = scratch->limbs;
+      scratch2->coeffs = scratch->coeffs+temp->length*(scratch->limbs+1);
+      scratch2->limbs = scratch->limbs;
+      if (b->length <= a2->length) __Zpoly_mpn_karamul_recursive(temp,a2,b,scratch2,scratchb);
+      else __Zpoly_mpn_karamul_recursive(temp,b,a2,scratch2,scratchb);
+      
+      // res_mid += temp
+      temp1->coeffs = res->coeffs+a1->length*(res->limbs+1);
+      temp1->length = temp->length;
+      temp1->limbs = res->limbs;
+      _Zpoly_mpn_add(temp1,temp1,temp);
+  
+      res->length = a->length + b->length - 1;
+   } 
+}
+
+void _Zpoly_mpn_mul_karatsuba(Zpoly_mpn_t output, Zpoly_mpn_t input1, Zpoly_mpn_t input2)
+{
+   unsigned long limbs = input1->limbs+input2->limbs+2;
+   unsigned long log_length = 0;
+   Zpoly_mpn_t scratch, scratchb;
+   scratch->coeffs = (mp_limb_t *) limb_alloc(5*FLINT_MAX(input1->length,input2->length)*(limbs+1),0);
+   scratch->limbs = limbs;
+   scratchb->limbs = FLINT_MAX(input1->limbs,input2->limbs)+1;
+   scratchb->coeffs = (mp_limb_t *) limb_alloc(5*FLINT_MAX(input1->length,input2->length)*(scratchb->limbs+2),0);
+   
+   if (input1->length >= input2->length)
+       __Zpoly_mpn_karamul_recursive(output, input1, input2, scratch, scratchb);
+   else
+       __Zpoly_mpn_karamul_recursive(output, input2, input1, scratch, scratchb);
+   
+   limb_release(); limb_release();
+}
+
 
 /****************************************************************************
 

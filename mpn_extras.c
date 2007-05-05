@@ -305,7 +305,7 @@ mp_limb_t mpn_addmul(mp_limb_t * rp, mp_limb_t * s1p, unsigned long s1n,
    for (unsigned long i = 1; i < s2n; i++)
    {
       carry = mpn_add_1(rp+i+s1n-1, rp+i+s1n-1, 1, carry); 
-      carry += mpn_addmul_1(rp+i, s1p, s1n, s2p[i]);
+      if (s2p[i]) carry += mpn_addmul_1(rp+i, s1p, s1n, s2p[i]);
    }
    return carry;
 }
