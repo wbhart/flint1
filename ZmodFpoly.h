@@ -70,10 +70,10 @@ typedef struct
    unsigned long scratch_count;
    ZmodF_t* scratch;
    
-} ZmodFPoly_struct;
+} ZmodFpoly_struct;
 
 // ZmodFpoly_t allows reference-like semantics for ZpolyFPoly_struct:
-typedef ZmodFPoly_struct ZmodFpoly_t[1];
+typedef ZmodFpoly_struct ZmodFpoly_t[1];
 
 
 
@@ -87,13 +87,13 @@ typedef ZmodFPoly_struct ZmodFpoly_t[1];
    Initialises a ZmodFpoly_t with supplied parameters, and length = 0.
    Coefficients are not zeroed out.
 */
-void ZmodFPoly_init(ZmodFpoly_t poly, unsigned long depth, unsigned long n,
+void ZmodFpoly_init(ZmodFpoly_t poly, unsigned long depth, unsigned long n,
                     unsigned long scratch_count);
 
 /*
    Frees resources for the given polynomial.
 */
-void ZmodFPoly_clear(ZmodFpoly_t poly);
+void ZmodFpoly_clear(ZmodFpoly_t poly);
 
 
 /****************************************************************************
@@ -103,23 +103,23 @@ void ZmodFPoly_clear(ZmodFpoly_t poly);
 ****************************************************************************/
 
 /* 
-   Converts Zpoly_mpn_t "poly_mpn" to a ZmodFPoly.
+   Converts Zpoly_mpn_t "poly_mpn" to a ZmodFpoly.
    
    Each coefficient of poly_mpn is assumed to fit into a coefficient 
    of poly_f.
 */
 
-void ZmodFPoly_convert_in_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn);
+void ZmodFpoly_convert_in_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn);
 
 
 /* 
-   Converts ZmodFPoly "poly_f" to a Zpoly_mpn_t. 
+   Converts ZmodFpoly "poly_f" to a Zpoly_mpn_t. 
    
    Each coefficient of poly_f is assumed to fit into a coefficient 
    of poly_mpn. 
 */
 
-void ZmodFPoly_convert_out_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn);
+void ZmodFpoly_convert_out_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn);
 
 
 /*
@@ -130,12 +130,12 @@ void ZmodFPoly_convert_out_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn);
    "bits" is assumed to be less than FLINT_BITS_PER_LIMB.
 */ 
    
-void ZmodFPoly_bit_pack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
+void ZmodFpoly_bit_pack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
      unsigned long bundle, unsigned long bits);
 
 
 /*
-   Unpacks poly_f into poly_mpn. This is the inverse of ZmodFPoly_bitpack_mpn.
+   Unpacks poly_f into poly_mpn. This is the inverse of ZmodFpoly_bitpack_mpn.
    Each coeff of poly_f is assumed to contain "bundle" coefficients, each stored 
    in a bitfield "bits" bits wide. 
    
@@ -145,7 +145,7 @@ void ZmodFPoly_bit_pack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
    "bits" is assumed to be less than FLINT_BITS_PER_LIMB.
 */ 
    
-void ZmodFPoly_bit_unpack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
+void ZmodFpoly_bit_unpack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
      unsigned long bundle, unsigned long bits);
 
      
@@ -158,7 +158,7 @@ void ZmodFPoly_bit_unpack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
    coefficients are assumed to be at least a limb wide.
 */ 
    
-void ZmodFPoly_byte_pack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
+void ZmodFpoly_byte_pack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
      unsigned long bundle, unsigned long bytes);
 
      
@@ -173,7 +173,7 @@ void ZmodFPoly_byte_pack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
    coefficients are assumed to be at least a limb wide.
 */ 
    
-void ZmodFPoly_byte_unpack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
+void ZmodFpoly_byte_unpack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
      unsigned long bundle, unsigned long bytes);
 
      
@@ -182,7 +182,7 @@ void ZmodFPoly_byte_unpack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
    stores each piece into bundle coefficients of poly_f. 
 */
  
-void ZmodFPoly_split_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
+void ZmodFpoly_split_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
      unsigned long bundle, unsigned long limbs);
 
      
@@ -191,12 +191,12 @@ void ZmodFPoly_split_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
    limbs long, into a coefficient of poly_mpn. 
    
    This function is used for testing purposed only, and is the exact inverse
-   of ZmodFPoly_split_mpn.
+   of ZmodFpoly_split_mpn.
    
    The number of coefficients extracted is given by the length of poly_mpn.
 */
  
-void ZmodFPoly_unsplit_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
+void ZmodFpoly_unsplit_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
      unsigned long bundle, unsigned long limbs);
 
 
@@ -215,7 +215,7 @@ void ZmodFPoly_unsplit_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
    PRECONDITIONS:
       x and y must have compatible dimensions.
 */
-void ZmodFPoly_set(ZmodFpoly_t x, ZmodFpoly_t y);
+void ZmodFpoly_set(ZmodFpoly_t x, ZmodFpoly_t y);
 
 
 /*
@@ -231,7 +231,7 @@ void ZmodFPoly_set(ZmodFpoly_t x, ZmodFpoly_t y);
    NOTE:
       This function normalises the coefficients before multiplying.
 */
-void ZmodFPoly_mul(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y);
+void ZmodFpoly_mul(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y);
 
 
 /*
@@ -248,7 +248,7 @@ void ZmodFPoly_mul(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y);
       This function does *not* normalise before subtracting. Be careful
       with the overflow limb.
 */
-void ZmodFPoly_add(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y);
+void ZmodFpoly_add(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y);
 
 
 /*
@@ -265,13 +265,13 @@ void ZmodFPoly_add(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y);
       This function does *not* normalise before subtracting. Be careful
       with the overflow limb.
 */
-void ZmodFPoly_sub(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y);
+void ZmodFpoly_sub(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y);
 
 
 /*
    Normalises all coefficients (up to x.length) to be in the range [0, p).
 */
-void ZmodFPoly_normalise(ZmodFpoly_t poly);
+void ZmodFpoly_normalise(ZmodFpoly_t poly);
 
 
 
@@ -298,7 +298,7 @@ ensures that Z/pZ has enough roots of unity.
       0 <= length <= 2^poly.depth
       poly.scratch_count >= 1
 */
-void ZmodFPoly_FFT(ZmodFpoly_t poly, unsigned long length);
+void ZmodFpoly_FFT(ZmodFpoly_t poly, unsigned long length);
 
 
 /*
@@ -310,19 +310,19 @@ void ZmodFPoly_FFT(ZmodFpoly_t poly, unsigned long length);
    Result is inplace, x.length is not modified. (Note: after it's finished, the
    coefficients beyond x.length will contain garbage.)
 
-   The output will be a factor of 2^depth too big. See ZmodFPoly_rescale().
+   The output will be a factor of 2^depth too big. See ZmodFpoly_rescale().
 
    PRECONDITIONS:
       poly.scratch_count >= 1
 */
-void ZmodFPoly_IFFT(ZmodFpoly_t poly);
+void ZmodFpoly_IFFT(ZmodFpoly_t poly);
 
 
 /*
    Divides all coefficients by 2^depth mod p. This should be used after
    running an inverse transform.
 */
-void ZmodFPoly_rescale(ZmodFpoly_t poly);
+void ZmodFpoly_rescale(ZmodFpoly_t poly);
 
 
 /*
@@ -345,8 +345,7 @@ void ZmodFPoly_rescale(ZmodFpoly_t poly);
       y.scratch_count >= 1
       res.scratch_count >= 1
 */
-void ZmodFPoly_convolution(ZmodFpoly_t res,
-                           ZmodFpoly_t x, ZmodFpoly_t y);
+void ZmodFpoly_convolution(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y);
 
 
 
@@ -364,11 +363,11 @@ unity.
 ****************************************************************************/
 
 
-void ZmodFPoly_negacyclic_FFT(ZmodFpoly_t poly, unsigned long length);
+void ZmodFpoly_negacyclic_FFT(ZmodFpoly_t poly, unsigned long length);
 
-void ZmodFPoly_negacyclic_IFFT(ZmodFpoly_t poly);
+void ZmodFpoly_negacyclic_IFFT(ZmodFpoly_t poly);
 
-void ZmodFPoly_negacyclic_convolution(ZmodFpoly_t res,
+void ZmodFpoly_negacyclic_convolution(ZmodFpoly_t res,
                                       ZmodFpoly_t x, ZmodFpoly_t y);
 
 
