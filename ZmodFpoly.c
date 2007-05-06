@@ -116,31 +116,97 @@ void ZmodFpoly_unsplit_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
 
 void ZmodFpoly_set(ZmodFpoly_t x, ZmodFpoly_t y)
 {
-   abort();
+   FLINT_ASSERT(x->depth == y->depth);
+   FLINT_ASSERT(x->n == y->n);
+
+   for (unsigned long i = 0; i < y->length; i++)
+      ZmodF_set(x->coeffs[i], y->coeffs[i], x->n);
+   x->length = y->length;
 }
 
 
 void ZmodFpoly_mul(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y)
 {
-   abort();
+   FLINT_ASSERT(x->depth == y->depth);
+   FLINT_ASSERT(x->depth == res->depth);
+   FLINT_ASSERT(x->n == y->n);
+   FLINT_ASSERT(x->n == res->n);
+   FLINT_ASSERT(x->length == y->length);
+   
+   // todo: use FLINT memory allocation
+   
+   mp_limb_t* buf = (mp_limb_t*) malloc((2 * x->n) * sizeof(mp_limb_t));
+   unsigned long n = x->n;
+   
+   // todo: write special case for x == y
+
+   for (unsigned long i = 0; i < x->n; i++)
+   {
+      ZmodF_normalise(x->coeffs[i]);
+      ZmodF_normalise(y->coeffs[i]);
+         
+      if (x->coeffs[i][n])
+      {
+         // special case for one term being -1 mod p
+         ZmodF_neg(res->coeffs[i], y->coeffs[i], n);
+      }
+      else if (y->coeffs[i][n])
+      {
+         // special case for the other term being -1 mod p
+         ZmodF_neg(res->coeffs[i], x->coeffs[i], n);
+      }
+      else
+      {
+         // do the product
+         mpn_mul_n(buf, x->coeffs[i], y->coeffs[i], n);
+         // reduce mod p
+         res->coeffs[i][n] = -mpn_sub_n(res->coeffs[i], buf, buf + n, n);
+      }
+   }
+   
+   free(buf);
 }
 
 
 void ZmodFpoly_add(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y)
 {
-   abort();
+   FLINT_ASSERT(x->depth == y->depth);
+   FLINT_ASSERT(x->depth == res->depth);
+   FLINT_ASSERT(x->n == y->n);
+   FLINT_ASSERT(x->n == res->n);
+   FLINT_ASSERT(x->length == y->length);
+   
+   for (unsigned long i = 0; i < x->length; i++)
+      ZmodF_add(res->coeffs[i], x->coeffs[i], y->coeffs[i], poly->n);
+   res->length = x->length;
 }
 
 
 void ZmodFpoly_sub(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y)
 {
-   abort();
+   FLINT_ASSERT(x->depth == y->depth);
+   FLINT_ASSERT(x->depth == res->depth);
+   FLINT_ASSERT(x->n == y->n);
+   FLINT_ASSERT(x->n == res->n);
+   FLINT_ASSERT(x->length == y->length);
+   
+   for (unsigned long i = 0; i < x->length; i++)
+      ZmodF_sub(res->coeffs[i], x->coeffs[i], y->coeffs[i], poly->n);
+   res->length = x->length;
 }
 
 
 void ZmodFpoly_normalise(ZmodFpoly_t poly)
 {
-   abort();
+   for (unsigned long i = 0; i < poly->length; i++)
+      ZmodF_normalise(poly->coeffs[i], poly->n);
+}
+
+
+void ZmodFpoly_rescale(ZmodFpoly_t poly)
+{
+   for (unsigned long i = 0; i < poly->length; i++)
+      ZmodF_div_2exp(poly->coeffs[i], poly->coeffs[i], poly->depth, poly->n);
 }
 
 
@@ -247,10 +313,155 @@ void _ZmodFpoly_FFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
 
 
 
+/*
+This is an internal function. It's just a temporary implementation so that
+we can get started on higher level code. It is not optimised particularly
+well yet.
+
+x = array of buffers to operate on
+skip = distance between buffers
+depth = log2(number of buffers)
+nonzero = number of *output* buffers assumed to be nonzero
+length = number of untransformed coefficients requested
+extra = indicates whether an extra *forward* coefficient should be computed
+twist = twisting power of sqrt2
+n = coefficient length
+scratch = a scratch buffer
+*/
+void _ZmodFpoly_IFFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
+                     unsigned long nonzero, unsigned long length, int extra,
+                     unsigned long twist, unsigned long n,
+                     ZmodF_t* scratch)
+{
+   FLINT_ASSERT(skip >= 1);
+   FLINT_ASSERT(n >= 1);
+   FLINT_ASSERT(nonzero >= 1 && nonzero <= (1UL << depth));
+   FLINT_ASSERT(length <= nonzero);
+   FLINT_ASSERT((length == 0 && extra) ||
+                (length == (1UL << depth) && !extra) ||
+                (length > 0 && length < (1UL << depth)));
+   
+   // root is the (2^depth)-th root unity, measured as a power of sqrt2
+   unsigned long root = (4*n*FLINT_BITS_PER_LIMB) >> m;
+   FLINT_ASSERT(twist < root);
+   
+   // ========================
+   // base cases
+   
+   if (depth == 0)
+      return;
+      
+   if (depth == 1)
+   {
+      if (length == 0)
+      {
+         if (nonzero == 2)
+            ZmodF_add(x[0], x[0], x[skip], n);
+         ZmodF_div_2exp(x[0], x[0], 1, n);
+      }
+      else if (length == 1)
+      {
+         if (nonzero == 1)
+         {
+            if (extra)
+               ZmodF_mul_sqrt2exp(x + skip, x, scratch, twist, n);
+            ZmodF_add(x[0], x[0], x[0], n);
+         }
+         else  // nonzero == 2
+         {
+            if (extra)
+            {
+               ZmodF_sub(scratch[0], x[0], x[skip], n);
+               ZmodF_add(x[0], x[0], scratch[0], n);
+               ZmodF_mul_sqrt2exp(x + skip, scratch, scratch, twist, n);
+            }
+            else
+            {
+               Zmod_add(x[0], x[0], x[0], n);
+               Zmod_sub(x[0], x[0], x[skip], n);
+            }
+         }
+      }
+      else  // length == 2
+         ZmodF_inverse_butterfly_sqrt2exp(x, x + skip, scratch, twist, n);
+
+      return;
+   }
+   
+   // ========================
+   // factoring case
+
+   unsigned long rows_depth = depth >> 1;
+   unsigned long cols_depth = depth - rows_depth;
+   unsigned long rows = 1UL << rows_depth;
+   unsigned long cols = 1UL << cols_depth;
+
+   unsigned long length_rows = length >> cols_depth;
+   unsigned long length_cols = length & (cols-1);
+   unsigned long nonzero_rows = nonzero >> cols_depth;
+   unsigned long nonzero_cols = nonzero & (cols-1);
+
+   unsigned long i, j;
+   ZmodF_t* y;
+
+   // row transforms for the rows where we have all fourier coefficients
+   for (i = 0, y = x; i < length_rows; i++, y += (skip << cols_depth))
+      _ZmodFpoly_IFFT(y, cols_depth, skip, cols, cols, 0,
+                      twist << rows_depth, n, scratch);
+
+   // column transforms where we have enough information
+   for (i = length_cols, y = x + (skip * length_cols),
+        j = twist + (root*length_cols);
+        i < nonzero_cols; i++, y += skip, j += root)
+   {
+      _ZmodFpoly_IFFT(y, rows_depth, skip << cols_depth, nonzero_rows + 1,
+                      length_rows, length_cols ? 1 : extra, j, n, scratch);
+   }
+   if (nonzero_rows)
+      for (; i < cols; i++, y += skip, j += root)
+         _ZmodFpoly_IFFT(y, rows_depth, skip << cols_depth, nonzero_rows,
+                         length_rows, length_cols ? 1 : extra, j, n, scratch);
+
+   if (length_cols)
+   {
+      // a single switcheroo row transform
+      _ZmodFpoly_IFFT(x + length_rows * (skip << cols_depth), cols_depth,
+                      skip, (nonzero_rows ? cols : nonzero_cols),
+                      length_cols, extra, twist << rows_depth, n, scratch);
+
+      // remaining column transforms
+      for (i = 0, y = x, j = twist; i < length_cols && i < nonzero_cols;
+           i++, y += skip, j += root)
+      {
+         _ZmodFpoly_IFFT(y, rows_depth, skip << cols_depth, nonzero_rows + 1,
+                         length_rows + 1, 0, j, n, scratch);
+      }
+      if (nonzero_rows)
+      {
+         for (; i < length_cols; i++, y += skip, j += root)
+            _ZmodFpoly_IFFT(y, rows_depth, skip << cols_depth, nonzero_rows,
+                            length_rows + 1, 0, j, n, scratch);
+      }
+   }
+   else if (extra)
+   {
+      // need one extra trivial fourier coefficient
+      x += length_rows * (skip << cols_depth);
+      for (i = 1, y = x + skip; i < (nonzero_rows ? cols : nonzero_cols);
+           i++, y += skip)
+      {
+         ZmodF_add(x[0], x[0], y[0], n);
+      }
+      ZmodF_short_div2exp(x[0], x[0], cols_depth, n);
+   }
+}
+
+
 void ZmodFpoly_FFT(ZmodFpoly_t poly, unsigned long length)
 {
    // check the right roots of unity are available
    FLINT_ASSERT((4 * poly->n * FLINT_BITS_PER_LIMB) % (1 << poly->depth) == 0);
+   FLINT_ASSERT(poly->scratch_count >= 1);
 
    if (length != 0)
    {
@@ -273,19 +484,34 @@ void ZmodFpoly_FFT(ZmodFpoly_t poly, unsigned long length)
 
 void ZmodFpoly_IFFT(ZmodFpoly_t poly)
 {
-   abort();
-}
+   // check the right roots of unity are available
+   FLINT_ASSERT((4 * poly->n * FLINT_BITS_PER_LIMB) % (1 << poly->depth) == 0);
+   FLINT_ASSERT(poly->scratch_count >= 1);
 
-
-void ZmodFpoly_rescale(ZmodFpoly_t poly)
-{
-   abort();
+   if (poly->length != 0)
+      _ZmodFpoly_IFFT(poly->coeffs, poly->depth, 1, poly->length,
+                      poly->length, 0, 0, poly->n, poly->scratch);
 }
 
 
 void ZmodFpoly_convolution(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y)
 {
-   abort();
+   FLINT_ASSERT(x->depth == y->depth);
+   FLINT_ASSERT(x->depth == res->depth);
+   FLINT_ASSERT(x->n == y->n);
+   FLINT_ASSERT(x->n == res->n);
+
+   unsigned long length = x->length + y->length - 1;
+   unsigned long size = 1UL << res->depth;
+   if (length > size)
+      length = size;
+   
+   ZmodFpoly_FFT(x, length);
+   if (x != y)    // take care of aliasing
+      ZmodFpoly_FFT(y, length);
+      
+   ZmodFpoly_mul(res, x, y);
+   ZmodFpoly_IFFT(res);
 }
 
 
@@ -298,20 +524,62 @@ void ZmodFpoly_convolution(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y)
 
 void ZmodFpoly_negacyclic_FFT(ZmodFpoly_t poly, unsigned long length)
 {
-   abort();
+   // check the right roots of unity are available
+   FLINT_ASSERT((2 * poly->n * FLINT_BITS_PER_LIMB) % (1 << poly->depth) == 0);
+   FLINT_ASSERT(poly->scratch_count >= 1);
+
+   if (length != 0)
+   {
+      if (poly->length == 0)
+      {
+         // input is zero, so output is zero too
+         for (unsigned long i = 0; i < length; i++)
+            ZmodF_clear(poly->coeffs[i], poly->n);
+      }
+      else
+      {
+         _ZmodFpoly_FFT(poly->coeffs, poly->depth, 1, poly->length, length,
+                        (2 * poly->n * FLINT_BITS_PER_LIMB) >> poly->depth,
+                        poly->n, poly->scratch);
+      }
+   }
+
+   poly->length = length;
 }
 
 
 void ZmodFpoly_negacyclic_IFFT(ZmodFpoly_t poly)
 {
-   abort();
+   // check the right roots of unity are available
+   FLINT_ASSERT((2 * poly->n * FLINT_BITS_PER_LIMB) % (1 << poly->depth) == 0);
+   FLINT_ASSERT(poly->scratch_count >= 1);
+
+   if (poly->length != 0)
+      _ZmodFpoly_IFFT(poly->coeffs, poly->depth, 1, poly->length, poly->length,
+                      0, (2 * poly->n * FLINT_BITS_PER_LIMB) >> poly->depth,
+                      poly->n, poly->scratch);
 }
 
 
 void ZmodFpoly_negacyclic_convolution(ZmodFpoly_t res,
                                       ZmodFpoly_t x, ZmodFpoly_t y)
 {
-   abort();
+   FLINT_ASSERT(x->depth == y->depth);
+   FLINT_ASSERT(x->depth == res->depth);
+   FLINT_ASSERT(x->n == y->n);
+   FLINT_ASSERT(x->n == res->n);
+
+   unsigned long length = x->length + y->length - 1;
+   unsigned long size = 1UL << res->depth;
+   if (length > size)
+      length = size;
+   
+   ZmodFpoly_negacyclic_FFT(x, length);
+   if (x != y)    // take care of aliasing
+      ZmodFpoly_negacyclic_FFT(y, length);
+      
+   ZmodFpoly_mul(res, x, y);
+   ZmodFpoly_negacyclic_IFFT(res);
 }
 
 

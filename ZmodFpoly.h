@@ -274,6 +274,12 @@ void ZmodFpoly_sub(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y);
 void ZmodFpoly_normalise(ZmodFpoly_t poly);
 
 
+/*
+   Divides all coefficients by 2^depth mod p. This should be used after
+   running an inverse fourier transform.
+*/
+void ZmodFpoly_rescale(ZmodFpoly_t poly);
+
 
 /****************************************************************************
 
@@ -316,13 +322,6 @@ void ZmodFpoly_FFT(ZmodFpoly_t poly, unsigned long length);
       poly.scratch_count >= 1
 */
 void ZmodFpoly_IFFT(ZmodFpoly_t poly);
-
-
-/*
-   Divides all coefficients by 2^depth mod p. This should be used after
-   running an inverse transform.
-*/
-void ZmodFpoly_rescale(ZmodFpoly_t poly);
 
 
 /*
