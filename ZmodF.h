@@ -45,6 +45,45 @@ todo: perhaps this should go in mpn_extras instead of here. And perhaps it
 static inline
 void mpn_signed_add_1(mp_limb_t* x, unsigned long count, mp_limb_signed_t limb)
 {
+   abort();
+}
+
+
+/*
+   x := y
+*/
+static inline
+void ZmodF_set(ZmodF_t x, ZmodF_t y, unsigned long n)
+{
+   abort();
+}
+
+
+/*
+   x := -y
+   
+   PRECONDITIONS:
+      x and y may alias each other
+*/
+static inline
+void ZmodF_neg(ZmodF_t x, ZmodF_t y, unsigned long n)
+{
+   abort();
+}
+
+
+/*
+   res := x*y
+   
+   PRECONDITIONS:
+      Any combination of aliasing among res, x, y is allowed.
+      scratch must be a buffer of length 2*n, and must NOT alias x, y, res.
+*/
+static inline
+void ZmodF_mul(ZmodF_t res, ZmodF_t x, ZmodF_t y, mp_limb_t* scratch,
+               unsigned long n)
+{
+   abort();
 }
 
 
@@ -55,6 +94,7 @@ void mpn_signed_add_1(mp_limb_t* x, unsigned long count, mp_limb_signed_t limb)
 static inline
 void ZmodF_normalise(ZmodF_t x, unsigned long n)
 {
+   abort();
 }
 
 
@@ -67,11 +107,12 @@ void ZmodF_normalise(ZmodF_t x, unsigned long n)
 static inline
 void ZmodF_fast_reduce(ZmodF_t x, unsigned long n)
 {
+   abort();
 }
 
 
 /*
-   b := 2^(-s) a   mod p
+   b := 2^(-s) a
 
    PRECONDITIONS:
       0 < s < logB
@@ -82,22 +123,77 @@ static inline
 void ZmodF_short_div_2exp(ZmodF_t b, ZmodF_t a,
                           unsigned long s, unsigned long n)
 {
+   abort();
 }
 
 
+/*
+   b := 2^(s/2) a
+   z := destroyed
+
+   PRECONDITIONS:
+      0 < s < logB
+      a may alias z
+      b may not alias a or z
+
+   NOTE: a, b, z may get permuted
+*/
+static inline
+void ZmodF_mul_sqrt2exp(ZmodF_t* b, ZmodF_t* a, ZmodF_t* z,
+                        unsigned long s, unsigned long n)
+{
+   abort();
+}
+
 
 /*
-   b := B^s a   mod p
+   a := a + b
+   b := 2^(s/2) (a - b)
+   z := destroyed
+
+   PRECONDITIONS:
+      a, b, z may not alias each other
+      
+   NOTE: a, b, z may get permuted
+*/
+static inline
+void ZmodF_forward_butterfly_sqrt2exp(ZmodF_t* a, ZmodF_t* b, ZmodF_t* z,
+                                      unsigned long s, unsigned long n)
+{
+   abort();
+}
+
+
+/*
+   a := a + 2^(-s/2) b
+   b := a - 2^(-s/2) b
+   z := destroyed
+
+   PRECONDITIONS:
+      a, b, z may not alias each other
+      
+   NOTE: a, b, z may get permuted
+*/
+static inline
+void ZmodF_inverse_butterfly_sqrt2exp(ZmodF_t* a, ZmodF_t* b, ZmodF_t* z,
+                                      unsigned long s, unsigned long n)
+{
+   abort();
+}
+
+
+/*
+   b := B^s a
 
    PRECONDITIONS:
       0 < s < n
       b must not alias a
-
 */
 static inline
 void ZmodF_mul_Bexp(ZmodF_t b, ZmodF_t a,
                     unsigned long s, unsigned long n)
 {
+   abort();
 }
 
 
@@ -110,11 +206,11 @@ void ZmodF_mul_Bexp(ZmodF_t b, ZmodF_t a,
       a, b, z may not alias each other
       
    NOTE: a, b, z may get permuted
-
 */
 void ZmodF_simple_butterfly(ZmodF_t* a, ZmodF_t* b,
                             ZmodF_t* z, unsigned long n)
 {
+   abort();
 }
 
 

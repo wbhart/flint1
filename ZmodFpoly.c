@@ -140,10 +140,10 @@ void ZmodFpoly_mul(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y)
    
    // todo: write special case for x == y
 
-   for (unsigned long i = 0; i < x->n; i++)
+   for (unsigned long i = 0; i < n; i++)
    {
-      ZmodF_normalise(x->coeffs[i]);
-      ZmodF_normalise(y->coeffs[i]);
+      ZmodF_normalise(x->coeffs[i], n);
+      ZmodF_normalise(y->coeffs[i], n);
          
       if (x->coeffs[i][n])
       {
@@ -206,7 +206,8 @@ void ZmodFpoly_normalise(ZmodFpoly_t poly)
 void ZmodFpoly_rescale(ZmodFpoly_t poly)
 {
    for (unsigned long i = 0; i < poly->length; i++)
-      ZmodF_div_2exp(poly->coeffs[i], poly->coeffs[i], poly->depth, poly->n);
+      ZmodF_short_div_2exp(poly->coeffs[i], poly->coeffs[i],
+                           poly->depth, poly->n);
 }
 
 
@@ -357,7 +358,7 @@ void _ZmodFpoly_IFFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
       {
          if (nonzero == 2)
             ZmodF_add(x[0], x[0], x[skip], n);
-         ZmodF_div_2exp(x[0], x[0], 1, n);
+         ZmodF_short_div_2exp(x[0], x[0], 1, n);
       }
       else if (length == 1)
       {
