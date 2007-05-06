@@ -27,6 +27,15 @@ and the last limb is x[n] (signed). Then the value being represented is
 typedef mp_limb_t* ZmodF_t;
 
 
+static inline
+void ZmodF_swap(ZmodF_t* a, ZmodF_t* b)
+{
+   ZmodF_t temp = *a;
+   *a = *b;
+   *b = temp;
+}
+
+
 /*
    Normalises a into the range [0, p).
    (Note that the top limb will be set if and only if a = -1 mod p.)
@@ -135,68 +144,12 @@ void ZmodF_short_div_2exp(ZmodF_t b, ZmodF_t a,
 {
    FLINT_ASSERT(s > 0 && s < FLINT_BITS_PER_LIMB);
    
-   // quick adjustment mod p to ensure a is positive
+   // quick adjustment mod p to ensure a is non-negative
    ZmodF_fast_reduce(a, n);
 
    // do the rotation, and push the overflow back to the top limb
    mp_limb_t overflow = mpn_rshift(b, a, n+1, s);
    mpn_sub_1(b+n-1, b+n-1, 2, overflow);
-}
-
-
-/*
-   b := 2^(s/2) a
-   z := destroyed
-
-   PRECONDITIONS:
-      0 < s < logB
-      a may alias z (in which case a gets destroyed)
-      b may not alias a or z
-
-   NOTE: a, b, z may get permuted
-*/
-static inline
-void ZmodF_mul_sqrt2exp(ZmodF_t* b, ZmodF_t* a, ZmodF_t* z,
-                        unsigned long s, unsigned long n)
-{
-
-   abort();
-}
-
-
-/*
-   a := a + b
-   b := 2^(s/2) (a - b)
-   z := destroyed
-
-   PRECONDITIONS:
-      a, b, z may not alias each other
-      
-   NOTE: a, b, z may get permuted
-*/
-static inline
-void ZmodF_forward_butterfly_sqrt2exp(ZmodF_t* a, ZmodF_t* b, ZmodF_t* z,
-                                      unsigned long s, unsigned long n)
-{
-   abort();
-}
-
-
-/*
-   a := a + 2^(-s/2) b
-   b := a - 2^(-s/2) b
-   z := destroyed
-
-   PRECONDITIONS:
-      a, b, z may not alias each other
-      
-   NOTE: a, b, z may get permuted
-*/
-static inline
-void ZmodF_inverse_butterfly_sqrt2exp(ZmodF_t* a, ZmodF_t* b, ZmodF_t* z,
-                                      unsigned long s, unsigned long n)
-{
-   abort();
 }
 
 
@@ -216,6 +169,83 @@ void ZmodF_mul_Bexp(ZmodF_t b, ZmodF_t a,
 
 
 /*
+   b := 2^s a
+
+   PRECONDITIONS:
+      0 <= s < n*FLINT_BITS_PER_LIMB
+      b may not alias a
+*/
+void ZmodF_mul_2exp(ZmodF_t b, ZmodF_t a, unsigned long s, unsigned long n);
+
+
+/*
+   b := 2^(s/2) a
+   z := destroyed
+
+   PRECONDITIONS:
+      0 <= s < 2*n*FLINT_BITS_PER_LIMB
+      a may alias z (in which case a gets destroyed)
+      b may not alias a or z
+
+   NOTE: a, b, z may get permuted
+*/
+void ZmodF_mul_sqrt2exp(ZmodF_t* b, ZmodF_t* a, ZmodF_t* z,
+                        unsigned long s, unsigned long n);
+
+
+/*
+   c := 2^s (a - b)
+
+   PRECONDITIONS:
+      c must not alias a or b
+      0 <= s < n*FLINT_BITS_PER_LIMB
+*/
+void ZmodF_sub_mul_2exp(ZmodF_t c, ZmodF_t a, ZmodF_t b,
+                        unsigned long s, unsigned long n);
+
+/*
+   a := a + b
+   b := 2^s (a - b)
+   z := destroyed
+
+   PRECONDITIONS:
+      a, b, z may not alias each other
+      
+   NOTE: a, b, z may get permuted
+*/
+void ZmodF_forward_butterfly_2exp(ZmodF_t* a, ZmodF_t* b, ZmodF_t* z,
+                                  unsigned long s, unsigned long n);
+
+
+/*
+   a := a + b
+   b := 2^(s/2) (a - b)
+   z := destroyed
+
+   PRECONDITIONS:
+      a, b, z may not alias each other
+      
+   NOTE: a, b, z may get permuted
+*/
+void ZmodF_forward_butterfly_sqrt2exp(ZmodF_t* a, ZmodF_t* b, ZmodF_t* z,
+                                      unsigned long s, unsigned long n);
+
+
+/*
+   a := a + 2^(-s/2) b
+   b := a - 2^(-s/2) b
+   z := destroyed
+
+   PRECONDITIONS:
+      a, b, z may not alias each other
+      
+   NOTE: a, b, z may get permuted
+*/
+void ZmodF_inverse_butterfly_sqrt2exp(ZmodF_t* a, ZmodF_t* b, ZmodF_t* z,
+                                      unsigned long s, unsigned long n);
+
+
+/*
    a := a + b
    b := a - b
    z := destroyed
@@ -225,11 +255,8 @@ void ZmodF_mul_Bexp(ZmodF_t b, ZmodF_t a,
       
    NOTE: a, b, z may get permuted
 */
-void ZmodF_simple_butterfly(ZmodF_t* a, ZmodF_t* b,
-                            ZmodF_t* z, unsigned long n)
-{
-   abort();
-}
+void ZmodF_simple_butterfly(ZmodF_t* a, ZmodF_t* b, ZmodF_t* z,
+                            unsigned long n);
 
 
 // end of file ****************************************************************
