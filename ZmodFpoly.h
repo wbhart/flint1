@@ -1,6 +1,6 @@
 /****************************************************************************
 
-ZmodFermatPoly.h
+ZmodFpoly.h
 
 Polynomials over Z/pZ, where p = the Fermat number B^n + 1, where
 B = 2^FLINT_BITS_PER_LIMB. Routines for truncated Schoenhage-Strassen FFTs
@@ -19,7 +19,7 @@ Copyright (C) 2007, William Hart and David Harvey
 #include "flint-manager.h"
 #include "mpn_extras.h"
 #include "Zpoly_mpn.h"
-#include "ZmodFermat.h"
+#include "ZmodF.h"
 
 
 /****************************************************************************
