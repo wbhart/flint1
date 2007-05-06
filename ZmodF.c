@@ -15,6 +15,41 @@
 #include "ZmodF.h"
 
 
+void ZmodF_normalise(ZmodF_t a, unsigned long n)
+{
+   mp_limb_t hi = a[n];
+
+   if ((mp_limb_signed_t) hi < 0)
+   {
+      // If top limb (hi) is negative, we add -hi multiples of p
+      a[n] = 0;
+      mpn_add_1(a, a, n + 1, -hi);
+
+      // If the result is >= p (very unlikely)...
+      if (a[n] && a[0])
+      {
+         // ... need to subtract off p.
+         a[n] = 0;
+         a[0]--;
+      }
+   }
+   else
+   {
+      // If top limb (hi) is non-negative, we subtract hi multiples of p
+      a[n] = 0;
+      mpn_sub_1(a, a, n + 1, hi);
+
+      // If the result is negative (very unlikely)...
+      if (a[n])
+      {
+         // ... need to add back p.
+         a[n] = 0;
+         mpn_add_1(a, a, n + 1, 1);
+      }
+   }
+}
+
+
 void ZmodF_mul(ZmodF_t res, ZmodF_t a, ZmodF_t b, mp_limb_t* scratch,
                unsigned long n)
 {

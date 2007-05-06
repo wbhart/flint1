@@ -31,40 +31,7 @@ typedef mp_limb_t* ZmodF_t;
    Normalises a into the range [0, p).
    (Note that the top limb will be set if and only if a = -1 mod p.)
 */
-static inline
-void ZmodF_normalise(ZmodF_t a, unsigned long n)
-{
-   mp_limb_t hi = a[n];
-
-   if ((mp_limb_signed_t) hi < 0)
-   {
-      // If top limb (hi) is negative, we add -hi multiples of p
-      a[n] = 0;
-      mpn_add_1(a, a, n + 1, -hi);
-
-      // If the result is >= p (very unlikely)...
-      if (a[n] && a[0])
-      {
-         // ... need to subtract off p.
-         a[n] = 0;
-         a[0]--;
-      }
-   }
-   else
-   {
-      // If top limb (hi) is non-negative, we subtract hi multiples of p
-      a[n] = 0;
-      mpn_sub_1(a, a, n + 1, hi);
-
-      // If the result is negative (very unlikely)...
-      if (a[n])
-      {
-         // ... need to add back p.
-         a[n] = 0;
-         mpn_add_1(a, a, n + 1, 1);
-      }
-   }
-}
+void ZmodF_normalise(ZmodF_t a, unsigned long n);
 
 
 /*
@@ -183,7 +150,7 @@ void ZmodF_short_div_2exp(ZmodF_t b, ZmodF_t a,
 
    PRECONDITIONS:
       0 < s < logB
-      a may alias z
+      a may alias z (in which case a gets destroyed)
       b may not alias a or z
 
    NOTE: a, b, z may get permuted
@@ -192,6 +159,7 @@ static inline
 void ZmodF_mul_sqrt2exp(ZmodF_t* b, ZmodF_t* a, ZmodF_t* z,
                         unsigned long s, unsigned long n)
 {
+
    abort();
 }
 
