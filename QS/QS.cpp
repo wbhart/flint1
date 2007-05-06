@@ -1520,6 +1520,7 @@ void mainRoutine(unsigned long Mdiv2, mpz_t n, unsigned long multiplier)
     mpz_div_ui(n,n,multiplier);
     
 // Now do the "square root" and GCD steps hopefully obtaining factors of n
+    printf("FACTORS:\n");
     for (long l = 0;l<64;l++)
     {
         while (!(mask & ((u_int64_t)(1) << l))) l++;
