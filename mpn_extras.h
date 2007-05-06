@@ -99,42 +99,39 @@ static inline void set_limbs(mp_limb_t* dest, unsigned long count)
 
 
 /*
-This is a lot like mpn_add_1 and mpn_sub_1, but treats the limb being added
-as a SIGNED quantity.
- */
+   Add the given *signed* limb to the buffer [x, x+count), much like
+   mpn_add_1 and mpn_sub_1 (except it's always inplace).
+
+   PRECONDITIONS:
+      count >= 1
+   
+   NOTE:
+      The branch predictability of this function is optimised for the case that
+      abs(limb) is relatively small and that the first limb of x is randomly
+      distributed, which should be the normal usage in the FFT routines.
+*/
 static inline
-void signed_add_1(mp_limb_t* dest, unsigned long count, mp_limb_signed_t limb)
+void signed_add_1(mp_limb_t* x, unsigned long count, mp_limb_signed_t limb)
 {
-#if 0
-   // todo: kill this block once the new code is properly tested
-   if (limb >= 0)
-      mpn_add_1(dest, dest, count, limb);
+   FLINT_ASSERT(count >= 1);
+   
+   // If the high bit of x[0] doesn't change when we add "limb" to it,
+   // then there's no possibility of overflow.
+   mp_limb_t temp = x[0] + limb;
+   if ((mp_limb_signed_t)(temp ^ x[0]) >= 0)
+      // the likely case
+      x[0] = temp;
    else
-      mpn_sub_1(dest, dest, count, -limb);
-#else
-   // If the high bit of *dest doesn't change when we add "limb" to it,
-   // then there's no possibility of overflow. If we assume that abs(limb)
-   // is relatively small (which will always be true in the case of the ssmul
-   // FFTs), then this will almost always be the case, so this is a very
-   // predictable branch.
-   mp_limb_t temp = *dest;
-   temp += limb;
-   if ((temp ^ *dest) >> (FLINT_BITS_PER_LIMB - 1))
    {
       // the unlikely case; here we need to branch based on the sign of
       // the limb being added
       if (limb >= 0)
-         mpn_add_1(dest, dest, count, limb);
+         mpn_add_1(x, x, count, limb);
       else
-         mpn_sub_1(dest, dest, count, -limb);
+         mpn_sub_1(x, x, count, -limb);
    }
-   else
-   {
-      // the likely case
-      *dest = temp;
-   }
-#endif
 }
+
 
 mp_limb_t mpn_divmod_1_preinv(mp_limb_t * qp, mp_limb_t * up, 
              unsigned long un, mp_limb_t d, mp_limb_t dinv, unsigned long norm);

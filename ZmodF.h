@@ -28,28 +28,6 @@ typedef mp_limb_t* ZmodF_t;
 
 
 /*
-   Add the given *signed* limb to the buffer [x, x+count), much like
-   mpn_add_1 and mpn_sub_1 (except it's always inplace).
-
-   PRECONDITIONS:
-      count >= 1
-   
-   NOTE:
-      The branch predictability of this function is optimised for the case that
-      abs(limb) is relatively small and that the first limb of x is randomly
-      distributed, which should be the normal usage in the FFT routines.
-   
-todo: perhaps this should go in mpn_extras instead of here. And perhaps it
-      shouldn't start with "mpn", that's not very nice.
-*/
-static inline
-void mpn_signed_add_1(mp_limb_t* x, unsigned long count, mp_limb_signed_t limb)
-{
-   abort();
-}
-
-
-/*
    x := y
 */
 static inline
