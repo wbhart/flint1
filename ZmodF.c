@@ -92,7 +92,7 @@ void ZmodF_sqr(ZmodF_t res, ZmodF_t a, mp_limb_t* scratch, unsigned long n)
    else
    {
       // do the product
-      mpn_mul_n(scratch, x, x, n);
+      mpn_mul_n(scratch, a, a, n);
       // reduce mod p
       res[n] = -mpn_sub_n(res, scratch, scratch + n, n);
    }
@@ -206,6 +206,7 @@ void ZmodF_forward_butterfly_sqrt2exp(ZmodF_t* a, ZmodF_t* b, ZmodF_t* z,
 void ZmodF_inverse_butterfly_sqrt2exp(ZmodF_t* a, ZmodF_t* b, ZmodF_t* z,
                                       unsigned long s, unsigned long n)
 {
+   abort();
 }
 
 // end of file ****************************************************************

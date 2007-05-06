@@ -12,6 +12,10 @@
  
 ******************************************************************************/
 
+#include <stdlib.h>
+#include <gmp.h>
+#include "mpn_extras.h"
+
 
 /*
 A ZmodF_t is stored as a *signed* value in two's complement format, using
@@ -55,6 +59,17 @@ void ZmodF_fast_reduce(ZmodF_t a, unsigned long n)
    mp_limb_t hi = a[n];
    a[n] = 1;
    signed_add_1(a, n+1, 1-hi);
+}
+
+
+/*
+   a := 0
+*/
+static inline
+void ZmodF_clear(ZmodF_t a, unsigned long n)
+{
+   long i = n;
+   do a[i] = 0; while (--i >= 0);
 }
 
 
@@ -164,6 +179,23 @@ static inline
 void ZmodF_mul_Bexp(ZmodF_t b, ZmodF_t a,
                     unsigned long s, unsigned long n)
 {
+   abort();
+}
+
+
+/*
+   c := B^s (a - b)
+
+PRECONDITIONS:   
+   c must not alias a or b
+   0 < s < n
+*/
+static inline
+void ZmodF_sub_mul_Bexp(ZmodF_t c, ZmodF_t a, ZmodF_t b,
+                        unsigned long s, unsigned long n)
+{
+   FLINT_ASSERT(s > 0 && s < n);
+
    abort();
 }
 

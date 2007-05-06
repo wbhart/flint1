@@ -1,6 +1,9 @@
 #ifndef MPN_EXTRAS_H
 #define MPN_EXTRAS_H
 
+#include "flint.h"
+
+
 void* limb_alloc(unsigned long, int);
 void limb_release();
 
