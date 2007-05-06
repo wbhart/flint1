@@ -24,15 +24,15 @@ Copyright (C) 2007, William Hart and David Harvey
 
 /****************************************************************************
 
-   ZmodFPoly_t
+   ZmodFpoly_t
    -----------
 
-ZmodFPoly_t represents a polynomial with coefficients in Z/pZ, where
+ZmodFpoly_t represents a polynomial with coefficients in Z/pZ, where
 p = B^n + 1, B = 2^FLINT_BITS_PER_LIMB. Coefficients are represented in the
 format described in ZmodFermat.h.
 
-Each polynomial has a fixed transform length M = 2^m, specified at creation
-time, where m >= 0.
+Each polynomial has a fixed transform length 2^depth, specified at creation
+time, where depth >= 0.
 
 A polynomial may be in either "coefficient representation" (list of
 coefficients of the polynomial), or "fourier representation" (list of
@@ -44,7 +44,7 @@ coefficient representation, the remaining coefficients are assumed to be
 *zero*. If x is in fourier representation, the remaining coefficients are not
 necessarily zero, they are simply *unknown*.
 
-Always 0 <= length <= M.
+Always 0 <= length <= 2^depth.
 
 Each polynomial carries a number of additional scratch buffers. The number of
 scratch buffers is set at creation time. Various routines require a certain
@@ -56,14 +56,14 @@ so that outputs may well end up in what was originally a scratch buffer.
 
 typedef struct
 {
-   unsigned long m, M;
+   unsigned long depth;
    unsigned long n;
    unsigned long length;
 
    // Single chunk of memory where all coefficients live.
    mp_limb_t* storage;
 
-   // Array of pointers to coefficients (length M).
+   // Array of pointers to coefficients (length 2^depth).
    ZmodF_t* coeffs;
 
    // Array of pointers to scratch buffers (length scratch_count).
@@ -72,8 +72,8 @@ typedef struct
    
 } ZmodFPoly_struct;
 
-// ZmodFPoly_t allows reference-like semantics for ZpolyFPoly_struct:
-typedef ZmodFPoly_struct ZmodFPoly_t[1];
+// ZmodFpoly_t allows reference-like semantics for ZpolyFPoly_struct:
+typedef ZmodFPoly_struct ZmodFpoly_t[1];
 
 
 
@@ -84,16 +84,16 @@ typedef ZmodFPoly_struct ZmodFPoly_t[1];
 ****************************************************************************/
 
 /*
-   Initialises a ZmodFPoly_t with supplied parameters, and length = 0.
+   Initialises a ZmodFpoly_t with supplied parameters, and length = 0.
    Coefficients are not zeroed out.
 */
-void ZmodFPoly_init(ZmodFPoly_t poly, unsigned long m, unsigned long n,
+void ZmodFPoly_init(ZmodFpoly_t poly, unsigned long depth, unsigned long n,
                     unsigned long scratch_count);
 
 /*
    Frees resources for the given polynomial.
 */
-void ZmodFPoly_clear(ZmodFPoly_t poly);
+void ZmodFPoly_clear(ZmodFpoly_t poly);
 
 
 /****************************************************************************
@@ -109,7 +109,7 @@ void ZmodFPoly_clear(ZmodFPoly_t poly);
    of poly_f.
 */
 
-void ZmodFPoly_convert_in_mpn(ZmodFPoly_t poly_f, Zpoly_mpn_t poly_mpn);
+void ZmodFPoly_convert_in_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn);
 
 
 /* 
@@ -119,7 +119,7 @@ void ZmodFPoly_convert_in_mpn(ZmodFPoly_t poly_f, Zpoly_mpn_t poly_mpn);
    of poly_mpn. 
 */
 
-void ZmodFPoly_convert_out_mpn(ZmodFPoly_t poly_f, Zpoly_mpn_t poly_mpn);
+void ZmodFPoly_convert_out_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn);
 
 
 /*
@@ -130,7 +130,7 @@ void ZmodFPoly_convert_out_mpn(ZmodFPoly_t poly_f, Zpoly_mpn_t poly_mpn);
    "bits" is assumed to be less than FLINT_BITS_PER_LIMB.
 */ 
    
-void ZmodFPoly_bit_pack_mpn(ZmodFPoly_t poly_f, Zpoly_mpn_t poly_mpn,
+void ZmodFPoly_bit_pack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
      unsigned long bundle, unsigned long bits);
 
 
@@ -145,7 +145,7 @@ void ZmodFPoly_bit_pack_mpn(ZmodFPoly_t poly_f, Zpoly_mpn_t poly_mpn,
    "bits" is assumed to be less than FLINT_BITS_PER_LIMB.
 */ 
    
-void ZmodFPoly_bit_unpack_mpn(ZmodFPoly_t poly_f, Zpoly_mpn_t poly_mpn,
+void ZmodFPoly_bit_unpack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
      unsigned long bundle, unsigned long bits);
 
      
@@ -154,11 +154,11 @@ void ZmodFPoly_bit_unpack_mpn(ZmodFPoly_t poly_f, Zpoly_mpn_t poly_mpn,
    will have "bundle" coefficients packed into it, each packed into a field
    "bytes" bytes wide.
    
-   "bytes" is assumed to be at least FLINT_BITS_PER_LIMB/8, i.e. the coefficients
-   are assumed to be at least a limb wide.
+   "bytes" is assumed to be at least FLINT_BITS_PER_LIMB/8, i.e. the
+   coefficients are assumed to be at least a limb wide.
 */ 
    
-void ZmodFPoly_byte_pack_mpn(ZmodFPoly_t poly_f, Zpoly_mpn_t poly_mpn,
+void ZmodFPoly_byte_pack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
      unsigned long bundle, unsigned long bytes);
 
      
@@ -169,11 +169,11 @@ void ZmodFPoly_byte_pack_mpn(ZmodFPoly_t poly_f, Zpoly_mpn_t poly_mpn,
    The total number of coefficients to be unpacked is given by the length of 
    poly_mpn.
    
-   "bytes" is assumed to be at least FLINT_BITS_PER_LIMB/8, i.e. the coefficients
-   are assumed to be at least a limb wide.
+   "bytes" is assumed to be at least FLINT_BITS_PER_LIMB/8, i.e. the
+   coefficients are assumed to be at least a limb wide.
 */ 
    
-void ZmodFPoly_byte_unpack_mpn(ZmodFPoly_t poly_f, Zpoly_mpn_t poly_mpn,
+void ZmodFPoly_byte_unpack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
      unsigned long bundle, unsigned long bytes);
 
      
@@ -182,7 +182,7 @@ void ZmodFPoly_byte_unpack_mpn(ZmodFPoly_t poly_f, Zpoly_mpn_t poly_mpn,
    stores each piece into bundle coefficients of poly_f. 
 */
  
-void ZmodFPoly_split_mpn(ZmodFPoly_t poly_f, Zpoly_mpn_t poly_mpn,
+void ZmodFPoly_split_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
      unsigned long bundle, unsigned long limbs);
 
      
@@ -196,7 +196,7 @@ void ZmodFPoly_split_mpn(ZmodFPoly_t poly_f, Zpoly_mpn_t poly_mpn,
    The number of coefficients extracted is given by the length of poly_mpn.
 */
  
-void ZmodFPoly_unsplit_mpn(ZmodFPoly_t poly_f, Zpoly_mpn_t poly_mpn,
+void ZmodFPoly_unsplit_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
      unsigned long bundle, unsigned long limbs);
 
 
@@ -215,7 +215,7 @@ void ZmodFPoly_unsplit_mpn(ZmodFPoly_t poly_f, Zpoly_mpn_t poly_mpn,
    PRECONDITIONS:
       x and y must have compatible dimensions.
 */
-void ZmodFPoly_set(ZmodFPoly_t x, ZmodFPoly_t y);
+void ZmodFPoly_set(ZmodFpoly_t x, ZmodFpoly_t y);
 
 
 /*
@@ -231,7 +231,7 @@ void ZmodFPoly_set(ZmodFPoly_t x, ZmodFPoly_t y);
    NOTE:
       This function normalises the coefficients before multiplying.
 */
-void ZmodFPoly_mul(ZmodFPoly_t res, ZmodFPoly_t x, ZmodFPoly_t y);
+void ZmodFPoly_mul(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y);
 
 
 /*
@@ -248,7 +248,7 @@ void ZmodFPoly_mul(ZmodFPoly_t res, ZmodFPoly_t x, ZmodFPoly_t y);
       This function does *not* normalise before subtracting. Be careful
       with the overflow limb.
 */
-void ZmodFPoly_add(ZmodFPoly_t res, ZmodFPoly_t x, ZmodFPoly_t y);
+void ZmodFPoly_add(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y);
 
 
 /*
@@ -265,13 +265,13 @@ void ZmodFPoly_add(ZmodFPoly_t res, ZmodFPoly_t x, ZmodFPoly_t y);
       This function does *not* normalise before subtracting. Be careful
       with the overflow limb.
 */
-void ZmodFPoly_sub(ZmodFPoly_t res, ZmodFPoly_t x, ZmodFPoly_t y);
+void ZmodFPoly_sub(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y);
 
 
 /*
    Normalises all coefficients (up to x.length) to be in the range [0, p).
 */
-void ZmodFPoly_normalise(ZmodFPoly_t poly);
+void ZmodFPoly_normalise(ZmodFpoly_t poly);
 
 
 
@@ -279,8 +279,8 @@ void ZmodFPoly_normalise(ZmodFPoly_t poly);
 
    Fourier Transform Routines
    
-For the following routines, M must divide 4*n*FLINT_BITS_PER_LIMB. This
-ensures that Z/pZ has Mth roots of unity (since we have available a sqrt2).
+For the following routines, 2^depth must divide 4*n*FLINT_BITS_PER_LIMB. This
+ensures that Z/pZ has enough roots of unity.
    
 ****************************************************************************/
 
@@ -291,14 +291,14 @@ ensures that Z/pZ has Mth roots of unity (since we have available a sqrt2).
    "length" is the desired number of fourier coefficients; x.length is set
    to length when finished.
 
-   Output is inplace. (Note that in general *all* M coefficients will get
-   overwritten in intermediate steps.)
+   Output is inplace. (Note that in general *all* 2^depth coefficients will
+   get overwritten in intermediate steps.)
 
    PRECONDITIONS:
-      0 <= length <= poly.M
+      0 <= length <= 2^poly.depth
       poly.scratch_count >= 1
 */
-void ZmodFPoly_FFT(ZmodFPoly_t poly, unsigned long length);
+void ZmodFPoly_FFT(ZmodFpoly_t poly, unsigned long length);
 
 
 /*
@@ -310,27 +310,27 @@ void ZmodFPoly_FFT(ZmodFPoly_t poly, unsigned long length);
    Result is inplace, x.length is not modified. (Note: after it's finished, the
    coefficients beyond x.length will contain garbage.)
 
-   The output will be a factor of M too big. See ZmodFPoly_rescale().
+   The output will be a factor of 2^depth too big. See ZmodFPoly_rescale().
 
    PRECONDITIONS:
       poly.scratch_count >= 1
 */
-void ZmodFPoly_IFFT(ZmodFPoly_t poly);
+void ZmodFPoly_IFFT(ZmodFpoly_t poly);
 
 
 /*
-   Divides all coefficients by M mod p. This should be used after running an
-   inverse transform.
+   Divides all coefficients by 2^depth mod p. This should be used after
+   running an inverse transform.
 */
-void ZmodFPoly_rescale(ZmodFPoly_t poly);
+void ZmodFPoly_rescale(ZmodFpoly_t poly);
 
 
 /*
    Computes convolution of x and y, places result in res.
 
    The resulting length will be x.length + y.length - 1. If this is more
-   than M, then the resulting length is M, and the convolution is actually
-   cyclic of length M.
+   than 2^depth, then the resulting length is 2^depth, and the convolution is
+   actually cyclic of length 2^depth.
 
    PRECONDITIONS:
       Any combination of aliasing among res, x, y is allowed.
@@ -345,8 +345,8 @@ void ZmodFPoly_rescale(ZmodFPoly_t poly);
       y.scratch_count >= 1
       res.scratch_count >= 1
 */
-void ZmodFPoly_convolution(ZmodFPoly_t res,
-                           ZmodFPoly_t x, ZmodFPoly_t y);
+void ZmodFPoly_convolution(ZmodFpoly_t res,
+                           ZmodFpoly_t x, ZmodFpoly_t y);
 
 
 
@@ -354,21 +354,22 @@ void ZmodFPoly_convolution(ZmodFPoly_t res,
 
    Negacyclic Fourier Transform Routines
    
-For the following routines, 2M must divide 4*n*FLINT_BITS_PER_LIMB. This
-ensures that Z/pZ has 2Mth roots of unity (since we have available a sqrt2).
+For the following routines, 2^(depth+1) must divide 4*n*FLINT_BITS_PER_LIMB.
+This ensures that Z/pZ has enough roots of unity.
 
 These routines are exactly the same as those listed in the previous section,
-except that they evaluate at w^(2k+1), where w is a 2M-th root of unity.
+except that they evaluate at w^(2k+1), where w is a 2^(depth+1)-th root of
+unity.
    
 ****************************************************************************/
 
 
-void ZmodFPoly_negacyclic_FFT(ZmodFPoly_t poly, unsigned long length);
+void ZmodFPoly_negacyclic_FFT(ZmodFpoly_t poly, unsigned long length);
 
-void ZmodFPoly_negacyclic_IFFT(ZmodFPoly_t poly);
+void ZmodFPoly_negacyclic_IFFT(ZmodFpoly_t poly);
 
-void ZmodFPoly_negacyclic_convolution(ZmodFPoly_t res,
-                                      ZmodFPoly_t x, ZmodFPoly_t y);
+void ZmodFPoly_negacyclic_convolution(ZmodFpoly_t res,
+                                      ZmodFpoly_t x, ZmodFpoly_t y);
 
 
 
