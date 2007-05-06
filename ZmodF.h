@@ -28,80 +28,152 @@ typedef mp_limb_t* ZmodF_t;
 
 
 /*
-   x := y
+   Normalises a into the range [0, p).
+   (Note that the top limb will be set if and only if a = -1 mod p.)
 */
 static inline
-void ZmodF_set(ZmodF_t x, ZmodF_t y, unsigned long n)
+void ZmodF_normalise(ZmodF_t a, unsigned long n)
 {
-   abort();
+   mp_limb_t hi = a[n];
+
+   if ((mp_limb_signed_t) hi < 0)
+   {
+      // If top limb (hi) is negative, we add -hi multiples of p
+      a[n] = 0;
+      mpn_add_1(a, a, n + 1, -hi);
+
+      // If the result is >= p (very unlikely)...
+      if (a[n] && a[0])
+      {
+         // ... need to subtract off p.
+         a[n] = 0;
+         a[0]--;
+      }
+   }
+   else
+   {
+      // If top limb (hi) is non-negative, we subtract hi multiples of p
+      a[n] = 0;
+      mpn_sub_1(a, a, n + 1, hi);
+
+      // If the result is negative (very unlikely)...
+      if (a[n])
+      {
+         // ... need to add back p.
+         a[n] = 0;
+         mpn_add_1(a, a, n + 1, 1);
+      }
+   }
 }
 
 
 /*
-   x := -y
-   
-   PRECONDITIONS:
-      x and y may alias each other
-*/
-static inline
-void ZmodF_neg(ZmodF_t x, ZmodF_t y, unsigned long n)
-{
-   abort();
-}
-
-
-/*
-   res := x*y
-   
-   PRECONDITIONS:
-      Any combination of aliasing among res, x, y is allowed.
-      scratch must be a buffer of length 2*n, and must NOT alias x, y, res.
-*/
-static inline
-void ZmodF_mul(ZmodF_t res, ZmodF_t x, ZmodF_t y, mp_limb_t* scratch,
-               unsigned long n)
-{
-   abort();
-}
-
-
-/*
-   Normalises x into the range [0, p).
-   (Note that the top limb will be set if and only if x = -1 mod p.)
-*/
-static inline
-void ZmodF_normalise(ZmodF_t x, unsigned long n)
-{
-   abort();
-}
-
-
-/*
-   Adjusts x mod p so that the top limb is in the interval [-1, 1].
+   Adjusts a mod p so that the top limb is in the interval [0, 2].
 
    This in general will be faster then ZmodF_normalise(); in particular
    the branching is much more predictable.
 */
 static inline
-void ZmodF_fast_reduce(ZmodF_t x, unsigned long n)
+void ZmodF_fast_reduce(ZmodF_t a, unsigned long n)
 {
-   abort();
+   mp_limb_t hi = a[n];
+   a[n] = 1;
+   signed_add_1(a, n+1, 1-hi);
 }
+
+
+/*
+   b := a
+*/
+static inline
+void ZmodF_set(ZmodF_t b, ZmodF_t a, unsigned long n)
+{
+   long i = n;
+   do b[i] = a[i]; while (--i >= 0);
+}
+
+
+/*
+   b := -a
+   
+   PRECONDITIONS:
+      a and b may alias each other
+*/
+static inline
+void ZmodF_neg(ZmodF_t b, ZmodF_t a, unsigned long n)
+{
+   b[n] = ~a[n] - 1;     // -1 is to make up mod p for 2's complement negation
+   long i = n-1;
+   do b[i] = ~a[i]; while (--i >= 0);
+}
+
+
+/*
+   res := a + b
+   
+   PRECONDITIONS:
+      Any combination of aliasing among res, a, b is allowed.
+*/
+static inline
+void ZmodF_add(ZmodF_t res, ZmodF_t a, ZmodF_t b, unsigned long n)
+{
+   mpn_add_n(res, a, b, n+1);
+}
+
+
+/*
+   res := a - b
+   
+   PRECONDITIONS:
+      Any combination of aliasing among res, a, b is allowed.
+*/
+static inline
+void ZmodF_sub(ZmodF_t res, ZmodF_t a, ZmodF_t b, unsigned long n)
+{
+   mpn_sub_n(res, a, b, n+1);
+}
+
+
+/*
+   res := a * b
+   
+   PRECONDITIONS:
+      Any combination of aliasing among res, a, b is allowed.
+      scratch must be a buffer of length 2*n, and must NOT alias a, b, res.
+*/
+void ZmodF_mul(ZmodF_t res, ZmodF_t a, ZmodF_t b, mp_limb_t* scratch,
+               unsigned long n);
+
+
+/*
+   res := a * a
+   
+   PRECONDITIONS:
+      a may alias res.
+      scratch must be a buffer of length 2*n, and must NOT overlap a or res.
+*/
+void ZmodF_sqr(ZmodF_t res, ZmodF_t a, mp_limb_t* scratch, unsigned long n);
 
 
 /*
    b := 2^(-s) a
 
    PRECONDITIONS:
-      0 < s < logB
+      0 < s < FLINT_BITS_PER_LIMB
       b may alias a
-
 */
 static inline
 void ZmodF_short_div_2exp(ZmodF_t b, ZmodF_t a,
                           unsigned long s, unsigned long n)
 {
-   abort();
+   FLINT_ASSERT(s > 0 && s < FLINT_BITS_PER_LIMB);
+   
+   // quick adjustment mod p to ensure a is positive
+   ZmodF_fast_reduce(a, n);
+
+   // do the rotation, and push the overflow back to the top limb
+   mp_limb_t overflow = mpn_rshift(b, a, n+1, s);
+   mpn_sub_1(b+n-1, b+n-1, 2, overflow);
 }
 
 

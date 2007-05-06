@@ -135,36 +135,16 @@ void ZmodFpoly_mul(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y)
    
    // todo: use FLINT memory allocation
    
-   mp_limb_t* buf = (mp_limb_t*) malloc((2 * x->n) * sizeof(mp_limb_t));
-   unsigned long n = x->n;
-   
-   // todo: write special case for x == y
+   mp_limb_t* scratch = (mp_limb_t*) malloc((2 * x->n) * sizeof(mp_limb_t));
 
-   for (unsigned long i = 0; i < n; i++)
-   {
-      ZmodF_normalise(x->coeffs[i], n);
-      ZmodF_normalise(y->coeffs[i], n);
-         
-      if (x->coeffs[i][n])
-      {
-         // special case for one term being -1 mod p
-         ZmodF_neg(res->coeffs[i], y->coeffs[i], n);
-      }
-      else if (y->coeffs[i][n])
-      {
-         // special case for the other term being -1 mod p
-         ZmodF_neg(res->coeffs[i], x->coeffs[i], n);
-      }
-      else
-      {
-         // do the product
-         mpn_mul_n(buf, x->coeffs[i], y->coeffs[i], n);
-         // reduce mod p
-         res->coeffs[i][n] = -mpn_sub_n(res->coeffs[i], buf, buf + n, n);
-      }
-   }
+   if (x != y)
+      for (unsigned long i = 0; i < x->length; i++)
+         ZmodF_mul(res->coeffs[i], x->coeffs[i], y->coeffs[i], scratch, x->n);
+   else
+      for (unsigned long i = 0; i < x->length; i++)
+         ZmodF_sqr(res->coeffs[i], x->coeffs[i], scratch, x->n);
    
-   free(buf);
+   free(scratch);
 }
 
 
@@ -178,6 +158,7 @@ void ZmodFpoly_add(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y)
    
    for (unsigned long i = 0; i < x->length; i++)
       ZmodF_add(res->coeffs[i], x->coeffs[i], y->coeffs[i], poly->n);
+
    res->length = x->length;
 }
 
@@ -192,6 +173,7 @@ void ZmodFpoly_sub(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y)
    
    for (unsigned long i = 0; i < x->length; i++)
       ZmodF_sub(res->coeffs[i], x->coeffs[i], y->coeffs[i], poly->n);
+
    res->length = x->length;
 }
 
@@ -205,6 +187,9 @@ void ZmodFpoly_normalise(ZmodFpoly_t poly)
 
 void ZmodFpoly_rescale(ZmodFpoly_t poly)
 {
+   if (poly->depth == 0)
+      return;
+
    for (unsigned long i = 0; i < poly->length; i++)
       ZmodF_short_div_2exp(poly->coeffs[i], poly->coeffs[i],
                            poly->depth, poly->n);
