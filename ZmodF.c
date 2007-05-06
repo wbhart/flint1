@@ -203,10 +203,48 @@ void ZmodF_forward_butterfly_sqrt2exp(ZmodF_t* a, ZmodF_t* b, ZmodF_t* z,
 }
 
 
+void ZmodF_inverse_butterfly_2exp(ZmodF_t* a, ZmodF_t* b, ZmodF_t* z,
+                                  unsigned long s, unsigned long n)
+{
+   FLINT_ASSERT(s < n*FLINT_BITS_PER_LIMB);
+   FLINT_ASSERT(*a != *b);
+   FLINT_ASSERT(*b != *scratch);
+   FLINT_ASSERT(*a != *scratch);
+
+   unsigned long bits = s & (FLINT_BITS_PER_LIMB - 1);
+   if (bits)
+      // shift right by leftover bits
+      ZmodF_short_div_2exp(*b, *b, bits, n);
+
+   s /= FLINT_BITS_PER_LIMB;
+   if (s)
+   {
+      ZmodF_div_Bexp_sub(*z, *a, *b, s, n);
+      ZmodF_div_Bexp_add(*a, *a, *b, s, n);
+   }
+   else
+   {
+      ZmodF_sub(*z, *a, *b, n);
+      ZmodF_add(*a, *a, *b, n);
+   }
+
+   ZmodF_swap(z, b);
+}
+
+
 void ZmodF_inverse_butterfly_sqrt2exp(ZmodF_t* a, ZmodF_t* b, ZmodF_t* z,
                                       unsigned long s, unsigned long n)
 {
-   abort();
+   FLINT_ASSERT(s < 2*n*FLINT_BITS_PER_LIMB);
+   FLINT_ASSERT(*a != *b);
+   FLINT_ASSERT(*b != *z);
+   FLINT_ASSERT(*a != *z);
+
+   if (s & 1)
+      // not implemented yet
+      abort();
+      
+   ZmodF_inverse_butterfly_2exp(a, b, z, s >> 1, n);
 }
 
 // end of file ****************************************************************

@@ -157,7 +157,7 @@ void ZmodFpoly_add(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y)
    FLINT_ASSERT(x->length == y->length);
    
    for (unsigned long i = 0; i < x->length; i++)
-      ZmodF_add(res->coeffs[i], x->coeffs[i], y->coeffs[i], poly->n);
+      ZmodF_add(res->coeffs[i], x->coeffs[i], y->coeffs[i], x->n);
 
    res->length = x->length;
 }
@@ -172,7 +172,7 @@ void ZmodFpoly_sub(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y)
    FLINT_ASSERT(x->length == y->length);
    
    for (unsigned long i = 0; i < x->length; i++)
-      ZmodF_sub(res->coeffs[i], x->coeffs[i], y->coeffs[i], poly->n);
+      ZmodF_sub(res->coeffs[i], x->coeffs[i], y->coeffs[i], x->n);
 
    res->length = x->length;
 }
@@ -228,7 +228,7 @@ void _ZmodFpoly_FFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
    FLINT_ASSERT(length >= 1 && length <= (1 << depth));
    
    // root is the (2^depth)-th root unity, measured as a power of sqrt2
-   unsigned long root = (4*n*FLINT_BITS_PER_LIMB) >> m;
+   unsigned long root = (4*n*FLINT_BITS_PER_LIMB) >> depth;
    FLINT_ASSERT(twist < root);
    
    // ========================
@@ -328,7 +328,7 @@ void _ZmodFpoly_IFFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
                 (length > 0 && length < (1UL << depth)));
    
    // root is the (2^depth)-th root unity, measured as a power of sqrt2
-   unsigned long root = (4*n*FLINT_BITS_PER_LIMB) >> m;
+   unsigned long root = (4*n*FLINT_BITS_PER_LIMB) >> depth;
    FLINT_ASSERT(twist < root);
    
    // ========================
@@ -363,8 +363,8 @@ void _ZmodFpoly_IFFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
             }
             else
             {
-               Zmod_add(x[0], x[0], x[0], n);
-               Zmod_sub(x[0], x[0], x[skip], n);
+               ZmodF_add(x[0], x[0], x[0], n);
+               ZmodF_sub(x[0], x[0], x[skip], n);
             }
          }
       }
@@ -438,7 +438,7 @@ void _ZmodFpoly_IFFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
       {
          ZmodF_add(x[0], x[0], y[0], n);
       }
-      ZmodF_short_div2exp(x[0], x[0], cols_depth, n);
+      ZmodF_short_div_2exp(x[0], x[0], cols_depth, n);
    }
 }
 

@@ -176,10 +176,81 @@ void ZmodF_short_div_2exp(ZmodF_t b, ZmodF_t a,
       b must not alias a
 */
 static inline
-void ZmodF_mul_Bexp(ZmodF_t b, ZmodF_t a,
-                    unsigned long s, unsigned long n)
+void ZmodF_mul_Bexp(ZmodF_t b, ZmodF_t a, unsigned long s, unsigned long n)
 {
-   abort();
+   FLINT_ASSERT(s > 0);
+   FLINT_ASSERT(s < n);
+   FLINT_ASSERT(b != a);
+
+   // let a = ex*B^n + hi*B^(n-s) + lo,
+   // where  0 <= lo < B^(n-s)  and  0 <= hi < B^s  and  abs(ex) < B/2.
+   // Then the output should be  -ex*B^s + lo*B^s - hi  (mod p).
+
+   long i;
+   
+   // Put B^s - hi - 1 into b
+   i = s-1;
+   do b[i] = ~a[n-s+i]; while (--i >= 0);
+
+   // Put lo*B^s into b
+   i = n-s-1;
+   do b[i+s] = a[i]; while (--i >= 0);
+
+   // Put -B^n into b (to compensate mod p for -1 added in first loop)
+   b[n] = (mp_limb_t)(-1L);
+   
+   // Add (-ex-1)*B^s to b
+   signed_add_1(b+s, n-s+1, -a[n]-1);
+}
+
+
+/*
+   c := a - 2^(-Bs) b
+
+PRECONDITIONS:
+   0 < s < n
+   b must not alias c
+   a may alias b or c
+*/
+static inline
+void ZmodF_div_Bexp_sub(ZmodF_t c, ZmodF_t a, ZmodF_t b,
+                        unsigned long s, unsigned long n)
+{
+   FLINT_ASSERT(s > 0);
+   FLINT_ASSERT(s < n);
+   FLINT_ASSERT(b != c);
+
+   // add low limbs of b to high limbs of a
+   c[n] = a[n] + mpn_add_n(c+n-s, b, a+n-s, s);
+   // subtract high limbs of b from low limbs of a
+   mp_limb_t overflow = b[n] + mpn_sub_n(c, a, b+s, n-s);
+   // propagate overflow
+   signed_add_1(c+n-s, s+1, -overflow);
+}
+
+
+/*
+   c := a + 2^(-Bs) b
+
+   PRECONDITIONS:
+      0 < s < n
+      b must not alias c
+      a may alias b or c
+*/
+static inline
+void ZmodF_div_Bexp_add(ZmodF_t c, ZmodF_t a, ZmodF_t b,
+                        unsigned long s, unsigned long n)
+{
+   FLINT_ASSERT(s > 0);
+   FLINT_ASSERT(s < n);
+   FLINT_ASSERT(b != c);
+
+   // subtract low limbs of b from high limbs of a
+   c[n] = a[n] - mpn_sub_n(c+n-s, a+n-s, b, s);
+   // add high limbs of b to low limbs of a
+   mp_limb_t overflow = b[n] + mpn_add_n(c, a, b+s, n-s);
+   // propagate overflow
+   signed_add_1(c+n-s, s+1, overflow);
 }
 
 
@@ -194,9 +265,17 @@ static inline
 void ZmodF_sub_mul_Bexp(ZmodF_t c, ZmodF_t a, ZmodF_t b,
                         unsigned long s, unsigned long n)
 {
-   FLINT_ASSERT(s > 0 && s < n);
+   FLINT_ASSERT(s > 0);
+   FLINT_ASSERT(s < n);
+   FLINT_ASSERT(c != a);
+   FLINT_ASSERT(c != b);
 
-   abort();
+   // get low limbs of a - b into high limbs of c
+   c[n] = -mpn_sub_n(c+s, a, b, n-s);
+   // get high limbs of b - a into low limbs of c
+   mp_limb_t overflow = b[n] - a[n] - mpn_sub_n(c, b+n-s, a+n-s, s);
+   // propagate overflow
+   signed_add_1(c+s, n+1-s, overflow);
 }
 
 

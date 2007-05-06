@@ -128,6 +128,7 @@ Zpoly_mpn-test.o: Zpoly_mpn-test.c Zpoly_mpn.h Zpoly.h flint-manager.o
 Zpoly_mpn-test: Zpoly_mpn-test.o mpn_extras.o Zpoly.o Zpoly_mpn.o Zpoly.h flint-manager.o 
 	$(CC) Zpoly_mpn.o mpn_extras.o Zpoly.o Zpoly_mpn-test.o flint-manager.o -o Zpoly_mpn-test $(CFLAGS) $(LIBS)
 
+
 ZmodF.o: ZmodF.c ZmodF.h
 	$(CC) -c ZmodF.c -o ZmodF.o $(CFLAGS)
 	
@@ -136,6 +137,16 @@ ZmodF-test.o: ZmodF-test.c ZmodF.h
 
 ZmodF-test: ZmodF-test.o ZmodF.o
 	$(CC) ZmodF-test.o ZmodF.o -o ZmodF-test $(CFLAGS) $(LIBS)
+
+ZmodFpoly.o: ZmodFpoly.c ZmodFpoly.h ZmodF.h
+	$(CC) -c ZmodFpoly.c -o ZmodFpoly.o $(CFLAGS)
+	
+ZmodFpoly-test.o: ZmodFpoly-test.c ZmodFpoly.h ZmodF.h
+	$(CC) -c ZmodFpoly-test.c -o ZmodFpoly-test.o $(CFLAGS)
+
+ZmodFpoly-test: ZmodFpoly-test.o ZmodFpoly.o ZmodF.o
+	$(CC) ZmodFpoly-test.o ZmodFpoly.o ZmodF.o -o ZmodFpoly-test $(CFLAGS) $(LIBS)
+
 
 ssfft.o: ssfft.c ssfft.h
 	$(CC) -c ssfft.c -o ssfft.o $(CFLAGS)
