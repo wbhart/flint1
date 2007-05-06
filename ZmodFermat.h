@@ -53,7 +53,7 @@ void mpn_signed_add_1(mp_limb_t* x, unsigned long count, mp_limb_signed_t limb)
    (Note that the top limb will be set if and only if x = -1 mod p.)
 */
 static inline
-void ZmodFermat_normalise(ZmodF_t x, unsigned long n)
+void ZmodF_normalise(ZmodF_t x, unsigned long n)
 {
 }
 
@@ -61,11 +61,11 @@ void ZmodFermat_normalise(ZmodF_t x, unsigned long n)
 /*
    Adjusts x mod p so that the top limb is in the interval [-1, 1].
 
-   This in general will be faster then ZmodFermat_normalise(); in particular
+   This in general will be faster then ZmodF_normalise(); in particular
    the branching is much more predictable.
 */
 static inline
-void ZmodFermat_fast_reduce(ZmodF_t x, unsigned long n)
+void ZmodF_fast_reduce(ZmodF_t x, unsigned long n)
 {
 }
 
@@ -79,8 +79,8 @@ void ZmodFermat_fast_reduce(ZmodF_t x, unsigned long n)
 
 */
 static inline
-void ZmodFermat_short_div_2exp(ZmodF_t b, ZmodF_t a,
-                               unsigned long s, unsigned long n)
+void ZmodF_short_div_2exp(ZmodF_t b, ZmodF_t a,
+                          unsigned long s, unsigned long n)
 {
 }
 
@@ -95,8 +95,8 @@ void ZmodFermat_short_div_2exp(ZmodF_t b, ZmodF_t a,
 
 */
 static inline
-void ZmodFermat_mul_Bexp(ZmodF_t b, ZmodF_t a,
-                         unsigned long s, unsigned long n)
+void ZmodF_mul_Bexp(ZmodF_t b, ZmodF_t a,
+                    unsigned long s, unsigned long n)
 {
 }
 
@@ -112,8 +112,8 @@ void ZmodFermat_mul_Bexp(ZmodF_t b, ZmodF_t a,
    NOTE: a, b, z may get permuted
 
 */
-void ZmodFermat_simple_butterfly(ZmodF_t* a, ZmodF_t* b,
-                                 ZmodF_t* z, unsigned long n)
+void ZmodF_simple_butterfly(ZmodF_t* a, ZmodF_t* b,
+                            ZmodF_t* z, unsigned long n)
 {
 }
 
