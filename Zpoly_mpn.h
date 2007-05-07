@@ -70,6 +70,38 @@ typedef struct
 typedef Zpoly_mpn_struct Zpoly_mpn_t[1];
 typedef Zpoly_mpn_struct * Zpoly_mpn_p;
 
+#define NORM(coeff) \
+do { \
+   if ((coeff)[0]) \
+   { \
+      if ((long) (coeff)[0] < 0) \
+      { \
+         while ((!(coeff)[-(coeff)[0]]) && (coeff)[0]) (coeff)[0]++; \
+      } else \
+      { \
+         while ((!(coeff)[(coeff)[0]]) && (coeff)[0]) (coeff)[0]--; \
+      } \
+   } \
+} while (0);
+
+#define ABS(x) (((long) x < 0) ? -x : x)
+
+#define SWAP(x_dummy, y_dummy) \
+do { \
+   Zpoly_mpn_p swap_temp = x_dummy; \
+   x_dummy = y_dummy; \
+   y_dummy = swap_temp; \
+} while(0);
+
+#define SWAP_PTRS(x_dummy_p, y_dummy_p) \
+do { \
+   mp_limb_t * swap_temp_p = x_dummy_p; \
+   x_dummy_p = y_dummy_p; \
+   y_dummy_p = swap_temp_p; \
+} while(0);
+
+
+
 /*============================================================================
   
     Functions in _Zpoly_mpn_* layer
@@ -175,6 +207,10 @@ int _Zpoly_mpn_equal(Zpoly_mpn_p input1, Zpoly_mpn_p input2);
 void _Zpoly_mpn_negate(Zpoly_mpn_t output, Zpoly_mpn_t input);
 
 void _Zpoly_mpn_add(Zpoly_mpn_t output, Zpoly_mpn_t input1, Zpoly_mpn_t input2);
+
+void __Zpoly_mpn_add_coeff_ui(mp_limb_t * output, unsigned long x);
+
+void __Zpoly_mpn_sub_coeff_ui(mp_limb_t * output, unsigned long x);
 
 void _Zpoly_mpn_sub(Zpoly_mpn_t output, Zpoly_mpn_t input1, Zpoly_mpn_t input2);
 
