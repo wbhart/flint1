@@ -66,7 +66,7 @@ void ZmodF_fast_reduce(ZmodF_t a, unsigned long n)
    a := 0
 */
 static inline
-void ZmodF_clear(ZmodF_t a, unsigned long n)
+void ZmodF_zero(ZmodF_t a, unsigned long n)
 {
    long i = n;
    do a[i] = 0; while (--i >= 0);

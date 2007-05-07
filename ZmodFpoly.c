@@ -495,7 +495,7 @@ void ZmodFpoly_FFT(ZmodFpoly_t poly, unsigned long length)
       {
          // input is zero, so output is zero too
          for (unsigned long i = 0; i < length; i++)
-            ZmodF_clear(poly->coeffs[i], poly->n);
+            ZmodF_zero(poly->coeffs[i], poly->n);
       }
       else
       {
@@ -560,7 +560,7 @@ void ZmodFpoly_negacyclic_FFT(ZmodFpoly_t poly, unsigned long length)
       {
          // input is zero, so output is zero too
          for (unsigned long i = 0; i < length; i++)
-            ZmodF_clear(poly->coeffs[i], poly->n);
+            ZmodF_zero(poly->coeffs[i], poly->n);
       }
       else
       {

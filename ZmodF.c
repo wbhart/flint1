@@ -86,7 +86,7 @@ void ZmodF_sqr(ZmodF_t res, ZmodF_t a, mp_limb_t* scratch, unsigned long n)
       if (a == res)
          res[n] = 0;
       else
-         ZmodF_clear(res, n);
+         ZmodF_zero(res, n);
       res[0] = 1;
    }
    else
