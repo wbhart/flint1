@@ -93,7 +93,7 @@ void ZmodFpoly_convert_out_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn)
 
    for (unsigned long i = 0, j = 0; i < poly_f->length; i++, j += size_m)
    {
-      ZmodF_normalise(coeffs_f[i], size_f-1);
+      ZmodF_normalise(coeffs_f[i], n);
       if (coeffs_f[i][n-1]>>(FLINT_BITS_PER_LIMB-1))
       {
          negate_limbs(coeffs_m + j + 1, coeffs_f[i], n);

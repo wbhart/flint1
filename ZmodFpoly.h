@@ -113,10 +113,13 @@ void ZmodFpoly_convert_in_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn);
 
 
 /* 
-   Converts ZmodFpoly "poly_f" to a Zpoly_mpn_t. 
+   Normalise and converts ZmodFpoly "poly_f" to a Zpoly_mpn_t. 
    
    Each coefficient of poly_f is assumed to fit into a coefficient 
    of poly_mpn. 
+   
+   The normalisation ensures that this function is the inverse of 
+   ZmodFpoly_convert_in_mpn.
 */
 
 void ZmodFpoly_convert_out_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn);
