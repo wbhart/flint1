@@ -280,6 +280,30 @@ void ZmodF_sub_mul_Bexp(ZmodF_t c, ZmodF_t a, ZmodF_t b,
 
 
 /*
+   b := B^s (1 - B^(n/2)) a
+   
+   PRECONDITIONS:
+      0 <= s < 2n
+      n must be odd
+      b must not alias a
+*/
+void ZmodF_mul_pseudosqrt2_n_odd(ZmodF_t b, ZmodF_t a,
+                                 unsigned long s, unsigned long n);
+
+
+/*
+   b := B^s (1 - B^(n/2)) a
+   
+   PRECONDITIONS:
+      0 <= s < 2n
+      n must be even
+      b must not alias a
+*/
+void ZmodF_mul_pseudosqrt2_n_even(ZmodF_t b, ZmodF_t a,
+                                  unsigned long s, unsigned long n);
+
+
+/*
    b := 2^s a
 
    PRECONDITIONS:
@@ -291,16 +315,12 @@ void ZmodF_mul_2exp(ZmodF_t b, ZmodF_t a, unsigned long s, unsigned long n);
 
 /*
    b := 2^(s/2) a
-   z := destroyed
 
    PRECONDITIONS:
       0 <= s < 2*n*FLINT_BITS_PER_LIMB
-      a may alias z (in which case a gets destroyed)
-      b may not alias a or z
 
-   NOTE: a, b, z may get permuted
 */
-void ZmodF_mul_sqrt2exp(ZmodF_t* b, ZmodF_t* a, ZmodF_t* z,
+void ZmodF_mul_sqrt2exp(ZmodF_t b, ZmodF_t a,
                         unsigned long s, unsigned long n);
 
 

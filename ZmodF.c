@@ -15,6 +15,45 @@
 #include "ZmodF.h"
 
 
+/*
+For odd s, finds "limbs" and "bits" such that 2^(s/2) is decomposed into
+  2^(-bits) * B^limbs * (1 - B^(n/2)),
+where 0 <= bits < FLINT_BITS_PER_LIMB, and 0 <= limbs < 2n.
+
+i.e. we are decomposing a rotation involving a sqrt2 into a fractional
+limbshift and a pseudosqrt2 call.
+
+PRECONDIITONS:
+   s must be odd
+   0 <= s < 2n*FLINT_BITS_PER_LIMB
+*/
+void ZmodF_decompose_rotation(unsigned long* limbs, unsigned long* bits,
+                              unsigned long s, unsigned long n)
+{
+   FLINT_ASSERT(s & 1);
+   FLINT_ASSERT(s < 2*n*FLINT_BITS_PER_LIMB);
+
+   // first split into 2^r * (1 - B^(n/2))
+   unsigned long r = (s >> 1) - 3*n*FLINT_BITS_PER_LIMB/4;
+   if ((long)r < 0)
+      r += 2*n*FLINT_BITS_PER_LIMB;
+
+   // now split 2^r into 2^(-bits) and B^limbs
+   unsigned long z = r & (FLINT_BITS_PER_LIMB - 1);
+   r /= FLINT_BITS_PER_LIMB;
+   if (z)
+   {
+      *bits = FLINT_BITS_PER_LIMB - z;
+      if (++r == 2*n)
+         r = 0;
+   }
+   else
+      *bits = 0;
+
+   *limbs = r;
+}
+
+
 void ZmodF_normalise(ZmodF_t a, unsigned long n)
 {
    mp_limb_t hi = a[n];
@@ -127,19 +166,27 @@ void ZmodF_mul_2exp(ZmodF_t b, ZmodF_t a, unsigned long s, unsigned long n)
 }
 
 
-void ZmodF_mul_sqrt2exp(ZmodF_t* b, ZmodF_t* a, ZmodF_t* z,
+void ZmodF_mul_sqrt2exp(ZmodF_t b, ZmodF_t a,
                         unsigned long s, unsigned long n)
 {
    FLINT_ASSERT(s < 2*n*FLINT_BITS_PER_LIMB);
-   FLINT_ASSERT(*a != *b);
-   FLINT_ASSERT(*b != *z);
-   FLINT_ASSERT(*a != *z);
+   FLINT_ASSERT(a != b);
 
    if (s & 1)
-      // not implemented yet
-      abort();
+   {
+      unsigned long limbs, bits;
+      ZmodF_decompose_rotation(&limbs, &bits, s, n);
       
-   ZmodF_mul_2exp(*b, *a, s >> 1, n);
+      if (n & 1)
+         ZmodF_mul_pseudosqrt2_n_odd(b, a, limbs, n);
+      else
+         ZmodF_mul_pseudosqrt2_n_even(b, a, limbs, n);
+         
+      if (bits)
+         ZmodF_short_div_2exp(b, b, bits, n);
+   }
+   else
+      ZmodF_mul_2exp(b, a, s >> 1, n);
 }
 
 
@@ -173,6 +220,219 @@ void ZmodF_sub_mul_2exp(ZmodF_t c, ZmodF_t a, ZmodF_t b,
 }
 
 
+void ZmodF_mul_pseudosqrt2_n_odd(ZmodF_t b, ZmodF_t a,
+                                 unsigned long s, unsigned long n)
+{
+   // todo: this is not optimised yet
+
+   FLINT_ASSERT(a != b);
+   FLINT_ASSERT((n & 1) == 1);
+   FLINT_ASSERT(s < 2*n);
+   
+   // first multiply by -B^(s+(n+1)/2) from a into b
+   unsigned long limbs = s + (n+1)/2 + n;
+   while (limbs >= 2*n)
+      limbs -= 2*n;
+
+   if (limbs == 0)
+      ZmodF_set(b, a, n);
+   else if (limbs < n)
+      ZmodF_mul_Bexp(b, a, limbs, n);
+   else if (limbs == n)
+      ZmodF_neg(b, a, n);
+   else
+   {
+      ZmodF_mul_Bexp(b, a, limbs - n, n);
+      ZmodF_neg(b, b, n);
+   }
+   
+   // Divide by B^(n/2)
+   ZmodF_short_div_2exp(b, b, FLINT_BITS_PER_LIMB / 2, n);
+   
+   // Now add in B^s a
+   if (s == 0)
+      ZmodF_add(b, b, a, n);
+   else if (s < n)
+      ZmodF_div_Bexp_sub(b, b, a, n - s, n);
+   else if (s == n)
+      ZmodF_sub(b, b, a, n);
+   else
+      ZmodF_div_Bexp_add(b, b, a, 2*n - s, n);
+}
+
+
+void ZmodF_mul_pseudosqrt2_n_even(ZmodF_t b, ZmodF_t a,
+                                  unsigned long s, unsigned long n)
+{
+   FLINT_ASSERT(a != b);
+   FLINT_ASSERT((n & 1) == 0);
+   FLINT_ASSERT(s < 2*n);
+   
+   mp_limb_t carry;
+
+   if (s < n)
+   {
+      if (s < n/2)
+      {
+         if (s)
+         {
+            // We're computing B^s * (1 - B^(n/2)) * a.
+            // If input is
+            // 0                   n/2-s     n/2                   n-s       n
+            // |         x0          |   y0   |         x1          |   y1   |
+            // then output should be
+            // 0        s                    n/2     n/2+s                   n
+            // |  y0-y1 |        x0+x1        | y0+y1  |       -x0+x1        |
+
+            // Store x1 - x0
+            b[n] = -mpn_sub_n(b+n/2+s, a+n/2, a, n/2-s);
+            // Store x0 + x1 and y0 + y1
+            carry = mpn_add_n(b+s, a, a+n/2, n/2);
+            signed_add_1(b+s+n/2, n/2-s+1, carry + a[n]);
+            // Store y0 - y1
+            carry = mpn_sub_n(b, a+n/2-s, a+n-s, s);
+            signed_add_1(b+s, n-s+1, -a[n] - carry);
+         }
+         else
+         {
+            // Special case for s = 0.
+
+            // Store x1 - x0
+            b[n] = a[n] - mpn_sub_n(b+n/2, a+n/2, a, n/2);
+            // Store x0 + x1
+            carry = mpn_add_n(b, a, a+n/2, n/2);
+            signed_add_1(b+n/2, n/2+1, carry + a[n]);
+         }
+      }
+      else
+      {
+         s -= n/2;
+      
+         if (s)
+         {
+            // We're computing B^s * (1 + B^(n/2)) * a.
+            // If input is
+            // 0                   n/2-s     n/2                   n-s       n
+            // |         x0          |   y0   |         x1          |   y1   |
+            // then output should be
+            // 0        s                    n/2     n/2+s                   n
+            // | -y0-y1 |        x0-x1        | y0-y1  |       x0+x1         |
+            
+            // Store x0 + x1
+            // (the -1 compensates mod p for the bottom bit of the complement)
+            b[n] = mpn_add_n(b+s+n/2, a, a+n/2, n-s-n/2) - 1;
+            // Store x0 - x1 and y0 - y1
+            carry = mpn_sub_n(b+s, a, a+n/2, n/2);
+            signed_add_1(b+s+n/2, n/2-s+1, -a[n] - carry);
+            // Store -y0 - y1
+            carry = mpn_add_n(b, a+n/2-s, a+n-s, s);
+            // (the -1 compensates for the top bit of the complement)
+            signed_add_1(b+s, n-s+1, -a[n] - carry - 1);
+            long i = s-1;
+            do b[i] = ~b[i]; while (--i >= 0);
+         }
+         else
+         {
+            // Special case for s = 0.
+
+            // Store x0 + x1
+            b[n] = a[n] + mpn_add_n(b+n/2, a, a+n/2, n/2);
+            // Store x0 - x1
+            carry = mpn_sub_n(b, a, a+n/2, n/2);
+            signed_add_1(b+n/2, n/2+1, -a[n] - carry);
+         }
+      }
+   }
+   else
+   {
+      s -= n;
+
+      if (s < n/2)
+      {
+         if (s)
+         {
+            // We're computing B^s * (-1 + B^(n/2)) * a.
+            // If input is
+            // 0                   n/2-s     n/2                   n-s       n
+            // |         x0          |   y0   |         x1          |   y1   |
+            // then output should be
+            // 0        s                    n/2     n/2+s                   n
+            // | -y0+y1 |       -x0-x1        | -y0-y1 |        x0-x1        |
+            
+            // Store x0 - x1
+            b[n] = -mpn_sub_n(b+n/2+s, a, a+n/2, n/2-s);
+            // Store -x0 - x1 and -y0 - y1
+            carry = mpn_add_n(b+s, a, a+n/2, n/2);
+            // (the -1 compensates for the top bit of the complement)
+            signed_add_1(b+n/2+s, n/2-s+1, -a[n] - carry - 1);
+            long i = n/2-1;
+            do b[s+i] = ~b[s+i]; while (--i >= 0);
+            // Store y1 - y0
+            carry = mpn_sub_n(b, a+n-s, a+n/2-s, s);
+            // (the +1 compensates for the bottom bit of the complement)
+            signed_add_1(b+s, n-s+1, a[n] - carry + 1);
+         }
+         else
+         {
+            // Special case for s = 0.
+
+            // Store x0 - x1
+            // (the -1 compensates mod p for the bottom bit of the complement)
+            b[n] = -mpn_sub_n(b+n/2, a, a+n/2, n/2) - a[n] - 1;
+            // Store -x0 - x1
+            carry = mpn_add_n(b, a, a+n/2, n/2);
+            // (the -1 compensates for the top bit of the complement)
+            signed_add_1(b+n/2, n/2+1, -a[n] - carry - 1);
+            long i = n/2-1;
+            do b[i] = ~b[i]; while (--i >= 0);
+         }
+      }
+      else
+      {
+         s -= n/2;
+      
+         if (s)
+         {
+            // We're computing B^s * (-1 - B^(n/2)) * a.
+            // If input is
+            // 0                   n/2-s     n/2                   n-s       n
+            // |         x0          |   y0   |         x1          |   y1   |
+            // then output should be
+            // 0        s                    n/2     n/2+s                   n
+            // |  y0+y1 |       -x0+x1        | -y0+y1 |      -x0-x1         |
+
+            // Store -x0 - x1
+            // (the -1 compensates for the top bit of the complement)
+            b[n] = -mpn_add_n(b+n/2+s, a, a+n/2, n/2-s) - 1;
+            long i = n/2-s-1;
+            do b[n/2+s+i] = ~b[n/2+s+i]; while (i-- >= 0);
+            // Store x1 - x0 and y1 - y0
+            carry = mpn_sub_n(b+s, a+n/2, a, n/2);
+            // (the +1 compensates for the bottom bit of the complement)
+            signed_add_1(b+n/2+s, n/2-s+1, a[n] - carry + 1);
+            // Store y0 + y1
+            carry = mpn_add_n(b, a+n/2-s, a+n-s, s);
+            signed_add_1(b+s, n-s+1, a[n] + carry);
+         }
+         else
+         {
+            // Special case for s = 0.
+            
+            // Store -x0 - x1
+            // (the -1 compensates for the top bit of the complement)
+            b[n] = -mpn_add_n(b+n/2, a, a+n/2, n/2) - a[n] - 1;
+            long i = n/2-1;
+            do b[n/2+i] = ~b[n/2+i]; while (i-- >= 0);
+            // Store x1 - x0
+            carry = mpn_sub_n(b, a+n/2, a, n/2);
+            // (the +1 compensates for the bottom bit of the complement)
+            signed_add_1(b+n/2, n/2+1, a[n] - carry + 1);
+         }
+      }
+   }
+}
+
+
 void ZmodF_forward_butterfly_2exp(ZmodF_t* a, ZmodF_t* b, ZmodF_t* z,
                                   unsigned long s, unsigned long n)
 {
@@ -196,10 +456,31 @@ void ZmodF_forward_butterfly_sqrt2exp(ZmodF_t* a, ZmodF_t* b, ZmodF_t* z,
    FLINT_ASSERT(*a != *z);
 
    if (s & 1)
-      // not implemented yet
-      abort();
+   {
+      unsigned long limbs, bits;
+      ZmodF_decompose_rotation(&limbs, &bits, s, n);
       
-   ZmodF_forward_butterfly_2exp(a, b, z, s >> 1, n);
+      if (limbs == 0)
+         ZmodF_sub(*z, *a, *b, n);
+      else if (limbs < n)
+         ZmodF_sub_mul_Bexp(*z, *a, *b, limbs, n);
+      else if (limbs == n)
+         ZmodF_sub(*z, *b, *a, n);
+      else
+         ZmodF_sub_mul_Bexp(*z, *b, *a, limbs, n);
+      
+      ZmodF_add(*a, *a, *b, n);
+      
+      if (n & 1)
+         ZmodF_mul_pseudosqrt2_n_odd(*b, *z, 0, n);
+      else
+         ZmodF_mul_pseudosqrt2_n_even(*b, *z, 0, n);
+         
+      if (bits)
+         ZmodF_short_div_2exp(*b, *b, bits, n);
+   }
+   else
+      ZmodF_forward_butterfly_2exp(a, b, z, s >> 1, n);
 }
 
 
@@ -208,8 +489,8 @@ void ZmodF_inverse_butterfly_2exp(ZmodF_t* a, ZmodF_t* b, ZmodF_t* z,
 {
    FLINT_ASSERT(s < n*FLINT_BITS_PER_LIMB);
    FLINT_ASSERT(*a != *b);
-   FLINT_ASSERT(*b != *scratch);
-   FLINT_ASSERT(*a != *scratch);
+   FLINT_ASSERT(*b != *z);
+   FLINT_ASSERT(*a != *z);
 
    unsigned long bits = s & (FLINT_BITS_PER_LIMB - 1);
    if (bits)
@@ -241,10 +522,42 @@ void ZmodF_inverse_butterfly_sqrt2exp(ZmodF_t* a, ZmodF_t* b, ZmodF_t* z,
    FLINT_ASSERT(*a != *z);
 
    if (s & 1)
-      // not implemented yet
-      abort();
+   {
+      unsigned long limbs, bits;
+      ZmodF_decompose_rotation(&limbs, &bits, 2*n*FLINT_BITS_PER_LIMB - s, n);
       
-   ZmodF_inverse_butterfly_2exp(a, b, z, s >> 1, n);
+      if (n & 1)
+         ZmodF_mul_pseudosqrt2_n_odd(*z, *b, 0, n);
+      else
+         ZmodF_mul_pseudosqrt2_n_even(*z, *b, 0, n);
+      
+      if (bits)
+         ZmodF_short_div_2exp(*z, *z, bits, n);
+
+      if (limbs == 0)
+      {
+         ZmodF_sub(*b, *a, *z, n);
+         ZmodF_add(*a, *a, *z, n);
+      }
+      else if (limbs < n)
+      {
+         ZmodF_div_Bexp_add(*b, *a, *z, n - limbs, n);
+         ZmodF_div_Bexp_sub(*a, *a, *z, n - limbs, n);
+      }
+      else if (limbs == n)
+      {
+         ZmodF_add(*b, *a, *z, n);
+         ZmodF_sub(*a, *a, *z, n);
+      }
+      else
+      {
+         ZmodF_div_Bexp_sub(*b, *a, *z, 2*n - limbs, n);
+         ZmodF_div_Bexp_add(*a, *a, *z, 2*n - limbs, n);
+      }
+   }
+   else
+      ZmodF_inverse_butterfly_2exp(a, b, z, s >> 1, n);
 }
+
 
 // end of file ****************************************************************
