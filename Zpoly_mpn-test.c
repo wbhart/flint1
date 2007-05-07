@@ -1349,8 +1349,8 @@ int test_Zpoly_mpn_mul_karatsuba()
       Zpoly_mpn_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
       Zpoly_mpn_init(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS_PER_LIMB+1);
       
-      length2 = gmp_urandomm_ui(Zpoly_test_randstate,2000)+1; 
-      length = gmp_urandomm_ui(Zpoly_test_randstate,20)+1;   
+      length2 = gmp_urandomm_ui(Zpoly_test_randstate,200)+1; 
+      length = gmp_urandomm_ui(Zpoly_test_randstate,200)+1;   
 #if DEBUG
       printf("length = %ld, length2 = %ld, bits = %ld, bits2 = %ld\n", length, length2, bits, bits2);
 #endif

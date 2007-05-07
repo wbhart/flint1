@@ -23,37 +23,6 @@ Copyright (C) 2007, William Hart and David Harvey
 
 ****************************************************************************/
 
-#define NORM(coeff) \
-do { \
-   if ((coeff)[0]) \
-   { \
-      if ((long) (coeff)[0] < 0) \
-      { \
-         while ((!(coeff)[-(coeff)[0]]) && (coeff)[0]) (coeff)[0]++; \
-      } else \
-      { \
-         while ((!(coeff)[(coeff)[0]]) && (coeff)[0]) (coeff)[0]--; \
-      } \
-   } \
-} while (0);
-
-#define ABS(x) (((long) x < 0) ? -x : x)
-
-#define SWAP(x_dummy, y_dummy) \
-do { \
-   Zpoly_mpn_p swap_temp = x_dummy; \
-   x_dummy = y_dummy; \
-   y_dummy = swap_temp; \
-} while(0);
-
-#define SWAP_PTRS(x_dummy_p, y_dummy_p) \
-do { \
-   mp_limb_t * swap_temp_p = x_dummy_p; \
-   x_dummy_p = y_dummy_p; \
-   y_dummy_p = swap_temp_p; \
-} while(0);
-
-
 void _Zpoly_mpn_convert_out(Zpoly_t poly_mpz, Zpoly_mpn_t poly_mpn)
 {
    FLINT_ASSERT(poly_mpz->alloc >= poly_mpn->length);
@@ -885,6 +854,14 @@ void __Zpoly_mpn_karamul_recursive(Zpoly_mpn_t res, Zpoly_mpn_t a, Zpoly_mpn_t b
       
       return;
    }
+   
+   /*if ((a->length <= 4) || (b->length <= 4)) 
+   {
+      _Zpoly_mpn_mul_naive(res, a, b);
+      
+      return;
+   }*/
+
 
    /* 
       As we may have dirty limbs in our res polynomial (it might be part of the
@@ -1009,7 +986,7 @@ void _Zpoly_mpn_mul_karatsuba(Zpoly_mpn_t output, Zpoly_mpn_t input1, Zpoly_mpn_
    scratch->coeffs = (mp_limb_t *) limb_alloc(5*FLINT_MAX(input1->length,input2->length)*(limbs+1),0);
    scratch->limbs = limbs;
    scratchb->limbs = FLINT_MAX(input1->limbs,input2->limbs)+1;
-   scratchb->coeffs = (mp_limb_t *) limb_alloc(5*FLINT_MAX(input1->length,input2->length)*(scratchb->limbs+2),0);
+   scratchb->coeffs = (mp_limb_t *) limb_alloc(5*FLINT_MAX(input1->length,input2->length)*(scratchb->limbs+1),0);
    
    if (input1->length >= input2->length)
        __Zpoly_mpn_karamul_recursive(output, input1, input2, scratch, scratchb);

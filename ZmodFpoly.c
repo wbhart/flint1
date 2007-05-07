@@ -13,6 +13,7 @@ Copyright (C) 2007, William Hart and David Harvey
 #include "flint.h"
 #include "flint-manager.h"
 #include "ZmodFpoly.h"
+#include "Zpoly_mpn.h"
 
 
 /****************************************************************************
@@ -61,12 +62,51 @@ void ZmodFpoly_clear(ZmodFpoly_t poly)
 
 void ZmodFpoly_convert_in_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn)
 {
-   abort();
+   unsigned long size_f = poly_f->n + 1;
+   unsigned long size_m = poly_mpn->limbs+1;
+   unsigned long coeffs_m = poly_mpn->coeffs;
+   unsigned long coeffs_f = poly_f->coeffs;
+   
+   long size_j;
+   
+   for (unsigned long i = 0, j = 0; i < poly_mpn->length; i++, j += size_m)
+   {
+      if ((size_j = coeffs_m[j]) < 0)
+      {
+         negate_limbs(coeffs_f[i], coeffs_m + j + 1, ABS(size_j)); 
+         set_limbs(coeffs_f[i] + ABS(size_j), size_f - ABS(size_j)); 
+      } else
+      {
+         copy_limbs(coeffs_f[i], coeffs_m + j + 1, ABS(size_j)); 
+         clear_limbs(coeffs_f[i] + ABS(size_j), size_f - ABS(size_j)); 
+      }
+   }
+   poly_f->length = poly_mpn->length;   
 }
 
 void ZmodFpoly_convert_out_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn)
 {
-   abort();
+   unsigned long n = poly_f->n;
+   unsigned long size_m = poly_mpn->limbs+1;
+   unsigned long coeffs_m = poly_mpn->coeffs;
+   unsigned long coeffs_f = poly_f->coeffs;
+
+   for (unsigned long i = 0, j = 0; i < poly_f->length; i++, j += size_m)
+   {
+      ZmodF_normalise(coeffs_f[i], size_f-1);
+      if (coeffs_f[i][n-1]>>(FLINT_BITS_PER_LIMB-1))
+      {
+         negate_limbs(coeffs_m + j + 1, coeffs_f[i], n);
+         mpn_add_1(coeffs_m + j + 1, coeffs_m + j + 1, n, 1L);
+         coeffs_m[j] = -n;
+         NORM(coeffs_m + j);
+      } else
+      {
+         copy_limbs(coeffs_m + j + 1, coeffs_f[i], n);
+         coeffs_m[j] = n;
+         NORM(coeffs_m + j);         
+      }
+   }
 }
 
 void ZmodFpoly_bit_pack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
