@@ -71,7 +71,7 @@ int test_ZmodFpoly_convert()
    
    Zpoly_init(test_poly); 
    Zpoly_init(test_poly2); 
-   for (unsigned long count1 = 1; (count1 < 100) && (result == 1) ; count1++)
+   for (unsigned long count1 = 1; (count1 < 1000) && (result == 1) ; count1++)
    {
       bits = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 1;
       
@@ -88,7 +88,7 @@ int test_ZmodFpoly_convert()
           Zpoly_mpn_realloc(test_mpn_poly, length);
           Zpoly_mpn_realloc(test_mpn_poly2, length);
           Zpoly_realloc(test_poly2, length);
-          randpoly(test_poly, length, bits); 
+          randpoly(test_poly, length, bits-1); 
 #if DEBUG
           for (unsigned j = 0; j < test_poly->length; j++)
              gmp_printf("%Zd, ",test_poly->coeffs[j]);

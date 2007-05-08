@@ -148,7 +148,7 @@ void ZmodFpoly_bit_pack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
    "bits" is assumed to be less than FLINT_BITS_PER_LIMB.
 */ 
    
-void ZmodFpoly_bit_unpack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
+void ZmodFpoly_bit_unpack_mpn(Zpoly_mpn_t poly_mpn, ZmodFpoly_t poly_f, 
      unsigned long bundle, unsigned long bits);
 
      

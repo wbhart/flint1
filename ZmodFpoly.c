@@ -96,7 +96,7 @@ void ZmodFpoly_convert_out_mpn(Zpoly_mpn_t poly_mpn, ZmodFpoly_t poly_f)
    for (unsigned long i = 0, j = 0; i < poly_f->length; i++, j += size_m)
    {
       ZmodF_normalise(coeffs_f[i], n);
-      if (coeffs_f[i][n-1]>>(FLINT_BITS_PER_LIMB-1))
+      if (coeffs_f[i][n-1]>>(FLINT_BITS_PER_LIMB-1) || coeffs_f[i][n])
       {
          negate_limbs(coeffs_m + j + 1, coeffs_f[i], n);
          mpn_add_1(coeffs_m + j + 1, coeffs_m + j + 1, n, 1L);
@@ -109,6 +109,8 @@ void ZmodFpoly_convert_out_mpn(Zpoly_mpn_t poly_mpn, ZmodFpoly_t poly_f)
          NORM(coeffs_m + j);         
       }
    }
+   poly_mpn->length = poly_f->length;   
+
 }
 
 static inline long __get_next_coeff(mp_limb_t * coeff_m, long * borrow, long mask)
@@ -247,7 +249,7 @@ void ZmodFpoly_bit_pack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
 }
 
 
-void ZmodFpoly_bit_unpack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
+void ZmodFpoly_bit_unpack_mpn(Zpoly_mpn_t poly_mpn, ZmodFpoly_t poly_f, 
                               unsigned long bundle, unsigned long bits)
 {
    unsigned long k, l, skip;
