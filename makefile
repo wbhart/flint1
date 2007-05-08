@@ -144,8 +144,8 @@ ZmodFpoly.o: ZmodFpoly.c ZmodFpoly.h ZmodF.h
 ZmodFpoly-test.o: ZmodFpoly-test.c ZmodFpoly.h ZmodF.h
 	$(CC) -c ZmodFpoly-test.c -o ZmodFpoly-test.o $(CFLAGS)
 
-ZmodFpoly-test: ZmodFpoly-test.o ZmodFpoly.o ZmodF.o
-	$(CC) ZmodFpoly-test.o ZmodFpoly.o ZmodF.o -o ZmodFpoly-test $(CFLAGS) $(LIBS)
+ZmodFpoly-test: Zpoly_mpn.o flint-manager.o mpn_extras.o ZmodFpoly-test.o ZmodFpoly.o ZmodF.o
+	$(CC) Zpoly_mpn.o flint-manager.o mpn_extras.o ZmodFpoly-test.o ZmodFpoly.o ZmodF.o -o ZmodFpoly-test $(CFLAGS) $(LIBS)
 
 
 ssfft.o: ssfft.c ssfft.h

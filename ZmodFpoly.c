@@ -494,7 +494,7 @@ void _ZmodFpoly_FFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
       else   // length == 2
       {
          if (nonzero == 1)
-            ZmodF_mul_sqrt2exp(x+skip, x, scratch, twist, n);
+            ZmodF_mul_sqrt2exp(x[skip], x[0], twist, n);
          else  // nonzero == 2
             ZmodF_forward_butterfly_sqrt2exp(x, x+skip, scratch, twist, n);
       }
@@ -597,7 +597,7 @@ void _ZmodFpoly_IFFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
          if (nonzero == 1)
          {
             if (extra)
-               ZmodF_mul_sqrt2exp(x + skip, x, scratch, twist, n);
+               ZmodF_mul_sqrt2exp(x[skip], x[0], twist, n);
             ZmodF_add(x[0], x[0], x[0], n);
          }
          else  // nonzero == 2
@@ -606,7 +606,7 @@ void _ZmodFpoly_IFFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
             {
                ZmodF_sub(scratch[0], x[0], x[skip], n);
                ZmodF_add(x[0], x[0], scratch[0], n);
-               ZmodF_mul_sqrt2exp(x + skip, scratch, scratch, twist, n);
+               ZmodF_mul_sqrt2exp(x[skip], scratch[0], twist, n);
             }
             else
             {
@@ -702,7 +702,7 @@ void ZmodFpoly_FFT(ZmodFpoly_t poly, unsigned long length)
       {
          // input is zero, so output is zero too
          for (unsigned long i = 0; i < length; i++)
-            ZmodF_clear(poly->coeffs[i], poly->n);
+            ZmodF_zero(poly->coeffs[i], poly->n);
       }
       else
       {
@@ -757,6 +757,9 @@ void ZmodFpoly_convolution(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y)
 
 void ZmodFpoly_negacyclic_FFT(ZmodFpoly_t poly, unsigned long length)
 {
+   // todo: I *think* this code is wrong
+   abort();
+      
    // check the right roots of unity are available
    FLINT_ASSERT((2 * poly->n * FLINT_BITS_PER_LIMB) % (1 << poly->depth) == 0);
    FLINT_ASSERT(poly->scratch_count >= 1);
@@ -767,7 +770,7 @@ void ZmodFpoly_negacyclic_FFT(ZmodFpoly_t poly, unsigned long length)
       {
          // input is zero, so output is zero too
          for (unsigned long i = 0; i < length; i++)
-            ZmodF_clear(poly->coeffs[i], poly->n);
+            ZmodF_zero(poly->coeffs[i], poly->n);
       }
       else
       {
@@ -783,14 +786,19 @@ void ZmodFpoly_negacyclic_FFT(ZmodFpoly_t poly, unsigned long length)
 
 void ZmodFpoly_negacyclic_IFFT(ZmodFpoly_t poly)
 {
+   // todo: I *think* this code is wrong
+   abort();
+      
    // check the right roots of unity are available
    FLINT_ASSERT((2 * poly->n * FLINT_BITS_PER_LIMB) % (1 << poly->depth) == 0);
    FLINT_ASSERT(poly->scratch_count >= 1);
 
    if (poly->length != 0)
+   {
       _ZmodFpoly_IFFT(poly->coeffs, poly->depth, 1, poly->length, poly->length,
                       0, (2 * poly->n * FLINT_BITS_PER_LIMB) >> poly->depth,
                       poly->n, poly->scratch);
+   }
 }
 
 

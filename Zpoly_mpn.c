@@ -338,7 +338,7 @@ void __Zpoly_mpn_add_coeff_ui(mp_limb_t * output, unsigned long x)
       output[0] = 1;
    } else if ((long) output[0] > 0)
    {
-      carry = mpn_add_1(output + 1, output[0], x); 
+      carry = mpn_add_1(output + 1, output + 1, output[0], x); 
       if (carry)
       {
          output[output[0]] = carry;
@@ -346,7 +346,7 @@ void __Zpoly_mpn_add_coeff_ui(mp_limb_t * output, unsigned long x)
       }
    } else if ((long) output[0] < -1L)
    {
-      mpn_sub_1(output + 1, ABS(output[0]), x); 
+      mpn_sub_1(output + 1, output + 1, ABS(output[0]), x); 
       NORM(output);
    } else
    {
@@ -372,7 +372,7 @@ void __Zpoly_mpn_sub_coeff_ui(mp_limb_t * output, unsigned long x)
       output[0] = -1L;
    } else if ((long) output[0] < 0)
    {
-      carry = mpn_add_1(output + 1, output[0], x); 
+      carry = mpn_add_1(output + 1, output + 1, output[0], x); 
       if (carry)
       {
          output[output[0]] = carry;
@@ -380,7 +380,7 @@ void __Zpoly_mpn_sub_coeff_ui(mp_limb_t * output, unsigned long x)
       }
    } else if ((long) output[0] > 1L)
    {
-      mpn_sub_1(output + 1, ABS(output[0]), x); 
+      mpn_sub_1(output + 1, output + 1, ABS(output[0]), x); 
       NORM(output);
    } else
    {
