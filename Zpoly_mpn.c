@@ -332,33 +332,36 @@ void __Zpoly_mpn_add_coeff_ui(mp_limb_t * output, unsigned long x)
 {
    unsigned long carry;
    
-   if (!output[0])
+   if (x)
    {
-      output[1] = x;
-      output[0] = 1;
-   } else if ((long) output[0] > 0)
-   {
-      carry = mpn_add_1(output + 1, output + 1, output[0], x); 
-      if (carry)
+      if (!output[0])
       {
-         output[output[0]] = carry;
-         output[0]++;
-      }
-   } else if ((long) output[0] < -1L)
-   {
-      mpn_sub_1(output + 1, output + 1, ABS(output[0]), x); 
-      NORM(output);
-   } else
-   {
-      if (x <= output[1]) 
+         output[1] = x;
+         output[0] = 1;
+      } else if ((long) output[0] > 0)
       {
-         output[1] -= x;
-         if (!output[1]) output[0] = 0;
+         carry = mpn_add_1(output + 1, output + 1, output[0], x); 
+         if (carry)
+         {
+            output[output[0]] = carry;
+            output[0]++;
+         }
+      } else if ((long) output[0] < -1L)
+      {
+         mpn_sub_1(output + 1, output + 1, ABS(output[0]), x); 
+         NORM(output);
       } else
       {
-         output[1] = x - output[1];
-         output[0] = 1;
-      } 
+         if (x <= output[1]) 
+         {
+            output[1] -= x;
+            if (!output[1]) output[0] = 0;
+         } else
+         {
+            output[1] = x - output[1];
+            output[0] = 1;
+         } 
+      }
    }
 }
 
@@ -366,33 +369,36 @@ void __Zpoly_mpn_sub_coeff_ui(mp_limb_t * output, unsigned long x)
 {
    unsigned long carry;
    
-   if (!output[0])
+   if (x)
    {
-      output[1] = x;
-      output[0] = -1L;
-   } else if ((long) output[0] < 0)
-   {
-      carry = mpn_add_1(output + 1, output + 1, output[0], x); 
-      if (carry)
+      if (!output[0])
       {
-         output[output[0]] = carry;
-         output[0]--;
-      }
-   } else if ((long) output[0] > 1L)
-   {
-      mpn_sub_1(output + 1, output + 1, ABS(output[0]), x); 
-      NORM(output);
-   } else
-   {
-      if (x <= output[1]) 
+         output[1] = x;
+         output[0] = -1L;
+      } else if ((long) output[0] < 0)
       {
-         output[1] -= x;
-         if (!output[1]) output[0] = 0;
+         carry = mpn_add_1(output + 1, output + 1, output[0], x); 
+         if (carry)
+         {
+            output[output[0]] = carry;
+            output[0]--;
+         }
+      } else if ((long) output[0] > 1L)
+      {
+         mpn_sub_1(output + 1, output + 1, ABS(output[0]), x); 
+         NORM(output);
       } else
       {
-         output[1] = x - output[1];
-         output[0] = -1L;
-      } 
+         if (x <= output[1]) 
+         {
+            output[1] -= x;
+            if (!output[1]) output[0] = 0;
+         } else
+         {
+            output[1] = x - output[1];
+            output[0] = -1L;
+         } 
+      }
    }
 }
 

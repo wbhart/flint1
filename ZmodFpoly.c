@@ -117,7 +117,8 @@ static inline long __get_next_coeff(mp_limb_t * coeff_m, long * borrow, long mas
 { 
    long coeff;
    
-   if ((long) coeff_m[0] >= 0) coeff = coeff_m[1] - *borrow;
+   if ((long) coeff_m[0] == 0) coeff = -*borrow;
+   else if ((long) coeff_m[0] > 0) coeff = coeff_m[1] - *borrow;
    else coeff = (-coeff_m[1] - *borrow);
    *borrow = 0UL;
    if (coeff < 0) 
@@ -141,10 +142,12 @@ void ZmodFpoly_bit_pack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
    half_ulong lower;
    long coeff;
    long borrow;
+   mp_limb_t extend;
 
    const unsigned long mask = (1UL<<bits)-1;
    
    poly_f->length = 0;
+   i=0;
       
    while (coeff_m < poly_mpn->coeffs + 2*poly_mpn->length)
    {
@@ -236,16 +239,14 @@ void ZmodFpoly_bit_pack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
         skip++;
       } 
       // sign extend the remainder of the array, reducing modulo p 
-      if (borrow)
+      extend = 0;
+      if (borrow) extend = -1L;
+      while (skip < n+1) 
       {
-         while (skip < n) 
-         {
-            array[skip] = -1UL;
-            skip++;
-         }
-         mpn_add_1(array, array, n+1, 1UL);
+         array[skip] = extend;
+         skip++;
       }
-   } // for
+   } // while
 }
 
 
@@ -268,11 +269,21 @@ void ZmodFpoly_bit_unpack_mpn(Zpoly_mpn_t poly_mpn, ZmodFpoly_t poly_f,
    mp_limb_t * coeff_m = poly_mpn->coeffs;
    mp_limb_t * next_point;
    unsigned long size_m = poly_mpn->limbs+1;
+   unsigned long n = poly_f->n;
+   
+#if DEBUG
+   for (unsigned long i = 0; i < n+1; i++)
+   {
+       printf("%lx ",poly_f->coeffs[0][i]);
+   }
+   printf("\n");
+#endif
     
    for (unsigned long i = 0; coeff_m < poly_mpn->coeffs + poly_mpn->length*size_m; i++)
    {
       array = poly_f->coeffs[i];
-      
+      ZmodF_normalise(array, n);
+
       k=0; skip=0; carry = 0UL; temp2 = 0;
       next_point = coeff_m + size_m*bundle;
       if (next_point > poly_mpn->coeffs + poly_mpn->length*size_m) next_point = poly_mpn->coeffs + poly_mpn->length*size_m;

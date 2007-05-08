@@ -128,7 +128,8 @@ void ZmodFpoly_convert_out_mpn(Zpoly_mpn_t poly_mpn, ZmodFpoly_t poly_f);
 /*
    Packs poly_mpn down to the bit into poly_f. Each coefficient of poly_f
    will have "bundle" coefficients packed into it. Each of the original
-   coefficients is packed into a bitfield "bits" bits wide. 
+   coefficients is packed into a bitfield "bits" bits wide including one 
+   bit for a sign bit. 
    
    "bits" is assumed to be less than FLINT_BITS_PER_LIMB.
 */ 
@@ -138,12 +139,16 @@ void ZmodFpoly_bit_pack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
 
 
 /*
-   Unpacks poly_f into poly_mpn. This is the inverse of ZmodFpoly_bitpack_mpn.
+   Unpacks poly_f into poly_mpn. This is the inverse of ZmodFpoly_bitpack_mpn, so
+   long as the final coefficient in the polynomial is positive.
    Each coeff of poly_f is assumed to contain "bundle" coefficients, each stored 
-   in a bitfield "bits" bits wide. 
+   in a bitfield "bits" bits wide with the most significant bit being reserved for
+   the sign. 
    
    The total number of coefficients to be unpacked is given by the length of 
-   poly_mpn.
+   poly_mpn. One must ensure each of the coefficients of poly_mpn are set to zero
+   before calling this function for the first time since it adds to existing 
+   coefficients of poly_mpn, rather than overwriting them.
    
    "bits" is assumed to be less than FLINT_BITS_PER_LIMB.
 */ 
