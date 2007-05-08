@@ -10,6 +10,7 @@ Copyright (C) 2007, William Hart and David Harvey
 
 *****************************************************************************/
 
+#include <sys/types.h>
 #include "flint.h"
 #include "flint-manager.h"
 #include "ZmodFpoly.h"
@@ -65,8 +66,8 @@ void ZmodFpoly_convert_in_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn)
 {
    unsigned long size_f = poly_f->n + 1;
    unsigned long size_m = poly_mpn->limbs+1;
-   unsigned long coeffs_m = poly_mpn->coeffs;
-   unsigned long coeffs_f = poly_f->coeffs;
+   mp_limb_t * coeffs_m = poly_mpn->coeffs;
+   ZmodF_t * coeffs_f = poly_f->coeffs;
    
    long size_j;
    
@@ -89,8 +90,8 @@ void ZmodFpoly_convert_out_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn)
 {
    unsigned long n = poly_f->n;
    unsigned long size_m = poly_mpn->limbs+1;
-   unsigned long coeffs_m = poly_mpn->coeffs;
-   unsigned long coeffs_f = poly_f->coeffs;
+   mp_limb_t * coeffs_m = poly_mpn->coeffs;
+   ZmodF_t * coeffs_f = poly_f->coeffs;
 
    for (unsigned long i = 0, j = 0; i < poly_f->length; i++, j += size_m)
    {
@@ -110,7 +111,7 @@ void ZmodFpoly_convert_out_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn)
    }
 }
 
-static inline long get_next_coeff(mp_limb_t * coeff_m, long * borrow, long mask)
+static inline long __get_next_coeff(mp_limb_t * coeff_m, long * borrow, long mask)
 { 
    long coeff;
    
@@ -129,10 +130,10 @@ static inline long get_next_coeff(mp_limb_t * coeff_m, long * borrow, long mask)
 void ZmodFpoly_bit_pack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
                             unsigned long bundle, unsigned long bits)
 {   
-   unsigned long k, skip;
+   unsigned long i, k, skip;
    unsigned long n = poly_f->n;
    mp_limb_t * coeff_m = poly_mpn->coeffs;
-   mp_limb_t * array, next_point;
+   mp_limb_t * array, * next_point;
     
    unsigned long temp;
    half_ulong lower;
@@ -147,7 +148,8 @@ void ZmodFpoly_bit_pack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
    {
       k=0; skip=0;
       coeff = 0UL; borrow = 0L; temp = 0;
-      array = poly->coeffs[i];
+      array = poly_f->coeffs[i];
+      i++;
    
       next_point = coeff_m + 2*bundle;
       if (next_point > poly_mpn->coeffs + 2*poly_mpn->length) 
@@ -158,7 +160,7 @@ void ZmodFpoly_bit_pack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
          // k is guaranteed to be less than FLINT_BITS_PER_LIMB at this point
          while ((k<HALF_FLINT_BITS_PER_LIMB)&&(coeff_m < next_point))
          {
-            temp+=(get_next_coeff(coeff_m, &borrow, mask) << k);
+            temp+=(__get_next_coeff(coeff_m, &borrow, mask) << k);
             coeff_m+=2; k+=bits;
          }
          // k may exceed FLINT_BITS_PER_LIMB at this point but is less than 96
@@ -184,7 +186,7 @@ void ZmodFpoly_bit_pack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
 
                while ((k<HALF_FLINT_BITS_PER_LIMB)&&(coeff_m < next_point))
                {
-                  temp+=(get_next_coeff(coeff_m, &borrow, mask) << k);
+                  temp+=(__get_next_coeff(coeff_m, &borrow, mask) << k);
                   coeff_m+=2; k+=bits;
                }
                // k may again exceed FLINT_BITS_PER_LIMB bits but is less than 96
@@ -263,21 +265,21 @@ void ZmodFpoly_bit_unpack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
    unsigned long s;
    mp_limb_t * coeff_m = poly_mpn->coeffs;
    mp_limb_t * next_point;
-   size_m = poly_mpn->limbs+1;
+   unsigned long size_m = poly_mpn->limbs+1;
     
-   while (unsigned long i = 0; coeff_m < poly_mpn->length*size_m; i++)
+   for (unsigned long i = 0; coeff_m < poly_mpn->coeffs + poly_mpn->length*size_m; i++)
    {
       array = poly_f->coeffs[i];
       
       k=0; skip=0; carry = 0UL; temp2 = 0;
       next_point = coeff_m + size_m*bundle;
-      if (next_point > poly_mpn->length*size_m) next_point = poly_mpn->length*size_m;
+      if (next_point > poly_mpn->coeffs + poly_mpn->length*size_m) next_point = poly_mpn->coeffs + poly_mpn->length*size_m;
       
       while (coeff_m < next_point)
       {
          // read in a full limb
          full_limb = array[skip];
-         temp2 += shift_l(full_limb,k);
+         temp2 += l_shift(full_limb,k);
          s=FLINT_BITS_PER_LIMB-k;
          k+=s;
          while ((k >= bits)&&(coeff_m < next_point))
@@ -299,7 +301,7 @@ void ZmodFpoly_bit_unpack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
          }
          // k is now less than bits
          // read in remainder of full_limb
-         temp2 += shift_l(shift_r(full_limb,s),k);
+         temp2 += l_shift(r_shift(full_limb,s),k);
          k+=(FLINT_BITS_PER_LIMB-s);
        
          while ((k >= bits)&&(coeff_m < next_point))
@@ -492,7 +494,7 @@ void _ZmodFpoly_FFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
       else   // length == 2
       {
          if (nonzero == 1)
-            ZmodF_mul_sqrt2exp(x[skip], x[0], twist, n);
+            ZmodF_mul_sqrt2exp(x+skip, x, scratch, twist, n);
          else  // nonzero == 2
             ZmodF_forward_butterfly_sqrt2exp(x, x+skip, scratch, twist, n);
       }
@@ -595,7 +597,7 @@ void _ZmodFpoly_IFFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
          if (nonzero == 1)
          {
             if (extra)
-               ZmodF_mul_sqrt2exp(x[skip], x[0], twist, n);
+               ZmodF_mul_sqrt2exp(x + skip, x, scratch, twist, n);
             ZmodF_add(x[0], x[0], x[0], n);
          }
          else  // nonzero == 2
@@ -604,7 +606,7 @@ void _ZmodFpoly_IFFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
             {
                ZmodF_sub(scratch[0], x[0], x[skip], n);
                ZmodF_add(x[0], x[0], scratch[0], n);
-               ZmodF_mul_sqrt2exp(x[skip], scratch[0], twist, n);
+               ZmodF_mul_sqrt2exp(x + skip, scratch, scratch, twist, n);
             }
             else
             {
@@ -700,7 +702,7 @@ void ZmodFpoly_FFT(ZmodFpoly_t poly, unsigned long length)
       {
          // input is zero, so output is zero too
          for (unsigned long i = 0; i < length; i++)
-            ZmodF_zero(poly->coeffs[i], poly->n);
+            ZmodF_clear(poly->coeffs[i], poly->n);
       }
       else
       {
@@ -755,9 +757,6 @@ void ZmodFpoly_convolution(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y)
 
 void ZmodFpoly_negacyclic_FFT(ZmodFpoly_t poly, unsigned long length)
 {
-   // todo: I *think* this code is wrong
-   abort();
-      
    // check the right roots of unity are available
    FLINT_ASSERT((2 * poly->n * FLINT_BITS_PER_LIMB) % (1 << poly->depth) == 0);
    FLINT_ASSERT(poly->scratch_count >= 1);
@@ -768,7 +767,7 @@ void ZmodFpoly_negacyclic_FFT(ZmodFpoly_t poly, unsigned long length)
       {
          // input is zero, so output is zero too
          for (unsigned long i = 0; i < length; i++)
-            ZmodF_zero(poly->coeffs[i], poly->n);
+            ZmodF_clear(poly->coeffs[i], poly->n);
       }
       else
       {
@@ -784,19 +783,14 @@ void ZmodFpoly_negacyclic_FFT(ZmodFpoly_t poly, unsigned long length)
 
 void ZmodFpoly_negacyclic_IFFT(ZmodFpoly_t poly)
 {
-   // todo: I *think* this code is wrong
-   abort();
-      
    // check the right roots of unity are available
    FLINT_ASSERT((2 * poly->n * FLINT_BITS_PER_LIMB) % (1 << poly->depth) == 0);
    FLINT_ASSERT(poly->scratch_count >= 1);
 
    if (poly->length != 0)
-   {
       _ZmodFpoly_IFFT(poly->coeffs, poly->depth, 1, poly->length, poly->length,
                       0, (2 * poly->n * FLINT_BITS_PER_LIMB) >> poly->depth,
                       poly->n, poly->scratch);
-   }
 }
 
 

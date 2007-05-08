@@ -73,6 +73,15 @@ the mpz_t::_mp_d member directly).
  */
 #define FLINT_GMP_COMPLIANT 0
 
+#if FLINT_BITS_PER_LIMB == 32
+#define half_ulong u_int16_t
+#define half_long int16_t
+#define HALF_FLINT_BITS_PER_LIMB 16
+#else
+#define half_ulong u_int32_t
+#define half_long int32_t
+#define HALF_FLINT_BITS_PER_LIMB 32
+#endif
 
 /*
 Returns ceil(log2(x)).
