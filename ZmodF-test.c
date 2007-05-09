@@ -25,13 +25,13 @@ mpz_t global_mpz;   // to avoid frequent mpz_init calls
 Prints the ZmodF_t to the given stream in hex, each limb in a separate block,
 most significant limb (i.e. the overflow limb) first.
 */
-void ZmodF_print(FILE* stream, ZmodF_t x, unsigned long n)
+void ZmodF_print(ZmodF_t x, unsigned long n)
 {
    for (long i = n; i >= 0; i--)
 #if FLINT_BITS_PER_LIMB == 64
-      fprintf(stream, "%016lx ", x[i]);
+      printf("%016lx ", x[i]);
 #else
-      fprintf(stream, "%08lx ", x[i]);
+      printf("%08lx ", x[i]);
 #endif
 }
 
@@ -121,11 +121,20 @@ Assumes global_n and global_p are set correctly.
 */
 void naive_mul_sqrt2exp(mpz_t y, mpz_t x, unsigned long s)
 {
+   static mpz_t temp;
+   static int init = 0;
+   
+   if (!init)
+   {
+      mpz_init(temp);
+      init = 1;
+   }
+
    if (s & 1)
    {
       mpz_mul_2exp(y, x, s/2 + global_n*FLINT_BITS_PER_LIMB/4);
-      mpz_mul_2exp(global_mpz, y, global_n*FLINT_BITS_PER_LIMB/2);
-      mpz_sub(y, global_mpz, y);
+      mpz_mul_2exp(temp, y, global_n*FLINT_BITS_PER_LIMB/2);
+      mpz_sub(y, temp, y);
       mpz_mod(y, y, global_p);
    }
    else
@@ -309,7 +318,6 @@ int test_ZmodF_neg()
             if (!check_coeffs(2, n))
                return 0;
 
-            // check output actually equals input mod p
             mpz_neg(global_mpz, coeffs_mpz_out[inplace]);
             mpz_mod(global_mpz, global_mpz, global_p);
             if (mpz_cmp(coeffs_mpz_in[0], global_mpz))
@@ -324,13 +332,67 @@ int test_ZmodF_neg()
 
 int test_ZmodF_mul()
 {
-   return 0;
+   mp_limb_t scratch[2*MAX_N];
+   
+   for (unsigned long n = 1; n <= 5; n++)
+   {
+      for (unsigned long trial = 0; trial < 4000; trial++)
+      {
+         for (int outbuf = 0; outbuf <= 2; outbuf++)
+            for (int inbuf1 = 0; inbuf1 <= 2; inbuf1++)
+               for (int inbuf2 = 0; inbuf2 <= 2; inbuf2++)
+               {
+                  setup_coeffs(3, n, random_ulong(FLINT_BITS_PER_LIMB - 2));
+            
+                  ZmodF_mul(coeffs[outbuf], coeffs[inbuf1], coeffs[inbuf2],
+                            scratch, n);
+
+                  if (!check_coeffs(3, n))
+                     return 0;
+                     
+                  mpz_mul(global_mpz, coeffs_mpz_in[inbuf1],
+                          coeffs_mpz_in[inbuf2]);
+                  mpz_mod(global_mpz, global_mpz, global_p);
+                  
+                  if (mpz_cmp(coeffs_mpz_out[outbuf], global_mpz))
+                     return 0;
+               }
+      }
+   }
+
+   return 1;
 }
 
 
 int test_ZmodF_sqr()
 {
-   return 0;
+   mp_limb_t scratch[2*MAX_N];
+   
+   for (unsigned long n = 1; n <= 5; n++)
+   {
+      for (unsigned long trial = 0; trial < 4000; trial++)
+      {
+         for (int outbuf = 0; outbuf <= 1; outbuf++)
+            for (int inbuf = 0; inbuf <= 1; inbuf++)
+            {
+               setup_coeffs(2, n, random_ulong(FLINT_BITS_PER_LIMB - 2));
+         
+               ZmodF_sqr(coeffs[outbuf], coeffs[inbuf], scratch, n);
+
+               if (!check_coeffs(2, n))
+                  return 0;
+                  
+               mpz_mul(global_mpz, coeffs_mpz_in[inbuf],
+                       coeffs_mpz_in[inbuf]);
+               mpz_mod(global_mpz, global_mpz, global_p);
+               
+               if (mpz_cmp(coeffs_mpz_out[outbuf], global_mpz))
+                  return 0;
+            }
+      }
+   }
+
+   return 1;
 }
 
 
@@ -351,7 +413,6 @@ int test_ZmodF_short_div_2exp()
                if (!check_coeffs(2, n))
                   return 0;
 
-               // check output actually equals input mod p
                naive_div_sqrt2exp(global_mpz, coeffs_mpz_in[0], 2*s);
                if (mpz_cmp(coeffs_mpz_out[inplace], global_mpz))
                   return 0;
@@ -379,7 +440,6 @@ int test_ZmodF_mul_Bexp()
             if (!check_coeffs(2, n))
                return 0;
 
-            // check output actually equals input mod p
             naive_mul_sqrt2exp(global_mpz, coeffs_mpz_in[0],
                                2*FLINT_BITS_PER_LIMB*s);
             if (mpz_cmp(coeffs_mpz_out[1], global_mpz))
@@ -412,25 +472,111 @@ int test_ZmodF_sub_mul_Bexp()
 
 int test_ZmodF_mul_pseudosqrt2_n_odd()
 {
-   return 0;
+   for (unsigned long n = 1; n <= 9; n += 2)
+   {
+      for (unsigned long trial = 0; trial < 8000; trial++)
+      {
+         for (unsigned long s = 0; s < 2*n; s++)
+         {
+            setup_coeffs(2, n, random_ulong(FLINT_BITS_PER_LIMB - 4));
+
+            ZmodF_mul_pseudosqrt2_n_odd(coeffs[1], coeffs[0], s, n);
+
+            if (!check_coeffs(2, n))
+               return 0;
+
+            mpz_mul_2exp(global_mpz, coeffs_mpz_in[0], n*FLINT_BITS_PER_LIMB/2);
+            mpz_sub(global_mpz, coeffs_mpz_in[0], global_mpz);
+            mpz_mul_2exp(global_mpz, global_mpz, s*FLINT_BITS_PER_LIMB);
+            mpz_mod(global_mpz, global_mpz, global_p);
+            if (mpz_cmp(coeffs_mpz_out[1], global_mpz))
+               return 0;
+         }
+      }
+   }
+
+   return 1;
 }
 
 
 int test_ZmodF_mul_pseudosqrt2_n_even()
 {
-   return 0;
+   for (unsigned long n = 2; n <= 10; n += 2)
+   {
+      for (unsigned long trial = 0; trial < 8000; trial++)
+      {
+         for (unsigned long s = 0; s < 2*n; s++)
+         {
+            setup_coeffs(2, n, random_ulong(FLINT_BITS_PER_LIMB - 2));
+
+            ZmodF_mul_pseudosqrt2_n_even(coeffs[1], coeffs[0], s, n);
+
+            if (!check_coeffs(2, n))
+               return 0;
+
+            mpz_mul_2exp(global_mpz, coeffs_mpz_in[0], n*FLINT_BITS_PER_LIMB/2);
+            mpz_sub(global_mpz, coeffs_mpz_in[0], global_mpz);
+            mpz_mul_2exp(global_mpz, global_mpz, s*FLINT_BITS_PER_LIMB);
+            mpz_mod(global_mpz, global_mpz, global_p);
+            if (mpz_cmp(coeffs_mpz_out[1], global_mpz))
+               return 0;
+         }
+      }
+   }
+
+   return 1;
 }
 
 
 int test_ZmodF_mul_2exp()
 {
-   return 0;
+   for (unsigned long n = 1; n <= 6; n++)
+   {
+      for (unsigned long trial = 0; trial < 500; trial++)
+      {
+         for (unsigned long s = 0; s < n*FLINT_BITS_PER_LIMB; s++)
+         {
+            setup_coeffs(2, n, random_ulong(FLINT_BITS_PER_LIMB - 3));
+
+            ZmodF_mul_2exp(coeffs[1], coeffs[0], s, n);
+
+            if (!check_coeffs(2, n))
+               return 0;
+
+            naive_mul_sqrt2exp(global_mpz, coeffs_mpz_in[0], 2*s);
+            if (mpz_cmp(coeffs_mpz_out[1], global_mpz))
+               return 0;
+         }
+      }
+   }
+
+   return 1;
 }
 
 
 int test_ZmodF_mul_sqrt2exp()
 {
-   return 0;
+   for (unsigned long n = 1; n <= 6; n++)
+   {
+      for (unsigned long trial = 0; trial < 500; trial++)
+      {
+         for (unsigned long s = 0; s < 2*n*FLINT_BITS_PER_LIMB; s++)
+         {
+            setup_coeffs(2, n, random_ulong(FLINT_BITS_PER_LIMB - 6));
+
+            ZmodF_mul_sqrt2exp(coeffs[1], coeffs[0], s, n);
+
+            if (!check_coeffs(2, n))
+               return 0;
+
+            naive_mul_sqrt2exp(global_mpz, coeffs_mpz_in[0], s);
+            if (mpz_cmp(coeffs_mpz_out[1], global_mpz))
+               return 0;
+         }
+      }
+   }
+
+   return 1;
 }
 
 

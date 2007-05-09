@@ -246,7 +246,7 @@ void ZmodF_mul_pseudosqrt2_n_odd(ZmodF_t b, ZmodF_t a,
       ZmodF_neg(b, b, n);
    }
    
-   // Divide by B^(n/2)
+   // Divide by B^(1/2)
    ZmodF_short_div_2exp(b, b, FLINT_BITS_PER_LIMB / 2, n);
    
    // Now add in B^s a
