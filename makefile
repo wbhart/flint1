@@ -1,5 +1,11 @@
+ifdef PLEASE_DO_NOT_ERASE_DAVIDS_64_BIT_FLAG_AGAIN_THANKS_VERY_MUCH
+	BITFLAG = -m64
+else
+	BITFLAG = 
+endif
+
 CPP = gcc -std=c99
-CC = gcc -std=c99
+CC = gcc -std=c99 $(BITFLAG)
 LINKOBJ  = ssmul.o driver.o
 DRIVEROBJ = Z.o Zvec.o ssfft.o mpn_extras.o profiler.o ssmul.o Z-ssmul.o driver.o
 DRIVER2OBJ = mpn_extras.o radixmul.o Z.o driver2.o
