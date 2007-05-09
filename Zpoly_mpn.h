@@ -237,6 +237,14 @@ void _Zpoly_mpn_mul_naive(Zpoly_mpn_t output, Zpoly_mpn_t input1,
 
 void _Zpoly_mpn_mul_karatsuba(Zpoly_mpn_t output, Zpoly_mpn_t input1, 
                                                  Zpoly_mpn_t input2);
+                                                 
+/*
+   Multiply two polynomials together using the Kronecker segmentation method.
+   Currently assumes that the number of output bits per coefficient is <= 64 and
+   is supplied by the parameter "bits"
+*/
+void _Zpoly_mpn_mul_KS(Zpoly_mpn_t output, Zpoly_mpn_t input1, 
+                                       Zpoly_mpn_t input2, unsigned long bits);
 
 void _Zpoly_mpn_sqr(Zpoly_mpn_t output, Zpoly_mpn_t input);
 

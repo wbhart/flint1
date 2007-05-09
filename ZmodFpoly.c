@@ -113,21 +113,19 @@ void ZmodFpoly_convert_out_mpn(Zpoly_mpn_t poly_mpn, ZmodFpoly_t poly_f)
 
 }
 
-static inline long __get_next_coeff(mp_limb_t * coeff_m, long * borrow, long mask)
+static inline long __get_next_coeff(mp_limb_t * coeff_m, long * borrow, long * coeff, long mask)
 { 
-   long coeff;
-   
-   if ((long) coeff_m[0] == 0) coeff = -*borrow;
-   else if ((long) coeff_m[0] > 0) coeff = coeff_m[1] - *borrow;
-   else coeff = (-coeff_m[1] - *borrow);
+   if ((long) coeff_m[0] == 0) *coeff = -*borrow;
+   else if ((long) coeff_m[0] > 0) *coeff = coeff_m[1] - *borrow;
+   else *coeff = (-coeff_m[1] - *borrow);
    *borrow = 0UL;
-   if (coeff < 0) 
+   if (*coeff < 0) 
    {
       *borrow = 1UL;
-      coeff&=mask;
    }
+   *coeff&=mask;
    
-   return coeff;
+   return *coeff;
 }
 
 void ZmodFpoly_bit_pack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
@@ -143,16 +141,18 @@ void ZmodFpoly_bit_pack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
    long coeff;
    long borrow;
    mp_limb_t extend;
+   
+   unsigned long coeffs_per_limb = FLINT_BITS_PER_LIMB/bits;
 
    const unsigned long mask = (1UL<<bits)-1;
-   
+      
    poly_f->length = 0;
    i=0;
       
    while (coeff_m < poly_mpn->coeffs + 2*poly_mpn->length)
    {
       k=0; skip=0;
-      coeff = 0UL; borrow = 0L; temp = 0;
+      coeff = 0; borrow = 0L; temp = 0;
       array = poly_f->coeffs[i];
       i++;
    
@@ -160,12 +160,74 @@ void ZmodFpoly_bit_pack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
       if (next_point > poly_mpn->coeffs + 2*poly_mpn->length) 
          next_point = poly_mpn->coeffs + 2*poly_mpn->length;
          
+/*      while (coeff_m + 2*(coeffs_per_limb + 1) < next_point)
+      {
+         // k is guaranteed to be less than FLINT_BITS_PER_LIMB at this point
+         while (k<HALF_FLINT_BITS_PER_LIMB)
+         {
+            temp+=(__get_next_coeff(coeff_m, &borrow, &coeff, mask) << k);
+            coeff_m+=2; k+=bits;
+         }
+         // k may exceed FLINT_BITS_PER_LIMB at this point but is less than 96
+
+         if (k>FLINT_BITS_PER_LIMB)
+         {
+            // if k > FLINT_BITS_PER_LIMB write out a whole limb and read in remaining bits of coeff
+            array[skip] = temp;
+            skip++;
+            temp=(coeff>>(bits+FLINT_BITS_PER_LIMB-k));
+            k=(k-FLINT_BITS_PER_LIMB);
+            // k < HALF_FLINT_BITS_PER_LIMB
+         } else
+         {
+            // k <= FLINT_BITS_PER_LIMB
+            if (k >= HALF_FLINT_BITS_PER_LIMB)
+            {
+               // if k >= HALF_FLINT_BITS_PER_LIMB store bottom HALF_FLINT_BITS_PER_LIMB bits
+               lower = (half_ulong)temp;
+               k-=HALF_FLINT_BITS_PER_LIMB;
+               temp>>=HALF_FLINT_BITS_PER_LIMB;
+               // k is now <= HALF_FLINT_BITS_PER_LIMB
+
+               while (k<HALF_FLINT_BITS_PER_LIMB)
+               {
+                  temp+=(__get_next_coeff(coeff_m, &borrow, &coeff, mask) << k);
+                  coeff_m+=2; k+=bits;
+               }
+               // k may again exceed FLINT_BITS_PER_LIMB bits but is less than 96
+               if (k>FLINT_BITS_PER_LIMB)
+               {
+                  // if k > FLINT_BITS_PER_LIMB, write out bottom HALF_FLINT_BITS_PER_LIMB bits (along with HALF_FLINT_BITS_PER_LIMB bits from lower)
+                  // read remaining bits from coeff and reduce k by HALF_FLINT_BITS_PER_LIMB
+                  array[skip] = (temp<<HALF_FLINT_BITS_PER_LIMB)+(unsigned long)lower;
+                  skip++;
+                  temp>>=HALF_FLINT_BITS_PER_LIMB;
+                  temp+=((coeff>>(bits+FLINT_BITS_PER_LIMB-k))<<HALF_FLINT_BITS_PER_LIMB);
+                  k=(k-HALF_FLINT_BITS_PER_LIMB);
+                  // k < FLINT_BITS_PER_LIMB and we are ready to read next coefficient if there is one
+               } else
+               {
+                  // k <= FLINT_BITS_PER_LIMB
+                  // if k >= HALF_FLINT_BITS_PER_LIMB write out bottom HALF_FLINT_BITS_PER_LIMB bits (along with lower)
+                  // and reduce k by HALF_FLINT_BITS_PER_LIMB
+                  k-=HALF_FLINT_BITS_PER_LIMB;
+                  array[skip] = (temp<<HALF_FLINT_BITS_PER_LIMB)+lower;
+                  temp>>=HALF_FLINT_BITS_PER_LIMB;
+                  skip++;
+                  // k is now less than or equal to HALF_FLINT_BITS_PER_LIMB and we are now ready to read 
+                  // the next coefficient if there is one
+               } 
+            } // if
+         } // else
+         poly_f->length++;
+      } // while
+*/
       while (coeff_m < next_point)
       {
          // k is guaranteed to be less than FLINT_BITS_PER_LIMB at this point
          while ((k<HALF_FLINT_BITS_PER_LIMB)&&(coeff_m < next_point))
          {
-            temp+=(__get_next_coeff(coeff_m, &borrow, mask) << k);
+            temp+=(__get_next_coeff(coeff_m, &borrow, &coeff, mask) << k);
             coeff_m+=2; k+=bits;
          }
          // k may exceed FLINT_BITS_PER_LIMB at this point but is less than 96
@@ -191,7 +253,7 @@ void ZmodFpoly_bit_pack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
 
                while ((k<HALF_FLINT_BITS_PER_LIMB)&&(coeff_m < next_point))
                {
-                  temp+=(__get_next_coeff(coeff_m, &borrow, mask) << k);
+                  temp+=(__get_next_coeff(coeff_m, &borrow, &coeff, mask) << k);
                   coeff_m+=2; k+=bits;
                }
                // k may again exceed FLINT_BITS_PER_LIMB bits but is less than 96
@@ -247,6 +309,14 @@ void ZmodFpoly_bit_pack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
          skip++;
       }
    } // while
+#if DEBUG
+   for (unsigned long i = 0; i < n+1; i++)
+   {
+       printf("%lx ",poly_f->coeffs[0][i]);
+   }
+   printf("\n");
+#endif
+
 }
 
 

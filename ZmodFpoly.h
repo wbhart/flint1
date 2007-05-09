@@ -150,7 +150,7 @@ void ZmodFpoly_bit_pack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
    before calling this function for the first time since it adds to existing 
    coefficients of poly_mpn, rather than overwriting them.
    
-   "bits" is assumed to be less than FLINT_BITS_PER_LIMB.
+   "bits" is assumed to be less than FLINT_BITS_PER_LIMB. 
 */ 
    
 void ZmodFpoly_bit_unpack_mpn(Zpoly_mpn_t poly_mpn, ZmodFpoly_t poly_f, 

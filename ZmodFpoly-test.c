@@ -39,6 +39,7 @@ void randpoly(Zpoly_t pol, unsigned long length, unsigned long maxbits)
    for (unsigned long i = 0; i < length; i++)
    {
        bits = randint(maxbits);
+       bits = maxbits;
        if (bits == 0) mpz_set_ui(temp,0);
        else 
        {
@@ -129,22 +130,23 @@ int test_ZmodFpoly_convert_bits()
    mpz_t temp;
    mpz_init(temp);
    int result = 1;
-   unsigned long bits, length, depth;
+   unsigned long bits, length, depth, bundle;
    
    Zpoly_init(test_poly); 
    Zpoly_init(test_poly2); 
    for (unsigned long count1 = 1; (count1 < 1000) && (result == 1) ; count1++)
    {
-      bits = gmp_urandomm_ui(Zpoly_test_randstate,63)+ 2;
-      bits = 24;
+      bits = gmp_urandomm_ui(Zpoly_test_randstate,62)+ 2;
       
       Zpoly_mpn_init(test_mpn_poly, 1, 1);
-      Zpoly_mpn_init(test_mpn_poly2, 1, 1);
+      Zpoly_mpn_init(test_mpn_poly2, 1, 10);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
           length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1;
+          bundle = length/5;
+          if (bundle == 0) bundle = length;
           depth = 0;
-          while ((1<<depth) < length) depth++;
+          while ((1<<depth) < (length-1)/bundle + 1) depth++;
 #if DEBUG
           printf("%ld, %ld\n",length, bits);
 #endif
@@ -153,10 +155,19 @@ int test_ZmodFpoly_convert_bits()
           Zpoly_realloc(test_poly2, length);
           
           randpoly(test_poly, length, bits-1);
-          if (mpz_sgn(test_poly->coeffs[length-1])<0) // Final coeff must be positive
+          for (unsigned long i = bundle-1; i < length; i+=bundle)
+          {
+             if (mpz_sgn(test_poly->coeffs[i])<0) // Final coeff in each bundle
+                                                  // must be positive
+                mpz_neg(test_poly->coeffs[i], test_poly->coeffs[i]);
+             if (mpz_sgn(test_poly->coeffs[i]) == 0) 
+                mpz_set_ui(test_poly->coeffs[i], 1);
+          }
+          if (mpz_sgn(test_poly->coeffs[length-1])<0) 
              mpz_neg(test_poly->coeffs[length-1], test_poly->coeffs[length-1]);
           if (mpz_sgn(test_poly->coeffs[length-1]) == 0) 
              mpz_set_ui(test_poly->coeffs[length-1], 1);
+
 
 #if DEBUG
           for (unsigned j = 0; j < test_poly->length; j++)
@@ -164,15 +175,15 @@ int test_ZmodFpoly_convert_bits()
           printf("\n\n");
 #endif
           _Zpoly_mpn_convert_in(test_mpn_poly, test_poly);
-          ZmodFpoly_init(test_modF_poly, 0, (bits*length-1)/FLINT_BITS_PER_LIMB+1, 0);
+          ZmodFpoly_init(test_modF_poly, depth, (bits*bundle-1)/FLINT_BITS_PER_LIMB+1, 0);
           
-          ZmodFpoly_bit_pack_mpn(test_modF_poly, test_mpn_poly, length, bits);
+          ZmodFpoly_bit_pack_mpn(test_modF_poly, test_mpn_poly, bundle, bits);
           test_mpn_poly2->length = length;
           
           for (unsigned long i = 0; i < length; i++) // Must clear coeffs in advance
              test_mpn_poly2->coeffs[i*(test_mpn_poly2->limbs+1)] = 0; 
              
-          ZmodFpoly_bit_unpack_mpn(test_mpn_poly2, test_modF_poly, length, bits);  
+          ZmodFpoly_bit_unpack_mpn(test_mpn_poly2, test_modF_poly, bundle, bits);  
           _Zpoly_mpn_convert_out(test_poly2, test_mpn_poly2);
           
           ZmodFpoly_clear(test_modF_poly);

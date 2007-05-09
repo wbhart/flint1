@@ -16,6 +16,8 @@ Copyright (C) 2007, William Hart and David Harvey
 #include "extras.h"
 #include "longlong_wrapper.h"
 #include "flint-manager.h"
+#include "ZmodFpoly.h"
+#include "Z-ssmul.h"
 
 /****************************************************************************
 
@@ -1071,6 +1073,62 @@ void _Zpoly_mpn_mul_karatsuba(Zpoly_mpn_t output, Zpoly_mpn_t input1, Zpoly_mpn_
    limb_release(); limb_release();
 }
 
+void _Zpoly_mpn_mul_KS(Zpoly_mpn_t output, Zpoly_mpn_t input1, Zpoly_mpn_t input2, unsigned long bits)
+{
+   long sign1 = 1L;
+   long sign2 = 1L;
+
+   _Zpoly_mpn_normalise(input1);
+   _Zpoly_mpn_normalise(input2);
+   
+   if ((input1->length == 0) || (input2->length == 0)) 
+   {
+      _Zpoly_mpn_zero(output);
+      return;
+   }
+   
+   if ((long) input1->coeffs[(input1->length-1)*(input1->limbs+1)] < 0)
+   {
+      _Zpoly_mpn_negate(input1, input1);
+      sign1 = -1L;
+   }
+   
+   if ((long) input2->coeffs[(input2->length-1)*(input2->limbs+1)] < 0)
+   {
+      _Zpoly_mpn_negate(input2, input2);
+      sign2 = -1L;
+   }
+   ZmodFpoly_t poly1, poly2, poly3;
+   
+   ZmodFpoly_init(poly1, 0, (bits*input1->length-1)/FLINT_BITS_PER_LIMB+1, 0);
+   ZmodFpoly_init(poly2, 0, (bits*input2->length-1)/FLINT_BITS_PER_LIMB+1, 0);
+   ZmodFpoly_init(poly3, 0, poly1->n + poly2->n, 0);
+   
+   ZmodFpoly_bit_pack_mpn(poly1, input1, input1->length, bits);
+   ZmodFpoly_bit_pack_mpn(poly2, input2, input2->length, bits);
+           
+   if ((poly1->n < 1500) || (poly2->n < 1500)) 
+   {
+      if (poly1->n > poly2->n) mpn_mul(poly3->coeffs[0], poly1->coeffs[0], poly1->n, poly2->coeffs[0], poly2->n);
+      else mpn_mul(poly3->coeffs[0], poly2->coeffs[0], poly2->n, poly1->coeffs[0], poly1->n);
+   } else Z_SSMul(poly3->coeffs[0], poly1->coeffs[0], poly2->coeffs[0], poly1->n, poly2->n);
+   poly3->coeffs[0][poly1->n+poly2->n] = 0;
+   poly3->length = 1;
+   
+   output->length = input1->length+input2->length-1;
+   for (unsigned long i = 0; i < output->length; i++)
+      output->coeffs[i*(output->limbs+1)] = 0;
+   ZmodFpoly_bit_unpack_mpn(output, poly3, input1->length+input2->length-1, bits);  
+   
+   ZmodFpoly_clear(poly1);
+   ZmodFpoly_clear(poly2);
+   ZmodFpoly_clear(poly3);
+     
+   if ((long) (sign1 ^ sign2) < 0) _Zpoly_mpn_negate(output, output);
+   
+   if (sign1 < 0) _Zpoly_mpn_negate(input1, input1);
+   if (sign2 < 0) _Zpoly_mpn_negate(input2, input2);
+}
 
 /****************************************************************************
 

@@ -131,8 +131,8 @@ Zpoly_mpn.o: Zpoly_mpn.c Zpoly_mpn.h Zpoly.h flint-manager.o
 Zpoly_mpn-test.o: Zpoly_mpn-test.c Zpoly_mpn.h Zpoly.h flint-manager.o 
 	$(CC) -c Zpoly_mpn-test.c -o Zpoly_mpn-test.o $(CFLAGS)
 	
-Zpoly_mpn-test: Zpoly_mpn-test.o mpn_extras.o Zpoly.o Zpoly_mpn.o Zpoly.h flint-manager.o 
-	$(CC) Zpoly_mpn.o mpn_extras.o Zpoly.o Zpoly_mpn-test.o flint-manager.o -o Zpoly_mpn-test $(CFLAGS) $(LIBS)
+Zpoly_mpn-test: Zpoly_mpn-test.o ZmodFpoly.o ZmodF.o Z-ssmul.o ssfft.o mpn_extras.o Zpoly.o Zpoly_mpn.o Zpoly.h flint-manager.o 
+	$(CC) Zpoly_mpn.o ZmodFpoly.o ZmodF.o Z-ssmul.o ssfft.o mpn_extras.o Zpoly.o Zpoly_mpn-test.o flint-manager.o -o Zpoly_mpn-test $(CFLAGS) $(LIBS)
 
 
 ZmodF.o: ZmodF.c ZmodF.h
@@ -150,8 +150,8 @@ ZmodFpoly.o: ZmodFpoly.c ZmodFpoly.h ZmodF.h
 ZmodFpoly-test.o: ZmodFpoly-test.c ZmodFpoly.h ZmodF.h
 	$(CC) -c ZmodFpoly-test.c -o ZmodFpoly-test.o $(CFLAGS)
 
-ZmodFpoly-test: Zpoly_mpn.o Zpoly.o flint-manager.o mpn_extras.o ZmodFpoly-test.o ZmodFpoly.o ZmodF.o
-	$(CC) Zpoly_mpn.o Zpoly.o flint-manager.o mpn_extras.o ZmodFpoly-test.o ZmodFpoly.o ZmodF.o -o ZmodFpoly-test $(CFLAGS) $(LIBS)
+ZmodFpoly-test: Zpoly_mpn.o Zpoly.o Z-ssmul.o ssfft.o flint-manager.o mpn_extras.o ZmodFpoly-test.o ZmodFpoly.o ZmodF.o
+	$(CC) Zpoly_mpn.o Zpoly.o Z-ssmul.o ssfft.o flint-manager.o mpn_extras.o ZmodFpoly-test.o ZmodFpoly.o ZmodF.o -o ZmodFpoly-test $(CFLAGS) $(LIBS)
 
 
 ssfft.o: ssfft.c ssfft.h
