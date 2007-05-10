@@ -242,7 +242,7 @@ void ZmodFpoly_set(ZmodFpoly_t x, ZmodFpoly_t y);
    NOTE:
       This function normalises the coefficients before multiplying.
 */
-void ZmodFpoly_mul(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y);
+void ZmodFpoly_pointwise_mul(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y);
 
 
 /*
@@ -358,6 +358,7 @@ void ZmodFpoly_IFFT(ZmodFpoly_t poly);
 void ZmodFpoly_convolution(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y);
 
 
+// internal functions
 
 void _ZmodFpoly_FFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
                     unsigned long nonzero, unsigned long length,

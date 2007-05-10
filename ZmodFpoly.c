@@ -462,7 +462,7 @@ void ZmodFpoly_set(ZmodFpoly_t x, ZmodFpoly_t y)
 }
 
 
-void ZmodFpoly_mul(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y)
+void ZmodFpoly_pointwise_mul(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y)
 {
    FLINT_ASSERT(x->depth == y->depth);
    FLINT_ASSERT(x->depth == res->depth);
@@ -835,7 +835,7 @@ void ZmodFpoly_convolution(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y)
    if (x != y)    // take care of aliasing
       ZmodFpoly_FFT(y, length);
       
-   ZmodFpoly_mul(res, x, y);
+   ZmodFpoly_pointwise_mul(res, x, y);
    ZmodFpoly_IFFT(res);
    ZmodFpoly_rescale(res);
 }
@@ -912,7 +912,7 @@ void ZmodFpoly_negacyclic_convolution(ZmodFpoly_t res,
    if (x != y)    // take care of aliasing
       ZmodFpoly_negacyclic_FFT(y, length);
       
-   ZmodFpoly_mul(res, x, y);
+   ZmodFpoly_pointwise_mul(res, x, y);
    ZmodFpoly_negacyclic_IFFT(res);
    ZmodFpoly_rescale(res);
 }
