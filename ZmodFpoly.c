@@ -570,7 +570,7 @@ void _ZmodFpoly_FFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
    
    // ========================
    // base cases
-   
+
    if (depth == 0)
       return;
       
@@ -626,12 +626,12 @@ void _ZmodFpoly_FFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
    // row transforms
    for (i = 0, y = x; i < length_rows; i++, y += (skip << cols_depth))
       _ZmodFpoly_FFT(y, cols_depth, skip, nonzero_cols, cols,
-                     twist << cols_depth, n, scratch);
+                     twist << rows_depth, n, scratch);
 
    if (length_cols)
       // The relevant portion of the last row:
       _ZmodFpoly_FFT(y, cols_depth, skip, nonzero_cols, length_cols,
-                     twist << cols_depth, n, scratch);
+                     twist << rows_depth, n, scratch);
 }
 
 

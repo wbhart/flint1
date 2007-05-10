@@ -541,20 +541,27 @@ int test__ZmodFpoly_FFT()
          
       for (unsigned long n = n_skip; n < 8*n_skip && success; n += n_skip)
       {
-         ZmodFpoly_t f;
-         ZmodFpoly_init(f, depth, n, 1);
-         
-         ZmodFpoly_random(f, 4);
-         ZmodFpoly_convert_out(poly1, f);
-         naive_FFT(poly1, depth, 2*n*FLINT_BITS_PER_LIMB / size, 0, n);
+         printf("depth = %d, n = %d\n", depth, n);
+      
+         for (unsigned long trial = 0; trial < 20; trial++)
+         {
+            ZmodFpoly_t f;
+            ZmodFpoly_init(f, depth, n, 1);
+            
+            set_global_n(n);
+            
+            ZmodFpoly_random(f, 4);
+            ZmodFpoly_convert_out(poly1, f);
+            naive_FFT(poly1, depth, 4*n*FLINT_BITS_PER_LIMB / size, 0, n);
 
-         _ZmodFpoly_FFT(f->coeffs, depth, 1, size, size, 0, n, f->scratch);
-         ZmodFpoly_convert_out(poly2, f);
-         
-         if (!Zpoly_equal(poly1, poly2))
-            success = 0;
-         
-         ZmodFpoly_clear(f);
+            _ZmodFpoly_FFT(f->coeffs, depth, 1, size, size, 0, n, f->scratch);
+            ZmodFpoly_convert_out(poly2, f);
+            
+            if (!Zpoly_equal(poly1, poly2))
+               success = 0;
+            
+            ZmodFpoly_clear(f);
+         }
       }
    }
 
