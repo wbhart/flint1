@@ -451,12 +451,116 @@ void ZmodFpoly_convert_out(Zpoly_t output, ZmodFpoly_t input)
    
    for (unsigned long k = 0; k < size; k++)
       ZmodF_convert_out(output->coeffs[k], input->coeffs[k]);
+      
+   output->length = size;
+}
+
+
+/*
+y := x * 2^(s/2)  mod p    (using a very naive algorithm)
+y may alias x
+Assumes global_n and global_p are set correctly.
+*/
+void naive_mul_sqrt2exp(mpz_t y, mpz_t x, unsigned long s)
+{
+   static mpz_t temp;
+   static int init = 0;
+   
+   if (!init)
+   {
+      mpz_init(temp);
+      init = 1;
+   }
+
+   if (s & 1)
+   {
+      mpz_mul_2exp(y, x, s/2 + global_n*FLINT_BITS_PER_LIMB/4);
+      mpz_mul_2exp(temp, y, global_n*FLINT_BITS_PER_LIMB/2);
+      mpz_sub(y, temp, y);
+      mpz_mod(y, y, global_p);
+   }
+   else
+   {
+      mpz_mul_2exp(y, x, s/2);
+      mpz_mod(y, y, global_p);
+   }
+}
+
+
+// root and twist are powers of sqrt2
+void naive_FFT(Zpoly_t x, unsigned long depth, unsigned long root,
+               unsigned long twist, unsigned long n)
+{
+   static mpz_t temp;
+   static int init = 0;
+   
+   if (!init)
+   {
+      mpz_init(temp);
+      init = 1;
+   }
+
+   unsigned long size = 1UL << depth;
+   
+   for (unsigned long d = 0; d < depth; d++)
+   {
+      unsigned long half = 1UL << (depth - d - 1);
+      for (unsigned long start = 0; start < size; start += 2*half)
+      {
+         for (unsigned long i = 0; i < half; i++)
+         {
+            mpz_t* a = &x->coeffs[start + i];
+            mpz_t* b = &x->coeffs[start + half + i];
+            mpz_add(temp, *a, *b);
+            mpz_sub(*b, *a, *b);
+            naive_mul_sqrt2exp(*b, *b, twist + i*root);
+            mpz_mod(*a, temp, global_p);
+         }
+      }
+      root <<= 1;
+      twist <<= 1;
+   }
 }
 
 
 int test__ZmodFpoly_FFT()
 {
-   return 0;
+   Zpoly_t poly1, poly2;
+   Zpoly_init(poly1);
+   Zpoly_init(poly2);
+   int success = 1;
+
+   for (unsigned long depth = 0; depth <= 10 && success; depth++)
+   {
+      unsigned long size = 1UL << depth;
+   
+      // need 4*n*FLINT_BITS_PER_LIMB divisible by 2^depth
+      unsigned long n_skip = size / (4*FLINT_BITS_PER_LIMB);
+      if (n_skip == 0)
+         n_skip = 1;
+         
+      for (unsigned long n = n_skip; n < 8*n_skip && success; n += n_skip)
+      {
+         ZmodFpoly_t f;
+         ZmodFpoly_init(f, depth, n, 1);
+         
+         ZmodFpoly_random(f, 4);
+         ZmodFpoly_convert_out(poly1, f);
+         naive_FFT(poly1, depth, 2*n*FLINT_BITS_PER_LIMB / size, 0, n);
+
+         _ZmodFpoly_FFT(f->coeffs, depth, 1, size, size, 0, n, f->scratch);
+         ZmodFpoly_convert_out(poly2, f);
+         
+         if (!Zpoly_equal(poly1, poly2))
+            success = 0;
+         
+         ZmodFpoly_clear(f);
+      }
+   }
+
+   Zpoly_clear(poly2);
+   Zpoly_clear(poly1);
+   return success;
 }
 
 
@@ -489,7 +593,7 @@ void ZmodFpoly_test_all()
 {
    int success, all_success = 1;
 
-#if 1    // just here temporarily so I don't have to run these tests every time
+#if 0    // just here temporarily so I don't have to run these tests every time
    RUN_TEST(ZmodFpoly_convert);
    RUN_TEST(ZmodFpoly_convert_bits);
    RUN_TEST(ZmodFpoly_convert_bits_unsigned);
