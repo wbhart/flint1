@@ -539,29 +539,49 @@ int test__ZmodFpoly_FFT()
       if (n_skip == 0)
          n_skip = 1;
          
-      for (unsigned long n = n_skip; n < 8*n_skip && success; n += n_skip)
+      for (unsigned long n = n_skip; n < 6*n_skip && success; n += n_skip)
       {
+         ZmodFpoly_t f;
+         ZmodFpoly_init(f, depth, n, 1);
+
+#if DEBUG
          printf("depth = %d, n = %d\n", depth, n);
-      
-         for (unsigned long trial = 0; trial < 20; trial++)
+#endif
+
+         set_global_n(n);
+         
+         unsigned long num_trials = 40000 / (1 << depth);
+         for (unsigned long trial = 0; trial < num_trials; trial++)
          {
-            ZmodFpoly_t f;
-            ZmodFpoly_init(f, depth, n, 1);
+            unsigned long nonzero, length, twist, root;
             
-            set_global_n(n);
-            
+            if (depth == 0)
+               nonzero = length = 1;
+            else
+            {
+               nonzero = random_ulong(size-1) + 1;
+               length = random_ulong(size-1) + 1;
+            }
+
+            root = 4*n*FLINT_BITS_PER_LIMB / size;
+            twist = random_ulong(root);
+                  
             ZmodFpoly_random(f, 4);
             ZmodFpoly_convert_out(poly1, f);
-            naive_FFT(poly1, depth, 4*n*FLINT_BITS_PER_LIMB / size, 0, n);
+            for (unsigned long i = nonzero; i < size; i++)
+               mpz_set_ui(poly1->coeffs[i], 0);
+            naive_FFT(poly1, depth, root, twist, n);
 
-            _ZmodFpoly_FFT(f->coeffs, depth, 1, size, size, 0, n, f->scratch);
+            _ZmodFpoly_FFT(f->coeffs, depth, 1, nonzero, length, twist,
+                           n, f->scratch);
             ZmodFpoly_convert_out(poly2, f);
-            
-            if (!Zpoly_equal(poly1, poly2))
-               success = 0;
-            
-            ZmodFpoly_clear(f);
+
+            for (unsigned long i = 0; i < length; i++)
+               if (mpz_cmp(poly1->coeffs[i], poly2->coeffs[i]))
+                  success = 0;
          }
+         
+         ZmodFpoly_clear(f);
       }
    }
 
@@ -600,7 +620,7 @@ void ZmodFpoly_test_all()
 {
    int success, all_success = 1;
 
-#if 0    // just here temporarily so I don't have to run these tests every time
+#if 1    // just here temporarily so I don't have to run these tests every time
    RUN_TEST(ZmodFpoly_convert);
    RUN_TEST(ZmodFpoly_convert_bits);
    RUN_TEST(ZmodFpoly_convert_bits_unsigned);
