@@ -4,7 +4,7 @@ else
 	BITFLAG = 
 endif
 
-CPP = gcc -std=c99
+CPP = gcc -std=c99 $(BITFLAG)
 CC = gcc -std=c99 $(BITFLAG)
 LINKOBJ  = ssmul.o driver.o
 DRIVEROBJ = Z.o Zvec.o ssfft.o mpn_extras.o profiler.o ssmul.o Z-ssmul.o driver.o
