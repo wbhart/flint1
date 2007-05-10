@@ -20,6 +20,14 @@ Copyright (C) 2007, William Hart and David Harvey
 
 gmp_randstate_t Zpoly_test_randstate;
 
+
+/****************************************************************************
+
+   Test code for Conversion Routines
+   
+****************************************************************************/
+
+
 unsigned long randint(unsigned long randsup) 
 {
     static unsigned long randval = 4035456057U;
@@ -302,6 +310,13 @@ int test_ZmodFpoly_convert_bits_unsigned()
 }
 
 
+/****************************************************************************
+
+   Test code for Fourier Transform Routines
+
+****************************************************************************/
+
+
 int test_ZmodFpoly_FFT()
 {
    return 0;
@@ -324,6 +339,13 @@ int test_ZmodFpoly_negacyclic_convolution()
 {
    return 0;
 }
+
+
+/****************************************************************************
+
+   Main test functions
+
+****************************************************************************/
 
 
 void ZmodFpoly_test_all()
