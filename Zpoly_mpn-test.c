@@ -1422,7 +1422,7 @@ int test_Zpoly_mpn_mul_KS()
    Zpoly_init(test_poly4); 
    for (unsigned long count1 = 1; (count1 < 100) && (result == 1) ; count1++)
    {
-      bits = gmp_urandomm_ui(Zpoly_test_randstate,24)+ 2;
+      bits = gmp_urandomm_ui(Zpoly_test_randstate,(FLINT_BITS_PER_LIMB-15)/2)+ 2;
       //bits = 4;
       
       Zpoly_mpn_init(test_mpn_poly, 1, 1);

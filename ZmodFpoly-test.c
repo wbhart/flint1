@@ -166,7 +166,7 @@ int test_ZmodFpoly_convert_bits()
    Zpoly_init(test_poly2); 
    for (unsigned long count1 = 1; (count1 < 1000) && (result == 1) ; count1++)
    {
-      bits = gmp_urandomm_ui(Zpoly_test_randstate,62)+ 2;
+      bits = gmp_urandomm_ui(Zpoly_test_randstate,FLINT_BITS_PER_LIMB-2)+ 2;
       
       Zpoly_mpn_init(test_mpn_poly, 1, 1);
       Zpoly_mpn_init(test_mpn_poly2, 1, 10);
@@ -251,7 +251,7 @@ int test_ZmodFpoly_convert_bits_unsigned()
    Zpoly_init(test_poly2); 
    for (unsigned long count1 = 1; (count1 < 1000) && (result == 1) ; count1++)
    {
-      bits = gmp_urandomm_ui(Zpoly_test_randstate,62)+ 2;
+      bits = gmp_urandomm_ui(Zpoly_test_randstate,FLINT_BITS_PER_LIMB-2)+ 2;
       
       Zpoly_mpn_init(test_mpn_poly, 1, 1);
       Zpoly_mpn_init(test_mpn_poly2, 1, 10);
