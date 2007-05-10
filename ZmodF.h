@@ -363,6 +363,20 @@ void ZmodF_forward_butterfly_sqrt2exp(ZmodF_t* a, ZmodF_t* b, ZmodF_t* z,
 
 
 /*
+   a := a + 2^(-s) b
+   b := a - 2^(-s) b
+   z := destroyed
+
+   PRECONDITIONS:
+      a, b, z may not alias each other
+      
+   NOTE: a, b, z may get permuted
+*/
+void ZmodF_inverse_butterfly_2exp(ZmodF_t* a, ZmodF_t* b, ZmodF_t* z,
+                                  unsigned long s, unsigned long n);
+
+
+/*
    a := a + 2^(-s/2) b
    b := a - 2^(-s/2) b
    z := destroyed
@@ -386,8 +400,14 @@ void ZmodF_inverse_butterfly_sqrt2exp(ZmodF_t* a, ZmodF_t* b, ZmodF_t* z,
       
    NOTE: a, b, z may get permuted
 */
+static inline
 void ZmodF_simple_butterfly(ZmodF_t* a, ZmodF_t* b, ZmodF_t* z,
-                            unsigned long n);
+                            unsigned long n)
+{
+   ZmodF_add(*z, *a, *b, n);
+   ZmodF_sub(*b, *a, *b, n);
+   ZmodF_swap(z, a);
+}
 
 
 // end of file ****************************************************************

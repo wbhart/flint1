@@ -467,7 +467,7 @@ void ZmodF_forward_butterfly_sqrt2exp(ZmodF_t* a, ZmodF_t* b, ZmodF_t* z,
       else if (limbs == n)
          ZmodF_sub(*z, *b, *a, n);
       else
-         ZmodF_sub_mul_Bexp(*z, *b, *a, limbs, n);
+         ZmodF_sub_mul_Bexp(*z, *b, *a, limbs - n, n);
       
       ZmodF_add(*a, *a, *b, n);
       
@@ -536,23 +536,23 @@ void ZmodF_inverse_butterfly_sqrt2exp(ZmodF_t* a, ZmodF_t* b, ZmodF_t* z,
 
       if (limbs == 0)
       {
-         ZmodF_sub(*b, *a, *z, n);
-         ZmodF_add(*a, *a, *z, n);
-      }
-      else if (limbs < n)
-      {
-         ZmodF_div_Bexp_add(*b, *a, *z, n - limbs, n);
-         ZmodF_div_Bexp_sub(*a, *a, *z, n - limbs, n);
-      }
-      else if (limbs == n)
-      {
          ZmodF_add(*b, *a, *z, n);
          ZmodF_sub(*a, *a, *z, n);
       }
+      else if (limbs < n)
+      {
+         ZmodF_div_Bexp_sub(*b, *a, *z, n - limbs, n);
+         ZmodF_div_Bexp_add(*a, *a, *z, n - limbs, n);
+      }
+      else if (limbs == n)
+      {
+         ZmodF_sub(*b, *a, *z, n);
+         ZmodF_add(*a, *a, *z, n);
+      }
       else
       {
-         ZmodF_div_Bexp_sub(*b, *a, *z, 2*n - limbs, n);
-         ZmodF_div_Bexp_add(*a, *a, *z, 2*n - limbs, n);
+         ZmodF_div_Bexp_add(*b, *a, *z, 2*n - limbs, n);
+         ZmodF_div_Bexp_sub(*a, *a, *z, 2*n - limbs, n);
       }
    }
    else
