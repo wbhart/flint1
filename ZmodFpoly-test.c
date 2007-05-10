@@ -724,7 +724,9 @@ int test__ZmodFpoly_IFFT()
 
 
 // x and y should both have length 2^depth
-void naive_convolution(Zpoly_t res, Zpoly_t x, Zpoly_t y, unsigned long depth)
+// negacyclic = 1 does negacyclic convolution, 0 does cyclic convolution
+void naive_convolution(Zpoly_t res, Zpoly_t x, Zpoly_t y,
+                       unsigned long depth, int negacyclic)
 {
    unsigned long size = 1UL << depth;
    Zpoly_ensure_space(res, size);
@@ -735,14 +737,25 @@ void naive_convolution(Zpoly_t res, Zpoly_t x, Zpoly_t y, unsigned long depth)
    
    for (unsigned long i = 0; i < size; i++)
       for (unsigned long j = 0; j < size; j++)
-         mpz_addmul(res->coeffs[(i + j) & (size-1)],
-                    x->coeffs[i], y->coeffs[j]);
+      {
+         unsigned long k = i + j;
+         if (k < size)
+            mpz_addmul(res->coeffs[k], x->coeffs[i], y->coeffs[j]);
+         else
+         {
+            if (negacyclic)
+               mpz_submul(res->coeffs[k-size], x->coeffs[i], y->coeffs[j]);
+            else
+               mpz_addmul(res->coeffs[k-size], x->coeffs[i], y->coeffs[j]);
+         }
+      }
    
    for (unsigned long i = 0; i < size; i++)
       mpz_mod(res->coeffs[i], res->coeffs[i], global_p);
 }
 
 
+// this also tests negacyclic_convolution
 int test_ZmodFpoly_convolution()
 {
    Zpoly_t poly1, poly2, poly3, poly4;
@@ -791,11 +804,16 @@ int test_ZmodFpoly_convolution()
             ZmodFpoly_convert_out(poly2, f2);
             for (unsigned long i = len2; i < size; i++)
                mpz_set_ui(poly2->coeffs[i], 0);
-            
-            ZmodFpoly_convolution(f3, f1, f2);
+
+            int negacyclic = random_ulong(2);
+
+            if (negacyclic)
+               ZmodFpoly_negacyclic_convolution(f3, f1, f2);
+            else
+               ZmodFpoly_convolution(f3, f1, f2);
+
             ZmodFpoly_convert_out(poly3, f3);
-            
-            naive_convolution(poly4, poly1, poly2, depth);
+            naive_convolution(poly4, poly1, poly2, depth, negacyclic);
             
             unsigned long out_len = len1 + len2 - 1;
             if (out_len > size)
@@ -820,11 +838,6 @@ int test_ZmodFpoly_convolution()
 }
 
 
-int test_ZmodFpoly_negacyclic_convolution()
-{
-   return 0;
-}
-
 
 /****************************************************************************
 
@@ -837,15 +850,12 @@ void ZmodFpoly_test_all()
 {
    int success, all_success = 1;
 
-#if 1    // just here temporarily so I don't have to run these tests every time
    RUN_TEST(ZmodFpoly_convert);
    RUN_TEST(ZmodFpoly_convert_bits);
    RUN_TEST(ZmodFpoly_convert_bits_unsigned);
    RUN_TEST(_ZmodFpoly_FFT);
    RUN_TEST(_ZmodFpoly_IFFT);
    RUN_TEST(ZmodFpoly_convolution);
-#endif
-   RUN_TEST(ZmodFpoly_negacyclic_convolution);
 
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");

@@ -850,12 +850,17 @@ void ZmodFpoly_convolution(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y)
 
 void ZmodFpoly_negacyclic_FFT(ZmodFpoly_t poly, unsigned long length)
 {
-   // todo: I *think* this code is wrong
-   abort();
-      
    // check the right roots of unity are available
    FLINT_ASSERT((2 * poly->n * FLINT_BITS_PER_LIMB) % (1 << poly->depth) == 0);
    FLINT_ASSERT(poly->scratch_count >= 1);
+
+   // twist on the way in to make it negacyclic
+   unsigned long twist = (2 * poly->n * FLINT_BITS_PER_LIMB) >> poly->depth;
+   for (unsigned long i = 1; i < length; i++)
+   {
+      ZmodF_mul_sqrt2exp(*poly->scratch, poly->coeffs[i], i*twist, poly->n);
+      ZmodF_swap(poly->scratch, poly->coeffs + i);
+   }
 
    if (length != 0)
    {
@@ -867,9 +872,15 @@ void ZmodFpoly_negacyclic_FFT(ZmodFpoly_t poly, unsigned long length)
       }
       else
       {
+/*
+// NOTE: when we switch to the dual transform, this should be the correct call:
+
          _ZmodFpoly_FFT(poly->coeffs, poly->depth, 1, poly->length, length,
                         (2 * poly->n * FLINT_BITS_PER_LIMB) >> poly->depth,
                         poly->n, poly->scratch);
+*/
+         _ZmodFpoly_FFT(poly->coeffs, poly->depth, 1, poly->length, length,
+                        0, poly->n, poly->scratch);
       }
    }
 
@@ -879,18 +890,30 @@ void ZmodFpoly_negacyclic_FFT(ZmodFpoly_t poly, unsigned long length)
 
 void ZmodFpoly_negacyclic_IFFT(ZmodFpoly_t poly)
 {
-   // todo: I *think* this code is wrong
-   abort();
-      
    // check the right roots of unity are available
    FLINT_ASSERT((2 * poly->n * FLINT_BITS_PER_LIMB) % (1 << poly->depth) == 0);
    FLINT_ASSERT(poly->scratch_count >= 1);
 
    if (poly->length != 0)
    {
+/*
+// NOTE: when we switch to the dual transform, this should be the correct call:
+
       _ZmodFpoly_IFFT(poly->coeffs, poly->depth, 1, poly->length, poly->length,
                       0, (2 * poly->n * FLINT_BITS_PER_LIMB) >> poly->depth,
                       poly->n, poly->scratch);
+*/
+      _ZmodFpoly_IFFT(poly->coeffs, poly->depth, 1, poly->length, poly->length,
+                      0, 0, poly->n, poly->scratch);
+   }
+
+   // twist on the way out to make it negacyclic
+   unsigned long twist = (2 * poly->n * FLINT_BITS_PER_LIMB) >> poly->depth;
+   for (unsigned long i = 1; i < poly->length; i++)
+   {
+      ZmodF_mul_sqrt2exp(*poly->scratch, poly->coeffs[i],
+                         2 * poly->n * FLINT_BITS_PER_LIMB - i*twist, poly->n);
+      ZmodF_neg(poly->coeffs[i], *poly->scratch, poly->n);
    }
 }
 
