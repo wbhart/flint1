@@ -318,8 +318,8 @@ int test_ZmodFpoly_convert_bits_unsigned()
 
 
 /*
-Prints the ZmodF_t to the given stream in hex, each limb in a separate block,
-most significant limb (i.e. the overflow limb) first.
+Prints the ZmodF_t, each limb in a separate block, most significant limb
+(i.e. the overflow limb) first.
 */
 void ZmodF_print(ZmodF_t x, unsigned long n)
 {
@@ -332,6 +332,9 @@ void ZmodF_print(ZmodF_t x, unsigned long n)
 }
 
 
+/*
+Prints each coefficient of the polynomial on a separate line.
+*/
 void ZmodFpoly_print(ZmodFpoly_t x)
 {
    for (unsigned long k = 0; k < (1UL << x->depth); k++)
@@ -384,6 +387,70 @@ void ZmodFpoly_random(ZmodFpoly_t x, unsigned long overflow_bits)
    }
 
    mpz_clear(temp);
+}
+
+
+mpz_t global_p;
+unsigned long global_n = 0;
+
+
+// Sets:
+// global_n := n,
+// global_p = 2^(FLINT_BITS_PER_LIMB*n) + 1
+void set_global_n(unsigned long n)
+{
+   if (n != global_n)
+   {
+      global_n = n;
+      mpz_set_ui(global_p, 1);
+      mpz_mul_2exp(global_p, global_p, n*FLINT_BITS_PER_LIMB);
+      mpz_add_ui(global_p, global_p, 1);
+   }
+}
+
+
+/*
+Converts given ZmodF_t into mpz_t format, reduced into [0, p) range.
+Assumes global_n and global_p are set correctly.
+*/
+void ZmodF_convert_out(mpz_t output, ZmodF_t input)
+{
+   int negative = ((mp_limb_signed_t) input[global_n] < 0);
+   
+   if (negative)
+      for (int i = 0; i <= global_n; i++)
+         input[i] = ~input[i];
+         
+   mpz_import(output, global_n+1, -1, sizeof(mp_limb_t), 0, 0, input);
+   
+   if (negative)
+   {
+      mpz_add_ui(output, output, 1);
+      mpz_neg(output, output);
+      for (int i = 0; i <= global_n; i++)
+         input[i] = ~input[i];
+   }
+
+   mpz_mod(output, output, global_p);
+}
+
+
+/*
+Converts input polynomial to Zpoly format. Each output coefficient is
+normalised into [0, p). All 2^depth coefficients are converted.
+
+Assumes that output has already initialised.
+*/
+void ZmodFpoly_convert_out(Zpoly_t output, ZmodFpoly_t input)
+{
+   unsigned long size = 1UL << input->depth;
+   unsigned long n = input->n;
+   
+   Zpoly_ensure_space(output, size);
+   set_global_n(n);
+   
+   for (unsigned long k = 0; k < size; k++)
+      ZmodF_convert_out(output->coeffs[k], input->coeffs[k]);
 }
 
 
@@ -440,6 +507,8 @@ void ZmodFpoly_test_all()
 int main()
 {
    gmp_randinit_default(Zpoly_test_randstate);
+   mpz_init(global_p);
+   
    ZmodFpoly_test_all();
 
    return 0;
