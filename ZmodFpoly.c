@@ -835,6 +835,7 @@ void ZmodFpoly_convolution(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y)
       
    ZmodFpoly_mul(res, x, y);
    ZmodFpoly_IFFT(res);
+   ZmodFpoly_rescale(res);
 }
 
 
@@ -911,6 +912,7 @@ void ZmodFpoly_negacyclic_convolution(ZmodFpoly_t res,
       
    ZmodFpoly_mul(res, x, y);
    ZmodFpoly_negacyclic_IFFT(res);
+   ZmodFpoly_rescale(res);
 }
 
 

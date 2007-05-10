@@ -301,6 +301,31 @@ int test_ZmodFpoly_convert_bits_unsigned()
    return result;
 }
 
+
+int test_ZmodFpoly_FFT()
+{
+   return 0;
+}
+
+
+int test_ZmodFpoly_IFFT()
+{
+   return 0;
+}
+
+
+int test_ZmodFpoly_convolution()
+{
+   return 0;
+}
+
+
+int test_ZmodFpoly_negacyclic_convolution()
+{
+   return 0;
+}
+
+
 void ZmodFpoly_test_all()
 {
    int success, all_success = 1;
@@ -308,6 +333,10 @@ void ZmodFpoly_test_all()
    RUN_TEST(ZmodFpoly_convert);
    RUN_TEST(ZmodFpoly_convert_bits);
    RUN_TEST(ZmodFpoly_convert_bits_unsigned);
+   RUN_TEST(ZmodFpoly_FFT);
+   RUN_TEST(ZmodFpoly_IFFT);
+   RUN_TEST(ZmodFpoly_convolution);
+   RUN_TEST(ZmodFpoly_negacyclic_convolution);
 
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");
