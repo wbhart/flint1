@@ -480,6 +480,8 @@ void ZmodFpoly_mul(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y)
    else
       for (unsigned long i = 0; i < x->length; i++)
          ZmodF_sqr(res->coeffs[i], x->coeffs[i], scratch, x->n);
+
+   res->length = x->length;
    
    free(scratch);
 }

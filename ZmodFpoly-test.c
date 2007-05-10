@@ -523,45 +523,6 @@ void naive_FFT(Zpoly_t x, unsigned long depth, unsigned long root,
 }
 
 
-// root and twist are powers of sqrt2
-void naive_IFFT(Zpoly_t x, unsigned long depth, unsigned long root,
-                unsigned long twist, unsigned long n)
-{
-   static mpz_t temp;
-   static int init = 0;
-   
-   if (!init)
-   {
-      mpz_init(temp);
-      init = 1;
-   }
-
-   unsigned long size = 1UL << depth;
-   root <<= depth;
-   twist <<= depth;
-   
-   for (unsigned long d = 0; d < depth; d++)
-   {
-      unsigned long half = 1UL << d;
-      for (unsigned long start = 0; start < size; start += 2*half)
-      {
-         for (unsigned long i = 0; i < half; i++)
-         {
-            mpz_t* a = &x->coeffs[start + i];
-            mpz_t* b = &x->coeffs[start + half + i];
-            naive_mul_sqrt2exp(*b, *b, 4*n*FLINT_BITS_PER_LIMB - (twist + i*root));
-            mpz_add(temp, *a, *b);
-            mpz_sub(*b, *a, *b);
-            mpz_mod(*a, temp, global_p);
-            mpz_mod(*b, *b, global_p);
-         }
-      }
-      root >>= 1;
-      twist >>= 1;
-   }
-}
-
-
 int test__ZmodFpoly_FFT()
 {
    Zpoly_t poly1, poly2;
@@ -627,6 +588,45 @@ int test__ZmodFpoly_FFT()
    Zpoly_clear(poly2);
    Zpoly_clear(poly1);
    return success;
+}
+
+
+// root and twist are powers of sqrt2
+void naive_IFFT(Zpoly_t x, unsigned long depth, unsigned long root,
+                unsigned long twist, unsigned long n)
+{
+   static mpz_t temp;
+   static int init = 0;
+   
+   if (!init)
+   {
+      mpz_init(temp);
+      init = 1;
+   }
+
+   unsigned long size = 1UL << depth;
+   root <<= depth;
+   twist <<= depth;
+   
+   for (unsigned long d = 0; d < depth; d++)
+   {
+      unsigned long half = 1UL << d;
+      for (unsigned long start = 0; start < size; start += 2*half)
+      {
+         for (unsigned long i = 0; i < half; i++)
+         {
+            mpz_t* a = &x->coeffs[start + i];
+            mpz_t* b = &x->coeffs[start + half + i];
+            naive_mul_sqrt2exp(*b, *b, 4*n*FLINT_BITS_PER_LIMB - (twist + i*root));
+            mpz_add(temp, *a, *b);
+            mpz_sub(*b, *a, *b);
+            mpz_mod(*a, temp, global_p);
+            mpz_mod(*b, *b, global_p);
+         }
+      }
+      root >>= 1;
+      twist >>= 1;
+   }
 }
 
 
@@ -723,9 +723,100 @@ int test__ZmodFpoly_IFFT()
 }
 
 
+// x and y should both have length 2^depth
+void naive_convolution(Zpoly_t res, Zpoly_t x, Zpoly_t y, unsigned long depth)
+{
+   unsigned long size = 1UL << depth;
+   Zpoly_ensure_space(res, size);
+   res->length = size;
+   
+   for (unsigned long i = 0; i < size; i++)
+      mpz_set_ui(res->coeffs[i], 0);
+   
+   for (unsigned long i = 0; i < size; i++)
+      for (unsigned long j = 0; j < size; j++)
+         mpz_addmul(res->coeffs[(i + j) & (size-1)],
+                    x->coeffs[i], y->coeffs[j]);
+   
+   for (unsigned long i = 0; i < size; i++)
+      mpz_mod(res->coeffs[i], res->coeffs[i], global_p);
+}
+
+
 int test_ZmodFpoly_convolution()
 {
-   return 0;
+   Zpoly_t poly1, poly2, poly3, poly4;
+   Zpoly_init(poly1);
+   Zpoly_init(poly2);
+   Zpoly_init(poly3);
+   Zpoly_init(poly4);
+   int success = 1;
+
+   for (unsigned long depth = 0; depth <= 5 && success; depth++)
+   {
+      unsigned long size = 1UL << depth;
+   
+      // need 4*n*FLINT_BITS_PER_LIMB divisible by 2^depth
+      unsigned long n_skip = size / (4*FLINT_BITS_PER_LIMB);
+      if (n_skip == 0)
+         n_skip = 1;
+         
+      for (unsigned long n = n_skip; n < 6*n_skip && success; n += n_skip)
+      {
+         ZmodFpoly_t f1, f2, f3;
+         ZmodFpoly_init(f1, depth, n, 1);
+         ZmodFpoly_init(f2, depth, n, 1);
+         ZmodFpoly_init(f3, depth, n, 1);
+
+#if DEBUG
+         printf("depth = %d, n = %d\n", depth, n);
+#endif
+
+         set_global_n(n);
+         
+         unsigned long num_trials = 40000 / (1 << depth);
+         for (unsigned long trial = 0; trial < num_trials && success; trial++)
+         {
+            unsigned long len1 = random_ulong(size+1);
+            unsigned long len2 = random_ulong(size+1);
+
+            ZmodFpoly_random(f1, 4);
+            ZmodFpoly_random(f2, 4);
+            f1->length = len1;
+            f2->length = len2;
+
+            ZmodFpoly_convert_out(poly1, f1);
+            for (unsigned long i = len1; i < size; i++)
+               mpz_set_ui(poly1->coeffs[i], 0);
+            ZmodFpoly_convert_out(poly2, f2);
+            for (unsigned long i = len2; i < size; i++)
+               mpz_set_ui(poly2->coeffs[i], 0);
+            
+            ZmodFpoly_convolution(f3, f1, f2);
+            ZmodFpoly_convert_out(poly3, f3);
+            
+            naive_convolution(poly4, poly1, poly2, depth);
+            
+            unsigned long out_len = len1 + len2 - 1;
+            if (out_len > size)
+               out_len = size;
+
+            for (unsigned long i = 0; i < out_len; i++)
+               if (mpz_cmp(poly3->coeffs[i], poly4->coeffs[i]))
+                  success = 0;
+         }
+         
+         ZmodFpoly_clear(f3);
+         ZmodFpoly_clear(f2);
+         ZmodFpoly_clear(f1);
+      }
+   }
+
+   Zpoly_clear(poly4);
+   Zpoly_clear(poly3);
+   Zpoly_clear(poly2);
+   Zpoly_clear(poly1);
+   return success;
 }
 
 
@@ -752,8 +843,8 @@ void ZmodFpoly_test_all()
    RUN_TEST(ZmodFpoly_convert_bits_unsigned);
    RUN_TEST(_ZmodFpoly_FFT);
    RUN_TEST(_ZmodFpoly_IFFT);
-#endif
    RUN_TEST(ZmodFpoly_convolution);
+#endif
    RUN_TEST(ZmodFpoly_negacyclic_convolution);
 
    printf(all_success ? "\nAll tests passed\n" :
