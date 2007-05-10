@@ -15,6 +15,9 @@ Copyright (C) 2007, William Hart and David Harvey
 #include "flint-manager.h"
 #include "ZmodFpoly.h"
 
+#define VARY_BITS 1
+#define SIGNS 1
+
 #define DEBUG 0 // prints debug information
 #define DEBUG2 1 
 
@@ -38,12 +41,18 @@ void randpoly(Zpoly_t pol, unsigned long length, unsigned long maxbits)
    Zpoly_init3(pol, length, maxbits);
    for (unsigned long i = 0; i < length; i++)
    {
+#if VARY_BITS
        bits = randint(maxbits);
+#else
+       bits = maxbits;
+#endif
        if (bits == 0) mpz_set_ui(temp,0);
        else 
        {
           mpz_rrandomb(temp, Zpoly_test_randstate, bits);
+#if SIGNS
           if (randint(2)) mpz_neg(temp,temp);
+#endif
        }
        Zpoly_set_coeff(pol, i, temp);
        
@@ -1411,9 +1420,10 @@ int test_Zpoly_mpn_mul_KS()
    Zpoly_init(test_poly2); 
    Zpoly_init(test_poly3); 
    Zpoly_init(test_poly4); 
-   for (unsigned long count1 = 1; (count1 < 10) && (result == 1) ; count1++)
+   for (unsigned long count1 = 1; (count1 < 100) && (result == 1) ; count1++)
    {
       bits = gmp_urandomm_ui(Zpoly_test_randstate,24)+ 2;
+      //bits = 4;
       
       Zpoly_mpn_init(test_mpn_poly, 1, 1);
       Zpoly_mpn_init(test_mpn_poly2, 1, 1);
@@ -1422,9 +1432,12 @@ int test_Zpoly_mpn_mul_KS()
       { 
           length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1;
           length2 = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1;
+          //length = 32000;
+          //length2 = 32000;
           depth = 0;
           while ((1<<depth) < ((length > length2) ? length : length2)) depth++;
           output_bits = 2*bits+depth+2;
+          //output_bits = 2*bits+depth;
 #if DEBUG
           printf("%ld, %ld, %ld\n", length, length2, bits);
 #endif
@@ -1450,9 +1463,9 @@ int test_Zpoly_mpn_mul_KS()
           _Zpoly_mpn_convert_in(test_mpn_poly, test_poly);
           _Zpoly_mpn_convert_in(test_mpn_poly2, test_poly2);
           
-          Zpoly_mul_naive(test_poly3, test_poly, test_poly2);
+          Zpoly_mul_naive_KS(test_poly3, test_poly, test_poly2);
           
-          for (unsigned long i = 0; i < 100; i++)
+          for (unsigned long i = 0; i < 10; i++)
              _Zpoly_mpn_mul_KS(test_mpn_poly3, test_mpn_poly, test_mpn_poly2, output_bits);
           _Zpoly_mpn_convert_out(test_poly4, test_mpn_poly3);
                   

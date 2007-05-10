@@ -154,7 +154,10 @@ void ZmodFpoly_bit_pack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
 */ 
    
 void ZmodFpoly_bit_unpack_mpn(Zpoly_mpn_t poly_mpn, ZmodFpoly_t poly_f, 
-     unsigned long bundle, unsigned long bits);
+                              unsigned long bundle, unsigned long bits);
+void ZmodFpoly_bit_unpack_unsigned_mpn(Zpoly_mpn_t poly_mpn, ZmodFpoly_t poly_f, 
+                              unsigned long bundle, unsigned long bits);
+
 
      
 /*

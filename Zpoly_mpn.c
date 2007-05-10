@@ -1118,6 +1118,7 @@ void _Zpoly_mpn_mul_KS(Zpoly_mpn_t output, Zpoly_mpn_t input1, Zpoly_mpn_t input
    output->length = input1->length+input2->length-1;
    for (unsigned long i = 0; i < output->length; i++)
       output->coeffs[i*(output->limbs+1)] = 0;
+   //ZmodFpoly_bit_unpack_unsigned_mpn(output, poly3, input1->length+input2->length-1, bits);  
    ZmodFpoly_bit_unpack_mpn(output, poly3, input1->length+input2->length-1, bits);  
    
    ZmodFpoly_clear(poly1);

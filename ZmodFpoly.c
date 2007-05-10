@@ -128,6 +128,15 @@ static inline long __get_next_coeff(mp_limb_t * coeff_m, long * borrow, long * c
    return *coeff;
 }
 
+/*static inline long __get_next_coeff_unsigned(mp_limb_t * coeff_m, long * borrow, long * coeff, long mask)
+{ 
+   if ((long) coeff_m[0] == 0) *coeff = 0;
+   else *coeff = coeff_m[1];
+   *coeff&=mask;
+   
+   return *coeff;
+}*/
+
 void ZmodFpoly_bit_pack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
                             unsigned long bundle, unsigned long bits)
 {   
@@ -160,68 +169,6 @@ void ZmodFpoly_bit_pack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
       if (next_point > poly_mpn->coeffs + 2*poly_mpn->length) 
          next_point = poly_mpn->coeffs + 2*poly_mpn->length;
          
-/*      while (coeff_m + 2*(coeffs_per_limb + 1) < next_point)
-      {
-         // k is guaranteed to be less than FLINT_BITS_PER_LIMB at this point
-         while (k<HALF_FLINT_BITS_PER_LIMB)
-         {
-            temp+=(__get_next_coeff(coeff_m, &borrow, &coeff, mask) << k);
-            coeff_m+=2; k+=bits;
-         }
-         // k may exceed FLINT_BITS_PER_LIMB at this point but is less than 96
-
-         if (k>FLINT_BITS_PER_LIMB)
-         {
-            // if k > FLINT_BITS_PER_LIMB write out a whole limb and read in remaining bits of coeff
-            array[skip] = temp;
-            skip++;
-            temp=(coeff>>(bits+FLINT_BITS_PER_LIMB-k));
-            k=(k-FLINT_BITS_PER_LIMB);
-            // k < HALF_FLINT_BITS_PER_LIMB
-         } else
-         {
-            // k <= FLINT_BITS_PER_LIMB
-            if (k >= HALF_FLINT_BITS_PER_LIMB)
-            {
-               // if k >= HALF_FLINT_BITS_PER_LIMB store bottom HALF_FLINT_BITS_PER_LIMB bits
-               lower = (half_ulong)temp;
-               k-=HALF_FLINT_BITS_PER_LIMB;
-               temp>>=HALF_FLINT_BITS_PER_LIMB;
-               // k is now <= HALF_FLINT_BITS_PER_LIMB
-
-               while (k<HALF_FLINT_BITS_PER_LIMB)
-               {
-                  temp+=(__get_next_coeff(coeff_m, &borrow, &coeff, mask) << k);
-                  coeff_m+=2; k+=bits;
-               }
-               // k may again exceed FLINT_BITS_PER_LIMB bits but is less than 96
-               if (k>FLINT_BITS_PER_LIMB)
-               {
-                  // if k > FLINT_BITS_PER_LIMB, write out bottom HALF_FLINT_BITS_PER_LIMB bits (along with HALF_FLINT_BITS_PER_LIMB bits from lower)
-                  // read remaining bits from coeff and reduce k by HALF_FLINT_BITS_PER_LIMB
-                  array[skip] = (temp<<HALF_FLINT_BITS_PER_LIMB)+(unsigned long)lower;
-                  skip++;
-                  temp>>=HALF_FLINT_BITS_PER_LIMB;
-                  temp+=((coeff>>(bits+FLINT_BITS_PER_LIMB-k))<<HALF_FLINT_BITS_PER_LIMB);
-                  k=(k-HALF_FLINT_BITS_PER_LIMB);
-                  // k < FLINT_BITS_PER_LIMB and we are ready to read next coefficient if there is one
-               } else
-               {
-                  // k <= FLINT_BITS_PER_LIMB
-                  // if k >= HALF_FLINT_BITS_PER_LIMB write out bottom HALF_FLINT_BITS_PER_LIMB bits (along with lower)
-                  // and reduce k by HALF_FLINT_BITS_PER_LIMB
-                  k-=HALF_FLINT_BITS_PER_LIMB;
-                  array[skip] = (temp<<HALF_FLINT_BITS_PER_LIMB)+lower;
-                  temp>>=HALF_FLINT_BITS_PER_LIMB;
-                  skip++;
-                  // k is now less than or equal to HALF_FLINT_BITS_PER_LIMB and we are now ready to read 
-                  // the next coefficient if there is one
-               } 
-            } // if
-         } // else
-         poly_f->length++;
-      } // while
-*/
       while (coeff_m < next_point)
       {
          // k is guaranteed to be less than FLINT_BITS_PER_LIMB at this point
@@ -323,7 +270,7 @@ void ZmodFpoly_bit_pack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
 void ZmodFpoly_bit_unpack_mpn(Zpoly_mpn_t poly_mpn, ZmodFpoly_t poly_f, 
                               unsigned long bundle, unsigned long bits)
 {
-   unsigned long k, l, skip;
+   unsigned long k, skip;
 
    unsigned long temp2;
    unsigned long temp;
@@ -402,6 +349,66 @@ void ZmodFpoly_bit_unpack_mpn(Zpoly_mpn_t poly_mpn, ZmodFpoly_t poly_f,
             }
             coeff_m += size_m;
             temp2>>=bits;
+            k-=bits;
+         }
+         // k is now less than bits
+         skip++;
+      }
+   }
+}
+ 
+void ZmodFpoly_bit_unpack_unsigned_mpn(Zpoly_mpn_t poly_mpn, ZmodFpoly_t poly_f, 
+                              unsigned long bundle, unsigned long bits)
+{
+   unsigned long k, l, skip;
+
+   unsigned long temp2;
+   unsigned long temp;
+   unsigned long full_limb;
+    
+   mp_limb_t* array;
+    
+   const unsigned long mask = (1UL<<bits)-1;
+
+   unsigned long s;
+   mp_limb_t * coeff_m = poly_mpn->coeffs;
+   mp_limb_t * next_point;
+   unsigned long size_m = poly_mpn->limbs+1;
+   unsigned long n = poly_f->n;
+       
+   for (unsigned long i = 0; coeff_m < poly_mpn->coeffs + poly_mpn->length*size_m; i++)
+   {
+      array = poly_f->coeffs[i];
+      ZmodF_normalise(array, n);
+
+      k=0; skip=0; temp2 = 0;
+      next_point = coeff_m + size_m*bundle;
+      if (next_point > poly_mpn->coeffs + poly_mpn->length*size_m) next_point = poly_mpn->coeffs + poly_mpn->length*size_m;
+      
+      while (coeff_m < next_point)
+      {
+         // read in a full limb
+         full_limb = array[skip];
+         temp2 += l_shift(full_limb,k);
+         s=FLINT_BITS_PER_LIMB-k;
+         k+=s;
+         while ((k >= bits)&&(coeff_m < next_point))
+         {
+            __Zpoly_mpn_add_coeff_ui(coeff_m, (temp2&mask));
+            coeff_m += size_m;
+            temp2>>=bits;
+            k-=bits;
+         }
+         // k is now less than bits
+         // read in remainder of full_limb
+         temp2 += l_shift(r_shift(full_limb,s),k);
+         k+=(FLINT_BITS_PER_LIMB-s);
+       
+         while ((k >= bits)&&(coeff_m < next_point))
+         {
+            __Zpoly_mpn_add_coeff_ui(coeff_m, temp2&mask);
+            coeff_m += size_m;
+            temp2>>=bits;
             l++;
             k-=bits;
          }
@@ -410,7 +417,7 @@ void ZmodFpoly_bit_unpack_mpn(Zpoly_mpn_t poly_mpn, ZmodFpoly_t poly_f,
       }
    }
 }
-     
+    
 void ZmodFpoly_byte_pack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
                              unsigned long bundle, unsigned long bytes)
 {
