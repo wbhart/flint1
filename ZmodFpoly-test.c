@@ -317,13 +317,83 @@ int test_ZmodFpoly_convert_bits_unsigned()
 ****************************************************************************/
 
 
-int test_ZmodFpoly_FFT()
+/*
+Prints the ZmodF_t to the given stream in hex, each limb in a separate block,
+most significant limb (i.e. the overflow limb) first.
+*/
+void ZmodF_print(ZmodF_t x, unsigned long n)
+{
+   for (long i = n; i >= 0; i--)
+#if FLINT_BITS_PER_LIMB == 64
+      printf("%016lx ", x[i]);
+#else
+      printf("%08lx ", x[i]);
+#endif
+}
+
+
+void ZmodFpoly_print(ZmodFpoly_t x)
+{
+   for (unsigned long k = 0; k < (1UL << x->depth); k++)
+   {
+      ZmodF_print(x->coeffs[k], x->n);
+      printf("\n");
+   }
+}
+
+
+unsigned long random_ulong(unsigned long max)
+{
+   return gmp_urandomm_ui(Zpoly_test_randstate, max);
+}
+
+
+/*
+Generates a random ZmodFpoly_t with at most overflow_bits used in the
+overflow limb for each coefficient.
+
+The ZmodFpoly_t should already be initialised. This function ignores the
+"length" attribute.
+*/
+void ZmodFpoly_random(ZmodFpoly_t x, unsigned long overflow_bits)
+{
+   unsigned long n = x->n;
+   
+   mpz_t temp;
+   mpz_init(temp);
+
+   for (unsigned long k = 0; k < (1UL << x->depth); k++)
+   {
+      ZmodF_t y = x->coeffs[k];
+   
+      ZmodF_zero(y, n);
+      mpz_rrandomb(temp, Zpoly_test_randstate, (n+1)*FLINT_BITS_PER_LIMB);
+      mpz_export(y, NULL, -1, sizeof(mp_limb_t), 0, 0, temp);
+
+      // GMP has a "bug" where the top bit of the output of mpz_rrandomb
+      // is always set. So we flip everything with probability 1/2.
+      if (random_ulong(2))
+         for (unsigned long i = 0; i <= n; i++)
+            y[i] = ~y[i];
+
+      // Copy the sign bit downwards so that only overflow_bits bits are used.
+      if ((mp_limb_signed_t) y[n] >= 0)
+         y[n] &= (1UL << overflow_bits) - 1;
+      else
+         y[n] |= ~((1UL << overflow_bits) - 1);
+   }
+
+   mpz_clear(temp);
+}
+
+
+int test__ZmodFpoly_FFT()
 {
    return 0;
 }
 
 
-int test_ZmodFpoly_IFFT()
+int test__ZmodFpoly_IFFT()
 {
    return 0;
 }
@@ -352,11 +422,13 @@ void ZmodFpoly_test_all()
 {
    int success, all_success = 1;
 
+#if 1    // just here temporarily so I don't have to run these tests every time
    RUN_TEST(ZmodFpoly_convert);
    RUN_TEST(ZmodFpoly_convert_bits);
    RUN_TEST(ZmodFpoly_convert_bits_unsigned);
-   RUN_TEST(ZmodFpoly_FFT);
-   RUN_TEST(ZmodFpoly_IFFT);
+#endif
+   RUN_TEST(_ZmodFpoly_FFT);
+   RUN_TEST(_ZmodFpoly_IFFT);
    RUN_TEST(ZmodFpoly_convolution);
    RUN_TEST(ZmodFpoly_negacyclic_convolution);
 
