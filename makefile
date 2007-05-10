@@ -22,7 +22,7 @@ ifndef FLINT_GMP_LIB_DIR
 endif
 LIBS = -L$(FLINT_GMP_LIB_DIR) -lgmp -lpthread
 INCS =  -I"/usr/include" -I$(FLINT_GMP_INCLUDE_DIR)
-CXXINCS = -I"/home/dmharvey/gmp/install/include" 
+CXXINCS = -I$(FLINT_GMP_INCLUDE_DIR)
 BIN  = ssmul
 BIN2 = radixmul
 BIN3  = Zssmul
