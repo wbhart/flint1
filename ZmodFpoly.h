@@ -302,6 +302,9 @@ ensures that Z/pZ has enough roots of unity.
 ****************************************************************************/
 
 
+extern unsigned long ZmodFpoly_FFT_factor_threshold;
+
+
 /*
    Converts from coefficient representation to fourier representation.
 
@@ -359,6 +362,18 @@ void ZmodFpoly_convolution(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y);
 
 
 // internal functions
+
+void _ZmodFpoly_FFT_iterative(
+            ZmodF_t* x, unsigned long depth,
+            unsigned long skip, unsigned long nonzero, unsigned long length,
+            unsigned long twist, unsigned long n, ZmodF_t* scratch);
+
+
+void _ZmodFpoly_FFT_factor(
+            ZmodF_t* x, unsigned long rows_depth, unsigned long cols_depth,
+            unsigned long skip, unsigned long nonzero, unsigned long length,
+            unsigned long twist, unsigned long n, ZmodF_t* scratch);
+
 
 void _ZmodFpoly_FFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
                     unsigned long nonzero, unsigned long length,

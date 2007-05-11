@@ -690,6 +690,17 @@ void _ZmodFpoly_FFT_factor(
 
 
 /*
+This is the threshold for switching from a plain iterative FFT to an FFT
+factoring algorithm. It should be set to about the number of limbs in L1 cache.
+
+NOTE:
+   This should probably be a #define, but the test code in ZmodFpoly-test
+   needs to be able to modify it to test different parts of the FFT code.
+*/
+unsigned long ZmodFpoly_FFT_factor_threshold = 7500;
+
+
+/*
 This is an internal function. It's just a temporary implementation so that
 we can get started on higher level code. It is not optimised particularly
 well yet.
@@ -713,17 +724,21 @@ void _ZmodFpoly_FFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
    FLINT_ASSERT(nonzero >= 1 && nonzero <= (1 << depth));
    FLINT_ASSERT(length >= 1 && length <= (1 << depth));
 
-   if (depth <= 3)
+   // If the data fits in L1 (2^depth coefficients of length n+1, plus a
+   // scratch buffer), then use the iterative transform. Otherwise factor the
+   // FFT into two chunks.
+   if (depth <= 1 ||
+       ((1 << depth) + 1) * (n+1) <= ZmodFpoly_FFT_factor_threshold)
    {
-      // base case
-      _ZmodFpoly_FFT_iterative(x, depth, skip, nonzero, length, twist, n, scratch);
+      _ZmodFpoly_FFT_iterative(x, depth, skip, nonzero, length,
+                               twist, n, scratch);
    }
    else
    {
-      // factoring case
       unsigned long rows_depth = depth >> 1;
       unsigned long cols_depth = depth - rows_depth;
-      _ZmodFpoly_FFT_factor(x, rows_depth, cols_depth, skip, nonzero, length, twist, n, scratch);
+      _ZmodFpoly_FFT_factor(x, rows_depth, cols_depth, skip, nonzero, length,
+                            twist, n, scratch);
    }
 }
 

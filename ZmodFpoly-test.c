@@ -523,11 +523,49 @@ void naive_FFT(Zpoly_t x, unsigned long depth, unsigned long root,
 }
 
 
-int test__ZmodFpoly_FFT()
+
+int test__ZmodFpoly_FFT_iterative_case(
+         unsigned long depth, unsigned long nonzero, unsigned long length,
+         unsigned long twist, unsigned long n)
 {
    Zpoly_t poly1, poly2;
+   ZmodFpoly_t f;
+
+   unsigned long size = 1UL << depth;
+   unsigned long root = 4*n*FLINT_BITS_PER_LIMB / size;
+                  
    Zpoly_init(poly1);
    Zpoly_init(poly2);
+   ZmodFpoly_init(f, depth, n, 1);
+
+   int success = 1;
+   set_global_n(n);
+         
+   ZmodFpoly_random(f, 4);
+   ZmodFpoly_convert_out(poly1, f);
+   for (unsigned long i = nonzero; i < size; i++)
+      mpz_set_ui(poly1->coeffs[i], 0);
+
+   naive_FFT(poly1, depth, root, twist, n);
+
+   _ZmodFpoly_FFT_iterative(f->coeffs, depth, 1, nonzero, length,
+                            twist, n, f->scratch);
+   ZmodFpoly_convert_out(poly2, f);
+
+   for (unsigned long i = 0; i < length; i++)
+      if (mpz_cmp(poly1->coeffs[i], poly2->coeffs[i]))
+         success = 0;
+   
+   ZmodFpoly_clear(f);
+   Zpoly_clear(poly2);
+   Zpoly_clear(poly1);
+
+   return success;
+}
+
+
+int test__ZmodFpoly_FFT_iterative()
+{
    int success = 1;
 
    for (unsigned long depth = 0; depth <= 11 && success; depth++)
@@ -541,17 +579,12 @@ int test__ZmodFpoly_FFT()
          
       for (unsigned long n = n_skip; n < 6*n_skip && success; n += n_skip)
       {
-         ZmodFpoly_t f;
-         ZmodFpoly_init(f, depth, n, 1);
-
 #if DEBUG
          printf("depth = %d, n = %d\n", depth, n);
 #endif
 
-         set_global_n(n);
-         
          unsigned long num_trials = 40000 / (1 << depth);
-         for (unsigned long trial = 0; trial < num_trials; trial++)
+         for (unsigned long trial = 0; trial < num_trials && success; trial++)
          {
             unsigned long nonzero, length, twist, root;
             
@@ -563,32 +596,97 @@ int test__ZmodFpoly_FFT()
                length = random_ulong(size-1) + 1;
             }
 
-            root = 4*n*FLINT_BITS_PER_LIMB / size;
-            twist = random_ulong(root);
-                  
-            ZmodFpoly_random(f, 4);
-            ZmodFpoly_convert_out(poly1, f);
-            for (unsigned long i = nonzero; i < size; i++)
-               mpz_set_ui(poly1->coeffs[i], 0);
-            naive_FFT(poly1, depth, root, twist, n);
-
-            _ZmodFpoly_FFT(f->coeffs, depth, 1, nonzero, length, twist,
-                           n, f->scratch);
-            ZmodFpoly_convert_out(poly2, f);
-
-            for (unsigned long i = 0; i < length; i++)
-               if (mpz_cmp(poly1->coeffs[i], poly2->coeffs[i]))
-                  success = 0;
+            twist = random_ulong(4*n*FLINT_BITS_PER_LIMB / size);
+            success = success && test__ZmodFpoly_FFT_iterative_case(
+                                           depth, nonzero, length, twist, n);
          }
-         
-         ZmodFpoly_clear(f);
       }
    }
 
-   Zpoly_clear(poly2);
-   Zpoly_clear(poly1);
    return success;
 }
+
+
+int test__ZmodFpoly_FFT_factor_case(
+         unsigned long rows_depth, unsigned long cols_depth,
+         unsigned long nonzero, unsigned long length,
+         unsigned long twist, unsigned long n)
+{
+   Zpoly_t poly1, poly2;
+   ZmodFpoly_t f;
+
+   unsigned long depth = rows_depth + cols_depth;
+   unsigned long size = 1UL << depth;
+   unsigned long root = 4*n*FLINT_BITS_PER_LIMB / size;
+                  
+   Zpoly_init(poly1);
+   Zpoly_init(poly2);
+   ZmodFpoly_init(f, depth, n, 1);
+
+   int success = 1;
+   set_global_n(n);
+   
+   ZmodFpoly_random(f, 4);
+   ZmodFpoly_convert_out(poly1, f);
+   for (unsigned long i = nonzero; i < size; i++)
+      mpz_set_ui(poly1->coeffs[i], 0);
+
+   naive_FFT(poly1, depth, root, twist, n);
+
+   _ZmodFpoly_FFT_factor(f->coeffs, rows_depth, cols_depth, 1, nonzero,
+                         length, twist, n, f->scratch);
+   ZmodFpoly_convert_out(poly2, f);
+
+   for (unsigned long i = 0; i < length; i++)
+      if (mpz_cmp(poly1->coeffs[i], poly2->coeffs[i]))
+         success = 0;
+   
+   ZmodFpoly_clear(f);
+   Zpoly_clear(poly2);
+   Zpoly_clear(poly1);
+
+   return success;
+}
+
+
+int test__ZmodFpoly_FFT_factor()
+{
+   int success = 1;
+   
+   for (unsigned long depth = 2; depth <= 6 && success; depth++)
+      for (unsigned long depth1 = 1; depth1 < depth && success; depth1++)
+      {
+         unsigned long depth2 = depth - depth1;
+         unsigned long size = 1UL << depth;
+      
+         // need 4*n*FLINT_BITS_PER_LIMB divisible by 2^depth
+         unsigned long n = size / (4*FLINT_BITS_PER_LIMB);
+         if (n == 0)
+            n = 1;
+         
+#if DEBUG
+         printf("depth1 = %d, depth2 = %d, n = %d\n", depth1, depth2, n);
+#endif
+
+         for (unsigned long length = 1; length <= size; length++)
+            for (unsigned long nonzero = 1; nonzero <= size; nonzero++)
+            {
+               unsigned long num_trials = 1000000 / (1 << (3*depth));
+               if (num_trials == 0)
+                  num_trials = 1;
+               for (unsigned long trial = 0; trial < num_trials; trial++)
+               {
+                  unsigned long twist = random_ulong(
+                                             4*n*FLINT_BITS_PER_LIMB / size);
+                  success = success && test__ZmodFpoly_FFT_factor_case(
+                                 depth1, depth2, nonzero, length, twist, n);
+               }
+            }
+      }
+
+   return success;
+}
+
 
 
 // root and twist are powers of sqrt2
@@ -765,7 +863,7 @@ int test_ZmodFpoly_convolution()
    Zpoly_init(poly4);
    int success = 1;
 
-   for (unsigned long depth = 0; depth <= 5 && success; depth++)
+   for (unsigned long depth = 0; depth <= 6 && success; depth++)
    {
       unsigned long size = 1UL << depth;
    
@@ -853,7 +951,8 @@ void ZmodFpoly_test_all()
    RUN_TEST(ZmodFpoly_convert);
    RUN_TEST(ZmodFpoly_convert_bits);
    RUN_TEST(ZmodFpoly_convert_bits_unsigned);
-   RUN_TEST(_ZmodFpoly_FFT);
+   RUN_TEST(_ZmodFpoly_FFT_iterative);
+   RUN_TEST(_ZmodFpoly_FFT_factor);
    RUN_TEST(_ZmodFpoly_IFFT);
    RUN_TEST(ZmodFpoly_convolution);
 
