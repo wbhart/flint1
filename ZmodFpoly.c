@@ -542,7 +542,6 @@ void ZmodFpoly_rescale(ZmodFpoly_t poly)
 ****************************************************************************/
 
 
-// currently only supports depth <= 1
 void _ZmodFpoly_FFT_iterative(
             ZmodF_t* x, unsigned long depth,
             unsigned long skip, unsigned long nonzero, unsigned long length,
@@ -553,26 +552,80 @@ void _ZmodFpoly_FFT_iterative(
    FLINT_ASSERT(nonzero >= 1 && nonzero <= (1 << depth));
    FLINT_ASSERT(length >= 1 && length <= (1 << depth));
 
+   unsigned long i, s, start;
 
-   FLINT_ASSERT(depth <= 1);
+   // root is the (2^depth)-th root of unity for the current layer,
+   // measured as a power of sqrt2
+   unsigned long root = (4*n*FLINT_BITS_PER_LIMB) >> depth;
+   FLINT_ASSERT(twist < root);
 
-   if (depth == 0)
-      return;
-      
-   if (depth == 1)
+   // half = half the current block length
+   unsigned long half = 1UL << (depth - 1);
+
+   for (unsigned long layer = 0; layer < depth; layer++)
    {
-      if (length == 1)
+      // Let length = multiple of block size plus a remainder.
+      unsigned long length_quantised = length & (-2*half);
+      unsigned long length_remainder = length - length_quantised;
+
+      // If length is an exact multiple of the block size, then nothing
+      // to do here.
+      if (length_remainder)
       {
-         if (nonzero == 2)
-            ZmodF_add(x[0], x[0], x[skip], n);
+         if (length_remainder <= half)
+         {
+            // If length overhangs the block by at most half the block size,
+            // then we only need to compute the first output of each butterfly
+            // for this block, i.e. (a, b) -> (a + b)
+            if (nonzero > half)
+            {
+               for (i = 0; i < nonzero - half; i++)
+                  ZmodF_add(x[skip*(length_quantised + i)], x[skip*(length_quantised + i)],
+                            x[skip*(length_quantised + half + i)], n);
+            }
+         }
+         else
+         {
+            // If length overhangs by more than half the block, then we need to
+            // perform full butterflies on the last block (i.e. the last block
+            // doesn't get any special treatment).
+            length_quantised += 2*half;
+         }
       }
-      else   // length == 2
+
+      if (nonzero <= half)
       {
-         if (nonzero == 1)
-            ZmodF_mul_sqrt2exp(x[skip], x[0], twist, n);
-         else  // nonzero == 2
-            ZmodF_forward_butterfly_sqrt2exp(x, x+skip, scratch, twist, n);
+         // If nonzero <= half, then the second half of each butterfly input
+         // are zeroes, so we just computing (a, 0) -> (a, ra), where r is the
+         // appropriate root of unity.
+         for (start = 0; start < length_quantised; start += 2*half)
+            for (i = 0, s = twist; i < nonzero; i++, s += root)
+               ZmodF_mul_sqrt2exp(x[skip*(start + half + i)], x[skip*(start + i)], s, n);
       }
+      else
+      {
+         for (start = 0; start < length_quantised; start += 2*half)
+         {
+            // If nonzero > half, then we need some full butterflies...
+            for (i = 0, s = twist; i < nonzero - half; i++, s += root)
+               ZmodF_forward_butterfly_sqrt2exp(
+                           x + skip*(start + i), x + skip*(start + half + i), scratch, s, n);
+            // and also some partial butterflies (a, 0) -> (a, ra).
+            for (; i < half; i++, s += root)
+               ZmodF_mul_sqrt2exp(x[skip*(start + half + i)], x[skip*(start + i)], s, n);
+         }
+      }
+
+      // Update roots of unity
+      twist <<= 1;
+      root <<= 1;
+      
+      // Update block length. Note that as soon as the block length is <=
+      // nonzero, that means that there are no more zero coefficients to take
+      // advantage of, so we just set nonzero = block length.
+      half >>= 1;
+      if (nonzero > 2*half)
+         nonzero = 2*half;
    }
 }
 
@@ -660,7 +713,7 @@ void _ZmodFpoly_FFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
    FLINT_ASSERT(nonzero >= 1 && nonzero <= (1 << depth));
    FLINT_ASSERT(length >= 1 && length <= (1 << depth));
 
-   if (depth <= 1)
+   if (depth <= 3)
    {
       // base case
       _ZmodFpoly_FFT_iterative(x, depth, skip, nonzero, length, twist, n, scratch);

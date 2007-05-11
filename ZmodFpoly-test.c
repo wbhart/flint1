@@ -530,7 +530,7 @@ int test__ZmodFpoly_FFT()
    Zpoly_init(poly2);
    int success = 1;
 
-   for (unsigned long depth = 0; depth <= 10 && success; depth++)
+   for (unsigned long depth = 0; depth <= 11 && success; depth++)
    {
       unsigned long size = 1UL << depth;
    
@@ -640,7 +640,7 @@ int test__ZmodFpoly_IFFT()
 
    int success = 1;
 
-   for (unsigned long depth = 0; depth <= 10 && success; depth++)
+   for (unsigned long depth = 0; depth <= 11 && success; depth++)
    {
       unsigned long size = 1UL << depth;
    
