@@ -542,36 +542,19 @@ void ZmodFpoly_rescale(ZmodFpoly_t poly)
 ****************************************************************************/
 
 
-/*
-This is an internal function. It's just a temporary implementation so that
-we can get started on higher level code. It is not optimised particularly
-well yet.
-
-x = array of buffers to operate on
-skip = distance between buffers
-depth = log2(number of buffers)
-nonzero = number of buffers assumed to be nonzero
-length = number of fourier coefficients requested
-twist = twisting power of sqrt2
-n = coefficient length
-scratch = a scratch buffer
-*/
-void _ZmodFpoly_FFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
-                    unsigned long nonzero, unsigned long length,
-                    unsigned long twist, unsigned long n,
-                    ZmodF_t* scratch)
+// currently only supports depth <= 1
+void _ZmodFpoly_FFT_iterative(
+            ZmodF_t* x, unsigned long depth,
+            unsigned long skip, unsigned long nonzero, unsigned long length,
+            unsigned long twist, unsigned long n, ZmodF_t* scratch)
 {
    FLINT_ASSERT(skip >= 1);
    FLINT_ASSERT(n >= 1);
    FLINT_ASSERT(nonzero >= 1 && nonzero <= (1 << depth));
    FLINT_ASSERT(length >= 1 && length <= (1 << depth));
-   
-   // root is the (2^depth)-th root unity, measured as a power of sqrt2
-   unsigned long root = (4*n*FLINT_BITS_PER_LIMB) >> depth;
-   FLINT_ASSERT(twist < root);
-   
-   // ========================
-   // base cases
+
+
+   FLINT_ASSERT(depth <= 1);
 
    if (depth == 0)
       return;
@@ -590,15 +573,30 @@ void _ZmodFpoly_FFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
          else  // nonzero == 2
             ZmodF_forward_butterfly_sqrt2exp(x, x+skip, scratch, twist, n);
       }
-      
-      return;
    }
-   
-   // ========================
-   // factoring case
+}
 
-   unsigned long rows_depth = depth >> 1;
-   unsigned long cols_depth = depth - rows_depth;
+
+/*
+Factors FFT of length 2^depth into length 2^rows_depth and length 2^cols_depth
+transforms
+*/
+void _ZmodFpoly_FFT_factor(
+            ZmodF_t* x, unsigned long rows_depth, unsigned long cols_depth,
+            unsigned long skip, unsigned long nonzero, unsigned long length,
+            unsigned long twist, unsigned long n, ZmodF_t* scratch)
+{
+   FLINT_ASSERT(skip >= 1);
+   FLINT_ASSERT(n >= 1);
+   
+   unsigned long depth = rows_depth + cols_depth;
+   FLINT_ASSERT(nonzero >= 1 && nonzero <= (1 << depth));
+   FLINT_ASSERT(length >= 1 && length <= (1 << depth));
+   
+   // root is the (2^depth)-th root unity, measured as a power of sqrt2
+   unsigned long root = (4*n*FLINT_BITS_PER_LIMB) >> depth;
+   FLINT_ASSERT(twist < root);
+
    unsigned long rows = 1UL << rows_depth;
    unsigned long cols = 1UL << cols_depth;
 
@@ -634,6 +632,46 @@ void _ZmodFpoly_FFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
       // The relevant portion of the last row:
       _ZmodFpoly_FFT(y, cols_depth, skip, nonzero_cols, length_cols,
                      twist << rows_depth, n, scratch);
+}
+
+
+
+/*
+This is an internal function. It's just a temporary implementation so that
+we can get started on higher level code. It is not optimised particularly
+well yet.
+
+x = array of buffers to operate on
+skip = distance between buffers
+depth = log2(number of buffers)
+nonzero = number of buffers assumed to be nonzero
+length = number of fourier coefficients requested
+twist = twisting power of sqrt2
+n = coefficient length
+scratch = a scratch buffer
+*/
+void _ZmodFpoly_FFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
+                    unsigned long nonzero, unsigned long length,
+                    unsigned long twist, unsigned long n,
+                    ZmodF_t* scratch)
+{
+   FLINT_ASSERT(skip >= 1);
+   FLINT_ASSERT(n >= 1);
+   FLINT_ASSERT(nonzero >= 1 && nonzero <= (1 << depth));
+   FLINT_ASSERT(length >= 1 && length <= (1 << depth));
+
+   if (depth <= 1)
+   {
+      // base case
+      _ZmodFpoly_FFT_iterative(x, depth, skip, nonzero, length, twist, n, scratch);
+   }
+   else
+   {
+      // factoring case
+      unsigned long rows_depth = depth >> 1;
+      unsigned long cols_depth = depth - rows_depth;
+      _ZmodFpoly_FFT_factor(x, rows_depth, cols_depth, skip, nonzero, length, twist, n, scratch);
+   }
 }
 
 
@@ -855,6 +893,7 @@ void ZmodFpoly_negacyclic_FFT(ZmodFpoly_t poly, unsigned long length)
    FLINT_ASSERT(poly->scratch_count >= 1);
 
    // twist on the way in to make it negacyclic
+   // todo: this needs to be cleaned up
    unsigned long twist = (2 * poly->n * FLINT_BITS_PER_LIMB) >> poly->depth;
    for (unsigned long i = 1; i < length; i++)
    {
@@ -872,13 +911,6 @@ void ZmodFpoly_negacyclic_FFT(ZmodFpoly_t poly, unsigned long length)
       }
       else
       {
-/*
-// NOTE: when we switch to the dual transform, this should be the correct call:
-
-         _ZmodFpoly_FFT(poly->coeffs, poly->depth, 1, poly->length, length,
-                        (2 * poly->n * FLINT_BITS_PER_LIMB) >> poly->depth,
-                        poly->n, poly->scratch);
-*/
          _ZmodFpoly_FFT(poly->coeffs, poly->depth, 1, poly->length, length,
                         0, poly->n, poly->scratch);
       }
@@ -896,18 +928,12 @@ void ZmodFpoly_negacyclic_IFFT(ZmodFpoly_t poly)
 
    if (poly->length != 0)
    {
-/*
-// NOTE: when we switch to the dual transform, this should be the correct call:
-
-      _ZmodFpoly_IFFT(poly->coeffs, poly->depth, 1, poly->length, poly->length,
-                      0, (2 * poly->n * FLINT_BITS_PER_LIMB) >> poly->depth,
-                      poly->n, poly->scratch);
-*/
       _ZmodFpoly_IFFT(poly->coeffs, poly->depth, 1, poly->length, poly->length,
                       0, 0, poly->n, poly->scratch);
    }
 
    // twist on the way out to make it negacyclic
+   // todo: this needs to be cleaned up
    unsigned long twist = (2 * poly->n * FLINT_BITS_PER_LIMB) >> poly->depth;
    for (unsigned long i = 1; i < poly->length; i++)
    {
