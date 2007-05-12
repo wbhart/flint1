@@ -570,31 +570,23 @@ void _ZmodFpoly_FFT_iterative(
       unsigned long length_quantised = length & (-2*half);
       unsigned long length_remainder = length - length_quantised;
 
-      // If length is an exact multiple of the block size, then nothing
-      // to do here.
-      if (length_remainder)
+      if (length_remainder > half)
       {
-         if (length_remainder <= half)
+         // If length overhangs by more than half the block, then we need to
+         // perform full butterflies on the last block (i.e. the last block
+         // doesn't get any special treatment).
+         length_quantised += 2*half;
+      }
+      else if (length_remainder)
+      {
+         // If length overhangs the block by at most half the block size,
+         // then we only need to compute the first output of each butterfly
+         // for this block, i.e. (a, b) -> (a + b)
+         if (nonzero > half)
          {
-            // If length overhangs the block by at most half the block size,
-            // then we only need to compute the first output of each butterfly
-            // for this block, i.e. (a, b) -> (a + b)
-            
-            // todo: move this block to the end so that we don't have to
-            // recompute the pointers?
-            if (nonzero > half)
-            {
-               y = x + skip * length_quantised;
-               for (i = 0; i < nonzero - half; i++, y += skip)
-                  ZmodF_add(y[0], y[0], y[half_skip], n);
-            }
-         }
-         else
-         {
-            // If length overhangs by more than half the block, then we need to
-            // perform full butterflies on the last block (i.e. the last block
-            // doesn't get any special treatment).
-            length_quantised += 2*half;
+            y = x + skip * length_quantised;
+            for (i = 0; i < nonzero - half; i++, y += skip)
+               ZmodF_add(y[0], y[0], y[half_skip], n);
          }
       }
 
