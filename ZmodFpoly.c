@@ -551,6 +551,7 @@ void _ZmodFpoly_FFT_iterative(
    FLINT_ASSERT(n >= 1);
    FLINT_ASSERT(nonzero >= 1 && nonzero <= (1 << depth));
    FLINT_ASSERT(length >= 1 && length <= (1 << depth));
+   FLINT_ASSERT(depth >= 1);
 
    unsigned long i, s, start;
    ZmodF_t* y, * z;
@@ -564,7 +565,87 @@ void _ZmodFpoly_FFT_iterative(
    unsigned long half = 1UL << (depth - 1);
    unsigned long half_skip = half * skip;
 
-   for (unsigned long layer = 0; layer < depth; layer++)
+   unsigned long layer;
+
+   // =========================================================================
+   // Special case for first layer, if root and/or twist involve sqrt2
+   // rotations.
+
+   if ((root | twist) & 1)
+   {
+      // Let length = multiple of block size plus a remainder.
+      unsigned long length_quantised = length & (-2*half);
+      unsigned long length_remainder = length - length_quantised;
+
+      if (length_remainder > half)
+      {
+         // If length overhangs by more than half the block, then we need to
+         // perform full butterflies on the last block (i.e. the last block
+         // doesn't get any special treatment).
+         length_quantised += 2*half;
+      }
+      else if (length_remainder)
+      {
+         // If length overhangs the block by at most half the block size,
+         // then we only need to compute the first output of each butterfly
+         // for this block, i.e. (a, b) -> (a + b, ?)
+         if (nonzero > half)
+         {
+            y = x + skip * length_quantised;
+            for (i = 0; i < nonzero - half; i++, y += skip)
+               ZmodF_add(y[0], y[0], y[half_skip], n);
+         }
+      }
+
+      if (length_quantised)
+      {
+         if (nonzero <= half)
+         {
+            // If nonzero <= half, then the second half of each butterfly input
+            // are zeroes, so we just computing (a, 0) -> (a, ra), where r is the
+            // appropriate root of unity.
+            for (i = 0, s = twist, y = x; i < nonzero; i++, s += root, y += skip)
+               ZmodF_mul_sqrt2exp(y[half_skip], y[0], s, n);
+         }
+         else
+         {
+            // If nonzero > half, then we need some full butterflies...
+            for (i = 0, s = twist, y = x; i < nonzero - half; i++, s += root, y += skip)
+               ZmodF_forward_butterfly_sqrt2exp(y, y + half_skip, scratch, s, n);
+            // and also some partial butterflies (a, 0) -> (a, ra).
+            for (; i < half; i++, s += root, y += skip)
+               ZmodF_mul_sqrt2exp(y[half_skip], y[0], s, n);
+         }
+      }
+
+      // Update roots of unity
+      twist <<= 1;
+      root <<= 1;
+      
+      // Update block length. Note that as soon as the block length is <=
+      // nonzero, that means that there are no more zero coefficients to take
+      // advantage of, so we just set nonzero = block length.
+      half >>= 1;
+      half_skip >>= 1;
+      if (nonzero > 2*half)
+         nonzero = 2*half;
+   
+      layer = 1;
+   }
+   else
+   {
+      // no special case for first layer
+      layer = 0;
+   }
+
+   // =========================================================================
+   // Remaining layers. Nothing here involves a sqrt2, so we now measure
+   // root and twist as powers of 2.
+   
+   root >>= 1;
+   twist >>= 1;
+
+   for (; layer < depth; layer++)
    {
       // Let length = multiple of block size plus a remainder.
       unsigned long length_quantised = length & (-2*half);
@@ -597,7 +678,7 @@ void _ZmodFpoly_FFT_iterative(
          // appropriate root of unity.
          for (start = 0, y = x; start < length_quantised; start += 2*half, y += 2*half_skip)
             for (i = 0, s = twist, z = y; i < nonzero; i++, s += root, z += skip)
-               ZmodF_mul_sqrt2exp(z[half_skip], z[0], s, n);
+               ZmodF_mul_2exp(z[half_skip], z[0], s, n);
       }
       else
       {
@@ -605,10 +686,10 @@ void _ZmodFpoly_FFT_iterative(
          {
             // If nonzero > half, then we need some full butterflies...
             for (i = 0, s = twist, z = y; i < nonzero - half; i++, s += root, z += skip)
-               ZmodF_forward_butterfly_sqrt2exp(z, z + half_skip, scratch, s, n);
+               ZmodF_forward_butterfly_2exp(z, z + half_skip, scratch, s, n);
             // and also some partial butterflies (a, 0) -> (a, ra).
             for (; i < half; i++, s += root, z += skip)
-               ZmodF_mul_sqrt2exp(z[half_skip], z[0], s, n);
+               ZmodF_mul_2exp(z[half_skip], z[0], s, n);
          }
       }
 
