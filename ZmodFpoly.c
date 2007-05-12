@@ -637,10 +637,15 @@ void _ZmodFpoly_FFT_iterative(
    }
 
    // =========================================================================
-   // Remaining layers, none of which involve sqrt2. In this section all roots
-   // are measured as powers of 2.
+   // This section handles the layers where there are still zero coefficients
+   // to take advantage of. In most cases, this will only happen for the
+   // first layer or two, so we don't bother with specialised limbshift-only
+   // code for these layers.
 
-   for (; layer < depth; layer++)
+   // Note: from here on there are no sqrt2 rotations, and we measure all
+   // roots as powers of 2.
+   
+   for (; (layer < depth) && (nonzero < 2*half); layer++)
    {
       // Let length = multiple of block size plus a remainder.
       unsigned long length_quantised = length & (-2*half);
@@ -692,13 +697,52 @@ void _ZmodFpoly_FFT_iterative(
       twist <<= 1;
       root <<= 1;
       
-      // Update block length. Note that as soon as the block length is <=
-      // nonzero, that means that there are no more zero coefficients to take
-      // advantage of, so we just set nonzero = block length.
+      // Update block length.
       half >>= 1;
       half_skip >>= 1;
+      
       if (nonzero > 2*half)
+         // no more zero coefficients to take advantage of:
          nonzero = 2*half;
+   }
+
+   // =========================================================================
+   // Now we may assume there are no more zero coefficients.
+
+   for (; layer < depth; layer++)
+   {
+      // Let length = multiple of block size plus a remainder.
+      unsigned long length_quantised = length & (-2*half);
+      unsigned long length_remainder = length - length_quantised;
+
+      if (length_remainder > half)
+      {
+         // If length overhangs by more than half the block, then we need to
+         // perform full butterflies on the last block (i.e. the last block
+         // doesn't get any special treatment).
+         length_quantised += 2*half;
+      }
+      else if (length_remainder)
+      {
+         // If length overhangs the block by at most half the block size,
+         // then we only need to compute the first output of each butterfly
+         // for this block, i.e. (a, b) -> (a + b)
+         y = x + skip * length_quantised;
+         for (i = 0; i < half; i++, y += skip)
+            ZmodF_add(y[0], y[0], y[half_skip], n);
+      }
+
+      for (start = 0, y = x; start < length_quantised; start += 2*half, y += 2*half_skip)
+         for (i = 0, s = twist, z = y; i < half; i++, s += root, z += skip)
+            ZmodF_forward_butterfly_2exp(z, z + half_skip, scratch, s, n);
+
+      // Update roots of unity
+      twist <<= 1;
+      root <<= 1;
+      
+      // Update block length.
+      half >>= 1;
+      half_skip >>= 1;
    }
 }
 
