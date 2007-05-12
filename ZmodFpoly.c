@@ -731,10 +731,22 @@ void _ZmodFpoly_FFT_iterative(
          for (i = 0; i < half; i++, y += skip)
             ZmodF_add(y[0], y[0], y[half_skip], n);
       }
-
-      for (start = 0, y = x; start < length_quantised; start += 2*half, y += 2*half_skip)
-         for (i = 0, s = twist, z = y; i < half; i++, s += root, z += skip)
-            ZmodF_forward_butterfly_2exp(z, z + half_skip, scratch, s, n);
+      
+      // To keep the inner loops long, we have two versions of the next loop.
+      if (layer < depth/2)
+      {
+         // Version 1: only a few relatively long blocks.
+         for (start = 0, y = x; start < length_quantised; start += 2*half, y += 2*half_skip)
+            for (i = 0, s = twist, z = y; i < half; i++, s += root, z += skip)
+               ZmodF_forward_butterfly_2exp(z, z + half_skip, scratch, s, n);
+      }
+      else
+      {
+         // Version 2: lots of short blocks.
+         for (i = 0, s = twist, y = x; i < half; i++, s += root, y += skip)
+            for (start = 0, z = y; start < length_quantised; start += 2*half, z += 2*half_skip)
+               ZmodF_forward_butterfly_2exp(z, z + half_skip, scratch, s, n);
+      }
 
       // Update roots of unity
       twist <<= 1;
