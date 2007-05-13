@@ -537,7 +537,7 @@ void ZmodFpoly_rescale(ZmodFpoly_t poly)
 
 /****************************************************************************
 
-   Fourier Transform Routines
+   Forward fourier transforms (internal code)
 
 ****************************************************************************/
 
@@ -925,6 +925,13 @@ void _ZmodFpoly_FFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
 
 
 
+/****************************************************************************
+
+   Inverse fourier transforms (internal code)
+
+****************************************************************************/
+
+
 void _ZmodFpoly_IFFT_basecase(ZmodF_t* x, unsigned long depth, unsigned long skip,
                      unsigned long nonzero, unsigned long length, int extra,
                      unsigned long twist, unsigned long n,
@@ -1137,6 +1144,13 @@ void _ZmodFpoly_IFFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
                              extra, twist, n, scratch);
    }
 }
+
+
+/****************************************************************************
+
+   Fourier Transform Routines
+
+****************************************************************************/
 
 
 void ZmodFpoly_FFT(ZmodFpoly_t poly, unsigned long length)
