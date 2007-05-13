@@ -1027,18 +1027,14 @@ void _ZmodFpoly_IFFT_recursive(
                 (length == (1UL << depth) && !extra) ||
                 (length > 0 && length < (1UL << depth)));
 
-   if (depth <= 1)
-   {
-      _ZmodFpoly_IFFT_basecase(x, depth, skip, nonzero, length, extra, twist, n, scratch);
+   if (depth == 0)
       return;
-   }
 
    // root is the (2^depth)-th root unity, measured as a power of sqrt2
    long root = (4*n*FLINT_BITS_PER_LIMB) >> depth;
    FLINT_ASSERT(twist < root);
 
    long size = 1UL << depth;
-   long cols = size / 2;
 
    if (length == size)
    {
@@ -1046,6 +1042,8 @@ void _ZmodFpoly_IFFT_recursive(
       _ZmodFpoly_IFFT_iterative(x, depth, skip, twist, n, scratch);
       return;
    }
+
+   long cols = size >> 1;
 
    long i, j;
    ZmodF_t* y;
@@ -1062,7 +1060,6 @@ void _ZmodFpoly_IFFT_recursive(
    
    // the horizontal transforms convert between B and C
    // the vertical butterflies convert between A and B
-
 
    if ((length < cols) || (length == cols && !extra))
    {
@@ -1101,14 +1098,12 @@ void _ZmodFpoly_IFFT_recursive(
       // First some forward butterflies ("Aa" => "B?") to make them look like:
       // CCCCAABB      CCCCBBBB      CCCCBBaa      CCCCaaaa
       // AAAAAA??  or  AAaa????  or  aaaa??aa  or  aaaaaaaa
-
       for (; i >= last_zero_forward_butterfly; i--, j -= root, y -= skip)
          _ZmodFpoly_IFFT_basecase(y, 1, skip << (depth - 1), 1, 0, 1, j, n, scratch);
 
       // Then some forward butterflies ("AA" => "B?") to make them look like:
       // CCCCBBBB      CCCCBBBB      CCCCBBaa      CCCCaaaa
       // AAAA????  or  AAaa????  or  aaaa??aa  or  aaaaaaaa
-      
       for (; i >= (long)length; i--, j -= root, y -= skip)
          _ZmodFpoly_IFFT_basecase(y, 1, skip << (depth - 1), 2, 0, 1, j, n, scratch);
 
@@ -1119,9 +1114,15 @@ void _ZmodFpoly_IFFT_recursive(
                                 (nonzero < cols) ? nonzero : cols,
                                 length, extra, twist << 1, n, scratch);
       
-      // cross butterflies, but don't write output to bottom row
+      // Cross butterflies ("Ba" => "A?") to make them look like:
+      // BBBB*???      BBAA*???      AAAA*???      AAAA*???
+      // AAAA????  or  AA??????  or  ??????aa  or  ????aaaa
       for (; i >= last_zero_cross_butterfly; i--, j -= root, y -= skip)
          _ZmodFpoly_IFFT_basecase(y, 1, skip << (depth - 1), 1, 1, 0, j, n, scratch);
+         
+      // Cross butterflies ("BA" => "A?") to make them look like:
+      // AAAA*???      AAAA*???      AAAA*???      AAAA*???
+      // ????????  or  ????????  or  ??????aa  or  ????aaaa
       for (; i >= 0; i--, j -= root, y -= skip)
          _ZmodFpoly_IFFT_basecase(y, 1, skip << (depth - 1), 2, 1, 0, j, n, scratch);
    }
@@ -1143,20 +1144,26 @@ void _ZmodFpoly_IFFT_recursive(
       long last_zero_cross_butterfly = nonzero - cols;
       long last_cross_butterfly = length - cols;
    
-      // cross butterflies, compute both outputs
+      // Cross butterflies ("Ba" => "AB") to make them look like:
+      // BBBBAAAA                   BBBBBBAA
+      // AAAABBBB (extra == 1)  or  CCCAAABB
       for (; i >= last_zero_cross_butterfly; i--, j -= root, y -= skip)
          _ZmodFpoly_IFFT_basecase(y, 1, skip << (depth - 1), 1, 1, 1, j, n, scratch);
+         
+      // Cross butterflies ("BA" => "AB") to make them look like:
+      // AAAAAAAA                   BBBAAAAA
+      // BBBBBBBB (extra == 1)  or  CCCBBBBB
       for (; i >= last_cross_butterfly; i--, j -= root, y -= skip)
          _ZmodFpoly_IFFT_basecase(y, 1, skip << (depth - 1), 2, 1, 1, j, n, scratch);
       
-      // now should look like
+      // Transform second row to make them look like:
       // AAAAAAAA                   BBBAAAAA
-      // BBBBBBBB (extra == 1)  or  CCCBBBBB
-      
-      // transform second row
+      // *??????? (extra == 1)  or  BBB*????
       _ZmodFpoly_IFFT_recursive(x + skip*cols, depth - 1, skip, cols, length - cols, extra, twist << 1, n, scratch);
 
-      // inverse butterflies
+      // Inverse butterflies ("BB" => "AA") to make them look like:
+      // AAAAAAAA                   AAAAAAAA
+      // *??????? (extra == 1)  or  AAA*????
       for (; i >= 0; i--, j -= root, y -= skip)
          _ZmodFpoly_IFFT_basecase(y, 1, skip << (depth - 1), 2, 2, 0, j, n, scratch);
    }
