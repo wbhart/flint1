@@ -1160,32 +1160,39 @@ void _ZmodFpoly_IFFT_recursive(
          nonzero_rows--;
       }
 
-      unsigned long zero_butterflies_end = nonzero_cols;
-      i = length_cols;
-      y = x + (skip * length_cols);
-      j = twist + (root * length_cols);
-
-      if (nonzero_rows)
-      {
-         // CCCCAAAAAA      CCCCBBBAAA
-         // AAAAAAAaaa  ->  AAAA???aaa
-         for (; i < nonzero_cols; i++, y += skip, j += root)
-         {
-            // these handle AA => B?
-            _ZmodFpoly_IFFT(y, 1, skip << (depth - 1), 2, 0, 1, j, n, scratch);
-         }
-
-         zero_butterflies_end = cols;
-      }
-      // CCCCBBBAAA      CCCCBBBBBB          CCCCAAAaaa      CCCCBBBbbb
-      // AAAA???aaa  ->  AAAA??????,   OR    aaaaaaaaaa  ->  aaaa???bbb,
+      // CCCCAAAAAA      CCCCAAABBB          CCCCAAAaaa      CCCCBBBbbb
+      // AAAAAAAaaa  ->  AAAAAAA???,   OR    aaaaaaaaaa  ->  aaaa???bbb,
       //
       //      CCCCAAAAAA      CCCCBBBBBB
       //  OR  AAaaaaaaaa  ->  AAaa??????
-      for (; i < zero_butterflies_end; i++, y += skip, j += root)
+
+      long last_i;
+      if (nonzero_rows)
+      {
+         i = cols - 1;
+         last_i = (nonzero_cols > length_cols) ? nonzero_cols : length_cols;
+      }
+      else
+      {
+         i = nonzero_cols - 1;
+         last_i = length_cols;
+      }
+      
+      y = x + skip * i;
+      j = twist + root * i;
+      
+      for (; i >= last_i; i--, y -= skip, j -= root)
       {
          // these handle Aa => B?
          _ZmodFpoly_IFFT(y, 1, skip << (depth - 1), 1, 0, 1, j, n, scratch);
+      }
+
+      // CCCCAAABBB      CCCCBBBBBB
+      // AAAAAAA???  ->  AAAA??????
+      for (; i >= length_cols; i--, y -= skip, j -= root)
+      {
+         // these handle AA => B?
+         _ZmodFpoly_IFFT(y, 1, skip << (depth - 1), 2, 0, 1, j, n, scratch);
       }
 
       if (length_cols)
@@ -1200,35 +1207,34 @@ void _ZmodFpoly_IFFT_recursive(
          _ZmodFpoly_IFFT(x, depth - 1, skip, (nonzero_rows ? cols : nonzero_cols),
                          length_cols, extra, twist << 1, n, scratch);
 
-         i = 0;
-         y = x;
-         j = twist;
-         zero_butterflies_end = (length_cols < nonzero_cols) ? length_cols : nonzero_cols;
-
          if (nonzero_rows)
          {
-            // BBBB*?????      AAAA*?????          BBBB*?????      AABB*?????
-            // AAAA??????  ->  ??????????,   OR    AAaa??????  ->  ??aa??????
-            for (; i < zero_butterflies_end; i++, y += skip, j += root)
-            {
-               // these handle BA => A?
-               _ZmodFpoly_IFFT(y, 1, skip << (depth - 1), 2, 1, 0, j, n, scratch);
-            }
-            
-            zero_butterflies_end = length_cols;
+            last_i = (nonzero_cols < length_cols) ? nonzero_cols : (i+1);
+         }
+         else
+         {
+            last_i = 0;
          }
 
-         // AABB*?????      AAAA*?????
-         // ??aa??????  ->  ??????????
-         for (; i < zero_butterflies_end; i++, y += skip, j += root)
+         // BBBB*?????      AAAA*?????          BBBB*?????      BBAA*?????
+         // aaaa???bbb  ->  ??????????,   OR    AAaa??????  ->  AA????????
+         for (; i >= last_i; i--, y -= skip, j -= root)
          {
             // these handle Ba => A?
             _ZmodFpoly_IFFT(y, 1, skip << (depth - 1), 1, 1, 0, j, n, scratch);
          }
+
+         // BBBB*?????      AAAA*?????
+         // AAAA??????  ->  ??????????
+         for (; i >= 0; i--, y -= skip, j -= root)
+         {
+            // these handle BA => A?
+            _ZmodFpoly_IFFT(y, 1, skip << (depth - 1), 2, 1, 0, j, n, scratch);
+         }
       }
       else
       {
-         ASSERT(extra);
+         FLINT_ASSERT(extra);
       
          // BBBBBBBBB      C????????
          // ?????????  ->  ?????????
