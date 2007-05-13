@@ -303,6 +303,13 @@ ensures that Z/pZ has enough roots of unity.
 
 
 /*
+This is the threshold for switching from a plain iterative FFT to an FFT
+factoring algorithm. It should be set to about the number of limbs in L1 cache.
+*/
+#define ZMODFPOLY_FFT_FACTOR_THRESHOLD 7500
+
+
+/*
    Converts from coefficient representation to fourier representation.
 
    "length" is the desired number of fourier coefficients; x.length is set

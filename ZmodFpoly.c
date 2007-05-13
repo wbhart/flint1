@@ -879,13 +879,6 @@ void _ZmodFpoly_FFT_factor(
 
 
 /*
-This is the threshold for switching from a plain iterative FFT to an FFT
-factoring algorithm. It should be set to about the number of limbs in L1 cache.
-*/
-#define ZMODFPOLY_FFT_FACTOR_THRESHOLD 7500
-
-
-/*
 This is an internal function. It's just a temporary implementation so that
 we can get started on higher level code. It is not optimised particularly
 well yet.
@@ -932,6 +925,67 @@ void _ZmodFpoly_FFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
 
 
 
+void _ZmodFpoly_IFFT_basecase(ZmodF_t* x, unsigned long depth, unsigned long skip,
+                     unsigned long nonzero, unsigned long length, int extra,
+                     unsigned long twist, unsigned long n,
+                     ZmodF_t* scratch)
+{
+   FLINT_ASSERT(skip >= 1);
+   FLINT_ASSERT(n >= 1);
+   FLINT_ASSERT(nonzero >= 1 && nonzero <= (1UL << depth));
+   FLINT_ASSERT(length <= nonzero);
+   FLINT_ASSERT((length == 0 && extra) ||
+                (length == (1UL << depth) && !extra) ||
+                (length > 0 && length < (1UL << depth)));
+
+
+   FLINT_ASSERT(depth <= 1);
+   
+   // root is the (2^depth)-th root unity, measured as a power of sqrt2
+   unsigned long root = (4*n*FLINT_BITS_PER_LIMB) >> depth;
+   FLINT_ASSERT(twist < root);
+   
+   // ========================
+   // base cases
+   
+   if (depth == 0)
+      return;
+      
+   if (length == 0)
+   {
+      if (nonzero == 2)
+         ZmodF_add(x[0], x[0], x[skip], n);
+      ZmodF_short_div_2exp(x[0], x[0], 1, n);
+   }
+   else if (length == 1)
+   {
+      if (nonzero == 1)
+      {
+         if (extra)
+            ZmodF_mul_sqrt2exp(x[skip], x[0], twist, n);
+         ZmodF_add(x[0], x[0], x[0], n);
+      }
+      else  // nonzero == 2
+      {
+         if (extra)
+         {
+            ZmodF_sub(scratch[0], x[0], x[skip], n);
+            ZmodF_add(x[0], x[0], scratch[0], n);
+            ZmodF_mul_sqrt2exp(x[skip], scratch[0], twist, n);
+         }
+         else
+         {
+            ZmodF_add(x[0], x[0], x[0], n);
+            ZmodF_sub(x[0], x[0], x[skip], n);
+         }
+      }
+   }
+   else  // length == 2
+      ZmodF_inverse_butterfly_sqrt2exp(x, x + skip, scratch, twist, n);
+}
+
+
+
 /*
 This is an internal function. It's just a temporary implementation so that
 we can get started on higher level code. It is not optimised particularly
@@ -947,13 +1001,17 @@ twist = twisting power of sqrt2
 n = coefficient length
 scratch = a scratch buffer
 */
-void _ZmodFpoly_IFFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
-                     unsigned long nonzero, unsigned long length, int extra,
-                     unsigned long twist, unsigned long n,
-                     ZmodF_t* scratch)
+void _ZmodFpoly_IFFT_factor(
+            ZmodF_t* x, unsigned long rows_depth, unsigned long cols_depth,
+            unsigned long skip, unsigned long nonzero, unsigned long length,
+            int extra, unsigned long twist, unsigned long n, ZmodF_t* scratch)
 {
    FLINT_ASSERT(skip >= 1);
    FLINT_ASSERT(n >= 1);
+   FLINT_ASSERT(rows_depth >= 1);
+   FLINT_ASSERT(cols_depth >= 1);
+
+   unsigned long depth = rows_depth + cols_depth;
    FLINT_ASSERT(nonzero >= 1 && nonzero <= (1UL << depth));
    FLINT_ASSERT(length <= nonzero);
    FLINT_ASSERT((length == 0 && extra) ||
@@ -964,54 +1022,6 @@ void _ZmodFpoly_IFFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
    unsigned long root = (4*n*FLINT_BITS_PER_LIMB) >> depth;
    FLINT_ASSERT(twist < root);
    
-   // ========================
-   // base cases
-   
-   if (depth == 0)
-      return;
-      
-   if (depth == 1)
-   {
-      if (length == 0)
-      {
-         if (nonzero == 2)
-            ZmodF_add(x[0], x[0], x[skip], n);
-         ZmodF_short_div_2exp(x[0], x[0], 1, n);
-      }
-      else if (length == 1)
-      {
-         if (nonzero == 1)
-         {
-            if (extra)
-               ZmodF_mul_sqrt2exp(x[skip], x[0], twist, n);
-            ZmodF_add(x[0], x[0], x[0], n);
-         }
-         else  // nonzero == 2
-         {
-            if (extra)
-            {
-               ZmodF_sub(scratch[0], x[0], x[skip], n);
-               ZmodF_add(x[0], x[0], scratch[0], n);
-               ZmodF_mul_sqrt2exp(x[skip], scratch[0], twist, n);
-            }
-            else
-            {
-               ZmodF_add(x[0], x[0], x[0], n);
-               ZmodF_sub(x[0], x[0], x[skip], n);
-            }
-         }
-      }
-      else  // length == 2
-         ZmodF_inverse_butterfly_sqrt2exp(x, x + skip, scratch, twist, n);
-
-      return;
-   }
-   
-   // ========================
-   // factoring case
-
-   unsigned long rows_depth = depth >> 1;
-   unsigned long cols_depth = depth - rows_depth;
    unsigned long rows = 1UL << rows_depth;
    unsigned long cols = 1UL << cols_depth;
 
@@ -1072,6 +1082,59 @@ void _ZmodFpoly_IFFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
          ZmodF_add(x[0], x[0], y[0], n);
       }
       ZmodF_short_div_2exp(x[0], x[0], cols_depth, n);
+   }
+}
+
+
+/*
+This is an internal function. It's just a temporary implementation so that
+we can get started on higher level code. It is not optimised particularly
+well yet.
+
+x = array of buffers to operate on
+skip = distance between buffers
+depth = log2(number of buffers)
+nonzero = number of *output* buffers assumed to be nonzero
+length = number of untransformed coefficients requested
+extra = indicates whether an extra *forward* coefficient should be computed
+twist = twisting power of sqrt2
+n = coefficient length
+scratch = a scratch buffer
+*/
+void _ZmodFpoly_IFFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
+                     unsigned long nonzero, unsigned long length, int extra,
+                     unsigned long twist, unsigned long n,
+                     ZmodF_t* scratch)
+{
+   FLINT_ASSERT(skip >= 1);
+   FLINT_ASSERT(n >= 1);
+   FLINT_ASSERT(nonzero >= 1 && nonzero <= (1UL << depth));
+   FLINT_ASSERT(length <= nonzero);
+   FLINT_ASSERT((length == 0 && extra) ||
+                (length == (1UL << depth) && !extra) ||
+                (length > 0 && length < (1UL << depth)));
+
+   if (depth == 0)
+      return;
+
+/*
+   // If the data fits in L1 (2^depth coefficients of length n+1, plus a
+   // scratch buffer), then use the iterative transform. Otherwise factor the
+   // FFT into two chunks.
+   if (depth == 1 ||
+       ((1 << depth) + 1) * (n+1) <= ZMODFPOLY_FFT_FACTOR_THRESHOLD)
+*/
+   if (depth <= 1)
+   {
+      _ZmodFpoly_IFFT_basecase(x, depth, skip, nonzero, length, extra,
+                               twist, n, scratch);
+   }
+   else
+   {
+      unsigned long rows_depth = depth >> 1;
+      unsigned long cols_depth = depth - rows_depth;
+      _ZmodFpoly_IFFT_factor(x, rows_depth, cols_depth, skip, nonzero, length,
+                             extra, twist, n, scratch);
    }
 }
 
