@@ -334,6 +334,34 @@ void ZmodF_mul_sqrt2exp(ZmodF_t b, ZmodF_t a,
 void ZmodF_sub_mul_2exp(ZmodF_t c, ZmodF_t a, ZmodF_t b,
                         unsigned long s, unsigned long n);
 
+
+/*
+   a := a + b
+   b := B^s (a - b)
+   z := destroyed
+
+   PRECONDITIONS:
+      a, b, z may not alias each other
+      0 < s < n
+      
+   NOTE: a, b, z may get permuted
+*/
+static inline
+void ZmodF_forward_butterfly_Bexp(ZmodF_t* a, ZmodF_t* b, ZmodF_t* z,
+                                  unsigned long s, unsigned long n)
+{
+   FLINT_ASSERT(s > 0);
+   FLINT_ASSERT(s < n);
+   FLINT_ASSERT(*a != *b);
+   FLINT_ASSERT(*a != *z);
+   FLINT_ASSERT(*z != *b);
+
+   ZmodF_sub_mul_Bexp(*z, *a, *b, s, n);
+   ZmodF_add(*a, *a, *b, n);
+   ZmodF_swap(b, z);
+}
+
+
 /*
    a := a + b
    b := 2^s (a - b)
@@ -341,6 +369,7 @@ void ZmodF_sub_mul_2exp(ZmodF_t c, ZmodF_t a, ZmodF_t b,
 
    PRECONDITIONS:
       a, b, z may not alias each other
+      0 <= s < n*FLINT_BITS_PER_LIMB
       
    NOTE: a, b, z may get permuted
 */
@@ -355,6 +384,7 @@ void ZmodF_forward_butterfly_2exp(ZmodF_t* a, ZmodF_t* b, ZmodF_t* z,
 
    PRECONDITIONS:
       a, b, z may not alias each other
+      0 <= s < 4*FLINT_BITS_PER_LIMB
       
    NOTE: a, b, z may get permuted
 */
@@ -369,6 +399,7 @@ void ZmodF_forward_butterfly_sqrt2exp(ZmodF_t* a, ZmodF_t* b, ZmodF_t* z,
 
    PRECONDITIONS:
       a, b, z may not alias each other
+      0 <= s < n*FLINT_BITS_PER_LIMB
       
    NOTE: a, b, z may get permuted
 */
@@ -383,6 +414,7 @@ void ZmodF_inverse_butterfly_2exp(ZmodF_t* a, ZmodF_t* b, ZmodF_t* z,
 
    PRECONDITIONS:
       a, b, z may not alias each other
+      0 <= s < 2*n*FLINT_BITS_PER_LIMB
       
    NOTE: a, b, z may get permuted
 */
@@ -404,6 +436,10 @@ static inline
 void ZmodF_simple_butterfly(ZmodF_t* a, ZmodF_t* b, ZmodF_t* z,
                             unsigned long n)
 {
+   FLINT_ASSERT(*a != *b);
+   FLINT_ASSERT(*a != *z);
+   FLINT_ASSERT(*z != *b);
+
    ZmodF_add(*z, *a, *b, n);
    ZmodF_sub(*b, *a, *b, n);
    ZmodF_swap(z, a);
