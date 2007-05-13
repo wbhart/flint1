@@ -1057,13 +1057,12 @@ void _ZmodFpoly_IFFT_recursive(
 
    if (length_rows)
    {
-      // length_rows == 1
+      // length_rows == 1, nonzero_rows == 1 or 2
       
-
+      FLINT_ASSERT(nonzero_rows >= 1);
+      
       // row transforms for the rows where we have all fourier coefficients
-      for (i = 0, y = x; i < length_rows; i++, y += (skip << (depth - 1)))
-         _ZmodFpoly_IFFT(y, (depth - 1), skip, cols, cols, 0,
-                         twist << 1, n, scratch);
+      _ZmodFpoly_IFFT(x, (depth - 1), skip, cols, cols, 0, twist << 1, n, scratch);
 
       // column transforms where we have enough information
       for (i = length_cols, y = x + (skip * length_cols),
@@ -1071,40 +1070,34 @@ void _ZmodFpoly_IFFT_recursive(
            i < nonzero_cols; i++, y += skip, j += root)
       {
          _ZmodFpoly_IFFT(y, 1, skip << (depth - 1), nonzero_rows + 1,
-                         length_rows, length_cols ? 1 : extra, j, n, scratch);
+                         1, length_cols ? 1 : extra, j, n, scratch);
       }
-      if (nonzero_rows)
-         for (; i < cols; i++, y += skip, j += root)
-            _ZmodFpoly_IFFT(y, 1, skip << (depth - 1), nonzero_rows,
-                            length_rows, length_cols ? 1 : extra, j, n, scratch);
+      for (; i < cols; i++, y += skip, j += root)
+         _ZmodFpoly_IFFT(y, 1, skip << (depth - 1), nonzero_rows,
+                         1, length_cols ? 1 : extra, j, n, scratch);
 
       if (length_cols)
       {
          // a single switcheroo row transform
-         _ZmodFpoly_IFFT(x + length_rows * (skip << (depth - 1)), (depth - 1),
-                         skip, (nonzero_rows ? cols : nonzero_cols),
-                         length_cols, extra, twist << 1, n, scratch);
+         _ZmodFpoly_IFFT(x + (skip << (depth - 1)), (depth - 1),
+                         skip, cols, length_cols, extra, twist << 1, n, scratch);
 
          // remaining column transforms
          for (i = 0, y = x, j = twist; i < length_cols && i < nonzero_cols;
               i++, y += skip, j += root)
          {
             _ZmodFpoly_IFFT(y, 1, skip << (depth - 1), nonzero_rows + 1,
-                            length_rows + 1, 0, j, n, scratch);
+                            2, 0, j, n, scratch);
          }
-         if (nonzero_rows)
-         {
-            for (; i < length_cols; i++, y += skip, j += root)
-               _ZmodFpoly_IFFT(y, 1, skip << (depth - 1), nonzero_rows,
-                               length_rows + 1, 0, j, n, scratch);
-         }
+         for (; i < length_cols; i++, y += skip, j += root)
+            _ZmodFpoly_IFFT(y, 1, skip << (depth - 1), nonzero_rows,
+                            2, 0, j, n, scratch);
       }
       else if (extra)
       {
          // need one extra trivial fourier coefficient
-         x += length_rows * (skip << (depth - 1));
-         for (i = 1, y = x + skip; i < (nonzero_rows ? cols : nonzero_cols);
-              i++, y += skip)
+         x += (skip << (depth - 1));
+         for (i = 1, y = x + skip; i < cols; i++, y += skip)
          {
             ZmodF_add(x[0], x[0], y[0], n);
          }
@@ -1115,29 +1108,23 @@ void _ZmodFpoly_IFFT_recursive(
    {
       // length_rows == 0
    
-   
-      // row transforms for the rows where we have all fourier coefficients
-      for (i = 0, y = x; i < length_rows; i++, y += (skip << (depth - 1)))
-         _ZmodFpoly_IFFT(y, (depth - 1), skip, cols, cols, 0,
-                         twist << 1, n, scratch);
-
       // column transforms where we have enough information
       for (i = length_cols, y = x + (skip * length_cols),
            j = twist + (root*length_cols);
            i < nonzero_cols; i++, y += skip, j += root)
       {
          _ZmodFpoly_IFFT(y, 1, skip << (depth - 1), nonzero_rows + 1,
-                         length_rows, length_cols ? 1 : extra, j, n, scratch);
+                         0, length_cols ? 1 : extra, j, n, scratch);
       }
       if (nonzero_rows)
          for (; i < cols; i++, y += skip, j += root)
             _ZmodFpoly_IFFT(y, 1, skip << (depth - 1), nonzero_rows,
-                            length_rows, length_cols ? 1 : extra, j, n, scratch);
+                            0, length_cols ? 1 : extra, j, n, scratch);
 
       if (length_cols)
       {
          // a single switcheroo row transform
-         _ZmodFpoly_IFFT(x + length_rows * (skip << (depth - 1)), (depth - 1),
+         _ZmodFpoly_IFFT(x + 0 * (skip << (depth - 1)), (depth - 1),
                          skip, (nonzero_rows ? cols : nonzero_cols),
                          length_cols, extra, twist << 1, n, scratch);
 
@@ -1146,19 +1133,19 @@ void _ZmodFpoly_IFFT_recursive(
               i++, y += skip, j += root)
          {
             _ZmodFpoly_IFFT(y, 1, skip << (depth - 1), nonzero_rows + 1,
-                            length_rows + 1, 0, j, n, scratch);
+                            1, 0, j, n, scratch);
          }
          if (nonzero_rows)
          {
             for (; i < length_cols; i++, y += skip, j += root)
                _ZmodFpoly_IFFT(y, 1, skip << (depth - 1), nonzero_rows,
-                               length_rows + 1, 0, j, n, scratch);
+                               1, 0, j, n, scratch);
          }
       }
       else if (extra)
       {
          // need one extra trivial fourier coefficient
-         x += length_rows * (skip << (depth - 1));
+         x += 0 * (skip << (depth - 1));
          for (i = 1, y = x + skip; i < (nonzero_rows ? cols : nonzero_cols);
               i++, y += skip)
          {
