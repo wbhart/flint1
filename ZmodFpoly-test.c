@@ -791,7 +791,7 @@ int test__ZmodFpoly_IFFT_recursive()
 {
    int success = 1;
 
-   for (unsigned long depth = 0; depth <= 11 && success; depth++)
+   for (unsigned long depth = 0; depth <= 6 && success; depth++)
    {
       unsigned long size = 1UL << depth;
       
