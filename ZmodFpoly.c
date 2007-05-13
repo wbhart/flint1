@@ -676,17 +676,27 @@ void _ZmodFpoly_FFT_iterative(
          // If nonzero <= half, then the second half of each butterfly input
          // are zeroes, so we just computing (a, 0) -> (a, ra), where r is the
          // appropriate root of unity.
-         for (start = 0, y = x; start < length_quantised; start += 2*half, y += 2*half_skip)
-            for (i = 0, s = twist, z = y; i < nonzero; i++, s += root, z += skip)
+         for (start = 0, y = x; start < length_quantised;
+              start += 2*half, y += 2*half_skip)
+         {
+            for (i = 0, s = twist, z = y; i < nonzero;
+                 i++, s += root, z += skip)
+            {
                ZmodF_mul_2exp(z[half_skip], z[0], s, n);
+            }
+         }
       }
       else
       {
-         for (start = 0, y = x; start < length_quantised; start += 2*half, y += 2*half_skip)
+         for (start = 0, y = x; start < length_quantised;
+              start += 2*half, y += 2*half_skip)
          {
             // If nonzero > half, then we need some full butterflies...
-            for (i = 0, s = twist, z = y; i < nonzero - half; i++, s += root, z += skip)
+            for (i = 0, s = twist, z = y; i < nonzero - half;
+                 i++, s += root, z += skip)
+            {
                ZmodF_forward_butterfly_2exp(z, z + half_skip, scratch, s, n);
+            }
             // and also some partial butterflies (a, 0) -> (a, ra).
             for (; i < half; i++, s += root, z += skip)
                ZmodF_mul_2exp(z[half_skip], z[0], s, n);
@@ -736,16 +746,64 @@ void _ZmodFpoly_FFT_iterative(
       if (layer < depth/2)
       {
          // Version 1: only a few relatively long blocks.
-         for (start = 0, y = x; start < length_quantised; start += 2*half, y += 2*half_skip)
+         
+         for (start = 0, y = x; start < length_quantised;
+              start += 2*half, y += 2*half_skip)
+         {
             for (i = 0, s = twist, z = y; i < half; i++, s += root, z += skip)
                ZmodF_forward_butterfly_2exp(z, z + half_skip, scratch, s, n);
+         }
       }
       else
       {
          // Version 2: lots of short blocks.
-         for (i = 0, s = twist, y = x; i < half; i++, s += root, y += skip)
-            for (start = 0, z = y; start < length_quantised; start += 2*half, z += 2*half_skip)
-               ZmodF_forward_butterfly_2exp(z, z + half_skip, scratch, s, n);
+         
+         // Two sub-versions, depending on whether the rotations are all by
+         // a whole number of limbs.
+         if ((root | twist) & (FLINT_BITS_PER_LIMB - 1))
+         {
+            // Version 2a: rotations still involve bitshifts.
+            for (i = 0, s = twist, y = x; i < half; i++, s += root, y += skip)
+               for (start = 0, z = y; start < length_quantised;
+                    start += 2*half, z += 2*half_skip)
+               {
+                  ZmodF_forward_butterfly_2exp(z, z + half_skip,
+                                               scratch, s, n);
+               }
+         }
+         else
+         {
+            // Version 2b: rotations involve only limbshifts.
+            unsigned long root_limbs = root / FLINT_BITS_PER_LIMB;
+
+            if (twist == 0)
+            {
+               // special case, since ZmodF_forward_butterfly_Bexp doesn't
+               // allow zero rotation count
+               for (start = 0, z = x; start < length_quantised;
+                    start += 2*half, z += 2*half_skip)
+               {
+                  ZmodF_simple_butterfly(z, z + half_skip, scratch, n);
+               }
+               i = 1;
+               y = x + skip;
+               s = root_limbs;
+            }
+            else
+            {
+               i = 0;
+               y = x;
+               s = twist / FLINT_BITS_PER_LIMB;
+            }
+            
+            for (; i < half; i++, s += root_limbs, y += skip)
+               for (start = 0, z = y; start < length_quantised;
+                    start += 2*half, z += 2*half_skip)
+               {
+                  ZmodF_forward_butterfly_Bexp(z, z + half_skip,
+                                               scratch, s, n);
+               }
+         }
       }
 
       // Update roots of unity
@@ -770,6 +828,8 @@ void _ZmodFpoly_FFT_factor(
 {
    FLINT_ASSERT(skip >= 1);
    FLINT_ASSERT(n >= 1);
+   FLINT_ASSERT(rows_depth >= 1);
+   FLINT_ASSERT(cols_depth >= 1);
    
    unsigned long depth = rows_depth + cols_depth;
    FLINT_ASSERT(nonzero >= 1 && nonzero <= (1 << depth));
@@ -821,12 +881,8 @@ void _ZmodFpoly_FFT_factor(
 /*
 This is the threshold for switching from a plain iterative FFT to an FFT
 factoring algorithm. It should be set to about the number of limbs in L1 cache.
-
-NOTE:
-   This should probably be a #define, but the test code in ZmodFpoly-test
-   needs to be able to modify it to test different parts of the FFT code.
 */
-unsigned long ZmodFpoly_FFT_factor_threshold = 7500;
+#define ZMODFPOLY_FFT_FACTOR_THRESHOLD 7500
 
 
 /*
@@ -853,11 +909,14 @@ void _ZmodFpoly_FFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
    FLINT_ASSERT(nonzero >= 1 && nonzero <= (1 << depth));
    FLINT_ASSERT(length >= 1 && length <= (1 << depth));
 
+   if (depth == 0)
+      return;
+
    // If the data fits in L1 (2^depth coefficients of length n+1, plus a
    // scratch buffer), then use the iterative transform. Otherwise factor the
    // FFT into two chunks.
-   if (depth <= 1 ||
-       ((1 << depth) + 1) * (n+1) <= ZmodFpoly_FFT_factor_threshold)
+   if (depth == 1 ||
+       ((1 << depth) + 1) * (n+1) <= ZMODFPOLY_FFT_FACTOR_THRESHOLD)
    {
       _ZmodFpoly_FFT_iterative(x, depth, skip, nonzero, length,
                                twist, n, scratch);

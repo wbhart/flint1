@@ -302,9 +302,6 @@ ensures that Z/pZ has enough roots of unity.
 ****************************************************************************/
 
 
-extern unsigned long ZmodFpoly_FFT_factor_threshold;
-
-
 /*
    Converts from coefficient representation to fourier representation.
 

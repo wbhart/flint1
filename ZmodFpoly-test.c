@@ -568,7 +568,7 @@ int test__ZmodFpoly_FFT_iterative()
 {
    int success = 1;
 
-   for (unsigned long depth = 0; depth <= 11 && success; depth++)
+   for (unsigned long depth = 1; depth <= 11 && success; depth++)
    {
       unsigned long size = 1UL << depth;
    
