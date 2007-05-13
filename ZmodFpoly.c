@@ -1064,22 +1064,22 @@ void _ZmodFpoly_IFFT_recursive(
       if (nonzero_rows == 2)
          nonzero_cols = cols;
 
-      // column transforms where we have enough information
-      for (i = length_cols, y = x + (skip * length_cols),
-           j = twist + (root * length_cols);
-           i < nonzero_cols; i++, y += skip, j += root)
-      {
-         _ZmodFpoly_IFFT(y, 1, skip << (depth - 1),
-                         2, 1, length_cols ? 1 : extra, j, n, scratch);
-      }
-      for (; i < cols; i++, y += skip, j += root)
-      {
-         _ZmodFpoly_IFFT(y, 1, skip << (depth - 1),
-                         1, 1, length_cols ? 1 : extra, j, n, scratch);
-      }
-
       if (length_cols)
       {
+         // column transforms where we have enough information
+         for (i = length_cols, y = x + (skip * length_cols),
+              j = twist + (root * length_cols);
+              i < nonzero_cols; i++, y += skip, j += root)
+         {
+            _ZmodFpoly_IFFT(y, 1, skip << (depth - 1),
+                            2, 1, 1, j, n, scratch);
+         }
+         for (; i < cols; i++, y += skip, j += root)
+         {
+            _ZmodFpoly_IFFT(y, 1, skip << (depth - 1),
+                            1, 1, 1, j, n, scratch);
+         }
+
          // transform second row
          _ZmodFpoly_IFFT(x + (skip << (depth - 1)), depth - 1,
                          skip, cols, length_cols, extra, twist << 1, n, scratch);
@@ -1091,14 +1091,31 @@ void _ZmodFpoly_IFFT_recursive(
                             2, 2, 0, j, n, scratch);
          }
       }
-      else if (extra)
+      else
       {
-         // need one extra trivial fourier coefficient
-         x += (skip << (depth - 1));
-         for (i = 1, y = x + skip; i < cols; i++, y += skip)
-            ZmodF_add(x[0], x[0], y[0], n);
-         ZmodF_short_div_2exp(x[0], x[0], depth - 1, n);
+         // column transforms where we have enough information
+         for (i = 0, y = x, j = twist; i < nonzero_cols; i++, y += skip, j += root)
+         {
+            _ZmodFpoly_IFFT(y, 1, skip << (depth - 1),
+                            2, 1, extra, j, n, scratch);
+         }
+         for (; i < cols; i++, y += skip, j += root)
+         {
+            _ZmodFpoly_IFFT(y, 1, skip << (depth - 1),
+                            1, 1, extra, j, n, scratch);
+         }
+
+         if (extra)
+         {
+            // need one extra trivial fourier coefficient
+            x += (skip << (depth - 1));
+            for (i = 1, y = x + skip; i < cols; i++, y += skip)
+               ZmodF_add(x[0], x[0], y[0], n);
+            ZmodF_short_div_2exp(x[0], x[0], depth - 1, n);
+         }
       }
+
+
    }
    else
    {
