@@ -1068,183 +1068,75 @@ void _ZmodFpoly_IFFT_recursive(
    // the horizontal transforms convert between B and C
    // the vertical butterflies convert between A and B
 
-   if (length_rows == 1)
+
+
+   // stupid implementation for now
+
+   for (i = nonzero; i < size; i++)
+      ZmodF_zero(x[i*skip], n);
+
+   long last_i;
+   long second_output;
+
+   i = cols-1;
+   j = twist + root*i;
+   y = x + skip*i;
+   
+   if (length < cols)
    {
-      // CCCCCCCCC      BBBBBBBBB
-      // CCCAAAaaa  ->  CCCAAAaaa
+      // forward butterflies
+      for (; i >= (long)length; i--, j -= root, y -= skip)
+      {
+         _ZmodFpoly_IFFT_basecase(y, 1, skip << (depth - 1), 2, 0, 1, j, n, scratch);
+      }
+
+      // transform first row
+      _ZmodFpoly_IFFT_recursive(x, depth - 1, skip, cols, length, extra, twist << 1, n, scratch);
+      
+      if (length == 0)
+         return;
+      
+      last_i = 0;
+      second_output = 0;
+   }
+   else
+   {
+      // transform first row (no truncation necessary)
       _ZmodFpoly_IFFT_iterative(x, depth - 1, skip, twist << 1, n, scratch);
       
-      if (nonzero_rows == 2)
+      last_i = length - cols;
+      second_output = last_i || extra;
+   }
+   
+   // cross butterflies
+   if (second_output)
+   {
+      for (; i >= last_i; i--, j -= root, y -= skip)
       {
-         // nonzero_rows = 1;    // not actually necessary
-         nonzero_cols = cols;
-      }
-      
-      i = cols-1;
-      y = x + skip*(cols - 1);
-      j = twist + root*(cols - 1);
-         
-      if (length_cols || extra)
-      {
-         // BBBBBBBBB      BBBBBBAAA
-         // CCCAAAaaa  ->  CCCAAABBB
-         for (; i >= nonzero_cols; i--, y -= skip, j -= root)
-         {
-            // these handle Ba => AB
-            _ZmodFpoly_IFFT(y, 1, skip << (depth - 1), 1, 1, 1, j, n, scratch);
-         }
-
-         // BBBBBBAAA      BBBAAAAAA
-         // CCCAAABBB  ->  CCCBBBBBB
-         for (; i >= length_cols; i--, y -= skip, j -= root)
-         {
-            // these handle BA => AB
-            _ZmodFpoly_IFFT(y, 1, skip << (depth - 1), 2, 1, 1, j, n, scratch);
-         }
-         
-         if (length_cols)
-         {
-            // BBBAAAAAA      BBBAAAAAA
-            // CCCBBBBBB  ->  BBB*?????
-            // (where "*" is "C" if extra == 1, otherwise "?")
-            _ZmodFpoly_IFFT(x + (skip << (depth - 1)), depth - 1,
-                            skip, cols, length_cols, extra, twist << 1, n, scratch);
-
-            // BBBAAAAAA      AAAAAAAAA
-            // BBB*?????  ->  AAA*?????
-            for (; i >= 0; i--, y -= skip, j -= root)
-            {
-               // these handle BB => AA
-               _ZmodFpoly_IFFT(y, 1, skip << (depth - 1), 2, 2, 0, j, n, scratch);
-            }
-         }
-         else
-         {
-            FLINT_ASSERT(extra);
-
-            // AAAAAAAAA      AAAAAAAAA
-            // BBBBBBBBB  ->  C????????
-
-            x += (skip << (depth - 1));
-            for (i = 1, y = x + skip; i < cols; i++, y += skip)
-               ZmodF_add(x[0], x[0], y[0], n);
-            ZmodF_short_div_2exp(x[0], x[0], depth - 1, n);
-         }
-      }
-      else
-      {
-         // BBBBBBBBB      BBBBBAAAA
-         // AAAAAaaaa  ->  AAAAA????
-         for (; i >= nonzero_cols; i--, y -= skip, j -= root)
-         {
-            // these handle Ba => A?
-            _ZmodFpoly_IFFT(y, 1, skip << (depth - 1), 1, 1, 0, j, n, scratch);
-         }
-
-         // BBBBBAAAA      AAAAAAAAA
-         // AAAAA????  ->  ?????????
-         for (; i >= 0; i--, y -= skip, j -= root)
-         {
-            // these handle BA => A?
-            _ZmodFpoly_IFFT(y, 1, skip << (depth - 1), 2, 1, 0, j, n, scratch);
-         }
+         _ZmodFpoly_IFFT_basecase(y, 1, skip << (depth - 1), 2, 1, 1, j, n, scratch);
       }
    }
    else
    {
-      // length_rows == 0
-
-      if (nonzero_cols == 0)
+      for (; i >= last_i; i--, j -= root, y -= skip)
       {
-         nonzero_cols = cols;
-         nonzero_rows--;
+         _ZmodFpoly_IFFT_basecase(y, 1, skip << (depth - 1), 2, 1, 0, j, n, scratch);
       }
-
-      // CCCCAAAAAA      CCCCAAABBB          CCCCAAAaaa      CCCCBBBbbb
-      // AAAAAAAaaa  ->  AAAAAAA???,   OR    aaaaaaaaaa  ->  aaaa???bbb,
-      //
-      //      CCCCAAAAAA      CCCCBBBBBB
-      //  OR  AAaaaaaaaa  ->  AAaa??????
-
-      long last_i;
-      if (nonzero_rows)
-      {
-         i = cols - 1;
-         last_i = (nonzero_cols > length_cols) ? nonzero_cols : length_cols;
-      }
-      else
-      {
-         i = nonzero_cols - 1;
-         last_i = length_cols;
-      }
+   }
+   
+   if (length < cols)
+      return;
       
-      y = x + skip * i;
-      j = twist + root * i;
+   if ((length == cols) && !extra)
+      return;
       
-      for (; i >= last_i; i--, y -= skip, j -= root)
-      {
-         // these handle Aa => B?
-         _ZmodFpoly_IFFT(y, 1, skip << (depth - 1), 1, 0, 1, j, n, scratch);
-      }
+   // transform second row
+   _ZmodFpoly_IFFT_recursive(x + skip*cols, depth - 1, skip, cols, length - cols, extra, twist << 1, n, scratch);
 
-      // CCCCAAABBB      CCCCBBBBBB
-      // AAAAAAA???  ->  AAAA??????
-      for (; i >= length_cols; i--, y -= skip, j -= root)
-      {
-         // these handle AA => B?
-         _ZmodFpoly_IFFT(y, 1, skip << (depth - 1), 2, 0, 1, j, n, scratch);
-      }
-
-      if (length_cols)
-      {
-         // CCCCBBBBBB      BBBB*?????          CCCCBBBbbb      BBBB*?????
-         // AAAA??????  ->  AAAA??????,   OR    aaaa???bbb  ->  aaaa???bbb,
-         //
-         //      CCCCBBBBBB      BBBB*?????
-         //  OR  AAaa??????  ->  AAaa??????
-         //
-         // (where "*" is "C" if extra == 1, otherwise "?")
-         _ZmodFpoly_IFFT(x, depth - 1, skip, (nonzero_rows ? cols : nonzero_cols),
-                         length_cols, extra, twist << 1, n, scratch);
-
-         if (nonzero_rows)
-         {
-            last_i = (nonzero_cols < length_cols) ? nonzero_cols : (i+1);
-         }
-         else
-         {
-            last_i = 0;
-         }
-
-         // BBBB*?????      AAAA*?????          BBBB*?????      BBAA*?????
-         // aaaa???bbb  ->  ??????????,   OR    AAaa??????  ->  AA????????
-         for (; i >= last_i; i--, y -= skip, j -= root)
-         {
-            // these handle Ba => A?
-            _ZmodFpoly_IFFT(y, 1, skip << (depth - 1), 1, 1, 0, j, n, scratch);
-         }
-
-         // BBBB*?????      AAAA*?????
-         // AAAA??????  ->  ??????????
-         for (; i >= 0; i--, y -= skip, j -= root)
-         {
-            // these handle BA => A?
-            _ZmodFpoly_IFFT(y, 1, skip << (depth - 1), 2, 1, 0, j, n, scratch);
-         }
-      }
-      else
-      {
-         FLINT_ASSERT(extra);
-      
-         // BBBBBBBBB      C????????
-         // ?????????  ->  ?????????
-         for (i = 1, y = x + skip; i < (nonzero_rows ? cols : nonzero_cols);
-              i++, y += skip)
-         {
-            ZmodF_add(x[0], x[0], y[0], n);
-         }
-         ZmodF_short_div_2exp(x[0], x[0], depth - 1, n);
-      }
+   // inverse butterflies
+   for (; i >= 0; i--, j -= root, y -= skip)
+   {
+      _ZmodFpoly_IFFT_basecase(y, 1, skip << (depth - 1), 2, 2, 0, j, n, scratch);
    }
 }
 
