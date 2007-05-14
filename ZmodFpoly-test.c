@@ -703,8 +703,8 @@ void naive_IFFT(Zpoly_t x, unsigned long depth, unsigned long root,
    }
 
    unsigned long size = 1UL << depth;
-   root <<= depth;
-   twist <<= depth;
+   root <<= (depth - 1);
+   twist <<= (depth - 1);
    
    for (unsigned long d = 0; d < depth; d++)
    {
@@ -791,7 +791,7 @@ int test__ZmodFpoly_IFFT_recursive()
 {
    int success = 1;
 
-   for (unsigned long depth = 0; depth <= 6 && success; depth++)
+   for (unsigned long depth = 2; depth <= 6 && success; depth++)
    {
       unsigned long size = 1UL << depth;
       
@@ -824,6 +824,80 @@ int test__ZmodFpoly_IFFT_recursive()
                                     depth, nonzero, length, extra, twist, n);
                   }
                }
+      }
+   }
+
+   return success;
+}
+
+
+
+int test__ZmodFpoly_IFFT_iterative_case(unsigned long depth,
+                                        unsigned long twist, unsigned long n)
+{
+   Zpoly_t poly1, poly2;
+   ZmodFpoly_t f;
+   mpz_t extra_coeff;
+   mpz_init(extra_coeff);
+
+   unsigned long size = 1UL << depth;
+   unsigned long root = 4*n*FLINT_BITS_PER_LIMB / size;
+                  
+   Zpoly_init(poly1);
+   Zpoly_init(poly2);
+   ZmodFpoly_init(f, depth, n, 1);
+
+   int success = 1;
+   set_global_n(n);
+
+   ZmodFpoly_random(f, 4);
+   ZmodFpoly_convert_out(poly1, f);
+   naive_IFFT(poly1, depth, root, twist, n);
+   _ZmodFpoly_IFFT_iterative(f->coeffs, depth, 1, twist, n, f->scratch);
+   ZmodFpoly_convert_out(poly2, f);
+
+   for (unsigned long i = 0; i < size; i++)
+      if (mpz_cmp(poly1->coeffs[i], poly2->coeffs[i]))
+         success = 0;
+
+   ZmodFpoly_clear(f);
+   Zpoly_clear(poly2);
+   Zpoly_clear(poly1);
+
+   return success;
+}
+
+
+
+int test__ZmodFpoly_IFFT_iterative()
+{
+   int success = 1;
+
+   for (unsigned long depth = 1; depth <= 10 && success; depth++)
+   {
+      unsigned long size = 1UL << depth;
+      
+      // need 4*n*FLINT_BITS_PER_LIMB divisible by 2^depth
+      unsigned long n_skip = size / (4*FLINT_BITS_PER_LIMB);
+      if (n_skip == 0)
+         n_skip = 1;
+         
+      for (unsigned long n = n_skip; n < 6*n_skip && success; n += n_skip)
+      {
+#if DEBUG
+         printf("depth = %d, n = %d\n", depth, n);
+#endif
+
+         unsigned long num_trials = 100000 / (1 << (depth));
+         if (num_trials == 0)
+            num_trials = 1;
+         for (unsigned long trial = 0; trial < num_trials; trial++)
+         {
+            unsigned long twist = random_ulong(
+                                      4*n*FLINT_BITS_PER_LIMB / size);
+            success = success && test__ZmodFpoly_IFFT_iterative_case(
+                                                            depth, twist, n);
+         }
       }
    }
 
@@ -1058,8 +1132,9 @@ void ZmodFpoly_test_all()
    RUN_TEST(ZmodFpoly_convert_bits_unsigned);
    RUN_TEST(_ZmodFpoly_FFT_iterative);
    RUN_TEST(_ZmodFpoly_FFT_factor);
-#endif
    RUN_TEST(_ZmodFpoly_IFFT_recursive);
+#endif
+   RUN_TEST(_ZmodFpoly_IFFT_iterative);
    RUN_TEST(_ZmodFpoly_IFFT);
    RUN_TEST(ZmodFpoly_convolution);
 

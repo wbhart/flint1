@@ -1000,6 +1000,10 @@ void _ZmodFpoly_IFFT_iterative(
 {
    FLINT_ASSERT(skip >= 1);
    FLINT_ASSERT(n >= 1);
+
+   // root is the (2^depth)-th root unity, measured as a power of sqrt2
+   long root = (4*n*FLINT_BITS_PER_LIMB) >> depth;
+   FLINT_ASSERT(twist < root);
    
    // for now just call the main routine back again, or the basecase :-)
    if (depth <= 1)

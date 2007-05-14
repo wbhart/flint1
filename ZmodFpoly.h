@@ -391,6 +391,11 @@ void _ZmodFpoly_IFFT_recursive(
                unsigned long twist, unsigned long n, ZmodF_t* scratch);
 
 
+void _ZmodFpoly_IFFT_iterative(
+               ZmodF_t* x, unsigned long depth, unsigned long skip,
+               unsigned long twist, unsigned long n, ZmodF_t* scratch);
+
+
 void _ZmodFpoly_IFFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
                      unsigned long nonzero, unsigned long length, int extra,
                      unsigned long twist, unsigned long n,
