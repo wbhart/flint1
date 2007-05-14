@@ -954,8 +954,7 @@ void _ZmodFpoly_IFFT_iterative(
    unsigned long half = 1;
    unsigned long half_skip = skip;
    unsigned long size = 1UL << depth;
-   unsigned long layer;
-   unsigned long start, i, s;
+   unsigned long layer, start, i, s;
    ZmodF_t* y, * z;
    
    // First group of layers; lots of small blocks.
@@ -970,13 +969,50 @@ void _ZmodFpoly_IFFT_iterative(
       root >>= 1;
       twist >>= 1;
       
-      for (i = 0, y = x, s = twist; i < half; i++, s += root, y += skip)
-         for (start = 0, z = y; start < size;
-              start += 2*half, z += 2*half_skip)
+      if ((root | twist) & (FLINT_BITS_PER_LIMB-1))
+      {
+         // This version allows bitshifts
+         for (i = 0, y = x, s = twist; i < half; i++, s += root, y += skip)
+            for (start = 0, z = y; start < size;
+                 start += 2*half, z += 2*half_skip)
+            {
+               ZmodF_inverse_butterfly_2exp(z, z + half_skip, scratch, s, n);
+            }
+      }
+      else
+      {
+         // This version is limbshifts only
+         unsigned long root_limbs = root / FLINT_BITS_PER_LIMB;
+
+         if (twist == 0)
          {
-            ZmodF_inverse_butterfly_2exp(z, z + half_skip, scratch, s, n);
+            // special case since ZmodF_inverse_butterfly_Bexp doesn't allow
+            // zero rotation count
+            for (start = 0, z = x; start < size;
+                 start += 2*half, z += 2*half_skip)
+            {
+               ZmodF_simple_butterfly(z, z + half_skip, scratch, n);
+            }
+         
+            i = 1;
+            s = root_limbs;
+            y = x + skip;
+         }
+         else
+         {
+            i = 0;
+            s = twist / FLINT_BITS_PER_LIMB;
+            y = x;
          }
          
+         for (; i < half; i++, s += root_limbs, y += skip)
+            for (start = 0, z = y; start < size;
+                 start += 2*half, z += 2*half_skip)
+            {
+               ZmodF_inverse_butterfly_Bexp(z, z + half_skip, scratch, s, n);
+            }
+      }
+      
       half <<= 1;
       half_skip <<= 1;
    }
