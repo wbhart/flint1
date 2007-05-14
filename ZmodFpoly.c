@@ -547,6 +547,7 @@ void _ZmodFpoly_FFT_iterative(
             unsigned long skip, unsigned long nonzero, unsigned long length,
             unsigned long twist, unsigned long n, ZmodF_t* scratch)
 {
+   FLINT_ASSERT((4*n*FLINT_BITS_PER_LIMB) % (1 << depth) == 0);
    FLINT_ASSERT(skip >= 1);
    FLINT_ASSERT(n >= 1);
    FLINT_ASSERT(nonzero >= 1 && nonzero <= (1 << depth));
@@ -832,6 +833,7 @@ void _ZmodFpoly_FFT_factor(
    FLINT_ASSERT(cols_depth >= 1);
    
    unsigned long depth = rows_depth + cols_depth;
+   FLINT_ASSERT((4*n*FLINT_BITS_PER_LIMB) % (1 << depth) == 0);
    FLINT_ASSERT(nonzero >= 1 && nonzero <= (1 << depth));
    FLINT_ASSERT(length >= 1 && length <= (1 << depth));
    
@@ -897,6 +899,7 @@ void _ZmodFpoly_FFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
                     unsigned long twist, unsigned long n,
                     ZmodF_t* scratch)
 {
+   FLINT_ASSERT((4*n*FLINT_BITS_PER_LIMB) % (1 << depth) == 0);
    FLINT_ASSERT(skip >= 1);
    FLINT_ASSERT(n >= 1);
    FLINT_ASSERT(nonzero >= 1 && nonzero <= (1 << depth));
@@ -937,33 +940,58 @@ void _ZmodFpoly_IFFT_iterative(
                ZmodF_t* x, unsigned long depth, unsigned long skip,
                unsigned long twist, unsigned long n, ZmodF_t* scratch)
 {
+   FLINT_ASSERT((4*n*FLINT_BITS_PER_LIMB) % (1 << depth) == 0);
    FLINT_ASSERT(skip >= 1);
    FLINT_ASSERT(n >= 1);
    FLINT_ASSERT(depth >= 1);
 
-   // root is the (2^depth)-th root unity, measured as a power of sqrt2
-   long root = (4*n*FLINT_BITS_PER_LIMB) >> depth;
-   FLINT_ASSERT(twist < root);
-   
+   // root is the (2^(layer+1))-th root unity for each layer,
+   // measured as a power of sqrt2
+   long root = 2*n*FLINT_BITS_PER_LIMB;
    twist <<= (depth - 1);
-   root <<= (depth - 1);
+   FLINT_ASSERT(twist < root);
 
-   // half = half the current block length
    unsigned long half = 1;
    unsigned long half_skip = skip;
    unsigned long size = 1UL << depth;
+   unsigned long layer;
+   unsigned long start, i, s;
+   ZmodF_t* y, * z;
    
-   for (unsigned long layer = 0; layer < depth; layer++)
+   // First group of layers; lots of small blocks.
+
+   for (layer = 0; layer < depth/2; layer++)
    {
-      for (unsigned long start = 0; start < size; start += 2*half)
-      {
-         for (unsigned long i = 0; i < half; i++)
+      // no sqrt2 should be involved here
+      FLINT_ASSERT(!((twist | root) & 1));
+
+      // change roots to be measured as powers of 2
+      // (also this updates for the next layer in advance)
+      root >>= 1;
+      twist >>= 1;
+      
+      for (i = 0, y = x, s = twist; i < half; i++, s += root, y += skip)
+         for (start = 0, z = y; start < size;
+              start += 2*half, z += 2*half_skip)
          {
-            ZmodF_inverse_butterfly_sqrt2exp(x + skip*(start + i),
-                    x + skip*(start + half + i), scratch, twist + root*i, n);
+            ZmodF_inverse_butterfly_2exp(z, z + half_skip, scratch, s, n);
          }
-      }
+         
       half <<= 1;
+      half_skip <<= 1;
+   }
+
+
+   // Second group of layers; just a few large blocks.
+   
+   for (; layer < depth; layer++)
+   {
+      for (start = 0, y = x; start < size; start += 2*half, y += 2*half_skip)
+         for (i = 0, z = y, s = twist; i < half; i++, s += root, z += skip)
+            ZmodF_inverse_butterfly_sqrt2exp(z, z + half_skip, scratch, s, n);
+      
+      half <<= 1;
+      half_skip <<= 1;
       twist >>= 1;
       root >>= 1;
    }
@@ -980,6 +1008,7 @@ void _ZmodFpoly_IFFT_recursive(
                unsigned long nonzero, unsigned long length, int extra,
                unsigned long twist, unsigned long n, ZmodF_t* scratch)
 {
+   FLINT_ASSERT((4*n*FLINT_BITS_PER_LIMB) % (1 << depth) == 0);
    FLINT_ASSERT(skip >= 1);
    FLINT_ASSERT(n >= 1);
    FLINT_ASSERT(nonzero >= 1 && nonzero <= (1UL << depth));
@@ -1182,6 +1211,7 @@ void _ZmodFpoly_IFFT_factor(
    FLINT_ASSERT(cols_depth >= 1);
 
    unsigned long depth = rows_depth + cols_depth;
+   FLINT_ASSERT((4*n*FLINT_BITS_PER_LIMB) % (1 << depth) == 0);
    FLINT_ASSERT(nonzero >= 1 && nonzero <= (1UL << depth));
    FLINT_ASSERT(length <= nonzero);
    FLINT_ASSERT((length == 0 && extra) ||
@@ -1276,6 +1306,7 @@ void _ZmodFpoly_IFFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
                      unsigned long twist, unsigned long n,
                      ZmodF_t* scratch)
 {
+   FLINT_ASSERT((4*n*FLINT_BITS_PER_LIMB) % (1 << depth) == 0);
    FLINT_ASSERT(skip >= 1);
    FLINT_ASSERT(n >= 1);
    FLINT_ASSERT(nonzero >= 1 && nonzero <= (1UL << depth));
