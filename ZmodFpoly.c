@@ -1030,10 +1030,6 @@ void _ZmodFpoly_IFFT_recursive(
    if (depth == 0)
       return;
 
-   // root is the (2^depth)-th root unity, measured as a power of sqrt2
-   long root = (4*n*FLINT_BITS_PER_LIMB) >> depth;
-   FLINT_ASSERT(twist < root);
-
    long size = 1UL << depth;
 
    if (length == size)
@@ -1043,10 +1039,12 @@ void _ZmodFpoly_IFFT_recursive(
       return;
    }
 
-   long cols = size >> 1;
+   // root is the (2^depth)-th root unity, measured as a power of sqrt2
+   long root = (4*n*FLINT_BITS_PER_LIMB) >> depth;
+   FLINT_ASSERT(twist < root);
 
-   long i, j;
-   ZmodF_t* y;
+   long cols = size >> 1;
+   long half = skip << (depth - 1);
 
    // symbols in the following diagrams:
    // A = fully untransformed coefficient
@@ -1067,9 +1065,7 @@ void _ZmodFpoly_IFFT_recursive(
       // CCCCAAAA      CCCCAAAA      CCCCAAaa      CCCCaaaa
       // AAAAAAaa  or  AAaaaaaa  or  aaaaaaaa  or  aaaaaaaa
 
-      long last_zero_forward_butterfly;
-      long last_zero_cross_butterfly;
-      long last_cross_butterfly;
+      long i, last_zero_forward_butterfly, last_zero_cross_butterfly;
 
       if (nonzero <= cols)
       {
@@ -1092,20 +1088,26 @@ void _ZmodFpoly_IFFT_recursive(
          }
       }
       
-      j = twist + root*i;
-      y = x + skip*i;
+      ZmodF_t* y = x + skip*i;
 
       // First some forward butterflies ("Aa" => "B?") to make them look like:
       // CCCCAABB      CCCCBBBB      CCCCBBaa      CCCCaaaa
       // AAAAAA??  or  AAaa????  or  aaaa??aa  or  aaaaaaaa
-      for (; i >= last_zero_forward_butterfly; i--, j -= root, y -= skip)
-         _ZmodFpoly_IFFT_basecase(y, 1, skip << (depth - 1), 1, 0, 1, j, n, scratch);
+      for (; i >= last_zero_forward_butterfly; i--, y -= skip)
+      {
+         // (2*a0, ?) -> (a0, ?)   = (b0, ?)
+         ZmodF_short_div_2exp(y[0], y[0], 1, n);
+      }
 
       // Then some forward butterflies ("AA" => "B?") to make them look like:
       // CCCCBBBB      CCCCBBBB      CCCCBBaa      CCCCaaaa
       // AAAA????  or  AAaa????  or  aaaa??aa  or  aaaaaaaa
-      for (; i >= (long)length; i--, j -= root, y -= skip)
-         _ZmodFpoly_IFFT_basecase(y, 1, skip << (depth - 1), 2, 0, 1, j, n, scratch);
+      for (; i >= (long)length; i--, y -= skip)
+      {
+         // (2*a0, 2*a1) -> (a0 + a1, ?)   = (b0, ?)
+         ZmodF_add(y[0], y[0], y[half], n);
+         ZmodF_short_div_2exp(y[0], y[0], 1, n);
+      }
 
       // Transform the first row to make them look like:
       // BBBB*???      BBBB*???      BBBB*???      BBBB*???
@@ -1117,14 +1119,21 @@ void _ZmodFpoly_IFFT_recursive(
       // Cross butterflies ("Ba" => "A?") to make them look like:
       // BBBB*???      BBAA*???      AAAA*???      AAAA*???
       // AAAA????  or  AA??????  or  ??????aa  or  ????aaaa
-      for (; i >= last_zero_cross_butterfly; i--, j -= root, y -= skip)
-         _ZmodFpoly_IFFT_basecase(y, 1, skip << (depth - 1), 1, 1, 0, j, n, scratch);
+      for (; i >= last_zero_cross_butterfly; i--, y -= skip)
+      {
+         // (b0, ?) -> (2*b0, ?)    = (2*a0, ?)
+         ZmodF_add(y[0], y[0], y[0], n);
+      }
          
       // Cross butterflies ("BA" => "A?") to make them look like:
       // AAAA*???      AAAA*???      AAAA*???      AAAA*???
       // ????????  or  ????????  or  ??????aa  or  ????aaaa
-      for (; i >= 0; i--, j -= root, y -= skip)
-         _ZmodFpoly_IFFT_basecase(y, 1, skip << (depth - 1), 2, 1, 0, j, n, scratch);
+      for (; i >= 0; i--, y -= skip)
+      {
+         // (b0, 2*a1) -> (2*b0 - 2*a1, ?)     = (2*a0, ?)
+         ZmodF_add(y[0], y[0], y[0], n);
+         ZmodF_sub(y[0], y[0], y[half], n);
+      }
    }
    else
    {
@@ -1137,9 +1146,9 @@ void _ZmodFpoly_IFFT_recursive(
       // AAAAaaaa (extra == 1)  or  CCCAAAaa
       _ZmodFpoly_IFFT_iterative(x, depth - 1, skip, twist << 1, n, scratch);
 
-      i = cols-1;
-      j = twist + root*i;
-      y = x + skip*i;
+      long i = cols - 1;
+      unsigned long s = twist + root*i;
+      ZmodF_t* y = x + skip*i;
       
       long last_zero_cross_butterfly = nonzero - cols;
       long last_cross_butterfly = length - cols;
@@ -1147,25 +1156,38 @@ void _ZmodFpoly_IFFT_recursive(
       // Cross butterflies ("Ba" => "AB") to make them look like:
       // BBBBAAAA                   BBBBBBAA
       // AAAABBBB (extra == 1)  or  CCCAAABB
-      for (; i >= last_zero_cross_butterfly; i--, j -= root, y -= skip)
-         _ZmodFpoly_IFFT_basecase(y, 1, skip << (depth - 1), 1, 1, 1, j, n, scratch);
+      for (; i >= last_zero_cross_butterfly; i--, s -= root, y -= skip)
+      {
+         // (b0, ?) -> (2*b0, w*b0)     = (2*a0, b1)
+         ZmodF_mul_sqrt2exp(y[half], y[0], s, n);
+         ZmodF_add(y[0], y[0], y[0], n);
+      }
          
       // Cross butterflies ("BA" => "AB") to make them look like:
       // AAAAAAAA                   BBBAAAAA
       // BBBBBBBB (extra == 1)  or  CCCBBBBB
-      for (; i >= last_cross_butterfly; i--, j -= root, y -= skip)
-         _ZmodFpoly_IFFT_basecase(y, 1, skip << (depth - 1), 2, 1, 1, j, n, scratch);
+      for (; i >= last_cross_butterfly; i--, s -= root, y -= skip)
+      {
+         // (b0, 2*a1) -> (2*(b0-a1), w*(b0-2*a1))    = (2*a0, b1)
+         ZmodF_sub(scratch[0], y[0], y[half], n);
+         ZmodF_add(y[0], y[0], scratch[0], n);
+         ZmodF_mul_sqrt2exp(y[half], scratch[0], s, n);
+      }
       
       // Transform second row to make them look like:
       // AAAAAAAA                   BBBAAAAA
       // *??????? (extra == 1)  or  BBB*????
-      _ZmodFpoly_IFFT_recursive(x + skip*cols, depth - 1, skip, cols, length - cols, extra, twist << 1, n, scratch);
+      _ZmodFpoly_IFFT_recursive(x + skip*cols, depth - 1, skip, cols,
+                                length - cols, extra, twist << 1, n, scratch);
 
       // Inverse butterflies ("BB" => "AA") to make them look like:
       // AAAAAAAA                   AAAAAAAA
       // *??????? (extra == 1)  or  AAA*????
-      for (; i >= 0; i--, j -= root, y -= skip)
-         _ZmodFpoly_IFFT_basecase(y, 1, skip << (depth - 1), 2, 2, 0, j, n, scratch);
+      for (; i >= 0; i--, s -= root, y -= skip)
+      {
+         // (b0, b1) -> (b0 + w*b1, b0 - w*b1)    = (2*a0, 2*a1)
+         ZmodF_inverse_butterfly_sqrt2exp(y, y + half, scratch, s, n);
+      }
    }
 }
 
