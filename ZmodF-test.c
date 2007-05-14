@@ -719,6 +719,40 @@ int test_ZmodF_forward_butterfly_sqrt2exp()
 }
 
 
+int test_ZmodF_inverse_butterfly_Bexp()
+{
+   for (unsigned long n = 1; n <= 6; n++)
+      for (unsigned long trial = 0; trial < 25000; trial++)
+         for (unsigned long s = 1; s < n; s++)
+         {
+            setup_coeffs(3, n, random_ulong(FLINT_BITS_PER_LIMB - 2));
+
+            ZmodF_inverse_butterfly_Bexp(&coeffs[0], &coeffs[1], &coeffs[2],
+                                         s, n);
+
+            if (!check_coeffs(3, n))
+               return 0;
+
+            naive_div_sqrt2exp(global_mpz, coeffs_mpz_in[1],
+                               2*FLINT_BITS_PER_LIMB*s);
+            mpz_add(global_mpz, coeffs_mpz_in[0], global_mpz);
+            mpz_mod(global_mpz, global_mpz, global_p);
+            if (mpz_cmp(coeffs_mpz_out[0], global_mpz))
+               return 0;
+            
+            naive_div_sqrt2exp(global_mpz, coeffs_mpz_in[1],
+                               2*FLINT_BITS_PER_LIMB*s);
+            mpz_sub(global_mpz, coeffs_mpz_in[0], global_mpz);
+            mpz_mod(global_mpz, global_mpz, global_p);
+            if (mpz_cmp(coeffs_mpz_out[1], global_mpz))
+               return 0;
+         }
+
+   return 1;
+}
+
+
+
 int test_ZmodF_inverse_butterfly_2exp()
 {
    for (unsigned long n = 1; n <= 6; n++)
@@ -839,6 +873,7 @@ void ZmodF_test_all()
    RUN_TEST(ZmodF_forward_butterfly_Bexp);
    RUN_TEST(ZmodF_forward_butterfly_2exp);
    RUN_TEST(ZmodF_forward_butterfly_sqrt2exp);
+   RUN_TEST(ZmodF_inverse_butterfly_Bexp);
    RUN_TEST(ZmodF_inverse_butterfly_2exp);
    RUN_TEST(ZmodF_inverse_butterfly_sqrt2exp);
    RUN_TEST(ZmodF_simple_butterfly);
