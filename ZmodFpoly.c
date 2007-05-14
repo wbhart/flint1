@@ -1022,14 +1022,35 @@ void _ZmodFpoly_IFFT_iterative(
    
    for (; layer < depth; layer++)
    {
-      for (start = 0, y = x; start < size; start += 2*half, y += 2*half_skip)
-         for (i = 0, z = y, s = twist; i < half; i++, s += root, z += skip)
+      if ((root | twist) & 1)
+      {
+         // sqrt2 is involved. This had better be the last layer.
+         FLINT_ASSERT(layer == depth - 1);
+         
+         for (i = 0, z = x, s = twist; i < half; i++, s += root, z += skip)
             ZmodF_inverse_butterfly_sqrt2exp(z, z + half_skip, scratch, s, n);
-      
+         
+         return;
+      }
+      else
+      {
+         // Only bitshifts.
+
+         // change roots to be measured as powers of 2
+         // (also this updates for the next layer in advance)
+         twist >>= 1;
+         root >>= 1;
+         
+         for (start = 0, y = x; start < size;
+              start += 2*half, y += 2*half_skip)
+         {
+            for (i = 0, z = y, s = twist; i < half; i++, s += root, z += skip)
+               ZmodF_inverse_butterfly_2exp(z, z + half_skip, scratch, s, n);
+         }
+      }
+   
       half <<= 1;
       half_skip <<= 1;
-      twist >>= 1;
-      root >>= 1;
    }
 }
 
