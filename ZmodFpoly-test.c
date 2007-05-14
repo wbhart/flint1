@@ -791,7 +791,7 @@ int test__ZmodFpoly_IFFT_recursive()
 {
    int success = 1;
 
-   for (unsigned long depth = 2; depth <= 6 && success; depth++)
+   for (unsigned long depth = 1; depth <= 6 && success; depth++)
    {
       unsigned long size = 1UL << depth;
       
@@ -873,7 +873,7 @@ int test__ZmodFpoly_IFFT_iterative()
 {
    int success = 1;
 
-   for (unsigned long depth = 1; depth <= 10 && success; depth++)
+   for (unsigned long depth = 1; depth <= 9 && success; depth++)
    {
       unsigned long size = 1UL << depth;
       
@@ -916,7 +916,7 @@ int test__ZmodFpoly_IFFT()
 
    int success = 1;
 
-   for (unsigned long depth = 0; depth <= 11 && success; depth++)
+   for (unsigned long depth = 1; depth <= 11 && success; depth++)
    {
       unsigned long size = 1UL << depth;
    
@@ -955,7 +955,7 @@ int test__ZmodFpoly_IFFT()
 
             root = 4*n*FLINT_BITS_PER_LIMB / size;
             twist = random_ulong(root);
-
+            
             // run truncated inverse transform on random data
             ZmodFpoly_random(f, 4);
             ZmodFpoly_convert_out(poly1, f);
