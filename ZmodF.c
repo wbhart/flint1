@@ -147,14 +147,34 @@ void ZmodF_mul_2exp(ZmodF_t b, ZmodF_t a, unsigned long s, unsigned long n)
    s /= FLINT_BITS_PER_LIMB;
    if (bits)
    {
-      // shift left by s+1 limbs...
       if (++s == n)
+      {
+         // special case if s == n-1
          ZmodF_neg(b, a, n);
-      else
-         ZmodF_mul_Bexp(b, a, s, n);
+         ZmodF_short_div_2exp(b, b, FLINT_BITS_PER_LIMB - bits, n);
+         return;
+      }
 
-      // ... and then shift right by remaining bits
-      ZmodF_short_div_2exp(b, b, FLINT_BITS_PER_LIMB - bits, n);
+      // Need to shift left by s limbs and right by
+      // (FLINT_BITS_PER_LIMB - bits) bits.
+      bits = FLINT_BITS_PER_LIMB - bits;
+      
+      // Shift top part of input directly into bottom part of output
+      ZmodF_fast_reduce(a, n);
+      mp_limb_t carry1 = mpn_rshift(b, a+n-s, s+1, bits);
+      mp_limb_t overlap = b[s];
+      // complement the part we just shifted in
+      long i = s-1;
+      do b[i] = ~b[i]; while (--i >= 0);
+      
+      // shift bottom part of input directly into top part of output
+      mp_limb_t carry2 = mpn_rshift(b+s, a, n-s, bits);
+      b[n] = -1;  // compensate mod p for 1's complement
+      
+      // fiddle with carries
+      mpn_add_1(b+n-1, b+n-1, 2, carry1);
+      mpn_add_1(b+s-1, b+s-1, n-s+2, carry2);
+      mpn_sub_1(b+s, b+s, n-s+1, overlap+1);
    }
    else
    {

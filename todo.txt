@@ -140,3 +140,12 @@ themselves.
 * think about the ordering of loops in each stage of the outer fft routine.
 Sometimes might be slightly better to start at the end and work backwards
 to improve locality.
+
+
+=== ZmodF module ===
+
+* in revision 507, I rewrote ZmodF_mul_2exp(). For long coefficients the new
+  version should be more efficient, since it does fewer passes over the data
+  on average. But this needs to be checked. Moreover it's quite possible the
+  new version is slower for small coefficients, which also needs to be
+  investigated.
