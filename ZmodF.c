@@ -335,75 +335,49 @@ void ZmodF_mul_pseudosqrt2_n_even(ZmodF_t b, ZmodF_t a,
    
    if (s < n)
    {
-      if (s < n/2)
+      if (s <= n/2)
       {
-         if (s)
-         {
-            // We're computing B^s * (1 - B^(n/2)) * a.
-            // If input is
-            // 0                   n/2-s     n/2                   n-s       n
-            // |         x0          |   y0   |         x1          |   y1   |
-            // then output should be
-            // 0        s                    n/2     n/2+s                   n
-            // |  y0-y1 |        x0+x1        | y0+y1  |       -x0+x1        |
+         // We're computing B^s * (1 - B^(n/2)) * a.
+         // If input is
+         // 0                   n/2-s     n/2                   n-s       n
+         // |         x0          |   y0   |         x1          |   y1   |
+         // then output should be
+         // 0        s                    n/2     n/2+s                   n
+         // |  y0-y1 |        x0+x1        | y0+y1  |       -x0+x1        |
 
-            // Store x1 - x0
-            b[n] = -mpn_sub_n(b+n/2+s, a+n/2, a, n/2-s);
-            // Store x0 + x1 and y0 + y1
-            carry = mpn_add_n(b+s, a, a+n/2, n/2);
-            signed_add_1(b+s+n/2, n/2-s+1, carry + a[n]);
-            // Store y0 - y1
-            carry = mpn_sub_n(b, a+n/2-s, a+n-s, s);
-            signed_add_1(b+s, n-s+1, -a[n] - carry);
-         }
-         else
-         {
-            // Special case for s = 0.
-
-            // Store x1 - x0
-            b[n] = a[n] - mpn_sub_n(b+n/2, a+n/2, a, n/2);
-            // Store x0 + x1
-            carry = mpn_add_n(b, a, a+n/2, n/2);
-            signed_add_1(b+n/2, n/2+1, carry + a[n]);
-         }
+         // Store x1 - x0
+         b[n] = (s < n/2) ? -mpn_sub_n(b+n/2+s, a+n/2, a, n/2-s) : 0;
+         // Store x0 + x1 and y0 + y1
+         carry = mpn_add_n(b+s, a, a+n/2, n/2);
+         signed_add_1(b+s+n/2, n/2-s+1, carry + a[n]);
+         // Store y0 - y1
+         carry = s ? mpn_sub_n(b, a+n/2-s, a+n-s, s) : 0;
+         signed_add_1(b+s, n-s+1, -a[n] - carry);
       }
       else
       {
          s -= n/2;
-      
-         if (s)
-         {
-            // We're computing B^s * (1 + B^(n/2)) * a.
-            // If input is
-            // 0                   n/2-s     n/2                   n-s       n
-            // |         x0          |   y0   |         x1          |   y1   |
-            // then output should be
-            // 0        s                    n/2     n/2+s                   n
-            // | -y0-y1 |        x0-x1        | y0-y1  |       x0+x1         |
-            
-            // Store x0 + x1
-            // (the -1 compensates mod p for the bottom bit of the complement)
-            b[n] = mpn_add_n(b+s+n/2, a, a+n/2, n-s-n/2) - 1;
-            // Store x0 - x1 and y0 - y1
-            carry = mpn_sub_n(b+s, a, a+n/2, n/2);
-            signed_add_1(b+s+n/2, n/2-s+1, -a[n] - carry);
-            // Store -y0 - y1
-            carry = mpn_add_n(b, a+n/2-s, a+n-s, s);
-            // (the -1 compensates for the top bit of the complement)
-            signed_add_1(b+s, n-s+1, -a[n] - carry - 1);
-            long i = s-1;
-            do b[i] = ~b[i]; while (--i >= 0);
-         }
-         else
-         {
-            // Special case for s = 0.
 
-            // Store x0 + x1
-            b[n] = a[n] + mpn_add_n(b+n/2, a, a+n/2, n/2);
-            // Store x0 - x1
-            carry = mpn_sub_n(b, a, a+n/2, n/2);
-            signed_add_1(b+n/2, n/2+1, -a[n] - carry);
-         }
+         // We're computing B^s * (1 + B^(n/2)) * a.
+         // If input is
+         // 0                   n/2-s     n/2                   n-s       n
+         // |         x0          |   y0   |         x1          |   y1   |
+         // then output should be
+         // 0        s                    n/2     n/2+s                   n
+         // | -y0-y1 |        x0-x1        | y0-y1  |       x0+x1         |
+         
+         // Store x0 + x1
+         // (the -1 compensates mod p for the bottom bit of the complement)
+         b[n] = mpn_add_n(b+s+n/2, a, a+n/2, n-s-n/2) - 1;
+         // Store x0 - x1 and y0 - y1
+         carry = mpn_sub_n(b+s, a, a+n/2, n/2);
+         signed_add_1(b+s+n/2, n/2-s+1, -a[n] - carry);
+         // Store -y0 - y1
+         carry = mpn_add_n(b, a+n/2-s, a+n-s, s);
+         // (the -1 compensates for the top bit of the complement)
+         signed_add_1(b+s, n-s+1, -a[n] - carry - 1);
+         long i = s-1;
+         do b[i] = ~b[i]; while (--i >= 0);
       }
    }
    else
@@ -412,85 +386,51 @@ void ZmodF_mul_pseudosqrt2_n_even(ZmodF_t b, ZmodF_t a,
 
       if (s < n/2)
       {
-         if (s)
-         {
-            // We're computing B^s * (-1 + B^(n/2)) * a.
-            // If input is
-            // 0                   n/2-s     n/2                   n-s       n
-            // |         x0          |   y0   |         x1          |   y1   |
-            // then output should be
-            // 0        s                    n/2     n/2+s                   n
-            // | -y0+y1 |       -x0-x1        | -y0-y1 |        x0-x1        |
-            
-            // Store x0 - x1
-            b[n] = -mpn_sub_n(b+n/2+s, a, a+n/2, n/2-s);
-            // Store -x0 - x1 and -y0 - y1
-            carry = mpn_add_n(b+s, a, a+n/2, n/2);
-            // (the -1 compensates for the top bit of the complement)
-            signed_add_1(b+n/2+s, n/2-s+1, -a[n] - carry - 1);
-            long i = n/2-1;
-            do b[s+i] = ~b[s+i]; while (--i >= 0);
-            // Store y1 - y0
-            carry = mpn_sub_n(b, a+n-s, a+n/2-s, s);
-            // (the +1 compensates for the bottom bit of the complement)
-            signed_add_1(b+s, n-s+1, a[n] - carry + 1);
-         }
-         else
-         {
-            // Special case for s = 0.
-
-            // Store x0 - x1
-            // (the -1 compensates mod p for the bottom bit of the complement)
-            b[n] = -mpn_sub_n(b+n/2, a, a+n/2, n/2) - a[n] - 1;
-            // Store -x0 - x1
-            carry = mpn_add_n(b, a, a+n/2, n/2);
-            // (the -1 compensates for the top bit of the complement)
-            signed_add_1(b+n/2, n/2+1, -a[n] - carry - 1);
-            long i = n/2-1;
-            do b[i] = ~b[i]; while (--i >= 0);
-         }
+         // We're computing B^s * (-1 + B^(n/2)) * a.
+         // If input is
+         // 0                   n/2-s     n/2                   n-s       n
+         // |         x0          |   y0   |         x1          |   y1   |
+         // then output should be
+         // 0        s                    n/2     n/2+s                   n
+         // | -y0+y1 |       -x0-x1        | -y0-y1 |        x0-x1        |
+         
+         // Store x0 - x1
+         b[n] = -mpn_sub_n(b+n/2+s, a, a+n/2, n/2-s);
+         // Store -x0 - x1 and -y0 - y1
+         carry = mpn_add_n(b+s, a, a+n/2, n/2);
+         // (the -1 compensates for the top bit of the complement)
+         signed_add_1(b+n/2+s, n/2-s+1, -a[n] - carry - 1);
+         long i = n/2-1;
+         do b[s+i] = ~b[s+i]; while (--i >= 0);
+         // Store y1 - y0
+         carry = s ? mpn_sub_n(b, a+n-s, a+n/2-s, s) : 0;
+         // (the +1 compensates for the bottom bit of the complement)
+         signed_add_1(b+s, n-s+1, a[n] - carry + 1);
       }
       else
       {
          s -= n/2;
       
-         if (s)
-         {
-            // We're computing B^s * (-1 - B^(n/2)) * a.
-            // If input is
-            // 0                   n/2-s     n/2                   n-s       n
-            // |         x0          |   y0   |         x1          |   y1   |
-            // then output should be
-            // 0        s                    n/2     n/2+s                   n
-            // |  y0+y1 |       -x0+x1        | -y0+y1 |      -x0-x1         |
+         // We're computing B^s * (-1 - B^(n/2)) * a.
+         // If input is
+         // 0                   n/2-s     n/2                   n-s       n
+         // |         x0          |   y0   |         x1          |   y1   |
+         // then output should be
+         // 0        s                    n/2     n/2+s                   n
+         // |  y0+y1 |       -x0+x1        | -y0+y1 |      -x0-x1         |
 
-            // Store -x0 - x1
-            // (the -1 compensates for the top bit of the complement)
-            b[n] = -mpn_add_n(b+n/2+s, a, a+n/2, n/2-s) - 1;
-            long i = n/2-s-1;
-            do b[n/2+s+i] = ~b[n/2+s+i]; while (i-- >= 0);
-            // Store x1 - x0 and y1 - y0
-            carry = mpn_sub_n(b+s, a+n/2, a, n/2);
-            // (the +1 compensates for the bottom bit of the complement)
-            signed_add_1(b+n/2+s, n/2-s+1, a[n] - carry + 1);
-            // Store y0 + y1
-            carry = mpn_add_n(b, a+n/2-s, a+n-s, s);
-            signed_add_1(b+s, n-s+1, a[n] + carry);
-         }
-         else
-         {
-            // Special case for s = 0.
-            
-            // Store -x0 - x1
-            // (the -1 compensates for the top bit of the complement)
-            b[n] = -mpn_add_n(b+n/2, a, a+n/2, n/2) - a[n] - 1;
-            long i = n/2-1;
-            do b[n/2+i] = ~b[n/2+i]; while (i-- >= 0);
-            // Store x1 - x0
-            carry = mpn_sub_n(b, a+n/2, a, n/2);
-            // (the +1 compensates for the bottom bit of the complement)
-            signed_add_1(b+n/2, n/2+1, a[n] - carry + 1);
-         }
+         // Store -x0 - x1
+         // (the -1 compensates for the top bit of the complement)
+         b[n] = -mpn_add_n(b+n/2+s, a, a+n/2, n/2-s) - 1;
+         long i = n/2-s-1;
+         do b[n/2+s+i] = ~b[n/2+s+i]; while (i-- >= 0);
+         // Store x1 - x0 and y1 - y0
+         carry = mpn_sub_n(b+s, a+n/2, a, n/2);
+         // (the +1 compensates for the bottom bit of the complement)
+         signed_add_1(b+n/2+s, n/2-s+1, a[n] - carry + 1);
+         // Store y0 + y1
+         carry = s ? mpn_add_n(b, a+n/2-s, a+n-s, s) : 0;
+         signed_add_1(b+s, n-s+1, a[n] + carry);
       }
    }
 }
