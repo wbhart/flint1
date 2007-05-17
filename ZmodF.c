@@ -13,6 +13,7 @@
 ******************************************************************************/
 
 #include "ZmodF.h"
+#include "longlong_wrapper.h"
 
 
 /*
@@ -243,41 +244,83 @@ void ZmodF_sub_mul_2exp(ZmodF_t c, ZmodF_t a, ZmodF_t b,
 void ZmodF_mul_pseudosqrt2_n_odd(ZmodF_t b, ZmodF_t a,
                                  unsigned long s, unsigned long n)
 {
-   // todo: this is not optimised yet
-
    FLINT_ASSERT(a != b);
    FLINT_ASSERT((n & 1) == 1);
    FLINT_ASSERT(s < 2*n);
-   
-   // first multiply by -B^(s+(n+1)/2) from a into b
-   unsigned long limbs = s + (n+1)/2 + n;
-   while (limbs >= 2*n)
-      limbs -= 2*n;
 
-   if (limbs == 0)
-      ZmodF_set(b, a, n);
-   else if (limbs < n)
-      ZmodF_mul_Bexp(b, a, limbs, n);
-   else if (limbs == n)
-      ZmodF_neg(b, a, n);
+   // Let ss = s+(n+1)/2 mod n, in the range (0, n].
+   unsigned long ss = s + (n+1)/2;
+   if (ss > n)
+      ss -= n;
+   if (ss > n)
+      ss -= n;
+
+   // The next block of code has the following effect.
+   // Pretend that the input is normalised to be divisible by B^(1/2)
+   // (i.e. imagine that the bottom half-limb has been relocated mod p to the
+   // overflow limb). Now write the input as
+   //    a = (X + Y*B^(n-ss) + Z*B^n) * B^(1/2),
+   // where X is exactly n-ss limbs long, Y is exactly ss limbs long,
+   // and where Z is a signed quantity, just a few bits long.
+   // This block computes Z, and sets b to Y + X*B^ss.
+   // (It doesn't set the overflow limb of b to anything meaningful.)
+   mp_limb_signed_t Z;
+   ZmodF_fast_reduce(a, n);
+   mpn_rshift(b, a+n-ss, ss+1, FLINT_BITS_PER_LIMB/2);
+   mp_limb_t underflow = mpn_rshift(b+ss, a, n-ss+1, FLINT_BITS_PER_LIMB/2);
+   sub_ddmmss(Z, b[ss-1], 0, b[ss-1], 0, underflow);
+   
+   mp_limb_t carry1, carry2;
+
+   // Now we need to add in B^s*a, taking into account the fact that some of
+   // b currently has the wrong sign. We split into various cases depending
+   // on relative locations of s and ss, and depending on sign issues.
+   if (s <= n)
+   {
+      if (s <= (n-1)/2)
+      {
+         carry1 = s ? -mpn_sub_n(b, b, a+n-s, s) : 0;
+         carry2 = mpn_add_n(b+s, b+s, a, (n+1)/2);
+         b[n] = (ss < n) ? -mpn_sub_n(b+ss, a+(n+1)/2, b+ss, n-ss) : 0;
+         signed_add_1(b+s, n-s+1, carry1 - a[n]);
+         signed_add_1(b+ss, n-ss+1, Z + carry2);
+      }
+      else
+      {
+         carry1 = mpn_add_n(b, b, a+n-s, ss);
+         long i = ss-1;
+         do b[i] = ~b[i]; while (--i >= 0);
+         carry2 = (n > 1) ? mpn_sub_n(b+ss, b+ss, a+(n+1)/2, (n-1)/2) : 0;
+         b[n] = (s < n) ? mpn_add_n(b+s, b+s, a, n-s) - 1 : -1;
+         signed_add_1(b+ss, n-ss+1, -carry1 - Z - 1);
+         signed_add_1(b+s, n-s+1, -carry2 - a[n]);
+      }
+   }
    else
    {
-      ZmodF_mul_Bexp(b, a, limbs - n, n);
-      ZmodF_neg(b, b, n);
+      s -= n;
+
+      if (s <= (n-1)/2)
+      {
+         carry1 = s ? -mpn_sub_n(b, a+n-s, b, s) : 0;
+         carry2 = mpn_add_n(b+s, b+s, a, (n+1)/2);
+         long i = ss-1;
+         do b[i] = ~b[i]; while (--i >= s);
+         b[n] = (ss < n) ? -mpn_sub_n(b+ss, b+ss, a+(n+1)/2, n-ss) : 0;
+         signed_add_1(b+s, n-s+1, carry1 + a[n] + 1);
+         signed_add_1(b+ss, n-ss+1, -Z - carry2 - 1);
+      }
+      else
+      {
+         carry1 = mpn_add_n(b, b, a+n-s, ss);
+         carry2 = (n > 1) ? mpn_sub_n(b+ss, a+(n+1)/2, b+ss, (n-1)/2) : 0;
+         b[n] = mpn_add_n(b+s, b+s, a, n-s);
+         long i = n;
+         do b[i] = ~b[i]; while (--i >= s);
+         signed_add_1(b+ss, n-ss+1, carry1 + Z);
+         signed_add_1(b+s, n-s+1, -carry2 + a[n] + 1);
+      }
    }
-   
-   // Divide by B^(1/2)
-   ZmodF_short_div_2exp(b, b, FLINT_BITS_PER_LIMB / 2, n);
-   
-   // Now add in B^s a
-   if (s == 0)
-      ZmodF_add(b, b, a, n);
-   else if (s < n)
-      ZmodF_div_Bexp_sub(b, b, a, n - s, n);
-   else if (s == n)
-      ZmodF_sub(b, b, a, n);
-   else
-      ZmodF_div_Bexp_add(b, b, a, 2*n - s, n);
 }
 
 
@@ -289,7 +332,7 @@ void ZmodF_mul_pseudosqrt2_n_even(ZmodF_t b, ZmodF_t a,
    FLINT_ASSERT(s < 2*n);
    
    mp_limb_t carry;
-
+   
    if (s < n)
    {
       if (s < n/2)
