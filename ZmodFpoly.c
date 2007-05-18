@@ -462,7 +462,7 @@ void ZmodFpoly_set(ZmodFpoly_t x, ZmodFpoly_t y)
 }
 
 
-void ZmodFpoly_mul(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y)
+void ZmodFpoly_pointwise_mul(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y)
 {
    FLINT_ASSERT(x->depth == y->depth);
    FLINT_ASSERT(x->depth == res->depth);
@@ -480,6 +480,8 @@ void ZmodFpoly_mul(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y)
    else
       for (unsigned long i = 0; i < x->length; i++)
          ZmodF_sqr(res->coeffs[i], x->coeffs[i], scratch, x->n);
+
+   res->length = x->length;
    
    free(scratch);
 }
@@ -535,68 +537,310 @@ void ZmodFpoly_rescale(ZmodFpoly_t poly)
 
 /****************************************************************************
 
-   Fourier Transform Routines
+   Forward fourier transforms (internal code)
 
 ****************************************************************************/
 
 
-/*
-This is an internal function. It's just a temporary implementation so that
-we can get started on higher level code. It is not optimised particularly
-well yet.
+void _ZmodFpoly_FFT_iterative(
+            ZmodF_t* x, unsigned long depth,
+            unsigned long skip, unsigned long nonzero, unsigned long length,
+            unsigned long twist, unsigned long n, ZmodF_t* scratch)
+{
+   FLINT_ASSERT((4*n*FLINT_BITS_PER_LIMB) % (1 << depth) == 0);
+   FLINT_ASSERT(skip >= 1);
+   FLINT_ASSERT(n >= 1);
+   FLINT_ASSERT(nonzero >= 1 && nonzero <= (1 << depth));
+   FLINT_ASSERT(length >= 1 && length <= (1 << depth));
+   FLINT_ASSERT(depth >= 1);
 
-x = array of buffers to operate on
-skip = distance between buffers
-depth = log2(number of buffers)
-nonzero = number of buffers assumed to be nonzero
-length = number of fourier coefficients requested
-twist = twisting power of sqrt2
-n = coefficient length
-scratch = a scratch buffer
+   unsigned long i, s, start;
+   ZmodF_t* y, * z;
+
+   // root is the (2^depth)-th root of unity for the current layer,
+   // measured as a power of sqrt2
+   unsigned long root = (4*n*FLINT_BITS_PER_LIMB) >> depth;
+   FLINT_ASSERT(twist < root);
+
+   // half = half the current block length
+   unsigned long half = 1UL << (depth - 1);
+   unsigned long half_skip = half * skip;
+
+   unsigned long layer;
+
+   // =========================================================================
+   // Special case for first layer, if root and/or twist involve sqrt2
+   // rotations.
+
+   if ((root | twist) & 1)
+   {
+      // Let length = multiple of block size plus a remainder.
+      unsigned long length_quantised = length & (-2*half);
+      unsigned long length_remainder = length - length_quantised;
+
+      if (length <= half)
+      {
+         // Only need first output for each butterfly,
+         // i.e. (a, b) -> (a + b, ?)
+         if (nonzero > half)
+            for (i = 0, y = x; i < nonzero - half; i++, y += skip)
+               ZmodF_add(y[0], y[0], y[half_skip], n);
+      }
+      else
+      {
+         // Need both outputs for each butterfly.
+         if (nonzero <= half)
+         {
+            // The second half of each butterfly input are zeroes, so we just
+            // computing (a, 0) -> (a, ra), where r is the appropriate root
+            // of unity.
+            for (i = 0, s = twist, y = x; i < nonzero;
+                 i++, s += root, y += skip)
+            {
+               ZmodF_mul_sqrt2exp(y[half_skip], y[0], s, n);
+            }
+         }
+         else
+         {
+            // If nonzero > half, then we need some full butterflies...
+            for (i = 0, s = twist, y = x; i < nonzero - half;
+                 i++, s += root, y += skip)
+            {
+               ZmodF_forward_butterfly_sqrt2exp(y, y + half_skip, 
+                                                scratch, s, n);
+            }
+            // and also some partial butterflies (a, 0) -> (a, ra).
+            for (; i < half; i++, s += root, y += skip)
+               ZmodF_mul_sqrt2exp(y[half_skip], y[0], s, n);
+         }
+      }
+
+      // Here we switch to measuring roots as powers of 2, but we also need
+      // to update to the next layer's roots, and these two actions cancel
+      // each other out :-)
+      
+      // Update block length.
+      half >>= 1;
+      half_skip >>= 1;
+      if (nonzero > 2*half)
+         nonzero = 2*half;
+   
+      layer = 1;
+   }
+   else
+   {
+      // no special case for first layer
+      layer = 0;
+
+      // switch to measuring roots as powers of 2
+      root >>= 1;
+      twist >>= 1;
+   }
+
+   // =========================================================================
+   // This section handles the layers where there are still zero coefficients
+   // to take advantage of. In most cases, this will only happen for the
+   // first layer or two, so we don't bother with specialised limbshift-only
+   // code for these layers.
+
+   // Note: from here on there are no sqrt2 rotations, and we measure all
+   // roots as powers of 2.
+   
+   for (; (layer < depth) && (nonzero < 2*half); layer++)
+   {
+      // Let length = multiple of block size plus a remainder.
+      unsigned long length_quantised = length & (-2*half);
+      unsigned long length_remainder = length - length_quantised;
+
+      if (length_remainder > half)
+      {
+         // If length overhangs by more than half the block, then we need to
+         // perform full butterflies on the last block (i.e. the last block
+         // doesn't get any special treatment).
+         length_quantised += 2*half;
+      }
+      else if (length_remainder)
+      {
+         // If length overhangs the block by at most half the block size,
+         // then we only need to compute the first output of each butterfly
+         // for this block, i.e. (a, b) -> (a + b)
+         if (nonzero > half)
+         {
+            y = x + skip * length_quantised;
+            for (i = 0; i < nonzero - half; i++, y += skip)
+               ZmodF_add(y[0], y[0], y[half_skip], n);
+         }
+      }
+
+      if (nonzero <= half)
+      {
+         // If nonzero <= half, then the second half of each butterfly input
+         // are zeroes, so we just computing (a, 0) -> (a, ra), where r is the
+         // appropriate root of unity.
+         for (start = 0, y = x; start < length_quantised;
+              start += 2*half, y += 2*half_skip)
+         {
+            for (i = 0, s = twist, z = y; i < nonzero;
+                 i++, s += root, z += skip)
+            {
+               ZmodF_mul_2exp(z[half_skip], z[0], s, n);
+            }
+         }
+      }
+      else
+      {
+         for (start = 0, y = x; start < length_quantised;
+              start += 2*half, y += 2*half_skip)
+         {
+            // If nonzero > half, then we need some full butterflies...
+            for (i = 0, s = twist, z = y; i < nonzero - half;
+                 i++, s += root, z += skip)
+            {
+               ZmodF_forward_butterfly_2exp(z, z + half_skip, scratch, s, n);
+            }
+            // and also some partial butterflies (a, 0) -> (a, ra).
+            for (; i < half; i++, s += root, z += skip)
+               ZmodF_mul_2exp(z[half_skip], z[0], s, n);
+         }
+      }
+
+      // Update roots of unity
+      twist <<= 1;
+      root <<= 1;
+      
+      // Update block length.
+      half >>= 1;
+      half_skip >>= 1;
+      
+      if (nonzero > 2*half)
+         // no more zero coefficients to take advantage of:
+         nonzero = 2*half;
+   }
+
+   // =========================================================================
+   // Now we may assume there are no more zero coefficients.
+
+   for (; layer < depth; layer++)
+   {
+      // Let length = multiple of block size plus a remainder.
+      unsigned long length_quantised = length & (-2*half);
+      unsigned long length_remainder = length - length_quantised;
+
+      if (length_remainder > half)
+      {
+         // If length overhangs by more than half the block, then we need to
+         // perform full butterflies on the last block (i.e. the last block
+         // doesn't get any special treatment).
+         length_quantised += 2*half;
+      }
+      else if (length_remainder)
+      {
+         // If length overhangs the block by at most half the block size,
+         // then we only need to compute the first output of each butterfly
+         // for this block, i.e. (a, b) -> (a + b)
+         y = x + skip * length_quantised;
+         for (i = 0; i < half; i++, y += skip)
+            ZmodF_add(y[0], y[0], y[half_skip], n);
+      }
+      
+      // To keep the inner loops long, we have two versions of the next loop.
+      if (layer < depth/2)
+      {
+         // Version 1: only a few relatively long blocks.
+         
+         for (start = 0, y = x; start < length_quantised;
+              start += 2*half, y += 2*half_skip)
+         {
+            for (i = 0, s = twist, z = y; i < half; i++, s += root, z += skip)
+               ZmodF_forward_butterfly_2exp(z, z + half_skip, scratch, s, n);
+         }
+      }
+      else
+      {
+         // Version 2: lots of short blocks.
+         
+         // Two sub-versions, depending on whether the rotations are all by
+         // a whole number of limbs.
+         if ((root | twist) & (FLINT_BITS_PER_LIMB - 1))
+         {
+            // Version 2a: rotations still involve bitshifts.
+            for (i = 0, s = twist, y = x; i < half; i++, s += root, y += skip)
+               for (start = 0, z = y; start < length_quantised;
+                    start += 2*half, z += 2*half_skip)
+               {
+                  ZmodF_forward_butterfly_2exp(z, z + half_skip,
+                                               scratch, s, n);
+               }
+         }
+         else
+         {
+            // Version 2b: rotations involve only limbshifts.
+            unsigned long root_limbs = root / FLINT_BITS_PER_LIMB;
+
+            if (twist == 0)
+            {
+               // special case, since ZmodF_forward_butterfly_Bexp doesn't
+               // allow zero rotation count
+               for (start = 0, z = x; start < length_quantised;
+                    start += 2*half, z += 2*half_skip)
+               {
+                  ZmodF_simple_butterfly(z, z + half_skip, scratch, n);
+               }
+               i = 1;
+               y = x + skip;
+               s = root_limbs;
+            }
+            else
+            {
+               i = 0;
+               y = x;
+               s = twist / FLINT_BITS_PER_LIMB;
+            }
+            
+            for (; i < half; i++, s += root_limbs, y += skip)
+               for (start = 0, z = y; start < length_quantised;
+                    start += 2*half, z += 2*half_skip)
+               {
+                  ZmodF_forward_butterfly_Bexp(z, z + half_skip,
+                                               scratch, s, n);
+               }
+         }
+      }
+
+      // Update roots of unity
+      twist <<= 1;
+      root <<= 1;
+      
+      // Update block length.
+      half >>= 1;
+      half_skip >>= 1;
+   }
+}
+
+
+/*
+Factors FFT of length 2^depth into length 2^rows_depth and length 2^cols_depth
+transforms
 */
-void _ZmodFpoly_FFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
-                    unsigned long nonzero, unsigned long length,
-                    unsigned long twist, unsigned long n,
-                    ZmodF_t* scratch)
+void _ZmodFpoly_FFT_factor(
+            ZmodF_t* x, unsigned long rows_depth, unsigned long cols_depth,
+            unsigned long skip, unsigned long nonzero, unsigned long length,
+            unsigned long twist, unsigned long n, ZmodF_t* scratch)
 {
    FLINT_ASSERT(skip >= 1);
    FLINT_ASSERT(n >= 1);
+   FLINT_ASSERT(rows_depth >= 1);
+   FLINT_ASSERT(cols_depth >= 1);
+   
+   unsigned long depth = rows_depth + cols_depth;
+   FLINT_ASSERT((4*n*FLINT_BITS_PER_LIMB) % (1 << depth) == 0);
    FLINT_ASSERT(nonzero >= 1 && nonzero <= (1 << depth));
    FLINT_ASSERT(length >= 1 && length <= (1 << depth));
    
    // root is the (2^depth)-th root unity, measured as a power of sqrt2
    unsigned long root = (4*n*FLINT_BITS_PER_LIMB) >> depth;
    FLINT_ASSERT(twist < root);
-   
-   // ========================
-   // base cases
-   
-   if (depth == 0)
-      return;
-      
-   if (depth == 1)
-   {
-      if (length == 1)
-      {
-         if (nonzero == 2)
-            ZmodF_add(x[0], x[0], x[skip], n);
-      }
-      else   // length == 2
-      {
-         if (nonzero == 1)
-            ZmodF_mul_sqrt2exp(x[skip], x[0], twist, n);
-         else  // nonzero == 2
-            ZmodF_forward_butterfly_sqrt2exp(x, x+skip, scratch, twist, n);
-      }
-      
-      return;
-   }
-   
-   // ========================
-   // factoring case
 
-   unsigned long rows_depth = depth >> 1;
-   unsigned long cols_depth = depth - rows_depth;
    unsigned long rows = 1UL << rows_depth;
    unsigned long cols = 1UL << cols_depth;
 
@@ -626,12 +870,374 @@ void _ZmodFpoly_FFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
    // row transforms
    for (i = 0, y = x; i < length_rows; i++, y += (skip << cols_depth))
       _ZmodFpoly_FFT(y, cols_depth, skip, nonzero_cols, cols,
-                     twist << cols_depth, n, scratch);
+                     twist << rows_depth, n, scratch);
 
    if (length_cols)
       // The relevant portion of the last row:
       _ZmodFpoly_FFT(y, cols_depth, skip, nonzero_cols, length_cols,
-                     twist << cols_depth, n, scratch);
+                     twist << rows_depth, n, scratch);
+}
+
+
+
+/*
+This is an internal function. It's just a temporary implementation so that
+we can get started on higher level code. It is not optimised particularly
+well yet.
+
+x = array of buffers to operate on
+skip = distance between buffers
+depth = log2(number of buffers)
+nonzero = number of buffers assumed to be nonzero
+length = number of fourier coefficients requested
+twist = twisting power of sqrt2
+n = coefficient length
+scratch = a scratch buffer
+*/
+void _ZmodFpoly_FFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
+                    unsigned long nonzero, unsigned long length,
+                    unsigned long twist, unsigned long n,
+                    ZmodF_t* scratch)
+{
+   FLINT_ASSERT((4*n*FLINT_BITS_PER_LIMB) % (1 << depth) == 0);
+   FLINT_ASSERT(skip >= 1);
+   FLINT_ASSERT(n >= 1);
+   FLINT_ASSERT(nonzero >= 1 && nonzero <= (1 << depth));
+   FLINT_ASSERT(length >= 1 && length <= (1 << depth));
+   FLINT_ASSERT(depth >= 1);
+
+   // If the data fits in L1 (2^depth coefficients of length n+1, plus a
+   // scratch buffer), then use the iterative transform. Otherwise factor the
+   // FFT into two chunks.
+   if (depth == 1 ||
+       ((1 << depth) + 1) * (n+1) <= ZMODFPOLY_FFT_FACTOR_THRESHOLD)
+   {
+      _ZmodFpoly_FFT_iterative(x, depth, skip, nonzero, length,
+                               twist, n, scratch);
+   }
+   else
+   {
+      unsigned long rows_depth = depth >> 1;
+      unsigned long cols_depth = depth - rows_depth;
+      _ZmodFpoly_FFT_factor(x, rows_depth, cols_depth, skip, nonzero, length,
+                            twist, n, scratch);
+   }
+}
+
+
+
+/****************************************************************************
+
+   Inverse fourier transforms (internal code)
+
+****************************************************************************/
+
+
+/*
+This one is for when there is no truncation.
+*/
+void _ZmodFpoly_IFFT_iterative(
+               ZmodF_t* x, unsigned long depth, unsigned long skip,
+               unsigned long twist, unsigned long n, ZmodF_t* scratch)
+{
+   FLINT_ASSERT((4*n*FLINT_BITS_PER_LIMB) % (1 << depth) == 0);
+   FLINT_ASSERT(skip >= 1);
+   FLINT_ASSERT(n >= 1);
+   FLINT_ASSERT(depth >= 1);
+
+   // root is the (2^(layer+1))-th root unity for each layer,
+   // measured as a power of sqrt2
+   long root = 2*n*FLINT_BITS_PER_LIMB;
+   twist <<= (depth - 1);
+   FLINT_ASSERT(twist < root);
+
+   unsigned long half = 1;
+   unsigned long half_skip = skip;
+   unsigned long size = 1UL << depth;
+   unsigned long layer, start, i, s;
+   ZmodF_t* y, * z;
+   
+   // First group of layers; lots of small blocks.
+
+   for (layer = 0; layer < depth/2; layer++)
+   {
+      // no sqrt2 should be involved here
+      FLINT_ASSERT(!((twist | root) & 1));
+
+      // change roots to be measured as powers of 2
+      // (also this updates for the next layer in advance)
+      root >>= 1;
+      twist >>= 1;
+      
+      if ((root | twist) & (FLINT_BITS_PER_LIMB-1))
+      {
+         // This version allows bitshifts
+         for (i = 0, y = x, s = twist; i < half; i++, s += root, y += skip)
+            for (start = 0, z = y; start < size;
+                 start += 2*half, z += 2*half_skip)
+            {
+               ZmodF_inverse_butterfly_2exp(z, z + half_skip, scratch, s, n);
+            }
+      }
+      else
+      {
+         // This version is limbshifts only
+         unsigned long root_limbs = root / FLINT_BITS_PER_LIMB;
+
+         if (twist == 0)
+         {
+            // special case since ZmodF_inverse_butterfly_Bexp doesn't allow
+            // zero rotation count
+            for (start = 0, z = x; start < size;
+                 start += 2*half, z += 2*half_skip)
+            {
+               ZmodF_simple_butterfly(z, z + half_skip, scratch, n);
+            }
+         
+            i = 1;
+            s = root_limbs;
+            y = x + skip;
+         }
+         else
+         {
+            i = 0;
+            s = twist / FLINT_BITS_PER_LIMB;
+            y = x;
+         }
+         
+         for (; i < half; i++, s += root_limbs, y += skip)
+            for (start = 0, z = y; start < size;
+                 start += 2*half, z += 2*half_skip)
+            {
+               ZmodF_inverse_butterfly_Bexp(z, z + half_skip, scratch, s, n);
+            }
+      }
+      
+      half <<= 1;
+      half_skip <<= 1;
+   }
+
+
+   // Second group of layers; just a few large blocks.
+   
+   for (; layer < depth; layer++)
+   {
+      if ((root | twist) & 1)
+      {
+         // sqrt2 is involved. This had better be the last layer.
+         FLINT_ASSERT(layer == depth - 1);
+         
+         for (i = 0, z = x, s = twist; i < half; i++, s += root, z += skip)
+            ZmodF_inverse_butterfly_sqrt2exp(z, z + half_skip, scratch, s, n);
+         
+         return;
+      }
+      else
+      {
+         // Only bitshifts.
+
+         // change roots to be measured as powers of 2
+         // (also this updates for the next layer in advance)
+         twist >>= 1;
+         root >>= 1;
+         
+         for (start = 0, y = x; start < size;
+              start += 2*half, y += 2*half_skip)
+         {
+            for (i = 0, z = y, s = twist; i < half; i++, s += root, z += skip)
+               ZmodF_inverse_butterfly_2exp(z, z + half_skip, scratch, s, n);
+         }
+      }
+   
+      half <<= 1;
+      half_skip <<= 1;
+   }
+}
+
+
+
+/*
+This one's for working in L1 when truncation is involved. It splits into
+two halves.
+*/
+void _ZmodFpoly_IFFT_recursive(
+               ZmodF_t* x, unsigned long depth, unsigned long skip,
+               unsigned long nonzero, unsigned long length, int extra,
+               unsigned long twist, unsigned long n, ZmodF_t* scratch)
+{
+   FLINT_ASSERT((4*n*FLINT_BITS_PER_LIMB) % (1 << depth) == 0);
+   FLINT_ASSERT(skip >= 1);
+   FLINT_ASSERT(n >= 1);
+   FLINT_ASSERT(nonzero >= 1 && nonzero <= (1UL << depth));
+   FLINT_ASSERT(length <= nonzero);
+   FLINT_ASSERT((length == 0 && extra) ||
+                (length == (1UL << depth) && !extra) ||
+                (length > 0 && length < (1UL << depth)));
+   FLINT_ASSERT(depth >= 1);
+
+   long size = 1UL << depth;
+
+   if (length == size)
+   {
+      // no truncation necessary
+      _ZmodFpoly_IFFT_iterative(x, depth, skip, twist, n, scratch);
+      return;
+   }
+
+   // root is the (2^depth)-th root unity, measured as a power of sqrt2
+   long root = (4*n*FLINT_BITS_PER_LIMB) >> depth;
+   FLINT_ASSERT(twist < root);
+
+   long cols = size >> 1;
+   long half = skip << (depth - 1);
+
+   // symbols in the following diagrams:
+   // A = fully untransformed coefficient
+   // a = fully untransformed coefficient (implied zero)
+   // B = intermediate coefficient
+   // b = intermediate coefficient (implied zero)
+   // C = fully transformed coefficient
+   // c = fully transformed coefficient (implied zero)
+   // ? = garbage that we don't care about
+   // * = the extra C coefficient, or "?" if no extra coefficient requested
+   
+   // the horizontal transforms convert between B and C
+   // the vertical butterflies convert between A and B
+
+   if ((length < cols) || (length == cols && !extra))
+   {
+      // The input could look like one of the following:
+      // CCCCAAAA      CCCCAAAA      CCCCAAaa      CCCCaaaa
+      // AAAAAAaa  or  AAaaaaaa  or  aaaaaaaa  or  aaaaaaaa
+
+      long i, last_zero_forward_butterfly, last_zero_cross_butterfly;
+
+      if (nonzero <= cols)
+      {
+         i = nonzero - 1;
+         last_zero_forward_butterfly = length;
+         last_zero_cross_butterfly = 0;
+      }
+      else
+      {
+         i = cols - 1;
+         if (nonzero > length + cols)
+         {
+            last_zero_forward_butterfly = nonzero - cols;
+            last_zero_cross_butterfly = length;
+         }
+         else
+         {
+            last_zero_forward_butterfly = length;
+            last_zero_cross_butterfly = nonzero - cols;
+         }
+      }
+      
+      ZmodF_t* y = x + skip*i;
+
+      // First some forward butterflies ("Aa" => "B?") to make them look like:
+      // CCCCAABB      CCCCBBBB      CCCCBBaa      CCCCaaaa
+      // AAAAAA??  or  AAaa????  or  aaaa??aa  or  aaaaaaaa
+      for (; i >= last_zero_forward_butterfly; i--, y -= skip)
+      {
+         // (2*a0, ?) -> (a0, ?)   = (b0, ?)
+         ZmodF_short_div_2exp(y[0], y[0], 1, n);
+      }
+
+      // Then some forward butterflies ("AA" => "B?") to make them look like:
+      // CCCCBBBB      CCCCBBBB      CCCCBBaa      CCCCaaaa
+      // AAAA????  or  AAaa????  or  aaaa??aa  or  aaaaaaaa
+      for (; i >= (long)length; i--, y -= skip)
+      {
+         // (2*a0, 2*a1) -> (a0 + a1, ?)   = (b0, ?)
+         ZmodF_add(y[0], y[0], y[half], n);
+         ZmodF_short_div_2exp(y[0], y[0], 1, n);
+      }
+
+      // Transform the first row to make them look like:
+      // BBBB*???      BBBB*???      BBBB*???      BBBB*???
+      // AAAA????  or  AAaa????  or  aaaa??aa  or  aaaaaaaa
+      if (depth > 1)
+         _ZmodFpoly_IFFT_recursive(x, depth - 1, skip,
+                                   (nonzero < cols) ? nonzero : cols,
+                                   length, extra, twist << 1, n, scratch);
+      
+      // Cross butterflies ("Ba" => "A?") to make them look like:
+      // BBBB*???      BBAA*???      AAAA*???      AAAA*???
+      // AAAA????  or  AA??????  or  ??????aa  or  ????aaaa
+      for (; i >= last_zero_cross_butterfly; i--, y -= skip)
+      {
+         // (b0, ?) -> (2*b0, ?)    = (2*a0, ?)
+         ZmodF_add(y[0], y[0], y[0], n);
+      }
+         
+      // Cross butterflies ("BA" => "A?") to make them look like:
+      // AAAA*???      AAAA*???      AAAA*???      AAAA*???
+      // ????????  or  ????????  or  ??????aa  or  ????aaaa
+      for (; i >= 0; i--, y -= skip)
+      {
+         // (b0, 2*a1) -> (2*b0 - 2*a1, ?)     = (2*a0, ?)
+         ZmodF_add(y[0], y[0], y[0], n);
+         ZmodF_sub(y[0], y[0], y[half], n);
+      }
+   }
+   else
+   {
+      // The input looks like one of these:
+      // CCCCCCCC                   CCCCCCCC
+      // AAAAaaaa (extra == 1)  or  CCCAAAaa
+   
+      // Transform first row (no truncation necessary) to make them look like:
+      // BBBBBBBB                   BBBBBBBB
+      // AAAAaaaa (extra == 1)  or  CCCAAAaa
+      if (depth > 1)
+         _ZmodFpoly_IFFT_iterative(x, depth - 1, skip, twist << 1, n, scratch);
+
+      long i = cols - 1;
+      unsigned long s = twist + root*i;
+      ZmodF_t* y = x + skip*i;
+      
+      long last_zero_cross_butterfly = nonzero - cols;
+      long last_cross_butterfly = length - cols;
+   
+      // Cross butterflies ("Ba" => "AB") to make them look like:
+      // BBBBAAAA                   BBBBBBAA
+      // AAAABBBB (extra == 1)  or  CCCAAABB
+      for (; i >= last_zero_cross_butterfly; i--, s -= root, y -= skip)
+      {
+         // (b0, ?) -> (2*b0, w*b0)     = (2*a0, b1)
+         ZmodF_mul_sqrt2exp(y[half], y[0], s, n);
+         ZmodF_add(y[0], y[0], y[0], n);
+      }
+         
+      // Cross butterflies ("BA" => "AB") to make them look like:
+      // AAAAAAAA                   BBBAAAAA
+      // BBBBBBBB (extra == 1)  or  CCCBBBBB
+      for (; i >= last_cross_butterfly; i--, s -= root, y -= skip)
+      {
+         // (b0, 2*a1) -> (2*(b0-a1), w*(b0-2*a1))    = (2*a0, b1)
+         ZmodF_sub(scratch[0], y[0], y[half], n);
+         ZmodF_add(y[0], y[0], scratch[0], n);
+         ZmodF_mul_sqrt2exp(y[half], scratch[0], s, n);
+      }
+      
+      // Transform second row to make them look like:
+      // AAAAAAAA                   BBBAAAAA
+      // *??????? (extra == 1)  or  BBB*????
+      if (depth > 1)
+         _ZmodFpoly_IFFT_recursive(x + skip*cols, depth - 1, skip, cols,
+                                   length - cols, extra, twist << 1, n,
+                                   scratch);
+
+      // Inverse butterflies ("BB" => "AA") to make them look like:
+      // AAAAAAAA                   AAAAAAAA
+      // *??????? (extra == 1)  or  AAA*????
+      for (; i >= 0; i--, s -= root, y -= skip)
+      {
+         // (b0, b1) -> (b0 + w*b1, b0 - w*b1)    = (2*a0, 2*a1)
+         ZmodF_inverse_butterfly_sqrt2exp(y, y + half, scratch, s, n);
+      }
+   }
 }
 
 
@@ -651,13 +1257,18 @@ twist = twisting power of sqrt2
 n = coefficient length
 scratch = a scratch buffer
 */
-void _ZmodFpoly_IFFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
-                     unsigned long nonzero, unsigned long length, int extra,
-                     unsigned long twist, unsigned long n,
-                     ZmodF_t* scratch)
+void _ZmodFpoly_IFFT_factor(
+            ZmodF_t* x, unsigned long rows_depth, unsigned long cols_depth,
+            unsigned long skip, unsigned long nonzero, unsigned long length,
+            int extra, unsigned long twist, unsigned long n, ZmodF_t* scratch)
 {
    FLINT_ASSERT(skip >= 1);
    FLINT_ASSERT(n >= 1);
+   FLINT_ASSERT(rows_depth >= 1);
+   FLINT_ASSERT(cols_depth >= 1);
+
+   unsigned long depth = rows_depth + cols_depth;
+   FLINT_ASSERT((4*n*FLINT_BITS_PER_LIMB) % (1 << depth) == 0);
    FLINT_ASSERT(nonzero >= 1 && nonzero <= (1UL << depth));
    FLINT_ASSERT(length <= nonzero);
    FLINT_ASSERT((length == 0 && extra) ||
@@ -668,54 +1279,6 @@ void _ZmodFpoly_IFFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
    unsigned long root = (4*n*FLINT_BITS_PER_LIMB) >> depth;
    FLINT_ASSERT(twist < root);
    
-   // ========================
-   // base cases
-   
-   if (depth == 0)
-      return;
-      
-   if (depth == 1)
-   {
-      if (length == 0)
-      {
-         if (nonzero == 2)
-            ZmodF_add(x[0], x[0], x[skip], n);
-         ZmodF_short_div_2exp(x[0], x[0], 1, n);
-      }
-      else if (length == 1)
-      {
-         if (nonzero == 1)
-         {
-            if (extra)
-               ZmodF_mul_sqrt2exp(x[skip], x[0], twist, n);
-            ZmodF_add(x[0], x[0], x[0], n);
-         }
-         else  // nonzero == 2
-         {
-            if (extra)
-            {
-               ZmodF_sub(scratch[0], x[0], x[skip], n);
-               ZmodF_add(x[0], x[0], scratch[0], n);
-               ZmodF_mul_sqrt2exp(x[skip], scratch[0], twist, n);
-            }
-            else
-            {
-               ZmodF_add(x[0], x[0], x[0], n);
-               ZmodF_sub(x[0], x[0], x[skip], n);
-            }
-         }
-      }
-      else  // length == 2
-         ZmodF_inverse_butterfly_sqrt2exp(x, x + skip, scratch, twist, n);
-
-      return;
-   }
-   
-   // ========================
-   // factoring case
-
-   unsigned long rows_depth = depth >> 1;
-   unsigned long cols_depth = depth - rows_depth;
    unsigned long rows = 1UL << rows_depth;
    unsigned long cols = 1UL << cols_depth;
 
@@ -780,8 +1343,65 @@ void _ZmodFpoly_IFFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
 }
 
 
+/*
+This is an internal function. It's just a temporary implementation so that
+we can get started on higher level code. It is not optimised particularly
+well yet.
+
+x = array of buffers to operate on
+skip = distance between buffers
+depth = log2(number of buffers)
+nonzero = number of *output* buffers assumed to be nonzero
+length = number of untransformed coefficients requested
+extra = indicates whether an extra *forward* coefficient should be computed
+twist = twisting power of sqrt2
+n = coefficient length
+scratch = a scratch buffer
+*/
+void _ZmodFpoly_IFFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
+                     unsigned long nonzero, unsigned long length, int extra,
+                     unsigned long twist, unsigned long n,
+                     ZmodF_t* scratch)
+{
+   FLINT_ASSERT((4*n*FLINT_BITS_PER_LIMB) % (1 << depth) == 0);
+   FLINT_ASSERT(skip >= 1);
+   FLINT_ASSERT(n >= 1);
+   FLINT_ASSERT(nonzero >= 1 && nonzero <= (1UL << depth));
+   FLINT_ASSERT(length <= nonzero);
+   FLINT_ASSERT((length == 0 && extra) ||
+                (length == (1UL << depth) && !extra) ||
+                (length > 0 && length < (1UL << depth)));
+   FLINT_ASSERT(depth >= 1);
+
+   // If the data fits in L1 (2^depth coefficients of length n+1, plus a
+   // scratch buffer), then use the iterative transform. Otherwise factor the
+   // FFT into two chunks.
+   if (depth == 1 ||
+       ((1 << depth) + 1) * (n+1) <= ZMODFPOLY_FFT_FACTOR_THRESHOLD)
+   {
+      _ZmodFpoly_IFFT_recursive(x, depth, skip, nonzero, length, extra,
+                                twist, n, scratch);
+   }
+   else
+   {
+      unsigned long rows_depth = depth >> 1;
+      unsigned long cols_depth = depth - rows_depth;
+      _ZmodFpoly_IFFT_factor(x, rows_depth, cols_depth, skip, nonzero, length,
+                             extra, twist, n, scratch);
+   }
+}
+
+
+/****************************************************************************
+
+   Fourier Transform Routines
+
+****************************************************************************/
+
+
 void ZmodFpoly_FFT(ZmodFpoly_t poly, unsigned long length)
 {
+   FLINT_ASSERT(length <= (1UL << poly->depth));
    // check the right roots of unity are available
    FLINT_ASSERT((4 * poly->n * FLINT_BITS_PER_LIMB) % (1 << poly->depth) == 0);
    FLINT_ASSERT(poly->scratch_count >= 1);
@@ -796,8 +1416,9 @@ void ZmodFpoly_FFT(ZmodFpoly_t poly, unsigned long length)
       }
       else
       {
-         _ZmodFpoly_FFT(poly->coeffs, poly->depth, 1, poly->length,
-                        length, 0, poly->n, poly->scratch);
+         if (poly->depth >= 1)
+            _ZmodFpoly_FFT(poly->coeffs, poly->depth, 1, poly->length,
+                           length, 0, poly->n, poly->scratch);
       }
    }
 
@@ -811,7 +1432,7 @@ void ZmodFpoly_IFFT(ZmodFpoly_t poly)
    FLINT_ASSERT((4 * poly->n * FLINT_BITS_PER_LIMB) % (1 << poly->depth) == 0);
    FLINT_ASSERT(poly->scratch_count >= 1);
 
-   if (poly->length != 0)
+   if (poly->length && poly->depth)
       _ZmodFpoly_IFFT(poly->coeffs, poly->depth, 1, poly->length,
                       poly->length, 0, 0, poly->n, poly->scratch);
 }
@@ -833,9 +1454,9 @@ void ZmodFpoly_convolution(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y)
    if (x != y)    // take care of aliasing
       ZmodFpoly_FFT(y, length);
       
-   ZmodFpoly_mul(res, x, y);
+   ZmodFpoly_pointwise_mul(res, x, y);
    ZmodFpoly_IFFT(res);
-   res->length = length;
+   ZmodFpoly_rescale(res);
 }
 
 
@@ -848,12 +1469,19 @@ void ZmodFpoly_convolution(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y)
 
 void ZmodFpoly_negacyclic_FFT(ZmodFpoly_t poly, unsigned long length)
 {
-   // todo: I *think* this code is wrong
-   abort();
-      
+   FLINT_ASSERT(length <= (1UL << poly->depth));
    // check the right roots of unity are available
    FLINT_ASSERT((2 * poly->n * FLINT_BITS_PER_LIMB) % (1 << poly->depth) == 0);
    FLINT_ASSERT(poly->scratch_count >= 1);
+
+   // twist on the way in to make it negacyclic
+   // todo: this needs to be cleaned up
+   unsigned long twist = (2 * poly->n * FLINT_BITS_PER_LIMB) >> poly->depth;
+   for (unsigned long i = 1; i < length; i++)
+   {
+      ZmodF_mul_sqrt2exp(*poly->scratch, poly->coeffs[i], i*twist, poly->n);
+      ZmodF_swap(poly->scratch, poly->coeffs + i);
+   }
 
    if (length != 0)
    {
@@ -865,9 +1493,9 @@ void ZmodFpoly_negacyclic_FFT(ZmodFpoly_t poly, unsigned long length)
       }
       else
       {
-         _ZmodFpoly_FFT(poly->coeffs, poly->depth, 1, poly->length, length,
-                        (2 * poly->n * FLINT_BITS_PER_LIMB) >> poly->depth,
-                        poly->n, poly->scratch);
+         if (poly->depth)
+            _ZmodFpoly_FFT(poly->coeffs, poly->depth, 1, poly->length, length,
+                           0, poly->n, poly->scratch);
       }
    }
 
@@ -877,18 +1505,24 @@ void ZmodFpoly_negacyclic_FFT(ZmodFpoly_t poly, unsigned long length)
 
 void ZmodFpoly_negacyclic_IFFT(ZmodFpoly_t poly)
 {
-   // todo: I *think* this code is wrong
-   abort();
-      
    // check the right roots of unity are available
    FLINT_ASSERT((2 * poly->n * FLINT_BITS_PER_LIMB) % (1 << poly->depth) == 0);
    FLINT_ASSERT(poly->scratch_count >= 1);
 
-   if (poly->length != 0)
+   if (poly->length && poly->depth)
    {
       _ZmodFpoly_IFFT(poly->coeffs, poly->depth, 1, poly->length, poly->length,
-                      0, (2 * poly->n * FLINT_BITS_PER_LIMB) >> poly->depth,
-                      poly->n, poly->scratch);
+                      0, 0, poly->n, poly->scratch);
+   }
+
+   // twist on the way out to make it negacyclic
+   // todo: this needs to be cleaned up
+   unsigned long twist = (2 * poly->n * FLINT_BITS_PER_LIMB) >> poly->depth;
+   for (unsigned long i = 1; i < poly->length; i++)
+   {
+      ZmodF_mul_sqrt2exp(*poly->scratch, poly->coeffs[i],
+                         2 * poly->n * FLINT_BITS_PER_LIMB - i*twist, poly->n);
+      ZmodF_neg(poly->coeffs[i], *poly->scratch, poly->n);
    }
 }
 
@@ -910,8 +1544,9 @@ void ZmodFpoly_negacyclic_convolution(ZmodFpoly_t res,
    if (x != y)    // take care of aliasing
       ZmodFpoly_negacyclic_FFT(y, length);
       
-   ZmodFpoly_mul(res, x, y);
+   ZmodFpoly_pointwise_mul(res, x, y);
    ZmodFpoly_negacyclic_IFFT(res);
+   ZmodFpoly_rescale(res);
 }
 
 
