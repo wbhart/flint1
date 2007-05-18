@@ -58,6 +58,16 @@ typedef struct
 // Zpoly_t allows reference-like semantics for Zpoly_struct:
 typedef Zpoly_struct Zpoly_t[1];
 
+typedef Zpoly_struct* Zpoly_p;
+
+
+#define SWAP_ZPOLY_PTRS(xxx_ptr, yyy_ptr) \
+{                                         \
+   Zpoly_p zzz_ptr = xxx_ptr;            \
+   xxx_ptr = yyy_ptr;                     \
+   yyy_ptr = zzz_ptr;                     \
+}
+
 
 /*============================================================================
   
@@ -74,8 +84,7 @@ mpz_t* _Zpoly_get_coeff_ptr(Zpoly_t poly, unsigned long n)
 
 // copies out x^n coefficient (via mpz_set) with no bounds checking
 static inline
-void _Zpoly_get_coeff(mpz_t output, Zpoly_t poly,
-                             unsigned long n)
+void _Zpoly_get_coeff(mpz_t output, Zpoly_t poly, unsigned long n)
 {
     mpz_set(output, poly->coeffs[n]);
 }
@@ -106,8 +115,7 @@ void _Zpoly_set_coeff(Zpoly_t poly, unsigned long n, mpz_t x)
 }
 
 static inline
-void _Zpoly_set_coeff_ui(Zpoly_t poly, unsigned long n,
-                                unsigned long x)
+void _Zpoly_set_coeff_ui(Zpoly_t poly, unsigned long n, unsigned long x)
 {
     mpz_set_ui(poly->coeffs[n], x);
 }
@@ -172,10 +180,8 @@ int _Zpoly_equal(Zpoly_t input1, Zpoly_t input2);
 // all combinations of parameter aliasing are allowed
 // output.length is set to the maximum of the two lengths, and no normalisation
 // is performed (so the output may have leading zeroes)
-void _Zpoly_add(Zpoly_t output, Zpoly_t input1,
-                       Zpoly_t input2);
-void _Zpoly_sub(Zpoly_t output, Zpoly_t input1,
-                       Zpoly_t input2);
+void _Zpoly_add(Zpoly_t output, Zpoly_t input1, Zpoly_t input2);
+void _Zpoly_sub(Zpoly_t output, Zpoly_t input1, Zpoly_t input2);
 
 // output = -input
 // assumes output.alloc >= input.length
@@ -197,14 +203,11 @@ void _Zpoly_scalar_div_ui(Zpoly_t poly, unsigned long x);
 // output = input1 * input2
 // assumes output.alloc >= input1.length + input2.length - 1
 // output may **NOT** alias either input
-void _Zpoly_mul(Zpoly_t output, Zpoly_t input1,
-                       Zpoly_t input2);
+void _Zpoly_mul(Zpoly_t output, Zpoly_t input1, Zpoly_t input2);
 // as above, but always uses naive multiplication algorithm
-void _Zpoly_mul_naive(Zpoly_t output, Zpoly_t input1,
-                             Zpoly_t input2);
+void _Zpoly_mul_naive(Zpoly_t output, Zpoly_t input1, Zpoly_t input2);
 // as above, but always uses karatsuba
-void _Zpoly_mul_karatsuba(Zpoly_t output, Zpoly_t input1,
-                                 Zpoly_t input2);
+void _Zpoly_mul_karatsuba(Zpoly_t output, Zpoly_t input1, Zpoly_t input2);
 
 // output = input * input
 // output may NOT alias input
@@ -216,13 +219,11 @@ void _Zpoly_sqr_karatsuba(Zpoly_t output, Zpoly_t input);
 // output = x^n * input
 // assumes output.alloc >= input.length + n
 // output may alias input
-void _Zpoly_left_shift(Zpoly_t output, Zpoly_t input,
-                              unsigned long n);
+void _Zpoly_left_shift(Zpoly_t output, Zpoly_t input, unsigned long n);
 // output = input / x^n (truncating division)
 // assumes output.alloc >= input.length - n >= 0
 // output may alias input
-void _Zpoly_right_shift(Zpoly_t output, Zpoly_t input,
-                               unsigned long n);
+void _Zpoly_right_shift(Zpoly_t output, Zpoly_t input, unsigned long n);
 
 
 // todo: figure out better division interface once we understand the
@@ -235,12 +236,10 @@ void _Zpoly_right_shift(Zpoly_t output, Zpoly_t input,
 
 // quotient = input1 / input2 (throw away remainder)
 // asumes quotient.alloc >= max(0, input1.length - input2.length)
-void _Zpoly_div(Zpoly_t quotient, Zpoly_t input1,
-                       Zpoly_t input2);
+void _Zpoly_div(Zpoly_t quotient, Zpoly_t input1, Zpoly_t input2);
 // remainder = input1 % input2 (throw away quotient)
 // assumes remainder.alloc >= input2.length
-void _Zpoly_rem(Zpoly_t remainder, Zpoly_t input1,
-                       Zpoly_t input2);
+void _Zpoly_rem(Zpoly_t remainder, Zpoly_t input1, Zpoly_t input2);
 void _Zpoly_div_rem(Zpoly_t quotient, Zpoly_t remainder,
                            Zpoly_t input1, Zpoly_t input2);
 
@@ -248,8 +247,7 @@ void _Zpoly_div_rem(Zpoly_t quotient, Zpoly_t remainder,
 // output = gcd(input1, input2)
 // assumes output.alloc >= max(input1.length, input2.length)
 // (or perhaps only requires output.alloc >= length of gcd?)
-void _Zpoly_gcd(Zpoly_t output, Zpoly_t input1,
-                       Zpoly_t input2);
+void _Zpoly_gcd(Zpoly_t output, Zpoly_t input1, Zpoly_t input2);
 // also sets a, b so that a*input1 + b*input2 = output
 // (is this even always possible in Z[x]?)
 void _Zpoly_xgcd(Zpoly_t a, Zpoly_t b, Zpoly_t output,
@@ -276,8 +274,7 @@ void Zpoly_init2(Zpoly_t poly, unsigned long alloc);
 
 // allocate coeffs to given length, with space for coeff_size bits in each
 // coefficient, sets length = 0 (i.e. zero polynomial)
-void Zpoly_init3(Zpoly_t poly, unsigned long alloc,
-                     unsigned long coeff_bits);
+void Zpoly_init3(Zpoly_t poly, unsigned long alloc, unsigned long coeff_bits);
 
 
 // Changes allocated space to be alloc.
@@ -316,8 +313,7 @@ void Zpoly_clear(Zpoly_t poly);
 mpz_t* Zpoly_get_coeff_ptr(Zpoly_t poly, unsigned long n);
 
 // copies out x^n coefficient (via mpz_set), or retrieves zero if out of range
-void Zpoly_get_coeff(mpz_t output, Zpoly_t poly,
-                         unsigned long n);
+void Zpoly_get_coeff(mpz_t output, Zpoly_t poly, unsigned long n);
 unsigned long Zpoly_get_coeff_ui(Zpoly_t poly, unsigned long n);
 long Zpoly_get_coeff_si(Zpoly_t poly, unsigned long n);
 
@@ -388,37 +384,28 @@ void Zpoly_scalar_mul_si(Zpoly_t poly, long x);
 void Zpoly_scalar_div(Zpoly_t poly, mpz_t x);
 void Zpoly_scalar_div_ui(Zpoly_t poly, unsigned long x);
 void Zpoly_mul(Zpoly_t output, Zpoly_t input1, Zpoly_t input2);
-void Zpoly_mul_naive(Zpoly_t output, Zpoly_t input1,
-                         Zpoly_t input2);
-void Zpoly_mul_karatsuba(Zpoly_t output, Zpoly_t input1,
-                             Zpoly_t input2);
+void Zpoly_mul_naive(Zpoly_t output, Zpoly_t input1, Zpoly_t input2);
+void Zpoly_mul_karatsuba(Zpoly_t output, Zpoly_t input1, Zpoly_t input2);
 // mul_naive_KS uses a "naive" KS multiplication algorithm (i.e. it doesn't
 // try very hard to pack coefficients efficiently, and it uses GMP for the
 // underlying multiplication. It's for testing purposes only. The idea is to
 // provide a very stable algorithm which can still keep up asymptotically with
 // any other multiplication code.)
-void Zpoly_mul_naive_KS(Zpoly_t output, Zpoly_t input1,
-                            Zpoly_t input2);
+void Zpoly_mul_naive_KS(Zpoly_t output, Zpoly_t input1, Zpoly_t input2);
 void Zpoly_sqr(Zpoly_t output, Zpoly_t input);
 void Zpoly_sqr_naive(Zpoly_t output, Zpoly_t input);
 void Zpoly_sqr_karatsuba(Zpoly_t output, Zpoly_t input);
-void Zpoly_sqr_naive_KS(Zpoly_t output, Zpoly_t input1,
-                            Zpoly_t input2);
+void Zpoly_sqr_naive_KS(Zpoly_t output, Zpoly_t input1, Zpoly_t input2);
 
-void Zpoly_left_shift(Zpoly_t output, Zpoly_t input,
-                          unsigned long n);
-void Zpoly_right_shift(Zpoly_t output, Zpoly_t input,
-                           unsigned long n);
+void Zpoly_left_shift(Zpoly_t output, Zpoly_t input, unsigned long n);
+void Zpoly_right_shift(Zpoly_t output, Zpoly_t input, unsigned long n);
 
-void Zpoly_div(Zpoly_t quotient, Zpoly_t input1,
-                   Zpoly_t input2);
-void Zpoly_rem(Zpoly_t remainder, Zpoly_t input1,
-                   Zpoly_t input2);
+void Zpoly_div(Zpoly_t quotient, Zpoly_t input1, Zpoly_t input2);
+void Zpoly_rem(Zpoly_t remainder, Zpoly_t input1, Zpoly_t input2);
 void Zpoly_div_rem(Zpoly_t quotient, Zpoly_t remainder,
                        Zpoly_t input1, Zpoly_t input2);
 
-void Zpoly_gcd(Zpoly_t output, Zpoly_t input1,
-                       Zpoly_t input2);
+void Zpoly_gcd(Zpoly_t output, Zpoly_t input1, Zpoly_t input2);
 void Zpoly_xgcd(Zpoly_t a, Zpoly_t b, Zpoly_t output,
                     Zpoly_t input1, Zpoly_t input2);
                     

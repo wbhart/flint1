@@ -46,66 +46,97 @@ void _Zpoly_set(Zpoly_t output, Zpoly_t input)
 /* Return 1 if polynomials are equal, 0 otherwise. 
    Polynomials do not need to be normalised. */
 
-int _Zpoly_equal(Zpoly_t input1, Zpoly_t input2)
+int _Zpoly_equal(Zpoly_p input1, Zpoly_p input2)
 {
-   int is_input1_longer = (input1->length > input2->length);
-
-   unsigned long short_length =
-           is_input1_longer ? input2->length : input1->length;
-
+   // rearrange parameters to make input1 no longer than input2
+   if (input1->length > input2->length)
+      SWAP_ZPOLY_PTRS(input1, input2);
+   
    unsigned long i;
-   for (i = 0; i < short_length; i++)
+   
+   for (i = 0; i < input1->length; i++)
       if (mpz_cmp(input1->coeffs[i], input2->coeffs[i]))
          return 0;
 
-   if (is_input1_longer)
-   {
-      for (; i < input1->length; i++)
-         if (mpz_sgn(input1->coeffs[i]))
-            return 0;
-   }
-   else
-   {
-      for (; i < input2->length; i++)
-         if (mpz_sgn(input2->coeffs[i]))
-            return 0;
-   }
+   for (; i < input2->length; i++)
+      if (mpz_sgn(input2->coeffs[i]))
+         return 0;
 
    return 1;
 }
 
-/* Set output poly to sum of input polys */
 
-// todo: we need several versions of this:
-// 1) the lowest layer should assume that input1 is at least as long as input2
-// 2) a middle layer which doesn't assume anything about the lengths, but assumes
-//    the output has enough room for the result
-// 3) the hand-holding layer does memory reallocation and everything.
+/*
+   output += input
+   Assumes input->length <= output->length
+*/
+void __Zpoly_add_inplace(Zpoly_t output, Zpoly_t input)
+{
+   FLINT_ASSERT(input->length <= output->length);
+   
+   for (unsigned long i = 0; i < input->length; i++)
+      mpz_add(output->coeffs[i], input->coeffs[i], input->coeffs[i]);
+}
 
-void _Zpoly_add(Zpoly_t output, Zpoly_t input1,
-                       Zpoly_t input2)
+
+/*
+   output += input
+   Assumes output->alloc >= input->length.
+   Sets output->length to the max of the lengths of input and output.
+*/
+void _Zpoly_add_inplace(Zpoly_t output, Zpoly_t input)
+{
+   FLINT_ASSERT(output->alloc >= input->length);
+
+   if (output->length < input->length)
+   {
+      for (unsigned long i = output->length; i < input->length; i++)
+         mpz_set_ui(output->coeffs[i], 0);
+      
+      output->length = input->length;
+   }
+   
+   __Zpoly_add_inplace(output, input);
+}
+
+
+/*
+   output = input1 + input2
+   Assumes input1->length <= input2->length <= output->alloc.
+   Does NOT set output->length.
+*/
+void __Zpoly_add(Zpoly_t output, Zpoly_t input1, Zpoly_t input2)
+{
+   FLINT_ASSERT(output->alloc >= input2->length);
+   FLINT_ASSERT(input1->length <= input2->length);
+   
+   unsigned long i;
+   for (i = 0; i < input1->length; i++)
+      mpz_add(output->coeffs[i], input1->coeffs[i], input2->coeffs[i]);
+      
+   for (; i < input2->length; i++)
+      mpz_set(output->coeffs[i], input2->coeffs[i]);
+}
+
+
+/*
+   output = input1 + input2
+   Assumes max(input1->length, input2->length) <= output->alloc.
+   Sets output->length to the max of the lengths.
+*/
+void _Zpoly_add(Zpoly_t output, Zpoly_p input1, Zpoly_p input2)
 {
    FLINT_ASSERT(output->alloc >= input1->length);
    FLINT_ASSERT(output->alloc >= input2->length);
-
-   int is_input1_longer = (input1->length > input2->length);
-
-   unsigned long short_length =
-           is_input1_longer ? input2->length : input1->length;
    
-   unsigned long i;
-   for (i = 0; i < short_length; i++)
-      mpz_add(output->coeffs[i], input1->coeffs[i], input2->coeffs[i]);
+   if (input1->length > input2->length)
+      SWAP_ZPOLY_PTRS(input1, input2);
       
-   if (is_input1_longer)
-      for (; i < input1->length; i++)
-         mpz_set(output->coeffs[i], input1->coeffs[i]);
-   else
-      for (; i < input2->length; i++)
-         mpz_set(output->coeffs[i], input2->coeffs[i]);
+   __Zpoly_add(output, input1, input2);
 
-   output->length = i;
+   output->length = input2->length;
 }
+
 
 /* Set output poly to input1 minus input2 */
 
@@ -525,6 +556,12 @@ void Zpoly_add(Zpoly_t output, Zpoly_t input1, Zpoly_t input2)
    _Zpoly_add(output, input1, input2);
 }
 
+void Zpoly_add_inplace(Zpoly_t output, Zpoly_t input)
+{
+   Zpoly_ensure_space(output, input->length);
+   _Zpoly_add_inplace(output, input);
+}
+
 /* Set the output poly to input1 minus input2 */
 
 void Zpoly_sub(Zpoly_t output, Zpoly_t input1, Zpoly_t input2)
@@ -598,8 +635,7 @@ void Zpoly_mul(Zpoly_t output, Zpoly_t input1, Zpoly_t input2)
 
 /* Naieve schoolboy polynomial multiplication routine */
 
-void Zpoly_mul_naive(Zpoly_t output, Zpoly_t input1,
-                         Zpoly_t input2)
+void Zpoly_mul_naive(Zpoly_t output, Zpoly_t input1, Zpoly_t input2)
 {
    if (!input1->length || !input2->length)
    {
