@@ -1131,6 +1131,53 @@ void _Zpoly_mpn_mul_KS(Zpoly_mpn_t output, Zpoly_mpn_t input1, Zpoly_mpn_t input
    if (sign2 < 0) _Zpoly_mpn_negate(input2, input2);
 }
 
+void _Zpoly_mpn_mul_SS(Zpoly_mpn_t output, Zpoly_mpn_p input1, Zpoly_mpn_p input2)
+{
+   if (input1->length < input2->length) SWAP(input1, input2);
+   
+   _Zpoly_mpn_normalise(input1);
+   _Zpoly_mpn_normalise(input2);
+   
+   unsigned long length1 = input1->length;
+   unsigned long length2 = input2->length;
+   unsigned long size1 = input1->limbs;
+   unsigned long size2 = input2->limbs;
+   
+   unsigned long bits = FLINT_BITS_PER_LIMB * FLINT_MAX(size1, size2);
+   
+   unsigned long log_length = 0;
+   while ((1<<log_length) < length1) log_length++;
+   
+   unsigned long output_bits = 2*bits + log_length + 2;
+
+  // if (output_bits <= length1)
+  //    output_bits = (((output_bits - 1) >> (log_length-1)) + 1) << (log_length-1);
+   //else 
+      output_bits = (((output_bits - 1) >> log_length) + 1) << log_length;
+      
+   unsigned long n = (output_bits - 1) / FLINT_BITS_PER_LIMB + 1;
+   
+   ZmodFpoly_t poly1, poly2, res;
+
+   ZmodFpoly_init(poly1, log_length + 1, n, 1);
+   ZmodFpoly_init(poly2, log_length + 1, n, 1);
+   ZmodFpoly_init(res, log_length + 1, n, 1);
+   
+   ZmodFpoly_convert_in_mpn(poly1, input1);
+   ZmodFpoly_convert_in_mpn(poly2, input2);
+   
+   ZmodFpoly_convolution(res, poly1, poly2);
+   ZmodFpoly_rescale(res);
+   
+   output->length = length1 + length2 - 1;
+   ZmodFpoly_convert_out_mpn(output, res);
+   
+   ZmodFpoly_clear(poly1);
+   ZmodFpoly_clear(poly2);
+   ZmodFpoly_clear(res);
+}
+
+
 /****************************************************************************
 
    Zpoly_mpn_* layer

@@ -243,8 +243,12 @@ void _Zpoly_mpn_mul_karatsuba(Zpoly_mpn_t output, Zpoly_mpn_t input1,
    Currently assumes that the number of output bits per coefficient is <= 64 and
    is supplied by the parameter "bits"
 */
+
 void _Zpoly_mpn_mul_KS(Zpoly_mpn_t output, Zpoly_mpn_t input1, 
                                        Zpoly_mpn_t input2, unsigned long bits);
+
+void _Zpoly_mpn_mul_SS(Zpoly_mpn_t output, Zpoly_mpn_p input1, 
+                                                            Zpoly_mpn_p input2);
 
 void _Zpoly_mpn_sqr(Zpoly_mpn_t output, Zpoly_mpn_t input);
 
