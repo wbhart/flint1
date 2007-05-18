@@ -27,8 +27,6 @@ Copyright (C) 2007, William Hart and David Harvey
 
 void _Zpoly_mpn_convert_out(Zpoly_t poly_mpz, Zpoly_mpn_t poly_mpn)
 {
-   FLINT_ASSERT(poly_mpz->alloc >= poly_mpn->length);
-
    long size;
    
    poly_mpz->length = poly_mpn->length;
@@ -56,6 +54,7 @@ void _Zpoly_mpn_convert_in(Zpoly_mpn_t poly_mpn, Zpoly_t poly_mpz)
    FLINT_ASSERT(poly_mpn->alloc >= poly_mpz->length);
 
    poly_mpn->length = poly_mpz->length;
+   if (poly_mpz->length == 0) return;
    for (unsigned long i = 0; i < poly_mpz->length; i++)
    {
       if (mpz_sgn(poly_mpz->coeffs[i]) == 0) 
@@ -1133,26 +1132,31 @@ void _Zpoly_mpn_mul_KS(Zpoly_mpn_t output, Zpoly_mpn_t input1, Zpoly_mpn_t input
 
 void _Zpoly_mpn_mul_SS(Zpoly_mpn_t output, Zpoly_mpn_p input1, Zpoly_mpn_p input2)
 {
-   if (input1->length < input2->length) SWAP(input1, input2);
-   
    _Zpoly_mpn_normalise(input1);
    _Zpoly_mpn_normalise(input2);
    
+   if (input1->length < input2->length) SWAP(input1, input2);
+   
    unsigned long length1 = input1->length;
    unsigned long length2 = input2->length;
+   
+   if ((length1 == 0) || (length2 == 0)) 
+   {
+      _Zpoly_mpn_zero(output);
+      return;
+   }
+   
    unsigned long size1 = input1->limbs;
    unsigned long size2 = input2->limbs;
-   
-   unsigned long bits = FLINT_BITS_PER_LIMB * FLINT_MAX(size1, size2);
    
    unsigned long log_length = 0;
    while ((1<<log_length) < length1) log_length++;
    
-   unsigned long output_bits = 2*bits + log_length + 2;
+   unsigned long output_bits = FLINT_BITS_PER_LIMB * (size1 + size2) + log_length + 2;
 
-  // if (output_bits <= length1)
-  //    output_bits = (((output_bits - 1) >> (log_length-1)) + 1) << (log_length-1);
-   //else 
+   if (output_bits <= length1)
+      output_bits = (((output_bits - 1) >> (log_length-1)) + 1) << (log_length-1);
+   else 
       output_bits = (((output_bits - 1) >> log_length) + 1) << log_length;
       
    unsigned long n = (output_bits - 1) / FLINT_BITS_PER_LIMB + 1;
@@ -1162,14 +1166,15 @@ void _Zpoly_mpn_mul_SS(Zpoly_mpn_t output, Zpoly_mpn_p input1, Zpoly_mpn_p input
    ZmodFpoly_init(poly1, log_length + 1, n, 1);
    ZmodFpoly_init(poly2, log_length + 1, n, 1);
    ZmodFpoly_init(res, log_length + 1, n, 1);
-   
+          
    ZmodFpoly_convert_in_mpn(poly1, input1);
    ZmodFpoly_convert_in_mpn(poly2, input2);
-   
+             
    ZmodFpoly_convolution(res, poly1, poly2);
-   ZmodFpoly_rescale(res);
-   
+   ZmodFpoly_normalise(res);
+          
    output->length = length1 + length2 - 1;
+   
    ZmodFpoly_convert_out_mpn(output, res);
    
    ZmodFpoly_clear(poly1);

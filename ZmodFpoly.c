@@ -90,6 +90,8 @@ void ZmodFpoly_convert_out_mpn(Zpoly_mpn_t poly_mpn, ZmodFpoly_t poly_f)
 {
    unsigned long n = poly_f->n;
    unsigned long size_m = poly_mpn->limbs+1;
+   unsigned long limbs = FLINT_MIN(n, size_m-1);
+   
    mp_limb_t * coeffs_m = poly_mpn->coeffs;
    ZmodF_t * coeffs_f = poly_f->coeffs;
 
@@ -98,14 +100,14 @@ void ZmodFpoly_convert_out_mpn(Zpoly_mpn_t poly_mpn, ZmodFpoly_t poly_f)
       ZmodF_normalise(coeffs_f[i], n);
       if (coeffs_f[i][n-1]>>(FLINT_BITS_PER_LIMB-1) || coeffs_f[i][n])
       {
-         negate_limbs(coeffs_m + j + 1, coeffs_f[i], n);
-         mpn_add_1(coeffs_m + j + 1, coeffs_m + j + 1, n, 1L);
-         coeffs_m[j] = -n;
+         negate_limbs(coeffs_m + j + 1, coeffs_f[i], limbs);
+         mpn_add_1(coeffs_m + j + 1, coeffs_m + j + 1, limbs, 1L);
+         coeffs_m[j] = -limbs;
          NORM(coeffs_m + j);
       } else
       {
-         copy_limbs(coeffs_m + j + 1, coeffs_f[i], n);
-         coeffs_m[j] = n;
+         copy_limbs(coeffs_m + j + 1, coeffs_f[i], limbs);
+         coeffs_m[j] = limbs;
          NORM(coeffs_m + j);         
       }
    }
