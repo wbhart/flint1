@@ -383,7 +383,7 @@ void Zpoly_realloc(Zpoly_t poly, unsigned long alloc)
 /* Expand poly to "alloc" allocated coefficients, ensuring that it is made at
    least twice the current allocated size */
 
-void Zpoly_ensure_space_IMPL(Zpoly_t poly, unsigned long alloc)
+void Zpoly_ensure_space2(Zpoly_t poly, unsigned long alloc)
 {
    if (alloc < 2*poly->alloc)
       alloc = 2*poly->alloc;

@@ -287,7 +287,7 @@ void Zpoly_realloc(Zpoly_t poly, unsigned long alloc);
 
 // This is the actual implementation that's called for Zpoly_ensure_space()
 // (see below) if a reallocation is required
-void Zpoly_ensure_space_IMPL(Zpoly_t poly, unsigned long alloc);
+void Zpoly_ensure_space2(Zpoly_t poly, unsigned long alloc);
 
 // Ensures that the polynomial has at least alloc coefficients allocated.
 // If the polynomial already has enough space allocated, nothing happens.
@@ -301,7 +301,7 @@ static inline
 void Zpoly_ensure_space(Zpoly_t poly, unsigned long alloc)
 {
    if (poly->alloc < alloc)
-      Zpoly_ensure_space_IMPL(poly, alloc);
+      Zpoly_ensure_space2(poly, alloc);
 }
 
 
