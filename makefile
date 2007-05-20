@@ -154,6 +154,22 @@ ZmodFpoly-test: Zpoly_mpn.o Zpoly.o Z-ssmul.o ssfft.o flint-manager.o mpn_extras
 	$(CC) Zpoly_mpn.o Zpoly.o Z-ssmul.o ssfft.o flint-manager.o mpn_extras.o ZmodFpoly-test.o ZmodFpoly.o ZmodF.o -o ZmodFpoly-test $(CFLAGS) $(LIBS)
 
 
+
+profiler-main.o: profiler-main.c
+	$(CC) -c profiler-main.c -o profiler-main.o $(CFLAGS)
+
+
+ZmodFpoly-profile-tables.c: ZmodFpoly-profile.c
+	python make-profile-tables.py ZmodFpoly
+	
+ZmodFpoly-profile.o: ZmodFpoly-profile.c
+	$(CC) -c ZmodFpoly-profile.c -o ZmodFpoly-profile.o $(CFLAGS)
+
+ZmodFpoly-profile: ZmodFpoly-profile.o ZmodFpoly-profile-tables.o ZmodFpoly.o profiler-main.o profiler.o ZmodF.o Zpoly_mpn.o Zpoly.o Z-ssmul.o ssfft.o mpn_extras.o
+	$(CC) -o ZmodFpoly-profile ZmodFpoly-profile.o ZmodFpoly-profile-tables.o profiler.o profiler-main.o Zpoly_mpn.o Zpoly.o Z-ssmul.o ssfft.o flint-manager.o mpn_extras.o ZmodFpoly.o ZmodF.o $(CFLAGS) $(LIBS)
+	
+
+
 ssfft.o: ssfft.c ssfft.h
 	$(CC) -c ssfft.c -o ssfft.o $(CFLAGS)
 

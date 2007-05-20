@@ -2,7 +2,7 @@
 
  Timing/profiling
 
- (C) 2006 William Hart and David Harvey
+ (C) 2007 William Hart and David Harvey
 
 ******************************************************************************/
 
@@ -14,22 +14,29 @@
 #ifndef FLINT_PROFILER_H
 #define FLINT_PROFILER_H
 
+
+// number of independent global clocks
 #define FLINT_NUM_CLOCKS 20
+
+
+// If this flag is set, profiling will use a cycle counter *if one is
+// available* (otherwise this flag is ignored)
 #define FLINT_USE_CYCLE_COUNTER 1
+
+// cycles/second
+#define FLINT_CLOCKSPEED 1800000000.0
 
 
 extern double clock_last[FLINT_NUM_CLOCKS];
 extern double clock_accum[FLINT_NUM_CLOCKS];
 
 
-// Relative timings on X86 machines running gcc
 
 #if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
 
-#define FLINT_HAVE_CYCLE_COUNTER 1
+// Relative timings on X86 machines running gcc
 
-// Make it around order of magnitude of microseconds, assuming about 1GHz cpu:
-#define FLINT_CLOCK_SCALE_FACTOR 0.001
+#define FLINT_HAVE_CYCLE_COUNTER 1
 
 static inline double get_cycle_counter()
 {
@@ -48,8 +55,21 @@ static inline double get_cycle_counter()
 #else
 
 #define FLINT_HAVE_CYCLE_COUNTER 0
-#define FLINT_CLOCK_SCALE_FACTOR 1.0
 
+#endif
+
+
+
+/*
+Here we define FLINT_CLOCK_SCALE_FACTOR, which converts the output of
+get_current_time() into microseconds
+*/
+#if FLINT_HAVE_CYCLE_COUNTER && FLINT_USE_CYCLE_COUNTER
+// microseconds per cycle
+#define FLINT_CLOCK_SCALE_FACTOR (1000000.0 / FLINT_CLOCKSPEED)
+#else
+// we'll use getrusage, which is already in microseconds
+#define FLINT_CLOCK_SCALE_FACTOR 1.0
 #endif
 
 
@@ -92,26 +112,6 @@ static inline void stop_clock(unsigned long n)
    double now = get_current_time();
    clock_accum[n] += (now - clock_last[n]);
 }
-
-
-// ============================================================================
-// Support for repeatedly running a given routine
-
-typedef void (*profile_target_t)(void* arg);
-
-// Timing runs need to last at least this many microseconds to be counted:
-#define DURATION_THRESHOLD 200000
-// Number of seconds per timing run that the run_profile function aims for:
-#define DURATION_TARGET 300000
-
-
-/*
-This function repeatedly calls the function "target" with the parameter
-"arg". See profiler.c for the strategy for selecting the number of loops.
-It returns the minimum time (per call). If range is non-NULL, it stores the
-difference between the maximum and minimum times (per call).
- */
-double run_profile(double* range, profile_target_t target, void* arg);
 
 
 #endif // #ifndef FLINT_PROFILER_H
