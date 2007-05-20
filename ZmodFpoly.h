@@ -107,9 +107,12 @@ void ZmodFpoly_clear(ZmodFpoly_t poly);
    
    Each coefficient of poly_mpn is assumed to fit into a coefficient 
    of poly_f.
+   
+   The maximum number of *bits* that any coefficient takes is returned
+   and made negative if any of the coefficients was negative.
 */
 
-void ZmodFpoly_convert_in_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn);
+long ZmodFpoly_convert_in_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn);
 
 
 /* 
@@ -290,6 +293,11 @@ void ZmodFpoly_normalise(ZmodFpoly_t poly);
    running an inverse fourier transform.
 */
 void ZmodFpoly_rescale(ZmodFpoly_t poly);
+
+static inline void ZmodFpoly_reduce_n(ZmodFpoly_t poly, unsigned long n)
+{
+   poly->n = n;
+}
 
 
 /****************************************************************************

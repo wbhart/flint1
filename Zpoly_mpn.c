@@ -1132,8 +1132,8 @@ void _Zpoly_mpn_mul_KS(Zpoly_mpn_t output, Zpoly_mpn_t input1, Zpoly_mpn_t input
 
 void _Zpoly_mpn_mul_SS(Zpoly_mpn_t output, Zpoly_mpn_p input1, Zpoly_mpn_p input2)
 {
-   _Zpoly_mpn_normalise(input1);
-   _Zpoly_mpn_normalise(input2);
+   //_Zpoly_mpn_normalise(input1);
+   //_Zpoly_mpn_normalise(input2);
    
    if (input1->length < input2->length) SWAP(input1, input2);
    
@@ -1162,14 +1162,35 @@ void _Zpoly_mpn_mul_SS(Zpoly_mpn_t output, Zpoly_mpn_p input1, Zpoly_mpn_p input
    unsigned long n = (output_bits - 1) / FLINT_BITS_PER_LIMB + 1;
    
    ZmodFpoly_t poly1, poly2, res;
+   long bits1, bits2;
+   unsigned long sign = 0;
 
    ZmodFpoly_init(poly1, log_length + 1, n, 1);
    ZmodFpoly_init(poly2, log_length + 1, n, 1);
    ZmodFpoly_init(res, log_length + 1, n, 1);
-          
-   ZmodFpoly_convert_in_mpn(poly1, input1);
-   ZmodFpoly_convert_in_mpn(poly2, input2);
-             
+   
+   bits1 = ZmodFpoly_convert_in_mpn(poly1, input1);
+   bits2 = ZmodFpoly_convert_in_mpn(poly2, input2);
+   
+   if ((bits1 < 0) || (bits2 < 0)) sign = 1;
+   bits1 = ABS(bits1);
+   bits2 = ABS(bits2);
+   
+   /* Recompute the length of n now that we know how large everything really is */
+   
+   output_bits = bits1 + bits2 + log_length + 2*sign;
+   
+   if (output_bits <= length1)
+      output_bits = (((output_bits - 1) >> (log_length-1)) + 1) << (log_length-1);
+   else 
+      output_bits = (((output_bits - 1) >> log_length) + 1) << log_length;
+      
+   n = (output_bits - 1) / FLINT_BITS_PER_LIMB + 1;
+   
+   ZmodFpoly_reduce_n(poly1, n);
+   ZmodFpoly_reduce_n(poly2, n);
+   ZmodFpoly_reduce_n(res, n);
+                    
    ZmodFpoly_convolution(res, poly1, poly2);
    ZmodFpoly_normalise(res);
           

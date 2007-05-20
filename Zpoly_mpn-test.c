@@ -1177,15 +1177,17 @@ int test_Zpoly_mpn_scalar_div_ui()
    
    Zpoly_init(test_poly); 
    
-   for (unsigned long count1 = 1; (count1 < 200) && (result == 1) ; count1++)
+   for (unsigned long count1 = 0; (count1 < 10) && (result == 1) ; count1++)
    {
       bits = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 1;
+      //bits = 64*1000;
       
       Zpoly_mpn_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
       Zpoly_mpn_init(test_mpn_poly2, 1, (bits-1)/FLINT_BITS_PER_LIMB+2);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
-          length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1;        
+          length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1; 
+          //length = 10000;       
 #if DEBUG
           printf("length = %ld, bits = %ld\n",length, bits);
 #endif
@@ -1196,8 +1198,11 @@ int test_Zpoly_mpn_scalar_div_ui()
           _Zpoly_mpn_convert_in(test_mpn_poly, test_poly);
           
           div = randint(34682739)+1;
-          _Zpoly_mpn_scalar_div_ui(test_mpn_poly2, test_mpn_poly, div);
-         
+          for (unsigned long i = 0; i < 100; i++)
+          {
+             _Zpoly_mpn_scalar_div_ui(test_mpn_poly2, test_mpn_poly, div);
+          }
+          
           Zpoly_init3(test_poly2, length, bits);
           _Zpoly_mpn_convert_out(test_poly2, test_mpn_poly2); 
           
@@ -1395,8 +1400,6 @@ int test_Zpoly_mpn_mul_karatsuba()
       
       Zpoly_clear(test_poly4);
       Zpoly_mpn_clear(test_mpn_poly3);
-      Zpoly_mpn_clear(test_mpn_poly);
-      Zpoly_mpn_clear(test_mpn_poly2);
    }
    
    Zpoly_clear(test_poly);
@@ -1504,7 +1507,7 @@ int test_Zpoly_mpn_mul_SS()
    Zpoly_init(test_poly2); 
    Zpoly_init(test_poly3); 
    
-   for (unsigned long count1 = 0; (count1 < 200) && (result == 1) ; count1++)
+   for (unsigned long count1 = 0; (count1 < 10) && (result == 1) ; count1++)
    {
       bits = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 1;
       bits2 = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 1;
@@ -1534,10 +1537,10 @@ int test_Zpoly_mpn_mul_SS()
 #endif          
       Zpoly_mul_naive_KS(test_poly3, test_poly, test_poly2);
           
-      Zpoly_init3(test_poly4, length+length2-1, test_mpn_poly->limbs+test_mpn_poly2->limbs+2);
+      Zpoly_init3(test_poly4, length+length2-1, test_mpn_poly->limbs+test_mpn_poly2->limbs+1);
       Zpoly_mpn_init(test_mpn_poly3, length+length2-1, test_mpn_poly->limbs+test_mpn_poly2->limbs+1);
           
-      for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
+      for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
       { 
           _Zpoly_mpn_mul_SS(test_mpn_poly3, test_mpn_poly, test_mpn_poly2);
       }

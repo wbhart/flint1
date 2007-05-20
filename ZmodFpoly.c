@@ -62,18 +62,38 @@ void ZmodFpoly_clear(ZmodFpoly_t poly)
    
 ****************************************************************************/
 
-void ZmodFpoly_convert_in_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn)
+long ZmodFpoly_convert_in_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn)
 {
    unsigned long size_f = poly_f->n + 1;
    unsigned long size_m = poly_mpn->limbs+1;
    mp_limb_t * coeffs_m = poly_mpn->coeffs;
    ZmodF_t * coeffs_f = poly_f->coeffs;
    
+   unsigned long mask = -1L;
+   unsigned long bits = 0;
+   unsigned long limbs = 0;
+   long sign = 1;
+   
    long size_j;
    
    for (unsigned long i = 0, j = 0; i < poly_mpn->length; i++, j += size_m)
    {
-      if ((size_j = coeffs_m[j]) < 0)
+      if ((long) size_j < 0) sign = -1L;
+      size_j = coeffs_m[j];
+      if (ABS(size_j) > limbs + 1)
+      {
+         limbs = ABS(size_j) - 1;
+         bits = FLINT_BIT_COUNT(coeffs_m[j+ABS(size_j)]);   
+      } else if (ABS(size_j) == limbs + 1)
+      {
+         if (coeffs_m[j+ABS(size_j)] & mask)
+         {
+            bits = FLINT_BIT_COUNT(coeffs_m[j+ABS(size_j)]);   
+            if (bits == FLINT_BITS_PER_LIMB) mask = 0L;
+            else mask = -1L - ((1L<<bits)-1);
+         }
+      }
+      if (size_j < 0)
       {
          negate_limbs(coeffs_f[i], coeffs_m + j + 1, ABS(size_j)); 
          set_limbs(coeffs_f[i] + ABS(size_j), size_f - ABS(size_j)); 
@@ -83,7 +103,9 @@ void ZmodFpoly_convert_in_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn)
          clear_limbs(coeffs_f[i] + ABS(size_j), size_f - ABS(size_j)); 
       }
    }
-   poly_f->length = poly_mpn->length;   
+   poly_f->length = poly_mpn->length; 
+   
+   return sign*(FLINT_BITS_PER_LIMB*limbs+bits);  
 }
 
 void ZmodFpoly_convert_out_mpn(Zpoly_mpn_t poly_mpn, ZmodFpoly_t poly_f)
