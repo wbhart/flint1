@@ -30,14 +30,13 @@ module = sys.argv[1]
 cfilename = module + "-profile.c"
 cfile = open(cfilename)
 
-prof2dMain_re = re.compile("void prof2dMain_(.*)\(.*")
-prof2dExec_re = re.compile("void prof2dExec_(.*)\(.*")
-prof2dString_re = re.compile("char prof2dString_(.*)\[\].*")
+prof2dDriver_re = re.compile("void prof2dDriver_(.*)\(.*")
+prof2dDriverString_re = re.compile("char\* prof2dDriverString_(.*)\(.*")
 
-prof2d_re = [prof2dMain_re, prof2dExec_re, prof2dString_re]
+prof2d_re = [prof2dDriver_re, prof2dDriverString_re]
 
-# dictionary from profile name to a triple of bools, indicating which of
-# main, exec, string are defined
+# dictionary from profile name to a tuple of bools, indicating which
+# functions are defined for each target
 prof2d_data = {}
 
 for line in cfile:
@@ -46,7 +45,7 @@ for line in cfile:
       if m is not None:
          name = m.group(1)
          if name not in prof2d_data:
-            prof2d_data[name] = [False, False, False]
+            prof2d_data[name] = [False] * len(prof2d_re)
          else:
             if prof2d_data[name][i]:
                raise ValueError, "duplicate target \"%s\"" % name
@@ -80,11 +79,9 @@ tfile.write("int prof2d_target_count = %s;\n\n" % len(prof2d_data))
 
 for (name, flags) in prof2d_data.iteritems():
    if flags[0]:
-      tfile.write("extern void prof2dMain_%s();\n" % name)
+      tfile.write("extern void prof2dDriver_%s(int argc, char* argv[]);\n" % name)
    if flags[1]:
-      tfile.write("extern void prof2dExec_%s(unsigned long, unsigned long, unsigned long);\n" % name)
-   if flags[2]:
-      tfile.write("extern char prof2dString_%s[];\n" % name)
+      tfile.write("extern char* prof2dDriverString_%s(int argc, char* argv[]);\n" % name)
 tfile.write("\n")
 
 tfile.write("char* prof2d_target_name[] = {\n")
@@ -92,19 +89,20 @@ for (name, flags) in prof2d_data.iteritems():
    tfile.write("   \"%s\",\n" % name)
 tfile.write("};\n\n")
 
-tfile.write("char* prof2d_target_string[] = {\n")
+tfile.write("prof2d_Driver_t prof2d_Driver_list[] = {\n")
 for (name, flags) in prof2d_data.iteritems():
-   tfile.write("   prof2dString_%s,\n" % name  if flags[2] else "   NULL,\n")
+   if flags[0]:
+      tfile.write("   prof2dDriver_%s,\n" % name)
+   else:
+      tfile.write("   NULL,\n")
 tfile.write("};\n\n")
 
-tfile.write("prof2d_exec_t prof2d_target_exec[] = {\n")
+tfile.write("prof2d_DriverString_t prof2d_DriverString_list[] = {\n")
 for (name, flags) in prof2d_data.iteritems():
-   tfile.write("   prof2dExec_%s,\n" % name  if flags[1] else "   NULL,\n")
-tfile.write("};\n\n")
-
-tfile.write("prof2d_main_t prof2d_target_main[] = {\n")
-for (name, flags) in prof2d_data.iteritems():
-   tfile.write("   prof2dMain_%s,\n" % name  if flags[0] else "   NULL,\n")
+   if flags[1]:
+      tfile.write("   prof2dDriverString_%s,\n" % name)
+   else:
+      tfile.write("   NULL,\n")
 tfile.write("};\n\n")
 
 

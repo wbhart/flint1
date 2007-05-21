@@ -11,14 +11,20 @@
 
 // A function that takes two arguments and an iteration count
 // (i.e. the type of function that is getting profiled).
-typedef void (*prof2d_exec_t)(unsigned long x, unsigned long y,
-                              unsigned long count);
+typedef void (*prof2d_Sampler_t)(unsigned long x, unsigned long y,
+                                 unsigned long count);
 
 
-typedef void (*prof2d_main_t)();
+// A function that runs a bunch of profiles
+typedef void (*prof2d_Driver_t)(int argc, char* argv[]);
 
 
-void prof2d_exec(unsigned long x, unsigned long y);
+// A function that returns a string (the description of the target)
+typedef char* (*prof2d_DriverString_t)(int argc, char* argv[]);
+
+
+void prof2d_set_sampler(prof2d_Sampler_t sampler);
+void prof2d_sample(unsigned long x, unsigned long y);
 
 
 /* ============================================================================
@@ -36,9 +42,8 @@ extern char* prof_module_name;
 extern int prof2d_target_count;
 
 extern char* prof2d_target_name[];
-extern char* prof2d_target_string[];
-extern prof2d_exec_t prof2d_target_exec[];
-extern prof2d_main_t prof2d_target_main[];
+extern prof2d_Driver_t prof2d_Driver_list[];
+extern prof2d_DriverString_t prof2d_DriverString_list[];
 
 
 // end of file ****************************************************************

@@ -159,8 +159,10 @@ profiler-main.o: profiler-main.c
 	$(CC) -c profiler-main.c -o profiler-main.o $(CFLAGS)
 
 
-ZmodFpoly-profile-tables.c: ZmodFpoly-profile.c
+ZmodFpoly-profile-tables.o: ZmodFpoly-profile.c
 	python make-profile-tables.py ZmodFpoly
+	$(CC) -c ZmodFpoly-profile-tables.c -o ZmodFpoly-profile-tables.o $(CFLAGS)
+	rm ZmodFpoly-profile-tables.c
 	
 ZmodFpoly-profile.o: ZmodFpoly-profile.c
 	$(CC) -c ZmodFpoly-profile.c -o ZmodFpoly-profile.o $(CFLAGS)
