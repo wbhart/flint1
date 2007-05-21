@@ -673,7 +673,7 @@ Running time should be O(k*len*log(len))
 */
 
 void Zpoly_mul_naive_KS_pack(mpz_t y, mpz_t* x, unsigned long len,
-                                 unsigned long k)
+                             unsigned long k)
 {
    if (len == 1)
       mpz_set(y, x[0]);
@@ -697,7 +697,7 @@ Inverse operation of Zpoly_mul_naive_KS_pack
 */
 
 void Zpoly_mul_naive_KS_unpack(mpz_t* x, unsigned long len, mpz_t y,
-                                   unsigned long k)
+                               unsigned long k)
 {
    if (len == 1)
       mpz_set(x[0], y);
@@ -741,8 +741,7 @@ unsigned long Zpoly_mul_naive_KS_get_max_bits(Zpoly_t x)
 
 /* A simple Kronecker segmentation multiplication routine */
 
-void Zpoly_mul_naive_KS(Zpoly_t output, Zpoly_t input1,
-                            Zpoly_t input2)
+void Zpoly_mul_naive_KS(Zpoly_t output, Zpoly_t input1, Zpoly_t input2)
 {
    if (!input1->length || !input2->length)
    {
@@ -759,7 +758,8 @@ void Zpoly_mul_naive_KS(Zpoly_t output, Zpoly_t input1,
    unsigned long output_len = input1->length + input2->length - 1;
    unsigned long bits1 = Zpoly_mul_naive_KS_get_max_bits(input1);
    unsigned long bits2 = Zpoly_mul_naive_KS_get_max_bits(input2);
-   unsigned long bits = bits1 + bits2 + 2 + ceil_log2(output_len);
+   unsigned long bits = bits1 + bits2 + 1 +
+                        ceil_log2(FLINT_MIN(input1->length, input2->length));
 
    Zpoly_mul_naive_KS_pack(z1, input1->coeffs, input1->length, bits);
    Zpoly_mul_naive_KS_pack(z2, input2->coeffs, input2->length, bits);
@@ -774,7 +774,7 @@ void Zpoly_mul_naive_KS(Zpoly_t output, Zpoly_t input1,
 
 /* A simple Kronecker substitution squaring routine */
 
-void Zpoly_naive_KS_sqr(Zpoly_t output, Zpoly_t input)
+void Zpoly_sqr_naive_KS(Zpoly_t output, Zpoly_t input)
 {
    if (!input->length)
    {
@@ -788,7 +788,7 @@ void Zpoly_naive_KS_sqr(Zpoly_t output, Zpoly_t input)
 
    unsigned long output_len = 2*input->length - 1;
    unsigned long bits = 2 * Zpoly_mul_naive_KS_get_max_bits(input)
-                          + 2 + ceil_log2(output_len);
+                          + 1 + ceil_log2(input->length);
 
    Zpoly_mul_naive_KS_pack(z, input->coeffs, input->length, bits);
    mpz_mul(z, z, z);

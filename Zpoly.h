@@ -395,7 +395,7 @@ void Zpoly_mul_naive_KS(Zpoly_t output, Zpoly_t input1, Zpoly_t input2);
 void Zpoly_sqr(Zpoly_t output, Zpoly_t input);
 void Zpoly_sqr_naive(Zpoly_t output, Zpoly_t input);
 void Zpoly_sqr_karatsuba(Zpoly_t output, Zpoly_t input);
-void Zpoly_sqr_naive_KS(Zpoly_t output, Zpoly_t input1, Zpoly_t input2);
+void Zpoly_sqr_naive_KS(Zpoly_t output, Zpoly_t input);
 
 void Zpoly_left_shift(Zpoly_t output, Zpoly_t input, unsigned long n);
 void Zpoly_right_shift(Zpoly_t output, Zpoly_t input, unsigned long n);

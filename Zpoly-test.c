@@ -558,6 +558,54 @@ int test_Zpoly_mul_naive_KS()
 }
 
 
+int test_Zpoly_sqr_naive_KS()
+{
+   // todo: test inplace multiplication too
+
+   int success = 1;
+   
+   unsigned long max_degree = 10;
+   unsigned long max_bitsize = 10;
+   Zpoly_t poly[3];
+   for (unsigned long i = 0; i < 3; i++)
+      Zpoly_init2(poly[i], max_degree*2 + 1);
+   mpz_t temp;
+   mpz_init(temp);
+
+   unsigned long degree;
+   unsigned long bitsize;
+
+   for (degree = 1; degree <= max_degree; degree++)
+      for (bitsize = 1; bitsize <= max_bitsize; bitsize++)
+         for (unsigned long trial = 0; trial < 10; trial++)
+         {
+            // generate random polys
+            Zpoly_zero(poly[0]);
+            for (unsigned long i = 0; i < degree; i++)
+            {
+               unsigned long bits = gmp_urandomm_ui(
+                                          Zpoly_test_randstate, bitsize+1);
+               mpz_rrandomb(temp, Zpoly_test_randstate, bits);
+               if (gmp_urandomb_ui(Zpoly_test_randstate, 1))
+                  mpz_neg(temp, temp);
+               Zpoly_set_coeff(poly[0], i, temp);
+            }
+            
+            // compute product using naive multiplication and by
+            // naive KS, and compare answers
+            Zpoly_sqr_naive(poly[1], poly[0]);
+            Zpoly_sqr_naive_KS(poly[2], poly[0]);
+            success = success && Zpoly_equal(poly[1], poly[2]);
+         }
+
+   for (unsigned long i = 0; i < 3; i++)
+      Zpoly_clear(poly[i]);
+   mpz_clear(temp);
+
+   return success;
+}
+
+
 #define RUN_TEST(targetfunc) \
    printf("Testing " #targetfunc "()... ");            \
    fflush(stdout);                                     \
@@ -597,6 +645,11 @@ void Zpoly_test_all()
    RUN_TEST(Zpoly_mul);
    RUN_TEST(Zpoly_mul_naive);
    RUN_TEST(Zpoly_mul_naive_KS);
+#if 0
+   // disabled for the moment, because we haven't written the naive
+   // squaring routine yet
+   RUN_TEST(Zpoly_sqr_naive_KS);
+#endif
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");
