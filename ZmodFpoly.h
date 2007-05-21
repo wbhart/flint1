@@ -125,7 +125,7 @@ long ZmodFpoly_convert_in_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn);
    ZmodFpoly_convert_in_mpn.
 */
 
-void ZmodFpoly_convert_out_mpn(Zpoly_mpn_t poly_mpn, ZmodFpoly_t poly_f);
+void ZmodFpoly_convert_out_mpn(Zpoly_mpn_t poly_mpn, ZmodFpoly_t poly_f, long sign);
 
 
 /*
@@ -134,11 +134,12 @@ void ZmodFpoly_convert_out_mpn(Zpoly_mpn_t poly_mpn, ZmodFpoly_t poly_f);
    coefficients is packed into a bitfield "bits" bits wide including one 
    bit for a sign bit. 
    
-   "bits" is assumed to be less than FLINT_BITS_PER_LIMB.
+   "bits" is assumed to be less than FLINT_BITS_PER_LIMB. If bits is 
+   negative, the input poly is assumed to have signed coefficients.
 */ 
    
 void ZmodFpoly_bit_pack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
-     unsigned long bundle, unsigned long bits);
+     unsigned long bundle, long bits);
 
 
 /*
@@ -294,7 +295,12 @@ void ZmodFpoly_normalise(ZmodFpoly_t poly);
 */
 void ZmodFpoly_rescale(ZmodFpoly_t poly);
 
-static inline void ZmodFpoly_reduce_n(ZmodFpoly_t poly, unsigned long n)
+/* 
+   Decrease the number of limbs n that are meaningful in a ZmodFpoly_t.
+   The actual number of limbs allocated remains the same, only the field
+   n is adjusted.
+*/
+static inline void ZmodFpoly_decrease_n(ZmodFpoly_t poly, unsigned long n)
 {
    poly->n = n;
 }

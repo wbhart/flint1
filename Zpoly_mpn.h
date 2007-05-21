@@ -202,6 +202,8 @@ static inline void _Zpoly_mpn_zero(Zpoly_mpn_t output)
 
 void _Zpoly_mpn_swap(Zpoly_mpn_t x, Zpoly_mpn_t y);
 
+long _Zpoly_mpn_bits1(Zpoly_mpn_t poly_mpn);
+
 int _Zpoly_mpn_equal(Zpoly_mpn_p input1, Zpoly_mpn_p input2);
 
 void _Zpoly_mpn_negate(Zpoly_mpn_t output, Zpoly_mpn_t input);
@@ -245,7 +247,7 @@ void _Zpoly_mpn_mul_karatsuba(Zpoly_mpn_t output, Zpoly_mpn_t input1,
 */
 
 void _Zpoly_mpn_mul_KS(Zpoly_mpn_t output, Zpoly_mpn_t input1, 
-                                       Zpoly_mpn_t input2, unsigned long bits);
+                                       Zpoly_mpn_t input2);
 
 void _Zpoly_mpn_mul_SS(Zpoly_mpn_t output, Zpoly_mpn_p input1, 
                                                             Zpoly_mpn_p input2);

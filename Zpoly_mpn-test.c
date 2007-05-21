@@ -1417,13 +1417,13 @@ int test_Zpoly_mpn_mul_KS()
    mpz_t temp;
    mpz_init(temp);
    int result = 1;
-   unsigned long bits, length, length2, depth, output_bits;
+   unsigned long bits, length, length2;
    
    Zpoly_init(test_poly); 
    Zpoly_init(test_poly2); 
    Zpoly_init(test_poly3); 
    Zpoly_init(test_poly4); 
-   for (unsigned long count1 = 1; (count1 < 100) && (result == 1) ; count1++)
+   for (unsigned long count1 = 0; (count1 < 10) && (result == 1) ; count1++)
    {
       bits = gmp_urandomm_ui(Zpoly_test_randstate,(FLINT_BITS_PER_LIMB-15)/2)+ 2;
       //bits = 4;
@@ -1437,10 +1437,6 @@ int test_Zpoly_mpn_mul_KS()
           length2 = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1;
           //length = 32000;
           //length2 = 32000;
-          depth = 0;
-          while ((1<<depth) < ((length > length2) ? length : length2)) depth++;
-          output_bits = 2*bits+depth+2;
-          //output_bits = 2*bits+depth;
 #if DEBUG
           printf("%ld, %ld, %ld\n", length, length2, bits);
 #endif
@@ -1468,8 +1464,8 @@ int test_Zpoly_mpn_mul_KS()
           
           Zpoly_mul_naive_KS(test_poly3, test_poly, test_poly2);
           
-          for (unsigned long i = 0; i < 10; i++)
-             _Zpoly_mpn_mul_KS(test_mpn_poly3, test_mpn_poly, test_mpn_poly2, output_bits);
+          for (unsigned long i = 0; i < 100; i++)
+             _Zpoly_mpn_mul_KS(test_mpn_poly3, test_mpn_poly, test_mpn_poly2);
           _Zpoly_mpn_convert_out(test_poly4, test_mpn_poly3);
                   
 #if DEBUG
@@ -1551,6 +1547,8 @@ int test_Zpoly_mpn_mul_SS()
       if (!result)
       {
 #if DEBUG
+          Zpoly_print(stdout, test_poly);printf("\n\n");
+          Zpoly_print(stdout, test_poly2);printf("\n\n");
           Zpoly_print(stdout, test_poly3);printf("\n\n");
           Zpoly_print(stdout, test_poly4);printf("\n\n");
 #endif               

@@ -181,6 +181,48 @@ void _Zpoly_mpn_swap(Zpoly_mpn_t x, Zpoly_mpn_t y)
    y->limbs = temp_l;
 }
 
+/*
+   Determines the maximum number of bits in a coefficient of poly_mpn. This
+   function assumes every coefficient fits in a limb. The returned value is
+   negative if any of the coefficients was negative.
+*/
+long _Zpoly_mpn_bits1(Zpoly_mpn_t poly_mpn)
+{
+   unsigned long mask = -1L;
+   long bits = 0;
+   long sign = 1;
+   mp_limb_t * coeffs_m = poly_mpn->coeffs;
+   unsigned long i, j;
+   
+   for (i = 0, j = 0; i < poly_mpn->length; i++, j += 2)
+   {
+      if ((long) coeffs_m[j] < 0) sign = -1L;
+      if (coeffs_m[j])
+      {
+         if (coeffs_m[j+1] & mask)
+         {
+            bits = FLINT_BIT_COUNT(coeffs_m[j+1]);   
+            if (bits == FLINT_BITS_PER_LIMB) break;
+            else mask = -1L - ((1L<<bits)-1);
+         }
+      }
+   }
+   
+   if (sign == 1)
+   {
+      for ( ; i < poly_mpn->length; i++, j += 2)
+      { 
+         if ((long) coeffs_m[j] < 0) 
+         {
+            sign = -1L;
+            break;
+         }
+      }
+   }
+   
+   return sign*bits;
+}
+
 int _Zpoly_mpn_equal(Zpoly_mpn_p input1, Zpoly_mpn_p input2)
 {
    int shorter_poly;
@@ -1072,7 +1114,7 @@ void _Zpoly_mpn_mul_karatsuba(Zpoly_mpn_t output, Zpoly_mpn_t input1, Zpoly_mpn_
    limb_release(); limb_release();
 }
 
-void _Zpoly_mpn_mul_KS(Zpoly_mpn_t output, Zpoly_mpn_t input1, Zpoly_mpn_t input2, unsigned long bits)
+void _Zpoly_mpn_mul_KS(Zpoly_mpn_t output, Zpoly_mpn_t input1, Zpoly_mpn_t input2)
 {
    long sign1 = 1L;
    long sign2 = 1L;
@@ -1097,14 +1139,25 @@ void _Zpoly_mpn_mul_KS(Zpoly_mpn_t output, Zpoly_mpn_t input1, Zpoly_mpn_t input
       _Zpoly_mpn_negate(input2, input2);
       sign2 = -1L;
    }
+   
+   long bits1 = _Zpoly_mpn_bits1(input1);
+   long bits2 = _Zpoly_mpn_bits1(input2);
+   unsigned long sign = ((bits1 < 0) || (bits2 < 0));
+   unsigned long length = FLINT_MIN(input1->length, input2->length);
+   unsigned log_length = 0;
+   while ((1<<log_length) < length) log_length++;
+   unsigned long bits = ABS(bits1) + ABS(bits2) + log_length + sign; 
+   
    ZmodFpoly_t poly1, poly2, poly3;
    
    ZmodFpoly_init(poly1, 0, (bits*input1->length-1)/FLINT_BITS_PER_LIMB+1, 0);
    ZmodFpoly_init(poly2, 0, (bits*input2->length-1)/FLINT_BITS_PER_LIMB+1, 0);
    ZmodFpoly_init(poly3, 0, poly1->n + poly2->n, 0);
    
+   if (sign) bits = -1L*bits;
    ZmodFpoly_bit_pack_mpn(poly1, input1, input1->length, bits);
    ZmodFpoly_bit_pack_mpn(poly2, input2, input2->length, bits);
+   bits=ABS(bits);
            
    if ((poly1->n < 1500) || (poly2->n < 1500)) 
    {
@@ -1117,8 +1170,8 @@ void _Zpoly_mpn_mul_KS(Zpoly_mpn_t output, Zpoly_mpn_t input1, Zpoly_mpn_t input
    output->length = input1->length+input2->length-1;
    for (unsigned long i = 0; i < output->length; i++)
       output->coeffs[i*(output->limbs+1)] = 0;
-   //ZmodFpoly_bit_unpack_unsigned_mpn(output, poly3, input1->length+input2->length-1, bits);  
-   ZmodFpoly_bit_unpack_mpn(output, poly3, input1->length+input2->length-1, bits);  
+   if (sign) ZmodFpoly_bit_unpack_mpn(output, poly3, input1->length+input2->length-1, bits);  
+   else ZmodFpoly_bit_unpack_unsigned_mpn(output, poly3, input1->length+input2->length-1, bits);  
    
    ZmodFpoly_clear(poly1);
    ZmodFpoly_clear(poly2);
@@ -1132,8 +1185,8 @@ void _Zpoly_mpn_mul_KS(Zpoly_mpn_t output, Zpoly_mpn_t input1, Zpoly_mpn_t input
 
 void _Zpoly_mpn_mul_SS(Zpoly_mpn_t output, Zpoly_mpn_p input1, Zpoly_mpn_p input2)
 {
-   //_Zpoly_mpn_normalise(input1);
-   //_Zpoly_mpn_normalise(input2);
+   _Zpoly_mpn_normalise(input1);
+   _Zpoly_mpn_normalise(input2);
    
    if (input1->length < input2->length) SWAP(input1, input2);
    
@@ -1151,6 +1204,10 @@ void _Zpoly_mpn_mul_SS(Zpoly_mpn_t output, Zpoly_mpn_p input1, Zpoly_mpn_p input
    
    unsigned long log_length = 0;
    while ((1<<log_length) < length1) log_length++;
+   unsigned long log_length2 = 0;
+   while ((1<<log_length2) < length2) log_length2++;
+   
+   /* Start with an upper bound on the number of bits needed */
    
    unsigned long output_bits = FLINT_BITS_PER_LIMB * (size1 + size2) + log_length + 2;
 
@@ -1172,13 +1229,16 @@ void _Zpoly_mpn_mul_SS(Zpoly_mpn_t output, Zpoly_mpn_p input1, Zpoly_mpn_p input
    bits1 = ZmodFpoly_convert_in_mpn(poly1, input1);
    bits2 = ZmodFpoly_convert_in_mpn(poly2, input2);
    
-   if ((bits1 < 0) || (bits2 < 0)) sign = 1;
-   bits1 = ABS(bits1);
-   bits2 = ABS(bits2);
+   if ((bits1 < 0) || (bits2 < 0)) 
+   {
+      sign = 1;  
+      bits1 = ABS(bits1);
+      bits2 = ABS(bits2);
+   }
    
    /* Recompute the length of n now that we know how large everything really is */
    
-   output_bits = bits1 + bits2 + log_length + 2*sign;
+   output_bits = bits1 + bits2 + log_length2 + sign;
    
    if (output_bits <= length1)
       output_bits = (((output_bits - 1) >> (log_length-1)) + 1) << (log_length-1);
@@ -1187,16 +1247,16 @@ void _Zpoly_mpn_mul_SS(Zpoly_mpn_t output, Zpoly_mpn_p input1, Zpoly_mpn_p input
       
    n = (output_bits - 1) / FLINT_BITS_PER_LIMB + 1;
    
-   ZmodFpoly_reduce_n(poly1, n);
-   ZmodFpoly_reduce_n(poly2, n);
-   ZmodFpoly_reduce_n(res, n);
+   ZmodFpoly_decrease_n(poly1, n);
+   ZmodFpoly_decrease_n(poly2, n);
+   ZmodFpoly_decrease_n(res, n);
                     
    ZmodFpoly_convolution(res, poly1, poly2);
    ZmodFpoly_normalise(res);
           
    output->length = length1 + length2 - 1;
    
-   ZmodFpoly_convert_out_mpn(output, res);
+   ZmodFpoly_convert_out_mpn(output, res, sign);
    
    ZmodFpoly_clear(poly1);
    ZmodFpoly_clear(poly2);
