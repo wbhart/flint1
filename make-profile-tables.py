@@ -79,9 +79,9 @@ tfile.write("int prof2d_target_count = %s;\n\n" % len(prof2d_data))
 
 for (name, flags) in prof2d_data.iteritems():
    if flags[0]:
-      tfile.write("extern void prof2dDriver_%s(int argc, char* argv[]);\n" % name)
+      tfile.write("extern void prof2dDriver_%s(char* params);\n" % name)
    if flags[1]:
-      tfile.write("extern char* prof2dDriverString_%s(int argc, char* argv[]);\n" % name)
+      tfile.write("extern char* prof2dDriverString_%s(char* params);\n" % name)
 tfile.write("\n")
 
 tfile.write("char* prof2d_target_name[] = {\n")

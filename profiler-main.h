@@ -16,15 +16,17 @@ typedef void (*prof2d_Sampler_t)(unsigned long x, unsigned long y,
 
 
 // A function that runs a bunch of profiles
-typedef void (*prof2d_Driver_t)(int argc, char* argv[]);
+typedef void (*prof2d_Driver_t)(char* params);
 
 
 // A function that returns a string (the description of the target)
-typedef char* (*prof2d_DriverString_t)(int argc, char* argv[]);
+typedef char* (*prof2d_DriverString_t)(char* params);
 
 
 void prof2d_set_sampler(prof2d_Sampler_t sampler);
 void prof2d_sample(unsigned long x, unsigned long y);
+void prof2d_start();
+void prof2d_stop();
 
 
 /* ============================================================================

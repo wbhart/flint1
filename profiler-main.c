@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <time.h>
 
 
 prof2d_Driver_t prof2d_active_Driver = NULL;
@@ -19,13 +20,36 @@ prof2d_DriverString_t prof2d_active_DriverString = NULL;
 prof2d_Sampler_t prof2d_active_Sampler = NULL;
 
 
+#define MACHINE_NAME_MAXLEN 1000
+char machine_name[MACHINE_NAME_MAXLEN + 1];
+
+#define PROFILE_PARAMS_MAXLEN 1000
+char profile_params[PROFILE_PARAMS_MAXLEN + 1];
+
+
+
+void prof2d_set_sampler(prof2d_Sampler_t sampler)
+{
+   prof2d_active_Sampler = sampler;
+}
+
+
+void prof2d_start()
+{
+   start_clock(0);
+}
+
+void prof2d_stop()
+{
+   stop_clock(0);
+}
+
+
 double do_single_run(prof2d_Sampler_t sampler, unsigned long x,
                      unsigned long y, unsigned long count)
 {
    init_clock(0);
-   start_clock(0);
    sampler(x, y, count);
-   stop_clock(0);
    return get_clock(0);
 }
 
@@ -91,73 +115,130 @@ void prof2d_sample(unsigned long x, unsigned long y)
    }
 
    // print results
-   printf("%d %d %lf %lf\n", x, y, min_time, max_time);
+   printf("%d\t%d\t%.3le\t%.3le\n", x, y, min_time, max_time);
 }
 
 
-void prof2d_set_sampler(prof2d_Sampler_t sampler)
+void do_target(int index, char* params)
 {
-   prof2d_active_Sampler = sampler;
-}
+   printf("FLINT profile output\n\n");
 
+   time_t now;
+   time(&now);
+   printf("TIMESTAMP: %s", ctime(&now));
+   printf("MACHINE: %s\n\n", machine_name);
 
-void do_target(int index, int argc, char* argv[])
-{
+   printf("MODULE: %s\n", prof_module_name);
+   printf("TARGET: %s\n", prof2d_target_name[index]);
+   printf("PARAMETERS: %s\n", strlen(params) ? params : "(none)");
+
    printf("\n");
-   printf("=========================\n");
-   printf("print some header here which contains e.g. current timestamp,\n");
-   printf("name of module, name of profile target, target description\n");
-   printf("e.g. \"%s\", current machine name\n", prof2d_DriverString_list[index](argc, argv));
-   printf("(from an environment variable probably), etc.\n");
-   printf("=========================\n");
+   printf("DESCRIPTION:\n%s\n", prof2d_DriverString_list[index](params));
+   
+   printf("\n");
+   printf("============================================== begin data \n");
 
    prof2d_active_Driver = prof2d_Driver_list[index];
 
    if (prof2d_active_Driver != NULL)
    {
-      prof2d_active_Driver(argc, argv);
+      prof2d_active_Driver(params);
    }
+}
+
+
+// returns -1 if target name not found
+int lookup_target_name(char* name)
+{
+   for (int i = 0; i < prof2d_target_count; i++)
+   {
+      if (!strcmp(prof2d_target_name[i], name))
+         return i;
+   }
+   return -1;
+}
+
+
+void error(char* message)
+{
+   printf("Error: %s\n", message);
+   exit(0);
+}
+
+
+void help()
+{
+   printf("FLINT profiling utility for module \"%s\"\n", prof_module_name);
+   printf("\n");
+   printf("options:\n");
+   printf(" -h           Show this help screen\n");
+   printf(" -t <target>  Target to run. Overrides environment variable\n");
+   printf("              FLINT_PROFILE_TARGET.\n");
+   printf(" -p <params>  Parameters to pass to target's Driver function.\n");
+   printf("              Overrides environment variable FLINT_PROFILE_PARAMS.\n");
+   printf("\n");
+   printf("Targets in this profiling module are:\n");
+   for (int i = 0; i < prof2d_target_count; i++)
+      printf("  %s\n", prof2d_target_name[i]);
 }
 
 
 int main(int argc, char* argv[])
 {
-   if (argc == 1)
+   // get name of current machine from environment variable
+   char* machine_name_env = getenv("FLINT_MACHINE_NAME");
+   if (machine_name_env)
+      strncpy(machine_name, machine_name_env, MACHINE_NAME_MAXLEN);
+   else
+      strcpy(machine_name, "unknown");
+      
+   int selected_target = -1;
+   char* profile_target_env = getenv("FLINT_PROFILE_TARGET");
+   if (profile_target_env)
+      selected_target = lookup_target_name(profile_target_env);
+      
+   char* profile_params_env = getenv("FLINT_PROFILE_PARAMS");
+   if (profile_params_env)
+      strncpy(profile_params, profile_params_env, PROFILE_PARAMS_MAXLEN);
+   
+
+   int num_args = 0;
+   char** args = NULL;
+
+   // scan command line options
+   for (int n = 1; n < argc; n++)
    {
-      // no args supplied; work in interactive mode
-      printf("FLINT profiling utility for module \"%s\"\n\n", prof_module_name);
-      
-      for (int i = 0; i < prof2d_target_count; i++)
-         printf("[ %2d ]: %s\n", i, prof2d_target_name[i]);
-      
-      printf("\n");
-      printf("Select one of the above: ");
-      
-      unsigned choice;
-      scanf("%d", &choice);
-      
-      if (choice >= prof2d_target_count)
+      if (!strcmp(argv[n], "-h"))
       {
-         printf("\n\nUmm yeah try again.\n");
+         help();
          return 0;
       }
-      
-      do_target(choice, argc, argv);
-
-   }
-   else
-   {
-      // if user supplies profile target on command, run it directly
-      for (int i = 0; i < prof2d_target_count; i++)
+      else if (!strcmp(argv[n], "-t"))
       {
-         if (!strcmp(prof2d_target_name[i], argv[1]))
-         {
-            do_target(i, argc, argv);
-            return 0;
-         }
+         // grab target name
+         if (++n == argc)
+            error("missing target name.");
+         selected_target = lookup_target_name(argv[n]);
+         if (selected_target == -1)
+            error("unknown target name.");
       }
-      printf("\n\nUnrecognised target name\n");
+      else if (!strcmp(argv[n], "-p"))
+      {
+         if (++n == argc)
+            error("missing target parameters.");
+         strncpy(profile_params, argv[n], PROFILE_PARAMS_MAXLEN);
+      }
+      else
+         error("unrecognised option.");
    }
+   
+   if (selected_target == -1)
+   {
+      help();
+      return 0;
+   }
+
+   do_target(selected_target, profile_params);
 
    return 0;
 }
