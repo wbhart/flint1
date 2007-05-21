@@ -20,7 +20,7 @@ endif
 ifndef FLINT_GMP_LIB_DIR
 	FLINT_GMP_LIB_DIR = "/home/dmharvey/gmp/install/lib"
 endif
-LIBS = -L$(FLINT_GMP_LIB_DIR) -lgmp -lpthread
+LIBS = -L$(FLINT_GMP_LIB_DIR) -lgmp -lpthread -lm
 INCS =  -I"/usr/include" -I$(FLINT_GMP_INCLUDE_DIR)
 CXXINCS = -I$(FLINT_GMP_INCLUDE_DIR)
 BIN  = ssmul
