@@ -116,6 +116,7 @@ void prof2d_sample(unsigned long x, unsigned long y)
 
    // print results
    printf("%d\t%d\t%.3le\t%.3le\n", x, y, min_time, max_time);
+   fflush(stdout);
 }
 
 
