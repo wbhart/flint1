@@ -223,6 +223,57 @@ long _Zpoly_mpn_bits1(Zpoly_mpn_t poly_mpn)
    return sign*bits;
 }
 
+/*
+   Determines the maximum number of bits in a coefficient of poly_mpn. 
+   The returned value is negative if any of the coefficients was negative.
+*/
+long _Zpoly_mpn_bits(Zpoly_mpn_t poly_mpn)
+{
+   unsigned long mask = -1L;
+   long bits = 0;
+   long sign = 1;
+   long limbs = 0;
+   long size_j;
+   mp_limb_t * coeffs_m = poly_mpn->coeffs;
+   unsigned long size_m = poly_mpn->limbs+1;
+   unsigned long i, j;
+   
+   for (i = 0, j = 0; i < poly_mpn->length; i++, j += size_m)
+   {
+      size_j = (long) coeffs_m[j];
+      if (size_j < 0) sign = -1L;
+      if (ABS(size_j) > limbs + 1)
+      {
+         limbs = ABS(size_j) - 1;
+         bits = FLINT_BIT_COUNT(coeffs_m[j+ABS(size_j)]);   
+         if (bits == FLINT_BITS_PER_LIMB) mask = 0L;
+         else mask = -1L - ((1L<<bits)-1);
+      } else if (ABS(size_j) == limbs+1)
+      {
+         if (coeffs_m[j+ABS(size_j)] & mask)
+         {
+            bits = FLINT_BIT_COUNT(coeffs_m[j+ABS(size_j)]);   
+            if (bits == FLINT_BITS_PER_LIMB) mask = 0L;
+            else mask = -1L - ((1L<<bits)-1);
+         }
+      }       
+   }
+   
+   if (sign == 1)
+   {
+      for ( ; i < poly_mpn->length; i++, j += size_m)
+      { 
+         if ((long) coeffs_m[j] < 0) 
+         {
+            sign = -1L;
+            break;
+         }
+      }
+   }
+   
+   return sign*(FLINT_BITS_PER_LIMB*limbs+bits);
+}
+
 int _Zpoly_mpn_equal(Zpoly_mpn_p input1, Zpoly_mpn_p input2)
 {
    int shorter_poly;
@@ -420,15 +471,15 @@ void __Zpoly_mpn_sub_coeff_ui(mp_limb_t * output, unsigned long x)
          output[0] = -1L;
       } else if ((long) output[0] < 0)
       {
-         carry = mpn_add_1(output + 1, output + 1, output[0], x); 
+         carry = mpn_add_1(output + 1, output + 1, ABS(output[0]), x); 
          if (carry)
          {
-            output[output[0]] = carry;
+            output[ABS(output[0])] = carry;
             output[0]--;
          }
       } else if ((long) output[0] > 1L)
       {
-         mpn_sub_1(output + 1, output + 1, ABS(output[0]), x); 
+         mpn_sub_1(output + 1, output + 1, output[0], x); 
          NORM(output);
       } else
       {
@@ -1114,13 +1165,15 @@ void _Zpoly_mpn_mul_karatsuba(Zpoly_mpn_t output, Zpoly_mpn_t input1, Zpoly_mpn_
    limb_release(); limb_release();
 }
 
-void _Zpoly_mpn_mul_KS(Zpoly_mpn_t output, Zpoly_mpn_t input1, Zpoly_mpn_t input2)
+void _Zpoly_mpn_mul_KS(Zpoly_mpn_t output, Zpoly_mpn_p input1, Zpoly_mpn_p input2)
 {
    long sign1 = 1L;
    long sign2 = 1L;
 
    _Zpoly_mpn_normalise(input1);
    _Zpoly_mpn_normalise(input2);
+   
+   if (input2->length > input1->length) SWAP(input1, input2);
    
    if ((input1->length == 0) || (input2->length == 0)) 
    {
@@ -1140,38 +1193,71 @@ void _Zpoly_mpn_mul_KS(Zpoly_mpn_t output, Zpoly_mpn_t input1, Zpoly_mpn_t input
       sign2 = -1L;
    }
    
-   long bits1 = _Zpoly_mpn_bits1(input1);
-   long bits2 = _Zpoly_mpn_bits1(input2);
+   long bits1, bits2;
+   int bitpack = 0;
+   
+   if ((input1->limbs == 1) && (input2->limbs == 1))
+   {
+      bits1 = _Zpoly_mpn_bits1(input1);
+      bits2 = _Zpoly_mpn_bits1(input2);
+   } else
+   {
+      bits1 = _Zpoly_mpn_bits(input1);
+      bits2 = _Zpoly_mpn_bits(input2);
+   }
+      
    unsigned long sign = ((bits1 < 0) || (bits2 < 0));
    unsigned long length = FLINT_MIN(input1->length, input2->length);
    unsigned log_length = 0;
    while ((1<<log_length) < length) log_length++;
    unsigned long bits = ABS(bits1) + ABS(bits2) + log_length + sign; 
+   unsigned long limbs = (bits-1)/FLINT_BITS_PER_LIMB + 1;
+   
+   if (bits < 64) bitpack = 1;
    
    ZmodFpoly_t poly1, poly2, poly3;
    
-   ZmodFpoly_init(poly1, 0, (bits*input1->length-1)/FLINT_BITS_PER_LIMB+1, 0);
-   ZmodFpoly_init(poly2, 0, (bits*input2->length-1)/FLINT_BITS_PER_LIMB+1, 0);
+   if (bitpack)
+   {
+      ZmodFpoly_init(poly1, 0, (bits*input1->length-1)/FLINT_BITS_PER_LIMB+1, 0);
+      ZmodFpoly_init(poly2, 0, (bits*input2->length-1)/FLINT_BITS_PER_LIMB+1, 0);
+      if (sign) bits = -1L*bits;
+      ZmodFpoly_bit_pack_mpn(poly1, input1, input1->length, bits);
+      ZmodFpoly_bit_pack_mpn(poly2, input2, input2->length, bits);
+      bits=ABS(bits);
+   } else
+   {
+      ZmodFpoly_init(poly1, 0, limbs*input1->length, 0);
+      ZmodFpoly_init(poly2, 0, limbs*input2->length, 0);
+      ZmodFpoly_limb_pack_mpn(poly1, input1, input1->length, limbs);
+      ZmodFpoly_limb_pack_mpn(poly2, input2, input2->length, limbs);
+   }
+   
    ZmodFpoly_init(poly3, 0, poly1->n + poly2->n, 0);
    
-   if (sign) bits = -1L*bits;
-   ZmodFpoly_bit_pack_mpn(poly1, input1, input1->length, bits);
-   ZmodFpoly_bit_pack_mpn(poly2, input2, input2->length, bits);
-   bits=ABS(bits);
            
    if ((poly1->n < 1500) || (poly2->n < 1500)) 
    {
-      if (poly1->n > poly2->n) mpn_mul(poly3->coeffs[0], poly1->coeffs[0], poly1->n, poly2->coeffs[0], poly2->n);
-      else mpn_mul(poly3->coeffs[0], poly2->coeffs[0], poly2->n, poly1->coeffs[0], poly1->n);
+      mpn_mul(poly3->coeffs[0], poly1->coeffs[0], poly1->n, poly2->coeffs[0], poly2->n);
    } else Z_SSMul(poly3->coeffs[0], poly1->coeffs[0], poly2->coeffs[0], poly1->n, poly2->n);
+   
    poly3->coeffs[0][poly1->n+poly2->n] = 0;
    poly3->length = 1;
    
    output->length = input1->length+input2->length-1;
+  
    for (unsigned long i = 0; i < output->length; i++)
       output->coeffs[i*(output->limbs+1)] = 0;
-   if (sign) ZmodFpoly_bit_unpack_mpn(output, poly3, input1->length+input2->length-1, bits);  
-   else ZmodFpoly_bit_unpack_unsigned_mpn(output, poly3, input1->length+input2->length-1, bits);  
+      
+   if (bitpack)
+   {
+      if (sign) ZmodFpoly_bit_unpack_mpn(output, poly3, input1->length+input2->length-1, bits);  
+      else ZmodFpoly_bit_unpack_unsigned_mpn(output, poly3, input1->length+input2->length-1, bits);  
+   } else
+   {
+      if (sign) ZmodFpoly_limb_unpack_mpn(output, poly3, input1->length+input2->length-1, limbs);        
+      else ZmodFpoly_limb_unpack_unsigned_mpn(output, poly3, input1->length+input2->length-1, limbs);  
+   }
    
    ZmodFpoly_clear(poly1);
    ZmodFpoly_clear(poly2);

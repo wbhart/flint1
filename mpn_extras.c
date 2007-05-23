@@ -61,6 +61,7 @@ unsigned int rescount_mpn=0; //counter for which limb_memp_t we are upto in the 
 
 void* limb_alloc(unsigned long length, int reserved)
 {
+   printf("%ld limbs allocated\n", length);
    static limb_mem_t* curr;
    static limb_mem_t* temp;
    static int initialised = 0; //has limb_alloc been initialised
@@ -156,6 +157,7 @@ void* limb_alloc(unsigned long length, int reserved)
       last_mpn->next = (limb_mem_t*) malloc(sizeof(limb_mem_t));
       last_mpn->next->prev = last_mpn;
       last_mpn=last_mpn->next;
+      printf("Here---1\n");
       last_mpn->point = (mp_limb_t*)alloc_d+length;
       last_mpn->next = NULL;
       last_mpn->remaining=0;
@@ -172,6 +174,7 @@ void* limb_alloc(unsigned long length, int reserved)
    //set up the new record, and head_mpn and last_mpn to point to this single new record
    alloc_d = malloc(length*sizeof(mp_limb_t));
    head_mpn = (limb_mem_t*) malloc(sizeof(limb_mem_t));
+   printf("Here---2\n");
    head_mpn->point = (mp_limb_t*)alloc_d+length;
    head_mpn->next = NULL;
    head_mpn->prev = NULL;

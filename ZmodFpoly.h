@@ -127,6 +127,28 @@ long ZmodFpoly_convert_in_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn);
 
 void ZmodFpoly_convert_out_mpn(Zpoly_mpn_t poly_mpn, ZmodFpoly_t poly_f, long sign);
 
+/* 
+   Packs bundle coefficients, each padded out to the given number of limbs, into 
+   the first coefficient of poly_f.
+*/
+void ZmodFpoly_limb_pack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
+                                           unsigned long bundle, long limbs);
+
+/* 
+   Unpacks bundle coefficients from the first coefficient of poly_f, each 
+   assumed to be stored in a field of the given number of limbs.
+*/
+void ZmodFpoly_limb_unpack_mpn(Zpoly_mpn_t poly_mpn, ZmodFpoly_t poly_f, 
+                                  unsigned long bundle, unsigned long limbs);
+
+/* 
+   Unpacks bundle coefficients from the first coefficient of poly_f, each 
+   assumed to be stored in a field of the given number of limbs. Assumes the
+   coefficients are unsigned.
+*/
+void ZmodFpoly_limb_unpack_unsigned_mpn(Zpoly_mpn_t poly_mpn, ZmodFpoly_t poly_f, 
+                                  unsigned long bundle, unsigned long limbs);
+
 
 /*
    Packs poly_mpn down to the bit into poly_f. Each coefficient of poly_f

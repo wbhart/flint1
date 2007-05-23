@@ -461,6 +461,89 @@ void ZmodFpoly_bit_unpack_unsigned_mpn(Zpoly_mpn_t poly_mpn, ZmodFpoly_t poly_f,
       }
    }
 }
+
+void ZmodFpoly_limb_pack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
+                                           unsigned long bundle, long limbs)
+{
+   unsigned long size_m = poly_mpn->limbs + 1;
+   long size_j;
+   mp_limb_t * coeffs_m = poly_mpn->coeffs;
+   mp_limb_t * coeffs_f = poly_f->coeffs[0];
+   long carry = 0;
+   
+   for (unsigned long i = 0, j = 0, k = 0; i < bundle; i++, j += size_m, k += limbs)
+   {
+      size_j = (long) coeffs_m[j];
+      if (size_j < 0)
+      {
+         negate_limbs(coeffs_f + k, coeffs_m + j + 1, ABS(size_j)); 
+         set_limbs(coeffs_f + k + ABS(size_j), limbs - ABS(size_j));
+         if (carry) mpn_sub_1(coeffs_f + k, coeffs_f + k, limbs, 1L);
+         carry = 1L;
+      } else if (size_j > 0)
+      {
+         copy_limbs(coeffs_f + k, coeffs_m + j + 1, ABS(size_j)); 
+         clear_limbs(coeffs_f + k + ABS(size_j), limbs - ABS(size_j)); 
+         if (carry) mpn_sub_1(coeffs_f + k, coeffs_f + k, limbs, 1L);
+         carry = 0L;
+      } else
+      {
+         if (carry) 
+         {
+            set_limbs(coeffs_f + k, limbs);
+            carry = 1L;
+         } else 
+         {
+            clear_limbs(coeffs_f + k, limbs);
+            carry = 0L;
+         }
+      }
+   }
+}
+
+void ZmodFpoly_limb_unpack_mpn(Zpoly_mpn_t poly_mpn, ZmodFpoly_t poly_f, 
+                                  unsigned long bundle, unsigned long limbs)
+{
+   unsigned long size_m = poly_mpn->limbs + 1;
+   unsigned long n = poly_f->n;
+   mp_limb_t * coeffs_m = poly_mpn->coeffs;
+   mp_limb_t * coeffs_f = poly_f->coeffs[0];
+   unsigned long carry = 0L;
+   
+   for (unsigned long i = 0, j = 0, k = 0; i < bundle; i++, j += size_m, k += limbs)
+   {
+      if (carry) mpn_add_1(coeffs_f + k, coeffs_f + k, n - k, 1L);
+      if (coeffs_f[k+limbs-1]>>(FLINT_BITS_PER_LIMB-1))
+      {
+         negate_limbs(coeffs_m + j + 1, coeffs_f + k, limbs);
+         coeffs_m[j] = -limbs;
+         NORM(coeffs_m + j);
+         carry = 1L;
+      } else
+      {
+         copy_limbs(coeffs_m + j + 1, coeffs_f + k, limbs);
+         coeffs_m[j] = limbs;
+         NORM(coeffs_m + j); 
+         carry = 0L;        
+      }
+   }
+}
+
+void ZmodFpoly_limb_unpack_unsigned_mpn(Zpoly_mpn_t poly_mpn, ZmodFpoly_t poly_f, 
+                                  unsigned long bundle, unsigned long limbs)
+{
+   unsigned long size_m = poly_mpn->limbs + 1;
+   unsigned long n = poly_f->n;
+   mp_limb_t * coeffs_m = poly_mpn->coeffs;
+   mp_limb_t * coeffs_f = poly_f->coeffs[0];
+   
+   for (unsigned long i = 0, j = 0, k = 0; i < bundle; i++, j += size_m, k += limbs)
+   {
+         copy_limbs(coeffs_m + j + 1, coeffs_f+k, limbs);
+         coeffs_m[j] = limbs;
+         NORM(coeffs_m + j);          
+   }
+}
     
 void ZmodFpoly_byte_pack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
                              unsigned long bundle, unsigned long bytes)
