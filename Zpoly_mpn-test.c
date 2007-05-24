@@ -1425,18 +1425,18 @@ int test_Zpoly_mpn_mul_KS()
    Zpoly_init(test_poly4); 
    for (unsigned long count1 = 0; (count1 < 1) && (result == 1) ; count1++)
    {
-      bits = gmp_urandomm_ui(Zpoly_test_randstate,1000) + 1;
-      //bits = 400;
+      //bits = gmp_urandomm_ui(Zpoly_test_randstate,1000) + 1;
+      bits = 400;
       
       Zpoly_mpn_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
       Zpoly_mpn_init(test_mpn_poly2, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
       Zpoly_mpn_init(test_mpn_poly3, 1, (2*bits-1)/FLINT_BITS_PER_LIMB+2);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
-          length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1;
-          length2 = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1;
-          //length = 32000;
-          //length2 = 32000;
+          //length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1;
+          //length2 = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1;
+          length = 32000;
+          length2 = 32000;
 #if DEBUG
           printf("%ld, %ld, %ld\n", length, length2, bits);
 #endif

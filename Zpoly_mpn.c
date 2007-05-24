@@ -1207,7 +1207,7 @@ void _Zpoly_mpn_mul_KS(Zpoly_mpn_t output, Zpoly_mpn_p input1, Zpoly_mpn_p input
    }
       
    unsigned long sign = ((bits1 < 0) || (bits2 < 0));
-   unsigned long length = FLINT_MIN(input1->length, input2->length);
+   unsigned long length = input2->length;
    unsigned log_length = 0;
    while ((1<<log_length) < length) log_length++;
    unsigned long bits = ABS(bits1) + ABS(bits2) + log_length + sign; 
@@ -1234,7 +1234,6 @@ void _Zpoly_mpn_mul_KS(Zpoly_mpn_t output, Zpoly_mpn_p input1, Zpoly_mpn_p input
    }
    
    ZmodFpoly_init(poly3, 0, poly1->n + poly2->n, 0);
-   
            
    if ((poly1->n < 1500) || (poly2->n < 1500)) 
    {

@@ -37,7 +37,6 @@ that understand them).
 #include "Z-ssmul.h"
 #include "mpn_extras.h"
 #include "ssfft.h"
-#include "flint-manager.h"
 
 
 /*
@@ -895,7 +894,7 @@ void Z_ssmul_main(mp_limb_t** array1, unsigned long length1,
 
     // pointwise multiplies
 
-    mp_limb_t* mul_scratch = (mp_limb_t*) flint_malloc_limbs(2*n);
+    mp_limb_t* mul_scratch = (mp_limb_t*) limb_alloc(2*n, 0);
 
     for (i = 0; i < output_length; i++)
     {
@@ -933,7 +932,7 @@ void Z_ssmul_main(mp_limb_t** array1, unsigned long length1,
        }
     }
 
-    flint_free(mul_scratch);
+    limb_release();
 
     // do inverse FFT
     ssfft_ifft(array1, 1, log_length, output_length, output_length, 0,
@@ -1037,8 +1036,8 @@ void Z_SSMul(mp_limb_t* res, mp_limb_t* data1, mp_limb_t* data2,
    // on account of limb_alloc just taking the number of limbs that the caller
    // wants as a parameter
    
-   mp_limb_t* array = (mp_limb_t*) flint_malloc_limbs((2*length + 1) * (n+1) + 2*n);
-   mp_limb_t** pointarr = (mp_limb_t**) flint_malloc_limbs(2*length + 1);
+   mp_limb_t* array = (mp_limb_t*) limb_alloc((2*length + 1) * (n+1) + 2*n, 0);
+   mp_limb_t** pointarr = (mp_limb_t**) limb_alloc(2*length + 1, 0);
 
    // partition up array into coefficient buffers of length n+1...
    
@@ -1051,6 +1050,7 @@ void Z_SSMul(mp_limb_t* res, mp_limb_t* data1, mp_limb_t* data2,
    mp_limb_t** array1 = pointarr;
    mp_limb_t** array2 = pointarr + length;
    mp_limb_t** scratch = pointarr + 2*length;
+   
    // convert data for first FFT
    for (skip = 0, i = 0; (i < length/2) && (skip+input_limbs <= limbs); i++, skip+=input_limbs)
    {
@@ -1084,7 +1084,7 @@ void Z_SSMul(mp_limb_t* res, mp_limb_t* data1, mp_limb_t* data2,
    // We have to clear the output polynomial, since we have to add to its
    // coefficients rather than just copy into them
    
-   clear_limbs(res,2*limbs);
+   clear_limbs(res,limbs + limbs2);
     
    for (skip = 0, i = 0; (i < trunc_length + trunc_length2 - 1) && (skip+n <= 2*limbs); i++, skip+=input_limbs)
    { 
@@ -1100,7 +1100,6 @@ void Z_SSMul(mp_limb_t* res, mp_limb_t* data1, mp_limb_t* data2,
       mpn_add(res+skip, res+skip, n+1, array1[i], n);
       
    } 
-   
    while (skip < 2*limbs)
    {
       if ((2*limbs > skip) && (i < trunc_length+trunc_length2 - 1))
@@ -1117,8 +1116,8 @@ void Z_SSMul(mp_limb_t* res, mp_limb_t* data1, mp_limb_t* data2,
    }  
    
    // free allocated space
-   flint_free(pointarr);
-   flint_free(array);
+   limb_release();
+   limb_release();
 }
 
 void Z_fast_mul(mpz_t res, mpz_t a, mpz_t b)
