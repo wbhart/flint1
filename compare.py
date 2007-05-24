@@ -107,8 +107,8 @@ for f in files:
 
 
 # merge data into single list of ratios
-# > 0.5 means the 1st sample was faster
-# < 0.5 means the 2nd sample was faster
+# values in [-1.0, 0.0] means the 1st sample was faster
+# values in [0.0, 1.0] means the 2nd sample was faster
 ratios = []
 for (x, y) in data[0]:
    z0 = data[0][x, y]
@@ -131,15 +131,14 @@ for (x, y) in data[0]:
       elif ratio < -1.0:
          ratio = -1.0
 
-      ratio = (ratio + 1.0) / 2   # scale into [0, 1]
-
       ratios.append((x, y, ratio))
 
 ratios.sort()
 
 pylab.scatter([x for (x, y, z) in ratios], [y for (x, y, z) in ratios],
-              c = [z for (x, y, z) in ratios], s = CONFIG_dotsize,
-              faceted=False, cmap = cmap)
+              c = [z for (x, y, z) in ratios], vmin=-1.0, vmax=1.0,
+              s = CONFIG_dotsize, faceted=False, cmap = cmap)
+
 
 
 # write down the two filenames (this should really be the profile name)
