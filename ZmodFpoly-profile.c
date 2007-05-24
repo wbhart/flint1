@@ -25,14 +25,16 @@ void sample_ZmodFpoly_FFT(unsigned long length, unsigned long n,
    
    ZmodFpoly_t poly;
    ZmodFpoly_init(poly, m, n, 1);
-   poly->length = length;
    
    // todo: need to generate random data here
    
    prof2d_start();
 
    for (unsigned long i = 0; i < count; i++)
+   {
+      poly->length = length;
       ZmodFpoly_FFT(poly, 2*length);
+   }
 
    prof2d_stop();
    
@@ -99,14 +101,16 @@ void sample_ZmodFpoly_FFT_nozero(unsigned long length, unsigned long n,
    
    ZmodFpoly_t poly;
    ZmodFpoly_init(poly, m, n, 1);
-   poly->length = (1 << m);
    
    // todo: need to generate random data here
    
    prof2d_start();
 
    for (unsigned long i = 0; i < count; i++)
+   {
+      poly->length = (1 << m);
       ZmodFpoly_FFT(poly, length);
+   }
 
    prof2d_stop();
    
