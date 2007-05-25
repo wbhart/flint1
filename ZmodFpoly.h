@@ -96,6 +96,19 @@ void ZmodFpoly_init(ZmodFpoly_t poly, unsigned long depth, unsigned long n,
 void ZmodFpoly_clear(ZmodFpoly_t poly);
 
 
+/* 
+   Decrease the number of limbs n that are meaningful in a ZmodFpoly_t.
+   The actual number of limbs allocated remains the same, only the field
+   n is adjusted.
+*/
+static inline
+void ZmodFpoly_decrease_n(ZmodFpoly_t poly, unsigned long n)
+{
+   FLINT_ASSERT(n <= poly->n);
+   poly->n = n;
+}
+
+
 /****************************************************************************
 
    Conversion Routines
@@ -317,16 +330,6 @@ void ZmodFpoly_normalise(ZmodFpoly_t poly);
 */
 void ZmodFpoly_rescale(ZmodFpoly_t poly);
 
-/* 
-   Decrease the number of limbs n that are meaningful in a ZmodFpoly_t.
-   The actual number of limbs allocated remains the same, only the field
-   n is adjusted.
-*/
-static inline void ZmodFpoly_decrease_n(ZmodFpoly_t poly, unsigned long n)
-{
-   poly->n = n;
-}
-
 
 /****************************************************************************
 
@@ -342,7 +345,8 @@ ensures that Z/pZ has enough roots of unity.
 This is the threshold for switching from a plain iterative FFT to an FFT
 factoring algorithm. It should be set to about the number of limbs in L1 cache.
 */
-#define ZMODFPOLY_FFT_FACTOR_THRESHOLD 7500
+//#define ZMODFPOLY_FFT_FACTOR_THRESHOLD 7500
+#define ZMODFPOLY_FFT_FACTOR_THRESHOLD 7000
 
 
 /*
