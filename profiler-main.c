@@ -134,7 +134,8 @@ void do_target(int index, char* params)
    printf("PARAMETERS: %s\n", strlen(params) ? params : "(none)");
 
    printf("\n");
-   printf("DESCRIPTION:\n%s\n", prof2d_DriverString_list[index](params));
+   if (prof2d_DriverString_list[index])
+      printf("DESCRIPTION:\n%s\n", prof2d_DriverString_list[index](params));
    
    printf("\n");
    printf("============================================== begin data \n");
