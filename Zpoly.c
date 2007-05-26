@@ -209,8 +209,7 @@ void _Zpoly_scalar_div_ui(Zpoly_t poly, unsigned long x)
 
 /* Multiply two input polynomials */
 
-void _Zpoly_mul(Zpoly_t output, Zpoly_t input1,
-                       Zpoly_t input2)
+void _Zpoly_mul(Zpoly_t output, Zpoly_t input1, Zpoly_t input2)
 {
    FLINT_ASSERT(output != input1);
    FLINT_ASSERT(output != input2);
@@ -222,8 +221,7 @@ void _Zpoly_mul(Zpoly_t output, Zpoly_t input1,
                            
 /* Naieve schoolboy polynomial multiplication routine */
 
-void _Zpoly_mul_naive(Zpoly_t output, Zpoly_t input1,
-                             Zpoly_t input2)
+void _Zpoly_mul_naive(Zpoly_t output, Zpoly_t input1, Zpoly_t input2)
 {
    FLINT_ASSERT(output != input1);
    FLINT_ASSERT(output != input2);
@@ -247,8 +245,7 @@ void _Zpoly_mul_naive(Zpoly_t output, Zpoly_t input1,
 }
 
 
-void _Zpoly_mul_karatsuba(Zpoly_t output, Zpoly_t input1,
-                                 Zpoly_t input2)
+void _Zpoly_mul_karatsuba(Zpoly_t output, Zpoly_t input1, Zpoly_t input2)
 {
    abort();
 }
@@ -268,45 +265,40 @@ void _Zpoly_sqr_karatsuba(Zpoly_t output, Zpoly_t input)
    abort();
 }
 
-void _Zpoly_left_shift(Zpoly_t output, Zpoly_t input,
-                              unsigned long n)
+void _Zpoly_left_shift(Zpoly_t output, Zpoly_t input, unsigned long n)
 {
    abort();
 }
 
-void _Zpoly_right_shift(Zpoly_t output, Zpoly_t input,
-                               unsigned long n)
+void _Zpoly_right_shift(Zpoly_t output, Zpoly_t input, unsigned long n)
 {
    abort();
 }
 
 
-void _Zpoly_div(Zpoly_t quotient, Zpoly_t input1,
-                       Zpoly_t input2)
+void _Zpoly_div(Zpoly_t quotient, Zpoly_t input1, Zpoly_t input2)
 {
    abort();
 }
 
-void _Zpoly_rem(Zpoly_t remainder, Zpoly_t input1,
-                       Zpoly_t input2)
+void _Zpoly_rem(Zpoly_t remainder, Zpoly_t input1, Zpoly_t input2)
 {
    abort();
 }
 
 void _Zpoly_div_rem(Zpoly_t quotient, Zpoly_t remainder,
-                           Zpoly_t input1, Zpoly_t input2)
+                    Zpoly_t input1, Zpoly_t input2)
 {
    abort();
 }
 
-void _Zpoly_gcd(Zpoly_t output, Zpoly_t input1,
-                       Zpoly_t input2)
+void _Zpoly_gcd(Zpoly_t output, Zpoly_t input1, Zpoly_t input2)
 {
    abort();
 }
 
 void _Zpoly_xgcd(Zpoly_t a, Zpoly_t b, Zpoly_t output,
-                        Zpoly_t input1, Zpoly_t input2)
+                 Zpoly_t input1, Zpoly_t input2)
 {
    abort();
 }
@@ -607,6 +599,11 @@ void Zpoly_scalar_div_ui(Zpoly_t poly, unsigned long x)
 
 void Zpoly_mul(Zpoly_t output, Zpoly_t input1, Zpoly_t input2)
 {
+#if 1       // for now just use naive KS
+
+   Zpoly_mul_naive_KS(output, input1, input2);
+
+#else       // disabled for now
    if (!input1->length || !input2->length)
    {
       // one of the inputs is zero
@@ -631,6 +628,7 @@ void Zpoly_mul(Zpoly_t output, Zpoly_t input1, Zpoly_t input2)
       Zpoly_ensure_space(output, output_length);
       _Zpoly_mul(output, input1, input2);
    }
+#endif
 }
 
 /* Naieve schoolboy polynomial multiplication routine */
@@ -800,6 +798,152 @@ void Zpoly_sqr_naive_KS(Zpoly_t output, Zpoly_t input)
 }
 
 
+// ----------------------------------------------------------------------------
+// Naive newton-iteration division.
+
+
+/*
+Input is a monic polynomial B of degree n, and a nonzero polynomial Q1 of
+degree k1 such that
+    x^(k1+n) = B*Q1 + R
+where deg(R) < n.
+
+Output is a nonzero polynomial Q2 of degree k2 such that
+    x^(k2+n) = B*Q2 + S
+where deg(S) < n.
+
+PRECONDITIONS:
+   k2 >= k1
+   B and Q1 must be normalised
+   Q1, Q2, B must not alias each other
+
+*/
+void Zpoly_monic_inverse_newton_extend(Zpoly_t Q2, Zpoly_t Q1, Zpoly_t B,
+                                       unsigned long k2)
+{
+   FLINT_ASSERT(B != Q1);
+   FLINT_ASSERT(B != Q2);
+   FLINT_ASSERT(Q1 != Q2);
+   FLINT_ASSERT(_Zpoly_normalised(B));
+   FLINT_ASSERT(_Zpoly_normalised(Q1));
+   FLINT_ASSERT(Q1->length >= 1);
+   
+   unsigned long k1 = Q1->length - 1;
+   FLINT_ASSERT(k2 >= k1);
+   
+   unsigned long n = B->length - 1;
+
+   if (k2 <= 2*k1)
+   {
+      // only one newton iteration is needed
+      
+      // temp := top k2+1 coefficients of Q1^2
+      Zpoly_t temp;
+      Zpoly_init(temp);
+      Zpoly_mul(temp, Q1, Q1);
+      Zpoly_right_shift(temp, temp, temp->length - (k2+1));
+      
+      // temp := top k2+1 coefficients of Q1^2*B
+      if (B->length > k2+1)
+      {
+         // first get top k2+1 coefficients of B
+         Zpoly_t Btop;
+         Zpoly_init(Btop);
+         Zpoly_right_shift(Btop, B, B->length - (k2+1));
+
+         // now get top k2+1 coefficients of Q1^2*B
+         Zpoly_mul(temp, temp, Btop);
+         Zpoly_right_shift(temp, temp, temp->length - (k2+1));
+         
+         Zpoly_clear(Btop);
+      }
+      else
+      {
+         Zpoly_mul(temp, temp, B);
+         Zpoly_right_shift(temp, temp, temp->length - (k2+1));
+      }
+      
+      // Q2 = top k2+1 coefficients of 2*Q1*x^(k1+n) - Q1^2*B
+      Zpoly_ensure_space(Q2, k2+1);
+      mpz_t x;
+      mpz_init(x);
+
+      unsigned long i;
+      for (i = 0; i <= k1; i++)
+      {
+         mpz_add(x, Q1->coeffs[k1-i], Q1->coeffs[k1-i]);
+         mpz_sub(Q2->coeffs[k2-i], x, temp->coeffs[k2-i]);
+      }
+      for (; i <= k2; i++)
+      {
+         mpz_neg(Q2->coeffs[k2-i], temp->coeffs[k2-i]);
+      }
+
+      Q2->length = k2+1;
+
+      mpz_clear(x);
+      Zpoly_clear(temp);
+
+   }
+   else
+   {
+      // more than one newton iteration is needed, so recurse
+      Zpoly_t temp;
+      Zpoly_init(temp);
+      Zpoly_monic_inverse_newton_extend(temp, Q1, B, (k2+1)/2);
+      Zpoly_monic_inverse_newton_extend(Q2, temp, B, k2);
+      Zpoly_clear(temp);
+   }
+}
+
+
+/*
+Input is a monic polynomial B of degree n, and an integer k >= 0.
+
+Output is a polynomial Q of degree k such that
+    x^(k+n) = BQ + R,
+where deg(R) < n.
+
+In other words it returns an approximate inverse of B.
+
+*/
+void Zpoly_monic_inverse(Zpoly_t Q, Zpoly_t B, unsigned long k)
+{
+   // todo: remove the following restrictions
+   FLINT_ASSERT(k >= 2);
+   FLINT_ASSERT(B->length >= 2);
+   FLINT_ASSERT(Q != B);
+
+   // if B is x^n + a*x^(n-1) + ..., then first approximation
+   // to Q is given by x - a
+   Zpoly_t temp;
+   Zpoly_init2(temp, 2);
+   mpz_set_ui(temp->coeffs[1], 1);
+   mpz_neg(temp->coeffs[0], B->coeffs[B->length-2]);
+   temp->length = 2;
+
+   // extend the approximation using newton's method
+   Zpoly_monic_inverse_newton_extend(Q, temp, B, k);
+   
+   Zpoly_clear(temp);
+}
+
+
+/*
+Input is a nonzero polynomial B of degree n, and an integer k >= 0.
+
+Output is a polynomial Q of degree k such that
+    d^(k+1) x^(k+n) = BQ + R
+where d = leading coefficient of B, and where deg(R) < n.
+
+In other words it returns an approximate inverse of B.
+
+*/
+void Zpoly_pseudo_inverse(Zpoly_t Q, Zpoly_t B, unsigned long k)
+{
+}
+
+
 void Zpoly_mul_karatsuba(Zpoly_t output, Zpoly_t input1,
                              Zpoly_t input2)
 {
@@ -821,44 +965,53 @@ void Zpoly_sqr_karatsuba(Zpoly_t output, Zpoly_t input)
    abort();
 }
 
-void Zpoly_left_shift(Zpoly_t output, Zpoly_t input,
-                          unsigned long n)
+void Zpoly_left_shift(Zpoly_t output, Zpoly_t input, unsigned long n)
 {
    abort();
 }
 
-void Zpoly_right_shift(Zpoly_t output, Zpoly_t input,
-                           unsigned long n)
+// output may alias input
+void Zpoly_right_shift(Zpoly_t output, Zpoly_t input, unsigned long n)
+{
+   if (n >= input->length)
+   {
+      output->length = 0;
+      return;
+   }
+
+   // output length:
+   unsigned long m = input->length - n;
+
+   Zpoly_ensure_space(output, m);
+   for (unsigned long i = 0; i < m; i++)
+      mpz_set(output->coeffs[i], input->coeffs[i+n]);
+   
+   output->length = m;
+}
+
+void Zpoly_div(Zpoly_t quotient, Zpoly_t input1, Zpoly_t input2)
 {
    abort();
 }
 
-void Zpoly_div(Zpoly_t quotient, Zpoly_t input1,
-                   Zpoly_t input2)
-{
-   abort();
-}
-
-void Zpoly_rem(Zpoly_t remainder, Zpoly_t input1,
-                   Zpoly_t input2)
+void Zpoly_rem(Zpoly_t remainder, Zpoly_t input1, Zpoly_t input2)
 {
    abort();
 }
 
 void Zpoly_div_rem(Zpoly_t quotient, Zpoly_t remainder,
-                       Zpoly_t input1, Zpoly_t input2)
+                   Zpoly_t input1, Zpoly_t input2)
 {
    abort();
 }
 
-void Zpoly_gcd(Zpoly_t output, Zpoly_t input1,
-                   Zpoly_t input2)
+void Zpoly_gcd(Zpoly_t output, Zpoly_t input1, Zpoly_t input2)
 {
    abort();
 }
 
 void Zpoly_xgcd(Zpoly_t a, Zpoly_t b, Zpoly_t output,
-                    Zpoly_t input1, Zpoly_t input2)
+                Zpoly_t input1, Zpoly_t input2)
 {
    abort();
 }

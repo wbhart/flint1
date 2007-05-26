@@ -131,12 +131,19 @@ void _Zpoly_set_coeff_si(Zpoly_t poly, unsigned long n, long x)
 // (i.e. so that the degree really is length-1)
 void _Zpoly_normalise(Zpoly_t poly);
 
+// Determines whether the poly is normalised
+static inline
+long _Zpoly_normalised(Zpoly_t poly)
+{
+   return (poly->length == 0) || (mpz_sgn(poly->coeffs[poly->length-1]) != 0);
+}
+
 // Normalises the polynomial, and returns its degree
 // (the zero polynomial has degree -1 by convention)
-long _Zpoly_get_degree(Zpoly_t poly);
+long _Zpoly_degree(Zpoly_t poly);
 
 // Normalises the polynomial, and returns its length
-unsigned long _Zpoly_get_length(Zpoly_t poly);
+unsigned long _Zpoly_length(Zpoly_t poly);
 
 // output = input
 // assumes output.alloc >= input.length
@@ -233,6 +240,8 @@ void _Zpoly_right_shift(Zpoly_t output, Zpoly_t input, unsigned long n);
 // Also perhaps a power series inversion function should go here somewhere;
 // i.e. computes inverse modulo a given x^n. And for that matter direct
 // power series division, which might be faster than "invert & multiply".
+
+void Zpoly_monic_inverse(Zpoly_t Q, Zpoly_t B, unsigned long k);
 
 // quotient = input1 / input2 (throw away remainder)
 // asumes quotient.alloc >= max(0, input1.length - input2.length)

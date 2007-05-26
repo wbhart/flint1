@@ -447,6 +447,54 @@ int test__Zpoly_mul_naive()
    _Zpoly_mul_naive(poly3, poly1, poly2);
    success = success && Zpoly_equal_str(poly3, "-144 198 -17 108 2684 -106 168");
 
+   Zpoly_clear(poly1);
+   Zpoly_clear(poly2);
+   Zpoly_clear(poly3);
+   return success;
+}
+
+
+int test_Zpoly_monic_inverse()
+{
+   int success = 1;
+   Zpoly_t poly1, poly2;
+   Zpoly_init(poly1);
+   Zpoly_init(poly2);
+
+   for (unsigned long deg1 = 2; deg1 <= 10; deg1++)
+   {
+      for (unsigned long trial = 0; trial < 20; trial++)
+      {
+         // generate random input poly
+         Zpoly_set_coeff_ui(poly1, deg1, 1);
+         for (unsigned long i = 0; i < deg1; i++)
+            Zpoly_set_coeff_si(poly1, i, gmp_urandomb_ui(Zpoly_test_randstate, 10) - 512);
+      
+         // try computing inverses to various lengths
+         for (unsigned long deg2 = deg1; deg2 <= 50; deg2++)
+         {
+            Zpoly_t poly3;
+            Zpoly_init(poly3);
+            
+            Zpoly_monic_inverse(poly3, poly1, deg2);
+            if (poly3->length-1 != deg2)
+               success = 0;
+            else
+            {
+               // check correctness by multiplying back together
+               Zpoly_mul(poly2, poly1, poly3);
+               success = success && !mpz_cmp_ui(poly2->coeffs[deg1+deg2], 1);
+               for (unsigned long i = 0; i < deg2; i++)
+                  success = success && !mpz_sgn(poly2->coeffs[deg1+i]);
+            }
+            
+            Zpoly_clear(poly3);
+         }
+      }
+   }
+   
+   Zpoly_clear(poly2);
+   Zpoly_clear(poly1);
    return success;
 }
 
@@ -650,6 +698,7 @@ void Zpoly_test_all()
    // squaring routine yet
    RUN_TEST(Zpoly_sqr_naive_KS);
 #endif
+   RUN_TEST(Zpoly_monic_inverse);
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");
