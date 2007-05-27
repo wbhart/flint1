@@ -1521,6 +1521,70 @@ void _ZmodFpoly_IFFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
 
 /****************************************************************************
 
+   Forward "dual" fourier transforms (internal code)
+
+(twists are applied *before* the transform instead of afterwards, so these
+are used for e.g. negacyclic transforms)
+
+****************************************************************************/
+
+/*
+Let M = 2^depth
+sqrt2^root = Mth root of unity
+input is assumed to be mod x^M - a^M, where a = sqrt2^twist
+
+so should split up into x - wa where w are Mth roots of unity
+*/
+void _ZmodFpoly_FFT_dual_recursive(
+            ZmodF_t* x, unsigned long depth,
+            unsigned long twist, unsigned long root,
+            unsigned long n, ZmodF_t* scratch)
+{
+   if (depth == 0)
+      return;
+
+   unsigned long half = 1 << (depth - 1);
+   for (unsigned long i = 0; i < half; i++)
+   {
+      ZmodF_mul_sqrt2exp(*scratch, x[half+i], twist << (depth-1), n);
+      ZmodF_sub(x[half+i], x[i], *scratch, n);
+      ZmodF_add(x[i], x[i], *scratch, n);
+   }
+
+   _ZmodFpoly_FFT_dual_recursive(x, depth-1, twist, root << 1, n, scratch);
+   _ZmodFpoly_FFT_dual_recursive(x + half, depth-1, twist + root, root << 1, n, scratch);
+}
+
+
+
+void _ZmodFpoly_IFFT_dual_recursive(
+            ZmodF_t* x, unsigned long depth,
+            unsigned long twist, unsigned long root,
+            unsigned long n, ZmodF_t* scratch)
+{
+   if (depth == 0)
+      return;
+
+   unsigned long half = 1 << (depth - 1);
+
+   _ZmodFpoly_IFFT_dual_recursive(x, depth-1, twist, root << 1, n, scratch);
+   _ZmodFpoly_IFFT_dual_recursive(x + half, depth-1, twist + root, root << 1, n, scratch);
+
+   for (unsigned long i = 0; i < half; i++)
+   {
+      ZmodF_sub(*scratch, x[half+i], x[i], n);
+      ZmodF_add(x[i], x[i], x[half+i], n);
+      if (twist == 0)
+         ZmodF_set(x[half+i], *scratch, n);
+      else
+         ZmodF_mul_sqrt2exp(x[half+i], *scratch, 2*n*FLINT_BITS_PER_LIMB - (twist << (depth-1)), n);
+   }
+
+}
+
+
+/****************************************************************************
+
    Fourier Transform Routines
 
 ****************************************************************************/
@@ -1594,39 +1658,40 @@ void ZmodFpoly_convolution(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y)
 ****************************************************************************/
 
 
-void ZmodFpoly_negacyclic_FFT(ZmodFpoly_t poly, unsigned long length)
+/*
+ignores length of poly
+*/
+void ZmodFpoly_negacyclic_FFT(ZmodFpoly_t poly)
 {
-   FLINT_ASSERT(length <= (1UL << poly->depth));
    // check the right roots of unity are available
    FLINT_ASSERT((2 * poly->n * FLINT_BITS_PER_LIMB) % (1 << poly->depth) == 0);
    FLINT_ASSERT(poly->scratch_count >= 1);
 
-   // twist on the way in to make it negacyclic
-   // todo: this needs to be cleaned up
+#if 1
+   // new version
+
    unsigned long twist = (2 * poly->n * FLINT_BITS_PER_LIMB) >> poly->depth;
-   for (unsigned long i = 1; i < length; i++)
+
+   _ZmodFpoly_FFT_dual_recursive(poly->coeffs, poly->depth, twist, 2*twist, poly->n, poly->scratch);
+   poly->length = 1 << poly->depth;
+
+#else
+   // old version
+
+   // twist on the way in to make it negacyclic
+   unsigned long twist = (2 * poly->n * FLINT_BITS_PER_LIMB) >> poly->depth;
+   for (unsigned long i = 1; i < (1 << poly->depth); i++)
    {
       ZmodF_mul_sqrt2exp(*poly->scratch, poly->coeffs[i], i*twist, poly->n);
       ZmodF_swap(poly->scratch, poly->coeffs + i);
    }
 
-   if (length != 0)
-   {
-      if (poly->length == 0)
-      {
-         // input is zero, so output is zero too
-         for (unsigned long i = 0; i < length; i++)
-            ZmodF_zero(poly->coeffs[i], poly->n);
-      }
-      else
-      {
-         if (poly->depth)
-            _ZmodFpoly_FFT(poly->coeffs, poly->depth, 1, poly->length, length,
-                           0, poly->n, poly->scratch);
-      }
-   }
+   if (poly->depth)
+      _ZmodFpoly_FFT(poly->coeffs, poly->depth, 1, 1 << poly->depth, 1 << poly->depth,
+                     0, poly->n, poly->scratch);
 
-   poly->length = length;
+   poly->length = (1 << poly->depth);
+#endif
 }
 
 
@@ -1636,21 +1701,32 @@ void ZmodFpoly_negacyclic_IFFT(ZmodFpoly_t poly)
    FLINT_ASSERT((2 * poly->n * FLINT_BITS_PER_LIMB) % (1 << poly->depth) == 0);
    FLINT_ASSERT(poly->scratch_count >= 1);
 
-   if (poly->length && poly->depth)
+#if 1
+   // new version
+
+   unsigned long twist = (2 * poly->n * FLINT_BITS_PER_LIMB) >> poly->depth;
+   _ZmodFpoly_IFFT_dual_recursive(poly->coeffs, poly->depth, twist, 2*twist, poly->n, poly->scratch);
+   poly->length = 1 << poly->depth;
+
+#else
+   // old version
+
+   if (poly->depth)
    {
-      _ZmodFpoly_IFFT(poly->coeffs, poly->depth, 1, poly->length, poly->length,
+      _ZmodFpoly_IFFT(poly->coeffs, poly->depth, 1, 1 << poly->depth, 1 << poly->depth,
                       0, 0, poly->n, poly->scratch);
    }
 
    // twist on the way out to make it negacyclic
    // todo: this needs to be cleaned up
    unsigned long twist = (2 * poly->n * FLINT_BITS_PER_LIMB) >> poly->depth;
-   for (unsigned long i = 1; i < poly->length; i++)
+   for (unsigned long i = 1; i < (1 << poly->depth); i++)
    {
       ZmodF_mul_sqrt2exp(*poly->scratch, poly->coeffs[i],
                          2 * poly->n * FLINT_BITS_PER_LIMB - i*twist, poly->n);
       ZmodF_neg(poly->coeffs[i], *poly->scratch, poly->n);
    }
+#endif
 }
 
 
@@ -1662,18 +1738,16 @@ void ZmodFpoly_negacyclic_convolution(ZmodFpoly_t res,
    FLINT_ASSERT(x->n == y->n);
    FLINT_ASSERT(x->n == res->n);
 
-   unsigned long length = x->length + y->length - 1;
    unsigned long size = 1UL << res->depth;
-   if (length > size)
-      length = size;
    
-   ZmodFpoly_negacyclic_FFT(x, length);
+   ZmodFpoly_negacyclic_FFT(x);
    if (x != y)    // take care of aliasing
-      ZmodFpoly_negacyclic_FFT(y, length);
+      ZmodFpoly_negacyclic_FFT(y);
       
    ZmodFpoly_pointwise_mul(res, x, y);
    ZmodFpoly_negacyclic_IFFT(res);
    ZmodFpoly_rescale(res);
+   res->length = size;
 }
 
 
