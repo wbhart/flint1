@@ -18,7 +18,7 @@ Copyright (C) 2007, William Hart and David Harvey
 #define VARY_BITS 1
 #define SIGNS 1
 
-#define DEBUG 0 // prints debug information
+#define DEBUG 0    // prints debug information
 #define DEBUG2 1 
 
 gmp_randstate_t Zpoly_test_randstate;
@@ -1134,9 +1134,9 @@ int test__ZmodFpoly_IFFT()
 
 
 // x and y should both have length 2^depth
-// negacyclic = 1 does negacyclic convolution, 0 does cyclic convolution
-void naive_convolution(Zpoly_t res, Zpoly_t x, Zpoly_t y,
-                       unsigned long depth, int negacyclic)
+// this version just multiplies out the convolution
+void really_naive_convolution(Zpoly_t res, Zpoly_t x, Zpoly_t y,
+                              unsigned long depth)
 {
    unsigned long size = 1UL << depth;
    Zpoly_ensure_space(res, size);
@@ -1147,25 +1147,46 @@ void naive_convolution(Zpoly_t res, Zpoly_t x, Zpoly_t y,
    
    for (unsigned long i = 0; i < size; i++)
       for (unsigned long j = 0; j < size; j++)
-      {
-         unsigned long k = i + j;
-         if (k < size)
-            mpz_addmul(res->coeffs[k], x->coeffs[i], y->coeffs[j]);
-         else
-         {
-            if (negacyclic)
-               mpz_submul(res->coeffs[k-size], x->coeffs[i], y->coeffs[j]);
-            else
-               mpz_addmul(res->coeffs[k-size], x->coeffs[i], y->coeffs[j]);
-         }
-      }
+         mpz_addmul(res->coeffs[(i+j) % size], x->coeffs[i], y->coeffs[j]);
    
    for (unsigned long i = 0; i < size; i++)
       mpz_mod(res->coeffs[i], res->coeffs[i], global_p);
 }
 
 
-// this also tests negacyclic_convolution
+// x and y should both have length 2^depth
+// this version uses naive_FFT and naive_IFFT mod p
+void naive_convolution(Zpoly_t res, Zpoly_t x, Zpoly_t y,
+                       unsigned long depth, unsigned long n)
+{
+   unsigned long size = 1UL << depth;
+   Zpoly_t xt, yt;
+   Zpoly_init(xt);
+   Zpoly_init(yt);
+   
+   Zpoly_set(xt, x);
+   Zpoly_set(yt, y);
+   
+   naive_FFT(xt, depth, (4*n*FLINT_BITS_PER_LIMB) >> depth, 0, n);
+   naive_FFT(yt, depth, (4*n*FLINT_BITS_PER_LIMB) >> depth, 0, n);
+
+   Zpoly_ensure_space(res, size);
+   for (unsigned long i = 0; i < (1 << depth); i++)
+   {
+      mpz_mul(res->coeffs[i], xt->coeffs[i], yt->coeffs[i]);
+      mpz_mul_2exp(res->coeffs[i], res->coeffs[i],
+                   2*n*FLINT_BITS_PER_LIMB - depth);
+      mpz_mod(res->coeffs[i], res->coeffs[i], global_p);
+   }
+   res->length = size;
+   
+   naive_IFFT(res, depth, (4*n*FLINT_BITS_PER_LIMB) >> depth, 0, n);
+   
+   Zpoly_clear(xt);
+   Zpoly_clear(yt);
+}
+
+
 int test_ZmodFpoly_convolution()
 {
    Zpoly_t poly1, poly2, poly3, poly4;
@@ -1175,7 +1196,7 @@ int test_ZmodFpoly_convolution()
    Zpoly_init(poly4);
    int success = 1;
 
-   for (unsigned long depth = 0; depth <= 6 && success; depth++)
+   for (unsigned long depth = 0; depth <= 11 && success; depth++)
    {
       unsigned long size = 1UL << depth;
    
@@ -1197,7 +1218,15 @@ int test_ZmodFpoly_convolution()
 
          set_global_n(n);
          
-         unsigned long num_trials = 40000 / (1 << depth);
+         // switch to FFT-based convolution even for the test code, otherwise
+         // tests get too slow
+         int use_really_naive = (depth <= 5);
+         
+         unsigned long num_trials = (use_really_naive ? 50000 : 20000) /
+                                    ((1 << depth) * n);
+         if (num_trials == 0)
+            num_trials = 1;
+         
          for (unsigned long trial = 0; trial < num_trials && success; trial++)
          {
             unsigned long len1 = random_ulong(size+1);
@@ -1215,15 +1244,13 @@ int test_ZmodFpoly_convolution()
             for (unsigned long i = len2; i < size; i++)
                mpz_set_ui(poly2->coeffs[i], 0);
 
-            int negacyclic = random_ulong(2);
-
-            if (negacyclic)
-               ZmodFpoly_negacyclic_convolution(f3, f1, f2);
-            else
-               ZmodFpoly_convolution(f3, f1, f2);
+            ZmodFpoly_convolution(f3, f1, f2);
 
             ZmodFpoly_convert_out(poly3, f3);
-            naive_convolution(poly4, poly1, poly2, depth, negacyclic);
+            if (use_really_naive)
+               really_naive_convolution(poly4, poly1, poly2, depth);
+            else
+               naive_convolution(poly4, poly1, poly2, depth, n);
             
             unsigned long out_len = len1 + len2 - 1;
             if (out_len > size)
@@ -1248,6 +1275,151 @@ int test_ZmodFpoly_convolution()
 }
 
 
+// x and y should both have length 2^depth
+// this version just multiplies out the convolution
+void really_naive_negacyclic_convolution(Zpoly_t res, Zpoly_t x, Zpoly_t y,
+                                         unsigned long depth)
+{
+   unsigned long size = 1UL << depth;
+   Zpoly_ensure_space(res, size);
+   res->length = size;
+   
+   for (unsigned long i = 0; i < size; i++)
+      mpz_set_ui(res->coeffs[i], 0);
+   
+   for (unsigned long i = 0; i < size; i++)
+      for (unsigned long j = 0; j < size; j++)
+      {
+         unsigned long k = i + j;
+         if (k < size)
+            mpz_addmul(res->coeffs[k], x->coeffs[i], y->coeffs[j]);
+         else
+            mpz_submul(res->coeffs[k-size], x->coeffs[i], y->coeffs[j]);
+      }
+   
+   for (unsigned long i = 0; i < size; i++)
+      mpz_mod(res->coeffs[i], res->coeffs[i], global_p);
+}
+
+
+// x and y should both have length 2^depth
+// this version uses naive_FFT and naive_IFFT mod p
+void naive_negacyclic_convolution(Zpoly_t res, Zpoly_t x, Zpoly_t y,
+                                  unsigned long depth, unsigned long n)
+{
+   unsigned long size = 1UL << depth;
+   Zpoly_t xt, yt;
+   Zpoly_init(xt);
+   Zpoly_init(yt);
+   
+   Zpoly_set(xt, x);
+   Zpoly_set(yt, y);
+
+   for (unsigned long i = 0; i < (1 << depth); i++)
+   {
+      naive_mul_sqrt2exp(xt->coeffs[i], xt->coeffs[i], (2*i*n*FLINT_BITS_PER_LIMB) >> depth);
+      naive_mul_sqrt2exp(yt->coeffs[i], yt->coeffs[i], (2*i*n*FLINT_BITS_PER_LIMB) >> depth);
+   }
+   naive_FFT(xt, depth, (4*n*FLINT_BITS_PER_LIMB) >> depth, 0, n);
+   naive_FFT(yt, depth, (4*n*FLINT_BITS_PER_LIMB) >> depth, 0, n);
+
+   Zpoly_ensure_space(res, size);
+   for (unsigned long i = 0; i < (1 << depth); i++)
+   {
+      mpz_mul(res->coeffs[i], xt->coeffs[i], yt->coeffs[i]);
+      mpz_mul_2exp(res->coeffs[i], res->coeffs[i],
+                   2*n*FLINT_BITS_PER_LIMB - depth);
+      mpz_mod(res->coeffs[i], res->coeffs[i], global_p);
+   }
+   res->length = size;
+   
+   naive_IFFT(res, depth, (4*n*FLINT_BITS_PER_LIMB) >> depth, 0, n);
+   for (unsigned long i = 0; i < (1 << depth); i++)
+   {
+      naive_mul_sqrt2exp(res->coeffs[i], res->coeffs[i], (4*n*FLINT_BITS_PER_LIMB) - ((2*i*n*FLINT_BITS_PER_LIMB) >> depth));
+   }
+
+   Zpoly_clear(xt);
+   Zpoly_clear(yt);
+}
+
+
+int test_ZmodFpoly_negacyclic_convolution()
+{
+   Zpoly_t poly1, poly2, poly3, poly4;
+   Zpoly_init(poly1);
+   Zpoly_init(poly2);
+   Zpoly_init(poly3);
+   Zpoly_init(poly4);
+   int success = 1;
+
+   for (unsigned long depth = 0; depth <= 10 && success; depth++)
+   {
+      unsigned long size = 1UL << depth;
+   
+      // need 2*n*FLINT_BITS_PER_LIMB divisible by 2^depth
+      unsigned long n_skip = size / (2*FLINT_BITS_PER_LIMB);
+      if (n_skip == 0)
+         n_skip = 1;
+         
+      for (unsigned long n = n_skip; n < 6*n_skip && success; n += n_skip)
+      {
+         ZmodFpoly_t f1, f2, f3;
+         ZmodFpoly_init(f1, depth, n, 1);
+         ZmodFpoly_init(f2, depth, n, 1);
+         ZmodFpoly_init(f3, depth, n, 1);
+
+#if DEBUG
+         printf("depth = %d, n = %d\n", depth, n);
+#endif
+
+         set_global_n(n);
+         
+         // switch to FFT-based convolution even for the test code, otherwise
+         // tests get too slow
+         int use_really_naive = (depth <= 5);
+         
+         unsigned long num_trials = (use_really_naive ? 50000 : 20000) /
+                                    ((1 << depth) * n);
+         if (num_trials == 0)
+            num_trials = 1;
+         
+         for (unsigned long trial = 0; trial < num_trials && success; trial++)
+         {
+            ZmodFpoly_random(f1, 4);
+            ZmodFpoly_random(f2, 4);
+            f1->length = size;
+            f2->length = size;
+
+            ZmodFpoly_convert_out(poly1, f1);
+            ZmodFpoly_convert_out(poly2, f2);
+
+            ZmodFpoly_negacyclic_convolution(f3, f1, f2);
+
+            ZmodFpoly_convert_out(poly3, f3);
+            if (use_really_naive)
+               really_naive_negacyclic_convolution(poly4, poly1, poly2, depth);
+            else
+               naive_negacyclic_convolution(poly4, poly1, poly2, depth, n);
+            
+            for (unsigned long i = 0; i < size; i++)
+               if (mpz_cmp(poly3->coeffs[i], poly4->coeffs[i]))
+                  success = 0;
+         }
+         
+         ZmodFpoly_clear(f3);
+         ZmodFpoly_clear(f2);
+         ZmodFpoly_clear(f1);
+      }
+   }
+
+   Zpoly_clear(poly4);
+   Zpoly_clear(poly3);
+   Zpoly_clear(poly2);
+   Zpoly_clear(poly1);
+   return success;
+}
+
 
 /****************************************************************************
 
@@ -1260,7 +1432,6 @@ void ZmodFpoly_test_all()
 {
    int success, all_success = 1;
 
-#if 1
    RUN_TEST(ZmodFpoly_convert);
    RUN_TEST(ZmodFpoly_convert_bits);
    RUN_TEST(ZmodFpoly_convert_bits_unsigned);
@@ -1269,10 +1440,10 @@ void ZmodFpoly_test_all()
    RUN_TEST(_ZmodFpoly_FFT_iterative);
    RUN_TEST(_ZmodFpoly_FFT_factor);
    RUN_TEST(_ZmodFpoly_IFFT_recursive);
-#endif
    RUN_TEST(_ZmodFpoly_IFFT_iterative);
    RUN_TEST(_ZmodFpoly_IFFT);
    RUN_TEST(ZmodFpoly_convolution);
+   RUN_TEST(ZmodFpoly_negacyclic_convolution);
 
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");
