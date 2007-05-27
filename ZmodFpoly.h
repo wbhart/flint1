@@ -456,7 +456,7 @@ unity.
 ****************************************************************************/
 
 
-void ZmodFpoly_negacyclic_FFT(ZmodFpoly_t poly, unsigned long length);
+void ZmodFpoly_negacyclic_FFT(ZmodFpoly_t poly);
 
 void ZmodFpoly_negacyclic_IFFT(ZmodFpoly_t poly);
 
