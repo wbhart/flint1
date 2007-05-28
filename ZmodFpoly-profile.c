@@ -314,4 +314,74 @@ void prof2dDriver_ssfft_ifft(char* params)
 }
 
 
+// ============================================================================
+
+void sample_ZmodFpoly_negacyclic_convolution(
+      unsigned long depth, unsigned long n, unsigned long count)
+{
+   ZmodFpoly_t poly1, poly2, poly3;
+   ZmodFpoly_init(poly1, depth, n, 1);
+   ZmodFpoly_init(poly2, depth, n, 1);
+   ZmodFpoly_init(poly3, depth, n, 1);
+
+   unsigned long size = 1 << depth;
+   for (unsigned long i = 0; i < size; i++)
+   {
+      profiler_random_limbs(poly1->coeffs[i], n+1);
+      profiler_random_limbs(poly2->coeffs[i], n+1);
+   }
+
+   unsigned long twist = (2*n*FLINT_BITS_PER_LIMB) >> depth;
+   
+   prof2d_start();
+
+   for (unsigned long i = 0; i < count; i++)
+      ZmodFpoly_negacyclic_convolution(poly3, poly1, poly2);
+
+   prof2d_stop();
+   
+   ZmodFpoly_clear(poly3);
+   ZmodFpoly_clear(poly2);
+   ZmodFpoly_clear(poly1);
+}
+
+
+char* prof2dDriverString_ZmodFpoly_negacyclic_convolution(char* params)
+{
+   return "ZmodFpoly_negacyclic_convolution over various depths and coefficient lengths";
+}
+
+
+/*
+Parameters for this target are:
+   depth_min: minimum depth
+   depth_max: maximum depth
+   n_max: maximum n to try
+*/
+void prof2dDriver_ZmodFpoly_negacyclic_convolution(char* params)
+{
+   int depth_min, depth_max, n_max;
+
+   if (strlen(params) == 0)
+   {
+      // default parameters:
+      depth_min = 3;
+      depth_max = 8;
+      n_max = 8;
+   }
+   else
+   {
+      sscanf(params, "%d %d %d", &depth_min, &depth_max, &n_max);
+   }
+
+   prof2d_set_sampler(sample_ZmodFpoly_negacyclic_convolution);
+
+   for (unsigned long depth = depth_min; depth <= depth_max; depth++)
+   {
+      for (unsigned long n = 1; n <= n_max; n++)
+         prof2d_sample(depth, n);
+   }
+}
+
+
 // end of file ****************************************************************
