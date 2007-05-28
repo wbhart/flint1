@@ -902,7 +902,7 @@ void _ZmodFpoly_FFT_iterative(
          else
          {
             // Version 2b: rotations involve only limbshifts.
-            unsigned long root_limbs = root / FLINT_BITS_PER_LIMB;
+            unsigned long root_limbs = root >> FLINT_LG_BITS_PER_LIMB;
 
             if (twist == 0)
             {
@@ -921,7 +921,7 @@ void _ZmodFpoly_FFT_iterative(
             {
                i = 0;
                y = x;
-               s = twist / FLINT_BITS_PER_LIMB;
+               s = twist >> FLINT_LG_BITS_PER_LIMB;
             }
             
             for (; i < half; i++, s += root_limbs, y += skip)
@@ -1109,7 +1109,7 @@ void _ZmodFpoly_IFFT_iterative(
       else
       {
          // This version is limbshifts only
-         unsigned long root_limbs = root / FLINT_BITS_PER_LIMB;
+         unsigned long root_limbs = root >> FLINT_LG_BITS_PER_LIMB;
 
          if (twist == 0)
          {
@@ -1128,7 +1128,7 @@ void _ZmodFpoly_IFFT_iterative(
          else
          {
             i = 0;
-            s = twist / FLINT_BITS_PER_LIMB;
+            s = twist >> FLINT_LG_BITS_PER_LIMB;
             y = x;
          }
          
@@ -1532,14 +1532,23 @@ are used for e.g. negacyclic transforms)
 Let M = 2^depth
 sqrt2^root = Mth root of unity
 input is assumed to be mod x^M - a^M, where a = sqrt2^twist
+
+assumes twist nonzero
 */
 void _ZmodFpoly_FFT_dual_recursive(
             ZmodF_t* x, unsigned long depth,
             unsigned long twist, unsigned long root,
             unsigned long n, ZmodF_t* scratch)
 {
+   FLINT_ASSERT(twist);
+   FLINT_ASSERT(twist < root);
+
+   // =========================================================================
+   // special cases for length <= 4
+
    if (depth == 2)
    {
+      // length == 4
       ZmodF_forward_dual_butterfly_2exp(x, x+2, scratch, twist, n);
       ZmodF_forward_dual_butterfly_2exp(x+1, x+3, scratch, twist, n);
       ZmodF_forward_dual_butterfly_sqrt2exp(x, x+1, scratch, twist, n);
@@ -1550,17 +1559,64 @@ void _ZmodFpoly_FFT_dual_recursive(
 
    if (depth <= 1)
    {
+      // length == 1 or 2
       if (depth == 1)
          ZmodF_forward_dual_butterfly_sqrt2exp(x, x+1, scratch, twist, n);
       return;
    }
+   
+   // =========================================================================
+   // general case for length >= 8
 
    unsigned long half = 1 << (depth - 1);
    unsigned long amount = twist << (depth - 2);
-   
-   for (unsigned long i = 0; i < half; i++)
-      ZmodF_forward_dual_butterfly_2exp(x+i, x+half+i, scratch, amount, n);
+   ZmodF_t* y = x + half;
 
+   // butterflies (a, b) -> (a + w*b, a - w*b), where w = 2^(amount).
+   unsigned long bits = amount & (FLINT_BITS_PER_LIMB-1);
+   if (bits)
+   {
+      // each butterfly needs a bitshift
+      bits = FLINT_BITS_PER_LIMB - bits;
+      amount = n-1 - (amount >> FLINT_LG_BITS_PER_LIMB);
+      if (amount)
+      {
+         for (unsigned long i = 0; i < half; i++)
+         {
+            ZmodF_short_div_2exp(*scratch, y[i], bits, n);
+            // a - w*b
+            ZmodF_div_Bexp_add(y[i], x[i], *scratch, amount, n);
+            // a + w*b
+            ZmodF_div_Bexp_sub(x[i], x[i], *scratch, amount, n);
+         }
+      }
+      else
+      {
+         for (unsigned long i = 0; i < half; i++)
+         {
+            ZmodF_short_div_2exp(*scratch, y[i], bits, n);
+            // a - w*b
+            ZmodF_add(y[i], x[i], *scratch, n);
+            // a + w*b
+            ZmodF_sub(x[i], x[i], *scratch, n);
+         }
+      }
+   }
+   else
+   {
+      // all butterflies are limbshifts only
+      amount = n - (amount >> FLINT_LG_BITS_PER_LIMB);
+      for (unsigned long i = 0; i < half; i++)
+      {
+         // a - w*b
+         ZmodF_div_Bexp_add(*scratch, x[i], y[i], amount, n);
+         ZmodF_swap(scratch, y+i);
+         // a + w*b
+         ZmodF_div_Bexp_sub(x[i], x[i], *scratch, amount, n);
+      }
+   }
+   
+   // recurse into two halves
    _ZmodFpoly_FFT_dual_recursive(x, depth-1, twist, root << 1, n, scratch);
    _ZmodFpoly_FFT_dual_recursive(x + half, depth-1, twist + root, root << 1,
                                  n, scratch);
