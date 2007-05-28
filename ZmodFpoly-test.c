@@ -1357,8 +1357,8 @@ int test_ZmodFpoly_negacyclic_convolution()
    {
       unsigned long size = 1UL << depth;
    
-      // need 2*n*FLINT_BITS_PER_LIMB divisible by 2^depth
-      unsigned long n_skip = size / (2*FLINT_BITS_PER_LIMB);
+      // need n*FLINT_BITS_PER_LIMB divisible by 2^depth
+      unsigned long n_skip = size / (FLINT_BITS_PER_LIMB);
       if (n_skip == 0)
          n_skip = 1;
          
