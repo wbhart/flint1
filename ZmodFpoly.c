@@ -1551,7 +1551,7 @@ void _ZmodFpoly_FFT_dual_recursive(
       // length == 4
       
       // ----------------------------------------------------------------------
-      // Do the first layer of two butterflies first. This is basically an
+      // Do the outer layer of two butterflies first. This is basically an
       // unrolled version of the length >= 8 case below.
 
       unsigned long bits = (2*twist) & (FLINT_BITS_PER_LIMB-1);
@@ -1584,6 +1584,7 @@ void _ZmodFpoly_FFT_dual_recursive(
       }
       else
       {
+         // no bitshifts needed
          ZmodF_div_Bexp_add(*scratch, x[0], x[2], limbs, n);
          ZmodF_swap(scratch, x+2);
          ZmodF_div_Bexp_sub(x[0], x[0], *scratch, limbs, n);
@@ -1661,7 +1662,9 @@ void _ZmodFpoly_FFT_dual_recursive(
       }
    }
    
+   // =========================================================================
    // recurse into two halves
+
    _ZmodFpoly_FFT_dual_recursive(x, depth-1, twist, root << 1, n, scratch);
    _ZmodFpoly_FFT_dual_recursive(x + half, depth-1, twist + root, root << 1,
                                  n, scratch);
@@ -1679,24 +1682,77 @@ void _ZmodFpoly_IFFT_dual_recursive(
    
    if (depth == 2)
    {
-      ZmodF_inverse_dual_butterfly_2exp(x+2, x+3, scratch,
-                                            twist + root, n);
-      ZmodF_inverse_dual_butterfly_2exp(x, x+1, scratch, twist, n);
-      ZmodF_inverse_dual_butterfly_2exp(x+1, x+3, scratch, 2*twist, n);
-      ZmodF_inverse_dual_butterfly_2exp(x, x+2, scratch, 2*twist, n);
+      // ----------------------------------------------------------------------
+      // Do the inner layer of two "blocks" of one butterfly each.
+
+      unsigned long temp = n*FLINT_BITS_PER_LIMB - twist;
+      ZmodF_forward_butterfly_2exp(x+3, x+2, scratch, temp - root, n);
+      ZmodF_swap(x+2, x+3);
+      ZmodF_forward_butterfly_2exp(x+1, x, scratch, temp, n);
+      ZmodF_swap(x, x+1);
+
+      // ----------------------------------------------------------------------
+      // Now do the outer layer of two butterflies. This is basically an
+      // unrolled version of the length >= 8 case below.
+
+      unsigned long amount = 2*twist;
+      unsigned long bits = amount & (FLINT_BITS_PER_LIMB-1);
+      unsigned long limbs = n - (amount >> FLINT_LG_BITS_PER_LIMB);
+
+      if (bits)
+      {
+         // each butterfly needs a bitshift
+         if (limbs != n)
+         {
+            ZmodF_sub_mul_Bexp(*scratch, x[2], x[0], limbs, n);
+            ZmodF_add(x[0], x[0], x[2], n);
+            ZmodF_short_div_2exp(x[2], *scratch, bits, n);
+
+            ZmodF_sub_mul_Bexp(*scratch, x[3], x[1], limbs, n);
+            ZmodF_add(x[1], x[1], x[3], n);
+            ZmodF_short_div_2exp(x[3], *scratch, bits, n);
+         }
+         else
+         {
+            ZmodF_sub(*scratch, x[0], x[2], n);
+            ZmodF_add(x[0], x[0], x[2], n);
+            ZmodF_short_div_2exp(x[2], *scratch, bits, n);
+
+            ZmodF_sub(*scratch, x[1], x[3], n);
+            ZmodF_add(x[1], x[1], x[3], n);
+            ZmodF_short_div_2exp(x[3], *scratch, bits, n);
+         }
+      }
+      else
+      {
+         // no bitshifts required
+         ZmodF_sub_mul_Bexp(*scratch, x[2], x[0], limbs, n);
+         ZmodF_add(x[0], x[0], x[2], n);
+         ZmodF_swap(x+2, scratch);
+
+         ZmodF_sub_mul_Bexp(*scratch, x[3], x[1], limbs, n);
+         ZmodF_add(x[1], x[1], x[3], n);
+         ZmodF_swap(x+3, scratch);
+      }
+
       return;
    }
 
    if (depth <= 1)
    {
       if (depth == 1)
-         ZmodF_inverse_dual_butterfly_2exp(x, x+1, scratch, twist, n);
+      {
+         ZmodF_forward_butterfly_2exp(x+1, x, scratch, twist, n);
+         ZmodF_swap(x, x+1);
+      }
       return;
    }
 
    unsigned long half = 1 << (depth - 1);
    
+   // =========================================================================
    // recurse into two halves
+
    _ZmodFpoly_IFFT_dual_recursive(x, depth-1, twist, root << 1, n, scratch);
    _ZmodFpoly_IFFT_dual_recursive(x + half, depth-1, twist + root, root << 1,
                                   n, scratch);
@@ -1829,31 +1885,10 @@ void ZmodFpoly_negacyclic_FFT(ZmodFpoly_t poly)
    FLINT_ASSERT((2 * poly->n * FLINT_BITS_PER_LIMB) % (1 << poly->depth) == 0);
    FLINT_ASSERT(poly->scratch_count >= 1);
 
-#if 1
-   // new version
-
    unsigned long twist = (poly->n * FLINT_BITS_PER_LIMB) >> poly->depth;
 
    _ZmodFpoly_FFT_dual_recursive(poly->coeffs, poly->depth, twist, 2*twist, poly->n, poly->scratch);
    poly->length = 1 << poly->depth;
-
-#else
-   // old version
-
-   // twist on the way in to make it negacyclic
-   unsigned long twist = (2 * poly->n * FLINT_BITS_PER_LIMB) >> poly->depth;
-   for (unsigned long i = 1; i < (1 << poly->depth); i++)
-   {
-      ZmodF_mul_sqrt2exp(*poly->scratch, poly->coeffs[i], i*twist, poly->n);
-      ZmodF_swap(poly->scratch, poly->coeffs + i);
-   }
-
-   if (poly->depth)
-      _ZmodFpoly_FFT(poly->coeffs, poly->depth, 1, 1 << poly->depth, 1 << poly->depth,
-                     0, poly->n, poly->scratch);
-
-   poly->length = (1 << poly->depth);
-#endif
 }
 
 
@@ -1863,32 +1898,9 @@ void ZmodFpoly_negacyclic_IFFT(ZmodFpoly_t poly)
    FLINT_ASSERT((2 * poly->n * FLINT_BITS_PER_LIMB) % (1 << poly->depth) == 0);
    FLINT_ASSERT(poly->scratch_count >= 1);
 
-#if 1
-   // new version
-
    unsigned long twist = (poly->n * FLINT_BITS_PER_LIMB) >> poly->depth;
    _ZmodFpoly_IFFT_dual_recursive(poly->coeffs, poly->depth, twist, 2*twist, poly->n, poly->scratch);
    poly->length = 1 << poly->depth;
-
-#else
-   // old version
-
-   if (poly->depth)
-   {
-      _ZmodFpoly_IFFT(poly->coeffs, poly->depth, 1, 1 << poly->depth, 1 << poly->depth,
-                      0, 0, poly->n, poly->scratch);
-   }
-
-   // twist on the way out to make it negacyclic
-   // todo: this needs to be cleaned up
-   unsigned long twist = (2 * poly->n * FLINT_BITS_PER_LIMB) >> poly->depth;
-   for (unsigned long i = 1; i < (1 << poly->depth); i++)
-   {
-      ZmodF_mul_sqrt2exp(*poly->scratch, poly->coeffs[i],
-                         2 * poly->n * FLINT_BITS_PER_LIMB - i*twist, poly->n);
-      ZmodF_neg(poly->coeffs[i], *poly->scratch, poly->n);
-   }
-#endif
 }
 
 
