@@ -356,31 +356,93 @@ char* prof2dDriverString_ZmodFpoly_negacyclic_convolution(char* params)
 Parameters for this target are:
    depth_min: minimum depth
    depth_max: maximum depth
+   n_min: minimum n to try
    n_max: maximum n to try
 */
 void prof2dDriver_ZmodFpoly_negacyclic_convolution(char* params)
 {
-   int depth_min, depth_max, n_max;
+   int depth_min, depth_max, n_min, n_max;
 
    if (strlen(params) == 0)
    {
       // default parameters:
       depth_min = 3;
       depth_max = 8;
+      n_min = 1;
       n_max = 8;
    }
    else
    {
-      sscanf(params, "%d %d %d", &depth_min, &depth_max, &n_max);
+      sscanf(params, "%d %d %d %d", &depth_min, &depth_max, &n_min, &n_max);
    }
 
    prof2d_set_sampler(sample_ZmodFpoly_negacyclic_convolution);
 
    for (unsigned long depth = depth_min; depth <= depth_max; depth++)
    {
-      for (unsigned long n = 1; n <= n_max; n++)
+      for (unsigned long n = n_min; n <= n_max; n++)
+      {
+         if ((2*n*FLINT_BITS_PER_LIMB) % (1 << depth))
+            continue;
+         
          prof2d_sample(depth, n);
+      }
    }
+}
+
+
+// ============================================================================
+
+
+void sample_mpn_mul_n(
+      unsigned long n, unsigned long dummy, unsigned long count)
+{
+   mp_limb_t* buf;
+   buf = malloc(4*n*sizeof(mp_limb_t));
+
+   profiler_random_limbs(buf, 2*n);
+   
+   prof2d_start();
+
+   for (unsigned long i = 0; i < count; i++)
+      mpn_mul_n(buf + 2*n, buf, buf+n, n);
+
+   prof2d_stop();
+   
+   free(buf);
+}
+
+
+char* prof2dDriverString_mpn_mul_n(char* params)
+{
+   return "mpn_mul_n for various n";
+}
+
+
+/*
+Parameters for this target are:
+   n_min
+   n_max
+*/
+void prof2dDriver_mpn_mul_n(char* params)
+{
+   int n_min, n_max;
+
+   if (strlen(params) == 0)
+   {
+      // default parameters:
+      n_min = 30;
+      n_max = 200;
+   }
+   else
+   {
+      sscanf(params, "%d %d", &n_min, &n_max);
+   }
+
+   prof2d_set_sampler(sample_mpn_mul_n);
+
+   for (unsigned long n = n_min; n <= n_max; n++)
+      prof2d_sample(n, 0);
 }
 
 
