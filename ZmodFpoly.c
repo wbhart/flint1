@@ -1532,27 +1532,38 @@ are used for e.g. negacyclic transforms)
 Let M = 2^depth
 sqrt2^root = Mth root of unity
 input is assumed to be mod x^M - a^M, where a = sqrt2^twist
-
-so should split up into x - wa where w are Mth roots of unity
 */
 void _ZmodFpoly_FFT_dual_recursive(
             ZmodF_t* x, unsigned long depth,
             unsigned long twist, unsigned long root,
             unsigned long n, ZmodF_t* scratch)
 {
-   if (depth == 0)
-      return;
-
-   unsigned long half = 1 << (depth - 1);
-   for (unsigned long i = 0; i < half; i++)
+   if (depth == 2)
    {
-      ZmodF_mul_sqrt2exp(*scratch, x[half+i], twist << (depth-1), n);
-      ZmodF_sub(x[half+i], x[i], *scratch, n);
-      ZmodF_add(x[i], x[i], *scratch, n);
+      ZmodF_forward_dual_butterfly_2exp(x, x+2, scratch, twist, n);
+      ZmodF_forward_dual_butterfly_2exp(x+1, x+3, scratch, twist, n);
+      ZmodF_forward_dual_butterfly_sqrt2exp(x, x+1, scratch, twist, n);
+      ZmodF_forward_dual_butterfly_sqrt2exp(x+2, x+3, scratch,
+                                            twist + root, n);
+      return;
    }
 
+   if (depth <= 1)
+   {
+      if (depth == 1)
+         ZmodF_forward_dual_butterfly_sqrt2exp(x, x+1, scratch, twist, n);
+      return;
+   }
+
+   unsigned long half = 1 << (depth - 1);
+   unsigned long amount = twist << (depth - 1);
+   
+   for (unsigned long i = 0; i < half; i++)
+      ZmodF_forward_dual_butterfly_sqrt2exp(x+i, x+half+i, scratch, amount, n);
+
    _ZmodFpoly_FFT_dual_recursive(x, depth-1, twist, root << 1, n, scratch);
-   _ZmodFpoly_FFT_dual_recursive(x + half, depth-1, twist + root, root << 1, n, scratch);
+   _ZmodFpoly_FFT_dual_recursive(x + half, depth-1, twist + root, root << 1,
+                                 n, scratch);
 }
 
 
@@ -1562,24 +1573,33 @@ void _ZmodFpoly_IFFT_dual_recursive(
             unsigned long twist, unsigned long root,
             unsigned long n, ZmodF_t* scratch)
 {
-   if (depth == 0)
+   if (depth == 2)
+   {
+      ZmodF_inverse_dual_butterfly_sqrt2exp(x+2, x+3, scratch,
+                                            twist + root, n);
+      ZmodF_inverse_dual_butterfly_sqrt2exp(x, x+1, scratch, twist, n);
+      ZmodF_inverse_dual_butterfly_2exp(x+1, x+3, scratch, twist, n);
+      ZmodF_inverse_dual_butterfly_2exp(x, x+2, scratch, twist, n);
       return;
+   }
+
+   if (depth <= 1)
+   {
+      if (depth == 1)
+         ZmodF_inverse_dual_butterfly_sqrt2exp(x, x+1, scratch, twist, n);
+      return;
+   }
 
    unsigned long half = 1 << (depth - 1);
 
    _ZmodFpoly_IFFT_dual_recursive(x, depth-1, twist, root << 1, n, scratch);
-   _ZmodFpoly_IFFT_dual_recursive(x + half, depth-1, twist + root, root << 1, n, scratch);
+   _ZmodFpoly_IFFT_dual_recursive(x + half, depth-1, twist + root, root << 1,
+                                  n, scratch);
+
+   unsigned long amount = twist << (depth-1);
 
    for (unsigned long i = 0; i < half; i++)
-   {
-      ZmodF_sub(*scratch, x[half+i], x[i], n);
-      ZmodF_add(x[i], x[i], x[half+i], n);
-      if (twist == 0)
-         ZmodF_set(x[half+i], *scratch, n);
-      else
-         ZmodF_mul_sqrt2exp(x[half+i], *scratch, 2*n*FLINT_BITS_PER_LIMB - (twist << (depth-1)), n);
-   }
-
+      ZmodF_inverse_dual_butterfly_sqrt2exp(x+i, x+half+i, scratch, amount, n);
 }
 
 
