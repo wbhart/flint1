@@ -1556,10 +1556,10 @@ void _ZmodFpoly_FFT_dual_recursive(
    }
 
    unsigned long half = 1 << (depth - 1);
-   unsigned long amount = twist << (depth - 1);
+   unsigned long amount = twist << (depth - 2);
    
    for (unsigned long i = 0; i < half; i++)
-      ZmodF_forward_dual_butterfly_sqrt2exp(x+i, x+half+i, scratch, amount, n);
+      ZmodF_forward_dual_butterfly_2exp(x+i, x+half+i, scratch, amount, n);
 
    _ZmodFpoly_FFT_dual_recursive(x, depth-1, twist, root << 1, n, scratch);
    _ZmodFpoly_FFT_dual_recursive(x + half, depth-1, twist + root, root << 1,
@@ -1596,10 +1596,10 @@ void _ZmodFpoly_IFFT_dual_recursive(
    _ZmodFpoly_IFFT_dual_recursive(x + half, depth-1, twist + root, root << 1,
                                   n, scratch);
 
-   unsigned long amount = twist << (depth-1);
+   unsigned long amount = twist << (depth - 2);
 
    for (unsigned long i = 0; i < half; i++)
-      ZmodF_inverse_dual_butterfly_sqrt2exp(x+i, x+half+i, scratch, amount, n);
+      ZmodF_inverse_dual_butterfly_2exp(x+i, x+half+i, scratch, amount, n);
 }
 
 
