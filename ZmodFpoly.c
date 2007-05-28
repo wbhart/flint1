@@ -1549,11 +1549,59 @@ void _ZmodFpoly_FFT_dual_recursive(
    if (depth == 2)
    {
       // length == 4
-      ZmodF_forward_dual_butterfly_2exp(x, x+2, scratch, twist, n);
-      ZmodF_forward_dual_butterfly_2exp(x+1, x+3, scratch, twist, n);
-      ZmodF_forward_dual_butterfly_sqrt2exp(x, x+1, scratch, twist, n);
-      ZmodF_forward_dual_butterfly_sqrt2exp(x+2, x+3, scratch,
-                                            twist + root, n);
+      
+      // ----------------------------------------------------------------------
+      // Do the first layer of two butterflies first. This is basically an
+      // unrolled version of the length >= 8 case below.
+
+      unsigned long bits = twist & (FLINT_BITS_PER_LIMB-1);
+      unsigned long limbs = n - (twist >> FLINT_LG_BITS_PER_LIMB);
+      
+      if (bits)
+      {
+         // each butterfly needs a bitshift
+         bits = FLINT_BITS_PER_LIMB - bits;
+         if (--limbs)
+         {
+            ZmodF_short_div_2exp(*scratch, x[2], bits, n);
+            ZmodF_div_Bexp_add(x[2], x[0], *scratch, limbs, n);
+            ZmodF_div_Bexp_sub(x[0], x[0], *scratch, limbs, n);
+
+            ZmodF_short_div_2exp(*scratch, x[3], bits, n);
+            ZmodF_div_Bexp_add(x[3], x[1], *scratch, limbs, n);
+            ZmodF_div_Bexp_sub(x[1], x[1], *scratch, limbs, n);
+         }
+         else
+         {
+            ZmodF_short_div_2exp(*scratch, x[2], bits, n);
+            ZmodF_add(x[2], x[0], *scratch, n);
+            ZmodF_sub(x[0], x[0], *scratch, n);
+
+            ZmodF_short_div_2exp(*scratch, x[3], bits, n);
+            ZmodF_add(x[3], x[1], *scratch, n);
+            ZmodF_sub(x[1], x[1], *scratch, n);
+         }
+      }
+      else
+      {
+         ZmodF_div_Bexp_add(*scratch, x[0], x[2], limbs, n);
+         ZmodF_swap(scratch, x+2);
+         ZmodF_div_Bexp_sub(x[0], x[0], *scratch, limbs, n);
+
+         ZmodF_div_Bexp_add(*scratch, x[1], x[3], limbs, n);
+         ZmodF_swap(scratch, x+3);
+         ZmodF_div_Bexp_sub(x[1], x[1], *scratch, limbs, n);
+      }
+
+      // ----------------------------------------------------------------------
+      // Now do the bottom layer, two "blocks" of one butterfly each.
+
+      twist = 2*n*FLINT_BITS_PER_LIMB - twist;
+      ZmodF_inverse_butterfly_sqrt2exp(x, x+1, scratch, twist, n);
+      ZmodF_swap(x, x+1);
+      ZmodF_inverse_butterfly_sqrt2exp(x+2, x+3, scratch, twist - root, n);
+      ZmodF_swap(x+2, x+3);
+
       return;
    }
 
@@ -1561,7 +1609,11 @@ void _ZmodFpoly_FFT_dual_recursive(
    {
       // length == 1 or 2
       if (depth == 1)
-         ZmodF_forward_dual_butterfly_sqrt2exp(x, x+1, scratch, twist, n);
+      {
+         ZmodF_inverse_butterfly_sqrt2exp(x, x+1, scratch,
+                                          2*n*FLINT_BITS_PER_LIMB - twist, n);
+         ZmodF_swap(x, x+1);
+      }
       return;
    }
    
@@ -1574,21 +1626,19 @@ void _ZmodFpoly_FFT_dual_recursive(
 
    // butterflies (a, b) -> (a + w*b, a - w*b), where w = 2^(amount).
    unsigned long bits = amount & (FLINT_BITS_PER_LIMB-1);
-   amount = n - (amount >> FLINT_LG_BITS_PER_LIMB);
+   unsigned long limbs = n - (amount >> FLINT_LG_BITS_PER_LIMB);
    
    if (bits)
    {
       // each butterfly needs a bitshift
       bits = FLINT_BITS_PER_LIMB - bits;
-      if (--amount)
+      if (--limbs)
       {
          for (unsigned long i = 0; i < half; i++)
          {
             ZmodF_short_div_2exp(*scratch, y[i], bits, n);
-            // a - w*b
-            ZmodF_div_Bexp_add(y[i], x[i], *scratch, amount, n);
-            // a + w*b
-            ZmodF_div_Bexp_sub(x[i], x[i], *scratch, amount, n);
+            ZmodF_div_Bexp_add(y[i], x[i], *scratch, limbs, n);
+            ZmodF_div_Bexp_sub(x[i], x[i], *scratch, limbs, n);
          }
       }
       else
@@ -1596,9 +1646,7 @@ void _ZmodFpoly_FFT_dual_recursive(
          for (unsigned long i = 0; i < half; i++)
          {
             ZmodF_short_div_2exp(*scratch, y[i], bits, n);
-            // a - w*b
             ZmodF_add(y[i], x[i], *scratch, n);
-            // a + w*b
             ZmodF_sub(x[i], x[i], *scratch, n);
          }
       }
@@ -1608,11 +1656,9 @@ void _ZmodFpoly_FFT_dual_recursive(
       // all butterflies are limbshifts only
       for (unsigned long i = 0; i < half; i++)
       {
-         // a - w*b
-         ZmodF_div_Bexp_add(*scratch, x[i], y[i], amount, n);
+         ZmodF_div_Bexp_add(*scratch, x[i], y[i], limbs, n);
          ZmodF_swap(scratch, y+i);
-         // a + w*b
-         ZmodF_div_Bexp_sub(x[i], x[i], *scratch, amount, n);
+         ZmodF_div_Bexp_sub(x[i], x[i], *scratch, limbs, n);
       }
    }
    

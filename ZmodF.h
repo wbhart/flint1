@@ -474,34 +474,6 @@ void ZmodF_simple_butterfly(ZmodF_t* a, ZmodF_t* b, ZmodF_t* z,
 
 
 static inline
-void ZmodF_forward_dual_butterfly_2exp(ZmodF_t* a, ZmodF_t* b, ZmodF_t* z,
-                                       unsigned long s, unsigned long n)
-{
-   if (s == 0)
-      ZmodF_simple_butterfly(a, b, z, n);
-   else
-   {
-      ZmodF_inverse_butterfly_2exp(a, b, z, n*FLINT_BITS_PER_LIMB - s, n);
-      ZmodF_swap(a, b);
-   }
-}
-
-
-static inline
-void ZmodF_forward_dual_butterfly_sqrt2exp(ZmodF_t* a, ZmodF_t* b, ZmodF_t* z,
-                                           unsigned long s, unsigned long n)
-{
-   if (s == 0)
-      ZmodF_simple_butterfly(a, b, z, n);
-   else
-   {
-      ZmodF_inverse_butterfly_sqrt2exp(a, b, z, 2*n*FLINT_BITS_PER_LIMB - s, n);
-      ZmodF_swap(a, b);
-   }
-}
-
-
-static inline
 void ZmodF_inverse_dual_butterfly_2exp(ZmodF_t* a, ZmodF_t* b, ZmodF_t* z,
                                        unsigned long s, unsigned long n)
 {
