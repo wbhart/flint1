@@ -13,6 +13,7 @@
 #include <string.h>
 #include <math.h>
 #include <time.h>
+#include <gmp.h>
 
 
 prof2d_Driver_t prof2d_active_Driver = NULL;
@@ -26,6 +27,16 @@ char machine_name[MACHINE_NAME_MAXLEN + 1];
 #define PROFILE_PARAMS_MAXLEN 1000
 char profile_params[PROFILE_PARAMS_MAXLEN + 1];
 
+
+gmp_randstate_t profiler_main_randstate;
+
+
+void profiler_random_limbs(unsigned long* output, unsigned long count)
+{
+   for (unsigned long i = 0; i < count; i++)
+      output[i] = gmp_urandomb_ui(profiler_main_randstate,
+                                  FLINT_BITS_PER_LIMB);
+}
 
 
 void prof2d_set_sampler(prof2d_Sampler_t sampler)
@@ -187,6 +198,8 @@ void help()
 
 int main(int argc, char* argv[])
 {
+   gmp_randinit_default(profiler_main_randstate);
+
    // get name of current machine from environment variable
    char* machine_name_env = getenv("FLINT_MACHINE_NAME");
    if (machine_name_env)

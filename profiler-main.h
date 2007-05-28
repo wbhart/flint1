@@ -29,6 +29,12 @@ void prof2d_start();
 void prof2d_stop();
 
 
+/*
+Generates count random unsigned limbs, stores them at output
+*/
+void profiler_random_limbs(unsigned long* output, unsigned long count);
+
+
 /* ============================================================================
 
    Imported data from the auto-generated table file
