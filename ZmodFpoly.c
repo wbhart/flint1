@@ -1574,12 +1574,13 @@ void _ZmodFpoly_FFT_dual_recursive(
 
    // butterflies (a, b) -> (a + w*b, a - w*b), where w = 2^(amount).
    unsigned long bits = amount & (FLINT_BITS_PER_LIMB-1);
+   amount = n - (amount >> FLINT_LG_BITS_PER_LIMB);
+   
    if (bits)
    {
       // each butterfly needs a bitshift
       bits = FLINT_BITS_PER_LIMB - bits;
-      amount = n-1 - (amount >> FLINT_LG_BITS_PER_LIMB);
-      if (amount)
+      if (--amount)
       {
          for (unsigned long i = 0; i < half; i++)
          {
@@ -1605,7 +1606,6 @@ void _ZmodFpoly_FFT_dual_recursive(
    else
    {
       // all butterflies are limbshifts only
-      amount = n - (amount >> FLINT_LG_BITS_PER_LIMB);
       for (unsigned long i = 0; i < half; i++)
       {
          // a - w*b
