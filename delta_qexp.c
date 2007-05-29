@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 #include <gmp.h>
+#include <math.h>
 #include "flint.h"
 #include "Zpoly_mpn.h"
 #include "Zpoly.h"
@@ -33,12 +34,17 @@ int main(int argc, char* argv[])
    // number of terms to compute
    long n = atoi(argv[1]);
 
+   unsigned long F_bits = ceil(log(2*sqrt(4.0*n) + 1)) + 1;
+   unsigned long F2_bits = 2*F_bits + ceil(log(n+1) / log(2.0));
+   unsigned long F4_bits = 2*F2_bits + ceil(log(n+1) / log(2.0));
+   unsigned long F8_bits = 2*F4_bits + ceil(log(n+1) / log(2.0));
+
    // initialise polynomial objects
    Zpoly_mpn_t F, F2, F4, F8;
-   Zpoly_mpn_init(F, 2*n, 1);
-   Zpoly_mpn_init(F2, 2*n, 1);
-   Zpoly_mpn_init(F4, 2*n, 2);
-   Zpoly_mpn_init(F8, 2*n, 2);
+   Zpoly_mpn_init(F, 2*n, ceil(1.0 * F_bits / FLINT_BITS_PER_LIMB));
+   Zpoly_mpn_init(F2, 2*n, ceil(1.0 * F2_bits / FLINT_BITS_PER_LIMB));
+   Zpoly_mpn_init(F4, 2*n, ceil(1.0 * F4_bits / FLINT_BITS_PER_LIMB));
+   Zpoly_mpn_init(F8, 2*n, ceil(1.0 * F8_bits / FLINT_BITS_PER_LIMB));
    
    F->length = n;
    for (long i = 0; i < n; i++)
