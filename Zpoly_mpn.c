@@ -1188,11 +1188,14 @@ void _Zpoly_mpn_mul_KS(Zpoly_mpn_t output, Zpoly_mpn_p input1, Zpoly_mpn_p input
       sign1 = -1L;
    }
    
-   if ((long) input2->coeffs[(input2->length-1)*(input2->limbs+1)] < 0)
+   if (input1 != input2)
    {
-      _Zpoly_mpn_negate(input2, input2);
-      sign2 = -1L;
-   }
+      if ((long) input2->coeffs[(input2->length-1)*(input2->limbs+1)] < 0)
+      {
+         _Zpoly_mpn_negate(input2, input2);
+         sign2 = -1L;
+      }
+   } else sign2 = sign1;
    
    long bits1, bits2;
    int bitpack = 0;
@@ -1214,7 +1217,7 @@ void _Zpoly_mpn_mul_KS(Zpoly_mpn_t output, Zpoly_mpn_p input1, Zpoly_mpn_p input
    unsigned long bits = ABS(bits1) + ABS(bits2) + log_length + sign; 
    unsigned long limbs = (bits-1)/FLINT_BITS_PER_LIMB + 1;
    
-   if (bits < 64) bitpack = 1;
+   if ((bits < 64) && (input1->limbs == 1) && (input2->limbs == 1) && (output->limbs == 1)) bitpack = 1;
    
    ZmodFpoly_t poly1, poly2, poly3;
    
@@ -1266,7 +1269,7 @@ void _Zpoly_mpn_mul_KS(Zpoly_mpn_t output, Zpoly_mpn_p input1, Zpoly_mpn_p input
    if ((long) (sign1 ^ sign2) < 0) _Zpoly_mpn_negate(output, output);
    
    if (sign1 < 0) _Zpoly_mpn_negate(input1, input1);
-   if (sign2 < 0) _Zpoly_mpn_negate(input2, input2);
+   if ((sign2 < 0) && (input1 != input2)) _Zpoly_mpn_negate(input2, input2);
 }
 
 void _Zpoly_mpn_mul_SS(Zpoly_mpn_t output, Zpoly_mpn_p input1, Zpoly_mpn_p input2)

@@ -202,6 +202,7 @@ void ZmodFpoly_bit_pack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
       
    while (coeff_m < poly_mpn->coeffs + 2*poly_mpn->length)
    {
+      for (unsigned long j = 0; j < n; j += 8) FLINT_PREFETCH(poly_f->coeffs[i+1], j);
       k=0; skip=0;
       coeff = 0; borrow = 0L; temp = 0;
       array = poly_f->coeffs[i];
@@ -344,6 +345,7 @@ void ZmodFpoly_bit_unpack_mpn(Zpoly_mpn_t poly_mpn, ZmodFpoly_t poly_f,
    for (unsigned long i = 0; coeff_m < poly_mpn->coeffs + poly_mpn->length*size_m; i++)
    {
       array = poly_f->coeffs[i];
+      for (unsigned long j = 0; j < n; j += 8) FLINT_PREFETCH(poly_f->coeffs[i+1], j);
       ZmodF_normalise(array, n);
 
       k=0; skip=0; carry = 0UL; temp2 = 0;
@@ -424,6 +426,8 @@ void ZmodFpoly_bit_unpack_unsigned_mpn(Zpoly_mpn_t poly_mpn, ZmodFpoly_t poly_f,
    for (unsigned long i = 0; coeff_m < poly_mpn->coeffs + poly_mpn->length*size_m; i++)
    {
       array = poly_f->coeffs[i];
+      for (unsigned long j = 0; j < n; j += 8) FLINT_PREFETCH(poly_f->coeffs[i+1], j);
+      
       ZmodF_normalise(array, n);
 
       k=0; skip=0; temp2 = 0;
