@@ -213,6 +213,7 @@ void ZmodFpoly_bit_pack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
          
       while (coeff_m < next_point)
       {
+         if ((unsigned long)coeff_m&7 == 0) FLINT_PREFETCH(coeff_m,64);
          // k is guaranteed to be less than FLINT_BITS_PER_LIMB at this point
          while ((k<HALF_FLINT_BITS_PER_LIMB)&&(coeff_m < next_point))
          {
@@ -431,6 +432,7 @@ void ZmodFpoly_bit_unpack_unsigned_mpn(Zpoly_mpn_t poly_mpn, ZmodFpoly_t poly_f,
       
       while (coeff_m < next_point)
       {
+         if (skip&7 == 0) FLINT_PREFETCH(array+skip,64);
          // read in a full limb
          full_limb = array[skip];
          temp2 += l_shift(full_limb,k);
@@ -543,6 +545,7 @@ void ZmodFpoly_limb_unpack_unsigned_mpn(Zpoly_mpn_t poly_mpn, ZmodFpoly_t poly_f
          coeffs_m[j] = limbs;
          NORM(coeffs_m + j);          
    }
+   
 }
     
 void ZmodFpoly_byte_pack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
@@ -597,16 +600,24 @@ void ZmodFpoly_pointwise_mul(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y)
    FLINT_ASSERT(x->n == res->n);
    FLINT_ASSERT(x->length == y->length);
    
+   unsigned long j;
    // todo: use FLINT memory allocation
    
    mp_limb_t* scratch = (mp_limb_t*) malloc((2 * x->n) * sizeof(mp_limb_t));
 
    if (x != y)
       for (unsigned long i = 0; i < x->length; i++)
+      {
+         for (j = 0; j < x->n; j += 8) FLINT_PREFETCH(x->coeffs[i+8], j);
+         for (j = 0; j < y->n; j += 8) FLINT_PREFETCH(y->coeffs[i+8], j);
          ZmodF_mul(res->coeffs[i], x->coeffs[i], y->coeffs[i], scratch, x->n);
+      }
    else
       for (unsigned long i = 0; i < x->length; i++)
+      {
+         for (j = 0; j < x->n; j += 8) FLINT_PREFETCH(x->coeffs[i+8], j);
          ZmodF_sqr(res->coeffs[i], x->coeffs[i], scratch, x->n);
+      }
 
    res->length = x->length;
    

@@ -46,12 +46,11 @@
 #error FLINT requires that unsigned long is 32 bits or 64 bits
 #endif
 
-
 /* 
 Cache hints to speed up reads from data in memory
 */
 #if defined(__GNUC__) && __GNUC__ >= 3
-#define FLINT_PREFETCH(addr,n) __builtin_prefetch((unsigned long*)addr+n,0,1) 
+#define FLINT_PREFETCH(addr,n) __builtin_prefetch((unsigned long*)addr+n,1,0) 
 #elif defined(_MSC_VER) && _MSC_VER >= 1400
 #define FLINT_PREFETCH(addr,n) PreFetchCacheLine(PF_TEMPORAL_LEVEL_1, (unsigned long*)addr+n)
 #else

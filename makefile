@@ -116,6 +116,9 @@ profiler.o: profiler.c profiler.h
 flint-manager.o: flint-manager.c flint-manager.h
 	$(CC) -c flint-manager.c -o flint-manager.o $(CFLAGS)
 
+Z_mpn.o: Z_mpn.c Z_mpn.h mpn_extras.o
+	$(CC) -c Z_mpn.c -o Z_mpn.o $(CFLAGS)
+
 Zpoly.o: Zpoly.c Zpoly.h flint-manager.o 
 	$(CC) -c Zpoly.c -o Zpoly.o $(CFLAGS)
 	
@@ -125,14 +128,14 @@ Zpoly-test.o: Zpoly-test.c Zpoly.h flint-manager.o
 Zpoly-test: Zpoly-test.o Zpoly.o flint-manager.o 
 	$(CC) Zpoly.o Zpoly-test.o flint-manager.o -o Zpoly-test $(CFLAGS) $(LIBS)
 	
-Zpoly_mpn.o: Zpoly_mpn.c Zpoly_mpn.h Zpoly.h flint-manager.o 
+Zpoly_mpn.o: Zpoly_mpn.c Zpoly_mpn.h Zpoly.h Z_mpn.o flint-manager.o 
 	$(CC) -c Zpoly_mpn.c -o Zpoly_mpn.o $(CFLAGS)
 	
 Zpoly_mpn-test.o: Zpoly_mpn-test.c Zpoly_mpn.h Zpoly.h flint-manager.o 
 	$(CC) -c Zpoly_mpn-test.c -o Zpoly_mpn-test.o $(CFLAGS)
 	
-Zpoly_mpn-test: Zpoly_mpn-test.o ZmodFpoly.o ZmodF.o Z-ssmul.o ssfft.o mpn_extras.o Zpoly.o Zpoly_mpn.o Zpoly.h flint-manager.o 
-	$(CC) Zpoly_mpn.o ZmodFpoly.o ZmodF.o Z-ssmul.o ssfft.o mpn_extras.o Zpoly.o Zpoly_mpn-test.o flint-manager.o -o Zpoly_mpn-test $(CFLAGS) $(LIBS)
+Zpoly_mpn-test: Zpoly_mpn-test.o ZmodFpoly.o ZmodF.o Z_mpn.o ssfft.o mpn_extras.o Zpoly.o Zpoly_mpn.o Zpoly.h flint-manager.o 
+	$(CC) Zpoly_mpn.o ZmodFpoly.o ZmodF.o Z_mpn.o ssfft.o mpn_extras.o Zpoly.o Zpoly_mpn-test.o flint-manager.o -o Zpoly_mpn-test $(CFLAGS) $(LIBS)
 
 
 ZmodF.o: ZmodF.c ZmodF.h
@@ -163,15 +166,24 @@ ZmodFpoly-profile-tables.o: ZmodFpoly-profile.c
 	python make-profile-tables.py ZmodFpoly
 	$(CC) -c ZmodFpoly-profile-tables.c -o ZmodFpoly-profile-tables.o $(CFLAGS)
 	rm ZmodFpoly-profile-tables.c
+
+Zpoly_mpn-profile-tables.o: Zpoly_mpn-profile.c
+	python make-profile-tables.py Zpoly_mpn
+	$(CC) -c Zpoly_mpn-profile-tables.c -o Zpoly_mpn-profile-tables.o $(CFLAGS)
+	rm Zpoly_mpn-profile-tables.c
 	
 ZmodFpoly-profile.o: ZmodFpoly-profile.c
 	$(CC) -c ZmodFpoly-profile.c -o ZmodFpoly-profile.o $(CFLAGS)
 
+Zpoly_mpn-profile.o: Zpoly_mpn-profile.c
+	$(CC) -c Zpoly_mpn-profile.c -o Zpoly_mpn-profile.o $(CFLAGS)
+
 ZmodFpoly-profile: ZmodFpoly-profile.o ZmodFpoly-profile-tables.o ZmodFpoly.o profiler-main.o profiler.o ZmodF.o Zpoly_mpn.o Zpoly.o Z-ssmul.o ssfft.o mpn_extras.o
 	$(CC) -o ZmodFpoly-profile ZmodFpoly-profile.o ZmodFpoly-profile-tables.o profiler.o profiler-main.o Zpoly_mpn.o Zpoly.o Z-ssmul.o ssfft.o flint-manager.o mpn_extras.o ZmodFpoly.o ZmodF.o $(CFLAGS) $(LIBS)
 	
-
-
+Zpoly_mpn-profile: Zpoly_mpn-profile.o Zpoly_mpn-profile-tables.o Zpoly_mpn.o profiler-main.o profiler.o ZmodF.o Zpoly_mpn.o Zpoly.o Z-ssmul.o ssfft.o mpn_extras.o
+	$(CC) -o Zpoly_mpn-profile Zpoly_mpn-profile.o Zpoly_mpn-profile-tables.o profiler.o profiler-main.o Zpoly_mpn.o Zpoly.o Z-ssmul.o ssfft.o flint-manager.o mpn_extras.o ZmodFpoly.o ZmodF.o $(CFLAGS) $(LIBS)
+	
 ssfft.o: ssfft.c ssfft.h
 	$(CC) -c ssfft.c -o ssfft.o $(CFLAGS)
 

@@ -948,31 +948,13 @@ Main Schonhage-Strassen routine exported from this module.
 
 // todo: write an SSSqr for squaring instead of multiplying
 
-/* 
-Main polynomial multiplication routine. It performs a Schoenhage-Strassen
-algorithm, calling the above Z_fft and Z_ifft functions. res is set to the 
-polynomial data1*data2.
 
-At approximately the
-point when the degree of the polynomials exceeds the input coefficient bit
-size, it starts bundling coefficients together using the Kronecker-Schoenhage
-technique as refined by Paul Zimmerman and David Harvey.
-
-log_length is the ceiling of the log_2 of the length of the *input* 
-polynomial (length = deg+1).  coeff_bits is the number of bits in the 
-maximimum *input* coefficient. We assume that the length of the output
-polynomial will always be less than 2^B where B = FLINT_BITS_PER_LIMB
-
-todo: add code to accept Zpoly's and compute the other two parameters
-from the given poly inputs
-
-*/
 void Z_SSMul(mp_limb_t* res, mp_limb_t* data1, mp_limb_t* data2,
               unsigned long limbs, unsigned long limbs2)
 {
    unsigned long twk;
    
-   twk = 2;   
+   twk = 16;   
       
    unsigned long i, j, skip;
    unsigned long input_limbs = limbs;

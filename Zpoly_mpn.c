@@ -17,7 +17,7 @@ Copyright (C) 2007, William Hart and David Harvey
 #include "longlong_wrapper.h"
 #include "flint-manager.h"
 #include "ZmodFpoly.h"
-#include "Z-ssmul.h"
+#include "Z_mpn.h"
 
 /****************************************************************************
 
@@ -196,6 +196,7 @@ long _Zpoly_mpn_bits1(Zpoly_mpn_t poly_mpn)
    
    for (i = 0, j = 0; i < poly_mpn->length; i++, j += 2)
    {
+      if (i&3 == 0) FLINT_PREFETCH(coeffs_m+j,64);
       if ((long) coeffs_m[j] < 0) sign = -1L;
       if (coeffs_m[j])
       {
@@ -1238,7 +1239,7 @@ void _Zpoly_mpn_mul_KS(Zpoly_mpn_t output, Zpoly_mpn_p input1, Zpoly_mpn_p input
    if ((poly1->n < 1500) || (poly2->n < 1500)) 
    {
       mpn_mul(poly3->coeffs[0], poly1->coeffs[0], poly1->n, poly2->coeffs[0], poly2->n);
-   } else Z_SSMul(poly3->coeffs[0], poly1->coeffs[0], poly2->coeffs[0], poly1->n, poly2->n);
+   } else Z_mpn_mul(poly3->coeffs[0], poly1->coeffs[0], poly1->n, poly2->coeffs[0], poly2->n);
    
    poly3->coeffs[0][poly1->n+poly2->n] = 0;
    poly3->length = 1;
@@ -1347,6 +1348,21 @@ void _Zpoly_mpn_mul_SS(Zpoly_mpn_t output, Zpoly_mpn_p input1, Zpoly_mpn_p input
    ZmodFpoly_clear(poly2);
    ZmodFpoly_clear(res);
 }
+
+/*void _Zpoly_mpn_scalar_mul(Zpoly_mpn_t output, Zpoly_mpn_t poly, mp_limb_t * x)
+{
+     mp_limb_t * coeffs = poly->coeffs;
+     unsigned long size_x = ABS(x[0]);
+     unsigned long size_p = poly->limbs+1;
+     
+     if ((size_p > FLINT_TRUNC_MIN_LIMBS) && (size_x > FLINT_TRUNC_MIN_LIMBS))
+     {
+        Z_mul_precomp_t x_precomp;
+        Z_mul_precomp(x_precomp, x, 
+     } else
+     {
+     }
+}*/
 
 
 /****************************************************************************
