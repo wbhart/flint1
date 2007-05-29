@@ -121,3 +121,9 @@ ZmodFpoly-profile.o: ZmodFpoly-profile.c $(HEADERS)
 ZmodFpoly-profile: Z_mpn.o flint-manager.o ZmodFpoly-profile.o ZmodFpoly-profile-tables.o ZmodFpoly.o profiler-main.o profiler.o ZmodF.o Zpoly_mpn.o Zpoly.o mpn_extras.o
 	$(CC) -o ZmodFpoly-profile Z_mpn.o ZmodFpoly-profile.o ZmodFpoly-profile-tables.o profiler.o profiler-main.o Zpoly_mpn.o Zpoly.o flint-manager.o mpn_extras.o ZmodFpoly.o ZmodF.o $(CFLAGS) $(LIBS)
 	
+
+delta_qexp.o: delta_qexp.c $(HEADERS)
+	$(CC) -c delta_qexp.c -o delta_qexp.o $(CFLAGS)
+
+delta_qexp: delta_qexp.o Z_mpn.o Zpoly_mpn.o Zpoly.o flint-manager.o mpn_extras.o ZmodFpoly.o ZmodF.o
+	$(CC) -o delta_qexp delta_qexp.o Z_mpn.o Zpoly_mpn.o Zpoly.o flint-manager.o mpn_extras.o ZmodFpoly.o ZmodF.o $(CFLAGS) $(LIBS)
