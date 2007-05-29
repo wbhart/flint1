@@ -1,7 +1,7 @@
 /*
    Demo FLINT program for computing the q-expansion of the delta function.
    
-   (C) 2007 David Harvey
+   (C) 2007 David Harvey and William Hart
 */
 
 #include <stdio.h>
@@ -18,16 +18,6 @@ void print_poly(Zpoly_mpn_t x_mpn)
    _Zpoly_mpn_convert_out(x, x_mpn);
    Zpoly_print(stdout, x);
    Zpoly_clear(x);
-   /*for (int i = 0; i < x->length; i++)
-   {
-      if ((signed long) x->coeffs[i*(x->limbs+1)] > 0)
-         printf("+%d ", x->coeffs[i*(x->limbs+1)+1]);
-      else if ((signed long) x->coeffs[i*(x->limbs+1)] < 0)
-         printf("-%d ", x->coeffs[i*(x->limbs+1)+1]);
-      else
-         printf("0 ");
-   }
-   printf("\n");*/
 }
 
 
@@ -63,23 +53,27 @@ int main(int argc, char* argv[])
       _Zpoly_mpn_set_coeff_si(F, index, (i & 1) ? -(2*i+1) : (2*i+1));
    }
 
-   print_poly(F); printf("\n");
+//   print_poly(F); printf("\n");
 
    // compute F^8, truncated to length n
    _Zpoly_mpn_mul_KS(F2, F, F);
    F2->length = n;
-   print_poly(F2); printf("\n");
+//   print_poly(F2); printf("\n");
 
    _Zpoly_mpn_mul_KS(F4, F2, F2);
    F4->length = n;
-   print_poly(F4);  printf("\n");  
+//   print_poly(F4);  printf("\n");  
 
    _Zpoly_mpn_mul_KS(F8, F4, F4);
    F8->length = n;
-   print_poly(F8);  printf("\n");  
+//   print_poly(F8);  printf("\n");  
    
    // print out last coefficient (or at least one word of it)
-//   printf("coefficient of q^%d is %d\n", n-1, _Zpoly_mpn_get_coeff_ui(Fpow, n-1));
+   Zpoly_t output;
+   Zpoly_init2(output, n);
+   _Zpoly_mpn_convert_out(output, F8);
+   gmp_printf("coefficient of q^%d is %Zd\n", n, output->coeffs[n-1]);
+   Zpoly_clear(output);
    
    // clean up
    Zpoly_mpn_clear(F8);
