@@ -36,42 +36,46 @@ int main(int argc, char* argv[])
 
    // initialise polynomial objects
    // (play it safe with allocated space for the moment)
-   Zpoly_mpn_t F, F2, F4, F8;
+   Zpoly_mpn_t F2, F4, F8;
    unsigned long limbs = (FLINT_BITS_PER_LIMB == 32) ? 6 : 3;
-   Zpoly_mpn_init(F, 2*n, limbs);
    Zpoly_mpn_init(F2, 2*n, limbs);
    Zpoly_mpn_init(F4, 2*n, limbs);
    Zpoly_mpn_init(F8, 2*n, limbs);
    
-   F->length = n;
+   // set F2 := whatever it's supposed to be
+   long* values = malloc(sizeof(long) * n);
    for (long i = 0; i < n; i++)
-      _Zpoly_mpn_set_coeff_ui(F, i, 0);
-      
-   // set F := whatever it's supposed to be
-   for (long i = 0; 1; i++)
+      values[i] = 0;
+
+   long stop = (long) ceil((-1.0 + sqrt(1.0 + 8.0*n))/2.0);
+   for (long i = 0; i <= stop; i++)
    {
-      long index = i * (i+1) / 2;
-      if (index >= n)
-         break;
-      _Zpoly_mpn_set_coeff_si(F, index, (i & 1) ? -(2*i+1) : (2*i+1));
+      long index1 = i*(i+1)/2;
+      long value1 = (i & 1) ? (-2*i-1) : (2*i+1);
+      for (long j = 0; j <= stop; j++)
+      {
+         long index2 = j*(j+1)/2;
+         if (index1 + index2 >= n)
+            break;
+         long value2 = (j & 1) ? (-2*j-1) : (2*j+1);
+         values[index1 + index2] += value1 * value2;
+      }
    }
 
-//   print_poly(F); printf("\n");
+   F2->length = n;
+   for (long i = 0; i < n; i++)
+      _Zpoly_mpn_set_coeff_si(F2, i, values[i]);
+
+   free(values);
 
    // compute F^8, truncated to length n
-   _Zpoly_mpn_mul_KS(F2, F, F);
-   F2->length = n;
-//   print_poly(F2); printf("\n");
-
    _Zpoly_mpn_mul_KS(F4, F2, F2);
    F4->length = n;
-//   print_poly(F4);  printf("\n");  
 
    _Zpoly_mpn_mul_KS(F8, F4, F4);
    F8->length = n;
-//   print_poly(F8);  printf("\n");  
    
-   // print out last coefficient (or at least one word of it)
+   // print out last coefficient
    Zpoly_t output;
    Zpoly_init2(output, n);
    _Zpoly_mpn_convert_out(output, F8);
@@ -82,7 +86,6 @@ int main(int argc, char* argv[])
    Zpoly_mpn_clear(F8);
    Zpoly_mpn_clear(F4);
    Zpoly_mpn_clear(F2);
-   Zpoly_mpn_clear(F);
    return 0;
 }
 
