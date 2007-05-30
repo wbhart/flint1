@@ -1203,11 +1203,11 @@ void _Zpoly_mpn_mul_KS(Zpoly_mpn_t output, Zpoly_mpn_p input1, Zpoly_mpn_p input
    if ((input1->limbs == 1) && (input2->limbs == 1))
    {
       bits1 = _Zpoly_mpn_bits1(input1);
-      bits2 = _Zpoly_mpn_bits1(input2);
+      bits2 = (input1 == input2) ? bits1 : _Zpoly_mpn_bits1(input2);
    } else
    {
       bits1 = _Zpoly_mpn_bits(input1);
-      bits2 = _Zpoly_mpn_bits(input2);
+      bits2 = (input1 == input2) ? bits1 : _Zpoly_mpn_bits(input2);
    }
       
    unsigned long sign = ((bits1 < 0) || (bits2 < 0));
@@ -1224,17 +1224,31 @@ void _Zpoly_mpn_mul_KS(Zpoly_mpn_t output, Zpoly_mpn_p input1, Zpoly_mpn_p input
    if (bitpack)
    {
       ZmodFpoly_init(poly1, 0, (bits*input1->length-1)/FLINT_BITS_PER_LIMB+1, 0);
-      ZmodFpoly_init(poly2, 0, (bits*input2->length-1)/FLINT_BITS_PER_LIMB+1, 0);
+      if (input1 != input2)
+         ZmodFpoly_init(poly2, 0, (bits*input2->length-1)/FLINT_BITS_PER_LIMB+1, 0);
+
       if (sign) bits = -1L*bits;
+
       ZmodFpoly_bit_pack_mpn(poly1, input1, input1->length, bits);
-      ZmodFpoly_bit_pack_mpn(poly2, input2, input2->length, bits);
+      if (input1 != input2)
+         ZmodFpoly_bit_pack_mpn(poly2, input2, input2->length, bits);
+
       bits=ABS(bits);
    } else
    {
       ZmodFpoly_init(poly1, 0, limbs*input1->length, 0);
-      ZmodFpoly_init(poly2, 0, limbs*input2->length, 0);
+      if (input1 != input2)
+         ZmodFpoly_init(poly2, 0, limbs*input2->length, 0);
+
       ZmodFpoly_limb_pack_mpn(poly1, input1, input1->length, limbs);
-      ZmodFpoly_limb_pack_mpn(poly2, input2, input2->length, limbs);
+      if (input1 != input2)
+         ZmodFpoly_limb_pack_mpn(poly2, input2, input2->length, limbs);
+   }
+   
+   if (input1 == input2)
+   {
+      poly2->coeffs = poly1->coeffs;
+      poly2->n = poly1->n;
    }
    
    ZmodFpoly_init(poly3, 0, poly1->n + poly2->n, 0);
@@ -1263,7 +1277,8 @@ void _Zpoly_mpn_mul_KS(Zpoly_mpn_t output, Zpoly_mpn_p input1, Zpoly_mpn_p input
    }
    
    ZmodFpoly_clear(poly1);
-   ZmodFpoly_clear(poly2);
+   if (input1 != input2)
+      ZmodFpoly_clear(poly2);
    ZmodFpoly_clear(poly3);
      
    if ((long) (sign1 ^ sign2) < 0) _Zpoly_mpn_negate(output, output);
@@ -1271,6 +1286,7 @@ void _Zpoly_mpn_mul_KS(Zpoly_mpn_t output, Zpoly_mpn_p input1, Zpoly_mpn_p input
    if (sign1 < 0) _Zpoly_mpn_negate(input1, input1);
    if ((sign2 < 0) && (input1 != input2)) _Zpoly_mpn_negate(input2, input2);
 }
+
 
 void _Zpoly_mpn_mul_SS(Zpoly_mpn_t output, Zpoly_mpn_p input1, Zpoly_mpn_p input2)
 {

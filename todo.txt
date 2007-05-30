@@ -73,8 +73,6 @@ just use `gmp_bits_per_limb` because that's a const, not a #define)
 
 === ssfft module ===
 
-* continue working on ssfft3 branch
-
 * GMP has a cool idea for doing very long butterflies. Instead of doing
 a call to mpn_add_n and mpn_sub_n separately, it works in chunks to ensure
 everything is done in cache. This will only make a difference when the
@@ -114,6 +112,17 @@ to add a bit of padding.
 * clarify the meaning of the sign limb. The documentation in the header
   doesn't agree with what the code seems to do.
 
+* I'm not comfortable with the way _Zpoly_mpn_mul_KS modifies its input
+  temporarily if the signs are wrong. What happens if a multithreaded
+  application wants to do two things with the poly at the same time.
+  Surely it's possible to accomplish the same thing without mutating
+  the input. -- david
+
+* It seems a little nuts to be using ZmodFpoly with a single coefficient
+  in _Zpoly_mpn_mul_KS(). There's something wrong with the code structure here.
+  The bitpacking etc routines need to be abstracted differently or something.
+  -- david
+
 
 === modpmul module ===
 
@@ -149,3 +158,5 @@ to improve locality.
   on average. But this needs to be checked. Moreover it's quite possible the
   new version is slower for small coefficients, which also needs to be
   investigated.
+
+
