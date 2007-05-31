@@ -74,8 +74,8 @@ Zpoly_mpn.o: Zpoly_mpn.c $(HEADERS)
 Zpoly_mpn-test.o: Zpoly_mpn-test.c $(HEADERS)
 	$(CC) -c Zpoly_mpn-test.c -o Zpoly_mpn-test.o $(CFLAGS)
 	
-Zpoly_mpn-test: Zpoly_mpn-test.o ZmodFpoly.o ZmodF.o Z_mpn.o mpn_extras.o Zpoly.o Zpoly_mpn.o Zpoly.h flint-manager.o 
-	$(CC) Zpoly_mpn.o ZmodFpoly.o ZmodF.o Z_mpn.o mpn_extras.o Zpoly.o Zpoly_mpn-test.o flint-manager.o -o Zpoly_mpn-test $(CFLAGS) $(LIBS)
+Zpoly_mpn-test: Zpoly_mpn-test.o ZmodFpoly.o ZmodF.o ZmodF_mul.o Z_mpn.o mpn_extras.o Zpoly.o Zpoly_mpn.o Zpoly.h flint-manager.o 
+	$(CC) Zpoly_mpn.o ZmodFpoly.o ZmodF.o ZmodF_mul.o Z_mpn.o mpn_extras.o Zpoly.o Zpoly_mpn-test.o flint-manager.o -o Zpoly_mpn-test $(CFLAGS) $(LIBS)
 
 Zpoly_mpn-profile-tables.o: Zpoly_mpn-profile.c $(HEADERS)
 	python make-profile-tables.py Zpoly_mpn
@@ -85,19 +85,22 @@ Zpoly_mpn-profile-tables.o: Zpoly_mpn-profile.c $(HEADERS)
 Zpoly_mpn-profile.o: Zpoly_mpn-profile.c $(HEADERS)
 	$(CC) -c Zpoly_mpn-profile.c -o Zpoly_mpn-profile.o $(CFLAGS)
 
-Zpoly_mpn-profile: Z_mpn.o ZmodFpoly.o flint-manager.o Zpoly_mpn-profile.o Zpoly_mpn-profile-tables.o Zpoly_mpn.o profiler-main.o profiler.o ZmodF.o Zpoly_mpn.o Zpoly.o mpn_extras.o
-	$(CC) -o Zpoly_mpn-profile Z_mpn.o Zpoly_mpn-profile.o Zpoly_mpn-profile-tables.o profiler.o profiler-main.o Zpoly_mpn.o Zpoly.o flint-manager.o mpn_extras.o ZmodFpoly.o ZmodF.o $(CFLAGS) $(LIBS)
+Zpoly_mpn-profile: Z_mpn.o ZmodFpoly.o flint-manager.o Zpoly_mpn-profile.o Zpoly_mpn-profile-tables.o Zpoly_mpn.o profiler-main.o profiler.o ZmodF.o ZmodF_mul.o Zpoly_mpn.o Zpoly.o mpn_extras.o
+	$(CC) -o Zpoly_mpn-profile Z_mpn.o Zpoly_mpn-profile.o Zpoly_mpn-profile-tables.o profiler.o profiler-main.o Zpoly_mpn.o Zpoly.o flint-manager.o mpn_extras.o ZmodFpoly.o ZmodF.o ZmodF_mul.o $(CFLAGS) $(LIBS)
 
 
 
 ZmodF.o: ZmodF.c $(HEADERS)
 	$(CC) -c ZmodF.c -o ZmodF.o $(CFLAGS)
 	
+ZmodF_mul.o: ZmodF_mul.c $(HEADERS)
+	$(CC) -c ZmodF_mul.c -o ZmodF_mul.o $(CFLAGS)
+
 ZmodF-test.o: ZmodF-test.c $(HEADERS)
 	$(CC) -c ZmodF-test.c -o ZmodF-test.o $(CFLAGS)
 
-ZmodF-test: ZmodF-test.o ZmodF.o
-	$(CC) ZmodF-test.o ZmodF.o -o ZmodF-test $(CFLAGS) $(LIBS)
+ZmodF-test: ZmodF-test.o ZmodF.o ZmodF_mul.o ZmodFpoly.o Zpoly_mpn.o flint-manager.o mpn_extras.o Z_mpn.o
+	$(CC) ZmodF-test.o ZmodF.o ZmodF_mul.o ZmodFpoly.o Zpoly_mpn.o flint-manager.o mpn_extras.o Z_mpn.o -o ZmodF-test $(CFLAGS) $(LIBS)
 
 
 
@@ -107,8 +110,8 @@ ZmodFpoly.o: ZmodFpoly.c $(HEADERS)
 ZmodFpoly-test.o: ZmodFpoly-test.c $(HEADERS)
 	$(CC) -c ZmodFpoly-test.c -o ZmodFpoly-test.o $(CFLAGS)
 
-ZmodFpoly-test: Z_mpn.o Zpoly_mpn.o Zpoly.o flint-manager.o mpn_extras.o ZmodFpoly-test.o ZmodFpoly.o ZmodF.o
-	$(CC) Z_mpn.o Zpoly_mpn.o Zpoly.o flint-manager.o mpn_extras.o ZmodFpoly-test.o ZmodFpoly.o ZmodF.o -o ZmodFpoly-test $(CFLAGS) $(LIBS)
+ZmodFpoly-test: Z_mpn.o Zpoly_mpn.o Zpoly.o flint-manager.o mpn_extras.o ZmodFpoly-test.o ZmodFpoly.o ZmodF.o ZmodF_mul.o
+	$(CC) Z_mpn.o Zpoly_mpn.o Zpoly.o flint-manager.o mpn_extras.o ZmodFpoly-test.o ZmodFpoly.o ZmodF.o ZmodF_mul.o -o ZmodFpoly-test $(CFLAGS) $(LIBS)
 
 ZmodFpoly-profile-tables.o: ZmodFpoly-profile.c $(HEADERS)
 	python make-profile-tables.py ZmodFpoly
@@ -118,12 +121,12 @@ ZmodFpoly-profile-tables.o: ZmodFpoly-profile.c $(HEADERS)
 ZmodFpoly-profile.o: ZmodFpoly-profile.c $(HEADERS)
 	$(CC) -c ZmodFpoly-profile.c -o ZmodFpoly-profile.o $(CFLAGS)
 
-ZmodFpoly-profile: Z_mpn.o flint-manager.o ZmodFpoly-profile.o ZmodFpoly-profile-tables.o ZmodFpoly.o profiler-main.o profiler.o ZmodF.o Zpoly_mpn.o Zpoly.o mpn_extras.o
-	$(CC) -o ZmodFpoly-profile Z_mpn.o ZmodFpoly-profile.o ZmodFpoly-profile-tables.o profiler.o profiler-main.o Zpoly_mpn.o Zpoly.o flint-manager.o mpn_extras.o ZmodFpoly.o ZmodF.o $(CFLAGS) $(LIBS)
+ZmodFpoly-profile: Z_mpn.o flint-manager.o ZmodFpoly-profile.o ZmodFpoly-profile-tables.o ZmodFpoly.o profiler-main.o profiler.o ZmodF.o Zpoly_mpn.o Zpoly.o mpn_extras.o ZmodF_mul.o
+	$(CC) -o ZmodFpoly-profile Z_mpn.o ZmodFpoly-profile.o ZmodFpoly-profile-tables.o profiler.o profiler-main.o Zpoly_mpn.o Zpoly.o flint-manager.o mpn_extras.o ZmodFpoly.o ZmodF.o ZmodF_mul.o $(CFLAGS) $(LIBS)
 	
 
 delta_qexp.o: delta_qexp.c $(HEADERS)
 	$(CC) -c delta_qexp.c -o delta_qexp.o $(CFLAGS)
 
-delta_qexp: delta_qexp.o Z_mpn.o Zpoly_mpn.o Zpoly.o flint-manager.o mpn_extras.o ZmodFpoly.o ZmodF.o
-	$(CC) -o delta_qexp delta_qexp.o Z_mpn.o Zpoly_mpn.o Zpoly.o flint-manager.o mpn_extras.o ZmodFpoly.o ZmodF.o $(CFLAGS) $(LIBS)
+delta_qexp: delta_qexp.o Z_mpn.o Zpoly_mpn.o Zpoly.o flint-manager.o mpn_extras.o ZmodFpoly.o ZmodF.o ZmodF_mul.o
+	$(CC) -o delta_qexp delta_qexp.o Z_mpn.o Zpoly_mpn.o Zpoly.o flint-manager.o mpn_extras.o ZmodFpoly.o ZmodF.o ZmodF_mul.o $(CFLAGS) $(LIBS)

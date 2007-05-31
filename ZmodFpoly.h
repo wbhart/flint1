@@ -29,7 +29,7 @@ Copyright (C) 2007, William Hart and David Harvey
 
 ZmodFpoly_t represents a polynomial with coefficients in Z/pZ, where
 p = B^n + 1, B = 2^FLINT_BITS_PER_LIMB. Coefficients are represented in the
-format described in ZmodFermat.h.
+format described in ZmodF.h.
 
 Each polynomial has a fixed transform length 2^depth, specified at creation
 time, where depth >= 0.

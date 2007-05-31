@@ -1,6 +1,6 @@
 /******************************************************************************
 
- ZmodF-test.c: test module for ZmodF module
+ ZmodF-test.c: test module for ZmodF and ZmodF_mul modules
 
  Copyright (C) 2007, David Harvey
 
@@ -12,6 +12,8 @@ TODO: establish and test overflow bit guarantees
 
 #include <stdio.h>
 #include "ZmodF.h"
+#include "ZmodF_mul.h"
+
 
 gmp_randstate_t ZmodF_test_randstate;
 mpz_t global_mpz;   // to avoid frequent mpz_init calls

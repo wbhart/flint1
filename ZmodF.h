@@ -12,6 +12,9 @@
  
 ******************************************************************************/
 
+#ifndef FLINT_ZMODF_H
+#define FLINT_ZMODF_H
+
 #include <stdlib.h>
 #include <gmp.h>
 #include "mpn_extras.h"
@@ -472,84 +475,7 @@ void ZmodF_simple_butterfly(ZmodF_t* a, ZmodF_t* b, ZmodF_t* z,
 }
 
 
-/* ============================================================================
 
-    Multiplication
-
-============================================================================ */
-
-
-struct ZmodFpoly_t;
-
-/*
-This struct stores info used to speed up multiplications mod p
-for a specific n.
-*/
-typedef struct
-{
-   unsigned long n;
-
-   // 0 means use plain old mpn_mul_n; 1 means use the negacyclic FFT.
-   int use_fft;
-   
-   // ------------------ fields used only for mpn_mul_n
-   
-   // scratch buffer of length 2*n
-   mp_limb_t* scratch;
-   
-   // ------------------ fields used only for negacyclic FFT
-   
-   unsigned long limbs;
-   // hmmmm it's a bit weird to make this a pointer, but otherwise
-   // the dependencies between files get really messy
-   struct ZmodFpoly_t* poly;
-
-} ZmodF_mul_precomp_struct;
-
-
-// ZmodF_mul_precomp_t allows reference-like semantics for
-// ZmodF_mul_precomp_struct:
-typedef ZmodF_mul_precomp_struct ZmodF_mul_precomp_t[1];
-
-
-// initialises ZmodF_mul_precomp_t for a given n
-// (The squaring flag is 1 if you are going to use this object for squaring.
-// This doesn't affect whether the struct can be used for squaring or
-// multiplying, the only effect is to possibly modify the tuning parameters.)
-void ZmodF_mul_precomp_init(ZmodF_mul_precomp_t info, unsigned long n,
-                            int squaring);
-                            
-// releases resources
-void ZmodF_mul_precomp_clear(ZmodF_mul_precomp_t info);
-
-// sets res := a * b, assuming they all have the same n as the given
-// ZmodF_mul_precomp_t.
-void ZmodF_mul_precomp(ZmodF_mul_precomp_t, ZmodF_t res, ZmodF_t a, ZmodF_t b);
-// res := a * b
-void ZmodF_sqr_precomp(ZmodF_mul_precomp_t, ZmodF_t res, ZmodF_t a);
-
-
-/*
-   res := a * b
-   
-   PRECONDITIONS:
-      Any combination of aliasing among res, a, b is allowed.
-      scratch must be a buffer of length 2*n, and must NOT alias a, b, res.
-
-*/
-void ZmodF_mul(ZmodF_t res, ZmodF_t a, ZmodF_t b, mp_limb_t* scratch,
-               unsigned long n);
-
-
-/*
-   res := a * a
-   
-   PRECONDITIONS:
-      a may alias res.
-      scratch must be a buffer of length 2*n, and must NOT overlap a or res.
-*/
-void ZmodF_sqr(ZmodF_t res, ZmodF_t a, mp_limb_t* scratch, unsigned long n);
-
-
+#endif
 
 // end of file ****************************************************************

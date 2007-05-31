@@ -14,6 +14,7 @@ Copyright (C) 2007, William Hart and David Harvey
 #include "flint.h"
 #include "flint-manager.h"
 #include "ZmodFpoly.h"
+#include "ZmodF_mul.h"
 #include "Zpoly_mpn.h"
 #include "extras.h"
 

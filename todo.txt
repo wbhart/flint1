@@ -125,7 +125,10 @@ to add a bit of padding.
 
 * we should change the name of ABS() in Zpoly_mpn. This will certainly interfere
   with someone else's namespace one day. -- david
-  
+
+* I think the the bitpacking/limbpacking/bytepacking routines should be
+  moved out of ZmodFpoly.c into Zpoly_mpn.c.
+
 
 === modpmul module ===
 
