@@ -9,17 +9,6 @@
 #include <math.h>
 #include "flint.h"
 #include "Zpoly_mpn.h"
-#include "Zpoly.h"
-
-
-void print_poly(Zpoly_mpn_t x_mpn)
-{
-   Zpoly_t x;
-   Zpoly_init2(x, x_mpn->length);
-   _Zpoly_mpn_convert_out(x, x_mpn);
-   Zpoly_print(stdout, x);
-   Zpoly_clear(x);
-}
 
 
 int main(int argc, char* argv[])
@@ -62,8 +51,7 @@ int main(int argc, char* argv[])
       }
    }
 
-   // NB: we could avoid reallocations in the next loop by calling
-   //    Zpoly_mpn_ensure_space(F2, n);
+   Zpoly_mpn_ensure_space(F2, n);
    for (long i = 0; i < n; i++)
       Zpoly_mpn_set_coeff_si(F2, i, values[i]);
 
@@ -91,57 +79,3 @@ int main(int argc, char* argv[])
 
    return 0;
 }
-
-
-// Here's what it *should* look like:
-/*
-int main()
-{
-   if (argc != 2)
-   {
-      printf("Syntax: delta_qexp <integer>\n");
-      printf("where <integer> is the number of terms to compute\n");
-      return 0;
-   }
-   
-   // number of terms to compute
-   long n = atoi(argv[1]);
-
-   // initialise polynomial objects
-   Zpoly_mpn_t F, Fpow;
-   Zpoly_mpn_init(F);
-   Zpoly_mpn_init(Fpow);
-
-   // set F := whatever it's supposed to be
-   for (long i = 0; 1; i++)
-   {
-      long index = i * (i+1) / 2;
-      if (index >= n)
-         break;
-      Zpoly_mpn_set_coeff_si(F, index, (i & 1) ? -(2*i+1) : (2*i+1));
-   }
-
-   // compute F^8, truncated to length n
-   Zpoly_mpn_mul(Fpow, F, F);
-   Zpoly_mpn_truncate(Fpow, n);
-
-   Zpoly_mpn_mul(Fpow, Fpow, Fpow);
-   Zpoly_mpn_truncate(Fpow, n);
-
-   Zpoly_mpn_mul(Fpow, Fpow, Fpow);
-   Zpoly_mpn_truncate(Fpow, n);
-   
-   // print out last coefficient
-   mpz_t x;
-   mpz_init(x);
-   Zpoly_mpn_get_coeff_mpz(Fpow, x, n-1);
-   
-   gmp_printf("coefficient of q^%d is %Z\n", n-1, x);
-   
-   // clean up
-   mpz_clear(x);
-   Zpoly_mpn_clear(Fpow);
-   Zpoly_mpn_clear(F);
-   return 0;
-}
-*/
