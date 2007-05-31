@@ -7,12 +7,14 @@
  * add some kind of debug flag to the makefile, which will enable/disable
    FLINT_ASSERT
    
- * figure out why "#define FLINT_ASSERT(dummy)" wouldn't compile.
-   
  * we should be checking somewhere (at build time?) that FLINT_BITS_PER_LIMB
    really is the same as GMP's bits per limb
-   
- * add some documentation for cache hint macros in flint.h
+
+ * cache hints:
+    * add some documentation for cache hint macros in flint.h
+    * instead of having loops like 
+             for (j = 0; j < x->n; j += 8) FLINT_PREFETCH(x->coeffs[i+8], j);
+      everywhere, can't we have a FLINT_BLOCK_PREFETCH macro?
  
  * determine cache size at build time, instead of #defined in flint.h!!!!
      * possibly determine size of each cache in hierarchy?
@@ -34,8 +36,6 @@ integrate them into a single routine
 
  * Write a test module for Z and polynomials over Z packages. Move all
  existing test code into that module.
-
- * Change Zvec to Zpoly throughout and implement Zvec routines. (Bill)
 
  * Collect together timing statistics on various programs (MAGMA, NTL, PARI,
 FLINT, etc), in one convenient place. (David)

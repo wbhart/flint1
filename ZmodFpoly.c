@@ -592,6 +592,7 @@ void ZmodFpoly_set(ZmodFpoly_t x, ZmodFpoly_t y)
 
    for (unsigned long i = 0; i < y->length; i++)
       ZmodF_set(x->coeffs[i], y->coeffs[i], x->n);
+
    x->length = y->length;
 }
 
@@ -605,27 +606,27 @@ void ZmodFpoly_pointwise_mul(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y)
    FLINT_ASSERT(x->length == y->length);
    
    unsigned long j;
-   // todo: use FLINT memory allocation
-   
-   mp_limb_t* scratch = (mp_limb_t*) malloc((2 * x->n) * sizeof(mp_limb_t));
 
+   ZmodF_mul_precomp_t info;
+   ZmodF_mul_precomp_init(info, x->n, x == y);
+   
    if (x != y)
       for (unsigned long i = 0; i < x->length; i++)
       {
          for (j = 0; j < x->n; j += 8) FLINT_PREFETCH(x->coeffs[i+8], j);
          for (j = 0; j < y->n; j += 8) FLINT_PREFETCH(y->coeffs[i+8], j);
-         ZmodF_mul(res->coeffs[i], x->coeffs[i], y->coeffs[i], scratch, x->n);
+         ZmodF_mul_precomp(info, res->coeffs[i], x->coeffs[i], y->coeffs[i]);
       }
    else
       for (unsigned long i = 0; i < x->length; i++)
       {
          for (j = 0; j < x->n; j += 8) FLINT_PREFETCH(x->coeffs[i+8], j);
-         ZmodF_sqr(res->coeffs[i], x->coeffs[i], scratch, x->n);
+         ZmodF_sqr_precomp(info, res->coeffs[i], x->coeffs[i]);
       }
 
+   ZmodF_mul_precomp_clear(info);
+
    res->length = x->length;
-   
-   free(scratch);
 }
 
 
