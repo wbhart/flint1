@@ -330,8 +330,25 @@ void ZmodF_mul_precomp(ZmodF_mul_precomp_t info,
 
 void ZmodF_sqr_precomp(ZmodF_mul_precomp_t info, ZmodF_t res, ZmodF_t a)
 {
-   // for now just use multiplication routine
-   ZmodF_mul_precomp(info, res, a, a);
+   // try special case a = -1 mod p
+   if (_ZmodF_sqr_handle_minus1(res, a, info->n))
+      return;
+
+   if (!info->use_fft)
+   {
+      // plain mpn_mul_n multiplication
+      _ZmodF_mul(res, a, a, info->scratch, info->n);
+      return;
+   }
+   
+   // negacyclic FFT multiplication
+   _ZmodF_mul_split(info->polys[0], a, info->n);
+
+   ZmodFpoly_negacyclic_convolution(info->polys[0], info->polys[0],
+                                    info->polys[0]);
+   ZmodFpoly_normalise(info->polys[0]);
+
+   _ZmodF_mul_combine(res, info->polys[0], info->n);
 }
 
 
