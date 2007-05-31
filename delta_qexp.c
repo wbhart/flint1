@@ -62,7 +62,7 @@ int main(int argc, char* argv[])
       }
    }
 
-   // NB: could avoid reallocations in the next loop by calling
+   // NB: we could avoid reallocations in the next loop by calling
    //    Zpoly_mpn_ensure_space(F2, n);
    for (long i = 0; i < n; i++)
       Zpoly_mpn_set_coeff_si(F2, i, values[i]);
@@ -78,11 +78,11 @@ int main(int argc, char* argv[])
    Zpoly_mpn_set_length(F8, n);
    
    // print out last coefficient
-   Zpoly_t output;
-   Zpoly_init2(output, n);
-   _Zpoly_mpn_convert_out(output, F8);
-   gmp_printf("coefficient of q^%d is %Zd\n", n, output->coeffs[n-1]);
-   Zpoly_clear(output);
+   mpz_t x;
+   mpz_init(x);
+   Zpoly_mpn_get_coeff_mpz(x, F8, n-1);
+   gmp_printf("coefficient of q^%d is %Zd\n", n, x);
+   mpz_clear(x);
    
    // clean up
    Zpoly_mpn_clear(F8);

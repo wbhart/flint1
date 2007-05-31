@@ -25,29 +25,44 @@ Copyright (C) 2007, William Hart and David Harvey
 
 ****************************************************************************/
 
-void _Zpoly_mpn_convert_out(Zpoly_t poly_mpz, Zpoly_mpn_t poly_mpn)
-{
-   long size;
-   
-   poly_mpz->length = poly_mpn->length;
-   for (unsigned long i = 0; i < poly_mpn->length; i++)
-   {
-       size = poly_mpn->coeffs[i*(poly_mpn->limbs+1)];
-       if (size == 0) 
-          mpz_set_ui(poly_mpz->coeffs[i], 0);
-       else 
-       {
-          mpz_import(poly_mpz->coeffs[i], ABS(size), -1, 
-                     sizeof(mp_limb_t), 0, 0,
-                     poly_mpn->coeffs + i*(poly_mpn->limbs+1) + 1);
 
-          if (size < 0)
-          {
-             mpz_neg(poly_mpz->coeffs[i], poly_mpz->coeffs[i]);
-          }
-       }
+static inline
+void _convert_coeff_to_mpz(mpz_t x, mp_limb_t* coeff)
+{
+   long size = coeff[0];
+   
+   if (size == 0) 
+      mpz_set_ui(x, 0);
+   else
+   {
+      mpz_import(x, ABS(size), -1, sizeof(mp_limb_t), 0, 0, coeff + 1);
+
+      if (size < 0)
+         mpz_neg(x, x);
    }
 }
+
+
+// retrieves coefficient #n as an mpz, no bounds checking
+void _Zpoly_mpn_get_coeff_mpz(mpz_t x, Zpoly_mpn_t poly, unsigned long n)
+{
+   FLINT_ASSERT(n < poly->length);
+   _convert_coeff_to_mpz(x, poly->coeffs + n*(poly->limbs+1));
+}
+
+
+// converts Zpoly_mpn to Zpoly, assumes enough space allocated for output
+void _Zpoly_mpn_convert_out(Zpoly_t poly_mpz, Zpoly_mpn_t poly_mpn)
+{
+   FLINT_ASSERT(poly_mpz->alloc >= poly_mpn->length);
+
+   poly_mpz->length = poly_mpn->length;
+   
+   for (unsigned long i = 0; i < poly_mpn->length; i++)
+      _convert_coeff_to_mpz(poly_mpz->coeffs[i],
+                            poly_mpn->coeffs + i*(poly_mpn->limbs+1));
+}
+
 
 void _Zpoly_mpn_convert_in(Zpoly_mpn_t poly_mpn, Zpoly_t poly_mpz)
 {
@@ -1456,4 +1471,12 @@ void Zpoly_mpn_ensure_length2(Zpoly_mpn_t poly, unsigned long length)
       poly->coeffs[i*(poly->limbs+1)] = 0;
 
    poly->length = length;
+}
+
+void Zpoly_mpn_get_coeff_mpz(mpz_t x, Zpoly_mpn_t poly, unsigned long n)
+{
+   if (n >= poly->length)
+      mpz_set_ui(x, 0);
+   else
+      _Zpoly_mpn_get_coeff_mpz(x, poly, n);
 }

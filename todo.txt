@@ -123,6 +123,9 @@ to add a bit of padding.
   The bitpacking etc routines need to be abstracted differently or something.
   -- david
 
+* we should change the name of ABS() in Zpoly_mpn. This will certainly interfere
+  with someone else's namespace one day. -- david
+  
 
 === modpmul module ===
 

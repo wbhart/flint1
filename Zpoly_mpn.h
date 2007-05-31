@@ -123,27 +123,32 @@ mp_limb_t * _Zpoly_mpn_get_coeff_ptr(Zpoly_mpn_t poly, unsigned long n)
    Assumes length of output is poly->limbs limbs long.  
 */
    
-static inline long _Zpoly_mpn_get_coeff(mp_limb_t * output, Zpoly_mpn_t poly, 
-                                                                unsigned long n)
+static inline
+long _Zpoly_mpn_get_coeff(mp_limb_t * output, Zpoly_mpn_t poly,
+                          unsigned long n)
 {
    if (poly->coeffs[n*(poly->limbs+1)] == 0) clear_limbs(output, poly->limbs);
    copy_limbs(output, poly->coeffs+n*(poly->limbs+1)+1, poly->limbs);
    return poly->coeffs[n*(poly->limbs+1)];
 }
 
-static inline unsigned long _Zpoly_mpn_get_coeff_ui(Zpoly_mpn_t poly, unsigned long n)
+static inline
+unsigned long _Zpoly_mpn_get_coeff_ui(Zpoly_mpn_t poly, unsigned long n)
 {
    if (poly->coeffs[n*(poly->limbs+1)] == 0) return 0;
    else return poly->coeffs[n*(poly->limbs+1)+1];
 }
 
-static inline long _Zpoly_mpn_get_coeff_si(Zpoly_mpn_t poly, unsigned long n)
+static inline
+long _Zpoly_mpn_get_coeff_si(Zpoly_mpn_t poly, unsigned long n)
 {
    if (poly->coeffs[n*(poly->limbs+1)] == 0) return 0;
    if (poly->coeffs[n*(poly->limbs+1)] == 1L) 
                                  return poly->coeffs[n*(poly->limbs+1)+1];
    else return -poly->coeffs[n*(poly->limbs+1)+1];
 }
+
+void _Zpoly_mpn_get_coeff_mpz(mpz_t x, Zpoly_mpn_t poly, unsigned long n);
 
 /* 
    Set a coefficient to the given value having "size" limbs.
@@ -346,6 +351,9 @@ void Zpoly_mpn_set_coeff_si(Zpoly_mpn_t poly, unsigned long n, long x)
    Zpoly_mpn_ensure_length(poly, n+1);
    _Zpoly_mpn_set_coeff_si(poly, n, x);
 }
+
+
+void Zpoly_mpn_get_coeff_mpz(mpz_t x, Zpoly_mpn_t poly, unsigned long n);
 
 
 // *************** end of file
