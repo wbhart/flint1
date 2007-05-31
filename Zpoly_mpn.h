@@ -292,7 +292,61 @@ void Zpoly_mpn_init(Zpoly_mpn_t poly, unsigned long alloc,
 void Zpoly_mpn_realloc(Zpoly_mpn_t poly, unsigned long alloc);
 
 void Zpoly_mpn_clear(Zpoly_mpn_t poly);
-                                              
+
+
+// This is the actual implementation that's called for Zpoly_mpn_ensure_space()
+// (see below) if a reallocation is required
+void Zpoly_mpn_ensure_space2(Zpoly_mpn_t poly, unsigned long alloc);
+
+// Ensures that the polynomial has at least alloc coefficients allocated.
+// If the polynomial already has enough space allocated, nothing happens.
+// If more space is required, then a realloc occurs, and the space allocated
+// will at least *double* from its current amount. This strategy ensures that
+// repeated calls have amortised constant cost.
+// (NOTE: I'm making only the initial comparison inline, since this will
+// happen very frequently; the actual reallocation will be less frequent,
+// and will chew up too many bytes of code if I make it inline.)
+static inline
+void Zpoly_mpn_ensure_space(Zpoly_mpn_t poly, unsigned long alloc)
+{
+   if (poly->alloc < alloc)
+      Zpoly_mpn_ensure_space2(poly, alloc);
+}
+
+
+// This is the actual implementation that's called for Zpoly_mpn_ensure_length()
+// (see below) if extending is required
+void Zpoly_mpn_ensure_length2(Zpoly_mpn_t poly, unsigned long length);
+
+// Ensures that the poly has length at least "length".
+// If not, it extends it and zero-fills appropriately.
+static inline
+void Zpoly_mpn_ensure_length(Zpoly_mpn_t poly, unsigned long length)
+{
+   if (poly->length < length)
+      Zpoly_mpn_ensure_length2(poly, length);
+}
+
+
+// Sets length to given length, either truncating or zero-padding (possibly
+// with a reallocation) as necessary.
+static inline
+void Zpoly_mpn_set_length(Zpoly_mpn_t poly, unsigned long length)
+{
+   if (length <= poly->length)
+      poly->length = length;
+   else
+      Zpoly_mpn_ensure_length2(poly, length);
+}
+
+
+static inline
+void Zpoly_mpn_set_coeff_si(Zpoly_mpn_t poly, unsigned long n, long x)
+{
+   Zpoly_mpn_ensure_length(poly, n+1);
+   _Zpoly_mpn_set_coeff_si(poly, n, x);
+}
+
 
 // *************** end of file
 #endif

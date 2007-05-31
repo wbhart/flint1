@@ -62,18 +62,20 @@ int main(int argc, char* argv[])
       }
    }
 
-   F2->length = n;
+   // NB: could avoid reallocations in the next loop by calling
+   //    Zpoly_mpn_ensure_space(F2, n);
    for (long i = 0; i < n; i++)
-      _Zpoly_mpn_set_coeff_si(F2, i, values[i]);
+      Zpoly_mpn_set_coeff_si(F2, i, values[i]);
 
    free(values);
 
-   // compute F^8, truncated to length n
+   // compute F^4, truncated to length n
    _Zpoly_mpn_mul_KS(F4, F2, F2);
-   F4->length = n;
+   Zpoly_mpn_set_length(F4, n);
 
+   // compute F^8, truncated to length n
    _Zpoly_mpn_mul_KS(F8, F4, F4);
-   F8->length = n;
+   Zpoly_mpn_set_length(F8, n);
    
    // print out last coefficient
    Zpoly_t output;
@@ -86,6 +88,7 @@ int main(int argc, char* argv[])
    Zpoly_mpn_clear(F8);
    Zpoly_mpn_clear(F4);
    Zpoly_mpn_clear(F2);
+
    return 0;
 }
 

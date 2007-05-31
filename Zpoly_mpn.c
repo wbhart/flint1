@@ -1436,3 +1436,24 @@ unsigned long Zpoly_mpn_length(Zpoly_mpn_t poly)
    _Zpoly_mpn_normalise(poly);
    return poly->length;
 }
+
+void Zpoly_mpn_ensure_space2(Zpoly_mpn_t poly, unsigned long alloc)
+{
+   FLINT_ASSERT(alloc >= poly->alloc);
+
+   if (alloc < 2*poly->alloc)
+      alloc = 2*poly->alloc;
+   Zpoly_mpn_realloc(poly, alloc);
+}
+
+void Zpoly_mpn_ensure_length2(Zpoly_mpn_t poly, unsigned long length)
+{
+   FLINT_ASSERT(length >= poly->length);
+   
+   Zpoly_mpn_ensure_space(poly, length);
+
+   for (unsigned long i = poly->length; i < length; i++)
+      poly->coeffs[i*(poly->limbs+1)] = 0;
+
+   poly->length = length;
+}
