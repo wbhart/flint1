@@ -119,7 +119,7 @@ unsigned long negacyclic_threshold_table[] =
 unsigned long negacyclic_threshold_table_size =
    sizeof(negacyclic_threshold_table) / sizeof(negacyclic_threshold_table[0]);
 
-const unsigned long min_negacyclic_depth = 4;
+unsigned long min_negacyclic_depth = 4;
 
 #else
 
@@ -131,7 +131,7 @@ unsigned long negacyclic_threshold_table[] =
 unsigned long negacyclic_threshold_table_size =
    sizeof(negacyclic_threshold_table) / sizeof(negacyclic_threshold_table[0]);
 
-const unsigned long min_negacyclic_depth = 2;
+unsigned long min_negacyclic_depth = 2;
 
 #endif
 

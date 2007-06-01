@@ -102,6 +102,17 @@ ZmodF-test.o: ZmodF-test.c $(HEADERS)
 ZmodF-test: ZmodF-test.o ZmodF.o ZmodF_mul.o ZmodFpoly.o Zpoly_mpn.o flint-manager.o mpn_extras.o Z_mpn.o
 	$(CC) ZmodF-test.o ZmodF.o ZmodF_mul.o ZmodFpoly.o Zpoly_mpn.o flint-manager.o mpn_extras.o Z_mpn.o -o ZmodF-test $(CFLAGS) $(LIBS)
 
+ZmodF_mul-profile-tables.o: ZmodF_mul-profile.c $(HEADERS)
+	python make-profile-tables.py ZmodF_mul
+	$(CC) -c ZmodF_mul-profile-tables.c -o ZmodF_mul-profile-tables.o $(CFLAGS)
+	rm ZmodF_mul-profile-tables.c
+
+ZmodF_mul-profile.o: ZmodF_mul-profile.c $(HEADERS)
+	$(CC) -c ZmodF_mul-profile.c -o ZmodF_mul-profile.o $(CFLAGS)
+
+ZmodF_mul-profile: ZmodF_mul-profile.o ZmodF.o ZmodF_mul.o ZmodFpoly.o Zpoly_mpn.o flint-manager.o mpn_extras.o Z_mpn.o profiler-main.o ZmodF_mul-profile-tables.o profiler.o
+	$(CC) -o ZmodF_mul-profile ZmodF_mul-profile.o ZmodF.o ZmodF_mul.o ZmodFpoly.o Zpoly_mpn.o flint-manager.o mpn_extras.o Z_mpn.o profiler-main.o ZmodF_mul-profile-tables.o profiler.o $(CFLAGS) $(LIBS)
+
 
 
 ZmodFpoly.o: ZmodFpoly.c $(HEADERS)
