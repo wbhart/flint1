@@ -59,6 +59,8 @@ long _ZmodF_sqr_handle_minus1(ZmodF_t res, ZmodF_t a, unsigned long n)
       else
          ZmodF_zero(res, n);
       res[0] = 1;
+
+      return 1;
    }
 
    return 0;
@@ -110,7 +112,7 @@ void ZmodF_sqr(ZmodF_t res, ZmodF_t a, mp_limb_t* scratch, unsigned long n)
 // plain old mpn_mul_n
 
 // todo: I pulled these values from my rear end, they need to be tuned....
-#if 0
+#if 1
 unsigned long negacyclic_threshold_table[] = 
    {300, 600, 1200, 2400, 4800, 10000, 20000, 40000};
 
@@ -129,7 +131,7 @@ unsigned long negacyclic_threshold_table[] =
 unsigned long negacyclic_threshold_table_size =
    sizeof(negacyclic_threshold_table) / sizeof(negacyclic_threshold_table[0]);
 
-const unsigned long min_negacyclic_depth = 1;
+const unsigned long min_negacyclic_depth = 2;
 
 #endif
 
@@ -141,7 +143,7 @@ unsigned long ZmodF_mul_precomp_get_feasible_n(unsigned long *depth,
    if (n < negacyclic_threshold_table[0])
       return n;
    
-   // n is big enough, search the table for the right convolution depth
+   // n is big enough, search the table for d = best convolution depth
    unsigned long d = 0;
    for (unsigned long i = 1; i < negacyclic_threshold_table_size; i++)
    {
@@ -154,17 +156,21 @@ unsigned long ZmodF_mul_precomp_get_feasible_n(unsigned long *depth,
    
    if (d == 0)
    {
-      // n was too big for the table, we need to estimate a value for depth
+      // n was too big for the table, we need to estimate a value for d
 
       // todo: for now just use the maximum table size, since we aren't
       // planning on multiplying anything that humungous anyway...?
       d = negacyclic_threshold_table_size + min_negacyclic_depth;
    }
 
-   // Round up n to a multiple of 2^depth, so that n can be broken up
-   // into 2^depth chunks.
-   n = (((n-1) >> d) + 1) << d;
-
+   // Round up n to a multiple of 2^d/FLINT_BITS_PER_LIMB, so that n can
+   // be broken up into 2^d chunks.
+   if (d > FLINT_LG_BITS_PER_LIMB)
+   {
+      unsigned long shift = d - FLINT_LG_BITS_PER_LIMB;
+      n = (((n-1) >> shift) + 1) << shift;
+   }
+      
    if (depth != NULL)
       *depth = d;
    
@@ -177,7 +183,7 @@ void ZmodF_mul_precomp_init(ZmodF_mul_precomp_t info, unsigned long n,
 {
    unsigned long depth;
    info->n = n;
-
+   
 #if 0       // disable negacyclic pointwise mults until it's reasonably tuned
    if ((n < negacyclic_threshold_table[0]) ||
        (n != ZmodF_mul_precomp_get_feasible_n(&depth, n)))
@@ -196,9 +202,11 @@ void ZmodF_mul_precomp_init(ZmodF_mul_precomp_t info, unsigned long n,
    {
       // use negacyclic FFTs
       info->use_fft = 1;
-      
+
       // work out how many limbs the small coefficients need to have
-      unsigned long next_n = 2 * (n >> depth) + 1;
+      unsigned long input_bits = (n*FLINT_BITS_PER_LIMB) >> depth;
+      unsigned long output_bits = 2*input_bits + 1 + depth;
+      unsigned long next_n = ((output_bits-1) >> FLINT_LG_BITS_PER_LIMB) + 1;
 
       // round up next_n so that enough roots of unity are available,
       // i.e. need FLINT_BITS_PER_LIMB*next_n divisible by 2^(depth-1)
@@ -234,16 +242,42 @@ Assumes x is normalised and of length n.
 */
 void _ZmodF_mul_split(ZmodFpoly_t poly, ZmodF_t x, unsigned long n)
 {
-   FLINT_ASSERT(n % (1 << poly->depth) == 0);
+   FLINT_ASSERT((n * FLINT_BITS_PER_LIMB) % (1 << poly->depth) == 0);
 
-   unsigned long i, size, offset, skip;
+   unsigned long size = 1UL << poly->depth;
    
-   size = 1 << poly->depth;
-   skip = n >> poly->depth;
-   for (i = 0, offset = 0; i < size; i++, offset += skip)
+   // we'll split x into chunks each having "bits" bits
+   unsigned long bits = (n * FLINT_BITS_PER_LIMB) >> poly->depth;
+   // round it up to a whole number of limbs
+   unsigned long limbs = ((bits - 1) >> FLINT_LG_BITS_PER_LIMB) + 1;
+   
+   // last_mask is applied to the last limb of each target coefficient to
+   // zero out the bits that don't belong there
+   unsigned long last_mask = (1UL << (bits & (FLINT_BITS_PER_LIMB-1))) - 1;
+   if (!last_mask)
+      last_mask = -1UL;
+
+   // [start, end) are the bit-indices into x of the current chunk
+   unsigned long start, end, i;
+   for (i = 0, start = 0, end = bits; i < size; i++, start = end, end += bits)
    {
-      copy_limbs(poly->coeffs[i], x + offset, skip);
-      clear_limbs(poly->coeffs[i] + skip, poly->n + 1 - skip);
+      // figure out which limbs contain the data for this chunk
+      unsigned long start_limb = start >> FLINT_LG_BITS_PER_LIMB;
+      unsigned long end_limb = ((end-1) >> FLINT_LG_BITS_PER_LIMB) + 1;
+      
+      // shift/copy the limbs containing the chunk into the target coefficient
+      unsigned long start_bits = start & (FLINT_BITS_PER_LIMB-1);
+      if (start_bits)
+         mpn_rshift(poly->coeffs[i], x + start_limb, end_limb - start_limb,
+                    start_bits);
+      else
+         copy_limbs(poly->coeffs[i], x + start_limb, end_limb - start_limb);
+
+      // zero out the high bits that shouldn't contribute to this coefficient
+      poly->coeffs[i][limbs-1] &= last_mask;
+
+      // zero out remaining limbs
+      clear_limbs(poly->coeffs[i] + limbs, poly->n + 1 - limbs);
    }
 }
 
@@ -256,46 +290,72 @@ void _ZmodF_mul_combine(ZmodF_t x, ZmodFpoly_t poly, unsigned long n)
 {
    ZmodF_zero(x, n);
 
-   unsigned long i, size, offset, skip, end, carry;
+   unsigned long i, carry;
+   unsigned long size = 1 << poly->depth;
+
+   // "bits" is the number of bits apart that each coefficient must be stored
+   unsigned long bits = (n * FLINT_BITS_PER_LIMB) >> poly->depth;
+   // "start" is the bit-index into x where the current coeff will be stored
+   unsigned long start;
    
-   size = 1 << poly->depth;
-   skip = n >> poly->depth;
-   for (i = 0, offset = 0, end = poly->n; i < size;
-        i++, offset += skip, end += skip)
+   for (i = 0, start = 0; i < size; i++, start += bits)
    {
+      // start_limb, start_bit indicate where the current coefficient will
+      // be stored; end_limb points beyond the last limb
+      unsigned long start_limb = start >> FLINT_LG_BITS_PER_LIMB;
+      unsigned long start_bit = start & (FLINT_BITS_PER_LIMB-1);
+      unsigned long end_limb = start_limb + poly->n + 1;
+
       if (poly->coeffs[i][poly->n])
       {
-         // coefficient is -1 mod p
-         mpn_sub_1(x + offset, x + offset, 1, n + 1 - offset);
-      }
-      else if (end <= n)
-      {
-         // the whole coefficient fits in the output
-         carry = mpn_add_n(x + offset, x + offset, poly->coeffs[i], poly->n);
-         mpn_add_1(x + end, x + end, n + 1 - end, carry);
-
-         if ((mp_limb_signed_t) poly->coeffs[i][poly->n - 1] < 0)
-         {
-            // If the coefficient was negative, then it was represented by
-            // 2^(FLINT_BITS_PER_LIMB*poly->n) + 1 plus the real coefficient,
-            // so we need to correct for that
-            mpn_sub_1(x + end, x + end, n + 1 - end, 1);
-            mpn_sub_1(x + offset, x + offset, n + 1 - offset, 1);
-         }
+         // special case: coefficient is -1 mod p
+         mpn_sub_1(x + start_limb, x + start_limb, n + 1 - start_limb,
+                   1UL << start_bit);
       }
       else
       {
-         // the coefficient wraps around negacyclically to the bottom,
-         // so need to add part of it and subtract the other part
-         x[n] += mpn_add_n(x + offset, x + offset, poly->coeffs[i], n - offset);
-         carry = mpn_sub_n(x, x, poly->coeffs[i] + n - offset, end - n);
-         mpn_sub_1(x + end - n, x + end - n, n + 1 - (end - n), carry);
-
-         if ((mp_limb_signed_t) poly->coeffs[i][poly->n - 1] < 0)
+         long negative = ((mp_limb_signed_t) poly->coeffs[i][poly->n - 1] < 0);
+      
+         // shift coefficient to the left to line it up with the spot where
+         // it's going to get added in
+         if (start_bit)
+            mpn_lshift(poly->coeffs[i], poly->coeffs[i], poly->n + 1,
+                       start_bit);
+                       
+         if (end_limb <= n)
          {
-            // correct for negative coefficient
-            mpn_add_1(x + end - n, x + end - n, n + 1 - (end - n), 1);
-            mpn_sub_1(x + offset, x + offset, n + 1 - offset, 1);
+            // the coefficient fits nicely into the output, so add it in
+            mpn_add(x + start_limb, x + start_limb, n + 1 - start_limb,
+                    poly->coeffs[i], poly->n + 1);
+
+            if (negative)
+            {
+               // If the coefficient is negative, then it's stored as
+               // 2^(FLINT_BITS_PER_LIMB*poly->n) + 1 plus the real
+               // coefficient, so we need to correct for that
+               mpn_sub_1(x + start_limb, x + start_limb, n + 1 - start_limb,
+                         1UL << start_bit);
+               mpn_sub_1(x + end_limb - 1, x + end_limb - 1,
+                         n + 2 - end_limb, 1UL << start_bit);
+            }
+         }
+         else
+         {
+            // the coefficient needs to wrap around negacyclically
+            x[n] += mpn_add_n(x + start_limb, x + start_limb, poly->coeffs[i],
+                              n - start_limb);
+            mpn_sub(x, x, n + 1, poly->coeffs[i] + n - start_limb,
+                    end_limb - n);
+
+            if (negative)
+            {
+               // handle negative coefficient as above
+               mpn_sub_1(x + start_limb, x + start_limb, n + 1 - start_limb,
+                         1UL << start_bit);
+               end_limb -= n;
+               mpn_add_1(x + end_limb - 1, x + end_limb - 1,
+                         n + 2 - end_limb, 1UL << start_bit);
+            }
          }
       }
    }
