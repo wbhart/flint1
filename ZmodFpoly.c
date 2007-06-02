@@ -1864,6 +1864,8 @@ void ZmodFpoly_IFFT(ZmodFpoly_t poly)
 }
 
 
+// res may alias x or y
+// x and y may alias each other
 void ZmodFpoly_convolution(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y)
 {
    FLINT_ASSERT(x->depth == y->depth);

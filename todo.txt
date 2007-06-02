@@ -169,3 +169,7 @@ to improve locality.
 === ZmodFpoly module ===
 
 * reorganise code to permit doing pointwise mults + inner FFTs + inner IFFTs with better locality
+
+=== profiler-main module ===
+
+* this module should supply a random number generating object so that profiling code doesn't have to worry about it
