@@ -19,24 +19,18 @@ int main(int argc, char* argv[])
       printf("where <integer> is the number of terms to compute\n");
       return 0;
    }
-   
-   // number of terms to compute
-   long n = atoi(argv[1]);
 
-   // initialise polynomial objects
-   // (play it safe with allocated space for the moment)
-   Zpoly_mpn_t F2, F4, F8;
    unsigned long limbs = (FLINT_BITS_PER_LIMB == 32) ? 6 : 3;
-   Zpoly_mpn_init(F2, 2*n, limbs);
-   Zpoly_mpn_init(F4, 2*n, limbs);
-   Zpoly_mpn_init(F8, 2*n, limbs);
-   
-   // set F2 := whatever it's supposed to be
-   long* values = malloc(sizeof(long) * n);
-   for (long i = 0; i < n; i++)
+
+   // number of terms to compute
+   long N = atoi(argv[1]);
+
+   // compute coefficients of F(q)^2
+   long* values = malloc(sizeof(long) * N);
+   for (long i = 0; i < N; i++)
       values[i] = 0;
 
-   long stop = (long) ceil((-1.0 + sqrt(1.0 + 8.0*n))/2.0);
+   long stop = (long) ceil((-1.0 + sqrt(1.0 + 8.0*N)) / 2.0);
    for (long i = 0; i <= stop; i++)
    {
       long index1 = i*(i+1)/2;
@@ -44,32 +38,39 @@ int main(int argc, char* argv[])
       for (long j = 0; j <= stop; j++)
       {
          long index2 = j*(j+1)/2;
-         if (index1 + index2 >= n)
+         if (index1 + index2 >= N)
             break;
          long value2 = (j & 1) ? (-2*j-1) : (2*j+1);
          values[index1 + index2] += value1 * value2;
       }
    }
 
-   Zpoly_mpn_ensure_space(F2, n);
-   for (long i = 0; i < n; i++)
+   // Create some polynomial objects
+   Zpoly_mpn_t F2, F4, F8;
+   Zpoly_mpn_init(F2, 2*N, limbs);
+   Zpoly_mpn_init(F4, 2*N, limbs);
+   Zpoly_mpn_init(F8, 2*N, limbs);
+
+   // Initialise F2 with coefficients of F(q)^2
+   Zpoly_mpn_ensure_space(F2, N);
+   for (long i = 0; i < N; i++)
       Zpoly_mpn_set_coeff_si(F2, i, values[i]);
 
    free(values);
 
-   // compute F^4, truncated to length n
+   // compute F^4, truncated to length N
    _Zpoly_mpn_mul_KS(F4, F2, F2);
-   Zpoly_mpn_set_length(F4, n);
+   Zpoly_mpn_set_length(F4, N);
 
-   // compute F^8, truncated to length n
+   // compute F^8, truncated to length N
    _Zpoly_mpn_mul_KS(F8, F4, F4);
-   Zpoly_mpn_set_length(F8, n);
+   Zpoly_mpn_set_length(F8, N);
    
    // print out last coefficient
    mpz_t x;
    mpz_init(x);
-   Zpoly_mpn_get_coeff_mpz(x, F8, n-1);
-   gmp_printf("coefficient of q^%d is %Zd\n", n, x);
+   Zpoly_mpn_get_coeff_mpz(x, F8, N-1);
+   gmp_printf("coefficient of q^%d is %Zd\n", N, x);
    mpz_clear(x);
    
    // clean up
