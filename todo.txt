@@ -179,3 +179,9 @@ to improve locality.
 
 * the current implementation is not O(1), since it might need to traverse
 the stack. This could be a problem if we need to allocate many small objects.
+
+
+=== ZmodF_mul module ===
+
+* remember when doing the automatic tuning for this, squaring and multiplication probably have different crossovers
+
