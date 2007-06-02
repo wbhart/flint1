@@ -92,38 +92,31 @@ void Z_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1,
    output_bits = (((output_bits - 1) >> (log_length-1)) + 1) << (log_length-1);
    unsigned long n = (output_bits - 1) / FLINT_BITS_PER_LIMB + 1;
    
-   ZmodFpoly_t poly1, poly2, poly_out;
-
-   ZmodFpoly_init(poly_out, log_length, n, 1);
+   ZmodFpoly_t poly1;
+   ZmodFpoly_init(poly1, log_length, n, 1);
+   Z_split_limbs(poly1, data1, limbs1, coeff_limbs, n);
    
    if (data1 == data2 && limbs1 == limbs2)
    {
       // identical operands case
-
-      ZmodFpoly_init(poly1, log_length, n, 1);
-      Z_split_limbs(poly1, data1, limbs1, coeff_limbs, n);
-      ZmodFpoly_convolution(poly_out, poly1, poly1);
-      ZmodFpoly_clear(poly1);
+      ZmodFpoly_convolution(poly1, poly1, poly1);
    }
    else
    {
       // distinct operands case
-
-      ZmodFpoly_init(poly1, log_length, n, 1);
-      Z_split_limbs(poly1, data1, limbs1, coeff_limbs, n);
-
+      ZmodFpoly_t poly2;
       ZmodFpoly_init(poly2, log_length, n, 1);
       Z_split_limbs(poly2, data2, limbs2, coeff_limbs, n);
 
-      ZmodFpoly_convolution(poly_out, poly1, poly2);
+      ZmodFpoly_convolution(poly1, poly1, poly2);
 
       ZmodFpoly_clear(poly2);
-      ZmodFpoly_clear(poly1);
    }
    
-   ZmodFpoly_normalise(poly_out);
+   ZmodFpoly_normalise(poly1);
    
    clear_limbs(res, limbs1 + limbs2);
    
-   Z_combine_limbs(res, poly_out, coeff_limbs, output_limbs, limbs1 + limbs2);
+   Z_combine_limbs(res, poly1, coeff_limbs, output_limbs, limbs1 + limbs2);
+   ZmodFpoly_clear(poly1);
 }
