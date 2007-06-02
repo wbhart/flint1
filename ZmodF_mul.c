@@ -14,6 +14,10 @@
 #include "ZmodF_mul.h"
 
 
+//#define ENABLE_NEGACYCLIC_MULTS 1
+#define ENABLE_NEGACYCLIC_MULTS 0
+
+
 /*
 Normalises a and b, and then attempts to multiply them mod p, putting result
 in res. It only succeeds if one of the inputs is exactly -1 mod p, in which
@@ -111,29 +115,16 @@ void ZmodF_sqr(ZmodF_t res, ZmodF_t a, mp_limb_t* scratch, unsigned long n)
 // i + min_negacyclic_depth. If it's less than the first entry, we just use
 // plain old mpn_mul_n
 
-// todo: I pulled these values from my rear end, they need to be tuned....
-#if 1
+// todo: the first four of these values are tuned for sage.math, the rest
+// I pulled from my rear end... we need automatic tuning code for this
+// (it's very difficult because the performance is not very smooth yet)
 unsigned long negacyclic_threshold_table[] = 
-   {300, 600, 1200, 2400, 4800, 10000, 20000, 40000};
+   {320, 500, 1000, 2200, 5000, 10000, 20000, 40000};
 
 unsigned long negacyclic_threshold_table_size =
    sizeof(negacyclic_threshold_table) / sizeof(negacyclic_threshold_table[0]);
 
 unsigned long min_negacyclic_depth = 4;
-
-#else
-
-// some smaller values for testing:
-
-unsigned long negacyclic_threshold_table[] = 
-   {3, 60, 120, 240, 480, 1000, 2000, 4000};
-
-unsigned long negacyclic_threshold_table_size =
-   sizeof(negacyclic_threshold_table) / sizeof(negacyclic_threshold_table[0]);
-
-unsigned long min_negacyclic_depth = 2;
-
-#endif
 
 
 unsigned long ZmodF_mul_precomp_get_feasible_n(unsigned long *depth,
@@ -184,7 +175,7 @@ void ZmodF_mul_precomp_init(ZmodF_mul_precomp_t info, unsigned long n,
    unsigned long depth;
    info->n = n;
    
-#if 0       // disable negacyclic pointwise mults until it's reasonably tuned
+#if ENABLE_NEGACYCLIC_MULTS
    if ((n < negacyclic_threshold_table[0]) ||
        (n != ZmodF_mul_precomp_get_feasible_n(&depth, n)))
 #else

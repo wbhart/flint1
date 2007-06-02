@@ -26,12 +26,18 @@ void sample_ZmodF_mul(unsigned long n, unsigned long depth,
                       unsigned long count)
 {
    // force the ZmodF_mul_precomp machinery to use requested transform depth
-   // (depth == 0 means use mpn_mul_n)
-   if (depth == 0)
+   // (depth == 0 means use default, depth == 1 means use mpn_mul_n)
+   unsigned long save0 = negacyclic_threshold_table[0];
+   unsigned long save1 = negacyclic_threshold_table[1];
+   unsigned long save_min = min_negacyclic_depth;
+
+   // todo: the above thing is really hackish, needs to be fixed
+
+   if (depth == 1)
    {
       negacyclic_threshold_table[0] = n+1;
    }
-   else
+   else if (depth >= 2)
    {
       negacyclic_threshold_table[0] = n;
       negacyclic_threshold_table[1] = n+1;
@@ -61,6 +67,10 @@ void sample_ZmodF_mul(unsigned long n, unsigned long depth,
    free(x3);
    free(x2);
    free(x1);
+
+   negacyclic_threshold_table[0] = save0;
+   negacyclic_threshold_table[1] = save1;
+   min_negacyclic_depth = save_min;
 }
 
 
@@ -74,7 +84,7 @@ char* prof2dDriverString_ZmodF_mul(char* params)
 Parameters for this target are:
    n_min, n_max: minimum and maximum n
    n_skip
-   depth: transform depth (0 means just use mpn_mul_n)
+   depth: transform depth (0 means use default, 1 means use mpn_mul_n)
 */
 void prof2dDriver_ZmodF_mul(char* params)
 {
