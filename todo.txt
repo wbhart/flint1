@@ -166,3 +166,6 @@ to improve locality.
   investigated.
 
 
+=== ZmodFpoly module ===
+
+* reorganise code to permit doing pointwise mults + inner FFTs + inner IFFTs with better locality
