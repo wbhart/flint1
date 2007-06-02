@@ -173,3 +173,9 @@ to improve locality.
 === profiler-main module ===
 
 * this module should supply a random number generating object so that profiling code doesn't have to worry about it
+
+
+=== memory manager ===
+
+* the current implementation is not O(1), since it might need to traverse
+the stack. This could be a problem if we need to allocate many small objects.
