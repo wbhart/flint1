@@ -16,6 +16,7 @@ Copyright (C) 2007, William Hart and David Harvey
 #include "ZmodFpoly.h"
 #include "Z_mpn.h"
 #include "ZmodF_mul.h"
+#include "Z_mpn_mul-tuning.h"
 
 #define DEBUG 0
 
@@ -75,19 +76,41 @@ void Z_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1,
    
    unsigned log_length2 = 0;
    
-   unsigned long twk = 64;
-   if ((coeff_limbs >= 2*1794) && ( coeff_limbs < 2*1920)) twk = 16;
-   if ((coeff_limbs >= 2*1920) && ( coeff_limbs < 2*3856)) twk = 64;
-   if ((coeff_limbs >= 2*3856) && ( coeff_limbs < 2*6350)) twk = 16;
-   if ((coeff_limbs >= 2*6350) && ( coeff_limbs < 2*71000)) twk = 4;
-   if ((coeff_limbs >= 2*71000) && ( coeff_limbs < 2*127000)) twk = 1;
-   if ((coeff_limbs >= 2*127000) && ( coeff_limbs < 2*262000)) twk = 4;
-   if ((coeff_limbs >= 2*262000) && ( coeff_limbs < 2*517000)) twk = 1;
-   if ((coeff_limbs >= 2*517000) && ( coeff_limbs < 2*1050000)) twk = 4;
-   if ((coeff_limbs >= 2*1050000) && ( coeff_limbs < 2*2060000)) twk = 1;
-   if ((coeff_limbs >= 2*2060000) && ( coeff_limbs < 2*4230000)) twk = 4;
-   if ((coeff_limbs >= 2*4230000) && ( coeff_limbs < 2*8350000)) twk = 1;
-   if (coeff_limbs >= 2*8350000) twk = 1;
+   unsigned long twk;
+   
+   if (data1 != data2)
+   {
+      if (coeff_limbs < MUL_TWK_SMALL_CUTOFF) twk = MUL_TWK_SMALL_DEFAULT;
+      else if (coeff_limbs > MUL_TWK_LARGE_CUTOFF) twk = MUL_TWK_LARGE_DEFAULT;
+      else 
+      {  
+         for (unsigned long twk_count = 0; twk_count < MUL_TWK_COUNT; twk_count++)
+         {
+            if ((coeff_limbs < MUL_TWK_VALS[twk_count][0]) || (coeff_limbs < MUL_TWK_VALS[twk_count][1])) continue;
+            else 
+            {
+               twk = MUL_TWK_VALS[twk_count][2];
+               break;
+            }
+         }
+      }
+   } else
+   {
+      if (coeff_limbs < SQR_TWK_SMALL_CUTOFF) twk = SQR_TWK_SMALL_DEFAULT;
+      else if (coeff_limbs > SQR_TWK_LARGE_CUTOFF) twk = SQR_TWK_LARGE_DEFAULT;
+      else 
+      {  
+         for (unsigned long twk_count = 0; twk_count < SQR_TWK_COUNT; twk_count++)
+         {
+            if ((coeff_limbs < SQR_TWK_VALS[twk_count][0]) || (coeff_limbs < SQR_TWK_VALS[twk_count][1])) continue;
+            else 
+            {
+               twk = SQR_TWK_VALS[twk_count][2];
+               break;
+            }
+         }
+      }
+   }
    
    while (twk*length < 2*output_bits)
    {
