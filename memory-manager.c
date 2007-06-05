@@ -182,7 +182,7 @@ void* flint_stack_alloc(unsigned long length)
 
 void* flint_stack_alloc_bytes(unsigned long bytes)
 {
-   flint_stack_alloc((bytes-1)/FLINT_BYTES_PER_LIMB+1);
+   return flint_stack_alloc((bytes-1)/FLINT_BYTES_PER_LIMB+1);
 }
 
 
