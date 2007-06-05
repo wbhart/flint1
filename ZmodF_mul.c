@@ -14,8 +14,7 @@
 #include "ZmodF_mul.h"
 
 
-//#define ENABLE_NEGACYCLIC_MULTS 1
-#define ENABLE_NEGACYCLIC_MULTS 0
+#define ENABLE_NEGACYCLIC_MULTS 1
 
 
 /*

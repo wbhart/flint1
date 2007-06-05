@@ -11,11 +11,13 @@ Copyright (C) 2007, William Hart and David Harvey
 #include <stdlib.h>
 #include <stdio.h>
 #include <gmp.h>
-#include "flint-manager.h"
+#include "memory-manager.h"
 #include "mpn_extras.h"
 #include "ZmodFpoly.h"
 #include "Z_mpn.h"
+#include "ZmodF_mul.h"
 
+#define DEBUG 0
 
 void Z_split_limbs(ZmodFpoly_t poly, mp_limb_t * limbs, unsigned long total_limbs,
                                unsigned long coeff_limbs, unsigned long output_limbs)
@@ -64,36 +66,50 @@ void Z_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1,
    unsigned long length = 1;
    unsigned long log_length = 0;
    
-   unsigned long output_limbs = limbs1+limbs2;
+   unsigned long coeff_limbs = limbs1 + limbs2;
+   unsigned long output_bits = coeff_limbs*FLINT_BITS_PER_LIMB;
+   unsigned long n = coeff_limbs;
+ 
+   unsigned long length1 = 1;
+   unsigned long length2 = 1;
    
-   unsigned long twk = 8;
+   unsigned log_length2 = 0;
    
-   while (twk*length < output_limbs*FLINT_BITS_PER_LIMB)
+   unsigned long twk = 64;
+   if ((coeff_limbs >= 2*1794) && ( coeff_limbs < 2*1920)) twk = 16;
+   if ((coeff_limbs >= 2*1920) && ( coeff_limbs < 2*3856)) twk = 64;
+   if ((coeff_limbs >= 2*3856) && ( coeff_limbs < 2*6350)) twk = 16;
+   if ((coeff_limbs >= 2*6350) && ( coeff_limbs < 2*71000)) twk = 4;
+   if ((coeff_limbs >= 2*71000) && ( coeff_limbs < 2*127000)) twk = 1;
+   if ((coeff_limbs >= 2*127000) && ( coeff_limbs < 2*262000)) twk = 4;
+   if ((coeff_limbs >= 2*262000) && ( coeff_limbs < 2*517000)) twk = 1;
+   if ((coeff_limbs >= 2*517000) && ( coeff_limbs < 2*1050000)) twk = 4;
+   if ((coeff_limbs >= 2*1050000) && ( coeff_limbs < 2*2060000)) twk = 1;
+   if ((coeff_limbs >= 2*2060000) && ( coeff_limbs < 2*4230000)) twk = 4;
+   if ((coeff_limbs >= 2*4230000) && ( coeff_limbs < 2*8350000)) twk = 1;
+   if (coeff_limbs >= 2*8350000) twk = 1;
+   
+   while (twk*length < 2*output_bits)
    {
       length<<=1;
       log_length++;
-      output_limbs = 2*(limbs1+limbs2)/(length+1)+1;
+      coeff_limbs = (limbs1+limbs2-1)/length+1;
+      while ((limbs1-1)/coeff_limbs+(limbs2-1)/coeff_limbs+2 > length) coeff_limbs++;
+      output_bits = (2*coeff_limbs+1)*FLINT_BITS_PER_LIMB;
+      output_bits = (((output_bits - 1) >> (log_length-1)) + 1) << (log_length-1);
+      coeff_limbs = ((output_bits - FLINT_BITS_PER_LIMB)/FLINT_BITS_PER_LIMB)/2;
+      if ((long) coeff_limbs < 1) coeff_limbs = 1;
+      length1 = (limbs1-1)/coeff_limbs+1;
+      length2 = (limbs2-1)/coeff_limbs+1;
    }
-   
-   unsigned long coeff_limbs = (limbs1 + limbs2-1)/length+1;
-   if (limbs1%coeff_limbs) coeff_limbs++;
-   
-   unsigned long length1 = (limbs1-1)/coeff_limbs + 1;
-   unsigned long length2 = (limbs2-1)/coeff_limbs + 1;
-   
-   // Recompute output_limbs
-   unsigned log_length2 = 0;
-   while ((1<<log_length2) < length2) log_length2++;
-    
-   unsigned long output_bits = 2*coeff_limbs*FLINT_BITS_PER_LIMB + log_length2;
-   output_limbs = (output_bits-1)/FLINT_BITS_PER_LIMB+1;
-   
-   // Round to a number of bits supported by the convolution length
-   output_bits = (((output_bits - 1) >> (log_length-1)) + 1) << (log_length-1);
-   unsigned long n = (output_bits - 1) / FLINT_BITS_PER_LIMB + 1;
-   
+      
+   n = output_bits/FLINT_BITS_PER_LIMB;
+   n = ZmodF_mul_precomp_get_feasible_n(NULL, n);
+#if DEBUG
+   printf("%ld, %ld, %ld, %ld, %ld\n", length1, length2, output_bits, coeff_limbs, log_length);
+#endif   
    ZmodFpoly_t poly1;
-   ZmodFpoly_init(poly1, log_length, n, 1);
+   ZmodFpoly_stack_init(poly1, log_length, n, 1);
    Z_split_limbs(poly1, data1, limbs1, coeff_limbs, n);
    
    if (data1 == data2 && limbs1 == limbs2)
@@ -105,18 +121,33 @@ void Z_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1,
    {
       // distinct operands case
       ZmodFpoly_t poly2;
-      ZmodFpoly_init(poly2, log_length, n, 1);
+      ZmodFpoly_stack_init(poly2, log_length, n, 1);
       Z_split_limbs(poly2, data2, limbs2, coeff_limbs, n);
 
       ZmodFpoly_convolution(poly1, poly1, poly2);
 
-      ZmodFpoly_clear(poly2);
+      ZmodFpoly_stack_clear(poly2);
    }
    
    ZmodFpoly_normalise(poly1);
    
    clear_limbs(res, limbs1 + limbs2);
    
-   Z_combine_limbs(res, poly1, coeff_limbs, output_limbs, limbs1 + limbs2);
-   ZmodFpoly_clear(poly1);
+   Z_combine_limbs(res, poly1, coeff_limbs, 2*coeff_limbs+1, limbs1 + limbs2);
+   ZmodFpoly_stack_clear(poly1);
+}
+
+void Z_mul(mpz_t res, mpz_t a, mpz_t b)
+{
+   unsigned long int limbs;
+   if (a->_mp_size + b->_mp_size > 128000/FLINT_BITS_PER_LIMB)
+   {
+      if (a->_mp_size >= b->_mp_size) limbs = a->_mp_size;
+      else limbs = b->_mp_size;
+      mp_limb_t* output = (mp_limb_t*) flint_stack_alloc(a->_mp_size+b->_mp_size);
+      Z_mpn_mul(output, a->_mp_d, a->_mp_size, b->_mp_d, b->_mp_size);
+      mpz_import(res, a->_mp_size+b->_mp_size, -1, sizeof(mp_limb_t), 0, 0, output);
+      if (mpz_sgn(res) != mpz_sgn(a)*mpz_sgn(b)) mpz_neg(res,res);
+      flint_stack_release();
+   } else mpz_mul(res, a, b);
 }

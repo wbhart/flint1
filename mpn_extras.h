@@ -3,12 +3,6 @@
 
 #include "flint.h"
 
-
-void* limb_alloc(unsigned long, int);
-void limb_release();
-
-
-
 /*============================================================================
 
 "mpn-wannabe" code.

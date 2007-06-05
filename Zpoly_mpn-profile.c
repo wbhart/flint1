@@ -8,13 +8,14 @@ Copyright (C) 2007, William Hart and David Harvey
 
 *****************************************************************************/
 
-#include "profiler-main.h"
-#include "Zpoly_mpn.h"
-#include "Zpoly.h"
-#include "flint.h"
 #include <string.h>
 #include <math.h>
 #include <gmp.h>
+#include "profiler-main.h"
+#include "flint.h"
+#include "memory-manager.h"
+#include "Zpoly_mpn.h"
+#include "Zpoly.h"
 
 //================================================================================
 
@@ -36,8 +37,8 @@ void randpoly(Zpoly_t pol, unsigned long length, unsigned long maxbits)
    mpz_t temp;
    mpz_init(temp);
    
-   if (pol->coeffs) Zpoly_clear(pol);
-   Zpoly_init3(pol, length, maxbits);
+   //if (pol->coeffs) Zpoly_clear(pol);
+   //Zpoly_init3(pol, length, maxbits);
    for (unsigned long i = 0; i < length; i++)
    {
        bits = maxbits;
@@ -62,22 +63,21 @@ void randpoly(Zpoly_t pol, unsigned long length, unsigned long maxbits)
 void sample_Zpoly_mpn_mul_KS(unsigned long length, unsigned long bits,
                           unsigned long count)
 {
-   unsigned long m = ceil_log2(2*length);
+   unsigned long m = ceil_log2(length);
+   unsigned long output_bits = 2*bits+m;
    
    Zpoly_mpn_t poly1, poly2, poly3;
    Zpoly_t r_poly, r_poly2;  
    
    Zpoly_init(r_poly); 
    Zpoly_init(r_poly2); 
-   Zpoly_mpn_init(poly1, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
-   Zpoly_mpn_init(poly2, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
-   Zpoly_mpn_init(poly3, 1, poly1->limbs+poly2->limbs+1);
-   Zpoly_mpn_realloc(poly1, length);
-   Zpoly_mpn_realloc(poly2, length);
-   Zpoly_mpn_realloc(poly3, 2*length-1);
    Zpoly_realloc(r_poly, length);
    Zpoly_realloc(r_poly2, length);
-   
+  
+   _Zpoly_mpn_stack_init(poly1, length, (bits-1)/FLINT_BITS_PER_LIMB+1);
+   _Zpoly_mpn_stack_init(poly2, length, (bits-1)/FLINT_BITS_PER_LIMB+1);
+   _Zpoly_mpn_stack_init(poly3, 2*length-1, (output_bits-1)/FLINT_BITS_PER_LIMB+1);
+    
    unsigned long r_count;
    
    if (count >= 1000) r_count = 100;
@@ -103,9 +103,10 @@ void sample_Zpoly_mpn_mul_KS(unsigned long length, unsigned long bits,
    
    Zpoly_clear(r_poly);
    Zpoly_clear(r_poly2);
-   Zpoly_mpn_clear(poly1);
-   Zpoly_mpn_clear(poly2);
-   Zpoly_mpn_clear(poly3);
+   
+   _Zpoly_mpn_stack_clear(poly3);
+   _Zpoly_mpn_stack_clear(poly2);
+   _Zpoly_mpn_stack_clear(poly1);
    
 }
 
@@ -150,7 +151,7 @@ void prof2dDriver_Zpoly_mpn_mul_KS(char* params)
    for (unsigned long length = length_min; length < length_max;
         length = (int)(ceil(ratio * (float)length)))
    {
-      for (unsigned long bits = bits_min; bits <= length; 
+      for (unsigned long bits = bits_min; (bits <= length); 
                                   bits = (int)(ceil(ratio * bits)))
       {
          if (bits == 444) bits = 445;

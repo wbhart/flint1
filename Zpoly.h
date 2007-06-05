@@ -16,7 +16,6 @@ There are two entirely separate data formats for polynomials over Z:
 #include <stdlib.h>
 #include <stdio.h>
 #include <gmp.h>
-#include "flint-manager.h"
 
 /****************************************************************************
 

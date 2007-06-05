@@ -11,7 +11,7 @@ Copyright (C) 2007, William Hart and David Harvey
 #include <string.h>
 #include "flint.h"
 #include "Zpoly.h"
-#include "flint-manager.h"
+#include "memory-manager.h"
 
 /****************************************************************************
 
@@ -318,7 +318,7 @@ void _Zpoly_content(mpz_t content, Zpoly_t a)
 
 void Zpoly_init(Zpoly_t poly)
 {
-   poly->coeffs = (mpz_t*) flint_malloc(sizeof(mpz_t));
+   poly->coeffs = (mpz_t*) flint_heap_alloc_bytes(sizeof(mpz_t));
    mpz_init(poly->coeffs[0]);
    poly->alloc = 1;
    poly->length = 0;
@@ -328,7 +328,7 @@ void Zpoly_init(Zpoly_t poly)
 
 void Zpoly_init2(Zpoly_t poly, unsigned long alloc)
 {
-   poly->coeffs = (mpz_t*) flint_malloc(sizeof(mpz_t) * alloc);
+   poly->coeffs = (mpz_t*) flint_heap_alloc_bytes(sizeof(mpz_t) * alloc);
    for (unsigned long i = 0; i < alloc; i++)
       mpz_init(poly->coeffs[i]);
    poly->alloc = alloc;
@@ -341,7 +341,7 @@ void Zpoly_init2(Zpoly_t poly, unsigned long alloc)
 void Zpoly_init3(Zpoly_t poly, unsigned long alloc,
                      unsigned long coeff_bits)
 {
-   poly->coeffs = (mpz_t*) flint_malloc(sizeof(mpz_t) * alloc);
+   poly->coeffs = (mpz_t*) flint_heap_alloc_bytes(sizeof(mpz_t) * alloc);
    for (unsigned long i = 0; i < alloc; i++)
       mpz_init2(poly->coeffs[i], coeff_bits);
    poly->alloc = alloc;
@@ -359,7 +359,7 @@ void Zpoly_realloc(Zpoly_t poly, unsigned long alloc)
          mpz_clear(poly->coeffs[i]);
    }
    
-   if (alloc > 0) poly->coeffs = (mpz_t*) flint_realloc(poly->coeffs, sizeof(mpz_t) * alloc);
+   if (alloc > 0) poly->coeffs = (mpz_t*) flint_heap_realloc_bytes(poly->coeffs, sizeof(mpz_t) * alloc);
 
    // create new mpz's if necessary
    for (unsigned long i = poly->alloc; i < alloc; i++)
@@ -388,7 +388,7 @@ void Zpoly_clear(Zpoly_t poly)
 {
    for (unsigned long i = 0; i < poly->alloc; i++)
       mpz_clear(poly->coeffs[i]);
-   flint_free(poly->coeffs);
+   flint_heap_free(poly->coeffs);
 }
 
 /* Return a pointer to the given coefficient, or NULL if the poly isn't
@@ -496,10 +496,10 @@ void Zpoly_get_as_string(char* output, Zpoly_t poly)
 void Zpoly_print(FILE* output, Zpoly_t poly)
 {
    unsigned long size = Zpoly_get_string_size(poly);
-   char* buf = flint_malloc(size);
+   char* buf = flint_heap_alloc_bytes(size);
    Zpoly_get_as_string(buf, poly);
    fprintf(output, buf);
-   flint_free(buf);
+   flint_heap_free(buf);
 }
 
 /* Set the given polynomial coefficient to the given value */

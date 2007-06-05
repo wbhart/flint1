@@ -16,4 +16,6 @@ Copyright (C) 2007, William Hart and David Harvey
 void Z_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1, 
                                       mp_limb_t * data2, unsigned long limbs2);
                                       
+void Z_mul(mpz_t res, mpz_t a, mpz_t b);
+                                      
 #endif

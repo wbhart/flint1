@@ -57,14 +57,16 @@ int main(int argc, char* argv[])
       Zpoly_mpn_set_coeff_si(F2, i, values[i]);
 
    free(values);
-
+   printf("Done F2\n");
    // compute F^4, truncated to length N
    _Zpoly_mpn_mul_KS(F4, F2, F2);
    Zpoly_mpn_set_length(F4, N);
-
+   printf("Done F4\n");
+   
    // compute F^8, truncated to length N
    _Zpoly_mpn_mul_KS(F8, F4, F4);
    Zpoly_mpn_set_length(F8, N);
+   printf("Done F8\n");
    
    // print out last coefficient
    mpz_t x;

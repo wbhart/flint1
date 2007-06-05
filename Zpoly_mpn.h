@@ -16,10 +16,8 @@ There are two entirely separate data formats for polynomials over Z:
 #include <stdlib.h>
 #include <stdio.h>
 #include <gmp.h>
-#include "flint-manager.h"
 #include "Zpoly.h"
 #include "mpn_extras.h"
-
 /****************************************************************************
 
    Zpoly_mpn_t
@@ -107,6 +105,10 @@ do { \
     Functions in _Zpoly_mpn_* layer
     
 ===============================================================================*/
+
+void _Zpoly_mpn_stack_init(Zpoly_mpn_t poly, unsigned long alloc, unsigned long limbs);
+
+void _Zpoly_mpn_stack_clear(Zpoly_mpn_t poly);
 
 void _Zpoly_mpn_convert_out(Zpoly_t poly_mpz, Zpoly_mpn_t poly_mpn);
 
@@ -219,7 +221,13 @@ void _Zpoly_mpn_add(Zpoly_mpn_t output, Zpoly_mpn_t input1, Zpoly_mpn_t input2);
 
 void __Zpoly_mpn_add_coeff_ui(mp_limb_t * output, unsigned long x);
 
+void __Zpoly_mpn_add_coeff2_ui(mp_limb_t * output, unsigned long x);
+
 void __Zpoly_mpn_sub_coeff_ui(mp_limb_t * output, unsigned long x);
+
+void __Zpoly_mpn_add_coeffs(mp_limb_t * coeffs_out, mp_limb_t * coeffs1, mp_limb_t * coeffs2);
+
+void __Zpoly_mpn_sub_coeffs(mp_limb_t * coeffs_out, mp_limb_t * coeffs1, mp_limb_t * coeffs2);
 
 void _Zpoly_mpn_sub(Zpoly_mpn_t output, Zpoly_mpn_t input1, Zpoly_mpn_t input2);
 

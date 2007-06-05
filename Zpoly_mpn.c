@@ -15,7 +15,7 @@ Copyright (C) 2007, William Hart and David Harvey
 #include "mpn_extras.h"
 #include "extras.h"
 #include "longlong_wrapper.h"
-#include "flint-manager.h"
+#include "memory-manager.h"
 #include "ZmodFpoly.h"
 #include "Z_mpn.h"
 
@@ -25,6 +25,26 @@ Copyright (C) 2007, William Hart and David Harvey
 
 ****************************************************************************/
 
+/* 
+   Create a polynomial of length zero with "alloc" allocated coefficients
+   each with enough space for limbs limbs
+*/
+
+void _Zpoly_mpn_stack_init(Zpoly_mpn_t poly, unsigned long alloc, unsigned long limbs)
+{
+   FLINT_ASSERT(alloc >= 1);
+   FLINT_ASSERT(limbs >= 1);
+
+   poly->coeffs = (mp_limb_t *) flint_stack_alloc(alloc*(limbs+1));
+   poly->alloc = alloc;
+   poly->length = 0;
+   poly->limbs = limbs;
+}
+
+void _Zpoly_mpn_stack_clear(Zpoly_mpn_t poly)
+{
+   flint_stack_release();
+}
 
 static inline
 void _convert_coeff_to_mpz(mpz_t x, mp_limb_t* coeff)
@@ -453,7 +473,7 @@ void __Zpoly_mpn_add_coeff_ui(mp_limb_t * output, unsigned long x)
          carry = mpn_add_1(output + 1, output + 1, output[0], x); 
          if (carry)
          {
-            output[output[0]] = carry;
+            output[output[0]+1] = carry;
             output[0]++;
          }
       } else if ((long) output[0] < -1L)
@@ -475,6 +495,28 @@ void __Zpoly_mpn_add_coeff_ui(mp_limb_t * output, unsigned long x)
    }
 }
 
+void __Zpoly_mpn_add_coeff2_ui(mp_limb_t * output, unsigned long x)
+{
+   unsigned long carry;
+   
+   if (x)
+   {
+      if (!output[0])
+      {
+         output[1] = x;
+         output[0] = 1;
+      } else 
+      {
+         carry = mpn_add_1(output + 1, output + 1, output[0], x); 
+         if (carry)
+         {
+            output[output[0]+1] = carry;
+            output[0]++;
+         }
+      } 
+   }
+}
+
 void __Zpoly_mpn_sub_coeff_ui(mp_limb_t * output, unsigned long x)
 {
    unsigned long carry;
@@ -490,7 +532,7 @@ void __Zpoly_mpn_sub_coeff_ui(mp_limb_t * output, unsigned long x)
          carry = mpn_add_1(output + 1, output + 1, ABS(output[0]), x); 
          if (carry)
          {
-            output[ABS(output[0])] = carry;
+            output[ABS(output[0])+1] = carry;
             output[0]--;
          }
       } else if ((long) output[0] > 1L)
@@ -781,7 +823,7 @@ void _Zpoly_mpn_scalar_div_exact_ui(Zpoly_mpn_t output, Zpoly_mpn_t poly, unsign
          }
       } else
       {
-         mp_limb_t * signs = (mp_limb_t *) flint_malloc_limbs(poly->length);
+         mp_limb_t * signs = (mp_limb_t *) flint_stack_alloc(poly->length);
          signs[0] = coeffs1[0];
          coeffs_out[0] = 0;
          for (unsigned long i = 0; i < poly->length-1; i++)
@@ -796,7 +838,7 @@ void _Zpoly_mpn_scalar_div_exact_ui(Zpoly_mpn_t output, Zpoly_mpn_t poly, unsign
             coeffs_out[i*size_out] = signs[i];
             NORM(coeffs_out+i*size_out);
          }
-         flint_free(signs);
+         flint_stack_release();
       }
    }
    output->length = poly->length;
@@ -847,7 +889,7 @@ void _Zpoly_mpn_scalar_div_exact_si(Zpoly_mpn_t output, Zpoly_mpn_t poly, long x
          }
       } else
       {
-         mp_limb_t * signs = (mp_limb_t *) flint_malloc_limbs(poly->length);
+         mp_limb_t * signs = (mp_limb_t *) flint_stack_alloc(poly->length);
          signs[0] = coeffs1[0];
          coeffs_out[0] = 0;
          for (unsigned long i = 0; i < poly->length-1; i++)
@@ -864,7 +906,7 @@ void _Zpoly_mpn_scalar_div_exact_si(Zpoly_mpn_t output, Zpoly_mpn_t poly, long x
             else coeffs_out[i*size_out] = signs[i];
             NORM(coeffs_out+i*size_out);
          }
-         flint_free(signs);
+         flint_stack_release();
       }
    }
    output->length = poly->length;
@@ -964,7 +1006,7 @@ void _Zpoly_mpn_mul_naive(Zpoly_mpn_t output, Zpoly_mpn_t input1, Zpoly_mpn_t in
    len1 = input1->length;
    len2 = input2->length;
       
-   mp_limb_t * temp = (mp_limb_t *) limb_alloc(size1+size2-1,0);
+   mp_limb_t * temp = (mp_limb_t *) flint_stack_alloc(size1+size2-1);
          
    for (unsigned long i = 0; i < len1; i++)
    {
@@ -1007,7 +1049,7 @@ void _Zpoly_mpn_mul_naive(Zpoly_mpn_t output, Zpoly_mpn_t input1, Zpoly_mpn_t in
       }
    } 
    output->length = len1 + len2 - 1;
-   limb_release();
+   flint_stack_release();
 }
 
 void __Zpoly_mpn_karamul_recursive(Zpoly_mpn_t res, Zpoly_mpn_t a, Zpoly_mpn_t b, Zpoly_mpn_t scratch, Zpoly_mpn_t scratchb)
@@ -1168,17 +1210,17 @@ void _Zpoly_mpn_mul_karatsuba(Zpoly_mpn_t output, Zpoly_mpn_t input1, Zpoly_mpn_
    unsigned long limbs = input1->limbs+input2->limbs+2;
    unsigned long log_length = 0;
    Zpoly_mpn_t scratch, scratchb;
-   scratch->coeffs = (mp_limb_t *) limb_alloc(5*FLINT_MAX(input1->length,input2->length)*(limbs+1),0);
+   scratch->coeffs = (mp_limb_t *) flint_stack_alloc(5*FLINT_MAX(input1->length,input2->length)*(limbs+1));
    scratch->limbs = limbs;
    scratchb->limbs = FLINT_MAX(input1->limbs,input2->limbs)+1;
-   scratchb->coeffs = (mp_limb_t *) limb_alloc(5*FLINT_MAX(input1->length,input2->length)*(scratchb->limbs+1),0);
+   scratchb->coeffs = (mp_limb_t *) flint_stack_alloc(5*FLINT_MAX(input1->length,input2->length)*(scratchb->limbs+1));
    
    if (input1->length >= input2->length)
        __Zpoly_mpn_karamul_recursive(output, input1, input2, scratch, scratchb);
    else
        __Zpoly_mpn_karamul_recursive(output, input2, input1, scratch, scratchb);
    
-   limb_release(); limb_release();
+   flint_stack_release(); flint_stack_release();
 }
 
 void _Zpoly_mpn_mul_KS(Zpoly_mpn_t output, Zpoly_mpn_p input1, Zpoly_mpn_p input2)
@@ -1197,7 +1239,7 @@ void _Zpoly_mpn_mul_KS(Zpoly_mpn_t output, Zpoly_mpn_p input1, Zpoly_mpn_p input
       return;
    }
    
-   if ((long) input1->coeffs[(input1->length-1)*(input1->limbs+1)] < 0)
+              if ((long) input1->coeffs[(input1->length-1)*(input1->limbs+1)] < 0)
    {
       _Zpoly_mpn_negate(input1, input1);
       sign1 = -1L;
@@ -1234,30 +1276,30 @@ void _Zpoly_mpn_mul_KS(Zpoly_mpn_t output, Zpoly_mpn_p input1, Zpoly_mpn_p input
    
    if ((bits < 64) && (input1->limbs == 1) && (input2->limbs == 1) && (output->limbs == 1)) bitpack = 1;
    
-   ZmodFpoly_t poly1, poly2, poly3;
+   unsigned long bytes = ((bits-1)>>3)+1;
    
+   ZmodFpoly_t poly1, poly2, poly3;
    if (bitpack)
    {
-      ZmodFpoly_init(poly1, 0, (bits*input1->length-1)/FLINT_BITS_PER_LIMB+1, 0);
+      ZmodFpoly_stack_init(poly1, 0, (bits*input1->length-1)/FLINT_BITS_PER_LIMB+1, 0);
       if (input1 != input2)
-         ZmodFpoly_init(poly2, 0, (bits*input2->length-1)/FLINT_BITS_PER_LIMB+1, 0);
+         ZmodFpoly_stack_init(poly2, 0, (bits*input2->length-1)/FLINT_BITS_PER_LIMB+1, 0);
 
       if (sign) bits = -1L*bits;
-
-      ZmodFpoly_bit_pack_mpn(poly1, input1, input1->length, bits);
+      ZmodFpoly_bit_pack_mpn(poly2, input2, input2->length, bits);
       if (input1 != input2)
-         ZmodFpoly_bit_pack_mpn(poly2, input2, input2->length, bits);
+         ZmodFpoly_bit_pack_mpn(poly1, input1, input1->length, bits);
 
       bits=ABS(bits);
    } else
    {
-      ZmodFpoly_init(poly1, 0, limbs*input1->length, 0);
+      ZmodFpoly_stack_init(poly1, 0, ((bytes*input1->length-1)>>FLINT_LG_BYTES_PER_LIMB)+1, 0);
       if (input1 != input2)
-         ZmodFpoly_init(poly2, 0, limbs*input2->length, 0);
+         ZmodFpoly_stack_init(poly2, 0, ((bytes*input2->length-1)>>FLINT_LG_BYTES_PER_LIMB)+1, 0);
 
-      ZmodFpoly_limb_pack_mpn(poly1, input1, input1->length, limbs);
+      ZmodFpoly_byte_pack_mpn(poly1, input1, input1->length, bytes);
       if (input1 != input2)
-         ZmodFpoly_limb_pack_mpn(poly2, input2, input2->length, limbs);
+         ZmodFpoly_byte_pack_mpn(poly2, input2, input2->length, bytes);
    }
    
    if (input1 == input2)
@@ -1266,7 +1308,7 @@ void _Zpoly_mpn_mul_KS(Zpoly_mpn_t output, Zpoly_mpn_p input1, Zpoly_mpn_p input
       poly2->n = poly1->n;
    }
    
-   ZmodFpoly_init(poly3, 0, poly1->n + poly2->n, 0);
+   ZmodFpoly_stack_init(poly3, 0, poly1->n + poly2->n, 0);
            
    if ((poly1->n < 1500) || (poly2->n < 1500)) 
    {
@@ -1287,14 +1329,14 @@ void _Zpoly_mpn_mul_KS(Zpoly_mpn_t output, Zpoly_mpn_p input1, Zpoly_mpn_p input
       else ZmodFpoly_bit_unpack_unsigned_mpn(output, poly3, input1->length+input2->length-1, bits);  
    } else
    {
-      if (sign) ZmodFpoly_limb_unpack_mpn(output, poly3, input1->length+input2->length-1, limbs);        
-      else ZmodFpoly_limb_unpack_unsigned_mpn(output, poly3, input1->length+input2->length-1, limbs);  
+      if (sign) ZmodFpoly_byte_unpack_mpn(output, poly3->coeffs[0], input1->length+input2->length-1, bytes);        
+      else ZmodFpoly_byte_unpack_unsigned_mpn(output, poly3->coeffs[0], input1->length+input2->length-1, bytes);  
    }
    
-   ZmodFpoly_clear(poly1);
+   ZmodFpoly_stack_clear(poly3);
    if (input1 != input2)
-      ZmodFpoly_clear(poly2);
-   ZmodFpoly_clear(poly3);
+      ZmodFpoly_stack_clear(poly2);
+   ZmodFpoly_stack_clear(poly1);
      
    if ((long) (sign1 ^ sign2) < 0) _Zpoly_mpn_negate(output, output);
    
@@ -1383,22 +1425,6 @@ void _Zpoly_mpn_mul_SS(Zpoly_mpn_t output, Zpoly_mpn_p input1, Zpoly_mpn_p input
    ZmodFpoly_clear(res);
 }
 
-/*void _Zpoly_mpn_scalar_mul(Zpoly_mpn_t output, Zpoly_mpn_t poly, mp_limb_t * x)
-{
-     mp_limb_t * coeffs = poly->coeffs;
-     unsigned long size_x = ABS(x[0]);
-     unsigned long size_p = poly->limbs+1;
-     
-     if ((size_p > FLINT_TRUNC_MIN_LIMBS) && (size_x > FLINT_TRUNC_MIN_LIMBS))
-     {
-        Z_mul_precomp_t x_precomp;
-        Z_mul_precomp(x_precomp, x, 
-     } else
-     {
-     }
-}*/
-
-
 /****************************************************************************
 
    Zpoly_mpn_* layer
@@ -1415,7 +1441,8 @@ void Zpoly_mpn_init(Zpoly_mpn_t poly, unsigned long alloc, unsigned long limbs)
    FLINT_ASSERT(alloc >= 1);
    FLINT_ASSERT(limbs >= 1);
 
-   poly->coeffs = (mp_limb_t *) flint_malloc(sizeof(mp_limb_t)*alloc*(limbs+1));
+   poly->coeffs = (mp_limb_t *) flint_heap_alloc(alloc*(limbs+1));
+   
    poly->alloc = alloc;
    poly->length = 0;
    poly->limbs = limbs;
@@ -1426,7 +1453,7 @@ void Zpoly_mpn_init(Zpoly_mpn_t poly, unsigned long alloc, unsigned long limbs)
 void Zpoly_mpn_realloc(Zpoly_mpn_t poly, unsigned long alloc)
 {
    if (alloc <= 0) alloc = 1;
-   poly->coeffs = (mp_limb_t*) flint_realloc(poly->coeffs, sizeof(mp_limb_t)*alloc*(poly->limbs+1));
+   poly->coeffs = (mp_limb_t*) flint_heap_realloc(poly->coeffs, alloc*(poly->limbs+1));
    
    poly->alloc = alloc;
    
@@ -1437,7 +1464,7 @@ void Zpoly_mpn_realloc(Zpoly_mpn_t poly, unsigned long alloc)
 
 void Zpoly_mpn_clear(Zpoly_mpn_t poly)
 {
-   flint_free(poly->coeffs);
+   flint_heap_free(poly->coeffs);
 }
 
 long Zpoly_mpn_degree(Zpoly_mpn_t poly)

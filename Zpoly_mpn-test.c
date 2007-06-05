@@ -12,7 +12,7 @@ Copyright (C) 2007, William Hart and David Harvey
 #include "flint.h"
 #include "Zpoly_mpn.h"
 #include "Zpoly.h"
-#include "flint-manager.h"
+#include "memory-manager.h"
 #include "ZmodFpoly.h"
 
 #define VARY_BITS 1
@@ -39,6 +39,7 @@ void randpoly(Zpoly_t pol, unsigned long length, unsigned long maxbits)
    
    if (pol->coeffs) Zpoly_clear(pol);
    Zpoly_init3(pol, length, maxbits);
+   
    for (unsigned long i = 0; i < length; i++)
    {
 #if VARY_BITS
@@ -86,7 +87,7 @@ int test_Zpoly_mpn_convert()
       Zpoly_mpn_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
-          length = gmp_urandomm_ui(Zpoly_test_randstate,1000);
+          length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1;
 #if DEBUG
           printf("%ld, %ld\n",length, bits);
 #endif
@@ -1414,8 +1415,6 @@ int test_Zpoly_mpn_mul_KS()
    Zpoly_t test_poly, test_poly2, test_poly3, test_poly4;
    Zpoly_mpn_t test_mpn_poly, test_mpn_poly2, test_mpn_poly3;
    ZmodFpoly_t test_modF_poly;
-   mpz_t temp;
-   mpz_init(temp);
    int result = 1;
    unsigned long bits, bits2, length, length2;
    
@@ -1423,70 +1422,69 @@ int test_Zpoly_mpn_mul_KS()
    Zpoly_init(test_poly2); 
    Zpoly_init(test_poly3); 
    Zpoly_init(test_poly4); 
-   for (unsigned long count1 = 0; (count1 < 10) && (result == 1) ; count1++)
+      
+   for (unsigned long count1 = 0; count1 < 10; count1++)
    {
+      
       bits = gmp_urandomm_ui(Zpoly_test_randstate,1000) + 1;
       bits2 = gmp_urandomm_ui(Zpoly_test_randstate,1000) + 1;
       //bits = 4;
       //bits2 = 4;
-      
-      Zpoly_mpn_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
-      Zpoly_mpn_init(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS_PER_LIMB+1);
-      Zpoly_mpn_init(test_mpn_poly3, 1,  
-                      test_mpn_poly->limbs + test_mpn_poly2->limbs + 1);
+      length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1;
+      length2 = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1;
+      //length = 32000;
+      //length2 = 32000;   
+   
+      _Zpoly_mpn_stack_init(test_mpn_poly, length, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      _Zpoly_mpn_stack_init(test_mpn_poly2, length2, (bits2-1)/FLINT_BITS_PER_LIMB+1);
+      _Zpoly_mpn_stack_init(test_mpn_poly3, length + length2 - 1, test_mpn_poly->limbs + test_mpn_poly2->limbs + 1);
+#if DEBUG
+      printf("%ld, %ld, %ld, %ld\n", length, length2, bits, bits2);
+#endif
+      Zpoly_realloc(test_poly, length);
+      Zpoly_realloc(test_poly2, length2);
+      Zpoly_realloc(test_poly3, length + length2 - 1);
+      Zpoly_realloc(test_poly4, length + length2 - 1);
+          
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
-          length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1;
-          length2 = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1;
-          //length = 32000;
-          //length2 = 32000;
+         randpoly(test_poly, length, bits);
+         randpoly(test_poly2, length2, bits2);      
+          
 #if DEBUG
-          printf("%ld, %ld, %ld, %ld\n", length, length2, bits, bits2);
+         for (unsigned j = 0; j < test_poly->length; j++)
+            gmp_printf("%Zx, ",test_poly->coeffs[j]);
+         printf("\n\n");
+         for (unsigned j = 0; j < test_poly2->length; j++)
+            gmp_printf("%Zx, ",test_poly2->coeffs[j]);
+         printf("\n\n");
 #endif
-          Zpoly_mpn_realloc(test_mpn_poly, length);
-          Zpoly_mpn_realloc(test_mpn_poly2, length2);
-          Zpoly_mpn_realloc(test_mpn_poly3, length + length2 - 1);
-          Zpoly_realloc(test_poly, length);
-          Zpoly_realloc(test_poly2, length2);
-          Zpoly_realloc(test_poly3, length + length2 - 1);
-          Zpoly_realloc(test_poly4, length + length2 - 1);
+         _Zpoly_mpn_convert_in(test_mpn_poly2, test_poly2);
+         _Zpoly_mpn_convert_in(test_mpn_poly, test_poly);
           
-          randpoly(test_poly, length, bits);
-          randpoly(test_poly2, length2, bits2);      
-
-#if DEBUG
-          for (unsigned j = 0; j < test_poly->length; j++)
-             gmp_printf("%Zx, ",test_poly->coeffs[j]);
-          printf("\n\n");
-          for (unsigned j = 0; j < test_poly2->length; j++)
-             gmp_printf("%Zx, ",test_poly2->coeffs[j]);
-          printf("\n\n");
-#endif
-          _Zpoly_mpn_convert_in(test_mpn_poly, test_poly);
-          _Zpoly_mpn_convert_in(test_mpn_poly2, test_poly2);
+         Zpoly_mul_naive_KS(test_poly3, test_poly, test_poly2);
           
-          Zpoly_mul_naive_KS(test_poly3, test_poly, test_poly2);
-          
-          for (unsigned long i = 0; i < 10; i++)
-             _Zpoly_mpn_mul_KS(test_mpn_poly3, test_mpn_poly, test_mpn_poly2);
-          _Zpoly_mpn_convert_out(test_poly4, test_mpn_poly3);
+         for (unsigned long i = 0; i < 10; i++)
+            _Zpoly_mpn_mul_KS(test_mpn_poly3, test_mpn_poly, test_mpn_poly2);
+         _Zpoly_mpn_convert_out(test_poly4, test_mpn_poly3);
                   
 #if DEBUG
-          for (unsigned j = 0; j < test_poly3->length; j++)
-             gmp_printf("%Zx, ",test_poly3->coeffs[j]);
-          printf("\n\n");
-          for (unsigned j = 0; j < test_poly4->length; j++)
-             gmp_printf("%Zx, ",test_poly4->coeffs[j]);
-          printf("\n\n");
+         for (unsigned j = 0; j < test_poly3->length; j++)
+            gmp_printf("%Zx, ",test_poly3->coeffs[j]);
+         printf("\n\n");
+         for (unsigned j = 0; j < test_poly4->length; j++)
+            gmp_printf("%Zx, ",test_poly4->coeffs[j]);
+         printf("\n\n");
 #endif         
-          result = Zpoly_equal(test_poly3, test_poly4);
+         result = Zpoly_equal(test_poly3, test_poly4);
       }   
-      Zpoly_mpn_clear(test_mpn_poly);
-      Zpoly_mpn_clear(test_mpn_poly2);
-      Zpoly_mpn_clear(test_mpn_poly3);
+   
+      _Zpoly_mpn_stack_clear(test_mpn_poly3);
+      _Zpoly_mpn_stack_clear(test_mpn_poly2);
+      _Zpoly_mpn_stack_clear(test_mpn_poly);
+   
    }
    
-   mpz_clear(temp);
    Zpoly_clear(test_poly);
    Zpoly_clear(test_poly2);
    Zpoly_clear(test_poly3);

@@ -16,7 +16,7 @@ Copyright (C) 2007, William Hart and David Harvey
 #include <stdlib.h>
 #include <stdio.h>
 #include <gmp.h>
-#include "flint-manager.h"
+#include "memory-manager.h"
 #include "mpn_extras.h"
 #include "Zpoly_mpn.h"
 #include "ZmodF.h"
@@ -89,11 +89,17 @@ typedef ZmodFpoly_struct ZmodFpoly_t[1];
 */
 void ZmodFpoly_init(ZmodFpoly_t poly, unsigned long depth, unsigned long n,
                     unsigned long scratch_count);
+                    
+void ZmodFpoly_stack_init(ZmodFpoly_t poly, unsigned long depth, unsigned long n,
+                    unsigned long scratch_count);
+
 
 /*
    Frees resources for the given polynomial.
 */
 void ZmodFpoly_clear(ZmodFpoly_t poly);
+
+void ZmodFpoly_stack_clear(ZmodFpoly_t poly);
 
 
 /* 
@@ -204,12 +210,12 @@ void ZmodFpoly_bit_unpack_unsigned_mpn(Zpoly_mpn_t poly_mpn, ZmodFpoly_t poly_f,
    will have "bundle" coefficients packed into it, each packed into a field
    "bytes" bytes wide.
    
-   "bytes" is assumed to be at least FLINT_BITS_PER_LIMB/8, i.e. the
+   "coeff_bytes" is assumed to be at least FLINT_BITS_PER_LIMB/8, i.e. the
    coefficients are assumed to be at least a limb wide.
 */ 
    
 void ZmodFpoly_byte_pack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
-     unsigned long bundle, unsigned long bytes);
+                             unsigned long bundle, unsigned long coeff_bytes);
 
      
 /*
@@ -219,12 +225,16 @@ void ZmodFpoly_byte_pack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
    The total number of coefficients to be unpacked is given by the length of 
    poly_mpn.
    
-   "bytes" is assumed to be at least FLINT_BITS_PER_LIMB/8, i.e. the
+   "coeff_bytes" is assumed to be at least FLINT_BITS_PER_LIMB/8, i.e. the
    coefficients are assumed to be at least a limb wide.
 */ 
    
-void ZmodFpoly_byte_unpack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
-     unsigned long bundle, unsigned long bytes);
+void ZmodFpoly_byte_unpack_unsigned_mpn(Zpoly_mpn_t poly_m, mp_limb_t* array,
+                               unsigned long bundle, unsigned long coeff_bytes);
+
+void ZmodFpoly_byte_unpack_mpn(Zpoly_mpn_t poly_m, mp_limb_t* array,
+                               unsigned long bundle, unsigned long coeff_bytes);
+
 
      
 /*
