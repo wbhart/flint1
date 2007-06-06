@@ -167,7 +167,7 @@ unsigned long ZmodF_mul_precomp_get_feasible_n(unsigned long *depth,
    return n;
 }
 
-
+/* Todo: mention in the documentation that this function uses stack based memory management */
 void ZmodF_mul_precomp_init(ZmodF_mul_precomp_t info, unsigned long n,
                             int squaring)
 {
@@ -184,9 +184,7 @@ void ZmodF_mul_precomp_init(ZmodF_mul_precomp_t info, unsigned long n,
       // use mpn_mul_n
       info->use_fft = 0;
 
-      // todo: this should use stack-based memory manager; and the
-      // documentation for this function NEEDS TO MENTION THIS
-      info->scratch = (mp_limb_t*) malloc(2*n * sizeof(mp_limb_t));
+      info->scratch = (mp_limb_t*) flint_stack_alloc(2*n);
    }
    else
    {
@@ -221,7 +219,7 @@ void ZmodF_mul_precomp_clear(ZmodF_mul_precomp_t info)
    }
    else
    {
-      free(info->scratch);
+      flint_stack_release(info->scratch);
    }
 }
 
