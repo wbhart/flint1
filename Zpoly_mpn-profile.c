@@ -170,4 +170,119 @@ void prof2dDriver_Zpoly_mpn_mul_KS(char* params)
    }
 }
 
+// **************************************************************************************
+
+void sample_Zpoly_mpn_mul_SS(unsigned long length, unsigned long bits,
+                          unsigned long count)
+{
+   unsigned long m = ceil_log2(length);
+   unsigned long output_bits = 2*bits+m;
+   
+   Zpoly_mpn_t poly1, poly2, poly3;
+   Zpoly_t r_poly, r_poly2;  
+   
+   Zpoly_init(r_poly); 
+   Zpoly_init(r_poly2); 
+   Zpoly_realloc(r_poly, length);
+   Zpoly_realloc(r_poly2, length);
+  
+   _Zpoly_mpn_stack_init(poly1, length, (bits-1)/FLINT_BITS_PER_LIMB+1);
+   _Zpoly_mpn_stack_init(poly2, length, (bits-1)/FLINT_BITS_PER_LIMB+1);
+   _Zpoly_mpn_stack_init(poly3, 2*length-1, (output_bits-1)/FLINT_BITS_PER_LIMB+1);
+    
+   unsigned long r_count;
+   
+   if (count >= 1000) r_count = 100;
+   else if (count >= 100) r_count = 10;
+   else if (count >= 20) r_count = 5;
+   else if (count >= 8) r_count = 2;
+   else r_count = 1;
+ 
+   
+   for (unsigned long i = 0; i < count; i++)
+   {
+      if (i%r_count == 0)
+      {
+         randpoly(r_poly, length, bits);
+         _Zpoly_mpn_convert_in(poly1, r_poly);
+         randpoly(r_poly2, length, bits);
+         _Zpoly_mpn_convert_in(poly2, r_poly2);
+      }
+       prof2d_start();
+       _Zpoly_mpn_mul_SS(poly3, poly1, poly2);
+       prof2d_stop();
+   }
+   
+   Zpoly_clear(r_poly);
+   Zpoly_clear(r_poly2);
+   
+   _Zpoly_mpn_stack_clear(poly3);
+   _Zpoly_mpn_stack_clear(poly2);
+   _Zpoly_mpn_stack_clear(poly1);
+   
+}
+
+
+char* prof2dDriverString_Zpoly_mpn_mul_SS(char* params)
+{
+   return "Zpoly_mpn_mul_SS over various lengths and various bit sizes";
+}
+
+
+/*
+Parameters for this target are:
+   length_min: minimum length
+   length_max: maximum length
+   ratio: e.g. 1.03 means increase by 3% at a time
+   n_count: number of coefficient lengths to test
+*/
+void prof2dDriver_Zpoly_mpn_mul_SS(char* params)
+{
+   int length_min, length_max, bits_min, bits_max;
+   double ratio;
+
+   if (strlen(params) == 0)
+   {
+      // default parameters:
+      length_min = 1;
+      length_max = 1000000;
+      bits_max = 1000000;
+      bits_min = 1;
+      
+      ratio = 1.2;
+   }
+   else
+   {
+      sscanf(params, "%d %d %lf %d", &length_min, &length_max,
+                                     &ratio, &bits_min);
+   }
+
+   gmp_randinit_default(Zpoly_test_randstate);
+
+   prof2d_set_sampler(sample_Zpoly_mpn_mul_SS);
+
+   for (unsigned long length = length_min; length <= length_max;
+        length = (int)(ceil(ratio * (float)length)))
+   {
+      for (unsigned long bits = bits_min; bits <= bits_max; 
+                                  bits = (int)(ceil(ratio * bits)))
+      {
+         if (bits * length > 1000000) continue;
+         
+         if (bits == 444) bits = 445;
+         if (length == 444) length = 445;
+         if (bits == 924) bits = 925;
+         if (length == 924) length = 925;
+         if (bits == 51144) bits = 51145;
+         if (length == 51144) length = 51145;
+         if (bits == 61374) bits = 61375;
+         if (length == 61374) length = 61375;
+         if (bits == 106056) bits = 106057;
+         if (length == 106056) length = 106057;
+         if (bits*length > 1000000) continue;
+         prof2d_sample(length, bits);
+      }
+   }
+}
+
 // end of file ****************************************************************
