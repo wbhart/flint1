@@ -18,6 +18,7 @@ Copyright (C) 2007, William Hart and David Harvey
 #include "memory-manager.h"
 #include "ZmodFpoly.h"
 #include "Z_mpn.h"
+#include "ZmodF_mul.h"
 
 /****************************************************************************
 
@@ -1310,7 +1311,7 @@ void _Zpoly_mpn_mul_KS(Zpoly_mpn_t output, Zpoly_mpn_p input1, Zpoly_mpn_p input
    
    ZmodFpoly_stack_init(poly3, 0, poly1->n + poly2->n, 0);
            
-   if ((poly1->n < 1500) || (poly2->n < 1500)) 
+   if (poly1->n  + poly2->n < 2*1794) 
    {
       mpn_mul(poly3->coeffs[0], poly1->coeffs[0], poly1->n, poly2->coeffs[0], poly2->n);
    } else Z_mpn_mul(poly3->coeffs[0], poly1->coeffs[0], poly1->n, poly2->coeffs[0], poly2->n);
@@ -1371,7 +1372,7 @@ void _Zpoly_mpn_mul_SS(Zpoly_mpn_t output, Zpoly_mpn_p input1, Zpoly_mpn_p input
    
    /* Start with an upper bound on the number of bits needed */
    
-   unsigned long output_bits = FLINT_BITS_PER_LIMB * (size1 + size2) + log_length + 2;
+   unsigned long output_bits = FLINT_BITS_PER_LIMB * (size1 + size2) + log_length2 + 2;
 
    if (output_bits <= length1)
       output_bits = (((output_bits - 1) >> (log_length-1)) + 1) << (log_length-1);
@@ -1380,10 +1381,12 @@ void _Zpoly_mpn_mul_SS(Zpoly_mpn_t output, Zpoly_mpn_p input1, Zpoly_mpn_p input
       
    unsigned long n = (output_bits - 1) / FLINT_BITS_PER_LIMB + 1;
    
+   n = ZmodF_mul_precomp_get_feasible_n(NULL, n);
+
    ZmodFpoly_t poly1, poly2, res;
    long bits1, bits2;
    unsigned long sign = 0;
-
+   
    ZmodFpoly_init(poly1, log_length + 1, n, 1);
    ZmodFpoly_init(poly2, log_length + 1, n, 1);
    ZmodFpoly_init(res, log_length + 1, n, 1);
@@ -1408,6 +1411,8 @@ void _Zpoly_mpn_mul_SS(Zpoly_mpn_t output, Zpoly_mpn_p input1, Zpoly_mpn_p input
       output_bits = (((output_bits - 1) >> log_length) + 1) << log_length;
       
    n = (output_bits - 1) / FLINT_BITS_PER_LIMB + 1;
+   
+   n = ZmodF_mul_precomp_get_feasible_n(NULL, n);
    
    ZmodFpoly_decrease_n(poly1, n);
    ZmodFpoly_decrease_n(poly2, n);
