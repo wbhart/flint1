@@ -80,13 +80,13 @@ void Z_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1,
    
    if (data1 != data2)
    {
-      if (coeff_limbs < MUL_TWK_SMALL_CUTOFF) twk = MUL_TWK_SMALL_DEFAULT;
-      else if (coeff_limbs > MUL_TWK_LARGE_CUTOFF) twk = MUL_TWK_LARGE_DEFAULT;
+      if (coeff_limbs/2 < MUL_TWK_SMALL_CUTOFF) twk = MUL_TWK_SMALL_DEFAULT;
+      else if (coeff_limbs/2 > MUL_TWK_LARGE_CUTOFF) twk = MUL_TWK_LARGE_DEFAULT;
       else 
       {  
          for (unsigned long twk_count = 0; twk_count < MUL_TWK_COUNT; twk_count++)
          {
-            if ((coeff_limbs < MUL_TWK_VALS[twk_count][0]) || (coeff_limbs < MUL_TWK_VALS[twk_count][1])) continue;
+            if ((coeff_limbs/2 < MUL_TWK_VALS[twk_count][0]) || (coeff_limbs/2 < MUL_TWK_VALS[twk_count][1])) continue;
             else 
             {
                twk = MUL_TWK_VALS[twk_count][2];
@@ -96,13 +96,13 @@ void Z_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1,
       }
    } else
    {
-      if (coeff_limbs < SQR_TWK_SMALL_CUTOFF) twk = SQR_TWK_SMALL_DEFAULT;
-      else if (coeff_limbs > SQR_TWK_LARGE_CUTOFF) twk = SQR_TWK_LARGE_DEFAULT;
+      if (coeff_limbs/2 < SQR_TWK_SMALL_CUTOFF) twk = SQR_TWK_SMALL_DEFAULT;
+      else if (coeff_limbs/2 > SQR_TWK_LARGE_CUTOFF) twk = SQR_TWK_LARGE_DEFAULT;
       else 
       {  
          for (unsigned long twk_count = 0; twk_count < SQR_TWK_COUNT; twk_count++)
          {
-            if ((coeff_limbs < SQR_TWK_VALS[twk_count][0]) || (coeff_limbs < SQR_TWK_VALS[twk_count][1])) continue;
+            if ((coeff_limbs/2 < SQR_TWK_VALS[twk_count][0]) || (coeff_limbs/2 < SQR_TWK_VALS[twk_count][1])) continue;
             else 
             {
                twk = SQR_TWK_VALS[twk_count][2];
