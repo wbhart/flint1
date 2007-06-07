@@ -39,6 +39,7 @@ CONFIG_yscale = None
 CONFIG_xlabel = None
 CONFIG_ylabel = None
 CONFIG_truncate = 2.0
+CONFIG_min_intensity = 0.5
 
 
 # override settings from configuration file if requested
@@ -59,9 +60,13 @@ except ImportError:
 #   values in [0, 0.5] are blue
 #   values in [0.5, 1] are red
 cmap_data = {
-    'red'  :  ((0.0, 0.0, 0.0), (0.5, 0.0, 0.5), (1.0, 1.0, 1.0)),
+    'red'  :  ((0.0, 0.0, 0.0),
+               (0.5, 0.0, CONFIG_min_intensity),
+               (1.0, 1.0, 1.0)),
     'green':  ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0)),
-    'blue' :  ((0.0, 1.0, 1.0), (0.5, 0.5, 0.0), (1.0, 0.0, 0.0))
+    'blue' :  ((0.0, 1.0, 1.0),
+               (0.5, CONFIG_min_intensity, 0.0),
+               (1.0, 0.0, 0.0))
 }
 cmap = LinearSegmentedColormap('????', cmap_data)
 

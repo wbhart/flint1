@@ -58,4 +58,15 @@ CONFIG_ylabel = None
 CONFIG_truncate = 2.0
 
 
+#------------------------------------------------------------------------------
+# The minimum colour intensity, in the range (0, 1).
+# If this is zero, then negative through positive values are plotted on
+# a continuous spectrum from blue through red. If this is 0.5, then a tiny
+# positive value is already somewhat brown, and a tiny negative value is
+# already somewhat blue. If this is 1.0, you get all flat blue and all flat
+# red.
+
+CONFIG_min_intensity = 0.5
+
+
 ################# end of config file
