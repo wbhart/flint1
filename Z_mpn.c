@@ -61,7 +61,7 @@ void Z_combine_limbs(mp_limb_t * res, ZmodFpoly_t poly, unsigned long coeff_limb
 
 }
 
-void Z_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1, 
+mp_limb_t Z_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1, 
                                       mp_limb_t * data2, unsigned long limbs2)
 {
    unsigned long length = 1;
@@ -77,6 +77,11 @@ void Z_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1,
    unsigned log_length2 = 0;
    
    unsigned long twk;
+   
+   if (coeff_limbs/2 < 2300) 
+   {
+      return mpn_mul(res, data1, limbs1, data2, limbs2);
+   }
    
    if (data1 != data2)
    {
@@ -158,6 +163,8 @@ void Z_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1,
    
    Z_combine_limbs(res, poly1, coeff_limbs, 2*coeff_limbs+1, limbs1 + limbs2);
    ZmodFpoly_stack_clear(poly1);
+   
+   return res[limbs1+limbs2-1];
 }
 
 void Z_mul(mpz_t res, mpz_t a, mpz_t b)

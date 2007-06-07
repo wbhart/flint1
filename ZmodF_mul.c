@@ -12,6 +12,7 @@
 #include "ZmodF.h"
 #include "ZmodFpoly.h"
 #include "ZmodF_mul.h"
+#include "Z_mpn.h"
 
 
 #define ENABLE_NEGACYCLIC_MULTS 1
@@ -79,8 +80,30 @@ void _ZmodF_mul(ZmodF_t res, ZmodF_t a, ZmodF_t b, mp_limb_t* scratch,
 {
    FLINT_ASSERT(a[n] == 0);
    
+   unsigned long limbs_out = 2*n;
+   unsigned long limbs1 = n;
+   while ((!a[limbs1-1]) && (limbs1>0))
+   {
+      scratch[limbs_out-1] = 0;
+      limbs1--;
+      limbs_out--;
+   }
+   unsigned long limbs2 = n;
+   while ((!b[limbs2-1]) && (limbs2>0))
+   {
+      scratch[limbs_out-1] = 0;
+      limbs2--;
+      limbs_out--;
+   }
+   if ((limbs1 == 0) || (limbs2 == 0)) 
+   {
+      clear_limbs(res, n+1);
+      return;
+   }
+   
    // do the product
-   mpn_mul_n(scratch, a, b, n);
+   if (limbs1 >= limbs2) Z_mpn_mul(scratch, a, limbs1, b, limbs2);
+   else Z_mpn_mul(scratch, b, limbs2, a, limbs1);
    // reduce mod p
    res[n] = -mpn_sub_n(res, scratch, scratch + n, n);
 }
@@ -219,7 +242,7 @@ void ZmodF_mul_precomp_clear(ZmodF_mul_precomp_t info)
    }
    else
    {
-      flint_stack_release(info->scratch);
+      flint_stack_release();
    }
 }
 
