@@ -24,7 +24,7 @@
 #define FLINT_USE_CYCLE_COUNTER 1
 
 // cycles/second
-#define FLINT_CLOCKSPEED 1800000000.0
+#define FLINT_CLOCKSPEED 1804121000.0
 
 
 extern double clock_last[FLINT_NUM_CLOCKS];

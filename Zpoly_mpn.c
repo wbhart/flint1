@@ -1439,6 +1439,12 @@ void _Zpoly_mpn_mul(Zpoly_mpn_t output, Zpoly_mpn_t input1, Zpoly_mpn_t input2)
       return;
    }
    
+   if ((input1->limbs <= 256/FLINT_BITS_PER_LIMB) && (input1->limbs >= 200/FLINT_BITS_PER_LIMB) && (input1->length == 256)) 
+   {
+      _Zpoly_mpn_mul_SS(output, input1, input2);
+      return;
+   } 
+   
    if (input1->limbs + input2->limbs <= 512/FLINT_BITS_PER_LIMB)
    {
       _Zpoly_mpn_mul_KS(output, input1, input2);

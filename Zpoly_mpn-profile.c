@@ -421,7 +421,7 @@ void sample_Zpoly_mpn_mul(unsigned long length, unsigned long bits,
   
    _Zpoly_mpn_stack_init(poly1, length, (bits-1)/FLINT_BITS_PER_LIMB+1);
    _Zpoly_mpn_stack_init(poly2, length, (bits-1)/FLINT_BITS_PER_LIMB+1);
-   if ((bits > 256) && (length <=16)) _Zpoly_mpn_stack_init(poly3, 2*length-1, poly1->limbs+poly2->limbs+2);
+   if ((bits > 256) && (length <=16) && (length > 2)) _Zpoly_mpn_stack_init(poly3, 2*length-1, poly1->limbs+poly2->limbs+2);
    else  _Zpoly_mpn_stack_init(poly3, 2*length-1, (output_bits-1)/FLINT_BITS_PER_LIMB+1);
    
    unsigned long r_count;
@@ -479,8 +479,8 @@ void prof2dDriver_Zpoly_mpn_mul(char* params)
    {
       // default parameters:
       length_min = 1;
-      length_max = 1000000;
-      bits_max = 1000000;
+      length_max = 16000000;
+      bits_max = 16000000;
       bits_min = 1;
       
       ratio = 1.2;
@@ -501,7 +501,7 @@ void prof2dDriver_Zpoly_mpn_mul(char* params)
       for (unsigned long bits = bits_min; bits <= bits_max; 
                                   bits = (int)(ceil(ratio * bits)))
       {
-         if (bits * length > 1000000) continue;
+         if (bits * length > 16000000) continue;
          
          if (bits == 444) bits = 445;
          if (length == 444) length = 445;
