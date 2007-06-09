@@ -100,26 +100,26 @@ to add a bit of padding.
 
 
 
-=== Zpoly_mpn module ===
+=== fmpz_poly module ===
 
 * Ensure the documentation agrees with the implementation of the sign limb.
 
-* I'm not comfortable with the way _Zpoly_mpn_mul_KS modifies its input
+* I'm not comfortable with the way _fmpz_poly_mul_KS modifies its input
   temporarily if the signs are wrong. What happens if a multithreaded
   application wants to do two things with the poly at the same time.
   Surely it's possible to accomplish the same thing without mutating
   the input. -- david
 
 * It seems a little nuts to be using ZmodFpoly with a single coefficient
-  in _Zpoly_mpn_mul_KS(). There's something wrong with the code structure here.
+  in _fmpz_poly_mul_KS(). There's something wrong with the code structure here.
   The bitpacking etc routines need to be abstracted differently or something.
   -- david
 
-* we should change the name of ABS() in Zpoly_mpn. This will certainly interfere
+* we should change the name of ABS() in fmpz_poly. This will certainly interfere
   with someone else's namespace one day. -- david
 
 * I think the the bitpacking/limbpacking/bytepacking routines should be
-  moved out of ZmodFpoly.c into Zpoly_mpn.c.
+  moved out of ZmodFpoly.c into fmpz_poly.c.
 
 
 === modpmul module ===
@@ -179,7 +179,7 @@ the stack. This could be a problem if we need to allocate many small objects.
 
 === Miscellaneous ===
 
-* Switch to integer increments instead of rounded floating point ones in  Zpoly_mpn-profile.c and magma-profile.m
+* Switch to integer increments instead of rounded floating point ones in  fmpz_poly-profile.c and magma-profile.m
 
 * Add memory manager to Zpoly.c
 
@@ -191,14 +191,14 @@ the stack. This could be a problem if we need to allocate many small objects.
 
 * Write new faster bitpacking routines (include support for 32 bit machines)
 
-* Compute number of limbs needed for test_mpn_poly3 in Zpoly_mpn_test.c
+* Compute number of limbs needed for test_mpn_poly3 in fmpz_poly_test.c
 
 * Think about ways of lowering the system time in delta_qexp
 
 * Implement karatsuba for sparse polynomials
 
-* Write tests for double underscore functions in Zpoly_mpn.c
+* Write tests for double underscore functions in fmpz_poly.c
 
-* Check all Zpoly_mpn functions deal appropriately with the zero length poly
+* Check all fmpz_poly functions deal appropriately with the zero length poly
 
 * Make karatsuba use the right number of limbs

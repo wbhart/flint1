@@ -1,17 +1,17 @@
 /****************************************************************************
 
-Zpoly_mpn.h: Polynomials over Z
+fmpz_poly.h: Polynomials over Z
 
 Copyright (C) 2007, William Hart and David Harvey
 
 There are two entirely separate data formats for polynomials over Z:
   -- Zpoly_t uses an array of mpz_t's (see Zpoly.c and Zpoly.h files)
-  -- Zpoly_mpn_t uses a single block of memory with each coefficient occupying
+  -- fmpz_poly_t uses a single block of memory with each coefficient occupying
      the same number of limbs 
 
 *****************************************************************************/
-#ifndef FLINT_ZPOLY_MPN_H
-#define FLINT_ZPOLY_MPN_H
+#ifndef FLINT_fmpz_poly_H
+#define FLINT_fmpz_poly_H
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -20,10 +20,10 @@ There are two entirely separate data formats for polynomials over Z:
 #include "mpn_extras.h"
 /****************************************************************************
 
-   Zpoly_mpn_t
+   fmpz_poly_t
    -----------
 
-Zpoly_mpn_t represents a dense polynomial in Z[x] using a single block of
+fmpz_poly_t represents a dense polynomial in Z[x] using a single block of
 memory to hold all the coefficients.
 
 This type is better suited to handling very dense polynomials with relatively
@@ -41,15 +41,15 @@ polynomial; i.e. it's a polynomial of degree at most length-1. There is no
 requirement for coeff[length-1] to be nonzero. If length == 0, this is the
 zero polynomial. Obviously always alloc >= length.
 
-There are two classes of functions operating on Zpoly_mpn_t:
+There are two classes of functions operating on fmpz_poly_t:
 
--- The _Zpoly_mpn_* functions NEVER free or reallocate "coeffs", so they
+-- The _fmpz_poly_* functions NEVER free or reallocate "coeffs", so they
    don't care how "coeffs" was allocated, and they never even look at the
    "alloc" attribute. They always assume the output has enough space for
    the result. They also NEVER modify the limbs attribute (since this
    would screw up the block size).
 
--- The Zpoly_mpn_* functions ASSUME that "coeffs" was allocated via
+-- The fmpz_poly_* functions ASSUME that "coeffs" was allocated via
    flint_malloc, and they MAY free or reallocate "coeffs" using flint_realloc,
    flint_free etc, whenever they feel the need. Furthermore they assume that
    always alloc >= 1.
@@ -62,11 +62,11 @@ typedef struct
    unsigned long alloc;
    unsigned long length;
    unsigned long limbs;
-} Zpoly_mpn_struct;
+} fmpz_poly_struct;
 
-// Zpoly_mpn_t allows reference-like semantics for Zpoly_mpn_struct:
-typedef Zpoly_mpn_struct Zpoly_mpn_t[1];
-typedef Zpoly_mpn_struct * Zpoly_mpn_p;
+// fmpz_poly_t allows reference-like semantics for fmpz_poly_struct:
+typedef fmpz_poly_struct fmpz_poly_t[1];
+typedef fmpz_poly_struct * fmpz_poly_p;
 
 #define NORM(coeff) \
 do { \
@@ -86,7 +86,7 @@ do { \
 
 #define SWAP(x_dummy, y_dummy) \
 do { \
-   Zpoly_mpn_p swap_temp = x_dummy; \
+   fmpz_poly_p swap_temp = x_dummy; \
    x_dummy = y_dummy; \
    y_dummy = swap_temp; \
 } while(0);
@@ -102,20 +102,20 @@ do { \
 
 /*============================================================================
   
-    Functions in _Zpoly_mpn_* layer
+    Functions in _fmpz_poly_* layer
     
 ===============================================================================*/
 
-void _Zpoly_mpn_stack_init(Zpoly_mpn_t poly, unsigned long alloc, unsigned long limbs);
+void _fmpz_poly_stack_init(fmpz_poly_t poly, unsigned long alloc, unsigned long limbs);
 
-void _Zpoly_mpn_stack_clear(Zpoly_mpn_t poly);
+void _fmpz_poly_stack_clear(fmpz_poly_t poly);
 
-void _Zpoly_mpn_convert_out(Zpoly_t poly_mpz, Zpoly_mpn_t poly_mpn);
+void _fmpz_poly_convert_out(Zpoly_t poly_mpz, fmpz_poly_t poly_mpn);
 
-void _Zpoly_mpn_convert_in(Zpoly_mpn_t poly_mpn, Zpoly_t poly_mpz);
+void _fmpz_poly_convert_in(fmpz_poly_t poly_mpn, Zpoly_t poly_mpz);
                      
 static inline
-mp_limb_t * _Zpoly_mpn_get_coeff_ptr(Zpoly_mpn_t poly, unsigned long n)
+mp_limb_t * _fmpz_poly_get_coeff_ptr(fmpz_poly_t poly, unsigned long n)
 {
    return poly->coeffs+n*(poly->limbs+1);
 }
@@ -126,7 +126,7 @@ mp_limb_t * _Zpoly_mpn_get_coeff_ptr(Zpoly_mpn_t poly, unsigned long n)
 */
    
 static inline
-long _Zpoly_mpn_get_coeff(mp_limb_t * output, Zpoly_mpn_t poly,
+long _fmpz_poly_get_coeff(mp_limb_t * output, fmpz_poly_t poly,
                           unsigned long n)
 {
    if (poly->coeffs[n*(poly->limbs+1)] == 0) clear_limbs(output, poly->limbs);
@@ -135,14 +135,14 @@ long _Zpoly_mpn_get_coeff(mp_limb_t * output, Zpoly_mpn_t poly,
 }
 
 static inline
-unsigned long _Zpoly_mpn_get_coeff_ui(Zpoly_mpn_t poly, unsigned long n)
+unsigned long _fmpz_poly_get_coeff_ui(fmpz_poly_t poly, unsigned long n)
 {
    if (poly->coeffs[n*(poly->limbs+1)] == 0) return 0;
    else return poly->coeffs[n*(poly->limbs+1)+1];
 }
 
 static inline
-long _Zpoly_mpn_get_coeff_si(Zpoly_mpn_t poly, unsigned long n)
+long _fmpz_poly_get_coeff_si(fmpz_poly_t poly, unsigned long n)
 {
    if (poly->coeffs[n*(poly->limbs+1)] == 0) return 0;
    if (poly->coeffs[n*(poly->limbs+1)] == 1L) 
@@ -150,14 +150,14 @@ long _Zpoly_mpn_get_coeff_si(Zpoly_mpn_t poly, unsigned long n)
    else return -poly->coeffs[n*(poly->limbs+1)+1];
 }
 
-void _Zpoly_mpn_get_coeff_mpz(mpz_t x, Zpoly_mpn_t poly, unsigned long n);
+void _fmpz_poly_get_coeff_mpz(mpz_t x, fmpz_poly_t poly, unsigned long n);
 
 /* 
    Set a coefficient to the given value having "size" limbs.
    Assumes that the poly->limbs is at least "size".
 */
 
-static inline void _Zpoly_mpn_set_coeff(Zpoly_mpn_t poly, unsigned long n, 
+static inline void _fmpz_poly_set_coeff(fmpz_poly_t poly, unsigned long n, 
                                   mp_limb_t * x, long sign, unsigned long size)
 {
    FLINT_ASSERT(poly->limbs >= size);
@@ -167,93 +167,93 @@ static inline void _Zpoly_mpn_set_coeff(Zpoly_mpn_t poly, unsigned long n,
      clear_limbs(poly->coeffs+n*(poly->limbs+1)+size+1, poly->limbs-size);
 }
 
-void _Zpoly_mpn_set_coeff_ui(Zpoly_mpn_t poly, unsigned long n, unsigned long x);
+void _fmpz_poly_set_coeff_ui(fmpz_poly_t poly, unsigned long n, unsigned long x);
 
-void _Zpoly_mpn_set_coeff_si(Zpoly_mpn_t poly, unsigned long n, long x);
+void _fmpz_poly_set_coeff_si(fmpz_poly_t poly, unsigned long n, long x);
 
-void _Zpoly_mpn_normalise(Zpoly_mpn_t poly);
+void _fmpz_poly_normalise(fmpz_poly_t poly);
 
-static inline long _Zpoly_mpn_degree(Zpoly_mpn_t poly)
+static inline long _fmpz_poly_degree(fmpz_poly_t poly)
 {
    return poly->length - 1;
 }
 
-static inline unsigned long _Zpoly_mpn_length(Zpoly_mpn_t poly)
+static inline unsigned long _fmpz_poly_length(fmpz_poly_t poly)
 {
    return poly->length;
 }
 
-static inline unsigned long _Zpoly_mpn_limbs(Zpoly_mpn_t poly)
+static inline unsigned long _fmpz_poly_limbs(fmpz_poly_t poly)
 {
    return poly->limbs;
 }
 
 // These two are the same as above, but normalise the poly first
 
-long Zpoly_mpn_degree(Zpoly_mpn_t poly);
+long fmpz_poly_degree(fmpz_poly_t poly);
 
-unsigned long Zpoly_mpn_length(Zpoly_mpn_t poly);
+unsigned long fmpz_poly_length(fmpz_poly_t poly);
 
 
-void _Zpoly_mpn_set(Zpoly_mpn_t output, Zpoly_mpn_t input);
+void _fmpz_poly_set(fmpz_poly_t output, fmpz_poly_t input);
 
 /* 
    Zero the polynomial by setting the length to zero.
    Does not set the actual limbs to zero.
 */
 
-static inline void _Zpoly_mpn_zero(Zpoly_mpn_t output)
+static inline void _fmpz_poly_zero(fmpz_poly_t output)
 {
    output->length = 0;
 }
 
-void _Zpoly_mpn_swap(Zpoly_mpn_t x, Zpoly_mpn_t y);
+void _fmpz_poly_swap(fmpz_poly_t x, fmpz_poly_t y);
 
-long _Zpoly_mpn_bits1(Zpoly_mpn_t poly_mpn);
+long _fmpz_poly_bits1(fmpz_poly_t poly_mpn);
 
-long _Zpoly_mpn_bits(Zpoly_mpn_t poly_mpn);
+long _fmpz_poly_bits(fmpz_poly_t poly_mpn);
 
-int _Zpoly_mpn_equal(Zpoly_mpn_p input1, Zpoly_mpn_p input2);
+int _fmpz_poly_equal(fmpz_poly_p input1, fmpz_poly_p input2);
 
-void _Zpoly_mpn_negate(Zpoly_mpn_t output, Zpoly_mpn_t input);
+void _fmpz_poly_negate(fmpz_poly_t output, fmpz_poly_t input);
 
-void _Zpoly_mpn_add(Zpoly_mpn_t output, Zpoly_mpn_t input1, Zpoly_mpn_t input2);
+void _fmpz_poly_add(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_t input2);
 
-void __Zpoly_mpn_add_coeff_ui(mp_limb_t * output, unsigned long x);
+void __fmpz_poly_add_coeff_ui(mp_limb_t * output, unsigned long x);
 
-void __Zpoly_mpn_add_coeff2_ui(mp_limb_t * output, unsigned long x);
+void __fmpz_poly_add_coeff2_ui(mp_limb_t * output, unsigned long x);
 
-void __Zpoly_mpn_sub_coeff_ui(mp_limb_t * output, unsigned long x);
+void __fmpz_poly_sub_coeff_ui(mp_limb_t * output, unsigned long x);
 
-void __Zpoly_mpn_add_coeffs(mp_limb_t * coeffs_out, mp_limb_t * coeffs1, mp_limb_t * coeffs2);
+void __fmpz_poly_add_coeffs(mp_limb_t * coeffs_out, mp_limb_t * coeffs1, mp_limb_t * coeffs2);
 
-void __Zpoly_mpn_sub_coeffs(mp_limb_t * coeffs_out, mp_limb_t * coeffs1, mp_limb_t * coeffs2);
+void __fmpz_poly_sub_coeffs(mp_limb_t * coeffs_out, mp_limb_t * coeffs1, mp_limb_t * coeffs2);
 
-void _Zpoly_mpn_sub(Zpoly_mpn_t output, Zpoly_mpn_t input1, Zpoly_mpn_t input2);
+void _fmpz_poly_sub(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_t input2);
 
-void _Zpoly_mpn_scalar_mul(Zpoly_mpn_t output, Zpoly_mpn_t poly, mp_limb_t * x);
+void _fmpz_poly_scalar_mul(fmpz_poly_t output, fmpz_poly_t poly, mp_limb_t * x);
 
-void _Zpoly_mpn_scalar_mul_ui(Zpoly_mpn_t output, Zpoly_mpn_t poly, unsigned long x);
+void _fmpz_poly_scalar_mul_ui(fmpz_poly_t output, fmpz_poly_t poly, unsigned long x);
 
-void _Zpoly_mpn_scalar_mul_si(Zpoly_mpn_t output, Zpoly_mpn_t poly, long x);
+void _fmpz_poly_scalar_mul_si(fmpz_poly_t output, fmpz_poly_t poly, long x);
 
-void _Zpoly_mpn_scalar_div(Zpoly_mpn_t output, Zpoly_mpn_t poly, mp_limb_t * x);
+void _fmpz_poly_scalar_div(fmpz_poly_t output, fmpz_poly_t poly, mp_limb_t * x);
 
-void _Zpoly_mpn_scalar_div_ui(Zpoly_mpn_t output, Zpoly_mpn_t poly, unsigned long x);
+void _fmpz_poly_scalar_div_ui(fmpz_poly_t output, fmpz_poly_t poly, unsigned long x);
 
-void _Zpoly_mpn_scalar_div_si(Zpoly_mpn_t output, Zpoly_mpn_t poly, long x);
+void _fmpz_poly_scalar_div_si(fmpz_poly_t output, fmpz_poly_t poly, long x);
 
-void _Zpoly_mpn_scalar_div_exact_ui(Zpoly_mpn_t output, Zpoly_mpn_t poly, unsigned long x);
+void _fmpz_poly_scalar_div_exact_ui(fmpz_poly_t output, fmpz_poly_t poly, unsigned long x);
 
-void _Zpoly_mpn_scalar_div_exact_si(Zpoly_mpn_t output, Zpoly_mpn_t poly, long x);
+void _fmpz_poly_scalar_div_exact_si(fmpz_poly_t output, fmpz_poly_t poly, long x);
 
-void _Zpoly_mpn_mul(Zpoly_mpn_t output, Zpoly_mpn_t input1, Zpoly_mpn_t input2);
+void _fmpz_poly_mul(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_t input2);
 
-void _Zpoly_mpn_mul_naive(Zpoly_mpn_t output, Zpoly_mpn_t input1, 
-                                                 Zpoly_mpn_t input2);
+void _fmpz_poly_mul_naive(fmpz_poly_t output, fmpz_poly_t input1, 
+                                                 fmpz_poly_t input2);
 
-void _Zpoly_mpn_mul_karatsuba(Zpoly_mpn_t output, Zpoly_mpn_t input1, 
-                                                 Zpoly_mpn_t input2);
+void _fmpz_poly_mul_karatsuba(fmpz_poly_t output, fmpz_poly_t input1, 
+                                                 fmpz_poly_t input2);
                                                  
 /*
    Multiply two polynomials together using the Kronecker segmentation method.
@@ -261,55 +261,55 @@ void _Zpoly_mpn_mul_karatsuba(Zpoly_mpn_t output, Zpoly_mpn_t input1,
    is supplied by the parameter "bits"
 */
 
-void _Zpoly_mpn_mul_KS(Zpoly_mpn_t output, Zpoly_mpn_t input1, 
-                                       Zpoly_mpn_t input2);
+void _fmpz_poly_mul_KS(fmpz_poly_t output, fmpz_poly_t input1, 
+                                       fmpz_poly_t input2);
 
-void _Zpoly_mpn_mul_SS(Zpoly_mpn_t output, Zpoly_mpn_p input1, 
-                                                            Zpoly_mpn_p input2);
+void _fmpz_poly_mul_SS(fmpz_poly_t output, fmpz_poly_p input1, 
+                                                            fmpz_poly_p input2);
 
-void _Zpoly_mpn_sqr(Zpoly_mpn_t output, Zpoly_mpn_t input);
+void _fmpz_poly_sqr(fmpz_poly_t output, fmpz_poly_t input);
 
-void _Zpoly_mpn_sqr_naive(Zpoly_mpn_t output, Zpoly_mpn_t input);
+void _fmpz_poly_sqr_naive(fmpz_poly_t output, fmpz_poly_t input);
 
-void _Zpoly_mpn_sqr_karatsuba(Zpoly_mpn_t output, Zpoly_mpn_t input);
+void _fmpz_poly_sqr_karatsuba(fmpz_poly_t output, fmpz_poly_t input);
 
-void _Zpoly_mpn_left_shift(Zpoly_mpn_t output, Zpoly_mpn_t input, 
+void _fmpz_poly_left_shift(fmpz_poly_t output, fmpz_poly_t input, 
                                                  unsigned long n);
 
-void _Zpoly_mpn_right_shift(Zpoly_mpn_t output, Zpoly_mpn_t input, unsigned long n);
+void _fmpz_poly_right_shift(fmpz_poly_t output, fmpz_poly_t input, unsigned long n);
 
-void _Zpoly_mpn_div(Zpoly_mpn_t quotient, Zpoly_mpn_t input1, Zpoly_mpn_t input2);
+void _fmpz_poly_div(fmpz_poly_t quotient, fmpz_poly_t input1, fmpz_poly_t input2);
 
-void _Zpoly_mpn_rem(Zpoly_mpn_t remainder, Zpoly_mpn_t input1, Zpoly_mpn_t input2);
+void _fmpz_poly_rem(fmpz_poly_t remainder, fmpz_poly_t input1, fmpz_poly_t input2);
 
-void _Zpoly_mpn_div_rem(Zpoly_mpn_t quotient, Zpoly_mpn_t remainder, 
-                                     Zpoly_mpn_t input1, Zpoly_mpn_t input2);
+void _fmpz_poly_div_rem(fmpz_poly_t quotient, fmpz_poly_t remainder, 
+                                     fmpz_poly_t input1, fmpz_poly_t input2);
 
-void _Zpoly_mpn_gcd(Zpoly_mpn_t output, Zpoly_mpn_t input1, Zpoly_mpn_t input2);
+void _fmpz_poly_gcd(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_t input2);
 
-void _Zpoly_mpn_xgcd(Zpoly_mpn_t a, Zpoly_mpn_t b, Zpoly_mpn_t output, 
-                                      Zpoly_mpn_t input1, Zpoly_mpn_t input2);
+void _fmpz_poly_xgcd(fmpz_poly_t a, fmpz_poly_t b, fmpz_poly_t output, 
+                                      fmpz_poly_t input1, fmpz_poly_t input2);
 
-void _Zpoly_mpn_content(mp_limb_t * content, Zpoly_mpn_t a);
+void _fmpz_poly_content(mp_limb_t * content, fmpz_poly_t a);
 
 
 /*============================================================================
   
-    Functions in Zpoly_mpn_* layer
+    Functions in fmpz_poly_* layer
     
 ===============================================================================*/
 
-void Zpoly_mpn_init(Zpoly_mpn_t poly, unsigned long alloc,
+void fmpz_poly_init(fmpz_poly_t poly, unsigned long alloc,
                                               unsigned long limbs);
                                               
-void Zpoly_mpn_realloc(Zpoly_mpn_t poly, unsigned long alloc);
+void fmpz_poly_realloc(fmpz_poly_t poly, unsigned long alloc);
 
-void Zpoly_mpn_clear(Zpoly_mpn_t poly);
+void fmpz_poly_clear(fmpz_poly_t poly);
 
 
-// This is the actual implementation that's called for Zpoly_mpn_ensure_space()
+// This is the actual implementation that's called for fmpz_poly_ensure_space()
 // (see below) if a reallocation is required
-void Zpoly_mpn_ensure_space2(Zpoly_mpn_t poly, unsigned long alloc);
+void fmpz_poly_ensure_space2(fmpz_poly_t poly, unsigned long alloc);
 
 // Ensures that the polynomial has at least alloc coefficients allocated.
 // If the polynomial already has enough space allocated, nothing happens.
@@ -320,48 +320,48 @@ void Zpoly_mpn_ensure_space2(Zpoly_mpn_t poly, unsigned long alloc);
 // happen very frequently; the actual reallocation will be less frequent,
 // and will chew up too many bytes of code if I make it inline.)
 static inline
-void Zpoly_mpn_ensure_space(Zpoly_mpn_t poly, unsigned long alloc)
+void fmpz_poly_ensure_space(fmpz_poly_t poly, unsigned long alloc)
 {
    if (poly->alloc < alloc)
-      Zpoly_mpn_ensure_space2(poly, alloc);
+      fmpz_poly_ensure_space2(poly, alloc);
 }
 
 
-// This is the actual implementation that's called for Zpoly_mpn_ensure_length()
+// This is the actual implementation that's called for fmpz_poly_ensure_length()
 // (see below) if extending is required
-void Zpoly_mpn_ensure_length2(Zpoly_mpn_t poly, unsigned long length);
+void fmpz_poly_ensure_length2(fmpz_poly_t poly, unsigned long length);
 
 // Ensures that the poly has length at least "length".
 // If not, it extends it and zero-fills appropriately.
 static inline
-void Zpoly_mpn_ensure_length(Zpoly_mpn_t poly, unsigned long length)
+void fmpz_poly_ensure_length(fmpz_poly_t poly, unsigned long length)
 {
    if (poly->length < length)
-      Zpoly_mpn_ensure_length2(poly, length);
+      fmpz_poly_ensure_length2(poly, length);
 }
 
 
 // Sets length to given length, either truncating or zero-padding (possibly
 // with a reallocation) as necessary.
 static inline
-void Zpoly_mpn_set_length(Zpoly_mpn_t poly, unsigned long length)
+void fmpz_poly_set_length(fmpz_poly_t poly, unsigned long length)
 {
    if (length <= poly->length)
       poly->length = length;
    else
-      Zpoly_mpn_ensure_length2(poly, length);
+      fmpz_poly_ensure_length2(poly, length);
 }
 
 
 static inline
-void Zpoly_mpn_set_coeff_si(Zpoly_mpn_t poly, unsigned long n, long x)
+void fmpz_poly_set_coeff_si(fmpz_poly_t poly, unsigned long n, long x)
 {
-   Zpoly_mpn_ensure_length(poly, n+1);
-   _Zpoly_mpn_set_coeff_si(poly, n, x);
+   fmpz_poly_ensure_length(poly, n+1);
+   _fmpz_poly_set_coeff_si(poly, n, x);
 }
 
 
-void Zpoly_mpn_get_coeff_mpz(mpz_t x, Zpoly_mpn_t poly, unsigned long n);
+void fmpz_poly_get_coeff_mpz(mpz_t x, fmpz_poly_t poly, unsigned long n);
 
 
 // *************** end of file

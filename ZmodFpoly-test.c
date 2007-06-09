@@ -12,7 +12,7 @@ Copyright (C) 2007, William Hart and David Harvey
 #include "flint.h"
 #include "memory-manager.h"
 #include "ZmodFpoly.h"
-#include "Zpoly_mpn.h"
+#include "fmpz_poly.h"
 #include "Zpoly.h"
 
 #define VARY_BITS 1
@@ -106,7 +106,7 @@ void randpoly_unsigned(Zpoly_t pol, unsigned long length, unsigned long maxbits)
 int test_ZmodFpoly_convert()
 {
    Zpoly_t test_poly, test_poly2;
-   Zpoly_mpn_t test_mpn_poly, test_mpn_poly2;
+   fmpz_poly_t test_mpn_poly, test_mpn_poly2;
    ZmodFpoly_t test_modF_poly;
    mpz_t temp;
    mpz_init(temp);
@@ -119,8 +119,8 @@ int test_ZmodFpoly_convert()
    {
       bits = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 1;
       
-      Zpoly_mpn_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
-      Zpoly_mpn_init(test_mpn_poly2, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init(test_mpn_poly2, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
           length = gmp_urandomm_ui(Zpoly_test_randstate,1000);
@@ -129,8 +129,8 @@ int test_ZmodFpoly_convert()
 #if DEBUG
           printf("%ld, %ld\n",length, bits);
 #endif
-          Zpoly_mpn_realloc(test_mpn_poly, length);
-          Zpoly_mpn_realloc(test_mpn_poly2, length);
+          fmpz_poly_realloc(test_mpn_poly, length);
+          fmpz_poly_realloc(test_mpn_poly2, length);
           Zpoly_realloc(test_poly2, length);
           randpoly(test_poly, length, bits-1); 
 #if DEBUG
@@ -138,11 +138,11 @@ int test_ZmodFpoly_convert()
              gmp_printf("%Zd, ",test_poly->coeffs[j]);
           printf("\n\n");
 #endif
-          _Zpoly_mpn_convert_in(test_mpn_poly, test_poly);
+          _fmpz_poly_convert_in(test_mpn_poly, test_poly);
           ZmodFpoly_init(test_modF_poly, depth, (bits-1)/FLINT_BITS_PER_LIMB+1, 0);
           ZmodFpoly_convert_in_mpn(test_modF_poly, test_mpn_poly);
           ZmodFpoly_convert_out_mpn(test_mpn_poly2, test_modF_poly, 1);
-          _Zpoly_mpn_convert_out(test_poly2, test_mpn_poly2);
+          _fmpz_poly_convert_out(test_poly2, test_mpn_poly2);
           
           ZmodFpoly_clear(test_modF_poly);
           
@@ -154,8 +154,8 @@ int test_ZmodFpoly_convert()
           
           result = Zpoly_equal(test_poly, test_poly2);
       }   
-      Zpoly_mpn_clear(test_mpn_poly);
-      Zpoly_mpn_clear(test_mpn_poly2);
+      fmpz_poly_clear(test_mpn_poly);
+      fmpz_poly_clear(test_mpn_poly2);
    }
    
    mpz_clear(temp);
@@ -168,7 +168,7 @@ int test_ZmodFpoly_convert()
 int test_ZmodFpoly_convert_bits()
 {
    Zpoly_t test_poly, test_poly2;
-   Zpoly_mpn_t test_mpn_poly, test_mpn_poly2;
+   fmpz_poly_t test_mpn_poly, test_mpn_poly2;
    ZmodFpoly_t test_modF_poly;
    mpz_t temp;
    mpz_init(temp);
@@ -181,8 +181,8 @@ int test_ZmodFpoly_convert_bits()
    {
       bits = gmp_urandomm_ui(Zpoly_test_randstate, FLINT_BITS_PER_LIMB-2)+ 2;
       
-      Zpoly_mpn_init(test_mpn_poly, 1, 1);
-      Zpoly_mpn_init(test_mpn_poly2, 1, 10);
+      fmpz_poly_init(test_mpn_poly, 1, 1);
+      fmpz_poly_init(test_mpn_poly2, 1, 10);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
           length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1;
@@ -193,8 +193,8 @@ int test_ZmodFpoly_convert_bits()
 #if DEBUG
           printf("%ld, %ld\n",length, bits);
 #endif
-          Zpoly_mpn_realloc(test_mpn_poly, length);
-          Zpoly_mpn_realloc(test_mpn_poly2, length);
+          fmpz_poly_realloc(test_mpn_poly, length);
+          fmpz_poly_realloc(test_mpn_poly2, length);
           Zpoly_realloc(test_poly2, length);
           
           randpoly(test_poly, length, bits-1);
@@ -216,7 +216,7 @@ int test_ZmodFpoly_convert_bits()
              gmp_printf("%Zx, ",test_poly->coeffs[j]);
           printf("\n\n");
 #endif
-          _Zpoly_mpn_convert_in(test_mpn_poly, test_poly);
+          _fmpz_poly_convert_in(test_mpn_poly, test_poly);
           ZmodFpoly_init(test_modF_poly, depth, (bits*bundle-1)/FLINT_BITS_PER_LIMB+1, 0);
           
           ZmodFpoly_bit_pack_mpn(test_modF_poly, test_mpn_poly, bundle, -bits);
@@ -226,7 +226,7 @@ int test_ZmodFpoly_convert_bits()
              test_mpn_poly2->coeffs[i*(test_mpn_poly2->limbs+1)] = 0; 
              
           ZmodFpoly_bit_unpack_mpn(test_mpn_poly2, test_modF_poly, bundle, bits);  
-          _Zpoly_mpn_convert_out(test_poly2, test_mpn_poly2);
+          _fmpz_poly_convert_out(test_poly2, test_mpn_poly2);
           
           ZmodFpoly_clear(test_modF_poly);
           
@@ -238,8 +238,8 @@ int test_ZmodFpoly_convert_bits()
           
           result = Zpoly_equal(test_poly, test_poly2);
       }   
-      Zpoly_mpn_clear(test_mpn_poly);
-      Zpoly_mpn_clear(test_mpn_poly2);
+      fmpz_poly_clear(test_mpn_poly);
+      fmpz_poly_clear(test_mpn_poly2);
    }
    
    mpz_clear(temp);
@@ -252,7 +252,7 @@ int test_ZmodFpoly_convert_bits()
 int test_ZmodFpoly_convert_bits_unsigned()
 {
    Zpoly_t test_poly, test_poly2;
-   Zpoly_mpn_t test_mpn_poly, test_mpn_poly2;
+   fmpz_poly_t test_mpn_poly, test_mpn_poly2;
    ZmodFpoly_t test_modF_poly;
    mpz_t temp;
    mpz_init(temp);
@@ -265,8 +265,8 @@ int test_ZmodFpoly_convert_bits_unsigned()
    {
       bits = gmp_urandomm_ui(Zpoly_test_randstate,FLINT_BITS_PER_LIMB-2)+ 2;
       
-      Zpoly_mpn_init(test_mpn_poly, 1, 1);
-      Zpoly_mpn_init(test_mpn_poly2, 1, 10);
+      fmpz_poly_init(test_mpn_poly, 1, 1);
+      fmpz_poly_init(test_mpn_poly2, 1, 10);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
           length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1;
@@ -277,8 +277,8 @@ int test_ZmodFpoly_convert_bits_unsigned()
 #if DEBUG
           printf("%ld, %ld\n",length, bits);
 #endif
-          Zpoly_mpn_realloc(test_mpn_poly, length);
-          Zpoly_mpn_realloc(test_mpn_poly2, length);
+          fmpz_poly_realloc(test_mpn_poly, length);
+          fmpz_poly_realloc(test_mpn_poly2, length);
           Zpoly_realloc(test_poly2, length);
           
           randpoly_unsigned(test_poly, length, bits);
@@ -288,7 +288,7 @@ int test_ZmodFpoly_convert_bits_unsigned()
              gmp_printf("%Zx, ",test_poly->coeffs[j]);
           printf("\n\n");
 #endif
-          _Zpoly_mpn_convert_in(test_mpn_poly, test_poly);
+          _fmpz_poly_convert_in(test_mpn_poly, test_poly);
           ZmodFpoly_init(test_modF_poly, depth, (bits*bundle-1)/FLINT_BITS_PER_LIMB+1, 0);
           
           ZmodFpoly_bit_pack_mpn(test_modF_poly, test_mpn_poly, bundle, bits);
@@ -298,7 +298,7 @@ int test_ZmodFpoly_convert_bits_unsigned()
              test_mpn_poly2->coeffs[i*(test_mpn_poly2->limbs+1)] = 0; 
              
           ZmodFpoly_bit_unpack_unsigned_mpn(test_mpn_poly2, test_modF_poly, bundle, bits);  
-          _Zpoly_mpn_convert_out(test_poly2, test_mpn_poly2);
+          _fmpz_poly_convert_out(test_poly2, test_mpn_poly2);
           
           ZmodFpoly_clear(test_modF_poly);
           
@@ -310,8 +310,8 @@ int test_ZmodFpoly_convert_bits_unsigned()
           
           result = Zpoly_equal(test_poly, test_poly2);
       }   
-      Zpoly_mpn_clear(test_mpn_poly);
-      Zpoly_mpn_clear(test_mpn_poly2);
+      fmpz_poly_clear(test_mpn_poly);
+      fmpz_poly_clear(test_mpn_poly2);
    }
    
    mpz_clear(temp);
@@ -324,7 +324,7 @@ int test_ZmodFpoly_convert_bits_unsigned()
 int test_ZmodFpoly_limb_pack_unsigned()
 {
    Zpoly_t test_poly, test_poly2;
-   Zpoly_mpn_t test_mpn_poly, test_mpn_poly2;
+   fmpz_poly_t test_mpn_poly, test_mpn_poly2;
    ZmodFpoly_t test_modF_poly;
    int result = 1;
    unsigned long bits, length, length2, depth, bundle, limbs;
@@ -335,8 +335,8 @@ int test_ZmodFpoly_limb_pack_unsigned()
    {
       bits = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 1;
       limbs = (bits-1)/FLINT_BITS_PER_LIMB + 1;
-      Zpoly_mpn_init(test_mpn_poly, 1, limbs);
-      Zpoly_mpn_init(test_mpn_poly2, 1, limbs);
+      fmpz_poly_init(test_mpn_poly, 1, limbs);
+      fmpz_poly_init(test_mpn_poly2, 1, limbs);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
           length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1;
@@ -344,8 +344,8 @@ int test_ZmodFpoly_limb_pack_unsigned()
 #if DEBUG
           printf("%ld, %ld\n",length, bits);
 #endif
-          Zpoly_mpn_realloc(test_mpn_poly, length);
-          Zpoly_mpn_realloc(test_mpn_poly2, length);
+          fmpz_poly_realloc(test_mpn_poly, length);
+          fmpz_poly_realloc(test_mpn_poly2, length);
           Zpoly_realloc(test_poly2, length);
           
           randpoly_unsigned(test_poly, length, bits);
@@ -355,14 +355,14 @@ int test_ZmodFpoly_limb_pack_unsigned()
              gmp_printf("%Zx, ",test_poly->coeffs[j]);
           printf("\n\n");
 #endif
-          _Zpoly_mpn_convert_in(test_mpn_poly, test_poly);
+          _fmpz_poly_convert_in(test_mpn_poly, test_poly);
           ZmodFpoly_init(test_modF_poly, 0, length*limbs, 0);
           
           ZmodFpoly_limb_pack_mpn(test_modF_poly, test_mpn_poly, length, limbs);
                   
           ZmodFpoly_limb_unpack_unsigned_mpn(test_mpn_poly2, test_modF_poly, length, limbs);  
           test_mpn_poly2->length = length;
-          _Zpoly_mpn_convert_out(test_poly2, test_mpn_poly2);
+          _fmpz_poly_convert_out(test_poly2, test_mpn_poly2);
           
           ZmodFpoly_clear(test_modF_poly);
           
@@ -374,8 +374,8 @@ int test_ZmodFpoly_limb_pack_unsigned()
           
           result = Zpoly_equal(test_poly, test_poly2);
       }   
-      Zpoly_mpn_clear(test_mpn_poly);
-      Zpoly_mpn_clear(test_mpn_poly2);
+      fmpz_poly_clear(test_mpn_poly);
+      fmpz_poly_clear(test_mpn_poly2);
    }
    
    Zpoly_clear(test_poly);
@@ -387,7 +387,7 @@ int test_ZmodFpoly_limb_pack_unsigned()
 int test_ZmodFpoly_limb_pack()
 {
    Zpoly_t test_poly, test_poly2;
-   Zpoly_mpn_t test_mpn_poly, test_mpn_poly2;
+   fmpz_poly_t test_mpn_poly, test_mpn_poly2;
    ZmodFpoly_t test_modF_poly;
    int result = 1;
    unsigned long bits, length, length2, depth, bundle, limbs;
@@ -398,8 +398,8 @@ int test_ZmodFpoly_limb_pack()
    {
       bits = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 1;
       limbs = (bits-1)/FLINT_BITS_PER_LIMB + 1;
-      Zpoly_mpn_init(test_mpn_poly, 1, limbs);
-      Zpoly_mpn_init(test_mpn_poly2, 1, limbs);
+      fmpz_poly_init(test_mpn_poly, 1, limbs);
+      fmpz_poly_init(test_mpn_poly2, 1, limbs);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
           length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1;
@@ -407,8 +407,8 @@ int test_ZmodFpoly_limb_pack()
 #if DEBUG
           printf("%ld, %ld\n",length, bits);
 #endif
-          Zpoly_mpn_realloc(test_mpn_poly, length);
-          Zpoly_mpn_realloc(test_mpn_poly2, length);
+          fmpz_poly_realloc(test_mpn_poly, length);
+          fmpz_poly_realloc(test_mpn_poly2, length);
           Zpoly_realloc(test_poly2, length);
           
           randpoly(test_poly, length, bits);
@@ -418,14 +418,14 @@ int test_ZmodFpoly_limb_pack()
              gmp_printf("%Zx, ",test_poly->coeffs[j]);
           printf("\n\n");
 #endif
-          _Zpoly_mpn_convert_in(test_mpn_poly, test_poly);
+          _fmpz_poly_convert_in(test_mpn_poly, test_poly);
           ZmodFpoly_init(test_modF_poly, 0, length*limbs, 0);
           
           ZmodFpoly_limb_pack_mpn(test_modF_poly, test_mpn_poly, length, limbs);
                   
           ZmodFpoly_limb_unpack_mpn(test_mpn_poly2, test_modF_poly, length, limbs);  
           test_mpn_poly2->length = length;
-          _Zpoly_mpn_convert_out(test_poly2, test_mpn_poly2);
+          _fmpz_poly_convert_out(test_poly2, test_mpn_poly2);
           
           ZmodFpoly_clear(test_modF_poly);
           
@@ -437,8 +437,8 @@ int test_ZmodFpoly_limb_pack()
           
           result = Zpoly_equal(test_poly, test_poly2);
       }   
-      Zpoly_mpn_clear(test_mpn_poly);
-      Zpoly_mpn_clear(test_mpn_poly2);
+      fmpz_poly_clear(test_mpn_poly);
+      fmpz_poly_clear(test_mpn_poly2);
    }
    
    Zpoly_clear(test_poly);
@@ -450,7 +450,7 @@ int test_ZmodFpoly_limb_pack()
 int test_ZmodFpoly_convert_bytes_unsigned()
 {
    Zpoly_t test_poly, test_poly2;
-   Zpoly_mpn_t test_mpn_poly, test_mpn_poly2;
+   fmpz_poly_t test_mpn_poly, test_mpn_poly2;
    ZmodFpoly_t test_modF_poly;
    mpz_t temp;
    mpz_init(temp);
@@ -464,16 +464,16 @@ int test_ZmodFpoly_convert_bytes_unsigned()
       bits = gmp_urandomm_ui(Zpoly_test_randstate, 1000)+ 64;
       bytes = ((bits-1)>>3)+1;
       
-      Zpoly_mpn_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
-      Zpoly_mpn_init(test_mpn_poly2, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init(test_mpn_poly2, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
       for (unsigned long count2 = 0; (count2 < 1) && (result == 1); count2++)
       { 
           length = gmp_urandomm_ui(Zpoly_test_randstate, 1000)+1;
 #if DEBUG
           printf("%ld, %ld\n",length, bits);
 #endif
-          Zpoly_mpn_realloc(test_mpn_poly, length);
-          Zpoly_mpn_realloc(test_mpn_poly2, length);
+          fmpz_poly_realloc(test_mpn_poly, length);
+          fmpz_poly_realloc(test_mpn_poly2, length);
           Zpoly_realloc(test_poly2, length);
           
           randpoly_unsigned(test_poly, length, bits/2);
@@ -483,7 +483,7 @@ int test_ZmodFpoly_convert_bytes_unsigned()
              gmp_printf("%Zx, ",test_poly->coeffs[j]);
           printf("\n\n");
 #endif
-          _Zpoly_mpn_convert_in(test_mpn_poly, test_poly);
+          _fmpz_poly_convert_in(test_mpn_poly, test_poly);
           ZmodFpoly_init(test_modF_poly, 0, ((bytes*length-1)>>FLINT_LG_BYTES_PER_LIMB)+1, 0);
           
           for (unsigned long j = 0; j < 100; j++)
@@ -496,7 +496,7 @@ int test_ZmodFpoly_convert_bytes_unsigned()
              
              ZmodFpoly_byte_unpack_unsigned_mpn(test_mpn_poly2, test_modF_poly->coeffs[0], length, bytes);  
           }
-          _Zpoly_mpn_convert_out(test_poly2, test_mpn_poly2);
+          _fmpz_poly_convert_out(test_poly2, test_mpn_poly2);
           
           ZmodFpoly_clear(test_modF_poly);
           
@@ -508,8 +508,8 @@ int test_ZmodFpoly_convert_bytes_unsigned()
           
           result = Zpoly_equal(test_poly, test_poly2);
       }   
-      Zpoly_mpn_clear(test_mpn_poly);
-      Zpoly_mpn_clear(test_mpn_poly2);
+      fmpz_poly_clear(test_mpn_poly);
+      fmpz_poly_clear(test_mpn_poly2);
    }
    
    mpz_clear(temp);
@@ -522,7 +522,7 @@ int test_ZmodFpoly_convert_bytes_unsigned()
 int test_ZmodFpoly_convert_bytes()
 {
    Zpoly_t test_poly, test_poly2;
-   Zpoly_mpn_t test_mpn_poly, test_mpn_poly2;
+   fmpz_poly_t test_mpn_poly, test_mpn_poly2;
    ZmodFpoly_t test_modF_poly;
    mpz_t temp;
    mpz_init(temp);
@@ -536,16 +536,16 @@ int test_ZmodFpoly_convert_bytes()
       bits = gmp_urandomm_ui(Zpoly_test_randstate, 1000)+ 130;
       bytes = ((bits-1)>>3)+1;
       
-      Zpoly_mpn_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
-      Zpoly_mpn_init(test_mpn_poly2, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init(test_mpn_poly2, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
       for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
       { 
           length = gmp_urandomm_ui(Zpoly_test_randstate, 1000)+1;
 #if DEBUG
           printf("%ld, %ld\n",length, bits);
 #endif
-          Zpoly_mpn_realloc(test_mpn_poly, length);
-          Zpoly_mpn_realloc(test_mpn_poly2, length);
+          fmpz_poly_realloc(test_mpn_poly, length);
+          fmpz_poly_realloc(test_mpn_poly2, length);
           Zpoly_realloc(test_poly2, length);
           
           randpoly(test_poly, length, bits/2);
@@ -555,7 +555,7 @@ int test_ZmodFpoly_convert_bytes()
              gmp_printf("%Zx, ",test_poly->coeffs[j]);
           printf("\n\n");
 #endif
-          _Zpoly_mpn_convert_in(test_mpn_poly, test_poly);
+          _fmpz_poly_convert_in(test_mpn_poly, test_poly);
           ZmodFpoly_init(test_modF_poly, 0, ((bytes*length-1)>>FLINT_LG_BYTES_PER_LIMB)+1, 0);
           
           for (unsigned long j = 0; j < 100; j++)
@@ -568,7 +568,7 @@ int test_ZmodFpoly_convert_bytes()
              
              ZmodFpoly_byte_unpack_mpn(test_mpn_poly2, test_modF_poly->coeffs[0], length, bytes);  
           }
-          _Zpoly_mpn_convert_out(test_poly2, test_mpn_poly2);
+          _fmpz_poly_convert_out(test_poly2, test_mpn_poly2);
           
           ZmodFpoly_clear(test_modF_poly);
           
@@ -589,8 +589,8 @@ int test_ZmodFpoly_convert_bytes()
           printf("\n\n");
           }
       }   
-      Zpoly_mpn_clear(test_mpn_poly);
-      Zpoly_mpn_clear(test_mpn_poly2);
+      fmpz_poly_clear(test_mpn_poly);
+      fmpz_poly_clear(test_mpn_poly2);
    }
    
    mpz_clear(temp);

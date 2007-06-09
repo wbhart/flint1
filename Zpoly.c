@@ -511,7 +511,7 @@ void Zpoly_set_coeff(Zpoly_t poly, unsigned long n, mpz_t x)
    
    // todo: this is wrong! it should set intermediate coefficients to zero too.
    // Same with the functions below. e.g. see implementation of
-   // Zpoly_mpn_ensure_length() and Zpoly_mpn_ensure_length2().
+   // fmpz_poly_ensure_length() and fmpz_poly_ensure_length2().
    
    if (poly->length <= n)
       poly->length = n+1;

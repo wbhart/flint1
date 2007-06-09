@@ -6,8 +6,8 @@ Copyright (C) 2007, William Hart and David Harvey
 
 There are two entirely separate data formats for polynomials over Z:
   -- Zpoly_t uses an array of mpz_t's
-  -- Zpoly_mpn_t uses a single block of memory with each coefficient occupying
-     the same number of limbs (see Zpoly_mpn files)
+  -- fmpz_poly_t uses a single block of memory with each coefficient occupying
+     the same number of limbs (see fmpz_poly files)
 
 *****************************************************************************/
 #ifndef ZPOLY_H

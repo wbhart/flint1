@@ -8,7 +8,7 @@
 #include <gmp.h>
 #include <math.h>
 #include "flint.h"
-#include "Zpoly_mpn.h"
+#include "fmpz_poly.h"
 
 
 int main(int argc, char* argv[])
@@ -46,39 +46,39 @@ int main(int argc, char* argv[])
    }
 
    // Create some polynomial objects
-   Zpoly_mpn_t F2, F4, F8;
-   Zpoly_mpn_init(F2, 2*N, limbs);
-   Zpoly_mpn_init(F4, 2*N, limbs);
-   Zpoly_mpn_init(F8, 2*N, limbs);
+   fmpz_poly_t F2, F4, F8;
+   fmpz_poly_init(F2, 2*N, limbs);
+   fmpz_poly_init(F4, 2*N, limbs);
+   fmpz_poly_init(F8, 2*N, limbs);
 
    // Initialise F2 with coefficients of F(q)^2
-   Zpoly_mpn_ensure_space(F2, N);
+   fmpz_poly_ensure_space(F2, N);
    for (long i = 0; i < N; i++)
-      Zpoly_mpn_set_coeff_si(F2, i, values[i]);
+      fmpz_poly_set_coeff_si(F2, i, values[i]);
 
    free(values);
    printf("Done F2\n");
    // compute F^4, truncated to length N
-   _Zpoly_mpn_mul_KS(F4, F2, F2);
-   Zpoly_mpn_set_length(F4, N);
+   _fmpz_poly_mul_KS(F4, F2, F2);
+   fmpz_poly_set_length(F4, N);
    printf("Done F4\n");
    
    // compute F^8, truncated to length N
-   _Zpoly_mpn_mul_KS(F8, F4, F4);
-   Zpoly_mpn_set_length(F8, N);
+   _fmpz_poly_mul_KS(F8, F4, F4);
+   fmpz_poly_set_length(F8, N);
    printf("Done F8\n");
    
    // print out last coefficient
    mpz_t x;
    mpz_init(x);
-   Zpoly_mpn_get_coeff_mpz(x, F8, N-1);
+   fmpz_poly_get_coeff_mpz(x, F8, N-1);
    gmp_printf("coefficient of q^%d is %Zd\n", N, x);
    mpz_clear(x);
    
    // clean up
-   Zpoly_mpn_clear(F8);
-   Zpoly_mpn_clear(F4);
-   Zpoly_mpn_clear(F2);
+   fmpz_poly_clear(F8);
+   fmpz_poly_clear(F4);
+   fmpz_poly_clear(F2);
 
    return 0;
 }

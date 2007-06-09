@@ -18,7 +18,7 @@ Copyright (C) 2007, William Hart and David Harvey
 #include <gmp.h>
 #include "memory-manager.h"
 #include "mpn_extras.h"
-#include "Zpoly_mpn.h"
+#include "fmpz_poly.h"
 #include "ZmodF.h"
 
 
@@ -122,7 +122,7 @@ void ZmodFpoly_decrease_n(ZmodFpoly_t poly, unsigned long n)
 ****************************************************************************/
 
 /* 
-   Converts Zpoly_mpn_t "poly_mpn" to a ZmodFpoly.
+   Converts fmpz_poly_t "poly_mpn" to a ZmodFpoly.
    
    Each coefficient of poly_mpn is assumed to fit into a coefficient 
    of poly_f.
@@ -131,11 +131,11 @@ void ZmodFpoly_decrease_n(ZmodFpoly_t poly, unsigned long n)
    and made negative if any of the coefficients was negative.
 */
 
-long ZmodFpoly_convert_in_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn);
+long ZmodFpoly_convert_in_mpn(ZmodFpoly_t poly_f, fmpz_poly_t poly_mpn);
 
 
 /* 
-   Normalise and converts ZmodFpoly "poly_f" to a Zpoly_mpn_t. 
+   Normalise and converts ZmodFpoly "poly_f" to a fmpz_poly_t. 
    
    Each coefficient of poly_f is assumed to fit into a coefficient 
    of poly_mpn. 
@@ -144,20 +144,20 @@ long ZmodFpoly_convert_in_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn);
    ZmodFpoly_convert_in_mpn.
 */
 
-void ZmodFpoly_convert_out_mpn(Zpoly_mpn_t poly_mpn, ZmodFpoly_t poly_f, long sign);
+void ZmodFpoly_convert_out_mpn(fmpz_poly_t poly_mpn, ZmodFpoly_t poly_f, long sign);
 
 /* 
    Packs bundle coefficients, each padded out to the given number of limbs, into 
    the first coefficient of poly_f.
 */
-void ZmodFpoly_limb_pack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
+void ZmodFpoly_limb_pack_mpn(ZmodFpoly_t poly_f, fmpz_poly_t poly_mpn,
                                            unsigned long bundle, long limbs);
 
 /* 
    Unpacks bundle coefficients from the first coefficient of poly_f, each 
    assumed to be stored in a field of the given number of limbs.
 */
-void ZmodFpoly_limb_unpack_mpn(Zpoly_mpn_t poly_mpn, ZmodFpoly_t poly_f, 
+void ZmodFpoly_limb_unpack_mpn(fmpz_poly_t poly_mpn, ZmodFpoly_t poly_f, 
                                   unsigned long bundle, unsigned long limbs);
 
 /* 
@@ -165,7 +165,7 @@ void ZmodFpoly_limb_unpack_mpn(Zpoly_mpn_t poly_mpn, ZmodFpoly_t poly_f,
    assumed to be stored in a field of the given number of limbs. Assumes the
    coefficients are unsigned.
 */
-void ZmodFpoly_limb_unpack_unsigned_mpn(Zpoly_mpn_t poly_mpn, ZmodFpoly_t poly_f, 
+void ZmodFpoly_limb_unpack_unsigned_mpn(fmpz_poly_t poly_mpn, ZmodFpoly_t poly_f, 
                                   unsigned long bundle, unsigned long limbs);
 
 
@@ -179,7 +179,7 @@ void ZmodFpoly_limb_unpack_unsigned_mpn(Zpoly_mpn_t poly_mpn, ZmodFpoly_t poly_f
    negative, the input poly is assumed to have signed coefficients.
 */ 
    
-void ZmodFpoly_bit_pack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
+void ZmodFpoly_bit_pack_mpn(ZmodFpoly_t poly_f, fmpz_poly_t poly_mpn,
      unsigned long bundle, long bits);
 
 
@@ -198,9 +198,9 @@ void ZmodFpoly_bit_pack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
    "bits" is assumed to be less than FLINT_BITS_PER_LIMB. 
 */ 
    
-void ZmodFpoly_bit_unpack_mpn(Zpoly_mpn_t poly_mpn, ZmodFpoly_t poly_f, 
+void ZmodFpoly_bit_unpack_mpn(fmpz_poly_t poly_mpn, ZmodFpoly_t poly_f, 
                               unsigned long bundle, unsigned long bits);
-void ZmodFpoly_bit_unpack_unsigned_mpn(Zpoly_mpn_t poly_mpn, ZmodFpoly_t poly_f, 
+void ZmodFpoly_bit_unpack_unsigned_mpn(fmpz_poly_t poly_mpn, ZmodFpoly_t poly_f, 
                               unsigned long bundle, unsigned long bits);
 
 
@@ -214,7 +214,7 @@ void ZmodFpoly_bit_unpack_unsigned_mpn(Zpoly_mpn_t poly_mpn, ZmodFpoly_t poly_f,
    coefficients are assumed to be at least a limb wide.
 */ 
    
-void ZmodFpoly_byte_pack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
+void ZmodFpoly_byte_pack_mpn(ZmodFpoly_t poly_f, fmpz_poly_t poly_mpn,
                              unsigned long bundle, unsigned long coeff_bytes);
 
      
@@ -229,10 +229,10 @@ void ZmodFpoly_byte_pack_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
    coefficients are assumed to be at least a limb wide.
 */ 
    
-void ZmodFpoly_byte_unpack_unsigned_mpn(Zpoly_mpn_t poly_m, mp_limb_t* array,
+void ZmodFpoly_byte_unpack_unsigned_mpn(fmpz_poly_t poly_m, mp_limb_t* array,
                                unsigned long bundle, unsigned long coeff_bytes);
 
-void ZmodFpoly_byte_unpack_mpn(Zpoly_mpn_t poly_m, mp_limb_t* array,
+void ZmodFpoly_byte_unpack_mpn(fmpz_poly_t poly_m, mp_limb_t* array,
                                unsigned long bundle, unsigned long coeff_bytes);
 
 
@@ -242,7 +242,7 @@ void ZmodFpoly_byte_unpack_mpn(Zpoly_mpn_t poly_m, mp_limb_t* array,
    stores each piece into bundle coefficients of poly_f. 
 */
  
-void ZmodFpoly_split_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
+void ZmodFpoly_split_mpn(ZmodFpoly_t poly_f, fmpz_poly_t poly_mpn,
      unsigned long bundle, unsigned long limbs);
 
      
@@ -256,7 +256,7 @@ void ZmodFpoly_split_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
    The number of coefficients extracted is given by the length of poly_mpn.
 */
  
-void ZmodFpoly_unsplit_mpn(ZmodFpoly_t poly_f, Zpoly_mpn_t poly_mpn,
+void ZmodFpoly_unsplit_mpn(ZmodFpoly_t poly_f, fmpz_poly_t poly_mpn,
      unsigned long bundle, unsigned long limbs);
 
 
