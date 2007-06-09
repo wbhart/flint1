@@ -20,8 +20,6 @@ int main(int argc, char* argv[])
       return 0;
    }
 
-   unsigned long limbs = (FLINT_BITS_PER_LIMB == 32) ? 6 : 3;
-
    // number of terms to compute
    long N = atoi(argv[1]);
 
@@ -47,25 +45,24 @@ int main(int argc, char* argv[])
 
    // Create some polynomial objects
    fmpz_poly_t F2, F4, F8;
-   fmpz_poly_init(F2, 2*N, limbs);
-   fmpz_poly_init(F4, 2*N, limbs);
-   fmpz_poly_init(F8, 2*N, limbs);
-
-   // Initialise F2 with coefficients of F(q)^2
-   fmpz_poly_ensure_space(F2, N);
+   fmpz_poly_init(F2);
+   fmpz_poly_init(F4);
+   fmpz_poly_init(F8);
+   
    for (long i = 0; i < N; i++)
       fmpz_poly_set_coeff_si(F2, i, values[i]);
 
    free(values);
    printf("Done F2\n");
+   
    // compute F^4, truncated to length N
-   _fmpz_poly_mul_KS(F4, F2, F2);
-   fmpz_poly_set_length(F4, N);
+   fmpz_poly_mul(F4, F2, F2);
+   fmpz_poly_truncate(F4, N);
    printf("Done F4\n");
    
    // compute F^8, truncated to length N
-   _fmpz_poly_mul_KS(F8, F4, F4);
-   fmpz_poly_set_length(F8, N);
+   fmpz_poly_mul(F8, F4, F4);
+   fmpz_poly_truncate(F8, N);
    printf("Done F8\n");
    
    // print out last coefficient

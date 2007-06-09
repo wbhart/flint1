@@ -84,7 +84,7 @@ int test_fmpz_poly_convert()
    {
       bits = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 1;
       
-      fmpz_poly_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
           length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1;
@@ -133,7 +133,7 @@ int test_fmpz_poly_getset_ui()
    {
       bits = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 1;
       
-      fmpz_poly_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
           length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1;        
@@ -181,7 +181,7 @@ int test_fmpz_poly_getset_si()
    {
       bits = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 1;
       
-      fmpz_poly_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
           length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1;        
@@ -231,7 +231,7 @@ int test_fmpz_poly_get_coeff_ptr()
    {
       bits = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 1;
       
-      fmpz_poly_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
           length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1;        
@@ -282,7 +282,7 @@ int test_fmpz_poly_normalise()
    {
       bits = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 1;
       
-      fmpz_poly_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
           length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1;        
@@ -328,7 +328,7 @@ int test_fmpz_poly_getset_coeff()
    {
       bits = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 1;
       
-      fmpz_poly_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
           length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1;        
@@ -380,8 +380,8 @@ int test_fmpz_poly_setequal()
    {
       bits = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 1;
       
-      fmpz_poly_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
-      fmpz_poly_init(test_mpn_poly2, 1, (bits-1)/FLINT_BITS_PER_LIMB+1+randint(30));
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init2(test_mpn_poly2, 1, (bits-1)/FLINT_BITS_PER_LIMB+1+randint(30));
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
           length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1;        
@@ -479,9 +479,9 @@ int test_fmpz_poly_swap()
    {
       bits = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 1;
       
-      fmpz_poly_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
-      fmpz_poly_init(test_mpn_poly2, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
-      fmpz_poly_init(test_mpn_poly3, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init2(test_mpn_poly2, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init2(test_mpn_poly3, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
           length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1; 
@@ -527,8 +527,8 @@ int test_fmpz_poly_shift()
    {
       bits = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 1;
       
-      fmpz_poly_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
-      fmpz_poly_init(test_mpn_poly2, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init2(test_mpn_poly2, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
       
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
@@ -595,9 +595,9 @@ int test_fmpz_poly_negate()
       extra_bits1 = randint(200);
       extra_bits2 = randint(200);
       
-      fmpz_poly_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
-      fmpz_poly_init(test_mpn_poly2, 1, (bits+extra_bits1-1)/FLINT_BITS_PER_LIMB+1);
-      fmpz_poly_init(test_mpn_poly3, 1, (bits+extra_bits1+extra_bits2-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init2(test_mpn_poly2, 1, (bits+extra_bits1-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init2(test_mpn_poly3, 1, (bits+extra_bits1+extra_bits2-1)/FLINT_BITS_PER_LIMB+1);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
           length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1;      
@@ -645,9 +645,9 @@ int test_fmpz_poly_add()
       bits2 = bits+gmp_urandomm_ui(Zpoly_test_randstate,200);
       bits3 = bits2+gmp_urandomm_ui(Zpoly_test_randstate,200)+ 1;
       
-      fmpz_poly_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
-      fmpz_poly_init(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS_PER_LIMB+1);
-      fmpz_poly_init(test_mpn_poly3, 1, (bits3-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init2(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init2(test_mpn_poly3, 1, (bits3-1)/FLINT_BITS_PER_LIMB+1);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
           length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1; 
@@ -689,8 +689,8 @@ int test_fmpz_poly_add()
       bits = gmp_urandomm_ui(Zpoly_test_randstate,1000) + 1;
       bits2 = bits+gmp_urandomm_ui(Zpoly_test_randstate,200) + 1;
       
-      fmpz_poly_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
-      fmpz_poly_init(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init2(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS_PER_LIMB+1);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
           length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1; 
@@ -749,9 +749,9 @@ int test_fmpz_poly_sub()
       bits2 = bits+gmp_urandomm_ui(Zpoly_test_randstate,200);
       bits3 = bits2+gmp_urandomm_ui(Zpoly_test_randstate,200)+ 1;
       
-      fmpz_poly_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
-      fmpz_poly_init(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS_PER_LIMB+1);
-      fmpz_poly_init(test_mpn_poly3, 1, (bits3-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init2(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init2(test_mpn_poly3, 1, (bits3-1)/FLINT_BITS_PER_LIMB+1);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
           length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1; 
@@ -795,8 +795,8 @@ int test_fmpz_poly_sub()
       bits = gmp_urandomm_ui(Zpoly_test_randstate,1000) + 1;
       bits2 = bits+gmp_urandomm_ui(Zpoly_test_randstate,200) + 1;
       
-      fmpz_poly_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
-      fmpz_poly_init(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init2(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS_PER_LIMB+1);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
           length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1; 
@@ -856,8 +856,8 @@ int test_fmpz_poly_scalar_mul_ui()
    {
       bits = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 1;
       
-      fmpz_poly_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
-      fmpz_poly_init(test_mpn_poly2, 1, (bits-1)/FLINT_BITS_PER_LIMB+2);
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init2(test_mpn_poly2, 1, (bits-1)/FLINT_BITS_PER_LIMB+2);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
           length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1;        
@@ -912,8 +912,8 @@ int test_fmpz_poly_scalar_mul_si()
    {
       bits = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 1;
       
-      fmpz_poly_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
-      fmpz_poly_init(test_mpn_poly2, 1, (bits-1)/FLINT_BITS_PER_LIMB+2);
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init2(test_mpn_poly2, 1, (bits-1)/FLINT_BITS_PER_LIMB+2);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
           length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1;        
@@ -969,9 +969,9 @@ int test_fmpz_poly_scalar_div_exact_ui()
    {
       bits = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 1;
       
-      fmpz_poly_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
-      fmpz_poly_init(test_mpn_poly2, 1, (bits-1)/FLINT_BITS_PER_LIMB+2);
-      fmpz_poly_init(test_mpn_poly3, 1, (bits-1)/FLINT_BITS_PER_LIMB+2);
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init2(test_mpn_poly2, 1, (bits-1)/FLINT_BITS_PER_LIMB+2);
+      fmpz_poly_init2(test_mpn_poly3, 1, (bits-1)/FLINT_BITS_PER_LIMB+2);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
           length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1;        
@@ -999,8 +999,8 @@ int test_fmpz_poly_scalar_div_exact_ui()
    {
       bits = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 1;
       
-      fmpz_poly_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
-      fmpz_poly_init(test_mpn_poly2, 1, (bits-1)/FLINT_BITS_PER_LIMB+2);
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init2(test_mpn_poly2, 1, (bits-1)/FLINT_BITS_PER_LIMB+2);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
           length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1;        
@@ -1026,9 +1026,9 @@ int test_fmpz_poly_scalar_div_exact_ui()
    {
       bits = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 1;
       
-      fmpz_poly_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
-      fmpz_poly_init(test_mpn_poly2, 1, (bits-1)/FLINT_BITS_PER_LIMB+2);
-      fmpz_poly_init(test_mpn_poly3, 1, (bits-1)/FLINT_BITS_PER_LIMB+3);
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init2(test_mpn_poly2, 1, (bits-1)/FLINT_BITS_PER_LIMB+2);
+      fmpz_poly_init2(test_mpn_poly3, 1, (bits-1)/FLINT_BITS_PER_LIMB+3);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
           length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1;        
@@ -1072,9 +1072,9 @@ int test_fmpz_poly_scalar_div_exact_si()
    {
       bits = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 1;
       
-      fmpz_poly_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
-      fmpz_poly_init(test_mpn_poly2, 1, (bits-1)/FLINT_BITS_PER_LIMB+2);
-      fmpz_poly_init(test_mpn_poly3, 1, (bits-1)/FLINT_BITS_PER_LIMB+2);
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init2(test_mpn_poly2, 1, (bits-1)/FLINT_BITS_PER_LIMB+2);
+      fmpz_poly_init2(test_mpn_poly3, 1, (bits-1)/FLINT_BITS_PER_LIMB+2);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
           length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1;        
@@ -1104,8 +1104,8 @@ int test_fmpz_poly_scalar_div_exact_si()
    {
       bits = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 1;
       
-      fmpz_poly_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
-      fmpz_poly_init(test_mpn_poly2, 1, (bits-1)/FLINT_BITS_PER_LIMB+2);
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init2(test_mpn_poly2, 1, (bits-1)/FLINT_BITS_PER_LIMB+2);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
           length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1;        
@@ -1133,9 +1133,9 @@ int test_fmpz_poly_scalar_div_exact_si()
    {
       bits = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 1;
       
-      fmpz_poly_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
-      fmpz_poly_init(test_mpn_poly2, 1, (bits-1)/FLINT_BITS_PER_LIMB+2);
-      fmpz_poly_init(test_mpn_poly3, 1, (bits-1)/FLINT_BITS_PER_LIMB+3);
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init2(test_mpn_poly2, 1, (bits-1)/FLINT_BITS_PER_LIMB+2);
+      fmpz_poly_init2(test_mpn_poly3, 1, (bits-1)/FLINT_BITS_PER_LIMB+3);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
           length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1;        
@@ -1183,8 +1183,8 @@ int test_fmpz_poly_scalar_div_ui()
       bits = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 1;
       //bits = 64*1000;
       
-      fmpz_poly_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
-      fmpz_poly_init(test_mpn_poly2, 1, (bits-1)/FLINT_BITS_PER_LIMB+2);
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init2(test_mpn_poly2, 1, (bits-1)/FLINT_BITS_PER_LIMB+2);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
           length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1; 
@@ -1243,8 +1243,8 @@ int test_fmpz_poly_scalar_div_si()
    {
       bits = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 1;
       
-      fmpz_poly_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
-      fmpz_poly_init(test_mpn_poly2, 1, (bits-1)/FLINT_BITS_PER_LIMB+2);
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init2(test_mpn_poly2, 1, (bits-1)/FLINT_BITS_PER_LIMB+2);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
           length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1;        
@@ -1305,8 +1305,8 @@ int test_fmpz_poly_mul_naieve()
       bits = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 1;
       bits2 = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 1;
       
-      fmpz_poly_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
-      fmpz_poly_init(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init2(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS_PER_LIMB+1);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
           length = gmp_urandomm_ui(Zpoly_test_randstate,200)+1; 
@@ -1325,7 +1325,7 @@ int test_fmpz_poly_mul_naieve()
           Zpoly_mul_naive(test_poly3, test_poly, test_poly2);
           
           Zpoly_init3(test_poly4, length+length2-1, bits+bits2+FLINT_BITS_PER_LIMB);
-          fmpz_poly_init(test_mpn_poly3, length+length2-1, (bits+bits2-1)/FLINT_BITS_PER_LIMB+2);
+          fmpz_poly_init2(test_mpn_poly3, length+length2-1, (bits+bits2-1)/FLINT_BITS_PER_LIMB+2);
           
           _fmpz_poly_mul_naive(test_mpn_poly3, test_mpn_poly, test_mpn_poly2);
           
@@ -1362,8 +1362,8 @@ int test_fmpz_poly_mul_karatsuba()
       bits = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 1;
       bits2 = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 1;
       
-      fmpz_poly_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
-      fmpz_poly_init(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init2(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS_PER_LIMB+1);
       
       length2 = gmp_urandomm_ui(Zpoly_test_randstate,200)+1; 
       length = gmp_urandomm_ui(Zpoly_test_randstate,200)+1;   
@@ -1384,7 +1384,7 @@ int test_fmpz_poly_mul_karatsuba()
       Zpoly_mul_naive(test_poly3, test_poly, test_poly2);
           
       Zpoly_init3(test_poly4, length+length2-1, test_mpn_poly->limbs+test_mpn_poly2->limbs+2);
-      fmpz_poly_init(test_mpn_poly3, length+length2-1, test_mpn_poly->limbs+test_mpn_poly2->limbs+2);
+      fmpz_poly_init2(test_mpn_poly3, length+length2-1, test_mpn_poly->limbs+test_mpn_poly2->limbs+2);
           
       for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
       { 
@@ -1510,8 +1510,8 @@ int test_fmpz_poly_mul_SS()
       bits2 = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 1;
       //bits = bits2 = 1000;
       
-      fmpz_poly_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
-      fmpz_poly_init(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init2(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS_PER_LIMB+1);
       
       length2 = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1; 
       length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1; 
@@ -1535,7 +1535,7 @@ int test_fmpz_poly_mul_SS()
       Zpoly_mul_naive_KS(test_poly3, test_poly, test_poly2);
           
       Zpoly_init3(test_poly4, length+length2-1, test_mpn_poly->limbs+test_mpn_poly2->limbs+1);
-      fmpz_poly_init(test_mpn_poly3, length+length2-1, test_mpn_poly->limbs+test_mpn_poly2->limbs+1);
+      fmpz_poly_init2(test_mpn_poly3, length+length2-1, test_mpn_poly->limbs+test_mpn_poly2->limbs+1);
           
       for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
       { 

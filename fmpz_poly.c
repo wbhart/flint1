@@ -266,6 +266,9 @@ long _fmpz_poly_bits1(fmpz_poly_t poly_mpn)
 */
 long _fmpz_poly_bits(fmpz_poly_t poly_mpn)
 {
+   if (poly_mpn->limbs == 0) return 0;
+   if (poly_mpn->limbs == 1) return _fmpz_poly_bits1(poly_mpn);
+   
    unsigned long mask = -1L;
    long bits = 0;
    long sign = 1;
@@ -1262,15 +1265,8 @@ void _fmpz_poly_mul_KS(fmpz_poly_t output, fmpz_poly_p input1, fmpz_poly_p input
    long bits1, bits2;
    int bitpack = 0;
    
-   if ((input1->limbs == 1) && (input2->limbs == 1))
-   {
-      bits1 = _fmpz_poly_bits1(input1);
-      bits2 = (input1 == input2) ? bits1 : _fmpz_poly_bits1(input2);
-   } else
-   {
-      bits1 = _fmpz_poly_bits(input1);
-      bits2 = (input1 == input2) ? bits1 : _fmpz_poly_bits(input2);
-   }
+   bits1 = _fmpz_poly_bits(input1);
+   bits2 = (input1 == input2) ? bits1 : _fmpz_poly_bits(input2);
       
    unsigned long sign = ((bits1 < 0) || (bits2 < 0));
    unsigned long length = input2->length;
@@ -1476,16 +1472,28 @@ void _fmpz_poly_mul(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_t input2)
 ****************************************************************************/
 
 /* 
-   Create a polynomial of length zero with "alloc" allocated coefficients
-   each with enough space for limbs limbs
+   Create a polynomial of length zero with zero allocated coefficients
 */
 
-void fmpz_poly_init(fmpz_poly_t poly, unsigned long alloc, unsigned long limbs)
+void fmpz_poly_init(fmpz_poly_t poly)
 {
-   FLINT_ASSERT(alloc >= 1);
-   FLINT_ASSERT(limbs >= 1);
+   poly->coeffs = NULL;
+   
+   poly->alloc = 0;
+   poly->length = 0;
+   poly->limbs = 0;
+}
 
-   poly->coeffs = (mp_limb_t *) flint_heap_alloc(alloc*(limbs+1));
+/* 
+   Create a polynomial of length zero with "alloc" allocated coefficients
+   each with enough space for "limbs" limbs
+*/
+
+void fmpz_poly_init2(fmpz_poly_t poly, unsigned long alloc, unsigned long limbs)
+{
+   if ((alloc > 0) && (limbs > 0))
+      poly->coeffs = (mp_limb_t *) flint_heap_alloc(alloc*(limbs+1));
+   else poly->coeffs = NULL;
    
    poly->alloc = alloc;
    poly->length = 0;
@@ -1496,19 +1504,86 @@ void fmpz_poly_init(fmpz_poly_t poly, unsigned long alloc, unsigned long limbs)
 
 void fmpz_poly_realloc(fmpz_poly_t poly, unsigned long alloc)
 {
-   if (alloc <= 0) alloc = 1;
-   poly->coeffs = (mp_limb_t*) flint_heap_realloc(poly->coeffs, alloc*(poly->limbs+1));
+   if (poly->limbs > 0)
+   {
+      if (alloc > 0)
+      {
+         poly->coeffs = (mp_limb_t*) flint_heap_realloc(poly->coeffs, alloc*(poly->limbs+1));
+      } else
+      {
+         if (poly->coeffs) flint_heap_free(poly->coeffs);
+      }   
+      poly->alloc = alloc;
    
-   poly->alloc = alloc;
+      // truncate actual data if necessary
+      if (poly->length > alloc)
+         poly->length = alloc;
+   } else
+   {
+      poly->alloc = alloc;
+   }
+}
+
+void fmpz_poly_fit_length(fmpz_poly_t poly, unsigned long alloc)
+{
+   if (alloc <= poly->alloc) return;
+
+   if (alloc < 2*poly->alloc) alloc = 2*poly->alloc;
    
-   // truncate actual data if necessary
-   if (poly->length > alloc)
-      poly->length = alloc;
+   fmpz_poly_realloc(poly, alloc);
+}
+
+void fmpz_poly_resize_limbs(fmpz_poly_t poly, unsigned long limbs)
+{
+   if (limbs > 0)
+   {
+      if (limbs == poly->limbs) return;
+      
+      unsigned long i;
+      mp_limb_t * coeff_i;
+      mp_limb_t * coeff_i_old = poly->coeffs;
+      
+      if (limbs < poly->limbs)
+      {
+         coeff_i = poly->coeffs + limbs+1;
+         coeff_i_old += (poly->limbs+1);
+         for (i = 1; i < poly->length; i++)
+         {
+            forward_copy_limbs(coeff_i, coeff_i_old, limbs+1);
+            FLINT_ASSERT(ABS(coeff_i[0]) > limbs); 
+            coeff_i += (limbs+1);
+            coeff_i_old += (poly->limbs+1);
+         } 
+      } else
+      {
+         mp_limb_t * temp_coeffs = (mp_limb_t*) flint_heap_alloc(poly->alloc*(limbs+1));
+         coeff_i = temp_coeffs;
+         for (i = 0; i < poly->length; i++)
+         {
+            copy_limbs(coeff_i, coeff_i_old, limbs+1);
+            coeff_i += (limbs+1);
+            coeff_i_old += (poly->limbs+1);
+         } 
+         flint_heap_free(poly->coeffs);
+         poly->coeffs = temp_coeffs;
+      }
+      for ( ; i < poly->alloc; i++)
+      {
+         coeff_i[0] = 0;
+         coeff_i += (limbs+1);
+      } 
+      poly->limbs = limbs;
+   } else
+   {
+      if (poly->coeffs) flint_heap_free(poly->coeffs);
+      poly->length = 0;
+      poly->limbs = 0;
+   }
 }
 
 void fmpz_poly_clear(fmpz_poly_t poly)
 {
-   flint_heap_free(poly->coeffs);
+   if (poly->coeffs) flint_heap_free(poly->coeffs);
 }
 
 long fmpz_poly_degree(fmpz_poly_t poly)
@@ -1523,20 +1598,9 @@ unsigned long fmpz_poly_length(fmpz_poly_t poly)
    return poly->length;
 }
 
-void fmpz_poly_ensure_space2(fmpz_poly_t poly, unsigned long alloc)
+void fmpz_poly_set_length(fmpz_poly_t poly, unsigned long length)
 {
-   FLINT_ASSERT(alloc >= poly->alloc);
-
-   if (alloc < 2*poly->alloc)
-      alloc = 2*poly->alloc;
-   fmpz_poly_realloc(poly, alloc);
-}
-
-void fmpz_poly_ensure_length2(fmpz_poly_t poly, unsigned long length)
-{
-   FLINT_ASSERT(length >= poly->length);
-   
-   fmpz_poly_ensure_space(poly, length);
+   fmpz_poly_fit_length(poly, length);
 
    for (unsigned long i = poly->length; i < length; i++)
       poly->coeffs[i*(poly->limbs+1)] = 0;
@@ -1550,4 +1614,26 @@ void fmpz_poly_get_coeff_mpz(mpz_t x, fmpz_poly_t poly, unsigned long n)
       mpz_set_ui(x, 0);
    else
       _fmpz_poly_get_coeff_mpz(x, poly, n);
+}
+
+void fmpz_poly_mul(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_t input2)
+{
+   unsigned long limbs = input1->limbs + input2->limbs;
+   
+   long bits1, bits2;
+      
+   bits1 = _fmpz_poly_bits(input1);
+   bits2 = (input1 == input2) ? bits1 : _fmpz_poly_bits(input2);
+      
+   unsigned long sign = ((bits1 < 0) || (bits2 < 0));
+   unsigned long length = (input1->length > input2->length) ? input2->length : input1->length;
+   unsigned log_length = 0;
+   while ((1<<log_length) < length) log_length++;
+   unsigned long bits = ABS(bits1) + ABS(bits2) + log_length + sign; 
+   
+   fmpz_poly_fit_limbs(output, (bits-1)/FLINT_BITS_PER_LIMB+1);
+   fmpz_poly_fit_length(output, input1->length + input2->length - 1);
+   
+   _fmpz_poly_mul(output, input1, input2);
+   fmpz_poly_set_length(output, input1->length + input2->length - 1);
 }

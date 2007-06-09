@@ -299,70 +299,43 @@ void _fmpz_poly_content(mp_limb_t * content, fmpz_poly_t a);
     
 ===============================================================================*/
 
-void fmpz_poly_init(fmpz_poly_t poly, unsigned long alloc,
-                                              unsigned long limbs);
+void fmpz_poly_init(fmpz_poly_t poly);
+
+void fmpz_poly_init2(fmpz_poly_t poly, unsigned long alloc, unsigned long limbs);
                                               
 void fmpz_poly_realloc(fmpz_poly_t poly, unsigned long alloc);
 
+void fmpz_poly_fit_length(fmpz_poly_t poly, unsigned long alloc);
+
+void fmpz_poly_resize_limbs(fmpz_poly_t poly, unsigned long limbs);
+
+static inline void fmpz_poly_fit_limbs(fmpz_poly_t poly, unsigned long limbs)
+{
+   if (limbs > poly->limbs) fmpz_poly_resize_limbs(poly, limbs);
+}
+
 void fmpz_poly_clear(fmpz_poly_t poly);
 
+void fmpz_poly_set_length(fmpz_poly_t poly, unsigned long length);
 
-// This is the actual implementation that's called for fmpz_poly_ensure_space()
-// (see below) if a reallocation is required
-void fmpz_poly_ensure_space2(fmpz_poly_t poly, unsigned long alloc);
-
-// Ensures that the polynomial has at least alloc coefficients allocated.
-// If the polynomial already has enough space allocated, nothing happens.
-// If more space is required, then a realloc occurs, and the space allocated
-// will at least *double* from its current amount. This strategy ensures that
-// repeated calls have amortised constant cost.
-// (NOTE: I'm making only the initial comparison inline, since this will
-// happen very frequently; the actual reallocation will be less frequent,
-// and will chew up too many bytes of code if I make it inline.)
-static inline
-void fmpz_poly_ensure_space(fmpz_poly_t poly, unsigned long alloc)
+static inline void fmpz_poly_truncate(fmpz_poly_t poly, unsigned long length)
 {
-   if (poly->alloc < alloc)
-      fmpz_poly_ensure_space2(poly, alloc);
+   FLINT_ASSERT(poly->length >= length);
+   fmpz_poly_set_length(poly, length);
 }
-
-
-// This is the actual implementation that's called for fmpz_poly_ensure_length()
-// (see below) if extending is required
-void fmpz_poly_ensure_length2(fmpz_poly_t poly, unsigned long length);
-
-// Ensures that the poly has length at least "length".
-// If not, it extends it and zero-fills appropriately.
-static inline
-void fmpz_poly_ensure_length(fmpz_poly_t poly, unsigned long length)
-{
-   if (poly->length < length)
-      fmpz_poly_ensure_length2(poly, length);
-}
-
-
-// Sets length to given length, either truncating or zero-padding (possibly
-// with a reallocation) as necessary.
-static inline
-void fmpz_poly_set_length(fmpz_poly_t poly, unsigned long length)
-{
-   if (length <= poly->length)
-      poly->length = length;
-   else
-      fmpz_poly_ensure_length2(poly, length);
-}
-
 
 static inline
 void fmpz_poly_set_coeff_si(fmpz_poly_t poly, unsigned long n, long x)
 {
-   fmpz_poly_ensure_length(poly, n+1);
+   fmpz_poly_fit_length(poly, n+1);
+   fmpz_poly_fit_limbs(poly, 1);
    _fmpz_poly_set_coeff_si(poly, n, x);
+   if (n > poly->length) poly->length = n+1;
 }
-
 
 void fmpz_poly_get_coeff_mpz(mpz_t x, fmpz_poly_t poly, unsigned long n);
 
+void fmpz_poly_mul(fmpz_poly_t output, fmpz_poly_p input1, fmpz_poly_p input2);
 
 // *************** end of file
 #endif
