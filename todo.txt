@@ -24,13 +24,11 @@
  * Write some decent profiling code.
 
  * Make sure to use mpz_rrandomb for all randomised testing, it's much better
-   at picking up corner cases
+   at picking up corner cases. Make sure it isn't used in the profiling code, 
+   since GMP uses a faster algorithm for multiplying such numbers.
 
  * Think more about the odd-even karatsuba idea -- david suspects it might
    give smoother performance for unequal length inputs
-
- * Finish implementations of all polynomial multiplication routines and
-integrate them into a single routine
 
  * Profile our code to date in the Z and polynomials over Z packages.
 
@@ -39,11 +37,6 @@ integrate them into a single routine
 
  * Collect together timing statistics on various programs (MAGMA, NTL, PARI,
 FLINT, etc), in one convenient place. (David)
-
- * Change MAGMA timing routines to generate new random polys say every 20
-iterations (david)
-
- * Document the Z package that has already been written (Bill).
 
  * Write an asymptotically fast GCD algorithm for the Z package for very
 large integers. (First check how far along the GMP implementation is, and
@@ -109,8 +102,7 @@ to add a bit of padding.
 
 === Zpoly_mpn module ===
 
-* clarify the meaning of the sign limb. The documentation in the header
-  doesn't agree with what the code seems to do.
+* Ensure the documentation agrees with the implementation of the sign limb.
 
 * I'm not comfortable with the way _Zpoly_mpn_mul_KS modifies its input
   temporarily if the signs are wrong. What happens if a multithreaded
@@ -185,3 +177,28 @@ the stack. This could be a problem if we need to allocate many small objects.
 
 * remember when doing the automatic tuning for this, squaring and multiplication probably have different crossovers
 
+=== Miscellaneous ===
+
+* Switch to integer increments instead of rounded floating point ones in  Zpoly_mpn-profile.c and magma-profile.m
+
+* Add memory manager to Zpoly.c
+
+* Use stack based memory manager in ZmodFpoly-test.c
+
+* Remove randstate memory leak from Z_mul_timing.c
+
+* Make long-extras module and redistribute extras file
+
+* Write new faster bitpacking routines (include support for 32 bit machines)
+
+* Compute number of limbs needed for test_mpn_poly3 in Zpoly_mpn_test.c
+
+* Think about ways of lowering the system time in delta_qexp
+
+* Implement karatsuba for sparse polynomials
+
+* Write tests for double underscore functions in Zpoly_mpn.c
+
+* Check all Zpoly_mpn functions deal appropriately with the zero length poly
+
+* Make karatsuba use the right number of limbs
