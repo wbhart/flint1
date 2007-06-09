@@ -324,8 +324,7 @@ static inline void fmpz_poly_truncate(fmpz_poly_t poly, unsigned long length)
    fmpz_poly_set_length(poly, length);
 }
 
-static inline
-void fmpz_poly_set_coeff_si(fmpz_poly_t poly, unsigned long n, long x)
+static inline void fmpz_poly_set_coeff_si(fmpz_poly_t poly, unsigned long n, long x)
 {
    fmpz_poly_fit_length(poly, n+1);
    fmpz_poly_fit_limbs(poly, 1);
