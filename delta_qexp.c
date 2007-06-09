@@ -49,6 +49,7 @@ int main(int argc, char* argv[])
    fmpz_poly_init(F4);
    fmpz_poly_init(F8);
    
+   fmpz_poly_fit_length(F2, N);
    for (long i = 0; i < N; i++)
       fmpz_poly_set_coeff_si(F2, i, values[i]);
 
