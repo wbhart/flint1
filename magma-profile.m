@@ -19,8 +19,8 @@ Usage: run magma with the -b flag to prevent the start up banner, i.e.
 
 ************************************************************************/
 
-target_name := "please put target name here";
-target_description := "please put longer description here";
+target_name := "PolyMul";
+target_description := "MAGMA polynomial multiplication over various sizes";
 
 
 // Timing runs need to last at least this many microseconds to be counted:
@@ -35,21 +35,31 @@ forward prof2d_sample;
 This function should run count iterations at position (x, y),
 and return the total time in seconds, using the Cputime() function.
 */
-function sampler(x, y, count)
+function sampler(length, bits, count)
 
-    // here is an example that multiplies integers with x bits and y bits
-    
-    n := Random(2^x);
-    m := Random(2^y);
-
+    countmod := 4;
+    if count gt 1000 then countmod := 100; end if;
+    if count gt 100 then countmod := 10; end if;
     time1 := Cputime();
-    
     for i := 1 to count do
-	k := n * m;
+	if (i-1) mod countmod eq 0 then
+         a:=Polynomial([RandomBits(bits):x in [1..length]]);
+         b:=Polynomial([RandomBits(bits):x in [1..length]]);
+      end if;
+      c:=a*b;
     end for;
 
     time2 := Cputime();
-    return time2 - time1;
+
+    for i := 1 to count do
+        if (i-1) mod countmod eq 0 then
+	 a:=Polynomial([RandomBits(bits):x in [1..length]]);
+	 b:=Polynomial([RandomBits(bits):x in [1..length]]);
+       end if;
+    end for;
+
+    time3 := Cputime();
+    return (time2 - time1) - (time3 - time2);
 end function;
 
 
@@ -59,13 +69,20 @@ and call prof2d_sample(x, y) for each one.
 */
 procedure driver()
 
-    // here is an example that calls prof2d_sample for a range of x and y
+   //here is an example that calls prof2d_sample for a range of x and y
     
-    for x := 100000 to 200000 by 10000 do
-	for y := 100000 to 200000 by 10000 do
-	    prof2d_sample(x, y);
-	end for;
-    end for;
+    x := 1;
+    y := 1;
+    while x le 16000000 do
+	y := 1;
+      while y le 16000000 do
+          if x*y le 16000000 then
+	       prof2d_sample(x, y);
+          end if;
+          y := Ceiling(y*1.200);
+	end while;
+          x := Ceiling(x*1.200);
+    end while;
 end procedure;
 
 
@@ -102,8 +119,8 @@ procedure prof2d_sample(x, y)
     good_count := 0;
 
     // first try one loop
-    num_trials := 1;
-    last_time := sampler(x, y, 1) * 1000000.0;
+    num_trials := 8;
+    last_time := sampler(x, y, 8) * 1000000.0;
 
     max_time := 0;
     min_time := 0;
@@ -126,8 +143,7 @@ procedure prof2d_sample(x, y)
 	    if good_count eq 5 then
 		// we've got enough data
 		// print it out and return
-		print Sprintf("%o\t%o\t%o\t%o", x, y, \
-		    format_sci(min_time), format_sci(max_time));
+		print Sprintf("%o\t%o\t%o\t%o", x, y, format_sci(min_time), format_sci(max_time));
 		return;
 	    end if;
 	end if;
