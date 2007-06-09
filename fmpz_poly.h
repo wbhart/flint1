@@ -330,7 +330,7 @@ void fmpz_poly_set_coeff_si(fmpz_poly_t poly, unsigned long n, long x)
    fmpz_poly_fit_length(poly, n+1);
    fmpz_poly_fit_limbs(poly, 1);
    _fmpz_poly_set_coeff_si(poly, n, x);
-   if (n > poly->length) poly->length = n+1;
+   if (n+1 > poly->length) poly->length = n+1;
 }
 
 void fmpz_poly_get_coeff_mpz(mpz_t x, fmpz_poly_t poly, unsigned long n);
