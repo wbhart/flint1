@@ -1287,9 +1287,9 @@ void _fmpz_poly_mul_KS(fmpz_poly_t output, fmpz_poly_p input1, fmpz_poly_p input
          ZmodFpoly_stack_init(poly2, 0, (bits*input2->length-1)/FLINT_BITS_PER_LIMB+1, 0);
 
       if (sign) bits = -1L*bits;
-      ZmodFpoly_bit_pack_mpn(poly2, input2, input2->length, bits);
       if (input1 != input2)
-         ZmodFpoly_bit_pack_mpn(poly1, input1, input1->length, bits);
+         ZmodFpoly_bit_pack_mpn(poly2, input2, input2->length, bits);
+      ZmodFpoly_bit_pack_mpn(poly1, input1, input1->length, bits);
 
       bits=ABS(bits);
    } else
