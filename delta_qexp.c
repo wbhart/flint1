@@ -54,17 +54,14 @@ int main(int argc, char* argv[])
       fmpz_poly_set_coeff_si(F2, i, values[i]);
 
    free(values);
-   printf("Done F2\n");
    
    // compute F^4, truncated to length N
    fmpz_poly_mul(F4, F2, F2);
    fmpz_poly_truncate(F4, N);
-   printf("Done F4\n");
    
    // compute F^8, truncated to length N
    fmpz_poly_mul(F8, F4, F4);
    fmpz_poly_truncate(F8, N);
-   printf("Done F8\n");
    
    // print out last coefficient
    mpz_t x;
