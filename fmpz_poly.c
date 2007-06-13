@@ -1378,8 +1378,6 @@ void _fmpz_poly_mul_SS(fmpz_poly_t output, fmpz_poly_p input1, fmpz_poly_p input
       
    unsigned long n = (output_bits - 1) / FLINT_BITS_PER_LIMB + 1;
    
-   n = ZmodF_mul_precomp_get_feasible_n(NULL, n);
-
    ZmodFpoly_t poly1, poly2, res;
    long bits1, bits2;
    unsigned long sign = 0;
@@ -1408,8 +1406,6 @@ void _fmpz_poly_mul_SS(fmpz_poly_t output, fmpz_poly_p input1, fmpz_poly_p input
       output_bits = (((output_bits - 1) >> log_length) + 1) << log_length;
       
    n = (output_bits - 1) / FLINT_BITS_PER_LIMB + 1;
-   
-   n = ZmodF_mul_precomp_get_feasible_n(NULL, n);
    
    ZmodFpoly_decrease_n(poly1, n);
    ZmodFpoly_decrease_n(poly2, n);

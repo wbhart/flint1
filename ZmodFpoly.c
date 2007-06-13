@@ -1076,24 +1076,24 @@ void ZmodFpoly_pointwise_mul(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y)
    
    unsigned long j;
 
-   ZmodF_mul_precomp_t info;
-   ZmodF_mul_precomp_init(info, x->n, x == y);
+   ZmodF_mul_info_t info;
+   ZmodF_mul_info_init(info, x->n, x == y);
    
    if (x != y)
       for (unsigned long i = 0; i < x->length; i++)
       {
          for (j = 0; j < x->n; j += 8) FLINT_PREFETCH(x->coeffs[i+8], j);
          for (j = 0; j < y->n; j += 8) FLINT_PREFETCH(y->coeffs[i+8], j);
-         ZmodF_mul_precomp(info, res->coeffs[i], x->coeffs[i], y->coeffs[i]);
+         ZmodF_mul_info_mul(info, res->coeffs[i], x->coeffs[i], y->coeffs[i]);
       }
    else
       for (unsigned long i = 0; i < x->length; i++)
       {
          for (j = 0; j < x->n; j += 8) FLINT_PREFETCH(x->coeffs[i+8], j);
-         ZmodF_sqr_precomp(info, res->coeffs[i], x->coeffs[i]);
+         ZmodF_mul_info_sqr(info, res->coeffs[i], x->coeffs[i]);
       }
 
-   ZmodF_mul_precomp_clear(info);
+   ZmodF_mul_info_clear(info);
 
    res->length = x->length;
 }

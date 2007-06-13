@@ -4,6 +4,9 @@
 
  Copyright (C) 2007, David Harvey
  
+ Routines for multiplication of elements of Z/pZ where p = B^n + 1,
+ B = 2^FLINT_BITS_PER_LIMB.
+ 
 ******************************************************************************/
 
 #ifndef FLINT_ZMODF_MUL_H
@@ -16,6 +19,17 @@
 
 
 /*
+   Three possible algorithms for multiplication mod p.
+   ZMOD_MUL_PLAIN: use mpn_mul_n and then reduce mod p
+   ZMOD_MUL_THREEWAY: use B^(3n) + 1 = (B^n + 1)(B^2n - B^n + 1)
+   ZMOD_MUL_NEGACYCLIC: use negacyclic FFT
+*/
+#define ZMODF_MUL_ALGO_PLAIN 0
+#define ZMODF_MUL_ALGO_THREEWAY 1
+#define ZMODF_MUL_ALGO_NEGACYCLIC 2
+
+
+/*
 This struct stores info used to speed up multiplications mod p
 for a specific n.
 */
@@ -23,53 +37,65 @@ typedef struct
 {
    unsigned long n;
 
-   // 0 means use plain old mpn_mul_n; 1 means use the negacyclic FFT.
-   int use_fft;
+   // possible values for algo are the ZMOD_MUL_ALGO_xyz constants above
+   int algo;
    
-   // ------------------ fields used only for mpn_mul_n
-   
-   // scratch buffer of length 2*n
+   // scratch buffer of length 2n (for ZMODF_MUL_ALGO_PLAIN)
+   // or length 3n+1 (for ZMODF_MUL_ALGO_THREEWAY)
    mp_limb_t* scratch;
-   
-   // ------------------ fields used only for negacyclic FFT
 
+   // m = n/3; used only in ZMODF_MUL_ALGO_THREEWAY
+   unsigned long m;
+   
+   // used only for ZMODF_MUL_ALGO_NEGACYCLIC
    ZmodFpoly_t polys[2];
 
-} ZmodF_mul_precomp_struct;
+} ZmodF_mul_info_struct;
 
 
-// ZmodF_mul_precomp_t allows reference-like semantics for
-// ZmodF_mul_precomp_struct:
-typedef ZmodF_mul_precomp_struct ZmodF_mul_precomp_t[1];
+// ZmodF_mul_info_t allows reference-like semantics for
+// ZmodF_mul_info_struct:
+typedef ZmodF_mul_info_struct ZmodF_mul_info_t[1];
 
 
-// Input is a requested coefficient length n. Output is n' >= n which is
-// optimal with respect to running a negacyclic FFT.
-// (i.e. If n is sufficiently small that mpn_mul_n should be used directly,
-// then it returns n. Otherwise it might round n up slightly to a multiple
-// of a power of two, to make a negacyclic convolution possible.)
-// If depth != NULL, it will also write the negacyclic transform depth to
-// that location.
-unsigned long ZmodF_mul_precomp_get_feasible_n(unsigned long* depth,
-                                               unsigned long n);
+/*
+Initialises ZmodF_mul_info_t for a given n. This function automatically selects
+the best underlying multiplication algorithm for the given n.
+
+The squaring flag is 1 if you intend to use this object for squaring. (This
+doesn't affect whether the struct can be used for squaring or multiplying,
+the only effect is to select the best algorithm using different tuning
+parameters.)
+
+WARNING: the multiplication time does NOT increase monotonically with n.
+* If n is divisible by 3, the "threeway" algorithm is available, which is
+  faster than the "plain" algorithm for n >= 36 (on our opteron test machine).
+* For large n, the "negacyclic" algorithm is available, but there are
+  conditions on the 2-divisibility of n (not very onerous though).
+
+NOTE: this function uses stack based memory management.
+*/
+void ZmodF_mul_info_init(ZmodF_mul_info_t info, unsigned long n, int squaring);
 
 
-// initialises ZmodF_mul_precomp_t for a given n
-// (The squaring flag is 1 if you are going to use this object for squaring.
-// This doesn't affect whether the struct can be used for squaring or
-// multiplying, the only effect is to possibly modify the tuning parameters.)
-void ZmodF_mul_precomp_init(ZmodF_mul_precomp_t info, unsigned long n,
-                            int squaring);
+// the following functions initialise with a specific algorithm:
+void ZmodF_mul_info_init_plain(ZmodF_mul_info_t info, unsigned long n);
+void ZmodF_mul_info_init_threeway(ZmodF_mul_info_t info, unsigned long n);
+void ZmodF_mul_info_init_negacyclic(ZmodF_mul_info_t info, unsigned long n,
+                                    unsigned long depth);
+
                             
 // releases resources
-void ZmodF_mul_precomp_clear(ZmodF_mul_precomp_t info);
+void ZmodF_mul_info_clear(ZmodF_mul_info_t info);
 
-// sets res := a * b, assuming they all have the same n as the given
-// ZmodF_mul_precomp_t.
-void ZmodF_mul_precomp(ZmodF_mul_precomp_t, ZmodF_t res, ZmodF_t a, ZmodF_t b);
-// res := a * b
-void ZmodF_sqr_precomp(ZmodF_mul_precomp_t, ZmodF_t res, ZmodF_t a);
+// sets res := a * b using the given ZmodF_mul_info_t object
+void ZmodF_mul_info_mul(ZmodF_mul_info_t, ZmodF_t res, ZmodF_t a, ZmodF_t b);
+// sets res := a * b using the given ZmodF_mul_info_t object
+void ZmodF_mul_info_sqr(ZmodF_mul_info_t, ZmodF_t res, ZmodF_t a);
 
+
+// the following functions are for standalone multiplying/squaring, without
+// the use of the precomputation stuff above:
 
 /*
    res := a * b

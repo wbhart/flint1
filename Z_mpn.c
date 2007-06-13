@@ -132,7 +132,6 @@ mp_limb_t Z_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1,
    }
       
    n = output_bits/FLINT_BITS_PER_LIMB;
-   n = ZmodF_mul_precomp_get_feasible_n(NULL, n);
 #if DEBUG
    printf("%ld, %ld, %ld, %ld, %ld\n", length1, length2, output_bits, coeff_limbs, log_length);
 #endif   
@@ -213,7 +212,6 @@ void Z_mpn_mul_precomp_init(Z_mpn_precomp_t precomp, mp_limb_t * data1, unsigned
    }
       
    n = output_bits/FLINT_BITS_PER_LIMB;
-   n = ZmodF_mul_precomp_get_feasible_n(NULL, n);
 #if DEBUG
    printf("%ld, %ld, %ld, %ld, %ld\n", length1, length2, output_bits, coeff_limbs, log_length);
 #endif   
