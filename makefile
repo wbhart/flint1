@@ -51,12 +51,14 @@ profiler.o: profiler.c $(HEADERS)
 profiler-main.o: profiler-main.c $(HEADERS)
 	$(CC) -c profiler-main.c -o profiler-main.o $(CFLAGS)
 
-
-
 Z_mpn.o: Z_mpn.c $(HEADERS)
 	$(CC) -c Z_mpn.c -o Z_mpn.o $(CFLAGS)
 
+Z_mpn-test.o: Z_mpn-test.c $(HEADERS)
+	$(CC) -c Z_mpn-test.c -o Z_mpn-test.o $(CFLAGS)
 
+Z_mpn-test: ZmodFpoly.o Z_mpn.o Z_mpn-test.o memory-manager.o ZmodF.o ZmodF_mul.o Zpoly.o fmpz_poly.o mpn_extras.o $(HEADERS)
+	$(CC) ZmodFpoly.o Z_mpn.o Z_mpn-test.o memory-manager.o ZmodF.o ZmodF_mul.o Zpoly.o fmpz_poly.o mpn_extras.o -o Z_mpn-test $(CFLAGS) $(LIBS)
 
 Zpoly.o: Zpoly.c $(HEADERS)
 	$(CC) -c Zpoly.c -o Zpoly.o $(CFLAGS)

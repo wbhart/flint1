@@ -75,6 +75,8 @@ typedef struct
 // ZmodFpoly_t allows reference-like semantics for ZpolyFPoly_struct:
 typedef ZmodFpoly_struct ZmodFpoly_t[1];
 
+typedef ZmodFpoly_struct * ZmodFpoly_p;
+
 
 
 /****************************************************************************
