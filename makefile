@@ -31,7 +31,7 @@ clean: clean-custom
 
 HEADERS = Z.h Z_mpn.h ZmodF.h ZmodFpoly.h Zpoly.h fmpz_poly.h \
 			 extras.h memory-manager.h flint.h longlong.h longlong_wrapper.h \
-			 mpn_extras.h profiler-main.h profiler.h
+			 mpn_extras.h profiler-main.h profiler.h ZmodF_mul.h ZmodF_mul-tuning.h
 
 
 mpn_extras.o: mpn_extras.c $(HEADERS)
@@ -47,7 +47,7 @@ memory-manager.o: memory-manager.c $(HEADERS)
 
 profiler.o: profiler.c $(HEADERS)
 	$(CC) -c profiler.c -o profiler.o $(CFLAGS)
-	
+
 profiler-main.o: profiler-main.c $(HEADERS)
 	$(CC) -c profiler-main.c -o profiler-main.o $(CFLAGS)
 
@@ -62,21 +62,21 @@ Z_mpn-test: ZmodFpoly.o Z_mpn.o Z_mpn-test.o memory-manager.o ZmodF.o ZmodF_mul.
 
 Zpoly.o: Zpoly.c $(HEADERS)
 	$(CC) -c Zpoly.c -o Zpoly.o $(CFLAGS)
-	
+
 Zpoly-test.o: Zpoly-test.c $(HEADERS)
 	$(CC) -c Zpoly-test.c -o Zpoly-test.o $(CFLAGS)
-	
+
 Zpoly-test: Zpoly-test.o Zpoly.o memory-manager.o
 	$(CC) Zpoly.o Zpoly-test.o memory-manager.o -o Zpoly-test $(CFLAGS) $(LIBS)
-	
+
 
 
 fmpz_poly.o: fmpz_poly.c $(HEADERS)
 	$(CC) -c fmpz_poly.c -o fmpz_poly.o $(CFLAGS)
-	
+
 fmpz_poly-test.o: fmpz_poly-test.c $(HEADERS)
 	$(CC) -c fmpz_poly-test.c -o fmpz_poly-test.o $(CFLAGS)
-	
+
 fmpz_poly-test: fmpz_poly-test.o ZmodFpoly.o ZmodF.o ZmodF_mul.o Z_mpn.o mpn_extras.o Zpoly.o fmpz_poly.o Zpoly.h memory-manager.o 
 	$(CC) fmpz_poly.o ZmodFpoly.o ZmodF.o ZmodF_mul.o Z_mpn.o mpn_extras.o Zpoly.o fmpz_poly-test.o memory-manager.o -o fmpz_poly-test $(CFLAGS) $(LIBS)
 
@@ -84,7 +84,7 @@ fmpz_poly-profile-tables.o: fmpz_poly-profile.c $(HEADERS)
 	python make-profile-tables.py fmpz_poly
 	$(CC) -c fmpz_poly-profile-tables.c -o fmpz_poly-profile-tables.o $(CFLAGS)
 	rm fmpz_poly-profile-tables.c
-	
+
 fmpz_poly-profile.o: fmpz_poly-profile.c $(HEADERS)
 	$(CC) -c fmpz_poly-profile.c -o fmpz_poly-profile.o $(CFLAGS)
 
@@ -95,7 +95,7 @@ fmpz_poly-profile: Z_mpn.o ZmodFpoly.o memory-manager.o fmpz_poly-profile.o fmpz
 
 ZmodF.o: ZmodF.c $(HEADERS)
 	$(CC) -c ZmodF.c -o ZmodF.o $(CFLAGS)
-	
+
 ZmodF_mul.o: ZmodF_mul.c $(HEADERS)
 	$(CC) -c ZmodF_mul.c -o ZmodF_mul.o $(CFLAGS)
 
@@ -120,7 +120,7 @@ ZmodF_mul-profile: ZmodF_mul-profile.o ZmodF.o ZmodF_mul.o ZmodFpoly.o fmpz_poly
 
 ZmodFpoly.o: ZmodFpoly.c $(HEADERS)
 	$(CC) -c ZmodFpoly.c -o ZmodFpoly.o $(CFLAGS)
-	
+
 ZmodFpoly-test.o: ZmodFpoly-test.c $(HEADERS)
 	$(CC) -c ZmodFpoly-test.c -o ZmodFpoly-test.o $(CFLAGS)
 
@@ -137,7 +137,7 @@ ZmodFpoly-profile.o: ZmodFpoly-profile.c $(HEADERS)
 
 ZmodFpoly-profile: Z_mpn.o memory-manager.o ZmodFpoly-profile.o ZmodFpoly-profile-tables.o ZmodFpoly.o profiler-main.o profiler.o ZmodF.o fmpz_poly.o Zpoly.o mpn_extras.o ZmodF_mul.o
 	$(CC) -o ZmodFpoly-profile Z_mpn.o ZmodFpoly-profile.o ZmodFpoly-profile-tables.o profiler.o profiler-main.o fmpz_poly.o Zpoly.o memory-manager.o mpn_extras.o ZmodFpoly.o ZmodF.o ZmodF_mul.o $(CFLAGS) $(LIBS)
-	
+
 
 delta_qexp.o: delta_qexp.c $(HEADERS)
 	$(CC) -c delta_qexp.c -o delta_qexp.o $(CFLAGS)

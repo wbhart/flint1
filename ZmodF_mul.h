@@ -18,6 +18,14 @@
 #include "ZmodFpoly.h"
 
 
+// whether to use negacyclic/threeway algorithms in the automatic
+// algorithm selection
+// todo: these flags are just for testing, they should eventually
+// be removed
+#define ZMODF_MUL_ENABLE_NEGACYCLIC 1
+#define ZMODF_MUL_ENABLE_THREEWAY 1
+
+
 /*
    Three possible algorithms for multiplication mod p.
    ZMOD_MUL_PLAIN: use mpn_mul_n and then reduce mod p

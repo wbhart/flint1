@@ -228,7 +228,8 @@ void ZmodF_mul_info_init(ZmodF_mul_info_t info, unsigned long n, int squaring)
          ZmodF_mul_info_init_plain(info, n);
          return;
       }
-      
+
+#if ZMODF_MUL_ENABLE_THREEWAY
       if (n % 3 == 0)
       {
          if (n < ZMODF_MUL_THREEWAY_NEGACYCLIC_THRESHOLD)
@@ -239,6 +240,7 @@ void ZmodF_mul_info_init(ZmodF_mul_info_t info, unsigned long n, int squaring)
          }
       }
       else
+#endif
       {
          if (n < ZMODF_MUL_PLAIN_NEGACYCLIC_THRESHOLD)
          {
@@ -247,7 +249,8 @@ void ZmodF_mul_info_init(ZmodF_mul_info_t info, unsigned long n, int squaring)
             return;
          }
       }
-      
+
+#if ZMODF_MUL_ENABLE_NEGACYCLIC
       // neither plain nor threeway is appropriate;
       // need to select FFT of appropriate depth
       unsigned long depth = _ZmodF_mul_get_depth(n);
@@ -258,6 +261,9 @@ void ZmodF_mul_info_init(ZmodF_mul_info_t info, unsigned long n, int squaring)
          depth--;
 
       ZmodF_mul_info_init_negacyclic(info, n, depth);
+#else
+      ZmodF_mul_info_init_plain(info, n);
+#endif
    }
    else
    {
@@ -270,6 +276,7 @@ void ZmodF_mul_info_init(ZmodF_mul_info_t info, unsigned long n, int squaring)
          return;
       }
 
+#if ZMODF_MUL_ENABLE_THREEWAY
       if (n % 3 == 0)
       {
          if (n < ZMODF_SQR_THREEWAY_NEGACYCLIC_THRESHOLD)
@@ -280,6 +287,7 @@ void ZmodF_mul_info_init(ZmodF_mul_info_t info, unsigned long n, int squaring)
          }
       }
       else
+#endif
       {
          if (n < ZMODF_SQR_PLAIN_NEGACYCLIC_THRESHOLD)
          {
@@ -289,6 +297,7 @@ void ZmodF_mul_info_init(ZmodF_mul_info_t info, unsigned long n, int squaring)
          }
       }
       
+#if ZMODF_MUL_ENABLE_NEGACYCLIC
       // neither plain nor threeway is appropriate;
       // need to select FFT of appropriate depth
       unsigned long depth = _ZmodF_sqr_get_depth(n);
@@ -299,6 +308,9 @@ void ZmodF_mul_info_init(ZmodF_mul_info_t info, unsigned long n, int squaring)
          depth--;
 
       ZmodF_mul_info_init_negacyclic(info, n, depth);
+#else
+      ZmodF_mul_info_init_plain(info, n);
+#endif
    }
 }
 
