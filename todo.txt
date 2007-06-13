@@ -121,6 +121,12 @@ to add a bit of padding.
 * I think the the bitpacking/limbpacking/bytepacking routines should be
   moved out of ZmodFpoly.c into fmpz_poly.c.
 
+* delta_qexp gives apparently wrong answers for N = 10^8, it gives
+-755917764646304292457277421712502022323848918766659304525858319186
+which looks fishy, it should be more divisible by 10. The answer looks
+more correct for N = 5*10^7. I have no idea where the bug is. Could be in
+the FFTs, or the packing, or who knows.
+
 
 === modpmul module ===
 
