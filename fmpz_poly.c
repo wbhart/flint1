@@ -1461,6 +1461,41 @@ void _fmpz_poly_mul(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_t input2)
    _fmpz_poly_mul_KS(output, input1, input2);     
 }
 
+void _fmpz_poly_scalar_mul(fmpz_poly_t output, fmpz_poly_t poly, mp_limb_t * x)
+{
+   unsigned long limbs1 = ABS(x[0]);
+   unsigned long limbs2 = poly->limbs;
+   unsigned long total_limbs;
+   unsigned long limbs_out = output->limbs+1;
+   mp_limb_t * coeffs_out = output->coeffs;
+   mp_limb_t * coeffs2 = poly->coeffs;
+   long sign1 = x[0];
+   
+   if (limbs1 + limbs2 > 1000)
+   {
+      Z_mpn_precomp_t precomp;
+   
+      Z_mpn_mul_precomp_init(precomp, x+1, limbs1, limbs2);   
+      
+      for (unsigned long i = 0; i < poly->length; i++)
+      {
+          total_limbs = limbs1 + ABS(coeffs2[i*(limbs2+1)]);
+          Z_mpn_mul_precomp(coeffs_out + i*limbs_out + 1, coeffs2 + i*(limbs2+1) + 1, ABS(coeffs2[i*(limbs2+1)]), precomp);
+          if (((long) coeffs2[i*(limbs2+1)] ^ sign1) < 0) coeffs_out[i*limbs_out] = -total_limbs;
+          else coeffs_out[i*limbs_out] = total_limbs;
+          NORM(coeffs_out + i*limbs_out);
+      }
+      Z_mpn_mul_precomp_clear(precomp);
+   } else
+   {
+      for (unsigned long i = 0; i < poly->length; i++)
+      {
+         __fmpz_poly_mul_coeffs(coeffs_out + i*limbs_out, coeffs2 + i*(limbs2+1), x);
+      }
+   } 
+   output->length = poly->length;
+}
+
 /****************************************************************************
 
    fmpz_poly_* layer
