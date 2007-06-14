@@ -2,7 +2,7 @@
 
  ZmodF_mul.c
 
- Copyright (C) 2007, David Harvey
+ Copyright (C) 2007, David Harvey and William Hart
  
  Routines for multiplication of elements of Z/pZ where p = B^n + 1,
  B = 2^FLINT_BITS_PER_LIMB.
@@ -70,28 +70,40 @@ long _ZmodF_sqr_handle_minus1(ZmodF_t res, ZmodF_t a, unsigned long n)
 
 
 /*
-   assumes a and b are normalised, and that their overflow limbs are 0
+   Computes res := a * b mod p, where a and b are of length n.
+   scratch must be of length 2n, and not overlap any of a, b, res
+   a and b must be normalised, and have zero overflow limbs
+   any combinations of a, b, res may be aliased
 */
 static inline
 void _ZmodF_mul(ZmodF_t res, ZmodF_t a, ZmodF_t b, mp_limb_t* scratch,
                 unsigned long n)
 {
    FLINT_ASSERT(a[n] == 0);
-   
+   FLINT_ASSERT(b[n] == 0);
+
+   // Detect zero limbs at the top of a and b, and reduce multiplication size
+   // appropriately.
+
+   // (Note: the reason we do this is that in the FFTs we often *do* get
+   // Fourier coefficients with plenty of zeroes; for example the first and
+   // second coefficients are x0 + x1 + ... + xM and x0 - x1 + x2 - ... - xM,
+   // which are about half the size of the other coefficients. The overhead
+   // from performing the checks is negligible if n is large enough, and we
+   // expect say n >= 16 if the FFTs are tuned correctly.)
+
    unsigned long limbs_out = 2*n;
    unsigned long limbs1 = n;
-   while ((!a[limbs1-1]) && (limbs1>0))
+   while (limbs1 && !a[limbs1-1])
    {
-      scratch[limbs_out-1] = 0;
+      scratch[--limbs_out] = 0;
       limbs1--;
-      limbs_out--;
    }
    unsigned long limbs2 = n;
-   while ((!b[limbs2-1]) && (limbs2>0))
+   while (limbs2 && !b[limbs2-1])
    {
-      scratch[limbs_out-1] = 0;
+      scratch[--limbs_out] = 0;
       limbs2--;
-      limbs_out--;
    }
    if ((limbs1 == 0) || (limbs2 == 0)) 
    {
@@ -99,9 +111,12 @@ void _ZmodF_mul(ZmodF_t res, ZmodF_t a, ZmodF_t b, mp_limb_t* scratch,
       return;
    }
    
-   // do the product
-   if (limbs1 >= limbs2) Z_mpn_mul(scratch, a, limbs1, b, limbs2);
-   else Z_mpn_mul(scratch, b, limbs2, a, limbs1);
+   // do the product into scratch
+   if (limbs1 >= limbs2)
+      Z_mpn_mul(scratch, a, limbs1, b, limbs2);
+   else
+      Z_mpn_mul(scratch, b, limbs2, a, limbs1);
+
    // reduce mod p
    res[n] = -mpn_sub_n(res, scratch, scratch + n, n);
 }
