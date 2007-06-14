@@ -17,6 +17,9 @@ Copyright (C) 2007, David Harvey
 gmp_randstate_t randstate;
 
 
+#define DEBUG 0    // prints debug information
+
+
 /*   // disabled temporarily
 int test_ZmodF_mul()
 {
@@ -79,10 +82,52 @@ int test_ZmodF_sqr()
 
 int test__ZmodF_mul_negacyclic_split()
 {
-   ZmodFpoly_t p;
-   mp_limb_t x;
+   int success = 1;
+
+   mpz_t x, y, z;
+   mpz_init(x);
+   mpz_init(y);
+   mpz_init(z);
+   mp_limb_t buf[300];
+
+   for (unsigned long n = 1; n < 200 && success; n++)
+   {
+      for (unsigned long depth = 0;
+           ((n*FLINT_BITS_PER_LIMB) % (1 << depth) == 0) && success; depth++)
+      {
+         ZmodFpoly_t poly;
+         ZmodFpoly_init(poly, depth, n, 1);
+
+#if DEBUG
+         printf("n = %d, depth = %d\n", n, depth);
+#endif
+         
+         for (unsigned long trial = 0; trial < 30; trial++)
+         {
+            mpz_rrandomb(x, randstate, n*FLINT_BITS_PER_LIMB);
+            memset(buf, 0, n+1);
+            mpz_export(buf, NULL, -1, sizeof(mp_limb_t), 0, 0, x);
+            
+            _ZmodF_mul_negacyclic_split(poly, buf, n);
+
+            for (unsigned long i = 0; i < (1 << depth); i++)
+            {
+               mpz_tdiv_r_2exp(y, x, (n*FLINT_BITS_PER_LIMB) >> depth);
+               mpz_tdiv_q_2exp(x, x, (n*FLINT_BITS_PER_LIMB) >> depth);
+               mpz_import(z, poly->n+1, -1, sizeof(mp_limb_t), 0, 0, poly->coeffs[i]);
+               if (mpz_cmp(z, y))
+                  success = 0;
+            }
+         }
+         
+         ZmodFpoly_clear(poly);
+      }
+   }
    
-   _ZmodF_mul_negacyclic_split(p, &x, 3);
+   mpz_clear(x);
+   mpz_clear(y);
+   mpz_clear(z);
+   return success;
 }
 
 
