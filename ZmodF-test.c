@@ -74,7 +74,7 @@ void ZmodF_random(ZmodF_t x, unsigned long n, unsigned long overflow_bits)
 #if FLINT_BITS_PER_LIMB == 64
 #define SENTRY_LIMB 0x0123456789abcdefUL
 #else
-#define SETNRY_LIMB 0x01234567UL
+#define SENTRY_LIMB 0x01234567UL
 #endif
 
 
@@ -319,64 +319,6 @@ int test_ZmodF_neg()
             if (mpz_cmp(coeffs_mpz_in[0], global_mpz))
                return 0;
          }
-
-   return 1;
-}
-
-
-int test_ZmodF_mul()
-{
-   mp_limb_t scratch[2*MAX_N];
-   
-   for (unsigned long n = 1; n <= 5; n++)
-      for (unsigned long trial = 0; trial < 4000; trial++)
-         for (int outbuf = 0; outbuf <= 2; outbuf++)
-            for (int inbuf1 = 0; inbuf1 <= 2; inbuf1++)
-               for (int inbuf2 = 0; inbuf2 <= 2; inbuf2++)
-               {
-                  setup_coeffs(3, n, random_ulong(FLINT_BITS_PER_LIMB - 2));
-            
-                  ZmodF_mul(coeffs[outbuf], coeffs[inbuf1], coeffs[inbuf2],
-                            scratch, n);
-
-                  if (!check_coeffs(3, n))
-                     return 0;
-                     
-                  mpz_mul(global_mpz, coeffs_mpz_in[inbuf1],
-                          coeffs_mpz_in[inbuf2]);
-                  mpz_mod(global_mpz, global_mpz, global_p);
-                  
-                  if (mpz_cmp(coeffs_mpz_out[outbuf], global_mpz))
-                     return 0;
-               }
-
-   return 1;
-}
-
-
-int test_ZmodF_sqr()
-{
-   mp_limb_t scratch[2*MAX_N];
-   
-   for (unsigned long n = 1; n <= 5; n++)
-      for (unsigned long trial = 0; trial < 4000; trial++)
-         for (int outbuf = 0; outbuf <= 1; outbuf++)
-            for (int inbuf = 0; inbuf <= 1; inbuf++)
-            {
-               setup_coeffs(2, n, random_ulong(FLINT_BITS_PER_LIMB - 2));
-         
-               ZmodF_sqr(coeffs[outbuf], coeffs[inbuf], scratch, n);
-
-               if (!check_coeffs(2, n))
-                  return 0;
-                  
-               mpz_mul(global_mpz, coeffs_mpz_in[inbuf],
-                       coeffs_mpz_in[inbuf]);
-               mpz_mod(global_mpz, global_mpz, global_p);
-               
-               if (mpz_cmp(coeffs_mpz_out[outbuf], global_mpz))
-                  return 0;
-            }
 
    return 1;
 }
@@ -860,8 +802,6 @@ void ZmodF_test_all()
    RUN_TEST(ZmodF_normalise);
    RUN_TEST(ZmodF_fast_reduce);
    RUN_TEST(ZmodF_neg);
-   RUN_TEST(ZmodF_mul);
-   RUN_TEST(ZmodF_sqr);
    RUN_TEST(ZmodF_short_div_2exp);
    RUN_TEST(ZmodF_mul_Bexp);
    RUN_TEST(ZmodF_div_Bexp_sub);

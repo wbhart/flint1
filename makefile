@@ -116,6 +116,11 @@ ZmodF_mul-profile.o: ZmodF_mul-profile.c $(HEADERS)
 ZmodF_mul-profile: ZmodF_mul-profile.o ZmodF.o ZmodF_mul.o ZmodFpoly.o fmpz_poly.o memory-manager.o mpn_extras.o Z_mpn.o profiler-main.o ZmodF_mul-profile-tables.o profiler.o
 	$(CC) -o ZmodF_mul-profile ZmodF_mul-profile.o ZmodF.o ZmodF_mul.o ZmodFpoly.o fmpz_poly.o memory-manager.o mpn_extras.o Z_mpn.o profiler-main.o ZmodF_mul-profile-tables.o profiler.o $(CFLAGS) $(LIBS)
 
+ZmodF_mul-test.o: ZmodF_mul-test.c $(HEADERS)
+	$(CC) -c ZmodF_mul-test.c -o ZmodF_mul-test.o $(CFLAGS)
+
+ZmodF_mul-test: ZmodF_mul-test.o ZmodF.o ZmodF_mul.o ZmodFpoly.o fmpz_poly.o memory-manager.o mpn_extras.o Z_mpn.o
+	$(CC) -o ZmodF_mul-profile ZmodF_mul-profile.o ZmodF.o ZmodF_mul.o ZmodFpoly.o fmpz_poly.o memory-manager.o mpn_extras.o Z_mpn.o $(CFLAGS) $(LIBS)
 
 
 ZmodFpoly.o: ZmodFpoly.c $(HEADERS)
