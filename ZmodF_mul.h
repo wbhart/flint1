@@ -98,7 +98,7 @@ void ZmodF_mul_info_clear(ZmodF_mul_info_t info);
 
 // sets res := a * b using the given ZmodF_mul_info_t object
 void ZmodF_mul_info_mul(ZmodF_mul_info_t, ZmodF_t res, ZmodF_t a, ZmodF_t b);
-// sets res := a * b using the given ZmodF_mul_info_t object
+// sets res := a * a using the given ZmodF_mul_info_t object
 void ZmodF_mul_info_sqr(ZmodF_mul_info_t, ZmodF_t res, ZmodF_t a);
 
 
@@ -125,6 +125,27 @@ void ZmodF_mul(ZmodF_t res, ZmodF_t a, ZmodF_t b, mp_limb_t* scratch,
       scratch must be a buffer of length 2*n, and must NOT overlap a or res.
 */
 void ZmodF_sqr(ZmodF_t res, ZmodF_t a, mp_limb_t* scratch, unsigned long n);
+
+
+// ============================================================================
+// the following functions are exported for testing purposes:
+
+void _ZmodF_mul_negacyclic_split(ZmodFpoly_t poly, ZmodF_t x, unsigned long n);
+
+void _ZmodF_mul_negacyclic_combine(ZmodF_t x, ZmodFpoly_t poly,
+                                   unsigned long n);
+
+static inline
+void _ZmodF_mul_threeway_reduce1(ZmodF_t res, ZmodF_t a, unsigned long m);
+
+static inline
+void _ZmodF_mul_threeway_reduce2(mp_limb_t* res, ZmodF_t a, unsigned long m);
+
+static inline
+void _ZmodF_mul_threeway_crt(mp_limb_t* res, ZmodF_t a, mp_limb_t* b,
+                             unsigned long m);
+
+
 
 
 #endif

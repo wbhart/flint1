@@ -15,7 +15,7 @@ TODO: establish and test overflow bit guarantees
 #include "ZmodF_mul.h"
 
 
-gmp_randstate_t ZmodF_test_randstate;
+gmp_randstate_t randstate;
 mpz_t global_mpz;   // to avoid frequent mpz_init calls
 
 
@@ -40,7 +40,7 @@ void ZmodF_print(ZmodF_t x, unsigned long n)
 
 unsigned long random_ulong(unsigned long max)
 {
-   return gmp_urandomm_ui(ZmodF_test_randstate, max);
+   return gmp_urandomm_ui(randstate, max);
 }
 
 
@@ -54,7 +54,7 @@ void ZmodF_random(ZmodF_t x, unsigned long n, unsigned long overflow_bits)
 {
    ZmodF_zero(x, n);
 
-   mpz_rrandomb(global_mpz, ZmodF_test_randstate, (n+1)*FLINT_BITS_PER_LIMB);
+   mpz_rrandomb(global_mpz, randstate, (n+1)*FLINT_BITS_PER_LIMB);
    mpz_export(x, NULL, -1, sizeof(mp_limb_t), 0, 0, global_mpz);
 
    // GMP has a "bug" where the top bit of the output of mpz_rrandomb
@@ -827,7 +827,7 @@ void ZmodF_test_all()
 
 int main()
 {
-   gmp_randinit_default(ZmodF_test_randstate);
+   gmp_randinit_default(randstate);
    mpz_init(global_mpz);
    mpz_init(global_p);
    for (int i = 0; i < MAX_COEFFS; i++)

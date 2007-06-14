@@ -17,6 +17,7 @@ Copyright (C) 2007, David Harvey
 gmp_randstate_t randstate;
 
 
+/*   // disabled temporarily
 int test_ZmodF_mul()
 {
    mp_limb_t scratch[2*MAX_N];
@@ -73,11 +74,59 @@ int test_ZmodF_sqr()
 
    return 1;
 }
+*/
 
 
-int test_ZmodF_mul()
+int test__ZmodF_mul_negacyclic_split()
 {
+   ZmodFpoly_t p;
+   mp_limb_t x;
+   
+   _ZmodF_mul_negacyclic_split(p, &x, 3);
 }
+
+
+int test__ZmodF_mul_negacyclic_combine()
+{
+   return 0;
+}
+
+
+int test__ZmodF_mul_threeway_reduce1()
+{
+   return 0;
+}
+
+
+int test__ZmodF_mul_threeway_reduce2()
+{
+   return 0;
+}
+
+
+int test__ZmodF_mul_threeway_crt()
+{
+   return 0;
+}
+
+
+int test_ZmodF_mul_info_mul_plain()
+{
+   return 0;
+}
+
+
+int test_ZmodF_mul_info_mul_threeway()
+{
+   return 0;
+}
+
+
+int test_ZmodF_mul_info_mul_negacyclic()
+{
+   return 0;
+}
+
 
 
 /****************************************************************************
@@ -87,12 +136,30 @@ int test_ZmodF_mul()
 ****************************************************************************/
 
 
+#define RUN_TEST(targetfunc) \
+   printf("Testing " #targetfunc "()... ");            \
+   fflush(stdout);                                     \
+   success = test_##targetfunc();                      \
+   all_success = all_success && success;               \
+   printf(success ? "ok\n" : "FAIL!\n");
+
+
 void ZmodF_mul_test_all()
 {
    int success, all_success = 1;
 
+/*
    RUN_TEST(ZmodF_mul);
    RUN_TEST(ZmodF_sqr);
+*/
+   RUN_TEST(_ZmodF_mul_negacyclic_split);
+   RUN_TEST(_ZmodF_mul_negacyclic_combine);
+   RUN_TEST(_ZmodF_mul_threeway_reduce1);
+   RUN_TEST(_ZmodF_mul_threeway_reduce2);
+   RUN_TEST(_ZmodF_mul_threeway_crt);
+   RUN_TEST(ZmodF_mul_info_mul_plain);
+   RUN_TEST(ZmodF_mul_info_mul_threeway);
+   RUN_TEST(ZmodF_mul_info_mul_negacyclic);
 
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");

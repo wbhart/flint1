@@ -183,6 +183,10 @@ the stack. This could be a problem if we need to allocate many small objects.
 
 * remember when doing the automatic tuning for this, squaring and multiplication probably have different crossovers
 
+* figure out why the negacyclic multiplication performance is so unsmooth
+  with respect to n (weird periodicity effects in the timings)
+  
+
 === Miscellaneous ===
 
 * Switch to integer increments instead of rounded floating point ones in  fmpz_poly-profile.c and magma-profile.m

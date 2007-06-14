@@ -345,12 +345,17 @@ void ZmodF_mul_info_clear(ZmodF_mul_info_t info)
 
 
 /*
-Splits coefficient x into a ZmodFpoly_t.
-Assumes x is normalised and of length n.
+Splits x into equally sized pieces.
+Number of pieces = transform length of "poly".
+Number of bits of x (i.e. n*FLINT_BITS_PER_LIMB) must be divisible by
+the transform length.
+
+Assumes x is normalised and of length n, and has zero overflow limb.
 */
 void _ZmodF_mul_negacyclic_split(ZmodFpoly_t poly, ZmodF_t x, unsigned long n)
 {
    FLINT_ASSERT((n * FLINT_BITS_PER_LIMB) % (1 << poly->depth) == 0);
+   FLINT_ASSERT(x[n] == 0);
 
    unsigned long size = 1UL << poly->depth;
    
