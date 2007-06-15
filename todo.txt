@@ -7,7 +7,7 @@
  * add some kind of debug flag to the makefile, which will enable/disable
    FLINT_ASSERT
    
- * we should be checking somewhere (at build time?) that FLINT_BITS_PER_LIMB
+ * we should be checking somewhere (at build time?) that FLINT_BITS
    really is the same as GMP's bits per limb
 
  * cache hints:
@@ -58,7 +58,7 @@ the other files don't. Is this a problem?
    seem to make a helluva difference, at least for the ssfft_fft_iterative()
    function I was profiling.
 
- * Figure out `FLINT_BITS_PER_LIMB`, put it in a header somewhere (do ''not''
+ * Figure out `FLINT_BITS`, put it in a header somewhere (do ''not''
 just use `gmp_bits_per_limb` because that's a const, not a #define)
 
  * Figure out FLINT_CACHE_SIZE

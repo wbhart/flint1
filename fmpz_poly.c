@@ -239,7 +239,7 @@ long _fmpz_poly_bits1(fmpz_poly_t poly_mpn)
          if (coeffs_m[j+1] & mask)
          {
             bits = FLINT_BIT_COUNT(coeffs_m[j+1]);   
-            if (bits == FLINT_BITS_PER_LIMB) break;
+            if (bits == FLINT_BITS) break;
             else mask = -1L - ((1L<<bits)-1);
          }
       }
@@ -286,14 +286,14 @@ long _fmpz_poly_bits(fmpz_poly_t poly_mpn)
       {
          limbs = ABS(size_j) - 1;
          bits = FLINT_BIT_COUNT(coeffs_m[j+ABS(size_j)]);   
-         if (bits == FLINT_BITS_PER_LIMB) mask = 0L;
+         if (bits == FLINT_BITS) mask = 0L;
          else mask = -1L - ((1L<<bits)-1);
       } else if (ABS(size_j) == limbs+1)
       {
          if (coeffs_m[j+ABS(size_j)] & mask)
          {
             bits = FLINT_BIT_COUNT(coeffs_m[j+ABS(size_j)]);   
-            if (bits == FLINT_BITS_PER_LIMB) mask = 0L;
+            if (bits == FLINT_BITS) mask = 0L;
             else mask = -1L - ((1L<<bits)-1);
          }
       }       
@@ -311,7 +311,7 @@ long _fmpz_poly_bits(fmpz_poly_t poly_mpn)
       }
    }
    
-   return sign*(FLINT_BITS_PER_LIMB*limbs+bits);
+   return sign*(FLINT_BITS*limbs+bits);
 }
 
 int _fmpz_poly_equal(fmpz_poly_p input1, fmpz_poly_p input2)
@@ -1273,7 +1273,7 @@ void _fmpz_poly_mul_KS(fmpz_poly_t output, fmpz_poly_p input1, fmpz_poly_p input
    unsigned log_length = 0;
    while ((1<<log_length) < length) log_length++;
    unsigned long bits = ABS(bits1) + ABS(bits2) + log_length + sign; 
-   unsigned long limbs = (bits-1)/FLINT_BITS_PER_LIMB + 1;
+   unsigned long limbs = (bits-1)/FLINT_BITS + 1;
    
    if ((bits < 64) && (input1->limbs == 1) && (input2->limbs == 1) && (output->limbs == 1)) bitpack = 1;
    
@@ -1282,9 +1282,9 @@ void _fmpz_poly_mul_KS(fmpz_poly_t output, fmpz_poly_p input1, fmpz_poly_p input
    ZmodFpoly_t poly1, poly2, poly3;
    if (bitpack)
    {
-      ZmodFpoly_stack_init(poly1, 0, (bits*input1->length-1)/FLINT_BITS_PER_LIMB+1, 0);
+      ZmodFpoly_stack_init(poly1, 0, (bits*input1->length-1)/FLINT_BITS+1, 0);
       if (input1 != input2)
-         ZmodFpoly_stack_init(poly2, 0, (bits*input2->length-1)/FLINT_BITS_PER_LIMB+1, 0);
+         ZmodFpoly_stack_init(poly2, 0, (bits*input2->length-1)/FLINT_BITS+1, 0);
 
       if (sign) bits = -1L*bits;
       if (input1 != input2)
@@ -1369,14 +1369,14 @@ void _fmpz_poly_mul_SS(fmpz_poly_t output, fmpz_poly_p input1, fmpz_poly_p input
    
    /* Start with an upper bound on the number of bits needed */
    
-   unsigned long output_bits = FLINT_BITS_PER_LIMB * (size1 + size2) + log_length2 + 2;
+   unsigned long output_bits = FLINT_BITS * (size1 + size2) + log_length2 + 2;
 
    if (output_bits <= length1)
       output_bits = (((output_bits - 1) >> (log_length-1)) + 1) << (log_length-1);
    else 
       output_bits = (((output_bits - 1) >> log_length) + 1) << log_length;
       
-   unsigned long n = (output_bits - 1) / FLINT_BITS_PER_LIMB + 1;
+   unsigned long n = (output_bits - 1) / FLINT_BITS + 1;
    
    ZmodFpoly_t poly1, poly2, res;
    long bits1, bits2;
@@ -1405,7 +1405,7 @@ void _fmpz_poly_mul_SS(fmpz_poly_t output, fmpz_poly_p input1, fmpz_poly_p input
    else 
       output_bits = (((output_bits - 1) >> log_length) + 1) << log_length;
       
-   n = (output_bits - 1) / FLINT_BITS_PER_LIMB + 1;
+   n = (output_bits - 1) / FLINT_BITS + 1;
    
    ZmodFpoly_decrease_n(poly1, n);
    ZmodFpoly_decrease_n(poly2, n);
@@ -1431,13 +1431,13 @@ void _fmpz_poly_mul(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_t input2)
       return;
    }
    
-   if ((input1->limbs <= 256/FLINT_BITS_PER_LIMB) && (input1->limbs >= 200/FLINT_BITS_PER_LIMB) && (input1->length == 256)) 
+   if ((input1->limbs <= 256/FLINT_BITS) && (input1->limbs >= 200/FLINT_BITS) && (input1->length == 256)) 
    {
       _fmpz_poly_mul_SS(output, input1, input2);
       return;
    } 
    
-   if (input1->limbs + input2->limbs <= 512/FLINT_BITS_PER_LIMB)
+   if (input1->limbs + input2->limbs <= 512/FLINT_BITS)
    {
       _fmpz_poly_mul_KS(output, input1, input2);
       return;
@@ -1662,7 +1662,7 @@ void fmpz_poly_mul(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_t input2)
    while ((1<<log_length) < length) log_length++;
    unsigned long bits = ABS(bits1) + ABS(bits2) + log_length + sign; 
    
-   fmpz_poly_fit_limbs(output, (bits-1)/FLINT_BITS_PER_LIMB+1);
+   fmpz_poly_fit_limbs(output, (bits-1)/FLINT_BITS+1);
    fmpz_poly_fit_length(output, input1->length + input2->length - 1);
    
    _fmpz_poly_mul(output, input1, input2);

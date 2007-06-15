@@ -119,8 +119,8 @@ int test_ZmodFpoly_convert()
    {
       bits = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 1;
       
-      fmpz_poly_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
-      fmpz_poly_init(test_mpn_poly2, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
+      fmpz_poly_init(test_mpn_poly2, 1, (bits-1)/FLINT_BITS+1);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
           length = gmp_urandomm_ui(Zpoly_test_randstate,1000);
@@ -139,7 +139,7 @@ int test_ZmodFpoly_convert()
           printf("\n\n");
 #endif
           _fmpz_poly_convert_in(test_mpn_poly, test_poly);
-          ZmodFpoly_init(test_modF_poly, depth, (bits-1)/FLINT_BITS_PER_LIMB+1, 0);
+          ZmodFpoly_init(test_modF_poly, depth, (bits-1)/FLINT_BITS+1, 0);
           ZmodFpoly_convert_in_mpn(test_modF_poly, test_mpn_poly);
           ZmodFpoly_convert_out_mpn(test_mpn_poly2, test_modF_poly, 1);
           _fmpz_poly_convert_out(test_poly2, test_mpn_poly2);
@@ -179,7 +179,7 @@ int test_ZmodFpoly_convert_bits()
    Zpoly_init(test_poly2); 
    for (unsigned long count1 = 1; (count1 < 1000) && (result == 1) ; count1++)
    {
-      bits = gmp_urandomm_ui(Zpoly_test_randstate, FLINT_BITS_PER_LIMB-2)+ 2;
+      bits = gmp_urandomm_ui(Zpoly_test_randstate, FLINT_BITS-2)+ 2;
       
       fmpz_poly_init(test_mpn_poly, 1, 1);
       fmpz_poly_init(test_mpn_poly2, 1, 10);
@@ -217,7 +217,7 @@ int test_ZmodFpoly_convert_bits()
           printf("\n\n");
 #endif
           _fmpz_poly_convert_in(test_mpn_poly, test_poly);
-          ZmodFpoly_init(test_modF_poly, depth, (bits*bundle-1)/FLINT_BITS_PER_LIMB+1, 0);
+          ZmodFpoly_init(test_modF_poly, depth, (bits*bundle-1)/FLINT_BITS+1, 0);
           
           ZmodFpoly_bit_pack_mpn(test_modF_poly, test_mpn_poly, bundle, -bits);
           test_mpn_poly2->length = length;
@@ -263,7 +263,7 @@ int test_ZmodFpoly_convert_bits_unsigned()
    Zpoly_init(test_poly2); 
    for (unsigned long count1 = 1; (count1 < 1000) && (result == 1) ; count1++)
    {
-      bits = gmp_urandomm_ui(Zpoly_test_randstate,FLINT_BITS_PER_LIMB-2)+ 2;
+      bits = gmp_urandomm_ui(Zpoly_test_randstate,FLINT_BITS-2)+ 2;
       
       fmpz_poly_init(test_mpn_poly, 1, 1);
       fmpz_poly_init(test_mpn_poly2, 1, 10);
@@ -289,7 +289,7 @@ int test_ZmodFpoly_convert_bits_unsigned()
           printf("\n\n");
 #endif
           _fmpz_poly_convert_in(test_mpn_poly, test_poly);
-          ZmodFpoly_init(test_modF_poly, depth, (bits*bundle-1)/FLINT_BITS_PER_LIMB+1, 0);
+          ZmodFpoly_init(test_modF_poly, depth, (bits*bundle-1)/FLINT_BITS+1, 0);
           
           ZmodFpoly_bit_pack_mpn(test_modF_poly, test_mpn_poly, bundle, bits);
           test_mpn_poly2->length = length;
@@ -334,7 +334,7 @@ int test_ZmodFpoly_limb_pack_unsigned()
    for (unsigned long count1 = 1; (count1 < 1000) && (result == 1) ; count1++)
    {
       bits = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 1;
-      limbs = (bits-1)/FLINT_BITS_PER_LIMB + 1;
+      limbs = (bits-1)/FLINT_BITS + 1;
       fmpz_poly_init(test_mpn_poly, 1, limbs);
       fmpz_poly_init(test_mpn_poly2, 1, limbs);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
@@ -397,7 +397,7 @@ int test_ZmodFpoly_limb_pack()
    for (unsigned long count1 = 1; (count1 < 1000) && (result == 1) ; count1++)
    {
       bits = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 1;
-      limbs = (bits-1)/FLINT_BITS_PER_LIMB + 1;
+      limbs = (bits-1)/FLINT_BITS + 1;
       fmpz_poly_init(test_mpn_poly, 1, limbs);
       fmpz_poly_init(test_mpn_poly2, 1, limbs);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
@@ -464,8 +464,8 @@ int test_ZmodFpoly_convert_bytes_unsigned()
       bits = gmp_urandomm_ui(Zpoly_test_randstate, 1000)+ 64;
       bytes = ((bits-1)>>3)+1;
       
-      fmpz_poly_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
-      fmpz_poly_init(test_mpn_poly2, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
+      fmpz_poly_init(test_mpn_poly2, 1, (bits-1)/FLINT_BITS+1);
       for (unsigned long count2 = 0; (count2 < 1) && (result == 1); count2++)
       { 
           length = gmp_urandomm_ui(Zpoly_test_randstate, 1000)+1;
@@ -536,8 +536,8 @@ int test_ZmodFpoly_convert_bytes()
       bits = gmp_urandomm_ui(Zpoly_test_randstate, 1000)+ 130;
       bytes = ((bits-1)>>3)+1;
       
-      fmpz_poly_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
-      fmpz_poly_init(test_mpn_poly2, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
+      fmpz_poly_init(test_mpn_poly2, 1, (bits-1)/FLINT_BITS+1);
       for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
       { 
           length = gmp_urandomm_ui(Zpoly_test_randstate, 1000)+1;
@@ -615,7 +615,7 @@ Prints the ZmodF_t, each limb in a separate block, most significant limb
 void ZmodF_print(ZmodF_t x, unsigned long n)
 {
    for (long i = n; i >= 0; i--)
-#if FLINT_BITS_PER_LIMB == 64
+#if FLINT_BITS == 64
       printf("%016lx ", x[i]);
 #else
       printf("%08lx ", x[i]);
@@ -661,7 +661,7 @@ void ZmodFpoly_random(ZmodFpoly_t x, unsigned long overflow_bits)
       ZmodF_t y = x->coeffs[k];
    
       ZmodF_zero(y, n);
-      mpz_rrandomb(temp, Zpoly_test_randstate, (n+1)*FLINT_BITS_PER_LIMB);
+      mpz_rrandomb(temp, Zpoly_test_randstate, (n+1)*FLINT_BITS);
       mpz_export(y, NULL, -1, sizeof(mp_limb_t), 0, 0, temp);
 
       // GMP has a "bug" where the top bit of the output of mpz_rrandomb
@@ -687,14 +687,14 @@ unsigned long global_n = 0;
 
 // Sets:
 // global_n := n,
-// global_p = 2^(FLINT_BITS_PER_LIMB*n) + 1
+// global_p = 2^(FLINT_BITS*n) + 1
 void set_global_n(unsigned long n)
 {
    if (n != global_n)
    {
       global_n = n;
       mpz_set_ui(global_p, 1);
-      mpz_mul_2exp(global_p, global_p, n*FLINT_BITS_PER_LIMB);
+      mpz_mul_2exp(global_p, global_p, n*FLINT_BITS);
       mpz_add_ui(global_p, global_p, 1);
    }
 }
@@ -765,8 +765,8 @@ void naive_mul_sqrt2exp(mpz_t y, mpz_t x, unsigned long s)
 
    if (s & 1)
    {
-      mpz_mul_2exp(y, x, s/2 + global_n*FLINT_BITS_PER_LIMB/4);
-      mpz_mul_2exp(temp, y, global_n*FLINT_BITS_PER_LIMB/2);
+      mpz_mul_2exp(y, x, s/2 + global_n*FLINT_BITS/4);
+      mpz_mul_2exp(temp, y, global_n*FLINT_BITS/2);
       mpz_sub(y, temp, y);
       mpz_mod(y, y, global_p);
    }
@@ -823,7 +823,7 @@ int test__ZmodFpoly_FFT_iterative_case(
    ZmodFpoly_t f;
 
    unsigned long size = 1UL << depth;
-   unsigned long root = 4*n*FLINT_BITS_PER_LIMB / size;
+   unsigned long root = 4*n*FLINT_BITS / size;
                   
    Zpoly_init(poly1);
    Zpoly_init(poly2);
@@ -863,8 +863,8 @@ int test__ZmodFpoly_FFT_iterative()
    {
       unsigned long size = 1UL << depth;
    
-      // need 4*n*FLINT_BITS_PER_LIMB divisible by 2^depth
-      unsigned long n_skip = size / (4*FLINT_BITS_PER_LIMB);
+      // need 4*n*FLINT_BITS divisible by 2^depth
+      unsigned long n_skip = size / (4*FLINT_BITS);
       if (n_skip == 0)
          n_skip = 1;
          
@@ -887,7 +887,7 @@ int test__ZmodFpoly_FFT_iterative()
                length = random_ulong(size-1) + 1;
             }
 
-            twist = random_ulong(4*n*FLINT_BITS_PER_LIMB / size);
+            twist = random_ulong(4*n*FLINT_BITS / size);
             success = success && test__ZmodFpoly_FFT_iterative_case(
                                            depth, nonzero, length, twist, n);
          }
@@ -908,7 +908,7 @@ int test__ZmodFpoly_FFT_factor_case(
 
    unsigned long depth = rows_depth + cols_depth;
    unsigned long size = 1UL << depth;
-   unsigned long root = 4*n*FLINT_BITS_PER_LIMB / size;
+   unsigned long root = 4*n*FLINT_BITS / size;
                   
    Zpoly_init(poly1);
    Zpoly_init(poly2);
@@ -950,8 +950,8 @@ int test__ZmodFpoly_FFT_factor()
          unsigned long depth2 = depth - depth1;
          unsigned long size = 1UL << depth;
       
-         // need 4*n*FLINT_BITS_PER_LIMB divisible by 2^depth
-         unsigned long n = size / (4*FLINT_BITS_PER_LIMB);
+         // need 4*n*FLINT_BITS divisible by 2^depth
+         unsigned long n = size / (4*FLINT_BITS);
          if (n == 0)
             n = 1;
          
@@ -968,7 +968,7 @@ int test__ZmodFpoly_FFT_factor()
                for (unsigned long trial = 0; trial < num_trials; trial++)
                {
                   unsigned long twist = random_ulong(
-                                             4*n*FLINT_BITS_PER_LIMB / size);
+                                             4*n*FLINT_BITS / size);
                   success = success && test__ZmodFpoly_FFT_factor_case(
                                  depth1, depth2, nonzero, length, twist, n);
                }
@@ -1006,7 +1006,7 @@ void naive_IFFT(Zpoly_t x, unsigned long depth, unsigned long root,
          {
             mpz_t* a = &x->coeffs[start + i];
             mpz_t* b = &x->coeffs[start + half + i];
-            naive_mul_sqrt2exp(*b, *b, 4*n*FLINT_BITS_PER_LIMB - (twist + i*root));
+            naive_mul_sqrt2exp(*b, *b, 4*n*FLINT_BITS - (twist + i*root));
             mpz_add(temp, *a, *b);
             mpz_sub(*b, *a, *b);
             mpz_mod(*a, temp, global_p);
@@ -1029,7 +1029,7 @@ int test__ZmodFpoly_IFFT_recursive_case(
    mpz_init(extra_coeff);
 
    unsigned long size = 1UL << depth;
-   unsigned long root = 4*n*FLINT_BITS_PER_LIMB / size;
+   unsigned long root = 4*n*FLINT_BITS / size;
                   
    Zpoly_init(poly1);
    Zpoly_init(poly2);
@@ -1059,7 +1059,7 @@ int test__ZmodFpoly_IFFT_recursive_case(
    // rescale
    for (unsigned long i = 0; i < size; i++)
       naive_mul_sqrt2exp(poly2->coeffs[i], poly2->coeffs[i],
-                         2*(2*n*FLINT_BITS_PER_LIMB - depth));
+                         2*(2*n*FLINT_BITS - depth));
    // check the first few agree with input
    for (unsigned long i = 0; i < length; i++)
       if (mpz_cmp(poly2->coeffs[i], poly1->coeffs[i]))
@@ -1086,8 +1086,8 @@ int test__ZmodFpoly_IFFT_recursive()
    {
       unsigned long size = 1UL << depth;
       
-      // need 4*n*FLINT_BITS_PER_LIMB divisible by 2^depth
-      unsigned long n_skip = size / (4*FLINT_BITS_PER_LIMB);
+      // need 4*n*FLINT_BITS divisible by 2^depth
+      unsigned long n_skip = size / (4*FLINT_BITS);
       if (n_skip == 0)
          n_skip = 1;
          
@@ -1110,7 +1110,7 @@ int test__ZmodFpoly_IFFT_recursive()
                   for (unsigned long trial = 0; trial < num_trials; trial++)
                   {
                      unsigned long twist = random_ulong(
-                                               4*n*FLINT_BITS_PER_LIMB / size);
+                                               4*n*FLINT_BITS / size);
                      success = success && test__ZmodFpoly_IFFT_recursive_case(
                                     depth, nonzero, length, extra, twist, n);
                   }
@@ -1132,7 +1132,7 @@ int test__ZmodFpoly_IFFT_iterative_case(unsigned long depth,
    mpz_init(extra_coeff);
 
    unsigned long size = 1UL << depth;
-   unsigned long root = 4*n*FLINT_BITS_PER_LIMB / size;
+   unsigned long root = 4*n*FLINT_BITS / size;
                   
    Zpoly_init(poly1);
    Zpoly_init(poly2);
@@ -1168,8 +1168,8 @@ int test__ZmodFpoly_IFFT_iterative()
    {
       unsigned long size = 1UL << depth;
       
-      // need 4*n*FLINT_BITS_PER_LIMB divisible by 2^depth
-      unsigned long n_skip = size / (4*FLINT_BITS_PER_LIMB);
+      // need 4*n*FLINT_BITS divisible by 2^depth
+      unsigned long n_skip = size / (4*FLINT_BITS);
       if (n_skip == 0)
          n_skip = 1;
          
@@ -1185,7 +1185,7 @@ int test__ZmodFpoly_IFFT_iterative()
          for (unsigned long trial = 0; trial < num_trials; trial++)
          {
             unsigned long twist = random_ulong(
-                                      4*n*FLINT_BITS_PER_LIMB / size);
+                                      4*n*FLINT_BITS / size);
             success = success && test__ZmodFpoly_IFFT_iterative_case(
                                                             depth, twist, n);
          }
@@ -1211,8 +1211,8 @@ int test__ZmodFpoly_IFFT()
    {
       unsigned long size = 1UL << depth;
    
-      // need 4*n*FLINT_BITS_PER_LIMB divisible by 2^depth
-      unsigned long n_skip = size / (4*FLINT_BITS_PER_LIMB);
+      // need 4*n*FLINT_BITS divisible by 2^depth
+      unsigned long n_skip = size / (4*FLINT_BITS);
       if (n_skip == 0)
          n_skip = 1;
          
@@ -1244,7 +1244,7 @@ int test__ZmodFpoly_IFFT()
                length = random_ulong(nonzero) + 1 - extra;
             }
 
-            root = 4*n*FLINT_BITS_PER_LIMB / size;
+            root = 4*n*FLINT_BITS / size;
             twist = random_ulong(root);
             
             // run truncated inverse transform on random data
@@ -1268,7 +1268,7 @@ int test__ZmodFpoly_IFFT()
             // rescale
             for (unsigned long i = 0; i < size; i++)
                naive_mul_sqrt2exp(poly2->coeffs[i], poly2->coeffs[i],
-                                  2*(2*n*FLINT_BITS_PER_LIMB - depth));
+                                  2*(2*n*FLINT_BITS - depth));
             // check the first few agree with input
             for (unsigned long i = 0; i < length; i++)
                if (mpz_cmp(poly2->coeffs[i], poly1->coeffs[i]))
@@ -1324,20 +1324,20 @@ void naive_convolution(Zpoly_t res, Zpoly_t x, Zpoly_t y,
    Zpoly_set(xt, x);
    Zpoly_set(yt, y);
    
-   naive_FFT(xt, depth, (4*n*FLINT_BITS_PER_LIMB) >> depth, 0, n);
-   naive_FFT(yt, depth, (4*n*FLINT_BITS_PER_LIMB) >> depth, 0, n);
+   naive_FFT(xt, depth, (4*n*FLINT_BITS) >> depth, 0, n);
+   naive_FFT(yt, depth, (4*n*FLINT_BITS) >> depth, 0, n);
 
    Zpoly_ensure_space(res, size);
    for (unsigned long i = 0; i < (1 << depth); i++)
    {
       mpz_mul(res->coeffs[i], xt->coeffs[i], yt->coeffs[i]);
       mpz_mul_2exp(res->coeffs[i], res->coeffs[i],
-                   2*n*FLINT_BITS_PER_LIMB - depth);
+                   2*n*FLINT_BITS - depth);
       mpz_mod(res->coeffs[i], res->coeffs[i], global_p);
    }
    res->length = size;
    
-   naive_IFFT(res, depth, (4*n*FLINT_BITS_PER_LIMB) >> depth, 0, n);
+   naive_IFFT(res, depth, (4*n*FLINT_BITS) >> depth, 0, n);
    
    Zpoly_clear(xt);
    Zpoly_clear(yt);
@@ -1357,8 +1357,8 @@ int test_ZmodFpoly_convolution()
    {
       unsigned long size = 1UL << depth;
    
-      // need 4*n*FLINT_BITS_PER_LIMB divisible by 2^depth
-      unsigned long n_skip = size / (4*FLINT_BITS_PER_LIMB);
+      // need 4*n*FLINT_BITS divisible by 2^depth
+      unsigned long n_skip = size / (4*FLINT_BITS);
       if (n_skip == 0)
          n_skip = 1;
          
@@ -1474,26 +1474,26 @@ void naive_negacyclic_convolution(Zpoly_t res, Zpoly_t x, Zpoly_t y,
 
    for (unsigned long i = 0; i < (1 << depth); i++)
    {
-      naive_mul_sqrt2exp(xt->coeffs[i], xt->coeffs[i], (2*i*n*FLINT_BITS_PER_LIMB) >> depth);
-      naive_mul_sqrt2exp(yt->coeffs[i], yt->coeffs[i], (2*i*n*FLINT_BITS_PER_LIMB) >> depth);
+      naive_mul_sqrt2exp(xt->coeffs[i], xt->coeffs[i], (2*i*n*FLINT_BITS) >> depth);
+      naive_mul_sqrt2exp(yt->coeffs[i], yt->coeffs[i], (2*i*n*FLINT_BITS) >> depth);
    }
-   naive_FFT(xt, depth, (4*n*FLINT_BITS_PER_LIMB) >> depth, 0, n);
-   naive_FFT(yt, depth, (4*n*FLINT_BITS_PER_LIMB) >> depth, 0, n);
+   naive_FFT(xt, depth, (4*n*FLINT_BITS) >> depth, 0, n);
+   naive_FFT(yt, depth, (4*n*FLINT_BITS) >> depth, 0, n);
 
    Zpoly_ensure_space(res, size);
    for (unsigned long i = 0; i < (1 << depth); i++)
    {
       mpz_mul(res->coeffs[i], xt->coeffs[i], yt->coeffs[i]);
       mpz_mul_2exp(res->coeffs[i], res->coeffs[i],
-                   2*n*FLINT_BITS_PER_LIMB - depth);
+                   2*n*FLINT_BITS - depth);
       mpz_mod(res->coeffs[i], res->coeffs[i], global_p);
    }
    res->length = size;
    
-   naive_IFFT(res, depth, (4*n*FLINT_BITS_PER_LIMB) >> depth, 0, n);
+   naive_IFFT(res, depth, (4*n*FLINT_BITS) >> depth, 0, n);
    for (unsigned long i = 0; i < (1 << depth); i++)
    {
-      naive_mul_sqrt2exp(res->coeffs[i], res->coeffs[i], (4*n*FLINT_BITS_PER_LIMB) - ((2*i*n*FLINT_BITS_PER_LIMB) >> depth));
+      naive_mul_sqrt2exp(res->coeffs[i], res->coeffs[i], (4*n*FLINT_BITS) - ((2*i*n*FLINT_BITS) >> depth));
    }
 
    Zpoly_clear(xt);
@@ -1514,8 +1514,8 @@ int test_ZmodFpoly_negacyclic_convolution()
    {
       unsigned long size = 1UL << depth;
    
-      // need n*FLINT_BITS_PER_LIMB divisible by 2^depth
-      unsigned long n_skip = size / (FLINT_BITS_PER_LIMB);
+      // need n*FLINT_BITS divisible by 2^depth
+      unsigned long n_skip = size / (FLINT_BITS);
       if (n_skip == 0)
          n_skip = 1;
          

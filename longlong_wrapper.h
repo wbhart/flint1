@@ -6,7 +6,7 @@
 #define UWtype mp_limb_t
 #define UHWtype mp_limb_t
 #define UDWtype mp_limb_t 
-#define W_TYPE_SIZE FLINT_BITS_PER_LIMB
+#define W_TYPE_SIZE FLINT_BITS
 #define SItype int32_t
 #define USItype uint32_t
 #define DItype int64_t

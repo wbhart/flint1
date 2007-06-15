@@ -7,13 +7,13 @@
 
 static inline unsigned long r_shift(unsigned long in, unsigned long shift)
 {
-   if (shift == FLINT_BITS_PER_LIMB) return 0L;
+   if (shift == FLINT_BITS) return 0L;
    return (in>>shift);
 }
 
 static inline unsigned long l_shift(unsigned long in, unsigned long shift)
 {
-   if (shift == FLINT_BITS_PER_LIMB) return 0L;
+   if (shift == FLINT_BITS) return 0L;
    return (in<<shift);
 }
 
@@ -25,8 +25,8 @@ static inline unsigned long l_shift(unsigned long in, unsigned long shift)
 
 #define LIMB_HIGHBIT_TO_MASK(n)                                 \
   (((mp_limb_signed_t) -1 >> 1) < 0                             \
-   ? (mp_limb_signed_t) (n) >> (FLINT_BITS_PER_LIMB - 1)              \
-   : (n) & (1L<<(FLINT_BITS_PER_LIMB-1)) ? (~ (mp_limb_t) 0L) : (0L))
+   ? (mp_limb_signed_t) (n) >> (FLINT_BITS - 1)              \
+   : (n) & (1L<<(FLINT_BITS-1)) ? (~ (mp_limb_t) 0L) : (0L))
 
 #define udiv_qrnnd_preinv(q, r, nh, nl, d, di)				\
   do {									\

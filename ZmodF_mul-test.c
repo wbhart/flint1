@@ -27,7 +27,7 @@ most significant limb (i.e. the overflow limb) first.
 void ZmodF_print(ZmodF_t x, unsigned long n)
 {
    for (long i = n; i >= 0; i--)
-#if FLINT_BITS_PER_LIMB == 64
+#if FLINT_BITS == 64
       printf("%016lx ", x[i]);
 #else
       printf("%08lx ", x[i]);
@@ -67,7 +67,7 @@ int test_ZmodF_mul()
             for (int inbuf1 = 0; inbuf1 <= 2; inbuf1++)
                for (int inbuf2 = 0; inbuf2 <= 2; inbuf2++)
                {
-                  setup_coeffs(3, n, random_ulong(FLINT_BITS_PER_LIMB - 2));
+                  setup_coeffs(3, n, random_ulong(FLINT_BITS - 2));
             
                   ZmodF_mul(coeffs[outbuf], coeffs[inbuf1], coeffs[inbuf2],
                             scratch, n);
@@ -96,7 +96,7 @@ int test_ZmodF_sqr()
          for (int outbuf = 0; outbuf <= 1; outbuf++)
             for (int inbuf = 0; inbuf <= 1; inbuf++)
             {
-               setup_coeffs(2, n, random_ulong(FLINT_BITS_PER_LIMB - 2));
+               setup_coeffs(2, n, random_ulong(FLINT_BITS - 2));
          
                ZmodF_sqr(coeffs[outbuf], coeffs[inbuf], scratch, n);
 
@@ -129,10 +129,10 @@ int test__ZmodF_mul_negacyclic_split()
    for (unsigned long n = 1; n < 200 && success; n++)
    {
       for (unsigned long depth = 0;
-           ((n*FLINT_BITS_PER_LIMB) % (1 << depth) == 0) && success; depth++)
+           ((n*FLINT_BITS) % (1 << depth) == 0) && success; depth++)
       {
-         unsigned long bits = (n*FLINT_BITS_PER_LIMB) >> depth;
-         unsigned long m = (bits-1)/FLINT_BITS_PER_LIMB + 1;
+         unsigned long bits = (n*FLINT_BITS) >> depth;
+         unsigned long m = (bits-1)/FLINT_BITS + 1;
       
          ZmodFpoly_t poly;
          ZmodFpoly_init(poly, depth, m, 1);
@@ -143,7 +143,7 @@ int test__ZmodF_mul_negacyclic_split()
          
          for (unsigned long trial = 0; trial < 120; trial++)
          {
-            mpz_rrandomb(x, randstate, n*FLINT_BITS_PER_LIMB);
+            mpz_rrandomb(x, randstate, n*FLINT_BITS);
             memset(buf, 0, (n+1) * sizeof(mp_limb_t));
             mpz_export(buf, NULL, -1, sizeof(mp_limb_t), 0, 0, x);
             
@@ -187,10 +187,10 @@ int test__ZmodF_mul_negacyclic_combine()
    for (unsigned long n = 1; n < 200 && success; n++)
    {
       for (unsigned long depth = 0;
-           ((n*FLINT_BITS_PER_LIMB) % (1 << depth) == 0) && success; depth++)
+           ((n*FLINT_BITS) % (1 << depth) == 0) && success; depth++)
       {
-         unsigned long bits = (n*FLINT_BITS_PER_LIMB) >> depth;
-         unsigned long m = (bits-1)/FLINT_BITS_PER_LIMB + 1;
+         unsigned long bits = (n*FLINT_BITS) >> depth;
+         unsigned long m = (bits-1)/FLINT_BITS + 1;
 
          ZmodFpoly_t poly;
          ZmodFpoly_init(poly, depth, m, 1);
@@ -201,13 +201,13 @@ int test__ZmodF_mul_negacyclic_combine()
 
          // p := B^n + 1
          mpz_set_ui(p, 1);
-         mpz_mul_2exp(p, p, n*FLINT_BITS_PER_LIMB);
+         mpz_mul_2exp(p, p, n*FLINT_BITS);
          mpz_add_ui(p, p, 1);
          
          // q := B^m + 1
          // half_q := B^m / 2  = (q-1)/2
          mpz_set_ui(half_q, 1);
-         mpz_mul_2exp(half_q, half_q, m*FLINT_BITS_PER_LIMB - 1);
+         mpz_mul_2exp(half_q, half_q, m*FLINT_BITS - 1);
          mpz_add(q, half_q, half_q);
          mpz_add_ui(q, q, 1);
          
@@ -227,7 +227,7 @@ int test__ZmodF_mul_negacyclic_combine()
                }
                else
                {
-                  mpz_rrandomb(x, randstate, m*FLINT_BITS_PER_LIMB);
+                  mpz_rrandomb(x, randstate, m*FLINT_BITS);
                   if (random_ulong(2))
                   {
                      // flip leading bit

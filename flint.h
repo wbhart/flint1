@@ -27,16 +27,16 @@
 
 
 /*
- FLINT_BITS_PER_LIMB is the number of bits per limb.
+ FLINT_BITS is the number of bits per limb.
 */
 #if ULONG_MAX == 4294967295U
-#define FLINT_BITS_PER_LIMB 32
+#define FLINT_BITS 32
 #define FLINT_LG_BITS_PER_LIMB 5
 #define FLINT_BYTES_PER_LIMB 4
 #define FLINT_LG_BYTES_PER_LIMB 2
 
 #elif ULONG_MAX == 18446744073709551615U
-#define FLINT_BITS_PER_LIMB 64
+#define FLINT_BITS 64
 #define FLINT_LG_BITS_PER_LIMB 6
 #define FLINT_BYTES_PER_LIMB 8
 #define FLINT_LG_BYTES_PER_LIMB 3
@@ -72,14 +72,14 @@ the mpz_t::_mp_d member directly).
  */
 #define FLINT_GMP_COMPLIANT 0
 
-#if FLINT_BITS_PER_LIMB == 32
+#if FLINT_BITS == 32
 #define half_ulong u_int16_t
 #define half_long int16_t
-#define HALF_FLINT_BITS_PER_LIMB 16
+#define HALF_FLINT_BITS 16
 #else
 #define half_ulong u_int32_t
 #define half_long int32_t
-#define HALF_FLINT_BITS_PER_LIMB 32
+#define HALF_FLINT_BITS 32
 #endif
 
 /*
@@ -105,8 +105,8 @@ static inline unsigned long ceil_log2(unsigned long x)
 
 static inline unsigned long FLINT_BIT_COUNT(unsigned long x)
 {
-   unsigned long bits = FLINT_BITS_PER_LIMB;
-   unsigned long mask = 1L<<(FLINT_BITS_PER_LIMB-1);
+   unsigned long bits = FLINT_BITS;
+   unsigned long mask = 1L<<(FLINT_BITS-1);
    while ((bits > 1) && !(mask & x)) 
    {
       bits--;

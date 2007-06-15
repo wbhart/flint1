@@ -3,7 +3,7 @@
 ZmodFpoly.h
 
 Polynomials over Z/pZ, where p = the Fermat number B^n + 1, where
-B = 2^FLINT_BITS_PER_LIMB. Routines for truncated Schoenhage-Strassen FFTs
+B = 2^FLINT_BITS. Routines for truncated Schoenhage-Strassen FFTs
 and convolutions.
 
 Copyright (C) 2007, William Hart and David Harvey
@@ -28,7 +28,7 @@ Copyright (C) 2007, William Hart and David Harvey
    -----------
 
 ZmodFpoly_t represents a polynomial with coefficients in Z/pZ, where
-p = B^n + 1, B = 2^FLINT_BITS_PER_LIMB. Coefficients are represented in the
+p = B^n + 1, B = 2^FLINT_BITS. Coefficients are represented in the
 format described in ZmodF.h.
 
 Each polynomial has a fixed transform length 2^depth, specified at creation
@@ -177,7 +177,7 @@ void ZmodFpoly_limb_unpack_unsigned_mpn(fmpz_poly_t poly_mpn, ZmodFpoly_t poly_f
    coefficients is packed into a bitfield "bits" bits wide including one 
    bit for a sign bit. 
    
-   "bits" is assumed to be less than FLINT_BITS_PER_LIMB. If bits is 
+   "bits" is assumed to be less than FLINT_BITS. If bits is 
    negative, the input poly is assumed to have signed coefficients.
 */ 
    
@@ -197,7 +197,7 @@ void ZmodFpoly_bit_pack_mpn(ZmodFpoly_t poly_f, fmpz_poly_t poly_mpn,
    before calling this function for the first time since it adds to existing 
    coefficients of poly_mpn, rather than overwriting them.
    
-   "bits" is assumed to be less than FLINT_BITS_PER_LIMB. 
+   "bits" is assumed to be less than FLINT_BITS. 
 */ 
    
 void ZmodFpoly_bit_unpack_mpn(fmpz_poly_t poly_mpn, ZmodFpoly_t poly_f, 
@@ -212,7 +212,7 @@ void ZmodFpoly_bit_unpack_unsigned_mpn(fmpz_poly_t poly_mpn, ZmodFpoly_t poly_f,
    will have "bundle" coefficients packed into it, each packed into a field
    "bytes" bytes wide.
    
-   "coeff_bytes" is assumed to be at least FLINT_BITS_PER_LIMB/8, i.e. the
+   "coeff_bytes" is assumed to be at least FLINT_BITS/8, i.e. the
    coefficients are assumed to be at least a limb wide.
 */ 
    
@@ -227,7 +227,7 @@ void ZmodFpoly_byte_pack_mpn(ZmodFpoly_t poly_f, fmpz_poly_t poly_mpn,
    The total number of coefficients to be unpacked is given by the length of 
    poly_mpn.
    
-   "coeff_bytes" is assumed to be at least FLINT_BITS_PER_LIMB/8, i.e. the
+   "coeff_bytes" is assumed to be at least FLINT_BITS/8, i.e. the
    coefficients are assumed to be at least a limb wide.
 */ 
    
@@ -347,7 +347,7 @@ void ZmodFpoly_rescale(ZmodFpoly_t poly);
 
    Fourier Transform Routines
    
-For the following routines, 2^depth must divide 4*n*FLINT_BITS_PER_LIMB. This
+For the following routines, 2^depth must divide 4*n*FLINT_BITS. This
 ensures that Z/pZ has enough roots of unity.
    
 ****************************************************************************/
@@ -458,7 +458,7 @@ void _ZmodFpoly_IFFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
 
    Negacyclic Fourier Transform Routines
    
-For the following routines, 2^(depth+1) must divide 4*n*FLINT_BITS_PER_LIMB.
+For the following routines, 2^(depth+1) must divide 4*n*FLINT_BITS.
 This ensures that Z/pZ has enough roots of unity.
 
 These routines are exactly the same as those listed in the previous section,

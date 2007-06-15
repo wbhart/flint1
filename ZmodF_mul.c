@@ -5,7 +5,7 @@
  Copyright (C) 2007, David Harvey and William Hart
  
  Routines for multiplication of elements of Z/pZ where p = B^n + 1,
- B = 2^FLINT_BITS_PER_LIMB.
+ B = 2^FLINT_BITS.
  
 ******************************************************************************/
 
@@ -178,18 +178,18 @@ with a transform depth of "depth".
 void ZmodF_mul_info_init_negacyclic(
          ZmodF_mul_info_t info, unsigned long n, unsigned long depth)
 {
-   FLINT_ASSERT((n * FLINT_BITS_PER_LIMB) % (1 << depth) == 0);
+   FLINT_ASSERT((n * FLINT_BITS) % (1 << depth) == 0);
 
    info->n = n;
    info->algo = ZMODF_MUL_ALGO_NEGACYCLIC;
 
    // work out how many limbs the small coefficients need to have
-   unsigned long input_bits = (n*FLINT_BITS_PER_LIMB) >> depth;
+   unsigned long input_bits = (n*FLINT_BITS) >> depth;
    unsigned long output_bits = 2*input_bits + 1 + depth;
    unsigned long next_n = ((output_bits-1) >> FLINT_LG_BITS_PER_LIMB) + 1;
 
    // round up next_n so that enough roots of unity are available,
-   // i.e. need FLINT_BITS_PER_LIMB*next_n divisible by 2^(depth-1)
+   // i.e. need FLINT_BITS*next_n divisible by 2^(depth-1)
    if (depth-1 > FLINT_LG_BITS_PER_LIMB)
    {
       unsigned long shift = depth - 1 - FLINT_LG_BITS_PER_LIMB;
@@ -272,7 +272,7 @@ void ZmodF_mul_info_init(ZmodF_mul_info_t info, unsigned long n, int squaring)
       
       // need to check that n supports an FFT of that depth, and if not,
       // take the largest possible depth that works
-      while ((n * FLINT_BITS_PER_LIMB) & ((1 << depth) - 1))
+      while ((n * FLINT_BITS) & ((1 << depth) - 1))
          depth--;
 
       ZmodF_mul_info_init_negacyclic(info, n, depth);
@@ -319,7 +319,7 @@ void ZmodF_mul_info_init(ZmodF_mul_info_t info, unsigned long n, int squaring)
       
       // need to check that n supports an FFT of that depth, and if not,
       // take the largest possible depth that works
-      while ((n * FLINT_BITS_PER_LIMB) & ((1 << depth) - 1))
+      while ((n * FLINT_BITS) & ((1 << depth) - 1))
          depth--;
 
       ZmodF_mul_info_init_negacyclic(info, n, depth);
@@ -347,26 +347,26 @@ void ZmodF_mul_info_clear(ZmodF_mul_info_t info)
 /*
 Splits x into equally sized pieces.
 Number of pieces = transform length of "poly".
-Number of bits of x (i.e. n*FLINT_BITS_PER_LIMB) must be divisible by
+Number of bits of x (i.e. n*FLINT_BITS) must be divisible by
 the transform length.
 
 Assumes x is normalised and of length n, and has zero overflow limb.
 */
 void _ZmodF_mul_negacyclic_split(ZmodFpoly_t poly, ZmodF_t x, unsigned long n)
 {
-   FLINT_ASSERT((n * FLINT_BITS_PER_LIMB) % (1 << poly->depth) == 0);
+   FLINT_ASSERT((n * FLINT_BITS) % (1 << poly->depth) == 0);
    FLINT_ASSERT(x[n] == 0);
 
    unsigned long size = 1UL << poly->depth;
    
    // we'll split x into chunks each having "bits" bits
-   unsigned long bits = (n * FLINT_BITS_PER_LIMB) >> poly->depth;
+   unsigned long bits = (n * FLINT_BITS) >> poly->depth;
    // round it up to a whole number of limbs
    unsigned long limbs = ((bits - 1) >> FLINT_LG_BITS_PER_LIMB) + 1;
    
    // last_mask is applied to the last limb of each target coefficient to
    // zero out the bits that don't belong there
-   unsigned long last_mask = (1UL << (bits & (FLINT_BITS_PER_LIMB-1))) - 1;
+   unsigned long last_mask = (1UL << (bits & (FLINT_BITS-1))) - 1;
    if (!last_mask)
       last_mask = -1UL;
 
@@ -379,7 +379,7 @@ void _ZmodF_mul_negacyclic_split(ZmodFpoly_t poly, ZmodF_t x, unsigned long n)
       unsigned long end_limb = ((end-1) >> FLINT_LG_BITS_PER_LIMB) + 1;
       
       // shift/copy the limbs containing the chunk into the target coefficient
-      unsigned long start_bits = start & (FLINT_BITS_PER_LIMB-1);
+      unsigned long start_bits = start & (FLINT_BITS-1);
       if (start_bits)
          mpn_rshift(poly->coeffs[i], x + start_limb, end_limb - start_limb,
                     start_bits);
@@ -412,7 +412,7 @@ normalised), where R = (B^n)^(1/M).
 void _ZmodF_mul_negacyclic_combine(ZmodF_t x, ZmodFpoly_t poly,
                                    unsigned long n)
 {
-   FLINT_ASSERT((n * FLINT_BITS_PER_LIMB) % (1 << poly->depth) == 0);
+   FLINT_ASSERT((n * FLINT_BITS) % (1 << poly->depth) == 0);
 
    ZmodF_zero(x, n);
 
@@ -420,7 +420,7 @@ void _ZmodF_mul_negacyclic_combine(ZmodF_t x, ZmodFpoly_t poly,
    unsigned long size = 1 << poly->depth;
 
    // "bits" is the number of bits apart that each coefficient must be stored
-   unsigned long bits = (n * FLINT_BITS_PER_LIMB) >> poly->depth;
+   unsigned long bits = (n * FLINT_BITS) >> poly->depth;
    // "start" is the bit-index into x where the current coeff will be stored
    unsigned long start;
    
@@ -429,7 +429,7 @@ void _ZmodF_mul_negacyclic_combine(ZmodF_t x, ZmodFpoly_t poly,
       // start_limb, start_bit indicate where the current coefficient will
       // be stored; end_limb points beyond the last limb
       unsigned long start_limb = start >> FLINT_LG_BITS_PER_LIMB;
-      unsigned long start_bit = start & (FLINT_BITS_PER_LIMB-1);
+      unsigned long start_bit = start & (FLINT_BITS-1);
       unsigned long end_limb = start_limb + poly->n + 1;
 
       if (poly->coeffs[i][poly->n])
@@ -457,7 +457,7 @@ void _ZmodF_mul_negacyclic_combine(ZmodF_t x, ZmodFpoly_t poly,
             if (negative)
             {
                // If the coefficient is negative, then it's stored as
-               // 2^(FLINT_BITS_PER_LIMB*poly->n) + 1 plus the real
+               // 2^(FLINT_BITS*poly->n) + 1 plus the real
                // coefficient, so we need to correct for that
                mpn_sub_1(x + start_limb, x + start_limb, n + 1 - start_limb,
                          1UL << start_bit);
@@ -581,8 +581,8 @@ void _ZmodF_mul_threeway_crt(mp_limb_t* res, ZmodF_t a, mp_limb_t* b,
    unsigned long total = 0;
    for (unsigned long i = 0; i < 3*m+1; i++)
    {
-      total += (res[i] & ((1UL << (FLINT_BITS_PER_LIMB/2)) - 1));
-      total += (res[i] >> (FLINT_BITS_PER_LIMB/2));
+      total += (res[i] & ((1UL << (FLINT_BITS/2)) - 1));
+      total += (res[i] >> (FLINT_BITS/2));
    }
 
    // add "total" times B^3n + 1 (the latter is 2 mod 3)

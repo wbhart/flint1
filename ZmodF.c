@@ -5,7 +5,7 @@
  Copyright (C) 2007, David Harvey
  
  Routines for arithmetic on elements of Z/pZ where p = B^n + 1,
- B = 2^FLINT_BITS_PER_LIMB.
+ B = 2^FLINT_BITS.
  
  These are currently used only in the ZmodFpoly module, which supplies the
  Schoenhage-Strassen FFT code.
@@ -19,32 +19,32 @@
 /*
 For odd s, finds "limbs" and "bits" such that 2^(s/2) is decomposed into
   2^(-bits) * B^limbs * (1 - B^(n/2)),
-where 0 <= bits < FLINT_BITS_PER_LIMB, and 0 <= limbs < 2n.
+where 0 <= bits < FLINT_BITS, and 0 <= limbs < 2n.
 
 i.e. we are decomposing a rotation involving a sqrt2 into a fractional
 limbshift and a pseudosqrt2 call.
 
 PRECONDIITONS:
    s must be odd
-   0 <= s < 2n*FLINT_BITS_PER_LIMB
+   0 <= s < 2n*FLINT_BITS
 */
 void ZmodF_decompose_rotation(unsigned long* limbs, unsigned long* bits,
                               unsigned long s, unsigned long n)
 {
    FLINT_ASSERT(s & 1);
-   FLINT_ASSERT(s < 2*n*FLINT_BITS_PER_LIMB);
+   FLINT_ASSERT(s < 2*n*FLINT_BITS);
 
    // first split into 2^r * (1 - B^(n/2))
-   unsigned long r = (s >> 1) - 3*n*FLINT_BITS_PER_LIMB/4;
+   unsigned long r = (s >> 1) - 3*n*FLINT_BITS/4;
    if ((long)r < 0)
-      r += 2*n*FLINT_BITS_PER_LIMB;
+      r += 2*n*FLINT_BITS;
 
    // now split 2^r into 2^(-bits) and B^limbs
-   unsigned long z = r & (FLINT_BITS_PER_LIMB - 1);
-   r /= FLINT_BITS_PER_LIMB;
+   unsigned long z = r & (FLINT_BITS - 1);
+   r /= FLINT_BITS;
    if (z)
    {
-      *bits = FLINT_BITS_PER_LIMB - z;
+      *bits = FLINT_BITS - z;
       if (++r == 2*n)
          r = 0;
    }
@@ -92,24 +92,24 @@ void ZmodF_normalise(ZmodF_t a, unsigned long n)
 
 void ZmodF_mul_2exp(ZmodF_t b, ZmodF_t a, unsigned long s, unsigned long n)
 {
-   FLINT_ASSERT(s < n*FLINT_BITS_PER_LIMB);
+   FLINT_ASSERT(s < n*FLINT_BITS);
    FLINT_ASSERT(a != b);
 
-   unsigned long bits = s & (FLINT_BITS_PER_LIMB - 1);
-   s /= FLINT_BITS_PER_LIMB;
+   unsigned long bits = s & (FLINT_BITS - 1);
+   s /= FLINT_BITS;
    if (bits)
    {
       if (++s == n)
       {
          // special case if s == n-1
          ZmodF_neg(b, a, n);
-         ZmodF_short_div_2exp(b, b, FLINT_BITS_PER_LIMB - bits, n);
+         ZmodF_short_div_2exp(b, b, FLINT_BITS - bits, n);
          return;
       }
 
       // Need to shift left by s limbs and right by
-      // (FLINT_BITS_PER_LIMB - bits) bits.
-      bits = FLINT_BITS_PER_LIMB - bits;
+      // (FLINT_BITS - bits) bits.
+      bits = FLINT_BITS - bits;
       
       // Shift top part of input directly into bottom part of output
       ZmodF_fast_reduce(a, n);
@@ -141,7 +141,7 @@ void ZmodF_mul_2exp(ZmodF_t b, ZmodF_t a, unsigned long s, unsigned long n)
 void ZmodF_mul_sqrt2exp(ZmodF_t b, ZmodF_t a,
                         unsigned long s, unsigned long n)
 {
-   FLINT_ASSERT(s < 2*n*FLINT_BITS_PER_LIMB);
+   FLINT_ASSERT(s < 2*n*FLINT_BITS);
    FLINT_ASSERT(a != b);
 
    if (s & 1)
@@ -165,12 +165,12 @@ void ZmodF_mul_sqrt2exp(ZmodF_t b, ZmodF_t a,
 void ZmodF_sub_mul_2exp(ZmodF_t c, ZmodF_t a, ZmodF_t b,
                         unsigned long s, unsigned long n)
 {
-   FLINT_ASSERT(s < n*FLINT_BITS_PER_LIMB);
+   FLINT_ASSERT(s < n*FLINT_BITS);
    FLINT_ASSERT(c != a);
    FLINT_ASSERT(c != b);
 
-   unsigned long bits = s & (FLINT_BITS_PER_LIMB - 1);
-   s /= FLINT_BITS_PER_LIMB;
+   unsigned long bits = s & (FLINT_BITS - 1);
+   s /= FLINT_BITS;
    if (bits)
    {
       // shift a-b left by s+1 limbs...
@@ -180,7 +180,7 @@ void ZmodF_sub_mul_2exp(ZmodF_t c, ZmodF_t a, ZmodF_t b,
          ZmodF_sub_mul_Bexp(c, a, b, s, n);
       
       // ... and then shift right by remaining bits
-      ZmodF_short_div_2exp(c, c, FLINT_BITS_PER_LIMB - bits, n);
+      ZmodF_short_div_2exp(c, c, FLINT_BITS - bits, n);
    }
    else
    {
@@ -217,8 +217,8 @@ void ZmodF_mul_pseudosqrt2_n_odd(ZmodF_t b, ZmodF_t a,
    // (It doesn't set the overflow limb of b to anything meaningful.)
    mp_limb_signed_t Z;
    ZmodF_fast_reduce(a, n);
-   mpn_rshift(b, a+n-ss, ss+1, FLINT_BITS_PER_LIMB/2);
-   mp_limb_t underflow = mpn_rshift(b+ss, a, n-ss+1, FLINT_BITS_PER_LIMB/2);
+   mpn_rshift(b, a+n-ss, ss+1, FLINT_BITS/2);
+   mp_limb_t underflow = mpn_rshift(b+ss, a, n-ss+1, FLINT_BITS/2);
    sub_ddmmss(Z, b[ss-1], 0, b[ss-1], 0, underflow);
    
    mp_limb_t carry1, carry2;
@@ -390,7 +390,7 @@ void ZmodF_mul_pseudosqrt2_n_even(ZmodF_t b, ZmodF_t a,
 void ZmodF_forward_butterfly_2exp(ZmodF_t* a, ZmodF_t* b, ZmodF_t* z,
                                   unsigned long s, unsigned long n)
 {
-   FLINT_ASSERT(s < n*FLINT_BITS_PER_LIMB);
+   FLINT_ASSERT(s < n*FLINT_BITS);
    FLINT_ASSERT(*a != *b);
    FLINT_ASSERT(*b != *z);
    FLINT_ASSERT(*a != *z);
@@ -404,7 +404,7 @@ void ZmodF_forward_butterfly_2exp(ZmodF_t* a, ZmodF_t* b, ZmodF_t* z,
 void ZmodF_forward_butterfly_sqrt2exp(ZmodF_t* a, ZmodF_t* b, ZmodF_t* z,
                                       unsigned long s, unsigned long n)
 {
-   FLINT_ASSERT(s < 2*n*FLINT_BITS_PER_LIMB);
+   FLINT_ASSERT(s < 2*n*FLINT_BITS);
    FLINT_ASSERT(*a != *b);
    FLINT_ASSERT(*b != *z);
    FLINT_ASSERT(*a != *z);
@@ -441,17 +441,17 @@ void ZmodF_forward_butterfly_sqrt2exp(ZmodF_t* a, ZmodF_t* b, ZmodF_t* z,
 void ZmodF_inverse_butterfly_2exp(ZmodF_t* a, ZmodF_t* b, ZmodF_t* z,
                                   unsigned long s, unsigned long n)
 {
-   FLINT_ASSERT(s < n*FLINT_BITS_PER_LIMB);
+   FLINT_ASSERT(s < n*FLINT_BITS);
    FLINT_ASSERT(*a != *b);
    FLINT_ASSERT(*b != *z);
    FLINT_ASSERT(*a != *z);
 
-   unsigned long bits = s & (FLINT_BITS_PER_LIMB - 1);
+   unsigned long bits = s & (FLINT_BITS - 1);
    if (bits)
       // shift right by leftover bits
       ZmodF_short_div_2exp(*b, *b, bits, n);
 
-   s /= FLINT_BITS_PER_LIMB;
+   s /= FLINT_BITS;
    if (s)
    {
       ZmodF_div_Bexp_sub(*z, *a, *b, s, n);
@@ -470,7 +470,7 @@ void ZmodF_inverse_butterfly_2exp(ZmodF_t* a, ZmodF_t* b, ZmodF_t* z,
 void ZmodF_inverse_butterfly_sqrt2exp(ZmodF_t* a, ZmodF_t* b, ZmodF_t* z,
                                       unsigned long s, unsigned long n)
 {
-   FLINT_ASSERT(s < 2*n*FLINT_BITS_PER_LIMB);
+   FLINT_ASSERT(s < 2*n*FLINT_BITS);
    FLINT_ASSERT(*a != *b);
    FLINT_ASSERT(*b != *z);
    FLINT_ASSERT(*a != *z);
@@ -478,7 +478,7 @@ void ZmodF_inverse_butterfly_sqrt2exp(ZmodF_t* a, ZmodF_t* b, ZmodF_t* z,
    if (s & 1)
    {
       unsigned long limbs, bits;
-      ZmodF_decompose_rotation(&limbs, &bits, 2*n*FLINT_BITS_PER_LIMB - s, n);
+      ZmodF_decompose_rotation(&limbs, &bits, 2*n*FLINT_BITS - s, n);
       
       if (n & 1)
          ZmodF_mul_pseudosqrt2_n_odd(*z, *b, 0, n);

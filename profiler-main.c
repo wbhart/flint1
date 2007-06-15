@@ -35,7 +35,7 @@ void profiler_random_limbs(unsigned long* output, unsigned long count)
 {
    for (unsigned long i = 0; i < count; i++)
       output[i] = gmp_urandomb_ui(profiler_main_randstate,
-                                  FLINT_BITS_PER_LIMB);
+                                  FLINT_BITS);
 }
 
 

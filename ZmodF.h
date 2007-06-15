@@ -5,7 +5,7 @@
  Copyright (C) 2007, David Harvey
  
  Routines for arithmetic on elements of Z/pZ where p = B^n + 1,
- B = 2^FLINT_BITS_PER_LIMB.
+ B = 2^FLINT_BITS.
  
  These are currently used only in the ZmodFpoly module, which supplies the
  Schoenhage-Strassen FFT code.
@@ -146,14 +146,14 @@ void ZmodF_sub(ZmodF_t res, ZmodF_t a, ZmodF_t b, unsigned long n)
    b := 2^(-s) a
 
    PRECONDITIONS:
-      0 < s < FLINT_BITS_PER_LIMB
+      0 < s < FLINT_BITS
       b may alias a
 */
 static inline
 void ZmodF_short_div_2exp(ZmodF_t b, ZmodF_t a,
                           unsigned long s, unsigned long n)
 {
-   FLINT_ASSERT(s > 0 && s < FLINT_BITS_PER_LIMB);
+   FLINT_ASSERT(s > 0 && s < FLINT_BITS);
    
    // quick adjustment mod p to ensure a is non-negative
    ZmodF_fast_reduce(a, n);
@@ -303,7 +303,7 @@ void ZmodF_mul_pseudosqrt2_n_even(ZmodF_t b, ZmodF_t a,
    b := 2^s a
 
    PRECONDITIONS:
-      0 <= s < n*FLINT_BITS_PER_LIMB
+      0 <= s < n*FLINT_BITS
       b may not alias a
 */
 void ZmodF_mul_2exp(ZmodF_t b, ZmodF_t a, unsigned long s, unsigned long n);
@@ -313,7 +313,7 @@ void ZmodF_mul_2exp(ZmodF_t b, ZmodF_t a, unsigned long s, unsigned long n);
    b := 2^(s/2) a
 
    PRECONDITIONS:
-      0 <= s < 2*n*FLINT_BITS_PER_LIMB
+      0 <= s < 2*n*FLINT_BITS
 
 */
 void ZmodF_mul_sqrt2exp(ZmodF_t b, ZmodF_t a,
@@ -325,7 +325,7 @@ void ZmodF_mul_sqrt2exp(ZmodF_t b, ZmodF_t a,
 
    PRECONDITIONS:
       c must not alias a or b
-      0 <= s < n*FLINT_BITS_PER_LIMB
+      0 <= s < n*FLINT_BITS
 */
 void ZmodF_sub_mul_2exp(ZmodF_t c, ZmodF_t a, ZmodF_t b,
                         unsigned long s, unsigned long n);
@@ -371,7 +371,7 @@ void ZmodF_forward_butterfly_Bexp(ZmodF_t* a, ZmodF_t* b, ZmodF_t* z,
 
    PRECONDITIONS:
       a, b, z may not alias each other
-      0 <= s < n*FLINT_BITS_PER_LIMB
+      0 <= s < n*FLINT_BITS
       
    NOTE: a, b, z may get permuted
 */
@@ -386,7 +386,7 @@ void ZmodF_forward_butterfly_2exp(ZmodF_t* a, ZmodF_t* b, ZmodF_t* z,
 
    PRECONDITIONS:
       a, b, z may not alias each other
-      0 <= s < 4*FLINT_BITS_PER_LIMB
+      0 <= s < 4*FLINT_BITS
       
    NOTE: a, b, z may get permuted
 */
@@ -428,7 +428,7 @@ void ZmodF_inverse_butterfly_Bexp(ZmodF_t* a, ZmodF_t* b, ZmodF_t* z,
 
    PRECONDITIONS:
       a, b, z may not alias each other
-      0 <= s < n*FLINT_BITS_PER_LIMB
+      0 <= s < n*FLINT_BITS
       
    NOTE: a, b, z may get permuted
 */
@@ -443,7 +443,7 @@ void ZmodF_inverse_butterfly_2exp(ZmodF_t* a, ZmodF_t* b, ZmodF_t* z,
 
    PRECONDITIONS:
       a, b, z may not alias each other
-      0 <= s < 2*n*FLINT_BITS_PER_LIMB
+      0 <= s < 2*n*FLINT_BITS
       
    NOTE: a, b, z may get permuted
 */

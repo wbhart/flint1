@@ -5,7 +5,7 @@
  Copyright (C) 2007, David Harvey
  
  Routines for multiplication of elements of Z/pZ where p = B^n + 1,
- B = 2^FLINT_BITS_PER_LIMB.
+ B = 2^FLINT_BITS.
  
 ******************************************************************************/
 

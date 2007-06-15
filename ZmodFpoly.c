@@ -3,7 +3,7 @@
 ZmodFpoly.c
 
 Polynomials over Z/pZ, where p = the Fermat number B^n + 1, where
-B = 2^FLINT_BITS_PER_LIMB. Routines for truncated Schoenhage-Strassen FFTs
+B = 2^FLINT_BITS. Routines for truncated Schoenhage-Strassen FFTs
 and convolutions.
 
 Copyright (C) 2007, William Hart and David Harvey
@@ -112,14 +112,14 @@ long ZmodFpoly_convert_in_mpn(ZmodFpoly_t poly_f, fmpz_poly_t poly_mpn)
       {
          limbs = ABS(size_j) - 1;
          bits = FLINT_BIT_COUNT(coeffs_m[j+ABS(size_j)]); 
-         if (bits == FLINT_BITS_PER_LIMB) mask = 0L;
+         if (bits == FLINT_BITS) mask = 0L;
          else mask = -1L - ((1L<<bits)-1);  
       } else if (ABS(size_j) == limbs + 1)
       {
          if (coeffs_m[j+ABS(size_j)] & mask)
          {
             bits = FLINT_BIT_COUNT(coeffs_m[j+ABS(size_j)]);   
-            if (bits == FLINT_BITS_PER_LIMB) mask = 0L;
+            if (bits == FLINT_BITS) mask = 0L;
             else mask = -1L - ((1L<<bits)-1);
          }
       }
@@ -135,7 +135,7 @@ long ZmodFpoly_convert_in_mpn(ZmodFpoly_t poly_f, fmpz_poly_t poly_mpn)
    }
    poly_f->length = poly_mpn->length; 
    
-   return sign*(FLINT_BITS_PER_LIMB*limbs+bits);  
+   return sign*(FLINT_BITS*limbs+bits);  
 }
 
 void ZmodFpoly_convert_out_mpn(fmpz_poly_t poly_mpn, ZmodFpoly_t poly_f, long sign)
@@ -152,7 +152,7 @@ void ZmodFpoly_convert_out_mpn(fmpz_poly_t poly_mpn, ZmodFpoly_t poly_f, long si
       for (unsigned long i = 0, j = 0; i < poly_f->length; i++, j += size_m)
       {
          ZmodF_normalise(coeffs_f[i], n);
-         if (coeffs_f[i][n-1]>>(FLINT_BITS_PER_LIMB-1) || coeffs_f[i][n])
+         if (coeffs_f[i][n-1]>>(FLINT_BITS-1) || coeffs_f[i][n])
          {
             negate_limbs(coeffs_m + j + 1, coeffs_f[i], limbs);
             mpn_add_1(coeffs_m + j + 1, coeffs_m + j + 1, limbs, 1L);
@@ -220,7 +220,7 @@ void ZmodFpoly_bit_pack_mpn(ZmodFpoly_t poly_f, fmpz_poly_t poly_mpn,
    int sign = (bits < 0);
    if (sign) bits = ABS(bits);
    
-   unsigned long coeffs_per_limb = FLINT_BITS_PER_LIMB/bits;
+   unsigned long coeffs_per_limb = FLINT_BITS/bits;
 
    const unsigned long mask = (1UL<<bits)-1;
       
@@ -241,70 +241,70 @@ void ZmodFpoly_bit_pack_mpn(ZmodFpoly_t poly_f, fmpz_poly_t poly_mpn,
       while (coeff_m < next_point)
       {
          if ((unsigned long)coeff_m&7 == 0) FLINT_PREFETCH(coeff_m,64);
-         // k is guaranteed to be less than FLINT_BITS_PER_LIMB at this point
-         while ((k<HALF_FLINT_BITS_PER_LIMB)&&(coeff_m < next_point))
+         // k is guaranteed to be less than FLINT_BITS at this point
+         while ((k<HALF_FLINT_BITS)&&(coeff_m < next_point))
          {
             if (sign) temp+=(__get_next_coeff(coeff_m, &borrow, &coeff, mask) << k);
             else temp+=(__get_next_coeff_unsigned(coeff_m, &coeff) << k);
             coeff_m+=2; k+=bits;
          }
-         // k may exceed FLINT_BITS_PER_LIMB at this point but is less than 96
+         // k may exceed FLINT_BITS at this point but is less than 96
 
-         if (k>FLINT_BITS_PER_LIMB)
+         if (k>FLINT_BITS)
          {
-            // if k > FLINT_BITS_PER_LIMB write out a whole limb and read in remaining bits of coeff
+            // if k > FLINT_BITS write out a whole limb and read in remaining bits of coeff
             array[skip] = temp;
             skip++;
-            temp=(coeff>>(bits+FLINT_BITS_PER_LIMB-k));
-            k=(k-FLINT_BITS_PER_LIMB);
-            // k < HALF_FLINT_BITS_PER_LIMB
+            temp=(coeff>>(bits+FLINT_BITS-k));
+            k=(k-FLINT_BITS);
+            // k < HALF_FLINT_BITS
          } else
          {
-            // k <= FLINT_BITS_PER_LIMB
-            if (k >= HALF_FLINT_BITS_PER_LIMB)
+            // k <= FLINT_BITS
+            if (k >= HALF_FLINT_BITS)
             {
-               // if k >= HALF_FLINT_BITS_PER_LIMB store bottom HALF_FLINT_BITS_PER_LIMB bits
+               // if k >= HALF_FLINT_BITS store bottom HALF_FLINT_BITS bits
                lower = (half_ulong)temp;
-               k-=HALF_FLINT_BITS_PER_LIMB;
-               temp>>=HALF_FLINT_BITS_PER_LIMB;
-               // k is now <= HALF_FLINT_BITS_PER_LIMB
+               k-=HALF_FLINT_BITS;
+               temp>>=HALF_FLINT_BITS;
+               // k is now <= HALF_FLINT_BITS
 
-               while ((k<HALF_FLINT_BITS_PER_LIMB)&&(coeff_m < next_point))
+               while ((k<HALF_FLINT_BITS)&&(coeff_m < next_point))
                {
                   if (sign) temp+=(__get_next_coeff(coeff_m, &borrow, &coeff, mask) << k);
                   else temp+=(__get_next_coeff_unsigned(coeff_m, &coeff) << k);
                   coeff_m+=2; k+=bits;
                }
-               // k may again exceed FLINT_BITS_PER_LIMB bits but is less than 96
-               if (k>FLINT_BITS_PER_LIMB)
+               // k may again exceed FLINT_BITS bits but is less than 96
+               if (k>FLINT_BITS)
                {
-                  // if k > FLINT_BITS_PER_LIMB, write out bottom HALF_FLINT_BITS_PER_LIMB bits (along with HALF_FLINT_BITS_PER_LIMB bits from lower)
-                  // read remaining bits from coeff and reduce k by HALF_FLINT_BITS_PER_LIMB
-                  array[skip] = (temp<<HALF_FLINT_BITS_PER_LIMB)+(unsigned long)lower;
+                  // if k > FLINT_BITS, write out bottom HALF_FLINT_BITS bits (along with HALF_FLINT_BITS bits from lower)
+                  // read remaining bits from coeff and reduce k by HALF_FLINT_BITS
+                  array[skip] = (temp<<HALF_FLINT_BITS)+(unsigned long)lower;
                   skip++;
-                  temp>>=HALF_FLINT_BITS_PER_LIMB;
-                  temp+=((coeff>>(bits+FLINT_BITS_PER_LIMB-k))<<HALF_FLINT_BITS_PER_LIMB);
-                  k=(k-HALF_FLINT_BITS_PER_LIMB);
-                  // k < FLINT_BITS_PER_LIMB and we are ready to read next coefficient if there is one
-               } else if (k >= HALF_FLINT_BITS_PER_LIMB) 
+                  temp>>=HALF_FLINT_BITS;
+                  temp+=((coeff>>(bits+FLINT_BITS-k))<<HALF_FLINT_BITS);
+                  k=(k-HALF_FLINT_BITS);
+                  // k < FLINT_BITS and we are ready to read next coefficient if there is one
+               } else if (k >= HALF_FLINT_BITS) 
                {
-                  // k <= FLINT_BITS_PER_LIMB
-                  // if k >= HALF_FLINT_BITS_PER_LIMB write out bottom HALF_FLINT_BITS_PER_LIMB bits (along with lower)
-                  // and reduce k by HALF_FLINT_BITS_PER_LIMB
-                  k-=HALF_FLINT_BITS_PER_LIMB;
-                  array[skip] = (temp<<HALF_FLINT_BITS_PER_LIMB)+lower;
-                  temp>>=HALF_FLINT_BITS_PER_LIMB;
+                  // k <= FLINT_BITS
+                  // if k >= HALF_FLINT_BITS write out bottom HALF_FLINT_BITS bits (along with lower)
+                  // and reduce k by HALF_FLINT_BITS
+                  k-=HALF_FLINT_BITS;
+                  array[skip] = (temp<<HALF_FLINT_BITS)+lower;
+                  temp>>=HALF_FLINT_BITS;
                   skip++;
-                  // k is now less than or equal to HALF_FLINT_BITS_PER_LIMB and we are now ready to read 
+                  // k is now less than or equal to HALF_FLINT_BITS and we are now ready to read 
                   // the next coefficient if there is one
                } else
                {
-                  // k < HALF_FLINT_BITS_PER_LIMB
-                  // there isn't enough to write out a whole FLINT_BITS_PER_LIMB bits, so put it all 
+                  // k < HALF_FLINT_BITS
+                  // there isn't enough to write out a whole FLINT_BITS bits, so put it all 
                   // together in temp
-                  temp = (temp<<HALF_FLINT_BITS_PER_LIMB)+lower;
-                  k+=HALF_FLINT_BITS_PER_LIMB;
-                  // k is now guaranteed to be less than FLINT_BITS_PER_LIMB and we are ready for the
+                  temp = (temp<<HALF_FLINT_BITS)+lower;
+                  k+=HALF_FLINT_BITS;
+                  // k is now guaranteed to be less than FLINT_BITS and we are ready for the
                   // next coefficient if there is one
                }
             } // if
@@ -312,7 +312,7 @@ void ZmodFpoly_bit_pack_mpn(ZmodFpoly_t poly_f, fmpz_poly_t poly_mpn,
          poly_f->length++;
       } // while
 
-      // sign extend the last FLINT_BITS_PER_LIMB bits we write out
+      // sign extend the last FLINT_BITS bits we write out
       if (skip < n)
       {
         if (borrow) temp+=(-1UL << k);
@@ -384,7 +384,7 @@ void ZmodFpoly_bit_unpack_mpn(fmpz_poly_t poly_mpn, ZmodFpoly_t poly_f,
          // read in a full limb
          full_limb = array[skip];
          temp2 += l_shift(full_limb,k);
-         s=FLINT_BITS_PER_LIMB-k;
+         s=FLINT_BITS-k;
          k+=s;
          while ((k >= bits)&&(coeff_m < next_point))
          {
@@ -406,7 +406,7 @@ void ZmodFpoly_bit_unpack_mpn(fmpz_poly_t poly_mpn, ZmodFpoly_t poly_f,
          // k is now less than bits
          // read in remainder of full_limb
          temp2 += l_shift(r_shift(full_limb,s),k);
-         k+=(FLINT_BITS_PER_LIMB-s);
+         k+=(FLINT_BITS-s);
        
          while ((k >= bits)&&(coeff_m < next_point))
          {
@@ -467,7 +467,7 @@ void ZmodFpoly_bit_unpack_unsigned_mpn(fmpz_poly_t poly_mpn, ZmodFpoly_t poly_f,
          // read in a full limb
          full_limb = array[skip];
          temp2 += l_shift(full_limb,k);
-         s=FLINT_BITS_PER_LIMB-k;
+         s=FLINT_BITS-k;
          k+=s;
          while ((k >= bits)&&(coeff_m < next_point))
          {
@@ -479,7 +479,7 @@ void ZmodFpoly_bit_unpack_unsigned_mpn(fmpz_poly_t poly_mpn, ZmodFpoly_t poly_f,
          // k is now less than bits
          // read in remainder of full_limb
          temp2 += l_shift(r_shift(full_limb,s),k);
-         k+=(FLINT_BITS_PER_LIMB-s);
+         k+=(FLINT_BITS-s);
        
          while ((k >= bits)&&(coeff_m < next_point))
          {
@@ -546,7 +546,7 @@ void ZmodFpoly_limb_unpack_mpn(fmpz_poly_t poly_mpn, ZmodFpoly_t poly_f,
    for (unsigned long i = 0, j = 0, k = 0; i < bundle; i++, j += size_m, k += limbs)
    {
       if (carry) mpn_add_1(coeffs_f + k, coeffs_f + k, n - k, 1L);
-      if (coeffs_f[k+limbs-1]>>(FLINT_BITS_PER_LIMB-1))
+      if (coeffs_f[k+limbs-1]>>(FLINT_BITS-1))
       {
          negate_limbs(coeffs_m + j + 1, coeffs_f + k, limbs);
          coeffs_m[j] = -limbs;
@@ -654,7 +654,7 @@ void ZmodFpoly_byte_pack_mpn(ZmodFpoly_t poly_f, fmpz_poly_t poly_mpn,
       {
           // compute shifts to be used
           shift_1 = coeff_byte<<3;
-          shift_2 = FLINT_BITS_PER_LIMB-shift_1;
+          shift_2 = FLINT_BITS-shift_1;
         
           borrowed = borrow;
              
@@ -725,7 +725,7 @@ void ZmodFpoly_byte_pack_mpn(ZmodFpoly_t poly_f, fmpz_poly_t poly_mpn,
              // deal with first limb of coefficient
              next_limb = coeff_m[1];
              __ZmodFpoly_write_next_limb(array, &temp, &offset_limb, next_limb, shift_1, shift_2);
-             if (shift_2 == FLINT_BITS_PER_LIMB) temp = 0;
+             if (shift_2 == FLINT_BITS) temp = 0;
              // deal with remaining limbs
              for (j = 1; j < ABS(coeff_m[0]); j++)
              {
@@ -815,7 +815,7 @@ static inline void __ZmodFpoly_unpack_bytes(mp_limb_t* output, mp_limb_t* array,
     
     
     shift_1 = (byte_start<<3);
-    shift_2 = FLINT_BITS_PER_LIMB - shift_1;
+    shift_2 = FLINT_BITS - shift_1;
     
     temp = array[coeff_limb];
     coeff_limb++;
@@ -860,7 +860,7 @@ static inline unsigned long __ZmodFpoly_unpack_signed_bytes(mp_limb_t* output, m
     
     
     shift_1 = (byte_start<<3);
-    shift_2 = FLINT_BITS_PER_LIMB - shift_1;
+    shift_2 = FLINT_BITS - shift_1;
     
     unsigned long sign;
 
@@ -870,10 +870,10 @@ static inline unsigned long __ZmodFpoly_unpack_signed_bytes(mp_limb_t* output, m
             + extra_bytes_to_extract - FLINT_BYTES_PER_LIMB)<<3)-1));
     } else if (byte_start + extra_bytes_to_extract == FLINT_BYTES_PER_LIMB)
     {
-       sign = array[limb_start+limbs_to_extract]&(1UL<<(FLINT_BITS_PER_LIMB-1));
+       sign = array[limb_start+limbs_to_extract]&(1UL<<(FLINT_BITS-1));
     } else if (byte_start + extra_bytes_to_extract == 0)
     {
-       sign = array[limb_start+limbs_to_extract-1]&(1UL<<(FLINT_BITS_PER_LIMB-1));
+       sign = array[limb_start+limbs_to_extract-1]&(1UL<<(FLINT_BITS-1));
     } else
     {
        sign = array[limb_start+limbs_to_extract]&(1UL<<(((byte_start 
@@ -1159,7 +1159,7 @@ void _ZmodFpoly_FFT_iterative(
             unsigned long skip, unsigned long nonzero, unsigned long length,
             unsigned long twist, unsigned long n, ZmodF_t* scratch)
 {
-   FLINT_ASSERT((4*n*FLINT_BITS_PER_LIMB) % (1 << depth) == 0);
+   FLINT_ASSERT((4*n*FLINT_BITS) % (1 << depth) == 0);
    FLINT_ASSERT(skip >= 1);
    FLINT_ASSERT(n >= 1);
    FLINT_ASSERT(nonzero >= 1 && nonzero <= (1 << depth));
@@ -1171,7 +1171,7 @@ void _ZmodFpoly_FFT_iterative(
 
    // root is the (2^depth)-th root of unity for the current layer,
    // measured as a power of sqrt2
-   unsigned long root = (4*n*FLINT_BITS_PER_LIMB) >> depth;
+   unsigned long root = (4*n*FLINT_BITS) >> depth;
    FLINT_ASSERT(twist < root);
 
    // half = half the current block length
@@ -1373,7 +1373,7 @@ void _ZmodFpoly_FFT_iterative(
          
          // Two sub-versions, depending on whether the rotations are all by
          // a whole number of limbs.
-         if ((root | twist) & (FLINT_BITS_PER_LIMB - 1))
+         if ((root | twist) & (FLINT_BITS - 1))
          {
             // Version 2a: rotations still involve bitshifts.
             for (i = 0, s = twist, y = x; i < half; i++, s += root, y += skip)
@@ -1445,12 +1445,12 @@ void _ZmodFpoly_FFT_factor(
    FLINT_ASSERT(cols_depth >= 1);
    
    unsigned long depth = rows_depth + cols_depth;
-   FLINT_ASSERT((4*n*FLINT_BITS_PER_LIMB) % (1 << depth) == 0);
+   FLINT_ASSERT((4*n*FLINT_BITS) % (1 << depth) == 0);
    FLINT_ASSERT(nonzero >= 1 && nonzero <= (1 << depth));
    FLINT_ASSERT(length >= 1 && length <= (1 << depth));
    
    // root is the (2^depth)-th root unity, measured as a power of sqrt2
-   unsigned long root = (4*n*FLINT_BITS_PER_LIMB) >> depth;
+   unsigned long root = (4*n*FLINT_BITS) >> depth;
    FLINT_ASSERT(twist < root);
 
    unsigned long rows = 1UL << rows_depth;
@@ -1511,7 +1511,7 @@ void _ZmodFpoly_FFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
                     unsigned long twist, unsigned long n,
                     ZmodF_t* scratch)
 {
-   FLINT_ASSERT((4*n*FLINT_BITS_PER_LIMB) % (1 << depth) == 0);
+   FLINT_ASSERT((4*n*FLINT_BITS) % (1 << depth) == 0);
    FLINT_ASSERT(skip >= 1);
    FLINT_ASSERT(n >= 1);
    FLINT_ASSERT(nonzero >= 1 && nonzero <= (1 << depth));
@@ -1552,14 +1552,14 @@ void _ZmodFpoly_IFFT_iterative(
                ZmodF_t* x, unsigned long depth, unsigned long skip,
                unsigned long twist, unsigned long n, ZmodF_t* scratch)
 {
-   FLINT_ASSERT((4*n*FLINT_BITS_PER_LIMB) % (1 << depth) == 0);
+   FLINT_ASSERT((4*n*FLINT_BITS) % (1 << depth) == 0);
    FLINT_ASSERT(skip >= 1);
    FLINT_ASSERT(n >= 1);
    FLINT_ASSERT(depth >= 1);
 
    // root is the (2^(layer+1))-th root unity for each layer,
    // measured as a power of sqrt2
-   long root = 2*n*FLINT_BITS_PER_LIMB;
+   long root = 2*n*FLINT_BITS;
    twist <<= (depth - 1);
    FLINT_ASSERT(twist < root);
 
@@ -1581,7 +1581,7 @@ void _ZmodFpoly_IFFT_iterative(
       root >>= 1;
       twist >>= 1;
       
-      if ((root | twist) & (FLINT_BITS_PER_LIMB-1))
+      if ((root | twist) & (FLINT_BITS-1))
       {
          // This version allows bitshifts
          for (i = 0, y = x, s = twist; i < half; i++, s += root, y += skip)
@@ -1677,7 +1677,7 @@ void _ZmodFpoly_IFFT_recursive(
                unsigned long nonzero, unsigned long length, int extra,
                unsigned long twist, unsigned long n, ZmodF_t* scratch)
 {
-   FLINT_ASSERT((4*n*FLINT_BITS_PER_LIMB) % (1 << depth) == 0);
+   FLINT_ASSERT((4*n*FLINT_BITS) % (1 << depth) == 0);
    FLINT_ASSERT(skip >= 1);
    FLINT_ASSERT(n >= 1);
    FLINT_ASSERT(nonzero >= 1 && nonzero <= (1UL << depth));
@@ -1697,7 +1697,7 @@ void _ZmodFpoly_IFFT_recursive(
    }
 
    // root is the (2^depth)-th root unity, measured as a power of sqrt2
-   long root = (4*n*FLINT_BITS_PER_LIMB) >> depth;
+   long root = (4*n*FLINT_BITS) >> depth;
    FLINT_ASSERT(twist < root);
 
    long cols = size >> 1;
@@ -1880,7 +1880,7 @@ void _ZmodFpoly_IFFT_factor(
    FLINT_ASSERT(cols_depth >= 1);
 
    unsigned long depth = rows_depth + cols_depth;
-   FLINT_ASSERT((4*n*FLINT_BITS_PER_LIMB) % (1 << depth) == 0);
+   FLINT_ASSERT((4*n*FLINT_BITS) % (1 << depth) == 0);
    FLINT_ASSERT(nonzero >= 1 && nonzero <= (1UL << depth));
    FLINT_ASSERT(length <= nonzero);
    FLINT_ASSERT((length == 0 && extra) ||
@@ -1888,7 +1888,7 @@ void _ZmodFpoly_IFFT_factor(
                 (length > 0 && length < (1UL << depth)));
    
    // root is the (2^depth)-th root unity, measured as a power of sqrt2
-   unsigned long root = (4*n*FLINT_BITS_PER_LIMB) >> depth;
+   unsigned long root = (4*n*FLINT_BITS) >> depth;
    FLINT_ASSERT(twist < root);
    
    unsigned long rows = 1UL << rows_depth;
@@ -1975,7 +1975,7 @@ void _ZmodFpoly_IFFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
                      unsigned long twist, unsigned long n,
                      ZmodF_t* scratch)
 {
-   FLINT_ASSERT((4*n*FLINT_BITS_PER_LIMB) % (1 << depth) == 0);
+   FLINT_ASSERT((4*n*FLINT_BITS) % (1 << depth) == 0);
    FLINT_ASSERT(skip >= 1);
    FLINT_ASSERT(n >= 1);
    FLINT_ASSERT(nonzero >= 1 && nonzero <= (1UL << depth));
@@ -2039,13 +2039,13 @@ void _ZmodFpoly_FFT_dual_recursive(
       // Do the outer layer of two butterflies first. This is basically an
       // unrolled version of the length >= 8 case below.
 
-      unsigned long bits = (2*twist) & (FLINT_BITS_PER_LIMB-1);
+      unsigned long bits = (2*twist) & (FLINT_BITS-1);
       unsigned long limbs = n - (twist >> (FLINT_LG_BITS_PER_LIMB-1));
       
       if (bits)
       {
          // each butterfly needs a bitshift
-         bits = FLINT_BITS_PER_LIMB - bits;
+         bits = FLINT_BITS - bits;
          if (--limbs)
          {
             ZmodF_short_div_2exp(*scratch, x[2], bits, n);
@@ -2082,7 +2082,7 @@ void _ZmodFpoly_FFT_dual_recursive(
       // ----------------------------------------------------------------------
       // Now do the bottom layer, two "blocks" of one butterfly each.
 
-      twist = n*FLINT_BITS_PER_LIMB - twist;
+      twist = n*FLINT_BITS - twist;
       ZmodF_inverse_butterfly_2exp(x, x+1, scratch, twist, n);
       ZmodF_swap(x, x+1);
       ZmodF_inverse_butterfly_2exp(x+2, x+3, scratch, twist - root, n);
@@ -2097,7 +2097,7 @@ void _ZmodFpoly_FFT_dual_recursive(
       if (depth == 1)
       {
          ZmodF_inverse_butterfly_2exp(x, x+1, scratch,
-                                      n*FLINT_BITS_PER_LIMB - twist, n);
+                                      n*FLINT_BITS - twist, n);
          ZmodF_swap(x, x+1);
       }
       return;
@@ -2110,13 +2110,13 @@ void _ZmodFpoly_FFT_dual_recursive(
    unsigned long half = 1 << (depth - 1);
    ZmodF_t* y = x + half;
    unsigned long amount = twist << (depth - 1);
-   unsigned long bits = amount & (FLINT_BITS_PER_LIMB-1);
+   unsigned long bits = amount & (FLINT_BITS-1);
    unsigned long limbs = n - (amount >> FLINT_LG_BITS_PER_LIMB);
    
    if (bits)
    {
       // each butterfly needs a bitshift
-      bits = FLINT_BITS_PER_LIMB - bits;
+      bits = FLINT_BITS - bits;
       if (--limbs)
       {
          for (unsigned long i = 0; i < half; i++)
@@ -2170,7 +2170,7 @@ void _ZmodFpoly_IFFT_dual_recursive(
       // ----------------------------------------------------------------------
       // Do the inner layer of two "blocks" of one butterfly each.
 
-      unsigned long temp = n*FLINT_BITS_PER_LIMB - twist;
+      unsigned long temp = n*FLINT_BITS - twist;
       ZmodF_forward_butterfly_2exp(x+3, x+2, scratch, temp - root, n);
       ZmodF_swap(x+2, x+3);
       ZmodF_forward_butterfly_2exp(x+1, x, scratch, temp, n);
@@ -2181,7 +2181,7 @@ void _ZmodFpoly_IFFT_dual_recursive(
       // unrolled version of the length >= 8 case below.
 
       unsigned long amount = 2*twist;
-      unsigned long bits = amount & (FLINT_BITS_PER_LIMB-1);
+      unsigned long bits = amount & (FLINT_BITS-1);
       unsigned long limbs = n - (amount >> FLINT_LG_BITS_PER_LIMB);
 
       if (bits)
@@ -2248,7 +2248,7 @@ void _ZmodFpoly_IFFT_dual_recursive(
    // butterflies (a, b) -> (a + b, w*(a - b)), where w = 2^(-amount).
    ZmodF_t* y = x + half;
    unsigned long amount = twist << (depth - 1);
-   unsigned long bits = amount & (FLINT_BITS_PER_LIMB-1);
+   unsigned long bits = amount & (FLINT_BITS-1);
    unsigned long limbs = n - (amount >> FLINT_LG_BITS_PER_LIMB);
 
    if (bits)
@@ -2297,7 +2297,7 @@ void ZmodFpoly_FFT(ZmodFpoly_t poly, unsigned long length)
 {
    FLINT_ASSERT(length <= (1UL << poly->depth));
    // check the right roots of unity are available
-   FLINT_ASSERT((4 * poly->n * FLINT_BITS_PER_LIMB) % (1 << poly->depth) == 0);
+   FLINT_ASSERT((4 * poly->n * FLINT_BITS) % (1 << poly->depth) == 0);
    FLINT_ASSERT(poly->scratch_count >= 1);
 
    if (length != 0)
@@ -2323,7 +2323,7 @@ void ZmodFpoly_FFT(ZmodFpoly_t poly, unsigned long length)
 void ZmodFpoly_IFFT(ZmodFpoly_t poly)
 {
    // check the right roots of unity are available
-   FLINT_ASSERT((4 * poly->n * FLINT_BITS_PER_LIMB) % (1 << poly->depth) == 0);
+   FLINT_ASSERT((4 * poly->n * FLINT_BITS) % (1 << poly->depth) == 0);
    FLINT_ASSERT(poly->scratch_count >= 1);
 
    if (poly->length && poly->depth)
@@ -2369,10 +2369,10 @@ ignores length of poly
 void ZmodFpoly_negacyclic_FFT(ZmodFpoly_t poly)
 {
    // check the right roots of unity are available
-   FLINT_ASSERT((2 * poly->n * FLINT_BITS_PER_LIMB) % (1 << poly->depth) == 0);
+   FLINT_ASSERT((2 * poly->n * FLINT_BITS) % (1 << poly->depth) == 0);
    FLINT_ASSERT(poly->scratch_count >= 1);
 
-   unsigned long twist = (poly->n * FLINT_BITS_PER_LIMB) >> poly->depth;
+   unsigned long twist = (poly->n * FLINT_BITS) >> poly->depth;
 
    _ZmodFpoly_FFT_dual_recursive(poly->coeffs, poly->depth, twist, 2*twist, poly->n, poly->scratch);
    poly->length = 1 << poly->depth;
@@ -2382,10 +2382,10 @@ void ZmodFpoly_negacyclic_FFT(ZmodFpoly_t poly)
 void ZmodFpoly_negacyclic_IFFT(ZmodFpoly_t poly)
 {
    // check the right roots of unity are available
-   FLINT_ASSERT((2 * poly->n * FLINT_BITS_PER_LIMB) % (1 << poly->depth) == 0);
+   FLINT_ASSERT((2 * poly->n * FLINT_BITS) % (1 << poly->depth) == 0);
    FLINT_ASSERT(poly->scratch_count >= 1);
 
-   unsigned long twist = (poly->n * FLINT_BITS_PER_LIMB) >> poly->depth;
+   unsigned long twist = (poly->n * FLINT_BITS) >> poly->depth;
    _ZmodFpoly_IFFT_dual_recursive(poly->coeffs, poly->depth, twist, 2*twist, poly->n, poly->scratch);
    poly->length = 1 << poly->depth;
 }

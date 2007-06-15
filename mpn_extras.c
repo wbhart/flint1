@@ -45,7 +45,7 @@ mp_limb_t mpn_divmod_1_preinv(mp_limb_t * qp, mp_limb_t * up,
   
   qp += (n - 1);   /* Make qp point at most significant quotient limb */
 
-  if ((d & (1L<<(FLINT_BITS_PER_LIMB-1))) != 0)
+  if ((d & (1L<<(FLINT_BITS-1))) != 0)
   {
      if (un != 0)
      {
@@ -92,12 +92,12 @@ mp_limb_t mpn_divmod_1_preinv(mp_limb_t * qp, mp_limb_t * up,
      if (un != 0)
      {
         n1 = up[un - 1];
-        r |= (n1 >> (FLINT_BITS_PER_LIMB - norm));
+        r |= (n1 >> (FLINT_BITS - norm));
         for (i = un - 2; i >= 0; i--)
 		{
 		  n0 = up[i];
 		  udiv_qrnnd_preinv (*qp, r, r, 
-				     ((n1 << norm) | (n0 >> (FLINT_BITS_PER_LIMB - norm))), d, dinv);
+				     ((n1 << norm) | (n0 >> (FLINT_BITS - norm))), d, dinv);
 		  qp--;
 		  n1 = n0;
 		}

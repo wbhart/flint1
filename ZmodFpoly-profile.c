@@ -81,7 +81,7 @@ void prof2dDriver_ZmodFpoly_FFT(char* params)
    {
       unsigned long m = ceil_log2(2*length);
 
-      unsigned long n_skip = (1 << m) / (4*FLINT_BITS_PER_LIMB);
+      unsigned long n_skip = (1 << m) / (4*FLINT_BITS);
       if (n_skip == 0)
          n_skip = 1;
 
@@ -154,7 +154,7 @@ void prof2dDriver_ZmodFpoly_IFFT(char* params)
    {
       unsigned long m = ceil_log2(length);
 
-      unsigned long n_skip = (1 << m) / (4*FLINT_BITS_PER_LIMB);
+      unsigned long n_skip = (1 << m) / (4*FLINT_BITS);
       if (n_skip == 0)
          n_skip = 1;
 
@@ -182,7 +182,7 @@ void sample_ZmodFpoly_negacyclic_convolution(
       profiler_random_limbs(poly2->coeffs[i], n+1);
    }
 
-   unsigned long twist = (2*n*FLINT_BITS_PER_LIMB) >> depth;
+   unsigned long twist = (2*n*FLINT_BITS) >> depth;
    
    prof2d_start();
 
@@ -233,7 +233,7 @@ void prof2dDriver_ZmodFpoly_negacyclic_convolution(char* params)
    {
       for (unsigned long n = n_min; n <= n_max; n++)
       {
-         if ((2*n*FLINT_BITS_PER_LIMB) % (1 << depth))
+         if ((2*n*FLINT_BITS) % (1 << depth))
             continue;
          
          prof2d_sample(depth, n);
