@@ -56,7 +56,7 @@ unsigned long random_ulong(unsigned long max)
 }
 
 
-/*   // disabled temporarily
+/*
 int test_ZmodF_mul()
 {
    mp_limb_t scratch[2*MAX_N];
@@ -312,7 +312,58 @@ int test_ZmodF_mul_info_mul_threeway()
 
 int test_ZmodF_mul_info_mul_negacyclic()
 {
-   return 0;
+   int success = 1;
+
+   mp_limb_t in1[2000];
+   mp_limb_t in2[2000];
+   mp_limb_t out_plain[2000];
+   mp_limb_t out_negacyclic[2000];
+
+   mpz_t x;
+   mpz_init(x);
+
+   for (unsigned long n = 1; n < 1000 && success; n++)
+   {
+      for (unsigned long depth = 1;
+           (n*FLINT_BITS) % (1 << depth) == 0
+           && (depth <= FLINT_LG_BITS_PER_LIMB + 4)
+           && success; depth++)
+      {
+
+#if DEBUG
+         printf("n = %d, depth = %d\n", n, depth);
+#endif
+
+         ZmodF_mul_info_t info_plain, info_negacyclic;
+         ZmodF_mul_info_init_negacyclic(info_negacyclic, n, depth);
+         ZmodF_mul_info_init_plain(info_plain, n);
+
+         for (unsigned long trial = 0; trial < 10 && success; trial++)
+         {
+            ZmodF_zero(in1, n);
+            mpz_rrandomb(x, randstate, n*FLINT_BITS + FLINT_BITS/2);
+            mpz_export(in1, NULL, -1, sizeof(mp_limb_t), 0, 0, x);
+
+            ZmodF_zero(in2, n);
+            mpz_rrandomb(x, randstate, n*FLINT_BITS + FLINT_BITS/2);
+            mpz_export(in2, NULL, -1, sizeof(mp_limb_t), 0, 0, x);
+
+            ZmodF_mul_info_mul(info_plain, out_plain, in1, in2);
+            ZmodF_mul_info_mul(info_negacyclic, out_negacyclic, in1, in2);
+
+            ZmodF_normalise(out_plain, n);
+            ZmodF_normalise(out_negacyclic, n);
+
+            if (memcmp(out_plain, out_negacyclic, (n+1) * sizeof(mp_limb_t)))
+               success = 0;
+         }
+
+         ZmodF_mul_info_clear(info_plain);
+         ZmodF_mul_info_clear(info_negacyclic);
+      }
+   }
+
+   return success;
 }
 
 
@@ -341,8 +392,8 @@ void ZmodF_mul_test_all()
    RUN_TEST(ZmodF_sqr);
 */
 
-   RUN_TEST(_ZmodF_mul_negacyclic_split);
-   RUN_TEST(_ZmodF_mul_negacyclic_combine);
+//   RUN_TEST(_ZmodF_mul_negacyclic_split);
+//   RUN_TEST(_ZmodF_mul_negacyclic_combine);
    RUN_TEST(_ZmodF_mul_threeway_reduce1);
    RUN_TEST(_ZmodF_mul_threeway_reduce2);
    RUN_TEST(_ZmodF_mul_threeway_crt);

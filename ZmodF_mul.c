@@ -163,7 +163,7 @@ n must be divisible by 3
 void ZmodF_mul_info_init_threeway(ZmodF_mul_info_t info, unsigned long n)
 {
    FLINT_ASSERT(n % 3 == 0);
-   
+
    info->n = n;
    info->m = n/3;
    info->algo = ZMODF_MUL_ALGO_THREEWAY;
@@ -188,11 +188,11 @@ void ZmodF_mul_info_init_negacyclic(
    unsigned long output_bits = 2*input_bits + 1 + depth;
    unsigned long next_n = ((output_bits-1) >> FLINT_LG_BITS_PER_LIMB) + 1;
 
-   // round up next_n so that enough roots of unity are available,
-   // i.e. need FLINT_BITS*next_n divisible by 2^(depth-1)
-   if (depth-1 > FLINT_LG_BITS_PER_LIMB)
+   // round up next_n so that 2^(depth+1) roots of unity are available,
+   // i.e. need FLINT_BITS*next_n divisible by 2^depth
+   if (depth > FLINT_LG_BITS_PER_LIMB)
    {
-      unsigned long shift = depth - 1 - FLINT_LG_BITS_PER_LIMB;
+      unsigned long shift = depth - FLINT_LG_BITS_PER_LIMB;
       next_n = (((next_n - 1) >> shift) + 1) << shift;
    }
 
