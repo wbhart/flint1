@@ -306,7 +306,53 @@ int test_ZmodF_mul_info_mul_plain()
 
 int test_ZmodF_mul_info_mul_threeway()
 {
-   return 0;
+   int success = 1;
+
+   mp_limb_t in1[2000];
+   mp_limb_t in2[2000];
+   mp_limb_t out_plain[2000];
+   mp_limb_t out_threeway[2000];
+
+   mpz_t x;
+   mpz_init(x);
+
+   for (unsigned long n = 3; n < 1000 && success; n += 3)
+   {
+#if DEBUG
+      printf("n = %d\n", n);
+#endif
+
+      ZmodF_mul_info_t info_plain, info_threeway;
+      ZmodF_mul_info_init_threeway(info_threeway, n);
+      ZmodF_mul_info_init_plain(info_plain, n);
+
+      for (unsigned long trial = 0; trial < 250 && success; trial++)
+      {
+         ZmodF_zero(in1, n);
+         mpz_rrandomb(x, randstate, n*FLINT_BITS + FLINT_BITS/2);
+         mpz_export(in1, NULL, -1, sizeof(mp_limb_t), 0, 0, x);
+         
+         ZmodF_zero(in2, n);
+         mpz_rrandomb(x, randstate, n*FLINT_BITS + FLINT_BITS/2);
+         mpz_export(in2, NULL, -1, sizeof(mp_limb_t), 0, 0, x);
+         
+         ZmodF_mul_info_mul(info_plain, out_plain, in1, in2);
+         ZmodF_mul_info_mul(info_threeway, out_threeway, in1, in2);
+         
+         ZmodF_normalise(out_plain, n);
+         ZmodF_normalise(out_threeway, n);
+         
+         if (memcmp(out_plain, out_threeway, (n+1) * sizeof(mp_limb_t)))
+            success = 0;
+      }
+      
+      ZmodF_mul_info_clear(info_plain);
+      ZmodF_mul_info_clear(info_threeway);
+   }
+
+   mpz_clear(x);
+
+   return success;
 }
 
 
@@ -362,6 +408,8 @@ int test_ZmodF_mul_info_mul_negacyclic()
          ZmodF_mul_info_clear(info_negacyclic);
       }
    }
+
+   mpz_clear(x);
 
    return success;
 }
