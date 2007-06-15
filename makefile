@@ -2,7 +2,7 @@ ifdef PLEASE_DO_NOT_ERASE_DAVIDS_64_BIT_FLAG_AGAIN_THANKS_VERY_MUCH
 	BITFLAG = -m64
 else
 	BITFLAG =
-#      TUNE = -mtune=opteron -march=opteron 
+      TUNE = -mtune=opteron -march=opteron 
 endif
 
 CC = gcc -std=c99 $(BITFLAG)
