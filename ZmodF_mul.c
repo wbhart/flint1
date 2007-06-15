@@ -396,12 +396,24 @@ void _ZmodF_mul_negacyclic_split(ZmodFpoly_t poly, ZmodF_t x, unsigned long n)
 
 
 /*
-Combines coefficients of poly into a ZmodF_t, doing things appropriately mod p.
-Coefficients of poly must be normalised.
+Combines coefficients of poly into a ZmodF_t.
+
+More precisely, let the coefficients of "poly" be c_0, ..., c_{M-1}, where
+M = transform length of poly. The coefficients are assumed to be normalised,
+and lie in the range [0, q), where q = B^m + 1, where m is the coefficient
+length associated to poly. However this function interprets the coefficients
+as representing integers in the range [-(q+1)/2, (q-3)/2)] since the output
+of a negacyclic convolution can have *negative* coefficients.
+
+Then it computes x := \sum_{i=0}^{M-1} c_i R^i   (mod p) (not necessarily
+normalised), where R = (B^n)^(1/M).
+
 */
 void _ZmodF_mul_negacyclic_combine(ZmodF_t x, ZmodFpoly_t poly,
                                    unsigned long n)
 {
+   FLINT_ASSERT((n * FLINT_BITS_PER_LIMB) % (1 << poly->depth) == 0);
+
    ZmodF_zero(x, n);
 
    unsigned long i, carry;

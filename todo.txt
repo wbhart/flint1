@@ -212,3 +212,6 @@ the stack. This could be a problem if we need to allocate many small objects.
 * Check all fmpz_poly functions deal appropriately with the zero length poly
 
 * Make karatsuba use the right number of limbs
+
+* write a wrapper for mpz_export and mpz_import so we don't need to remember
+  the parameters all the time

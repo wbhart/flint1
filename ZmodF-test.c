@@ -24,7 +24,7 @@ mpz_t global_mpz;   // to avoid frequent mpz_init calls
 
 
 /*
-Prints the ZmodF_t to the given stream in hex, each limb in a separate block,
+Prints the ZmodF_t to stdout in hex, each limb in a separate block,
 most significant limb (i.e. the overflow limb) first.
 */
 void ZmodF_print(ZmodF_t x, unsigned long n)
