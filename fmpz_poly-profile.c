@@ -304,7 +304,7 @@ void sample_fmpz_poly_mul_karatsuba(unsigned long length, unsigned long bits,
   
    _fmpz_poly_stack_init(poly1, length, (bits-1)/FLINT_BITS+1);
    _fmpz_poly_stack_init(poly2, length, (bits-1)/FLINT_BITS+1);
-   _fmpz_poly_stack_init(poly3, 2*length-1, poly1->limbs+poly2->limbs+2);
+   _fmpz_poly_stack_init(poly3, 2*length-1, poly1->limbs+poly2->limbs+1);
     
    unsigned long r_count;
    
@@ -421,8 +421,7 @@ void sample_fmpz_poly_mul(unsigned long length, unsigned long bits,
   
    _fmpz_poly_stack_init(poly1, length, (bits-1)/FLINT_BITS+1);
    _fmpz_poly_stack_init(poly2, length, (bits-1)/FLINT_BITS+1);
-   if ((bits > 256) && (length <=16) && (length > 2)) _fmpz_poly_stack_init(poly3, 2*length-1, poly1->limbs+poly2->limbs+2);
-   else  _fmpz_poly_stack_init(poly3, 2*length-1, (output_bits-1)/FLINT_BITS+1);
+   _fmpz_poly_stack_init(poly3, 2*length-1, (output_bits-1)/FLINT_BITS+1);
    
    unsigned long r_count;
    

@@ -1384,7 +1384,7 @@ int test_fmpz_poly_mul_karatsuba()
       Zpoly_mul_naive(test_poly3, test_poly, test_poly2);
           
       Zpoly_init3(test_poly4, length+length2-1, test_mpn_poly->limbs+test_mpn_poly2->limbs+2);
-      fmpz_poly_init2(test_mpn_poly3, length+length2-1, test_mpn_poly->limbs+test_mpn_poly2->limbs+2);
+      fmpz_poly_init2(test_mpn_poly3, length+length2-1, test_mpn_poly->limbs+test_mpn_poly2->limbs+1);
           
       for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
       { 
@@ -1661,8 +1661,8 @@ int test_fmpz_poly_div_naive()
       bits2 = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 1;
       //bits = bits2 = 1000000;
       
-      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS_PER_LIMB+1);
-      fmpz_poly_init2(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS_PER_LIMB+1);
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
+      fmpz_poly_init2(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS+1);
       
       length2 = gmp_urandomm_ui(Zpoly_test_randstate,100)+1; 
       length = gmp_urandomm_ui(Zpoly_test_randstate,100)+1; 

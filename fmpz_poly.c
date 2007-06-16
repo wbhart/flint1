@@ -1217,16 +1217,20 @@ void _fmpz_poly_mul_karatsuba(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_
 {
    unsigned long limbs = input1->limbs+input2->limbs+2;
    unsigned long log_length = 0;
-   fmpz_poly_t scratch, scratchb;
+   fmpz_poly_t scratch, scratchb, temp;
+   _fmpz_poly_stack_init(temp, input1->length+input2->length-1, limbs);
    scratch->coeffs = (mp_limb_t *) flint_stack_alloc(5*FLINT_MAX(input1->length,input2->length)*(limbs+1));
    scratch->limbs = limbs;
    scratchb->limbs = FLINT_MAX(input1->limbs,input2->limbs)+1;
    scratchb->coeffs = (mp_limb_t *) flint_stack_alloc(5*FLINT_MAX(input1->length,input2->length)*(scratchb->limbs+1));
    
    if (input1->length >= input2->length)
-       __fmpz_poly_karamul_recursive(output, input1, input2, scratch, scratchb);
+       __fmpz_poly_karamul_recursive(temp, input1, input2, scratch, scratchb);
    else
-       __fmpz_poly_karamul_recursive(output, input2, input1, scratch, scratchb);
+       __fmpz_poly_karamul_recursive(temp, input2, input1, scratch, scratchb);
+   
+   _fmpz_poly_set(output, temp);
+   _fmpz_poly_stack_clear(temp);
    
    flint_stack_release(); flint_stack_release();
 }
