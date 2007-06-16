@@ -280,15 +280,97 @@ int test__ZmodF_mul_negacyclic_combine()
 }
 
 
-int test__ZmodF_mul_threeway_reduce1()
+int test__ZmodF_mul_threeway_reduce()
 {
-   return 0;
-}
+   int success = 1;
 
+   mp_limb_t in[2000];
+   mp_limb_t out1[2000];
+   mp_limb_t out2[2000];
+   mp_limb_t test[2000];
 
-int test__ZmodF_mul_threeway_reduce2()
-{
-   return 0;
+   mpz_t x, y, power, power2, mod1, mod2;
+   mpz_init(x);
+   mpz_init(y);
+   mpz_init(power);
+   mpz_init(power2);
+   mpz_init(mod1);
+   mpz_init(mod2);
+
+   for (unsigned long n = 3; n < 1000 && success; n += 3)
+   {
+#if DEBUG
+      printf("n = %d\n", n);
+#endif
+      
+      // power = B^n
+      mpz_set_ui(power, 1);
+      mpz_mul_2exp(power, power, n*FLINT_BITS);
+
+      // power2 = B^(2n/3)
+      mpz_set_ui(power2, 1);
+      mpz_mul_2exp(power2, power2, 2*n/3*FLINT_BITS);
+
+      // mod1 = B^(n/3) + 1
+      mpz_set_ui(mod1, 1);
+      mpz_mul_2exp(mod1, mod1, n/3*FLINT_BITS);
+      mpz_add_ui(mod1, mod1, 1);
+
+      // mod2 = B^(2n/3) - B^(n/3) + 1
+      mpz_set(mod2, mod1);
+      mpz_mul_2exp(mod2, mod2, n/3*FLINT_BITS);
+      mpz_sub(mod2, mod2, mod1);
+      mpz_sub(mod2, mod2, mod1);
+      mpz_add_ui(mod2, mod2, 3);
+
+      for (unsigned long trial = 0; trial < 250 && success; trial++)
+      {
+         ZmodF_zero(in, n);
+         mpz_rrandomb(x, randstate, n*FLINT_BITS);
+         if (random_ulong(2))
+         {
+            // flip bits with probability 1/2
+            mpz_sub(x, power, x);
+            mpz_sub_ui(x, x, 1);
+         }
+         mpz_export(in, NULL, -1, sizeof(mp_limb_t), 0, 0, x);
+
+         _ZmodF_mul_threeway_reduce1(out1, in, n/3);
+         mpz_mod(y, x, mod1);
+         memset(test, 0, (n/3 + 1) * sizeof(mp_limb_t));
+         mpz_export(test, NULL, -1, sizeof(mp_limb_t), 0, 0, y);
+         if (memcmp(test, out1, (n/3 + 1) * sizeof(mp_limb_t)))
+             success = 0;
+
+         _ZmodF_mul_threeway_reduce2(out2, in, n/3);
+         mpz_mod(y, x, mod2);
+         memset(test, 0, (2*n/3) * sizeof(mp_limb_t));
+         mpz_export(test, NULL, -1, sizeof(mp_limb_t), 0, 0, y);
+         if (memcmp(test, out2, 2*n/3 * sizeof(mp_limb_t)))
+         {
+            // didn't work... check if the "other answer" is correct
+            mpz_add(y, y, mod2);
+            if (mpz_cmp(y, power2) >= 0)
+               success = 0;
+            else
+            {
+               memset(test, 0, (2*n/3) * sizeof(mp_limb_t));
+               mpz_export(test, NULL, -1, sizeof(mp_limb_t), 0, 0, y);
+               if (memcmp(test, out2, 2*n/3 * sizeof(mp_limb_t)))
+                  return 0;
+            }
+         }
+      }
+   }
+
+   mpz_clear(mod2);
+   mpz_clear(mod1);
+   mpz_clear(power2);
+   mpz_clear(power);
+   mpz_clear(y);
+   mpz_clear(x);
+
+   return success;
 }
 
 
@@ -442,8 +524,7 @@ void ZmodF_mul_test_all()
 
 //   RUN_TEST(_ZmodF_mul_negacyclic_split);
 //   RUN_TEST(_ZmodF_mul_negacyclic_combine);
-   RUN_TEST(_ZmodF_mul_threeway_reduce1);
-   RUN_TEST(_ZmodF_mul_threeway_reduce2);
+   RUN_TEST(_ZmodF_mul_threeway_reduce);
    RUN_TEST(_ZmodF_mul_threeway_crt);
    RUN_TEST(ZmodF_mul_info_mul_plain);
    RUN_TEST(ZmodF_mul_info_mul_threeway);
