@@ -49,7 +49,6 @@ void mpz_poly_init2(mpz_poly_t poly, unsigned long alloc);
 void mpz_poly_realloc(mpz_poly_t poly, unsigned long alloc);
 void mpz_poly_ensure_alloc(mpz_poly_t poly, unsigned long alloc);
 void mpz_poly_init_upto(mpz_poly_t poly, unsigned long init);
-void mpz_poly_ensure_length(mpz_poly_t poly, unsigned long length);
 
 
 // ------------------------------------------------------
@@ -59,6 +58,7 @@ mpz_t* mpz_poly_get_coeff_ptr(mpz_poly_t poly, unsigned long n);
 void mpz_poly_get_coeff(mpz_t c, mpz_poly_t poly, unsigned long n);
 unsigned long mpz_poly_get_coeff_ui(mpz_poly_t poly, unsigned long n);
 long mpz_poly_get_coeff_si(mpz_poly_t poly, unsigned long n);
+
 void mpz_poly_set_coeff(mpz_poly_t poly, unsigned long n, mpz_t c);
 void mpz_poly_set_coeff_ui(mpz_poly_t poly, unsigned long n, unsigned long c);
 void mpz_poly_set_coeff_si(mpz_poly_t poly, unsigned long n, long c);
@@ -124,6 +124,7 @@ int mpz_poly_fread(mpz_poly_t poly, FILE* f);
 
 void mpz_poly_normalise(mpz_poly_t poly);
 int mpz_poly_normalised(mpz_poly_t poly);
+void mpz_poly_pad(mpz_poly_t poly, unsigned long length);
 
 
 static inline
@@ -181,7 +182,7 @@ void mpz_poly_swap(mpz_poly_t poly1, mpz_poly_t poly2)
 // ------------------------------------------------------
 // Conversions
 
-#if 0    // disabled, since fmpz_poly_t doesn't exist yet
+#if 0    // disabled, since we're not hooked up to fmpz_poly_t yet
 void mpz_poly_to_fmpz_poly(fmpz_poly_t res, mpz_poly_t poly);
 void fmpz_poly_to_mpz_poly(mpz_poly_t res, fmpz_poly_t poly);
 #endif
@@ -233,6 +234,7 @@ void mpz_poly_scalar_div_exact(mpz_poly_t res, mpz_poly_t poly, mpz_t c);
 void mpz_poly_scalar_div_exact_ui(mpz_poly_t res, mpz_poly_t poly,
                                   unsigned long c);
 void mpz_poly_scalar_div_exact_si(mpz_poly_t res, mpz_poly_t poly, long c);
+
 void mpz_poly_scalar_mod(mpz_poly_t res, mpz_poly_t poly, mpz_t c);
 void mpz_poly_scalar_mod_ui(mpz_poly_t res, mpz_poly_t poly, unsigned long c);
 

@@ -153,8 +153,8 @@ mpz_poly.o: mpz_poly.c $(HEADERS)
 mpz_poly-test.o: mpz_poly-test.c $(HEADERS)
 	$(CC) -c mpz_poly-test.c -o mpz_poly-test.o $(CFLAGS)
 	
-mpz_poly-test: mpz_poly-test.o mpz_poly.o memory-manager.o
-	$(CC) mpz_poly.o mpz_poly-test.o memory-manager.o -o mpz_poly-test $(CFLAGS) $(LIBS)
+mpz_poly-test: mpz_poly-test.o mpz_poly.o memory-manager.o test-support.o
+	$(CC) mpz_poly.o mpz_poly-test.o memory-manager.o test-support.o -o mpz_poly-test $(CFLAGS) $(LIBS)
 
 
 delta_qexp.o: delta_qexp.c $(HEADERS)

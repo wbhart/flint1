@@ -28,6 +28,17 @@ void mpz_poly_init(mpz_poly_t poly)
 }
 
 
+void mpz_poly_init2(mpz_poly_t poly, unsigned long alloc)
+{
+   FLINT_ASSERT(alloc >= 1);
+
+   poly->coeffs = (mpz_t*) flint_heap_alloc(alloc * sizeof(mpz_t));
+   poly->alloc = alloc;
+   poly->init = 0;
+   poly->length = 0;
+}
+
+
 void mpz_poly_clear(mpz_poly_t poly)
 {
    for (unsigned long i = 0; i < poly->init; i++)
@@ -105,7 +116,8 @@ void mpz_poly_get_coeff(mpz_t c, mpz_poly_t poly, unsigned long n)
 {
    if (n >= poly->length)
       mpz_set_ui(c, 0);
-   mpz_set(c, poly->coeffs[n]);
+   else
+      mpz_set(c, poly->coeffs[n]);
 }
 
 
@@ -389,6 +401,29 @@ void mpz_poly_set(mpz_poly_t res, mpz_poly_t poly)
    res->length = poly->length;
 }
 
+
+
+/****************************************************************************
+
+   Conversions
+
+****************************************************************************/
+
+
+#if 0    // disabled, since we're not hooked up to fmpz_poly_t yet
+
+void mpz_poly_to_fmpz_poly(fmpz_poly_t res, mpz_poly_t poly)
+{
+   abort();
+}
+
+
+void fmpz_poly_to_mpz_poly(mpz_poly_t res, fmpz_poly_t poly)
+{
+   abort();
+}
+
+#endif
 
 
 /****************************************************************************
@@ -749,49 +784,6 @@ void mpz_poly_scalar_mod_ui(mpz_poly_t res, mpz_poly_t poly, unsigned long c)
    Polynomial multiplication
 
 ****************************************************************************/
-
-
-unsigned long mpz_poly_max_limbs(mpz_poly_t poly)
-{
-   if (!poly->length)
-      return 0;
-   
-   unsigned long temp, limbs = mpz_size(poly->coeffs[0]);
-   
-   for (unsigned long i = 1; i < poly->length; i++)
-   {
-      temp = mpz_size(poly->coeffs[i]);
-      if (temp > limbs)
-         limbs = temp;
-   }
-
-   return limbs;
-}
-
-
-unsigned long mpz_poly_max_bits(mpz_poly_t poly)
-{
-   abort();
-}
-
-
-unsigned long mpz_poly_product_max_limbs(mpz_poly_t poly1, mpz_poly_t poly2)
-{
-   unsigned long limbs1 = mpz_poly_max_limbs(poly1);
-   unsigned long limbs2 = mpz_poly_max_limbs(poly2);
-
-   // we're assuming poly lengths are at most 2^FLINT_BITS
-   return limbs1 + limbs2 + 1;
-}
-
-
-unsigned long mpz_poly_product_max_bits(mpz_poly_t poly1, mpz_poly_t poly2)
-{
-   unsigned long bits1 = mpz_poly_max_bits(poly1);
-   unsigned long bits2 = mpz_poly_max_bits(poly2);
-   
-   return bits1 + bits2 + ceil_log2(FLINT_MAX(poly1->length, poly2->length));
-}
 
 
 void mpz_poly_mul(mpz_poly_t res, mpz_poly_t poly1, mpz_poly_t poly2)
@@ -1190,7 +1182,6 @@ void mpz_poly_pseudo_div_rem_naive(mpz_poly_t quot, mpz_poly_t rem,
 
 
 
-
 /****************************************************************************
 
    GCD and extended GCD
@@ -1220,6 +1211,57 @@ void mpz_poly_xgcd(mpz_poly_t res, mpz_poly_t a, mpz_poly_t b,
                    mpz_poly_t poly1, mpz_poly_t poly2)
 {
    abort();
+}
+
+
+
+/****************************************************************************
+
+   Miscellaneous
+
+****************************************************************************/
+
+
+unsigned long mpz_poly_max_limbs(mpz_poly_t poly)
+{
+   if (!poly->length)
+      return 0;
+   
+   unsigned long temp, limbs = mpz_size(poly->coeffs[0]);
+   
+   for (unsigned long i = 1; i < poly->length; i++)
+   {
+      temp = mpz_size(poly->coeffs[i]);
+      if (temp > limbs)
+         limbs = temp;
+   }
+
+   return limbs;
+}
+
+
+unsigned long mpz_poly_max_bits(mpz_poly_t poly)
+{
+   abort();
+}
+
+
+unsigned long mpz_poly_product_max_limbs(mpz_poly_t poly1, mpz_poly_t poly2)
+{
+   unsigned long limbs1 = mpz_poly_max_limbs(poly1);
+   unsigned long limbs2 = mpz_poly_max_limbs(poly2);
+
+   // we're assuming poly lengths are at most 2^FLINT_BITS
+   return limbs1 + limbs2 + 1;
+}
+
+
+unsigned long mpz_poly_product_max_bits(mpz_poly_t poly1, mpz_poly_t poly2)
+{
+   unsigned long bits1 = mpz_poly_max_bits(poly1);
+   unsigned long bits2 = mpz_poly_max_bits(poly2);
+   
+   return bits1 + bits2 + ceil_log2(FLINT_MAX(poly1->length, poly2->length));
 }
 
 

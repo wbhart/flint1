@@ -110,9 +110,20 @@ The \code{mpz_poly_struct} struct has four members:
 \item \code{unsigned long length}. The current length of the polynomial. That is, for \code{n < length}, the coefficient of $x^n$ is \code{coeffs[n]}, and for \code{n >= length}, the coefficient of $x^n$ is zero. Always \code{length <= init}. If \code{length == 0} then this is the zero polynomial. 
 \end{itemize}
 
-An \code{mpz_poly_t} is said to be \emph{normalised} if either \code{length == 0}, or if \code{coeffs[length-1]} is nonzero. All \code{mpz_poly_blah()} functions expect their inputs to be normalised, and produce output that is normalised. If you modify the coefficients yourself, you must ensure that the polynomial is subsequently normalised (for example by using \code{mpz_poly_normalise()}).
+An \code{mpz_poly_t} is said to be \emph{normalised} if either \code{length == 0}, or if \code{coeffs[length-1]} is nonzero. All \code{mpz_poly_blah()} functions expect their inputs to be normalised, and unless other specified they produce output that is normalised. If you modify the coefficients yourself, you must ensure that the polynomial is subsequently normalised (for example by using \code{mpz_poly_normalise()}).
 
-All of the functions in this module attempt to delay calling \code{mpz_init()} until it is known how much space must be allocated for the coefficient. Often it is possible for them to reduce memory allocation time by appropriate use of \code{mpz_init2()} or \code{mpz_init_set()}.
+All \code{mpz_poly_t}'s are allocated on the heap. The reason we don't bother with stack storage is that most of the memory allocation overhead for \code{mpz_poly_t} is in the coefficients anyway, and providing both stack and heap allocation would just make things unnecessarily complicated.
+
+
+\subsection{Working directly with the coefficients}
+
+If you work with \code{mpz_poly_t} only through the \code{mpz_poly} interface, then you can ignore this section.
+
+If you operate directly on the coefficients of an \code{mpz_poly_t} using GMP's \code{mpz} layer, you must \emph{never} access coefficients beyond the current value of \code{init}, since these have not yet been \code{mpz_init}'d.
+
+As a convenience, the function \code{mpz_poly_init_upto()} is provided, which ensures that all coefficients up to a certain point have been \code{mpz_init}'d.
+
+Generally FLINT delays calling \code{mpz_init} until the last possible moment, when it knows how much space needs to be allocated for the \code{mpz_t}. This strategy allows it to use functions like \code{mpz_init_set} and \code{mpz_init2} to avoid unnecessary calls to \code{malloc}.
 
 
 \subsection{Comparison with \code{fmpz_poly_t}}
