@@ -160,6 +160,7 @@ int test__ZmodF_mul_negacyclic_split()
    mpz_clear(x);
    mpz_clear(y);
    mpz_clear(z);
+
    return success;
 }
 
@@ -333,7 +334,7 @@ int test__ZmodF_mul_threeway_reduce()
             {
                mpz_to_mpn(test, 2*n/3, y);
                if (mpn_cmp(test, out2, 2*n/3))
-                  return 0;
+                  success = 0;
             }
          }
       }
@@ -430,7 +431,82 @@ int test__ZmodF_mul_threeway_crt()
 
 int test_ZmodF_mul_info_mul_plain()
 {
-   return 0;
+   int success = 1;
+
+   mp_limb_t in1[2000];
+   mp_limb_t in2[2000];
+   mp_limb_t out[2000];
+
+   mpz_t x1, x2, y, z, p;
+   mpz_init(x1);
+   mpz_init(x2);
+   mpz_init(y);
+   mpz_init(z);
+   mpz_init(p);
+
+   for (unsigned long n = 1; n < 100 && success; n++)
+   {
+#if DEBUG
+      printf("n = %d\n", n);
+#endif
+
+      // p = B^n + 1
+      mpz_set_ui(p, 1);
+      mpz_mul_2exp(p, p, n*FLINT_BITS);
+      mpz_add_ui(p, p, 1);
+
+      ZmodF_mul_info_t info;
+      ZmodF_mul_info_init_plain(info, n);
+
+      for (unsigned long trial = 0; trial < 1000 && success; trial++)
+      {
+         if (random_ulong(4) == 0)
+         {
+            // put in -1 mod p every now and then
+            ZmodF_zero(in1, n);
+            in1[n] = 1;
+         }
+         else
+         {
+            random_limbs(in1, n);
+            in1[n] = 0;
+         }
+
+         if (random_ulong(4) == 0)
+         {
+            // put in -1 mod p every now and then
+            ZmodF_zero(in2, n);
+            in2[n] = 1;
+         }
+         else
+         {
+            random_limbs(in2, n);
+            in2[n] = 0;
+         }
+         
+         mpn_to_mpz(x1, in1, n+1);
+         mpn_to_mpz(x2, in2, n+1);
+         mpz_mul(z, x1, x2);
+         mpz_mod(z, z, p);
+         
+         ZmodF_mul_info_mul(info, out, in1, in2);
+         ZmodF_normalise(out, n);
+         mpn_to_mpz(y, out, n+1);
+         
+         if (mpz_cmp(y, z))
+            success = 0;
+      }
+      
+      ZmodF_mul_info_clear(info);
+   }
+
+   mpz_clear(x1);
+   mpz_clear(x2);
+   mpz_clear(y);
+   mpz_clear(z);
+   mpz_clear(p);
+
+   return success;
 }
 
 
