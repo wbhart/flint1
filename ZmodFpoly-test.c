@@ -119,11 +119,11 @@ int test_ZmodFpoly_convert()
    {
       bits = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 1;
       
-      fmpz_poly_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
-      fmpz_poly_init(test_mpn_poly2, 1, (bits-1)/FLINT_BITS+1);
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
+      fmpz_poly_init2(test_mpn_poly2, 1, (bits-1)/FLINT_BITS+1);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
-          length = gmp_urandomm_ui(Zpoly_test_randstate,1000);
+          length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1;
           depth = 0;
           while ((1<<depth) < length) depth++;
 #if DEBUG
@@ -181,8 +181,8 @@ int test_ZmodFpoly_convert_bits()
    {
       bits = gmp_urandomm_ui(Zpoly_test_randstate, FLINT_BITS-2)+ 2;
       
-      fmpz_poly_init(test_mpn_poly, 1, 1);
-      fmpz_poly_init(test_mpn_poly2, 1, 10);
+      fmpz_poly_init2(test_mpn_poly, 1, 1);
+      fmpz_poly_init2(test_mpn_poly2, 1, 10);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
           length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1;
@@ -265,8 +265,8 @@ int test_ZmodFpoly_convert_bits_unsigned()
    {
       bits = gmp_urandomm_ui(Zpoly_test_randstate,FLINT_BITS-2)+ 2;
       
-      fmpz_poly_init(test_mpn_poly, 1, 1);
-      fmpz_poly_init(test_mpn_poly2, 1, 10);
+      fmpz_poly_init2(test_mpn_poly, 1, 1);
+      fmpz_poly_init2(test_mpn_poly2, 1, 10);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
           length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1;
@@ -335,8 +335,8 @@ int test_ZmodFpoly_limb_pack_unsigned()
    {
       bits = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 1;
       limbs = (bits-1)/FLINT_BITS + 1;
-      fmpz_poly_init(test_mpn_poly, 1, limbs);
-      fmpz_poly_init(test_mpn_poly2, 1, limbs);
+      fmpz_poly_init2(test_mpn_poly, 1, limbs);
+      fmpz_poly_init2(test_mpn_poly2, 1, limbs);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
           length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1;
@@ -396,10 +396,10 @@ int test_ZmodFpoly_limb_pack()
    Zpoly_init(test_poly2); 
    for (unsigned long count1 = 1; (count1 < 1000) && (result == 1) ; count1++)
    {
-      bits = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 1;
+      bits = gmp_urandomm_ui(Zpoly_test_randstate,1000)+ 2;
       limbs = (bits-1)/FLINT_BITS + 1;
-      fmpz_poly_init(test_mpn_poly, 1, limbs);
-      fmpz_poly_init(test_mpn_poly2, 1, limbs);
+      fmpz_poly_init2(test_mpn_poly, 1, limbs);
+      fmpz_poly_init2(test_mpn_poly2, 1, limbs);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
           length = gmp_urandomm_ui(Zpoly_test_randstate,1000)+1;
@@ -411,7 +411,7 @@ int test_ZmodFpoly_limb_pack()
           fmpz_poly_realloc(test_mpn_poly2, length);
           Zpoly_realloc(test_poly2, length);
           
-          randpoly(test_poly, length, bits);
+          randpoly(test_poly, length, bits-1);
 
 #if DEBUG
           for (unsigned j = 0; j < test_poly->length; j++)
@@ -464,8 +464,8 @@ int test_ZmodFpoly_convert_bytes_unsigned()
       bits = gmp_urandomm_ui(Zpoly_test_randstate, 1000)+ 64;
       bytes = ((bits-1)>>3)+1;
       
-      fmpz_poly_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
-      fmpz_poly_init(test_mpn_poly2, 1, (bits-1)/FLINT_BITS+1);
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
+      fmpz_poly_init2(test_mpn_poly2, 1, (bits-1)/FLINT_BITS+1);
       for (unsigned long count2 = 0; (count2 < 1) && (result == 1); count2++)
       { 
           length = gmp_urandomm_ui(Zpoly_test_randstate, 1000)+1;
@@ -536,8 +536,8 @@ int test_ZmodFpoly_convert_bytes()
       bits = gmp_urandomm_ui(Zpoly_test_randstate, 1000)+ 130;
       bytes = ((bits-1)>>3)+1;
       
-      fmpz_poly_init(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
-      fmpz_poly_init(test_mpn_poly2, 1, (bits-1)/FLINT_BITS+1);
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
+      fmpz_poly_init2(test_mpn_poly2, 1, (bits-1)/FLINT_BITS+1);
       for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
       { 
           length = gmp_urandomm_ui(Zpoly_test_randstate, 1000)+1;
