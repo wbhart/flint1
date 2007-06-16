@@ -36,7 +36,19 @@ int mpz_poly_equal_str(mpz_poly_t poly, char* s)
 
 int test_mpz_poly_get_coeff_ptr()
 {
-   return 0;
+   int success = 1;
+   mpz_poly_t poly;
+
+   mpz_poly_init(poly);
+   mpz_poly_init_upto(poly, 3);
+   poly->length = 2;
+   
+   success = success && (mpz_poly_get_coeff_ptr(poly, 0) == poly->coeffs);
+   success = success && (mpz_poly_get_coeff_ptr(poly, 1) == poly->coeffs + 1);
+   success = success && (mpz_poly_get_coeff_ptr(poly, 2) == NULL);
+   
+   mpz_poly_clear(poly);
+   return success;
 }
 
 
