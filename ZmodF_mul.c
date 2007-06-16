@@ -16,6 +16,12 @@
 #include "ZmodF_mul-tuning.h"
 
 
+/******************************************************************************
+
+   Plain multiplication
+
+******************************************************************************/
+
 /*
 Normalises a and b, and then attempts to multiply them mod p, putting result
 in res. It only succeeds if one of the inputs is exactly -1 mod p, in which
@@ -70,10 +76,10 @@ long _ZmodF_sqr_handle_minus1(ZmodF_t res, ZmodF_t a, unsigned long n)
 
 
 /*
-   Computes res := a * b mod p, where a and b are of length n.
-   scratch must be of length 2n, and not overlap any of a, b, res
-   a and b must be normalised, and have zero overflow limbs
-   any combinations of a, b, res may be aliased
+   Computes res := a * b mod p = B^n + 1, where a and b are of length n.
+   scratch must be of length 2n, and not overlap any of a, b, res.
+   a and b must be normalised, and have zero overflow limbs.
+   Any combinations of a, b, res may be aliased.
 */
 FLINT_INLINE
 void _ZmodF_mul(ZmodF_t res, ZmodF_t a, ZmodF_t b, mp_limb_t* scratch,
@@ -144,6 +150,12 @@ void ZmodF_sqr(ZmodF_t res, ZmodF_t a, mp_limb_t* scratch, unsigned long n)
    _ZmodF_mul(res, a, a, scratch, n);
 }
 
+
+/******************************************************************************
+
+   ZmodF_mul_info initialisation routines
+
+******************************************************************************/
 
 /*
 initialises info to use plain mpn_mul_n for multiplication
@@ -344,6 +356,12 @@ void ZmodF_mul_info_clear(ZmodF_mul_info_t info)
 }
 
 
+/******************************************************************************
+
+   Negacyclic multiplication splitting/combining routines
+
+******************************************************************************/
+
 /*
 Splits x into equally sized pieces.
 Number of pieces = transform length of "poly".
@@ -488,6 +506,12 @@ void _ZmodF_mul_negacyclic_combine(ZmodF_t x, ZmodFpoly_t poly,
 }
 
 
+/******************************************************************************
+
+   Threeway multiplication splitting/combining routines
+
+******************************************************************************/
+
 /*
 Assume a is length 3m, and normalised, and != -1 mod p.
 Reduces a mod B^m + 1, stores result at res, in usual ZmodF_t format (m+1
@@ -596,6 +620,14 @@ void _ZmodF_mul_threeway_crt(mp_limb_t* res, ZmodF_t a, mp_limb_t* b,
 
    ZmodF_fast_reduce(res, 3*m);
 }
+
+
+
+/******************************************************************************
+
+   Main ZmodF_mul_info multiplication routines
+
+******************************************************************************/
 
 
 void ZmodF_mul_info_mul(ZmodF_mul_info_t info,

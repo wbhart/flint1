@@ -7,11 +7,7 @@ Copyright (C) 2007, David Harvey
 *****************************************************************************/
 
 #include <stdio.h>
-#include <string.h>
-#include <gmp.h>
-#include "flint.h"
-#include "memory-manager.h"
-#include "ZmodFpoly.h"
+//#include <string.h>
 #include "ZmodF_mul.h"
 #include "test-support.h"
 
@@ -48,66 +44,6 @@ void ZmodFpoly_print(ZmodFpoly_t x)
    }
 }
 
-
-
-/*
-int test_ZmodF_mul()
-{
-   mp_limb_t scratch[2*MAX_N];
-   
-   for (unsigned long n = 1; n <= 5; n++)
-      for (unsigned long trial = 0; trial < 4000; trial++)
-         for (int outbuf = 0; outbuf <= 2; outbuf++)
-            for (int inbuf1 = 0; inbuf1 <= 2; inbuf1++)
-               for (int inbuf2 = 0; inbuf2 <= 2; inbuf2++)
-               {
-                  setup_coeffs(3, n, random_ulong(FLINT_BITS - 2));
-            
-                  ZmodF_mul(coeffs[outbuf], coeffs[inbuf1], coeffs[inbuf2],
-                            scratch, n);
-
-                  if (!check_coeffs(3, n))
-                     return 0;
-                     
-                  mpz_mul(global_mpz, coeffs_mpz_in[inbuf1],
-                          coeffs_mpz_in[inbuf2]);
-                  mpz_mod(global_mpz, global_mpz, global_p);
-                  
-                  if (mpz_cmp(coeffs_mpz_out[outbuf], global_mpz))
-                     return 0;
-               }
-
-   return 1;
-}
-
-
-int test_ZmodF_sqr()
-{
-   mp_limb_t scratch[2*MAX_N];
-   
-   for (unsigned long n = 1; n <= 5; n++)
-      for (unsigned long trial = 0; trial < 4000; trial++)
-         for (int outbuf = 0; outbuf <= 1; outbuf++)
-            for (int inbuf = 0; inbuf <= 1; inbuf++)
-            {
-               setup_coeffs(2, n, random_ulong(FLINT_BITS - 2));
-         
-               ZmodF_sqr(coeffs[outbuf], coeffs[inbuf], scratch, n);
-
-               if (!check_coeffs(2, n))
-                  return 0;
-                  
-               mpz_mul(global_mpz, coeffs_mpz_in[inbuf],
-                       coeffs_mpz_in[inbuf]);
-               mpz_mod(global_mpz, global_mpz, global_p);
-               
-               if (mpz_cmp(coeffs_mpz_out[outbuf], global_mpz))
-                  return 0;
-            }
-
-   return 1;
-}
-*/
 
 
 int test__ZmodF_mul_negacyclic_split()
@@ -483,6 +419,8 @@ int test_ZmodF_mul_info_mul_plain()
             random_limbs(in2, n);
             in2[n] = 0;
          }
+
+         // test multiplication
          
          mpn_to_mpz(x1, in1, n+1);
          mpn_to_mpz(x2, in2, n+1);
@@ -495,6 +433,18 @@ int test_ZmodF_mul_info_mul_plain()
          
          if (mpz_cmp(y, z))
             success = 0;
+
+         // test squaring
+
+         mpz_mul(z, x1, x1);
+         mpz_mod(z, z, p);
+         ZmodF_mul_info_sqr(info, out, in1);
+         ZmodF_normalise(out, n);
+         mpn_to_mpz(y, out, n+1);
+         
+         if (mpz_cmp(y, z))
+            success = 0;
+
       }
       
       ZmodF_mul_info_clear(info);
@@ -558,9 +508,22 @@ int test_ZmodF_mul_info_mul_threeway()
             in2[n] = 0;
          }
 
+         // test multiplication
+         
          ZmodF_mul_info_mul(info_plain, out_plain, in1, in2);
          ZmodF_mul_info_mul(info_threeway, out_threeway, in1, in2);
          
+         ZmodF_normalise(out_plain, n);
+         ZmodF_normalise(out_threeway, n);
+         
+         if (mpn_cmp(out_plain, out_threeway, n+1))
+            success = 0;
+
+         // test squaring
+
+         ZmodF_mul_info_sqr(info_plain, out_plain, in1);
+         ZmodF_mul_info_sqr(info_threeway, out_threeway, in1);
+
          ZmodF_normalise(out_plain, n);
          ZmodF_normalise(out_threeway, n);
          
@@ -632,8 +595,21 @@ int test_ZmodF_mul_info_mul_negacyclic()
                in2[n] = 0;
             }
 
+            // test multiplication
+
             ZmodF_mul_info_mul(info_plain, out_plain, in1, in2);
             ZmodF_mul_info_mul(info_negacyclic, out_negacyclic, in1, in2);
+
+            ZmodF_normalise(out_plain, n);
+            ZmodF_normalise(out_negacyclic, n);
+
+            if (mpn_cmp(out_plain, out_negacyclic, n+1))
+               success = 0;
+
+            // test squaring
+            
+            ZmodF_mul_info_sqr(info_plain, out_plain, in1);
+            ZmodF_mul_info_sqr(info_negacyclic, out_negacyclic, in1);
 
             ZmodF_normalise(out_plain, n);
             ZmodF_normalise(out_negacyclic, n);
@@ -672,9 +648,6 @@ int test_ZmodF_mul_info_mul_negacyclic()
 void ZmodF_mul_test_all()
 {
    int success, all_success = 1;
-
-//   RUN_TEST(ZmodF_mul);
-//   RUN_TEST(ZmodF_sqr);
 
    RUN_TEST(_ZmodF_mul_negacyclic_split);
    RUN_TEST(_ZmodF_mul_negacyclic_combine);
