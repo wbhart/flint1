@@ -31,8 +31,11 @@ clean: clean-custom
 
 HEADERS = Z.h Z_mpn.h ZmodF.h ZmodFpoly.h Zpoly.h fmpz_poly.h \
 			 extras.h memory-manager.h flint.h longlong.h longlong_wrapper.h \
-			 mpn_extras.h profiler-main.h profiler.h ZmodF_mul.h ZmodF_mul-tuning.h
+			 mpn_extras.h profiler-main.h profiler.h ZmodF_mul.h ZmodF_mul-tuning.h test-support.h
 
+
+test-support.o: test-support.c $(HEADERS)
+	$(CC) -c test-support.c -o test-support.o $(CFLAGS)
 
 mpn_extras.o: mpn_extras.c $(HEADERS)
 	$(CC) -c mpn_extras.c -o mpn_extras.o $(CFLAGS)
@@ -119,8 +122,8 @@ ZmodF_mul-profile: ZmodF_mul-profile.o ZmodF.o ZmodF_mul.o ZmodFpoly.o fmpz_poly
 ZmodF_mul-test.o: ZmodF_mul-test.c $(HEADERS)
 	$(CC) -c ZmodF_mul-test.c -o ZmodF_mul-test.o $(CFLAGS)
 
-ZmodF_mul-test: ZmodF_mul-test.o ZmodF.o ZmodF_mul.o ZmodFpoly.o fmpz_poly.o memory-manager.o mpn_extras.o Z_mpn.o
-	$(CC) -o ZmodF_mul-test ZmodF_mul-test.o ZmodF.o ZmodF_mul.o ZmodFpoly.o fmpz_poly.o memory-manager.o mpn_extras.o Z_mpn.o $(CFLAGS) $(LIBS)
+ZmodF_mul-test: ZmodF_mul-test.o ZmodF.o ZmodF_mul.o ZmodFpoly.o fmpz_poly.o memory-manager.o mpn_extras.o Z_mpn.o test-support.o
+	$(CC) -o ZmodF_mul-test ZmodF_mul-test.o ZmodF.o ZmodF_mul.o ZmodFpoly.o fmpz_poly.o memory-manager.o mpn_extras.o Z_mpn.o test-support.o $(CFLAGS) $(LIBS)
 
 
 ZmodFpoly.o: ZmodFpoly.c $(HEADERS)
