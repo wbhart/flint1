@@ -336,5 +336,7 @@ void fmpz_poly_get_coeff_mpz(mpz_t x, fmpz_poly_t poly, unsigned long n);
 
 void fmpz_poly_mul(fmpz_poly_t output, fmpz_poly_p input1, fmpz_poly_p input2);
 
+void fmpz_poly_div_naive(fmpz_poly_t Q, fmpz_poly_t R, fmpz_poly_t A, fmpz_poly_t B);
+
 // *************** end of file
 #endif

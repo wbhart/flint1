@@ -1668,3 +1668,141 @@ void fmpz_poly_mul(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_t input2)
    _fmpz_poly_mul(output, input1, input2);
    fmpz_poly_set_length(output, input1->length + input2->length - 1);
 }
+
+void fmpz_poly_div_naive(fmpz_poly_t Q, fmpz_poly_t R, fmpz_poly_t A, fmpz_poly_t B)
+{
+   fmpz_poly_t qB;
+   
+   _fmpz_poly_normalise(A);
+   _fmpz_poly_normalise(B);
+   if (B->length == 0)
+   {
+      printf("Error: Divide by zero\n");
+      abort();
+   }
+   
+   long coeff = A->length-1;
+   unsigned long size_A = A->limbs + 1;
+   unsigned long size_B = B->limbs + 1;
+   unsigned long size_R;
+   unsigned long limbs_R;
+   unsigned long size_Q;
+   unsigned long limbs_Q;
+   mp_limb_t * coeffs_A = A->coeffs;
+   mp_limb_t * coeffs_B = B->coeffs;
+   mp_limb_t * coeff_i = coeffs_A + coeff*size_A;
+   mp_limb_t * B_lead = coeffs_B + (B->length-1)*size_B; 
+   mp_limb_t * coeff_Q;
+   mp_limb_t * coeffs_R;
+
+   NORM(B_lead);
+   
+   unsigned long size_B_lead = ABS(B_lead[0]);
+   mp_limb_t sign_B_lead = B_lead[0];
+   mp_limb_t sign_quot;
+   
+   while (1)
+   {
+      if (coeff < (long) B->length - 1) break;
+      NORM(coeff_i);
+      if (ABS(coeff_i[0]) < size_B_lead)
+      {
+         coeff--;
+         coeff_i -= size_A;
+      } else if (ABS(coeff_i[0]) > size_B_lead) break;
+      else if (mpn_cmp(coeff_i+1, B_lead+1, size_B_lead) >= 0) break;
+      else 
+      {
+         coeff--;
+         coeff_i -= size_A;         
+      }    
+   }
+   
+   mp_limb_t * rem = flint_heap_alloc(size_B_lead);
+   
+   fmpz_poly_fit_length(R, A->length);
+   fmpz_poly_fit_limbs(R, A->limbs);
+   R->length = A->length;
+   _fmpz_poly_set(R, A);
+   coeffs_R = R->coeffs;
+   size_R = R->limbs+1;
+      
+   if (coeff >= (long) B->length - 1)
+   {
+      fmpz_poly_fit_length(Q, coeff-B->length+2);
+      fmpz_poly_fit_limbs(Q, 1);
+      Q->length = coeff-B->length+2;
+      size_Q = Q->limbs+1;
+   } else _fmpz_poly_zero(Q);
+   
+   while (coeff >= (long) B->length - 1)
+   {
+      coeff_Q = Q->coeffs+(coeff-B->length+1)*size_Q;
+      while (1)
+      {
+         if (coeff < (long) B->length - 1) break;
+         NORM(coeffs_R+coeff*size_R);
+         if (ABS(coeffs_R[coeff*size_R]) < size_B_lead)
+         {
+            coeff_Q[0] = 0;
+            coeff_Q -= size_Q;
+            coeff--;
+         } else if (ABS(coeffs_R[coeff*size_R]) > size_B_lead) break;
+         else if (mpn_cmp(coeffs_R+coeff*size_R+1, B_lead+1, size_B_lead) >= 0) break;
+         else 
+         {
+            coeff_Q[0] = 0;
+            coeff_Q -= size_Q;
+            coeff--;
+         }    
+      }
+      
+      if (coeff >= (long) B->length - 1)
+      {
+         limbs_Q = ABS(coeffs_R[coeff*size_R]) - size_B_lead + 1;
+         fmpz_poly_fit_limbs(Q, limbs_Q);
+         size_Q = Q->limbs+1;
+         coeff_Q = Q->coeffs+(coeff - B->length+1)*size_Q;
+         sign_quot = ABS(coeffs_R[coeff*size_R]) - size_B_lead + 1;
+         if (((long) (sign_B_lead ^ coeffs_R[coeff*size_R])) < 0) 
+         {
+            mpn_tdiv_qr(coeff_Q+1, rem, 0, coeffs_R+coeff*size_R+1, ABS(coeffs_R[coeff*size_R]), B_lead+1, size_B_lead);
+            coeff_Q[0] = -sign_quot;
+            for (unsigned long i = 0; i < size_B_lead; i++)
+            {
+               if (rem[i])
+               {
+                  __fmpz_poly_sub_coeff_ui(coeff_Q,1);
+                  break;
+               }
+            }
+         }
+         else 
+         {
+            mpn_tdiv_qr(coeff_Q+1, rem, 0, coeffs_R+coeff*size_R+1, ABS(coeffs_R[coeff*size_R]), B_lead+1, size_B_lead);
+            coeff_Q[0] = sign_quot;
+         }
+         NORM(coeff_Q);
+         
+         fmpz_poly_init2(qB, B->length, B->limbs+ABS(coeff_Q[0]));
+         _fmpz_poly_scalar_mul(qB, B, coeff_Q); 
+      
+         fmpz_poly_fit_limbs(R, qB->limbs+1);
+         coeffs_R = R->coeffs;
+         size_R = R->limbs+1;
+      
+         fmpz_poly_t R_sub;
+         R_sub->coeffs = coeffs_R+(coeff - B->length + 1)*size_R;
+         R_sub->limbs = R->limbs;
+         R_sub->length = B->length;
+         _fmpz_poly_sub(R_sub, R_sub, qB);
+         
+         coeff--;
+         fmpz_poly_clear(qB);
+      }
+   }
+   
+   _fmpz_poly_normalise(R);
+   flint_heap_free(rem);
+}
+
