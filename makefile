@@ -147,6 +147,16 @@ ZmodFpoly-profile: Z_mpn.o memory-manager.o ZmodFpoly-profile.o ZmodFpoly-profil
 	$(CC) -o ZmodFpoly-profile Z_mpn.o ZmodFpoly-profile.o ZmodFpoly-profile-tables.o profiler.o profiler-main.o fmpz_poly.o Zpoly.o memory-manager.o mpn_extras.o ZmodFpoly.o ZmodF.o ZmodF_mul.o $(CFLAGS) $(LIBS)
 
 
+mpz_poly.o: mpz_poly.c $(HEADERS)
+	$(CC) -c mpz_poly.c -o mpz_poly.o $(CFLAGS)
+	
+mpz_poly-test.o: mpz_poly-test.c $(HEADERS)
+	$(CC) -c mpz_poly-test.c -o mpz_poly-test.o $(CFLAGS)
+	
+mpz_poly-test: mpz_poly-test.o mpz_poly.o memory-manager.o
+	$(CC) mpz_poly.o mpz_poly-test.o memory-manager.o -o mpz_poly-test $(CFLAGS) $(LIBS)
+
+
 delta_qexp.o: delta_qexp.c $(HEADERS)
 	$(CC) -c delta_qexp.c -o delta_qexp.o $(CFLAGS)
 
