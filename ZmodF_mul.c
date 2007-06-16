@@ -528,8 +528,7 @@ void _ZmodF_mul_threeway_reduce2(mp_limb_t* res, ZmodF_t a, unsigned long m)
 
 
 /*
-given a of length m+1 (normalised, ZmodF format)
-and b of length 2*m
+given a of length m+1 (normalised, ZmodF format) and b of length 2*m,
 computes res of length 3*m (ZmodF format, not normalised)
 such that res = a mod B^m + 1, and res = b mod B^2m - B^m + 1
  */

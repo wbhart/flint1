@@ -56,6 +56,33 @@ unsigned long random_ulong(unsigned long max)
 }
 
 
+// uses mpz_rrandomb to write random bits of length k limbs to x
+void random_limbs(mp_limb_t* x, unsigned long k)
+{
+   mpz_t y;
+   mpz_init(y);
+   
+   mpz_rrandomb(y, randstate, k*FLINT_BITS);
+   if (random_ulong(2))
+   {
+      mpz_t power;
+      mpz_init(power);
+      
+      mpz_set_ui(power, 1);
+      mpz_mul_2exp(power, power, k*FLINT_BITS);
+      mpz_sub_ui(power, power, 1);
+      mpz_sub(y, power, y);
+      
+      mpz_clear(power);
+   }
+
+   memset(x, 0, k * sizeof(mp_limb_t));
+   mpz_export(x, NULL, -1, sizeof(mp_limb_t), 0, 0, y);
+   
+   mpz_clear(y);
+}
+
+
 /*
 int test_ZmodF_mul()
 {
@@ -376,7 +403,79 @@ int test__ZmodF_mul_threeway_reduce()
 
 int test__ZmodF_mul_threeway_crt()
 {
-   return 0;
+   int success = 1;
+   
+   mp_limb_t in1[2000];
+   mp_limb_t in2[2000];
+   mp_limb_t out[2000];
+   mpz_t x1, x2, y1, y2, z, mod1, mod2;
+   
+   mpz_init(x1);
+   mpz_init(x2);
+   mpz_init(y1);
+   mpz_init(y2);
+   mpz_init(z);
+   mpz_init(mod1);
+   mpz_init(mod2);
+
+   for (unsigned long n = 3; n < 1000 && success; n += 3)
+   {
+#if DEBUG
+      printf("n = %d\n", n);
+#endif
+
+      // mod1 = B^(n/3) + 1
+      mpz_set_ui(mod1, 1);
+      mpz_mul_2exp(mod1, mod1, n/3*FLINT_BITS);
+      mpz_add_ui(mod1, mod1, 1);
+
+      // mod2 = B^(2n/3) - B^(n/3) + 1
+      mpz_set(mod2, mod1);
+      mpz_mul_2exp(mod2, mod2, n/3*FLINT_BITS);
+      mpz_sub(mod2, mod2, mod1);
+      mpz_sub(mod2, mod2, mod1);
+      mpz_add_ui(mod2, mod2, 3);
+
+      for (unsigned long trial = 0; trial < 100 && success; trial++)
+      {
+         if (random_ulong(5) == 0)
+         {
+            // every now and then generate -1 mod B^(n/3) + 1
+            ZmodF_zero(in1, n/3);
+            in1[n/3] = 1;
+         }
+         else
+         {
+            random_limbs(in1, n/3);
+            in1[n/3] = 0;
+         }
+         
+         random_limbs(in2, 2*n/3);
+         
+         mpz_import(x1, n/3 + 1, -1, sizeof(mp_limb_t), 0, 0, in1);
+         mpz_import(x2, 2*n/3, -1, sizeof(mp_limb_t), 0, 0, in2);
+         mpz_mod(x2, x2, mod2);
+         
+         _ZmodF_mul_threeway_crt(out, in1, in2, n/3);
+         ZmodF_normalise(out, n);
+         mpz_import(z, n+1, -1, sizeof(mp_limb_t), 0, 0, out);
+
+         mpz_mod(y1, z, mod1);
+         mpz_mod(y2, z, mod2);
+         if (mpz_cmp(y1, x1) || mpz_cmp(y2, x2))
+            success = 0;
+      }
+   }
+
+   mpz_clear(mod1);
+   mpz_clear(mod2);
+   mpz_clear(x1);
+   mpz_clear(x2);
+   mpz_clear(y1);
+   mpz_clear(y2);
+   mpz_clear(z);
+
+   return success;
 }
 
 
@@ -517,18 +616,16 @@ void ZmodF_mul_test_all()
 {
    int success, all_success = 1;
 
-/*
-   RUN_TEST(ZmodF_mul);
-   RUN_TEST(ZmodF_sqr);
-*/
+//   RUN_TEST(ZmodF_mul);
+//   RUN_TEST(ZmodF_sqr);
 
 //   RUN_TEST(_ZmodF_mul_negacyclic_split);
 //   RUN_TEST(_ZmodF_mul_negacyclic_combine);
-   RUN_TEST(_ZmodF_mul_threeway_reduce);
+//   RUN_TEST(_ZmodF_mul_threeway_reduce);
    RUN_TEST(_ZmodF_mul_threeway_crt);
    RUN_TEST(ZmodF_mul_info_mul_plain);
-   RUN_TEST(ZmodF_mul_info_mul_threeway);
-   RUN_TEST(ZmodF_mul_info_mul_negacyclic);
+//   RUN_TEST(ZmodF_mul_info_mul_threeway);
+//   RUN_TEST(ZmodF_mul_info_mul_negacyclic);
 
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");
