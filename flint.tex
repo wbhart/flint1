@@ -1,0 +1,703 @@
+\documentclass[a4paper,10pt]{article}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{eucal}
+\usepackage{amscd}
+\usepackage{url}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{wrapfig}
+\urlstyle{sf}
+
+\addtolength{\oddsidemargin}{-0.75in}
+\addtolength{\evensidemargin}{-0.75in}
+\addtolength{\textwidth}{1.5in}
+
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\HH}{\mathcal{H}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\I}{\mathbb{I}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Pee}{\mathbb{P}}
+\newcommand{\EuO}{\mathcal{O}}
+\newcommand{\Qbar}{\overline{\mathbb{Q}}}
+\newcommand{\fn}{\hfill[Function]}
+\newcommand{\macro}{\hfill[Macro]}
+\newcommand{\gmp}{\hfill[GMP]}
+\newcommand{\code}{\lstinline}
+
+\newcommand{\ljk}[2]{\left(\frac{#1}{#2}\right)}
+\newcommand{\modulo}[1]{\;\left(\mbox{mod}\;#1\right)}
+\newcommand{\fr}{\mathfrak}
+
+\def\notdivides{\mathrel{\kern-3pt\not\!\kern4.5pt\bigm|}}
+\def\nmid{\notdivides}
+\def\nsubseteq{\mathrel{\kern-3pt\not\!\kern2.5pt\subseteq}}
+
+\parindent=0pt
+\parskip 4pt plus 2pt minus 2pt
+
+%\email{w.b.hart@maths.warwick.ac.uk}
+
+\title{FLINT: Fast Library for Number Theory}
+\author{William B. Hart and David Harvey}
+
+\begin{document}
+\maketitle
+\lstset{language=c}
+\lstset{basicstyle=\ttfamily}
+\lstset{keywordstyle=}
+%\lstset{morekeywords={mpz_t,mpz_poly_t,fmpz_poly_t}}
+\lstset{escapeinside=\%\%}
+
+\section{Introduction}
+
+FLINT is a C library of functions for doing number theory. It is highly optimised and can be compiled on numerous platforms. FLINT also has the aim of providing support for multicore and multiprocessor computer architectures.
+
+FLINT is currently maintained by William Hart of Warwick University in the UK and David Harvey of Harvard University in the US.
+
+As of version 1.0, FLINT compiles on and supports 32 and 64 bit x86 processors, the G5 and Alpha processors.
+
+FLINT is supplied as a set of modules, \code{mpz_poly}, \code{fmpz_poly}, etc., each of which can be linked to a C program that wishes to make use of their functionality. There are some dependencies amongst the modules, and these are listed in the introductions to the relevant modules below.
+
+All of the functions in FLINT have a corresponding test function provided in the appropriately named module in the test directory. E.g: all the functions in \code{mpz_poly.c} have test functions in \code{mpz_poly-test.c}.
+
+
+\section{The mpz\_poly module}
+
+The \code{mpz_poly_t} data type represents elements of $\Z[x]$ by an array of \code{mpz_t}'s. It provides routines for memory management, basic arithmetic, and conversions to/from other types.
+
+Unless otherwise specified, all functions in this section permit aliasing between their input and output arguments.
+
+
+\subsection{Simple example}
+
+The following example computes the square of the polynomial $5x^3 - 1$.
+
+\begin{lstlisting}
+#include "mpz_poly.h"
+ ....
+mpz_poly_t x, y;
+mpz_poly_init(x);
+mpz_poly_init(y);
+mpz_poly_set_coeff_ui(x, 3, 5);
+mpz_poly_set_coeff_si(x, 0, -1);
+mpz_poly_mul(y, x, x);
+mpz_poly_print(x); printf("\n");
+mpz_poly_print(y); printf("\n");
+mpz_poly_clear(x);
+mpz_poly_clear(y);
+\end{lstlisting}
+
+Output is:
+
+\begin{lstlisting}
+4  -1 0 0 5
+7  1 0 0 -10 0 0 25
+\end{lstlisting}
+
+\subsection{Definition of \code{mpz_poly_t}}
+
+The \code{mpz_poly_t} type is actually a typedef for an array of length 1 of \code{mpz_poly_struct}. This permits passing parameters  of type \code{mpz_poly_t} `by reference'.
+
+The \code{mpz_poly_struct} struct has four members:
+\begin{itemize}
+\item \code{mpz_t* coeffs}.
+\item \code{unsigned long alloc}. Length of \code{coeffs}. Always \code{alloc >= 1}.
+\item \code{unsigned long init}. Number of \code{mpz_t}'s in \code{coeffs} that are \code{mpz_init}'d. Always \code{init <= alloc}.
+\item \code{unsigned long length}. The current length of the polynomial. That is, for \code{n < length}, the coefficient of $x^n$ is \code{coeffs[n]}, and for \code{n >= length}, the coefficient of $x^n$ is zero. Always \code{length <= init}. If \code{length == 0} then this is the zero polynomial. 
+\end{itemize}
+
+An \code{mpz_poly_t} is said to be \emph{normalised} if either \code{length == 0}, or if \code{coeffs[length-1]} is nonzero. All \code{mpz_poly_blah()} functions expect their inputs to be normalised, and produce output that is normalised. If you modify the coefficients yourself, you must ensure that the polynomial is subsequently normalised (for example by using \code{mpz_poly_normalise()}).
+
+All of the functions in this module attempt to delay calling \code{mpz_init()} until it is known how much space must be allocated for the coefficient. Often it is possible for them to reduce memory allocation time by appropriate use of \code{mpz_init2()} or \code{mpz_init_set()}.
+
+
+\subsection{Comparison with \code{fmpz_poly_t}}
+
+Advantages of \code{mpz_poly_t} over \code{fmpz_poly_t} are:
+\begin{itemize}
+\item GMP's mpz functions may be used directly on the coefficients.
+\item If the coefficients vary a lot in size, the memory usage will be more efficient. (In fact it might be completely impractical to use \code{fmpz_poly_t} for such a polynomial.)
+\end{itemize}
+
+Disadvantages compared to \code{fmpz_poly_t} are:
+\begin{itemize}
+\item \code{fmpz_poly_t} is more efficient (in both time and space) for dense polynomials with relatively small, equally-sized coefficients, because it has much less memory management overhead.
+\end{itemize}
+
+
+\subsection{Initialisation and memory management}
+
+\begin{lstlisting}
+void mpz_poly_init(mpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Initialises an \code{mpz_poly_t} object. This function must be called before using the polynomial. The initial allocated size is set to 1. None of the coefficients are \code{mpz_init}'d, so \code{init == 0}. The length is set to zero, so this is the zero polynomial. 
+
+This function should not be used twice on the same polynomial without an intervening \code{mpz_poly_clear()}; this will cause memory leaks.
+\end{quote}
+
+\begin{lstlisting}
+void mpz_poly_clear(mpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Frees the resources associated with an \code{mpz_poly_t} object. The coefficients are \code{mpz_clear}ed and the polynomial object becomes unusable. To use it again, \code{mpz_poly_init()} must be called.
+\end{quote}
+
+\begin{lstlisting}
+void mpz_poly_init2(mpz_poly_t poly, unsigned long alloc)
+\end{lstlisting}
+\begin{quote}
+Same as \code{mpz_poly_init()}, but with \code{alloc} coefficients initially allocated. Must have \code{alloc >= 1}.
+\end{quote}
+
+\begin{lstlisting}
+void mpz_poly_realloc(mpz_poly_t poly, unsigned long alloc)
+\end{lstlisting}
+\begin{quote}
+Reallocates the array of coefficients to length \code{alloc}. Must have \code{alloc >= 1}. The value of the polynomial is preserved as far as possible (i.e.~up to at most \code{alloc} coefficients).
+\end{quote}
+
+\begin{lstlisting}
+void mpz_poly_ensure_alloc(mpz_poly_t poly, unsigned long alloc)
+\end{lstlisting}
+\begin{quote}
+Ensures that at least \code{alloc} coefficients are allocated in \code{poly}, by increasing the number of allocated coefficients if necessary. If more coefficients are required, the number of allocated coefficients is at least doubled. The value of the polynomial is preserved.
+\end{quote}
+
+
+\begin{lstlisting}
+void mpz_poly_init_upto(mpz_poly_t poly, unsigned long init)
+\end{lstlisting}
+\begin{quote}
+Ensures that at least \code{init} coefficients are \code{mpz_init}'d. If necessary, \code{alloc} is increased too. The value of the polynomial is preserved.
+\end{quote}
+
+
+
+\subsection{Setting/retrieving coefficients}
+
+\begin{lstlisting}
+mpz_t* mpz_poly_get_coeff_ptr(mpz_poly_t poly, unsigned long n)
+\end{lstlisting}
+\begin{quote}
+Returns a pointer to the coefficient of $x^n$ in \code{poly}, or \code{NULL} if $n$ is beyond the current length of the polynomial.
+\end{quote}
+
+
+\begin{lstlisting}
+void mpz_poly_get_coeff(mpz_t c, mpz_poly_t poly, unsigned long n)
+\end{lstlisting}
+\begin{quote}
+Copies the coefficient of $x^n$ in \code{poly} into \code{c}. If $n$ is beyond the current length of the polynomial, \code{c} is set to zero.
+\end{quote}
+
+
+\begin{lstlisting}
+unsigned long mpz_poly_get_coeff_ui(mpz_poly_t poly, unsigned long n)
+\end{lstlisting}
+\begin{quote}
+Returns the absolute value of the coefficient of $x^n$ in \code{poly} as an \code{unsigned long}. If it doesn't fit, only the least significant bits are returned. (See GMP's \code{mpz_get_ui()} function.) If $n$ is beyond the current length of the polynomial, the return value is zero.
+\end{quote}
+
+
+\begin{lstlisting}
+long mpz_poly_get_coeff_si(mpz_poly_t poly, unsigned long n)
+\end{lstlisting}
+\begin{quote}
+Returns the coefficient of $x^n$ in \code{poly} as a \code{long}. If it doesn't fit, the return value probably doesn't mean much (but see GMP's \code{mpz_get_si()} function). If $n$ is beyond the current length of the polynomial, the return value is zero.
+\end{quote}
+
+\begin{lstlisting}
+mpz_t* _mpz_poly_get_coeff_ptr(mpz_poly_t poly, unsigned long n)
+void _mpz_poly_get_coeff(mpz_t c, mpz_poly_t poly, unsigned long n)
+unsigned long _mpz_poly_get_coeff_ui(mpz_poly_t poly, unsigned long n)
+long _mpz_poly_get_coeff_si(mpz_poly_t poly, unsigned long n)
+\end{lstlisting}
+\begin{quote}
+These are the same as the functions above, but they are inlined, and do no bounds checking. If $n$ is beyond the current length of the polynomial, the result is undefined.
+\end{quote}
+
+
+\begin{lstlisting}
+void mpz_poly_set_coeff(mpz_poly_t poly, unsigned long n, mpz_t c)
+void mpz_poly_set_coeff_ui(mpz_poly_t poly, unsigned long n,
+                           unsigned long c)
+void mpz_poly_set_coeff_si(mpz_poly_t poly, unsigned long n, long c)
+\end{lstlisting}
+\begin{quote}
+Sets the coefficient of $x^n$ in \code{poly} to $c$. If $n$ is beyond the current length of the polynomial, the polynomial is extended and reallocated appropriately.
+\end{quote}
+
+
+\begin{lstlisting}
+void _mpz_poly_set_coeff(mpz_poly_t poly, unsigned long n, mpz_t c)
+void _mpz_poly_set_coeff_ui(mpz_poly_t poly, unsigned long n,
+                            unsigned long c)
+void _mpz_poly_set_coeff_si(mpz_poly_t poly, unsigned long n, long c)
+\end{lstlisting}
+\begin{quote}
+These are the same as the functions above, but they are inlined, and do no bounds checking. If $n$ is beyond the current length of the polynomial, the result is undefined. Additionally, they do not ensure that the result is normalised.
+\end{quote}
+
+
+\subsection{String conversions and I/O}
+
+The functions in this section are not intended to be particularly fast. They are intended mainly as a debugging aid.
+
+All of the functions use the same string representation of polynomials. It is given by a sequence of integers, in decimal notation, separated by whitespace. The first integer gives the length of the polynomial; the remaining \code{length} integers are the coefficients. For example $5x^3 - x + 1$ is represented by the string ``\code{4 1 -1 0 5}'', and the zero polynomial is represented by ``\code{0}''.
+
+\begin{lstlisting}
+int mpz_poly_from_string(mpz_poly_t poly, char* s)
+\end{lstlisting}
+\begin{quote}
+Converts \code{s} into a polynomial, stored in \code{poly}. The return value is 1 if the conversion succeeded. The return value is zero if the string did not represent a valid polynomial, in which case \code{poly} will be in a legal state, but with an undefined value.
+\end{quote}
+
+\begin{lstlisting}
+char* mpz_poly_to_string(mpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Converts the polynomial to a string and returns a character buffer that was allocated by \code{malloc}. You should call \code{free} when the string is no longer needed.
+\end{quote}
+
+\begin{lstlisting}
+void mpz_poly_print(mpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Prints the given polynomial to standard output.
+\end{quote}
+
+\begin{lstlisting}
+void mpz_poly_fprint(mpz_poly_t poly, FILE* f)
+\end{lstlisting}
+\begin{quote}
+Prints the given polynomial to the given stream.
+\end{quote}
+
+\begin{lstlisting}
+int mpz_poly_read(mpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Reads a string from standard input and converts it to a polynomial. Return value has the same meaning as for \code{mpz_poly_from_string()}.
+\end{quote}
+
+\begin{lstlisting}
+int mpz_poly_fread(mpz_poly_t poly, FILE* f)
+\end{lstlisting}
+\begin{quote}
+Reads a string from the given stream and converts it to a polynomial. Return value has the same meaning as for \code{mpz_poly_from_string()}.
+\end{quote}
+
+
+\subsection{Length and degree}
+
+\begin{lstlisting}
+unsigned long mpz_poly_length(mpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Return the polynomial's length.
+\end{quote}
+
+\begin{lstlisting}
+long mpz_poly_degree(mpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Returns the polynomial's degree, which is defined to be \code{length - 1}. In particular the degree of the zero polynomial is $-1$.
+\end{quote}
+
+\begin{lstlisting}
+void mpz_poly_normalise(mpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Normalises the polynomial; that is, reduces its length until either the length is zero, or the coefficient of $x^{\text{length} - 1}$ is nonzero.
+\end{quote}
+
+\begin{lstlisting}
+int mpz_poly_normalised(mpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Returns a nonzero value if the polynomial is normalised.
+\end{quote}
+
+
+\begin{lstlisting}
+void mpz_poly_pad(mpz_poly_t poly, unsigned long length)
+\end{lstlisting}
+\begin{quote}
+Ensures that the polynomial has length at least \code{length}, by zero-padding the polynomial if necessary. \emph{The polynomial will not necessarily be normalised after this operation.} The value of the polynomial is preserved.
+\end{quote}
+
+
+
+\subsection{Assignment}
+
+\begin{lstlisting}
+void mpz_poly_set(mpz_poly_t res, mpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Copies the value of \code{poly} into \code{res}.
+\end{quote}
+
+\begin{lstlisting}
+void mpz_poly_zero(mpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Sets \code{poly} to zero (by setting its length to zero).
+\end{quote}
+
+\begin{lstlisting}
+void mpz_poly_swap(mpz_poly_t poly1, mpz_poly_t poly2)
+\end{lstlisting}
+\begin{quote}
+Swaps the contents of \code{poly1} and \code{poly2} by pointer swapping. This is much more efficient than going via a temporary.
+\end{quote}
+
+
+\subsection{Conversions}
+
+\begin{lstlisting}
+void mpz_poly_to_fmpz_poly(fmpz_poly_t res, mpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Converts \code{poly} into \code{fmpz_poly_t} format.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_poly_to_mpz_poly(mpz_poly_t res, fmpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Converts \code{poly} into \code{mpz_poly_t} format.
+\end{quote}
+
+
+
+\subsection{Comparison}
+
+
+\begin{lstlisting}
+int mpz_poly_equal(mpz_poly_t poly1, mpz_poly_t poly2)
+\end{lstlisting}
+\begin{quote}
+Returns a nonzero value if \code{poly1} and \code{poly2} are equal.
+\end{quote}
+
+
+
+\subsection{Addition/subtraction}
+
+
+\begin{lstlisting}
+void mpz_poly_add(mpz_poly_t res, mpz_poly_t poly1, mpz_poly_t poly2)
+\end{lstlisting}
+\begin{quote}
+Sets \code{res} equal to \code{poly1} plus \code{poly2}.
+\end{quote}
+
+\begin{lstlisting}
+void mpz_poly_sub(mpz_poly_t res, mpz_poly_t poly1, mpz_poly_t poly2)
+\end{lstlisting}
+\begin{quote}
+Sets \code{res} equal to \code{poly1} minus \code{poly2}.
+\end{quote}
+
+\begin{lstlisting}
+void mpz_poly_neg(mpz_poly_t res, mpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Sets \code{res} equal to the negative of \code{poly}.
+\end{quote}
+
+
+\subsection{Shifting}
+
+\begin{lstlisting}
+void mpz_poly_lshift(mpz_poly_t res, mpz_poly_t poly, unsigned long k)
+\end{lstlisting}
+\begin{quote}
+Sets \code{res} equal to \code{poly} times $x^k$. If \code{res} is the same object as \code{poly}, this is done efficiently by pointer swapping.
+\end{quote}
+
+\begin{lstlisting}
+void mpz_poly_rshift(mpz_poly_t res, mpz_poly_t poly, unsigned long k)
+\end{lstlisting}
+\begin{quote}
+Sets \code{res} equal to \code{poly} divided by $x^k$, with the lower order terms discarded. If \code{res} is the same object as \code{poly}, this is done efficiently by pointer swapping.
+\end{quote}
+
+\begin{lstlisting}
+void mpz_poly_shift(mpz_poly_t res, mpz_poly_t poly, long k)
+\end{lstlisting}
+\begin{quote}
+Sets \code{res} equal to \code{poly} multiplied by $x^k$, where the semantics are the same as \code{mpz_poly_lshift()} or \code{mpz_poly_rshift()}, depending on whether $k$ is non-negative or negative.
+\end{quote}
+
+
+\subsection{Scalar multiplication and division}
+
+\begin{lstlisting}
+void mpz_poly_scalar_mul(mpz_poly_t res, mpz_poly_t poly, mpz_t c)
+void mpz_poly_scalar_mul_ui(mpz_poly_t res, mpz_poly_t poly,
+                            unsigned long c)
+void mpz_poly_scalar_mul_si(mpz_poly_t res, mpz_poly_t poly,
+                            long c)
+\end{lstlisting}
+\begin{quote}
+Sets \code{res} equal to \code{poly} times \code{c}.
+\end{quote}
+
+\begin{lstlisting}
+void mpz_poly_scalar_div(mpz_poly_t res, mpz_poly_t poly, mpz_t c)
+void mpz_poly_scalar_div_ui(mpz_poly_t res, mpz_poly_t poly,
+                            unsigned long c)
+void mpz_poly_scalar_div_si(mpz_poly_t res, mpz_poly_t poly, long c)
+\end{lstlisting}
+\begin{quote}
+Sets \code{res} equal to \code{poly} divided by $c$. Rounding is towards zero (similar to the \code{mpz_tdiv} family in GMP). If $c$ is zero then a division-by-zero is raised.
+
+In the \code{ui} and \code{si} cases, in appropriate circumstances some precomputation is performed which is then shared among the coefficients, so this routine will be faster than dividing each coefficient by $c$ separately. Similar functionality is planned for the \code{mpz_t} case.
+\end{quote}
+
+
+\begin{lstlisting}
+void mpz_poly_scalar_div_exact(mpz_poly_t res, mpz_poly_t poly,
+                               mpz_t c)
+void mpz_poly_scalar_div_exact_ui(mpz_poly_t res, mpz_poly_t poly,
+                                  unsigned long c)
+void mpz_poly_scalar_div_exact_si(mpz_poly_t res, mpz_poly_t poly,
+                                  long c)
+\end{lstlisting}
+\begin{quote}
+Sets \code{res} equal to \code{poly} divided by $c$, \emph{assuming} that $c$ divides each coefficient exactly. If $c$ does not divide them, the result is undefined. If $c$ is zero then a division-by-zero is raised.
+
+The remarks made above for \code{mpz_poly_scalar_div} regarding precomputation apply here also.
+\end{quote}
+
+\begin{lstlisting}
+void mpz_poly_scalar_mod(mpz_poly_t res, mpz_poly_t poly, mpz_t c)
+void mpz_poly_scalar_mod_ui(mpz_poly_t res, mpz_poly_t poly,
+                            unsigned long c)
+\end{lstlisting}
+\begin{quote}
+Sets \code{res} equal to \code{poly} modulo $c$, that is, reduces each coefficient into the range $[0, c)$. In the \code{mpz_t} case, the sign of \code{c} is ignored.
+
+The remarks made above for \code{mpz_poly_scalar_div} regarding precomputation apply here also.
+\end{quote}
+
+
+\subsection{Polynomial multiplication}
+
+\begin{lstlisting}
+void mpz_poly_mul(mpz_poly_t res, mpz_poly_t poly1, mpz_poly_t poly2)
+\end{lstlisting}
+\begin{quote}
+Sets \code{res} equal to \code{poly1} times \code{poly2}. An appropriate multiplication algorithm is selected based on the degree and the maximum size of the coefficients of the input polynomials.
+
+The automatic algorithm selection strategy is based on the assumption that the polynomials are dense and have coefficients whose size does not vary too much. If this assumption is not satisfied, the chosen algorithm may be inappropriate. For example, if the polynomials represent the first few terms of the $q$-expansion of a modular form, then the coefficients might grow quite rapidly, in which case \code{mpz_poly_mul} will probably choose an FFT-based algorithm tuned for the largest coefficient; but the naive multiplication algorithm would probably do much better. Another example: if the polynomial is very sparse, then quite possibly FLINT is the wrong tool for the job, since it does not (yet) implement algorithms that can efficiently multiply sparse polynomials.
+\end{quote}
+
+
+\begin{lstlisting}
+void mpz_poly_mul_naive(mpz_poly_t res, mpz_poly_t poly1,
+                        mpz_poly_t poly2)
+\end{lstlisting}
+\begin{quote}
+Sets \code{res} equal to \code{poly1} times \code{poly2}, using the `naive' (classical) algorithm.
+\end{quote}
+
+\begin{lstlisting}
+void mpz_poly_mul_karatsuba(mpz_poly_t res, mpz_poly_t poly1,
+                            mpz_poly_t poly2)
+\end{lstlisting}
+\begin{quote}
+Sets \code{res} equal to \code{poly1} times \code{poly2}, using Karatsuba's algorithm. This is asymptotically faster than the naive algorithm, but not as fast as FFT-based methods.
+\end{quote}
+
+\begin{lstlisting}
+void mpz_poly_mul_SS(mpz_poly_t res, mpz_poly_t poly1,
+                     mpz_poly_t poly2)
+\end{lstlisting}
+\begin{quote}
+Sets \code{res} equal to \code{poly1} times \code{poly2}, using a Sch\"onhage--Strassen FFT algorithm \cite{ss}.
+
+This is asymptotically the fastest multiplication algorithm implemented in FLINT, and is used for very large multiplications (several thousand words or higher). The underlying algorithm is a Sch\"onhage--Strassen FFT operating on a polynomial whose coefficients have about the same number of bits as the degrees of the input polynomials (see the \code{ZmodF_poly_t} data type). A modification of the truncated Fourier transform \cite{tft} is used to improve smoothness of the running time.
+
+To convert the original multiplication to a problem of this type, FLINT either packs coefficients together (in the case that the coefficients are initially too small compared to the degree), or splits them apart (in the case that the coefficients are too large compared to the degree). The first approach is similar to Kronecker segmentation, except that instead of packing all the way into a single integer, we aim directly for the polynomial on which the Sch\"onhage--Strassen FFT operates. This was suggested independently by Paul Zimmerman and David Harvey. The splitting approach for the other case is due to William Hart.
+\end{quote}
+
+
+\begin{lstlisting}
+void mpz_poly_mul_naive_KS(mpz_poly_t res, mpz_poly_t poly1,
+                           mpz_poly_t poly2)
+\end{lstlisting}
+\begin{quote}
+Sets \code{res} equal to \code{poly1} times \code{poly2}, using a `naive Kronecker segmentation' algorithm. This function is provided for testing purposes only; it is never called by \code{mpz_poly_mul()}. It simply packs the coefficients into a single large integer, and multiplies the integers using GMP. It is asymptotically fast, and less likely to contain bugs than the other functions, as it is based on very mature GMP code.
+\end{quote}
+
+
+
+\begin{lstlisting}
+void mpz_poly_sqr(mpz_poly_t res, mpz_poly_t poly)
+void mpz_poly_sqr_naive(mpz_poly_t res, mpz_poly_t poly)
+void mpz_poly_sqr_karatsuba(mpz_poly_t res, mpz_poly_t poly)
+void mpz_poly_sqr_SS(mpz_poly_t res, mpz_poly_t poly)
+void mpz_poly_sqr_naive_KS(mpz_poly_t res, mpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+These functions are the same as the multiplication functions given above, but specialised for squaring. Note that the multiplication functions will automatically call the squaring versions if they are passed two identical inputs.
+\end{quote}
+
+
+
+\subsection{Polynomial division}
+
+\begin{lstlisting}
+void mpz_poly_monic_inverse(mpz_poly_t res, mpz_poly_t poly,
+                            unsigned long k)
+\end{lstlisting}
+\begin{quote}
+Let $n$ be the degree of \code{poly}, and assume that \code{poly} is monic. This function computes a monic polynomial \code{res} of degree $k$ such that
+ \[ x^{k+n} = \text{res} \cdot \text{poly} + R, \]
+where $R$ has degree less than $n$. In other words it computes an approximate inverse of \code{poly}, scaled by an appropriate power of $x$.
+
+For sufficiently small $k$ and sufficiently small input polynomials, this function uses a naive division algorithm (see \code{mpz_poly_monic_inverse_naive()} below). For larger problems it switches to a divide-and-conquer algorithm, and eventually a Newton iteration method.
+\end{quote}
+
+
+\begin{lstlisting}
+void mpz_poly_pseudo_inverse(mpz_poly_t res, mpz_poly_t poly,
+                             unsigned long k)
+\end{lstlisting}
+\begin{quote}
+Let $n$ be the degree of \code{poly}, and let $d$ be the leading coefficient of \code{poly} (assumed nonzero). This function computes a polynomial \code{res} of degree $k$ such that
+ \[ d^{k+1} x^{k+n} = \text{res} \cdot \text{poly} + R, \]
+where $R$ has degree less than $n$. In other words it computes an approximate inverse of \code{poly}, scaled by an appropriate power of $x$ and $d$.
+
+The algorithms used are similar to those described above for \code{mpz_poly_monic_inverse()}, with appropriate modifications to handle $d \neq 1$.
+\end{quote}
+
+
+\begin{lstlisting}
+void mpz_poly_monic_div(mpz_poly_t quot, mpz_poly_t poly1,
+                        mpz_poly_t poly2)
+\end{lstlisting}
+\begin{quote}
+This function divides \code{poly1} by \code{poly2}, assuming that \code{poly2} is monic. That is, it computes a polynomial \code{quot} such that
+ \[ \text{poly1} = \text{quot} \cdot \text{poly2} + \text{rem}, \]
+where the remainder \code{rem} has degree less than \code{poly2}.
+\end{quote}
+
+\begin{lstlisting}
+void mpz_poly_pseudo_div(mpz_poly_t quot, mpz_poly_t poly1,
+                         mpz_poly_t poly2)
+\end{lstlisting}
+\begin{quote}
+This function pseudo-divides \code{poly1} by \code{poly2}. That is, let $d$ be the leading coefficient of \code{poly2} (assumed nonzero). Let $n$ and $m$ be the degrees of \code{poly1} and \code{poly2}. This function computes a polynomial \code{quot} such that
+ \[ d^{n-m+1} \text{poly1} = \text{quot} \cdot \text{poly2} + \text{rem}, \]
+where the remainder \code{rem} has degree less than \code{poly2}.
+\end{quote}
+
+
+\begin{lstlisting}
+void mpz_poly_monic_rem(mpz_poly_t rem, mpz_poly_t poly1,
+                        mpz_poly_t poly2)
+void mpz_poly_pseudo_rem(mpz_poly_t rem, mpz_poly_t poly1,
+                         mpz_poly_t poly2)
+void mpz_poly_monic_div_rem(mpz_poly_t quot, mpz_poly_t rem,
+                            mpz_poly_t poly1, mpz_poly_t poly2)
+void mpz_poly_pseudo_div_rem(mpz_poly_t quot, mpz_poly_t rem, 
+                             mpz_poly_t poly1, mpz_poly_t poly2)
+\end{lstlisting}
+\begin{quote}
+The same as the functions above, but compute the remainder, or the quotient and the remainder.
+\end{quote}
+
+
+\begin{lstlisting}
+void mpz_poly_monic_inverse_naive(mpz_poly_t res, mpz_poly_t poly,
+                                  unsigned long k)
+void mpz_poly_pseudo_inverse_naive(mpz_poly_t res, mpz_poly_t poly,
+                                   unsigned long k)
+void mpz_poly_monic_div_naive(mpz_poly_t quot, mpz_poly_t poly1,
+                              mpz_poly_t poly2)
+void mpz_poly_pseudo_div_naive(mpz_poly_t quot, mpz_poly_t poly1,
+                               mpz_poly_t poly2)
+void mpz_poly_monic_rem_naive(mpz_poly_t rem, mpz_poly_t poly1,
+                              mpz_poly_t poly2)
+void mpz_poly_pseudo_rem_naive(mpz_poly_t rem, mpz_poly_t poly1,
+                               mpz_poly_t poly2)
+void mpz_poly_monic_div_rem_naive(mpz_poly_t quot, mpz_poly_t rem,
+                                  mpz_poly_t poly1, mpz_poly_t poly2)
+void mpz_poly_pseudo_div_rem_naive(mpz_poly_t quot, mpz_poly_t rem, 
+                                   mpz_poly_t poly1, mpz_poly_t poly2)
+\end{lstlisting}
+\begin{quote}
+The same as the functions above, but they always use a naive division algorithm.
+\end{quote}
+
+
+
+\subsection{GCD and extended GCD}
+
+\begin{lstlisting}
+void mpz_poly_content(mpz_t x, mpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Computes the content of \code{poly} (the non-negative GCD of the coefficients) and stores it in \code{x}.
+\end{quote}
+
+\begin{lstlisting}
+unsigned long mpz_poly_content_ui(mpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Computes the content of \code{poly}, and returns it as an \code{unsigned long}. If it doesn't fit, the least significant bits are returned.
+\end{quote}
+
+\begin{lstlisting}
+void mpz_poly_gcd(mpz_poly_t res, mpz_poly_t poly1, mpz_poly_t poly2)
+\end{lstlisting}
+\begin{quote}
+(.....)
+\end{quote}
+
+\begin{lstlisting}
+void mpz_poly_xgcd(mpz_poly_t res, mpz_poly_t a, mpz_poly_t b,
+                   mpz_poly_t poly1, mpz_poly_t poly2)
+\end{lstlisting}
+\begin{quote}
+(.....)
+\end{quote}
+
+
+\subsection{Miscellaneous}
+
+\begin{lstlisting}
+unsigned long mpz_poly_max_limbs(mpz_poly_t poly)
+unsigned long mpz_poly_max_bits(mpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Return the maximum number of limbs (respectively bits) in the coefficients of \code{poly}. Note that the former is somewhat faster, so it should be used if only a rough upper bound on the size is required.
+\end{quote}
+
+
+\begin{lstlisting}
+unsigned long mpz_poly_product_max_limbs(mpz_poly_t poly1,
+                                         mpz_poly_t poly2)
+unsigned long mpz_poly_product_max_bits(mpz_poly_t poly1,
+                                        mpz_poly_t poly2)
+\end{lstlisting}
+\begin{quote}
+Returns the maximum number of limbs (respectively bits) that the coefficients of the product of \code{poly1} and \code{poly2} could possibly have, based on their lengths and coefficient sizes.
+
+Note that \code{mpz_poly_product_max_limbs()} only examines the limb sizes of each input polynomial, so it's a fairly coarse estimate; it could overshoot the true bound by several limbs. It should not be used in situations where a tight bound is required. On the other hand it is faster than \code{mpz_poly_product_max_bits()}.
+\end{quote}
+
+
+
+\bibliographystyle{amsalpha}
+\bibliography{flint}
+
+\end{document}
