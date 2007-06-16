@@ -1383,7 +1383,7 @@ int test_fmpz_poly_mul_karatsuba()
 #endif          
       Zpoly_mul_naive(test_poly3, test_poly, test_poly2);
           
-      Zpoly_init3(test_poly4, length+length2-1, test_mpn_poly->limbs+test_mpn_poly2->limbs+2);
+      Zpoly_init3(test_poly4, length+length2-1, test_mpn_poly->limbs+test_mpn_poly2->limbs+1);
       fmpz_poly_init2(test_mpn_poly3, length+length2-1, test_mpn_poly->limbs+test_mpn_poly2->limbs+1);
           
       for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
@@ -1688,7 +1688,7 @@ int test_fmpz_poly_div_naive()
 #endif          
           
       Zpoly_init3(test_poly4, length+length2-1, test_mpn_poly->limbs+test_mpn_poly2->limbs+1);
-      fmpz_poly_init2(test_mpn_poly3, length+length2-1, test_mpn_poly->limbs+test_mpn_poly2->limbs+2);
+      fmpz_poly_init2(test_mpn_poly3, length+length2-1, test_mpn_poly->limbs+test_mpn_poly2->limbs+1);
           
       fmpz_poly_init(test_mpn_poly4);
       fmpz_poly_init(test_mpn_poly5);
