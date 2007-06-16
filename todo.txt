@@ -208,4 +208,6 @@ the stack. This could be a problem if we need to allocate many small objects.
 * Make karatsuba use the right number of limbs
 
 * write a wrapper for mpz_export and mpz_import so we don't need to remember
-  the parameters all the time
+  the parameters all the time, perhaps call it mpz_to_mpn and vice versa
+
+* change FLINT_LG_BITS_PER_LIMB to FLINT_LG_BITS, same for BYTES, etc

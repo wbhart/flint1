@@ -75,7 +75,7 @@ long _ZmodF_sqr_handle_minus1(ZmodF_t res, ZmodF_t a, unsigned long n)
    a and b must be normalised, and have zero overflow limbs
    any combinations of a, b, res may be aliased
 */
-static inline
+FLINT_INLINE
 void _ZmodF_mul(ZmodF_t res, ZmodF_t a, ZmodF_t b, mp_limb_t* scratch,
                 unsigned long n)
 {
@@ -493,7 +493,7 @@ Assume a is length 3m, and normalised, and != -1 mod p.
 Reduces a mod B^m + 1, stores result at res, in usual ZmodF_t format (m+1
 limbs), in normalised form.
  */
-TEST_INLINE
+FLINT_INLINE
 void _ZmodF_mul_threeway_reduce1(ZmodF_t res, ZmodF_t a, unsigned long m)
 {
    res[m] = mpn_add_n(res, a, a+2*m, m);
@@ -511,7 +511,7 @@ for the answer.
 Note: in some cases there are two possible answers, since B^2m - B^m + 1
 is less than B^2m. In these cases either answer may be produced.
  */
-TEST_INLINE
+FLINT_INLINE
 void _ZmodF_mul_threeway_reduce2(mp_limb_t* res, ZmodF_t a, unsigned long m)
 {
    res[2*m] = mpn_add_n(res+m, a+m, a+2*m, m);
@@ -533,7 +533,7 @@ and b of length 2*m
 computes res of length 3*m (ZmodF format, not normalised)
 such that res = a mod B^m + 1, and res = b mod B^2m - B^m + 1
  */
-TEST_INLINE
+FLINT_INLINE
 void _ZmodF_mul_threeway_crt(mp_limb_t* res, ZmodF_t a, mp_limb_t* b,
                              unsigned long m)
 {

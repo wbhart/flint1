@@ -136,19 +136,15 @@ void _ZmodF_mul_negacyclic_combine(ZmodF_t x, ZmodFpoly_t poly,
                                    unsigned long n);
 
 
-#define TEST_INLINE inline
-
-TEST_INLINE
+FLINT_INLINE
 void _ZmodF_mul_threeway_reduce1(ZmodF_t res, ZmodF_t a, unsigned long m);
 
-TEST_INLINE
+FLINT_INLINE
 void _ZmodF_mul_threeway_reduce2(mp_limb_t* res, ZmodF_t a, unsigned long m);
 
-TEST_INLINE
+FLINT_INLINE
 void _ZmodF_mul_threeway_crt(mp_limb_t* res, ZmodF_t a, mp_limb_t* b,
                              unsigned long m);
-
-
 
 
 #endif
