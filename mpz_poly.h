@@ -125,6 +125,7 @@ int mpz_poly_fread(mpz_poly_t poly, FILE* f);
 void mpz_poly_normalise(mpz_poly_t poly);
 int mpz_poly_normalised(mpz_poly_t poly);
 void mpz_poly_pad(mpz_poly_t poly, unsigned long length);
+void mpz_poly_truncate(mpz_poly_t res, mpz_poly_t poly, unsigned long length);
 
 
 static inline

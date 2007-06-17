@@ -139,34 +139,56 @@ long mpz_poly_get_coeff_si(mpz_poly_t poly, unsigned long n)
 
 void mpz_poly_set_coeff(mpz_poly_t poly, unsigned long n, mpz_t c)
 {
-   if (n+1 <= poly->length)
+   if (n == poly->length)
    {
-      if ((n+1 == poly->length) && !mpz_sgn(c))
+      // common use case: set coefficient just beyond current length of poly
+      mpz_poly_ensure_alloc(poly, n+1);
+
+      if (poly->init > n)
+         mpz_set(poly->coeffs[n], c);
+      else
+         mpz_init_set(poly->coeffs[poly->init++], c);
+
+      poly->length++;
+   }
+   else if (n+1 < poly->length)
+   {
+      // set interior coefficient
+      mpz_set(poly->coeffs[n], c);
+   }
+   else if (n+1 == poly->length)
+   {
+      // set last coefficient
+      if (mpz_sgn(c))
+         mpz_set(poly->coeffs[n], c);
+      else
       {
-         // set last coefficient to zero (and normalise)
          do poly->length--;
          while (poly->length && !mpz_sgn(poly->coeffs[poly->length-1]));
       }
-      else
-         // set an existing coefficient
-         mpz_set(poly->coeffs[n], c);
    }
    else
    {
+      // set beyond last coefficient
+      FLINT_ASSERT(n > poly->length);
+      
       if (!mpz_sgn(c))
-         // set zero coefficient beyond current length
          return;
 
-      // zero extend, possibly init, and set new coefficient
       mpz_poly_ensure_alloc(poly, n+1);
+
+
+      unsigned long i = poly->length;
+      for (; i < n && i < poly->init; i++)
+         mpz_set_ui(poly->coeffs[i], 0);
+      for (; i < n; i++)
+         mpz_init(poly->coeffs[poly->init++]);
+
       if (n < poly->init)
          mpz_set(poly->coeffs[n], c);
       else
-      {
-         for (; poly->init < n; poly->init++)
-            mpz_init(poly->coeffs[poly->init]);
-         mpz_init_set(poly->coeffs[n], c);
-      }
+         mpz_init_set(poly->coeffs[poly->init++], c);
+      
       poly->length = n+1;
    }
 }
@@ -174,27 +196,52 @@ void mpz_poly_set_coeff(mpz_poly_t poly, unsigned long n, mpz_t c)
 
 void mpz_poly_set_coeff_ui(mpz_poly_t poly, unsigned long n, unsigned long c)
 {
-   if (n+1 <= poly->length)
+   if (n == poly->length)
    {
-      if ((n+1 == poly->length) && !c)
+      // common use case: set coefficient just beyond current length of poly
+      mpz_poly_ensure_alloc(poly, n+1);
+
+      if (poly->init <= n)
+         mpz_init(poly->coeffs[poly->init++]);
+
+      mpz_set_ui(poly->coeffs[n], c);
+
+      poly->length++;
+   }
+   else if (n+1 < poly->length)
+   {
+      // set interior coefficient
+      mpz_set_ui(poly->coeffs[n], c);
+   }
+   else if (n+1 == poly->length)
+   {
+      // set last coefficient
+      if (c)
+         mpz_set_ui(poly->coeffs[n], c);
+      else
       {
-         // set last coefficient to zero (and normalise)
          do poly->length--;
          while (poly->length && !mpz_sgn(poly->coeffs[poly->length-1]));
       }
-      else
-         // set an existing coefficient
-         mpz_set_ui(poly->coeffs[n], c);
    }
    else
    {
+      // set beyond last coefficient
+      FLINT_ASSERT(n > poly->length);
+      
       if (!c)
-         // set zero coefficient beyond current length
          return;
 
-      // zero extend, possibly init, and set new coefficient
-      mpz_poly_init_upto(poly, n+1);
+      mpz_poly_ensure_alloc(poly, n+1);
+
+      unsigned long i = poly->length;
+      for (; i < n && i < poly->init; i++)
+         mpz_set_ui(poly->coeffs[i], 0);
+      for (; i <= n; i++)
+         mpz_init(poly->coeffs[poly->init++]);
+
       mpz_set_ui(poly->coeffs[n], c);
+
       poly->length = n+1;
    }
 }
@@ -202,27 +249,52 @@ void mpz_poly_set_coeff_ui(mpz_poly_t poly, unsigned long n, unsigned long c)
 
 void mpz_poly_set_coeff_si(mpz_poly_t poly, unsigned long n, long c)
 {
-   if (n+1 <= poly->length)
+   if (n == poly->length)
    {
-      if ((n+1 == poly->length) && !c)
+      // common use case: set coefficient just beyond current length of poly
+      mpz_poly_ensure_alloc(poly, n+1);
+
+      if (poly->init <= n)
+         mpz_init(poly->coeffs[poly->init++]);
+
+      mpz_set_si(poly->coeffs[n], c);
+
+      poly->length++;
+   }
+   else if (n+1 < poly->length)
+   {
+      // set interior coefficient
+      mpz_set_si(poly->coeffs[n], c);
+   }
+   else if (n+1 == poly->length)
+   {
+      // set last coefficient
+      if (c)
+         mpz_set_si(poly->coeffs[n], c);
+      else
       {
-         // set last coefficient to zero (and normalise)
          do poly->length--;
          while (poly->length && !mpz_sgn(poly->coeffs[poly->length-1]));
       }
-      else
-         // set an existing coefficient
-         mpz_set_si(poly->coeffs[n], c);
    }
    else
    {
+      // set beyond last coefficient
+      FLINT_ASSERT(n > poly->length);
+      
       if (!c)
-         // set zero coefficient beyond current length
          return;
 
-      // zero extend, possibly init, and set new coefficient
-      mpz_poly_init_upto(poly, n+1);
+      mpz_poly_ensure_alloc(poly, n+1);
+
+      unsigned long i = poly->length;
+      for (; i < n && i < poly->init; i++)
+         mpz_set_ui(poly->coeffs[i], 0);
+      for (; i <= n; i++)
+         mpz_init(poly->coeffs[poly->init++]);
+
       mpz_set_si(poly->coeffs[n], c);
+
       poly->length = n+1;
    }
 }
@@ -373,6 +445,47 @@ void mpz_poly_pad(mpz_poly_t poly, unsigned long length)
 }
 
 
+void mpz_poly_truncate(mpz_poly_t res, mpz_poly_t poly, unsigned long length)
+{
+   if (poly == res)
+   {
+      // inplace truncation
+
+      if (length < poly->length)
+         poly->length = length;
+   }
+   else
+   {
+      // copy and truncate
+
+      if (length > poly->length)
+      {
+         mpz_poly_set(res, poly);
+         return;
+      }
+
+      mpz_poly_ensure_alloc(res, length);
+
+      // copy into coefficients that are already mpz_init'd
+      unsigned long i, n = FLINT_MIN(length, res->init);
+      for (i = 0; i < n; i++)
+         mpz_set(res->coeffs[i], poly->coeffs[i]);
+         
+      // copy into coefficients that need to be mpz_init'd
+      if (i < length)
+      {
+         for (; i < length; i++)
+            mpz_init_set(res->coeffs[i], poly->coeffs[i]);
+         res->init = length;
+      }
+      
+      res->length = length;
+   }
+   
+   mpz_poly_normalise(res);
+}
+
+
 
 /****************************************************************************
 
@@ -383,6 +496,9 @@ void mpz_poly_pad(mpz_poly_t poly, unsigned long length)
 
 void mpz_poly_set(mpz_poly_t res, mpz_poly_t poly)
 {
+   if (res == poly)
+      return;
+
    mpz_poly_ensure_alloc(res, poly->length);
    
    // copy into coefficients that are already mpz_init'd

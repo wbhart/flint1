@@ -336,6 +336,15 @@ Returns a nonzero value if the polynomial is normalised.
 
 
 \begin{lstlisting}
+void mpz_poly_truncate(mpz_poly_t res, mpz_poly_t poly,
+                       unsigned long length)
+\end{lstlisting}
+\begin{quote}
+Truncates \code{poly} to length \code{length}, puts result in \code{res}.
+\end{quote}
+
+
+\begin{lstlisting}
 void mpz_poly_pad(mpz_poly_t poly, unsigned long length)
 \end{lstlisting}
 \begin{quote}

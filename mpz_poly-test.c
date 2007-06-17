@@ -132,19 +132,135 @@ int test_mpz_poly_get_coeff_si()
 
 int test_mpz_poly_set_coeff()
 {
-   return 0;
+   int success = 1;
+   mpz_poly_t poly;
+   mpz_t x, y, zero;
+
+   mpz_poly_init(poly);
+   mpz_init(x);
+   mpz_init(y);
+   mpz_init(zero);
+   mpz_set_ui(x, 42);
+   mpz_set_ui(y, 37);
+
+   mpz_poly_set_coeff(poly, 2, x);
+   success = success && mpz_poly_equal_str(poly, "3  0 0 42");
+
+   mpz_poly_set_coeff(poly, 5, y);
+   success = success && mpz_poly_equal_str(poly, "6  0 0 42 0 0 37");
+
+   mpz_poly_set_coeff(poly, 1, y);
+   success = success && mpz_poly_equal_str(poly, "6  0 37 42 0 0 37");
+
+   mpz_poly_set_coeff(poly, 5, x);
+   success = success && mpz_poly_equal_str(poly, "6  0 37 42 0 0 42");
+
+   mpz_poly_set_coeff(poly, 2, zero);
+   success = success && mpz_poly_equal_str(poly, "6  0 37 0 0 0 42");
+
+   mpz_poly_set_coeff(poly, 8, zero);
+   success = success && mpz_poly_equal_str(poly, "6  0 37 0 0 0 42");
+
+   mpz_poly_set_coeff(poly, 5, zero);
+   success = success && mpz_poly_equal_str(poly, "2  0 37");
+   
+   mpz_poly_truncate(poly, poly, 1);
+   success = success && mpz_poly_equal_str(poly, "0");
+
+   mpz_poly_set_coeff(poly, 3, x);
+   success = success && mpz_poly_equal_str(poly, "4  0 0 0 42");
+
+   mpz_poly_set_coeff(poly, 3, zero);
+   success = success && mpz_poly_equal_str(poly, "0");
+
+   mpz_poly_clear(poly);
+   mpz_clear(y);
+   mpz_clear(x);
+   mpz_clear(zero);
+
+   return success;
 }
 
 
 int test_mpz_poly_set_coeff_ui()
 {
-   return 0;
+   int success = 1;
+   mpz_poly_t poly;
+   mpz_poly_init(poly);
+
+   mpz_poly_set_coeff_ui(poly, 2, 42);
+   success = success && mpz_poly_equal_str(poly, "3  0 0 42");
+
+   mpz_poly_set_coeff_ui(poly, 5, 37);
+   success = success && mpz_poly_equal_str(poly, "6  0 0 42 0 0 37");
+
+   mpz_poly_set_coeff_ui(poly, 1, 37);
+   success = success && mpz_poly_equal_str(poly, "6  0 37 42 0 0 37");
+
+   mpz_poly_set_coeff_ui(poly, 5, 42);
+   success = success && mpz_poly_equal_str(poly, "6  0 37 42 0 0 42");
+
+   mpz_poly_set_coeff_ui(poly, 2, 0);
+   success = success && mpz_poly_equal_str(poly, "6  0 37 0 0 0 42");
+
+   mpz_poly_set_coeff_ui(poly, 8, 0);
+   success = success && mpz_poly_equal_str(poly, "6  0 37 0 0 0 42");
+
+   mpz_poly_set_coeff_ui(poly, 5, 0);
+   success = success && mpz_poly_equal_str(poly, "2  0 37");
+   
+   mpz_poly_truncate(poly, poly, 1);
+   success = success && mpz_poly_equal_str(poly, "0");
+
+   mpz_poly_set_coeff_ui(poly, 3, 42);
+   success = success && mpz_poly_equal_str(poly, "4  0 0 0 42");
+
+   mpz_poly_set_coeff_ui(poly, 3, 0);
+   success = success && mpz_poly_equal_str(poly, "0");
+
+   mpz_poly_clear(poly);
+   return success;
 }
 
 
 int test_mpz_poly_set_coeff_si()
 {
-   return 0;
+   int success = 1;
+   mpz_poly_t poly;
+   mpz_poly_init(poly);
+
+   mpz_poly_set_coeff_si(poly, 2, 42);
+   success = success && mpz_poly_equal_str(poly, "3  0 0 42");
+
+   mpz_poly_set_coeff_si(poly, 5, -37);
+   success = success && mpz_poly_equal_str(poly, "6  0 0 42 0 0 -37");
+
+   mpz_poly_set_coeff_si(poly, 1, -37);
+   success = success && mpz_poly_equal_str(poly, "6  0 -37 42 0 0 -37");
+
+   mpz_poly_set_coeff_si(poly, 5, 42);
+   success = success && mpz_poly_equal_str(poly, "6  0 -37 42 0 0 42");
+
+   mpz_poly_set_coeff_si(poly, 2, 0);
+   success = success && mpz_poly_equal_str(poly, "6  0 -37 0 0 0 42");
+
+   mpz_poly_set_coeff_si(poly, 8, 0);
+   success = success && mpz_poly_equal_str(poly, "6  0 -37 0 0 0 42");
+
+   mpz_poly_set_coeff_si(poly, 5, 0);
+   success = success && mpz_poly_equal_str(poly, "2  0 -37");
+   
+   mpz_poly_truncate(poly, poly, 1);
+   success = success && mpz_poly_equal_str(poly, "0");
+
+   mpz_poly_set_coeff_si(poly, 3, 42);
+   success = success && mpz_poly_equal_str(poly, "4  0 0 0 42");
+
+   mpz_poly_set_coeff_si(poly, 3, 0);
+   success = success && mpz_poly_equal_str(poly, "0");
+
+   mpz_poly_clear(poly);
+   return success;
 }
 
 
@@ -287,6 +403,12 @@ int test_mpz_poly_normalised()
 
 
 int test_mpz_poly_pad()
+{
+   return 0;
+}
+
+
+int test_mpz_poly_truncate()
 {
    return 0;
 }
@@ -1014,6 +1136,7 @@ void mpz_poly_test_all()
    RUN_TEST(mpz_poly_set_coeff);
    RUN_TEST(mpz_poly_set_coeff_ui);
    RUN_TEST(mpz_poly_set_coeff_si);
+/*
    RUN_TEST(mpz_poly_to_fmpz_poly);
    RUN_TEST(fmpz_poly_to_mpz_poly);
    RUN_TEST(mpz_poly_from_string);
@@ -1073,6 +1196,7 @@ void mpz_poly_test_all()
    RUN_TEST(mpz_poly_xgcd);
    RUN_TEST(mpz_poly_max_limbs);
    RUN_TEST(mpz_poly_max_bits);
+*/
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");
