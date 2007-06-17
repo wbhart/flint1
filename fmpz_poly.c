@@ -10,6 +10,7 @@ Copyright (C) 2007, William Hart and David Harvey
 
 #include <string.h>
 #include "flint.h"
+#include "fmpz.h"
 #include "fmpz_poly.h"
 #include "Zpoly.h"
 #include "mpn_extras.h"
@@ -47,28 +48,12 @@ void _fmpz_poly_stack_clear(fmpz_poly_t poly)
    flint_stack_release();
 }
 
-static inline
-void _convert_coeff_to_mpz(mpz_t x, mp_limb_t* coeff)
-{
-   long size = coeff[0];
-   
-   if (size == 0) 
-      mpz_set_ui(x, 0);
-   else
-   {
-      mpz_import(x, ABS(size), -1, sizeof(mp_limb_t), 0, 0, coeff + 1);
-
-      if (size < 0)
-         mpz_neg(x, x);
-   }
-}
-
 
 // retrieves coefficient #n as an mpz, no bounds checking
 void _fmpz_poly_get_coeff_mpz(mpz_t x, fmpz_poly_t poly, unsigned long n)
 {
    FLINT_ASSERT(n < poly->length);
-   _convert_coeff_to_mpz(x, poly->coeffs + n*(poly->limbs+1));
+   fmpz_to_mpz(x, poly->coeffs + n*(poly->limbs+1));
 }
 
 
@@ -80,8 +65,8 @@ void _fmpz_poly_convert_out(Zpoly_t poly_mpz, fmpz_poly_t poly_mpn)
    poly_mpz->length = poly_mpn->length;
    
    for (unsigned long i = 0; i < poly_mpn->length; i++)
-      _convert_coeff_to_mpz(poly_mpz->coeffs[i],
-                            poly_mpn->coeffs + i*(poly_mpn->limbs+1));
+      fmpz_to_mpz(poly_mpz->coeffs[i],
+                  poly_mpn->coeffs + i*(poly_mpn->limbs+1));
 }
 
 
@@ -91,27 +76,15 @@ void _fmpz_poly_convert_in(fmpz_poly_t poly_mpn, Zpoly_t poly_mpz)
 
    poly_mpn->length = poly_mpz->length;
    if (poly_mpz->length == 0) return;
+
    for (unsigned long i = 0; i < poly_mpz->length; i++)
    {
-      if (mpz_sgn(poly_mpz->coeffs[i]) == 0) 
-          poly_mpn->coeffs[i*(poly_mpn->limbs+1)] = 0L;
-      else
-      {
-          size_t countp;
-          
-          FLINT_ASSERT(poly_mpn->limbs >= mpz_size(poly_mpz->coeffs[i]));
-          
-          mpz_export(poly_mpn->coeffs + i*(poly_mpn->limbs+1) + 1, &countp, 
-                     -1, sizeof(mp_limb_t), 0, 0, poly_mpz->coeffs[i]);
-                     
-          if (mpz_sgn(poly_mpz->coeffs[i]) < 0) 
-          {
-             poly_mpn->coeffs[i*(poly_mpn->limbs+1)] = -countp;
-          } else
-             poly_mpn->coeffs[i*(poly_mpn->limbs+1)] = countp;
-      }
+      FLINT_ASSERT(poly_mpn->limbs >= mpz_size(poly_mpz->coeffs[i]));
+      mpz_to_fmpz(poly_mpn->coeffs + i*(poly_mpn->limbs+1),
+                  poly_mpz->coeffs[i]);
    }
 }
+
 
 /* 
    Set a coefficient to the given unsigned value.

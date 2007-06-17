@@ -34,9 +34,11 @@ long fmpz_sgn(fmpz_t x)
 }
 
 
+// todo: should the next functions should be inlined?
+// is it really that important?
+
 // res must have enough space for x
 void mpz_to_fmpz(fmpz_t res, mpz_t x);
-
 
 void fmpz_to_mpz(mpz_t res, fmpz_t x);
 

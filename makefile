@@ -84,8 +84,8 @@ fmpz_poly.o: fmpz_poly.c $(HEADERS)
 fmpz_poly-test.o: fmpz_poly-test.c $(HEADERS)
 	$(CC) -c fmpz_poly-test.c -o fmpz_poly-test.o $(CFLAGS)
 
-fmpz_poly-test: fmpz_poly-test.o ZmodFpoly.o ZmodF.o ZmodF_mul.o Z_mpn.o mpn_extras.o Zpoly.o fmpz_poly.o Zpoly.h memory-manager.o 
-	$(CC) fmpz_poly.o ZmodFpoly.o ZmodF.o ZmodF_mul.o Z_mpn.o mpn_extras.o Zpoly.o fmpz_poly-test.o memory-manager.o -o fmpz_poly-test $(CFLAGS) $(LIBS)
+fmpz_poly-test: fmpz_poly-test.o ZmodFpoly.o ZmodF.o ZmodF_mul.o Z_mpn.o mpn_extras.o Zpoly.o fmpz_poly.o Zpoly.h memory-manager.o fmpz.o
+	$(CC) fmpz_poly.o ZmodFpoly.o ZmodF.o ZmodF_mul.o Z_mpn.o mpn_extras.o Zpoly.o fmpz_poly-test.o memory-manager.o fmpz.o -o fmpz_poly-test $(CFLAGS) $(LIBS)
 
 fmpz_poly-profile-tables.o: fmpz_poly-profile.c $(HEADERS)
 	python make-profile-tables.py fmpz_poly
