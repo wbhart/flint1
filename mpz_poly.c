@@ -10,6 +10,8 @@ Copyright (C) 2007, William Hart and David Harvey
 #include <stdio.h>
 #include "flint.h"
 #include "mpz_poly.h"
+#include "fmpz.h"
+#include "fmpz_poly.h"
 
 
 /****************************************************************************
@@ -524,20 +526,59 @@ void mpz_poly_set(mpz_poly_t res, mpz_poly_t poly)
 ****************************************************************************/
 
 
-#if 0    // disabled, since we're not hooked up to fmpz_poly_t yet
+// assumes coefficients are big enough, and alloc is big enough
+void _mpz_poly_to_fmpz_poly(fmpz_poly_t res, mpz_poly_t poly)
+{
+   FLINT_ASSERT(res->alloc >= poly->length);
+
+   res->length = poly->length;
+   if (poly->length == 0)
+      return;
+
+   for (unsigned long i = 0; i < poly->length; i++)
+   {
+      FLINT_ASSERT(res->limbs >= mpz_size(poly->coeffs[i]));
+      mpz_to_fmpz(res->coeffs + i*(res->limbs+1), poly->coeffs[i]);
+   }
+}
+
 
 void mpz_poly_to_fmpz_poly(fmpz_poly_t res, mpz_poly_t poly)
 {
-   abort();
+   unsigned long limbs = mpz_poly_max_limbs(poly);
+
+   // todo: there should be a single function that achieves both of the
+   // following.... actually we don't even care in this case if the value
+   // is preserved.
+   fmpz_poly_fit_length(res, poly->length);
+   fmpz_poly_fit_limbs(res, limbs);
+
+   _mpz_poly_to_fmpz_poly(res, poly);
 }
 
 
 void fmpz_poly_to_mpz_poly(mpz_poly_t res, fmpz_poly_t poly)
 {
-   abort();
-}
+   mpz_poly_ensure_alloc(res, poly->length);
 
-#endif
+   res->length = poly->length;
+   
+   // todo: is there a bug here if poly->coeffs is not actually allocated?
+
+   unsigned long i;
+   mp_limb_t* ptr = poly->coeffs;
+
+   // convert to coefficients already mpz_init'd
+   for (i = 0; i < poly->length && i < res->init; i++, ptr += poly->limbs+1)
+      fmpz_to_mpz(res->coeffs[i], ptr);
+
+   // convert to coefficients that need mpz_init'ing
+   for (; i < poly->length; i++, ptr += poly->limbs+1)
+   {
+      mpz_init2(res->coeffs[res->init++], fmpz_size(ptr) * FLINT_BITS);
+      fmpz_to_mpz(res->coeffs[i], ptr);
+   }
+}
 
 
 /****************************************************************************
@@ -1005,6 +1046,7 @@ void mpz_poly_mul_naive_KS_unpack(mpz_t* x, unsigned long len, mpz_t y,
 
 /*
    Counts maximum number of bits in abs(x->coeffs[i])
+   todo: isn't this subsumed into mpz_poly_max_bits()?
 */
 
 unsigned long mpz_poly_mul_naive_KS_get_max_bits(mpz_poly_t x)
