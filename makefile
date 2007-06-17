@@ -30,8 +30,9 @@ clean: clean-custom
 	${RM} $(FLINTOBJ) $(PROFOBJ) $(TESTOBJ) $(DRIVEROBJ) $(BIN) $(FBIN)
 
 HEADERS = Z.h Z_mpn.h ZmodF.h ZmodFpoly.h Zpoly.h fmpz_poly.h \
-			 extras.h memory-manager.h flint.h longlong.h longlong_wrapper.h \
-			 mpn_extras.h profiler-main.h profiler.h ZmodF_mul.h ZmodF_mul-tuning.h test-support.h
+		extras.h memory-manager.h flint.h longlong.h longlong_wrapper.h \
+		mpn_extras.h profiler-main.h profiler.h ZmodF_mul.h \
+		ZmodF_mul-tuning.h test-support.h fmpz.h
 
 
 test-support.o: test-support.c $(HEADERS)
@@ -72,6 +73,9 @@ Zpoly-test.o: Zpoly-test.c $(HEADERS)
 Zpoly-test: Zpoly-test.o Zpoly.o memory-manager.o
 	$(CC) Zpoly.o Zpoly-test.o memory-manager.o -o Zpoly-test $(CFLAGS) $(LIBS)
 
+
+fmpz.o: fmpz.c $(HEADERS)
+	$(CC) -c fmpz.c -o fmpz.o $(CFLAGS)
 
 
 fmpz_poly.o: fmpz_poly.c $(HEADERS)
@@ -153,8 +157,8 @@ mpz_poly.o: mpz_poly.c $(HEADERS)
 mpz_poly-test.o: mpz_poly-test.c $(HEADERS)
 	$(CC) -c mpz_poly-test.c -o mpz_poly-test.o $(CFLAGS)
 	
-mpz_poly-test: mpz_poly-test.o mpz_poly.o memory-manager.o test-support.o
-	$(CC) mpz_poly.o mpz_poly-test.o memory-manager.o test-support.o -o mpz_poly-test $(CFLAGS) $(LIBS)
+mpz_poly-test: mpz_poly-test.o mpz_poly.o memory-manager.o test-support.o fmpz.o
+	$(CC) mpz_poly.o mpz_poly-test.o memory-manager.o test-support.o fmpz.o -o mpz_poly-test $(CFLAGS) $(LIBS)
 
 
 delta_qexp.o: delta_qexp.c $(HEADERS)
