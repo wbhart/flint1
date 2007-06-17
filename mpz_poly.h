@@ -47,8 +47,21 @@ void mpz_poly_init(mpz_poly_t poly);
 void mpz_poly_clear(mpz_poly_t poly);
 void mpz_poly_init2(mpz_poly_t poly, unsigned long alloc);
 void mpz_poly_realloc(mpz_poly_t poly, unsigned long alloc);
-void mpz_poly_ensure_alloc(mpz_poly_t poly, unsigned long alloc);
 void mpz_poly_init_upto(mpz_poly_t poly, unsigned long init);
+
+
+// this non-inlined version REQUIRES that alloc > poly->alloc
+void __mpz_poly_ensure_alloc(mpz_poly_t poly, unsigned long alloc);
+
+// this is arranged so that the initial comparison is inlined, but the
+// actual allocation is not
+static inline
+void mpz_poly_ensure_alloc(mpz_poly_t poly, unsigned long alloc)
+{
+   if (alloc > poly->alloc)
+      __mpz_poly_ensure_alloc(poly, alloc);
+}
+
 
 
 // ------------------------------------------------------

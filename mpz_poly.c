@@ -73,14 +73,13 @@ void mpz_poly_realloc(mpz_poly_t poly, unsigned long alloc)
 }
 
 
-void mpz_poly_ensure_alloc(mpz_poly_t poly, unsigned long alloc)
+void __mpz_poly_ensure_alloc(mpz_poly_t poly, unsigned long alloc)
 {
-   if (poly->alloc < alloc)
-   {
-      if (alloc < 2*poly->alloc)
-         alloc = 2*poly->alloc;
-      mpz_poly_realloc(poly, alloc);
-   }
+   FLINT_ASSERT(alloc > poly->alloc);
+
+   if (alloc < 2*poly->alloc)
+      alloc = 2*poly->alloc;
+   mpz_poly_realloc(poly, alloc);
 }
 
 
@@ -90,8 +89,8 @@ void mpz_poly_init_upto(mpz_poly_t poly, unsigned long init)
 
    if (poly->init < init)
    {
-      for (unsigned long i = poly->init; i < init; i++)
-         mpz_init(poly->coeffs[i]);
+      unsigned long i = poly->init;
+      do mpz_init(poly->coeffs[i]); while (++i < init);
       poly->init = init;
    }
 }
@@ -176,7 +175,6 @@ void mpz_poly_set_coeff(mpz_poly_t poly, unsigned long n, mpz_t c)
          return;
 
       mpz_poly_ensure_alloc(poly, n+1);
-
 
       unsigned long i = poly->length;
       for (; i < n && i < poly->init; i++)
@@ -549,7 +547,7 @@ void fmpz_poly_to_mpz_poly(mpz_poly_t res, fmpz_poly_t poly)
 ****************************************************************************/
 
 
-int mpz_poly_equal(mpz_poly_p poly1, mpz_poly_p poly2)
+int mpz_poly_equal(mpz_poly_t poly1, mpz_poly_t poly2)
 {
    if (poly1->length != poly2->length)
       return 0;
