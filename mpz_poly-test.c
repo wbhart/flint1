@@ -467,45 +467,34 @@ int test_mpz_poly_swap()
 
 int test_mpz_poly_equal()
 {
-   return 0;
-/*
    int success = 1;
    mpz_poly_t poly1, poly2;
-   mpz_poly_init2(poly1, 10);
-   mpz_poly_init2(poly2, 10);
+   mpz_poly_init(poly1);
+   mpz_poly_init(poly2);
 
-   mpz_poly_set_from_string(poly1, "42 -5 0 3");
-   mpz_poly_set_from_string(poly2, "42 -5 0 3");
-   success = success && _mpz_poly_equal(poly1, poly2);
+   mpz_poly_from_string(poly1, "4  42 -5 0 3");
+   mpz_poly_from_string(poly2, "4  42 -5 0 3");
+   success = success && mpz_poly_equal(poly1, poly2);
 
-   mpz_poly_set_from_string(poly1, "42 -5 0 3");
-   mpz_poly_set_from_string(poly2, "42 -5 0 3 0");
-   success = success && _mpz_poly_equal(poly1, poly2);
+   mpz_poly_from_string(poly1, "4  42 -5 0 3");
+   mpz_poly_from_string(poly2, "5  42 -5 0 3 1");
+   success = success && !mpz_poly_equal(poly1, poly2);
 
-   mpz_poly_set_from_string(poly1, "42 -5 0 3");
-   mpz_poly_set_from_string(poly2, "42 -5 0 3 1");
-   success = success && !_mpz_poly_equal(poly1, poly2);
+   mpz_poly_from_string(poly1, "5  42 -5 0 3 4");
+   mpz_poly_from_string(poly2, "4  42 -5 0 3");
+   success = success && !mpz_poly_equal(poly1, poly2);
 
-   mpz_poly_set_from_string(poly1, "42 -5 0 3 4");
-   mpz_poly_set_from_string(poly2, "42 -5 0 3");
-   success = success && !_mpz_poly_equal(poly1, poly2);
+   mpz_poly_from_string(poly1, "4  42 -6 0 3");
+   mpz_poly_from_string(poly2, "4  42 -5 0 3");
+   success = success && !mpz_poly_equal(poly1, poly2);
 
-   mpz_poly_set_from_string(poly1, "42 -6 0 3");
-   mpz_poly_set_from_string(poly2, "42 -5 0 3");
-   success = success && !_mpz_poly_equal(poly1, poly2);
-
-   mpz_poly_set_from_string(poly1, "");
-   mpz_poly_set_from_string(poly2, "42 -5 0 3");
-   success = success && !_mpz_poly_equal(poly1, poly2);
-
-   mpz_poly_set_from_string(poly1, "");
-   mpz_poly_set_from_string(poly2, "0");
-   success = success && _mpz_poly_equal(poly1, poly2);
+   mpz_poly_from_string(poly1, "0 ");
+   mpz_poly_from_string(poly2, "4 42 -5 0 3");
+   success = success && !mpz_poly_equal(poly1, poly2);
 
    mpz_poly_clear(poly1);
    mpz_poly_clear(poly2);
    return success;
-*/
 }
 
 
@@ -515,141 +504,146 @@ int test_mpz_poly_equal()
 
 ****************************************************************************/
 
-int test_mpz_poly_add()
+
+// assumes poly is mpz_poly_init'd, with init == 0 and length == 0.
+// Sets poly to a random polynomial of length exactly "length", with exactly
+// "init" coefficients initialised, with coefficients selected randomly from
+// {0, -small, small, -big, big}
+void setup_test_poly(mpz_poly_t poly, unsigned long init, unsigned long length,
+                     mpz_t big, mpz_t small)
 {
-   return 0;
-/*
-   int success = 1;
-   mpz_poly_t poly[3];
-   mpz_poly_init2(poly[0], 10);
-   mpz_poly_init2(poly[1], 10);
-   mpz_poly_init2(poly[2], 10);
-
-   // try various combinations of argument aliasing
-   for (int i = 0; i < 3; i++)
+   FLINT_ASSERT(length <= init);
+   
+   if (length == 0)
+      return;
+   
+   mpz_poly_init_upto(poly, init);
+   for (unsigned long i = 0; i < length; i++)
    {
-      mpz_poly_t* target = &poly[i];
-
-      mpz_poly_set_from_string(poly[0], "");
-      mpz_poly_set_from_string(poly[1], "");
-      mpz_poly_set_from_string(poly[2], "123 456 789 123 456");
-      _mpz_poly_add(*target, poly[0], poly[1]);
-      success = success && mpz_poly_equal_str(*target, "");
-
-      mpz_poly_set_from_string(poly[0], "1");
-      mpz_poly_set_from_string(poly[1], "");
-      mpz_poly_set_from_string(poly[2], "123 456 789 123 456");
-      _mpz_poly_add(*target, poly[0], poly[1]);
-      success = success && mpz_poly_equal_str(*target, "1");
-
-      mpz_poly_set_from_string(poly[0], "");
-      mpz_poly_set_from_string(poly[1], "1");
-      mpz_poly_set_from_string(poly[2], "123 456 789 123 456");
-      _mpz_poly_add(*target, poly[0], poly[1]);
-      success = success && mpz_poly_equal_str(*target, "1");
-
-      mpz_poly_set_from_string(poly[0], "-1");
-      mpz_poly_set_from_string(poly[1], "1");
-      mpz_poly_set_from_string(poly[2], "123 456 789 123 456");
-      _mpz_poly_add(*target, poly[0], poly[1]);
-      success = success && mpz_poly_equal_str(*target, "");
-
-      mpz_poly_set_from_string(poly[0], "-1 0 47");
-      mpz_poly_set_from_string(poly[1], "0 0 0 0 8");
-      mpz_poly_set_from_string(poly[2], "123 456 789 123 456");
-      _mpz_poly_add(*target, poly[0], poly[1]);
-      success = success && mpz_poly_equal_str(*target, "-1 0 47 0 8");
-
-      mpz_poly_set_from_string(poly[0], "0 0 0 0 8");
-      mpz_poly_set_from_string(poly[1], "-1 0 47");
-      mpz_poly_set_from_string(poly[2], "123 456 789 123 456");
-      _mpz_poly_add(*target, poly[0], poly[1]);
-      success = success && mpz_poly_equal_str(*target, "-1 0 47 0 8");
+      switch (random_ulong((i == length-1) ? 5 : 4))
+      {
+         case 0:    mpz_set(poly->coeffs[i], small); break;
+         case 1:    mpz_set(poly->coeffs[i], small);
+                    mpz_neg(poly->coeffs[i], poly->coeffs[i]); break;
+         case 2:    mpz_set(poly->coeffs[i], big); break;
+         case 3:    mpz_set(poly->coeffs[i], big);
+                    mpz_neg(poly->coeffs[i], poly->coeffs[i]); break;
+         case 4:    mpz_set_ui(poly->coeffs[i], 0); break;
+      }
    }
-
-   mpz_poly_set_from_string(poly[0], "2 3 4");
-   mpz_poly_set_from_string(poly[1], "123 456 789 123 456");
-   _mpz_poly_add(poly[1], poly[0], poly[0]);
-   success = success && mpz_poly_equal_str(poly[1], "4 6 8");
-
-   mpz_poly_set_from_string(poly[0], "2 3 4");
-   _mpz_poly_add(poly[0], poly[0], poly[0]);
-   success = success && mpz_poly_equal_str(poly[0], "4 6 8");
-
-   mpz_poly_clear(poly[0]);
-   mpz_poly_clear(poly[1]);
-   mpz_poly_clear(poly[2]);
-   return success;
-*/
+   poly->length = length;
 }
 
 
-int test_mpz_poly_sub()
+int test_mpz_poly_addsub()
 {
-   return 0;
-/*
    int success = 1;
-   mpz_poly_t poly[3];
-   mpz_poly_init2(poly[0], 10);
-   mpz_poly_init2(poly[1], 10);
-   mpz_poly_init2(poly[2], 10);
+   unsigned long i, j, in1, in2, out, trial, op;
 
-   // try various combinations of argument aliasing
-   for (int i = 0; i < 3; i++)
+   // small = 42, big = 2^500
+   mpz_t small, big, x;
+   mpz_init(small);
+   mpz_init(big);
+   mpz_init(x);
+   mpz_set_ui(small, 42);
+   mpz_set_ui(big, 1);
+   mpz_mul_2exp(big, big, 500);
+   
+   const unsigned long MAX = 3;
+   
+   unsigned long alloc[3];
+   unsigned long init[3];
+   unsigned long length[3];
+
+   mpz_t coeffs[3][MAX];
+   for (i = 0; i < 3; i++)
+      for (j = 0; j < MAX; j++)
+         mpz_init(coeffs[i][j]);
+
+   // loop over various combinations of alloc, init, length for each input
+   // and output poly
+   for (alloc[0] = 1; alloc[0] <= MAX && success; alloc[0]++)
+   for (init[0] = 0; init[0] <= alloc[0] && success; init[0]++)
+   for (length[0] = 0; length[0] <= init[0] && success; length[0]++)
+
+   for (alloc[1] = 1; alloc[1] <= MAX && success; alloc[1]++)
+   for (init[1] = 0; init[1] <= alloc[1] && success; init[1]++)
+   for (length[1] = 0; length[1] <= init[1] && success; length[1]++)
+
+   for (alloc[2] = 1; alloc[2] <= MAX && success; alloc[2]++)
+   for (init[2] = 0; init[2] <= alloc[2] && success; init[2]++)
+   for (length[2] = 0; length[2] <= init[2] && success; length[2]++)
+
+   // loop over various argument aliasing combinations
+   for (in1 = 0; in1 < 3 && success; in1++)
+   for (in2 = 0; in2 < 3 && success; in2++)
+   for (out = 0; out < 3 && success; out++)
+            
+   // loop over addition and subtraction
+   for (op = 0; op < 2; op++)
+            
+   for (trial = 0; trial < 5 && success; trial++)
    {
-      mpz_poly_t* target = &poly[i];
+      mpz_poly_t poly[3];
 
-      mpz_poly_set_from_string(poly[0], "");
-      mpz_poly_set_from_string(poly[1], "");
-      mpz_poly_set_from_string(poly[2], "123 456 789 123 456");
-      _mpz_poly_sub(*target, poly[0], poly[1]);
-      success = success && mpz_poly_equal_str(*target, "");
+      // initialise random polys
+      for (unsigned long i = 0; i < 3; i++)
+      {
+         mpz_poly_init2(poly[i], alloc[i]);
+         setup_test_poly(poly[i], init[i], length[i], big, small);
+      }
+      
+      // copy out zero-padded test coefficients into "coeffs" array
+      for (i = 0; i < 3; i++)
+         for (j = 0; j < MAX; j++)
+            mpz_set_ui(coeffs[i][j], 0);
 
-      mpz_poly_set_from_string(poly[0], "1");
-      mpz_poly_set_from_string(poly[1], "");
-      mpz_poly_set_from_string(poly[2], "123 456 789 123 456");
-      _mpz_poly_sub(*target, poly[0], poly[1]);
-      success = success && mpz_poly_equal_str(*target, "1");
+      for (j = 0; j < length[in1]; j++)
+         mpz_set(coeffs[0][j], poly[in1]->coeffs[j]);
+      for (j = 0; j < length[in2]; j++)
+         mpz_set(coeffs[1][j], poly[in2]->coeffs[j]);
 
-      mpz_poly_set_from_string(poly[0], "");
-      mpz_poly_set_from_string(poly[1], "1");
-      mpz_poly_set_from_string(poly[2], "123 456 789 123 456");
-      _mpz_poly_sub(*target, poly[0], poly[1]);
-      success = success && mpz_poly_equal_str(*target, "-1");
+      // try the addition/subtraction
+      if (op == 0)
+         mpz_poly_add(poly[out], poly[in1], poly[in2]);
+      else
+         mpz_poly_sub(poly[out], poly[in1], poly[in2]);
 
-      mpz_poly_set_from_string(poly[0], "-1");
-      mpz_poly_set_from_string(poly[1], "1");
-      mpz_poly_set_from_string(poly[2], "123 456 789 123 456");
-      _mpz_poly_sub(*target, poly[0], poly[1]);
-      success = success && mpz_poly_equal_str(*target, "-2");
+      // grab output coefficients
+      for (j = 0; j < poly[out]->length; j++)
+         mpz_set(coeffs[2][j], poly[out]->coeffs[j]);
 
-      mpz_poly_set_from_string(poly[0], "-1 0 47");
-      mpz_poly_set_from_string(poly[1], "0 0 0 0 8");
-      mpz_poly_set_from_string(poly[2], "123 456 789 123 456");
-      _mpz_poly_sub(*target, poly[0], poly[1]);
-      success = success && mpz_poly_equal_str(*target, "-1 0 47 0 -8");
+      unsigned long max_init = FLINT_MAX(FLINT_MAX(init[0], init[1]), init[2]);
+      
+      // check result is normalised, check no superfluous
+      // initialisations occurred
+      success = success && mpz_poly_normalised(poly[out]);
+      success = success && (poly[out]->init <= max_init);
+      
+      // check result is correct
+      for (i = 0; i < MAX; i++)
+      {
+         if (op == 0)
+            mpz_add(x, coeffs[0][i], coeffs[1][i]);
+         else
+            mpz_sub(x, coeffs[0][i], coeffs[1][i]);
 
-      mpz_poly_set_from_string(poly[0], "0 0 0 0 8");
-      mpz_poly_set_from_string(poly[1], "-1 0 47");
-      mpz_poly_set_from_string(poly[2], "123 456 789 123 456");
-      _mpz_poly_sub(*target, poly[0], poly[1]);
-      success = success && mpz_poly_equal_str(*target, "1 0 -47 0 8");
+         success = success && !mpz_cmp(x, coeffs[2][i]);
+      }
+
+      for (i = 0; i < 3; i++)
+         mpz_poly_clear(poly[i]);
    }
+   
+   mpz_clear(small);
+   mpz_clear(big);
+   mpz_clear(x);
 
-   mpz_poly_set_from_string(poly[0], "2 3 4");
-   mpz_poly_set_from_string(poly[1], "123 456 789 123 456");
-   _mpz_poly_sub(poly[1], poly[0], poly[0]);
-   success = success && mpz_poly_equal_str(poly[1], "");
+   for (i = 0; i < 3; i++)
+      for (j = 0; j < MAX; j++)
+         mpz_clear(coeffs[i][j]);
 
-   mpz_poly_set_from_string(poly[0], "2 3 4");
-   _mpz_poly_sub(poly[0], poly[0], poly[0]);
-   success = success && mpz_poly_equal_str(poly[0], "");
-
-   mpz_poly_clear(poly[0]);
-   mpz_poly_clear(poly[1]);
-   mpz_poly_clear(poly[2]);
    return success;
-*/
 }
 
 
@@ -1136,67 +1130,64 @@ void mpz_poly_test_all()
    RUN_TEST(mpz_poly_set_coeff);
    RUN_TEST(mpz_poly_set_coeff_ui);
    RUN_TEST(mpz_poly_set_coeff_si);
-/*
-   RUN_TEST(mpz_poly_to_fmpz_poly);
-   RUN_TEST(fmpz_poly_to_mpz_poly);
-   RUN_TEST(mpz_poly_from_string);
-   RUN_TEST(mpz_poly_to_string);
-   RUN_TEST(mpz_poly_fprint);
-   RUN_TEST(mpz_poly_fread);
-   RUN_TEST(mpz_poly_normalise);
-   RUN_TEST(mpz_poly_normalised);
-   RUN_TEST(mpz_poly_pad);
-   RUN_TEST(mpz_poly_length);
-   RUN_TEST(mpz_poly_degree);
-   RUN_TEST(mpz_poly_set);
-   RUN_TEST(mpz_poly_swap);
+//   RUN_TEST(mpz_poly_to_fmpz_poly);
+//   RUN_TEST(fmpz_poly_to_mpz_poly);
+//   RUN_TEST(mpz_poly_from_string);
+//   RUN_TEST(mpz_poly_to_string);
+//   RUN_TEST(mpz_poly_fprint);
+//   RUN_TEST(mpz_poly_fread);
+//   RUN_TEST(mpz_poly_normalise);
+//   RUN_TEST(mpz_poly_normalised);
+//   RUN_TEST(mpz_poly_pad);
+//   RUN_TEST(mpz_poly_length);
+//   RUN_TEST(mpz_poly_degree);
+//   RUN_TEST(mpz_poly_set);
+//   RUN_TEST(mpz_poly_swap);
    RUN_TEST(mpz_poly_equal);
-   RUN_TEST(mpz_poly_add);
-   RUN_TEST(mpz_poly_sub);
-   RUN_TEST(mpz_poly_neg);
-   RUN_TEST(mpz_poly_lshift);
-   RUN_TEST(mpz_poly_rshift);
-   RUN_TEST(mpz_poly_shift);
-   RUN_TEST(mpz_poly_scalar_mul);
-   RUN_TEST(mpz_poly_scalar_mul_ui);
-   RUN_TEST(mpz_poly_scalar_mul_si);
-   RUN_TEST(mpz_poly_scalar_div);
-   RUN_TEST(mpz_poly_scalar_div_ui);
-   RUN_TEST(mpz_poly_scalar_div_si);
-   RUN_TEST(mpz_poly_scalar_div_exact);
-   RUN_TEST(mpz_poly_scalar_div_exact_ui);
-   RUN_TEST(mpz_poly_scalar_div_exact_si);
-   RUN_TEST(mpz_poly_mod);
-   RUN_TEST(mpz_poly_mod_ui);
-   RUN_TEST(mpz_poly_mul);
-   RUN_TEST(mpz_poly_mul_naive);
-   RUN_TEST(mpz_poly_mul_karatsuba);
-   RUN_TEST(mpz_poly_mul_SS);
-   RUN_TEST(mpz_poly_mul_naive_KS);
-   RUN_TEST(mpz_poly_monic_inverse);
-   RUN_TEST(mpz_poly_monic_inverse);
-   RUN_TEST(mpz_poly_pseudo_inverse);
-   RUN_TEST(mpz_poly_monic_div);
-   RUN_TEST(mpz_poly_pseudo_div);
-   RUN_TEST(mpz_poly_monic_rem);
-   RUN_TEST(mpz_poly_pseudo_rem);
-   RUN_TEST(mpz_poly_monic_div_rem);
-   RUN_TEST(mpz_poly_pseudo_div_rem);
-   RUN_TEST(mpz_poly_monic_inverse_naive);
-   RUN_TEST(mpz_poly_pseudo_inverse_naive);
-   RUN_TEST(mpz_poly_monic_div_naive);
-   RUN_TEST(mpz_poly_pseudo_div_naive);
-   RUN_TEST(mpz_poly_monic_rem_naive);
-   RUN_TEST(mpz_poly_pseudo_rem_naive);
-   RUN_TEST(mpz_poly_monic_div_rem_naive);
-   RUN_TEST(mpz_poly_pseudo_div_rem_naive);
-   RUN_TEST(mpz_poly_content);
-   RUN_TEST(mpz_poly_content_ui);
-   RUN_TEST(mpz_poly_gcd);
-   RUN_TEST(mpz_poly_xgcd);
-   RUN_TEST(mpz_poly_max_limbs);
-   RUN_TEST(mpz_poly_max_bits);
-*/
+   RUN_TEST(mpz_poly_addsub);
+//   RUN_TEST(mpz_poly_neg);
+//   RUN_TEST(mpz_poly_lshift);
+//   RUN_TEST(mpz_poly_rshift);
+//   RUN_TEST(mpz_poly_shift);
+//   RUN_TEST(mpz_poly_scalar_mul);
+//   RUN_TEST(mpz_poly_scalar_mul_ui);
+//   RUN_TEST(mpz_poly_scalar_mul_si);
+//   RUN_TEST(mpz_poly_scalar_div);
+//   RUN_TEST(mpz_poly_scalar_div_ui);
+//   RUN_TEST(mpz_poly_scalar_div_si);
+//   RUN_TEST(mpz_poly_scalar_div_exact);
+//   RUN_TEST(mpz_poly_scalar_div_exact_ui);
+//   RUN_TEST(mpz_poly_scalar_div_exact_si);
+//   RUN_TEST(mpz_poly_mod);
+//   RUN_TEST(mpz_poly_mod_ui);
+//   RUN_TEST(mpz_poly_mul);
+//   RUN_TEST(mpz_poly_mul_naive);
+//   RUN_TEST(mpz_poly_mul_karatsuba);
+//   RUN_TEST(mpz_poly_mul_SS);
+ //  RUN_TEST(mpz_poly_mul_naive_KS);
+//   RUN_TEST(mpz_poly_monic_inverse);
+//   RUN_TEST(mpz_poly_monic_inverse);
+//   RUN_TEST(mpz_poly_pseudo_inverse);
+//   RUN_TEST(mpz_poly_monic_div);
+//   RUN_TEST(mpz_poly_pseudo_div);
+//   RUN_TEST(mpz_poly_monic_rem);
+//   RUN_TEST(mpz_poly_pseudo_rem);
+//   RUN_TEST(mpz_poly_monic_div_rem);
+//   RUN_TEST(mpz_poly_pseudo_div_rem);
+//   RUN_TEST(mpz_poly_monic_inverse_naive);
+//   RUN_TEST(mpz_poly_pseudo_inverse_naive);
+//   RUN_TEST(mpz_poly_monic_div_naive);
+//   RUN_TEST(mpz_poly_pseudo_div_naive);
+//   RUN_TEST(mpz_poly_monic_rem_naive);
+//   RUN_TEST(mpz_poly_pseudo_rem_naive);
+//   RUN_TEST(mpz_poly_monic_div_rem_naive);
+//   RUN_TEST(mpz_poly_pseudo_div_rem_naive);
+//   RUN_TEST(mpz_poly_content);
+//   RUN_TEST(mpz_poly_content_ui);
+//   RUN_TEST(mpz_poly_gcd);
+//   RUN_TEST(mpz_poly_xgcd);
+//   RUN_TEST(mpz_poly_max_limbs);
+//   RUN_TEST(mpz_poly_max_bits);
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");
