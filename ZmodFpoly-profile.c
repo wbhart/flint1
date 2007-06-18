@@ -70,8 +70,8 @@ void prof2dDriver_ZmodFpoly_FFT(char* params)
    }
    else
    {
-      sscanf(params, "%d %d %lf %d", &length_min, &length_max,
-                                     &length_ratio, &n_count);
+      sscanf(params, "%ld %ld %lf %ld", &length_min, &length_max,
+                                        &length_ratio, &n_count);
    }
 
    prof2d_set_sampler(sample_ZmodFpoly_FFT);
@@ -143,8 +143,8 @@ void prof2dDriver_ZmodFpoly_IFFT(char* params)
    }
    else
    {
-      sscanf(params, "%d %d %lf %d", &length_min, &length_max,
-                                     &length_ratio, &n_count);
+      sscanf(params, "%ld %ld %lf %ld", &length_min, &length_max,
+                                        &length_ratio, &n_count);
    }
 
    prof2d_set_sampler(sample_ZmodFpoly_IFFT);
@@ -224,7 +224,8 @@ void prof2dDriver_ZmodFpoly_negacyclic_convolution(char* params)
    }
    else
    {
-      sscanf(params, "%d %d %d %d", &depth_min, &depth_max, &n_min, &n_max);
+      sscanf(params, "%ld %ld %ld %ld", &depth_min, &depth_max,
+                                        &n_min, &n_max);
    }
 
    prof2d_set_sampler(sample_ZmodFpoly_negacyclic_convolution);
@@ -287,7 +288,7 @@ void prof2dDriver_mpn_mul_n(char* params)
    }
    else
    {
-      sscanf(params, "%d %d", &n_min, &n_max);
+      sscanf(params, "%ld %ld", &n_min, &n_max);
    }
 
    prof2d_set_sampler(sample_mpn_mul_n);

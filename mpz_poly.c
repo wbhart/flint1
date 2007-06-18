@@ -314,9 +314,9 @@ int mpz_poly_from_string(mpz_poly_t poly, char* s)
    
    // read poly length
    unsigned long length;
-   if (!sscanf(s, "%d", &length))
+   if (!sscanf(s, "%ld", &length))
       return 0;
-
+      
    // jump to next whitespace
    s += strcspn(s, whitespace);
    
@@ -353,7 +353,7 @@ char* mpz_poly_to_string(mpz_poly_t poly)
 
    // write the string
    char* buf = (char*) malloc(size);
-   char* ptr = buf + sprintf(buf, "%d  ", poly->length);
+   char* ptr = buf + sprintf(buf, "%ld  ", poly->length);
    for (unsigned long i = 0; i < poly->length; i++)
    {
       mpz_get_str(ptr, 10, poly->coeffs[i]);
@@ -387,7 +387,7 @@ int mpz_poly_fread(mpz_poly_t poly, FILE* f)
 {
    // read poly length
    unsigned long length;
-   if (!fscanf(f, "%d", &length))
+   if (!fscanf(f, "%ld", &length))
       return 0;
 
    poly->length = 0;

@@ -520,7 +520,7 @@ void setup_test_poly(mpz_poly_t poly, unsigned long init, unsigned long length,
    mpz_poly_init_upto(poly, init);
    for (unsigned long i = 0; i < length; i++)
    {
-      switch (random_ulong((i == length-1) ? 5 : 4))
+      switch (random_ulong((i == length-1) ? 4 : 5))
       {
          case 0:    mpz_set(poly->coeffs[i], small); break;
          case 1:    mpz_set(poly->coeffs[i], small);
@@ -535,7 +535,7 @@ void setup_test_poly(mpz_poly_t poly, unsigned long init, unsigned long length,
 }
 
 
-int test_mpz_poly_addsub()
+int test_mpz_poly_addsubneg()
 {
    int success = 1;
    unsigned long i, j, in1, in2, out, trial, op;
@@ -576,11 +576,11 @@ int test_mpz_poly_addsub()
 
    // loop over various argument aliasing combinations
    for (in1 = 0; in1 < 3 && success; in1++)
-   for (in2 = 0; in2 < 3 && success; in2++)
-   for (out = 0; out < 3 && success; out++)
+   for (in2 = in1; in2 < 3 && success; in2++)
+   for (out = in2; out < 3 && success; out++)
             
-   // loop over addition and subtraction
-   for (op = 0; op < 2; op++)
+   // loop over addition, subtraction and negation
+   for (op = 0; op < 3; op++)
             
    for (trial = 0; trial < 5 && success; trial++)
    {
@@ -603,11 +603,13 @@ int test_mpz_poly_addsub()
       for (j = 0; j < length[in2]; j++)
          mpz_set(coeffs[1][j], poly[in2]->coeffs[j]);
 
-      // try the addition/subtraction
+      // try the addition/subtraction/negation
       if (op == 0)
          mpz_poly_add(poly[out], poly[in1], poly[in2]);
-      else
+      else if (op == 1)
          mpz_poly_sub(poly[out], poly[in1], poly[in2]);
+      else
+         mpz_poly_neg(poly[out], poly[in1]);
 
       // grab output coefficients
       for (j = 0; j < poly[out]->length; j++)
@@ -625,8 +627,10 @@ int test_mpz_poly_addsub()
       {
          if (op == 0)
             mpz_add(x, coeffs[0][i], coeffs[1][i]);
-         else
+         else if (op == 1)
             mpz_sub(x, coeffs[0][i], coeffs[1][i]);
+         else
+            mpz_neg(x, coeffs[0][i]);
 
          success = success && !mpz_cmp(x, coeffs[2][i]);
       }
@@ -644,44 +648,6 @@ int test_mpz_poly_addsub()
          mpz_clear(coeffs[i][j]);
 
    return success;
-}
-
-
-int test_mpz_poly_neg()
-{
-   return 0;
-/*
-   int success = 1;
-   mpz_poly_t poly1, poly2;
-   mpz_poly_init2(poly1, 10);
-   mpz_poly_init2(poly2, 10);
-
-   // out-of-place
-
-   mpz_poly_set_from_string(poly1, "");
-   mpz_poly_set_from_string(poly2, "123 456 789 123 456");
-   _mpz_poly_neg(poly2, poly1);
-   success = success && mpz_poly_equal_str(poly2, "");
-
-   mpz_poly_set_from_string(poly1, "0 2 -5 6");
-   mpz_poly_set_from_string(poly2, "123 456 789 123 456");
-   _mpz_poly_neg(poly2, poly1);
-   success = success && mpz_poly_equal_str(poly2, "0 -2 5 -6");
-
-   // in-place
-
-   mpz_poly_set_from_string(poly1, "");
-   _mpz_poly_neg(poly1, poly1);
-   success = success && mpz_poly_equal_str(poly1, "");
-
-   mpz_poly_set_from_string(poly1, "0 2 -5 6");
-   _mpz_poly_neg(poly1, poly1);
-   success = success && mpz_poly_equal_str(poly1, "0 -2 5 -6");
-
-   mpz_poly_clear(poly1);
-   mpz_poly_clear(poly2);
-   return success;
-*/
 }
 
 
@@ -1144,7 +1110,7 @@ void mpz_poly_test_all()
 //   RUN_TEST(mpz_poly_set);
 //   RUN_TEST(mpz_poly_swap);
    RUN_TEST(mpz_poly_equal);
-   RUN_TEST(mpz_poly_addsub);
+   RUN_TEST(mpz_poly_addsubneg);
 //   RUN_TEST(mpz_poly_neg);
 //   RUN_TEST(mpz_poly_lshift);
 //   RUN_TEST(mpz_poly_rshift);

@@ -140,8 +140,8 @@ void prof2dDriver_fmpz_poly_mul_KS(char* params)
    }
    else
    {
-      sscanf(params, "%d %d %lf %d", &length_min, &length_max,
-                                     &ratio, &bits_min);
+      sscanf(params, "%ld %ld %lf %ld", &length_min, &length_max,
+                                        &ratio, &bits_min);
    }
 
    gmp_randinit_default(Zpoly_test_randstate);
@@ -253,8 +253,8 @@ void prof2dDriver_fmpz_poly_mul_SS(char* params)
    }
    else
    {
-      sscanf(params, "%d %d %lf %d", &length_min, &length_max,
-                                     &ratio, &bits_min);
+      sscanf(params, "%ld %ld %lf %ld", &length_min, &length_max,
+                                        &ratio, &bits_min);
    }
 
    gmp_randinit_default(Zpoly_test_randstate);
@@ -369,8 +369,8 @@ void prof2dDriver_fmpz_poly_mul_karatsuba(char* params)
    }
    else
    {
-      sscanf(params, "%d %d %lf %d", &length_min, &length_max,
-                                     &ratio, &bits_min);
+      sscanf(params, "%ld %ld %lf %ld", &length_min, &length_max,
+                                        &ratio, &bits_min);
    }
 
    gmp_randinit_default(Zpoly_test_randstate);
@@ -486,8 +486,8 @@ void prof2dDriver_fmpz_poly_mul(char* params)
    }
    else
    {
-      sscanf(params, "%d %d %lf %d", &length_min, &length_max,
-                                     &ratio, &bits_min);
+      sscanf(params, "%ld %ld %lf %ld", &length_min, &length_max,
+                                        &ratio, &bits_min);
    }
 
    gmp_randinit_default(Zpoly_test_randstate);

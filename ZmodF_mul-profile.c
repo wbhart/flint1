@@ -81,7 +81,7 @@ void prof2dDriver_ZmodF_mul(char* params)
    }
    else
    {
-      sscanf(params, "%d %d %d %d", &n_min, &n_max, &n_skip, &depth);
+      sscanf(params, "%ld %ld %ld %ld", &n_min, &n_max, &n_skip, &depth);
    }
 
    prof2d_set_sampler(sample_ZmodF_mul);
@@ -155,7 +155,7 @@ void prof2dDriver_ZmodF_sqr(char* params)
    }
    else
    {
-      sscanf(params, "%d %d %d %d", &n_min, &n_max, &n_skip, &depth);
+      sscanf(params, "%ld %ld %ld %ld", &n_min, &n_max, &n_skip, &depth);
    }
 
    prof2d_set_sampler(sample_ZmodF_sqr);
