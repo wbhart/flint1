@@ -953,10 +953,157 @@ void mpz_poly_sqr(mpz_poly_t res, mpz_poly_t poly)
    mpz_poly_sqr_naive_KS(res, poly);
 }
 
+
+/*
+ This is just like mpz_poly_mul_naive(), with the following restrictions:
+ 
+  * assumes res does not alias poly1 and poly2
+  * neither polynomial is zero
+  * res->init >= poly1->length + poly2->length - 1
+     (i.e. output has enough room for product)
+*/
+void _mpz_poly_mul_naive(mpz_poly_t res, mpz_poly_t poly1, mpz_poly_t poly2)
+{
+   FLINT_ASSERT(res != poly1);
+   FLINT_ASSERT(res != poly2);
+   FLINT_ASSERT(poly1->length && poly2->length);
+
+   res->length = poly1->length + poly2->length - 1;
+   FLINT_ASSERT(res->init >= res->length);
+
+   for (unsigned long i = 0; i < res->length; i++)
+      mpz_set_ui(res->coeffs[i], 0);
+   
+   for (unsigned long i = 0; i < poly1->length; i++)
+      for (unsigned long j = 0; j < poly2->length; j++)
+         mpz_addmul(res->coeffs[i+j], poly1->coeffs[i], poly2->coeffs[j]);
+}
+
+
 void mpz_poly_mul_naive(mpz_poly_t res, mpz_poly_t poly1, mpz_poly_t poly2)
 {
-   abort();
+   if (!poly1->length || !poly2->length)
+   {
+      // one of the polys is zero
+      res->length = 0;
+      return;
+   }
+   
+   if (poly1 == poly2)
+   {
+      // polys are identical, so call specialised squaring routine
+      mpz_poly_sqr_naive(res, poly1);
+      return;
+   }
+   
+   unsigned long limbs = mpz_poly_product_max_limbs(poly1, poly2);
+   unsigned long length = poly1->length + poly2->length - 1;
+   
+   if (res == poly1 || res == poly2)
+   {
+      // output is inplace, so need a temporary
+      mpz_poly_t temp;
+      mpz_poly_init2(temp, length);
+
+      // allocate enough space in coefficients of temporary
+      for (unsigned long i = 0; i < length; i++)
+         mpz_init2(temp->coeffs[i], FLINT_BITS * limbs);
+      temp->init = length;
+
+      _mpz_poly_mul_naive(temp, poly1, poly2);
+
+      mpz_poly_swap(temp, res);
+      mpz_poly_clear(temp);
+   }
+   else
+   {
+      // output not inplace
+      
+      // allocate more coefficients if necessary
+      mpz_poly_ensure_alloc(res, length);
+      while (res->init < length)
+         mpz_init2(res->coeffs[res->init++], FLINT_BITS * limbs);
+
+      _mpz_poly_mul_naive(res, poly1, poly2);
+   }
 }
+
+
+/*
+ This is just like mpz_poly_sqr_naive(), with the following restrictions:
+ 
+  * assumes res does not alias poly
+  * poly is nonzero
+  * res->init >= 2*poly->length - 1  (i.e. output has enough room for product)
+*/
+void _mpz_poly_sqr_naive(mpz_poly_t res, mpz_poly_t poly)
+{
+   FLINT_ASSERT(res != poly);
+   FLINT_ASSERT(poly->length);
+
+   res->length = 2*poly->length - 1;
+   FLINT_ASSERT(res->init >= res->length);
+
+   for (unsigned long i = 0; i < res->length; i++)
+      mpz_set_ui(res->coeffs[i], 0);
+   
+   // off-diagonal products
+   for (unsigned long i = 1; i < poly->length; i++)
+      for (unsigned long j = 0; j < i; j++)
+         mpz_addmul(res->coeffs[i+j], poly->coeffs[i], poly->coeffs[j]);
+         
+   // double the off-diagonal products
+   for (unsigned long i = 1; i < res->length - 1; i++)
+      mpz_add(res->coeffs[i], res->coeffs[i], res->coeffs[i]);
+      
+   // add in diagonal products
+   for (unsigned long i = 0; i < poly->length; i++)
+      mpz_addmul(res->coeffs[2*i], poly->coeffs[i], poly->coeffs[i]);
+}
+
+
+void mpz_poly_sqr_naive(mpz_poly_t res, mpz_poly_t poly)
+{
+   if (!poly->length)
+   {
+      // input is zero
+      res->length = 0;
+      return;
+   }
+   
+   unsigned long limbs = mpz_poly_product_max_limbs(poly, poly);
+   unsigned long length = 2*poly->length - 1;
+   
+   if (res == poly)
+   {
+      // output is inplace, so need a temporary
+      mpz_poly_t temp;
+      mpz_poly_init2(temp, length);
+
+      // allocate enough space in coefficients of temporary
+      for (unsigned long i = 0; i < length; i++)
+         mpz_init2(temp->coeffs[i], FLINT_BITS * limbs);
+      temp->init = length;
+
+      _mpz_poly_sqr_naive(temp, poly);
+
+      mpz_poly_swap(temp, res);
+      mpz_poly_clear(temp);
+   }
+   else
+   {
+      // output not inplace
+      
+      // allocate more coefficients if necessary
+      mpz_poly_ensure_alloc(res, length);
+      while (res->init < length)
+         mpz_init2(res->coeffs[res->init++], FLINT_BITS * limbs);
+
+      _mpz_poly_sqr_naive(res, poly);
+   }
+}
+
+
 
 void mpz_poly_mul_karatsuba(mpz_poly_t res, mpz_poly_t poly1,
                             mpz_poly_t poly2)
@@ -965,11 +1112,6 @@ void mpz_poly_mul_karatsuba(mpz_poly_t res, mpz_poly_t poly1,
 }
 
 void mpz_poly_mul_SS(mpz_poly_t res, mpz_poly_t poly1, mpz_poly_t poly2)
-{
-   abort();
-}
-
-void mpz_poly_sqr_naive(mpz_poly_t res, mpz_poly_t poly)
 {
    abort();
 }
@@ -1420,42 +1562,5 @@ unsigned long mpz_poly_product_max_bits(mpz_poly_t poly1, mpz_poly_t poly2)
    return bits1 + bits2 + ceil_log2(FLINT_MAX(poly1->length, poly2->length));
 }
 
-
-
-// &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
-//
-// ======================== old code that hasn't been reviewed yet !!!
-//
-// &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
-
-#if 0
-                           
-/* Naieve schoolboy polynomial multiplication routine */
-
-void _mpz_poly_mul_naive(mpz_poly_t output, mpz_poly_t input1, mpz_poly_t input2)
-{
-   FLINT_ASSERT(output != input1);
-   FLINT_ASSERT(output != input2);
-
-   if (!input1->length || !input2->length)
-   {
-      // one of the inputs is zero
-      output->length = 0;
-      return;
-   }
-   
-   output->length = input1->length + input2->length - 1;
-   FLINT_ASSERT(output->alloc >= output->length);
-
-   for (unsigned long i = 0; i < output->length; i++)
-      mpz_set_ui(output->coeffs[i], 0);
-   
-   for (unsigned long i = 0; i < input1->length; i++)
-      for (unsigned long j = 0; j < input2->length; j++)
-         mpz_addmul(output->coeffs[i+j], input1->coeffs[i], input2->coeffs[j]);
-}
-
-
-#endif
 
 // *************** end of file
