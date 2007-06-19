@@ -62,7 +62,7 @@ void Z_combine_limbs(mp_limb_t * res, ZmodFpoly_t poly, unsigned long coeff_limb
 }
 
 mp_limb_t Z_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1, 
-                                      mp_limb_t * data2, unsigned long limbs2)
+                                      mp_limb_t * data2, unsigned long limbs2, unsigned long twk)
 {
    unsigned long length = 1;
    unsigned long log_length = 0;
@@ -76,9 +76,9 @@ mp_limb_t Z_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1,
    
    unsigned log_length2 = 0;
    
-   unsigned long twk;
+   //unsigned long twk;
    
-   if (coeff_limbs/2 < 2300) 
+   /*if (coeff_limbs/2 < 2300) 
    {
       return mpn_mul(res, data1, limbs1, data2, limbs2);
    }
@@ -115,23 +115,63 @@ mp_limb_t Z_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1,
             }
          }
       }
-   }
+   }*/
    
-   while (twk*length < 2*output_bits)
+   if (twk > 64)
    {
-      length<<=1;
-      log_length++;
+      length = 2;
+      log_length = 1;
+      while ((1<<(log_length-1)) < output_bits)
+      {
+         length<<=1;
+         log_length++;
+         coeff_limbs = (limbs1+limbs2-1)/length+1;
+         while ((limbs1-1)/coeff_limbs+(limbs2-1)/coeff_limbs+2 > length) coeff_limbs++;
+         output_bits = (2*coeff_limbs+1)*FLINT_BITS;
+         output_bits = (((output_bits - 1) >> (log_length-1)) + 1) << (log_length-1);
+         coeff_limbs = ((output_bits - FLINT_BITS)/FLINT_BITS)/2;
+         if ((long) coeff_limbs < 1) coeff_limbs = 1;
+         length1 = (limbs1-1)/coeff_limbs+1;
+         length2 = (limbs2-1)/coeff_limbs+1;
+      }
+      while (twk > 64)
+      {
+         log_length--;
+         length>>=1;
+         twk>>=2;
+      }
       coeff_limbs = (limbs1+limbs2-1)/length+1;
       while ((limbs1-1)/coeff_limbs+(limbs2-1)/coeff_limbs+2 > length) coeff_limbs++;
       output_bits = (2*coeff_limbs+1)*FLINT_BITS;
       output_bits = (((output_bits - 1) >> (log_length-1)) + 1) << (log_length-1);
+      while ((output_bits%3) != 0) output_bits+=(1<<(log_length-1));
       coeff_limbs = ((output_bits - FLINT_BITS)/FLINT_BITS)/2;
       if ((long) coeff_limbs < 1) coeff_limbs = 1;
       length1 = (limbs1-1)/coeff_limbs+1;
       length2 = (limbs2-1)/coeff_limbs+1;
+      log_length = 1;
+      while ((1<<log_length) < length1 + length2) log_length++;
+      length = (1<<log_length);        
    }
-      
+   else
+   {
+      while (twk*length < 2*output_bits)
+      {
+         length<<=1;
+         log_length++;
+         coeff_limbs = (limbs1+limbs2-1)/length+1;
+         while ((limbs1-1)/coeff_limbs+(limbs2-1)/coeff_limbs+2 > length) coeff_limbs++;
+         output_bits = (2*coeff_limbs+1)*FLINT_BITS;
+         output_bits = (((output_bits - 1) >> (log_length-1)) + 1) << (log_length-1);
+         coeff_limbs = ((output_bits - FLINT_BITS)/FLINT_BITS)/2;
+         if ((long) coeff_limbs < 1) coeff_limbs = 1;
+         length1 = (limbs1-1)/coeff_limbs+1;
+         length2 = (limbs2-1)/coeff_limbs+1;
+      }
+   }
+         
    n = output_bits/FLINT_BITS;
+   //printf("n= %ld\n",n);
 #if DEBUG
    printf("%ld, %ld, %ld, %ld, %ld\n", length1, length2, output_bits, coeff_limbs, log_length);
 #endif   
@@ -265,15 +305,15 @@ mp_limb_t Z_mpn_mul_precomp(mp_limb_t * res, mp_limb_t * data2, unsigned long li
    return res[precomp->limbs1+precomp->limbs2-1];
 }
 
-void Z_mul(mpz_t res, mpz_t a, mpz_t b)
+void Z_mul(mpz_t res, mpz_t a, mpz_t b, unsigned long tweak)
 {
    unsigned long int limbs;
-   if (a->_mp_size + b->_mp_size > 128000/FLINT_BITS)
+   if (a->_mp_size + b->_mp_size > 100000/FLINT_BITS) //128000
    {
       if (a->_mp_size >= b->_mp_size) limbs = a->_mp_size;
       else limbs = b->_mp_size;
       mp_limb_t* output = (mp_limb_t*) flint_stack_alloc(a->_mp_size+b->_mp_size);
-      Z_mpn_mul(output, a->_mp_d, a->_mp_size, b->_mp_d, b->_mp_size);
+      Z_mpn_mul(output, a->_mp_d, a->_mp_size, b->_mp_d, b->_mp_size, tweak);
       mpz_import(res, a->_mp_size+b->_mp_size, -1, sizeof(mp_limb_t), 0, 0, output);
       if (mpz_sgn(res) != mpz_sgn(a)*mpz_sgn(b)) mpz_neg(res,res);
       flint_stack_release();

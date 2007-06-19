@@ -100,14 +100,14 @@ int main (int argc, const char * argv[])
        printf("%ld words\n",words);
        besti = 0;
        best = 1000.0;
-       if (bits/64>200000)
+       if (bits/64>20000)
        {
-          imax = 3;
+          imax = 2;
           tweak = 1;
        } else
        {
           tweak = 1;
-          imax = 5;
+          imax = 8;
        }
        for (unsigned long i = 0; i < imax; i++)
        {

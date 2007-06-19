@@ -32,9 +32,9 @@ typedef Z_mpn_precomp_s Z_mpn_precomp_t[1];
 typedef Z_mpn_precomp_s * Z_mpn_precomp_p;
 
 mp_limb_t Z_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1, 
-                                      mp_limb_t * data2, unsigned long limbs2);
+                                      mp_limb_t * data2, unsigned long limbs2, unsigned long twk);
                                       
-void Z_mul(mpz_t res, mpz_t a, mpz_t b);
+void Z_mul(mpz_t res, mpz_t a, mpz_t b, unsigned long tweak);
 
 void Z_mpn_mul_precomp_init(Z_mpn_precomp_t precomp, mp_limb_t * data1, unsigned long limbs1, unsigned long limbs2);
 

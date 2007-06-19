@@ -118,10 +118,15 @@ void _ZmodF_mul(ZmodF_t res, ZmodF_t a, ZmodF_t b, mp_limb_t* scratch,
    }
    
    // do the product into scratch
-   if (limbs1 >= limbs2)
+   /*if (limbs1 >= limbs2)
       Z_mpn_mul(scratch, a, limbs1, b, limbs2);
    else
-      Z_mpn_mul(scratch, b, limbs2, a, limbs1);
+      Z_mpn_mul(scratch, b, limbs2, a, limbs1);*/
+      
+   if (limbs1 >= limbs2)
+      mpn_mul(scratch, a, limbs1, b, limbs2);
+   else
+      mpn_mul(scratch, b, limbs2, a, limbs1);
 
    // reduce mod p
    res[n] = -mpn_sub_n(res, scratch, scratch + n, n);

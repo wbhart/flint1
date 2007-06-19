@@ -29,7 +29,7 @@ all: all-before ssmul all-after
 clean: clean-custom
 	${RM} $(FLINTOBJ) $(PROFOBJ) $(TESTOBJ) $(DRIVEROBJ) $(BIN) $(FBIN)
 
-HEADERS = Z.h Z_mpn.h ZmodF.h ZmodFpoly.h Zpoly.h fmpz_poly.h \
+HEADERS = Z_mpn.h ZmodF.h ZmodFpoly.h Zpoly.h fmpz_poly.h \
 		extras.h memory-manager.h flint.h longlong.h longlong_wrapper.h \
 		mpn_extras.h profiler-main.h profiler.h ZmodF_mul.h \
 		ZmodF_mul-tuning.h test-support.h fmpz.h

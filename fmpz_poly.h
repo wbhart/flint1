@@ -292,6 +292,9 @@ void _fmpz_poly_xgcd(fmpz_poly_t a, fmpz_poly_t b, fmpz_poly_t output,
 
 void _fmpz_poly_content(mp_limb_t * content, fmpz_poly_t a);
 
+/* Zero first n coefficients of poly, regardless of what length is */
+
+void _fmpz_poly_zero_coeffs(fmpz_poly_t poly, unsigned long n);
 
 /*============================================================================
   
@@ -337,6 +340,8 @@ void fmpz_poly_get_coeff_mpz(mpz_t x, fmpz_poly_t poly, unsigned long n);
 void fmpz_poly_mul(fmpz_poly_t output, fmpz_poly_p input1, fmpz_poly_p input2);
 
 void fmpz_poly_div_naive(fmpz_poly_t Q, fmpz_poly_t R, fmpz_poly_t A, fmpz_poly_t B);
+
+void fmpz_poly_div_karatsuba(fmpz_poly_t Q, fmpz_poly_t DQ, fmpz_poly_t A, fmpz_poly_t B);
 
 // *************** end of file
 #endif
