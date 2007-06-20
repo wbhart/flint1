@@ -1,6 +1,6 @@
 /****************************************************************************
 
-Z_mpn-test.c: test module for ZmodFpoly module
+Z_mpn-test.c: test module for Z_mpn module
 
 Copyright (C) 2007, William Hart and David Harvey
 
@@ -12,14 +12,14 @@ Copyright (C) 2007, William Hart and David Harvey
 #include "flint.h"
 #include "memory-manager.h"
 #include "Z_mpn.h"
+#include "mpz_poly.h"
+#include "test-support.h"
 
 #define VARY_BITS 1
 #define SIGNS 1
 
 #define DEBUG 0    // prints debug information
 #define DEBUG2 1 
-
-gmp_randstate_t Z_mpn_test_randstate;
 
 
 /****************************************************************************
@@ -37,14 +37,14 @@ unsigned long randint(unsigned long randsup)
     return (unsigned long)randval%randsup;
 }
 
-void randpoly(Zpoly_t pol, unsigned long length, unsigned long maxbits)
+void randpoly(mpz_poly_t pol, unsigned long length, unsigned long maxbits)
 {
    unsigned long bits;
    mpz_t temp;
    mpz_init(temp);
    
-   if (pol->coeffs) Zpoly_clear(pol);
-   Zpoly_init3(pol, length, maxbits);
+   mpz_poly_zero(pol);
+
    for (unsigned long i = 0; i < length; i++)
    {
 #if VARY_BITS
@@ -55,26 +55,26 @@ void randpoly(Zpoly_t pol, unsigned long length, unsigned long maxbits)
        if (bits == 0) mpz_set_ui(temp,0);
        else 
        {
-          mpz_rrandomb(temp, Z_mpn_test_randstate, bits);
+          mpz_rrandomb(temp, randstate, bits);
 #if SIGNS
           if (randint(2)) mpz_neg(temp,temp);
 #endif
        }
-       Zpoly_set_coeff(pol, i, temp);
+       mpz_poly_set_coeff(pol, i, temp);
        
    }
    
    mpz_clear(temp);
 } 
 
-void randpoly_unsigned(Zpoly_t pol, unsigned long length, unsigned long maxbits)
+void randpoly_unsigned(mpz_poly_t pol, unsigned long length, unsigned long maxbits)
 {
    unsigned long bits;
    mpz_t temp;
    mpz_init(temp);
+
+   mpz_poly_zero(pol);
    
-   if (pol->coeffs) Zpoly_clear(pol);
-   Zpoly_init3(pol, length, maxbits);
    for (unsigned long i = 0; i < length; i++)
    {
 #if VARY_BITS
@@ -85,21 +85,14 @@ void randpoly_unsigned(Zpoly_t pol, unsigned long length, unsigned long maxbits)
        if (bits == 0) mpz_set_ui(temp,0);
        else 
        {
-          mpz_rrandomb(temp, Z_mpn_test_randstate, bits);
+          mpz_rrandomb(temp, randstate, bits);
        }
-       Zpoly_set_coeff(pol, i, temp);
+       mpz_poly_set_coeff(pol, i, temp);
        
    }
    
    mpz_clear(temp);
 } 
-
-#define RUN_TEST(targetfunc) \
-   printf("Testing " #targetfunc "()... ");            \
-   fflush(stdout);                                     \
-   success = test_##targetfunc();                      \
-   all_success = all_success && success;               \
-   printf(success ? "ok\n" : "FAIL!\n");
 
 int test_Z_mpn_mul_precomp()
 {
@@ -109,7 +102,6 @@ int test_Z_mpn_mul_precomp()
    
    for (unsigned long count = 0; (count < 100) && (result == 1); count++)
    {
-   
       unsigned long limbs2 = randint(100) + 100;
       unsigned long limbs1 = limbs2 + randint(100);
    
@@ -161,6 +153,13 @@ int test_Z_mpn_mul_precomp()
 
 ****************************************************************************/
 
+#define RUN_TEST(targetfunc) \
+   printf("Testing " #targetfunc "()... ");            \
+   fflush(stdout);                                     \
+   success = test_##targetfunc();                      \
+   all_success = all_success && success;               \
+   printf(success ? "ok\n" : "FAIL!\n");
+
 
 void Z_mpn_test_all()
 {
@@ -175,9 +174,9 @@ void Z_mpn_test_all()
 
 int main()
 {
-   gmp_randinit_default(Z_mpn_test_randstate);
-   
+   test_support_init();
    Z_mpn_test_all();
+   test_support_cleanup();
 
    return 0;
 }

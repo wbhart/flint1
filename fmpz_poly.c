@@ -1,10 +1,8 @@
 /****************************************************************************
 
-fmpz_poly.c: Polynomials over Z
+fmpz_poly.c: Polynomials over Z, implemented as contiguous block of fmpz_t's
 
 Copyright (C) 2007, William Hart and David Harvey
-
-(Development code)
 
 *****************************************************************************/
 
@@ -12,7 +10,6 @@ Copyright (C) 2007, William Hart and David Harvey
 #include "flint.h"
 #include "fmpz.h"
 #include "fmpz_poly.h"
-#include "Zpoly.h"
 #include "mpn_extras.h"
 #include "extras.h"
 #include "longlong_wrapper.h"
@@ -54,35 +51,6 @@ void _fmpz_poly_get_coeff_mpz(mpz_t x, fmpz_poly_t poly, unsigned long n)
 {
    FLINT_ASSERT(n < poly->length);
    fmpz_to_mpz(x, poly->coeffs + n*(poly->limbs+1));
-}
-
-
-// converts fmpz_poly to Zpoly, assumes enough space allocated for output
-void _fmpz_poly_convert_out(Zpoly_t poly_mpz, fmpz_poly_t poly_mpn)
-{
-   FLINT_ASSERT(poly_mpz->alloc >= poly_mpn->length);
-
-   poly_mpz->length = poly_mpn->length;
-   
-   for (unsigned long i = 0; i < poly_mpn->length; i++)
-      fmpz_to_mpz(poly_mpz->coeffs[i],
-                  poly_mpn->coeffs + i*(poly_mpn->limbs+1));
-}
-
-
-void _fmpz_poly_convert_in(fmpz_poly_t poly_mpn, Zpoly_t poly_mpz)
-{
-   FLINT_ASSERT(poly_mpn->alloc >= poly_mpz->length);
-
-   poly_mpn->length = poly_mpz->length;
-   if (poly_mpz->length == 0) return;
-
-   for (unsigned long i = 0; i < poly_mpz->length; i++)
-   {
-      FLINT_ASSERT(poly_mpn->limbs >= mpz_size(poly_mpz->coeffs[i]));
-      mpz_to_fmpz(poly_mpn->coeffs + i*(poly_mpn->limbs+1),
-                  poly_mpz->coeffs[i]);
-   }
 }
 
 
@@ -314,7 +282,7 @@ int _fmpz_poly_equal(fmpz_poly_p input1, fmpz_poly_p input2)
 
 }
 
-void _fmpz_poly_negate(fmpz_poly_t output, fmpz_poly_t input)
+void _fmpz_poly_neg(fmpz_poly_t output, fmpz_poly_t input)
 {
    if (input->coeffs == output->coeffs)
    {
@@ -1226,7 +1194,7 @@ void _fmpz_poly_mul_KS(fmpz_poly_t output, fmpz_poly_p input1, fmpz_poly_p input
    
               if ((long) input1->coeffs[(input1->length-1)*(input1->limbs+1)] < 0)
    {
-      _fmpz_poly_negate(input1, input1);
+      _fmpz_poly_neg(input1, input1);
       sign1 = -1L;
    }
    
@@ -1234,7 +1202,7 @@ void _fmpz_poly_mul_KS(fmpz_poly_t output, fmpz_poly_p input1, fmpz_poly_p input
    {
       if ((long) input2->coeffs[(input2->length-1)*(input2->limbs+1)] < 0)
       {
-         _fmpz_poly_negate(input2, input2);
+         _fmpz_poly_neg(input2, input2);
          sign2 = -1L;
       }
    } else sign2 = sign1;
@@ -1313,10 +1281,10 @@ void _fmpz_poly_mul_KS(fmpz_poly_t output, fmpz_poly_p input1, fmpz_poly_p input
       ZmodFpoly_stack_clear(poly2);
    ZmodFpoly_stack_clear(poly1);
      
-   if ((long) (sign1 ^ sign2) < 0) _fmpz_poly_negate(output, output);
+   if ((long) (sign1 ^ sign2) < 0) _fmpz_poly_neg(output, output);
    
-   if (sign1 < 0) _fmpz_poly_negate(input1, input1);
-   if ((sign2 < 0) && (input1 != input2)) _fmpz_poly_negate(input2, input2);
+   if (sign1 < 0) _fmpz_poly_neg(input1, input1);
+   if ((sign2 < 0) && (input1 != input2)) _fmpz_poly_neg(input2, input2);
 }
 
 

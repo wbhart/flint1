@@ -1,23 +1,19 @@
 /****************************************************************************
 
-fmpz_poly.h: Polynomials over Z
+fmpz_poly.h: Polynomials over Z, implemented as contiguous block of fmpz_t's
 
 Copyright (C) 2007, William Hart and David Harvey
 
-There are two entirely separate data formats for polynomials over Z:
-  -- Zpoly_t uses an array of mpz_t's (see Zpoly.c and Zpoly.h files)
-  -- fmpz_poly_t uses a single block of memory with each coefficient occupying
-     the same number of limbs 
-
 *****************************************************************************/
-#ifndef FLINT_fmpz_poly_H
-#define FLINT_fmpz_poly_H
+
+#ifndef FLINT_FMPZ_POLY_H
+#define FLINT_FMPZ_POLY_H
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <gmp.h>
-#include "Zpoly.h"
 #include "mpn_extras.h"
+
 /****************************************************************************
 
    fmpz_poly_t
@@ -110,10 +106,6 @@ void _fmpz_poly_stack_init(fmpz_poly_t poly, unsigned long alloc, unsigned long 
 
 void _fmpz_poly_stack_clear(fmpz_poly_t poly);
 
-void _fmpz_poly_convert_out(Zpoly_t poly_mpz, fmpz_poly_t poly_mpn);
-
-void _fmpz_poly_convert_in(fmpz_poly_t poly_mpn, Zpoly_t poly_mpz);
-                     
 static inline
 mp_limb_t * _fmpz_poly_get_coeff_ptr(fmpz_poly_t poly, unsigned long n)
 {
@@ -215,7 +207,7 @@ long _fmpz_poly_bits(fmpz_poly_t poly_mpn);
 
 int _fmpz_poly_equal(fmpz_poly_p input1, fmpz_poly_p input2);
 
-void _fmpz_poly_negate(fmpz_poly_t output, fmpz_poly_t input);
+void _fmpz_poly_neg(fmpz_poly_t output, fmpz_poly_t input);
 
 void _fmpz_poly_add(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_t input2);
 

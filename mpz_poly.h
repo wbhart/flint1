@@ -13,6 +13,7 @@ Copyright (C) 2007, William Hart and David Harvey
 #include <stdio.h>
 #include <gmp.h>
 #include "memory-manager.h"
+#include "fmpz_poly.h"
 
 
 typedef struct
@@ -196,10 +197,8 @@ void mpz_poly_swap(mpz_poly_t poly1, mpz_poly_t poly2)
 // ------------------------------------------------------
 // Conversions
 
-#if 0    // disabled, since we're not hooked up to fmpz_poly_t yet
 void mpz_poly_to_fmpz_poly(fmpz_poly_t res, mpz_poly_t poly);
 void fmpz_poly_to_mpz_poly(mpz_poly_t res, fmpz_poly_t poly);
-#endif
 
 
 // ------------------------------------------------------

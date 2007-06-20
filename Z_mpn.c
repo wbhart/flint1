@@ -1,6 +1,6 @@
 /****************************************************************************
 
-fmpz_poly.c: Polynomials over Z
+Z_mpn.c: Z arithmetic
 
 Copyright (C) 2007, William Hart and David Harvey
 

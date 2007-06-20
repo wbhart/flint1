@@ -7,7 +7,7 @@ Copyright (C) 2007, David Harvey
 *****************************************************************************/
 
 #include <stdio.h>
-//#include <string.h>
+#include <string.h>
 #include "ZmodF_mul.h"
 #include "test-support.h"
 

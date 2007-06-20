@@ -2,7 +2,7 @@
 
 fmpz_poly-profile.c
 
-Profiling for ZmodFpoly
+Profiling for fmpz_poly
 
 Copyright (C) 2007, William Hart and David Harvey
 
@@ -15,13 +15,12 @@ Copyright (C) 2007, William Hart and David Harvey
 #include "flint.h"
 #include "memory-manager.h"
 #include "fmpz_poly.h"
-#include "Zpoly.h"
+#include "mpz_poly.h"
+#include "test-support.h"
 
 //================================================================================
 
 #define SIGNS 0
-
-gmp_randstate_t Zpoly_test_randstate;
 
 unsigned long randint(unsigned long randsup) 
 {
@@ -31,27 +30,26 @@ unsigned long randint(unsigned long randsup)
     return (unsigned long)randval%randsup;
 }
 
-void randpoly(Zpoly_t pol, unsigned long length, unsigned long maxbits)
+void randpoly(mpz_poly_t pol, unsigned long length, unsigned long maxbits)
 {
    unsigned long bits;
    mpz_t temp;
    mpz_init(temp);
    
-   //if (pol->coeffs) Zpoly_clear(pol);
-   //Zpoly_init3(pol, length, maxbits);
+   mpz_poly_zero(pol);
+   
    for (unsigned long i = 0; i < length; i++)
    {
        bits = maxbits;
        if (bits == 0) mpz_set_ui(temp,0);
        else 
        {
-          mpz_rrandomb(temp, Zpoly_test_randstate, bits);
+          mpz_rrandomb(temp, randstate, bits);
 #if SIGNS
           if (randint(2)) mpz_neg(temp,temp);
 #endif
        }
-       Zpoly_set_coeff(pol, i, temp);
-       
+       mpz_poly_set_coeff(pol, i, temp);
    }
    
    mpz_clear(temp);
@@ -67,12 +65,12 @@ void sample_fmpz_poly_mul_KS(unsigned long length, unsigned long bits,
    unsigned long output_bits = 2*bits+m;
    
    fmpz_poly_t poly1, poly2, poly3;
-   Zpoly_t r_poly, r_poly2;  
+   mpz_poly_t r_poly, r_poly2;  
    
-   Zpoly_init(r_poly); 
-   Zpoly_init(r_poly2); 
-   Zpoly_realloc(r_poly, length);
-   Zpoly_realloc(r_poly2, length);
+   mpz_poly_init(r_poly); 
+   mpz_poly_init(r_poly2); 
+   mpz_poly_realloc(r_poly, length);
+   mpz_poly_realloc(r_poly2, length);
   
    _fmpz_poly_stack_init(poly1, length, (bits-1)/FLINT_BITS+1);
    _fmpz_poly_stack_init(poly2, length, (bits-1)/FLINT_BITS+1);
@@ -92,17 +90,17 @@ void sample_fmpz_poly_mul_KS(unsigned long length, unsigned long bits,
       if (i%r_count == 0)
       {
          randpoly(r_poly, length, bits);
-         _fmpz_poly_convert_in(poly1, r_poly);
+         mpz_poly_to_fmpz_poly(poly1, r_poly);
          randpoly(r_poly2, length, bits);
-         _fmpz_poly_convert_in(poly2, r_poly2);
+         mpz_poly_to_fmpz_poly(poly2, r_poly2);
       }
        prof2d_start();
        _fmpz_poly_mul_KS(poly3, poly1, poly2);
        prof2d_stop();
    }
    
-   Zpoly_clear(r_poly);
-   Zpoly_clear(r_poly2);
+   mpz_poly_clear(r_poly);
+   mpz_poly_clear(r_poly2);
    
    _fmpz_poly_stack_clear(poly3);
    _fmpz_poly_stack_clear(poly2);
@@ -144,7 +142,7 @@ void prof2dDriver_fmpz_poly_mul_KS(char* params)
                                         &ratio, &bits_min);
    }
 
-   gmp_randinit_default(Zpoly_test_randstate);
+   test_support_init();
 
    prof2d_set_sampler(sample_fmpz_poly_mul_KS);
 
@@ -168,6 +166,8 @@ void prof2dDriver_fmpz_poly_mul_KS(char* params)
          prof2d_sample(length, bits);
       }
    }
+
+   test_support_cleanup();
 }
 
 // **************************************************************************************
@@ -179,12 +179,12 @@ void sample_fmpz_poly_mul_SS(unsigned long length, unsigned long bits,
    unsigned long output_bits = 2*bits+m;
    
    fmpz_poly_t poly1, poly2, poly3;
-   Zpoly_t r_poly, r_poly2;  
+   mpz_poly_t r_poly, r_poly2;  
    
-   Zpoly_init(r_poly); 
-   Zpoly_init(r_poly2); 
-   Zpoly_realloc(r_poly, length);
-   Zpoly_realloc(r_poly2, length);
+   mpz_poly_init(r_poly); 
+   mpz_poly_init(r_poly2); 
+   mpz_poly_realloc(r_poly, length);
+   mpz_poly_realloc(r_poly2, length);
   
    _fmpz_poly_stack_init(poly1, length, (bits-1)/FLINT_BITS+1);
    _fmpz_poly_stack_init(poly2, length, (bits-1)/FLINT_BITS+1);
@@ -204,17 +204,17 @@ void sample_fmpz_poly_mul_SS(unsigned long length, unsigned long bits,
       if (i%r_count == 0)
       {
          randpoly(r_poly, length, bits);
-         _fmpz_poly_convert_in(poly1, r_poly);
+         mpz_poly_to_fmpz_poly(poly1, r_poly);
          randpoly(r_poly2, length, bits);
-         _fmpz_poly_convert_in(poly2, r_poly2);
+         mpz_poly_to_fmpz_poly(poly2, r_poly2);
       }
        prof2d_start();
        _fmpz_poly_mul_SS(poly3, poly1, poly2);
        prof2d_stop();
    }
    
-   Zpoly_clear(r_poly);
-   Zpoly_clear(r_poly2);
+   mpz_poly_clear(r_poly);
+   mpz_poly_clear(r_poly2);
    
    _fmpz_poly_stack_clear(poly3);
    _fmpz_poly_stack_clear(poly2);
@@ -257,7 +257,7 @@ void prof2dDriver_fmpz_poly_mul_SS(char* params)
                                         &ratio, &bits_min);
    }
 
-   gmp_randinit_default(Zpoly_test_randstate);
+   test_support_init();
 
    prof2d_set_sampler(sample_fmpz_poly_mul_SS);
 
@@ -283,6 +283,8 @@ void prof2dDriver_fmpz_poly_mul_SS(char* params)
          prof2d_sample(length, bits);
       }
    }
+
+   test_support_cleanup();
 }
 
 // ============================================================================
@@ -295,12 +297,12 @@ void sample_fmpz_poly_mul_karatsuba(unsigned long length, unsigned long bits,
    unsigned long output_bits = 2*bits+m;
    
    fmpz_poly_t poly1, poly2, poly3;
-   Zpoly_t r_poly, r_poly2;  
+   mpz_poly_t r_poly, r_poly2;  
    
-   Zpoly_init(r_poly); 
-   Zpoly_init(r_poly2); 
-   Zpoly_realloc(r_poly, length);
-   Zpoly_realloc(r_poly2, length);
+   mpz_poly_init(r_poly); 
+   mpz_poly_init(r_poly2); 
+   mpz_poly_realloc(r_poly, length);
+   mpz_poly_realloc(r_poly2, length);
   
    _fmpz_poly_stack_init(poly1, length, (bits-1)/FLINT_BITS+1);
    _fmpz_poly_stack_init(poly2, length, (bits-1)/FLINT_BITS+1);
@@ -320,17 +322,17 @@ void sample_fmpz_poly_mul_karatsuba(unsigned long length, unsigned long bits,
       if (i%r_count == 0)
       {
          randpoly(r_poly, length, bits);
-         _fmpz_poly_convert_in(poly1, r_poly);
+         mpz_poly_to_fmpz_poly(poly1, r_poly);
          randpoly(r_poly2, length, bits);
-         _fmpz_poly_convert_in(poly2, r_poly2);
+         mpz_poly_to_fmpz_poly(poly2, r_poly2);
       }
        prof2d_start();
        _fmpz_poly_mul_karatsuba(poly3, poly1, poly2);
        prof2d_stop();
    }
    
-   Zpoly_clear(r_poly);
-   Zpoly_clear(r_poly2);
+   mpz_poly_clear(r_poly);
+   mpz_poly_clear(r_poly2);
    
    _fmpz_poly_stack_clear(poly3);
    _fmpz_poly_stack_clear(poly2);
@@ -373,7 +375,7 @@ void prof2dDriver_fmpz_poly_mul_karatsuba(char* params)
                                         &ratio, &bits_min);
    }
 
-   gmp_randinit_default(Zpoly_test_randstate);
+   test_support_init();
 
    prof2d_set_sampler(sample_fmpz_poly_mul_karatsuba);
 
@@ -399,6 +401,8 @@ void prof2dDriver_fmpz_poly_mul_karatsuba(char* params)
          prof2d_sample(length, bits);
       }
    }
+
+   test_support_cleanup();
 }
 
 
@@ -412,12 +416,12 @@ void sample_fmpz_poly_mul(unsigned long length, unsigned long bits,
    unsigned long output_bits = 2*bits+m;
    
    fmpz_poly_t poly1, poly2, poly3;
-   Zpoly_t r_poly, r_poly2;  
+   mpz_poly_t r_poly, r_poly2;  
    
-   Zpoly_init(r_poly); 
-   Zpoly_init(r_poly2); 
-   Zpoly_realloc(r_poly, length);
-   Zpoly_realloc(r_poly2, length);
+   mpz_poly_init(r_poly); 
+   mpz_poly_init(r_poly2); 
+   mpz_poly_realloc(r_poly, length);
+   mpz_poly_realloc(r_poly2, length);
   
    _fmpz_poly_stack_init(poly1, length, (bits-1)/FLINT_BITS+1);
    _fmpz_poly_stack_init(poly2, length, (bits-1)/FLINT_BITS+1);
@@ -437,17 +441,17 @@ void sample_fmpz_poly_mul(unsigned long length, unsigned long bits,
       if (i%r_count == 0)
       {
          randpoly(r_poly, length, bits);
-         _fmpz_poly_convert_in(poly1, r_poly);
+         mpz_poly_to_fmpz_poly(poly1, r_poly);
          randpoly(r_poly2, length, bits);
-         _fmpz_poly_convert_in(poly2, r_poly2);
+         mpz_poly_to_fmpz_poly(poly2, r_poly2);
       }
        prof2d_start();
        _fmpz_poly_mul(poly3, poly1, poly2);
        prof2d_stop();
    }
    
-   Zpoly_clear(r_poly);
-   Zpoly_clear(r_poly2);
+   mpz_poly_clear(r_poly);
+   mpz_poly_clear(r_poly2);
    
    _fmpz_poly_stack_clear(poly3);
    _fmpz_poly_stack_clear(poly2);
@@ -490,7 +494,7 @@ void prof2dDriver_fmpz_poly_mul(char* params)
                                         &ratio, &bits_min);
    }
 
-   gmp_randinit_default(Zpoly_test_randstate);
+   test_support_init();
 
    prof2d_set_sampler(sample_fmpz_poly_mul);
 
@@ -516,6 +520,8 @@ void prof2dDriver_fmpz_poly_mul(char* params)
          prof2d_sample(length, bits);
       }
    }
+
+   test_support_cleanup();
 }
 
 

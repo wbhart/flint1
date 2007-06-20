@@ -179,7 +179,8 @@ the stack. This could be a problem if we need to allocate many small objects.
 
 * figure out why the negacyclic multiplication performance is so unsmooth
   with respect to n (weird periodicity effects in the timings)
-  
+
+* for squaring, we don't need to allocate so much memory  
 
 === Miscellaneous ===
 
@@ -211,3 +212,5 @@ the stack. This could be a problem if we need to allocate many small objects.
   the parameters all the time, perhaps call it mpz_to_mpn and vice versa
 
 * change FLINT_LG_BITS_PER_LIMB to FLINT_LG_BITS, same for BYTES, etc
+
+* use mpn_random2 in more places instead of mpz_randombb (thanks Bill for pointing that out....)

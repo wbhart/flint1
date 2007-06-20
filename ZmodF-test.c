@@ -1,6 +1,6 @@
 /******************************************************************************
 
- ZmodF-test.c: test module for ZmodF and ZmodF_mul modules
+ ZmodF-test.c: test module for ZmodF module
 
  Copyright (C) 2007, David Harvey
 
@@ -13,9 +13,9 @@ TODO: establish and test overflow bit guarantees
 #include <stdio.h>
 #include "ZmodF.h"
 #include "ZmodF_mul.h"
+#include "test-support.h"
 
 
-gmp_randstate_t randstate;
 mpz_t global_mpz;   // to avoid frequent mpz_init calls
 
 
@@ -35,12 +35,6 @@ void ZmodF_print(ZmodF_t x, unsigned long n)
 #else
       printf("%08lx ", x[i]);
 #endif
-}
-
-
-unsigned long random_ulong(unsigned long max)
-{
-   return gmp_urandomm_ui(randstate, max);
 }
 
 
@@ -827,7 +821,8 @@ void ZmodF_test_all()
 
 int main()
 {
-   gmp_randinit_default(randstate);
+   test_support_init();
+
    mpz_init(global_mpz);
    mpz_init(global_p);
    for (int i = 0; i < MAX_COEFFS; i++)
@@ -837,6 +832,8 @@ int main()
    }
    
    ZmodF_test_all();
+   
+   test_support_cleanup();
    
    return 0;
 }
