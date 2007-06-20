@@ -10,7 +10,7 @@ Copyright (C) 2007, William Hart and David Harvey
 #define FLINT_Z_MPN_H
 
 #include <gmp.h>
-#include "ZmodFpoly.h"
+#include "ZmodF_poly.h"
 
 /****************************************************************************/
 
@@ -19,7 +19,7 @@ typedef enum {FFT_PRE, KAR_PRE} precomp_type;
 typedef struct
 {
    precomp_type type;
-   ZmodFpoly_p poly;
+   ZmodF_poly_p poly;
    unsigned long length;
    unsigned long length2;
    unsigned long coeff_limbs;

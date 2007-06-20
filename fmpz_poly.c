@@ -14,7 +14,7 @@ Copyright (C) 2007, William Hart and David Harvey
 #include "extras.h"
 #include "longlong_wrapper.h"
 #include "memory-manager.h"
-#include "ZmodFpoly.h"
+#include "ZmodF_poly.h"
 #include "Z_mpn.h"
 #include "ZmodF_mul.h"
 
@@ -1224,28 +1224,28 @@ void _fmpz_poly_mul_KS(fmpz_poly_t output, fmpz_poly_p input1, fmpz_poly_p input
    
    unsigned long bytes = ((bits-1)>>3)+1;
    
-   ZmodFpoly_t poly1, poly2, poly3;
+   ZmodF_poly_t poly1, poly2, poly3;
    if (bitpack)
    {
-      ZmodFpoly_stack_init(poly1, 0, (bits*input1->length-1)/FLINT_BITS+1, 0);
+      ZmodF_poly_stack_init(poly1, 0, (bits*input1->length-1)/FLINT_BITS+1, 0);
       if (input1 != input2)
-         ZmodFpoly_stack_init(poly2, 0, (bits*input2->length-1)/FLINT_BITS+1, 0);
+         ZmodF_poly_stack_init(poly2, 0, (bits*input2->length-1)/FLINT_BITS+1, 0);
 
       if (sign) bits = -1L*bits;
       if (input1 != input2)
-         ZmodFpoly_bit_pack_mpn(poly2, input2, input2->length, bits);
-      ZmodFpoly_bit_pack_mpn(poly1, input1, input1->length, bits);
+         ZmodF_poly_bit_pack_mpn(poly2, input2, input2->length, bits);
+      ZmodF_poly_bit_pack_mpn(poly1, input1, input1->length, bits);
 
       bits=ABS(bits);
    } else
    {
-      ZmodFpoly_stack_init(poly1, 0, ((bytes*input1->length-1)>>FLINT_LG_BYTES_PER_LIMB)+1, 0);
+      ZmodF_poly_stack_init(poly1, 0, ((bytes*input1->length-1)>>FLINT_LG_BYTES_PER_LIMB)+1, 0);
       if (input1 != input2)
-         ZmodFpoly_stack_init(poly2, 0, ((bytes*input2->length-1)>>FLINT_LG_BYTES_PER_LIMB)+1, 0);
+         ZmodF_poly_stack_init(poly2, 0, ((bytes*input2->length-1)>>FLINT_LG_BYTES_PER_LIMB)+1, 0);
 
-      ZmodFpoly_byte_pack_mpn(poly1, input1, input1->length, bytes);
+      ZmodF_poly_byte_pack_mpn(poly1, input1, input1->length, bytes);
       if (input1 != input2)
-         ZmodFpoly_byte_pack_mpn(poly2, input2, input2->length, bytes);
+         ZmodF_poly_byte_pack_mpn(poly2, input2, input2->length, bytes);
    }
    
    if (input1 == input2)
@@ -1254,7 +1254,7 @@ void _fmpz_poly_mul_KS(fmpz_poly_t output, fmpz_poly_p input1, fmpz_poly_p input
       poly2->n = poly1->n;
    }
    
-   ZmodFpoly_stack_init(poly3, 0, poly1->n + poly2->n, 0);
+   ZmodF_poly_stack_init(poly3, 0, poly1->n + poly2->n, 0);
            
    Z_mpn_mul(poly3->coeffs[0], poly1->coeffs[0], poly1->n, poly2->coeffs[0], poly2->n, 4);
    
@@ -1268,18 +1268,18 @@ void _fmpz_poly_mul_KS(fmpz_poly_t output, fmpz_poly_p input1, fmpz_poly_p input
       
    if (bitpack)
    {
-      if (sign) ZmodFpoly_bit_unpack_mpn(output, poly3, input1->length+input2->length-1, bits);  
-      else ZmodFpoly_bit_unpack_unsigned_mpn(output, poly3, input1->length+input2->length-1, bits);  
+      if (sign) ZmodF_poly_bit_unpack_mpn(output, poly3, input1->length+input2->length-1, bits);  
+      else ZmodF_poly_bit_unpack_unsigned_mpn(output, poly3, input1->length+input2->length-1, bits);  
    } else
    {
-      if (sign) ZmodFpoly_byte_unpack_mpn(output, poly3->coeffs[0], input1->length+input2->length-1, bytes);        
-      else ZmodFpoly_byte_unpack_unsigned_mpn(output, poly3->coeffs[0], input1->length+input2->length-1, bytes);  
+      if (sign) ZmodF_poly_byte_unpack_mpn(output, poly3->coeffs[0], input1->length+input2->length-1, bytes);        
+      else ZmodF_poly_byte_unpack_unsigned_mpn(output, poly3->coeffs[0], input1->length+input2->length-1, bytes);  
    }
    
-   ZmodFpoly_stack_clear(poly3);
+   ZmodF_poly_stack_clear(poly3);
    if (input1 != input2)
-      ZmodFpoly_stack_clear(poly2);
-   ZmodFpoly_stack_clear(poly1);
+      ZmodF_poly_stack_clear(poly2);
+   ZmodF_poly_stack_clear(poly1);
      
    if ((long) (sign1 ^ sign2) < 0) _fmpz_poly_neg(output, output);
    
@@ -1323,16 +1323,16 @@ void _fmpz_poly_mul_SS(fmpz_poly_t output, fmpz_poly_p input1, fmpz_poly_p input
       
    unsigned long n = (output_bits - 1) / FLINT_BITS + 1;
    
-   ZmodFpoly_t poly1, poly2, res;
+   ZmodF_poly_t poly1, poly2, res;
    long bits1, bits2;
    unsigned long sign = 0;
    
-   ZmodFpoly_stack_init(poly1, log_length + 1, n, 1);
-   ZmodFpoly_stack_init(poly2, log_length + 1, n, 1);
-   ZmodFpoly_stack_init(res, log_length + 1, n, 1);
+   ZmodF_poly_stack_init(poly1, log_length + 1, n, 1);
+   ZmodF_poly_stack_init(poly2, log_length + 1, n, 1);
+   ZmodF_poly_stack_init(res, log_length + 1, n, 1);
    
-   bits1 = ZmodFpoly_convert_in_mpn(poly1, input1);
-   bits2 = ZmodFpoly_convert_in_mpn(poly2, input2);
+   bits1 = ZmodF_poly_convert_in_mpn(poly1, input1);
+   bits2 = ZmodF_poly_convert_in_mpn(poly2, input2);
    
    if ((bits1 < 0) || (bits2 < 0)) 
    {
@@ -1352,20 +1352,20 @@ void _fmpz_poly_mul_SS(fmpz_poly_t output, fmpz_poly_p input1, fmpz_poly_p input
       
    n = (output_bits - 1) / FLINT_BITS + 1;
    
-   ZmodFpoly_decrease_n(poly1, n);
-   ZmodFpoly_decrease_n(poly2, n);
-   ZmodFpoly_decrease_n(res, n);
+   ZmodF_poly_decrease_n(poly1, n);
+   ZmodF_poly_decrease_n(poly2, n);
+   ZmodF_poly_decrease_n(res, n);
                     
-   ZmodFpoly_convolution(res, poly1, poly2);
-   ZmodFpoly_normalise(res);
+   ZmodF_poly_convolution(res, poly1, poly2);
+   ZmodF_poly_normalise(res);
           
    output->length = length1 + length2 - 1;
    
-   ZmodFpoly_convert_out_mpn(output, res, sign);
+   ZmodF_poly_convert_out_mpn(output, res, sign);
    
-   ZmodFpoly_stack_clear(res);
-   ZmodFpoly_stack_clear(poly2);
-   ZmodFpoly_stack_clear(poly1);
+   ZmodF_poly_stack_clear(res);
+   ZmodF_poly_stack_clear(poly2);
+   ZmodF_poly_stack_clear(poly1);
 }
 
 void _fmpz_poly_mul(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_t input2)

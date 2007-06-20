@@ -10,7 +10,7 @@
 ******************************************************************************/
 
 #include "ZmodF.h"
-#include "ZmodFpoly.h"
+#include "ZmodF_poly.h"
 #include "ZmodF_mul.h"
 #include "Z_mpn.h"
 #include "ZmodF_mul-tuning.h"
@@ -213,8 +213,8 @@ void ZmodF_mul_info_init_negacyclic(
       next_n = (((next_n - 1) >> shift) + 1) << shift;
    }
 
-   ZmodFpoly_init(info->polys[0], depth, next_n, 1);
-   ZmodFpoly_init(info->polys[1], depth, next_n, 1);
+   ZmodF_poly_init(info->polys[0], depth, next_n, 1);
+   ZmodF_poly_init(info->polys[1], depth, next_n, 1);
 }
 
 
@@ -351,8 +351,8 @@ void ZmodF_mul_info_clear(ZmodF_mul_info_t info)
 {
    if (info->algo == ZMODF_MUL_ALGO_NEGACYCLIC)
    {
-      ZmodFpoly_clear(info->polys[1]);
-      ZmodFpoly_clear(info->polys[0]);
+      ZmodF_poly_clear(info->polys[1]);
+      ZmodF_poly_clear(info->polys[0]);
    }
    else
    {
@@ -375,7 +375,7 @@ the transform length.
 
 Assumes x is normalised and of length n, and has zero overflow limb.
 */
-void _ZmodF_mul_negacyclic_split(ZmodFpoly_t poly, ZmodF_t x, unsigned long n)
+void _ZmodF_mul_negacyclic_split(ZmodF_poly_t poly, ZmodF_t x, unsigned long n)
 {
    FLINT_ASSERT((n * FLINT_BITS) % (1 << poly->depth) == 0);
    FLINT_ASSERT(x[n] == 0);
@@ -432,7 +432,7 @@ Then it computes x := \sum_{i=0}^{M-1} c_i R^i   (mod p) (not necessarily
 normalised), where R = (B^n)^(1/M).
 
 */
-void _ZmodF_mul_negacyclic_combine(ZmodF_t x, ZmodFpoly_t poly,
+void _ZmodF_mul_negacyclic_combine(ZmodF_t x, ZmodF_poly_t poly,
                                    unsigned long n)
 {
    FLINT_ASSERT((n * FLINT_BITS) % (1 << poly->depth) == 0);
@@ -687,9 +687,9 @@ void ZmodF_mul_info_mul(ZmodF_mul_info_t info,
       _ZmodF_mul_negacyclic_split(info->polys[0], a, info->n);
       _ZmodF_mul_negacyclic_split(info->polys[1], b, info->n);
 
-      ZmodFpoly_negacyclic_convolution(info->polys[0], info->polys[0],
+      ZmodF_poly_negacyclic_convolution(info->polys[0], info->polys[0],
                                        info->polys[1]);
-      ZmodFpoly_normalise(info->polys[0]);
+      ZmodF_poly_normalise(info->polys[0]);
 
       _ZmodF_mul_negacyclic_combine(res, info->polys[0], info->n);
    }
@@ -744,9 +744,9 @@ void ZmodF_mul_info_sqr(ZmodF_mul_info_t info, ZmodF_t res, ZmodF_t a)
       // negacyclic FFT multiplication
       _ZmodF_mul_negacyclic_split(info->polys[0], a, info->n);
 
-      ZmodFpoly_negacyclic_convolution(info->polys[0], info->polys[0],
+      ZmodF_poly_negacyclic_convolution(info->polys[0], info->polys[0],
                                        info->polys[0]);
-      ZmodFpoly_normalise(info->polys[0]);
+      ZmodF_poly_normalise(info->polys[0]);
 
       _ZmodF_mul_negacyclic_combine(res, info->polys[0], info->n);
    }

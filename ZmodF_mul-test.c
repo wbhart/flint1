@@ -35,7 +35,7 @@ void ZmodF_print(ZmodF_t x, unsigned long n)
 /*
 Prints each coefficient of the polynomial on a separate line.
 */
-void ZmodFpoly_print(ZmodFpoly_t x)
+void ZmodF_poly_print(ZmodF_poly_t x)
 {
    for (unsigned long k = 0; k < (1UL << x->depth); k++)
    {
@@ -64,8 +64,8 @@ int test__ZmodF_mul_negacyclic_split()
          unsigned long bits = (n*FLINT_BITS) >> depth;
          unsigned long m = (bits-1)/FLINT_BITS + 1;
       
-         ZmodFpoly_t poly;
-         ZmodFpoly_init(poly, depth, m, 1);
+         ZmodF_poly_t poly;
+         ZmodF_poly_init(poly, depth, m, 1);
 
 #if DEBUG
          printf("n = %d, depth = %d, m = %d\n", n, depth, m);
@@ -89,7 +89,7 @@ int test__ZmodF_mul_negacyclic_split()
             }
          }
          
-         ZmodFpoly_clear(poly);
+         ZmodF_poly_clear(poly);
       }
    }
    
@@ -123,8 +123,8 @@ int test__ZmodF_mul_negacyclic_combine()
          unsigned long bits = (n*FLINT_BITS) >> depth;
          unsigned long m = (bits-1)/FLINT_BITS + 1;
 
-         ZmodFpoly_t poly;
-         ZmodFpoly_init(poly, depth, m, 1);
+         ZmodF_poly_t poly;
+         ZmodF_poly_init(poly, depth, m, 1);
 
 #if DEBUG
          printf("n = %d, depth = %d, m = %d\n", n, depth, m);
@@ -187,7 +187,7 @@ int test__ZmodF_mul_negacyclic_combine()
                success = 0;
          }
          
-         ZmodFpoly_clear(poly);
+         ZmodF_poly_clear(poly);
       }
    }
 

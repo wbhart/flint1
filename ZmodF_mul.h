@@ -15,7 +15,7 @@
 #include <stdlib.h>
 #include <gmp.h>
 #include "mpn_extras.h"
-#include "ZmodFpoly.h"
+#include "ZmodF_poly.h"
 
 
 // whether to use negacyclic/threeway algorithms in the automatic
@@ -56,7 +56,7 @@ typedef struct
    unsigned long m;
    
    // used only for ZMODF_MUL_ALGO_NEGACYCLIC
-   ZmodFpoly_t polys[2];
+   ZmodF_poly_t polys[2];
 
 } ZmodF_mul_info_struct;
 
@@ -130,9 +130,9 @@ void ZmodF_sqr(ZmodF_t res, ZmodF_t a, mp_limb_t* scratch, unsigned long n);
 // ============================================================================
 // the following functions are exported for testing purposes:
 
-void _ZmodF_mul_negacyclic_split(ZmodFpoly_t poly, ZmodF_t x, unsigned long n);
+void _ZmodF_mul_negacyclic_split(ZmodF_poly_t poly, ZmodF_t x, unsigned long n);
 
-void _ZmodF_mul_negacyclic_combine(ZmodF_t x, ZmodFpoly_t poly,
+void _ZmodF_mul_negacyclic_combine(ZmodF_t x, ZmodF_poly_t poly,
                                    unsigned long n);
 
 

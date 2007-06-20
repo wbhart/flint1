@@ -35,7 +35,7 @@ HEADERS = \
 	ZmodF.h \
 	ZmodF_mul-tuning.h \
 	ZmodF_mul.h \
-	ZmodFpoly.h \
+	ZmodF_poly.h \
 	extras.h \
 	flint.h \
 	fmpz.h \
@@ -62,7 +62,7 @@ FLINTOBJ = \
 	fmpz.o \
 	fmpz_poly.o \
 	mpz_poly.o \
-	ZmodFpoly.o
+	ZmodF_poly.o
 	
 
 mpn_extras.o: mpn_extras.c $(HEADERS)
@@ -92,8 +92,8 @@ fmpz_poly.o: fmpz_poly.c $(HEADERS)
 mpz_poly.o: mpz_poly.c $(HEADERS)
 	$(CC) $(CFLAGS) -c mpz_poly.c -o mpz_poly.o
 	
-ZmodFpoly.o: ZmodFpoly.c $(HEADERS)
-	$(CC) $(CFLAGS) -c ZmodFpoly.c -o ZmodFpoly.o
+ZmodF_poly.o: ZmodF_poly.c $(HEADERS)
+	$(CC) $(CFLAGS) -c ZmodF_poly.c -o ZmodF_poly.o
 
 
 
@@ -109,8 +109,8 @@ fmpz_poly-test.o: fmpz_poly-test.c $(HEADERS)
 ZmodF-test.o: ZmodF-test.c $(HEADERS)
 	$(CC) $(CFLAGS) -c ZmodF-test.c -o ZmodF-test.o
 
-ZmodFpoly-test.o: ZmodFpoly-test.c $(HEADERS)
-	$(CC) $(CFLAGS) -c ZmodFpoly-test.c -o ZmodFpoly-test.o
+ZmodF_poly-test.o: ZmodF_poly-test.c $(HEADERS)
+	$(CC) $(CFLAGS) -c ZmodF_poly-test.c -o ZmodF_poly-test.o
 
 mpz_poly-test.o: mpz_poly-test.c $(HEADERS)
 	$(CC) $(CFLAGS) -c mpz_poly-test.c -o mpz_poly-test.o
@@ -134,8 +134,8 @@ fmpz_poly-test: fmpz_poly-test.o test-support.o $(FLINTOBJ) $(HEADERS)
 ZmodF-test: ZmodF-test.o test-support.o $(FLINTOBJ) $(HEADERS)
 	$(CC) $(CFLAGS) ZmodF-test.o test-support.o -o ZmodF-test $(FLINTOBJ) $(LIBS)
 
-ZmodFpoly-test: ZmodFpoly-test.o test-support.o $(FLINTOBJ) $(HEADERS)
-	$(CC) $(CFLAGS) ZmodFpoly-test.o test-support.o -o ZmodFpoly-test $(FLINTOBJ) $(LIBS)
+ZmodF_poly-test: ZmodF_poly-test.o test-support.o $(FLINTOBJ) $(HEADERS)
+	$(CC) $(CFLAGS) ZmodF_poly-test.o test-support.o -o ZmodF_poly-test $(FLINTOBJ) $(LIBS)
 
 mpz_poly-test: mpz_poly-test.o test-support.o $(FLINTOBJ) $(HEADERS)
 	$(CC) $(CFLAGS) mpz_poly-test.o test-support.o -o mpz_poly-test $(FLINTOBJ) $(LIBS)
@@ -163,13 +163,13 @@ fmpz_poly-profile.o: fmpz_poly-profile.c $(HEADERS)
 	$(CC) $(CFLAGS) -c fmpz_poly-profile.c -o fmpz_poly-profile.o
 
 
-ZmodFpoly-profile-tables.o: ZmodFpoly-profile.c $(HEADERS)
-	python make-profile-tables.py ZmodFpoly
-	$(CC) $(CFLAGS) -c ZmodFpoly-profile-tables.c -o ZmodFpoly-profile-tables.o
-	rm ZmodFpoly-profile-tables.c
+ZmodF_poly-profile-tables.o: ZmodF_poly-profile.c $(HEADERS)
+	python make-profile-tables.py ZmodF_poly
+	$(CC) $(CFLAGS) -c ZmodF_poly-profile-tables.c -o ZmodF_poly-profile-tables.o
+	rm ZmodF_poly-profile-tables.c
 
-ZmodFpoly-profile.o: ZmodFpoly-profile.c $(HEADERS)
-	$(CC) $(CFLAGS) -c ZmodFpoly-profile.c -o ZmodFpoly-profile.o
+ZmodF_poly-profile.o: ZmodF_poly-profile.c $(HEADERS)
+	$(CC) $(CFLAGS) -c ZmodF_poly-profile.c -o ZmodF_poly-profile.o
 
 
 ZmodF_mul-profile-tables.o: ZmodF_mul-profile.c $(HEADERS)
@@ -193,8 +193,8 @@ fmpz_poly-profile: fmpz_poly-profile.o fmpz_poly-profile-tables.o test-support.o
 ZmodF_mul-profile: ZmodF_mul-profile.o ZmodF_mul-profile-tables.o $(PROFOBJ)
 	$(CC) $(CFLAGS) -o ZmodF_mul-profile ZmodF_mul-profile.o ZmodF_mul-profile-tables.o $(PROFOBJ) $(LIBS)
 
-ZmodFpoly-profile: ZmodFpoly-profile.o ZmodFpoly-profile-tables.o $(PROFOBJ)
-	$(CC) $(CFLAGS) -o ZmodFpoly-profile ZmodFpoly-profile.o ZmodFpoly-profile-tables.o $(PROFOBJ) $(LIBS)
+ZmodF_poly-profile: ZmodF_poly-profile.o ZmodF_poly-profile-tables.o $(PROFOBJ)
+	$(CC) $(CFLAGS) -o ZmodF_poly-profile ZmodF_poly-profile.o ZmodF_poly-profile-tables.o $(PROFOBJ) $(LIBS)
 
 
 

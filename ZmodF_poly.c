@@ -1,6 +1,6 @@
 /****************************************************************************
 
-ZmodFpoly.c
+ZmodF_poly.c
 
 Polynomials over Z/pZ, where p = the Fermat number B^n + 1, where
 B = 2^FLINT_BITS. Routines for truncated Schoenhage-Strassen FFTs
@@ -13,7 +13,7 @@ Copyright (C) 2007, William Hart and David Harvey
 #include <sys/types.h>
 #include "flint.h"
 #include "memory-manager.h"
-#include "ZmodFpoly.h"
+#include "ZmodF_poly.h"
 #include "ZmodF_mul.h"
 #include "fmpz_poly.h"
 #include "extras.h"
@@ -25,7 +25,7 @@ Copyright (C) 2007, William Hart and David Harvey
    
 ****************************************************************************/
 
-void ZmodFpoly_init(ZmodFpoly_t poly, unsigned long depth, unsigned long n,
+void ZmodF_poly_init(ZmodF_poly_t poly, unsigned long depth, unsigned long n,
                     unsigned long scratch_count)
 {
    poly->n = n;
@@ -48,13 +48,13 @@ void ZmodFpoly_init(ZmodFpoly_t poly, unsigned long depth, unsigned long n,
 }
 
 
-void ZmodFpoly_clear(ZmodFpoly_t poly)
+void ZmodF_poly_clear(ZmodF_poly_t poly)
 {
    flint_heap_free(poly->coeffs);
    flint_heap_free(poly->storage);
 }
 
-void ZmodFpoly_stack_init(ZmodFpoly_t poly, unsigned long depth, unsigned long n,
+void ZmodF_poly_stack_init(ZmodF_poly_t poly, unsigned long depth, unsigned long n,
                     unsigned long scratch_count)
 {
    poly->n = n;
@@ -76,7 +76,7 @@ void ZmodFpoly_stack_init(ZmodFpoly_t poly, unsigned long depth, unsigned long n
       poly->coeffs[i] = poly->coeffs[i-1] + (n+1);
 }
 
-void ZmodFpoly_stack_clear(ZmodFpoly_t poly)
+void ZmodF_poly_stack_clear(ZmodF_poly_t poly)
 {
    flint_stack_release();
    flint_stack_release();
@@ -90,7 +90,7 @@ void ZmodFpoly_stack_clear(ZmodFpoly_t poly)
    
 ****************************************************************************/
 
-long ZmodFpoly_convert_in_mpn(ZmodFpoly_t poly_f, fmpz_poly_t poly_mpn)
+long ZmodF_poly_convert_in_mpn(ZmodF_poly_t poly_f, fmpz_poly_t poly_mpn)
 {
    unsigned long size_f = poly_f->n + 1;
    unsigned long size_m = poly_mpn->limbs+1;
@@ -138,7 +138,7 @@ long ZmodFpoly_convert_in_mpn(ZmodFpoly_t poly_f, fmpz_poly_t poly_mpn)
    return sign*(FLINT_BITS*limbs+bits);  
 }
 
-void ZmodFpoly_convert_out_mpn(fmpz_poly_t poly_mpn, ZmodFpoly_t poly_f, long sign)
+void ZmodF_poly_convert_out_mpn(fmpz_poly_t poly_mpn, ZmodF_poly_t poly_f, long sign)
 {
    unsigned long n = poly_f->n;
    unsigned long size_m = poly_mpn->limbs+1;
@@ -203,7 +203,7 @@ static inline long __get_next_coeff_unsigned(mp_limb_t * coeff_m, long * coeff)
    return *coeff;
 }
 
-void ZmodFpoly_bit_pack_mpn(ZmodFpoly_t poly_f, fmpz_poly_t poly_mpn,
+void ZmodF_poly_bit_pack_mpn(ZmodF_poly_t poly_f, fmpz_poly_t poly_mpn,
                             unsigned long bundle, long bits)
 {   
    unsigned long i, k, skip;
@@ -340,7 +340,7 @@ void ZmodFpoly_bit_pack_mpn(ZmodFpoly_t poly_f, fmpz_poly_t poly_mpn,
 }
 
 
-void ZmodFpoly_bit_unpack_mpn(fmpz_poly_t poly_mpn, ZmodFpoly_t poly_f, 
+void ZmodF_poly_bit_unpack_mpn(fmpz_poly_t poly_mpn, ZmodF_poly_t poly_f, 
                               unsigned long bundle, unsigned long bits)
 {
    unsigned long k, skip;
@@ -431,7 +431,7 @@ void ZmodFpoly_bit_unpack_mpn(fmpz_poly_t poly_mpn, ZmodFpoly_t poly_f,
    }
 }
  
-void ZmodFpoly_bit_unpack_unsigned_mpn(fmpz_poly_t poly_mpn, ZmodFpoly_t poly_f, 
+void ZmodF_poly_bit_unpack_unsigned_mpn(fmpz_poly_t poly_mpn, ZmodF_poly_t poly_f, 
                               unsigned long bundle, unsigned long bits)
 {
    unsigned long k, l, skip;
@@ -495,7 +495,7 @@ void ZmodFpoly_bit_unpack_unsigned_mpn(fmpz_poly_t poly_mpn, ZmodFpoly_t poly_f,
    }
 }
 
-void ZmodFpoly_limb_pack_mpn(ZmodFpoly_t poly_f, fmpz_poly_t poly_mpn,
+void ZmodF_poly_limb_pack_mpn(ZmodF_poly_t poly_f, fmpz_poly_t poly_mpn,
                                            unsigned long bundle, long limbs)
 {
    unsigned long size_m = poly_mpn->limbs + 1;
@@ -534,7 +534,7 @@ void ZmodFpoly_limb_pack_mpn(ZmodFpoly_t poly_f, fmpz_poly_t poly_mpn,
    }
 }
 
-void ZmodFpoly_limb_unpack_mpn(fmpz_poly_t poly_mpn, ZmodFpoly_t poly_f, 
+void ZmodF_poly_limb_unpack_mpn(fmpz_poly_t poly_mpn, ZmodF_poly_t poly_f, 
                                   unsigned long bundle, unsigned long limbs)
 {
    unsigned long size_m = poly_mpn->limbs + 1;
@@ -562,7 +562,7 @@ void ZmodFpoly_limb_unpack_mpn(fmpz_poly_t poly_mpn, ZmodFpoly_t poly_f,
    }
 }
 
-void ZmodFpoly_limb_unpack_unsigned_mpn(fmpz_poly_t poly_mpn, ZmodFpoly_t poly_f, 
+void ZmodF_poly_limb_unpack_unsigned_mpn(fmpz_poly_t poly_mpn, ZmodF_poly_t poly_f, 
                                   unsigned long bundle, unsigned long limbs)
 {
    unsigned long size_m = poly_mpn->limbs + 1;
@@ -579,7 +579,7 @@ void ZmodFpoly_limb_unpack_unsigned_mpn(fmpz_poly_t poly_mpn, ZmodFpoly_t poly_f
    
 }
 
-void __ZmodFpoly_write_next_limb(mp_limb_t * array, unsigned long * temp, unsigned long * offset_limb, 
+void __ZmodF_poly_write_next_limb(mp_limb_t * array, unsigned long * temp, unsigned long * offset_limb, 
              unsigned long next_limb, unsigned long shift_1, unsigned long shift_2)
 {
    *temp += l_shift(next_limb, shift_1);
@@ -588,7 +588,7 @@ void __ZmodFpoly_write_next_limb(mp_limb_t * array, unsigned long * temp, unsign
    *temp = r_shift(next_limb, shift_2);
 }
 
-void __ZmodFpoly_write_whole_limb(mp_limb_t * array, unsigned long * temp, unsigned long * offset_limb, 
+void __ZmodF_poly_write_whole_limb(mp_limb_t * array, unsigned long * temp, unsigned long * offset_limb, 
              unsigned long next_limb, unsigned long shift_1, unsigned long shift_2)
 {
    *temp += l_shift(next_limb,shift_1);
@@ -597,7 +597,7 @@ void __ZmodFpoly_write_whole_limb(mp_limb_t * array, unsigned long * temp, unsig
    *temp = r_shift(next_limb,shift_2);
 }
 
-void ZmodFpoly_byte_pack_mpn(ZmodFpoly_t poly_f, fmpz_poly_t poly_mpn,
+void ZmodF_poly_byte_pack_mpn(ZmodF_poly_t poly_f, fmpz_poly_t poly_mpn,
                              unsigned long bundle, unsigned long coeff_bytes)
 {
    unsigned long size_m = poly_mpn->limbs+1;
@@ -672,7 +672,7 @@ void ZmodFpoly_byte_pack_mpn(ZmodFpoly_t poly_f, fmpz_poly_t poly_mpn,
              {
                 if (coeff_m == next_point-size_m) 
                 {
-                   __ZmodFpoly_write_next_limb(array, &temp, &offset_limb, next_limb, shift_1, shift_2);
+                   __ZmodF_poly_write_next_limb(array, &temp, &offset_limb, next_limb, shift_1, shift_2);
                    temp += l_shift(-1UL,shift_1);
                    array[offset_limb] = temp;
                    offset_limb++;
@@ -680,17 +680,17 @@ void ZmodFpoly_byte_pack_mpn(ZmodFpoly_t poly_f, fmpz_poly_t poly_mpn,
                 } else 
                 {
                    next_limb &= ((1UL<<(extra_bytes_per_coeff<<3))-1);
-                   __ZmodFpoly_write_next_limb(array, &temp, &offset_limb, next_limb, shift_1, shift_2);
+                   __ZmodF_poly_write_next_limb(array, &temp, &offset_limb, next_limb, shift_1, shift_2);
                    array[offset_limb] = temp;
                 }
              } else
              {
-                __ZmodFpoly_write_next_limb(array, &temp, &offset_limb, next_limb, shift_1, shift_2);
+                __ZmodF_poly_write_next_limb(array, &temp, &offset_limb, next_limb, shift_1, shift_2);
                 // deal with remaining limbs
                 for (j = 1; j < ABS(coeff_m[0]); j++)
                 {
                    next_limb = ~coeff_m[j+1];
-                   __ZmodFpoly_write_whole_limb(array, &temp, &offset_limb, next_limb, shift_1, shift_2);
+                   __ZmodF_poly_write_whole_limb(array, &temp, &offset_limb, next_limb, shift_1, shift_2);
                 }
                 // write remaining part of coefficient and fill 
                 // remainder of coeff_bytes with binary 1's
@@ -724,13 +724,13 @@ void ZmodFpoly_byte_pack_mpn(ZmodFpoly_t poly_f, fmpz_poly_t poly_mpn,
           {
              // deal with first limb of coefficient
              next_limb = coeff_m[1];
-             __ZmodFpoly_write_next_limb(array, &temp, &offset_limb, next_limb, shift_1, shift_2);
+             __ZmodF_poly_write_next_limb(array, &temp, &offset_limb, next_limb, shift_1, shift_2);
              if (shift_2 == FLINT_BITS) temp = 0;
              // deal with remaining limbs
              for (j = 1; j < ABS(coeff_m[0]); j++)
              {
                 next_limb = coeff_m[j+1];
-                __ZmodFpoly_write_whole_limb(array, &temp, &offset_limb, next_limb, shift_1, shift_2);
+                __ZmodF_poly_write_whole_limb(array, &temp, &offset_limb, next_limb, shift_1, shift_2);
              }
              // write remaining part of coefficient
              array[offset_limb] = temp;
@@ -796,7 +796,7 @@ void ZmodFpoly_byte_pack_mpn(ZmodFpoly_t poly_f, fmpz_poly_t poly_mpn,
    }
 }
      
-static inline void __ZmodFpoly_unpack_bytes(mp_limb_t* output, mp_limb_t* array, 
+static inline void __ZmodF_poly_unpack_bytes(mp_limb_t* output, mp_limb_t* array, 
             const unsigned long limb_start, const unsigned long byte_start, 
             const unsigned long num_bytes)
 {
@@ -841,7 +841,7 @@ static inline void __ZmodFpoly_unpack_bytes(mp_limb_t* output, mp_limb_t* array,
     }
 }
 
-static inline unsigned long __ZmodFpoly_unpack_signed_bytes(mp_limb_t* output, mp_limb_t* array, 
+static inline unsigned long __ZmodF_poly_unpack_signed_bytes(mp_limb_t* output, mp_limb_t* array, 
             const unsigned long limb_start, const unsigned long byte_start, 
             const unsigned long num_bytes)
 {
@@ -933,7 +933,7 @@ static inline unsigned long __ZmodFpoly_unpack_signed_bytes(mp_limb_t* output, m
     return sign;
 }   
 
-void ZmodFpoly_byte_unpack_unsigned_mpn(fmpz_poly_t poly_m, mp_limb_t* array,
+void ZmodF_poly_byte_unpack_unsigned_mpn(fmpz_poly_t poly_m, mp_limb_t* array,
                                unsigned long bundle, unsigned long coeff_bytes)
 {
    const unsigned long limbs_per_coeff = (coeff_bytes>>FLINT_LG_BYTES_PER_LIMB);
@@ -954,7 +954,7 @@ void ZmodFpoly_byte_unpack_unsigned_mpn(fmpz_poly_t poly_m, mp_limb_t* array,
    for (unsigned long i = 0; i < bundle; i++)
    {
        clear_limbs(temp, limbs+2);
-       __ZmodFpoly_unpack_bytes(temp + 1, array, limb_upto, 
+       __ZmodF_poly_unpack_bytes(temp + 1, array, limb_upto, 
                                              byte_offset, coeff_bytes);
        temp[0] = limbs;
        NORM(temp);
@@ -976,7 +976,7 @@ void ZmodFpoly_byte_unpack_unsigned_mpn(fmpz_poly_t poly_m, mp_limb_t* array,
    flint_stack_release();
 }
 
-void ZmodFpoly_byte_unpack_mpn(fmpz_poly_t poly_m, mp_limb_t* array,
+void ZmodF_poly_byte_unpack_mpn(fmpz_poly_t poly_m, mp_limb_t* array,
                                unsigned long bundle, unsigned long coeff_bytes)
 {
    const unsigned long limbs_per_coeff = (coeff_bytes>>FLINT_LG_BYTES_PER_LIMB);
@@ -1000,7 +1000,7 @@ void ZmodFpoly_byte_unpack_mpn(fmpz_poly_t poly_m, mp_limb_t* array,
    for (unsigned long i = 0; i < bundle; i++)
    {
        clear_limbs(temp,limbs+2);
-       sign = __ZmodFpoly_unpack_signed_bytes(temp + 1, array, limb_upto, 
+       sign = __ZmodF_poly_unpack_signed_bytes(temp + 1, array, limb_upto, 
                                              byte_offset, coeff_bytes);
        if (sign) temp[0] = -limbs;
        else temp[0] = limbs;
@@ -1034,13 +1034,13 @@ void ZmodFpoly_byte_unpack_mpn(fmpz_poly_t poly_m, mp_limb_t* array,
 
 
      
-void ZmodFpoly_split_mpn(ZmodFpoly_t poly_f, fmpz_poly_t poly_mpn,
+void ZmodF_poly_split_mpn(ZmodF_poly_t poly_f, fmpz_poly_t poly_mpn,
                          unsigned long bundle, unsigned long limbs)
 {
    abort();
 }
      
-void ZmodFpoly_unsplit_mpn(ZmodFpoly_t poly_f, fmpz_poly_t poly_mpn,
+void ZmodF_poly_unsplit_mpn(ZmodF_poly_t poly_f, fmpz_poly_t poly_mpn,
                            unsigned long bundle, unsigned long limbs)
 {
    abort();
@@ -1054,7 +1054,7 @@ void ZmodFpoly_unsplit_mpn(ZmodFpoly_t poly_f, fmpz_poly_t poly_mpn,
 ****************************************************************************/
 
 
-void ZmodFpoly_set(ZmodFpoly_t x, ZmodFpoly_t y)
+void ZmodF_poly_set(ZmodF_poly_t x, ZmodF_poly_t y)
 {
    FLINT_ASSERT(x->depth == y->depth);
    FLINT_ASSERT(x->n == y->n);
@@ -1066,7 +1066,7 @@ void ZmodFpoly_set(ZmodFpoly_t x, ZmodFpoly_t y)
 }
 
 
-void ZmodFpoly_pointwise_mul(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y)
+void ZmodF_poly_pointwise_mul(ZmodF_poly_t res, ZmodF_poly_t x, ZmodF_poly_t y)
 {
    FLINT_ASSERT(x->depth == y->depth);
    FLINT_ASSERT(x->depth == res->depth);
@@ -1099,7 +1099,7 @@ void ZmodFpoly_pointwise_mul(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y)
 }
 
 
-void ZmodFpoly_add(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y)
+void ZmodF_poly_add(ZmodF_poly_t res, ZmodF_poly_t x, ZmodF_poly_t y)
 {
    FLINT_ASSERT(x->depth == y->depth);
    FLINT_ASSERT(x->depth == res->depth);
@@ -1114,7 +1114,7 @@ void ZmodFpoly_add(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y)
 }
 
 
-void ZmodFpoly_sub(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y)
+void ZmodF_poly_sub(ZmodF_poly_t res, ZmodF_poly_t x, ZmodF_poly_t y)
 {
    FLINT_ASSERT(x->depth == y->depth);
    FLINT_ASSERT(x->depth == res->depth);
@@ -1129,14 +1129,14 @@ void ZmodFpoly_sub(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y)
 }
 
 
-void ZmodFpoly_normalise(ZmodFpoly_t poly)
+void ZmodF_poly_normalise(ZmodF_poly_t poly)
 {
    for (unsigned long i = 0; i < poly->length; i++)
       ZmodF_normalise(poly->coeffs[i], poly->n);
 }
 
 
-void ZmodFpoly_rescale(ZmodFpoly_t poly)
+void ZmodF_poly_rescale(ZmodF_poly_t poly)
 {
    if (poly->depth == 0)
       return;
@@ -1154,7 +1154,7 @@ void ZmodFpoly_rescale(ZmodFpoly_t poly)
 ****************************************************************************/
 
 
-void _ZmodFpoly_FFT_iterative(
+void _ZmodF_poly_FFT_iterative(
             ZmodF_t* x, unsigned long depth,
             unsigned long skip, unsigned long nonzero, unsigned long length,
             unsigned long twist, unsigned long n, ZmodF_t* scratch)
@@ -1434,7 +1434,7 @@ void _ZmodFpoly_FFT_iterative(
 Factors FFT of length 2^depth into length 2^rows_depth and length 2^cols_depth
 transforms
 */
-void _ZmodFpoly_FFT_factor(
+void _ZmodF_poly_FFT_factor(
             ZmodF_t* x, unsigned long rows_depth, unsigned long cols_depth,
             unsigned long skip, unsigned long nonzero, unsigned long length,
             unsigned long twist, unsigned long n, ZmodF_t* scratch)
@@ -1468,25 +1468,25 @@ void _ZmodFpoly_FFT_factor(
 
    // column transforms
    for (i = 0, y = x, j = twist; i < nonzero_cols; i++, y += skip, j += root)
-      _ZmodFpoly_FFT(y, rows_depth, skip << cols_depth, nonzero_rows + 1,
+      _ZmodF_poly_FFT(y, rows_depth, skip << cols_depth, nonzero_rows + 1,
                      length_whole_rows, j, n, scratch);
 
    if (nonzero_rows)
    {
       for (; i < cols; i++, y += skip, j += root)
-         _ZmodFpoly_FFT(y, rows_depth, skip << cols_depth, nonzero_rows,
+         _ZmodF_poly_FFT(y, rows_depth, skip << cols_depth, nonzero_rows,
                         length_whole_rows, j, n, scratch);
       nonzero_cols = cols;
    }
    
    // row transforms
    for (i = 0, y = x; i < length_rows; i++, y += (skip << cols_depth))
-      _ZmodFpoly_FFT(y, cols_depth, skip, nonzero_cols, cols,
+      _ZmodF_poly_FFT(y, cols_depth, skip, nonzero_cols, cols,
                      twist << rows_depth, n, scratch);
 
    if (length_cols)
       // The relevant portion of the last row:
-      _ZmodFpoly_FFT(y, cols_depth, skip, nonzero_cols, length_cols,
+      _ZmodF_poly_FFT(y, cols_depth, skip, nonzero_cols, length_cols,
                      twist << rows_depth, n, scratch);
 }
 
@@ -1506,7 +1506,7 @@ twist = twisting power of sqrt2
 n = coefficient length
 scratch = a scratch buffer
 */
-void _ZmodFpoly_FFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
+void _ZmodF_poly_FFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
                     unsigned long nonzero, unsigned long length,
                     unsigned long twist, unsigned long n,
                     ZmodF_t* scratch)
@@ -1524,14 +1524,14 @@ void _ZmodFpoly_FFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
    if (depth == 1 ||
        ((1 << depth) + 1) * (n+1) <= ZMODFPOLY_FFT_FACTOR_THRESHOLD)
    {
-      _ZmodFpoly_FFT_iterative(x, depth, skip, nonzero, length,
+      _ZmodF_poly_FFT_iterative(x, depth, skip, nonzero, length,
                                twist, n, scratch);
    }
    else
    {
       unsigned long rows_depth = depth >> 1;
       unsigned long cols_depth = depth - rows_depth;
-      _ZmodFpoly_FFT_factor(x, rows_depth, cols_depth, skip, nonzero, length,
+      _ZmodF_poly_FFT_factor(x, rows_depth, cols_depth, skip, nonzero, length,
                             twist, n, scratch);
    }
 }
@@ -1548,7 +1548,7 @@ void _ZmodFpoly_FFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
 /*
 This one is for when there is no truncation.
 */
-void _ZmodFpoly_IFFT_iterative(
+void _ZmodF_poly_IFFT_iterative(
                ZmodF_t* x, unsigned long depth, unsigned long skip,
                unsigned long twist, unsigned long n, ZmodF_t* scratch)
 {
@@ -1672,7 +1672,7 @@ void _ZmodFpoly_IFFT_iterative(
 This one's for working in L1 when truncation is involved. It splits into
 two halves.
 */
-void _ZmodFpoly_IFFT_recursive(
+void _ZmodF_poly_IFFT_recursive(
                ZmodF_t* x, unsigned long depth, unsigned long skip,
                unsigned long nonzero, unsigned long length, int extra,
                unsigned long twist, unsigned long n, ZmodF_t* scratch)
@@ -1692,7 +1692,7 @@ void _ZmodFpoly_IFFT_recursive(
    if (length == size)
    {
       // no truncation necessary
-      _ZmodFpoly_IFFT_iterative(x, depth, skip, twist, n, scratch);
+      _ZmodF_poly_IFFT_iterative(x, depth, skip, twist, n, scratch);
       return;
    }
 
@@ -1770,7 +1770,7 @@ void _ZmodFpoly_IFFT_recursive(
       // BBBB*???      BBBB*???      BBBB*???      BBBB*???
       // AAAA????  or  AAaa????  or  aaaa??aa  or  aaaaaaaa
       if (depth > 1)
-         _ZmodFpoly_IFFT_recursive(x, depth - 1, skip,
+         _ZmodF_poly_IFFT_recursive(x, depth - 1, skip,
                                    (nonzero < cols) ? nonzero : cols,
                                    length, extra, twist << 1, n, scratch);
       
@@ -1803,7 +1803,7 @@ void _ZmodFpoly_IFFT_recursive(
       // BBBBBBBB                   BBBBBBBB
       // AAAAaaaa (extra == 1)  or  CCCAAAaa
       if (depth > 1)
-         _ZmodFpoly_IFFT_iterative(x, depth - 1, skip, twist << 1, n, scratch);
+         _ZmodF_poly_IFFT_iterative(x, depth - 1, skip, twist << 1, n, scratch);
 
       long i = cols - 1;
       unsigned long s = twist + root*i;
@@ -1837,7 +1837,7 @@ void _ZmodFpoly_IFFT_recursive(
       // AAAAAAAA                   BBBAAAAA
       // *??????? (extra == 1)  or  BBB*????
       if (depth > 1)
-         _ZmodFpoly_IFFT_recursive(x + skip*cols, depth - 1, skip, cols,
+         _ZmodF_poly_IFFT_recursive(x + skip*cols, depth - 1, skip, cols,
                                    length - cols, extra, twist << 1, n,
                                    scratch);
 
@@ -1869,7 +1869,7 @@ twist = twisting power of sqrt2
 n = coefficient length
 scratch = a scratch buffer
 */
-void _ZmodFpoly_IFFT_factor(
+void _ZmodF_poly_IFFT_factor(
             ZmodF_t* x, unsigned long rows_depth, unsigned long cols_depth,
             unsigned long skip, unsigned long nonzero, unsigned long length,
             int extra, unsigned long twist, unsigned long n, ZmodF_t* scratch)
@@ -1904,7 +1904,7 @@ void _ZmodFpoly_IFFT_factor(
 
    // row transforms for the rows where we have all fourier coefficients
    for (i = 0, y = x; i < length_rows; i++, y += (skip << cols_depth))
-      _ZmodFpoly_IFFT(y, cols_depth, skip, cols, cols, 0,
+      _ZmodF_poly_IFFT(y, cols_depth, skip, cols, cols, 0,
                       twist << rows_depth, n, scratch);
 
    // column transforms where we have enough information
@@ -1912,18 +1912,18 @@ void _ZmodFpoly_IFFT_factor(
         j = twist + (root*length_cols);
         i < nonzero_cols; i++, y += skip, j += root)
    {
-      _ZmodFpoly_IFFT(y, rows_depth, skip << cols_depth, nonzero_rows + 1,
+      _ZmodF_poly_IFFT(y, rows_depth, skip << cols_depth, nonzero_rows + 1,
                       length_rows, length_cols ? 1 : extra, j, n, scratch);
    }
    if (nonzero_rows)
       for (; i < cols; i++, y += skip, j += root)
-         _ZmodFpoly_IFFT(y, rows_depth, skip << cols_depth, nonzero_rows,
+         _ZmodF_poly_IFFT(y, rows_depth, skip << cols_depth, nonzero_rows,
                          length_rows, length_cols ? 1 : extra, j, n, scratch);
 
    if (length_cols)
    {
       // a single switcheroo row transform
-      _ZmodFpoly_IFFT(x + length_rows * (skip << cols_depth), cols_depth,
+      _ZmodF_poly_IFFT(x + length_rows * (skip << cols_depth), cols_depth,
                       skip, (nonzero_rows ? cols : nonzero_cols),
                       length_cols, extra, twist << rows_depth, n, scratch);
 
@@ -1931,13 +1931,13 @@ void _ZmodFpoly_IFFT_factor(
       for (i = 0, y = x, j = twist; i < length_cols && i < nonzero_cols;
            i++, y += skip, j += root)
       {
-         _ZmodFpoly_IFFT(y, rows_depth, skip << cols_depth, nonzero_rows + 1,
+         _ZmodF_poly_IFFT(y, rows_depth, skip << cols_depth, nonzero_rows + 1,
                          length_rows + 1, 0, j, n, scratch);
       }
       if (nonzero_rows)
       {
          for (; i < length_cols; i++, y += skip, j += root)
-            _ZmodFpoly_IFFT(y, rows_depth, skip << cols_depth, nonzero_rows,
+            _ZmodF_poly_IFFT(y, rows_depth, skip << cols_depth, nonzero_rows,
                             length_rows + 1, 0, j, n, scratch);
       }
    }
@@ -1970,7 +1970,7 @@ twist = twisting power of sqrt2
 n = coefficient length
 scratch = a scratch buffer
 */
-void _ZmodFpoly_IFFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
+void _ZmodF_poly_IFFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
                      unsigned long nonzero, unsigned long length, int extra,
                      unsigned long twist, unsigned long n,
                      ZmodF_t* scratch)
@@ -1991,14 +1991,14 @@ void _ZmodFpoly_IFFT(ZmodF_t* x, unsigned long depth, unsigned long skip,
    if (depth == 1 ||
        ((1 << depth) + 1) * (n+1) <= ZMODFPOLY_FFT_FACTOR_THRESHOLD)
    {
-      _ZmodFpoly_IFFT_recursive(x, depth, skip, nonzero, length, extra,
+      _ZmodF_poly_IFFT_recursive(x, depth, skip, nonzero, length, extra,
                                 twist, n, scratch);
    }
    else
    {
       unsigned long rows_depth = depth >> 1;
       unsigned long cols_depth = depth - rows_depth;
-      _ZmodFpoly_IFFT_factor(x, rows_depth, cols_depth, skip, nonzero, length,
+      _ZmodF_poly_IFFT_factor(x, rows_depth, cols_depth, skip, nonzero, length,
                              extra, twist, n, scratch);
    }
 }
@@ -2020,7 +2020,7 @@ input is assumed to be mod x^M - a^M, where a = 2^twist
 
 assumes twist nonzero
 */
-void _ZmodFpoly_FFT_dual_recursive(
+void _ZmodF_poly_FFT_dual_recursive(
             ZmodF_t* x, unsigned long depth,
             unsigned long twist, unsigned long root,
             unsigned long n, ZmodF_t* scratch)
@@ -2150,14 +2150,14 @@ void _ZmodFpoly_FFT_dual_recursive(
    // =========================================================================
    // recurse into two halves
 
-   _ZmodFpoly_FFT_dual_recursive(x, depth-1, twist, root << 1, n, scratch);
-   _ZmodFpoly_FFT_dual_recursive(x + half, depth-1, twist + root, root << 1,
+   _ZmodF_poly_FFT_dual_recursive(x, depth-1, twist, root << 1, n, scratch);
+   _ZmodF_poly_FFT_dual_recursive(x + half, depth-1, twist + root, root << 1,
                                  n, scratch);
 }
 
 
 
-void _ZmodFpoly_IFFT_dual_recursive(
+void _ZmodF_poly_IFFT_dual_recursive(
             ZmodF_t* x, unsigned long depth,
             unsigned long twist, unsigned long root,
             unsigned long n, ZmodF_t* scratch)
@@ -2238,8 +2238,8 @@ void _ZmodFpoly_IFFT_dual_recursive(
    // =========================================================================
    // recurse into two halves
 
-   _ZmodFpoly_IFFT_dual_recursive(x, depth-1, twist, root << 1, n, scratch);
-   _ZmodFpoly_IFFT_dual_recursive(x + half, depth-1, twist + root, root << 1,
+   _ZmodF_poly_IFFT_dual_recursive(x, depth-1, twist, root << 1, n, scratch);
+   _ZmodF_poly_IFFT_dual_recursive(x + half, depth-1, twist + root, root << 1,
                                   n, scratch);
 
    // =========================================================================
@@ -2293,7 +2293,7 @@ void _ZmodFpoly_IFFT_dual_recursive(
 ****************************************************************************/
 
 
-void ZmodFpoly_FFT(ZmodFpoly_t poly, unsigned long length)
+void ZmodF_poly_FFT(ZmodF_poly_t poly, unsigned long length)
 {
    FLINT_ASSERT(length <= (1UL << poly->depth));
    // check the right roots of unity are available
@@ -2311,7 +2311,7 @@ void ZmodFpoly_FFT(ZmodFpoly_t poly, unsigned long length)
       else
       {
          if (poly->depth >= 1)
-            _ZmodFpoly_FFT(poly->coeffs, poly->depth, 1, poly->length,
+            _ZmodF_poly_FFT(poly->coeffs, poly->depth, 1, poly->length,
                            length, 0, poly->n, poly->scratch);
       }
    }
@@ -2320,21 +2320,21 @@ void ZmodFpoly_FFT(ZmodFpoly_t poly, unsigned long length)
 }
 
 
-void ZmodFpoly_IFFT(ZmodFpoly_t poly)
+void ZmodF_poly_IFFT(ZmodF_poly_t poly)
 {
    // check the right roots of unity are available
    FLINT_ASSERT((4 * poly->n * FLINT_BITS) % (1 << poly->depth) == 0);
    FLINT_ASSERT(poly->scratch_count >= 1);
 
    if (poly->length && poly->depth)
-      _ZmodFpoly_IFFT(poly->coeffs, poly->depth, 1, poly->length,
+      _ZmodF_poly_IFFT(poly->coeffs, poly->depth, 1, poly->length,
                       poly->length, 0, 0, poly->n, poly->scratch);
 }
 
 
 // res may alias x or y
 // x and y may alias each other
-void ZmodFpoly_convolution(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y)
+void ZmodF_poly_convolution(ZmodF_poly_t res, ZmodF_poly_t x, ZmodF_poly_t y)
 {
    FLINT_ASSERT(x->depth == y->depth);
    FLINT_ASSERT(x->depth == res->depth);
@@ -2346,13 +2346,13 @@ void ZmodFpoly_convolution(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y)
    if (length > size)
       length = size;
    
-   ZmodFpoly_FFT(x, length);
+   ZmodF_poly_FFT(x, length);
    if (x != y)    // take care of aliasing
-      ZmodFpoly_FFT(y, length);
+      ZmodF_poly_FFT(y, length);
       
-   ZmodFpoly_pointwise_mul(res, x, y);
-   ZmodFpoly_IFFT(res);
-   ZmodFpoly_rescale(res);
+   ZmodF_poly_pointwise_mul(res, x, y);
+   ZmodF_poly_IFFT(res);
+   ZmodF_poly_rescale(res);
 }
 
 
@@ -2366,7 +2366,7 @@ void ZmodFpoly_convolution(ZmodFpoly_t res, ZmodFpoly_t x, ZmodFpoly_t y)
 /*
 ignores length of poly
 */
-void ZmodFpoly_negacyclic_FFT(ZmodFpoly_t poly)
+void ZmodF_poly_negacyclic_FFT(ZmodF_poly_t poly)
 {
    // check the right roots of unity are available
    FLINT_ASSERT((2 * poly->n * FLINT_BITS) % (1 << poly->depth) == 0);
@@ -2374,25 +2374,25 @@ void ZmodFpoly_negacyclic_FFT(ZmodFpoly_t poly)
 
    unsigned long twist = (poly->n * FLINT_BITS) >> poly->depth;
 
-   _ZmodFpoly_FFT_dual_recursive(poly->coeffs, poly->depth, twist, 2*twist, poly->n, poly->scratch);
+   _ZmodF_poly_FFT_dual_recursive(poly->coeffs, poly->depth, twist, 2*twist, poly->n, poly->scratch);
    poly->length = 1 << poly->depth;
 }
 
 
-void ZmodFpoly_negacyclic_IFFT(ZmodFpoly_t poly)
+void ZmodF_poly_negacyclic_IFFT(ZmodF_poly_t poly)
 {
    // check the right roots of unity are available
    FLINT_ASSERT((2 * poly->n * FLINT_BITS) % (1 << poly->depth) == 0);
    FLINT_ASSERT(poly->scratch_count >= 1);
 
    unsigned long twist = (poly->n * FLINT_BITS) >> poly->depth;
-   _ZmodFpoly_IFFT_dual_recursive(poly->coeffs, poly->depth, twist, 2*twist, poly->n, poly->scratch);
+   _ZmodF_poly_IFFT_dual_recursive(poly->coeffs, poly->depth, twist, 2*twist, poly->n, poly->scratch);
    poly->length = 1 << poly->depth;
 }
 
 
-void ZmodFpoly_negacyclic_convolution(ZmodFpoly_t res,
-                                      ZmodFpoly_t x, ZmodFpoly_t y)
+void ZmodF_poly_negacyclic_convolution(ZmodF_poly_t res,
+                                      ZmodF_poly_t x, ZmodF_poly_t y)
 {
    FLINT_ASSERT(x->depth == y->depth);
    FLINT_ASSERT(x->depth == res->depth);
@@ -2401,13 +2401,13 @@ void ZmodFpoly_negacyclic_convolution(ZmodFpoly_t res,
 
    unsigned long size = 1UL << res->depth;
    
-   ZmodFpoly_negacyclic_FFT(x);
+   ZmodF_poly_negacyclic_FFT(x);
    if (x != y)    // take care of aliasing
-      ZmodFpoly_negacyclic_FFT(y);
+      ZmodF_poly_negacyclic_FFT(y);
       
-   ZmodFpoly_pointwise_mul(res, x, y);
-   ZmodFpoly_negacyclic_IFFT(res);
-   ZmodFpoly_rescale(res);
+   ZmodF_poly_pointwise_mul(res, x, y);
+   ZmodF_poly_negacyclic_IFFT(res);
+   ZmodF_poly_rescale(res);
    res->length = size;
 }
 

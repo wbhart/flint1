@@ -1,15 +1,15 @@
 /****************************************************************************
 
-ZmodFpoly-profile.c
+ZmodF_poly-profile.c
 
-Profiling for ZmodFpoly
+Profiling for ZmodF_poly
 
 Copyright (C) 2007, William Hart and David Harvey
 
 *****************************************************************************/
 
 #include "profiler-main.h"
-#include "ZmodFpoly.h"
+#include "ZmodF_poly.h"
 #include "flint.h"
 #include <string.h>
 #include <math.h>
@@ -18,13 +18,13 @@ Copyright (C) 2007, William Hart and David Harvey
 // ============================================================================
 
 
-void sample_ZmodFpoly_FFT(unsigned long length, unsigned long n,
+void sample_ZmodF_poly_FFT(unsigned long length, unsigned long n,
                           unsigned long count)
 {
    unsigned long m = ceil_log2(2*length);
    
-   ZmodFpoly_t poly;
-   ZmodFpoly_init(poly, m, n, 1);
+   ZmodF_poly_t poly;
+   ZmodF_poly_init(poly, m, n, 1);
    
    // todo: need to generate random data here
    
@@ -33,18 +33,18 @@ void sample_ZmodFpoly_FFT(unsigned long length, unsigned long n,
    for (unsigned long i = 0; i < count; i++)
    {
       poly->length = length;
-      ZmodFpoly_FFT(poly, 2*length);
+      ZmodF_poly_FFT(poly, 2*length);
    }
 
    prof2d_stop();
    
-   ZmodFpoly_clear(poly);
+   ZmodF_poly_clear(poly);
 }
 
 
-char* prof2dDriverString_ZmodFpoly_FFT(char* params)
+char* prof2dDriverString_ZmodF_poly_FFT(char* params)
 {
-   return "ZmodFpoly_FFT over various transform lengths and coefficient sizes";
+   return "ZmodF_poly_FFT over various transform lengths and coefficient sizes";
 }
 
 
@@ -55,7 +55,7 @@ Parameters for this target are:
    length_ratio: e.g. 1.03 means increase by 3% at a time
    n_count: number of coefficient lengths to test
 */
-void prof2dDriver_ZmodFpoly_FFT(char* params)
+void prof2dDriver_ZmodF_poly_FFT(char* params)
 {
    int length_min, length_max, n_count;
    double length_ratio;
@@ -74,7 +74,7 @@ void prof2dDriver_ZmodFpoly_FFT(char* params)
                                         &length_ratio, &n_count);
    }
 
-   prof2d_set_sampler(sample_ZmodFpoly_FFT);
+   prof2d_set_sampler(sample_ZmodF_poly_FFT);
 
    for (unsigned long length = length_min; length < length_max;
         length = (int)(ceil(length_ratio * length)))
@@ -93,13 +93,13 @@ void prof2dDriver_ZmodFpoly_FFT(char* params)
 
 // ============================================================================
 
-void sample_ZmodFpoly_IFFT(unsigned long length, unsigned long n,
+void sample_ZmodF_poly_IFFT(unsigned long length, unsigned long n,
                            unsigned long count)
 {
    unsigned long m = ceil_log2(length);
    
-   ZmodFpoly_t poly;
-   ZmodFpoly_init(poly, m, n, 1);
+   ZmodF_poly_t poly;
+   ZmodF_poly_init(poly, m, n, 1);
    poly->length = length;
    
    // todo: need to generate random data here
@@ -107,17 +107,17 @@ void sample_ZmodFpoly_IFFT(unsigned long length, unsigned long n,
    prof2d_start();
 
    for (unsigned long i = 0; i < count; i++)
-      ZmodFpoly_IFFT(poly);
+      ZmodF_poly_IFFT(poly);
 
    prof2d_stop();
    
-   ZmodFpoly_clear(poly);
+   ZmodF_poly_clear(poly);
 }
 
 
-char* prof2dDriverString_ZmodFpoly_IFFT(char* params)
+char* prof2dDriverString_ZmodF_poly_IFFT(char* params)
 {
-   return "ZmodFpoly_IFFT over various transform lengths and coefficient sizes";
+   return "ZmodF_poly_IFFT over various transform lengths and coefficient sizes";
 }
 
 
@@ -128,7 +128,7 @@ Parameters for this target are:
    length_ratio: e.g. 1.03 means increase by 3% at a time
    n_count: number of coefficient lengths to test
 */
-void prof2dDriver_ZmodFpoly_IFFT(char* params)
+void prof2dDriver_ZmodF_poly_IFFT(char* params)
 {
    int length_min, length_max, n_count;
    double length_ratio;
@@ -147,7 +147,7 @@ void prof2dDriver_ZmodFpoly_IFFT(char* params)
                                         &length_ratio, &n_count);
    }
 
-   prof2d_set_sampler(sample_ZmodFpoly_IFFT);
+   prof2d_set_sampler(sample_ZmodF_poly_IFFT);
 
    for (unsigned long length = length_min; length < length_max;
         length = (int)(ceil(length_ratio * length)))
@@ -167,13 +167,13 @@ void prof2dDriver_ZmodFpoly_IFFT(char* params)
 
 // ============================================================================
 
-void sample_ZmodFpoly_negacyclic_convolution(
+void sample_ZmodF_poly_negacyclic_convolution(
       unsigned long depth, unsigned long n, unsigned long count)
 {
-   ZmodFpoly_t poly1, poly2, poly3;
-   ZmodFpoly_init(poly1, depth, n, 1);
-   ZmodFpoly_init(poly2, depth, n, 1);
-   ZmodFpoly_init(poly3, depth, n, 1);
+   ZmodF_poly_t poly1, poly2, poly3;
+   ZmodF_poly_init(poly1, depth, n, 1);
+   ZmodF_poly_init(poly2, depth, n, 1);
+   ZmodF_poly_init(poly3, depth, n, 1);
 
    unsigned long size = 1 << depth;
    for (unsigned long i = 0; i < size; i++)
@@ -187,19 +187,19 @@ void sample_ZmodFpoly_negacyclic_convolution(
    prof2d_start();
 
    for (unsigned long i = 0; i < count; i++)
-      ZmodFpoly_negacyclic_convolution(poly3, poly1, poly2);
+      ZmodF_poly_negacyclic_convolution(poly3, poly1, poly2);
 
    prof2d_stop();
    
-   ZmodFpoly_clear(poly3);
-   ZmodFpoly_clear(poly2);
-   ZmodFpoly_clear(poly1);
+   ZmodF_poly_clear(poly3);
+   ZmodF_poly_clear(poly2);
+   ZmodF_poly_clear(poly1);
 }
 
 
-char* prof2dDriverString_ZmodFpoly_negacyclic_convolution(char* params)
+char* prof2dDriverString_ZmodF_poly_negacyclic_convolution(char* params)
 {
-   return "ZmodFpoly_negacyclic_convolution over various depths and coefficient lengths";
+   return "ZmodF_poly_negacyclic_convolution over various depths and coefficient lengths";
 }
 
 
@@ -210,7 +210,7 @@ Parameters for this target are:
    n_min: minimum n to try
    n_max: maximum n to try
 */
-void prof2dDriver_ZmodFpoly_negacyclic_convolution(char* params)
+void prof2dDriver_ZmodF_poly_negacyclic_convolution(char* params)
 {
    int depth_min, depth_max, n_min, n_max;
 
@@ -228,7 +228,7 @@ void prof2dDriver_ZmodFpoly_negacyclic_convolution(char* params)
                                         &n_min, &n_max);
    }
 
-   prof2d_set_sampler(sample_ZmodFpoly_negacyclic_convolution);
+   prof2d_set_sampler(sample_ZmodF_poly_negacyclic_convolution);
 
    for (unsigned long depth = depth_min; depth <= depth_max; depth++)
    {

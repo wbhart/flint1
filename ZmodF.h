@@ -7,7 +7,7 @@
  Routines for arithmetic on elements of Z/pZ where p = B^n + 1,
  B = 2^FLINT_BITS.
  
- These are currently used only in the ZmodFpoly module, which supplies the
+ These are currently used only in the ZmodF_poly module, which supplies the
  Schoenhage-Strassen FFT code.
  
 ******************************************************************************/

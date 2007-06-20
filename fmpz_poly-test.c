@@ -13,7 +13,7 @@ Copyright (C) 2007, William Hart and David Harvey
 #include "mpz_poly.h"
 #include "fmpz_poly.h"
 #include "memory-manager.h"
-#include "ZmodFpoly.h"
+#include "ZmodF_poly.h"
 #include "test-support.h"
 
 #define VARY_BITS 0
@@ -1411,7 +1411,7 @@ int test_fmpz_poly_mul_KS()
 {
    mpz_poly_t test_poly, test_poly2, test_poly3, test_poly4;
    fmpz_poly_t test_mpn_poly, test_mpn_poly2, test_mpn_poly3;
-   ZmodFpoly_t test_modF_poly;
+   ZmodF_poly_t test_modF_poly;
    int result = 1;
    unsigned long bits, bits2, length, length2;
    

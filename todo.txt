@@ -110,7 +110,7 @@ to add a bit of padding.
   Surely it's possible to accomplish the same thing without mutating
   the input. -- david
 
-* It seems a little nuts to be using ZmodFpoly with a single coefficient
+* It seems a little nuts to be using ZmodF_poly with a single coefficient
   in _fmpz_poly_mul_KS(). There's something wrong with the code structure here.
   The bitpacking etc routines need to be abstracted differently or something.
   -- david
@@ -119,7 +119,7 @@ to add a bit of padding.
   with someone else's namespace one day. -- david
 
 * I think the the bitpacking/limbpacking/bytepacking routines should be
-  moved out of ZmodFpoly.c into fmpz_poly.c.
+  moved out of ZmodF_poly.c into fmpz_poly.c.
 
 
 === modpmul module ===
@@ -158,7 +158,7 @@ to improve locality.
   investigated.
 
 
-=== ZmodFpoly module ===
+=== ZmodF_poly module ===
 
 * reorganise code to permit doing pointwise mults + inner FFTs + inner IFFTs with better locality
 
@@ -188,7 +188,7 @@ the stack. This could be a problem if we need to allocate many small objects.
 
 * Add memory manager to Zpoly.c
 
-* Use stack based memory manager in ZmodFpoly-test.c
+* Use stack based memory manager in ZmodF_poly-test.c
 
 * Remove randstate memory leak from Z_mul_timing.c
 
