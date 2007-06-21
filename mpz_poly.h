@@ -319,5 +319,15 @@ unsigned long mpz_poly_product_max_bits(mpz_poly_t poly1, mpz_poly_t poly2);
 
 
 
+
+
+// ------------------------------------------------------
+// Exported for testing only
+
+void _mpz_poly_mul_kara_recursive(mpz_t* out,
+          mpz_t* in1, unsigned long len1, mpz_t* in2, unsigned long len2,
+          mpz_t* scratch, unsigned long skip, unsigned long crossover);
+
+
 // *************** end of file
 #endif

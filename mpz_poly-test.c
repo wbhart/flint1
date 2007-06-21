@@ -853,6 +853,54 @@ int test_mpz_poly_mul_naive()
 }
 
 
+
+int test__mpz_poly_mul_kara_recursive()
+{
+   // todo: also should test squaring
+   
+   int success = 1;
+   
+   mpz_poly_t in1, in2, correct, out, scratch;
+   mpz_poly_init(in1);
+   mpz_poly_init(in2);
+   mpz_poly_init(correct);
+   mpz_poly_init(out);
+   mpz_poly_init(scratch);
+   
+   for (unsigned long len1 = 1; len1 <= 64 && success; len1 <<= 1)
+   for (unsigned long len2 = len1; len2 <= 64 && success; len2 <<= 1)
+   for (unsigned long trial = 0; trial < 100 && success; trial++)
+   {
+      mpz_poly_init_upto(in1, len1);
+      mpz_poly_init_upto(in2, len2);
+      mpz_poly_init_upto(out, len1 + len2 - 1);
+      mpz_poly_init_upto(scratch, len1 + len2);
+      
+      for (unsigned long i = 0; i < len1; i++)
+         mpz_urandomb(in1->coeffs[i], randstate, 300);
+      in1->length = len1;
+
+      for (unsigned long i = 0; i < len2; i++)
+         mpz_urandomb(in2->coeffs[i], randstate, 300);
+      in2->length = len2;
+      
+      _mpz_poly_mul_kara_recursive(out->coeffs, in1->coeffs, len1,
+                                   in2->coeffs, len2, scratch->coeffs, 1, 0);
+      out->length = len1 + len2 - 1;
+      
+      mpz_poly_mul_naive(correct, in1, in2);
+      success = success && mpz_poly_equal(correct, out);
+   }
+
+   mpz_poly_clear(scratch);
+   mpz_poly_clear(out);
+   mpz_poly_clear(correct);
+   mpz_poly_clear(in2);
+   mpz_poly_clear(in1);
+   return success;
+}
+
+
 int test_mpz_poly_mul_karatsuba()
 {
    // also should test squaring
@@ -1139,6 +1187,11 @@ void mpz_poly_test_all()
 {
    int success, all_success = 1;
 
+   RUN_TEST(_mpz_poly_mul_kara_recursive);
+   return;
+   
+   
+
    RUN_TEST(mpz_poly_get_coeff_ptr);
    RUN_TEST(mpz_poly_get_coeff);
    RUN_TEST(mpz_poly_get_coeff_ui);
@@ -1178,6 +1231,7 @@ void mpz_poly_test_all()
 //   RUN_TEST(mpz_poly_mod_ui);
 //   RUN_TEST(mpz_poly_mul);
    RUN_TEST(mpz_poly_mul_naive);
+   RUN_TEST(_mpz_poly_mul_kara_recursive);
 //   RUN_TEST(mpz_poly_mul_karatsuba);
 //   RUN_TEST(mpz_poly_mul_SS);
 //   RUN_TEST(mpz_poly_mul_naive_KS);

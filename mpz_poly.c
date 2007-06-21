@@ -1105,10 +1105,198 @@ void mpz_poly_sqr_naive(mpz_poly_t res, mpz_poly_t poly)
 
 
 
+/*
+Recursive portion of karatsuba multiplication.
+
+Input arrays are "in1" of length "len1", staggered by "skip", ditto for in2.
+Output array is "out" of length len1 + len2 - 1, also staggered by "skip".
+scratch buffer should be length len1 + len2, also staggered by "skip".
+
+All input/output/scratch space should be mpz_init'd, and shouldn't overlap.
+
+Must have 1 <= len1 <= len2.
+
+crossover parameter currently unused...
+*/
+void _mpz_poly_mul_kara_recursive(mpz_t* out,
+                                  mpz_t* in1, unsigned long len1,
+                                  mpz_t* in2, unsigned long len2,
+                                  mpz_t* scratch, unsigned long skip,
+                                  unsigned long crossover)
+{
+   FLINT_ASSERT(len1 >= 1);
+   FLINT_ASSERT(len2 >= len1);
+
+   // ==================== base cases
+
+   if (len1 == 1)
+   {
+      // special case, just scalar multiplication
+      for (unsigned long i = 0; i < len2; i++)
+         mpz_mul(out[i*skip], in1[0], in2[i*skip]);
+      return;
+   }
+   
+   /*
+   if (len1 + len2 < crossover)
+   {
+      // switch to naive multiplication here?
+   }
+   */
+
+   // ==================== recursive case
+
+/*
+   printf("\n");
+   printf("entering recursive karatsuba:\n");
+   printf("in1 = ");
+   for (unsigned long i = 0; i < len1; i++)
+      gmp_printf("%Zd ", in1[i*skip]);
+   printf("\n");
+   printf("in2 = ");
+   for (unsigned long i = 0; i < len2; i++)
+      gmp_printf("%Zd ", in2[i*skip]);
+   printf("\n");
+*/
+
+   // Let in1 = A1(x^2) + x*B1(x^2) + C1(x^2),
+   // where A1, B1 are length floor(len1/2),
+   // and C1 is the leading term of in1 if len1 is odd
+
+   // Similarly for in2 = A2(x^2) + x*B2(x^2) + C2(x^2)
+   
+   // Put A1 + B1 into even slots of scratch space
+   // (uses len1/2 scratch slots)
+   
+   mpz_t* ptr = scratch;
+   for (unsigned long i = 0; i < len1/2; i++, ptr += 2*skip)
+      mpz_add(*ptr, in1[2*i*skip], in1[2*i*skip + skip]);
+
+/*      
+   printf("\nA1 + B1 = ");
+   for (unsigned long i = 0; i < len1/2; i++)
+      gmp_printf("%Zd ", scratch[2*i*skip]);
+   printf("\n");
+*/
+   
+   // Put A2 + B2 into remaining even slots of scratch space
+   // (uses len2/2 slots of scratch)
+   mpz_t* scratch2 = ptr;
+   for (unsigned long i = 0; i < len2/2; i++, ptr += 2*skip)
+      mpz_add(*ptr, in2[2*i*skip], in2[2*i*skip + skip]);
+
+/*
+   printf("\nA2 + B2 = ");
+   for (unsigned long i = 0; i < len2/2; i++)
+      gmp_printf("%Zd ", scratch2[2*i*skip]);
+   printf("\n");
+*/
+   
+   // The following three recursive calls all use the odd slots of the current
+   // scratch array as the next layer's scratch space
+
+   // Put product (A1+B1)*(A2+B2) into odd slots of output array
+   _mpz_poly_mul_kara_recursive(out + skip, scratch, len1/2, scratch2, len2/2,
+                                scratch + skip, 2*skip, crossover);
+
+/*
+   printf("\n(A1 + B1) * (A2 + B2) = ");
+   for (unsigned long i = 0; i < len1/2 + len2/2 - 1; i++)
+      gmp_printf("%Zd ", out[2*i*skip + skip]);
+   printf("\n");
+*/
+
+   // Put product x^2*(B1*B2) into even slots of output array
+   // (except first slot, which is an implied zero)
+   _mpz_poly_mul_kara_recursive(out + 2*skip, in1 + skip, len1/2, in2 + skip,
+                                len2/2, scratch + skip, 2*skip, crossover);
+
+   // Put product A1*A2 into even slots of scratch space
+   _mpz_poly_mul_kara_recursive(scratch, in1, len1/2, in2, len2/2,
+                                scratch + skip, 2*skip, crossover);
+                            
+   // Subtract A1*A2 and B1*B2 from (A1+B1)*(A2+B2) to get (A1*B2 + A2*B1)
+   // in odd slots of output
+   for (unsigned long i = 0; i < len1/2 + len2/2 - 1; i++)
+   {
+      mpz_sub(out[2*i*skip + skip], out[2*i*skip + skip], out[2*(i+1)*skip]);
+      mpz_sub(out[2*i*skip + skip], out[2*i*skip + skip], scratch[2*i*skip]);
+   }
+      
+   // Add A1*A2 to x^2*(B1*B2) into even slots of output
+   mpz_set(out[0], scratch[0]);
+   for (unsigned long i = 1; i < len1/2 + len2/2 - 1; i++)
+      mpz_add(out[2*i*skip], out[2*i*skip], scratch[2*i*skip]);
+   
+   // Now we have the product (A1(x^2) + x*B1(x^2)) * (A2(x^2) + x*B2(x^2))
+   // in the output array. Still need to handle C1 and C2 terms.
+   
+   // todo: handle odd case...
+   FLINT_ASSERT(len1 & 1 == 0);
+   FLINT_ASSERT(len2 & 1 == 0);
+}
+
+
 void mpz_poly_mul_karatsuba(mpz_poly_t res, mpz_poly_t poly1,
                             mpz_poly_t poly2)
 {
    abort();
+   
+/*
+   // todo: need to decide crossover parameter based on coefficient size
+
+   if (!poly1->length || !poly2->length)
+   {
+      // one of the polys is zero
+      res->length = 0;
+      return;
+   }
+   
+   if (poly1 == poly2)
+   {
+      // polys are identical, so call specialised squaring routine
+      mpz_poly_sqr_karatsuba(res, poly1);
+      return;
+   }
+   
+   unsigned long limbs = mpz_poly_product_max_limbs(poly1, poly2);
+   unsigned long length = poly1->length + poly2->length - 1;
+   
+   // allocate scratch space for recursive karatsuba routine
+   mpz_t* scratch = (mpz_t*) flint_stack_alloc_bytes(length * sizeof(mpz_t));
+   for (unsigned long i = 0; i < length; i++)
+      mpz_init2(scratch[i], limbs * FLINT_BITS);
+   
+   
+   
+   if (res == poly1 || res == poly2)
+   {
+      // output is inplace, so need a temporary
+      mpz_poly_t temp;
+      mpz_poly_init2(temp, length);
+
+      // allocate enough space in coefficients of temporary
+      for (unsigned long i = 0; i < length; i++)
+         mpz_init2(temp->coeffs[i], FLINT_BITS * limbs);
+      temp->init = length;
+
+      _mpz_poly_mul_naive(temp, poly1, poly2);
+
+      mpz_poly_swap(temp, res);
+      mpz_poly_clear(temp);
+   }
+   else
+   {
+      // output not inplace
+      
+      // allocate more coefficients if necessary
+      mpz_poly_ensure_alloc(res, length);
+      while (res->init < length)
+         mpz_init2(res->coeffs[res->init++], FLINT_BITS * limbs);
+
+      _mpz_poly_mul_naive(res, poly1, poly2);
+   }
+*/
 }
 
 void mpz_poly_mul_SS(mpz_poly_t res, mpz_poly_t poly1, mpz_poly_t poly2)
