@@ -867,9 +867,9 @@ int test__mpz_poly_mul_kara_recursive()
    mpz_poly_init(out);
    mpz_poly_init(scratch);
    
-   for (unsigned long len1 = 1; len1 <= 64 && success; len1 <<= 1)
-   for (unsigned long len2 = len1; len2 <= 64 && success; len2 <<= 1)
-   for (unsigned long trial = 0; trial < 100 && success; trial++)
+   for (unsigned long len1 = 1; len1 <= 64 && success; len1++)
+   for (unsigned long len2 = len1; len2 <= 64 && success; len2++)
+   for (unsigned long trial = 0; trial < 15 && success; trial++)
    {
       mpz_poly_init_upto(in1, len1);
       mpz_poly_init_upto(in2, len2);

@@ -1146,24 +1146,11 @@ void _mpz_poly_mul_kara_recursive(mpz_t* out,
 
    // ==================== recursive case
 
-/*
-   printf("\n");
-   printf("entering recursive karatsuba:\n");
-   printf("in1 = ");
-   for (unsigned long i = 0; i < len1; i++)
-      gmp_printf("%Zd ", in1[i*skip]);
-   printf("\n");
-   printf("in2 = ");
-   for (unsigned long i = 0; i < len2; i++)
-      gmp_printf("%Zd ", in2[i*skip]);
-   printf("\n");
-*/
-
-   // Let in1 = A1(x^2) + x*B1(x^2) + C1(x^2),
-   // where A1, B1 are length floor(len1/2),
+   // Let in1 = A1(x^2) + x*B1(x^2) + x^(2*floor(len1/2))*C1,
+   // where A1, B1 have length floor(len1/2),
    // and C1 is the leading term of in1 if len1 is odd
 
-   // Similarly for in2 = A2(x^2) + x*B2(x^2) + C2(x^2)
+   // Similarly for in2 = A2(x^2) + x*B2(x^2) + x^(2*floor(len2/2))*C2.
    
    // Put A1 + B1 into even slots of scratch space
    // (uses len1/2 scratch slots)
@@ -1172,39 +1159,18 @@ void _mpz_poly_mul_kara_recursive(mpz_t* out,
    for (unsigned long i = 0; i < len1/2; i++, ptr += 2*skip)
       mpz_add(*ptr, in1[2*i*skip], in1[2*i*skip + skip]);
 
-/*      
-   printf("\nA1 + B1 = ");
-   for (unsigned long i = 0; i < len1/2; i++)
-      gmp_printf("%Zd ", scratch[2*i*skip]);
-   printf("\n");
-*/
-   
    // Put A2 + B2 into remaining even slots of scratch space
    // (uses len2/2 slots of scratch)
    mpz_t* scratch2 = ptr;
    for (unsigned long i = 0; i < len2/2; i++, ptr += 2*skip)
       mpz_add(*ptr, in2[2*i*skip], in2[2*i*skip + skip]);
 
-/*
-   printf("\nA2 + B2 = ");
-   for (unsigned long i = 0; i < len2/2; i++)
-      gmp_printf("%Zd ", scratch2[2*i*skip]);
-   printf("\n");
-*/
-   
    // The following three recursive calls all use the odd slots of the current
    // scratch array as the next layer's scratch space
 
    // Put product (A1+B1)*(A2+B2) into odd slots of output array
    _mpz_poly_mul_kara_recursive(out + skip, scratch, len1/2, scratch2, len2/2,
                                 scratch + skip, 2*skip, crossover);
-
-/*
-   printf("\n(A1 + B1) * (A2 + B2) = ");
-   for (unsigned long i = 0; i < len1/2 + len2/2 - 1; i++)
-      gmp_printf("%Zd ", out[2*i*skip + skip]);
-   printf("\n");
-*/
 
    // Put product x^2*(B1*B2) into even slots of output array
    // (except first slot, which is an implied zero)
@@ -1231,9 +1197,41 @@ void _mpz_poly_mul_kara_recursive(mpz_t* out,
    // Now we have the product (A1(x^2) + x*B1(x^2)) * (A2(x^2) + x*B2(x^2))
    // in the output array. Still need to handle C1 and C2 terms.
    
-   // todo: handle odd case...
-   FLINT_ASSERT(len1 & 1 == 0);
-   FLINT_ASSERT(len2 & 1 == 0);
+   if (len1 & 1)
+   {
+      if (len2 & 1)
+      {
+         // terms from x^(len1-1)*C1 * (A2(x^2) + x*B2(x^2))
+         mpz_t* term1 = in1 + skip*(len1-1);
+         for (unsigned long i = 0; i < len2-2; i++)
+            mpz_addmul(out[(i+len1-1)*skip], *term1, in2[i*skip]);
+         mpz_mul(out[(len1+len2-3)*skip], *term1, in2[(len2-2)*skip]);
+
+         // terms from x^(len2-1)*C2 * (A1(x^2) + x*B1(x^2))
+         mpz_t* term2 = in2 + skip*(len2-1);
+         for (unsigned long i = 0; i < len1-1; i++)
+            mpz_addmul(out[(i+len2-1)*skip], *term2, in1[i*skip]);
+            
+         // final C1 * C2 term
+         mpz_mul(out[(len1+len2-2)*skip], *term1, *term2);
+      }
+      else
+      {
+         // terms from x^(len1-1)*C1 * (A2(x^2) + x*B2(x^2))
+         mpz_t* term = in1 + skip*(len1-1);
+         for (unsigned long i = 0; i < len2-1; i++)
+            mpz_addmul(out[(i+len1-1)*skip], *term, in2[i*skip]);
+         mpz_mul(out[(len1+len2-2)*skip], *term, in2[(len2-1)*skip]);
+      }
+   }
+   else if (len2 & 1)
+   {
+      // terms from x^(len2-1)*C2 * (A1(x^2) + x*B1(x^2))
+      mpz_t* term = in2 + skip*(len2-1);
+      for (unsigned long i = 0; i < len1-1; i++)
+         mpz_addmul(out[(i+len2-1)*skip], *term, in1[i*skip]);
+      mpz_mul(out[(len1+len2-2)*skip], *term, in1[(len1-1)*skip]);
+   }
 }
 
 
