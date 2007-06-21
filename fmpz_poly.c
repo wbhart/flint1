@@ -652,8 +652,8 @@ void __fmpz_poly_mul_coeffs(mp_limb_t * res, mp_limb_t * a, mp_limb_t * b)
         res[0] = 0;
       } else
       {
-         if (sizea >= sizeb) mslimb = Z_mpn_mul(res+1, a+1, sizea, b+1, sizeb, 4);
-         else mslimb = Z_mpn_mul(res+1, b+1, sizeb, a+1, sizea, 4);
+         if (sizea >= sizeb) mslimb = Z_mpn_mul(res+1, a+1, sizea, b+1, sizeb);
+         else mslimb = Z_mpn_mul(res+1, b+1, sizeb, a+1, sizea);
          res[0] = sizea+sizeb - (mslimb == 0);
          if ((long) (a[0] ^ b[0]) < 0) res[0] = -res[0];
       }
@@ -1256,7 +1256,7 @@ void _fmpz_poly_mul_KS(fmpz_poly_t output, fmpz_poly_p input1, fmpz_poly_p input
    
    ZmodF_poly_stack_init(poly3, 0, poly1->n + poly2->n, 0);
            
-   Z_mpn_mul(poly3->coeffs[0], poly1->coeffs[0], poly1->n, poly2->coeffs[0], poly2->n, 4);
+   Z_mpn_mul(poly3->coeffs[0], poly1->coeffs[0], poly1->n, poly2->coeffs[0], poly2->n);
    
    poly3->coeffs[0][poly1->n+poly2->n] = 0;
    poly3->length = 1;

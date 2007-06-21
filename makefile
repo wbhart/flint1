@@ -19,7 +19,7 @@ ifndef FLINT_GMP_LIB_DIR
 	FLINT_GMP_LIB_DIR = "/home/dmharvey/gmp/install/lib"
 endif
 
-LIBS = -L$(FLINT_GMP_LIB_DIR) -lgmp -lpthread -lm
+LIBS = -L$(FLINT_GMP_LIB_DIR) -static -lgmp -lpthread -lm
 INCS =  -I"/usr/include" -I$(FLINT_GMP_INCLUDE_DIR)
 
 CC = gcc -std=c99
@@ -205,5 +205,3 @@ delta_qexp.o: delta_qexp.c $(HEADERS)
 
 delta_qexp: delta_qexp.o $(FLINTOBJ)
 	$(CC) $(CFLAGS) -o delta_qexp delta_qexp.o $(FLINTOBJ) $(LIBS)
-	
-
