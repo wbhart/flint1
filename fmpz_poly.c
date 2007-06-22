@@ -876,7 +876,7 @@ void _fmpz_poly_scalar_div_ui(fmpz_poly_t output, fmpz_poly_t poly, unsigned lon
       unsigned long norm;
       mp_limb_t xinv;
       
-      count_leading_zeros (norm, x);
+      count_lead_zeros(norm, x);
       x <<= norm;
       invert_limb(xinv,x);
       x >>= norm;
@@ -912,7 +912,7 @@ void _fmpz_poly_scalar_div_si(fmpz_poly_t output, fmpz_poly_t poly, long x)
       unsigned long norm;
       mp_limb_t xinv;
       
-      count_leading_zeros (norm, (unsigned long) x);
+      count_lead_zeros(norm, (unsigned long) x);
       x = ((unsigned long) x) << norm;
       invert_limb(xinv,(unsigned long) x);
       x = ((unsigned long) x) >> norm;
