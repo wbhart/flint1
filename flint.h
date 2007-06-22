@@ -9,7 +9,9 @@
 
 #include <limits.h>
 #include <assert.h>
+#include <gmp.h>
 #include "longlong_wrapper.h"
+
 
 #ifndef FLINT_H
 #define FLINT_H
@@ -90,7 +92,7 @@ the mpz_t::_mp_d member directly).
 #define count_lead_zeros(a,b) \
    a = __builtin_clzll(b);
 #else
-   count_leading_zeros(a,b);
+#define count_lead_zeros(a,b) count_leading_zeros(a,b);
 #endif
 
 /*
