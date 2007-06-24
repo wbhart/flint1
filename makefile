@@ -205,3 +205,9 @@ delta_qexp.o: delta_qexp.c $(HEADERS)
 
 delta_qexp: delta_qexp.o $(FLINTOBJ)
 	$(CC) $(CFLAGS) -o delta_qexp delta_qexp.o $(FLINTOBJ) $(LIBS)
+
+long_extras.o: long_extras.c long_extras.h
+	$(CC) $(CFLAGS) -c long_extras.c -o long_extras.o
+
+BLTcubes: long_extras.o
+	$(CC) $(CFLAGS) -o BLTcubes BLTcubes.c long_extras.o $(LIBS)
