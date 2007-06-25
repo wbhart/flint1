@@ -114,4 +114,33 @@ static inline void stop_clock(unsigned long n)
 }
 
 
+/******************************************************************************
+
+   Framework for repeatedly sampling a single target
+   
+******************************************************************************/
+
+// A profiling target (a function called with one argument and an
+// iteration count.)
+typedef void (*profile_target_t)(void* arg, unsigned long count);
+
+/*
+   Calls target(arg) repeatedly, adjusting the iteration count based on the
+   observed running times.
+   
+   The target function should use clock #0 (i.e. with start_clock() and
+   stop_clock()) to mark which code should be timed.
+   
+   Stores minimum/maximum time per iteration (in microseconds) in min and max
+   (either may be NULL, in which case the value is not stored).
+*/
+void prof_repeat(double* min, double* max, profile_target_t target, void* arg);
+
+
+// Timing runs need to last at least this many microseconds to be counted:
+#define DURATION_THRESHOLD 200000
+// Microseconds per timing run that the prof_repeat function aims for:
+#define DURATION_TARGET 300000
+
+
 #endif // #ifndef FLINT_PROFILER_H
