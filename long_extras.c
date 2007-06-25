@@ -80,7 +80,7 @@ unsigned long long_mod_precomp2(unsigned long a_hi, unsigned long a_lo,
    t3 = a_lo;
    umul_ppmm(t2, t1, p3, n);
    sub_ddmmss(t4, t3, t4, t3, t2, t1);
-   if (t4 || (!t4 && (t3 >= n))) return t3-n;
+   if (t4 || (t3 >= n)) return t3-n;
    else return t3;   
 }
  
