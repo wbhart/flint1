@@ -20,6 +20,7 @@ ifndef FLINT_GMP_LIB_DIR
 endif
 
 LIBS = -L$(FLINT_GMP_LIB_DIR) -static -lgmp -lpthread -lm
+#LIBS = -L$(FLINT_GMP_LIB_DIR) -lgmp -lpthread -lm
 INCS =  -I"/usr/include" -I$(FLINT_GMP_INCLUDE_DIR)
 
 CC = gcc -std=c99
@@ -198,6 +199,9 @@ ZmodF_mul-profile: ZmodF_mul-profile.o ZmodF_mul-profile-tables.o $(PROFOBJ)
 
 ZmodF_poly-profile: ZmodF_poly-profile.o ZmodF_poly-profile-tables.o $(PROFOBJ)
 	$(CC) $(CFLAGS) -o ZmodF_poly-profile ZmodF_poly-profile.o ZmodF_poly-profile-tables.o $(PROFOBJ) $(LIBS)
+
+kara-profile: kara-profile.c profiler.o test-support.o $(FLINTOBJ)
+	$(CC) $(CFLAGS) -o kara-profile kara-profile.c profiler.o test-support.o $(FLINTOBJ) $(LIBS)
 
 
 
