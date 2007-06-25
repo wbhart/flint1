@@ -759,7 +759,7 @@ int test_mpz_poly_mod_ui()
 
 int test_mpz_poly_mul()
 {
-   // also should test squaring
+   // todo: also should test squaring
    return 0;
 }
 
@@ -903,21 +903,65 @@ int test__mpz_poly_mul_kara_recursive()
 
 int test_mpz_poly_mul_karatsuba()
 {
-   // also should test squaring
-   return 0;
+   // todo: also should test squaring
+   // todo: also should test inplace multiplication
+
+   int success = 1;
+   
+   mpz_t x;
+   mpz_init(x);
+   
+   mpz_poly_t in1, in2, correct, out;
+   mpz_poly_init(in1);
+   mpz_poly_init(in2);
+   mpz_poly_init(correct);
+   mpz_poly_init(out);
+
+   for (unsigned long len1 = 0; len1 <= 32 && success; len1++)
+   for (unsigned long len2 = 0; len2 <= 32 && success; len2++)
+   for (unsigned long trial = 0; trial < 15 && success; trial++)
+   {
+      mpz_poly_zero(in1);
+      mpz_poly_zero(in2);
+   
+      for (unsigned long i = 0; i < len1; i++)
+      {
+         mpz_urandomb(x, randstate, 300);
+         mpz_poly_set_coeff(in1, i, x);
+      }
+
+      for (unsigned long i = 0; i < len2; i++)
+      {
+         mpz_urandomb(x, randstate, 300);
+         mpz_poly_set_coeff(in2, i, x);
+      }
+
+      mpz_poly_mul_karatsuba(out, in1, in2);
+      mpz_poly_mul_naive(correct, in1, in2);
+      
+      success = success && mpz_poly_equal(out, correct);
+   }
+
+   mpz_clear(x);
+   mpz_poly_clear(in1);
+   mpz_poly_clear(in2);
+   mpz_poly_clear(correct);
+   mpz_poly_clear(out);
+   
+   return success;
 }
 
 
 int test_mpz_poly_mul_SS()
 {
-   // also should test squaring
+   // todo: also should test squaring
    return 0;
 }
 
 
 int test_mpz_poly_mul_naive_KS()
 {
-   // also should test squaring
+   // todo: also should test squaring
    return 0;
 /*
    // todo: test inplace multiplication too
@@ -1187,7 +1231,8 @@ void mpz_poly_test_all()
 {
    int success, all_success = 1;
 
-   RUN_TEST(_mpz_poly_mul_kara_recursive);
+   RUN_TEST(mpz_poly_mul_karatsuba);
+
    return;
    
    
@@ -1232,7 +1277,7 @@ void mpz_poly_test_all()
 //   RUN_TEST(mpz_poly_mul);
    RUN_TEST(mpz_poly_mul_naive);
    RUN_TEST(_mpz_poly_mul_kara_recursive);
-//   RUN_TEST(mpz_poly_mul_karatsuba);
+   RUN_TEST(mpz_poly_mul_karatsuba);
 //   RUN_TEST(mpz_poly_mul_SS);
 //   RUN_TEST(mpz_poly_mul_naive_KS);
 //   RUN_TEST(mpz_poly_monic_inverse);

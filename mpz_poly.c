@@ -1154,7 +1154,6 @@ void _mpz_poly_mul_kara_recursive(mpz_t* out,
    
    // Put A1 + B1 into even slots of scratch space
    // (uses len1/2 scratch slots)
-   
    mpz_t* ptr = scratch;
    for (unsigned long i = 0; i < len1/2; i++, ptr += 2*skip)
       mpz_add(*ptr, in1[2*i*skip], in1[2*i*skip + skip]);
@@ -1167,7 +1166,7 @@ void _mpz_poly_mul_kara_recursive(mpz_t* out,
 
    // The following three recursive calls all use the odd slots of the current
    // scratch array as the next layer's scratch space
-
+   
    // Put product (A1+B1)*(A2+B2) into odd slots of output array
    _mpz_poly_mul_kara_recursive(out + skip, scratch, len1/2, scratch2, len2/2,
                                 scratch + skip, 2*skip, crossover);
@@ -1212,7 +1211,7 @@ void _mpz_poly_mul_kara_recursive(mpz_t* out,
          for (unsigned long i = 0; i < len1-1; i++)
             mpz_addmul(out[(i+len2-1)*skip], *term2, in1[i*skip]);
             
-         // final C1 * C2 term
+         // final C1*C2 term
          mpz_mul(out[(len1+len2-2)*skip], *term1, *term2);
       }
       else
@@ -1238,11 +1237,6 @@ void _mpz_poly_mul_kara_recursive(mpz_t* out,
 void mpz_poly_mul_karatsuba(mpz_poly_t res, mpz_poly_t poly1,
                             mpz_poly_t poly2)
 {
-   abort();
-   
-/*
-   // todo: need to decide crossover parameter based on coefficient size
-
    if (!poly1->length || !poly2->length)
    {
       // one of the polys is zero
@@ -1256,16 +1250,23 @@ void mpz_poly_mul_karatsuba(mpz_poly_t res, mpz_poly_t poly1,
       mpz_poly_sqr_karatsuba(res, poly1);
       return;
    }
-   
-   unsigned long limbs = mpz_poly_product_max_limbs(poly1, poly2);
+
+   // rearrange parameters to make poly1 no longer than poly2
+   if (poly1->length > poly2->length)
+      SWAP_MPZ_POLY_PTRS(poly1, poly2);
+
+   // number of output coefficients, and a rough upper bound on the number
+   // of limbs needed for each one
    unsigned long length = poly1->length + poly2->length - 1;
+   unsigned long limbs = mpz_poly_product_max_limbs(poly1, poly2);
    
-   // allocate scratch space for recursive karatsuba routine
-   mpz_t* scratch = (mpz_t*) flint_stack_alloc_bytes(length * sizeof(mpz_t));
-   for (unsigned long i = 0; i < length; i++)
+   // allocate scratch space for lower-level karatsuba routine
+   mpz_t* scratch = (mpz_t*)
+                     flint_stack_alloc_bytes((length+1) * sizeof(mpz_t));
+   for (unsigned long i = 0; i <= length; i++)
       mpz_init2(scratch[i], limbs * FLINT_BITS);
-   
-   
+
+   // todo: need to decide crossover parameter based on coefficient size
    
    if (res == poly1 || res == poly2)
    {
@@ -1278,7 +1279,9 @@ void mpz_poly_mul_karatsuba(mpz_poly_t res, mpz_poly_t poly1,
          mpz_init2(temp->coeffs[i], FLINT_BITS * limbs);
       temp->init = length;
 
-      _mpz_poly_mul_naive(temp, poly1, poly2);
+      _mpz_poly_mul_kara_recursive(
+            temp->coeffs, poly1->coeffs, poly1->length,
+            poly2->coeffs, poly2->length, scratch, 1, 0);
 
       mpz_poly_swap(temp, res);
       mpz_poly_clear(temp);
@@ -1292,10 +1295,18 @@ void mpz_poly_mul_karatsuba(mpz_poly_t res, mpz_poly_t poly1,
       while (res->init < length)
          mpz_init2(res->coeffs[res->init++], FLINT_BITS * limbs);
 
-      _mpz_poly_mul_naive(res, poly1, poly2);
+      _mpz_poly_mul_kara_recursive(
+            res->coeffs, poly1->coeffs, poly1->length,
+            poly2->coeffs, poly2->length, scratch, 1, 0);
    }
-*/
+   
+   res->length = length;
+   
+   for (unsigned long i = 0; i <= length; i++)
+      mpz_clear(scratch[i]);
+   flint_stack_release();
 }
+
 
 void mpz_poly_mul_SS(mpz_poly_t res, mpz_poly_t poly1, mpz_poly_t poly2)
 {
