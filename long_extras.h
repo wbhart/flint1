@@ -12,9 +12,20 @@
 
 #include <math.h>
 
+unsigned long long_randint(unsigned long limit);
+
+void long_precompute_inverse2(unsigned long * ninv_hi, 
+                            unsigned long * ninv_lo, unsigned long n);
+                            
+unsigned long long_mod_precomp2(unsigned long a_hi, unsigned long a_lo, 
+         unsigned long n, unsigned long ninv_hi, unsigned long ninv_lo);
+         
+unsigned long long_mulmod_precomp2(unsigned long a, unsigned long b, unsigned long n,
+                        unsigned long ninv_hi, unsigned long ninv_lo);
+
 unsigned long long_pow(unsigned long a, unsigned long exp);
 
-long long_powm(long a, long exp, long p);
+unsigned long long_powmod(unsigned long a, long exp, unsigned long n);
 
 unsigned long long_nextprime(unsigned long n);
 

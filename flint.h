@@ -88,12 +88,8 @@ the mpz_t::_mp_d member directly).
 #define HALF_FLINT_BITS 32
 #endif
 
-#ifdef __PPC64__
 #define count_lead_zeros(a,b) \
    a = __builtin_clzll(b);
-#else
-#define count_lead_zeros(a,b) count_leading_zeros(a,b);
-#endif
 
 /*
 Returns ceil(log2(x)).

@@ -13,12 +13,23 @@
 #include <gmp.h>
 #include "long_extras.h"
 
-#define K 60000
+#define K 400000
 #define k 42
-#define eps 0.038518603
-#define theta 6.480740698
+#define eps 0.000015746
+#define theta 3.47602664
 
 #define r 1 //not used at present
+
+#define LO 650000000000
+#define HI 1000000000000
+#define SKIP 50
+
+static inline int inbounds(unsigned long n)
+{
+   if (((n < HI) && (n > LO)) || ((n > -HI) && (n < -LO)))
+   return 1;         
+   else return 0;
+}
 
 int main()
 {
@@ -75,10 +86,12 @@ int main()
                     
           for (long a = -alim; a < alim; a++)
           {
+            if (inbounds(n))
+            {
               nmod72 = (n%72);
               if (nmod72 < 0) nmod72+=72;
               
-              if ((a%3 == 1) && OK[nmod72] && ((n > 1000000000000) || (n < -1000000000000))) 
+              if ((a%3 == 1) && OK[nmod72]) 
               {
                  // gcd(x, y) = a*x + b*y
                  if ((w & 1 == 1) || (n & 1 == 1))
@@ -140,14 +153,33 @@ int main()
                     } 
                  }
               }
+            } else
+            {
+               while (!inbounds(n) && (a < alim))
+               {
+                  a += SKIP;
+                  n = a*a*a + k*b*b*b + k*k*c*c*c - 3*k*a*b*c;
+               }
+               a-=(SKIP);
+               n = a*a*a + k*b*b*b + k*k*c*c*c - 3*k*a*b*c;
+               while (!inbounds(n) && (a < alim))
+               {
+                  a++;
+                  n = a*a*a + k*b*b*b + k*k*c*c*c - 3*k*a*b*c;
+               }
+               a--;
+               n = a*a*a + k*b*b*b + k*k*c*c*c - 3*k*a*b*c;
+               w = b*b-a*c;
+               v = k*c*c-a*b;
+               asq = a*a;
+            }
               
-              n += (3*(asq+a)-kbc3+1);
-              w -= c;
-              v -= b;
-              asq += (2*a+1);
-                               
+            n += (3*(asq+a)-kbc3+1);
+            w -= c;
+            v -= b;
+            asq += (2*a+1);                             
           }
-          if ((b&255) == 0) fprintf(file1,"Checkpoint %ld, %ld\n", b, c);
+          if ((b&1023) == 0) fprintf(file1,"Checkpoint %ld, %ld\n", b, c);
           fflush(file1);
       }
    }

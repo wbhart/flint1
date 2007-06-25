@@ -12,7 +12,92 @@
 #include <gmp.h>
 #include "flint.h"
 #include "long_extras.h"
-//#include "longlong_wrapper.h"
+#include "longlong_wrapper.h"
+#include "longlong.h"
+
+/*  
+   Returns a pseudorandom integer in the range [0, limit)
+   limit must be no more than 4294967291
+   todo: get rid of divisions, allow limit = 2^32 or higher
+*/
+
+unsigned long long_randint(unsigned long limit) 
+{
+    static unsigned long randval = 4035456057U;
+    randval = ((unsigned long)randval*1025416097U+286824428U)%(unsigned long)4294967291U;
+    
+    return (unsigned long)randval%limit;
+}
+
+/* 
+   Computes a 2 limb approximate inverse, i.e. 2 limbs of 2^B / n
+   Requires that n be no more than 63 bits
+*/
+
+void long_precompute_inverse2(unsigned long * ninv_hi, 
+                            unsigned long * ninv_lo, unsigned long n)
+{
+   unsigned long norm;
+   unsigned long rem, temp;
+   
+#if UDIV_NEEDS_NORMALIZATION
+   count_lead_zeros(norm, n);
+
+#if DEBUG2
+   printf("n = %lu, lead zeroes = %ld, normalised n = %lu\n", n, norm, n<<norm);
+#endif
+   udiv_qrnnd(*ninv_hi, rem, 1UL<<norm, 0UL, n<<norm);
+   udiv_qrnnd(*ndiv_lo, temp, rem<<norm, 0UL, n<<norm);  
+#else
+   udiv_qrnnd(*ninv_hi, rem, 1UL, 0UL, n);
+   udiv_qrnnd(*ninv_lo, temp, rem, 0UL, n);
+#endif
+}
+
+/* 
+    Returns a_hi a_lo % n given precomputed approx inverse ninv_quot ninv_rem
+    Assumes the result fits in a single limb, e.g. a_hi a_lo < n^2
+    Operation is *unsigned*
+    Requires that n be no more than 63 bits
+*/
+
+unsigned long long_mod_precomp2(unsigned long a_hi, unsigned long a_lo, 
+         unsigned long n, unsigned long ninv_hi, unsigned long ninv_lo)
+{
+   unsigned long p2, p3, p4;
+   unsigned long t1, t2, t3, t4;
+   
+   // p3 = top limb of (a_hi a_lo) * (ninv_quot ninv_rem) 
+   // approx (may be too small by 1)
+   p2 = 0UL;
+   p3 = a_hi * ninv_hi;
+   umul_ppmm(t2, t1, a_lo, ninv_hi);
+   umul_ppmm(t4, t3, a_hi, ninv_lo);
+   add_ssaaaa(p3, p2, p3, p2, t2, t1);
+   add_ssaaaa(p3, p2, p3, p2, t4, t3);
+   
+   t4 = a_hi;
+   t3 = a_lo;
+   umul_ppmm(t2, t1, p3, n);
+   sub_ddmmss(t4, t3, t4, t3, t2, t1);
+   if (t4 || (!t4 && (t3 >= n))) return t3-n;
+   else return t3;   
+}
+ 
+/* 
+   Computes a*b mod n, given a precomputed inverse ninv_quot ninv_rem
+   Assumes a an b are both in [0,n). There is no restriction on a*b, 
+   i.e. it can be two limbs
+   Requires that n be no more than 63 bits
+*/
+unsigned long long_mulmod_precomp2(unsigned long a, unsigned long b, unsigned long n,
+                        unsigned long ninv_hi, unsigned long ninv_lo)
+{
+   unsigned long p1, p2;
+   
+   umul_ppmm(p2, p1, a, b);
+   return long_mod_precomp2(p2, p1, n, ninv_hi, ninv_lo);
+}                       
 
 /*
     returns a^exp
@@ -32,14 +117,15 @@ unsigned long long_pow(unsigned long a, unsigned long exp)
 }
 
 /*
-         returns a^exp modulo p
-         assumes a is not (much) bigger than p
-         DIRTY for 64 bit due to long long
+   Returns a^exp modulo n
+   Assumes a is reduced mod n
+   Requires that n be no more than 63 bits
 */
 
-long long_powm(long a, long exp, long p)
+unsigned long long_powmod(unsigned long a, long exp, unsigned long n)
 {
-   long x, y;
+   unsigned long x, y;
+   unsigned long ninv_hi, ninv_lo;
 
    unsigned long e;
 
@@ -48,15 +134,17 @@ long long_powm(long a, long exp, long p)
    else
       e = exp;
 
+   long_precompute_inverse2(&ninv_hi, &ninv_lo, n);
+      
    x = 1;
    y = a;
    while (e) {
-      if (e & 1) x = ((long long)x * (long long)y)% p;
-      y = ((long long)y * (long long)y)% p;
+      if (e & 1) x = long_mulmod_precomp2(x, y, n, ninv_hi, ninv_lo);
+      y = long_mulmod_precomp2(y, y, n, ninv_hi, ninv_lo);
       e = e >> 1;
    }
 
-   if (exp < 0) x = long_invert(x, p);
+   if (exp < 0) x = long_invert(x, n);
 
    return x;
 }

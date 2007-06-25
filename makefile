@@ -20,7 +20,6 @@ ifndef FLINT_GMP_LIB_DIR
 endif
 
 LIBS = -L$(FLINT_GMP_LIB_DIR) -static -lgmp -lpthread -lm
-#LIBS = -L$(FLINT_GMP_LIB_DIR) -lgmp -lpthread -lm
 INCS =  -I"/usr/include" -I$(FLINT_GMP_INCLUDE_DIR)
 
 CC = gcc -std=c99
@@ -96,7 +95,7 @@ mpz_poly.o: mpz_poly.c $(HEADERS)
 ZmodF_poly.o: ZmodF_poly.c $(HEADERS)
 	$(CC) $(CFLAGS) -c ZmodF_poly.c -o ZmodF_poly.o
 
-long_extras.o: long_extras.c $(HEADERS)
+long_extras.o: long_extras.c long_extras.h
 	$(CC) $(CFLAGS) -c long_extras.c -o long_extras.o
 
 
@@ -125,6 +124,9 @@ Z_mpn-test.o: Z_mpn-test.c $(HEADERS)
 ZmodF_mul-test.o: ZmodF_mul-test.c $(HEADERS)
 	$(CC) $(CFLAGS) -c ZmodF_mul-test.c -o ZmodF_mul-test.o
 
+long_extras-test.o: long_extras-test.c 
+	$(CC) $(CFLAGS) -c long_extras-test.c -o long_extras-test.o
+
 
 
 ####### test program targets
@@ -146,6 +148,9 @@ mpz_poly-test: mpz_poly-test.o test-support.o $(FLINTOBJ) $(HEADERS)
 
 ZmodF_mul-test: ZmodF_mul-test.o test-support.o $(FLINTOBJ) $(HEADERS)
 	$(CC) $(CFLAGS) ZmodF_mul-test.o test-support.o -o ZmodF_mul-test $(FLINTOBJ) $(LIBS)
+
+long_extras-test: long_extras.o long_extras-test.o test-support.o
+	$(CC) $(CFLAGS) long_extras.o long_extras-test.o test-support.o -o long_extras-test $(LIBS)
 
 
 
@@ -200,9 +205,6 @@ ZmodF_mul-profile: ZmodF_mul-profile.o ZmodF_mul-profile-tables.o $(PROFOBJ)
 ZmodF_poly-profile: ZmodF_poly-profile.o ZmodF_poly-profile-tables.o $(PROFOBJ)
 	$(CC) $(CFLAGS) -o ZmodF_poly-profile ZmodF_poly-profile.o ZmodF_poly-profile-tables.o $(PROFOBJ) $(LIBS)
 
-kara-profile: kara-profile.c profiler.o test-support.o $(FLINTOBJ)
-	$(CC) $(CFLAGS) -o kara-profile kara-profile.c profiler.o test-support.o $(FLINTOBJ) $(LIBS)
-
 
 
 ####### example programs
@@ -213,5 +215,5 @@ delta_qexp.o: delta_qexp.c $(HEADERS)
 delta_qexp: delta_qexp.o $(FLINTOBJ)
 	$(CC) $(CFLAGS) -o delta_qexp delta_qexp.o $(FLINTOBJ) $(LIBS)
 
-BLTcubes: long_extras.o BLTcubes.c
+BLTcubes: long_extras.o
 	$(CC) $(CFLAGS) -o BLTcubes BLTcubes.c long_extras.o $(LIBS)
