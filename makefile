@@ -95,6 +95,9 @@ mpz_poly.o: mpz_poly.c $(HEADERS)
 ZmodF_poly.o: ZmodF_poly.c $(HEADERS)
 	$(CC) $(CFLAGS) -c ZmodF_poly.c -o ZmodF_poly.o
 
+long_extras.o: long_extras.c $(HEADERS)
+	$(CC) $(CFLAGS) -c long_extras.c -o long_extras.o
+
 
 
 ####### test program object files
@@ -206,8 +209,5 @@ delta_qexp.o: delta_qexp.c $(HEADERS)
 delta_qexp: delta_qexp.o $(FLINTOBJ)
 	$(CC) $(CFLAGS) -o delta_qexp delta_qexp.o $(FLINTOBJ) $(LIBS)
 
-long_extras.o: long_extras.c long_extras.h
-	$(CC) $(CFLAGS) -c long_extras.c -o long_extras.o
-
-BLTcubes: long_extras.o
+BLTcubes: long_extras.o BLTcubes.c
 	$(CC) $(CFLAGS) -o BLTcubes BLTcubes.c long_extras.o $(LIBS)
