@@ -149,6 +149,101 @@ unsigned long long_powmod(unsigned long a, long exp, unsigned long n)
    return x;
 }
 
+/*
+   Returns a^exp modulo n given a precomputed inverse
+   Assumes a is reduced mod n
+   Requires that n be no more than 63 bits
+*/
+
+unsigned long long_powmod_precomp2(unsigned long a, long exp, unsigned long n,
+                            unsigned long ninv_hi, unsigned long ninv_lo)
+{
+   unsigned long x, y;
+   
+   unsigned long e;
+
+   if (exp < 0)
+      e = (unsigned long) -exp;
+   else
+      e = exp;
+   
+   x = 1;
+   y = a;
+   while (e) {
+      if (e & 1) x = long_mulmod_precomp2(x, y, n, ninv_hi, ninv_lo);
+      y = long_mulmod_precomp2(y, y, n, ninv_hi, ninv_lo);
+      e = e >> 1;
+   }
+
+   if (exp < 0) x = long_invert(x, n);
+
+   return x;
+}
+
+/* 
+   Currently assumes p = 1 mod 3
+*/
+
+unsigned long long_cuberootmod(unsigned long a, unsigned long p)
+{
+   unsigned long pinv_hi, pinv_lo;
+   unsigned long x;
+   
+   long_precompute_inverse2(&pinv_hi, &pinv_lo, p);
+   
+   if ((p % 3) == 2)
+   {
+      return long_powmod_precomp2(a, 2*((p+1)/3)-1, p, pinv_hi, pinv_lo);
+   }
+   
+   unsigned long e=0;
+   unsigned long q = p-1;
+   unsigned long l;
+   unsigned long n = 2;
+   unsigned long z, y, r, temp, temp2, b, m, s, t;
+   
+   while ((q%3) == 0)
+   {
+      q = q/3;
+      e++;
+   }
+   l = q%3;
+   
+   x = long_powmod_precomp2(a, (q-l)/3, p, pinv_hi, pinv_lo);
+   temp = long_powmod_precomp2(a, l, p, pinv_hi, pinv_lo);
+   temp2 = long_powmod_precomp2(x, 3UL, p, pinv_hi, pinv_lo);
+   b = long_mulmod_precomp2(temp, temp2, p, pinv_hi, pinv_lo);
+   if ((l%3) == 2) x = long_mulmod_precomp2(a, x, p, pinv_hi, pinv_lo);
+      
+   if (b!=1)
+   {
+      while(long_powmod_precomp2(n, (p-1)/3, p, pinv_hi, pinv_lo)==1) n++;
+   
+      z = long_powmod_precomp2(n, q, p, pinv_hi, pinv_lo);
+      y = z;
+      r = e;
+   }
+   
+   while (b!=1)
+   {
+      s = long_powmod_precomp2(b, 3UL, p, pinv_hi, pinv_lo);
+      m = 1;
+      while(s!=1) 
+      {
+         s = long_powmod_precomp2(s, 3UL, p, pinv_hi, pinv_lo);
+         m++;
+      }
+      if(m==r) return(0);
+      t = long_powmod_precomp2(y, long_pow(3UL, r-m-1UL), p, pinv_hi, pinv_lo);
+      y = long_powmod_precomp2(t, 3UL, p, pinv_hi, pinv_lo);
+      r = m;
+      x = long_mulmod_precomp2(t, x, p, pinv_hi, pinv_lo);
+      b = long_mulmod_precomp2(y, b, p, pinv_hi, pinv_lo);
+   }
+   if (l==2) return(x);
+   else return(long_invert(x, p));
+}
+
 /* 
     returns the next prime after n (does not check if the result is too big)
 */
