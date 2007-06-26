@@ -30,7 +30,9 @@ unsigned long long_powmod(unsigned long a, long exp, unsigned long n);
 unsigned long long_powmod_precomp2(unsigned long a, long exp, unsigned long n,
                             unsigned long ninv_hi, unsigned long ninv_lo);
                             
-unsigned long long_cuberootmod(unsigned long a, unsigned long p);
+unsigned long long_cuberootmod_precomp2(unsigned long * cuberoot1, 
+                               unsigned long a, unsigned long pinv_hi, 
+                               unsigned long pinv_lo, unsigned long p);
 
 unsigned long long_nextprime(unsigned long n);
 

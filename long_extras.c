@@ -184,15 +184,14 @@ unsigned long long_powmod_precomp2(unsigned long a, long exp, unsigned long n,
    Currently assumes p = 1 mod 3
 */
 
-unsigned long long_cuberootmod(unsigned long a, unsigned long p)
+unsigned long long_cuberootmod_precomp2(unsigned long * cuberoot1, unsigned long a, 
+       unsigned long pinv_hi, unsigned long pinv_lo, unsigned long p)
 {
-   unsigned long pinv_hi, pinv_lo;
    unsigned long x;
-   
-   long_precompute_inverse2(&pinv_hi, &pinv_lo, p);
    
    if ((p % 3) == 2)
    {
+      *cuberoot1 = 1;
       return long_powmod_precomp2(a, 2*((p+1)/3)-1, p, pinv_hi, pinv_lo);
    }
    
@@ -201,6 +200,8 @@ unsigned long long_cuberootmod(unsigned long a, unsigned long p)
    unsigned long l;
    unsigned long n = 2;
    unsigned long z, y, r, temp, temp2, b, m, s, t;
+   
+   r = 1;
    
    while ((q%3) == 0)
    {
@@ -213,16 +214,13 @@ unsigned long long_cuberootmod(unsigned long a, unsigned long p)
    temp = long_powmod_precomp2(a, l, p, pinv_hi, pinv_lo);
    temp2 = long_powmod_precomp2(x, 3UL, p, pinv_hi, pinv_lo);
    b = long_mulmod_precomp2(temp, temp2, p, pinv_hi, pinv_lo);
-   if ((l%3) == 2) x = long_mulmod_precomp2(a, x, p, pinv_hi, pinv_lo);
+   if (l == 2) x = long_mulmod_precomp2(a, x, p, pinv_hi, pinv_lo);
       
-   if (b!=1)
-   {
-      while(long_powmod_precomp2(n, (p-1)/3, p, pinv_hi, pinv_lo)==1) n++;
+   while(long_powmod_precomp2(n, (p-1)/3, p, pinv_hi, pinv_lo)==1) n++;
    
-      z = long_powmod_precomp2(n, q, p, pinv_hi, pinv_lo);
-      y = z;
-      r = e;
-   }
+   z = long_powmod_precomp2(n, q, p, pinv_hi, pinv_lo);
+   y = z;
+   r = e;
    
    while (b!=1)
    {
@@ -240,6 +238,9 @@ unsigned long long_cuberootmod(unsigned long a, unsigned long p)
       x = long_mulmod_precomp2(t, x, p, pinv_hi, pinv_lo);
       b = long_mulmod_precomp2(y, b, p, pinv_hi, pinv_lo);
    }
+   
+   if (r==1) *cuberoot1 = y;
+   else *cuberoot1 = long_powmod_precomp2(y, long_pow(3UL, r-1), p, pinv_hi, pinv_lo);
    if (l==2) return(x);
    else return(long_invert(x, p));
 }

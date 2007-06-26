@@ -127,10 +127,13 @@ int test_long_cuberootmod()
 {
    unsigned long p = 0;
    unsigned long a, res1, res2;
+   unsigned long pinv_hi, pinv_lo;
+   unsigned long cuberoot1;
    
-   mpz_t mpz_res, mpz_p;
+   mpz_t mpz_res, mpz_p, mpz_temp;
    mpz_init(mpz_res);
    mpz_init(mpz_p);
+   mpz_init(mpz_temp);
           
    int result = 1;
    
@@ -143,16 +146,25 @@ int test_long_cuberootmod()
       {
          a = random_ulong(p); 
          
+         long_precompute_inverse2(&pinv_hi, &pinv_lo, p);
+   
          for (unsigned long count = 0; count < 10; count++)   
-            res1 = long_cuberootmod(a, p);
-         
+            res1 = long_cuberootmod_precomp2(&cuberoot1, a, pinv_hi, pinv_lo, p);
          
          if ((res1 == 0) && (p % 3 == 2) && (a != 0)) result == 0;
          else if (res1)
          {
-            mpz_set_ui(mpz_res, res1);
+            mpz_set_ui(mpz_temp, res1);
             mpz_set_ui(mpz_p, p);
-            mpz_powm_ui(mpz_res, mpz_res, 3UL, mpz_p);
+            mpz_powm_ui(mpz_res, mpz_temp, 3UL, mpz_p);
+            result &= (mpz_cmp_ui(mpz_res,a) == 0);
+            mpz_mul_ui(mpz_temp, mpz_temp, cuberoot1);
+            mpz_mod(mpz_temp, mpz_temp, mpz_p);
+            mpz_powm_ui(mpz_res, mpz_temp, 3UL, mpz_p);
+            result &= (mpz_cmp_ui(mpz_res,a) == 0);
+            mpz_mul_ui(mpz_temp, mpz_temp, cuberoot1);
+            mpz_powm_ui(mpz_res, mpz_temp, 3UL, mpz_p);
+            result &= (mpz_cmp_ui(mpz_res,a) == 0);
          
 #if DEBUG
             if (mpz_cmp_ui(mpz_res,a))
@@ -160,13 +172,13 @@ int test_long_cuberootmod()
                gmp_printf("res1 = %ld, p = %ld, a = %ld, cuberoot^3 = %Zd\n", res1, p, a, mpz_res);
             }
 #endif
-            result = (mpz_cmp_ui(mpz_res,a) == 0);
          }
       }
    }  
    
    mpz_clear(mpz_res);
    mpz_clear(mpz_p);
+   mpz_clear(mpz_temp);
    
    return result;
 }
