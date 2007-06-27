@@ -18,9 +18,11 @@ Copyright (C) 2007, William Hart and David Harvey
 #include "mpz_poly.h"
 #include "test-support.h"
 
-//================================================================================
+//=============================================================================
 
+// whether to generate signed or unsigned random polys
 #define SIGNS 0
+
 
 unsigned long randint(unsigned long randsup) 
 {
@@ -58,8 +60,45 @@ void randpoly(mpz_poly_t pol, unsigned long length, unsigned long maxbits)
 // ============================================================================
 
 
+/*
+Calls prof2d_sample(length, bits) for all length, bits combinations
+such that length*bits < max_bits, with length and bits spaced out by
+the given ratio
+ */
+void run_triangle(unsigned long max_bits, double ratio)
+{
+   int max_iter = (int) ceil(log((double) max_bits) / log(ratio));
+
+   unsigned long last_length = 0;
+   for (unsigned long i = 0; i <= max_iter; i++)
+   {
+      unsigned long length = (unsigned long) floor(pow(ratio, i));
+      if (length != last_length)
+      {
+         last_length = length;
+
+         unsigned long last_bits = 0;
+         for (unsigned long j = 0; j <= max_iter; j++)
+         {
+            unsigned long bits = (unsigned long) floor(pow(ratio, j));
+            if (bits != last_bits)
+            {
+               last_bits = bits;
+
+               if (bits * length < max_bits)
+                  prof2d_sample(length, bits);
+            }
+         }
+      }
+   }
+}
+
+
+// ============================================================================
+
+
 void sample_fmpz_poly_mul_KS(unsigned long length, unsigned long bits,
-                          unsigned long count)
+                             unsigned long count)
 {
    unsigned long m = ceil_log2(length);
    unsigned long output_bits = 2*bits+m;
@@ -76,14 +115,13 @@ void sample_fmpz_poly_mul_KS(unsigned long length, unsigned long bits,
    _fmpz_poly_stack_init(poly2, length, (bits-1)/FLINT_BITS+1);
    _fmpz_poly_stack_init(poly3, 2*length-1, (output_bits-1)/FLINT_BITS+1);
     
-   unsigned long r_count;
+   unsigned long r_count;    // how often to generate new random data
    
    if (count >= 1000) r_count = 100;
    else if (count >= 100) r_count = 10;
    else if (count >= 20) r_count = 5;
    else if (count >= 8) r_count = 2;
    else r_count = 1;
- 
    
    for (unsigned long i = 0; i < count; i++)
    {
@@ -94,9 +132,9 @@ void sample_fmpz_poly_mul_KS(unsigned long length, unsigned long bits,
          randpoly(r_poly2, length, bits);
          mpz_poly_to_fmpz_poly(poly2, r_poly2);
       }
-       prof2d_start();
-       _fmpz_poly_mul_KS(poly3, poly1, poly2);
-       prof2d_stop();
+      prof2d_start();
+      _fmpz_poly_mul_KS(poly3, poly1, poly2);
+      prof2d_stop();
    }
    
    mpz_poly_clear(r_poly);
@@ -111,69 +149,38 @@ void sample_fmpz_poly_mul_KS(unsigned long length, unsigned long bits,
 
 char* prof2dDriverString_fmpz_poly_mul_KS(char* params)
 {
-   return "fmpz_poly_mul_KS over various lengths and various bit sizes";
+   return "fmpz_poly_mul_KS over various lengths and various bit sizes.\n"
+   "Parameters are: max bitsize; ratio between consecutive lengths/bitsizes.";
 }
 
 
-/*
-Parameters for this target are:
-   length_min: minimum length
-   length_max: maximum length
-   ratio: e.g. 1.03 means increase by 3% at a time
-   n_count: number of coefficient lengths to test
-*/
 void prof2dDriver_fmpz_poly_mul_KS(char* params)
 {
-   int length_min, length_max, bits_min;
+   int max_bits;
    double ratio;
 
    if (strlen(params) == 0)
    {
       // default parameters:
-      length_min = 1;
-      length_max = 1000000;
-      bits_min = 1;
-      
+      max_bits = 16000000;
       ratio = 1.2;
    }
    else
    {
-      sscanf(params, "%ld %ld %lf %ld", &length_min, &length_max,
-                                        &ratio, &bits_min);
+      sscanf(params, "%ld %lf", &max_bits, &ratio);
    }
 
    test_support_init();
-
    prof2d_set_sampler(sample_fmpz_poly_mul_KS);
-
-   for (unsigned long length = length_min; length < length_max;
-        length = (int)(ceil(ratio * (float)length)))
-   {
-      for (unsigned long bits = bits_min; (bits <= length); 
-                                  bits = (int)(ceil(ratio * bits)))
-      {
-         if (bits == 444) bits = 445;
-         if (length == 444) length = 445;
-         if (bits == 924) bits = 925;
-         if (length == 924) length = 925;
-         if (bits == 51144) bits = 51145;
-         if (length == 51144) length = 51145;
-         if (bits == 61374) bits = 61375;
-         if (length == 61374) length = 61375;
-         if (bits == 106056) bits = 106057;
-         if (length == 106056) length = 106057;
-         if (bits*length > 1000000) continue;
-         prof2d_sample(length, bits);
-      }
-   }
-
+   run_triangle(max_bits, ratio);
    test_support_cleanup();
 }
 
-// **************************************************************************************
+
+// ****************************************************************************
 
 void sample_fmpz_poly_mul_SS(unsigned long length, unsigned long bits,
-                          unsigned long count)
+                             unsigned long count)
 {
    unsigned long m = ceil_log2(length);
    unsigned long output_bits = 2*bits+m;
@@ -190,7 +197,7 @@ void sample_fmpz_poly_mul_SS(unsigned long length, unsigned long bits,
    _fmpz_poly_stack_init(poly2, length, (bits-1)/FLINT_BITS+1);
    _fmpz_poly_stack_init(poly3, 2*length-1, (output_bits-1)/FLINT_BITS+1);
     
-   unsigned long r_count;
+   unsigned long r_count;    // how often to generate new random data
    
    if (count >= 1000) r_count = 100;
    else if (count >= 100) r_count = 10;
@@ -225,73 +232,39 @@ void sample_fmpz_poly_mul_SS(unsigned long length, unsigned long bits,
 
 char* prof2dDriverString_fmpz_poly_mul_SS(char* params)
 {
-   return "fmpz_poly_mul_SS over various lengths and various bit sizes";
+   return "fmpz_poly_mul_SS over various lengths and various bit sizes.\n"
+   "Parameters are: max bitsize; ratio between consecutive lengths/bitsizes.";
 }
 
 
-/*
-Parameters for this target are:
-   length_min: minimum length
-   length_max: maximum length
-   ratio: e.g. 1.03 means increase by 3% at a time
-   n_count: number of coefficient lengths to test
-*/
 void prof2dDriver_fmpz_poly_mul_SS(char* params)
 {
-   int length_min, length_max, bits_min, bits_max;
+   int max_bits;
    double ratio;
 
    if (strlen(params) == 0)
    {
       // default parameters:
-      length_min = 1;
-      length_max = 1000000;
-      bits_max = 1000000;
-      bits_min = 1;
-      
+      max_bits = 16000000;
       ratio = 1.2;
    }
    else
    {
-      sscanf(params, "%ld %ld %lf %ld", &length_min, &length_max,
-                                        &ratio, &bits_min);
+      sscanf(params, "%ld %lf", &max_bits, &ratio);
    }
 
    test_support_init();
-
    prof2d_set_sampler(sample_fmpz_poly_mul_SS);
-
-   for (unsigned long length = length_min; length <= length_max;
-        length = (int)(ceil(ratio * (float)length)))
-   {
-      for (unsigned long bits = bits_min; bits <= bits_max; 
-                                  bits = (int)(ceil(ratio * bits)))
-      {
-         if (bits * length > 1000000) continue;
-         
-         if (bits == 444) bits = 445;
-         if (length == 444) length = 445;
-         if (bits == 924) bits = 925;
-         if (length == 924) length = 925;
-         if (bits == 51144) bits = 51145;
-         if (length == 51144) length = 51145;
-         if (bits == 61374) bits = 61375;
-         if (length == 61374) length = 61375;
-         if (bits == 106056) bits = 106057;
-         if (length == 106056) length = 106057;
-         if (bits*length > 1000000) continue;
-         prof2d_sample(length, bits);
-      }
-   }
-
+   run_triangle(max_bits, ratio);
    test_support_cleanup();
 }
+
 
 // ============================================================================
 
 
 void sample_fmpz_poly_mul_karatsuba(unsigned long length, unsigned long bits,
-                          unsigned long count)
+                                    unsigned long count)
 {
    unsigned long m = ceil_log2(length);
    unsigned long output_bits = 2*bits+m;
@@ -308,7 +281,7 @@ void sample_fmpz_poly_mul_karatsuba(unsigned long length, unsigned long bits,
    _fmpz_poly_stack_init(poly2, length, (bits-1)/FLINT_BITS+1);
    _fmpz_poly_stack_init(poly3, 2*length-1, poly1->limbs+poly2->limbs+1);
     
-   unsigned long r_count;
+   unsigned long r_count;    // how often to generate new random data
    
    if (count >= 1000) r_count = 100;
    else if (count >= 100) r_count = 10;
@@ -343,65 +316,30 @@ void sample_fmpz_poly_mul_karatsuba(unsigned long length, unsigned long bits,
 
 char* prof2dDriverString_fmpz_poly_mul_karatsuba(char* params)
 {
-   return "fmpz_poly_mul_karatsuba over various lengths and various bit sizes";
+   return "fmpz_poly_mul_karatsuba over various lengths and various bit sizes.\n"
+   "Parameters are: max bitsize; ratio between consecutive lengths/bitsizes.";
 }
 
 
-/*
-Parameters for this target are:
-   length_min: minimum length
-   length_max: maximum length
-   ratio: e.g. 1.03 means increase by 3% at a time
-   n_count: number of coefficient lengths to test
-*/
 void prof2dDriver_fmpz_poly_mul_karatsuba(char* params)
 {
-   int length_min, length_max, bits_min, bits_max;
+   int max_bits;
    double ratio;
 
    if (strlen(params) == 0)
    {
       // default parameters:
-      length_min = 1;
-      length_max = 1000000;
-      bits_max = 1000000;
-      bits_min = 1;
-      
+      max_bits = 16000000;
       ratio = 1.2;
    }
    else
    {
-      sscanf(params, "%ld %ld %lf %ld", &length_min, &length_max,
-                                        &ratio, &bits_min);
+      sscanf(params, "%ld %lf", &max_bits, &ratio);
    }
 
    test_support_init();
-
    prof2d_set_sampler(sample_fmpz_poly_mul_karatsuba);
-
-   for (unsigned long length = length_min; length <= length_max;
-        length = (int)(ceil(ratio * (float)length)))
-   {
-      for (unsigned long bits = bits_min; bits <= bits_max; 
-                                  bits = (int)(ceil(ratio * bits)))
-      {
-         if (bits * length > 1000000) continue;
-         
-         if (bits == 444) bits = 445;
-         if (length == 444) length = 445;
-         if (bits == 924) bits = 925;
-         if (length == 924) length = 925;
-         if (bits == 51144) bits = 51145;
-         if (length == 51144) length = 51145;
-         if (bits == 61374) bits = 61375;
-         if (length == 61374) length = 61375;
-         if (bits == 106056) bits = 106057;
-         if (length == 106056) length = 106057;
-         if (bits*length > 1000000) continue;
-         prof2d_sample(length, bits);
-      }
-   }
-
+   run_triangle(max_bits, ratio);
    test_support_cleanup();
 }
 
@@ -427,7 +365,7 @@ void sample_fmpz_poly_mul(unsigned long length, unsigned long bits,
    _fmpz_poly_stack_init(poly2, length, (bits-1)/FLINT_BITS+1);
    _fmpz_poly_stack_init(poly3, 2*length-1, (output_bits-1)/FLINT_BITS+1);
    
-   unsigned long r_count;
+   unsigned long r_count;    // how often to generate new random data
    
    if (count >= 1000) r_count = 100;
    else if (count >= 100) r_count = 10;
@@ -462,68 +400,32 @@ void sample_fmpz_poly_mul(unsigned long length, unsigned long bits,
 
 char* prof2dDriverString_fmpz_poly_mul(char* params)
 {
-   return "fmpz_poly_mul over various lengths and various bit sizes";
+   return "fmpz_poly_mul over various lengths and various bit sizes.\n"
+   "Parameters are: max bitsize; ratio between consecutive lengths/bitsizes.";
 }
 
 
-/*
-Parameters for this target are:
-   length_min: minimum length
-   length_max: maximum length
-   ratio: e.g. 1.03 means increase by 3% at a time
-   n_count: number of coefficient lengths to test
-*/
 void prof2dDriver_fmpz_poly_mul(char* params)
 {
-   int length_min, length_max, bits_min, bits_max;
+   int max_bits;
    double ratio;
 
    if (strlen(params) == 0)
    {
       // default parameters:
-      length_min = 1;
-      length_max = 16000000;
-      bits_max = 16000000;
-      bits_min = 1;
-      
+      max_bits = 16000000;
       ratio = 1.2;
    }
    else
    {
-      sscanf(params, "%ld %ld %lf %ld", &length_min, &length_max,
-                                        &ratio, &bits_min);
+      sscanf(params, "%ld %lf", &max_bits, &ratio);
    }
 
    test_support_init();
-
    prof2d_set_sampler(sample_fmpz_poly_mul);
-
-   for (unsigned long length = length_min; length <= length_max;
-        length = (int)(ceil(ratio * (float)length)))
-   {
-      for (unsigned long bits = bits_min; bits <= bits_max; 
-                                  bits = (int)(ceil(ratio * bits)))
-      {
-         if (bits * length > 16000000) continue;
-         
-         if (bits == 444) bits = 445;
-         if (length == 444) length = 445;
-         if (bits == 924) bits = 925;
-         if (length == 924) length = 925;
-         if (bits == 51144) bits = 51145;
-         if (length == 51144) length = 51145;
-         if (bits == 61374) bits = 61375;
-         if (length == 61374) length = 61375;
-         if (bits == 106056) bits = 106057;
-         if (length == 106056) length = 106057;
-         if (bits*length > 1000000) continue;
-         prof2d_sample(length, bits);
-      }
-   }
-
+   run_triangle(max_bits, ratio);
    test_support_cleanup();
 }
-
 
 
 // end of file ****************************************************************
