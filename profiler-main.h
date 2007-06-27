@@ -22,6 +22,9 @@ typedef void (*prof2d_Driver_t)(char* params);
 // A function that returns a string (the description of the target)
 typedef char* (*prof2d_DriverString_t)(char* params);
 
+// A function that returns a string (the default parameters for this target)
+typedef char* (*prof2d_DriverDefaultParams_t)();
+
 
 void prof2d_set_sampler(prof2d_Sampler_t sampler);
 void prof2d_sample(unsigned long x, unsigned long y);
@@ -52,6 +55,7 @@ extern int prof2d_target_count;
 extern char* prof2d_target_name[];
 extern prof2d_Driver_t prof2d_Driver_list[];
 extern prof2d_DriverString_t prof2d_DriverString_list[];
+extern prof2d_DriverDefaultParams_t prof2d_DriverDefaultParams_list[];
 
 
 // end of file ****************************************************************

@@ -18,6 +18,7 @@
 
 prof2d_Driver_t prof2d_active_Driver = NULL;
 prof2d_DriverString_t prof2d_active_DriverString = NULL;
+prof2d_DriverDefaultParams_t prof2d_active_DriverDefaultParams = NULL;
 prof2d_Sampler_t prof2d_active_Sampler = NULL;
 
 
@@ -98,7 +99,7 @@ void do_target(int index, char* params)
 
    printf("MODULE: %s\n", prof_module_name);
    printf("TARGET: %s\n", prof2d_target_name[index]);
-   printf("PARAMETERS: %s\n", strlen(params) ? params : "(none)");
+   printf("PARAMETERS: %s\n", params);
 
    printf("\n");
    if (prof2d_DriverString_list[index])
@@ -207,6 +208,16 @@ int main(int argc, char* argv[])
    {
       help();
       return 0;
+   }
+
+   // get default parameters from appropriate function if no
+   // parameters supplied on command line
+   if (!strlen(profile_params))
+   {
+      prof2d_DriverDefaultParams_t f =
+         prof2d_DriverDefaultParams_list[selected_target];
+      if (f)
+         strcpy(profile_params, f());
    }
 
    do_target(selected_target, profile_params);

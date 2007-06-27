@@ -153,22 +153,18 @@ char* prof2dDriverString_fmpz_poly_mul_KS(char* params)
    "Parameters are: max bitsize; ratio between consecutive lengths/bitsizes.";
 }
 
+char* prof2dDriverDefaultParams_fmpz_poly_mul_KS()
+{
+   return "16000000 1.2";
+}
+
 
 void prof2dDriver_fmpz_poly_mul_KS(char* params)
 {
    int max_bits;
    double ratio;
 
-   if (strlen(params) == 0)
-   {
-      // default parameters:
-      max_bits = 16000000;
-      ratio = 1.2;
-   }
-   else
-   {
-      sscanf(params, "%ld %lf", &max_bits, &ratio);
-   }
+   sscanf(params, "%ld %lf", &max_bits, &ratio);
 
    test_support_init();
    prof2d_set_sampler(sample_fmpz_poly_mul_KS);
@@ -236,23 +232,18 @@ char* prof2dDriverString_fmpz_poly_mul_SS(char* params)
    "Parameters are: max bitsize; ratio between consecutive lengths/bitsizes.";
 }
 
+char* prof2dDriverDefaultParams_fmpz_poly_mul_SS()
+{
+   return "16000000 1.2";
+}
 
 void prof2dDriver_fmpz_poly_mul_SS(char* params)
 {
    int max_bits;
    double ratio;
 
-   if (strlen(params) == 0)
-   {
-      // default parameters:
-      max_bits = 16000000;
-      ratio = 1.2;
-   }
-   else
-   {
-      sscanf(params, "%ld %lf", &max_bits, &ratio);
-   }
-
+   sscanf(params, "%ld %lf", &max_bits, &ratio);
+   
    test_support_init();
    prof2d_set_sampler(sample_fmpz_poly_mul_SS);
    run_triangle(max_bits, ratio);
@@ -320,22 +311,17 @@ char* prof2dDriverString_fmpz_poly_mul_karatsuba(char* params)
    "Parameters are: max bitsize; ratio between consecutive lengths/bitsizes.";
 }
 
+char* prof2dDriverDefaultParams_fmpz_poly_mul_karatsuba()
+{
+   return "300000 1.2";
+}
 
 void prof2dDriver_fmpz_poly_mul_karatsuba(char* params)
 {
    int max_bits;
    double ratio;
 
-   if (strlen(params) == 0)
-   {
-      // default parameters:
-      max_bits = 16000000;
-      ratio = 1.2;
-   }
-   else
-   {
-      sscanf(params, "%ld %lf", &max_bits, &ratio);
-   }
+   sscanf(params, "%ld %lf", &max_bits, &ratio);
 
    test_support_init();
    prof2d_set_sampler(sample_fmpz_poly_mul_karatsuba);
@@ -404,22 +390,17 @@ char* prof2dDriverString_fmpz_poly_mul(char* params)
    "Parameters are: max bitsize; ratio between consecutive lengths/bitsizes.";
 }
 
+char* prof2dDriverDefaultParams_fmpz_poly_mul()
+{
+   return "16000000 1.2";
+}
 
 void prof2dDriver_fmpz_poly_mul(char* params)
 {
    int max_bits;
    double ratio;
 
-   if (strlen(params) == 0)
-   {
-      // default parameters:
-      max_bits = 16000000;
-      ratio = 1.2;
-   }
-   else
-   {
-      sscanf(params, "%ld %lf", &max_bits, &ratio);
-   }
+   sscanf(params, "%ld %lf", &max_bits, &ratio);
 
    test_support_init();
    prof2d_set_sampler(sample_fmpz_poly_mul);

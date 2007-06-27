@@ -32,8 +32,9 @@ cfile = open(cfilename)
 
 prof2dDriver_re = re.compile("void prof2dDriver_(.*)\(.*")
 prof2dDriverString_re = re.compile("char\* prof2dDriverString_(.*)\(.*")
+prof2dDriverDefaultParams_re = re.compile("char\* prof2dDriverDefaultParams_(.*)\(.*")
 
-prof2d_re = [prof2dDriver_re, prof2dDriverString_re]
+prof2d_re = [prof2dDriver_re, prof2dDriverString_re, prof2dDriverDefaultParams_re]
 
 # dictionary from profile name to a tuple of bools, indicating which
 # functions are defined for each target
@@ -82,12 +83,15 @@ for (name, flags) in prof2d_data.iteritems():
       tfile.write("extern void prof2dDriver_%s(char* params);\n" % name)
    if flags[1]:
       tfile.write("extern char* prof2dDriverString_%s(char* params);\n" % name)
+   if flags[2]:
+      tfile.write("extern char* prof2dDriverDefaultParams_%s();\n" % name)
 tfile.write("\n")
 
 tfile.write("char* prof2d_target_name[] = {\n")
 for (name, flags) in prof2d_data.iteritems():
    tfile.write("   \"%s\",\n" % name)
 tfile.write("};\n\n")
+
 
 tfile.write("prof2d_Driver_t prof2d_Driver_list[] = {\n")
 for (name, flags) in prof2d_data.iteritems():
@@ -97,10 +101,20 @@ for (name, flags) in prof2d_data.iteritems():
       tfile.write("   NULL,\n")
 tfile.write("};\n\n")
 
+
 tfile.write("prof2d_DriverString_t prof2d_DriverString_list[] = {\n")
 for (name, flags) in prof2d_data.iteritems():
    if flags[1]:
       tfile.write("   prof2dDriverString_%s,\n" % name)
+   else:
+      tfile.write("   NULL,\n")
+tfile.write("};\n\n")
+
+
+tfile.write("prof2d_DriverDefaultParams_t prof2d_DriverDefaultParams_list[] = {\n")
+for (name, flags) in prof2d_data.iteritems():
+   if flags[2]:
+      tfile.write("   prof2dDriverDefaultParams_%s,\n" % name)
    else:
       tfile.write("   NULL,\n")
 tfile.write("};\n\n")
