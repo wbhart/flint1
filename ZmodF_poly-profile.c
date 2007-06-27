@@ -44,35 +44,24 @@ void sample_ZmodF_poly_FFT(unsigned long length, unsigned long n,
 
 char* prof2dDriverString_ZmodF_poly_FFT(char* params)
 {
-   return "ZmodF_poly_FFT over various transform lengths and coefficient sizes";
+   return "ZmodF_poly_FFT over various truncation lengths and coefficient sizes.\n"
+   "Parameters are: min truncation length; max truncation length; ratio between\n"
+   "consecutive truncation lengths; number of coefficient lengths to try.";
+}
+
+char* prof2dDriverDefaultParams_ZmodF_poly_FFT()
+{
+   return "100 200 1.1 6";
 }
 
 
-/*
-Parameters for this target are:
-   length_min: minimum truncation length
-   length_max: maximum truncation length
-   length_ratio: e.g. 1.03 means increase by 3% at a time
-   n_count: number of coefficient lengths to test
-*/
 void prof2dDriver_ZmodF_poly_FFT(char* params)
 {
-   int length_min, length_max, n_count;
+   unsigned long length_min, length_max, n_count;
    double length_ratio;
 
-   if (strlen(params) == 0)
-   {
-      // default parameters:
-      length_min = 100;
-      length_max = 200;
-      length_ratio = 1.1;
-      n_count = 6;
-   }
-   else
-   {
-      sscanf(params, "%ld %ld %lf %ld", &length_min, &length_max,
-                                        &length_ratio, &n_count);
-   }
+   sscanf(params, "%ld %ld %lf %ld", &length_min, &length_max,
+                                     &length_ratio, &n_count);
 
    prof2d_set_sampler(sample_ZmodF_poly_FFT);
 
@@ -81,6 +70,8 @@ void prof2dDriver_ZmodF_poly_FFT(char* params)
    {
       unsigned long m = ceil_log2(2*length);
 
+      // restrict coefficient lengths so that appropriate roots of unity
+      // are available
       unsigned long n_skip = (1 << m) / (4*FLINT_BITS);
       if (n_skip == 0)
          n_skip = 1;
@@ -117,35 +108,24 @@ void sample_ZmodF_poly_IFFT(unsigned long length, unsigned long n,
 
 char* prof2dDriverString_ZmodF_poly_IFFT(char* params)
 {
-   return "ZmodF_poly_IFFT over various transform lengths and coefficient sizes";
+   return "ZmodF_poly_IFFT over various truncation lengths and coefficient sizes.\n"
+   "Parameters are: min truncation length; max truncation length; ratio between\n"
+   "consecutive truncation lengths; number of coefficient lengths to try.";
+}
+
+char* prof2dDriverDefaultParams_ZmodF_poly_IFFT()
+{
+   return "100 200 1.1 6";
 }
 
 
-/*
-Parameters for this target are:
-   length_min: minimum truncation length
-   length_max: maximum truncation length
-   length_ratio: e.g. 1.03 means increase by 3% at a time
-   n_count: number of coefficient lengths to test
-*/
 void prof2dDriver_ZmodF_poly_IFFT(char* params)
 {
-   int length_min, length_max, n_count;
+   unsigned long length_min, length_max, n_count;
    double length_ratio;
 
-   if (strlen(params) == 0)
-   {
-      // default parameters:
-      length_min = 100;
-      length_max = 200;
-      length_ratio = 1.1;
-      n_count = 6;
-   }
-   else
-   {
-      sscanf(params, "%ld %ld %lf %ld", &length_min, &length_max,
-                                        &length_ratio, &n_count);
-   }
+   sscanf(params, "%ld %ld %lf %ld", &length_min, &length_max,
+                                     &length_ratio, &n_count);
 
    prof2d_set_sampler(sample_ZmodF_poly_IFFT);
 
@@ -154,6 +134,8 @@ void prof2dDriver_ZmodF_poly_IFFT(char* params)
    {
       unsigned long m = ceil_log2(length);
 
+      // restrict coefficient lengths so that appropriate roots of unity
+      // are available
       unsigned long n_skip = (1 << m) / (4*FLINT_BITS);
       if (n_skip == 0)
          n_skip = 1;
@@ -199,34 +181,22 @@ void sample_ZmodF_poly_negacyclic_convolution(
 
 char* prof2dDriverString_ZmodF_poly_negacyclic_convolution(char* params)
 {
-   return "ZmodF_poly_negacyclic_convolution over various depths and coefficient lengths";
+   return "ZmodF_poly_negacyclic_convolution over various depths and coefficient sizes.\n"
+   "Parameters are: min depth; max depth; min coeff length; max coeff length.";
+}
+
+char* prof2dDriverDefaultParams_ZmodF_poly_negacyclic_convolution()
+{
+   return "3 8 1 8";
 }
 
 
-/*
-Parameters for this target are:
-   depth_min: minimum depth
-   depth_max: maximum depth
-   n_min: minimum n to try
-   n_max: maximum n to try
-*/
 void prof2dDriver_ZmodF_poly_negacyclic_convolution(char* params)
 {
-   int depth_min, depth_max, n_min, n_max;
+   unsigned long depth_min, depth_max, n_min, n_max;
 
-   if (strlen(params) == 0)
-   {
-      // default parameters:
-      depth_min = 3;
-      depth_max = 8;
-      n_min = 1;
-      n_max = 8;
-   }
-   else
-   {
-      sscanf(params, "%ld %ld %ld %ld", &depth_min, &depth_max,
-                                        &n_min, &n_max);
-   }
+   sscanf(params, "%ld %ld %ld %ld", &depth_min, &depth_max,
+                                     &n_min, &n_max);
 
    prof2d_set_sampler(sample_ZmodF_poly_negacyclic_convolution);
 
@@ -234,67 +204,14 @@ void prof2dDriver_ZmodF_poly_negacyclic_convolution(char* params)
    {
       for (unsigned long n = n_min; n <= n_max; n++)
       {
+         // restrict coefficient lengths so that appropriate roots of unity
+         // are available
          if ((2*n*FLINT_BITS) % (1 << depth))
             continue;
          
          prof2d_sample(depth, n);
       }
    }
-}
-
-
-// ============================================================================
-
-
-void sample_mpn_mul_n(
-      unsigned long n, unsigned long dummy, unsigned long count)
-{
-   mp_limb_t* buf;
-   buf = malloc(4*n*sizeof(mp_limb_t));
-
-   profiler_random_limbs(buf, 2*n);
-   
-   prof2d_start();
-
-   for (unsigned long i = 0; i < count; i++)
-      mpn_mul_n(buf + 2*n, buf, buf+n, n);
-
-   prof2d_stop();
-   
-   free(buf);
-}
-
-
-char* prof2dDriverString_mpn_mul_n(char* params)
-{
-   return "mpn_mul_n for various n";
-}
-
-
-/*
-Parameters for this target are:
-   n_min
-   n_max
-*/
-void prof2dDriver_mpn_mul_n(char* params)
-{
-   int n_min, n_max;
-
-   if (strlen(params) == 0)
-   {
-      // default parameters:
-      n_min = 30;
-      n_max = 200;
-   }
-   else
-   {
-      sscanf(params, "%ld %ld", &n_min, &n_max);
-   }
-
-   prof2d_set_sampler(sample_mpn_mul_n);
-
-   for (unsigned long n = n_min; n <= n_max; n++)
-      prof2d_sample(n, 0);
 }
 
 
