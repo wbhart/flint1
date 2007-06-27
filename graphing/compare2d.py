@@ -17,8 +17,8 @@ parser.add_option("-o", "--output",
                   help="output filename (default graph.png)")
                   
 parser.add_option("-c", "--config",
-                  default="compare_config",
-                  help="configuration file (default compare_config)")
+                  default="compare2d_config",
+                  help="configuration file (default compare2d_config)")
 
 
 (options, args) = parser.parse_args()
@@ -29,7 +29,7 @@ if len(args) != 2:
 
 
 # default configuration settings;
-# see compare_config.py for explanation of each setting
+# see compare2d_config.py for explanation of each setting
 CONFIG_dpi = 96
 CONFIG_dotsize = 3
 CONFIG_title = None
