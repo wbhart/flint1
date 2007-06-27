@@ -14,6 +14,7 @@
 
 #include "ZmodF.h"
 #include "longlong_wrapper.h"
+#include "longlong.h"
 
 
 /*
