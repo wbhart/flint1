@@ -20,7 +20,7 @@ Usage: run magma with the -b flag to prevent the start up banner, i.e.
 ************************************************************************/
 
 target_name := "PolyMul";
-target_description := "MAGMA polynomial multiplication over various sizes";
+target_description := "MAGMA polynomial multiplication in Z[x] over various sizes";
 
 
 // Timing runs need to last at least this many microseconds to be counted:
@@ -37,12 +37,14 @@ and return the total time in seconds, using the Cputime() function.
 */
 function sampler(length, bits, count)
 
+    // first time random poly generation + multiplication
+
     countmod := 4;
     if count gt 1000 then countmod := 100; end if;
     if count gt 100 then countmod := 10; end if;
     time1 := Cputime();
     for i := 1 to count do
-	if (i-1) mod countmod eq 0 then
+      if (i-1) mod countmod eq 0 then
          a:=Polynomial([RandomBits(bits):x in [1..length]]);
          b:=Polynomial([RandomBits(bits):x in [1..length]]);
       end if;
@@ -51,10 +53,12 @@ function sampler(length, bits, count)
 
     time2 := Cputime();
 
+    // now time just the random poly generation
+
     for i := 1 to count do
-        if (i-1) mod countmod eq 0 then
-	 a:=Polynomial([RandomBits(bits):x in [1..length]]);
-	 b:=Polynomial([RandomBits(bits):x in [1..length]]);
+      if (i-1) mod countmod eq 0 then
+       a:=Polynomial([RandomBits(bits):x in [1..length]]);
+       b:=Polynomial([RandomBits(bits):x in [1..length]]);
        end if;
     end for;
 
@@ -69,20 +73,30 @@ and call prof2d_sample(x, y) for each one.
 */
 procedure driver()
 
-   //here is an example that calls prof2d_sample for a range of x and y
-    
-    x := 1;
-    y := 1;
-    while x le 16000000 do
-	y := 1;
-      while y le 16000000 do
-          if x*y le 16000000 then
-	       prof2d_sample(x, y);
-          end if;
-          y := Ceiling(y*1.200);
-	end while;
-          x := Ceiling(x*1.200);
-    end while;
+   max := 16000000;   // maximum total bitsize of input polys
+   ratio := 1.2;      // ratio between consecutive lengths/bitsizes
+
+   max_iter := Ceil(Log(max) / Log(ratio));
+
+   last_length := 0;
+   for i := 0 to max_iter do
+      length := Floor(ratio^i);
+      if length ne last_length then
+         last_length := length;
+
+         last_bits := 0;
+         for j := 0 to max_iter do
+            bits := Floor(ratio^j);
+            if bits ne last_bits then
+               last_bits := bits;
+
+               if length*bits le max then
+                  prof2d_sample(length, bits);
+               end if;
+            end if;
+         end for;
+      end if;
+   end for;
 end procedure;
 
 
@@ -102,9 +116,9 @@ function format_sci(x)
     x := x / 10^L;
     s := Sprintf("%.3oe", x);
     if L lt 0 then
-	s := s cat "-";
+      s := s cat "-";
     else
-	s := s cat "+";
+      s := s cat "+";
     end if;
 
     s := s cat Sprintf("%o", Floor(Abs(L / 10)));
@@ -118,57 +132,57 @@ procedure prof2d_sample(x, y)
     // number of timings that were at least DURATION_THRESHOLD microseconds:
     good_count := 0;
 
-    // first try one loop
-    num_trials := 8;
-    last_time := sampler(x, y, 8) * 1000000.0;
+    // first try just a few loops
+    num_trials := 4;
+    last_time := sampler(x, y, num_trials) * 1000000.0;
 
     max_time := 0;
     min_time := 0;
 
     // loop until we have enough good times
     while true do
-	per_trial := last_time / num_trials;
+      per_trial := last_time / num_trials;
 
-	// if the last recorded time was long enough, record it
-	if last_time gt DURATION_THRESHOLD then
-	    if good_count gt 0 then
-		max_time := Max(max_time, per_trial);
-		min_time := Min(min_time, per_trial);
-	    else
-		max_time := per_trial;
-		min_time := per_trial;
-	    end if;
+      // if the last recorded time was long enough, record it
+      if last_time gt DURATION_THRESHOLD then
+          if good_count gt 0 then
+            max_time := Max(max_time, per_trial);
+            min_time := Min(min_time, per_trial);
+          else
+            max_time := per_trial;
+            min_time := per_trial;
+          end if;
 
-	    good_count := good_count + 1;
-	    if good_count eq 5 then
-		// we've got enough data
-		// print it out and return
-		print Sprintf("%o\t%o\t%o\t%o", x, y, format_sci(min_time), format_sci(max_time));
-		return;
-	    end if;
-	end if;
+          good_count := good_count + 1;
+          if good_count eq 5 then
+            // we've got enough data
+            // print it out and return
+            print Sprintf("%o\t%o\t%o\t%o", x, y, format_sci(min_time), format_sci(max_time));
+            return;
+          end if;
+      end if;
 
-        // adjust num_trials so that the elapsed time gravitates towards
-	// DURATION_TARGET; num_trials can be changed by a factor of
-	// at most 25%, and must be at least 1
-	if last_time lt 0.0001 then
-	    last_time := 0.0001;
-	end if;
-	adjust_ratio := 1.0 * DURATION_TARGET / last_time;
-	if adjust_ratio gt 1.25 then
-	    adjust_ratio := 1.25;
-	end if;
-	if adjust_ratio lt 0.75 then
-	    adjust_ratio := 0.75;
-	end if;
-	num_trials := Ceiling(adjust_ratio * num_trials);
-	// just to be safe:
-	if num_trials eq 0 then
-	    num_trials := 1;
-	end if;
+      // adjust num_trials so that the elapsed time gravitates towards
+      // DURATION_TARGET; num_trials can be changed by a factor of
+      // at most 25%, and must be at least 1
+      if last_time lt 0.0001 then
+          last_time := 0.0001;
+      end if;
+      adjust_ratio := 1.0 * DURATION_TARGET / last_time;
+      if adjust_ratio gt 1.25 then
+          adjust_ratio := 1.25;
+      end if;
+      if adjust_ratio lt 0.75 then
+          adjust_ratio := 0.75;
+      end if;
+      num_trials := Ceiling(adjust_ratio * num_trials);
+      // just to be safe:
+      if num_trials eq 0 then
+          num_trials := 1;
+      end if;
 
-	// run another trial
-	last_time := sampler(x, y, num_trials) * 1000000.0;
+      // run another trial
+      last_time := sampler(x, y, num_trials) * 1000000.0;
     end while;
 end procedure;
 
