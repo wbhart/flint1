@@ -10,7 +10,7 @@ import pylab
 from math import log
 
 
-parser = OptionParser(usage="python compare.py [options] input1 input2")
+parser = OptionParser(usage="python compare2d.py [options] input1 input2")
 
 parser.add_option("-o", "--output",
                   default="graph.png",
