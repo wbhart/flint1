@@ -30,27 +30,27 @@ module = sys.argv[1]
 cfilename = module + "-profile.c"
 cfile = open(cfilename)
 
-prof2dDriver_re = re.compile("void prof2dDriver_(.*)\(.*")
-prof2dDriverString_re = re.compile("char\* prof2dDriverString_(.*)\(.*")
-prof2dDriverDefaultParams_re = re.compile("char\* prof2dDriverDefaultParams_(.*)\(.*")
+profDriver_re = re.compile("void profDriver_(.*)\(.*")
+profDriverString_re = re.compile("char\* profDriverString_(.*)\(.*")
+profDriverDefaultParams_re = re.compile("char\* profDriverDefaultParams_(.*)\(.*")
 
-prof2d_re = [prof2dDriver_re, prof2dDriverString_re, prof2dDriverDefaultParams_re]
+prof_re = [profDriver_re, profDriverString_re, profDriverDefaultParams_re]
 
 # dictionary from profile name to a tuple of bools, indicating which
 # functions are defined for each target
-prof2d_data = {}
+prof_data = {}
 
 for line in cfile:
-   for i in range(len(prof2d_re)):
-      m = prof2d_re[i].match(line)
+   for i in range(len(prof_re)):
+      m = prof_re[i].match(line)
       if m is not None:
          name = m.group(1)
-         if name not in prof2d_data:
-            prof2d_data[name] = [False] * len(prof2d_re)
+         if name not in prof_data:
+            prof_data[name] = [False] * len(prof_re)
          else:
-            if prof2d_data[name][i]:
+            if prof_data[name][i]:
                raise ValueError, "duplicate target \"%s\"" % name
-         prof2d_data[name][i] = True
+         prof_data[name][i] = True
 
 
 ############ generate output file
@@ -76,45 +76,45 @@ tfile.write("\n")
 
 tfile.write("char* prof_module_name = \"" + module + "\";\n\n")
 
-tfile.write("int prof2d_target_count = %s;\n\n" % len(prof2d_data))
+tfile.write("int prof_target_count = %s;\n\n" % len(prof_data))
 
-for (name, flags) in prof2d_data.iteritems():
+for (name, flags) in prof_data.iteritems():
    if flags[0]:
-      tfile.write("extern void prof2dDriver_%s(char* params);\n" % name)
+      tfile.write("extern void profDriver_%s(char* params);\n" % name)
    if flags[1]:
-      tfile.write("extern char* prof2dDriverString_%s(char* params);\n" % name)
+      tfile.write("extern char* profDriverString_%s(char* params);\n" % name)
    if flags[2]:
-      tfile.write("extern char* prof2dDriverDefaultParams_%s();\n" % name)
+      tfile.write("extern char* profDriverDefaultParams_%s();\n" % name)
 tfile.write("\n")
 
-tfile.write("char* prof2d_target_name[] = {\n")
-for (name, flags) in prof2d_data.iteritems():
+tfile.write("char* prof_target_name[] = {\n")
+for (name, flags) in prof_data.iteritems():
    tfile.write("   \"%s\",\n" % name)
 tfile.write("};\n\n")
 
 
-tfile.write("prof2d_Driver_t prof2d_Driver_list[] = {\n")
-for (name, flags) in prof2d_data.iteritems():
+tfile.write("prof_Driver_t prof_Driver_list[] = {\n")
+for (name, flags) in prof_data.iteritems():
    if flags[0]:
-      tfile.write("   prof2dDriver_%s,\n" % name)
+      tfile.write("   profDriver_%s,\n" % name)
    else:
       tfile.write("   NULL,\n")
 tfile.write("};\n\n")
 
 
-tfile.write("prof2d_DriverString_t prof2d_DriverString_list[] = {\n")
-for (name, flags) in prof2d_data.iteritems():
+tfile.write("prof_DriverString_t prof_DriverString_list[] = {\n")
+for (name, flags) in prof_data.iteritems():
    if flags[1]:
-      tfile.write("   prof2dDriverString_%s,\n" % name)
+      tfile.write("   profDriverString_%s,\n" % name)
    else:
       tfile.write("   NULL,\n")
 tfile.write("};\n\n")
 
 
-tfile.write("prof2d_DriverDefaultParams_t prof2d_DriverDefaultParams_list[] = {\n")
-for (name, flags) in prof2d_data.iteritems():
+tfile.write("prof_DriverDefaultParams_t prof_DriverDefaultParams_list[] = {\n")
+for (name, flags) in prof_data.iteritems():
    if flags[2]:
-      tfile.write("   prof2dDriverDefaultParams_%s,\n" % name)
+      tfile.write("   profDriverDefaultParams_%s,\n" % name)
    else:
       tfile.write("   NULL,\n")
 tfile.write("};\n\n")

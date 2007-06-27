@@ -132,9 +132,9 @@ void sample_fmpz_poly_mul_KS(unsigned long length, unsigned long bits,
          randpoly(r_poly2, length, bits);
          mpz_poly_to_fmpz_poly(poly2, r_poly2);
       }
-      prof2d_start();
+      prof_start();
       _fmpz_poly_mul_KS(poly3, poly1, poly2);
-      prof2d_stop();
+      prof_stop();
    }
    
    mpz_poly_clear(r_poly);
@@ -147,21 +147,21 @@ void sample_fmpz_poly_mul_KS(unsigned long length, unsigned long bits,
 }
 
 
-char* prof2dDriverString_fmpz_poly_mul_KS(char* params)
+char* profDriverString_fmpz_poly_mul_KS(char* params)
 {
    return "fmpz_poly_mul_KS over various lengths and various bit sizes.\n"
    "Parameters are: max bitsize; ratio between consecutive lengths/bitsizes.";
 }
 
-char* prof2dDriverDefaultParams_fmpz_poly_mul_KS()
+char* profDriverDefaultParams_fmpz_poly_mul_KS()
 {
    return "16000000 1.2";
 }
 
 
-void prof2dDriver_fmpz_poly_mul_KS(char* params)
+void profDriver_fmpz_poly_mul_KS(char* params)
 {
-   int max_bits;
+   unsigned long max_bits;
    double ratio;
 
    sscanf(params, "%ld %lf", &max_bits, &ratio);
@@ -211,9 +211,9 @@ void sample_fmpz_poly_mul_SS(unsigned long length, unsigned long bits,
          randpoly(r_poly2, length, bits);
          mpz_poly_to_fmpz_poly(poly2, r_poly2);
       }
-       prof2d_start();
+       prof_start();
        _fmpz_poly_mul_SS(poly3, poly1, poly2);
-       prof2d_stop();
+       prof_stop();
    }
    
    mpz_poly_clear(r_poly);
@@ -226,20 +226,20 @@ void sample_fmpz_poly_mul_SS(unsigned long length, unsigned long bits,
 }
 
 
-char* prof2dDriverString_fmpz_poly_mul_SS(char* params)
+char* profDriverString_fmpz_poly_mul_SS(char* params)
 {
    return "fmpz_poly_mul_SS over various lengths and various bit sizes.\n"
    "Parameters are: max bitsize; ratio between consecutive lengths/bitsizes.";
 }
 
-char* prof2dDriverDefaultParams_fmpz_poly_mul_SS()
+char* profDriverDefaultParams_fmpz_poly_mul_SS()
 {
    return "16000000 1.2";
 }
 
-void prof2dDriver_fmpz_poly_mul_SS(char* params)
+void profDriver_fmpz_poly_mul_SS(char* params)
 {
-   int max_bits;
+   unsigned long max_bits;
    double ratio;
 
    sscanf(params, "%ld %lf", &max_bits, &ratio);
@@ -290,9 +290,9 @@ void sample_fmpz_poly_mul_karatsuba(unsigned long length, unsigned long bits,
          randpoly(r_poly2, length, bits);
          mpz_poly_to_fmpz_poly(poly2, r_poly2);
       }
-       prof2d_start();
+       prof_start();
        _fmpz_poly_mul_karatsuba(poly3, poly1, poly2);
-       prof2d_stop();
+       prof_stop();
    }
    
    mpz_poly_clear(r_poly);
@@ -305,20 +305,20 @@ void sample_fmpz_poly_mul_karatsuba(unsigned long length, unsigned long bits,
 }
 
 
-char* prof2dDriverString_fmpz_poly_mul_karatsuba(char* params)
+char* profDriverString_fmpz_poly_mul_karatsuba(char* params)
 {
    return "fmpz_poly_mul_karatsuba over various lengths and various bit sizes.\n"
    "Parameters are: max bitsize; ratio between consecutive lengths/bitsizes.";
 }
 
-char* prof2dDriverDefaultParams_fmpz_poly_mul_karatsuba()
+char* profDriverDefaultParams_fmpz_poly_mul_karatsuba()
 {
    return "300000 1.2";
 }
 
-void prof2dDriver_fmpz_poly_mul_karatsuba(char* params)
+void profDriver_fmpz_poly_mul_karatsuba(char* params)
 {
-   int max_bits;
+   unsigned long max_bits;
    double ratio;
 
    sscanf(params, "%ld %lf", &max_bits, &ratio);
@@ -336,6 +336,8 @@ void prof2dDriver_fmpz_poly_mul_karatsuba(char* params)
 void sample_fmpz_poly_mul(unsigned long length, unsigned long bits,
                           unsigned long count)
 {
+   printf("hello, count = %ld\n", count);
+
    unsigned long m = ceil_log2(length);
    unsigned long output_bits = 2*bits+m;
    
@@ -369,9 +371,9 @@ void sample_fmpz_poly_mul(unsigned long length, unsigned long bits,
          randpoly(r_poly2, length, bits);
          mpz_poly_to_fmpz_poly(poly2, r_poly2);
       }
-       prof2d_start();
+       prof_start();
        _fmpz_poly_mul(poly3, poly1, poly2);
-       prof2d_stop();
+       prof_stop();
    }
    
    mpz_poly_clear(r_poly);
@@ -384,22 +386,22 @@ void sample_fmpz_poly_mul(unsigned long length, unsigned long bits,
 }
 
 
-char* prof2dDriverString_fmpz_poly_mul(char* params)
+char* profDriverString_fmpz_poly_mul(char* params)
 {
    return "fmpz_poly_mul over various lengths and various bit sizes.\n"
    "Parameters are: max bitsize; ratio between consecutive lengths/bitsizes.";
 }
 
-char* prof2dDriverDefaultParams_fmpz_poly_mul()
+char* profDriverDefaultParams_fmpz_poly_mul()
 {
    return "16000000 1.2";
 }
 
-void prof2dDriver_fmpz_poly_mul(char* params)
+void profDriver_fmpz_poly_mul(char* params)
 {
-   int max_bits;
+   unsigned long max_bits;
    double ratio;
-
+   
    sscanf(params, "%ld %lf", &max_bits, &ratio);
 
    test_support_init();

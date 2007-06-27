@@ -28,7 +28,7 @@ void sample_ZmodF_poly_FFT(unsigned long length, unsigned long n,
    
    // todo: need to generate random data here
    
-   prof2d_start();
+   prof_start();
 
    for (unsigned long i = 0; i < count; i++)
    {
@@ -36,26 +36,26 @@ void sample_ZmodF_poly_FFT(unsigned long length, unsigned long n,
       ZmodF_poly_FFT(poly, 2*length);
    }
 
-   prof2d_stop();
+   prof_stop();
    
    ZmodF_poly_clear(poly);
 }
 
 
-char* prof2dDriverString_ZmodF_poly_FFT(char* params)
+char* profDriverString_ZmodF_poly_FFT(char* params)
 {
    return "ZmodF_poly_FFT over various truncation lengths and coefficient sizes.\n"
    "Parameters are: min truncation length; max truncation length; ratio between\n"
    "consecutive truncation lengths; number of coefficient lengths to try.";
 }
 
-char* prof2dDriverDefaultParams_ZmodF_poly_FFT()
+char* profDriverDefaultParams_ZmodF_poly_FFT()
 {
    return "100 200 1.1 6";
 }
 
 
-void prof2dDriver_ZmodF_poly_FFT(char* params)
+void profDriver_ZmodF_poly_FFT(char* params)
 {
    unsigned long length_min, length_max, n_count;
    double length_ratio;
@@ -95,31 +95,31 @@ void sample_ZmodF_poly_IFFT(unsigned long length, unsigned long n,
    
    // todo: need to generate random data here
    
-   prof2d_start();
+   prof_start();
 
    for (unsigned long i = 0; i < count; i++)
       ZmodF_poly_IFFT(poly);
 
-   prof2d_stop();
+   prof_stop();
    
    ZmodF_poly_clear(poly);
 }
 
 
-char* prof2dDriverString_ZmodF_poly_IFFT(char* params)
+char* profDriverString_ZmodF_poly_IFFT(char* params)
 {
    return "ZmodF_poly_IFFT over various truncation lengths and coefficient sizes.\n"
    "Parameters are: min truncation length; max truncation length; ratio between\n"
    "consecutive truncation lengths; number of coefficient lengths to try.";
 }
 
-char* prof2dDriverDefaultParams_ZmodF_poly_IFFT()
+char* profDriverDefaultParams_ZmodF_poly_IFFT()
 {
    return "100 200 1.1 6";
 }
 
 
-void prof2dDriver_ZmodF_poly_IFFT(char* params)
+void profDriver_ZmodF_poly_IFFT(char* params)
 {
    unsigned long length_min, length_max, n_count;
    double length_ratio;
@@ -166,12 +166,12 @@ void sample_ZmodF_poly_negacyclic_convolution(
 
    unsigned long twist = (2*n*FLINT_BITS) >> depth;
    
-   prof2d_start();
+   prof_start();
 
    for (unsigned long i = 0; i < count; i++)
       ZmodF_poly_negacyclic_convolution(poly3, poly1, poly2);
 
-   prof2d_stop();
+   prof_stop();
    
    ZmodF_poly_clear(poly3);
    ZmodF_poly_clear(poly2);
@@ -179,19 +179,19 @@ void sample_ZmodF_poly_negacyclic_convolution(
 }
 
 
-char* prof2dDriverString_ZmodF_poly_negacyclic_convolution(char* params)
+char* profDriverString_ZmodF_poly_negacyclic_convolution(char* params)
 {
    return "ZmodF_poly_negacyclic_convolution over various depths and coefficient sizes.\n"
    "Parameters are: min depth; max depth; min coeff length; max coeff length.";
 }
 
-char* prof2dDriverDefaultParams_ZmodF_poly_negacyclic_convolution()
+char* profDriverDefaultParams_ZmodF_poly_negacyclic_convolution()
 {
    return "3 8 1 8";
 }
 
 
-void prof2dDriver_ZmodF_poly_negacyclic_convolution(char* params)
+void profDriver_ZmodF_poly_negacyclic_convolution(char* params)
 {
    unsigned long depth_min, depth_max, n_min, n_max;
 

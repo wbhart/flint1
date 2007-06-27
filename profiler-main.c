@@ -16,9 +16,11 @@
 #include <gmp.h>
 
 
-prof2d_Driver_t prof2d_active_Driver = NULL;
-prof2d_DriverString_t prof2d_active_DriverString = NULL;
-prof2d_DriverDefaultParams_t prof2d_active_DriverDefaultParams = NULL;
+prof_Driver_t prof_active_Driver = NULL;
+prof_DriverString_t prof_active_DriverString = NULL;
+prof_DriverDefaultParams_t prof_active_DriverDefaultParams = NULL;
+
+prof1d_Sampler_t prof1d_active_Sampler = NULL;
 prof2d_Sampler_t prof2d_active_Sampler = NULL;
 
 
@@ -45,16 +47,28 @@ void prof2d_set_sampler(prof2d_Sampler_t sampler)
    prof2d_active_Sampler = sampler;
 }
 
+void prof1d_set_sampler(prof1d_Sampler_t sampler)
+{
+   prof1d_active_Sampler = sampler;
+}
 
-void prof2d_start()
+
+void prof_start()
 {
    start_clock(0);
 }
 
-void prof2d_stop()
+void prof_stop()
 {
    stop_clock(0);
 }
+
+
+typedef struct
+{
+   unsigned long x;
+   prof1d_Sampler_t sampler;
+} prof1d_arg_t;
 
 
 typedef struct
@@ -64,11 +78,34 @@ typedef struct
 } prof2d_arg_t;
 
 
+void prof1d_arg_exec(void* arg, unsigned long count)
+{
+   prof1d_arg_t* z = (prof1d_arg_t*) arg;
+   
+   z->sampler(z->x, count);
+}
+
+
 void prof2d_arg_exec(void* arg, unsigned long count)
 {
    prof2d_arg_t* z = (prof2d_arg_t*) arg;
    
    z->sampler(z->x, z->y, count);
+}
+
+
+void prof1d_sample(unsigned long x)
+{
+   double min_time, max_time;
+   prof1d_arg_t arg;
+   
+   arg.x = x;
+   arg.sampler = prof1d_active_Sampler;
+   
+   prof_repeat(&min_time, &max_time, prof1d_arg_exec, &arg);
+
+   printf("%d\t%.3le\t%.3le\n", x, min_time, max_time);
+   fflush(stdout);
 }
 
 
@@ -98,21 +135,21 @@ void do_target(int index, char* params)
    printf("MACHINE: %s\n\n", machine_name);
 
    printf("MODULE: %s\n", prof_module_name);
-   printf("TARGET: %s\n", prof2d_target_name[index]);
+   printf("TARGET: %s\n", prof_target_name[index]);
    printf("PARAMETERS: %s\n", params);
 
    printf("\n");
-   if (prof2d_DriverString_list[index])
-      printf("DESCRIPTION:\n%s\n", prof2d_DriverString_list[index](params));
+   if (prof_DriverString_list[index])
+      printf("DESCRIPTION:\n%s\n", prof_DriverString_list[index](params));
    
    printf("\n");
    printf("============================================== begin data \n");
 
-   prof2d_active_Driver = prof2d_Driver_list[index];
+   prof_active_Driver = prof_Driver_list[index];
 
-   if (prof2d_active_Driver != NULL)
+   if (prof_active_Driver != NULL)
    {
-      prof2d_active_Driver(params);
+      prof_active_Driver(params);
    }
 }
 
@@ -120,9 +157,9 @@ void do_target(int index, char* params)
 // returns -1 if target name not found
 int lookup_target_name(char* name)
 {
-   for (int i = 0; i < prof2d_target_count; i++)
+   for (int i = 0; i < prof_target_count; i++)
    {
-      if (!strcmp(prof2d_target_name[i], name))
+      if (!strcmp(prof_target_name[i], name))
          return i;
    }
    return -1;
@@ -148,8 +185,8 @@ void help()
    printf("              Overrides environment variable FLINT_PROFILE_PARAMS.\n");
    printf("\n");
    printf("Targets in this profiling module are:\n");
-   for (int i = 0; i < prof2d_target_count; i++)
-      printf("  %s\n", prof2d_target_name[i]);
+   for (int i = 0; i < prof_target_count; i++)
+      printf("  %s\n", prof_target_name[i]);
 }
 
 
@@ -214,8 +251,8 @@ int main(int argc, char* argv[])
    // parameters supplied on command line
    if (!strlen(profile_params))
    {
-      prof2d_DriverDefaultParams_t f =
-         prof2d_DriverDefaultParams_list[selected_target];
+      prof_DriverDefaultParams_t f =
+         prof_DriverDefaultParams_list[selected_target];
       if (f)
          strcpy(profile_params, f());
    }
