@@ -1,33 +1,27 @@
 /*
-Script for 2d profiles of MAGMA.
-
-This file is part of the FLINT project. It generates output in the same
-format as profiler-main.c.
+Profiling MAGMA polynomial multiplication in Z[x].
 
 Usage: run magma with the -b flag to prevent the start up banner, i.e.
 
    magma -b magma-profile.m > output.prof
 
-(C) 2007 David Harvey, GPL
+(C) 2007 David Harvey + Bill Hart, GPL
 
 */
 
-/************************************************************************
-
- The first section of the file is a template you need to fill in to
- run a particular profile.
-
-************************************************************************/
-
 target_name := "PolyMul";
-target_description := "MAGMA polynomial multiplication in Z[x] over various sizes";
+target_description := "MAGMA polynomial multiplication in Z[x] over various lengths and bitsizes, NON-NEGATIVE coefficients only";
+
+
+max := 16000000;   // maximum total bitsize of input polys
+ratio := 1.2;      // ratio between consecutive lengths/bitsizes
 
 
 // Timing runs need to last at least this many microseconds to be counted:
 DURATION_THRESHOLD := 200000;
 // Microseconds per timing run that the prof2d_sample function aims for:
 DURATION_TARGET := 300000;
-    
+
 
 forward prof2d_sample;
 
@@ -45,8 +39,8 @@ function sampler(length, bits, count)
     time1 := Cputime();
     for i := 1 to count do
       if (i-1) mod countmod eq 0 then
-         a:=Polynomial([RandomBits(bits):x in [1..length]]);
-         b:=Polynomial([RandomBits(bits):x in [1..length]]);
+         a:=Polynomial([RandomBits(bits): x in [1..length]]);
+         b:=Polynomial([RandomBits(bits): x in [1..length]]);
       end if;
       c:=a*b;
     end for;
@@ -57,8 +51,8 @@ function sampler(length, bits, count)
 
     for i := 1 to count do
       if (i-1) mod countmod eq 0 then
-       a:=Polynomial([RandomBits(bits):x in [1..length]]);
-       b:=Polynomial([RandomBits(bits):x in [1..length]]);
+       a:=Polynomial([RandomBits(bits): x in [1..length]]);
+       b:=Polynomial([RandomBits(bits): x in [1..length]]);
        end if;
     end for;
 
@@ -73,10 +67,7 @@ and call prof2d_sample(x, y) for each one.
 */
 procedure driver()
 
-   max := 16000000;   // maximum total bitsize of input polys
-   ratio := 1.2;      // ratio between consecutive lengths/bitsizes
-
-   max_iter := Ceil(Log(max) / Log(ratio));
+   max_iter := Ceiling(Log(max) / Log(ratio));
 
    last_length := 0;
    for i := 0 to max_iter do
