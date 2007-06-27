@@ -10,6 +10,10 @@ ifndef FLINT_TUNE
 	
 endif
 
+ifndef FLINT_LINK_OPTIONS
+	FLINT_LINK_OPTIONS = -static
+endif
+
 # default GMP directories on sage.math development machine
 ifndef FLINT_GMP_INCLUDE_DIR
 	FLINT_GMP_INCLUDE_DIR = "/home/dmharvey/gmp/install/include"
@@ -19,7 +23,7 @@ ifndef FLINT_GMP_LIB_DIR
 	FLINT_GMP_LIB_DIR = "/home/dmharvey/gmp/install/lib"
 endif
 
-LIBS = -L$(FLINT_GMP_LIB_DIR) -static -lgmp -lpthread -lm
+LIBS = -L$(FLINT_GMP_LIB_DIR) $(FLINT_LINK_OPTIONS) -lgmp -lpthread -lm
 INCS =  -I"/usr/include" -I$(FLINT_GMP_INCLUDE_DIR)
 
 CC = gcc -std=c99
