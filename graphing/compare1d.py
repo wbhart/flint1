@@ -37,7 +37,6 @@ CONFIG_xscale = None
 CONFIG_yscale = None
 CONFIG_xlabel = None
 CONFIG_ylabel = None
-CONFIG_truncate = 2.0
 
 
 # override settings from configuration file if requested
