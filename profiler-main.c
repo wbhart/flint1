@@ -67,58 +67,62 @@ void prof_stop()
 typedef struct
 {
    unsigned long x;
+   void* arg;
    prof1d_Sampler_t sampler;
-} prof1d_arg_t;
+} prof1d_info_t;
 
 
 typedef struct
 {
    unsigned long x, y;
+   void* arg;
    prof2d_Sampler_t sampler;
-} prof2d_arg_t;
+} prof2d_info_t;
 
 
-void prof1d_arg_exec(void* arg, unsigned long count)
+void prof1d_info_exec(void* info, unsigned long count)
 {
-   prof1d_arg_t* z = (prof1d_arg_t*) arg;
+   prof1d_info_t* z = (prof1d_info_t*) info;
    
-   z->sampler(z->x, count);
+   z->sampler(z->x, z->arg, count);
 }
 
 
-void prof2d_arg_exec(void* arg, unsigned long count)
+void prof2d_info_exec(void* info, unsigned long count)
 {
-   prof2d_arg_t* z = (prof2d_arg_t*) arg;
+   prof2d_info_t* z = (prof2d_info_t*) info;
    
-   z->sampler(z->x, z->y, count);
+   z->sampler(z->x, z->y, z->arg, count);
 }
 
 
-void prof1d_sample(unsigned long x)
+void prof1d_sample(unsigned long x, void* arg)
 {
    double min_time, max_time;
-   prof1d_arg_t arg;
+   prof1d_info_t info;
    
-   arg.x = x;
-   arg.sampler = prof1d_active_Sampler;
+   info.x = x;
+   info.arg = arg;
+   info.sampler = prof1d_active_Sampler;
    
-   prof_repeat(&min_time, &max_time, prof1d_arg_exec, &arg);
+   prof_repeat(&min_time, &max_time, prof1d_info_exec, &info);
 
    printf("%d\t%.3le\t%.3le\n", x, min_time, max_time);
    fflush(stdout);
 }
 
 
-void prof2d_sample(unsigned long x, unsigned long y)
+void prof2d_sample(unsigned long x, unsigned long y, void* arg)
 {
    double min_time, max_time;
-   prof2d_arg_t arg;
+   prof2d_info_t info;
    
-   arg.x = x;
-   arg.y = y;
-   arg.sampler = prof2d_active_Sampler;
+   info.x = x;
+   info.y = y;
+   info.arg = arg;
+   info.sampler = prof2d_active_Sampler;
    
-   prof_repeat(&min_time, &max_time, prof2d_arg_exec, &arg);
+   prof_repeat(&min_time, &max_time, prof2d_info_exec, &info);
 
    printf("%d\t%d\t%.3le\t%.3le\n", x, y, min_time, max_time);
    fflush(stdout);
@@ -148,9 +152,7 @@ void do_target(int index, char* params)
    prof_active_Driver = prof_Driver_list[index];
 
    if (prof_active_Driver != NULL)
-   {
       prof_active_Driver(params);
-   }
 }
 
 
@@ -252,7 +254,7 @@ int main(int argc, char* argv[])
    if (!strlen(profile_params))
    {
       prof_DriverDefaultParams_t f =
-         prof_DriverDefaultParams_list[selected_target];
+                  prof_DriverDefaultParams_list[selected_target];
       if (f)
          strcpy(profile_params, f());
    }

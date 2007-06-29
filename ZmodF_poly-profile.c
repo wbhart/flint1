@@ -18,8 +18,8 @@ Copyright (C) 2007, William Hart and David Harvey
 // ============================================================================
 
 
-void sample_ZmodF_poly_FFT(unsigned long length, unsigned long n,
-                          unsigned long count)
+void sample_ZmodF_poly_FFT(unsigned long length, unsigned long n, void* arg,
+                           unsigned long count)
 {
    unsigned long m = ceil_log2(2*length);
    
@@ -77,15 +77,15 @@ void profDriver_ZmodF_poly_FFT(char* params)
          n_skip = 1;
 
       for (unsigned long n = n_skip; n <= n_count * n_skip; n += n_skip)
-         prof2d_sample(length, n);
+         prof2d_sample(length, n, NULL);
    }
 }
 
 
 // ============================================================================
 
-void sample_ZmodF_poly_IFFT(unsigned long length, unsigned long n,
-                           unsigned long count)
+void sample_ZmodF_poly_IFFT(unsigned long length, unsigned long n, void* arg,
+                            unsigned long count)
 {
    unsigned long m = ceil_log2(length);
    
@@ -141,7 +141,7 @@ void profDriver_ZmodF_poly_IFFT(char* params)
          n_skip = 1;
 
       for (unsigned long n = n_skip; n <= n_count * n_skip; n += n_skip)
-         prof2d_sample(length, n);
+         prof2d_sample(length, n, NULL);
    }
 }
 
@@ -150,7 +150,7 @@ void profDriver_ZmodF_poly_IFFT(char* params)
 // ============================================================================
 
 void sample_ZmodF_poly_negacyclic_convolution(
-      unsigned long depth, unsigned long n, unsigned long count)
+      unsigned long depth, unsigned long n, void* arg, unsigned long count)
 {
    ZmodF_poly_t poly1, poly2, poly3;
    ZmodF_poly_init(poly1, depth, n, 1);
@@ -209,7 +209,7 @@ void profDriver_ZmodF_poly_negacyclic_convolution(char* params)
          if ((2*n*FLINT_BITS) % (1 << depth))
             continue;
          
-         prof2d_sample(depth, n);
+         prof2d_sample(depth, n, NULL);
       }
    }
 }

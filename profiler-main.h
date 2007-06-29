@@ -9,10 +9,12 @@
 #include "profiler.h"
 
 
-// A function that takes one/two arguments and an iteration count
+// A function that takes one/two coordinates, an implementation-defined
+// argument, and an iteration count
 // (i.e. the type of function that is getting profiled).
-typedef void (*prof1d_Sampler_t)(unsigned long x, unsigned long count);
-typedef void (*prof2d_Sampler_t)(unsigned long x, unsigned long y,
+typedef void (*prof1d_Sampler_t)(unsigned long x, void* arg,
+                                 unsigned long count);
+typedef void (*prof2d_Sampler_t)(unsigned long x, unsigned long y, void* arg,
                                  unsigned long count);
 
 
@@ -28,9 +30,9 @@ typedef char* (*prof_DriverDefaultParams_t)();
 
 
 void prof2d_set_sampler(prof2d_Sampler_t sampler);
-void prof2d_sample(unsigned long x, unsigned long y);
+void prof2d_sample(unsigned long x, unsigned long y, void* arg);
 void prof1d_set_sampler(prof1d_Sampler_t sampler);
-void prof1d_sample(unsigned long x);
+void prof1d_sample(unsigned long x, void* arg);
 
 void prof_start();
 void prof_stop();

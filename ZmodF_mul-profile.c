@@ -22,7 +22,7 @@ Copyright (C) 2007, William Hart and David Harvey
 unsigned long ZmodF_mul_depth = 0;
 
 
-void sample_ZmodF_mul(unsigned long n, unsigned long count)
+void sample_ZmodF_mul(unsigned long n, void* arg, unsigned long count)
 {
    ZmodF_mul_info_t info;
    
@@ -94,7 +94,7 @@ void profDriver_ZmodF_mul(char* params)
       if (depth > 2 && ((n * FLINT_BITS) & ((1 << depth) - 1)))
          continue;
       
-      prof1d_sample(n);
+      prof1d_sample(n, NULL);
    }
 }
 
@@ -104,7 +104,7 @@ void profDriver_ZmodF_mul(char* params)
 // ============================================================================
 
 
-void sample_ZmodF_sqr(unsigned long n, unsigned long count)
+void sample_ZmodF_sqr(unsigned long n, void* arg, unsigned long count)
 {
    ZmodF_mul_info_t info;
    
@@ -172,7 +172,7 @@ void profDriver_ZmodF_sqr(char* params)
       if (depth > 2 && ((n * FLINT_BITS) & ((1 << depth) - 1)))
          continue;
       
-      prof1d_sample(n);
+      prof1d_sample(n, NULL);
    }
 }
 

@@ -61,7 +61,7 @@ void randpoly(mpz_poly_t pol, unsigned long length, unsigned long maxbits)
 
 
 /*
-Calls prof2d_sample(length, bits) for all length, bits combinations
+Calls prof2d_sample(length, bits, NULL) for all length, bits combinations
 such that length*bits < max_bits, with length and bits spaced out by
 the given ratio
  */
@@ -86,7 +86,7 @@ void run_triangle(unsigned long max_bits, double ratio)
                last_bits = bits;
 
                if (bits * length < max_bits)
-                  prof2d_sample(length, bits);
+                  prof2d_sample(length, bits, NULL);
             }
          }
       }
@@ -98,7 +98,7 @@ void run_triangle(unsigned long max_bits, double ratio)
 
 
 void sample_fmpz_poly_mul_KS(unsigned long length, unsigned long bits,
-                             unsigned long count)
+                             void* arg, unsigned long count)
 {
    unsigned long m = ceil_log2(length);
    unsigned long output_bits = 2*bits+m;
@@ -176,7 +176,7 @@ void profDriver_fmpz_poly_mul_KS(char* params)
 // ****************************************************************************
 
 void sample_fmpz_poly_mul_SS(unsigned long length, unsigned long bits,
-                             unsigned long count)
+                             void* arg, unsigned long count)
 {
    unsigned long m = ceil_log2(length);
    unsigned long output_bits = 2*bits+m;
@@ -200,7 +200,6 @@ void sample_fmpz_poly_mul_SS(unsigned long length, unsigned long bits,
    else if (count >= 20) r_count = 5;
    else if (count >= 8) r_count = 2;
    else r_count = 1;
- 
    
    for (unsigned long i = 0; i < count; i++)
    {
@@ -255,7 +254,7 @@ void profDriver_fmpz_poly_mul_SS(char* params)
 
 
 void sample_fmpz_poly_mul_karatsuba(unsigned long length, unsigned long bits,
-                                    unsigned long count)
+                                    void* arg, unsigned long count)
 {
    unsigned long m = ceil_log2(length);
    unsigned long output_bits = 2*bits+m;
@@ -279,7 +278,6 @@ void sample_fmpz_poly_mul_karatsuba(unsigned long length, unsigned long bits,
    else if (count >= 20) r_count = 5;
    else if (count >= 8) r_count = 2;
    else r_count = 1;
- 
    
    for (unsigned long i = 0; i < count; i++)
    {
@@ -334,7 +332,7 @@ void profDriver_fmpz_poly_mul_karatsuba(char* params)
 
 
 void sample_fmpz_poly_mul(unsigned long length, unsigned long bits,
-                          unsigned long count)
+                          void* arg, unsigned long count)
 {
    printf("hello, count = %ld\n", count);
 
@@ -360,7 +358,6 @@ void sample_fmpz_poly_mul(unsigned long length, unsigned long bits,
    else if (count >= 20) r_count = 5;
    else if (count >= 8) r_count = 2;
    else r_count = 1;
- 
    
    for (unsigned long i = 0; i < count; i++)
    {
