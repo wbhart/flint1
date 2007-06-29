@@ -437,9 +437,66 @@ int test_ZmodF_mul_info_mul_plain()
          
          if (mpz_cmp(y, z))
             success = 0;
+      }
+      
+      ZmodF_mul_info_clear(info);
+   }
+
+   mpz_clear(x1);
+   mpz_clear(x2);
+   mpz_clear(y);
+   mpz_clear(z);
+   mpz_clear(p);
+
+   return success;
+}
+
+
+
+int test_ZmodF_mul_info_sqr_plain()
+{
+   int success = 1;
+
+   mp_limb_t in1[2000];
+   mp_limb_t out[2000];
+
+   mpz_t x1, y, z, p;
+   mpz_init(x1);
+   mpz_init(y);
+   mpz_init(z);
+   mpz_init(p);
+
+   for (unsigned long n = 1; n < 100 && success; n++)
+   {
+#if DEBUG
+      printf("n = %d\n", n);
+#endif
+
+      // p = B^n + 1
+      mpz_set_ui(p, 1);
+      mpz_mul_2exp(p, p, n*FLINT_BITS);
+      mpz_add_ui(p, p, 1);
+
+      ZmodF_mul_info_t info;
+      ZmodF_mul_info_init_plain(info, n, 1);
+
+      for (unsigned long trial = 0; trial < 1000 && success; trial++)
+      {
+         if (random_ulong(4) == 0)
+         {
+            // put in -1 mod p every now and then
+            ZmodF_zero(in1, n);
+            in1[n] = 1;
+         }
+         else
+         {
+            random_limbs(in1, n);
+            in1[n] = 0;
+         }
 
          // test squaring
 
+         mpn_to_mpz(x1, in1, n+1);
          mpz_mul(z, x1, x1);
          mpz_mod(z, z, p);
          ZmodF_mul_info_sqr(info, out, in1);
@@ -455,7 +512,6 @@ int test_ZmodF_mul_info_mul_plain()
    }
 
    mpz_clear(x1);
-   mpz_clear(x2);
    mpz_clear(y);
    mpz_clear(z);
    mpz_clear(p);
@@ -522,6 +578,52 @@ int test_ZmodF_mul_info_mul_threeway()
          
          if (mpn_cmp(out_plain, out_threeway, n+1))
             success = 0;
+      }
+      
+      ZmodF_mul_info_clear(info_plain);
+      ZmodF_mul_info_clear(info_threeway);
+   }
+
+   mpz_clear(x);
+
+   return success;
+}
+
+
+int test_ZmodF_mul_info_sqr_threeway()
+{
+   int success = 1;
+
+   mp_limb_t in1[2000];
+   mp_limb_t out_plain[2000];
+   mp_limb_t out_threeway[2000];
+
+   mpz_t x;
+   mpz_init(x);
+
+   for (unsigned long n = 3; n < 300 && success; n += 3)
+   {
+#if DEBUG
+      printf("n = %d\n", n);
+#endif
+
+      ZmodF_mul_info_t info_plain, info_threeway;
+      ZmodF_mul_info_init_threeway(info_threeway, n, 1);
+      ZmodF_mul_info_init_plain(info_plain, n, 1);
+
+      for (unsigned long trial = 0; trial < 250 && success; trial++)
+      {
+         if (random_ulong(4) == 0)
+         {
+            // put in -1 mod p every now and then
+            ZmodF_zero(in1, n);
+            in1[n] = 1;
+         }
+         else
+         {
+            random_limbs(in1, n);
+            in1[n] = 0;
+         }
 
          // test squaring
 
@@ -564,66 +666,63 @@ int test_ZmodF_mul_info_mul_negacyclic()
            && (depth <= FLINT_LG_BITS_PER_LIMB + 4)
            && success; depth++)
       {
-
+// todo: testing 2nd version negacyclic code currently disabled:
+//         for (int version = 0; version < 2; version++)
+         for (int version = 0; version < 1; version++)
+         {
 #if DEBUG
-         printf("n = %d, depth = %d\n", n, depth);
+            printf("n = %d, depth = %d\n", n, depth);
 #endif
 
-         ZmodF_mul_info_t info_plain, info_negacyclic;
-         ZmodF_mul_info_init_negacyclic(info_negacyclic, n, depth, 0);
-         ZmodF_mul_info_init_plain(info_plain, n, 0);
+            ZmodF_mul_info_t info_plain, info_negacyclic;
+            ZmodF_mul_info_init_plain(info_plain, n, 0);
 
-         for (unsigned long trial = 0; trial < 10 && success; trial++)
-         {
-            if (random_ulong(4) == 0)
-            {
-               // put in -1 mod p every now and then
-               ZmodF_zero(in1, n);
-               in1[n] = 1;
-            }
+            if (version == 0)
+               ZmodF_mul_info_init_negacyclic(info_negacyclic, n, depth, 0);
             else
+               ZmodF_mul_info_init_negacyclic2(info_negacyclic, n, depth, 0);
+
+            for (unsigned long trial = 0; trial < 10 && success; trial++)
             {
-               random_limbs(in1, n);
-               in1[n] = 0;
+               if (random_ulong(4) == 0)
+               {
+                  // put in -1 mod p every now and then
+                  ZmodF_zero(in1, n);
+                  in1[n] = 1;
+               }
+               else
+               {
+                  random_limbs(in1, n);
+                  in1[n] = 0;
+               }
+
+               if (random_ulong(4) == 0)
+               {
+                  // put in -1 mod p every now and then
+                  ZmodF_zero(in2, n);
+                  in2[n] = 1;
+               }
+               else
+               {
+                  random_limbs(in2, n);
+                  in2[n] = 0;
+               }
+
+               // test multiplication
+
+               ZmodF_mul_info_mul(info_plain, out_plain, in1, in2);
+               ZmodF_mul_info_mul(info_negacyclic, out_negacyclic, in1, in2);
+
+               ZmodF_normalise(out_plain, n);
+               ZmodF_normalise(out_negacyclic, n);
+
+               if (mpn_cmp(out_plain, out_negacyclic, n+1))
+                  success = 0;
             }
 
-            if (random_ulong(4) == 0)
-            {
-               // put in -1 mod p every now and then
-               ZmodF_zero(in2, n);
-               in2[n] = 1;
-            }
-            else
-            {
-               random_limbs(in2, n);
-               in2[n] = 0;
-            }
-
-            // test multiplication
-
-            ZmodF_mul_info_mul(info_plain, out_plain, in1, in2);
-            ZmodF_mul_info_mul(info_negacyclic, out_negacyclic, in1, in2);
-
-            ZmodF_normalise(out_plain, n);
-            ZmodF_normalise(out_negacyclic, n);
-
-            if (mpn_cmp(out_plain, out_negacyclic, n+1))
-               success = 0;
-
-            // test squaring
-            
-            ZmodF_mul_info_sqr(info_plain, out_plain, in1);
-            ZmodF_mul_info_sqr(info_negacyclic, out_negacyclic, in1);
-
-            ZmodF_normalise(out_plain, n);
-            ZmodF_normalise(out_negacyclic, n);
-
-            if (mpn_cmp(out_plain, out_negacyclic, n+1))
-               success = 0;
+            ZmodF_mul_info_clear(info_negacyclic);
+            ZmodF_mul_info_clear(info_plain);
          }
-
-         ZmodF_mul_info_clear(info_plain);
-         ZmodF_mul_info_clear(info_negacyclic);
       }
    }
 
@@ -632,6 +731,78 @@ int test_ZmodF_mul_info_mul_negacyclic()
    return success;
 }
 
+
+
+int test_ZmodF_mul_info_sqr_negacyclic()
+{
+   int success = 1;
+
+   mp_limb_t in1[2000];
+   mp_limb_t out_plain[2000];
+   mp_limb_t out_negacyclic[2000];
+
+   mpz_t x;
+   mpz_init(x);
+
+   for (unsigned long n = 1; n < 1000 && success; n++)
+   {
+      for (unsigned long depth = 1;
+           (n*FLINT_BITS) % (1 << depth) == 0
+           && (depth <= FLINT_LG_BITS_PER_LIMB + 4)
+           && success; depth++)
+      {
+// todo: testing 2nd version negacyclic code currently disabled:
+//         for (int version = 0; version < 2; version++)
+         for (int version = 0; version < 1; version++)
+         {
+
+#if DEBUG
+            printf("n = %d, depth = %d\n", n, depth);
+#endif
+
+            ZmodF_mul_info_t info_plain, info_negacyclic;
+            ZmodF_mul_info_init_plain(info_plain, n, 1);
+            if (version == 0)
+               ZmodF_mul_info_init_negacyclic(info_negacyclic, n, depth, 1);
+            else
+               ZmodF_mul_info_init_negacyclic2(info_negacyclic, n, depth, 1);
+
+            for (unsigned long trial = 0; trial < 10 && success; trial++)
+            {
+               if (random_ulong(4) == 0)
+               {
+                  // put in -1 mod p every now and then
+                  ZmodF_zero(in1, n);
+                  in1[n] = 1;
+               }
+               else
+               {
+                  random_limbs(in1, n);
+                  in1[n] = 0;
+               }
+
+               // test squaring
+               
+               ZmodF_mul_info_sqr(info_plain, out_plain, in1);
+               ZmodF_mul_info_sqr(info_negacyclic, out_negacyclic, in1);
+
+               ZmodF_normalise(out_plain, n);
+               ZmodF_normalise(out_negacyclic, n);
+
+               if (mpn_cmp(out_plain, out_negacyclic, n+1))
+                  success = 0;
+            }
+
+            ZmodF_mul_info_clear(info_negacyclic);
+            ZmodF_mul_info_clear(info_plain);
+         }
+      }
+   }
+
+   mpz_clear(x);
+
+   return success;
+}
 
 
 /****************************************************************************
@@ -658,8 +829,11 @@ void ZmodF_mul_test_all()
    RUN_TEST(_ZmodF_mul_threeway_reduce);
    RUN_TEST(_ZmodF_mul_threeway_crt);
    RUN_TEST(ZmodF_mul_info_mul_plain);
+   RUN_TEST(ZmodF_mul_info_sqr_plain);
    RUN_TEST(ZmodF_mul_info_mul_threeway);
+   RUN_TEST(ZmodF_mul_info_sqr_threeway);
    RUN_TEST(ZmodF_mul_info_mul_negacyclic);
+   RUN_TEST(ZmodF_mul_info_sqr_negacyclic);
 
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");
