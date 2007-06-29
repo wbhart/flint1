@@ -183,6 +183,57 @@ void profDriver_ZmodF_mul_negacyclic(char* params)
 // ============================================================================
 
 
+/*
+arg should point to an unsigned long, which is the transform depth
+*/
+void sample_ZmodF_mul_negacyclic2(unsigned long n, void* arg,
+                                  unsigned long count)
+{
+   unsigned long depth = * (unsigned long*) arg;
+   ZmodF_mul_info_t info;
+   ZmodF_mul_info_init_negacyclic2(info, n, depth, 0);
+   sample_ZmodF_mul_helper(info, n, count);
+   ZmodF_mul_info_clear(info);
+}
+
+
+char* profDriverString_ZmodF_mul_negacyclic2(char* params)
+{
+   return
+   "ZmodF_mul using 2nd negacyclic algorithm.\n"
+   "Parameters: depth, n_min, n_max, n_skip.\n"
+   "Note: those n not supported for the given depth are skipped.\n";
+}
+
+
+char* profDriverDefaultParams_ZmodF_mul_negacyclic2()
+{
+   return "4 1 1000 1";
+}
+
+
+void profDriver_ZmodF_mul_negacyclic2(char* params)
+{
+   unsigned long depth, n_min, n_max, n_skip;
+   sscanf(params, "%ld %ld %ld %ld", &depth, &n_min, &n_max, &n_skip);
+
+   prof1d_set_sampler(sample_ZmodF_mul_negacyclic2);
+
+   // round up n_min so we start on a permissible value
+   while ((n_min * FLINT_BITS) & ((1 << depth) - 1))
+      n_min++;
+   
+   for (unsigned long n = n_min; n <= n_max; n += n_skip)
+   {
+      if (((n * FLINT_BITS) & ((1 << depth) - 1)) == 0)
+         prof1d_sample(n, &depth);
+   }
+}
+
+
+// ============================================================================
+
+
 void sample_ZmodF_mul_auto(unsigned long n, void* arg, unsigned long count)
 {
    ZmodF_mul_info_t info;
