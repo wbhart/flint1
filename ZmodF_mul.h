@@ -27,14 +27,18 @@
 
 
 /*
-   Three possible algorithms for multiplication mod p.
-   ZMOD_MUL_PLAIN: use mpn_mul_n and then reduce mod p
-   ZMOD_MUL_THREEWAY: use B^(3n) + 1 = (B^n + 1)(B^2n - B^n + 1)
-   ZMOD_MUL_NEGACYCLIC: use negacyclic FFT
+   Various algorithms for multiplication mod p.
+
+   ZMODF_MUL_PLAIN: use mpn_mul_n and then reduce mod p
+   ZMODF_MUL_THREEWAY: use B^(3m) + 1 = (B^m + 1)(B^2m - B^m + 1)
+   ZMODF_MUL_NEGACYCLIC: use negacyclic FFT, working mod B^m + 1
+   ZMODF_MUL_NEGACYCLIC2: use negacyclic FFT, but do the arithmetic first
+                          mod B^m + 1 and then mod B, and then CRT together
 */
 #define ZMODF_MUL_ALGO_PLAIN 0
 #define ZMODF_MUL_ALGO_THREEWAY 1
 #define ZMODF_MUL_ALGO_NEGACYCLIC 2
+#define ZMODF_MUL_ALGO_NEGACYCLIC2 3
 
 
 /*
@@ -48,14 +52,19 @@ typedef struct
    // possible values for algo are the ZMOD_MUL_ALGO_xyz constants above
    int algo;
    
-   // scratch buffer of length 2n (for ZMODF_MUL_ALGO_PLAIN)
-   // or length 3n+1 (for ZMODF_MUL_ALGO_THREEWAY)
+   // scratch buffer:
+   // of length 2n           (for ZMODF_MUL_ALGO_PLAIN)
+   // or length 3n+1         (for ZMODF_MUL_ALGO_THREEWAY)
+   // or length 3*2^depth    (for ZMODF_MUL_ALGO_NEGACYCLIC2)
+   // unused                 (for ZMODF_MUL_ALGO_NEGACYCLIC)
    mp_limb_t* scratch;
 
-   // m = n/3; used only in ZMODF_MUL_ALGO_THREEWAY
+   // for ZMODF_MUL_ALGO_THREEWAY, m = n/3
+   // for the NEGACYCLIC algorithms, the FFT coefficients are mod B^m + 1
    unsigned long m;
    
-   // used only for ZMODF_MUL_ALGO_NEGACYCLIC
+   // used only for ZMODF_MUL_ALGO_NEGACYCLIC and ZMODF_MUL_ALGO_NEGACYCLIC2
+   // todo: for squaring, only need the first one
    ZmodF_poly_t polys[2];
 
 } ZmodF_mul_info_struct;
@@ -91,6 +100,8 @@ void ZmodF_mul_info_init_plain(ZmodF_mul_info_t info, unsigned long n);
 void ZmodF_mul_info_init_threeway(ZmodF_mul_info_t info, unsigned long n);
 void ZmodF_mul_info_init_negacyclic(ZmodF_mul_info_t info, unsigned long n,
                                     unsigned long depth);
+void ZmodF_mul_info_init_negacyclic2(ZmodF_mul_info_t info, unsigned long n,
+                                     unsigned long depth);
 
                             
 // releases resources
@@ -136,15 +147,23 @@ void _ZmodF_mul_negacyclic_combine(ZmodF_t x, ZmodF_poly_t poly,
                                    unsigned long n);
 
 
-FLINT_INLINE
+inline
 void _ZmodF_mul_threeway_reduce1(ZmodF_t res, ZmodF_t a, unsigned long m);
 
-FLINT_INLINE
+inline
 void _ZmodF_mul_threeway_reduce2(mp_limb_t* res, ZmodF_t a, unsigned long m);
 
-FLINT_INLINE
+inline
 void _ZmodF_mul_threeway_crt(mp_limb_t* res, ZmodF_t a, mp_limb_t* b,
                              unsigned long m);
+
+
+
+void _ZmodF_mul_negacyclic2_convolve_modB(
+            mp_limb_t* out, mp_limb_t* in1, mp_limb_t* in2, unsigned long len);
+
+void _ZmodF_mul_negacyclic2_combine(ZmodF_t x, ZmodF_poly_t poly,
+                                    unsigned long n);
 
 
 #endif

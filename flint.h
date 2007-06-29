@@ -17,8 +17,6 @@
 #define FLINT_H
 
 
-#define FLINT_INLINE inline
-
 
 #if 0
 #define FLINT_ASSERT assert
