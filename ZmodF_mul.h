@@ -52,6 +52,10 @@ typedef struct
    // possible values for algo are the ZMOD_MUL_ALGO_xyz constants above
    int algo;
    
+   // this flag indicates that this struct is being used for squaring, in
+   // which case less memory will be allocated in the init routines
+   int squaring;
+   
    // scratch buffer:
    // of length 2n           (for ZMODF_MUL_ALGO_PLAIN)
    // or length 3n+1         (for ZMODF_MUL_ALGO_THREEWAY)
@@ -79,10 +83,10 @@ typedef ZmodF_mul_info_struct ZmodF_mul_info_t[1];
 Initialises ZmodF_mul_info_t for a given n. This function automatically selects
 the best underlying multiplication algorithm for the given n.
 
-The squaring flag is 1 if you intend to use this object for squaring. (This
-doesn't affect whether the struct can be used for squaring or multiplying,
-the only effect is to select the best algorithm using different tuning
-parameters.)
+The squaring flag is 1 if you intend to use this object for squaring. The
+object will then use up less memory. If squaring == 0, it's still possible to
+use this object for squaring, but if squaring == 1, you can't use it for
+arbitrary multiplication.
 
 WARNING: the multiplication time does NOT increase monotonically with n.
 * If n is divisible by 3, the "threeway" algorithm is available, which is
@@ -96,12 +100,14 @@ void ZmodF_mul_info_init(ZmodF_mul_info_t info, unsigned long n, int squaring);
 
 
 // the following functions initialise with a specific algorithm:
-void ZmodF_mul_info_init_plain(ZmodF_mul_info_t info, unsigned long n);
-void ZmodF_mul_info_init_threeway(ZmodF_mul_info_t info, unsigned long n);
+void ZmodF_mul_info_init_plain(ZmodF_mul_info_t info, unsigned long n,
+                               int squaring);
+void ZmodF_mul_info_init_threeway(ZmodF_mul_info_t info, unsigned long n,
+                                  int squaring);
 void ZmodF_mul_info_init_negacyclic(ZmodF_mul_info_t info, unsigned long n,
-                                    unsigned long depth);
+                                    unsigned long depth, int squaring);
 void ZmodF_mul_info_init_negacyclic2(ZmodF_mul_info_t info, unsigned long n,
-                                     unsigned long depth);
+                                     unsigned long depth, int squaring);
 
                             
 // releases resources

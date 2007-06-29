@@ -365,6 +365,10 @@ int test__ZmodF_mul_threeway_crt()
 }
 
 
+
+// todo: separate test code for squaring....?
+
+
 int test_ZmodF_mul_info_mul_plain()
 {
    int success = 1;
@@ -392,7 +396,7 @@ int test_ZmodF_mul_info_mul_plain()
       mpz_add_ui(p, p, 1);
 
       ZmodF_mul_info_t info;
-      ZmodF_mul_info_init_plain(info, n);
+      ZmodF_mul_info_init_plain(info, n, 0);
 
       for (unsigned long trial = 0; trial < 1000 && success; trial++)
       {
@@ -479,8 +483,8 @@ int test_ZmodF_mul_info_mul_threeway()
 #endif
 
       ZmodF_mul_info_t info_plain, info_threeway;
-      ZmodF_mul_info_init_threeway(info_threeway, n);
-      ZmodF_mul_info_init_plain(info_plain, n);
+      ZmodF_mul_info_init_threeway(info_threeway, n, 0);
+      ZmodF_mul_info_init_plain(info_plain, n, 0);
 
       for (unsigned long trial = 0; trial < 250 && success; trial++)
       {
@@ -566,8 +570,8 @@ int test_ZmodF_mul_info_mul_negacyclic()
 #endif
 
          ZmodF_mul_info_t info_plain, info_negacyclic;
-         ZmodF_mul_info_init_negacyclic(info_negacyclic, n, depth);
-         ZmodF_mul_info_init_plain(info_plain, n);
+         ZmodF_mul_info_init_negacyclic(info_negacyclic, n, depth, 0);
+         ZmodF_mul_info_init_plain(info_plain, n, 0);
 
          for (unsigned long trial = 0; trial < 10 && success; trial++)
          {

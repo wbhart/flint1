@@ -162,9 +162,11 @@ void ZmodF_sqr(ZmodF_t res, ZmodF_t a, mp_limb_t* scratch, unsigned long n)
 /*
 initialises info to use plain mpn_mul_n for multiplication
  */
-void ZmodF_mul_info_init_plain(ZmodF_mul_info_t info, unsigned long n)
+void ZmodF_mul_info_init_plain(ZmodF_mul_info_t info, unsigned long n,
+                               int squaring)
 {
    info->n = n;
+   info->squaring = squaring;
    info->algo = ZMODF_MUL_ALGO_PLAIN;
    info->scratch = (mp_limb_t*) flint_stack_alloc(2*n);
 }
@@ -175,13 +177,16 @@ initialises info to use the "three-way split" algorithm for multiplication
 
 n must be divisible by 3
  */
-void ZmodF_mul_info_init_threeway(ZmodF_mul_info_t info, unsigned long n)
+void ZmodF_mul_info_init_threeway(ZmodF_mul_info_t info, unsigned long n,
+                                  int squaring)
 {
    FLINT_ASSERT(n % 3 == 0);
 
    info->n = n;
+   info->squaring = squaring;
    info->m = n/3;
    info->algo = ZMODF_MUL_ALGO_THREEWAY;
+   // todo: maybe can use less memory here when squaring:
    info->scratch = (mp_limb_t*) flint_stack_alloc(3*n + 1);
 }
 
@@ -193,13 +198,14 @@ with a transform depth of "depth".
 n*FLINT_BITS must be divisible by 2^depth (so that the coefficients can be
 broken up into 2^depth pieces)
 */
-void ZmodF_mul_info_init_negacyclic(
-         ZmodF_mul_info_t info, unsigned long n, unsigned long depth)
+void ZmodF_mul_info_init_negacyclic(ZmodF_mul_info_t info, unsigned long n,
+                                    unsigned long depth, int squaring)
 {
    FLINT_ASSERT((n * FLINT_BITS) % (1 << depth) == 0);
 
    info->algo = ZMODF_MUL_ALGO_NEGACYCLIC;
    info->n = n;
+   info->squaring = squaring;
 
    // work out how many limbs the small coefficients need to have
    unsigned long input_bits = (n*FLINT_BITS) >> depth;
@@ -215,7 +221,8 @@ void ZmodF_mul_info_init_negacyclic(
    }
    
    ZmodF_poly_init(info->polys[0], depth, info->m, 1);
-   ZmodF_poly_init(info->polys[1], depth, info->m, 1);
+   if (!squaring)
+      ZmodF_poly_init(info->polys[1], depth, info->m, 1);
 }
 
 
@@ -227,13 +234,14 @@ with a transform depth of "depth".
 n*FLINT_BITS must be divisible by 2^depth (so that the coefficients can be
 broken up into 2^depth pieces)
 */
-void ZmodF_mul_info_init_negacyclic2(
-         ZmodF_mul_info_t info, unsigned long n, unsigned long depth)
+void ZmodF_mul_info_init_negacyclic2(ZmodF_mul_info_t info, unsigned long n, 
+                                     unsigned long depth, int squaring)
 {
    FLINT_ASSERT((n * FLINT_BITS) % (1 << depth) == 0);
 
    info->algo = ZMODF_MUL_ALGO_NEGACYCLIC2;
    info->n = n;
+   info->squaring = squaring;
 
    // work out how many limbs the small coefficients need to have
    // (remember one extra limb will be supplied by working mod B)
@@ -253,9 +261,13 @@ void ZmodF_mul_info_init_negacyclic2(
    // routines we only use m+1 limbs (i.e. work mod B^m + 1). Then, later on
    // we'll need the full m+2 limbs to store the result mod B^(m+1) + B.
    ZmodF_poly_init(info->polys[0], depth, info->m+1, 1);
-   ZmodF_poly_init(info->polys[1], depth, info->m+1, 1);
    ZmodF_poly_decrease_n(info->polys[0], info->m);
-   ZmodF_poly_decrease_n(info->polys[1], info->m);
+   if (!squaring)
+   {
+      ZmodF_poly_init(info->polys[1], depth, info->m+1, 1);
+      ZmodF_poly_decrease_n(info->polys[1], info->m);
+   }
+   // todo: maybe can use less memory here when squaring:
    info->scratch = (mp_limb_t*) flint_stack_alloc(3UL << depth);
 }
 
@@ -299,7 +311,7 @@ void ZmodF_mul_info_init(ZmodF_mul_info_t info, unsigned long n, int squaring)
       if (n < ZMODF_MUL_PLAIN_THREEWAY_THRESHOLD)
       {
          // n is tiny, just use plain algorithm
-         ZmodF_mul_info_init_plain(info, n);
+         ZmodF_mul_info_init_plain(info, n, 0);
          return;
       }
 
@@ -309,7 +321,7 @@ void ZmodF_mul_info_init(ZmodF_mul_info_t info, unsigned long n, int squaring)
          if (n < ZMODF_MUL_THREEWAY_NEGACYCLIC_THRESHOLD)
          {
             // n is larger, use threeway algorithm
-            ZmodF_mul_info_init_threeway(info, n);
+            ZmodF_mul_info_init_threeway(info, n, 0);
             return;
          }
       }
@@ -319,7 +331,7 @@ void ZmodF_mul_info_init(ZmodF_mul_info_t info, unsigned long n, int squaring)
          if (n < ZMODF_MUL_PLAIN_NEGACYCLIC_THRESHOLD)
          {
             // n is small, just use plain algorithm
-            ZmodF_mul_info_init_plain(info, n);
+            ZmodF_mul_info_init_plain(info, n, 0);
             return;
          }
       }
@@ -335,11 +347,11 @@ void ZmodF_mul_info_init(ZmodF_mul_info_t info, unsigned long n, int squaring)
          depth--;
          
 //    switched off during development:
-//      ZmodF_mul_info_init_negacyclic2(info, n, depth);
-      ZmodF_mul_info_init_negacyclic(info, n, depth);
+//      ZmodF_mul_info_init_negacyclic2(info, n, depth, 0);
+      ZmodF_mul_info_init_negacyclic(info, n, depth, 0);
 
 #else
-      ZmodF_mul_info_init_plain(info, n);
+      ZmodF_mul_info_init_plain(info, n, 0);
 #endif
    }
    else
@@ -349,7 +361,7 @@ void ZmodF_mul_info_init(ZmodF_mul_info_t info, unsigned long n, int squaring)
       if (n < ZMODF_SQR_PLAIN_THREEWAY_THRESHOLD)
       {
          // n is tiny, just use plain algorithm
-         ZmodF_mul_info_init_plain(info, n);
+         ZmodF_mul_info_init_plain(info, n, 1);
          return;
       }
 
@@ -359,7 +371,7 @@ void ZmodF_mul_info_init(ZmodF_mul_info_t info, unsigned long n, int squaring)
          if (n < ZMODF_SQR_THREEWAY_NEGACYCLIC_THRESHOLD)
          {
             // n is larger, use threeway algorithm
-            ZmodF_mul_info_init_threeway(info, n);
+            ZmodF_mul_info_init_threeway(info, n, 1);
             return;
          }
       }
@@ -369,7 +381,7 @@ void ZmodF_mul_info_init(ZmodF_mul_info_t info, unsigned long n, int squaring)
          if (n < ZMODF_SQR_PLAIN_NEGACYCLIC_THRESHOLD)
          {
             // n is small, just use plain algorithm
-            ZmodF_mul_info_init_plain(info, n);
+            ZmodF_mul_info_init_plain(info, n, 1);
             return;
          }
       }
@@ -385,11 +397,11 @@ void ZmodF_mul_info_init(ZmodF_mul_info_t info, unsigned long n, int squaring)
          depth--;
 
 //    switched off during development:
-//      ZmodF_mul_info_init_negacyclic2(info, n, depth);
-      ZmodF_mul_info_init_negacyclic(info, n, depth);
+//      ZmodF_mul_info_init_negacyclic2(info, n, depth, 1);
+      ZmodF_mul_info_init_negacyclic(info, n, depth, 1);
 
 #else
-      ZmodF_mul_info_init_plain(info, n);
+      ZmodF_mul_info_init_plain(info, n, 1);
 #endif
    }
 }
@@ -405,7 +417,8 @@ void ZmodF_mul_info_clear(ZmodF_mul_info_t info)
    if (info->algo == ZMODF_MUL_ALGO_NEGACYCLIC ||
        info->algo == ZMODF_MUL_ALGO_NEGACYCLIC2)
    {
-      ZmodF_poly_clear(info->polys[1]);
+      if (!info->squaring)
+         ZmodF_poly_clear(info->polys[1]);
       ZmodF_poly_clear(info->polys[0]);
    }
 }
@@ -825,6 +838,8 @@ void _ZmodF_mul_threeway_crt(mp_limb_t* res, ZmodF_t a, mp_limb_t* b,
 void ZmodF_mul_info_mul(ZmodF_mul_info_t info,
                         ZmodF_t res, ZmodF_t a, ZmodF_t b)
 {
+   FLINT_ASSERT(!info->squaring);
+
    // try special cases a = -1 or b = -1 mod p
    if (_ZmodF_mul_handle_minus1(res, a, b, info->n))
       return;

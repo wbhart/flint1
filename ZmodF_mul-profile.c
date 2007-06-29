@@ -31,11 +31,11 @@ void sample_ZmodF_mul(unsigned long n, unsigned long count)
    if (ZmodF_mul_depth == 0)
       ZmodF_mul_info_init(info, n, 0);
    else if (ZmodF_mul_depth == 1)
-      ZmodF_mul_info_init_plain(info, n);
+      ZmodF_mul_info_init_plain(info, n, 0);
    else if (ZmodF_mul_depth == 2)
-      ZmodF_mul_info_init_threeway(info, n);
+      ZmodF_mul_info_init_threeway(info, n, 0);
    else
-      ZmodF_mul_info_init_negacyclic(info, n, ZmodF_mul_depth);
+      ZmodF_mul_info_init_negacyclic(info, n, ZmodF_mul_depth, 0);
 
    mp_limb_t* x1 = (mp_limb_t*) malloc((n+1) * sizeof(mp_limb_t));
    mp_limb_t* x2 = (mp_limb_t*) malloc((n+1) * sizeof(mp_limb_t));
@@ -113,11 +113,11 @@ void sample_ZmodF_sqr(unsigned long n, unsigned long count)
    if (ZmodF_mul_depth == 0)
       ZmodF_mul_info_init(info, n, 1);
    else if (ZmodF_mul_depth == 1)
-      ZmodF_mul_info_init_plain(info, n);
+      ZmodF_mul_info_init_plain(info, n, 1);
    else if (ZmodF_mul_depth == 2)
-      ZmodF_mul_info_init_threeway(info, n);
+      ZmodF_mul_info_init_threeway(info, n, 1);
    else
-      ZmodF_mul_info_init_negacyclic(info, n, ZmodF_mul_depth);
+      ZmodF_mul_info_init_negacyclic(info, n, ZmodF_mul_depth, 1);
 
    mp_limb_t* x1 = (mp_limb_t*) malloc((n+1) * sizeof(mp_limb_t));
    mp_limb_t* x3 = (mp_limb_t*) malloc((n+1) * sizeof(mp_limb_t));
