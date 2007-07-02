@@ -157,8 +157,21 @@ void do_target(int index, char* params)
 
 
 // returns -1 if target name not found
+// name can be either the string, or the integer index of the target
 int lookup_target_name(char* name)
 {
+   int id = atoi(name);
+   if (id > 0)
+   {
+      // looked like an integer
+      if (id <= prof_target_count)
+         return id - 1;
+         
+      // integer out of range
+      return -1;
+   }
+
+   // not an integer; look up the name in the list
    for (int i = 0; i < prof_target_count; i++)
    {
       if (!strcmp(prof_target_name[i], name))
@@ -181,14 +194,14 @@ void help()
    printf("\n");
    printf("options:\n");
    printf(" -h           Show this help screen\n");
-   printf(" -t <target>  Target to run. Overrides environment variable\n");
-   printf("              FLINT_PROFILE_TARGET.\n");
-   printf(" -p <params>  Parameters to pass to target's Driver function.\n");
+   printf(" -t <target>  Target to run (either string or integer index).\n");
+   printf("              Overrides environment variable FLINT_PROFILE_TARGET.\n");
+   printf(" -p <params>  Parameters to pass to target's Driver function (a string).\n");
    printf("              Overrides environment variable FLINT_PROFILE_PARAMS.\n");
    printf("\n");
    printf("Targets in this profiling module are:\n");
    for (int i = 0; i < prof_target_count; i++)
-      printf("  %s\n", prof_target_name[i]);
+      printf(" %2ld. %s\n", i+1, prof_target_name[i]);
 }
 
 
