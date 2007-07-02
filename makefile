@@ -176,6 +176,15 @@ fmpz_poly-profile.o: fmpz_poly-profile.c $(HEADERS)
 	$(CC) $(CFLAGS) -c fmpz_poly-profile.c -o fmpz_poly-profile.o
 
 
+mpz_poly-profile-tables.o: mpz_poly-profile.c $(HEADERS)
+	python make-profile-tables.py mpz_poly
+	$(CC) $(CFLAGS) -c mpz_poly-profile-tables.c -o mpz_poly-profile-tables.o
+	rm mpz_poly-profile-tables.c
+
+mpz_poly-profile.o: mpz_poly-profile.c $(HEADERS)
+	$(CC) $(CFLAGS) -c mpz_poly-profile.c -o mpz_poly-profile.o
+
+
 ZmodF_poly-profile-tables.o: ZmodF_poly-profile.c $(HEADERS)
 	python make-profile-tables.py ZmodF_poly
 	$(CC) $(CFLAGS) -c ZmodF_poly-profile-tables.c -o ZmodF_poly-profile-tables.o
@@ -202,6 +211,9 @@ PROFOBJ = $(FLINTOBJ) profiler.o profiler-main.o
 
 fmpz_poly-profile: fmpz_poly-profile.o fmpz_poly-profile-tables.o test-support.o $(PROFOBJ)
 	$(CC) $(CFLAGS) -o fmpz_poly-profile fmpz_poly-profile.o fmpz_poly-profile-tables.o test-support.o $(PROFOBJ) $(LIBS)
+
+mpz_poly-profile: mpz_poly-profile.o mpz_poly-profile-tables.o test-support.o $(PROFOBJ)
+	$(CC) $(CFLAGS) -o mpz_poly-profile mpz_poly-profile.o mpz_poly-profile-tables.o test-support.o $(PROFOBJ) $(LIBS)
 
 ZmodF_mul-profile: ZmodF_mul-profile.o ZmodF_mul-profile-tables.o $(PROFOBJ)
 	$(CC) $(CFLAGS) -o ZmodF_mul-profile ZmodF_mul-profile.o ZmodF_mul-profile-tables.o $(PROFOBJ) $(LIBS)

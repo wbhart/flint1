@@ -408,4 +408,95 @@ void profDriver_fmpz_poly_mul(char* params)
 }
 
 
+
+// ============================================================================
+
+
+/*
+this function samples multiplying polynomials of lengths len1 and len2
+using fmpz_poly_mul_karatsuba
+
+arg should point to an unsigned long, giving the coefficient bitlengths
+*/
+void sample_fmpz_poly_mul_karatsuba_mixlengths(
+     unsigned long len1, unsigned long len2, void* arg, unsigned long count)
+{
+   unsigned long bits = *(unsigned long*) arg;
+   unsigned long m = ceil_log2(len1 + len2);
+   unsigned long output_bits = 2*bits + 2 + m;
+
+   mpz_poly_t poly1, poly2;
+   mpz_poly_init(poly1);
+   mpz_poly_init(poly2);
+
+   mpz_t x;
+   mpz_init(x);
+   for (unsigned long i = 0; i < len1; i++)
+   {
+      mpz_urandomb(x, randstate, bits);
+      if (random_ulong(2)) mpz_neg(x, x);
+      mpz_poly_set_coeff(poly1, i, x);
+   }
+   for (unsigned long i = 0; i < len2; i++)
+   {
+      mpz_urandomb(x, randstate, bits);
+      if (random_ulong(2)) mpz_neg(x, x);
+      mpz_poly_set_coeff(poly2, i, x);
+   }
+   mpz_clear(x);
+
+   fmpz_poly_t fpoly1, fpoly2, fpoly3;
+   _fmpz_poly_stack_init(fpoly1, len1, (bits-1)/FLINT_BITS+1);
+   _fmpz_poly_stack_init(fpoly2, len2, (bits-1)/FLINT_BITS+1);
+   _fmpz_poly_stack_init(fpoly3, len1 + len2 - 1, (output_bits-1)/FLINT_BITS+1);
+   
+   mpz_poly_to_fmpz_poly(fpoly1, poly1);
+   mpz_poly_to_fmpz_poly(fpoly2, poly2);
+   
+   prof_start();
+
+   for (unsigned long i = 0; i < count; i++)
+      _fmpz_poly_mul_karatsuba(fpoly3, fpoly1, fpoly2);
+
+   prof_stop();
+   
+   _fmpz_poly_stack_clear(fpoly3);
+   _fmpz_poly_stack_clear(fpoly2);
+   _fmpz_poly_stack_clear(fpoly1);
+   
+   mpz_poly_clear(poly2);
+   mpz_poly_clear(poly1);
+}
+
+
+char* profDriverString_fmpz_poly_mul_karatsuba_mixlengths(char* params)
+{
+   return "fmpz_poly_mul_karatubsa for distinct input lengths and fixed\n"
+   "coefficient size. Parameters are: max length; length skip; coefficient size (in bits)\n";
+}
+
+char* profDriverDefaultParams_fmpz_poly_mul_karatsuba_mixlengths()
+{
+   return "50 3 300";
+}
+
+
+void profDriver_fmpz_poly_mul_karatsuba_mixlengths(char* params)
+{
+   unsigned long max_length, skip, bits;
+
+   sscanf(params, "%ld %ld %ld", &max_length, &skip, &bits);
+
+   prof2d_set_sampler(sample_fmpz_poly_mul_karatsuba_mixlengths);
+
+   test_support_init();
+
+   for (unsigned long len1 = skip; len1 <= max_length; len1 += skip)
+      for (unsigned long len2 = skip; len2 <= max_length; len2 += skip)
+         prof2d_sample(len1, len2, &bits);
+
+   test_support_cleanup();
+}
+
+
 // end of file ****************************************************************
