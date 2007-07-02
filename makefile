@@ -1,13 +1,12 @@
 ifndef FLINT_TUNE
 	# defaults for sage.math development machine
 	FLINT_TUNE = -mtune=opteron -march=opteron
-	
+
 	# for the record, here's what I use on my G5 powerpc:
 	# FLINT_TUNE = -m64 -mcpu=970 -mtune=970 -mpowerpc64 -falign-loops=16 -falign-functions=16 -falign-labels=16 -falign-jumps=16
-	
+
 	# and here's for my laptop:
 	# FLINT_TUNE = 
-	
 endif
 
 ifndef FLINT_LINK_OPTIONS
@@ -67,7 +66,7 @@ FLINTOBJ = \
 	fmpz_poly.o \
 	mpz_poly.o \
 	ZmodF_poly.o
-	
+
 
 mpn_extras.o: mpn_extras.c $(HEADERS)
 	$(CC) $(CFLAGS) -c mpn_extras.c -o mpn_extras.o
@@ -95,7 +94,7 @@ fmpz_poly.o: fmpz_poly.c $(HEADERS)
 
 mpz_poly.o: mpz_poly.c $(HEADERS)
 	$(CC) $(CFLAGS) -c mpz_poly.c -o mpz_poly.o
-	
+
 ZmodF_poly.o: ZmodF_poly.c $(HEADERS)
 	$(CC) $(CFLAGS) -c ZmodF_poly.c -o ZmodF_poly.o
 
@@ -121,7 +120,7 @@ ZmodF_poly-test.o: ZmodF_poly-test.c $(HEADERS)
 
 mpz_poly-test.o: mpz_poly-test.c $(HEADERS)
 	$(CC) $(CFLAGS) -c mpz_poly-test.c -o mpz_poly-test.o
-	
+
 Z_mpn-test.o: Z_mpn-test.c $(HEADERS)
 	$(CC) $(CFLAGS) -c Z_mpn-test.c -o Z_mpn-test.o
 
@@ -220,6 +219,10 @@ ZmodF_mul-profile: ZmodF_mul-profile.o ZmodF_mul-profile-tables.o $(PROFOBJ)
 
 ZmodF_poly-profile: ZmodF_poly-profile.o ZmodF_poly-profile-tables.o $(PROFOBJ)
 	$(CC) $(CFLAGS) -o ZmodF_poly-profile ZmodF_poly-profile.o ZmodF_poly-profile-tables.o $(PROFOBJ) $(LIBS)
+
+
+kara-profile: kara-profile.c profiler.o test-support.o $(FLINTOBJ)
+	$(CC) $(CFLAGS) -o kara-profile kara-profile.c profiler.o test-support.o $(FLINTOBJ) $(LIBS)
 
 
 
