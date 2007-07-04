@@ -19,7 +19,7 @@ TODO: write an automatic tuning utility!!
 
 
 // crossover from plain to threeway algorithm, assuming 3 divides n
-#define ZMODF_MUL_PLAIN_THREEWAY_THRESHOLD 36
+#define ZMODF_MUL_PLAIN_THREEWAY_THRESHOLD 24
 
 // crossover from threeway to negacyclic algorithm, assuming 3 divides n
 #define ZMODF_MUL_THREEWAY_NEGACYCLIC_THRESHOLD 750
@@ -43,8 +43,9 @@ unsigned long ZMODF_MUL_NEGACYCLIC_THRESHOLD[] =
 
 
 // same as above, but for squaring
-// todo: for now these are the same as the multiplication values
 #define ZMODF_SQR_PLAIN_THREEWAY_THRESHOLD 36
+
+
 #define ZMODF_SQR_THREEWAY_NEGACYCLIC_THRESHOLD 750
 #define ZMODF_SQR_PLAIN_NEGACYCLIC_THRESHOLD 320
 #define ZMODF_SQR_MIN_NEGACYCLIC_DEPTH 4

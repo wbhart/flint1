@@ -252,6 +252,7 @@ int test__ZmodF_mul_threeway_reduce()
          mpn_to_mpz(x, in, n+1);
 
          _ZmodF_mul_threeway_reduce1(out1, in, n/3);
+         ZmodF_normalise(out1, n/3);
          mpz_mod(y, x, mod1);
          mpz_to_mpn(test, n/3 + 1, y);
          if (mpn_cmp(test, out1, n/3 + 1))
@@ -286,87 +287,6 @@ int test__ZmodF_mul_threeway_reduce()
    return success;
 }
 
-
-int test__ZmodF_mul_threeway_crt()
-{
-   int success = 1;
-   
-   mp_limb_t in1[2000];
-   mp_limb_t in2[2000];
-   mp_limb_t out[2000];
-   mpz_t x1, x2, y1, y2, z, mod1, mod2;
-   
-   mpz_init(x1);
-   mpz_init(x2);
-   mpz_init(y1);
-   mpz_init(y2);
-   mpz_init(z);
-   mpz_init(mod1);
-   mpz_init(mod2);
-
-   for (unsigned long n = 3; n < 300 && success; n += 3)
-   {
-#if DEBUG
-      printf("n = %d\n", n);
-#endif
-
-      // mod1 = B^(n/3) + 1
-      mpz_set_ui(mod1, 1);
-      mpz_mul_2exp(mod1, mod1, n/3*FLINT_BITS);
-      mpz_add_ui(mod1, mod1, 1);
-
-      // mod2 = B^(2n/3) - B^(n/3) + 1
-      mpz_set(mod2, mod1);
-      mpz_mul_2exp(mod2, mod2, n/3*FLINT_BITS);
-      mpz_sub(mod2, mod2, mod1);
-      mpz_sub(mod2, mod2, mod1);
-      mpz_add_ui(mod2, mod2, 3);
-
-      for (unsigned long trial = 0; trial < 100 && success; trial++)
-      {
-         if (random_ulong(5) == 0)
-         {
-            // every now and then generate -1 mod B^(n/3) + 1
-            ZmodF_zero(in1, n/3);
-            in1[n/3] = 1;
-         }
-         else
-         {
-            random_limbs(in1, n/3);
-            in1[n/3] = 0;
-         }
-         
-         random_limbs(in2, 2*n/3);
-
-         mpn_to_mpz(x1, in1, n/3 + 1);
-         mpn_to_mpz(x2, in2, 2*n/3);
-         mpz_mod(x2, x2, mod2);
-         
-         _ZmodF_mul_threeway_crt(out, in1, in2, n/3);
-         ZmodF_normalise(out, n);
-         mpn_to_mpz(z, out, n+1);
-
-         mpz_mod(y1, z, mod1);
-         mpz_mod(y2, z, mod2);
-         if (mpz_cmp(y1, x1) || mpz_cmp(y2, x2))
-            success = 0;
-      }
-   }
-
-   mpz_clear(mod1);
-   mpz_clear(mod2);
-   mpz_clear(x1);
-   mpz_clear(x2);
-   mpz_clear(y1);
-   mpz_clear(y2);
-   mpz_clear(z);
-
-   return success;
-}
-
-
-
-// todo: separate test code for squaring....?
 
 
 int test_ZmodF_mul_info_mul_plain()
@@ -532,7 +452,7 @@ int test_ZmodF_mul_info_mul_threeway()
    mpz_t x;
    mpz_init(x);
 
-   for (unsigned long n = 3; n < 300 && success; n += 3)
+   for (unsigned long n = 3; n < 100 && success; n += 3)
    {
 #if DEBUG
       printf("n = %d\n", n);
@@ -542,7 +462,7 @@ int test_ZmodF_mul_info_mul_threeway()
       ZmodF_mul_info_init_threeway(info_threeway, n, 0);
       ZmodF_mul_info_init_plain(info_plain, n, 0);
 
-      for (unsigned long trial = 0; trial < 250 && success; trial++)
+      for (unsigned long trial = 0; trial < 50000 && success; trial++)
       {
          if (random_ulong(4) == 0)
          {
@@ -601,7 +521,7 @@ int test_ZmodF_mul_info_sqr_threeway()
    mpz_t x;
    mpz_init(x);
 
-   for (unsigned long n = 3; n < 300 && success; n += 3)
+   for (unsigned long n = 3; n < 100 && success; n += 3)
    {
 #if DEBUG
       printf("n = %d\n", n);
@@ -611,7 +531,7 @@ int test_ZmodF_mul_info_sqr_threeway()
       ZmodF_mul_info_init_threeway(info_threeway, n, 1);
       ZmodF_mul_info_init_plain(info_plain, n, 1);
 
-      for (unsigned long trial = 0; trial < 250 && success; trial++)
+      for (unsigned long trial = 0; trial < 50000 && success; trial++)
       {
          if (random_ulong(4) == 0)
          {
@@ -827,7 +747,6 @@ void ZmodF_mul_test_all()
    RUN_TEST(_ZmodF_mul_negacyclic_split);
    RUN_TEST(_ZmodF_mul_negacyclic_combine);
    RUN_TEST(_ZmodF_mul_threeway_reduce);
-   RUN_TEST(_ZmodF_mul_threeway_crt);
    RUN_TEST(ZmodF_mul_info_mul_plain);
    RUN_TEST(ZmodF_mul_info_sqr_plain);
    RUN_TEST(ZmodF_mul_info_mul_threeway);

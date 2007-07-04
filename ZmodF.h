@@ -476,6 +476,27 @@ void ZmodF_simple_butterfly(ZmodF_t* a, ZmodF_t* b, ZmodF_t* z,
 
 
 
+
+/* ============================================================================
+
+    Miscellaneous
+
+============================================================================ */
+
+
+/*
+   b := a / 3
+
+   PRECONDITIONS:
+      n < 2^(FLINT_BITS/2)
+   
+   NOTE:
+      a and b may alias each other
+      a may get modified mod p
+*/
+void ZmodF_divby3(ZmodF_t b, ZmodF_t a, unsigned long n);
+
+
 #endif
 
 // end of file ****************************************************************
