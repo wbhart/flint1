@@ -27,6 +27,10 @@ int long_miller_rabin_precomp2(unsigned long n, unsigned long ninv_hi, unsigned 
 
 int long_isprime_precomp2(unsigned long n, unsigned long ninv_hi, unsigned long ninv_lo);
 
+int long_isprime(unsigned long n);
+
+unsigned long long_nextprime(unsigned long n);
+
 unsigned long long_pow(unsigned long a, unsigned long exp);
 
 unsigned long long_powmod(unsigned long a, long exp, unsigned long n);
@@ -34,11 +38,8 @@ unsigned long long_powmod(unsigned long a, long exp, unsigned long n);
 unsigned long long_powmod_precomp2(unsigned long a, long exp, unsigned long n,
                             unsigned long ninv_hi, unsigned long ninv_lo);
                             
-unsigned long long_cuberootmod_precomp2(unsigned long * cuberoot1, 
-                               unsigned long a, unsigned long pinv_hi, 
-                               unsigned long pinv_lo, unsigned long p);
-
-unsigned long long_nextprime(unsigned long n);
+unsigned long long_cuberootmod(unsigned long * cuberoot1, 
+                               unsigned long a, unsigned long p);
 
 unsigned long long_invert(unsigned long a, unsigned long p);
 

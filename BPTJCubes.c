@@ -10,15 +10,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdargs.h>
 #include <gmp.h>
 #include "long_extras.h"
 
 #define START 10000000000 
 #define STOP 100000000000
 #define k1 195
-#define k2 290
-#define k3 452
+#define k2 948
+#define k3 975
 
 // Checked 42 up to 1.35x10^12 (from 6.5x10^11 - Siksek's machine
 // Checked 114 up to 10^11 (from 100000)
@@ -170,7 +169,7 @@ int main()
             
       //if (OK[Tmod72])
       //{
-         root1 = long_cuberootmod_precomp2(&cuberoot1, k1, Tinv_hi, Tinv_lo, T);
+         root1 = long_cuberootmod(&cuberoot1, k1, T);
          if (root1)
          {
             if (cuberoot1 != 1)
@@ -201,7 +200,7 @@ int main()
                }
             }
          } 
-         root1 = long_cuberootmod_precomp2(&cuberoot1, k2, Tinv_hi, Tinv_lo, T);
+         root1 = long_cuberootmod(&cuberoot1, k2, T);
          if (root1)
          {
             if (cuberoot1 != 1)
@@ -232,7 +231,7 @@ int main()
                }
             }
          } 
-         root1 = long_cuberootmod_precomp2(&cuberoot1, k3, Tinv_hi, Tinv_lo, T);
+         root1 = long_cuberootmod(&cuberoot1, k3, T);
          if (root1)
          {
             if (cuberoot1 != 1)

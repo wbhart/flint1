@@ -16,6 +16,7 @@
 #include "long_extras.h"
 #include "longlong_wrapper.h"
 #include "longlong.h"
+#include "memory-manager.h"
 
 /*  
    Returns a pseudorandom integer in the range [0, limit)
@@ -191,13 +192,22 @@ unsigned long long_powmod_precomp2(unsigned long a, long exp, unsigned long n,
 }
 
 /* 
-   Currently assumes p = 1 mod 3
+   Computes a cube root of _a_ mod p for a prime p and returns a cube 
+   root of unity if the cube roots of _a_ are distinct else the cube 
+   root is set to 1
+   If _a_ is not a cube modulo p then 0 is returned
+   This function assumes _a_ is not 0 and that _a_ is reduced modulo p
+   Assumes p is no more than 63 bits 
 */
 
-unsigned long long_cuberootmod_precomp2(unsigned long * cuberoot1, unsigned long a, 
-       unsigned long pinv_hi, unsigned long pinv_lo, unsigned long p)
+unsigned long long_cuberootmod(unsigned long * cuberoot1, unsigned long a, 
+       unsigned long p)
 {
    unsigned long x;
+   unsigned long pinv_hi; 
+   unsigned long pinv_lo;
+    
+   long_precompute_inverse2(&pinv_hi, &pinv_lo, p);
    
    if ((p % 3) == 2)
    {
@@ -256,8 +266,9 @@ unsigned long long_cuberootmod_precomp2(unsigned long * cuberoot1, unsigned long
 }
 
 /* 
-   Tests whether n is an a-Strong Pseudo PRime
+   Tests whether n is an a-Strong Pseudo Prime
    Assumes d is set to the largest odd factor of n-1
+   Assumes n is no more than 63 bits
 */
 static inline
 int SPRP(unsigned long a, unsigned long d, unsigned long n, unsigned long ninv_hi, unsigned long ninv_lo)
@@ -279,7 +290,7 @@ int SPRP(unsigned long a, unsigned long d, unsigned long n, unsigned long ninv_h
     Miller-Rabin primality test. If reps is set to 5 a couple of 
     pseudoprimes on average will pass the test out of each 10^11 tests. 
     Every increase of reps by 1 decreases the chance or composites 
-    passing by a factor of 4. 
+    passing by a factor of 4. Assumes n is no more than 63 bits
 */
      
 int long_miller_rabin_precomp2(unsigned long n, unsigned long ninv_hi, unsigned long ninv_lo, unsigned long reps)
@@ -347,22 +358,139 @@ int long_isprime_precomp2(unsigned long n, unsigned long ninv_hi, unsigned long 
 }
 
 /* 
-    returns the next prime after n (does not check if the result is too big)
+   For n < 10^16 this is a deterministic prime test. 
+   For n > 10^16 then it is a probabalistic test at present.
+   Todo: use the table here: http://oldweb.cecm.sfu.ca/pseudoprime/
+   to make this into an unconditional primality test.
+   This test is intended to be run after checking for divisibility by
+   primes up to 257 say.
+*/
+int long_isprime(unsigned long n)
+{
+   unsigned long ninv_hi, ninv_lo;
+   unsigned long d = n-1;
+   
+   long_precompute_inverse2(&ninv_hi, &ninv_lo, n);
+
+   do {
+      d>>=1; 
+   } while ((d&1) == 0);
+   
+   if (n < 9080191UL) 
+   { 
+      if (SPRP(31UL, d, n, ninv_hi, ninv_lo) && SPRP(73UL, d, n, ninv_hi, ninv_lo)) return 1;
+      else return 0;
+   }
+   if (n < 4759123141UL)
+   {
+      if (SPRP(2UL, d, n, ninv_hi, ninv_lo) && SPRP(7UL, d, n, ninv_hi, ninv_lo) && SPRP(61UL, d, n, ninv_hi, ninv_lo)) return 1;
+      else return 0;
+   }
+   if (n < 1122004669633UL)
+   {
+      if (SPRP(2UL, d, n, ninv_hi, ninv_lo) && SPRP(13UL, d, n, ninv_hi, ninv_lo) && SPRP(23UL, d, n, ninv_hi, ninv_lo) && SPRP(1662803UL, d, n, ninv_hi, ninv_lo)) 
+         if (n != 46856248255981UL) return 1;
+      return 0;
+   }
+   if (n < 10000000000000000UL)
+   {
+      if (SPRP(2UL, d, n, ninv_hi, ninv_lo) && SPRP(3UL, d, n, ninv_hi, ninv_lo) && SPRP(7UL, d, n, ninv_hi, ninv_lo) && SPRP(61UL, d, n, ninv_hi, ninv_lo) && SPRP(24251UL, d, n, ninv_hi, ninv_lo)) 
+         if (n != 46856248255981UL) return 1;
+      return 0;
+   }
+   return long_miller_rabin_precomp2(n, ninv_hi, ninv_lo, 6);  
+}
+
+unsigned int nextmod30[] = 
+{
+   1, 6, 5, 4, 3, 2, 1, 4, 3, 2, 1, 2, 1, 4, 3, 2, 1, 2, 1,
+   4, 3, 2, 1, 6, 5, 4, 3, 2, 1, 2
+};
+
+unsigned int nextindex[] = 
+{
+   1, 7, 7, 7, 7, 7, 7, 11, 11, 11, 11, 13, 13, 17, 17, 17, 17, 19, 19,
+   23, 23, 23, 23, 29, 29, 29, 29, 29, 29, 1
+};
+
+unsigned int primes[] =
+{
+   7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97,
+   101,103,107,109,113,127,131,137,139,149,151,157,163,167,173,179,181,
+   191,193,197,199,211,223,227,229,233,239,241,251
+};
+
+#define NUMBER_OF_PRIMES 51
+
+/* 
+    Returns the next prime after n 
+    Assumes the result will fit in an unsigned long
 */
 
 unsigned long long_nextprime(unsigned long n)
 {
-   mpz_t temp;
-   mpz_init(temp);
-     
-   mpz_set_ui(temp,n);
-   mpz_nextprime(temp,temp);
+   if (n < 7) 
+   {
+      if (n<2) return 2;
+      n++;
+      n|=1;
+      return n;  
+   }
    
-   unsigned long prime = mpz_get_ui(temp);
+   unsigned long index = n%30;
+   n+=nextmod30[index];
+   index = nextindex[index];
+      
+   if (n < primes[NUMBER_OF_PRIMES-1])
+   {
+      while (((n%7)==0)||((n%11)==0)||((n%13)==0))
+      {
+         n += nextmod30[index];
+         index = nextindex[index];
+      }
+      return n;
+   }
+    
+   unsigned int * moduli = (unsigned int *) flint_stack_alloc_bytes(NUMBER_OF_PRIMES * sizeof(unsigned int));
+
+   for (unsigned int i = 0; i < NUMBER_OF_PRIMES; i++)
+      moduli[i] = (n % primes[i]);
+      
+   while (1) 
+   {
+      unsigned int composite = 0;
+
+      unsigned int diff, acc, pr;;
+      
+      diff = nextmod30[index];
+      
+      /* First check residues */
+      for (unsigned int i = 0; i < NUMBER_OF_PRIMES; i++)
+	  {
+	     composite |= (moduli[i] == 0);
+	     acc = moduli[i] + diff;
+	     pr = primes[i];
+	     moduli[i] = acc >= pr ? acc - pr : acc;
+	   }
+       if (composite)
+       {
+	      n += diff;
+          index = nextindex[index];
+          continue;
+       }
+       
+       /* Miller-Rabin test */
+      if (long_isprime(n)) break;
+      else
+      {
+         n += diff;
+         index = nextindex[index];
+      }   
+   }
    
-   mpz_clear(temp);
+   flint_stack_release(); 
    
-   return prime;
+   return n;
 }
 
 /* 
