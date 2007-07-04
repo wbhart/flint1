@@ -152,8 +152,8 @@ mpz_poly-test: mpz_poly-test.o test-support.o $(FLINTOBJ) $(HEADERS)
 ZmodF_mul-test: ZmodF_mul-test.o test-support.o $(FLINTOBJ) $(HEADERS)
 	$(CC) $(CFLAGS) ZmodF_mul-test.o test-support.o -o ZmodF_mul-test $(FLINTOBJ) $(LIBS)
 
-long_extras-test: long_extras.o long_extras-test.o test-support.o
-	$(CC) $(CFLAGS) long_extras.o long_extras-test.o test-support.o -o long_extras-test $(LIBS)
+long_extras-test: long_extras.o long_extras-test.o test-support.o memory-manager.o
+	$(CC) $(CFLAGS) long_extras.o long_extras-test.o test-support.o memory-manager.o -o long_extras-test $(LIBS)
 
 
 

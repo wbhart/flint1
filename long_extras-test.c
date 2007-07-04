@@ -127,7 +127,6 @@ int test_long_cuberootmod()
 {
    unsigned long p = 0;
    unsigned long a, res1, res2;
-   unsigned long pinv_hi, pinv_lo;
    unsigned long cuberoot1;
    
    mpz_t mpz_res, mpz_p, mpz_temp;
@@ -146,10 +145,8 @@ int test_long_cuberootmod()
       {
          a = random_ulong(p); 
          
-         long_precompute_inverse2(&pinv_hi, &pinv_lo, p);
-   
          for (unsigned long count = 0; count < 10; count++)   
-            res1 = long_cuberootmod_precomp2(&cuberoot1, a, pinv_hi, pinv_lo, p);
+            res1 = long_cuberootmod(&cuberoot1, a, p);
          
          if ((res1 == 0) && (p % 3 == 2) && (a != 0)) result == 0;
          else if (res1)
@@ -183,6 +180,45 @@ int test_long_cuberootmod()
    return result;
 }
 
+int test_nextprime()
+{
+   unsigned long n;
+   unsigned long res1, res2;
+   
+   mpz_t mpz_n;
+   mpz_init(mpz_n);
+       
+   int result = 1;
+   
+   for (unsigned long count = 0; (count < 100000) && (result == 1); count++)
+   { 
+      unsigned long bits = long_randint(62)+1;
+      n = random_ulong((1UL<<bits)-1UL)+1; 
+      mpz_set_ui(mpz_n, n);
+
+#if DEBUG
+      printf("n = %ld\n", n);
+#endif
+
+      for (unsigned long i = 0; i < 1; i++)
+      {
+         mpz_nextprime(mpz_n, mpz_n);
+         n = long_nextprime(n);
+      }
+      res1 = n;
+      res2 = mpz_get_ui(mpz_n);
+#if DEBUG
+      if (res1 != res2) printf("res1 = %ld, res2 = %ld\n", res1, res2);
+#endif
+      result = (res1 == res2);
+   }  
+   
+   mpz_clear(mpz_n); 
+
+   return result;
+}
+
+
 void fmpz_poly_test_all()
 {
    int success, all_success = 1;
@@ -190,6 +226,7 @@ void fmpz_poly_test_all()
    RUN_TEST(long_mulmod_precomp2);
    RUN_TEST(long_powmod);
    RUN_TEST(long_cuberootmod);
+   RUN_TEST(nextprime);
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");

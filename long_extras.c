@@ -298,20 +298,20 @@ int long_miller_rabin_precomp2(unsigned long n, unsigned long ninv_hi, unsigned 
    unsigned long d = n-1, a, t, y;
    
    do {
-      d>>=1; 
-   } while ((d&1) == 0);
+      d>>=1UL; 
+   } while ((d&1UL) == 0);
       
    for (unsigned long i = 0; i < reps; i++)
    {
-      a = long_randint(n-2)+1;
+      a = long_randint(n-2)+1UL;
       t = d;
       y = long_powmod_precomp2(a, t , n, ninv_hi, ninv_lo);
-      while ((t != n-1) && (y != 1) && (y != n-1))
+      while ((t != n-1) && (y != 1UL) && (y != n-1))
       {
          y = long_mulmod_precomp2(y, y, n, ninv_hi, ninv_lo);
-         t <<= 1;
+         t <<= 1UL;
       }
-      if ((y != n-1) && ((t&1) == 0)) return 0;
+      if ((y != n-1) && ((t&1UL) == 0UL)) return 0;
    }
    return 1;
 }
@@ -440,9 +440,13 @@ unsigned long long_nextprime(unsigned long n)
    unsigned long index = n%30;
    n+=nextmod30[index];
    index = nextindex[index];
-      
-   if (n < primes[NUMBER_OF_PRIMES-1])
+         
+   if (n <= primes[NUMBER_OF_PRIMES-1])
    {
+      if (n == 7) return 7;
+      if (n == 11) return 11;
+      if (n == 13) return 13;
+      
       while (((n%7)==0)||((n%11)==0)||((n%13)==0))
       {
          n += nextmod30[index];
