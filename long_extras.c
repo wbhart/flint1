@@ -9,6 +9,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
+#include <sys/types.h>
 #include <gmp.h>
 #include "flint.h"
 #include "long_extras.h"
@@ -17,16 +19,24 @@
 
 /*  
    Returns a pseudorandom integer in the range [0, limit)
-   limit must be no more than 4294967291
-   todo: get rid of divisions, allow limit = 2^32 or higher
+   todo: get rid of divisions
 */
 
 unsigned long long_randint(unsigned long limit) 
 {
-    static unsigned long randval = 4035456057U;
-    randval = ((unsigned long)randval*1025416097U+286824428U)%(unsigned long)4294967291U;
+#if FLINTBITS == 32
+    static u_int64_t randval = 4035456057U;
+    randval = ((u_int64_t)randval*(u_int64_t)1025416097U+(u_int64_t)286824428U)%(u_int64_t)4294967311U;
     
     return (unsigned long)randval%limit;
+#else
+    static unsigned long randval = 4035456057U;
+    static unsigned long randval2 = 6748392731U;
+    randval = ((unsigned long)randval*(unsigned long)1025416097U+(unsigned long)286824428U)%(unsigned long)4294967311U;
+    randval2 = ((unsigned long)randval2*(unsigned long)1025416097U+(unsigned long)286824428U)%(unsigned long)4294967311U;
+    
+    return (unsigned long)(randval+(randval2<<32))%limit;
+#endif
 }
 
 /* 
@@ -231,7 +241,7 @@ unsigned long long_cuberootmod_precomp2(unsigned long * cuberoot1, unsigned long
          s = long_powmod_precomp2(s, 3UL, p, pinv_hi, pinv_lo);
          m++;
       }
-      if(m==r) return(0);
+      if(m>=r) return(0);
       t = long_powmod_precomp2(y, long_pow(3UL, r-m-1UL), p, pinv_hi, pinv_lo);
       y = long_powmod_precomp2(t, 3UL, p, pinv_hi, pinv_lo);
       r = m;
@@ -243,6 +253,97 @@ unsigned long long_cuberootmod_precomp2(unsigned long * cuberoot1, unsigned long
    else *cuberoot1 = long_powmod_precomp2(y, long_pow(3UL, r-1), p, pinv_hi, pinv_lo);
    if (l==2) return(x);
    else return(long_invert(x, p));
+}
+
+/* 
+   Tests whether n is an a-Strong Pseudo PRime
+   Assumes d is set to the largest odd factor of n-1
+*/
+static inline
+int SPRP(unsigned long a, unsigned long d, unsigned long n, unsigned long ninv_hi, unsigned long ninv_lo)
+{
+      unsigned long t = d;
+      unsigned long y;
+      
+      y = long_powmod_precomp2(a, t , n, ninv_hi, ninv_lo);
+      while ((t != n-1) && (y != 1) && (y != n-1))
+      {
+         y = long_mulmod_precomp2(y, y, n, ninv_hi, ninv_lo);
+         t <<= 1;
+      }
+      if ((y != n-1) && ((t&1) == 0)) return 0;
+      return 1;
+}
+
+/* 
+    Miller-Rabin primality test. If reps is set to 5 a couple of 
+    pseudoprimes on average will pass the test out of each 10^11 tests. 
+    Every increase of reps by 1 decreases the chance or composites 
+    passing by a factor of 4. 
+*/
+     
+int long_miller_rabin_precomp2(unsigned long n, unsigned long ninv_hi, unsigned long ninv_lo, unsigned long reps)
+{
+   unsigned long d = n-1, a, t, y;
+   
+   do {
+      d>>=1; 
+   } while ((d&1) == 0);
+      
+   for (unsigned long i = 0; i < reps; i++)
+   {
+      a = long_randint(n-2)+1;
+      t = d;
+      y = long_powmod_precomp2(a, t , n, ninv_hi, ninv_lo);
+      while ((t != n-1) && (y != 1) && (y != n-1))
+      {
+         y = long_mulmod_precomp2(y, y, n, ninv_hi, ninv_lo);
+         t <<= 1;
+      }
+      if ((y != n-1) && ((t&1) == 0)) return 0;
+   }
+   return 1;
+}
+
+/* 
+   For n < 10^16 this is a deterministic prime test. 
+   For n > 10^16 then it is a probabalistic test at present.
+   Todo: use the table here: http://oldweb.cecm.sfu.ca/pseudoprime/
+   to make this into an unconditional primality test.
+   This test is intended to be run after checking for divisibility by
+   primes up to 257 say.
+*/
+int long_isprime_precomp2(unsigned long n, unsigned long ninv_hi, unsigned long ninv_lo)
+{
+   unsigned long d = n-1;
+   
+   do {
+      d>>=1; 
+   } while ((d&1) == 0);
+   
+   if (n < 9080191UL) 
+   { 
+      if (SPRP(31UL, d, n, ninv_hi, ninv_lo) && SPRP(73UL, d, n, ninv_hi, ninv_lo)) return 1;
+      else return 0;
+   }
+   if (n < 4759123141UL)
+   {
+      if (SPRP(2UL, d, n, ninv_hi, ninv_lo) && SPRP(7UL, d, n, ninv_hi, ninv_lo) && SPRP(61UL, d, n, ninv_hi, ninv_lo)) return 1;
+      else return 0;
+   }
+   if (n < 1122004669633UL)
+   {
+      if (SPRP(2UL, d, n, ninv_hi, ninv_lo) && SPRP(13UL, d, n, ninv_hi, ninv_lo) && SPRP(23UL, d, n, ninv_hi, ninv_lo) && SPRP(1662803UL, d, n, ninv_hi, ninv_lo)) 
+         if (n != 46856248255981UL) return 1;
+      return 0;
+   }
+   if (n < 10000000000000000UL)
+   {
+      if (SPRP(2UL, d, n, ninv_hi, ninv_lo) && SPRP(3UL, d, n, ninv_hi, ninv_lo) && SPRP(7UL, d, n, ninv_hi, ninv_lo) && SPRP(61UL, d, n, ninv_hi, ninv_lo) && SPRP(24251UL, d, n, ninv_hi, ninv_lo)) 
+         if (n != 46856248255981UL) return 1;
+      return 0;
+   }
+   return long_miller_rabin_precomp2(n, ninv_hi, ninv_lo, 6);  
 }
 
 /* 

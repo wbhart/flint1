@@ -23,6 +23,10 @@ unsigned long long_mod_precomp2(unsigned long a_hi, unsigned long a_lo,
 unsigned long long_mulmod_precomp2(unsigned long a, unsigned long b, unsigned long n,
                         unsigned long ninv_hi, unsigned long ninv_lo);
 
+int long_miller_rabin_precomp2(unsigned long n, unsigned long ninv_hi, unsigned long ninv_lo, unsigned long reps);
+
+int long_isprime_precomp2(unsigned long n, unsigned long ninv_hi, unsigned long ninv_lo);
+
 unsigned long long_pow(unsigned long a, unsigned long exp);
 
 unsigned long long_powmod(unsigned long a, long exp, unsigned long n);

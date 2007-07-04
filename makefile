@@ -234,5 +234,9 @@ delta_qexp.o: delta_qexp.c $(HEADERS)
 delta_qexp: delta_qexp.o $(FLINTOBJ)
 	$(CC) $(CFLAGS) -o delta_qexp delta_qexp.o $(FLINTOBJ) $(LIBS)
 
-BLTcubes: long_extras.o
+BLTcubes: long_extras.o BLTcubes.c
 	$(CC) $(CFLAGS) -o BLTcubes BLTcubes.c long_extras.o $(LIBS)
+
+BPTJCubes: long_extras.o
+	$(CC) $(CFLAGS) -o BPTJCubes BPTJCubes.c long_extras.o $(LIBS)
+
