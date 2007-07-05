@@ -377,7 +377,7 @@ int test_factor_trial()
       
       result = (prod == orig_n);
 
-#if DEBUG2
+#if DEBUG
       if (!result)
       {
          printf("n = %ld: [", orig_n);
@@ -388,6 +388,35 @@ int test_factor_trial()
          printf("%ld, %ld", factors.p[i], factors.exp[i]);
          if (n != 1) printf("; %ld, 1]\n", n);
          else printf("]\n");
+      }
+#endif
+
+   }  
+   
+   return result;
+}
+
+int test_factor_SQUFOF()
+{
+   unsigned long n, factor;
+
+   int result = 1;
+   
+   for (unsigned long count = 0; (count < 100000) && (result == 1); count++)
+   { 
+      n = random_ulong(1000000);
+           
+      for (unsigned long j = 0; j < 10; j++)
+         factor = long_factor_SQUFOF(n);
+      
+      if (factor) result = (n == factor*(n/factor));
+
+#if DEBUG2
+      if (!factor) printf("%ld failed to factor\n", n);
+      if (!result)
+      {
+         printf("n = %ld\n", n);
+         printf("factors = %ld, %ld\n", factor, n/factor);
       }
 #endif
 
@@ -408,6 +437,7 @@ void fmpz_poly_test_all()
    RUN_TEST(CRT);
    RUN_TEST(issquarefree);
    RUN_TEST(factor_trial);
+   RUN_TEST(factor_SQUFOF);
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");

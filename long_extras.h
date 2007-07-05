@@ -61,6 +61,11 @@ long long_extgcd(long* a, long* b, long x, long y);
 
 unsigned long long_gcd(long x, long y);
 
+static inline unsigned long long_intsqrt(unsigned long n)
+{
+   return (unsigned long) floor(sqrt(n));
+}
+
 static inline int long_issquare(long x)
 {
    static int mod64[64] = {1,1,0,0,1,0,0,0,0,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0}; 
@@ -84,6 +89,7 @@ int long_remove(unsigned long * n, unsigned long p);
 
 unsigned long long_factor_trial(factor_t * factors, unsigned long n);
 
+unsigned long long_factor_SQUFOF(unsigned long n);
 
 #endif
 

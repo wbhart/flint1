@@ -910,7 +910,7 @@ int long_remove(unsigned long * n, unsigned long p)
 {
    unsigned long exp; 
    int i;
-   unsigned long powp[6];
+   unsigned long powp[7]; // One more than I calculate is necessary for 64 bits
    unsigned long quot, rem;
    
    if (p == 2)
@@ -979,3 +979,82 @@ unsigned long long_factor_trial(factor_t * factors, unsigned long n)
    return n;
 }
 
+/*
+   Square forms factoring algorithm of Shanks
+   Adapted from code of Sam Wagstaff
+*/
+
+#define SQUFOF_ITERS 20000
+
+unsigned long long_factor_SQUFOF(unsigned long n)
+{
+   unsigned long sqroot = long_intsqrt(n);
+   unsigned long p = sqroot;
+   unsigned long q = n - sqroot*sqroot;
+   
+   if (q == 0) 
+   {
+      return sqroot;
+   }
+   
+   unsigned long l = 1 + 2*long_intsqrt(2*p);
+   unsigned long l2 = l/2;
+   unsigned long iq, pnext;
+   unsigned long qarr[20];
+   unsigned long qupto = 0;
+   unsigned long qlast = 1;
+   unsigned long i, j, t, r;
+   
+   for (i = 0; i < SQUFOF_ITERS; i++)
+   {
+      iq = (sqroot + p)/q;
+      pnext = iq*q - p;
+      if (q <= 1) 
+      {
+         if ((q & 1) == 0) 
+         {
+            qarr[qupto] = q/2;
+            qupto++;
+            if (qupto >= 20) return 0;
+         } else if (q <= l2)
+         {
+            qarr[qupto] = q;
+            qupto++;
+            if (qupto >= 20) return 0;
+         }
+      }
+      t = qlast + iq*(p - pnext);
+	  qlast = q;
+	  q = t;
+	  p = pnext;
+	  if ((i&1) == 1) continue;
+	  if (!long_issquare(q)) continue;
+	  if (qupto == 0) break;
+	  r = long_intsqrt(q);
+	  for (j = 0; j < qupto; j++)	
+         if (r == qarr[j]) continue;
+      break;
+   }
+   
+   if (i == SQUFOF_ITERS) return 0; // taken too long, give up
+   
+   qlast = r;
+   p = p + r*((sqroot - p)/r);
+   q = (n - p*p)/qlast;
+   
+   for (j = 0; j < SQUFOF_ITERS; j++)
+   {	
+	  iq = (sqroot + p)/q;
+	  pnext = iq*q - p;
+	  if (p == pnext) break;
+	  t = qlast + iq*(p - pnext);
+	  qlast = q;
+	  q = t;
+	  p = pnext;
+   }
+   
+   if ((q & 1) == 0) q /= 2;
+   
+   if (q != 1) return q;
+   else return 0;
+}
