@@ -68,6 +68,8 @@ static inline int long_issquare(long x)
    return (x == sqroot*sqroot);
 }
 
+unsigned long long_CRT(unsigned long x1, unsigned long x2, 
+                       unsigned long n1, unsigned long n2);
 
 #endif
 

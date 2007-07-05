@@ -192,7 +192,7 @@ int test_long_sqrtmod()
           
    int result = 1;
    
-   for (unsigned long count = 0; (count < 1000) && (result == 1); count++)
+   for (unsigned long count = 0; (count < 10000) && (result == 1); count++)
    { 
       bits = long_randint(63)+1;
       p = random_ulong((1UL<<bits)-1UL)+1; 
@@ -202,7 +202,7 @@ int test_long_sqrtmod()
       {
          a = random_ulong(p); 
          
-         for (unsigned long count = 0; count < 10; count++)   
+         for (unsigned long count = 0; count < 1; count++)   
             res1 = long_sqrtmod(a, p);
             
          if (res1)
@@ -267,6 +267,44 @@ int test_nextprime()
    return result;
 }
 
+int test_CRT()
+{
+   unsigned long x1, x2, n1, n2;
+   unsigned long res;
+   
+   int result = 1;
+   
+   for (unsigned long count = 0; (count < 100000) && (result == 1); count++)
+   { 
+      unsigned long bits = long_randint(61)+2;
+      unsigned long bits1 = long_randint(bits-1) + 1;
+      unsigned long bits2 = bits - bits1;
+      
+      n1 = random_ulong((1UL<<bits1)-1UL)+1; 
+      do n2 = random_ulong((1UL<<bits2)-1UL)+1;
+      while (long_gcd(n1, n2) != 1); 
+      
+      x1 = random_ulong(n1);
+      x2 = random_ulong(n2);
+      
+#if DEBUG
+      printf("x1 = %ld, n1 = %ld, x2 = %ld, n2 = %ld\n", x1, n1, x2, n2);
+#endif
+
+      for (unsigned long i = 0; i < 10; i++)
+      {
+         res = long_CRT(x1, x2, n1, n2);
+      }
+      result = (((res % n1) == x1) && ((res % n2) == x2));
+      
+#if DEBUG
+      if (!result) printf("res = %ld\n", res);
+#endif
+   }  
+   
+   return result;
+}
+
 
 void fmpz_poly_test_all()
 {
@@ -277,6 +315,7 @@ void fmpz_poly_test_all()
    RUN_TEST(long_sqrtmod);
    RUN_TEST(long_cuberootmod);
    RUN_TEST(nextprime);
+   RUN_TEST(CRT);
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");

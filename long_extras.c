@@ -511,6 +511,8 @@ unsigned int primes[] =
 /* 
     Returns the next prime after n 
     Assumes the result will fit in an unsigned long
+    Assumes n is at most 63 bits
+    N.B: Test currently fails for 63 bits.
 */
 
 unsigned long long_nextprime(unsigned long n)
@@ -822,6 +824,34 @@ unsigned long long_gcd(long x, long y)
    return u3;
 }
 
+/*
+   Return 0 <= a < n1*n2 such that a mod n1 = x1 and a mod n2 = x2
+   Assumes gcd(n1, n2) = 1 and that n1*n2 is at most 63 bits
+   Assumes x1 is reduced modulo n1 and x2 is reduced modulo n2
+*/
+
+unsigned long long_CRT(unsigned long x1, unsigned long x2, 
+                       unsigned long n1, unsigned long n2)
+{
+     unsigned long n, res, ch;
+     unsigned long ninv_hi, ninv_lo;
+     
+     n = n1*n2;
+     if (n == 1) return 0;
+     long_precompute_inverse2(&ninv_hi, &ninv_lo, n);
+     
+     res = long_invert(n2,n1);
+     res = long_mulmod_precomp2(res, n2, n, ninv_hi, ninv_lo);
+     res = long_mulmod_precomp2(res, x1, n, ninv_hi, ninv_lo);
+     
+     ch = long_invert(n1,n2);
+     ch = long_mulmod_precomp2(ch, n1, n, ninv_hi, ninv_lo);
+     ch = long_mulmod_precomp2(ch, x2, n, ninv_hi, ninv_lo);
+     
+     res = res+ch;
+     if (res >= n) return res - n;
+     else return res;
+}
 
 
 
