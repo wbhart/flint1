@@ -901,4 +901,81 @@ int long_issquarefree(unsigned long n)
    }
 }
 
+/*
+   Removes the highest power of p possible from n and 
+   returns the exponent to which it appeared in n
+*/
+
+int long_remove(unsigned long * n, unsigned long p)
+{
+   unsigned long exp; 
+   int i;
+   unsigned long powp[6];
+   unsigned long quot, rem;
+   
+   if (p == 2)
+   {
+      count_trail_zeros(exp, *n);
+      if (exp)
+      {
+         *n = ((*n)>>exp);
+         return exp;      
+      }
+   }
+   
+   powp[0] = p;
+   
+   for (i = 0; ; i++)
+   {
+      quot = *n/powp[i];
+      rem = *n - quot*powp[i];
+      if (rem != 0) break;
+      powp[i + 1] = powp[i] * powp[i];
+      *n = quot;
+   }
+   
+   exp = (1<<i) - 1;
+   
+   while (i > 0)
+   {
+      i--;
+      quot = *n/powp[i];
+      rem = *n - quot*powp[i];
+      if (rem == 0) 
+      {
+         exp += (1<<i);
+         *n = quot;
+      }     
+   } 
+   
+   return exp;
+}
+
+#define TF_CUTOFF 168
+
+/*
+   Finds all the factors of n by trial factoring up to some limit
+   Returns the cofactor after removing these factors
+*/
+
+unsigned long long_factor_trial(factor_t * factors, unsigned long n)
+{
+   int num_factors = 0;
+   int exp;
+   
+   for (unsigned long i = 0; (i < TF_CUTOFF) && (primes[i]*primes[i] <= n); i++)
+   {
+      exp = long_remove(&n, primes[i]);
+      if (exp)
+      {
+         factors->p[num_factors] = primes[i];
+         factors->exp[num_factors] = exp;
+         num_factors++;
+      }      
+   }
+       
+   factors->num = num_factors;
+   
+   return n;
+}
 

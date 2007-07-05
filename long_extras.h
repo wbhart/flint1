@@ -12,6 +12,13 @@
 
 #include <math.h>
 
+typedef struct factor_s
+{
+   int num;
+   unsigned long p[15];
+   unsigned long exp[15];
+} factor_t;
+
 unsigned long long_randint(unsigned long limit);
 
 void long_precompute_inverse2(unsigned long * ninv_hi, 
@@ -72,6 +79,11 @@ unsigned long long_CRT(unsigned long x1, unsigned long x2,
                        unsigned long n1, unsigned long n2);
                        
 int long_issquarefree(unsigned long n);
+
+int long_remove(unsigned long * n, unsigned long p);
+
+unsigned long long_factor_trial(factor_t * factors, unsigned long n);
+
 
 #endif
 

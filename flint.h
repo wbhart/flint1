@@ -89,6 +89,9 @@ the mpz_t::_mp_d member directly).
 #define count_lead_zeros(a,b) \
    a = __builtin_clzll(b);
 
+#define count_trail_zeros(a,b) \
+   a = __builtin_ctzll(b);
+
 /*
 Returns ceil(log2(x)).
 If x == 0, returns 0.

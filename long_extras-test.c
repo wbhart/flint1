@@ -354,6 +354,47 @@ int test_issquarefree()
    return result;
 }
 
+int test_factor_trial()
+{
+   unsigned long n, prod, orig_n;
+   factor_t factors;
+   int i;
+
+   int result = 1;
+   
+   for (unsigned long count = 0; (count < 100000) && (result == 1); count++)
+   { 
+      orig_n = random_ulong(1000000);
+           
+      for (unsigned long j = 0; j < 10; j++)
+         n = long_factor_trial(&factors, orig_n);
+      
+      prod = n;
+      for (i = 0; i < factors.num; i++)
+      {
+          prod *= long_pow(factors.p[i], factors.exp[i]);
+      }
+      
+      result = (prod == orig_n);
+
+#if DEBUG2
+      if (!result)
+      {
+         printf("n = %ld: [", orig_n);
+         for (i = 0; i < factors.num - 1; i++)
+         {
+            printf("%ld, %ld; ", factors.p[i], factors.exp[i]);
+         }
+         printf("%ld, %ld", factors.p[i], factors.exp[i]);
+         if (n != 1) printf("; %ld, 1]\n", n);
+         else printf("]\n");
+      }
+#endif
+
+   }  
+   
+   return result;
+}
 
 void fmpz_poly_test_all()
 {
@@ -366,6 +407,7 @@ void fmpz_poly_test_all()
    RUN_TEST(nextprime);
    RUN_TEST(CRT);
    RUN_TEST(issquarefree);
+   RUN_TEST(factor_trial);
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");
