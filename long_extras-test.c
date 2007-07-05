@@ -344,7 +344,7 @@ int test_issquarefree()
          } 
       } while (n*n1 < n2);
       
-#if DEBUG2
+#if DEBUG
       printf("%ld\n", n);
 #endif
 
