@@ -180,6 +180,55 @@ int test_long_cuberootmod()
    return result;
 }
 
+int test_long_sqrtmod()
+{
+   unsigned long p = 0;
+   unsigned long a, res1, bits;
+   
+   mpz_t mpz_res, mpz_p, mpz_temp;
+   mpz_init(mpz_res);
+   mpz_init(mpz_p);
+   mpz_init(mpz_temp);
+          
+   int result = 1;
+   
+   for (unsigned long count = 0; (count < 1000) && (result == 1); count++)
+   { 
+      bits = long_randint(63)+1;
+      p = random_ulong((1UL<<bits)-1UL)+1; 
+      p = long_nextprime(p);
+      
+      for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
+      {
+         a = random_ulong(p); 
+         
+         for (unsigned long count = 0; count < 10; count++)   
+            res1 = long_sqrtmod(a, p);
+            
+         if (res1)
+         {
+            mpz_set_ui(mpz_temp, res1);
+            mpz_set_ui(mpz_p, p);
+            mpz_powm_ui(mpz_res, mpz_temp, 2UL, mpz_p);
+            result &= (mpz_cmp_ui(mpz_res, a) == 0);
+         
+#if DEBUG
+            if (mpz_cmp_ui(mpz_res,a))
+            {
+               gmp_printf("res1 = %ld, p = %ld, a = %ld, sqrt^2 = %Zd\n", res1, p, a, mpz_res);
+            }
+#endif
+         }
+      }
+   }  
+   
+   mpz_clear(mpz_res);
+   mpz_clear(mpz_p);
+   mpz_clear(mpz_temp);
+   
+   return result;
+}
+
 int test_nextprime()
 {
    unsigned long n;
@@ -225,6 +274,7 @@ void fmpz_poly_test_all()
 
    RUN_TEST(long_mulmod_precomp2);
    RUN_TEST(long_powmod);
+   RUN_TEST(long_sqrtmod);
    RUN_TEST(long_cuberootmod);
    RUN_TEST(nextprime);
    

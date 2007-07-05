@@ -38,6 +38,11 @@ unsigned long long_powmod(unsigned long a, long exp, unsigned long n);
 unsigned long long_powmod_precomp2(unsigned long a, long exp, unsigned long n,
                             unsigned long ninv_hi, unsigned long ninv_lo);
                             
+int long_jacobi_precomp2(unsigned long a, unsigned long p, unsigned long pinv_hi, 
+                                                    unsigned long pinv_lo);
+                                                    
+unsigned long long_sqrtmod(unsigned long a, unsigned long p); 
+
 unsigned long long_cuberootmod(unsigned long * cuberoot1, 
                                unsigned long a, unsigned long p);
 

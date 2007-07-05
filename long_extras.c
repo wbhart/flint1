@@ -192,6 +192,92 @@ unsigned long long_powmod_precomp2(unsigned long a, long exp, unsigned long n,
 }
 
 /* 
+   Computes the Jacobi symbol of _a_ modulo p
+   Assumes p is a prime of no more than 63 bits and that _a_
+   is reduced modulo p
+*/
+
+int long_jacobi_precomp2(unsigned long a, unsigned long p, 
+                            unsigned long pinv_hi, unsigned long pinv_lo)
+{
+   if (a == 0) return 0;  
+   if (long_powmod_precomp2(a, (p-1)/2, p, pinv_hi, pinv_lo) == p-1) return -1;
+   else return 1;                                            
+}
+
+/* 
+   Computes a square root of _a_ modulo p.
+   Assumes p is a prime of no more than 63 bits,
+   that _a_ is reduced modulo p and is a quadratic
+   residue modulo p. Returns 0 if a is a quadratic
+   non-residue modulo p.
+*/
+unsigned long long_sqrtmod(unsigned long a, unsigned long p) 
+{
+     unsigned int r, k, m;
+     unsigned long p1, b, g, bpow, gpow, res;
+     unsigned long pinv_hi; 
+     unsigned long pinv_lo;
+         
+     if ((a==0) || (a==1)) 
+     {
+        return a;
+     }
+     
+     long_precompute_inverse2(&pinv_hi, &pinv_lo, p);
+     
+     if (long_jacobi_precomp2(a, p, pinv_hi, pinv_lo) == -1) return 0;
+     
+     if ((p&3)==3)
+     {
+        return long_powmod_precomp2(a, (p+1)/4, p, pinv_hi, pinv_lo);
+     }
+     
+     r = 0;
+     p1 = p-1;
+     
+     do {
+        p1>>=1UL; 
+        r++;
+     } while ((p1&1UL) == 0);
+ 
+     b = long_powmod_precomp2(a, p1, p, pinv_hi, pinv_lo);
+     
+     for (k=2UL; ;k++)
+     {
+         if (long_jacobi_precomp2(k, p, pinv_hi, pinv_lo) == -1) break;
+     }
+     
+     g = long_powmod_precomp2(k, p1, p, pinv_hi, pinv_lo);
+     res = long_powmod_precomp2(a, (p1+1)/2, p, pinv_hi, pinv_lo);
+     if (b == 1UL) 
+     {
+        return res;
+     }
+        
+     while (b != 1)
+     {
+           bpow = b;
+           for (m = 1; (m <= r-1) && (bpow != 1); m++)
+           {
+               bpow = long_mulmod_precomp2(bpow, bpow, p, pinv_hi, pinv_lo);
+           }
+           gpow = g;
+           for (int i = 1; i < r-m; i++)
+           {
+               gpow = long_mulmod_precomp2(gpow, gpow, p, pinv_hi, pinv_lo);
+           }
+           res = long_mulmod_precomp2(res, gpow, p, pinv_hi, pinv_lo);
+           gpow = long_mulmod_precomp2(gpow, gpow, p, pinv_hi, pinv_lo);
+           b = long_mulmod_precomp2(b, gpow, p, pinv_hi, pinv_lo);
+           gpow = g;
+           r = m;
+     }
+     
+     return res;
+}
+
+/* 
    Computes a cube root of _a_ mod p for a prime p and returns a cube 
    root of unity if the cube roots of _a_ are distinct else the cube 
    root is set to 1
