@@ -70,6 +70,8 @@ static inline int long_issquare(long x)
 
 unsigned long long_CRT(unsigned long x1, unsigned long x2, 
                        unsigned long n1, unsigned long n2);
+                       
+int long_issquarefree(unsigned long n);
 
 #endif
 

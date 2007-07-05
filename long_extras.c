@@ -501,12 +501,12 @@ unsigned int nextindex[] =
 
 unsigned int primes[] =
 {
-   7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97,
+   2, 3, 5, 7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97,
    101,103,107,109,113,127,131,137,139,149,151,157,163,167,173,179,181,
    191,193,197,199,211,223,227,229,233,239,241,251
 };
 
-#define NUMBER_OF_PRIMES 51
+#define NUMBER_OF_PRIMES 54
 
 /* 
     Returns the next prime after n 
@@ -545,7 +545,7 @@ unsigned long long_nextprime(unsigned long n)
     
    unsigned int * moduli = (unsigned int *) flint_stack_alloc_bytes(NUMBER_OF_PRIMES * sizeof(unsigned int));
 
-   for (unsigned int i = 0; i < NUMBER_OF_PRIMES; i++)
+   for (unsigned int i = 3; i < NUMBER_OF_PRIMES; i++)
       moduli[i] = (n % primes[i]);
       
    while (1) 
@@ -557,7 +557,7 @@ unsigned long long_nextprime(unsigned long n)
       diff = nextmod30[index];
       
       /* First check residues */
-      for (unsigned int i = 0; i < NUMBER_OF_PRIMES; i++)
+      for (unsigned int i = 3; i < NUMBER_OF_PRIMES; i++)
 	  {
 	     composite |= (moduli[i] == 0);
 	     acc = moduli[i] + diff;
@@ -853,6 +853,44 @@ unsigned long long_CRT(unsigned long x1, unsigned long x2,
      else return res;
 }
 
+#define SQFREE_TF_PRIMES_LIMIT 54
+#define SQFREE_TF_CUTOFF 65535
 
+int long_issquarefree_trial(unsigned long n)
+{
+   unsigned long quot, rem;
+   
+   if ((n&1) == 0)
+   {
+      if ((n&3) == 0) return 0;
+      else n = (n>>1);
+   }
+   for (unsigned long i = 1; (i < SQFREE_TF_PRIMES_LIMIT) && (primes[i]*primes[i] <= n); i++)
+   {
+      quot = n/primes[i];
+      rem = n - quot*primes[i];
+      if (rem == 0) 
+      { 
+         if ((quot % primes[i]) == 0) return 0;
+         else n = quot;
+      }
+   }
+   return 1;
+}
+
+/*
+   Tests if n is squarefree or not
+   Currently only works for numbers up to 65535
+*/
+
+int long_issquarefree(unsigned long n)
+{
+   if (n < SQFREE_TF_CUTOFF) return long_issquarefree_trial(n);
+   else 
+   {
+      printf("Not implemented yet!\n");
+      abort();
+   }
+}
 
 

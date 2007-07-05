@@ -305,6 +305,55 @@ int test_CRT()
    return result;
 }
 
+int test_issquarefree()
+{
+   unsigned long n, n1, n2;
+
+   int result = 1;
+   
+   for (unsigned long count = 0; (count < 10000000) && (result == 1); count++)
+   { 
+      do
+      {
+         n1 = random_ulong(100);
+         n2 = random_ulong(100);
+         n2 = n2*n2;
+      } while ((n1*n2 > 65535) || (n2 == 1));
+      
+      n = n1*n2;
+      
+#if DEBUG
+      printf("n1 = %ld, n2 = %ld\n", n1, n2);
+#endif
+
+      result = !long_issquarefree(n);
+   }  
+
+   for (unsigned long count = 0; (count < 1000000) && (result == 1); count++)
+   { 
+      n = 1;
+      n1 = 1;
+      n2 = random_ulong(65533)+2;
+      
+      do
+      {
+         n = n*n1;
+         for (unsigned long i = 0; i < random_ulong(3)+1; i++)
+         {
+            n1 = long_nextprime(n1);
+         } 
+      } while (n*n1 < n2);
+      
+#if DEBUG2
+      printf("%ld\n", n);
+#endif
+
+      result = long_issquarefree(n);
+   }  
+   
+   return result;
+}
+
 
 void fmpz_poly_test_all()
 {
@@ -316,6 +365,7 @@ void fmpz_poly_test_all()
    RUN_TEST(long_cuberootmod);
    RUN_TEST(nextprime);
    RUN_TEST(CRT);
+   RUN_TEST(issquarefree);
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");
