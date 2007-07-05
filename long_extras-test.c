@@ -329,11 +329,11 @@ int test_issquarefree()
       result = !long_issquarefree(n);
    }  
 
-   for (unsigned long count = 0; (count < 1000000) && (result == 1); count++)
+   for (unsigned long count = 0; (count < 500000) && (result == 1); count++)
    { 
       n = 1;
       n1 = 1;
-      n2 = random_ulong(65533)+2;
+      n2 = random_ulong(999998)+2;
       
       do
       {
