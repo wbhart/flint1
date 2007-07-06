@@ -91,6 +91,8 @@ unsigned long long_factor_trial(factor_t * factors, unsigned long n);
 
 unsigned long long_factor_SQUFOF(unsigned long n);
 
+int long_factor(factor_t * factors, unsigned long n);
+
 #endif
 
 

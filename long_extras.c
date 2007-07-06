@@ -952,6 +952,8 @@ int long_remove(unsigned long * n, unsigned long p)
 }
 
 #define TF_CUTOFF 168
+#define TF_FACTORS_IN_LIMB 8 // how many factors above the TF cutoff could
+                             // an integer one limb wide have
 
 /*
    Finds all the factors of n by trial factoring up to some limit
@@ -987,7 +989,7 @@ unsigned long long_factor_trial(factor_t * factors, unsigned long n)
 
 #define SQUFOF_ITERS 50000
 
-unsigned long long_factor_SQUFOF(unsigned long n)
+unsigned long _long_factor_SQUFOF(unsigned long n)
 {
    unsigned long sqroot = long_intsqrt(n);
    unsigned long p = sqroot;
@@ -1057,6 +1059,93 @@ unsigned long long_factor_SQUFOF(unsigned long n)
    
    if ((q & 1) == 0) q /= 2;
    
-   if (q != 1) return q;
-   else {printf("Trivial\n");return 0;}
+   return q;
 }
+
+/* 
+   Factor n using as many rounds of SQUFOF as it takes
+   Assumes trial factoring of n has already been done and that
+   n is not a prime
+*/
+
+unsigned long long_factor_SQUFOF(unsigned long n)
+{
+   unsigned long factor = _long_factor_SQUFOF(n);
+   unsigned long multiplier;
+   unsigned long quot, rem, kn;
+   unsigned long s1, s2;
+   
+   if (factor) return factor;
+   
+   for (unsigned long i = 1; (i < NUMBER_OF_PRIMES) && !factor; i++)
+   {
+      multiplier = primes[i];
+      count_lead_zeros(s1, multiplier);
+      s1 = FLINT_BITS - s1;
+      count_lead_zeros(s2, n);
+      if (s1 > s2) return 0; // kn is more than one limb 
+      kn = multiplier*n;
+      factor = _long_factor_SQUFOF(kn);
+      if (factor) 
+      {
+         quot = factor/multiplier;
+         rem = factor - quot*multiplier;
+         if (!rem) factor = quot;
+         if ((factor == 1) || (factor == n)) factor = 0;
+      }
+   }
+   return factor; 
+}
+
+void insert_factor(factor_t * factors, unsigned long p)
+{
+   int i = 0;
+   
+   for (i = 0; i < factors->num; i++)
+   {
+      if (factors->p[i] == p)
+      {
+         factors->exp[i]++;
+         break;
+      }
+   }
+   if (i == factors->num)
+   {
+      factors->p[i] = p;
+      factors->exp[i] = 1;
+      factors->num++;
+   }
+}
+
+int long_factor(factor_t * factors, unsigned long n)
+{
+   unsigned long cofactor;
+   unsigned long factor_arr[TF_FACTORS_IN_LIMB];
+   unsigned long cutoff = primes[TF_CUTOFF-1]*primes[TF_CUTOFF-1];
+   unsigned long factors_left = 1;
+   unsigned long factor;
+   
+   cofactor = long_factor_trial(factors, n);
+      
+   if (cofactor != 1)
+   {
+      factor = factor_arr[0] = cofactor;
+      
+      while (factors_left > 0)
+      {
+         factor = factor_arr[factors_left-1]; 
+         if ((factor < cutoff) || long_isprime(factor))
+         {
+            insert_factor(factors, factor);
+            factors_left--;
+         } else
+         {
+            factor = factor_arr[factors_left] = long_factor_SQUFOF(factor);
+            if (!factor_arr[factors_left]) return 0;
+            factor_arr[factors_left-1] /= factor;
+            factors_left++;
+         }
+      }
+      return 1;
+   } 
+} 

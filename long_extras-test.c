@@ -229,7 +229,7 @@ int test_long_sqrtmod()
    return result;
 }
 
-int test_nextprime()
+int test_long_nextprime()
 {
    unsigned long n;
    unsigned long res1, res2;
@@ -267,14 +267,14 @@ int test_nextprime()
    return result;
 }
 
-int test_CRT()
+int test_long_CRT()
 {
    unsigned long x1, x2, n1, n2;
    unsigned long res;
    
    int result = 1;
    
-   for (unsigned long count = 0; (count < 100000) && (result == 1); count++)
+   for (unsigned long count = 0; (count < 500000) && (result == 1); count++)
    { 
       unsigned long bits = long_randint(61)+2;
       unsigned long bits1 = long_randint(bits-1) + 1;
@@ -305,13 +305,13 @@ int test_CRT()
    return result;
 }
 
-int test_issquarefree()
+int test_long_issquarefree()
 {
    unsigned long n, n1, n2;
 
    int result = 1;
    
-   for (unsigned long count = 0; (count < 10000000) && (result == 1); count++)
+   for (unsigned long count = 0; (count < 5000000) && (result == 1); count++)
    { 
       do
       {
@@ -354,7 +354,7 @@ int test_issquarefree()
    return result;
 }
 
-int test_factor_trial()
+int test_long_factor_trial()
 {
    unsigned long n, prod, orig_n;
    factor_t factors;
@@ -396,7 +396,7 @@ int test_factor_trial()
    return result;
 }
 
-int test_factor_SQUFOF()
+int test_long_factor_SQUFOF()
 {
    unsigned long n, factor;
 
@@ -411,7 +411,9 @@ int test_factor_SQUFOF()
       } while (long_isprime(n));     
       
       for (unsigned long j = 0; j < 10; j++)
+      {
          factor = long_factor_SQUFOF(n);
+      }
       
       if (factor) result = (n == factor*(n/factor));
 
@@ -430,6 +432,53 @@ int test_factor_SQUFOF()
    return result;
 }
 
+int test_long_factor()
+{
+   unsigned long n, prod, orig_n;
+   factor_t factors;
+   int i, factored;
+
+   int result = 1;
+   
+   for (unsigned long count = 0; (count < 10000) && (result == 1); count++)
+   { 
+      orig_n = random_ulong(1000000000000000000);
+
+#if DEBUG
+         printf("Factoring n = %ld....\n", orig_n);
+#endif
+           
+      for (unsigned long j = 0; j < 10; j++)
+         factored = long_factor(&factors, orig_n);
+      
+      if (factored)
+      {
+         prod = 1;
+         for (i = 0; i < factors.num; i++)
+         {
+            prod *= long_pow(factors.p[i], factors.exp[i]);
+         }
+      
+         result = (prod == orig_n);
+      } else printf("%ld didn't factor\n", orig_n);
+
+#if DEBUG
+      if (!result)
+      {
+         printf("n = %ld: [", orig_n);
+         for (i = 0; i < factors.num - 1; i++)
+         {
+            printf("%ld, %ld; ", factors.p[i], factors.exp[i]);
+         }
+         printf("%ld, %ld]\n", factors.p[i], factors.exp[i]);
+      }
+#endif
+
+   }  
+   
+   return result;
+}
+
 void fmpz_poly_test_all()
 {
    int success, all_success = 1;
@@ -438,11 +487,12 @@ void fmpz_poly_test_all()
    RUN_TEST(long_powmod);
    RUN_TEST(long_sqrtmod);
    RUN_TEST(long_cuberootmod);
-   RUN_TEST(nextprime);
-   RUN_TEST(CRT);
-   RUN_TEST(issquarefree);
-   RUN_TEST(factor_trial);
-   RUN_TEST(factor_SQUFOF);
+   RUN_TEST(long_nextprime);
+   RUN_TEST(long_CRT);
+   RUN_TEST(long_issquarefree);
+   RUN_TEST(long_factor_trial);
+   RUN_TEST(long_factor_SQUFOF);
+   RUN_TEST(long_factor);
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");
