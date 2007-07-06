@@ -984,10 +984,11 @@ unsigned long long_factor_trial(factor_t * factors, unsigned long n)
    Adapted from code of Sam Wagstaff
 */
 
-#define SQUFOF_ITERS 20000
+#define SQUFOF_ITERS 30000
 
 unsigned long long_factor_SQUFOF(unsigned long n)
 {
+   if ((n & 3) == 1) n = 2*n;
    unsigned long sqroot = long_intsqrt(n);
    unsigned long p = sqroot;
    unsigned long q = n - sqroot*sqroot;
@@ -1009,7 +1010,7 @@ unsigned long long_factor_SQUFOF(unsigned long n)
    {
       iq = (sqroot + p)/q;
       pnext = iq*q - p;
-      if (q <= 1) 
+      if (q <= l) 
       {
          if ((q & 1) == 0) 
          {
@@ -1029,11 +1030,12 @@ unsigned long long_factor_SQUFOF(unsigned long n)
 	  p = pnext;
 	  if ((i&1) == 1) continue;
 	  if (!long_issquare(q)) continue;
-	  if (qupto == 0) break;
 	  r = long_intsqrt(q);
+	  if (qupto == 0) break;
 	  for (j = 0; j < qupto; j++)	
-         if (r == qarr[j]) continue;
+         if (r == qarr[j]) goto cont;
       break;
+      cont: ;
    }
    
    if (i == SQUFOF_ITERS) return 0; // taken too long, give up
@@ -1056,5 +1058,5 @@ unsigned long long_factor_SQUFOF(unsigned long n)
    if ((q & 1) == 0) q /= 2;
    
    if (q != 1) return q;
-   else return 0;
+   else {printf("Trivial\n");return 0;}
 }

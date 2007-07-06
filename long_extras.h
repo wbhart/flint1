@@ -63,7 +63,7 @@ unsigned long long_gcd(long x, long y);
 
 static inline unsigned long long_intsqrt(unsigned long n)
 {
-   return (unsigned long) floor(sqrt(n));
+   return (unsigned long) floor(sqrt((double)n));
 }
 
 static inline int long_issquare(long x)
@@ -76,7 +76,7 @@ static inline int long_issquare(long x)
    if (!mod64[x%64]) return 0;
    if (!mod63[x%63]) return 0;
    if (!mod65[x%65]) return 0;
-   unsigned long sqroot = (unsigned long) sqrt(x);
+   unsigned long sqroot = (unsigned long) sqrt((double)x);
    return (x == sqroot*sqroot);
 }
 

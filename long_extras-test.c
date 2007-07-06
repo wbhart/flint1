@@ -402,17 +402,22 @@ int test_factor_SQUFOF()
 
    int result = 1;
    
-   for (unsigned long count = 0; (count < 100000) && (result == 1); count++)
+   for (unsigned long count = 0; (count < 5000) && (result == 1); count++)
    { 
-      n = random_ulong(1000000);
-           
+      do 
+      {
+         n = random_ulong(1000000000000)+1;
+         n|=1;
+      } while (long_isprime(n));     
+      
       for (unsigned long j = 0; j < 10; j++)
          factor = long_factor_SQUFOF(n);
       
       if (factor) result = (n == factor*(n/factor));
 
-#if DEBUG2
+#if DEBUG
       if (!factor) printf("%ld failed to factor\n", n);
+      if (factor) printf("%ld factored\n", n);
       if (!result)
       {
          printf("n = %ld\n", n);
