@@ -981,14 +981,14 @@ unsigned long long_factor_trial(factor_t * factors, unsigned long n)
 
 /*
    Square forms factoring algorithm of Shanks
-   Adapted from code of Sam Wagstaff
+   Adapted from the (simplified) algorithm as described by 
+   Gower and Wagstaff Math of Comp. (Preprint May 2007)
 */
 
-#define SQUFOF_ITERS 30000
+#define SQUFOF_ITERS 50000
 
 unsigned long long_factor_SQUFOF(unsigned long n)
 {
-   if ((n & 3) == 1) n = 2*n;
    unsigned long sqroot = long_intsqrt(n);
    unsigned long p = sqroot;
    unsigned long q = n - sqroot*sqroot;
@@ -1001,7 +1001,7 @@ unsigned long long_factor_SQUFOF(unsigned long n)
    unsigned long l = 1 + 2*long_intsqrt(2*p);
    unsigned long l2 = l/2;
    unsigned long iq, pnext;
-   unsigned long qarr[20];
+   unsigned long qarr[50];
    unsigned long qupto = 0;
    unsigned long qlast = 1;
    unsigned long i, j, t, r;
@@ -1016,12 +1016,12 @@ unsigned long long_factor_SQUFOF(unsigned long n)
          {
             qarr[qupto] = q/2;
             qupto++;
-            if (qupto >= 20) return 0;
+            if (qupto >= 50) return 0;
          } else if (q <= l2)
          {
             qarr[qupto] = q;
             qupto++;
-            if (qupto >= 20) return 0;
+            if (qupto >= 50) return 0;
          }
       }
       t = qlast + iq*(p - pnext);
@@ -1035,7 +1035,7 @@ unsigned long long_factor_SQUFOF(unsigned long n)
 	  for (j = 0; j < qupto; j++)	
          if (r == qarr[j]) goto cont;
       break;
-      cont: ;
+      cont: ; if (r == 1) return 0;
    }
    
    if (i == SQUFOF_ITERS) return 0; // taken too long, give up
