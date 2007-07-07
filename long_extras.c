@@ -41,8 +41,196 @@ unsigned long long_randint(unsigned long limit)
 }
 
 /* 
+   Computes a double floating point approximate inverse, 
+   i.e. 53 bits of 1 / n 
+   Requires that n be no more than 52 bits
+*/
+
+double long_precompute_inverse(unsigned long n)
+{
+   return ((double) 1 / (double) n);
+}
+
+/* 
+    Returns a % n given a precomputed approx inverse ninv
+    Operation is *unsigned*
+    Requires that n be no more than 52 bits
+*/
+
+unsigned long long_mod_precomp(unsigned long a, unsigned long n, double ninv)
+{
+   unsigned long quot = (unsigned long) ((double) a * ninv);
+   unsigned long rem = a - quot*n;
+   if (rem > n) return rem - n;
+   else return rem;
+}
+
+/* 
+   Computes a*b mod n, given a precomputed inverse ninv
+   Assumes a an b are both in [0,n). 
+   Requires a*b to be no more than n^2
+   Requires that n be no more than 52 bits
+*/
+
+unsigned long long_mulmod_precomp(unsigned long a, unsigned long b, 
+                                         unsigned long n, double ninv)
+{
+   unsigned long quot = (unsigned long) ((double) a * (double) b * ninv);
+   long rem = a*b - quot*n;
+   if (rem < 0) return rem + n;
+   if (rem >= n) return rem - n;
+   return rem;
+}
+
+/*
+   Returns a^exp modulo n
+   Assumes a is reduced mod n
+   Requires that n be no more than 52 bits
+*/
+
+unsigned long long_powmod0(unsigned long a, long exp, unsigned long n)
+{
+   double ninv = long_precompute_inverse(n);
+   
+   unsigned long x, y;
+   
+   unsigned long e;
+
+   if (exp < 0)
+      e = (unsigned long) -exp;
+   else
+      e = exp;
+   
+   x = 1;
+   y = a;
+   while (e) {
+      if (e & 1) x = long_mulmod_precomp(x, y, n, ninv);
+      y = long_mulmod_precomp(y, y, n, ninv);
+      e = e >> 1;
+   }
+
+   if (exp < 0) x = long_invert(x, n);
+
+   return x;
+} 
+
+/*
+   Returns a^exp modulo n given a precomputed inverse
+   Assumes a is reduced mod n
+   Requires that n be no more than 52 bits
+*/
+
+unsigned long long_powmod_precomp0(unsigned long a, long exp, 
+                                     unsigned long n, double ninv)
+{
+   unsigned long x, y;
+   
+   unsigned long e;
+
+   if (exp < 0)
+      e = (unsigned long) -exp;
+   else
+      e = exp;
+   
+   x = 1;
+   y = a;
+   while (e) {
+      if (e & 1) x = long_mulmod_precomp(x, y, n, ninv);
+      y = long_mulmod_precomp(y, y, n, ninv);
+      e = e >> 1;
+   }
+
+   if (exp < 0) x = long_invert(x, n);
+
+   return x;
+} 
+
+/* 
+   Computes the Jacobi symbol of _a_ modulo p
+   Assumes p is a prime of no more than 52 bits and that _a_
+   is reduced modulo p
+*/
+
+int long_jacobi_precomp(unsigned long a, unsigned long p, double pinv)
+{
+   if (a == 0) return 0;  
+   if (long_powmod_precomp0(a, (p-1)/2, p, pinv) == p-1) return -1;
+   else return 1;                                            
+}
+                      
+/* 
+   Computes a square root of _a_ modulo p.
+   Assumes p is a prime of no more than 52 bits,
+   that _a_ is reduced modulo p. 
+   Returns 0 if _a_ is a quadratic non-residue modulo p.
+*/
+unsigned long long_sqrtmod0(unsigned long a, unsigned long p) 
+{
+     unsigned int r, k, m;
+     unsigned long p1, b, g, bpow, gpow, res;
+     double pinv;
+         
+     if ((a==0) || (a==1)) 
+     {
+        return a;
+     }
+     
+     pinv = long_precompute_inverse(p);
+     
+     if (long_jacobi_precomp(a, p, pinv) == -1) return 0;
+     
+     if ((p&3)==3)
+     {
+        return long_powmod_precomp0(a, (p+1)/4, p, pinv);
+     }
+     
+     r = 0;
+     p1 = p-1;
+     
+     do {
+        p1>>=1UL; 
+        r++;
+     } while ((p1&1UL) == 0);
+ 
+     b = long_powmod_precomp0(a, p1, p, pinv);
+     
+     for (k=2UL; ;k++)
+     {
+         if (long_jacobi_precomp(k, p, pinv) == -1) break;
+     }
+     
+     g = long_powmod_precomp0(k, p1, p, pinv);
+     res = long_powmod_precomp0(a, (p1+1)/2, p, pinv);
+     if (b == 1UL) 
+     {
+        return res;
+     }
+        
+     while (b != 1)
+     {
+           bpow = b;
+           for (m = 1; (m <= r-1) && (bpow != 1); m++)
+           {
+               bpow = long_mulmod_precomp(bpow, bpow, p, pinv);
+           }
+           gpow = g;
+           for (int i = 1; i < r-m; i++)
+           {
+               gpow = long_mulmod_precomp(gpow, gpow, p, pinv);
+           }
+           res = long_mulmod_precomp(res, gpow, p, pinv);
+           gpow = long_mulmod_precomp(gpow, gpow, p, pinv);
+           b = long_mulmod_precomp(b, gpow, p, pinv);
+           gpow = g;
+           r = m;
+     }
+     
+     return res;
+}
+
+/* 
    Computes a 2 limb approximate inverse, i.e. 2 limbs of 2^B / n
-   Requires that n be no more than 63 bits
+   Requires that n be no more than 64 bits
 */
 
 void long_precompute_inverse2(unsigned long * ninv_hi, 
@@ -69,7 +257,7 @@ void long_precompute_inverse2(unsigned long * ninv_hi,
     Returns a_hi a_lo % n given precomputed approx inverse ninv_quot ninv_rem
     Assumes the result fits in a single limb, e.g. a_hi a_lo < n^2
     Operation is *unsigned*
-    Requires that n be no more than 63 bits
+    Requires that n be no more than 64 bits
 */
 
 unsigned long long_mod_precomp2(unsigned long a_hi, unsigned long a_lo, 
@@ -91,7 +279,8 @@ unsigned long long_mod_precomp2(unsigned long a_hi, unsigned long a_lo,
    t3 = a_lo;
    umul_ppmm(t2, t1, p3, n);
    sub_ddmmss(t4, t3, t4, t3, t2, t1);
-   if (t4 || (!t4 && (t3 >= n))) return t3-n;
+   if (t4 || (!t4 && (t3 >= n))) t3-=n;
+   if (t3 >= n) return t3-n;
    else return t3;   
 }
  
@@ -99,7 +288,7 @@ unsigned long long_mod_precomp2(unsigned long a_hi, unsigned long a_lo,
    Computes a*b mod n, given a precomputed inverse ninv_quot ninv_rem
    Assumes a an b are both in [0,n). There is no restriction on a*b, 
    i.e. it can be two limbs
-   Requires that n be no more than 63 bits
+   Requires that n be no more than 64 bits
 */
 unsigned long long_mulmod_precomp2(unsigned long a, unsigned long b, unsigned long n,
                         unsigned long ninv_hi, unsigned long ninv_lo)
@@ -193,7 +382,7 @@ unsigned long long_powmod_precomp2(unsigned long a, long exp, unsigned long n,
 
 /* 
    Computes the Jacobi symbol of _a_ modulo p
-   Assumes p is a prime of no more than 63 bits and that _a_
+   Assumes p is a prime of no more than 64 bits and that _a_
    is reduced modulo p
 */
 
@@ -207,10 +396,9 @@ int long_jacobi_precomp2(unsigned long a, unsigned long p,
 
 /* 
    Computes a square root of _a_ modulo p.
-   Assumes p is a prime of no more than 63 bits,
-   that _a_ is reduced modulo p and is a quadratic
-   residue modulo p. Returns 0 if a is a quadratic
-   non-residue modulo p.
+   Assumes p is a prime of no more than 64 bits,
+   that _a_ is reduced modulo p. 
+   Returns 0 if _a_ is a quadratic non-residue modulo p.
 */
 unsigned long long_sqrtmod(unsigned long a, unsigned long p) 
 {
@@ -283,7 +471,7 @@ unsigned long long_sqrtmod(unsigned long a, unsigned long p)
    root is set to 1
    If _a_ is not a cube modulo p then 0 is returned
    This function assumes _a_ is not 0 and that _a_ is reduced modulo p
-   Assumes p is no more than 63 bits 
+   Assumes p is no more than 64 bits 
 */
 
 unsigned long long_cuberootmod(unsigned long * cuberoot1, unsigned long a, 
@@ -354,7 +542,7 @@ unsigned long long_cuberootmod(unsigned long * cuberoot1, unsigned long a,
 /* 
    Tests whether n is an a-Strong Pseudo Prime
    Assumes d is set to the largest odd factor of n-1
-   Assumes n is no more than 63 bits
+   Assumes n is no more than 64 bits
 */
 static inline
 int SPRP(unsigned long a, unsigned long d, unsigned long n, unsigned long ninv_hi, unsigned long ninv_lo)
@@ -376,7 +564,7 @@ int SPRP(unsigned long a, unsigned long d, unsigned long n, unsigned long ninv_h
     Miller-Rabin primality test. If reps is set to 5 a couple of 
     pseudoprimes on average will pass the test out of each 10^11 tests. 
     Every increase of reps by 1 decreases the chance or composites 
-    passing by a factor of 4. Assumes n is no more than 63 bits
+    passing by a factor of 4. Assumes n is no more than 64 bits
 */
      
 int long_miller_rabin_precomp2(unsigned long n, unsigned long ninv_hi, unsigned long ninv_lo, unsigned long reps)
@@ -409,6 +597,7 @@ int long_miller_rabin_precomp2(unsigned long n, unsigned long ninv_hi, unsigned 
    to make this into an unconditional primality test.
    This test is intended to be run after checking for divisibility by
    primes up to 257 say.
+   Requires n be no more than 64 bits
 */
 int long_isprime_precomp2(unsigned long n, unsigned long ninv_hi, unsigned long ninv_lo)
 {
@@ -450,6 +639,7 @@ int long_isprime_precomp2(unsigned long n, unsigned long ninv_hi, unsigned long 
    to make this into an unconditional primality test.
    This test is intended to be run after checking for divisibility by
    primes up to 257 say.
+   Requires n be no more than 64 bits
 */
 int long_isprime(unsigned long n)
 {
@@ -519,8 +709,7 @@ unsigned int primes[] =
 /* 
     Returns the next prime after n 
     Assumes the result will fit in an unsigned long
-    Assumes n is at most 63 bits
-    N.B: Test currently fails for 63 bits.
+    Assumes n is at most 64 bits
 */
 
 unsigned long long_nextprime(unsigned long n)
@@ -834,7 +1023,7 @@ unsigned long long_gcd(long x, long y)
 
 /*
    Return 0 <= a < n1*n2 such that a mod n1 = x1 and a mod n2 = x2
-   Assumes gcd(n1, n2) = 1 and that n1*n2 is at most 63 bits
+   Assumes gcd(n1, n2) = 1 and that n1*n2 is at most 62 bits
    Assumes x1 is reduced modulo n1 and x2 is reduced modulo n2
 */
 

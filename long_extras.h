@@ -21,6 +21,22 @@ typedef struct factor_s
 
 unsigned long long_randint(unsigned long limit);
 
+double long_precompute_inverse(unsigned long n);
+
+unsigned long long_mod_precomp(unsigned long a, unsigned long n, double ninv);
+
+unsigned long long_mulmod_precomp(unsigned long a, unsigned long b, 
+                                         unsigned long n, double ninv);
+                                         
+unsigned long long_powmod0(unsigned long a, long exp, unsigned long n);
+
+unsigned long long_powmod_precomp0(unsigned long a, long exp, 
+                                     unsigned long n, double ninv);
+                                     
+unsigned long long_sqrtmod0(unsigned long a, unsigned long p);
+
+int long_jacobi_precomp(unsigned long a, unsigned long p, double pinv);
+
 void long_precompute_inverse2(unsigned long * ninv_hi, 
                             unsigned long * ninv_lo, unsigned long n);
                             
