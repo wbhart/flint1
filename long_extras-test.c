@@ -74,9 +74,9 @@ int test_long_mulmod_precomp()
    mpz_init(mpz_n);
    mpz_init(mpz_res); 
 
-   for (unsigned long count = 0; (count < 2000) && (result == 1); count++)
+   for (unsigned long count = 0; (count < 1000) && (result == 1); count++)
    { 
-      n = random_ulong(4503599627370494UL)+1;
+      n = random_ulong(9007199254740990UL)+1;
       
       ninv = long_precompute_inverse(n);
       
@@ -117,7 +117,7 @@ int test_long_mulmod_precomp()
 int test_long_powmod0()
 {
    unsigned long n, ninv_hi, ninv_lo;
-   unsigned long a, exp, res1, res2;
+   unsigned long a, exp, res1, res2, bits;
    
    mpz_t mpz_res, mpz_a, mpz_n;
    mpz_init(mpz_res);
@@ -126,10 +126,10 @@ int test_long_powmod0()
        
    int result = 1;
    
-   for (unsigned long count = 0; (count < 200) && (result == 1); count++)
+   for (unsigned long count = 0; (count < 100) && (result == 1); count++)
    { 
-      n = random_ulong(4503599627370494UL)+1; 
-      if (!n) n++;
+      bits = long_randint(52)+1;
+      n = random_ulong((1UL<<bits)-1UL)+1; 
       
       for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
       {
@@ -158,6 +158,55 @@ int test_long_powmod0()
    mpz_clear(mpz_a);
    mpz_clear(mpz_n); 
 
+   return result;
+}
+
+int test_long_sqrtmod0()
+{
+   unsigned long p = 0;
+   unsigned long a, res1, bits;
+   
+   mpz_t mpz_res, mpz_p, mpz_temp;
+   mpz_init(mpz_res);
+   mpz_init(mpz_p);
+   mpz_init(mpz_temp);
+          
+   int result = 1;
+   
+   for (unsigned long count = 0; (count < 10000) && (result == 1); count++)
+   { 
+      bits = long_randint(52)+1;
+      p = random_ulong((1UL<<bits)-1UL)+1; 
+      p = long_nextprime(p);
+      
+      for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
+      {
+         a = random_ulong(p); 
+         
+         for (unsigned long count3 = 0; count3 < 1; count3++)   
+            res1 = long_sqrtmod0(a, p);
+            
+         if (res1)
+         {
+            mpz_set_ui(mpz_temp, res1);
+            mpz_set_ui(mpz_p, p);
+            mpz_powm_ui(mpz_res, mpz_temp, 2UL, mpz_p);
+            result &= (mpz_cmp_ui(mpz_res, a) == 0);
+         
+#if DEBUG
+            if (mpz_cmp_ui(mpz_res,a))
+            {
+               gmp_printf("res1 = %ld, p = %ld, a = %ld, sqrt^2 = %Zd\n", res1, p, a, mpz_res);
+            }
+#endif
+         }
+      }
+   }  
+   
+   mpz_clear(mpz_res);
+   mpz_clear(mpz_p);
+   mpz_clear(mpz_temp);
+   
    return result;
 }
  
@@ -217,7 +266,9 @@ int test_long_mulmod_precomp2()
 int test_long_powmod()
 {
    unsigned long n, ninv_hi, ninv_lo;
-   unsigned long a, exp, res1, res2;
+   unsigned long a, res1, res2;
+   unsigned long e;
+   long exp;
    
    mpz_t mpz_res, mpz_a, mpz_n;
    mpz_init(mpz_res);
@@ -226,20 +277,24 @@ int test_long_powmod()
        
    int result = 1;
    
-   for (unsigned long count = 0; (count < 200) && (result == 1); count++)
+   for (unsigned long count = 0; (count < 100) && (result == 1); count++)
    { 
-      n = random_ulong(18446744073709551614UL)+1; 
+      n = random_ulong(9223372036854775807UL-100)+1;
+      n = long_nextprime(n);
       
       for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
       {
          a = random_ulong(n); 
-         exp = random_ulong(9223372036854775807UL); 
+         exp = random_ulong(18446744073709551614UL)+1;  
          
+         if (exp < 0) e = -exp;
+         else e = exp;
          for (unsigned long count = 0; count < 100; count++)   
             res1 = long_powmod(a, exp, n);
          mpz_set_ui(mpz_a, a);
          mpz_set_ui(mpz_n, n);
-         mpz_powm_ui(mpz_res, mpz_a, exp, mpz_n);
+         mpz_powm_ui(mpz_res, mpz_a, e, mpz_n);
+         if (exp < 0) mpz_invert(mpz_res, mpz_res, mpz_n);
          res2 = mpz_get_ui(mpz_res);
          
 #if DEBUG2               
@@ -275,7 +330,7 @@ int test_long_cuberootmod()
    
    for (unsigned long count = 0; (count < 1000) && (result == 1); count++)
    { 
-      p = random_ulong(1099511627776); 
+      p = random_ulong(1000000000000000-100)+1; 
       p = long_nextprime(p);
       
       for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
@@ -329,10 +384,9 @@ int test_long_sqrtmod()
           
    int result = 1;
    
-   for (unsigned long count = 0; (count < 10000) && (result == 1); count++)
+   for (unsigned long count = 0; (count < 5000) && (result == 1); count++)
    { 
-      bits = long_randint(63)+1;
-      p = random_ulong((1UL<<bits)-1UL)+1; 
+      p = random_ulong(-1L-100)+1; 
       p = long_nextprime(p);
       
       for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
@@ -341,55 +395,6 @@ int test_long_sqrtmod()
          
          for (unsigned long count = 0; count < 1; count++)   
             res1 = long_sqrtmod(a, p);
-            
-         if (res1)
-         {
-            mpz_set_ui(mpz_temp, res1);
-            mpz_set_ui(mpz_p, p);
-            mpz_powm_ui(mpz_res, mpz_temp, 2UL, mpz_p);
-            result &= (mpz_cmp_ui(mpz_res, a) == 0);
-         
-#if DEBUG
-            if (mpz_cmp_ui(mpz_res,a))
-            {
-               gmp_printf("res1 = %ld, p = %ld, a = %ld, sqrt^2 = %Zd\n", res1, p, a, mpz_res);
-            }
-#endif
-         }
-      }
-   }  
-   
-   mpz_clear(mpz_res);
-   mpz_clear(mpz_p);
-   mpz_clear(mpz_temp);
-   
-   return result;
-}
-
-int test_long_sqrtmod0()
-{
-   unsigned long p = 0;
-   unsigned long a, res1, bits;
-   
-   mpz_t mpz_res, mpz_p, mpz_temp;
-   mpz_init(mpz_res);
-   mpz_init(mpz_p);
-   mpz_init(mpz_temp);
-          
-   int result = 1;
-   
-   for (unsigned long count = 0; (count < 10000) && (result == 1); count++)
-   { 
-      bits = long_randint(52)+1;
-      p = random_ulong((1UL<<bits)-1UL)+1; 
-      p = long_nextprime(p);
-      
-      for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
-      {
-         a = random_ulong(p); 
-         
-         for (unsigned long count = 0; count < 1; count++)   
-            res1 = long_sqrtmod0(a, p);
             
          if (res1)
          {
