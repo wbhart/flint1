@@ -9,6 +9,7 @@
  
 ******************************************************************************/
 
+#include <math.h>
 #include "ZmodF.h"
 #include "ZmodF_poly.h"
 #include "ZmodF_mul.h"
@@ -25,9 +26,9 @@
 ******************************************************************************/
 
 /*
-Normalises a and b, and then attempts to multiply them mod p, putting result
-in res. It only succeeds if one of the inputs is exactly -1 mod p, in which
-case it returns 1. Otherwise it just returns 0.
+   Normalises a and b, and then attempts to multiply them mod p, putting result
+   in res. It only succeeds if one of the inputs is exactly -1 mod p, in which
+   case it returns 1. Otherwise it just returns 0.
 */
 long _ZmodF_mul_handle_minus1(ZmodF_t res, ZmodF_t a, ZmodF_t b,
                               unsigned long n)
@@ -54,7 +55,7 @@ long _ZmodF_mul_handle_minus1(ZmodF_t res, ZmodF_t a, ZmodF_t b,
 
 
 /*
-Same as _ZmodF_mul_handle_minus1, but for squaring.
+   Same as _ZmodF_mul_handle_minus1, but for squaring.
 */
 long _ZmodF_sqr_handle_minus1(ZmodF_t res, ZmodF_t a, unsigned long n)
 {
@@ -82,6 +83,7 @@ long _ZmodF_sqr_handle_minus1(ZmodF_t res, ZmodF_t a, unsigned long n)
    scratch must be of length 2n, and not overlap any of a, b, res.
    a and b must be normalised, and have zero overflow limbs.
    Any combinations of a, b, res may be aliased.
+   The output is not necessarily normalised.
 */
 inline
 void _ZmodF_mul(ZmodF_t res, ZmodF_t a, ZmodF_t b, mp_limb_t* scratch,
@@ -160,8 +162,8 @@ void ZmodF_sqr(ZmodF_t res, ZmodF_t a, mp_limb_t* scratch, unsigned long n)
 ******************************************************************************/
 
 /*
-initialises info to use plain mpn_mul_n for multiplication
- */
+   Initialises info to use plain mpn_mul_n for multiplication.
+*/
 void ZmodF_mul_info_init_plain(ZmodF_mul_info_t info, unsigned long n,
                                int squaring)
 {
@@ -173,10 +175,11 @@ void ZmodF_mul_info_init_plain(ZmodF_mul_info_t info, unsigned long n,
 
 
 /*
-initialises info to use the "three-way split" algorithm for multiplication
+   Initialises info to use the threeway algorithm for multiplication.
 
-n must be divisible by 3
- */
+   PRECONDITIONS:
+      n must be divisible by 3
+*/
 void ZmodF_mul_info_init_threeway(ZmodF_mul_info_t info, unsigned long n,
                                   int squaring)
 {
@@ -192,230 +195,196 @@ void ZmodF_mul_info_init_threeway(ZmodF_mul_info_t info, unsigned long n,
 
 
 /*
-initialises info to use a negacyclic FFT algorithm for multiplication,
-with a transform depth of "depth".
+   Initialises info to use FFT algorithm for multiplication.
 
-n*FLINT_BITS must be divisible by 2^depth (so that the coefficients can be
-broken up into 2^depth pieces)
+   If m == 0, it will automatically choose a suitable value for m, and will
+   choose k = 0. (This won't always be optimal, but it should be pretty close.)
+
+   PRECONDITIONS:
+      n*FLINT_BITS must be divisible by 2^depth (so that the input can be
+      broken up into 2^depth pieces)
+      
+      0 <= k <= 2
+      k <= m
+      
+      m*FLINT_BITS must be divisible by 2^depth (so that the coefficients
+      support a negacyclic FFT of the given depth).
+      
+      (m+k)*FLINT_BITS >= 2*n*FLINT_BITS/2^depth + 1 + depth (so that getting
+      the convolution mod (B^m + 1)*B^k determines the result uniquely)
 */
-void ZmodF_mul_info_init_negacyclic(ZmodF_mul_info_t info, unsigned long n,
-                                    unsigned long depth, int squaring)
+void ZmodF_mul_info_init_fft(ZmodF_mul_info_t info, unsigned long n,
+                             unsigned long depth, unsigned long m,
+                             unsigned long k, int squaring)
 {
    FLINT_ASSERT((n * FLINT_BITS) % (1 << depth) == 0);
+   FLINT_ASSERT(k <= m);
 
-   info->algo = ZMODF_MUL_ALGO_NEGACYCLIC;
+   info->algo = ZMODF_MUL_ALGO_FFT;
    info->n = n;
    info->squaring = squaring;
 
-   // work out how many limbs the small coefficients need to have
-   unsigned long input_bits = (n*FLINT_BITS) >> depth;
-   unsigned long output_bits = 2*input_bits + 1 + depth;
-   info->m = ((output_bits-1) >> FLINT_LG_BITS_PER_LIMB) + 1;
-
-   // round up m so that 2^(depth+1) roots of unity are available,
-   // i.e. need m*FLINT_BITS divisible by 2^depth
-   if (depth > FLINT_LG_BITS_PER_LIMB)
+   if (!m)
    {
-      unsigned long shift = depth - FLINT_LG_BITS_PER_LIMB;
-      info->m = (((info->m - 1) >> shift) + 1) << shift;
+      // automatically determine reasonable values for m and k
+      
+      unsigned long input_bits = (n*FLINT_BITS) >> depth;
+      unsigned long output_bits = 2*input_bits + 1 + depth;
+      m = ((output_bits - 1) >> FLINT_LG_BITS_PER_LIMB) + 1;
+      k = 0;
+
+      // m needs to be divisible by 2^shift
+      unsigned long shift = 0;
+      if (depth > FLINT_LG_BITS_PER_LIMB)
+         shift = depth - FLINT_LG_BITS_PER_LIMB;
+
+      // if m is in the feasible range for the threeway algorithm, try to
+      // round it up/down to a multiple of 3
+      if (m < ZmodF_mul_threeway_fft_threshold)
+      {
+         if (shift == 0)
+         {
+            // round down to a multiple of 3, set k to compensate
+            if (m > 3)
+            {
+               k = m % 3;
+               m -= k;
+            }
+         }
+         else
+         {
+            // round up to a multiple of 3*2^shift
+            unsigned long round = 3 << shift;
+            m = (((m-1) / round) + 1) * round;
+         }
+      }
+      else
+      {
+         // threeway not feasible; just round up to multiple of 2^shift
+         m = (((m-1) >> shift) + 1) << shift;
+      }
    }
+
+   //   printf("initialised FFT with n = %ld, depth = %ld, m = %ld, k = %ld\n", n, depth, m, k);
+
+   FLINT_ASSERT((m*FLINT_BITS) % (1 << depth) == 0);
+   FLINT_ASSERT(k <= 2);
+   FLINT_ASSERT((m+k)*FLINT_BITS >= ((2*n*FLINT_BITS) >> depth) + 1 + depth);
+   info->m = m;
+   info->k = k;
+
+   // For the ZmodF_poly routines, we'll only need m+1 limbs (i.e. to work
+   // mod B^m + 1). But later on we'll need m+k+1 limbs to store the result
+   // mod (B^m + 1)*B^k, so we allocate these spare limbs in advance.
+   ZmodF_poly_init(info->polys[0], depth, m + k, 1);
+   ZmodF_poly_decrease_n(info->polys[0], m);
    
-   ZmodF_poly_init(info->polys[0], depth, info->m, 1);
-   if (!squaring)
-      ZmodF_poly_init(info->polys[1], depth, info->m, 1);
-}
-
-
-
-/*
-initialises info to use 2nd negacyclic FFT algorithm for multiplication,
-with a transform depth of "depth".
-
-n*FLINT_BITS must be divisible by 2^depth (so that the coefficients can be
-broken up into 2^depth pieces)
-*/
-void ZmodF_mul_info_init_negacyclic2(ZmodF_mul_info_t info, unsigned long n, 
-                                     unsigned long depth, int squaring)
-{
-   FLINT_ASSERT((n * FLINT_BITS) % (1 << depth) == 0);
-
-   info->algo = ZMODF_MUL_ALGO_NEGACYCLIC2;
-   info->n = n;
-   info->squaring = squaring;
-
-   // work out how many limbs the small coefficients need to have
-   // (remember one extra limb will be supplied by working mod B)
-   unsigned long input_bits = (n*FLINT_BITS) >> depth;
-   unsigned long output_bits = 2*input_bits + 1 + depth;
-   info->m = ((output_bits-1) >> FLINT_LG_BITS_PER_LIMB);
-
-   // round up m so that 2^(depth+1) roots of unity are available,
-   // i.e. need m*FLINT_BITS divisible by 2^depth
-   if (depth > FLINT_LG_BITS_PER_LIMB)
-   {
-      unsigned long shift = depth - FLINT_LG_BITS_PER_LIMB;
-      info->m = (((info->m - 1) >> shift) + 1) << shift;
-   }
-   
-   // we allocate m+2 limbs for each coefficient, but for the ZmodF_poly
-   // routines we only use m+1 limbs (i.e. work mod B^m + 1). Then, later on
-   // we'll need the full m+2 limbs to store the result mod B^(m+1) + B.
-   ZmodF_poly_init(info->polys[0], depth, info->m+1, 1);
-   ZmodF_poly_decrease_n(info->polys[0], info->m);
    if (!squaring)
    {
-      ZmodF_poly_init(info->polys[1], depth, info->m+1, 1);
-      ZmodF_poly_decrease_n(info->polys[1], info->m);
+      ZmodF_poly_init(info->polys[1], depth, m + k, 1);
+      ZmodF_poly_decrease_n(info->polys[1], m);
    }
+
    // todo: maybe can use less memory here when squaring:
-   info->scratch = (mp_limb_t*) flint_stack_alloc(3UL << depth);
+   if (k)
+      info->scratch = (mp_limb_t*) flint_stack_alloc((3*k) << depth);
+   else
+      info->scratch = NULL;
 }
 
 
 /*
-Looks up n in the tuning table and returns optimal negacyclic FFT depth.
+  Looks up n in the tuning table and returns optimal negacyclic FFT depth.
 */
-unsigned long _ZmodF_mul_get_depth(unsigned long n)
+unsigned long _ZmodF_mul_best_fft_depth(unsigned long n, int squaring)
 {
-   for (unsigned long depth = 0; ; depth++)
-   {
-      unsigned long value = ZMODF_MUL_NEGACYCLIC_THRESHOLD[depth];
-      // bail out if either
-      // (a) value == 0: means that n was too big for the table, or
-      // (b) value > n: found the right value in the table
+   unsigned long* table = squaring ? ZmodF_sqr_fft_table : ZmodF_mul_fft_table;
 
-      // todo: for really really humungous input, (a) is the wrong strategy,
-      // won't even be close to n log(n) anymore.... need a heuristic for this
-      if (value == 0 || value > n)
-         return depth + ZMODF_MUL_MIN_NEGACYCLIC_DEPTH;
-   }
+   unsigned long i;
+   for (i = 0; table[i]; i++)
+      if (n < table[i])
+         return i + 3;
+
+   // We've gone beyond the end of the table; need to choose a value
+   // somewhat heuristically. We extrapolate from the last table entry,
+   // assuming that the convolution length should be proportional to
+   // sqrt(total bitsize).
+   unsigned long depth = i + 3 +
+                 (unsigned long) floor(log(1.0 * n / table[i-1]) / log(4.0));
+
+   // need n*FLINT_BITS divisible by 2^depth
+   while ((n*FLINT_BITS) & ((1 << depth) - 1))
+      depth--;
+   
+   return depth;
 }
 
-
-// same as above, but for squaring
-unsigned long _ZmodF_sqr_get_depth(unsigned long n)
-{
-   for (unsigned long depth = 0; ; depth++)
-   {
-      unsigned long value = ZMODF_SQR_NEGACYCLIC_THRESHOLD[depth];
-      if (value == 0 || value > n)
-         return depth + ZMODF_SQR_MIN_NEGACYCLIC_DEPTH;
-   }
-}
 
 
 void ZmodF_mul_info_init(ZmodF_mul_info_t info, unsigned long n, int squaring)
 {
    if (!squaring)
    {
-      if (n < ZMODF_MUL_PLAIN_THREEWAY_THRESHOLD)
+      if (n < ZmodF_mul_plain_threeway_threshold)
       {
-         // n is tiny, just use plain algorithm
          ZmodF_mul_info_init_plain(info, n, 0);
          return;
       }
 
-#if ZMODF_MUL_ENABLE_THREEWAY
       if (n % 3 == 0)
       {
-         if (n < ZMODF_MUL_THREEWAY_NEGACYCLIC_THRESHOLD)
+         if (n < ZmodF_mul_threeway_fft_threshold)
          {
-            // n is larger, use threeway algorithm
             ZmodF_mul_info_init_threeway(info, n, 0);
             return;
          }
       }
       else
-#endif
       {
-         if (n < ZMODF_MUL_PLAIN_NEGACYCLIC_THRESHOLD)
+         if (n < ZmodF_mul_plain_fft_threshold)
          {
-            // n is small, just use plain algorithm
             ZmodF_mul_info_init_plain(info, n, 0);
             return;
          }
       }
-
-#if ZMODF_MUL_ENABLE_NEGACYCLIC
-      // neither plain nor threeway is appropriate;
-      // need to select FFT of appropriate depth
-      unsigned long depth = _ZmodF_mul_get_depth(n);
-      
-      // need to check that n supports an FFT of that depth, and if not,
-      // take the largest possible depth that works
-      while ((n * FLINT_BITS) & ((1 << depth) - 1))
-         depth--;
-         
-//    switched off during development:
-//      ZmodF_mul_info_init_negacyclic2(info, n, depth, 0);
-      ZmodF_mul_info_init_negacyclic(info, n, depth, 0);
-
-#else
-      ZmodF_mul_info_init_plain(info, n, 0);
-#endif
    }
    else
    {
-      // squaring
-
-      if (n < ZMODF_SQR_PLAIN_THREEWAY_THRESHOLD)
+      if (n < ZmodF_sqr_plain_threeway_threshold)
       {
-         // n is tiny, just use plain algorithm
          ZmodF_mul_info_init_plain(info, n, 1);
          return;
       }
 
-#if ZMODF_MUL_ENABLE_THREEWAY
       if (n % 3 == 0)
       {
-         if (n < ZMODF_SQR_THREEWAY_NEGACYCLIC_THRESHOLD)
+         if (n < ZmodF_sqr_threeway_fft_threshold)
          {
-            // n is larger, use threeway algorithm
             ZmodF_mul_info_init_threeway(info, n, 1);
             return;
          }
       }
       else
-#endif
       {
-         if (n < ZMODF_SQR_PLAIN_NEGACYCLIC_THRESHOLD)
+         if (n < ZmodF_sqr_plain_fft_threshold)
          {
-            // n is small, just use plain algorithm
             ZmodF_mul_info_init_plain(info, n, 1);
             return;
          }
       }
-      
-#if ZMODF_MUL_ENABLE_NEGACYCLIC
-      // neither plain nor threeway is appropriate;
-      // need to select FFT of appropriate depth
-      unsigned long depth = _ZmodF_sqr_get_depth(n);
-      
-      // need to check that n supports an FFT of that depth, and if not,
-      // take the largest possible depth that works
-      while ((n * FLINT_BITS) & ((1 << depth) - 1))
-         depth--;
-
-//    switched off during development:
-//      ZmodF_mul_info_init_negacyclic2(info, n, depth, 1);
-      ZmodF_mul_info_init_negacyclic(info, n, depth, 1);
-
-#else
-      ZmodF_mul_info_init_plain(info, n, 1);
-#endif
    }
+
+   unsigned long depth = _ZmodF_mul_best_fft_depth(n, squaring);
+   ZmodF_mul_info_init_fft(info, n, depth, 0, 0, squaring);
 }
 
 
 void ZmodF_mul_info_clear(ZmodF_mul_info_t info)
 {
-   if (info->algo != ZMODF_MUL_ALGO_NEGACYCLIC)
-   {
+   if (info->scratch)
       flint_stack_release();
-   }
 
-   if (info->algo == ZMODF_MUL_ALGO_NEGACYCLIC ||
-       info->algo == ZMODF_MUL_ALGO_NEGACYCLIC2)
+   if (info->algo == ZMODF_MUL_ALGO_FFT)
    {
       if (!info->squaring)
          ZmodF_poly_clear(info->polys[1]);
@@ -426,19 +395,25 @@ void ZmodF_mul_info_clear(ZmodF_mul_info_t info)
 
 /******************************************************************************
 
-   Negacyclic multiplication routines
+   FFT multiplication routines
 
 ******************************************************************************/
 
 /*
 Splits x into equally sized pieces.
-Number of pieces = transform length of "poly".
-Number of bits of x (i.e. n*FLINT_BITS) must be divisible by
-the transform length.
 
-Assumes x is normalised and of length n, and has zero overflow limb.
+That is, let R = (B^n)^(1/M), where M = transform length of "poly".
+Let x = \sum_{i=0}^{M-1} c_i R^i, where each c_i is in [0, R).
+This function computes the c_i and stores them as coefficients of "poly".
+
+PRECONDITIONS:
+   x must be normalised and of length n, and have zero overflow limb
+   (i.e. is != -1 mod p)
+   
+   n*FLINT_BITS must be divisible by M
+
 */
-void _ZmodF_mul_negacyclic_split(ZmodF_poly_t poly, ZmodF_t x, unsigned long n)
+void _ZmodF_mul_fft_split(ZmodF_poly_t poly, ZmodF_t x, unsigned long n)
 {
    FLINT_ASSERT((n * FLINT_BITS) % (1 << poly->depth) == 0);
    FLINT_ASSERT(x[n] == 0);
@@ -481,157 +456,114 @@ void _ZmodF_mul_negacyclic_split(ZmodF_poly_t poly, ZmodF_t x, unsigned long n)
 }
 
 
+
 /*
 Combines coefficients of poly into a ZmodF_t.
 
 More precisely, let the coefficients of "poly" be c_0, ..., c_{M-1}, where
 M = transform length of poly. The coefficients are assumed to be normalised,
-and lie in the range [0, q), where q = B^m + 1, where m is the coefficient
-length associated to poly. However this function interprets the coefficients
-as representing integers in the range [-(q+1)/2, (q-3)/2)] since the output
-of a negacyclic convolution can have *negative* coefficients.
+and lie in the range [0, q), where q = (B^m + 1)*B^k. (Here "normalised" means
+that the top m+1 limbs are normalised in the usual ZmodF_t sense; the bottom
+k limbs are arbitrary.)
 
-Then it computes x := \sum_{i=0}^{M-1} c_i R^i   (mod p) (not necessarily
-normalised), where R = (B^n)^(1/M).
+However the coefficients are interpreted as signed integers in the range
+(-E, E) where E = B^(m+k)/2. (This is necessary since the output of a
+negacyclic convolution can have negative coefficients.)
+
+The function computes res := \sum_{i=0}^{M-1} c_i R^i   (mod p)
+(not necessarily normalised), where R = (B^n)^(1/M).
+
+NOTE: the input poly is destroyed.
 
 */
-void _ZmodF_mul_negacyclic_combine(ZmodF_t x, ZmodF_poly_t poly,
-                                   unsigned long n)
+void _ZmodF_mul_fft_combine(ZmodF_t res, ZmodF_poly_t poly,
+                            unsigned long m, unsigned long k, unsigned long n)
 {
    FLINT_ASSERT((n * FLINT_BITS) % (1 << poly->depth) == 0);
+   FLINT_ASSERT(poly->n > 0);
 
-   ZmodF_zero(x, n);
+   ZmodF_zero(res, n);
 
-   unsigned long i, carry;
    unsigned long size = 1 << poly->depth;
-   unsigned long m = poly->n;
 
    // "bits" is the number of bits apart that each coefficient must be stored
    unsigned long bits = (n * FLINT_BITS) >> poly->depth;
    // "start" is the bit-index into x where the current coeff will be stored
    unsigned long start;
-   
+   long i;
+
+   // first loop: twiddle bits to deal with signs of coefficients
+   // (do this in reverse order to avoid quadratic running time)
+   for (i = size-1, start = (size-1)*bits; i >= 0; i--, start -= bits)
+   {
+      // start_limb, start_bit indicate where the current coefficient will
+      // be stored; end_limb points beyond the last limb
+      unsigned long start_limb = start >> FLINT_LG_BITS_PER_LIMB;
+      unsigned long start_bit = start & (FLINT_BITS-1);
+      unsigned long end_limb = start_limb + m + k + 1;
+
+      if (poly->coeffs[i][m + k] ||
+          ((mp_limb_signed_t) poly->coeffs[i][m + k - 1] < 0))
+      {
+         // coefficient is negative, so it was stored as (B^m + 1)*B^k plus
+         // the real coefficient, so we need to correct for that
+         unsigned long fiddle = 1UL << start_bit;
+         
+         // first correct for B^k
+         unsigned long index = start_limb + k;
+         if (index < n)
+            mpn_sub_1(res + index, res + index, n + 1 - index, fiddle);
+         else
+         {
+            // handle negacyclic wraparound
+            index -= n;
+            mpn_add_1(res + index, res + index, n + 1 - index, fiddle);
+         }
+         
+         // now correct for B^(m+k)
+         index = start_limb + m + k;
+         if (index < n)
+            mpn_sub_1(res + index, res + index, n + 1 - index, fiddle);
+         else
+         {
+            // handle negacyclic wraparound
+            index -= n;
+            mpn_add_1(res + index, res + index, n + 1 - index, fiddle);
+         }
+      }
+   }
+
+   // main loop: add in bulk of coefficients
    for (i = 0, start = 0; i < size; i++, start += bits)
    {
       // start_limb, start_bit indicate where the current coefficient will
       // be stored; end_limb points beyond the last limb
       unsigned long start_limb = start >> FLINT_LG_BITS_PER_LIMB;
       unsigned long start_bit = start & (FLINT_BITS-1);
-      unsigned long end_limb = start_limb + m + 1;
+      unsigned long end_limb = start_limb + m + k + 1;
 
-      if (poly->coeffs[i][m])
+      // shift coefficient to the left to line it up with the spot where
+      // it's going to get added in
+      if (start_bit)
+         mpn_lshift(poly->coeffs[i], poly->coeffs[i], m + k + 1, start_bit);
+                    
+      if (end_limb <= n)
       {
-         // special case: coefficient is -1 mod p
-         mpn_sub_1(x + start_limb, x + start_limb, n + 1 - start_limb,
-                   1UL << start_bit);
+         // the coefficient fits nicely into the output, so add it in
+         mpn_add(res + start_limb, res + start_limb, n + 1 - start_limb,
+                 poly->coeffs[i], m + k + 1);
       }
       else
       {
-         long negative = ((mp_limb_signed_t) poly->coeffs[i][m - 1] < 0);
-      
-         // shift coefficient to the left to line it up with the spot where
-         // it's going to get added in
-         if (start_bit)
-            mpn_lshift(poly->coeffs[i], poly->coeffs[i], m + 1, start_bit);
-                       
-         if (end_limb <= n)
-         {
-            // the coefficient fits nicely into the output, so add it in
-            mpn_add(x + start_limb, x + start_limb, n + 1 - start_limb,
-                    poly->coeffs[i], m + 1);
-
-            if (negative)
-            {
-               // If the coefficient is negative, then it's stored as
-               // B^m + 1 plus the real coefficient, so we need to correct
-               // for that
-               
-               // todo: are we possibly inducing quadratic runtime here!!!!??
-               // i.e. with long borrow propagations?
-               mpn_sub_1(x + start_limb, x + start_limb, n + 1 - start_limb,
-                         1UL << start_bit);
-               mpn_sub_1(x + end_limb - 1, x + end_limb - 1,
-                         n + 2 - end_limb, 1UL << start_bit);
-            }
-         }
-         else
-         {
-            // the coefficient needs to wrap around negacyclically
-            x[n] += mpn_add_n(x + start_limb, x + start_limb, poly->coeffs[i],
-                              n - start_limb);
-            mpn_sub(x, x, n + 1, poly->coeffs[i] + n - start_limb,
-                    end_limb - n);
-
-            if (negative)
-            {
-               // handle negative coefficient as above
-               mpn_sub_1(x + start_limb, x + start_limb, n + 1 - start_limb,
-                         1UL << start_bit);
-               end_limb -= n;
-               mpn_add_1(x + end_limb - 1, x + end_limb - 1,
-                         n + 2 - end_limb, 1UL << start_bit);
-            }
-         }
+         // the coefficient needs to wrap around negacyclically
+         res[n] += mpn_add_n(res + start_limb, res + start_limb,
+                             poly->coeffs[i], n - start_limb);
+         mpn_sub(res, res, n + 1, poly->coeffs[i] + n - start_limb,
+                 end_limb - n);
       }
    }
 }
 
-
-/*
-Computes res = a*b using negacyclic algorithm.
-Output is not necessarily normalised.
-
-Expects both inputs to be normalised and != -1 mod p.
-*/
-inline
-void _ZmodF_mul_info_mul_negacyclic(ZmodF_mul_info_t info,
-                                    ZmodF_t res, ZmodF_t a, ZmodF_t b)
-{
-   FLINT_ASSERT(info->algo == ZMODF_MUL_ALGO_NEGACYCLIC);
-   FLINT_ASSERT(!info->squaring);
-   FLINT_ASSERT(!a[info->n]);
-   FLINT_ASSERT(!b[info->n]);
-
-   _ZmodF_mul_negacyclic_split(info->polys[0], a, info->n);
-   _ZmodF_mul_negacyclic_split(info->polys[1], b, info->n);
-
-   ZmodF_poly_negacyclic_convolution(info->polys[0], info->polys[0],
-                                     info->polys[1]);
-   ZmodF_poly_normalise(info->polys[0]);
-
-   _ZmodF_mul_negacyclic_combine(res, info->polys[0], info->n);
-}
-
-
-/*
-Computes res = a*a using negacyclic algorithm.
-Output is not necessarily normalised.
-
-Expects both inputs to be normalised and != -1 mod p.
-*/
-inline
-void _ZmodF_mul_info_sqr_negacyclic(ZmodF_mul_info_t info,
-                                    ZmodF_t res, ZmodF_t a)
-{
-   FLINT_ASSERT(info->algo == ZMODF_MUL_ALGO_NEGACYCLIC);
-   FLINT_ASSERT(!a[info->n]);
-
-   _ZmodF_mul_negacyclic_split(info->polys[0], a, info->n);
-
-   ZmodF_poly_negacyclic_convolution(info->polys[0], info->polys[0],
-                                     info->polys[0]);
-   ZmodF_poly_normalise(info->polys[0]);
-
-   _ZmodF_mul_negacyclic_combine(res, info->polys[0], info->n);
-}
-
-
-
-/******************************************************************************
-
-   Negacyclic multiplication (2nd version) routines
-
-******************************************************************************/
 
 
 /*
@@ -643,13 +575,13 @@ out must not alias in1 or in2.
 
 Only naive convolution is implemented.
 */
-void _ZmodF_mul_negacyclic2_convolve_modB(
-            mp_limb_t* out, mp_limb_t* in1, mp_limb_t* in2, unsigned long len)
+void _ZmodF_mul_fft_convolve_modB(unsigned long* out, unsigned long* in1,
+                                  unsigned long* in2, unsigned long len)
 {
    unsigned long i, j;
-
+   
    for (i = 0; i < len; i++)
-      out[i] = in1[i] * in2[0];
+      out[i] = in1[0] * in2[i];
 
    for (i = 1; i < len; i++)
    {
@@ -663,231 +595,195 @@ void _ZmodF_mul_negacyclic2_convolve_modB(
 
 
 /*
-Combines coefficients of poly into a ZmodF_t.
-
-More precisely, let the coefficients of "poly" be c_0, ..., c_{M-1}, where
-M = transform length of poly. The coefficients are assumed to be normalised,
-and lie in the range [0, q), where q = B^(m+1) + B, where m is the coefficient
-length associated to poly. (Note that we've abused the ZmodF_poly slightly,
-since we are storing m+2 limbs per coefficient instead of m+1 limbs.)
-
-However this function interprets the coefficients as representing integers in
-the range (-B^(m+1)/2, B^(m+1)/2) since the output of a negacyclic convolution
-can have *negative* coefficients.
-
-Then it computes x := \sum_{i=0}^{M-1} c_i R^i   (mod p) (not necessarily
-normalised), where R = (B^n)^(1/M).
-
+   Multiplies (in1_hi*B + in1_lo) by (in2_hi*B + in2_lo) modulo B^2;
+   puts result into (out_hi*B + out_lo).
 */
-void _ZmodF_mul_negacyclic2_combine(ZmodF_t x, ZmodF_poly_t poly,
-                                    unsigned long n)
+inline
+void mul_modB2(unsigned long* out_hi, unsigned long* out_lo,
+               unsigned long in1_hi, unsigned long in1_lo,
+               unsigned long in2_hi, unsigned long in2_lo)
 {
-   FLINT_ASSERT((n * FLINT_BITS) % (1 << poly->depth) == 0);
+   umul_ppmm(*out_hi, *out_lo, in1_lo, in2_lo);
+   *out_hi += (in1_hi * in2_lo) + (in2_hi * in1_lo);
+}
 
-   ZmodF_zero(x, n);
 
-   unsigned long i, carry;
-   unsigned long size = 1 << poly->depth;
-   unsigned long m = poly->n;
 
-   // "bits" is the number of bits apart that each coefficient must be stored
-   unsigned long bits = (n * FLINT_BITS) >> poly->depth;
-   // "start" is the bit-index into x where the current coeff will be stored
-   unsigned long start;
-   
-   for (i = 0, start = 0; i < size; i++, start += bits)
+/*
+in1 and in2 are two polynomials of length len, with coefficients mod B^2.
+This function computes their negacyclic convolution (mod B^2), stores result
+at out, also length len. Each coefficient uses exactly 2 limbs.
+
+out must not alias in1 or in2.
+
+Only naive convolution is implemented.
+*/
+void _ZmodF_mul_fft_convolve_modB2(unsigned long* out, unsigned long* in1,
+                                   unsigned long* in2, unsigned long len)
+{
+   unsigned long i, j;
+   unsigned long hi, lo;
+
+   for (i = 0; i < len; i++)
+      mul_modB2(out + 2*i+1, out + 2*i, in1[1], in1[0], in2[2*i+1], in2[2*i]);
+
+   for (i = 1; i < len; i++)
    {
-      // start_limb, start_bit indicate where the current coefficient will
-      // be stored; end_limb points beyond the last limb
-      unsigned long start_limb = start >> FLINT_LG_BITS_PER_LIMB;
-      unsigned long start_bit = start & (FLINT_BITS-1);
-      unsigned long end_limb = start_limb + m + 2;
-
-      if (poly->coeffs[i][m + 1])
+      for (j = 0; j < len - i; j++)
       {
-         abort();
-         /*
-         // special case: coefficient has overflow limb set....
-         mpn_sub_1(x + start_limb, x + start_limb, n + 1 - start_limb,
-                   1UL << start_bit);
-         */
+         mul_modB2(&hi, &lo, in1[2*i+1], in1[2*i], in2[2*j+1], in2[2*j]);
+         add_ssaaaa(out[2*(i+j)+1], out[2*(i+j)],
+                    out[2*(i+j)+1], out[2*(i+j)], hi, lo);
       }
-      else
+      for (; j < len; j++)
       {
-         long negative = ((mp_limb_signed_t) poly->coeffs[i][m] < 0);
-      
-         // shift coefficient to the left to line it up with the spot where
-         // it's going to get added in
-         if (start_bit)
-            mpn_lshift(poly->coeffs[i], poly->coeffs[i], m + 2, start_bit);
-                       
-         if (end_limb <= n)
-         {
-            // the coefficient fits nicely into the output, so add it in
-            mpn_add(x + start_limb, x + start_limb, n + 1 - start_limb,
-                    poly->coeffs[i], m + 2);
-
-            if (negative)
-            {
-               // If the coefficient is negative, then it's stored as
-               // B^(m+1) + B plus the real coefficient, so we need to correct
-               // for that
-               mpn_sub_1(x + start_limb + 1, x + start_limb + 1,
-                         n - start_limb, 1UL << start_bit);
-               mpn_sub_1(x + end_limb - 1, x + end_limb - 1,
-                         n + 2 - end_limb, 1UL << start_bit);
-            }
-         }
-         else
-         {
-            // the coefficient needs to wrap around negacyclically
-            x[n] += mpn_add_n(x + start_limb, x + start_limb, poly->coeffs[i],
-                              n - start_limb);
-            mpn_sub(x, x, n + 1, poly->coeffs[i] + n - start_limb,
-                    end_limb - n);
-
-            if (negative)
-            {
-               // handle negative coefficient as above
-               mpn_sub_1(x + start_limb + 1, x + start_limb + 1,
-                         n + 1 - start_limb, 1UL << start_bit);
-               end_limb -= n;
-               mpn_add_1(x + end_limb - 1, x + end_limb - 1,
-                         n + 2 - end_limb, 1UL << start_bit);
-            }
-         }
+         mul_modB2(&hi, &lo, in1[2*i+1], in1[2*i], in2[2*j+1], in2[2*j]);
+         sub_ddmmss(out[2*(i+j-len)+1], out[2*(i+j-len)],
+                    out[2*(i+j-len)+1], out[2*(i+j-len)], hi, lo);
       }
    }
 }
 
 
 /*
-Computes res = a*b using 2nd negacyclic algorithm.
+   Reduces an array of ZmodF_t's mod B, stores result at out.
+*/
+void _ZmodF_mul_fft_reduce_modB(unsigned long* out, ZmodF_t* in,
+                                unsigned long len)
+{
+   for (unsigned long i = 0; i < len; i++)
+      out[i] = in[i][0];
+}
+
+
+/*
+   Reduces an array of ZmodF_t's mod B^2, stores result at out (two limbs
+   per coefficient).
+*/
+void _ZmodF_mul_fft_reduce_modB2(unsigned long* out, ZmodF_t* in,
+                                 unsigned long len)
+{
+   for (unsigned long i = 0; i < len; i++)
+   {
+      out[2*i] = in[i][0];
+      out[2*i+1] = in[i][1];
+   }
+}
+
+
+/*
+Computes res = a*b using FFT algorithm.
 Output is not necessarily normalised.
+If a == b, this function automatically uses a faster squaring algorithm.
 
 Expects both inputs to be normalised and != -1 mod p.
 */
 inline
-void _ZmodF_mul_info_mul_negacyclic2(ZmodF_mul_info_t info,
-                                     ZmodF_t res, ZmodF_t a, ZmodF_t b)
+void _ZmodF_mul_info_mul_fft(ZmodF_mul_info_t info, ZmodF_t res,
+                             ZmodF_t a, ZmodF_t b)
 {
-   FLINT_ASSERT(info->algo == ZMODF_MUL_ALGO_NEGACYCLIC2);
-   FLINT_ASSERT(!info->squaring);
+   FLINT_ASSERT(info->algo == ZMODF_MUL_ALGO_FFT);
    FLINT_ASSERT(!a[info->n]);
    FLINT_ASSERT(!b[info->n]);
 
-   // split inputs into 2^depth pieces
-   _ZmodF_mul_negacyclic_split(info->polys[0], a, info->n);
-   _ZmodF_mul_negacyclic_split(info->polys[1], b, info->n);
-   
-   // reduce all coefficient mod B, store results at scratch + len and
-   // scratch + 2*len
    unsigned long len = 1UL << info->polys[0]->depth;
-   for (unsigned long i = 0; i < len; i++)
-      info->scratch[len + i] = info->polys[0]->coeffs[i][0];
-   for (unsigned long i = 0; i < len; i++)
-      info->scratch[2*len + i] = info->polys[1]->coeffs[i][0];
+   unsigned long n = info->n;
+   unsigned long m = info->m;
+   unsigned long k = info->k;
 
-   // do convolution mod B
-   _ZmodF_mul_negacyclic2_convolve_modB(
-          info->scratch, info->scratch + len, info->scratch + 2*len, len);
-   
-   // do the convolution mod B^m + 1
-   ZmodF_poly_negacyclic_convolution(info->polys[0], info->polys[0],
-                                     info->polys[1]);
-
-   // use CRT to determine coefficients of convolution mod B^(m+1) + B
-   // (store them as m+2 limbs each, in 2's complement, similar to ZmodF_t,
-   // results are normalised)
-   // todo: factor out this code into a function
-   for (unsigned long i = 0; i < len; i++)
+   if (a != b)
    {
-      mp_limb_t* coeff = info->polys[0]->coeffs[i];
-      ZmodF_normalise(coeff, info->m);
-      
-      if (coeff[info->m])
+      // distinct operands case
+      FLINT_ASSERT(!info->squaring);
+
+      // split inputs into 2^depth pieces
+      _ZmodF_mul_fft_split(info->polys[0], a, n);
+      _ZmodF_mul_fft_split(info->polys[1], b, n);
+
+      // negacyclic convolution mod B^k
+      if (k == 1)
       {
-         // special case for -1 mod B^m + 1
-         // todo: write this
-         abort();
+         _ZmodF_mul_fft_reduce_modB(info->scratch + len,
+                                    info->polys[0]->coeffs, len);
+         _ZmodF_mul_fft_reduce_modB(info->scratch + 2*len,
+                                    info->polys[1]->coeffs, len);
+         _ZmodF_mul_fft_convolve_modB(info->scratch, info->scratch + len,
+                                      info->scratch + 2*len, len);
       }
-      else
+      else if (k == 2)
       {
-         // usual case, when not -1 mod B^m + 1
-         sub_ddmmss(coeff[info->m+1], coeff[info->m], 0, info->scratch[i],
-                    0, coeff[0]);
-         coeff[0] = info->scratch[i];
+         _ZmodF_mul_fft_reduce_modB2(info->scratch + 2*len,
+                                     info->polys[0]->coeffs, len);
+         _ZmodF_mul_fft_reduce_modB2(info->scratch + 4*len,
+                                     info->polys[1]->coeffs, len);
+         _ZmodF_mul_fft_convolve_modB2(info->scratch, info->scratch + 2*len,
+                                       info->scratch + 4*len, len);
       }
 
-      // normalise
-      ZmodF_normalise(coeff+1, info->m);
+      // negacyclic convolution mod B^m + 1 using FFT
+      ZmodF_poly_negacyclic_convolution(info->polys[0], info->polys[0],
+                                        info->polys[1]);
+   }
+   else
+   {
+      // squaring case
+      
+      // split input into 2^depth pieces
+      _ZmodF_mul_fft_split(info->polys[0], a, n);
+      
+      // negacyclic convolution mod B^k
+      if (k == 1)
+      {
+         _ZmodF_mul_fft_reduce_modB(info->scratch + len,
+                                    info->polys[0]->coeffs, len);
+         _ZmodF_mul_fft_convolve_modB(info->scratch, info->scratch + len,
+                                      info->scratch + len, len);
+      }
+      else if (k == 2)
+      {
+         _ZmodF_mul_fft_reduce_modB2(info->scratch + 2*len,
+                                     info->polys[0]->coeffs, len);
+         _ZmodF_mul_fft_convolve_modB2(info->scratch, info->scratch + 2*len,
+                                       info->scratch + 2*len, len);
+      }
+
+      // negacyclic convolution mod B^m + 1 using FFT
+      ZmodF_poly_negacyclic_convolution(info->polys[0], info->polys[0],
+                                        info->polys[0]);
    }
 
-   // combine results
-   _ZmodF_mul_negacyclic2_combine(res, info->polys[0], info->n);
-}
-
-
-// todo: much of the mult and squaring routines can be factored into common code
-
-
-/*
-Computes res = a*a using 2nd negacyclic algorithm.
-Output is not necessarily normalised.
-
-Expects both inputs to be normalised and != -1 mod p.
-*/
-inline
-void _ZmodF_mul_info_sqr_negacyclic2(ZmodF_mul_info_t info,
-                                     ZmodF_t res, ZmodF_t a)
-{
-   FLINT_ASSERT(info->algo == ZMODF_MUL_ALGO_NEGACYCLIC2);
-   FLINT_ASSERT(!a[info->n]);
-
-   // split inputs into 2^depth pieces
-   _ZmodF_mul_negacyclic_split(info->polys[0], a, info->n);
-   
-   // reduce all coefficient mod B, store results at scratch + len
-   unsigned long len = 1UL << info->polys[0]->depth;
-   for (unsigned long i = 0; i < len; i++)
-      info->scratch[len + i] = info->polys[0]->coeffs[i][0];
-
-   // do convolution mod B
-   _ZmodF_mul_negacyclic2_convolve_modB(
-          info->scratch, info->scratch + len, info->scratch + len, len);
-   
-   // now do the convolution mod B^m + 1
-   ZmodF_poly_negacyclic_convolution(info->polys[0], info->polys[0],
-                                     info->polys[0]);
-
-   // use CRT to determine coefficients of convolution mod B^(m+1) + B
-   // (store them as m+2 limbs each, in 2's complement, similar to ZmodF_t,
-   // results are normalised)
-   for (unsigned long i = 0; i < len; i++)
+   // use CRT to determine coefficients of convolution mod (B^m + 1)*B^k.
+   // Basically the idea is: adjust bottom k limbs to make them agree with the
+   // known mod B^k result, and compensate the top k limbs accordingly (i.e.
+   // add a multiple of B^m + 1).
+   if (k)
    {
-      mp_limb_t* coeff = info->polys[0]->coeffs[i];
-      ZmodF_normalise(coeff, info->m);
-      
-      if (coeff[info->m])
+      for (unsigned long i = 0; i < len; i++)
       {
-         // special case for -1 mod B^m + 1
-         // todo: write this
-         abort();
-      }
-      else
-      {
-         // usual case, when not -1 mod B^m + 1
-         sub_ddmmss(coeff[info->m+1], coeff[info->m], 0, info->scratch[i],
-                    0, coeff[0]);
-         coeff[0] = info->scratch[i];
-      }
+         ZmodF_t coeff = info->polys[0]->coeffs[i];
+         ZmodF_fast_reduce(coeff, m);
 
-      // normalise
-      ZmodF_normalise(coeff+1, info->m);
+         // zero out the top limbs
+         for (unsigned long j = 0; j < k; j++)
+            coeff[m+1+j] = 0;
+
+         // compute the amount we need to adjust by
+         mp_limb_t adjust[2];
+         mpn_sub_n(adjust, info->scratch + k*i, coeff, k);
+         
+         // perform adjustment
+         mpn_add(coeff, coeff, m+k+1, adjust, k);
+         mpn_add(coeff + m, coeff + m, k+1, adjust, k);
+
+         // normalise result
+         ZmodF_normalise(coeff + k, m);
+      }
    }
+   else
+      ZmodF_poly_normalise(info->polys[0]);
 
-   // combine results
-   _ZmodF_mul_negacyclic2_combine(res, info->polys[0], info->n);
+   // substitute back to get integer mod B^n + 1
+   _ZmodF_mul_fft_combine(res, info->polys[0], m, k, n);
 }
 
 
@@ -899,10 +795,10 @@ void _ZmodF_mul_info_sqr_negacyclic2(ZmodF_mul_info_t info,
 ******************************************************************************/
 
 /*
-Assume a is length 3m, and normalised, and != -1 mod p.
-Reduces a mod B^m + 1, stores result at res, in usual ZmodF_t format (m+1
-limbs), not necessarily normalised.
- */
+   Assume a is length 3m, and normalised, and != -1 mod p.
+   Reduces a mod B^m + 1, stores result at res, in usual ZmodF_t format (m+1
+   limbs), not necessarily normalised.
+*/
 inline
 void _ZmodF_mul_threeway_reduce1(ZmodF_t res, ZmodF_t a, unsigned long m)
 {
@@ -913,14 +809,14 @@ void _ZmodF_mul_threeway_reduce1(ZmodF_t res, ZmodF_t a, unsigned long m)
 
 
 /*
-Assume a is length 3m, and normalised, and != -1 mod p.
-Reduces a mod B^2m - B^m + 1, stores result at res, exactly 2m limbs.
-res must have room for 2m+1 limbs, even though the last limb is not used
-for the answer.
+   Assume a is length 3m, and normalised, and != -1 mod p.
+   Reduces a mod B^2m - B^m + 1, stores result at res, exactly 2m limbs.
+   res must have room for 2m+1 limbs, even though the last limb is not used
+   for the answer.
 
-Note: in some cases there are two possible answers, since B^2m - B^m + 1
-is less than B^2m. In these cases either answer may be produced.
- */
+   Note: in some cases there are two possible answers, since B^2m - B^m + 1
+   is less than B^2m. In these cases either answer may be produced.
+*/
 inline
 void _ZmodF_mul_threeway_reduce2(mp_limb_t* res, ZmodF_t a, unsigned long m)
 {
@@ -938,17 +834,17 @@ void _ZmodF_mul_threeway_reduce2(mp_limb_t* res, ZmodF_t a, unsigned long m)
 
 
 /*
-Computes res = a*b using threeway algorithm.
-Output is not necessarily normalised.
+   Computes res = a*b using threeway algorithm.
+   Output is not necessarily normalised.
+   If a == b, this function automatically uses a faster squaring algorithm.
 
-Expects both inputs to be normalised and != -1 mod p.
+   Expects both inputs to be normalised and != -1 mod p.
 */
 inline
 void _ZmodF_mul_info_mul_threeway(ZmodF_mul_info_t info,
                                   ZmodF_t res, ZmodF_t a, ZmodF_t b)
 {
    FLINT_ASSERT(info->algo == ZMODF_MUL_ALGO_THREEWAY);
-   FLINT_ASSERT(!info->squaring);
    FLINT_ASSERT(!a[info->n]);
    FLINT_ASSERT(!b[info->n]);
 
@@ -957,19 +853,42 @@ void _ZmodF_mul_info_mul_threeway(ZmodF_mul_info_t info,
    mp_limb_t* buf2 = buf1 + m+1;
    mp_limb_t* buf3 = buf2 + 4*m;
 
-   // reduce a and b mod B^m + 1
-   _ZmodF_mul_threeway_reduce1(buf1, a, m);
-   _ZmodF_mul_threeway_reduce1(buf2, b, m);
+   if (a != b)
+   {
+      // distinct operands case
+      FLINT_ASSERT(!info->squaring);
+      
+      // reduce a and b mod B^m + 1
+      _ZmodF_mul_threeway_reduce1(buf1, a, m);
+      _ZmodF_mul_threeway_reduce1(buf2, b, m);
 
-   // buf1 := a*b  mod B^m + 1
-   ZmodF_mul(buf1, buf1, buf2, buf3, m);
+      // buf1 := a*b  mod B^m + 1
+      ZmodF_mul(buf1, buf1, buf2, buf3, m);
 
-   // reduce inputs mod B^2m - B^m + 1
-   _ZmodF_mul_threeway_reduce2(buf2, a, m);
-   _ZmodF_mul_threeway_reduce2(buf2 + 2*m, b, m);
+      // reduce inputs mod B^2m - B^m + 1
+      _ZmodF_mul_threeway_reduce2(buf2, a, m);
+      _ZmodF_mul_threeway_reduce2(buf2 + 2*m, b, m);
 
-   // multiply
-   mpn_mul_n(buf3, buf2, buf2 + 2*m, 2*m);
+      // multiply mod B^2m - B^m + 1
+      mpn_mul_n(buf3, buf2, buf2 + 2*m, 2*m);
+   }
+   else
+   {
+      // squaring case
+
+      // reduce a mod B^m + 1
+      _ZmodF_mul_threeway_reduce1(buf1, a, m);
+
+      // buf1 := a*a  mod B^m + 1
+      ZmodF_mul(buf1, buf1, buf1, buf3, m);
+
+      // reduce a mod B^2m - B^m + 1
+      _ZmodF_mul_threeway_reduce2(buf2, a, m);
+
+      // square mod B^2m - B^m + 1
+      mpn_mul_n(buf3, buf2, buf2, 2*m);
+   }
+
    // reduce mod B^3m + 1 (inplace)
    buf3[3*m] = -mpn_sub(buf3, buf3, 3*m, buf3 + 3*m, m);
 
@@ -1017,91 +936,11 @@ void _ZmodF_mul_info_mul_threeway(ZmodF_mul_info_t info,
    }
 }
 
-
-
-// todo: much of the mult and squaring routines can be factored into common code
-
-
-/*
-Computes res = a*a using threeway algorithm.
-Output is not necessarily normalised.
-
-Expects both inputs to be normalised and != -1 mod p.
-*/
-inline
-void _ZmodF_mul_info_sqr_threeway(ZmodF_mul_info_t info,
-                                  ZmodF_t res, ZmodF_t a)
-{
-   FLINT_ASSERT(info->algo == ZMODF_MUL_ALGO_THREEWAY);
-   FLINT_ASSERT(!a[info->n]);
-
-   unsigned long m = info->m;
-   mp_limb_t* buf1 = info->scratch;
-   mp_limb_t* buf2 = buf1 + m+1;
-   mp_limb_t* buf3 = buf2 + 4*m;
-
-   // reduce a mod B^m + 1
-   _ZmodF_mul_threeway_reduce1(buf1, a, m);
-
-   // buf1 := a*a  mod B^m + 1
-   ZmodF_sqr(buf1, buf1, buf3, m);
-
-   // reduce a mod B^2m - B^m + 1
-   _ZmodF_mul_threeway_reduce2(buf2, a, m);
-
-   // square it
-   mpn_mul_n(buf3, buf2, buf2, 2*m);
-   // reduce mod B^3m + 1 (inplace)
-   buf3[3*m] = -mpn_sub(buf3, buf3, 3*m, buf3 + 3*m, m);
-
-   // Now buf3 (length 3m+1) is congruent to a*b mod B^2m - B^m + 1,
-   // and buf1 (length m+1) is congruent to a*b mod B^m + 1.
-
-   // Need to adjust buf3 to make it congruent to buf1 mod B^m + 1,
-   // without modifying it mod B^2m - B^m + 1.
-   // Strategy is:
-   // Let X = (buf1 - buf3)/3 mod B^m + 1.
-   // Add (B^2m - B^m + 1)*X to buf3.
-
-   // buf2 := 3*X
-   ZmodF_normalise(buf3, 3*m);
-   if (buf3[3*m])
-      // special case: buf3 = -1 mod B^3m + 1
-      mpn_add_1(buf2, buf1, m+1, 1);
-   else
-   {
-      _ZmodF_mul_threeway_reduce1(buf2, buf3, m);
-      ZmodF_sub(buf2, buf1, buf2, m);
-   }
-
-   // buf2 := X
-   ZmodF_divby3(buf2, buf2, m);
-   ZmodF_normalise(buf2, m);
-   
-   // res := buf3 + (B^2m - B^m + 1)*X.
-   if (buf2[m])
-   {
-      // special case: X = -1 mod B^m + 1
-      ZmodF_set(res, buf3, 3*m);
-      mpn_sub_1(res, res, 3*m+1, 1);
-      mpn_add_1(res + m, res + m, 2*m+1, 1);
-      mpn_sub_1(res + 2*m, res + 2*m, m+1, 1);
-   }
-   else
-   {
-      // usual case
-      mp_limb_t carry1 = mpn_add_n(res, buf3, buf2, m);
-      mp_limb_t carry2 = mpn_sub_n(res + m, buf3 + m, buf2, m);
-      res[3*m] = mpn_add_n(res + 2*m, buf3 + 2*m, buf2, m);
-      mpn_add_1(res + m, res + m, 2*m+1, carry1);
-      mpn_sub_1(res + 2*m, res + 2*m, m+1, carry2);
-   }
-}
 
 
 /******************************************************************************
 
-   Main ZmodF_mul_info multiplication routines
+   Main ZmodF_mul_info multiplication routine
 
 ******************************************************************************/
 
@@ -1109,15 +948,20 @@ void _ZmodF_mul_info_sqr_threeway(ZmodF_mul_info_t info,
 void ZmodF_mul_info_mul(ZmodF_mul_info_t info,
                         ZmodF_t res, ZmodF_t a, ZmodF_t b)
 {
-   FLINT_ASSERT(!info->squaring);
-
    // try special cases a = -1 or b = -1 mod p
-   if (_ZmodF_mul_handle_minus1(res, a, b, info->n))
-      return;
+   if (a != b)
+   {
+      if (_ZmodF_mul_handle_minus1(res, a, b, info->n))
+         return;
+   }
+   else
+   {
+      if (_ZmodF_sqr_handle_minus1(res, a, info->n))
+         return;
+   }
 
    if (info->algo == ZMODF_MUL_ALGO_PLAIN)
    {
-      // plain mpn_mul_n multiplication
       _ZmodF_mul(res, a, b, info->scratch, info->n);
       return;
    }
@@ -1125,40 +969,10 @@ void ZmodF_mul_info_mul(ZmodF_mul_info_t info,
    else if (info->algo == ZMODF_MUL_ALGO_THREEWAY)
       _ZmodF_mul_info_mul_threeway(info, res, a, b);
 
-   else if (info->algo == ZMODF_MUL_ALGO_NEGACYCLIC)
-      _ZmodF_mul_info_mul_negacyclic(info, res, a, b);
-
    else
    {
-      FLINT_ASSERT(info->algo == ZMODF_MUL_ALGO_NEGACYCLIC2);
-      _ZmodF_mul_info_mul_negacyclic2(info, res, a, b);
-   }
-}
-
-
-void ZmodF_mul_info_sqr(ZmodF_mul_info_t info, ZmodF_t res, ZmodF_t a)
-{
-   // try special case a = -1 mod p
-   if (_ZmodF_sqr_handle_minus1(res, a, info->n))
-      return;
-
-   if (info->algo == ZMODF_MUL_ALGO_PLAIN)
-   {
-      // plain mpn_mul_n multiplication
-      _ZmodF_mul(res, a, a, info->scratch, info->n);
-      return;
-   }
-
-   else if (info->algo == ZMODF_MUL_ALGO_THREEWAY)
-      _ZmodF_mul_info_sqr_threeway(info, res, a);
-
-   else if (info->algo == ZMODF_MUL_ALGO_NEGACYCLIC)
-      _ZmodF_mul_info_sqr_negacyclic(info, res, a);
-
-   else
-   {
-      FLINT_ASSERT(info->algo == ZMODF_MUL_ALGO_NEGACYCLIC2);
-      _ZmodF_mul_info_sqr_negacyclic2(info, res, a);
+      FLINT_ASSERT(info->algo == ZMODF_MUL_ALGO_FFT);
+      _ZmodF_mul_info_mul_fft(info, res, a, b);
    }
 }
 

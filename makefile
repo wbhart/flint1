@@ -62,6 +62,7 @@ FLINTOBJ = \
 	Z_mpn.o \
 	ZmodF.o \
 	ZmodF_mul.o \
+	ZmodF_mul-tuning.o \
 	fmpz.o \
 	fmpz_poly.o \
 	mpz_poly.o \
@@ -85,6 +86,9 @@ ZmodF.o: ZmodF.c $(HEADERS)
 
 ZmodF_mul.o: ZmodF_mul.c $(HEADERS)
 	$(CC) $(CFLAGS) -c ZmodF_mul.c -o ZmodF_mul.o
+
+ZmodF_mul-tuning.o: ZmodF_mul-tuning.c $(HEADERS)
+	$(CC) $(CFLAGS) -c ZmodF_mul-tuning.c -o ZmodF_mul-tuning.o
 
 fmpz.o: fmpz.c $(HEADERS)
 	$(CC) $(CFLAGS) -c fmpz.c -o fmpz.o
@@ -154,6 +158,19 @@ ZmodF_mul-test: ZmodF_mul-test.o test-support.o $(FLINTOBJ) $(HEADERS)
 
 long_extras-test: long_extras.o long_extras-test.o test-support.o memory-manager.o
 	$(CC) $(CFLAGS) long_extras.o long_extras-test.o test-support.o memory-manager.o -o long_extras-test $(LIBS)
+
+
+####### tuning program object files
+
+ZmodF_mul-tune.o: ZmodF_mul-tune.c $(HEADERS)
+	$(CC) $(CFLAGS) -c ZmodF_mul-tune.c -o ZmodF_mul-tune.o
+
+
+
+####### tuning program targets
+
+ZmodF_mul-tune: ZmodF_mul-tune.o test-support.o profiler.o $(FLINTOBJ) $(HEADERS)
+	$(CC) $(CFLAGS) ZmodF_mul-tune.o test-support.o profiler.o -o ZmodF_mul-tune $(FLINTOBJ) $(LIBS)
 
 
 

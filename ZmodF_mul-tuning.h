@@ -14,43 +14,20 @@ TODO: write an automatic tuning utility!!
 #define FLINT_ZMODF_MUL_TUNING_H
 
 
-// ===========================================
-//   multiplication
+// for ZmodF_mul_fft_table[] and ZmodF_sqr_fft_table[],
+// first value is crossover n from depth 3 to depth 4,
+// then crossover from depth 4 to depth 5, etc.
 
+extern unsigned long ZmodF_mul_plain_threeway_threshold;
+extern unsigned long ZmodF_mul_plain_fft_threshold;
+extern unsigned long ZmodF_mul_threeway_fft_threshold;
+extern unsigned long ZmodF_mul_fft_table[];
 
-// crossover from plain to threeway algorithm, assuming 3 divides n
-#define ZMODF_MUL_PLAIN_THREEWAY_THRESHOLD 24
-
-// crossover from threeway to negacyclic algorithm, assuming 3 divides n
-#define ZMODF_MUL_THREEWAY_NEGACYCLIC_THRESHOLD 750
-
-// crossover from plain to negacyclic algorithm, if 3 does not divide n
-#define ZMODF_MUL_PLAIN_NEGACYCLIC_THRESHOLD 320
-
-
-// the minimum depth used for negacyclic transforms
-#define ZMODF_MUL_MIN_NEGACYCLIC_DEPTH 4
-
-// the i-th entry in this table is the value of n for which we switch from
-// depth K+i to depth K+i+1, where K = ZMODF_MUL_MIN_NEGACYCLIC_DEPTH
-// (the first three values are tuned for sage.math, I made the rest up)
-unsigned long ZMODF_MUL_NEGACYCLIC_THRESHOLD[] =
-   {500, 1400, 3000, 6000, 12000, 24000, 48000, 0};
-
-
-// ===========================================
-//   squaring
-
-
-// same as above, but for squaring
-#define ZMODF_SQR_PLAIN_THREEWAY_THRESHOLD 36
-
-
-#define ZMODF_SQR_THREEWAY_NEGACYCLIC_THRESHOLD 750
-#define ZMODF_SQR_PLAIN_NEGACYCLIC_THRESHOLD 320
-#define ZMODF_SQR_MIN_NEGACYCLIC_DEPTH 4
-unsigned long ZMODF_SQR_NEGACYCLIC_THRESHOLD[] =
-   {500, 1400, 3000, 6000, 12000, 24000, 48000, 0};
+extern unsigned long ZmodF_sqr_plain_threeway_threshold;
+extern unsigned long ZmodF_sqr_plain_fft_threshold;
+extern unsigned long ZmodF_sqr_threeway_fft_threshold;
+extern unsigned long ZmodF_sqr_fft_table[];
 
 
 #endif
+// end of file ****************************************************************

@@ -48,6 +48,13 @@ mp_limb_t random_limb()
 }
 
 
+void urandom_limbs(mp_limb_t* dest, unsigned long limbs)
+{
+   for (unsigned long i = 0; i < limbs; i++)
+      dest[i] = gmp_urandomb_ui(randstate, FLINT_BITS);
+}
+
+
 void random_limbs(mp_limb_t* dest, unsigned long limbs)
 {
    mpz_rrandomb(test_mpz[0], randstate, limbs*FLINT_BITS);

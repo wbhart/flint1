@@ -86,14 +86,6 @@ worst case? (Currently the worst case is two passes.)
 mentioned some potential cache-thrashing issues on intels. Might be better
 to add a bit of padding.
 
-* the 0th and (n/2)th fourier coefficients are always about half the size of
-  the others. (These are the two stored first in the bit-reversed array.)
-  Take advantage of this when doing pointwise mults there.
-
-* negacylic convolutions for pointwise mults when the coefficients are
-  large enough. Also chase up that reference in the paper by Zimmerman et al
-  for some kind of wrapped-around toom cook.
-
 * for KS, try the idea where we evaluate X1 = f(2^n)g(2^n), X2 = f(-2^n)g(-2^n) and then reconstruct output from X1+X2 and X1-X2
 
 
@@ -173,16 +165,10 @@ the stack. This could be a problem if we need to allocate many small objects.
 
 === ZmodF_mul module ===
 
-* remember when doing the automatic tuning for this, squaring and multiplication probably have different crossovers
-
-* figure out why the negacyclic multiplication performance is so unsmooth
-  with respect to n (weird periodicity effects in the timings)
-
 * for squaring, we don't need to allocate so much memory  
 
-=== Miscellaneous ===
 
-* Switch to integer increments instead of rounded floating point ones in  fmpz_poly-profile.c and magma-profile.m
+=== Miscellaneous ===
 
 * Add memory manager to Zpoly.c
 

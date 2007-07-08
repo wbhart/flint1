@@ -1090,7 +1090,7 @@ void ZmodF_poly_pointwise_mul(ZmodF_poly_t res, ZmodF_poly_t x, ZmodF_poly_t y)
       for (unsigned long i = 0; i < x->length; i++)
       {
          for (j = 0; j < x->n; j += 8) FLINT_PREFETCH(x->coeffs[i+8], j);
-         ZmodF_mul_info_sqr(info, res->coeffs[i], x->coeffs[i]);
+         ZmodF_mul_info_mul(info, res->coeffs[i], x->coeffs[i], x->coeffs[i]);
       }
 
    ZmodF_mul_info_clear(info);

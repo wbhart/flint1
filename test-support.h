@@ -30,6 +30,9 @@ mp_limb_t random_limb();
 // writes "limbs" random limbs to dest, using mpz_rrandomb
 void random_limbs(mp_limb_t* dest, unsigned long limbs);
 
+// writes "limbs" random limbs to dest, uniform distribution
+void urandom_limbs(mp_limb_t* dest, unsigned long limbs);
+
 
 // converts mpz to mpn, writes "limbs" limbs (zero-padded), ignores sign of src
 void mpz_to_mpn(mp_limb_t* dest, unsigned long limbs, mpz_t src);

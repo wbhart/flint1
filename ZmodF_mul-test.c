@@ -12,7 +12,6 @@ Copyright (C) 2007, David Harvey
 #include "test-support.h"
 
 
-
 #define DEBUG 0    // prints debug information
 
 
@@ -46,7 +45,7 @@ void ZmodF_poly_print(ZmodF_poly_t x)
 
 
 
-int test__ZmodF_mul_negacyclic_split()
+int test__ZmodF_mul_fft_split()
 {
    int success = 1;
 
@@ -77,7 +76,7 @@ int test__ZmodF_mul_negacyclic_split()
             buf[n] = 0;
             mpn_to_mpz(x, buf, n);
             
-            _ZmodF_mul_negacyclic_split(poly, buf, n);
+            _ZmodF_mul_fft_split(poly, buf, n);
 
             for (unsigned long i = 0; i < (1 << depth); i++)
             {
@@ -101,101 +100,106 @@ int test__ZmodF_mul_negacyclic_split()
 }
 
 
-int test__ZmodF_mul_negacyclic_combine()
+int test__ZmodF_mul_fft_combine()
 {
    int success = 1;
    
-   mpz_t x, y, p, q, half_q, total;
+   mpz_t x, y, p, q, r, s, total;
    mpz_init(x);
    mpz_init(y);
+   mpz_init(s);
+   mpz_init(r);
    mpz_init(q);
    mpz_init(p);
-   mpz_init(half_q);
    mpz_init(total);
 
    mp_limb_t buf[300];
 
-   for (unsigned long n = 1; n < 200 && success; n++)
+   for (unsigned long n = 1; n < 80 && success; n++)
    {
       for (unsigned long depth = 0;
            ((n*FLINT_BITS) % (1 << depth) == 0) && success; depth++)
       {
-         unsigned long bits = (n*FLINT_BITS) >> depth;
-         unsigned long m = (bits-1)/FLINT_BITS + 1;
-
-         ZmodF_poly_t poly;
-         ZmodF_poly_init(poly, depth, m, 1);
-
+         for (unsigned long m = 1; m < n/4 && success; m++)
+         {
+            for (unsigned long k = 0; k < 5 && success; k++)
+            {
 #if DEBUG
-         printf("n = %d, depth = %d, m = %d\n", n, depth, m);
+               printf("n = %ld, depth = %ld, m = %ld, k = %ld\n", n, depth, m, k);
 #endif
 
-         // p := B^n + 1
-         mpz_set_ui(p, 1);
-         mpz_mul_2exp(p, p, n*FLINT_BITS);
-         mpz_add_ui(p, p, 1);
-         
-         // q := B^m + 1
-         // half_q := B^m / 2  = (q-1)/2
-         mpz_set_ui(half_q, 1);
-         mpz_mul_2exp(half_q, half_q, m*FLINT_BITS - 1);
-         mpz_add(q, half_q, half_q);
-         mpz_add_ui(q, q, 1);
-         
-         for (unsigned long trial = 0; trial < 100; trial++)
-         {
-            mpz_set_ui(total, 0);
-         
-            for (long i = (1 << depth) - 1; i >= 0; i--)
-            {
-               // select a random x in [0, q)
-               if (random_ulong(5) == 0)
+               ZmodF_poly_t poly;
+               ZmodF_poly_init(poly, depth, m+k, 1);
+
+               // p := B^n + 1
+               mpz_set_ui(p, 1);
+               mpz_mul_2exp(p, p, n*FLINT_BITS);
+               mpz_add_ui(p, p, 1);
+               
+               // q := (B^m + 1)*B^k
+               mpz_set_ui(q, 1);
+               mpz_mul_2exp(q, q, m*FLINT_BITS);
+               mpz_add_ui(q, q, 1);
+               mpz_mul_2exp(q, q, k*FLINT_BITS);
+
+               // r := B^(m+k) - 1
+               mpz_set_ui(r, 1);
+               mpz_mul_2exp(r, r, (m+k)*FLINT_BITS);
+               mpz_sub_ui(r, r, 1);
+               
+               // s := B^(m+k)/2
+               mpz_set_ui(s, 1);
+               mpz_mul_2exp(s, s, (m+k)*FLINT_BITS - 1);
+                  
+               for (unsigned long trial = 0; trial < 20 && success; trial++)
                {
-                  // try the special case -1 mod q every now and then
-                  memset(poly->coeffs[i], 0, (m+1) * sizeof(mp_limb_t));
-                  poly->coeffs[i][m] = 1;
+                  mpz_set_ui(total, 0);
+               
+                  for (long i = (1 << depth) - 1; i >= 0; i--)
+                  {
+                     // select random x in (0, B^(m+k))
+                     mpz_set_ui(x, 0);
+                     while (!mpz_sgn(x))
+                     {
+                        mpz_rrandomb(x, randstate, (m+k)*FLINT_BITS);
+                        if (random_ulong(2))    // to get high bit 0 sometimes
+                           mpz_sub(x, r, x);
+                     }
+                        
+                     // push it down to (-B^(m+k)/2, B^(m+k)/2)
+                     mpz_sub(x, x, s);
+                     
+                     // add it to running total
+                     mpz_mul_2exp(total, total, (n*FLINT_BITS) >> depth);
+                     mpz_add(total, total, x);
+                     
+                     // normalise it into [0, q), and store in polynomial
+                     mpz_mod(x, x, q);
+                     mpz_to_mpn(poly->coeffs[i], m+k+1, x);
+                  }
+                  
+                  // compare result to target function
+                  _ZmodF_mul_fft_combine(buf, poly, m, k, n);
+                  ZmodF_normalise(buf, n);
+                  mpn_to_mpz(y, buf, n+1);
+                  
+                  mpz_mod(total, total, p);
+                  if (mpz_cmp(total, y))
+                     success = 0;
                }
-               else
-               {
-                  random_limbs(poly->coeffs[i], m);
-                  poly->coeffs[i][m] = 0;
-               }
-               
-               // store in poly coefficient
-               mpn_to_mpz(x, poly->coeffs[i], m+1);
-               
-               // convert to range [-(q+1)/2, (q-3)/2]
-               mpz_add(x, x, half_q);
-               mpz_add_ui(x, x, 1);
-               mpz_mod(x, x, q);
-               mpz_sub(x, x, half_q);
-               mpz_sub_ui(x, x, 1);
-               
-               // add to running total
-               mpz_mul_2exp(total, total, bits);
-               mpz_add(total, total, x);
+
+               ZmodF_poly_clear(poly);
             }
-
-            // reduce total mod p and compare to result of target function
-            mpz_mod(total, total, p);
-            
-            _ZmodF_mul_negacyclic_combine(buf, poly, n);
-            ZmodF_normalise(buf, n);
-            mpn_to_mpz(y, buf, n+1);
-
-            if (mpz_cmp(y, total))
-               success = 0;
          }
-         
-         ZmodF_poly_clear(poly);
       }
    }
 
    mpz_clear(x);
    mpz_clear(y);
+   mpz_clear(s);
+   mpz_clear(r);
    mpz_clear(q);
    mpz_clear(p);
-   mpz_clear(half_q);
    mpz_clear(total);
 
    return success;
@@ -357,6 +361,18 @@ int test_ZmodF_mul_info_mul_plain()
          
          if (mpz_cmp(y, z))
             success = 0;
+            
+         // test squaring
+         
+         mpz_mul(z, x1, x1);
+         mpz_mod(z, z, p);
+         
+         ZmodF_mul_info_mul(info, out, in1, in1);
+         ZmodF_normalise(out, n);
+         mpn_to_mpz(y, out, n+1);
+         
+         if (mpz_cmp(y, z))
+            success = 0;
       }
       
       ZmodF_mul_info_clear(info);
@@ -364,74 +380,6 @@ int test_ZmodF_mul_info_mul_plain()
 
    mpz_clear(x1);
    mpz_clear(x2);
-   mpz_clear(y);
-   mpz_clear(z);
-   mpz_clear(p);
-
-   return success;
-}
-
-
-
-int test_ZmodF_mul_info_sqr_plain()
-{
-   int success = 1;
-
-   mp_limb_t in1[2000];
-   mp_limb_t out[2000];
-
-   mpz_t x1, y, z, p;
-   mpz_init(x1);
-   mpz_init(y);
-   mpz_init(z);
-   mpz_init(p);
-
-   for (unsigned long n = 1; n < 100 && success; n++)
-   {
-#if DEBUG
-      printf("n = %d\n", n);
-#endif
-
-      // p = B^n + 1
-      mpz_set_ui(p, 1);
-      mpz_mul_2exp(p, p, n*FLINT_BITS);
-      mpz_add_ui(p, p, 1);
-
-      ZmodF_mul_info_t info;
-      ZmodF_mul_info_init_plain(info, n, 1);
-
-      for (unsigned long trial = 0; trial < 1000 && success; trial++)
-      {
-         if (random_ulong(4) == 0)
-         {
-            // put in -1 mod p every now and then
-            ZmodF_zero(in1, n);
-            in1[n] = 1;
-         }
-         else
-         {
-            random_limbs(in1, n);
-            in1[n] = 0;
-         }
-
-         // test squaring
-
-         mpn_to_mpz(x1, in1, n+1);
-         mpz_mul(z, x1, x1);
-         mpz_mod(z, z, p);
-         ZmodF_mul_info_sqr(info, out, in1);
-         ZmodF_normalise(out, n);
-         mpn_to_mpz(y, out, n+1);
-         
-         if (mpz_cmp(y, z))
-            success = 0;
-
-      }
-      
-      ZmodF_mul_info_clear(info);
-   }
-
-   mpz_clear(x1);
    mpz_clear(y);
    mpz_clear(z);
    mpz_clear(p);
@@ -498,58 +446,12 @@ int test_ZmodF_mul_info_mul_threeway()
          
          if (mpn_cmp(out_plain, out_threeway, n+1))
             success = 0;
-      }
-      
-      ZmodF_mul_info_clear(info_plain);
-      ZmodF_mul_info_clear(info_threeway);
-   }
-
-   mpz_clear(x);
-
-   return success;
-}
-
-
-int test_ZmodF_mul_info_sqr_threeway()
-{
-   int success = 1;
-
-   mp_limb_t in1[2000];
-   mp_limb_t out_plain[2000];
-   mp_limb_t out_threeway[2000];
-
-   mpz_t x;
-   mpz_init(x);
-
-   for (unsigned long n = 3; n < 100 && success; n += 3)
-   {
-#if DEBUG
-      printf("n = %d\n", n);
-#endif
-
-      ZmodF_mul_info_t info_plain, info_threeway;
-      ZmodF_mul_info_init_threeway(info_threeway, n, 1);
-      ZmodF_mul_info_init_plain(info_plain, n, 1);
-
-      for (unsigned long trial = 0; trial < 50000 && success; trial++)
-      {
-         if (random_ulong(4) == 0)
-         {
-            // put in -1 mod p every now and then
-            ZmodF_zero(in1, n);
-            in1[n] = 1;
-         }
-         else
-         {
-            random_limbs(in1, n);
-            in1[n] = 0;
-         }
 
          // test squaring
-
-         ZmodF_mul_info_sqr(info_plain, out_plain, in1);
-         ZmodF_mul_info_sqr(info_threeway, out_threeway, in1);
-
+         
+         ZmodF_mul_info_mul(info_plain, out_plain, in1, in1);
+         ZmodF_mul_info_mul(info_threeway, out_threeway, in1, in1);
+         
          ZmodF_normalise(out_plain, n);
          ZmodF_normalise(out_threeway, n);
          
@@ -567,14 +469,15 @@ int test_ZmodF_mul_info_sqr_threeway()
 }
 
 
-int test_ZmodF_mul_info_mul_negacyclic()
+
+int test_ZmodF_mul_info_mul_fft()
 {
    int success = 1;
 
    mp_limb_t in1[2000];
    mp_limb_t in2[2000];
    mp_limb_t out_plain[2000];
-   mp_limb_t out_negacyclic[2000];
+   mp_limb_t out_fft[2000];
 
    mpz_t x;
    mpz_init(x);
@@ -586,62 +489,83 @@ int test_ZmodF_mul_info_mul_negacyclic()
            && (depth <= FLINT_LG_BITS_PER_LIMB + 4)
            && success; depth++)
       {
-// todo: testing 2nd version negacyclic code currently disabled:
-//         for (int version = 0; version < 2; version++)
-         for (int version = 0; version < 1; version++)
+         unsigned long input_bits = (n*FLINT_BITS) >> depth;
+         unsigned long output_bits = 2*input_bits + 1 + depth;
+         unsigned long target_m =
+                            ((output_bits - 1) >> FLINT_LG_BITS_PER_LIMB) + 1;
+      
+         for (unsigned long m = target_m - 2; m <= target_m + 3 && success; m++)
          {
+            if ((m*FLINT_BITS) % (1 << depth) != 0)
+               continue;
+
+            for (unsigned long k = 0; k <= 2 && success; k++)
+            {
+               if (m + k < target_m)
+                  continue;
+               if (k > m)
+                  continue;
+            
 #if DEBUG
-            printf("n = %d, depth = %d\n", n, depth);
+               printf("n = %ld, depth = %ld, m = %ld, k = %ld\n", n, depth, m, k);
 #endif
 
-            ZmodF_mul_info_t info_plain, info_negacyclic;
-            ZmodF_mul_info_init_plain(info_plain, n, 0);
+               ZmodF_mul_info_t info_plain, info_fft;
+               ZmodF_mul_info_init_plain(info_plain, n, 0);
+               ZmodF_mul_info_init_fft(info_fft, n, depth, m, k, 0);
 
-            if (version == 0)
-               ZmodF_mul_info_init_negacyclic(info_negacyclic, n, depth, 0);
-            else
-               ZmodF_mul_info_init_negacyclic2(info_negacyclic, n, depth, 0);
-
-            for (unsigned long trial = 0; trial < 10 && success; trial++)
-            {
-               if (random_ulong(4) == 0)
+               for (unsigned long trial = 0; trial < 10 && success; trial++)
                {
-                  // put in -1 mod p every now and then
-                  ZmodF_zero(in1, n);
-                  in1[n] = 1;
+                  if (random_ulong(4) == 0)
+                  {
+                     // put in -1 mod p every now and then
+                     ZmodF_zero(in1, n);
+                     in1[n] = 1;
+                  }
+                  else
+                  {
+                     random_limbs(in1, n);
+                     in1[n] = 0;
+                  }
+
+                  if (random_ulong(4) == 0)
+                  {
+                     // put in -1 mod p every now and then
+                     ZmodF_zero(in2, n);
+                     in2[n] = 1;
+                  }
+                  else
+                  {
+                     random_limbs(in2, n);
+                     in2[n] = 0;
+                  }
+
+                  // test multiplication
+
+                  ZmodF_mul_info_mul(info_plain, out_plain, in1, in2);
+                  ZmodF_mul_info_mul(info_fft, out_fft, in1, in2);
+
+                  ZmodF_normalise(out_plain, n);
+                  ZmodF_normalise(out_fft, n);
+
+                  if (mpn_cmp(out_plain, out_fft, n+1))
+                     success = 0;
+
+                  // test squaring
+         
+                  ZmodF_mul_info_mul(info_plain, out_plain, in1, in1);
+                  ZmodF_mul_info_mul(info_fft, out_fft, in1, in1);
+
+                  ZmodF_normalise(out_plain, n);
+                  ZmodF_normalise(out_fft, n);
+
+                  if (mpn_cmp(out_plain, out_fft, n+1))
+                     success = 0;
                }
-               else
-               {
-                  random_limbs(in1, n);
-                  in1[n] = 0;
-               }
 
-               if (random_ulong(4) == 0)
-               {
-                  // put in -1 mod p every now and then
-                  ZmodF_zero(in2, n);
-                  in2[n] = 1;
-               }
-               else
-               {
-                  random_limbs(in2, n);
-                  in2[n] = 0;
-               }
-
-               // test multiplication
-
-               ZmodF_mul_info_mul(info_plain, out_plain, in1, in2);
-               ZmodF_mul_info_mul(info_negacyclic, out_negacyclic, in1, in2);
-
-               ZmodF_normalise(out_plain, n);
-               ZmodF_normalise(out_negacyclic, n);
-
-               if (mpn_cmp(out_plain, out_negacyclic, n+1))
-                  success = 0;
+               ZmodF_mul_info_clear(info_fft);
+               ZmodF_mul_info_clear(info_plain);
             }
-
-            ZmodF_mul_info_clear(info_negacyclic);
-            ZmodF_mul_info_clear(info_plain);
          }
       }
    }
@@ -651,78 +575,6 @@ int test_ZmodF_mul_info_mul_negacyclic()
    return success;
 }
 
-
-
-int test_ZmodF_mul_info_sqr_negacyclic()
-{
-   int success = 1;
-
-   mp_limb_t in1[2000];
-   mp_limb_t out_plain[2000];
-   mp_limb_t out_negacyclic[2000];
-
-   mpz_t x;
-   mpz_init(x);
-
-   for (unsigned long n = 1; n < 1000 && success; n++)
-   {
-      for (unsigned long depth = 1;
-           (n*FLINT_BITS) % (1 << depth) == 0
-           && (depth <= FLINT_LG_BITS_PER_LIMB + 4)
-           && success; depth++)
-      {
-// todo: testing 2nd version negacyclic code currently disabled:
-//         for (int version = 0; version < 2; version++)
-         for (int version = 0; version < 1; version++)
-         {
-
-#if DEBUG
-            printf("n = %d, depth = %d\n", n, depth);
-#endif
-
-            ZmodF_mul_info_t info_plain, info_negacyclic;
-            ZmodF_mul_info_init_plain(info_plain, n, 1);
-            if (version == 0)
-               ZmodF_mul_info_init_negacyclic(info_negacyclic, n, depth, 1);
-            else
-               ZmodF_mul_info_init_negacyclic2(info_negacyclic, n, depth, 1);
-
-            for (unsigned long trial = 0; trial < 10 && success; trial++)
-            {
-               if (random_ulong(4) == 0)
-               {
-                  // put in -1 mod p every now and then
-                  ZmodF_zero(in1, n);
-                  in1[n] = 1;
-               }
-               else
-               {
-                  random_limbs(in1, n);
-                  in1[n] = 0;
-               }
-
-               // test squaring
-               
-               ZmodF_mul_info_sqr(info_plain, out_plain, in1);
-               ZmodF_mul_info_sqr(info_negacyclic, out_negacyclic, in1);
-
-               ZmodF_normalise(out_plain, n);
-               ZmodF_normalise(out_negacyclic, n);
-
-               if (mpn_cmp(out_plain, out_negacyclic, n+1))
-                  success = 0;
-            }
-
-            ZmodF_mul_info_clear(info_negacyclic);
-            ZmodF_mul_info_clear(info_plain);
-         }
-      }
-   }
-
-   mpz_clear(x);
-
-   return success;
-}
 
 
 /****************************************************************************
@@ -744,15 +596,12 @@ void ZmodF_mul_test_all()
 {
    int success, all_success = 1;
 
-   RUN_TEST(_ZmodF_mul_negacyclic_split);
-   RUN_TEST(_ZmodF_mul_negacyclic_combine);
+   RUN_TEST(_ZmodF_mul_fft_split);
+   RUN_TEST(_ZmodF_mul_fft_combine);
    RUN_TEST(_ZmodF_mul_threeway_reduce);
    RUN_TEST(ZmodF_mul_info_mul_plain);
-   RUN_TEST(ZmodF_mul_info_sqr_plain);
    RUN_TEST(ZmodF_mul_info_mul_threeway);
-   RUN_TEST(ZmodF_mul_info_sqr_threeway);
-   RUN_TEST(ZmodF_mul_info_mul_negacyclic);
-   RUN_TEST(ZmodF_mul_info_sqr_negacyclic);
+   RUN_TEST(ZmodF_mul_info_mul_fft);
 
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");
@@ -762,14 +611,10 @@ void ZmodF_mul_test_all()
 int main()
 {
    test_support_init();
-   
    ZmodF_mul_test_all();
-
    test_support_cleanup();
-
    return 0;
 }
-
 
 
 // end of file ****************************************************************
