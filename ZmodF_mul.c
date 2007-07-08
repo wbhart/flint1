@@ -232,7 +232,7 @@ void ZmodF_mul_info_init_fft(ZmodF_mul_info_t info, unsigned long n,
       unsigned long output_bits = 2*input_bits + 1 + depth;
       m = ((output_bits - 1) >> FLINT_LG_BITS_PER_LIMB) + 1;
       k = 0;
-
+      
       // m needs to be divisible by 2^shift
       unsigned long shift = 0;
       if (depth > FLINT_LG_BITS_PER_LIMB)
@@ -242,30 +242,41 @@ void ZmodF_mul_info_init_fft(ZmodF_mul_info_t info, unsigned long n,
       // round it up/down to a multiple of 3
       if (m < ZmodF_mul_threeway_fft_threshold)
       {
-         if (shift == 0)
+         // first try rounding down to a multiple of 3, using k to compensate
+         // (this only works if the smaller m satisfies the right divisibility
+         // conditions)
+         unsigned long smaller_m = (m / 3) * 3;
+         if (((smaller_m >> shift) << shift) == smaller_m)
          {
-            // round down to a multiple of 3, set k to compensate
-            if (m > 3)
-            {
-               k = m % 3;
-               m -= k;
-            }
+            k = m - smaller_m;
+            m = smaller_m;
          }
          else
          {
-            // round up to a multiple of 3*2^shift
+            // that didn't work; just round up to a multiple of 3*2^shift
             unsigned long round = 3 << shift;
             m = (((m-1) / round) + 1) * round;
          }
       }
       else
       {
-         // threeway not feasible; just round up to multiple of 2^shift
-         m = (((m-1) >> shift) + 1) << shift;
+         // threeway not feasible.
+
+         // first try rounding down to a multiple of 2^shift, using
+         // k to compensate
+         unsigned long smaller_m = (m >> shift) << shift;
+         if (m - smaller_m <= 2)
+         {
+            k = m - smaller_m;
+            m = smaller_m;
+         }
+         else
+         {
+            // that didn't work; just round up to a multiple of 2^shift
+            m = (((m - 1) >> shift) + 1) << shift;
+         }
       }
    }
-
-   //   printf("initialised FFT with n = %ld, depth = %ld, m = %ld, k = %ld\n", n, depth, m, k);
 
    FLINT_ASSERT((m*FLINT_BITS) % (1 << depth) == 0);
    FLINT_ASSERT(k <= 2);
