@@ -111,18 +111,11 @@ static inline unsigned long ceil_log2(unsigned long x)
    return result;
 }
 
-/* Horrendously slow function for counting the number of bits a value takes up */
-
 static inline unsigned long FLINT_BIT_COUNT(unsigned long x)
 {
-   unsigned long bits = FLINT_BITS;
-   unsigned long mask = 1L<<(FLINT_BITS-1);
-   while ((bits > 1) && !(mask & x)) 
-   {
-      bits--;
-      mask>>=1;
-   }
-   return bits;
+   unsigned long zeros;
+   count_lead_zeros(zeros, x);
+   return FLINT_BITS-zeros;
 }
 
 #endif

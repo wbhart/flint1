@@ -240,3 +240,13 @@ BLTcubes: long_extras.o BLTcubes.c
 BPTJCubes: long_extras.o memory-manager.o
 	$(CC) $(CFLAGS) -o BPTJCubes BPTJCubes.c memory-manager.o long_extras.o $(LIBS)
 
+####### Quadratic sieve
+
+poly.o: QS/poly.c QS/poly.h
+	$(CC) $(CFLAGS) -c QS/poly.c -o poly.o
+
+factor_base.o: QS/factor_base.c QS/factor_base.h
+	$(CC) $(CFLAGS) -c QS/factor_base.c -o factor_base.o
+
+tinyQS: QS/tinyQS.c QS/tinyQS.h factor_base.o poly.o long_extras.o memory-manager.o fmpz.o test-support.o
+	$(CC) $(CFLAGS) -o tinyQS QS/tinyQS.c factor_base.o poly.o memory-manager.o long_extras.o fmpz.o test-support.o $(LIBS)

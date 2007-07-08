@@ -27,14 +27,14 @@ unsigned long long_randint(unsigned long limit)
 {
 #if FLINTBITS == 32
     static u_int64_t randval = 4035456057U;
-    randval = ((u_int64_t)randval*(u_int64_t)1025416097U+(u_int64_t)286824428U)%(u_int64_t)4294967311U;
+    randval = ((u_int64_t)randval*(u_int64_t)1025416097U+(u_int64_t)286824430U)%(u_int64_t)4294967311U;
     
     return (unsigned long)randval%limit;
 #else
     static unsigned long randval = 4035456057U;
     static unsigned long randval2 = 6748392731U;
     randval = ((unsigned long)randval*(unsigned long)1025416097U+(unsigned long)286824428U)%(unsigned long)4294967311U;
-    randval2 = ((unsigned long)randval2*(unsigned long)1025416097U+(unsigned long)286824428U)%(unsigned long)4294967311U;
+    randval2 = ((unsigned long)randval2*(unsigned long)1647637699U+(unsigned long)286824428U)%(unsigned long)4294967357U;
     
     return (unsigned long)(randval+(randval2<<32))%limit;
 #endif
@@ -61,8 +61,30 @@ unsigned long long_mod_precomp(unsigned long a, unsigned long n, double ninv)
 {
    unsigned long quot = (unsigned long) ((double) a * ninv);
    unsigned long rem = a - quot*n;
-   if (rem > n) return rem - n;
+   if (rem >= n) return rem - n;
    else return rem;
+}
+
+unsigned long long_mod2_precomp(unsigned long a_hi, unsigned long a_lo, 
+                                             unsigned long n, double ninv)
+{
+   unsigned long t1;
+   unsigned long norm, q, r, orig_n;
+   
+   if (a_hi >= n) 
+   {
+      if (((n>>32) == 0) && (a_hi >= n*n)) a_hi = a_hi%n;
+      else a_hi = long_mod_precomp(a_hi, n, ninv);
+   }
+   
+#if UDIV_NEEDS_NORMALIZATION
+   count_lead_zeros(norm, n);
+   udiv_qrnnd(q, r, (a_hi<<norm) + (a_lo>>(FLINT_BITS-norm)), a_lo<<norm, n<<norm);
+#else
+   udiv_qrnnd(q, r, a_hi, a_lo, n);
+#endif
+   
+   return r;
 }
 
 /* 

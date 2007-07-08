@@ -60,6 +60,60 @@ int test_long_mod_precomp()
    return result;
 }
 
+int test_long_mod2_precomp()
+{
+   double ninv;
+   unsigned long n;
+   unsigned long a, b, res1, res2;
+   
+   int result = 1;
+   
+   mpz_t mpz_a, mpz_b, mpz_n, mpz_res;
+   mpz_init(mpz_a);
+   mpz_init(mpz_b);
+   mpz_init(mpz_n);
+   mpz_init(mpz_res); 
+
+   for (unsigned long count = 0; (count < 1000) && (result == 1); count++)
+   { 
+      n = random_ulong(199254740990UL)+1;
+      
+      ninv = long_precompute_inverse(n);
+      
+      for (unsigned long count2 = 0; (count2 < 1000) && (result == 1); count2++)
+      {
+         a = random_ulong(2199023255552UL);
+         b = random_ulong(-1L);
+         
+         for (unsigned long count = 0; count < 100; count++)   
+            res1 = long_mod2_precomp(a, b, n, ninv);
+                  
+         mpz_set_ui(mpz_a, a);
+         mpz_mul_2exp(mpz_res, mpz_a, FLINT_BITS);
+         mpz_add_ui(mpz_res, mpz_res, b);
+         mpz_set_ui(mpz_n, n);
+         mpz_mod(mpz_res, mpz_res, mpz_n);       
+         res2 = mpz_get_ui(mpz_res);
+         
+#if DEBUG2             
+         if (res1 != res2)
+         {
+            printf("a = %ld, b = %ld, n = %ld, ninv = %e, res1 = %ld, res2 = %ld\n", a, b, n, ninv, res1, res2);
+         }
+#endif
+         
+         result = (res1 == res2);
+      }
+   }
+   
+   mpz_clear(mpz_a);
+   mpz_clear(mpz_b);
+   mpz_clear(mpz_n);
+   mpz_clear(mpz_res); 
+   
+   return result;
+}
+
 int test_long_mulmod_precomp()
 {
    double ninv;
@@ -95,7 +149,7 @@ int test_long_mulmod_precomp()
          mpz_mod(mpz_res, mpz_res, mpz_n);       
          res2 = mpz_get_ui(mpz_res);
          
-#if DEBUG2              
+#if DEBUG              
          if (res1 != res2)
          {
             printf("a = %ld, b = %ld, n = %ld, ninv = %lf, res1 = %ld, res2 = %ld\n", a, b, n, ninv, res1, res2);
@@ -143,7 +197,7 @@ int test_long_powmod0()
          mpz_powm_ui(mpz_res, mpz_a, exp, mpz_n);
          res2 = mpz_get_ui(mpz_res);
          
-#if DEBUG2               
+#if DEBUG            
          if (res1 != res2)
          {
             printf("a = %ld, exp = %ld, n = %ld, res1 = %ld, res2 = %ld\n", a, exp, n, res1, res2);
@@ -297,7 +351,7 @@ int test_long_powmod()
          if (exp < 0) mpz_invert(mpz_res, mpz_res, mpz_n);
          res2 = mpz_get_ui(mpz_res);
          
-#if DEBUG2               
+#if DEBUG              
          if (res1 != res2)
          {
             printf("a = %ld, exp = %ld, n = %ld, res1 = %ld, res2 = %ld\n", a, exp, n, res1, res2);
@@ -675,6 +729,7 @@ void fmpz_poly_test_all()
    int success, all_success = 1;
 
    RUN_TEST(long_mod_precomp);
+   RUN_TEST(long_mod2_precomp);
    RUN_TEST(long_mulmod_precomp);
    RUN_TEST(long_powmod0);
    RUN_TEST(long_sqrtmod0);
