@@ -521,12 +521,13 @@ void ZmodF_divby3(ZmodF_t b, ZmodF_t a, unsigned long n)
    ZmodF_fast_reduce(a, n);
 
    // compute a "total" which is congruent to a mod 3
-   unsigned long total = 0;
+   unsigned long hi = 0, lo = 0;
    for (unsigned long i = 0; i <= n; i++)
-   {
-      total += (a[i] & ((1UL << (FLINT_BITS/2)) - 1));
-      total += (a[i] >> (FLINT_BITS/2));
-   }
+      add_ssaaaa(hi, lo, hi, lo, 0, a[i]);
+
+   unsigned long total = lo & ((1UL << (FLINT_BITS/2)) - 1);
+   total += (lo >> (FLINT_BITS/2));
+   total += hi;
 
    // add "total" times B^n + 1 (the latter is 2 mod 3),
    // so that a becomes exactly divisible by 3
