@@ -1,0 +1,255 @@
+/******************************************************************************
+
+ factor_base.c
+ 
+ Routines for generating and maintaining the factor base primes
+ including the multiplier
+
+ (C) 2006 William Hart
+
+******************************************************************************/
+
+#include <gmp.h>
+#include <stdio.h>
+#include <math.h>
+
+#include "../flint.h"
+#include "../memory-manager.h"
+#include "../long_extras.h"
+
+#include "factor_base.h"
+
+/*=========================================================================
+   num_FB_primes:
+ 
+   Function: retrieve the number of factor base primes to use from table
+             
+ 
+==========================================================================*/
+
+unsigned long num_FB_primes(unsigned long bits)
+{
+   unsigned long i;
+   
+   for (i = 0; i < PTABSIZE; i++)
+   {
+      if (prime_tab[i][0] > bits) break;
+   }
+   
+   return prime_tab[i-1][1];
+}
+
+/*=========================================================================
+   sqrts_init:
+ 
+   Function: allocate space for the factorbase primes and associated info
+             
+ 
+==========================================================================*/
+
+void sqrts_init(QS_t * qs_inf)
+{
+   qs_inf->sqrts = (unsigned long *) flint_stack_alloc(qs_inf->num_primes);
+}
+
+void sqrts_clear(void)
+{
+   flint_stack_release();
+}
+
+/*=========================================================================
+   primes_init:
+ 
+   Function: allocate space for the factorbase primes and associated info
+             
+ 
+==========================================================================*/
+
+void primes_init(QS_t * qs_inf)
+{
+   unsigned long bits;
+   
+   count_lead_zeros(bits, multipliers[NUMMULTS-1]);
+   bits = FLINT_BITS - max_mult_size;
+   bits += qs_inf->bits; // set bits to the max possible bits of kn
+   
+   qs_inf->num_primes = num_FB_primes(bits); // this is a provisional number of primes
+   
+   qs_inf->factor_base = (prime_t *) flint_stack_alloc_bytes(qs_inf->num_primes*sizeof(prime_t));
+}
+
+void primes_clear(void)
+{
+   flint_stack_release();
+}
+
+/*===========================================================================
+   Compute Prime Sizes:
+ 
+   Function: Computes the size in bits of each prime in the factor base
+ 
+===========================================================================*/
+void compute_sizes(QS_t * qs_inf)
+{
+     unsigned long num_primes = qs_inf->num_primes;
+     
+     qs_inf->sizes = (unsigned char *) flint_stack_alloc_bytes(num_primes);
+     unsigned char * sizes = qs_inf->sizes;
+     prime_t * factor_base = qs_inf->factor_base;
+     
+     for (unsigned long i = 0; i < num_primes; i++)
+     {
+         sizes[i]=(unsigned char) round(log(factor_base[i].p)/log(2.0));
+     }
+     
+     return;
+}
+
+void sizes_clear(void)
+{
+   flint_stack_release();
+}
+/*=========================================================================
+   Knuth-Schroeppel algorithm:
+ 
+   Function: Find the best multiplier to use (allows 2 as a multiplier).
+             The general idea is to find a multiplier k such that kn will
+             be faster to factor. This is achieved by making kn a square 
+             modulo lots of small primes. These primes will then be factor
+             base primes, and the more small factor base primes, the faster
+             relations will accumulate, since they hit the sieving interval
+             more often. 
+             
+             Also computes approximate inverses and modular square roots 
+             primes that are suitable as factor base primes
+ 
+==========================================================================*/
+
+unsigned long knuth_schroeppel(QS_t * qs_inf)
+{
+    float best_factor = -10.0f;
+    unsigned long multiplier = 1;
+    unsigned long nmod8, mod8, multindex, prime, nmod, mult;
+    const unsigned long max_fb_primes = qs_inf->num_primes;
+    unsigned long fb_prime = 2; // leave space for the multiplier and 2
+    float factors[NUMMULTS];
+    float logpdivp;
+    double pinv;
+    int kron;
+    
+    prime_t * factor_base = qs_inf->factor_base;
+    unsigned long * sqrts = qs_inf->sqrts;
+    
+    fmpz_t n = qs_inf->n;
+    nmod8 = n[1]%8;
+    
+    mpz_t r;
+        
+    for (multindex = 0; multindex < NUMMULTS; multindex++)
+    {
+       mod8 = ((nmod8*multipliers[multindex])%8);
+       factors[multindex] = 0.34657359; // ln2/2 
+       if (mod8 == 1) factors[multindex] *= 4.0;   
+       if (mod8 == 5) factors[multindex] *= 2.0;   
+       factors[multindex] -= (log((float) multipliers[multindex]) / 2.0);
+    }
+    
+    prime = 3;
+    while ((prime < KSMAX) && (fb_prime < max_fb_primes))
+    {
+          pinv = long_precompute_inverse(prime);
+          logpdivp = log((float)prime) / (float)prime; // log p / p
+          nmod = long_mod2_precomp(n[2], n[1], prime, pinv); 
+          if (nmod == 0) return prime;
+          kron = long_jacobi_precomp(nmod, prime, pinv); 
+          if (kron == 1)
+          {
+             factor_base[fb_prime].p = prime;
+             factor_base[fb_prime].pinv = pinv;
+             sqrts[fb_prime] = long_sqrtmod0(nmod, prime);
+             fb_prime++;
+          }
+          for (multindex = 0; multindex < NUMMULTS; multindex++)
+          {
+              mult = multipliers[multindex];
+              if (mult > prime) 
+              {
+                 if (mult >= prime*prime) mult = mult%prime; 
+                 else long_mod_precomp(mult, prime, pinv);
+              }
+              if (mult == 0) factors[multindex] += logpdivp;
+              else if (kron*long_jacobi_precomp(mult, prime, pinv) == 1) 
+                 factors[multindex] += 2.0*logpdivp;
+          }
+          
+          prime = long_nextprime(prime);
+    }
+    
+    for (multindex=0; multindex<NUMMULTS; multindex++)
+    {
+      if (factors[multindex] > best_factor)
+      { 
+        best_factor = factors[multindex];
+        multiplier = multipliers[multindex];
+      }
+    } 
+    
+    qs_inf->k = multiplier;
+    qs_inf->num_primes = fb_prime;
+    return 0;
+}
+
+unsigned long compute_factor_base(QS_t * qs_inf)
+{
+   unsigned long fb_prime = 2;
+   unsigned long multiplier = qs_inf->k;
+   prime_t * factor_base = qs_inf->factor_base;
+   unsigned long * sqrts = qs_inf->sqrts;
+   unsigned long num_primes = num_FB_primes(qs_inf->bits);
+   unsigned long prime, pinv, nmod;
+   fmpz_t n = qs_inf->n;
+   long kron;
+   
+   while ((factor_base[fb_prime].p != multiplier) && (fb_prime < qs_inf->num_primes)) fb_prime++;
+   if (fb_prime == qs_inf->num_primes)
+   {
+      factor_base[0].p = multiplier;
+      factor_base[0].pinv = long_precompute_inverse(multiplier);
+      sqrts[0] = 0; // n is a non-residue mod the multiplier
+   } else
+   {
+      factor_base[0].p = factor_base[fb_prime].p;
+      factor_base[0].pinv = factor_base[fb_prime].pinv;
+      sqrts[0] = sqrts[fb_prime];
+      
+      factor_base[1].p = 2; // don't compute an inverse for 2, just shift
+   
+      while (fb_prime < qs_inf->num_primes - 1)
+      {
+         factor_base[fb_prime].p = factor_base[fb_prime+1].p;
+         factor_base[fb_prime].pinv = factor_base[fb_prime+1].pinv;
+         sqrts[fb_prime] = sqrts[fb_prime+1];
+         fb_prime++;
+      }
+   }
+   
+   prime = factor_base[fb_prime-1].p;
+   while (fb_prime < num_primes)
+   {
+      prime = long_nextprime(prime);
+      pinv = long_precompute_inverse(prime);
+      nmod = long_mod2_precomp(n[2], n[1], prime, pinv); 
+      if (nmod == 0) return prime;
+      kron = long_jacobi_precomp(nmod, prime, pinv); 
+      if (kron == 1)
+      {
+         factor_base[fb_prime].p = prime;
+         factor_base[fb_prime].pinv = pinv;
+         sqrts[fb_prime] = long_sqrtmod0(nmod, prime);
+         fb_prime++;
+      }   
+   }
+   
+   qs_inf->num_primes = fb_prime;
+   return 0;
+}
