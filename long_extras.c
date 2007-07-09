@@ -48,7 +48,7 @@ unsigned long long_randint(unsigned long limit)
 
 double long_precompute_inverse(unsigned long n)
 {
-   return ((double) 1 / (double) n);
+   return (double) 1 / (double) n;
 }
 
 /* 

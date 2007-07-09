@@ -28,6 +28,7 @@
 
 #define FLINT_MAX(zzz1, zzz2) ((zzz1) > (zzz2) ? (zzz1) : (zzz2))
 #define FLINT_MIN(zzz1, zzz2) ((zzz1) > (zzz2) ? (zzz2) : (zzz1))
+#define FLINT_ABS(zzz) ((long)(zzz) < 0 ? (-zzz) : (zzz))
 
 
 /*

@@ -267,3 +267,12 @@ factor_base.o: QS/factor_base.c QS/factor_base.h
 
 tinyQS: QS/tinyQS.c QS/tinyQS.h factor_base.o poly.o long_extras.o memory-manager.o fmpz.o test-support.o
 	$(CC) $(CFLAGS) -o tinyQS QS/tinyQS.c factor_base.o poly.o memory-manager.o long_extras.o fmpz.o test-support.o $(LIBS)
+
+####### Integer multiplication timing
+
+ZMULOBJ = memory-manager.o fmpz.o ZmodF_mul-tuning.o fmpz_poly.o ZmodF_poly.o Z_mpn.o profiler.o ZmodF_mul.o ZmodF.o mpn_extras.o Z_mul_timing.o
+
+Z_mul_timing: $(ZMULOBJ)
+	$(CC) $(ZMULOBJ) -o Zmul $(LIBS)
+
+
