@@ -15,6 +15,8 @@
 #include "factor_base.h"
 #include "common.h"
 
+#define QS_INFO 0 // Print some info about what is being factored, etc
+
 #define MAXBITS 115
 #define EXTRA_RELS 64 // number of additional relations to find above the number of primes
 

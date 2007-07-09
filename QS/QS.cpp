@@ -1069,6 +1069,7 @@ void mainRoutine(unsigned long Mdiv2, mpz_t n, unsigned long multiplier)
 #ifdef TIMES
     counterfirst[2] = getcounter();
 #endif
+
     s = mpz_sizeinbase(n,2)/28+1;
      
     unsigned long * aind = (unsigned long*) calloc(sizeof(unsigned long),s);  
@@ -1145,6 +1146,8 @@ void mainRoutine(unsigned long Mdiv2, mpz_t n, unsigned long multiplier)
         long i,j;
         long ran;
            
+//====================================================================================
+
         mpz_set_ui(A,1);
         
         for (i = 0; i < s-1; )

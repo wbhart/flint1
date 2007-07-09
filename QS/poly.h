@@ -14,10 +14,15 @@
 
 #include "common.h"
 
+#define POLY_PARAMS 0 // Print the parameters being used to choose polynomials
+#define POLY_A 0 // Print target A and actual A
+
 typedef struct poly_s
 {
     unsigned long s;
     unsigned long fact, span, min;
+    unsigned long target_A;
+    unsigned long A;
      
     unsigned long * A_ind;
     unsigned long * A_modp;
@@ -30,5 +35,7 @@ typedef struct poly_s
 void poly_init(QS_t * qs_inf, poly_t * poly_inf, mpz_t N);
 
 void poly_clear(void);
+
+void compute_A(QS_t * qs_inf, poly_t * poly_inf);
 
 #endif

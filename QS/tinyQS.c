@@ -35,6 +35,8 @@
 
 unsigned long collect_relations(QS_t * qs_inf, poly_t * poly_inf)
 {
+   compute_A(qs_inf, poly_inf);
+   
    return 10;
 }
 
@@ -86,7 +88,6 @@ int F_mpz_factor_tinyQS(F_mpz_factor_t factors, mpz_t N)
    
    small_factor = compute_factor_base(&qs_inf); // Computes the factor base primes and modular square roots
    if (small_factor) goto cleanup_1;
-   
    compute_sizes(&qs_inf);
    
    poly_init(&qs_inf, &poly_inf, N);
@@ -139,11 +140,20 @@ int main(int argc, unsigned char *argv[])
     unsigned long failed = 0;
     unsigned long small_factors = 0;
     unsigned long succeed = 0;
+    unsigned long bits1, bits2;
     
     for (unsigned long i = 0; i < 10000; i++)
     {
-       mpz_set_ui(N, long_nextprime(long_randint(100000000000000000)+1));
-       mpz_mul_ui(N, N, long_nextprime(long_randint(100000000000000000)+1));
+       mpz_set_ui(N, long_nextprime(long_randint(4000000000UL)+1UL));
+       bits1 = long_randint(41UL)+13UL;
+       bits2 = long_randint(22UL)+13UL;
+       mpz_mul_ui(N, N, long_nextprime(long_randint((1UL<<bits1)-1UL)+1UL));
+       mpz_mul_ui(N, N, long_nextprime(long_randint((1UL<<bits2)-1UL)+1UL));
+
+#if QS_INFO
+       gmp_printf("Factoring %Zd\n", N);
+#endif
+
        factor = F_mpz_factor_tinyQS(factors, N);
        if (!factor) failed++;
        if (factor > 1) small_factors++;

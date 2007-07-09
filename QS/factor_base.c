@@ -109,6 +109,7 @@ void sizes_clear(void)
 {
    flint_stack_release();
 }
+
 /*=========================================================================
    Knuth-Schroeppel algorithm:
  
@@ -199,6 +200,15 @@ unsigned long knuth_schroeppel(QS_t * qs_inf)
     return 0;
 }
 
+/*=========================================================================
+   Compute Factor Base:
+ 
+   Function: Compute all the primes p for which n is a quadratic residue 
+             mod p. Compute square roots of n modulo each p.
+ 
+==========================================================================*/
+
+
 unsigned long compute_factor_base(QS_t * qs_inf)
 {
    unsigned long fb_prime = 2;
@@ -206,11 +216,13 @@ unsigned long compute_factor_base(QS_t * qs_inf)
    prime_t * factor_base = qs_inf->factor_base;
    unsigned long * sqrts = qs_inf->sqrts;
    unsigned long num_primes = num_FB_primes(qs_inf->bits);
-   unsigned long prime, pinv, nmod;
+   unsigned long prime, nmod;
+   double pinv;
    fmpz_t n = qs_inf->n;
    long kron;
    
    while ((factor_base[fb_prime].p != multiplier) && (fb_prime < qs_inf->num_primes)) fb_prime++;
+   
    if (fb_prime == qs_inf->num_primes)
    {
       factor_base[0].p = multiplier;
@@ -232,7 +244,7 @@ unsigned long compute_factor_base(QS_t * qs_inf)
          fb_prime++;
       }
    }
-   
+    
    prime = factor_base[fb_prime-1].p;
    while (fb_prime < num_primes)
    {
