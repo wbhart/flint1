@@ -61,8 +61,8 @@ void Z_combine_limbs(mp_limb_t * res, ZmodF_poly_t poly, unsigned long coeff_lim
 
 }
 
-mp_limb_t Z_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1, 
-                                      mp_limb_t * data2, unsigned long limbs2)
+mp_limb_t __Z_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1, 
+                                      mp_limb_t * data2, unsigned long limbs2, unsigned long twk)
 {
    unsigned long length = 1;
    unsigned long log_length = 0;
@@ -76,46 +76,10 @@ mp_limb_t Z_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1,
    
    unsigned log_length2 = 0;
    
-   unsigned long twk;
-   
    if (coeff_limbs/2 < 2300) 
    {
       return mpn_mul(res, data1, limbs1, data2, limbs2);
-   }
-   
-   if (data1 != data2)
-   {
-      if (coeff_limbs/2 < MUL_TWK_SMALL_CUTOFF) twk = MUL_TWK_SMALL_DEFAULT;
-      else if (coeff_limbs/2 > MUL_TWK_LARGE_CUTOFF) twk = MUL_TWK_LARGE_DEFAULT;
-      else 
-      {  
-         for (unsigned long twk_count = 0; twk_count < MUL_TWK_COUNT; twk_count++)
-         {
-            if ((coeff_limbs/2 < MUL_TWK_VALS[twk_count][0]) || (coeff_limbs/2 < MUL_TWK_VALS[twk_count][1])) continue;
-            else 
-            {
-               twk = MUL_TWK_VALS[twk_count][2];
-               break;
-            }
-         }
-      }
-   } else
-   {
-      if (coeff_limbs/2 < SQR_TWK_SMALL_CUTOFF) twk = SQR_TWK_SMALL_DEFAULT;
-      else if (coeff_limbs/2 > SQR_TWK_LARGE_CUTOFF) twk = SQR_TWK_LARGE_DEFAULT;
-      else 
-      {  
-         for (unsigned long twk_count = 0; twk_count < SQR_TWK_COUNT; twk_count++)
-         {
-            if ((coeff_limbs/2 < SQR_TWK_VALS[twk_count][0]) || (coeff_limbs/2 < SQR_TWK_VALS[twk_count][1])) continue;
-            else 
-            {
-               twk = SQR_TWK_VALS[twk_count][2];
-               break;
-            }
-         }
-      }
-   }
+   } 
    
    if (twk > 64)
    {
@@ -204,6 +168,49 @@ mp_limb_t Z_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1,
    ZmodF_poly_stack_clear(poly1);
    
    return res[limbs1+limbs2-1];
+}
+
+mp_limb_t Z_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1, 
+                                      mp_limb_t * data2, unsigned long limbs2)
+{
+   unsigned long coeff_limbs = limbs1 + limbs2;
+   unsigned long twk;
+   
+   if (data1 != data2)
+   {
+      if (coeff_limbs/2 < MUL_TWK_SMALL_CUTOFF) twk = MUL_TWK_SMALL_DEFAULT;
+      else if (coeff_limbs/2 > MUL_TWK_LARGE_CUTOFF) twk = MUL_TWK_LARGE_DEFAULT;
+      else 
+      {  
+         for (unsigned long twk_count = 0; twk_count < MUL_TWK_COUNT; twk_count++)
+         {
+            if ((coeff_limbs/2 < MUL_TWK_VALS[twk_count][0]) || (coeff_limbs/2 < MUL_TWK_VALS[twk_count][1])) continue;
+            else 
+            {
+               twk = MUL_TWK_VALS[twk_count][2];
+               break;
+            }
+         }
+      }
+   } else
+   {
+      if (coeff_limbs/2 < SQR_TWK_SMALL_CUTOFF) twk = SQR_TWK_SMALL_DEFAULT;
+      else if (coeff_limbs/2 > SQR_TWK_LARGE_CUTOFF) twk = SQR_TWK_LARGE_DEFAULT;
+      else 
+      {  
+         for (unsigned long twk_count = 0; twk_count < SQR_TWK_COUNT; twk_count++)
+         {
+            if ((coeff_limbs/2 < SQR_TWK_VALS[twk_count][0]) || (coeff_limbs/2 < SQR_TWK_VALS[twk_count][1])) continue;
+            else 
+            {
+               twk = SQR_TWK_VALS[twk_count][2];
+               break;
+            }
+         }
+      }
+   }
+
+   return __Z_mpn_mul(res, data1, limbs1, data2, limbs2, twk);
 }
 
 void Z_mpn_mul_precomp_init(Z_mpn_precomp_t precomp, mp_limb_t * data1, unsigned long limbs1, unsigned long limbs2)
@@ -303,6 +310,21 @@ mp_limb_t Z_mpn_mul_precomp(mp_limb_t * res, mp_limb_t * data2, unsigned long li
    ZmodF_poly_stack_clear(poly2);
    
    return res[precomp->limbs1+precomp->limbs2-1];
+}
+
+void __Z_mul(mpz_t res, mpz_t a, mpz_t b, unsigned long twk)
+{
+   unsigned long int limbs;
+   if (a->_mp_size + b->_mp_size > 128000/FLINT_BITS) 
+   {
+      if (a->_mp_size >= b->_mp_size) limbs = a->_mp_size;
+      else limbs = b->_mp_size;
+      mp_limb_t* output = (mp_limb_t*) flint_stack_alloc(a->_mp_size+b->_mp_size);
+      __Z_mpn_mul(output, a->_mp_d, a->_mp_size, b->_mp_d, b->_mp_size, twk);
+      mpz_import(res, a->_mp_size+b->_mp_size, -1, sizeof(mp_limb_t), 0, 0, output);
+      if (mpz_sgn(res) != mpz_sgn(a)*mpz_sgn(b)) mpz_neg(res,res);
+      flint_stack_release();
+   } else mpz_mul(res, a, b);
 }
 
 void Z_mul(mpz_t res, mpz_t a, mpz_t b)

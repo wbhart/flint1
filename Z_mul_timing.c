@@ -23,7 +23,7 @@ TRIALS = number of trials to perform.
 LOGLENGTH = log of degree+1.
 BITS = number of bits to use in each coefficient. */
 
-unsigned long run_Z_Mul(unsigned long num_trials, unsigned coeff_bits, int fast, unsigned long tweak)
+unsigned long run_Z_Mul(unsigned long num_trials, unsigned long coeff_bits, int fast, unsigned long tweak)
 {
    unsigned long i;
    
@@ -70,7 +70,7 @@ unsigned long run_Z_Mul(unsigned long num_trials, unsigned coeff_bits, int fast,
       start_clock(0);
       if (fast)
       {
-         Z_mul(data3, data1, data1, tweak);
+         __Z_mul(data3, data1, data1, tweak);
       } else
       {
          mpz_mul(data4, data1, data1);
@@ -94,7 +94,7 @@ int main (int argc, const char * argv[])
    unsigned long tweak;
    unsigned long bits;
    
-   for (unsigned long words = 1000UL; words < 17100000; words=floor(words*pow(2.0,1.0/64.0))) 
+   for (unsigned long words = 1000UL; words < 500000000; words=floor(words*pow(2.0,1.0/64.0))) 
    {
        bits = 64*words;
        printf("%ld words\n",words);
