@@ -113,8 +113,9 @@ void sample_fmpz_poly_mul_KS(unsigned long length, unsigned long bits,
   
    _fmpz_poly_stack_init(poly1, length, (bits-1)/FLINT_BITS+1);
    _fmpz_poly_stack_init(poly2, length, (bits-1)/FLINT_BITS+1);
-   _fmpz_poly_stack_init(poly3, 2*length-1, (output_bits-1)/FLINT_BITS+1);
-    
+   if (length >= 3) _fmpz_poly_stack_init(poly3, 2*length-1, (output_bits-1)/FLINT_BITS+1);
+   else _fmpz_poly_stack_init(poly3, 2*length-1, poly1->limbs+poly2->limbs+m);
+   
    unsigned long r_count;    // how often to generate new random data
    
    if (count >= 1000) r_count = 100;
