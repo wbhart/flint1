@@ -12,7 +12,7 @@
 
 #include "../fmpz.h"
 
-#define SIEVE_SIZE 65536
+#define SIEVE_SIZE 16384
 
 typedef struct prime_s
 {

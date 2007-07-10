@@ -37,7 +37,11 @@ unsigned long collect_relations(QS_t * qs_inf, poly_t * poly_inf)
 {
    compute_A(qs_inf, poly_inf);
    
-   return 10;
+   compute_B_terms(qs_inf, poly_inf);
+   
+   compute_off_adj(qs_inf, poly_inf);
+   
+   return 3*(1<<(poly_inf->s-1));
 }
 
 /*===========================================================================
@@ -142,13 +146,14 @@ int main(int argc, unsigned char *argv[])
     unsigned long succeed = 0;
     unsigned long bits1, bits2;
     
-    for (unsigned long i = 0; i < 10000; i++)
+    for (unsigned long i = 0; i < 1000; i++)
     {
-       mpz_set_ui(N, long_nextprime(long_randint(4000000000UL)+1UL));
-       bits1 = long_randint(41UL)+13UL;
-       bits2 = long_randint(22UL)+13UL;
-       mpz_mul_ui(N, N, long_nextprime(long_randint((1UL<<bits1)-1UL)+1UL));
-       mpz_mul_ui(N, N, long_nextprime(long_randint((1UL<<bits2)-1UL)+1UL));
+       mpz_set_ui(N, long_nextprime(long_randint(100000000000000000UL)+1UL));
+       mpz_mul_ui(N, N, long_nextprime(long_randint(40000000000000000UL)+1UL));
+       //bits1 = long_randint(41UL)+13UL;
+       //bits2 = long_randint(22UL)+13UL;
+       //mpz_mul_ui(N, N, long_nextprime(long_randint((1UL<<bits1)-1UL)+1UL));
+       //mpz_mul_ui(N, N, long_nextprime(long_randint((1UL<<bits2)-1UL)+1UL));
 
 #if QS_INFO
        gmp_printf("Factoring %Zd\n", N);
