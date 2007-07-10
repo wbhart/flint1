@@ -334,8 +334,6 @@ void profDriver_fmpz_poly_mul_karatsuba(char* params)
 void sample_fmpz_poly_mul(unsigned long length, unsigned long bits,
                           void* arg, unsigned long count)
 {
-   printf("hello, count = %ld\n", count);
-
    unsigned long m = ceil_log2(length);
    unsigned long output_bits = 2*bits+m;
    
