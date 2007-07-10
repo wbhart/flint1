@@ -59,9 +59,54 @@ double long_precompute_inverse(unsigned long n)
 
 unsigned long long_mod_precomp(unsigned long a, unsigned long n, double ninv)
 {
+   if (a < n) return a;
    unsigned long quot = (unsigned long) ((double) a * ninv);
    unsigned long rem = a - quot*n;
    if (rem >= n) return rem - n;
+   else return rem;
+}
+
+/* 
+    Returns a / n given a precomputed approx inverse ninv
+    Operation is *unsigned*
+    Requires that n be no more than 63 bits but there are no
+    restrictions on _a_
+*/
+
+unsigned long long_div63_precomp(unsigned long a, unsigned long n, double ninv)
+{
+   if (a < n) return 0;
+   unsigned long quot = (unsigned long) ((double) a * ninv);
+   long rem = a - quot*n;
+   if (rem < (long)(-n)) quot -= (unsigned long) ((double) (-rem) * ninv);
+   else if (rem >= (long) n) quot += (unsigned long) ((double) rem * ninv);
+   else if (rem < 0L) return quot - 1;
+   else return quot;
+   rem = a - quot*n;
+   if (rem >= (long) n) return quot + 1;
+   else if (rem < 0L) return quot - 1;
+   else return quot;
+}
+
+/* 
+    Returns a % n given a precomputed approx inverse ninv
+    Operation is *unsigned*
+    Requires that n be no more than 63 bits but there are no
+    restrictions on _a_
+*/
+
+unsigned long long_mod63_precomp(unsigned long a, unsigned long n, double ninv)
+{
+   if (a < n) return a;
+   unsigned long quot = (unsigned long) ((double) a * ninv);
+   long rem = a - quot*n;
+   if (rem < (long)(-n)) quot -= (unsigned long) ((double) (-rem) * ninv);
+   else if (rem >= (long) n) quot += (unsigned long) ((double) rem * ninv);
+   else if (rem < 0L) return rem + n;
+   else return rem;
+   rem = a - quot*n;
+   if (rem >= (long) n) return rem - n;
+   else if (rem < 0L) return rem + n;
    else return rem;
 }
 
@@ -806,6 +851,8 @@ unsigned long long_nextprime(unsigned long n)
 
 unsigned long long_invert(unsigned long a, unsigned long p)
 {
+   if (a == 0) return 0;
+   
    long u1=1, u3=a;
    long v1=0, v3=p;
    long t1=0, t3=0;

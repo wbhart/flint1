@@ -60,6 +60,86 @@ int test_long_mod_precomp()
    return result;
 }
 
+int test_long_div63_precomp()
+{
+   double ninv;
+   unsigned long n, bits;
+   unsigned long a, res1, res2;
+   
+   int result = 1;
+   
+   for (unsigned long count = 0; (count < 20000) && (result == 1); count++)
+   { 
+      bits = long_randint(63)+1;
+      n = random_ulong((1UL<<bits)-1)+1;
+         
+      ninv = long_precompute_inverse(n);
+      
+      for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
+      {
+         bits = long_randint(63)+1;
+         a = random_ulong((1UL<<bits)-1)+1;
+         //a = random_ulong(18446744073709551615UL);
+       
+         for (unsigned long count = 0; count < 100; count++)   
+            res1 = long_div63_precomp(a, n, ninv);
+                  
+         res2 = a / n;
+         
+#if DEBUG2              
+         if (res1 != res2)
+         {
+            printf("a = %ld, n = %ld, ninv = %lf, res1 = %ld, res2 = %ld\n", a, n, ninv, res1, res2);
+         }
+#endif
+         
+         result = (res1 == res2);
+      }
+   } 
+     
+   return result;
+}
+
+int test_long_mod63_precomp()
+{
+   double ninv;
+   unsigned long n, bits;
+   unsigned long a, res1, res2;
+   
+   int result = 1;
+   
+   for (unsigned long count = 0; (count < 20000) && (result == 1); count++)
+   { 
+      bits = long_randint(63)+1;
+      n = random_ulong((1UL<<bits)-1)+1;
+         
+      ninv = long_precompute_inverse(n);
+      
+      for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
+      {
+         bits = long_randint(63)+1;
+         a = random_ulong((1UL<<bits)-1)+1;
+         //a = random_ulong(18446744073709551615UL);
+       
+         for (unsigned long count = 0; count < 100; count++)   
+            res1 = long_mod63_precomp(a, n, ninv);
+                  
+         res2 = a % n;
+         
+#if DEBUG2              
+         if (res1 != res2)
+         {
+            printf("a = %ld, n = %ld, ninv = %lf, res1 = %ld, res2 = %ld\n", a, n, ninv, res1, res2);
+         }
+#endif
+         
+         result = (res1 == res2);
+      }
+   } 
+     
+   return result;
+}
+
 int test_long_mod2_precomp()
 {
    double ninv;
@@ -729,6 +809,8 @@ void fmpz_poly_test_all()
    int success, all_success = 1;
 
    RUN_TEST(long_mod_precomp);
+   RUN_TEST(long_div63_precomp);
+   RUN_TEST(long_mod63_precomp);
    RUN_TEST(long_mod2_precomp);
    RUN_TEST(long_mulmod_precomp);
    RUN_TEST(long_powmod0);

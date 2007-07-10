@@ -404,6 +404,10 @@ void __fmpz_poly_add_coeffs(mp_limb_t * coeffs_out, mp_limb_t * coeffs1, mp_limb
    }
 }
 
+/* 
+     Add an unsigned long to a polynomial coefficient
+*/
+
 void __fmpz_poly_add_coeff_ui(mp_limb_t * output, unsigned long x)
 {
    unsigned long carry;
@@ -440,6 +444,11 @@ void __fmpz_poly_add_coeff_ui(mp_limb_t * output, unsigned long x)
       }
    }
 }
+
+/*
+   Add an unsigned long to a coefficient. 
+   Assumes the output coefficient is non-negative.   
+*/
 
 void __fmpz_poly_add_coeff2_ui(mp_limb_t * output, unsigned long x)
 {
@@ -600,7 +609,7 @@ void __fmpz_poly_sub_coeffs(mp_limb_t * coeffs_out, mp_limb_t * coeffs1, mp_limb
 }
 
 /* 
-    Add two polynomials together 
+    Subtract two polynomials
 */
 
 void _fmpz_poly_sub(fmpz_poly_t output, fmpz_poly_p input1, fmpz_poly_p input2)
@@ -637,7 +646,7 @@ void _fmpz_poly_sub(fmpz_poly_t output, fmpz_poly_p input1, fmpz_poly_p input2)
 }
 
 /* 
-   Multiplies two coefficient
+   Multiplies two coefficients
    Assumes no overlap
 */
 
@@ -1441,6 +1450,10 @@ void _fmpz_poly_scalar_mul(fmpz_poly_t output, fmpz_poly_t poly, mp_limb_t * x)
    } 
    output->length = poly->length;
 }
+
+/* 
+   Set n of the coefficients of poly to zero.
+*/
 
 void _fmpz_poly_zero_coeffs(fmpz_poly_t poly, unsigned long n)
 {
