@@ -25,6 +25,10 @@ double long_precompute_inverse(unsigned long n);
 
 unsigned long long_mod_precomp(unsigned long a, unsigned long n, double ninv);
 
+unsigned long long_div63_precomp(unsigned long a, unsigned long n, double ninv);
+
+unsigned long long_mod63_precomp(unsigned long a, unsigned long n, double ninv);
+
 unsigned long long_mod2_precomp(unsigned long a_hi, unsigned long a_lo, 
                                              unsigned long n, double ninv);
 
