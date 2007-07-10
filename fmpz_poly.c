@@ -1382,7 +1382,7 @@ void _fmpz_poly_mul(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_t input2)
 {
    if ((input1->length <= 2) && (input2->length <= 2)) 
    {
-      _fmpz_poly_mul_naive(output, input1, input2);
+      _fmpz_poly_mul_karatsuba(output, input1, input2);
       return;
    }
    
