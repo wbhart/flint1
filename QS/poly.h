@@ -31,6 +31,7 @@ typedef struct poly_s
     unsigned long * soln1;
     unsigned long * soln2;
     unsigned long ** A_inv2B; 
+    double * inv_p2;
     
     unsigned long * B_terms;
 } poly_t;
@@ -44,4 +45,7 @@ void compute_A(QS_t * qs_inf, poly_t * poly_inf);
 void compute_B_terms(QS_t * qs_inf, poly_t * poly_inf);
 
 void compute_off_adj(QS_t * qs_inf, poly_t * poly_inf);
+
+void compute_A_factor_offsets(QS_t * qs_inf, poly_t * poly_inf);
+
 #endif

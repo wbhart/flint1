@@ -1070,7 +1070,7 @@ void mainRoutine(unsigned long Mdiv2, mpz_t n, unsigned long multiplier)
     counterfirst[2] = getcounter();
 #endif
 
-    s = mpz_sizeinbase(n,2)/28+1;
+    s = (mpz_sizeinbase(n,2)-1)/23+1;
      
     unsigned long * aind = (unsigned long*) calloc(sizeof(unsigned long),s);  
     unsigned long * amodp = (unsigned long*) calloc(sizeof(unsigned long),s); 
@@ -1146,8 +1146,6 @@ void mainRoutine(unsigned long Mdiv2, mpz_t n, unsigned long multiplier)
         long i,j;
         long ran;
            
-//====================================================================================
-
         mpz_set_ui(A,1);
         
         for (i = 0; i < s-1; )
@@ -1235,8 +1233,11 @@ void mainRoutine(unsigned long Mdiv2, mpz_t n, unsigned long multiplier)
            mpz_neg(temp,temp);
            mpz_mul_ui(temp,temp,2*Ainv[i]);
            soln2[i] = mpz_fdiv_r_ui(temp,temp,p)+soln1[i];
+           if (soln2[i] >= p) soln2[i] -= p;
         }  
             
+//====================================================================================
+
         for (long polyindex=1; polyindex<(1<<(s-1))-1; polyindex++)
         {
            long j,polyadd;
@@ -1264,13 +1265,14 @@ void mainRoutine(unsigned long Mdiv2, mpz_t n, unsigned long multiplier)
               mpz_fdiv_r_ui(D,n,p*p);
               mpz_fdiv_r_ui(Bdivp2,B,p*p);
               mpz_mul_ui(temp,Bdivp2,amodp[j]);
-              mpz_realloc2(temp3,64);
-	          mpz_fdiv_r_ui(temp,temp,p);
+              //mpz_realloc2(temp3,64);
+	          //mpz_fdiv_r_ui(temp,temp,p);
 	          u1 = modinverse(mpz_fdiv_r_ui(temp,temp,p),p);        
-              mpz_mul(temp,Bdivp2,Bdivp2);
-              mpz_sub(temp,temp,D);
-              mpz_neg(temp,temp);
-              mpz_div_ui(temp,temp,p);
+              //mpz_mul(temp,Bdivp2,Bdivp2);
+              //mpz_sub(temp,temp,D);
+              mpz_submul(D,Bdivp2,Bdivp2);
+              //mpz_neg(temp,temp);
+              mpz_div_ui(temp,D,p);
               mpz_mul_ui(temp,temp,u1);
               mpz_add_ui(temp,temp,Mdiv2);
               mpz_add_ui(temp,temp,p);

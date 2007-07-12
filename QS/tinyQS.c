@@ -1,4 +1,3 @@
-#include <stdio.h>
 /******************************************************************************
 
  tinyQS.c
@@ -9,6 +8,7 @@
 
 ******************************************************************************/
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <gmp.h>
@@ -35,13 +35,30 @@
 
 unsigned long collect_relations(QS_t * qs_inf, poly_t * poly_inf)
 {
+   unsigned long s = poly_inf->s;
+   unsigned long * poly_corr;
+   unsigned long relations = 0;
+   unsigned long ** A_inv2B = poly_inf->A_inv2B;
+   unsigned long i, j;
+   
    compute_A(qs_inf, poly_inf);
-   
    compute_B_terms(qs_inf, poly_inf);
-   
    compute_off_adj(qs_inf, poly_inf);
    
-   return 3*(1<<(poly_inf->s-1));
+   for (i = 0; i < (1<<(s-1)); i++)
+   {
+      for (j = 0; j < s; j++)
+      {
+         if (((i>>j) & 1) != 0) break;
+      }
+      poly_corr = A_inv2B[j];
+           
+      compute_A_factor_offsets(qs_inf, poly_inf);
+      
+      relations += 3;    
+   }
+   
+   return relations;
 }
 
 /*===========================================================================
@@ -71,11 +88,11 @@ int F_mpz_factor_tinyQS(F_mpz_factor_t factors, mpz_t N)
    qs_inf.n[2] = 0;
    mpz_to_fmpz(qs_inf.n, N); // set n to the number to be factored
    
+   small_factor = knuth_schroeppel(&qs_inf); // Compute multiplier and some FB primes
+   if (small_factor) goto cleanup_2;
+   
    primes_init(&qs_inf);
    sqrts_init(&qs_inf);
-   
-   small_factor = knuth_schroeppel(&qs_inf); // Compute multiplier and some FB primes
-   if (small_factor) goto cleanup_1;
    
    mpz_init(temp);
    mpz_set(temp, N);
@@ -107,6 +124,7 @@ int F_mpz_factor_tinyQS(F_mpz_factor_t factors, mpz_t N)
 cleanup_1:
    sqrts_clear(); // release modular square roots
    primes_clear(); // release factor_base
+cleanup_2:
    flint_stack_release(); // release n
    
    return small_factor;    
@@ -144,9 +162,9 @@ int main(int argc, unsigned char *argv[])
     unsigned long failed = 0;
     unsigned long small_factors = 0;
     unsigned long succeed = 0;
-    unsigned long bits1, bits2;
+    unsigned long bits1, bits2, i;
     
-    for (unsigned long i = 0; i < 1000; i++)
+    for (i = 0; i < 1000; i++)
     {
        mpz_set_ui(N, long_nextprime(long_randint(100000000000000000UL)+1UL));
        mpz_mul_ui(N, N, long_nextprime(long_randint(40000000000000000UL)+1UL));

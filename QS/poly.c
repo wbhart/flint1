@@ -41,6 +41,7 @@ void poly_init(QS_t * qs_inf, poly_t * poly_inf, mpz_t N)
    poly_inf->A_ind = (unsigned long*) flint_stack_alloc(s);  
    poly_inf->A_modp = (unsigned long*) flint_stack_alloc(s);  
    poly_inf->A_inv2B = (unsigned long**) flint_stack_alloc(s); 
+   poly_inf->inv_p2 = (double*) flint_stack_alloc_bytes(s*sizeof(double));  
    poly_inf->A_inv = (unsigned long*) flint_stack_alloc(num_primes);  
    poly_inf->soln1 = (unsigned long*) flint_stack_alloc(num_primes); 
    poly_inf->soln2 = (unsigned long*) flint_stack_alloc(num_primes); 
@@ -82,7 +83,7 @@ void poly_init(QS_t * qs_inf, poly_t * poly_inf, mpz_t N)
    poly_inf->min = min;
    poly_inf->fact = fact;
    poly_inf->span = span;
-   
+          
    mpz_clear(temp); 
 }
 
@@ -92,6 +93,7 @@ void poly_clear(void)
    flint_stack_release(); // release soln1
    flint_stack_release(); // release soln2
    flint_stack_release(); // release A_inv
+   flint_stack_release(); // release inv_p2
    flint_stack_release(); // release A_inv2B
    flint_stack_release(); // release A_modp
    flint_stack_release(); // release A_ind
@@ -114,7 +116,7 @@ void compute_A(QS_t * qs_inf, poly_t * poly_inf)
    unsigned long s = poly_inf->s;
    unsigned long * A_ind = poly_inf->A_ind;
    prime_t * factor_base = qs_inf->factor_base;
-   unsigned long factor, i;
+   unsigned long factor, i, p;
    unsigned long diff, best_diff, best1, best2;
    
    unsigned long A;
@@ -189,8 +191,8 @@ void compute_A(QS_t * qs_inf, poly_t * poly_inf)
           if (i == 0)
           {
              best_diff = FLINT_ABS(factor_base[A_ind[3]].p * factor_base[A_ind[4]].p - factor);
-             best1 = factor_base[A_ind[3]].p;
-             best2 = factor_base[A_ind[4]].p;
+             best1 = A_ind[3];
+             best2 = A_ind[4];
              continue;
           }
           
@@ -213,7 +215,13 @@ void compute_A(QS_t * qs_inf, poly_t * poly_inf)
 
 #if POLY_A
    if ((s == 4) || (s == 5)) printf("A = %ld, target A = %ld\n", A, poly_inf->target_A);
-#endif          
+#endif    
+ 
+   for (i = 0; i < s; i++)
+   {
+      p = factor_base[A_ind[i]].p;
+      poly_inf->inv_p2[i] = long_precompute_inverse(p*p);
+   }      
 }
 
 /*=========================================================================
@@ -310,3 +318,46 @@ void compute_off_adj(QS_t * qs_inf, poly_t * poly_inf)
       if (soln2[i] >= p) soln2[i] -= p;
    }  
 }
+
+/*=========================================================================
+   Compute offsets and hypercube polynomial correction factors:
+ 
+   Function: Compute the starting offsets in the sieve for each prime
+             and the polynomial correction factors used by the 
+             hypercube method
+ 
+==========================================================================*/
+void compute_A_factor_offsets(QS_t * qs_inf, poly_t * poly_inf)
+{
+   unsigned long s = poly_inf->s;
+   unsigned long * A_ind = poly_inf->A_ind;
+   unsigned long * A_modp = poly_inf->A_modp;
+   unsigned long * soln1 = poly_inf->soln1;
+   unsigned long * soln2 = poly_inf->soln2;
+   unsigned long p, D;
+   unsigned long * n = qs_inf->n;
+   unsigned long B = poly_inf->B;
+   unsigned long temp, temp2, B_divp2, index; 
+   prime_t * factor_base = qs_inf->factor_base;
+   double * inv_p2 = poly_inf->inv_p2;
+   double pinv;
+   
+   for (unsigned long j = 0; j < s; j++)
+   {
+      index = A_ind[j];
+      p = factor_base[index].p;
+      pinv = factor_base[index].pinv;
+      D = long_mod2_precomp(n[2], n[1], p*p, inv_p2[j]);
+      B_divp2 = long_mod63_precomp(B, p*p, inv_p2[j]);
+      temp = B_divp2*A_modp[j];
+      temp = long_mod63_precomp(temp, p, pinv); 
+      temp2 = long_invert(temp, p);
+      D -= B_divp2*B_divp2;
+      temp = long_div63_precomp(D, p, pinv);
+      temp *= temp2;
+      temp += SIEVE_SIZE/2;
+      temp += p;
+      soln1[index] = long_mod63_precomp(temp, p, pinv);
+      soln2[index] = -1L;
+   }
+}          

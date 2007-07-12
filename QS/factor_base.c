@@ -138,7 +138,6 @@ unsigned long knuth_schroeppel(QS_t * qs_inf)
     double pinv;
     int kron;
     
-    prime_t * factor_base = qs_inf->factor_base;
     unsigned long * sqrts = qs_inf->sqrts;
     
     fmpz_t n = qs_inf->n;
@@ -163,13 +162,6 @@ unsigned long knuth_schroeppel(QS_t * qs_inf)
           nmod = long_mod2_precomp(n[2], n[1], prime, pinv); 
           if (nmod == 0) return prime;
           kron = long_jacobi_precomp(nmod, prime, pinv); 
-          if (kron == 1)
-          {
-             factor_base[fb_prime].p = prime;
-             factor_base[fb_prime].pinv = pinv;
-             sqrts[fb_prime] = long_sqrtmod0(nmod, prime);
-             fb_prime++;
-          }
           for (multindex = 0; multindex < NUMMULTS; multindex++)
           {
               mult = multipliers[multindex];
@@ -196,7 +188,6 @@ unsigned long knuth_schroeppel(QS_t * qs_inf)
     } 
     
     qs_inf->k = multiplier;
-    qs_inf->num_primes = fb_prime;
     return 0;
 }
 
@@ -220,38 +211,18 @@ unsigned long compute_factor_base(QS_t * qs_inf)
    double pinv;
    fmpz_t n = qs_inf->n;
    long kron;
-   
-   while ((factor_base[fb_prime].p != multiplier) && (fb_prime < qs_inf->num_primes)) fb_prime++;
-   
-   if (fb_prime == qs_inf->num_primes)
-   {
-      factor_base[0].p = multiplier;
-      factor_base[0].pinv = long_precompute_inverse(multiplier);
-      sqrts[0] = 0; // n is a non-residue mod the multiplier
-   } else
-   {
-      factor_base[0].p = factor_base[fb_prime].p;
-      factor_base[0].pinv = factor_base[fb_prime].pinv;
-      sqrts[0] = sqrts[fb_prime];
-      
-      factor_base[1].p = 2; // don't compute an inverse for 2, just shift
-   
-      while (fb_prime < qs_inf->num_primes - 1)
-      {
-         factor_base[fb_prime].p = factor_base[fb_prime+1].p;
-         factor_base[fb_prime].pinv = factor_base[fb_prime+1].pinv;
-         sqrts[fb_prime] = sqrts[fb_prime+1];
-         fb_prime++;
-      }
-   }
     
-   prime = factor_base[fb_prime-1].p;
+   factor_base[0].p = multiplier;
+   factor_base[0].pinv = long_precompute_inverse(multiplier);
+   factor_base[1].p = 2;
+   prime = 2;
+   
    while (fb_prime < num_primes)
    {
       prime = long_nextprime(prime);
       pinv = long_precompute_inverse(prime);
       nmod = long_mod2_precomp(n[2], n[1], prime, pinv); 
-      if (nmod == 0) return prime;
+      if ((nmod == 0) && (prime != multiplier)) return prime;
       kron = long_jacobi_precomp(nmod, prime, pinv); 
       if (kron == 1)
       {
