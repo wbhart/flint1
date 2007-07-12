@@ -241,7 +241,7 @@ int main(int argc, char* argv[])
    fprintf(fout, "#include \"ZmodF_mul-tuning.h\"\n");
    fprintf(fout, "#include \"ZmodF_mul.h\"\n");
    fprintf(fout, "\n");
-   fflush(stdout);
+   fflush(fout);
 
    for (int squaring = 0; squaring <= 1; squaring++)
    {
@@ -252,7 +252,7 @@ int main(int argc, char* argv[])
       for (n = 3; algo_compare(n, squaring, 1, 0, flog); n += 3);
       fprintf(fout, "unsigned long ZmodF_%s_plain_threeway_threshold = %ld;\n",
               type, n);
-      fflush(stdout);
+      fflush(fout);
 
       if (!squaring)
          ZmodF_mul_plain_threeway_threshold = n;
@@ -263,7 +263,7 @@ int main(int argc, char* argv[])
       n = algo_threshold(0, 3, squaring, 0, flog);
       fprintf(fout, "unsigned long ZmodF_%s_plain_fft_threshold = %ld;\n",
               type, n);
-      fflush(stdout);
+      fflush(fout);
 
       if (!squaring)
          ZmodF_mul_plain_fft_threshold = n;
@@ -274,7 +274,7 @@ int main(int argc, char* argv[])
       n = algo_threshold(1, 4, squaring, 0, flog);
       fprintf(fout, "unsigned long ZmodF_%s_threeway_fft_threshold = %ld;\n",
               type, n);
-      fflush(stdout);
+      fflush(fout);
 
       if (!squaring)
          ZmodF_mul_threeway_fft_threshold = n;
