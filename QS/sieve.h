@@ -16,5 +16,9 @@
 
 void do_sieving(unsigned long poly_add, unsigned long * poly_corr, 
                 QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve);
+                
+void evaluate_sieve(QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve);
+
+void evaluate_candidate(QS_t * qs_inf, poly_t * poly_inf, unsigned long i);
 
 #endif

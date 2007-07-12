@@ -761,7 +761,12 @@ void evaluateSieve(unsigned long ** relations, unsigned long ctimesreps, unsigne
            }   
            i++;
               
-        };      
+        }; 
+        if (j<M/sizeof(unsigned long)) 
+        {
+           sieve[i-1] = 0;
+           j--;
+        }     
      }  
      
      return;

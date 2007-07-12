@@ -61,13 +61,12 @@ unsigned long collect_relations(QS_t * qs_inf, poly_t * poly_inf, unsigned char 
            
       do_sieving(poly_add, poly_corr, qs_inf, poly_inf, sieve);
       
+      evaluate_sieve(qs_inf, poly_inf, sieve);
+      
       if (poly_add) poly_inf->B += (2*poly_inf->B_terms[j]); 
       else poly_inf->B -= (2*poly_inf->B_terms[j]);           
       
       compute_A_factor_offsets(qs_inf, poly_inf);
-      
-      //evaluate_sieve();
-      
       
       relations += 3;    
    }
