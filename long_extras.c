@@ -54,7 +54,7 @@ double long_precompute_inverse(unsigned long n)
 /* 
     Returns a % n given a precomputed approx inverse ninv
     Operation is *unsigned*
-    Requires that n be no more than 53 bits
+    Requires that n be no more than 53 bits and _a_ be less than n^2
 */
 
 unsigned long long_mod_precomp(unsigned long a, unsigned long n, double ninv)
@@ -109,6 +109,13 @@ unsigned long long_mod63_precomp(unsigned long a, unsigned long n, double ninv)
    else if (rem < 0L) return rem + n;
    else return rem;
 }
+
+/*
+   Computes a_hi a_lo mod n given an approximate inverse
+   Assumes n is no more than 63 bits, but there are no
+   restrictions on a_hi or a_lo
+   Operation is unsigned.
+*/
 
 unsigned long long_mod2_precomp(unsigned long a_hi, unsigned long a_lo, 
                                              unsigned long n, double ninv)
