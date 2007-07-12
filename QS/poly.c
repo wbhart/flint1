@@ -248,9 +248,9 @@ void compute_B_terms(QS_t * qs_inf, poly_t * poly_inf)
    {
       p = factor_base[A_ind[i]].p;
       pinv = factor_base[A_ind[i]].pinv;
-      temp2 = temp = long_div63_precomp(A, p, pinv); 
-      A_modp[i] = temp = long_mod63_precomp(temp, p, pinv);
-      temp = long_invert(temp,p);
+      temp2 = (temp = long_div63_precomp(A, p, pinv)); 
+      A_modp[i] = (temp = long_mod63_precomp(temp, p, pinv));
+      temp = long_invert(temp, p);
       temp = long_mulmod_precomp(temp, qs_inf->sqrts[A_ind[i]], p, pinv);
       if (temp > p/2) temp = p - temp;
       B_terms[i] = temp*temp2;     
@@ -282,7 +282,7 @@ void compute_off_adj(QS_t * qs_inf, poly_t * poly_inf)
    unsigned long ** A_inv2B = poly_inf->A_inv2B;
    unsigned long * B_terms = poly_inf->B_terms;
    unsigned long * soln1 = poly_inf->soln1;
-   unsigned long * soln2 = poly_inf->soln1;
+   unsigned long * soln2 = poly_inf->soln2;
    unsigned long * sqrts = qs_inf->sqrts;
    prime_t * factor_base = qs_inf->factor_base;
    unsigned long s = poly_inf->s;
@@ -311,6 +311,7 @@ void compute_off_adj(QS_t * qs_inf, poly_t * poly_inf)
       temp += SIEVE_SIZE/2;
       soln1[i] = long_mod63_precomp(temp, p, pinv); // Consider using long_mod_precomp
       temp = p - sqrts[i];
+      if (temp == p) temp -= p;
       temp = long_mulmod_precomp(temp, A_inv[i], p, pinv);
       temp *= 2;
       if (temp >= p) temp -= p;      
@@ -337,7 +338,7 @@ void compute_A_factor_offsets(QS_t * qs_inf, poly_t * poly_inf)
    unsigned long p, D;
    unsigned long * n = qs_inf->n;
    unsigned long B = poly_inf->B;
-   unsigned long temp, temp2, B_divp2, index; 
+   unsigned long temp, temp2, B_modp2, index, p2; 
    prime_t * factor_base = qs_inf->factor_base;
    double * inv_p2 = poly_inf->inv_p2;
    double pinv;
@@ -346,18 +347,31 @@ void compute_A_factor_offsets(QS_t * qs_inf, poly_t * poly_inf)
    {
       index = A_ind[j];
       p = factor_base[index].p;
+      p2 = p*p;
       pinv = factor_base[index].pinv;
-      D = long_mod2_precomp(n[2], n[1], p*p, inv_p2[j]);
-      B_divp2 = long_mod63_precomp(B, p*p, inv_p2[j]);
-      temp = B_divp2*A_modp[j];
+      D = long_mod2_precomp(n[2], n[1], p*p, inv_p2[j]);    
+      if ((long) B < 0) 
+      {
+         B_modp2 = long_mod63_precomp(-B, p2, inv_p2[j]);
+         B_modp2 = p2 - B_modp2;
+         if (B_modp2 == p2) B_modp2 = 0;
+      } else
+      B_modp2 = long_mod63_precomp(B, p2, inv_p2[j]);
+      temp = B_modp2*A_modp[j];
       temp = long_mod63_precomp(temp, p, pinv); 
       temp2 = long_invert(temp, p);
-      D -= B_divp2*B_divp2;
-      temp = long_div63_precomp(D, p, pinv);
+      D -= (B_modp2*B_modp2);
+      if ((long) D < 0) temp = -long_div63_precomp(-D, p, pinv);
+      else temp = -long_div63_precomp(-D, p, pinv);
       temp *= temp2;
       temp += SIEVE_SIZE/2;
-      temp += p;
-      soln1[index] = long_mod63_precomp(temp, p, pinv);
+      if ((long) temp < 0) 
+      {
+         temp = p - long_mod63_precomp(-temp, p, pinv);
+         if (temp == p) temp = 0;
+      }
+      else temp = long_mod63_precomp(temp, p, pinv);
+      soln1[index] = temp;
       soln2[index] = -1L;
    }
 }          

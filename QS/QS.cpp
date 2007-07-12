@@ -1191,6 +1191,7 @@ void mainRoutine(unsigned long Mdiv2, mpz_t n, unsigned long multiplier)
         {
            p = factorBase[aind[i]+min];
            mpz_div_ui(temp,A,p);
+           mpz_set(temp3, temp);
 	       amodp[i] = mpz_fdiv_r_ui(temp,temp,p);
                           
 	       mpz_set_ui(temp,modinverse(mpz_get_ui(temp),p));
@@ -1201,8 +1202,9 @@ void mainRoutine(unsigned long Mdiv2, mpz_t n, unsigned long multiplier)
               mpz_sub_ui(temp,temp,p);
               mpz_neg(temp,temp);
            }
-           mpz_mul(temp,temp,A);
-           mpz_div_ui(Bterms[i],temp,p);     
+           mpz_mul(Bterms[i],temp,temp3);
+           //mpz_div_ui(Bterms[i],temp,p); 
+               
         }
             
         mpz_set(B,Bterms[0]);

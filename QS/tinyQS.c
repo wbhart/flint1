@@ -21,6 +21,7 @@
 #include "tinyQS.h"
 #include "factor_base.h"
 #include "poly.h"
+#include "sieve.h"
 
 /*===========================================================================
    Collect relations:
@@ -33,27 +34,40 @@
 
 ===========================================================================*/
 
-unsigned long collect_relations(QS_t * qs_inf, poly_t * poly_inf)
+unsigned long collect_relations(QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve)
 {
    unsigned long s = poly_inf->s;
    unsigned long * poly_corr;
    unsigned long relations = 0;
    unsigned long ** A_inv2B = poly_inf->A_inv2B;
-   unsigned long i, j;
+   unsigned long poly_index, j;
+   unsigned long poly_add;
    
    compute_A(qs_inf, poly_inf);
    compute_B_terms(qs_inf, poly_inf);
    compute_off_adj(qs_inf, poly_inf);
-   
-   for (i = 0; i < (1<<(s-1)); i++)
+   compute_A_factor_offsets(qs_inf, poly_inf);
+      
+   for (poly_index = 1; poly_index < (1<<(s-1)); poly_index++)
    {
       for (j = 0; j < s; j++)
       {
-         if (((i>>j) & 1) != 0) break;
+         if (((poly_index >> j) & 1UL) != 0UL) break;
       }
+      
+      poly_add = (((poly_index >> j) & 2UL) != 0UL);
+      
       poly_corr = A_inv2B[j];
            
+      do_sieving(poly_add, poly_corr, qs_inf, poly_inf, sieve);
+      
+      if (poly_add) poly_inf->B += (2*poly_inf->B_terms[j]); 
+      else poly_inf->B -= (2*poly_inf->B_terms[j]);           
+      
       compute_A_factor_offsets(qs_inf, poly_inf);
+      
+      //evaluate_sieve();
+      
       
       relations += 3;    
    }
@@ -113,10 +127,12 @@ int F_mpz_factor_tinyQS(F_mpz_factor_t factors, mpz_t N)
    
    poly_init(&qs_inf, &poly_inf, N);
    
+   unsigned char * sieve = (unsigned char *) flint_stack_alloc_bytes(SIEVE_SIZE+1);
    while (rels_found < qs_inf.num_primes + EXTRA_RELS)
    {
-      rels_found += collect_relations(&qs_inf, &poly_inf);
+      rels_found += collect_relations(&qs_inf, &poly_inf, sieve);
    }
+   flint_stack_release(); // release sieve
    
    small_factor = 1; // sieve was successful
    poly_clear();
