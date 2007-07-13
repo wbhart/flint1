@@ -10,6 +10,7 @@ Copyright (C) 2007, William Hart and David Harvey
 #include <stdio.h>
 #include "flint.h"
 #include "mpz_poly.h"
+#include "mpz_poly-tuning.h"
 #include "fmpz.h"
 #include "fmpz_poly.h"
 
@@ -1137,12 +1138,18 @@ void _mpz_poly_mul_kara_recursive(mpz_t* out,
       return;
    }
    
-   /*
-   if (len1 + len2 < crossover)
+   if (len1 * len2 < crossover)
    {
-      // switch to naive multiplication here?
+      // switch to naive multiplication
+      for (unsigned long i = 0; i < len1 + len2 - 1; i++)
+         mpz_set_ui(out[i*skip], 0);
+   
+      for (unsigned long i = 0; i < len1; i++)
+         for (unsigned long j = 0; j < len2; j++)
+            mpz_addmul(out[(i+j)*skip], in1[i*skip], in2[j*skip]);
+            
+      return;
    }
-   */
 
    // ==================== recursive case
 
@@ -1266,7 +1273,15 @@ void mpz_poly_mul_karatsuba(mpz_poly_t res, mpz_poly_t poly1,
    for (unsigned long i = 0; i <= length; i++)
       mpz_init2(scratch[i], limbs * FLINT_BITS);
 
-   // todo: need to decide crossover parameter based on coefficient size
+   // look up crossover parameter (i.e. when to switch from classical to
+   // karatsuba multiplication) based on coefficient size
+   unsigned long test_limbs = limbs/2;
+   unsigned long crossover;
+   if (test_limbs >= mpz_poly_kara_crossover_table_size)
+      crossover = 0;
+   else
+      crossover = mpz_poly_kara_crossover_table[test_limbs - 1];
+   crossover = crossover * crossover;
    
    if (res == poly1 || res == poly2)
    {
@@ -1281,7 +1296,7 @@ void mpz_poly_mul_karatsuba(mpz_poly_t res, mpz_poly_t poly1,
 
       _mpz_poly_mul_kara_recursive(
             temp->coeffs, poly1->coeffs, poly1->length,
-            poly2->coeffs, poly2->length, scratch, 1, 0);
+            poly2->coeffs, poly2->length, scratch, 1, crossover);
 
       mpz_poly_swap(temp, res);
       mpz_poly_clear(temp);
@@ -1297,7 +1312,7 @@ void mpz_poly_mul_karatsuba(mpz_poly_t res, mpz_poly_t poly1,
 
       _mpz_poly_mul_kara_recursive(
             res->coeffs, poly1->coeffs, poly1->length,
-            poly2->coeffs, poly2->length, scratch, 1, 0);
+            poly2->coeffs, poly2->length, scratch, 1, crossover);
    }
    
    res->length = length;

@@ -867,9 +867,10 @@ int test__mpz_poly_mul_kara_recursive()
    mpz_poly_init(out);
    mpz_poly_init(scratch);
    
-   for (unsigned long len1 = 1; len1 <= 64 && success; len1++)
-   for (unsigned long len2 = len1; len2 <= 64 && success; len2++)
-   for (unsigned long trial = 0; trial < 15 && success; trial++)
+   for (unsigned long len1 = 1; len1 <= 40 && success; len1++)
+   for (unsigned long len2 = len1; len2 <= 40 && success; len2++)
+   for (unsigned long crossover = 0; crossover <= 6; crossover++)
+   for (unsigned long trial = 0; trial < 3 && success; trial++)
    {
       mpz_poly_init_upto(in1, len1);
       mpz_poly_init_upto(in2, len2);
@@ -885,7 +886,8 @@ int test__mpz_poly_mul_kara_recursive()
       in2->length = len2;
       
       _mpz_poly_mul_kara_recursive(out->coeffs, in1->coeffs, len1,
-                                   in2->coeffs, len2, scratch->coeffs, 1, 0);
+                                   in2->coeffs, len2, scratch->coeffs, 1,
+                                   crossover);
       out->length = len1 + len2 - 1;
       
       mpz_poly_mul_naive(correct, in1, in2);
@@ -1230,12 +1232,6 @@ int test_mpz_poly_max_bits()
 void mpz_poly_test_all()
 {
    int success, all_success = 1;
-
-   RUN_TEST(mpz_poly_mul_karatsuba);
-
-   return;
-   
-   
 
    RUN_TEST(mpz_poly_get_coeff_ptr);
    RUN_TEST(mpz_poly_get_coeff);

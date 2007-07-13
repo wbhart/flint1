@@ -47,6 +47,7 @@ HEADERS = \
 	longlong_wrapper.h \
 	memory-manager.h \
 	mpn_extras.h \
+	mpz_poly-tuning.h \
 	mpz_poly.h \
 	profiler-main.h \
 	profiler.h \
@@ -65,6 +66,7 @@ FLINTOBJ = \
 	ZmodF_mul-tuning.o \
 	fmpz.o \
 	fmpz_poly.o \
+	mpz_poly-tuning.o \
 	mpz_poly.o \
 	ZmodF_poly.o
 
@@ -98,6 +100,9 @@ fmpz_poly.o: fmpz_poly.c $(HEADERS)
 
 mpz_poly.o: mpz_poly.c $(HEADERS)
 	$(CC) $(CFLAGS) -c mpz_poly.c -o mpz_poly.o
+
+mpz_poly-tuning.o: mpz_poly-tuning.c $(HEADERS)
+	$(CC) $(CFLAGS) -c mpz_poly-tuning.c -o mpz_poly-tuning.o
 
 ZmodF_poly.o: ZmodF_poly.c $(HEADERS)
 	$(CC) $(CFLAGS) -c ZmodF_poly.c -o ZmodF_poly.o
@@ -165,6 +170,9 @@ long_extras-test: long_extras.o long_extras-test.o test-support.o memory-manager
 ZmodF_mul-tune.o: ZmodF_mul-tune.c $(HEADERS)
 	$(CC) $(CFLAGS) -c ZmodF_mul-tune.c -o ZmodF_mul-tune.o
 
+mpz_poly-tune.o: mpz_poly-tune.c $(HEADERS)
+	$(CC) $(CFLAGS) -c mpz_poly-tune.c -o mpz_poly-tune.o
+
 
 
 ####### tuning program targets
@@ -172,6 +180,8 @@ ZmodF_mul-tune.o: ZmodF_mul-tune.c $(HEADERS)
 ZmodF_mul-tune: ZmodF_mul-tune.o test-support.o profiler.o $(FLINTOBJ) $(HEADERS)
 	$(CC) $(CFLAGS) ZmodF_mul-tune.o test-support.o profiler.o -o ZmodF_mul-tune $(FLINTOBJ) $(LIBS)
 
+mpz_poly-tune: mpz_poly-tune.o test-support.o profiler.o $(FLINTOBJ) $(HEADERS)
+	$(CC) $(CFLAGS) mpz_poly-tune.o test-support.o profiler.o -o mpz_poly-tune $(FLINTOBJ) $(LIBS)
 
 
 ####### profiling object files
@@ -257,6 +267,7 @@ BLTcubes: long_extras.o BLTcubes.c
 BPTJCubes: long_extras.o memory-manager.o
 	$(CC) $(CFLAGS) -o BPTJCubes BPTJCubes.c memory-manager.o long_extras.o $(LIBS)
 
+
 ####### Quadratic sieve
 
 poly.o: QS/poly.c QS/poly.h
@@ -267,6 +278,7 @@ factor_base.o: QS/factor_base.c QS/factor_base.h
 
 tinyQS: QS/tinyQS.c QS/tinyQS.h factor_base.o poly.o long_extras.o memory-manager.o fmpz.o test-support.o
 	$(CC) $(CFLAGS) -o tinyQS QS/tinyQS.c factor_base.o poly.o memory-manager.o long_extras.o fmpz.o test-support.o $(LIBS)
+
 
 ####### Integer multiplication timing
 
