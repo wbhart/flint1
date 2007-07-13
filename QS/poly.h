@@ -24,6 +24,7 @@ typedef struct poly_s
     unsigned long target_A;
     unsigned long A;
     unsigned long B;
+    unsigned long C;
      
     unsigned long * A_ind;
     unsigned long * A_modp;
@@ -43,6 +44,8 @@ void poly_clear(void);
 void compute_A(QS_t * qs_inf, poly_t * poly_inf);
 
 void compute_B_terms(QS_t * qs_inf, poly_t * poly_inf);
+
+void compute_C(QS_t * qs_inf, poly_t * poly_inf);
 
 void compute_off_adj(QS_t * qs_inf, poly_t * poly_inf);
 

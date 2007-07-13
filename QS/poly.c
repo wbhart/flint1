@@ -10,10 +10,13 @@
 
 #include <gmp.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "../flint.h"
 #include "../memory-manager.h"
 #include "../long_extras.h"
+#include "../longlong_wrapper.h"
+#include "../longlong.h"
 
 #include "poly.h"
 #include "common.h"
@@ -29,7 +32,7 @@
 void poly_init(QS_t * qs_inf, poly_t * poly_inf, mpz_t N)
 {
    unsigned long num_primes = qs_inf->num_primes;
-   unsigned long s = (qs_inf->bits-1)/23+1;
+   unsigned long s = (qs_inf->bits-1)/28+1;
    prime_t * factor_base = qs_inf->factor_base;
    unsigned long fact_approx, fact, span;
    long min; 
@@ -72,7 +75,7 @@ void poly_init(QS_t * qs_inf, poly_t * poly_inf, mpz_t N)
    span = num_primes/s/s/2;
    if (span < 10) span = 10;
    min = fact - span/2;
-   if (min < 2) min = 2;
+   if (min < 7) min = 7;
    if (min + span >= qs_inf->num_primes) span = num_primes - min - 1;
    fact = min + span/2;
 
@@ -375,3 +378,49 @@ void compute_A_factor_offsets(QS_t * qs_inf, poly_t * poly_inf)
       soln2[index] = -1L;
    }
 }          
+
+/*=========================================================================
+   Compute C:
+ 
+   Function: Compute the C coefficient of the polynomial with the 
+             current A and B values
+ 
+==========================================================================*/
+
+void compute_C(QS_t * qs_inf, poly_t * poly_inf)
+{
+   unsigned long A = poly_inf->A;
+   unsigned long B = poly_inf->B;
+   unsigned long hi, lo;
+   unsigned long AC_hi, AC_lo;
+   unsigned long norm, r;
+   unsigned long C;
+   unsigned long * n = qs_inf->n;
+   
+   if ((long) B < 0L) B = -B;
+   hi = 0;
+   umul_ppmm(hi, lo, B, B);
+   if ((hi < n[2]) || ((hi == n[2]) && (lo < n[1])))
+   {
+      AC_hi = 0;
+      sub_ddmmss(AC_hi, AC_lo, n[2], n[1], hi, lo);
+#if UDIV_NEEDS_NORMALIZATION
+      count_lead_zeros(norm, A);
+      udiv_qrnnd(C, r, (AC_hi<<norm) + (AC_lo>>(FLINT_BITS-norm)), AC_lo<<norm, A<<norm);
+#else
+      udiv_qrnnd(C, r, AC_hi, AC_lo, A);
+#endif
+      C = -C; 
+   } else
+   {
+      AC_hi = 0;
+      sub_ddmmss(AC_hi, AC_lo, hi, lo, n[2], n[1]);
+#if UDIV_NEEDS_NORMALIZATION
+      count_lead_zeros(norm, A);
+      udiv_qrnnd(C, r, (AC_hi<<norm) + (AC_lo>>(FLINT_BITS-norm)), AC_lo<<norm, A<<norm);
+#else
+      udiv_qrnnd(C, r, AC_hi, AC_lo, A);
+#endif
+   }
+   poly_inf->C = C;
+} 

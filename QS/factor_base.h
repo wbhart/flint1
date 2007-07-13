@@ -15,7 +15,7 @@
 #include "tinyQS.h"
 #include "common.h"
 
-#define KSMAX 1000
+#define KSMAX 100
 
 static const unsigned long prime_tab[][2] =
 {
@@ -25,9 +25,9 @@ static const unsigned long prime_tab[][2] =
    {60, 100},
    {70, 150},
    {80, 200},
-   {90, 300},
-   {100, 350},
-   {110, 400},
+   {90, 240},
+   {100, 250},
+   {110, 300},
    {120, 450},
    {130, 550}
 };
@@ -46,8 +46,10 @@ void sizes_clear(void);
 
 //Knuth-Schroeppel multipliers and a macro to count them
 
-static const unsigned long multipliers[] = {1, 2, 3, 5, 7, 11, 13, 17, 19, 
-                                                23, 29, 31, 37, 41, 43};
+static const unsigned long multipliers[] = {1, 2, 3, 5, 6, 7, 10, 11, 13, 14, 
+                                            15, 17, 19, 21, 22, 23, 26, 29, 
+                                            30, 31, 33, 34, 35, 37, 38, 41, 
+                                            42, 43, 47};
 
 #define NUMMULTS (sizeof(multipliers)/sizeof(unsigned long))
 #define max_mult_size 6 // number of bits of maximum multiplier

@@ -67,13 +67,9 @@ void sqrts_clear(void)
 
 void primes_init(QS_t * qs_inf)
 {
-   unsigned long bits;
+   unsigned long bits = qs_inf->bits; // set bits to the number of bits of kn
    
-   count_lead_zeros(bits, multipliers[NUMMULTS-1]);
-   bits = FLINT_BITS - max_mult_size;
-   bits += qs_inf->bits; // set bits to the max possible bits of kn
-   
-   qs_inf->num_primes = num_FB_primes(bits); // this is a provisional number of primes
+   qs_inf->num_primes = num_FB_primes(bits); 
    
    qs_inf->factor_base = (prime_t *) flint_stack_alloc_bytes(qs_inf->num_primes*sizeof(prime_t));
 }
@@ -99,7 +95,7 @@ void compute_sizes(QS_t * qs_inf)
      
      for (unsigned long i = 0; i < num_primes; i++)
      {
-         sizes[i]=(unsigned char) round(log(factor_base[i].p)/log(2.0));
+         sizes[i] = (unsigned char) round(log(factor_base[i].p)/log(2.0));
      }
      
      return;
@@ -165,10 +161,10 @@ unsigned long knuth_schroeppel(QS_t * qs_inf)
           for (multindex = 0; multindex < NUMMULTS; multindex++)
           {
               mult = multipliers[multindex];
-              if (mult > prime) 
+              if (mult >= prime) 
               {
                  if (mult >= prime*prime) mult = mult%prime; 
-                 else long_mod_precomp(mult, prime, pinv);
+                 else mult = long_mod_precomp(mult, prime, pinv);
               }
               if (mult == 0) factors[multindex] += logpdivp;
               else if (kron*long_jacobi_precomp(mult, prime, pinv) == 1) 
@@ -222,7 +218,10 @@ unsigned long compute_factor_base(QS_t * qs_inf)
       prime = long_nextprime(prime);
       pinv = long_precompute_inverse(prime);
       nmod = long_mod2_precomp(n[2], n[1], prime, pinv); 
-      if ((nmod == 0) && (prime != multiplier)) return prime;
+      if (nmod == 0) 
+      {
+         if (long_mod_precomp(multiplier, prime, pinv) != 0) return prime;
+      }
       kron = long_jacobi_precomp(nmod, prime, pinv); 
       if (kron == 1)
       {

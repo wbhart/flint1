@@ -47,6 +47,7 @@ unsigned long collect_relations(QS_t * qs_inf, poly_t * poly_inf, unsigned char 
    compute_B_terms(qs_inf, poly_inf);
    compute_off_adj(qs_inf, poly_inf);
    compute_A_factor_offsets(qs_inf, poly_inf);
+   compute_C(qs_inf, poly_inf);          
       
    for (poly_index = 1; poly_index < (1<<(s-1)); poly_index++)
    {
@@ -59,16 +60,18 @@ unsigned long collect_relations(QS_t * qs_inf, poly_t * poly_inf, unsigned char 
       
       poly_corr = A_inv2B[j];
            
-      do_sieving(poly_add, poly_corr, qs_inf, poly_inf, sieve);
+      do_sieving(qs_inf, poly_inf, sieve);
       
-      evaluate_sieve(qs_inf, poly_inf, sieve);
+      relations += evaluate_sieve(qs_inf, poly_inf, sieve);
+      
+      update_offsets(poly_add, poly_corr, qs_inf, poly_inf);
       
       if (poly_add) poly_inf->B += (2*poly_inf->B_terms[j]); 
-      else poly_inf->B -= (2*poly_inf->B_terms[j]);           
+      else poly_inf->B -= (2*poly_inf->B_terms[j]); 
       
-      compute_A_factor_offsets(qs_inf, poly_inf);
+      compute_C(qs_inf, poly_inf);          
       
-      relations += 3;    
+      compute_A_factor_offsets(qs_inf, poly_inf);    
    }
    
    return relations;
@@ -103,9 +106,10 @@ int F_mpz_factor_tinyQS(F_mpz_factor_t factors, mpz_t N)
    
    small_factor = knuth_schroeppel(&qs_inf); // Compute multiplier and some FB primes
    if (small_factor) goto cleanup_2;
-   
-   primes_init(&qs_inf);
-   sqrts_init(&qs_inf);
+
+#if QS_INFO
+   printf("Multiplier = %ld\n", qs_inf.k);
+#endif
    
    mpz_init(temp);
    mpz_set(temp, N);
@@ -113,6 +117,9 @@ int F_mpz_factor_tinyQS(F_mpz_factor_t factors, mpz_t N)
    qs_inf.bits = mpz_sizeinbase(temp,2);
    mpz_to_fmpz(qs_inf.n, temp); // set n to the number to be factored times k
    mpz_clear(temp);
+   
+   primes_init(&qs_inf);
+   sqrts_init(&qs_inf);
       
    if (qs_inf.bits > MAXBITS) 
    {
@@ -181,8 +188,8 @@ int main(int argc, unsigned char *argv[])
     
     for (i = 0; i < 1000; i++)
     {
-       mpz_set_ui(N, long_nextprime(long_randint(100000000000000000UL)+1UL));
-       mpz_mul_ui(N, N, long_nextprime(long_randint(40000000000000000UL)+1UL));
+       mpz_set_ui(N, long_nextprime(long_randint(1000000000000000UL)+1UL));
+       mpz_mul_ui(N, N, long_nextprime(long_randint(4000000000000000UL)+1UL));
        //bits1 = long_randint(41UL)+13UL;
        //bits2 = long_randint(22UL)+13UL;
        //mpz_mul_ui(N, N, long_nextprime(long_randint((1UL<<bits1)-1UL)+1UL));
