@@ -38,7 +38,7 @@ void do_sieving(QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve)
    memset(sieve, 0, SIEVE_SIZE);
    *end = 255;
    
-   for (unsigned long prime = 7; prime < num_primes; prime++) 
+   for (unsigned long prime = 7; prime < num_primes/2; prime++) 
    {
       if (soln2[prime] == -1L) continue;
       
@@ -53,6 +53,37 @@ void do_sieving(QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve)
       {  
          (*pos1)+=size, (*(pos1+diff))+=size, pos1+=p;
          (*pos1)+=size, (*(pos1+diff))+=size, pos1+=p;
+         (*pos1)+=size, (*(pos1+diff))+=size, pos1+=p;
+         (*pos1)+=size, (*(pos1+diff))+=size, pos1+=p;
+      }
+      while ((end - pos1 > 0) && (end - pos1 - diff > 0))
+      { 
+         (*pos1)+=size, (*(pos1+diff))+=size, pos1+=p;
+      }
+      pos2 = pos1+diff;
+      if (end - pos2 > 0)
+      { 
+         (*pos2)+=size;
+      }
+      if (end - pos1 > 0)
+      { 
+         (*pos1)+=size;
+      } 
+   }
+   
+   for (unsigned long prime = num_primes/2; prime < num_primes; prime++) 
+   {
+      if (soln2[prime] == -1L) continue;
+      
+      p = factor_base[prime].p;
+      size = sizes[prime];
+      pos1 = sieve + soln1[prime];
+      pos2 = sieve + soln2[prime];
+      diff = pos2 - pos1;
+      bound = end - p*2;
+        
+      while (bound - pos1 > 0)  
+      {  
          (*pos1)+=size, (*(pos1+diff))+=size, pos1+=p;
          (*pos1)+=size, (*(pos1+diff))+=size, pos1+=p;
       }
@@ -143,7 +174,7 @@ int evaluate_candidate(QS_t * qs_inf, poly_t * poly_inf,
    mpz_add(res, res, *C); // res = AX^2+2BX+C
            
    bits = mpz_sizeinbase(res, 2);
-   bits -= 10; 
+   bits -= 11; 
    extra_bits = 0;
    
    mpz_set_ui(p, 2); // divide out by powers of 2
@@ -158,7 +189,7 @@ int evaluate_candidate(QS_t * qs_inf, poly_t * poly_inf,
    {
       mpz_set_ui(p, factor_base[0].p);
       exp = mpz_remove(res, res, p);
-      if (exp) extra_bits += qs_inf->sizes[0];
+      if (exp) extra_bits += exp*qs_inf->sizes[0];
 #if RELATIONS
       if (exp) printf("%ld^%ld ", factor_base[0].p, exp); 
 #endif
