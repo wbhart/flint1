@@ -86,10 +86,10 @@ void update_offsets(unsigned long poly_add, unsigned long * poly_corr,
       p = factor_base[prime].p;
       correction = (poly_add ? p - poly_corr[prime] : poly_corr[prime]);
       soln1[prime] += correction;
-      while (soln1[prime] >= p) soln1[prime] -= p;
+      if (soln1[prime] >= p) soln1[prime] -= p;
       if (soln2[prime] == -1L) continue;
       soln2[prime] += correction;
-      while (soln2[prime] >= p) soln2[prime] -= p; 
+      if (soln2[prime] >= p) soln2[prime] -= p; 
    }
 }  
 
@@ -110,7 +110,7 @@ int evaluate_candidate(QS_t * qs_inf, poly_t * poly_inf,
    unsigned long * soln2 = poly_inf->soln2;
    unsigned long A = poly_inf->A;
    unsigned long B = poly_inf->B;
-   unsigned long C = poly_inf->C;
+   mpz_t * C = &poly_inf->C;
    int relation = 0;
    double pinv;
    
@@ -140,11 +140,11 @@ int evaluate_candidate(QS_t * qs_inf, poly_t * poly_inf,
       mpz_add_ui(res, Y, B);
    }
    mpz_mul(res, res, X);  
-   if ((long) C < 0) mpz_sub_ui(res, res, -C);  
-   else mpz_add_ui(res, res, C); // res = AX^2+2BX+C
+   mpz_add(res, res, *C); // res = AX^2+2BX+C
            
    bits = mpz_sizeinbase(res, 2);
-   bits -= 5; 
+   bits -= 10; 
+   extra_bits = 0;
    
    mpz_set_ui(p, 2); // divide out by powers of 2
    exp = mpz_remove(res, res, p);
@@ -182,7 +182,8 @@ int evaluate_candidate(QS_t * qs_inf, poly_t * poly_inf,
    
    if (extra_bits + sieve[i] > bits)
    {
-      for (unsigned long j = 7; j < num_primes; j++) // pull out remaining primes
+      sieve[i] += extra_bits;
+      for (unsigned long j = 7; (j < num_primes) && (extra_bits < sieve[i]); j++) // pull out remaining primes
       {
          prime = factor_base[j].p;
          pinv = factor_base[j].pinv;
@@ -205,7 +206,7 @@ int evaluate_candidate(QS_t * qs_inf, poly_t * poly_inf,
 #if RELATIONS
             if (exp) gmp_printf("%Zd^%ld ", p, exp);
 #endif
-            if (exp) extra_bits += qs_inf->sizes[j];
+            //if (exp) extra_bits += qs_inf->sizes[j];
          }    
       }
       if (mpz_cmpabs_ui(res, 1) == 0) 
@@ -246,7 +247,7 @@ unsigned long evaluate_sieve(QS_t * qs_inf, poly_t * poly_inf, unsigned char * s
       i = j*sizeof(unsigned long);
       while ((i < (j+1)*sizeof(unsigned long)) && (i < SIEVE_SIZE))
       {
-         if (sieve[i] > 47) 
+         if (sieve[i] > 51) 
          {
             if (evaluate_candidate(qs_inf, poly_inf, i, sieve)) rels++;
          }

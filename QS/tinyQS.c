@@ -93,7 +93,6 @@ int F_mpz_factor_tinyQS(F_mpz_factor_t factors, mpz_t N)
    unsigned long small_factor;
    unsigned long rels_found = 0;
    
-   mpz_t temp;
    QS_t qs_inf; 
    poly_t poly_inf;
    
@@ -111,12 +110,11 @@ int F_mpz_factor_tinyQS(F_mpz_factor_t factors, mpz_t N)
    printf("Multiplier = %ld\n", qs_inf.k);
 #endif
    
-   mpz_init(temp);
-   mpz_set(temp, N);
-   mpz_mul_ui(temp, temp, qs_inf.k);
-   qs_inf.bits = mpz_sizeinbase(temp,2);
-   mpz_to_fmpz(qs_inf.n, temp); // set n to the number to be factored times k
-   mpz_clear(temp);
+   mpz_init(qs_inf.mpz_n);
+   mpz_set(qs_inf.mpz_n, N);
+   mpz_mul_ui(qs_inf.mpz_n, qs_inf.mpz_n, qs_inf.k);
+   qs_inf.bits = mpz_sizeinbase(qs_inf.mpz_n,2);
+   mpz_to_fmpz(qs_inf.n, qs_inf.mpz_n); // set n to the number to be factored times k
    
    primes_init(&qs_inf);
    sqrts_init(&qs_inf);
@@ -141,13 +139,14 @@ int F_mpz_factor_tinyQS(F_mpz_factor_t factors, mpz_t N)
    flint_stack_release(); // release sieve
    
    small_factor = 1; // sieve was successful
-   poly_clear();
+   poly_clear(&poly_inf);
    sizes_clear();
 cleanup_1:
    sqrts_clear(); // release modular square roots
    primes_clear(); // release factor_base
 cleanup_2:
    flint_stack_release(); // release n
+   mpz_clear(qs_inf.mpz_n);
    
    return small_factor;    
 }
@@ -186,10 +185,10 @@ int main(int argc, unsigned char *argv[])
     unsigned long succeed = 0;
     unsigned long bits1, bits2, i;
     
-    for (i = 0; i < 1000; i++)
+    for (i = 0; i < 100; i++)
     {
-       mpz_set_ui(N, long_nextprime(long_randint(1000000000000000UL)+1UL));
-       mpz_mul_ui(N, N, long_nextprime(long_randint(4000000000000000UL)+1UL));
+       mpz_set_ui(N, long_nextprime(long_randint(4000000000000000000UL)+1UL));
+       mpz_mul_ui(N, N, long_nextprime(long_randint(4000000000000000000UL)+1UL));
        //bits1 = long_randint(41UL)+13UL;
        //bits2 = long_randint(22UL)+13UL;
        //mpz_mul_ui(N, N, long_nextprime(long_randint((1UL<<bits1)-1UL)+1UL));

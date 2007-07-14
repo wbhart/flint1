@@ -53,6 +53,8 @@ void poly_init(QS_t * qs_inf, poly_t * poly_inf, mpz_t N)
    
    A_inv2B[0] = (unsigned long *) flint_stack_alloc(num_primes*s);
    
+   mpz_init(poly_inf->C);
+   
    for (unsigned long i = 1; i < s; i++)
    {
       A_inv2B[i] = A_inv2B[i-1] + num_primes;
@@ -90,8 +92,9 @@ void poly_init(QS_t * qs_inf, poly_t * poly_inf, mpz_t N)
    mpz_clear(temp); 
 }
 
-void poly_clear(void)
+void poly_clear(poly_t * poly_inf)
 {
+   mpz_clear(poly_inf->C);
    flint_stack_release(); // release all A_inv2B[i]
    flint_stack_release(); // release soln1
    flint_stack_release(); // release soln2
@@ -391,14 +394,18 @@ void compute_C(QS_t * qs_inf, poly_t * poly_inf)
 {
    unsigned long A = poly_inf->A;
    unsigned long B = poly_inf->B;
-   unsigned long hi, lo;
+   /*unsigned long hi, lo;
    unsigned long AC_hi, AC_lo;
-   unsigned long norm, r;
-   unsigned long C;
-   unsigned long * n = qs_inf->n;
+   unsigned long norm, r;*/
+   mpz_t * C = &poly_inf->C;
+   mpz_t * mpz_n = &qs_inf->mpz_n;
    
    if ((long) B < 0L) B = -B;
-   hi = 0;
+   mpz_set_ui(*C, B);
+   mpz_mul_ui(*C, *C, B);
+   mpz_sub(*C, *C, *mpz_n);
+   mpz_divexact_ui(*C, *C, A);
+   /*hi = 0;
    umul_ppmm(hi, lo, B, B);
    if ((hi < n[2]) || ((hi == n[2]) && (lo < n[1])))
    {
@@ -422,5 +429,5 @@ void compute_C(QS_t * qs_inf, poly_t * poly_inf)
       udiv_qrnnd(C, r, AC_hi, AC_lo, A);
 #endif
    }
-   poly_inf->C = C;
+   poly_inf->C = C;*/
 } 

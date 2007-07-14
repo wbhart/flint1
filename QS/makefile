@@ -20,8 +20,8 @@
 #============================================================================
 
 CPP  = g++
-OBJ  = lprels.o ModuloArith.o TonelliShanks.o F2matrix.o lanczos.o QS.o $(RES)
-LINKOBJ  = lprels.o ModuloArith.o TonelliShanks.o F2matrix.o lanczos.o QS.o $(RES)
+OBJ  = lprels.o ModuloArith.o TonelliShanks.o F2matrix.o lanczos.o QS.o long_extras.o memory-manager.o $(RES)
+LINKOBJ  = lprels.o ModuloArith.o TonelliShanks.o F2matrix.o lanczos.o QS.o long_extras.o memory-manager.o $(RES)
 #LIBS =  -L"home/dmharvey/gmp/install/lib" -lgmp 
 #CXXINCS = -I"home/dmharvey/gmp/install/include" 
 LIBS = -L"/usr/lib" -lgmp
@@ -59,6 +59,12 @@ lanczos.o: lanczos.c
 
 lprels.o: lprels.c
 	$(CPP) -ansi -c lprels.c -o lprels.o $(CXXFLAGS2)
+
+long_extras.o: ../long_extras.c
+	$(CPP) -std=c99 -c ../long_extras.c -o long_extras.o $(CXXFLAGS2)
+
+memory-manager.o: ../memory-manager.c
+	$(CPP) -std=c99 -c ../memory-manager.c -o memory-manager.o $(CXXFLAGS2)
 
 QS.o: QS.cpp
 	$(CPP) -ansi -c QS.cpp -o QS.o $(CXXFLAGS)

@@ -40,6 +40,8 @@ Contact: hart_wb {at-thingy} yahoo.com
 #include "lanczos.h"
 #include "lprels.h"
 
+#include "../long_extras.h"
+
 //===========================================================================
 //Uncomment these for various pieces of debugging information
 
@@ -92,7 +94,7 @@ unsigned long largeprimes[] =
      250000, 300000, 370000, 440000, 510000, 580000, 650000, 720000, 790000, 8600000, //40-49
      930000, 1000000, 1700000, 2400000, 3100000, 3800000, 4500000, 5200000, 5900000, 6600000, //50-59
      7300000, 8000000, 8900000, 10000000, 11300000, 12800000, 14500000, 16300000, 18100000, 20000000, //60-69
-     22000000, 24000000, 27000000, 32000000, 39000000,  //70-74
+     22000000, 30000000, 27000000, 32000000, 39000000,  //70-74
      53000000, 65000000, 75000000, 87000000, 100000000, //75-79
      114000000, 130000000, 150000000, 172000000, 195000000, //80-84
      220000000, 250000000, 300000000, 350000000, 400000000, //85-89
@@ -105,7 +107,7 @@ unsigned long primesNo[] =
 {
      1500, 1500, 1600, 1700, 1750, 1800, 1900, 2000, 2050, 2100, //40-49
      2150, 2200, 2250, 2300, 2400, 2500, 2600, 2700, 2800, 2900, //50-59
-     3000, 3150, 5500, 6000, 6500, 7000, 7500, 8000, 8500, 9000, //60-69 
+     3000, 3400, 5500, 6000, 6500, 7000, 7500, 8000, 8500, 9000, //60-69 
      9500, 10000, 11500, 13000, 15000, //70-74
      17000, 24000, 27000, 30000, 37000, //75-79
      45000, 47000, 53000, 57000, 58000,  //80-84
@@ -119,9 +121,9 @@ unsigned long firstPrimes[] =
 {
      8, 8, 8, 8, 8, 8, 8, 8, 8, 8, //40-49
      9, 8, 9, 9, 9, 9, 10, 10, 10, 10, //50-59
-     10, 10, 11, 11, 12, 12, 13, 14, 15, 17, //60-69  //10
-     19, 21, 22, 22, 23, //70-74
-     24, 25, 25, 26, 26, //75-79
+     10, 9, 11, 11, 12, 12, 13, 14, 15, 17, //60-69  //10
+     19, 19, 22, 22, 23, //70-74
+     24, 24, 25, 26, 26, //75-79
      27, 27, 27, 27, 28, //80-84
      28, 28, 28, 29, 29, //85-89
      29, 29 //90-91
@@ -133,9 +135,9 @@ unsigned long errorAmounts[] =
 {
      16, 17, 17, 18, 18, 19, 19, 19, 20, 20, //40-49
      21, 21, 21, 22, 22, 22, 23, 23, 23, 24, //50-59
-     24, 24, 25, 25, 25, 25, 26, 26, 26, 26, //60-69 //24
-     27, 27, 28, 28, 29, //70-74
-     29, 30, 30, 30, 31, //75-79
+     24, 26, 25, 25, 25, 25, 26, 26, 26, 26, //60-69 //24
+     27, 30, 28, 28, 29, //70-74
+     29, 32, 30, 30, 31, //75-79
      31, 31, 31, 32, 32, //80-84
      32, 32, 32, 33, 33, //85-89
      33, 33 //90-91
@@ -148,8 +150,8 @@ unsigned long thresholds[] =
      66, 67, 67, 68, 68, 68, 69, 69, 69, 69, //40-49
      70, 70, 70, 71, 71, 71, 72, 72, 73, 73, //50-59
      74, 74, 75, 75, 76, 76, 77, 77, 78, 79, //60-69 //74
-     80, 81, 82, 83, 84, //70-74
-     85, 86, 87, 88, 89, //75-79
+     80, 82, 82, 83, 84, //70-74
+     85, 87, 87, 88, 89, //75-79
      91, 92, 93, 93, 94, //80-84 
      95, 96, 97, 98, 100, //85-89
      101, 102 //90-91  
@@ -162,9 +164,9 @@ unsigned long sieveSize[] =
 {
      32000, 32000, 32000, 32000, 32000, 32000, 32000, 32000, 32000, 32000, //40-49
      32000, 32000, 32000, 32000, 32000, 32000, 32000, 32000, 32000, 32000, //50-59
-     32000, 32000, 32000, 32000, 32000, 32000, 32000, 32000, 32000, 32000, //60-69
-     32000, 32000, 64000, 64000, 64000, //70-74
-     96000, 96000, 96000, 128000, 128000, //75-79
+     32000, 20000, 32000, 32000, 32000, 32000, 32000, 32000, 32000, 32000, //60-69
+     32000, 20000, 64000, 64000, 64000, //70-74
+     96000, 64000, 96000, 128000, 128000, //75-79
      160000, 160000, 160000, 160000, 160000, //80-84 
      192000, 192000, 192000, 192000, 192000, //85-89
      192000, 192000 //90-91
@@ -205,6 +207,7 @@ unsigned char * flags; //flags used for speeding up sieving for large primes
 unsigned long partials = 0; //number of partial relations
 unsigned long Mdiv2; //size of sieving interval divide 2 
 unsigned long mat2off; //offset of second square block in matrix
+double * pinv;
 
 mpz_t * sqrts; //square roots of n modulo each prime in the factor base
 
@@ -353,7 +356,7 @@ unsigned long knuthSchroeppel(mpz_t n)
     }
     
     mpz_set_ui(prime,3);
-    while (mpz_cmp_ui(prime,10000)<0)
+    while (mpz_cmp_ui(prime,1000)<0)
     {
           logpdivp = log((float)mpz_get_ui(prime)) / mpz_get_ui(prime);
           kron = mpz_kronecker(n,prime);
@@ -428,6 +431,7 @@ void computeFactorBase(mpz_t n, unsigned long B,unsigned long multiplier)
      unsigned long primesinbase = 0;
      
      factorBase = (unsigned long *) calloc(sizeof(unsigned long),B); 
+     pinv = (double *) malloc(sizeof(double)*B); 
      
      factorBase[primesinbase] = multiplier;
      primesinbase++;
@@ -442,6 +446,7 @@ void computeFactorBase(mpz_t n, unsigned long B,unsigned long multiplier)
           if (mpz_kronecker(n,currentPrime)==1)
           {
               factorBase[primesinbase] = mpz_get_ui(currentPrime);
+              pinv[primesinbase] = long_precompute_inverse(mpz_get_ui(currentPrime));
               primesinbase++;
           } 
           mpz_nextprime(currentPrime,currentPrime);
@@ -515,6 +520,8 @@ void evaluateSieve(unsigned long ** relations, unsigned long ctimesreps, unsigne
      char * last_ptr;
      char Q_str[200];
      char X_str[200];
+     double inv;
+     unsigned long p;
      
      i = 0;
      j=0;
@@ -565,11 +572,13 @@ void evaluateSieve(unsigned long ** relations, unsigned long ctimesreps, unsigne
            exponent = mpz_remove(res,res,temp);
            exponents[1] = exponent;
            extra+=exponent;
-                
+           
            for (k = 2; k<firstprime; k++)
            {
-              modp=(i+ctimesreps)%factorBase[k];
-                
+              //modp=(i+ctimesreps)%factorBase[k];
+              inv = pinv[k];
+              p = factorBase[k];
+              modp = long_mod_precomp(i+ctimesreps, p, inv);  
               if (soln2[k]!=0xFFFFFFFFl)
               {
                  if ((modp==soln1[k]) || (modp==soln2[k]))
@@ -606,7 +615,10 @@ void evaluateSieve(unsigned long ** relations, unsigned long ctimesreps, unsigne
               vv=((unsigned char)1<<(i&7));
               for (k = firstprime; (k<secondprime)&&(extra<sieve[i]); k++)
               {
-                 modp=(i+ctimesreps)%factorBase[k];
+                 //modp=(i+ctimesreps)%factorBase[k];
+                 inv = pinv[k];
+                 p = factorBase[k];
+                 modp = long_mod_precomp(i+ctimesreps, p, inv);  
                  if (soln2[k]!=0xFFFFFFFFl)
                  {
                     if ((modp==soln1[k]) || (modp==soln2[k]))
@@ -650,7 +662,9 @@ void evaluateSieve(unsigned long ** relations, unsigned long ctimesreps, unsigne
               {
                  if (flags[k]&vv)
                  {
-                    modp=(i+ctimesreps)%factorBase[k];
+                    inv = pinv[k];
+                    p = factorBase[k];
+                    modp = long_mod_precomp(i+ctimesreps, p, inv);  
                     if ((modp==soln1[k]) || (modp==soln2[k]))
                     {
                        mpz_set_ui(temp,factorBase[k]);

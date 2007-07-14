@@ -12,7 +12,7 @@
 
 #include "../fmpz.h"
 
-#define SIEVE_SIZE 10000
+#define SIEVE_SIZE 9000
 
 typedef struct prime_s
 {
@@ -23,6 +23,7 @@ typedef struct prime_s
 typedef struct QS_s
 {
    fmpz_t n; // Number to factor = kn when multiplier is found
+   mpz_t mpz_n;
    unsigned long k; // Multiplier
    unsigned long bits;
    unsigned long num_primes;
