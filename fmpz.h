@@ -69,6 +69,28 @@ void fmpz_set_si(fmpz_t res, long x)
 }
 
 
+// returns nonzero if op1 == op2
+static inline
+int fmpz_equal(fmpz_t op1, fmpz_t op2)
+{
+   // if the signs/sizes are different, they can't be equal
+   if (op1[0] != op2[0])
+      return 0;
+
+   // compare actual limbs
+   long i = fmpz_size(op1);
+   do
+   {
+      if (op1[i] != op2[i])
+         return 0;
+   }
+   while (--i);
+   
+   return 1;
+}
+
+
+
 // res must have enough space for x
 void mpz_to_fmpz(fmpz_t res, mpz_t x);
 
