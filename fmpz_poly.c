@@ -51,54 +51,31 @@ void _fmpz_poly_stack_clear(fmpz_poly_t poly)
 void _fmpz_poly_get_coeff_mpz(mpz_t x, fmpz_poly_t poly, unsigned long n)
 {
    FLINT_ASSERT(n < poly->length);
-   fmpz_to_mpz(x, poly->coeffs + n*(poly->limbs+1));
+   fmpz_to_mpz(x, poly->coeffs + n*(poly->limbs + 1));
 }
 
 
 /* 
    Set a coefficient to the given unsigned value.
-   Clears dirty limbs unless the coefficient is set to zero. 
-   Sets the sign to 1 if x is positive, else to zero.
+   If x is nonzero, poly->limbs must be positive.
    Assumes the polynomial length is greater than n.
 */
 void _fmpz_poly_set_coeff_ui(fmpz_poly_t poly, unsigned long n, unsigned long x)
 {
    FLINT_ASSERT(poly->alloc > n);
-   if (x == 0) 
-   {
-      poly->coeffs[n*(poly->limbs+1)] = 0UL;
-      return;
-   }
-   poly->coeffs[n*(poly->limbs+1)] = 1UL;
-   poly->coeffs[n*(poly->limbs+1)+1] = x;
+   fmpz_set_ui(poly->coeffs + n*(poly->limbs + 1), x);
 }
 
 /* 
    Set a coefficient to the given signed value.
-   Clears dirty limbs unless the coefficient is set to zero. 
-   Sets the sign to 1 if x is positive, -1 if negative, else to zero.
+   If x is nonzero, poly->limbs must be positive.
    Assumes the polynomial length is greater than n.
 */
 
 void _fmpz_poly_set_coeff_si(fmpz_poly_t poly, unsigned long n, long x)
 {
    FLINT_ASSERT(poly->length > n);
-   if (x == 0)
-   {
-      poly->coeffs[n*(poly->limbs+1)] = 0UL;
-      return;
-   }
-
-   if (x > 0)
-   {
-      poly->coeffs[n*(poly->limbs+1)] = 1L;
-      poly->coeffs[n*(poly->limbs+1)+1] = x;
-   }
-   else
-   {
-      poly->coeffs[n*(poly->limbs+1)] = -1L;
-      poly->coeffs[n*(poly->limbs+1)+1] = -x;
-   } 
+   fmpz_set_si(poly->coeffs + n*(poly->limbs + 1), x);
 }
 
 void _fmpz_poly_normalise(fmpz_poly_t poly)

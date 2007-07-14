@@ -34,8 +34,40 @@ long fmpz_sgn(fmpz_t x)
 }
 
 
-// todo: should the next functions should be inlined?
-// is it really that important?
+// res := x
+// if x == 0, then res needs room only for the control limb
+// if x != 0, res needs room for one limb beyond control limb
+static inline
+void fmpz_set_ui(fmpz_t res, unsigned long x)
+{
+   if (x) 
+   {
+      res[0] = 1UL;
+      res[1] = x;
+   }
+   else
+      res[0] = 0UL;
+}
+
+
+// same as fmpz_set_ui
+static inline
+void fmpz_set_si(fmpz_t res, long x)
+{
+   if (x > 0)
+   {
+      res[0] = 1L;
+      res[1] = x;
+   }
+   else if (x < 0)
+   {
+      res[0] = -1L;
+      res[1] = -x;
+   }
+   else
+      res[0] = 0UL;
+}
+
 
 // res must have enough space for x
 void mpz_to_fmpz(fmpz_t res, mpz_t x);
