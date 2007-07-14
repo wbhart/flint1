@@ -90,6 +90,22 @@ int fmpz_equal(fmpz_t op1, fmpz_t op2)
 }
 
 
+// sets res := op
+// doesn't check for aliasing (i.e. if op == res, it will stupidly copy data)
+// assumes res has enough room
+static inline
+void fmpz_set(fmpz_t res, fmpz_t op)
+{
+   long i = fmpz_size(op);
+   do
+   {
+      res[i] = op[i];
+      i--;
+   }
+   while (i >= 0);
+}
+
+
 
 // res must have enough space for x
 void mpz_to_fmpz(fmpz_t res, mpz_t x);
