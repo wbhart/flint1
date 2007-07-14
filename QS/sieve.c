@@ -206,7 +206,6 @@ int evaluate_candidate(QS_t * qs_inf, poly_t * poly_inf,
 #if RELATIONS
             if (exp) gmp_printf("%Zd^%ld ", p, exp);
 #endif
-            //if (exp) extra_bits += qs_inf->sizes[j];
          }    
       }
       if (mpz_cmpabs_ui(res, 1) == 0) 
