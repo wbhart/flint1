@@ -37,6 +37,7 @@ typedef struct linalg_s
    unsigned long num_unmerged;
    mpz_t * Y_arr;
    mpz_t * unmerged_Y;
+   la_col_t ** qsort_arr;
    unsigned long * relation;
    unsigned long * curr_rel;
    unsigned long * unmerged_rels;

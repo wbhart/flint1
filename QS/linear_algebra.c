@@ -40,6 +40,8 @@ void linear_algebra_init(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly_inf)
    la_inf->unmerged_Y = Y_arr + qs_inf->num_primes + EXTRA_RELS;
    la_inf->curr_rel = la_inf->relation = (unsigned long *) flint_stack_alloc((qs_inf->num_primes + EXTRA_RELS + 100)*MAX_FACS*2);
    la_inf->curr_unmerged = la_inf->unmerged_rels = la_inf->curr_rel + (qs_inf->num_primes + EXTRA_RELS)*MAX_FACS*2;
+   la_inf->qsort_arr = (la_col_t **) flint_stack_alloc(100);
+   
    for (unsigned long i = 0; i < qs_inf->num_primes + EXTRA_RELS + 100; i++) 
    {
       clear_col(matrix + i);
@@ -71,13 +73,43 @@ void linear_algebra_clear(linalg_t * la_inf, QS_t * qs_inf)
       free_col(unmerged + i);
    }
    
+   flint_stack_release(); // Clear qsort_array
    flint_stack_release(); // Clear relation
    flint_stack_release(); // Clear Y_arr
    flint_stack_release(); // Clear matrix and unmerged
    flint_stack_release(); // Clear factor
    flint_stack_release(); // Clear small
 }
+
+/*=========================================================================
    
+   Compare relations:
+ 
+   Function: Compare two relations; used by qsort
+ 
+==========================================================================*/
+
+int relations_cmp(const void *a, const void *b)
+{
+  la_col_t * ra = *((la_col_t **) a);
+  la_col_t * rb = *((la_col_t **) b);
+  
+  long point;
+  
+  if (ra->weight > rb->weight) return 1;
+  else if (ra->weight < rb->weight) return -1;
+  
+  for (point = ra->weight-1; (ra->data[point] == rb->data[point]) && (point >= 0); point--)
+  {
+      ;
+  }
+  
+  if (point == -1L) return 0;
+
+  if (ra->data[point] > rb->data[point]) return 1;
+  else if (ra->data[point] < rb->data[point]) return -1;
+}
+  
 /*==========================================================================
    Merge relations:
 
@@ -95,26 +127,37 @@ unsigned long merge_relations(linalg_t * la_inf)
    mpz_t * Y_arr = la_inf->Y_arr;
    unsigned long * rel_point1 = la_inf->unmerged_rels;
    unsigned long * rel_point2 = la_inf->curr_rel;
+   la_col_t ** qsort_arr = la_inf->qsort_arr;
     
-   for (unsigned long i = 0; i < num_unmerged; i++)
+   if (num_unmerged)
    {
-      copy_col(matrix + columns, unmerged + i);
-      matrix[columns].orig = columns;
-      clear_col(unmerged + i);
-      columns++;
-      mpz_set(Y_arr[columns], unmerged_Y[i]); 
-      for (unsigned long j = 0; j < 2*MAX_FACS; j++)
+      for (unsigned long i = 0; i < num_unmerged; i++)
       {
-         rel_point2[j] = rel_point1[j];
+         qsort_arr[i] = unmerged + i;
       }
-      rel_point1 += 2*MAX_FACS;
-      rel_point2 += 2*MAX_FACS;
-   }
+      qsort(qsort_arr, num_unmerged, sizeof(la_col_t *), relations_cmp);
+
+      for (unsigned long i = 0; i < num_unmerged; i++)
+      {
+         copy_col(matrix + columns, unmerged + i);
+         matrix[columns].orig = columns;
+         clear_col(unmerged + i);
+         columns++;
+         mpz_set(Y_arr[columns], unmerged_Y[i]); 
+         for (unsigned long j = 0; j < 2*MAX_FACS; j++)
+         {
+            rel_point2[j] = rel_point1[j];
+         }
+         rel_point1 += 2*MAX_FACS;
+         rel_point2 += 2*MAX_FACS;
+      }
    
-   la_inf->curr_rel = rel_point2;
-   la_inf->columns = columns;
-   la_inf->num_unmerged = 0;
-   la_inf->curr_unmerged = la_inf->unmerged_rels;
+      la_inf->curr_rel = rel_point2;
+      la_inf->columns = columns;
+      la_inf->num_unmerged = 0;
+      la_inf->curr_unmerged = la_inf->unmerged_rels;
+   
+   }
    
    return num_unmerged;
 }
