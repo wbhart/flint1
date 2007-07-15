@@ -276,9 +276,17 @@ poly.o: QS/poly.c QS/poly.h
 factor_base.o: QS/factor_base.c QS/factor_base.h
 	$(CC) $(CFLAGS) -c QS/factor_base.c -o factor_base.o
 
-tinyQS: QS/tinyQS.c QS/tinyQS.h factor_base.o poly.o long_extras.o memory-manager.o fmpz.o test-support.o
-	$(CC) $(CFLAGS) -o tinyQS QS/tinyQS.c factor_base.o poly.o memory-manager.o long_extras.o fmpz.o test-support.o $(LIBS)
+sieve.o: QS/sieve.c QS/sieve.h
+	$(CC) $(CFLAGS) -c QS/sieve.c -o sieve.o
 
+linear_algebra.o: QS/linear_algebra.c QS/linear_algebra.h
+	$(CC) $(CFLAGS) -c QS/linear_algebra.c -o linear_algebra.o
+
+block_lanczos.o: QS/block_lanczos.c QS/block_lanczos.h
+	$(CC) $(CFLAGS) -c QS/block_lanczos.c -o block_lanczos.o
+
+tinyQS: QS/tinyQS.c QS/tinyQS.h factor_base.o poly.o sieve.o linear_algebra.o block_lanczos.o long_extras.o memory-manager.o fmpz.o test-support.o
+	$(CC) $(CFLAGS) -o tinyQS QS/tinyQS.c factor_base.o poly.o sieve.o linear_algebra.o block_lanczos.o memory-manager.o long_extras.o fmpz.o test-support.o $(LIBS)
 
 ####### Integer multiplication timing
 

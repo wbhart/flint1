@@ -14,6 +14,10 @@
 
 #define SIEVE_SIZE 9000
 
+#define SMALL_PRIMES 6
+
+#define EXTRA_RELS 64 // number of additional relations to find above the number of primes
+
 typedef struct prime_s
 {
    unsigned long p; // prime

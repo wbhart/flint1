@@ -77,7 +77,7 @@ void poly_init(QS_t * qs_inf, poly_t * poly_inf, mpz_t N)
    span = num_primes/s/s/2;
    if (span < 10) span = 10;
    min = fact - span/2;
-   if (min < 7) min = 7;
+   if (min < SMALL_PRIMES) min = SMALL_PRIMES;
    if (min + span >= qs_inf->num_primes) span = num_primes - min - 1;
    fact = min + span/2;
 
@@ -394,9 +394,6 @@ void compute_C(QS_t * qs_inf, poly_t * poly_inf)
 {
    unsigned long A = poly_inf->A;
    unsigned long B = poly_inf->B;
-   /*unsigned long hi, lo;
-   unsigned long AC_hi, AC_lo;
-   unsigned long norm, r;*/
    mpz_t * C = &poly_inf->C;
    mpz_t * mpz_n = &qs_inf->mpz_n;
    
@@ -405,29 +402,4 @@ void compute_C(QS_t * qs_inf, poly_t * poly_inf)
    mpz_mul_ui(*C, *C, B);
    mpz_sub(*C, *C, *mpz_n);
    mpz_divexact_ui(*C, *C, A);
-   /*hi = 0;
-   umul_ppmm(hi, lo, B, B);
-   if ((hi < n[2]) || ((hi == n[2]) && (lo < n[1])))
-   {
-      AC_hi = 0;
-      sub_ddmmss(AC_hi, AC_lo, n[2], n[1], hi, lo);
-#if UDIV_NEEDS_NORMALIZATION
-      count_lead_zeros(norm, A);
-      udiv_qrnnd(C, r, (AC_hi<<norm) + (AC_lo>>(FLINT_BITS-norm)), AC_lo<<norm, A<<norm);
-#else
-      udiv_qrnnd(C, r, AC_hi, AC_lo, A);
-#endif
-      C = -C; 
-   } else
-   {
-      AC_hi = 0;
-      sub_ddmmss(AC_hi, AC_lo, hi, lo, n[2], n[1]);
-#if UDIV_NEEDS_NORMALIZATION
-      count_lead_zeros(norm, A);
-      udiv_qrnnd(C, r, (AC_hi<<norm) + (AC_lo>>(FLINT_BITS-norm)), AC_lo<<norm, A<<norm);
-#else
-      udiv_qrnnd(C, r, AC_hi, AC_lo, A);
-#endif
-   }
-   poly_inf->C = C;*/
 } 

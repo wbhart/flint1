@@ -17,8 +17,7 @@
 
 #define QS_INFO 0 // Print some info about what is being factored, etc
 
-#define MAXBITS 130
-#define EXTRA_RELS 64 // number of additional relations to find above the number of primes
+#define MAXBITS 128 // Largest bits including multiplier that can be factored
 
 typedef struct F_mpz_fact_s
 {

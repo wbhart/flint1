@@ -108,6 +108,8 @@ unsigned long long_CRT(unsigned long x1, unsigned long x2,
                        
 int long_issquarefree(unsigned long n);
 
+int long_remove63_precomp(unsigned long * n, unsigned long p, double pinv);
+
 int long_remove(unsigned long * n, unsigned long p);
 
 unsigned long long_factor_trial(factor_t * factors, unsigned long n);

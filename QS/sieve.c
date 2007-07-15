@@ -18,6 +18,7 @@
 
 #include "common.h"
 #include "poly.h"
+#include "linear_algebra.h"
 
 void do_sieving(QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve)
 {
@@ -38,7 +39,7 @@ void do_sieving(QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve)
    memset(sieve, 0, SIEVE_SIZE);
    *end = 255;
    
-   for (unsigned long prime = 7; prime < num_primes/2; prime++) 
+   for (unsigned long prime = SMALL_PRIMES; prime < num_primes; prime++) 
    {
       if (soln2[prime] == -1L) continue;
       
@@ -47,40 +48,7 @@ void do_sieving(QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve)
       pos1 = sieve + soln1[prime];
       pos2 = sieve + soln2[prime];
       diff = pos2 - pos1;
-      bound = end - p*4;
-        
-      while (bound - pos1 > 0)  
-      {  
-         (*pos1)+=size, (*(pos1+diff))+=size, pos1+=p;
-         (*pos1)+=size, (*(pos1+diff))+=size, pos1+=p;
-         (*pos1)+=size, (*(pos1+diff))+=size, pos1+=p;
-         (*pos1)+=size, (*(pos1+diff))+=size, pos1+=p;
-      }
-      while ((end - pos1 > 0) && (end - pos1 - diff > 0))
-      { 
-         (*pos1)+=size, (*(pos1+diff))+=size, pos1+=p;
-      }
-      pos2 = pos1+diff;
-      if (end - pos2 > 0)
-      { 
-         (*pos2)+=size;
-      }
-      if (end - pos1 > 0)
-      { 
-         (*pos1)+=size;
-      } 
-   }
-   
-   for (unsigned long prime = num_primes/2; prime < num_primes; prime++) 
-   {
-      if (soln2[prime] == -1L) continue;
-      
-      p = factor_base[prime].p;
-      size = sizes[prime];
-      pos1 = sieve + soln1[prime];
-      pos2 = sieve + soln2[prime];
-      diff = pos2 - pos1;
-      bound = end - p*2;
+      bound = end - 2*p;
         
       while (bound - pos1 > 0)  
       {  
@@ -127,11 +95,11 @@ void update_offsets(unsigned long poly_add, unsigned long * poly_corr,
 /*==========================================================================
    evaluate_candidate:
 
-   Function: determine whether a given sieve entry is a relation or 
-             partial relation
+   Function: determine whether a given sieve entry is a relation 
 
 ===========================================================================*/
-int evaluate_candidate(QS_t * qs_inf, poly_t * poly_inf, 
+
+unsigned long evaluate_candidate(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly_inf, 
                           unsigned long i, unsigned char * sieve)
 {
    unsigned long bits, exp, extra_bits, modp, prime;
@@ -139,10 +107,14 @@ int evaluate_candidate(QS_t * qs_inf, poly_t * poly_inf,
    prime_t * factor_base = qs_inf->factor_base;
    unsigned long * soln1 = poly_inf->soln1;
    unsigned long * soln2 = poly_inf->soln2;
+   unsigned long * small = la_inf->small;
+   fac_t * factor = la_inf->factor;
    unsigned long A = poly_inf->A;
    unsigned long B = poly_inf->B;
+   unsigned long num_factors = 0;
+   unsigned long j;
    mpz_t * C = &poly_inf->C;
-   int relation = 0;
+   unsigned long relations = 0;
    double pinv;
    
    mpz_t X, Y, res, p;
@@ -174,7 +146,7 @@ int evaluate_candidate(QS_t * qs_inf, poly_t * poly_inf,
    mpz_add(res, res, *C); // res = AX^2+2BX+C
            
    bits = mpz_sizeinbase(res, 2);
-   bits -= 11; 
+   bits -= 12; 
    extra_bits = 0;
    
    mpz_set_ui(p, 2); // divide out by powers of 2
@@ -184,18 +156,20 @@ int evaluate_candidate(QS_t * qs_inf, poly_t * poly_inf,
    if (exp) printf("2^%ld ", exp);
 #endif
    extra_bits += exp;
+   small[1] = exp;
      
    if (factor_base[0].p != 1) // divide out powers of the multiplier
    {
       mpz_set_ui(p, factor_base[0].p);
       exp = mpz_remove(res, res, p);
       if (exp) extra_bits += exp*qs_inf->sizes[0];
+      small[0] = exp;
 #if RELATIONS
       if (exp) printf("%ld^%ld ", factor_base[0].p, exp); 
 #endif
-   }
+   } else small[0] = 0;
    
-   for (unsigned long j = 2; j < 7; j++) // pull out small primes
+   for (unsigned long j = 2; j < SMALL_PRIMES; j++) // pull out small primes
    {
       prime = factor_base[j].p;
       pinv = factor_base[j].pinv;
@@ -205,16 +179,17 @@ int evaluate_candidate(QS_t * qs_inf, poly_t * poly_inf,
          mpz_set_ui(p, prime);
          exp = mpz_remove(res, res, p);
          if (exp) extra_bits += qs_inf->sizes[j];
+         small[j] = exp;
 #if RELATIONS
          if (exp) gmp_printf("%Zd^%ld ", p, exp); 
 #endif
-      }
+      } else small[j] = 0;
    }
    
    if (extra_bits + sieve[i] > bits)
    {
       sieve[i] += extra_bits;
-      for (unsigned long j = 7; (j < num_primes) && (extra_bits < sieve[i]); j++) // pull out remaining primes
+      for (j = SMALL_PRIMES; (j < num_primes) && (extra_bits < sieve[i]); j++) // pull out remaining primes
       {
          prime = factor_base[j].p;
          pinv = factor_base[j].pinv;
@@ -228,20 +203,37 @@ int evaluate_candidate(QS_t * qs_inf, poly_t * poly_inf,
 #if RELATIONS
                if (exp) gmp_printf("%Zd^%ld ", p, exp);
 #endif
-               if (exp) extra_bits += qs_inf->sizes[j]; 
+               if (exp) 
+               {
+                  extra_bits += qs_inf->sizes[j];
+                  factor[num_factors].ind = j;
+                  factor[num_factors++].exp = exp; 
+               }
             }
          } else
          {
             mpz_set_ui(p, prime);
             exp = mpz_remove(res, res, p);
+            factor[num_factors].ind = j;
+            factor[num_factors++].exp = exp+1; 
 #if RELATIONS
             if (exp) gmp_printf("%Zd^%ld ", p, exp);
 #endif
          }    
       }
-      if (mpz_cmpabs_ui(res, 1) == 0) 
+      if (mpz_cmpabs_ui(res, 1) == 0) // We've found a relation
       {
-         relation = 1;
+         unsigned long * A_ind = poly_inf->A_ind;
+         for (unsigned long i = 0; i < poly_inf->s; i++) // Commit any outstanding A factors
+         {
+            if (A_ind[i] >= j)
+            {
+               factor[num_factors].ind = A_ind[i];
+               factor[num_factors++].exp = 1; 
+            }
+         }
+         la_inf->num_factors = num_factors;
+         relations += insert_relation(la_inf, poly_inf, Y);  // Insert the relation in the matrix
          goto cleanup;
       }
    }
@@ -255,7 +247,7 @@ cleanup:
    mpz_clear(res);
    mpz_clear(p);
       
-   return relation;
+   return relations;
 }
 
 /*==========================================================================
@@ -264,7 +256,7 @@ cleanup:
    Function: searches sieve for relations and sticks them into a matrix
 
 ===========================================================================*/
-unsigned long evaluate_sieve(QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve)
+unsigned long evaluate_sieve(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve)
 {
    unsigned long i = 0;
    unsigned long j=0;
@@ -279,12 +271,11 @@ unsigned long evaluate_sieve(QS_t * qs_inf, poly_t * poly_inf, unsigned char * s
       {
          if (sieve[i] > 51) 
          {
-            if (evaluate_candidate(qs_inf, poly_inf, i, sieve)) rels++;
+             rels += evaluate_candidate(la_inf, qs_inf, poly_inf, i, sieve);
          }
          i++;
       }
       j++;
    }
-   
    return rels;
 }

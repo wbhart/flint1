@@ -1165,6 +1165,30 @@ int long_issquarefree(unsigned long n)
 /*
    Removes the highest power of p possible from n and 
    returns the exponent to which it appeared in n
+   n can be up to 63 bits
+*/
+
+int long_remove63_precomp(unsigned long * n, unsigned long p, double pinv)
+{
+   unsigned long quot, rem;
+   int exp = 0;
+   
+   quot = long_div63_precomp(*n, p, pinv);
+   rem = (*n) - quot*p;
+   printf("n = %ld, quot = %ld, rem = %ld\n", *n, quot, rem);
+   while (rem == 0); 
+   {
+      exp++;
+      (*n) = quot;
+      quot = long_div63_precomp(*n, p, pinv);
+      rem = (*n) - quot*p;
+   } 
+   return exp;
+}
+   
+/*
+   Removes the highest power of p possible from n and 
+   returns the exponent to which it appeared in n
 */
 
 int long_remove(unsigned long * n, unsigned long p)

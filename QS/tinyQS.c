@@ -22,6 +22,8 @@
 #include "factor_base.h"
 #include "poly.h"
 #include "sieve.h"
+#include "linear_algebra.h"
+#include "block_lanczos.h"
 
 /*===========================================================================
    Collect relations:
@@ -34,7 +36,7 @@
 
 ===========================================================================*/
 
-unsigned long collect_relations(QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve)
+unsigned long collect_relations(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve)
 {
    unsigned long s = poly_inf->s;
    unsigned long * poly_corr;
@@ -62,7 +64,7 @@ unsigned long collect_relations(QS_t * qs_inf, poly_t * poly_inf, unsigned char 
            
       do_sieving(qs_inf, poly_inf, sieve);
       
-      relations += evaluate_sieve(qs_inf, poly_inf, sieve);
+      relations += evaluate_sieve(la_inf, qs_inf, poly_inf, sieve);
       
       update_offsets(poly_add, poly_corr, qs_inf, poly_inf);
       
@@ -73,6 +75,8 @@ unsigned long collect_relations(QS_t * qs_inf, poly_t * poly_inf, unsigned char 
       
       compute_A_factor_offsets(qs_inf, poly_inf);    
    }
+   
+   relations += merge_relations(la_inf);
    
    return relations;
 }
@@ -95,6 +99,7 @@ int F_mpz_factor_tinyQS(F_mpz_factor_t factors, mpz_t N)
    
    QS_t qs_inf; 
    poly_t poly_inf;
+   linalg_t la_inf;
    
    qs_inf.bits = mpz_sizeinbase(N,2);
    if (qs_inf.bits > MAXBITS) return 0; // Number too big for tinyQS 
@@ -113,7 +118,12 @@ int F_mpz_factor_tinyQS(F_mpz_factor_t factors, mpz_t N)
    mpz_init(qs_inf.mpz_n);
    mpz_set(qs_inf.mpz_n, N);
    mpz_mul_ui(qs_inf.mpz_n, qs_inf.mpz_n, qs_inf.k);
-   qs_inf.bits = mpz_sizeinbase(qs_inf.mpz_n,2);
+   qs_inf.bits = mpz_sizeinbase(qs_inf.mpz_n, 2);
+   if (qs_inf.bits > MAXBITS) 
+   {
+      small_factor = 0; // Number too big for tinyQS 
+      goto cleanup_2;
+   }
    mpz_to_fmpz(qs_inf.n, qs_inf.mpz_n); // set n to the number to be factored times k
    
    primes_init(&qs_inf);
@@ -130,15 +140,28 @@ int F_mpz_factor_tinyQS(F_mpz_factor_t factors, mpz_t N)
    compute_sizes(&qs_inf);
    
    poly_init(&qs_inf, &poly_inf, N);
+   linear_algebra_init(&la_inf, &qs_inf, &poly_inf);
    
    unsigned char * sieve = (unsigned char *) flint_stack_alloc_bytes(SIEVE_SIZE+1);
    while (rels_found < qs_inf.num_primes + EXTRA_RELS)
    {
-      rels_found += collect_relations(&qs_inf, &poly_inf, sieve);
+      rels_found += collect_relations(&la_inf, &qs_inf, &poly_inf, sieve);
    }
    flint_stack_release(); // release sieve
    
+   la_col_t * matrix = la_inf.matrix;
+   unsigned long ncols = qs_inf.num_primes + EXTRA_RELS;
+   unsigned long nrows = qs_inf.num_primes;
+
+   reduce_matrix(&nrows, &ncols, matrix); // Do some filtering on the matrix
+ 
+   u_int64_t* nullrows;
+   //do {
+      nullrows = block_lanczos(nrows, 0, ncols, matrix); // Linear algebra (block Lanczos)
+   //} while (nullrows == NULL);  
+   
    small_factor = 1; // sieve was successful
+   linear_algebra_clear(&la_inf, &qs_inf);
    poly_clear(&poly_inf);
    sizes_clear();
 cleanup_1:
