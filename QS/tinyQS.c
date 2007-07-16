@@ -26,6 +26,68 @@
 #include "block_lanczos.h"
 
 /*===========================================================================
+   Square Root:
+
+   Function: Compute the square root of the product of all the partial 
+             relations and take it mod p
+
+===========================================================================*/
+
+static inline void square_root(mpz_t X, mpz_t Y, QS_t * qs_inf, linalg_t * la_inf, 
+   u_int64_t * nullrows, unsigned long ncols, unsigned long l, mpz_t N)
+{
+   unsigned long position;
+   unsigned long * relation = la_inf->relation;
+   prime_t * factor_base = qs_inf->factor_base;
+   unsigned long * prime_count = qs_inf->prime_count;
+   unsigned long num_primes = qs_inf->num_primes;
+   mpz_t * Y_arr = la_inf->Y_arr;
+   
+   mpz_t pow;
+   mpz_init(pow);
+      
+   memset(prime_count, 0, num_primes*sizeof(unsigned long));
+      
+   mpz_set_ui(X, 1);
+   mpz_set_ui(Y, 1);
+   
+   for (unsigned long i = 0; i < ncols; i++)
+   {
+      if (get_null_entry(nullrows, i, l)) 
+      {
+         position = la_inf->matrix[i].orig*2*MAX_FACS;
+         for (unsigned long j = 0; j < relation[position]; j++)
+         {
+            prime_count[relation[position+2*j+1]] +=
+               (relation[position+2*j+2]);
+         }
+         mpz_mul(Y, Y, Y_arr[la_inf->matrix[i].orig]);
+         if (i % 10 == 0) mpz_mod(Y, Y, N);
+      }
+   }
+
+   for (unsigned long i = 0; i < num_primes; i++)
+   {
+      if (prime_count[i]) 
+      {
+         mpz_set_ui(pow, factor_base[i].p);
+         mpz_powm_ui(pow, pow, prime_count[i]/2, N);
+         mpz_mul(X, X, pow);
+      } 
+      if (i%10 == 0) mpz_mod(X, X, N);
+   }
+
+#if TEST
+   for (unsigned long i = 0; i < num_primes; i++)
+   {
+      if ((prime_count[i] %2) != 0) printf("Error %ld, %ld, %ld\n", l, i, prime_count[i]);
+   }
+#endif
+
+   mpz_clear(pow);
+}
+
+/*===========================================================================
    Collect relations:
 
    Function: Sets up batches of polynomials
@@ -158,9 +220,66 @@ int F_mpz_factor_tinyQS(F_mpz_factor_t factors, mpz_t N)
    u_int64_t* nullrows;
    do {
       nullrows = block_lanczos(nrows, 0, ncols, matrix); // Linear algebra (block Lanczos)
-   } while (nullrows == NULL);  
+   } while (nullrows == NULL); 
+   
+   unsigned long i, j, mask;
+     
+   for (i = 0, mask = 0; i < ncols; i++)
+      mask |= nullrows[i];
+
+   for (i = j = 0; i < 64; i++) {
+		if (mask & ((u_int64_t)(1) << i))
+			j++;
+   }
+
+#if QS_INFO
+   printf("%ld nullspace vectors found\n", j);
+#endif
+
+   qs_inf.prime_count = (unsigned long *) flint_stack_alloc(qs_inf.num_primes);
+   
+   mpz_t X, Y, F, Q, R;
+   mpz_init(X);
+   mpz_init(Y);
+   mpz_init(F);
+   mpz_init(Q);
+   mpz_init(R);
+   
+   mpz_set(F, N);
+    
+#if PRINT_FACTORS
+   gmp_printf("Factors of %Zd:\n", N);
+#endif
+
+   for (unsigned long l = 0; l < 64; l++)
+   {
+      if (mask & ((u_int64_t)(1) << l))
+      {
+         square_root(X, Y, &qs_inf, &la_inf, nullrows, ncols, l, N); 
+         mpz_sub(X, X, Y);
+         mpz_gcd(X, X, N);
+         if ((mpz_cmp(X, N) != 0) && (mpz_cmp_ui(X, 1) != 0))
+         {
+#if PRINT_FACTORS
+            gmp_printf("%Zd\n", X);
+#endif
+            if (mpz_probab_prime_p(X, 10)) 
+            {
+               mpz_fdiv_qr(Q, R, F, X);
+               if (mpz_cmp_ui(R, 0) == 0) mpz_set(F, Q);
+            }
+            if (mpz_cmp_ui(F, 1) == 0) break; 
+         }
+      }
+   }
    
    small_factor = 1; // sieve was successful
+   mpz_clear(Q);
+   mpz_clear(R);
+   mpz_clear(F);
+   mpz_clear(X);
+   mpz_clear(Y);
+   flint_stack_release(); // release prime_count
    linear_algebra_clear(&la_inf, &qs_inf);
    poly_clear(&poly_inf);
    sizes_clear();
@@ -210,8 +329,8 @@ int main(int argc, unsigned char *argv[])
     
     for (i = 0; i < 100; i++)
     {
-       mpz_set_ui(N, long_nextprime(long_randint(4000000000000000000UL)+1UL));
-       mpz_mul_ui(N, N, long_nextprime(long_randint(4000000000000000000UL)+1UL));
+       mpz_set_ui(N, long_nextprime(long_randint(4000000000UL)+1UL));
+       mpz_mul_ui(N, N, long_nextprime(long_randint(4000000000UL)+1UL));
        //bits1 = long_randint(41UL)+13UL;
        //bits2 = long_randint(22UL)+13UL;
        //mpz_mul_ui(N, N, long_nextprime(long_randint((1UL<<bits1)-1UL)+1UL));

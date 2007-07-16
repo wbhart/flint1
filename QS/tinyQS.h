@@ -19,6 +19,10 @@
 
 #define MAXBITS 128 // Largest bits including multiplier that can be factored
 
+#define TEST 0
+
+#define PRINT_FACTORS 1
+
 typedef struct F_mpz_fact_s
 {
    mpz_t * fact;

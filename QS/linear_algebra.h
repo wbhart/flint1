@@ -17,8 +17,6 @@
 #include "block_lanczos.h"
 
 
-#define MAX_FACS 25 // Maximum number of different prime factors
-                    // a relation can have
 #define DUPS 0 // Print info about number of duplicate relations
 
 typedef struct fac_s

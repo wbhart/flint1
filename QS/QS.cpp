@@ -1257,8 +1257,6 @@ void mainRoutine(unsigned long Mdiv2, mpz_t n, unsigned long multiplier)
            if (soln2[i] >= p) soln2[i] -= p;
         }  
             
-//====================================================================================
-
         for (long polyindex=1; polyindex<(1<<(s-1))-1; polyindex++)
         {
            long j,polyadd;
@@ -1544,12 +1542,14 @@ void mainRoutine(unsigned long Mdiv2, mpz_t n, unsigned long multiplier)
 // We want factors of n, not kn, so divide out by the multiplier
      
     mpz_div_ui(n,n,multiplier);
+
+//====================================================================================
     
 // Now do the "square root" and GCD steps hopefully obtaining factors of n
     printf("FACTORS:\n");
-    for (long l = 0;l<64;l++)
+    for (long l = 0;l < 64; l++)
     {
-        while (!(mask & ((u_int64_t)(1) << l))) l++;
+        if (!(mask & ((u_int64_t)(1) << l))) continue;
         mpz_set_ui(temp,1);
         mpz_set_ui(temp2,1);
         memset(primecount,0,numPrimes*sizeof(unsigned long));

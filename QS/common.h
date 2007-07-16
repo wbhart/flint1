@@ -14,9 +14,12 @@
 
 #define SIEVE_SIZE 9000
 
-#define SMALL_PRIMES 6
+#define SMALL_PRIMES 4
 
 #define EXTRA_RELS 64 // number of additional relations to find above the number of primes
+
+#define MAX_FACS 25 // Maximum number of different prime factors
+                    // a relation can have
 
 typedef struct prime_s
 {
@@ -34,6 +37,7 @@ typedef struct QS_s
    prime_t * factor_base; 
    unsigned long * sqrts;
    unsigned char * sizes;
+   unsigned long * prime_count;
 } QS_t;
 
 #endif

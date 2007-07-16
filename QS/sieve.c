@@ -146,7 +146,7 @@ unsigned long evaluate_candidate(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly
    mpz_add(res, res, *C); // res = AX^2+2BX+C
            
    bits = mpz_sizeinbase(res, 2);
-   bits -= 12; 
+   bits -= 10; 
    extra_bits = 0;
    
    mpz_set_ui(p, 2); // divide out by powers of 2
@@ -269,7 +269,7 @@ unsigned long evaluate_sieve(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly_inf
       i = j*sizeof(unsigned long);
       while ((i < (j+1)*sizeof(unsigned long)) && (i < SIEVE_SIZE))
       {
-         if (sieve[i] > 51) 
+         if (sieve[i] > 38) 
          {
              rels += evaluate_candidate(la_inf, qs_inf, poly_inf, i, sieve);
          }
