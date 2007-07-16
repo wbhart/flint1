@@ -154,11 +154,11 @@ int F_mpz_factor_tinyQS(F_mpz_factor_t factors, mpz_t N)
    unsigned long nrows = qs_inf.num_primes;
 
    reduce_matrix(&nrows, &ncols, matrix); // Do some filtering on the matrix
- 
+   
    u_int64_t* nullrows;
-   //do {
+   do {
       nullrows = block_lanczos(nrows, 0, ncols, matrix); // Linear algebra (block Lanczos)
-   //} while (nullrows == NULL);  
+   } while (nullrows == NULL);  
    
    small_factor = 1; // sieve was successful
    linear_algebra_clear(&la_inf, &qs_inf);

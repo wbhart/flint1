@@ -75,7 +75,7 @@ void poly_init(QS_t * qs_inf, poly_t * poly_inf, mpz_t N)
    for (fact = 0; fact_approx >= factor_base[fact].p; fact++); 
    
    span = num_primes/s/s/2;
-   if (span < 10) span = 10;
+   if (span < 3*s) span = 3*s;
    min = fact - span/2;
    if (min < SMALL_PRIMES) min = SMALL_PRIMES;
    if (min + span >= qs_inf->num_primes) span = num_primes - min - 1;

@@ -137,11 +137,11 @@ void reduce_matrix(unsigned long *nrows,
 						counts[col->data[k]]--;
 					}
 					free_col(col);
-				    col->weight = 0;
+				    clear_col(col);
 				}
 				else {
 					cols[j++] = cols[i];
-					cols[i].weight = 0;
+					if (j-1 != i) clear_col(col);
 				}
 			}
 			reduced_cols = j;
@@ -172,7 +172,7 @@ void reduce_matrix(unsigned long *nrows,
 					counts[col->data[j]]--;
 				}
 				free_col(col);
-				col->weight = 0;
+				clear_col(col);
 			}
 			reduced_cols = reduced_rows + NUM_EXTRA_RELATIONS;
 		}

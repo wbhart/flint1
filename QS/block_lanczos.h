@@ -76,6 +76,30 @@ static inline void copy_col(la_col_t* col2, la_col_t* col1)
 }
 
 /*==========================================================================
+   swap_cols:
+
+   Function: swap two columns
+   
+===========================================================================*/
+
+static inline void swap_cols(la_col_t* col2, la_col_t* col1)
+{
+   la_col_t temp;
+   
+   temp.weight = col1->weight;
+   temp.data = col1->data;
+   temp.orig = col1->orig;
+   
+   col1->weight = col2->weight;
+   col1->data = col2->data;
+   col1->orig = col2->orig;
+   
+   col2->weight = temp.weight;
+   col2->data = temp.data;
+   col2->orig = temp.orig;
+}
+
+/*==========================================================================
    clear_col:
 
    Function: clear a column
