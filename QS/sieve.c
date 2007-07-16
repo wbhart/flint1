@@ -234,6 +234,11 @@ unsigned long evaluate_candidate(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly
          }
          la_inf->num_factors = num_factors;
          relations += insert_relation(la_inf, poly_inf, Y);  // Insert the relation in the matrix
+         if (la_inf->num_relations >= qs_inf->num_primes + EXTRA_RELS + 100)
+         {
+            printf("Error: too many duplicate relations!\n");
+            abort();
+         }
          goto cleanup;
       }
    }
