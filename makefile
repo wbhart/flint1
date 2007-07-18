@@ -288,6 +288,21 @@ block_lanczos.o: QS/block_lanczos.c QS/block_lanczos.h
 tinyQS: QS/tinyQS.c QS/tinyQS.h factor_base.o poly.o sieve.o linear_algebra.o block_lanczos.o long_extras.o memory-manager.o fmpz.o test-support.o
 	$(CC) $(CFLAGS) -o tinyQS QS/tinyQS.c factor_base.o poly.o sieve.o linear_algebra.o block_lanczos.o memory-manager.o long_extras.o fmpz.o test-support.o $(LIBS)
 
+mp_sieve.o: QS/mp_sieve.c QS/mp_sieve.h
+	$(CC) $(CFLAGS) -c QS/mp_sieve.c -o mp_sieve.o
+
+mp_linear_algebra.o: QS/mp_linear_algebra.c QS/mp_linear_algebra.h
+	$(CC) $(CFLAGS) -c QS/mp_linear_algebra.c -o mp_linear_algebra.o
+
+mp_poly.o: QS/mp_poly.c QS/mp_poly.h
+	$(CC) $(CFLAGS) -c QS/mp_poly.c -o mp_poly.o
+
+mp_factor_base.o: QS/mp_factor_base.c QS/mp_factor_base.h
+	$(CC) $(CFLAGS) -c QS/mp_factor_base.c -o mp_factor_base.o
+
+mpQS: QS/mpQS.c QS/mpQS.h mp_factor_base.o mp_poly.o mp_sieve.o mp_linear_algebra.o block_lanczos.o long_extras.o memory-manager.o fmpz.o test-support.o
+	$(CC) $(CFLAGS) -o mpQS QS/mpQS.c mp_factor_base.o mp_poly.o mp_sieve.o mp_linear_algebra.o block_lanczos.o memory-manager.o long_extras.o fmpz.o test-support.o $(LIBS)
+
 ####### Integer multiplication timing
 
 ZMULOBJ = memory-manager.o fmpz.o ZmodF_mul-tuning.o fmpz_poly.o ZmodF_poly.o Z_mpn.o profiler.o ZmodF_mul.o ZmodF.o mpn_extras.o Z_mul_timing.o

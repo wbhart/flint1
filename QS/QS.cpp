@@ -81,8 +81,10 @@ Contact: hart_wb {at-thingy} yahoo.com
 //===========================================================================
 //Knuth-Schroeppel multipliers and a macro to count them
 
-static const unsigned long multipliers[] = {1, 2, 3, 5, 7, 11, 13, 17, 19, 
-                                                23, 29, 31, 37, 41, 43};
+static const unsigned long multipliers[] = {1, 2, 3, 5, 6, 7, 10, 11, 13, 14, 
+                                            15, 17, 19, 21, 22, 23, 26, 29, 
+                                            30, 31, 33, 34, 35, 37, 38, 41, 
+                                            42, 43, 47};
 
 #define NUMMULTS (sizeof(multipliers)/sizeof(unsigned long))
 
@@ -356,7 +358,7 @@ unsigned long knuthSchroeppel(mpz_t n)
     }
     
     mpz_set_ui(prime,3);
-    while (mpz_cmp_ui(prime,1000)<0)
+    while (mpz_cmp_ui(prime,100)<0)
     {
           logpdivp = log((float)mpz_get_ui(prime)) / mpz_get_ui(prime);
           kron = mpz_kronecker(n,prime);
@@ -488,7 +490,9 @@ void computeSizes(unsigned long numPrimes)
 void tonelliShanks(unsigned long numPrimes,mpz_t n)
 {
      sqrts = (mpz_t *) calloc(sizeof(mpz_t),numPrimes); 
-     mpz_array_init(sqrts[0],numPrimes,8*sizeof(unsigned long));
+     for (unsigned long i = 0; i < numPrimes; i++)
+        mpz_init2(sqrts[i], 8*64);
+     //mpz_array_init(sqrts[0],numPrimes,8*sizeof(unsigned long));
      
      for (unsigned long i = 1; i<numPrimes; i++) 
      {
@@ -1589,7 +1593,7 @@ void mainRoutine(unsigned long Mdiv2, mpz_t n, unsigned long multiplier)
    Function: Factors a user specified number using a quadratic sieve
 
 ===========================================================================*/
-int main(int argc, unsigned char *argv[])
+/*int main(int argc, unsigned char *argv[])
 {
     unsigned long multiplier;
 
@@ -1686,6 +1690,62 @@ int main(int argc, unsigned char *argv[])
     delfile = get_filename(tmp_dir,unique_filename("lprels"));
     remove(delfile);
       
+    return 0;
+}*/
+
+int main(int argc, unsigned char *argv[])
+{
+    unsigned long multiplier;
+
+    initSieve(); 
+        
+    mpz_t N;
+    mpz_init(N); 
+    
+    unsigned long factor;
+    unsigned long failed = 0;
+    unsigned long small_factors = 0;
+    unsigned long succeed = 0;
+    unsigned long bits1, bits2, bits3, i;
+    
+    for (i = 0; i < 500; i++)
+    {
+       mpz_set_ui(N, long_nextprime(long_randint(4000000000000000000UL)));
+       mpz_mul_ui(N, N, long_nextprime(long_randint(4000000000000000000UL)));
+       mpz_mul_ui(N, N, long_nextprime(long_randint(4000000000000000000UL)));
+       //bits1 = long_randint(41UL)+13UL;
+       //bits2 = long_randint(22UL)+13UL;
+       //bits3 = long_randint(22UL)+13UL;
+       //mpz_set_ui(N, long_nextprime(long_randint((1UL<<bits1)-1UL)+1UL));
+       //mpz_mul_ui(N, N, long_nextprime(long_randint((1UL<<bits2)-1UL)+1UL));
+       //mpz_mul_ui(N, N, long_nextprime(long_randint((1UL<<bits3)-1UL)+1UL));
+
+#if QS_INFO
+       gmp_printf("Factoring %Zd\n", N);
+#endif
+
+       decdigits = mpz_sizeinbase(N,10);
+     
+       multiplier = knuthSchroeppel(N);
+       mpz_mul_ui(n,N,multiplier);
+       
+       numPrimes=primesNo[decdigits-MINDIG];
+       computeFactorBase(n, numPrimes, multiplier);
+       computeSizes(numPrimes);
+       
+       TonelliInit();
+       tonelliShanks(numPrimes,n);
+    
+       for (unsigned long i = 0; i < numPrimes; i++)
+          mpz_clear(sqrts[i]);
+       free(sqrts);
+       free(primeSizes);
+       free(factorBase);
+       free(pinv); 
+    }
+    
+    mpz_clear(N);
+
     return 0;
 }
 

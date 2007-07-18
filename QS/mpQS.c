@@ -1,8 +1,8 @@
 /******************************************************************************
 
- tinyQS.c
+ mpQS.c
  
- Implementation of a tiny hypercube MPQS
+ A full implementation of the Quadratic Sieve using multi-precision arithmetic
 
  (C) 2006 William Hart
 
@@ -17,12 +17,13 @@
 #include "../fmpz.h"
 #include "../long_extras.h"
 #include "../memory-manager.h"
+#include "../flint.h"
 
-#include "tinyQS.h"
-#include "factor_base.h"
-#include "poly.h"
-#include "sieve.h"
-#include "linear_algebra.h"
+#include "mpQS.h"
+#include "mp_factor_base.h"
+#include "mp_poly.h"
+#include "mp_sieve.h"
+#include "mp_linear_algebra.h"
 #include "block_lanczos.h"
 
 /*===========================================================================
@@ -147,29 +148,33 @@ unsigned long collect_relations(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly_
    Main Quadratic Sieve Factoring Routine:
 
    Function: Finds the factors of a number using the quadratic sieve
-             Assume n is odd, not a perfect power and not a prime 
+             Assume n is odd, not a perfect power, positive and not a prime 
              Returns 0 if factorisation was unsuccessful
              Returns 1 if factorisation was successful
              If a small factor is found, it is returned and the QS is not run
 
 ===========================================================================*/
 
-int F_mpz_factor_tinyQS(F_mpz_factor_t factors, mpz_t N)
+int F_mpz_factor_mpQS(F_mpz_factor_t factors, mpz_t N)
 {
    unsigned long small_factor;
    unsigned long rels_found = 0;
+   unsigned long prec;
    
    QS_t qs_inf; 
    poly_t poly_inf;
    linalg_t la_inf;
    
    qs_inf.bits = mpz_sizeinbase(N,2);
-   if (qs_inf.bits > MAXBITS) return 0; // Number too big for tinyQS 
+   if (qs_inf.bits < MINBITS) return 0; // Number too small for mpQS 
    
-   mpz_init(qs_inf.mpz_n);
-   qs_inf.n = (fmpz_t) flint_stack_alloc(3);
-   qs_inf.n[2] = 0;
+   prec = (qs_inf.bits + max_mult_size - 1)/FLINT_BITS + 1;
+   
+   qs_inf.n = (fmpz_t) flint_stack_alloc(prec+1);
+   qs_inf.n[prec] = 0;
    mpz_to_fmpz(qs_inf.n, N); // set n to the number to be factored
+   
+   qs_inf.prec = (prec + 1)/2;
    
    small_factor = knuth_schroeppel(&qs_inf); // Compute multiplier and some FB primes
    if (small_factor) goto cleanup_2;
@@ -178,20 +183,20 @@ int F_mpz_factor_tinyQS(F_mpz_factor_t factors, mpz_t N)
    printf("Multiplier = %ld\n", qs_inf.k);
 #endif
    
+   mpz_init(qs_inf.mpz_n);
    mpz_set(qs_inf.mpz_n, N);
    mpz_mul_ui(qs_inf.mpz_n, qs_inf.mpz_n, qs_inf.k);
    qs_inf.bits = mpz_sizeinbase(qs_inf.mpz_n, 2);
-   if (qs_inf.bits > MAXBITS) 
+   if (qs_inf.bits < MINBITS) 
    {
-      small_factor = 0; // Number too big for tinyQS 
-      goto cleanup_2;
+      small_factor = 0; // Number too small for mpQS 
+      goto cleanup_1a;
    }
    mpz_to_fmpz(qs_inf.n, qs_inf.mpz_n); // set n to the number to be factored times k
-   
    primes_init(&qs_inf);
    sqrts_init(&qs_inf);
       
-   if (qs_inf.bits > MAXBITS) 
+   if (qs_inf.bits < MINBITS) 
    {
       small_factor = 0; // kn too big for tinyQS
       goto cleanup_1;
@@ -205,13 +210,13 @@ int F_mpz_factor_tinyQS(F_mpz_factor_t factors, mpz_t N)
    linear_algebra_init(&la_inf, &qs_inf, &poly_inf);
    
    unsigned char * sieve = (unsigned char *) flint_stack_alloc_bytes(SIEVE_SIZE+1);
-   while (rels_found < qs_inf.num_primes + EXTRA_RELS)
+   /*while (rels_found < qs_inf.num_primes + EXTRA_RELS)
    {
       rels_found += collect_relations(&la_inf, &qs_inf, &poly_inf, sieve);
-   }
+   }*/
    flint_stack_release(); // release sieve
    
-   la_col_t * matrix = la_inf.matrix;
+   /*la_col_t * matrix = la_inf.matrix;
    unsigned long ncols = qs_inf.num_primes + EXTRA_RELS;
    unsigned long nrows = qs_inf.num_primes;
 
@@ -271,25 +276,26 @@ int F_mpz_factor_tinyQS(F_mpz_factor_t factors, mpz_t N)
             if (mpz_cmp_ui(F, 1) == 0) break; 
          }
       }
-   }
+   }*/
    
    small_factor = 1; // sieve was successful
-   mpz_clear(Q);
+   /*mpz_clear(Q);
    mpz_clear(R);
    mpz_clear(F);
    mpz_clear(X);
    mpz_clear(Y);
-   flint_stack_release(); // release prime_count
+   flint_stack_release(); // release prime_count*/
    linear_algebra_clear(&la_inf, &qs_inf);
    poly_clear(&poly_inf);
    sizes_clear();
 cleanup_1:
    sqrts_clear(); // release modular square roots
    primes_clear(); // release factor_base
+cleanup_1a:
+   mpz_clear(qs_inf.mpz_n);
 cleanup_2:
    flint_stack_release(); // release n
-   mpz_clear(qs_inf.mpz_n);
-   
+
    return small_factor;    
 }
 
@@ -307,10 +313,10 @@ cleanup_2:
     
     F_mpz_factor_t factors;
     
-    printf("Input number to factor [ <= 35 decimal digits ] : "); 
+    printf("Input number to factor [ >= 40 decimal digits ] : "); 
     gmp_scanf("%Zd", N); getchar();
     
-    F_mpz_factor_tinyQS(factors, N);
+    F_mpz_factor_mpQS(factors, N);
     
     mpz_clear(N);
 }*/
@@ -321,32 +327,36 @@ int main(int argc, unsigned char *argv[])
     mpz_init(N); 
     
     F_mpz_factor_t factors;
+    
     unsigned long factor;
     unsigned long failed = 0;
     unsigned long small_factors = 0;
     unsigned long succeed = 0;
-    unsigned long bits1, bits2, i;
+    unsigned long bits1, bits2, bits3, i;
     
-    for (i = 0; i < 100; i++)
+    for (i = 0; i < 500; i++)
     {
-       mpz_set_ui(N, long_nextprime(long_randint(4000000000UL)+1UL));
-       mpz_mul_ui(N, N, long_nextprime(long_randint(4000000000UL)+1UL));
+       mpz_set_ui(N, long_nextprime(long_randint(4000000000000000000UL)));
+       mpz_mul_ui(N, N, long_nextprime(long_randint(4000000000000000000UL)));
+       mpz_mul_ui(N, N, long_nextprime(long_randint(4000000000000000000UL)));
        //bits1 = long_randint(41UL)+13UL;
        //bits2 = long_randint(22UL)+13UL;
-       //mpz_mul_ui(N, N, long_nextprime(long_randint((1UL<<bits1)-1UL)+1UL));
+       //bits3 = long_randint(22UL)+13UL;
+       //mpz_set_ui(N, long_nextprime(long_randint((1UL<<bits1)-1UL)+1UL));
        //mpz_mul_ui(N, N, long_nextprime(long_randint((1UL<<bits2)-1UL)+1UL));
+       //mpz_mul_ui(N, N, long_nextprime(long_randint((1UL<<bits3)-1UL)+1UL));
 
 #if QS_INFO
        gmp_printf("Factoring %Zd\n", N);
 #endif
 
-       factor = F_mpz_factor_tinyQS(factors, N);
+       factor = F_mpz_factor_mpQS(factors, N);
        if (!factor) failed++;
        if (factor > 1) small_factors++;
        if (factor == 1) succeed++; 
     }
     
-    printf("TinyQS succeeded %ld times, found a small factor %ld times\n", succeed, small_factors);
+    printf("mpQS succeeded %ld times, found a small factor %ld times\n", succeed, small_factors);
     printf("and failed %ld times\n", failed);
     
     mpz_clear(N);

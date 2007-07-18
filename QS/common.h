@@ -7,12 +7,12 @@
 
 ******************************************************************************/
 
-#ifndef TINYQS_COMMON_H
-#define TINYQS_COMMON_H
+#ifndef QS_COMMON_H
+#define QS_COMMON_H
 
 #include "../fmpz.h"
 
-#define SIEVE_SIZE 9000
+#define SIEVE_SIZE 20000
 
 #define SMALL_PRIMES 4
 
@@ -33,6 +33,7 @@ typedef struct QS_s
    mpz_t mpz_n;
    unsigned long k; // Multiplier
    unsigned long bits;
+   unsigned long prec; // Number of limbs required to hold B
    unsigned long num_primes;
    prime_t * factor_base; 
    unsigned long * sqrts;
