@@ -19,6 +19,7 @@
 #include "common.h"
 #include "mp_poly.h"
 #include "mp_linear_algebra.h"
+#include "mp_sieve.h"
 
 void do_sieving(QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve)
 {
@@ -39,7 +40,7 @@ void do_sieving(QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve)
    memset(sieve, 0, SIEVE_SIZE);
    *end = 255;
    
-   for (unsigned long prime = SMALL_PRIMES; prime < num_primes; prime++) 
+   for (unsigned long prime = SMALL_PRIMES; prime < 1500; prime++) 
    {
       if (soln2[prime] == -1L) continue;
       
@@ -69,6 +70,33 @@ void do_sieving(QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve)
          (*pos1)+=size;
       } 
    }
+   
+   for (unsigned long prime = 1500; prime < num_primes; prime++) 
+   {
+      if (soln2[prime] == -1L) continue;
+      
+      p = factor_base[prime].p;
+      size = sizes[prime];
+      pos1 = sieve + soln1[prime];
+      pos2 = sieve + soln2[prime];
+      diff = pos2 - pos1;
+      bound = end - p;
+        
+      while (bound - pos1 > 0)  
+      {  
+         (*pos1)+=size, (*(pos1+diff))+=size, pos1+=p;
+      }
+      pos2 = pos1+diff;
+      if (end - pos2 > 0)
+      { 
+         (*pos2)+=size;
+      }
+      if (end - pos1 > 0)
+      { 
+         (*pos1)+=size;
+      } 
+   }
+
 }
 
 void update_offsets(unsigned long poly_add, unsigned long * poly_corr, 
@@ -109,8 +137,8 @@ unsigned long evaluate_candidate(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly
    unsigned long * soln2 = poly_inf->soln2;
    unsigned long * small = la_inf->small;
    fac_t * factor = la_inf->factor;
-   unsigned long A = poly_inf->A;
-   unsigned long B = poly_inf->B;
+   mpz_t * A = &poly_inf->A_mpz;
+   mpz_t * B = &poly_inf->B_mpz;
    unsigned long num_factors = 0;
    unsigned long j;
    mpz_t * C = &poly_inf->C;
@@ -125,35 +153,28 @@ unsigned long evaluate_candidate(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly
     
 #if POLYS
    printf("X = %ld\n", i);
-   printf("%ldX^2+2*%ldX+%ld\n", A, B, C);
+   gmp_printf("%ZdX^2+2*%ZdX+%Zd\n", A, B, C);
 #endif
 
    mpz_set_ui(X, i);
    mpz_sub_ui(X, X, SIEVE_SIZE/2); //X
               
-   mpz_mul_ui(Y, X, A);
-   if ((long) B < 0) 
-   {
-      mpz_sub_ui(Y, Y, -B);  // Y = AX+B
-      mpz_sub_ui(res, Y, -B);  
-   }
-   else 
-   {
-      mpz_add_ui(Y, Y, B);
-      mpz_add_ui(res, Y, B);
-   }
+   mpz_mul(Y, X, *A);
+   mpz_add(Y, Y, *B);  // Y = AX+B
+   mpz_add(res, Y, *B);  
+   
    mpz_mul(res, res, X);  
    mpz_add(res, res, *C); // res = AX^2+2BX+C
            
    bits = mpz_sizeinbase(res, 2);
-   bits -= 10; 
+   bits -= 24; 
    extra_bits = 0;
    
    mpz_set_ui(p, 2); // divide out by powers of 2
    exp = mpz_remove(res, res, p);
 
 #if RELATIONS
-   if (exp) printf("2^%ld ", exp);
+   if (exp) printf("2^%ld \n", exp);
 #endif
    extra_bits += exp;
    small[1] = exp;
@@ -242,11 +263,11 @@ unsigned long evaluate_candidate(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly
          goto cleanup;
       }
    }
+  
+cleanup:
 #if RELATIONS
    printf("\n");
 #endif
-  
-cleanup:
    mpz_clear(X);
    mpz_clear(Y);
    mpz_clear(res);
@@ -270,11 +291,11 @@ unsigned long evaluate_sieve(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly_inf
      
    while (j < SIEVE_SIZE/sizeof(unsigned long))
    {
-      while (!(sieve2[j] & 0xE0E0E0E0E0E0E0E0U)) j++;
+      while (!(sieve2[j] & 0xC0C0C0C0C0C0C0C0U)) j++;
       i = j*sizeof(unsigned long);
       while ((i < (j+1)*sizeof(unsigned long)) && (i < SIEVE_SIZE))
       {
-         if (sieve[i] > 38) 
+         if (sieve[i] > 83) 
          {
              rels += evaluate_candidate(la_inf, qs_inf, poly_inf, i, sieve);
          }

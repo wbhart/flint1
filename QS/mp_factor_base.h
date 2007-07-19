@@ -36,7 +36,9 @@ static const unsigned long prime_tab[][2] =
    {170, 2200}, // 50 digits 
    {180, 2400},
    {190, 2700}, 
-   {200, 3000} // 60 digits
+   {200, 4200}, // 60 digits
+   {210, 4200},
+   {220, 4200}
 };
 
 #define PTABSIZE (sizeof(prime_tab)/(2*sizeof(unsigned long)))

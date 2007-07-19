@@ -18,6 +18,7 @@
 #include "../long_extras.h"
 #include "../memory-manager.h"
 #include "../flint.h"
+#include "../mpn_extras.h"
 
 #include "mpQS.h"
 #include "mp_factor_base.h"
@@ -107,12 +108,17 @@ unsigned long collect_relations(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly_
    unsigned long ** A_inv2B = poly_inf->A_inv2B;
    unsigned long poly_index, j;
    unsigned long poly_add;
+   unsigned long * B = poly_inf->B;
+   unsigned long * B_terms = poly_inf->B_terms;
+   unsigned long limbs = qs_inf->prec + 1;
+   unsigned long limbs2;
+   mp_limb_t msl;
    
    compute_A(qs_inf, poly_inf);
    compute_B_terms(qs_inf, poly_inf);
    compute_off_adj(qs_inf, poly_inf);
    compute_A_factor_offsets(qs_inf, poly_inf);
-   compute_C(qs_inf, poly_inf);          
+   compute_B_C(qs_inf, poly_inf);          
       
    for (poly_index = 1; poly_index < (1<<(s-1)); poly_index++)
    {
@@ -131,12 +137,36 @@ unsigned long collect_relations(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly_
       
       update_offsets(poly_add, poly_corr, qs_inf, poly_inf);
       
-      if (poly_add) poly_inf->B += (2*poly_inf->B_terms[j]); 
-      else poly_inf->B -= (2*poly_inf->B_terms[j]); 
+      limbs2 = B_terms[j*limbs];
+      if (((poly_add) && ((long)(limbs2 ^ B[0]) >= 0L)) || ((!poly_add) && ((long)(limbs2 ^ B[0]) < 0L)))
+      {
+         msl = mpn_add_n(B+1, B+1, B_terms + j*limbs + 1, limbs2);
+         msl += mpn_add_n(B+1, B+1, B_terms + j*limbs + 1, limbs2);
+         if (msl) mpn_add_1(B + limbs2 + 1, B + limbs2 + 1, limbs - limbs2 - 1, msl);
+      } else 
+      {
+         msl = mpn_sub_n(B+1, B+1, B_terms + j*limbs + 1, limbs2);
+         msl += mpn_sub_n(B+1, B+1, B_terms + j*limbs + 1, limbs2);
+         if ((msl) && (limbs2 < limbs - 1)) msl = mpn_sub_1(B + limbs2 + 1, B + limbs2 + 1, limbs - limbs2 - 1, msl);
+         if (msl)
+         {
+            negate_limbs(B+1, B+1, limbs - 1);
+            B[0] = -B[0];
+         }
+      }
+      if ((long) B[0] < 0)
+      {
+         B[0] = 1L - limbs;
+         while (!B[FLINT_ABS(B[0])] && B[0]) B[0]++;
+      } else
+      {
+         B[0] = limbs - 1L;
+         while (!B[B[0]] && B[0]) B[0]--;
+      }
       
-      compute_C(qs_inf, poly_inf);          
+      compute_B_C(qs_inf, poly_inf);          
       
-      compute_A_factor_offsets(qs_inf, poly_inf);    
+      //compute_A_factor_offsets(qs_inf, poly_inf);    
    }
    
    relations += merge_relations(la_inf);
@@ -210,13 +240,13 @@ int F_mpz_factor_mpQS(F_mpz_factor_t factors, mpz_t N)
    linear_algebra_init(&la_inf, &qs_inf, &poly_inf);
    
    unsigned char * sieve = (unsigned char *) flint_stack_alloc_bytes(SIEVE_SIZE+1);
-   /*while (rels_found < qs_inf.num_primes + EXTRA_RELS)
+   while (rels_found < qs_inf.num_primes + EXTRA_RELS)
    {
       rels_found += collect_relations(&la_inf, &qs_inf, &poly_inf, sieve);
-   }*/
+   }
    flint_stack_release(); // release sieve
    
-   /*la_col_t * matrix = la_inf.matrix;
+   la_col_t * matrix = la_inf.matrix;
    unsigned long ncols = qs_inf.num_primes + EXTRA_RELS;
    unsigned long nrows = qs_inf.num_primes;
 
@@ -276,15 +306,15 @@ int F_mpz_factor_mpQS(F_mpz_factor_t factors, mpz_t N)
             if (mpz_cmp_ui(F, 1) == 0) break; 
          }
       }
-   }*/
+   }
    
    small_factor = 1; // sieve was successful
-   /*mpz_clear(Q);
+   mpz_clear(Q);
    mpz_clear(R);
    mpz_clear(F);
    mpz_clear(X);
    mpz_clear(Y);
-   flint_stack_release(); // release prime_count*/
+   flint_stack_release(); // release prime_count
    linear_algebra_clear(&la_inf, &qs_inf);
    poly_clear(&poly_inf);
    sizes_clear();
@@ -338,7 +368,8 @@ int main(int argc, unsigned char *argv[])
     {
        mpz_set_ui(N, long_nextprime(long_randint(4000000000000000000UL)));
        mpz_mul_ui(N, N, long_nextprime(long_randint(4000000000000000000UL)));
-       mpz_mul_ui(N, N, long_nextprime(long_randint(4000000000000000000UL)));
+       mpz_mul_ui(N, N, long_nextprime(long_randint(4000000000000000UL)));
+       mpz_mul_ui(N, N, long_nextprime(long_randint(1000000000UL)));
        //bits1 = long_randint(41UL)+13UL;
        //bits2 = long_randint(22UL)+13UL;
        //bits3 = long_randint(22UL)+13UL;

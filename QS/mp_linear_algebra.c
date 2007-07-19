@@ -231,6 +231,8 @@ unsigned long merge_relations(linalg_t * la_inf)
          qsort_arr[i] = unmerged + i;
       }
       qsort(qsort_arr, num_unmerged, sizeof(la_col_t *), relations_cmp);
+      
+      if ((la_inf->num_relations & 7) == 0) printf("%ld relations found\n", la_inf->num_relations);
 
       return merge_sort(la_inf);
    }

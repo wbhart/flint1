@@ -12,9 +12,9 @@
 
 #include "../fmpz.h"
 
-#define SIEVE_SIZE 20000
+#define SIEVE_SIZE 64000
 
-#define SMALL_PRIMES 4
+#define SMALL_PRIMES 12
 
 #define EXTRA_RELS 64 // number of additional relations to find above the number of primes
 

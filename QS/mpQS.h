@@ -15,7 +15,7 @@
 #include "mp_factor_base.h"
 #include "common.h"
 
-#define QS_INFO 0 // Print some info about what is being factored, etc
+#define QS_INFO 1 // Print some info about what is being factored, etc
 
 #define MINBITS 128 // Smallest bits including multiplier that can be factored
 

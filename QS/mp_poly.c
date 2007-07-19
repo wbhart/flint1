@@ -13,6 +13,8 @@
 #include <stdlib.h>
 
 #include "../flint.h"
+#include "../mpn_extras.h"
+#include "../fmpz.h"
 #include "../memory-manager.h"
 #include "../long_extras.h"
 #include "../longlong_wrapper.h"
@@ -39,7 +41,10 @@ void poly_init(QS_t * qs_inf, poly_t * poly_inf, mpz_t N)
    
    poly_inf->s = s;
      
+   poly_inf->B = (unsigned long*) flint_stack_alloc(qs_inf->prec+1);  
    poly_inf->B_terms = (unsigned long*) flint_stack_alloc(s*(qs_inf->prec+1));  
+   poly_inf->A = (unsigned long*) flint_stack_alloc(qs_inf->prec+1);  
+   poly_inf->target_A = (unsigned long*) flint_stack_alloc(qs_inf->prec+1);  
    
    poly_inf->A_ind = (unsigned long*) flint_stack_alloc(s);  
    poly_inf->A_modp = (unsigned long*) flint_stack_alloc(s);  
@@ -53,13 +58,15 @@ void poly_init(QS_t * qs_inf, poly_t * poly_inf, mpz_t N)
    
    A_inv2B[0] = (unsigned long *) flint_stack_alloc(num_primes*s);
    
+   mpz_init(poly_inf->A_mpz);
+   mpz_init(poly_inf->B_mpz);
    mpz_init(poly_inf->C);
    
    for (unsigned long i = 1; i < s; i++)
    {
       A_inv2B[i] = A_inv2B[i-1] + num_primes;
    } 
-    
+ 
    mpz_t temp;
    mpz_init(temp); 
    
@@ -67,7 +74,7 @@ void poly_init(QS_t * qs_inf, poly_t * poly_inf, mpz_t N)
    mpz_sqrt(temp, temp);
    
    mpz_div_ui(temp, temp, SIEVE_SIZE);
-   poly_inf->target_A = mpz_get_ui(temp);
+   mpz_to_fmpz(poly_inf->target_A, temp);
    
    mpz_root(temp, temp, s);
    fact_approx = mpz_get_ui(temp);
@@ -75,7 +82,7 @@ void poly_init(QS_t * qs_inf, poly_t * poly_inf, mpz_t N)
    for (fact = 0; fact_approx >= factor_base[fact].p; fact++); 
    
    span = num_primes/s/s/2;
-   if (span < 2*s) span = 2*s;
+   if (span < 4*s) span = 4*s;
    min = fact - span/2;
    if (min < SMALL_PRIMES) min = SMALL_PRIMES;
    if (min + span >= qs_inf->num_primes) span = num_primes - min - 1;
@@ -94,6 +101,8 @@ void poly_init(QS_t * qs_inf, poly_t * poly_inf, mpz_t N)
 
 void poly_clear(poly_t * poly_inf)
 {
+   mpz_clear(poly_inf->A_mpz);
+   mpz_clear(poly_inf->B_mpz);
    mpz_clear(poly_inf->C);
    flint_stack_release(); // release all A_inv2B[i]
    flint_stack_release(); // release soln1
@@ -103,8 +112,10 @@ void poly_clear(poly_t * poly_inf)
    flint_stack_release(); // release A_inv2B
    flint_stack_release(); // release A_modp
    flint_stack_release(); // release A_ind
+   flint_stack_release(); // release target_A
+   flint_stack_release(); // release A
    flint_stack_release(); // release B_terms
-   
+   flint_stack_release(); // release B
 }
 
 /*=========================================================================
@@ -121,113 +132,144 @@ void compute_A(QS_t * qs_inf, poly_t * poly_inf)
    unsigned long span = poly_inf->span;
    unsigned long s = poly_inf->s;
    unsigned long * A_ind = poly_inf->A_ind;
+   unsigned long * A = poly_inf->A;
+   unsigned long * target_A = poly_inf->target_A;
+   unsigned long * current_A = (unsigned long *) flint_stack_alloc(qs_inf->prec+1);  
+   unsigned long * diff = (unsigned long *) flint_stack_alloc(qs_inf->prec+1);  
+   unsigned long * best_diff = (unsigned long *) flint_stack_alloc(qs_inf->prec+1);  
    prime_t * factor_base = qs_inf->factor_base;
-   unsigned long factor, i, p;
-   unsigned long diff, best_diff, best1, best2;
+   unsigned long factor, p;
+   unsigned long best1, best2, best3;
+   unsigned long odds = s - 3;
+   mp_limb_t msl;
+   int taken;
+   long i, j, k;
    
-   unsigned long A;
-   
-   if (s <= 4) 
+   A[0] = 1;
+   A[1] = 1;
+   for (i = 0; i < odds; i++) // Randomly choose the first s-3 prime factors of A with odd indices
    {
-       A_ind[0] = long_randint(span) + min;
-       do
-       {
-          A_ind[1] = long_randint(span) + min;
-       } while (A_ind[0] == A_ind[1]);
-   }
-   
-   if (s == 2) A = factor_base[A_ind[0]].p * factor_base[A_ind[1]].p;
-   
-   if ((s == 3) || (s == 4))
-   {
-       do
-       {
-          A_ind[2] = long_randint(span) + min;
-       } while ((A_ind[0] == A_ind[2]) || (A_ind[1] == A_ind[2]));
-       A = factor_base[A_ind[0]].p * factor_base[A_ind[1]].p * factor_base[A_ind[2]].p;
-   }  
-   
-   if (s == 4)
-   {
-      factor = (poly_inf->target_A - 1) / A + 1; 
-      for (i = min; i < min+span; i++)
+      do
       {
-         if ((factor_base[i].p > factor) && (i != A_ind[0]) && (i != A_ind[1]) && (i != A_ind[2])) break;
-      } 
-      if (i == min + span)
+         taken = 0;
+         A_ind[i] = ((long_randint(span) + min) | 1);
+         if (A_ind[i] == min + span) A_ind[i] -= 2;
+         for (j = 0; j < i; j++)
+         {
+            if (A_ind[i] == A_ind[j]) taken = 1;
+         }  
+      } while (taken);
+      msl = mpn_mul_1(A+1, A+1, A[0], factor_base[A_ind[i]].p);
+      if (msl) // Compute the product of these s-3 primes
       {
-         i--;
-         while ((i == A_ind[0]) || (i == A_ind[1]) || (i == A_ind[2])) i--;
-      }   
-      A_ind[3] = i;
-      A *= factor_base[A_ind[3]].p;
+         A[A[0]+1] = msl;
+         A[0]++;
+      }
    }
-   
-   if (s == 5) 
+ 
+   for (k = 0; k < 8; k++) // Now try 8 different sets of even index primes as the remaining factors
    {
-       A_ind[0] = ((long_randint(span) + min) | 1);
-       if (A_ind[0] == min + span) A_ind[0] -= 2;
-       
-       do
-       {
-          A_ind[1] = ((long_randint(span) + min) | 1);
-          if (A_ind[1] == min + span) A_ind[1] -= 2;
-       } while (A_ind[0] == A_ind[1]);
-       
-       do
-       {
-          A_ind[2] = ((long_randint(span) + min) | 1);
-          if (A_ind[2] == min + span) A_ind[2] -= 2;
-       } while ((A_ind[0] == A_ind[2]) || (A_ind[1] == A_ind[2]));
-       
-       A = factor_base[A_ind[0]].p * factor_base[A_ind[1]].p * factor_base[A_ind[2]].p;
-       factor = poly_inf->target_A / A;
-       
-       for (i = 0; i < 8; i++)
-       {
-          A_ind[3] = ((long_randint(span) + min) & -2L);
-          if (A_ind[3] < min) A_ind[3]+=2;
-          
-          do
-          {
-             A_ind[4] = ((long_randint(span) + min) & -2L);
-             if (A_ind[4] < min) A_ind[4]+=2;
-          } while (A_ind[3] == A_ind[4]);
-          
-          if (i == 0)
-          {
-             best_diff = FLINT_ABS(factor_base[A_ind[3]].p * factor_base[A_ind[4]].p - factor);
-             best1 = A_ind[3];
-             best2 = A_ind[4];
-             continue;
-          }
-          
-          diff = FLINT_ABS(factor_base[A_ind[3]].p * factor_base[A_ind[4]].p - factor);
-          
-          if (diff < best_diff)
-          {
-             best_diff = diff;
-             best1 = A_ind[3];
-             best2 = A_ind[4];
-          }
-       }
-       
-       A_ind[3] = best1;
-       A_ind[4] = best2;
-       A = A * factor_base[A_ind[3]].p * factor_base[A_ind[4]].p;
-   }  
-   
-   poly_inf->A = A;
+      copy_limbs(current_A, A, A[0] + 1);
+      for (i = 0; i < 3; i++) // Randomly choose the last 3 prime factors of A with even indices
+      {
+         do
+         {
+            taken = 0;
+            A_ind[s-3+i] = ((long_randint(span) + min) & -2L);
+            if (A_ind[s-3+i] < min) A_ind[s-3+i] += 2;
+            for (j = 0; j < i; j++)
+            {
+               if (A_ind[s-3+i] == A_ind[s-3+j]) taken = 1;
+            }  
+         } while (taken);
 
+         msl = mpn_mul_1(current_A+1, current_A+1, current_A[0], factor_base[A_ind[s-3+i]].p);
+         if (msl) // Compute the product of these s-3 primes and the odd indexed primes
+         {
+            current_A[current_A[0]+1] = msl;
+            current_A[0]++;
+         }
+      }
+      
+      if (k == 0)  // Just store the first difference as the best one
+      {
+         if (target_A[0] >= current_A[0]) // Compute the difference with the target A
+         {
+            msl = mpn_sub(best_diff+1, target_A+1, target_A[0], current_A+1, current_A[0]);
+            best_diff[0] = target_A[0];
+         }
+         else 
+         {
+            msl = mpn_sub(best_diff+1, current_A+1, current_A[0], target_A+1, target_A[0]);
+            best_diff[0] = current_A[0];
+         }
+         if (msl) negate_limbs(best_diff+1, best_diff+1, best_diff[0]);
+         while ((!best_diff[best_diff[0]]) && (best_diff[0])) best_diff[0]--; // Normalise best_diff
+         
+         best1 = A_ind[s-3];
+         best2 = A_ind[s-2];
+         best3 = A_ind[s-1];
+   
+         continue;
+      }
+
+      if (target_A[0] >= current_A[0]) // Compute the difference with the target A
+      {
+         msl = mpn_sub(diff+1, target_A+1, target_A[0], current_A+1, current_A[0]);
+         diff[0] = target_A[0];
+      }
+      else 
+      {
+         msl = mpn_sub(diff+1, current_A+1, current_A[0], target_A+1, target_A[0]);
+         diff[0] = current_A[0];
+      }
+      if (msl) negate_limbs(diff+1, diff+1, diff[0]);
+      while ((!diff[diff[0]]) && (diff[0])) diff[0]--; // Normalise diff
+
+      if ((diff[0] < best_diff[0]) || ((diff[0] == best_diff[0]) && (mpn_cmp(diff+1, best_diff+1, diff[0]) < 0)))  // The new diff is better
+      {
+         copy_limbs(best_diff, diff, diff[0]+1);
+         best1 = A_ind[s-3];
+         best2 = A_ind[s-2];
+         best3 = A_ind[s-1];         
+      }
+   }    
+
+   A_ind[s-3] = best1; // Multiply A by the product of these 3 primes and store their indices
+   A_ind[s-2] = best2;
+   A_ind[s-1] = best3;   
+   for (i = 0; i < 3; i++) 
+   {
+      msl = mpn_mul_1(A+1, A+1, A[0], factor_base[A_ind[s+i-3]].p);
+      if (msl) 
+      {
+         A[A[0]+1] = msl;
+         A[0]++;
+      }
+   }
+              
 #if POLY_A
-   if ((s == 4) || (s == 5)) printf("A = %ld, target A = %ld\n", A, poly_inf->target_A);
+   mpz_t A_disp, targ_A;
+   mpz_init(A_disp);
+   mpz_init(targ_A);
+   fmpz_to_mpz(A_disp, A);
+   fmpz_to_mpz(targ_A, target_A);
+   gmp_printf("A = %Zd, target A = %Zd\n", A_disp, targ_A);
+   mpz_clear(A_disp);
+   mpz_clear(targ_A);
 #endif    
  
    for (i = 0; i < s; i++)
    {
       p = factor_base[A_ind[i]].p;
       poly_inf->inv_p2[i] = long_precompute_inverse(p*p);
-   }      
+   } 
+
+   fmpz_to_mpz(poly_inf->A_mpz, A);
+   
+   flint_stack_release(); // release current_A
+   flint_stack_release(); // release diff
+   flint_stack_release(); // release best_diff     
 }
 
 /*=========================================================================
@@ -245,29 +287,54 @@ void compute_B_terms(QS_t * qs_inf, poly_t * poly_inf)
    unsigned long * A_modp = poly_inf->A_modp;
    unsigned long * B_terms = poly_inf->B_terms;
    prime_t * factor_base = qs_inf->factor_base;
-   unsigned long A = poly_inf->A;
-   unsigned long B;
-   unsigned long p, temp, temp2, i;
+   unsigned long limbs = qs_inf->prec+1;
+   unsigned long limbs2;
+   unsigned long * A = poly_inf->A;
+   unsigned long * B = poly_inf->B;
+   unsigned long p, i; 
+   unsigned long * temp1 = (unsigned long *) flint_stack_alloc(limbs);
+   unsigned long temp;
+   mp_limb_t msl;
    double pinv;
    
    for (i = 0; i < s; i++)
    {
       p = factor_base[A_ind[i]].p;
-      pinv = factor_base[A_ind[i]].pinv;
-      temp2 = (temp = long_div63_precomp(A, p, pinv)); 
-      A_modp[i] = (temp = long_mod63_precomp(temp, p, pinv));
+      pinv = long_precompute_inverse(p);
+      mpn_divmod_1(temp1 + 1, A + 1, A[0], p);
+      temp1[0] = A[0] - (temp1[A[0]] == 0); 
+      A_modp[i] = (temp = mpn_mod_1(temp1 + 1, temp1[0], p));
       temp = long_invert(temp, p);
       temp = long_mulmod_precomp(temp, qs_inf->sqrts[A_ind[i]], p, pinv);
       if (temp > p/2) temp = p - temp;
-      B_terms[i] = temp*temp2;     
+      msl = mpn_mul_1(B_terms + i*limbs + 1, temp1 + 1, temp1[0], temp);
+      if (msl) 
+      {
+         B_terms[i*limbs + temp1[0] + 1] = msl;
+         B_terms[i*limbs] = temp1[0] + 1;
+      }
+      else B_terms[i*limbs] = temp1[0];
+#if B_TERMS
+      mpz_t temp;
+      mpz_init(temp);
+      fmpz_to_mpz(temp, B_terms + i*limbs);
+      gmp_printf("B_%ld = %Zd\n", i, temp);
+      mpz_clear(temp);
+#endif
    }
    
-   B = B_terms[0];
+   copy_limbs(B, B_terms, B_terms[0]+1);  // Set B to the sum of the B terms
+   if (limbs > B_terms[0] + 1) clear_limbs(B + B_terms[0], limbs - B[0] - 1);
    for (i = 1; i < s; i++)
    {
-      B += B_terms[i];
+      limbs2 = B_terms[i*limbs];
+      msl = mpn_add_n(B+1, B+1, B_terms + i*limbs + 1, limbs2);
+      if (msl) mpn_add_1(B + limbs2 + 1, B + limbs2 + 1, limbs - limbs2 - 1, msl);
    }
-   poly_inf->B = B;
+   B[0] = limbs - 1;
+   while (!B[B[0]] && B[0]) B[0]--;
+   
+   flint_stack_release(); // release temp1
 }
 
 /*=========================================================================
@@ -282,8 +349,8 @@ void compute_B_terms(QS_t * qs_inf, poly_t * poly_inf)
 void compute_off_adj(QS_t * qs_inf, poly_t * poly_inf)
 {
    unsigned long num_primes = qs_inf->num_primes;
-   unsigned long A = poly_inf->A;
-   unsigned long B = poly_inf->B;
+   unsigned long * A = poly_inf->A;
+   unsigned long * B = poly_inf->B;
    unsigned long * A_inv = poly_inf->A_inv;
    unsigned long ** A_inv2B = poly_inf->A_inv2B;
    unsigned long * B_terms = poly_inf->B_terms;
@@ -293,6 +360,7 @@ void compute_off_adj(QS_t * qs_inf, poly_t * poly_inf)
    prime_t * factor_base = qs_inf->factor_base;
    unsigned long s = poly_inf->s;
    unsigned long p, temp;
+   unsigned limbs = qs_inf->prec+1; 
    double pinv;
    
    for (unsigned long i = 2; i < num_primes; i++) // skip k and 2
@@ -300,18 +368,18 @@ void compute_off_adj(QS_t * qs_inf, poly_t * poly_inf)
       p = factor_base[i].p;
       pinv = factor_base[i].pinv;
       
-      A_inv[i] = long_invert(long_mod63_precomp(A, p, pinv), p);
+      A_inv[i] = long_invert(mpn_mod_1(A+1, A[0], p), p);
              
       for (unsigned long j = 0; j < s; j++)
       {
-         temp = long_mod63_precomp(B_terms[j], p, pinv);
+         temp = mpn_mod_1(B_terms + j*limbs + 1, B_terms[j*limbs], p);
          temp = long_mulmod_precomp(temp, A_inv[i], p, pinv);
          temp *= 2;
          if (temp >= p) temp -= p;
          A_inv2B[j][i] = temp;
       }
              
-      temp = long_mod63_precomp(B, p, pinv);
+      temp = mpn_mod_1(B+1, B[0], p);
       temp = sqrts[i] + p - temp;
       temp *= A_inv[i];
       temp += SIEVE_SIZE/2;
@@ -343,7 +411,7 @@ void compute_A_factor_offsets(QS_t * qs_inf, poly_t * poly_inf)
    unsigned long * soln2 = poly_inf->soln2;
    unsigned long p, D;
    unsigned long * n = qs_inf->n;
-   unsigned long B = poly_inf->B;
+   unsigned long * B = poly_inf->B;
    unsigned long temp, temp2, B_modp2, index, p2; 
    prime_t * factor_base = qs_inf->factor_base;
    double * inv_p2 = poly_inf->inv_p2;
@@ -352,7 +420,7 @@ void compute_A_factor_offsets(QS_t * qs_inf, poly_t * poly_inf)
    for (unsigned long j = 0; j < s; j++)
    {
       index = A_ind[j];
-      p = factor_base[index].p;
+/*      p = factor_base[index].p;
       p2 = p*p;
       pinv = factor_base[index].pinv;
       D = long_mod2_precomp(n[2], n[1], p*p, inv_p2[j]);    
@@ -377,10 +445,10 @@ void compute_A_factor_offsets(QS_t * qs_inf, poly_t * poly_inf)
          if (temp == p) temp = 0;
       }
       else temp = long_mod63_precomp(temp, p, pinv);
-      soln1[index] = temp;
+      soln1[index] = temp;*/
       soln2[index] = -1L;
    }
-}          
+}       
 
 /*=========================================================================
    Compute C:
@@ -390,16 +458,23 @@ void compute_A_factor_offsets(QS_t * qs_inf, poly_t * poly_inf)
  
 ==========================================================================*/
 
-void compute_C(QS_t * qs_inf, poly_t * poly_inf)
+void compute_B_C(QS_t * qs_inf, poly_t * poly_inf)
 {
-   unsigned long A = poly_inf->A;
-   unsigned long B = poly_inf->B;
+   mpz_t * A_mpz = &poly_inf->A_mpz;
+   mpz_t * B_mpz = &poly_inf->B_mpz;
    mpz_t * C = &poly_inf->C;
+   unsigned long * B = poly_inf->B;
    mpz_t * mpz_n = &qs_inf->mpz_n;
-   
-   if ((long) B < 0L) B = -B;
-   mpz_set_ui(*C, B);
-   mpz_mul_ui(*C, *C, B);
+
+   fmpz_to_mpz(*B_mpz, B);
+   mpz_mul(*C, *B_mpz, *B_mpz);
    mpz_sub(*C, *C, *mpz_n);
-   mpz_divexact_ui(*C, *C, A);
+#if TEST_C
+   mpz_t temp;
+   mpz_init(temp);
+   mpz_mod(temp, *C, *A_mpz);
+   if (mpz_cmp_ui(temp, 0) != 0) gmp_printf("B^2 - n = %Zd is not divisible by A = %Zd\n", *C, *A_mpz);
+   mpz_clear(temp);
+#endif   
+   mpz_divexact(*C, *C, *A_mpz);
 } 
