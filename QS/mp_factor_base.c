@@ -231,6 +231,7 @@ unsigned long compute_factor_base(QS_t * qs_inf)
          fb_prime++;
       }   
    }
+   printf("Largest prime = %ld\n", prime);
    
    qs_inf->num_primes = fb_prime;
    return 0;

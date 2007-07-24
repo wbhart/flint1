@@ -110,9 +110,17 @@ unsigned long collect_relations(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly_
    unsigned long poly_add;
    unsigned long * B = poly_inf->B;
    unsigned long * B_terms = poly_inf->B_terms;
+   unsigned long sieve_size = qs_inf->sieve_size;
+   unsigned long small_primes = qs_inf->small_primes;
    unsigned long limbs = qs_inf->prec + 1;
    unsigned long limbs2;
    mp_limb_t msl;
+   
+#if CURVES
+   static unsigned long count = 0;
+   count++;
+   if ((count & 7) == 0) printf("%ld curves\n", count*((1<<(s-1))-1));
+#endif
    
    compute_A(qs_inf, poly_inf);
    compute_B_terms(qs_inf, poly_inf);
@@ -131,8 +139,25 @@ unsigned long collect_relations(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly_
       
       poly_corr = A_inv2B[j];
            
-      do_sieving(qs_inf, poly_inf, sieve);
-      
+      if (sieve_size <= SIEVE_BLOCK)
+         do_sieving2(qs_inf, poly_inf, sieve);
+      else
+      {
+         unsigned long blocks = sieve_size/SIEVE_BLOCK;
+         unsigned long offset = SIEVE_BLOCK;
+         unsigned long sieve_fill = qs_inf->sieve_fill;
+        
+         memset(sieve, sieve_fill, sieve_size);
+         *(sieve+sieve_size) = 255;
+         
+         do_sieving(qs_inf, poly_inf, sieve, small_primes, SECOND_PRIME, SIEVE_BLOCK, 1, 0);
+         for (long i = 1; i < blocks - 1; i++, offset += SIEVE_BLOCK)
+            do_sieving(qs_inf, poly_inf, sieve + offset, small_primes, SECOND_PRIME, SIEVE_BLOCK, 0, 0);
+         do_sieving(qs_inf, poly_inf, sieve + offset, small_primes, SECOND_PRIME, sieve_size - offset, 0, 1);
+         
+         do_sieving3(qs_inf, poly_inf, sieve, SECOND_PRIME, qs_inf->num_primes, sieve_size);
+      }
+         
       relations += evaluate_sieve(la_inf, qs_inf, poly_inf, sieve);
       
       update_offsets(poly_add, poly_corr, qs_inf, poly_inf);
@@ -223,6 +248,7 @@ int F_mpz_factor_mpQS(F_mpz_factor_t factors, mpz_t N)
       goto cleanup_1a;
    }
    mpz_to_fmpz(qs_inf.n, qs_inf.mpz_n); // set n to the number to be factored times k
+   
    primes_init(&qs_inf);
    sqrts_init(&qs_inf);
       
@@ -235,11 +261,12 @@ int F_mpz_factor_mpQS(F_mpz_factor_t factors, mpz_t N)
    small_factor = compute_factor_base(&qs_inf); // Computes the factor base primes and modular square roots
    if (small_factor) goto cleanup_1;
    compute_sizes(&qs_inf);
+   get_sieve_params(&qs_inf);
    
    poly_init(&qs_inf, &poly_inf, N);
    linear_algebra_init(&la_inf, &qs_inf, &poly_inf);
    
-   unsigned char * sieve = (unsigned char *) flint_stack_alloc_bytes(SIEVE_SIZE+1);
+   unsigned char * sieve = (unsigned char *) flint_stack_alloc_bytes(qs_inf.sieve_size+1);
    while (rels_found < qs_inf.num_primes + EXTRA_RELS)
    {
       rels_found += collect_relations(&la_inf, &qs_inf, &poly_inf, sieve);
@@ -336,7 +363,7 @@ cleanup_2:
 
 
 ===========================================================================*/
-/*int main(int argc, unsigned char *argv[])
+int main(int argc, unsigned char *argv[])
 {
     mpz_t N;
     mpz_init(N); 
@@ -349,9 +376,9 @@ cleanup_2:
     F_mpz_factor_mpQS(factors, N);
     
     mpz_clear(N);
-}*/
+}
 
-int main(int argc, unsigned char *argv[])
+/*int main(int argc, unsigned char *argv[])
 {
     mpz_t N;
     mpz_init(N); 
@@ -364,7 +391,7 @@ int main(int argc, unsigned char *argv[])
     unsigned long succeed = 0;
     unsigned long bits1, bits2, bits3, i;
     
-    for (i = 0; i < 500; i++)
+    for (i = 0; i < 1; i++)
     {
        mpz_set_ui(N, long_nextprime(long_randint(4000000000000000000UL)));
        mpz_mul_ui(N, N, long_nextprime(long_randint(4000000000000000000UL)));
@@ -391,4 +418,4 @@ int main(int argc, unsigned char *argv[])
     printf("and failed %ld times\n", failed);
     
     mpz_clear(N);
-}
+}*/

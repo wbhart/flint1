@@ -297,11 +297,14 @@ mp_linear_algebra.o: QS/mp_linear_algebra.c QS/mp_linear_algebra.h
 mp_poly.o: QS/mp_poly.c QS/mp_poly.h
 	$(CC) $(CFLAGS) -c QS/mp_poly.c -o mp_poly.o
 
+mp_lprels.o: QS/mp_lprels.c QS/mp_lprels.h
+	$(CC) $(CFLAGS) -c QS/mp_lprels.c -o mp_lprels.o
+
 mp_factor_base.o: QS/mp_factor_base.c QS/mp_factor_base.h
 	$(CC) $(CFLAGS) -c QS/mp_factor_base.c -o mp_factor_base.o
 
-mpQS: QS/mpQS.c QS/mpQS.h mp_factor_base.o mp_poly.o mp_sieve.o mp_linear_algebra.o block_lanczos.o long_extras.o memory-manager.o fmpz.o test-support.o mpn_extras.o
-	$(CC) $(CFLAGS) -o mpQS QS/mpQS.c mp_factor_base.o mp_poly.o mp_sieve.o mp_linear_algebra.o block_lanczos.o memory-manager.o long_extras.o fmpz.o test-support.o mpn_extras.o $(LIBS)
+mpQS: QS/mpQS.c QS/mpQS.h mp_factor_base.o mp_poly.o mp_sieve.o mp_linear_algebra.o block_lanczos.o mp_lprels.o long_extras.o memory-manager.o fmpz.o test-support.o mpn_extras.o
+	$(CC) $(CFLAGS) -o mpQS QS/mpQS.c mp_factor_base.o mp_poly.o mp_sieve.o mp_linear_algebra.o block_lanczos.o mp_lprels.o memory-manager.o long_extras.o fmpz.o test-support.o mpn_extras.o $(LIBS)
 
 ####### Integer multiplication timing
 

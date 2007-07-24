@@ -21,6 +21,8 @@
 
 #define TEST 0
 
+#define CURVES 0
+
 #define PRINT_FACTORS 1
 
 typedef struct F_mpz_fact_s

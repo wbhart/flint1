@@ -15,33 +15,7 @@
 #include "mpQS.h"
 #include "common.h"
 
-#define KSMAX 100
-
-static const unsigned long prime_tab[][2] =
-{
-   {32, 30},
-   {40, 50},
-   {50, 80},
-   {60, 100},
-   {70, 150},
-   {80, 200},
-   {90, 200},
-   {100, 250},
-   {110, 300},
-   {120, 500},
-   {130, 550}, // 37 digits
-   {140, 800}, // 40 digits
-   {150, 1000},
-   {160, 2000}, 
-   {170, 2200}, // 50 digits 
-   {180, 2400},
-   {190, 2700}, 
-   {200, 4200}, // 60 digits
-   {210, 4200},
-   {220, 4200}
-};
-
-#define PTABSIZE (sizeof(prime_tab)/(2*sizeof(unsigned long)))
+#define KSMAX 1000
 
 unsigned long num_FB_primes(unsigned long bits);
 

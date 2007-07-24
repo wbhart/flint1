@@ -19,6 +19,7 @@
 #include "mp_poly.h"
 #include "mp_linear_algebra.h"
 #include "block_lanczos.h"
+#include "mp_lprels.h"
 
 /*=========================================================================
    linear_algebra_init:
@@ -32,28 +33,35 @@ void linear_algebra_init(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly_inf)
    la_col_t * matrix;
    mpz_t * Y_arr;
    unsigned long prec = qs_inf->prec+1;
+   unsigned long small_primes = qs_inf->small_primes;
    
-   const unsigned long buffer_size = 3*(qs_inf->num_primes + EXTRA_RELS + 100)/2; // Allows for 1/3 of relations to be duplicates
+   const unsigned long buffer_size = 4*(qs_inf->num_primes + EXTRA_RELS + 200)/2; // Allows for 1/3 of relations to be duplicates
    
-   la_inf->small = (unsigned long *) flint_stack_alloc(SMALL_PRIMES);
+   la_inf->small = (unsigned long *) flint_stack_alloc(small_primes);
    la_inf->factor = (fac_t *) flint_stack_alloc_bytes(sizeof(fac_t)*MAX_FACS);
    
-   matrix = la_inf->matrix = (la_col_t *) flint_stack_alloc_bytes(sizeof(la_col_t)*(qs_inf->num_primes + EXTRA_RELS + 200));
-   la_inf->unmerged = la_inf->matrix + qs_inf->num_primes + EXTRA_RELS + 100;
+   matrix = la_inf->matrix = (la_col_t *) flint_stack_alloc_bytes(sizeof(la_col_t)*(qs_inf->num_primes + EXTRA_RELS + 400));
+   la_inf->unmerged = la_inf->matrix + qs_inf->num_primes + EXTRA_RELS + 200;
    Y_arr = la_inf->Y_arr = (mpz_t *) flint_stack_alloc_bytes(sizeof(mpz_t)*buffer_size);
    la_inf->curr_rel = la_inf->relation = (unsigned long *) flint_stack_alloc(buffer_size*MAX_FACS*2);
-   la_inf->qsort_arr = (la_col_t **) flint_stack_alloc(100);
+   la_inf->qsort_arr = (la_col_t **) flint_stack_alloc(200);
+   la_inf->rel_str = (char *) flint_stack_alloc(MPQS_STRING_LENGTH);
    
+   la_inf->lpnew = flint_fopen("lpnew", "w");
+   FILE * lprels = flint_fopen("lprels","w");
+   fclose(lprels);
+    
    for (unsigned long i = 0; i < buffer_size; i++) 
    {
       mpz_init2(Y_arr[i], prec);
    }
-   for (unsigned long i = 0; i < qs_inf->num_primes + EXTRA_RELS + 200; i++) 
+   for (unsigned long i = 0; i < qs_inf->num_primes + EXTRA_RELS + 400; i++) 
    {
       matrix[i].weight = 0;
    }
    
    la_inf->num_unmerged = 0;
+   la_inf->num_lp_unmerged = 0;
    la_inf->columns = 0;
    la_inf->num_relations = 0;
 }
@@ -63,7 +71,7 @@ void linear_algebra_clear(linalg_t * la_inf, QS_t * qs_inf)
    la_col_t * matrix = la_inf->matrix;
    la_col_t * unmerged = la_inf->unmerged;
    mpz_t * Y_arr = la_inf->Y_arr;
-   const unsigned long buffer_size = 3*(qs_inf->num_primes + EXTRA_RELS + 100)/2;
+   const unsigned long buffer_size = 4*(qs_inf->num_primes + EXTRA_RELS + 200)/2;
    
    for (unsigned long i = 0; i < buffer_size; i++) 
    {
@@ -80,6 +88,9 @@ void linear_algebra_clear(linalg_t * la_inf, QS_t * qs_inf)
       free_col(unmerged + i);
    }
    
+   fclose(la_inf->lpnew);
+   
+   flint_stack_release(); // Clear rel_str
    flint_stack_release(); // Clear qsort_array
    flint_stack_release(); // Clear relation
    flint_stack_release(); // Clear Y_arr
@@ -240,6 +251,80 @@ unsigned long merge_relations(linalg_t * la_inf)
    return 0;
 }
 
+unsigned long merge_lp_relations(QS_t * qs_inf, poly_t * poly_inf, linalg_t * la_inf)
+{
+   FILE * comb;
+   unsigned long combined;
+   
+   fclose(la_inf->lpnew); 
+   sort_lp_file("lpnew");
+   comb = flint_fopen("comb","w");
+   mergesort_lp_file("lprels", "lpnew", "tmp", comb);
+   fclose(comb);
+   la_inf->lpnew = flint_fopen("lpnew","w");
+   
+   mpz_t factor;
+   mpz_init(factor);
+   comb = flint_fopen("comb", "r");
+   combined = combine_large_primes(qs_inf, la_inf, poly_inf, comb, factor);
+   mpz_clear(factor);
+   fclose(comb);
+     
+   la_inf->num_lp_unmerged = 0;
+   
+   return combined;         
+}
+
+/*==========================================================================
+   Insert large prime partial relation:
+
+   Function: Insert the partial relation into the lprels file, return the 
+             number of full relations obtained after any sorting and merging
+   
+===========================================================================*/
+
+unsigned long insert_lp_relation(QS_t * qs_inf, linalg_t * la_inf, poly_t * poly_inf, mpz_t Y, mpz_t res)
+{
+   char * rel_str = la_inf->rel_str;
+   char * rel_ptr = rel_str;
+   char Q_str[200];
+   char Y_str[200];
+   FILE * LPNEW = la_inf->lpnew;
+
+   unsigned long small_primes = qs_inf->small_primes;
+   
+   unsigned long * small = la_inf->small;
+   const unsigned long num_factors = la_inf->num_factors; 
+   fac_t * factor = la_inf->factor;
+      
+   unsigned long fac_num = 0; 
+   
+   for (unsigned long i = 0; i < small_primes; i++)
+   {
+       if (small[i]) add_factor(&rel_ptr, (unsigned long) small[i], (unsigned long) i);
+   }
+   for (unsigned long i = 0; i < num_factors; i++)
+   {
+       add_factor(&rel_ptr, (unsigned long) factor[i].exp, (unsigned long) factor[i].ind);
+   }
+   add_0(&rel_ptr);
+   
+   gmp_sprintf(Y_str, "%Zd\0", Y);
+   gmp_sprintf(Q_str, "%Zd\0", res);
+   
+   fprintf(LPNEW, "%s @ %s :%s\n", Q_str, Y_str, rel_str);
+                          
+   la_inf->num_lp_unmerged++;
+   if ((la_inf->num_lp_unmerged %256) == 0) printf("%ld partials\n", la_inf->num_lp_unmerged);
+   
+   if (la_inf->num_lp_unmerged == 500)
+   {
+      return merge_lp_relations(qs_inf, poly_inf, la_inf);
+   }
+      
+   return 0;
+}
+
 /*==========================================================================
    Insert relation:
 
@@ -247,10 +332,11 @@ unsigned long merge_relations(linalg_t * la_inf)
    
 ===========================================================================*/
 
-unsigned long insert_relation(linalg_t * la_inf, poly_t * poly_inf, mpz_t Y)
+unsigned long insert_relation(QS_t * qs_inf, linalg_t * la_inf, poly_t * poly_inf, mpz_t Y)
 {
    la_col_t * unmerged = la_inf->unmerged;
    unsigned long num_unmerged = la_inf->num_unmerged;
+   unsigned long small_primes = qs_inf->small_primes;
    
    unsigned long * small = la_inf->small;
    const unsigned long num_factors = la_inf->num_factors; 
@@ -261,7 +347,7 @@ unsigned long insert_relation(linalg_t * la_inf, poly_t * poly_inf, mpz_t Y)
    unsigned long fac_num = 0; 
    clear_col(unmerged + num_unmerged);
    
-   for (unsigned long i = 0; i < SMALL_PRIMES; i++)
+   for (unsigned long i = 0; i < small_primes; i++)
    {
        if (small[i] & 1) insert_col_entry(unmerged + num_unmerged, i);
        if (small[i]) 

@@ -37,6 +37,8 @@ void poly_init(QS_t * qs_inf, poly_t * poly_inf, mpz_t N)
    unsigned long s = (qs_inf->bits-1)/28+1;
    prime_t * factor_base = qs_inf->factor_base;
    unsigned long fact_approx, fact, span;
+   unsigned long sieve_size = qs_inf->sieve_size;
+   unsigned long small_primes = qs_inf->small_primes;
    long min; 
    
    poly_inf->s = s;
@@ -53,6 +55,8 @@ void poly_init(QS_t * qs_inf, poly_t * poly_inf, mpz_t N)
    poly_inf->A_inv = (unsigned long*) flint_stack_alloc(num_primes);  
    poly_inf->soln1 = (unsigned long*) flint_stack_alloc(num_primes); 
    poly_inf->soln2 = (unsigned long*) flint_stack_alloc(num_primes); 
+   poly_inf->posn1 = (char * *) flint_stack_alloc(num_primes); 
+   poly_inf->posn2 = (char * *) flint_stack_alloc(num_primes); 
    
    unsigned long ** A_inv2B = poly_inf->A_inv2B;
    
@@ -73,7 +77,7 @@ void poly_init(QS_t * qs_inf, poly_t * poly_inf, mpz_t N)
    mpz_mul_ui(temp, N, 2*qs_inf->k);
    mpz_sqrt(temp, temp);
    
-   mpz_div_ui(temp, temp, SIEVE_SIZE);
+   mpz_div_ui(temp, temp, 42*sieve_size/100);
    mpz_to_fmpz(poly_inf->target_A, temp);
    
    mpz_root(temp, temp, s);
@@ -82,9 +86,9 @@ void poly_init(QS_t * qs_inf, poly_t * poly_inf, mpz_t N)
    for (fact = 0; fact_approx >= factor_base[fact].p; fact++); 
    
    span = num_primes/s/s/2;
-   if (span < 4*s) span = 4*s;
+   if (span < 5*s) span = 5*s;
    min = fact - span/2;
-   if (min < SMALL_PRIMES) min = SMALL_PRIMES;
+   if (min < small_primes) min = small_primes;
    if (min + span >= qs_inf->num_primes) span = num_primes - min - 1;
    fact = min + span/2;
 
@@ -105,6 +109,8 @@ void poly_clear(poly_t * poly_inf)
    mpz_clear(poly_inf->B_mpz);
    mpz_clear(poly_inf->C);
    flint_stack_release(); // release all A_inv2B[i]
+   flint_stack_release(); // release posn1
+   flint_stack_release(); // release posn2
    flint_stack_release(); // release soln1
    flint_stack_release(); // release soln2
    flint_stack_release(); // release A_inv
@@ -358,6 +364,7 @@ void compute_off_adj(QS_t * qs_inf, poly_t * poly_inf)
    unsigned long * soln2 = poly_inf->soln2;
    unsigned long * sqrts = qs_inf->sqrts;
    prime_t * factor_base = qs_inf->factor_base;
+   unsigned long sieve_size = qs_inf->sieve_size;
    unsigned long s = poly_inf->s;
    unsigned long p, temp;
    unsigned limbs = qs_inf->prec+1; 
@@ -382,7 +389,7 @@ void compute_off_adj(QS_t * qs_inf, poly_t * poly_inf)
       temp = mpn_mod_1(B+1, B[0], p);
       temp = sqrts[i] + p - temp;
       temp *= A_inv[i];
-      temp += SIEVE_SIZE/2;
+      temp += sieve_size/2;
       soln1[i] = long_mod63_precomp(temp, p, pinv); // Consider using long_mod_precomp
       temp = p - sqrts[i];
       if (temp == p) temp -= p;
@@ -413,6 +420,7 @@ void compute_A_factor_offsets(QS_t * qs_inf, poly_t * poly_inf)
    unsigned long * n = qs_inf->n;
    unsigned long * B = poly_inf->B;
    unsigned long temp, temp2, B_modp2, index, p2; 
+   unsigned long sieve_size = qs_inf->sieve_size;
    prime_t * factor_base = qs_inf->factor_base;
    double * inv_p2 = poly_inf->inv_p2;
    double pinv;
@@ -438,7 +446,7 @@ void compute_A_factor_offsets(QS_t * qs_inf, poly_t * poly_inf)
       if ((long) D < 0) temp = -long_div63_precomp(-D, p, pinv);
       else temp = -long_div63_precomp(-D, p, pinv);
       temp *= temp2;
-      temp += SIEVE_SIZE/2;
+      temp += sieve_size/2;
       if ((long) temp < 0) 
       {
          temp = p - long_mod63_precomp(-temp, p, pinv);
@@ -477,4 +485,5 @@ void compute_B_C(QS_t * qs_inf, poly_t * poly_inf)
    mpz_clear(temp);
 #endif   
    mpz_divexact(*C, *C, *A_mpz);
+   qs_inf->sieve_fill = 128-mpz_sizeinbase(*C, 2)+qs_inf->error_bits+20;// 16, 20, 23
 } 

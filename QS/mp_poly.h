@@ -14,7 +14,7 @@
 
 #include "common.h"
 
-#define POLY_PARAMS 0 // Print the parameters being used to choose polynomials
+#define POLY_PARAMS 1 // Print the parameters being used to choose polynomials
 
 #define POLY_A 0 // Print target A and actual A
 
@@ -38,6 +38,8 @@ typedef struct poly_s
     unsigned long * A_inv;
     unsigned long * soln1;
     unsigned long * soln2;
+    char * * posn1;
+    char * * posn2;
     unsigned long ** A_inv2B; 
     double * inv_p2;
     

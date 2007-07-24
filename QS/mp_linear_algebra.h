@@ -11,11 +11,11 @@
 #define MPLINALG_H
 
 #include <gmp.h>
+#include <stdio.h>
 
 #include "common.h"
 #include "mp_poly.h"
 #include "block_lanczos.h"
-
 
 #define DUPS 0 // Print info about number of duplicate relations
 
@@ -36,6 +36,7 @@ typedef struct linalg_s
    
    la_col_t * unmerged; // A new list of unmerged F_2 columns
    unsigned long num_unmerged; // The current number of unmerged F_2 relations
+   unsigned long num_lp_unmerged; // The current number of unmerged partial relations
    
    mpz_t * Y_arr; // The Y values corresponding to all relations found
       
@@ -44,6 +45,9 @@ typedef struct linalg_s
    unsigned long num_relations; // Total number of relations found so far
 
    la_col_t ** qsort_arr; // An array of pointers to the unmerged relations for quicksort
+   
+   char * rel_str;
+   FILE * lpnew;
 } linalg_t;
 
 void linear_algebra_init(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly_inf);
@@ -52,8 +56,12 @@ void linear_algebra_clear(linalg_t * la_inf, QS_t * qs_inf);
 
 unsigned long merge_sort(linalg_t * la_inf);
       
+unsigned long merge_lp_relations(QS_t * qs_inf, poly_t * poly_inf, linalg_t * la_inf);
+
 unsigned long merge_relations(linalg_t * la_inf);
 
-unsigned long insert_relation(linalg_t * la_inf, poly_t * poly_inf, mpz_t Y);
+unsigned long insert_lp_relation(QS_t * qs_inf, linalg_t * la_inf, poly_t * poly_inf, mpz_t Y, mpz_t res);
+
+unsigned long insert_relation(QS_t * qs_inf, linalg_t * la_inf, poly_t * poly_inf, mpz_t Y);
 
 #endif
