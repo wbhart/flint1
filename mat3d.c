@@ -13,6 +13,48 @@
 
 #include "mat3d.h"
 
+#define ROW(R, x) R[x-1]
+#define COL(R, x) R[x-1]
+#define MAT_R(R, x, y) R[x-1][y-1]
+#define MAT_C(R, x, y) R[y-1][x-1]
+
+void z_mat3dr_swap12(z_mat3dr_t C)
+{
+   z_vec3d_t * temp;
+   temp = ROW(C, 1);
+   ROW(C, 1) = ROW(C, 2);
+   ROW(C, 2) = temp;
+} 
+
+void z_mat3dr_swap13(z_mat3dr_t C)
+{
+   z_vec3d_t * temp;
+   temp = ROW(C, 1);
+   ROW(C, 1) = ROW(C, 3);
+   ROW(C, 3) = temp;
+} 
+
+void z_mat3dr_swap23(z_mat3dr_t C)
+{
+   z_vec3d_t * temp;
+   temp = ROW(C, 2);
+   ROW(C, 2) = ROW(C, 3);
+   ROW(C, 3) = temp;
+} 
+
+void z_mat3dr_set_identity(z_mat3dr_t C)
+{
+   MAT_R(C, 1, 1) = 1;
+   MAT_R(C, 1, 2) = 0;
+   MAT_R(C, 1, 3) = 0;
+   MAT_R(C, 2, 1) = 0;
+   MAT_R(C, 2, 2) = 1;
+   MAT_R(C, 2, 3) = 0;
+   MAT_R(C, 3, 1) = 0;
+   MAT_R(C, 3, 2) = 0;
+   MAT_R(C, 3, 3) = 1;
+}
+
 /* 
    Compute the Gram-Schmidt Orthogonalisation of a set of 3 vectors b_i (given as the
    columns of the input matrix B_in). The orthogonal vectors b*_i are returned as the 
@@ -23,47 +65,105 @@
    Aliasing is permitted.
 */
 
-void mat3dc_gram_schmidt(mat3dc_t Q, mat3dc_t B_out, mat3dc_t B_in)
+void d_mat3dc_gram_schmidt(d_mat3dc_t Q, d_mat3dc_t B_out, d_mat3dc_t B_in)
 {
-   vec_3d_t temp;
+   d_vec3d_t temp;
    
-   vec3d_set(B_out->c1, B_in->c1);
-   Q->c1->x2 = vec3d_scalar_proj(B_in->c2, B_in->c1);
-   Q->c1->x3 = vec3d_scalar_proj(B_in->c3, B_in->c1);
+   d_vec3d_set(COL(B_out, 1), COL(B_in, 1));
+   MAT_C(Q, 2, 1) = d_vec3d_scalar_proj(COL(B_in, 2), COL(B_in, 1));
+   MAT_C(Q, 3, 1) = d_vec3d_scalar_proj(COL(B_in, 3), COL(B_in, 1));
    
-   vec3d_sub_scalar_mul(B_out->c2, B_in->c2, B_in->c1, Q->c1->x2);
-   Q->c2->x3 = vec3d_scalar_proj(B_in->c3, B_out->c2);
+   d_vec3d_sub_scalar_mul(COL(B_out, 2), COL(B_in, 2), COL(B_in, 1), MAT_C(Q, 2, 1));
+   MAT_C(Q, 3, 2) = d_vec3d_scalar_proj(COL(B_in, 3), COL(B_out, 2));
    
-   vec3d_sub_scalar_mul(B_out->c3, B_in->c3, B_out->c2, Q->c2->x3);
-   vec3d_sub_scalar_mul(B_out->c3, B_out->c3, B_out->c1, Q->c1->x3);
+   d_vec3d_sub_scalar_mul(COL(B_out, 3), COL(B_in, 3), COL(B_out, 2), MAT_C(Q, 3, 2));
+   d_vec3d_sub_scalar_mul(COL(B_out, 3), COL(B_out, 3), COL(B_out, 1), MAT_C(Q, 3, 1));
 }  
 
 /* 
-   Performs LLL reduction on the matrix B_in with the given delta value.
-   We assume 1/4 < delta <= 1.
+   Performs LLL reduction on the matrix B_in with a given delta value.
+   We assume 1/4 < delta <= 1 (for now delta doesn't do anything and is
+   set to 1/4).
    
-   Note B_out must be a mat3dc_p for efficiency.
+   B_in is a matrix whose columns are a basis specifying a subspace of R^3.
    
-   Not finished yet....
+   The matrix C will become a set of row vectors, each of which specifies a 
+   vector of the reduced basis as a linear combination of the original 
+   basis vectors.
 */
 
-void mat3dc_LLL(mat3dc_p B_out, mat3dc_p B_in, double delta)
+void d_mat3dc_LLL(z_mat3dr_t C, d_mat3dc_t B_in, double delta)
 {
-   mat3dc_t Q;
+   d_mat3dc_t Q;
+   d_mat3dc_t B;
+   d_vec3d_t temp;
+   double B1, B2, B3, B_temp, mu;
    
-   mat3dc_gram_schmidt(Q, B_out, B_in);
+   z_mat3dr_set_identity(C);
+   
+   d_mat3dc_gram_schmidt(Q, B, B_in);
+   
+   B1 = d_vec3d_norm(COL(B, 1));
+   B2 = d_vec3d_norm(COL(B, 2));
+   B3 = d_vec3d_norm(COL(B, 3));
    
    // k = 2
-   if (abs(Q->c1->x2) <= 0.5) 
+k2:
+   mu = MAT_C(Q, 2, 1);
+   if (abs(mu) > 0.5) 
    {
-      unsigned long r = round(Q->c1->x2);
-      vec3d_sub_scalar_mul(B_out->c2, B_out->c2, B_out->c1, (double) r);
-      Q->c1->x2 -= (double) r;
+      unsigned long r = round(mu);
+      z_vec3d_sub_scalar_mul(ROW(C, 2), ROW(C, 2), ROW(C, 1), r);
+      MAT_C(Q, 2, 1) -= (double) r;
    }
    
+   mu = MAT_C(Q, 2, 1);
+   if (B2 < (0.75 - mu*mu)*B1)
+   {
+      B_temp = B2 + mu*B1;
+      MAT_C(Q, 2, 1) = mu*B1 / B_temp; 
+      B2 = B1*B2 / B_temp;
+      B1 = B_temp;
+      z_mat3dr_swap12(C);
+      mu = MAT_C(Q, 3, 1) - mu*MAT_C(Q, 3, 2);
+      MAT_C(Q, 3, 1) = MAT_C(Q, 3, 2) + mu*MAT_C(Q, 2, 1);
+      MAT_C(Q, 3, 2) = mu;
+      goto k2;
+   }
    
    // k = 3
+k3:
+   mu = MAT_C(Q, 3, 2);
+   if (abs(mu) > 0.5) 
+   {
+      unsigned long r = round(mu);
+      z_vec3d_sub_scalar_mul(ROW(C, 3), ROW(C, 3), ROW(C, 2), r);
+      MAT_C(Q, 3, 1) -= r*MAT_C(Q, 2, 1);
+      MAT_C(Q, 3, 2) -= (double) r;
+   }
    
+   mu = MAT_C(Q, 3, 2);
+   if (B3 >= (0.75 - mu*mu)*B2)
+   {
+      mu = MAT_C(Q, 3, 1);
+      if (abs(mu) > 0.5)
+      {
+         unsigned long r = round(mu);
+         z_vec3d_sub_scalar_mul(ROW(C, 3), ROW(C, 3), ROW(C, 1), r);
+         MAT_C(Q, 3, 1) -= (double) r;
+      }
+   } else
+   {
+      B_temp = B3 + mu*mu*B2;
+      MAT_C(Q, 3, 2) = mu*B2 / B_temp;
+      B3 = B2*B3 / B_temp;
+      B2 = B_temp;
+      z_mat3dr_swap23(C);
+      mu = MAT_C(Q, 2, 1);
+      MAT_C(Q, 2, 1) = MAT_C(Q, 3, 1);
+      MAT_C(Q, 3, 1) = mu;
+      goto k2;
+   } 
+    
    // k = 4 : terminate
-}  
-
+} 

@@ -12,3 +12,132 @@
 #include <math.h>
 
 #include "vec3d.h"
+
+#define COORD(A,x) A[x-1]
+#define SQ(A,x) A[x-1]*A[x-1]
+
+/*
+   Returns the Euclidean length of a 3d vector
+*/
+
+double d_vec3d_length(d_vec3d_t v)
+{
+   return sqrt(SQ(x,1) + SQ(v,2) + SQ(v,3));
+}
+
+/*
+   Returns the square of the Euclidean length of a 3d vector
+*/
+
+double d_vec3d_norm(d_vec3d_t v)
+{
+   return SQ(x,1) + SQ(v,2) + SQ(v,3);
+}
+
+/*
+   Normalises the given input vector (i.e. divides it by its length)
+*/
+
+void d_vec3d_normalise(d_vec3d_t v_out, d_vec3d_t v_in)
+{
+   double length = d_vec3d_length(v_in);
+   
+   COORD(v_out, 1) = COORD(v_in, 1) / length;
+   COORD(v_out, 2) = COORD(v_in, 2) / length;
+   COORD(v_out, 3) = COORD(v_in, 3) / length;
+}
+
+/* 
+   Multiplies the given vector by the given scalar
+*/
+
+double d_vec3d_mul_scalar(d_vec3d_t v_out, d_vec3d_t v_in, double scalar)
+{
+   COORD(v_out, 1) = COORD(v_in, 1)*scalar;
+   COORD(v_out, 2) = COORD(v_in, 2)*scalar;
+   COORD(v_out, 3) = COORD(v_in, 3)*scalar;
+}
+
+/*
+   Computes the scalar product of the two input vectors
+*/
+
+double d_vec3d_scalar_prod(d_vec3d_t v1, d_vec3d_t v2)
+{
+   return COORD(v1, 1)*COORD(v2, 1) + COORD(v1, 2)*COORD(v2, 2) + COORD(v1, 3)*COORD(v2, 3);
+}
+
+/*
+   Computes the vector projection of _v_ on _u_
+*/
+
+void d_vec3d_vector_proj(d_vec3d_t v_out, d_vec3d_t v, d_vec3d_t u)
+{
+   double proj_scalar = d_vec3d_scalar_prod(v, u) / d_vec3d_scalar_prod(u, u);
+   d_vec3d_mul_scalar(v_out, u, proj_scalar);   
+}
+
+/*
+   Returns the scalar projection of _v_ on _u_
+*/
+
+void d_vec3d_scalar_proj(d_vec3d_t v, d_vec3d_t u)
+{
+   return d_vec3d_scalar_prod(v, u) / d_vec3d_scalar_prod(u, u);
+}
+
+/* 
+   Sets the vector v_out to be equal to v_in
+*/
+
+void d_vec3d_set(d_vec3d_t v_out, d_vec3d_t v_in)
+{
+   COORD(v_out, 1) = COORD(v_in, 1);
+   COORD(v_out, 2) = COORD(v_in, 2);
+   COORD(v_out, 3) = COORD(v_in, 3);
+}
+
+/*
+   Sets v_out to v_in1 - scalar * v_in2
+*/
+
+void d_vec3d_sub_scalar_mul(d_vec3d_t v_out, d_vec3d_t v_in1, d_vec3d_t v_in2, double scalar)
+{
+   COORD(v_out, 1) = COORD(v_in1, 1) - scalar * COORD(v_in2, 1);
+   COORD(v_out, 2) = COORD(v_in1, 2) - scalar * COORD(v_in2, 2);
+   COORD(v_out, 3) = COORD(v_in1, 3) - scalar * COORD(v_in2, 3);
+}
+
+/*
+   Sets v_out to v_in1 + scalar * v_in2
+*/
+
+void d_vec3d_add_scalar_mul(d_vec3d_t v_out, d_vec3d_t v_in1, d_vec3d_t v_in2, double scalar)
+{
+   COORD(v_out, 1) = COORD(v_in1, 1) + scalar * COORD(v_in2, 1);
+   COORD(v_out, 2) = COORD(v_in1, 2) + scalar * COORD(v_in2, 2);
+   COORD(v_out, 3) = COORD(v_in1, 3) + scalar * COORD(v_in2, 3);
+}
+
+/*
+   Sets v_out to v_in1 - scalar * v_in2
+*/
+
+void z_vec3d_sub_scalar_mul(z_vec3d_t v_out, z_vec3d_t v_in1, z_vec3d_t v_in2, unsigned long scalar)
+{
+   COORD(v_out, 1) = COORD(v_in1, 1) - scalar * COORD(v_in2, 1);
+   COORD(v_out, 2) = COORD(v_in1, 2) - scalar * COORD(v_in2, 2);
+   COORD(v_out, 3) = COORD(v_in1, 3) - scalar * COORD(v_in2, 3);
+}
+
+/*
+   Sets v_out to v_in1 + scalar * v_in2
+*/
+
+void z_vec3d_add_scalar_mul(z_vec3d_t v_out, z_vec3d_t v_in1, z_vec3d_t v_in2, unsigned long scalar)
+{
+   COORD(v_out, 1) = COORD(v_in1, 1) + scalar * COORD(v_in2, 1);
+   COORD(v_out, 2) = COORD(v_in1, 2) + scalar * COORD(v_in2, 2);
+   COORD(v_out, 3) = COORD(v_in1, 3) + scalar * COORD(v_in2, 3);
+}
+
