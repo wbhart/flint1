@@ -12,6 +12,8 @@
 
 #include <math.h>
 
+#include "vec3d.h"
+
 /*
    mat3d: There are numerous different types here:
           
@@ -28,23 +30,46 @@
 
 // Defines (implicitly) a matrix of dimension 3 whose columns are 3d vectors of doubles
 
-typedef d_mat d_mat3dc_t;
+typedef d_vec3d * d_mat3dc_t;
 
 // Defines (implicitly) a matrix of dimension 3 whose rows are 3d vectors of doubles
 
-typedef d_mat d_mat3dr_t;
+typedef d_vec3d * d_mat3dr_t;
 
 // Defines (implicitly) a matrix of dimension 3 whose columns are 3d vectors of unsigned longs
 
-typedef z_mat z_mat3dc_t;
+typedef z_vec3d * z_mat3dc_t;
 
 // Defines (implicitly) a matrix of dimension 3 whose rows are 3d vectors of unsigned longs
 
-typedef z_mat z_mat3dr_t;
+typedef z_vec3d * z_mat3dr_t;
 
+void z_mat3dr_stack_init(z_mat3dr_t * C);
+
+void z_mat3dr_stack_clear(void);
+
+void z_mat3dc_stack_init(z_mat3dc_t * C);
+
+void z_mat3dc_stack_clear(void);
+
+void d_mat3dr_stack_init(d_mat3dr_t * C);
+
+void d_mat3dr_stack_clear();
+
+void d_mat3dc_stack_init(d_mat3dc_t * C);
+
+void d_mat3dc_stack_clear();
+
+void z_mat3dr_swap12(z_mat3dr_t C);
+
+void z_mat3dr_swap13(z_mat3dr_t C);
+
+void z_mat3dr_swap23(z_mat3dr_t C);
+
+void z_mat3dr_set_identity(z_mat3dr_t C);
 
 void d_mat3dc_gram_schmidt(d_mat3dc_t Q, d_mat3dc_t B_out, d_mat3dc_t B_in);
 
-void d_mat3dc_LLL(z_mat3dr_t B_out, d_mat3dc_t B_in, double delta);
+void d_mat3dc_LLL(z_mat3dr_t C, d_mat3dc_t B_in, double delta);
 
 #endif

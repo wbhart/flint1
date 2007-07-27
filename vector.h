@@ -41,3 +41,4 @@ typedef struct d_vec_s
 
 typedef d_vec_s d_vec_t[1];
 
+#endif

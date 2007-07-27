@@ -13,6 +13,8 @@
 
 #include <math.h>
 
+#include "vector.h"
+
 /*
    Matrix of unsigned longs
 */

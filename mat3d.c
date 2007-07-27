@@ -12,15 +12,43 @@
 #include <math.h>
 
 #include "mat3d.h"
+#include "vec3d.h"
+#include "memory-manager.h"
 
-#define ROW(R, x) R[x-1]
-#define COL(R, x) R[x-1]
-#define MAT_R(R, x, y) R[x-1][y-1]
-#define MAT_C(R, x, y) R[y-1][x-1]
+#define ROW(R, x) ((R)[x-1])
+#define COL(R, x) ((R)[x-1])
+#define MAT_R(R, x, y) ((R)[x-1][y-1])
+#define MAT_C(R, x, y) ((R)[y-1][x-1])
+
+void z_mat3dr_stack_init(z_mat3dr_t * C)
+{
+   (*C) = (unsigned long **) flint_stack_alloc(12);
+   (*C)[0] = (unsigned long *) (C+3);
+   (*C)[1] = (unsigned long *) (C+6);
+   (*C)[2] = (unsigned long *) (C+9); 
+}
+
+void z_mat3dr_stack_clear(void)
+{
+   flint_stack_release();
+}
+
+void z_mat3dc_stack_init(z_mat3dc_t * C)
+{
+   (*C) = (unsigned long **) flint_stack_alloc(12);
+   (*C)[0] = (unsigned long *) (C+3);
+   (*C)[1] = (unsigned long *) (C+6);
+   (*C)[2] = (unsigned long *) (C+9); 
+}
+
+void z_mat3dc_stack_clear(void)
+{
+   flint_stack_release();
+}
 
 void z_mat3dr_swap12(z_mat3dr_t C)
 {
-   z_vec3d_t * temp;
+   z_vec3d temp;
    temp = ROW(C, 1);
    ROW(C, 1) = ROW(C, 2);
    ROW(C, 2) = temp;
@@ -28,7 +56,7 @@ void z_mat3dr_swap12(z_mat3dr_t C)
 
 void z_mat3dr_swap13(z_mat3dr_t C)
 {
-   z_vec3d_t * temp;
+   z_vec3d temp;
    temp = ROW(C, 1);
    ROW(C, 1) = ROW(C, 3);
    ROW(C, 3) = temp;
@@ -36,7 +64,7 @@ void z_mat3dr_swap13(z_mat3dr_t C)
 
 void z_mat3dr_swap23(z_mat3dr_t C)
 {
-   z_vec3d_t * temp;
+   z_vec3d temp;
    temp = ROW(C, 2);
    ROW(C, 2) = ROW(C, 3);
    ROW(C, 3) = temp;
@@ -55,6 +83,32 @@ void z_mat3dr_set_identity(z_mat3dr_t C)
    MAT_R(C, 3, 3) = 1;
 }
 
+void d_mat3dr_stack_init(d_mat3dr_t * C)
+{
+   (*C) = (double **) flint_stack_alloc(12);
+   (*C)[0] = (double *) (C+3);
+   (*C)[1] = (double *) (C+6);
+   (*C)[2] = (double *) (C+9); 
+}
+
+void d_mat3dr_stack_clear()
+{
+   flint_stack_release();
+}
+
+void d_mat3dc_stack_init(d_mat3dc_t * C)
+{
+   (*C) = (double **) flint_stack_alloc(12);
+   (*C)[0] = (double *) (C+3);
+   (*C)[1] = (double *) (C+6);
+   (*C)[2] = (double *) (C+9); 
+}
+
+void d_mat3dc_stack_clear()
+{
+   flint_stack_release();
+}
+
 /* 
    Compute the Gram-Schmidt Orthogonalisation of a set of 3 vectors b_i (given as the
    columns of the input matrix B_in). The orthogonal vectors b*_i are returned as the 
@@ -67,8 +121,6 @@ void z_mat3dr_set_identity(z_mat3dr_t C)
 
 void d_mat3dc_gram_schmidt(d_mat3dc_t Q, d_mat3dc_t B_out, d_mat3dc_t B_in)
 {
-   d_vec3d_t temp;
-   
    d_vec3d_set(COL(B_out, 1), COL(B_in, 1));
    MAT_C(Q, 2, 1) = d_vec3d_scalar_proj(COL(B_in, 2), COL(B_in, 1));
    MAT_C(Q, 3, 1) = d_vec3d_scalar_proj(COL(B_in, 3), COL(B_in, 1));
@@ -96,8 +148,10 @@ void d_mat3dc_LLL(z_mat3dr_t C, d_mat3dc_t B_in, double delta)
 {
    d_mat3dc_t Q;
    d_mat3dc_t B;
-   d_vec3d_t temp;
    double B1, B2, B3, B_temp, mu;
+   
+   d_mat3dc_stack_init(&Q);
+   d_mat3dc_stack_init(&B);
    
    z_mat3dr_set_identity(C);
    
@@ -166,4 +220,6 @@ k3:
    } 
     
    // k = 4 : terminate
+   d_mat3dc_stack_clear();
+   d_mat3dc_stack_clear();
 } 

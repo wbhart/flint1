@@ -313,4 +313,13 @@ ZMULOBJ = memory-manager.o fmpz.o ZmodF_mul-tuning.o fmpz_poly.o ZmodF_poly.o Z_
 Z_mul_timing: $(ZMULOBJ)
 	$(CC) $(ZMULOBJ) -o Zmul $(LIBS)
 
+####### Linear Algebra
 
+vec3d.o: vec3d.c vec3d.h
+	$(CC) $(CFLAGS) -c vec3d.c -o vec3d.o
+
+mat3d.o: mat3d.c mat3d.h
+	$(CC) $(CFLAGS) -c mat3d.c -o mat3d.o
+
+vecmat3d: vecmat3d-driver.c mat3d.o vec3d.o memory-manager.o
+	$(CC) $(CFLAGS) -o vecmat3d vecmat3d-driver.c mat3d.o vec3d.o memory-manager.o $(LIBS)
