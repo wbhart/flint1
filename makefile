@@ -1,6 +1,7 @@
 ifndef FLINT_TUNE
 	# defaults for sage.math development machine
-	FLINT_TUNE = -mtune=opteron -march=opteron
+	FLINT_TUNE = -mtune=opteron -march=opteron 
+      # -m128bit-long-double
 
 	# for the record, here's what I use on my G5 powerpc:
 	# FLINT_TUNE = -m64 -mcpu=970 -mtune=970 -mpowerpc64 -falign-loops=16 -falign-functions=16 -falign-labels=16 -falign-jumps=16
@@ -323,3 +324,6 @@ mat3d.o: mat3d.c mat3d.h
 
 vecmat3d: vecmat3d-driver.c mat3d.o vec3d.o memory-manager.o
 	$(CC) $(CFLAGS) -o vecmat3d vecmat3d-driver.c mat3d.o vec3d.o memory-manager.o $(LIBS)
+
+x3y3z3k: x3y3z3k.c mat3d.o vec3d.o memory-manager.o
+	$(CC) $(CFLAGS) -o x3y3z3k x3y3z3k.c mat3d.o vec3d.o memory-manager.o $(LIBS)

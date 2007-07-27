@@ -14,10 +14,10 @@
 #include <math.h>
 
 /*
-   Vector of unsigned longs
+   Vector of longs
 */
 
-typedef unsigned long * z_vec;
+typedef long * z_vec;
 
 typedef struct z_vec_s
 {

@@ -22,10 +22,10 @@
 
 void z_mat3dr_stack_init(z_mat3dr_t * C)
 {
-   (*C) = (unsigned long **) flint_stack_alloc(12);
-   (*C)[0] = (unsigned long *) (C+3);
-   (*C)[1] = (unsigned long *) (C+6);
-   (*C)[2] = (unsigned long *) (C+9); 
+   (*C) = (long **) flint_stack_alloc(12);
+   (*C)[0] = (long *) (*C+3);
+   (*C)[1] = (long *) (*C+6);
+   (*C)[2] = (long *) (*C+9); 
 }
 
 void z_mat3dr_stack_clear(void)
@@ -35,10 +35,10 @@ void z_mat3dr_stack_clear(void)
 
 void z_mat3dc_stack_init(z_mat3dc_t * C)
 {
-   (*C) = (unsigned long **) flint_stack_alloc(12);
-   (*C)[0] = (unsigned long *) (C+3);
-   (*C)[1] = (unsigned long *) (C+6);
-   (*C)[2] = (unsigned long *) (C+9); 
+   (*C) = (long **) flint_stack_alloc(12);
+   (*C)[0] = (long *) (*C+3);
+   (*C)[1] = (long *) (*C+6);
+   (*C)[2] = (long *) (*C+9); 
 }
 
 void z_mat3dc_stack_clear(void)
@@ -70,6 +70,30 @@ void z_mat3dr_swap23(z_mat3dr_t C)
    ROW(C, 3) = temp;
 } 
 
+void z_mat3dc_swap12(z_mat3dc_t C)
+{
+   z_vec3d temp;
+   temp = COL(C, 1);
+   COL(C, 1) = COL(C, 2);
+   COL(C, 2) = temp;
+} 
+
+void z_mat3dc_swap13(z_mat3dc_t C)
+{
+   z_vec3d temp;
+   temp = COL(C, 1);
+   COL(C, 1) = ROW(C, 3);
+   COL(C, 3) = temp;
+} 
+
+void z_mat3dc_swap23(z_mat3dc_t C)
+{
+   z_vec3d temp;
+   temp = COL(C, 2);
+   COL(C, 2) = COL(C, 3);
+   COL(C, 3) = temp;
+} 
+
 void z_mat3dr_set_identity(z_mat3dr_t C)
 {
    MAT_R(C, 1, 1) = 1;
@@ -83,12 +107,51 @@ void z_mat3dr_set_identity(z_mat3dr_t C)
    MAT_R(C, 3, 3) = 1;
 }
 
+void z_mat3dc_set_identity(z_mat3dc_t C)
+{
+   MAT_C(C, 1, 1) = 1;
+   MAT_C(C, 1, 2) = 0;
+   MAT_C(C, 1, 3) = 0;
+   MAT_C(C, 2, 1) = 0;
+   MAT_C(C, 2, 2) = 1;
+   MAT_C(C, 2, 3) = 0;
+   MAT_C(C, 3, 1) = 0;
+   MAT_C(C, 3, 2) = 0;
+   MAT_C(C, 3, 3) = 1;
+}
+
+void d_mat3dc_set_identity(d_mat3dc_t C)
+{
+   MAT_C(C, 1, 1) = 1.0;
+   MAT_C(C, 1, 2) = 0.0;
+   MAT_C(C, 1, 3) = 0.0;
+   MAT_C(C, 2, 1) = 0.0;
+   MAT_C(C, 2, 2) = 1.0;
+   MAT_C(C, 2, 3) = 0.0;
+   MAT_C(C, 3, 1) = 0.0;
+   MAT_C(C, 3, 2) = 0.0;
+   MAT_C(C, 3, 3) = 1.0;
+}
+
+void d_mat3dc_set_zero(d_mat3dc_t C)
+{
+   MAT_C(C, 1, 1) = 0.0;
+   MAT_C(C, 1, 2) = 0.0;
+   MAT_C(C, 1, 3) = 0.0;
+   MAT_C(C, 2, 1) = 0.0;
+   MAT_C(C, 2, 2) = 0.0;
+   MAT_C(C, 2, 3) = 0.0;
+   MAT_C(C, 3, 1) = 0.0;
+   MAT_C(C, 3, 2) = 0.0;
+   MAT_C(C, 3, 3) = 0.0;
+}
+
 void d_mat3dr_stack_init(d_mat3dr_t * C)
 {
-   (*C) = (double **) flint_stack_alloc(12);
-   (*C)[0] = (double *) (C+3);
-   (*C)[1] = (double *) (C+6);
-   (*C)[2] = (double *) (C+9); 
+   (*C) = (double **) flint_stack_alloc(21);
+   (*C)[0] = (double *) (*C+3);
+   (*C)[1] = (double *) (*C+9);
+   (*C)[2] = (double *) (*C+15); 
 }
 
 void d_mat3dr_stack_clear()
@@ -98,10 +161,10 @@ void d_mat3dr_stack_clear()
 
 void d_mat3dc_stack_init(d_mat3dc_t * C)
 {
-   (*C) = (double **) flint_stack_alloc(12);
-   (*C)[0] = (double *) (C+3);
-   (*C)[1] = (double *) (C+6);
-   (*C)[2] = (double *) (C+9); 
+   (*C) = (double **) flint_stack_alloc(21);
+   (*C)[0] = (double *) (*C+3);
+   (*C)[1] = (double *) (*C+9);
+   (*C)[2] = (double *) (*C+15); 
 }
 
 void d_mat3dc_stack_clear()
@@ -109,6 +172,83 @@ void d_mat3dc_stack_clear()
    flint_stack_release();
 }
 
+void d_mat3dc_printf(d_mat3dc_t mat)
+{
+   printf("\n[%.18f %.18f %.18f]\n", MAT_C(mat, 1, 1), MAT_C(mat, 1, 2), MAT_C(mat, 1, 3));
+   printf("[%.18f %.18f %.18f]\n", MAT_C(mat, 2, 1), MAT_C(mat, 2, 2), MAT_C(mat, 2, 3));
+   printf("[%.18f %.18f %.18f]\n", MAT_C(mat, 3, 1), MAT_C(mat, 3, 2), MAT_C(mat, 3, 3)); 
+}
+
+void d_mat3dc_scanf(d_mat3dc_t mat)
+{
+   scanf("%lf %lf %lf", &MAT_C(mat, 1, 1), &MAT_C(mat, 1, 2), &MAT_C(mat, 1, 3));
+   scanf("%lf %lf %lf", &MAT_C(mat, 2, 1), &MAT_C(mat, 2, 2), &MAT_C(mat, 2, 3));
+   scanf("%lf %lf %lf", &MAT_C(mat, 3, 1), &MAT_C(mat, 3, 2), &MAT_C(mat, 3, 3)); getchar();
+}
+
+void z_mat3dc_printf(z_mat3dc_t mat)
+{
+   printf("\n[%ld %ld %ld]\n", MAT_C(mat, 1, 1), MAT_C(mat, 1, 2), MAT_C(mat, 1, 3));
+   printf("[%ld %ld %ld]\n", MAT_C(mat, 2, 1), MAT_C(mat, 2, 2), MAT_C(mat, 2, 3));
+   printf("[%ld %ld %ld]\n", MAT_C(mat, 3, 1), MAT_C(mat, 3, 2), MAT_C(mat, 3, 3)); 
+}
+
+void z_mat3dc_scanf(z_mat3dc_t mat)
+{
+   scanf("%ld %ld %ld", &MAT_C(mat, 1, 1), &MAT_C(mat, 1, 2), &MAT_C(mat, 1, 3));
+   scanf("%ld %ld %ld", &MAT_C(mat, 2, 1), &MAT_C(mat, 2, 2), &MAT_C(mat, 2, 3));
+   scanf("%ld %ld %ld", &MAT_C(mat, 3, 1), &MAT_C(mat, 3, 2), &MAT_C(mat, 3, 3)); getchar();
+}
+
+void z_mat3dr_printf(z_mat3dr_t mat)
+{
+   printf("\n[%ld %ld %ld]\n", MAT_R(mat, 1, 1), MAT_R(mat, 1, 2), MAT_R(mat, 1, 3));
+   printf("[%ld %ld %ld]\n", MAT_R(mat, 2, 1), MAT_R(mat, 2, 2), MAT_R(mat, 2, 3));
+   printf("[%ld %ld %ld]\n", MAT_R(mat, 3, 1), MAT_R(mat, 3, 2), MAT_R(mat, 3, 3)); 
+}
+
+void z_mat3dr_scanf(z_mat3dr_t mat)
+{
+   scanf("%ld %ld %ld", &MAT_R(mat, 1, 1), &MAT_R(mat, 1, 2), &MAT_R(mat, 1, 3));
+   scanf("%ld %ld %ld", &MAT_R(mat, 2, 1), &MAT_R(mat, 2, 2), &MAT_R(mat, 2, 3));
+   scanf("%ld %ld %ld", &MAT_R(mat, 3, 1), &MAT_R(mat, 3, 2), &MAT_R(mat, 3, 3)); getchar();
+}
+
+double d_mat3dc_det(d_mat3dc_t B)
+{
+   return MAT_C(B, 1, 1)*(MAT_C(B, 3, 3)*MAT_C(B, 2, 2) - MAT_C(B, 3, 2)*MAT_C(B, 2, 3))
+        - MAT_C(B, 2, 1)*(MAT_C(B, 3, 3)*MAT_C(B, 1, 2) - MAT_C(B, 3, 2)*MAT_C(B, 1, 3))
+        + MAT_C(B, 3, 1)*(MAT_C(B, 2, 3)*MAT_C(B, 1, 2) - MAT_C(B, 2, 2)*MAT_C(B, 1, 3));
+   
+}
+
+void d_mat3dc_invert(d_mat3dc_t B_inv, d_mat3dc_t B)
+{
+   double det = d_mat3dc_det(B);
+   
+   MAT_C(B_inv, 1, 1) = (MAT_C(B, 3, 3)*MAT_C(B, 2, 2) - MAT_C(B, 3, 2)*MAT_C(B, 2, 3))/det;
+   MAT_C(B_inv, 1, 2) = -(MAT_C(B, 3, 3)*MAT_C(B, 1, 2) - MAT_C(B, 3, 2)*MAT_C(B, 1, 3))/det;
+   MAT_C(B_inv, 1, 3) = (MAT_C(B, 2, 3)*MAT_C(B, 1, 2) - MAT_C(B, 2, 2)*MAT_C(B, 1, 3))/det;
+   MAT_C(B_inv, 2, 1) = -(MAT_C(B, 3, 3)*MAT_C(B, 2, 1) - MAT_C(B, 3, 1)*MAT_C(B, 2, 3))/det;
+   MAT_C(B_inv, 2, 2) = (MAT_C(B, 3, 3)*MAT_C(B, 1, 1) - MAT_C(B, 3, 1)*MAT_C(B, 1, 3))/det;
+   MAT_C(B_inv, 2, 3) = -(MAT_C(B, 2, 3)*MAT_C(B, 1, 1) - MAT_C(B, 2, 1)*MAT_C(B, 1, 3))/det;
+   MAT_C(B_inv, 3, 1) = (MAT_C(B, 3, 2)*MAT_C(B, 2, 1) - MAT_C(B, 3, 1)*MAT_C(B, 2, 2))/det;
+   MAT_C(B_inv, 3, 2) = -(MAT_C(B, 3, 2)*MAT_C(B, 1, 1) - MAT_C(B, 3, 1)*MAT_C(B, 1, 2))/det;
+   MAT_C(B_inv, 3, 3) = (MAT_C(B, 2, 2)*MAT_C(B, 1, 1) - MAT_C(B, 2, 1)*MAT_C(B, 1, 2))/det;
+}
+
+void d_mat3dc_mul_z_mat3dc(d_mat3dc_t B_out, d_mat3dc_t B, z_mat3dc_t Z)
+{
+   MAT_C(B_out, 1, 1) = MAT_C(B, 1, 1)*MAT_C(Z, 1, 1) + MAT_C(B, 1, 2)*MAT_C(Z, 2, 1) + MAT_C(B, 1, 3)*MAT_C(Z, 3, 1);
+   MAT_C(B_out, 1, 2) = MAT_C(B, 1, 1)*MAT_C(Z, 1, 2) + MAT_C(B, 1, 2)*MAT_C(Z, 2, 2) + MAT_C(B, 1, 3)*MAT_C(Z, 3, 2);
+   MAT_C(B_out, 1, 3) = MAT_C(B, 1, 1)*MAT_C(Z, 1, 3) + MAT_C(B, 1, 2)*MAT_C(Z, 2, 3) + MAT_C(B, 1, 3)*MAT_C(Z, 3, 3);
+   MAT_C(B_out, 2, 1) = MAT_C(B, 2, 1)*MAT_C(Z, 1, 1) + MAT_C(B, 2, 2)*MAT_C(Z, 2, 1) + MAT_C(B, 2, 3)*MAT_C(Z, 3, 1);
+   MAT_C(B_out, 2, 2) = MAT_C(B, 2, 1)*MAT_C(Z, 1, 2) + MAT_C(B, 2, 2)*MAT_C(Z, 2, 2) + MAT_C(B, 2, 3)*MAT_C(Z, 3, 2);
+   MAT_C(B_out, 2, 3) = MAT_C(B, 2, 1)*MAT_C(Z, 1, 3) + MAT_C(B, 2, 2)*MAT_C(Z, 2, 3) + MAT_C(B, 2, 3)*MAT_C(Z, 3, 3);
+   MAT_C(B_out, 3, 1) = MAT_C(B, 3, 1)*MAT_C(Z, 1, 1) + MAT_C(B, 3, 2)*MAT_C(Z, 2, 1) + MAT_C(B, 3, 3)*MAT_C(Z, 3, 1);
+   MAT_C(B_out, 3, 2) = MAT_C(B, 3, 1)*MAT_C(Z, 1, 2) + MAT_C(B, 3, 2)*MAT_C(Z, 2, 2) + MAT_C(B, 3, 3)*MAT_C(Z, 3, 2);
+   MAT_C(B_out, 3, 3) = MAT_C(B, 3, 1)*MAT_C(Z, 1, 3) + MAT_C(B, 3, 2)*MAT_C(Z, 2, 3) + MAT_C(B, 3, 3)*MAT_C(Z, 3, 3);
+}
 /* 
    Compute the Gram-Schmidt Orthogonalisation of a set of 3 vectors b_i (given as the
    columns of the input matrix B_in). The orthogonal vectors b*_i are returned as the 
@@ -144,7 +284,7 @@ void d_mat3dc_gram_schmidt(d_mat3dc_t Q, d_mat3dc_t B_out, d_mat3dc_t B_in)
    basis vectors.
 */
 
-void d_mat3dc_LLL(z_mat3dr_t C, d_mat3dc_t B_in, double delta)
+void d_mat3dc_LLL(z_mat3dc_t C, d_mat3dc_t B_in, double delta)
 {
    d_mat3dc_t Q;
    d_mat3dc_t B;
@@ -153,7 +293,7 @@ void d_mat3dc_LLL(z_mat3dr_t C, d_mat3dc_t B_in, double delta)
    d_mat3dc_stack_init(&Q);
    d_mat3dc_stack_init(&B);
    
-   z_mat3dr_set_identity(C);
+   z_mat3dc_set_identity(C);
    
    d_mat3dc_gram_schmidt(Q, B, B_in);
    
@@ -166,19 +306,19 @@ k2:
    mu = MAT_C(Q, 2, 1);
    if (abs(mu) > 0.5) 
    {
-      unsigned long r = round(mu);
-      z_vec3d_sub_scalar_mul(ROW(C, 2), ROW(C, 2), ROW(C, 1), r);
+      long r = round(mu);
+      z_vec3d_sub_scalar_mul(COL(C, 2), COL(C, 2), COL(C, 1), r);
       MAT_C(Q, 2, 1) -= (double) r;
    }
    
    mu = MAT_C(Q, 2, 1);
-   if (B2 < (0.75 - mu*mu)*B1)
+   if (B2 < (delta - mu*mu)*B1)
    {
-      B_temp = B2 + mu*B1;
+      B_temp = B2 + mu*mu*B1;
       MAT_C(Q, 2, 1) = mu*B1 / B_temp; 
       B2 = B1*B2 / B_temp;
       B1 = B_temp;
-      z_mat3dr_swap12(C);
+      z_mat3dc_swap12(C);
       mu = MAT_C(Q, 3, 1) - mu*MAT_C(Q, 3, 2);
       MAT_C(Q, 3, 1) = MAT_C(Q, 3, 2) + mu*MAT_C(Q, 2, 1);
       MAT_C(Q, 3, 2) = mu;
@@ -190,20 +330,20 @@ k3:
    mu = MAT_C(Q, 3, 2);
    if (abs(mu) > 0.5) 
    {
-      unsigned long r = round(mu);
-      z_vec3d_sub_scalar_mul(ROW(C, 3), ROW(C, 3), ROW(C, 2), r);
+      long r = round(mu);
+      z_vec3d_sub_scalar_mul(COL(C, 3), COL(C, 3), COL(C, 2), r);
       MAT_C(Q, 3, 1) -= r*MAT_C(Q, 2, 1);
       MAT_C(Q, 3, 2) -= (double) r;
    }
    
    mu = MAT_C(Q, 3, 2);
-   if (B3 >= (0.75 - mu*mu)*B2)
+   if (B3 >= (delta - mu*mu)*B2)
    {
       mu = MAT_C(Q, 3, 1);
       if (abs(mu) > 0.5)
       {
-         unsigned long r = round(mu);
-         z_vec3d_sub_scalar_mul(ROW(C, 3), ROW(C, 3), ROW(C, 1), r);
+         long r = round(mu);
+         z_vec3d_sub_scalar_mul(COL(C, 3), COL(C, 3), COL(C, 1), r);
          MAT_C(Q, 3, 1) -= (double) r;
       }
    } else
@@ -212,7 +352,7 @@ k3:
       MAT_C(Q, 3, 2) = mu*B2 / B_temp;
       B3 = B2*B3 / B_temp;
       B2 = B_temp;
-      z_mat3dr_swap23(C);
+      z_mat3dc_swap23(C);  
       mu = MAT_C(Q, 2, 1);
       MAT_C(Q, 2, 1) = MAT_C(Q, 3, 1);
       MAT_C(Q, 3, 1) = mu;

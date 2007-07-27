@@ -19,7 +19,7 @@
 
 void z_vec3d_stack_init(z_vec3d * vec)
 {
-   *vec = (unsigned long *) flint_stack_alloc_bytes(3*sizeof(unsigned long));
+   *vec = (long *) flint_stack_alloc_bytes(3*sizeof(long));
 }
 
 void d_vec3d_stack_init(d_vec3d * vec)
@@ -145,7 +145,7 @@ void d_vec3d_add_scalar_mul(d_vec3d v_out, d_vec3d v_in1, d_vec3d v_in2, double 
    Sets v_out to v_in1 - scalar * v_in2
 */
 
-void z_vec3d_sub_scalar_mul(z_vec3d v_out, z_vec3d v_in1, z_vec3d v_in2, unsigned long scalar)
+void z_vec3d_sub_scalar_mul(z_vec3d v_out, z_vec3d v_in1, z_vec3d v_in2, long scalar)
 {
    COORD(v_out, 1) = COORD(v_in1, 1) - scalar * COORD(v_in2, 1);
    COORD(v_out, 2) = COORD(v_in1, 2) - scalar * COORD(v_in2, 2);
@@ -156,7 +156,7 @@ void z_vec3d_sub_scalar_mul(z_vec3d v_out, z_vec3d v_in1, z_vec3d v_in2, unsigne
    Sets v_out to v_in1 + scalar * v_in2
 */
 
-void z_vec3d_add_scalar_mul(z_vec3d v_out, z_vec3d v_in1, z_vec3d v_in2, unsigned long scalar)
+void z_vec3d_add_scalar_mul(z_vec3d v_out, z_vec3d v_in1, z_vec3d v_in2, long scalar)
 {
    COORD(v_out, 1) = COORD(v_in1, 1) + scalar * COORD(v_in2, 1);
    COORD(v_out, 2) = COORD(v_in1, 2) + scalar * COORD(v_in2, 2);

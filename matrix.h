@@ -16,7 +16,7 @@
 #include "vector.h"
 
 /*
-   Matrix of unsigned longs
+   Matrix of longs
 */
 
 typedef z_vec * z_mat;
@@ -24,7 +24,7 @@ typedef z_vec * z_mat;
 typedef struct z_mat_s
 {
    z_mat entries;
-   unsigned long * data; // Internal use, will point to a single block of memory containing all the coefficients 
+   long * data; // Internal use, will point to a single block of memory containing all the coefficients 
    unsigned long rows; // Number of rows
    unsigned long cols; // Number of columns
    int format;  // If 0 the rows of this matrix are vectors, if 1 the columns are vectors
