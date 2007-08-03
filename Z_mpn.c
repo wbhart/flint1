@@ -170,9 +170,10 @@ mp_limb_t Z_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1,
                                       mp_limb_t * data2, unsigned long limbs2)
 {
    unsigned long coeff_limbs = limbs1 + limbs2;
+   int s1 = (FLINT_BIT_COUNT(data1[limbs1-1]) + FLINT_BIT_COUNT(data2[limbs2-1]) > FLINT_BITS);
    unsigned long twk;
    
-   if (coeff_limbs/2 < 2300) 
+   if (coeff_limbs/2 < FLINT_FFT_LIMBS_CROSSOVER) 
    {
       return mpn_mul(res, data1, limbs1, data2, limbs2);
    } 
@@ -213,6 +214,32 @@ mp_limb_t Z_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1,
 
    return __Z_mpn_mul(res, data1, limbs1, data2, limbs2, twk);
 }
+
+mp_limb_t Z_mpn_mul_m1(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1, 
+                                      mp_limb_t * data2, unsigned long limbs2)
+{
+   unsigned long coeff_limbs = limbs1 + limbs2;
+   int s1 = (FLINT_BIT_COUNT(data1[limbs1-1]) + FLINT_BIT_COUNT(data2[limbs2-1]) > FLINT_BITS);
+   unsigned long twk;
+   
+   if (coeff_limbs/2 < FLINT_FFT_LIMBS_CROSSOVER) 
+   {
+      if (s1) return mpn_mul(res, data1, limbs1, data2, limbs2);
+      else 
+      {
+         mp_limb_t * temp = (mp_limb_t *) flint_stack_alloc(limbs1+limbs2);
+         mpn_mul(temp, data1, limbs1, data2, limbs2);
+         copy_limbs(res, temp, limbs1+limbs2-1);
+         res[limbs1+limbs2-1] = 0;
+         flint_stack_release();
+         return 0;
+      } 
+   } 
+   
+   
+   return Z_mpn_mul(res, data1, limbs1, data2, limbs2);
+}
+
 
 void Z_mpn_mul_precomp_init(Z_mpn_precomp_t precomp, mp_limb_t * data1, unsigned long limbs1, unsigned long limbs2)
 {

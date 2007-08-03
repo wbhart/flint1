@@ -634,13 +634,14 @@ void __fmpz_poly_mul_coeffs(mp_limb_t * res, mp_limb_t * a, mp_limb_t * b)
       unsigned long sizea = ABS(a[0]);
       unsigned long sizeb = ABS(b[0]);
       mp_limb_t mslimb;
+      
       if ((sizea == 0) || (sizeb == 0))
       {
         res[0] = 0;
       } else
       {
-         if (sizea >= sizeb) mslimb = Z_mpn_mul(res+1, a+1, sizea, b+1, sizeb);
-         else mslimb = Z_mpn_mul(res+1, b+1, sizeb, a+1, sizea);
+         if (sizea >= sizeb) mslimb = Z_mpn_mul_m1(res+1, a+1, sizea, b+1, sizeb);
+         else mslimb = Z_mpn_mul_m1(res+1, b+1, sizeb, a+1, sizea);
          res[0] = sizea+sizeb - (mslimb == 0);
          if ((long) (a[0] ^ b[0]) < 0) res[0] = -res[0];
       }
