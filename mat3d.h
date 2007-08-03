@@ -100,6 +100,46 @@ void z_mat3dr_scanf(z_mat3dr_t mat);
 
 void d_mat3dc_gram_schmidt(d_mat3dc_t Q, d_mat3dc_t B_out, d_mat3dc_t B_in);
 
-void d_mat3dc_LLL(z_mat3dr_t C, d_mat3dc_t B_in, double delta);
+int d_mat3dc_LLL(z_mat3dr_t C, d_mat3dc_t B_out, d_mat3dc_t B_in, double delta);
+
+/************************************************************************************
+
+   Double-double precision matrices
+   
+************************************************************************************/
+
+// Defines (implicitly) a matrix of dimension 3 whose columns are 3d vectors of double-doubles
+
+typedef dd_vec3d * dd_mat3dc_t;
+
+// Defines (implicitly) a matrix of dimension 3 whose rows are 3d vectors of double-doubles
+
+typedef dd_vec3d * dd_mat3dr_t;
+
+void dd_mat3dr_stack_init(dd_mat3dr_t * C);
+
+void dd_mat3dr_stack_clear();
+
+void dd_mat3dc_stack_init(dd_mat3dc_t * C);
+
+void dd_mat3dc_stack_clear();
+
+void dd_mat3dc_printf(dd_mat3dc_t mat);
+
+void dd_mat3dc_set_identity(dd_mat3dc_t C);
+
+void dd_mat3dc_set_zero(dd_mat3dc_t C);
+
+void dd_mat3dc_scanf(dd_mat3dc_t mat);
+
+void dd_mat3dc_gram_schmidt(dd_mat3dc_t Q, dd_mat3dc_t B_out, dd_mat3dc_t B_in);
+
+void dd_mat3dc_det(double * out, dd_mat3dc_t B);
+
+void dd_mat3dc_invert(dd_mat3dc_t B_inv, dd_mat3dc_t B);
+
+void dd_mat3dc_mul_z_mat3dc(dd_mat3dc_t B_out, dd_mat3dc_t B, z_mat3dc_t Z);
+
+int dd_mat3dc_LLL(z_mat3dc_t C, dd_mat3dc_t B_out, dd_mat3dc_t B_in, double del);
 
 #endif

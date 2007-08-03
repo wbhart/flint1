@@ -1,7 +1,6 @@
 ifndef FLINT_TUNE
 	# defaults for sage.math development machine
-	FLINT_TUNE = -mtune=opteron -march=opteron 
-      # -m128bit-long-double
+	FLINT_TUNE = -mtune=opteron -march=opteron
 
 	# for the record, here's what I use on my G5 powerpc:
 	# FLINT_TUNE = -m64 -mcpu=970 -mtune=970 -mpowerpc64 -falign-loops=16 -falign-functions=16 -falign-labels=16 -falign-jumps=16
@@ -23,10 +22,22 @@ ifndef FLINT_GMP_LIB_DIR
 	FLINT_GMP_LIB_DIR = "/home/dmharvey/gmp/install/lib"
 endif
 
-LIBS = -L$(FLINT_GMP_LIB_DIR) $(FLINT_LINK_OPTIONS) -lgmp -lpthread -lm
-INCS =  -I"/usr/include" -I$(FLINT_GMP_INCLUDE_DIR)
+# qd include and library directories
+
+ifndef FLINT_QD_INCLUDE_DIR
+	FLINT_QD_INCLUDE_DIR = "/home/dmharvey/gmp/install/include"
+endif
+
+ifndef FLINT_QD_LIB_DIR
+	FLINT_QD_LIB_DIR = "qd"
+endif
+
+LIBS = -L$(FLINT_GMP_LIB_DIR) -L$(FLINT_QD_LIB_DIR) $(FLINT_LINK_OPTIONS) -lgmp -lpthread -lm -lqd
+INCS =  -I"/usr/include" -I$(FLINT_GMP_INCLUDE_DIR) -I$(FLINT_QD_INCLUDE_DIR) 
 
 CC = gcc -std=c99
+
+CPP = g++ 
 
 CFLAGS = $(INCS) -funroll-loops -fexpensive-optimizations $(FLINT_TUNE) -O3
 
@@ -316,14 +327,25 @@ Z_mul_timing: $(ZMULOBJ)
 
 ####### Linear Algebra
 
+memory-manager2.o: memory-manager.c $(HEADERS)
+	$(CPP) $(CFLAGS) -c memory-manager.c -o memory-manager2.o
+
 vec3d.o: vec3d.c vec3d.h
-	$(CC) $(CFLAGS) -c vec3d.c -o vec3d.o
+	$(CPP) $(CFLAGS) -c vec3d.c -o vec3d.o
 
 mat3d.o: mat3d.c mat3d.h
-	$(CC) $(CFLAGS) -c mat3d.c -o mat3d.o
+	$(CPP) $(CFLAGS) -c mat3d.c -o mat3d.o
 
-vecmat3d: vecmat3d-driver.c mat3d.o vec3d.o memory-manager.o
-	$(CC) $(CFLAGS) -o vecmat3d vecmat3d-driver.c mat3d.o vec3d.o memory-manager.o $(LIBS)
+vecmat3d: vecmat3d-driver.c mat3d.o vec3d.o memory-manager2.o
+	$(CPP) $(CFLAGS) -o vecmat3d vecmat3d-driver.c mat3d.o vec3d.o memory-manager2.o $(LIBS)
 
-x3y3z3k: x3y3z3k.c mat3d.o vec3d.o memory-manager.o
-	$(CC) $(CFLAGS) -o x3y3z3k x3y3z3k.c mat3d.o vec3d.o memory-manager.o $(LIBS)
+x3y3z3k: x3y3z3k.c mat3d.o vec3d.o memory-manager2.o 
+	$(CPP) -o x3y3z3k $(CFLAGS) x3y3z3k.c mat3d.o vec3d.o memory-manager2.o $(LIBS) 
+
+dd_vecmat3d: dd_vecmat3d-driver.c mat3d.o vec3d.o memory-manager2.o
+	$(CPP) $(CFLAGS) -o dd_vecmat3d dd_vecmat3d-driver.c mat3d.o vec3d.o memory-manager2.o $(LIBS)
+
+dd_x3y3z3k: dd_x3y3z3k.c mat3d.o vec3d.o memory-manager2.o 
+	$(CPP) -o dd_x3y3z3k $(CFLAGS) dd_x3y3z3k.c mat3d.o vec3d.o memory-manager2.o $(LIBS) 
+
+
