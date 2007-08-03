@@ -170,13 +170,14 @@ mp_limb_t Z_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1,
                                       mp_limb_t * data2, unsigned long limbs2)
 {
    unsigned long coeff_limbs = limbs1 + limbs2;
-   int s1 = (FLINT_BIT_COUNT(data1[limbs1-1]) + FLINT_BIT_COUNT(data2[limbs2-1]) > FLINT_BITS);
    unsigned long twk;
    
    if (coeff_limbs/2 < FLINT_FFT_LIMBS_CROSSOVER) 
    {
       return mpn_mul(res, data1, limbs1, data2, limbs2);
    } 
+   
+   int s1 = (FLINT_BIT_COUNT(data1[limbs1-1]) + FLINT_BIT_COUNT(data2[limbs2-1]) > FLINT_BITS);
    
    if (data1 != data2)
    {
