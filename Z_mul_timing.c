@@ -14,9 +14,8 @@
 
 /* Runs Z_fast_mul through random data.
 
-TRIALS = number of trials to perform.
-LOGLENGTH = log of degree+1.
-BITS = number of bits to use in each coefficient. */
+num_trials = number of trials to perform.
+coeff_bits = number of bits to use in each coefficient. */
 
 unsigned long run_Z_Mul(unsigned long num_trials, unsigned long coeff_bits, int fast, unsigned long tweak)
 {
@@ -73,7 +72,9 @@ unsigned long run_Z_Mul(unsigned long num_trials, unsigned long coeff_bits, int 
       stop_clock(0);
 #endif          
    }   
+   
    // clean up
+   gmp_randclear(state);
    mpz_clear(data1);
    mpz_clear(data2);
    mpz_clear(data3);

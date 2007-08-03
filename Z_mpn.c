@@ -277,6 +277,7 @@ void Z_mpn_mul_precomp_init(Z_mpn_precomp_t precomp, mp_limb_t * data1, unsigned
    precomp->limbs1 = limbs1;
    precomp->limbs2 = limbs2;
    precomp->poly = poly1; 
+   precomp->msl_bits = FLINT_BIT_COUNT(data1[limbs1-1]);
 }
 
 void Z_mpn_mul_precomp_clear(Z_mpn_precomp_t precomp)
@@ -288,6 +289,7 @@ mp_limb_t Z_mpn_mul_precomp(mp_limb_t * res, mp_limb_t * data2, unsigned long li
 {
    ZmodF_poly_t poly2;
    ZmodF_poly_stack_init(poly2, precomp->poly->depth, precomp->poly->n, 1);
+   int s1 = (FLINT_BIT_COUNT(data2[limbs2-1]) + precomp->msl_bits <= FLINT_BITS);
    
    Z_split_limbs(poly2, data2, limbs2, precomp->coeff_limbs, precomp->poly->n);
    
@@ -304,13 +306,14 @@ mp_limb_t Z_mpn_mul_precomp(mp_limb_t * res, mp_limb_t * data2, unsigned long li
    
    ZmodF_poly_normalise(poly2);
    
-   clear_limbs(res, precomp->limbs1 + precomp->limbs2);
+   clear_limbs(res, precomp->limbs1 + precomp->limbs2 - s1);
    
-   Z_combine_limbs(res, poly2, precomp->coeff_limbs, 2*precomp->coeff_limbs+1, precomp->limbs1 + precomp->limbs2);
+   Z_combine_limbs(res, poly2, precomp->coeff_limbs, 2*precomp->coeff_limbs+1, precomp->limbs1 + precomp->limbs2 - s1);
    
    ZmodF_poly_stack_clear(poly2);
    
-   return res[precomp->limbs1+precomp->limbs2-1];
+   if (s1) return 0;
+   else return res[precomp->limbs1+precomp->limbs2-1];
 }
 
 void __Z_mul(mpz_t res, mpz_t a, mpz_t b, unsigned long twk)

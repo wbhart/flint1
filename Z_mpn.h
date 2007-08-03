@@ -25,6 +25,7 @@ typedef struct
    unsigned long coeff_limbs;
    unsigned long limbs1;
    unsigned long limbs2;
+   unsigned long msl_bits;
 } Z_mpn_precomp_s;
 
 typedef Z_mpn_precomp_s Z_mpn_precomp_t[1]; 

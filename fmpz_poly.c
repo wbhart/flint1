@@ -1398,6 +1398,7 @@ void _fmpz_poly_scalar_mul(fmpz_poly_t output, fmpz_poly_t poly, mp_limb_t * x)
    unsigned long limbs1 = ABS(x[0]);
    unsigned long limbs2 = poly->limbs;
    unsigned long total_limbs;
+   unsigned long msl;
    unsigned long limbs_out = output->limbs+1;
    mp_limb_t * coeffs_out = output->coeffs;
    mp_limb_t * coeffs2 = poly->coeffs;
@@ -1412,10 +1413,9 @@ void _fmpz_poly_scalar_mul(fmpz_poly_t output, fmpz_poly_t poly, mp_limb_t * x)
       for (unsigned long i = 0; i < poly->length; i++)
       {
           total_limbs = limbs1 + ABS(coeffs2[i*(limbs2+1)]);
-          Z_mpn_mul_precomp(coeffs_out + i*limbs_out + 1, coeffs2 + i*(limbs2+1) + 1, ABS(coeffs2[i*(limbs2+1)]), precomp);
-          if (((long) coeffs2[i*(limbs2+1)] ^ sign1) < 0) coeffs_out[i*limbs_out] = -total_limbs;
-          else coeffs_out[i*limbs_out] = total_limbs;
-          NORM(coeffs_out + i*limbs_out);
+          msl = Z_mpn_mul_precomp(coeffs_out + i*limbs_out + 1, coeffs2 + i*(limbs2+1) + 1, ABS(coeffs2[i*(limbs2+1)]), precomp);
+          if (((long) coeffs2[i*(limbs2+1)] ^ sign1) < 0) coeffs_out[i*limbs_out] = -total_limbs + (msl == 0);
+          else coeffs_out[i*limbs_out] = total_limbs - (msl == 0);
       }
       Z_mpn_mul_precomp_clear(precomp);
    } else
