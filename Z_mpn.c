@@ -68,6 +68,7 @@ mp_limb_t __Z_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1,
    unsigned long log_length = 0;
    
    unsigned long coeff_limbs = limbs1 + limbs2;
+   unsigned long total_limbs = coeff_limbs - (FLINT_BIT_COUNT(data1[limbs1-1]) + FLINT_BIT_COUNT(data2[limbs2-1]) <= FLINT_BITS);
    unsigned long output_bits = coeff_limbs*FLINT_BITS;
    unsigned long n = coeff_limbs;
  
@@ -157,9 +158,9 @@ mp_limb_t __Z_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1,
    
    ZmodF_poly_normalise(poly1);
    
-   clear_limbs(res, limbs1 + limbs2);
+   clear_limbs(res, total_limbs);
    
-   Z_combine_limbs(res, poly1, coeff_limbs, 2*coeff_limbs+1, limbs1 + limbs2);
+   Z_combine_limbs(res, poly1, coeff_limbs, 2*coeff_limbs+1, total_limbs);
    ZmodF_poly_stack_clear(poly1);
    
    return res[limbs1+limbs2-1];
@@ -314,14 +315,16 @@ mp_limb_t Z_mpn_mul_precomp(mp_limb_t * res, mp_limb_t * data2, unsigned long li
 
 void __Z_mul(mpz_t res, mpz_t a, mpz_t b, unsigned long twk)
 {
-   unsigned long int limbs;
-   if (a->_mp_size + b->_mp_size > 128000/FLINT_BITS) 
+   unsigned long sa = mpz_size(a);
+   unsigned long sb = mpz_size(b);
+   unsigned long s1 = (FLINT_BIT_COUNT(a->_mp_d[sa-1]) + FLINT_BIT_COUNT(b->_mp_d[sb-1]) <= FLINT_BITS);
+   
+   if (sa+sb > 128000/FLINT_BITS) 
    {
-      if (a->_mp_size >= b->_mp_size) limbs = a->_mp_size;
-      else limbs = b->_mp_size;
-      mp_limb_t* output = (mp_limb_t*) flint_stack_alloc(a->_mp_size+b->_mp_size);
-      __Z_mpn_mul(output, a->_mp_d, a->_mp_size, b->_mp_d, b->_mp_size, twk);
-      mpz_import(res, a->_mp_size+b->_mp_size, -1, sizeof(mp_limb_t), 0, 0, output);
+      mp_limb_t* output = 
+         (mp_limb_t*) flint_stack_alloc(sa + sb - s1);
+      __Z_mpn_mul(output, a->_mp_d, sa, b->_mp_d, sb, twk);
+      mpz_import(res, sa+sb-s1, -1, sizeof(mp_limb_t), 0, 0, output);
       if (mpz_sgn(res) != mpz_sgn(a)*mpz_sgn(b)) mpz_neg(res,res);
       flint_stack_release();
    } else mpz_mul(res, a, b);
@@ -329,14 +332,16 @@ void __Z_mul(mpz_t res, mpz_t a, mpz_t b, unsigned long twk)
 
 void Z_mul(mpz_t res, mpz_t a, mpz_t b)
 {
-   unsigned long int limbs;
-   if (a->_mp_size + b->_mp_size > 128000/FLINT_BITS) 
+   unsigned long sa = mpz_size(a);
+   unsigned long sb = mpz_size(b);
+   unsigned long s1 = (FLINT_BIT_COUNT(a->_mp_d[sa-1]) + FLINT_BIT_COUNT(b->_mp_d[sb-1]) <= FLINT_BITS);
+   
+   if (sa+sb > 128000/FLINT_BITS) 
    {
-      if (a->_mp_size >= b->_mp_size) limbs = a->_mp_size;
-      else limbs = b->_mp_size;
-      mp_limb_t* output = (mp_limb_t*) flint_stack_alloc(a->_mp_size+b->_mp_size);
-      Z_mpn_mul(output, a->_mp_d, a->_mp_size, b->_mp_d, b->_mp_size);
-      mpz_import(res, a->_mp_size+b->_mp_size, -1, sizeof(mp_limb_t), 0, 0, output);
+      mp_limb_t* output = 
+         (mp_limb_t*) flint_stack_alloc(sa + sb - s1);
+      Z_mpn_mul(output, a->_mp_d, sa, b->_mp_d, sb);
+      mpz_import(res, sa+sb-s1, -1, sizeof(mp_limb_t), 0, 0, output);
       if (mpz_sgn(res) != mpz_sgn(a)*mpz_sgn(b)) mpz_neg(res,res);
       flint_stack_release();
    } else mpz_mul(res, a, b);

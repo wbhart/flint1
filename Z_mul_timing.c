@@ -1,13 +1,8 @@
 #define TRIALS 1
-#define BITS 1000000UL
-//#define SSMUL
-//#define GMP
-//#define TEST
 
-#ifdef TEST
-#define SSMUL
-#define GMP
-#endif
+#define TEST
+//#define TIMING
+
 
 #include <gmp.h>
 #include <stdlib.h>
@@ -55,18 +50,18 @@ unsigned long run_Z_Mul(unsigned long num_trials, unsigned long coeff_bits, int 
       }
      
 
-#ifdef SSMUL
+#ifdef TEST
       // compute product using Z_mpn_mul
       Z_mul(data3, data1, data1);
-#endif
-#ifdef GMP
       // compute product using GMP
       mpz_mul(data4, data1, data1);
-#endif
-#ifdef TEST
+      
+      if (mpz_size(data3) != mpz_size(data4)) printf("Huh! %ld, %ld\n", mpz_size(data3), mpz_size(data4));
+
       if (mpz_cmp(data3,data4)!=0) printf("Failure!!\n");
 #endif
 
+#ifdef TIMING
       start_clock(0);
       if (fast)
       {
@@ -76,7 +71,7 @@ unsigned long run_Z_Mul(unsigned long num_trials, unsigned long coeff_bits, int 
          mpz_mul(data4, data1, data1);
       }
       stop_clock(0);
-          
+#endif          
    }   
    // clean up
    mpz_clear(data1);
@@ -97,6 +92,7 @@ int main (int argc, const char * argv[])
    for (unsigned long words = 1000UL; words < 500000000; words=floor(words*pow(2.0,1.0/64.0))) 
    {
        bits = 64*words;
+#ifdef TIMING
        printf("%ld words\n",words);
        besti = 0;
        best = 1000.0;
@@ -127,10 +123,10 @@ int main (int argc, const char * argv[])
        time2 = get_clock(0) / FLINT_CLOCK_SCALE_FACTOR / 1800000000.0;
        printf("GMP = %lf ",time2);   
        printf("ratio = %lf, best = %ld\n",time2/best,besti);
-       
-       //printf("%ld\n",bits);
-       //run_Z_Mul(TRIALS, bits, 1);
-       
+#else       
+       printf("%ld\n",bits);
+       run_Z_Mul(TRIALS, bits, 1, 1);
+#endif       
    }
 
    return 0;
