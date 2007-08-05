@@ -579,6 +579,9 @@ void fmpz_poly_to_mpz_poly(mpz_poly_t res, fmpz_poly_t poly)
       mpz_init2(res->coeffs[res->init++], fmpz_size(ptr) * FLINT_BITS);
       fmpz_to_mpz(res->coeffs[i], ptr);
    }
+   
+   mpz_poly_normalise(res);
+
 }
 
 

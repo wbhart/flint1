@@ -68,7 +68,8 @@ mp_limb_t __Z_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1,
    unsigned long log_length = 0;
    
    unsigned long coeff_limbs = limbs1 + limbs2;
-   unsigned long total_limbs = coeff_limbs - (FLINT_BIT_COUNT(data1[limbs1-1]) + FLINT_BIT_COUNT(data2[limbs2-1]) <= FLINT_BITS);
+   unsigned long s1 = (FLINT_BIT_COUNT(data1[limbs1-1]) + FLINT_BIT_COUNT(data2[limbs2-1]) <= FLINT_BITS);
+   unsigned long total_limbs = coeff_limbs - s1;
    unsigned long output_bits = coeff_limbs*FLINT_BITS;
    unsigned long n = coeff_limbs;
  
@@ -163,7 +164,8 @@ mp_limb_t __Z_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1,
    Z_combine_limbs(res, poly1, coeff_limbs, 2*coeff_limbs+1, total_limbs);
    ZmodF_poly_stack_clear(poly1);
    
-   return res[limbs1+limbs2-1];
+   if (s1) return 0;
+   else return res[limbs1+limbs2-1];
 }
 
 mp_limb_t Z_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1, 
@@ -176,8 +178,6 @@ mp_limb_t Z_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1,
    {
       return mpn_mul(res, data1, limbs1, data2, limbs2);
    } 
-   
-   int s1 = (FLINT_BIT_COUNT(data1[limbs1-1]) + FLINT_BIT_COUNT(data2[limbs2-1]) > FLINT_BITS);
    
    if (data1 != data2)
    {
@@ -231,13 +231,11 @@ mp_limb_t Z_mpn_mul_m1(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1,
          mp_limb_t * temp = (mp_limb_t *) flint_stack_alloc(limbs1+limbs2);
          mpn_mul(temp, data1, limbs1, data2, limbs2);
          copy_limbs(res, temp, limbs1+limbs2-1);
-         res[limbs1+limbs2-1] = 0;
          flint_stack_release();
          return 0;
       } 
    } 
-   
-   
+
    return Z_mpn_mul(res, data1, limbs1, data2, limbs2);
 }
 
@@ -341,7 +339,7 @@ mp_limb_t Z_mpn_mul_precomp(mp_limb_t * res, mp_limb_t * data2, unsigned long li
    ZmodF_poly_stack_clear(poly2);
    
    if (s1) return 0;
-   else return res[precomp->limbs1+precomp->limbs2-1];
+   else return res[precomp->limbs1+limbs2-1];
 }
 
 void __Z_mul(mpz_t res, mpz_t a, mpz_t b, unsigned long twk)

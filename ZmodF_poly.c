@@ -204,7 +204,7 @@ static inline long __get_next_coeff_unsigned(mp_limb_t * coeff_m, long * coeff)
 }
 
 void ZmodF_poly_bit_pack_mpn(ZmodF_poly_t poly_f, fmpz_poly_t poly_mpn,
-                            unsigned long bundle, long bits)
+                            unsigned long bundle, long bits, unsigned long length)
 {   
    unsigned long i, k, skip;
    unsigned long n = poly_f->n;
@@ -227,7 +227,7 @@ void ZmodF_poly_bit_pack_mpn(ZmodF_poly_t poly_f, fmpz_poly_t poly_mpn,
    poly_f->length = 0;
    i=0;
       
-   while (coeff_m < poly_mpn->coeffs + 2*poly_mpn->length)
+   while (coeff_m < poly_mpn->coeffs + 2*length)
    {
       k=0; skip=0;
       coeff = 0; borrow = 0L; temp = 0;
@@ -235,7 +235,7 @@ void ZmodF_poly_bit_pack_mpn(ZmodF_poly_t poly_f, fmpz_poly_t poly_mpn,
       i++;
    
       next_point = coeff_m + 2*bundle;
-      if (next_point >= poly_mpn->coeffs + 2*poly_mpn->length) next_point = poly_mpn->coeffs + 2*poly_mpn->length;
+      if (next_point >= poly_mpn->coeffs + 2*length) next_point = poly_mpn->coeffs + 2*length;
       else for (unsigned long j = 0; j < n; j += 8) FLINT_PREFETCH(poly_f->coeffs[i+1], j);
          
       while (coeff_m < next_point)
@@ -598,7 +598,7 @@ void __ZmodF_poly_write_whole_limb(mp_limb_t * array, unsigned long * temp, unsi
 }
 
 void ZmodF_poly_byte_pack_mpn(ZmodF_poly_t poly_f, fmpz_poly_t poly_mpn,
-                             unsigned long bundle, unsigned long coeff_bytes)
+                             unsigned long bundle, unsigned long coeff_bytes, unsigned long length)
 {
    unsigned long size_m = poly_mpn->limbs+1;
    unsigned long total_limbs = poly_f->n + 1;
@@ -630,7 +630,7 @@ void ZmodF_poly_byte_pack_mpn(ZmodF_poly_t poly_f, fmpz_poly_t poly_mpn,
     
    unsigned long i, j;
    
-   mp_limb_t * end = poly_mpn->coeffs + size_m*poly_mpn->length;
+   mp_limb_t * end = poly_mpn->coeffs + size_m*length;
     
    i = 0;
    poly_f->length = 0;

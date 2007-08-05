@@ -55,7 +55,7 @@ unsigned long run_Z_Mul(unsigned long num_trials, unsigned long coeff_bits, int 
       // compute product using GMP
       mpz_mul(data4, data1, data1);
       
-      if (mpz_size(data3) != mpz_size(data4)) printf("Huh! %ld, %ld\n", mpz_size(data3), mpz_size(data4));
+      if (mpz_size(data3) != mpz_size(data4)) printf("Sizes don't match! %ld, %ld\n", mpz_size(data3), mpz_size(data4));
 
       if (mpz_cmp(data3,data4)!=0) printf("Failure!!\n");
 #endif

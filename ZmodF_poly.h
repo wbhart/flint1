@@ -182,7 +182,7 @@ void ZmodF_poly_limb_unpack_unsigned_mpn(fmpz_poly_t poly_mpn, ZmodF_poly_t poly
 */ 
    
 void ZmodF_poly_bit_pack_mpn(ZmodF_poly_t poly_f, fmpz_poly_t poly_mpn,
-     unsigned long bundle, long bits);
+     unsigned long bundle, long bits, unsigned long length);
 
 
 /*
@@ -217,7 +217,7 @@ void ZmodF_poly_bit_unpack_unsigned_mpn(fmpz_poly_t poly_mpn, ZmodF_poly_t poly_
 */ 
    
 void ZmodF_poly_byte_pack_mpn(ZmodF_poly_t poly_f, fmpz_poly_t poly_mpn,
-                             unsigned long bundle, unsigned long coeff_bytes);
+                             unsigned long bundle, unsigned long coeff_bytes, unsigned long length);
 
      
 /*
