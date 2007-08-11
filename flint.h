@@ -87,11 +87,17 @@ the mpz_t::_mp_d member directly).
 #define HALF_FLINT_BITS 32
 #endif
 
+#if FLINT_BITS == 64
 #define count_lead_zeros(a,b) \
    a = __builtin_clzll(b);
-
 #define count_trail_zeros(a,b) \
    a = __builtin_ctzll(b);
+#else
+#define count_lead_zeros(a,b) \
+   a = __builtin_clzl(b);
+#define count_trail_zeros(a,b) \
+   a = __builtin_ctzl(b);
+#endif
 
 /*
 Returns ceil(log2(x)).
