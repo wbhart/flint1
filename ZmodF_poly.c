@@ -716,9 +716,9 @@ void ZmodF_poly_byte_pack_mpn(ZmodF_poly_t poly_f, fmpz_poly_t poly_mpn,
              }
              temp = 0;
              // restore the original coefficient
-             __fmpz_poly_sub_coeff_ui(coeff_m, 1L);//-(long)borrow);
+             if (!borrow) __fmpz_poly_sub_coeff_ui(coeff_m, 1L);//-(long)borrow);
              borrow = 1;
-             //borrowed = 0;
+             borrowed = 0;
           }
           
           else 
