@@ -1570,7 +1570,7 @@ void fmpz_poly_resize_limbs(fmpz_poly_t poly, unsigned long limbs)
          coeff_i = temp_coeffs;
          for (i = 0; i < poly->length; i++)
          {
-            copy_limbs(coeff_i, coeff_i_old, limbs+1);
+            copy_limbs(coeff_i, coeff_i_old, poly->limbs+1);
             coeff_i += (limbs+1);
             coeff_i_old += (poly->limbs+1);
          } 
@@ -1764,8 +1764,12 @@ void fmpz_poly_div_naive(fmpz_poly_t Q, fmpz_poly_t R, fmpz_poly_t A, fmpz_poly_
          NORM(coeff_Q);
          
          fmpz_poly_init2(qB, B->length, B->limbs+ABS(coeff_Q[0]));
+         for (unsigned long i = 0; i < B->length; i++)
+         {
+            if (FLINT_ABS(B->coeffs[i*(B->limbs+1)]) > B->limbs) printf("Error\n");
+         }
          _fmpz_poly_scalar_mul(qB, B, coeff_Q); 
-      
+         
          fmpz_poly_fit_limbs(R, qB->limbs+1);
          coeffs_R = R->coeffs;
          size_R = R->limbs+1;
@@ -1920,8 +1924,6 @@ void fmpz_poly_div_karatsuba(fmpz_poly_t Q, fmpz_poly_t BQ, fmpz_poly_t A, fmpz_
    */
    
    
-   if (d2q1->length > d1q1->length+n2) printf("Error 1\n");
-   if (d1q1->length ==0) printf("Error 2\n");
    _fmpz_poly_stack_init(dq1, d1q1->length + n2, B->limbs+q1->limbs+1);
    dq1->length = d1q1->length + n2;
    
