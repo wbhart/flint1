@@ -1179,22 +1179,18 @@ void _fmpz_poly_mul_KS(fmpz_poly_t output, fmpz_poly_p input1, fmpz_poly_p input
    while ((input1->coeffs[(length1-1)*(input1->limbs+1)] == 0) && (length1)) length1--;
    while ((input2->coeffs[(length2-1)*(input2->limbs+1)] == 0) && (length2)) length2--;
    
-   /*_fmpz_poly_normalise(input1);
-   _fmpz_poly_normalise(input2);*/
-   
+   if ((length1 == 0) || (length2 == 0)) 
+   {
+      _fmpz_poly_zero(output);
+      return;
+   }
+
    if (length2 > length1) 
    {
       unsigned long temp = length1;
       length1 = length2;
       length2 = temp;
       SWAP(input1, input2);
-   }
-   
-   
-   if ((length1 == 0) || (length2 == 0)) 
-   {
-      _fmpz_poly_zero(output);
-      return;
    }
    
    if ((long) input1->coeffs[(length1-1)*(input1->limbs+1)] < 0)
@@ -1295,7 +1291,6 @@ void _fmpz_poly_mul_KS(fmpz_poly_t output, fmpz_poly_p input1, fmpz_poly_p input
       output->coeffs[i*(output->limbs+1)] = 0;
    }
    output->length = input1->length + input2->length - 1;
-   //_fmpz_poly_normalise(output);
 }
 
 
