@@ -205,6 +205,8 @@ long _fmpz_poly_bits1(fmpz_poly_t poly_mpn);
 
 long _fmpz_poly_bits(fmpz_poly_t poly_mpn);
 
+unsigned long _fmpz_poly_max_limbs(fmpz_poly_t poly);
+
 int _fmpz_poly_equal(fmpz_poly_p input1, fmpz_poly_p input2);
 
 void _fmpz_poly_neg(fmpz_poly_t output, fmpz_poly_t input);

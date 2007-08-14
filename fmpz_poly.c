@@ -1134,6 +1134,20 @@ void _fmpz_poly_mul_naive(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_t in
    output->length = len1 + len2 - 1;
 }
 
+unsigned long _fmpz_poly_max_limbs(fmpz_poly_t poly)
+{
+   unsigned long limbs = poly->limbs;
+   unsigned long max_limbs = 0;
+   unsigned long next_limbs;
+   
+   for (unsigned long i = 0; (i < poly->length) && (max_limbs != limbs); i++)
+   {
+       next_limbs = ABS(poly->coeffs[i*(limbs+1)]);
+       if (next_limbs > max_limbs) max_limbs = next_limbs;
+   } 
+   return max_limbs;
+}
+
 void __fmpz_poly_karamul_recursive(fmpz_poly_t res, fmpz_poly_t a, fmpz_poly_t b, fmpz_poly_t scratch, fmpz_poly_t scratchb)
 {
    fmpz_poly_t temp;
@@ -1145,7 +1159,7 @@ void __fmpz_poly_karamul_recursive(fmpz_poly_t res, fmpz_poly_t a, fmpz_poly_t b
       return;
    }
    
-   if ((a->length ==2 && b->length == 2) && (a->limbs+b->limbs > 15)) {
+   if ((a->length ==2 && b->length == 2) && (_fmpz_poly_max_limbs(a)+_fmpz_poly_max_limbs(b) > 15)) {
       const unsigned long asize = a->limbs+1;
       const unsigned long bsize = b->limbs+1;
       const unsigned long rsize = res->limbs+1;
@@ -1164,7 +1178,7 @@ void __fmpz_poly_karamul_recursive(fmpz_poly_t res, fmpz_poly_t a, fmpz_poly_t b
       return;
    }
    
-   if (a->limbs + b->limbs + a->length+b->length <= 19) 
+   if (_fmpz_poly_max_limbs(a) + _fmpz_poly_max_limbs(b) + a->length+b->length <= 19) 
    {
       _fmpz_poly_mul_naive(res, a, b);
       
