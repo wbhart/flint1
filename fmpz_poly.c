@@ -1139,6 +1139,138 @@ void _fmpz_poly_mul_naive(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_t in
    output->length = len1 + len2 - 1;
 }
 
+void _fmpz_poly_truncate(fmpz_poly_t poly, unsigned long trunc)
+{
+   poly->length = trunc;
+}
+
+/*
+   Multiply two polynomials using the naive technique truncating the result to trunc terms.
+   Currently doesn't allow aliasing
+*/
+
+void _fmpz_poly_mul_naive_trunc(fmpz_poly_t output, fmpz_poly_t input1, 
+                                          fmpz_poly_t input2, unsigned long trunc)
+{
+   mp_limb_t * coeffs_out = output->coeffs;
+   unsigned long size_out = output->limbs+1;
+   mp_limb_t * coeffs1, * coeffs2;
+   unsigned long size1, size2;
+   unsigned long len1, len2; 
+   unsigned long lenm1;
+   
+   if (trunc == 0) 
+   {
+      _fmpz_poly_zero(output);
+      return;
+   }
+   
+   if ((input1->length == 0) || (input2->length == 0)) 
+   {
+      for (unsigned long i = 0; i < trunc; i++)
+      {
+         coeffs_out[i*size_out] = 0;
+      }
+      _fmpz_poly_zero(output);
+      return;      
+   }
+      
+   coeffs1 = input1->coeffs;
+   coeffs2 = input2->coeffs;
+   size1 = input1->limbs+1;
+   size2 = input2->limbs+1;
+   lenm1 = input1->length-1;
+   len1 = input1->length;
+   len2 = input2->length;
+   
+   unsigned long i, j;
+      
+   mp_limb_t * temp;
+            
+   // Special case if the length of both inputs is 1
+   if ((len1 == 1) && (len2 == 1))
+   {
+      if ((coeffs1[0] == 0) || (coeffs2[0] == 0))
+      {
+         coeffs_out[0] = 0;
+      } else
+      {
+         __fmpz_poly_mul_coeffs(coeffs_out, coeffs1, coeffs2);
+      }      
+   }
+   // Ordinay case
+   else
+   {
+      for (i = 0; (i < len1) && (i < trunc - 1); i++)
+      {
+         /* Set out[i] = in1[i]*in2[0] */
+         if ((coeffs1[i*size1] == 0) || (coeffs2[0] == 0))
+         {
+            coeffs_out[i*size_out] = 0;
+         } else
+         {
+            __fmpz_poly_mul_coeffs2(coeffs_out+i*size_out, coeffs1+i*size1, coeffs2);
+         }
+      }
+      if (i != len1)
+      {
+         if ((coeffs1[i*size1] == 0) || (coeffs2[0] == 0))
+         {
+            coeffs_out[i*size_out] = 0;
+         } else
+         {
+            __fmpz_poly_mul_coeffs(coeffs_out+i*size_out, coeffs1+i*size1, coeffs2);
+         }
+      } else
+      {
+         for (i = 1; (i < len2 - 1) && (i + lenm1 < trunc - 1); i++)
+         {
+            /* Set out[i+in1->length-1] = in1[in1->length-1]*in2[i] */
+            if ((coeffs1[lenm1*size1] == 0) || (coeffs2[i*size2] == 0))
+            {
+               coeffs_out[(i+lenm1)*size_out] = 0;
+            } else
+            {
+               __fmpz_poly_mul_coeffs2(coeffs_out+(i+lenm1)*size_out, coeffs1+lenm1*size1, coeffs2+i*size2);
+            }      
+         }
+         
+         /* 
+            The above coefficient multiplications overwrite the first limb of the next coefficient
+            in each case, using the function __fmpz_poly_mul_coeffs2. The final multiplication 
+            cannot do this however.
+         */
+         if ((coeffs1[lenm1*size1] == 0) || (coeffs2[i*size2] == 0))
+         {
+            coeffs_out[(i+lenm1)*size_out] = 0;
+         } else
+         {
+            __fmpz_poly_mul_coeffs(coeffs_out+(i+lenm1)*size_out, coeffs1+lenm1*size1, coeffs2+i*size2);
+         }     
+      }
+         
+      for (i = 0; i < lenm1; i++)
+      {      
+         for (j = 1; (j < len2) && (i + j < trunc); j++)
+         {
+            /* out[i+j] += in1[i]*in2[j] */
+            if ((coeffs1[i*size1] != 0) && (coeffs2[j*size2] != 0))
+            {
+               if (!coeffs_out[(i+j)*size_out])
+               {
+                  __fmpz_poly_mul_coeffs(coeffs_out+(i+j)*size_out, coeffs1+i*size1, coeffs2+j*size2);
+               } else 
+               {
+                  __fmpz_poly_addmul_coeffs(coeffs_out+(i+j)*size_out, coeffs1+i*size1, coeffs2+j*size2);
+               } 
+            }
+         }
+      }
+   } 
+   
+   output->length = FLINT_MIN(len1 + len2 - 1, trunc);
+}
+
 unsigned long _fmpz_poly_max_limbs(fmpz_poly_t poly)
 {
    unsigned long limbs = poly->limbs;
