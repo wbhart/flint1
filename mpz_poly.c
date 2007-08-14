@@ -1119,8 +1119,6 @@ scratch buffer should be length len1 + len2, also staggered by "skip".
 All input/output/scratch space should be mpz_init'd, and shouldn't overlap.
 
 Must have 1 <= len1 <= len2.
-
-crossover parameter currently unused...
 */
 void _mpz_poly_mul_kara_recursive(mpz_t* out,
                                   mpz_t* in1, unsigned long len1,

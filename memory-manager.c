@@ -207,17 +207,35 @@ void flint_stack_release()
 
 /*-----------------------------------------------------------------------------------------------*/
 
-#define FLINT_SMALL_BLOCK_SIZE 1000000L
+#define FLINT_SMALL_BLOCK_SIZE 10000L
 
-mp_limb_t * block_ptr;
+mp_limb_t * block_ptr = NULL;
 unsigned long block_left = 0;
    
 void * flint_stack_alloc_small(unsigned long length)
 {
    if (length + 1L > block_left) // not enough space left, allocate a new block
    {
-      block_ptr = (mp_limb_t *) flint_heap_alloc(FLINT_SMALL_BLOCK_SIZE);
-      block_left = FLINT_SMALL_BLOCK_SIZE;
+      if (length + 3L > FLINT_SMALL_BLOCK_SIZE)
+      {
+         printf("Error: attempt to allocate %ld limbs in small stack memory manager!\n", length);
+         abort();
+      }
+      if (block_ptr == NULL)
+      {
+         block_ptr = (mp_limb_t *) flint_heap_alloc(FLINT_SMALL_BLOCK_SIZE);
+         block_left = FLINT_SMALL_BLOCK_SIZE - 2;
+         block_ptr[0] = 0;
+         block_ptr[1] = (unsigned long) NULL;
+         block_ptr += 2;
+      } else
+      {
+         mp_limb_t * temp = (mp_limb_t *) flint_heap_alloc(FLINT_SMALL_BLOCK_SIZE);
+         temp[0] = block_left;
+         temp[1] = (unsigned long) block_ptr; 
+         block_ptr = temp + 2;
+         block_left = FLINT_SMALL_BLOCK_SIZE - 2;
+      }
    }
    
    block_ptr[length] = length;
@@ -228,6 +246,15 @@ void * flint_stack_alloc_small(unsigned long length)
 
 void flint_stack_release_small(void)
 {
+   if (block_left == FLINT_SMALL_BLOCK_SIZE - 2)
+   {
+      block_ptr -= 2;
+      block_left = block_ptr[0];
+      mp_limb_t * temp = block_ptr;
+      block_ptr = (mp_limb_t *) block_ptr[1]; 
+      flint_heap_free(temp);           
+   } 
+   
    block_ptr--;
    unsigned long temp = (*block_ptr);
    block_left += (temp+1);
