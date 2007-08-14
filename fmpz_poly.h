@@ -256,6 +256,9 @@ void _fmpz_poly_mul_naive_trunc(fmpz_poly_t output, fmpz_poly_t input1,
 void _fmpz_poly_mul_karatsuba(fmpz_poly_t output, fmpz_poly_t input1, 
                                                  fmpz_poly_t input2);
                                                  
+void _fmpz_poly_mul_karatsuba_trunc(fmpz_poly_t output, fmpz_poly_t input1, 
+                                           fmpz_poly_t input2, unsigned long trunc);
+                                                 
 /*
    Multiply two polynomials together using the Kronecker segmentation method.
    Currently assumes that the number of output bits per coefficient is <= 64 and
