@@ -13,7 +13,11 @@ void* flint_stack_alloc(unsigned long length);
 
 void* flint_stack_alloc_bytes(unsigned long bytes);
 
+void* flint_stack_alloc_small(unsigned long length);
+
 void flint_stack_release();
+
+void flint_stack_release_small();
 
 void* flint_heap_alloc(unsigned long limbs);
 

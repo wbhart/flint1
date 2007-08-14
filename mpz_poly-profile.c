@@ -72,7 +72,7 @@ char* profDriverString_mpz_poly_mul_karatsuba_mixlengths(char* params)
 
 char* profDriverDefaultParams_mpz_poly_mul_karatsuba_mixlengths()
 {
-   return "50 3 300";
+   return "50 1 100";
 }
 
 
@@ -87,7 +87,7 @@ void profDriver_mpz_poly_mul_karatsuba_mixlengths(char* params)
    test_support_init();
 
    for (unsigned long len1 = skip; len1 <= max_length; len1 += skip)
-      for (unsigned long len2 = skip; len2 <= max_length; len2 += skip)
+      for (unsigned long len2 = skip; len2 <= len1; len2 += skip)
          prof2d_sample(len1, len2, &bits);
 
    test_support_cleanup();

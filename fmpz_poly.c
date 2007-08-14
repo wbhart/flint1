@@ -18,6 +18,7 @@ Copyright (C) 2007, William Hart and David Harvey
 #include "ZmodF_poly.h"
 #include "Z_mpn.h"
 #include "ZmodF_mul.h"
+#include "Z_mpn_mul-tuning.h"
 
 #include "mpz_poly.h"
 
@@ -352,11 +353,11 @@ void __fmpz_poly_add_coeffs(mp_limb_t * coeffs_out, mp_limb_t * coeffs1, mp_limb
       if (!size2) coeffs_out[0] = 0L;
       else
       {
-         copy_limbs(coeffs_out, coeffs2, size2+1);
+         if (coeffs_out != coeffs2) copy_limbs(coeffs_out, coeffs2, size2+1);
       }
    } else if (!size2)
    {
-      copy_limbs(coeffs_out, coeffs1, size1+1);
+      if (coeffs_out != coeffs1) copy_limbs(coeffs_out, coeffs1, size1+1);
    } else if ((long) (coeffs1[0] ^ coeffs2[0]) >= 0)
    {
       coeffs_out[0] = coeffs1[0];
@@ -517,15 +518,21 @@ void _fmpz_poly_add(fmpz_poly_t output, fmpz_poly_p input1, fmpz_poly_p input2)
    for (unsigned long i = 0; i < shorter; i++)
    {
       __fmpz_poly_add_coeffs(coeffs_out+i*size_out, coeffs1+i*size1, coeffs2+i*size2);
-   }
+   }    
    
-   for (unsigned long i = shorter; i < input1->length; i++)
+   if (input1 != output)
    {
-       copy_limbs(coeffs_out+i*size_out, coeffs1+i*size1, ABS(coeffs1[i*size1])+1);
+      for (unsigned long i = shorter; i < input1->length; i++)
+      {
+          copy_limbs(coeffs_out+i*size_out, coeffs1+i*size1, ABS(coeffs1[i*size1])+1);
+      }
    }
-   for (unsigned long i = shorter; i < input2->length; i++)
+   if (input2 != output)
    {
-       copy_limbs(coeffs_out+i*size_out, coeffs2+i*size2, ABS(coeffs2[i*size2])+1);
+      for (unsigned long i = shorter; i < input2->length; i++)
+      {
+         copy_limbs(coeffs_out+i*size_out, coeffs2+i*size2, ABS(coeffs2[i*size2])+1);
+      }
    }
    
    output->length = (input1->length > input2->length) ? input1->length : input2->length;
@@ -551,12 +558,12 @@ void __fmpz_poly_sub_coeffs(mp_limb_t * coeffs_out, mp_limb_t * coeffs1, mp_limb
       if (!size2) coeffs_out[0] = 0L;
       else
       {
-         copy_limbs(coeffs_out, coeffs2, size2+1);
+         if (coeffs2 != coeffs_out) copy_limbs(coeffs_out, coeffs2, size2+1);
          if (in_order) coeffs_out[0] = -coeffs_out[0];
       }
    } else if (!size2)
    {
-      copy_limbs(coeffs_out, coeffs1, size1+1);
+      if (coeffs1 != coeffs_out) copy_limbs(coeffs_out, coeffs1, size1+1);
       if (!in_order) coeffs_out[0] = -coeffs_out[0];
    } else if ((long) (coeffs1[0] ^ coeffs2[0]) < 0)
    {
@@ -617,16 +624,28 @@ void _fmpz_poly_sub(fmpz_poly_t output, fmpz_poly_p input1, fmpz_poly_p input2)
       __fmpz_poly_sub_coeffs(coeffs_out+i*size_out, coeffs1+i*size1, coeffs2+i*size2);
    }
    
-   for (unsigned long i = shorter; i < input1->length; i++)
+   if (input1 != output)
    {
-       copy_limbs(coeffs_out+i*size_out, coeffs1+i*size1, ABS(coeffs1[i*size1])+1);
+      for (unsigned long i = shorter; i < input1->length; i++)
+      {
+         copy_limbs(coeffs_out+i*size_out, coeffs1+i*size1, ABS(coeffs1[i*size1])+1);
+      }
    }
-   for (unsigned long i = shorter; i < input2->length; i++)
+   if (input2 != output)
    {
-       copy_limbs(coeffs_out+i*size_out+1, coeffs2+i*size2+1, ABS(coeffs2[i*size2]));
-       coeffs_out[i*size_out] = -coeffs2[i*size2];
+      for (unsigned long i = shorter; i < input2->length; i++)
+      {
+         copy_limbs(coeffs_out+i*size_out+1, coeffs2+i*size2+1, ABS(coeffs2[i*size2]));
+         coeffs_out[i*size_out] = -coeffs2[i*size2];
+      }
+   } else
+   {
+      for (unsigned long i = shorter; i < input2->length; i++)
+      {
+         coeffs_out[i*size_out] = -coeffs2[i*size2];
+      }
    }
-   
+
    output->length = (input1->length > input2->length) ? input1->length : input2->length;
 }
 
@@ -642,17 +661,110 @@ void __fmpz_poly_mul_coeffs(mp_limb_t * res, mp_limb_t * a, mp_limb_t * b)
       unsigned long sizea = ABS(a[0]);
       unsigned long sizeb = ABS(b[0]);
       mp_limb_t mslimb;
+      mp_limb_t * temp;
       
       if ((sizea == 0) || (sizeb == 0))
       {
         res[0] = 0;
+      } else if (sizea + sizeb < 100)
+      {
+         temp = (mp_limb_t *) flint_stack_alloc_small(sizea + sizeb + 1);
+         if (sizea >= sizeb) mslimb = mpn_mul(temp+1, a+1, sizea, b+1, sizeb);
+         else mslimb = mpn_mul(temp+1, b+1, sizeb, a+1, sizea);
+         temp[0] = sizea + sizeb - (mslimb == 0);
+         copy_limbs(res, temp, temp[0]+1);
+         if ((long) (a[0] ^ b[0]) < 0) res[0] = -res[0];
+         flint_stack_release_small();   
+      } else if (sizea + sizeb < 2*FLINT_FFT_LIMBS_CROSSOVER)
+      {
+         temp = (mp_limb_t *) flint_stack_alloc(sizea + sizeb + 1);
+         if (sizea >= sizeb) mslimb = mpn_mul(temp+1, a+1, sizea, b+1, sizeb);
+         else mslimb = mpn_mul(temp+1, b+1, sizeb, a+1, sizea);
+         temp[0] = sizea + sizeb - (mslimb == 0);
+         copy_limbs(res, temp, temp[0]+1);
+         if ((long) (a[0] ^ b[0]) < 0) res[0] = -res[0];
+         flint_stack_release();   
       } else
       {
-         if (sizea >= sizeb) mslimb = Z_mpn_mul_m1(res+1, a+1, sizea, b+1, sizeb);
-         else mslimb = Z_mpn_mul_m1(res+1, b+1, sizeb, a+1, sizea);
+         if (sizea >= sizeb) mslimb = Z_mpn_mul(res+1, a+1, sizea, b+1, sizeb);
+         else mslimb = Z_mpn_mul(res+1, b+1, sizeb, a+1, sizea);
          res[0] = sizea+sizeb - (mslimb == 0);
          if ((long) (a[0] ^ b[0]) < 0) res[0] = -res[0];
       }
+}      
+
+/* 
+   Multiplies two coefficients but assumes that there is space in each coeff
+   of res for the number of limbs of _a_ plus the number of limbs of _b_, whenever 
+   this sum is less than 2*FLINT_FFT_LIMBS_CROSSOVER  
+.
+   Assumes no overlap
+*/
+
+void __fmpz_poly_mul_coeffs2(mp_limb_t * res, mp_limb_t * a, mp_limb_t * b) 
+{
+      NORM(a);
+      NORM(b);
+      unsigned long sizea = ABS(a[0]);
+      unsigned long sizeb = ABS(b[0]);
+      mp_limb_t mslimb;
+      mp_limb_t * temp;
+      
+      if ((sizea == 0) || (sizeb == 0))
+      {
+        res[0] = 0;
+      } else if (sizea + sizeb < 100)
+      {
+         if (sizea >= sizeb) mslimb = mpn_mul(res+1, a+1, sizea, b+1, sizeb);
+         else mslimb = mpn_mul(res+1, b+1, sizeb, a+1, sizea);
+         res[0] = sizea + sizeb - (mslimb == 0);
+         if ((long) (a[0] ^ b[0]) < 0) res[0] = -res[0];
+      } else
+      {
+         if (sizea >= sizeb) mslimb = Z_mpn_mul(res+1, a+1, sizea, b+1, sizeb);
+         else mslimb = Z_mpn_mul(res+1, b+1, sizeb, a+1, sizea);
+         res[0] = sizea+sizeb - (mslimb == 0);
+         if ((long) (a[0] ^ b[0]) < 0) res[0] = -res[0];
+      }
+}      
+
+/* 
+   Sets out to out+in1*in2
+   Assumes no overlap
+   Assumes all coefficients are only a small number of limbs (< 100 say)
+*/
+
+void __fmpz_poly_addmul_coeffs(mp_limb_t * res, mp_limb_t * a, mp_limb_t * b) 
+{
+      NORM(a);
+      NORM(b);
+      unsigned long sizea = ABS(a[0]);
+      unsigned long sizeb = ABS(b[0]);
+      mp_limb_t * temp;
+      mp_limb_t mslimb;
+      
+      if (sizea && sizeb)
+      {
+         if (sizea + sizeb < 100)
+         {
+            temp = (mp_limb_t *) flint_stack_alloc_small(sizea + sizeb + 1);
+            if (sizea >= sizeb) mslimb = mpn_mul(temp+1, a+1, sizea, b+1, sizeb);
+            else mslimb = mpn_mul(temp+1, b+1, sizeb, a+1, sizea);
+            temp[0] = sizea + sizeb - (mslimb == 0);
+            if ((long) (a[0] ^ b[0]) < 0) temp[0] = -temp[0];
+            __fmpz_poly_add_coeffs(res, res, temp);
+            flint_stack_release_small();
+         } else
+         {
+            temp = (mp_limb_t *) flint_stack_alloc(sizea + sizeb + 1);
+            if (sizea >= sizeb) mslimb = mpn_mul(temp+1, a+1, sizea, b+1, sizeb);
+            else mslimb = mpn_mul(temp+1, b+1, sizeb, a+1, sizea);
+            temp[0] = sizea + sizeb - (mslimb == 0);
+            if ((long) (a[0] ^ b[0]) < 0) temp[0] = -temp[0];
+            __fmpz_poly_add_coeffs(res, res, temp);
+            flint_stack_release();
+         }        
+      }     
 }      
 
 void _fmpz_poly_scalar_mul_ui(fmpz_poly_t output, fmpz_poly_t poly, unsigned long x)
@@ -950,51 +1062,76 @@ void _fmpz_poly_mul_naive(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_t in
    len2 = input2->length;
       
    mp_limb_t * temp;
-   
-   if (len1 + len2 > 2) temp = (mp_limb_t *) flint_stack_alloc(size1+size2-1);
-         
-   for (unsigned long i = 0; i < len1; i++)
+            
+   // Special case if the length of both inputs is 1
+   if ((len1 == 1) && (len2 == 1))
    {
-      /* Set out[i] = in1[i]*in2[0] */
-      if ((coeffs1[i*size1] == 0) || (coeffs2[0] == 0))
+      if ((coeffs1[0] == 0) || (coeffs2[0] == 0))
       {
-         coeffs_out[i*size_out]=0;
+         coeffs_out[0] = 0;
       } else
       {
-         __fmpz_poly_mul_coeffs(coeffs_out+i*size_out, coeffs1+i*size1, coeffs2);
-      }
-   }
-   for (unsigned long i = 1; i < len2; i++)
-   {
-      /* Set out[i+in1->length-1] = in1[in1->length-1]*in2[i] */
-      if ((coeffs1[lenm1*size1] == 0) || (coeffs2[i*size2] == 0))
-      {
-         coeffs_out[(i+lenm1)*size_out]=0;
-      } else
-      {
-         __fmpz_poly_mul_coeffs(coeffs_out+(i+lenm1)*size_out, coeffs1+lenm1*size1, coeffs2+i*size2);
+         __fmpz_poly_mul_coeffs(coeffs_out, coeffs1, coeffs2);
       }      
    }
-   for (unsigned long i = 0; i < lenm1; i++)
-   {      
-      for (unsigned long j = 1; j < len2; j++)
+   // Ordinay case
+   else
+   {
+      for (unsigned long i = 0; i < len1; i++)
       {
-         /* out[i+j] += in1[i]*in2[j] */
-         if ((coeffs1[i*size1] != 0) && (coeffs2[j*size2] != 0))
+         /* Set out[i] = in1[i]*in2[0] */
+         if ((coeffs1[i*size1] == 0) || (coeffs2[0] == 0))
          {
-            if (!coeffs_out[(i+j)*size_out])
+            coeffs_out[i*size_out]=0;
+         } else
+         {
+            __fmpz_poly_mul_coeffs2(coeffs_out+i*size_out, coeffs1+i*size1, coeffs2);
+         }
+      }
+      for (unsigned long i = 1; i < len2 - 1; i++)
+      {
+         /* Set out[i+in1->length-1] = in1[in1->length-1]*in2[i] */
+         if ((coeffs1[lenm1*size1] == 0) || (coeffs2[i*size2] == 0))
+         {
+            coeffs_out[(i+lenm1)*size_out]=0;
+         } else
+         {
+            __fmpz_poly_mul_coeffs2(coeffs_out+(i+lenm1)*size_out, coeffs1+lenm1*size1, coeffs2+i*size2);
+         }      
+      }
+      /* 
+         The above coefficient multiplications overwrite the first limb of the next coefficient
+         in each case, using the function __fmpz_poly_mul_coeffs2. The final multiplication 
+         cannot do this however.
+      */
+      if ((coeffs1[lenm1*size1] == 0) || (coeffs2[(len2-1)*size2] == 0))
+      {
+         coeffs_out[(len2+lenm1-1)*size_out]=0;
+      } else
+      {
+         __fmpz_poly_mul_coeffs(coeffs_out+(len2+lenm1-1)*size_out, coeffs1+lenm1*size1, coeffs2+(len2-1)*size2);
+      }      
+   
+      for (unsigned long i = 0; i < lenm1; i++)
+      {      
+         for (unsigned long j = 1; j < len2; j++)
+         {
+            /* out[i+j] += in1[i]*in2[j] */
+            if ((coeffs1[i*size1] != 0) && (coeffs2[j*size2] != 0))
             {
-               __fmpz_poly_mul_coeffs(coeffs_out+(i+j)*size_out, coeffs1+i*size1, coeffs2+j*size2);
-            } else 
-            {
-               __fmpz_poly_mul_coeffs(temp, coeffs1+i*size1, coeffs2+j*size2);
-               __fmpz_poly_add_coeffs(coeffs_out+(i+j)*size_out, temp, coeffs_out+(i+j)*size_out);
-            } 
+               if (!coeffs_out[(i+j)*size_out])
+               {
+                  __fmpz_poly_mul_coeffs(coeffs_out+(i+j)*size_out, coeffs1+i*size1, coeffs2+j*size2);
+               } else 
+               {
+                  __fmpz_poly_addmul_coeffs(coeffs_out+(i+j)*size_out, coeffs1+i*size1, coeffs2+j*size2);
+               } 
+            }
          }
       }
    } 
+   
    output->length = len1 + len2 - 1;
-   if (len1 + len2 > 2) flint_stack_release();
 }
 
 void __fmpz_poly_karamul_recursive(fmpz_poly_t res, fmpz_poly_t a, fmpz_poly_t b, fmpz_poly_t scratch, fmpz_poly_t scratchb)
@@ -1008,13 +1145,13 @@ void __fmpz_poly_karamul_recursive(fmpz_poly_t res, fmpz_poly_t a, fmpz_poly_t b
       return;
    }
    
-   if (a->length ==2 && b->length == 2) {
+   if ((a->length ==2 && b->length == 2) && (a->limbs+b->limbs > 15)) {
       const unsigned long asize = a->limbs+1;
       const unsigned long bsize = b->limbs+1;
       const unsigned long rsize = res->limbs+1;
       const unsigned long ssize = scratchb->limbs+1;
       
-      __fmpz_poly_mul_coeffs(res->coeffs, a->coeffs, b->coeffs); 
+      __fmpz_poly_mul_coeffs2(res->coeffs, a->coeffs, b->coeffs); 
       __fmpz_poly_add_coeffs(scratchb->coeffs, a->coeffs, a->coeffs+asize);
       __fmpz_poly_mul_coeffs(res->coeffs+2*rsize, a->coeffs+asize, b->coeffs+bsize); 
       __fmpz_poly_add_coeffs(scratchb->coeffs+ssize, b->coeffs, b->coeffs+bsize);
@@ -1027,24 +1164,13 @@ void __fmpz_poly_karamul_recursive(fmpz_poly_t res, fmpz_poly_t a, fmpz_poly_t b
       return;
    }
    
-   /*if ((a->length <= 8) || (b->length <= 8)) 
+   if (a->limbs + b->limbs + a->length+b->length <= 19) 
    {
       _fmpz_poly_mul_naive(res, a, b);
       
       return;
-   }*/
-
-
-   /* 
-      As we may have dirty limbs in our res polynomial (it might be part of the
-      original scratch polynomial) we need to clean it before using it 
-   */
-   
-   for (unsigned long i = 0, j = 0; i < a->length + b->length - 1; i++, j+= (scratch->limbs+1))
-   {
-      res->coeffs[j] = 0;
-   }
-      
+   }   
+        
    fmpz_poly_t a1,a2,b1,b2;
       
    unsigned long l2 = 0;
@@ -1069,6 +1195,12 @@ void __fmpz_poly_karamul_recursive(fmpz_poly_t res, fmpz_poly_t a, fmpz_poly_t b
       b1->limbs = b->limbs;
       b2->limbs = b->limbs;
       
+      /* 
+         from 0 for 2 * a1->length - 1, from 2 * a1->length for a2->length + b2->length - 1
+         will be written directly to, so we need to clean the coefficient in between
+      */
+      res->coeffs[((a1->length<<1)-1)*(res->limbs+1)] = 0;
+  
       fmpz_poly_t asum, bsum, prodsum, scratch2, scratch3;
      
       asum->length = a1->length;
@@ -1128,6 +1260,13 @@ void __fmpz_poly_karamul_recursive(fmpz_poly_t res, fmpz_poly_t a, fmpz_poly_t b
       a1->coeffs = a->coeffs;
       a2->coeffs = a->coeffs+a1->length*(a->limbs+1);
 
+      /* 
+         from 0 for a1->length + b->length - 1 will be written directly to, so we 
+         need to clean the remaining coefficients
+      */
+      for (unsigned long i = a1->length + b->length - 1; i < a->length + b->length - 1; i++)
+         res->coeffs[i*(res->limbs+1)] = 0;
+  
       // res_lo = a1*b
       __fmpz_poly_karamul_recursive(res,a1,b,scratch,scratchb);
       
@@ -1257,8 +1396,9 @@ void _fmpz_poly_mul_KS(fmpz_poly_t output, fmpz_poly_p input1, fmpz_poly_p input
    
    ZmodF_poly_stack_init(poly3, 0, poly1->n + poly2->n, 0);
            
-   Z_mpn_mul(poly3->coeffs[0], poly1->coeffs[0], poly1->n, poly2->coeffs[0], poly2->n);
+   mp_limb_t msl = Z_mpn_mul(poly3->coeffs[0], poly1->coeffs[0], poly1->n, poly2->coeffs[0], poly2->n);
    
+   poly3->coeffs[0][poly1->n+poly2->n-1] = msl;
    poly3->coeffs[0][poly1->n+poly2->n] = 0;
    poly3->length = 1;
    
@@ -1418,6 +1558,10 @@ void _fmpz_poly_mul(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_t input2)
    _fmpz_poly_mul_KS(output, input1, input2);     
 }
 
+/*
+   Scalar multiplication of a polynomial by a scalar
+*/
+
 void _fmpz_poly_scalar_mul(fmpz_poly_t output, fmpz_poly_t poly, mp_limb_t * x)
 {
    NORM(x);
@@ -1447,9 +1591,19 @@ void _fmpz_poly_scalar_mul(fmpz_poly_t output, fmpz_poly_t poly, mp_limb_t * x)
       Z_mpn_mul_precomp_clear(precomp);
    } else
    {
-      for (unsigned long i = 0; i < poly->length; i++)
+      if (poly != output)
       {
-         __fmpz_poly_mul_coeffs(coeffs_out + i*limbs_out, coeffs2 + i*(limbs2+1), x);
+         for (unsigned long i = 0; i < poly->length - 1; i++)
+         {
+            __fmpz_poly_mul_coeffs2(coeffs_out + i*limbs_out, coeffs2 + i*(limbs2+1), x);
+         }
+         __fmpz_poly_mul_coeffs(coeffs_out + (poly->length - 1)*limbs_out, coeffs2 + (poly->length - 1)*(limbs2+1), x);
+      } else
+      {
+         for (unsigned long i = 0; i < poly->length; i++)
+         {
+            __fmpz_poly_mul_coeffs(coeffs_out + i*limbs_out, coeffs2 + i*(limbs2+1), x);
+         }
       }
    } 
    output->length = poly->length;

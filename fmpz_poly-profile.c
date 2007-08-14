@@ -331,6 +331,34 @@ void profDriver_fmpz_poly_mul_karatsuba(char* params)
 // ============================================================================
 
 
+char* profDriverString_fmpz_poly_mul_karatsuba_len(char* params)
+{
+   return "fmpz_poly_mul_karatsuba over various lengths with fixed bitsize.\n"
+   "Parameters are: none.";
+}
+
+char* profDriverDefaultParams_fmpz_poly_mul_karatsuba_len()
+{
+   return "";
+}
+
+void profDriver_fmpz_poly_mul_karatsuba_len(char* params)
+{
+   unsigned long max_bits;
+   double ratio;
+
+   test_support_init();
+   prof2d_set_sampler(sample_fmpz_poly_mul_karatsuba);
+   for (unsigned long length = 1; length < 128; length++)
+      prof2d_sample(length, 100, NULL);
+ 
+   test_support_cleanup();
+}
+
+
+// ============================================================================
+
+
 void sample_fmpz_poly_mul(unsigned long length, unsigned long bits,
                           void* arg, unsigned long count)
 {
@@ -504,7 +532,7 @@ char* profDriverString_fmpz_poly_mul_karatsuba_mixlengths(char* params)
 
 char* profDriverDefaultParams_fmpz_poly_mul_karatsuba_mixlengths()
 {
-   return "50 3 300";
+   return "50 1 100";
 }
 
 
@@ -519,7 +547,7 @@ void profDriver_fmpz_poly_mul_karatsuba_mixlengths(char* params)
    test_support_init();
 
    for (unsigned long len1 = skip; len1 <= max_length; len1 += skip)
-      for (unsigned long len2 = skip; len2 <= max_length; len2 += skip)
+      for (unsigned long len2 = skip; len2 <= len1; len2 += skip)
          prof2d_sample(len1, len2, &bits);
 
    test_support_cleanup();

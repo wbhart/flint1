@@ -11,6 +11,7 @@ Copyright (C) 2007, William Hart and David Harvey
 #include <string.h>
 #include <stdio.h>
 #include "flint.h"
+#include "memory-manager.h"
 
 /*
    Stack based memory manager to allocate an array of limbs of the given length. 
@@ -202,6 +203,35 @@ void flint_stack_release()
     //release limb_memp_t back into reservoir_mpn
     top_mpn--;
     rescount_mpn--;
+}
+
+/*-----------------------------------------------------------------------------------------------*/
+
+#define FLINT_SMALL_BLOCK_SIZE 1000000L
+
+mp_limb_t * block_ptr;
+unsigned long block_left = 0;
+   
+void * flint_stack_alloc_small(unsigned long length)
+{
+   if (length + 1L > block_left) // not enough space left, allocate a new block
+   {
+      block_ptr = (mp_limb_t *) flint_heap_alloc(FLINT_SMALL_BLOCK_SIZE);
+      block_left = FLINT_SMALL_BLOCK_SIZE;
+   }
+   
+   block_ptr[length] = length;
+   block_ptr += (length+1L); 
+   block_left -= (length+1L);
+   return (void *) (block_ptr - (length + 1L));  
+}
+
+void flint_stack_release_small(void)
+{
+   block_ptr--;
+   unsigned long temp = (*block_ptr);
+   block_left += (temp+1);
+   block_ptr -= temp;
 }
 
 /*-----------------------------------------------------------------------------------------------*/

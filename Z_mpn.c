@@ -20,6 +20,47 @@ Copyright (C) 2007, William Hart and David Harvey
 
 #define DEBUG 0
 
+unsigned long MUL_TWK_VALS[MUL_TWK_COUNT][3] = 
+{
+   {2000, 2140, 1024},
+   {2140, 2430, 64},
+   {2430, 2580, 1024},
+   {2580, 2700, 64},
+   {2700, 2880, 4096},
+   {2880, 3850, 16},
+   {3850, 4220, 4},
+   {4220, 4400, 1024},
+   {4400, 4850, 16},
+   {4850, 5700, 1024},
+   {5700, 7900, 4},
+   {7900, 8900, 1024},
+   {8900, 97000, 4},
+   {97000, 127000, 1},
+   {127000, 262000, 4},
+   {262000, 517000, 1},
+   {517000, 1050000, 4},
+   {1050000, 2060000, 1},
+   {2060000, 4230000, 4},
+   {4230000, 8350000, 1}
+};
+
+unsigned long SQR_TWK_VALS[SQR_TWK_COUNT][3] = 
+{
+   {1564, 1994, 16},
+   {1994, 2952, 64},
+   {2952, 5921, 16},
+   {5921, 32575, 4},
+   {32575, 40006, 16},
+   {40006, 66526, 4},
+   {66526, 127370, 1},
+   {127370, 257473, 4},
+   {257473, 520507, 1},
+   {520507, 1050000, 4},
+   {1050000, 2060000, 1},
+   {2060000, 4230000, 4},
+   {4230000, 8350000, 1}
+};
+
 void Z_split_limbs(ZmodF_poly_t poly, mp_limb_t * limbs, unsigned long total_limbs,
                                unsigned long coeff_limbs, unsigned long output_limbs)
 {
@@ -168,6 +209,15 @@ mp_limb_t __Z_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1,
    else return res[limbs1+limbs2-1];
 }
 
+/*
+   Multiply two integers in mpn format
+   
+   WARNING: This function requires limbs1+limbs2 output limbs when limbs1+limbs2
+   < FLINT_FFT_LIMBS_CROSSOVER but may require one less limb otherwise. The function
+   will return 0 if it did not require (and indeed did not zero) the extra limb,
+   otherwise it returns the (non zero) value of this high limb after multiplication.
+*/
+
 mp_limb_t Z_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1, 
                                       mp_limb_t * data2, unsigned long limbs2)
 {
@@ -215,30 +265,6 @@ mp_limb_t Z_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1,
 
    return __Z_mpn_mul(res, data1, limbs1, data2, limbs2, twk);
 }
-
-mp_limb_t Z_mpn_mul_m1(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1, 
-                                      mp_limb_t * data2, unsigned long limbs2)
-{
-   unsigned long coeff_limbs = limbs1 + limbs2;
-   int s1 = (FLINT_BIT_COUNT(data1[limbs1-1]) + FLINT_BIT_COUNT(data2[limbs2-1]) > FLINT_BITS);
-   unsigned long twk;
-   
-   if (coeff_limbs/2 < FLINT_FFT_LIMBS_CROSSOVER) 
-   {
-      if (s1) return mpn_mul(res, data1, limbs1, data2, limbs2);
-      else 
-      {
-         mp_limb_t * temp = (mp_limb_t *) flint_stack_alloc(limbs1+limbs2);
-         mpn_mul(temp, data1, limbs1, data2, limbs2);
-         copy_limbs(res, temp, limbs1+limbs2-1);
-         flint_stack_release();
-         return 0;
-      } 
-   } 
-
-   return Z_mpn_mul(res, data1, limbs1, data2, limbs2);
-}
-
 
 void Z_mpn_mul_precomp_init(Z_mpn_precomp_t precomp, mp_limb_t * data1, unsigned long limbs1, unsigned long limbs2)
 {
@@ -346,10 +372,11 @@ void __Z_mul(mpz_t res, mpz_t a, mpz_t b, unsigned long twk)
 {
    unsigned long sa = mpz_size(a);
    unsigned long sb = mpz_size(b);
-   unsigned long s1 = (FLINT_BIT_COUNT(a->_mp_d[sa-1]) + FLINT_BIT_COUNT(b->_mp_d[sb-1]) <= FLINT_BITS);
-   
-   if (sa+sb > 128000/FLINT_BITS) 
+
+   if (sa+sb > FLINT_FFT_LIMBS_CROSSOVER) 
    {
+      unsigned long s1 = (FLINT_BIT_COUNT(a->_mp_d[sa-1]) + FLINT_BIT_COUNT(b->_mp_d[sb-1]) <= FLINT_BITS);
+   
       mp_limb_t* output = 
          (mp_limb_t*) flint_stack_alloc(sa + sb - s1);
       __Z_mpn_mul(output, a->_mp_d, sa, b->_mp_d, sb, twk);
@@ -360,13 +387,13 @@ void __Z_mul(mpz_t res, mpz_t a, mpz_t b, unsigned long twk)
 }
 
 void Z_mul(mpz_t res, mpz_t a, mpz_t b)
-{
+{   
    unsigned long sa = mpz_size(a);
    unsigned long sb = mpz_size(b);
-   unsigned long s1 = (FLINT_BIT_COUNT(a->_mp_d[sa-1]) + FLINT_BIT_COUNT(b->_mp_d[sb-1]) <= FLINT_BITS);
-   
-   if (sa+sb > 128000/FLINT_BITS) 
+
+   if (sa+sb > FLINT_FFT_LIMBS_CROSSOVER) 
    {
+      unsigned long s1 = (FLINT_BIT_COUNT(a->_mp_d[sa-1]) + FLINT_BIT_COUNT(b->_mp_d[sb-1]) <= FLINT_BITS);
       mp_limb_t* output = 
          (mp_limb_t*) flint_stack_alloc(sa + sb - s1);
       Z_mpn_mul(output, a->_mp_d, sa, b->_mp_d, sb);
