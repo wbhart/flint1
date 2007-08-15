@@ -250,11 +250,11 @@ int main(void)
       }
    }
    
-   outfile = fopen("dd-test4.out", "w");
+   outfile = fopen("x3y3z3-test.out", "w");
    N = 100000000000;
    c_dd_copy_d(1.0, eps);
    c_dd_div_dd_d(eps, N, eps); // eps = 1/N
-   for (long k = -20266876928; k > -N+20000000000; k--) 
+   /*for (long k = -50000000000; k > -N+20000000000; k--) 
    {
       if ((k&0x7ffff) == 0) 
       {
@@ -264,8 +264,8 @@ int main(void)
       c_dd_copy_d(k, a);
       c_dd_div_dd_d(a, N, a); // a = k/N
       elkies(a, N, eps);
-   }
-   for (long k = 20000000000; k < N-20000000000; k++) 
+   }*/
+   for (long k = 50000000000; k < N-20000000000; k++) 
    {
       if ((k&0x7ffff) == 0) 
       {

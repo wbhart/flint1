@@ -803,20 +803,20 @@ k2:
       c_dd_nint(mu, temp);
       long r = (long) temp[0];
       z_vec3d_sub_scalar_mul(COL(C, 2), COL(C, 2), COL(C, 1), r);
-      //frexpl(MAT_C(Q, 2, 1), &oldexp);
+      frexp(D_MAT_C(Q, 2, 1)[0], &oldexp);
       c_dd_sub_dd_d(D_MAT_C(Q, 2, 1), r, D_MAT_C(Q, 2, 1));
-      //frexpl(MAT_C(Q, 2, 1), &newexp);
-      /*if (oldexp > newexp) loss += (oldexp - newexp);
+      frexp(D_MAT_C(Q, 2, 1)[0], &newexp);
+      if (oldexp > newexp) loss += (oldexp - newexp);
       if (loss > 15) 
       {
-         d_mat3dc_mul_z_mat3dc(B_out, B_in, C);
-         d_mat3dc_gram_schmidt(Q, B, B_out);
+         dd_mat3dc_mul_z_mat3dc(B_out, B_in, C);
+         dd_mat3dc_gram_schmidt(Q, B, B_out);
    
-         B1 = d_vec3d_norm(COL(B, 1));
-         B2 = d_vec3d_norm(COL(B, 2));
-         B3 = d_vec3d_norm(COL(B, 3));
+         dd_vec3d_norm(B1, D_COL(B, 1));
+         dd_vec3d_norm(B2, D_COL(B, 2));
+         dd_vec3d_norm(B3, D_COL(B, 3));
          loss = 0;
-      }*/
+      }
    }
    
    c_dd_copy(D_MAT_C(Q, 2, 1), mu);
@@ -827,7 +827,7 @@ k2:
    if (test < 0)
    {
       z_mat3dc_swap12(C);
-      //frexp(B2, &oldexp);
+      frexp(B2[0], &oldexp);
       c_dd_mul(temp, B1, temp2);
       c_dd_add(B2, temp2, B_temp);
       c_dd_mul(mu, B1, temp);
@@ -835,28 +835,16 @@ k2:
       c_dd_mul(B1, B2, temp);
       c_dd_div(temp, B_temp, B2);
       c_dd_copy(B_temp, B1);
-      //frexp(B1, &newexp);
-      //if (oldexp > newexp) loss += (oldexp - newexp);
+      frexp(B1[0], &newexp);
+      if (oldexp > newexp) loss += (oldexp - newexp);
       c_dd_mul(mu, D_MAT_C(Q, 3, 2), temp);
       c_dd_sub(D_MAT_C(Q, 3, 1), temp, mu);
-      //frexp(MAT_C(Q, 3, 1), &oldexp);
+      frexp(D_MAT_C(Q, 3, 1)[0], &oldexp);
       c_dd_mul(mu, D_MAT_C(Q, 2, 1), temp);
       c_dd_add(D_MAT_C(Q, 3, 2), temp, D_MAT_C(Q, 3, 1));
-      //frexp(MAT_C(Q, 3, 1), &newexp);
-      /*if (oldexp > newexp) loss += (oldexp - newexp);
+      frexp(D_MAT_C(Q, 3, 1)[0], &newexp);
+      if (oldexp > newexp) loss += (oldexp - newexp);
       if (loss > 15) 
-      {
-         d_mat3dc_mul_z_mat3dc(B_out, B_in, C);
-         d_mat3dc_gram_schmidt(Q, B, B_out);
-   
-         B1 = d_vec3d_norm(COL(B, 1));
-         B2 = d_vec3d_norm(COL(B, 2));
-         B3 = d_vec3d_norm(COL(B, 3));
-         loss = 0;
-      } else */
-      c_dd_copy(mu, D_MAT_C(Q, 3, 2));
-      i++;
-      if (i > 5)
       {
          dd_mat3dc_mul_z_mat3dc(B_out, B_in, C);
          dd_mat3dc_gram_schmidt(Q, B, B_out);
@@ -864,6 +852,12 @@ k2:
          dd_vec3d_norm(B1, D_COL(B, 1));
          dd_vec3d_norm(B2, D_COL(B, 2));
          dd_vec3d_norm(B3, D_COL(B, 3));
+         loss = 0;
+      } else
+         c_dd_copy(mu, D_MAT_C(Q, 3, 2));
+      i++;
+      if (i > 30)
+      {
          alpha += 0.001;
          if (alpha > 0.6) 
          {
@@ -887,25 +881,25 @@ k3:
       c_dd_nint(mu, temp);
       long r = (long) temp[0];
       z_vec3d_sub_scalar_mul(COL(C, 3), COL(C, 3), COL(C, 2), r);
-      //frexp(MAT_C(Q, 3, 1), &oldexp);
+      frexp(D_MAT_C(Q, 3, 1)[0], &oldexp);
       c_dd_mul_dd_d(D_MAT_C(Q, 2, 1), r, temp);
       c_dd_sub(D_MAT_C(Q, 3, 1), temp, D_MAT_C(Q, 3, 1));
-      //frexp(MAT_C(Q, 3, 1), &newexp);
-      //if (oldexp > newexp) loss += (oldexp - newexp);
-      //frexp(MAT_C(Q, 3, 2), &oldexp);
+      frexp(D_MAT_C(Q, 3, 1)[0], &newexp);
+      if (oldexp > newexp) loss += (oldexp - newexp);
+      frexp(D_MAT_C(Q, 3, 2)[0], &oldexp);
       c_dd_sub_dd_d(D_MAT_C(Q, 3, 2), r, D_MAT_C(Q, 3, 2));
-      //frexp(MAT_C(Q, 3, 2), &newexp);
-      //if (oldexp > newexp) loss += (oldexp - newexp);
-      /*if (loss > 15) 
+      frexp(D_MAT_C(Q, 3, 2)[0], &newexp);
+      if (oldexp > newexp) loss += (oldexp - newexp);
+      if (loss > 15) 
       {
-         d_mat3dc_mul_z_mat3dc(B_out, B_in, C);
-         d_mat3dc_gram_schmidt(Q, B, B_out);
+         dd_mat3dc_mul_z_mat3dc(B_out, B_in, C);
+         dd_mat3dc_gram_schmidt(Q, B, B_out);
    
-         B1 = d_vec3d_norm(COL(B, 1));
-         B2 = d_vec3d_norm(COL(B, 2));
-         B3 = d_vec3d_norm(COL(B, 3));
+         dd_vec3d_norm(B1, D_COL(B, 1));
+         dd_vec3d_norm(B2, D_COL(B, 2));
+         dd_vec3d_norm(B3, D_COL(B, 3));
          loss = 0;
-      }*/
+      }
    }
    
    c_dd_copy(D_MAT_C(Q, 3, 2), mu);
@@ -923,20 +917,20 @@ k3:
          c_dd_nint(mu, temp);
          long r = (long) temp[0];
          z_vec3d_sub_scalar_mul(COL(C, 3), COL(C, 3), COL(C, 1), r);
-         //frexp(MAT_C(Q, 3, 1), &oldexp);
+         frexp(D_MAT_C(Q, 3, 1)[0], &oldexp);
          c_dd_sub_dd_d(D_MAT_C(Q, 3, 1), r, D_MAT_C(Q, 3, 1));
-         //frexp(MAT_C(Q, 3, 1), &newexp);
-         /*if (oldexp > newexp) loss += (oldexp - newexp);
+         frexp(D_MAT_C(Q, 3, 1)[0], &newexp);
+         if (oldexp > newexp) loss += (oldexp - newexp);
          if (loss > 15) 
          {
-            d_mat3dc_mul_z_mat3dc(B_out, B_in, C);
-            d_mat3dc_gram_schmidt(Q, B, B_out);
+            dd_mat3dc_mul_z_mat3dc(B_out, B_in, C);
+            dd_mat3dc_gram_schmidt(Q, B, B_out);
    
-            B1 = d_vec3d_norm(COL(B, 1));
-            B2 = d_vec3d_norm(COL(B, 2));
-            B3 = d_vec3d_norm(COL(B, 3));
+            dd_vec3d_norm(B1, D_COL(B, 1));
+            dd_vec3d_norm(B2, D_COL(B, 2));
+            dd_vec3d_norm(B3, D_COL(B, 3));
             loss = 0;
-         }*/
+         }
       }
    } else
    {
@@ -954,14 +948,8 @@ k3:
       c_dd_copy(mu, D_MAT_C(Q, 3, 1));
       
       i++;
-      if (i > 5)
+      if (i > 30)
       {
-         dd_mat3dc_mul_z_mat3dc(B_out, B_in, C);
-         dd_mat3dc_gram_schmidt(Q, B, B_out);
-   
-         dd_vec3d_norm(B1, D_COL(B, 1));
-         dd_vec3d_norm(B2, D_COL(B, 2));
-         dd_vec3d_norm(B3, D_COL(B, 3));
          alpha += 0.001;
          if (alpha > 0.6) 
          {

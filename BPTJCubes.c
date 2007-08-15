@@ -13,11 +13,11 @@
 #include <gmp.h>
 #include "long_extras.h"
 
-#define START 10000000000 
-#define STOP 100000000000
-#define k1 195
-#define k2 948
-#define k3 975
+#define START 1000000 
+#define STOP 200000000
+#define k1 1965
+#define k2 1986
+#define k3 1991
 
 // Checked 42 up to 1.35x10^12 (from 6.5x10^11 - Siksek's machine
 // Checked 114 up to 10^11 (from 100000)
@@ -76,7 +76,7 @@ int main()
 {
    gmp_randinit_default(randstate);
    
-   FILE * file1 = fopen("output2.log","w");
+   FILE * file1 = fopen("output.log","w");
    /*int cubes[72];
    int OK[72];
    for (unsigned long i = 0; i < 72; i++) 
