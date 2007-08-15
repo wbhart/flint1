@@ -268,6 +268,10 @@ void mpz_poly_sqr_karatsuba(mpz_poly_t res, mpz_poly_t poly);
 void mpz_poly_sqr_naive_KS(mpz_poly_t res, mpz_poly_t poly);
 
 
+// exported for profiling...
+unsigned long _mpz_poly_mul_karatsuba_crossover(unsigned long limbs);
+
+
 // ------------------------------------------------------
 // Polynomial division
 

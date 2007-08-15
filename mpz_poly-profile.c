@@ -93,5 +93,97 @@ void profDriver_mpz_poly_mul_karatsuba_mixlengths(char* params)
    test_support_cleanup();
 }
 
+// ============================================================================
+
+
+/*
+this function samples multiplying polynomials of lengths len1 and len2
+using mpz_poly_mul_karatsuba
+
+arg should point to an unsigned long, giving the coefficient bitlengths
+*/
+void sample__mpz_poly_mul_kara_recursive_mixlengths(
+     unsigned long len1, unsigned long len2, void* arg, unsigned long count)
+{
+   unsigned long bits = *(unsigned long*) arg;
+   
+   mpz_poly_t poly1, poly2, poly3;
+   mpz_poly_init(poly1);
+   mpz_poly_init(poly2);
+   mpz_poly_init(poly3);
+   mpz_poly_init_upto(poly3, len1 + len2);
+
+   // allocate scratch space
+   unsigned long scratch_len = len1 + len2;
+   mpz_t* scratch = (mpz_t*) malloc(scratch_len * sizeof(mpz_t));
+   for (unsigned long i = 0; i < scratch_len; i++)
+      mpz_init2(scratch[i], 2*bits + 100);
+
+   mpz_t x;
+   mpz_init(x);
+   for (unsigned long i = 0; i < len1; i++)
+   {
+      mpz_urandomb(x, randstate, bits);
+      if (random_ulong(2)) mpz_neg(x, x);
+      mpz_poly_set_coeff(poly1, i, x);
+   }
+   for (unsigned long i = 0; i < len2; i++)
+   {
+      mpz_urandomb(x, randstate, bits);
+      if (random_ulong(2)) mpz_neg(x, x);
+      mpz_poly_set_coeff(poly2, i, x);
+   }
+   mpz_clear(x);
+
+   unsigned long crossover =
+                      _mpz_poly_mul_karatsuba_crossover(bits / FLINT_BITS);
+   
+   prof_start();
+
+   for (unsigned long i = 0; i < count; i++)
+      _mpz_poly_mul_kara_recursive(poly3->coeffs, poly1->coeffs, len1,
+                                   poly2->coeffs, len2, scratch, 1, crossover);
+
+   prof_stop();
+
+   for (unsigned long i = 0; i < scratch_len; i++)
+      mpz_clear(scratch[i]);
+   free(scratch);
+   
+   mpz_poly_clear(poly3);
+   mpz_poly_clear(poly2);
+   mpz_poly_clear(poly1);
+}
+
+
+char* profDriverString__mpz_poly_mul_kara_recursive_mixlengths(char* params)
+{
+   return "_mpz_poly_mul_kara_recursive for distinct input lengths and fixed\n"
+   "coefficient size. Parameters are: max length; length skip; coefficient size (in bits)\n";
+}
+
+char* profDriverDefaultParams__mpz_poly_mul_kara_recursive_mixlengths()
+{
+   return "50 1 100";
+}
+
+
+void profDriver__mpz_poly_mul_kara_recursive_mixlengths(char* params)
+{
+   unsigned long max_length, skip, bits;
+
+   sscanf(params, "%ld %ld %ld", &max_length, &skip, &bits);
+
+   prof2d_set_sampler(sample__mpz_poly_mul_kara_recursive_mixlengths);
+
+   test_support_init();
+
+   for (unsigned long len1 = skip; len1 <= max_length; len1 += skip)
+      for (unsigned long len2 = skip; len2 <= len1; len2 += skip)
+         prof2d_sample(len1, len2, &bits);
+
+   test_support_cleanup();
+}
+
 
 // end of file ****************************************************************

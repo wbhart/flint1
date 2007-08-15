@@ -1119,6 +1119,9 @@ scratch buffer should be length len1 + len2, also staggered by "skip".
 All input/output/scratch space should be mpz_init'd, and shouldn't overlap.
 
 Must have 1 <= len1 <= len2.
+
+If len1*len2 <= crossover, it uses a naive multiplication algorithm. The
+crossover parameter is passed down recursively to subproducts.
 */
 void _mpz_poly_mul_kara_recursive(mpz_t* out,
                                   mpz_t* in1, unsigned long len1,
@@ -1242,6 +1245,17 @@ void _mpz_poly_mul_kara_recursive(mpz_t* out,
 }
 
 
+unsigned long _mpz_poly_mul_karatsuba_crossover(unsigned long limbs)
+{
+   unsigned long crossover;
+   if (limbs >= mpz_poly_kara_crossover_table_size)
+      crossover = 0;
+   else
+      crossover = mpz_poly_kara_crossover_table[limbs - 1];
+   return crossover * crossover;
+}
+
+
 void mpz_poly_mul_karatsuba(mpz_poly_t res, mpz_poly_t poly1,
                             mpz_poly_t poly2)
 {
@@ -1276,13 +1290,7 @@ void mpz_poly_mul_karatsuba(mpz_poly_t res, mpz_poly_t poly1,
 
    // look up crossover parameter (i.e. when to switch from classical to
    // karatsuba multiplication) based on coefficient size
-   unsigned long test_limbs = limbs/2;
-   unsigned long crossover;
-   if (test_limbs >= mpz_poly_kara_crossover_table_size)
-      crossover = 0;
-   else
-      crossover = mpz_poly_kara_crossover_table[test_limbs - 1];
-   crossover = crossover * crossover;
+   unsigned long crossover = _mpz_poly_mul_karatsuba_crossover(limbs/2);
    
    if (res == poly1 || res == poly2)
    {
