@@ -253,6 +253,8 @@ void _fmpz_poly_mul_naive(fmpz_poly_t output, fmpz_poly_t input1,
 void _fmpz_poly_mul_naive_trunc(fmpz_poly_t output, fmpz_poly_t input1, 
                                           fmpz_poly_t input2, unsigned long trunc);
 
+void __fmpz_poly_karamul_recursive(fmpz_poly_t res, fmpz_poly_t a, fmpz_poly_t b, fmpz_poly_t scratch, fmpz_poly_t scratchb, unsigned long crossover);
+
 void _fmpz_poly_mul_karatsuba(fmpz_poly_t output, fmpz_poly_t input1, 
                                                  fmpz_poly_t input2);
                                                  

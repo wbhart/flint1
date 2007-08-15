@@ -1520,7 +1520,7 @@ int test_fmpz_poly_mul_karatsuba_trunc()
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
           length = random_ulong(200)+1; 
-          length2 = length; 
+          length2 = random_ulong(200)+1; 
           trunc = random_ulong(length+length2);       
 #if DEBUG
           printf("length = %ld, length2 = %ld, trunc = %ld, bits = %ld, bits2 = %ld\n", length, length2, trunc, bits, bits2);
@@ -1546,7 +1546,7 @@ int test_fmpz_poly_mul_karatsuba_trunc()
           fmpz_poly_to_mpz_poly(test_poly4, test_mpn_poly4); 
 
           result = _mpz_poly_equal(test_poly4, test_poly3);
-#if DEBUG2          
+#if DEBUG          
           if (!result)
           {
              mpz_poly_print(test_poly3); printf("\n\n");

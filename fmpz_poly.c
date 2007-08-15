@@ -1052,22 +1052,14 @@ void _fmpz_poly_scalar_div_si(fmpz_poly_t output, fmpz_poly_t poly, long x)
 void _fmpz_poly_mul_naive(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_t input2)
 {
    mp_limb_t * coeffs_out = output->coeffs;
-   unsigned long size_out = output->limbs+1;
    mp_limb_t * coeffs1, * coeffs2;
-   unsigned long size1, size2;
    unsigned long len1, len2; 
    unsigned long lenm1;
-      
    coeffs1 = input1->coeffs;
    coeffs2 = input2->coeffs;
-   size1 = input1->limbs+1;
-   size2 = input2->limbs+1;
-   lenm1 = input1->length-1;
    len1 = input1->length;
    len2 = input2->length;
       
-   mp_limb_t * temp;
-            
    // Special case if the length of both inputs is 1
    if ((len1 == 1) && (len2 == 1))
    {
@@ -1078,10 +1070,18 @@ void _fmpz_poly_mul_naive(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_t in
       {
          __fmpz_poly_mul_coeffs(coeffs_out, coeffs1, coeffs2);
       }      
-   }
-   // Ordinay case
+   }         
+   // Ordinary case
    else
    {
+      unsigned long size_out = output->limbs+1;
+      unsigned long size1, size2;
+      size1 = input1->limbs+1;
+      size2 = input2->limbs+1;
+      lenm1 = input1->length-1;
+      
+      mp_limb_t * temp;
+      
       for (unsigned long i = 0; i < len1; i++)
       {
          /* Set out[i] = in1[i]*in2[0] */
@@ -1289,14 +1289,7 @@ void __fmpz_poly_karamul_recursive(fmpz_poly_t res, fmpz_poly_t a, fmpz_poly_t b
 {
    fmpz_poly_t temp;
    
-   if ((a->length <= 1) || (b->length <= 1)) 
-   {
-      _fmpz_poly_mul_naive(res, a, b);
-      
-      return;
-   }
-   
-   if ((a->length == 2 && b->length == 2) && (crossover < 4)) {
+   if ((crossover < 4) && (a->length == 2 && b->length == 2)) {
       const unsigned long asize = a->limbs+1;
       const unsigned long bsize = b->limbs+1;
       const unsigned long rsize = res->limbs+1;
@@ -1315,7 +1308,7 @@ void __fmpz_poly_karamul_recursive(fmpz_poly_t res, fmpz_poly_t a, fmpz_poly_t b
       return;
    }
    
-   if (a->length+b->length <= crossover) 
+   if ((a->length+b->length <= crossover) ||  (a->length <= 1) || (b->length <= 1))
    {
       _fmpz_poly_mul_naive(res, a, b);
       
@@ -1412,8 +1405,8 @@ void __fmpz_poly_karamul_recursive(fmpz_poly_t res, fmpz_poly_t a, fmpz_poly_t b
       a2->coeffs = a->coeffs+a1->length*(a->limbs+1);
 
       /* 
-         from 0 for a1->length + b->length - 1 will be written directly to, so we 
-         need to clean the remaining coefficients
+         The first a1->length + b->length - 1 coefficients will be written to directly, 
+         so we need to clean the remaining coefficients
       */
       for (unsigned long i = a1->length + b->length - 1; i < a->length + b->length - 1; i++)
          res->coeffs[i*(res->limbs+1)] = 0;
@@ -1452,7 +1445,8 @@ void _fmpz_poly_mul_karatsuba(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_
    scratchb->limbs = FLINT_MAX(input1->limbs,input2->limbs)+1;
    scratchb->coeffs = (mp_limb_t *) flint_stack_alloc(5*FLINT_MAX(input1->length,input2->length)*(scratchb->limbs+1));
    
-   crossover = 19 - _fmpz_poly_max_limbs(input1) - _fmpz_poly_max_limbs(input2);
+   if (_fmpz_poly_max_limbs(input1) + _fmpz_poly_max_limbs(input2) >= 19) crossover = 0;
+   else crossover = 19 - _fmpz_poly_max_limbs(input1) - _fmpz_poly_max_limbs(input2);
    
    if (input1->length >= input2->length)
        __fmpz_poly_karamul_recursive(output, input1, input2, scratch, scratchb, crossover);
@@ -1468,6 +1462,7 @@ void __fmpz_poly_karatrunc_recursive(fmpz_poly_t res, fmpz_poly_t a, fmpz_poly_t
    
    if ((a->length <= 1) || (b->length <= 1)) 
    {
+      trunc = FLINT_MIN(trunc, a->length + b->length - 1);
       _fmpz_poly_mul_naive_trunc(res, a, b, trunc);
       
       return;
@@ -1505,6 +1500,7 @@ void __fmpz_poly_karatrunc_recursive(fmpz_poly_t res, fmpz_poly_t a, fmpz_poly_t
    }
    if (a->length+b->length <= crossover) 
    {
+      trunc = FLINT_MIN(trunc, a->length + b->length - 1);
       _fmpz_poly_mul_naive_trunc(res, a, b, trunc);
       
       return;
@@ -1607,37 +1603,43 @@ void __fmpz_poly_karatrunc_recursive(fmpz_poly_t res, fmpz_poly_t a, fmpz_poly_t
       fmpz_poly_t scratch2, temp1; 
 
       while ((1<<l2)<a1->length) l2++;
-      if ((1<<l2) < a->length) a1->length = (1<<l2);
-      a2->length = a->length-a1->length;
+      if ((1<<l2) < sa) a1->length = (1<<l2);
+      a2->length = sa - a1->length;
       a1->coeffs = a->coeffs;
       a2->coeffs = a->coeffs+a1->length*(a->limbs+1);
-
+      
       /* 
-         from 0 for a1->length + b->length - 1 will be written directly to, so we 
-         need to clean the remaining coefficients
+         The first a1->length + b->length - 1 coefficients will be written to directly, 
+         so we need to clean the remaining coefficients
       */
-      for (unsigned long i = a1->length + b->length - 1; i < a->length + b->length - 1; i++)
-         res->coeffs[i*(res->limbs+1)] = 0;
+      if (trunc > a1->length + sb - 1)
+         for (unsigned long i = a1->length + sb - 1; i < FLINT_MIN(sa + sb - 1, trunc); i++)
+            res->coeffs[i*(res->limbs+1)] = 0;
+            
+      temp->coeffs = b->coeffs;
+      temp->limbs = b->limbs;
+      temp->length = sb;
       
       // res_lo = a1*b
-      __fmpz_poly_karamul_recursive(res, a1, b, scratch, scratchb, crossover);
+      if (sb <= a1->length) __fmpz_poly_karatrunc_recursive(res, a1, temp, scratch, scratchb, crossover, trunc);
+      else __fmpz_poly_karatrunc_recursive(res, temp, a1, scratch, scratchb, crossover, trunc);
       
-      //temp = a2*b
-      temp->coeffs = scratch->coeffs;
-      temp->length = a2->length + b->length - 1;
-      temp->limbs = scratch->limbs;
-      scratch2->coeffs = scratch->coeffs+temp->length*(scratch->limbs+1);
+      //temp2 = a2*b
+      temp2->coeffs = scratch->coeffs;
+      temp2->length = FLINT_MIN(a2->length + sb - 1, trunc - a1->length);
+      temp2->limbs = scratch->limbs;
+      scratch2->coeffs = scratch->coeffs+temp2->length*(scratch->limbs+1);
       scratch2->limbs = scratch->limbs;
-      if (b->length <= a2->length) __fmpz_poly_karamul_recursive(temp, a2, b, scratch2, scratchb, crossover);
-      else __fmpz_poly_karamul_recursive(temp, b, a2, scratch2, scratchb, crossover);
+      if (sb <= a2->length) __fmpz_poly_karatrunc_recursive(temp2, a2, temp, scratch2, scratchb, crossover, trunc - a1->length);
+      else __fmpz_poly_karatrunc_recursive(temp2, temp, a2, scratch2, scratchb, crossover, trunc - a1->length);
       
-      // res_mid += temp
+      // res_mid += 2temp
       temp1->coeffs = res->coeffs+a1->length*(res->limbs+1);
-      temp1->length = temp->length;
+      temp1->length = FLINT_MIN(temp2->length, trunc - a1->length);
       temp1->limbs = res->limbs;
-      _fmpz_poly_add(temp1,temp1,temp);
-  
-      res->length = a->length + b->length - 1;
+      _fmpz_poly_add(temp1, temp1, temp2);
+      
+      res->length = FLINT_MIN(sa + sb - 1, trunc);
    } 
 }
 
