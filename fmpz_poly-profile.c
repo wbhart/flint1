@@ -172,6 +172,84 @@ void profDriver_fmpz_poly_mul_KS(char* params)
    test_support_cleanup();
 }
 
+// ============================================================================
+
+
+void sample_fmpz_poly_mul_KS_trunc(unsigned long length, unsigned long bits,
+                             void* arg, unsigned long count)
+{
+   unsigned long m = ceil_log2(length);
+   unsigned long output_bits = 2*bits+m;
+   
+   fmpz_poly_t poly1, poly2, poly3;
+   mpz_poly_t r_poly, r_poly2;  
+   
+   mpz_poly_init(r_poly); 
+   mpz_poly_init(r_poly2); 
+   mpz_poly_realloc(r_poly, length);
+   mpz_poly_realloc(r_poly2, length);
+  
+   _fmpz_poly_stack_init(poly1, length, (bits-1)/FLINT_BITS+1);
+   _fmpz_poly_stack_init(poly2, length, (bits-1)/FLINT_BITS+1);
+   _fmpz_poly_stack_init(poly3, 2*length-1, (output_bits-1)/FLINT_BITS+1);
+   
+   unsigned long r_count;    // how often to generate new random data
+   
+   if (count >= 1000) r_count = 100;
+   else if (count >= 100) r_count = 10;
+   else if (count >= 20) r_count = 5;
+   else if (count >= 8) r_count = 2;
+   else r_count = 1;
+   
+   for (unsigned long i = 0; i < count; i++)
+   {
+      if (i%r_count == 0)
+      {
+         randpoly(r_poly, length, bits);
+         mpz_poly_to_fmpz_poly(poly1, r_poly);
+         randpoly(r_poly2, length, bits);
+         mpz_poly_to_fmpz_poly(poly2, r_poly2);
+      }
+      prof_start();
+      _fmpz_poly_mul_KS_trunc(poly3, poly1, poly2, length);
+      prof_stop();
+   }
+   
+   mpz_poly_clear(r_poly);
+   mpz_poly_clear(r_poly2);
+   
+   _fmpz_poly_stack_clear(poly3);
+   _fmpz_poly_stack_clear(poly2);
+   _fmpz_poly_stack_clear(poly1);
+   
+}
+
+
+char* profDriverString_fmpz_poly_mul_KS_trunc(char* params)
+{
+   return "fmpz_poly_mul_KS_trunc over various lengths and various bit sizes.\n"
+   "Parameters are: max bitsize; ratio between consecutive lengths/bitsizes.";
+}
+
+char* profDriverDefaultParams_fmpz_poly_mul_KS_trunc()
+{
+   return "16000000 1.2";
+}
+
+
+void profDriver_fmpz_poly_mul_KS_trunc(char* params)
+{
+   unsigned long max_bits;
+   double ratio;
+
+   sscanf(params, "%ld %lf", &max_bits, &ratio);
+
+   test_support_init();
+   prof2d_set_sampler(sample_fmpz_poly_mul_KS_trunc);
+   run_triangle(max_bits, ratio);
+   test_support_cleanup();
+}
+
 
 // ****************************************************************************
 
@@ -245,6 +323,82 @@ void profDriver_fmpz_poly_mul_SS(char* params)
    
    test_support_init();
    prof2d_set_sampler(sample_fmpz_poly_mul_SS);
+   run_triangle(max_bits, ratio);
+   test_support_cleanup();
+}
+
+// ****************************************************************************
+
+void sample_fmpz_poly_mul_SS_trunc(unsigned long length, unsigned long bits,
+                             void* arg, unsigned long count)
+{
+   unsigned long m = ceil_log2(length);
+   unsigned long output_bits = 2*bits+m;
+   
+   fmpz_poly_t poly1, poly2, poly3;
+   mpz_poly_t r_poly, r_poly2;  
+   
+   mpz_poly_init(r_poly); 
+   mpz_poly_init(r_poly2); 
+   mpz_poly_realloc(r_poly, length);
+   mpz_poly_realloc(r_poly2, length);
+  
+   _fmpz_poly_stack_init(poly1, length, (bits-1)/FLINT_BITS+1);
+   _fmpz_poly_stack_init(poly2, length, (bits-1)/FLINT_BITS+1);
+   _fmpz_poly_stack_init(poly3, 2*length-1, (output_bits-1)/FLINT_BITS+1);
+    
+   unsigned long r_count;    // how often to generate new random data
+   
+   if (count >= 1000) r_count = 100;
+   else if (count >= 100) r_count = 10;
+   else if (count >= 20) r_count = 5;
+   else if (count >= 8) r_count = 2;
+   else r_count = 1;
+   
+   for (unsigned long i = 0; i < count; i++)
+   {
+      if (i%r_count == 0)
+      {
+         randpoly(r_poly, length, bits);
+         mpz_poly_to_fmpz_poly(poly1, r_poly);
+         randpoly(r_poly2, length, bits);
+         mpz_poly_to_fmpz_poly(poly2, r_poly2);
+      }
+       prof_start();
+       _fmpz_poly_mul_SS_trunc(poly3, poly1, poly2, length);
+       prof_stop();
+   }
+   
+   mpz_poly_clear(r_poly);
+   mpz_poly_clear(r_poly2);
+   
+   _fmpz_poly_stack_clear(poly3);
+   _fmpz_poly_stack_clear(poly2);
+   _fmpz_poly_stack_clear(poly1);
+   
+}
+
+
+char* profDriverString_fmpz_poly_mul_SS_trunc(char* params)
+{
+   return "fmpz_poly_mul_SS_trunc over various lengths and various bit sizes.\n"
+   "Parameters are: max bitsize; ratio between consecutive lengths/bitsizes.";
+}
+
+char* profDriverDefaultParams_fmpz_poly_mul_SS_trunc()
+{
+   return "16000000 1.2";
+}
+
+void profDriver_fmpz_poly_mul_SS_trunc(char* params)
+{
+   unsigned long max_bits;
+   double ratio;
+
+   sscanf(params, "%ld %lf", &max_bits, &ratio);
+   
+   test_support_init();
+   prof2d_set_sampler(sample_fmpz_poly_mul_SS_trunc);
    run_triangle(max_bits, ratio);
    test_support_cleanup();
 }
@@ -323,6 +477,83 @@ void profDriver_fmpz_poly_mul_karatsuba(char* params)
 
    test_support_init();
    prof2d_set_sampler(sample_fmpz_poly_mul_karatsuba);
+   run_triangle(max_bits, ratio);
+   test_support_cleanup();
+}
+
+// ============================================================================
+
+
+void sample_fmpz_poly_mul_karatsuba_trunc(unsigned long length, unsigned long bits,
+                                    void* arg, unsigned long count)
+{
+   unsigned long m = ceil_log2(length);
+   unsigned long output_bits = 2*bits+m;
+   
+   fmpz_poly_t poly1, poly2, poly3;
+   mpz_poly_t r_poly, r_poly2;  
+   
+   mpz_poly_init(r_poly); 
+   mpz_poly_init(r_poly2); 
+   mpz_poly_realloc(r_poly, length);
+   mpz_poly_realloc(r_poly2, length);
+  
+   _fmpz_poly_stack_init(poly1, length, (bits-1)/FLINT_BITS+1);
+   _fmpz_poly_stack_init(poly2, length, (bits-1)/FLINT_BITS+1);
+   _fmpz_poly_stack_init(poly3, 2*length-1, (output_bits-1)/FLINT_BITS+1);
+    
+   unsigned long r_count;    // how often to generate new random data
+   
+   if (count >= 1000) r_count = 100;
+   else if (count >= 100) r_count = 10;
+   else if (count >= 20) r_count = 5;
+   else if (count >= 8) r_count = 2;
+   else r_count = 1;
+   
+   for (unsigned long i = 0; i < count; i++)
+   {
+      if (i%r_count == 0)
+      {
+         randpoly(r_poly, length, bits);
+         mpz_poly_to_fmpz_poly(poly1, r_poly);
+         randpoly(r_poly2, length, bits);
+         mpz_poly_to_fmpz_poly(poly2, r_poly2);
+      }
+       prof_start();
+       _fmpz_poly_mul_karatsuba_trunc(poly3, poly1, poly2, length);
+       prof_stop();
+   }
+   
+   mpz_poly_clear(r_poly);
+   mpz_poly_clear(r_poly2);
+   
+   _fmpz_poly_stack_clear(poly3);
+   _fmpz_poly_stack_clear(poly2);
+   _fmpz_poly_stack_clear(poly1);
+   
+}
+
+
+char* profDriverString_fmpz_poly_mul_karatsuba_trunc(char* params)
+{
+   return "fmpz_poly_mul_karatsuba_trunc over various lengths and various bit sizes.\n"
+   "Parameters are: max bitsize; ratio between consecutive lengths/bitsizes.";
+}
+
+char* profDriverDefaultParams_fmpz_poly_mul_karatsuba_trunc()
+{
+   return "300000 1.2";
+}
+
+void profDriver_fmpz_poly_mul_karatsuba_trunc(char* params)
+{
+   unsigned long max_bits;
+   double ratio;
+
+   sscanf(params, "%ld %lf", &max_bits, &ratio);
+
+   test_support_init();
+   prof2d_set_sampler(sample_fmpz_poly_mul_karatsuba_trunc);
    run_triangle(max_bits, ratio);
    test_support_cleanup();
 }
