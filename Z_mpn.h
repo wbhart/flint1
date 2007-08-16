@@ -39,6 +39,9 @@ void Z_mul(mpz_t res, mpz_t a, mpz_t b);
 
 void __Z_mul(mpz_t res, mpz_t a, mpz_t b, unsigned long twk);
 
+mp_limb_t Z_mpn_mul_trunc(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1, 
+                        mp_limb_t * data2, unsigned long limbs2, unsigned long trunc);
+
 void Z_mpn_mul_precomp_init(Z_mpn_precomp_t precomp, mp_limb_t * data1, unsigned long limbs1, unsigned long limbs2);
 
 void Z_mpn_mul_precomp_clear(Z_mpn_precomp_t precomp);

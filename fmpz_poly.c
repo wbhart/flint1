@@ -1862,12 +1862,12 @@ void _fmpz_poly_mul_KS_trunc(fmpz_poly_t output, fmpz_poly_p input1,
       if (input1 != input2)
          ZmodF_poly_stack_init(poly2, 0, (bits*length2-1)/FLINT_BITS+1, 0);
 
-      if (sign) bits = -1L*bits;
+      if (sign) bits = -bits;
       if (input1 != input2)
          ZmodF_poly_bit_pack_mpn(poly2, input2, length2, bits, length2);
       ZmodF_poly_bit_pack_mpn(poly1, input1, length1, bits, length1);
 
-      bits=ABS(bits);
+      bits = ABS(bits);
    } else
    {
       ZmodF_poly_stack_init(poly1, 0, ((bytes*length1-1)>>FLINT_LG_BYTES_PER_LIMB)+1, 0);
@@ -1887,14 +1887,22 @@ void _fmpz_poly_mul_KS_trunc(fmpz_poly_t output, fmpz_poly_p input1,
    
    ZmodF_poly_stack_init(poly3, 0, poly1->n + poly2->n, 0);
            
-   mp_limb_t msl = Z_mpn_mul(poly3->coeffs[0], poly1->coeffs[0], poly1->n, poly2->coeffs[0], poly2->n);
+   output->length = FLINT_MIN(length1+length2-1, trunc);
+
+   mp_limb_t msl;
+   
+   if (bitpack)
+   {
+      msl = Z_mpn_mul_trunc(poly3->coeffs[0], poly1->coeffs[0], poly1->n, poly2->coeffs[0], poly2->n, (output->length*bits-1)/FLINT_BITS+1);
+   } else
+   {
+      msl = Z_mpn_mul_trunc(poly3->coeffs[0], poly1->coeffs[0], poly1->n, poly2->coeffs[0], poly2->n, ((output->length*bytes-1)>>FLINT_LG_BYTES_PER_LIMB) + 1);
+   }
    
    poly3->coeffs[0][poly1->n+poly2->n-1] = msl;
    poly3->coeffs[0][poly1->n+poly2->n] = 0;
    poly3->length = 1;
-   
-   output->length = FLINT_MIN(length1+length2-1, trunc);
-   
+      
    for (unsigned long i = 0; i < trunc; i++)
       output->coeffs[i*(output->limbs+1)] = 0;
       

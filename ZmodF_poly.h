@@ -342,6 +342,13 @@ void ZmodF_poly_normalise(ZmodF_poly_t poly);
 */
 void ZmodF_poly_rescale(ZmodF_poly_t poly);
 
+/*
+   Divides _trunc_ coefficients by 2^depth mod p. This can be used after
+   running an inverse fourier transform of one only wants the first trunc
+   coefficients.
+*/
+void ZmodF_poly_rescale_trunc(ZmodF_poly_t poly, unsigned long trunc);
+
 
 /****************************************************************************
 
@@ -415,6 +422,9 @@ void ZmodF_poly_IFFT(ZmodF_poly_t poly);
       res.scratch_count >= 1
 */
 void ZmodF_poly_convolution(ZmodF_poly_t res, ZmodF_poly_t x, ZmodF_poly_t y);
+
+void ZmodF_poly_convolution_trunc(ZmodF_poly_t res, ZmodF_poly_t x, 
+                                        ZmodF_poly_t y, unsigned long trunc);
 
 
 // internal functions
