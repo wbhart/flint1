@@ -131,9 +131,12 @@ void ZmodF_poly_decrease_n(ZmodF_poly_t poly, unsigned long n)
    
    The maximum number of *bits* that any coefficient takes is returned
    and made negative if any of the coefficients was negative.
+   
+   Only _length_ coefficients are converted.
 */
 
-long ZmodF_poly_convert_in_mpn(ZmodF_poly_t poly_f, fmpz_poly_t poly_mpn);
+long ZmodF_poly_convert_in_mpn(ZmodF_poly_t poly_f, fmpz_poly_t poly_mpn, 
+                                                         unsigned long length);
 
 
 /* 

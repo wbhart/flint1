@@ -90,7 +90,8 @@ void ZmodF_poly_stack_clear(ZmodF_poly_t poly)
    
 ****************************************************************************/
 
-long ZmodF_poly_convert_in_mpn(ZmodF_poly_t poly_f, fmpz_poly_t poly_mpn)
+long ZmodF_poly_convert_in_mpn(ZmodF_poly_t poly_f, fmpz_poly_t poly_mpn, 
+                                                        unsigned long length)
 {
    unsigned long size_f = poly_f->n + 1;
    unsigned long size_m = poly_mpn->limbs+1;
@@ -104,7 +105,7 @@ long ZmodF_poly_convert_in_mpn(ZmodF_poly_t poly_f, fmpz_poly_t poly_mpn)
    
    long size_j;
    
-   for (unsigned long i = 0, j = 0; i < poly_mpn->length; i++, j += size_m)
+   for (unsigned long i = 0, j = 0; i < length; i++, j += size_m)
    {
       size_j = coeffs_m[j];
       if ((long) size_j < 0) sign = -1L;
@@ -133,7 +134,7 @@ long ZmodF_poly_convert_in_mpn(ZmodF_poly_t poly_f, fmpz_poly_t poly_mpn)
          clear_limbs(coeffs_f[i] + ABS(size_j), size_f - ABS(size_j)); 
       }
    }
-   poly_f->length = poly_mpn->length; 
+   poly_f->length = length; 
    
    return sign*(FLINT_BITS*limbs+bits);  
 }

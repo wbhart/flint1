@@ -1930,18 +1930,23 @@ void _fmpz_poly_mul_KS_trunc(fmpz_poly_t output, fmpz_poly_p input1,
 
 void _fmpz_poly_mul_SS(fmpz_poly_t output, fmpz_poly_p input1, fmpz_poly_p input2)
 {
-   _fmpz_poly_normalise(input1);
-   _fmpz_poly_normalise(input2);
-   
-   if (input1->length < input2->length) SWAP(input1, input2);
-   
    unsigned long length1 = input1->length;
    unsigned long length2 = input2->length;
    
+   while ((input1->coeffs[(length1-1)*(input1->limbs+1)] == 0) && (length1)) length1--;
+   while ((input2->coeffs[(length2-1)*(input2->limbs+1)] == 0) && (length2)) length2--;
    if ((length1 == 0) || (length2 == 0)) 
    {
       _fmpz_poly_zero(output);
       return;
+   }
+   
+   if (length2 > length1) 
+   {
+      unsigned long temp = length1;
+      length1 = length2;
+      length2 = temp;
+      SWAP(input1, input2);
    }
    
    unsigned long size1 = input1->limbs;
@@ -1971,8 +1976,8 @@ void _fmpz_poly_mul_SS(fmpz_poly_t output, fmpz_poly_p input1, fmpz_poly_p input
    ZmodF_poly_stack_init(poly2, log_length + 1, n, 1);
    ZmodF_poly_stack_init(res, log_length + 1, n, 1);
    
-   bits1 = ZmodF_poly_convert_in_mpn(poly1, input1);
-   bits2 = ZmodF_poly_convert_in_mpn(poly2, input2);
+   bits1 = ZmodF_poly_convert_in_mpn(poly1, input1, length1);
+   bits2 = ZmodF_poly_convert_in_mpn(poly2, input2, length2);
    
    if ((bits1 < 0) || (bits2 < 0)) 
    {
@@ -2000,6 +2005,93 @@ void _fmpz_poly_mul_SS(fmpz_poly_t output, fmpz_poly_p input1, fmpz_poly_p input
    ZmodF_poly_normalise(res);
           
    output->length = length1 + length2 - 1;
+   
+   ZmodF_poly_convert_out_mpn(output, res, sign);
+   
+   ZmodF_poly_stack_clear(res);
+   ZmodF_poly_stack_clear(poly2);
+   ZmodF_poly_stack_clear(poly1);
+}
+
+void _fmpz_poly_mul_SS_trunc(fmpz_poly_t output, fmpz_poly_p input1, 
+                                        fmpz_poly_p input2, unsigned long trunc)
+{
+   unsigned long length1 = FLINT_MIN(input1->length, trunc);
+   unsigned long length2 = FLINT_MIN(input2->length, trunc);
+   
+   while ((input1->coeffs[(length1-1)*(input1->limbs+1)] == 0) && (length1)) length1--;
+   while ((input2->coeffs[(length2-1)*(input2->limbs+1)] == 0) && (length2)) length2--;
+   if ((length1 == 0) || (length2 == 0)) 
+   {
+      _fmpz_poly_zero(output);
+      return;
+   }
+   
+   if (length2 > length1) 
+   {
+      unsigned long temp = length1;
+      length1 = length2;
+      length2 = temp;
+      SWAP(input1, input2);
+   }
+   
+   unsigned long size1 = input1->limbs;
+   unsigned long size2 = input2->limbs;
+   
+   unsigned long log_length = 0;
+   while ((1<<log_length) < length1) log_length++;
+   unsigned long log_length2 = 0;
+   while ((1<<log_length2) < length2) log_length2++;
+   
+   /* Start with an upper bound on the number of bits needed */
+   
+   unsigned long output_bits = FLINT_BITS * (size1 + size2) + log_length2 + 2;
+
+   if (output_bits <= length1)
+      output_bits = (((output_bits - 1) >> (log_length-1)) + 1) << (log_length-1);
+   else 
+      output_bits = (((output_bits - 1) >> log_length) + 1) << log_length;
+      
+   unsigned long n = (output_bits - 1) / FLINT_BITS + 1;
+   
+   ZmodF_poly_t poly1, poly2, res;
+   long bits1, bits2;
+   unsigned long sign = 0;
+   
+   ZmodF_poly_stack_init(poly1, log_length + 1, n, 1);
+   ZmodF_poly_stack_init(poly2, log_length + 1, n, 1);
+   ZmodF_poly_stack_init(res, log_length + 1, n, 1);
+   
+   bits1 = ZmodF_poly_convert_in_mpn(poly1, input1, length1);
+   bits2 = ZmodF_poly_convert_in_mpn(poly2, input2, length2);
+   
+   if ((bits1 < 0) || (bits2 < 0)) 
+   {
+      sign = 1;  
+      bits1 = ABS(bits1);
+      bits2 = ABS(bits2);
+   }
+   
+   /* Recompute the length of n now that we know how large everything really is */
+   
+   output_bits = bits1 + bits2 + log_length2 + sign;
+   
+   if (output_bits <= length1)
+      output_bits = (((output_bits - 1) >> (log_length-1)) + 1) << (log_length-1);
+   else 
+      output_bits = (((output_bits - 1) >> log_length) + 1) << log_length;
+      
+   n = (output_bits - 1) / FLINT_BITS + 1;
+   
+   ZmodF_poly_decrease_n(poly1, n);
+   ZmodF_poly_decrease_n(poly2, n);
+   ZmodF_poly_decrease_n(res, n);
+                    
+   ZmodF_poly_convolution_trunc(res, poly1, poly2, trunc);
+   res->length = FLINT_MIN(res->length, trunc);
+   ZmodF_poly_normalise(res);
+          
+   output->length = FLINT_MIN(length1 + length2 - 1, trunc);
    
    ZmodF_poly_convert_out_mpn(output, res, sign);
    
