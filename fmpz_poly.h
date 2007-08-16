@@ -269,6 +269,9 @@ void _fmpz_poly_mul_karatsuba_trunc(fmpz_poly_t output, fmpz_poly_t input1,
 
 void _fmpz_poly_mul_KS(fmpz_poly_t output, fmpz_poly_t input1, 
                                        fmpz_poly_t input2);
+                                       
+void _fmpz_poly_mul_KS_trunc(fmpz_poly_t output, fmpz_poly_p input1, 
+                                        fmpz_poly_p input2, unsigned long trunc);
 
 void _fmpz_poly_mul_SS(fmpz_poly_t output, fmpz_poly_p input1, 
                                                             fmpz_poly_p input2);

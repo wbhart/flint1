@@ -1141,7 +1141,7 @@ void _fmpz_poly_mul_naive(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_t in
 
 void _fmpz_poly_truncate(fmpz_poly_t poly, unsigned long trunc)
 {
-   poly->length = trunc;
+   if (poly->length > trunc) poly->length = trunc;
 }
 
 /*
@@ -1796,6 +1796,127 @@ void _fmpz_poly_mul_KS(fmpz_poly_t output, fmpz_poly_p input1, fmpz_poly_p input
       output->coeffs[i*(output->limbs+1)] = 0;
    }
    output->length = input1->length + input2->length - 1;
+}
+
+void _fmpz_poly_mul_KS_trunc(fmpz_poly_t output, fmpz_poly_p input1, 
+                                        fmpz_poly_p input2, unsigned long trunc)
+{
+   long sign1 = 1L;
+   long sign2 = 1L;
+   
+   unsigned long length1 = FLINT_MIN(input1->length, trunc);
+   unsigned long length2 = FLINT_MIN(input2->length, trunc);
+   
+   while ((input1->coeffs[(length1-1)*(input1->limbs+1)] == 0) && (length1)) length1--;
+   while ((input2->coeffs[(length2-1)*(input2->limbs+1)] == 0) && (length2)) length2--;
+   if ((length1 == 0) || (length2 == 0)) 
+   {
+      _fmpz_poly_zero(output);
+      return;
+   }
+   
+   if (length2 > length1) 
+   {
+      unsigned long temp = length1;
+      length1 = length2;
+      length2 = temp;
+      SWAP(input1, input2);
+   }
+   
+   if ((long) input1->coeffs[(length1-1)*(input1->limbs+1)] < 0)
+   {
+      _fmpz_poly_neg(input1, input1);
+      sign1 = -1L;
+   }
+   
+   if (input1 != input2)
+   {
+      if ((long) input2->coeffs[(length2-1)*(input2->limbs+1)] < 0)
+      {
+         _fmpz_poly_neg(input2, input2);
+         sign2 = -1L;
+      }
+   } else sign2 = sign1;
+   
+   long bits1, bits2;
+   int bitpack = 0;
+   
+   bits1 = _fmpz_poly_bits(input1);
+   bits2 = (input1 == input2) ? bits1 : _fmpz_poly_bits(input2);
+      
+   unsigned long sign = ((bits1 < 0) || (bits2 < 0));
+   unsigned long length = length2;
+   unsigned log_length = 0;
+   while ((1<<log_length) < length) log_length++;
+   unsigned long bits = ABS(bits1) + ABS(bits2) + log_length + sign; 
+   unsigned long limbs = (bits-1)/FLINT_BITS + 1;
+   
+   if ((bits < FLINT_BITS) && (input1->limbs == 1) && (input2->limbs == 1) && (output->limbs == 1)) bitpack = 1;
+   
+   unsigned long bytes = ((bits-1)>>3)+1;
+   
+   ZmodF_poly_t poly1, poly2, poly3;
+   if (bitpack)
+   {
+      ZmodF_poly_stack_init(poly1, 0, (bits*length1-1)/FLINT_BITS+1, 0);
+      if (input1 != input2)
+         ZmodF_poly_stack_init(poly2, 0, (bits*length2-1)/FLINT_BITS+1, 0);
+
+      if (sign) bits = -1L*bits;
+      if (input1 != input2)
+         ZmodF_poly_bit_pack_mpn(poly2, input2, length2, bits, length2);
+      ZmodF_poly_bit_pack_mpn(poly1, input1, length1, bits, length1);
+
+      bits=ABS(bits);
+   } else
+   {
+      ZmodF_poly_stack_init(poly1, 0, ((bytes*length1-1)>>FLINT_LG_BYTES_PER_LIMB)+1, 0);
+      if (input1 != input2)
+         ZmodF_poly_stack_init(poly2, 0, ((bytes*length2-1)>>FLINT_LG_BYTES_PER_LIMB)+1, 0);
+
+      ZmodF_poly_byte_pack_mpn(poly1, input1, length1, bytes, length1);
+      if (input1 != input2)
+         ZmodF_poly_byte_pack_mpn(poly2, input2, length2, bytes, length2);
+   }
+   
+   if (input1 == input2)
+   {
+      poly2->coeffs = poly1->coeffs;
+      poly2->n = poly1->n;
+   }
+   
+   ZmodF_poly_stack_init(poly3, 0, poly1->n + poly2->n, 0);
+           
+   mp_limb_t msl = Z_mpn_mul(poly3->coeffs[0], poly1->coeffs[0], poly1->n, poly2->coeffs[0], poly2->n);
+   
+   poly3->coeffs[0][poly1->n+poly2->n-1] = msl;
+   poly3->coeffs[0][poly1->n+poly2->n] = 0;
+   poly3->length = 1;
+   
+   output->length = FLINT_MIN(length1+length2-1, trunc);
+   
+   for (unsigned long i = 0; i < trunc; i++)
+      output->coeffs[i*(output->limbs+1)] = 0;
+      
+   if (bitpack)
+   {
+      if (sign) ZmodF_poly_bit_unpack_mpn(output, poly3, output->length, bits);  
+      else ZmodF_poly_bit_unpack_unsigned_mpn(output, poly3, output->length, bits);  
+   } else
+   {
+      if (sign) ZmodF_poly_byte_unpack_mpn(output, poly3->coeffs[0], output->length, bytes);        
+      else ZmodF_poly_byte_unpack_unsigned_mpn(output, poly3->coeffs[0], output->length, bytes);  
+   }
+   
+   ZmodF_poly_stack_clear(poly3);
+   if (input1 != input2)
+      ZmodF_poly_stack_clear(poly2);
+   ZmodF_poly_stack_clear(poly1);
+     
+   if ((long) (sign1 ^ sign2) < 0) _fmpz_poly_neg(output, output);
+   
+   if (sign1 < 0) _fmpz_poly_neg(input1, input1);
+   if ((sign2 < 0) && (input1 != input2)) _fmpz_poly_neg(input2, input2);
 }
 
 
