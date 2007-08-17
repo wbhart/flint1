@@ -19,6 +19,7 @@ Copyright (C) 2007, William Hart and David Harvey
 #include "Z_mpn_mul-tuning.h"
 
 #define DEBUG 0
+#define DEBUG2 1
 
 unsigned long MUL_TWK_VALS[MUL_TWK_COUNT][3] = 
 {
@@ -453,7 +454,7 @@ void Z_mpn_mul_precomp_init(Z_mpn_precomp_t precomp, mp_limb_t * data1, unsigned
          }
       }
    }
-   
+ 
    while (twk*length < 2*output_bits)
    {
       length<<=1;
@@ -478,7 +479,6 @@ void Z_mpn_mul_precomp_init(Z_mpn_precomp_t precomp, mp_limb_t * data1, unsigned
    Z_split_limbs(poly1, data1, limbs1, coeff_limbs, n);
    
    ZmodF_poly_FFT(poly1, length1 + length2 - 1);
-   
    precomp->type = FFT_PRE;
    precomp->length = length1 + length2 - 1;
    precomp->length2 = length2;
@@ -491,7 +491,13 @@ void Z_mpn_mul_precomp_init(Z_mpn_precomp_t precomp, mp_limb_t * data1, unsigned
 
 void Z_mpn_mul_precomp_clear(Z_mpn_precomp_t precomp)
 {
-   if (precomp->type == FFT_PRE) ZmodF_poly_stack_clear(precomp->poly);
+   if (precomp->type == FFT_PRE) 
+   {
+      ZmodF_poly_stack_clear(precomp->poly);
+      free(precomp->poly);
+   }
+   
+   
 }
 
 mp_limb_t Z_mpn_mul_precomp(mp_limb_t * res, mp_limb_t * data2, unsigned long limbs2, Z_mpn_precomp_t precomp)
