@@ -78,7 +78,6 @@ void Z_split_limbs(ZmodF_poly_t poly, mp_limb_t * limbs, unsigned long total_lim
    }
    if (i < length) clear_limbs(poly->coeffs[i], output_limbs+1);
    if (total_limbs > skip) copy_limbs(poly->coeffs[i], limbs+skip, total_limbs-skip);
-   i++;
    
    poly->length = length;
 }
@@ -182,7 +181,7 @@ mp_limb_t __Z_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1,
    ZmodF_poly_stack_init(poly1, log_length, n, 1);
    Z_split_limbs(poly1, data1, limbs1, coeff_limbs, n);
    
-   if (data1 == data2 && limbs1 == limbs2)
+   if ((data1 == data2) && (limbs1 == limbs2))
    {
       // identical operands case
       ZmodF_poly_convolution(poly1, poly1, poly1);
@@ -239,7 +238,7 @@ mp_limb_t __Z_mpn_mul_trunc(mp_limb_t * res, mp_limb_t * data1, unsigned long li
          output_bits = (2*coeff_limbs+1)*FLINT_BITS;
          output_bits = (((output_bits - 1) >> (log_length-1)) + 1) << (log_length-1);
          coeff_limbs = ((output_bits - FLINT_BITS)/FLINT_BITS)/2;
-         if ((long) coeff_limbs < 1) coeff_limbs = 1;
+         if ((long) coeff_limbs < 1L) coeff_limbs = 1;
          length1 = (limbs1-1)/coeff_limbs+1;
          length2 = (limbs2-1)/coeff_limbs+1;
       }
@@ -255,7 +254,7 @@ mp_limb_t __Z_mpn_mul_trunc(mp_limb_t * res, mp_limb_t * data1, unsigned long li
       output_bits = (((output_bits - 1) >> (log_length-1)) + 1) << (log_length-1);
       while ((output_bits%3) != 0) output_bits+=(1<<(log_length-1));
       coeff_limbs = ((output_bits - FLINT_BITS)/FLINT_BITS)/2;
-      if ((long) coeff_limbs < 1) coeff_limbs = 1;
+      if ((long) coeff_limbs < 1L) coeff_limbs = 1;
       length1 = (limbs1-1)/coeff_limbs+1;
       length2 = (limbs2-1)/coeff_limbs+1;
       log_length = 1;
@@ -273,7 +272,7 @@ mp_limb_t __Z_mpn_mul_trunc(mp_limb_t * res, mp_limb_t * data1, unsigned long li
          output_bits = (2*coeff_limbs+1)*FLINT_BITS;
          output_bits = (((output_bits - 1) >> (log_length-1)) + 1) << (log_length-1);
          coeff_limbs = ((output_bits - FLINT_BITS)/FLINT_BITS)/2;
-         if ((long) coeff_limbs < 1) coeff_limbs = 1;
+         if ((long) coeff_limbs < 1L) coeff_limbs = 1;
          length1 = (limbs1-1)/coeff_limbs+1;
          length2 = (limbs2-1)/coeff_limbs+1;
       }
@@ -322,6 +321,8 @@ mp_limb_t __Z_mpn_mul_trunc(mp_limb_t * res, mp_limb_t * data1, unsigned long li
    < FLINT_FFT_LIMBS_CROSSOVER but may require one less limb otherwise. The function
    will return 0 if it did not require (and indeed did not zero) the extra limb,
    otherwise it returns the (non zero) value of this high limb after multiplication.
+   
+   Assumes neither of limbs1, limbs2 is zero. 
 */
 
 mp_limb_t Z_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1, 
@@ -374,6 +375,7 @@ mp_limb_t Z_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1,
 
 /*
    Multiply two integers in mpn format truncating to _trunc_ output limbs
+   Assumes none of limbs1, limbs2 and trunc is zero. 
 */
 
 mp_limb_t Z_mpn_mul_trunc(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1, 
@@ -424,6 +426,11 @@ mp_limb_t Z_mpn_mul_trunc(mp_limb_t * res, mp_limb_t * data1, unsigned long limb
    return __Z_mpn_mul_trunc(res, data1, limbs1, data2, limbs2, twk, trunc);
 }
 
+/*   
+   Precompute an FFT for integer multiplication.
+   Assumes neither of limbs1, limbs2 is zero. 
+*/
+
 void Z_mpn_mul_precomp_init(Z_mpn_precomp_t precomp, mp_limb_t * data1, unsigned long limbs1, unsigned long limbs2)
 {
    unsigned long length = 1;
@@ -454,19 +461,57 @@ void Z_mpn_mul_precomp_init(Z_mpn_precomp_t precomp, mp_limb_t * data1, unsigned
          }
       }
    }
- 
-   while (twk*length < 2*output_bits)
+   if (twk > 64)
    {
-      length<<=1;
-      log_length++;
+      length = 2;
+      log_length = 1;
+      while ((1<<(log_length-1)) < output_bits)
+      {
+         length<<=1;
+         log_length++;
+         coeff_limbs = (limbs1+limbs2-1)/length+1;
+         while ((limbs1-1)/coeff_limbs+(limbs2-1)/coeff_limbs+2 > length) coeff_limbs++;
+         output_bits = (2*coeff_limbs+1)*FLINT_BITS;
+         output_bits = (((output_bits - 1) >> (log_length-1)) + 1) << (log_length-1);
+         coeff_limbs = ((output_bits - FLINT_BITS)/FLINT_BITS)/2;
+         if ((long) coeff_limbs < 1L) coeff_limbs = 1;
+         length1 = (limbs1-1)/coeff_limbs+1;
+         length2 = (limbs2-1)/coeff_limbs+1;
+      }
+      while (twk > 64)
+      {
+         log_length--;
+         length>>=1;
+         twk>>=2;
+      }
       coeff_limbs = (limbs1+limbs2-1)/length+1;
       while ((limbs1-1)/coeff_limbs+(limbs2-1)/coeff_limbs+2 > length) coeff_limbs++;
       output_bits = (2*coeff_limbs+1)*FLINT_BITS;
       output_bits = (((output_bits - 1) >> (log_length-1)) + 1) << (log_length-1);
+      while ((output_bits%3) != 0) output_bits+=(1<<(log_length-1));
       coeff_limbs = ((output_bits - FLINT_BITS)/FLINT_BITS)/2;
-      if ((long) coeff_limbs < 1) coeff_limbs = 1;
+      if ((long) coeff_limbs < 1L) coeff_limbs = 1;
       length1 = (limbs1-1)/coeff_limbs+1;
       length2 = (limbs2-1)/coeff_limbs+1;
+      log_length = 1;
+      while ((1<<log_length) < length1 + length2) log_length++;
+      length = (1<<log_length);        
+   }
+   else
+   {
+      while (twk*length < 2*output_bits)
+      {
+         length<<=1;
+         log_length++;
+         coeff_limbs = (limbs1+limbs2-1)/length+1;
+         while ((limbs1-1)/coeff_limbs+(limbs2-1)/coeff_limbs+2 > length) coeff_limbs++;
+         output_bits = (2*coeff_limbs+1)*FLINT_BITS;
+         output_bits = (((output_bits - 1) >> (log_length-1)) + 1) << (log_length-1);
+         coeff_limbs = ((output_bits - FLINT_BITS)/FLINT_BITS)/2;
+         if ((long) coeff_limbs < 1L) coeff_limbs = 1;
+         length1 = (limbs1-1)/coeff_limbs+1;
+         length2 = (limbs2-1)/coeff_limbs+1;
+      }
    }
       
    n = output_bits/FLINT_BITS;
@@ -480,7 +525,7 @@ void Z_mpn_mul_precomp_init(Z_mpn_precomp_t precomp, mp_limb_t * data1, unsigned
    
    ZmodF_poly_FFT(poly1, length1 + length2 - 1);
    precomp->type = FFT_PRE;
-   precomp->length = length1 + length2 - 1;
+   precomp->length = length1;
    precomp->length2 = length2;
    precomp->coeff_limbs = coeff_limbs;
    precomp->limbs1 = limbs1;
@@ -495,10 +540,14 @@ void Z_mpn_mul_precomp_clear(Z_mpn_precomp_t precomp)
    {
       ZmodF_poly_stack_clear(precomp->poly);
       free(precomp->poly);
-   }
-   
-   
+   }   
 }
+
+/*   
+   Compute an integer multiplication given a precomputed FFT for 
+   one of the integers.
+   Assumes neither of limbs1, limbs2 is zero. 
+*/
 
 mp_limb_t Z_mpn_mul_precomp(mp_limb_t * res, mp_limb_t * data2, unsigned long limbs2, Z_mpn_precomp_t precomp)
 {
@@ -508,22 +557,21 @@ mp_limb_t Z_mpn_mul_precomp(mp_limb_t * res, mp_limb_t * data2, unsigned long li
    
    Z_split_limbs(poly2, data2, limbs2, precomp->coeff_limbs, precomp->poly->n);
    
-   for (unsigned long i = poly2->length; i < precomp->length2; i++)
+   /*for (unsigned long i = poly2->length; i < precomp->length2; i++)
    {
       clear_limbs(poly2->coeffs[i], poly2->n+1);
    }
-   poly2->length = precomp->length2;
+   poly2->length = precomp->length2;*/
    
-   ZmodF_poly_FFT(poly2, precomp->length);
+   ZmodF_poly_FFT(poly2, precomp->length+poly2->length-1);
    ZmodF_poly_pointwise_mul(poly2, poly2, precomp->poly);
    ZmodF_poly_IFFT(poly2);
    ZmodF_poly_rescale(poly2);
    
    ZmodF_poly_normalise(poly2);
+   clear_limbs(res, precomp->limbs1 + limbs2 - s1);
    
-   clear_limbs(res, precomp->limbs1 + precomp->limbs2 - s1);
-   
-   Z_combine_limbs(res, poly2, precomp->coeff_limbs, 2*precomp->coeff_limbs+1, precomp->limbs1 + precomp->limbs2 - s1);
+   Z_combine_limbs(res, poly2, precomp->coeff_limbs, 2*precomp->coeff_limbs+1, precomp->limbs1 + limbs2 - s1);
    
    ZmodF_poly_stack_clear(poly2);
    

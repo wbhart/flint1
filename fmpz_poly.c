@@ -2163,7 +2163,7 @@ void _fmpz_poly_scalar_mul(fmpz_poly_t output, fmpz_poly_t poly, mp_limb_t * x)
    mp_limb_t * coeffs2 = poly->coeffs;
    long sign1 = x[0];
    
-   if (limbs1 + limbs2 > 1000)
+   if (limbs1 + limbs2 > FLINT_FFT_LIMBS_CROSSOVER*2)
    {
       Z_mpn_precomp_t precomp;
    
@@ -2172,9 +2172,12 @@ void _fmpz_poly_scalar_mul(fmpz_poly_t output, fmpz_poly_t poly, mp_limb_t * x)
       for (long i = 0; i < poly->length; i++)
       {
           total_limbs = limbs1 + ABS(coeffs2[i*(limbs2+1)]);
-          msl = Z_mpn_mul_precomp(coeffs_out + i*limbs_out + 1, coeffs2 + i*(limbs2+1) + 1, ABS(coeffs2[i*(limbs2+1)]), precomp);
-          if (((long) coeffs2[i*(limbs2+1)] ^ sign1) < 0) coeffs_out[i*limbs_out] = -total_limbs + (msl == 0L);
-          else coeffs_out[i*limbs_out] = total_limbs - (msl == 0L);
+          if (total_limbs != limbs1)
+          {
+             msl = Z_mpn_mul_precomp(coeffs_out + i*limbs_out + 1, coeffs2 + i*(limbs2+1) + 1, ABS(coeffs2[i*(limbs2+1)]), precomp);
+             if (((long) coeffs2[i*(limbs2+1)] ^ sign1) < 0) coeffs_out[i*limbs_out] = -total_limbs + (msl == 0L);
+             else coeffs_out[i*limbs_out] = total_limbs - (msl == 0L);
+          } else coeffs_out[i*limbs_out] = 0;
       }
       Z_mpn_mul_precomp_clear(precomp);
    } else

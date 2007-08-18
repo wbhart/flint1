@@ -90,7 +90,7 @@ int main (int argc, const char * argv[])
    unsigned long tweak;
    unsigned long bits;
    
-   for (unsigned long words = 1000UL; words < 500000000; words=floor(words*pow(2.0,1.0/64.0))) 
+   for (unsigned long words = 1000UL; words < 500000000; words=floor(words*pow(2.0,1.0/128.0))) 
    {
        bits = 64*words;
 #ifdef TIMING
