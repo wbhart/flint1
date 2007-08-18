@@ -2578,6 +2578,66 @@ int test_fmpz_poly_div_karatsuba()
    return result; 
 }
 
+int test_fmpz_poly_newton_invert_basecase()
+{
+   mpz_poly_t test_poly;
+   fmpz_poly_t test_mpn_poly, test_mpn_poly2, test_mpn_poly3;
+   int result = 1;
+   unsigned long bits, length, n;
+   
+   mpz_poly_init(test_poly); 
+   
+   for (unsigned long count1 = 0; (count1 < 200) && (result == 1) ; count1++)
+   {
+      bits = random_ulong(1000)+ 2;
+      //bits = 100000;
+      
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
+      fmpz_poly_init(test_mpn_poly2);
+      fmpz_poly_init(test_mpn_poly3);
+      
+      
+      length = random_ulong(128)+1;
+      //length = 12;
+       
+#if DEBUG
+      printf("length = %ld, bits = %ld\n", length, bits);
+#endif
+
+      do {
+         randpoly(test_poly, length, bits); 
+         fmpz_poly_realloc(test_mpn_poly, length);
+         mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
+         _fmpz_poly_normalise(test_mpn_poly);
+      } while (test_mpn_poly->length == 0);
+      
+      _fmpz_poly_set_coeff_ui(test_mpn_poly, test_mpn_poly->length - 1, 1);
+      
+      n = randint(test_mpn_poly->length) + 1;
+      
+#if DEBUG
+      mpz_poly_print(test_poly);printf("\n\n");
+#endif          
+          
+      fmpz_poly_newton_invert_basecase(test_mpn_poly2, test_mpn_poly, n);
+      
+      fmpz_poly_mul(test_mpn_poly3, test_mpn_poly, test_mpn_poly2);
+           
+      for (unsigned long i = 0; i < n - 1; i++)
+      {
+          result &= (test_mpn_poly3->coeffs[(i+test_mpn_poly3->length-n)*(test_mpn_poly3->limbs+1)] == 0);
+      }
+      result &= (test_mpn_poly3->coeffs[(test_mpn_poly3->length-1)*(test_mpn_poly3->limbs+1)] == 1);
+      result &= (test_mpn_poly3->coeffs[(test_mpn_poly3->length-1)*(test_mpn_poly3->limbs+1)+1] == 1);
+      
+      fmpz_poly_clear(test_mpn_poly2);
+      fmpz_poly_clear(test_mpn_poly3);
+   }
+   
+   mpz_poly_clear(test_poly);
+   
+   return result; 
+}
 
 void fmpz_poly_test_all()
 {
@@ -2616,6 +2676,7 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_poly_div_karatsuba_recursive);
    RUN_TEST(fmpz_poly_divrem_karatsuba);
    RUN_TEST(fmpz_poly_div_karatsuba);
+   RUN_TEST(fmpz_poly_newton_invert_basecase);
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");

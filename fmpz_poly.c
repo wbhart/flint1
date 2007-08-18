@@ -3191,3 +3191,27 @@ void fmpz_poly_divrem_karatsuba(fmpz_poly_t Q, fmpz_poly_t R, fmpz_poly_t A, fmp
    
    fmpz_poly_clear(QB);
 }
+
+/*
+   Compute the polynomial X^{2n} / Q. 
+   Used by Newton iteration to bootstrap power series inversion.
+   Q must be monic and have length >= n.
+*/
+
+void fmpz_poly_newton_invert_basecase(fmpz_poly_t Q_inv, fmpz_poly_t Q, unsigned long n)
+{
+   fmpz_poly_t X2n, Qn;
+   
+   fmpz_poly_init2(X2n, 2*n-1, 1);
+   _fmpz_poly_zero_coeffs(X2n, 2*n - 2);
+   _fmpz_poly_set_coeff_ui(X2n, 2*n - 2, 1);
+   X2n->length = 2*n-1;
+   
+   Qn->coeffs = Q->coeffs + (Q->length - n)*(Q->limbs + 1);
+   Qn->limbs = Q->limbs;
+   Qn->length = n;
+   
+   fmpz_poly_div_karatsuba(Q_inv, X2n, Qn); 
+   
+   fmpz_poly_clear(X2n);
+}
