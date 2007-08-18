@@ -2811,7 +2811,8 @@ void fmpz_poly_div_karatsuba_recursive(fmpz_poly_t Q, fmpz_poly_t BQ, fmpz_poly_
       
       fmpz_poly_init(d1q1);
       fmpz_poly_div_karatsuba_recursive(Q, d1q1, p1, d1); //******************************
-      
+      _fmpz_poly_stack_clear(p1);
+
       _fmpz_poly_stack_init(d2q1, d2->length+Q->length-1, d2->limbs+Q->limbs+1); 
       _fmpz_poly_mul(d2q1, d2, Q);
       
@@ -2865,7 +2866,7 @@ void fmpz_poly_div_karatsuba_recursive(fmpz_poly_t Q, fmpz_poly_t BQ, fmpz_poly_
       fmpz_poly_init(q1);
    
       fmpz_poly_div_karatsuba_recursive(q1, d1q1, p1, d1); //******************************
-      _fmpz_poly_stack_clear(p1);
+      _fmpz_poly_stack_clear(p1);   
    }
    
    /* 
@@ -2996,4 +2997,197 @@ void fmpz_poly_div_karatsuba_recursive(fmpz_poly_t Q, fmpz_poly_t BQ, fmpz_poly_
    _fmpz_poly_stack_clear(dq2);
    _fmpz_poly_stack_clear(dq1);
    _fmpz_poly_stack_clear(d2q1);
+}
+
+void fmpz_poly_div_karatsuba(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B)
+{
+   _fmpz_poly_normalise(A);
+   _fmpz_poly_normalise(B);
+         
+   if (A->length < B->length)
+   {
+      _fmpz_poly_zero(Q);
+      
+      return;
+   }
+   
+   if ((B->length <= 4) || (A->length > 2*B->length - 1))
+   {
+      fmpz_poly_div_naive(Q, A, B);
+      
+      return;
+   }
+   
+   fmpz_poly_t d1, d2, p1, q1, q2, dq1, dq2, d1q1, d2q1, d2q2, d1q2, t, temp;
+      
+   unsigned long n1 = (B->length+1)/2;
+   unsigned long n2 = B->length - n1;
+   
+   /* We let B = d1*x^n2 + d2 */
+   d1->length = n1;
+   d2->length = n2;
+   d1->limbs = B->limbs;
+   d2->limbs = B->limbs;
+   d1->coeffs = B->coeffs + n2*(B->limbs+1);
+   d2->coeffs = B->coeffs;
+   
+   if (A->length <= n1+2*n2-1)
+   {
+      temp->length = A->length - (n1+n2-1);
+      temp->limbs = A->limbs;
+      temp->coeffs = A->coeffs + (n1+n2-1)*(A->limbs+1);
+      _fmpz_poly_stack_init(p1, temp->length+n1-1, A->limbs);
+      _fmpz_poly_left_shift(p1, temp, n1-1);
+      p1->length = temp->length+n1-1;
+      
+      fmpz_poly_init(d1q1);
+      fmpz_poly_div_karatsuba_recursive(Q, d1q1, p1, d1); //******************************
+      fmpz_poly_clear(d1q1);
+      _fmpz_poly_stack_clear(p1);
+            
+      return;   
+   } else
+   {
+   /* 
+      We let A = a1*x^(3n-1) + a2*x^(2n-1) + a3 
+      where a1 and a2 are length n and a3 is length 2n-1 
+      We set p1 = a1*x^(n-1), so it has length 2n-1
+   */
+   /* 
+      We let A = a1*x^(n1+2*n2-1) + a2*x^(n1+n2-1) + a3 
+      where a1 is length n1 and a2 is length n2 and a3 is length n1+n2-1 
+      We set p1 = a1*x^(n2-1), so it has length n1+n2-1
+   */
+      temp->length = A->length - (n1+2*n2-1);
+      temp->limbs = A->limbs;
+      temp->coeffs = A->coeffs + (n1+2*n2-1)*(A->limbs+1);
+      _fmpz_poly_stack_init(p1, temp->length+n1-1, A->limbs);
+      _fmpz_poly_left_shift(p1, temp, n1-1);
+      p1->length = temp->length+n1-1;
+   
+      /* 
+         Set q1 to p1 div d1 
+         This is an 2n-1 by n division so 
+         q1 ends up being length n
+         d1q1 = d1*q1 is length 2n-1
+      */
+      /* 
+         Set q1 to p1 div d1 
+         This is a 2*n1-1 by n1 division so 
+         q1 ends up being length n1
+         d1q1 = d1*q1 is length 2*n1-1
+      */
+      fmpz_poly_init(d1q1);
+      fmpz_poly_init(q1);
+   
+      fmpz_poly_div_karatsuba_recursive(q1, d1q1, p1, d1); //******************************
+      _fmpz_poly_stack_clear(p1);
+   }
+   
+   /* 
+      Compute d2q1 = d2*q1 
+      which ends up being length 2n-1
+   */
+   /* 
+      Compute d2q1 = d2*q1 
+      which ends up being length n1+n2-1
+   */  
+   
+   _fmpz_poly_stack_init(d2q1, d2->length+q1->length-1, d2->limbs+q1->limbs+1); 
+   _fmpz_poly_mul(d2q1, d2, q1);
+   
+   /* 
+      Compute dq1 = d1*q1*x^n + d2*q1
+      dq1 is then of length 3n-1
+   */
+   /* 
+      Compute dq1 = d1*q1*x^n2 + d2*q1
+      dq1 is then of length 2*n1+n2-1
+   */
+   
+   
+   _fmpz_poly_stack_init(dq1, d1q1->length + n2, B->limbs+q1->limbs+1);
+   dq1->length = d1q1->length + n2;
+   
+   _fmpz_poly_zero_coeffs(dq1, n2);
+   temp->length = d1q1->length;
+   temp->limbs = dq1->limbs;
+   temp->coeffs = dq1->coeffs + n2*(dq1->limbs+1);
+   _fmpz_poly_set(temp, d1q1);
+   fmpz_poly_clear(d1q1);
+   _fmpz_poly_add(dq1, dq1, d2q1);
+
+   
+   /*
+      Compute t = p1*x^(2n-1) + p2*x^(n-1) - dq1
+      which has length 3*n-1, but the first
+      n coefficients will be 0, so it has 
+      effective length 2n-1
+   */
+   /*
+      Compute t = p1*x^(n1+n2-1) + p2*x^(n1-1) - dq1 (shifted left by 1 if n1 > n2)
+      which has length 2*n1+n2-1, but we are not interested 
+      in the first n1 coefficients, so it has 
+      effective length n1+n2-1
+   */
+   
+   temp->length = A->length - (n1+n2-1);
+   temp->limbs = A->limbs;
+   temp->coeffs = A->coeffs + (n1+n2-1)*(A->limbs+1);
+   _fmpz_poly_stack_init(t, 2*n1+n2-1, FLINT_MAX(A->limbs,dq1->limbs)+1);
+   _fmpz_poly_left_shift(t, temp, n1-1);
+   t->length = temp->length+n1-1;
+   _fmpz_poly_sub(t, t, dq1);
+   _fmpz_poly_normalise(t); 
+     
+   /*
+      Compute q2 = t div d1
+      It is a 2*n-1 by n division, so
+      the length of q2 will be n
+      Also compute d1q2 of length 2n-1
+   */
+   /*
+      Compute q2 = t div d1
+      It is a n1+n2-1 by n1 division, so
+      the length of q2 will be n2
+      Also compute d1q2 of length n1+n2-1
+   */
+   fmpz_poly_init(d1q2);
+   fmpz_poly_init(q2);
+   fmpz_poly_div_karatsuba_recursive(q2, d1q2, t, d1); //******************************
+   _fmpz_poly_stack_clear(t);  
+   _fmpz_poly_stack_clear(dq1);
+   _fmpz_poly_stack_clear(d2q1);
+   fmpz_poly_clear(d1q2);
+      
+   /*
+      Write out Q = q1*x^n2 + q2
+      Q has length n1+n2
+   */
+   fmpz_poly_fit_length(Q, q1->length+n2);
+   fmpz_poly_fit_limbs(Q, FLINT_MAX(q1->limbs, q2->limbs));
+   _fmpz_poly_set(Q, q2);
+   fmpz_poly_clear(q2);
+   Q->length = q1->length + n2;
+   temp->length = q1->length;
+   temp->limbs = Q->limbs;
+   temp->coeffs = Q->coeffs + n2*(Q->limbs+1);
+   _fmpz_poly_set(temp, q1);
+   fmpz_poly_clear(q1);
+}
+
+void fmpz_poly_divrem_karatsuba(fmpz_poly_t Q, fmpz_poly_t R, fmpz_poly_t A, fmpz_poly_t B)
+{
+   fmpz_poly_t QB;
+   
+   fmpz_poly_init(QB);
+   
+   fmpz_poly_div_karatsuba_recursive(Q, QB, A, B);
+   
+   fmpz_poly_fit_limbs(R, FLINT_MAX(QB->limbs, A->limbs)+1);
+   fmpz_poly_fit_length(R, A->length);
+   _fmpz_poly_sub(R, A, QB);
+   _fmpz_poly_normalise(R);
+   
+   fmpz_poly_clear(QB);
 }
