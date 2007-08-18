@@ -2102,6 +2102,12 @@ void _fmpz_poly_mul_SS_trunc(fmpz_poly_t output, fmpz_poly_p input1,
    ZmodF_poly_stack_clear(poly1);
 }
 
+/*
+   A truncating polynomial multiplication.
+   The number of terms require, _trunc_ can be any value, but the function is
+   tuned for truncation to length n where both inputs have length approximately n.
+*/
+
 void _fmpz_poly_mul_trunc_n(fmpz_poly_t output, fmpz_poly_t input1, 
                                 fmpz_poly_t input2, unsigned long trunc)
 {
@@ -2119,6 +2125,8 @@ void _fmpz_poly_mul_trunc_n(fmpz_poly_t output, fmpz_poly_t input1,
    
    unsigned long bits1 = _fmpz_poly_bits(input1);
    unsigned long bits2 = (input1 == input2) ? bits1 : _fmpz_poly_bits(input2);
+   bits1 = ABS(bits1);
+   bits2 = ABS(bits2);
    
    if ((bits1 + bits2 >= 64) && (input1->length + input2->length <= 10)) 
    {
@@ -2181,6 +2189,8 @@ void _fmpz_poly_mul(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_t input2)
    
    unsigned long bits1 = _fmpz_poly_bits(input1);
    unsigned long bits2 = (input1 == input2) ? bits1 : _fmpz_poly_bits(input2);
+   bits1 = ABS(bits1);
+   bits2 = ABS(bits2);
    
    if (3*(bits1 + bits2) >= input1->length + input2->length)
    {
@@ -2431,6 +2441,29 @@ void fmpz_poly_mul(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_t input2)
    
    _fmpz_poly_mul(output, input1, input2);
    fmpz_poly_set_length(output, input1->length + input2->length - 1);
+}
+
+void fmpz_poly_mul_trunc_n(fmpz_poly_t output, fmpz_poly_t input1, 
+                                          fmpz_poly_t input2, unsigned long trunc)
+{
+   unsigned long limbs = input1->limbs + input2->limbs;
+   
+   long bits1, bits2;
+      
+   bits1 = _fmpz_poly_bits(input1);
+   bits2 = (input1 == input2) ? bits1 : _fmpz_poly_bits(input2);
+      
+   unsigned long sign = ((bits1 < 0) || (bits2 < 0));
+   unsigned long length = (input1->length > input2->length) ? input2->length : input1->length;
+   unsigned log_length = 0;
+   while ((1<<log_length) < length) log_length++;
+   unsigned long bits = ABS(bits1) + ABS(bits2) + log_length + sign; 
+   
+   fmpz_poly_fit_limbs(output, (bits-1)/FLINT_BITS+1);
+   fmpz_poly_fit_length(output, FLINT_MIN(input1->length + input2->length - 1, trunc));
+   
+   _fmpz_poly_mul_trunc_n(output, input1, input2, trunc);
+   fmpz_poly_set_length(output, FLINT_MIN(input1->length + input2->length - 1, trunc));
 }
 
 void fmpz_poly_div_naive(fmpz_poly_t Q, fmpz_poly_t R, fmpz_poly_t A, fmpz_poly_t B)

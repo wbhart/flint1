@@ -50,18 +50,21 @@ int main(int argc, char* argv[])
    fmpz_poly_init(F8);
    
    fmpz_poly_fit_length(F2, N);
+   
    for (long i = 0; i < N; i++)
       fmpz_poly_set_coeff_si(F2, i, values[i]);
 
    free(values);
    
    // compute F^4, truncated to length N
-   fmpz_poly_mul(F4, F2, F2);
-   fmpz_poly_truncate(F4, N);
+   //fmpz_poly_mul(F4, F2, F2);
+   //fmpz_poly_truncate(F4, N);
+   fmpz_poly_mul_trunc_n(F4, F2, F2, N);
    
    // compute F^8, truncated to length N
-   fmpz_poly_mul(F8, F4, F4);
-   fmpz_poly_truncate(F8, N);
+   //fmpz_poly_mul(F8, F4, F4);
+   //fmpz_poly_truncate(F8, N);
+   fmpz_poly_mul_trunc_n(F8, F4, F4, N);
    
    // print out last coefficient
    mpz_t x;
