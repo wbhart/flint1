@@ -2102,6 +2102,51 @@ void _fmpz_poly_mul_SS_trunc(fmpz_poly_t output, fmpz_poly_p input1,
    ZmodF_poly_stack_clear(poly1);
 }
 
+void _fmpz_poly_mul_trunc_n(fmpz_poly_t output, fmpz_poly_t input1, 
+                                fmpz_poly_t input2, unsigned long trunc)
+{
+   if ((input1->length == 0) || (input2->length == 0)) 
+   {
+      _fmpz_poly_zero(output);
+      return;
+   }
+
+   if ((input1->length <= 3) && (input2->length <= 3)) 
+   {
+      _fmpz_poly_mul_karatsuba_trunc(output, input1, input2, trunc);
+      return;
+   }
+   
+   unsigned long bits1 = _fmpz_poly_bits(input1);
+   unsigned long bits2 = (input1 == input2) ? bits1 : _fmpz_poly_bits(input2);
+   
+   if ((bits1 + bits2 >= 64) && (input1->length + input2->length <= 10)) 
+   {
+      _fmpz_poly_mul_karatsuba_trunc(output, input1, input2, trunc);
+      return;
+   }
+   
+   if ((bits1 + bits2 >= 370) && (input1->length + input2->length <= 32)) 
+   {
+      _fmpz_poly_mul_karatsuba_trunc(output, input1, input2, trunc);
+      return;
+   }   
+   
+   if (bits1 + bits2 < 512)
+   {
+      _fmpz_poly_mul_KS_trunc(output, input1, input2, trunc);
+      return;
+   } 
+   
+   if (3*(bits1 + bits2) >= input1->length + input2->length)
+   {
+      _fmpz_poly_mul_SS_trunc(output, input1, input2, trunc);
+      return;
+   } 
+   
+   _fmpz_poly_mul_KS_trunc(output, input1, input2, trunc);     
+}
+
 void _fmpz_poly_mul(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_t input2)
 {
    if ((input1->length == 0) || (input2->length == 0)) 
