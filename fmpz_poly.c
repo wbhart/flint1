@@ -2466,7 +2466,7 @@ void fmpz_poly_mul_trunc_n(fmpz_poly_t output, fmpz_poly_t input1,
    fmpz_poly_set_length(output, FLINT_MIN(input1->length + input2->length - 1, trunc));
 }
 
-void fmpz_poly_div_naive(fmpz_poly_t Q, fmpz_poly_t R, fmpz_poly_t A, fmpz_poly_t B)
+void fmpz_poly_divrem_naive(fmpz_poly_t Q, fmpz_poly_t R, fmpz_poly_t A, fmpz_poly_t B)
 {
    fmpz_poly_t qB;
    
@@ -2582,10 +2582,6 @@ void fmpz_poly_div_naive(fmpz_poly_t Q, fmpz_poly_t R, fmpz_poly_t A, fmpz_poly_
          NORM(coeff_Q);
          
          fmpz_poly_init2(qB, B->length, B->limbs+ABS(coeff_Q[0]));
-         for (unsigned long i = 0; i < B->length; i++)
-         {
-            if (FLINT_ABS(B->coeffs[i*(B->limbs+1)]) > B->limbs) printf("Error\n");
-         }
          _fmpz_poly_scalar_mul(qB, B, coeff_Q); 
          
          fmpz_poly_fit_limbs(R, qB->limbs+1);
@@ -2607,13 +2603,165 @@ void fmpz_poly_div_naive(fmpz_poly_t Q, fmpz_poly_t R, fmpz_poly_t A, fmpz_poly_
    flint_heap_free(rem);
 }
 
+/*
+   Divide the polynomial A by the polynomial B but do not compute the remainder
+*/
+
+void fmpz_poly_div_naive(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B)
+{
+   fmpz_poly_t qB, R;
+   
+   fmpz_poly_init(R);
+   
+   _fmpz_poly_normalise(A);
+   _fmpz_poly_normalise(B);
+   if (B->length == 0)
+   {
+      printf("Error: Divide by zero\n");
+      abort();
+   }
+   
+   long coeff = A->length-1;
+   unsigned long size_A = A->limbs + 1;
+   unsigned long size_B = B->limbs + 1;
+   unsigned long size_R;
+   unsigned long limbs_R;
+   unsigned long size_Q;
+   unsigned long limbs_Q;
+   mp_limb_t * coeffs_A = A->coeffs;
+   mp_limb_t * coeffs_B = B->coeffs;
+   mp_limb_t * coeff_i = coeffs_A + coeff*size_A;
+   mp_limb_t * B_lead = coeffs_B + (B->length-1)*size_B; 
+   mp_limb_t * coeff_Q;
+   mp_limb_t * coeffs_R;
+
+   NORM(B_lead);
+   
+   unsigned long size_B_lead = ABS(B_lead[0]);
+   mp_limb_t sign_B_lead = B_lead[0];
+   mp_limb_t sign_quot;
+   
+   // Find the first coefficient greater than B_lead
+   while (1)
+   {
+      if (coeff < (long) B->length - 1) break;
+      NORM(coeff_i);
+      if (ABS(coeff_i[0]) < size_B_lead)
+      {
+         coeff--;
+         coeff_i -= size_A;
+      } else if (ABS(coeff_i[0]) > size_B_lead) break;
+      else if (mpn_cmp(coeff_i+1, B_lead+1, size_B_lead) >= 0) break;
+      else 
+      {
+         coeff--;
+         coeff_i -= size_A;         
+      }    
+   }
+   
+   mp_limb_t * rem = (mp_limb_t *) flint_heap_alloc(size_B_lead);
+   
+   // Set R to A
+   fmpz_poly_fit_length(R, A->length);
+   fmpz_poly_fit_limbs(R, A->limbs);
+   R->length = A->length;
+   _fmpz_poly_set(R, A);
+   coeffs_R = R->coeffs;
+   size_R = R->limbs+1;
+      
+   // Set the quotient to zero if R is shorter than B
+   if (coeff >= (long) B->length - 1)
+   {
+      fmpz_poly_fit_length(Q, coeff-B->length+2);
+      fmpz_poly_fit_limbs(Q, 1);
+      Q->length = coeff-B->length+2;
+      size_Q = Q->limbs+1;
+   } else _fmpz_poly_zero(Q);
+   
+   while (coeff >= (long) B->length - 1)
+   {
+      coeff_Q = Q->coeffs+(coeff-B->length+1)*size_Q;
+      // Set quotient coefficients to 0 if the R coefficients are already smaller than B
+      while (1)
+      {
+         if (coeff < (long) B->length - 1) break;
+         NORM(coeffs_R+coeff*size_R);
+         if (ABS(coeffs_R[coeff*size_R]) < size_B_lead)
+         {
+            coeff_Q[0] = 0;
+            coeff_Q -= size_Q;
+            coeff--;
+         } else if (ABS(coeffs_R[coeff*size_R]) > size_B_lead) break;
+         else if (mpn_cmp(coeffs_R+coeff*size_R+1, B_lead+1, size_B_lead) >= 0) break;
+         else 
+         {
+            coeff_Q[0] = 0;
+            coeff_Q -= size_Q;
+            coeff--;
+         }    
+      }
+      
+      if (coeff >= (long) B->length - 1)
+      {
+         // else compute the quotient of the coefficient by B_lead
+         limbs_Q = ABS(coeffs_R[coeff*size_R]) - size_B_lead + 1;
+         fmpz_poly_fit_limbs(Q, limbs_Q);
+         size_Q = Q->limbs+1;
+         coeff_Q = Q->coeffs+(coeff - B->length+1)*size_Q;
+         sign_quot = ABS(coeffs_R[coeff*size_R]) - size_B_lead + 1;
+         if (((long) (sign_B_lead ^ coeffs_R[coeff*size_R])) < 0) 
+         {
+            mpn_tdiv_qr(coeff_Q+1, rem, 0, coeffs_R+coeff*size_R+1, ABS(coeffs_R[coeff*size_R]), B_lead+1, size_B_lead);
+            coeff_Q[0] = -sign_quot;
+            for (unsigned long i = 0; i < size_B_lead; i++)
+            {
+               if (rem[i])
+               {
+                  __fmpz_poly_sub_coeff_ui(coeff_Q,1);
+                  break;
+               }
+            }
+         }
+         else 
+         {
+            mpn_tdiv_qr(coeff_Q+1, rem, 0, coeffs_R+coeff*size_R+1, ABS(coeffs_R[coeff*size_R]), B_lead+1, size_B_lead);
+            coeff_Q[0] = sign_quot;
+         }
+         NORM(coeff_Q);
+         
+         if (coeff >= (long) B->length)
+         {
+            // Now multiply B by this new quotient coefficient and subtract from R
+            fmpz_poly_init2(qB, B->length, B->limbs+ABS(coeff_Q[0]));
+            _fmpz_poly_scalar_mul(qB, B, coeff_Q); 
+         
+            fmpz_poly_fit_limbs(R, qB->limbs+1);
+            coeffs_R = R->coeffs;
+            size_R = R->limbs+1;
+      
+            fmpz_poly_t R_sub;
+            R_sub->coeffs = coeffs_R+(coeff - B->length + 1)*size_R;
+            R_sub->limbs = R->limbs;
+            R_sub->length = B->length;
+            _fmpz_poly_sub(R_sub, R_sub, qB);
+
+            fmpz_poly_clear(qB);
+         }
+         coeff--;
+      }
+   }
+   
+   fmpz_poly_clear(R);
+   flint_heap_free(rem);
+}
+
 /* 
    Integer polynomial division using a Karatsuba-like algorithm.
    We assume for now that the length of B is 2*n = 2^l, and that the length of A is 4*n-1 
-   Note BQ is not the remainder, but B*Q, so the remainder R = A-BQ
+   Note BQ is not the remainder but B*Q, so the remainder R = A-BQ
 */
  
-void fmpz_poly_div_karatsuba(fmpz_poly_t Q, fmpz_poly_t BQ, fmpz_poly_t A, fmpz_poly_t B)
+void fmpz_poly_div_karatsuba_recursive(fmpz_poly_t Q, fmpz_poly_t BQ, fmpz_poly_t A, fmpz_poly_t B)
 {
    _fmpz_poly_normalise(A);
    _fmpz_poly_normalise(B);
@@ -2630,7 +2778,7 @@ void fmpz_poly_div_karatsuba(fmpz_poly_t Q, fmpz_poly_t BQ, fmpz_poly_t A, fmpz_
    {
       fmpz_poly_t Rb;
       fmpz_poly_init(Rb);
-      fmpz_poly_div_naive(Q, Rb, A, B);
+      fmpz_poly_divrem_naive(Q, Rb, A, B);
       fmpz_poly_fit_length(BQ, A->length);
       fmpz_poly_fit_limbs(BQ, FLINT_MAX(A->limbs, Rb->limbs)+1);
       _fmpz_poly_sub(BQ, A, Rb);
@@ -2662,7 +2810,7 @@ void fmpz_poly_div_karatsuba(fmpz_poly_t Q, fmpz_poly_t BQ, fmpz_poly_t A, fmpz_
       p1->length = temp->length+n1-1;
       
       fmpz_poly_init(d1q1);
-      fmpz_poly_div_karatsuba(Q, d1q1, p1, d1); //******************************
+      fmpz_poly_div_karatsuba_recursive(Q, d1q1, p1, d1); //******************************
       
       _fmpz_poly_stack_init(d2q1, d2->length+Q->length-1, d2->limbs+Q->limbs+1); 
       _fmpz_poly_mul(d2q1, d2, Q);
@@ -2716,7 +2864,7 @@ void fmpz_poly_div_karatsuba(fmpz_poly_t Q, fmpz_poly_t BQ, fmpz_poly_t A, fmpz_
       fmpz_poly_init(d1q1);
       fmpz_poly_init(q1);
    
-      fmpz_poly_div_karatsuba(q1, d1q1, p1, d1); //******************************
+      fmpz_poly_div_karatsuba_recursive(q1, d1q1, p1, d1); //******************************
       _fmpz_poly_stack_clear(p1);
    }
    
@@ -2789,7 +2937,7 @@ void fmpz_poly_div_karatsuba(fmpz_poly_t Q, fmpz_poly_t BQ, fmpz_poly_t A, fmpz_
    */
    fmpz_poly_init(d1q2);
    fmpz_poly_init(q2);
-   fmpz_poly_div_karatsuba(q2, d1q2, t, d1); //******************************
+   fmpz_poly_div_karatsuba_recursive(q2, d1q2, t, d1); //******************************
    _fmpz_poly_stack_clear(t);
       
    /*
