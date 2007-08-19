@@ -213,6 +213,8 @@ void _fmpz_poly_neg(fmpz_poly_t output, fmpz_poly_t input);
 
 void _fmpz_poly_truncate(fmpz_poly_t poly, unsigned long trunc);
 
+void _fmpz_poly_reverse(fmpz_poly_t output, fmpz_poly_t input, unsigned long length);
+
 void _fmpz_poly_add(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_t input2);
 
 void __fmpz_poly_add_coeff_ui(mp_limb_t * output, unsigned long x);

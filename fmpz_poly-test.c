@@ -2639,6 +2639,55 @@ int test_fmpz_poly_newton_invert_basecase()
    return result; 
 }
 
+int test_fmpz_poly_reverse()
+{
+   mpz_poly_t test_poly;
+   fmpz_poly_t test_mpn_poly, test_mpn_poly2;
+   int result = 1;
+   unsigned long bits, length, length2;
+   
+   mpz_poly_init(test_poly); 
+   
+   for (unsigned long count1 = 0; (count1 < 5000) && (result == 1) ; count1++)
+   {
+      bits = random_ulong(100)+ 1;
+      
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
+      fmpz_poly_init2(test_mpn_poly2, 1, (bits-1)/FLINT_BITS+1);   
+      
+      length = random_ulong(100)+1;
+      length2 = length + randint(200);
+       
+#if DEBUG
+      printf("length = %ld, length2 = %ld, bits = %ld\n", length, length2, bits);
+#endif
+
+      randpoly(test_poly, length, bits); 
+      fmpz_poly_realloc(test_mpn_poly, length);
+      mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
+      _fmpz_poly_normalise(test_mpn_poly);
+      
+      fmpz_poly_realloc(test_mpn_poly2, length2);
+      
+      
+#if DEBUG
+      mpz_poly_print(test_poly);printf("\n\n");
+#endif          
+          
+      _fmpz_poly_reverse(test_mpn_poly2, test_mpn_poly, length2);
+      _fmpz_poly_reverse(test_mpn_poly2, test_mpn_poly2, length2);
+           
+      result = _fmpz_poly_equal(test_mpn_poly2, test_mpn_poly);
+      
+      fmpz_poly_clear(test_mpn_poly);
+      fmpz_poly_clear(test_mpn_poly2);
+   }
+   
+   mpz_poly_clear(test_poly);
+   
+   return result; 
+}
+
 void fmpz_poly_test_all()
 {
    int success, all_success = 1;
@@ -2677,6 +2726,7 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_poly_divrem_karatsuba);
    RUN_TEST(fmpz_poly_div_karatsuba);
    RUN_TEST(fmpz_poly_newton_invert_basecase);
+   RUN_TEST(fmpz_poly_reverse);
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");

@@ -331,6 +331,65 @@ void _fmpz_poly_right_shift(fmpz_poly_t output, fmpz_poly_t input, unsigned long
    _fmpz_poly_set(output, part);
 }
 
+/* 
+   Sets output to the reverse of input (i.e. reverse the order of the coefficients)
+   assuming input to be a polynomial with _length_ coefficients (it may have a length
+   that is less than _length_).
+*/ 
+
+void _fmpz_poly_reverse(fmpz_poly_t output, fmpz_poly_t input, unsigned long length)
+{
+   unsigned long coeff_limbs;
+   unsigned long size_in = input->limbs + 1;
+   unsigned long size_out = output->limbs + 1;
+   long i;
+   
+   if (input != output)
+   {
+      for (i = 0; i < FLINT_MIN(length, input->length); i++)
+      {
+         coeff_limbs = ABS(input->coeffs[i*size_in]) + 1;
+         copy_limbs(output->coeffs + (length - i - 1)*size_out, input->coeffs + i*size_in, coeff_limbs);
+      }
+      for ( ; i < length; i++)
+      {
+         output->coeffs[(length - i - 1)*size_out] = 0;
+      }
+      output->length = length;
+      _fmpz_poly_normalise(output);
+   } else
+   {
+      mp_limb_t * temp = (mp_limb_t *) flint_stack_alloc(size_in);
+      unsigned long coeff_limbs2;
+      
+      for (i = 0; i < length/2; i++)
+      {
+         if (i < input->length)
+         {
+            coeff_limbs = ABS(input->coeffs[i*size_in]) + 1;
+            copy_limbs(temp, input->coeffs + i*size_in, coeff_limbs);
+         } else
+         {
+            coeff_limbs = 1;
+            temp[0] = 0;            
+         }
+         if (length - i - 1 < input->length)
+         {
+            coeff_limbs2 = ABS(input->coeffs[(length - i - 1)*size_in]) + 1;
+            copy_limbs(input->coeffs + i*size_in, input->coeffs + (length - i - 1)*size_in, coeff_limbs2);
+         } else
+         {
+            input->coeffs[i*size_in] = 0;
+         }
+         copy_limbs(input->coeffs + (length - i - 1)*size_in, temp, coeff_limbs);
+      }
+      if ((length & 1) && (i >= input->length)) input->coeffs[i*size_in] = 0;
+
+      input->length = length;
+      _fmpz_poly_normalise(input);
+   }
+}
+
 /*
     Adds two coefficients together
 */
