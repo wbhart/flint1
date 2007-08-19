@@ -373,5 +373,7 @@ void fmpz_poly_newton_invert_basecase(fmpz_poly_t Q_inv, fmpz_poly_t Q, unsigned
 
 void fmpz_poly_newton_invert(fmpz_poly_t Q_inv, fmpz_poly_t Q, unsigned long n);
 
+void fmpz_poly_div_series(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B, unsigned long n);
+
 // *************** end of file
 #endif

@@ -3317,3 +3317,18 @@ void fmpz_poly_newton_invert(fmpz_poly_t Q_inv, fmpz_poly_t Q, unsigned long n)
    fmpz_poly_clear(prod);
    fmpz_poly_clear(g0);
 }
+
+/* 
+   Yields a precision n power series quotient of A by B assuming A and B are both 
+   given to precision n and B is normalised (i.e. constant coefficient is 1).
+*/
+
+void fmpz_poly_div_series(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B, unsigned long n)
+{
+   fmpz_poly_t B_inv;
+   fmpz_poly_init(B_inv);
+   fmpz_poly_newton_invert(B_inv, B, n);
+   fmpz_poly_mul_trunc_n(Q, B_inv, A, n);
+   
+   fmpz_poly_clear(B_inv);    
+}
