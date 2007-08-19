@@ -3274,3 +3274,46 @@ void fmpz_poly_newton_invert_basecase(fmpz_poly_t Q_inv, fmpz_poly_t Q, unsigned
    
    fmpz_poly_clear(X2n);
 }
+
+#define FLINT_NEWTON_INVERSE_BASECASE_CUTOFF 16
+
+/*
+   Recursively compute 1 / Q mod x^n using Newton iteration
+   Assumes Q is given to the full precision n required and has constant term 1
+*/
+
+void fmpz_poly_newton_invert(fmpz_poly_t Q_inv, fmpz_poly_t Q, unsigned long n)
+{
+   if (n < FLINT_NEWTON_INVERSE_BASECASE_CUTOFF)
+   {
+      fmpz_poly_t Q_rev;
+      fmpz_poly_init(Q_rev);
+      fmpz_poly_fit_length(Q_rev, n);
+      fmpz_poly_fit_limbs(Q_rev, Q->limbs);
+      _fmpz_poly_reverse(Q_rev, Q, n);
+      fmpz_poly_newton_invert_basecase(Q_inv, Q_rev, n);
+      fmpz_poly_fit_length(Q_inv, n);
+      _fmpz_poly_reverse(Q_inv, Q_inv, n);
+      fmpz_poly_clear(Q_rev);
+      
+      return;
+   }
+   
+   unsigned long m = (n+1)/2;
+   
+   fmpz_poly_t g0, prod, prod2;
+   fmpz_poly_init(g0);
+   fmpz_poly_init(prod);
+   fmpz_poly_init(prod2);
+   fmpz_poly_newton_invert(g0, Q, m);
+   fmpz_poly_mul_trunc_n(prod, Q, g0, n);
+   __fmpz_poly_sub_coeff_ui(prod->coeffs, 1);
+   fmpz_poly_mul_trunc_n(prod2, prod, g0, n);
+   fmpz_poly_fit_length(Q_inv, n);
+   fmpz_poly_fit_limbs(Q_inv, FLINT_MAX(prod2->limbs, g0->limbs)+1);
+   _fmpz_poly_sub(Q_inv, g0, prod2);
+   
+   fmpz_poly_clear(prod2);
+   fmpz_poly_clear(prod);
+   fmpz_poly_clear(g0);
+}
