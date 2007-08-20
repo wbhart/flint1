@@ -106,6 +106,8 @@ void _fmpz_poly_stack_init(fmpz_poly_t poly, unsigned long alloc, unsigned long 
 
 void _fmpz_poly_stack_clear(fmpz_poly_t poly);
 
+void _fmpz_poly_check(fmpz_poly_t poly);
+
 static inline
 mp_limb_t * _fmpz_poly_get_coeff_ptr(fmpz_poly_t poly, unsigned long n)
 {
@@ -374,6 +376,8 @@ void fmpz_poly_newton_invert_basecase(fmpz_poly_t Q_inv, fmpz_poly_t Q, unsigned
 void fmpz_poly_newton_invert(fmpz_poly_t Q_inv, fmpz_poly_t Q, unsigned long n);
 
 void fmpz_poly_div_series(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B, unsigned long n);
+
+void fmpz_poly_div_newton(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B);
 
 // *************** end of file
 #endif

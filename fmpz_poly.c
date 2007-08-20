@@ -49,6 +49,46 @@ void _fmpz_poly_stack_clear(fmpz_poly_t poly)
    flint_stack_release();
 }
 
+/*
+   Used for debugging polynomial code
+   Checks that length <= alloc and that both are positive or zero
+   Checks that limbs >= 0 otherwise
+   Checks that each coefficient has at most _limbs_ limbs 
+*/
+
+void _fmpz_poly_check(fmpz_poly_t poly)
+{
+   if ((long) poly->alloc < 0)
+   {
+      printf("Error: Poly alloc < 0\n");
+      abort();
+   }
+   if ((long) poly->length < 0)
+   {
+      printf("Error: Poly length < 0\n");
+      abort();
+   }
+   if (poly->length > poly->alloc) 
+   {
+      printf("Error: Poly length = %ld > alloc = %ld\n", poly->length, poly->alloc);
+      abort();
+   }
+   if ((long) poly->limbs < 0) 
+   {
+      printf("Error: Poly limbs < 0\n");
+      abort();
+   }
+   for (unsigned long i = 0; i < poly->length; i++)
+   {
+      if (FLINT_ABS(poly->coeffs[i*(poly->limbs+1)]) > poly->limbs)
+      {
+         printf("Error: coefficient %ld is to large (%ld limbs vs %ld limbs)\n", 
+                        i, FLINT_ABS(poly->coeffs[i*(poly->limbs+1)]), poly->limbs);
+         abort();
+      }
+   }
+}
+
 
 // retrieves coefficient #n as an mpz, no bounds checking
 void _fmpz_poly_get_coeff_mpz(mpz_t x, fmpz_poly_t poly, unsigned long n)
@@ -2505,13 +2545,11 @@ void fmpz_poly_mul(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_t input2)
 void fmpz_poly_mul_trunc_n(fmpz_poly_t output, fmpz_poly_t input1, 
                                           fmpz_poly_t input2, unsigned long trunc)
 {
-   unsigned long limbs = input1->limbs + input2->limbs;
-   
    long bits1, bits2;
       
    bits1 = _fmpz_poly_bits(input1);
    bits2 = (input1 == input2) ? bits1 : _fmpz_poly_bits(input2);
-      
+     
    unsigned long sign = ((bits1 < 0) || (bits2 < 0));
    unsigned long length = (input1->length > input2->length) ? input2->length : input1->length;
    unsigned log_length = 0;
@@ -2521,7 +2559,7 @@ void fmpz_poly_mul_trunc_n(fmpz_poly_t output, fmpz_poly_t input1,
    fmpz_poly_fit_limbs(output, (bits-1)/FLINT_BITS+1);
    fmpz_poly_fit_length(output, FLINT_MIN(input1->length + input2->length - 1, trunc));
    
-   _fmpz_poly_mul_trunc_n(output, input1, input2, trunc);
+   _fmpz_poly_mul_trunc_n(output, input1, input2, FLINT_MIN(input1->length + input2->length - 1, trunc));
    fmpz_poly_set_length(output, FLINT_MIN(input1->length + input2->length - 1, trunc));
 }
 
@@ -3331,4 +3369,34 @@ void fmpz_poly_div_series(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B, unsigned 
    fmpz_poly_mul_trunc_n(Q, B_inv, A, n);
    
    fmpz_poly_clear(B_inv);    
+}
+
+/*
+   Polynomial division of A by B
+   The remainder is not computed, to save time
+   B is assumed to be monic
+*/
+
+void fmpz_poly_div_newton(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B)
+{
+   if (A->length < B->length)
+   {
+      fmpz_poly_set_coeff_si(Q, 0, 1);
+      return;
+   }
+   
+   fmpz_poly_t A_rev, B_rev;
+   fmpz_poly_init2(A_rev, A->length, A->limbs);
+   fmpz_poly_init2(B_rev, B->length, B->limbs);
+   
+   _fmpz_poly_reverse(A_rev, A, A->length);
+   _fmpz_poly_reverse(B_rev, B, B->length);
+   
+   fmpz_poly_div_series(Q, A_rev, B_rev, A->length - B->length + 1);
+   
+   _fmpz_poly_reverse(Q, Q, A->length - B->length + 1);
+   _fmpz_poly_normalise(Q);
+   
+   fmpz_poly_clear(B_rev);
+   fmpz_poly_clear(A_rev);
 }
