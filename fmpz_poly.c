@@ -3381,7 +3381,7 @@ void fmpz_poly_div_newton(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B)
 {
    if (A->length < B->length)
    {
-      fmpz_poly_set_coeff_si(Q, 0, 1);
+      fmpz_poly_set_coeff_si(Q, 0, 0);
       return;
    }
    

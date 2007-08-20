@@ -2850,6 +2850,8 @@ int test_fmpz_poly_div_newton()
       randpoly(test_poly2, length2, bits2);     
       fmpz_poly_realloc(test_mpn_poly2, length2);
       mpz_poly_to_fmpz_poly(test_mpn_poly2, test_poly2);
+      _fmpz_poly_normalise(test_mpn_poly2);
+      
       
 #if DEBUG
       mpz_poly_print(test_poly);printf("\n\n");
