@@ -148,7 +148,7 @@ int test_ZmodF_poly_convert()
 #endif
           mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
           ZmodF_poly_init(test_modF_poly, depth, (bits-1)/FLINT_BITS+1, 0);
-          ZmodF_poly_convert_in_mpn(test_modF_poly, test_mpn_poly);
+          ZmodF_poly_convert_in_mpn(test_modF_poly, test_mpn_poly, length);
           ZmodF_poly_convert_out_mpn(test_mpn_poly2, test_modF_poly, 1);
           fmpz_poly_to_mpz_poly(test_poly2, test_mpn_poly2);
           
