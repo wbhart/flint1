@@ -111,7 +111,7 @@ void sample__mpz_poly_mul_kara_recursive_mixlengths(
    mpz_poly_init(poly1);
    mpz_poly_init(poly2);
    mpz_poly_init(poly3);
-   mpz_poly_init_upto(poly3, len1 + len2);
+   mpz_poly_ensure_alloc(poly3, len1 + len2);
 
    // allocate scratch space
    unsigned long scratch_len = len1 + len2;

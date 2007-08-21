@@ -102,28 +102,16 @@ Output is:
 
 The \code{mpz_poly_t} type is actually a typedef for an array of length 1 of \code{mpz_poly_struct}. This permits passing parameters  of type \code{mpz_poly_t} `by reference'.
 
-The \code{mpz_poly_struct} struct has four members:
+The \code{mpz_poly_struct} struct has three members:
 \begin{itemize}
-\item \code{mpz_t* coeffs}.
+\item \code{mpz_t* coeffs}. An array of \code{mpz_t}'s of length \code{alloc}. All of them are \code{mpz_init}'d.
 \item \code{unsigned long alloc}. Length of \code{coeffs}. Always \code{alloc >= 1}.
-\item \code{unsigned long init}. Number of \code{mpz_t}'s in \code{coeffs} that are \code{mpz_init}'d. Always \code{init <= alloc}.
-\item \code{unsigned long length}. The current length of the polynomial. That is, for \code{n < length}, the coefficient of $x^n$ is \code{coeffs[n]}, and for \code{n >= length}, the coefficient of $x^n$ is zero. Always \code{length <= init}. If \code{length == 0} then this is the zero polynomial. 
+\item \code{unsigned long length}. The current length of the polynomial. That is, for \code{n < length}, the coefficient of $x^n$ is \code{coeffs[n]}, and for \code{n >= length}, the coefficient of $x^n$ is zero. Always \code{length <= alloc}. If \code{length == 0} then this is the zero polynomial. 
 \end{itemize}
 
 An \code{mpz_poly_t} is said to be \emph{normalised} if either \code{length == 0}, or if \code{coeffs[length-1]} is nonzero. All \code{mpz_poly_blah()} functions expect their inputs to be normalised, and unless other specified they produce output that is normalised. If you modify the coefficients yourself, you must ensure that the polynomial is subsequently normalised (for example by using \code{mpz_poly_normalise()}).
 
 All \code{mpz_poly_t}'s are allocated on the heap. The reason we don't bother with stack storage is that most of the memory allocation overhead for \code{mpz_poly_t} is in the coefficients anyway, and providing both stack and heap allocation would just make things unnecessarily complicated.
-
-
-\subsection{Working directly with the coefficients}
-
-If you work with \code{mpz_poly_t} only through the \code{mpz_poly} interface, then you can ignore this section.
-
-If you operate directly on the coefficients of an \code{mpz_poly_t} using GMP's \code{mpz} layer, you must \emph{never} access coefficients beyond the current value of \code{init}, since these have not yet been \code{mpz_init}'d.
-
-As a convenience, the function \code{mpz_poly_init_upto()} is provided, which ensures that all coefficients up to a certain point have been \code{mpz_init}'d.
-
-Generally FLINT delays calling \code{mpz_init} until the last possible moment, when it knows how much space needs to be allocated for the \code{mpz_t}. This strategy allows it to use functions like \code{mpz_init_set} and \code{mpz_init2} to avoid unnecessary calls to \code{malloc}.
 
 
 \subsection{Comparison with \code{fmpz_poly_t}}
@@ -146,7 +134,7 @@ Disadvantages compared to \code{fmpz_poly_t} are:
 void mpz_poly_init(mpz_poly_t poly)
 \end{lstlisting}
 \begin{quote}
-Initialises an \code{mpz_poly_t} object. This function must be called before using the polynomial. The initial allocated size is set to 1. None of the coefficients are \code{mpz_init}'d, so \code{init == 0}. The length is set to zero, so this is the zero polynomial. 
+Initialises an \code{mpz_poly_t} object. This function must be called before using the polynomial. The initial allocated size is set to 1. The length is set to zero, so this is the zero polynomial. 
 
 This function should not be used twice on the same polynomial without an intervening \code{mpz_poly_clear()}; this will cause memory leaks.
 \end{quote}
@@ -177,14 +165,6 @@ void mpz_poly_ensure_alloc(mpz_poly_t poly, unsigned long alloc)
 \end{lstlisting}
 \begin{quote}
 Ensures that at least \code{alloc} coefficients are allocated in \code{poly}, by increasing the number of allocated coefficients if necessary. If more coefficients are required, the number of allocated coefficients is at least doubled. The value of the polynomial is preserved.
-\end{quote}
-
-
-\begin{lstlisting}
-void mpz_poly_init_upto(mpz_poly_t poly, unsigned long init)
-\end{lstlisting}
-\begin{quote}
-Ensures that at least \code{init} coefficients are \code{mpz_init}'d. If necessary, \code{alloc} is increased too. The value of the polynomial is preserved.
 \end{quote}
 
 

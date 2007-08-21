@@ -49,7 +49,7 @@ void randpoly(mpz_poly_t pol, unsigned long length, unsigned long maxbits)
    for (unsigned long i = 0; i < length; i++)
    {
 #if VARY_BITS
-       bits = randint(maxbits);
+       bits = randint(maxbits+1);
 #else
        bits = maxbits;
 #endif
@@ -78,7 +78,7 @@ void randpoly_unsigned(mpz_poly_t pol, unsigned long length, unsigned long maxbi
    for (unsigned long i = 0; i < length; i++)
    {
 #if VARY_BITS
-       bits = randint(maxbits);
+       bits = randint(maxbits+1);
 #else
        bits = maxbits;
 #endif
@@ -93,23 +93,6 @@ void randpoly_unsigned(mpz_poly_t pol, unsigned long length, unsigned long maxbi
    mpz_clear(temp);
 } 
 
-/* A temporary fix to a very bad problem */
-
-int _mpz_poly_equal(mpz_poly_t poly1, mpz_poly_t poly2)
-{
-   unsigned long sl = (poly1->length < poly2->length) ? poly1->length : poly2->length;
-   
-   for (unsigned long i = 0; i < sl; i++)
-      if (mpz_cmp(poly1->coeffs[i], poly2->coeffs[i]))
-         return 0;
-   for (unsigned long i = sl; i < poly1->length; i++)
-      if (mpz_cmp_ui(poly1->coeffs[i], 0) != 0) return 0;
-   for (unsigned long i = sl; i < poly2->length; i++)
-      if (mpz_cmp_ui(poly2->coeffs[i], 0) != 0) return 0;
-      
-
-   return 1;
-}
 
 int test_ZmodF_poly_convert()
 {
@@ -140,7 +123,9 @@ int test_ZmodF_poly_convert()
           fmpz_poly_realloc(test_mpn_poly, length);
           fmpz_poly_realloc(test_mpn_poly2, length);
           mpz_poly_realloc(test_poly2, length);
-          randpoly(test_poly, length, bits-1); 
+          
+          do randpoly(test_poly, length, bits-1); 
+          while (mpz_poly_length(test_poly) < length);
 #if DEBUG
           for (unsigned j = 0; j < test_poly->length; j++)
              gmp_printf("%Zd, ",test_poly->coeffs[j]);
@@ -160,7 +145,7 @@ int test_ZmodF_poly_convert()
           printf("\n\n");
 #endif
           
-          result = _mpz_poly_equal(test_poly, test_poly2);
+          result = mpz_poly_equal(test_poly, test_poly2);
       } 
       fmpz_poly_clear(test_mpn_poly);
       fmpz_poly_clear(test_mpn_poly2);
@@ -204,7 +189,9 @@ int test_ZmodF_poly_convert_bits()
           fmpz_poly_realloc(test_mpn_poly2, length);
           mpz_poly_realloc(test_poly2, length);
           
-          randpoly(test_poly, length, bits-1);
+          do randpoly(test_poly, length, bits-1);
+          while (mpz_poly_length(test_poly) < length);
+          
           for (unsigned long i = bundle-1; i < length; i+=bundle)
           {
              if (mpz_sgn(test_poly->coeffs[i])<0) // Final coeff in each bundle
@@ -243,7 +230,7 @@ int test_ZmodF_poly_convert_bits()
           printf("\n\n");
 #endif
           
-          result = _mpz_poly_equal(test_poly, test_poly2);
+          result = mpz_poly_equal(test_poly, test_poly2);
       }   
       fmpz_poly_clear(test_mpn_poly);
       fmpz_poly_clear(test_mpn_poly2);
@@ -288,7 +275,8 @@ int test_ZmodF_poly_convert_bits_unsigned()
           fmpz_poly_realloc(test_mpn_poly2, length);
           mpz_poly_realloc(test_poly2, length);
           
-          randpoly_unsigned(test_poly, length, bits);
+          do randpoly_unsigned(test_poly, length, bits);
+          while (mpz_poly_length(test_poly) < length);
 
 #if DEBUG
           for (unsigned j = 0; j < test_poly->length; j++)
@@ -315,7 +303,7 @@ int test_ZmodF_poly_convert_bits_unsigned()
           printf("\n\n");
 #endif
           
-          result = _mpz_poly_equal(test_poly, test_poly2);
+          result = mpz_poly_equal(test_poly, test_poly2);
       }   
       fmpz_poly_clear(test_mpn_poly);
       fmpz_poly_clear(test_mpn_poly2);
@@ -355,7 +343,8 @@ int test_ZmodF_poly_limb_pack_unsigned()
           fmpz_poly_realloc(test_mpn_poly2, length);
           mpz_poly_realloc(test_poly2, length);
           
-          randpoly_unsigned(test_poly, length, bits);
+          do randpoly_unsigned(test_poly, length, bits);
+          while (mpz_poly_length(test_poly) < length);
 
 #if DEBUG
           for (unsigned j = 0; j < test_poly->length; j++)
@@ -379,7 +368,7 @@ int test_ZmodF_poly_limb_pack_unsigned()
           printf("\n\n");
 #endif
           
-          result = _mpz_poly_equal(test_poly, test_poly2);
+          result = mpz_poly_equal(test_poly, test_poly2);
       }   
       fmpz_poly_clear(test_mpn_poly);
       fmpz_poly_clear(test_mpn_poly2);
@@ -418,7 +407,8 @@ int test_ZmodF_poly_limb_pack()
           fmpz_poly_realloc(test_mpn_poly2, length);
           mpz_poly_realloc(test_poly2, length);
           
-          randpoly(test_poly, length, bits-1);
+          do randpoly(test_poly, length, bits-1);
+          while (mpz_poly_length(test_poly) < length);
 
 #if DEBUG
           for (unsigned j = 0; j < test_poly->length; j++)
@@ -442,7 +432,7 @@ int test_ZmodF_poly_limb_pack()
           printf("\n\n");
 #endif
           
-          result = _mpz_poly_equal(test_poly, test_poly2);
+          result = mpz_poly_equal(test_poly, test_poly2);
       }   
       fmpz_poly_clear(test_mpn_poly);
       fmpz_poly_clear(test_mpn_poly2);
@@ -483,7 +473,8 @@ int test_ZmodF_poly_convert_bytes_unsigned()
           fmpz_poly_realloc(test_mpn_poly2, length);
           mpz_poly_realloc(test_poly2, length);
           
-          randpoly_unsigned(test_poly, length, bits/2);
+          do randpoly_unsigned(test_poly, length, bits/2);
+          while (mpz_poly_length(test_poly) < length);
 
 #if DEBUG
           for (unsigned j = 0; j < test_poly->length; j++)
@@ -513,7 +504,7 @@ int test_ZmodF_poly_convert_bytes_unsigned()
           printf("\n\n");
 #endif
           
-          result = _mpz_poly_equal(test_poly, test_poly2);
+          result = mpz_poly_equal(test_poly, test_poly2);
       }   
       fmpz_poly_clear(test_mpn_poly);
       fmpz_poly_clear(test_mpn_poly2);
@@ -555,7 +546,8 @@ int test_ZmodF_poly_convert_bytes()
           fmpz_poly_realloc(test_mpn_poly2, length);
           mpz_poly_realloc(test_poly2, length);
           
-          randpoly(test_poly, length, bits/2);
+          do randpoly(test_poly, length, bits/2);
+          while (mpz_poly_length(test_poly) < length);
 
 #if DEBUG
           for (unsigned j = 0; j < test_poly->length; j++)
@@ -585,7 +577,7 @@ int test_ZmodF_poly_convert_bytes()
           printf("\n\n");
 #endif
           
-          result = _mpz_poly_equal(test_poly, test_poly2);
+          result = mpz_poly_equal(test_poly, test_poly2);
           if (!result) 
           {
           for (unsigned j = 0; j < test_poly->length; j++)
@@ -738,7 +730,7 @@ void ZmodF_poly_convert_out(mpz_poly_t output, ZmodF_poly_t input)
    unsigned long size = 1UL << input->depth;
    unsigned long n = input->n;
    
-   mpz_poly_init_upto(output, size);
+   mpz_poly_ensure_alloc(output, size);
    set_global_n(n);
    
    for (unsigned long k = 0; k < size; k++)
@@ -1297,7 +1289,7 @@ void really_naive_convolution(mpz_poly_t res, mpz_poly_t x, mpz_poly_t y,
                               unsigned long depth)
 {
    unsigned long size = 1UL << depth;
-   mpz_poly_init_upto(res, size);
+   mpz_poly_ensure_alloc(res, size);
    res->length = size;
    
    for (unsigned long i = 0; i < size; i++)
@@ -1328,7 +1320,7 @@ void naive_convolution(mpz_poly_t res, mpz_poly_t x, mpz_poly_t y,
    naive_FFT(xt, depth, (4*n*FLINT_BITS) >> depth, 0, n);
    naive_FFT(yt, depth, (4*n*FLINT_BITS) >> depth, 0, n);
 
-   mpz_poly_init_upto(res, size);
+   mpz_poly_ensure_alloc(res, size);
    for (unsigned long i = 0; i < (1 << depth); i++)
    {
       mpz_mul(res->coeffs[i], xt->coeffs[i], yt->coeffs[i]);
@@ -1439,7 +1431,7 @@ void really_naive_negacyclic_convolution(mpz_poly_t res, mpz_poly_t x, mpz_poly_
                                          unsigned long depth)
 {
    unsigned long size = 1UL << depth;
-   mpz_poly_init_upto(res, size);
+   mpz_poly_ensure_alloc(res, size);
    res->length = size;
    
    for (unsigned long i = 0; i < size; i++)
@@ -1481,7 +1473,7 @@ void naive_negacyclic_convolution(mpz_poly_t res, mpz_poly_t x, mpz_poly_t y,
    naive_FFT(xt, depth, (4*n*FLINT_BITS) >> depth, 0, n);
    naive_FFT(yt, depth, (4*n*FLINT_BITS) >> depth, 0, n);
 
-   mpz_poly_init_upto(res, size);
+   mpz_poly_ensure_alloc(res, size);
    for (unsigned long i = 0; i < (1 << depth); i++)
    {
       mpz_mul(res->coeffs[i], xt->coeffs[i], yt->coeffs[i]);

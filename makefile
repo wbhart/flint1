@@ -34,9 +34,9 @@ endif
 
 qdexists := $(shell ls -d qd)
 ifeq ($(qdexists), qd)
-	LIBS = -L$(FLINT_GMP_LIB_DIR) -L$(FLINT_QD_LIB_DIR) $(FLINT_LINK_OPTIONS) -static -lgmp -lpthread -lm -lqd
+	LIBS = -L$(FLINT_GMP_LIB_DIR) -L$(FLINT_QD_LIB_DIR) $(FLINT_LINK_OPTIONS) -lgmp -lpthread -lm -lqd
 else
-	LIBS = -L$(FLINT_GMP_LIB_DIR) -L$(FLINT_QD_LIB_DIR) $(FLINT_LINK_OPTIONS) -static -lgmp -lpthread -lm
+	LIBS = -L$(FLINT_GMP_LIB_DIR) -L$(FLINT_QD_LIB_DIR) $(FLINT_LINK_OPTIONS) -lgmp -lpthread -lm
 endif
 
 INCS =  -I"/usr/include" -I$(FLINT_GMP_INCLUDE_DIR) -I$(FLINT_QD_INCLUDE_DIR) 

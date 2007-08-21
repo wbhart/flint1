@@ -474,15 +474,15 @@ int test_ZmodF_mul_info_mul_fft()
 {
    int success = 1;
 
-   mp_limb_t in1[2000];
-   mp_limb_t in2[2000];
-   mp_limb_t out_plain[2000];
-   mp_limb_t out_fft[2000];
+   mp_limb_t in1[1000];
+   mp_limb_t in2[1000];
+   mp_limb_t out_plain[1000];
+   mp_limb_t out_fft[1000];
 
    mpz_t x;
    mpz_init(x);
 
-   for (unsigned long n = 1; n < 1000 && success; n++)
+   for (unsigned long n = 1; n < 300 && success; n++)
    {
       for (unsigned long depth = 1;
            (n*FLINT_BITS) % (1 << depth) == 0
