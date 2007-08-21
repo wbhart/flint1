@@ -3386,7 +3386,7 @@ void fmpz_poly_div_series(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B, unsigned 
    fmpz_poly_newton_invert(B_inv, B, n);
    fmpz_poly_mul_trunc_n(Q, B_inv, A, n);
    
-   fmpz_poly_clear(B_inv);    
+   fmpz_poly_clear(B_inv);
 }
 
 /*
@@ -3413,6 +3413,7 @@ void fmpz_poly_div_newton(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B)
    
    fmpz_poly_div_series(Q, A_rev, B_rev, A->length - B->length + 1);
    
+   fmpz_poly_fit_length(Q, A->length - B->length + 1);
    _fmpz_poly_reverse(Q, Q, A->length - B->length + 1);
    _fmpz_poly_normalise(Q);
    

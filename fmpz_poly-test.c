@@ -2822,7 +2822,7 @@ int test_fmpz_poly_div_newton()
    mpz_poly_init(test_poly2); 
    mpz_poly_init(test_poly3); 
    
-   for (unsigned long count1 = 0; (count1 < 30) && (result == 1) ; count1++)
+   for (unsigned long count1 = 0; (count1 < 100) && (result == 1) ; count1++)
    {
       bits = random_ulong(10)+ 1;
       bits2 = random_ulong(10)+ 1;
@@ -2869,17 +2869,19 @@ int test_fmpz_poly_div_newton()
       mpz_poly_print(test_poly2);printf("\n\n");
       mpz_poly_print(test_poly3);printf("\n\n");
 #endif               
-      for (unsigned long i = 1; i < 1; i++)
+      for (unsigned long i = 1; i < 10; i++)
       {
          fmpz_poly_div_newton(test_mpn_poly4, test_mpn_poly3, test_mpn_poly);
          fmpz_poly_clear(test_mpn_poly4);
          fmpz_poly_init(test_mpn_poly4);
       }
       fmpz_poly_div_newton(test_mpn_poly4, test_mpn_poly3, test_mpn_poly);
+      _fmpz_poly_check(test_mpn_poly4);
       
       fmpz_poly_to_mpz_poly(test_poly4, test_mpn_poly4);
            
       result = _mpz_poly_equal(test_poly4, test_poly2);
+      
 #if DEBUG
       if (!result) 
       {
