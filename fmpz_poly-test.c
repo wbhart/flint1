@@ -2508,15 +2508,15 @@ int test_fmpz_poly_div_karatsuba()
    {
       bits = random_ulong(1000)+ 2;
       bits2 = random_ulong(1000)+ 1;
-      //bits = bits2 = 100000;
+      //bits = bits2 = 10;
       
       fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
       fmpz_poly_init2(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS+1);
       
       length2 = random_ulong(128)+1; 
       length = random_ulong(128)+1;
-      //length = 12;
-      //length2 = 5;
+      //length = 1000;
+      //length2 = 1000;
        
 #if DEBUG
       printf("length = %ld, length2 = %ld, bits = %ld, bits2 = %ld\n", length, length2, bits, bits2);
@@ -2547,7 +2547,7 @@ int test_fmpz_poly_div_karatsuba()
       mpz_poly_print(test_poly2);printf("\n\n");
       mpz_poly_print(test_poly3);printf("\n\n");
 #endif               
-      for (unsigned long i = 0; i < 10; i++)
+      for (unsigned long i = 1; i < 10; i++)
       {
          fmpz_poly_div_karatsuba(test_mpn_poly4, test_mpn_poly3, test_mpn_poly);
          fmpz_poly_clear(test_mpn_poly4);
@@ -2824,8 +2824,8 @@ int test_fmpz_poly_div_newton()
    
    for (unsigned long count1 = 0; (count1 < 30) && (result == 1) ; count1++)
    {
-      bits = random_ulong(100)+ 2;
-      bits2 = random_ulong(100)+ 1;
+      bits = random_ulong(10)+ 1;
+      bits2 = random_ulong(10)+ 1;
       //bits = bits2 = 100000;
       
       fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
@@ -2833,8 +2833,8 @@ int test_fmpz_poly_div_newton()
       
       length2 = random_ulong(128)+1; 
       length = random_ulong(128)+1;
-      //length = 12;
-      //length2 = 5;
+      //length = 100000;
+      //length2 = 100000;
        
 #if DEBUG
       printf("length = %ld, length2 = %ld, bits = %ld, bits2 = %ld\n", length, length2, bits, bits2);
@@ -2869,7 +2869,7 @@ int test_fmpz_poly_div_newton()
       mpz_poly_print(test_poly2);printf("\n\n");
       mpz_poly_print(test_poly3);printf("\n\n");
 #endif               
-      for (unsigned long i = 1; i < 10; i++)
+      for (unsigned long i = 1; i < 1; i++)
       {
          fmpz_poly_div_newton(test_mpn_poly4, test_mpn_poly3, test_mpn_poly);
          fmpz_poly_clear(test_mpn_poly4);

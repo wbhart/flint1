@@ -812,7 +812,8 @@ void __fmpz_poly_mul_coeffs2(mp_limb_t * res, mp_limb_t * a, mp_limb_t * b)
       if ((sizea == 0) || (sizeb == 0))
       {
         res[0] = 0;
-      } else if (sizea + sizeb < 100)
+      } 
+      else if (sizea + sizeb < 100)
       {
          if (sizea >= sizeb) mslimb = mpn_mul(res+1, a+1, sizea, b+1, sizeb);
          else mslimb = mpn_mul(res+1, b+1, sizeb, a+1, sizea);
@@ -2317,7 +2318,20 @@ void _fmpz_poly_scalar_mul(fmpz_poly_t output, fmpz_poly_t poly, mp_limb_t * x)
    mp_limb_t * coeffs2 = poly->coeffs;
    long sign1 = x[0];
    
-   if (limbs1 + limbs2 > FLINT_FFT_LIMBS_CROSSOVER*2)
+   if (limbs1 == 1)
+   {
+      for (long i = 0; i < poly->length; i++)
+      {
+          total_limbs = 1 + ABS(coeffs2[i*(limbs2+1)]);
+          if (total_limbs != 1)
+          {
+             msl = mpn_mul_1(coeffs_out + i*limbs_out + 1, coeffs2 + i*(limbs2+1) + 1, ABS(coeffs2[i*(limbs2+1)]), x[1]);
+             if (msl) coeffs_out[i*limbs_out+ABS(coeffs2[i*(limbs2+1)])+1] = msl;
+             if (((long) coeffs2[i*(limbs2+1)] ^ sign1) < 0) coeffs_out[i*limbs_out] = -total_limbs + (msl == 0L);
+             else coeffs_out[i*limbs_out] = total_limbs - (msl == 0L);
+          } else coeffs_out[i*limbs_out] = 0;
+      }
+   } else if (limbs1 + limbs2 > 1000)//FLINT_FFT_LIMBS_CROSSOVER*2)
    {
       Z_mpn_precomp_t precomp;
    
@@ -2829,17 +2843,21 @@ void fmpz_poly_div_naive(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B)
          if (coeff >= (long) B->length)
          {
             // Now multiply B by this new quotient coefficient and subtract from R
-            fmpz_poly_init2(qB, B->length, B->limbs+ABS(coeff_Q[0]));
-            _fmpz_poly_scalar_mul(qB, B, coeff_Q); 
+            fmpz_poly_t R_sub;
+            unsigned long length = FLINT_MIN(coeff - B->length + 2, B->length);
+            
+            fmpz_poly_init2(qB, length, B->limbs+ABS(coeff_Q[0]));
+            R_sub->coeffs = B->coeffs + (B->length - length)*(B->limbs + 1);
+            R_sub->limbs = B->limbs;
+            R_sub->length = length;
+            _fmpz_poly_scalar_mul(qB, R_sub, coeff_Q); 
          
             fmpz_poly_fit_limbs(R, qB->limbs+1);
             coeffs_R = R->coeffs;
             size_R = R->limbs+1;
       
-            fmpz_poly_t R_sub;
-            R_sub->coeffs = coeffs_R+(coeff - B->length + 1)*size_R;
+            R_sub->coeffs = coeffs_R+(coeff - length + 1)*size_R;
             R_sub->limbs = R->limbs;
-            R_sub->length = B->length;
             _fmpz_poly_sub(R_sub, R_sub, qB);
 
             fmpz_poly_clear(qB);
@@ -2871,7 +2889,7 @@ void fmpz_poly_div_karatsuba_recursive(fmpz_poly_t Q, fmpz_poly_t BQ, fmpz_poly_
       return;
    }
    
-   if ((B->length <= 4) || (A->length > 2*B->length - 1))
+   if ((B->length <= 25) || (A->length > 2*B->length - 1))
    {
       fmpz_poly_t Rb;
       fmpz_poly_init(Rb);
@@ -3108,7 +3126,7 @@ void fmpz_poly_div_karatsuba(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B)
       return;
    }
    
-   if ((B->length <= 4) || (A->length > 2*B->length - 1))
+   if ((B->length <= 16) || (A->length > 2*B->length - 1))
    {
       fmpz_poly_div_naive(Q, A, B);
       
@@ -3382,6 +3400,7 @@ void fmpz_poly_div_newton(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B)
    if (A->length < B->length)
    {
       fmpz_poly_set_coeff_si(Q, 0, 0);
+      _fmpz_poly_normalise(Q);
       return;
    }
    
