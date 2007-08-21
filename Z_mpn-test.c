@@ -98,6 +98,7 @@ int test_Z_mpn_mul_precomp()
 {
    mp_limb_t * int1, * int2, * product, * product2;
    Z_mpn_precomp_t precomp;
+   mp_limb_t msl;
    int result = 1;
    
    for (unsigned long count = 0; (count < 100) && (result == 1); count++)
@@ -126,9 +127,9 @@ int test_Z_mpn_mul_precomp()
       
          Z_mpn_mul_precomp(product, int2, limbs2, precomp);
          
-         mpn_mul(product2, int1, limbs1, int2, limbs2);
+         msl = mpn_mul(product2, int1, limbs1, int2, limbs2);
       
-         for (unsigned long j = 0; j < limbs1+limbs2; j++)
+         for (unsigned long j = 0; j < limbs1+limbs2 - (msl == 0); j++)
          {
             if (product[j] != product2[j]) result = 0;
          }
