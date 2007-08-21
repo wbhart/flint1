@@ -1692,7 +1692,7 @@ int test_fmpz_poly_mul_KS_trunc()
       { 
           length = random_ulong(2000)+1; 
           length2 = random_ulong(2000)+1; 
-          trunc = random_ulong(length+length2);       
+          trunc = random_ulong(length+length2-1)+1;       
 #if DEBUG
           printf("length = %ld, length2 = %ld, trunc = %ld, bits = %ld, bits2 = %ld\n", length, length2, trunc, bits, bits2);
 #endif
@@ -1749,7 +1749,7 @@ int test_fmpz_poly_mul_KS_trunc()
       { 
           length = random_ulong(500)+1; 
           length2 = random_ulong(500)+1; 
-          trunc = random_ulong(length+length2);       
+          trunc = random_ulong(length+length2-1)+1;       
 #if DEBUG
           printf("length = %ld, length2 = %ld, trunc = %ld, bits = %ld, bits2 = %ld\n", length, length2, trunc, bits, bits2);
 #endif
