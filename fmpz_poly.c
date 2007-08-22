@@ -1372,6 +1372,124 @@ void _fmpz_poly_mul_naive_trunc(fmpz_poly_t output, fmpz_poly_t input1,
    output->length = FLINT_MIN(len1 + len2 - 1, trunc);
 }
 
+/*
+   Multiply two polynomials using the naive technique truncating the result 
+   so that the first trunc terms are zero.
+   Currently doesn't allow aliasing
+*/
+
+void _fmpz_poly_mul_naive_trunc_left(fmpz_poly_t output, fmpz_poly_t input1, 
+                                          fmpz_poly_t input2, unsigned long trunc)
+{
+   mp_limb_t * coeffs_out = output->coeffs;
+   unsigned long size_out = output->limbs+1;
+   mp_limb_t * coeffs1, * coeffs2;
+   unsigned long size1, size2;
+   unsigned long len1, len2; 
+   unsigned long lenm1;
+   
+   if ((input1->length == 0) || (input2->length == 0) || (trunc >= input1->length + input2->length - 1)) 
+   {
+      for (unsigned long i = 0; i < input1->length + input2->length - 1; i++)
+      {
+         coeffs_out[i*size_out] = 0;
+      }
+      _fmpz_poly_zero(output);
+      return;      
+   }
+      
+   coeffs1 = input1->coeffs;
+   coeffs2 = input2->coeffs;
+   size1 = input1->limbs+1;
+   size2 = input2->limbs+1;
+   lenm1 = input1->length-1;
+   len1 = input1->length;
+   len2 = input2->length;
+   
+   long i, j;
+      
+   mp_limb_t * temp;
+            
+   // Special case if the length of both inputs is 1
+   if ((len1 == 1) && (len2 == 1))
+   {
+      if ((coeffs1[0] == 0) || (coeffs2[0] == 0))
+      {
+         coeffs_out[0] = 0;
+      } else
+      {
+         __fmpz_poly_mul_coeffs(coeffs_out, coeffs1, coeffs2);
+      }      
+   }
+   // Ordinay case
+   else
+   {
+      for (i = trunc; (i < len1); i++)
+      {
+         /* Set out[i] = in1[i]*in2[0] */
+         if ((coeffs1[i*size1] == 0) || (coeffs2[0] == 0))
+         {
+            coeffs_out[i*size_out] = 0;
+         } else
+         {
+            __fmpz_poly_mul_coeffs2(coeffs_out+i*size_out, coeffs1+i*size1, coeffs2);
+         }
+      }
+      for (i = 1; i < len2 - 1; i++)
+      {
+         if (i + lenm1 >= trunc)
+         {
+            /* Set out[i+in1->length-1] = in1[in1->length-1]*in2[i] */
+            if ((coeffs1[lenm1*size1] == 0) || (coeffs2[i*size2] == 0))
+            {
+               coeffs_out[(i+lenm1)*size_out] = 0;
+            } else
+            {
+               __fmpz_poly_mul_coeffs2(coeffs_out+(i+lenm1)*size_out, coeffs1+lenm1*size1, coeffs2+i*size2);
+            }
+         }      
+      }
+      if (len2 == 1) i = 0;   
+      /* 
+         The above coefficient multiplications overwrite the first limb of the next coefficient
+         in each case, using the function __fmpz_poly_mul_coeffs2. The final multiplication 
+         cannot do this however.
+      */
+      if ((coeffs1[lenm1*size1] == 0) || (coeffs2[i*size2] == 0))
+      {
+         coeffs_out[(i+lenm1)*size_out] = 0;
+      } else
+      {
+         __fmpz_poly_mul_coeffs(coeffs_out+(i+lenm1)*size_out, coeffs1+lenm1*size1, coeffs2+i*size2);
+      }     
+         
+      for (i = 0; i < lenm1; i++)
+      {      
+         for (j = 1; j < len2; j++)
+         {
+            /* out[i+j] += in1[i]*in2[j] */
+            if ((coeffs1[i*size1] != 0) && (coeffs2[j*size2] != 0) && (i + j >= trunc))
+            {
+               if (!coeffs_out[(i+j)*size_out])
+               {
+                  __fmpz_poly_mul_coeffs(coeffs_out+(i+j)*size_out, coeffs1+i*size1, coeffs2+j*size2);
+               } else 
+               {
+                  __fmpz_poly_addmul_coeffs(coeffs_out+(i+j)*size_out, coeffs1+i*size1, coeffs2+j*size2);
+               } 
+            }
+         }
+      }
+   } 
+   
+   for (i = 0; (i < trunc) && (i < len1 + len2 - 1); i++)
+   {
+      coeffs_out[i*size_out] = 0;
+   }
+   
+   output->length = len1 + len2 - 1;
+}
+
 unsigned long _fmpz_poly_max_limbs(fmpz_poly_t poly)
 {
    unsigned long limbs = poly->limbs;
@@ -2889,7 +3007,7 @@ void fmpz_poly_div_karatsuba_recursive(fmpz_poly_t Q, fmpz_poly_t BQ, fmpz_poly_
       return;
    }
    
-   if ((B->length <= 25) || (A->length > 2*B->length - 1))
+   if ((B->length <= 16) || (A->length > 2*B->length - 1))
    {
       fmpz_poly_t Rb;
       fmpz_poly_init(Rb);
@@ -3208,9 +3326,10 @@ void fmpz_poly_div_karatsuba(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B)
       which ends up being length n1+n2-1
    */  
    
+   fmpz_poly_t temp2;
    _fmpz_poly_stack_init(d2q1, d2->length+q1->length-1, d2->limbs+q1->limbs+1); 
    _fmpz_poly_mul(d2q1, d2, q1);
-   
+     
    /* 
       Compute dq1 = d1*q1*x^n + d2*q1
       dq1 is then of length 3n-1
