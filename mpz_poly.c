@@ -1037,7 +1037,11 @@ unsigned long _mpz_poly_mul_karatsuba_crossover(unsigned long limbs)
    if (limbs >= mpz_poly_kara_crossover_table_size)
       crossover = 0;
    else
+   {
+      if (limbs == 0)
+         limbs = 1;
       crossover = mpz_poly_kara_crossover_table[limbs - 1];
+   }
    return crossover * crossover;
 }
 
