@@ -1639,6 +1639,71 @@ int test_fmpz_poly_mul_karatsuba_trunc()
    return result; 
 }
 
+int test_fmpz_poly_mul_karatsuba_trunc_left()
+{
+   mpz_poly_t test_poly, test_poly2, test_poly3, test_poly4;
+   fmpz_poly_t test_mpn_poly, test_mpn_poly2, test_mpn_poly3, test_mpn_poly4;
+   int result = 1;
+   unsigned long bits, bits2, length, length2, trunc;
+   
+   mpz_poly_init(test_poly); 
+   mpz_poly_init(test_poly2); 
+   mpz_poly_init(test_poly3); 
+   
+   for (unsigned long count1 = 1; (count1 < 100) && (result == 1) ; count1++)
+   {
+      bits = random_ulong(1000)+ 1;
+      bits2 = random_ulong(1000)+ 1;
+      
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
+      fmpz_poly_init2(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS+1);
+      for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
+      { 
+          length = random_ulong(100)+1; 
+          length2 = random_ulong(100)+1; 
+          trunc = random_ulong(length+length2-1)+1;       
+#if DEBUG
+          printf("length = %ld, length2 = %ld, trunc = %ld, bits = %ld, bits2 = %ld\n", length, length2, trunc, bits, bits2);
+#endif
+          do randpoly(test_poly, length, bits); 
+          while (mpz_poly_length(test_poly) < length);
+
+          do randpoly(test_poly2, length2, bits2); 
+          while (mpz_poly_length(test_poly2) < length2);
+          
+          fmpz_poly_realloc(test_mpn_poly, length);
+          fmpz_poly_realloc(test_mpn_poly2, length2);
+          mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
+          mpz_poly_to_fmpz_poly(test_mpn_poly2, test_poly2);
+          
+          mpz_poly_init(test_poly4);
+          fmpz_poly_init2(test_mpn_poly3, length+length2-1, (bits+bits2-1)/FLINT_BITS+2);
+          fmpz_poly_init2(test_mpn_poly4, length+length2-1, (bits+bits2-1)/FLINT_BITS+2);
+          
+          _fmpz_poly_mul_naive(test_mpn_poly3, test_mpn_poly, test_mpn_poly2);
+          _fmpz_poly_zero_coeffs(test_mpn_poly3, FLINT_MIN(trunc, test_mpn_poly3->length));
+          
+          _fmpz_poly_mul_karatsuba_trunc_left(test_mpn_poly4, test_mpn_poly, test_mpn_poly2, trunc);
+          _fmpz_poly_check(test_mpn_poly4);
+          
+          fmpz_poly_to_mpz_poly(test_poly3, test_mpn_poly3); 
+          fmpz_poly_to_mpz_poly(test_poly4, test_mpn_poly4); 
+          
+          result = mpz_poly_equal(test_poly4, test_poly3);
+          mpz_poly_clear(test_poly4);
+          fmpz_poly_clear(test_mpn_poly3);
+          fmpz_poly_clear(test_mpn_poly4);
+      }
+      fmpz_poly_clear(test_mpn_poly);
+      fmpz_poly_clear(test_mpn_poly2);
+   }
+   
+   mpz_poly_clear(test_poly);
+   mpz_poly_clear(test_poly2);
+   mpz_poly_clear(test_poly3);
+   
+   return result; 
+}
 
 int test_fmpz_poly_mul_KS()
 {
@@ -2620,8 +2685,8 @@ int test_fmpz_poly_div_karatsuba()
       
       length2 = random_ulong(128)+1; 
       length = random_ulong(128)+1;
-      //length = 1000;
-      //length2 = 1000;
+      //length = 100000;
+      //length2 = 100000;
        
 #if DEBUG
       printf("length = %ld, length2 = %ld, bits = %ld, bits2 = %ld\n", length, length2, bits, bits2);
@@ -3034,6 +3099,7 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_poly_mul_naive_trunc_left);
    RUN_TEST(fmpz_poly_mul_karatsuba);
    RUN_TEST(fmpz_poly_mul_karatsuba_trunc);
+   RUN_TEST(fmpz_poly_mul_karatsuba_trunc_left);
    RUN_TEST(fmpz_poly_mul_KS);
    RUN_TEST(fmpz_poly_mul_KS_trunc);
    RUN_TEST(fmpz_poly_mul_SS);

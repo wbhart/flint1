@@ -82,7 +82,7 @@ void _fmpz_poly_check(fmpz_poly_t poly)
    {
       if (FLINT_ABS(poly->coeffs[i*(poly->limbs+1)]) > poly->limbs)
       {
-         printf("Error: coefficient %ld is to large (%ld limbs vs %ld limbs)\n", 
+         printf("Error: coefficient %ld is too large (%ld limbs vs %ld limbs)\n", 
                         i, FLINT_ABS(poly->coeffs[i*(poly->limbs+1)]), poly->limbs);
          abort();
       }
@@ -1892,6 +1892,226 @@ void _fmpz_poly_mul_karatsuba_trunc(fmpz_poly_t output, fmpz_poly_t input1, fmpz
    flint_stack_release(); flint_stack_release();
 }
 
+void __fmpz_poly_karatrunc_left_recursive(fmpz_poly_t res, fmpz_poly_t a, fmpz_poly_t b, fmpz_poly_t scratch, fmpz_poly_t scratchb, unsigned long crossover, unsigned long trunc)
+{
+   fmpz_poly_t temp, temp2;
+   
+   long non_zero = a->length + b->length - trunc - 1;
+   if (non_zero <= 0)
+   {
+      for (unsigned long i = 0; i < a->length + b->length - 1; i++)
+      {
+         res->coeffs[i*(res->limbs+1)] = 0;
+      }
+      return;
+   }
+   
+   if ((a->length <= 1) || (b->length <= 1) || (non_zero == 1)) 
+   {
+      _fmpz_poly_mul_naive_trunc_left(res, a, b, trunc);
+      
+      return;
+   }
+   
+   if ((a->length == 2 && b->length == 2) && (crossover < 4) && (!trunc)) 
+   {
+      const unsigned long asize = a->limbs+1;
+      const unsigned long bsize = b->limbs+1;
+      const unsigned long rsize = res->limbs+1;
+      const unsigned long ssize = scratchb->limbs+1;
+      
+      __fmpz_poly_mul_coeffs2(res->coeffs, a->coeffs, b->coeffs); 
+         
+      __fmpz_poly_add_coeffs(scratchb->coeffs, a->coeffs, a->coeffs+asize);
+      __fmpz_poly_add_coeffs(scratchb->coeffs+ssize, b->coeffs, b->coeffs+bsize);
+         
+      __fmpz_poly_mul_coeffs(res->coeffs+2*rsize, a->coeffs+asize, b->coeffs+bsize); 
+         
+      __fmpz_poly_mul_coeffs(res->coeffs+rsize, scratchb->coeffs, scratchb->coeffs+ssize); 
+         
+      __fmpz_poly_sub_coeffs(res->coeffs+rsize, res->coeffs+rsize, res->coeffs);
+      __fmpz_poly_sub_coeffs(res->coeffs+rsize, res->coeffs+rsize, res->coeffs+2*rsize);
+      
+            
+      res->length = a->length + b->length - 1;
+      
+      return;
+   }
+   
+   if ((a->length+b->length <= crossover) || ((a->length == 2) && (b->length == 2)))
+   {
+      _fmpz_poly_mul_naive_trunc_left(res, a, b, trunc);
+      
+      return;
+   }   
+        
+   fmpz_poly_t a1, a2, b1, b2;
+      
+   unsigned long l2 = 0;
+   
+   unsigned long old_length;
+     
+   a1->length = (a->length+1)/2;
+   a2->length = a->length-a1->length;
+   a1->coeffs = a->coeffs;
+   a2->coeffs = a->coeffs+a1->length*(a->limbs+1);
+   a1->limbs = a->limbs;
+   a2->limbs = a->limbs;
+   
+   if (a1->length < b->length) //ordinary case
+   {
+      /*
+         (a1+a2*x)*(b1+b2*x) = a1*b1 + a2*b2*x^2 + (a1+a2)*(b1+b2)*x-a1*b1*x-a2*b2*x;
+      */
+      
+      b1->length = a1->length;
+      b2->length = b->length - b1->length;
+      b1->coeffs = b->coeffs;
+      b2->coeffs = b->coeffs + b1->length*(b->limbs+1);
+      b1->limbs = b->limbs;
+      b2->limbs = b->limbs;
+      
+      /* 
+         from 0 for 2 * a1->length - 1, from 2 * a1->length for a2->length + b2->length - 1
+         will be written directly to, so we need to clean the coefficient in between
+      */
+      res->coeffs[((a1->length<<1)-1)*(res->limbs+1)] = 0;
+  
+      fmpz_poly_t asum, bsum, prodsum, scratch2, scratch3;
+     
+      asum->length = a1->length;
+      asum->coeffs = scratchb->coeffs;
+      asum->limbs = scratchb->limbs;
+      bsum->length = a1->length;
+      bsum->coeffs = scratchb->coeffs + a1->length*(scratchb->limbs+1);
+      bsum->limbs = scratchb->limbs;
+      prodsum->length = (a1->length<<1)-1;
+      prodsum->coeffs = scratch->coeffs;
+      prodsum->limbs = scratch->limbs;
+      
+      /*
+         (a1+a2*x)*(b1+b2*x) = a1*b1 + a2*b2*x^2 + (a1+a2)*(b1+b2)*x-a1*b1*x-a2*b2*x;
+      */
+      
+      // res_lo = a1*b1
+      if (trunc > a1->length) __fmpz_poly_karatrunc_left_recursive(res, a1, b1, scratch, scratchb, crossover, trunc - a1->length);
+      else __fmpz_poly_karatrunc_left_recursive(res, a1, b1, scratch, scratchb, crossover, 0);
+      
+      // res_hi = a2*b2
+      temp->coeffs = res->coeffs+(a1->length<<1)*(res->limbs+1);
+      temp->limbs = res->limbs;
+      if (trunc > a1->length*2) __fmpz_poly_karatrunc_left_recursive(temp, a2, b2, scratch, scratchb, crossover, trunc - a1->length*2);
+      else __fmpz_poly_karatrunc_left_recursive(temp, a2, b2, scratch, scratchb, crossover, 0);
+      
+      if (trunc < 3*a1->length - 1)
+      {
+         // asum = a1+a2
+         _fmpz_poly_add(asum, a1, a2);
+         // bsum = b1+b2
+         _fmpz_poly_add(bsum, b1, b2);
+         // prodsum = asum*bsum
+         scratch3->coeffs = scratchb->coeffs+(a1->length<<1)*(scratchb->limbs+1);
+         scratch3->limbs = scratchb->limbs;
+      
+         scratch2->limbs = scratch->limbs;
+         scratch2->coeffs = scratch->coeffs+((a1->length<<1)-1)*(scratch->limbs+1);
+         if (trunc > a1->length) __fmpz_poly_karatrunc_left_recursive(prodsum, asum, bsum, scratch2, scratch3, crossover, trunc - a1->length);
+         else __fmpz_poly_karatrunc_left_recursive(prodsum, asum, bsum, scratch2, scratch3, crossover, 0);
+         
+         // prodsum = prodsum - res_lo
+         temp->coeffs = res->coeffs;
+         temp->length = (a1->length<<1)-1;
+         _fmpz_poly_sub(prodsum, prodsum, temp);
+       
+         // prodsum = prodsum - res_hi
+         temp->coeffs = res->coeffs + (a1->length<<1)*(res->limbs+1);
+         temp->length = a2->length+b2->length-1;
+         _fmpz_poly_sub(prodsum, prodsum, temp);
+      
+         // res_mid += prodsum
+         temp->coeffs = res->coeffs + a1->length*(res->limbs+1);
+         temp->length = prodsum->length;
+         _fmpz_poly_add(temp, temp, prodsum);
+      
+      }
+      
+      res->length = a->length + b->length - 1;
+      
+   } else 
+   {
+      fmpz_poly_t scratch2, temp1; 
+
+      while ((1<<l2)<a1->length) l2++;
+      if ((1<<l2) < a->length) a1->length = (1<<l2);
+      a2->length = a->length-a1->length;
+      a1->coeffs = a->coeffs;
+      a2->coeffs = a->coeffs+a1->length*(a->limbs+1);
+
+      /* 
+         The first a1->length + b->length - 1 coefficients will be written to directly, 
+         so we need to clean the remaining coefficients
+      */
+      for (unsigned long i = a1->length + b->length - 1; i < a->length + b->length - 1; i++)
+         res->coeffs[i*(res->limbs+1)] = 0;
+      
+      // res_lo = a1*b
+      if (trunc < a1->length + b->length - 1) __fmpz_poly_karatrunc_left_recursive(res, a1, b, scratch, scratchb, crossover, trunc);
+      
+      //temp = a2*b
+      temp->coeffs = scratch->coeffs;
+      temp->length = a2->length + b->length - 1;
+      temp->limbs = scratch->limbs;
+      scratch2->coeffs = scratch->coeffs+temp->length*(scratch->limbs+1);
+      scratch2->limbs = scratch->limbs;
+      if (trunc > a1->length)
+      {
+         if (b->length <= a2->length) __fmpz_poly_karatrunc_left_recursive(temp, a2, b, scratch2, scratchb, crossover, trunc - a1->length);
+         else __fmpz_poly_karatrunc_left_recursive(temp, b, a2, scratch2, scratchb, crossover, trunc - a1->length);
+      } else
+      {
+         if (b->length <= a2->length) __fmpz_poly_karatrunc_left_recursive(temp, a2, b, scratch2, scratchb, crossover, 0);
+         else __fmpz_poly_karatrunc_left_recursive(temp, b, a2, scratch2, scratchb, crossover, 0);
+      }
+      
+      // res_mid += temp
+      temp1->coeffs = res->coeffs+a1->length*(res->limbs+1);
+      temp1->length = temp->length;
+      temp1->limbs = res->limbs;
+      _fmpz_poly_add(temp1,temp1,temp);
+  
+      res->length = a->length + b->length - 1;
+   } 
+   
+   for (unsigned long i = 0; i < trunc; i++)
+   {
+      res->coeffs[i*(res->limbs+1)] = 0;
+   }     
+}
+
+void _fmpz_poly_mul_karatsuba_trunc_left(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_t input2, unsigned long trunc)
+{
+   unsigned long limbs = output->limbs;
+   unsigned long log_length = 0;
+   unsigned long crossover;
+   
+   fmpz_poly_t scratch, scratchb, temp;
+   scratch->coeffs = (mp_limb_t *) flint_stack_alloc(5*FLINT_MAX(input1->length,input2->length)*(limbs+1));
+   scratch->limbs = limbs + 1;
+   scratchb->limbs = FLINT_MAX(input1->limbs, input2->limbs) + 1;
+   scratchb->coeffs = (mp_limb_t *) flint_stack_alloc(5*FLINT_MAX(input1->length, input2->length)*(scratchb->limbs+1));
+   
+   if (_fmpz_poly_max_limbs(input1) + _fmpz_poly_max_limbs(input2) >= 19) crossover = 0;
+   else crossover = 19 - _fmpz_poly_max_limbs(input1) - _fmpz_poly_max_limbs(input2);
+   
+   if (input1->length >= input2->length)
+       __fmpz_poly_karatrunc_left_recursive(output, input1, input2, scratch, scratchb, crossover, trunc);
+   else
+       __fmpz_poly_karatrunc_left_recursive(output, input2, input1, scratch, scratchb, crossover, trunc);
+   
+   flint_stack_release(); 
+   flint_stack_release();
+}
+
 void _fmpz_poly_mul_KS(fmpz_poly_t output, fmpz_poly_p input1, fmpz_poly_p input2)
 {
    long sign1 = 1L;
@@ -2420,6 +2640,61 @@ void _fmpz_poly_mul(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_t input2)
 }
 
 /*
+   A truncating polynomial multiplication which ignores the first trunc coeffs of
+   the output (which can end up being anything - often zero).
+   The number of zero terms, _trunc_ can be any value, but the function is
+   tuned for truncation of length n-1 terms, where both inputs have length approximately n.
+*/
+
+void _fmpz_poly_mul_trunc_left_n(fmpz_poly_t output, fmpz_poly_t input1, 
+                                fmpz_poly_t input2, unsigned long trunc)
+{
+   if ((input1->length == 0) || (input2->length == 0)) 
+   {
+      _fmpz_poly_zero(output);
+      return;
+   }
+
+   if ((input1->length <= 3) && (input2->length <= 3)) 
+   {
+      _fmpz_poly_mul_karatsuba_trunc_left(output, input1, input2, trunc);
+      return;
+   }
+   
+   unsigned long bits1 = _fmpz_poly_bits(input1);
+   unsigned long bits2 = (input1 == input2) ? bits1 : _fmpz_poly_bits(input2);
+   bits1 = ABS(bits1);
+   bits2 = ABS(bits2);
+   
+   if ((bits1 + bits2 >= 64) && (input1->length + input2->length <= 10)) 
+   {
+      _fmpz_poly_mul_karatsuba_trunc_left(output, input1, input2, trunc);
+      return;
+   }
+   
+   if ((bits1 + bits2 >= 370) && (input1->length + input2->length <= 32)) 
+   {
+      _fmpz_poly_mul_karatsuba_trunc_left(output, input1, input2, trunc);
+      return;
+   }   
+   
+   if (bits1 + bits2 < 512)
+   {
+      _fmpz_poly_mul_KS(output, input1, input2);
+      return;
+   } 
+   
+   if (3*(bits1 + bits2) >= input1->length + input2->length)
+   {
+      _fmpz_poly_mul_SS(output, input1, input2);
+      return;
+   } 
+   
+   _fmpz_poly_mul_KS(output, input1, input2);     
+}
+
+
+/*
    Scalar multiplication of a polynomial by a scalar
 */
 
@@ -2694,6 +2969,29 @@ void fmpz_poly_mul_trunc_n(fmpz_poly_t output, fmpz_poly_t input1,
    _fmpz_poly_mul_trunc_n(output, input1, input2, FLINT_MIN(input1->length + input2->length - 1, trunc));
    fmpz_poly_set_length(output, FLINT_MIN(input1->length + input2->length - 1, trunc));
 }
+
+void fmpz_poly_mul_trunc_left_n(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_t input2, unsigned long trunc)
+{
+   unsigned long limbs = input1->limbs + input2->limbs;
+   
+   long bits1, bits2;
+      
+   bits1 = _fmpz_poly_bits(input1);
+   bits2 = (input1 == input2) ? bits1 : _fmpz_poly_bits(input2);
+      
+   unsigned long sign = ((bits1 < 0) || (bits2 < 0));
+   unsigned long length = (input1->length > input2->length) ? input2->length : input1->length;
+   unsigned log_length = 0;
+   while ((1<<log_length) < length) log_length++;
+   unsigned long bits = ABS(bits1) + ABS(bits2) + log_length + sign; 
+   
+   fmpz_poly_fit_limbs(output, (bits-1)/FLINT_BITS+1);
+   fmpz_poly_fit_length(output, input1->length + input2->length - 1);
+   
+   _fmpz_poly_mul_trunc_left_n(output, input1, input2, trunc);
+   fmpz_poly_set_length(output, input1->length + input2->length - 1);
+}
+
 
 void fmpz_poly_divrem_naive(fmpz_poly_t Q, fmpz_poly_t R, fmpz_poly_t A, fmpz_poly_t B)
 {
@@ -3328,7 +3626,7 @@ void fmpz_poly_div_karatsuba(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B)
    
    fmpz_poly_t temp2;
    _fmpz_poly_stack_init(d2q1, d2->length+q1->length-1, d2->limbs+q1->limbs+1); 
-   _fmpz_poly_mul(d2q1, d2, q1);
+   _fmpz_poly_mul_trunc_left_n(d2q1, d2, q1, n1 - 1);
      
    /* 
       Compute dq1 = d1*q1*x^n + d2*q1
@@ -3386,13 +3684,11 @@ void fmpz_poly_div_karatsuba(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B)
       the length of q2 will be n2
       Also compute d1q2 of length n1+n2-1
    */
-   fmpz_poly_init(d1q2);
    fmpz_poly_init(q2);
-   fmpz_poly_div_karatsuba_recursive(q2, d1q2, t, d1); //******************************
+   fmpz_poly_div_karatsuba(q2, t, d1); //******************************
    _fmpz_poly_stack_clear(t);  
    _fmpz_poly_stack_clear(dq1);
    _fmpz_poly_stack_clear(d2q1);
-   fmpz_poly_clear(d1q2);
       
    /*
       Write out Q = q1*x^n2 + q2
