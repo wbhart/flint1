@@ -178,8 +178,8 @@ void profDriver__mpz_poly_mul_kara_recursive_mixlengths(char* params)
 
    test_support_init();
 
-   for (unsigned long len1 = skip; len1 <= max_length; len1 += skip)
-      for (unsigned long len2 = skip; len2 <= len1; len2 += skip)
+   for (unsigned long len2 = skip; len2 <= max_length; len2 += skip)
+      for (unsigned long len1 = skip; len1 <= len2; len1 += skip)
          prof2d_sample(len1, len2, &bits);
 
    test_support_cleanup();
