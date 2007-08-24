@@ -35,27 +35,12 @@ unsigned long long_mod2_precomp(unsigned long a_hi, unsigned long a_lo,
 unsigned long long_mulmod_precomp(unsigned long a, unsigned long b, 
                                          unsigned long n, double ninv);
                                          
-unsigned long long_powmod0(unsigned long a, long exp, unsigned long n);
+unsigned long long_powmod(unsigned long a, long exp, unsigned long n);
 
-unsigned long long_powmod_precomp0(unsigned long a, long exp, 
+unsigned long long_powmod_precomp(unsigned long a, long exp, 
                                      unsigned long n, double ninv);
                                      
-unsigned long long_sqrtmod0(unsigned long a, unsigned long p);
-
 int long_jacobi_precomp(unsigned long a, unsigned long p, double pinv);
-
-void long_precompute_inverse2(unsigned long * ninv_hi, 
-                            unsigned long * ninv_lo, unsigned long n);
-                            
-unsigned long long_mod_precomp2(unsigned long a_hi, unsigned long a_lo, 
-         unsigned long n, unsigned long ninv_hi, unsigned long ninv_lo);
-         
-unsigned long long_mulmod_precomp2(unsigned long a, unsigned long b, unsigned long n,
-                        unsigned long ninv_hi, unsigned long ninv_lo);
-
-int long_miller_rabin_precomp2(unsigned long n, unsigned long ninv_hi, unsigned long ninv_lo, unsigned long reps);
-
-int long_isprime_precomp2(unsigned long n, unsigned long ninv_hi, unsigned long ninv_lo);
 
 int long_isprime(unsigned long n);
 
@@ -64,14 +49,11 @@ unsigned long long_nextprime(unsigned long n);
 unsigned long long_pow(unsigned long a, unsigned long exp);
 
 unsigned long long_powmod(unsigned long a, long exp, unsigned long n);
-
-unsigned long long_powmod_precomp2(unsigned long a, long exp, unsigned long n,
-                            unsigned long ninv_hi, unsigned long ninv_lo);
-                            
-int long_jacobi_precomp2(unsigned long a, unsigned long p, unsigned long pinv_hi, 
-                                                    unsigned long pinv_lo);
                                                     
 unsigned long long_sqrtmod(unsigned long a, unsigned long p); 
+
+unsigned long long_cuberootmod(unsigned long * cuberoot1, unsigned long a, 
+       unsigned long p);
 
 unsigned long long_cuberootmod(unsigned long * cuberoot1, 
                                unsigned long a, unsigned long p);
