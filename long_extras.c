@@ -53,7 +53,7 @@ double z_precompute_inverse(unsigned long n)
 /* 
     Returns a % n given a precomputed approx inverse ninv
     Operation is *unsigned*
-    Requires that n be no more than 53 bits and _a_ be less than n^2
+    Requires that n be no more than FLINT_D_BITS bits and _a_ be less than n^2
 */
 
 unsigned long z_mod_precomp(unsigned long a, unsigned long n, double ninv)
@@ -68,7 +68,7 @@ unsigned long z_mod_precomp(unsigned long a, unsigned long n, double ninv)
 /* 
     Returns a / n given a precomputed approx inverse ninv
     Operation is *unsigned*
-    Requires that n be no more than 63 bits but there are no
+    Requires that n be no more than FLINT_BITS-1 bits but there are no
     restrictions on _a_
 */
 
@@ -90,7 +90,7 @@ unsigned long z_div_64_precomp(unsigned long a, unsigned long n, double ninv)
 /* 
     Returns a % n given a precomputed approx inverse ninv
     Operation is *unsigned*
-    Requires that n be no more than 63 bits but there are no
+    Requires that n be no more than FLINT_BITS-1 bits but there are no
     restrictions on _a_
 */
 
@@ -111,7 +111,7 @@ unsigned long z_mod_64_precomp(unsigned long a, unsigned long n, double ninv)
 
 /*
    Computes a_hi a_lo mod n given an approximate inverse
-   Assumes n is no more than 63 bits, but there are no
+   Assumes n is no more than FLINT_BITS-1 bits, but there are no
    restrictions on a_hi or a_lo
    Operation is unsigned.
 */
@@ -141,7 +141,7 @@ unsigned long z_ll_mod_precomp(unsigned long a_hi, unsigned long a_lo,
 /* 
    Computes a*b mod n, given a precomputed inverse ninv
    Assumes a an b are both in [0,n). 
-   Requires that n be no more than 53 bits
+   Requires that n be no more than FLINT_D_BITS bits
 */
 
 unsigned long z_mulmod_precomp(unsigned long a, unsigned long b, 
@@ -174,7 +174,7 @@ unsigned long z_mulmod_64_precomp(unsigned long a, unsigned long b, unsigned lon
 /*
    Returns a^exp modulo n
    Assumes a is reduced mod n
-   Requires that n be no more than 53 bits
+   Requires that n be no more than FLINT_D_BITS bits
    There are no restrictions on exp, which can also be negative.
 */
 
@@ -207,7 +207,7 @@ unsigned long z_powmod(unsigned long a, long exp, unsigned long n)
 /*
    Returns a^exp modulo n
    Assumes a is reduced mod n
-   Requires that n be no more than 63 bits
+   Requires that n be no more than FLINT_BITS-1 bits
    There are no restrictions on exp, which can also be negative.
 */
 
@@ -240,7 +240,7 @@ unsigned long z_powmod_64(unsigned long a, long exp, unsigned long n)
 /*
    Returns a^exp modulo n given a precomputed inverse
    Assumes a is reduced mod n
-   Requires that n be no more than 53 bits
+   Requires that n be no more than FLINT_D_BITS bits
    There are no restrictions on exp, which may also be negative
 */
 
@@ -272,7 +272,7 @@ unsigned long z_powmod_precomp(unsigned long a, long exp,
 /*
    Returns a^exp modulo n given a precomputed inverse
    Assumes a is reduced mod n
-   Requires that n be no more than 63 bits
+   Requires that n be no more than FLINT_BITS-1 bits
    There are no restrictions on exp, which may also be negative
 */
 
@@ -303,7 +303,7 @@ unsigned long z_powmod_64_precomp(unsigned long a, long exp,
 
 /* 
    Computes the Jacobi symbol of _a_ modulo p
-   Assumes p is a prime of no more than 63 bits and that _a_
+   Assumes p is a prime of no more than FLINT_BITS-1 bits and that _a_
    is reduced modulo p
 */
 
@@ -316,7 +316,7 @@ int z_jacobi_precomp(unsigned long a, unsigned long p, double pinv)
                       
 /* 
    Computes a square root of _a_ modulo p.
-   Assumes p is a prime of no more than 63 bits,
+   Assumes p is a prime of no more than FLINT_BITS-1 bits,
    that _a_ is reduced modulo p. 
    Returns 0 if _a_ is a quadratic non-residue modulo p.
 */
@@ -390,7 +390,7 @@ unsigned long z_sqrtmod(unsigned long a, unsigned long p)
    root is set to 1
    If _a_ is not a cube modulo p then 0 is returned
    This function assumes _a_ is not 0 and that _a_ is reduced modulo p
-   Requires p be no more than 63 bits
+   Requires p be no more than FLINT_BITS-1 bits
 */
 
 unsigned long z_cuberootmod(unsigned long * cuberoot1, unsigned long a, 
@@ -477,7 +477,7 @@ unsigned long z_pow(unsigned long a, unsigned long exp)
 /* 
    Tests whether n is an a-Strong Pseudo Prime
    Assumes d is set to the largest odd factor of n-1
-   Assumes n is at most 53 bits
+   Assumes n is at most FLINT_D_BITS bits
    Requires _a_ to be reduced mod n
 */
 static inline
@@ -499,7 +499,7 @@ int SPRP(unsigned long a, unsigned long d, unsigned long n, double ninv)
 /* 
    Tests whether n is an a-Strong Pseudo Prime
    Assumes d is set to the largest odd factor of n-1
-   Assumes n is at most 63 bits
+   Assumes n is at most FLINT_BITS-1 bits
    Requires _a_ to be reduced mod n
 */
 static inline
@@ -524,7 +524,7 @@ int SPRP_64(unsigned long a, unsigned long d, unsigned long n, double ninv)
     Every increase of reps by 1 decreases the chance or composites 
     passing by a factor of 4. 
     
-    Requires n be no more than 63 bits
+    Requires n be no more than FLINT_BITS-1 bits
 */
      
 int z_miller_rabin_precomp(unsigned long n, double ninv, unsigned long reps)
@@ -551,12 +551,12 @@ int z_miller_rabin_precomp(unsigned long n, double ninv, unsigned long reps)
 }
 
 /* 
-   This is a deterministic prime test. 
+   This is a deterministic prime test up to 10^16. 
    Todo: use the table here: http://oldweb.cecm.sfu.ca/pseudoprime/
    to make this into an unconditional primality test for larger n 
    This test is intended to be run after checking for divisibility by
    primes up to 257 say.
-   Requires n is no more than 63 bits
+   Requires n is no more than FLINT_BITS-1 bits
 */
 int z_isprime_precomp(unsigned long n, double ninv)
 {
@@ -597,14 +597,12 @@ int z_isprime_precomp(unsigned long n, double ninv)
 }
 
 /* 
-   This is a deterministic prime test. 
+   This is a deterministic prime test up to 10^16. 
    Todo: use the table here: http://oldweb.cecm.sfu.ca/pseudoprime/
    to make this into an unconditional primality test for larger n 
-   (once this function accepts n of more than 53 bits).
    This test is intended to be run after checking for divisibility by
    primes up to 257 say.
-   
-   Currently requires n to be at most 53 bits
+   Requires n to be at most FLINT_BITS-1 bits
 */
 
 int z_isprime(unsigned long n)
@@ -963,9 +961,9 @@ unsigned long z_gcd(long x, long y)
 
 /*
    Return 0 <= a < n1*n2 such that a mod n1 = x1 and a mod n2 = x2
-   Assumes gcd(n1, n2) = 1 and that n1*n2 is at most 62 bits
+   Assumes gcd(n1, n2) = 1 and that n1*n2 is at most FLINT_BITS-1 bits
    Assumes x1 is reduced modulo n1 and x2 is reduced modulo n2
-   Requires n1*n2 to be at most 63 bits
+   Requires n1*n2 to be at most FLINT_BITS-1 bits
 */
 
 unsigned long z_CRT(unsigned long x1, unsigned long x2, 
@@ -1034,7 +1032,7 @@ int z_issquarefree(unsigned long n)
 /*
    Removes the highest power of p possible from n and 
    returns the exponent to which it appeared in n
-   n can be up to 63 bits
+   n can be up to FLINT_BITS-1 bits
 */
 
 int z_remove_precomp(unsigned long * n, unsigned long p, double pinv)
