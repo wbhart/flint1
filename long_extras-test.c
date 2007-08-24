@@ -22,12 +22,6 @@ Copyright (C) 2007, William Hart and David Harvey
    success = test_##targetfunc();                      \
    all_success = all_success && success;               \
    printf(success ? "ok\n" : "FAIL!\n");
-   
-#if FLINT_BITS == 64
-#define D_BITS 53
-#else
-#define D_BITS 32
-#endif
 
 int test_z_mod_precomp()
 {
@@ -161,14 +155,14 @@ int test_z_ll_mod_precomp()
 
    for (unsigned long count = 0; (count < 1000) && (result == 1); count++)
    { 
-      bits = z_randint(D_BITS-1)+1;
+      bits = z_randint(FLINT_D_BITS-1)+1;
       n = random_ulong((1UL<<bits)-1)+1;
       
       ninv = z_precompute_inverse(n);
       
       for (unsigned long count2 = 0; (count2 < 1000) && (result == 1); count2++)
       {
-         bits = z_randint(D_BITS-1)+1;
+         bits = z_randint(FLINT_D_BITS-1)+1;
          a = random_ulong((1UL<<bits)-1)+1;
          b = random_ulong(-1L);
          
@@ -217,7 +211,7 @@ int test_z_mulmod_precomp()
 
    for (unsigned long count = 0; (count < 1000) && (result == 1); count++)
    { 
-      bits = z_randint(D_BITS-1)+1;
+      bits = z_randint(FLINT_D_BITS-1)+1;
       n = random_ulong((1UL<<bits)-1)+1;
       
       ninv = z_precompute_inverse(n);
@@ -325,7 +319,7 @@ int test_z_powmod()
    
    for (unsigned long count = 0; (count < 100) && (result == 1); count++)
    { 
-      bits = z_randint(D_BITS-1)+1;
+      bits = z_randint(FLINT_D_BITS-1)+1;
       n = random_ulong((1UL<<bits)-1UL)+1; 
       
       for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
@@ -421,7 +415,7 @@ int test_z_sqrtmod()
    
    for (unsigned long count = 0; (count < 10000) && (result == 1); count++)
    { 
-      bits = z_randint(D_BITS-1)+1;
+      bits = z_randint(FLINT_D_BITS-1)+1;
       p = random_ulong((1UL<<bits)-1UL)+1; 
       p = z_nextprime(p);
       
@@ -532,7 +526,7 @@ int test_z_nextprime()
    
    for (unsigned long count = 0; (count < 100000) && (result == 1); count++)
    { 
-      unsigned long bits = z_randint(D_BITS-1)+1;
+      unsigned long bits = z_randint(FLINT_D_BITS-1)+1;
       n = random_ulong((1UL<<bits)-1UL)+1; 
       mpz_set_ui(mpz_n, n);
 
