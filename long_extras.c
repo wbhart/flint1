@@ -72,7 +72,7 @@ unsigned long long_mod_precomp(unsigned long a, unsigned long n, double ninv)
     restrictions on _a_
 */
 
-unsigned long long_div63_precomp(unsigned long a, unsigned long n, double ninv)
+unsigned long long_div_1_precomp(unsigned long a, unsigned long n, double ninv)
 {
    if (a < n) return 0;
    unsigned long quot = (unsigned long) ((double) a * ninv);
@@ -94,7 +94,7 @@ unsigned long long_div63_precomp(unsigned long a, unsigned long n, double ninv)
     restrictions on _a_
 */
 
-unsigned long long_mod63_precomp(unsigned long a, unsigned long n, double ninv)
+unsigned long long_mod_1_precomp(unsigned long a, unsigned long n, double ninv)
 {
    if (a < n) return a;
    unsigned long quot = (unsigned long) ((double) a * ninv);
@@ -116,7 +116,7 @@ unsigned long long_mod63_precomp(unsigned long a, unsigned long n, double ninv)
    Operation is unsigned.
 */
 
-unsigned long long_mod2_precomp(unsigned long a_hi, unsigned long a_lo, 
+unsigned long long_mod_2_precomp(unsigned long a_hi, unsigned long a_lo, 
                                              unsigned long n, double ninv)
 {
    unsigned long t1;
@@ -156,6 +156,20 @@ unsigned long long_mulmod_precomp(unsigned long a, unsigned long b,
    } else if (rem >= n) return rem - n;
    return rem;
 }
+
+/* 
+   Computes a*b mod n, given a precomputed inverse ninv
+   Assumes a an b are both in [0,n). There is no restriction on a*b, 
+   i.e. it can be two limbs
+*/
+unsigned long long_mulmod_1_precomp(unsigned long a, unsigned long b, unsigned long n,
+                        double ninv)
+{
+   unsigned long p1, p2;
+   
+   umul_ppmm(p2, p1, a, b);
+   return long_mod_2_precomp(p2, p1, n, ninv);
+}                       
 
 /*
    Returns a^exp modulo n
@@ -938,18 +952,18 @@ int long_issquarefree(unsigned long n)
    n can be up to 63 bits
 */
 
-int long_remove63_precomp(unsigned long * n, unsigned long p, double pinv)
+int long_remove_1_precomp(unsigned long * n, unsigned long p, double pinv)
 {
    unsigned long quot, rem;
    int exp = 0;
    
-   quot = long_div63_precomp(*n, p, pinv);
+   quot = long_div_1_precomp(*n, p, pinv);
    rem = (*n) - quot*p;
    while (rem == 0); 
    {
       exp++;
       (*n) = quot;
-      quot = long_div63_precomp(*n, p, pinv);
+      quot = long_div_1_precomp(*n, p, pinv);
       rem = (*n) - quot*p;
    } 
    return exp;

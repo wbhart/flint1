@@ -25,15 +25,18 @@ double long_precompute_inverse(unsigned long n);
 
 unsigned long long_mod_precomp(unsigned long a, unsigned long n, double ninv);
 
-unsigned long long_div63_precomp(unsigned long a, unsigned long n, double ninv);
+unsigned long long_div_1_precomp(unsigned long a, unsigned long n, double ninv);
 
-unsigned long long_mod63_precomp(unsigned long a, unsigned long n, double ninv);
+unsigned long long_mod_1_precomp(unsigned long a, unsigned long n, double ninv);
 
-unsigned long long_mod2_precomp(unsigned long a_hi, unsigned long a_lo, 
+unsigned long long_mod_2_precomp(unsigned long a_hi, unsigned long a_lo, 
                                              unsigned long n, double ninv);
 
 unsigned long long_mulmod_precomp(unsigned long a, unsigned long b, 
                                          unsigned long n, double ninv);
+                                         
+unsigned long long_mulmod_1_precomp(unsigned long a, unsigned long b, unsigned long n,
+                        double ninv);
                                          
 unsigned long long_powmod(unsigned long a, long exp, unsigned long n);
 
@@ -75,11 +78,11 @@ static inline int long_issquare(long x)
 {
    static int mod64[64] = {1,1,0,0,1,0,0,0,0,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0}; 
    static int mod65[65] = {1,1,0,0,1,0,0,0,0,1,1,0,0,0,1,0,1,0,0,0,0,0,0,0,0,1,1,0,0,1,1,0,0,0,0,1,1,0,0,1,1,0,0,0,0,0,0,0,0,1,0,1,0,0,0,1,1,0,0,0,0,1,0,0,1};
-   static int mod63[63] = {1,1,0,0,1,0,0,1,0,1,0,0,0,0,1,0,1,0,1,0,0,0,1,0,0,1,0,0,1,0,0,0,0,0,0,1,1,1,0,0,0,0,0,1,0,0,1,0,0,1,0,0,0,0,0,0,1,0,1,0,0,0,0};
+   static int mod_ui[63] = {1,1,0,0,1,0,0,1,0,1,0,0,0,0,1,0,1,0,1,0,0,0,1,0,0,1,0,0,1,0,0,0,0,0,0,1,1,1,0,0,0,0,0,1,0,0,1,0,0,1,0,0,0,0,0,0,1,0,1,0,0,0,0};
    
    if (x < 0) return 0;
    if (!mod64[x%64]) return 0;
-   if (!mod63[x%63]) return 0;
+   if (!mod_ui[x%63]) return 0;
    if (!mod65[x%65]) return 0;
    unsigned long sqroot = (unsigned long) sqrt((double)x);
    return (x == sqroot*sqroot);
@@ -90,7 +93,7 @@ unsigned long long_CRT(unsigned long x1, unsigned long x2,
                        
 int long_issquarefree(unsigned long n);
 
-int long_remove63_precomp(unsigned long * n, unsigned long p, double pinv);
+int long_remove_1_precomp(unsigned long * n, unsigned long p, double pinv);
 
 int long_remove(unsigned long * n, unsigned long p);
 

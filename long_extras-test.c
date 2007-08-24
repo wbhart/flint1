@@ -67,7 +67,7 @@ int test_long_mod_precomp()
    return result;
 }
 
-int test_long_div63_precomp()
+int test_long_div_1_precomp()
 {
    double ninv;
    unsigned long n, bits;
@@ -88,7 +88,7 @@ int test_long_div63_precomp()
          a = random_ulong((1UL<<bits)-1)+1;
          
          for (unsigned long count = 0; count < 100; count++)   
-            res1 = long_div63_precomp(a, n, ninv);
+            res1 = long_div_1_precomp(a, n, ninv);
                   
          res2 = a / n;
          
@@ -106,7 +106,7 @@ int test_long_div63_precomp()
    return result;
 }
 
-int test_long_mod63_precomp()
+int test_long_mod_1_precomp()
 {
    double ninv;
    unsigned long n, bits;
@@ -127,7 +127,7 @@ int test_long_mod63_precomp()
          a = random_ulong((1UL<<bits)-1)+1;
          
          for (unsigned long count = 0; count < 100; count++)   
-            res1 = long_mod63_precomp(a, n, ninv);
+            res1 = long_mod_1_precomp(a, n, ninv);
                   
          res2 = a % n;
          
@@ -145,7 +145,7 @@ int test_long_mod63_precomp()
    return result;
 }
 
-int test_long_mod2_precomp()
+int test_long_mod_2_precomp()
 {
    double ninv;
    unsigned long n;
@@ -173,7 +173,7 @@ int test_long_mod2_precomp()
          b = random_ulong(-1L);
          
          for (unsigned long count = 0; count < 100; count++)   
-            res1 = long_mod2_precomp(a, b, n, ninv);
+            res1 = long_mod_2_precomp(a, b, n, ninv);
                   
          mpz_set_ui(mpz_a, a);
          mpz_mul_2exp(mpz_res, mpz_a, FLINT_BITS);
@@ -229,6 +229,61 @@ int test_long_mulmod_precomp()
          
          for (unsigned long count = 0; count < 100; count++)   
             res1 = long_mulmod_precomp(a, b, n, ninv);
+                  
+         mpz_set_ui(mpz_a, a);
+         mpz_set_ui(mpz_b, b);
+         mpz_set_ui(mpz_n, n);
+         mpz_mul(mpz_res, mpz_a, mpz_b);
+         mpz_mod(mpz_res, mpz_res, mpz_n);       
+         res2 = mpz_get_ui(mpz_res);
+         
+#if DEBUG              
+         if (res1 != res2)
+         {
+            printf("a = %ld, b = %ld, n = %ld, ninv = %lf, res1 = %ld, res2 = %ld\n", a, b, n, ninv, res1, res2);
+         }
+#endif
+         
+         result = (res1 == res2);
+      }
+   }
+   
+   mpz_clear(mpz_a);
+   mpz_clear(mpz_b);
+   mpz_clear(mpz_n);
+   mpz_clear(mpz_res); 
+   
+   return result;
+}
+
+int test_long_mulmod_1_precomp()
+{
+   double ninv;
+   unsigned long n;
+   unsigned long a, b, res1, res2, bits;
+   
+   int result = 1;
+   
+   mpz_t mpz_a, mpz_b, mpz_n, mpz_res;
+   mpz_init(mpz_a);
+   mpz_init(mpz_b);
+   mpz_init(mpz_n);
+   mpz_init(mpz_res); 
+
+   for (unsigned long count = 0; (count < 1000) && (result == 1); count++)
+   { 
+      bits = long_randint(FLINT_BITS-1)+1;
+      n = random_ulong((1UL<<bits)-1)+1;
+      
+      ninv = long_precompute_inverse(n);
+      
+      for (unsigned long count2 = 0; (count2 < 1000) && (result == 1); count2++)
+      {
+         a = random_ulong(n);
+         b = random_ulong(n);
+         
+         for (unsigned long count = 0; count < 100; count++)   
+            res1 = long_mulmod_1_precomp(a, b, n, ninv);
                   
          mpz_set_ui(mpz_a, a);
          mpz_set_ui(mpz_b, b);
@@ -676,10 +731,11 @@ void fmpz_poly_test_all()
    int success, all_success = 1;
 
    RUN_TEST(long_mod_precomp);
-   RUN_TEST(long_div63_precomp);
-   RUN_TEST(long_mod63_precomp);
-   RUN_TEST(long_mod2_precomp);
+   RUN_TEST(long_div_1_precomp);
+   RUN_TEST(long_mod_1_precomp);
+   RUN_TEST(long_mod_2_precomp);
    RUN_TEST(long_mulmod_precomp);
+   RUN_TEST(long_mulmod_1_precomp);
    RUN_TEST(long_powmod);
    RUN_TEST(long_sqrtmod);
    //RUN_TEST(long_cuberootmod);
