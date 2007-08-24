@@ -23,7 +23,7 @@
    todo: get rid of divisions
 */
 
-unsigned long long_randint(unsigned long limit) 
+unsigned long z_randint(unsigned long limit) 
 {
 #if FLINT_BITS == 32
     static u_int64_t randval = 4035456057U;
@@ -45,7 +45,7 @@ unsigned long long_randint(unsigned long limit)
    i.e. 53 bits of 1 / n 
 */
 
-double long_precompute_inverse(unsigned long n)
+double z_precompute_inverse(unsigned long n)
 {
    return (double) 1 / (double) n;
 }
@@ -56,7 +56,7 @@ double long_precompute_inverse(unsigned long n)
     Requires that n be no more than 53 bits and _a_ be less than n^2
 */
 
-unsigned long long_mod_precomp(unsigned long a, unsigned long n, double ninv)
+unsigned long z_mod_precomp(unsigned long a, unsigned long n, double ninv)
 {
    if (a < n) return a;
    unsigned long quot = (unsigned long) ((double) a * ninv);
@@ -72,7 +72,7 @@ unsigned long long_mod_precomp(unsigned long a, unsigned long n, double ninv)
     restrictions on _a_
 */
 
-unsigned long long_div_1_precomp(unsigned long a, unsigned long n, double ninv)
+unsigned long z_div_64_precomp(unsigned long a, unsigned long n, double ninv)
 {
    if (a < n) return 0;
    unsigned long quot = (unsigned long) ((double) a * ninv);
@@ -94,7 +94,7 @@ unsigned long long_div_1_precomp(unsigned long a, unsigned long n, double ninv)
     restrictions on _a_
 */
 
-unsigned long long_mod_1_precomp(unsigned long a, unsigned long n, double ninv)
+unsigned long z_mod_64_precomp(unsigned long a, unsigned long n, double ninv)
 {
    if (a < n) return a;
    unsigned long quot = (unsigned long) ((double) a * ninv);
@@ -116,7 +116,7 @@ unsigned long long_mod_1_precomp(unsigned long a, unsigned long n, double ninv)
    Operation is unsigned.
 */
 
-unsigned long long_mod_2_precomp(unsigned long a_hi, unsigned long a_lo, 
+unsigned long z_ll_mod_precomp(unsigned long a_hi, unsigned long a_lo, 
                                              unsigned long n, double ninv)
 {
    unsigned long t1;
@@ -125,7 +125,7 @@ unsigned long long_mod_2_precomp(unsigned long a_hi, unsigned long a_lo,
    if (a_hi >= n) 
    {
       if (((n>>(FLINT_BITS/2)) == 0) && (a_hi >= n*n)) a_hi = a_hi%n;
-      else a_hi = long_mod_precomp(a_hi, n, ninv);
+      else a_hi = z_mod_precomp(a_hi, n, ninv);
    }
    
 #if UDIV_NEEDS_NORMALIZATION
@@ -144,7 +144,7 @@ unsigned long long_mod_2_precomp(unsigned long a_hi, unsigned long a_lo,
    Requires that n be no more than 53 bits
 */
 
-unsigned long long_mulmod_precomp(unsigned long a, unsigned long b, 
+unsigned long z_mulmod_precomp(unsigned long a, unsigned long b, 
                                          unsigned long n, double ninv)
 {
    unsigned long quot = (unsigned long) ((double) a * (double) b * ninv);
@@ -162,13 +162,13 @@ unsigned long long_mulmod_precomp(unsigned long a, unsigned long b,
    Assumes a an b are both in [0,n). There is no restriction on a*b, 
    i.e. it can be two limbs
 */
-unsigned long long_mulmod_1_precomp(unsigned long a, unsigned long b, unsigned long n,
+unsigned long z_mulmod_64_precomp(unsigned long a, unsigned long b, unsigned long n,
                         double ninv)
 {
    unsigned long p1, p2;
    
    umul_ppmm(p2, p1, a, b);
-   return long_mod_2_precomp(p2, p1, n, ninv);
+   return z_ll_mod_precomp(p2, p1, n, ninv);
 }                       
 
 /*
@@ -178,9 +178,9 @@ unsigned long long_mulmod_1_precomp(unsigned long a, unsigned long b, unsigned l
    There are no restrictions on exp, which can also be negative.
 */
 
-unsigned long long_powmod(unsigned long a, long exp, unsigned long n)
+unsigned long z_powmod(unsigned long a, long exp, unsigned long n)
 {
-   double ninv = long_precompute_inverse(n);
+   double ninv = z_precompute_inverse(n);
    
    unsigned long x, y;
    
@@ -194,12 +194,12 @@ unsigned long long_powmod(unsigned long a, long exp, unsigned long n)
    x = 1;
    y = a;
    while (e) {
-      if (e & 1) x = long_mulmod_precomp(x, y, n, ninv);
-      y = long_mulmod_precomp(y, y, n, ninv);
+      if (e & 1) x = z_mulmod_precomp(x, y, n, ninv);
+      y = z_mulmod_precomp(y, y, n, ninv);
       e = e >> 1;
    }
 
-   if (exp < 0) x = long_invert(x, n);
+   if (exp < 0) x = z_invert(x, n);
 
    return x;
 } 
@@ -211,9 +211,9 @@ unsigned long long_powmod(unsigned long a, long exp, unsigned long n)
    There are no restrictions on exp, which can also be negative.
 */
 
-unsigned long long_powmod_1(unsigned long a, long exp, unsigned long n)
+unsigned long z_powmod_64(unsigned long a, long exp, unsigned long n)
 {
-   double ninv = long_precompute_inverse(n);
+   double ninv = z_precompute_inverse(n);
    
    unsigned long x, y;
    
@@ -227,12 +227,12 @@ unsigned long long_powmod_1(unsigned long a, long exp, unsigned long n)
    x = 1;
    y = a;
    while (e) {
-      if (e & 1) x = long_mulmod_1_precomp(x, y, n, ninv);
-      y = long_mulmod_1_precomp(y, y, n, ninv);
+      if (e & 1) x = z_mulmod_64_precomp(x, y, n, ninv);
+      y = z_mulmod_64_precomp(y, y, n, ninv);
       e = e >> 1;
    }
 
-   if (exp < 0) x = long_invert(x, n);
+   if (exp < 0) x = z_invert(x, n);
 
    return x;
 } 
@@ -244,7 +244,7 @@ unsigned long long_powmod_1(unsigned long a, long exp, unsigned long n)
    There are no restrictions on exp, which may also be negative
 */
 
-unsigned long long_powmod_precomp(unsigned long a, long exp, 
+unsigned long z_powmod_precomp(unsigned long a, long exp, 
                                      unsigned long n, double ninv)
 {
    unsigned long x, y;
@@ -259,12 +259,12 @@ unsigned long long_powmod_precomp(unsigned long a, long exp,
    x = 1;
    y = a;
    while (e) {
-      if (e & 1) x = long_mulmod_precomp(x, y, n, ninv);
-      y = long_mulmod_precomp(y, y, n, ninv);
+      if (e & 1) x = z_mulmod_precomp(x, y, n, ninv);
+      y = z_mulmod_precomp(y, y, n, ninv);
       e = e >> 1;
    }
 
-   if (exp < 0) x = long_invert(x, n);
+   if (exp < 0) x = z_invert(x, n);
 
    return x;
 } 
@@ -276,7 +276,7 @@ unsigned long long_powmod_precomp(unsigned long a, long exp,
    There are no restrictions on exp, which may also be negative
 */
 
-unsigned long long_powmod_1_precomp(unsigned long a, long exp, 
+unsigned long z_powmod_64_precomp(unsigned long a, long exp, 
                                      unsigned long n, double ninv)
 {
    unsigned long x, y;
@@ -291,12 +291,12 @@ unsigned long long_powmod_1_precomp(unsigned long a, long exp,
    x = 1;
    y = a;
    while (e) {
-      if (e & 1) x = long_mulmod_1_precomp(x, y, n, ninv);
-      y = long_mulmod_1_precomp(y, y, n, ninv);
+      if (e & 1) x = z_mulmod_64_precomp(x, y, n, ninv);
+      y = z_mulmod_64_precomp(y, y, n, ninv);
       e = e >> 1;
    }
 
-   if (exp < 0) x = long_invert(x, n);
+   if (exp < 0) x = z_invert(x, n);
 
    return x;
 } 
@@ -307,10 +307,10 @@ unsigned long long_powmod_1_precomp(unsigned long a, long exp,
    is reduced modulo p
 */
 
-int long_jacobi_precomp(unsigned long a, unsigned long p, double pinv)
+int z_jacobi_precomp(unsigned long a, unsigned long p, double pinv)
 {
    if (a == 0) return 0;  
-   if (long_powmod_1_precomp(a, (p-1)/2, p, pinv) == p-1) return -1;
+   if (z_powmod2_precomp(a, (p-1)/2, p, pinv) == p-1) return -1;
    else return 1;                                            
 }
                       
@@ -320,7 +320,7 @@ int long_jacobi_precomp(unsigned long a, unsigned long p, double pinv)
    that _a_ is reduced modulo p. 
    Returns 0 if _a_ is a quadratic non-residue modulo p.
 */
-unsigned long long_sqrtmod(unsigned long a, unsigned long p) 
+unsigned long z_sqrtmod(unsigned long a, unsigned long p) 
 {
      unsigned int r, k, m;
      unsigned long p1, b, g, bpow, gpow, res;
@@ -331,13 +331,13 @@ unsigned long long_sqrtmod(unsigned long a, unsigned long p)
         return a;
      }
      
-     pinv = long_precompute_inverse(p);
+     pinv = z_precompute_inverse(p);
      
-     if (long_jacobi_precomp(a, p, pinv) == -1) return 0;
+     if (z_jacobi_precomp(a, p, pinv) == -1) return 0;
      
      if ((p&3)==3)
      {
-        return long_powmod_1_precomp(a, (p+1)/4, p, pinv);
+        return z_powmod2_precomp(a, (p+1)/4, p, pinv);
      }
      
      r = 0;
@@ -348,15 +348,15 @@ unsigned long long_sqrtmod(unsigned long a, unsigned long p)
         r++;
      } while ((p1&1UL) == 0);
  
-     b = long_powmod_1_precomp(a, p1, p, pinv);
+     b = z_powmod2_precomp(a, p1, p, pinv);
      
      for (k=2UL; ;k++)
      {
-         if (long_jacobi_precomp(k, p, pinv) == -1) break;
+         if (z_jacobi_precomp(k, p, pinv) == -1) break;
      }
      
-     g = long_powmod_1_precomp(k, p1, p, pinv);
-     res = long_powmod_1_precomp(a, (p1+1)/2, p, pinv);
+     g = z_powmod2_precomp(k, p1, p, pinv);
+     res = z_powmod2_precomp(a, (p1+1)/2, p, pinv);
      if (b == 1UL) 
      {
         return res;
@@ -367,16 +367,16 @@ unsigned long long_sqrtmod(unsigned long a, unsigned long p)
            bpow = b;
            for (m = 1; (m <= r-1) && (bpow != 1); m++)
            {
-               bpow = long_mulmod_1_precomp(bpow, bpow, p, pinv);
+               bpow = z_mulmod2_precomp(bpow, bpow, p, pinv);
            }
            gpow = g;
            for (int i = 1; i < r-m; i++)
            {
-               gpow = long_mulmod_1_precomp(gpow, gpow, p, pinv);
+               gpow = z_mulmod2_precomp(gpow, gpow, p, pinv);
            }
-           res = long_mulmod_1_precomp(res, gpow, p, pinv);
-           gpow = long_mulmod_1_precomp(gpow, gpow, p, pinv);
-           b = long_mulmod_1_precomp(b, gpow, p, pinv);
+           res = z_mulmod2_precomp(res, gpow, p, pinv);
+           gpow = z_mulmod2_precomp(gpow, gpow, p, pinv);
+           b = z_mulmod2_precomp(b, gpow, p, pinv);
            gpow = g;
            r = m;
      }
@@ -393,18 +393,18 @@ unsigned long long_sqrtmod(unsigned long a, unsigned long p)
    Requires p be no more than 63 bits
 */
 
-unsigned long long_cuberootmod(unsigned long * cuberoot1, unsigned long a, 
+unsigned long z_cuberootmod(unsigned long * cuberoot1, unsigned long a, 
        unsigned long p)
 {
    unsigned long x;
    double pinv; 
     
-   pinv = long_precompute_inverse(p);
+   pinv = z_precompute_inverse(p);
    
    if ((p % 3) == 2)
    {
       *cuberoot1 = 1;
-      return long_powmod_1_precomp(a, 2*((p+1)/3)-1, p, pinv);
+      return z_powmod2_precomp(a, 2*((p+1)/3)-1, p, pinv);
    }
    
    unsigned long e=0;
@@ -422,46 +422,46 @@ unsigned long long_cuberootmod(unsigned long * cuberoot1, unsigned long a,
    }
    l = q%3;
    
-   x = long_powmod_1_precomp(a, (q-l)/3, p, pinv);
-   temp = long_powmod_1_precomp(a, l, p, pinv);
-   temp2 = long_powmod_1_precomp(x, 3UL, p, pinv);
-   b = long_mulmod_1_precomp(temp, temp2, p, pinv);
-   if (l == 2) x = long_mulmod_1_precomp(a, x, p, pinv);
+   x = z_powmod2_precomp(a, (q-l)/3, p, pinv);
+   temp = z_powmod2_precomp(a, l, p, pinv);
+   temp2 = z_powmod2_precomp(x, 3UL, p, pinv);
+   b = z_mulmod2_precomp(temp, temp2, p, pinv);
+   if (l == 2) x = z_mulmod2_precomp(a, x, p, pinv);
       
-   while(long_powmod_1_precomp(n, (p-1)/3, p, pinv)==1) n++;
+   while(z_powmod2_precomp(n, (p-1)/3, p, pinv)==1) n++;
    
-   z = long_powmod_1_precomp(n, q, p, pinv);
+   z = z_powmod2_precomp(n, q, p, pinv);
    y = z;
    r = e;
    
    while (b!=1)
    {
-      s = long_powmod_1_precomp(b, 3UL, p, pinv);
+      s = z_powmod2_precomp(b, 3UL, p, pinv);
       m = 1;
       while(s!=1) 
       {
-         s = long_powmod_1_precomp(s, 3UL, p, pinv);
+         s = z_powmod2_precomp(s, 3UL, p, pinv);
          m++;
       }
       if(m>=r) return(0);
-      t = long_powmod_1_precomp(y, long_pow(3UL, r-m-1UL), p, pinv);
-      y = long_powmod_1_precomp(t, 3UL, p, pinv);
+      t = z_powmod2_precomp(y, z_pow(3UL, r-m-1UL), p, pinv);
+      y = z_powmod2_precomp(t, 3UL, p, pinv);
       r = m;
-      x = long_mulmod_1_precomp(t, x, p, pinv);
-      b = long_mulmod_1_precomp(y, b, p, pinv);
+      x = z_mulmod2_precomp(t, x, p, pinv);
+      b = z_mulmod2_precomp(y, b, p, pinv);
    }
    
    if (r==1) *cuberoot1 = y;
-   else *cuberoot1 = long_powmod_1_precomp(y, long_pow(3UL, r-1), p, pinv);
+   else *cuberoot1 = z_powmod2_precomp(y, z_pow(3UL, r-1), p, pinv);
    if (l==2) return(x);
-   else return(long_invert(x, p));
+   else return(z_invert(x, p));
 }
 
 /*
     returns a^exp
 */
 
-unsigned long long_pow(unsigned long a, unsigned long exp)
+unsigned long z_pow(unsigned long a, unsigned long exp)
 {
    if (exp == 0) return 1;
    if (a == 1) return 1;
@@ -486,10 +486,32 @@ int SPRP(unsigned long a, unsigned long d, unsigned long n, double ninv)
       unsigned long t = d;
       unsigned long y;
       
-      y = long_powmod_precomp(a, t , n, ninv);
+      y = z_powmod_precomp(a, t , n, ninv);
       while ((t != n-1) && (y != 1) && (y != n-1))
       {
-         y = long_mulmod_precomp(y, y, n, ninv);
+         y = z_mulmod_precomp(y, y, n, ninv);
+         t <<= 1;
+      }
+      if ((y != n-1) && ((t&1) == 0)) return 0;
+      return 1;
+}
+
+/* 
+   Tests whether n is an a-Strong Pseudo Prime
+   Assumes d is set to the largest odd factor of n-1
+   Assumes n is at most 63 bits
+   Requires _a_ to be reduced mod n
+*/
+static inline
+int SPRP_64(unsigned long a, unsigned long d, unsigned long n, double ninv)
+{
+      unsigned long t = d;
+      unsigned long y;
+      
+      y = z_powmod_64_precomp(a, t , n, ninv);
+      while ((t != n-1) && (y != 1) && (y != n-1))
+      {
+         y = z_mulmod_64_precomp(y, y, n, ninv);
          t <<= 1;
       }
       if ((y != n-1) && ((t&1) == 0)) return 0;
@@ -505,7 +527,7 @@ int SPRP(unsigned long a, unsigned long d, unsigned long n, double ninv)
     Requires n be no more than 63 bits
 */
      
-int long_miller_rabin_precomp(unsigned long n, double ninv, unsigned long reps)
+int z_miller_rabin_precomp(unsigned long n, double ninv, unsigned long reps)
 {
    unsigned long d = n-1, a, t, y;
    
@@ -515,12 +537,12 @@ int long_miller_rabin_precomp(unsigned long n, double ninv, unsigned long reps)
       
    for (unsigned long i = 0; i < reps; i++)
    {
-      a = long_randint(n-2)+1UL;
+      a = z_randint(n-2)+1UL;
       t = d;
-      y = long_powmod_1_precomp(a, t , n, ninv);
+      y = z_powmod2_precomp(a, t , n, ninv);
       while ((t != n-1) && (y != 1UL) && (y != n-1))
       {
-         y = long_mulmod_1_precomp(y, y, n, ninv);
+         y = z_mulmod2_precomp(y, y, n, ninv);
          t <<= 1UL;
       }
       if ((y != n-1) && ((t&1UL) == 0UL)) return 0;
@@ -532,13 +554,11 @@ int long_miller_rabin_precomp(unsigned long n, double ninv, unsigned long reps)
    This is a deterministic prime test. 
    Todo: use the table here: http://oldweb.cecm.sfu.ca/pseudoprime/
    to make this into an unconditional primality test for larger n 
-   (once this function accepts n of more than 53 bits).
    This test is intended to be run after checking for divisibility by
    primes up to 257 say.
-   
-   Currently requires n to be at most 53 bits
+   Requires n is no more than 63 bits
 */
-int long_isprime_precomp(unsigned long n, double ninv)
+int z_isprime_precomp(unsigned long n, double ninv)
 {
    unsigned long d = n-1;
    
@@ -565,11 +585,11 @@ int long_isprime_precomp(unsigned long n, double ninv)
    }
    if (n < 10000000000000000UL)
    {
-      if (SPRP(2UL, d, n, ninv) && SPRP(3UL, d, n, ninv) && SPRP(7UL, d, n, ninv) && SPRP(61UL, d, n, ninv) && SPRP(24251UL, d, n, ninv)) 
+      if (SPRP_64(2UL, d, n, ninv) && SPRP_64(3UL, d, n, ninv) && SPRP_64(7UL, d, n, ninv) && SPRP_64(61UL, d, n, ninv) && SPRP_64(24251UL, d, n, ninv)) 
          if (n != 46856248255981UL) return 1;
       return 0;
    }
-   return long_miller_rabin_precomp(n, ninv, 6); 
+   return z_miller_rabin_precomp(n, ninv, 6); 
 #else
       if (SPRP(2UL, d, n, ninv) && SPRP(7UL, d, n, ninv) && SPRP(61UL, d, n, ninv)) return 1;
       else return 0;
@@ -587,13 +607,13 @@ int long_isprime_precomp(unsigned long n, double ninv)
    Currently requires n to be at most 53 bits
 */
 
-int long_isprime(unsigned long n)
+int z_isprime(unsigned long n)
 {
    double ninv;
 
-   ninv = long_precompute_inverse(n);
+   ninv = z_precompute_inverse(n);
 
-   return long_isprime_precomp(n, ninv);
+   return z_isprime_precomp(n, ninv);
 }
 
 unsigned int nextmod30[] = 
@@ -630,7 +650,7 @@ unsigned int primes[] =
     Assumes the result will fit in an unsigned long
 */
 
-unsigned long long_nextprime(unsigned long n)
+unsigned long z_nextprime(unsigned long n)
 {
    if (n < 7) 
    {
@@ -687,7 +707,7 @@ unsigned long long_nextprime(unsigned long n)
        }
        
        /* Miller-Rabin test */
-      if (long_isprime(n)) break;
+      if (z_isprime(n)) break;
       else
       {
          n += diff;
@@ -704,7 +724,7 @@ unsigned long long_nextprime(unsigned long n)
     returns the inverse of a modulo p
 */
 
-unsigned long long_invert(unsigned long a, unsigned long p)
+unsigned long z_invert(unsigned long a, unsigned long p)
 {
    if (a == 0) return 0;
    
@@ -755,7 +775,7 @@ unsigned long long_invert(unsigned long a, unsigned long p)
      returns gcd(x, y) = a*x + b*y. If gcd = 1 then a = x^-1 mod y
 */
 
-long long_gcd_invert(long* a, long x, long y)
+long z_gcd_invert(long* a, long x, long y)
 {
    long u1=1; 
    long u2=0; 
@@ -820,7 +840,7 @@ long long_gcd_invert(long* a, long x, long y)
      returns gcd(x, y) = a*x + b*y.
 */
 
-long long_extgcd(long* a, long* b, long x, long y)
+long z_extgcd(long* a, long* b, long x, long y)
 {
    long u1=1, v1=0;
    long u2=0, v2=1;
@@ -892,7 +912,7 @@ long long_extgcd(long* a, long* b, long x, long y)
      returns gcd(x, y)
 */
 
-unsigned long long_gcd(long x, long y)
+unsigned long z_gcd(long x, long y)
 {
    if (x < 0) {
       x = -x;
@@ -945,10 +965,10 @@ unsigned long long_gcd(long x, long y)
    Return 0 <= a < n1*n2 such that a mod n1 = x1 and a mod n2 = x2
    Assumes gcd(n1, n2) = 1 and that n1*n2 is at most 62 bits
    Assumes x1 is reduced modulo n1 and x2 is reduced modulo n2
-   Requires n1*n2 to be at most 53 bits
+   Requires n1*n2 to be at most 63 bits
 */
 
-unsigned long long_CRT(unsigned long x1, unsigned long x2, 
+unsigned long z_CRT(unsigned long x1, unsigned long x2, 
                        unsigned long n1, unsigned long n2)
 {
      unsigned long n, res, ch;
@@ -956,15 +976,15 @@ unsigned long long_CRT(unsigned long x1, unsigned long x2,
      
      n = n1*n2;
      if (n == 1) return 0;
-     ninv = long_precompute_inverse(n);
+     ninv = z_precompute_inverse(n);
      
-     res = long_invert(n2,n1);
-     res = long_mulmod_precomp(res, n2, n, ninv);
-     res = long_mulmod_precomp(res, x1, n, ninv);
+     res = z_invert(n2,n1);
+     res = z_mulmod2_precomp(res, n2, n, ninv);
+     res = z_mulmod2_precomp(res, x1, n, ninv);
      
-     ch = long_invert(n1,n2);
-     ch = long_mulmod_precomp(ch, n1, n, ninv);
-     ch = long_mulmod_precomp(ch, x2, n, ninv);
+     ch = z_invert(n1,n2);
+     ch = z_mulmod2_precomp(ch, n1, n, ninv);
+     ch = z_mulmod2_precomp(ch, x2, n, ninv);
      
      res = res+ch;
      if (res >= n) return res - n;
@@ -974,7 +994,7 @@ unsigned long long_CRT(unsigned long x1, unsigned long x2,
 #define SQFREE_TF_PRIMES_LIMIT 168
 #define SQFREE_TF_CUTOFF 1000000
 
-int long_issquarefree_trial(unsigned long n)
+int z_issquarefree_trial(unsigned long n)
 {
    unsigned long quot, rem;
    
@@ -1001,9 +1021,9 @@ int long_issquarefree_trial(unsigned long n)
    Currently only works for numbers up to 65535
 */
 
-int long_issquarefree(unsigned long n)
+int z_issquarefree(unsigned long n)
 {
-   if (n < SQFREE_TF_CUTOFF) return long_issquarefree_trial(n);
+   if (n < SQFREE_TF_CUTOFF) return z_issquarefree_trial(n);
    else 
    {
       printf("Not implemented yet!\n");
@@ -1017,18 +1037,18 @@ int long_issquarefree(unsigned long n)
    n can be up to 63 bits
 */
 
-int long_remove_1_precomp(unsigned long * n, unsigned long p, double pinv)
+int z_remove_precomp(unsigned long * n, unsigned long p, double pinv)
 {
    unsigned long quot, rem;
    int exp = 0;
    
-   quot = long_div_1_precomp(*n, p, pinv);
+   quot = z_div2_precomp(*n, p, pinv);
    rem = (*n) - quot*p;
    while (rem == 0); 
    {
       exp++;
       (*n) = quot;
-      quot = long_div_1_precomp(*n, p, pinv);
+      quot = z_div2_precomp(*n, p, pinv);
       rem = (*n) - quot*p;
    } 
    return exp;
@@ -1039,7 +1059,7 @@ int long_remove_1_precomp(unsigned long * n, unsigned long p, double pinv)
    returns the exponent to which it appeared in n
 */
 
-int long_remove(unsigned long * n, unsigned long p)
+int z_remove(unsigned long * n, unsigned long p)
 {
    unsigned long exp; 
    int i;
@@ -1093,14 +1113,14 @@ int long_remove(unsigned long * n, unsigned long p)
    Returns the cofactor after removing these factors
 */
 
-unsigned long long_factor_trial(factor_t * factors, unsigned long n)
+unsigned long z_factor_trial(factor_t * factors, unsigned long n)
 {
    int num_factors = 0;
    int exp;
    
    for (unsigned long i = 0; (i < TF_CUTOFF) && (primes[i]*primes[i] <= n); i++)
    {
-      exp = long_remove(&n, primes[i]);
+      exp = z_remove(&n, primes[i]);
       if (exp)
       {
          factors->p[num_factors] = primes[i];
@@ -1122,9 +1142,9 @@ unsigned long long_factor_trial(factor_t * factors, unsigned long n)
 
 #define SQUFOF_ITERS 50000
 
-unsigned long _long_factor_SQUFOF(unsigned long n)
+unsigned long _z_factor_SQUFOF(unsigned long n)
 {
-   unsigned long sqroot = long_intsqrt(n);
+   unsigned long sqroot = z_intsqrt(n);
    unsigned long p = sqroot;
    unsigned long q = n - sqroot*sqroot;
    
@@ -1133,7 +1153,7 @@ unsigned long _long_factor_SQUFOF(unsigned long n)
       return sqroot;
    }
    
-   unsigned long l = 1 + 2*long_intsqrt(2*p);
+   unsigned long l = 1 + 2*z_intsqrt(2*p);
    unsigned long l2 = l/2;
    unsigned long iq, pnext;
    unsigned long qarr[50];
@@ -1164,8 +1184,8 @@ unsigned long _long_factor_SQUFOF(unsigned long n)
 	  q = t;
 	  p = pnext;
 	  if ((i&1) == 1) continue;
-	  if (!long_issquare(q)) continue;
-	  r = long_intsqrt(q);
+	  if (!z_issquare(q)) continue;
+	  r = z_intsqrt(q);
 	  if (qupto == 0) break;
 	  for (j = 0; j < qupto; j++)	
          if (r == qarr[j]) goto cont;
@@ -1201,9 +1221,9 @@ unsigned long _long_factor_SQUFOF(unsigned long n)
    n is not a prime
 */
 
-unsigned long long_factor_SQUFOF(unsigned long n)
+unsigned long z_factor_SQUFOF(unsigned long n)
 {
-   unsigned long factor = _long_factor_SQUFOF(n);
+   unsigned long factor = _z_factor_SQUFOF(n);
    unsigned long multiplier;
    unsigned long quot, rem, kn;
    unsigned long s1, s2;
@@ -1218,7 +1238,7 @@ unsigned long long_factor_SQUFOF(unsigned long n)
       count_lead_zeros(s2, n);
       if (s1 > s2) return 0; // kn is more than one limb 
       kn = multiplier*n;
-      factor = _long_factor_SQUFOF(kn);
+      factor = _z_factor_SQUFOF(kn);
       if (factor) 
       {
          quot = factor/multiplier;
@@ -1258,7 +1278,7 @@ void insert_factor(factor_t * factors, unsigned long p)
    else it returns 1
 */
 
-int long_factor(factor_t * factors, unsigned long n)
+int z_factor(factor_t * factors, unsigned long n)
 {
    unsigned long cofactor;
    unsigned long factor_arr[TF_FACTORS_IN_LIMB];
@@ -1266,7 +1286,7 @@ int long_factor(factor_t * factors, unsigned long n)
    unsigned long factors_left = 1;
    unsigned long factor;
    
-   cofactor = long_factor_trial(factors, n);
+   cofactor = z_factor_trial(factors, n);
       
    if (cofactor != 1)
    {
@@ -1275,13 +1295,13 @@ int long_factor(factor_t * factors, unsigned long n)
       while (factors_left > 0)
       {
          factor = factor_arr[factors_left-1]; 
-         if ((factor < cutoff) || long_isprime(factor))
+         if ((factor < cutoff) || z_isprime(factor))
          {
             insert_factor(factors, factor);
             factors_left--;
          } else
          {
-            factor = factor_arr[factors_left] = long_factor_SQUFOF(factor);
+            factor = factor_arr[factors_left] = z_factor_SQUFOF(factor);
             if (!factor_arr[factors_left]) return 0;
             factor_arr[factors_left-1] /= factor;
             factors_left++;
