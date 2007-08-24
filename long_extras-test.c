@@ -359,6 +359,54 @@ int test_long_powmod()
    return result;
 }
 
+int test_long_powmod_1()
+{
+   unsigned long n, ninv_hi, ninv_lo;
+   unsigned long a, exp, res1, res2, bits;
+   
+   mpz_t mpz_res, mpz_a, mpz_n;
+   mpz_init(mpz_res);
+   mpz_init(mpz_a);
+   mpz_init(mpz_n);
+       
+   int result = 1;
+   
+   for (unsigned long count = 0; (count < 100) && (result == 1); count++)
+   { 
+      bits = long_randint(FLINT_BITS-1)+1;
+      n = random_ulong((1UL<<bits)-1UL)+1; 
+      
+      for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
+      {
+         a = random_ulong(n); 
+         bits = long_randint(FLINT_BITS-1)+1;
+         exp = random_ulong((1UL<<bits)-1)+1;
+         
+         for (unsigned long count = 0; count < 100; count++)   
+            res1 = long_powmod_1(a, exp, n);
+         mpz_set_ui(mpz_a, a);
+         mpz_set_ui(mpz_n, n);
+         mpz_powm_ui(mpz_res, mpz_a, exp, mpz_n);
+         res2 = mpz_get_ui(mpz_res);
+         
+#if DEBUG            
+         if (res1 != res2)
+         {
+            printf("a = %ld, exp = %ld, n = %ld, res1 = %ld, res2 = %ld\n", a, exp, n, res1, res2);
+         }
+#endif
+         
+         result = (res1 == res2);
+      }
+   }  
+   
+   mpz_clear(mpz_res);
+   mpz_clear(mpz_a);
+   mpz_clear(mpz_n); 
+
+   return result;
+}
+
 int test_long_sqrtmod()
 {
    unsigned long p = 0;
@@ -423,20 +471,23 @@ int test_long_cuberootmod()
    
    for (unsigned long count = 0; (count < 1000) && (result == 1); count++)
    { 
-      bits = long_randint(D_BITS-1)+1;
-      p = random_ulong((1UL<<bits)-3)+3;
+#if FLINT_BITS == 64
+      bits = long_randint(38)+2;
+#else 
+      bits = long_randint(29)+2;
+#endif
+      p = random_ulong((1UL<<bits)-1)+3;
       p = long_nextprime(p);
       
       for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
       {
          a = random_ulong(p-1)+1; 
-#if DEBUG2 
+#if DEBUG 
          printf("bits = %ld, p = %ld, a = %ld\n", bits, p, a);
 #endif
          
          for (unsigned long count = 0; count < 10; count++)   
             res1 = long_cuberootmod(&cuberoot1, a, p);
-         
          if ((res1 == 0) && (p % 3 == 2) && (a != 0)) result == 0;
          else if (res1)
          {
@@ -642,12 +693,12 @@ int test_long_factor_SQUFOF()
 
    int result = 1;
    
-   for (unsigned long count = 0; (count < 100) && (result == 1); count++)
+   for (unsigned long count = 0; (count < 1000) && (result == 1); count++)
    { 
       do 
       {
-         bits = long_randint(D_BITS - 11)+1;
-         n = random_ulong((1UL<<bits)-1)+1;
+         bits = long_randint(FLINT_BITS - 1)+1;
+         n = random_ulong((1UL<<bits)-1)+3;
          n|=1;
       } while (long_isprime(n));     
       
@@ -687,8 +738,8 @@ int test_long_factor()
    
    for (unsigned long count = 0; (count < 5000) && (result == 1); count++)
    { 
-      bits = long_randint(D_BITS-1)+1;
-      orig_n = random_ulong((1UL<<bits)-1)+1;
+      bits = long_randint(FLINT_BITS-1)+1;
+      orig_n = random_ulong((1UL<<bits)-1)+2;
 
 
 #if DEBUG
@@ -737,14 +788,15 @@ void fmpz_poly_test_all()
    RUN_TEST(long_mulmod_precomp);
    RUN_TEST(long_mulmod_1_precomp);
    RUN_TEST(long_powmod);
+   RUN_TEST(long_powmod_1);
    RUN_TEST(long_sqrtmod);
-   //RUN_TEST(long_cuberootmod);
+   RUN_TEST(long_cuberootmod);
    RUN_TEST(long_nextprime);
    RUN_TEST(long_CRT);
    RUN_TEST(long_issquarefree);
    RUN_TEST(long_factor_trial);
-   //RUN_TEST(long_factor_SQUFOF);
-   //RUN_TEST(long_factor);
+   RUN_TEST(long_factor_SQUFOF);
+   RUN_TEST(long_factor);
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");

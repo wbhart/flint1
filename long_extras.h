@@ -40,9 +40,14 @@ unsigned long long_mulmod_1_precomp(unsigned long a, unsigned long b, unsigned l
                                          
 unsigned long long_powmod(unsigned long a, long exp, unsigned long n);
 
+unsigned long long_powmod_1(unsigned long a, long exp, unsigned long n);
+
 unsigned long long_powmod_precomp(unsigned long a, long exp, 
                                      unsigned long n, double ninv);
                                      
+unsigned long long_powmod_1_precomp(unsigned long a, long exp, 
+                                     unsigned long n, double ninv);
+
 int long_jacobi_precomp(unsigned long a, unsigned long p, double pinv);
 
 int long_isprime(unsigned long n);
