@@ -3130,6 +3130,152 @@ void fmpz_poly_divrem_naive(fmpz_poly_t Q, fmpz_poly_t R, fmpz_poly_t A, fmpz_po
    flint_heap_free(rem);
 }
 
+/* 
+   Divides A by B and returns the quotient Q, but only the low half of the remainder R
+*/
+
+void fmpz_poly_divrem_naive_low(fmpz_poly_t Q, fmpz_poly_t R, fmpz_poly_t A, fmpz_poly_t B)
+{
+   fmpz_poly_t qB;
+   
+   _fmpz_poly_normalise(A);
+   _fmpz_poly_normalise(B);
+   if (B->length == 0)
+   {
+      printf("Error: Divide by zero\n");
+      abort();
+   }
+   
+   long coeff = A->length-1;
+   unsigned long size_A = A->limbs + 1;
+   unsigned long size_B = B->limbs + 1;
+   unsigned long size_R;
+   unsigned long limbs_R;
+   unsigned long size_Q;
+   unsigned long limbs_Q;
+   mp_limb_t * coeffs_A = A->coeffs;
+   mp_limb_t * coeffs_B = B->coeffs;
+   mp_limb_t * coeff_i = coeffs_A + coeff*size_A;
+   mp_limb_t * B_lead = coeffs_B + (B->length-1)*size_B; 
+   mp_limb_t * coeff_Q;
+   mp_limb_t * coeffs_R;
+
+   NORM(B_lead);
+   
+   unsigned long size_B_lead = ABS(B_lead[0]);
+   mp_limb_t sign_B_lead = B_lead[0];
+   mp_limb_t sign_quot;
+   
+   while (1)
+   {
+      if (coeff < (long) B->length - 1) break;
+      NORM(coeff_i);
+      if (ABS(coeff_i[0]) < size_B_lead)
+      {
+         coeff--;
+         coeff_i -= size_A;
+      } else if (ABS(coeff_i[0]) > size_B_lead) break;
+      else if (mpn_cmp(coeff_i+1, B_lead+1, size_B_lead) >= 0) break;
+      else 
+      {
+         coeff--;
+         coeff_i -= size_A;         
+      }    
+   }
+   
+   mp_limb_t * rem = (mp_limb_t *) flint_heap_alloc(size_B_lead);
+   
+   fmpz_poly_fit_length(R, A->length);
+   fmpz_poly_fit_limbs(R, A->limbs);
+   R->length = A->length;
+   _fmpz_poly_set(R, A);
+   coeffs_R = R->coeffs;
+   size_R = R->limbs+1;
+      
+   if (coeff >= (long) B->length - 1)
+   {
+      fmpz_poly_fit_length(Q, coeff-B->length+2);
+      fmpz_poly_fit_limbs(Q, 1);
+      Q->length = coeff-B->length+2;
+      size_Q = Q->limbs+1;
+   } else _fmpz_poly_zero(Q);
+   
+   while (coeff >= (long) B->length - 1)
+   {
+      coeff_Q = Q->coeffs+(coeff-B->length+1)*size_Q;
+      while (1)
+      {
+         if (coeff < (long) B->length - 1) break;
+         NORM(coeffs_R+coeff*size_R);
+         if (ABS(coeffs_R[coeff*size_R]) < size_B_lead)
+         {
+            coeff_Q[0] = 0;
+            coeff_Q -= size_Q;
+            coeff--;
+         } else if (ABS(coeffs_R[coeff*size_R]) > size_B_lead) break;
+         else if (mpn_cmp(coeffs_R+coeff*size_R+1, B_lead+1, size_B_lead) >= 0) break;
+         else 
+         {
+            coeff_Q[0] = 0;
+            coeff_Q -= size_Q;
+            coeff--;
+         }    
+      }
+      
+      if (coeff >= (long) B->length - 1)
+      {
+         limbs_Q = ABS(coeffs_R[coeff*size_R]) - size_B_lead + 1;
+         fmpz_poly_fit_limbs(Q, limbs_Q);
+         size_Q = Q->limbs+1;
+         coeff_Q = Q->coeffs+(coeff - B->length+1)*size_Q;
+         sign_quot = ABS(coeffs_R[coeff*size_R]) - size_B_lead + 1;
+         if (((long) (sign_B_lead ^ coeffs_R[coeff*size_R])) < 0) 
+         {
+            mpn_tdiv_qr(coeff_Q+1, rem, 0, coeffs_R+coeff*size_R+1, ABS(coeffs_R[coeff*size_R]), B_lead+1, size_B_lead);
+            coeff_Q[0] = -sign_quot;
+            for (unsigned long i = 0; i < size_B_lead; i++)
+            {
+               if (rem[i])
+               {
+                  __fmpz_poly_sub_coeff_ui(coeff_Q,1);
+                  break;
+               }
+            }
+         }
+         else 
+         {
+            mpn_tdiv_qr(coeff_Q+1, rem, 0, coeffs_R+coeff*size_R+1, ABS(coeffs_R[coeff*size_R]), B_lead+1, size_B_lead);
+            coeff_Q[0] = sign_quot;
+         }
+         NORM(coeff_Q);
+         
+         fmpz_poly_t temp;
+         fmpz_poly_init2(qB, B->length, B->limbs+ABS(coeff_Q[0]));
+         temp->coeffs = B->coeffs;
+         temp->length = B->length - 1;
+         temp->limbs = B->limbs;
+         _fmpz_poly_scalar_mul(qB, temp, coeff_Q); 
+         
+         fmpz_poly_fit_limbs(R, qB->limbs+1);
+         coeffs_R = R->coeffs;
+         size_R = R->limbs+1;
+      
+         fmpz_poly_t R_sub;
+         R_sub->coeffs = coeffs_R+(coeff - B->length + 1)*size_R;
+         R_sub->limbs = R->limbs;
+         R_sub->length = B->length - 1;
+         _fmpz_poly_sub(R_sub, R_sub, qB);
+         coeffs_R[coeff*size_R] = 0;
+         
+         coeff--;
+         fmpz_poly_clear(qB);
+      }
+   }
+   
+   _fmpz_poly_normalise(R);
+   flint_heap_free(rem);
+}
+
 /*
    Divide the polynomial A by the polynomial B but do not compute the remainder
 */
@@ -3530,6 +3676,280 @@ void fmpz_poly_div_karatsuba_recursive(fmpz_poly_t Q, fmpz_poly_t BQ, fmpz_poly_
    _fmpz_poly_stack_clear(d2q1);
 }
 
+/*
+   Divide and conquer division of A by B but only computing the low half of Q*B
+*/
+
+void fmpz_poly_div_karatsuba_recursive_low(fmpz_poly_t Q, fmpz_poly_t BQ, fmpz_poly_t A, fmpz_poly_t B)
+{
+   _fmpz_poly_normalise(A);
+   _fmpz_poly_normalise(B);
+         
+   if (A->length < B->length)
+   {
+      _fmpz_poly_zero(Q);
+      _fmpz_poly_zero(BQ);
+
+      return;
+   }
+   
+   if (A->length > 2*B->length - 1)
+   {
+      fmpz_poly_t Rb;
+      fmpz_poly_init(Rb);
+      fmpz_poly_divrem_naive(Q, Rb, A, B);
+      fmpz_poly_fit_length(BQ, A->length);
+      fmpz_poly_fit_limbs(BQ, FLINT_MAX(A->limbs, Rb->limbs)+1);
+      _fmpz_poly_sub(BQ, A, Rb);
+      fmpz_poly_clear(Rb);
+      
+      for (unsigned long i = B->length - 1; i < BQ->length; i++)
+      {
+         BQ->coeffs[i*(BQ->limbs+1)] = 0;
+      }
+      _fmpz_poly_normalise(BQ);
+      
+      return;
+   }
+   
+   fmpz_poly_t temp;
+   
+   if (B->length <= 16)
+   {
+      fmpz_poly_t Rb;
+      fmpz_poly_init(Rb);
+      fmpz_poly_divrem_naive_low(Q, Rb, A, B);
+      fmpz_poly_fit_length(BQ, B->length - 1);
+      fmpz_poly_fit_limbs(BQ, FLINT_MAX(A->limbs, Rb->limbs)+1);
+      temp->limbs = A->limbs;
+      temp->length = B->length - 1;
+      temp->coeffs = A->coeffs;
+      _fmpz_poly_sub(BQ, temp, Rb);
+      fmpz_poly_clear(Rb);
+      _fmpz_poly_normalise(BQ);
+      
+      return;
+   }
+   
+   fmpz_poly_t d1, d2, p1, q1, q2, dq1, dq2, d1q1, d2q1, d2q2, d1q2, t;
+   
+   unsigned long n1 = (B->length+1)/2;
+   unsigned long n2 = B->length - n1;
+   
+   /* We let B = d1*x^n2 + d2 */
+   d1->length = n1;
+   d2->length = n2;
+   d1->limbs = B->limbs;
+   d2->limbs = B->limbs;
+   d1->coeffs = B->coeffs + n2*(B->limbs+1);
+   d2->coeffs = B->coeffs;
+   
+   if (A->length <= n1+2*n2-1)
+   {
+      temp->length = A->length - (n1+n2-1);
+      temp->limbs = A->limbs;
+      temp->coeffs = A->coeffs + (n1+n2-1)*(A->limbs+1);
+      _fmpz_poly_stack_init(p1, temp->length+n1-1, A->limbs);
+      _fmpz_poly_left_shift(p1, temp, n1-1);
+      p1->length = temp->length+n1-1;
+      
+      fmpz_poly_init(d1q1);
+      fmpz_poly_div_karatsuba_recursive_low(Q, d1q1, p1, d1); //******************************
+      _fmpz_poly_stack_clear(p1);
+
+      _fmpz_poly_stack_init(d2q1, d2->length+Q->length-1, d2->limbs+Q->limbs+1); 
+      _fmpz_poly_mul(d2q1, d2, Q);
+      
+      fmpz_poly_fit_limbs(BQ, FLINT_MAX(d1q1->limbs, d2q1->limbs));
+      fmpz_poly_fit_length(BQ, n2+d1q1->length);
+      BQ->length = n2+d1q1->length;
+      _fmpz_poly_zero_coeffs(BQ, n2);
+   
+      temp->length = d1q1->length;
+      temp->limbs = BQ->limbs;
+      temp->coeffs = BQ->coeffs + n2*(BQ->limbs+1);
+      _fmpz_poly_set(temp, d1q1);  
+      _fmpz_poly_add(BQ, BQ, d2q1);
+   
+      _fmpz_poly_stack_clear(d2q1);
+      fmpz_poly_clear(d1q1);
+            
+      return;   
+   } else
+   {
+   /* 
+      We let A = a1*x^(3n-1) + a2*x^(2n-1) + a3 
+      where a1 and a2 are length n and a3 is length 2n-1 
+      We set p1 = a1*x^(n-1), so it has length 2n-1
+   */
+   /* 
+      We let A = a1*x^(n1+2*n2-1) + a2*x^(n1+n2-1) + a3 
+      where a1 is length n1 and a2 is length n2 and a3 is length n1+n2-1 
+      We set p1 = a1*x^(n2-1), so it has length n1+n2-1
+   */
+      temp->length = A->length - (n1+2*n2-1);
+      temp->limbs = A->limbs;
+      temp->coeffs = A->coeffs + (n1+2*n2-1)*(A->limbs+1);
+      _fmpz_poly_stack_init(p1, temp->length+n1-1, A->limbs);
+      _fmpz_poly_left_shift(p1, temp, n1-1);
+      p1->length = temp->length+n1-1;
+   
+      /* 
+         Set q1 to p1 div d1 
+         This is an 2n-1 by n division so 
+         q1 ends up being length n
+         d1q1 = d1*q1 is length 2n-1
+      */
+      /* 
+         Set q1 to p1 div d1 
+         This is a 2*n1-1 by n1 division so 
+         q1 ends up being length n1
+         d1q1 = d1*q1 is length 2*n1-1
+      */
+      fmpz_poly_init(d1q1);
+      fmpz_poly_init(q1);
+   
+      fmpz_poly_div_karatsuba_recursive_low(q1, d1q1, p1, d1); //******************************
+      _fmpz_poly_stack_clear(p1);   
+   }
+   
+   /* 
+      Compute d2q1 = d2*q1 
+      which ends up being length 2n-1
+   */
+   /* 
+      Compute d2q1 = d2*q1 
+      which ends up being length n1+n2-1
+   */  
+   
+   _fmpz_poly_stack_init(d2q1, d2->length+q1->length-1, d2->limbs+q1->limbs+1); 
+   _fmpz_poly_mul(d2q1, d2, q1);
+   
+   /* 
+      Compute dq1 = d1*q1*x^n + d2*q1
+      dq1 is then of length 3n-1
+   */
+   /* 
+      Compute dq1 = d1*q1*x^n2 + d2*q1
+      dq1 is then of length 2*n1+n2-1
+   */
+   
+   
+   _fmpz_poly_stack_init(dq1, d1q1->length + n2, B->limbs+q1->limbs+1);
+   dq1->length = d1q1->length + n2;
+   
+   _fmpz_poly_zero_coeffs(dq1, n2);
+   temp->length = d1q1->length;
+   temp->limbs = dq1->limbs;
+   temp->coeffs = dq1->coeffs + n2*(dq1->limbs+1);
+   _fmpz_poly_set(temp, d1q1);
+   fmpz_poly_clear(d1q1);
+   _fmpz_poly_add(dq1, dq1, d2q1);
+   
+   /*
+      Compute t = p1*x^(2n-1) + p2*x^(n-1) - dq1
+      which has length 3*n-1, but the first
+      n coefficients will be 0, so it has 
+      effective length 2n-1
+   */
+   /*
+      Compute t = p1*x^(n1+n2-1) + p2*x^(n1-1) - dq1 (shifted left by 1 if n1 > n2)
+      which has length 2*n1+n2-1, but we are not interested 
+      in the first n1 coefficients, so it has 
+      effective length n1+n2-1
+   */
+   
+   temp->length = A->length - (n1+n2-1);
+   temp->limbs = A->limbs;
+   temp->coeffs = A->coeffs + (n1+n2-1)*(A->limbs+1);
+   _fmpz_poly_stack_init(t, 2*n1+n2-1, FLINT_MAX(A->limbs,dq1->limbs)+1);
+   _fmpz_poly_left_shift(t, temp, n1-1);
+   t->length = temp->length+n1-1;
+   _fmpz_poly_sub(t, t, dq1);
+   t->length = n1+n2-1;
+   _fmpz_poly_normalise(t); 
+     
+   /*
+      Compute q2 = t div d1
+      It is a 2*n-1 by n division, so
+      the length of q2 will be n
+      Also compute d1q2 of length 2n-1
+   */
+   /*
+      Compute q2 = t div d1
+      It is a n1+n2-1 by n1 division, so
+      the length of q2 will be n2
+      Also compute d1q2 of length n1+n2-1
+   */
+   fmpz_poly_init(d1q2);
+   fmpz_poly_init(q2);
+   fmpz_poly_div_karatsuba_recursive_low(q2, d1q2, t, d1); //******************************
+   _fmpz_poly_stack_clear(t);
+      
+   /*
+      Compute d1*q2*x^n2
+   */
+   _fmpz_poly_stack_init(dq2, d1q2->length+n2, B->limbs+q2->limbs+2);
+   dq2->length = d1q2->length+n2;
+   _fmpz_poly_zero_coeffs(dq2, n2);
+   temp->length = d1q2->length;
+   temp->limbs = dq2->limbs;
+   temp->coeffs = dq2->coeffs + n2*(dq2->limbs+1);
+   _fmpz_poly_set(temp, d1q2);
+   fmpz_poly_clear(d1q2);
+   
+   /* 
+      Compute dq2 = d1*q2*x^n2 + d2*q2
+      dq2 has length 2*n1+n2-1
+   */
+   _fmpz_poly_stack_init(d2q2, d2->length+q2->length-1, d2->limbs+q2->limbs+1);
+   _fmpz_poly_mul(d2q2, d2, q2);
+   _fmpz_poly_add(dq2, dq2, d2q2);
+   _fmpz_poly_stack_clear(d2q2);
+   
+   /*
+      Write out Q = q1*x^n2 + q2
+      Q has length n1+n2
+   */
+   fmpz_poly_fit_length(Q, q1->length+n2);
+   fmpz_poly_fit_limbs(Q, FLINT_MAX(q1->limbs, q2->limbs));
+   _fmpz_poly_set(Q, q2);
+   fmpz_poly_clear(q2);
+   Q->length = q1->length + n2;
+   temp->length = q1->length;
+   temp->limbs = Q->limbs;
+   temp->coeffs = Q->coeffs + n2*(Q->limbs+1);
+   _fmpz_poly_set(temp, q1);
+   fmpz_poly_clear(q1);
+   /*
+      Write out BQ = dq1*x^n2 + dq2
+      BQ has length 4n-1
+   */
+   /*
+      Write out BQ = dq1*x^n2 + dq2
+      BQ has length 2*(n1+n2)-1
+   */
+   fmpz_poly_fit_limbs(BQ, FLINT_MAX(dq1->limbs, dq2->limbs)+1);
+   fmpz_poly_fit_length(BQ, FLINT_MAX(n2+dq1->length, dq2->length));
+   BQ->length = FLINT_MAX(n2+dq1->length, dq2->length);
+   _fmpz_poly_zero_coeffs(BQ, n2);
+   temp->length = dq1->length;
+   temp->limbs = BQ->limbs;
+   temp->coeffs = BQ->coeffs + n2*(BQ->limbs+1);
+   _fmpz_poly_set(temp, dq1);  
+   _fmpz_poly_add(BQ, BQ, dq2);
+   
+   for (unsigned long i = B->length - 1; i < BQ->length; i++)
+   {
+      BQ->coeffs[i*(BQ->limbs+1)] = 0;
+   }
+   _fmpz_poly_normalise(BQ);
+   
+   _fmpz_poly_stack_clear(dq2);
+   _fmpz_poly_stack_clear(dq1);
+   _fmpz_poly_stack_clear(d2q1);
+}
+
 void fmpz_poly_div_karatsuba(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B)
 {
    _fmpz_poly_normalise(A);
@@ -3572,7 +3992,7 @@ void fmpz_poly_div_karatsuba(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B)
       p1->length = temp->length+n1-1;
       
       fmpz_poly_init(d1q1);
-      fmpz_poly_div_karatsuba_recursive(Q, d1q1, p1, d1); //******************************
+      fmpz_poly_div_karatsuba_recursive_low(Q, d1q1, p1, d1); //******************************
       fmpz_poly_clear(d1q1);
       _fmpz_poly_stack_clear(p1);
             
@@ -3611,7 +4031,7 @@ void fmpz_poly_div_karatsuba(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B)
       fmpz_poly_init(d1q1);
       fmpz_poly_init(q1);
    
-      fmpz_poly_div_karatsuba_recursive(q1, d1q1, p1, d1); //******************************
+      fmpz_poly_div_karatsuba_recursive_low(q1, d1q1, p1, d1); //******************************
       _fmpz_poly_stack_clear(p1);
    }
    
@@ -3670,6 +4090,7 @@ void fmpz_poly_div_karatsuba(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B)
    _fmpz_poly_left_shift(t, temp, n1-1);
    t->length = temp->length+n1-1;
    _fmpz_poly_sub(t, t, dq1);
+   t->length = n1+n2-1; 
    _fmpz_poly_normalise(t); 
      
    /*
@@ -3685,7 +4106,7 @@ void fmpz_poly_div_karatsuba(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B)
       Also compute d1q2 of length n1+n2-1
    */
    fmpz_poly_init(q2);
-   fmpz_poly_div_karatsuba(q2, t, d1); //******************************
+   fmpz_poly_div_karatsuba(q2, t, d1); 
    _fmpz_poly_stack_clear(t);  
    _fmpz_poly_stack_clear(dq1);
    _fmpz_poly_stack_clear(d2q1);
@@ -3746,7 +4167,7 @@ void fmpz_poly_newton_invert_basecase(fmpz_poly_t Q_inv, fmpz_poly_t Q, unsigned
    fmpz_poly_clear(X2n);
 }
 
-#define FLINT_NEWTON_INVERSE_BASECASE_CUTOFF 16
+#define FLINT_NEWTON_INVERSE_BASECASE_CUTOFF 32
 
 /*
    Recursively compute 1 / Q mod x^n using Newton iteration

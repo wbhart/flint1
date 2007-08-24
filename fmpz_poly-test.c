@@ -2674,9 +2674,9 @@ int test_fmpz_poly_div_karatsuba()
    mpz_poly_init(test_poly2); 
    mpz_poly_init(test_poly3); 
    
-   for (unsigned long count1 = 0; (count1 < 150) && (result == 1) ; count1++)
+   for (unsigned long count1 = 0; (count1 < 600) && (result == 1) ; count1++)
    {
-      bits = random_ulong(1000)+ 2;
+      bits = random_ulong(1000)+ 1;
       bits2 = random_ulong(1000)+ 1;
       //bits = bits2 = 10;
       
@@ -2685,8 +2685,8 @@ int test_fmpz_poly_div_karatsuba()
       
       length2 = random_ulong(128)+1; 
       length = random_ulong(128)+1;
-      //length = 100000;
-      //length2 = 100000;
+      //length = 1000;
+      //length2 = 1000;
        
 #if DEBUG
       printf("length = %ld, length2 = %ld, bits = %ld, bits2 = %ld\n", length, length2, bits, bits2);
