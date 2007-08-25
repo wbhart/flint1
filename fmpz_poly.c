@@ -7,6 +7,7 @@ Copyright (C) 2007, William Hart and David Harvey
 *****************************************************************************/
 
 #include <string.h>
+#include "mpz_poly.h"
 #include "flint.h"
 #include "fmpz.h"
 #include "fmpz_poly.h"
@@ -3676,6 +3677,164 @@ void fmpz_poly_div_karatsuba_recursive(fmpz_poly_t Q, fmpz_poly_t BQ, fmpz_poly_
    _fmpz_poly_stack_clear(d2q1);
 }
 
+/****************************************************************************
+
+   String conversions and I/O
+
+****************************************************************************/
+
+
+int fmpz_poly_from_string(fmpz_poly_t poly, char* s)
+{
+   // const char* whitespace = " \t\n\r";
+   // 
+   // // read poly length
+   // unsigned long length;
+   // if (!sscanf(s, "%ld", &length))
+   //    return 0;
+   //    
+   // printf("length = %ld\n", length);
+   // 
+   // // jump to next whitespace
+   // s += strcspn(s, whitespace);
+   // 
+   // unsigned long limbs = 1;
+   // unsigned long size;
+   // 
+   // //mpz_t* coeffs = (mpz_t*) malloc(sizeof(mpz_t) * length);
+   // mpz_t coeff;
+   // mpz_init(coeff);
+   // 
+   // char* ptr;
+   // ptr = s;
+   // 
+   // // count how many limbs needed to store all coefficients!
+   // for (unsigned long i = 0; i < length; i++)
+   // {
+   //    // skip whitespace
+   //    s += strspn(s, whitespace);
+   //    
+   //    if (!gmp_sscanf(s, "%Zd", coeff))
+   //       return 0;
+   //       
+   //    size = mpz_sizeinbase(coeff, 2) / FLINT_BITS;
+   //    
+   //    printf("coeff = %s\n", mpz_get_str(NULL, 10, coeff));
+   //    
+   //    if(size > limbs)
+   //       limbs = size;
+   //       
+   //    // skip to next whitespace
+   //    s += strcspn(s, whitespace);
+   // }
+   // 
+   // printf("\n\nDone!  limbs = %i\n\n", limbs);
+   // 
+   // s = ptr;
+   // 
+   // fmpz_poly_init2(poly, length, limbs);
+   // fmpz_poly_set_length(poly, length);
+   // 
+   // for (unsigned long i = 0; i < length; i++)
+   // {
+   //    s += strspn(s, whitespace);
+   //    if (!gmp_sscanf(s, "%Zd", coeff))
+   //       return 0;
+   //    mpz_to_fmpz((fmpz_t)(poly->coeffs + i*(limbs+1)), coeff);
+   //    s += strcspn(s, whitespace);
+   // }
+   // 
+   // //free(coeffs);
+   // 
+   // _fmpz_poly_normalise(poly);
+   
+   mpz_poly_t p;
+   mpz_poly_init(p);
+   mpz_poly_from_string(p, s);
+   mpz_poly_to_fmpz_poly(poly, p);
+   mpz_poly_clear(p);
+   
+   return 1;
+}
+
+// taken from mpz_poly_to_string, and altered using fmpz_to_mpz
+char* fmpz_poly_to_string(fmpz_poly_t poly)
+{
+   // estimate the size of the string
+   // 20 = enough room for null terminator and length info
+   unsigned long size = 20;
+   mpz_t temp;
+   mpz_init(temp);
+   for (unsigned long i = 0; i < poly->length; i++) {
+      // +2 is for the sign and a space
+		fmpz_to_mpz(temp, poly->coeffs + i*(poly->limbs+1));
+      size += mpz_sizeinbase(temp, 10) + 2;      
+   }   
+   
+   // write the string
+   char* buf = (char*) malloc(size);
+   char* ptr = buf + sprintf(buf, "%ld  ", poly->length);
+   for (unsigned long i = 0; i < poly->length; i++)
+   {
+		fmpz_to_mpz(temp, poly->coeffs + i*(poly->limbs+1));
+		mpz_get_str(ptr, 10, temp);
+      ptr += strlen(ptr);
+      *ptr = ' ';
+      ptr++;
+   }
+   
+   mpz_clear(temp);
+   
+   ptr--;
+   *ptr = 0;
+   
+   return buf;
+}
+
+
+void fmpz_poly_fprint(fmpz_poly_t poly, FILE* f)
+{
+   char* s = fmpz_poly_to_string(poly);
+   fputs(s, f);
+   free(s);
+}
+
+
+void fmpz_poly_print(fmpz_poly_t poly)
+{
+   fmpz_poly_fprint(poly, stdout);
+}
+
+
+int fmpz_poly_fread(fmpz_poly_t poly, FILE* f)
+{
+   // // read poly length
+   // unsigned long length;
+   // if (!fscanf(f, "%ld", &length))
+   //    return 0;
+   // 
+   // poly->length = 0;
+   // fmpz_poly_init_upto(poly, length);
+   // 
+   // // read coefficients
+   // for (unsigned long i = 0; i < length; i++)
+   // {
+   //    if (!fmpz_inp_str(poly->coeffs[i], f, 10))
+   //       return 0;
+   //    poly->length++;
+   // }
+   // 
+   // fmpz_poly_normalise(poly);
+   
+   return 1;
+}
+
+
+int fmpz_poly_read(fmpz_poly_t poly)
+{
+   return fmpz_poly_fread(poly, stdin);
+}
+
 /*
    Divide and conquer division of A by B but only computing the low half of Q*B
 */
@@ -3949,6 +4108,7 @@ void fmpz_poly_div_karatsuba_recursive_low(fmpz_poly_t Q, fmpz_poly_t BQ, fmpz_p
    _fmpz_poly_stack_clear(dq1);
    _fmpz_poly_stack_clear(d2q1);
 }
+
 
 void fmpz_poly_div_karatsuba(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B)
 {
