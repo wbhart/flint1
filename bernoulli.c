@@ -1,7 +1,6 @@
 /****************************************************************************
 
    bernoulli.c: Finds Bernoulli numbers B_{2k}
-                Based on the algorithm of Brown, Lioen, Te Riele
                 Based on the implementation in SAGE written by David Harvey
    
    Copyright (C) 2007, David Howden
