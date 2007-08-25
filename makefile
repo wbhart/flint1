@@ -285,6 +285,12 @@ BLTcubes: long_extras.o BLTcubes.c
 BPTJCubes: long_extras.o memory-manager.o
 	$(CC) $(CFLAGS) -o BPTJCubes BPTJCubes.c memory-manager.o long_extras.o $(LIBS)
 
+bernoulli.o: bernoulli.c $(HEADERS)
+	$(CC) $(CFLAGS) -c bernoulli.c -o bernoulli.o
+
+bernoulli: bernoulli.o long_extras.o $(FLINTOBJ)
+	$(CC) $(CFLAGS) -o bernoulli bernoulli.o long_extras.o $(FLINTOBJ) $(LIBS)
+
 
 ####### Quadratic sieve
 
