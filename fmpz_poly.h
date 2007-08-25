@@ -362,6 +362,14 @@ static inline void fmpz_poly_set_coeff_si(fmpz_poly_t poly, unsigned long n, lon
    if (n+1 > poly->length) poly->length = n+1;
 }
 
+static inline void fmpz_poly_set_coeff_ui(fmpz_poly_t poly, unsigned long n, unsigned long x)
+{
+   fmpz_poly_fit_length(poly, n+1);
+   fmpz_poly_fit_limbs(poly, 1);
+   _fmpz_poly_set_coeff_ui(poly, n, x);
+   if(n+1 > poly->length) poly->length = n+1;
+}
+
 void fmpz_poly_get_coeff_mpz(mpz_t x, fmpz_poly_t poly, unsigned long n);
 
 void fmpz_poly_mul(fmpz_poly_t output, fmpz_poly_p input1, fmpz_poly_p input2);
@@ -373,6 +381,17 @@ void fmpz_poly_mul_trunc_left_n(fmpz_poly_t output, fmpz_poly_t input1,
                                           fmpz_poly_t input2, unsigned long trunc);
 
 void fmpz_poly_div_naive(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B);
+
+// ------------------------------------------------------
+// String conversions and I/O
+
+int fmpz_poly_from_string(fmpz_poly_t poly, char* s);
+char* fmpz_poly_to_string(fmpz_poly_t poly);
+void fmpz_poly_print(fmpz_poly_t poly);
+void fmpz_poly_fprint(fmpz_poly_t poly, FILE* f);
+int fmpz_poly_read(fmpz_poly_t poly);
+int fmpz_poly_fread(fmpz_poly_t poly, FILE* f);
+
 
 void fmpz_poly_divrem_naive(fmpz_poly_t Q, fmpz_poly_t R, fmpz_poly_t A, fmpz_poly_t B);
 
