@@ -1309,3 +1309,37 @@ int z_factor(factor_t * factors, unsigned long n)
    } 
    return 1;
 } 
+
+/*
+   Finds the smallest primitive root of the prime p
+   
+   Initial attempt - could be extremely sub-optimal!
+*/
+
+unsigned long z_primitive_root(unsigned long p)
+{
+   FLINT_ASSERT(p > 2);
+   FLINT_ASSERT(z_isprime(p) == 1);
+   
+   unsigned long res;
+   factor_t factors;
+   
+   if(z_factor(&factors, (p - 1)) == 0)
+   {
+      return 0;
+   }
+   
+   res = 2;
+   
+   int i = 0;
+   do {
+      if(z_powmod(res, (p-1) / factors.p[i], p) == 1) {
+         res++;
+         i = 0;
+      } else {
+         i++;
+      }
+   } while(i != factors.num);
+   
+   return res;
+}
