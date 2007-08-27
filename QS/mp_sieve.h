@@ -31,7 +31,7 @@ void do_sieving3(QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve,
                   unsigned long first_prime, unsigned long second_prime, 
                   unsigned long M);
                 
-void update_offsets(unsigned long poly_add, unsigned long * poly_corr, 
+void update_offsets(unsigned long poly_add, u_int32_t * poly_corr, 
                                         QS_t * qs_inf, poly_t * poly_inf);
 
 unsigned long evaluate_sieve(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve);

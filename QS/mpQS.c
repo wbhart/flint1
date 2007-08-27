@@ -67,7 +67,8 @@ static inline void square_root(mpz_t X, mpz_t Y, QS_t * qs_inf, linalg_t * la_in
          if (i % 10 == 0) mpz_mod(Y, Y, N);
       }
    }
-
+   mpz_mod(Y, Y, N);
+   
    for (unsigned long i = 0; i < num_primes; i++)
    {
       if (prime_count[i]) 
@@ -78,12 +79,26 @@ static inline void square_root(mpz_t X, mpz_t Y, QS_t * qs_inf, linalg_t * la_in
       } 
       if (i%10 == 0) mpz_mod(X, X, N);
    }
-
+   mpz_mod(X, X, N);
+   
 #if TEST
    for (unsigned long i = 0; i < num_primes; i++)
    {
       if ((prime_count[i] %2) != 0) printf("Error %ld, %ld, %ld\n", l, i, prime_count[i]);
    }
+#endif
+
+#if TEST2
+   mpz_t temp, temp2;
+   mpz_init(temp);
+   mpz_init(temp2);
+   mpz_mul(temp, Y, Y);
+   mpz_mod(temp, temp, N);
+   mpz_mul(temp2, X, X);
+   mpz_mod(temp2, temp2, N);
+   if (mpz_cmp(temp, temp2) != 0) gmp_printf("Y^2 = %Zd (mod N) != \nX^2 = %Zd (mod N)\n\n", temp, temp2);
+   mpz_clear(temp);
+   mpz_clear(temp2);
 #endif
 
    mpz_clear(pow);
@@ -103,16 +118,16 @@ static inline void square_root(mpz_t X, mpz_t Y, QS_t * qs_inf, linalg_t * la_in
 unsigned long collect_relations(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve)
 {
    unsigned long s = poly_inf->s;
-   unsigned long * poly_corr;
+   u_int32_t * poly_corr;
    unsigned long relations = 0;
-   unsigned long ** A_inv2B = poly_inf->A_inv2B;
+   u_int32_t ** A_inv2B = poly_inf->A_inv2B;
    unsigned long poly_index, j;
    unsigned long poly_add;
    unsigned long * B = poly_inf->B;
    unsigned long * B_terms = poly_inf->B_terms;
    unsigned long sieve_size = qs_inf->sieve_size;
    unsigned long small_primes = qs_inf->small_primes;
-   unsigned long limbs = qs_inf->prec + 1;
+   unsigned long limbs = qs_inf->prec+1;
    unsigned long limbs2;
    mp_limb_t msl;
    
@@ -140,22 +155,24 @@ unsigned long collect_relations(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly_
       poly_corr = A_inv2B[j];
            
       if (sieve_size <= SIEVE_BLOCK)
+      {
          do_sieving2(qs_inf, poly_inf, sieve);
+      }
       else
       {
          unsigned long blocks = sieve_size/SIEVE_BLOCK;
          unsigned long offset = SIEVE_BLOCK;
          unsigned long sieve_fill = qs_inf->sieve_fill;
-        
+         unsigned long second_prime = FLINT_MIN(SECOND_PRIME, qs_inf->num_primes);
          memset(sieve, sieve_fill, sieve_size);
          *(sieve+sieve_size) = 255;
          
-         do_sieving(qs_inf, poly_inf, sieve, small_primes, SECOND_PRIME, SIEVE_BLOCK, 1, 0);
+         do_sieving(qs_inf, poly_inf, sieve, small_primes, second_prime, SIEVE_BLOCK, 1, 0);
          for (long i = 1; i < blocks - 1; i++, offset += SIEVE_BLOCK)
-            do_sieving(qs_inf, poly_inf, sieve + offset, small_primes, SECOND_PRIME, SIEVE_BLOCK, 0, 0);
-         do_sieving(qs_inf, poly_inf, sieve + offset, small_primes, SECOND_PRIME, sieve_size - offset, 0, 1);
+            do_sieving(qs_inf, poly_inf, sieve, small_primes, second_prime, offset+SIEVE_BLOCK, 0, 0);
+         do_sieving(qs_inf, poly_inf, sieve, small_primes, second_prime, sieve_size, 0, 1);
          
-         do_sieving3(qs_inf, poly_inf, sieve, SECOND_PRIME, qs_inf->num_primes, sieve_size);
+         do_sieving3(qs_inf, poly_inf, sieve, second_prime, qs_inf->num_primes, sieve_size);
       }
          
       relations += evaluate_sieve(la_inf, qs_inf, poly_inf, sieve);
@@ -284,13 +301,14 @@ int F_mpz_factor_mpQS(F_mpz_factor_t factors, mpz_t N)
       nullrows = block_lanczos(nrows, 0, ncols, matrix); // Linear algebra (block Lanczos)
    } while (nullrows == NULL); 
    
-   unsigned long i, j, mask;
+   unsigned long i, j;
+   u_int64_t mask;
      
    for (i = 0, mask = 0; i < ncols; i++)
       mask |= nullrows[i];
 
    for (i = j = 0; i < 64; i++) {
-		if (mask & ((u_int64_t)(1) << i))
+		if (mask & (((u_int64_t)(1)) << i))
 			j++;
    }
 
@@ -393,16 +411,16 @@ int main(int argc, unsigned char *argv[])
     
     for (i = 0; i < 1; i++)
     {
-       mpz_set_ui(N, long_nextprime(long_randint(4000000000000000000UL)));
-       mpz_mul_ui(N, N, long_nextprime(long_randint(4000000000000000000UL)));
-       mpz_mul_ui(N, N, long_nextprime(long_randint(4000000000000000UL)));
-       mpz_mul_ui(N, N, long_nextprime(long_randint(1000000000UL)));
-       //bits1 = long_randint(41UL)+13UL;
-       //bits2 = long_randint(22UL)+13UL;
-       //bits3 = long_randint(22UL)+13UL;
-       //mpz_set_ui(N, long_nextprime(long_randint((1UL<<bits1)-1UL)+1UL));
-       //mpz_mul_ui(N, N, long_nextprime(long_randint((1UL<<bits2)-1UL)+1UL));
-       //mpz_mul_ui(N, N, long_nextprime(long_randint((1UL<<bits3)-1UL)+1UL));
+       mpz_set_ui(N, z_nextprime(z_randint(4000000000000000000UL)));
+       mpz_mul_ui(N, N, z_nextprime(z_randint(4000000000000000000UL)));
+       mpz_mul_ui(N, N, z_nextprime(z_randint(4000000000000000UL)));
+       mpz_mul_ui(N, N, z_nextprime(z_randint(1000000000UL)));
+       //bits1 = z_randint(41UL)+13UL;
+       //bits2 = z_randint(22UL)+13UL;
+       //bits3 = z_randint(22UL)+13UL;
+       //mpz_set_ui(N, z_nextprime(z_randint((1UL<<bits1)-1UL)+1UL));
+       //mpz_mul_ui(N, N, z_nextprime(z_randint((1UL<<bits2)-1UL)+1UL));
+       //mpz_mul_ui(N, N, z_nextprime(z_randint((1UL<<bits3)-1UL)+1UL));
 
 #if QS_INFO
        gmp_printf("Factoring %Zd\n", N);

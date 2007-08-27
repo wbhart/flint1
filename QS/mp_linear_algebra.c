@@ -35,7 +35,7 @@ void linear_algebra_init(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly_inf)
    unsigned long prec = qs_inf->prec+1;
    unsigned long small_primes = qs_inf->small_primes;
    
-   const unsigned long buffer_size = 4*(qs_inf->num_primes + EXTRA_RELS + 200)/2; // Allows for 1/3 of relations to be duplicates
+   const unsigned long buffer_size = 2*(qs_inf->num_primes + EXTRA_RELS + 200); // Allows for 1/2 of relations to be duplicates
    
    la_inf->small = (unsigned long *) flint_stack_alloc(small_primes);
    la_inf->factor = (fac_t *) flint_stack_alloc_bytes(sizeof(fac_t)*MAX_FACS);
@@ -129,7 +129,6 @@ int relations_cmp2(const void *a, const void *b)
 {
   la_col_t * ra = (la_col_t *) a;
   la_col_t * rb = (la_col_t *) b;
-  if (!ra->weight) printf("ra error\n");
   long point;
   if (ra->weight > rb->weight) return 1;
   else if (ra->weight < rb->weight) return -1;
@@ -369,6 +368,37 @@ unsigned long insert_relation(QS_t * qs_inf, linalg_t * la_inf, poly_t * poly_in
    unmerged[num_unmerged].orig = la_inf->num_relations;
    
    mpz_set(la_inf->Y_arr[la_inf->num_relations], Y); 
+   
+#if TEST3
+   mpz_t X, temp, temp2;
+   mpz_init(X);
+   mpz_init(temp);
+   mpz_init(temp2);
+   mpz_set_ui(X, 1);
+   
+   for (unsigned long j = 0; j < curr_rel[0]; j++)
+   {
+       mpz_set_ui(temp, qs_inf->factor_base[curr_rel[2*j + 1]].p);
+       mpz_pow_ui(temp, temp, curr_rel[2*j + 2]); 
+       mpz_mul(X, X, temp);
+   }
+   
+   mpz_mod(X, X, qs_inf->mpz_n);
+   mpz_mul(temp, Y, Y);
+   mpz_mod(temp, temp, qs_inf->mpz_n);
+   if (mpz_cmp(X, temp) != 0)
+   {
+      mpz_add(temp2, temp, X);
+      if (mpz_cmp(temp2, qs_inf->mpz_n) != 0) 
+      {
+         gmp_printf("X = %Zd (mod N) != \nY^2 = %Zd (mod N)\n\n", X, temp);
+         gmp_printf("n = %Zd\n", qs_inf->mpz_n);
+      }
+   }
+   mpz_clear(X);
+   mpz_clear(temp);
+   mpz_clear(temp2);
+#endif
    
    la_inf->curr_rel += MAX_FACS*2;
    la_inf->num_unmerged++;

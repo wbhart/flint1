@@ -583,34 +583,21 @@ void evaluateSieve(unsigned long ** relations, unsigned long ctimesreps, unsigne
               inv = pinv[k];
               p = factorBase[k];
               modp = long_mod_precomp(i+ctimesreps, p, inv);  
-              if (soln2[k]!=0xFFFFFFFFl)
-              {
-                 if ((modp==soln1[k]) || (modp==soln2[k]))
-                 {
-                    mpz_set_ui(temp,factorBase[k]);
-                    exponent = mpz_remove(res,res,temp);
-             
-#ifdef ERRORS
-                    if (exponent==0) printf("Error!\n");
-#endif
-                    extra+=primeSizes[k];
-#ifdef RELPRINT
-                    if (exponent > 0) printf(" %ld",(long)factorBase[k]);
-                    if (exponent > 1) printf("^%ld",exponent);
-#endif
-                    exponents[k] = exponent;
-                 } else exponents[k] = 0;
-              } else
+              if ((modp==soln1[k]) || (modp==soln2[k]))
               {
                  mpz_set_ui(temp,factorBase[k]);
                  exponent = mpz_remove(res,res,temp);
-                 if (exponent) extra+=primeSizes[k];
+             
+#ifdef ERRORS
+                 if (exponent==0) printf("Error!\n");
+#endif
+                 extra+=primeSizes[k];
 #ifdef RELPRINT
-                 if (exponent > 0) gmp_printf(" %Zd",factorBase[k]);
+                 if (exponent > 0) printf(" %ld",(long)factorBase[k]);
                  if (exponent > 1) printf("^%ld",exponent);
 #endif
                  exponents[k] = exponent;
-              }  
+              } else exponents[k] = 0; 
            }  
            factnum = 0;
            sieve[i]+=extra;
@@ -623,14 +610,13 @@ void evaluateSieve(unsigned long ** relations, unsigned long ctimesreps, unsigne
                  inv = pinv[k];
                  p = factorBase[k];
                  modp = long_mod_precomp(i+ctimesreps, p, inv);  
-                 if (soln2[k]!=0xFFFFFFFFl)
+                 if (soln2[k]!=-1L)
                  {
                     if ((modp==soln1[k]) || (modp==soln2[k]))
                     {
                        extra+=primeSizes[k];
                        mpz_set_ui(temp,factorBase[k]);
                        exponent = mpz_remove(res,res,temp);
-              
 #ifdef ERRORS
                        if (exponent==0) printf("Error!\n");
 #endif
@@ -648,7 +634,6 @@ void evaluateSieve(unsigned long ** relations, unsigned long ctimesreps, unsigne
                     mpz_set_ui(temp,factorBase[k]);
                     exponent = mpz_remove(res,res,temp);
                     if (exponent) extra+=primeSizes[k];
-                        
 #ifdef RELPRINT
                     if (exponent > 0) printf(" %ld",(long)factorBase[k]);
                     if (exponent > 1) printf("^%ld",exponent);
@@ -659,7 +644,7 @@ void evaluateSieve(unsigned long ** relations, unsigned long ctimesreps, unsigne
                        factors[factnum] = exponent;
                        factnum+=2;
                     }
-                 }  
+                 } 
               }  
               
               for (k = secondprime; (k<numPrimes)&&(extra<sieve[i]); k++)
@@ -689,8 +674,9 @@ void evaluateSieve(unsigned long ** relations, unsigned long ctimesreps, unsigne
               }  
               
               last_ptr = rel_str;
-              if (mpz_cmp_ui(res,1000)>0)
+              if (mpz_cmpabs_ui(res,1000)>0)
               {
+                 if (mpz_sgn(res) < 0) mpz_neg(res, res);
                  if (mpz_cmp_ui(res,largeprime)<0) 
                  {
                     for (unsigned long i = 0; i < firstprime; i++)
@@ -716,59 +702,28 @@ void evaluateSieve(unsigned long ** relations, unsigned long ctimesreps, unsigne
                  gmp_printf(" %Zd\n",res);
 #endif
               } else
-              { 
-                 mpz_neg(res,res);
-                 if (mpz_cmp_ui(res,1000)>0)
-                 {
-                    if (mpz_cmp_ui(res,largeprime)<0) 
-                    {
-                       for (unsigned long i = 0; i < firstprime; i++)
-                       {
-                          if (exponents[i]) add_factor(&last_ptr, (unsigned long) exponents[i], (unsigned long) i);
-                       }
-                       for (unsigned long i = 0; i < factnum; i+=2)
-                       {
-                          add_factor(&last_ptr, (unsigned long) factors[i], (unsigned long) factors[i+1]);
-                       }
-                       for (long i =0; i<s; i++)
-                       {
-                          add_factor(&last_ptr, (unsigned long) 1, (unsigned long) aind[i]+min);
-                       }
-                    
-                       add_0(&last_ptr);
-                       gmp_sprintf(X_str, "%Zd\0", temp3);
-                       gmp_sprintf(Q_str, "%Zd\0", res);
-                       fprintf(LPNEW, "%s @ %s :%s\n", Q_str, X_str, rel_str);
-                    
-                       partials++;
-                    }
+              {
 #ifdef RELPRINT
-                    gmp_printf(" %Zd\n",res);
+                 printf("....R\n");
 #endif
-                 } else 
+                 for (long i = 0; i<firstprime; i++) 
                  {
-#ifdef RELPRINT
-                    printf("....R\n");
-#endif
-                    for (long i = 0; i<firstprime; i++) 
-                    {
-                       if (exponents[i]) add_factor(&last_ptr, (unsigned long) exponents[i], (unsigned long) i);
-                    }
-                    for (unsigned long i = 0; i < factnum; i+=2)
-                    {
-                       add_factor(&last_ptr, (unsigned long) factors[i], (unsigned long) factors[i+1]);
-                    }
-                    for (long i =0; i<s; i++)
-                    {
-                       add_factor(&last_ptr, (unsigned long) 1, (unsigned long) aind[i]+min);
-                    }
+                    if (exponents[i]) add_factor(&last_ptr, (unsigned long) exponents[i], (unsigned long) i);
+                 }
+                 for (unsigned long i = 0; i < factnum; i+=2)
+                 {
+                    add_factor(&last_ptr, (unsigned long) factors[i], (unsigned long) factors[i+1]);
+                 }
+                 for (long i =0; i<s; i++)
+                 {
+                    add_factor(&last_ptr, (unsigned long) 1, (unsigned long) aind[i]+min);
+                 }
                        
-                    add_0(&last_ptr);
-                    gmp_sprintf(X_str, "%Zd\0", temp3);
-                    fprintf(RELS, "%s :%s\n", X_str, rel_str);
+                 add_0(&last_ptr);
+                 gmp_sprintf(X_str, "%Zd\0", temp3);
+                 fprintf(RELS, "%s :%s\n", X_str, rel_str);
                                            
-                    potrels++;
-                 } 
+                 potrels++;
               }  
            } else 
            {
@@ -815,7 +770,7 @@ void sieveInterval(unsigned long M, unsigned long numPrimes, unsigned char * sie
      {
         for (unsigned long prime=1; prime<firstprime; prime++) 
         {
-            if (soln2[prime] == 0xFFFFFFFF) continue;
+            if (soln2[prime] == -1L) continue;
             currentprime = factorBase[prime];
             correction = polyadd ? -polycorr[prime]+currentprime : polycorr[prime];
             soln1[prime]+=correction;
@@ -827,12 +782,12 @@ void sieveInterval(unsigned long M, unsigned long numPrimes, unsigned char * sie
      
      for (unsigned long prime=firstprime; prime<MEDIUMPRIME; prime++) 
      {
-        if (soln2[prime] == 0xFFFFFFFF) continue;
         currentprime = factorBase[prime];
         currentprimesize = primeSizes[prime];
         
         if (first)
         {
+           if (soln2[prime] == -1L) continue;
            correction = polyadd ? -polycorr[prime]+currentprime : polycorr[prime];
            soln1[prime]+=correction;
            while (soln1[prime]>=currentprime) soln1[prime]-=currentprime;
@@ -1156,6 +1111,7 @@ void mainRoutine(unsigned long Mdiv2, mpz_t n, unsigned long multiplier)
     for (fact = 0; mpz_cmp_ui(temp,factorBase[fact])>=0; fact++); 
     span = numPrimes/s/s/2;
     min=fact-span/2;
+    if (min < firstprime) min = firstprime;
     while ((fact*fact)/min - min < span) {min--;}
     
 #ifdef ADETAILS
@@ -1279,28 +1235,12 @@ void mainRoutine(unsigned long Mdiv2, mpz_t n, unsigned long multiplier)
               mpz_sub(B,B,Bterms[j]); 
            }
            polycorr = Ainv2B[j];
-             
+           
            long index;
            for (long j=0; j<s; j++)
            {
               index = aind[j]+min;
-              p = factorBase[index];
-              mpz_fdiv_r_ui(D,n,p*p);
-              mpz_fdiv_r_ui(Bdivp2,B,p*p);
-              mpz_mul_ui(temp,Bdivp2,amodp[j]);
-              //mpz_realloc2(temp3,64);
-	          //mpz_fdiv_r_ui(temp,temp,p);
-	          u1 = modinverse(mpz_fdiv_r_ui(temp,temp,p),p);        
-              //mpz_mul(temp,Bdivp2,Bdivp2);
-              //mpz_sub(temp,temp,D);
-              mpz_submul(D,Bdivp2,Bdivp2);
-              //mpz_neg(temp,temp);
-              mpz_div_ui(temp,D,p);
-              mpz_mul_ui(temp,temp,u1);
-              mpz_add_ui(temp,temp,Mdiv2);
-              mpz_add_ui(temp,temp,p);
-	          soln1[index]=mpz_fdiv_r_ui(temp,temp,p);
-              soln2[index]=0xFFFFFFFFl;
+              soln2[index]=-1L;
            }
            
 // Count the number of polynomial curves used so far and compute the C coefficient of our polynomial
@@ -1593,7 +1533,7 @@ void mainRoutine(unsigned long Mdiv2, mpz_t n, unsigned long multiplier)
    Function: Factors a user specified number using a quadratic sieve
 
 ===========================================================================*/
-/*int main(int argc, unsigned char *argv[])
+int main(int argc, unsigned char *argv[])
 {
     unsigned long multiplier;
 
@@ -1691,9 +1631,9 @@ void mainRoutine(unsigned long Mdiv2, mpz_t n, unsigned long multiplier)
     remove(delfile);
       
     return 0;
-}*/
+}
 
-int main(int argc, unsigned char *argv[])
+/*int main(int argc, unsigned char *argv[])
 {
     unsigned long multiplier;
 
@@ -1747,5 +1687,5 @@ int main(int argc, unsigned char *argv[])
     mpz_clear(N);
 
     return 0;
-}
+}*/
 

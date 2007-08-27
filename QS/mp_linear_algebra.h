@@ -19,6 +19,8 @@
 
 #define DUPS 0 // Print info about number of duplicate relations
 
+#define TEST3 0 // Checks if X = Y^2 mod N immediately after storing each relation
+
 typedef struct fac_s
 {
    unsigned long ind;

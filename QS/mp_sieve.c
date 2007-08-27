@@ -38,17 +38,15 @@ void get_sieve_params(QS_t * qs_inf)
    qs_inf->sieve_size = prime_tab[i-1][2]; 
    qs_inf->small_primes = prime_tab[i-1][3]; 
    qs_inf->large_prime = prime_tab[i-1][4]*factor_base[num_primes-1].p;
-   qs_inf->error_bits = round(log(qs_inf->large_prime)/log(2.0))+6; // 2, 6, 9 
+   qs_inf->error_bits = round(log(qs_inf->large_prime)/log(2.0))+3; // 2, 5, 6 
    printf("Error bits = %ld\n", qs_inf->error_bits);
 }
 
 void do_sieving2(QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve)
 {
    unsigned long num_primes = qs_inf->num_primes;
-   unsigned long * soln1 = poly_inf->soln1;
-   unsigned long * soln2 = poly_inf->soln2;
-   char * * posn1 = poly_inf->posn1;
-   char * * posn2 = poly_inf->posn2;
+   u_int32_t * soln1 = poly_inf->soln1;
+   u_int32_t * soln2 = poly_inf->soln2;
    prime_t * factor_base = qs_inf->factor_base;
    unsigned long sieve_size = qs_inf->sieve_size;
    unsigned char * end = sieve + sieve_size;
@@ -64,9 +62,11 @@ void do_sieving2(QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve)
    memset(sieve, sieve_fill, sieve_size);
    *end = 255;
    
-   for (unsigned long prime = small_primes; prime < SECOND_PRIME; prime++) 
+   const unsigned long second_prime = FLINT_MIN(SECOND_PRIME, num_primes);
+   
+   for (unsigned long prime = small_primes; prime < second_prime; prime++) 
    {
-      if (soln2[prime] == -1L) continue;
+      if (soln2[prime] == -1) continue;
       
       p = factor_base[prime].p;
       size = sizes[prime];
@@ -92,7 +92,7 @@ void do_sieving2(QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve)
       }
    }
    
-   for (unsigned long prime = SECOND_PRIME; prime < num_primes; prime++) 
+   for (unsigned long prime = second_prime; prime < num_primes; prime++) 
    {
       p = factor_base[prime].p;
       size = sizes[prime];
@@ -110,18 +110,18 @@ void do_sieving2(QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve)
    }
 }
 
-void update_offsets(unsigned long poly_add, unsigned long * poly_corr, 
+void update_offsets(unsigned long poly_add, u_int32_t * poly_corr, 
              QS_t * qs_inf, poly_t * poly_inf)
 {
    unsigned long num_primes = qs_inf->num_primes;
-   unsigned long * soln1 = poly_inf->soln1;
-   unsigned long * soln2 = poly_inf->soln2;
+   u_int32_t * soln1 = poly_inf->soln1;
+   u_int32_t * soln2 = poly_inf->soln2;
    prime_t * factor_base = qs_inf->factor_base;
    unsigned long p, correction;
    
    for (unsigned long prime = 2; prime < num_primes; prime++) 
    {
-      if (soln2[prime] == -1L) continue;
+      if (soln2[prime] == -1) continue;
       p = factor_base[prime].p;
       correction = (poly_add ? p - poly_corr[prime] : poly_corr[prime]);
       soln1[prime] += correction;
@@ -138,10 +138,10 @@ void do_sieving(QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve,
                   unsigned long M, int first, int last)
 {
    unsigned long num_primes = qs_inf->num_primes;
-   unsigned long * soln1 = poly_inf->soln1;
-   unsigned long * soln2 = poly_inf->soln2;
-   char * * posn1 = poly_inf->posn1;
-   char * * posn2 = poly_inf->posn2;
+   u_int32_t * soln1 = poly_inf->soln1;
+   u_int32_t * soln2 = poly_inf->soln2;
+   u_int32_t * posn1 = poly_inf->posn1;
+   u_int32_t * posn2 = poly_inf->posn2;
    prime_t * factor_base = qs_inf->factor_base;
    unsigned long small_primes = qs_inf->small_primes;
    unsigned long p, correction;
@@ -156,7 +156,7 @@ void do_sieving(QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve,
    
    for (unsigned long prime = first_prime; prime < second_prime; prime++) 
    {
-      if (soln2[prime] == -1L) continue;
+      if (soln2[prime] == -1) continue;
       
       p = factor_base[prime].p;
       size = sizes[prime];
@@ -166,8 +166,8 @@ void do_sieving(QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve,
          pos2 = sieve + soln2[prime];
       } else 
       {
-         pos1 = posn1[prime-first_prime];
-         pos2 = posn2[prime-first_prime];         
+         pos1 = sieve + posn1[prime];
+         pos2 = sieve + posn2[prime];         
       }
       
       bound = end - p;
@@ -191,8 +191,8 @@ void do_sieving(QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve,
 
       if (!last)
       { 
-         posn1[prime-first_prime] = pos1;
-         posn2[prime-first_prime] = pos2;
+         posn1[prime] = pos1 - sieve;
+         posn2[prime] = pos2 - sieve;
       }
    }
    
@@ -202,8 +202,8 @@ void do_sieving3(QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve,
                   unsigned long first_prime, unsigned long second_prime, 
                   unsigned long M)
 {
-   unsigned long * soln1 = poly_inf->soln1;
-   unsigned long * soln2 = poly_inf->soln2;
+   u_int32_t * soln1 = poly_inf->soln1;
+   u_int32_t * soln2 = poly_inf->soln2;
    prime_t * factor_base = qs_inf->factor_base;
    unsigned long p;
    unsigned char * end = sieve + M;
@@ -214,7 +214,7 @@ void do_sieving3(QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve,
    
    for (unsigned long prime = first_prime; prime < second_prime; prime++) 
    {
-      if (soln2[prime] == -1L) continue;
+      if (soln2[prime] == -1) continue;
       
       p = factor_base[prime].p;
       size = sizes[prime];
@@ -245,8 +245,8 @@ unsigned long evaluate_candidate(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly
    unsigned long bits, exp, extra_bits, modp, prime;
    unsigned long num_primes = qs_inf->num_primes;
    prime_t * factor_base = qs_inf->factor_base;
-   unsigned long * soln1 = poly_inf->soln1;
-   unsigned long * soln2 = poly_inf->soln2;
+   u_int32_t * soln1 = poly_inf->soln1;
+   u_int32_t * soln2 = poly_inf->soln2;
    unsigned long * small = la_inf->small;
    unsigned long sieve_fill = qs_inf->sieve_fill;
    unsigned long sieve_size = qs_inf->sieve_size;
@@ -261,6 +261,7 @@ unsigned long evaluate_candidate(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly
    mpz_t * C = &poly_inf->C;
    unsigned long relations = 0;
    double pinv;
+   const unsigned long second_prime = FLINT_MIN(SECOND_PRIME, num_primes);
    
    mpz_t X, Y, res, p;
    mpz_init(X); 
@@ -311,7 +312,7 @@ unsigned long evaluate_candidate(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly
    {
       prime = factor_base[j].p;
       pinv = factor_base[j].pinv;
-      modp = long_mod63_precomp(i, prime, pinv);
+      modp = z_mod2_precomp(i, prime, pinv);
       if ((modp == soln1[j]) || (modp == soln2[j]))
       {
          mpz_set_ui(p, prime);
@@ -327,12 +328,12 @@ unsigned long evaluate_candidate(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly
    if (extra_bits + sieve[i] > bits+sieve_fill)
    {
       sieve[i] += extra_bits - sieve_fill;
-      for (j = small_primes; (j < SECOND_PRIME) && (extra_bits < sieve[i]); j++) // pull out remaining primes
+      for (j = small_primes; (j < second_prime) && (extra_bits < sieve[i]); j++) // pull out remaining primes
       {
          prime = factor_base[j].p;
          pinv = factor_base[j].pinv;
-         modp = long_mod63_precomp(i, prime, pinv);
-         if (soln2[j] != -1L)
+         modp = z_mod2_precomp(i, prime, pinv);
+         if (soln2[j] != -1)
          {
             if ((modp == soln1[j]) || (modp == soln2[j]))
             {
@@ -356,7 +357,7 @@ unsigned long evaluate_candidate(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly
 #endif
          }    
       }
-      for (j = SECOND_PRIME; (j < num_primes) && (extra_bits < sieve[i]); j++) // pull out remaining primes
+      for ( ; (j < num_primes) && (extra_bits < sieve[i]); j++) // pull out remaining primes
       {
          if ((i == soln1[j]) || (i == soln2[j]))
          {
@@ -429,14 +430,18 @@ cleanup:
 unsigned long evaluate_sieve(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve)
 {
    unsigned long i = 0;
-   unsigned long j=0;
+   unsigned long j = 0;
    unsigned long * sieve2 = (unsigned long *) sieve;
    unsigned long sieve_size = qs_inf->sieve_size;
    unsigned long rels = 0;
      
    while (j < sieve_size/sizeof(unsigned long))
    {
+#if FLINT_BITS == 64
       while (!(sieve2[j] & 0x8080808080808080U)) j++;
+#else
+      while (!(sieve2[j] & 0x80808080U)) j++;
+#endif
       i = j*sizeof(unsigned long);
       while ((i < (j+1)*sizeof(unsigned long)) && (i < sieve_size))
       {
