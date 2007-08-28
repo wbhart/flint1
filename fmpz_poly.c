@@ -2600,8 +2600,6 @@ void _fmpz_poly_mul(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_t input2)
 {
    if ((input1->length == 0) || (input2->length == 0)) 
    {
-      fmpz_poly_fit_length(output, 1);
-      fmpz_poly_fit_limbs(output, 1);
       _fmpz_poly_zero(output);
       return;
    }
@@ -2934,6 +2932,14 @@ void fmpz_poly_get_coeff_mpz(mpz_t x, fmpz_poly_t poly, unsigned long n)
 
 void fmpz_poly_mul(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_t input2)
 {
+   if ((input1->length == 0) || (input2->length == 0))
+   {
+      fmpz_poly_fit_length(output, 1);
+      fmpz_poly_fit_limbs(output, 1);
+      _fmpz_poly_zero(output);
+      return;
+   }
+   
    unsigned long limbs = input1->limbs + input2->limbs;
    unsigned long total_length = input1->length + input2->length - 1;
    

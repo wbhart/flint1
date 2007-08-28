@@ -3097,14 +3097,11 @@ int test_fmpz_poly_power()
 #if DEBUG
           printf("length = %ld, bits = %ld, exp = %ld\n", length, bits, exp);
 #endif
-          do 
-          {
-             randpoly(test_poly, length, bits); 
+          randpoly(test_poly, length, bits); 
           
-             fmpz_poly_realloc(test_mpn_poly, length);
-             mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
-             _fmpz_poly_normalise(test_mpn_poly);
-          } while (test_mpn_poly->length == 0);
+          fmpz_poly_realloc(test_mpn_poly, length);
+          mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
+          _fmpz_poly_normalise(test_mpn_poly);
             
           fmpz_poly_fit_length(test_mpn_poly2, 1);
           fmpz_poly_fit_limbs(test_mpn_poly2, 1);
