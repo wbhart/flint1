@@ -409,5 +409,7 @@ void fmpz_poly_div_series(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B, unsigned 
 
 void fmpz_poly_div_newton(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B);
 
+void fmpz_poly_power(fmpz_poly_t output, fmpz_poly_t poly, unsigned long exp);
+
 // *************** end of file
 #endif

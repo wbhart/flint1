@@ -2121,6 +2121,8 @@ void _fmpz_poly_mul_KS(fmpz_poly_t output, fmpz_poly_p input1, fmpz_poly_p input
    unsigned long length1 = input1->length;
    unsigned long length2 = input2->length;
    
+   unsigned long final_length = length1 + length2 - 1;
+   
    while ((input1->coeffs[(length1-1)*(input1->limbs+1)] == 0) && (length1)) length1--;
    while ((input2->coeffs[(length2-1)*(input2->limbs+1)] == 0) && (length2)) length2--;
    
@@ -2236,7 +2238,7 @@ void _fmpz_poly_mul_KS(fmpz_poly_t output, fmpz_poly_p input1, fmpz_poly_p input
    {
       output->coeffs[i*(output->limbs+1)] = 0;
    }
-   output->length = input1->length + input2->length - 1;
+   output->length = final_length;
 }
 
 void _fmpz_poly_mul_KS_trunc(fmpz_poly_t output, fmpz_poly_p input1, 
@@ -2598,6 +2600,8 @@ void _fmpz_poly_mul(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_t input2)
 {
    if ((input1->length == 0) || (input2->length == 0)) 
    {
+      fmpz_poly_fit_length(output, 1);
+      fmpz_poly_fit_limbs(output, 1);
       _fmpz_poly_zero(output);
       return;
    }
@@ -2931,6 +2935,7 @@ void fmpz_poly_get_coeff_mpz(mpz_t x, fmpz_poly_t poly, unsigned long n)
 void fmpz_poly_mul(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_t input2)
 {
    unsigned long limbs = input1->limbs + input2->limbs;
+   unsigned long total_length = input1->length + input2->length - 1;
    
    long bits1, bits2;
       
@@ -2947,7 +2952,8 @@ void fmpz_poly_mul(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_t input2)
    fmpz_poly_fit_length(output, input1->length + input2->length - 1);
    
    _fmpz_poly_mul(output, input1, input2);
-   fmpz_poly_set_length(output, input1->length + input2->length - 1);
+   output->length = total_length;
+   
 }
 
 void fmpz_poly_mul_trunc_n(fmpz_poly_t output, fmpz_poly_t input1, 
@@ -4415,4 +4421,73 @@ void fmpz_poly_div_newton(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B)
    
    fmpz_poly_clear(B_rev);
    fmpz_poly_clear(A_rev);
+}
+
+void fmpz_poly_power(fmpz_poly_t output, fmpz_poly_t poly, unsigned long exp)
+{
+   fmpz_poly_t power, temp;
+   
+   fmpz_poly_init(power);
+   fmpz_poly_init(temp);
+   
+   if (exp == 0) 
+   {
+      fmpz_poly_fit_limbs(output, 1);
+      fmpz_poly_fit_length(output, 1);
+      fmpz_poly_set_coeff_ui(output, 0, 1);
+      output->length = 1;
+      return;
+   }
+   if ((poly->length == 1) && (poly->coeffs[0] == 1) && (poly->coeffs[1] == 1))
+   {
+      fmpz_poly_fit_limbs(output, 1);
+      fmpz_poly_fit_length(output, 1);
+      fmpz_poly_set_coeff_ui(output, 0, 1);
+      output->length = 1;
+      return;
+   } 
+   if (poly->length == 0)
+   {
+      fmpz_poly_fit_limbs(output, 1);
+      fmpz_poly_fit_length(output, 1);
+      output->length = 0;
+      return;      
+   }
+   
+   fmpz_poly_fit_length(output, poly->length);
+   fmpz_poly_fit_limbs(output, poly->limbs);
+   _fmpz_poly_set(output, poly);
+    
+   while (!(exp & 1L))
+   {
+      fmpz_poly_mul(temp, output, output);
+      fmpz_poly_fit_length(output, temp->length);
+      fmpz_poly_fit_limbs(output, temp->limbs);
+      _fmpz_poly_set(output, temp);
+      exp >>= 1;
+   }
+   
+   exp >>= 1;
+   if (exp)
+   {
+      fmpz_poly_fit_length(power, output->length);
+      fmpz_poly_fit_limbs(power, output->limbs);
+      _fmpz_poly_set(power, output);
+      
+      while (exp)
+      {
+         fmpz_poly_mul(temp, power, power);
+         fmpz_poly_fit_length(power, temp->length);
+         fmpz_poly_fit_limbs(power, temp->limbs);
+         _fmpz_poly_set(power, temp);
+         if (exp & 1) 
+         {
+            fmpz_poly_mul(temp, output, power);
+            fmpz_poly_fit_length(output, temp->length);
+            fmpz_poly_fit_limbs(output, temp->limbs);
+            _fmpz_poly_set(output, temp);
+         }
+         exp >>= 1;
+      }
+   }
 }
