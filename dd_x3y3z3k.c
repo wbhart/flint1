@@ -24,7 +24,6 @@
 
 mpz_t tmp, tmp2;
 
-FILE * outfile;
 char * done;
 
 #define DEBUG 0
@@ -207,8 +206,7 @@ void elkies(double * a, long N, double * eps)
          {
             if (!done[k])
             {
-               fprintf(outfile,"\n%ld^3 + %ld^3 + %ld^3  = %ld\n\n", t1, t2, t3, k);
-               fflush(outfile);
+               printf("\n%ld^3 + %ld^3 + %ld^3  = %ld\n\n", t1, t2, t3, k);
             }
             done[k] = 1;
             told = t1;
@@ -226,13 +224,17 @@ void elkies(double * a, long N, double * eps)
    dd_mat3dc_stack_clear();
 }
 
+#define PARTS 10
+
 int main(void)
 {
    long N;
    double eps[2];
    double a[2];
    char buf[1000];
+   char buf2[100];
    char* ptr;
+   long start;
    
    mpz_init(tmp);
    mpz_init(tmp2);
@@ -249,37 +251,38 @@ int main(void)
          done[atoi(ptr)] = 0;
       }
    }
-   
-   outfile = fopen("x3y3z3-test.out", "w");
+   fclose(unknown);
+
    N = 100000000000;
+   
+   FILE * range = fopen("range", "r");
+   fgets(buf2, 100, range);
+   ptr = strtok(buf2, ", \n\r");
+   start = atol(buf2);
+   fclose(range);
+   range = fopen("range", "w");
+   fprintf(range, "%ld\n", start + N/PARTS);
+   fflush(range);
+   fclose(range);
+   if (start == -(N/PARTS)) start += (2*N/PARTS);
    c_dd_copy_d(1.0, eps);
    c_dd_div_dd_d(eps, N, eps); // eps = 1/N
-   /*for (long k = -50000000000; k > -N+20000000000; k--) 
-   {
-      if ((k&0x7ffff) == 0) 
-      {
-         fprintf(outfile, "Passed k = %ld\n", k);
-         fflush(outfile);
-      }
-      c_dd_copy_d(k, a);
-      c_dd_div_dd_d(a, N, a); // a = k/N
-      elkies(a, N, eps);
-   }*/
-   for (long k = 50000000000; k < N-20000000000; k++) 
-   {
-      if ((k&0x7ffff) == 0) 
-      {
-         fprintf(outfile, "Passed k = %ld\n", k);
-         fflush(outfile);
-      }
-      c_dd_copy_d(k, a);
-      c_dd_div_dd_d(a, N, a); // a = k/N
-      elkies(a, N, eps);
-   } 
    
-   fclose(unknown);
+   const long end = start+N/PARTS;
+   const long start_point = start;
+   
+   for (long k = start_point; k < end; k++) 
+   {
+      if ((k&0x7ffff) == 0) 
+      {
+         printf("Passed k = %ld\n", k);
+      }
+      c_dd_copy_d(k, a);
+      c_dd_div_dd_d(a, N, a); // a = k/N
+      elkies(a, N, eps);
+   }
+   
    flint_stack_release();
-   fclose(outfile);
    mpz_clear(tmp);
    mpz_clear(tmp2);
 }
