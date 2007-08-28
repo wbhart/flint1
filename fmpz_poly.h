@@ -64,22 +64,6 @@ typedef struct
 typedef fmpz_poly_struct fmpz_poly_t[1];
 typedef fmpz_poly_struct * fmpz_poly_p;
 
-#define NORM(coeff) \
-do { \
-   if ((coeff)[0]) \
-   { \
-      if ((long) (coeff)[0] < 0) \
-      { \
-         while ((!(coeff)[-(coeff)[0]]) && (coeff)[0]) (coeff)[0]++; \
-      } else \
-      { \
-         while ((!(coeff)[(coeff)[0]]) && (coeff)[0]) (coeff)[0]--; \
-      } \
-   } \
-} while (0);
-
-#define ABS(x) (((long) x < 0) ? -x : x)
-
 #define SWAP(x_dummy, y_dummy) \
 do { \
    fmpz_poly_p swap_temp = x_dummy; \

@@ -2992,7 +2992,7 @@ int test_fmpz_poly_div_newton()
    mpz_poly_init(test_poly2); 
    mpz_poly_init(test_poly3); 
    
-   for (unsigned long count1 = 0; (count1 < 100) && (result == 1) ; count1++)
+   for (unsigned long count1 = 0; (count1 < 50) && (result == 1) ; count1++)
    {
       bits = random_ulong(10)+ 1;
       bits2 = random_ulong(10)+ 1;
@@ -3148,6 +3148,9 @@ int test_fmpz_poly_power()
     fmpz_poly_set_coeff_ui(poly, 0, 1);
     fmpz_poly_set_coeff_ui(poly, 1, 1);
     fmpz_poly_power(power, poly, (1UL<<13)-1);
+#if DEBUG
+    fmpz_poly_print(power); printf("\n");
+#endif
     
     return 1;
 }*/

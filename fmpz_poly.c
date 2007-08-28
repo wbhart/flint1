@@ -758,8 +758,11 @@ void __fmpz_poly_mul_coeffs(mp_limb_t * res, mp_limb_t * a, mp_limb_t * b)
 {
       NORM(a);
       NORM(b);
-      unsigned long sizea = ABS(a[0]);
-      unsigned long sizeb = ABS(b[0]);
+      long a0 = a[0];
+      long b0 = b[0];
+      
+      unsigned long sizea = ABS(a0);
+      unsigned long sizeb = ABS(b0);
       mp_limb_t mslimb;
       mp_limb_t * temp;
       
@@ -773,7 +776,7 @@ void __fmpz_poly_mul_coeffs(mp_limb_t * res, mp_limb_t * a, mp_limb_t * b)
          else mslimb = mpn_mul(temp+1, b+1, sizeb, a+1, sizea);
          temp[0] = sizea + sizeb - (mslimb == 0);
          copy_limbs(res, temp, temp[0]+1);
-         if ((long) (a[0] ^ b[0]) < 0) res[0] = -res[0];
+         if ((long) (a0 ^ b0) < 0) res[0] = -res[0];
          flint_stack_release_small();     
       } else if (sizea + sizeb < 2*FLINT_FFT_LIMBS_CROSSOVER)
       {
@@ -782,14 +785,14 @@ void __fmpz_poly_mul_coeffs(mp_limb_t * res, mp_limb_t * a, mp_limb_t * b)
          else mslimb = mpn_mul(temp+1, b+1, sizeb, a+1, sizea);
          temp[0] = sizea + sizeb - (mslimb == 0);
          copy_limbs(res, temp, temp[0]+1);
-         if ((long) (a[0] ^ b[0]) < 0) res[0] = -res[0];
+         if ((long) (a0 ^ b0) < 0) res[0] = -res[0];
          flint_stack_release();   
       } else
       {
          if (sizea >= sizeb) mslimb = Z_mpn_mul(res+1, a+1, sizea, b+1, sizeb);
          else mslimb = Z_mpn_mul(res+1, b+1, sizeb, a+1, sizea);
          res[0] = sizea+sizeb - (mslimb == 0);
-         if ((long) (a[0] ^ b[0]) < 0) res[0] = -res[0];
+         if ((long) (a0 ^ b0) < 0) res[0] = -res[0];
       }
 }      
 
@@ -1087,13 +1090,14 @@ void _fmpz_poly_scalar_div_ui(fmpz_poly_t output, fmpz_poly_t poly, unsigned lon
       
       count_lead_zeros(norm, x);
       x <<= norm;
-      invert_limb(xinv,x);
+      invert_limb(xinv, x);
       x >>= norm;
       
       for (unsigned long i = 0; i < poly->length; i++)
       {
          coeffs_out[i*size_out] = coeffs1[i*size1];
          mpn_divmod_1_preinv(coeffs_out+i*size_out+1, coeffs1+i*size1+1, ABS(coeffs1[i*size1]), x, xinv, norm);
+         NORM(coeffs_out+i*size_out);
       }
    } else
    {
@@ -1101,6 +1105,7 @@ void _fmpz_poly_scalar_div_ui(fmpz_poly_t output, fmpz_poly_t poly, unsigned lon
       {
          coeffs_out[i*size_out] = coeffs1[i*size1];
          mpn_divmod_1(coeffs_out+i*size_out+1, coeffs1+i*size1+1, ABS(coeffs1[i*size1]), x);
+         NORM(coeffs_out+i*size_out);
       }
    }
    
@@ -4458,6 +4463,115 @@ void fmpz_poly_power(fmpz_poly_t output, fmpz_poly_t poly, unsigned long exp)
       fmpz_poly_fit_length(output, 1);
       output->length = 0;
       return;      
+   }
+   
+   if (poly->length == 2) // Compute using binomial expansion
+   {
+      fmpz_poly_fit_length(output, exp + 1);
+      
+      fmpz_t coeff1 = poly->coeffs;
+      fmpz_t coeff2 = poly->coeffs + poly->limbs + 1;
+      
+      unsigned long bits2 = _fmpz_bits(coeff2);
+      
+      if (coeff1[0] == 0)
+      {
+         fmpz_poly_fit_limbs(output, (bits2*exp-1)/FLINT_BITS + 1);
+         fmpz_t coeff_out = output->coeffs;
+         unsigned long size_out = output->limbs + 1;
+         for (unsigned long i = 0; i < exp; i++) 
+         {
+             coeff_out[0] = 0;
+             coeff_out += size_out;
+         }
+         _fmpz_pow_ui(coeff_out, coeff2, exp);
+         
+         output->length = exp + 1;
+         
+         return;   
+      }
+      
+      // Enough space for the binomial coefficient, the extra limb required
+      // by _fmpz_binomial_next and a limb for the sign/length
+      fmpz_t binomial = (fmpz_t) flint_stack_alloc((exp+FLINT_BITS-1)/FLINT_BITS + 2);
+      binomial[0] = 1;
+      binomial[1] = 1;
+      
+      // A rough estimate of the max number of limbs needed for a coefficient 
+      unsigned long bits1 = _fmpz_bits(coeff1);
+      unsigned long bits = FLINT_MAX(bits1, bits2);
+      
+      fmpz_t pow;
+      if (!(_fmpz_is_one(coeff1) && _fmpz_is_one(coeff2)))
+      {
+         pow = (fmpz_t) flint_stack_alloc((exp*bits - 1)/FLINT_BITS+2);
+         pow[0] = 1;
+         pow[1] = 1;
+         bits = FLINT_MAX(exp + (bits1+bits2)*((exp+1)/2), exp*bits);
+      } else
+      {
+         bits = exp;
+      }
+      
+      fmpz_poly_fit_limbs(output, (bits-1)/FLINT_BITS+1);
+      
+      long i;
+      unsigned long cbits;
+      fmpz_t coeff_out = output->coeffs;
+      
+      if (_fmpz_is_one(coeff2))
+      {
+         for (i = 0; i < exp; i++)
+         {
+            fmpz_set(output->coeffs + i*(output->limbs+1), binomial); 
+            _fmpz_binomial_next(binomial, binomial, exp, i + 1);
+         }
+         fmpz_set(output->coeffs + i*(output->limbs+1), binomial); 
+         output->length = exp + 1;
+      } else
+      {
+         for (i = 0, cbits = 0; i < exp; i++, cbits += bits2)
+         {
+            fmpz_poly_fit_limbs(output, (cbits+_fmpz_bits(binomial)-1)/FLINT_BITS+1);
+            __fmpz_poly_mul_coeffs(output->coeffs + i*(output->limbs+1), pow, binomial); 
+            __fmpz_poly_mul_coeffs(pow, pow, coeff2);
+            _fmpz_binomial_next(binomial, binomial, exp, i + 1);
+            output->length++;
+         }
+         fmpz_poly_fit_limbs(output, (cbits+_fmpz_bits(binomial)-1)/FLINT_BITS+1);
+         __fmpz_poly_mul_coeffs(output->coeffs + i*(output->limbs+1), pow, binomial); 
+         output->length++;
+      }
+      
+      if (!_fmpz_is_one(coeff1))
+      {
+         pow[0] = 1;
+         pow[1] = 1;
+      
+         coeff_out = output->coeffs + i*(output->limbs+1);
+         cbits = 0;
+      
+         for (cbits = 0; i > 0; i--, cbits += bits1)
+         {
+            fmpz_poly_fit_limbs(output, (cbits + _fmpz_bits(coeff_out) - 1)/FLINT_BITS + 1);
+            coeff_out = output->coeffs + i*(output->limbs+1);
+            __fmpz_poly_mul_coeffs(coeff_out, coeff_out, pow); 
+            __fmpz_poly_mul_coeffs(pow, pow, coeff1);       
+         }
+         
+         fmpz_poly_fit_limbs(output, (cbits + _fmpz_bits(coeff_out) - 1)/FLINT_BITS + 1);
+         coeff_out = output->coeffs;
+         __fmpz_poly_mul_coeffs(coeff_out, coeff_out, pow); 
+      } 
+         
+      output->length = exp + 1;
+      
+      if (!(_fmpz_is_one(coeff1) && _fmpz_is_one(coeff2)))
+      {
+         flint_stack_release();
+      }
+      flint_stack_release();
+      return;
    }
    
    fmpz_poly_fit_length(output, poly->length);
