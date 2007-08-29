@@ -18,6 +18,7 @@ Copyright (C) 2007, William Hart and David Harvey
 #include "fmpz_poly.h"
 #include "extras.h"
 #include "mpn_extras.h"
+#include "fmpz.h"
 
 /****************************************************************************
 
