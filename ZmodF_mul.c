@@ -941,7 +941,7 @@ void _ZmodF_mul_info_mul_threeway(ZmodF_mul_info_t info,
       // usual case
       mp_limb_t carry1 = mpn_add_n(res, buf3, buf2, m);
       mp_limb_t carry2 = mpn_sub_n(res + m, buf3 + m, buf2, m);
-      res[3*m] = mpn_add_n(res + 2*m, buf3 + 2*m, buf2, m);
+      res[3*m] = buf3[3*m] + mpn_add_n(res + 2*m, buf3 + 2*m, buf2, m);
       mpn_add_1(res + m, res + m, 2*m+1, carry1);
       mpn_sub_1(res + 2*m, res + 2*m, m+1, carry2);
    }
