@@ -10,7 +10,15 @@ ifndef FLINT_TUNE
 endif
 
 ifndef FLINT_LINK_OPTIONS
-	FLINT_LINK_OPTIONS = -static
+	FLINT_LINK_OPTIONS = 
+endif
+
+ifndef FLINT_NTL_LIB_DIR 
+	FLINT_NTL_LIB_DIR = "/home/wbhart/sage/sage-2.0/local/lib"
+endif
+
+ifndef FLINT_NTL_INCLUDE_DIR 
+	FLINT_NTL_INCLUDE_DIR = "/home/wbhart/sage/sage-2.0/local/include"
 endif
 
 # default GMP directories on sage.math development machine
@@ -34,12 +42,12 @@ endif
 
 qdexists := $(shell ls -d qd)
 ifeq ($(qdexists), qd)
-	LIBS = -L$(FLINT_GMP_LIB_DIR) -L$(FLINT_QD_LIB_DIR) $(FLINT_LINK_OPTIONS) -lgmp -lpthread -lm -lqd
+	LIBS = -L$(FLINT_GMP_LIB_DIR)  -L$(FLINT_NTL_LIB_DIR) -L$(FLINT_QD_LIB_DIR) $(FLINT_LINK_OPTIONS) -lgmp -lpthread -lm -lntl -lqd
 else
-	LIBS = -L$(FLINT_GMP_LIB_DIR) -L$(FLINT_QD_LIB_DIR) $(FLINT_LINK_OPTIONS) -lgmp -lpthread -lm
+	LIBS = -L$(FLINT_GMP_LIB_DIR)  -L$(FLINT_NTL_LIB_DIR) -L$(FLINT_QD_LIB_DIR) $(FLINT_LINK_OPTIONS) -lgmp -lpthread -lntl -lm
 endif
 
-INCS =  -I"/usr/include" -I$(FLINT_GMP_INCLUDE_DIR) -I$(FLINT_QD_INCLUDE_DIR) 
+INCS =  -I"/usr/include" -I$(FLINT_GMP_INCLUDE_DIR) -I$(FLINT_NTL_INCLUDE_DIR) -I$(FLINT_QD_INCLUDE_DIR) 
 
 CC = gcc -std=c99
 
@@ -135,6 +143,8 @@ long_extras.o: long_extras.c long_extras.h
 test-support.o: test-support.c $(HEADERS)
 	$(CC) $(CFLAGS) -c test-support.c -o test-support.o
 
+test-support2.o: test-support.c $(HEADERS)
+	$(CPP) $(CFLAGS) -c test-support.c -o test-support2.o
 
 fmpz_poly-test.o: fmpz_poly-test.c $(HEADERS)
 	$(CC) $(CFLAGS) -c fmpz_poly-test.c -o fmpz_poly-test.o
@@ -210,6 +220,11 @@ profiler.o: profiler.c $(HEADERS)
 profiler-main.o: profiler-main.c $(HEADERS)
 	$(CC) $(CFLAGS) -c profiler-main.c -o profiler-main.o
 
+profiler2.o: profiler.c $(HEADERS)
+	$(CPP) $(CFLAGS) -c profiler.c -o profiler2.o
+
+profiler-main2.o: profiler-main.c $(HEADERS)
+	$(CPP) $(CFLAGS) -c profiler-main.c -o profiler-main2.o
 
 fmpz_poly-profile-tables.o: fmpz_poly-profile.c $(HEADERS)
 	python make-profile-tables.py fmpz_poly
@@ -246,12 +261,15 @@ ZmodF_mul-profile-tables.o: ZmodF_mul-profile.c $(HEADERS)
 ZmodF_mul-profile.o: ZmodF_mul-profile.c $(HEADERS)
 	$(CC) $(CFLAGS) -c ZmodF_mul-profile.c -o ZmodF_mul-profile.o
 
-
-
+NTL-profile-tables.o: NTL-profile.c $(HEADERS)
+	python make-profile-tables.py NTL
+	$(CPP) $(CFLAGS) -c NTL-profile-tables.c -o NTL-profile-tables.o
 
 ####### profiling program targets
 
 PROFOBJ = $(FLINTOBJ) profiler.o profiler-main.o
+
+PROFOBJ2 = profiler2.o profiler-main2.o
 
 fmpz_poly-profile: fmpz_poly-profile.o fmpz_poly-profile-tables.o test-support.o $(PROFOBJ)
 	$(CC) $(CFLAGS) -o fmpz_poly-profile fmpz_poly-profile.o fmpz_poly-profile-tables.o test-support.o $(PROFOBJ) $(LIBS)
@@ -269,7 +287,8 @@ ZmodF_poly-profile: ZmodF_poly-profile.o ZmodF_poly-profile-tables.o $(PROFOBJ)
 kara-profile: kara-profile.c profiler.o test-support.o $(FLINTOBJ)
 	$(CC) $(CFLAGS) -o kara-profile kara-profile.c profiler.o test-support.o $(FLINTOBJ) $(LIBS)
 
-
+NTL-profile: NTL-profile.c test-support2.o NTL-profile-tables.o $(PROFOBJ2)
+	$(CPP) $(CFLAGS) -o NTL-profile NTL-profile.c NTL-profile-tables.o test-support2.o $(PROFOBJ2) $(LIBS)
 
 ####### example programs
 
