@@ -2226,7 +2226,6 @@ int test_fmpz_poly_scalar_mul()
              mpz_poly_print(test_poly2);printf("\n\n");
           }
 #endif
-         
           mpz_poly_clear(test_poly2);
       }
       free(x);
@@ -2749,6 +2748,94 @@ int test_fmpz_poly_div_karatsuba()
    return result; 
 }
 
+int test_fmpz_poly_div_mulders()
+{
+   mpz_poly_t test_poly, test_poly2, test_poly3, test_poly4;
+   fmpz_poly_t test_mpn_poly, test_mpn_poly2, test_mpn_poly3, test_mpn_poly4;
+   int result = 1;
+   unsigned long bits, bits2, length, length2;
+   
+   mpz_poly_init(test_poly); 
+   mpz_poly_init(test_poly2); 
+   mpz_poly_init(test_poly3); 
+   
+   for (unsigned long count1 = 0; (count1 < 60000) && (result == 1) ; count1++)
+   {
+      bits = random_ulong(1000)+ 1;
+      bits2 = random_ulong(1000)+ 1;
+      //bits = bits2 = 10;
+      
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
+      fmpz_poly_init2(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS+1);
+      
+      length2 = random_ulong(128)+1; 
+      length = random_ulong(128)+1;
+      //length = 1000;
+      //length2 = 1000;
+       
+#if DEBUG
+      printf("length = %ld, length2 = %ld, bits = %ld, bits2 = %ld\n", length, length2, bits, bits2);
+#endif
+
+      do {
+         randpoly(test_poly, length, bits); 
+         fmpz_poly_realloc(test_mpn_poly, length);
+         mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
+         _fmpz_poly_normalise(test_mpn_poly);
+      } while (test_mpn_poly->length == 0);
+      
+      randpoly(test_poly2, length2, bits2);     
+      fmpz_poly_realloc(test_mpn_poly2, length2);
+      mpz_poly_to_fmpz_poly(test_mpn_poly2, test_poly2);
+#if DEBUG
+      mpz_poly_print(test_poly);printf("\n\n");
+      mpz_poly_print(test_poly2);printf("\n\n");
+#endif          
+          
+      mpz_poly_init(test_poly4);
+      fmpz_poly_init2(test_mpn_poly3, length+length2-1, test_mpn_poly->limbs+test_mpn_poly2->limbs+1);
+          
+      fmpz_poly_init(test_mpn_poly4);
+      _fmpz_poly_mul(test_mpn_poly3, test_mpn_poly, test_mpn_poly2);
+#if DEBUG
+      mpz_poly_print(test_poly);printf("\n\n");
+      mpz_poly_print(test_poly2);printf("\n\n");
+      mpz_poly_print(test_poly3);printf("\n\n");
+#endif               
+      for (unsigned long i = 1; i < 10; i++)
+      {
+         fmpz_poly_div_mulders(test_mpn_poly4, test_mpn_poly3, test_mpn_poly);
+         //fmpz_poly_clear(test_mpn_poly4);
+         //fmpz_poly_init(test_mpn_poly4);
+      }
+      fmpz_poly_div_mulders(test_mpn_poly4, test_mpn_poly3, test_mpn_poly);
+      _fmpz_poly_normalise(test_mpn_poly4);
+      
+      fmpz_poly_to_mpz_poly(test_poly4, test_mpn_poly4);
+           
+      result = mpz_poly_equal(test_poly4, test_poly2);
+#if DEBUG
+      if (!result) 
+      {
+         mpz_poly_print(test_poly2);printf("\n\n");
+         mpz_poly_print(test_poly4);printf("\n\n");
+      }
+#endif               
+            
+      mpz_poly_clear(test_poly4);
+      fmpz_poly_clear(test_mpn_poly3);
+      fmpz_poly_clear(test_mpn_poly4);
+      fmpz_poly_clear(test_mpn_poly);
+      fmpz_poly_clear(test_mpn_poly2);
+   }
+   
+   mpz_poly_clear(test_poly);
+   mpz_poly_clear(test_poly2);
+   mpz_poly_clear(test_poly3);
+   
+   return result; 
+}
+
 int test_fmpz_poly_newton_invert_basecase()
 {
    mpz_poly_t test_poly;
@@ -3140,25 +3227,26 @@ int test_fmpz_poly_power()
    return result; 
 }
 
-/*int test_fmpz_poly_power()
+int test_fmpz_poly_power2()
 {
     fmpz_poly_t poly, power, test;
     fmpz_poly_init(power);
     fmpz_poly_init(poly);
     fmpz_poly_set_coeff_ui(poly, 0, 1);
     fmpz_poly_set_coeff_ui(poly, 1, 1);
-    fmpz_poly_power(power, poly, (1UL<<13)-1);
+    fmpz_poly_power(power, poly, (1UL<<13));
 #if DEBUG
     fmpz_poly_print(power); printf("\n");
 #endif
     
     return 1;
-}*/
+}
 
 void fmpz_poly_test_all()
 {
    int success, all_success = 1;
 
+   RUN_TEST(fmpz_poly_div_mulders);
    RUN_TEST(fmpz_poly_convert);
    RUN_TEST(fmpz_poly_getset_ui);
    RUN_TEST(fmpz_poly_getset_si);
@@ -3188,7 +3276,6 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_poly_mul_SS);
    RUN_TEST(fmpz_poly_mul_SS_trunc);
    RUN_TEST(fmpz_poly_mul_trunc_n);
-   RUN_TEST(fmpz_poly_scalar_mul);
    RUN_TEST(fmpz_poly_div_naive);
    RUN_TEST(fmpz_poly_divrem_naive);
    RUN_TEST(fmpz_poly_div_karatsuba_recursive);
@@ -3199,7 +3286,8 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_poly_newton_invert);
    RUN_TEST(fmpz_poly_div_series);
    RUN_TEST(fmpz_poly_div_newton);
-   RUN_TEST(fmpz_poly_power);
+   RUN_TEST(fmpz_poly_power2);
+   RUN_TEST(fmpz_poly_scalar_mul);
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");

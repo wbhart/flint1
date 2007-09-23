@@ -3,6 +3,10 @@
 #include <string.h>
 #include <gmp.h>
 #include "Z.h"
+#include "flint.h"
+
+#define DEBUG2 1
+#define DEBUG 0
 
 gmp_randstate_t state_Z;
 int rand_init = 0;
@@ -606,3 +610,297 @@ void Z_rrandomb(Z_t res, unsigned long n)
    rand_running=0; //required for thread safety
 }
 
+/*
+    Compute the Montgomery reduced form of a mod m
+    Returns n such that m < 2^n (n will be divisible by FLINT_BITS)
+    Assumes a is already reduced mod m
+*/
+
+unsigned long Z_mont_red(mpz_t res, mpz_t a, mpz_t m)
+{
+   unsigned long n = mpz_size(m)*FLINT_BITS;
+   
+   mpz_mul_2exp(res, a, n);
+   mpz_mod(res, res, m);
+   
+   return n;
+}
+
+/* 
+    Compute the Montgomery multiplication r = a*b mod m assuming a and b are in 
+    Montgomery form with respect to 2^n where m < 2^n and R is -m mod 2^n
+*/
+
+void Z_mont_mul(mpz_t res, mpz_t a, mpz_t b, mpz_t m, mpz_t R, unsigned long n)
+{
+   mpz_t x, s;
+   mpz_init(x);
+   mpz_init(s);
+   
+   mpz_mul(x, a, b);
+   mpz_fdiv_r_2exp(s, x, n);
+   mpz_mul(s, s, R);
+   mpz_fdiv_r_2exp(s, s, n);
+   mpz_mul(res, s, m);
+   mpz_add(res, res, x);
+   mpz_fdiv_q_2exp(res, res, n);
+   
+   if (mpz_cmp(res, m) >= 0) mpz_sub(res, res, m);
+    
+   mpz_clear(x);
+   mpz_clear(s);
+}
+
+/* 
+    Compute a^exp mod m using Montgomery reduction
+    Requires that m is odd and positive and that exp is positive
+*/
+
+void Z_expmod_mont(mpz_t res, mpz_t a, mpz_t exp, mpz_t m)
+{
+   unsigned long n;
+   unsigned long bits = mpz_sizeinbase(exp, 2);
+   mpz_t aRED;
+   mpz_t powRED;
+   mpz_t R;
+   mpz_t temp;
+   int flag = 0;
+   
+   mpz_init(aRED);
+   mpz_init(powRED);
+   mpz_init(R);
+   mpz_init(temp);
+   
+   n = Z_mont_red(aRED, a, m);
+   
+   mpz_set_ui(temp, 1);
+   mpz_mul_2exp(temp, temp, n);
+   mpz_invert(R, m, temp);
+   mpz_sub(R, temp, R);
+   if (mpz_cmp(R, temp) == 0) mpz_sub(R, R, temp);
+   
+   mpz_set(powRED, aRED);
+#ifdef DEBUG
+   gmp_printf("powRED = %Zd\n", powRED);
+#endif
+   
+   for (unsigned long i = 0; i < bits - 1; i++)
+   {
+      if (mpz_tstbit(exp, i))
+      {
+         if (flag) Z_mont_mul(res, res, powRED, m, R, n);
+         else 
+         {
+            mpz_set(res, powRED);
+            flag = 1;
+         }
+      }
+      Z_mont_mul(powRED, powRED, powRED, m, R, n);
+#ifdef DEBUG
+      gmp_printf("powRED = %Zd\n", powRED);
+#endif
+   }
+   
+   if (flag) Z_mont_mul(res, res, powRED, m, R, n);
+   else mpz_set(res, powRED);
+   
+   mpz_set_ui(temp, 1);
+   Z_mont_mul(res, res, temp, m, R, n);
+   
+   mpz_clear(temp);
+   mpz_clear(R);
+   mpz_clear(powRED);
+   mpz_clear(aRED);
+}
+
+void Z_divrem_jebelean(mpz_t Q, mpz_t R, mpz_t A, mpz_t B)
+{
+   unsigned long n = mpz_size(B);
+   unsigned long m = mpz_size(A) - n;
+   
+   if ((long) m < 0)
+   {
+      mpz_set_ui(Q, 0);
+      mpz_set(R, A);
+      return;
+   }
+   
+   if (m < 64) 
+   {
+      mpz_fdiv_qr(Q, R, A, B);
+      return;
+   }
+   
+   unsigned long k = m/2;
+   
+   Z_t * B0 = Z_alloc();
+   Z_t * B1 = Z_alloc();
+   Z_t * A0 = Z_alloc();
+   Z_t * A1 = Z_alloc();
+   Z_t * Q0 = Z_alloc();
+   Z_t * Q1 = Z_alloc();
+   Z_t * R0 = Z_alloc();
+   Z_t * R1 = Z_alloc();
+   Z_t * temp = Z_alloc();
+   Z_t * temp2 = Z_alloc();
+   Z_t * temp3 = Z_alloc();
+   
+   
+   mpz_fdiv_q_2exp(*B1, B, FLINT_BITS*k);
+   mpz_fdiv_q_2exp(*A1, A, FLINT_BITS*2*k);
+   
+   Z_divrem_jebelean(*Q1, *R1, *A1, *B1);
+   mpz_fdiv_r_2exp(*B0, B, FLINT_BITS*k);
+   mpz_fdiv_r_2exp(*A0, A, FLINT_BITS*2*k);
+   mpz_mul_2exp(*temp, *R1, FLINT_BITS*2*k);
+   mpz_add(*temp, *temp, *A0);
+   mpz_mul_2exp(*temp2, *Q1, FLINT_BITS*k);
+   mpz_mul(*temp2, *temp2, *B0);
+   mpz_sub(*temp, *temp, *temp2);
+   mpz_mul_2exp(*temp2, B, FLINT_BITS*k);
+   
+   while (mpz_cmp_ui(*temp, 0) < 0) 
+   {
+      mpz_sub_ui(*Q1, *Q1, 1);
+      mpz_add(*temp, *temp, *temp2);
+   }
+   mpz_fdiv_q_2exp(*temp2, *temp, FLINT_BITS*k); 
+   Z_divrem_jebelean(*Q0, *R0, *temp2, *B1);
+   
+   mpz_fdiv_r_2exp(*temp2, *temp, FLINT_BITS*k);
+   mpz_mul_2exp(R, *R0, FLINT_BITS*k);
+   mpz_add(R, R, *temp2);
+   mpz_submul(R, *Q0, *B0);
+   while (mpz_cmp_ui(R, 0) < 0) 
+   {
+      mpz_sub_ui(*Q0, *Q0, 1);
+      mpz_add(R, R, B);
+   }
+   mpz_mul_2exp(Q, *Q1, FLINT_BITS*k);
+   mpz_add(Q, Q, *Q0);
+   
+   Z_release(); Z_release(); Z_release(); Z_release();
+   Z_release(); Z_release(); Z_release(); Z_release();
+   Z_release(); Z_release(); Z_release();
+}
+
+void Z_rem_jebelean(mpz_t R, mpz_t A, mpz_t B)
+{
+   unsigned long n = mpz_size(B);
+   unsigned long m = mpz_size(A) - n;
+   
+   if ((long) m < 0)
+   {
+      mpz_set(R, A);
+      return;
+   }
+   
+   if (m < 64) 
+   {
+      mpz_fdiv_r(R, A, B);
+      return;
+   }
+   
+   unsigned long k = m/2;
+   
+   Z_t * B0 = Z_alloc();
+   Z_t * B1 = Z_alloc();
+   Z_t * A0 = Z_alloc();
+   Z_t * A1 = Z_alloc();
+   Z_t * Q0 = Z_alloc();
+   Z_t * Q1 = Z_alloc();
+   Z_t * R0 = Z_alloc();
+   Z_t * R1 = Z_alloc();
+   Z_t * temp = Z_alloc();
+   Z_t * temp2 = Z_alloc();
+   Z_t * temp3 = Z_alloc();
+   
+   
+   mpz_fdiv_q_2exp(*B1, B, FLINT_BITS*k);
+   mpz_fdiv_q_2exp(*A1, A, FLINT_BITS*2*k);
+   
+   Z_divrem_jebelean(*Q1, *R1, *A1, *B1);
+   mpz_fdiv_r_2exp(*B0, B, FLINT_BITS*k);
+   mpz_fdiv_r_2exp(*A0, A, FLINT_BITS*2*k);
+   mpz_mul_2exp(*temp, *R1, FLINT_BITS*2*k);
+   mpz_add(*temp, *temp, *A0);
+   mpz_mul_2exp(*temp2, *Q1, FLINT_BITS*k);
+   mpz_mul(*temp2, *temp2, *B0);
+   mpz_sub(*temp, *temp, *temp2);
+   mpz_mul_2exp(*temp2, B, FLINT_BITS*k);
+   
+   while (mpz_cmp_ui(*temp, 0) < 0) 
+   {
+      mpz_sub_ui(*Q1, *Q1, 1);
+      mpz_add(*temp, *temp, *temp2);
+   }
+   mpz_fdiv_q_2exp(*temp2, *temp, FLINT_BITS*k); 
+   Z_divrem_jebelean(*Q0, *R0, *temp2, *B1);
+   
+   mpz_fdiv_r_2exp(*temp2, *temp, FLINT_BITS*k);
+   mpz_mul_2exp(R, *R0, FLINT_BITS*k);
+   mpz_add(R, R, *temp2);
+   mpz_submul(R, *Q0, *B0);
+   while (mpz_cmp_ui(R, 0) < 0) 
+   {
+      mpz_add(R, R, B);
+   }
+   
+   Z_release(); Z_release(); Z_release(); Z_release();
+   Z_release(); Z_release(); Z_release(); Z_release();
+   Z_release(); Z_release(); Z_release();
+}
+
+void Z_mulmod_jebelean(mpz_t res, mpz_t a, mpz_t b, mpz_t m)
+{
+   Z_t * temp = Z_alloc();
+   
+   mpz_mul(*temp, a, b);
+   Z_rem_jebelean(res, *temp, m);
+   
+   Z_release();
+}
+
+
+void Z_expmod_jebelean(mpz_t res, mpz_t a, mpz_t exp, mpz_t m)
+{
+   unsigned long n;
+   unsigned long bits = mpz_sizeinbase(exp, 2);
+   mpz_t aRED;
+   mpz_t powRED;
+   mpz_t temp;
+   int flag = 0;
+   
+   mpz_init(aRED);
+   mpz_init(powRED);
+   mpz_init(temp);
+   
+   mpz_set(powRED, a);
+#if DEBUG
+   gmp_printf("powRED = %Zd\n", powRED);
+#endif
+   
+   for (unsigned long i = 0; i < bits - 1; i++)
+   {
+      if (mpz_tstbit(exp, i))
+      {
+         if (flag) Z_mulmod_jebelean(res, res, powRED, m);
+         else 
+         {
+            mpz_set(res, powRED);
+            flag = 1;
+         }
+      }
+      Z_mulmod_jebelean(powRED, powRED, powRED, m);
+#if DEBUG
+      gmp_printf("powRED = %Zd\n", powRED);
+#endif
+   }
+   
+   if (flag) Z_mulmod_jebelean(res, res, powRED, m);
+   else mpz_set(res, powRED);
+   
+   mpz_clear(temp);
+   mpz_clear(powRED);
+   mpz_clear(aRED);
+}

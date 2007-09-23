@@ -324,6 +324,17 @@ static inline void fmpz_poly_fit_limbs(fmpz_poly_t poly, unsigned long limbs)
 
 void fmpz_poly_clear(fmpz_poly_t poly);
 
+// ------------------------------------------------------
+// String conversions and I/O
+
+int fmpz_poly_from_string(fmpz_poly_t poly, char* s);
+char* fmpz_poly_to_string(fmpz_poly_t poly);
+void fmpz_poly_print(fmpz_poly_t poly);
+void fmpz_poly_fprint(fmpz_poly_t poly, FILE* f);
+int fmpz_poly_read(fmpz_poly_t poly);
+int fmpz_poly_fread(fmpz_poly_t poly, FILE* f);
+
+
 long fmpz_poly_degree(fmpz_poly_t poly);
 
 unsigned long fmpz_poly_length(fmpz_poly_t poly);
@@ -492,17 +503,6 @@ void fmpz_poly_mul_trunc_left_n(fmpz_poly_t output, fmpz_poly_t input1,
 
 void fmpz_poly_div_naive(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B);
 
-// ------------------------------------------------------
-// String conversions and I/O
-
-int fmpz_poly_from_string(fmpz_poly_t poly, char* s);
-char* fmpz_poly_to_string(fmpz_poly_t poly);
-void fmpz_poly_print(fmpz_poly_t poly);
-void fmpz_poly_fprint(fmpz_poly_t poly, FILE* f);
-int fmpz_poly_read(fmpz_poly_t poly);
-int fmpz_poly_fread(fmpz_poly_t poly, FILE* f);
-
-
 void fmpz_poly_divrem_naive(fmpz_poly_t Q, fmpz_poly_t R, fmpz_poly_t A, fmpz_poly_t B);
 
 void fmpz_poly_div_karatsuba_recursive(fmpz_poly_t Q, fmpz_poly_t DQ, fmpz_poly_t A, fmpz_poly_t B);
@@ -510,6 +510,8 @@ void fmpz_poly_div_karatsuba_recursive(fmpz_poly_t Q, fmpz_poly_t DQ, fmpz_poly_
 void fmpz_poly_divrem_karatsuba(fmpz_poly_t Q, fmpz_poly_t R, fmpz_poly_t A, fmpz_poly_t B);
 
 void fmpz_poly_div_karatsuba(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B);
+
+void fmpz_poly_div_mulders(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B);
 
 void fmpz_poly_newton_invert_basecase(fmpz_poly_t Q_inv, fmpz_poly_t Q, unsigned long n);
 

@@ -819,4 +819,24 @@ static inline size_t Z_size(Z_t op)
    return mpz_size(op);
 }
 
-#endif // #ifndef FLINT_Z_H
+/*===================================================================================
+
+Montgomery routines
+
+====================================================================================*/
+
+unsigned long Z_mont_red(mpz_t res, mpz_t a, mpz_t m);
+
+void Z_mont_mul(mpz_t res, mpz_t a, mpz_t b, mpz_t m, mpz_t R, unsigned long n);
+
+void Z_expmod_mont(mpz_t res, mpz_t a, mpz_t exp, mpz_t m);
+
+void Z_divrem_jebelean(mpz_t Q, mpz_t R, mpz_t A, mpz_t B);
+
+void Z_rem_jebelean(mpz_t R, mpz_t A, mpz_t B);
+
+void Z_mulmod_jebelean(mpz_t res, mpz_t a, mpz_t b, mpz_t m);
+
+void Z_expmod_jebelean(mpz_t res, mpz_t a, mpz_t exp, mpz_t m);
+
+#endif

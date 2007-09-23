@@ -13,6 +13,62 @@ Copyright (C) 2007, William Hart and David Harvey
 #include "flint.h"
 #include "memory-manager.h"
 
+#define DEBUG 1 // Switches to debugging stack allocator
+
+#if DEBUG
+
+void * mempts[200000];
+unsigned long upto = 0;
+
+void * flint_stack_alloc(unsigned long length)
+{
+   if (upto == 200000) 
+   {
+      printf("Error: no free stack nodes in flint_stack_alloc\n");
+      abort();         
+   }
+   void * block = malloc(length*sizeof(unsigned long));
+   if (block == NULL)
+   {
+      printf("Error: unable to allocate memory in flint_stack_alloc\n");
+      abort();         
+   }
+   mempts[upto] = block;
+   upto++;
+   return block;
+}
+
+void * flint_stack_alloc_bytes(unsigned long bytes)
+{
+   if (upto == 200000) 
+   {
+      printf("Error: no free stack nodes in flint_stack_alloc_bytes\n");
+      abort();         
+   }
+   void * block = malloc(bytes);
+   if (block == NULL)
+   {
+      printf("Error: unable to allocate memory in flint_stack_alloc_bytes\n");
+      abort();         
+   }
+   mempts[upto] = block;
+   upto++;
+   return block;
+}
+
+void flint_stack_release()
+{
+   if (upto == 0) 
+   {
+      printf("Error: attempt to free unallocated block in flint_stack_release\n");
+      abort();         
+   }
+   upto--;
+   free(mempts[upto]);
+}
+
+#else
+
 /*
    Stack based memory manager to allocate an array of limbs of the given length. 
    It returns a (void*) which needs to be typecast to the required object, 
@@ -205,6 +261,8 @@ void flint_stack_release()
     rescount_mpn--;
 }
 
+#endif
+
 /*-----------------------------------------------------------------------------------------------*/
 
 #define FLINT_SMALL_BLOCK_SIZE 10000L
@@ -241,7 +299,7 @@ void * flint_stack_alloc_small(unsigned long length)
    block_ptr[length] = length;
    block_ptr += (length+1L); 
    block_left -= (length+1L);
-   return (void *) (block_ptr - (length + 1L));  
+   return (void *) (block_ptr - (length + 1L)); 
 }
 
 void flint_stack_release_small(void)
