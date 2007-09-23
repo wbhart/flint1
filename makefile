@@ -10,7 +10,7 @@ ifndef FLINT_TUNE
 endif
 
 ifndef FLINT_LINK_OPTIONS
-	FLINT_LINK_OPTIONS = 
+	FLINT_LINK_OPTIONS = -static
 endif
 
 ifndef FLINT_NTL_LIB_DIR 
@@ -42,9 +42,9 @@ endif
 
 qdexists := $(shell ls -d qd)
 ifeq ($(qdexists), qd)
-	LIBS = -L$(FLINT_GMP_LIB_DIR)  -L$(FLINT_NTL_LIB_DIR) -L$(FLINT_QD_LIB_DIR) $(FLINT_LINK_OPTIONS) -lgmp -lpthread -lm -lntl -lqd
+	LIBS = -L$(FLINT_GMP_LIB_DIR)  -L$(FLINT_NTL_LIB_DIR) -L$(FLINT_QD_LIB_DIR) $(FLINT_LINK_OPTIONS) -lgmp -lpthread -lm -lqd
 else
-	LIBS = -L$(FLINT_GMP_LIB_DIR)  -L$(FLINT_NTL_LIB_DIR) -L$(FLINT_QD_LIB_DIR) $(FLINT_LINK_OPTIONS) -lgmp -lpthread -lntl -lm
+	LIBS = -L$(FLINT_GMP_LIB_DIR)  -L$(FLINT_NTL_LIB_DIR) -L$(FLINT_QD_LIB_DIR) $(FLINT_LINK_OPTIONS) -lgmp -lpthread -lm
 endif
 
 INCS =  -I"/usr/include" -I$(FLINT_GMP_INCLUDE_DIR) -I$(FLINT_NTL_INCLUDE_DIR) -I$(FLINT_QD_INCLUDE_DIR) 
@@ -379,4 +379,6 @@ dd_vecmat3d: dd_vecmat3d-driver.c mat3d.o vec3d.o memory-manager2.o
 dd_x3y3z3k: dd_x3y3z3k.c mat3d.o vec3d.o memory-manager2.o 
 	$(CPP) -o dd_x3y3z3k $(CFLAGS) dd_x3y3z3k.c mat3d.o vec3d.o memory-manager2.o $(LIBS) 
 
+expmod: expmod.c Z.o
+	$(CC) $(CFLAGS) -o expmod expmod.c Z.o $(LIBS)
 
