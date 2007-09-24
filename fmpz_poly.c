@@ -3777,7 +3777,7 @@ void fmpz_poly_div_karatsuba_recursive(fmpz_poly_t Q, fmpz_poly_t BQ, fmpz_poly_
    */
    
    
-   _fmpz_poly_stack_init(dq1, d1q1->length + n2, B->limbs+q1->limbs+1);
+   _fmpz_poly_stack_init(dq1, FLINT_MAX(d1q1->length + n2, d2q1->length), B->limbs+q1->limbs+1);
    dq1->length = d1q1->length + n2;
    
    _fmpz_poly_zero_coeffs(dq1, n2);
@@ -4044,7 +4044,7 @@ void fmpz_poly_div_karatsuba_recursive_low(fmpz_poly_t Q, fmpz_poly_t BQ, fmpz_p
    */
    
    
-   _fmpz_poly_stack_init(dq1, d1q1->length + n2, B->limbs+q1->limbs+1);
+   _fmpz_poly_stack_init(dq1, FLINT_MAX(d1q1->length + n2, d2q1->length), B->limbs+q1->limbs+1);
    dq1->length = d1q1->length + n2;
    
    _fmpz_poly_zero_coeffs(dq1, n2);
@@ -4240,7 +4240,7 @@ void fmpz_poly_div_karatsuba(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B)
       */
       fmpz_poly_init(d1q1);
       fmpz_poly_init(q1);
-   
+      
       fmpz_poly_div_karatsuba_recursive_low(q1, d1q1, p1, d1); //******************************
       _fmpz_poly_stack_clear(p1);
    }
@@ -4268,7 +4268,7 @@ void fmpz_poly_div_karatsuba(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B)
    */
    
    
-   _fmpz_poly_stack_init(dq1, d1q1->length + n2, B->limbs+q1->limbs+1);
+   _fmpz_poly_stack_init(dq1, FLINT_MAX(d1q1->length + n2, d2q1->length), B->limbs+q1->limbs+1);
    dq1->length = d1q1->length + n2;
    
    _fmpz_poly_zero_coeffs(dq1, n2);
