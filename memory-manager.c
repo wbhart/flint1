@@ -17,6 +17,12 @@ Copyright (C) 2007, William Hart and David Harvey
 
 #if DEBUG
 
+/*-----------------------------------------------------------------------------------------------
+ 
+    Debug version of stack based memory managers
+    
+------------------------------------------------------------------------------------------------*/
+
 void * mempts[200000];
 unsigned long upto = 0;
 
@@ -65,6 +71,16 @@ void flint_stack_release()
    }
    upto--;
    free(mempts[upto]);
+}
+
+void * flint_stack_alloc_small(unsigned long length)
+{
+   return flint_stack_alloc(length);
+}
+
+void flint_stack_release_small(void)
+{
+   flint_stack_release();
 }
 
 #else
@@ -261,8 +277,6 @@ void flint_stack_release()
     rescount_mpn--;
 }
 
-#endif
-
 /*-----------------------------------------------------------------------------------------------*/
 
 #define FLINT_SMALL_BLOCK_SIZE 10000L
@@ -318,6 +332,8 @@ void flint_stack_release_small(void)
    block_left += (temp+1);
    block_ptr -= temp;
 }
+
+#endif
 
 /*-----------------------------------------------------------------------------------------------*/
 
