@@ -13,7 +13,7 @@ Copyright (C) 2007, William Hart and David Harvey
 #include "flint.h"
 #include "memory-manager.h"
 
-#define DEBUG 1 // Switches to debugging stack allocator
+#define DEBUG 0 // Switches to debugging stack allocator
 
 #if DEBUG
 
