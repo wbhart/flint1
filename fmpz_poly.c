@@ -3629,9 +3629,9 @@ void fmpz_poly_div_naive(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B)
             R_sub->limbs = R->limbs;
             _fmpz_poly_sub(R_sub, R_sub, qB);
             
-            if ((B->limbs == 3) && (B->length == 8)) printf("Here5 %ld, %ld\n", R_sub->length, R_sub->limbs);
+            //if ((B->limbs == 3) && (B->length == 8)) printf("Here5 %ld, %ld\n", R_sub->length, R_sub->limbs);
             fmpz_poly_clear(qB);
-            if ((B->limbs == 3) && (B->length == 8)) printf("Here6\n");  
+            //if ((B->limbs == 3) && (B->length == 8)) printf("Here6\n");  
          }
          coeff--;
       }
@@ -4669,7 +4669,6 @@ void fmpz_poly_div_mulders(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B)
    if ((B->length <= DIV_MULDERS_CROSSOVER) || (A->length > 2*B->length - 1))
    {
       fmpz_poly_div_naive(Q, A, B);
-      
       return;
    }
    
@@ -4703,7 +4702,7 @@ void fmpz_poly_div_mulders(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B)
    d2->coeffs = B->coeffs;
    g1->coeffs = B->coeffs + n1*(B->limbs+1);
    g2->coeffs = B->coeffs;
-   
+      
    if (A->length <= 2*n1+n2-1) 
    {
       temp->length = A->length - (n1+n2-1);
@@ -4717,7 +4716,7 @@ void fmpz_poly_div_mulders(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B)
       fmpz_poly_div_karatsuba_recursive_low(Q, d1q1, p1, d1); //******************************
       fmpz_poly_clear(d1q1);
       _fmpz_poly_stack_clear(p1);
-         
+      
       return;   
    } else
    {
@@ -4760,7 +4759,7 @@ void fmpz_poly_div_mulders(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B)
       dq1 is then of length n1+2*n2-1 but we have only the rightmost n1+n2-1 terms
    */
    
-   _fmpz_poly_stack_init(dq1, d1q1->length + n1, B->limbs+q1->limbs+1);
+   _fmpz_poly_stack_init(dq1, FLINT_MAX(d1q1->length + n1, d2q1->length), B->limbs+q1->limbs+1);
    dq1->length = d1q1->length + n1;
    
    _fmpz_poly_zero_coeffs(dq1, n1);

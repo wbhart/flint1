@@ -2759,7 +2759,7 @@ int test_fmpz_poly_div_mulders()
    mpz_poly_init(test_poly2); 
    mpz_poly_init(test_poly3); 
    
-   for (unsigned long count1 = 0; (count1 < 60000) && (result == 1) ; count1++)
+   for (unsigned long count1 = 0; (count1 < 600) && (result == 1) ; count1++)
    {
       bits = random_ulong(1000)+ 1;
       bits2 = random_ulong(1000)+ 1;
@@ -3172,7 +3172,7 @@ int test_fmpz_poly_power()
    fmpz_poly_init(test_mpn_poly2);
    fmpz_poly_init(test_mpn_poly3);
    
-   for (unsigned long count1 = 1; (count1 < 25) && (result == 1) ; count1++)
+   for (unsigned long count1 = 1; (count1 < 250) && (result == 1) ; count1++)
    {
       bits = random_ulong(100)+ 1;
       
@@ -3229,7 +3229,7 @@ int test_fmpz_poly_power()
 
 int test_fmpz_poly_power2()
 {
-    fmpz_poly_t poly, power, test;
+    fmpz_poly_t poly, power;
     fmpz_poly_init(power);
     fmpz_poly_init(poly);
     fmpz_poly_set_coeff_ui(poly, 0, 1);
@@ -3286,7 +3286,7 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_poly_newton_invert);
    RUN_TEST(fmpz_poly_div_series);
    RUN_TEST(fmpz_poly_div_newton);
-   RUN_TEST(fmpz_poly_power2);
+   RUN_TEST(fmpz_poly_power);
    RUN_TEST(fmpz_poly_scalar_mul);
    
    printf(all_success ? "\nAll tests passed\n" :
