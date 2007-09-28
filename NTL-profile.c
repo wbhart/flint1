@@ -531,7 +531,7 @@ void sample_NTL_poly_div2(unsigned long length, unsigned long bits,
     ZZ a;
     poly1.SetMaxLength(length);
     poly2.SetMaxLength(length);
-    poly3.SetMaxLength((length)+(length)-1);
+    poly3.SetMaxLength(2*length-1);
 
 
    
@@ -553,15 +553,15 @@ void sample_NTL_poly_div2(unsigned long length, unsigned long bits,
 		RandomBits(a,bits);
 		SetCoeff(poly1,j,a);
 		}
-		SetCoeff(poly1,length,1);
-	    for (unsigned long j = 0; j<(length)+(length)-1; j++)
+		SetCoeff(poly1,length-1,1);
+	    for (unsigned long j = 0; j<2*length-1; j++)
 		{
 		RandomBits(a,bits);
 		SetCoeff(poly3,j,a);
 		}
       }
        prof_start();
-       divide(poly2, poly3, poly1);
+       div(poly2, poly3, poly1);
        prof_stop();
    }
    
@@ -579,7 +579,7 @@ char* profDriverString_NTL_poly_div2(char* params)
  
 char* profDriverDefaultParams_NTL_poly_div2()
 {
-   return "12000000 1.77827941";
+   return "1100000 1.77827941";
 }
  
 void profDriver_NTL_poly_div2(char* params)
