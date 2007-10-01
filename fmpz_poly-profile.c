@@ -908,9 +908,9 @@ void sample_fmpz_poly_div_mulders(unsigned long length, unsigned long bits,
    mpz_poly_init(test_poly); 
    mpz_poly_init(test_poly2); 
    
-   if (count >= 1000) r_count = 100;
+   if (count >= 10000) r_count = 100;
    else if (count >= 100) r_count = 10;
-   else if (count >= 20) r_count = 5;
+   else if (count >= 20) r_count = 4;
    else if (count >= 8) r_count = 2;
    else r_count = 1;
    
@@ -936,14 +936,16 @@ void sample_fmpz_poly_div_mulders(unsigned long length, unsigned long bits,
          mpz_poly_to_fmpz_poly(test_mpn_poly2, test_poly2);
       }
           
-      fmpz_poly_init2(test_mpn_poly3, length+length2-1, test_mpn_poly->limbs+test_mpn_poly2->limbs+1);    
-      _fmpz_poly_mul(test_mpn_poly3, test_mpn_poly, test_mpn_poly2);
+      fmpz_poly_init(test_mpn_poly3);    
+      fmpz_poly_mul(test_mpn_poly3, test_mpn_poly, test_mpn_poly2);
       
       fmpz_poly_init(test_mpn_poly4);
       
       prof_start();
-      fmpz_poly_div_mulders(test_mpn_poly4, test_mpn_poly3, test_mpn_poly);
+      for (unsigned long i = 0; i < r_count; i++)
+         fmpz_poly_div_mulders(test_mpn_poly4, test_mpn_poly3, test_mpn_poly);
       prof_stop();
+      count1+=(r_count-1);
            
       fmpz_poly_clear(test_mpn_poly3);
       fmpz_poly_clear(test_mpn_poly4);

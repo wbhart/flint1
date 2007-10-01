@@ -373,6 +373,10 @@ mp_limb_t * fmpz_poly_get_coeff_ptr(fmpz_poly_t poly, unsigned long n)
 static inline
 unsigned long fmpz_poly_get_coeff_ui(fmpz_poly_t poly, unsigned long n)
 {
+   if (n >= poly->length)
+   {
+      return 0;
+   }
    if (poly->coeffs[n*(poly->limbs+1)] == 0) return 0;
    else return poly->coeffs[n*(poly->limbs+1)+1];
 }
@@ -380,6 +384,10 @@ unsigned long fmpz_poly_get_coeff_ui(fmpz_poly_t poly, unsigned long n)
 static inline
 long fmpz_poly_get_coeff_si(fmpz_poly_t poly, unsigned long n)
 {
+   if (n >= poly->length)
+   {
+      return 0;
+   }
    if (poly->coeffs[n*(poly->limbs+1)] == 0) return 0;
    if (poly->coeffs[n*(poly->limbs+1)] == 1L) 
                                  return poly->coeffs[n*(poly->limbs+1)+1];
@@ -534,6 +542,8 @@ void fmpz_poly_divrem(fmpz_poly_t Q, fmpz_poly_t R, fmpz_poly_t A, fmpz_poly_t B
 }
 
 void fmpz_poly_power(fmpz_poly_t output, fmpz_poly_t poly, unsigned long exp);
+
+void fmpz_poly_power_trunc_n(fmpz_poly_t output, fmpz_poly_t poly, unsigned long exp, unsigned long n);
 
 // *************** end of file
 #endif
