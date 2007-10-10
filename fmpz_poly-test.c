@@ -3172,7 +3172,7 @@ int test_fmpz_poly_power()
    fmpz_poly_init(test_mpn_poly2);
    fmpz_poly_init(test_mpn_poly3);
    
-   for (unsigned long count1 = 1; (count1 < 250) && (result == 1) ; count1++)
+   for (unsigned long count1 = 1; (count1 < 50) && (result == 1) ; count1++)
    {
       bits = random_ulong(100)+ 1;
       
@@ -3184,7 +3184,12 @@ int test_fmpz_poly_power()
 #if DEBUG
           printf("length = %ld, bits = %ld, exp = %ld\n", length, bits, exp);
 #endif
-          randpoly(test_poly, length, bits); 
+          do 
+          {
+            randpoly(test_poly, length, bits);
+            mpz_poly_normalise(test_poly); 
+          }
+          while (test_poly->length != length);
           
           fmpz_poly_realloc(test_mpn_poly, length);
           mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
@@ -3240,7 +3245,7 @@ int test_fmpz_poly_power_trunc_n()
    fmpz_poly_init(test_mpn_poly2);
    fmpz_poly_init(test_mpn_poly3);
    
-   for (unsigned long count1 = 1; (count1 < 250) && (result == 1) ; count1++)
+   for (unsigned long count1 = 1; (count1 < 50) && (result == 1) ; count1++)
    {
       bits = random_ulong(100)+ 1;
       
@@ -3272,12 +3277,13 @@ int test_fmpz_poly_power_trunc_n()
              _fmpz_poly_set(test_mpn_poly2, temp);
           }
           _fmpz_poly_truncate(test_mpn_poly2, n);
+          if (test_mpn_poly->length == 0) _fmpz_poly_zero(test_mpn_poly2);
           
           fmpz_poly_power_trunc_n(test_mpn_poly3, test_mpn_poly, exp, n);
           
           result = _fmpz_poly_equal(test_mpn_poly2, test_mpn_poly3);
                     
-#if DEBUG
+#if DEBUG2
           if (!result)
           {
              fmpz_poly_print(test_mpn_poly); printf("\n");
@@ -3302,9 +3308,9 @@ int test_fmpz_poly_power2()
     fmpz_poly_t poly, power;
     fmpz_poly_init(power);
     fmpz_poly_init(poly);
-    fmpz_poly_set_coeff_ui(poly, 0, 1);
-    fmpz_poly_set_coeff_ui(poly, 1, 1);
-    fmpz_poly_power(power, poly, (1UL<<13));
+    fmpz_poly_set_coeff_ui(poly, 0, 743);
+    fmpz_poly_set_coeff_ui(poly, 1, 423);
+    fmpz_poly_power(power, poly, 2000);//(1UL<<13));
 #if DEBUG
     fmpz_poly_print(power); printf("\n");
 #endif

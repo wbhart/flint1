@@ -7,6 +7,8 @@ Copyright (C) 2007, William Hart and David Harvey
 *****************************************************************************/
 
 #include <string.h>
+#include <math.h>
+
 #include "mpz_poly.h"
 #include "flint.h"
 #include "fmpz.h"
@@ -895,7 +897,39 @@ void __fmpz_poly_addmul_coeffs(mp_limb_t * res, mp_limb_t * a, mp_limb_t * b)
             flint_stack_release();
          }        
       }     
-}      
+} 
+
+/* 
+   Sets res to a / b
+   Assumes no overlap and that b is smaller than a
+*/
+
+void __fmpz_poly_div_coeffs(mp_limb_t * res, mp_limb_t * a, mp_limb_t * b) 
+{
+      NORM(a);
+      NORM(b);
+      long a0 = a[0];
+      long b0 = b[0];
+      
+      unsigned long sizea = ABS(a0);
+      unsigned long sizeb = ABS(b0);
+      mp_limb_t mslimb;
+      mp_limb_t * temp;
+      
+      if (sizeb == 0)
+      {
+      } else if (sizea < sizeb) // Todo: make this deal with sizea == sizeb but a < b
+      {
+         res[0] = 0;
+      } else 
+      {
+         temp = (mp_limb_t *) flint_stack_alloc(sizeb);
+         mpn_tdiv_qr(res+1, temp, 0, a+1, sizea, b+1, sizeb);
+         res[0] = sizea - sizeb + 1;
+         if ((long) (a0 ^ b0) < 0) res[0] = -res[0];
+         flint_stack_release();  
+      }
+}     
 
 void _fmpz_poly_scalar_mul_ui(fmpz_poly_t output, fmpz_poly_t poly, unsigned long x)
 {
@@ -2447,11 +2481,12 @@ void _fmpz_poly_mul_SS(fmpz_poly_t output, fmpz_poly_p input1, fmpz_poly_p input
    unsigned long sign = 0;
    
    ZmodF_poly_stack_init(poly1, log_length + 1, n, 1);
-   ZmodF_poly_stack_init(poly2, log_length + 1, n, 1);
+   if (poly1 != poly2) ZmodF_poly_stack_init(poly2, log_length + 1, n, 1);
    ZmodF_poly_stack_init(res, log_length + 1, n, 1);
    
    bits1 = ZmodF_poly_convert_in_mpn(poly1, input1, length1);
-   bits2 = ZmodF_poly_convert_in_mpn(poly2, input2, length2);
+   if (poly1 != poly2) bits2 = ZmodF_poly_convert_in_mpn(poly2, input2, length2);
+   else bits2 = bits1;
    
    if ((bits1 < 0) || (bits2 < 0)) 
    {
@@ -2472,10 +2507,11 @@ void _fmpz_poly_mul_SS(fmpz_poly_t output, fmpz_poly_p input1, fmpz_poly_p input
    n = (output_bits - 1) / FLINT_BITS + 1;
    
    ZmodF_poly_decrease_n(poly1, n);
-   ZmodF_poly_decrease_n(poly2, n);
+   if (poly1 != poly2) ZmodF_poly_decrease_n(poly2, n);
    ZmodF_poly_decrease_n(res, n);
                     
-   ZmodF_poly_convolution(res, poly1, poly2);
+   if (poly1 != poly2) ZmodF_poly_convolution(res, poly1, poly2);
+   else ZmodF_poly_convolution(res, poly1, poly1);
    ZmodF_poly_normalise(res);
           
    output->length = length1 + length2 - 1;
@@ -2483,7 +2519,7 @@ void _fmpz_poly_mul_SS(fmpz_poly_t output, fmpz_poly_p input1, fmpz_poly_p input
    ZmodF_poly_convert_out_mpn(output, res, sign);
    
    ZmodF_poly_stack_clear(res);
-   ZmodF_poly_stack_clear(poly2);
+   if (poly1 != poly2) ZmodF_poly_stack_clear(poly2);
    ZmodF_poly_stack_clear(poly1);
 }
 
@@ -4503,11 +4539,6 @@ void fmpz_poly_div_newton(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B)
 
 void fmpz_poly_power(fmpz_poly_t output, fmpz_poly_t poly, unsigned long exp)
 {
-   fmpz_poly_t power, temp;
-   
-   fmpz_poly_init(power);
-   fmpz_poly_init(temp);
-   
    if (exp == 0) 
    {
       fmpz_poly_fit_limbs(output, 1);
@@ -4531,6 +4562,8 @@ void fmpz_poly_power(fmpz_poly_t output, fmpz_poly_t poly, unsigned long exp)
       output->length = 0;
       return;      
    }
+   
+   //==================================================================================
    
    if (poly->length == 2) // Compute using binomial expansion
    {
@@ -4558,12 +4591,6 @@ void fmpz_poly_power(fmpz_poly_t output, fmpz_poly_t poly, unsigned long exp)
          return;   
       }
       
-      // Enough space for the binomial coefficient, the extra limb required
-      // by _fmpz_binomial_next and a limb for the sign/length
-      fmpz_t binomial = (fmpz_t) flint_stack_alloc((exp+FLINT_BITS-1)/FLINT_BITS + 2);
-      binomial[0] = 1;
-      binomial[1] = 1;
-      
       // A rough estimate of the max number of limbs needed for a coefficient 
       unsigned long bits1 = _fmpz_bits(coeff1);
       unsigned long bits = FLINT_MAX(bits1, bits2);
@@ -4571,9 +4598,6 @@ void fmpz_poly_power(fmpz_poly_t output, fmpz_poly_t poly, unsigned long exp)
       fmpz_t pow;
       if (!(_fmpz_is_one(coeff1) && _fmpz_is_one(coeff2)))
       {
-         pow = (fmpz_t) flint_stack_alloc((exp*bits - 1)/FLINT_BITS+2);
-         pow[0] = 1;
-         pow[1] = 1;
          bits = FLINT_MAX(exp + (bits1+bits2)*((exp+1)/2), exp*bits);
       } else
       {
@@ -4585,67 +4609,102 @@ void fmpz_poly_power(fmpz_poly_t output, fmpz_poly_t poly, unsigned long exp)
       long i;
       unsigned long cbits;
       fmpz_t coeff_out = output->coeffs;
+      fmpz_t last_coeff;
       
       if (_fmpz_is_one(coeff2))
       {
-         for (i = 0; i < exp; i++)
+         if (_fmpz_is_one(coeff1))
          {
-            fmpz_set(output->coeffs + i*(output->limbs+1), binomial); 
-            _fmpz_binomial_next(binomial, binomial, exp, i + 1);
+            coeff_out = output->coeffs;
+            coeff_out[0] = 1;
+            coeff_out[1] = 1;
+               
+            for (i = 1; i <= exp; i++)
+            {
+               last_coeff = coeff_out;
+               coeff_out += (output->limbs+1);
+               _fmpz_binomial_next(coeff_out, last_coeff, exp, i);
+            }
+         } else
+         {
+            fmpz_poly_set_coeff_ui(output, exp, 1);
+            coeff_out = output->coeffs + exp*(output->limbs+1);   
+            for (i = exp-1; i >= 0; i--)
+            {
+               fmpz_poly_fit_limbs(output, (bits1 + _fmpz_bits(coeff_out) - 1)/FLINT_BITS + 2);
+               coeff_out = output->coeffs + i*(output->limbs+1);   
+               last_coeff = coeff_out + output->limbs+1;
+               _fmpz_binomial_next(coeff_out, last_coeff, exp, exp - i);
+               __fmpz_poly_mul_coeffs(coeff_out, coeff_out, coeff1);
+            }
          }
-         fmpz_set(output->coeffs + i*(output->limbs+1), binomial); 
-         output->length = exp + 1;
       } else
       {
-         for (i = 0, cbits = 0; i < exp; i++, cbits += bits2)
+         if (_fmpz_is_one(coeff1))
          {
-            fmpz_poly_fit_limbs(output, (cbits+_fmpz_bits(binomial)-1)/FLINT_BITS+1);
-            __fmpz_poly_mul_coeffs(output->coeffs + i*(output->limbs+1), pow, binomial); 
-            __fmpz_poly_mul_coeffs(pow, pow, coeff2);
-            _fmpz_binomial_next(binomial, binomial, exp, i + 1);
-            output->length++;
+            coeff_out = output->coeffs;
+            coeff_out[0] = 1;
+            coeff_out[1] = 1;
+               
+            for (i = 1; i <= exp; i++)
+            {
+               output->length++;
+               fmpz_poly_fit_limbs(output, (bits2 + _fmpz_bits(coeff_out) - 1)/FLINT_BITS + 2);
+               coeff_out = output->coeffs + i*(output->limbs+1);   
+               last_coeff = coeff_out - output->limbs - 1;
+               _fmpz_binomial_next(coeff_out, last_coeff, exp, i);
+               __fmpz_poly_mul_coeffs(coeff_out, coeff_out, coeff2);
+            }
+         } else
+         {
+            fmpz_poly_fit_limbs(output, (bits1*exp - 1)/FLINT_BITS + 1);
+            coeff_out = output->coeffs;
+            _fmpz_pow_ui(coeff_out, coeff1, exp);
+               
+            for (i = 1; i <= exp; i++)
+            {
+               output->length++;
+               fmpz_poly_fit_limbs(output, (bits2 - bits1 + _fmpz_bits(coeff_out) - 1)/FLINT_BITS + 2);
+               coeff_out = output->coeffs + i*(output->limbs+1);   
+               last_coeff = coeff_out - output->limbs - 1;
+               __fmpz_poly_div_coeffs(coeff_out, last_coeff, coeff1);
+               _fmpz_binomial_next(coeff_out, coeff_out, exp, i);
+               __fmpz_poly_mul_coeffs(coeff_out, coeff_out, coeff2);
+            }
          }
-         fmpz_poly_fit_limbs(output, (cbits+_fmpz_bits(binomial)-1)/FLINT_BITS+1);
-         __fmpz_poly_mul_coeffs(output->coeffs + i*(output->limbs+1), pow, binomial); 
-         output->length++;
       }
       
-      if (!_fmpz_is_one(coeff1))
-      {
-         pow[0] = 1;
-         pow[1] = 1;
-      
-         coeff_out = output->coeffs + i*(output->limbs+1);
-         cbits = 0;
-      
-         for (cbits = 0; i > 0; i--, cbits += bits1)
-         {
-            fmpz_poly_fit_limbs(output, (cbits + _fmpz_bits(coeff_out) - 1)/FLINT_BITS + 1);
-            coeff_out = output->coeffs + i*(output->limbs+1);
-            __fmpz_poly_mul_coeffs(coeff_out, coeff_out, pow); 
-            __fmpz_poly_mul_coeffs(pow, pow, coeff1);       
-         }
-         
-         fmpz_poly_fit_limbs(output, (cbits + _fmpz_bits(coeff_out) - 1)/FLINT_BITS + 1);
-         coeff_out = output->coeffs;
-         __fmpz_poly_mul_coeffs(coeff_out, coeff_out, pow); 
-      } 
-         
       output->length = exp + 1;
-      
-      if (!(_fmpz_is_one(coeff1) && _fmpz_is_one(coeff2)))
-      {
-         flint_stack_release();
-      }
-      flint_stack_release();
       return;
    }
+   //===================================================================================
+   
+   fmpz_poly_t temp;
+   fmpz_poly_init(temp);
    
    fmpz_poly_fit_length(output, poly->length);
    fmpz_poly_fit_limbs(output, poly->limbs);
    _fmpz_poly_set(output, poly);
-    
-   while (!(exp & 1L))
+   
+   unsigned long bits = FLINT_BIT_COUNT(exp);
+   
+   while (bits > 1)
+   {
+      fmpz_poly_mul(temp, output, output);
+      fmpz_poly_fit_length(output, temp->length);
+      fmpz_poly_fit_limbs(output, temp->limbs);
+      _fmpz_poly_set(output, temp);
+      if ((1L<<(bits-2)) & exp)
+      {
+         fmpz_poly_mul(temp, output, poly);
+         fmpz_poly_fit_length(output, temp->length);
+         fmpz_poly_fit_limbs(output, temp->limbs);
+         _fmpz_poly_set(output, temp);
+      }
+      bits--;
+   } 
+   
+   /*while (!(exp & 1L))
    {
       fmpz_poly_mul(temp, output, output);
       fmpz_poly_fit_length(output, temp->length);
@@ -4676,7 +4735,7 @@ void fmpz_poly_power(fmpz_poly_t output, fmpz_poly_t poly, unsigned long exp)
          }
          exp >>= 1;
       }
-   }
+   }*/
 }
 
 void fmpz_poly_power_trunc_n(fmpz_poly_t output, fmpz_poly_t poly, unsigned long exp, unsigned long n)
@@ -4709,115 +4768,6 @@ void fmpz_poly_power_trunc_n(fmpz_poly_t output, fmpz_poly_t poly, unsigned long
       output->length = 1;
       return;
    } 
-   
-   /*if (poly->length == 2) // Compute using binomial expansion TODO: truncated version of this
-   {
-      fmpz_poly_fit_length(output, exp + 1);
-      
-      fmpz_t coeff1 = poly->coeffs;
-      fmpz_t coeff2 = poly->coeffs + poly->limbs + 1;
-      
-      unsigned long bits2 = _fmpz_bits(coeff2);
-      
-      if (coeff1[0] == 0)
-      {
-         fmpz_poly_fit_limbs(output, (bits2*exp-1)/FLINT_BITS + 1);
-         fmpz_t coeff_out = output->coeffs;
-         unsigned long size_out = output->limbs + 1;
-         for (unsigned long i = 0; i < exp; i++) 
-         {
-             coeff_out[0] = 0;
-             coeff_out += size_out;
-         }
-         _fmpz_pow_ui(coeff_out, coeff2, exp);
-         
-         output->length = exp + 1;
-         
-         return;   
-      }
-      
-      // Enough space for the binomial coefficient, the extra limb required
-      // by _fmpz_binomial_next and a limb for the sign/length
-      fmpz_t binomial = (fmpz_t) flint_stack_alloc((exp+FLINT_BITS-1)/FLINT_BITS + 2);
-      binomial[0] = 1;
-      binomial[1] = 1;
-      
-      // A rough estimate of the max number of limbs needed for a coefficient 
-      unsigned long bits1 = _fmpz_bits(coeff1);
-      unsigned long bits = FLINT_MAX(bits1, bits2);
-      
-      fmpz_t pow;
-      if (!(_fmpz_is_one(coeff1) && _fmpz_is_one(coeff2)))
-      {
-         pow = (fmpz_t) flint_stack_alloc((exp*bits - 1)/FLINT_BITS+2);
-         pow[0] = 1;
-         pow[1] = 1;
-         bits = FLINT_MAX(exp + (bits1+bits2)*((exp+1)/2), exp*bits);
-      } else
-      {
-         bits = exp;
-      }
-      
-      fmpz_poly_fit_limbs(output, (bits-1)/FLINT_BITS+1);
-      
-      long i;
-      unsigned long cbits;
-      fmpz_t coeff_out = output->coeffs;
-      
-      if (_fmpz_is_one(coeff2))
-      {
-         for (i = 0; i < exp; i++)
-         {
-            fmpz_set(output->coeffs + i*(output->limbs+1), binomial); 
-            _fmpz_binomial_next(binomial, binomial, exp, i + 1);
-         }
-         fmpz_set(output->coeffs + i*(output->limbs+1), binomial); 
-         output->length = exp + 1;
-      } else
-      {
-         for (i = 0, cbits = 0; i < exp; i++, cbits += bits2)
-         {
-            fmpz_poly_fit_limbs(output, (cbits+_fmpz_bits(binomial)-1)/FLINT_BITS+1);
-            __fmpz_poly_mul_coeffs(output->coeffs + i*(output->limbs+1), pow, binomial); 
-            __fmpz_poly_mul_coeffs(pow, pow, coeff2);
-            _fmpz_binomial_next(binomial, binomial, exp, i + 1);
-            output->length++;
-         }
-         fmpz_poly_fit_limbs(output, (cbits+_fmpz_bits(binomial)-1)/FLINT_BITS+1);
-         __fmpz_poly_mul_coeffs(output->coeffs + i*(output->limbs+1), pow, binomial); 
-         output->length++;
-      }
-      
-      if (!_fmpz_is_one(coeff1))
-      {
-         pow[0] = 1;
-         pow[1] = 1;
-      
-         coeff_out = output->coeffs + i*(output->limbs+1);
-         cbits = 0;
-      
-         for (cbits = 0; i > 0; i--, cbits += bits1)
-         {
-            fmpz_poly_fit_limbs(output, (cbits + _fmpz_bits(coeff_out) - 1)/FLINT_BITS + 1);
-            coeff_out = output->coeffs + i*(output->limbs+1);
-            __fmpz_poly_mul_coeffs(coeff_out, coeff_out, pow); 
-            __fmpz_poly_mul_coeffs(pow, pow, coeff1);       
-         }
-         
-         fmpz_poly_fit_limbs(output, (cbits + _fmpz_bits(coeff_out) - 1)/FLINT_BITS + 1);
-         coeff_out = output->coeffs;
-         __fmpz_poly_mul_coeffs(coeff_out, coeff_out, pow); 
-      } 
-         
-      output->length = exp + 1;
-      
-      if (!(_fmpz_is_one(coeff1) && _fmpz_is_one(coeff2)))
-      {
-         flint_stack_release();
-      }
-      flint_stack_release();
-      return;
-   }*/
    
    fmpz_poly_fit_length(output, n);  // Set output to poly
    fmpz_poly_fit_limbs(output, poly->limbs);
