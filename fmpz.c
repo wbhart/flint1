@@ -7,6 +7,7 @@
 *****************************************************************************/
 
 #include <gmp.h>
+#include <stdio.h>
 
 #include "fmpz.h"
 #include "flint.h"
@@ -96,14 +97,14 @@ void _fmpz_div_ui(fmpz_t output, fmpz_t input, unsigned long x)
    This function allocates space for output
 */
 
-void fmpz_pow_ui(fmpz_t output, fmpz_t input, unsigned long exp)
+void fmpz_pow_ui(fmpz_t * output, fmpz_t input, unsigned long exp)
 {
    mpz_t power;
    mpz_init(power);
    fmpz_to_mpz(power, input);
    mpz_pow_ui(power, power, exp);
-   output = (fmpz_t) flint_heap_alloc(mpz_size(power) + 1);
-   mpz_to_fmpz(output, power);
+   *output = (fmpz_t) flint_heap_alloc(mpz_size(power) + 1);
+   mpz_to_fmpz(*output, power);
    mpz_clear(power);
 }
 

@@ -141,7 +141,7 @@ void _fmpz_mul_ui(fmpz_t output, fmpz_t input, unsigned long x);
 
 void _fmpz_div_ui(fmpz_t output, fmpz_t input, unsigned long x);
 
-void fmpz_pow_ui(fmpz_t output, fmpz_t input, unsigned long exp);
+void fmpz_pow_ui(fmpz_t * output, fmpz_t input, unsigned long exp);
 
 void _fmpz_pow_ui(fmpz_t output, fmpz_t input, unsigned long exp);
 
