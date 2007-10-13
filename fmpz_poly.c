@@ -5463,3 +5463,167 @@ void fmpz_poly_pseudo_divrem(fmpz_poly_t Q, fmpz_poly_t R, fmpz_poly_t A, fmpz_p
 }
 
 #endif
+
+/*
+   Pseudo division of A by B. Returns Q, R and d such that l^d A = QB + R where l 
+   is the leading coefficient of B. This is faster than the pseudo divisions above
+   when there is no coefficient explosion, but is slower otherwise. It is usually
+   desirable to use this version unless you know specifically that coefficient
+   explosion will occur.
+*/
+
+void fmpz_poly_pseudo_divrem_d(fmpz_poly_t Q, fmpz_poly_t R, 
+                               unsigned long * d, fmpz_poly_t A, fmpz_poly_t B)
+{
+   fmpz_poly_t qB;
+   
+   _fmpz_poly_normalise(A);
+   _fmpz_poly_normalise(B);
+   
+   if (B->length == 0)
+   {
+      printf("Error: Divide by zero\n");
+      abort();
+   }
+   
+   unsigned long size_A = A->limbs + 1;
+   unsigned long size_B = B->limbs + 1;
+   unsigned long size_R;
+   unsigned long limbs_R;
+   unsigned long size_Q;
+   unsigned long limbs_Q;
+   mp_limb_t * coeffs_A = A->coeffs;
+   mp_limb_t * coeffs_B = B->coeffs;
+   mp_limb_t * B_lead = coeffs_B + (B->length-1)*size_B; 
+   mp_limb_t * coeff_Q;
+   mp_limb_t * coeff_R;
+   mp_limb_t * coeffs_R;
+   int scale;
+   
+   long m = A->length;
+   long n = B->length;
+   
+   NORM(B_lead);
+   
+   unsigned long size_B_lead = ABS(B_lead[0]);
+   mp_limb_t sign_B_lead = B_lead[0];
+   mp_limb_t sign_quot;
+      
+   fmpz_poly_fit_length(R, A->length);
+   fmpz_poly_fit_limbs(R, A->limbs);  
+   R->length = A->length;
+   _fmpz_poly_set(R, A);
+   coeffs_R = R->coeffs;
+   size_R = R->limbs+1;
+   
+   *d = 0;
+   
+   if ((long) R->length >= (long) B->length)
+   {
+      fmpz_poly_fit_length(Q, R->length-B->length+1);
+      fmpz_poly_fit_limbs(Q, ABS(A->coeffs[(A->length-1)*(A->limbs+1)]));
+      for (unsigned long i = 0; i < R->length-B->length+1; i++) Q->coeffs[i*(Q->limbs+1)] = 0;
+      Q->length = R->length-B->length+1;
+      size_Q = Q->limbs+1;
+   } else 
+   {
+      _fmpz_poly_zero(Q);
+      return;
+   }
+   
+   fmpz_poly_t Bm1;
+   Bm1->length = B->length - 1;
+   Bm1->limbs = B->limbs;
+   Bm1->coeffs = B->coeffs;
+   
+   coeff_R = coeffs_R + (R->length-1)*size_R;
+   
+   mp_limb_t * rem = (mp_limb_t *) flint_heap_alloc(size_B_lead+1);
+      
+   while ((long) R->length >= (long) B->length)
+   {
+      coeff_Q = Q->coeffs+(R->length - B->length)*size_Q;
+          
+      fmpz_normalise(coeff_R);
+      sign_quot = ABS(coeff_R[0]) - size_B_lead + 1;
+         
+      if (((long) sign_quot > 1) || ((sign_quot == 1) && (mpn_cmp(coeff_R+1, B_lead+1, size_B_lead) >= 0)))
+      {
+         mpn_tdiv_qr(coeff_Q+1, rem+1, 0, coeff_R+1, ABS(coeff_R[0]), B_lead+1, size_B_lead);
+      
+         rem[0] = size_B_lead;
+         
+         fmpz_normalise(rem);
+      } else
+      {
+         coeff_Q[0] = 0;
+         if (coeff_R[0] == 0) rem[0] = 0;
+         else 
+         {
+            rem[0] = 1;
+            rem[1] = 1;
+         }
+      }
+      if (fmpz_is_zero(rem))
+      {
+         if (((long) (sign_B_lead ^ coeff_R[0])) < 0) 
+         {
+            coeff_Q[0] = -sign_quot;
+            for (unsigned long i = 0; i < size_B_lead; i++)
+            {
+               if (rem[i])
+               {
+                  __fmpz_poly_sub_coeff_ui(coeff_Q,1);
+                  break;
+               }
+            }
+         }
+         else 
+         {
+            coeff_Q[0] = sign_quot;
+         }
+         NORM(coeff_Q);  
+         scale = 0; 
+      } else 
+      {   
+         _fmpz_poly_scalar_mul(Q, Q, B_lead);
+         fmpz_set(coeff_Q, coeff_R);
+         scale = 1;
+         *d++;
+      }
+               
+      if (B->length > 1)
+      {
+         fmpz_poly_init2(qB, B->length-1, B->limbs+ABS(coeff_Q[0]));
+         _fmpz_poly_scalar_mul(qB, Bm1, coeff_Q); 
+      }   
+      
+      if (scale)
+      {
+         fmpz_poly_fit_limbs(R, FLINT_MAX(R->limbs + size_B_lead, qB->limbs) + 1);
+         coeffs_R = R->coeffs;
+         size_R = R->limbs+1;
+         _fmpz_poly_scalar_mul(R, R, B_lead);
+      }
+      
+      fmpz_poly_t R_sub;
+      R_sub->coeffs = coeffs_R+(R->length-B->length)*size_R;
+      R_sub->limbs = R->limbs;
+      R_sub->length = B->length-1;
+      if (B->length > 1)
+      {
+         _fmpz_poly_sub(R_sub, R_sub, qB);
+         
+         fmpz_poly_clear(qB);
+      }
+      R_sub->coeffs[(B->length-1)*(R_sub->limbs+1)] = 0;
+      
+      _fmpz_poly_normalise(R);
+      coeff_R = coeffs_R + (R->length-1)*size_R;
+      
+      if (R->length) fmpz_poly_fit_limbs(Q, R->limbs);
+      size_Q = Q->limbs+1;
+   }
+   
+   flint_heap_free(rem);
+}

@@ -553,5 +553,8 @@ void fmpz_poly_power_trunc_n(fmpz_poly_t output, fmpz_poly_t poly, unsigned long
 
 void fmpz_poly_pseudo_divrem(fmpz_poly_t Q, fmpz_poly_t R, fmpz_poly_t A, fmpz_poly_t B);
 
+void fmpz_poly_pseudo_divrem_d(fmpz_poly_t Q, fmpz_poly_t R, 
+                               unsigned long * d, fmpz_poly_t A, fmpz_poly_t B);
+
 // *************** end of file
 #endif

@@ -168,6 +168,17 @@ int _fmpz_is_one(fmpz_t f)
    else return 0;
 }
 
+static inline
+int fmpz_is_zero(fmpz_t f)
+{
+   return (f[0] == 0L);
+}
+
+static inline
+void fmpz_normalise(fmpz_t f)
+{
+   NORM(f);
+}
 #endif
 
 // *************** end of file
