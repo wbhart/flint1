@@ -16,7 +16,7 @@ Copyright (C) 2007, William Hart and David Harvey
 #include "ZmodF_poly.h"
 #include "test-support.h"
 
-#define VARY_BITS 0
+#define VARY_BITS 1
 #define SIGNS 1
 
 #define DEBUG 0 // prints debug information
@@ -3477,7 +3477,7 @@ int test_fmpz_poly_pseudo_divrem_d()
       
       fmpz_poly_to_mpz_poly(test_poly4, test_mpn_poly4);
            
-      result = (test_mpn_poly5->length == 0);//mpz_poly_equal(test_poly4, test_poly2);
+      result = mpz_poly_equal(test_poly4, test_poly2);
 #if DEBUG
       mpz_poly_print(test_poly4);printf("\n\n");
 #endif               
@@ -3520,7 +3520,7 @@ int test_fmpz_poly_pseudo_divrem_recursive()
       //length = 100;
       //length2 = 199;
        
-#if DEBUG2
+#if DEBUG
       printf("length = %ld, length2 = %ld, bits = %ld, bits2 = %ld\n", length, length2, bits, bits2);
 #endif
 
@@ -3564,10 +3564,9 @@ int test_fmpz_poly_pseudo_divrem_recursive()
       }
       fmpz_poly_pseudo_divrem_recursive(test_mpn_poly4, test_mpn_poly5, &d, test_mpn_poly3, test_mpn_poly);
       
-      printf("%ld\n", d);
-      //fmpz_poly_to_mpz_poly(test_poly4, test_mpn_poly4);
+      fmpz_poly_to_mpz_poly(test_poly4, test_mpn_poly4);
            
-      result = 1;//(test_mpn_poly5->length == 0);//mpz_poly_equal(test_poly4, test_poly2);
+      result = mpz_poly_equal(test_poly4, test_poly2);
 #if DEBUG
       mpz_poly_print(test_poly4);printf("\n\n");
 #endif               
