@@ -555,6 +555,9 @@ void fmpz_poly_pseudo_divrem(fmpz_poly_t Q, fmpz_poly_t R, fmpz_poly_t A, fmpz_p
 
 void fmpz_poly_pseudo_divrem_d(fmpz_poly_t Q, fmpz_poly_t R, 
                                unsigned long * d, fmpz_poly_t A, fmpz_poly_t B);
+                               
+void fmpz_poly_pseudo_divrem_recursive(fmpz_poly_t Q, fmpz_poly_t R, 
+                               unsigned long * d, fmpz_poly_t A, fmpz_poly_t B);
 
 // *************** end of file
 #endif
