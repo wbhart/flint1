@@ -96,8 +96,8 @@ int main()
        }
    }*/
     
-   unsigned long T = long_nextprime(START);
-   unsigned long Tinv_hi, Tinv_lo;
+   unsigned long T = z_nextprime(START);
+   double Tinv;
    unsigned long cuberoot1;
    unsigned long root1, root2, root3;
    unsigned long s = 0, t, p;
@@ -112,7 +112,7 @@ int main()
    for (unsigned long i = 0; i < NUMPRIMES; i++)
    {
       prime[i] = s;
-      s = long_nextprime(s);
+      s = z_nextprime(s);
    }
    for (unsigned long i = 0; i < NUMPRIMES; i++)
    {
@@ -159,7 +159,7 @@ int main()
          }  
          mpz_set_ui(temp, T);
       } 
-      long_precompute_inverse2(&Tinv_hi, &Tinv_lo, T);
+      Tinv = z_precompute_inverse(T);
       
       //Tmod72 += (T-oldT);
       //while (Tmod72 >= 72) Tmod72-=72;
@@ -169,13 +169,13 @@ int main()
             
       //if (OK[Tmod72])
       //{
-         root1 = long_cuberootmod(&cuberoot1, k1, T);
+         root1 = z_cuberootmod(&cuberoot1, k1, T);
          if (root1)
          {
             if (cuberoot1 != 1)
             {
-               root2 = long_mulmod_precomp2(root1, cuberoot1, Tinv_hi, Tinv_lo, T);
-               root3 = long_mulmod_precomp2(root2, cuberoot1, Tinv_hi, Tinv_lo, T);
+               root2 = z_mulmod_precomp(root1, cuberoot1, Tinv, T);
+               root3 = z_mulmod_precomp(root2, cuberoot1, Tinv, T);
             }
             if (test_root(root1, T, k1)) 
             {
@@ -200,13 +200,13 @@ int main()
                }
             }
          } 
-         root1 = long_cuberootmod(&cuberoot1, k2, T);
+         root1 = z_cuberootmod(&cuberoot1, k2, T);
          if (root1)
          {
             if (cuberoot1 != 1)
             {
-               root2 = long_mulmod_precomp2(root1, cuberoot1, Tinv_hi, Tinv_lo, T);
-               root3 = long_mulmod_precomp2(root2, cuberoot1, Tinv_hi, Tinv_lo, T);
+               root2 = z_mulmod_precomp(root1, cuberoot1, Tinv, T);
+               root3 = z_mulmod_precomp(root2, cuberoot1, Tinv, T);
             }
             if (test_root(root1, T, k2)) 
             {
@@ -231,13 +231,13 @@ int main()
                }
             }
          } 
-         root1 = long_cuberootmod(&cuberoot1, k3, T);
+         root1 = z_cuberootmod(&cuberoot1, k3, T);
          if (root1)
          {
             if (cuberoot1 != 1)
             {
-               root2 = long_mulmod_precomp2(root1, cuberoot1, Tinv_hi, Tinv_lo, T);
-               root3 = long_mulmod_precomp2(root2, cuberoot1, Tinv_hi, Tinv_lo, T);
+               root2 = z_mulmod_precomp(root1, cuberoot1, Tinv, T);
+               root3 = z_mulmod_precomp(root2, cuberoot1, Tinv, T);
             }
             if (test_root(root1, T, k3)) 
             {
@@ -272,8 +272,8 @@ int main()
             T += 2;
             Ttab += 2;
          } while (table[Ttab] && (Ttab < TABLESIZE));
-         long_precompute_inverse2(&Tinv_hi, &Tinv_lo, T);
-      } while (!long_isprime_precomp2(T, Tinv_hi, Tinv_lo) && (Ttab < TABLESIZE));
+         Tinv = z_precompute_inverse(T);
+      } while (!z_isprime_precomp(T, Tinv) && (Ttab < TABLESIZE));
       
       //Tmod72 += (T-oldT);
       //while (Tmod72 >= 72) Tmod72-=72;

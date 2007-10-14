@@ -96,7 +96,7 @@ int main()
                  // gcd(x, y) = a*x + b*y
                  if ((w & 1 == 1) || (n & 1 == 1))
                  {
-                    gcd = long_gcd_invert(&winv, w, n);
+                    gcd = z_gcd_invert(&winv, w, n);
                     if ((gcd == 1) || (gcd == -1)) 
                     {
                        z = ((winv*v)%n);

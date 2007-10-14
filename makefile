@@ -291,8 +291,8 @@ delta_qexp.o: delta_qexp.c $(HEADERS)
 delta_qexp: delta_qexp.o $(FLINTOBJ)
 	$(CC) $(CFLAGS) -o delta_qexp delta_qexp.o $(FLINTOBJ) $(LIBS)
 
-BLTcubes: long_extras.o BLTcubes.c
-	$(CC) $(CFLAGS) -o BLTcubes BLTcubes.c long_extras.o $(LIBS)
+BLTcubes: long_extras.o BLTcubes.c memory-manager.o 
+	$(CC) $(CFLAGS) -o BLTcubes BLTcubes.c long_extras.o memory-manager.o $(LIBS)
 
 BPTJCubes: long_extras.o memory-manager.o
 	$(CC) $(CFLAGS) -o BPTJCubes BPTJCubes.c memory-manager.o long_extras.o $(LIBS)

@@ -71,6 +71,8 @@ int z_jacobi_precomp(unsigned long a, unsigned long p, double pinv);
 
 int z_isprime(unsigned long n);
 
+int z_isprime_precomp(unsigned long n, double ninv);
+
 unsigned long z_nextprime(unsigned long n);
 
 unsigned long z_pow(unsigned long a, unsigned long exp);
