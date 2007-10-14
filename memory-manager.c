@@ -13,8 +13,9 @@ Copyright (C) 2007, William Hart and David Harvey
 #include "flint.h"
 #include "memory-manager.h"
 
-#define DEBUG 0 // Switches to debugging stack allocator
+#define DEBUG 0 // Switches to debugging memory allocators
 #define DEBUG_PRINT 0 // Prints info about all allocations and releases
+
 #if DEBUG
 
 /*-----------------------------------------------------------------------------------------------
@@ -363,9 +364,91 @@ void flint_stack_release_small(void)
 
 void flint_memory_failure(void)
 {
+   printf("Error: unable to alloc/realloc memory\n");
    abort();
 }
   
+#if DEBUG
+
+void* flint_heap_alloc(unsigned long limbs)
+{
+#if DEBUG_PRINT
+   printf("Allocating %ld limbs on heap\n", limbs);
+#endif
+   unsigned long * buf = malloc((101+limbs) * sizeof(mp_limb_t));
+   if (!buf)
+      flint_memory_failure();
+   buf[0] = limbs;
+   for (unsigned long i = 0; i < 100; i++)
+      buf[limbs+i+1] = 0;
+   return (void*) (buf+1);
+}
+
+void* flint_heap_alloc_bytes(unsigned long bytes)
+{
+   unsigned long limbs = ((bytes-1)>>FLINT_LG_BYTES_PER_LIMB)+1;
+#if DEBUG_PRINT
+   printf("Allocating %ld limbs on heap\n", limbs);
+#endif
+   unsigned long * buf = malloc((101+limbs) * sizeof(mp_limb_t));
+   if (!buf)
+      flint_memory_failure();
+   buf[0] = limbs;
+   for (unsigned long i = 0; i < 100; i++)
+      buf[limbs+i+1] = 0;
+   return (void*) (buf+1);
+}
+
+void* flint_heap_realloc(void * block_void, unsigned long limbs)
+{
+   unsigned long * block = (unsigned long *) block_void;
+#if DEBUG_PRINT
+   printf("Reallocing to %ld limbs on heap\n", limbs);
+#endif
+   unsigned long* buf = realloc(block-1, (limbs+101) * sizeof(mp_limb_t));
+   if (!buf)
+      flint_memory_failure();
+   buf[0] = limbs;
+   for (unsigned long i = 0; i < 100; i++)
+      buf[limbs+i+1] = 0;
+   return (void*) (buf+1);
+}
+
+void* flint_heap_realloc_bytes(void * block_void, unsigned long bytes)
+{
+   unsigned long * block = (unsigned long *) block_void;
+   unsigned long limbs = ((bytes-1)>>FLINT_LG_BYTES_PER_LIMB)+1;
+#if DEBUG_PRINT
+   printf("Reallocing to %ld limbs on heap\n", limbs);
+#endif
+   unsigned long* buf = realloc(block-1, (limbs+101) * sizeof(mp_limb_t));
+   if (!buf)
+      flint_memory_failure();
+   buf[0] = limbs;
+   for (unsigned long i = 0; i < 100; i++)
+      buf[limbs+i+1] = 0;
+   return (void*) (buf+1);
+}
+
+void flint_heap_free(void * block_void)
+{
+   unsigned long * block = (unsigned long *) block_void;
+   block--;
+   unsigned long length = block[0];
+#if DEBUG_PRINT
+   printf("Releasing %ld limbs from heap\n", length);
+#endif
+   for (unsigned long i = 0; i < 100; i++)
+      if (block[length+i+1] != 0L) 
+      {
+         printf("Error: Block overrun detected by heap memory allocator!!\n");
+         abort();
+      }
+   free(block);
+}
+
+#else
+
 void* flint_heap_alloc(unsigned long limbs)
 {
    void* buf = malloc(limbs * sizeof(mp_limb_t));
@@ -402,3 +485,5 @@ void flint_heap_free(void* block)
 {
    free(block);
 }
+
+#endif
