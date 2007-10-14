@@ -14,9 +14,7 @@ ifndef NO_NTL
 endif
 
 ifndef FLINT_LINK_OPTIONS
-ifdef NO_NTL
-	FLINT_LINK_OPTIONS = -static
-endif
+	FLINT_LINK_OPTIONS = 
 endif
 
 ifndef FLINT_NTL_LIB_DIR 
@@ -39,7 +37,7 @@ endif
 # qd include and library directories
 
 ifndef FLINT_QD_INCLUDE_DIR
-	FLINT_QD_INCLUDE_DIR = "/home/dmharvey/gmp/install/include"
+	FLINT_QD_INCLUDE_DIR = "/home/wbhart/flint/trunk/qd"
 endif
 
 ifndef FLINT_QD_LIB_DIR
@@ -354,22 +352,22 @@ Z_mul_timing: $(ZMULOBJ)
 ####### Linear Algebra
 
 vec3d.o: vec3d.c vec3d.h
-	$(CPP) $(CFLAGS) -c vec3d.c -o vec3d.o
+	$(CC) $(CFLAGS) -c vec3d.c -o vec3d.o
 
 mat3d.o: mat3d.c mat3d.h
-	$(CPP) $(CFLAGS) -c mat3d.c -o mat3d.o
+	$(CC) $(CFLAGS) -c mat3d.c -o mat3d.o
 
 vecmat3d: vecmat3d-driver.c mat3d.o vec3d.o memory-manager.o
-	$(CPP) $(CFLAGS) -o vecmat3d vecmat3d-driver.c mat3d.o vec3d.o memory-manager.o $(LIBS)
+	$(CC) $(CFLAGS) -o vecmat3d vecmat3d-driver.c mat3d.o vec3d.o memory-manager.o $(LIBS)
 
 x3y3z3k: x3y3z3k.c mat3d.o vec3d.o memory-manager.o 
-	$(CPP) -o x3y3z3k $(CFLAGS) x3y3z3k.c mat3d.o vec3d.o memory-manager.o $(LIBS) 
+	$(CC) -o x3y3z3k $(CFLAGS) x3y3z3k.c mat3d.o vec3d.o memory-manager.o $(LIBS) 
 
 dd_vecmat3d: dd_vecmat3d-driver.c mat3d.o vec3d.o memory-manager.o
-	$(CPP) $(CFLAGS) -o dd_vecmat3d dd_vecmat3d-driver.c mat3d.o vec3d.o memory-manager.o $(LIBS)
+	$(CC) $(CFLAGS) -o dd_vecmat3d dd_vecmat3d-driver.c mat3d.o vec3d.o memory-manager.o $(LIBS)
 
 dd_x3y3z3k: dd_x3y3z3k.c mat3d.o vec3d.o memory-manager.o 
-	$(CPP) -o dd_x3y3z3k $(CFLAGS) dd_x3y3z3k.c mat3d.o vec3d.o memory-manager.o $(LIBS) 
+	$(CC) -o dd_x3y3z3k $(CFLAGS) dd_x3y3z3k.c mat3d.o vec3d.o memory-manager.o $(LIBS) 
 
 expmod: expmod.c Z.o
 	$(CC) $(CFLAGS) -o expmod expmod.c Z.o $(LIBS)

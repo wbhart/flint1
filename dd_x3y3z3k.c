@@ -45,6 +45,7 @@ void elkies(double * a, long N, double * eps)
    static long told;
    int test;
    long t1, t2, t3, k, l1, l2, l3;
+   static unsigned long iter = 0;
    
    double b[2];
    double c[2];
@@ -104,12 +105,14 @@ void elkies(double * a, long N, double * eps)
    c_dd_mul(Ne, eps, Ne2);
    
    dd_vec3d v;
-   dd_mat3dc_t L, M, R;
-   z_mat3dc_t Z;
+   dd_mat3dc_t L, L2, M, R;
+   z_mat3dc_t Z, Z2;
    dd_mat3dc_stack_init(&M);
    dd_mat3dc_stack_init(&L);
+   dd_mat3dc_stack_init(&L2);
    dd_mat3dc_stack_init(&R);
    z_mat3dc_stack_init(&Z);
+   z_mat3dc_stack_init(&Z2);
    dd_vec3d_stack_init(&v);
    
    c_dd_mul_dd_d(a, N, D_MAT_C(M, 1, 1));
@@ -129,7 +132,15 @@ void elkies(double * a, long N, double * eps)
 #if DEBUG
    printf("M^(-1) = "); dd_mat3dc_printf(L);printf("\n");
 #endif
-   if (dd_mat3dc_LLL(Z, R, L, 0.9999))
+   if (iter % 10 == 0)
+   {
+      dd_mat3dc_LLL(Z2, L2, L, 0.9999);
+   } else
+   {
+      dd_mat3dc_mul_z_mat3dc(L2, L, Z2);
+   }
+   iter++;
+   if (dd_mat3dc_LLL(Z, R, L2, 0.9999))
    {
 #if DEBUG
    printf("Z = "); z_mat3dc_printf(Z);printf("\n\n");
@@ -138,20 +149,20 @@ void elkies(double * a, long N, double * eps)
    printf("R = "); dd_mat3dc_printf(R);printf("\n\n");
 #endif
    dd_vec3d_norm(temp, D_COL(R, 1));
-   c_dd_div_d_dd(3.0, temp, temp);
+   c_dd_div_d_dd(1.0, temp, temp);
    c_dd_ceil(temp, temp);
    l1 = (long) temp[0];
    dd_vec3d_norm(temp, D_COL(R, 2));
-   c_dd_div_d_dd(3.0, temp, temp);
+   c_dd_div_d_dd(1.0, temp, temp);
    c_dd_ceil(temp, temp);
    l2 = (long) temp[0];
    dd_vec3d_norm(temp, D_COL(R, 3));
-   c_dd_div_d_dd(3.0, temp, temp);
+   c_dd_div_d_dd(1.0, temp, temp);
    c_dd_ceil(temp, temp);
    l3 = (long) temp[0];
-   if ((l1 > 100) || (l1 < 0)) l1 = 100;
-   if ((l2 > 100)  || (l2 < 0)) l2 = 100;
-   if ((l3 > 100)  || (l3 < 0)) l3 = 100;
+   if ((l1 > 30) || (l1 < 0)) l1 = 30;
+   if ((l2 > 30)  || (l2 < 0)) l2 = 30;
+   if ((l3 > 30)  || (l3 < 0)) l3 = 30;
    for (long i1 = -l1; i1 <= l1; i1++)
    {
    for (long i2 = -l2; i2 <= l2; i2++)
@@ -219,6 +230,8 @@ void elkies(double * a, long N, double * eps)
    } 
    dd_vec3d_stack_clear();
    z_mat3dc_stack_clear();
+   z_mat3dc_stack_clear();
+   dd_mat3dc_stack_clear();
    dd_mat3dc_stack_clear();
    dd_mat3dc_stack_clear();
    dd_mat3dc_stack_clear();
@@ -273,7 +286,7 @@ int main(void)
    
    for (long k = start_point; k < end; k++) 
    {
-      if ((k&0x7ffff) == 0) 
+      if ((k&0x3ffff) == 0) 
       {
          printf("Passed k = %ld\n", k);
       }

@@ -89,7 +89,7 @@ int main(void)
    
    printf("E is:"); d_mat3dc_printf(mat2);
    printf("The LLL coefficients of E are: ");
-   d_mat3dc_LLL(mat3, mat2, 0.75);
+   d_mat3dc_LLL(mat3, mat4, mat2, 0.75);
    z_mat3dc_printf(mat3);
    d_mat3dc_mul_z_mat3dc(mat, mat2, mat3);
    printf("The reduced matrix is: ");

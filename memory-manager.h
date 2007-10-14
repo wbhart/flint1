@@ -9,6 +9,10 @@ Copyright (C) 2007, William Hart and David Harvey
 #ifndef FLINT_MANAGER_H
 #define FLINT_MANAGER_H
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+ 
 void* flint_stack_alloc(unsigned long length);
 
 void* flint_stack_alloc_bytes(unsigned long bytes);
@@ -29,4 +33,8 @@ void* flint_heap_realloc_bytes(void* block, unsigned long limbs);
 
 void flint_heap_free(void* block);
 
+#ifdef __cplusplus
+ }
+#endif
+ 
 #endif

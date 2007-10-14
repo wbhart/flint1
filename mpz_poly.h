@@ -9,6 +9,10 @@ Copyright (C) 2007, William Hart and David Harvey
 #ifndef MPZ_POLY_H
 #define MPZ_POLY_H
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+ 
 #include <stdlib.h>
 #include <stdio.h>
 #include <gmp.h>
@@ -362,4 +366,9 @@ void _mpz_poly_mul_kara_recursive(mpz_t* out,
 
 
 // *************** end of file
+
+#ifdef __cplusplus
+ }
+#endif
+ 
 #endif
