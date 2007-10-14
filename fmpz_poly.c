@@ -23,8 +23,6 @@ Copyright (C) 2007, William Hart and David Harvey
 #include "ZmodF_mul.h"
 #include "Z_mpn_mul-tuning.h"
 
-#include "mpz_poly.h"
-
 /****************************************************************************
 
    _fmpz_poly_* layer
