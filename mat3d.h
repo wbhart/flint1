@@ -10,6 +10,10 @@
 #ifndef MAT3D_H
 #define MAT3D_H
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+ 
 #include <math.h>
 
 #include "vec3d.h"
@@ -142,4 +146,8 @@ void dd_mat3dc_mul_z_mat3dc(dd_mat3dc_t B_out, dd_mat3dc_t B, z_mat3dc_t Z);
 
 int dd_mat3dc_LLL(z_mat3dc_t C, dd_mat3dc_t B_out, dd_mat3dc_t B_in, double del);
 
+#ifdef __cplusplus
+ }
+#endif
+ 
 #endif

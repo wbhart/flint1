@@ -9,6 +9,10 @@ Copyright (C) 2007, William Hart and David Harvey
 #ifndef FLINT_TEST_SUPPORT_H
 #define FLINT_TEST_SUPPORT_H
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+ 
 #include <gmp.h>
 
 
@@ -43,6 +47,9 @@ void mpn_to_mpz(mpz_t dest, mp_limb_t* src, unsigned long limbs);
 
 #define TEST_MPZ_COUNT 5
 
+#ifdef __cplusplus
+ }
+#endif
 
 #endif
 

@@ -7,6 +7,10 @@
 #ifndef FLINT_Z_H
 #define FLINT_Z_H
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+ 
 #define Z_t mpz_t
 
 /*-----------------------------------------------------------------------------
@@ -839,4 +843,8 @@ void Z_mulmod_jebelean(mpz_t res, mpz_t a, mpz_t b, mpz_t m);
 
 void Z_expmod_jebelean(mpz_t res, mpz_t a, mpz_t exp, mpz_t m);
 
+#ifdef __cplusplus
+ }
+#endif
+ 
 #endif

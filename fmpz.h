@@ -9,6 +9,10 @@
 #ifndef FLINT_FMPZ_H
 #define FLINT_FMPZ_H
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+ 
 #include <gmp.h>
 #include "memory-manager.h"
 #include "flint.h"
@@ -179,6 +183,11 @@ void fmpz_normalise(fmpz_t f)
 {
    NORM(f);
 }
+
+#ifdef __cplusplus
+ }
+#endif
+ 
 #endif
 
 // *************** end of file

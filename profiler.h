@@ -14,7 +14,10 @@
 #ifndef FLINT_PROFILER_H
 #define FLINT_PROFILER_H
 
-
+#ifdef __cplusplus
+ extern "C" {
+#endif
+ 
 // number of independent global clocks
 #define FLINT_NUM_CLOCKS 20
 
@@ -142,5 +145,9 @@ void prof_repeat(double* min, double* max, profile_target_t target, void* arg);
 // Microseconds per timing run that the prof_repeat function aims for:
 #define DURATION_TARGET 300000
 
+#ifdef __cplusplus
+ }
+#endif
+ 
 
 #endif // #ifndef FLINT_PROFILER_H

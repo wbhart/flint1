@@ -6,6 +6,10 @@
 
 ******************************************************************************/
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+ 
 #include "profiler.h"
 
 
@@ -63,5 +67,8 @@ extern prof_Driver_t prof_Driver_list[];
 extern prof_DriverString_t prof_DriverString_list[];
 extern prof_DriverDefaultParams_t prof_DriverDefaultParams_list[];
 
-
+#ifdef __cplusplus
+ }
+#endif
+ 
 // end of file ****************************************************************

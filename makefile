@@ -9,8 +9,14 @@ ifndef FLINT_TUNE
 	# FLINT_TUNE = 
 endif
 
+ifndef NO_NTL
+	NTL = -lntl
+endif
+
 ifndef FLINT_LINK_OPTIONS
+ifdef NO_NTL
 	FLINT_LINK_OPTIONS = -static
+endif
 endif
 
 ifndef FLINT_NTL_LIB_DIR 
@@ -42,9 +48,9 @@ endif
 
 qdexists := $(shell ls -d qd)
 ifeq ($(qdexists), qd)
-	LIBS = -L$(FLINT_GMP_LIB_DIR)  -L$(FLINT_NTL_LIB_DIR) -L$(FLINT_QD_LIB_DIR) $(FLINT_LINK_OPTIONS) -lgmp -lpthread -lm -lqd
+	LIBS = -L$(FLINT_GMP_LIB_DIR)  -L$(FLINT_NTL_LIB_DIR) -L$(FLINT_QD_LIB_DIR) $(FLINT_LINK_OPTIONS) -lgmp -lpthread -lm -lqd $(NTL)
 else
-	LIBS = -L$(FLINT_GMP_LIB_DIR)  -L$(FLINT_NTL_LIB_DIR) -L$(FLINT_QD_LIB_DIR) $(FLINT_LINK_OPTIONS) -lgmp -lpthread -lm
+	LIBS = -L$(FLINT_GMP_LIB_DIR)  -L$(FLINT_NTL_LIB_DIR) -L$(FLINT_QD_LIB_DIR) $(FLINT_LINK_OPTIONS) -lgmp -lpthread -lm $(NTL)
 endif
 
 INCS = -I$(FLINT_GMP_INCLUDE_DIR) -I$(FLINT_NTL_INCLUDE_DIR) -I$(FLINT_QD_INCLUDE_DIR) 
@@ -143,9 +149,6 @@ long_extras.o: long_extras.c long_extras.h
 test-support.o: test-support.c $(HEADERS)
 	$(CC) $(CFLAGS) -c test-support.c -o test-support.o
 
-test-support2.o: test-support.c $(HEADERS)
-	$(CPP) $(CFLAGS) -c test-support.c -o test-support2.o
-
 fmpz_poly-test.o: fmpz_poly-test.c $(HEADERS)
 	$(CC) $(CFLAGS) -c fmpz_poly-test.c -o fmpz_poly-test.o
 
@@ -220,12 +223,6 @@ profiler.o: profiler.c $(HEADERS)
 profiler-main.o: profiler-main.c $(HEADERS)
 	$(CC) $(CFLAGS) -c profiler-main.c -o profiler-main.o
 
-profiler2.o: profiler.c $(HEADERS)
-	$(CPP) $(CFLAGS) -c profiler.c -o profiler2.o
-
-profiler-main2.o: profiler-main.c $(HEADERS)
-	$(CPP) $(CFLAGS) -c profiler-main.c -o profiler-main2.o
-
 fmpz_poly-profile-tables.o: fmpz_poly-profile.c $(HEADERS)
 	python make-profile-tables.py fmpz_poly
 	$(CC) $(CFLAGS) -c fmpz_poly-profile-tables.c -o fmpz_poly-profile-tables.o
@@ -269,8 +266,6 @@ NTL-profile-tables.o: NTL-profile.c $(HEADERS)
 
 PROFOBJ = $(FLINTOBJ) profiler.o profiler-main.o
 
-PROFOBJ2 = profiler2.o profiler-main2.o
-
 fmpz_poly-profile: fmpz_poly-profile.o fmpz_poly-profile-tables.o test-support.o $(PROFOBJ)
 	$(CC) $(CFLAGS) -o fmpz_poly-profile fmpz_poly-profile.o fmpz_poly-profile-tables.o test-support.o $(PROFOBJ) $(LIBS)
 
@@ -287,8 +282,8 @@ ZmodF_poly-profile: ZmodF_poly-profile.o ZmodF_poly-profile-tables.o $(PROFOBJ)
 kara-profile: kara-profile.c profiler.o test-support.o $(FLINTOBJ)
 	$(CC) $(CFLAGS) -o kara-profile kara-profile.c profiler.o test-support.o $(FLINTOBJ) $(LIBS)
 
-NTL-profile: NTL-profile.c test-support2.o NTL-profile-tables.o $(PROFOBJ2)
-	$(CPP) $(CFLAGS) -o NTL-profile NTL-profile.c NTL-profile-tables.o test-support2.o $(PROFOBJ2) $(LIBS)
+NTL-profile: NTL-profile.c test-support.o NTL-profile-tables.o $(PROFOBJ)
+	$(CPP) $(CFLAGS) -o NTL-profile NTL-profile.c NTL-profile-tables.o test-support.o $(PROFOBJ) $(LIBS)
 
 ####### example programs
 
@@ -358,26 +353,23 @@ Z_mul_timing: $(ZMULOBJ)
 
 ####### Linear Algebra
 
-memory-manager2.o: memory-manager.c $(HEADERS)
-	$(CPP) $(CFLAGS) -c memory-manager.c -o memory-manager2.o
-
 vec3d.o: vec3d.c vec3d.h
 	$(CPP) $(CFLAGS) -c vec3d.c -o vec3d.o
 
 mat3d.o: mat3d.c mat3d.h
 	$(CPP) $(CFLAGS) -c mat3d.c -o mat3d.o
 
-vecmat3d: vecmat3d-driver.c mat3d.o vec3d.o memory-manager2.o
-	$(CPP) $(CFLAGS) -o vecmat3d vecmat3d-driver.c mat3d.o vec3d.o memory-manager2.o $(LIBS)
+vecmat3d: vecmat3d-driver.c mat3d.o vec3d.o memory-manager.o
+	$(CPP) $(CFLAGS) -o vecmat3d vecmat3d-driver.c mat3d.o vec3d.o memory-manager.o $(LIBS)
 
-x3y3z3k: x3y3z3k.c mat3d.o vec3d.o memory-manager2.o 
-	$(CPP) -o x3y3z3k $(CFLAGS) x3y3z3k.c mat3d.o vec3d.o memory-manager2.o $(LIBS) 
+x3y3z3k: x3y3z3k.c mat3d.o vec3d.o memory-manager.o 
+	$(CPP) -o x3y3z3k $(CFLAGS) x3y3z3k.c mat3d.o vec3d.o memory-manager.o $(LIBS) 
 
-dd_vecmat3d: dd_vecmat3d-driver.c mat3d.o vec3d.o memory-manager2.o
-	$(CPP) $(CFLAGS) -o dd_vecmat3d dd_vecmat3d-driver.c mat3d.o vec3d.o memory-manager2.o $(LIBS)
+dd_vecmat3d: dd_vecmat3d-driver.c mat3d.o vec3d.o memory-manager.o
+	$(CPP) $(CFLAGS) -o dd_vecmat3d dd_vecmat3d-driver.c mat3d.o vec3d.o memory-manager.o $(LIBS)
 
-dd_x3y3z3k: dd_x3y3z3k.c mat3d.o vec3d.o memory-manager2.o 
-	$(CPP) -o dd_x3y3z3k $(CFLAGS) dd_x3y3z3k.c mat3d.o vec3d.o memory-manager2.o $(LIBS) 
+dd_x3y3z3k: dd_x3y3z3k.c mat3d.o vec3d.o memory-manager.o 
+	$(CPP) -o dd_x3y3z3k $(CFLAGS) dd_x3y3z3k.c mat3d.o vec3d.o memory-manager.o $(LIBS) 
 
 expmod: expmod.c Z.o
 	$(CC) $(CFLAGS) -o expmod expmod.c Z.o $(LIBS)

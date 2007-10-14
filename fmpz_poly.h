@@ -9,6 +9,10 @@ Copyright (C) 2007, William Hart and David Harvey
 #ifndef FLINT_FMPZ_POLY_H
 #define FLINT_FMPZ_POLY_H
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+ 
 #include <stdlib.h>
 #include <stdio.h>
 #include <gmp.h>
@@ -560,4 +564,9 @@ void fmpz_poly_pseudo_divrem_recursive(fmpz_poly_t Q, fmpz_poly_t R,
                                unsigned long * d, fmpz_poly_t A, fmpz_poly_t B);
 
 // *************** end of file
+
+#ifdef __cplusplus
+ }
+#endif
+ 
 #endif

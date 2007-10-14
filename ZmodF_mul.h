@@ -12,6 +12,10 @@
 #ifndef FLINT_ZMODF_MUL_H
 #define FLINT_ZMODF_MUL_H
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+ 
 #include <stdlib.h>
 #include <gmp.h>
 #include "mpn_extras.h"
@@ -164,7 +168,9 @@ void _ZmodF_mul_threeway_reduce1(ZmodF_t res, ZmodF_t a, unsigned long m);
 inline
 void _ZmodF_mul_threeway_reduce2(mp_limb_t* res, ZmodF_t a, unsigned long m);
 
-
+#ifdef __cplusplus
+ }
+#endif
 
 #endif
 

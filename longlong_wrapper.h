@@ -1,6 +1,10 @@
 #ifndef LONGLONGWRAP_H
 #define LONGLONGWRAP_H
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+ 
 #include <stdint.h>
 
 // todo: I think perhaps UDWtype is not quite right. It needs to be
@@ -23,4 +27,8 @@
 
 #define ASSERT(condition)
 
+#ifdef __cplusplus
+ }
+#endif
+ 
 #endif

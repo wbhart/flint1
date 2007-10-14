@@ -55,7 +55,7 @@ void run_triangle(unsigned long max_bits, double ratio)
    unsigned long last_length = 0;
    for (unsigned long i = 0; i <= max_iter; i++)
    {
-      unsigned long length = (unsigned long) floor(powf(ratio, i));
+      unsigned long length = (unsigned long) floor(powl(ratio, i));
       if (length != last_length)
       {
          last_length = length;
@@ -63,7 +63,7 @@ void run_triangle(unsigned long max_bits, double ratio)
          unsigned long last_bits = 0;
          for (unsigned long j = 0; j <= max_iter; j++)
          {
-            unsigned long bits = (unsigned long) floor(powf(ratio, j));
+            unsigned long bits = (unsigned long) floor(powl(ratio, j));
             if (bits != last_bits)
             {
                last_bits = bits;
@@ -460,9 +460,9 @@ void sample_NTL_poly_div1(unsigned long length, unsigned long bits,
    
    unsigned long r_count;    // how often to generate new random data
    
-   if (count >= 1000) r_count = 100;
+   if (count >= 10000) r_count = 100;
    else if (count >= 100) r_count = 10;
-   else if (count >= 20) r_count = 5;
+   else if (count >= 20) r_count = 4;
    else if (count >= 8) r_count = 2;
    else r_count = 1;
    
@@ -470,21 +470,31 @@ void sample_NTL_poly_div1(unsigned long length, unsigned long bits,
    {
       if (i%r_count == 0)
       {
-	    for (unsigned long j = 0; j<length; j++)
+	    do
+        {
+           for (unsigned long j = 0; j < length; j++)
+		   {
+		      RandomBits(a,bits);
+		      SetCoeff(poly1,j,a);
+		   }
+        } while (IsZero(poly1));
+        for (unsigned long j = 0; j < length; j++)
 		{
-		RandomBits(a,bits);
-		SetCoeff(poly1,j,a);
-		RandomBits(a,bits);
-		SetCoeff(poly2,j,a);
+           RandomBits(a,bits);
+		   SetCoeff(poly2,j,a);
 		}
       }
-	mul(poly3, poly1, poly2);
-       prof_start();
-       divide(poly2, poly3, poly1);
-       prof_stop();
-   }
-   
-   
+      
+      mul(poly3, poly1, poly2);
+      prof_start();
+      for (unsigned long count2 = 0; count2 < r_count; count2++)
+      {
+         divide(poly2, poly3, poly1);
+      }
+      prof_stop();
+      
+      i += (r_count-1);
+   }  
 }
 
 
@@ -498,7 +508,7 @@ char* profDriverString_NTL_poly_div1(char* params)
  
 char* profDriverDefaultParams_NTL_poly_div1()
 {
-   return "12000000 1.77827941";
+   return "1000000 1.2";
 }
  
 void profDriver_NTL_poly_div1(char* params)

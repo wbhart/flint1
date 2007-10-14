@@ -10,6 +10,10 @@
 #ifndef VEC3D_H
 #define VEC3D_H
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+ 
 #include <math.h>
 
 #include "vector.h"
@@ -119,5 +123,9 @@ void dd_vec3d_sub_scalar_mul_d(dd_vec3d v_out, dd_vec3d v_in1, dd_vec3d v_in2, d
 void dd_vec3d_add_scalar_mul_d(dd_vec3d v_out, dd_vec3d v_in1, dd_vec3d v_in2, double scalar);
 
 void dd_vec3d_mul_scalar_d(dd_vec3d v_out, dd_vec3d v_in, double scalar);
+
+#ifdef __cplusplus
+ }
+#endif
 
 #endif

@@ -13,6 +13,9 @@ TODO: write an automatic tuning utility!!
 #ifndef FLINT_MPZ_POLY_TUNING_H
 #define FLINT_MPZ_POLY_TUNING_H
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
 
 /*
    mpz_poly_kara_crossover_table[k] is the smallest length for which
@@ -22,7 +25,9 @@ TODO: write an automatic tuning utility!!
 extern unsigned long mpz_poly_kara_crossover_table[];
 extern unsigned long mpz_poly_kara_crossover_table_size;
 
-
+#ifdef __cplusplus
+ extern "C" {
+#endif
 
 #endif
 // end of file ****************************************************************

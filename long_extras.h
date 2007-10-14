@@ -10,6 +10,10 @@
 #ifndef LONGEXTRAS_H
 #define LONGEXTRAS_H
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+ 
 #include <math.h>
 
 typedef struct factor_s
@@ -125,6 +129,10 @@ int z_factor(factor_t * factors, unsigned long n);
 
 unsigned long z_primitive_root(unsigned long p);
 
+#ifdef __cplusplus
+ }
+#endif
+ 
 #endif
 
 

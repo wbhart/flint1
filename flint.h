@@ -16,7 +16,9 @@
 #ifndef FLINT_H
 #define FLINT_H
 
-
+#ifdef __cplusplus
+ extern "C" {
+#endif
 
 #if 0
 #define FLINT_ASSERT assert
@@ -126,6 +128,10 @@ static inline unsigned long FLINT_BIT_COUNT(unsigned long x)
    count_lead_zeros(zeros, x);
    return FLINT_BITS-zeros;
 }
+
+#ifdef __cplusplus
+ }
+#endif
 
 #endif
 

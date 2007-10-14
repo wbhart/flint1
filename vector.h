@@ -11,6 +11,10 @@
 #ifndef VECTOR_H
 #define VECTOR_H
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+ 
 #include <math.h>
 
 /*
@@ -41,4 +45,8 @@ typedef struct d_vec_s
 
 typedef d_vec_s d_vec_t[1];
 
+#ifdef __cplusplus
+ }
+#endif
+ 
 #endif

@@ -15,6 +15,10 @@
 #ifndef FLINT_ZMODF_H
 #define FLINT_ZMODF_H
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+ 
 #include <stdlib.h>
 #include <gmp.h>
 #include "mpn_extras.h"
@@ -496,6 +500,9 @@ void ZmodF_simple_butterfly(ZmodF_t* a, ZmodF_t* b, ZmodF_t* z,
 */
 void ZmodF_divby3(ZmodF_t b, ZmodF_t a, unsigned long n);
 
+#ifdef __cplusplus
+ }
+#endif
 
 #endif
 

@@ -1,6 +1,10 @@
 #ifndef EXTRAS_H
 #define EXTRAS_H
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+ 
 #include <gmp.h>
 #include "flint.h"
 #include "longlong_wrapper.h"
@@ -45,5 +49,10 @@ static inline unsigned long l_shift(unsigned long in, unsigned long shift)
     (r) = _xl + ((d) & _xh);						\
     (q) = _xh - _q1;							\
   } while (0)
+
+
+#ifdef __cplusplus
+ }
+#endif
 
 #endif

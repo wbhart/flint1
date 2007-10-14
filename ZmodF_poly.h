@@ -13,6 +13,10 @@ Copyright (C) 2007, William Hart and David Harvey
 #ifndef FLINT_ZMODFPOLY_H
 #define FLINT_ZMODFPOLY_H
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+ 
 #include <stdlib.h>
 #include <stdio.h>
 #include <gmp.h>
@@ -488,7 +492,9 @@ void ZmodF_poly_negacyclic_IFFT(ZmodF_poly_t poly);
 void ZmodF_poly_negacyclic_convolution(ZmodF_poly_t res,
                                       ZmodF_poly_t x, ZmodF_poly_t y);
 
-
+#ifdef __cplusplus
+ }
+#endif
 
 #endif
 
