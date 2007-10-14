@@ -5650,8 +5650,8 @@ void fmpz_poly_pseudo_divrem_recursive(fmpz_poly_t Q, fmpz_poly_t R, unsigned lo
    
    unsigned long crossover = 16;
    
-   if (B->limbs > 16)  crossover = 8;
-   if ((B->length <= 12) && (B->limbs > 8)) crossover = 8;
+   if (B->limbs > 32)  crossover = 8;
+   if ((B->length <= 12) && (B->limbs > 16)) crossover = 8;
 
    if ((B->length <= crossover) || (A->length > 2*B->length - 1))
    {
@@ -5663,6 +5663,7 @@ void fmpz_poly_pseudo_divrem_recursive(fmpz_poly_t Q, fmpz_poly_t R, unsigned lo
    fmpz_poly_t d1, d2, d3, d4, p1, q1, q2, dq1, dq2, r1, d2q1, d2q2, r2, t, u, temp;
    fmpz_t B_lead;
    unsigned long size_B_lead;
+   unsigned long bits_B_lead;
    
    unsigned long n1 = (B->length+1)/2;
    unsigned long n2 = B->length - n1;
@@ -5683,6 +5684,7 @@ void fmpz_poly_pseudo_divrem_recursive(fmpz_poly_t Q, fmpz_poly_t R, unsigned lo
    
    B_lead = B->coeffs + (B->length-1)*(B->limbs+1);
    size_B_lead = ABS(B_lead[0]);
+   bits_B_lead = _fmpz_bits(B_lead);
       
    if (A->length <= n1+2*n2-1)
    {
@@ -5701,11 +5703,11 @@ void fmpz_poly_pseudo_divrem_recursive(fmpz_poly_t Q, fmpz_poly_t R, unsigned lo
       _fmpz_poly_stack_init(d2q1, d4->length+Q->length-1, d4->limbs+Q->limbs+1); 
       _fmpz_poly_mul(d2q1, d4, Q);
       
-      fmpz_poly_fit_limbs(R, FLINT_MAX(FLINT_MAX(A->limbs+(*d)*size_B_lead, r1->limbs), d2q1->limbs)+1);
       fmpz_poly_fit_length(R, n1+n2-1);
+      fmpz_poly_fit_limbs(R, FLINT_MAX(FLINT_MAX(A->limbs+(*d)*size_B_lead, r1->limbs), d2q1->limbs)+1);
       R->length = n1+n2-1;
       
-      fmpz_t pow = (fmpz_t) flint_stack_alloc(size_B_lead*(*d)+1);
+      fmpz_t pow = (fmpz_t) flint_stack_alloc((bits_B_lead*(*d))/FLINT_BITS+2);
       _fmpz_pow_ui(pow, B_lead, *d);
       temp->length = n1+n2-1;
       temp->limbs = A->limbs;
@@ -5723,10 +5725,9 @@ void fmpz_poly_pseudo_divrem_recursive(fmpz_poly_t Q, fmpz_poly_t R, unsigned lo
    
       _fmpz_poly_stack_clear(d2q1);
       fmpz_poly_clear(r1);
-            
+   
       return;   
    } 
-   
    unsigned long s1, s2;
    
    /* 
@@ -5771,7 +5772,7 @@ void fmpz_poly_pseudo_divrem_recursive(fmpz_poly_t Q, fmpz_poly_t R, unsigned lo
    temp->coeffs = A->coeffs;
    temp->length = n1+2*n2-1;
    temp->limbs = A->limbs;
-   fmpz_t pow = (fmpz_t) flint_stack_alloc(s1*size_B_lead+1);
+   fmpz_t pow = (fmpz_t) flint_stack_alloc((bits_B_lead*s1)/FLINT_BITS+2);
    _fmpz_pow_ui(pow, B_lead, s1);
    _fmpz_poly_scalar_mul(t, temp, pow);
    flint_stack_release();
@@ -5812,7 +5813,7 @@ void fmpz_poly_pseudo_divrem_recursive(fmpz_poly_t Q, fmpz_poly_t R, unsigned lo
    temp->limbs = Q->limbs;
    temp->coeffs = Q->coeffs + n2*(Q->limbs+1);
    
-   pow = (fmpz_t) flint_stack_alloc(s2*size_B_lead+1);
+   pow = (fmpz_t) flint_stack_alloc((bits_B_lead*s2)/FLINT_BITS+2);
    _fmpz_pow_ui(pow, B_lead, s2);
    _fmpz_poly_scalar_mul(temp, q1, pow);
    flint_stack_release();

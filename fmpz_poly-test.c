@@ -3533,9 +3533,10 @@ int test_fmpz_poly_pseudo_divrem_recursive()
 
       do randpoly(test_poly2, length2, bits2);
       while (mpz_poly_length(test_poly2) < length2);
-
+      
       fmpz_poly_realloc(test_mpn_poly2, length2);
       mpz_poly_to_fmpz_poly(test_mpn_poly2, test_poly2);
+      
 #if DEBUG
       mpz_poly_print(test_poly);printf("\n\n");
       mpz_poly_print(test_poly2);printf("\n\n");

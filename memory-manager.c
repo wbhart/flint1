@@ -14,7 +14,7 @@ Copyright (C) 2007, William Hart and David Harvey
 #include "memory-manager.h"
 
 #define DEBUG 0 // Switches to debugging stack allocator
-
+#define DEBUG_PRINT 0 // Prints info about all allocations and releases
 #if DEBUG
 
 /*-----------------------------------------------------------------------------------------------
@@ -28,38 +28,51 @@ unsigned long upto = 0;
 
 void * flint_stack_alloc(unsigned long length)
 {
+#if DEBUG_PRINT
+   printf("Allocating %ld limbs\n", length);
+#endif
    if (upto == 200000) 
    {
       printf("Error: no free stack nodes in flint_stack_alloc\n");
       abort();         
    }
-   void * block = malloc(length*sizeof(unsigned long));
+   unsigned long * block = malloc((length+101)*sizeof(unsigned long));
    if (block == NULL)
    {
       printf("Error: unable to allocate memory in flint_stack_alloc\n");
       abort();         
    }
-   mempts[upto] = block;
+   mempts[upto] = (void*) block;
    upto++;
-   return block;
+   block[0] = length;
+   for (unsigned long i = 0; i < 100; i++)
+      block[length+i+1] = 0;
+   return (void*) (block+1);
 }
 
 void * flint_stack_alloc_bytes(unsigned long bytes)
 {
+   unsigned long length = ((bytes-1)>>FLINT_LG_BYTES_PER_LIMB)+1;
+#if DEBUG_PRINT
+   printf("Allocating %ld limbs\n", length);
+#endif
    if (upto == 200000) 
    {
       printf("Error: no free stack nodes in flint_stack_alloc_bytes\n");
       abort();         
    }
-   void * block = malloc(bytes);
+   unsigned long * block = malloc(sizeof(unsigned long)*(length + 101));
    if (block == NULL)
    {
       printf("Error: unable to allocate memory in flint_stack_alloc_bytes\n");
       abort();         
    }
-   mempts[upto] = block;
+   mempts[upto] = (void*) block;
    upto++;
-   return block;
+   block[0] = length;
+   for (unsigned long i = 0; i < 100; i++)
+      block[length+i+1] = 0L;
+   return (void*) (block+1);
 }
 
 void flint_stack_release()
@@ -70,6 +83,17 @@ void flint_stack_release()
       abort();         
    }
    upto--;
+   unsigned long * block = mempts[upto];
+   unsigned long length = block[0];
+#if DEBUG_PRINT
+   printf("Releasing %ld limbs\n", length);
+#endif
+   for (unsigned long i = 0; i < 100; i++)
+      if (block[length+i+1] != 0L) 
+      {
+         printf("Error: Block overrun detected by stack memory allocator!!\n");
+         abort();
+      }
    free(mempts[upto]);
 }
 
