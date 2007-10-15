@@ -49,7 +49,7 @@ unsigned long fmpz_size(fmpz_t x)
 }
 
 static inline
-unsigned long _fmpz_bits(fmpz_t x)
+unsigned long fmpz_bits(fmpz_t x)
 {
    unsigned long limbs = FLINT_ABS(x[0]);
    unsigned long bits = FLINT_BIT_COUNT(x[limbs]);  
@@ -141,13 +141,29 @@ void mpz_to_fmpz(fmpz_t res, mpz_t x);
 
 void fmpz_to_mpz(mpz_t res, fmpz_t x);
 
-void _fmpz_mul_ui(fmpz_t output, fmpz_t input, unsigned long x);
+void fmpz_add(fmpz_t coeffs_out, fmpz_t coeffs1, fmpz_t coeffs2);
 
-void _fmpz_div_ui(fmpz_t output, fmpz_t input, unsigned long x);
+void fmpz_add_ui_inplace(fmpz_t output, unsigned long x);
 
-void fmpz_pow_ui(fmpz_t * output, fmpz_t input, unsigned long exp);
+void __fmpz_add_ui_inplace(fmpz_t output, unsigned long x);
 
-void _fmpz_pow_ui(fmpz_t output, fmpz_t input, unsigned long exp);
+void fmpz_sub(fmpz_t coeffs_out, fmpz_t coeffs1, fmpz_t coeffs2);
+
+void fmpz_sub_ui_inplace(fmpz_t output, unsigned long x);
+
+void fmpz_mul(fmpz_t res, fmpz_t a, fmpz_t b);
+
+void __fmpz_mul(fmpz_t res, fmpz_t a, fmpz_t b);
+
+void fmpz_mul_ui(fmpz_t output, fmpz_t input, unsigned long x);
+
+void fmpz_addmul(fmpz_t res, fmpz_t a, fmpz_t b);
+
+void fmpz_div(fmpz_t res, fmpz_t a, fmpz_t b);
+
+void fmpz_div_ui(fmpz_t output, fmpz_t input, unsigned long x);
+
+void fmpz_pow_ui(fmpz_t output, fmpz_t input, unsigned long exp);
 
 /*
    Computes the binomial coefficient next := bin(n, k) given prev = bin(n, k-1)
@@ -159,14 +175,14 @@ void _fmpz_pow_ui(fmpz_t output, fmpz_t input, unsigned long exp);
 */
 
 static inline
-void _fmpz_binomial_next(fmpz_t next, fmpz_t prev, long n, long k)
+void fmpz_binomial_next(fmpz_t next, fmpz_t prev, long n, long k)
 {
-   _fmpz_mul_ui(next, prev, n-k+1);
-   _fmpz_div_ui(next, next, k);
+   fmpz_mul_ui(next, prev, n-k+1);
+   fmpz_div_ui(next, next, k);
 }
 
 static inline
-int _fmpz_is_one(fmpz_t f)
+int fmpz_is_one(fmpz_t f)
 {
    if (f[0] == 1L) return (f[1] == 1L);
    else return 0;

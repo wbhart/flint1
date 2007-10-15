@@ -392,13 +392,13 @@ void ZmodF_poly_bit_unpack_mpn(fmpz_poly_t poly_mpn, ZmodF_poly_t poly_f,
          {
             if (!(temp2&sign_mask)) 
             {
-               __fmpz_poly_add_coeff_ui(coeff_m, (temp2&mask)+carry);
+               fmpz_add_ui_inplace(coeff_m, (temp2&mask)+carry);
                carry = 0UL;
             }  
             else
             {
                temp = ((-temp2)&mask)-carry;
-               __fmpz_poly_sub_coeff_ui(coeff_m, temp);
+               fmpz_sub_ui_inplace(coeff_m, temp);
                carry = 1UL;
             }
             coeff_m += size_m;
@@ -414,13 +414,13 @@ void ZmodF_poly_bit_unpack_mpn(fmpz_poly_t poly_mpn, ZmodF_poly_t poly_f,
          {
             if (!(temp2&sign_mask)) 
             {
-               __fmpz_poly_add_coeff_ui(coeff_m, (temp2&mask)+carry);
+               fmpz_add_ui_inplace(coeff_m, (temp2&mask)+carry);
                carry = 0UL;
             }
             else
             {
                temp = ((-temp2)&mask)-carry;
-               __fmpz_poly_sub_coeff_ui(coeff_m, temp);
+               fmpz_sub_ui_inplace(coeff_m, temp);
                carry = 1UL;
             }
             coeff_m += size_m;
@@ -447,8 +447,8 @@ void ZmodF_poly_bit_unpack_unsigned_mpn(fmpz_poly_t poly_mpn, ZmodF_poly_t poly_
    const unsigned long mask = (1UL<<bits)-1;
 
    unsigned long s;
-   mp_limb_t * coeff_m = poly_mpn->coeffs;
-   mp_limb_t * next_point;
+   fmpz_t coeff_m = poly_mpn->coeffs;
+   fmpz_t next_point;
    unsigned long size_m = poly_mpn->limbs+1;
    unsigned long n = poly_f->n;
        
@@ -473,7 +473,7 @@ void ZmodF_poly_bit_unpack_unsigned_mpn(fmpz_poly_t poly_mpn, ZmodF_poly_t poly_
          k+=s;
          while ((k >= bits)&&(coeff_m < next_point))
          {
-            __fmpz_poly_add_coeff2_ui(coeff_m, (temp2&mask));
+            __fmpz_add_ui_inplace(coeff_m, (temp2&mask));
             coeff_m += size_m;
             temp2>>=bits;
             k-=bits;
@@ -485,7 +485,7 @@ void ZmodF_poly_bit_unpack_unsigned_mpn(fmpz_poly_t poly_mpn, ZmodF_poly_t poly_
        
          while ((k >= bits)&&(coeff_m < next_point))
          {
-            __fmpz_poly_add_coeff2_ui(coeff_m, temp2&mask);
+            __fmpz_add_ui_inplace(coeff_m, temp2&mask);
             coeff_m += size_m;
             temp2>>=bits;
             l++;
@@ -502,8 +502,8 @@ void ZmodF_poly_limb_pack_mpn(ZmodF_poly_t poly_f, fmpz_poly_t poly_mpn,
 {
    unsigned long size_m = poly_mpn->limbs + 1;
    long size_j;
-   mp_limb_t * coeffs_m = poly_mpn->coeffs;
-   mp_limb_t * coeffs_f = poly_f->coeffs[0];
+   fmpz_t coeffs_m = poly_mpn->coeffs;
+   fmpz_t coeffs_f = poly_f->coeffs[0];
    long carry = 0;
    
    for (unsigned long i = 0, j = 0, k = 0; i < bundle; i++, j += size_m, k += limbs)
@@ -541,8 +541,8 @@ void ZmodF_poly_limb_unpack_mpn(fmpz_poly_t poly_mpn, ZmodF_poly_t poly_f,
 {
    unsigned long size_m = poly_mpn->limbs + 1;
    unsigned long n = poly_f->n;
-   mp_limb_t * coeffs_m = poly_mpn->coeffs;
-   mp_limb_t * coeffs_f = poly_f->coeffs[0];
+   fmpz_t coeffs_m = poly_mpn->coeffs;
+   fmpz_t coeffs_f = poly_f->coeffs[0];
    unsigned long carry = 0L;
    
    for (unsigned long i = 0, j = 0, k = 0; i < bundle; i++, j += size_m, k += limbs)
@@ -569,8 +569,8 @@ void ZmodF_poly_limb_unpack_unsigned_mpn(fmpz_poly_t poly_mpn, ZmodF_poly_t poly
 {
    unsigned long size_m = poly_mpn->limbs + 1;
    unsigned long n = poly_f->n;
-   mp_limb_t * coeffs_m = poly_mpn->coeffs;
-   mp_limb_t * coeffs_f = poly_f->coeffs[0];
+   fmpz_t coeffs_m = poly_mpn->coeffs;
+   fmpz_t coeffs_f = poly_f->coeffs[0];
    
    for (unsigned long i = 0, j = 0, k = 0; i < bundle; i++, j += size_m, k += limbs)
    {
@@ -581,7 +581,7 @@ void ZmodF_poly_limb_unpack_unsigned_mpn(fmpz_poly_t poly_mpn, ZmodF_poly_t poly
    
 }
 
-void __ZmodF_poly_write_next_limb(mp_limb_t * array, unsigned long * temp, unsigned long * offset_limb, 
+void __ZmodF_poly_write_next_limb(fmpz_t array, unsigned long * temp, unsigned long * offset_limb, 
              unsigned long next_limb, unsigned long shift_1, unsigned long shift_2)
 {
    *temp += l_shift(next_limb, shift_1);
@@ -590,7 +590,7 @@ void __ZmodF_poly_write_next_limb(mp_limb_t * array, unsigned long * temp, unsig
    *temp = r_shift(next_limb, shift_2);
 }
 
-void __ZmodF_poly_write_whole_limb(mp_limb_t * array, unsigned long * temp, unsigned long * offset_limb, 
+void __ZmodF_poly_write_whole_limb(fmpz_t array, unsigned long * temp, unsigned long * offset_limb, 
              unsigned long next_limb, unsigned long shift_1, unsigned long shift_2)
 {
    *temp += l_shift(next_limb,shift_1);
@@ -604,8 +604,8 @@ void ZmodF_poly_byte_pack_mpn(ZmodF_poly_t poly_f, fmpz_poly_t poly_mpn,
 {
    unsigned long size_m = poly_mpn->limbs+1;
    unsigned long total_limbs = poly_f->n + 1;
-   mp_limb_t * coeff_m = poly_mpn->coeffs;
-   mp_limb_t * array;
+   fmpz_t coeff_m = poly_mpn->coeffs;
+   fmpz_t array;
     
    const unsigned long limbs_per_coeff = (coeff_bytes>>FLINT_LG_BYTES_PER_LIMB);
    const unsigned long extra_bytes_per_coeff = coeff_bytes 
@@ -632,7 +632,7 @@ void ZmodF_poly_byte_pack_mpn(ZmodF_poly_t poly_f, fmpz_poly_t poly_mpn,
     
    unsigned long i, j;
    
-   mp_limb_t * end = poly_mpn->coeffs + size_m*length;
+   fmpz_t end = poly_mpn->coeffs + size_m*length;
     
    i = 0;
    poly_f->length = 0;
@@ -649,7 +649,7 @@ void ZmodF_poly_byte_pack_mpn(ZmodF_poly_t poly_f, fmpz_poly_t poly_mpn,
       array = poly_f->coeffs[i];
       i++;
 
-      mp_limb_t * next_point = coeff_m + size_m*bundle;
+      fmpz_t next_point = coeff_m + size_m*bundle;
       if (next_point > end) next_point = end;
          
       while (coeff_m < next_point)
@@ -667,7 +667,7 @@ void ZmodF_poly_byte_pack_mpn(ZmodF_poly_t poly_f, fmpz_poly_t poly_mpn,
              if (borrow) 
              {
                 if (coeff_m[0] == 0) clear_limbs(coeff_m+1, poly_mpn->limbs);
-             } else __fmpz_poly_add_coeff_ui(coeff_m, 1L);
+             } else fmpz_add_ui_inplace(coeff_m, 1L);
           
              // deal with first limb of coefficient
              next_limb = ~coeff_m[1];
@@ -718,14 +718,14 @@ void ZmodF_poly_byte_pack_mpn(ZmodF_poly_t poly_f, fmpz_poly_t poly_mpn,
              }
              temp = 0;
              // restore the original coefficient
-             if (!borrow) __fmpz_poly_sub_coeff_ui(coeff_m, 1L);//-(long)borrow);
+             if (!borrow) fmpz_sub_ui_inplace(coeff_m, 1L);//-(long)borrow);
              borrow = 1;
              borrowed = 0;
           }
           
           else 
           {
-             if (borrow) __fmpz_poly_sub_coeff_ui(coeff_m, 1);     
+             if (borrow) fmpz_sub_ui_inplace(coeff_m, 1);     
           
              /* Coefficient is positive after borrow */
              if ((long) coeff_m[0] > 0)
@@ -797,7 +797,7 @@ void ZmodF_poly_byte_pack_mpn(ZmodF_poly_t poly_f, fmpz_poly_t poly_mpn,
           }
           offset_limb = coeff_limb;
           // set coefficient back to what it was before borrow
-          if (borrowed) __fmpz_poly_add_coeff_ui(coeff_m, 1L);
+          if (borrowed) fmpz_add_ui_inplace(coeff_m, 1L);
           coeff_m += size_m;
       }
       poly_f->length++;
@@ -955,7 +955,7 @@ void ZmodF_poly_byte_unpack_unsigned_mpn(fmpz_poly_t poly_m, mp_limb_t* array,
    unsigned long limb_upto = 0;
    unsigned long byte_offset = 0;
    
-   mp_limb_t * coeff_m = poly_m->coeffs;
+   fmpz_t coeff_m = poly_m->coeffs;
    unsigned long size_m = poly_m->limbs+1;
    poly_m->length = bundle;
    
@@ -967,7 +967,7 @@ void ZmodF_poly_byte_unpack_unsigned_mpn(fmpz_poly_t poly_m, mp_limb_t* array,
        temp[0] = limbs;
        NORM(temp);
        
-       __fmpz_poly_add_coeffs(coeff_m, coeff_m, temp);
+       fmpz_add(coeff_m, coeff_m, temp);
        
        limb_upto += limbs_per_coeff;
        
@@ -1001,7 +1001,7 @@ void ZmodF_poly_byte_unpack_mpn(fmpz_poly_t poly_m, mp_limb_t* array,
    unsigned long sign;
    unsigned long borrow = 0;
    
-   mp_limb_t * coeff_m = poly_m->coeffs;
+   fmpz_t coeff_m = poly_m->coeffs;
    unsigned long size_m = poly_m->limbs+1;
    poly_m->length = bundle;
    
@@ -1016,11 +1016,11 @@ void ZmodF_poly_byte_unpack_mpn(fmpz_poly_t poly_m, mp_limb_t* array,
        
        if (sign)
        {
-          __fmpz_poly_sub_coeff_ui(temp, 1);
+          fmpz_sub_ui_inplace(temp, 1);
        }
-       if (borrow) __fmpz_poly_add_coeff_ui(temp, 1);
+       if (borrow) fmpz_add_ui_inplace(temp, 1);
        
-       __fmpz_poly_add_coeffs(coeff_m, coeff_m, temp);
+       fmpz_add(coeff_m, coeff_m, temp);
        
        borrow = 0;
        if (sign) borrow = 1;
