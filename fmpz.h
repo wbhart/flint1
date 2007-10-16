@@ -36,9 +36,27 @@ do { \
 } while (0);
 
 static inline
+fmpz_t fmpz_init(unsigned long limbs)
+{
+   return (fmpz_t) flint_heap_alloc(limbs + 1);
+}
+
+static inline
+fmpz_t fmpz_stack_init(unsigned long limbs)
+{
+   return (fmpz_t) flint_stack_alloc(limbs + 1);
+}
+
+static inline
 void fmpz_clear(fmpz_t f)
 {
    flint_heap_free(f);
+}
+
+static inline
+void fmpz_stack_release(fmpz_t f)
+{
+   flint_stack_release();
 }
 
 static inline
@@ -110,14 +128,12 @@ int fmpz_equal(fmpz_t op1, fmpz_t op2)
       return 0;
 
    // compare actual limbs
-   long i = fmpz_size(op1);
-   do
+   for (long i = 0; i < fmpz_size(op1); i++)
    {
-      if (op1[i] != op2[i])
+      if (op1[i+1] != op2[i+1])
          return 0;
    }
-   while (--i);
-   
+     
    return 1;
 }
 
@@ -169,7 +185,7 @@ void fmpz_pow_ui(fmpz_t output, fmpz_t input, unsigned long exp);
    Computes the binomial coefficient next := bin(n, k) given prev = bin(n, k-1)
    The output is assumed to have enough space for the result, plus one extra limb
    (for efficiency reasons)
-   Note: bin(n, k) requires at most n bits to represent when n and k are positive
+   Note: bin(n, k) requires at most n bits to represent it when n and k are positive
    Currently only implemented for positive n and k 
    Todo: implement this for negative n and k
 */

@@ -150,6 +150,9 @@ test-support.o: test-support.c $(HEADERS)
 fmpz_poly-test.o: fmpz_poly-test.c $(HEADERS)
 	$(CC) $(CFLAGS) -c fmpz_poly-test.c -o fmpz_poly-test.o
 
+fmpz-test.o: fmpz-test.c $(HEADERS)
+	$(CC) $(CFLAGS) -c fmpz-test.c -o fmpz-test.o
+
 ZmodF-test.o: ZmodF-test.c $(HEADERS)
 	$(CC) $(CFLAGS) -c ZmodF-test.c -o ZmodF-test.o
 
@@ -177,6 +180,9 @@ Z_mpn-test: Z_mpn-test.o test-support.o $(FLINTOBJ) $(HEADERS)
 
 fmpz_poly-test: fmpz_poly-test.o test-support.o $(FLINTOBJ) $(HEADERS)
 	$(CC) $(CFLAGS) fmpz_poly-test.o test-support.o -o fmpz_poly-test $(FLINTOBJ) $(LIBS)
+
+fmpz-test: fmpz-test.o test-support.o $(FLINTOBJ) $(HEADERS)
+	$(CC) $(CFLAGS) fmpz-test.o test-support.o -o fmpz-test $(FLINTOBJ) $(LIBS)
 
 ZmodF-test: ZmodF-test.o test-support.o $(FLINTOBJ) $(HEADERS)
 	$(CC) $(CFLAGS) ZmodF-test.o test-support.o -o ZmodF-test $(FLINTOBJ) $(LIBS)
