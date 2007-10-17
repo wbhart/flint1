@@ -36,38 +36,38 @@ do { \
 } while (0);
 
 static inline
-fmpz_t fmpz_init(unsigned long limbs)
+fmpz_t fmpz_init(const unsigned long limbs)
 {
    return (fmpz_t) flint_heap_alloc(limbs + 1);
 }
 
 static inline
-fmpz_t fmpz_stack_init(unsigned long limbs)
+fmpz_t fmpz_stack_init(const unsigned long limbs)
 {
    return (fmpz_t) flint_stack_alloc(limbs + 1);
 }
 
 static inline
-void fmpz_clear(fmpz_t f)
+void fmpz_clear(const fmpz_t f)
 {
    flint_heap_free(f);
 }
 
 static inline
-void fmpz_stack_release(fmpz_t f)
+void fmpz_stack_release(void)
 {
    flint_stack_release();
 }
 
 static inline
-unsigned long fmpz_size(fmpz_t x)
+unsigned long fmpz_size(const fmpz_t x)
 {
    long limb = (long) x[0];
    return (unsigned long)  ((limb < 0) ? -limb : limb);
 }
 
 static inline
-unsigned long fmpz_bits(fmpz_t x)
+unsigned long fmpz_bits(const fmpz_t x)
 {
    unsigned long limbs = FLINT_ABS(x[0]);
    unsigned long bits = FLINT_BIT_COUNT(x[limbs]);  
@@ -78,7 +78,7 @@ unsigned long fmpz_bits(fmpz_t x)
 
 // returns positive, negative or zero according to sign of x
 static inline
-long fmpz_sgn(fmpz_t x)
+long fmpz_sgn(const fmpz_t x)
 {
    return (long) x[0];
 }
@@ -88,7 +88,7 @@ long fmpz_sgn(fmpz_t x)
 // if x == 0, then res needs room only for the control limb
 // if x != 0, res needs room for one limb beyond control limb
 static inline
-void fmpz_set_ui(fmpz_t res, unsigned long x)
+void fmpz_set_ui(fmpz_t res, const unsigned long x)
 {
    if (x) 
    {
@@ -102,7 +102,7 @@ void fmpz_set_ui(fmpz_t res, unsigned long x)
 
 // same as fmpz_set_ui
 static inline
-void fmpz_set_si(fmpz_t res, long x)
+void fmpz_set_si(fmpz_t res, const long x)
 {
    if (x > 0)
    {
@@ -121,7 +121,7 @@ void fmpz_set_si(fmpz_t res, long x)
 
 // returns nonzero if op1 == op2
 static inline
-int fmpz_equal(fmpz_t op1, fmpz_t op2)
+int fmpz_equal(const fmpz_t op1, const fmpz_t op2)
 {
    // if the signs/sizes are different, they can't be equal
    if (op1[0] != op2[0])
@@ -141,7 +141,7 @@ int fmpz_equal(fmpz_t op1, fmpz_t op2)
 // doesn't check for aliasing (i.e. if op == res, it will stupidly copy data)
 // assumes res has enough room
 static inline
-void fmpz_set(fmpz_t res, fmpz_t op)
+void fmpz_set(fmpz_t res, const fmpz_t op)
 {
    long i = fmpz_size(op);
    do
@@ -153,33 +153,33 @@ void fmpz_set(fmpz_t res, fmpz_t op)
 }
 
 // res must have enough space for x
-void mpz_to_fmpz(fmpz_t res, mpz_t x);
+void mpz_to_fmpz(fmpz_t res, const mpz_t x);
 
-void fmpz_to_mpz(mpz_t res, fmpz_t x);
+void fmpz_to_mpz(mpz_t res, const fmpz_t x);
 
-void fmpz_add(fmpz_t coeffs_out, fmpz_t coeffs1, fmpz_t coeffs2);
+void fmpz_add(fmpz_t coeffs_out, const fmpz_t in1, const fmpz_t in2);
 
-void fmpz_add_ui_inplace(fmpz_t output, unsigned long x);
+void fmpz_add_ui_inplace(fmpz_t output, const unsigned long x);
 
-void __fmpz_add_ui_inplace(fmpz_t output, unsigned long x);
+void __fmpz_add_ui_inplace(fmpz_t output, const unsigned long x);
 
-void fmpz_sub(fmpz_t coeffs_out, fmpz_t coeffs1, fmpz_t coeffs2);
+void fmpz_sub(fmpz_t coeffs_out, const fmpz_t in1, const fmpz_t in2);
 
-void fmpz_sub_ui_inplace(fmpz_t output, unsigned long x);
+void fmpz_sub_ui_inplace(fmpz_t output, const unsigned long x);
 
-void fmpz_mul(fmpz_t res, fmpz_t a, fmpz_t b);
+void fmpz_mul(fmpz_t res, const fmpz_t a, const fmpz_t b);
 
-void __fmpz_mul(fmpz_t res, fmpz_t a, fmpz_t b);
+void __fmpz_mul(fmpz_t res, const fmpz_t a, const fmpz_t b);
 
-void fmpz_mul_ui(fmpz_t output, fmpz_t input, unsigned long x);
+void fmpz_mul_ui(fmpz_t output, const fmpz_t input, const unsigned long x);
 
-void fmpz_addmul(fmpz_t res, fmpz_t a, fmpz_t b);
+void fmpz_addmul(fmpz_t res, const fmpz_t a, const fmpz_t b);
 
-void fmpz_div(fmpz_t res, fmpz_t a, fmpz_t b);
+void fmpz_div(fmpz_t res, const fmpz_t a, const fmpz_t b);
 
-void fmpz_div_ui(fmpz_t output, fmpz_t input, unsigned long x);
+void fmpz_div_ui(fmpz_t output, const fmpz_t input, const unsigned long x);
 
-void fmpz_pow_ui(fmpz_t output, fmpz_t input, unsigned long exp);
+void fmpz_pow_ui(fmpz_t output, const fmpz_t input, const unsigned long exp);
 
 /*
    Computes the binomial coefficient next := bin(n, k) given prev = bin(n, k-1)
@@ -191,27 +191,27 @@ void fmpz_pow_ui(fmpz_t output, fmpz_t input, unsigned long exp);
 */
 
 static inline
-void fmpz_binomial_next(fmpz_t next, fmpz_t prev, long n, long k)
+void fmpz_binomial_next(fmpz_t next, const fmpz_t prev, const long n, const long k)
 {
    fmpz_mul_ui(next, prev, n-k+1);
    fmpz_div_ui(next, next, k);
 }
 
 static inline
-int fmpz_is_one(fmpz_t f)
+int fmpz_is_one(const fmpz_t f)
 {
    if (f[0] == 1L) return (f[1] == 1L);
    else return 0;
 }
 
 static inline
-int fmpz_is_zero(fmpz_t f)
+int fmpz_is_zero(const fmpz_t f)
 {
    return (f[0] == 0L);
 }
 
 static inline
-void fmpz_normalise(fmpz_t f)
+void fmpz_normalise(const fmpz_t f)
 {
    NORM(f);
 }

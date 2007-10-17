@@ -91,14 +91,16 @@ do { \
     
 ===============================================================================*/
 
-void _fmpz_poly_stack_init(fmpz_poly_t poly, unsigned long alloc, unsigned long limbs);
+void _fmpz_poly_stack_init(fmpz_poly_t poly, const unsigned long alloc, const unsigned long limbs);
 
-void _fmpz_poly_stack_clear(fmpz_poly_t poly);
+void _fmpz_poly_stack_clear(const fmpz_poly_t poly);
 
-void _fmpz_poly_check(fmpz_poly_t poly);
+void _fmpz_poly_check(const fmpz_poly_t poly);
+
+void _fmpz_poly_check2(const fmpz_poly_t poly);
 
 static inline
-fmpz_t _fmpz_poly_get_coeff_ptr(fmpz_poly_t poly, unsigned long n)
+fmpz_t _fmpz_poly_get_coeff_ptr(fmpz_poly_t poly, const unsigned long n)
 {
    return poly->coeffs+n*(poly->limbs+1);
 }
@@ -109,8 +111,8 @@ fmpz_t _fmpz_poly_get_coeff_ptr(fmpz_poly_t poly, unsigned long n)
 */
    
 static inline
-long _fmpz_poly_get_coeff(fmpz_t output, fmpz_poly_t poly,
-                          unsigned long n)
+long _fmpz_poly_get_coeff(fmpz_t output, const fmpz_poly_t poly,
+                          const unsigned long n)
 {
    if (poly->coeffs[n*(poly->limbs+1)] == 0) clear_limbs(output, poly->limbs);
    copy_limbs(output, poly->coeffs+n*(poly->limbs+1)+1, poly->limbs);
@@ -118,14 +120,14 @@ long _fmpz_poly_get_coeff(fmpz_t output, fmpz_poly_t poly,
 }
 
 static inline
-unsigned long _fmpz_poly_get_coeff_ui(fmpz_poly_t poly, unsigned long n)
+unsigned long _fmpz_poly_get_coeff_ui(fmpz_poly_t poly, const unsigned long n)
 {
    if (poly->coeffs[n*(poly->limbs+1)] == 0) return 0;
    else return poly->coeffs[n*(poly->limbs+1)+1];
 }
 
 static inline
-long _fmpz_poly_get_coeff_si(fmpz_poly_t poly, unsigned long n)
+long _fmpz_poly_get_coeff_si(fmpz_poly_t poly, const unsigned long n)
 {
    if (poly->coeffs[n*(poly->limbs+1)] == 0) return 0;
    if (poly->coeffs[n*(poly->limbs+1)] == 1L) 
@@ -133,15 +135,15 @@ long _fmpz_poly_get_coeff_si(fmpz_poly_t poly, unsigned long n)
    else return -poly->coeffs[n*(poly->limbs+1)+1];
 }
 
-void _fmpz_poly_get_coeff_mpz(mpz_t x, fmpz_poly_t poly, unsigned long n);
+void _fmpz_poly_get_coeff_mpz(mpz_t x, const fmpz_poly_t poly, const unsigned long n);
 
 /* 
    Set a coefficient to the given value having "size" limbs.
    Assumes that the poly->limbs is at least "size".
 */
 
-static inline void _fmpz_poly_set_coeff(fmpz_poly_t poly, unsigned long n, 
-                                  fmpz_t x, long sign, unsigned long size)
+static inline void _fmpz_poly_set_coeff(fmpz_poly_t poly, const unsigned long n, 
+                                  const fmpz_t x, const long sign, const unsigned long size)
 {
    FLINT_ASSERT(poly->limbs >= size);
    copy_limbs(poly->coeffs+n*(poly->limbs+1)+1, x, size);
@@ -150,28 +152,28 @@ static inline void _fmpz_poly_set_coeff(fmpz_poly_t poly, unsigned long n,
      clear_limbs(poly->coeffs+n*(poly->limbs+1)+size+1, poly->limbs-size);
 }
 
-void _fmpz_poly_set_coeff_ui(fmpz_poly_t poly, unsigned long n, unsigned long x);
+void _fmpz_poly_set_coeff_ui(fmpz_poly_t poly, const unsigned long n, const unsigned long x);
 
-void _fmpz_poly_set_coeff_si(fmpz_poly_t poly, unsigned long n, long x);
+void _fmpz_poly_set_coeff_si(fmpz_poly_t poly, const unsigned long n, const long x);
 
 void _fmpz_poly_normalise(fmpz_poly_t poly);
 
-static inline long _fmpz_poly_degree(fmpz_poly_t poly)
+static inline long _fmpz_poly_degree(const fmpz_poly_t poly)
 {
    return poly->length - 1;
 }
 
-static inline unsigned long _fmpz_poly_length(fmpz_poly_t poly)
+static inline unsigned long _fmpz_poly_length(const fmpz_poly_t poly)
 {
    return poly->length;
 }
 
-static inline unsigned long _fmpz_poly_limbs(fmpz_poly_t poly)
+static inline unsigned long _fmpz_poly_limbs(const fmpz_poly_t poly)
 {
    return poly->limbs;
 }
 
-void _fmpz_poly_set(fmpz_poly_t output, fmpz_poly_t input);
+void _fmpz_poly_set(fmpz_poly_t output, const fmpz_poly_t input);
 
 /* 
    Zero the polynomial by setting the length to zero.
@@ -183,62 +185,76 @@ static inline void _fmpz_poly_zero(fmpz_poly_t output)
    output->length = 0;
 }
 
+/* Zero first n coefficients of poly, regardless of what length is */
+
+void _fmpz_poly_zero_coeffs(fmpz_poly_t poly, const unsigned long n);
+
+static inline void _fmpz_poly_transfer(fmpz_poly_t output, const fmpz_poly_t input)
+{
+   output->length = input->length;
+   output->limbs = input->limbs;
+   output->coeffs = input->coeffs;
+}
+
 void _fmpz_poly_swap(fmpz_poly_t x, fmpz_poly_t y);
 
-long _fmpz_poly_bits1(fmpz_poly_t poly_mpn);
+long _fmpz_poly_bits1(const fmpz_poly_t poly_mpn);
 
-long _fmpz_poly_bits(fmpz_poly_t poly_mpn);
+long _fmpz_poly_bits(const fmpz_poly_t poly_mpn);
 
-unsigned long _fmpz_poly_max_limbs(fmpz_poly_t poly);
+unsigned long _fmpz_poly_max_limbs(const fmpz_poly_t poly);
 
-int _fmpz_poly_equal(fmpz_poly_p input1, fmpz_poly_p input2);
+int _fmpz_poly_equal(const fmpz_poly_t input1, const fmpz_poly_t input2);
 
-void _fmpz_poly_neg(fmpz_poly_t output, fmpz_poly_t input);
+void _fmpz_poly_neg(fmpz_poly_t output, const fmpz_poly_t input);
 
-void _fmpz_poly_truncate(fmpz_poly_t poly, unsigned long trunc);
+void _fmpz_poly_truncate(fmpz_poly_t poly, const unsigned long trunc);
 
-void _fmpz_poly_reverse(fmpz_poly_t output, fmpz_poly_t input, unsigned long length);
+void _fmpz_poly_reverse(fmpz_poly_t output, const fmpz_poly_t input, const unsigned long length);
 
-void _fmpz_poly_add(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_t input2);
+void _fmpz_poly_left_shift(fmpz_poly_t output, const fmpz_poly_t input, 
+                                                 const unsigned long n);
 
-void _fmpz_poly_sub(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_t input2);
+void _fmpz_poly_right_shift(fmpz_poly_t output, const fmpz_poly_t input, const unsigned long n);
 
-void _fmpz_poly_scalar_mul(fmpz_poly_t output, fmpz_poly_t poly, fmpz_t x);
+void _fmpz_poly_add(fmpz_poly_t output, const fmpz_poly_t input1, const fmpz_poly_t input2);
 
-void _fmpz_poly_scalar_mul_ui(fmpz_poly_t output, fmpz_poly_t poly, unsigned long x);
+void _fmpz_poly_sub(fmpz_poly_t output, const fmpz_poly_t input1, const fmpz_poly_t input2);
 
-void _fmpz_poly_scalar_mul_si(fmpz_poly_t output, fmpz_poly_t poly, long x);
+void _fmpz_poly_scalar_mul(fmpz_poly_t output, const fmpz_poly_t poly, const fmpz_t x);
 
-void _fmpz_poly_scalar_div(fmpz_poly_t output, fmpz_poly_t poly, fmpz_t x);
+void _fmpz_poly_scalar_mul_ui(fmpz_poly_t output, const fmpz_poly_t poly, const unsigned long x);
 
-void _fmpz_poly_scalar_div_ui(fmpz_poly_t output, fmpz_poly_t poly, unsigned long x);
+void _fmpz_poly_scalar_mul_si(fmpz_poly_t output, const fmpz_poly_t poly, const long x);
 
-void _fmpz_poly_scalar_div_si(fmpz_poly_t output, fmpz_poly_t poly, long x);
+void _fmpz_poly_scalar_div(fmpz_poly_t output, const fmpz_poly_t poly, const fmpz_t x);
 
-void _fmpz_poly_scalar_div_exact_ui(fmpz_poly_t output, fmpz_poly_t poly, unsigned long x);
+void _fmpz_poly_scalar_div_ui(fmpz_poly_t output, const fmpz_poly_t poly, const unsigned long x);
 
-void _fmpz_poly_scalar_div_exact_si(fmpz_poly_t output, fmpz_poly_t poly, long x);
+void _fmpz_poly_scalar_div_si(fmpz_poly_t output, const fmpz_poly_t poly, const long x);
 
-void _fmpz_poly_mul(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_t input2);
+void _fmpz_poly_scalar_div_exact_ui(fmpz_poly_t output, const fmpz_poly_t poly, const unsigned long x);
 
-void _fmpz_poly_mul_naive(fmpz_poly_t output, fmpz_poly_t input1, 
-                                                 fmpz_poly_t input2);
+void _fmpz_poly_scalar_div_exact_si(fmpz_poly_t output, const fmpz_poly_t poly, const long x);
+
+void _fmpz_poly_mul_naive(fmpz_poly_t output, const fmpz_poly_t input1, 
+                                                 const fmpz_poly_t input2);
                                                  
-void _fmpz_poly_mul_naive_trunc(fmpz_poly_t output, fmpz_poly_t input1, 
-                                          fmpz_poly_t input2, unsigned long trunc);
+void _fmpz_poly_mul_naive_trunc(fmpz_poly_t output, const fmpz_poly_t input1, 
+                                          const fmpz_poly_t input2, const unsigned long trunc);
                                           
-void _fmpz_poly_mul_naive_trunc_left(fmpz_poly_t output, fmpz_poly_t input1, 
-                                          fmpz_poly_t input2, unsigned long trunc);
+void _fmpz_poly_mul_naive_trunc_left(fmpz_poly_t output, const fmpz_poly_t input1, 
+                                          const fmpz_poly_t input2, const unsigned long trunc);
 
-void __fmpz_poly_karamul_recursive(fmpz_poly_t res, fmpz_poly_t a, fmpz_poly_t b, fmpz_poly_t scratch, fmpz_poly_t scratchb, unsigned long crossover);
+void __fmpz_poly_karamul_recursive(fmpz_poly_t res, const fmpz_poly_t a, const fmpz_poly_t b, fmpz_poly_t scratch, fmpz_poly_t scratchb, const unsigned long crossover);
 
-void _fmpz_poly_mul_karatsuba(fmpz_poly_t output, fmpz_poly_t input1, 
-                                                 fmpz_poly_t input2);
+void _fmpz_poly_mul_karatsuba(fmpz_poly_t output, const fmpz_poly_t input1, 
+                                                 const fmpz_poly_t input2);
                                                  
-void _fmpz_poly_mul_karatsuba_trunc(fmpz_poly_t output, fmpz_poly_t input1, 
-                                           fmpz_poly_t input2, unsigned long trunc);
+void _fmpz_poly_mul_karatsuba_trunc(fmpz_poly_t output, const fmpz_poly_t input1, 
+                                           const fmpz_poly_t input2, const unsigned long trunc);
                                                  
-void _fmpz_poly_mul_karatsuba_trunc_left(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_t input2, unsigned long trunc);
+void _fmpz_poly_mul_karatsuba_trunc_left(fmpz_poly_t output, const fmpz_poly_t input1, const fmpz_poly_t input2, const unsigned long trunc);
 
 /*
    Multiply two polynomials together using the Kronecker segmentation method.
@@ -263,6 +279,8 @@ void _fmpz_poly_mul_trunc_n(fmpz_poly_t output, fmpz_poly_t input1,
                                 
 void _fmpz_poly_mul_trunc_left_n(fmpz_poly_t output, fmpz_poly_t input1, 
                                 fmpz_poly_t input2, unsigned long trunc);
+                                
+void _fmpz_poly_mul(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_t input2);
 
 void _fmpz_poly_sqr(fmpz_poly_t output, fmpz_poly_t input);
 
@@ -270,28 +288,7 @@ void _fmpz_poly_sqr_naive(fmpz_poly_t output, fmpz_poly_t input);
 
 void _fmpz_poly_sqr_karatsuba(fmpz_poly_t output, fmpz_poly_t input);
 
-void _fmpz_poly_left_shift(fmpz_poly_t output, fmpz_poly_t input, 
-                                                 unsigned long n);
-
-void _fmpz_poly_right_shift(fmpz_poly_t output, fmpz_poly_t input, unsigned long n);
-
-void _fmpz_poly_div(fmpz_poly_t quotient, fmpz_poly_t input1, fmpz_poly_t input2);
-
-void _fmpz_poly_rem(fmpz_poly_t remainder, fmpz_poly_t input1, fmpz_poly_t input2);
-
-void _fmpz_poly_div_rem(fmpz_poly_t quotient, fmpz_poly_t remainder, 
-                                     fmpz_poly_t input1, fmpz_poly_t input2);
-
-void _fmpz_poly_gcd(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_t input2);
-
-void _fmpz_poly_xgcd(fmpz_poly_t a, fmpz_poly_t b, fmpz_poly_t output, 
-                                      fmpz_poly_t input1, fmpz_poly_t input2);
-
-void _fmpz_poly_content(fmpz_t content, fmpz_poly_t a);
-
-/* Zero first n coefficients of poly, regardless of what length is */
-
-void _fmpz_poly_zero_coeffs(fmpz_poly_t poly, unsigned long n);
+void _fmpz_poly_content(fmpz_t content, const fmpz_poly_t a);
 
 /*============================================================================
   
@@ -327,7 +324,7 @@ int fmpz_poly_read(fmpz_poly_t poly);
 int fmpz_poly_fread(fmpz_poly_t poly, FILE* f);
 
 
-long fmpz_poly_degree(fmpz_poly_t poly);
+long fmpz_poly_degree(fmpz_poly_t const poly);
 
 unsigned long fmpz_poly_length(fmpz_poly_t poly);
 

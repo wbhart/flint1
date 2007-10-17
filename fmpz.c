@@ -20,7 +20,7 @@
 #include "Z_mpn.h"
 #include "Z_mpn_mul-tuning.h"
 
-void mpz_to_fmpz(fmpz_t res, mpz_t x)
+void mpz_to_fmpz(fmpz_t res, const mpz_t x)
 {
    if (mpz_sgn(x))
    {
@@ -32,7 +32,7 @@ void mpz_to_fmpz(fmpz_t res, mpz_t x)
       res[0] = 0;
 }
 
-void fmpz_to_mpz(mpz_t res, fmpz_t x)
+void fmpz_to_mpz(mpz_t res, const fmpz_t x)
 {
    long size = x[0];
    
@@ -51,8 +51,11 @@ void fmpz_to_mpz(mpz_t res, fmpz_t x)
     Adds two fmpz's together
 */
 
-void fmpz_add(fmpz_t coeffs_out, fmpz_t coeffs1, fmpz_t coeffs2)
+void fmpz_add(fmpz_t coeffs_out, const fmpz_t in1, const fmpz_t in2)
 {
+   fmpz_t coeffs1 = in1;
+   fmpz_t coeffs2 = in2;
+   
    long carry;
    unsigned long size1 = ABS(coeffs1[0]);
    unsigned long size2 = ABS(coeffs2[0]);
@@ -110,7 +113,7 @@ void fmpz_add(fmpz_t coeffs_out, fmpz_t coeffs1, fmpz_t coeffs2)
      Add an unsigned long to an fmpz, inplace
 */
 
-void fmpz_add_ui_inplace(fmpz_t output, unsigned long x)
+void fmpz_add_ui_inplace(fmpz_t output, const unsigned long x)
 {
    unsigned long carry;
    
@@ -152,7 +155,7 @@ void fmpz_add_ui_inplace(fmpz_t output, unsigned long x)
    Assumes the output coefficient is non-negative.   
 */
 
-void __fmpz_add_ui_inplace(fmpz_t output, unsigned long x)
+void __fmpz_add_ui_inplace(fmpz_t output, const unsigned long x)
 {
    unsigned long carry;
    
@@ -174,8 +177,11 @@ void __fmpz_add_ui_inplace(fmpz_t output, unsigned long x)
    }
 }
 
-void fmpz_sub(fmpz_t coeffs_out, fmpz_t coeffs1, fmpz_t coeffs2)
+void fmpz_sub(fmpz_t coeffs_out, const fmpz_t in1, const fmpz_t in2)
 {
+   fmpz_t coeffs1 = in1;
+   fmpz_t coeffs2 = in2;
+   
    long carry;
    unsigned long size1 = ABS(coeffs1[0]);
    unsigned long size2 = ABS(coeffs2[0]);
@@ -236,7 +242,7 @@ void fmpz_sub(fmpz_t coeffs_out, fmpz_t coeffs1, fmpz_t coeffs2)
    }
 }
 
-void fmpz_sub_ui_inplace(fmpz_t output, unsigned long x)
+void fmpz_sub_ui_inplace(fmpz_t output, const unsigned long x)
 {
    unsigned long carry;
    
@@ -278,15 +284,15 @@ void fmpz_sub_ui_inplace(fmpz_t output, unsigned long x)
    Assumes no overlap
 */
 
-void fmpz_mul(fmpz_t res, fmpz_t a, fmpz_t b) 
+void fmpz_mul(fmpz_t res, const fmpz_t a, const fmpz_t b) 
 {
-      NORM(a);
-      NORM(b);
       long a0 = a[0];
       long b0 = b[0];
+      unsigned long sizea = FLINT_ABS(a0);
+      unsigned long sizeb = FLINT_ABS(b0);
+      while ((!a[sizea]) && (sizea)) sizea--;
+      while ((!b[sizeb]) && (sizeb)) sizeb--;
       
-      unsigned long sizea = ABS(a0);
-      unsigned long sizeb = ABS(b0);
       mp_limb_t mslimb;
       fmpz_t temp;
       
@@ -328,12 +334,15 @@ void fmpz_mul(fmpz_t res, fmpz_t a, fmpz_t b)
    Assumes no overlap
 */
 
-void __fmpz_mul(fmpz_t res, fmpz_t a, fmpz_t b) 
+void __fmpz_mul(fmpz_t res, const fmpz_t a, const fmpz_t b) 
 {
-      NORM(a);
-      NORM(b);
-      unsigned long sizea = ABS(a[0]);
-      unsigned long sizeb = ABS(b[0]);
+      long a0 = a[0];
+      long b0 = b[0];
+      unsigned long sizea = FLINT_ABS(a0);
+      unsigned long sizeb = FLINT_ABS(b0);
+      while ((!a[sizea]) && (sizea)) sizea--;
+      while ((!b[sizeb]) && (sizeb)) sizeb--;
+      
       mp_limb_t mslimb;
       fmpz_t temp;
       
@@ -357,7 +366,7 @@ void __fmpz_mul(fmpz_t res, fmpz_t a, fmpz_t b)
 }      
 
 
-void fmpz_mul_ui(fmpz_t output, fmpz_t input, unsigned long x)
+void fmpz_mul_ui(fmpz_t output, const fmpz_t input, const unsigned long x)
 {
    if (x == 0)
    {
@@ -384,12 +393,15 @@ void fmpz_mul_ui(fmpz_t output, fmpz_t input, unsigned long x)
    Assumes no overlap
 */
 
-void fmpz_addmul(fmpz_t res, fmpz_t a, fmpz_t b) 
+void fmpz_addmul(fmpz_t res, const fmpz_t a, const fmpz_t b) 
 {
-      NORM(a);
-      NORM(b);
-      unsigned long sizea = ABS(a[0]);
-      unsigned long sizeb = ABS(b[0]);
+      long a0 = a[0];
+      long b0 = b[0];
+      unsigned long sizea = FLINT_ABS(a0);
+      unsigned long sizeb = FLINT_ABS(b0);
+      while ((!a[sizea]) && (sizea)) sizea--;
+      while ((!b[sizeb]) && (sizeb)) sizeb--;
+      
       fmpz_t temp;
       mp_limb_t mslimb;
       
@@ -422,15 +434,16 @@ void fmpz_addmul(fmpz_t res, fmpz_t a, fmpz_t b)
    Assumes no overlap
 */
 
-void fmpz_div(fmpz_t res, fmpz_t a, fmpz_t b) 
+void fmpz_div(fmpz_t res, const fmpz_t a, const fmpz_t b) 
 {
-   NORM(a);
-   NORM(b);
    long a0 = a[0];
    long b0 = b[0];
+   unsigned long sizea = FLINT_ABS(a0);
+   unsigned long sizeb = FLINT_ABS(b0);
+   while ((!a[sizea]) && (sizea)) sizea--;
+   while ((!b[sizeb]) && (sizeb)) sizeb--;
       
-   unsigned long sizea = ABS(a0);
-   unsigned long sizeb = ABS(b0);
+
    mp_limb_t mslimb;
    fmpz_t temp;
       
@@ -451,20 +464,20 @@ void fmpz_div(fmpz_t res, fmpz_t a, fmpz_t b)
    }
 }     
 
-void fmpz_div_ui(fmpz_t output, fmpz_t input, unsigned long x)
+void fmpz_div_ui(fmpz_t output, const fmpz_t input, const unsigned long x)
 {
    output[0] = input[0];
    unsigned long size = FLINT_ABS(input[0]);
-      
+   unsigned long xnorm;
+     
    if (size > 2) 
    {
       unsigned long norm;
       mp_limb_t xinv;
       
       count_lead_zeros(norm, x);
-      x <<= norm;
-      invert_limb(xinv, x);
-      x >>= norm;
+      xnorm = (x<<norm);
+      invert_limb(xinv, xnorm);
       
       mpn_divmod_1_preinv(output+1, input+1, size, x, xinv, norm);
    } else
@@ -481,7 +494,7 @@ void fmpz_div_ui(fmpz_t output, fmpz_t input, unsigned long x)
    GMP's mpz_pow_ui function
 */
 
-void fmpz_pow_ui(fmpz_t output, fmpz_t input, unsigned long exp)
+void fmpz_pow_ui(fmpz_t output, const fmpz_t input, const unsigned long exp)
 {
    mpz_t power;
    mpz_init(power);
