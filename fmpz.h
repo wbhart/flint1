@@ -161,11 +161,15 @@ void fmpz_add(fmpz_t coeffs_out, const fmpz_t in1, const fmpz_t in2);
 
 void fmpz_add_ui_inplace(fmpz_t output, const unsigned long x);
 
+void fmpz_add_ui(fmpz_t output, const fmpz_t input, const unsigned long x);
+
 void __fmpz_add_ui_inplace(fmpz_t output, const unsigned long x);
 
 void fmpz_sub(fmpz_t coeffs_out, const fmpz_t in1, const fmpz_t in2);
 
 void fmpz_sub_ui_inplace(fmpz_t output, const unsigned long x);
+
+void fmpz_sub_ui(fmpz_t output, const fmpz_t input, const unsigned long x);
 
 void fmpz_mul(fmpz_t res, const fmpz_t a, const fmpz_t b);
 
