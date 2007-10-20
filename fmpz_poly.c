@@ -2525,7 +2525,7 @@ void fmpz_poly_init(fmpz_poly_t poly)
    each with enough space for "limbs" limbs
 */
 
-void fmpz_poly_init2(fmpz_poly_t poly, unsigned long alloc, unsigned long limbs)
+void fmpz_poly_init2(fmpz_poly_t poly, const unsigned long alloc, const unsigned long limbs)
 {
    if ((alloc > 0) && (limbs > 0))
    {
@@ -2542,7 +2542,7 @@ void fmpz_poly_init2(fmpz_poly_t poly, unsigned long alloc, unsigned long limbs)
    Shrink or expand a polynomial to "alloc" coefficients 
 */
 
-void fmpz_poly_realloc(fmpz_poly_t poly, unsigned long alloc)
+void fmpz_poly_realloc(fmpz_poly_t poly, const unsigned long alloc)
 {
    if (poly->limbs > 0)
    {
@@ -2564,8 +2564,9 @@ void fmpz_poly_realloc(fmpz_poly_t poly, unsigned long alloc)
    }
 }
 
-void fmpz_poly_fit_length(fmpz_poly_t poly, unsigned long alloc)
+void fmpz_poly_fit_length(fmpz_poly_t poly, const unsigned long alc)
 {
+   unsigned long alloc = alc;
    if (alloc <= poly->alloc) return;
 
    if (alloc < 2*poly->alloc) alloc = 2*poly->alloc;
@@ -2573,7 +2574,7 @@ void fmpz_poly_fit_length(fmpz_poly_t poly, unsigned long alloc)
    fmpz_poly_realloc(poly, alloc);
 }
 
-void fmpz_poly_resize_limbs(fmpz_poly_t poly, unsigned long limbs)
+void fmpz_poly_resize_limbs(fmpz_poly_t poly, const unsigned long limbs)
 {
    if (limbs > 0)
    {
@@ -2633,7 +2634,7 @@ void fmpz_poly_clear(fmpz_poly_t poly)
 ****************************************************************************/
 
 
-int fmpz_poly_from_string(fmpz_poly_t poly, char* s)
+int fmpz_poly_from_string(fmpz_poly_t poly, const char* s)
 {
    // const char* whitespace = " \t\n\r";
    // 
@@ -2707,7 +2708,7 @@ int fmpz_poly_from_string(fmpz_poly_t poly, char* s)
 }
 
 // taken from mpz_poly_to_string, and altered using fmpz_to_mpz
-char* fmpz_poly_to_string(fmpz_poly_t poly)
+char* fmpz_poly_to_string(const fmpz_poly_t poly)
 {
    // estimate the size of the string
    // 20 = enough room for null terminator and length info
@@ -2741,7 +2742,7 @@ char* fmpz_poly_to_string(fmpz_poly_t poly)
 }
 
 
-void fmpz_poly_fprint(fmpz_poly_t poly, FILE* f)
+void fmpz_poly_fprint(const fmpz_poly_t poly, FILE* f)
 {
    char* s = fmpz_poly_to_string(poly);
    fputs(s, f);
@@ -2749,13 +2750,13 @@ void fmpz_poly_fprint(fmpz_poly_t poly, FILE* f)
 }
 
 
-void fmpz_poly_print(fmpz_poly_t poly)
+void fmpz_poly_print(const fmpz_poly_t poly)
 {
    fmpz_poly_fprint(poly, stdout);
 }
 
 
-int fmpz_poly_fread(fmpz_poly_t poly, FILE* f)
+int fmpz_poly_fread(fmpz_poly_t poly, const FILE* f)
 {
    // // read poly length
    // unsigned long length;
@@ -2786,7 +2787,7 @@ int fmpz_poly_read(fmpz_poly_t poly)
 
 
 
-long fmpz_poly_degree(fmpz_poly_t const in)
+long fmpz_poly_degree(const fmpz_poly_t in)
 {
    fmpz_poly_t poly;
    poly->length = in->length;
@@ -2795,13 +2796,16 @@ long fmpz_poly_degree(fmpz_poly_t const in)
    return poly->length - 1;
 }
 
-unsigned long fmpz_poly_length(fmpz_poly_t poly)
+unsigned long fmpz_poly_length(const fmpz_poly_t in)
 {
+   fmpz_poly_t poly;
+   poly->length = in->length;
+   poly->coeffs = in->coeffs;
    _fmpz_poly_normalise(poly);
    return poly->length;
 }
 
-void fmpz_poly_set_length(fmpz_poly_t poly, unsigned long length)
+void fmpz_poly_set_length(fmpz_poly_t poly, const unsigned long length)
 {
    fmpz_poly_fit_length(poly, length);
 
@@ -2811,7 +2815,7 @@ void fmpz_poly_set_length(fmpz_poly_t poly, unsigned long length)
    poly->length = length;
 }
 
-void fmpz_poly_get_coeff_mpz(mpz_t x, fmpz_poly_t poly, unsigned long n)
+void fmpz_poly_get_coeff_mpz(mpz_t x, const fmpz_poly_t poly, const unsigned long n)
 {
    if (n >= poly->length)
       mpz_set_ui(x, 0);
@@ -2819,7 +2823,7 @@ void fmpz_poly_get_coeff_mpz(mpz_t x, fmpz_poly_t poly, unsigned long n)
       _fmpz_poly_get_coeff_mpz(x, poly, n);
 }
 
-void fmpz_poly_mul(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_t input2)
+void fmpz_poly_mul(fmpz_poly_t output, const fmpz_poly_t input1, const fmpz_poly_t input2)
 {
    if ((input1->length == 0) || (input2->length == 0))
    {
@@ -2847,12 +2851,11 @@ void fmpz_poly_mul(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_t input2)
    fmpz_poly_fit_length(output, input1->length + input2->length - 1);
    
    _fmpz_poly_mul(output, input1, input2);
-   output->length = total_length;
-   
+   output->length = total_length; 
 }
 
-void fmpz_poly_mul_trunc_n(fmpz_poly_t output, fmpz_poly_t input1, 
-                                          fmpz_poly_t input2, unsigned long trunc)
+void fmpz_poly_mul_trunc_n(fmpz_poly_t output, const fmpz_poly_t input1, 
+                                          const fmpz_poly_t input2, const unsigned long trunc)
 {
    long bits1, bits2;
       
@@ -2877,7 +2880,8 @@ void fmpz_poly_mul_trunc_n(fmpz_poly_t output, fmpz_poly_t input1,
    fmpz_poly_set_length(output, FLINT_MIN(input1->length + input2->length - 1, trunc));
 }
 
-void fmpz_poly_mul_trunc_left_n(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_t input2, unsigned long trunc)
+void fmpz_poly_mul_trunc_left_n(fmpz_poly_t output, const fmpz_poly_t input1, 
+                             const fmpz_poly_t input2, const unsigned long trunc)
 {
    unsigned long limbs = input1->limbs + input2->limbs;
    
@@ -2900,9 +2904,13 @@ void fmpz_poly_mul_trunc_left_n(fmpz_poly_t output, fmpz_poly_t input1, fmpz_pol
 }
 
 
-void fmpz_poly_divrem_naive(fmpz_poly_t Q, fmpz_poly_t R, fmpz_poly_t A, fmpz_poly_t B)
+void fmpz_poly_divrem_naive(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_poly_t Ain, const fmpz_poly_t Bin)
 {
    fmpz_poly_t qB;
+   
+   fmpz_poly_t A, B;
+   _fmpz_poly_transfer(A, Ain);
+   _fmpz_poly_transfer(B, Bin);
    
    _fmpz_poly_normalise(A);
    _fmpz_poly_normalise(B);
@@ -3041,9 +3049,13 @@ void fmpz_poly_divrem_naive(fmpz_poly_t Q, fmpz_poly_t R, fmpz_poly_t A, fmpz_po
    Divides A by B and returns the quotient Q, but only the low half of the remainder R
 */
 
-void fmpz_poly_divrem_naive_low(fmpz_poly_t Q, fmpz_poly_t R, fmpz_poly_t A, fmpz_poly_t B)
+void fmpz_poly_divrem_naive_low(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_poly_t Ain, const fmpz_poly_t Bin)
 {
    fmpz_poly_t qB;
+   
+   fmpz_poly_t A, B;
+   _fmpz_poly_transfer(A, Ain);
+   _fmpz_poly_transfer(B, Bin);
    
    _fmpz_poly_normalise(A);
    _fmpz_poly_normalise(B);
@@ -3187,11 +3199,15 @@ void fmpz_poly_divrem_naive_low(fmpz_poly_t Q, fmpz_poly_t R, fmpz_poly_t A, fmp
    Divide the polynomial A by the polynomial B but do not compute the remainder
 */
 
-void fmpz_poly_div_naive(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B)
+void fmpz_poly_div_naive(fmpz_poly_t Q, const fmpz_poly_t Ain, const fmpz_poly_t Bin)
 {
    fmpz_poly_t qB, R;
    
    fmpz_poly_init(R);
+   
+   fmpz_poly_t A, B;
+   _fmpz_poly_transfer(A, Ain);
+   _fmpz_poly_transfer(B, Bin);
    
    _fmpz_poly_normalise(A);
    _fmpz_poly_normalise(B);
@@ -3346,8 +3362,12 @@ void fmpz_poly_div_naive(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B)
    Note BQ is not the remainder but B*Q, so the remainder R = A-BQ
 */
  
-void fmpz_poly_div_karatsuba_recursive(fmpz_poly_t Q, fmpz_poly_t BQ, fmpz_poly_t A, fmpz_poly_t B)
+void fmpz_poly_div_karatsuba_recursive(fmpz_poly_t Q, fmpz_poly_t BQ, const fmpz_poly_t Ain, const fmpz_poly_t Bin)
 {
+   fmpz_poly_t A, B;
+   _fmpz_poly_transfer(A, Ain);
+   _fmpz_poly_transfer(B, Bin);
+   
    _fmpz_poly_normalise(A);
    _fmpz_poly_normalise(B);
          
@@ -3593,8 +3613,12 @@ void fmpz_poly_div_karatsuba_recursive(fmpz_poly_t Q, fmpz_poly_t BQ, fmpz_poly_
    Divide and conquer division of A by B but only computing the low half of Q*B
 */
 
-void fmpz_poly_div_karatsuba_recursive_low(fmpz_poly_t Q, fmpz_poly_t BQ, fmpz_poly_t A, fmpz_poly_t B)
+void fmpz_poly_div_karatsuba_recursive_low(fmpz_poly_t Q, fmpz_poly_t BQ, const fmpz_poly_t Ain, const fmpz_poly_t Bin)
 {
+   fmpz_poly_t A, B;
+   _fmpz_poly_transfer(A, Ain);
+   _fmpz_poly_transfer(B, Bin);
+   
    _fmpz_poly_normalise(A);
    _fmpz_poly_normalise(B);
          
@@ -3879,8 +3903,12 @@ void fmpz_poly_div_karatsuba_recursive_low(fmpz_poly_t Q, fmpz_poly_t BQ, fmpz_p
 }
 
 
-void fmpz_poly_div_karatsuba(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B)
+void fmpz_poly_div_karatsuba(fmpz_poly_t Q, const fmpz_poly_t Ain, const fmpz_poly_t Bin)
 {
+   fmpz_poly_t A, B;
+   _fmpz_poly_transfer(A, Ain);
+   _fmpz_poly_transfer(B, Bin);
+   
    _fmpz_poly_normalise(A);
    _fmpz_poly_normalise(B);
          
@@ -4061,7 +4089,7 @@ void fmpz_poly_div_karatsuba(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B)
    fmpz_poly_clear(q1);
 }
 
-void fmpz_poly_divrem_karatsuba(fmpz_poly_t Q, fmpz_poly_t R, fmpz_poly_t A, fmpz_poly_t B)
+void fmpz_poly_divrem_karatsuba(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_poly_t A, const fmpz_poly_t B)
 {
    fmpz_poly_t QB;
    
@@ -4083,7 +4111,7 @@ void fmpz_poly_divrem_karatsuba(fmpz_poly_t Q, fmpz_poly_t R, fmpz_poly_t A, fmp
    Q must be monic and have length >= n.
 */
 
-void fmpz_poly_newton_invert_basecase(fmpz_poly_t Q_inv, fmpz_poly_t Q, unsigned long n)
+void fmpz_poly_newton_invert_basecase(fmpz_poly_t Q_inv, const fmpz_poly_t Q, unsigned long n)
 {
    fmpz_poly_t X2n, Qn;
    
@@ -4108,7 +4136,7 @@ void fmpz_poly_newton_invert_basecase(fmpz_poly_t Q_inv, fmpz_poly_t Q, unsigned
    Assumes Q is given to the full precision n required and has constant term 1
 */
 
-void fmpz_poly_newton_invert(fmpz_poly_t Q_inv, fmpz_poly_t Q, unsigned long n)
+void fmpz_poly_newton_invert(fmpz_poly_t Q_inv, const fmpz_poly_t Q, const unsigned long n)
 {
    if (n < FLINT_NEWTON_INVERSE_BASECASE_CUTOFF)
    {
@@ -4149,7 +4177,7 @@ void fmpz_poly_newton_invert(fmpz_poly_t Q_inv, fmpz_poly_t Q, unsigned long n)
    given to precision n and B is normalised (i.e. constant coefficient is 1).
 */
 
-void fmpz_poly_div_series(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B, unsigned long n)
+void fmpz_poly_div_series(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t B, const unsigned long n)
 {
    fmpz_poly_t B_inv;
    fmpz_poly_init(B_inv);
@@ -4165,7 +4193,7 @@ void fmpz_poly_div_series(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B, unsigned 
    B is assumed to be monic
 */
 
-void fmpz_poly_div_newton(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B)
+void fmpz_poly_div_newton(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t B)
 {
    if (A->length < B->length)
    {
@@ -4191,7 +4219,7 @@ void fmpz_poly_div_newton(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B)
    fmpz_poly_clear(A_rev);
 }
 
-void fmpz_poly_power(fmpz_poly_t output, fmpz_poly_t poly, unsigned long exp)
+void fmpz_poly_power(fmpz_poly_t output, const fmpz_poly_t poly, const unsigned long exp)
 {
    if (exp == 0) 
    {
@@ -4392,8 +4420,9 @@ void fmpz_poly_power(fmpz_poly_t output, fmpz_poly_t poly, unsigned long exp)
    }*/
 }
 
-void fmpz_poly_power_trunc_n(fmpz_poly_t output, fmpz_poly_t poly, unsigned long exp, unsigned long n)
+void fmpz_poly_power_trunc_n(fmpz_poly_t output, const fmpz_poly_t poly, const unsigned long exponent, const unsigned long n)
 {
+   unsigned long exp = exponent;
    fmpz_poly_t power, temp;
    
    fmpz_poly_init(power);
@@ -4475,8 +4504,12 @@ void fmpz_poly_power_trunc_n(fmpz_poly_t output, fmpz_poly_t poly, unsigned long
 
 // Mulders algorithm without improvements
 
-/*void fmpz_poly_div_mulders(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B)
+/*void fmpz_poly_div_mulders(fmpz_poly_t Q, const fmpz_poly_t Ain, const fmpz_poly_t Bin)
 {
+   fmpz_poly_t A, B;
+   _fmpz_poly_transfer(A, Ain);
+   _fmpz_poly_transfer(B, Bin);
+   
    _fmpz_poly_normalise(A);
    _fmpz_poly_normalise(B);
           
@@ -4650,8 +4683,12 @@ void fmpz_poly_power_trunc_n(fmpz_poly_t output, fmpz_poly_t poly, unsigned long
    fmpz_poly_clear(q1);
 }*/
 
-void fmpz_poly_div_mulders(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B)
+void fmpz_poly_div_mulders(fmpz_poly_t Q, const fmpz_poly_t Ain, const fmpz_poly_t Bin)
 {
+   fmpz_poly_t A, B;
+   _fmpz_poly_transfer(A, Ain);
+   _fmpz_poly_transfer(B, Bin);
+   
    _fmpz_poly_normalise(A);
    _fmpz_poly_normalise(B);
           
@@ -4837,9 +4874,13 @@ void fmpz_poly_div_mulders(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B)
 
 //Pseudo-division a la Cohen. 
 
-void fmpz_poly_pseudo_divrem(fmpz_poly_t Q, fmpz_poly_t R, fmpz_poly_t A, fmpz_poly_t B)
+void fmpz_poly_pseudo_divrem(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_poly_t Ain, const fmpz_poly_t Bin)
 {
    fmpz_poly_t qB;
+   
+   fmpz_poly_t A, B;
+   _fmpz_poly_transfer(A, Ain);
+   _fmpz_poly_transfer(B, Bin);
    
    _fmpz_poly_normalise(A);
    _fmpz_poly_normalise(B);
@@ -4943,9 +4984,13 @@ void fmpz_poly_pseudo_divrem(fmpz_poly_t Q, fmpz_poly_t R, fmpz_poly_t A, fmpz_p
 
 #else
 
-void fmpz_poly_pseudo_divrem(fmpz_poly_t Q, fmpz_poly_t R, fmpz_poly_t A, fmpz_poly_t B)
+void fmpz_poly_pseudo_divrem(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_poly_t Ain, const fmpz_poly_t Bin)
 {
    fmpz_poly_t qB;
+   
+   fmpz_poly_t A, B;
+   _fmpz_poly_transfer(A, Ain);
+   _fmpz_poly_transfer(B, Bin);
    
    _fmpz_poly_normalise(A);
    _fmpz_poly_normalise(B);
@@ -5110,9 +5155,13 @@ void fmpz_poly_pseudo_divrem(fmpz_poly_t Q, fmpz_poly_t R, fmpz_poly_t A, fmpz_p
 */
 
 void fmpz_poly_pseudo_divrem_d(fmpz_poly_t Q, fmpz_poly_t R, 
-                               unsigned long * d, fmpz_poly_t A, fmpz_poly_t B)
+                               unsigned long * d, const fmpz_poly_t Ain, const fmpz_poly_t Bin)
 {
    fmpz_poly_t qB;
+   
+   fmpz_poly_t A, B;
+   _fmpz_poly_transfer(A, Ain);
+   _fmpz_poly_transfer(B, Bin);
    
    _fmpz_poly_normalise(A);
    _fmpz_poly_normalise(B);
@@ -5269,8 +5318,12 @@ void fmpz_poly_pseudo_divrem_d(fmpz_poly_t Q, fmpz_poly_t R,
    Pseudo division using a Karatsuba-like algorithm.
 */
  
-void fmpz_poly_pseudo_divrem_recursive(fmpz_poly_t Q, fmpz_poly_t R, unsigned long * d, fmpz_poly_t A, fmpz_poly_t B)
+void fmpz_poly_pseudo_divrem_recursive(fmpz_poly_t Q, fmpz_poly_t R, unsigned long * d, const fmpz_poly_t Ain, const fmpz_poly_t Bin)
 {
+   fmpz_poly_t A, B;
+   _fmpz_poly_transfer(A, Ain);
+   _fmpz_poly_transfer(B, Bin);
+   
    _fmpz_poly_normalise(A);
    _fmpz_poly_normalise(B);
          

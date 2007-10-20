@@ -160,7 +160,7 @@ void _mpz_poly_set_coeff_si(mpz_poly_t poly, unsigned long n, long c)
 // ------------------------------------------------------
 // String conversions and I/O
 
-int mpz_poly_from_string(mpz_poly_t poly, char* s);
+int mpz_poly_from_string(mpz_poly_t poly, const char* s);
 char* mpz_poly_to_string(mpz_poly_t poly);
 void mpz_poly_print(mpz_poly_t poly);
 void mpz_poly_fprint(mpz_poly_t poly, FILE* f);

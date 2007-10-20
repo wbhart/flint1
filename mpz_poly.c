@@ -253,7 +253,7 @@ void mpz_poly_set_coeff_si(mpz_poly_t poly, unsigned long n, long c)
 ****************************************************************************/
 
 
-int mpz_poly_from_string(mpz_poly_t poly, char* s)
+int mpz_poly_from_string(mpz_poly_t poly, const char* s)
 {
    const char* whitespace = " \t\n\r";
    
