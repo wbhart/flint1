@@ -150,6 +150,53 @@ void fmpz_add_ui_inplace(fmpz_t output, const unsigned long x)
    }
 }
 
+/* 
+     Add an unsigned long to an fmpz, inplace
+*/
+
+void fmpz_add_ui(fmpz_t output, const fmpz_t input, const unsigned long x)
+{
+   unsigned long carry;
+   
+   if (x)
+   {
+      if (!input[0])
+      {
+         output[1] = x;
+         output[0] = 1;
+      } else if ((long) input[0] > 0)
+      {
+         carry = mpn_add_1(output + 1, input + 1, input[0], x); 
+         output[0] = input[0];
+         if (carry)
+         {
+            output[output[0]+1] = carry;
+            output[0]++;
+         }
+      } else if ((long) input[0] < -1L)
+      {
+         mpn_sub_1(output + 1, input + 1, ABS(input[0]), x); 
+         output[0] = input[0];
+         NORM(output);
+      } else
+      {
+         if (x <= input[1]) 
+         {
+            output[1] = input[1] - x;
+            if (!output[1]) output[0] = 0L;
+            else output[0] = -1L;
+         } else
+         {
+            output[1] = x - input[1];
+            output[0] = 1L;
+         } 
+      }
+   } else
+   {
+      fmpz_set(output, input);
+   }
+}
+
 /*
    Add an unsigned long to a coefficient. 
    Assumes the output coefficient is non-negative.   
@@ -276,6 +323,49 @@ void fmpz_sub_ui_inplace(fmpz_t output, const unsigned long x)
             output[0] = -1L;
          } 
       }
+   }
+}
+
+void fmpz_sub_ui(fmpz_t output, const fmpz_t input, const unsigned long x)
+{
+   unsigned long carry;
+   
+   if (x)
+   {
+      if (!input[0])
+      {
+         output[1] = x;
+         output[0] = -1L;
+      } else if ((long) input[0] < 0)
+      {
+         carry = mpn_add_1(output + 1, input + 1, ABS(input[0]), x); 
+         output[0] = input[0];
+         if (carry)
+         {
+            output[ABS(output[0])+1] = carry;
+            output[0]--;
+         }
+      } else if ((long) input[0] > 1L)
+      {
+         mpn_sub_1(output + 1, input + 1, input[0], x); 
+         output[0] = input[0];
+         NORM(output);
+      } else
+      {
+         if (x <= input[1]) 
+         {
+            output[1] = input[1] - x;
+            if (!output[1]) output[0] = 0;
+            else output[0] = 1L;
+         } else
+         {
+            output[1] = x - input[1];
+            output[0] = -1L;
+         } 
+      }
+   } else
+   {
+      fmpz_set(output, input);
    }
 }
 

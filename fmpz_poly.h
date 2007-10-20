@@ -262,25 +262,25 @@ void _fmpz_poly_mul_karatsuba_trunc_left(fmpz_poly_t output, const fmpz_poly_t i
    is supplied by the parameter "bits"
 */
 
-void _fmpz_poly_mul_KS(fmpz_poly_t output, fmpz_poly_t input1, 
-                                       fmpz_poly_t input2);
+void _fmpz_poly_mul_KS(fmpz_poly_t output, const fmpz_poly_t input1, 
+                                       const fmpz_poly_t input2);
                                        
-void _fmpz_poly_mul_KS_trunc(fmpz_poly_t output, fmpz_poly_p input1, 
-                                        fmpz_poly_p input2, unsigned long trunc);
+void _fmpz_poly_mul_KS_trunc(fmpz_poly_t output, const fmpz_poly_t input1, 
+                                        const fmpz_poly_t input2, const unsigned long trunc);
 
-void _fmpz_poly_mul_SS(fmpz_poly_t output, fmpz_poly_p input1, 
-                                                            fmpz_poly_p input2);
+void _fmpz_poly_mul_SS(fmpz_poly_t output, const fmpz_poly_t input1, 
+                                                      const fmpz_poly_t input2);
                                                             
-void _fmpz_poly_mul_SS_trunc(fmpz_poly_t output, fmpz_poly_p input1, 
-                                        fmpz_poly_p input2, unsigned long trunc);
+void _fmpz_poly_mul_SS_trunc(fmpz_poly_t output, const fmpz_poly_t input1, 
+                           const fmpz_poly_t input2, const unsigned long trunc);
                                         
-void _fmpz_poly_mul_trunc_n(fmpz_poly_t output, fmpz_poly_t input1, 
-                                fmpz_poly_t input2, unsigned long trunc);
+void _fmpz_poly_mul_trunc_n(fmpz_poly_t output, const fmpz_poly_t input1, 
+                                const fmpz_poly_t input2, const unsigned long trunc);
                                 
-void _fmpz_poly_mul_trunc_left_n(fmpz_poly_t output, fmpz_poly_t input1, 
-                                fmpz_poly_t input2, unsigned long trunc);
+void _fmpz_poly_mul_trunc_left_n(fmpz_poly_t output, const fmpz_poly_t input1, 
+                                const fmpz_poly_t input2, const unsigned long trunc);
                                 
-void _fmpz_poly_mul(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_t input2);
+void _fmpz_poly_mul(fmpz_poly_t output, const fmpz_poly_t input1, const fmpz_poly_t input2);
 
 void _fmpz_poly_sqr(fmpz_poly_t output, fmpz_poly_t input);
 

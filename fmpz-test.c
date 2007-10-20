@@ -711,6 +711,48 @@ int test_fmpz_add_ui_inplace()
    return result;
 }
 
+int test_fmpz_add_ui()
+{
+   mpz_t num1, num2;
+   fmpz_t fnum1, fnum2;
+   unsigned long bits, bits2, x;
+   int result = 1;
+   
+   mpz_init(num1);
+   mpz_init(num2);
+   
+   for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+   {
+       bits = random_ulong(63)+1;
+       x = random_ulong(1L<<bits);
+       
+       bits2 = random_ulong(1000);
+       fnum1 = fmpz_init((long) FLINT_MAX(bits, bits2)/FLINT_BITS+1);
+       fnum2 = fmpz_init((long) FLINT_MAX(bits, bits2)/FLINT_BITS+1);
+       
+       mpz_rrandomb(num1, state, bits2);
+#if SIGNS
+       if (random_ulong(2)) mpz_neg(num1, num1);
+#endif
+
+       mpz_to_fmpz(fnum1, num1);
+       fmpz_add_ui(fnum2, fnum1, x);
+       mpz_add_ui(num1, num1, x);
+       fmpz_to_mpz(num2, fnum2);
+             
+       result = (mpz_cmp(num1, num2) == 0);
+#if DEBUG
+       if (!result) gmp_printf("%Zd, %Zd, %ld\n", num1, num2, x);       
+#endif
+       fmpz_clear(fnum1);
+   }
+   
+   mpz_clear(num1);
+   mpz_clear(num2);
+   
+   return result;
+}
+
 int test___fmpz_add_ui_inplace()
 {
    mpz_t num1, num2;
@@ -777,6 +819,48 @@ int test_fmpz_sub_ui_inplace()
              
        result = (mpz_cmp(num1, num2) == 0);
        
+       fmpz_clear(fnum1);
+   }
+   
+   mpz_clear(num1);
+   mpz_clear(num2);
+   
+   return result;
+}
+
+int test_fmpz_sub_ui()
+{
+   mpz_t num1, num2;
+   fmpz_t fnum1, fnum2;
+   unsigned long bits, bits2, x;
+   int result = 1;
+   
+   mpz_init(num1);
+   mpz_init(num2);
+   
+   for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+   {
+       bits = random_ulong(63)+1;
+       x = random_ulong(1L<<bits);
+       
+       bits2 = random_ulong(1000);
+       fnum1 = fmpz_init((long) FLINT_MAX(bits, bits2)/FLINT_BITS+1);
+       fnum2 = fmpz_init((long) FLINT_MAX(bits, bits2)/FLINT_BITS+1);
+       
+       mpz_rrandomb(num1, state, bits2);
+#if SIGNS
+       if (random_ulong(2)) mpz_neg(num1, num1);
+#endif
+
+       mpz_to_fmpz(fnum1, num1);
+       fmpz_sub_ui(fnum2, fnum1, x);
+       mpz_sub_ui(num1, num1, x);
+       fmpz_to_mpz(num2, fnum2);
+             
+       result = (mpz_cmp(num1, num2) == 0);
+#if DEBUG
+       if (!result) gmp_printf("%Zd, %Zd, %ld\n", num1, num2, x);       
+#endif
        fmpz_clear(fnum1);
    }
    
@@ -1068,9 +1152,11 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_set_equal);
    RUN_TEST(fmpz_add);
    RUN_TEST(fmpz_add_ui_inplace);
+   RUN_TEST(fmpz_add_ui);
    RUN_TEST(__fmpz_add_ui_inplace);
    RUN_TEST(fmpz_sub);
    RUN_TEST(fmpz_sub_ui_inplace);
+   RUN_TEST(fmpz_sub_ui);
    RUN_TEST(fmpz_mul);
    RUN_TEST(fmpz_mul_ui);
    RUN_TEST(__fmpz_mul);

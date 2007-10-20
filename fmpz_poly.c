@@ -1904,7 +1904,7 @@ void _fmpz_poly_mul_karatsuba_trunc_left(fmpz_poly_t output, const fmpz_poly_t i
    flint_stack_release();
 }
 
-void _fmpz_poly_mul_KS(fmpz_poly_t output, fmpz_poly_t in1, fmpz_poly_t in2)
+void _fmpz_poly_mul_KS(fmpz_poly_t output, const fmpz_poly_t in1, const fmpz_poly_t in2)
 {
    long sign1 = 1L;
    long sign2 = 1L;
@@ -1938,26 +1938,13 @@ void _fmpz_poly_mul_KS(fmpz_poly_t output, fmpz_poly_t in1, fmpz_poly_t in2)
       _fmpz_poly_transfer(input2, in2);
    }
    
-   if ((long) input1->coeffs[(length1-1)*(input1->limbs+1)] < 0)
-   {
-      _fmpz_poly_neg(input1, input1);
-      sign1 = -1L;
-   }
-   
-   if (in1 != in2)
-   {
-      if ((long) input2->coeffs[(length2-1)*(input2->limbs+1)] < 0)
-      {
-         _fmpz_poly_neg(input2, input2);
-         sign2 = -1L;
-      }
-   } else sign2 = sign1;
+   //
    
    long bits1, bits2;
    int bitpack = 0;
    
    bits1 = _fmpz_poly_bits(input1);
-   bits2 = (input1 == input2) ? bits1 : _fmpz_poly_bits(input2);
+   bits2 = (in1 == in2) ? bits1 : _fmpz_poly_bits(input2);
       
    unsigned long sign = ((bits1 < 0) || (bits2 < 0));
    unsigned long length = length2;
@@ -1970,28 +1957,36 @@ void _fmpz_poly_mul_KS(fmpz_poly_t output, fmpz_poly_t in1, fmpz_poly_t in2)
    
    unsigned long bytes = ((bits-1)>>3)+1;
    
+   if ((long) input1->coeffs[(length1-1)*(input1->limbs+1)] < 0) sign1 = -1L;
+   
+   if (in1 != in2)
+   {
+      if ((long) input2->coeffs[(length2-1)*(input2->limbs+1)] < 0) sign2 = -1L;
+   } else sign2 = sign1;
+   
+   
    ZmodF_poly_t poly1, poly2, poly3;
    if (bitpack)
    {
       ZmodF_poly_stack_init(poly1, 0, (bits*length1-1)/FLINT_BITS+1, 0);
-      if (input1 != input2)
+      if (in1 != in2)
          ZmodF_poly_stack_init(poly2, 0, (bits*length2-1)/FLINT_BITS+1, 0);
 
       if (sign) bits = -1L*bits;
-      if (input1 != input2)
-         ZmodF_poly_bit_pack_mpn(poly2, input2, length2, bits, length2);
-      ZmodF_poly_bit_pack_mpn(poly1, input1, length1, bits, length1);
+      if (in1 != in2)
+         ZmodF_poly_bit_pack_mpn(poly2, input2, length2, bits, length2, sign2);
+      ZmodF_poly_bit_pack_mpn(poly1, input1, length1, bits, length1, sign1);
 
       bits=ABS(bits);
    } else
    {
       ZmodF_poly_stack_init(poly1, 0, ((bytes*length1-1)>>FLINT_LG_BYTES_PER_LIMB)+1, 0);
-      if (input1 != input2)
+      if (in1 != in2)
          ZmodF_poly_stack_init(poly2, 0, ((bytes*length2-1)>>FLINT_LG_BYTES_PER_LIMB)+1, 0);
 
-      ZmodF_poly_byte_pack_mpn(poly1, input1, length1, bytes, length1);
-      if (input1 != input2)
-         ZmodF_poly_byte_pack_mpn(poly2, input2, length2, bytes, length2);
+      ZmodF_poly_byte_pack_mpn(poly1, input1, length1, bytes, length1, sign1);
+      if (in1 != in2)
+         ZmodF_poly_byte_pack_mpn(poly2, input2, length2, bytes, length2, sign2);
    }
    
    if (in1 == in2)
@@ -2024,14 +2019,12 @@ void _fmpz_poly_mul_KS(fmpz_poly_t output, fmpz_poly_t in1, fmpz_poly_t in2)
    }
    
    ZmodF_poly_stack_clear(poly3);
-   if (input1 != input2)
+   if (in1 != in2)
       ZmodF_poly_stack_clear(poly2);
    ZmodF_poly_stack_clear(poly1);
      
    if ((long) (sign1 ^ sign2) < 0) _fmpz_poly_neg(output, output);
    
-   if (sign1 < 0) _fmpz_poly_neg(input1, input1);
-   if ((sign2 < 0) && (input1 != input2)) _fmpz_poly_neg(input2, input2);
    for (unsigned long i = output->length; i < input1->length + input2->length - 1; i++)
    {
       output->coeffs[i*(output->limbs+1)] = 0;
@@ -2039,8 +2032,8 @@ void _fmpz_poly_mul_KS(fmpz_poly_t output, fmpz_poly_t in1, fmpz_poly_t in2)
    output->length = final_length;
 }
 
-void _fmpz_poly_mul_KS_trunc(fmpz_poly_t output, fmpz_poly_t in1, 
-                                        fmpz_poly_t in2, unsigned long trunc)
+void _fmpz_poly_mul_KS_trunc(fmpz_poly_t output, const fmpz_poly_t in1, 
+                                        const fmpz_poly_t in2, const unsigned long trunc)
 {
    long sign1 = 1L;
    long sign2 = 1L;
@@ -2071,26 +2064,11 @@ void _fmpz_poly_mul_KS_trunc(fmpz_poly_t output, fmpz_poly_t in1,
       _fmpz_poly_transfer(input2, in2);
    }
    
-   if ((long) input1->coeffs[(length1-1)*(input1->limbs+1)] < 0)
-   {
-      _fmpz_poly_neg(input1, input1);
-      sign1 = -1L;
-   }
-   
-   if (in1 != in2)
-   {
-      if ((long) input2->coeffs[(length2-1)*(input2->limbs+1)] < 0)
-      {
-         _fmpz_poly_neg(input2, input2);
-         sign2 = -1L;
-      }
-   } else sign2 = sign1;
-   
    long bits1, bits2;
    int bitpack = 0;
    
    bits1 = _fmpz_poly_bits(input1);
-   bits2 = (input1 == input2) ? bits1 : _fmpz_poly_bits(input2);
+   bits2 = (in1 == in2) ? bits1 : _fmpz_poly_bits(input2);
       
    unsigned long sign = ((bits1 < 0) || (bits2 < 0));
    unsigned long length = length2;
@@ -2103,28 +2081,35 @@ void _fmpz_poly_mul_KS_trunc(fmpz_poly_t output, fmpz_poly_t in1,
    
    unsigned long bytes = ((bits-1)>>3)+1;
    
+   if ((long) input1->coeffs[(length1-1)*(input1->limbs+1)] < 0) sign1 = -1L;
+   
+   if (in1 != in2)
+   {
+      if ((long) input2->coeffs[(length2-1)*(input2->limbs+1)] < 0) sign2 = -1L;
+   } else sign2 = sign1;
+   
    ZmodF_poly_t poly1, poly2, poly3;
    if (bitpack)
    {
       ZmodF_poly_stack_init(poly1, 0, (bits*length1-1)/FLINT_BITS+1, 0);
-      if (input1 != input2)
+      if (in1 != in2)
          ZmodF_poly_stack_init(poly2, 0, (bits*length2-1)/FLINT_BITS+1, 0);
 
       if (sign) bits = -bits;
-      if (input1 != input2)
-         ZmodF_poly_bit_pack_mpn(poly2, input2, length2, bits, length2);
-      ZmodF_poly_bit_pack_mpn(poly1, input1, length1, bits, length1);
+      if (in1 != in2)
+         ZmodF_poly_bit_pack_mpn(poly2, input2, length2, bits, length2, sign2);
+      ZmodF_poly_bit_pack_mpn(poly1, input1, length1, bits, length1, sign1);
 
       bits = ABS(bits);
    } else
    {
       ZmodF_poly_stack_init(poly1, 0, ((bytes*length1-1)>>FLINT_LG_BYTES_PER_LIMB)+1, 0);
-      if (input1 != input2)
+      if (in1 != in2)
          ZmodF_poly_stack_init(poly2, 0, ((bytes*length2-1)>>FLINT_LG_BYTES_PER_LIMB)+1, 0);
 
-      ZmodF_poly_byte_pack_mpn(poly1, input1, length1, bytes, length1);
-      if (input1 != input2)
-         ZmodF_poly_byte_pack_mpn(poly2, input2, length2, bytes, length2);
+      ZmodF_poly_byte_pack_mpn(poly1, input1, length1, bytes, length1, sign1);
+      if (in1 != in2)
+         ZmodF_poly_byte_pack_mpn(poly2, input2, length2, bytes, length2, sign2);
    }
    
    if (in1 == in2)
@@ -2165,17 +2150,14 @@ void _fmpz_poly_mul_KS_trunc(fmpz_poly_t output, fmpz_poly_t in1,
    }
    
    ZmodF_poly_stack_clear(poly3);
-   if (input1 != input2)
+   if (in1 != in2)
       ZmodF_poly_stack_clear(poly2);
    ZmodF_poly_stack_clear(poly1);
      
    if ((long) (sign1 ^ sign2) < 0) _fmpz_poly_neg(output, output);
-   
-   if (sign1 < 0) _fmpz_poly_neg(input1, input1);
-   if ((sign2 < 0) && (input1 != input2)) _fmpz_poly_neg(input2, input2);
 }
 
-void _fmpz_poly_mul_SS(fmpz_poly_t output, fmpz_poly_t in1, fmpz_poly_t in2)
+void _fmpz_poly_mul_SS(fmpz_poly_t output, const fmpz_poly_t in1, const fmpz_poly_t in2)
 {
    unsigned long length1 = in1->length;
    unsigned long length2 = in2->length;
@@ -2269,8 +2251,8 @@ void _fmpz_poly_mul_SS(fmpz_poly_t output, fmpz_poly_t in1, fmpz_poly_t in2)
    ZmodF_poly_stack_clear(poly1);
 }
 
-void _fmpz_poly_mul_SS_trunc(fmpz_poly_t output, fmpz_poly_t in1, 
-                                        fmpz_poly_t in2, unsigned long trunc)
+void _fmpz_poly_mul_SS_trunc(fmpz_poly_t output, const fmpz_poly_t in1, 
+                                        const fmpz_poly_t in2, const unsigned long trunc)
 {
    unsigned long length1 = FLINT_MIN(in1->length, trunc);
    unsigned long length2 = FLINT_MIN(in2->length, trunc);
@@ -2369,8 +2351,8 @@ void _fmpz_poly_mul_SS_trunc(fmpz_poly_t output, fmpz_poly_t in1,
    tuned for truncation to length n where both inputs have length approximately n.
 */
 
-void _fmpz_poly_mul_trunc_n(fmpz_poly_t output, fmpz_poly_t input1, 
-                                fmpz_poly_t input2, unsigned long trunc)
+void _fmpz_poly_mul_trunc_n(fmpz_poly_t output, const fmpz_poly_t input1, 
+                                const fmpz_poly_t input2, const unsigned long trunc)
 {
    if ((input1->length == 0) || (input2->length == 0)) 
    {
@@ -2416,7 +2398,7 @@ void _fmpz_poly_mul_trunc_n(fmpz_poly_t output, fmpz_poly_t input1,
    _fmpz_poly_mul_KS_trunc(output, input1, input2, trunc);     
 }
 
-void _fmpz_poly_mul(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_t input2)
+void _fmpz_poly_mul(fmpz_poly_t output, const fmpz_poly_t input1, const fmpz_poly_t input2)
 {
    if ((input1->length == 0) || (input2->length == 0)) 
    {
@@ -2469,8 +2451,8 @@ void _fmpz_poly_mul(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_t input2)
    tuned for truncation of length n-1 terms, where both inputs have length approximately n.
 */
 
-void _fmpz_poly_mul_trunc_left_n(fmpz_poly_t output, fmpz_poly_t input1, 
-                                fmpz_poly_t input2, unsigned long trunc)
+void _fmpz_poly_mul_trunc_left_n(fmpz_poly_t output, const fmpz_poly_t input1, 
+                                const fmpz_poly_t input2, const unsigned long trunc)
 {
    if ((input1->length == 0) || (input2->length == 0)) 
    {
