@@ -16,9 +16,9 @@
 #include "longlong_wrapper.h"
 #include "longlong.h"
 #include "mpn_extras.h"
-#include "extras.h"
 #include "Z_mpn.h"
 #include "Z_mpn_mul-tuning.h"
+#include "long_extras.h"
 
 void mpz_to_fmpz(fmpz_t res, const mpz_t x)
 {

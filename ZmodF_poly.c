@@ -16,7 +16,6 @@ Copyright (C) 2007, William Hart and David Harvey
 #include "ZmodF_poly.h"
 #include "ZmodF_mul.h"
 #include "fmpz_poly.h"
-#include "extras.h"
 #include "mpn_extras.h"
 #include "fmpz.h"
 

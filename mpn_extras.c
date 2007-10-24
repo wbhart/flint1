@@ -5,8 +5,8 @@
  Extra functions for manipulating mpn's and limbs.
 
  Copyright (C) 2006, William Hart
- 
- mp_limb_t mpn_divmod_1_preinv was adapted from GMP.
+
+ mp_limb_t mpn_divmod_1_preinv was adapted from GMP, (C) Free Software Foundation
 
 ******************************************************************************/
 
@@ -15,9 +15,9 @@
 #include <string.h>
 #include <stdio.h>
 #include "flint.h"
-#include "extras.h"
 #include "longlong_wrapper.h"
 #include "longlong.h"
+#include "long_extras.h"
 
 /*=======================================================================================*/
 
@@ -29,7 +29,7 @@
     the original d should be supplied to the function, not the shifted d. 
     
     This code has been adapted from code found in the GMP package version 4.2.1
-    (divrem_1.c)
+    (divrem_1.c) (C) Free Software Foundation
 */
 mp_limb_t mpn_divmod_1_preinv(mp_limb_t * qp, mp_limb_t * up, 
                                   unsigned long un, mp_limb_t d, mp_limb_t dinv, unsigned long norm)

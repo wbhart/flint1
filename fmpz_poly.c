@@ -14,12 +14,12 @@ Copyright (C) 2007, William Hart and David Harvey
 #include "fmpz.h"
 #include "fmpz_poly.h"
 #include "mpn_extras.h"
-#include "extras.h"
 #include "longlong_wrapper.h"
 #include "longlong.h"
 #include "memory-manager.h"
 #include "ZmodF_poly.h"
 #include "Z_mpn.h"
+#include "long_extras.h"
 
 /****************************************************************************
 

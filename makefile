@@ -69,7 +69,6 @@ HEADERS = \
 	ZmodF_mul-tuning.h \
 	ZmodF_mul.h \
 	ZmodF_poly.h \
-	extras.h \
 	flint.h \
 	fmpz.h \
 	fmpz_poly.h \

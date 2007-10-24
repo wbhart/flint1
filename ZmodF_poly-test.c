@@ -213,7 +213,7 @@ int test_ZmodF_poly_convert_bits()
           mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
           ZmodF_poly_init(test_modF_poly, depth, (bits*bundle-1)/FLINT_BITS+1, 0);
           
-          ZmodF_poly_bit_pack_mpn(test_modF_poly, test_mpn_poly, bundle, -bits, length);
+          ZmodF_poly_bit_pack_mpn(test_modF_poly, test_mpn_poly, bundle, -bits, length, 1L);
           test_mpn_poly2->length = length;
           
           for (unsigned long i = 0; i < length; i++) // Must clear coeffs in advance
@@ -286,7 +286,7 @@ int test_ZmodF_poly_convert_bits_unsigned()
           mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
           ZmodF_poly_init(test_modF_poly, depth, (bits*bundle-1)/FLINT_BITS+1, 0);
           
-          ZmodF_poly_bit_pack_mpn(test_modF_poly, test_mpn_poly, bundle, bits, length);
+          ZmodF_poly_bit_pack_mpn(test_modF_poly, test_mpn_poly, bundle, bits, length, 1L);
           test_mpn_poly2->length = length;
           
           for (unsigned long i = 0; i < length; i++) // Must clear coeffs in advance
@@ -486,7 +486,7 @@ int test_ZmodF_poly_convert_bytes_unsigned()
           
           for (unsigned long j = 0; j < 100; j++)
           {
-             ZmodF_poly_byte_pack_mpn(test_modF_poly, test_mpn_poly, length, bytes, length);
+             ZmodF_poly_byte_pack_mpn(test_modF_poly, test_mpn_poly, length, bytes, length, 1L);
              test_mpn_poly2->length = length;
           
              for (unsigned long i = 0; i < length; i++) // Must clear coeffs in advance
@@ -559,7 +559,7 @@ int test_ZmodF_poly_convert_bytes()
           
           for (unsigned long j = 0; j < 100; j++)
           {
-             ZmodF_poly_byte_pack_mpn(test_modF_poly, test_mpn_poly, length, bytes, length);
+             ZmodF_poly_byte_pack_mpn(test_modF_poly, test_mpn_poly, length, bytes, length, 1L);
              test_mpn_poly2->length = length;
           
              for (unsigned long i = 0; i < length; i++) // Must clear coeffs in advance
