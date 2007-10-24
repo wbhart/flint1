@@ -16,9 +16,16 @@
 #include "longlong_wrapper.h"
 #include "longlong.h"
 #include "mpn_extras.h"
-#include "Z_mpn.h"
 #include "Z_mpn_mul-tuning.h"
 #include "long_extras.h"
+
+#define SWAP_PTRS(x_dummy_p, y_dummy_p) \
+do { \
+   fmpz_t swap_temp_p = x_dummy_p; \
+   x_dummy_p = y_dummy_p; \
+   y_dummy_p = swap_temp_p; \
+} while(0);
+
 
 void mpz_to_fmpz(fmpz_t res, const mpz_t x)
 {
@@ -409,8 +416,8 @@ void fmpz_mul(fmpz_t res, const fmpz_t a, const fmpz_t b)
          flint_stack_release();   
       } else
       {
-         if (sizea >= sizeb) mslimb = Z_mpn_mul(res+1, a+1, sizea, b+1, sizeb);
-         else mslimb = Z_mpn_mul(res+1, b+1, sizeb, a+1, sizea);
+         if (sizea >= sizeb) mslimb = F_mpn_mul(res+1, a+1, sizea, b+1, sizeb);
+         else mslimb = F_mpn_mul(res+1, b+1, sizeb, a+1, sizea);
          res[0] = sizea+sizeb - (mslimb == 0);
          if ((long) (a0 ^ b0) < 0) res[0] = -res[0];
       }
@@ -448,8 +455,8 @@ void __fmpz_mul(fmpz_t res, const fmpz_t a, const fmpz_t b)
          if ((long) (a[0] ^ b[0]) < 0) res[0] = -res[0];
       } else
       {
-         if (sizea >= sizeb) mslimb = Z_mpn_mul(res+1, a+1, sizea, b+1, sizeb);
-         else mslimb = Z_mpn_mul(res+1, b+1, sizeb, a+1, sizea);
+         if (sizea >= sizeb) mslimb = F_mpn_mul(res+1, a+1, sizea, b+1, sizeb);
+         else mslimb = F_mpn_mul(res+1, b+1, sizeb, a+1, sizea);
          res[0] = sizea+sizeb - (mslimb == 0);
          if ((long) (a[0] ^ b[0]) < 0) res[0] = -res[0];
       }
@@ -509,8 +516,8 @@ void fmpz_addmul(fmpz_t res, const fmpz_t a, const fmpz_t b)
          } else
          {
             temp = (fmpz_t) flint_stack_alloc(sizea + sizeb + 1);
-            if (sizea >= sizeb) mslimb = Z_mpn_mul(temp+1, a+1, sizea, b+1, sizeb);
-            else mslimb = Z_mpn_mul(temp+1, b+1, sizeb, a+1, sizea);
+            if (sizea >= sizeb) mslimb = F_mpn_mul(temp+1, a+1, sizea, b+1, sizeb);
+            else mslimb = F_mpn_mul(temp+1, b+1, sizeb, a+1, sizea);
             temp[0] = sizea + sizeb - (mslimb == 0);
             if ((long) (a[0] ^ b[0]) < 0) temp[0] = -temp[0];
             fmpz_add(res, res, temp);

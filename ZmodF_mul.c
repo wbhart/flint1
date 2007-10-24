@@ -13,7 +13,7 @@
 #include "ZmodF.h"
 #include "ZmodF_poly.h"
 #include "ZmodF_mul.h"
-#include "Z_mpn.h"
+#include "mpn_extras.h"
 #include "ZmodF_mul-tuning.h"
 #include "longlong_wrapper.h"
 #include "longlong.h"
@@ -123,9 +123,9 @@ void _ZmodF_mul(ZmodF_t res, ZmodF_t a, ZmodF_t b, mp_limb_t* scratch,
    
    // do the product into scratch
    if (limbs1 >= limbs2)
-      Z_mpn_mul(scratch, a, limbs1, b, limbs2);
+      F_mpn_mul(scratch, a, limbs1, b, limbs2);
    else
-      Z_mpn_mul(scratch, b, limbs2, a, limbs1);
+      F_mpn_mul(scratch, b, limbs2, a, limbs1);
       
    // reduce mod p
    res[n] = -mpn_sub_n(res, scratch, scratch + n, n);

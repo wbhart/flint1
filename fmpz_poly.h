@@ -83,6 +83,153 @@ do { \
    y_dummy_p = swap_temp_p; \
 } while(0);
 
+/****************************************************************************
+
+   Conversion Routines
+   
+****************************************************************************/
+
+/* 
+   Converts fmpz_poly_t "poly_mpn" to a ZmodF_poly.
+   
+   Each coefficient of poly_mpn is assumed to fit into a coefficient 
+   of poly_f.
+   
+   The maximum number of *bits* that any coefficient takes is returned
+   and made negative if any of the coefficients was negative.
+   
+   Only _length_ coefficients are converted.
+*/
+
+long ZmodF_poly_convert_in_mpn(ZmodF_poly_t poly_f, const fmpz_poly_t poly_mpn, 
+                                                         const unsigned long length);
+
+
+/* 
+   Normalise and converts ZmodF_poly "poly_f" to a fmpz_poly_t. 
+   
+   Each coefficient of poly_f is assumed to fit into a coefficient 
+   of poly_mpn. 
+   
+   The normalisation ensures that this function is the inverse of 
+   ZmodF_poly_convert_in_mpn.
+*/
+
+void ZmodF_poly_convert_out_mpn(fmpz_poly_t poly_mpn, const ZmodF_poly_t poly_f, const long sign);
+
+/* 
+   Packs bundle coefficients, each padded out to the given number of limbs, into 
+   the first coefficient of poly_f.
+*/
+void ZmodF_poly_limb_pack_mpn(ZmodF_poly_t poly_f, const fmpz_poly_t poly_mpn,
+                                           const unsigned long bundle, const long limbs);
+
+/* 
+   Unpacks bundle coefficients from the first coefficient of poly_f, each 
+   assumed to be stored in a field of the given number of limbs.
+*/
+void ZmodF_poly_limb_unpack_mpn(fmpz_poly_t poly_mpn, const ZmodF_poly_t poly_f, 
+                                  const unsigned long bundle, const unsigned long limbs);
+
+/* 
+   Unpacks bundle coefficients from the first coefficient of poly_f, each 
+   assumed to be stored in a field of the given number of limbs. Assumes the
+   coefficients are unsigned.
+*/
+void ZmodF_poly_limb_unpack_unsigned_mpn(fmpz_poly_t poly_mpn, const ZmodF_poly_t poly_f, 
+                                  const unsigned long bundle, const unsigned long limbs);
+
+
+/*
+   Packs poly_mpn down to the bit into poly_f. Each coefficient of poly_f
+   will have "bundle" coefficients packed into it. Each of the original
+   coefficients is packed into a bitfield "bits" bits wide including one 
+   bit for a sign bit. 
+   
+   "bits" is assumed to be less than FLINT_BITS. If bits is 
+   negative, the input poly is assumed to have signed coefficients.
+*/ 
+   
+void ZmodF_poly_bit_pack_mpn(ZmodF_poly_t poly_f, const fmpz_poly_t poly_mpn,
+     const unsigned long bundle, const long bits, const unsigned long length, const long negate);
+
+
+/*
+   Unpacks poly_f into poly_mpn. This is the inverse of ZmodF_poly_bitpack_mpn, so
+   long as the final coefficient in the polynomial is positive.
+   Each coeff of poly_f is assumed to contain "bundle" coefficients, each stored 
+   in a bitfield "bits" bits wide with the most significant bit being reserved for
+   the sign. 
+   
+   The total number of coefficients to be unpacked is given by the length of 
+   poly_mpn. One must ensure each of the coefficients of poly_mpn are set to zero
+   before calling this function for the first time since it adds to existing 
+   coefficients of poly_mpn, rather than overwriting them.
+   
+   "bits" is assumed to be less than FLINT_BITS. 
+*/ 
+   
+void ZmodF_poly_bit_unpack_mpn(fmpz_poly_t poly_mpn, const ZmodF_poly_t poly_f, 
+                              const unsigned long bundle, const unsigned long bits);
+void ZmodF_poly_bit_unpack_unsigned_mpn(fmpz_poly_t poly_mpn, const ZmodF_poly_t poly_f, 
+                              const unsigned long bundle, const unsigned long bits);
+
+
+     
+/*
+   Packs poly_mpn down to the byte into poly_f. Each coefficient of poly_f
+   will have "bundle" coefficients packed into it, each packed into a field
+   "bytes" bytes wide.
+   
+   "coeff_bytes" is assumed to be at least FLINT_BITS/8, i.e. the
+   coefficients are assumed to be at least a limb wide.
+*/ 
+   
+void ZmodF_poly_byte_pack_mpn(ZmodF_poly_t poly_f, const fmpz_poly_t poly_mpn,
+                   const unsigned long bundle, const unsigned long coeff_bytes,
+                                const unsigned long length, const long negate);
+
+     
+/*
+   Unpacks poly_f into poly_mpn. Each coefficient of poly_f will have "bundle" 
+   coefficients, each packed into a field "bytes" bytes wide.
+   
+   The total number of coefficients to be unpacked is given by the length of 
+   poly_mpn.
+   
+   "coeff_bytes" is assumed to be at least FLINT_BITS/8, i.e. the
+   coefficients are assumed to be at least a limb wide.
+*/ 
+   
+void ZmodF_poly_byte_unpack_unsigned_mpn(fmpz_poly_t poly_m, const mp_limb_t* array,
+                               const unsigned long bundle, const unsigned long coeff_bytes);
+
+void ZmodF_poly_byte_unpack_mpn(fmpz_poly_t poly_m, const mp_limb_t* array,
+                               const unsigned long bundle, const unsigned long coeff_bytes);
+
+
+     
+/*
+   Splits each coefficient of poly_mpn into pieces "limbs" limbs long and 
+   stores each piece into bundle coefficients of poly_f. 
+*/
+ 
+void ZmodF_poly_split_mpn(ZmodF_poly_t poly_f, fmpz_poly_t poly_mpn,
+     unsigned long bundle, unsigned long limbs);
+
+     
+/*
+   Combines each "bundle" coefficients of poly_f, each taken to be "limbs" 
+   limbs long, into a coefficient of poly_mpn. 
+   
+   This function is used for testing purposed only, and is the exact inverse
+   of ZmodF_poly_split_mpn.
+   
+   The number of coefficients extracted is given by the length of poly_mpn.
+*/
+ 
+void ZmodF_poly_unsplit_mpn(ZmodF_poly_t poly_f, fmpz_poly_t poly_mpn,
+     unsigned long bundle, unsigned long limbs);
 
 
 /*============================================================================

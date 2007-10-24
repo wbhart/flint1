@@ -9,15 +9,15 @@
 #include <stdio.h>
 #include <math.h>
 #include "flint.h"
-#include "Z_mpn.h"
+#include "Z.h"
 #include "profiler.h"
 
-/* Runs Z_fast_mul through random data.
+/* Runs F_mpz_mul through random data.
 
 num_trials = number of trials to perform.
 coeff_bits = number of bits to use in each coefficient. */
 
-unsigned long run_Z_Mul(unsigned long num_trials, unsigned long coeff_bits, int fast, unsigned long tweak)
+unsigned long run_F_mpz_mul(unsigned long num_trials, unsigned long coeff_bits, int fast, unsigned long tweak)
 {
    unsigned long i;
    
@@ -50,8 +50,8 @@ unsigned long run_Z_Mul(unsigned long num_trials, unsigned long coeff_bits, int 
      
 
 #ifdef TEST
-      // compute product using Z_mpn_mul
-      Z_mul(data3, data1, data1);
+      // compute product using F_mpz_mul
+      F_mpz_mul(data3, data1, data1);
       // compute product using GMP
       mpz_mul(data4, data1, data1);
       
@@ -64,7 +64,7 @@ unsigned long run_Z_Mul(unsigned long num_trials, unsigned long coeff_bits, int 
       start_clock(0);
       if (fast)
       {
-         __Z_mul(data3, data1, data1, tweak);
+         __F_mpz_mul(data3, data1, data1, tweak);
       } else
       {
          mpz_mul(data4, data1, data1);
@@ -109,7 +109,7 @@ int main (int argc, const char * argv[])
        for (unsigned long i = 0; i < imax; i++)
        {
           init_clock(0);
-          run_Z_Mul(TRIALS, bits, 1, tweak);
+          run_F_mpz_mul(TRIALS, bits, 1, tweak);
           time1 = get_clock(0) / FLINT_CLOCK_SCALE_FACTOR / 1800000000.0;
           if (time1 < best) 
           {
@@ -120,13 +120,13 @@ int main (int argc, const char * argv[])
        }
        printf("FLINT = %lf ", besti, best); 
        init_clock(0);
-       run_Z_Mul(TRIALS, bits, 0, 0);
+       run_F_mpz_mul(TRIALS, bits, 0, 0);
        time2 = get_clock(0) / FLINT_CLOCK_SCALE_FACTOR / 1800000000.0;
        printf("GMP = %lf ",time2);   
        printf("ratio = %lf, best = %ld\n",time2/best,besti);
 #else       
        printf("%ld\n",bits);
-       run_Z_Mul(TRIALS, bits, 1, 1);
+       run_F_mpz_mul(TRIALS, bits, 1, 1);
 #endif       
    }
 

@@ -63,7 +63,6 @@ RM = rm -f
 
 HEADERS = \
 	Z.h \
-	Z_mpn.h \
 	Z_mpn_mul-tuning.h \
 	ZmodF.h \
 	ZmodF_mul-tuning.h \
@@ -89,7 +88,6 @@ FLINTOBJ = \
 	mpn_extras.o \
 	Z.o \
 	memory-manager.o \
-	Z_mpn.o \
 	ZmodF.o \
 	ZmodF_mul.o \
 	ZmodF_mul-tuning.o \
@@ -108,9 +106,6 @@ Z.o: Z.c $(HEADERS)
 
 memory-manager.o: memory-manager.c $(HEADERS)
 	$(CC) $(CFLAGS) -c memory-manager.c -o memory-manager.o
-
-Z_mpn.o: Z_mpn.c $(HEADERS)
-	$(CC) $(CFLAGS) -c Z_mpn.c -o Z_mpn.o
 
 ZmodF.o: ZmodF.c $(HEADERS)
 	$(CC) $(CFLAGS) -c ZmodF.c -o ZmodF.o
@@ -349,7 +344,7 @@ mpQS: QS/mpQS.c QS/mpQS.h mp_factor_base.o mp_poly.o mp_sieve.o mp_linear_algebr
 
 ####### Integer multiplication timing
 
-ZMULOBJ = memory-manager.o fmpz.o ZmodF_mul-tuning.o mpz_poly.o mpz_poly-tuning.o fmpz_poly.o ZmodF_poly.o Z_mpn.o profiler.o ZmodF_mul.o ZmodF.o mpn_extras.o Z_mul_timing.o
+ZMULOBJ = memory-manager.o fmpz.o ZmodF_mul-tuning.o mpz_poly.o mpz_poly-tuning.o fmpz_poly.o ZmodF_poly.o Z.o profiler.o ZmodF_mul.o ZmodF.o mpn_extras.o Z_mul_timing.o
 
 Z_mul_timing: $(ZMULOBJ)
 	$(CC) $(ZMULOBJ) -o Zmul $(LIBS)

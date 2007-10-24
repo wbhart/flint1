@@ -2,6 +2,7 @@
 #define MPN_EXTRAS_H
 
 #include "flint.h"
+#include "ZmodF_poly.h"
 
 /*============================================================================
 
@@ -95,46 +96,49 @@ static inline void set_limbs(mp_limb_t* dest, unsigned long count)
 }
 
 
-/*
-   Add the given *signed* limb to the buffer [x, x+count), much like
-   mpn_add_1 and mpn_sub_1 (except it's always inplace).
-
-   PRECONDITIONS:
-      count >= 1
-   
-   NOTE:
-      The branch predictability of this function is optimised for the case that
-      abs(limb) is relatively small and that the first limb of x is randomly
-      distributed, which should be the normal usage in the FFT routines.
-*/
-static inline
-void signed_add_1(mp_limb_t* x, unsigned long count, mp_limb_signed_t limb)
-{
-   FLINT_ASSERT(count >= 1);
-   
-   // If the high bit of x[0] doesn't change when we add "limb" to it,
-   // then there's no possibility of overflow.
-   mp_limb_t temp = x[0] + limb;
-   if ((mp_limb_signed_t)(temp ^ x[0]) >= 0)
-      // the likely case
-      x[0] = temp;
-   else
-   {
-      // the unlikely case; here we need to branch based on the sign of
-      // the limb being added
-      if (limb >= 0)
-         mpn_add_1(x, x, count, limb);
-      else
-         mpn_sub_1(x, x, count, -limb);
-   }
-}
-
 
 mp_limb_t mpn_divmod_1_preinv(mp_limb_t * qp, mp_limb_t * up, 
              unsigned long un, mp_limb_t d, mp_limb_t dinv, unsigned long norm);
              
 mp_limb_t mpn_addmul(mp_limb_t * rp, mp_limb_t * s1p, unsigned long s1n, 
                                       mp_limb_t * s2p, unsigned long s2n);
+                                      
+/* 
+   Large integer multiplication
+*/
+
+typedef enum {FFT_PRE, KAR_PRE} precomp_type;
+ 
+typedef struct
+{
+   precomp_type type;
+   ZmodF_poly_p poly;
+   unsigned long length;
+   unsigned long length2;
+   unsigned long coeff_limbs;
+   unsigned long limbs1;
+   unsigned long limbs2;
+   unsigned long msl_bits;
+} F_mpn_precomp_s;
+
+typedef F_mpn_precomp_s F_mpn_precomp_t[1]; 
+
+mp_limb_t __F_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1, 
+                                      mp_limb_t * data2, unsigned long limbs2, 
+                                      unsigned long twk);
+
+mp_limb_t F_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1, 
+                                      mp_limb_t * data2, unsigned long limbs2);
+                                      
+mp_limb_t F_mpn_mul_trunc(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1, 
+                        mp_limb_t * data2, unsigned long limbs2, unsigned long trunc);
+
+void F_mpn_mul_precomp_init(F_mpn_precomp_t precomp, mp_limb_t * data1, unsigned long limbs1, unsigned long limbs2);
+
+void F_mpn_mul_precomp_clear(F_mpn_precomp_t precomp);
+
+mp_limb_t F_mpn_mul_precomp(mp_limb_t * res, mp_limb_t * data2, unsigned long limbs2, F_mpn_precomp_t precomp);
+      
 
 #endif
 

@@ -4,12 +4,11 @@
 #include <gmp.h>
 #include "Z.h"
 #include "flint.h"
+#include "mpn_extras.h"
+#include "Z_mpn_mul-tuning.h"
 
 #define DEBUG2 1
 #define DEBUG 0
-
-gmp_randstate_t state_Z;
-int rand_init = 0;
 
 /*
    Memory manager to allocate a single Z_t. It returns a pointer to the Z_t. 
@@ -78,23 +77,6 @@ void Z_release(void)
     rescount--;
 }
 
-/*
-    returns a^exp
-*/
-
-unsigned long Z_pow_long(unsigned long a, unsigned long exp)
-{
-   if (exp == 0) return 1;
-   if (a == 1) return 1;
-   
-   unsigned long power = a;
-
-   for (unsigned long i = 1; i < exp; i++)
-      power *= a;
-
-   return power;
-}
-
 /* 
     sets res to a*b modulo p
     assumes res is not p
@@ -130,253 +112,6 @@ unsigned long Z_mulmod_ui(Z_t res, Z_t a, Z_t b, unsigned long p)
      return result;
 }
 
-/*
-         returns a^exp modulo p
-         assumes a is not (much) bigger than p
-         DIRTY for 64 bit due to long long
-*/
-
-long Z_powm_long(long a, long exp, long p)
-{
-   long x, y;
-
-   unsigned long e;
-
-   if (exp < 0)
-      e = (unsigned long) -exp;
-   else
-      e = exp;
-
-   x = 1;
-   y = a;
-   while (e) {
-      if (e & 1) x = ((long long)x * (long long)y)% p;
-      y = ((long long)y * (long long)y)% p;
-      e = e >> 1;
-   }
-
-   if (exp < 0) x = Z_invert_long(x, p);
-
-   return x;
-}
-
-/* 
-    returns the next prime after n (does not check if the result is too big)
-*/
-
-unsigned long Z_nextprime_long(unsigned long n)
-{
-   Z_t* temp = Z_alloc();
-     
-   mpz_set_ui(*temp,n);
-   mpz_nextprime(*temp,*temp);
-   
-   Z_release();
-   
-   return mpz_get_ui(*temp);
-}
-
-/*
-    returns a random prime up to the specified number of bits
-*/
-
-void Z_randomprime(Z_t res, unsigned long bitsize)
-{
-   static int rand_running=0;
-   
-   if (!rand_init) //required for thread safety
-   {
-      gmp_randinit_default(state_Z);
-      rand_init = 1;
-   }
-   
-   while (rand_running){} //required for thread safety to prevent simultaneous access to state_Z
-   
-   rand_running=1; //required for thread safety
-   
-   do { 
-      mpz_urandomb(res,state_Z,bitsize);
-      mpz_setbit(res,0);
-      while (!mpz_probab_prime_p(res,5)) mpz_add_ui(res,res,2);
-   } while (mpz_sizeinbase(res,2)>bitsize); 
-   
-   rand_running=0; //required for thread safety
-}
-
-/* 
-    returns the inverse of a modulo p
-*/
-
-unsigned long Z_invert_long(unsigned long a, unsigned long p)
-{
-   long u1=1, u3=a;
-   long v1=0, v3=p;
-   long t1=0, t3=0;
-   long quot;
-   
-   while (v3)
-   {
-      quot=u3-v3;
-      if (u3 < (v3<<2))
-      {
-         if (quot < v3)
-         {
-            if (quot < 0)
-            { 
-               t1 = u1; u1 = v1; v1 = t1;
-               t3 = u3; u3 = v3; v3 = t3;
-            } else 
-            {
-               t1 = u1 - v1; u1 = v1; v1 = t1;
-               t3 = u3 - v3; u3 = v3; v3 = t3;
-            }
-         } else if (quot < (v3<<1))
-         {  
-            t1 = u1 - (v1<<1); u1 = v1; v1 = t1;
-            t3 = u3 - (v3<<1); u3 = v3; v3 = t3;
-         } else
-         {
-            t1 = u1 - v1*3; u1 = v1; v1 = t1;
-            t3 = u3 - v3*3; u3 = v3; v3 = t3;
-         }
-      } else
-      {
-         quot=u3/v3;
-         t1 = u1 - v1*quot; u1 = v1; v1 = t1;
-         t3 = u3 - v3*quot; u3 = v3; v3 = t3;
-      }
-   } 
-   
-   if (u1<0) u1+=p;
-   
-   return u1;
-}
-
-/* 
-     returns gcd(x, y) = a*x + b*y.
-*/
-
-long Z_extgcd_long(long* a, long* b, long x, long y)
-{
-   long u1=1, v1=0;
-   long u2=0, v2=1;
-   long t1, t2;
-   long u3, v3;
-   long quot, rem;
-   long xsign = 0;
-   long ysign = 0;
-   
-   if (x < 0) {
-      x = -x;
-      xsign = 1;
-   }
-
-   if (y < 0) {
-      y = -y;
-      ysign = 1;
-   }
-   
-   u3 = x, v3 = y;
-
-   while (v3) {
-      quot=u3-v3;
-      if (u3 < (v3<<2))
-      {
-         if (quot < v3)
-         {
-            if (quot < 0)
-            { 
-               rem = u3;
-               t1 = u2; u2 = u1; u1 = t1; u3 = v3;
-               t2 = v2; v2 = v1; v1 = t2; v3 = rem;
-            } else 
-            {
-               t1 = u2; u2 = u1 - u2; u1 = t1; u3 = v3;
-               t2 = v2; v2 = v1 - v2; v1 = t2; v3 = quot;
-            }
-         } else if (quot < (v3<<1))
-         {  
-            t1 = u2; u2 = u1 - (u2<<1); u1 = t1; u3 = v3;
-            t2 = v2; v2 = v1 - (v2<<1); v1 = t2; v3 = quot-u3;
-         } else
-         {
-            t1 = u2; u2 = u1 - 3*u2; u1 = t1; u3 = v3;
-            t2 = v2; v2 = v1 - 3*v2; v1 = t2; v3 = quot-(u3<<1);
-         }
-      } else
-      {
-         quot=u3/v3;
-         rem = u3 % v3;
-         t1 = u2; u2 = u1 - quot*u2; u1 = t1; u3 = v3;
-         t2 = v2; v2 = v1 - quot*v2; v1 = t2; v3 = rem;
-      }
-   }
-
-   if (xsign)
-      u1 = -u1;
-
-   if (ysign)
-      v1 = -v1;
-
-   *a = u1;
-   *b = v1;
-   
-   return u3;
-}
-
-/* 
-     returns gcd(x, y)
-*/
-
-unsigned long Z_gcd_long(long x, long y)
-{
-   if (x < 0) {
-      x = -x;
-   }
-
-   if (y < 0) {
-      y = -y;
-   }
-
-   long u3 = x, v3 = y;
-   long quot, rem;
-
-   while (v3) {
-      quot=u3-v3;
-      if (u3 < (v3<<2))
-      {
-         if (quot < v3)
-         {
-            if (quot < 0)
-            { 
-               rem = u3;
-               u3 = v3;
-               v3 = rem;
-            } else 
-            {
-               u3 = v3;
-               v3 = quot;
-            }
-         } else if (quot < (v3<<1))
-         {  
-            u3 = v3;
-            v3 = quot-u3;
-         } else
-         {
-            u3 = v3;
-            v3 = quot-(u3<<1);
-         }
-      } else
-      {
-         rem = u3 % v3;
-         u3 = v3;
-         v3 = rem;
-      }
-   }
-
-   return u3;
-}
-
 /* 
      sets res to the square root of a modulo p for a prime p
      returns 0 if a is not a square modulo p
@@ -405,7 +140,7 @@ int Z_sqrtmod(Z_t res, Z_t a, Z_t p)
         return 1;
      }
      
-     if ((Z_tstbit(p,0)==1)||(Z_tstbit(p,1)==1))
+     if ((mpz_tstbit(p,0)==1)||(mpz_tstbit(p,1)==1))
      {
         mpz_add_ui(*p1,p,1);
         mpz_fdiv_q_2exp(*p1,*p1,2);
@@ -551,63 +286,6 @@ void Z_CRT(Z_t res, Z_t n, Z_t x1, Z_t x2, Z_t n1, Z_t n2)
      Z_release();Z_release();Z_release();
      
      return;
-}
-
-void Z_urandomb(Z_t res, unsigned long n)
-{
-   static int rand_running=0;
-   
-   if (!rand_init) //required for thread safety
-   {
-      gmp_randinit_default(state_Z);
-      rand_init = 1;
-   }
-   
-   while (rand_running){} //required for thread safety to prevent simultaneous access to state_Z
-   
-   rand_running=1; //required for thread safety
-   
-   mpz_urandomb(res,state_Z,n);
-   
-   rand_running=0; //required for thread safety
-}
-
-void Z_urandomm(Z_t res, Z_t n)
-{
-   static int rand_running=0;
-   
-   if (!rand_init) //required for thread safety
-   {
-      gmp_randinit_default(state_Z);
-      rand_init = 1;
-   }
-   
-   while (rand_running){} //required for thread safety to prevent simultaneous access to state_Z
-   
-   rand_running=1; //required for thread safety
-   
-   mpz_urandomm(res,state_Z,n);
-   
-   rand_running=0; //required for thread safety
-}
-
-void Z_rrandomb(Z_t res, unsigned long n)
-{
-   static int rand_running=0;
-   
-   if (!rand_init) //required for thread safety
-   {
-      gmp_randinit_default(state_Z);
-      rand_init = 1;
-   }
-   
-   while (rand_running){} //required for thread safety to prevent simultaneous access to state_Z
-   
-   rand_running=1; //required for thread safety
-   
-   mpz_rrandomb(res,state_Z,n);
-   
-   rand_running=0; //required for thread safety
 }
 
 /*
@@ -904,3 +582,43 @@ void Z_expmod_jebelean(mpz_t res, mpz_t a, mpz_t exp, mpz_t m)
    mpz_clear(powRED);
    mpz_clear(aRED);
 }
+
+/*
+   Large integer multiplication code
+*/
+
+void __F_mpz_mul(mpz_t res, mpz_t a, mpz_t b, unsigned long twk)
+{
+   unsigned long sa = mpz_size(a);
+   unsigned long sb = mpz_size(b);
+
+   if (sa+sb > FLINT_FFT_LIMBS_CROSSOVER) 
+   {
+      unsigned long s1 = (FLINT_BIT_COUNT(a->_mp_d[sa-1]) + FLINT_BIT_COUNT(b->_mp_d[sb-1]) <= FLINT_BITS);
+   
+      mp_limb_t* output = 
+         (mp_limb_t*) flint_stack_alloc(sa + sb - s1);
+      __F_mpn_mul(output, a->_mp_d, sa, b->_mp_d, sb, twk);
+      mpz_import(res, sa+sb-s1, -1, sizeof(mp_limb_t), 0, 0, output);
+      if (mpz_sgn(res) != mpz_sgn(a)*mpz_sgn(b)) mpz_neg(res,res);
+      flint_stack_release();
+   } else mpz_mul(res, a, b);
+}
+
+void F_mpz_mul(mpz_t res, mpz_t a, mpz_t b)
+{   
+   unsigned long sa = mpz_size(a);
+   unsigned long sb = mpz_size(b);
+
+   if (sa+sb > FLINT_FFT_LIMBS_CROSSOVER) 
+   {
+      unsigned long s1 = (FLINT_BIT_COUNT(a->_mp_d[sa-1]) + FLINT_BIT_COUNT(b->_mp_d[sb-1]) <= FLINT_BITS);
+      mp_limb_t* output = 
+         (mp_limb_t*) flint_stack_alloc(sa + sb - s1);
+      F_mpn_mul(output, a->_mp_d, sa, b->_mp_d, sb);
+      mpz_import(res, sa+sb-s1, -1, sizeof(mp_limb_t), 0, 0, output);
+      if (mpz_sgn(res) != mpz_sgn(a)*mpz_sgn(b)) mpz_neg(res,res);
+      flint_stack_release();
+   } else mpz_mul(res, a, b);
+}
+

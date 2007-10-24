@@ -21,8 +21,41 @@
  
 #include <stdlib.h>
 #include <gmp.h>
-#include "mpn_extras.h"
+#include "flint.h"
 
+/*
+   Add the given *signed* limb to the buffer [x, x+count), much like
+   mpn_add_1 and mpn_sub_1 (except it's always inplace).
+
+   PRECONDITIONS:
+      count >= 1
+   
+   NOTE:
+      The branch predictability of this function is optimised for the case that
+      abs(limb) is relatively small and that the first limb of x is randomly
+      distributed, which should be the normal usage in the FFT routines.
+*/
+static inline
+void signed_add_1(mp_limb_t* x, unsigned long count, mp_limb_signed_t limb)
+{
+   FLINT_ASSERT(count >= 1);
+   
+   // If the high bit of x[0] doesn't change when we add "limb" to it,
+   // then there's no possibility of overflow.
+   mp_limb_t temp = x[0] + limb;
+   if ((mp_limb_signed_t)(temp ^ x[0]) >= 0)
+      // the likely case
+      x[0] = temp;
+   else
+   {
+      // the unlikely case; here we need to branch based on the sign of
+      // the limb being added
+      if (limb >= 0)
+         mpn_add_1(x, x, count, limb);
+      else
+         mpn_sub_1(x, x, count, -limb);
+   }
+}
 
 /*
 A ZmodF_t is stored as a *signed* value in two's complement format, using
