@@ -31,12 +31,12 @@ unsigned long num_FB_primes(unsigned long bits)
 {
    unsigned long i;
    
-   for (i = 0; i < PTABSIZE; i++)
+   for (i = 0; i < PTABSIZE_SMALL; i++)
    {
-      if (prime_tab[i][0] > bits) break;
+      if (prime_tab_small[i][0] > bits) break;
    }
    
-   return prime_tab[i-1][1];
+   return prime_tab_small[i-1][1];
 }
 
 /*=========================================================================
@@ -49,7 +49,7 @@ unsigned long num_FB_primes(unsigned long bits)
 
 void sqrts_init(QS_t * qs_inf)
 {
-   qs_inf->sqrts = (unsigned long *) flint_stack_alloc(qs_inf->num_primes);
+   qs_inf->sqrts = (u_int32_t *) flint_stack_alloc_bytes(sizeof(u_int32_t)*qs_inf->num_primes);
 }
 
 void sqrts_clear(void)
@@ -134,7 +134,7 @@ unsigned long knuth_schroeppel(QS_t * qs_inf)
     double pinv;
     int kron;
     
-    unsigned long * sqrts = qs_inf->sqrts;
+    u_int32_t * sqrts = qs_inf->sqrts;
     
     fmpz_t n = qs_inf->n;
     nmod8 = n[1]%8;
@@ -153,25 +153,25 @@ unsigned long knuth_schroeppel(QS_t * qs_inf)
     prime = 3;
     while ((prime < KSMAX) && (fb_prime < max_fb_primes))
     {
-          pinv = long_precompute_inverse(prime);
+          pinv = z_precompute_inverse(prime);
           logpdivp = log((float)prime) / (float)prime; // log p / p
-          nmod = long_mod2_precomp(n[2], n[1], prime, pinv); 
+          nmod = z_ll_mod_precomp(n[2], n[1], prime, pinv); 
           if (nmod == 0) return prime;
-          kron = long_jacobi_precomp(nmod, prime, pinv); 
+          kron = z_jacobi_precomp(nmod, prime, pinv); 
           for (multindex = 0; multindex < NUMMULTS; multindex++)
           {
               mult = multipliers[multindex];
               if (mult >= prime) 
               {
                  if (mult >= prime*prime) mult = mult%prime; 
-                 else mult = long_mod_precomp(mult, prime, pinv);
+                 else mult = z_mod_precomp(mult, prime, pinv);
               }
               if (mult == 0) factors[multindex] += logpdivp;
-              else if (kron*long_jacobi_precomp(mult, prime, pinv) == 1) 
+              else if (kron*z_jacobi_precomp(mult, prime, pinv) == 1) 
                  factors[multindex] += 2.0*logpdivp;
           }
           
-          prime = long_nextprime(prime);
+          prime = z_nextprime(prime);
     }
     
     for (multindex=0; multindex<NUMMULTS; multindex++)
@@ -201,7 +201,7 @@ unsigned long compute_factor_base(QS_t * qs_inf)
    unsigned long fb_prime = 2;
    unsigned long multiplier = qs_inf->k;
    prime_t * factor_base = qs_inf->factor_base;
-   unsigned long * sqrts = qs_inf->sqrts;
+   u_int32_t * sqrts = qs_inf->sqrts;
    unsigned long num_primes = num_FB_primes(qs_inf->bits);
    unsigned long prime, nmod;
    double pinv;
@@ -209,25 +209,25 @@ unsigned long compute_factor_base(QS_t * qs_inf)
    long kron;
     
    factor_base[0].p = multiplier;
-   factor_base[0].pinv = long_precompute_inverse(multiplier);
+   factor_base[0].pinv = z_precompute_inverse(multiplier);
    factor_base[1].p = 2;
    prime = 2;
    
    while (fb_prime < num_primes)
    {
-      prime = long_nextprime(prime);
-      pinv = long_precompute_inverse(prime);
-      nmod = long_mod2_precomp(n[2], n[1], prime, pinv); 
+      prime = z_nextprime(prime);
+      pinv = z_precompute_inverse(prime);
+      nmod = z_ll_mod_precomp(n[2], n[1], prime, pinv); 
       if (nmod == 0) 
       {
-         if (long_mod_precomp(multiplier, prime, pinv) != 0) return prime;
+         if (z_mod_precomp(multiplier, prime, pinv) != 0) return prime;
       }
-      kron = long_jacobi_precomp(nmod, prime, pinv); 
+      kron = z_jacobi_precomp(nmod, prime, pinv); 
       if (kron == 1)
       {
          factor_base[fb_prime].p = prime;
          factor_base[fb_prime].pinv = pinv;
-         sqrts[fb_prime] = long_sqrtmod0(nmod, prime);
+         sqrts[fb_prime] = z_sqrtmod(nmod, prime);
          fb_prime++;
       }   
    }

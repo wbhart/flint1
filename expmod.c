@@ -1,7 +1,7 @@
 #include <stdio.h>
 
 #include <gmp.h>
-#include "Z.h"
+#include "mpz_extras.h"
 
 /*int main(void)
 {
@@ -19,7 +19,7 @@
    printf("Enter modulus: ");
    gmp_scanf("%Zd", m);
    
-   Z_expmod_mont(res, a, exp, m);
+   F_mpz_expmod_mont(res, a, exp, m);
    
    gmp_printf("a^exp mod m is %Zd\n", res);
    
@@ -52,8 +52,8 @@ int main(void)
    mpz_sub_ui(exp, p, 1);
    mpz_fdiv_q_2exp(exp, exp, 10);
    
-   Z_expmod_jebelean(res, a, exp, p);
-   //Z_expmod_mont(res, a, exp, p);
+   F_mpz_expmod_BZ(res, a, exp, p);
+   //F_mpz_expmod_mont(res, a, exp, p);
    //mpz_powm(res, a, exp, p);
    
    mpz_clear(a);

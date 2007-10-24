@@ -329,17 +329,18 @@ int main(int argc, unsigned char *argv[])
     
     for (i = 0; i < 100; i++)
     {
-       mpz_set_ui(N, long_nextprime(long_randint(4000000000UL)+1UL));
-       mpz_mul_ui(N, N, long_nextprime(long_randint(4000000000UL)+1UL));
-       //bits1 = long_randint(41UL)+13UL;
-       //bits2 = long_randint(22UL)+13UL;
-       //mpz_mul_ui(N, N, long_nextprime(long_randint((1UL<<bits1)-1UL)+1UL));
-       //mpz_mul_ui(N, N, long_nextprime(long_randint((1UL<<bits2)-1UL)+1UL));
+       mpz_set_ui(N, z_nextprime(z_randint(4000000000UL)+1UL));
+       mpz_mul_ui(N, N, z_nextprime(z_randint(4000000000UL)+1UL));
+       //bits1 = z_randint(41UL)+13UL;
+       //bits2 = z_randint(22UL)+13UL;
+       //mpz_mul_ui(N, N, z_nextprime(z_randint((1UL<<bits1)-1UL)+1UL));
+       //mpz_mul_ui(N, N, z_nextprime(z_randint((1UL<<bits2)-1UL)+1UL));
 
 #if QS_INFO
        gmp_printf("Factoring %Zd\n", N);
 #endif
 
+       printf("i = %ld\n",i);
        factor = F_mpz_factor_tinyQS(factors, N);
        if (!factor) failed++;
        if (factor > 1) small_factors++;

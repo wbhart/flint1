@@ -175,7 +175,7 @@ void compute_A(QS_t * qs_inf, poly_t * poly_inf)
  
    for (k = 0; k < 30; k++) // Now try 8 different sets of even index primes as the remaining factors
    {
-      copy_limbs(current_A, A, A[0] + 1);
+      F_mpn_copy(current_A, A, A[0] + 1);
       for (i = 0; i < 3; i++) // Randomly choose the last 3 prime factors of A with even indices
       {
          do
@@ -209,7 +209,7 @@ void compute_A(QS_t * qs_inf, poly_t * poly_inf)
             msl = mpn_sub(best_diff+1, current_A+1, current_A[0], target_A+1, target_A[0]);
             best_diff[0] = current_A[0];
          }
-         if (msl) negate_limbs(best_diff+1, best_diff+1, best_diff[0]);
+         if (msl) F_mpn_negate(best_diff+1, best_diff+1, best_diff[0]);
          while ((!best_diff[best_diff[0]]) && (best_diff[0])) best_diff[0]--; // Normalise best_diff
          
          best1 = A_ind[s-3];
@@ -229,12 +229,12 @@ void compute_A(QS_t * qs_inf, poly_t * poly_inf)
          msl = mpn_sub(diff+1, current_A+1, current_A[0], target_A+1, target_A[0]);
          diff[0] = current_A[0];
       }
-      if (msl) negate_limbs(diff+1, diff+1, diff[0]);
+      if (msl) F_mpn_negate(diff+1, diff+1, diff[0]);
       while ((!diff[diff[0]]) && (diff[0])) diff[0]--; // Normalise diff
 
       if ((diff[0] < best_diff[0]) || ((diff[0] == best_diff[0]) && (mpn_cmp(diff+1, best_diff+1, diff[0]) < 0)))  // The new diff is better
       {
-         copy_limbs(best_diff, diff, diff[0]+1);
+         F_mpn_copy(best_diff, diff, diff[0]+1);
          best1 = A_ind[s-3];
          best2 = A_ind[s-2];
          best3 = A_ind[s-1];         
@@ -329,8 +329,8 @@ void compute_B_terms(QS_t * qs_inf, poly_t * poly_inf)
 #endif
    }
    
-   copy_limbs(B, B_terms, B_terms[0]+1);  // Set B to the sum of the B terms
-   if (limbs > B_terms[0] + 1) clear_limbs(B + B_terms[0] + 1, limbs - B_terms[0] - 1);
+   F_mpn_copy(B, B_terms, B_terms[0]+1);  // Set B to the sum of the B terms
+   if (limbs > B_terms[0] + 1) F_mpn_clear(B + B_terms[0] + 1, limbs - B_terms[0] - 1);
    for (i = 1; i < s; i++)
    {
       limbs2 = B_terms[i*limbs];

@@ -62,7 +62,7 @@ CFLAGS = $(INCS) -funroll-loops -fexpensive-optimizations $(FLINT_TUNE) -O3
 RM = rm -f
 
 HEADERS = \
-	Z.h \
+	mpz_extras.h \
 	F_mpn_mul-tuning.h \
 	ZmodF.h \
 	ZmodF_mul-tuning.h \
@@ -79,14 +79,15 @@ HEADERS = \
 	mpz_poly.h \
 	profiler-main.h \
 	profiler.h \
-	test-support.h
+	test-support.h \
+	long_extras.h
 
 
 ####### library object files
 
 FLINTOBJ = \
 	mpn_extras.o \
-	Z.o \
+	mpz_extras.o \
 	memory-manager.o \
 	ZmodF.o \
 	ZmodF_mul.o \
@@ -95,14 +96,16 @@ FLINTOBJ = \
 	fmpz_poly.o \
 	mpz_poly-tuning.o \
 	mpz_poly.o \
-	ZmodF_poly.o
+	ZmodF_poly.o \
+	long_extras.o
 
+all: mpn_extras-test fmpz_poly-test fmpz-test ZmodF-test ZmodF_poly-test mpz_poly-test ZmodF_mul-test long_extras-test ZmodF_mul-tune mpz_poly-tune fmpz_poly-profile mpz_poly-profile ZmodF_mul-profile ZmodF_poly-profile kara-profile NTL-profile delta_qexp BLTcubes BPTJCubes bernoulli F_mpz_mul-timing vecmat3d x3y3z3k dd_vecmat3d dd_x3y3z3k expmod mpQS tinyQS
 
 mpn_extras.o: mpn_extras.c $(HEADERS)
 	$(CC) $(CFLAGS) -c mpn_extras.c -o mpn_extras.o
 
-Z.o: Z.c $(HEADERS)
-	$(CC) $(CFLAGS) -c Z.c -o Z.o
+mpz_extras.o: mpz_extras.c $(HEADERS)
+	$(CC) $(CFLAGS) -c mpz_extras.c -o mpz_extras.o
 
 memory-manager.o: memory-manager.c $(HEADERS)
 	$(CC) $(CFLAGS) -c memory-manager.c -o memory-manager.o
@@ -300,8 +303,8 @@ BPTJCubes: long_extras.o memory-manager.o
 bernoulli.o: bernoulli.c $(HEADERS)
 	$(CC) $(CFLAGS) -c bernoulli.c -o bernoulli.o
 
-bernoulli: bernoulli.o long_extras.o $(FLINTOBJ)
-	$(CC) $(CFLAGS) -o bernoulli bernoulli.o long_extras.o $(FLINTOBJ) $(LIBS)
+bernoulli: bernoulli.o $(FLINTOBJ)
+	$(CC) $(CFLAGS) -o bernoulli bernoulli.o $(FLINTOBJ) $(LIBS)
 
 
 ####### Quadratic sieve
@@ -321,8 +324,8 @@ linear_algebra.o: QS/linear_algebra.c QS/linear_algebra.h
 block_lanczos.o: QS/block_lanczos.c QS/block_lanczos.h
 	$(CC) $(CFLAGS) -c QS/block_lanczos.c -o block_lanczos.o
 
-tinyQS: QS/tinyQS.c QS/tinyQS.h factor_base.o poly.o sieve.o linear_algebra.o block_lanczos.o long_extras.o memory-manager.o fmpz.o test-support.o
-	$(CC) $(CFLAGS) -o tinyQS QS/tinyQS.c factor_base.o poly.o sieve.o linear_algebra.o block_lanczos.o memory-manager.o long_extras.o fmpz.o test-support.o $(LIBS)
+tinyQS: QS/tinyQS.c QS/tinyQS.h factor_base.o poly.o sieve.o linear_algebra.o block_lanczos.o $(FLINTOBJ) 
+	$(CC) $(CFLAGS) -o tinyQS QS/tinyQS.c factor_base.o poly.o sieve.o linear_algebra.o block_lanczos.o $(FLINTOBJ) $(LIBS)
 
 mp_sieve.o: QS/mp_sieve.c QS/mp_sieve.h
 	$(CC) $(CFLAGS) -c QS/mp_sieve.c -o mp_sieve.o
@@ -339,12 +342,12 @@ mp_lprels.o: QS/mp_lprels.c QS/mp_lprels.h
 mp_factor_base.o: QS/mp_factor_base.c QS/mp_factor_base.h
 	$(CC) $(CFLAGS) -c QS/mp_factor_base.c -o mp_factor_base.o
 
-mpQS: QS/mpQS.c QS/mpQS.h mp_factor_base.o mp_poly.o mp_sieve.o mp_linear_algebra.o block_lanczos.o mp_lprels.o long_extras.o memory-manager.o fmpz.o test-support.o mpn_extras.o
-	$(CC) $(CFLAGS) -o mpQS QS/mpQS.c mp_factor_base.o mp_poly.o mp_sieve.o mp_linear_algebra.o block_lanczos.o mp_lprels.o memory-manager.o long_extras.o fmpz.o test-support.o mpn_extras.o $(LIBS)
+mpQS: QS/mpQS.c QS/mpQS.h mp_factor_base.o mp_poly.o mp_sieve.o mp_linear_algebra.o block_lanczos.o mp_lprels.o $(FLINTOBJ) 
+	$(CC) $(CFLAGS) -o mpQS QS/mpQS.c mp_factor_base.o mp_poly.o mp_sieve.o mp_linear_algebra.o block_lanczos.o mp_lprels.o $(FLINTOBJ) $(LIBS)
 
 ####### Integer multiplication timing
 
-ZMULOBJ = memory-manager.o fmpz.o ZmodF_mul-tuning.o mpz_poly.o mpz_poly-tuning.o fmpz_poly.o ZmodF_poly.o Z.o profiler.o ZmodF_mul.o ZmodF.o mpn_extras.o F_mpz_mul-timing.o
+ZMULOBJ = memory-manager.o fmpz.o ZmodF_mul-tuning.o mpz_poly.o mpz_poly-tuning.o fmpz_poly.o ZmodF_poly.o mpz_extras.o profiler.o ZmodF_mul.o ZmodF.o mpn_extras.o F_mpz_mul-timing.o
 
 F_mpz_mul-timing: $(ZMULOBJ)
 	$(CC) $(ZMULOBJ) -o Zmul $(LIBS)
@@ -369,6 +372,6 @@ dd_vecmat3d: dd_vecmat3d-driver.c mat3d.o vec3d.o memory-manager.o
 dd_x3y3z3k: dd_x3y3z3k.c mat3d.o vec3d.o memory-manager.o 
 	$(CC) -o dd_x3y3z3k $(CFLAGS) dd_x3y3z3k.c mat3d.o vec3d.o memory-manager.o $(LIBS) 
 
-expmod: expmod.c Z.o
-	$(CC) $(CFLAGS) -o expmod expmod.c Z.o $(LIBS)
+expmod: expmod.c $(FLINTOBJ) 
+	$(CC) $(CFLAGS) -o expmod expmod.c $(FLINTOBJ) $(LIBS)
 

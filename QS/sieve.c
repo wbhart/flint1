@@ -173,7 +173,7 @@ unsigned long evaluate_candidate(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly
    {
       prime = factor_base[j].p;
       pinv = factor_base[j].pinv;
-      modp = long_mod63_precomp(i, prime, pinv);
+      modp = z_mod_64_precomp(i, prime, pinv);
       if ((modp == soln1[j]) || (modp == soln2[j]))
       {
          mpz_set_ui(p, prime);
@@ -193,7 +193,7 @@ unsigned long evaluate_candidate(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly
       {
          prime = factor_base[j].p;
          pinv = factor_base[j].pinv;
-         modp = long_mod63_precomp(i, prime, pinv);
+         modp = z_mod_64_precomp(i, prime, pinv);
          if (soln2[j] != -1L)
          {
             if ((modp == soln1[j]) || (modp == soln2[j]))

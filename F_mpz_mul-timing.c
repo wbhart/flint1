@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <math.h>
 #include "flint.h"
-#include "Z.h"
+#include "mpz_extras.h"
 #include "profiler.h"
 
 /* Runs F_mpz_mul through random data.

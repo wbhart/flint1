@@ -57,6 +57,10 @@ static const unsigned long prime_tab[][5] =
 #define MAX_FACS 60 // Maximum number of different prime factors
                     // a relation can have 25, 30
                     
+#define SMALL_PRIMES 8 // Used by tinyQS Todo: make this a variable
+
+#define SIEVE_SIZE 64000 // Used by tinyQS Todo: make this a variable
+                    
 typedef struct prime_s
 {
    u_int32_t p; // prime

@@ -12,7 +12,6 @@
 
 #include <gmp.h>
 
-#include "factor_base.h"
 #include "common.h"
 
 #define QS_INFO 0 // Print some info about what is being factored, etc

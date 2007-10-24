@@ -17,7 +17,7 @@
 
 #define KSMAX 100
 
-static const unsigned long prime_tab[][2] =
+static const unsigned long prime_tab_small[][2] =
 {
    {32, 30},
    {40, 50},
@@ -32,7 +32,7 @@ static const unsigned long prime_tab[][2] =
    {130, 550}
 };
 
-#define PTABSIZE (sizeof(prime_tab)/(2*sizeof(unsigned long)))
+#define PTABSIZE_SMALL (sizeof(prime_tab_small)/(2*sizeof(unsigned long)))
 
 unsigned long num_FB_primes(unsigned long bits);
 

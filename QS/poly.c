@@ -129,10 +129,10 @@ void compute_A(QS_t * qs_inf, poly_t * poly_inf)
    
    if (s <= 4) 
    {
-       A_ind[0] = long_randint(span) + min;
+       A_ind[0] = z_randint(span) + min;
        do
        {
-          A_ind[1] = long_randint(span) + min;
+          A_ind[1] = z_randint(span) + min;
        } while (A_ind[0] == A_ind[1]);
    }
    
@@ -142,7 +142,7 @@ void compute_A(QS_t * qs_inf, poly_t * poly_inf)
    {
        do
        {
-          A_ind[2] = long_randint(span) + min;
+          A_ind[2] = z_randint(span) + min;
        } while ((A_ind[0] == A_ind[2]) || (A_ind[1] == A_ind[2]));
        A = factor_base[A_ind[0]].p * factor_base[A_ind[1]].p * factor_base[A_ind[2]].p;
    }  
@@ -165,18 +165,18 @@ void compute_A(QS_t * qs_inf, poly_t * poly_inf)
    
    if (s == 5) 
    {
-       A_ind[0] = ((long_randint(span) + min) | 1);
+       A_ind[0] = ((z_randint(span) + min) | 1);
        if (A_ind[0] == min + span) A_ind[0] -= 2;
        
        do
        {
-          A_ind[1] = ((long_randint(span) + min) | 1);
+          A_ind[1] = ((z_randint(span) + min) | 1);
           if (A_ind[1] == min + span) A_ind[1] -= 2;
        } while (A_ind[0] == A_ind[1]);
        
        do
        {
-          A_ind[2] = ((long_randint(span) + min) | 1);
+          A_ind[2] = ((z_randint(span) + min) | 1);
           if (A_ind[2] == min + span) A_ind[2] -= 2;
        } while ((A_ind[0] == A_ind[2]) || (A_ind[1] == A_ind[2]));
        
@@ -185,12 +185,12 @@ void compute_A(QS_t * qs_inf, poly_t * poly_inf)
        
        for (i = 0; i < 8; i++)
        {
-          A_ind[3] = ((long_randint(span) + min) & -2L);
+          A_ind[3] = ((z_randint(span) + min) & -2L);
           if (A_ind[3] < min) A_ind[3]+=2;
           
           do
           {
-             A_ind[4] = ((long_randint(span) + min) & -2L);
+             A_ind[4] = ((z_randint(span) + min) & -2L);
              if (A_ind[4] < min) A_ind[4]+=2;
           } while (A_ind[3] == A_ind[4]);
           
@@ -226,7 +226,7 @@ void compute_A(QS_t * qs_inf, poly_t * poly_inf)
    for (i = 0; i < s; i++)
    {
       p = factor_base[A_ind[i]].p;
-      poly_inf->inv_p2[i] = long_precompute_inverse(p*p);
+      poly_inf->inv_p2[i] = z_precompute_inverse(p*p);
    }      
 }
 
@@ -254,10 +254,10 @@ void compute_B_terms(QS_t * qs_inf, poly_t * poly_inf)
    {
       p = factor_base[A_ind[i]].p;
       pinv = factor_base[A_ind[i]].pinv;
-      temp2 = (temp = long_div63_precomp(A, p, pinv)); 
-      A_modp[i] = (temp = long_mod63_precomp(temp, p, pinv));
-      temp = long_invert(temp, p);
-      temp = long_mulmod_precomp(temp, qs_inf->sqrts[A_ind[i]], p, pinv);
+      temp2 = (temp = z_div_64_precomp(A, p, pinv)); 
+      A_modp[i] = (temp = z_mod_64_precomp(temp, p, pinv));
+      temp = z_invert(temp, p);
+      temp = z_mulmod_precomp(temp, qs_inf->sqrts[A_ind[i]], p, pinv);
       if (temp > p/2) temp = p - temp;
       B_terms[i] = temp*temp2;     
    }
@@ -289,7 +289,7 @@ void compute_off_adj(QS_t * qs_inf, poly_t * poly_inf)
    unsigned long * B_terms = poly_inf->B_terms;
    unsigned long * soln1 = poly_inf->soln1;
    unsigned long * soln2 = poly_inf->soln2;
-   unsigned long * sqrts = qs_inf->sqrts;
+   u_int32_t * sqrts = qs_inf->sqrts;
    prime_t * factor_base = qs_inf->factor_base;
    unsigned long s = poly_inf->s;
    unsigned long p, temp;
@@ -300,25 +300,25 @@ void compute_off_adj(QS_t * qs_inf, poly_t * poly_inf)
       p = factor_base[i].p;
       pinv = factor_base[i].pinv;
       
-      A_inv[i] = long_invert(long_mod63_precomp(A, p, pinv), p);
+      A_inv[i] = z_invert(z_mod_64_precomp(A, p, pinv), p);
              
       for (unsigned long j = 0; j < s; j++)
       {
-         temp = long_mod63_precomp(B_terms[j], p, pinv);
-         temp = long_mulmod_precomp(temp, A_inv[i], p, pinv);
+         temp = z_mod_64_precomp(B_terms[j], p, pinv);
+         temp = z_mulmod_precomp(temp, A_inv[i], p, pinv);
          temp *= 2;
          if (temp >= p) temp -= p;
          A_inv2B[j][i] = temp;
       }
              
-      temp = long_mod63_precomp(B, p, pinv);
+      temp = z_mod_64_precomp(B, p, pinv);
       temp = sqrts[i] + p - temp;
       temp *= A_inv[i];
       temp += SIEVE_SIZE/2;
-      soln1[i] = long_mod63_precomp(temp, p, pinv); // Consider using long_mod_precomp
+      soln1[i] = z_mod_64_precomp(temp, p, pinv); // Consider using z_mod_precomp
       temp = p - sqrts[i];
       if (temp == p) temp -= p;
-      temp = long_mulmod_precomp(temp, A_inv[i], p, pinv);
+      temp = z_mulmod_precomp(temp, A_inv[i], p, pinv);
       temp *= 2;
       if (temp >= p) temp -= p;      
       soln2[i] = temp+soln1[i];
@@ -355,28 +355,28 @@ void compute_A_factor_offsets(QS_t * qs_inf, poly_t * poly_inf)
       p = factor_base[index].p;
       p2 = p*p;
       pinv = factor_base[index].pinv;
-      D = long_mod2_precomp(n[2], n[1], p*p, inv_p2[j]);    
+      D = z_ll_mod_precomp(n[2], n[1], p*p, inv_p2[j]);    
       if ((long) B < 0) 
       {
-         B_modp2 = long_mod63_precomp(-B, p2, inv_p2[j]);
+         B_modp2 = z_mod_64_precomp(-B, p2, inv_p2[j]);
          B_modp2 = p2 - B_modp2;
          if (B_modp2 == p2) B_modp2 = 0;
       } else
-      B_modp2 = long_mod63_precomp(B, p2, inv_p2[j]);
+      B_modp2 = z_mod_64_precomp(B, p2, inv_p2[j]);
       temp = B_modp2*A_modp[j];
-      temp = long_mod63_precomp(temp, p, pinv); 
-      temp2 = long_invert(temp, p);
+      temp = z_mod_64_precomp(temp, p, pinv); 
+      temp2 = z_invert(temp, p);
       D -= (B_modp2*B_modp2);
-      if ((long) D < 0) temp = -long_div63_precomp(-D, p, pinv);
-      else temp = -long_div63_precomp(-D, p, pinv);
+      if ((long) D < 0) temp = -z_div_64_precomp(-D, p, pinv);
+      else temp = -z_div_64_precomp(-D, p, pinv);
       temp *= temp2;
       temp += SIEVE_SIZE/2;
       if ((long) temp < 0) 
       {
-         temp = p - long_mod63_precomp(-temp, p, pinv);
+         temp = p - z_mod_64_precomp(-temp, p, pinv);
          if (temp == p) temp = 0;
       }
-      else temp = long_mod63_precomp(temp, p, pinv);
+      else temp = z_mod_64_precomp(temp, p, pinv);
       soln1[index] = temp;
       soln2[index] = -1L;
    }

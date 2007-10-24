@@ -192,7 +192,7 @@ unsigned long collect_relations(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly_
          if ((msl) && (limbs2 < limbs - 1)) msl = mpn_sub_1(B + limbs2 + 1, B + limbs2 + 1, limbs - limbs2 - 1, msl);
          if (msl)
          {
-            negate_limbs(B+1, B+1, limbs - 1);
+            F_mpn_negate(B+1, B+1, limbs - 1);
             B[0] = -B[0];
          }
       }
