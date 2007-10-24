@@ -25,9 +25,8 @@
 #include "Z_mpn_mul-tuning.h"
 
 
-/*=======================================================================================*/
+/*=======================================================================================
 
-/* 
     Performs division by a limb d and places the quotient in qp and returns the 
     remainder. Requires a single limb approximation to 1/d as input. If the most
     significant bit of d is not 1 it expects d to be shifted left (by norm bits)
@@ -37,7 +36,7 @@
     This code has been adapted from code found in the GMP package version 4.2.1
     (divrem_1.c) (C) Free Software Foundation
 */
-mp_limb_t mpn_divmod_1_preinv(mp_limb_t * qp, mp_limb_t * up, 
+mp_limb_t F_mpn_divmod_1_preinv(mp_limb_t * qp, mp_limb_t * up, 
                                   unsigned long un, mp_limb_t d, mp_limb_t dinv, unsigned long norm)
 {
   mp_size_t  n;
@@ -115,7 +114,7 @@ mp_limb_t mpn_divmod_1_preinv(mp_limb_t * qp, mp_limb_t * up,
   }
 }
 
-mp_limb_t mpn_addmul(mp_limb_t * rp, mp_limb_t * s1p, unsigned long s1n, 
+mp_limb_t F_mpn_addmul(mp_limb_t * rp, mp_limb_t * s1p, unsigned long s1n, 
                                       mp_limb_t * s2p, unsigned long s2n)
 {
    if (s2n == 0) return 0;
@@ -196,12 +195,12 @@ void F_mpn_FFT_split(ZmodF_poly_t poly, mp_limb_t * limbs, unsigned long total_l
    {
       for (j = 0; j < output_limbs; j += 8) FLINT_PREFETCH(poly->coeffs[i+1], j);
       
-      clear_limbs(poly->coeffs[i], output_limbs+1);
+      F_mpn_clear(poly->coeffs[i], output_limbs+1);
       // convert a coefficient
-      copy_limbs(poly->coeffs[i], limbs+skip, coeff_limbs);
+      F_mpn_copy(poly->coeffs[i], limbs+skip, coeff_limbs);
    }
-   if (i < length) clear_limbs(poly->coeffs[i], output_limbs+1);
-   if (total_limbs > skip) copy_limbs(poly->coeffs[i], limbs+skip, total_limbs-skip);
+   if (i < length) F_mpn_clear(poly->coeffs[i], output_limbs+1);
+   if (total_limbs > skip) F_mpn_copy(poly->coeffs[i], limbs+skip, total_limbs-skip);
    
    poly->length = length;
 }
@@ -334,7 +333,7 @@ mp_limb_t __F_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1,
    
    ZmodF_poly_normalise(poly1);
    
-   clear_limbs(res, total_limbs);
+   F_mpn_clear(res, total_limbs);
    
    F_mpn_FFT_combine(res, poly1, coeff_limbs, 2*coeff_limbs+1, total_limbs);
    ZmodF_poly_stack_clear(poly1);
@@ -440,7 +439,7 @@ mp_limb_t __F_mpn_mul_trunc(mp_limb_t * res, mp_limb_t * data1, unsigned long li
    
    ZmodF_poly_normalise(poly1);
    
-   clear_limbs(res, trunc);
+   F_mpn_clear(res, trunc);
    
    F_mpn_FFT_combine(res, poly1, coeff_limbs, 2*coeff_limbs+1, trunc);
    ZmodF_poly_stack_clear(poly1);
@@ -693,7 +692,7 @@ mp_limb_t F_mpn_mul_precomp(mp_limb_t * res, mp_limb_t * data2, unsigned long li
    
    /*for (unsigned long i = poly2->length; i < precomp->length2; i++)
    {
-      clear_limbs(poly2->coeffs[i], poly2->n+1);
+      F_mpn_clear(poly2->coeffs[i], poly2->n+1);
    }
    poly2->length = precomp->length2;*/
    
@@ -703,7 +702,7 @@ mp_limb_t F_mpn_mul_precomp(mp_limb_t * res, mp_limb_t * data2, unsigned long li
    ZmodF_poly_rescale(poly2);
    
    ZmodF_poly_normalise(poly2);
-   clear_limbs(res, precomp->limbs1 + limbs2 - s1);
+   F_mpn_clear(res, precomp->limbs1 + limbs2 - s1);
    
    F_mpn_FFT_combine(res, poly2, precomp->coeff_limbs, 2*precomp->coeff_limbs+1, precomp->limbs1 + limbs2 - s1);
    

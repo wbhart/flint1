@@ -2184,7 +2184,7 @@ int test_fmpz_poly_scalar_mul()
           fmpz_poly_realloc(test_mpn_poly, length);
           fmpz_poly_realloc(test_mpn_poly2, length);
           
-          clear_limbs(x, limbs2+1);
+          F_mpn_clear(x, limbs2+1);
           mpn_random2(x+1, limbs2);
           if (randint(2)) 
               x[0] = limbs2;
@@ -2253,7 +2253,7 @@ int test_fmpz_poly_scalar_mul()
           fmpz_poly_realloc(test_mpn_poly, length);
           fmpz_poly_realloc(test_mpn_poly2, length);
           
-          clear_limbs(x, limbs2+1);
+          F_mpn_clear(x, limbs2+1);
           mpn_random2(x+1, limbs2);
           if (randint(2)) 
               x[0] = limbs2;

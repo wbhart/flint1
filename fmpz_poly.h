@@ -261,8 +261,8 @@ static inline
 long _fmpz_poly_get_coeff(fmpz_t output, const fmpz_poly_t poly,
                           const unsigned long n)
 {
-   if (poly->coeffs[n*(poly->limbs+1)] == 0) clear_limbs(output, poly->limbs);
-   copy_limbs(output, poly->coeffs+n*(poly->limbs+1)+1, poly->limbs);
+   if (poly->coeffs[n*(poly->limbs+1)] == 0) F_mpn_clear(output, poly->limbs);
+   F_mpn_copy(output, poly->coeffs+n*(poly->limbs+1)+1, poly->limbs);
    return poly->coeffs[n*(poly->limbs+1)];
 }
 
@@ -293,10 +293,10 @@ static inline void _fmpz_poly_set_coeff(fmpz_poly_t poly, const unsigned long n,
                                   const fmpz_t x, const long sign, const unsigned long size)
 {
    FLINT_ASSERT(poly->limbs >= size);
-   copy_limbs(poly->coeffs+n*(poly->limbs+1)+1, x, size);
+   F_mpn_copy(poly->coeffs+n*(poly->limbs+1)+1, x, size);
    poly->coeffs[n*(poly->limbs+1)] = sign;
    if (poly->limbs > size) 
-     clear_limbs(poly->coeffs+n*(poly->limbs+1)+size+1, poly->limbs-size);
+     F_mpn_clear(poly->coeffs+n*(poly->limbs+1)+size+1, poly->limbs-size);
 }
 
 void _fmpz_poly_set_coeff_ui(fmpz_poly_t poly, const unsigned long n, const unsigned long x);

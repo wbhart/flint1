@@ -79,11 +79,11 @@ void fmpz_add(fmpz_t coeffs_out, const fmpz_t in1, const fmpz_t in2)
       if (!size2) coeffs_out[0] = 0L;
       else
       {
-         if (coeffs_out != coeffs2) copy_limbs(coeffs_out, coeffs2, size2+1);
+         if (coeffs_out != coeffs2) F_mpn_copy(coeffs_out, coeffs2, size2+1);
       }
    } else if (!size2)
    {
-      if (coeffs_out != coeffs1) copy_limbs(coeffs_out, coeffs1, size1+1);
+      if (coeffs_out != coeffs1) F_mpn_copy(coeffs_out, coeffs1, size1+1);
    } else if ((long) (coeffs1[0] ^ coeffs2[0]) >= 0L)
    {
       coeffs_out[0] = coeffs1[0];
@@ -254,12 +254,12 @@ void fmpz_sub(fmpz_t coeffs_out, const fmpz_t in1, const fmpz_t in2)
       if (!size2) coeffs_out[0] = 0L;
       else
       {
-         if (coeffs2 != coeffs_out) copy_limbs(coeffs_out, coeffs2, size2+1);
+         if (coeffs2 != coeffs_out) F_mpn_copy(coeffs_out, coeffs2, size2+1);
          if (in_order) coeffs_out[0] = -coeffs_out[0];
       }
    } else if (!size2)
    {
-      if (coeffs1 != coeffs_out) copy_limbs(coeffs_out, coeffs1, size1+1);
+      if (coeffs1 != coeffs_out) F_mpn_copy(coeffs_out, coeffs1, size1+1);
       if (!in_order) coeffs_out[0] = -coeffs_out[0];
    } else if ((long) (coeffs1[0] ^ coeffs2[0]) < 0)
    {
@@ -402,7 +402,7 @@ void fmpz_mul(fmpz_t res, const fmpz_t a, const fmpz_t b)
          if (sizea >= sizeb) mslimb = mpn_mul(temp+1, a+1, sizea, b+1, sizeb);
          else mslimb = mpn_mul(temp+1, b+1, sizeb, a+1, sizea);
          temp[0] = sizea + sizeb - (mslimb == 0);
-         copy_limbs(res, temp, temp[0]+1);
+         F_mpn_copy(res, temp, temp[0]+1);
          if ((long) (a0 ^ b0) < 0) res[0] = -res[0];
          flint_stack_release_small();     
       } else if (sizea + sizeb < 2*FLINT_FFT_LIMBS_CROSSOVER)
@@ -411,7 +411,7 @@ void fmpz_mul(fmpz_t res, const fmpz_t a, const fmpz_t b)
          if (sizea >= sizeb) mslimb = mpn_mul(temp+1, a+1, sizea, b+1, sizeb);
          else mslimb = mpn_mul(temp+1, b+1, sizeb, a+1, sizea);
          temp[0] = sizea + sizeb - (mslimb == 0);
-         copy_limbs(res, temp, temp[0]+1);
+         F_mpn_copy(res, temp, temp[0]+1);
          if ((long) (a0 ^ b0) < 0) res[0] = -res[0];
          flint_stack_release();   
       } else
@@ -576,7 +576,7 @@ void fmpz_div_ui(fmpz_t output, const fmpz_t input, const unsigned long x)
       xnorm = (x<<norm);
       invert_limb(xinv, xnorm);
       
-      mpn_divmod_1_preinv(output+1, input+1, size, x, xinv, norm);
+      F_mpn_divmod_1_preinv(output+1, input+1, size, x, xinv, norm);
    } else
    {
       mpn_divmod_1(output+1, input+1, size, x);

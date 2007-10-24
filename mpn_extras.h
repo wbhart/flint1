@@ -35,7 +35,7 @@ todo: consider using GMP's mpn_com_n (undocumented)
 
 */
 
-static inline void negate_limbs(mp_limb_t* dest, mp_limb_t* src, unsigned long count)
+static inline void F_mpn_negate(mp_limb_t* dest, mp_limb_t* src, unsigned long count)
 {
    for (long i = count - 1; i >= 0; i--)
       dest[i] = ~src[i];
@@ -56,7 +56,7 @@ todo: GMP has code to do limb copying. Clearly memcpy wasn't good enough for
       them either. Work out how to use their code. It's not a documented
       interface, so some hackishness may be necessary.
  */
-static inline void copy_limbs(mp_limb_t* dest, mp_limb_t* src, unsigned long count)
+static inline void F_mpn_copy(mp_limb_t* dest, mp_limb_t* src, unsigned long count)
 {
    for (long i = count - 1; i >= 0; i--)
    {
@@ -64,7 +64,7 @@ static inline void copy_limbs(mp_limb_t* dest, mp_limb_t* src, unsigned long cou
    }
 }
 
-static inline void forward_copy_limbs(mp_limb_t* dest, mp_limb_t* src, unsigned long count)
+static inline void F_mpn_copy_forward(mp_limb_t* dest, mp_limb_t* src, unsigned long count)
 {
    for (long i = 0; i < count; i++)
    {
@@ -78,7 +78,7 @@ Sets a bunch of limbs to zero.
 
 todo: why does memset have so much overhead????!!?
  */
-static inline void clear_limbs(mp_limb_t* dest, unsigned long count)
+static inline void F_mpn_clear(mp_limb_t* dest, unsigned long count)
 {
    for (long i = count - 1; i >= 0; i--)
       dest[i] = 0;
@@ -89,7 +89,7 @@ Sets a bunch of limbs to 0xfff....
 
 todo: why does memset have so much overhead????!!?
  */
-static inline void set_limbs(mp_limb_t* dest, unsigned long count)
+static inline void F_mpn_set(mp_limb_t* dest, unsigned long count)
 {
    for (long i = count - 1; i >= 0; i--)
       dest[i] = (mp_limb_t)(-1L);
@@ -97,10 +97,10 @@ static inline void set_limbs(mp_limb_t* dest, unsigned long count)
 
 
 
-mp_limb_t mpn_divmod_1_preinv(mp_limb_t * qp, mp_limb_t * up, 
+mp_limb_t F_mpn_divmod_1_preinv(mp_limb_t * qp, mp_limb_t * up, 
              unsigned long un, mp_limb_t d, mp_limb_t dinv, unsigned long norm);
              
-mp_limb_t mpn_addmul(mp_limb_t * rp, mp_limb_t * s1p, unsigned long s1n, 
+mp_limb_t F_mpn_addmul(mp_limb_t * rp, mp_limb_t * s1p, unsigned long s1n, 
                                       mp_limb_t * s2p, unsigned long s2n);
                                       
 /* 

@@ -117,7 +117,7 @@ void _ZmodF_mul(ZmodF_t res, ZmodF_t a, ZmodF_t b, mp_limb_t* scratch,
    }
    if ((limbs1 == 0) || (limbs2 == 0)) 
    {
-      clear_limbs(res, n+1);
+      F_mpn_clear(res, n+1);
       return;
    }
    
@@ -456,13 +456,13 @@ void _ZmodF_mul_fft_split(ZmodF_poly_t poly, ZmodF_t x, unsigned long n)
          mpn_rshift(poly->coeffs[i], x + start_limb, end_limb - start_limb,
                     start_bits);
       else
-         copy_limbs(poly->coeffs[i], x + start_limb, end_limb - start_limb);
+         F_mpn_copy(poly->coeffs[i], x + start_limb, end_limb - start_limb);
 
       // zero out the high bits that shouldn't contribute to this coefficient
       poly->coeffs[i][limbs-1] &= last_mask;
 
       // zero out remaining limbs
-      clear_limbs(poly->coeffs[i] + limbs, poly->n + 1 - limbs);
+      F_mpn_clear(poly->coeffs[i] + limbs, poly->n + 1 - limbs);
    }
 }
 

@@ -63,12 +63,12 @@ long ZmodF_poly_convert_in_mpn(ZmodF_poly_t poly_f, const fmpz_poly_t poly_mpn,
       }
       if (size_j < 0)
       {
-         negate_limbs(coeffs_f[i], coeffs_m + j + 1, ABS(size_j)); 
-         set_limbs(coeffs_f[i] + ABS(size_j), size_f - ABS(size_j)); 
+         F_mpn_negate(coeffs_f[i], coeffs_m + j + 1, ABS(size_j)); 
+         F_mpn_set(coeffs_f[i] + ABS(size_j), size_f - ABS(size_j)); 
       } else
       {
-         copy_limbs(coeffs_f[i], coeffs_m + j + 1, ABS(size_j)); 
-         clear_limbs(coeffs_f[i] + ABS(size_j), size_f - ABS(size_j)); 
+         F_mpn_copy(coeffs_f[i], coeffs_m + j + 1, ABS(size_j)); 
+         F_mpn_clear(coeffs_f[i] + ABS(size_j), size_f - ABS(size_j)); 
       }
    }
    poly_f->length = length; 
@@ -92,13 +92,13 @@ void ZmodF_poly_convert_out_mpn(fmpz_poly_t poly_mpn, const ZmodF_poly_t poly_f,
          ZmodF_normalise(coeffs_f[i], n);
          if (coeffs_f[i][n-1]>>(FLINT_BITS-1) || coeffs_f[i][n])
          {
-            negate_limbs(coeffs_m + j + 1, coeffs_f[i], limbs);
+            F_mpn_negate(coeffs_m + j + 1, coeffs_f[i], limbs);
             mpn_add_1(coeffs_m + j + 1, coeffs_m + j + 1, limbs, 1L);
             coeffs_m[j] = -limbs;
             NORM(coeffs_m + j);
          } else
          {
-            copy_limbs(coeffs_m + j + 1, coeffs_f[i], limbs);
+            F_mpn_copy(coeffs_m + j + 1, coeffs_f[i], limbs);
             coeffs_m[j] = limbs;
             NORM(coeffs_m + j);         
          }
@@ -108,7 +108,7 @@ void ZmodF_poly_convert_out_mpn(fmpz_poly_t poly_mpn, const ZmodF_poly_t poly_f,
       for (unsigned long i = 0, j = 0; i < poly_f->length; i++, j += size_m)
       {
          ZmodF_normalise(coeffs_f[i], n);
-         copy_limbs(coeffs_m + j + 1, coeffs_f[i], limbs);
+         F_mpn_copy(coeffs_m + j + 1, coeffs_f[i], limbs);
          coeffs_m[j] = limbs;
          NORM(coeffs_m + j);         
       }
@@ -449,25 +449,25 @@ void ZmodF_poly_limb_pack_mpn(ZmodF_poly_t poly_f, const fmpz_poly_t poly_mpn,
       size_j = (long) coeffs_m[j];
       if (size_j < 0)
       {
-         negate_limbs(coeffs_f + k, coeffs_m + j + 1, ABS(size_j)); 
-         set_limbs(coeffs_f + k + ABS(size_j), limbs - ABS(size_j));
+         F_mpn_negate(coeffs_f + k, coeffs_m + j + 1, ABS(size_j)); 
+         F_mpn_set(coeffs_f + k + ABS(size_j), limbs - ABS(size_j));
          if (carry) mpn_sub_1(coeffs_f + k, coeffs_f + k, limbs, 1L);
          carry = 1L;
       } else if (size_j > 0)
       {
-         copy_limbs(coeffs_f + k, coeffs_m + j + 1, ABS(size_j)); 
-         clear_limbs(coeffs_f + k + ABS(size_j), limbs - ABS(size_j)); 
+         F_mpn_copy(coeffs_f + k, coeffs_m + j + 1, ABS(size_j)); 
+         F_mpn_clear(coeffs_f + k + ABS(size_j), limbs - ABS(size_j)); 
          if (carry) mpn_sub_1(coeffs_f + k, coeffs_f + k, limbs, 1L);
          carry = 0L;
       } else
       {
          if (carry) 
          {
-            set_limbs(coeffs_f + k, limbs);
+            F_mpn_set(coeffs_f + k, limbs);
             carry = 1L;
          } else 
          {
-            clear_limbs(coeffs_f + k, limbs);
+            F_mpn_clear(coeffs_f + k, limbs);
             carry = 0L;
          }
       }
@@ -488,13 +488,13 @@ void ZmodF_poly_limb_unpack_mpn(fmpz_poly_t poly_mpn, const ZmodF_poly_t poly_f,
       if (carry) mpn_add_1(coeffs_f + k, coeffs_f + k, n - k, 1L);
       if (coeffs_f[k+limbs-1]>>(FLINT_BITS-1))
       {
-         negate_limbs(coeffs_m + j + 1, coeffs_f + k, limbs);
+         F_mpn_negate(coeffs_m + j + 1, coeffs_f + k, limbs);
          coeffs_m[j] = -limbs;
          NORM(coeffs_m + j);
          carry = 1L;
       } else
       {
-         copy_limbs(coeffs_m + j + 1, coeffs_f + k, limbs);
+         F_mpn_copy(coeffs_m + j + 1, coeffs_f + k, limbs);
          coeffs_m[j] = limbs;
          NORM(coeffs_m + j); 
          carry = 0L;        
@@ -512,7 +512,7 @@ void ZmodF_poly_limb_unpack_unsigned_mpn(fmpz_poly_t poly_mpn, const ZmodF_poly_
    
    for (unsigned long i = 0, j = 0, k = 0; i < bundle; i++, j += size_m, k += limbs)
    {
-         copy_limbs(coeffs_m + j + 1, coeffs_f+k, limbs);
+         F_mpn_copy(coeffs_m + j + 1, coeffs_f+k, limbs);
          coeffs_m[j] = limbs;
          NORM(coeffs_m + j);          
    }
@@ -913,7 +913,7 @@ void ZmodF_poly_byte_unpack_unsigned_mpn(fmpz_poly_t poly_m, const mp_limb_t* ar
    
    for (unsigned long i = 0; i < bundle; i++)
    {
-       clear_limbs(temp, limbs+2);
+       F_mpn_clear(temp, limbs+2);
        __ZmodF_poly_unpack_bytes(temp + 1, array, limb_upto, 
                                              byte_offset, coeff_bytes);
        temp[0] = limbs;
@@ -959,7 +959,7 @@ void ZmodF_poly_byte_unpack_mpn(fmpz_poly_t poly_m, const mp_limb_t* array,
    
    for (unsigned long i = 0; i < bundle; i++)
    {
-       clear_limbs(temp,limbs+2);
+       F_mpn_clear(temp,limbs+2);
        sign = __ZmodF_poly_unpack_signed_bytes(temp + 1, array, limb_upto, 
                                              byte_offset, coeff_bytes);
        if (sign) temp[0] = -limbs;
@@ -1159,14 +1159,14 @@ void _fmpz_poly_set(fmpz_poly_t output, const fmpz_poly_t input)
          for (unsigned long i = 0; i < input->length; i++)
          {
             if (!input->coeffs[i*input_size]) output->coeffs[i*output_size] = 0;
-            else copy_limbs(output->coeffs+i*output_size, input->coeffs+i*input_size, ABS(input->coeffs[i*input_size])+1);
+            else F_mpn_copy(output->coeffs+i*output_size, input->coeffs+i*input_size, ABS(input->coeffs[i*input_size])+1);
          }
       } else
       {
          for (long i = input->length - 1; i >= 0; i--)
          {
             if (!input->coeffs[i*input_size]) output->coeffs[i*output_size] = 0;
-            else copy_limbs(output->coeffs+i*output_size, input->coeffs+i*input_size, ABS(input->coeffs[i*input_size])+1);
+            else F_mpn_copy(output->coeffs+i*output_size, input->coeffs+i*input_size, ABS(input->coeffs[i*input_size])+1);
          }
       }
    }
@@ -1360,7 +1360,7 @@ void _fmpz_poly_neg(fmpz_poly_t output, const fmpz_poly_t input)
          else 
          {
             output->coeffs[i*output_size] = -input->coeffs[i*input_size];
-            copy_limbs(output->coeffs+i*output_size+1, input->coeffs+i*input_size+1, ABS(input->coeffs[i*input_size]));
+            F_mpn_copy(output->coeffs+i*output_size+1, input->coeffs+i*input_size+1, ABS(input->coeffs[i*input_size]));
          }
       }
    }
@@ -1439,7 +1439,7 @@ void _fmpz_poly_reverse(fmpz_poly_t output, const fmpz_poly_t input, const unsig
       for (i = 0; i < FLINT_MIN(length, input->length); i++)
       {
          coeff_limbs = ABS(input->coeffs[i*size_in]) + 1;
-         copy_limbs(output->coeffs + (length - i - 1)*size_out, input->coeffs + i*size_in, coeff_limbs);
+         F_mpn_copy(output->coeffs + (length - i - 1)*size_out, input->coeffs + i*size_in, coeff_limbs);
       }
       for ( ; i < length; i++)
       {
@@ -1457,7 +1457,7 @@ void _fmpz_poly_reverse(fmpz_poly_t output, const fmpz_poly_t input, const unsig
          if (i < input->length)
          {
             coeff_limbs = ABS(input->coeffs[i*size_in]) + 1;
-            copy_limbs(temp, input->coeffs + i*size_in, coeff_limbs);
+            F_mpn_copy(temp, input->coeffs + i*size_in, coeff_limbs);
          } else
          {
             coeff_limbs = 1;
@@ -1466,12 +1466,12 @@ void _fmpz_poly_reverse(fmpz_poly_t output, const fmpz_poly_t input, const unsig
          if (length - i - 1 < input->length)
          {
             coeff_limbs2 = ABS(input->coeffs[(length - i - 1)*size_in]) + 1;
-            copy_limbs(input->coeffs + i*size_in, input->coeffs + (length - i - 1)*size_in, coeff_limbs2);
+            F_mpn_copy(input->coeffs + i*size_in, input->coeffs + (length - i - 1)*size_in, coeff_limbs2);
          } else
          {
             input->coeffs[i*size_in] = 0;
          }
-         copy_limbs(input->coeffs + (length - i - 1)*size_in, temp, coeff_limbs);
+         F_mpn_copy(input->coeffs + (length - i - 1)*size_in, temp, coeff_limbs);
       }
       if ((length & 1) && (i >= input->length)) input->coeffs[i*size_in] = 0;
 
@@ -1509,14 +1509,14 @@ void _fmpz_poly_add(fmpz_poly_t output, const fmpz_poly_t input1, const fmpz_pol
    {
       for (unsigned long i = shorter; i < input1->length; i++)
       {
-          copy_limbs(coeffs_out+i*size_out, coeffs1+i*size1, ABS(coeffs1[i*size1])+1);
+          F_mpn_copy(coeffs_out+i*size_out, coeffs1+i*size1, ABS(coeffs1[i*size1])+1);
       }
    }
    if (input2 != output)
    {
       for (unsigned long i = shorter; i < input2->length; i++)
       {
-         copy_limbs(coeffs_out+i*size_out, coeffs2+i*size2, ABS(coeffs2[i*size2])+1);
+         F_mpn_copy(coeffs_out+i*size_out, coeffs2+i*size2, ABS(coeffs2[i*size2])+1);
       }
    }
    
@@ -1551,14 +1551,14 @@ void _fmpz_poly_sub(fmpz_poly_t output, const fmpz_poly_t input1, const fmpz_pol
    {
       for (unsigned long i = shorter; i < input1->length; i++)
       {
-         copy_limbs(coeffs_out+i*size_out, coeffs1+i*size1, ABS(coeffs1[i*size1])+1);
+         F_mpn_copy(coeffs_out+i*size_out, coeffs1+i*size1, ABS(coeffs1[i*size1])+1);
       }
    }
    if (input2 != output)
    {
       for (unsigned long i = shorter; i < input2->length; i++)
       {
-         copy_limbs(coeffs_out+i*size_out+1, coeffs2+i*size2+1, ABS(coeffs2[i*size2]));
+         F_mpn_copy(coeffs_out+i*size_out+1, coeffs2+i*size2+1, ABS(coeffs2[i*size2]));
          coeffs_out[i*size_out] = -coeffs2[i*size2];
       }
    } else
@@ -1741,11 +1741,11 @@ void _fmpz_poly_scalar_div_exact_ui(fmpz_poly_t output, const fmpz_poly_t poly, 
          coeffs_out[0] = 0;
          for (unsigned long i = 0; i < poly->length-1; i++)
          {
-            copy_limbs(coeffs_out+i*size_out+1, coeffs1+i*size1+1, ABS(coeffs1[i*size1]));
-            clear_limbs(coeffs_out+i*size_out+ABS(coeffs1[i*size1])+1, size_out-ABS(coeffs1[i*size1]));
+            F_mpn_copy(coeffs_out+i*size_out+1, coeffs1+i*size1+1, ABS(coeffs1[i*size1]));
+            F_mpn_clear(coeffs_out+i*size_out+ABS(coeffs1[i*size1])+1, size_out-ABS(coeffs1[i*size1]));
          } 
-         copy_limbs(coeffs_out+(poly->length-1)*size_out+1, coeffs1+(poly->length-1)*size1+1, ABS(coeffs1[(poly->length-1)*size1]));
-         if (size_out > ABS(coeffs1[(poly->length-1)*size1])+1) clear_limbs(coeffs_out+(poly->length-1)*size_out+ABS(coeffs1[(poly->length-1)*size1])+1, size_out-ABS(coeffs1[(poly->length-1)*size1])-1);
+         F_mpn_copy(coeffs_out+(poly->length-1)*size_out+1, coeffs1+(poly->length-1)*size1+1, ABS(coeffs1[(poly->length-1)*size1]));
+         if (size_out > ABS(coeffs1[(poly->length-1)*size1])+1) F_mpn_clear(coeffs_out+(poly->length-1)*size_out+ABS(coeffs1[(poly->length-1)*size1])+1, size_out-ABS(coeffs1[(poly->length-1)*size1])-1);
          
          mpn_divmod_1(coeffs_out, coeffs_out, size_out*poly->length, x);
          for (unsigned long i = 0; i < poly->length; i++)
@@ -1761,9 +1761,9 @@ void _fmpz_poly_scalar_div_exact_ui(fmpz_poly_t output, const fmpz_poly_t poly, 
          for (unsigned long i = 0; i < poly->length-1; i++)
          {
              signs[i+1] = coeffs1[(i+1)*size1];
-             clear_limbs(coeffs_out+i*size_out+ABS(signs[i])+1, size_out-ABS(signs[i]));
+             F_mpn_clear(coeffs_out+i*size_out+ABS(signs[i])+1, size_out-ABS(signs[i]));
          } 
-         if (size_out > ABS(signs[poly->length-1])+1) clear_limbs(coeffs_out+(poly->length-1)*size_out+ABS(signs[poly->length-1])+1, size_out-ABS(signs[poly->length-1])-1);
+         if (size_out > ABS(signs[poly->length-1])+1) F_mpn_clear(coeffs_out+(poly->length-1)*size_out+ABS(signs[poly->length-1])+1, size_out-ABS(signs[poly->length-1])-1);
          mpn_divmod_1(coeffs_out, coeffs_out, size_out*poly->length, x);
          for (unsigned long i = 0; i < poly->length; i++)
          {
@@ -1810,11 +1810,11 @@ void _fmpz_poly_scalar_div_exact_si(fmpz_poly_t output, const fmpz_poly_t poly, 
          coeffs_out[0] = 0;
          for (unsigned long i = 0; i < poly->length-1; i++)
          {
-            copy_limbs(coeffs_out+i*size_out+1, coeffs1+i*size1+1, ABS(coeffs1[i*size1]));
-            clear_limbs(coeffs_out+i*size_out+ABS(coeffs1[i*size1])+1, size_out-ABS(coeffs1[i*size1]));
+            F_mpn_copy(coeffs_out+i*size_out+1, coeffs1+i*size1+1, ABS(coeffs1[i*size1]));
+            F_mpn_clear(coeffs_out+i*size_out+ABS(coeffs1[i*size1])+1, size_out-ABS(coeffs1[i*size1]));
          } 
-         copy_limbs(coeffs_out+(poly->length-1)*size_out+1, coeffs1+(poly->length-1)*size1+1, ABS(coeffs1[(poly->length-1)*size1]));
-         if (size_out > ABS(coeffs1[(poly->length-1)*size1])+1) clear_limbs(coeffs_out+(poly->length-1)*size_out+ABS(coeffs1[(poly->length-1)*size1])+1, size_out-ABS(coeffs1[(poly->length-1)*size1])-1);
+         F_mpn_copy(coeffs_out+(poly->length-1)*size_out+1, coeffs1+(poly->length-1)*size1+1, ABS(coeffs1[(poly->length-1)*size1]));
+         if (size_out > ABS(coeffs1[(poly->length-1)*size1])+1) F_mpn_clear(coeffs_out+(poly->length-1)*size_out+ABS(coeffs1[(poly->length-1)*size1])+1, size_out-ABS(coeffs1[(poly->length-1)*size1])-1);
          
          if (x < 0) mpn_divmod_1(coeffs_out, coeffs_out, size_out*poly->length, -x);
          else mpn_divmod_1(coeffs_out, coeffs_out, size_out*poly->length, x);
@@ -1832,9 +1832,9 @@ void _fmpz_poly_scalar_div_exact_si(fmpz_poly_t output, const fmpz_poly_t poly, 
          for (long i = 0; i < poly->length-1; i++)
          {
              signs[i+1] = coeffs1[(i+1)*size1];
-             clear_limbs(coeffs_out+i*size_out+ABS(signs[i])+1, size_out-ABS(signs[i]));
+             F_mpn_clear(coeffs_out+i*size_out+ABS(signs[i])+1, size_out-ABS(signs[i]));
          } 
-         if (size_out > ABS(signs[poly->length-1])+1) clear_limbs(coeffs_out+(poly->length-1)*size_out+ABS(signs[poly->length-1])+1, size_out-ABS(signs[poly->length-1])-1);
+         if (size_out > ABS(signs[poly->length-1])+1) F_mpn_clear(coeffs_out+(poly->length-1)*size_out+ABS(signs[poly->length-1])+1, size_out-ABS(signs[poly->length-1])-1);
          if (x < 0) mpn_divmod_1(coeffs_out, coeffs_out, size_out*poly->length, -x);
          else mpn_divmod_1(coeffs_out, coeffs_out, size_out*poly->length, x);
          for (long i = 0; i < poly->length; i++)
@@ -1879,7 +1879,7 @@ void _fmpz_poly_scalar_div_ui(fmpz_poly_t output, const fmpz_poly_t poly, const 
       for (unsigned long i = 0; i < poly->length; i++)
       {
          coeffs_out[i*size_out] = coeffs1[i*size1];
-         mpn_divmod_1_preinv(coeffs_out+i*size_out+1, coeffs1+i*size1+1, ABS(coeffs1[i*size1]), x, xinv, norm);
+         F_mpn_divmod_1_preinv(coeffs_out+i*size_out+1, coeffs1+i*size1+1, ABS(coeffs1[i*size1]), x, xinv, norm);
          NORM(coeffs_out+i*size_out);
       }
    } else
@@ -1925,7 +1925,7 @@ void _fmpz_poly_scalar_div_si(fmpz_poly_t output, const fmpz_poly_t poly, const 
       {
          if (sign) coeffs_out[i*size_out] = -coeffs1[i*size1];
          else coeffs_out[i*size_out] = coeffs1[i*size1];
-         mpn_divmod_1_preinv(coeffs_out+i*size_out+1, coeffs1+i*size1+1, ABS(coeffs1[i*size1]), x, xinv, norm);
+         F_mpn_divmod_1_preinv(coeffs_out+i*size_out+1, coeffs1+i*size1+1, ABS(coeffs1[i*size1]), x, xinv, norm);
       }
    } else
    {
@@ -3575,7 +3575,7 @@ void fmpz_poly_resize_limbs(fmpz_poly_t poly, const unsigned long limbs)
          coeff_i_old += (poly->limbs+1);
          for (i = 1; i < poly->length; i++)
          {
-            forward_copy_limbs(coeff_i, coeff_i_old, limbs+1);
+            F_mpn_copy_forward(coeff_i, coeff_i_old, limbs+1);
             FLINT_ASSERT(ABS(coeff_i[0]) > limbs); 
             coeff_i += (limbs+1);
             coeff_i_old += (poly->limbs+1);
@@ -3586,7 +3586,7 @@ void fmpz_poly_resize_limbs(fmpz_poly_t poly, const unsigned long limbs)
          coeff_i = temp_coeffs;
          for (i = 0; i < poly->length; i++)
          {
-            copy_limbs(coeff_i, coeff_i_old, poly->limbs+1);
+            F_mpn_copy(coeff_i, coeff_i_old, poly->limbs+1);
             coeff_i += (limbs+1);
             coeff_i_old += (poly->limbs+1);
          } 
