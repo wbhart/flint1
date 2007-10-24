@@ -156,8 +156,8 @@ ZmodF_poly-test.o: ZmodF_poly-test.c $(HEADERS)
 mpz_poly-test.o: mpz_poly-test.c $(HEADERS)
 	$(CC) $(CFLAGS) -c mpz_poly-test.c -o mpz_poly-test.o
 
-Z_mpn-test.o: Z_mpn-test.c $(HEADERS)
-	$(CC) $(CFLAGS) -c Z_mpn-test.c -o Z_mpn-test.o
+mpn_extras-test.o: mpn_extras-test.c $(HEADERS)
+	$(CC) $(CFLAGS) -c mpn_extras-test.c -o mpn_extras-test.o
 
 ZmodF_mul-test.o: ZmodF_mul-test.c $(HEADERS)
 	$(CC) $(CFLAGS) -c ZmodF_mul-test.c -o ZmodF_mul-test.o
@@ -169,8 +169,8 @@ long_extras-test.o: long_extras-test.c
 
 ####### test program targets
 
-Z_mpn-test: Z_mpn-test.o test-support.o $(FLINTOBJ) $(HEADERS)
-	$(CC) $(CFLAGS) Z_mpn-test.o test-support.o -o Z_mpn-test $(FLINTOBJ) $(LIBS)
+mpn_extras-test: mpn_extras-test.o test-support.o $(FLINTOBJ) $(HEADERS)
+	$(CC) $(CFLAGS) mpn_extras-test.o test-support.o -o mpn_extras-test $(FLINTOBJ) $(LIBS)
 
 fmpz_poly-test: fmpz_poly-test.o test-support.o $(FLINTOBJ) $(HEADERS)
 	$(CC) $(CFLAGS) fmpz_poly-test.o test-support.o -o fmpz_poly-test $(FLINTOBJ) $(LIBS)
