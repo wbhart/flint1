@@ -103,6 +103,23 @@ the mpz_t::_mp_d member directly).
    a = __builtin_ctzl(b);
 #endif
 
+/* 
+   On some platforms arithmetic shifts by FLINT_BITS don't yield all zeros 
+   So we define these macros for use in situations where this would be a problem
+*/
+
+static inline unsigned long r_shift(unsigned long in, unsigned long shift)
+{
+   if (shift == FLINT_BITS) return 0L;
+   return (in>>shift);
+}
+
+static inline unsigned long l_shift(unsigned long in, unsigned long shift)
+{
+   if (shift == FLINT_BITS) return 0L;
+   return (in<<shift);
+}
+
 /*
 Returns ceil(log2(x)).
 If x == 0, returns 0.
