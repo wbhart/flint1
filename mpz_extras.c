@@ -7,6 +7,8 @@
 #include "mpn_extras.h"
 #include "F_mpn_mul-tuning.h"
 #include "memory-manager.h"
+#include "longlong_wrapper.h"
+#include "longlong.h"
 
 #define DEBUG2 1
 #define DEBUG 0
@@ -81,6 +83,7 @@ void F_mpz_release(void)
 /* 
     sets res to a*b modulo p
     assumes res is not p
+    Does not assume a and b are reduced mod p
 */
 
 void F_mpz_mulmod(mpz_t res, mpz_t a, mpz_t b, mpz_t p)
@@ -97,25 +100,39 @@ void F_mpz_mulmod(mpz_t res, mpz_t a, mpz_t b, mpz_t p)
      return;
 }
 
-
 /* 
-     sets res to a*b modulo p
-     DIRTY for 64 bit due to long long
+     Sets res to a*b modulo p
+     Does not assume a and b are reduced mod p
 */
 
 unsigned long F_mpz_mulmod_ui(mpz_t res, mpz_t a, mpz_t b, unsigned long p)
 {
-     unsigned long result;
-     
-     result = ((unsigned long long)mpz_fdiv_r_ui(res,a,p)*(unsigned long long)mpz_fdiv_r_ui(res,b,p))%p;
-     mpz_set_ui(res,result);
-     
-     return result;
+   unsigned long p1, p2, al, bl;
+   
+   al = mpz_fdiv_r_ui(res, a, p);
+   bl = mpz_fdiv_r_ui(res, b, p);
+   
+   umul_ppmm(p2, p1, al, bl);
+   
+   unsigned long norm, q, r;
+   
+   if (p2 >= p) p2 %= p;
+   
+#if UDIV_NEEDS_NORMALIZATION
+   count_lead_zeros(norm, p);
+   udiv_qrnnd(q, r, (p2<<norm) + (p1>>(FLINT_BITS-norm)), p1<<norm, p<<norm);
+#else
+   udiv_qrnnd(q, r, p2, p1, p);
+#endif
+   
+   mpz_set_ui(res, r);
+   
+   return r;
 }
 
 /* 
-     sets res to the square root of a modulo p for a prime p
-     returns 0 if a is not a square modulo p
+     Sets res to the square root of a modulo p for a prime p
+     Returns 0 if a is not a square modulo p
 */
 
 int F_mpz_sqrtmod(mpz_t res, mpz_t a, mpz_t p) 
@@ -191,10 +208,10 @@ int F_mpz_sqrtmod(mpz_t res, mpz_t a, mpz_t p)
 }
 
 /* 
-     computes the square root of a modulo p^k when given z, the square root mod p^(k-1)
+     Computes the square root of a modulo p^k when given z, the square root mod p^(k-1)
 */
 
-inline void sqrtmodpow(mpz_t res, mpz_t z, mpz_t a, mpz_t pk, mpz_t tempsqpow, mpz_t inv)
+inline void __sqrtmodpow(mpz_t res, mpz_t z, mpz_t a, mpz_t pk, mpz_t tempsqpow, mpz_t inv)
 {
      mpz_mul_ui(inv,z,2);
      mpz_invert(inv,inv,pk);
@@ -209,7 +226,7 @@ inline void sqrtmodpow(mpz_t res, mpz_t z, mpz_t a, mpz_t pk, mpz_t tempsqpow, m
 } 
 
 /* 
-     computes the square root of a modulo p^k when given z, the square root mod p^{k-1}
+     Computes the square root of a modulo p^k when given z, the square root mod p^{k-1}
 */
 
 void F_mpz_sqrtmodpklift(mpz_t res, mpz_t z, mpz_t a, mpz_t pk)
@@ -217,7 +234,7 @@ void F_mpz_sqrtmodpklift(mpz_t res, mpz_t z, mpz_t a, mpz_t pk)
      mpz_t* tempsqpow = F_mpz_alloc();
      mpz_t* inv = F_mpz_alloc();
      
-     sqrtmodpow( res, z, a, pk, *tempsqpow, *inv);
+     __sqrtmodpow(res, z, a, pk, *tempsqpow, *inv);
      
      F_mpz_release();F_mpz_release();
 }
@@ -237,14 +254,15 @@ void F_mpz_sqrtmodptopk(mpz_t res, mpz_t sqrt, mpz_t a, mpz_t p, int k)
      for (int i = 2; i<=k; i++)
      {
             mpz_mul(*pk,*pk,p);
-            sqrtmodpow(res,res,a,*pk, *tempsqpow, *inv);
+            __sqrtmodpow(res,res,a,*pk, *tempsqpow, *inv);
      }
      
      F_mpz_release();F_mpz_release();F_mpz_release();
 }
 
 /* 
-     computes the square root of a modulo p^k 
+     Computes the square root of a modulo p^k 
+     Returns 0 if the square root of a does not exist mod p
 */
 
 int F_mpz_sqrtmodpk(mpz_t res, mpz_t a, mpz_t p, int k)
