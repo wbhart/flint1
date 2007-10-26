@@ -101,7 +101,7 @@ do { \
    Only _length_ coefficients are converted.
 */
 
-long ZmodF_poly_convert_in_mpn(ZmodF_poly_t poly_f, const fmpz_poly_t poly_mpn, 
+long fmpz_poly_to_ZmodF_poly(ZmodF_poly_t poly_f, const fmpz_poly_t poly_mpn, 
                                                          const unsigned long length);
 
 
@@ -115,20 +115,20 @@ long ZmodF_poly_convert_in_mpn(ZmodF_poly_t poly_f, const fmpz_poly_t poly_mpn,
    ZmodF_poly_convert_in_mpn.
 */
 
-void ZmodF_poly_convert_out_mpn(fmpz_poly_t poly_mpn, const ZmodF_poly_t poly_f, const long sign);
+void ZmodF_poly_to_fmpz_poly(fmpz_poly_t poly_mpn, const ZmodF_poly_t poly_f, const long sign);
 
 /* 
    Packs bundle coefficients, each padded out to the given number of limbs, into 
    the first coefficient of poly_f.
 */
-void ZmodF_poly_limb_pack_mpn(ZmodF_poly_t poly_f, const fmpz_poly_t poly_mpn,
+void fmpz_poly_limb_pack(ZmodF_poly_t poly_f, const fmpz_poly_t poly_mpn,
                                            const unsigned long bundle, const long limbs);
 
 /* 
    Unpacks bundle coefficients from the first coefficient of poly_f, each 
    assumed to be stored in a field of the given number of limbs.
 */
-void ZmodF_poly_limb_unpack_mpn(fmpz_poly_t poly_mpn, const ZmodF_poly_t poly_f, 
+void fmpz_poly_limb_unpack(fmpz_poly_t poly_mpn, const ZmodF_poly_t poly_f, 
                                   const unsigned long bundle, const unsigned long limbs);
 
 /* 
@@ -136,7 +136,7 @@ void ZmodF_poly_limb_unpack_mpn(fmpz_poly_t poly_mpn, const ZmodF_poly_t poly_f,
    assumed to be stored in a field of the given number of limbs. Assumes the
    coefficients are unsigned.
 */
-void ZmodF_poly_limb_unpack_unsigned_mpn(fmpz_poly_t poly_mpn, const ZmodF_poly_t poly_f, 
+void fmpz_poly_limb_unpack_unsigned(fmpz_poly_t poly_mpn, const ZmodF_poly_t poly_f, 
                                   const unsigned long bundle, const unsigned long limbs);
 
 
@@ -150,7 +150,7 @@ void ZmodF_poly_limb_unpack_unsigned_mpn(fmpz_poly_t poly_mpn, const ZmodF_poly_
    negative, the input poly is assumed to have signed coefficients.
 */ 
    
-void ZmodF_poly_bit_pack_mpn(ZmodF_poly_t poly_f, const fmpz_poly_t poly_mpn,
+void fmpz_poly_bit_pack(ZmodF_poly_t poly_f, const fmpz_poly_t poly_mpn,
      const unsigned long bundle, const long bits, const unsigned long length, const long negate);
 
 
@@ -169,9 +169,9 @@ void ZmodF_poly_bit_pack_mpn(ZmodF_poly_t poly_f, const fmpz_poly_t poly_mpn,
    "bits" is assumed to be less than FLINT_BITS. 
 */ 
    
-void ZmodF_poly_bit_unpack_mpn(fmpz_poly_t poly_mpn, const ZmodF_poly_t poly_f, 
+void fmpz_poly_bit_unpack(fmpz_poly_t poly_mpn, const ZmodF_poly_t poly_f, 
                               const unsigned long bundle, const unsigned long bits);
-void ZmodF_poly_bit_unpack_unsigned_mpn(fmpz_poly_t poly_mpn, const ZmodF_poly_t poly_f, 
+void fmpz_poly_bit_unpack_unsigned(fmpz_poly_t poly_mpn, const ZmodF_poly_t poly_f, 
                               const unsigned long bundle, const unsigned long bits);
 
 
@@ -185,7 +185,7 @@ void ZmodF_poly_bit_unpack_unsigned_mpn(fmpz_poly_t poly_mpn, const ZmodF_poly_t
    coefficients are assumed to be at least a limb wide.
 */ 
    
-void ZmodF_poly_byte_pack_mpn(ZmodF_poly_t poly_f, const fmpz_poly_t poly_mpn,
+void fmpz_poly_byte_pack(ZmodF_poly_t poly_f, const fmpz_poly_t poly_mpn,
                    const unsigned long bundle, const unsigned long coeff_bytes,
                                 const unsigned long length, const long negate);
 
@@ -201,10 +201,10 @@ void ZmodF_poly_byte_pack_mpn(ZmodF_poly_t poly_f, const fmpz_poly_t poly_mpn,
    coefficients are assumed to be at least a limb wide.
 */ 
    
-void ZmodF_poly_byte_unpack_unsigned_mpn(fmpz_poly_t poly_m, const mp_limb_t* array,
+void fmpz_poly_byte_unpack_unsigned(fmpz_poly_t poly_m, const mp_limb_t* array,
                                const unsigned long bundle, const unsigned long coeff_bytes);
 
-void ZmodF_poly_byte_unpack_mpn(fmpz_poly_t poly_m, const mp_limb_t* array,
+void fmpz_poly_byte_unpack(fmpz_poly_t poly_m, const mp_limb_t* array,
                                const unsigned long bundle, const unsigned long coeff_bytes);
 
 
@@ -214,7 +214,7 @@ void ZmodF_poly_byte_unpack_mpn(fmpz_poly_t poly_m, const mp_limb_t* array,
    stores each piece into bundle coefficients of poly_f. 
 */
  
-void ZmodF_poly_split_mpn(ZmodF_poly_t poly_f, fmpz_poly_t poly_mpn,
+void fmpz_poly_split(ZmodF_poly_t poly_f, fmpz_poly_t poly_mpn,
      unsigned long bundle, unsigned long limbs);
 
      
@@ -228,7 +228,7 @@ void ZmodF_poly_split_mpn(ZmodF_poly_t poly_f, fmpz_poly_t poly_mpn,
    The number of coefficients extracted is given by the length of poly_mpn.
 */
  
-void ZmodF_poly_unsplit_mpn(ZmodF_poly_t poly_f, fmpz_poly_t poly_mpn,
+void fmpz_poly_unsplit(ZmodF_poly_t poly_f, fmpz_poly_t poly_mpn,
      unsigned long bundle, unsigned long limbs);
 
 
@@ -342,8 +342,6 @@ static inline void _fmpz_poly_transfer(fmpz_poly_t output, const fmpz_poly_t inp
    output->limbs = input->limbs;
    output->coeffs = input->coeffs;
 }
-
-void _fmpz_poly_swap(fmpz_poly_t x, fmpz_poly_t y);
 
 long _fmpz_poly_bits1(const fmpz_poly_t poly_mpn);
 
@@ -467,20 +465,30 @@ int fmpz_poly_from_string(fmpz_poly_t poly, const char* s);
 char* fmpz_poly_to_string(const fmpz_poly_t poly);
 void fmpz_poly_print(const fmpz_poly_t poly);
 void fmpz_poly_fprint(const fmpz_poly_t poly, FILE* f);
-int fmpz_poly_read(fmpz_poly_t poly);
 int fmpz_poly_fread(fmpz_poly_t poly, const FILE* f);
-
-
-long fmpz_poly_degree(const fmpz_poly_t poly);
-
-unsigned long fmpz_poly_length(const fmpz_poly_t poly);
 
 static inline unsigned long fmpz_poly_limbs(const fmpz_poly_t poly)
 {
    return poly->limbs;
 }
 
-void fmpz_poly_set_length(fmpz_poly_t poly, const unsigned long length);
+static inline 
+int fmpz_poly_read(fmpz_poly_t poly)
+{
+   return fmpz_poly_fread(poly, stdin);
+}
+
+static inline 
+long fmpz_poly_degree(const fmpz_poly_t poly)
+{
+   return poly->length - 1;
+}
+
+static inline 
+unsigned long fmpz_poly_length(const fmpz_poly_t poly)
+{
+   return poly->length;
+}
 
 static inline 
 long fmpz_poly_bits(const fmpz_poly_t poly)
@@ -497,8 +505,10 @@ long fmpz_poly_max_limbs(const fmpz_poly_t poly)
 static inline void fmpz_poly_truncate(fmpz_poly_t poly, const unsigned long length)
 {
    FLINT_ASSERT(poly->length >= length);
-   fmpz_poly_set_length(poly, length);
+   poly->length = length;
 }
+
+void fmpz_poly_swap(fmpz_poly_t x, fmpz_poly_t y);
 
 static inline
 fmpz_t fmpz_poly_get_coeff_ptr(const fmpz_poly_t poly, const unsigned long n)
@@ -582,12 +592,6 @@ void fmpz_poly_set_coeff_mpz(fmpz_poly_t poly, const unsigned long n, const mpz_
       poly->length = n+1;
    }
    _fmpz_poly_normalise(poly);
-}
-
-static inline
-void fmpz_poly_swap(fmpz_poly_t input1, fmpz_poly_t input2)
-{
-   _fmpz_poly_swap(input1, input2);
 }
 
 static inline
