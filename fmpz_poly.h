@@ -284,9 +284,12 @@ long _fmpz_poly_get_coeff_si(fmpz_poly_t poly, const unsigned long n)
 
 void _fmpz_poly_get_coeff_mpz(mpz_t x, const fmpz_poly_t poly, const unsigned long n);
 
+void _fmpz_poly_normalise(fmpz_poly_t poly);
+
 /* 
    Set a coefficient to the given value having "size" limbs.
-   Assumes that the poly->limbs is at least "size".
+   Assumes that the poly->limbs is at least "size" and
+   that n < poly->length
 */
 
 static inline void _fmpz_poly_set_coeff(fmpz_poly_t poly, const unsigned long n, 
@@ -297,13 +300,12 @@ static inline void _fmpz_poly_set_coeff(fmpz_poly_t poly, const unsigned long n,
    poly->coeffs[n*(poly->limbs+1)] = sign;
    if (poly->limbs > size) 
      F_mpn_clear(poly->coeffs+n*(poly->limbs+1)+size+1, poly->limbs-size);
+   if ((x[0] == 0) && (n == poly->length - 1)) _fmpz_poly_normalise(poly);
 }
 
 void _fmpz_poly_set_coeff_ui(fmpz_poly_t poly, const unsigned long n, const unsigned long x);
 
 void _fmpz_poly_set_coeff_si(fmpz_poly_t poly, const unsigned long n, const long x);
-
-void _fmpz_poly_normalise(fmpz_poly_t poly);
 
 static inline long _fmpz_poly_degree(const fmpz_poly_t poly)
 {
@@ -678,7 +680,7 @@ void fmpz_poly_div_newton(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t 
 static inline
 void fmpz_poly_div(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t B)
 {
-   fmpz_poly_div_karatsuba(Q, A, B);
+   fmpz_poly_div_mulders(Q, A, B);
 }
 
 static inline
