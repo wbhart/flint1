@@ -363,7 +363,10 @@ int test_fmpz_poly_getset_coeff()
           printf("length = %ld, bits = %ld\n",length, bits);
 #endif
           fmpz_poly_realloc(test_mpn_poly, length);
-          randpoly(test_poly, length, bits); 
+          do
+          {
+             randpoly(test_poly, length, bits); 
+          } while (test_poly->length != length);
 
           mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
           
@@ -1705,7 +1708,6 @@ int test_fmpz_poly_mul_karatsuba_trunc_left()
           _fmpz_poly_zero_coeffs(test_mpn_poly3, FLINT_MIN(trunc, test_mpn_poly3->length));
           
           _fmpz_poly_mul_karatsuba_trunc_left(test_mpn_poly4, test_mpn_poly, test_mpn_poly2, trunc);
-          _fmpz_poly_check(test_mpn_poly4);
           
           fmpz_poly_to_mpz_poly(test_poly3, test_mpn_poly3); 
           fmpz_poly_to_mpz_poly(test_poly4, test_mpn_poly4); 
@@ -4115,16 +4117,16 @@ void fmpz_poly_test_all()
 {
    int success, all_success = 1;
 
-   RUN_TEST(fmpz_poly_to_ZmodF_poly);
-   RUN_TEST(fmpz_poly_bit_pack);
-   RUN_TEST(fmpz_poly_bit_pack_unsigned);
-   RUN_TEST(fmpz_poly_byte_pack_unsigned);
-   RUN_TEST(fmpz_poly_byte_pack);
-   RUN_TEST(fmpz_poly_limb_pack_unsigned);
-   RUN_TEST(fmpz_poly_limb_pack);
-   RUN_TEST(fmpz_poly_pseudo_divrem_recursive);
-   RUN_TEST(fmpz_poly_pseudo_divrem_d);
-   RUN_TEST(fmpz_poly_pseudo_divrem);
+   RUN_TEST(fmpz_poly_to_ZmodF_poly); 
+   RUN_TEST(fmpz_poly_bit_pack); 
+   RUN_TEST(fmpz_poly_bit_pack_unsigned); 
+   RUN_TEST(fmpz_poly_byte_pack_unsigned); 
+   RUN_TEST(fmpz_poly_byte_pack); 
+   RUN_TEST(fmpz_poly_limb_pack_unsigned); 
+   RUN_TEST(fmpz_poly_limb_pack); 
+   RUN_TEST(fmpz_poly_pseudo_divrem_recursive); 
+   RUN_TEST(fmpz_poly_pseudo_divrem_d); 
+   RUN_TEST(fmpz_poly_pseudo_divrem); 
    RUN_TEST(fmpz_poly_div_mulders);
    RUN_TEST(fmpz_poly_convert);
    RUN_TEST(fmpz_poly_getset_ui);
@@ -4167,7 +4169,7 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_poly_div_newton);
    RUN_TEST(fmpz_poly_power);
    RUN_TEST(fmpz_poly_power_trunc_n);
-   RUN_TEST(fmpz_poly_scalar_mul);
+   RUN_TEST(fmpz_poly_scalar_mul); 
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");

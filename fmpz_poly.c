@@ -1679,6 +1679,12 @@ void _fmpz_poly_scalar_mul_si(fmpz_poly_t output, const fmpz_poly_t poly, const 
 
 void _fmpz_poly_scalar_mul(fmpz_poly_t output, const fmpz_poly_t poly, const fmpz_t x)
 {
+   if (poly->length == 0)
+   {
+      _fmpz_poly_zero(output);
+      return;
+   }
+   
    unsigned long x0 = ABS(x[0]);
    while ((!x[x0]) && (x0)) x0--;
    unsigned long limbs1 = x0;
@@ -2724,13 +2730,14 @@ void __fmpz_poly_karatrunc_left_recursive(fmpz_poly_t res, const fmpz_poly_t a, 
       {
          res->coeffs[i*(res->limbs+1)] = 0;
       }
+      res->length = 0;
       return;
    }
    
    if ((a->length <= 1) || (b->length <= 1) || (non_zero == 1)) 
    {
       _fmpz_poly_mul_naive_trunc_left(res, a, b, trunc);
-      
+         
       return;
    }
    
@@ -5462,6 +5469,7 @@ void fmpz_poly_power_trunc_n(fmpz_poly_t output, const fmpz_poly_t poly, const u
       temp2->limbs = poly->limbs;
       temp2->length = n;
       _fmpz_poly_set(output, temp2);
+      _fmpz_poly_normalise(output);
    }
     
    while (!(exp & 1L))  // Square until we get to the first binary 1 in the exponent
