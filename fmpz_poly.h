@@ -33,14 +33,18 @@ be too expensive.
 
 "coeffs" is an array of limbs of length (alloc * (limbs+1)). Each
 coefficient uses limbs+1 limbs. For each coefficient, the first limb is
-a sign limb: 0 means positive and 1 means negative. (Zero may be stored as
-either positive or negative.) The remaining "limbs" limbs represent the
-absolute value of the coefficient, stored in GMP's mpn format.
+a sign/size limb: the number of limbs of the absolute value of the 
+coefficient is given by the absolute value of this limb, and the sign 
+of this limb is the sign of the coefficient. (Zero is stored as a 
+sign/size of zero followed by arbitrary data.) The remaining "limbs" 
+limbs represent the qbsolute value of the coefficient, stored in 
+GMP's mpn format.
 
-Only the first "length" coefficients actually represent coefficients of the
-polynomial; i.e. it's a polynomial of degree at most length-1. There is no
-requirement for coeff[length-1] to be nonzero. If length == 0, this is the
-zero polynomial. Obviously always alloc >= length.
+Only the first "length" coefficients actually represent coefficients 
+of the polynomial; i.e. it's a polynomial of degree at most length-1. 
+If length == 0, this is the zero polynomial. All functions normalise
+so that the (length-1)-th coefficient is non-zero.
+Obviously always alloc >= length.
 
 There are two classes of functions operating on fmpz_poly_t:
 
@@ -51,9 +55,8 @@ There are two classes of functions operating on fmpz_poly_t:
    would screw up the block size).
 
 -- The fmpz_poly_* functions ASSUME that "coeffs" was allocated via
-   flint_malloc, and they MAY free or reallocate "coeffs" using flint_realloc,
-   flint_free etc, whenever they feel the need. Furthermore they assume that
-   always alloc >= 1.
+   flint_heap_alloc, and they MAY free or reallocate "coeffs" using 
+   flint_heap_realloc, flint_heap_free etc, whenever they feel the need.
 
 */
  
