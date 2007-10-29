@@ -628,6 +628,15 @@ void fmpz_poly_reverse(fmpz_poly_t output, const fmpz_poly_t input, const unsign
    _fmpz_poly_reverse(output, input, length);
 }
 
+void fmpz_poly_scalar_mul(fmpz_poly_t output, 
+                          const fmpz_poly_t input, const fmpz_t x);
+                          
+void fmpz_poly_scalar_mul_ui(fmpz_poly_t output, 
+                          const fmpz_poly_t input, unsigned long x);
+                          
+void fmpz_poly_scalar_mul_si(fmpz_poly_t output, 
+                          const fmpz_poly_t input, long x);
+
 static inline
 void fmpz_poly_add(fmpz_poly_t output, const fmpz_poly_t input1, const fmpz_poly_t input2)
 {

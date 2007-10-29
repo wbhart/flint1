@@ -3864,6 +3864,138 @@ void fmpz_poly_swap(fmpz_poly_t x, fmpz_poly_t y)
    y->limbs = temp_l;
 }
 
+void fmpz_poly_scalar_mul_ui(fmpz_poly_t output, 
+                          const fmpz_poly_t input, unsigned long x)
+{
+   if ((input->length == 0) || (x == 0))
+   {
+      _fmpz_poly_zero(output);
+      return;
+   }
+   unsigned long limbs, bits, max_limbs, max_bits, x_bits, top_bits;
+   
+   max_bits = (input->limbs << FLINT_LG_BITS_PER_LIMB);
+   
+   max_limbs = 0;
+   bits = 0;
+   top_bits = 0;
+   x_bits = FLINT_BIT_COUNT(x);
+   fmpz_t next_coeff = input->coeffs;
+   unsigned long size = input->limbs+1; 
+   unsigned long i;
+   
+   for (i = 0; (i < input->length) && (top_bits + x_bits <= max_bits); i++)
+   {
+      limbs = ABS(next_coeff[0]);
+      if ((limbs >= max_limbs) && (limbs))
+      {
+         max_limbs = limbs;
+         bits = ((limbs - 1) << FLINT_LG_BITS_PER_LIMB) + FLINT_BIT_COUNT(next_coeff[limbs]);
+         if (bits > top_bits) top_bits = bits;
+      }
+      next_coeff += size;
+   }
+   
+   fmpz_poly_fit_length(output, input->length);
+   if (i < input->length)
+   {
+      fmpz_poly_fit_limbs(output, input->limbs + 1);
+   } else
+   {
+      fmpz_poly_fit_limbs(output, ((top_bits + x_bits - 1) >> FLINT_LG_BITS_PER_LIMB) + 1);
+   }
+   
+   _fmpz_poly_scalar_mul_ui(output, input, x);
+}
+
+void fmpz_poly_scalar_mul_si(fmpz_poly_t output, 
+                          const fmpz_poly_t input, long x)
+{
+   if ((input->length == 0) || (x == 0))
+   {
+      _fmpz_poly_zero(output);
+      return;
+   }
+   unsigned long limbs, bits, max_limbs, max_bits, x_bits, top_bits;
+   
+   max_bits = (input->limbs << FLINT_LG_BITS_PER_LIMB);
+   
+   max_limbs = 0;
+   bits = 0;
+   top_bits = 0;
+   x_bits = FLINT_BIT_COUNT(FLINT_ABS(x));
+   fmpz_t next_coeff = input->coeffs;
+   unsigned long size = input->limbs+1; 
+   unsigned long i;
+   
+   for (i = 0; (i < input->length) && (top_bits + x_bits <= max_bits); i++)
+   {
+      limbs = ABS(next_coeff[0]);
+      if ((limbs >= max_limbs) && (limbs))
+      {
+         max_limbs = limbs;
+         bits = ((limbs - 1) << FLINT_LG_BITS_PER_LIMB) + FLINT_BIT_COUNT(next_coeff[limbs]);
+         if (bits > top_bits) top_bits = bits;
+      }
+      next_coeff += size;
+   }
+   
+   fmpz_poly_fit_length(output, input->length);
+   if (i < input->length)
+   {
+      fmpz_poly_fit_limbs(output, input->limbs + 1);
+   } else
+   {
+      fmpz_poly_fit_limbs(output, ((top_bits + x_bits - 1) >> FLINT_LG_BITS_PER_LIMB) + 1);
+   }
+   
+   _fmpz_poly_scalar_mul_si(output, input, x);
+}
+
+void fmpz_poly_scalar_mul(fmpz_poly_t output, 
+                          const fmpz_poly_t input, const fmpz_t x)
+{
+   if ((input->length == 0) || (x[0] == 0))
+   {
+      _fmpz_poly_zero(output);
+      return;
+   }
+   unsigned long limbs, bits, max_limbs, max_bits, x_bits, top_bits;
+   
+   max_bits = ((input->limbs + ABS(x[0]) - 1) << FLINT_LG_BITS_PER_LIMB);
+   
+   max_limbs = 0;
+   bits = 0;
+   top_bits = 0;
+   x_bits = ABS(fmpz_bits(x));
+   fmpz_t next_coeff = input->coeffs;
+   unsigned long size = input->limbs+1; 
+   unsigned long i;
+   
+   for (i = 0; (i < input->length) && (top_bits + x_bits <= max_bits); i++)
+   {
+      limbs = ABS(next_coeff[0]);
+      if ((limbs >= max_limbs) && (limbs))
+      {
+         max_limbs = limbs;
+         bits = ((limbs - 1) << FLINT_LG_BITS_PER_LIMB) + FLINT_BIT_COUNT(next_coeff[limbs]);
+         if (bits > top_bits) top_bits = bits;
+      }
+      next_coeff += size;
+   }
+   
+   fmpz_poly_fit_length(output, input->length);
+   if (i < input->length)
+   {
+      fmpz_poly_fit_limbs(output, input->limbs + ABS(x[0]));
+   } else
+   {
+      fmpz_poly_fit_limbs(output, ((top_bits + x_bits - 1) >> FLINT_LG_BITS_PER_LIMB) + 1);
+   }
+   
+   _fmpz_poly_scalar_mul(output, input, x);
+}
+
 void fmpz_poly_mul(fmpz_poly_t output, const fmpz_poly_t input1, const fmpz_poly_t input2)
 {
    if ((input1->length == 0) || (input2->length == 0))
