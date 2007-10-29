@@ -24,13 +24,14 @@ Copyright (C) 2007, William Hart and David Harvey
 
 unsigned long randint(unsigned long randsup) 
 {
+    if (randsup == 0) return 0;
     static unsigned long randval = 4035456057U;
     randval = ((unsigned long)randval*1025416097U+286824428U)%(unsigned long)4294967291U;
     
     return (unsigned long)randval%randsup;
 }
 
-void randpoly(mpz_poly_t pol, unsigned long length, unsigned long maxbits)
+void randpoly(mpz_poly_t pol, long length, unsigned long maxbits)
 {
    unsigned long bits;
    mpz_t temp;
@@ -38,7 +39,7 @@ void randpoly(mpz_poly_t pol, unsigned long length, unsigned long maxbits)
    
    mpz_poly_zero(pol);
    
-   for (unsigned long i = 0; i < length; i++)
+   for (long i = 0; i < length; i++)
    {
 #if VARY_BITS
        bits = randint(maxbits+1);
@@ -59,7 +60,7 @@ void randpoly(mpz_poly_t pol, unsigned long length, unsigned long maxbits)
    mpz_clear(temp);
 } 
 
-void randpoly_unsigned(mpz_poly_t pol, unsigned long length, unsigned long maxbits)
+void randpoly_unsigned(mpz_poly_t pol, long length, unsigned long maxbits)
 {
    unsigned long bits;
    mpz_t temp;
@@ -67,7 +68,7 @@ void randpoly_unsigned(mpz_poly_t pol, unsigned long length, unsigned long maxbi
    
    mpz_poly_zero(pol);
    
-   for (unsigned long i = 0; i < length; i++)
+   for (long i = 0; i < length; i++)
    {
 #if VARY_BITS
        bits = randint(maxbits+1);
@@ -111,13 +112,14 @@ int test_fmpz_poly_convert()
       fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
-          length = random_ulong(1000)+1;
+          length = random_ulong(1000);
 #if DEBUG
           printf("%ld, %ld\n",length, bits);
 #endif
-          fmpz_poly_realloc(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly, length);
           mpz_poly_realloc(test_poly2, length);
-          randpoly(test_poly, length, bits); 
+          randpoly(test_poly, length, bits);
+           
 #if DEBUG
           for (unsigned j = 0; j < test_poly->length; j++)
              gmp_printf("%Zd, ",test_poly->coeffs[j]);
@@ -133,6 +135,7 @@ int test_fmpz_poly_convert()
           
           result = mpz_poly_equal(test_poly, test_poly2);
       }   
+          
       fmpz_poly_clear(test_mpn_poly);
    }
    
@@ -164,7 +167,7 @@ int test_fmpz_poly_getset_ui()
 #if DEBUG
           printf("length = %ld, bits = %ld\n",length, bits);
 #endif
-          fmpz_poly_realloc(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly, length);
           randpoly(test_poly, length, bits); 
 
           mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
@@ -212,7 +215,7 @@ int test_fmpz_poly_getset_si()
 #if DEBUG
           printf("length = %ld, bits = %ld\n",length, bits);
 #endif
-          fmpz_poly_realloc(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly, length);
           randpoly(test_poly, length, bits); 
 
           mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
@@ -262,7 +265,7 @@ int test_fmpz_poly_get_coeff_ptr()
 #if DEBUG
           printf("length = %ld, bits = %ld\n",length, bits);
 #endif
-          fmpz_poly_realloc(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly, length);
           randpoly(test_poly, length, bits); 
 
           mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
@@ -309,11 +312,11 @@ int test_fmpz_poly_normalise()
       fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
-          length = random_ulong(1000)+1;        
+          length = random_ulong(1000);        
 #if DEBUG
           printf("length = %ld, bits = %ld\n",length, bits);
 #endif
-          fmpz_poly_realloc(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly, length);
           
           do randpoly(test_poly, length, bits); 
           while (mpz_poly_length(test_poly) < length);
@@ -362,7 +365,7 @@ int test_fmpz_poly_getset_coeff()
 #if DEBUG
           printf("length = %ld, bits = %ld\n",length, bits);
 #endif
-          fmpz_poly_realloc(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly, length);
           do
           {
              randpoly(test_poly, length, bits); 
@@ -414,32 +417,32 @@ int test_fmpz_poly_setequal()
       fmpz_poly_init2(test_mpn_poly2, 1, (bits-1)/FLINT_BITS+1+randint(30));
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
-          length = random_ulong(1000)+1;        
+          length = random_ulong(1000);        
 #if DEBUG
           printf("length = %ld, bits = %ld\n",length, bits);
 #endif
-          fmpz_poly_realloc(test_mpn_poly, length);
-          fmpz_poly_realloc(test_mpn_poly2, length);
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length);
           randpoly(test_poly, length, bits); 
 
           mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
           _fmpz_poly_set(test_mpn_poly2, test_mpn_poly);
           result = _fmpz_poly_equal(test_mpn_poly2, test_mpn_poly); 
       }
-
+      
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
           length = random_ulong(1000)+1;        
 #if DEBUG
           printf("length = %ld, bits = %ld\n",length, bits);
 #endif
-          fmpz_poly_realloc(test_mpn_poly, length);
-          fmpz_poly_realloc(test_mpn_poly2, length);
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length);
           do
           {
              randpoly(test_poly, length, bits); 
           } while (test_poly->length != length);
-
+          
           mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
           _fmpz_poly_set(test_mpn_poly2, test_mpn_poly);
           altered_coeff = randint(length);
@@ -455,8 +458,8 @@ int test_fmpz_poly_setequal()
 #if DEBUG
           printf("length = %ld, bits = %ld\n",length, bits);
 #endif
-          fmpz_poly_realloc(test_mpn_poly, length);
-          fmpz_poly_realloc(test_mpn_poly2, length);
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length);
           do
           {
              randpoly(test_poly, length, bits); 
@@ -499,17 +502,17 @@ int test_fmpz_poly_swap()
       fmpz_poly_init2(test_mpn_poly3, 1, (bits-1)/FLINT_BITS+1);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
-          length = random_ulong(1000)+1; 
-          length2 = random_ulong(1000)+1;        
+          length = random_ulong(1000); 
+          length2 = random_ulong(1000);        
 #if DEBUG
           printf("length = %ld, bits = %ld\n",length, bits);
 #endif
-          fmpz_poly_realloc(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly, length);
           randpoly(test_poly, length, bits); 
           mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
           
-          fmpz_poly_realloc(test_mpn_poly2, length2);
-          fmpz_poly_realloc(test_mpn_poly3, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length2);
+          fmpz_poly_fit_length(test_mpn_poly3, length);
           randpoly(test_poly, length2, bits);
           mpz_poly_to_fmpz_poly(test_mpn_poly2, test_poly);
           
@@ -547,13 +550,13 @@ int test_fmpz_poly_shift()
       
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
-          length = random_ulong(1000)+1;        
+          length = random_ulong(1000);        
 #if DEBUG
           printf("length = %ld, bits = %ld\n",length, bits);
 #endif
           shift = randint(100);
-          fmpz_poly_realloc(test_mpn_poly, length+shift);
-          fmpz_poly_realloc(test_mpn_poly2, length+shift);
+          fmpz_poly_fit_length(test_mpn_poly, length+shift);
+          fmpz_poly_fit_length(test_mpn_poly2, length+shift);
           
           randpoly(test_poly, length, bits); 
 
@@ -567,13 +570,13 @@ int test_fmpz_poly_shift()
 
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
-          length = random_ulong(1000)+1;        
+          length = random_ulong(1000);        
 #if DEBUG
           printf("length = %ld, bits = %ld\n",length, bits);
 #endif
           shift = randint(length);
-          fmpz_poly_realloc(test_mpn_poly, length+shift);
-          fmpz_poly_realloc(test_mpn_poly2, length+shift);
+          fmpz_poly_fit_length(test_mpn_poly, length+shift);
+          fmpz_poly_fit_length(test_mpn_poly2, length+shift);
           
           do randpoly(test_poly, length, bits); 
           while (mpz_poly_length(test_poly) < length);
@@ -618,13 +621,13 @@ int test_fmpz_poly_neg()
       fmpz_poly_init2(test_mpn_poly3, 1, (bits+extra_bits1+extra_bits2-1)/FLINT_BITS+1);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
-          length = random_ulong(1000)+1;      
+          length = random_ulong(1000);      
 #if DEBUG
           printf("length = %ld, bits = %ld\n",length, bits);
 #endif
-          fmpz_poly_realloc(test_mpn_poly, length);
-          fmpz_poly_realloc(test_mpn_poly2, length);
-          fmpz_poly_realloc(test_mpn_poly3, length);
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length);
+          fmpz_poly_fit_length(test_mpn_poly3, length);
           
           do randpoly(test_poly, length, bits); 
           while (mpz_poly_length(test_poly) < length);
@@ -635,7 +638,8 @@ int test_fmpz_poly_neg()
           _fmpz_poly_neg(test_mpn_poly2, test_mpn_poly);
           _fmpz_poly_neg(test_mpn_poly3, test_mpn_poly2);
           
-          result = _fmpz_poly_equal(test_mpn_poly, test_mpn_poly3) 
+          if (length == 0) result = (test_mpn_poly2->length == 0);
+          else result = _fmpz_poly_equal(test_mpn_poly, test_mpn_poly3) 
              && (test_mpn_poly->coeffs[check_coeff*(test_mpn_poly->limbs+1)] == -test_mpn_poly2->coeffs[check_coeff*(test_mpn_poly2->limbs+1)]);
       }
       fmpz_poly_clear(test_mpn_poly);
@@ -671,15 +675,15 @@ int test_fmpz_poly_add()
       fmpz_poly_init2(test_mpn_poly3, 1, (bits3-1)/FLINT_BITS+1);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
-          length = random_ulong(10)+1; 
-          length2 = random_ulong(10)+1;        
+          length = random_ulong(10); 
+          length2 = random_ulong(10);        
 #if DEBUG
           printf("length = %ld, length2 = %ld, bits = %ld\n",length, length2, bits);
 #endif
-          fmpz_poly_realloc(test_mpn_poly, length);
-          fmpz_poly_realloc(test_mpn_poly2, length2);
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length2);
           max_length = (length > length2) ? length : length2;
-          fmpz_poly_realloc(test_mpn_poly3, max_length);
+          fmpz_poly_fit_length(test_mpn_poly3, max_length);
           
           randpoly(test_poly, length, bits); 
           randpoly(test_poly2, length2, bits2); 
@@ -719,13 +723,13 @@ int test_fmpz_poly_add()
       fmpz_poly_init2(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS+1);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
-          length = random_ulong(1000)+1; 
+          length = random_ulong(1000); 
           length2 = length + random_ulong(1000);        
 #if DEBUG
           printf("length = %ld, length2 = %ld, bits = %ld, bits2 = %ld\n",length, length2, bits, bits2);
 #endif
-          fmpz_poly_realloc(test_mpn_poly, length);
-          fmpz_poly_realloc(test_mpn_poly2, length2);
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length2);
           
           randpoly(test_poly, length, bits); 
           randpoly(test_poly2, length2, bits2-1); 
@@ -786,15 +790,15 @@ int test_fmpz_poly_sub()
       fmpz_poly_init2(test_mpn_poly3, 1, (bits3-1)/FLINT_BITS+1);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
-          length = random_ulong(1000)+1; 
-          length2 = random_ulong(1000)+1;        
+          length = random_ulong(1000); 
+          length2 = random_ulong(1000);        
 #if DEBUG
           printf("length = %ld, length2 = %ld, bits = %ld\n",length, length2, bits);
 #endif
-          fmpz_poly_realloc(test_mpn_poly, length);
-          fmpz_poly_realloc(test_mpn_poly2, length2);
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length2);
           max_length = (length > length2) ? length : length2;
-          fmpz_poly_realloc(test_mpn_poly3, max_length);
+          fmpz_poly_fit_length(test_mpn_poly3, max_length);
           
           randpoly(test_poly, length, bits); 
           randpoly(test_poly2, length2, bits2); 
@@ -832,13 +836,13 @@ int test_fmpz_poly_sub()
       fmpz_poly_init2(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS+1);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
-          length = random_ulong(1000)+1; 
+          length = random_ulong(1000); 
           length2 = length + random_ulong(1000);        
 #if DEBUG
           printf("length = %ld, length2 = %ld, bits = %ld, bits2 = %ld\n",length, length2, bits, bits2);
 #endif
-          fmpz_poly_realloc(test_mpn_poly, length);
-          fmpz_poly_realloc(test_mpn_poly2, length2);
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length2);
           
           randpoly(test_poly, length, bits); 
           randpoly(test_poly2, length2, bits2-1); 
@@ -895,12 +899,12 @@ int test__fmpz_poly_scalar_mul_ui()
       fmpz_poly_init2(test_mpn_poly2, 1, (bits-1)/FLINT_BITS+2);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
-          length = random_ulong(1000)+1;        
+          length = random_ulong(1000);        
 #if DEBUG
           printf("length = %ld, bits = %ld\n",length, bits);
 #endif
-          fmpz_poly_realloc(test_mpn_poly, length);
-          fmpz_poly_realloc(test_mpn_poly2, length);
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length);
           randpoly(test_poly, length, bits); 
 
           mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
@@ -933,12 +937,12 @@ int test__fmpz_poly_scalar_mul_ui()
       fmpz_poly_init2(test_mpn_poly2, 1, (bits-1)/FLINT_BITS+2);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
-          length = random_ulong(40)+1;        
+          length = random_ulong(40);        
 #if DEBUG
           printf("length = %ld, bits = %ld\n",length, bits);
 #endif
-          fmpz_poly_realloc(test_mpn_poly, length);
-          fmpz_poly_realloc(test_mpn_poly2, length);
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length);
           randpoly(test_poly, length, bits); 
 
           mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
@@ -989,12 +993,12 @@ int test_fmpz_poly_scalar_mul_ui()
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
           fmpz_poly_init(test_mpn_poly2);
-          length = random_ulong(1000)+1;        
+          length = random_ulong(1000);        
 #if DEBUG
           printf("length = %ld, bits = %ld\n",length, bits);
 #endif
-          fmpz_poly_realloc(test_mpn_poly, length);
-          fmpz_poly_realloc(test_mpn_poly2, length);
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length);
           randpoly(test_poly, length, bits); 
 
           mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
@@ -1027,12 +1031,12 @@ int test_fmpz_poly_scalar_mul_ui()
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
           fmpz_poly_init(test_mpn_poly2);
-          length = random_ulong(40)+1;        
+          length = random_ulong(40);        
 #if DEBUG
           printf("length = %ld, bits = %ld\n",length, bits);
 #endif
-          fmpz_poly_realloc(test_mpn_poly, length);
-          fmpz_poly_realloc(test_mpn_poly2, length);
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length);
           randpoly(test_poly, length, bits); 
 
           mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
@@ -1083,12 +1087,12 @@ int test__fmpz_poly_scalar_mul_si()
       fmpz_poly_init2(test_mpn_poly2, 1, (bits-1)/FLINT_BITS+2);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
-          length = random_ulong(1000)+1;        
+          length = random_ulong(1000);        
 #if DEBUG
           printf("length = %ld, bits = %ld\n",length, bits);
 #endif
-          fmpz_poly_realloc(test_mpn_poly, length);
-          fmpz_poly_realloc(test_mpn_poly2, length);
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length);
           randpoly(test_poly, length, bits); 
 
           mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
@@ -1142,12 +1146,12 @@ int test_fmpz_poly_scalar_mul_si()
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
           fmpz_poly_init(test_mpn_poly2);
-          length = random_ulong(1000)+1;        
+          length = random_ulong(1000);        
 #if DEBUG
           printf("length = %ld, bits = %ld\n",length, bits);
 #endif
-          fmpz_poly_realloc(test_mpn_poly, length);
-          fmpz_poly_realloc(test_mpn_poly2, length);
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length);
           randpoly(test_poly, length, bits); 
 
           mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
@@ -1183,12 +1187,12 @@ int test_fmpz_poly_scalar_mul_si()
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
           fmpz_poly_init(test_mpn_poly2);
-          length = random_ulong(40)+1;        
+          length = random_ulong(40);        
 #if DEBUG
           printf("length = %ld, bits = %ld\n",length, bits);
 #endif
-          fmpz_poly_realloc(test_mpn_poly, length);
-          fmpz_poly_realloc(test_mpn_poly2, length);
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length);
           randpoly(test_poly, length, bits); 
 
           mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
@@ -1241,13 +1245,13 @@ int test_fmpz_poly_scalar_div_exact_ui()
       fmpz_poly_init2(test_mpn_poly3, 1, (bits-1)/FLINT_BITS+2);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
-          length = random_ulong(1000)+1;        
+          length = random_ulong(1000);        
 #if DEBUG
           printf("length = %ld, bits = %ld\n",length, bits);
 #endif
-          fmpz_poly_realloc(test_mpn_poly, length);
-          fmpz_poly_realloc(test_mpn_poly2, length);
-          fmpz_poly_realloc(test_mpn_poly3, length);
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length);
+          fmpz_poly_fit_length(test_mpn_poly3, length);
           randpoly(test_poly, length, bits); 
 
           mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
@@ -1270,12 +1274,12 @@ int test_fmpz_poly_scalar_div_exact_ui()
       fmpz_poly_init2(test_mpn_poly2, 1, (bits-1)/FLINT_BITS+2);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
-          length = random_ulong(1000)+1;        
+          length = random_ulong(1000);        
 #if DEBUG
           printf("length = %ld, bits = %ld\n",length, bits);
 #endif
-          fmpz_poly_realloc(test_mpn_poly, length);
-          fmpz_poly_realloc(test_mpn_poly2, length);
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length);
           randpoly(test_poly, length, bits); 
 
           mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
@@ -1298,13 +1302,13 @@ int test_fmpz_poly_scalar_div_exact_ui()
       fmpz_poly_init2(test_mpn_poly3, 1, (bits-1)/FLINT_BITS+3);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
-          length = random_ulong(1000)+1;        
+          length = random_ulong(1000);        
 #if DEBUG
           printf("length = %ld, bits = %ld\n",length, bits);
 #endif
-          fmpz_poly_realloc(test_mpn_poly, length);
-          fmpz_poly_realloc(test_mpn_poly2, length);
-          fmpz_poly_realloc(test_mpn_poly3, length);
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length);
+          fmpz_poly_fit_length(test_mpn_poly3, length);
           randpoly(test_poly, length, bits); 
 
           mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
@@ -1344,13 +1348,13 @@ int test_fmpz_poly_scalar_div_exact_si()
       fmpz_poly_init2(test_mpn_poly3, 1, (bits-1)/FLINT_BITS+2);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
-          length = random_ulong(1000)+1;        
+          length = random_ulong(1000);        
 #if DEBUG
           printf("length = %ld, bits = %ld\n",length, bits);
 #endif
-          fmpz_poly_realloc(test_mpn_poly, length);
-          fmpz_poly_realloc(test_mpn_poly2, length);
-          fmpz_poly_realloc(test_mpn_poly3, length);
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length);
+          fmpz_poly_fit_length(test_mpn_poly3, length);
           randpoly(test_poly, length, bits); 
 
           mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
@@ -1375,12 +1379,12 @@ int test_fmpz_poly_scalar_div_exact_si()
       fmpz_poly_init2(test_mpn_poly2, 1, (bits-1)/FLINT_BITS+2);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
-          length = random_ulong(1000)+1;        
+          length = random_ulong(1000);        
 #if DEBUG
           printf("2:length = %ld, bits = %ld\n",length, bits);
 #endif
-          fmpz_poly_realloc(test_mpn_poly, length);
-          fmpz_poly_realloc(test_mpn_poly2, length);
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length);
           randpoly(test_poly, length, bits); 
 
           mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
@@ -1405,13 +1409,13 @@ int test_fmpz_poly_scalar_div_exact_si()
       fmpz_poly_init2(test_mpn_poly3, 1, (bits-1)/FLINT_BITS+3);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
-          length = random_ulong(1000)+1;        
+          length = random_ulong(1000);        
 #if DEBUG
           printf("length = %ld, bits = %ld\n",length, bits);
 #endif
-          fmpz_poly_realloc(test_mpn_poly, length);
-          fmpz_poly_realloc(test_mpn_poly2, length);
-          fmpz_poly_realloc(test_mpn_poly3, length);
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length);
+          fmpz_poly_fit_length(test_mpn_poly3, length);
           randpoly(test_poly, length, bits); 
 
           mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
@@ -1454,13 +1458,13 @@ int test_fmpz_poly_scalar_div_ui()
       fmpz_poly_init2(test_mpn_poly2, 1, (bits-1)/FLINT_BITS+2);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
-          length = random_ulong(1000)+1; 
+          length = random_ulong(1000); 
           //length = 10000;       
 #if DEBUG
           printf("length = %ld, bits = %ld\n",length, bits);
 #endif
-          fmpz_poly_realloc(test_mpn_poly, length);
-          fmpz_poly_realloc(test_mpn_poly2, length);
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length);
           randpoly(test_poly, length, bits); 
 
           mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
@@ -1519,12 +1523,12 @@ int test_fmpz_poly_scalar_div_si()
       fmpz_poly_init2(test_mpn_poly2, 1, (bits-1)/FLINT_BITS+2);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
-          length = random_ulong(1000)+1;        
+          length = random_ulong(1000);        
 #if DEBUG
           printf("length = %ld, bits = %ld\n",length, bits);
 #endif
-          fmpz_poly_realloc(test_mpn_poly, length);
-          fmpz_poly_realloc(test_mpn_poly2, length);
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length);
           randpoly(test_poly, length, bits); 
 
           mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
@@ -1586,8 +1590,8 @@ int test_fmpz_poly_mul_naive()
       fmpz_poly_init2(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS+1);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
-          length = random_ulong(100)+1; 
-          length2 = random_ulong(100)+1;        
+          length = random_ulong(100); 
+          length2 = random_ulong(100);        
 #if DEBUG
           printf("length = %ld, length2 = %ld, bits = %ld, bits2 = %ld\n", length, length2, bits, bits2);
 #endif
@@ -1597,8 +1601,8 @@ int test_fmpz_poly_mul_naive()
           do randpoly(test_poly2, length2, bits2); 
           while (mpz_poly_length(test_poly2) < length2);
           
-          fmpz_poly_realloc(test_mpn_poly, length);
-          fmpz_poly_realloc(test_mpn_poly2, length2);
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length2);
           mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
           mpz_poly_to_fmpz_poly(test_mpn_poly2, test_poly2);
           
@@ -1646,9 +1650,10 @@ int test_fmpz_poly_mul_naive_trunc()
       fmpz_poly_init2(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS+1);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
-          length = random_ulong(100)+1; 
-          length2 = random_ulong(100)+1; 
-          trunc = random_ulong(length+length2);       
+          length = random_ulong(100); 
+          length2 = random_ulong(100); 
+          if (length+length2) trunc = 0;
+          else trunc = random_ulong(length+length2);       
 #if DEBUG
           printf("length = %ld, length2 = %ld, trunc = %ld, bits = %ld, bits2 = %ld\n", length, length2, trunc, bits, bits2);
 #endif
@@ -1658,8 +1663,8 @@ int test_fmpz_poly_mul_naive_trunc()
           do randpoly(test_poly2, length2, bits2); 
           while (mpz_poly_length(test_poly2) < length2);
           
-          fmpz_poly_realloc(test_mpn_poly, length);
-          fmpz_poly_realloc(test_mpn_poly2, length2);
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length2);
           mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
           mpz_poly_to_fmpz_poly(test_mpn_poly2, test_poly2);
           
@@ -1711,9 +1716,10 @@ int test_fmpz_poly_mul_naive_trunc_left()
       fmpz_poly_init2(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS+1);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
-          length = random_ulong(100)+1; 
-          length2 = random_ulong(100)+1; 
-          trunc = random_ulong(length+length2-1)+1;       
+          length = random_ulong(100); 
+          length2 = random_ulong(100); 
+          if (length+length2 < 2) trunc = 0;
+          else trunc = random_ulong(length+length2-1)+1;       
 #if DEBUG
           printf("length = %ld, length2 = %ld, trunc = %ld, bits = %ld, bits2 = %ld\n", length, length2, trunc, bits, bits2);
 #endif
@@ -1723,14 +1729,21 @@ int test_fmpz_poly_mul_naive_trunc_left()
           do randpoly(test_poly2, length2, bits2); 
           while (mpz_poly_length(test_poly2) < length2);
           
-          fmpz_poly_realloc(test_mpn_poly, length);
-          fmpz_poly_realloc(test_mpn_poly2, length2);
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length2);
           mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
           mpz_poly_to_fmpz_poly(test_mpn_poly2, test_poly2);
           
           mpz_poly_init(test_poly4);
-          fmpz_poly_init2(test_mpn_poly3, length+length2-1, (bits+bits2-1)/FLINT_BITS+2);
-          fmpz_poly_init2(test_mpn_poly4, length+length2-1, (bits+bits2-1)/FLINT_BITS+2);
+          if (length + length2 < 2)
+          {
+             fmpz_poly_init2(test_mpn_poly3, 1, (bits+bits2-1)/FLINT_BITS+2);
+             fmpz_poly_init2(test_mpn_poly4, 1, (bits+bits2-1)/FLINT_BITS+2);
+          } else
+          {
+             fmpz_poly_init2(test_mpn_poly3, length+length2-1, (bits+bits2-1)/FLINT_BITS+2);
+             fmpz_poly_init2(test_mpn_poly4, length+length2-1, (bits+bits2-1)/FLINT_BITS+2);
+          }
           
           _fmpz_poly_mul_naive(test_mpn_poly3, test_mpn_poly, test_mpn_poly2);
           _fmpz_poly_zero_coeffs(test_mpn_poly3, FLINT_MIN(trunc, test_mpn_poly3->length));
@@ -1776,8 +1789,8 @@ int test_fmpz_poly_mul_karatsuba()
       fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
       fmpz_poly_init2(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS+1);
       
-      length2 = random_ulong(35)+1; 
-      length = random_ulong(35)+1;   
+      length2 = random_ulong(35); 
+      length = random_ulong(35);   
       max_length = FLINT_MIN(length, length2);
       log_length = 0;
       while ((1<<log_length) < max_length) log_length++;
@@ -1792,8 +1805,8 @@ int test_fmpz_poly_mul_karatsuba()
       do randpoly(test_poly2, length2, bits2); 
       while (mpz_poly_length(test_poly2) < length2);
           
-      fmpz_poly_realloc(test_mpn_poly, length);
-      fmpz_poly_realloc(test_mpn_poly2, length2);
+      fmpz_poly_fit_length(test_mpn_poly, length);
+      fmpz_poly_fit_length(test_mpn_poly2, length2);
       mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
       mpz_poly_to_fmpz_poly(test_mpn_poly2, test_poly2);
 #if DEBUG
@@ -1848,9 +1861,10 @@ int test_fmpz_poly_mul_karatsuba_trunc()
       fmpz_poly_init2(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS+1);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
-          length = random_ulong(35)+1; 
-          length2 = random_ulong(35)+1; 
-          trunc = random_ulong(length+length2);       
+          length = random_ulong(35); 
+          length2 = random_ulong(35); 
+          if (length+length2 == 0) trunc = 0;
+          else trunc = random_ulong(length+length2);       
 #if DEBUG
           printf("length = %ld, length2 = %ld, trunc = %ld, bits = %ld, bits2 = %ld\n", length, length2, trunc, bits, bits2);
 #endif
@@ -1860,8 +1874,8 @@ int test_fmpz_poly_mul_karatsuba_trunc()
           do randpoly(test_poly2, length2, bits2); 
           while (mpz_poly_length(test_poly2) < length2);
 
-          fmpz_poly_realloc(test_mpn_poly, length);
-          fmpz_poly_realloc(test_mpn_poly2, length2);
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length2);
           mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
           mpz_poly_to_fmpz_poly(test_mpn_poly2, test_poly2);
           
@@ -1914,9 +1928,10 @@ int test_fmpz_poly_mul_karatsuba_trunc_left()
       fmpz_poly_init2(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS+1);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
-          length = random_ulong(100)+1; 
-          length2 = random_ulong(100)+1; 
-          trunc = random_ulong(length+length2-1)+1;       
+          length = random_ulong(100); 
+          length2 = random_ulong(100); 
+          if (length+length2 < 2) trunc = 0;
+          else trunc = random_ulong(length+length2-1)+1;       
 #if DEBUG
           printf("length = %ld, length2 = %ld, trunc = %ld, bits = %ld, bits2 = %ld\n", length, length2, trunc, bits, bits2);
 #endif
@@ -1926,8 +1941,8 @@ int test_fmpz_poly_mul_karatsuba_trunc_left()
           do randpoly(test_poly2, length2, bits2); 
           while (mpz_poly_length(test_poly2) < length2);
           
-          fmpz_poly_realloc(test_mpn_poly, length);
-          fmpz_poly_realloc(test_mpn_poly2, length2);
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length2);
           mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
           mpz_poly_to_fmpz_poly(test_mpn_poly2, test_poly2);
           
@@ -1978,8 +1993,8 @@ int test_fmpz_poly_mul_KS()
       bits2 = random_ulong(100) + 1;
       //bits = 4;
       //bits2 = 4;
-      length = random_ulong(100)+1;
-      length2 = random_ulong(100)+1;
+      length = random_ulong(100);
+      length2 = random_ulong(100);
       //length = 32000;
       //length2 = 32000;   
    
@@ -2025,6 +2040,7 @@ int test_fmpz_poly_mul_KS()
          fmpz_poly_to_mpz_poly(test_poly4, test_mpn_poly3);
                   
          result = mpz_poly_equal(test_poly3, test_poly4);
+         
 #if DEBUG
          if (!result)
          {
@@ -2075,9 +2091,10 @@ int test_fmpz_poly_mul_KS_trunc()
       fmpz_poly_init2(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS+1);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
-          length = random_ulong(2000)+1; 
-          length2 = random_ulong(2000)+1; 
-          trunc = random_ulong(length+length2-1)+1;       
+          length = random_ulong(2000); 
+          length2 = random_ulong(2000); 
+          if (length+length2 < 2) trunc = 0;
+          else trunc = random_ulong(length+length2-1)+1;       
 #if DEBUG
           printf("length = %ld, length2 = %ld, trunc = %ld, bits = %ld, bits2 = %ld\n", length, length2, trunc, bits, bits2);
 #endif
@@ -2087,8 +2104,8 @@ int test_fmpz_poly_mul_KS_trunc()
           do randpoly(test_poly2, length2, bits2);
           while (mpz_poly_length(test_poly2) < length2);
           
-          fmpz_poly_realloc(test_mpn_poly, length);
-          fmpz_poly_realloc(test_mpn_poly2, length2);
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length2);
           mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
           mpz_poly_to_fmpz_poly(test_mpn_poly2, test_poly2);
           
@@ -2132,9 +2149,10 @@ int test_fmpz_poly_mul_KS_trunc()
       fmpz_poly_init2(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS+1);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
-          length = random_ulong(500)+1; 
-          length2 = random_ulong(500)+1; 
-          trunc = random_ulong(length+length2-1)+1;       
+          length = random_ulong(500); 
+          length2 = random_ulong(500); 
+          if (length+length2 < 2) trunc = 0;
+          else trunc = random_ulong(length+length2-1)+1;       
 #if DEBUG
           printf("length = %ld, length2 = %ld, trunc = %ld, bits = %ld, bits2 = %ld\n", length, length2, trunc, bits, bits2);
 #endif
@@ -2144,8 +2162,8 @@ int test_fmpz_poly_mul_KS_trunc()
           do randpoly(test_poly2, length2, bits2);
           while (mpz_poly_length(test_poly2) < length2);
           
-          fmpz_poly_realloc(test_mpn_poly, length);
-          fmpz_poly_realloc(test_mpn_poly2, length2);
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length2);
           mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
           mpz_poly_to_fmpz_poly(test_mpn_poly2, test_poly2);
           
@@ -2208,8 +2226,8 @@ int test_fmpz_poly_mul_SS()
       fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
       fmpz_poly_init2(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS+1);
       
-      length2 = random_ulong(1000)+1; 
-      length = random_ulong(1000)+1; 
+      length2 = random_ulong(1000); 
+      length = random_ulong(1000); 
       //length = length2 = 256;
        
 #if DEBUG
@@ -2222,8 +2240,8 @@ int test_fmpz_poly_mul_SS()
       do randpoly(test_poly2, length2, bits2);
       while (mpz_poly_length(test_poly2) < length2);
           
-      fmpz_poly_realloc(test_mpn_poly, length);
-      fmpz_poly_realloc(test_mpn_poly2, length2);
+      fmpz_poly_fit_length(test_mpn_poly, length);
+      fmpz_poly_fit_length(test_mpn_poly2, length2);
       mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
       mpz_poly_to_fmpz_poly(test_mpn_poly2, test_poly2);
 #if DEBUG
@@ -2284,9 +2302,10 @@ int test_fmpz_poly_mul_SS_trunc()
       fmpz_poly_init2(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS+1);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
-          length = random_ulong(1000)+1; 
-          length2 = random_ulong(1000)+1; 
-          trunc = random_ulong(length+length2);       
+          length = random_ulong(1000); 
+          length2 = random_ulong(1000); 
+          if (length+length2 == 0) trunc = 0;
+          else trunc = random_ulong(length+length2);       
 #if DEBUG
           printf("length = %ld, length2 = %ld, trunc = %ld, bits = %ld, bits2 = %ld\n", length, length2, trunc, bits, bits2);
 #endif
@@ -2296,8 +2315,8 @@ int test_fmpz_poly_mul_SS_trunc()
           do randpoly(test_poly2, length2, bits2);
           while (mpz_poly_length(test_poly2) < length2);
           
-          fmpz_poly_realloc(test_mpn_poly, length);
-          fmpz_poly_realloc(test_mpn_poly2, length2);
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length2);
           mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
           mpz_poly_to_fmpz_poly(test_mpn_poly2, test_poly2);
           
@@ -2358,7 +2377,7 @@ int test_fmpz_poly_mul_trunc_n()
       fmpz_poly_init2(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS+1);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
-          length = random_ulong(1000)+1; 
+          length = random_ulong(1000); 
           length2 = length; 
           trunc = length;       
 #if DEBUG
@@ -2370,8 +2389,8 @@ int test_fmpz_poly_mul_trunc_n()
           do randpoly(test_poly2, length2, bits2);
           while (mpz_poly_length(test_poly2) < length2);
           
-          fmpz_poly_realloc(test_mpn_poly, length);
-          fmpz_poly_realloc(test_mpn_poly2, length2);
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length2);
           mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
           mpz_poly_to_fmpz_poly(test_mpn_poly2, test_poly2);
           
@@ -2431,12 +2450,12 @@ int test__fmpz_poly_scalar_mul()
       
       for (unsigned long count2 = 0; (count2 < 3) && (result == 1); count2++)
       { 
-          length = randint(100)+1;        
+          length = randint(100);        
 #if DEBUG
           printf("length = %ld, bits = %ld, bits2 = %ld\n",length, bits, bits2);
 #endif
-          fmpz_poly_realloc(test_mpn_poly, length);
-          fmpz_poly_realloc(test_mpn_poly2, length);
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length);
           
           F_mpn_clear(x, limbs2+1);
           mpn_random2(x+1, limbs2);
@@ -2500,12 +2519,12 @@ int test__fmpz_poly_scalar_mul()
       
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
-          length = randint(100)+1;        
+          length = randint(100);        
 #if DEBUG
           printf("length = %ld, bits = %ld, bits2 = %ld\n",length, bits, bits2);
 #endif
-          fmpz_poly_realloc(test_mpn_poly, length);
-          fmpz_poly_realloc(test_mpn_poly2, length);
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length);
           
           F_mpn_clear(x, limbs2+1);
           mpn_random2(x+1, limbs2);
@@ -2588,11 +2607,11 @@ int test_fmpz_poly_scalar_mul()
       for (unsigned long count2 = 0; (count2 < 3) && (result == 1); count2++)
       { 
           fmpz_poly_init(test_mpn_poly2);
-          length = randint(100)+1;        
+          length = randint(100);        
 #if DEBUG
           printf("length = %ld, bits = %ld, bits2 = %ld\n",length, bits, bits2);
 #endif
-          fmpz_poly_realloc(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly, length);
           
           F_mpn_clear(x, limbs2+1);
           mpn_random2(x+1, limbs2);
@@ -2655,12 +2674,12 @@ int test_fmpz_poly_scalar_mul()
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
           fmpz_poly_init(test_mpn_poly2);
-          length = randint(100)+1;        
+          length = randint(100);        
 #if DEBUG
           printf("length = %ld, bits = %ld, bits2 = %ld\n",length, bits, bits2);
 #endif
-          fmpz_poly_realloc(test_mpn_poly, length);
-          fmpz_poly_realloc(test_mpn_poly2, length);
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length);
           
           F_mpn_clear(x, limbs2+1);
           mpn_random2(x+1, limbs2);
@@ -2723,12 +2742,12 @@ int test_fmpz_poly_scalar_mul()
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
           fmpz_poly_init(test_mpn_poly2);
-          length = randint(40)+1;        
+          length = randint(40);        
 #if DEBUG
           printf("length = %ld, bits = %ld, bits2 = %ld\n",length, bits, bits2);
 #endif
-          fmpz_poly_realloc(test_mpn_poly, length);
-          fmpz_poly_realloc(test_mpn_poly2, length);
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length);
           
           F_mpn_clear(x, limbs2+1);
           mpn_random2(x+1, limbs2);
@@ -2807,7 +2826,7 @@ int test_fmpz_poly_div_naive()
       fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
       fmpz_poly_init2(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS+1);
       
-      length2 = random_ulong(100)+1; 
+      length2 = random_ulong(100); 
       length = random_ulong(100)+1; 
       //length = length2 = 20;
        
@@ -2817,13 +2836,13 @@ int test_fmpz_poly_div_naive()
 
       do {
          randpoly(test_poly, length, bits); 
-         fmpz_poly_realloc(test_mpn_poly, length);
+         fmpz_poly_fit_length(test_mpn_poly, length);
          mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
          _fmpz_poly_normalise(test_mpn_poly);
       } while (test_mpn_poly->length == 0);
       
       randpoly(test_poly2, length2, bits2);     
-      fmpz_poly_realloc(test_mpn_poly2, length2);
+      fmpz_poly_fit_length(test_mpn_poly2, length2);
       mpz_poly_to_fmpz_poly(test_mpn_poly2, test_poly2);
 #if DEBUG
       mpz_poly_print(test_poly);printf("\n\n");
@@ -2890,7 +2909,7 @@ int test_fmpz_poly_divrem_naive()
       fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
       fmpz_poly_init2(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS+1);
       
-      length2 = random_ulong(100)+1; 
+      length2 = random_ulong(100); 
       length = random_ulong(100)+1; 
       //length = length2 = 20;
        
@@ -2900,7 +2919,7 @@ int test_fmpz_poly_divrem_naive()
 
       do {
          randpoly(test_poly, length, bits); 
-         fmpz_poly_realloc(test_mpn_poly, length);
+         fmpz_poly_fit_length(test_mpn_poly, length);
          mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
          _fmpz_poly_normalise(test_mpn_poly);
       } while (test_mpn_poly->length == 0);
@@ -2908,7 +2927,7 @@ int test_fmpz_poly_divrem_naive()
       do randpoly(test_poly2, length2, bits2);
       while (mpz_poly_length(test_poly2) < length2);
 
-      fmpz_poly_realloc(test_mpn_poly2, length2);
+      fmpz_poly_fit_length(test_mpn_poly2, length2);
       mpz_poly_to_fmpz_poly(test_mpn_poly2, test_poly2);
 #if DEBUG
       mpz_poly_print(test_poly);printf("\n\n");
@@ -2978,7 +2997,7 @@ int test_fmpz_poly_div_karatsuba_recursive()
       fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
       fmpz_poly_init2(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS+1);
       
-      length2 = random_ulong(128)+1; 
+      length2 = random_ulong(128); 
       length = random_ulong(128)+1;
       //length = 12;
       //length2 = 5;
@@ -2989,7 +3008,7 @@ int test_fmpz_poly_div_karatsuba_recursive()
 
       do {
          randpoly(test_poly, length, bits); 
-         fmpz_poly_realloc(test_mpn_poly, length);
+         fmpz_poly_fit_length(test_mpn_poly, length);
          mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
          _fmpz_poly_normalise(test_mpn_poly);
       } while (test_mpn_poly->length == 0);
@@ -2997,7 +3016,7 @@ int test_fmpz_poly_div_karatsuba_recursive()
       do randpoly(test_poly2, length2, bits2);
       while (mpz_poly_length(test_poly2) < length2);
 
-      fmpz_poly_realloc(test_mpn_poly2, length2);
+      fmpz_poly_fit_length(test_mpn_poly2, length2);
       mpz_poly_to_fmpz_poly(test_mpn_poly2, test_poly2);
 #if DEBUG
       mpz_poly_print(test_poly);printf("\n\n");
@@ -3069,7 +3088,7 @@ int test_fmpz_poly_divrem_karatsuba()
       fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
       fmpz_poly_init2(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS+1);
       
-      length2 = random_ulong(128)+1; 
+      length2 = random_ulong(128); 
       length = random_ulong(128)+1;
       //length = 12;
       //length2 = 5;
@@ -3080,7 +3099,7 @@ int test_fmpz_poly_divrem_karatsuba()
 
       do {
          randpoly(test_poly, length, bits); 
-         fmpz_poly_realloc(test_mpn_poly, length);
+         fmpz_poly_fit_length(test_mpn_poly, length);
          mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
          _fmpz_poly_normalise(test_mpn_poly);
       } while (test_mpn_poly->length == 0);
@@ -3088,7 +3107,7 @@ int test_fmpz_poly_divrem_karatsuba()
       do randpoly(test_poly2, length2, bits2);
       while (mpz_poly_length(test_poly2) < length2);
       
-      fmpz_poly_realloc(test_mpn_poly2, length2);
+      fmpz_poly_fit_length(test_mpn_poly2, length2);
       mpz_poly_to_fmpz_poly(test_mpn_poly2, test_poly2);
 #if DEBUG
       mpz_poly_print(test_poly);printf("\n\n");
@@ -3161,7 +3180,7 @@ int test_fmpz_poly_div_karatsuba()
       fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
       fmpz_poly_init2(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS+1);
       
-      length2 = random_ulong(128)+1; 
+      length2 = random_ulong(128); 
       length = random_ulong(128)+1;
       //length = 1000;
       //length2 = 1000;
@@ -3172,13 +3191,13 @@ int test_fmpz_poly_div_karatsuba()
 
       do {
          randpoly(test_poly, length, bits); 
-         fmpz_poly_realloc(test_mpn_poly, length);
+         fmpz_poly_fit_length(test_mpn_poly, length);
          mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
          _fmpz_poly_normalise(test_mpn_poly);
       } while (test_mpn_poly->length == 0);
       
       randpoly(test_poly2, length2, bits2);     
-      fmpz_poly_realloc(test_mpn_poly2, length2);
+      fmpz_poly_fit_length(test_mpn_poly2, length2);
       mpz_poly_to_fmpz_poly(test_mpn_poly2, test_poly2);
 #if DEBUG
       mpz_poly_print(test_poly);printf("\n\n");
@@ -3247,7 +3266,7 @@ int test_fmpz_poly_div_mulders()
       fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
       fmpz_poly_init2(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS+1);
       
-      length2 = random_ulong(128)+1; 
+      length2 = random_ulong(128); 
       length = random_ulong(128)+1;
       //length = 1000;
       //length2 = 1000;
@@ -3258,13 +3277,13 @@ int test_fmpz_poly_div_mulders()
 
       do {
          randpoly(test_poly, length, bits); 
-         fmpz_poly_realloc(test_mpn_poly, length);
+         fmpz_poly_fit_length(test_mpn_poly, length);
          mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
          _fmpz_poly_normalise(test_mpn_poly);
       } while (test_mpn_poly->length == 0);
       
       randpoly(test_poly2, length2, bits2);     
-      fmpz_poly_realloc(test_mpn_poly2, length2);
+      fmpz_poly_fit_length(test_mpn_poly2, length2);
       mpz_poly_to_fmpz_poly(test_mpn_poly2, test_poly2);
 #if DEBUG
       mpz_poly_print(test_poly);printf("\n\n");
@@ -3343,7 +3362,7 @@ int test_fmpz_poly_newton_invert_basecase()
 
       do {
          randpoly(test_poly, length, bits); 
-         fmpz_poly_realloc(test_mpn_poly, length);
+         fmpz_poly_fit_length(test_mpn_poly, length);
          mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
          _fmpz_poly_normalise(test_mpn_poly);
       } while (test_mpn_poly->length == 0);
@@ -3392,7 +3411,7 @@ int test_fmpz_poly_reverse()
       fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
       fmpz_poly_init2(test_mpn_poly2, 1, (bits-1)/FLINT_BITS+1);   
       
-      length = random_ulong(100)+1;
+      length = random_ulong(100);
       length2 = length + randint(200);
        
 #if DEBUG
@@ -3400,11 +3419,11 @@ int test_fmpz_poly_reverse()
 #endif
 
       randpoly(test_poly, length, bits); 
-      fmpz_poly_realloc(test_mpn_poly, length);
+      fmpz_poly_fit_length(test_mpn_poly, length);
       mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
       _fmpz_poly_normalise(test_mpn_poly);
       
-      fmpz_poly_realloc(test_mpn_poly2, length2);
+      fmpz_poly_fit_length(test_mpn_poly2, length2);
       
       
 #if DEBUG
@@ -3450,7 +3469,7 @@ int test_fmpz_poly_newton_invert()
 
       do {
          randpoly(test_poly, length, bits); 
-         fmpz_poly_realloc(test_mpn_poly, length);
+         fmpz_poly_fit_length(test_mpn_poly, length);
          mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
          _fmpz_poly_normalise(test_mpn_poly);
       } while (test_mpn_poly->length == 0);
@@ -3510,7 +3529,7 @@ int test_fmpz_poly_div_series()
 
       do {
          randpoly(test_poly, length, bits); 
-         fmpz_poly_realloc(test_mpn_poly, length);
+         fmpz_poly_fit_length(test_mpn_poly, length);
          mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
          _fmpz_poly_normalise(test_mpn_poly);
       } while (test_mpn_poly->length == 0);
@@ -3519,7 +3538,7 @@ int test_fmpz_poly_div_series()
       length = test_mpn_poly->length;
       
       randpoly(test_poly, length, bits); 
-      fmpz_poly_realloc(test_mpn_poly2, length);
+      fmpz_poly_fit_length(test_mpn_poly2, length);
       mpz_poly_to_fmpz_poly(test_mpn_poly2, test_poly);
 
       _fmpz_poly_reverse(test_mpn_poly, test_mpn_poly, length);
@@ -3567,7 +3586,7 @@ int test_fmpz_poly_div_newton()
       fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
       fmpz_poly_init2(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS+1);
       
-      length2 = random_ulong(128)+1; 
+      length2 = random_ulong(128); 
       length = random_ulong(128)+1;
       //length = 100000;
       //length2 = 100000;
@@ -3579,11 +3598,11 @@ int test_fmpz_poly_div_newton()
       randpoly(test_poly, length, bits); 
       mpz_poly_set_coeff_ui(test_poly, length - 1, 1);
       
-      fmpz_poly_realloc(test_mpn_poly, length);
+      fmpz_poly_fit_length(test_mpn_poly, length);
       mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
       
       randpoly(test_poly2, length2, bits2);     
-      fmpz_poly_realloc(test_mpn_poly2, length2);
+      fmpz_poly_fit_length(test_mpn_poly2, length2);
       mpz_poly_to_fmpz_poly(test_mpn_poly2, test_poly2);
       _fmpz_poly_normalise(test_mpn_poly2);
       
@@ -3658,7 +3677,7 @@ int test_fmpz_poly_power()
       fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
-          length = random_ulong(10)+1; 
+          length = random_ulong(10); 
           exp = random_ulong(20);
 #if DEBUG
           printf("length = %ld, bits = %ld, exp = %ld\n", length, bits, exp);
@@ -3670,7 +3689,7 @@ int test_fmpz_poly_power()
           }
           while (test_poly->length != length);
           
-          fmpz_poly_realloc(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly, length);
           mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
           _fmpz_poly_normalise(test_mpn_poly);
             
@@ -3731,7 +3750,7 @@ int test_fmpz_poly_power_trunc_n()
       fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
-          length = random_ulong(10)+1; 
+          length = random_ulong(10); 
           exp = random_ulong(20);
           n = random_ulong(20);
 #if DEBUG
@@ -3739,7 +3758,7 @@ int test_fmpz_poly_power_trunc_n()
 #endif
           randpoly(test_poly, length, bits); 
           
-          fmpz_poly_realloc(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly, length);
           mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
           _fmpz_poly_normalise(test_mpn_poly);
             
@@ -3817,7 +3836,7 @@ int test_fmpz_poly_pseudo_divrem()
       fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
       fmpz_poly_init2(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS+1);
       
-      length2 = random_ulong(40)+1; 
+      length2 = random_ulong(40); 
       length = random_ulong(40)+1; 
       //length = length2 = 20;
        
@@ -3827,7 +3846,7 @@ int test_fmpz_poly_pseudo_divrem()
 
       do {
          randpoly(test_poly, length, bits); 
-         fmpz_poly_realloc(test_mpn_poly, length);
+         fmpz_poly_fit_length(test_mpn_poly, length);
          mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
          _fmpz_poly_normalise(test_mpn_poly);
       } while (test_mpn_poly->length == 0);
@@ -3835,7 +3854,7 @@ int test_fmpz_poly_pseudo_divrem()
       do randpoly(test_poly2, length2, bits2);
       while (mpz_poly_length(test_poly2) < length2);
 
-      fmpz_poly_realloc(test_mpn_poly2, length2);
+      fmpz_poly_fit_length(test_mpn_poly2, length2);
       mpz_poly_to_fmpz_poly(test_mpn_poly2, test_poly2);
 #if DEBUG
       mpz_poly_print(test_poly);printf("\n\n");
@@ -3905,7 +3924,7 @@ int test_fmpz_poly_pseudo_divrem_d()
       fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
       fmpz_poly_init2(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS+1);
       
-      length2 = random_ulong(100)+1; 
+      length2 = random_ulong(100); 
       length = random_ulong(100)+1; 
       //length = 100;
       //length2 = 199;
@@ -3916,7 +3935,7 @@ int test_fmpz_poly_pseudo_divrem_d()
 
       do {
          randpoly(test_poly, length, bits); 
-         fmpz_poly_realloc(test_mpn_poly, length);
+         fmpz_poly_fit_length(test_mpn_poly, length);
          mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
          _fmpz_poly_normalise(test_mpn_poly);
       } while (test_mpn_poly->length == 0);
@@ -3924,7 +3943,7 @@ int test_fmpz_poly_pseudo_divrem_d()
       do randpoly(test_poly2, length2, bits2);
       while (mpz_poly_length(test_poly2) < length2);
 
-      fmpz_poly_realloc(test_mpn_poly2, length2);
+      fmpz_poly_fit_length(test_mpn_poly2, length2);
       mpz_poly_to_fmpz_poly(test_mpn_poly2, test_poly2);
 #if DEBUG
       mpz_poly_print(test_poly);printf("\n\n");
@@ -3995,7 +4014,7 @@ int test_fmpz_poly_pseudo_divrem_recursive()
       fmpz_poly_init2(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS+1);
       
       length = random_ulong(100)+1; 
-      length2 = random_ulong(100)+1; 
+      length2 = random_ulong(100); 
       //length = 100;
       //length2 = 199;
        
@@ -4005,7 +4024,7 @@ int test_fmpz_poly_pseudo_divrem_recursive()
 
       do {
          randpoly(test_poly, length, bits); 
-         fmpz_poly_realloc(test_mpn_poly, length);
+         fmpz_poly_fit_length(test_mpn_poly, length);
          mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
          _fmpz_poly_normalise(test_mpn_poly);
       } while (test_mpn_poly->length == 0);
@@ -4013,7 +4032,7 @@ int test_fmpz_poly_pseudo_divrem_recursive()
       do randpoly(test_poly2, length2, bits2);
       while (mpz_poly_length(test_poly2) < length2);
       
-      fmpz_poly_realloc(test_mpn_poly2, length2);
+      fmpz_poly_fit_length(test_mpn_poly2, length2);
       mpz_poly_to_fmpz_poly(test_mpn_poly2, test_poly2);
       
 #if DEBUG
@@ -4090,8 +4109,8 @@ int test_fmpz_poly_to_ZmodF_poly()
 #if DEBUG
           printf("%ld, %ld\n",length, bits);
 #endif
-          fmpz_poly_realloc(test_mpn_poly, length);
-          fmpz_poly_realloc(test_mpn_poly2, length);
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length);
           mpz_poly_realloc(test_poly2, length);
           
           do randpoly(test_poly, length, bits-1); 
@@ -4155,8 +4174,8 @@ int test_fmpz_poly_bit_pack()
 #if DEBUG
           printf("%ld, %ld\n",length, bits);
 #endif
-          fmpz_poly_realloc(test_mpn_poly, length);
-          fmpz_poly_realloc(test_mpn_poly2, length);
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length);
           mpz_poly_realloc(test_poly2, length);
           
           do randpoly(test_poly, length, bits-1);
@@ -4241,8 +4260,8 @@ int test_fmpz_poly_bit_pack_unsigned()
 #if DEBUG
           printf("%ld, %ld\n",length, bits);
 #endif
-          fmpz_poly_realloc(test_mpn_poly, length);
-          fmpz_poly_realloc(test_mpn_poly2, length);
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length);
           mpz_poly_realloc(test_poly2, length);
           
           do randpoly_unsigned(test_poly, length, bits);
@@ -4309,8 +4328,8 @@ int test_fmpz_poly_limb_pack_unsigned()
 #if DEBUG
           printf("%ld, %ld\n",length, bits);
 #endif
-          fmpz_poly_realloc(test_mpn_poly, length);
-          fmpz_poly_realloc(test_mpn_poly2, length);
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length);
           mpz_poly_realloc(test_poly2, length);
           
           do randpoly_unsigned(test_poly, length, bits);
@@ -4373,8 +4392,8 @@ int test_fmpz_poly_limb_pack()
 #if DEBUG
           printf("%ld, %ld\n",length, bits);
 #endif
-          fmpz_poly_realloc(test_mpn_poly, length);
-          fmpz_poly_realloc(test_mpn_poly2, length);
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length);
           mpz_poly_realloc(test_poly2, length);
           
           do randpoly(test_poly, length, bits-1);
@@ -4439,8 +4458,8 @@ int test_fmpz_poly_byte_pack_unsigned()
 #if DEBUG
           printf("%ld, %ld\n",length, bits);
 #endif
-          fmpz_poly_realloc(test_mpn_poly, length);
-          fmpz_poly_realloc(test_mpn_poly2, length);
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length);
           mpz_poly_realloc(test_poly2, length);
           
           do randpoly_unsigned(test_poly, length, bits/2);
@@ -4512,8 +4531,8 @@ int test_fmpz_poly_byte_pack()
 #if DEBUG
           printf("%ld, %ld\n",length, bits);
 #endif
-          fmpz_poly_realloc(test_mpn_poly, length);
-          fmpz_poly_realloc(test_mpn_poly2, length);
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length);
           mpz_poly_realloc(test_poly2, length);
           
           do randpoly(test_poly, length, bits/2);

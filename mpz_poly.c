@@ -33,8 +33,8 @@ void mpz_poly_init(mpz_poly_t poly)
 
 void mpz_poly_init2(mpz_poly_t poly, unsigned long alloc)
 {
-   FLINT_ASSERT(alloc >= 1);
-
+   if ((long) alloc <= 0) mpz_poly_init(poly);
+   
    poly->coeffs = (mpz_t*) flint_heap_alloc(alloc * sizeof(mpz_t));
    for (unsigned long i = 0; i < alloc; i++)
       mpz_init(poly->coeffs[i]);
@@ -46,8 +46,8 @@ void mpz_poly_init2(mpz_poly_t poly, unsigned long alloc)
 
 void mpz_poly_init3(mpz_poly_t poly, unsigned long alloc, unsigned long bits)
 {
-   FLINT_ASSERT(alloc >= 1);
-
+   if ((long) alloc <= 0) mpz_poly_init(poly);
+   
    poly->coeffs = (mpz_t*) flint_heap_alloc(alloc * sizeof(mpz_t));
    for (unsigned long i = 0; i < alloc; i++)
       mpz_init2(poly->coeffs[i], bits);
@@ -59,7 +59,7 @@ void mpz_poly_init3(mpz_poly_t poly, unsigned long alloc, unsigned long bits)
 
 void mpz_poly_clear(mpz_poly_t poly)
 {
-   for (unsigned long i = 0; i < poly->alloc; i++)
+   for (long i = 0; i < poly->alloc; i++)
       mpz_clear(poly->coeffs[i]);
 
    flint_heap_free(poly->coeffs);
@@ -68,8 +68,8 @@ void mpz_poly_clear(mpz_poly_t poly)
 
 void mpz_poly_realloc(mpz_poly_t poly, unsigned long alloc)
 {
-   FLINT_ASSERT(alloc >= 1);
-
+   if ((long) alloc <= 0) alloc = 1;
+   
    // clear any mpz_t's beyond the new array length
    for (unsigned long i = alloc; i < poly->alloc; i++)
       mpz_clear(poly->coeffs[i]);
@@ -95,8 +95,8 @@ void mpz_poly_realloc(mpz_poly_t poly, unsigned long alloc)
 void mpz_poly_realloc2(mpz_poly_t poly, unsigned long alloc,
                        unsigned long bits)
 {
-   FLINT_ASSERT(alloc >= 1);
-
+   if ((long) alloc <= 0) alloc = 1;
+   
    // clear any mpz_t's beyond the new array length
    for (unsigned long i = alloc; i < poly->alloc; i++)
       mpz_clear(poly->coeffs[i]);
@@ -492,9 +492,9 @@ void fmpz_poly_to_mpz_poly(mpz_poly_t res, fmpz_poly_t poly)
 
    res->length = poly->length;
    
-   // todo: is there a bug here if poly->coeffs is not actually allocated?
-
-   unsigned long i;
+   if (poly->length == 0) return;
+   
+   long i;
    mp_limb_t* ptr = poly->coeffs;
 
    for (i = 0; i < poly->length; i++, ptr += poly->limbs+1)
@@ -517,7 +517,7 @@ int mpz_poly_equal(mpz_poly_t poly1, mpz_poly_t poly2)
    if (poly1->length != poly2->length)
       return 0;
 
-   for (unsigned long i = 0; i < poly1->length; i++)
+   for (long i = 0; i < poly1->length; i++)
       if (mpz_cmp(poly1->coeffs[i], poly2->coeffs[i]))
          return 0;
 
