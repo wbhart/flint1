@@ -277,6 +277,14 @@ zmod_poly-profile-tables.o: zmod_poly-profile.c $(HEADERS)
 zmod_poly-profile.o: zmod_poly-profile.c $(HEADERS)
 	$(CC) $(CFLAGS) -c zmod_poly-profile.c -o zmod_poly-profile.o
 
+bernoulli-profile-tables.o: bernoulli-profile.c $(HEADERS)
+	python make-profile-tables.py bernoulli
+	$(CC) $(CFLAGS) -c bernoulli-profile-tables.c -o bernoulli-profile-tables.o
+	rm bernoulli-profile-tables.c
+
+bernoulli-profile.o: bernoulli-profile.c $(HEADERS)
+	$(CC) $(CFLAGS) -c bernoulli-profile.c -o bernoulli-profile.o
+
 ####### profiling program targets
 
 PROFOBJ = $(FLINTOBJ) profiler.o profiler-main.o
@@ -302,6 +310,9 @@ NTL-profile: NTL-profile.c test-support.o NTL-profile-tables.o $(PROFOBJ)
 
 zmod_poly-profile: zmod_poly-profile.o zmod_poly.o zmod_poly-profile-tables.o $(PROFOBJ)
 	$(CC) $(CFLAGS) -o zmod_poly-profile zmod_poly.o zmod_poly-profile.o zmod_poly-profile-tables.o $(PROFOBJ) $(LIBS)
+
+bernoulli-profile: bernoulli-profile.o zmod_poly.o bernoulli-profile-tables.o $(PROFOBJ)
+	$(CC) $(CFLAGS) -o bernoulli-profile zmod_poly.o bernoulli-profile.o bernoulli-profile-tables.o $(PROFOBJ) $(LIBS)
 
 ####### example programs
 
