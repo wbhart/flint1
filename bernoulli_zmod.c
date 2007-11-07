@@ -1,9 +1,9 @@
 /****************************************************************************
 
-   bernoulli.c: Finds Bernoulli numbers B_{2k}
+   bernoulli_zmod.c: Finds Bernoulli numbers B_{2k}
                 Based on the implementation in SAGE written by David Harvey
-                Uses mpz_polys for the calculations.  See bernoulli_fmpz.c
-                and bernoulli_zmod.c for use of other polys.
+                
+                Uses zmod_polys for calculation.
    
    Copyright (C) 2007, David Howden
 
@@ -15,11 +15,20 @@
 #include <gmp.h>
 
 #include "flint.h"
-#include "mpz_poly.h"
 #include "long_extras.h"
+#include "zmod_poly.h"
 
 #define TRUE 1;
 #define FALSE 0;
+
+/*
+   Debugging function
+*/
+
+// void print_var(char *name, unsigned long value)
+// {
+//    printf("%s = %d\n", name, value);
+// }
 
 
 /*
@@ -33,14 +42,14 @@
    will always return 1.
 */
 
-int bernoulli_mod_p_mpz(unsigned long *res, unsigned long p)
+int bernoulli_mod_p(unsigned long *res, unsigned long p)
 {
    FLINT_ASSERT(p > 2);
    FLINT_ASSERT(z_isprime(p) == 1);
    
    unsigned long g, g_inv, g_sqr, g_sqr_inv;
    double p_inv = z_precompute_inverse(p);
-   g = z_primitive_root(p);
+   g = z_primitive_root_precomp(p, p_inv);
    
    if(!g)
    {
@@ -74,11 +83,10 @@ int bernoulli_mod_p_mpz(unsigned long *res, unsigned long p)
    unsigned long fudge, fudge_inv;
    fudge = fudge_inv = 1;
    
-   // compute the polynomials F(X) and G(X)
-   mpz_poly_t F, G;
-   
-   mpz_poly_init2(F, poly_size);
-   mpz_poly_init2(G, poly_size);
+   // compute the polynomials F(X) and G(X)   
+   zmod_poly_t F, G;
+   zmod_poly_init2(F, p, poly_size);
+   zmod_poly_init2(G, p, poly_size);
    
    unsigned long i, temp, h;
    
@@ -93,21 +101,22 @@ int bernoulli_mod_p_mpz(unsigned long *res, unsigned long p)
       g_power_inv = z_mulmod_precomp(g_power_inv, g_inv, p, p_inv);
       
       // store coefficient g^{i^2} h(g^i)/g^i
-      mpz_poly_set_coeff_ui(G, i, z_mulmod_precomp(h, fudge, p, p_inv));
-      mpz_poly_set_coeff_ui(F, i, fudge_inv);
+      zmod_poly_set_coeff(G, i, z_mulmod_precomp(h, fudge, p, p_inv));
+      zmod_poly_set_coeff(F, i, fudge_inv);
       
       // update fudge and fudge_inv
       fudge = z_mulmod_precomp(z_mulmod_precomp(fudge, g_power, p, p_inv), z_mulmod_precomp(g_power, g, p, p_inv), p, p_inv);
       fudge_inv = z_mulmod_precomp(z_mulmod_precomp(fudge_inv, g_power_inv, p, p_inv), z_mulmod_precomp(g_power_inv, g, p, p_inv), p, p_inv);
    }
    
-   mpz_poly_set_coeff_ui(F, 0, 0);
+   zmod_poly_set_coeff(F, 0, 0);
    
    // step 2: multiply the polynomials...
-   mpz_poly_t product;
-   mpz_poly_init(product);
-   mpz_poly_mul(product, G, F);
    
+   zmod_poly_t product;
+   zmod_poly_init(product, p);
+   zmod_poly_mul_KS(product, G, F, 0);
+
    // step 3: assemble the result...   
    unsigned long g_sqr_power, value;
    g_sqr_power = g_sqr;
@@ -115,26 +124,19 @@ int bernoulli_mod_p_mpz(unsigned long *res, unsigned long p)
 
    res[0] = 1;
    
-   mpz_t value_coeff;
-   mpz_init(value_coeff);
-   
    unsigned long value_coeff_ui;
 
    for(i = 1; i < poly_size; i++)
    {
-      mpz_poly_get_coeff(value_coeff, product, i + poly_size);
-      value = mpz_fdiv_ui(value_coeff, p);
+      value = zmod_poly_get_coeff(product, i + poly_size);
       
-      value = z_mod_precomp(mpz_poly_get_coeff_ui(product, i + poly_size), p, p_inv);
-      
-      mpz_poly_get_coeff(value_coeff, product, i);
       if(is_odd)
       {
-         value = z_mod_precomp(mpz_poly_get_coeff_ui(G, i) + mpz_fdiv_ui(value_coeff, p) + p - value, p, p_inv);
+         value = z_mod_precomp(zmod_poly_get_coeff(G, i) + zmod_poly_get_coeff(product, i) + p - value, p, p_inv);
       }
       else
       {
-         value = z_mod_precomp(mpz_poly_get_coeff_ui(G, i) + mpz_fdiv_ui(value_coeff, p) + value, p, p_inv);
+         value = z_mod_precomp(zmod_poly_get_coeff(G, i) + zmod_poly_get_coeff(product, i) + value, p, p_inv);
       }
       
       value = z_mulmod_precomp(z_mulmod_precomp(z_mulmod_precomp(4, i, p, p_inv), fudge, p, p_inv), value, p, p_inv);
@@ -173,6 +175,14 @@ int verify_bernoulli_mod_p(unsigned long *res, unsigned long p)
    for(i = 0; i < N; i++)
    {
       element = res[i];
+      // if((signed long)element < 0)
+      // {
+      //    printf("NEGATIVE NUMBER!!!!!\n");
+      // }
+      // if(element > p)
+      // {
+      //    printf("OVERFLOW!!!!!\n");
+      // }
       value = z_mulmod_precomp(z_mulmod_precomp(product, 2*i+1, p, p_inv), element, p, p_inv);
       sum = z_mod_precomp(sum + value, p, p_inv);
       product = z_mulmod_precomp(product, 4, p, p_inv);
@@ -180,6 +190,13 @@ int verify_bernoulli_mod_p(unsigned long *res, unsigned long p)
    
    if(z_mod_precomp(sum + 2,  p, p_inv))
    {   
+      i = 0;
+      printf("Error occurred, output:\n");
+      while (i < N)
+      {
+         printf("%d\n", res[i]);
+         i++;
+      }
       return FALSE;
    }
    
@@ -198,7 +215,7 @@ int verify_bernoulli_mod_p(unsigned long *res, unsigned long p)
 int test_bernoulli_mod_p(unsigned long p)
 {
    unsigned long *res = (unsigned long*) malloc(sizeof(unsigned long)*((p-1)/2));
-   if(!bernoulli_mod_p_mpz(res, p))
+   if(!bernoulli_mod_p(res, p))
    {
       printf("Could not factor p = %d\n", p);
       free(res);
@@ -212,13 +229,30 @@ int test_bernoulli_mod_p(unsigned long p)
 
 int main (int argc, char const *argv[])
 {
-   unsigned long p = 1;
+   if (argc == 2)
+   {
+      unsigned long n = atoi(argv[1]);
+      n = z_nextprime(n);
+      printf("Computing bernoulli_mod_p(%ld)... ", n);
+      if (!test_bernoulli_mod_p(n))
+      {
+         printf("Failed\n");
+      }
+      else
+      {
+         printf("Done\n");
+      }
+      return 0;
+   }
+   
+   unsigned long p = 2;
    unsigned long tests = 1000;
    unsigned long fail = 0;
    
    for(unsigned long i = 0; i < tests; i++)
    {
       p = z_nextprime(p);
+      //if(p == 2053) return;
       if(!test_bernoulli_mod_p(p))
       {
          printf("Fails on p = %d\n", p);

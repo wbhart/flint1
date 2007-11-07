@@ -1,6 +1,6 @@
 ifndef FLINT_TUNE
 	# defaults for sage.math development machine
-	FLINT_TUNE = -mtune=opteron -march=opteron
+	FLINT_TUNE = -mtune=pentium -march=pentium
 
 	# for the record, here's what I use on my G5 powerpc:
 	# FLINT_TUNE = -m64 -mcpu=970 -mtune=970 -mpowerpc64 -falign-loops=16 -falign-functions=16 -falign-labels=16 -falign-jumps=16
@@ -9,35 +9,35 @@ ifndef FLINT_TUNE
 	# FLINT_TUNE = 
 endif
 
-ifndef NO_NTL
-	NTL = -lntl
-endif
+# ifndef NO_NTL
+#   NTL = -lntl
+# endif
 
 ifndef FLINT_LINK_OPTIONS
 	FLINT_LINK_OPTIONS = 
 endif
 
 ifndef FLINT_NTL_LIB_DIR 
-	FLINT_NTL_LIB_DIR = "/home/wbhart/sage/sage-2.0/local/lib"
+    FLINT_NTL_LIB_DIR = ""#"/home/wbhart/sage/sage-2.0/local/lib"
 endif
 
 ifndef FLINT_NTL_INCLUDE_DIR 
-	FLINT_NTL_INCLUDE_DIR = "/home/wbhart/sage/sage-2.0/local/include"
+	FLINT_NTL_INCLUDE_DIR = ""#"/home/wbhart/sage/sage-2.0/local/include"
 endif
 
 # default GMP directories on sage.math development machine
 ifndef FLINT_GMP_INCLUDE_DIR
-	FLINT_GMP_INCLUDE_DIR = "/home/dmharvey/gmp/install/include"
+	FLINT_GMP_INCLUDE_DIR = ""#"/home/dmharvey/gmp/install/include"
 endif
 
 ifndef FLINT_GMP_LIB_DIR
-	FLINT_GMP_LIB_DIR = "/home/dmharvey/gmp/install/lib"
+	FLINT_GMP_LIB_DIR = ""#"/home/dmharvey/gmp/install/lib"
 endif
 
 # qd include and library directories
 
 ifndef FLINT_QD_INCLUDE_DIR
-	FLINT_QD_INCLUDE_DIR = "/home/wbhart/flint/trunk/qd"
+	FLINT_QD_INCLUDE_DIR = ""#"/home/wbhart/flint/trunk/qd"
 endif
 
 ifndef FLINT_QD_LIB_DIR
@@ -136,7 +136,9 @@ ZmodF_poly.o: ZmodF_poly.c $(HEADERS)
 
 long_extras.o: long_extras.c long_extras.h
 	$(CC) $(CFLAGS) -c long_extras.c -o long_extras.o
-
+	
+zmod_poly.o: zmod_poly.c $(HEADERS)
+	$(CC) $(CFLAGS) -c zmod_poly.c -o zmod_poly.o
 
 
 ####### test program object files
@@ -168,7 +170,8 @@ ZmodF_mul-test.o: ZmodF_mul-test.c $(HEADERS)
 long_extras-test.o: long_extras-test.c 
 	$(CC) $(CFLAGS) -c long_extras-test.c -o long_extras-test.o
 
-
+zmod_poly-test.o: zmod_poly-test.c
+	$(CC) $(CFLAGS) -c zmod_poly-test.c -o zmod_poly-test.o
 
 ####### test program targets
 
@@ -195,6 +198,9 @@ ZmodF_mul-test: ZmodF_mul-test.o test-support.o $(FLINTOBJ) $(HEADERS)
 
 long_extras-test: long_extras.o long_extras-test.o test-support.o memory-manager.o
 	$(CC) $(CFLAGS) long_extras.o long_extras-test.o test-support.o memory-manager.o -o long_extras-test $(LIBS)
+
+zmod_poly-test: zmod_poly-test.o test-support.o long_extras.o $(FLINTOBJ) $(HEADERS)
+	$(CC) $(CFLAGS) zmod_poly-test.o test-support.o long_extras.o -o zmod_poly-test $(FLINTOBJ) $(LIBS)
 
 
 ####### tuning program object files
@@ -303,9 +309,20 @@ BPTJCubes: long_extras.o memory-manager.o
 bernoulli.o: bernoulli.c $(HEADERS)
 	$(CC) $(CFLAGS) -c bernoulli.c -o bernoulli.o
 
-bernoulli: bernoulli.o $(FLINTOBJ)
+bernoulli: bernoulli.o long_extras.o $(FLINTOBJ)
 	$(CC) $(CFLAGS) -o bernoulli bernoulli.o $(FLINTOBJ) $(LIBS)
 
+bernoulli_fmpz.o: bernoulli_fmpz.c $(HEADERS)
+	$(CC) $(CFLAGS) -c bernoulli_fmpz.c -o bernoulli_fmpz.o
+
+bernoulli_fmpz: bernoulli_fmpz.o $(FLINTOBJ)
+	$(CC) $(CFLAGS) -o bernoulli_fmpz bernoulli_fmpz.o $(FLINTOBJ) $(LIBS)
+
+bernoulli_zmod.o: bernoulli_zmod.c $(HEADERS)
+	$(CC) $(CFLAGS) -c bernoulli_zmod.c -o bernoulli_zmod.o
+
+bernoulli_zmod: bernoulli_zmod.o zmod_poly.o $(FLINTOBJ)
+	$(CC) $(CFLAGS) -o bernoulli_zmod bernoulli_zmod.o zmod_poly.o $(FLINTOBJ) $(LIBS)
 
 ####### Quadratic sieve
 

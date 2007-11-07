@@ -29,6 +29,7 @@ int main(int argc, char* argv[])
       values[i] = 0;
 
    long stop = (long) ceil((-1.0 + sqrt(1.0 + 8.0*N)) / 2.0);
+   
    for (long i = 0; i <= stop; i++)
    {
       long index1 = i*(i+1)/2;

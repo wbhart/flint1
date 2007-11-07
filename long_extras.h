@@ -173,6 +173,7 @@ unsigned long z_factor_SQUFOF(unsigned long n);
 int z_factor(factor_t * factors, unsigned long n);
 
 unsigned long z_primitive_root(unsigned long p);
+unsigned long z_primitive_root_precomp(unsigned long p, double p_inv);
 
 #ifdef __cplusplus
  }

@@ -1343,3 +1343,32 @@ unsigned long z_primitive_root(unsigned long p)
    
    return res;
 }
+
+unsigned long z_primitive_root_precomp(unsigned long p, double p_inv)
+{
+   FLINT_ASSERT(p > 2);
+   FLINT_ASSERT(z_isprime(p) == 1);
+   
+   unsigned long res;
+   factor_t factors;
+   
+   if(z_factor(&factors, (p - 1)) == 0)
+   {
+      return 0;
+   }
+   
+   res = 2;
+   
+   int i = 0;
+   do {
+      if(z_powmod_precomp(res, (p-1) / factors.p[i], p, p_inv) == 1) {
+         res++;
+         i = 0;
+      } else {
+         i++;
+      }
+   } while(i != factors.num);
+   
+   return res;
+}
+
