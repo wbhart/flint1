@@ -249,13 +249,13 @@ int verify_bernoulli_mod_p(unsigned long *res, unsigned long p)
       return FALSE;
    }
    
-   i = 0;
-   printf("Error occurred, output:\n");
-   while (i < N)
-   {
-      printf("%d\n", res[i]);
-      i++;
-   }
+   // i = 0;
+   // printf("Error occurred, output:\n");
+   // while (i < N)
+   // {
+   //    printf("%d\n", res[i]);
+   //    i++;
+   // }
    
    return TRUE;
 }
