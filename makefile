@@ -1,6 +1,6 @@
 ifndef FLINT_TUNE
 	# defaults for sage.math development machine
-	FLINT_TUNE = -mtune=pentium -march=pentium
+	FLINT_TUNE = -march=opteron -mtune=opteron
 
 	# for the record, here's what I use on my G5 powerpc:
 	# FLINT_TUNE = -m64 -mcpu=970 -mtune=970 -mpowerpc64 -falign-loops=16 -falign-functions=16 -falign-labels=16 -falign-jumps=16
@@ -18,26 +18,26 @@ ifndef FLINT_LINK_OPTIONS
 endif
 
 ifndef FLINT_NTL_LIB_DIR 
-    FLINT_NTL_LIB_DIR = ""#"/home/wbhart/sage/sage-2.0/local/lib"
+    FLINT_NTL_LIB_DIR = "/home/wbhart/sage/sage-2.0/local/lib"
 endif
 
 ifndef FLINT_NTL_INCLUDE_DIR 
-	FLINT_NTL_INCLUDE_DIR = ""#"/home/wbhart/sage/sage-2.0/local/include"
+	FLINT_NTL_INCLUDE_DIR = "/home/wbhart/sage/sage-2.0/local/include"
 endif
 
 # default GMP directories on sage.math development machine
 ifndef FLINT_GMP_INCLUDE_DIR
-	FLINT_GMP_INCLUDE_DIR = ""#"/home/dmharvey/gmp/install/include"
+	FLINT_GMP_INCLUDE_DIR = "/home/dmharvey/gmp/install/include"
 endif
 
 ifndef FLINT_GMP_LIB_DIR
-	FLINT_GMP_LIB_DIR = ""#"/home/dmharvey/gmp/install/lib"
+	FLINT_GMP_LIB_DIR = "/home/dmharvey/gmp/install/lib"
 endif
 
 # qd include and library directories
 
 ifndef FLINT_QD_INCLUDE_DIR
-	FLINT_QD_INCLUDE_DIR = ""#"/home/wbhart/flint/trunk/qd"
+	FLINT_QD_INCLUDE_DIR = "/home/wbhart/flint/trunk/qd"
 endif
 
 ifndef FLINT_QD_LIB_DIR
@@ -199,8 +199,8 @@ ZmodF_mul-test: ZmodF_mul-test.o test-support.o $(FLINTOBJ) $(HEADERS)
 long_extras-test: long_extras.o long_extras-test.o test-support.o memory-manager.o
 	$(CC) $(CFLAGS) long_extras.o long_extras-test.o test-support.o memory-manager.o -o long_extras-test $(LIBS)
 
-zmod_poly-test: zmod_poly-test.o test-support.o long_extras.o $(FLINTOBJ) $(HEADERS)
-	$(CC) $(CFLAGS) zmod_poly-test.o test-support.o long_extras.o -o zmod_poly-test $(FLINTOBJ) $(LIBS)
+zmod_poly-test: zmod_poly.o zmod_poly-test.o test-support.o $(FLINTOBJ) $(HEADERS)
+	$(CC) $(CFLAGS) zmod_poly.o zmod_poly-test.o test-support.o -o zmod_poly-test $(FLINTOBJ) $(LIBS)
 
 
 ####### tuning program object files
@@ -269,6 +269,14 @@ NTL-profile-tables.o: NTL-profile.c $(HEADERS)
 	python make-profile-tables.py NTL
 	$(CPP) $(CFLAGS) -c NTL-profile-tables.c -o NTL-profile-tables.o
 
+zmod_poly-profile-tables.o: zmod_poly-profile.c $(HEADERS)
+	python make-profile-tables.py zmod_poly
+	$(CC) $(CFLAGS) -c zmod_poly-profile-tables.c -o zmod_poly-profile-tables.o
+	rm zmod_poly-profile-tables.c
+
+zmod_poly-profile.o: zmod_poly-profile.c $(HEADERS)
+	$(CC) $(CFLAGS) -c zmod_poly-profile.c -o zmod_poly-profile.o
+
 ####### profiling program targets
 
 PROFOBJ = $(FLINTOBJ) profiler.o profiler-main.o
@@ -291,6 +299,9 @@ kara-profile: kara-profile.c profiler.o test-support.o $(FLINTOBJ)
 
 NTL-profile: NTL-profile.c test-support.o NTL-profile-tables.o $(PROFOBJ)
 	$(CPP) $(CFLAGS) -o NTL-profile NTL-profile.c NTL-profile-tables.o test-support.o $(PROFOBJ) $(LIBS)
+
+zmod_poly-profile: zmod_poly-profile.o zmod_poly.o zmod_poly-profile-tables.o $(PROFOBJ)
+	$(CC) $(CFLAGS) -o zmod_poly-profile zmod_poly.o zmod_poly-profile.o zmod_poly-profile-tables.o $(PROFOBJ) $(LIBS)
 
 ####### example programs
 

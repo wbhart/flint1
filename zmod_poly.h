@@ -11,15 +11,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "flint.h"
 #include "memory-manager.h"
-#include "long_extras.h"
 #include "mpn_extras.h"
-
+#include "long_extras.h"
 
 #ifndef _ZMOD_POLY_H_
 #define _ZMOD_POLY_H_
+
+#ifdef __cplusplus
+ extern "C" {
+#endif
 
 typedef struct
 {
@@ -228,5 +232,9 @@ void zmod_poly_bit_unpack_mpn(zmod_poly_t poly, mp_limb_t *mpn, unsigned long le
 
 void print_binary(unsigned long n, unsigned long len);
 void print_binary2(unsigned long n, unsigned long len, unsigned long space_bit);
+
+#ifdef __cplusplus
+ }
+#endif
 
 #endif /* _ZMOD_POLY_H_ */
