@@ -147,6 +147,12 @@ int bernoulli_mod_p_mpz(unsigned long *res, unsigned long p)
       g_sqr_power = z_mulmod_precomp(g_sqr_power, g, p, p_inv);
    }
    
+   mpz_clear(value_coeff);
+   
+   mpz_poly_clear(F);
+   mpz_poly_clear(G);
+   mpz_poly_clear(product);
+   
    return TRUE;
 }
 
@@ -197,22 +203,22 @@ int verify_bernoulli_mod_p(unsigned long *res, unsigned long p)
 
 int test_bernoulli_mod_p(unsigned long p)
 {
-   unsigned long *res = (unsigned long*) malloc(sizeof(unsigned long)*((p-1)/2));
+   unsigned long *res = (unsigned long*) flint_stack_alloc((p-1)/2);
    if(!bernoulli_mod_p_mpz(res, p))
    {
       printf("Could not factor p = %d\n", p);
-      free(res);
+      flint_stack_release();
       return FALSE;
    }
    int result = verify_bernoulli_mod_p(res, p);
-   free(res);
+   flint_stack_release();
    return result;
 }
 
 
 int main (int argc, char const *argv[])
 {
-   unsigned long p = 1;
+   unsigned long p = 2;
    unsigned long tests = 1000;
    unsigned long fail = 0;
    

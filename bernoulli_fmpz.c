@@ -85,8 +85,8 @@ int bernoulli_mod_p(unsigned long *res, unsigned long p)
    // compute the polynomials F(X) and G(X)
    fmpz_poly_t F, G;
    
-   fmpz_poly_init2(F, poly_size, 2);
-   fmpz_poly_init2(G, poly_size, 2);
+   fmpz_poly_init2(F, poly_size, 1);
+   fmpz_poly_init2(G, poly_size, 1);
    
    unsigned long i, temp, h;
    
@@ -205,6 +205,12 @@ int bernoulli_mod_p(unsigned long *res, unsigned long p)
    // 
    //    }
       
+   mpz_clear(value_coeff);
+   
+   fmpz_poly_clear(F);
+   fmpz_poly_clear(G);
+   fmpz_poly_clear(product);
+   
    return TRUE;
 }
 
@@ -271,15 +277,15 @@ int verify_bernoulli_mod_p(unsigned long *res, unsigned long p)
 
 int test_bernoulli_mod_p(unsigned long p)
 {
-   unsigned long *res = (unsigned long*) malloc(sizeof(unsigned long)*((p-1)/2));
+   unsigned long *res = (unsigned long*) flint_stack_alloc((p-1)/2);
    if(!bernoulli_mod_p(res, p))
    {
       printf("Could not factor p = %d\n", p);
-      free(res);
+      flint_stack_release();
       return FALSE;
    }
    int result = verify_bernoulli_mod_p(res, p);
-   free(res);
+   flint_stack_release();
    return result;
 }
 

@@ -18,8 +18,8 @@
 #include "long_extras.h"
 #include "zmod_poly.h"
 
-#define TRUE 1;
-#define FALSE 0;
+#define TRUE 1
+#define FALSE 0
 
 /*
    Debugging function
@@ -85,6 +85,7 @@ int bernoulli_mod_p(unsigned long *res, unsigned long p)
    
    // compute the polynomials F(X) and G(X)   
    zmod_poly_t F, G;
+   
    zmod_poly_init2(F, p, poly_size);
    zmod_poly_init2(G, p, poly_size);
    
@@ -122,7 +123,7 @@ int bernoulli_mod_p(unsigned long *res, unsigned long p)
    g_sqr_power = g_sqr;
    fudge = g;
 
-   res[0] = 1;
+   res[0] = 1L;
    
    unsigned long value_coeff_ui;
 
@@ -139,8 +140,8 @@ int bernoulli_mod_p(unsigned long *res, unsigned long p)
          value = z_mod_precomp(zmod_poly_get_coeff(G, i) + zmod_poly_get_coeff(product, i) + value, p, p_inv);
       }
       
-      value = z_mulmod_precomp(z_mulmod_precomp(z_mulmod_precomp(4, i, p, p_inv), fudge, p, p_inv), value, p, p_inv);
-      value = z_mulmod_precomp(value, z_invert(p+1-g_sqr_power, p), p, p_inv);
+      value = z_mulmod_precomp(z_mulmod_precomp(z_mulmod_precomp(4L, i, p, p_inv), fudge, p, p_inv), value, p, p_inv);
+      value = z_mulmod_precomp(value, z_invert(p+1L-g_sqr_power, p), p, p_inv);
 
       res[i] = value;
       
@@ -148,6 +149,10 @@ int bernoulli_mod_p(unsigned long *res, unsigned long p)
       fudge = z_mulmod_precomp(fudge, g_sqr_power, p, p_inv);
       g_sqr_power = z_mulmod_precomp(g_sqr_power, g, p, p_inv);
    }
+   
+   zmod_poly_clear(product);
+   zmod_poly_clear(F);
+   zmod_poly_clear(G);
    
    return TRUE;
 }
@@ -167,8 +172,8 @@ int verify_bernoulli_mod_p(unsigned long *res, unsigned long p)
    unsigned long N, i, product, sum, value, element;
    double p_inv;
    N = (p-1)/2;
-   product = 1;
-   sum = 0;
+   product = 1L;
+   sum = 0L;
    
    p_inv = z_precompute_inverse(p);
    
@@ -183,12 +188,12 @@ int verify_bernoulli_mod_p(unsigned long *res, unsigned long p)
       // {
       //    printf("OVERFLOW!!!!!\n");
       // }
-      value = z_mulmod_precomp(z_mulmod_precomp(product, 2*i+1, p, p_inv), element, p, p_inv);
+      value = z_mulmod_precomp(z_mulmod_precomp(product, 2*i+1L, p, p_inv), element, p, p_inv);
       sum = z_mod_precomp(sum + value, p, p_inv);
-      product = z_mulmod_precomp(product, 4, p, p_inv);
+      product = z_mulmod_precomp(product, 4L, p, p_inv);
    }
    
-   if(z_mod_precomp(sum + 2,  p, p_inv))
+   if(z_mod_precomp(sum + 2L,  p, p_inv))
    {   
       // i = 0;
       // printf("Error occurred, output:\n");
@@ -214,15 +219,15 @@ int verify_bernoulli_mod_p(unsigned long *res, unsigned long p)
 
 int test_bernoulli_mod_p(unsigned long p)
 {
-   unsigned long *res = (unsigned long*) malloc(sizeof(unsigned long)*((p-1)/2));
+   unsigned long *res = (unsigned long*) flint_stack_alloc((p-1)/2);
    if(!bernoulli_mod_p(res, p))
    {
       printf("Could not factor p = %d\n", p);
-      free(res);
+      flint_stack_release();
       return FALSE;
    }
    int result = verify_bernoulli_mod_p(res, p);
-   free(res);
+   flint_stack_release();
    return result;
 }
 
