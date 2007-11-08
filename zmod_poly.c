@@ -1244,7 +1244,7 @@ void zmod_poly_bit_unpack_mpn(zmod_poly_t res, mp_limb_t * mpn, unsigned long le
              //print_limb("temp_upper |= temp_lower", temp_upper);
              temp_upper &= mask;
              //print_limb("temp_upper &= mask      ", temp_upper);
-             _zmod_poly_set_coeff(res, i, z_mod_64_precomp(temp_upper, res->p, res->p_inv));
+             _zmod_poly_set_coeff(res, i, z_mod2_precomp(temp_upper, res->p, res->p_inv));
              current_bit = bits + current_bit - FLINT_BITS;
              mpn[current_limb] = shift_r(mpn[current_limb], current_bit);
              //print_limb("mpn[current_limb+1]     ", mpn[current_limb]);
@@ -1259,7 +1259,7 @@ void zmod_poly_bit_unpack_mpn(zmod_poly_t res, mp_limb_t * mpn, unsigned long le
              // less than a limb in size, so must be smaller than an unsigned long...
 
              //zmod_poly_set_coeff(res, i, temp_lower);
-             _zmod_poly_set_coeff(res, i, z_mod_64_precomp(temp_lower, res->p, res->p_inv));
+             _zmod_poly_set_coeff(res, i, z_mod2_precomp(temp_lower, res->p, res->p_inv));
 
              mpn[current_limb] = shift_r(mpn[current_limb], bits);
              //print_limb("mpn[current_limb]       ", mpn[current_limb]);
@@ -1277,7 +1277,7 @@ void zmod_poly_bit_unpack_mpn(zmod_poly_t res, mp_limb_t * mpn, unsigned long le
    {
       for (i = 0; i < length; i++)
       {
-         _zmod_poly_set_coeff(res, i, z_mod_precomp(mpn[i], res->p, res->p_inv));
+         _zmod_poly_set_coeff(res, i, z_ll_mod_precomp(0L, mpn[i], res->p, res->p_inv));
       }
    }
    else if (bits == 2*FLINT_BITS)

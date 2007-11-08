@@ -251,7 +251,7 @@ int main (int argc, char const *argv[])
    }
    
    unsigned long p = 2;
-   unsigned long tests = 1000;
+   unsigned long tests = 100000;
    unsigned long fail = 0;
    
    for(unsigned long i = 0; i < tests; i++)
