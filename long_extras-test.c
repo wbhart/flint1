@@ -771,14 +771,14 @@ int test_z_factor()
    return result;
 }
 
-int test_long_primitive_root()
+int test_z_primitive_root()
 {
    unsigned long p = 1;
    unsigned long r;
    
    for(int i = 0; i < 100; i++) {
-      p = long_nextprime(p);
-      r = long_primitive_root(p);
+      p = z_nextprime(p);
+      r = z_primitive_root(p);
       if(r == 0) {
          printf("Fails on p=%d\n", p);
          return 0;
@@ -792,26 +792,8 @@ void fmpz_poly_test_all()
 {
    int success, all_success = 1;
 
-<<<<<<< .mine
-   // RUN_TEST(long_mod_precomp);
-   // RUN_TEST(long_div63_precomp);
-   // RUN_TEST(long_mod63_precomp);
-   // RUN_TEST(long_mod2_precomp);
-   // RUN_TEST(long_mulmod_precomp);
-   // RUN_TEST(long_powmod0);
-   // RUN_TEST(long_sqrtmod0);
-   // RUN_TEST(long_mulmod_precomp2);
-   // RUN_TEST(long_powmod);
-   // RUN_TEST(long_sqrtmod);
-   // RUN_TEST(long_cuberootmod);
-   // RUN_TEST(long_nextprime);
-   // RUN_TEST(long_CRT);
-   // RUN_TEST(long_issquarefree);
-   // RUN_TEST(long_factor_trial);
-   // RUN_TEST(long_factor_SQUFOF);
-   // RUN_TEST(long_factor);
-   RUN_TEST(long_primitive_root);
-=======
+
+   RUN_TEST(z_primitive_root);
    RUN_TEST(z_mod_precomp);
    RUN_TEST(z_div2_precomp);
    RUN_TEST(z_mod2_precomp);
@@ -828,7 +810,6 @@ void fmpz_poly_test_all()
    RUN_TEST(z_factor_trial);
    RUN_TEST(z_factor_SQUFOF);
    RUN_TEST(z_factor);
->>>>>>> .r985
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");

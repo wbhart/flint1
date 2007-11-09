@@ -1570,7 +1570,7 @@ int test_fmpz_poly_scalar_div_si()
    return result; 
 }
 
-int test_fmpz_poly_mul_naive()
+int test_fmpz_poly_mul_classical()
 {
    mpz_poly_t test_poly, test_poly2, test_poly3, test_poly4;
    fmpz_poly_t test_mpn_poly, test_mpn_poly2, test_mpn_poly3;
@@ -1611,7 +1611,7 @@ int test_fmpz_poly_mul_naive()
           mpz_poly_init(test_poly4);
           fmpz_poly_init2(test_mpn_poly3, length+length2-1, (bits+bits2-1)/FLINT_BITS+2);
           
-          _fmpz_poly_mul_naive(test_mpn_poly3, test_mpn_poly, test_mpn_poly2);
+          _fmpz_poly_mul_classical(test_mpn_poly3, test_mpn_poly, test_mpn_poly2);
           
           fmpz_poly_to_mpz_poly(test_poly4, test_mpn_poly3); 
           
@@ -1630,7 +1630,7 @@ int test_fmpz_poly_mul_naive()
    return result; 
 }
 
-int test_fmpz_poly_mul_naive_trunc()
+int test_fmpz_poly_mul_classical_trunc()
 {
    mpz_poly_t test_poly, test_poly2, test_poly3, test_poly4;
    fmpz_poly_t test_mpn_poly, test_mpn_poly2, test_mpn_poly3, test_mpn_poly4;
@@ -1672,10 +1672,10 @@ int test_fmpz_poly_mul_naive_trunc()
           fmpz_poly_init2(test_mpn_poly3, length+length2-1, (bits+bits2-1)/FLINT_BITS+2);
           fmpz_poly_init2(test_mpn_poly4, trunc, (bits+bits2-1)/FLINT_BITS+2);
           
-          _fmpz_poly_mul_naive(test_mpn_poly3, test_mpn_poly, test_mpn_poly2);
+          _fmpz_poly_mul_classical(test_mpn_poly3, test_mpn_poly, test_mpn_poly2);
           _fmpz_poly_truncate(test_mpn_poly3, trunc);
           
-          _fmpz_poly_mul_naive_trunc(test_mpn_poly4, test_mpn_poly, test_mpn_poly2, trunc);
+          _fmpz_poly_mul_classical_trunc(test_mpn_poly4, test_mpn_poly, test_mpn_poly2, trunc);
           
           fmpz_poly_to_mpz_poly(test_poly3, test_mpn_poly3); 
           fmpz_poly_to_mpz_poly(test_poly4, test_mpn_poly4); 
@@ -1696,7 +1696,7 @@ int test_fmpz_poly_mul_naive_trunc()
    return result; 
 }
 
-int test_fmpz_poly_mul_naive_trunc_left()
+int test_fmpz_poly_mul_classical_trunc_left()
 {
    mpz_poly_t test_poly, test_poly2, test_poly3, test_poly4;
    fmpz_poly_t test_mpn_poly, test_mpn_poly2, test_mpn_poly3, test_mpn_poly4;
@@ -1745,10 +1745,10 @@ int test_fmpz_poly_mul_naive_trunc_left()
              fmpz_poly_init2(test_mpn_poly4, length+length2-1, (bits+bits2-1)/FLINT_BITS+2);
           }
           
-          _fmpz_poly_mul_naive(test_mpn_poly3, test_mpn_poly, test_mpn_poly2);
+          _fmpz_poly_mul_classical(test_mpn_poly3, test_mpn_poly, test_mpn_poly2);
           _fmpz_poly_zero_coeffs(test_mpn_poly3, FLINT_MIN(trunc, test_mpn_poly3->length));
           
-          _fmpz_poly_mul_naive_trunc_left(test_mpn_poly4, test_mpn_poly, test_mpn_poly2, trunc);
+          _fmpz_poly_mul_classical_trunc_left(test_mpn_poly4, test_mpn_poly, test_mpn_poly2, trunc);
           _fmpz_poly_check(test_mpn_poly4);
           
           fmpz_poly_to_mpz_poly(test_poly3, test_mpn_poly3); 
@@ -1882,7 +1882,7 @@ int test_fmpz_poly_mul_karatsuba_trunc()
           fmpz_poly_init2(test_mpn_poly3, length+length2-1, (bits+bits2-1)/FLINT_BITS+2);
           fmpz_poly_init2(test_mpn_poly4, trunc, (bits+bits2-1)/FLINT_BITS+2);
           
-          _fmpz_poly_mul_naive(test_mpn_poly3, test_mpn_poly, test_mpn_poly2);
+          _fmpz_poly_mul_classical(test_mpn_poly3, test_mpn_poly, test_mpn_poly2);
           _fmpz_poly_truncate(test_mpn_poly3, trunc);
           
           _fmpz_poly_mul_karatsuba_trunc(test_mpn_poly4, test_mpn_poly, test_mpn_poly2, trunc);
@@ -1950,7 +1950,7 @@ int test_fmpz_poly_mul_karatsuba_trunc_left()
           fmpz_poly_init2(test_mpn_poly3, length+length2-1, (bits+bits2-1)/FLINT_BITS+2);
           fmpz_poly_init2(test_mpn_poly4, length+length2-1, (bits+bits2-1)/FLINT_BITS+2);
           
-          _fmpz_poly_mul_naive(test_mpn_poly3, test_mpn_poly, test_mpn_poly2);
+          _fmpz_poly_mul_classical(test_mpn_poly3, test_mpn_poly, test_mpn_poly2);
           _fmpz_poly_zero_coeffs(test_mpn_poly3, FLINT_MIN(trunc, test_mpn_poly3->length));
           
           _fmpz_poly_mul_karatsuba_trunc_left(test_mpn_poly4, test_mpn_poly, test_mpn_poly2, trunc);
@@ -2806,7 +2806,7 @@ int test_fmpz_poly_scalar_mul()
    return result; 
 }
 
-int test_fmpz_poly_div_naive()
+int test_fmpz_poly_div_classical()
 {
    mpz_poly_t test_poly, test_poly2, test_poly3, test_poly4;
    fmpz_poly_t test_mpn_poly, test_mpn_poly2, test_mpn_poly3, test_mpn_poly4;
@@ -2863,11 +2863,11 @@ int test_fmpz_poly_div_naive()
       
       for (unsigned long i = 1; i < 5; i++)
       {
-         fmpz_poly_div_naive(test_mpn_poly4, test_mpn_poly3, test_mpn_poly);
+         fmpz_poly_div_classical(test_mpn_poly4, test_mpn_poly3, test_mpn_poly);
          fmpz_poly_clear(test_mpn_poly4);
          fmpz_poly_init(test_mpn_poly4);
       }
-      fmpz_poly_div_naive(test_mpn_poly4, test_mpn_poly3, test_mpn_poly);
+      fmpz_poly_div_classical(test_mpn_poly4, test_mpn_poly3, test_mpn_poly);
       _fmpz_poly_normalise(test_mpn_poly4);
       
       fmpz_poly_to_mpz_poly(test_poly4, test_mpn_poly4);
@@ -2889,7 +2889,7 @@ int test_fmpz_poly_div_naive()
    return result; 
 }
 
-int test_fmpz_poly_divrem_naive()
+int test_fmpz_poly_divrem_classical()
 {
    mpz_poly_t test_poly, test_poly2, test_poly3, test_poly4;
    fmpz_poly_t test_mpn_poly, test_mpn_poly2, test_mpn_poly3, test_mpn_poly4, test_mpn_poly5;
@@ -2949,13 +2949,13 @@ int test_fmpz_poly_divrem_naive()
       
       for (unsigned long i = 1; i < 5; i++)
       {
-         fmpz_poly_divrem_naive(test_mpn_poly4, test_mpn_poly5, test_mpn_poly3, test_mpn_poly);
+         fmpz_poly_divrem_classical(test_mpn_poly4, test_mpn_poly5, test_mpn_poly3, test_mpn_poly);
          fmpz_poly_clear(test_mpn_poly4);
          fmpz_poly_clear(test_mpn_poly5);
          fmpz_poly_init(test_mpn_poly4);
          fmpz_poly_init(test_mpn_poly5);
       }
-      fmpz_poly_divrem_naive(test_mpn_poly4, test_mpn_poly5, test_mpn_poly3, test_mpn_poly);
+      fmpz_poly_divrem_classical(test_mpn_poly4, test_mpn_poly5, test_mpn_poly3, test_mpn_poly);
       
       fmpz_poly_to_mpz_poly(test_poly4, test_mpn_poly4);
            
@@ -4885,9 +4885,9 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_poly_scalar_div_exact_si);
    RUN_TEST(fmpz_poly_scalar_div_ui);
    RUN_TEST(fmpz_poly_scalar_div_si);
-   RUN_TEST(fmpz_poly_mul_naive);
-   RUN_TEST(fmpz_poly_mul_naive_trunc);
-   RUN_TEST(fmpz_poly_mul_naive_trunc_left);
+   RUN_TEST(fmpz_poly_mul_classical);
+   RUN_TEST(fmpz_poly_mul_classical_trunc);
+   RUN_TEST(fmpz_poly_mul_classical_trunc_left);
    RUN_TEST(fmpz_poly_mul_karatsuba);
    RUN_TEST(fmpz_poly_mul_karatsuba_trunc);
    RUN_TEST(fmpz_poly_mul_karatsuba_trunc_left);
@@ -4896,8 +4896,8 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_poly_mul_SS);
    RUN_TEST(fmpz_poly_mul_SS_trunc);
    RUN_TEST(fmpz_poly_mul_trunc_n);
-   RUN_TEST(fmpz_poly_div_naive);
-   RUN_TEST(fmpz_poly_divrem_naive);
+   RUN_TEST(fmpz_poly_div_classical);
+   RUN_TEST(fmpz_poly_divrem_classical);
    RUN_TEST(fmpz_poly_div_karatsuba_recursive);
    RUN_TEST(fmpz_poly_divrem_karatsuba);
    RUN_TEST(fmpz_poly_div_karatsuba);

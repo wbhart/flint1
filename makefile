@@ -47,11 +47,11 @@ endif
 qdexists := $(shell ls -d qd)
 ifeq ($(qdexists), qd)
 	LIBS = -L$(FLINT_GMP_LIB_DIR)  -L$(FLINT_NTL_LIB_DIR) -L$(FLINT_QD_LIB_DIR) $(FLINT_LINK_OPTIONS) -lgmp -lpthread -lm -lqd $(NTL)
-all: mpn_extras-test fmpz_poly-test fmpz-test ZmodF-test ZmodF_poly-test mpz_poly-test ZmodF_mul-test long_extras-test ZmodF_mul-tune mpz_poly-tune fmpz_poly-profile mpz_poly-profile ZmodF_mul-profile ZmodF_poly-profile kara-profile NTL-profile delta_qexp BLTcubes BPTJCubes bernoulli F_mpz_mul-timing vecmat3d dd_vecmat3d dd_x3y3z3k x3y3z3k expmod mpQS tinyQS
 else
 	LIBS = -L$(FLINT_GMP_LIB_DIR)  -L$(FLINT_NTL_LIB_DIR) -L$(FLINT_QD_LIB_DIR) $(FLINT_LINK_OPTIONS) -lgmp -lpthread -lm $(NTL)
-all: mpn_extras-test fmpz_poly-test fmpz-test ZmodF-test ZmodF_poly-test mpz_poly-test ZmodF_mul-test long_extras-test ZmodF_mul-tune mpz_poly-tune fmpz_poly-profile mpz_poly-profile ZmodF_mul-profile ZmodF_poly-profile kara-profile NTL-profile delta_qexp BLTcubes BPTJCubes bernoulli F_mpz_mul-timing vecmat3d x3y3z3k expmod mpQS tinyQS
 endif
+
+all: mpn_extras-test fmpz_poly-test fmpz-test ZmodF-test ZmodF_poly-test mpz_poly-test ZmodF_mul-test long_extras-test ZmodF_mul-tune mpz_poly-tune fmpz_poly-profile mpz_poly-profile ZmodF_mul-profile ZmodF_poly-profile kara-profile delta_qexp BLTcubes BPTJCubes bernoulli F_mpz_mul-timing expmod mpQS tinyQS
 
 INCS = -I$(FLINT_GMP_INCLUDE_DIR) -I$(FLINT_NTL_INCLUDE_DIR) -I$(FLINT_QD_INCLUDE_DIR) 
 

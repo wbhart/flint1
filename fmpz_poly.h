@@ -405,13 +405,13 @@ void _fmpz_poly_scalar_div_exact_ui(fmpz_poly_t output, const fmpz_poly_t poly, 
 
 void _fmpz_poly_scalar_div_exact_si(fmpz_poly_t output, const fmpz_poly_t poly, const long x);
 
-void _fmpz_poly_mul_naive(fmpz_poly_t output, const fmpz_poly_t input1, 
+void _fmpz_poly_mul_classical(fmpz_poly_t output, const fmpz_poly_t input1, 
                                                  const fmpz_poly_t input2);
                                                  
-void _fmpz_poly_mul_naive_trunc(fmpz_poly_t output, const fmpz_poly_t input1, 
+void _fmpz_poly_mul_classical_trunc(fmpz_poly_t output, const fmpz_poly_t input1, 
                                           const fmpz_poly_t input2, const unsigned long trunc);
                                           
-void _fmpz_poly_mul_naive_trunc_left(fmpz_poly_t output, const fmpz_poly_t input1, 
+void _fmpz_poly_mul_classical_trunc_left(fmpz_poly_t output, const fmpz_poly_t input1, 
                                           const fmpz_poly_t input2, const unsigned long trunc);
 
 void __fmpz_poly_karamul_recursive(fmpz_poly_t res, const fmpz_poly_t a, const fmpz_poly_t b, fmpz_poly_t scratch, fmpz_poly_t scratchb, const unsigned long crossover);
@@ -691,9 +691,9 @@ void fmpz_poly_mul_trunc_n(fmpz_poly_t output, const fmpz_poly_t input1,
 void fmpz_poly_mul_trunc_left_n(fmpz_poly_t output, const fmpz_poly_t input1, 
                                           const fmpz_poly_t input2, const unsigned long trunc);
 
-void fmpz_poly_div_naive(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t B);
+void fmpz_poly_div_classical(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t B);
 
-void fmpz_poly_divrem_naive(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_poly_t A, const fmpz_poly_t B);
+void fmpz_poly_divrem_classical(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_poly_t A, const fmpz_poly_t B);
 
 void fmpz_poly_div_karatsuba_recursive(fmpz_poly_t Q, fmpz_poly_t DQ, const fmpz_poly_t A, const fmpz_poly_t B);
 

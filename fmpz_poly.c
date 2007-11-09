@@ -1998,11 +1998,11 @@ void _fmpz_poly_scalar_div_si(fmpz_poly_t output, const fmpz_poly_t poly, const 
 }
 
 /*
-   Multiply two polynomials using the naive technique.
+   Multiply two polynomials using the classical technique.
    Currently doesn't allow aliasing
 */
 
-void _fmpz_poly_mul_naive(fmpz_poly_t output, const fmpz_poly_t input1, const fmpz_poly_t input2)
+void _fmpz_poly_mul_classical(fmpz_poly_t output, const fmpz_poly_t input1, const fmpz_poly_t input2)
 {
    if ((input1->length == 0) || (input2->length == 0)) 
    {
@@ -2100,11 +2100,11 @@ void _fmpz_poly_mul_naive(fmpz_poly_t output, const fmpz_poly_t input1, const fm
 }
 
 /*
-   Multiply two polynomials using the naive technique truncating the result to trunc terms.
+   Multiply two polynomials using the classical technique truncating the result to trunc terms.
    Currently doesn't allow aliasing
 */
 
-void _fmpz_poly_mul_naive_trunc(fmpz_poly_t output, const fmpz_poly_t input1, 
+void _fmpz_poly_mul_classical_trunc(fmpz_poly_t output, const fmpz_poly_t input1, 
                                           const fmpz_poly_t input2, const unsigned long trunc)
 {
    fmpz_t coeffs_out = output->coeffs;
@@ -2228,12 +2228,12 @@ void _fmpz_poly_mul_naive_trunc(fmpz_poly_t output, const fmpz_poly_t input1,
 }
 
 /*
-   Multiply two polynomials using the naive technique truncating the result 
+   Multiply two polynomials using the classical technique truncating the result 
    so that the first trunc terms are zero.
    Currently doesn't allow aliasing
 */
 
-void _fmpz_poly_mul_naive_trunc_left(fmpz_poly_t output, const fmpz_poly_t input1, 
+void _fmpz_poly_mul_classical_trunc_left(fmpz_poly_t output, const fmpz_poly_t input1, 
                                           const fmpz_poly_t input2, const unsigned long trunc)
 {
    fmpz_t coeffs_out = output->coeffs;
@@ -2370,7 +2370,7 @@ void __fmpz_poly_karamul_recursive(fmpz_poly_t res, const fmpz_poly_t a, const f
    
    if ((a->length+b->length <= crossover) ||  (a->length <= 1) || (b->length <= 1) ||  ((a->length == 2) || (b->length == 2)))
    {
-      _fmpz_poly_mul_naive(res, a, b);
+      _fmpz_poly_mul_classical(res, a, b);
       
       return;
    }  
@@ -2532,7 +2532,7 @@ void __fmpz_poly_karatrunc_recursive(fmpz_poly_t res, const fmpz_poly_t a, const
    if ((a->length <= 1) || (b->length <= 1)) 
    {
       unsigned long trunc_next = FLINT_MIN(trunc, a->length + b->length - 1);
-      _fmpz_poly_mul_naive_trunc(res, a, b, trunc_next);
+      _fmpz_poly_mul_classical_trunc(res, a, b, trunc_next);
       res->length = FLINT_MIN(a->length+b->length-1, trunc_next);
       
       return;
@@ -2571,7 +2571,7 @@ void __fmpz_poly_karatrunc_recursive(fmpz_poly_t res, const fmpz_poly_t a, const
    if ((a->length+b->length <= crossover) || ((a->length == 2) && (b->length == 2)))
    {
       unsigned long trunc_next = FLINT_MIN(trunc, a->length + b->length - 1);
-      _fmpz_poly_mul_naive_trunc(res, a, b, trunc_next);
+      _fmpz_poly_mul_classical_trunc(res, a, b, trunc_next);
       res->length = FLINT_MIN(a->length+b->length-1, trunc_next);
      
       return;
@@ -2765,7 +2765,7 @@ void __fmpz_poly_karatrunc_left_recursive(fmpz_poly_t res, const fmpz_poly_t a, 
    
    if ((a->length <= 1) || (b->length <= 1) || (non_zero == 1)) 
    {
-      _fmpz_poly_mul_naive_trunc_left(res, a, b, trunc);
+      _fmpz_poly_mul_classical_trunc_left(res, a, b, trunc);
          
       return;
    }
@@ -2797,7 +2797,7 @@ void __fmpz_poly_karatrunc_left_recursive(fmpz_poly_t res, const fmpz_poly_t a, 
    
    if ((a->length+b->length <= crossover) || ((a->length == 2) && (b->length == 2)))
    {
-      _fmpz_poly_mul_naive_trunc_left(res, a, b, trunc);
+      _fmpz_poly_mul_classical_trunc_left(res, a, b, trunc);
       
       return;
    }   
@@ -4148,7 +4148,7 @@ void fmpz_poly_mul_trunc_left_n(fmpz_poly_t output, const fmpz_poly_t input1,
 
 ****************************************************************************/
 
-void fmpz_poly_divrem_naive(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_poly_t A, const fmpz_poly_t B)
+void fmpz_poly_divrem_classical(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_poly_t A, const fmpz_poly_t B)
 {
    fmpz_poly_t qB;
    
@@ -4287,7 +4287,7 @@ void fmpz_poly_divrem_naive(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_poly_t A, c
    Divides A by B and returns the quotient Q, but only the low half of the remainder R
 */
 
-void fmpz_poly_divrem_naive_low(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_poly_t A, const fmpz_poly_t B)
+void fmpz_poly_divrem_classical_low(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_poly_t A, const fmpz_poly_t B)
 {
    fmpz_poly_t qB;
    
@@ -4431,7 +4431,7 @@ void fmpz_poly_divrem_naive_low(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_poly_t 
    Divide the polynomial A by the polynomial B but do not compute the remainder
 */
 
-void fmpz_poly_div_naive(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t B)
+void fmpz_poly_div_classical(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t B)
 {
    fmpz_poly_t qB, R;
    
@@ -4607,7 +4607,7 @@ void fmpz_poly_div_karatsuba_recursive(fmpz_poly_t Q, fmpz_poly_t BQ, const fmpz
    {
       fmpz_poly_t Rb;
       fmpz_poly_init(Rb);
-      fmpz_poly_divrem_naive(Q, Rb, A, B);
+      fmpz_poly_divrem_classical(Q, Rb, A, B);
       fmpz_poly_fit_length(BQ, A->length);
       fmpz_poly_fit_limbs(BQ, FLINT_MAX(A->limbs, Rb->limbs)+1);
       _fmpz_poly_sub(BQ, A, Rb);
@@ -4849,7 +4849,7 @@ void fmpz_poly_div_karatsuba_recursive_low(fmpz_poly_t Q, fmpz_poly_t BQ, const 
    {
       fmpz_poly_t Rb;
       fmpz_poly_init(Rb);
-      fmpz_poly_divrem_naive_low(Q, Rb, A, B);
+      fmpz_poly_divrem_classical_low(Q, Rb, A, B);
       fmpz_poly_fit_length(BQ, A->length);
       fmpz_poly_fit_limbs(BQ, FLINT_MAX(A->limbs, Rb->limbs)+1);
       _fmpz_poly_sub(BQ, A, Rb);
@@ -4875,7 +4875,7 @@ void fmpz_poly_div_karatsuba_recursive_low(fmpz_poly_t Q, fmpz_poly_t BQ, const 
    {
       fmpz_poly_t Rb;
       fmpz_poly_init(Rb);
-      fmpz_poly_divrem_naive_low(Q, Rb, A, B);
+      fmpz_poly_divrem_classical_low(Q, Rb, A, B);
       if (Rb->length > B->length - 1) printf("Error!!\n");
       fmpz_poly_fit_length(BQ, B->length - 1);
       fmpz_poly_fit_limbs(BQ, FLINT_MAX(A->limbs, Rb->limbs)+1);
@@ -5138,7 +5138,7 @@ void fmpz_poly_div_karatsuba(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly
 
    if ((B->length <= crossover) || (A->length > 2*B->length - 1))
    {
-      fmpz_poly_div_naive(Q, A, B);
+      fmpz_poly_div_classical(Q, A, B);
       
       return;
    }
@@ -5455,7 +5455,7 @@ void fmpz_poly_div_newton(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t 
    
    if ((B->length <= crossover) || (A->length > 2*B->length - 1))
    {
-      fmpz_poly_div_naive(Q, A, B);
+      fmpz_poly_div_classical(Q, A, B);
       return;
    }
    
@@ -5630,7 +5630,7 @@ void fmpz_poly_div_mulders(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t
    
    if ((B->length <= crossover) || (A->length > 2*B->length - 1))
    {
-      fmpz_poly_div_naive(Q, A, B);
+      fmpz_poly_div_classical(Q, A, B);
       return;
    }
    
