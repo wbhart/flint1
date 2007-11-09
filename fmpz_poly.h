@@ -727,13 +727,37 @@ void fmpz_poly_power(fmpz_poly_t output, const fmpz_poly_t poly, const unsigned 
 
 void fmpz_poly_power_trunc_n(fmpz_poly_t output, const fmpz_poly_t poly, const unsigned long exp, const unsigned long n);
 
-void fmpz_poly_pseudo_divrem(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_poly_t A, const fmpz_poly_t B);
+void fmpz_poly_pseudo_divrem_cohen(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_poly_t A, const fmpz_poly_t B);
 
-void fmpz_poly_pseudo_divrem_d(fmpz_poly_t Q, fmpz_poly_t R, 
+void fmpz_poly_pseudo_divrem_schoup(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_poly_t A, const fmpz_poly_t B);
+
+void fmpz_poly_pseudo_divrem_basecase(fmpz_poly_t Q, fmpz_poly_t R, 
                                unsigned long * d, const fmpz_poly_t A, const fmpz_poly_t B);
                                
+void fmpz_poly_pseudo_div_basecase(fmpz_poly_t Q, unsigned long * d, 
+                                               const fmpz_poly_t A, const fmpz_poly_t B);
+
 void fmpz_poly_pseudo_divrem_recursive(fmpz_poly_t Q, fmpz_poly_t R, 
                                unsigned long * d, const fmpz_poly_t A, const fmpz_poly_t B);
+
+static inline
+void fmpz_poly_pseudo_divrem(fmpz_poly_t Q, fmpz_poly_t R, unsigned long * d, 
+                                               const fmpz_poly_t A, const fmpz_poly_t B)
+{
+   fmpz_poly_pseudo_divrem_recursive(Q, R, d, A, B);
+}
+
+void fmpz_poly_pseudo_div_recursive(fmpz_poly_t Q, unsigned long * d, 
+                                      const fmpz_poly_t A, const fmpz_poly_t B);
+                                      
+static inline
+void fmpz_poly_pseudo_div(fmpz_poly_t Q, unsigned long * d, 
+                                      const fmpz_poly_t A, const fmpz_poly_t B)
+{
+   fmpz_poly_pseudo_div_recursive(Q, d, A, B);
+}
+                                      
+
 
 // *************** end of file
 

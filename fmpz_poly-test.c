@@ -1652,7 +1652,7 @@ int test_fmpz_poly_mul_naive_trunc()
       { 
           length = random_ulong(100); 
           length2 = random_ulong(100); 
-          if (length+length2) trunc = 0;
+          if (length+length2 == 0) trunc = 0;
           else trunc = random_ulong(length+length2);       
 #if DEBUG
           printf("length = %ld, length2 = %ld, trunc = %ld, bits = %ld, bits2 = %ld\n", length, length2, trunc, bits, bits2);
@@ -3630,14 +3630,13 @@ int test_fmpz_poly_div_newton()
          fmpz_poly_init(test_mpn_poly4);
       }
       fmpz_poly_div_newton(test_mpn_poly4, test_mpn_poly3, test_mpn_poly);
-      _fmpz_poly_check(test_mpn_poly4);
       
       _fmpz_poly_normalise(test_mpn_poly4);
       fmpz_poly_to_mpz_poly(test_poly4, test_mpn_poly4);
            
       result = mpz_poly_equal(test_poly4, test_poly2);
       
-#if DEBUG
+#if DEBUG2
       if (!result) 
       {
          mpz_poly_print(test_poly2);printf("\n\n");
@@ -3816,7 +3815,7 @@ int test_fmpz_poly_power2()
     return 1;
 }
 
-int test_fmpz_poly_pseudo_divrem()
+int test_fmpz_poly_pseudo_divrem_cohen()
 {
    mpz_poly_t test_poly, test_poly2, test_poly3, test_poly4;
    fmpz_poly_t test_mpn_poly, test_mpn_poly2, test_mpn_poly3, test_mpn_poly4, test_mpn_poly5;
@@ -3876,13 +3875,13 @@ int test_fmpz_poly_pseudo_divrem()
       
       for (unsigned long i = 1; i < 5; i++)
       {
-         fmpz_poly_pseudo_divrem(test_mpn_poly4, test_mpn_poly5, test_mpn_poly3, test_mpn_poly);
+         fmpz_poly_pseudo_divrem_cohen(test_mpn_poly4, test_mpn_poly5, test_mpn_poly3, test_mpn_poly);
          fmpz_poly_clear(test_mpn_poly4);
          fmpz_poly_clear(test_mpn_poly5);
          fmpz_poly_init(test_mpn_poly4);
          fmpz_poly_init(test_mpn_poly5);
       }
-      fmpz_poly_pseudo_divrem(test_mpn_poly4, test_mpn_poly5, test_mpn_poly3, test_mpn_poly);
+      fmpz_poly_pseudo_divrem_cohen(test_mpn_poly4, test_mpn_poly5, test_mpn_poly3, test_mpn_poly);
       
       fmpz_poly_to_mpz_poly(test_poly4, test_mpn_poly4);
            
@@ -3904,7 +3903,95 @@ int test_fmpz_poly_pseudo_divrem()
    return result; 
 }
 
-int test_fmpz_poly_pseudo_divrem_d()
+int test_fmpz_poly_pseudo_divrem_schoup()
+{
+   mpz_poly_t test_poly, test_poly2, test_poly3, test_poly4;
+   fmpz_poly_t test_mpn_poly, test_mpn_poly2, test_mpn_poly3, test_mpn_poly4, test_mpn_poly5;
+   int result = 1;
+   unsigned long bits, bits2, length, length2;
+   
+   mpz_poly_init(test_poly); 
+   mpz_poly_init(test_poly2); 
+   mpz_poly_init(test_poly3); 
+   
+   for (unsigned long count1 = 0; (count1 < 1000) && (result == 1) ; count1++)
+   {
+      bits = random_ulong(300)+ 2;
+      bits2 = random_ulong(300)+ 1;
+      //bits = bits2 = 1000000;
+      
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
+      fmpz_poly_init2(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS+1);
+      
+      length2 = random_ulong(40); 
+      length = random_ulong(40)+1; 
+      //length = length2 = 20;
+       
+#if DEBUG
+      printf("length = %ld, length2 = %ld, bits = %ld, bits2 = %ld\n", length, length2, bits, bits2);
+#endif
+
+      do {
+         randpoly(test_poly, length, bits); 
+         fmpz_poly_fit_length(test_mpn_poly, length);
+         mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
+         _fmpz_poly_normalise(test_mpn_poly);
+      } while (test_mpn_poly->length == 0);
+
+      do randpoly(test_poly2, length2, bits2);
+      while (mpz_poly_length(test_poly2) < length2);
+
+      fmpz_poly_fit_length(test_mpn_poly2, length2);
+      mpz_poly_to_fmpz_poly(test_mpn_poly2, test_poly2);
+#if DEBUG
+      mpz_poly_print(test_poly);printf("\n\n");
+      mpz_poly_print(test_poly2);printf("\n\n");
+#endif          
+          
+      mpz_poly_init(test_poly4);
+      fmpz_poly_init2(test_mpn_poly3, length+length2-1, test_mpn_poly->limbs+test_mpn_poly2->limbs+1);
+          
+      fmpz_poly_init(test_mpn_poly4);
+      fmpz_poly_init(test_mpn_poly5);
+      _fmpz_poly_mul(test_mpn_poly3, test_mpn_poly, test_mpn_poly2);
+      
+#if DEBUG
+      mpz_poly_print(test_poly);printf("\n\n");
+      mpz_poly_print(test_poly2);printf("\n\n");
+      mpz_poly_print(test_poly3);printf("\n\n");
+#endif               
+      
+      for (unsigned long i = 1; i < 5; i++)
+      {
+         fmpz_poly_pseudo_divrem_schoup(test_mpn_poly4, test_mpn_poly5, test_mpn_poly3, test_mpn_poly);
+         fmpz_poly_clear(test_mpn_poly4);
+         fmpz_poly_clear(test_mpn_poly5);
+         fmpz_poly_init(test_mpn_poly4);
+         fmpz_poly_init(test_mpn_poly5);
+      }
+      fmpz_poly_pseudo_divrem_schoup(test_mpn_poly4, test_mpn_poly5, test_mpn_poly3, test_mpn_poly);
+      
+      fmpz_poly_to_mpz_poly(test_poly4, test_mpn_poly4);
+           
+      result = (test_mpn_poly5->length == 0);//mpz_poly_equal(test_poly4, test_poly2);
+#if DEBUG
+      mpz_poly_print(test_poly4);printf("\n\n");
+#endif               
+      
+      mpz_poly_clear(test_poly4);
+      fmpz_poly_clear(test_mpn_poly3);
+      fmpz_poly_clear(test_mpn_poly4);
+      fmpz_poly_clear(test_mpn_poly5);
+   }
+   
+   mpz_poly_clear(test_poly);
+   mpz_poly_clear(test_poly2);
+   mpz_poly_clear(test_poly3);
+   
+   return result; 
+}
+
+int test_fmpz_poly_pseudo_divrem_basecase()
 {
    mpz_poly_t test_poly, test_poly2, test_poly3, test_poly4;
    fmpz_poly_t test_mpn_poly, test_mpn_poly2, test_mpn_poly3, test_mpn_poly4, test_mpn_poly5;
@@ -3965,13 +4052,13 @@ int test_fmpz_poly_pseudo_divrem_d()
       
       for (unsigned long i = 1; i < 5; i++)
       {
-         fmpz_poly_pseudo_divrem_d(test_mpn_poly4, test_mpn_poly5, &d, test_mpn_poly3, test_mpn_poly);
+         fmpz_poly_pseudo_divrem_basecase(test_mpn_poly4, test_mpn_poly5, &d, test_mpn_poly3, test_mpn_poly);
          fmpz_poly_clear(test_mpn_poly4);
          fmpz_poly_clear(test_mpn_poly5);
          fmpz_poly_init(test_mpn_poly4);
          fmpz_poly_init(test_mpn_poly5);
       }
-      fmpz_poly_pseudo_divrem_d(test_mpn_poly4, test_mpn_poly5, &d, test_mpn_poly3, test_mpn_poly);
+      fmpz_poly_pseudo_divrem_basecase(test_mpn_poly4, test_mpn_poly5, &d, test_mpn_poly3, test_mpn_poly);
       
       fmpz_poly_to_mpz_poly(test_poly4, test_mpn_poly4);
            
@@ -3984,6 +4071,91 @@ int test_fmpz_poly_pseudo_divrem_d()
       fmpz_poly_clear(test_mpn_poly3);
       fmpz_poly_clear(test_mpn_poly4);
       fmpz_poly_clear(test_mpn_poly5);
+   }
+   
+   mpz_poly_clear(test_poly);
+   mpz_poly_clear(test_poly2);
+   mpz_poly_clear(test_poly3);
+   
+   return result; 
+}
+
+int test_fmpz_poly_pseudo_div_basecase()
+{
+   mpz_poly_t test_poly, test_poly2, test_poly3, test_poly4;
+   fmpz_poly_t test_mpn_poly, test_mpn_poly2, test_mpn_poly3, test_mpn_poly4;
+   int result = 1;
+   unsigned long bits, bits2, length, length2, d;
+   
+   mpz_poly_init(test_poly); 
+   mpz_poly_init(test_poly2); 
+   mpz_poly_init(test_poly3); 
+   
+   for (unsigned long count1 = 0; (count1 < 1000) && (result == 1) ; count1++)
+   {
+      bits = random_ulong(1000)+ 2;
+      bits2 = random_ulong(1000)+ 1;
+      //bits = bits2 = 1000;
+      
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
+      fmpz_poly_init2(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS+1);
+      
+      length2 = random_ulong(100); 
+      length = random_ulong(100)+1; 
+      //length = 100;
+      //length2 = 199;
+       
+#if DEBUG
+      printf("length = %ld, length2 = %ld, bits = %ld, bits2 = %ld\n", length, length2, bits, bits2);
+#endif
+
+      do {
+         randpoly(test_poly, length, bits); 
+         fmpz_poly_fit_length(test_mpn_poly, length);
+         mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
+         _fmpz_poly_normalise(test_mpn_poly);
+      } while (test_mpn_poly->length == 0);
+
+      do randpoly(test_poly2, length2, bits2);
+      while (mpz_poly_length(test_poly2) < length2);
+
+      fmpz_poly_fit_length(test_mpn_poly2, length2);
+      mpz_poly_to_fmpz_poly(test_mpn_poly2, test_poly2);
+#if DEBUG
+      mpz_poly_print(test_poly);printf("\n\n");
+      mpz_poly_print(test_poly2);printf("\n\n");
+#endif          
+          
+      mpz_poly_init(test_poly4);
+      fmpz_poly_init2(test_mpn_poly3, length+length2-1, test_mpn_poly->limbs+test_mpn_poly2->limbs+1);
+          
+      fmpz_poly_init(test_mpn_poly4);
+      _fmpz_poly_mul(test_mpn_poly3, test_mpn_poly, test_mpn_poly2);
+      
+#if DEBUG
+      mpz_poly_print(test_poly);printf("\n\n");
+      mpz_poly_print(test_poly2);printf("\n\n");
+      mpz_poly_print(test_poly3);printf("\n\n");
+#endif               
+      
+      for (unsigned long i = 1; i < 5; i++)
+      {
+         fmpz_poly_pseudo_div_basecase(test_mpn_poly4, &d, test_mpn_poly3, test_mpn_poly);
+         fmpz_poly_clear(test_mpn_poly4);
+         fmpz_poly_init(test_mpn_poly4);
+      }
+      fmpz_poly_pseudo_div_basecase(test_mpn_poly4, &d, test_mpn_poly3, test_mpn_poly);
+      
+      fmpz_poly_to_mpz_poly(test_poly4, test_mpn_poly4);
+           
+      result = mpz_poly_equal(test_poly4, test_poly2);
+#if DEBUG
+      mpz_poly_print(test_poly4);printf("\n\n");
+#endif               
+      
+      mpz_poly_clear(test_poly4);
+      fmpz_poly_clear(test_mpn_poly3);
+      fmpz_poly_clear(test_mpn_poly4);
    }
    
    mpz_poly_clear(test_poly);
@@ -4074,6 +4246,92 @@ int test_fmpz_poly_pseudo_divrem_recursive()
       fmpz_poly_clear(test_mpn_poly3);
       fmpz_poly_clear(test_mpn_poly4);
       fmpz_poly_clear(test_mpn_poly5);
+   }
+   
+   mpz_poly_clear(test_poly);
+   mpz_poly_clear(test_poly2);
+   mpz_poly_clear(test_poly3);
+   
+   return result; 
+}
+
+int test_fmpz_poly_pseudo_div_recursive()
+{
+   mpz_poly_t test_poly, test_poly2, test_poly3, test_poly4;
+   fmpz_poly_t test_mpn_poly, test_mpn_poly2, test_mpn_poly3, test_mpn_poly4;
+   int result = 1;
+   unsigned long bits, bits2, length, length2, d;
+   
+   mpz_poly_init(test_poly); 
+   mpz_poly_init(test_poly2); 
+   mpz_poly_init(test_poly3); 
+   
+   for (unsigned long count1 = 0; (count1 < 1000) && (result == 1) ; count1++)
+   {
+      bits = random_ulong(1000)+ 2;
+      bits2 = random_ulong(1000)+ 1;
+      //bits = bits2 = 1000;
+      
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
+      fmpz_poly_init2(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS+1);
+      
+      length = random_ulong(100)+1; 
+      length2 = random_ulong(100); 
+      //length = 100;
+      //length2 = 199;
+       
+#if DEBUG
+      printf("length = %ld, length2 = %ld, bits = %ld, bits2 = %ld\n", length, length2, bits, bits2);
+#endif
+
+      do {
+         randpoly(test_poly, length, bits); 
+         fmpz_poly_fit_length(test_mpn_poly, length);
+         mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
+         _fmpz_poly_normalise(test_mpn_poly);
+      } while (test_mpn_poly->length == 0);
+
+      do randpoly(test_poly2, length2, bits2);
+      while (mpz_poly_length(test_poly2) < length2);
+      
+      fmpz_poly_fit_length(test_mpn_poly2, length2);
+      mpz_poly_to_fmpz_poly(test_mpn_poly2, test_poly2);
+      
+#if DEBUG
+      mpz_poly_print(test_poly);printf("\n\n");
+      mpz_poly_print(test_poly2);printf("\n\n");
+#endif          
+          
+      mpz_poly_init(test_poly4);
+      fmpz_poly_init2(test_mpn_poly3, length+length2-1, test_mpn_poly->limbs+test_mpn_poly2->limbs+1);
+          
+      fmpz_poly_init(test_mpn_poly4);
+      _fmpz_poly_mul(test_mpn_poly3, test_mpn_poly, test_mpn_poly2);
+      
+#if DEBUG
+      mpz_poly_print(test_poly);printf("\n\n");
+      mpz_poly_print(test_poly2);printf("\n\n");
+      mpz_poly_print(test_poly3);printf("\n\n");
+#endif               
+      
+      for (unsigned long i = 1; i < 5; i++)
+      {
+         fmpz_poly_pseudo_div_recursive(test_mpn_poly4, &d, test_mpn_poly3, test_mpn_poly);
+         fmpz_poly_clear(test_mpn_poly4);
+         fmpz_poly_init(test_mpn_poly4);
+      }
+      fmpz_poly_pseudo_div_recursive(test_mpn_poly4, &d, test_mpn_poly3, test_mpn_poly);
+      
+      fmpz_poly_to_mpz_poly(test_poly4, test_mpn_poly4);
+           
+      result = mpz_poly_equal(test_poly4, test_poly2);
+#if DEBUG
+      mpz_poly_print(test_poly4);printf("\n\n");
+#endif               
+      
+      mpz_poly_clear(test_poly4);
+      fmpz_poly_clear(test_mpn_poly3);
+      fmpz_poly_clear(test_mpn_poly4);
    }
    
    mpz_poly_clear(test_poly);
@@ -4603,8 +4861,11 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_poly_limb_pack_unsigned); 
    RUN_TEST(fmpz_poly_limb_pack); 
    RUN_TEST(fmpz_poly_pseudo_divrem_recursive); 
-   RUN_TEST(fmpz_poly_pseudo_divrem_d); 
-   RUN_TEST(fmpz_poly_pseudo_divrem); 
+   RUN_TEST(fmpz_poly_pseudo_divrem_basecase); 
+   RUN_TEST(fmpz_poly_pseudo_div_basecase); 
+   RUN_TEST(fmpz_poly_pseudo_div_recursive); 
+   RUN_TEST(fmpz_poly_pseudo_divrem_cohen); 
+   RUN_TEST(fmpz_poly_pseudo_divrem_schoup); 
    RUN_TEST(fmpz_poly_div_mulders);
    RUN_TEST(fmpz_poly_convert);
    RUN_TEST(fmpz_poly_getset_ui);
