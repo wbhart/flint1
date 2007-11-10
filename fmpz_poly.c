@@ -270,7 +270,7 @@ void fmpz_poly_bit_pack(ZmodF_poly_t poly_f, const fmpz_poly_t poly_mpn,
       // sign extend the last FLINT_BITS bits we write out
       if (skip < n)
       {
-        if (borrow) temp+=(-1UL << k);
+        if (borrow) temp+= (-1UL<<k);
         array[skip] = temp;
         skip++;
       } 
