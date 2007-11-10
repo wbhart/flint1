@@ -1092,10 +1092,10 @@ void zmod_poly_bit_pack_mpn(mp_limb_t * res, zmod_poly_t poly, unsigned long bit
             //print_limb("poly->coeffs[i]                ", poly->coeffs[i]);
 
             // the part of the coeff that will be in the current limb
-            temp_lower = shift_l(poly->coeffs[i], current_bit);
+            temp_lower = (poly->coeffs[i] << current_bit);
             //print_limb("temp_lower                     ", temp_lower);
             // the part of the coeff that will be in the next limb
-            temp_upper = shift_r(poly->coeffs[i], (FLINT_BITS - current_bit));
+            temp_upper = (poly->coeffs[i] >> (FLINT_BITS - current_bit));
             //print_limb("temp_upper                     ", temp_upper);
             //print_limb("res[current_limb]              ", res[current_limb]);
             res[current_limb] |= temp_lower;
@@ -1157,13 +1157,13 @@ void zmod_poly_bit_pack_mpn(mp_limb_t * res, zmod_poly_t poly, unsigned long bit
          //print_limb("poly->coeffs[i]                ", poly->coeffs[i]);
 
          // the part of the coeff that will be in the current limb
-         temp_lower = shift_l(poly->coeffs[i], current_bit);
+         temp_lower = poly->coeffs[i] << current_bit;
          //print_limb("temp_lower                     ", temp_lower);
          // the part of the coeff that will be in the next limb
          if (current_bit)
          {
             //print_var("current_bit", current_bit);
-            temp_upper = shift_r(poly->coeffs[i], (FLINT_BITS - current_bit));
+            temp_upper = poly->coeffs[i] >> (FLINT_BITS - current_bit);
          }
          else
          {
@@ -1238,7 +1238,7 @@ void zmod_poly_bit_unpack_mpn(zmod_poly_t res, mp_limb_t * mpn, unsigned long le
              current_limb++;
              //print_limb("mpn[current_limb+1]     ", mpn[current_limb]);
              // so shift them up, OR with the lower part and apply the mask
-             temp_upper = shift_l(mpn[current_limb], (FLINT_BITS - current_bit));
+             temp_upper = mpn[current_limb] << (FLINT_BITS - current_bit);
              //print_limb("temp_upper              ", temp_upper);
              temp_upper |= temp_lower;
              //print_limb("temp_upper |= temp_lower", temp_upper);
@@ -1246,7 +1246,7 @@ void zmod_poly_bit_unpack_mpn(zmod_poly_t res, mp_limb_t * mpn, unsigned long le
              //print_limb("temp_upper &= mask      ", temp_upper);
              _zmod_poly_set_coeff(res, i, z_mod2_precomp(temp_upper, res->p, res->p_inv));
              current_bit = bits + current_bit - FLINT_BITS;
-             mpn[current_limb] = shift_r(mpn[current_limb], current_bit);
+             mpn[current_limb] = mpn[current_limb] >> current_bit;
              //print_limb("mpn[current_limb+1]     ", mpn[current_limb]);
           }
           else
@@ -1261,7 +1261,7 @@ void zmod_poly_bit_unpack_mpn(zmod_poly_t res, mp_limb_t * mpn, unsigned long le
              //zmod_poly_set_coeff(res, i, temp_lower);
              _zmod_poly_set_coeff(res, i, z_mod2_precomp(temp_lower, res->p, res->p_inv));
 
-             mpn[current_limb] = shift_r(mpn[current_limb], bits);
+             mpn[current_limb] = mpn[current_limb] >> bits;
              //print_limb("mpn[current_limb]       ", mpn[current_limb]);
              current_bit += bits;
           }
