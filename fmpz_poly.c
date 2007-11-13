@@ -6693,6 +6693,7 @@ void fmpz_poly_pseudo_div_recursive(fmpz_poly_t Q, unsigned long * d, const fmpz
    */  
    
    _fmpz_poly_stack_init(d2q1, d2->length+q1->length-1, d2->limbs+q1->limbs+1); 
+   _fmpz_poly_normalise(q1);
    _fmpz_poly_mul_trunc_left_n(d2q1, d2, q1, n2 - 1);
    
    /* 
