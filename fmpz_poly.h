@@ -265,8 +265,6 @@ void _fmpz_poly_stack_clear(const fmpz_poly_t poly);
 
 void _fmpz_poly_check(const fmpz_poly_t poly);
 
-void _fmpz_poly_check2(const fmpz_poly_t poly);
-
 static inline
 fmpz_t _fmpz_poly_get_coeff_ptr(fmpz_poly_t poly, const unsigned long n)
 {
@@ -450,11 +448,11 @@ void _fmpz_poly_mul_trunc_left_n(fmpz_poly_t output, const fmpz_poly_t input1,
                                 
 void _fmpz_poly_mul(fmpz_poly_t output, const fmpz_poly_t input1, const fmpz_poly_t input2);
 
-void _fmpz_poly_sqr(fmpz_poly_t output, fmpz_poly_t input);
+void _fmpz_poly_sqr(fmpz_poly_t output, const fmpz_poly_t input);
 
-void _fmpz_poly_sqr_naive(fmpz_poly_t output, fmpz_poly_t input);
+void _fmpz_poly_sqr_naive(fmpz_poly_t output, const fmpz_poly_t input);
 
-void _fmpz_poly_sqr_karatsuba(fmpz_poly_t output, fmpz_poly_t input);
+void _fmpz_poly_sqr_karatsuba(fmpz_poly_t output, const fmpz_poly_t input);
 
 void _fmpz_poly_content(fmpz_t content, const fmpz_poly_t a);
 
@@ -480,6 +478,8 @@ static inline void fmpz_poly_fit_limbs(fmpz_poly_t poly, const unsigned long lim
 }
 
 void fmpz_poly_clear(fmpz_poly_t poly);
+
+void fmpz_poly_check(const fmpz_poly_t poly);
 
 // ------------------------------------------------------
 // String conversions and I/O

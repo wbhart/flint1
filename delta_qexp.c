@@ -58,21 +58,15 @@ int main(int argc, char* argv[])
    free(values);
    
    // compute F^4, truncated to length N
-   //fmpz_poly_mul(F4, F2, F2);
-   //fmpz_poly_truncate(F4, N);
    fmpz_poly_mul_trunc_n(F4, F2, F2, N);
    
    // compute F^8, truncated to length N
-   //fmpz_poly_mul(F8, F4, F4);
-   //fmpz_poly_truncate(F8, N);
    fmpz_poly_mul_trunc_n(F8, F4, F4, N);
    
    // print out last coefficient
-   mpz_t x;
-   mpz_init(x);
-   fmpz_poly_get_coeff_mpz(x, F8, N-1);
-   gmp_printf("coefficient of q^%d is %Zd\n", N, x);
-   mpz_clear(x);
+   fmpz_t coeff = fmpz_poly_get_coeff_ptr(F8, N-1);
+   printf("coefficient of q^%d is ", N);
+   fmpz_print(coeff); printf("\n");
    
    // clean up
    fmpz_poly_clear(F8);

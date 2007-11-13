@@ -18,6 +18,7 @@ Copyright (C) 2007, William Hart and David Harvey
 
 #define VARY_BITS 1
 #define SIGNS 1
+#define SPARSE 1
 
 #define DEBUG 0 // prints debug information
 #define DEBUG2 1 
@@ -49,7 +50,12 @@ void randpoly(mpz_poly_t pol, long length, unsigned long maxbits)
        if (bits == 0) mpz_set_ui(temp,0);
        else 
        {
+#if SPARSE
+          if (randint(10) == 1) mpz_rrandomb(temp, randstate, bits);
+          else mpz_set_ui(temp, 0);
+#else
           mpz_rrandomb(temp, randstate, bits);
+#endif
 #if SIGNS
           if (randint(2)) mpz_neg(temp,temp);
 #endif
@@ -2817,10 +2823,10 @@ int test_fmpz_poly_div_classical()
    mpz_poly_init(test_poly2); 
    mpz_poly_init(test_poly3); 
    
-   for (unsigned long count1 = 0; (count1 < 1000) && (result == 1) ; count1++)
+   for (unsigned long count1 = 0; (count1 < 100000) && (result == 1) ; count1++)
    {
-      bits = random_ulong(1000)+ 2;
-      bits2 = random_ulong(1000)+ 1;
+      bits = random_ulong(20)+ 2;
+      bits2 = random_ulong(20)+ 1;
       //bits = bits2 = 1000000;
       
       fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
@@ -2880,6 +2886,8 @@ int test_fmpz_poly_div_classical()
       mpz_poly_clear(test_poly4);
       fmpz_poly_clear(test_mpn_poly3);
       fmpz_poly_clear(test_mpn_poly4);
+      fmpz_poly_clear(test_mpn_poly);
+      fmpz_poly_clear(test_mpn_poly2);
    }
    
    mpz_poly_clear(test_poly);
@@ -2900,10 +2908,10 @@ int test_fmpz_poly_divrem_classical()
    mpz_poly_init(test_poly2); 
    mpz_poly_init(test_poly3); 
    
-   for (unsigned long count1 = 0; (count1 < 1000) && (result == 1) ; count1++)
+   for (unsigned long count1 = 0; (count1 < 100000) && (result == 1) ; count1++)
    {
-      bits = random_ulong(1000)+ 2;
-      bits2 = random_ulong(1000)+ 1;
+      bits = random_ulong(20)+ 2;
+      bits2 = random_ulong(20)+ 1;
       //bits = bits2 = 1000000;
       
       fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
@@ -2965,6 +2973,8 @@ int test_fmpz_poly_divrem_classical()
 #endif               
       
       mpz_poly_clear(test_poly4);
+      fmpz_poly_clear(test_mpn_poly);
+      fmpz_poly_clear(test_mpn_poly2);
       fmpz_poly_clear(test_mpn_poly3);
       fmpz_poly_clear(test_mpn_poly4);
       fmpz_poly_clear(test_mpn_poly5);
@@ -2988,10 +2998,10 @@ int test_fmpz_poly_div_karatsuba_recursive()
    mpz_poly_init(test_poly2); 
    mpz_poly_init(test_poly3); 
    
-   for (unsigned long count1 = 0; (count1 < 150) && (result == 1) ; count1++)
+   for (unsigned long count1 = 0; (count1 < 15000) && (result == 1) ; count1++)
    {
-      bits = random_ulong(1000)+ 2;
-      bits2 = random_ulong(1000)+ 1;
+      bits = random_ulong(20)+ 2;
+      bits2 = random_ulong(20)+ 1;
       //bits = bits2 = 100000;
       
       fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
@@ -3056,6 +3066,8 @@ int test_fmpz_poly_div_karatsuba_recursive()
 #endif               
             
       mpz_poly_clear(test_poly4);
+      fmpz_poly_clear(test_mpn_poly);
+      fmpz_poly_clear(test_mpn_poly2);
       fmpz_poly_clear(test_mpn_poly3);
       fmpz_poly_clear(test_mpn_poly4);
       fmpz_poly_clear(test_mpn_poly5);
@@ -3079,10 +3091,10 @@ int test_fmpz_poly_divrem_karatsuba()
    mpz_poly_init(test_poly2); 
    mpz_poly_init(test_poly3); 
    
-   for (unsigned long count1 = 0; (count1 < 150) && (result == 1) ; count1++)
+   for (unsigned long count1 = 0; (count1 < 15000) && (result == 1) ; count1++)
    {
-      bits = random_ulong(1000)+ 2;
-      bits2 = random_ulong(1000)+ 1;
+      bits = random_ulong(20)+ 2;
+      bits2 = random_ulong(20)+ 1;
       //bits = bits2 = 100000;
       
       fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
@@ -3148,6 +3160,8 @@ int test_fmpz_poly_divrem_karatsuba()
 #endif               
             
       mpz_poly_clear(test_poly4);
+      fmpz_poly_clear(test_mpn_poly);
+      fmpz_poly_clear(test_mpn_poly2);
       fmpz_poly_clear(test_mpn_poly3);
       fmpz_poly_clear(test_mpn_poly4);
       fmpz_poly_clear(test_mpn_poly5);
@@ -3171,16 +3185,16 @@ int test_fmpz_poly_div_karatsuba()
    mpz_poly_init(test_poly2); 
    mpz_poly_init(test_poly3); 
    
-   for (unsigned long count1 = 0; (count1 < 600) && (result == 1) ; count1++)
+   for (unsigned long count1 = 0; (count1 < 60000) && (result == 1) ; count1++)
    {
-      bits = random_ulong(1000)+ 1;
-      bits2 = random_ulong(1000)+ 1;
+      bits = random_ulong(20)+ 1;
+      bits2 = random_ulong(20)+ 1;
       //bits = bits2 = 100;
       
       fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
       fmpz_poly_init2(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS+1);
       
-      length2 = random_ulong(128); 
+      length2 = random_ulong(128)+1; 
       length = random_ulong(128)+1;
       //length = 1000;
       //length2 = 1000;
@@ -3237,6 +3251,8 @@ int test_fmpz_poly_div_karatsuba()
       mpz_poly_clear(test_poly4);
       fmpz_poly_clear(test_mpn_poly3);
       fmpz_poly_clear(test_mpn_poly4);
+      fmpz_poly_clear(test_mpn_poly);
+      fmpz_poly_clear(test_mpn_poly2);
    }
    
    mpz_poly_clear(test_poly);
@@ -3343,17 +3359,17 @@ int test_fmpz_poly_newton_invert_basecase()
    
    mpz_poly_init(test_poly); 
    
-   for (unsigned long count1 = 0; (count1 < 200) && (result == 1) ; count1++)
+   for (unsigned long count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
    {
-      bits = random_ulong(1000)+ 2;
+      bits = random_ulong(100)+ 2;
       //bits = 100000;
       
-      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
+      fmpz_poly_init(test_mpn_poly);
       fmpz_poly_init(test_mpn_poly2);
       fmpz_poly_init(test_mpn_poly3);
       
       
-      length = random_ulong(128)+1;
+      length = random_ulong(64)+1;
       //length = 12;
        
 #if DEBUG
@@ -3367,7 +3383,7 @@ int test_fmpz_poly_newton_invert_basecase()
          _fmpz_poly_normalise(test_mpn_poly);
       } while (test_mpn_poly->length == 0);
       
-      _fmpz_poly_set_coeff_ui(test_mpn_poly, test_mpn_poly->length - 1, 1);
+      fmpz_poly_set_coeff_ui(test_mpn_poly, test_mpn_poly->length - 1, 1L);
       
       n = randint(test_mpn_poly->length) + 1;
       
@@ -3386,6 +3402,15 @@ int test_fmpz_poly_newton_invert_basecase()
       result &= (test_mpn_poly3->coeffs[(test_mpn_poly3->length-1)*(test_mpn_poly3->limbs+1)] == 1);
       result &= (test_mpn_poly3->coeffs[(test_mpn_poly3->length-1)*(test_mpn_poly3->limbs+1)+1] == 1);
       
+#if DEBUG
+      if (!result)
+      {
+         fmpz_poly_print(test_mpn_poly); printf("\n");
+         fmpz_poly_print(test_mpn_poly2); printf("\n");
+         fmpz_poly_print(test_mpn_poly3); printf("\n");
+      }
+#endif
+      fmpz_poly_clear(test_mpn_poly);
       fmpz_poly_clear(test_mpn_poly2);
       fmpz_poly_clear(test_mpn_poly3);
    }
@@ -3645,6 +3670,8 @@ int test_fmpz_poly_div_newton()
 #endif               
             
       mpz_poly_clear(test_poly4);
+      fmpz_poly_clear(test_mpn_poly);
+      fmpz_poly_clear(test_mpn_poly2);
       fmpz_poly_clear(test_mpn_poly3);
       fmpz_poly_clear(test_mpn_poly4);
    }
@@ -3979,6 +4006,8 @@ int test_fmpz_poly_pseudo_divrem_schoup()
 #endif               
       
       mpz_poly_clear(test_poly4);
+      fmpz_poly_clear(test_mpn_poly);
+      fmpz_poly_clear(test_mpn_poly2);
       fmpz_poly_clear(test_mpn_poly3);
       fmpz_poly_clear(test_mpn_poly4);
       fmpz_poly_clear(test_mpn_poly5);
@@ -4068,6 +4097,8 @@ int test_fmpz_poly_pseudo_divrem_basecase()
 #endif               
       
       mpz_poly_clear(test_poly4);
+      fmpz_poly_clear(test_mpn_poly);
+      fmpz_poly_clear(test_mpn_poly2);
       fmpz_poly_clear(test_mpn_poly3);
       fmpz_poly_clear(test_mpn_poly4);
       fmpz_poly_clear(test_mpn_poly5);
@@ -4154,6 +4185,8 @@ int test_fmpz_poly_pseudo_div_basecase()
 #endif               
       
       mpz_poly_clear(test_poly4);
+      fmpz_poly_clear(test_mpn_poly);
+      fmpz_poly_clear(test_mpn_poly2);
       fmpz_poly_clear(test_mpn_poly3);
       fmpz_poly_clear(test_mpn_poly4);
    }
@@ -4243,6 +4276,8 @@ int test_fmpz_poly_pseudo_divrem_recursive()
 #endif               
       
       mpz_poly_clear(test_poly4);
+      fmpz_poly_clear(test_mpn_poly);
+      fmpz_poly_clear(test_mpn_poly2);
       fmpz_poly_clear(test_mpn_poly3);
       fmpz_poly_clear(test_mpn_poly4);
       fmpz_poly_clear(test_mpn_poly5);
@@ -4330,6 +4365,8 @@ int test_fmpz_poly_pseudo_div_recursive()
 #endif               
       
       mpz_poly_clear(test_poly4);
+      fmpz_poly_clear(test_mpn_poly);
+      fmpz_poly_clear(test_mpn_poly2);
       fmpz_poly_clear(test_mpn_poly3);
       fmpz_poly_clear(test_mpn_poly4);
    }

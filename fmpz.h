@@ -59,6 +59,8 @@ void fmpz_stack_release(void)
    flint_stack_release();
 }
 
+void fmpz_print(fmpz_t in);
+
 static inline
 unsigned long fmpz_size(const fmpz_t x)
 {

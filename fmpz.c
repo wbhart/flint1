@@ -54,6 +54,15 @@ void fmpz_to_mpz(mpz_t res, const fmpz_t x)
    }
 }
 
+void fmpz_print(fmpz_t in)
+{
+   mpz_t coeff;
+   mpz_init(coeff);
+   fmpz_to_mpz(coeff, in);
+   gmp_printf("%Zd", coeff); 
+   mpz_clear(coeff);
+}
+
 /*
     Adds two fmpz's together
 */
