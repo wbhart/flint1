@@ -529,6 +529,7 @@ static inline void fmpz_poly_truncate(fmpz_poly_t poly, const unsigned long leng
 {
    FLINT_ASSERT(poly->length >= length);
    poly->length = length;
+   _fmpz_poly_normalise(poly);
 }
 
 void fmpz_poly_swap(fmpz_poly_t x, fmpz_poly_t y);
@@ -573,15 +574,15 @@ static inline void fmpz_poly_set_coeff_si(fmpz_poly_t poly, const unsigned long 
 {
    fmpz_poly_fit_length(poly, n+1);
    fmpz_poly_fit_limbs(poly, 1);
-   _fmpz_poly_set_coeff_si(poly, n, x);
    if (n+1 > poly->length) 
    {
-      for (unsigned long i = poly->length; i + 1 < n; i++)
+      for (long i = poly->length; i + 1 < n; i++)
       {
-         poly->coeffs[i*(poly->limbs+1)] = 0;
+         poly->coeffs[i*(poly->limbs+1)] = 0L;
       } 
       poly->length = n+1;
    }
+   _fmpz_poly_set_coeff_si(poly, n, x);
    _fmpz_poly_normalise(poly);
 }
 
@@ -589,15 +590,15 @@ static inline void fmpz_poly_set_coeff_ui(fmpz_poly_t poly, const unsigned long 
 {
    fmpz_poly_fit_length(poly, n+1);
    fmpz_poly_fit_limbs(poly, 1);
-   _fmpz_poly_set_coeff_ui(poly, n, x);
    if (n+1 > poly->length) 
    {
       for (long i = poly->length; i + 1 < n; i++)
       {
-         poly->coeffs[i*(poly->limbs+1)] = 0;
+         poly->coeffs[i*(poly->limbs+1)] = 0L;
       } 
       poly->length = n+1;
    }
+   _fmpz_poly_set_coeff_ui(poly, n, x);
    _fmpz_poly_normalise(poly);
 }
 
@@ -609,7 +610,6 @@ void fmpz_poly_set_coeff_mpz(fmpz_poly_t poly, const unsigned long n, const mpz_
    
    if (poly->limbs == 0) return;
    
-   mpz_to_fmpz(poly->coeffs + n*(poly->limbs+1), x);
    if (n+1 > poly->length) 
    {
       for (long i = poly->length; i + 1 < n; i++)
@@ -618,6 +618,7 @@ void fmpz_poly_set_coeff_mpz(fmpz_poly_t poly, const unsigned long n, const mpz_
       } 
       poly->length = n+1;
    }
+   mpz_to_fmpz(poly->coeffs + n*(poly->limbs+1), x);
    _fmpz_poly_normalise(poly);
 }
 

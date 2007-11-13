@@ -1418,7 +1418,7 @@ void _fmpz_poly_reverse(fmpz_poly_t output, const fmpz_poly_t input, const unsig
       }
       for ( ; i < length; i++)
       {
-         output->coeffs[(length - i - 1)*size_out] = 0;
+         output->coeffs[(length - i - 1)*size_out] = 0L;
       }
       output->length = length;
       _fmpz_poly_normalise(output);
