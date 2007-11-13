@@ -4610,11 +4610,11 @@ void fmpz_poly_div_classical(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly
 }
 
 /* 
-   Integer polynomial division using a Karatsuba-like algorithm.
+   Integer polynomial division using a divide and conquer algorithm.
    Note BQ is not the remainder but it is B*Q, so the remainder R = A-BQ
 */
  
-void fmpz_poly_div_karatsuba_recursive(fmpz_poly_t Q, fmpz_poly_t BQ, const fmpz_poly_t A, const fmpz_poly_t B)
+void fmpz_poly_div_bisection_recursive(fmpz_poly_t Q, fmpz_poly_t BQ, const fmpz_poly_t A, const fmpz_poly_t B)
 {
    if (A->length < B->length)
    {
@@ -4666,7 +4666,7 @@ void fmpz_poly_div_karatsuba_recursive(fmpz_poly_t Q, fmpz_poly_t BQ, const fmpz
       
       fmpz_poly_init(d1q1);
       _fmpz_poly_normalise(p1);
-      fmpz_poly_div_karatsuba_recursive(Q, d1q1, p1, d1); //******************************
+      fmpz_poly_div_bisection_recursive(Q, d1q1, p1, d1); //******************************
       _fmpz_poly_stack_clear(p1);
 
       _fmpz_poly_stack_init(d2q1, d2->length+Q->length-1, d2->limbs+Q->limbs+1); 
@@ -4722,7 +4722,7 @@ void fmpz_poly_div_karatsuba_recursive(fmpz_poly_t Q, fmpz_poly_t BQ, const fmpz
       fmpz_poly_init(q1);
    
       _fmpz_poly_normalise(p1);
-      fmpz_poly_div_karatsuba_recursive(q1, d1q1, p1, d1); //******************************
+      fmpz_poly_div_bisection_recursive(q1, d1q1, p1, d1); //******************************
       _fmpz_poly_stack_clear(p1);   
    }
    
@@ -4796,7 +4796,7 @@ void fmpz_poly_div_karatsuba_recursive(fmpz_poly_t Q, fmpz_poly_t BQ, const fmpz
    fmpz_poly_init(d1q2);
    fmpz_poly_init(q2);
    _fmpz_poly_normalise(t);
-   fmpz_poly_div_karatsuba_recursive(q2, d1q2, t, d1); //******************************
+   fmpz_poly_div_bisection_recursive(q2, d1q2, t, d1); //******************************
    _fmpz_poly_stack_clear(t);
       
    /*
@@ -4861,7 +4861,7 @@ void fmpz_poly_div_karatsuba_recursive(fmpz_poly_t Q, fmpz_poly_t BQ, const fmpz
    Divide and conquer division of A by B but only computing the low half of Q*B
 */
 
-void fmpz_poly_div_karatsuba_recursive_low(fmpz_poly_t Q, fmpz_poly_t BQ, const fmpz_poly_t A, const fmpz_poly_t B)
+void fmpz_poly_div_bisection_recursive_low(fmpz_poly_t Q, fmpz_poly_t BQ, const fmpz_poly_t A, const fmpz_poly_t B)
 {
    if (A->length < B->length)
    {
@@ -4945,7 +4945,7 @@ void fmpz_poly_div_karatsuba_recursive_low(fmpz_poly_t Q, fmpz_poly_t BQ, const 
       
       fmpz_poly_init(d1q1);
       _fmpz_poly_normalise(p1);
-      fmpz_poly_div_karatsuba_recursive_low(Q, d1q1, p1, d3); //******************************
+      fmpz_poly_div_bisection_recursive_low(Q, d1q1, p1, d3); //******************************
       _fmpz_poly_stack_clear(p1);
 
       _fmpz_poly_stack_init(d2q1, d4->length+Q->length-1, d2->limbs+Q->limbs+1); 
@@ -5001,7 +5001,7 @@ void fmpz_poly_div_karatsuba_recursive_low(fmpz_poly_t Q, fmpz_poly_t BQ, const 
       fmpz_poly_init(q1);
    
       _fmpz_poly_normalise(p1);
-      fmpz_poly_div_karatsuba_recursive(q1, d1q1, p1, d1); //******************************
+      fmpz_poly_div_bisection_recursive(q1, d1q1, p1, d1); //******************************
       _fmpz_poly_stack_clear(p1);   
    }
    
@@ -5079,7 +5079,7 @@ void fmpz_poly_div_karatsuba_recursive_low(fmpz_poly_t Q, fmpz_poly_t BQ, const 
    fmpz_poly_init(d1q2);
    fmpz_poly_init(q2);
    _fmpz_poly_normalise(t);
-   fmpz_poly_div_karatsuba_recursive_low(q2, d1q2, t, d3); //******************************
+   fmpz_poly_div_bisection_recursive_low(q2, d1q2, t, d3); //******************************
    _fmpz_poly_stack_clear(t);
       
    /*
@@ -5148,7 +5148,7 @@ void fmpz_poly_div_karatsuba_recursive_low(fmpz_poly_t Q, fmpz_poly_t BQ, const 
 }
 
 
-void fmpz_poly_div_karatsuba(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t B)
+void fmpz_poly_div_bisection(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t B)
 {
    if (A->length < B->length)
    {
@@ -5193,7 +5193,7 @@ void fmpz_poly_div_karatsuba(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly
       
       fmpz_poly_init(d1q1);
       _fmpz_poly_normalise(p1);
-      fmpz_poly_div_karatsuba_recursive_low(Q, d1q1, p1, d1); //******************************
+      fmpz_poly_div_bisection_recursive_low(Q, d1q1, p1, d1); //******************************
       fmpz_poly_clear(d1q1);
       _fmpz_poly_stack_clear(p1);
             
@@ -5232,7 +5232,7 @@ void fmpz_poly_div_karatsuba(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly
       fmpz_poly_init(q1);
       
       _fmpz_poly_normalise(p1);
-      fmpz_poly_div_karatsuba_recursive_low(q1, d1q1, p1, d1); //******************************
+      fmpz_poly_div_bisection_recursive_low(q1, d1q1, p1, d1); //******************************
       _fmpz_poly_stack_clear(p1);
    
    /* 
@@ -5306,7 +5306,7 @@ void fmpz_poly_div_karatsuba(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly
       Also compute d1q2 of length n1+n2-1
    */
    fmpz_poly_init(q2);
-   fmpz_poly_div_karatsuba(q2, t, d1); 
+   fmpz_poly_div_bisection(q2, t, d1); 
    _fmpz_poly_stack_clear(t);  
    _fmpz_poly_stack_clear(dq1);
    _fmpz_poly_stack_clear(d2q1);
@@ -5327,13 +5327,13 @@ void fmpz_poly_div_karatsuba(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly
    fmpz_poly_clear(q1);
 }
 
-void fmpz_poly_divrem_karatsuba(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_poly_t A, const fmpz_poly_t B)
+void fmpz_poly_divrem_bisection(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_poly_t A, const fmpz_poly_t B)
 {
    fmpz_poly_t QB;
    
    fmpz_poly_init(QB);
    
-   fmpz_poly_div_karatsuba_recursive(Q, QB, A, B);
+   fmpz_poly_div_bisection_recursive(Q, QB, A, B);
    
    fmpz_poly_fit_limbs(R, FLINT_MAX(QB->limbs, A->limbs)+1);
    fmpz_poly_fit_length(R, A->length);
@@ -5362,7 +5362,7 @@ void fmpz_poly_newton_invert_basecase(fmpz_poly_t Q_inv, const fmpz_poly_t Q, un
    Qn->limbs = Q->limbs;
    Qn->length = n;
    
-   fmpz_poly_div_karatsuba(Q_inv, X2n, Qn);
+   fmpz_poly_div_bisection(Q_inv, X2n, Qn);
       
    fmpz_poly_clear(X2n);
 }
@@ -5526,7 +5526,7 @@ void fmpz_poly_div_newton(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t 
       
       fmpz_poly_init(d1q1);
       _fmpz_poly_normalise(p1);
-      fmpz_poly_div_karatsuba_recursive(Q, d1q1, p1, d1); //******************************
+      fmpz_poly_div_bisection_recursive(Q, d1q1, p1, d1); //******************************
       fmpz_poly_clear(d1q1);
       _fmpz_poly_stack_clear(p1);
       
@@ -5556,7 +5556,7 @@ void fmpz_poly_div_newton(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t 
       fmpz_poly_init(q1);
    
       _fmpz_poly_normalise(p1);
-      fmpz_poly_div_karatsuba_recursive(q1, d1q1, p1, g1); //******************************
+      fmpz_poly_div_bisection_recursive(q1, d1q1, p1, g1); //******************************
       _fmpz_poly_stack_clear(p1);
    }
    
@@ -5701,7 +5701,7 @@ void fmpz_poly_div_mulders(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t
       
       fmpz_poly_init(d1q1);
       _fmpz_poly_normalise(p1);
-      fmpz_poly_div_karatsuba_recursive_low(Q, d1q1, p1, d1); //******************************
+      fmpz_poly_div_bisection_recursive_low(Q, d1q1, p1, d1); //******************************
       fmpz_poly_clear(d1q1);
       _fmpz_poly_stack_clear(p1);
       
@@ -5731,7 +5731,7 @@ void fmpz_poly_div_mulders(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t
       fmpz_poly_init(q1);
       
       _fmpz_poly_normalise(p1);
-      fmpz_poly_div_karatsuba_recursive_low(q1, d1q1, p1, g1); //******************************
+      fmpz_poly_div_bisection_recursive_low(q1, d1q1, p1, g1); //******************************
       _fmpz_poly_stack_clear(p1);
    }
    
@@ -6402,7 +6402,7 @@ void fmpz_poly_pseudo_div_basecase(fmpz_poly_t Q, unsigned long * d,
 }
 
 /* 
-   Pseudo division using a Karatsuba-like algorithm.
+   Pseudo division using a divide and conquer algorithm.
 */
  
 void fmpz_poly_pseudo_divrem_recursive(fmpz_poly_t Q, fmpz_poly_t R, unsigned long * d, const fmpz_poly_t A, const fmpz_poly_t B)

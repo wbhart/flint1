@@ -2987,7 +2987,7 @@ int test_fmpz_poly_divrem_classical()
    return result; 
 }
 
-int test_fmpz_poly_div_karatsuba_recursive()
+int test_fmpz_poly_div_bisection_recursive()
 {
    mpz_poly_t test_poly, test_poly2, test_poly3, test_poly4;
    fmpz_poly_t test_mpn_poly, test_mpn_poly2, test_mpn_poly3, test_mpn_poly4, test_mpn_poly5;
@@ -3046,13 +3046,13 @@ int test_fmpz_poly_div_karatsuba_recursive()
 #endif               
       for (unsigned long i = 0; i < 10; i++)
       {
-         fmpz_poly_div_karatsuba_recursive(test_mpn_poly4, test_mpn_poly5, test_mpn_poly3, test_mpn_poly);
+         fmpz_poly_div_bisection_recursive(test_mpn_poly4, test_mpn_poly5, test_mpn_poly3, test_mpn_poly);
          fmpz_poly_clear(test_mpn_poly4);
          fmpz_poly_clear(test_mpn_poly5);
          fmpz_poly_init(test_mpn_poly4);
          fmpz_poly_init(test_mpn_poly5);
       }
-      fmpz_poly_div_karatsuba_recursive(test_mpn_poly4, test_mpn_poly5, test_mpn_poly3, test_mpn_poly);
+      fmpz_poly_div_bisection_recursive(test_mpn_poly4, test_mpn_poly5, test_mpn_poly3, test_mpn_poly);
       
       fmpz_poly_to_mpz_poly(test_poly4, test_mpn_poly4);
            
@@ -3080,7 +3080,7 @@ int test_fmpz_poly_div_karatsuba_recursive()
    return result; 
 }
 
-int test_fmpz_poly_divrem_karatsuba()
+int test_fmpz_poly_divrem_bisection()
 {
    mpz_poly_t test_poly, test_poly2, test_poly3, test_poly4;
    fmpz_poly_t test_mpn_poly, test_mpn_poly2, test_mpn_poly3, test_mpn_poly4, test_mpn_poly5;
@@ -3139,13 +3139,13 @@ int test_fmpz_poly_divrem_karatsuba()
 #endif               
       for (unsigned long i = 0; i < 10; i++)
       {
-         fmpz_poly_divrem_karatsuba(test_mpn_poly4, test_mpn_poly5, test_mpn_poly3, test_mpn_poly);
+         fmpz_poly_divrem_bisection(test_mpn_poly4, test_mpn_poly5, test_mpn_poly3, test_mpn_poly);
          fmpz_poly_clear(test_mpn_poly4);
          fmpz_poly_clear(test_mpn_poly5);
          fmpz_poly_init(test_mpn_poly4);
          fmpz_poly_init(test_mpn_poly5);
       }
-      fmpz_poly_divrem_karatsuba(test_mpn_poly4, test_mpn_poly5, test_mpn_poly3, test_mpn_poly);
+      fmpz_poly_divrem_bisection(test_mpn_poly4, test_mpn_poly5, test_mpn_poly3, test_mpn_poly);
       _fmpz_poly_normalise(test_mpn_poly4);
       
       fmpz_poly_to_mpz_poly(test_poly4, test_mpn_poly4);
@@ -3174,7 +3174,7 @@ int test_fmpz_poly_divrem_karatsuba()
    return result; 
 }
 
-int test_fmpz_poly_div_karatsuba()
+int test_fmpz_poly_div_bisection()
 {
    mpz_poly_t test_poly, test_poly2, test_poly3, test_poly4;
    fmpz_poly_t test_mpn_poly, test_mpn_poly2, test_mpn_poly3, test_mpn_poly4;
@@ -3230,11 +3230,11 @@ int test_fmpz_poly_div_karatsuba()
 #endif               
       for (unsigned long i = 1; i < 10; i++)
       {
-         fmpz_poly_div_karatsuba(test_mpn_poly4, test_mpn_poly3, test_mpn_poly);
+         fmpz_poly_div_bisection(test_mpn_poly4, test_mpn_poly3, test_mpn_poly);
          //fmpz_poly_clear(test_mpn_poly4);
          //fmpz_poly_init(test_mpn_poly4);
       }
-      fmpz_poly_div_karatsuba(test_mpn_poly4, test_mpn_poly3, test_mpn_poly);
+      fmpz_poly_div_bisection(test_mpn_poly4, test_mpn_poly3, test_mpn_poly);
       _fmpz_poly_normalise(test_mpn_poly4);
       
       fmpz_poly_to_mpz_poly(test_poly4, test_mpn_poly4);
@@ -4935,9 +4935,9 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_poly_mul_trunc_n);
    RUN_TEST(fmpz_poly_div_classical);
    RUN_TEST(fmpz_poly_divrem_classical);
-   RUN_TEST(fmpz_poly_div_karatsuba_recursive);
-   RUN_TEST(fmpz_poly_divrem_karatsuba);
-   RUN_TEST(fmpz_poly_div_karatsuba);
+   RUN_TEST(fmpz_poly_div_bisection_recursive);
+   RUN_TEST(fmpz_poly_divrem_bisection);
+   RUN_TEST(fmpz_poly_div_bisection);
    RUN_TEST(fmpz_poly_newton_invert_basecase);
    RUN_TEST(fmpz_poly_reverse);
    RUN_TEST(fmpz_poly_newton_invert);
