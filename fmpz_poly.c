@@ -5362,7 +5362,7 @@ void fmpz_poly_newton_invert_basecase(fmpz_poly_t Q_inv, const fmpz_poly_t Q, un
    Qn->limbs = Q->limbs;
    Qn->length = n;
    
-   fmpz_poly_div_bisection(Q_inv, X2n, Qn);
+   fmpz_poly_div_mulders(Q_inv, X2n, Qn);
       
    fmpz_poly_clear(X2n);
 }
