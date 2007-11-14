@@ -3778,75 +3778,18 @@ void fmpz_poly_get_coeff_mpz(mpz_t x, const fmpz_poly_t poly, const unsigned lon
 
 int fmpz_poly_from_string(fmpz_poly_t poly, const char* s)
 {
-   // const char* whitespace = " \t\n\r";
-   // 
-   // // read poly length
-   // unsigned long length;
-   // if (!sscanf(s, "%ld", &length))
-   //    return 0;
-   //    
-   // printf("length = %ld\n", length);
-   // 
-   // // jump to next whitespace
-   // s += strcspn(s, whitespace);
-   // 
-   // unsigned long limbs = 1;
-   // unsigned long size;
-   // 
-   // //mpz_t* coeffs = (mpz_t*) malloc(sizeof(mpz_t) * length);
-   // mpz_t coeff;
-   // mpz_init(coeff);
-   // 
-   // char* ptr;
-   // ptr = s;
-   // 
-   // // count how many limbs needed to store all coefficients!
-   // for (unsigned long i = 0; i < length; i++)
-   // {
-   //    // skip whitespace
-   //    s += strspn(s, whitespace);
-   //    
-   //    if (!gmp_sscanf(s, "%Zd", coeff))
-   //       return 0;
-   //       
-   //    size = mpz_sizeinbase(coeff, 2) / FLINT_BITS;
-   //    
-   //    printf("coeff = %s\n", mpz_get_str(NULL, 10, coeff));
-   //    
-   //    if(size > limbs)
-   //       limbs = size;
-   //       
-   //    // skip to next whitespace
-   //    s += strcspn(s, whitespace);
-   // }
-   // 
-   // printf("\n\nDone!  limbs = %i\n\n", limbs);
-   // 
-   // s = ptr;
-   // 
-   // fmpz_poly_init2(poly, length, limbs);
-   // fmpz_poly_set_length(poly, length);
-   // 
-   // for (unsigned long i = 0; i < length; i++)
-   // {
-   //    s += strspn(s, whitespace);
-   //    if (!gmp_sscanf(s, "%Zd", coeff))
-   //       return 0;
-   //    mpz_to_fmpz((fmpz_t)(poly->coeffs + i*(limbs+1)), coeff);
-   //    s += strcspn(s, whitespace);
-   // }
-   // 
-   // //free(coeffs);
-   // 
-   // _fmpz_poly_normalise(poly);
+   int ok;
    
    mpz_poly_t p;
    mpz_poly_init(p);
-   mpz_poly_from_string(p, s);
-   mpz_poly_to_fmpz_poly(poly, p);
+   ok = mpz_poly_from_string(p, s);
+   if (ok)
+   {
+      mpz_poly_to_fmpz_poly(poly, p);
+   }
    mpz_poly_clear(p);
    
-   return 1;
+   return ok;
 }
 
 // taken from mpz_poly_to_string, and altered using fmpz_to_mpz
@@ -3898,27 +3841,20 @@ void fmpz_poly_print(const fmpz_poly_t poly)
 }
 
 
-int fmpz_poly_fread(fmpz_poly_t poly, const FILE* f)
+int fmpz_poly_fread(fmpz_poly_t poly, FILE* f)
 {
-   // // read poly length
-   // unsigned long length;
-   // if (!fscanf(f, "%ld", &length))
-   //    return 0;
-   // 
-   // poly->length = 0;
-   // fmpz_poly_init_upto(poly, length);
-   // 
-   // // read coefficients
-   // for (unsigned long i = 0; i < length; i++)
-   // {
-   //    if (!fmpz_inp_str(poly->coeffs[i], f, 10))
-   //       return 0;
-   //    poly->length++;
-   // }
-   // 
-   // fmpz_poly_normalise(poly);
+   int ok;
    
-   return 1;
+   mpz_poly_t p;
+   mpz_poly_init(p);
+   ok = mpz_poly_fread(p, f);
+   if (ok)
+   {
+      mpz_poly_to_fmpz_poly(poly, p);
+   }
+   mpz_poly_clear(p);
+   
+   return ok;
 }
 
 /****************************************************************************

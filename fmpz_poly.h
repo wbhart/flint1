@@ -488,7 +488,7 @@ int fmpz_poly_from_string(fmpz_poly_t poly, const char* s);
 char* fmpz_poly_to_string(const fmpz_poly_t poly);
 void fmpz_poly_print(const fmpz_poly_t poly);
 void fmpz_poly_fprint(const fmpz_poly_t poly, FILE* f);
-int fmpz_poly_fread(fmpz_poly_t poly, const FILE* f);
+int fmpz_poly_fread(fmpz_poly_t poly, FILE* f);
 
 static inline unsigned long fmpz_poly_limbs(const fmpz_poly_t poly)
 {
