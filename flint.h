@@ -7,14 +7,14 @@
 
 ******************************************************************************/
 
+#ifndef FLINT_H
+#define FLINT_H
+
 #include <limits.h>
 #include <assert.h>
 #include <gmp.h>
+#include <math.h>
 #include "longlong_wrapper.h"
-
-
-#ifndef FLINT_H
-#define FLINT_H
 
 #ifdef __cplusplus
  extern "C" {
@@ -26,6 +26,9 @@
 #define FLINT_ASSERT(zzz_dummy)
 #endif
 
+#ifndef __USE_ISOC99
+#define round(x) floor(x + 0.5)
+#endif
 
 
 #define FLINT_MAX(zzz1, zzz2) ((zzz1) > (zzz2) ? (zzz1) : (zzz2))
