@@ -1,16 +1,20 @@
 /***************************************************************** 
 
-pari-profile.p - code for timing PARI polynomial multiplication in Z[x] 
+pari-profile.p - code for timing PARI polynomial multiplication in Z[x]
+ 
 over various lengths and bitsizes. Based on Magma profiling code 
 by David Harvey.
 
 Copyright (C) 2007, Tomasz Lechowski
 
+Some corrections (C) 2007, Bill Allombert
+
 
 *****************************************************************/
 
 target_name="PolyMul";
-target_description="PARI polynomial multiplication in Z[x] over various lengths and bitsizes, NON-NEGATIVE coefficients only";
+target_description="PARI polynomial multiplication in Z[x] over various
+ lengths and bitsizes, NON-NEGATIVE coefficients only";
 
 Max=16000000;
 ratio=1.2;
@@ -33,9 +37,10 @@ for(i=1,count,
 	b=vector(Length);
 		for(j=1,Length,
 		a[j]=random(2^(bits));
-		b[j]=random(2^(bits)))
-	);
-c=Pol(a)*Pol(b));
+		b[j]=random(2^(bits)));
+        a=Pol(a);
+        b=Pol(b));
+c=a*b);
 
 time1=gettime();
 
@@ -44,8 +49,9 @@ for(i=1,count,
 	a=vector(Length); 	b=vector(Length);
 		for(j=1,Length,
 		a[j]=random(2^(bits));
-		b[j]=random(2^(bits)))
-	)
+		b[j]=random(2^(bits)));
+        a=Pol(a);
+        b=Pol(b));
 );
 
 time2=gettime();
@@ -98,8 +104,10 @@ prof2d_sample(x, y)={
 
           good_count=good_count+1;
           if(good_count==5,
-            print(Str(x,"  ", y,"  ",format_sci(min_time),"  ",format_sci(max_time)));
-            write(PARIprof,Str(x,"  ", y,"  ",format_sci(min_time),"  ",format_sci(max_time)));
+            print(Str(x,"  ", y,"  ",format_sci(min_time),"
+  ",format_sci(max_time)));
+            write(Pariprof,Str(x,"  ", y,"  ",format_sci(min_time),"
+  ",format_sci(max_time)));
 	    return;
           )
       );
@@ -149,7 +157,8 @@ print_header()={
     print("");
     write(Pariprof,"  ");
     print("============================================== begin data");
-    write(Pariprof,"============================================== begin data");
+    write(Pariprof,"==============================================
+ begin data");
    
 };
 
