@@ -106,12 +106,12 @@ void fmpz_set_ui(fmpz_t res, const unsigned long x)
 static inline
 void fmpz_set_si(fmpz_t res, const long x)
 {
-   if (x > 0)
+   if (x > 0L)
    {
       res[0] = 1L;
       res[1] = x;
    }
-   else if (x < 0)
+   else if (x < 0L)
    {
       res[0] = -1L;
       res[1] = -x;

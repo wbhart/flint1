@@ -265,6 +265,8 @@ void _fmpz_poly_stack_clear(const fmpz_poly_t poly);
 
 void _fmpz_poly_check(const fmpz_poly_t poly);
 
+void _fmpz_poly_check_normalisation(const fmpz_poly_t poly);
+
 static inline
 fmpz_t _fmpz_poly_get_coeff_ptr(fmpz_poly_t poly, const unsigned long n)
 {
@@ -277,10 +279,11 @@ fmpz_t _fmpz_poly_get_coeff_ptr(fmpz_poly_t poly, const unsigned long n)
 */
    
 static inline
-long _fmpz_poly_get_coeff(fmpz_t output, const fmpz_poly_t poly,
+long _fmpz_poly_get_coeff(mp_limb_t * output, const fmpz_poly_t poly,
                           const unsigned long n)
 {
-   if (poly->coeffs[n*(poly->limbs+1)] == 0) F_mpn_clear(output, poly->limbs);
+   if (n >= poly->length) F_mpn_clear(output, poly->limbs);
+   if (poly->coeffs[n*(poly->limbs+1)] == 0L) F_mpn_clear(output, poly->limbs);
    F_mpn_copy(output, poly->coeffs+n*(poly->limbs+1)+1, poly->limbs);
    return poly->coeffs[n*(poly->limbs+1)];
 }
@@ -288,15 +291,17 @@ long _fmpz_poly_get_coeff(fmpz_t output, const fmpz_poly_t poly,
 static inline
 unsigned long _fmpz_poly_get_coeff_ui(fmpz_poly_t poly, const unsigned long n)
 {
-   if (poly->coeffs[n*(poly->limbs+1)] == 0) return 0;
+   if (n >= poly->length) return 0L;
+   if (poly->coeffs[n*(poly->limbs+1)] == 0L) return 0L;
    else return poly->coeffs[n*(poly->limbs+1)+1];
 }
 
 static inline
 long _fmpz_poly_get_coeff_si(fmpz_poly_t poly, const unsigned long n)
 {
-   if (poly->coeffs[n*(poly->limbs+1)] == 0) return 0;
-   if (poly->coeffs[n*(poly->limbs+1)] == 1L) 
+   if (n >= poly->length) return 0L;
+   if (poly->coeffs[n*(poly->limbs+1)] == 0L) return 0L;
+   if ((long) poly->coeffs[n*(poly->limbs+1)] > 0L) 
                                  return poly->coeffs[n*(poly->limbs+1)+1];
    else return -poly->coeffs[n*(poly->limbs+1)+1];
 }
@@ -312,14 +317,14 @@ void _fmpz_poly_normalise(fmpz_poly_t poly);
 */
 
 static inline void _fmpz_poly_set_coeff(fmpz_poly_t poly, const unsigned long n, 
-                                  const fmpz_t x, const long sign, const unsigned long size)
+                                  const mp_limb_t * x, const long sign, const unsigned long size)
 {
    FLINT_ASSERT(poly->limbs >= size);
    F_mpn_copy(poly->coeffs+n*(poly->limbs+1)+1, x, size);
    poly->coeffs[n*(poly->limbs+1)] = sign;
    if (poly->limbs > size) 
      F_mpn_clear(poly->coeffs+n*(poly->limbs+1)+size+1, poly->limbs-size);
-   if ((x[0] == 0) && (n == poly->length - 1)) _fmpz_poly_normalise(poly);
+   _fmpz_poly_normalise(poly);
 }
 
 void _fmpz_poly_set_coeff_ui(fmpz_poly_t poly, const unsigned long n, const unsigned long x);
@@ -480,6 +485,8 @@ static inline void fmpz_poly_fit_limbs(fmpz_poly_t poly, const unsigned long lim
 void fmpz_poly_clear(fmpz_poly_t poly);
 
 void fmpz_poly_check(const fmpz_poly_t poly);
+
+void fmpz_poly_check_normalisation(const fmpz_poly_t poly);
 
 // ------------------------------------------------------
 // String conversions and I/O

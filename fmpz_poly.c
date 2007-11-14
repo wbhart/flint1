@@ -1079,6 +1079,38 @@ void _fmpz_poly_check(const fmpz_poly_t poly)
    }
 }
 
+void _fmpz_poly_check_normalisation(const fmpz_poly_t poly)
+{
+   if (poly->length)
+   {
+      if (!poly->coeffs[(poly->length-1)*(poly->limbs+1)])
+      {
+         printf("Error: Poly not normalised\n");
+         abort();
+      }
+   }
+   if ((long) poly->length < 0)
+   {
+      printf("Error: Poly length < 0\n");
+      abort();
+   }
+   if ((long) poly->limbs < 0) 
+   {
+      printf("Error: Poly limbs < 0\n");
+      abort();
+   }
+   for (unsigned long i = 0; i < poly->length; i++)
+   {
+      if (FLINT_ABS(poly->coeffs[i*(poly->limbs+1)]) > poly->limbs)
+      {
+         printf("Error: coefficient %ld is too large (%ld limbs vs %ld limbs)\n", 
+                        i, FLINT_ABS(poly->coeffs[i*(poly->limbs+1)]), poly->limbs);
+         abort();
+      }
+   }
+}
+
+
 // Retrieves the n-th coefficient as an mpz
 void _fmpz_poly_get_coeff_mpz(mpz_t x, const fmpz_poly_t poly, const unsigned long n)
 {
@@ -1100,7 +1132,7 @@ void _fmpz_poly_set_coeff_ui(fmpz_poly_t poly, const unsigned long n, const unsi
 {
    FLINT_ASSERT(poly->length > n);
    fmpz_set_ui(poly->coeffs + n*(poly->limbs + 1), x);
-   if ((x==0) && (poly->length == n-1)) _fmpz_poly_normalise(poly);
+   if ((x==0L) && (poly->length == n+1)) _fmpz_poly_normalise(poly);
 }
 
 /* 
@@ -1115,7 +1147,7 @@ void _fmpz_poly_set_coeff_si(fmpz_poly_t poly, const unsigned long n, const long
 {
    FLINT_ASSERT(poly->length > n);
    fmpz_set_si(poly->coeffs + n*(poly->limbs + 1), x);
-   if ((x==0) && (poly->length == n-1)) _fmpz_poly_normalise(poly);
+   if ((x==0L) && (poly->length == n+1)) _fmpz_poly_normalise(poly);
 }
 
 void _fmpz_poly_normalise(fmpz_poly_t poly)
@@ -3725,6 +3757,47 @@ void fmpz_poly_clear(fmpz_poly_t poly)
 
 void fmpz_poly_check(const fmpz_poly_t poly)
 {
+   if ((long) poly->alloc < 0)
+   {
+      printf("Error: Poly alloc < 0\n");
+      abort();
+   }
+   if ((long) poly->length < 0)
+   {
+      printf("Error: Poly length < 0\n");
+      abort();
+   }
+   if (poly->length > poly->alloc) 
+   {
+      printf("Error: Poly length = %ld > alloc = %ld\n", poly->length, poly->alloc);
+      abort();
+   }
+   if ((long) poly->limbs < 0) 
+   {
+      printf("Error: Poly limbs < 0\n");
+      abort();
+   }
+   for (unsigned long i = 0; i < poly->length; i++)
+   {
+      if (FLINT_ABS(poly->coeffs[i*(poly->limbs+1)]) > poly->limbs)
+      {
+         printf("Error: coefficient %ld is too large (%ld limbs vs %ld limbs)\n", 
+                        i, FLINT_ABS(poly->coeffs[i*(poly->limbs+1)]), poly->limbs);
+         abort();
+      }
+   }
+}
+
+void fmpz_poly_check_normalisation(const fmpz_poly_t poly)
+{
+   if (poly->length)
+   {
+      if (!poly->coeffs[(poly->length-1)*(poly->limbs+1)])
+      {
+         printf("Error: Poly not normalised\n");
+         abort();
+      }
+   }
    if ((long) poly->alloc < 0)
    {
       printf("Error: Poly alloc < 0\n");

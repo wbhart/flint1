@@ -56,7 +56,7 @@ todo: GMP has code to do limb copying. Clearly memcpy wasn't good enough for
       them either. Work out how to use their code. It's not a documented
       interface, so some hackishness may be necessary.
  */
-static inline void F_mpn_copy(mp_limb_t* dest, mp_limb_t* src, unsigned long count)
+static inline void F_mpn_copy(mp_limb_t* dest, const mp_limb_t* src, unsigned long count)
 {
    for (long i = count - 1; i >= 0; i--)
    {
@@ -64,7 +64,7 @@ static inline void F_mpn_copy(mp_limb_t* dest, mp_limb_t* src, unsigned long cou
    }
 }
 
-static inline void F_mpn_copy_forward(mp_limb_t* dest, mp_limb_t* src, unsigned long count)
+static inline void F_mpn_copy_forward(mp_limb_t* dest, const mp_limb_t* src, unsigned long count)
 {
    for (long i = 0; i < count; i++)
    {
