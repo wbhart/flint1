@@ -40,12 +40,16 @@ int test_fmpz_convert()
    for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
    {
        bits = random_ulong(1000);
-       fnum1 = fmpz_init(FLINT_MAX((long)(bits-1)/FLINT_BITS,0)+1);
+#if DEBUG
+       printf("Bits = %ld\n", bits);
+#endif
+       fnum1 = fmpz_init(FLINT_MAX((long)(bits-1)/FLINT_BITS,0L)+1);
        mpz_rrandomb(num1, state, bits);
 #if SIGNS
        if (random_ulong(2)) mpz_neg(num1, num1);
 #endif
        mpz_to_fmpz(fnum1, num1);
+       fmpz_check_normalisation(fnum1);
        fmpz_to_mpz(num2, fnum1);
        
        fmpz_clear(fnum1);
@@ -183,6 +187,7 @@ int test_fmpz_set_si()
    
    fnum1 = fmpz_init(0);
    fmpz_set_si(fnum1, 0);
+   fmpz_check_normalisation(fnum1);
    mpz_set_si(num1, 0);
    fmpz_to_mpz(num2, fnum1);
    
@@ -202,6 +207,7 @@ int test_fmpz_set_si()
        
        mpz_set_si(num1, x);
        fmpz_set_si(fnum1, x);
+       fmpz_check_normalisation(fnum1);
        fmpz_to_mpz(num2, fnum1);
              
        result = (mpz_cmp(num1, num2) == 0);
@@ -227,6 +233,7 @@ int test_fmpz_set_ui()
    
    fnum1 = fmpz_init(0);
    fmpz_set_ui(fnum1, 0);
+   fmpz_check_normalisation(fnum1);
    mpz_set_ui(num1, 0);
    fmpz_to_mpz(num2, fnum1);
    
@@ -242,6 +249,7 @@ int test_fmpz_set_ui()
        
        mpz_set_ui(num1, x);
        fmpz_set_ui(fnum1, x);
+       fmpz_check_normalisation(fnum1);
        fmpz_to_mpz(num2, fnum1);
              
        result = (mpz_cmp(num1, num2) == 0);
@@ -278,7 +286,8 @@ int test_fmpz_set_equal()
        mpz_to_fmpz(fnum1, num1);
        
        fmpz_set(fnum2, fnum1);
-              
+       fmpz_check_normalisation(fnum2);
+          
        result = (fmpz_equal(fnum1, fnum2));
        
 #if DEBUG2
@@ -311,8 +320,10 @@ int test_fmpz_set_equal()
        fnum2 = fmpz_init(FLINT_MAX((long)(bits2-1)/FLINT_BITS,0)+1);
 
        mpz_to_fmpz(fnum1, num1);
+       fmpz_check_normalisation(fnum1);
        mpz_to_fmpz(fnum2, num2);
-              
+       fmpz_check_normalisation(fnum2);
+          
        result = (!fmpz_equal(fnum1, fnum2));
        
        fmpz_clear(fnum1);
@@ -361,6 +372,7 @@ int test_fmpz_add()
        mpz_to_fmpz(fnum2, num2);
        
        fmpz_add(fnum3, fnum1, fnum2);
+       fmpz_check_normalisation(fnum3);
        mpz_add(num4, num1, num2);
        
        fmpz_to_mpz(num3, fnum3);
@@ -416,6 +428,7 @@ int test_fmpz_sub()
        mpz_to_fmpz(fnum2, num2);
        
        fmpz_sub(fnum3, fnum1, fnum2);
+       fmpz_check_normalisation(fnum3);
        mpz_sub(num4, num1, num2);
        
        fmpz_to_mpz(num3, fnum3);
@@ -471,6 +484,7 @@ int test_fmpz_mul()
        mpz_to_fmpz(fnum2, num2);
        
        fmpz_mul(fnum3, fnum1, fnum2);
+       fmpz_check_normalisation(fnum3);
        mpz_mul(num4, num1, num2);
        
        fmpz_to_mpz(num3, fnum3);
@@ -526,6 +540,7 @@ int test___fmpz_mul()
        mpz_to_fmpz(fnum2, num2);
        
        __fmpz_mul(fnum3, fnum1, fnum2);
+       fmpz_check_normalisation(fnum3);
        mpz_mul(num4, num1, num2);
        
        fmpz_to_mpz(num3, fnum3);
@@ -592,6 +607,7 @@ int test_fmpz_addmul()
        
        fmpz_set(fnum4, fnum3);
        fmpz_addmul(fnum4, fnum1, fnum2);
+       fmpz_check_normalisation(fnum4);
        mpz_set(num4, num3);
        mpz_addmul(num4, num1, num2);
        
@@ -653,6 +669,7 @@ int test_fmpz_div()
        mpz_to_fmpz(fnum2, num2);
        
        fmpz_div(fnum3, fnum1, fnum2);
+       fmpz_check_normalisation(fnum3);
        mpz_tdiv_q(num4, num1, num2);
        
        fmpz_to_mpz(num3, fnum3);
@@ -697,6 +714,7 @@ int test_fmpz_add_ui_inplace()
 
        mpz_to_fmpz(fnum1, num1);
        fmpz_add_ui_inplace(fnum1, x);
+       fmpz_check_normalisation(fnum1);
        mpz_add_ui(num1, num1, x);
        fmpz_to_mpz(num2, fnum1);
              
@@ -737,6 +755,7 @@ int test_fmpz_add_ui()
 
        mpz_to_fmpz(fnum1, num1);
        fmpz_add_ui(fnum2, fnum1, x);
+       fmpz_check_normalisation(fnum2);
        mpz_add_ui(num1, num1, x);
        fmpz_to_mpz(num2, fnum2);
              
@@ -745,6 +764,7 @@ int test_fmpz_add_ui()
        if (!result) gmp_printf("%Zd, %Zd, %ld\n", num1, num2, x);       
 #endif
        fmpz_clear(fnum1);
+       fmpz_clear(fnum2);
    }
    
    mpz_clear(num1);
@@ -775,6 +795,7 @@ int test___fmpz_add_ui_inplace()
 
        mpz_to_fmpz(fnum1, num1);
        __fmpz_add_ui_inplace(fnum1, x);
+       fmpz_check_normalisation(fnum1);
        mpz_add_ui(num1, num1, x);
        fmpz_to_mpz(num2, fnum1);
              
@@ -801,7 +822,7 @@ int test_fmpz_sub_ui_inplace()
    
    for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
    {
-       bits = random_ulong(63)+1;
+       bits = random_ulong(FLINT_BITS-1)+1;
        x = random_ulong(1L<<bits);
        
        bits2 = random_ulong(1000);
@@ -814,6 +835,7 @@ int test_fmpz_sub_ui_inplace()
 
        mpz_to_fmpz(fnum1, num1);
        fmpz_sub_ui_inplace(fnum1, x);
+       fmpz_check_normalisation(fnum1);
        mpz_sub_ui(num1, num1, x);
        fmpz_to_mpz(num2, fnum1);
              
@@ -840,10 +862,10 @@ int test_fmpz_sub_ui()
    
    for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
    {
-       bits = random_ulong(63)+1;
+       bits = random_ulong(FLINT_BITS-1)+1;
        x = random_ulong(1L<<bits);
        
-       bits2 = random_ulong(1000);
+       bits2 = random_ulong(1000)+1;
        fnum1 = fmpz_init((long) FLINT_MAX(bits, bits2)/FLINT_BITS+1);
        fnum2 = fmpz_init((long) FLINT_MAX(bits, bits2)/FLINT_BITS+1);
        
@@ -854,6 +876,7 @@ int test_fmpz_sub_ui()
 
        mpz_to_fmpz(fnum1, num1);
        fmpz_sub_ui(fnum2, fnum1, x);
+       fmpz_check_normalisation(fnum2);
        mpz_sub_ui(num1, num1, x);
        fmpz_to_mpz(num2, fnum2);
              
@@ -862,6 +885,7 @@ int test_fmpz_sub_ui()
        if (!result) gmp_printf("%Zd, %Zd, %ld\n", num1, num2, x);       
 #endif
        fmpz_clear(fnum1);
+       fmpz_clear(fnum2);
    }
    
    mpz_clear(num1);
@@ -896,6 +920,7 @@ int test_fmpz_mul_ui()
 
        mpz_to_fmpz(fnum1, num1);
        fmpz_mul_ui(fnum2, fnum1, x);
+       fmpz_check_normalisation(fnum2);
        mpz_mul_ui(num1, num1, x);
        fmpz_to_mpz(num2, fnum2);
              
@@ -940,6 +965,7 @@ int test_fmpz_div_ui()
 
        mpz_to_fmpz(fnum1, num1);
        fmpz_div_ui(fnum2, fnum1, x);
+       fmpz_check_normalisation(fnum2);
        mpz_tdiv_q_ui(num1, num1, x);
        fmpz_to_mpz(num2, fnum2);
              
@@ -981,6 +1007,7 @@ int test_fmpz_pow_ui()
 
        mpz_to_fmpz(fnum1, num1);
        fmpz_pow_ui(fnum2, fnum1, x);
+       fmpz_check_normalisation(fnum2);
        mpz_pow_ui(num1, num1, x);
        fmpz_to_mpz(num2, fnum2);
              
@@ -1093,6 +1120,7 @@ int test_fmpz_normalise()
        }
        fnum1[0] = limbs + limbs2;
        fmpz_normalise(fnum1);
+       fmpz_check_normalisation(fnum1);
               
        result = (mpz_size(num1) == fmpz_size(fnum1));
 
@@ -1124,7 +1152,10 @@ int test_fmpz_binomial_next()
        
        fmpz_set_ui(fnum1, 1L);
        for (long j = 1; j <= m; j++)
+       {
           fmpz_binomial_next(fnum1, fnum1, n, j);
+          fmpz_check_normalisation(fnum1);
+       }
        mpz_bin_uiui(num1, n, m);
        fmpz_to_mpz(num2, fnum1);
              

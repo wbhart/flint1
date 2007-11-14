@@ -26,6 +26,14 @@ do { \
    y_dummy_p = swap_temp_p; \
 } while(0);
 
+void fmpz_check_normalisation(const fmpz_t x)
+{
+   if ((x[0]) && (!x[ABS(x[0])]))
+   {
+      printf("Error: fmpz_t not normalised!\n");
+      abort();
+   }
+}
 
 void mpz_to_fmpz(fmpz_t res, const mpz_t x)
 {
@@ -33,10 +41,10 @@ void mpz_to_fmpz(fmpz_t res, const mpz_t x)
    {
       size_t countp;
       mpz_export(res + 1, &countp, -1, sizeof(mp_limb_t), 0, 0, x);
-      res[0] = (mpz_sgn(x) > 0) ? countp : -countp;
+      res[0] = ((long) mpz_sgn(x) > 0L) ? (long) countp : (long) -countp;
    }
    else
-      res[0] = 0;
+      res[0] = 0L;
 }
 
 void fmpz_to_mpz(mpz_t res, const fmpz_t x)
@@ -568,6 +576,7 @@ void fmpz_div(fmpz_t res, const fmpz_t a, const fmpz_t b)
       if ((long) (a0 ^ b0) < 0) res[0] = -res[0];
       flint_stack_release();  
    }
+   NORM(res);
 }     
 
 void fmpz_div_ui(fmpz_t output, const fmpz_t input, const unsigned long x)

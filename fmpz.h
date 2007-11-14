@@ -35,6 +35,8 @@ do { \
    } \
 } while (0);
 
+void fmpz_check_normalisation(const fmpz_t x);
+
 static inline
 fmpz_t fmpz_init(const unsigned long limbs)
 {
