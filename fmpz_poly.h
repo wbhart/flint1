@@ -362,11 +362,38 @@ static inline void _fmpz_poly_zero(fmpz_poly_t output)
 
 void _fmpz_poly_zero_coeffs(fmpz_poly_t poly, const unsigned long n);
 
-static inline void _fmpz_poly_transfer(fmpz_poly_t output, const fmpz_poly_t input)
+static inline void _fmpz_poly_attach(fmpz_poly_t output, const fmpz_poly_t input)
 {
    output->length = input->length;
    output->limbs = input->limbs;
    output->coeffs = input->coeffs;
+}
+
+/*
+   Attach input shifted right by n to output
+*/
+
+static inline void _fmpz_poly_attach_shifted(fmpz_poly_t output, 
+             const fmpz_poly_t input, unsigned long n)
+{
+   if (input->length >= n) output->length = input->length - n;
+   else output->length = 0;
+   output->limbs = input->limbs;
+   output->coeffs = input->coeffs + n*(input->limbs+1);
+}
+
+/*
+   Attach input to first n coefficients of input
+   n must be <= input->length
+*/
+
+static inline void _fmpz_poly_attach_truncate(fmpz_poly_t output, 
+             const fmpz_poly_t input, unsigned long n)
+{
+   output->length = n;
+   output->limbs = input->limbs;
+   output->coeffs = input->coeffs;
+   _fmpz_poly_normalise(output);
 }
 
 long _fmpz_poly_bits1(const fmpz_poly_t poly_mpn);

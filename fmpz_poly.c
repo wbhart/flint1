@@ -1371,8 +1371,7 @@ void _fmpz_poly_neg(fmpz_poly_t output, const fmpz_poly_t input)
 
 /* 
    Set n of the coefficients of poly to zero starting with
-   the constant term. 
-   Zeroes the actual coefficients even if n >= length-1.
+   the constant term *regardless of the original length*. 
    Normalises if n >= poly->length-1
 */
 
@@ -3003,12 +3002,12 @@ void _fmpz_poly_mul_KS(fmpz_poly_t output, const fmpz_poly_t in1, const fmpz_pol
       unsigned long temp = length1;
       length1 = length2;
       length2 = temp;
-      _fmpz_poly_transfer(input1, in2);
-      _fmpz_poly_transfer(input2, in1);
+      _fmpz_poly_attach(input1, in2);
+      _fmpz_poly_attach(input2, in1);
    } else
    {
-      _fmpz_poly_transfer(input1, in1);
-      _fmpz_poly_transfer(input2, in2);
+      _fmpz_poly_attach(input1, in1);
+      _fmpz_poly_attach(input2, in2);
    }
    
    
@@ -3125,12 +3124,12 @@ void _fmpz_poly_mul_KS_trunc(fmpz_poly_t output, const fmpz_poly_t in1,
       unsigned long temp = length1;
       length1 = length2;
       length2 = temp;
-      _fmpz_poly_transfer(input1, in2);
-      _fmpz_poly_transfer(input2, in1);
+      _fmpz_poly_attach(input1, in2);
+      _fmpz_poly_attach(input2, in1);
    } else
    {
-      _fmpz_poly_transfer(input1, in1);
-      _fmpz_poly_transfer(input2, in2);
+      _fmpz_poly_attach(input1, in1);
+      _fmpz_poly_attach(input2, in2);
    }
    
    long bits1, bits2;
@@ -3248,12 +3247,12 @@ void _fmpz_poly_mul_SS(fmpz_poly_t output, const fmpz_poly_t in1, const fmpz_pol
       unsigned long temp = length1;
       length1 = length2;
       length2 = temp;
-      _fmpz_poly_transfer(input1, in2);
-      _fmpz_poly_transfer(input2, in1);
+      _fmpz_poly_attach(input1, in2);
+      _fmpz_poly_attach(input2, in1);
    } else
    {
-      _fmpz_poly_transfer(input1, in1);
-      _fmpz_poly_transfer(input2, in2);
+      _fmpz_poly_attach(input1, in1);
+      _fmpz_poly_attach(input2, in2);
    }
    
    unsigned long size1 = input1->limbs;
@@ -3348,12 +3347,12 @@ void _fmpz_poly_mul_SS_trunc(fmpz_poly_t output, const fmpz_poly_t in1,
       unsigned long temp = length1;
       length1 = length2;
       length2 = temp;
-      _fmpz_poly_transfer(input1, in2);
-      _fmpz_poly_transfer(input2, in1);
+      _fmpz_poly_attach(input1, in2);
+      _fmpz_poly_attach(input2, in1);
    } else
    {
-      _fmpz_poly_transfer(input1, in1);
-      _fmpz_poly_transfer(input2, in2);
+      _fmpz_poly_attach(input1, in1);
+      _fmpz_poly_attach(input2, in2);
    }
    
    unsigned long size1 = input1->limbs;
@@ -3483,8 +3482,8 @@ void __fmpz_poly_mul_lead(fmpz_poly_t output, const fmpz_poly_t input1, const fm
    fmpz_poly_t pol1, pol2;
    long total_length = input1->length + input2->length - 1;
    
-   _fmpz_poly_transfer(pol1, input1);
-   _fmpz_poly_transfer(pol2, input2);
+   _fmpz_poly_attach(pol1, input1);
+   _fmpz_poly_attach(pol2, input2);
    _fmpz_poly_normalise(pol1);
    _fmpz_poly_normalise(pol2);
    
@@ -4633,13 +4632,22 @@ void fmpz_poly_div_bisection_recursive(fmpz_poly_t Q, fmpz_poly_t BQ, const fmpz
       return;
    }
    
-   unsigned long crossover = 16;
+   // A->length is now >= B->length
    
-   if (B->limbs > 16)  crossover = 8;
+   unsigned long crossover = 16;
+   unsigned long crossover2 = 128;
+   
+   if (B->limbs > 16) crossover = 8;
    if ((B->length <= 12) && (B->limbs > 8)) crossover = 8;
-
-   if ((B->length <= crossover) || (A->length > 2*B->length - 1))
+   
+   if ((B->length <= crossover) 
+   || ((A->length > 2*B->length - 1) && (A->length < crossover2)))
    {
+      /*
+         Use the classical algorithm to compute the
+         quotient and remainder, then use A-R to compute BQ
+      */
+      
       fmpz_poly_t Rb;
       fmpz_poly_init(Rb);
       fmpz_poly_divrem_classical(Q, Rb, A, B);
@@ -4651,219 +4659,265 @@ void fmpz_poly_div_bisection_recursive(fmpz_poly_t Q, fmpz_poly_t BQ, const fmpz
       return;
    }
    
-   fmpz_poly_t d1, d2, p1, q1, q2, dq1, dq2, d1q1, d2q1, d2q2, d1q2, t, temp;
+   fmpz_poly_t d1, d2, d3, d4, p1, q1, q2, dq1, dq2, d1q1, d2q1, d2q2, d1q2, t, temp;
    
    unsigned long n1 = (B->length+1)/2;
    unsigned long n2 = B->length - n1;
    
    /* We let B = d1*x^n2 + d2 */
-   d1->length = n1;
-   d2->length = n2;
-   d1->limbs = B->limbs;
-   d2->limbs = B->limbs;
-   d1->coeffs = B->coeffs + n2*(B->limbs+1);
-   d2->coeffs = B->coeffs;
    
-   if (A->length <= n1+2*n2-1)
+   _fmpz_poly_attach_shifted(d1, B, n2);
+   _fmpz_poly_attach_truncate(d2, B, n2);
+   _fmpz_poly_attach_shifted(d3, B, n1);
+   _fmpz_poly_attach_truncate(d4, B, n1);
+   
+   if (A->length <= n2 + B->length - 1)
    {
-      temp->length = A->length - (n1+n2-1);
-      temp->limbs = A->limbs;
-      temp->coeffs = A->coeffs + (n1+n2-1)*(A->limbs+1);
-      _fmpz_poly_stack_init(p1, temp->length+n1-1, A->limbs);
-      _fmpz_poly_left_shift(p1, temp, n1-1);
-      p1->length = temp->length+n1-1;
+      /*
+         If A->length <= B->length + n2 - 1
+         then only a single quotient is needed
+         We do a division of at most 2*n2 - 1
+         terms by n2 terms yielding a quotient of
+         at most n2 terms 
+      */
+      
+      // Set p1 to be A without the last
+      // n1 coefficients
+      // 2*n2-1 >= p1->length > 0
+      
+      fmpz_poly_init(p1);
+      fmpz_poly_fit_length(p1, A->length-n1);
+      fmpz_poly_fit_limbs(p1, A->limbs);
+      _fmpz_poly_right_shift(p1, A, n1);
+      
+      // Since A was normalised, then p1 will be
+      // d3 is the leading terms of B and so must be normalised
+      // d3 is length n2, so we get at most n2 terms in the quotient
       
       fmpz_poly_init(d1q1);
-      _fmpz_poly_normalise(p1);
-      fmpz_poly_div_bisection_recursive(Q, d1q1, p1, d1); //******************************
-      _fmpz_poly_stack_clear(p1);
-
-      _fmpz_poly_stack_init(d2q1, d2->length+Q->length-1, d2->limbs+Q->limbs+1); 
-      __fmpz_poly_mul_lead(d2q1, d2, Q);
+      fmpz_poly_div_bisection_recursive(Q, d1q1, p1, d3); 
+      fmpz_poly_clear(p1);
       
-      fmpz_poly_fit_limbs(BQ, FLINT_MAX(d1q1->limbs, d2q1->limbs));
-      fmpz_poly_fit_length(BQ, n2+d1q1->length);
-      _fmpz_poly_zero_coeffs(BQ, n2);
-      BQ->length = n2+d1q1->length;
+      /*
+         Compute d2q1 = Q*d4
+         It is of length at most n1+n2-1 terms
+      */
       
-      temp->length = d1q1->length;
-      temp->limbs = BQ->limbs;
-      temp->coeffs = BQ->coeffs + n2*(BQ->limbs+1);
-      _fmpz_poly_set(temp, d1q1);  
-      _fmpz_poly_add(BQ, BQ, d2q1);
-   
-      _fmpz_poly_stack_clear(d2q1);
+      fmpz_poly_init(d2q1);
+      fmpz_poly_mul(d2q1, Q, d4);
+      
+      /*
+         Compute BQ = d1q1*x^n1 + d2q1
+         It has length at most n1+2*n2-1
+      */
+      
+      fmpz_poly_fit_length(BQ, FLINT_MAX(d1q1->length+n1, d2q1->length));
+      fmpz_poly_fit_limbs(BQ, FLINT_MAX(d1q1->limbs, d2q1->limbs)+1);
+      _fmpz_poly_left_shift(BQ, d1q1, n1);
       fmpz_poly_clear(d1q1);
+      _fmpz_poly_add(BQ, BQ, d2q1);
+      fmpz_poly_clear(d2q1);
             
       return;   
-   } else
-   {
-   /* 
-      We let A = a1*x^(3n-1) + a2*x^(2n-1) + a3 
-      where a1 and a2 are length n and a3 is length 2n-1 
-      We set p1 = a1*x^(n-1), so it has length 2n-1
-   */
-   /* 
-      We let A = a1*x^(n1+2*n2-1) + a2*x^(n1+n2-1) + a3 
-      where a1 is length n1 and a2 is length n2 and a3 is length n1+n2-1 
-      We set p1 = a1*x^(n2-1), so it has length n1+n2-1
-   */
-      temp->length = A->length - (n1+2*n2-1);
-      temp->limbs = A->limbs;
-      temp->coeffs = A->coeffs + (n1+2*n2-1)*(A->limbs+1);
-      _fmpz_poly_stack_init(p1, temp->length+n1-1, A->limbs);
-      _fmpz_poly_left_shift(p1, temp, n1-1);
-      p1->length = temp->length+n1-1;
+   } 
    
+   if (A->length > 2*B->length - 1)
+   {
+      // We shift A right until it is length 2*B->length -1
+      // We call this polynomial p1
+      
+      unsigned long shift = A->length - 2*B->length + 1;
+      _fmpz_poly_attach_shifted(p1, A, shift);
+      
       /* 
-         Set q1 to p1 div d1 
-         This is an 2n-1 by n division so 
-         q1 ends up being length n
-         d1q1 = d1*q1 is length 2n-1
+         Set q1 to p1 div B 
+         This is a 2*B->length-1 by B->length division so 
+         q1 ends up being at most length B->length
+         d1q1 = d1*q1 is length at most 2*B->length-1
       */
-      /* 
-         Set q1 to p1 div d1 
-         This is a 2*n1-1 by n1 division so 
-         q1 ends up being length n1
-         d1q1 = d1*q1 is length 2*n1-1
-      */
+      
       fmpz_poly_init(d1q1);
       fmpz_poly_init(q1);
+      
+      fmpz_poly_div_bisection_recursive(q1, d1q1, p1, B); 
+       
+      /* 
+         Compute dq1 = d1*q1*x^shift
+         dq1 is then of length at most A->length
+         dq1 is normalised since d1q1 was
+      */
    
-      _fmpz_poly_normalise(p1);
-      fmpz_poly_div_bisection_recursive(q1, d1q1, p1, d1); //******************************
-      _fmpz_poly_stack_clear(p1);   
-   }
+      fmpz_poly_init(dq1);
+      
+      fmpz_poly_fit_length(dq1, d1q1->length + shift);
+      fmpz_poly_fit_limbs(dq1, d1q1->limbs);
+      _fmpz_poly_left_shift(dq1, d1q1, shift);
+      fmpz_poly_clear(d1q1);
+      
+      /*
+         Compute t = A - dq1 
+         The first B->length coefficients cancel
+         if the division is exact, leaving
+          A->length - B->length significant terms
+         otherwise we truncate at this length 
+      */
    
+      fmpz_poly_init(t);
+      fmpz_poly_sub(t, A, dq1);
+      _fmpz_poly_truncate(t, A->length - B->length);
+      
+      /*
+         Compute q2 = t div B
+         It is a smaller division than the original 
+         since t->length <= A->length-B->length
+      */
+   
+      fmpz_poly_init(q2);
+      fmpz_poly_init(dq2);
+      fmpz_poly_div_bisection_recursive(q2, dq2, t, B); 
+      fmpz_poly_clear(t);  
+      
+      /*
+         Write out Q = q1*x^shift + q2
+         Q has length at most B->length+shift
+         Note q2 has length at most shift since 
+         at most it is an A->length-B->length 
+         by B->length division
+      */
+   
+      fmpz_poly_fit_length(Q, FLINT_MAX(q1->length+shift, q2->length));
+      fmpz_poly_fit_limbs(Q, FLINT_MAX(q1->limbs, q2->limbs));
+   
+      _fmpz_poly_left_shift(Q, q1, shift);
+      fmpz_poly_clear(q1);
+      _fmpz_poly_add(Q, Q, q2);
+      fmpz_poly_clear(q2);
+      
+      /*
+         Write out BQ = dq1 + dq2
+      */
+      
+      fmpz_poly_fit_length(BQ, FLINT_MAX(dq1->length, dq2->length));
+      fmpz_poly_fit_limbs(BQ, FLINT_MAX(dq1->limbs, dq2->limbs)+1);
+      
+      _fmpz_poly_add(BQ, dq1, dq2);
+      fmpz_poly_clear(dq1);
+      fmpz_poly_clear(dq2);
+      
+      return;
+   } 
+   
+   // n2 + B->length - 1 < A->length <= n1 + n2 + B->length - 1
+    
    /* 
-      Compute d2q1 = d2*q1 
-      which ends up being length 2n-1
+      We let A = a1*x^(n1+2*n2-1) + a2*x^(n1+n2-1) + a3 
+      where a1 is length at most n1 (and at least 1), 
+      a2 is length n2 and a3 is length n1+n2-1 
+      We set p1 = a1*x^(n1-1)+ other terms, so it has 
+      length at most 2*n1-1 
    */
+      
+   _fmpz_poly_stack_init(p1, A->length-2*n2, A->limbs);
+   _fmpz_poly_right_shift(p1, A, 2*n2);
+      
+   /* 
+      Set q1 to p1 div d1 
+      This is at most a 2*n1-1 by n1 division so 
+      q1 ends up being at most length n1
+      d1q1 = d1*q1 is length at most 2*n1-1
+   */
+      
+   fmpz_poly_init(d1q1);
+   fmpz_poly_init(q1);
+   fmpz_poly_div_bisection_recursive(q1, d1q1, p1, d1); 
+   _fmpz_poly_stack_clear(p1);   
+   
    /* 
       Compute d2q1 = d2*q1 
-      which ends up being length n1+n2-1
+      which ends up being at most length n1+n2-1
    */  
    
-   _fmpz_poly_stack_init(d2q1, d2->length+q1->length-1, d2->limbs+q1->limbs+1); 
-   __fmpz_poly_mul_lead(d2q1, d2, q1);
+   fmpz_poly_init(d2q1);
+   fmpz_poly_mul(d2q1, d2, q1);
    
-   /* 
-      Compute dq1 = d1*q1*x^n + d2*q1
-      dq1 is then of length 3n-1
-   */
    /* 
       Compute dq1 = d1*q1*x^n2 + d2*q1
-      dq1 is then of length 2*n1+n2-1
+      dq1 is then of length at most 2*n1+n2-1
    */
    
-   
-   _fmpz_poly_stack_init(dq1, FLINT_MAX(d1q1->length + n2, d2q1->length), B->limbs+q1->limbs+1);
-   
-   _fmpz_poly_zero_coeffs(dq1, n2);
-   dq1->length = d1q1->length + n2;
-   temp->length = d1q1->length;
-   temp->limbs = dq1->limbs;
-   temp->coeffs = dq1->coeffs + n2*(dq1->limbs+1);
-   _fmpz_poly_set(temp, d1q1);
+   _fmpz_poly_stack_init(dq1, FLINT_MAX(d1q1->length + n2, d2q1->length), FLINT_MAX(d1q1->limbs, d2q1->limbs)+1);
+   _fmpz_poly_left_shift(dq1, d1q1, n2);
    fmpz_poly_clear(d1q1);
    _fmpz_poly_add(dq1, dq1, d2q1);
+   fmpz_poly_clear(d2q1);
    
    /*
-      Compute t = p1*x^(2n-1) + p2*x^(n-1) - dq1
-      which has length 3*n-1, but the first
-      n coefficients will be 0, so it has 
-      effective length 2n-1
-   */
-   /*
-      Compute t = p1*x^(n1+n2-1) + p2*x^(n1-1) - dq1 (shifted left by 1 if n1 > n2)
-      which has length 2*n1+n2-1, but we are not interested 
-      in the first n1 coefficients, so it has 
-      effective length n1+n2-1
+      Compute t = p1*x^(n1+n2-1) + p2*x^(n1-1) - dq1
+      which has length at most 2*n1+n2-1, but we are not interested 
+      in up to the first n1 coefficients, so it has 
+      effective length at most n1+n2-1
    */
    
-   temp->length = A->length - (n1+n2-1);
-   temp->limbs = A->limbs;
-   temp->coeffs = A->coeffs + (n1+n2-1)*(A->limbs+1);
-   _fmpz_poly_stack_init(t, 2*n1+n2-1, FLINT_MAX(A->limbs,dq1->limbs)+1);
-   _fmpz_poly_left_shift(t, temp, n1-1);
-   t->length = temp->length+n1-1;
+   _fmpz_poly_stack_init(t, FLINT_MAX(A->length-n2, dq1->length), FLINT_MAX(A->limbs, dq1->limbs)+1);
+   _fmpz_poly_right_shift(t, A, n2);
    _fmpz_poly_sub(t, t, dq1);
-   _fmpz_poly_normalise(t); 
-     
+   _fmpz_poly_truncate(t, B->length - 1);
+   
    /*
       Compute q2 = t div d1
-      It is a 2*n-1 by n division, so
-      the length of q2 will be n
-      Also compute d1q2 of length 2n-1
+      It is at most an n1+n2-1 by n1 division, so
+      the length of q2 will be at most n2
+      Also compute d1q2 of length at most n1+n2-1
    */
-   /*
-      Compute q2 = t div d1
-      It is a n1+n2-1 by n1 division, so
-      the length of q2 will be n2
-      Also compute d1q2 of length n1+n2-1
-   */
+   
    fmpz_poly_init(d1q2);
    fmpz_poly_init(q2);
-   _fmpz_poly_normalise(t);
-   fmpz_poly_div_bisection_recursive(q2, d1q2, t, d1); //******************************
+   fmpz_poly_div_bisection_recursive(q2, d1q2, t, d1); 
    _fmpz_poly_stack_clear(t);
       
    /*
-      Compute d1*q2*x^n2
+      Compute d2q2 = d2*q2 which is of length 
+      at most n1+n2-1
    */
-   _fmpz_poly_stack_init(dq2, d1q2->length+n2, B->limbs+q2->limbs+2);
-   _fmpz_poly_zero_coeffs(dq2, n2);
-   dq2->length = d1q2->length+n2;
-   temp->length = d1q2->length;
-   temp->limbs = dq2->limbs;
-   temp->coeffs = dq2->coeffs + n2*(dq2->limbs+1);
-   _fmpz_poly_set(temp, d1q2);
-   fmpz_poly_clear(d1q2);
    
-   /* 
-      Compute dq2 = d1*q2*x^n2 + d2*q2
-      dq2 has length 2*n1+n2-1
+   fmpz_poly_init(d2q2);
+   fmpz_poly_mul(d2q2, d2, q2);
+   
+   /*
+      Compute dq2 = d1*q2*x^n2 + d2q2
+      which is of length at most n1+2*n2-1
    */
-   _fmpz_poly_stack_init(d2q2, d2->length+q2->length-1, d2->limbs+q2->limbs+1);
-   __fmpz_poly_mul_lead(d2q2, d2, q2);
+   
+   _fmpz_poly_stack_init(dq2, FLINT_MAX(d1q2->length+n2, d2q2->length), FLINT_MAX(d1q2->limbs, d2q2->limbs)+1);
+   _fmpz_poly_left_shift(dq2, d1q2, n2);
+   fmpz_poly_clear(d1q2);
    _fmpz_poly_add(dq2, dq2, d2q2);
-   _fmpz_poly_stack_clear(d2q2);
+   fmpz_poly_clear(d2q2);
    
    /*
       Write out Q = q1*x^n2 + q2
-      Q has length n1+n2
+      Q has length at most n1+n2
    */
-   fmpz_poly_fit_length(Q, q1->length+n2);
+   
+   fmpz_poly_fit_length(Q, FLINT_MAX(q1->length+n2, q2->length));
    fmpz_poly_fit_limbs(Q, FLINT_MAX(q1->limbs, q2->limbs));
-   _fmpz_poly_set(Q, q2);
-   fmpz_poly_clear(q2);
-   Q->length = q1->length + n2;
-   temp->length = q1->length;
-   temp->limbs = Q->limbs;
-   temp->coeffs = Q->coeffs + n2*(Q->limbs+1);
-   _fmpz_poly_set(temp, q1);
+   _fmpz_poly_left_shift(Q, q1, n2);
    fmpz_poly_clear(q1);
+   _fmpz_poly_add(Q, Q, q2);
+   fmpz_poly_clear(q2);
+   
    /*
       Write out BQ = dq1*x^n2 + dq2
-      BQ has length 4n-1
+      BQ has length at most 2*(n1+n2)-1
    */
-   /*
-      Write out BQ = dq1*x^n2 + dq2
-      BQ has length 2*(n1+n2)-1
-   */
+   
+   fmpz_poly_fit_length(BQ, FLINT_MAX(n2+dq1->length, dq2->length));
    fmpz_poly_fit_limbs(BQ, FLINT_MAX(dq1->limbs, dq2->limbs)+1);
-   fmpz_poly_fit_length(BQ, n2+dq1->length);
-   _fmpz_poly_zero_coeffs(BQ, n2);
-   BQ->length = n2+dq1->length;
-   temp->length = dq1->length;
-   temp->limbs = BQ->limbs;
-   temp->coeffs = BQ->coeffs + n2*(BQ->limbs+1);
-   _fmpz_poly_set(temp, dq1);  
+   _fmpz_poly_left_shift(BQ, dq1, n2);
    _fmpz_poly_add(BQ, BQ, dq2);
    
    _fmpz_poly_stack_clear(dq2);
    _fmpz_poly_stack_clear(dq1);
-   _fmpz_poly_stack_clear(d2q1);
 }
 
 /*
@@ -4880,8 +4934,23 @@ void fmpz_poly_div_bisection_recursive_low(fmpz_poly_t Q, fmpz_poly_t BQ, const 
       return;
    }
    
-   if (A->length > 2*B->length - 1)
+   // A->length is now >= B->length
+   
+   unsigned long crossover = 16;
+   unsigned long crossover2 = 128;
+   
+   if (B->limbs > 16) crossover = 8;
+   if ((B->length <= 12) && (B->limbs > 8)) crossover = 8;
+   
+   if ((B->length <= crossover) 
+   || ((A->length > 2*B->length - 1) && (A->length < crossover2)))
    {
+      /*
+         Use the classical algorithm to compute the
+         quotient and low half of the remainder, then 
+         truncate A-R to compute BQ
+      */
+      
       fmpz_poly_t Rb;
       fmpz_poly_init(Rb);
       fmpz_poly_divrem_classical_low(Q, Rb, A, B);
@@ -4889,273 +4958,273 @@ void fmpz_poly_div_bisection_recursive_low(fmpz_poly_t Q, fmpz_poly_t BQ, const 
       fmpz_poly_fit_limbs(BQ, FLINT_MAX(A->limbs, Rb->limbs)+1);
       _fmpz_poly_sub(BQ, A, Rb);
       fmpz_poly_clear(Rb);
-      
-      for (unsigned long i = B->length - 1; i < BQ->length; i++)
-      {
-         BQ->coeffs[i*(BQ->limbs+1)] = 0;
-      }
-      _fmpz_poly_normalise(BQ);
+      _fmpz_poly_truncate(BQ, B->length - 1);
       
       return;
    }
    
-   fmpz_poly_t temp;
-   
-   unsigned long crossover = 16;
-   
-   if (B->limbs > 16)  crossover = 8;
-   if ((B->length <= 12) && (B->limbs > 8)) crossover = 8;
-
-   if (B->length <= crossover)
-   {
-      fmpz_poly_t Rb;
-      fmpz_poly_init(Rb);
-      fmpz_poly_divrem_classical_low(Q, Rb, A, B); //<- Crashes: Rb ends up with length 1 too many
-      fmpz_poly_fit_length(BQ, B->length - 1);
-      fmpz_poly_fit_limbs(BQ, FLINT_MAX(A->limbs, Rb->limbs)+1);
-      temp->limbs = A->limbs;
-      temp->length = B->length - 1;
-      temp->coeffs = A->coeffs;
-      _fmpz_poly_sub(BQ, temp, Rb);
-      fmpz_poly_clear(Rb);
-      _fmpz_poly_normalise(BQ);
-      
-      return;
-   }
-   
-   fmpz_poly_t d1, d2, d3, d4, p1, q1, q2, dq1, dq2, d1q1, d2q1, d2q2, d1q2, t;
+   fmpz_poly_t d1, d2, d3, d4, p1, q1, q2, dq1, dq2, d1q1, d2q1, d2q2, d1q2, t, temp;
    
    unsigned long n1 = (B->length+1)/2;
    unsigned long n2 = B->length - n1;
    
    /* We let B = d1*x^n2 + d2 */
-   d1->length = n1;
-   d2->length = n2;
-   d1->limbs = B->limbs;
-   d2->limbs = B->limbs;
-   d1->coeffs = B->coeffs + n2*(B->limbs+1);
-   d2->coeffs = B->coeffs;
    
-   d3->length = n2;
-   d4->length = n1;
-   d3->limbs = B->limbs;
-   d4->limbs = B->limbs;
-   d3->coeffs = B->coeffs + n1*(B->limbs+1);
-   d4->coeffs = B->coeffs;
+   _fmpz_poly_attach_shifted(d1, B, n2);
+   _fmpz_poly_attach_truncate(d2, B, n2);
+   _fmpz_poly_attach_shifted(d3, B, n1);
+   _fmpz_poly_attach_truncate(d4, B, n1);
    
-   if (A->length <= n1+2*n2-1)
+   if (A->length <= n2 + B->length - 1)
    {
-      temp->length = A->length - (n1+n2-1);
-      temp->limbs = A->limbs;
-      temp->coeffs = A->coeffs + (n1+n2-1)*(A->limbs+1);
-      _fmpz_poly_stack_init(p1, temp->length+n2-1, A->limbs);
-      _fmpz_poly_left_shift(p1, temp, n2-1);
-      p1->length = temp->length+n2-1;
+      /*
+         If A->length <= B->length + n2 - 1
+         then only a single quotient is needed
+         We do a division of at most 2*n2 - 1
+         terms by n2 terms yielding a quotient of
+         at most n2 terms 
+      */
+      
+      // Set p1 to be A without the last
+      // n1 coefficients
+      // 2*n2-1 >= p1->length > 0
+      
+      fmpz_poly_init(p1);
+      fmpz_poly_fit_length(p1, A->length-n1);
+      fmpz_poly_fit_limbs(p1, A->limbs);
+      _fmpz_poly_right_shift(p1, A, n1);
+      
+      // Since A was normalised, then p1 will be
+      // d3 is the leading terms of B and so must be normalised
+      // d3 is length n2, so we get at most n2 terms in the quotient
+      // We compute only the low n2-1 terms of the product d1q1
       
       fmpz_poly_init(d1q1);
-      _fmpz_poly_normalise(p1);
-      fmpz_poly_div_bisection_recursive_low(Q, d1q1, p1, d3); //******************************
-      _fmpz_poly_stack_clear(p1);
-
-      _fmpz_poly_stack_init(d2q1, d4->length+Q->length-1, d2->limbs+Q->limbs+1); 
-      __fmpz_poly_mul_lead(d2q1, d4, Q);
+      fmpz_poly_div_bisection_recursive_low(Q, d1q1, p1, d3); 
+      fmpz_poly_clear(p1);
       
+      /*
+         Compute d2q1 = Q*d4
+         It is of length at most n1+n2-1 terms
+      */
+      
+      fmpz_poly_init(d2q1);
+      fmpz_poly_mul(d2q1, Q, d4);
+      
+      /*
+         Compute BQ = d1q1*x^n1 + d2q1
+         It has length at most n1+n2-1
+      */
+      
+      fmpz_poly_fit_length(BQ, FLINT_MAX(d1q1->length+n1, d2q1->length));
       fmpz_poly_fit_limbs(BQ, FLINT_MAX(d1q1->limbs, d2q1->limbs)+1);
-      fmpz_poly_fit_length(BQ, FLINT_MAX(n1+d1q1->length, d2q1->length));
-      _fmpz_poly_zero_coeffs(BQ, n1);
-      BQ->length = n1+d1q1->length;
-      
-      temp->length = d1q1->length;
-      temp->limbs = BQ->limbs;
-      temp->coeffs = BQ->coeffs + n1*(BQ->limbs+1);
-      _fmpz_poly_set(temp, d1q1);  
-      _fmpz_poly_add(BQ, BQ, d2q1);
-   
-      _fmpz_poly_stack_clear(d2q1);
+      _fmpz_poly_left_shift(BQ, d1q1, n1);
       fmpz_poly_clear(d1q1);
+      _fmpz_poly_add(BQ, BQ, d2q1);
+      fmpz_poly_clear(d2q1);
             
       return;   
-   } else
-   {
-   /* 
-      We let A = a1*x^(3n-1) + a2*x^(2n-1) + a3 
-      where a1 and a2 are length n and a3 is length 2n-1 
-      We set p1 = a1*x^(n-1), so it has length 2n-1
-   */
-   /* 
-      We let A = a1*x^(n1+2*n2-1) + a2*x^(n1+n2-1) + a3 
-      where a1 is length n1 and a2 is length n2 and a3 is length n1+n2-1 
-      We set p1 = a1*x^(n2-1), so it has length n1+n2-1
-   */
-      temp->length = A->length - (n1+2*n2-1);
-      temp->limbs = A->limbs;
-      temp->coeffs = A->coeffs + (n1+2*n2-1)*(A->limbs+1);
-      _fmpz_poly_stack_init(p1, temp->length+n1-1, A->limbs);
-      _fmpz_poly_left_shift(p1, temp, n1-1);
-      p1->length = temp->length+n1-1;
+   } 
    
+   if (A->length > 2*B->length - 1)
+   {
+      // We shift A right until it is length 2*B->length - 1
+      // We call this polynomial p1
+      
+      unsigned long shift = A->length - 2*B->length + 1;
+      _fmpz_poly_attach_shifted(p1, A, shift);
+      
       /* 
-         Set q1 to p1 div d1 
-         This is an 2n-1 by n division so 
-         q1 ends up being length n
-         d1q1 = d1*q1 is length 2n-1
+         Set q1 to p1 div B 
+         This is a 2*B->length-1 by B->length division so 
+         q1 ends up being at most length B->length
+         d1q1 = d1*q1 is truncated to length at most B->length-1
       */
-      /* 
-         Set q1 to p1 div d1 
-         This is a 2*n1-1 by n1 division so 
-         q1 ends up being length n1
-         d1q1 = d1*q1 is length 2*n1-1
-      */
+      
       fmpz_poly_init(d1q1);
       fmpz_poly_init(q1);
+      
+      fmpz_poly_div_bisection_recursive_low(q1, d1q1, p1, B); 
+       
+      /* 
+         Compute dq1 = d1*q1*x^shift
+         dq1 is then of length at most A->length - B->length
+         dq1 is normalised since d1q1 was
+      */
    
-      _fmpz_poly_normalise(p1);
-      fmpz_poly_div_bisection_recursive(q1, d1q1, p1, d1); //******************************
-      _fmpz_poly_stack_clear(p1);   
-   }
+      fmpz_poly_init(dq1);
+      
+      fmpz_poly_fit_length(dq1, d1q1->length + shift);
+      fmpz_poly_fit_limbs(dq1, d1q1->limbs);
+      _fmpz_poly_left_shift(dq1, d1q1, shift);
+      fmpz_poly_clear(d1q1);
+      
+      /*
+         Compute t = A - dq1 
+         We truncate, leaving at most A->length - B->length 
+         significant terms
+      */
    
+      fmpz_poly_init(t);
+      fmpz_poly_sub(t, A, dq1);
+      _fmpz_poly_truncate(t, A->length - B->length);
+      
+      /*
+         Compute q2 = t div B
+         It is a smaller division than the original 
+         since t->length <= A->length-B->length
+         dq2 has length at most B->length - 1
+      */
+   
+      fmpz_poly_init(q2);
+      fmpz_poly_init(dq2);
+      fmpz_poly_div_bisection_recursive_low(q2, dq2, t, B); 
+      fmpz_poly_clear(t);  
+      
+      /*
+         Write out Q = q1*x^shift + q2
+         Q has length at most B->length+shift
+         Note q2 has length at most shift since 
+         at most it is an A->length-B->length 
+         by B->length division
+      */
+   
+      fmpz_poly_fit_length(Q, FLINT_MAX(q1->length+shift, q2->length));
+      fmpz_poly_fit_limbs(Q, FLINT_MAX(q1->limbs, q2->limbs));
+   
+      _fmpz_poly_left_shift(Q, q1, shift);
+      fmpz_poly_clear(q1);
+      _fmpz_poly_add(Q, Q, q2);
+      fmpz_poly_clear(q2);
+      
+      /*
+         Write out BQ = dq1 + dq2
+      */
+      
+      fmpz_poly_fit_length(BQ, FLINT_MAX(dq1->length, dq2->length));
+      fmpz_poly_fit_limbs(BQ, FLINT_MAX(dq1->limbs, dq2->limbs)+1);
+      
+      _fmpz_poly_add(BQ, dq1, dq2);
+      _fmpz_poly_truncate(BQ, B->length - 1);
+      fmpz_poly_clear(dq1);
+      fmpz_poly_clear(dq2);
+      
+      return;
+   } 
+   
+   // n2 + B->length - 1 < A->length <= n1 + n2 + B->length - 1
+    
    /* 
-      Compute d2q1 = d2*q1 
-      which ends up being length 2n-1
+      We let A = a1*x^(n1+2*n2-1) + a2*x^(n1+n2-1) + a3 
+      where a1 is length at most n1 (and at least 1), 
+      a2 is length n2 and a3 is length n1+n2-1 
+      We set p1 = a1*x^(n1-1)+ other terms, so it has 
+      length at most 2*n1-1 
    */
+      
+   _fmpz_poly_stack_init(p1, A->length-2*n2, A->limbs);
+   _fmpz_poly_right_shift(p1, A, 2*n2);
+      
+   /* 
+      Set q1 to p1 div d1 
+      This is at most a 2*n1-1 by n1 division so 
+      q1 ends up being at most length n1
+      d1q1 = d1*q1 is truncated to length at most n1-1
+   */
+      
+   fmpz_poly_init(d1q1);
+   fmpz_poly_init(q1);
+   fmpz_poly_div_bisection_recursive_low(q1, d1q1, p1, d1); 
+   _fmpz_poly_stack_clear(p1);   
+   
    /* 
       Compute d2q1 = d2*q1 
-      which ends up being length n1+n2-1
+      which ends up being at most length n1+n2-1
    */  
    
-   _fmpz_poly_stack_init(d2q1, d2->length+q1->length-1, d2->limbs+q1->limbs+1); 
-   __fmpz_poly_mul_lead(d2q1, d2, q1);
+   fmpz_poly_init(d2q1);
+   fmpz_poly_mul(d2q1, d2, q1);
    
-   /* 
-      Compute dq1 = d1*q1*x^n + d2*q1
-      dq1 is then of length 3n-1
-   */
    /* 
       Compute dq1 = d1*q1*x^n2 + d2*q1
-      dq1 is then of length 2*n1+n2-1
+      dq1 is then of length at most n1+n2-1
    */
    
-   
-   _fmpz_poly_stack_init(dq1, FLINT_MAX(d1q1->length + n2, d2q1->length), B->limbs+q1->limbs+1);
-   
-   _fmpz_poly_zero_coeffs(dq1, n2);
-   dq1->length = d1q1->length + n2;
-   temp->length = d1q1->length;
-   temp->limbs = dq1->limbs;
-   temp->coeffs = dq1->coeffs + n2*(dq1->limbs+1);
-   _fmpz_poly_set(temp, d1q1);
+   _fmpz_poly_stack_init(dq1, FLINT_MAX(d1q1->length + n2, d2q1->length), FLINT_MAX(d1q1->limbs, d2q1->limbs)+1);
+   _fmpz_poly_left_shift(dq1, d1q1, n2);
    fmpz_poly_clear(d1q1);
    _fmpz_poly_add(dq1, dq1, d2q1);
+   fmpz_poly_clear(d2q1);
    
    /*
-      Compute t = p1*x^(2n-1) + p2*x^(n-1) - dq1
-      which has length 3*n-1, but the first
-      n coefficients will be 0, so it has 
-      effective length 2n-1
-   */
-   /*
-      Compute t = p1*x^(n1+n2-1) + p2*x^(n1-1) - dq1 (shifted left by 1 if n1 > n2)
-      which has length 2*n1+n2-1, but we are not interested 
-      in the first n1 coefficients, so it has 
-      effective length n1+n2-1
+      Compute t = p1*x^(n1+n2-1) + p2*x^(n1-1) - dq1
+      which has length at most 2*n1+n2-1, but we are not interested 
+      in up to the first n1 coefficients, so it has 
+      effective length at most n1+n2-1
    */
    
-   temp->length = FLINT_MIN(A->length - (n1+n2-1), n2);
-   temp->limbs = A->limbs;
-   temp->coeffs = A->coeffs + (n1+n2-1)*(A->limbs+1);
-   _fmpz_poly_stack_init(t, 2*n1+n2-1, FLINT_MAX(A->limbs, dq1->limbs)+1);
-   _fmpz_poly_left_shift(t, temp, n2-1);
-   t->length = 2*n2-1;
-   temp->length = FLINT_MIN(dq1->length - (n1 - n2), 2*n2-1);
-   temp->limbs = dq1->limbs;
-   temp->coeffs = dq1->coeffs + (n1 - n2)*(dq1->limbs+1);
-   _fmpz_poly_sub(t, t, temp);
-   //t->length = 2*n2-1;
-   _fmpz_poly_normalise(t); 
-     
+   _fmpz_poly_stack_init(t, FLINT_MAX(A->length-n2, dq1->length), FLINT_MAX(A->limbs, dq1->limbs)+1);
+   _fmpz_poly_right_shift(t, A, n2);
+   _fmpz_poly_sub(t, t, dq1);
+   _fmpz_poly_truncate(t, B->length - 1);
+   
    /*
       Compute q2 = t div d1
-      It is a 2*n-1 by n division, so
-      the length of q2 will be n
-      Also compute d1q2 of length 2n-1
+      It is at most an n1+n2-1 by n1 division, so
+      the length of q2 will be at most n2
+      Also compute d1q2 truncated to length at most n1-1
    */
-   /*
-      Compute q2 = t div d1
-      It is a n1+n2-1 by n1 division, so
-      the length of q2 will be n2
-      Also compute d1q2 of length n1+n2-1
-   */
+   
    fmpz_poly_init(d1q2);
    fmpz_poly_init(q2);
-   _fmpz_poly_normalise(t);
-   fmpz_poly_div_bisection_recursive_low(q2, d1q2, t, d3); //******************************
+   fmpz_poly_div_bisection_recursive_low(q2, d1q2, t, d1); 
    _fmpz_poly_stack_clear(t);
       
    /*
-      Compute d1*q2*x^n1
+      Compute d2q2 = d2*q2 which is of length 
+      at most n1+n2-1
    */
-   _fmpz_poly_stack_init(dq2, FLINT_MAX(d1q2->length+n1, d4->length+q2->length-1), B->limbs+q2->limbs+2);
-   _fmpz_poly_zero_coeffs(dq2, n1);
-   dq2->length = d1q2->length+n1;
-   temp->length = d1q2->length;
-   temp->limbs = dq2->limbs;
-   temp->coeffs = dq2->coeffs + n1*(dq2->limbs+1);
-   _fmpz_poly_set(temp, d1q2);
-   fmpz_poly_clear(d1q2);
    
-   /* 
-      Compute dq2 = d1*q2*x^n1 + d2*q2
-      dq2 has length 2*n1+n2-1
+   fmpz_poly_init(d2q2);
+   fmpz_poly_mul(d2q2, d2, q2);
+   
+   /*
+      Compute dq2 = d1*q2*x^n2 + d2q2
+      which is of length at most n1+n2-1
    */
-   _fmpz_poly_stack_init(d2q2, d4->length+q2->length-1, d2->limbs+q2->limbs+1);
-   __fmpz_poly_mul_lead(d2q2, d4, q2);
+   
+   _fmpz_poly_stack_init(dq2, FLINT_MAX(d1q2->length+n2, d2q2->length), FLINT_MAX(d1q2->limbs, d2q2->limbs)+1);
+   _fmpz_poly_left_shift(dq2, d1q2, n2);
+   fmpz_poly_clear(d1q2);
    _fmpz_poly_add(dq2, dq2, d2q2);
-   _fmpz_poly_stack_clear(d2q2);
+   fmpz_poly_clear(d2q2);
    
    /*
       Write out Q = q1*x^n2 + q2
-      Q has length n1+n2
+      Q has length at most n1+n2
    */
-   fmpz_poly_fit_length(Q, q1->length+n2);
+   
+   fmpz_poly_fit_length(Q, FLINT_MAX(q1->length+n2, q2->length));
    fmpz_poly_fit_limbs(Q, FLINT_MAX(q1->limbs, q2->limbs));
-   _fmpz_poly_set(Q, q2);
-   fmpz_poly_clear(q2);
-   Q->length = q1->length + n2;
-   temp->length = q1->length;
-   temp->limbs = Q->limbs;
-   temp->coeffs = Q->coeffs + n2*(Q->limbs+1);
-   _fmpz_poly_set(temp, q1);
+   _fmpz_poly_left_shift(Q, q1, n2);
    fmpz_poly_clear(q1);
+   _fmpz_poly_add(Q, Q, q2);
+   fmpz_poly_clear(q2);
    
    /*
       Write out BQ = dq1*x^n2 + dq2
-      BQ has length 4n-1
+      BQ has length at most n1+2*n2-1
    */
-   /*
-      Write out BQ = dq1*x^n2 + dq2
-      BQ has length 2*(n1+n2)-1
-   */
-   fmpz_poly_fit_limbs(BQ, FLINT_MAX(dq1->limbs, dq2->limbs)+1);
+   
    fmpz_poly_fit_length(BQ, FLINT_MAX(n2+dq1->length, dq2->length));
-   _fmpz_poly_zero_coeffs(BQ, n2);
-   BQ->length = FLINT_MAX(n2+dq1->length, dq2->length);
-   temp->length = dq1->length;
-   temp->limbs = BQ->limbs;
-   temp->coeffs = BQ->coeffs + n2*(BQ->limbs+1);
-   _fmpz_poly_set(temp, dq1);  
+   fmpz_poly_fit_limbs(BQ, FLINT_MAX(dq1->limbs, dq2->limbs)+1);
+   _fmpz_poly_left_shift(BQ, dq1, n2);
    _fmpz_poly_add(BQ, BQ, dq2);
-   
-   for (unsigned long i = B->length - 1; i < BQ->length; i++)
-   {
-      BQ->coeffs[i*(BQ->limbs+1)] = 0;
-   }
-   _fmpz_poly_normalise(BQ);
+   _fmpz_poly_truncate(BQ, B->length - 1);
    
    _fmpz_poly_stack_clear(dq2);
    _fmpz_poly_stack_clear(dq1);
-   _fmpz_poly_stack_clear(d2q1);
 }
-
 
 void fmpz_poly_div_bisection(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t B)
 {
@@ -5166,174 +5235,235 @@ void fmpz_poly_div_bisection(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly
       return;
    }
 
+   // A->length is now >= B->length
+    
    unsigned long crossover = 16;
+   unsigned long crossover2 = 128;
    
-   if (B->limbs > 16)  crossover = 8;
+   if (B->limbs > 16) crossover = 8;
    if ((B->length <= 12) && (B->limbs > 8)) crossover = 8;
-
-   if ((B->length <= crossover) || (A->length > 2*B->length - 1))
+   
+   if ((B->length <= crossover) 
+   || ((A->length > 2*B->length - 1) && (A->length < crossover2)))
    {
       fmpz_poly_div_classical(Q, A, B);
       
       return;
    }
    
-   fmpz_poly_t d1, d2, p1, q1, q2, dq1, dq2, d1q1, d2q1, d2q2, d1q2, t, temp;
+   // B->length is now >= crossover (8 or 16)
+   
+   fmpz_poly_t d1, d2, d3, p1, q1, q2, dq1, dq2, d1q1, d2q1, d2q2, d1q2, t, temp;
       
    unsigned long n1 = (B->length+1)/2;
    unsigned long n2 = B->length - n1;
    
-   /* We let B = d1*x^n2 + d2 */
-   d1->length = n1;
-   d2->length = n2;
-   d1->limbs = B->limbs;
-   d2->limbs = B->limbs;
-   d1->coeffs = B->coeffs + n2*(B->limbs+1);
-   d2->coeffs = B->coeffs;
+   // n1 and n2 are at least 4
    
-   if (A->length <= n1+2*n2-1)
+   /* We let B = d1*x^n2 + d2 
+      d1 is of length n1 and
+      d2 of length n2
+   */
+
+   _fmpz_poly_attach_shifted(d1, B, n2);
+   _fmpz_poly_attach_truncate(d2, B, n2);
+   _fmpz_poly_attach_shifted(d3, B, n1);
+   
+   if (A->length <= n2 + B->length - 1)
    {
-      temp->length = A->length - (n1+n2-1);
-      temp->limbs = A->limbs;
-      temp->coeffs = A->coeffs + (n1+n2-1)*(A->limbs+1);
-      _fmpz_poly_stack_init(p1, temp->length+n1-1, A->limbs);
-      _fmpz_poly_left_shift(p1, temp, n1-1);
-      p1->length = temp->length+n1-1;
+      /*
+         If A->length <= B->length + n2 - 1
+         then only a single quotient is needed
+         We do a division of at most 2*n2 - 1
+         terms by n2 terms yielding a quotient of
+         at most n2 terms 
+      */
       
-      fmpz_poly_init(d1q1);
-      _fmpz_poly_normalise(p1);
-      fmpz_poly_div_bisection_recursive_low(Q, d1q1, p1, d1); //******************************
-      fmpz_poly_clear(d1q1);
-      _fmpz_poly_stack_clear(p1);
+      // Set p1 to be A without the last
+      // n1 coefficients
+      // 2*n2-1 >= p1->length > 0
+      
+      fmpz_poly_init(p1);
+      fmpz_poly_fit_length(p1, A->length-n1);
+      fmpz_poly_fit_limbs(p1, A->limbs);
+      _fmpz_poly_right_shift(p1, A, n1);
+      
+      // Since A was normalised, then p1 will be
+      // d3 is the leading terms of B and so must be normalised
+      // d3 is length n2, so we get at most n2 terms in the quotient
+      
+      fmpz_poly_div_bisection(Q, p1, d3); 
+      fmpz_poly_clear(p1);
             
       return;   
    } 
-   /* 
-      We let A = a1*x^(3n-1) + a2*x^(2n-1) + a3 
-      where a1 and a2 are length n and a3 is length 2n-1 
-      We set p1 = a1*x^(n-1), so it has length 2n-1
-   */
-   /* 
-      We let A = a1*x^(n1+2*n2-1) + a2*x^(n1+n2-1) + a3 
-      where a1 is length n1 and a2 is length n2 and a3 is length n1+n2-1 
-      We set p1 = a1*x^(n2-1), so it has length n1+n2-1
-   */
-      temp->length = A->length - (n1+2*n2-1);
-      temp->limbs = A->limbs;
-      temp->coeffs = A->coeffs + (n1+2*n2-1)*(A->limbs+1);
-      _fmpz_poly_stack_init(p1, temp->length+n1-1, A->limbs);
-      _fmpz_poly_left_shift(p1, temp, n1-1);
-      p1->length = temp->length+n1-1;
    
+   if (A->length > 2*B->length - 1)
+   {
+      // We shift A right until it is length 2*B->length -1
+      // We call this polynomial p1
+      
+      unsigned long shift = A->length - 2*B->length + 1;
+      _fmpz_poly_attach_shifted(p1, A, shift);
+      
       /* 
-         Set q1 to p1 div d1 
-         This is an 2n-1 by n division so 
-         q1 ends up being length n
-         d1q1 = d1*q1 is length 2n-1
+         Set q1 to p1 div B 
+         This is a 2*B->length-1 by B->length division so 
+         q1 ends up being at most length B->length
+         d1q1 = low(d1*q1) is length at most 2*B->length-1
+         We discard the lower B->length-1 terms
       */
-      /* 
-         Set q1 to p1 div d1 
-         This is a 2*n1-1 by n1 division so 
-         q1 ends up being length n1
-         d1q1 = d1*q1 is length 2*n1-1
-      */
+      
       fmpz_poly_init(d1q1);
       fmpz_poly_init(q1);
       
-      _fmpz_poly_normalise(p1);
-      fmpz_poly_div_bisection_recursive_low(q1, d1q1, p1, d1); //******************************
-      _fmpz_poly_stack_clear(p1);
+      fmpz_poly_div_bisection_recursive_low(q1, d1q1, p1, B); 
+       
+      /* 
+         Compute dq1 = d1*q1*x^shift
+         dq1 is then of length at most A->length
+         dq1 is normalised since d1q1 was
+      */
+   
+      fmpz_poly_init(dq1);
+      
+      fmpz_poly_fit_length(dq1, d1q1->length + shift);
+      fmpz_poly_fit_limbs(dq1, d1q1->limbs);
+      _fmpz_poly_left_shift(dq1, d1q1, shift);
+      fmpz_poly_clear(d1q1); 
+      
+      /*
+         Compute t = A - dq1 
+         The first B->length coefficients cancel
+         if the division is exact, leaving
+          A->length - B->length significant terms
+         otherwise we truncate at this length 
+      */
+   
+      fmpz_poly_init(t);
+      fmpz_poly_sub(t, A, dq1);
+      fmpz_poly_clear(dq1);
+      _fmpz_poly_truncate(t, A->length - B->length);
+      
+      /*
+         Compute q2 = t div B
+         It is a smaller division than the original 
+         since t->length <= A->length-B->length
+      */
+   
+      fmpz_poly_init(q2);
+      fmpz_poly_div_bisection(q2, t, B); 
+      fmpz_poly_clear(t);  
+      
+      /*
+         Write out Q = q1*x^shift + q2
+         Q has length at most B->length+shift
+         Note q2 has length at most shift since 
+         at most it is an A->length-B->length 
+         by B->length division
+      */
+   
+      fmpz_poly_fit_length(Q, FLINT_MAX(q1->length+shift, q2->length));
+      fmpz_poly_fit_limbs(Q, FLINT_MAX(q1->limbs, q2->limbs));
+   
+      _fmpz_poly_left_shift(Q, q1, shift);
+      fmpz_poly_clear(q1);
+      _fmpz_poly_add(Q, Q, q2);
+      fmpz_poly_clear(q2);
+      
+      return;
+   }
+   // We now have n2 + B->length - 1 < A->length <= 2*B->length - 1
    
    /* 
-      Compute d2q1 = d2*q1 
-      which ends up being length 2n-1
+      We let A = a1*x^(n1+2*n2-1) + a2*x^(n1+n2-1) + a3 
+      where a1 is length at most n1 and a2 is length n2 
+      and a3 is length n1+n2-1 
    */
+      
+      // Set p1 to a1*x^(n1-1) + other terms
+      // It has length at most 2*n1-1 and is normalised
+      // A->length >= 2*n2
+      
+      fmpz_poly_init(p1);
+      fmpz_poly_fit_length(p1, A->length - 2*n2);
+      fmpz_poly_fit_limbs(p1, A->limbs);
+      _fmpz_poly_right_shift(p1, A, 2*n2);
+      
+      /* 
+         Set q1 to p1 div d1 
+         This is at most a 2*n1-1 by n1 division so 
+         q1 ends up being at most length n1
+         d1q1 = low(d1*q1) is length at most n1-1
+         Thus we have discarded the leading n1 terms (at most)
+      */
+      
+      fmpz_poly_init(d1q1);
+      fmpz_poly_init(q1);
+      
+      fmpz_poly_div_bisection_recursive_low(q1, d1q1, p1, d1); 
+      fmpz_poly_clear(p1);
+   
    /* 
-      Compute d2q1 = d2*q1 
-      which ends up being length n1+n2-1
+      Compute d2q1 = d2*q1 with low n1 - 1 terms zeroed
+      d2*q1 is length at most n1+n2-1 leaving at most
+      n2 non-zero terms to the left
    */  
    
-   fmpz_poly_t temp2;
    _fmpz_poly_stack_init(d2q1, d2->length+q1->length-1, d2->limbs+q1->limbs+1); 
    _fmpz_poly_mul_trunc_left_n(d2q1, d2, q1, n1 - 1);
-    
-   /* 
-      Compute dq1 = d1*q1*x^n + d2*q1
-      dq1 is then of length 3n-1
-   */
+       
    /* 
       Compute dq1 = d1*q1*x^n2 + d2*q1
-      dq1 is then of length 2*n1+n2-1
+      dq1 is then of length at most 2*n1+n2-1
+      but may have any length below this        
    */
    
-   
    _fmpz_poly_stack_init(dq1, FLINT_MAX(d1q1->length + n2, d2q1->length), B->limbs+q1->limbs+1);
-   
-   _fmpz_poly_zero_coeffs(dq1, n2);
-   dq1->length = d1q1->length + n2;
-   temp->length = d1q1->length;
-   temp->limbs = dq1->limbs;
-   temp->coeffs = dq1->coeffs + n2*(dq1->limbs+1);
-   _fmpz_poly_set(temp, d1q1);
+   _fmpz_poly_left_shift(dq1, d1q1, n2);
    fmpz_poly_clear(d1q1); 
    _fmpz_poly_add(dq1, dq1, d2q1);
    
-   
    /*
-      Compute t = p1*x^(2n-1) + p2*x^(n-1) - dq1
-      which has length 3*n-1, but the first
-      n coefficients will be 0, so it has 
-      effective length 2n-1
-   */
-   /*
-      Compute t = p1*x^(n1+n2-1) + p2*x^(n1-1) - dq1 (shifted left by 1 if n1 > n2)
-      which has length 2*n1+n2-1, but we are not interested 
-      in the first n1 coefficients, so it has 
-      effective length n1+n2-1
+      Compute t = a1*x^(2*n2-1) + a2*x^(n2-1) - dq1 
+      after shifting dq1 to the right by (n1-n2)
+      which has length at most 2*n1+n2-1, but we 
+      discard up to n1 coefficients, so it has 
+      effective length 2*n2-1 with the last n2-1
+      coefficients ignored. Thus there are at most n2 
+      significant coefficients
    */
    
-   temp->length = A->length - (n1+n2-1);
-   temp->limbs = A->limbs;
-   temp->coeffs = A->coeffs + (n1+n2-1)*(A->limbs+1);
-   _fmpz_poly_stack_init(t, 2*n1+n2-1, FLINT_MAX(A->limbs,dq1->limbs)+1);
-   _fmpz_poly_left_shift(t, temp, n1-1);
-   t->length = temp->length+n1-1;
-   _fmpz_poly_sub(t, t, dq1);
-   t->length = n1+n2-1; 
-   _fmpz_poly_normalise(t); 
+   
+   _fmpz_poly_stack_init(t, n1+2*n2-1, FLINT_MAX(A->limbs,dq1->limbs)+1);
+   _fmpz_poly_right_shift(t, A, n1);
+   _fmpz_poly_attach_shifted(temp, dq1, n1-n2);
+   _fmpz_poly_sub(t, t, temp);
+   _fmpz_poly_truncate(t, 2*n2-1);
      
    /*
-      Compute q2 = t div d1
-      It is a 2*n-1 by n division, so
-      the length of q2 will be n
-      Also compute d1q2 of length 2n-1
+      Compute q2 = t div d3
+      It is at most a 2*n2-1 by n2 division, so
+      the length of q2 will be n2 at most
    */
-   /*
-      Compute q2 = t div d1
-      It is a n1+n2-1 by n1 division, so
-      the length of q2 will be n2
-      Also compute d1q2 of length n1+n2-1
-   */
+   
    fmpz_poly_init(q2);
-   fmpz_poly_div_bisection(q2, t, d1); 
+   fmpz_poly_div_bisection(q2, t, d3); 
    _fmpz_poly_stack_clear(t);  
    _fmpz_poly_stack_clear(dq1);
    _fmpz_poly_stack_clear(d2q1);
-      
+   
    /*
       Write out Q = q1*x^n2 + q2
       Q has length n1+n2
    */
+   
    fmpz_poly_fit_length(Q, q1->length+n2);
    fmpz_poly_fit_limbs(Q, FLINT_MAX(q1->limbs, q2->limbs));
-   _fmpz_poly_set(Q, q2);
-   fmpz_poly_clear(q2);
-   Q->length = q1->length + n2;
-   temp->length = q1->length;
-   temp->limbs = Q->limbs;
-   temp->coeffs = Q->coeffs + n2*(Q->limbs+1);
-   _fmpz_poly_set(temp, q1);
+   _fmpz_poly_left_shift(Q, q1, n2);
    fmpz_poly_clear(q1);
+   _fmpz_poly_add(Q, Q, q2);
+   fmpz_poly_clear(q2);
 }
 
 void fmpz_poly_divrem_bisection(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_poly_t A, const fmpz_poly_t B)
