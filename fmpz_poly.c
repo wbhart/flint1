@@ -5600,7 +5600,6 @@ void fmpz_poly_div_newton(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t 
    Mulder's short division algorithm
    
 ====================================================================================*/
-#define MULDERS_NEGATIVE 0
 
 // Mulders algorithm without improvements
 
@@ -5788,6 +5787,8 @@ void fmpz_poly_div_mulders(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t
       return;
    }
    
+   // Crossover must be at least 8 so that n2 is not zero
+   
    unsigned long crossover = 16;
    
    if (B->limbs > 16)  crossover = 8;
@@ -5808,132 +5809,107 @@ void fmpz_poly_div_mulders(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t
    
    fmpz_poly_t d1, d2, g1, g2, p1, q1, q2, dq1, dq2, d1q1, d2q1, d2q2, d1q2, t, temp;
       
-#if MULDERS_NEGATIVE
-   unsigned long n1 = (B->length+1)/2 - k; 
-#else
+   // We demand n2 not be zero, this holds since 
+   // crossover is at least 8
+   
    unsigned long n1 = (B->length+1)/2 + k; 
-#endif
    unsigned long n2 = B->length - n1; 
    
    /* We let B = d1*x^n2 + d2 */
-   d1->length = n1;
-   d2->length = n2;
-   g1->length = n2;
-   g2->length = n1;
-   d1->limbs = B->limbs;
-   d2->limbs = B->limbs;
-   g1->limbs = B->limbs;
-   g2->limbs = B->limbs;
-   d1->coeffs = B->coeffs + n2*(B->limbs+1);
-   d2->coeffs = B->coeffs;
-   g1->coeffs = B->coeffs + n1*(B->limbs+1);
-   g2->coeffs = B->coeffs;
+   
+   _fmpz_poly_attach_shifted(d1, B, n2);
+   _fmpz_poly_attach_truncate(d2, B, n2);
+   _fmpz_poly_attach_shifted(g1, B, n1);
+   _fmpz_poly_attach_truncate(g2, B, n1);
       
-   if (A->length <= 2*n1+n2-1) 
+   if (A->length <= n1 + B->length - 1) 
    {
-      temp->length = A->length - (n1+n2-1);
-      temp->limbs = A->limbs;
-      temp->coeffs = A->coeffs + (n1+n2-1)*(A->limbs+1);
-      _fmpz_poly_stack_init(p1, temp->length+n1-1, A->limbs);
-      _fmpz_poly_left_shift(p1, temp, n1-1);
-      p1->length = temp->length+n1-1;
+      /*
+         We only need a single division so we
+         shift and make a recursive call
+         Since n2 is not zero the size has been reduced
+      */
       
-      fmpz_poly_init(d1q1);
-      _fmpz_poly_normalise(p1);
-      fmpz_poly_div_bisection_recursive_low(Q, d1q1, p1, d1); //******************************
-      fmpz_poly_clear(d1q1);
+      _fmpz_poly_stack_init(p1, A->length - n2, A->limbs);
+      _fmpz_poly_right_shift(p1, A, n2);
+      
+      fmpz_poly_div_mulders(Q, p1, d1); 
       _fmpz_poly_stack_clear(p1);
       
       return;   
-   } else
-   {
-   /* 
-      We let A = a1*x^(2*n1+n2-1) + a2*x^(n1+n2-1) + a3 
-      where a1 is length n2 and a2 is length n1 and a3 is length n1+n2-1 
-      We set p1 = a1*x^(n2-1), so it has length 2*n2-1
-   */
-      
-      temp->length = A->length - (2*n1+n2-1);
-      temp->limbs = A->limbs;
-      temp->coeffs = A->coeffs + (2*n1+n2-1)*(A->limbs+1);
-      _fmpz_poly_stack_init(p1, temp->length+n2-1, A->limbs);
-      _fmpz_poly_left_shift(p1, temp, n2-1);
-      p1->length = temp->length+n2-1;
-      
-      /* 
-         Set q1 to p1 div g1 
-         This is a 2*n2-1 by n2 division so 
-         q1 ends up being length n2
-         g1q1 = g1*q1 is length 2*n2-1 but we retrieve only the low n2-1 terms
-      */
-      fmpz_poly_init(d1q1);
-      fmpz_poly_init(q1);
-      
-      _fmpz_poly_normalise(p1);
-      fmpz_poly_div_bisection_recursive_low(q1, d1q1, p1, g1); //******************************
-      _fmpz_poly_stack_clear(p1);
-   }
+   } 
    
    /* 
-      Compute g2q1 = g2*q1 
-      which ends up being length n1+n2-1 but we set the right most n2-1 terms to zero
+      We let A = a1*x^(2*n1+n2-1) + a2*x^(n1+n2-1) + a3 
+      where a1 is at most length n2 and a2 is length n1 
+      and a3 is length n1+n2-1 
+      We set p1 = a1*x^(n2-1) + other terms, so it has 
+      length at most 2*n2-1
+      A->length is at least 2*n1 + n2 - 1 which is at 
+      least the requisite 2*n1
+   */
+      
+   _fmpz_poly_stack_init(p1, A->length-2*n2, A->limbs);
+   _fmpz_poly_right_shift(p1, A, 2*n1);
+      
+   /* 
+      Set q1 to p1 div g1 
+      This is at most a 2*n2-1 by n2 division so 
+      q1 ends up being at most length n2
+      d1q1 = g1*q1 is length 2*n2-1 but we retrieve 
+      only the low n2-1 terms
+   */
+   
+   fmpz_poly_init(d1q1);
+   fmpz_poly_init(q1);
+      
+   fmpz_poly_div_bisection_recursive_low(q1, d1q1, p1, g1); 
+   _fmpz_poly_stack_clear(p1);
+   
+   /* 
+      Compute d2q1 = g2*q1 
+      which ends up being at most length n1+n2-1 but we set 
+      the right most n2-1 terms to zero
+      g2->length cannot be zero since it is d1
    */  
    
    _fmpz_poly_stack_init(d2q1, g2->length+q1->length-1, g2->limbs+q1->limbs+1); 
-   _fmpz_poly_normalise(q1);
    _fmpz_poly_mul_trunc_left_n(d2q1, g2, q1, n2 - 1);
      
    /* 
       Compute dq1 = g1*q1*x^n1 + g2*q1
-      dq1 is then of length n1+2*n2-1 but we have only the rightmost n1+n2-1 terms
+      dq1 is then of length n1+2*n2-1 but we have only 
+      the rightmost n1+n2-1 terms, the last n2-1 of 
+      which are irrelevant
    */
    
-   _fmpz_poly_stack_init(dq1, FLINT_MAX(d1q1->length + n1, d2q1->length), B->limbs+q1->limbs+1);
+   _fmpz_poly_stack_init(dq1, FLINT_MAX(d1q1->length + n1, d2q1->length), FLINT_MAX(d1q1->limbs, d2q1->limbs)+1);
    
-   _fmpz_poly_zero_coeffs(dq1, n1);
-   dq1->length = d1q1->length + n1;
-   temp->length = d1q1->length;
-   temp->limbs = dq1->limbs;
-   temp->coeffs = dq1->coeffs + n1*(dq1->limbs+1);
-   _fmpz_poly_set(temp, d1q1);
+   _fmpz_poly_left_shift(dq1, d1q1, n1);
    fmpz_poly_clear(d1q1);
    _fmpz_poly_add(dq1, dq1, d2q1);
    
    /*
       Compute t = p1*x^(n1+n2-1) + p2*x^(n2-1) - dq1 
+      where dq1 has been shifted left by (n1-n2),
       which has length 2*n1+n2-1, but we are not interested 
-      in the first n1 coefficients, so it has 
-      effective length n1+n2-1
+      in the first n2 coefficients, so it has 
+      effective length at most 2*n1-1
    */
    
-   temp->length = A->length - (n1+n2-1);
-   temp->limbs = A->limbs;
-   temp->coeffs = A->coeffs + (n1+n2-1)*(A->limbs+1);
-#if MULDERS_NEGATIVE
-   _fmpz_poly_stack_init(t, n1+2*n2-1, FLINT_MAX(A->limbs,dq1->limbs)+1);
-   _fmpz_poly_left_shift(t, temp, n2-1);
-   t->length = temp->length+n2-1;
-   _fmpz_poly_sub(t, t, dq1);
-   _fmpz_poly_right_shift(t, t, n2-n1);
-#else
-   _fmpz_poly_stack_init(t, 2*n1+n2-1, FLINT_MAX(A->limbs,dq1->limbs)+1);
-   _fmpz_poly_left_shift(t, temp, n1-1);
-   t->length = temp->length+n1-1;
-   temp->length = dq1->length;
-   temp->limbs = t->limbs;
-   temp->coeffs = t->coeffs + (n1-n2)*(t->limbs+1);
+   _fmpz_poly_stack_init(t, n1+B->length, FLINT_MAX(A->limbs,dq1->limbs)+1);
+   _fmpz_poly_right_shift(t, A, n2);
+   _fmpz_poly_attach_shifted(temp, t, n1-n2);
    _fmpz_poly_sub(temp, temp, dq1);
-#endif
-   t->length = 2*n1-1; 
-   _fmpz_poly_normalise(t); 
+   _fmpz_poly_truncate(t, 2*n1-1); 
      
    /*
       Compute q2 = t div d1
-      It is a 2*n1-1 by n1 division, so
-      the length of q2 will be n1
+      It is at most a 2*n1-1 by n1 division, so
+      the length of q2 will be at most n1
    */
+   
    fmpz_poly_init(q2);
-   _fmpz_poly_normalise(t);
    fmpz_poly_div_mulders(q2, t, d1); 
    _fmpz_poly_stack_clear(t);  
    _fmpz_poly_stack_clear(dq1);
@@ -5941,18 +5917,16 @@ void fmpz_poly_div_mulders(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t
       
    /*
       Write out Q = q1*x^n1 + q2
-      Q has length n1+n2
+      Q has length at most n1+n2
    */
-   fmpz_poly_fit_length(Q, q1->length+n1);
+   
+   fmpz_poly_fit_length(Q, FLINT_MAX(q1->length+n1, q2->length));
    fmpz_poly_fit_limbs(Q, FLINT_MAX(q1->limbs, q2->limbs));
-   _fmpz_poly_set(Q, q2);
-   fmpz_poly_clear(q2);
-   Q->length = q1->length + n1;
-   temp->length = q1->length;
-   temp->limbs = Q->limbs;
-   temp->coeffs = Q->coeffs + n1*(Q->limbs+1);
-   _fmpz_poly_set(temp, q1);
+   _fmpz_poly_left_shift(Q, q1, n1);
    fmpz_poly_clear(q1);
+   _fmpz_poly_add(Q, Q, q2);
+   fmpz_poly_clear(q2);
+   
 }
 
 /*===================================================================================
