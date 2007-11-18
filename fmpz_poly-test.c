@@ -16,7 +16,7 @@ Copyright (C) 2007, William Hart and David Harvey
 #include "ZmodF_poly.h"
 #include "test-support.h"
 
-#define VARY_BITS 1
+#define VARY_BITS 0
 #define SIGNS 1
 #define SPARSE 1
 
@@ -3266,17 +3266,17 @@ int test_fmpz_poly_div_bisection()
    mpz_poly_init(test_poly2); 
    mpz_poly_init(test_poly3); 
    
-   for (unsigned long count1 = 0; (count1 < 60000) && (result == 1) ; count1++)
+   for (unsigned long count1 = 0; (count1 < 600) && (result == 1) ; count1++)
    {
-      bits = random_ulong(20)+ 1;
-      bits2 = random_ulong(20)+ 1;
+      bits = random_ulong(2000)+ 1;
+      bits2 = random_ulong(2000)+ 1;
       //bits = bits2 = 100;
       
       fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
       fmpz_poly_init2(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS+1);
       
-      length2 = random_ulong(128)+1; 
-      length = random_ulong(128)+1;
+      length2 = random_ulong(256)+1; 
+      length = random_ulong(256)+1;
       //length = 1000;
       //length2 = 1000;
        
@@ -3355,10 +3355,10 @@ int test_fmpz_poly_div_mulders()
    mpz_poly_init(test_poly2); 
    mpz_poly_init(test_poly3); 
    
-   for (unsigned long count1 = 0; (count1 < 600) && (result == 1) ; count1++)
+   for (unsigned long count1 = 0; (count1 < 60000) && (result == 1) ; count1++)
    {
-      bits = random_ulong(1000)+ 1;
-      bits2 = random_ulong(1000)+ 1;
+      bits = random_ulong(100)+ 1;
+      bits2 = random_ulong(100)+ 1;
       //bits = bits2 = 10000;
       
       fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
@@ -3442,7 +3442,7 @@ int test_fmpz_poly_newton_invert_basecase()
    
    mpz_poly_init(test_poly); 
    
-   for (unsigned long count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+   for (unsigned long count1 = 0; (count1 < 200000) && (result == 1) ; count1++)
    {
       bits = random_ulong(100)+ 2;
       //bits = 100000;
@@ -3564,7 +3564,7 @@ int test_fmpz_poly_newton_invert()
    
    mpz_poly_init(test_poly); 
    
-   for (unsigned long count1 = 0; (count1 < 50) && (result == 1) ; count1++)
+   for (unsigned long count1 = 0; (count1 < 1500) && (result == 1) ; count1++)
    {
       bits = random_ulong(100)+ 1;
       
@@ -3624,7 +3624,7 @@ int test_fmpz_poly_div_series()
    
    mpz_poly_init(test_poly); 
    
-   for (unsigned long count1 = 0; (count1 < 50) && (result == 1) ; count1++)
+   for (unsigned long count1 = 0; (count1 < 2500) && (result == 1) ; count1++)
    {
       bits = random_ulong(100)+ 1;
       
@@ -3690,7 +3690,7 @@ int test_fmpz_poly_div_newton()
    mpz_poly_init(test_poly2); 
    mpz_poly_init(test_poly3); 
    
-   for (unsigned long count1 = 0; (count1 < 50) && (result == 1) ; count1++)
+   for (unsigned long count1 = 0; (count1 < 2500) && (result == 1) ; count1++)
    {
       bits = random_ulong(10)+ 1;
       bits2 = random_ulong(10)+ 1;
@@ -3945,7 +3945,7 @@ int test_fmpz_poly_pseudo_divrem_cohen()
    mpz_poly_init(test_poly2); 
    mpz_poly_init(test_poly3); 
    
-   for (unsigned long count1 = 0; (count1 < 1000) && (result == 1) ; count1++)
+   for (unsigned long count1 = 0; (count1 < 5000) && (result == 1) ; count1++)
    {
       bits = random_ulong(300)+ 2;
       bits2 = random_ulong(300)+ 1;
@@ -4035,7 +4035,7 @@ int test_fmpz_poly_pseudo_divrem_schoup()
    mpz_poly_init(test_poly2); 
    mpz_poly_init(test_poly3); 
    
-   for (unsigned long count1 = 0; (count1 < 1000) && (result == 1) ; count1++)
+   for (unsigned long count1 = 0; (count1 < 5000) && (result == 1) ; count1++)
    {
       bits = random_ulong(300)+ 2;
       bits2 = random_ulong(300)+ 1;
@@ -4127,10 +4127,10 @@ int test_fmpz_poly_pseudo_divrem_basecase()
    mpz_poly_init(test_poly2); 
    mpz_poly_init(test_poly3); 
    
-   for (unsigned long count1 = 0; (count1 < 1000) && (result == 1) ; count1++)
+   for (unsigned long count1 = 0; (count1 < 60000) && (result == 1) ; count1++)
    {
-      bits = random_ulong(1000)+ 2;
-      bits2 = random_ulong(1000)+ 1;
+      bits = random_ulong(100)+ 2;
+      bits2 = random_ulong(100)+ 1;
       //bits = bits2 = 1000;
       
       fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
@@ -4220,10 +4220,10 @@ int test_fmpz_poly_pseudo_div_basecase()
    mpz_poly_init(test_poly2); 
    mpz_poly_init(test_poly3); 
    
-   for (unsigned long count1 = 0; (count1 < 1000) && (result == 1) ; count1++)
+   for (unsigned long count1 = 0; (count1 < 60000) && (result == 1) ; count1++)
    {
-      bits = random_ulong(1000)+ 2;
-      bits2 = random_ulong(1000)+ 1;
+      bits = random_ulong(100)+ 2;
+      bits2 = random_ulong(100)+ 1;
       //bits = bits2 = 1000;
       
       fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
@@ -4309,17 +4309,17 @@ int test_fmpz_poly_pseudo_divrem_recursive()
    mpz_poly_init(test_poly2); 
    mpz_poly_init(test_poly3); 
    
-   for (unsigned long count1 = 0; (count1 < 1000) && (result == 1) ; count1++)
+   for (unsigned long count1 = 0; (count1 < 6000) && (result == 1) ; count1++)
    {
-      bits = random_ulong(1000)+ 2;
-      bits2 = random_ulong(1000)+ 1;
+      bits = random_ulong(20)+ 2;
+      bits2 = random_ulong(20)+ 1;
       //bits = bits2 = 1000;
       
       fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
       fmpz_poly_init2(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS+1);
       
-      length = random_ulong(100)+1; 
-      length2 = random_ulong(100); 
+      length = random_ulong(300)+1; 
+      length2 = random_ulong(300); 
       //length = 100;
       //length2 = 199;
        
@@ -4403,17 +4403,17 @@ int test_fmpz_poly_pseudo_div_recursive()
    mpz_poly_init(test_poly2); 
    mpz_poly_init(test_poly3); 
    
-   for (unsigned long count1 = 0; (count1 < 1000) && (result == 1) ; count1++)
+   for (unsigned long count1 = 0; (count1 < 6000) && (result == 1) ; count1++)
    {
-      bits = random_ulong(1000)+ 2;
-      bits2 = random_ulong(1000)+ 1;
+      bits = random_ulong(20)+ 2;
+      bits2 = random_ulong(20)+ 1;
       //bits = bits2 = 1000;
       
       fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
       fmpz_poly_init2(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS+1);
       
-      length = random_ulong(100)+1; 
-      length2 = random_ulong(100); 
+      length = random_ulong(300)+1; 
+      length2 = random_ulong(300); 
       //length = 100;
       //length2 = 199;
        
@@ -4997,7 +4997,7 @@ void fmpz_poly_test_all()
 {
    int success, all_success = 1;
 
-   RUN_TEST(fmpz_poly_scalar_mul_ui);
+   /*RUN_TEST(fmpz_poly_scalar_mul_ui);
    RUN_TEST(fmpz_poly_scalar_mul_si);
    RUN_TEST(fmpz_poly_scalar_mul); 
    RUN_TEST(fmpz_poly_to_ZmodF_poly); 
@@ -5006,7 +5006,7 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_poly_byte_pack_unsigned); 
    RUN_TEST(fmpz_poly_byte_pack); 
    RUN_TEST(fmpz_poly_limb_pack_unsigned); 
-   RUN_TEST(fmpz_poly_limb_pack); 
+   RUN_TEST(fmpz_poly_limb_pack); */
    RUN_TEST(fmpz_poly_pseudo_divrem_recursive); 
    RUN_TEST(fmpz_poly_pseudo_divrem_basecase); 
    RUN_TEST(fmpz_poly_pseudo_div_basecase); 
@@ -5014,7 +5014,7 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_poly_pseudo_divrem_cohen); 
    RUN_TEST(fmpz_poly_pseudo_divrem_schoup); 
    RUN_TEST(fmpz_poly_div_mulders);
-   RUN_TEST(fmpz_poly_convert);
+   /*RUN_TEST(fmpz_poly_convert);
    RUN_TEST(fmpz_poly_getset_ui);
    RUN_TEST(fmpz_poly_getset_si);
    RUN_TEST(fmpz_poly_get_coeff_ptr);
@@ -5042,20 +5042,20 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_poly_mul_KS_trunc);
    RUN_TEST(fmpz_poly_mul_SS);
    RUN_TEST(fmpz_poly_mul_SS_trunc);
-   RUN_TEST(fmpz_poly_mul_trunc_n);
+   RUN_TEST(fmpz_poly_mul_trunc_n);*/
    RUN_TEST(fmpz_poly_div_classical);
    RUN_TEST(fmpz_poly_divrem_classical);
    RUN_TEST(fmpz_poly_div_bisection_recursive);
    RUN_TEST(fmpz_poly_divrem_bisection);
    RUN_TEST(fmpz_poly_div_bisection);
    RUN_TEST(fmpz_poly_newton_invert_basecase);
-   RUN_TEST(fmpz_poly_reverse);
+   //RUN_TEST(fmpz_poly_reverse);
    RUN_TEST(fmpz_poly_newton_invert);
    RUN_TEST(fmpz_poly_div_series);
    RUN_TEST(fmpz_poly_div_newton);
-   RUN_TEST(fmpz_poly_power);
+   /*RUN_TEST(fmpz_poly_power);
    RUN_TEST(fmpz_poly_power_trunc_n);
-   RUN_TEST(_fmpz_poly_scalar_mul); 
+   RUN_TEST(_fmpz_poly_scalar_mul); */
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");

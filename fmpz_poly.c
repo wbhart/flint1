@@ -5238,7 +5238,7 @@ void fmpz_poly_div_bisection(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly
    // A->length is now >= B->length
     
    unsigned long crossover = 16;
-   unsigned long crossover2 = 128;
+   unsigned long crossover2 = 256;
    
    if (B->limbs > 16) crossover = 8;
    if ((B->length <= 12) && (B->limbs > 8)) crossover = 8;
@@ -5790,11 +5790,13 @@ void fmpz_poly_div_mulders(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t
    // Crossover must be at least 8 so that n2 is not zero
    
    unsigned long crossover = 16;
+   unsigned long crossover2 = 256;
    
-   if (B->limbs > 16)  crossover = 8;
+   if (B->limbs > 16) crossover = 8;
    if ((B->length <= 12) && (B->limbs > 8)) crossover = 8;
    
-   if ((B->length <= crossover) || (A->length > 2*B->length - 1))
+   if ((B->length <= crossover) 
+   || ((A->length > 2*B->length - 1) && (A->length < crossover2)))
    {
       fmpz_poly_div_classical(Q, A, B);
       return;
@@ -5838,6 +5840,13 @@ void fmpz_poly_div_mulders(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t
       
       return;   
    } 
+   
+   if (A->length > 2*B->length - 1)
+   {
+      fmpz_poly_div_bisection(Q, A, B);
+      
+      return;              
+   }              
    
    /* 
       We let A = a1*x^(2*n1+n2-1) + a2*x^(n1+n2-1) + a3 
@@ -6524,7 +6533,6 @@ void fmpz_poly_pseudo_divrem_recursive(fmpz_poly_t Q, fmpz_poly_t R, unsigned lo
    {
       fmpz_poly_fit_length(R, A->length);
       fmpz_poly_fit_limbs(R, A->limbs);  
-      R->length = A->length;
       _fmpz_poly_set(R, A);
       _fmpz_poly_zero(Q);
       *d = 0;
@@ -6533,11 +6541,13 @@ void fmpz_poly_pseudo_divrem_recursive(fmpz_poly_t Q, fmpz_poly_t R, unsigned lo
    }
    
    unsigned long crossover = 16;
+   unsigned long crossover2 = 128;
    
-   if (B->limbs > 32)  crossover = 8;
-   if ((B->length <= 12) && (B->limbs > 16)) crossover = 8;
-
-   if ((B->length <= crossover) || (A->length > 2*B->length - 1))
+   if (B->limbs > 16) crossover = 8;
+   if ((B->length <= 12) && (B->limbs > 8)) crossover = 8;
+   
+   if ((B->length <= crossover) 
+   || ((A->length > 2*B->length - 1) && (A->length < crossover2)))
    {
       fmpz_poly_pseudo_divrem_basecase(Q, R, d, A, B);
       
@@ -6545,6 +6555,7 @@ void fmpz_poly_pseudo_divrem_recursive(fmpz_poly_t Q, fmpz_poly_t R, unsigned lo
    }
    
    fmpz_poly_t d1, d2, d3, d4, p1, q1, q2, dq1, dq2, r1, d2q1, d2q2, r2, t, u, temp;
+   
    fmpz_t B_lead;
    unsigned long size_B_lead;
    unsigned long bits_B_lead;
@@ -6553,162 +6564,527 @@ void fmpz_poly_pseudo_divrem_recursive(fmpz_poly_t Q, fmpz_poly_t R, unsigned lo
    unsigned long n2 = B->length - n1;
    
    /* We let B = d1*x^n2 + d2 */
-   d1->length = n1;
-   d2->length = n2;
-   d3->length = n2;
-   d4->length = n1;
-   d1->limbs = B->limbs;
-   d2->limbs = B->limbs;
-   d1->coeffs = B->coeffs + n2*(B->limbs+1);
-   d2->coeffs = B->coeffs;
-   d3->limbs = B->limbs;
-   d4->limbs = B->limbs;
-   d3->coeffs = B->coeffs + n1*(B->limbs+1);
-   d4->coeffs = B->coeffs;
+   
+   _fmpz_poly_attach_shifted(d1, B, n2);
+   _fmpz_poly_attach_truncate(d2, B, n2);
+   _fmpz_poly_attach_shifted(d3, B, n1);
+   _fmpz_poly_attach_truncate(d4, B, n1);
+   
+   /* We need the leading coefficient of B */
    
    B_lead = B->coeffs + (B->length-1)*(B->limbs+1);
    size_B_lead = ABS(B_lead[0]);
    bits_B_lead = fmpz_bits(B_lead);
       
-   if (A->length <= n1+2*n2-1)
+   if (A->length <= n2 + B->length - 1)
    {
-      temp->length = A->length - (n1+n2-1);
-      temp->limbs = A->limbs;
-      temp->coeffs = A->coeffs + (n1+n2-1)*(A->limbs+1);
+      /*
+         A is greater than length n1+n2-1 and at most 
+         length n1+2*n2-1
+         We shift right by n1 and zero the last n2-1
+         coefficients, leaving at at most n2 significant
+         terms
+      */
       
-      _fmpz_poly_stack_init(p1, temp->length+n2-1, A->limbs);
-      _fmpz_poly_left_shift(p1, temp, n2-1);
-      p1->length = temp->length+n2-1;
+      _fmpz_poly_stack_init(p1, A->length-n1, A->limbs);
+      _fmpz_poly_right_shift(p1, A, n1);
+      _fmpz_poly_zero_coeffs(p1, n2-1);
+      
+      /* 
+         We compute p1 div d3 which is at most 
+         a 2*n2-1 by n2 division, leaving n2 terms 
+         in the quotient. Since we are doing pseudo
+         division, the remainder will have at most
+         n2-1 terms
+      */
       
       fmpz_poly_init(r1);
-      _fmpz_poly_normalise(p1);
-      fmpz_poly_pseudo_divrem_recursive(Q, r1, d, p1, d3); //******************************
+      fmpz_poly_pseudo_divrem_recursive(Q, r1, d, p1, d3); 
       _fmpz_poly_stack_clear(p1);
 
+      /*
+         We compute d2q1 = Q*d4
+         It will have at most n1+n2-1 terms
+      */
+      
       _fmpz_poly_stack_init(d2q1, d4->length+Q->length-1, d4->limbs+Q->limbs+1); 
-      __fmpz_poly_mul_lead(d2q1, d4, Q);
+      _fmpz_poly_mul(d2q1, d4, Q);
+      
+      /*
+         Compute R = lead(B)^n * R' where R' is 
+         the terms of A we haven't dealt with, 
+         of which there are at most n1+n2-1
+      */
       
       fmpz_poly_fit_length(R, n1+n2-1);
-      fmpz_poly_fit_limbs(R, FLINT_MAX(FLINT_MAX(A->limbs+(*d)*size_B_lead, r1->limbs), d2q1->limbs)+1);
-      R->length = n1+n2-1;
-      
+      fmpz_poly_fit_limbs(R, FLINT_MAX(FLINT_MAX(A->limbs+((*d)*bits_B_lead)/FLINT_BITS+1, r1->limbs), d2q1->limbs)+1);
       fmpz_t pow = (fmpz_t) flint_stack_alloc((bits_B_lead*(*d))/FLINT_BITS+2);
       fmpz_pow_ui(pow, B_lead, *d);
-      temp->length = n1+n2-1;
-      temp->limbs = A->limbs;
-      temp->coeffs = A->coeffs;
+      _fmpz_poly_attach_truncate(temp, A, n1+n2-1);
       _fmpz_poly_scalar_mul(R, temp, pow);
       flint_stack_release();
       
-      temp->length = r1->length;
-      temp->limbs = R->limbs;
-      temp->coeffs = R->coeffs + n1*(R->limbs+1);
-      _fmpz_poly_add(temp, temp, r1); 
-       
-      _fmpz_poly_sub(R, R, d2q1);
-      _fmpz_poly_normalise(R);
-   
+      /*
+         Compute the original remainder from the
+         first pseudo division r' = r1^n1 - d2q1.
+         This should be thought of as r'/lead(B)^n
+         We add this to the remainder R', first
+         multiplying everything through by 
+         lead(B)^n. This gives the remainder 
+         R + r'. We note r' will have at most 
+         n1+n2-1 terms.
+      */
+      
+      fmpz_poly_fit_length(r1, FLINT_MAX(r1->length+n1, d2q1->length));
+      _fmpz_poly_left_shift(r1, r1, n1); 
+      _fmpz_poly_sub(r1, r1, d2q1);
       _fmpz_poly_stack_clear(d2q1);
+      _fmpz_poly_add(R, R, r1);
       fmpz_poly_clear(r1);
    
       return;   
    } 
+   
    unsigned long s1, s2;
+   
+   if (A->length > 2*B->length - 1)
+   {
+      // We shift A right until it is length 2*B->length - 1
+      // We call this polynomial p1. Zero the final B->length-1
+      // coefficients. Note A->length > 2*B->length - 1
+      unsigned long shift = A->length - 2*B->length + 1;
+      _fmpz_poly_stack_init(p1, 2*B->length - 1, A->limbs);
+      _fmpz_poly_right_shift(p1, A, shift);
+      _fmpz_poly_zero_coeffs(p1, B->length - 1);
+      
+      /* 
+         Set q1 to p1 div B 
+         This is a 2*B->length-1 by B->length division so 
+         q1 ends up being at most length B->length
+         r1 is length at most B->length-1
+      */
+      
+      fmpz_poly_init(r1);
+      fmpz_poly_init(q1);
+      
+      fmpz_poly_pseudo_divrem_recursive(q1, r1, &s1, p1, B); 
+      _fmpz_poly_stack_clear(p1);
+       
+      /* 
+         Compute t = (lead(B)^s1) * a2 + r1*x^shift
+         which ends up being at most length A->length - B->length 
+         since r1 is at most length B->length-1 
+         Here a2 is what remains of A after the first R->length
+         coefficients are removed.
+      */  
+   
+      _fmpz_poly_stack_init(t, A->length - B->length, FLINT_MAX(A->limbs+(bits_B_lead*s1)/FLINT_BITS+1, r1->limbs)+1);
+      _fmpz_poly_attach_truncate(temp, A, A->length - B->length);
+      
+      fmpz_t pow = (fmpz_t) flint_stack_alloc((bits_B_lead*s1)/FLINT_BITS+2);
+      fmpz_pow_ui(pow, B_lead, s1);
+      _fmpz_poly_scalar_mul(t, temp, pow);
+      flint_stack_release();
+   
+      fmpz_poly_fit_length(r1, r1->length+shift);
+      _fmpz_poly_left_shift(r1, r1, shift);
+      _fmpz_poly_add(t, t, r1);
+      fmpz_poly_clear(r1);
+      
+      /*
+         Compute q2 = t div B
+         It is a smaller division than the original 
+         since t->length <= A->length - B->length
+         r2 has length at most B->length - 1
+      */
+   
+      fmpz_poly_init(q2);
+      fmpz_poly_pseudo_divrem_recursive(q2, R, &s2, t, B); 
+      fmpz_poly_clear(t);  
+      
+      /*
+         Write out Q = lead(B)^s2*q1*x^shift + q2
+         Q has length at most B->length+shift
+         Note q2 has length at most shift since 
+         at most it is an A->length-B->length 
+         by B->length division
+         q1 cannot have length zero since we
+         are doing pseudo division
+      */
+   
+      fmpz_poly_fit_length(Q, q1->length+shift);
+      fmpz_poly_fit_limbs(Q, FLINT_MAX(q1->limbs + (s2*bits_B_lead)/FLINT_BITS+1, q2->limbs));
+   
+      pow = (fmpz_t) flint_stack_alloc((bits_B_lead*s2)/FLINT_BITS+2);
+      fmpz_pow_ui(pow, B_lead, s2);
+      _fmpz_poly_scalar_mul(Q, q1, pow);
+      fmpz_poly_clear(q1);
+      flint_stack_release();
+      _fmpz_poly_left_shift(Q, Q, shift);
+      _fmpz_poly_add(Q, Q, q2);
+      fmpz_poly_clear(q2);
+   
+      /* 
+         Set d to the power of lead(B) that everything
+         must be multiplied by
+      */
+      
+      *d = s1 + s2;
+      
+      return;
+   } 
    
    /* 
       We let A = a1*x^(n1+2*n2-1) + a2*x^(n1+n2-1) + a3 
-      where a1 is length n1 and a2 is length n2 and a3 is length n1+n2-1 
-      We set p1 = a1*x^(n1-1), so it has length 2*n1-1
+      where a1 is at most length n1 and a2 is length n2 
+      and a3 is length n1+n2-1 
+      We set p1 = a1*x^(n1-1), so it has length at most
+      2*n1-1. We note A is at least length n1+2*n2-1
    */
       
-   temp->length = A->length - (n1+2*n2-1);
-   temp->limbs = A->limbs;
-   temp->coeffs = A->coeffs + (n1+2*n2-1)*(A->limbs+1);
-   _fmpz_poly_stack_init(p1, temp->length+n1-1, A->limbs);
-   _fmpz_poly_left_shift(p1, temp, n1-1);
-   p1->length = temp->length+n1-1;
+   _fmpz_poly_stack_init(p1, A->length-2*n2, A->limbs);
+   _fmpz_poly_right_shift(p1, A, 2*n2);
+   _fmpz_poly_zero_coeffs(p1, n1-1);
    
    /* 
       Set q1 to p1 div d1 
-      This is a 2*n1-1 by n1 division so 
-      q1 ends up being length n1
+      This is at most a 2*n1-1 by n1 division so 
+      q1 ends up being at most length length n1
       r1 is length n1-1
    */
+   
    fmpz_poly_init(r1);
    fmpz_poly_init(q1);
-   
-   _fmpz_poly_normalise(p1);
-   fmpz_poly_pseudo_divrem_recursive(q1, r1, &s1, p1, d1); //******************************
+   fmpz_poly_pseudo_divrem_recursive(q1, r1, &s1, p1, d1); 
    _fmpz_poly_stack_clear(p1);   
    
    /* 
       Compute d2q1 = d2*q1 
       which ends up being length n1+n2-1
+      Note q1->length is at least 1 since we are doing 
+      pseudo division
    */  
    
    _fmpz_poly_stack_init(d2q1, d2->length+q1->length-1, d2->limbs+q1->limbs+1); 
-   __fmpz_poly_mul_lead(d2q1, d2, q1);
+   _fmpz_poly_mul(d2q1, d2, q1);
    
    /* 
-      Compute t = (lead(B)^s1) * a2*x^(n1+n2-1)+a3 + r1*x^(2*n2) - d2q1*x^n2
-      which ends up being length n1+2*n2-1
+      Compute t = (lead(B)^s1) * (a2*x^(n1+n2-1)+a3) 
+                               + r1*x^(2*n2) - d2q1*x^n2
+      which ends up being at most length n2+B->length-1 
+      since r1 is at most length n1-1 and d2q1 is at 
+      most length n1+n2-1
    */  
    
-   _fmpz_poly_stack_init(t, n1+2*n2-1, FLINT_MAX(FLINT_MAX(A->limbs+s1*size_B_lead, r1->limbs), d2q1->limbs)+1);
-   temp->coeffs = A->coeffs;
-   temp->length = n1+2*n2-1;
-   temp->limbs = A->limbs;
+   _fmpz_poly_stack_init(t, n2+B->length-1, FLINT_MAX(FLINT_MAX(A->limbs+(bits_B_lead*s1)/FLINT_BITS+1, r1->limbs), d2q1->limbs)+1);
+   _fmpz_poly_attach_truncate(temp, A, n2+B->length-1);
    fmpz_t pow = (fmpz_t) flint_stack_alloc((bits_B_lead*s1)/FLINT_BITS+2);
    fmpz_pow_ui(pow, B_lead, s1);
    _fmpz_poly_scalar_mul(t, temp, pow);
    flint_stack_release();
    
-   temp->coeffs = t->coeffs + 2*n2*(t->limbs+1);
-   temp->length = r1->length;
-   temp->limbs = t->limbs;
-   _fmpz_poly_add(temp, temp, r1);
+   fmpz_poly_fit_length(r1, FLINT_MAX(r1->length+2*n2, d2q1->length+n2));
+   _fmpz_poly_left_shift(r1, r1, n2);
+   _fmpz_poly_sub(r1, r1, d2q1);
+   _fmpz_poly_left_shift(r1, r1, n2);
+   _fmpz_poly_add(t, t, r1);
    fmpz_poly_clear(r1);
-   
-   temp->coeffs = t->coeffs + n2*(t->limbs+1);
-   temp->length = d2q1->length;
-   temp->limbs = t->limbs;
-   _fmpz_poly_sub(temp, temp, d2q1);
    
    /*
       Compute q2 = t div B and set R to the remainder
-      It is a n1+2*n2-1 by n1+n2 division, so
-      the length of q2 will be n2
-      R will have length n1+n2-1
+      It is at most a n2+B->length-1 by n1+n2 division, 
+      so the length of q2 will be at most n2 .
+      R will have length at most n1+n2-1 since we are
+      doing pseudo division
    */
+   
    fmpz_poly_init(q2);
-   _fmpz_poly_normalise(t);
-   fmpz_poly_pseudo_divrem_recursive(q2, R, &s2, t, B); //******************************
+   fmpz_poly_pseudo_divrem_recursive(q2, R, &s2, t, B); 
    _fmpz_poly_stack_clear(t);
    _fmpz_poly_stack_clear(d2q1);
       
    /*
       Write out Q = lead(B)^s2 * q1*x^n2 + q2
       Q has length n1+n2
+      Note q1->length is not zero since we are doing
+      pseudo division
    */
+   
    fmpz_poly_fit_length(Q, q1->length+n2);
-   fmpz_poly_fit_limbs(Q, FLINT_MAX(q1->limbs + s2*size_B_lead, q2->limbs));
-   _fmpz_poly_set(Q, q2);
-   fmpz_poly_clear(q2);
-   Q->length = q1->length + n2;
-   
-   temp->length = q1->length;
-   temp->limbs = Q->limbs;
-   temp->coeffs = Q->coeffs + n2*(Q->limbs+1);
-   
+   fmpz_poly_fit_limbs(Q, FLINT_MAX(q1->limbs + (s2*bits_B_lead)/FLINT_BITS+1, q2->limbs));
    pow = (fmpz_t) flint_stack_alloc((bits_B_lead*s2)/FLINT_BITS+2);
    fmpz_pow_ui(pow, B_lead, s2);
-   _fmpz_poly_scalar_mul(temp, q1, pow);
-   flint_stack_release();
+   _fmpz_poly_scalar_mul(Q, q1, pow);
    fmpz_poly_clear(q1);
+   flint_stack_release();
+   _fmpz_poly_left_shift(Q, Q, n2);
+   _fmpz_poly_add(Q, Q, q2);
+   fmpz_poly_clear(q2);
+   
+   /* 
+      Set d to the power of lead(B) which everything 
+      has been raised to
+   */
+   
    *d = s1+s2;
 }
 
 void fmpz_poly_pseudo_div_recursive(fmpz_poly_t Q, unsigned long * d, const fmpz_poly_t A, const fmpz_poly_t B)
+{
+   if (A->length < B->length)
+   {
+      _fmpz_poly_zero(Q);
+      *d = 0;
+      
+      return;
+   }
+   
+   unsigned long crossover = 16;
+   unsigned long crossover2 = 256;
+   
+   if (B->limbs > 16) crossover = 8;
+   if ((B->length <= 12) && (B->limbs > 8)) crossover = 8;
+   
+   if ((B->length <= crossover) 
+   || ((A->length > 2*B->length - 1) && (A->length < crossover2)))
+   {
+      fmpz_poly_pseudo_div_basecase(Q, d, A, B);
+      
+      return;
+   }
+   
+   fmpz_poly_t d1, d2, d3, d4, p1, q1, q2, dq1, dq2, r1, d2q1, d2q2, r2, t, u, temp;
+   
+   fmpz_t B_lead;
+   unsigned long size_B_lead;
+   unsigned long bits_B_lead;
+   
+   unsigned long n1 = (B->length+1)/2;
+   unsigned long n2 = B->length - n1;
+   
+   /* We let B = d1*x^n2 + d2 */
+   
+   _fmpz_poly_attach_shifted(d1, B, n2);
+   _fmpz_poly_attach_truncate(d2, B, n2);
+   _fmpz_poly_attach_shifted(d3, B, n1);
+   _fmpz_poly_attach_truncate(d4, B, n1);
+   
+   /* We need the leading coefficient of B */
+   
+   B_lead = B->coeffs + (B->length-1)*(B->limbs+1);
+   size_B_lead = ABS(B_lead[0]);
+   bits_B_lead = fmpz_bits(B_lead);
+      
+   if (A->length <= n2 + B->length - 1)
+   {
+      /*
+         A is greater than length n1+n2-1 and at most 
+         length n1+2*n2-1
+         We shift right by n1 and zero the last n2-1
+         coefficients, leaving at at most n2 significant
+         terms
+      */
+      
+      _fmpz_poly_stack_init(p1, A->length-n1, A->limbs);
+      _fmpz_poly_right_shift(p1, A, n1);
+      _fmpz_poly_zero_coeffs(p1, n2-1);
+      
+      /* 
+         We compute p1 div d3 which is at most 
+         a 2*n2-1 by n2 division, leaving n2 terms 
+         in the quotient. 
+      */
+      
+      fmpz_poly_pseudo_div_recursive(Q, d, p1, d3); 
+      _fmpz_poly_stack_clear(p1);
+      
+      return;   
+   } 
+   
+   unsigned long s1, s2;
+   
+   if (A->length > 2*B->length - 1)
+   {
+      // We shift A right until it is length 2*B->length - 1
+      // We call this polynomial p1. Zero the final B->length-1
+      // coefficients. Note A->length > 2*B->length - 1
+      unsigned long shift = A->length - 2*B->length + 1;
+      _fmpz_poly_stack_init(p1, 2*B->length - 1, A->limbs);
+      _fmpz_poly_right_shift(p1, A, shift);
+      _fmpz_poly_zero_coeffs(p1, B->length - 1);
+      
+      /* 
+         Set q1 to p1 div B 
+         This is a 2*B->length-1 by B->length division so 
+         q1 ends up being at most length B->length
+         r1 is length at most B->length-1
+      */
+      
+      fmpz_poly_init(r1);
+      fmpz_poly_init(q1);
+      
+      fmpz_poly_pseudo_divrem_recursive(q1, r1, &s1, p1, B); 
+      _fmpz_poly_stack_clear(p1);
+       
+      /* 
+         Compute t = (lead(B)^s1) * a2 + r1*x^shift
+         which ends up being at most length A->length - B->length 
+         since r1 is at most length B->length-1 
+         Here a2 is what remains of A after the first R->length
+         coefficients are removed.
+      */  
+   
+      _fmpz_poly_stack_init(t, A->length - B->length, FLINT_MAX(A->limbs+(bits_B_lead*s1)/FLINT_BITS+1, r1->limbs)+1);
+      _fmpz_poly_attach_truncate(temp, A, A->length - B->length);
+      
+      fmpz_t pow = (fmpz_t) flint_stack_alloc((bits_B_lead*s1)/FLINT_BITS+2);
+      fmpz_pow_ui(pow, B_lead, s1);
+      _fmpz_poly_scalar_mul(t, temp, pow);
+      flint_stack_release();
+   
+      fmpz_poly_fit_length(r1, r1->length+shift);
+      _fmpz_poly_left_shift(r1, r1, shift);
+      _fmpz_poly_add(t, t, r1);
+      fmpz_poly_clear(r1);
+      
+      /*
+         Compute q2 = t div B
+         It is a smaller division than the original 
+         since t->length <= A->length - B->length
+      */
+   
+      fmpz_poly_init(q2);
+      fmpz_poly_pseudo_div_recursive(q2, &s2, t, B); 
+      fmpz_poly_clear(t);  
+      
+      /*
+         Write out Q = lead(B)^s2*q1*x^shift + q2
+         Q has length at most B->length+shift
+         Note q2 has length at most shift since 
+         at most it is an A->length-B->length 
+         by B->length division
+         q1 cannot have length zero since we
+         are doing pseudo division
+      */
+   
+      fmpz_poly_fit_length(Q, q1->length+shift);
+      fmpz_poly_fit_limbs(Q, FLINT_MAX(q1->limbs + (s2*bits_B_lead)/FLINT_BITS+1, q2->limbs));
+   
+      pow = (fmpz_t) flint_stack_alloc((bits_B_lead*s2)/FLINT_BITS+2);
+      fmpz_pow_ui(pow, B_lead, s2);
+      _fmpz_poly_scalar_mul(Q, q1, pow);
+      fmpz_poly_clear(q1);
+      flint_stack_release();
+      _fmpz_poly_left_shift(Q, Q, shift);
+      _fmpz_poly_add(Q, Q, q2);
+      fmpz_poly_clear(q2);
+   
+      /* 
+         Set d to the power of lead(B) that everything
+         must be multiplied by
+      */
+      
+      *d = s1 + s2;
+      
+      return;
+   } 
+   
+   /* 
+      We let A = a1*x^(n1+2*n2-1) + a2*x^(n1+n2-1) + a3 
+      where a1 is at most length n1 and a2 is length n2 
+      and a3 is length n1+n2-1 
+      We set p1 = a1*x^(n1-1), so it has length at most
+      2*n1-1. We note A is at least length n1+2*n2-1
+   */
+      
+   _fmpz_poly_stack_init(p1, A->length-2*n2, A->limbs);
+   _fmpz_poly_right_shift(p1, A, 2*n2);
+   _fmpz_poly_zero_coeffs(p1, n1-1);
+   
+   /* 
+      Set q1 to p1 div d1 
+      This is at most a 2*n1-1 by n1 division so 
+      q1 ends up being at most length length n1
+      r1 is length n1-1
+   */
+   
+   fmpz_poly_init(r1);
+   fmpz_poly_init(q1);
+   fmpz_poly_pseudo_divrem_recursive(q1, r1, &s1, p1, d1); 
+   _fmpz_poly_stack_clear(p1);   
+   
+   /* 
+      Compute d2q1 = d2*q1 
+      which ends up being length n1+n2-1
+      Note q1->length is at least 1 since we are doing 
+      pseudo division
+   */  
+   
+   _fmpz_poly_stack_init(d2q1, d2->length+q1->length-1, d2->limbs+q1->limbs+1); 
+   _fmpz_poly_mul(d2q1, d2, q1);
+   
+   /* 
+      Compute t = (lead(B)^s1) * (a2*x^(n1+n2-1)+a3) 
+                               + r1*x^(2*n2) - d2q1*x^n2
+      which ends up being at most length n2+B->length-1 
+      since r1 is at most length n1-1 and d2q1 is at 
+      most length n1+n2-1
+   */  
+   
+   _fmpz_poly_stack_init(t, n2+B->length-1, FLINT_MAX(FLINT_MAX(A->limbs+(bits_B_lead*s1)/FLINT_BITS+1, r1->limbs), d2q1->limbs)+1);
+   _fmpz_poly_attach_truncate(temp, A, n2+B->length-1);
+   fmpz_t pow = (fmpz_t) flint_stack_alloc((bits_B_lead*s1)/FLINT_BITS+2);
+   fmpz_pow_ui(pow, B_lead, s1);
+   _fmpz_poly_scalar_mul(t, temp, pow);
+   flint_stack_release();
+   
+   fmpz_poly_fit_length(r1, FLINT_MAX(r1->length+2*n2, d2q1->length+n2));
+   _fmpz_poly_left_shift(r1, r1, n2);
+   _fmpz_poly_sub(r1, r1, d2q1);
+   _fmpz_poly_left_shift(r1, r1, n2);
+   _fmpz_poly_add(t, t, r1);
+   fmpz_poly_clear(r1);
+   
+   /*
+      Compute q2 = t div B and set R to the remainder
+      It is at most a n2+B->length-1 by n1+n2 division, 
+      so the length of q2 will be at most n2 .
+      R will have length at most n1+n2-1 since we are
+      doing pseudo division
+   */
+   
+   fmpz_poly_init(q2);
+   fmpz_poly_pseudo_div_recursive(q2, &s2, t, B); 
+   _fmpz_poly_stack_clear(t);
+   _fmpz_poly_stack_clear(d2q1);
+      
+   /*
+      Write out Q = lead(B)^s2 * q1*x^n2 + q2
+      Q has length n1+n2
+      Note q1->length is not zero since we are doing
+      pseudo division
+   */
+   
+   fmpz_poly_fit_length(Q, q1->length+n2);
+   fmpz_poly_fit_limbs(Q, FLINT_MAX(q1->limbs + (s2*bits_B_lead)/FLINT_BITS+1, q2->limbs));
+   pow = (fmpz_t) flint_stack_alloc((bits_B_lead*s2)/FLINT_BITS+2);
+   fmpz_pow_ui(pow, B_lead, s2);
+   _fmpz_poly_scalar_mul(Q, q1, pow);
+   fmpz_poly_clear(q1);
+   flint_stack_release();
+   _fmpz_poly_left_shift(Q, Q, n2);
+   _fmpz_poly_add(Q, Q, q2);
+   fmpz_poly_clear(q2);
+   
+   /* 
+      Set d to the power of lead(B) which everything 
+      has been raised to
+   */
+   
+   *d = s1+s2;
+}
+
+/*void fmpz_poly_pseudo_div_recursive(fmpz_poly_t Q, unsigned long * d, const fmpz_poly_t A, const fmpz_poly_t B)
 {
    if (A->length < B->length)
    {
@@ -6739,7 +7115,7 @@ void fmpz_poly_pseudo_div_recursive(fmpz_poly_t Q, unsigned long * d, const fmpz
    unsigned long n2 = B->length - n1;
    
    /* We let B = d1*x^n2 + d2 */
-   d1->length = n1;
+   /*d1->length = n1;
    d2->length = n2;
    d3->length = n2;
    d4->length = n1;
@@ -6780,7 +7156,7 @@ void fmpz_poly_pseudo_div_recursive(fmpz_poly_t Q, unsigned long * d, const fmpz
       We set p1 = a1*x^(n1-1), so it has length 2*n1-1
    */
       
-   temp->length = A->length - (n1+2*n2-1);
+   /*temp->length = A->length - (n1+2*n2-1);
    temp->limbs = A->limbs;
    temp->coeffs = A->coeffs + (n1+2*n2-1)*(A->limbs+1);
    _fmpz_poly_stack_init(p1, temp->length+n1-1, A->limbs);
@@ -6793,7 +7169,7 @@ void fmpz_poly_pseudo_div_recursive(fmpz_poly_t Q, unsigned long * d, const fmpz
       q1 ends up being length n1
       r1 is length n1-1
    */
-   fmpz_poly_init(r1);
+   /*fmpz_poly_init(r1);
    fmpz_poly_init(q1);
    
    _fmpz_poly_normalise(p1);
@@ -6805,7 +7181,7 @@ void fmpz_poly_pseudo_div_recursive(fmpz_poly_t Q, unsigned long * d, const fmpz
       which ends up being length n1+n2-1
    */  
    
-   _fmpz_poly_stack_init(d2q1, d2->length+q1->length-1, d2->limbs+q1->limbs+1); 
+   /*_fmpz_poly_stack_init(d2q1, d2->length+q1->length-1, d2->limbs+q1->limbs+1); 
    _fmpz_poly_normalise(q1);
    _fmpz_poly_mul_trunc_left_n(d2q1, d2, q1, n2 - 1);
    
@@ -6814,7 +7190,7 @@ void fmpz_poly_pseudo_div_recursive(fmpz_poly_t Q, unsigned long * d, const fmpz
       which ends up being length n1+2*n2-1
    */  
    
-   _fmpz_poly_stack_init(t, n1+2*n2-1, FLINT_MAX(FLINT_MAX(A->limbs+s1*size_B_lead, r1->limbs), d2q1->limbs)+1);
+   /*_fmpz_poly_stack_init(t, n1+2*n2-1, FLINT_MAX(FLINT_MAX(A->limbs+s1*size_B_lead, r1->limbs), d2q1->limbs)+1);
    temp->coeffs = A->coeffs;
    temp->length = n1+2*n2-1;
    temp->limbs = A->limbs;
@@ -6839,7 +7215,7 @@ void fmpz_poly_pseudo_div_recursive(fmpz_poly_t Q, unsigned long * d, const fmpz
       It is a n1+2*n2-1 by n1+n2 division, so
       the length of q2 will be n2
    */
-   fmpz_poly_init(q2);
+   /*fmpz_poly_init(q2);
    _fmpz_poly_normalise(t);
    fmpz_poly_pseudo_div_recursive(q2, &s2, t, B); //******************************
    _fmpz_poly_stack_clear(t);
@@ -6849,7 +7225,7 @@ void fmpz_poly_pseudo_div_recursive(fmpz_poly_t Q, unsigned long * d, const fmpz
       Write out Q = lead(B)^s2 * q1*x^n2 + q2
       Q has length n1+n2
    */
-   fmpz_poly_fit_length(Q, q1->length+n2);
+   /*fmpz_poly_fit_length(Q, q1->length+n2);
    fmpz_poly_fit_limbs(Q, FLINT_MAX(q1->limbs + s2*size_B_lead, q2->limbs));
    _fmpz_poly_set(Q, q2);
    fmpz_poly_clear(q2);
@@ -6865,7 +7241,7 @@ void fmpz_poly_pseudo_div_recursive(fmpz_poly_t Q, unsigned long * d, const fmpz
    flint_stack_release();
    fmpz_poly_clear(q1);
    *d = s1+s2;
-}
+}*/
 
 
 /****************************************************************************
