@@ -810,7 +810,7 @@ void _ZmodF_mul_info_mul_fft(ZmodF_mul_info_t info, ZmodF_t res,
    Reduces a mod B^m + 1, stores result at res, in usual ZmodF_t format (m+1
    limbs), not necessarily normalised.
 */
-inline
+
 void _ZmodF_mul_threeway_reduce1(ZmodF_t res, ZmodF_t a, unsigned long m)
 {
    FLINT_ASSERT(a[3*m] == 0);
@@ -828,7 +828,7 @@ void _ZmodF_mul_threeway_reduce1(ZmodF_t res, ZmodF_t a, unsigned long m)
    Note: in some cases there are two possible answers, since B^2m - B^m + 1
    is less than B^2m. In these cases either answer may be produced.
 */
-inline
+
 void _ZmodF_mul_threeway_reduce2(mp_limb_t* res, ZmodF_t a, unsigned long m)
 {
    res[2*m] = mpn_add_n(res+m, a+m, a+2*m, m);

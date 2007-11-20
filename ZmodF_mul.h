@@ -162,10 +162,8 @@ void _ZmodF_mul_fft_convolve_modB2(
 
 
 
-inline
 void _ZmodF_mul_threeway_reduce1(ZmodF_t res, ZmodF_t a, unsigned long m);
 
-inline
 void _ZmodF_mul_threeway_reduce2(mp_limb_t* res, ZmodF_t a, unsigned long m);
 
 #ifdef __cplusplus
