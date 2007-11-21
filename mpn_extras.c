@@ -24,7 +24,6 @@
 #include "ZmodF_mul.h"
 #include "F_mpn_mul-tuning.h"
 
-
 /*=======================================================================================
 
     Performs division by a limb d and places the quotient in qp and returns the 
@@ -36,6 +35,7 @@
     This code has been adapted from code found in the GMP package version 4.2.1
     (divrem_1.c) (C) Free Software Foundation
 */
+
 mp_limb_t F_mpn_divmod_1_preinv(mp_limb_t * qp, mp_limb_t * up, 
                                   unsigned long un, mp_limb_t d, mp_limb_t dinv, unsigned long norm)
 {

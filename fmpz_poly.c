@@ -6652,6 +6652,7 @@ void fmpz_poly_pseudo_divrem_recursive(fmpz_poly_t Q, fmpz_poly_t R, unsigned lo
       // We shift A right until it is length 2*B->length - 1
       // We call this polynomial p1. Zero the final B->length-1
       // coefficients. Note A->length > 2*B->length - 1
+      
       unsigned long shift = A->length - 2*B->length + 1;
       _fmpz_poly_stack_init(p1, 2*B->length - 1, A->limbs);
       _fmpz_poly_right_shift(p1, A, shift);
