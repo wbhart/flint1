@@ -2934,7 +2934,7 @@ void __fmpz_poly_karatrunc_left_recursive(fmpz_poly_t res, const fmpz_poly_t a, 
       temp1->coeffs = res->coeffs+a1->length*(res->limbs+1);
       temp1->length = temp->length;
       temp1->limbs = res->limbs;
-      _fmpz_poly_add(temp1, temp1, temp); // <- bug here
+      _fmpz_poly_add(temp1, temp1, temp); 
   
       res->length = a->length + b->length - 1;
    } 
@@ -5156,7 +5156,7 @@ void fmpz_poly_div_bisection_recursive_low(fmpz_poly_t Q, fmpz_poly_t BQ, const 
    */
    
    fmpz_poly_init(d2q2);
-   fmpz_poly_mul(d2q2, d2, q2);  //<--Bug here
+   fmpz_poly_mul(d2q2, d2, q2);  
    
    /*
       Compute dq2 = d1*q2*x^n2 + d2q2
