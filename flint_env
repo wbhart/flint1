@@ -1,0 +1,44 @@
+#!/bin/sh
+
+if [ "`uname`" = "Linux" -a "`uname -m`" = "x86_64" ]; then
+   FLINT_TUNE="-mtune=opteron -march=opteron -funroll-loops "
+elif [ "`uname`" = "Darwin" -a "`uname -m`" = "Power Macintosh" ]; then
+   FLINT_TUNE=" -funroll-loops "
+elif [ "`uname -p`" = "powerpc" ]; then
+   FLINT_TUNE="-m64 -mcpu=970 -mtune=970 -mpowerpc64 -falign-loops=16 -falign-functions=16 -falign-labels=16 -falign-jumps=16"
+   elif [ "`uname -m`" = "ia64" ]; then 
+   # -funroll-loops crashes the build on itanium under GCC-4.2.1, as reported by
+   # Kate Minola.
+   FLINT_TUNE=" "
+else
+   FLINT_TUNE="-funroll-loops "
+fi
+
+if [ "`uname`" = "Darwin" ]; then
+   FLINT_LIB="libflint.dylib"
+else 
+   FLINT_LIB="libflint.so"
+fi 
+
+export FLINT_TUNE
+export FLINT_LIB
+
+if [ -z "$FLINT_GMP_INCLUDE_DIR" ]
+then
+	FLINT_GMP_INCLUDE_DIR="/usr/local/include"
+fi
+export FLINT_GMP_INCLUDE_DIR
+
+if [ -z "$FLINT_GMP_LIB_DIR" ]
+then
+   FLINT_GMP_LIB_DIR="/usr/local/lib"
+fi
+export FLINT_GMP_LIB_DIR
+
+if [ -z "$FLINT_LINK_OPTIONS" ]
+then
+   FLINT_LINK_OPTIONS=""
+fi
+export FLINT_LINK_OPTIONS
+
+export LD_LIBRARY_PATH=$(FLINT_GMP_LIB_DIR)

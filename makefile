@@ -1,75 +1,20 @@
-ifndef FLINT_TUNE
-	# defaults for sage.math development machine
-	FLINT_TUNE = -march=opteron -mtune=opteron
+LIBDIR=$(PREFIX)/lib
+INCLUDEDIR=$(PREFIX)/include
+DOCDIR=$(PREFIX)/doc
 
-	# for the record, here's what I use on my G5 powerpc:
-	# FLINT_TUNE = -m64 -mcpu=970 -mtune=970 -mpowerpc64 -falign-loops=16 -falign-functions=16 -falign-labels=16 -falign-jumps=16
-
-	# and here's for my laptop:
-	# FLINT_TUNE = 
-endif
-
-# ifndef NO_NTL
-#   NTL = -lntl
-# endif
-
-ifndef FLINT_LINK_OPTIONS
-	FLINT_LINK_OPTIONS = 
-endif
-
-ifndef FLINT_NTL_LIB_DIR 
-    FLINT_NTL_LIB_DIR = "/home/wbhart/sage/sage-2.0/local/lib"
-endif
-
-ifndef FLINT_NTL_INCLUDE_DIR 
-	FLINT_NTL_INCLUDE_DIR = "/home/wbhart/sage/sage-2.0/local/include"
-endif
-
-# default GMP directories on sage.math development machine
-ifndef FLINT_GMP_INCLUDE_DIR
-	FLINT_GMP_INCLUDE_DIR = "/home/dmharvey/gmp/install/include"
-endif
-
-ifndef FLINT_GMP_LIB_DIR
-	FLINT_GMP_LIB_DIR = "/home/dmharvey/gmp/install/lib"
-endif
-
-# qd include and library directories
-
-ifndef FLINT_QD_INCLUDE_DIR
-	FLINT_QD_INCLUDE_DIR = "/home/wbhart/flint/trunk/qd"
-endif
-
-ifndef FLINT_QD_LIB_DIR
-	FLINT_QD_LIB_DIR = "qd"
-endif
-
-qdexists := $(shell ls -d qd)
-ifeq ($(qdexists), qd)
-	LIBS = -L$(FLINT_GMP_LIB_DIR)  -L$(FLINT_NTL_LIB_DIR) -L$(FLINT_QD_LIB_DIR) $(FLINT_LINK_OPTIONS) -lgmp -lpthread -lm -lqd $(NTL)
+ifeq ($(MAKECMDGOALS),library)
+        CC = gcc -fPIC -std=c99
 else
-	LIBS = -L$(FLINT_GMP_LIB_DIR)  -L$(FLINT_NTL_LIB_DIR) -L$(FLINT_QD_LIB_DIR) $(FLINT_LINK_OPTIONS) -lgmp -lpthread -lm $(NTL)
+        CC = gcc -std=c99
 endif
 
-QS: mpQS tinyQS
+CPP = g++ -fPIC
 
-tune: ZmodF_mul-tune mpz_poly-tune 
-
-test: mpn_extras-test fmpz_poly-test fmpz-test ZmodF-test ZmodF_poly-test mpz_poly-test ZmodF_mul-test long_extras-test 
-
-profile: ZmodF_poly-profile kara-profile fmpz_poly-profile mpz_poly-profile ZmodF_mul-profile 
-
-examples: delta_qexp BLTcubes BPTJCubes bernoulli F_mpz_mul-timing expmod
-
-all: QS tune test profile examples
+LIBS = -L$(FLINT_GMP_LIB_DIR)  -L$(FLINT_NTL_LIB_DIR) -L$(FLINT_QD_LIB_DIR) $(FLINT_LINK_OPTIONS) -lgmp -lpthread -lm $(NTL)
 
 INCS = -I$(FLINT_GMP_INCLUDE_DIR) -I$(FLINT_NTL_INCLUDE_DIR) -I$(FLINT_QD_INCLUDE_DIR) 
 
-CC = gcc -std=c99
-
-CPP = g++ 
-
-CFLAGS = $(INCS) -funroll-loops -fexpensive-optimizations $(FLINT_TUNE) -O3
+CFLAGS = $(INCS) $(FLINT_TUNE) -O3
 
 RM = rm -f
 
@@ -111,7 +56,30 @@ FLINTOBJ = \
 	ZmodF_poly.o \
 	long_extras.o
 
-library: $(FLINTOBJ)
+QS: mpQS tinyQS
+
+tune: ZmodF_mul-tune mpz_poly-tune 
+
+test: mpn_extras-test fmpz_poly-test fmpz-test ZmodF-test ZmodF_poly-test mpz_poly-test ZmodF_mul-test long_extras-test 
+
+profile: ZmodF_poly-profile kara-profile fmpz_poly-profile mpz_poly-profile ZmodF_mul-profile 
+
+examples: delta_qexp BLTcubes BPTJCubes bernoulli F_mpz_mul-timing expmod
+
+all: QS tune test profile examples
+
+library: $(HEADERS)
+	CC = gcc -fPIC
+        $(FLINT_LIB)
+
+libflint.dylib: $(FLINTOBJ)
+	$(CC) -single_module -fPIC -dynamiclib -o libflint.dylib $(FLINTOBJ) $(LIBS)
+
+libflint.dll: $(FLINTOBJ)
+	$(CC) -fPIC -shared -o libflint.dll $(FLINTOBJ) $(LIBS)
+
+libflint.so: $(FLINTOBJ)
+	$(CC) -fPIC -shared -o -flibflint.so $(FLINTOBJ) $(LIBS)
 
 mpn_extras.o: mpn_extras.c $(HEADERS)
 	$(CC) $(CFLAGS) -c mpn_extras.c -o mpn_extras.o
