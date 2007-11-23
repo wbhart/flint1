@@ -34,7 +34,7 @@
 ===========================================================================*/
 
 static inline void square_root(mpz_t X, mpz_t Y, QS_t * qs_inf, linalg_t * la_inf, 
-   u_int64_t * nullrows, unsigned long ncols, unsigned long l, mpz_t N)
+   uint64_t * nullrows, unsigned long ncols, unsigned long l, mpz_t N)
 {
    unsigned long position;
    unsigned long * relation = la_inf->relation;
@@ -217,7 +217,7 @@ int F_mpz_factor_tinyQS(F_mpz_factor_t factors, mpz_t N)
 
    reduce_matrix(&nrows, &ncols, matrix); // Do some filtering on the matrix
    
-   u_int64_t* nullrows;
+   uint64_t* nullrows;
    do {
       nullrows = block_lanczos(nrows, 0, ncols, matrix); // Linear algebra (block Lanczos)
    } while (nullrows == NULL); 
@@ -228,7 +228,7 @@ int F_mpz_factor_tinyQS(F_mpz_factor_t factors, mpz_t N)
       mask |= nullrows[i];
 
    for (i = j = 0; i < 64; i++) {
-		if (mask & ((u_int64_t)(1) << i))
+		if (mask & ((uint64_t)(1) << i))
 			j++;
    }
 
@@ -253,7 +253,7 @@ int F_mpz_factor_tinyQS(F_mpz_factor_t factors, mpz_t N)
 
    for (unsigned long l = 0; l < 64; l++)
    {
-      if (mask & ((u_int64_t)(1) << l))
+      if (mask & ((uint64_t)(1) << l))
       {
          square_root(X, Y, &qs_inf, &la_inf, nullrows, ncols, l, N); 
          mpz_sub(X, X, Y);

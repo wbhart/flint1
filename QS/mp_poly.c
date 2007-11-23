@@ -50,17 +50,17 @@ void poly_init(QS_t * qs_inf, poly_t * poly_inf, mpz_t N)
    
    poly_inf->A_ind = (unsigned long*) flint_stack_alloc(s);  
    poly_inf->A_modp = (unsigned long*) flint_stack_alloc(s);  
-   poly_inf->A_inv2B = (u_int32_t**) flint_stack_alloc(s); 
+   poly_inf->A_inv2B = (uint32_t**) flint_stack_alloc(s); 
    poly_inf->inv_p2 = (double*) flint_stack_alloc_bytes(s*sizeof(double));  
-   poly_inf->A_inv = (u_int32_t *) flint_stack_alloc_bytes(num_primes*sizeof(u_int32_t));  
-   poly_inf->soln1 = (u_int32_t *) flint_stack_alloc_bytes(num_primes*sizeof(u_int32_t)); 
-   poly_inf->soln2 = (u_int32_t *) flint_stack_alloc_bytes(num_primes*sizeof(u_int32_t)); 
-   poly_inf->posn1 = (u_int32_t *) flint_stack_alloc_bytes(num_primes*sizeof(u_int32_t)); 
-   poly_inf->posn2 = (u_int32_t *) flint_stack_alloc_bytes(num_primes*sizeof(u_int32_t)); 
+   poly_inf->A_inv = (uint32_t *) flint_stack_alloc_bytes(num_primes*sizeof(uint32_t));  
+   poly_inf->soln1 = (uint32_t *) flint_stack_alloc_bytes(num_primes*sizeof(uint32_t)); 
+   poly_inf->soln2 = (uint32_t *) flint_stack_alloc_bytes(num_primes*sizeof(uint32_t)); 
+   poly_inf->posn1 = (uint32_t *) flint_stack_alloc_bytes(num_primes*sizeof(uint32_t)); 
+   poly_inf->posn2 = (uint32_t *) flint_stack_alloc_bytes(num_primes*sizeof(uint32_t)); 
    
-   u_int32_t ** A_inv2B = poly_inf->A_inv2B;
+   uint32_t ** A_inv2B = poly_inf->A_inv2B;
    
-   A_inv2B[0] = (u_int32_t *) flint_stack_alloc_bytes(num_primes*s*sizeof(u_int32_t));
+   A_inv2B[0] = (uint32_t *) flint_stack_alloc_bytes(num_primes*s*sizeof(uint32_t));
    
    mpz_init(poly_inf->A_mpz);
    mpz_init(poly_inf->B_mpz);
@@ -364,12 +364,12 @@ void compute_off_adj(QS_t * qs_inf, poly_t * poly_inf)
    unsigned long num_primes = qs_inf->num_primes;
    unsigned long * A = poly_inf->A;
    unsigned long * B = poly_inf->B;
-   u_int32_t * A_inv = poly_inf->A_inv;
-   u_int32_t ** A_inv2B = poly_inf->A_inv2B;
+   uint32_t * A_inv = poly_inf->A_inv;
+   uint32_t ** A_inv2B = poly_inf->A_inv2B;
    unsigned long * B_terms = poly_inf->B_terms;
-   u_int32_t * soln1 = poly_inf->soln1;
-   u_int32_t* soln2 = poly_inf->soln2;
-   u_int32_t * sqrts = qs_inf->sqrts;
+   uint32_t * soln1 = poly_inf->soln1;
+   uint32_t* soln2 = poly_inf->soln2;
+   uint32_t * sqrts = qs_inf->sqrts;
    prime_t * factor_base = qs_inf->factor_base;
    unsigned long sieve_size = qs_inf->sieve_size;
    unsigned long s = poly_inf->s;
@@ -425,8 +425,8 @@ void compute_A_factor_offsets(QS_t * qs_inf, poly_t * poly_inf)
    unsigned long s = poly_inf->s;
    unsigned long * A_ind = poly_inf->A_ind;
    unsigned long * A_modp = poly_inf->A_modp;
-   u_int32_t * soln1 = poly_inf->soln1;
-   u_int32_t * soln2 = poly_inf->soln2;
+   uint32_t * soln1 = poly_inf->soln1;
+   uint32_t * soln2 = poly_inf->soln2;
    unsigned long p, D;
    unsigned long * n = qs_inf->n;
    unsigned long * B = poly_inf->B;

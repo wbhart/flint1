@@ -49,7 +49,7 @@ unsigned long num_FB_primes(unsigned long bits)
 
 void sqrts_init(QS_t * qs_inf)
 {
-   qs_inf->sqrts = (u_int32_t *) flint_stack_alloc_bytes(sizeof(u_int32_t)*qs_inf->num_primes);
+   qs_inf->sqrts = (uint32_t *) flint_stack_alloc_bytes(sizeof(uint32_t)*qs_inf->num_primes);
 }
 
 void sqrts_clear(void)
@@ -134,7 +134,7 @@ unsigned long knuth_schroeppel(QS_t * qs_inf)
     double pinv;
     int kron;
     
-    u_int32_t * sqrts = qs_inf->sqrts;
+    uint32_t * sqrts = qs_inf->sqrts;
     
     fmpz_t n = qs_inf->n;
     nmod8 = n[1]%8;
@@ -201,7 +201,7 @@ unsigned long compute_factor_base(QS_t * qs_inf)
    unsigned long fb_prime = 2;
    unsigned long multiplier = qs_inf->k;
    prime_t * factor_base = qs_inf->factor_base;
-   u_int32_t * sqrts = qs_inf->sqrts;
+   uint32_t * sqrts = qs_inf->sqrts;
    unsigned long num_primes = num_FB_primes(qs_inf->bits);
    unsigned long prime, nmod;
    double pinv;

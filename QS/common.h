@@ -63,7 +63,7 @@ static const unsigned long prime_tab[][5] =
                     
 typedef struct prime_s
 {
-   u_int32_t p; // prime
+   uint32_t p; // prime
    double pinv; // precomputed inverse
 } prime_t;
 
@@ -81,7 +81,7 @@ typedef struct QS_s
    unsigned long small_primes;
    unsigned long large_prime;
    prime_t * factor_base; 
-   u_int32_t * sqrts;
+   uint32_t * sqrts;
    unsigned char * sizes;
    unsigned long * prime_count;
 } QS_t;

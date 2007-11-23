@@ -35,12 +35,12 @@ typedef struct poly_s
      
     unsigned long * A_ind;
     unsigned long * A_modp;
-    u_int32_t * A_inv;
-    u_int32_t * soln1;
-    u_int32_t * soln2;
-    u_int32_t * posn1;
-    u_int32_t * posn2;
-    u_int32_t ** A_inv2B; 
+    uint32_t * A_inv;
+    uint32_t * soln1;
+    uint32_t * soln2;
+    uint32_t * posn1;
+    uint32_t * posn2;
+    uint32_t ** A_inv2B; 
     double * inv_p2;
     
     unsigned long * B_terms;

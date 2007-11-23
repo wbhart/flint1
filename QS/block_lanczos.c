@@ -44,9 +44,9 @@ The following modifications were made by William Hart:
  
 #define NUM_EXTRA_RELATIONS 64
 
-#define BIT(x) (((u_int64_t)(1)) << (x))
+#define BIT(x) (((uint64_t)(1)) << (x))
 
-static const u_int64_t bitmask[64] = {
+static const uint64_t bitmask[64] = {
 	BIT( 0), BIT( 1), BIT( 2), BIT( 3), BIT( 4), BIT( 5), BIT( 6), BIT( 7),
 	BIT( 8), BIT( 9), BIT(10), BIT(11), BIT(12), BIT(13), BIT(14), BIT(15),
 	BIT(16), BIT(17), BIT(18), BIT(19), BIT(20), BIT(21), BIT(22), BIT(23),
@@ -58,7 +58,7 @@ static const u_int64_t bitmask[64] = {
 };
 
 /*--------------------------------------------------------------------*/
-u_int64_t get_null_entry(u_int64_t * nullrows, long i, long l) {
+uint64_t get_null_entry(uint64_t * nullrows, long i, long l) {
    
    /* Returns true if the entry with indices i,l is 1 in the
       supplied 64xN matrix. This is used to read the nullspace
@@ -67,14 +67,14 @@ u_int64_t get_null_entry(u_int64_t * nullrows, long i, long l) {
     return nullrows[i]&bitmask[l];
 }
 
-u_int64_t random32(void) {
+uint64_t random32(void) {
 
    /* Poor man's random number generator. It satisfies no 
       particularly good randomness properties, but is good
       enough for this application */
       
     static unsigned long randval = 4035456057U;
-    randval = ((u_int64_t)randval*1025416097U+286824428U)%(u_int64_t)4294967291U;
+    randval = ((uint64_t)randval*1025416097U+286824428U)%(uint64_t)4294967291U;
     
     return (unsigned long)randval;
 }
@@ -201,14 +201,14 @@ void reduce_matrix(unsigned long *nrows,
 }
 
 /*-------------------------------------------------------------------*/
-static void mul_64x64_64x64(u_int64_t *a, u_int64_t *b, u_int64_t *c ) {
+static void mul_64x64_64x64(uint64_t *a, uint64_t *b, uint64_t *c ) {
 
 	/* c[][] = x[][] * y[][], where all operands are 64 x 64
 	   (i.e. contain 64 words of 64 bits each). The result
 	   may overwrite a or b. */
 
-	u_int64_t ai, bj, accum;
-	u_int64_t tmp[64];
+	uint64_t ai, bj, accum;
+	uint64_t tmp[64];
 	unsigned long i, j;
 
 	for (i = 0; i < 64; i++) {
@@ -230,7 +230,7 @@ static void mul_64x64_64x64(u_int64_t *a, u_int64_t *b, u_int64_t *c ) {
 }
 
 /*-----------------------------------------------------------------------*/
-static void precompute_Nx64_64x64(u_int64_t *x, u_int64_t *c) {
+static void precompute_Nx64_64x64(uint64_t *x, uint64_t *c) {
 
 	/* Let x[][] be a 64 x 64 matrix in GF(2), represented
 	   as 64 words of 64 bits each. Let c[][] be an 8 x 256
@@ -245,7 +245,7 @@ static void precompute_Nx64_64x64(u_int64_t *x, u_int64_t *c) {
 	   table can dramatically speed up matrix multiplies
 	   by x[][]. */
 
-	u_int64_t accum, xk;
+	uint64_t accum, xk;
 	unsigned long i, j, k, index;
 
 	for (j = 0; j < 8; j++) {
@@ -269,8 +269,8 @@ static void precompute_Nx64_64x64(u_int64_t *x, u_int64_t *c) {
 }
 
 /*-------------------------------------------------------------------*/
-static void mul_Nx64_64x64_acc(u_int64_t *v, u_int64_t *x, u_int64_t *c, 
-				u_int64_t *y, unsigned long n) {
+static void mul_Nx64_64x64_acc(uint64_t *v, uint64_t *x, uint64_t *c, 
+				uint64_t *y, unsigned long n) {
 
 	/* let v[][] be a n x 64 matrix with elements in GF(2), 
 	   represented as an array of n 64-bit words. Let c[][]
@@ -279,7 +279,7 @@ static void mul_Nx64_64x64_acc(u_int64_t *v, u_int64_t *x, u_int64_t *c,
 	   x[][], then XORs the n x 64 result into y[][] */
 
 	unsigned long i;
-	u_int64_t word;
+	uint64_t word;
 
 	precompute_Nx64_64x64(x, c);
 
@@ -297,8 +297,8 @@ static void mul_Nx64_64x64_acc(u_int64_t *v, u_int64_t *x, u_int64_t *c,
 }
 
 /*-------------------------------------------------------------------*/
-static void mul_64xN_Nx64(u_int64_t *x, u_int64_t *y,
-			   u_int64_t *c, u_int64_t *xy, unsigned long n) {
+static void mul_64xN_Nx64(uint64_t *x, uint64_t *y,
+			   uint64_t *c, uint64_t *xy, unsigned long n) {
 
 	/* Let x and y be n x 64 matrices. This routine computes
 	   the 64 x 64 matrix xy[][] given by transpose(x) * y.
@@ -306,12 +306,12 @@ static void mul_64xN_Nx64(u_int64_t *x, u_int64_t *y,
 
 	unsigned long i;
 
-	memset(c, 0, 256 * 8 * sizeof(u_int64_t));
-	memset(xy, 0, 64 * sizeof(u_int64_t));
+	memset(c, 0, 256 * 8 * sizeof(uint64_t));
+	memset(xy, 0, 64 * sizeof(uint64_t));
 
 	for (i = 0; i < n; i++) {
-		u_int64_t xi = x[i];
-		u_int64_t yi = y[i];
+		uint64_t xi = x[i];
+		uint64_t yi = y[i];
 		c[ 0*256 + ( xi        & 0xff) ] ^= yi;
 		c[ 1*256 + ((xi >>  8) & 0xff) ] ^= yi;
 		c[ 2*256 + ((xi >> 16) & 0xff) ] ^= yi;
@@ -326,7 +326,7 @@ static void mul_64xN_Nx64(u_int64_t *x, u_int64_t *y,
 	for(i = 0; i < 8; i++) {
 
 		unsigned long j;
-		u_int64_t a0, a1, a2, a3, a4, a5, a6, a7;
+		uint64_t a0, a1, a2, a3, a4, a5, a6, a7;
 
 		a0 = a1 = a2 = a3 = 0;
 		a4 = a5 = a6 = a7 = 0;
@@ -351,9 +351,9 @@ static void mul_64xN_Nx64(u_int64_t *x, u_int64_t *y,
 }
 
 /*-------------------------------------------------------------------*/
-static unsigned long find_nonsingular_sub(u_int64_t *t, unsigned long *s, 
+static unsigned long find_nonsingular_sub(uint64_t *t, unsigned long *s, 
 				unsigned long *last_s, unsigned long last_dim, 
-				u_int64_t *w) {
+				uint64_t *w) {
 
 	/* given a 64x64 matrix t[][] (i.e. sixty-four
 	   64-bit words) and a list of 'last_dim' column 
@@ -366,9 +366,9 @@ static unsigned long find_nonsingular_sub(u_int64_t *t, unsigned long *s,
 	unsigned long i, j;
 	unsigned long dim;
 	unsigned long cols[64];
-	u_int64_t M[64][2];
-	u_int64_t mask, *row_i, *row_j;
-	u_int64_t m0, m1;
+	uint64_t M[64][2];
+	uint64_t mask, *row_i, *row_j;
+	uint64_t m0, m1;
 
 	/* M = [t | I] for I the 64x64 identity matrix */
 
@@ -487,7 +487,7 @@ static unsigned long find_nonsingular_sub(u_int64_t *t, unsigned long *s,
 	for (i = 0; i < last_dim; i++)
 		mask |= bitmask[last_s[i]];
 
-	if (mask != (u_int64_t)(-1)) {
+	if (mask != (uint64_t)(-1)) {
 #ifdef ERRORS
 		printf("lanczos error: not all columns used\n");
 #endif
@@ -500,21 +500,21 @@ static unsigned long find_nonsingular_sub(u_int64_t *t, unsigned long *s,
 /*-------------------------------------------------------------------*/
 void mul_MxN_Nx64(unsigned long vsize, unsigned long dense_rows,
 		unsigned long ncols, la_col_t *A,
-		u_int64_t *x, u_int64_t *b) {
+		uint64_t *x, uint64_t *b) {
 
 	/* Multiply the vector x[] by the matrix A (stored
 	   columnwise) and put the result in b[]. vsize
-	   refers to the number of u_int64_t's allocated for
+	   refers to the number of uint64_t's allocated for
 	   x[] and b[]; vsize is probably different from ncols */
 
 	unsigned long i, j;
 
-	memset(b, 0, vsize * sizeof(u_int64_t));
+	memset(b, 0, vsize * sizeof(uint64_t));
 	
 	for (i = 0; i < ncols; i++) {
 		la_col_t *col = A + i;
 		unsigned long *row_entries = col->data;
-		u_int64_t tmp = x[i];
+		uint64_t tmp = x[i];
 
 		for (j = 0; j < col->weight; j++) {
 			b[row_entries[j]] ^= tmp;
@@ -525,7 +525,7 @@ void mul_MxN_Nx64(unsigned long vsize, unsigned long dense_rows,
 		for (i = 0; i < ncols; i++) {
 			la_col_t *col = A + i;
 			unsigned long *row_entries = col->data + col->weight;
-			u_int64_t tmp = x[i];
+			uint64_t tmp = x[i];
 	
 			for (j = 0; j < dense_rows; j++) {
 				if (row_entries[j / 32] & 
@@ -539,7 +539,7 @@ void mul_MxN_Nx64(unsigned long vsize, unsigned long dense_rows,
 
 /*-------------------------------------------------------------------*/
 void mul_trans_MxN_Nx64(unsigned long dense_rows, unsigned long ncols,
-			la_col_t *A, u_int64_t *x, u_int64_t *b) {
+			la_col_t *A, uint64_t *x, uint64_t *b) {
 
 	/* Multiply the vector x[] by the transpose of the
 	   matrix A and put the result in b[]. Since A is stored
@@ -550,7 +550,7 @@ void mul_trans_MxN_Nx64(unsigned long dense_rows, unsigned long ncols,
 	for (i = 0; i < ncols; i++) {
 		la_col_t *col = A + i;
 		unsigned long *row_entries = col->data;
-		u_int64_t accum = 0;
+		uint64_t accum = 0;
 
 		for (j = 0; j < col->weight; j++) {
 			accum ^= x[row_entries[j]];
@@ -562,7 +562,7 @@ void mul_trans_MxN_Nx64(unsigned long dense_rows, unsigned long ncols,
 		for (i = 0; i < ncols; i++) {
 			la_col_t *col = A + i;
 			unsigned long *row_entries = col->data + col->weight;
-			u_int64_t accum = b[i];
+			uint64_t accum = b[i];
 	
 			for (j = 0; j < dense_rows; j++) {
 				if (row_entries[j / 32] &
@@ -576,7 +576,7 @@ void mul_trans_MxN_Nx64(unsigned long dense_rows, unsigned long ncols,
 }
 
 /*-----------------------------------------------------------------------*/
-static void transpose_vector(unsigned long ncols, u_int64_t *v, u_int64_t **trans) {
+static void transpose_vector(unsigned long ncols, uint64_t *v, uint64_t **trans) {
 
 	/* Hideously inefficent routine to transpose a
 	   vector v[] of 64-bit words into a 2-D array
@@ -584,7 +584,7 @@ static void transpose_vector(unsigned long ncols, u_int64_t *v, u_int64_t **tran
 
 	unsigned long i, j;
 	unsigned long col;
-	u_int64_t mask, word;
+	uint64_t mask, word;
 
 	for (i = 0; i < ncols; i++) {
 		col = i / 64;
@@ -602,8 +602,8 @@ static void transpose_vector(unsigned long ncols, u_int64_t *v, u_int64_t **tran
 
 /*-----------------------------------------------------------------------*/
 void combine_cols(unsigned long ncols, 
-		u_int64_t *x, u_int64_t *v, 
-		u_int64_t *ax, u_int64_t *av) {
+		uint64_t *x, uint64_t *v, 
+		uint64_t *ax, uint64_t *av) {
 
 	/* Once the block Lanczos iteration has finished, 
 	   x[] and v[] will contain mostly nullspace vectors
@@ -623,8 +623,8 @@ void combine_cols(unsigned long ncols,
 	   process assumes 64 dependencies instead of 128 */
 
 	unsigned long i, j, k, bitpos, col, col_words, num_deps;
-	u_int64_t mask;
-	u_int64_t *matrix[128], *amatrix[128], *tmp;
+	uint64_t mask;
+	uint64_t *matrix[128], *amatrix[128], *tmp;
 
 	num_deps = 128;
 	if (v == NULL || av == NULL)
@@ -633,10 +633,10 @@ void combine_cols(unsigned long ncols,
 	col_words = (ncols + 63) / 64;
 
 	for (i = 0; i < num_deps; i++) {
-		matrix[i] = (u_int64_t *)calloc((size_t)col_words, 
-					     sizeof(u_int64_t));
-		amatrix[i] = (u_int64_t *)calloc((size_t)col_words, 
-					      sizeof(u_int64_t));
+		matrix[i] = (uint64_t *)calloc((size_t)col_words, 
+					     sizeof(uint64_t));
+		amatrix[i] = (uint64_t *)calloc((size_t)col_words, 
+					      sizeof(uint64_t));
 	}
 
 	/* operations on columns can more conveniently become 
@@ -699,7 +699,7 @@ void combine_cols(unsigned long ncols,
 	/* transpose rows i to 64 back into x[] */
 
 	for (j = 0; j < ncols; j++) {
-		u_int64_t word = 0;
+		uint64_t word = 0;
 
 		col = j / 64;
 		mask = bitmask[j % 64];
@@ -718,24 +718,24 @@ void combine_cols(unsigned long ncols,
 }
 
 /*-----------------------------------------------------------------------*/
-u_int64_t * block_lanczos(unsigned long nrows, 
+uint64_t * block_lanczos(unsigned long nrows, 
 			unsigned long dense_rows, unsigned long ncols, la_col_t *B) {
 	
 	/* Solve Bx = 0 for some nonzero x; the computed
 	   solution, containing up to 64 of these nullspace
 	   vectors, is returned */
 
-	u_int64_t *vnext, *v[3], *x, *v0;
-	u_int64_t *winv[3];
-	u_int64_t *vt_a_v[2], *vt_a2_v[2];
-	u_int64_t *scratch;
-	u_int64_t *d, *e, *f, *f2;
-	u_int64_t *tmp;
+	uint64_t *vnext, *v[3], *x, *v0;
+	uint64_t *winv[3];
+	uint64_t *vt_a_v[2], *vt_a2_v[2];
+	uint64_t *scratch;
+	uint64_t *d, *e, *f, *f2;
+	uint64_t *tmp;
 	unsigned long s[2][64];
 	unsigned long i, iter;
 	unsigned long n = ncols;
 	unsigned long dim0, dim1;
-	u_int64_t mask0, mask1;
+	uint64_t mask0, mask1;
 	unsigned long vsize;
 
 	/* allocate all of the size-n variables. Note that because
@@ -745,27 +745,27 @@ u_int64_t * block_lanczos(unsigned long nrows,
 	   two numbers  */
 
 	vsize = FLINT_MAX(nrows, ncols);
-	v[0] = (u_int64_t *)malloc(vsize * sizeof(u_int64_t));
-	v[1] = (u_int64_t *)malloc(vsize * sizeof(u_int64_t));
-	v[2] = (u_int64_t *)malloc(vsize * sizeof(u_int64_t));
-	vnext = (u_int64_t *)malloc(vsize * sizeof(u_int64_t));
-	x = (u_int64_t *)malloc(vsize * sizeof(u_int64_t));
-	v0 = (u_int64_t *)malloc(vsize * sizeof(u_int64_t));
-	scratch = (u_int64_t *)malloc(FLINT_MAX(vsize, 256 * 8) * sizeof(u_int64_t));
+	v[0] = (uint64_t *)malloc(vsize * sizeof(uint64_t));
+	v[1] = (uint64_t *)malloc(vsize * sizeof(uint64_t));
+	v[2] = (uint64_t *)malloc(vsize * sizeof(uint64_t));
+	vnext = (uint64_t *)malloc(vsize * sizeof(uint64_t));
+	x = (uint64_t *)malloc(vsize * sizeof(uint64_t));
+	v0 = (uint64_t *)malloc(vsize * sizeof(uint64_t));
+	scratch = (uint64_t *)malloc(FLINT_MAX(vsize, 256 * 8) * sizeof(uint64_t));
 
 	/* allocate all the 64x64 variables */
 
-	winv[0] = (u_int64_t *)malloc(64 * sizeof(u_int64_t));
-	winv[1] = (u_int64_t *)malloc(64 * sizeof(u_int64_t));
-	winv[2] = (u_int64_t *)malloc(64 * sizeof(u_int64_t));
-	vt_a_v[0] = (u_int64_t *)malloc(64 * sizeof(u_int64_t));
-	vt_a_v[1] = (u_int64_t *)malloc(64 * sizeof(u_int64_t));
-	vt_a2_v[0] = (u_int64_t *)malloc(64 * sizeof(u_int64_t));
-	vt_a2_v[1] = (u_int64_t *)malloc(64 * sizeof(u_int64_t));
-	d = (u_int64_t *)malloc(64 * sizeof(u_int64_t));
-	e = (u_int64_t *)malloc(64 * sizeof(u_int64_t));
-	f = (u_int64_t *)malloc(64 * sizeof(u_int64_t));
-	f2 = (u_int64_t *)malloc(64 * sizeof(u_int64_t));
+	winv[0] = (uint64_t *)malloc(64 * sizeof(uint64_t));
+	winv[1] = (uint64_t *)malloc(64 * sizeof(uint64_t));
+	winv[2] = (uint64_t *)malloc(64 * sizeof(uint64_t));
+	vt_a_v[0] = (uint64_t *)malloc(64 * sizeof(uint64_t));
+	vt_a_v[1] = (uint64_t *)malloc(64 * sizeof(uint64_t));
+	vt_a2_v[0] = (uint64_t *)malloc(64 * sizeof(uint64_t));
+	vt_a2_v[1] = (uint64_t *)malloc(64 * sizeof(uint64_t));
+	d = (uint64_t *)malloc(64 * sizeof(uint64_t));
+	e = (uint64_t *)malloc(64 * sizeof(uint64_t));
+	f = (uint64_t *)malloc(64 * sizeof(uint64_t));
+	f2 = (uint64_t *)malloc(64 * sizeof(uint64_t));
 
 	/* The iterations computes v[0], vt_a_v[0],
 	   vt_a2_v[0], s[0] and winv[0]. Subscripts larger
@@ -774,8 +774,8 @@ u_int64_t * block_lanczos(unsigned long nrows,
 	   the past version of s[], which contains all
 	   the column indices */
 	   
-	memset(v[1], 0, vsize * sizeof(u_int64_t));
-	memset(v[2], 0, vsize * sizeof(u_int64_t));
+	memset(v[1], 0, vsize * sizeof(uint64_t));
+	memset(v[2], 0, vsize * sizeof(uint64_t));
 	for (i = 0; i < 64; i++) {
 		s[1][i] = i;
 		vt_a_v[1][i] = 0;
@@ -785,7 +785,7 @@ u_int64_t * block_lanczos(unsigned long nrows,
 	}
 	dim0 = 0;
 	dim1 = 64;
-	mask1 = (u_int64_t)(-1);
+	mask1 = (uint64_t)(-1);
 	iter = 0;
 
 	/* The computed solution 'x' starts off random,
@@ -793,13 +793,13 @@ u_int64_t * block_lanczos(unsigned long nrows,
 	   of v[0] must be saved off separately */
 
 	for (i = 0; i < n; i++)
-		v[0][i] = (u_int64_t)(random32()) << 32 |
-		          (u_int64_t)(random32());
+		v[0][i] = (uint64_t)(random32()) << 32 |
+		          (uint64_t)(random32());
 
-	memcpy(x, v[0], vsize * sizeof(u_int64_t));
+	memcpy(x, v[0], vsize * sizeof(uint64_t));
 	mul_MxN_Nx64(vsize, dense_rows, ncols, B, v[0], scratch);
 	mul_trans_MxN_Nx64(dense_rows, ncols, B, scratch, v[0]);
-	memcpy(v0, v[0], vsize * sizeof(u_int64_t));
+	memcpy(v0, v[0], vsize * sizeof(uint64_t));
 
 	/* perform the iteration */
 

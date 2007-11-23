@@ -289,7 +289,7 @@ void compute_off_adj(QS_t * qs_inf, poly_t * poly_inf)
    unsigned long * B_terms = poly_inf->B_terms;
    unsigned long * soln1 = poly_inf->soln1;
    unsigned long * soln2 = poly_inf->soln2;
-   u_int32_t * sqrts = qs_inf->sqrts;
+   uint32_t * sqrts = qs_inf->sqrts;
    prime_t * factor_base = qs_inf->factor_base;
    unsigned long s = poly_inf->s;
    unsigned long p, temp;

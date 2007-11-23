@@ -45,8 +45,8 @@ void get_sieve_params(QS_t * qs_inf)
 void do_sieving2(QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve)
 {
    unsigned long num_primes = qs_inf->num_primes;
-   u_int32_t * soln1 = poly_inf->soln1;
-   u_int32_t * soln2 = poly_inf->soln2;
+   uint32_t * soln1 = poly_inf->soln1;
+   uint32_t * soln2 = poly_inf->soln2;
    prime_t * factor_base = qs_inf->factor_base;
    unsigned long sieve_size = qs_inf->sieve_size;
    unsigned char * end = sieve + sieve_size;
@@ -110,12 +110,12 @@ void do_sieving2(QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve)
    }
 }
 
-void update_offsets(unsigned long poly_add, u_int32_t * poly_corr, 
+void update_offsets(unsigned long poly_add, uint32_t * poly_corr, 
              QS_t * qs_inf, poly_t * poly_inf)
 {
    unsigned long num_primes = qs_inf->num_primes;
-   u_int32_t * soln1 = poly_inf->soln1;
-   u_int32_t * soln2 = poly_inf->soln2;
+   uint32_t * soln1 = poly_inf->soln1;
+   uint32_t * soln2 = poly_inf->soln2;
    prime_t * factor_base = qs_inf->factor_base;
    unsigned long p, correction;
    
@@ -138,10 +138,10 @@ void do_sieving(QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve,
                   unsigned long M, int first, int last)
 {
    unsigned long num_primes = qs_inf->num_primes;
-   u_int32_t * soln1 = poly_inf->soln1;
-   u_int32_t * soln2 = poly_inf->soln2;
-   u_int32_t * posn1 = poly_inf->posn1;
-   u_int32_t * posn2 = poly_inf->posn2;
+   uint32_t * soln1 = poly_inf->soln1;
+   uint32_t * soln2 = poly_inf->soln2;
+   uint32_t * posn1 = poly_inf->posn1;
+   uint32_t * posn2 = poly_inf->posn2;
    prime_t * factor_base = qs_inf->factor_base;
    unsigned long small_primes = qs_inf->small_primes;
    unsigned long p, correction;
@@ -202,8 +202,8 @@ void do_sieving3(QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve,
                   unsigned long first_prime, unsigned long second_prime, 
                   unsigned long M)
 {
-   u_int32_t * soln1 = poly_inf->soln1;
-   u_int32_t * soln2 = poly_inf->soln2;
+   uint32_t * soln1 = poly_inf->soln1;
+   uint32_t * soln2 = poly_inf->soln2;
    prime_t * factor_base = qs_inf->factor_base;
    unsigned long p;
    unsigned char * end = sieve + M;
@@ -245,8 +245,8 @@ unsigned long evaluate_candidate(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly
    unsigned long bits, exp, extra_bits, modp, prime;
    unsigned long num_primes = qs_inf->num_primes;
    prime_t * factor_base = qs_inf->factor_base;
-   u_int32_t * soln1 = poly_inf->soln1;
-   u_int32_t * soln2 = poly_inf->soln2;
+   uint32_t * soln1 = poly_inf->soln1;
+   uint32_t * soln2 = poly_inf->soln2;
    unsigned long * small = la_inf->small;
    unsigned long sieve_fill = qs_inf->sieve_fill;
    unsigned long sieve_size = qs_inf->sieve_size;

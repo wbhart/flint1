@@ -85,11 +85,11 @@ the mpz_t::_mp_d member directly).
 #define FLINT_GMP_COMPLIANT 0
 
 #if FLINT_BITS == 32
-#define half_ulong u_int16_t
+#define half_ulong uint16_t
 #define half_long int16_t
 #define HALF_FLINT_BITS 16
 #else
-#define half_ulong u_int32_t
+#define half_ulong uint32_t
 #define half_long int32_t
 #define HALF_FLINT_BITS 32
 #endif
@@ -149,34 +149,10 @@ static inline unsigned long FLINT_BIT_COUNT(unsigned long x)
    return FLINT_BITS-zeros;
 }
 
-// <<<<<<< .mine
-#define shift_r(a,b) _shift_r(a,b);
-#define shift_l(a,b) _shift_l(a,b);
-
-static inline
-unsigned long _shift_r(unsigned long n, unsigned long r)
-{
-   if (r == FLINT_BITS) return 0;
-   return (n>>r);
-}
-
-static inline
-unsigned long _shift_l(unsigned long n, unsigned long l)
-{
-   if (l == FLINT_BITS) return 0;
-   return (n<<l);
-}
-
-// =======
 #ifdef __cplusplus
  }
-// >>>>>>> .r1042
 #endif
 
-// <<<<<<< .mine
-// =======
 #endif
-
-// >>>>>>> .r1042
 
 // end of file ****************************************************************
