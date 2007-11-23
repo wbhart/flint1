@@ -1896,11 +1896,10 @@ void _fmpz_poly_scalar_div_exact_si(fmpz_poly_t output, const fmpz_poly_t poly, 
 }
 
 /* 
-    Does scalar division of a polynomial by a limb x. Currently 
-    rounding is done towards zero.
+    Does scalar division of a polynomial by a limb x. Rounding is done towards zero.
 */
 
-void _fmpz_poly_scalar_div_ui(fmpz_poly_t output, const fmpz_poly_t poly, const unsigned long x)
+void _fmpz_poly_scalar_tdiv_ui(fmpz_poly_t output, const fmpz_poly_t poly, const unsigned long x)
 {
    if (poly->length == 0) 
    {
@@ -1942,7 +1941,68 @@ void _fmpz_poly_scalar_div_ui(fmpz_poly_t output, const fmpz_poly_t poly, const 
    _fmpz_poly_normalise(output);
 }
 
-void _fmpz_poly_scalar_div_si(fmpz_poly_t output, const fmpz_poly_t poly, const long scalar)
+/* 
+    Does scalar division of a polynomial by a limb x. Rounding is done towards 
+    minus infinity so that the remainder is positive.
+*/
+
+void _fmpz_poly_scalar_div_ui(fmpz_poly_t output, const fmpz_poly_t poly, const unsigned long x)
+{
+   if (poly->length == 0) 
+   {
+      output->length = 0;
+      return;
+   }
+   unsigned long size_out = output->limbs+1;
+   unsigned long size1 = poly->limbs+1;
+   fmpz_t coeffs_out = output->coeffs;
+   fmpz_t coeffs1 = poly->coeffs;
+   
+   mp_limb_t rem;
+      
+   if (poly->length > FLINT_POL_DIV_1_LENGTH)
+   {
+      unsigned long norm;
+      mp_limb_t xinv;
+      unsigned long xnorm;
+      
+      count_lead_zeros(norm, x);
+      xnorm = (x<<norm);
+      invert_limb(xinv, xnorm);
+      
+      for (unsigned long i = 0; i < poly->length; i++)
+      {
+         coeffs_out[i*size_out] = coeffs1[i*size1];
+         rem = F_mpn_divmod_1_preinv(coeffs_out+i*size_out+1, coeffs1+i*size1+1, ABS(coeffs1[i*size1]), x, xinv, norm);
+         NORM(coeffs_out+i*size_out);
+         if (((long) coeffs_out[i*size_out] < 0L) && (rem))
+         {
+            fmpz_sub_ui_inplace(coeffs_out+i*size_out, 1UL);
+         }
+      }
+   } else
+   {
+      for (unsigned long i = 0; i < poly->length; i++)
+      {
+         coeffs_out[i*size_out] = coeffs1[i*size1];
+         rem = mpn_divmod_1(coeffs_out+i*size_out+1, coeffs1+i*size1+1, ABS(coeffs1[i*size1]), x);
+         NORM(coeffs_out+i*size_out);
+         if (((long) coeffs_out[i*size_out] < 0L) && (rem))
+         {
+            fmpz_sub_ui_inplace(coeffs_out+i*size_out, 1UL);
+         }
+      }
+   }
+   
+   output->length = poly->length;
+   _fmpz_poly_normalise(output);
+}
+
+/*
+   Divide each coefficient by the signed scalar, rounding the quotient towards zero
+*/
+
+void _fmpz_poly_scalar_tdiv_si(fmpz_poly_t output, const fmpz_poly_t poly, const long scalar)
 {
    long x = scalar;
    
@@ -1973,6 +2033,7 @@ void _fmpz_poly_scalar_div_si(fmpz_poly_t output, const fmpz_poly_t poly, const 
          if (sign) coeffs_out[i*size_out] = -coeffs1[i*size1];
          else coeffs_out[i*size_out] = coeffs1[i*size1];
          F_mpn_divmod_1_preinv(coeffs_out+i*size_out+1, coeffs1+i*size1+1, ABS(coeffs1[i*size1]), x, xinv, norm);
+         NORM(coeffs_out+i*size_out);
       }
    } else
    {
@@ -1981,6 +2042,74 @@ void _fmpz_poly_scalar_div_si(fmpz_poly_t output, const fmpz_poly_t poly, const 
          if (sign) coeffs_out[i*size_out] = -coeffs1[i*size1];
          else coeffs_out[i*size_out] = coeffs1[i*size1];
          mpn_divmod_1(coeffs_out+i*size_out+1, coeffs1+i*size1+1, ABS(coeffs1[i*size1]), x);
+         NORM(coeffs_out+i*size_out);
+      }
+   }
+   
+   output->length = poly->length;
+   _fmpz_poly_normalise(output);
+}
+
+/*
+   Divide each coefficient by the signed scalar, rounding the quotient towards minus infinity
+*/
+
+void _fmpz_poly_scalar_div_si(fmpz_poly_t output, const fmpz_poly_t poly, const long scalar)
+{
+   long x = scalar;
+   
+   if (poly->length == 0) 
+   {
+      output->length = 0;
+      return;
+   }
+   unsigned long size_out = output->limbs+1;
+   unsigned long size1 = poly->limbs+1;
+   fmpz_t coeffs_out = output->coeffs;
+   fmpz_t coeffs1 = poly->coeffs;
+   int sign = (x < 0L);
+   if (sign) x = -x; 
+   mp_limb_t rem;
+      
+   if (poly->length > FLINT_POL_DIV_1_LENGTH)
+   {
+      unsigned long norm;
+      mp_limb_t xinv;
+      unsigned long xnorm;
+      
+      count_lead_zeros(norm, (unsigned long) x);
+      xnorm = ((unsigned long) x<<norm);
+      invert_limb(xinv, xnorm);
+      
+      for (unsigned long i = 0; i < poly->length; i++)
+      {
+         if (sign) coeffs_out[i*size_out] = -coeffs1[i*size1];
+         else coeffs_out[i*size_out] = coeffs1[i*size1];
+         rem = F_mpn_divmod_1_preinv(coeffs_out+i*size_out+1, coeffs1+i*size1+1, ABS(coeffs1[i*size1]), x, xinv, norm);
+         if (((long) coeffs_out[i*size_out] < 0L) && (rem))
+         {
+            NORM(coeffs_out+i*size_out);
+            fmpz_sub_ui_inplace(coeffs_out+i*size_out, 1UL);
+         } else
+         {
+            NORM(coeffs_out+i*size_out);
+         }     
+      }
+   } else
+   {
+      for (unsigned long i = 0; i < poly->length; i++)
+      {
+         if (sign) coeffs_out[i*size_out] = -coeffs1[i*size1];
+         else coeffs_out[i*size_out] = coeffs1[i*size1];
+         rem = mpn_divmod_1(coeffs_out+i*size_out+1, coeffs1+i*size1+1, ABS(coeffs1[i*size1]), x);
+         if (((long) coeffs_out[i*size_out] < 0L) && (rem))
+         {
+            NORM(coeffs_out+i*size_out);
+            fmpz_sub_ui_inplace(coeffs_out+i*size_out, 1UL);
+         } else
+         {
+            NORM(coeffs_out+i*size_out);
+         }
       }
    }
    

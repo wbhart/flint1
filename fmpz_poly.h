@@ -427,9 +427,13 @@ void _fmpz_poly_scalar_mul_si(fmpz_poly_t output, const fmpz_poly_t poly, const 
 
 void _fmpz_poly_scalar_div(fmpz_poly_t output, const fmpz_poly_t poly, const fmpz_t x);
 
+void _fmpz_poly_scalar_tdiv_ui(fmpz_poly_t output, const fmpz_poly_t poly, const unsigned long x);
+
 void _fmpz_poly_scalar_div_ui(fmpz_poly_t output, const fmpz_poly_t poly, const unsigned long x);
 
 void _fmpz_poly_scalar_div_si(fmpz_poly_t output, const fmpz_poly_t poly, const long x);
+
+void _fmpz_poly_scalar_tdiv_si(fmpz_poly_t output, const fmpz_poly_t poly, const long x);
 
 void _fmpz_poly_scalar_div_exact_ui(fmpz_poly_t output, const fmpz_poly_t poly, const unsigned long x);
 

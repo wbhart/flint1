@@ -1488,6 +1488,73 @@ int test_fmpz_poly_scalar_div_exact_si()
    return result; 
 }
 
+int test_fmpz_poly_scalar_tdiv_ui()
+{
+   mpz_poly_t test_poly, test_poly2;
+   fmpz_poly_t test_mpn_poly, test_mpn_poly2;
+   int result = 1;
+   unsigned long bits, length;
+   unsigned long div;
+   mpz_t temp;
+   mpz_init(temp);
+   
+   mpz_poly_init(test_poly); 
+   
+   for (unsigned long count1 = 0; (count1 < 20) && (result == 1) ; count1++)
+   {
+      bits = random_ulong(1000)+ 1;
+      //bits = 64*1000;
+      
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
+      fmpz_poly_init2(test_mpn_poly2, 1, (bits-1)/FLINT_BITS+2);
+      for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
+      { 
+          length = random_ulong(1000); 
+          //length = 10000;       
+#if DEBUG
+          printf("length = %ld, bits = %ld\n",length, bits);
+#endif
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length);
+          randpoly(test_poly, length, bits); 
+
+          mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
+          
+          div = randint(34682739)+1;
+          for (unsigned long i = 0; i < 100; i++)
+          {
+             _fmpz_poly_scalar_tdiv_ui(test_mpn_poly2, test_mpn_poly, div);
+             fmpz_poly_check_normalisation(test_mpn_poly2);
+          }
+          
+          mpz_poly_init(test_poly2);
+          fmpz_poly_to_mpz_poly(test_poly2, test_mpn_poly2); 
+          
+#if DEBUG
+          printf("length = %ld\n",_fmpz_poly_length(test_mpn_poly));
+#endif    
+          for (unsigned long i = 0; i < test_mpn_poly2->length; i++)
+          {
+              mpz_tdiv_q_ui(temp, test_poly->coeffs[i], div);
+              result &= (mpz_cmp(temp, test_poly2->coeffs[i]) == 0);
+          }         
+          for (unsigned long i = test_mpn_poly2->length; i < test_poly->length; i++)
+          {
+              mpz_tdiv_q_ui(temp, test_poly->coeffs[i], div);
+              result &= (mpz_cmp_ui(temp, 0) == 0);
+          }         
+          mpz_poly_clear(test_poly2);
+      }
+      fmpz_poly_clear(test_mpn_poly);
+      fmpz_poly_clear(test_mpn_poly2);
+   }
+   
+   mpz_poly_clear(test_poly);
+   mpz_clear(temp);
+   
+   return result; 
+}
+
 int test_fmpz_poly_scalar_div_ui()
 {
    mpz_poly_t test_poly, test_poly2;
@@ -1535,14 +1602,83 @@ int test_fmpz_poly_scalar_div_ui()
 #endif    
           for (unsigned long i = 0; i < test_mpn_poly2->length; i++)
           {
-              mpz_tdiv_q_ui(temp, test_poly->coeffs[i], div);
+              mpz_fdiv_q_ui(temp, test_poly->coeffs[i], div);
               result &= (mpz_cmp(temp, test_poly2->coeffs[i]) == 0);
           }         
           for (unsigned long i = test_mpn_poly2->length; i < test_poly->length; i++)
           {
-              mpz_tdiv_q_ui(temp, test_poly->coeffs[i], div);
+              mpz_fdiv_q_ui(temp, test_poly->coeffs[i], div);
               result &= (mpz_cmp_ui(temp, 0) == 0);
           }         
+          mpz_poly_clear(test_poly2);
+      }
+      fmpz_poly_clear(test_mpn_poly);
+      fmpz_poly_clear(test_mpn_poly2);
+   }
+   
+   mpz_poly_clear(test_poly);
+   mpz_clear(temp);
+   
+   return result; 
+}
+
+int test_fmpz_poly_scalar_tdiv_si()
+{
+   mpz_poly_t test_poly, test_poly2;
+   fmpz_poly_t test_mpn_poly, test_mpn_poly2;
+   int result = 1;
+   unsigned long bits, length;
+   long div;
+   mpz_t temp;
+   mpz_init(temp);
+   
+   mpz_poly_init(test_poly); 
+   
+   for (unsigned long count1 = 1; (count1 < 400) && (result == 1) ; count1++)
+   {
+      bits = random_ulong(1000)+ 1;
+      
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
+      fmpz_poly_init2(test_mpn_poly2, 1, (bits-1)/FLINT_BITS+2);
+      for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
+      { 
+          length = random_ulong(1000);        
+#if DEBUG
+          printf("length = %ld, bits = %ld\n",length, bits);
+#endif
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length);
+          randpoly(test_poly, length, bits); 
+
+          mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
+          
+          div = randint(34682739)+1;
+          if (randint(2)) div = -div;
+          _fmpz_poly_scalar_tdiv_si(test_mpn_poly2, test_mpn_poly, div);
+          fmpz_poly_check_normalisation(test_mpn_poly2);
+         
+          mpz_poly_init(test_poly2);
+          fmpz_poly_to_mpz_poly(test_poly2, test_mpn_poly2); 
+          
+#if DEBUG
+          printf("length = %ld\n",_fmpz_poly_length(test_mpn_poly));
+#endif    
+          for (unsigned long i = 0; i < test_mpn_poly2->length; i++)
+          {
+              if (div < 0)
+              {
+                 mpz_tdiv_q_ui(temp, test_poly->coeffs[i], -div);
+                 mpz_neg(temp, temp);
+              } else
+                 mpz_tdiv_q_ui(temp, test_poly->coeffs[i], div);
+              result &= (mpz_cmp(temp, test_poly2->coeffs[i]) == 0);
+          }   
+          for (unsigned long i = test_mpn_poly2->length; i < test_poly->length; i++)
+          {
+              if (div < 0) mpz_tdiv_q_ui(temp, test_poly->coeffs[i], -div);
+              else mpz_tdiv_q_ui(temp, test_poly->coeffs[i], div);
+              result &= (mpz_cmp_ui(temp, 0) == 0);
+          }              
           mpz_poly_clear(test_poly2);
       }
       fmpz_poly_clear(test_mpn_poly);
@@ -1598,18 +1734,33 @@ int test_fmpz_poly_scalar_div_si()
 #endif    
           for (unsigned long i = 0; i < test_mpn_poly2->length; i++)
           {
-              if (div < 0)
+              if (div < 0L)
               {
-                 mpz_tdiv_q_ui(temp, test_poly->coeffs[i], -div);
+                 mpz_cdiv_q_ui(temp, test_poly->coeffs[i], -div);
                  mpz_neg(temp, temp);
               } else
-                 mpz_tdiv_q_ui(temp, test_poly->coeffs[i], div);
+                 mpz_fdiv_q_ui(temp, test_poly->coeffs[i], div);
               result &= (mpz_cmp(temp, test_poly2->coeffs[i]) == 0);
+#if DEBUG2
+              if (!result)
+              {
+                 gmp_printf("%Zd, %ld, %Zd, %Zd\n", test_poly->coeffs[i], div, temp, test_poly2->coeffs[i]);
+                 break;
+              }
+#endif
           }   
           for (unsigned long i = test_mpn_poly2->length; i < test_poly->length; i++)
           {
-              mpz_tdiv_q_ui(temp, test_poly->coeffs[i], div);
+              if (div < 0L) mpz_cdiv_q_ui(temp, test_poly->coeffs[i], -div);
+              else mpz_fdiv_q_ui(temp, test_poly->coeffs[i], div);
               result &= (mpz_cmp_ui(temp, 0) == 0);
+#if DEBUG2
+              if (!result)
+              {
+                 gmp_printf("%Zd, %ld, %Zd\n", test_poly->coeffs[i], div, temp);
+                 break;
+              }
+#endif
           }              
           mpz_poly_clear(test_poly2);
       }
@@ -5031,7 +5182,9 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_poly_scalar_div_exact_ui);
    RUN_TEST(fmpz_poly_scalar_div_exact_si);
    RUN_TEST(fmpz_poly_scalar_div_ui);
+   RUN_TEST(fmpz_poly_scalar_tdiv_ui);
    RUN_TEST(fmpz_poly_scalar_div_si);
+   RUN_TEST(fmpz_poly_scalar_tdiv_si);
    RUN_TEST(fmpz_poly_mul_classical);
    RUN_TEST(fmpz_poly_mul_classical_trunc);
    RUN_TEST(fmpz_poly_mul_classical_trunc_left);
