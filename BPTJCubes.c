@@ -2,6 +2,9 @@
 
    BPTJ_cubes.c: Finds solutions to x^3 + y^3 + z^3 = k
                 Based on the algorithm of Beck, Pine, Tarrant and Jensen
+                
+   Simultaneously searches for solutions for k = k1, k2, k3
+   Searches from T = START to STOP
    
    Copyright (C) 2007, William Hart
 
@@ -18,10 +21,6 @@
 #define k1 1965
 #define k2 1986
 #define k3 1991
-
-// Checked 42 up to 1.35x10^12 (from 6.5x10^11 - Siksek's machine
-// Checked 114 up to 10^11 (from 100000)
-// Check 195, 290, 452 up to 10^11 (from 100000)
 
 #define NUMPRIMES 4000
 #define TABLESIZE 1800000 // Must be a multiple of CACHEBLOCK
@@ -77,31 +76,12 @@ int main()
    gmp_randinit_default(randstate);
    
    FILE * file1 = fopen("output.log","w");
-   /*int cubes[72];
-   int OK[72];
-   for (unsigned long i = 0; i < 72; i++) 
-   {
-      OK[i] = 0;
-      cubes[i] = 0;
-   }
-   for (unsigned long i = 0; i < 72; i++) 
-   {
-      cubes[(i*i*i)%72] = 1;
-   }  
-   for (unsigned long i = 0; i < 72; i++)
-   {
-       for (unsigned long j = 0; j < 72; j++)
-       {
-           if (cubes[(i*i*i+j*j*j-k)%72]) OK[(i+j)%72] = 1;
-       }
-   }*/
-    
+   
    unsigned long T = z_nextprime(START);
    double Tinv;
    unsigned long cuberoot1;
    unsigned long root1, root2, root3;
    unsigned long s = 0, t, p;
-   //unsigned long Tmod72, oldT;
    unsigned char * current;
    
    unsigned char * table = (unsigned char *) malloc(TABLESIZE);
@@ -126,8 +106,6 @@ int main()
    mpz_init(temp2);
    mpz_init(D);
    
-   //Tmod72 = T%72;
-   
    unsigned long Ttab = 0;
    
    while (T < STOP)
@@ -146,7 +124,6 @@ int main()
         }
       }
       
-      //oldT = T;
       mpz_set_ui(temp, T);
       while (!mpz_probab_prime_p(temp,3))
       {
@@ -161,14 +138,8 @@ int main()
       } 
       Tinv = z_precompute_inverse(T);
       
-      //Tmod72 += (T-oldT);
-      //while (Tmod72 >= 72) Tmod72-=72;
-
       while (Ttab < TABLESIZE)
       {
-            
-      //if (OK[Tmod72])
-      //{
          root1 = z_cuberootmod(&cuberoot1, k1, T);
          if (root1)
          {
@@ -262,9 +233,7 @@ int main()
                }
             }
          } 
-      //}
-                    
-      //oldT = T;
+
       do
       {
          do 
@@ -274,10 +243,7 @@ int main()
          } while (table[Ttab] && (Ttab < TABLESIZE));
          Tinv = z_precompute_inverse(T);
       } while (!z_isprime_precomp(T, Tinv) && (Ttab < TABLESIZE));
-      
-      //Tmod72 += (T-oldT);
-      //while (Tmod72 >= 72) Tmod72-=72;
-      
+            
       t++;
       if ((t%1000000UL) == 0) 
       {

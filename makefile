@@ -3,16 +3,16 @@ INCLUDEDIR=$(PREFIX)/include
 DOCDIR=$(PREFIX)/doc
 
 ifeq ($(MAKECMDGOALS),library)
-        CC = gcc -fPIC -std=c99
+	CC = gcc -fPIC -std=c99
 else
-        CC = gcc -std=c99
+	CC = gcc -std=c99
 endif
 
-CPP = g++ -fPIC
+CPP = g++
 
-LIBS = -L$(FLINT_GMP_LIB_DIR)  -L$(FLINT_NTL_LIB_DIR) -L$(FLINT_QD_LIB_DIR) $(FLINT_LINK_OPTIONS) -lgmp -lpthread -lm $(NTL)
+LIBS = -L$(FLINT_GMP_LIB_DIR) $(FLINT_LINK_OPTIONS) -lgmp -lpthread -lm
 
-INCS = -I$(FLINT_GMP_INCLUDE_DIR) -I$(FLINT_NTL_INCLUDE_DIR) -I$(FLINT_QD_INCLUDE_DIR) 
+INCS = -I$(FLINT_GMP_INCLUDE_DIR)
 
 CFLAGS = $(INCS) $(FLINT_TUNE) -O3
 
@@ -64,13 +64,11 @@ test: mpn_extras-test fmpz_poly-test fmpz-test ZmodF-test ZmodF_poly-test mpz_po
 
 profile: ZmodF_poly-profile kara-profile fmpz_poly-profile mpz_poly-profile ZmodF_mul-profile 
 
-examples: delta_qexp BLTcubes BPTJCubes bernoulli F_mpz_mul-timing expmod
+examples: delta_qexp BPTJCubes bernoulli F_mpz_mul-timing expmod
 
 all: QS tune test profile examples
 
-library: $(HEADERS)
-	CC = gcc -fPIC
-        $(FLINT_LIB)
+library: $(FLINT_LIB)
 
 libflint.dylib: $(FLINTOBJ)
 	$(CC) -single_module -fPIC -dynamiclib -o libflint.dylib $(FLINTOBJ) $(LIBS)
@@ -79,7 +77,7 @@ libflint.dll: $(FLINTOBJ)
 	$(CC) -fPIC -shared -o libflint.dll $(FLINTOBJ) $(LIBS)
 
 libflint.so: $(FLINTOBJ)
-	$(CC) -fPIC -shared -o -flibflint.so $(FLINTOBJ) $(LIBS)
+	$(CC) -fPIC -shared -o libflint.so $(FLINTOBJ) $(LIBS)
 
 mpn_extras.o: mpn_extras.c $(HEADERS)
 	$(CC) $(CFLAGS) -c mpn_extras.c -o mpn_extras.o
@@ -302,8 +300,8 @@ delta_qexp.o: delta_qexp.c $(HEADERS)
 delta_qexp: delta_qexp.o $(FLINTOBJ)
 	$(CC) $(CFLAGS) -o delta_qexp delta_qexp.o $(FLINTOBJ) $(LIBS)
 
-BLTcubes: long_extras.o BLTcubes.c memory-manager.o 
-	$(CC) $(CFLAGS) -o BLTcubes BLTcubes.c long_extras.o memory-manager.o $(LIBS)
+expmod: expmod.c $(FLINTOBJ)
+	$(CC) $(CFLAGS) -o expmod expmod.c $(FLINTOBJ) $(LIBS)
 
 BPTJCubes: long_extras.o memory-manager.o
 	$(CC) $(CFLAGS) -o BPTJCubes BPTJCubes.c memory-manager.o long_extras.o $(LIBS)
@@ -370,27 +368,4 @@ ZMULOBJ = memory-manager.o fmpz.o ZmodF_mul-tuning.o mpz_poly.o mpz_poly-tuning.
 
 F_mpz_mul-timing: $(ZMULOBJ)
 	$(CC) $(ZMULOBJ) -o Zmul $(LIBS)
-
-####### Linear Algebra
-
-vec3d.o: vec3d.c vec3d.h
-	$(CC) $(CFLAGS) -c vec3d.c -o vec3d.o
-
-mat3d.o: mat3d.c mat3d.h
-	$(CC) $(CFLAGS) -c mat3d.c -o mat3d.o
-
-vecmat3d: vecmat3d-driver.c mat3d.o vec3d.o memory-manager.o
-	$(CC) $(CFLAGS) -o vecmat3d vecmat3d-driver.c mat3d.o vec3d.o memory-manager.o $(LIBS)
-
-x3y3z3k: x3y3z3k.c mat3d.o vec3d.o memory-manager.o 
-	$(CC) -o x3y3z3k $(CFLAGS) x3y3z3k.c mat3d.o vec3d.o memory-manager.o $(LIBS) 
-
-dd_vecmat3d: dd_vecmat3d-driver.c mat3d.o vec3d.o memory-manager.o
-	$(CC) $(CFLAGS) -o dd_vecmat3d dd_vecmat3d-driver.c mat3d.o vec3d.o memory-manager.o $(LIBS)
-
-dd_x3y3z3k: dd_x3y3z3k.c mat3d.o vec3d.o memory-manager.o 
-	$(CC) -o dd_x3y3z3k $(CFLAGS) dd_x3y3z3k.c mat3d.o vec3d.o memory-manager.o $(LIBS) 
-
-expmod: expmod.c $(FLINTOBJ) 
-	$(CC) $(CFLAGS) -o expmod expmod.c $(FLINTOBJ) $(LIBS)
 

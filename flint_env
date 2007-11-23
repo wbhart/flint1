@@ -25,20 +25,18 @@ export FLINT_LIB
 
 if [ -z "$FLINT_GMP_INCLUDE_DIR" ]
 then
-	FLINT_GMP_INCLUDE_DIR="/usr/local/include"
+	FLINT_GMP_INCLUDE_DIR="/home/wbhart/sage-2.0/local/include"
 fi
 export FLINT_GMP_INCLUDE_DIR
 
 if [ -z "$FLINT_GMP_LIB_DIR" ]
 then
-   FLINT_GMP_LIB_DIR="/usr/local/lib"
+	FLINT_GMP_LIB_DIR="/home/wbhart/sage-2.0/local/lib"
 fi
 export FLINT_GMP_LIB_DIR
 
 if [ -z "$FLINT_LINK_OPTIONS" ]
 then
-   FLINT_LINK_OPTIONS=""
+	FLINT_LINK_OPTIONS=""
 fi
 export FLINT_LINK_OPTIONS
-
-export LD_LIBRARY_PATH=$(FLINT_GMP_LIB_DIR)
