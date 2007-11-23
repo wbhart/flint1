@@ -1150,6 +1150,31 @@ void _fmpz_poly_set_coeff_si(fmpz_poly_t poly, const unsigned long n, const long
    if ((x==0L) && (poly->length == n+1)) _fmpz_poly_normalise(poly);
 }
 
+/* 
+   Set a coefficient to the given fmpz_t.
+   Assumes the polynomial length is greater than n.
+   Normalises only if the leading coefficient is 
+   set to zero.
+*/
+
+void _fmpz_poly_set_coeff_fmpz(fmpz_poly_t poly, const unsigned long n, fmpz_t x)
+{
+   FLINT_ASSERT(poly->length > n);
+   fmpz_set(poly->coeffs + n*(poly->limbs + 1), x);
+   if (fmpz_is_zero(x) && (poly->length == n+1)) _fmpz_poly_normalise(poly);
+}
+
+// Retrieves the n-th coefficient as an fmpz
+void _fmpz_poly_get_coeff_fmpz(fmpz_t x, const fmpz_poly_t poly, const unsigned long n)
+{
+   if (n >= poly->length) 
+   {
+      fmpz_set_ui(x, 0);
+      return;
+   }
+   fmpz_set(x, poly->coeffs + n*(poly->limbs + 1));
+}
+
 void _fmpz_poly_normalise(fmpz_poly_t poly)
 {
    while (poly->length && poly->coeffs[(poly->length-1)*(poly->limbs+1)] == 0)

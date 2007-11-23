@@ -308,6 +308,10 @@ long _fmpz_poly_get_coeff_si(fmpz_poly_t poly, const unsigned long n)
 
 void _fmpz_poly_get_coeff_mpz(mpz_t x, const fmpz_poly_t poly, const unsigned long n);
 
+void _fmpz_poly_set_coeff_fmpz(fmpz_poly_t poly, const unsigned long n, fmpz_t x);
+
+void _fmpz_poly_get_coeff_fmpz(fmpz_t x, const fmpz_poly_t poly, const unsigned long n);
+
 void _fmpz_poly_normalise(fmpz_poly_t poly);
 
 /* 

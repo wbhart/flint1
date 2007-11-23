@@ -421,6 +421,60 @@ int test_fmpz_poly_getset_coeff()
    return result; 
 }
 
+int test_fmpz_poly_getset_coeff_fmpz()
+{
+   mpz_poly_t test_poly;
+   fmpz_poly_t test_mpn_poly;
+   unsigned long result = 1;
+   unsigned long bits, length, rand_coeff;
+   long sign, sign2;
+   
+   mpz_poly_init(test_poly); 
+           
+   for (unsigned long count1 = 1; (count1 < 400) && (result == 1) ; count1++)
+   {
+      bits = random_ulong(1000)+ 1;
+      
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
+      for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
+      { 
+          length = random_ulong(1000)+1;        
+#if DEBUG
+          printf("length = %ld, bits = %ld\n",length, bits);
+#endif
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          do
+          {
+             randpoly(test_poly, length, bits); 
+          } while (test_poly->length != length);
+
+          mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
+          
+          fmpz_t coeff1 = fmpz_init(test_mpn_poly->limbs);
+          fmpz_t coeff2 = fmpz_init(test_mpn_poly->limbs);
+          
+          _fmpz_poly_get_coeff_fmpz(coeff1, test_mpn_poly, randint(test_mpn_poly->length));
+          rand_coeff = randint(test_mpn_poly->length);
+          if (test_mpn_poly->length)
+          {
+             _fmpz_poly_set_coeff_fmpz(test_mpn_poly, rand_coeff, coeff1);
+             fmpz_poly_check_normalisation(test_mpn_poly);
+             _fmpz_poly_get_coeff_fmpz(coeff2, test_mpn_poly, rand_coeff);
+             
+             result = fmpz_equal(coeff1, coeff2);
+          }
+          
+          fmpz_clear(coeff1);
+          fmpz_clear(coeff2);
+      }
+      fmpz_poly_clear(test_mpn_poly);
+   }
+   
+   mpz_poly_clear(test_poly);
+   
+   return result; 
+}
+
 int test_fmpz_poly_setequal()
 {
    mpz_poly_t test_poly;
@@ -5276,6 +5330,7 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_poly_get_coeff_ptr);
    RUN_TEST(fmpz_poly_normalise);
    RUN_TEST(fmpz_poly_getset_coeff);
+   RUN_TEST(fmpz_poly_getset_coeff_fmpz);
    RUN_TEST(fmpz_poly_setequal);
    RUN_TEST(fmpz_poly_swap);
    RUN_TEST(fmpz_poly_neg);
