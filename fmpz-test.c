@@ -630,7 +630,7 @@ int test_fmpz_addmul()
    return result;
 }
 
-int test_fmpz_div()
+int test_fmpz_tdiv()
 {
    mpz_t num1, num2, num3, num4;
    fmpz_t fnum1, fnum2, fnum3;
@@ -668,9 +668,68 @@ int test_fmpz_div()
        mpz_to_fmpz(fnum1, num1);
        mpz_to_fmpz(fnum2, num2);
        
-       fmpz_div(fnum3, fnum1, fnum2);
+       fmpz_tdiv(fnum3, fnum1, fnum2);
        fmpz_check_normalisation(fnum3);
        mpz_tdiv_q(num4, num1, num2);
+       
+       fmpz_to_mpz(num3, fnum3);
+              
+       result = (mpz_cmp(num3, num4) == 0);
+       
+       fmpz_clear(fnum1);
+       fmpz_clear(fnum2);
+       fmpz_clear(fnum3);
+   }
+   
+   mpz_clear(num1);
+   mpz_clear(num2);
+   mpz_clear(num3);
+   mpz_clear(num4);
+   
+   return result;
+}
+
+int test_fmpz_fdiv()
+{
+   mpz_t num1, num2, num3, num4;
+   fmpz_t fnum1, fnum2, fnum3;
+   unsigned long bits, bits2;
+   int result = 1;
+   
+   mpz_init(num1);
+   mpz_init(num2);
+   mpz_init(num3);
+   mpz_init(num4);
+      
+   for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+   {
+       bits = random_ulong(1000);
+
+       mpz_rrandomb(num1, state, bits);
+#if SIGNS
+       if (random_ulong(2)) mpz_neg(num1, num1);
+#endif
+
+       do
+       {
+          bits2 = random_ulong(1000);
+
+          mpz_rrandomb(num2, state, bits2);
+#if SIGNS
+          if (random_ulong(2)) mpz_neg(num2, num2);
+#endif
+       } while (mpz_cmp_ui(num2, 0) == 0);
+       
+       fnum1 = fmpz_init(FLINT_MAX((long)(bits-1)/FLINT_BITS,0)+1);
+       fnum2 = fmpz_init(FLINT_MAX((long)(bits2-1)/FLINT_BITS,0)+1);
+       fnum3 = fmpz_init(FLINT_MAX((long)(bits-bits2)/FLINT_BITS,0)+2);
+
+       mpz_to_fmpz(fnum1, num1);
+       mpz_to_fmpz(fnum2, num2);
+       
+       fmpz_fdiv(fnum3, fnum1, fnum2);
+       fmpz_check_normalisation(fnum3);
+       mpz_fdiv_q(num4, num1, num2);
        
        fmpz_to_mpz(num3, fnum3);
               
@@ -936,7 +995,7 @@ int test_fmpz_mul_ui()
    return result;
 }
 
-int test_fmpz_div_ui()
+int test_fmpz_tdiv_ui()
 {
    mpz_t num1, num2;
    fmpz_t fnum1, fnum2;
@@ -964,7 +1023,7 @@ int test_fmpz_div_ui()
 #endif
 
        mpz_to_fmpz(fnum1, num1);
-       fmpz_div_ui(fnum2, fnum1, x);
+       fmpz_tdiv_ui(fnum2, fnum1, x);
        fmpz_check_normalisation(fnum2);
        mpz_tdiv_q_ui(num1, num1, x);
        fmpz_to_mpz(num2, fnum2);
@@ -1192,8 +1251,9 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_mul_ui);
    RUN_TEST(__fmpz_mul);
    RUN_TEST(fmpz_addmul);
-   RUN_TEST(fmpz_div);
-   RUN_TEST(fmpz_div_ui);
+   RUN_TEST(fmpz_tdiv);
+   RUN_TEST(fmpz_fdiv);
+   RUN_TEST(fmpz_tdiv_ui);
    RUN_TEST(fmpz_pow_ui);
    RUN_TEST(fmpz_is_one);
    RUN_TEST(fmpz_is_zero);

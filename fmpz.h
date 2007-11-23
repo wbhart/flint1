@@ -183,9 +183,11 @@ void fmpz_mul_ui(fmpz_t output, const fmpz_t input, const unsigned long x);
 
 void fmpz_addmul(fmpz_t res, const fmpz_t a, const fmpz_t b);
 
-void fmpz_div(fmpz_t res, const fmpz_t a, const fmpz_t b);
+void fmpz_tdiv(fmpz_t res, const fmpz_t a, const fmpz_t b);
 
-void fmpz_div_ui(fmpz_t output, const fmpz_t input, const unsigned long x);
+void fmpz_fdiv(fmpz_t res, const fmpz_t a, const fmpz_t b);
+
+void fmpz_tdiv_ui(fmpz_t output, const fmpz_t input, const unsigned long x);
 
 void fmpz_pow_ui(fmpz_t output, const fmpz_t input, const unsigned long exp);
 
@@ -202,7 +204,7 @@ static inline
 void fmpz_binomial_next(fmpz_t next, const fmpz_t prev, const long n, const long k)
 {
    fmpz_mul_ui(next, prev, n-k+1);
-   fmpz_div_ui(next, next, k);
+   fmpz_tdiv_ui(next, next, k);
 }
 
 static inline

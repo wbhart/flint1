@@ -7480,7 +7480,7 @@ void fmpz_poly_power(fmpz_poly_t output, const fmpz_poly_t poly, const unsigned 
                fmpz_poly_fit_limbs(output, (bits2 - bits1 + fmpz_bits(coeff_out) - 1)/FLINT_BITS + 2);
                coeff_out = output->coeffs + i*(output->limbs+1);   
                last_coeff = coeff_out - output->limbs - 1;
-               fmpz_div(coeff_out, last_coeff, coeff1);
+               fmpz_tdiv(coeff_out, last_coeff, coeff1);
                fmpz_binomial_next(coeff_out, coeff_out, exp, i);
                fmpz_mul(coeff_out, coeff_out, coeff2);
             }

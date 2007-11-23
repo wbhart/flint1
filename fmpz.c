@@ -546,9 +546,10 @@ void fmpz_addmul(fmpz_t res, const fmpz_t a, const fmpz_t b)
 /* 
    Sets res to a / b
    Assumes no overlap
+   Rounding occurs towards zero
 */
 
-void fmpz_div(fmpz_t res, const fmpz_t a, const fmpz_t b) 
+void fmpz_tdiv(fmpz_t res, const fmpz_t a, const fmpz_t b) 
 {
    long a0 = a[0];
    long b0 = b[0];
@@ -579,7 +580,61 @@ void fmpz_div(fmpz_t res, const fmpz_t a, const fmpz_t b)
    NORM(res);
 }     
 
-void fmpz_div_ui(fmpz_t output, const fmpz_t input, const unsigned long x)
+/* 
+   Sets res to a / b
+   Assumes no overlap
+   Rounding occurs towards minus infinity
+*/
+
+void fmpz_fdiv(fmpz_t res, const fmpz_t a, const fmpz_t b) 
+{
+   long a0 = a[0];
+   long b0 = b[0];
+   unsigned long sizea = FLINT_ABS(a0);
+   unsigned long sizeb = FLINT_ABS(b0);
+   while ((!a[sizea]) && (sizea)) sizea--;
+   while ((!b[sizeb]) && (sizeb)) sizeb--;
+      
+
+   mp_limb_t mslimb;
+   fmpz_t temp;
+      
+   if (sizeb == 0)
+   {
+      printf("Error: division by zero!\n");
+      abort();          
+   } else if (sizea < sizeb) // Todo: make this deal with sizea == sizeb but a < b
+   {
+      if (((long) (a0 ^ b0) < 0L) && (a0)) 
+      {
+         res[0] = -1L;
+         res[1] = 1;  
+      } else res[0] = 0;
+      return;
+   } else 
+   {
+      temp = (fmpz_t) flint_stack_alloc(sizeb);
+      mpn_tdiv_qr(res+1, temp, 0, a+1, sizea, b+1, sizeb);
+      res[0] = sizea - sizeb + 1;
+      if ((long) (a0 ^ b0) < 0L) res[0] = -res[0];
+      NORM(res);
+      if ((long) (a0 ^ b0) < 0L)
+      {
+         unsigned long i = 0; 
+         for (; i < sizeb; i++)
+         {
+            if (temp[i]) break;
+         }
+         if (i < sizeb)
+         {
+            fmpz_sub_ui_inplace(res, 1UL);
+         }
+      }
+      flint_stack_release();  
+   }
+}     
+
+void fmpz_tdiv_ui(fmpz_t output, const fmpz_t input, const unsigned long x)
 {
    output[0] = input[0];
    unsigned long size = FLINT_ABS(input[0]);
