@@ -123,6 +123,13 @@ static inline unsigned long l_shift(unsigned long in, unsigned long shift)
    return (in<<shift);
 }
 
+static inline unsigned long FLINT_BIT_COUNT(unsigned long x)
+{
+   unsigned long zeros;
+   count_lead_zeros(zeros, x);
+   return FLINT_BITS-zeros;
+}
+
 /*
 Returns ceil(log2(x)).
 If x == 0, returns 0.
@@ -133,21 +140,12 @@ static inline unsigned long ceil_log2(unsigned long x)
    if (x)
    {
       x--;
-      while (x)
-      {
-         x >>= 1;
-         result++;
-      }
+      result = FLINT_BIT_COUNT(x);
    }
    return result;
 }
 
-static inline unsigned long FLINT_BIT_COUNT(unsigned long x)
-{
-   unsigned long zeros;
-   count_lead_zeros(zeros, x);
-   return FLINT_BITS-zeros;
-}
+
 
 #ifdef __cplusplus
  }
