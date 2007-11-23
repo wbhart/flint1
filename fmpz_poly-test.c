@@ -2814,6 +2814,110 @@ int test__fmpz_poly_scalar_mul()
    return result; 
 }
 
+int test__fmpz_poly_scalar_div()
+{
+   mpz_poly_t test_poly, test_poly2;
+   fmpz_poly_t test_mpn_poly, test_mpn_poly2;
+   int result = 1;
+   unsigned long bits, bits2, limbs, limbs2, length;
+   mpz_t temp, x_mpz;
+   mpz_init(temp);
+   mpz_init(x_mpz);
+   mp_limb_t * x;
+   
+   mpz_poly_init(test_poly); 
+   
+   for (unsigned long count1 = 0; (count1 < 10000) && (result == 1) ; count1++)
+   {
+      bits = randint(300)+1;
+      bits2 = randint(300)+1;
+      limbs = (bits-1)/FLINT_BITS+1;
+      limbs2 = (bits2-1)/FLINT_BITS+1;
+      bits2 = limbs2*FLINT_BITS;
+      
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
+      if (limbs >= limbs2) fmpz_poly_init2(test_mpn_poly2, 1, limbs-limbs2+1);
+      else fmpz_poly_init2(test_mpn_poly2, 1, 1);
+      x = (mp_limb_t*) malloc(sizeof(mp_limb_t)*(limbs2+1));
+      
+      for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
+      { 
+          length = randint(100);        
+#if DEBUG
+          printf("length = %ld, bits = %ld, bits2 = %ld\n",length, bits, bits2);
+#endif
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length);
+          
+          F_mpn_clear(x, limbs2+1);
+          while (!x[limbs2]) mpn_random2(x+1, limbs2);
+          if (randint(2)) 
+              x[0] = limbs2;
+          else x[0] = -limbs2;
+          
+          randpoly(test_poly, length, bits); 
+          mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
+          
+          for (unsigned long j = 0; j < 5; j++)
+          {
+            _fmpz_poly_scalar_div(test_mpn_poly2, test_mpn_poly, x);
+            fmpz_poly_check_normalisation(test_mpn_poly2);
+          }
+          
+          mpz_poly_init(test_poly2);
+          fmpz_poly_to_mpz_poly(test_poly2, test_mpn_poly2); 
+          
+#if DEBUG
+          printf("length = %ld\n",_fmpz_poly_length(test_mpn_poly));
+#endif              
+          mpz_import(x_mpz, ABS(x[0]), -1, sizeof(mp_limb_t), 0, 0, x+1);
+          if ((long) x[0] < 0)
+             mpz_neg(x_mpz, x_mpz);
+          
+          for (long i = 0; i < test_poly2->length; i++)
+          {
+              mpz_fdiv_q(test_poly->coeffs[i], test_poly->coeffs[i], x_mpz);
+              result &= (mpz_cmp(test_poly->coeffs[i], test_poly2->coeffs[i]) == 0);
+              if (!result) 
+              {
+                 printf("Coefficient %ld of %ld incorrect\n", i, test_poly2->length); 
+                 printf("bits = %ld, bits2 = %ld, length1 = %ld, length2 = %ld\n", bits, bits2, test_poly->length, test_poly2->length);
+              }
+          } 
+          for (long i = test_poly2->length; i < test_poly->length; i++)
+          {
+              mpz_fdiv_q(temp, test_poly->coeffs[i], x_mpz);
+              result &= (mpz_cmp_ui(temp, 0L) == 0);
+              if (!result) 
+              {
+                 printf("Coefficient %ld of %ld not zero\n", i, test_poly->length); 
+                 printf("bits = %ld, bits2 = %ld, length1 = %ld, length2 = %ld\n", bits, bits2, test_poly->length, test_poly2->length);
+                 gmp_printf("%Zd, %Zd, %Zd\n", temp, test_poly->coeffs[i], x_mpz);
+                 break;
+              }
+          } 
+#if DEBUG
+          if (!result)
+          {
+             mpz_poly_print(test_poly);printf("\n\n");
+             mpz_poly_print(test_poly2);printf("\n\n");
+          }
+#endif
+         
+          mpz_poly_clear(test_poly2);
+      }
+      free(x);
+      fmpz_poly_clear(test_mpn_poly);
+      fmpz_poly_clear(test_mpn_poly2);
+   }
+
+   mpz_poly_clear(test_poly);
+   mpz_clear(temp);
+   mpz_clear(x_mpz);
+   
+   return result; 
+}
+
 int test_fmpz_poly_scalar_mul()
 {
    mpz_poly_t test_poly, test_poly2;
@@ -5148,6 +5252,7 @@ void fmpz_poly_test_all()
 {
    int success, all_success = 1;
 
+   RUN_TEST(_fmpz_poly_scalar_div); 
    RUN_TEST(fmpz_poly_scalar_mul_ui);
    RUN_TEST(fmpz_poly_scalar_mul_si);
    RUN_TEST(fmpz_poly_scalar_mul); 

@@ -1974,11 +1974,14 @@ void _fmpz_poly_scalar_div_ui(fmpz_poly_t output, const fmpz_poly_t poly, const 
       {
          coeffs_out[i*size_out] = coeffs1[i*size1];
          rem = F_mpn_divmod_1_preinv(coeffs_out+i*size_out+1, coeffs1+i*size1+1, ABS(coeffs1[i*size1]), x, xinv, norm);
-         NORM(coeffs_out+i*size_out);
          if (((long) coeffs_out[i*size_out] < 0L) && (rem))
          {
+            NORM(coeffs_out+i*size_out);
             fmpz_sub_ui_inplace(coeffs_out+i*size_out, 1UL);
-         }
+         } else
+         {
+            NORM(coeffs_out+i*size_out);
+         }     
       }
    } else
    {
@@ -1986,11 +1989,14 @@ void _fmpz_poly_scalar_div_ui(fmpz_poly_t output, const fmpz_poly_t poly, const 
       {
          coeffs_out[i*size_out] = coeffs1[i*size1];
          rem = mpn_divmod_1(coeffs_out+i*size_out+1, coeffs1+i*size1+1, ABS(coeffs1[i*size1]), x);
-         NORM(coeffs_out+i*size_out);
          if (((long) coeffs_out[i*size_out] < 0L) && (rem))
          {
+            NORM(coeffs_out+i*size_out);
             fmpz_sub_ui_inplace(coeffs_out+i*size_out, 1UL);
-         }
+         } else
+         {
+            NORM(coeffs_out+i*size_out);
+         }     
       }
    }
    
@@ -2111,6 +2117,33 @@ void _fmpz_poly_scalar_div_si(fmpz_poly_t output, const fmpz_poly_t poly, const 
             NORM(coeffs_out+i*size_out);
          }
       }
+   }
+   
+   output->length = poly->length;
+   _fmpz_poly_normalise(output);
+}
+
+/*
+   Divide each coefficient of poly by scalar. Rounds towards minus infinity.
+*/
+
+void _fmpz_poly_scalar_div(fmpz_poly_t output, const fmpz_poly_t poly, const fmpz_t scalar)
+{
+   if (scalar[0] == 1L) 
+   {
+      _fmpz_poly_scalar_div_ui(output, poly, scalar[1]);
+      return;
+   }
+   
+   if ((scalar[0] == -1L) && (fmpz_bits(scalar) < FLINT_BITS))
+   {
+      _fmpz_poly_scalar_div_si(output, poly, -scalar[1]);
+      return;
+   }
+   
+   for (unsigned long i = 0; i < poly->length; i++)
+   {
+      fmpz_fdiv(output->coeffs+i*(output->limbs+1), poly->coeffs+i*(poly->limbs+1), scalar);
    }
    
    output->length = poly->length;
