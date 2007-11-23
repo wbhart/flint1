@@ -1,10 +1,7 @@
 === general stuff ===
 
  * try GREDC algorithm
-
- * add some kind of debug flag to the makefile, which will enable/disable
-   FLINT_ASSERT
-   
+  
  * we should be checking somewhere (at build time?) that FLINT_BITS
    really is the same as GMP's bits per limb
 
@@ -17,22 +14,6 @@
  * determine cache size at build time, instead of #defined in flint.h!!!!
      * possibly determine size of each cache in hierarchy?
  
- * generally clean up the makefile -- it's really grossly disgusting right now
-
- * Write some decent profiling code.
-
- * Make sure to use mpz_rrandomb for all randomised testing, it's much better
-   at picking up corner cases. Make sure it isn't used in the profiling code, 
-   since GMP uses a faster algorithm for multiplying such numbers.
-
- * Think more about the odd-even karatsuba idea -- david suspects it might
-   give smoother performance for unequal length inputs
-
- * Profile our code to date in the Z and polynomials over Z packages.
-
- * Write a test module for Z and polynomials over Z packages. Move all
- existing test code into that module.
-
  * Collect together timing statistics on various programs (MAGMA, NTL, PARI,
 FLINT, etc), in one convenient place. (David)
 
@@ -40,29 +21,11 @@ FLINT, etc), in one convenient place. (David)
 large integers. (First check how far along the GMP implementation is, and
 compare it speedwise to MAGMA (which presumably is very fast :-) )
 
- * line endings. All of bill's files have DOS/Windows line endings :-) Some of
-the other files don't. Is this a problem?
-
  * follow up issue related to arithmetic right shifts --- see NTL's #define for this. Add test code to the build process to check for this.
 
- * write threadsafe limb allocator (does this even make sense at all with a
-   stack-based model?)
+ * write threadsafe limb allocator 
 
-
-=== Build process ===
-
- * on the G5 architecture, the flags 
-      -mcpu=970 -mtune=970 -mpowerpc64 -falign-loops=16 -falign-functions=16 -falign-labels=16 -falign-jumps=16
-   seem to make a helluva difference, at least for the ssfft_fft_iterative()
-   function I was profiling.
-
- * Figure out `FLINT_BITS`, put it in a header somewhere (do ''not''
-just use `gmp_bits_per_limb` because that's a const, not a #define)
-
- * Figure out FLINT_CACHE_SIZE
-
-
-=== ssfft module ===
+=== fft ===
 
 * GMP has a cool idea for doing very long butterflies. Instead of doing
 a call to mpn_add_n and mpn_sub_n separately, it works in chunks to ensure
@@ -79,26 +42,13 @@ worst case? (Currently the worst case is two passes.)
   fast reductions; we could get away with fewer, but would need to do a
   safety reduction pass over the data after a certain number of layers.
 
-
-=== ssmul module ===
-
 * maybe it's not optimal to store the coefficients n+1 limbs apart. Bill
 mentioned some potential cache-thrashing issues on intels. Might be better
 to add a bit of padding.
 
-* for KS, try the idea where we evaluate X1 = f(2^n)g(2^n), X2 = f(-2^n)g(-2^n) and then reconstruct output from X1+X2 and X1-X2
-
-
-
 === fmpz_poly module ===
 
-* Ensure the documentation agrees with the implementation of the sign limb.
-
-* I'm not comfortable with the way _fmpz_poly_mul_KS modifies its input
-  temporarily if the signs are wrong. What happens if a multithreaded
-  application wants to do two things with the poly at the same time.
-  Surely it's possible to accomplish the same thing without mutating
-  the input. -- david
+* for KS, try the idea where we evaluate X1 = f(2^n)g(2^n), X2 = f(-2^n)g(-2^n) and then reconstruct output from X1+X2 and X1-X2
 
 * It seems a little nuts to be using ZmodF_poly with a single coefficient
   in _fmpz_poly_mul_KS(). There's something wrong with the code structure here.
@@ -108,11 +58,7 @@ to add a bit of padding.
 * we should change the name of ABS() in fmpz_poly. This will certainly interfere
   with someone else's namespace one day. -- david
 
-* I think the the bitpacking/limbpacking/bytepacking routines should be
-  moved out of ZmodF_poly.c into fmpz_poly.c.
-
-
-=== modpmul module ===
+=== modpmul module (branch) ===
 
 * try writing assembly version of mul_redc. Maybe the three multiplications
 can be pipelined. Also, it might be possible to write a version which does
@@ -152,16 +98,6 @@ to improve locality.
 
 * reorganise code to permit doing pointwise mults + inner FFTs + inner IFFTs with better locality
 
-=== profiler-main module ===
-
-* this module should supply a random number generating object so that profiling code doesn't have to worry about it
-
-
-=== memory manager ===
-
-* the current implementation is not O(1), since it might need to traverse
-the stack. This could be a problem if we need to allocate many small objects.
-
 
 === ZmodF_mul module ===
 
@@ -170,31 +106,8 @@ the stack. This could be a problem if we need to allocate many small objects.
 
 === Miscellaneous ===
 
-* Add memory manager to Zpoly.c
-
-* Use stack based memory manager in ZmodF_poly-test.c
-
-* Remove randstate memory leak from Z_mul_timing.c
-
-* Make long-extras module and redistribute extras file
-
-* Write new faster bitpacking routines (include support for 32 bit machines)
-
-* Compute number of limbs needed for test_mpn_poly3 in fmpz_poly_test.c
-
-* Think about ways of lowering the system time in delta_qexp
-
-* Implement karatsuba for sparse polynomials
-
-* Write tests for double underscore functions in fmpz_poly.c
-
-* Check all fmpz_poly functions deal appropriately with the zero length poly
-
-* Make karatsuba use the right number of limbs
-
-* write a wrapper for mpz_export and mpz_import so we don't need to remember
-  the parameters all the time, perhaps call it mpz_to_mpn and vice versa
+* Write new faster bitpacking routines - see branch (include support for 32 bit machines)
 
 * change FLINT_LG_BITS_PER_LIMB to FLINT_LG_BITS, same for BYTES, etc
 
-* use mpn_random2 in more places instead of mpz_randombb (thanks Bill for pointing that out....)
+* use mpn_random2 in more places instead of mpz_randombb 
