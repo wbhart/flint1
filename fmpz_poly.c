@@ -4252,6 +4252,55 @@ void fmpz_poly_scalar_mul(fmpz_poly_t output,
    _fmpz_poly_scalar_mul(output, input, x);
 }
 
+void fmpz_poly_scalar_mul_mpz(fmpz_poly_t output, 
+                          const fmpz_poly_t input, const mpz_t x)
+{
+   if ((input->length == 0) || (mpz_sgn(x) == 0))
+   {
+      _fmpz_poly_zero(output);
+      return;
+   }
+   fmpz_t x_fmpz = fmpz_stack_init(mpz_size(x));
+   mpz_to_fmpz(x_fmpz, x);   
+   fmpz_poly_scalar_mul(output, input, x_fmpz);
+   fmpz_stack_release();
+}
+
+void fmpz_poly_scalar_div(fmpz_poly_t output, 
+                          const fmpz_poly_t input, const fmpz_t x)
+{
+   if (input->length == 0)
+   {
+      _fmpz_poly_zero(output);
+      return;
+   }
+    
+   fmpz_poly_fit_length(output, input->length);
+   
+   unsigned long inlimbs = _fmpz_poly_max_limbs(input);
+   unsigned long xlimbs = ABS(x[0]);
+   
+   if (inlimbs >= xlimbs) fmpz_poly_fit_limbs(output, inlimbs - xlimbs + 1);
+   else fmpz_poly_fit_limbs(output, 1);
+   
+   _fmpz_poly_scalar_div(output, input, x);
+}
+
+void fmpz_poly_scalar_div_mpz(fmpz_poly_t output, 
+                          const fmpz_poly_t input, const mpz_t x)
+{
+   if (input->length == 0)
+   {
+      _fmpz_poly_zero(output);
+      return;
+   }
+   fmpz_t x_fmpz = fmpz_stack_init(mpz_size(x));
+   mpz_to_fmpz(x_fmpz, x);   
+   fmpz_poly_scalar_div(output, input, x_fmpz);
+   fmpz_stack_release();
+}
+
+
 /****************************************************************************
 
    Multiplication

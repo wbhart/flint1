@@ -701,6 +701,15 @@ void fmpz_poly_scalar_mul_ui(fmpz_poly_t output,
                           
 void fmpz_poly_scalar_mul_si(fmpz_poly_t output, 
                           const fmpz_poly_t input, long x);
+                          
+void fmpz_poly_scalar_mul_mpz(fmpz_poly_t output, 
+                          const fmpz_poly_t input, const mpz_t x);
+                          
+void fmpz_poly_scalar_div(fmpz_poly_t output, 
+                          const fmpz_poly_t input, const fmpz_t x);
+                          
+void fmpz_poly_scalar_div_mpz(fmpz_poly_t output, 
+                          const fmpz_poly_t input, const mpz_t x);
 
 static inline
 void fmpz_poly_add(fmpz_poly_t output, const fmpz_poly_t input1, const fmpz_poly_t input2)
