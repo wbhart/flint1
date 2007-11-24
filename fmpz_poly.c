@@ -1508,6 +1508,7 @@ void _fmpz_poly_reverse(fmpz_poly_t output, const fmpz_poly_t input, const unsig
 
       output->length = length;
       _fmpz_poly_normalise(output);
+      flint_stack_release();
    }
 }
 

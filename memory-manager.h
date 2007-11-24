@@ -23,6 +23,8 @@ void flint_stack_release();
 
 void flint_stack_release_small();
 
+void flint_stack_cleanup();
+
 void* flint_heap_alloc(unsigned long limbs);
 
 void* flint_heap_alloc_bytes(unsigned long bytes);

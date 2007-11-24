@@ -108,6 +108,11 @@ void flint_stack_release_small(void)
    flint_stack_release();
 }
 
+void flint_stack_cleanup(void)
+{
+   if (upto) printf("Error: stack allocator detected mismatch on cleanup!\n"); 
+}
+
 #else
 
 /*
@@ -302,6 +307,7 @@ void flint_stack_release()
     rescount_mpn--;
 }
 
+
 /*-----------------------------------------------------------------------------------------------*/
 
 #define FLINT_SMALL_BLOCK_SIZE 10000L
@@ -356,6 +362,44 @@ void flint_stack_release_small(void)
    unsigned long temp = (*block_ptr);
    block_left += (temp+1);
    block_ptr -= temp;
+}
+
+void flint_stack_cleanup()
+{
+   limb_mem_t* curr = head_mpn;
+   limb_mem_t* temp;
+   
+   if (curr != NULL)
+   {
+      do 
+      {
+         if (curr->allocated) 
+         {
+            printf("Warning: FLINT stack memory allocation cleanup detected mismatched allocation/releases\n"); 
+         } 
+         free(curr->point);
+         if (curr==last_mpn) last_mpn = curr->prev;
+         else curr->next->prev = curr->prev;
+         if (curr==head_mpn) head_mpn=curr->next;
+         else (curr->prev->next = curr->next);
+         temp=curr;
+         curr = curr->next;
+         free(temp);
+      } while (curr != NULL);
+      free(reservoir_mpn);
+   }
+   
+   if (block_ptr != NULL)
+   {
+      if (block_left != FLINT_SMALL_BLOCK_SIZE - 2)
+      {
+         printf("Warning: FLINT small stack memory allocator detected mismatched alloc/release\n");
+         while (block_left != FLINT_SMALL_BLOCK_SIZE - 2) flint_stack_release_small();
+      }  
+      
+      block_ptr -= 2;
+      flint_heap_free(block_ptr);           
+   } 
 }
 
 #endif
