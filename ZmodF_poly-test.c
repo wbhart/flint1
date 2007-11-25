@@ -917,6 +917,99 @@ int test_ZmodF_poly_convolution()
    return success;
 }
 
+int test_ZmodF_poly_convolution_trunc()
+{
+   mpz_poly_t poly1, poly2, poly3, poly4;
+   mpz_poly_init(poly1);
+   mpz_poly_init(poly2);
+   mpz_poly_init(poly3);
+   mpz_poly_init(poly4);
+   int success = 1;
+
+   for (unsigned long depth = 0; depth <= 11 && success; depth++)
+   {
+      unsigned long size = 1UL << depth;
+   
+      // need 4*n*FLINT_BITS divisible by 2^depth
+      unsigned long n_skip = size / (4*FLINT_BITS);
+      if (n_skip == 0)
+         n_skip = 1;
+         
+      for (unsigned long n = n_skip; n < 6*n_skip && success; n += n_skip)
+      {
+         ZmodF_poly_t f1, f2, f3;
+         ZmodF_poly_init(f1, depth, n, 1);
+         ZmodF_poly_init(f2, depth, n, 1);
+         ZmodF_poly_init(f3, depth, n, 1);
+
+#if DEBUG
+         printf("depth = %d, n = %d\n", depth, n);
+#endif
+
+         set_global_n(n);
+         
+         // switch to FFT-based convolution even for the test code, otherwise
+         // tests get too slow
+         int use_really_naive = (depth <= 5);
+         
+         unsigned long num_trials = (use_really_naive ? 50000 : 20000) /
+                                    ((1 << depth) * n);
+         if (num_trials == 0)
+            num_trials = 1;
+         
+         for (unsigned long trial = 0; trial < num_trials && success; trial++)
+         {
+            unsigned long len1 = random_ulong(size+1);
+            unsigned long len2 = random_ulong(size+1);
+            
+            unsigned long out_len = len1 + len2 - 1;
+            if (out_len > size)
+               out_len = size;
+
+            unsigned long trunc;
+            if (out_len) trunc = random_ulong(out_len)+1;
+            else trunc = 0;
+#if DEBUG
+            printf("len1 = %ld, len2 = %ld, trunc = %ld\n", len1, len2, trunc); 
+#endif
+            ZmodF_poly_random(f1, 4);
+            ZmodF_poly_random(f2, 4);
+            f1->length = len1;
+            f2->length = len2;
+
+            ZmodF_poly_convert_out(poly1, f1);
+            for (unsigned long i = len1; i < size; i++)
+               mpz_set_ui(poly1->coeffs[i], 0);
+            ZmodF_poly_convert_out(poly2, f2);
+            for (unsigned long i = len2; i < size; i++)
+               mpz_set_ui(poly2->coeffs[i], 0);
+
+            ZmodF_poly_convolution_trunc(f3, f1, f2, trunc);
+
+            ZmodF_poly_convert_out(poly3, f3);
+            if (use_really_naive)
+               really_naive_convolution(poly4, poly1, poly2, depth);
+            else
+               naive_convolution(poly4, poly1, poly2, depth, n);
+            
+            for (unsigned long i = 0; i < trunc; i++)
+               if (mpz_cmp(poly3->coeffs[i], poly4->coeffs[i]))
+                  success = 0;
+         }
+         
+         ZmodF_poly_clear(f3);
+         ZmodF_poly_clear(f2);
+         ZmodF_poly_clear(f1);
+      }
+   }
+
+   mpz_poly_clear(poly4);
+   mpz_poly_clear(poly3);
+   mpz_poly_clear(poly2);
+   mpz_poly_clear(poly1);
+   return success;
+}
+
 
 // x and y should both have length 2^depth
 // this version just multiplies out the convolution
@@ -1088,6 +1181,7 @@ void ZmodF_poly_test_all()
    RUN_TEST(_ZmodF_poly_IFFT_iterative);
    RUN_TEST(_ZmodF_poly_IFFT);
    RUN_TEST(ZmodF_poly_convolution);
+   RUN_TEST(ZmodF_poly_convolution_trunc);
    RUN_TEST(ZmodF_poly_negacyclic_convolution);
 
    printf(all_success ? "\nAll tests passed\n" :

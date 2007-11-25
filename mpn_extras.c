@@ -690,12 +690,6 @@ mp_limb_t F_mpn_mul_precomp(mp_limb_t * res, mp_limb_t * data2, unsigned long li
    
    F_mpn_FFT_split(poly2, data2, limbs2, precomp->coeff_limbs, precomp->poly->n);
    
-   /*for (unsigned long i = poly2->length; i < precomp->length2; i++)
-   {
-      F_mpn_clear(poly2->coeffs[i], poly2->n+1);
-   }
-   poly2->length = precomp->length2;*/
-   
    ZmodF_poly_FFT(poly2, precomp->length+poly2->length-1);
    ZmodF_poly_pointwise_mul(poly2, poly2, precomp->poly);
    ZmodF_poly_IFFT(poly2);

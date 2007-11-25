@@ -14,6 +14,7 @@ Copyright (C) 2007, William Hart and David Harvey
 #include "mpn_extras.h"
 #include "mpz_poly.h"
 #include "test-support.h"
+#include "F_mpn_mul-tuning.h"
 
 #define VARY_BITS 1
 #define SIGNS 1
@@ -101,10 +102,10 @@ int test_F_mpn_mul_precomp()
    mp_limb_t msl;
    int result = 1;
    
-   for (unsigned long count = 0; (count < 100) && (result == 1); count++)
+   for (unsigned long count = 0; (count < 30) && (result == 1); count++)
    {
-      unsigned long limbs2 = randint(100) + 100;
-      unsigned long limbs1 = limbs2 + randint(100);
+      unsigned long limbs2 = randint(2*FLINT_FFT_LIMBS_CROSSOVER)+1;
+      unsigned long limbs1 = limbs2 + randint(1000);
    
       int1 = (mp_limb_t *) malloc(sizeof(mp_limb_t)*limbs1);
 
@@ -112,7 +113,7 @@ int test_F_mpn_mul_precomp()
    
       F_mpn_mul_precomp_init(precomp, int1, limbs1, limbs2);   
            
-      for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
+      for (unsigned long count2 = 0; (count2 < 30) && (result == 1); count2++)
       {    
 #if DEBUG
          printf("%ld, %ld\n",limbs1, limbs2);
@@ -147,6 +148,104 @@ int test_F_mpn_mul_precomp()
    return result;
 }
 
+int test_F_mpn_mul()
+{
+   mp_limb_t * int1, * int2, * product, * product2;
+   mp_limb_t msl, msl2;
+   int result = 1;
+   
+   for (unsigned long count = 0; (count < 30) && (result == 1); count++)
+   {
+      unsigned long limbs2 = randint(2*FLINT_FFT_LIMBS_CROSSOVER)+1;
+      unsigned long limbs1 = limbs2 + randint(1000);
+   
+      int1 = (mp_limb_t *) malloc(sizeof(mp_limb_t)*limbs1);
+
+      mpn_random2(int1, limbs1);
+        
+      for (unsigned long count2 = 0; (count2 < 30) && (result == 1); count2++)
+      {    
+#if DEBUG
+         printf("%ld, %ld\n",limbs1, limbs2);
+#endif
+
+         int2 = (mp_limb_t *) malloc(sizeof(mp_limb_t)*limbs2);
+         product = (mp_limb_t *) malloc(sizeof(mp_limb_t)*(limbs1+limbs2));
+         product2 = (mp_limb_t *) malloc(sizeof(mp_limb_t)*(limbs1+limbs2));
+         
+         F_mpn_clear(int2, limbs2);
+         mpn_random2(int2, randint(limbs2-1)+1);
+      
+         msl = F_mpn_mul(product, int1, limbs1, int2, limbs2);
+         
+         msl2 = mpn_mul(product2, int1, limbs1, int2, limbs2);
+      
+         for (unsigned long j = 0; j < limbs1+limbs2 - (msl == 0); j++)
+         {
+            if (product[j] != product2[j]) result = 0;
+         }
+         
+         result &= (msl == msl2);
+         
+         free(product2);
+         free(product);
+         free(int2);
+      }
+   
+      free(int1);
+   }   
+   
+   return result;
+}
+
+int test_F_mpn_mul_trunc()
+{
+   mp_limb_t * int1, * int2, * product, * product2;
+   mp_limb_t msl;
+   int result = 1;
+   
+   for (unsigned long count = 0; (count < 30) && (result == 1); count++)
+   {
+      unsigned long limbs2 = randint(2*FLINT_FFT_LIMBS_CROSSOVER)+1;
+      unsigned long limbs1 = limbs2 + randint(1000);
+      unsigned long trunc = randint(limbs1 + limbs2)+1;
+   
+      int1 = (mp_limb_t *) malloc(sizeof(mp_limb_t)*limbs1);
+
+      mpn_random2(int1, limbs1);
+        
+      for (unsigned long count2 = 0; (count2 < 30) && (result == 1); count2++)
+      {    
+#if DEBUG
+         printf("%ld, %ld\n",limbs1, limbs2);
+#endif
+
+         int2 = (mp_limb_t *) malloc(sizeof(mp_limb_t)*limbs2);
+         product = (mp_limb_t *) malloc(sizeof(mp_limb_t)*(limbs1+limbs2));
+         product2 = (mp_limb_t *) malloc(sizeof(mp_limb_t)*(limbs1+limbs2));
+         
+         F_mpn_clear(int2, limbs2);
+         mpn_random2(int2, randint(limbs2-1)+1);
+      
+         F_mpn_mul_trunc(product, int1, limbs1, int2, limbs2, trunc);
+         
+         mpn_mul(product2, int1, limbs1, int2, limbs2);
+      
+         for (unsigned long j = 0; j < trunc; j++)
+         {
+            if (product[j] != product2[j]) result = 0;
+         }
+         
+         free(product2);
+         free(product);
+         free(int2);
+      }
+   
+      free(int1);
+   }   
+   
+   return result;
+}
 
 /****************************************************************************
 
@@ -166,6 +265,8 @@ void F_mpn_test_all()
 {
    int success, all_success = 1;
 
+   RUN_TEST(F_mpn_mul);
+   RUN_TEST(F_mpn_mul_trunc);
    RUN_TEST(F_mpn_mul_precomp);
 
    printf(all_success ? "\nAll tests passed\n" :

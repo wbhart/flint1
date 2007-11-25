@@ -61,7 +61,7 @@
 /* 
 Cache hints to speed up reads from data in memory
 */
-#if defined(__GNUC__) && __GNUC__ >= 3
+#if defined(__GNUC__) 
 #define FLINT_PREFETCH(addr,n) __builtin_prefetch((unsigned long*)addr+n,1,0) 
 #elif defined(_MSC_VER) && _MSC_VER >= 1400
 #define FLINT_PREFETCH(addr,n) PreFetchCacheLine(PF_TEMPORAL_LEVEL_1, (unsigned long*)addr+n)
@@ -76,14 +76,6 @@ Cache size in bytes.
 
 #define FLINT_POL_DIV_1_LENGTH 10
 
-/*
-If this flag is set, we are strictly only using GMP's documented interface.
-
-If not set, we sometimes use hacks to speed things up (for example accessing
-the mpz_t::_mp_d member directly).
- */
-#define FLINT_GMP_COMPLIANT 0
-
 #if FLINT_BITS == 32
 #define half_ulong uint16_t
 #define half_long int16_t
@@ -94,6 +86,7 @@ the mpz_t::_mp_d member directly).
 #define HALF_FLINT_BITS 32
 #endif
 
+#if defined(__GNUC__) 
 #if FLINT_BITS == 64
 #define count_lead_zeros(a,b) \
    a = __builtin_clzll(b);
@@ -104,6 +97,9 @@ the mpz_t::_mp_d member directly).
    a = __builtin_clzl(b);
 #define count_trail_zeros(a,b) \
    a = __builtin_ctzl(b);
+#endif
+#else
+#error Currently FLINT only compiles with GCC
 #endif
 
 /* 
