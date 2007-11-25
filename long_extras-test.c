@@ -12,6 +12,7 @@ Copyright (C) 2007, William Hart and David Harvey
 #include "flint.h"
 #include "long_extras.h"
 #include "test-support.h"
+#include "memory-manager.h"
 
 #define DEBUG 0 // prints debug information
 #define DEBUG2 1 
@@ -752,9 +753,12 @@ int test_z_factor()
          }
       
          result = (prod == orig_n);
-      } else printf("%ld didn't factor\n", orig_n);
-
+      } 
 #if DEBUG
+      else printf("%ld didn't factor\n", orig_n);
+#endif
+
+#if DEBUG      
       if (!result)
       {
          printf("n = %ld: [", orig_n);
@@ -773,7 +777,7 @@ int test_z_factor()
 
 int test_z_primitive_root()
 {
-   unsigned long p = 1;
+   unsigned long p = 2;
    unsigned long r;
    
    for(int i = 0; i < 100; i++) {
@@ -783,7 +787,9 @@ int test_z_primitive_root()
          printf("Fails on p=%d\n", p);
          return 0;
       }
+#if DEBUG
       printf("primitive root of p=%d is %d\n", p, r);
+#endif
    }
    return 1;
 }
@@ -820,6 +826,8 @@ int main()
    test_support_init();
    fmpz_poly_test_all();
    test_support_cleanup();
+   
+   flint_stack_cleanup();
 
    return 0;
 }

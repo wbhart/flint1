@@ -1244,6 +1244,8 @@ int main()
    test_support_init();
    mpz_poly_test_all();
    test_support_cleanup();
+   
+   flint_stack_cleanup();
 
    return 0;
 }

@@ -178,6 +178,8 @@ int main()
    test_support_init();
    F_mpn_test_all();
    test_support_cleanup();
+   
+   flint_stack_cleanup();
 
    return 0;
 }

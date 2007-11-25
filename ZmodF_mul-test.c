@@ -10,10 +10,9 @@ Copyright (C) 2007, David Harvey
 #include <string.h>
 #include "ZmodF_mul.h"
 #include "test-support.h"
-
+#include "memory-manager.h"
 
 #define DEBUG 0    // prints debug information
-
 
 /*
 Prints the ZmodF_t to stdout in hex, each limb in a separate block,
@@ -613,6 +612,9 @@ int main()
    test_support_init();
    ZmodF_mul_test_all();
    test_support_cleanup();
+   
+   flint_stack_cleanup();
+   
    return 0;
 }
 

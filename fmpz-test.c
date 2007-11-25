@@ -1271,6 +1271,8 @@ int main()
    fmpz_poly_test_all();
    gmp_randclear(state);
    test_support_cleanup();
+   
+   flint_stack_cleanup();
 
    return 0;
 }

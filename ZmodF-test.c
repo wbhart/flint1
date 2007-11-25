@@ -835,6 +835,8 @@ int main()
    
    test_support_cleanup();
    
+   flint_stack_cleanup();
+   
    return 0;
 }
 
