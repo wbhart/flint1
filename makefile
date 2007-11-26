@@ -2,13 +2,25 @@ LIBDIR=$(PREFIX)/lib
 INCLUDEDIR=$(PREFIX)/include
 DOCDIR=$(PREFIX)/doc
 
-ifeq ($(MAKECMDGOALS),library)
-	CC = gcc -fPIC -std=c99
-else
-	CC = gcc -std=c99
+ifndef FLINT_CC
+	FLINT_CC = gcc
 endif
 
-CPP = g++
+ifeq ($(MAKECMDGOALS),library)
+	CC = $(FLINT_CC) -fPIC -std=c99
+else
+	CC = $(FLINT_CC) -std=c99
+endif
+
+ifndef FLINT_PY
+	FLINT_PY = python
+endif
+
+ifndef FLINT_CPP
+	FLIN_CPP = g++
+endif
+
+CPP = $(FLINT_CPP) 
 
 LIBS = -L$(FLINT_GMP_LIB_DIR) $(FLINT_LINK_OPTIONS) -lgmp -lpthread -lm
 
@@ -209,7 +221,7 @@ profiler-main.o: profiler-main.c $(HEADERS)
 	$(CC) $(CFLAGS) -c profiler-main.c -o profiler-main.o
 
 fmpz_poly-profile-tables.o: fmpz_poly-profile.c $(HEADERS)
-	python make-profile-tables.py fmpz_poly
+	$(FLINT_PY) make-profile-tables.py fmpz_poly
 	$(CC) $(CFLAGS) -c fmpz_poly-profile-tables.c -o fmpz_poly-profile-tables.o
 	rm fmpz_poly-profile-tables.c
 
@@ -218,7 +230,7 @@ fmpz_poly-profile.o: fmpz_poly-profile.c $(HEADERS)
 
 
 mpz_poly-profile-tables.o: mpz_poly-profile.c $(HEADERS)
-	python make-profile-tables.py mpz_poly
+	$(FLINT_PY) make-profile-tables.py mpz_poly
 	$(CC) $(CFLAGS) -c mpz_poly-profile-tables.c -o mpz_poly-profile-tables.o
 	rm mpz_poly-profile-tables.c
 
@@ -227,7 +239,7 @@ mpz_poly-profile.o: mpz_poly-profile.c $(HEADERS)
 
 
 ZmodF_poly-profile-tables.o: ZmodF_poly-profile.c $(HEADERS)
-	python make-profile-tables.py ZmodF_poly
+	$(FLINT_PY) make-profile-tables.py ZmodF_poly
 	$(CC) $(CFLAGS) -c ZmodF_poly-profile-tables.c -o ZmodF_poly-profile-tables.o
 	rm ZmodF_poly-profile-tables.c
 
@@ -236,7 +248,7 @@ ZmodF_poly-profile.o: ZmodF_poly-profile.c $(HEADERS)
 
 
 ZmodF_mul-profile-tables.o: ZmodF_mul-profile.c $(HEADERS)
-	python make-profile-tables.py ZmodF_mul
+	$(FLINT_PY) make-profile-tables.py ZmodF_mul
 	$(CC) $(CFLAGS) -c ZmodF_mul-profile-tables.c -o ZmodF_mul-profile-tables.o
 	rm ZmodF_mul-profile-tables.c
 
@@ -244,11 +256,11 @@ ZmodF_mul-profile.o: ZmodF_mul-profile.c $(HEADERS)
 	$(CC) $(CFLAGS) -c ZmodF_mul-profile.c -o ZmodF_mul-profile.o
 
 NTL-profile-tables.o: NTL-profile.c $(HEADERS)
-	python make-profile-tables.py NTL
+	$(FLINT_PY) make-profile-tables.py NTL
 	$(CPP) $(CFLAGS) -c NTL-profile-tables.c -o NTL-profile-tables.o
 
 zmod_poly-profile-tables.o: zmod_poly-profile.c $(HEADERS)
-	python make-profile-tables.py zmod_poly
+	$(FLINT_PY) make-profile-tables.py zmod_poly
 	$(CC) $(CFLAGS) -c zmod_poly-profile-tables.c -o zmod_poly-profile-tables.o
 	rm zmod_poly-profile-tables.c
 
@@ -256,7 +268,7 @@ zmod_poly-profile.o: zmod_poly-profile.c $(HEADERS)
 	$(CC) $(CFLAGS) -c zmod_poly-profile.c -o zmod_poly-profile.o
 
 bernoulli-profile-tables.o: bernoulli-profile.c $(HEADERS)
-	python make-profile-tables.py bernoulli
+	$(FLINT_PY) make-profile-tables.py bernoulli
 	$(CC) $(CFLAGS) -c bernoulli-profile-tables.c -o bernoulli-profile-tables.o
 	rm bernoulli-profile-tables.c
 

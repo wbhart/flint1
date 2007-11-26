@@ -6,7 +6,7 @@ elif [ "`uname`" = "Darwin" -a "`uname -m`" = "Power Macintosh" ]; then
    FLINT_TUNE=" -funroll-loops "
 elif [ "`uname -p`" = "powerpc" ]; then
    FLINT_TUNE="-m64 -mcpu=970 -mtune=970 -mpowerpc64 -falign-loops=16 -falign-functions=16 -falign-labels=16 -falign-jumps=16"
-   elif [ "`uname -m`" = "ia64" ]; then 
+elif [ "`uname -m`" = "ia64" ]; then 
    # -funroll-loops crashes the build on itanium under GCC-4.2.1, as reported by
    # Kate Minola.
    FLINT_TUNE=" "
