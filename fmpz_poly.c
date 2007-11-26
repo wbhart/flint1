@@ -1368,6 +1368,28 @@ void _fmpz_poly_truncate(fmpz_poly_t poly, const unsigned long trunc)
 }
 
 /*
+   Efficiently swap two polynomials by swapping pointers
+*/
+
+void _fmpz_poly_swap(fmpz_poly_t x, fmpz_poly_t y)
+{
+   fmpz_t temp_p;
+   mp_limb_t temp_l;
+   
+   temp_p = x->coeffs;
+   x->coeffs = y->coeffs;
+   y->coeffs = temp_p;
+   
+   temp_l = x->length;
+   x->length = y->length;
+   y->length = temp_l;
+   
+   temp_l = x->limbs;
+   x->limbs = y->limbs;
+   y->limbs = temp_l;
+}
+
+/*
    Set output to -input
 */
 
@@ -4085,34 +4107,6 @@ int fmpz_poly_fread(fmpz_poly_t poly, FILE* f)
    mpz_poly_clear(p);
    
    return ok;
-}
-
-/****************************************************************************
-
-   Assignment
-
-****************************************************************************/
-
-void fmpz_poly_swap(fmpz_poly_t x, fmpz_poly_t y)
-{
-   fmpz_t temp_p;
-   mp_limb_t temp_l;
-   
-   temp_p = x->coeffs;
-   x->coeffs = y->coeffs;
-   y->coeffs = temp_p;
-   
-   temp_l = x->alloc;
-   x->alloc = y->alloc;
-   y->alloc = temp_l;
-   
-   temp_l = x->length;
-   x->length = y->length;
-   y->length = temp_l;
-   
-   temp_l = x->limbs;
-   x->limbs = y->limbs;
-   y->limbs = temp_l;
 }
 
 /****************************************************************************

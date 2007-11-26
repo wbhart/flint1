@@ -265,6 +265,8 @@ void _fmpz_poly_stack_clear(const fmpz_poly_t poly);
 
 void _fmpz_poly_check(const fmpz_poly_t poly);
 
+void _fmpz_poly_normalise(fmpz_poly_t poly);
+
 void _fmpz_poly_check_normalisation(const fmpz_poly_t poly);
 
 static inline
@@ -308,11 +310,26 @@ long _fmpz_poly_get_coeff_si(fmpz_poly_t poly, const unsigned long n)
 
 void _fmpz_poly_get_coeff_mpz(mpz_t x, const fmpz_poly_t poly, const unsigned long n);
 
+static inline
+void _fmpz_poly_set_coeff_mpz(fmpz_poly_t poly, const unsigned long n, const mpz_t x)
+{
+   if (poly->limbs == 0) return;
+   
+   if (n+1 > poly->length) 
+   {
+      for (long i = poly->length; i + 1 < n; i++)
+      {
+         poly->coeffs[i*(poly->limbs+1)] = 0;
+      } 
+      poly->length = n+1;
+   }
+   mpz_to_fmpz(poly->coeffs + n*(poly->limbs+1), x);
+   _fmpz_poly_normalise(poly);
+}
+
 void _fmpz_poly_set_coeff_fmpz(fmpz_poly_t poly, const unsigned long n, fmpz_t x);
 
 void _fmpz_poly_get_coeff_fmpz(fmpz_t x, const fmpz_poly_t poly, const unsigned long n);
-
-void _fmpz_poly_normalise(fmpz_poly_t poly);
 
 /* 
    Set a coefficient to the given value having "size" limbs.
@@ -320,7 +337,8 @@ void _fmpz_poly_normalise(fmpz_poly_t poly);
    that n < poly->length
 */
 
-static inline void _fmpz_poly_set_coeff(fmpz_poly_t poly, const unsigned long n, 
+static inline 
+void _fmpz_poly_set_coeff(fmpz_poly_t poly, const unsigned long n, 
                                   const mp_limb_t * x, const long sign, const unsigned long size)
 {
    FLINT_ASSERT(poly->limbs >= size);
@@ -335,29 +353,35 @@ void _fmpz_poly_set_coeff_ui(fmpz_poly_t poly, const unsigned long n, const unsi
 
 void _fmpz_poly_set_coeff_si(fmpz_poly_t poly, const unsigned long n, const long x);
 
-static inline long _fmpz_poly_degree(const fmpz_poly_t poly)
+static inline 
+long _fmpz_poly_degree(const fmpz_poly_t poly)
 {
    return poly->length - 1;
 }
 
-static inline unsigned long _fmpz_poly_length(const fmpz_poly_t poly)
+static inline 
+unsigned long _fmpz_poly_length(const fmpz_poly_t poly)
 {
    return poly->length;
 }
 
-static inline unsigned long _fmpz_poly_limbs(const fmpz_poly_t poly)
+static inline 
+unsigned long _fmpz_poly_limbs(const fmpz_poly_t poly)
 {
    return poly->limbs;
 }
 
 void _fmpz_poly_set(fmpz_poly_t output, const fmpz_poly_t input);
 
+void _fmpz_poly_swap(fmpz_poly_t x, fmpz_poly_t y);
+
 /* 
    Zero the polynomial by setting the length to zero.
    Does not set the actual limbs to zero.
 */
 
-static inline void _fmpz_poly_zero(fmpz_poly_t output)
+static inline 
+void _fmpz_poly_zero(fmpz_poly_t output)
 {
    output->length = 0;
 }
@@ -366,7 +390,8 @@ static inline void _fmpz_poly_zero(fmpz_poly_t output)
 
 void _fmpz_poly_zero_coeffs(fmpz_poly_t poly, const unsigned long n);
 
-static inline void _fmpz_poly_attach(fmpz_poly_t output, const fmpz_poly_t input)
+static inline 
+void _fmpz_poly_attach(fmpz_poly_t output, const fmpz_poly_t input)
 {
    output->length = input->length;
    output->limbs = input->limbs;
@@ -377,7 +402,8 @@ static inline void _fmpz_poly_attach(fmpz_poly_t output, const fmpz_poly_t input
    Attach input shifted right by n to output
 */
 
-static inline void _fmpz_poly_attach_shifted(fmpz_poly_t output, 
+static inline 
+void _fmpz_poly_attach_shifted(fmpz_poly_t output, 
              const fmpz_poly_t input, unsigned long n)
 {
    if (input->length >= n) output->length = input->length - n;
@@ -391,7 +417,8 @@ static inline void _fmpz_poly_attach_shifted(fmpz_poly_t output,
    n must be <= input->length
 */
 
-static inline void _fmpz_poly_attach_truncate(fmpz_poly_t output, 
+static inline 
+void _fmpz_poly_attach_truncate(fmpz_poly_t output, 
              const fmpz_poly_t input, unsigned long n)
 {
    output->length = n;
@@ -527,20 +554,25 @@ void fmpz_poly_check_normalisation(const fmpz_poly_t poly);
 // String conversions and I/O
 
 int fmpz_poly_from_string(fmpz_poly_t poly, const char* s);
-char* fmpz_poly_to_string(const fmpz_poly_t poly);
-void fmpz_poly_print(const fmpz_poly_t poly);
-void fmpz_poly_fprint(const fmpz_poly_t poly, FILE* f);
-int fmpz_poly_fread(fmpz_poly_t poly, FILE* f);
 
-static inline unsigned long fmpz_poly_limbs(const fmpz_poly_t poly)
-{
-   return poly->limbs;
-}
+char* fmpz_poly_to_string(const fmpz_poly_t poly);
+
+void fmpz_poly_print(const fmpz_poly_t poly);
+
+void fmpz_poly_fprint(const fmpz_poly_t poly, FILE* f);
+
+int fmpz_poly_fread(fmpz_poly_t poly, FILE* f);
 
 static inline 
 int fmpz_poly_read(fmpz_poly_t poly)
 {
    return fmpz_poly_fread(poly, stdin);
+}
+
+static inline 
+unsigned long fmpz_poly_limbs(const fmpz_poly_t poly)
+{
+   return poly->limbs;
 }
 
 static inline 
@@ -567,14 +599,26 @@ long fmpz_poly_max_limbs(const fmpz_poly_t poly)
    return _fmpz_poly_max_limbs(poly);
 }
 
-static inline void fmpz_poly_truncate(fmpz_poly_t poly, const unsigned long length)
+static inline 
+void fmpz_poly_truncate(fmpz_poly_t poly, const unsigned long length)
 {
    FLINT_ASSERT(poly->length >= length);
    poly->length = length;
    _fmpz_poly_normalise(poly);
 }
 
-void fmpz_poly_swap(fmpz_poly_t x, fmpz_poly_t y);
+static inline
+void fmpz_poly_swap(fmpz_poly_t x, fmpz_poly_t y)
+{
+   mp_limb_t temp_l;
+   
+   temp_l = x->alloc;
+   x->alloc = y->alloc;
+   y->alloc = temp_l;
+   
+   _fmpz_poly_swap(x, y);
+}
+
 
 static inline
 fmpz_t fmpz_poly_get_coeff_ptr(const fmpz_poly_t poly, const unsigned long n)
@@ -584,6 +628,18 @@ fmpz_t fmpz_poly_get_coeff_ptr(const fmpz_poly_t poly, const unsigned long n)
       return NULL;
    }
    return poly->coeffs+n*(poly->limbs+1);
+}
+
+static inline
+long fmpz_poly_get_coeff(mp_limb_t * output, const fmpz_poly_t poly,
+                                                  const unsigned long n)
+{
+   if (n >= poly->length)
+   {
+       F_mpn_clear(output, n);
+       return 0;  
+   }
+   return _fmpz_poly_get_coeff(output, poly, n);
 }
 
 static inline
@@ -612,7 +668,54 @@ long fmpz_poly_get_coeff_si(const fmpz_poly_t poly, const unsigned long n)
 
 void fmpz_poly_get_coeff_mpz(mpz_t x, const fmpz_poly_t poly, const unsigned long n);
 
-static inline void fmpz_poly_set_coeff_si(fmpz_poly_t poly, const unsigned long n, const long x)
+static inline
+void fmpz_poly_set_coeff_fmpz(fmpz_poly_t poly, const unsigned long n, fmpz_t x) 
+{
+   fmpz_poly_fit_length(poly, n+1);
+   fmpz_poly_fit_limbs(poly, fmpz_size(x));
+   if (n+1 > poly->length) 
+   {
+      for (long i = poly->length; i + 1 < n; i++)
+      {
+         poly->coeffs[i*(poly->limbs+1)] = 0L;
+      } 
+      poly->length = n+1;
+   }
+   _fmpz_poly_set_coeff_fmpz(poly, n, x);
+   _fmpz_poly_normalise(poly);
+}
+
+static inline
+void fmpz_poly_get_coeff_fmpz(fmpz_t x, const fmpz_poly_t poly, const unsigned long n) 
+{
+   if (n >= poly->length)
+   {
+      x[0] = 0;
+      return;
+   }
+   _fmpz_poly_get_coeff_fmpz(x, poly, n);
+} 
+
+static inline
+void fmpz_poly_set_coeff(fmpz_poly_t poly, const unsigned long n, 
+                        const mp_limb_t * x, const long sign, const unsigned long size)
+{
+   fmpz_poly_fit_length(poly, n+1);
+   fmpz_poly_fit_limbs(poly, size);
+   if (n+1 > poly->length) 
+   {
+      for (long i = poly->length; i + 1 < n; i++)
+      {
+         poly->coeffs[i*(poly->limbs+1)] = 0L;
+      } 
+      poly->length = n+1;
+   }
+   _fmpz_poly_set_coeff(poly, n, x, sign, size);
+   _fmpz_poly_normalise(poly);
+}    
+
+static inline 
+void fmpz_poly_set_coeff_si(fmpz_poly_t poly, const unsigned long n, const long x)
 {
    fmpz_poly_fit_length(poly, n+1);
    fmpz_poly_fit_limbs(poly, 1);
@@ -628,7 +731,8 @@ static inline void fmpz_poly_set_coeff_si(fmpz_poly_t poly, const unsigned long 
    _fmpz_poly_normalise(poly);
 }
 
-static inline void fmpz_poly_set_coeff_ui(fmpz_poly_t poly, const unsigned long n, const unsigned long x)
+static inline
+void fmpz_poly_set_coeff_ui(fmpz_poly_t poly, const unsigned long n, const unsigned long x)
 {
    fmpz_poly_fit_length(poly, n+1);
    fmpz_poly_fit_limbs(poly, 1);
@@ -650,18 +754,7 @@ void fmpz_poly_set_coeff_mpz(fmpz_poly_t poly, const unsigned long n, const mpz_
    fmpz_poly_fit_length(poly, n+1);
    fmpz_poly_fit_limbs(poly, mpz_size(x));
    
-   if (poly->limbs == 0) return;
-   
-   if (n+1 > poly->length) 
-   {
-      for (long i = poly->length; i + 1 < n; i++)
-      {
-         poly->coeffs[i*(poly->limbs+1)] = 0;
-      } 
-      poly->length = n+1;
-   }
-   mpz_to_fmpz(poly->coeffs + n*(poly->limbs+1), x);
-   _fmpz_poly_normalise(poly);
+   _fmpz_poly_set_coeff_mpz(poly, n, x);
 }
 
 static inline
@@ -672,9 +765,34 @@ void fmpz_poly_set(fmpz_poly_t output, const fmpz_poly_t input)
    _fmpz_poly_set(output, input);
 }
 
-static inline void fmpz_poly_zero(fmpz_poly_t output)
+static inline
+int fmpz_poly_equal(const fmpz_poly_t input1, const fmpz_poly_t input2)
+{
+   return _fmpz_poly_equal(input1, input2);
+}
+
+static inline
+void fmpz_poly_zero(fmpz_poly_t output)
 {
    output->length = 0;
+}
+
+static inline 
+void fmpz_poly_zero_coeffs(fmpz_poly_t poly, const unsigned long n)
+{
+   fmpz_poly_fit_length(poly, n);
+   if (n >= poly->length) 
+   {
+      fmpz_poly_zero(poly);
+      return;
+   }
+   _fmpz_poly_zero_coeffs(poly, n);
+}
+
+static inline
+long fmpz_poly_bits1(const fmpz_poly_t poly)
+{
+   return _fmpz_poly_bits1(poly);
 }
 
 static inline
@@ -693,6 +811,26 @@ void fmpz_poly_reverse(fmpz_poly_t output, const fmpz_poly_t input, const unsign
    _fmpz_poly_reverse(output, input, length);
 }
 
+static inline
+void fmpz_poly_left_shift(fmpz_poly_t output, const fmpz_poly_t input, 
+                                                 const unsigned long n)
+{
+   if (input->length + n == 0)
+   {
+      fmpz_poly_zero(output);
+      return;
+   }
+   fmpz_poly_fit_length(output, input->length + n);
+   fmpz_poly_fit_limbs(output, input->limbs);
+   _fmpz_poly_left_shift(output, input, n);  
+}
+
+static inline
+void fmpz_poly_right_shift(fmpz_poly_t output, const fmpz_poly_t input, const unsigned long n)
+{
+   _fmpz_poly_right_shift(output, input, n);
+}
+
 void fmpz_poly_scalar_mul(fmpz_poly_t output, 
                           const fmpz_poly_t input, const fmpz_t x);
                           
@@ -704,6 +842,90 @@ void fmpz_poly_scalar_mul_si(fmpz_poly_t output,
                           
 void fmpz_poly_scalar_mul_mpz(fmpz_poly_t output, 
                           const fmpz_poly_t input, const mpz_t x);
+                          
+static inline
+void fmpz_poly_scalar_div_ui(fmpz_poly_t output, const fmpz_poly_t poly, const unsigned long x)
+{
+   if (poly->length == 0)
+   {
+      fmpz_poly_zero(output);
+      return;
+   }
+   unsigned long limbs = fmpz_poly_max_limbs(poly);
+   fmpz_poly_fit_length(output, poly->length);
+   fmpz_poly_fit_limbs(output, limbs);
+   _fmpz_poly_scalar_div_ui(output, poly, x);
+}
+                          
+static inline
+void fmpz_poly_scalar_div_si(fmpz_poly_t output, const fmpz_poly_t poly, const unsigned long x)
+{
+   if (poly->length == 0)
+   {
+      fmpz_poly_zero(output);
+      return;
+   }
+   unsigned long limbs = fmpz_poly_max_limbs(poly);
+   fmpz_poly_fit_length(output, poly->length);
+   fmpz_poly_fit_limbs(output, limbs);
+   _fmpz_poly_scalar_div_si(output, poly, x);
+}
+                          
+static inline
+void fmpz_poly_scalar_tdiv_ui(fmpz_poly_t output, const fmpz_poly_t poly, const unsigned long x)
+{
+   if (poly->length == 0)
+   {
+      fmpz_poly_zero(output);
+      return;
+   }
+   unsigned long limbs = fmpz_poly_max_limbs(poly);
+   fmpz_poly_fit_length(output, poly->length);
+   fmpz_poly_fit_limbs(output, limbs);
+   _fmpz_poly_scalar_tdiv_ui(output, poly, x);
+}
+                          
+static inline
+void fmpz_poly_scalar_tdiv_si(fmpz_poly_t output, const fmpz_poly_t poly, const unsigned long x)
+{
+   if (poly->length == 0)
+   {
+      fmpz_poly_zero(output);
+      return;
+   }
+   unsigned long limbs = fmpz_poly_max_limbs(poly);
+   fmpz_poly_fit_length(output, poly->length);
+   fmpz_poly_fit_limbs(output, limbs);
+   _fmpz_poly_scalar_tdiv_si(output, poly, x);
+}
+
+static inline
+void fmpz_poly_scalar_div_exact_ui(fmpz_poly_t output, const fmpz_poly_t poly, const unsigned long x)
+{
+   if (poly->length == 0)
+   {
+      fmpz_poly_zero(output);
+      return;
+   }
+   unsigned long limbs = fmpz_poly_max_limbs(poly);
+   fmpz_poly_fit_length(output, poly->length);
+   fmpz_poly_fit_limbs(output, limbs);
+   _fmpz_poly_scalar_div_exact_ui(output, poly, x);
+}
+                          
+static inline
+void fmpz_poly_scalar_div_exact_si(fmpz_poly_t output, const fmpz_poly_t poly, const unsigned long x)
+{
+   if (poly->length == 0)
+   {
+      fmpz_poly_zero(output);
+      return;
+   }
+   unsigned long limbs = fmpz_poly_max_limbs(poly);
+   fmpz_poly_fit_length(output, poly->length);
+   fmpz_poly_fit_limbs(output, limbs);
+   _fmpz_poly_scalar_div_exact_si(output, poly, x);
+}
                           
 void fmpz_poly_scalar_div(fmpz_poly_t output, 
                           const fmpz_poly_t input, const fmpz_t x);
