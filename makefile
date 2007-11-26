@@ -17,7 +17,7 @@ ifndef FLINT_PY
 endif
 
 ifndef FLINT_CPP
-	FLIN_CPP = g++
+	FLINT_CPP = g++
 endif
 
 CPP = $(FLINT_CPP) 
