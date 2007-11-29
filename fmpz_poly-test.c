@@ -20,6 +20,8 @@ Copyright (C) 2007, William Hart and David Harvey
 #define SIGNS 1
 #define SPARSE 1
 
+#define TESTFILE 0 // Set this to test polynomial reading and writing to a file in the current dir
+
 #define DEBUG 0 // prints debug information
 #define DEBUG2 1 
 
@@ -140,6 +142,380 @@ int test_fmpz_poly_convert()
 #endif
           
           result = mpz_poly_equal(test_poly, test_poly2);
+      }   
+          
+      fmpz_poly_clear(test_mpn_poly);
+   }
+   
+   mpz_clear(temp);
+   mpz_poly_clear(test_poly);
+   mpz_poly_clear(test_poly2);
+   
+   return result;
+}
+
+int test__fmpz_poly_truncate()
+{
+   mpz_poly_t test_poly, test_poly2;
+   fmpz_poly_t test_mpn_poly;
+   int result = 1;
+   unsigned long bits, length, trunc;
+   
+   mpz_poly_init(test_poly); 
+   mpz_poly_init(test_poly2); 
+   for (unsigned long count1 = 1; (count1 < 300) && (result == 1) ; count1++)
+   {
+      bits = random_ulong(1000) + 1;
+      
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
+      for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
+      { 
+          length = random_ulong(1000);
+          trunc = random_ulong(length+1);
+#if DEBUG
+          printf("%ld, %ld\n",length, bits);
+#endif
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          mpz_poly_realloc(test_poly2, length);
+          randpoly(test_poly, length, bits);
+           
+#if DEBUG
+          for (unsigned j = 0; j < test_poly->length; j++)
+             gmp_printf("%Zd, ",test_poly->coeffs[j]);
+          printf("\n\n");
+#endif
+          mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
+          _fmpz_poly_truncate(test_mpn_poly, trunc);
+          fmpz_poly_check_normalisation(test_mpn_poly);
+          fmpz_poly_to_mpz_poly(test_poly2, test_mpn_poly);
+          mpz_poly_truncate(test_poly, test_poly, trunc);
+#if DEBUG
+          for (unsigned j = 0; j < test_poly2->length; j++)
+             gmp_printf("%Zd, ",test_poly2->coeffs[j]);
+          printf("\n\n");
+#endif
+          
+          result = mpz_poly_equal(test_poly, test_poly2);
+      }   
+          
+      fmpz_poly_clear(test_mpn_poly);
+   }
+   
+   mpz_poly_clear(test_poly);
+   mpz_poly_clear(test_poly2);
+   
+   return result;
+}
+
+int test__fmpz_poly_bits()
+{
+   mpz_poly_t test_poly;
+   fmpz_poly_t test_mpn_poly;
+   int result = 1;
+   unsigned long bits, length;
+   long next_bits, mpz_bits, fmpz_bits, sign;
+   
+   mpz_poly_init(test_poly); 
+   for (unsigned long count1 = 1; (count1 < 300) && (result == 1) ; count1++)
+   {
+      bits = random_ulong(1000) + 1;
+      
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
+      for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
+      { 
+          length = random_ulong(1000);
+#if DEBUG
+          printf("%ld, %ld\n",length, bits);
+#endif
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          randpoly(test_poly, length, bits);
+           
+#if DEBUG
+          for (unsigned j = 0; j < test_poly->length; j++)
+             gmp_printf("%Zd, ",test_poly->coeffs[j]);
+          printf("\n\n");
+#endif
+          mpz_bits = 0;
+          sign = 1L;
+          for (unsigned long i = 0; i < test_poly->length; i++)
+          {
+             next_bits = mpz_sizeinbase(test_poly->coeffs[i], 2);
+             if (next_bits > mpz_bits) mpz_bits = next_bits;
+             if (mpz_sgn(test_poly->coeffs[i]) < 0L) sign = -1L;
+          }
+          mpz_bits = sign*mpz_bits;
+          mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
+          fmpz_bits = _fmpz_poly_bits(test_mpn_poly);
+          
+          result = (mpz_bits == fmpz_bits);
+      }   
+          
+      fmpz_poly_clear(test_mpn_poly);
+   }
+   
+   mpz_poly_clear(test_poly);
+   
+   return result;
+}
+
+int test__fmpz_poly_bits1()
+{
+   mpz_poly_t test_poly;
+   fmpz_poly_t test_mpn_poly;
+   int result = 1;
+   unsigned long bits, length;
+   long next_bits, mpz_bits, fmpz_bits, sign;
+   
+   mpz_poly_init(test_poly); 
+   for (unsigned long count1 = 1; (count1 < 300) && (result == 1) ; count1++)
+   {
+      bits = random_ulong(64)+1;
+      
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
+      for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
+      { 
+          length = random_ulong(1000);
+#if DEBUG
+          printf("%ld, %ld\n",length, bits);
+#endif
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          randpoly(test_poly, length, bits);
+           
+#if DEBUG
+          for (unsigned j = 0; j < test_poly->length; j++)
+             gmp_printf("%Zd, ",test_poly->coeffs[j]);
+          printf("\n\n");
+#endif
+          mpz_bits = 0;
+          sign = 1L;
+          for (unsigned long i = 0; i < test_poly->length; i++)
+          {
+             next_bits = mpz_sizeinbase(test_poly->coeffs[i], 2);
+             if (next_bits > mpz_bits) mpz_bits = next_bits;
+             if (mpz_sgn(test_poly->coeffs[i]) < 0L) sign = -1L;
+          }
+          mpz_bits = mpz_bits*sign;
+          mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
+          fmpz_bits = _fmpz_poly_bits1(test_mpn_poly);
+          
+          result = (mpz_bits == fmpz_bits);
+      }   
+          
+      fmpz_poly_clear(test_mpn_poly);
+   }
+   
+   mpz_poly_clear(test_poly);
+   
+   return result;
+}
+
+int test__fmpz_poly_max_limbs()
+{
+   mpz_poly_t test_poly;
+   fmpz_poly_t test_mpn_poly;
+   int result = 1;
+   unsigned long bits, length, next_limbs, mpz_limbs, fmpz_limbs;
+   
+   mpz_poly_init(test_poly); 
+   for (unsigned long count1 = 1; (count1 < 300) && (result == 1) ; count1++)
+   {
+      bits = random_ulong(1000) + 1;
+      
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
+      for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
+      { 
+          length = random_ulong(1000);
+#if DEBUG
+          printf("%ld, %ld\n",length, bits);
+#endif
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          randpoly(test_poly, length, bits);
+           
+#if DEBUG
+          for (unsigned j = 0; j < test_poly->length; j++)
+             gmp_printf("%Zd, ",test_poly->coeffs[j]);
+          printf("\n\n");
+#endif
+          mpz_limbs = 0;
+          for (unsigned long i = 0; i < test_poly->length; i++)
+          {
+             next_limbs = mpz_size(test_poly->coeffs[i]);
+             if (next_limbs > mpz_limbs) mpz_limbs = next_limbs;
+          }
+          mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
+          fmpz_limbs = _fmpz_poly_max_limbs(test_mpn_poly);
+          
+          result = (mpz_limbs == fmpz_limbs);
+      }   
+          
+      fmpz_poly_clear(test_mpn_poly);
+   }
+   
+   mpz_poly_clear(test_poly);
+   
+   return result;
+}
+
+int test__fmpz_poly_attach()
+{
+   mpz_poly_t test_poly, test_poly2;
+   fmpz_poly_t test_mpn_poly, test_mpn_poly2;
+   mpz_t temp;
+   mpz_init(temp);
+   int result = 1;
+   unsigned long bits, length;
+   
+   mpz_poly_init(test_poly); 
+   mpz_poly_init(test_poly2); 
+   for (unsigned long count1 = 1; (count1 < 300) && (result == 1) ; count1++)
+   {
+      bits = random_ulong(1000) + 1;
+      
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
+      for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
+      { 
+          length = random_ulong(1000);
+#if DEBUG
+          printf("%ld, %ld\n",length, bits);
+#endif
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          mpz_poly_realloc(test_poly2, length);
+          randpoly(test_poly, length, bits);
+           
+#if DEBUG
+          for (unsigned j = 0; j < test_poly->length; j++)
+             gmp_printf("%Zd, ",test_poly->coeffs[j]);
+          printf("\n\n");
+#endif
+          mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
+          _fmpz_poly_attach(test_mpn_poly2, test_mpn_poly);
+          _fmpz_poly_check_normalisation(test_mpn_poly2);
+          fmpz_poly_to_mpz_poly(test_poly2, test_mpn_poly2);
+#if DEBUG
+          for (unsigned j = 0; j < test_poly2->length; j++)
+             gmp_printf("%Zd, ",test_poly2->coeffs[j]);
+          printf("\n\n");
+#endif
+          
+          result = mpz_poly_equal(test_poly, test_poly2);
+      }   
+          
+      fmpz_poly_clear(test_mpn_poly);
+   }
+   
+   mpz_clear(temp);
+   mpz_poly_clear(test_poly);
+   mpz_poly_clear(test_poly2);
+   
+   return result;
+}
+
+int test__fmpz_poly_attach_shifted()
+{
+   mpz_poly_t test_poly, test_poly2;
+   fmpz_poly_t test_mpn_poly, test_mpn_poly2;
+   mpz_t temp;
+   mpz_init(temp);
+   int result = 1;
+   unsigned long bits, length, shift;
+   
+   mpz_poly_init(test_poly); 
+   mpz_poly_init(test_poly2); 
+   for (unsigned long count1 = 1; (count1 < 300) && (result == 1) ; count1++)
+   {
+      bits = random_ulong(1000) + 1;
+      
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
+      for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
+      { 
+          length = random_ulong(1000);
+          shift = random_ulong(length+1);
+#if DEBUG
+          printf("%ld, %ld\n",length, bits);
+#endif
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          mpz_poly_realloc(test_poly2, length);
+          randpoly(test_poly, length, bits);
+           
+#if DEBUG
+          for (unsigned j = 0; j < test_poly->length; j++)
+             gmp_printf("%Zd, ",test_poly->coeffs[j]);
+          printf("\n\n");
+#endif
+          mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
+          _fmpz_poly_attach_shifted(test_mpn_poly2, test_mpn_poly, shift);
+          _fmpz_poly_check_normalisation(test_mpn_poly2);
+          fmpz_poly_to_mpz_poly(test_poly2, test_mpn_poly2);
+          _fmpz_poly_right_shift(test_mpn_poly, test_mpn_poly, shift);
+          fmpz_poly_to_mpz_poly(test_poly, test_mpn_poly);
+#if DEBUG
+          for (unsigned j = 0; j < test_poly2->length; j++)
+             gmp_printf("%Zd, ",test_poly2->coeffs[j]);
+          printf("\n\n");
+#endif
+          
+          result = mpz_poly_equal(test_poly, test_poly2);
+      }   
+          
+      fmpz_poly_clear(test_mpn_poly);
+   }
+   
+   mpz_clear(temp);
+   mpz_poly_clear(test_poly);
+   mpz_poly_clear(test_poly2);
+   
+   return result;
+}
+
+int test__fmpz_poly_attach_truncate()
+{
+   mpz_poly_t test_poly, test_poly2;
+   fmpz_poly_t test_mpn_poly, test_mpn_poly2;
+   mpz_t temp;
+   mpz_init(temp);
+   int result = 1;
+   unsigned long bits, length, trunc;
+   
+   mpz_poly_init(test_poly); 
+   mpz_poly_init(test_poly2); 
+   
+   for (unsigned long count1 = 1; (count1 < 300) && (result == 1) ; count1++)
+   {
+      bits = random_ulong(1000) + 1;
+      
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
+      for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
+      { 
+          length = random_ulong(1000);
+          trunc = random_ulong(length+1);
+#if DEBUG
+          printf("%ld, %ld, %ld\n",length, bits, trunc);
+#endif
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          mpz_poly_realloc(test_poly2, length);
+          randpoly(test_poly, length, bits);
+          if (trunc > test_poly->length) trunc = test_poly->length; 
+           
+#if DEBUG
+          for (unsigned j = 0; j < test_poly->length; j++)
+             gmp_printf("%Zd, ",test_poly->coeffs[j]);
+          printf("\n\n");
+#endif
+          mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
+          _fmpz_poly_attach_truncate(test_mpn_poly2, test_mpn_poly, trunc);
+          _fmpz_poly_check_normalisation(test_mpn_poly2);
+          fmpz_poly_to_mpz_poly(test_poly2, test_mpn_poly2);
+          _fmpz_poly_truncate(test_mpn_poly, trunc);
+          fmpz_poly_to_mpz_poly(test_poly, test_mpn_poly);
+          result = mpz_poly_equal(test_poly, test_poly2);
+#if DEBUG2
+          if (!result) 
+          {
+             mpz_poly_print(test_poly); printf("\n");
+             mpz_poly_print(test_poly2); printf("\n"); 
+          }
+#endif
+          
       }   
           
       fmpz_poly_clear(test_mpn_poly);
@@ -361,7 +737,6 @@ int test_fmpz_poly_normalise()
    return result; 
 }
 
-
 int test_fmpz_poly_getset_coeff()
 {
    mpz_poly_t test_poly;
@@ -475,6 +850,61 @@ int test_fmpz_poly_getset_coeff_fmpz()
    return result; 
 }
 
+int test_fmpz_poly_getset_coeff_mpz()
+{
+   mpz_poly_t test_poly;
+   fmpz_poly_t test_mpn_poly;
+   unsigned long result = 1;
+   unsigned long bits, length, rand_coeff;
+   long sign, sign2;
+   
+   mpz_poly_init(test_poly); 
+           
+   for (unsigned long count1 = 1; (count1 < 400) && (result == 1) ; count1++)
+   {
+      bits = random_ulong(1000)+ 1;
+      
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
+      for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
+      { 
+          length = random_ulong(1000)+1;        
+#if DEBUG
+          printf("length = %ld, bits = %ld\n",length, bits);
+#endif
+          fmpz_poly_fit_length(test_mpn_poly, length);
+           do
+          {
+             randpoly(test_poly, length, bits); 
+          } while (test_poly->length != length);
+
+          mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
+          
+          mpz_t coeff1, coeff2;
+          mpz_init(coeff1);
+          mpz_init(coeff2);
+          
+          _fmpz_poly_get_coeff_mpz(coeff1, test_mpn_poly, randint(test_mpn_poly->length));
+          rand_coeff = randint(test_mpn_poly->length);
+          if (test_mpn_poly->length)
+          {
+             _fmpz_poly_set_coeff_mpz(test_mpn_poly, rand_coeff, coeff1);
+             fmpz_poly_check_normalisation(test_mpn_poly);
+             _fmpz_poly_get_coeff_mpz(coeff2, test_mpn_poly, rand_coeff);
+             
+             result = (mpz_cmp(coeff1, coeff2) == 0);
+          }
+          
+          mpz_clear(coeff1);
+          mpz_clear(coeff2);
+      }
+      fmpz_poly_clear(test_mpn_poly);
+   }
+   
+   mpz_poly_clear(test_poly);
+   
+   return result; 
+}
+
 int test_fmpz_poly_setequal()
 {
    mpz_poly_t test_poly;
@@ -555,6 +985,168 @@ int test_fmpz_poly_setequal()
              test_mpn_poly2->coeffs[altered_coeff*(test_mpn_poly2->limbs+1)] = 1;
           
           result = !_fmpz_poly_equal(test_mpn_poly2, test_mpn_poly); 
+      }
+      
+      fmpz_poly_clear(test_mpn_poly);
+      fmpz_poly_clear(test_mpn_poly2);         
+   }
+   
+   mpz_poly_clear(test_poly);
+   
+   return result; 
+}
+
+#if TESTFILE
+int test_fmpz_poly_freadprint()
+{
+   mpz_poly_t test_poly;
+   fmpz_poly_t test_mpn_poly, test_mpn_poly2;
+   int result = 1;
+   unsigned long bits, length;
+   
+   mpz_poly_init(test_poly); 
+   
+   for (unsigned long count1 = 1; (count1 < 200) && (result == 1) ; count1++)
+   {
+      bits = random_ulong(100)+ 1;
+      
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
+      fmpz_poly_init2(test_mpn_poly2, 1, (bits-1)/FLINT_BITS+1+randint(30));
+      FILE * testfile; 
+      
+      for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
+      { 
+          length = random_ulong(100);        
+#if DEBUG
+          printf("length = %ld, bits = %ld\n",length, bits);
+#endif
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length);
+          randpoly(test_poly, length, bits); 
+
+          mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
+          
+          testfile = fopen("testfile", "w");
+          fmpz_poly_fprint(test_mpn_poly, testfile);
+          fclose(testfile);
+          testfile = fopen("testfile", "r");
+          fmpz_poly_fread(test_mpn_poly2, testfile);
+          fclose(testfile);
+          fmpz_poly_check_normalisation(test_mpn_poly2);
+          result = _fmpz_poly_equal(test_mpn_poly2, test_mpn_poly);
+           
+      }
+      remove("testfile");
+            
+      fmpz_poly_clear(test_mpn_poly);
+      fmpz_poly_clear(test_mpn_poly2);         
+   }
+   
+   mpz_poly_clear(test_poly);
+   
+   return result; 
+}
+#endif
+
+int test_fmpz_poly_tofromstring()
+{
+   mpz_poly_t test_poly;
+   fmpz_poly_t test_mpn_poly, test_mpn_poly2;
+   int result = 1;
+   unsigned long bits, length;
+   
+   mpz_poly_init(test_poly); 
+   
+   for (unsigned long count1 = 1; (count1 < 200) && (result == 1) ; count1++)
+   {
+      bits = random_ulong(100)+ 1;
+      
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
+      fmpz_poly_init2(test_mpn_poly2, 1, (bits-1)/FLINT_BITS+1+randint(30));
+      FILE * testfile; 
+      
+      for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
+      { 
+          length = random_ulong(100);        
+#if DEBUG
+          printf("length = %ld, bits = %ld\n",length, bits);
+#endif
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length);
+          randpoly(test_poly, length, bits); 
+
+          mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
+          
+          char * strbuf = fmpz_poly_to_string(test_mpn_poly);
+          int OK = fmpz_poly_from_string(test_mpn_poly2, strbuf);
+          free(strbuf);
+          fmpz_poly_check_normalisation(test_mpn_poly2);
+          result = _fmpz_poly_equal(test_mpn_poly2, test_mpn_poly) && OK;
+           
+      }
+            
+      fmpz_poly_clear(test_mpn_poly);
+      fmpz_poly_clear(test_mpn_poly2);         
+   }
+   
+   mpz_poly_clear(test_poly);
+   
+   return result; 
+}
+
+int test__fmpz_poly_zero_coeffs()
+{
+   mpz_poly_t test_poly;
+   fmpz_poly_t test_mpn_poly, test_mpn_poly2;
+   int result = 1;
+   unsigned long bits, length, zeroes;
+   
+   mpz_poly_init(test_poly); 
+   
+   for (unsigned long count1 = 1; (count1 < 200) && (result == 1) ; count1++)
+   {
+      bits = random_ulong(1000)+ 1;
+      
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
+      fmpz_poly_init2(test_mpn_poly2, 1, (bits-1)/FLINT_BITS+1+randint(30));
+      for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
+      { 
+          length = random_ulong(1000);        
+#if DEBUG
+          printf("length = %ld, bits = %ld\n",length, bits);
+#endif
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length);
+          randpoly(test_poly, length, bits); 
+
+          mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
+          _fmpz_poly_set(test_mpn_poly2, test_mpn_poly);
+          
+          zeroes = randint(test_mpn_poly->length + 1);
+          
+          _fmpz_poly_zero_coeffs(test_mpn_poly2, zeroes);
+          fmpz_poly_check_normalisation(test_mpn_poly2);
+          
+          unsigned long i;
+          fmpz_t coeff1, coeff2;
+          
+          if (zeroes == test_mpn_poly->length)
+          {
+             result = (test_mpn_poly2->length == 0);
+          } else
+          {
+             for (i = 0; i < zeroes; i++)
+             {
+                coeff1 = _fmpz_poly_get_coeff_ptr(test_mpn_poly2, i);
+                result &= fmpz_is_zero(coeff1);
+             }
+             for (i = zeroes; i < test_mpn_poly->length; i++)
+             {
+                coeff1 = _fmpz_poly_get_coeff_ptr(test_mpn_poly, i);
+                coeff2 = _fmpz_poly_get_coeff_ptr(test_mpn_poly2, i);
+                result &= fmpz_equal(coeff1, coeff2);
+             }
+          }
       }
       
       fmpz_poly_clear(test_mpn_poly);
@@ -2706,6 +3298,164 @@ int test_fmpz_poly_mul_trunc_n()
    mpz_poly_clear(test_poly3);
    
    return result; 
+}
+
+int test__fmpz_poly_mul_trunc_left_n()
+{
+   mpz_poly_t test_poly, test_poly2, test_poly3, test_poly4;
+   fmpz_poly_t test_mpn_poly, test_mpn_poly2, test_mpn_poly3, test_mpn_poly4;
+   int result = 1;
+   unsigned long bits, bits2, length, length2, trunc;
+   
+   mpz_poly_init(test_poly); 
+   mpz_poly_init(test_poly2); 
+   mpz_poly_init(test_poly3); 
+   
+   for (unsigned long count1 = 1; (count1 < 25) && (result == 1) ; count1++)
+   {
+      bits = random_ulong(1000)+ 1;
+      bits2 = random_ulong(1000)+ 1;
+      
+      fmpz_poly_init2(test_mpn_poly, 1, (bits-1)/FLINT_BITS+1);
+      fmpz_poly_init2(test_mpn_poly2, 1, (bits2-1)/FLINT_BITS+1);
+      for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
+      { 
+          length = random_ulong(1000); 
+          length2 = length; 
+          trunc = length;       
+#if DEBUG
+          printf("length = %ld, length2 = %ld, trunc = %ld, bits = %ld, bits2 = %ld\n", length, length2, trunc, bits, bits2);
+#endif
+          do randpoly(test_poly, length, bits);
+          while (mpz_poly_length(test_poly) < length);
+
+          do randpoly(test_poly2, length2, bits2);
+          while (mpz_poly_length(test_poly2) < length2);
+          
+          fmpz_poly_fit_length(test_mpn_poly, length);
+          fmpz_poly_fit_length(test_mpn_poly2, length2);
+          mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
+          mpz_poly_to_fmpz_poly(test_mpn_poly2, test_poly2);
+          
+          mpz_poly_init(test_poly4);
+          if (length + length2) fmpz_poly_init2(test_mpn_poly3, length+length2-1, (bits+bits2-1)/FLINT_BITS+2);
+          else fmpz_poly_init(test_mpn_poly3);
+          fmpz_poly_init2(test_mpn_poly4, length+length2-1, (bits+bits2-1)/FLINT_BITS+2);
+          
+          _fmpz_poly_mul_KS(test_mpn_poly3, test_mpn_poly, test_mpn_poly2);
+          _fmpz_poly_zero_coeffs(test_mpn_poly3, trunc);
+          
+          _fmpz_poly_mul_trunc_left_n(test_mpn_poly4, test_mpn_poly, test_mpn_poly2, trunc);
+          fmpz_poly_check_normalisation(test_mpn_poly4);
+          _fmpz_poly_zero_coeffs(test_mpn_poly4, trunc);
+          
+          fmpz_poly_to_mpz_poly(test_poly3, test_mpn_poly3); 
+          fmpz_poly_to_mpz_poly(test_poly4, test_mpn_poly4); 
+          
+          result = mpz_poly_equal(test_poly4, test_poly3);
+          mpz_poly_clear(test_poly4);
+          fmpz_poly_clear(test_mpn_poly3);
+          fmpz_poly_clear(test_mpn_poly4);
+      }
+      fmpz_poly_clear(test_mpn_poly);
+      fmpz_poly_clear(test_mpn_poly2);
+   }
+   
+   mpz_poly_clear(test_poly);
+   mpz_poly_clear(test_poly2);
+   mpz_poly_clear(test_poly3);
+   
+   return result; 
+}
+
+int test__fmpz_poly_mul()
+{
+   mpz_poly_t test_poly, test_poly2, test_poly3, test_poly4;
+   fmpz_poly_t test_mpn_poly, test_mpn_poly2, test_mpn_poly3;
+   ZmodF_poly_t test_modF_poly;
+   int result = 1;
+   unsigned long bits, bits2, length, length2;
+   
+   mpz_poly_init(test_poly); 
+   mpz_poly_init(test_poly2); 
+   mpz_poly_init(test_poly3); 
+   mpz_poly_init(test_poly4); 
+      
+   for (unsigned long count1 = 0; count1 < 20; count1++)
+   {
+      bits = random_ulong(1000) + 1;
+      bits2 = random_ulong(1000) + 1;
+      //bits = 4;
+      //bits2 = 4;
+      length2 = random_ulong(1000); 
+      length = random_ulong(1000);   
+      //length = 32000;
+      //length2 = 32000;   
+   
+      _fmpz_poly_stack_init(test_mpn_poly, length, (bits-1)/FLINT_BITS+1);
+      _fmpz_poly_stack_init(test_mpn_poly2, length2, (bits2-1)/FLINT_BITS+1);
+      if (length + length2) _fmpz_poly_stack_init(test_mpn_poly3, length + length2 - 1, test_mpn_poly->limbs + test_mpn_poly2->limbs + 1);
+      else fmpz_poly_init(test_mpn_poly3);
+
+#if DEBUG
+      printf("%ld, %ld, %ld, %ld\n", length, length2, bits, bits2);
+#endif
+      mpz_poly_realloc(test_poly, length);
+      mpz_poly_realloc(test_poly2, length2);
+      if (length + length2)
+      {
+         mpz_poly_realloc(test_poly3, length + length2 - 1);
+         mpz_poly_realloc(test_poly4, length + length2 - 1);
+      }    
+      
+      for (unsigned long count2 = 0; (count2 < 20) && (result == 1); count2++)
+      { 
+         do randpoly(test_poly, length, bits);
+         while (mpz_poly_length(test_poly) < length);
+
+         do randpoly(test_poly2, length2, bits2);
+         while (mpz_poly_length(test_poly2) < length2);
+          
+         mpz_poly_to_fmpz_poly(test_mpn_poly2, test_poly2);
+         mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
+          
+         mpz_poly_mul_naive_KS(test_poly3, test_poly, test_poly2);
+          
+         for (unsigned long i = 0; i < 2; i++)
+            _fmpz_poly_mul(test_mpn_poly3, test_mpn_poly, test_mpn_poly2);
+         fmpz_poly_check_normalisation(test_mpn_poly3);
+         fmpz_poly_to_mpz_poly(test_poly4, test_mpn_poly3);
+                  
+         result = mpz_poly_equal(test_poly3, test_poly4);
+         
+#if DEBUG
+         if (!result)
+         {
+            printf("Output poly correct\n");
+            for (unsigned j = 0; j < test_poly3->length; j++)
+               gmp_printf("%Zx, ",test_poly3->coeffs[j]);
+            printf("\n\n");
+            printf("Output poly incorrect\n");
+            for (unsigned j = 0; j < test_poly4->length; j++)
+               gmp_printf("%Zx, ",test_poly4->coeffs[j]);
+            printf("\n\n");
+         }
+#endif         
+
+      }   
+   
+      _fmpz_poly_stack_clear(test_mpn_poly3);
+      _fmpz_poly_stack_clear(test_mpn_poly2);
+      _fmpz_poly_stack_clear(test_mpn_poly);
+   
+   }
+   
+   mpz_poly_clear(test_poly);
+   mpz_poly_clear(test_poly2);
+   mpz_poly_clear(test_poly3);
+   mpz_poly_clear(test_poly4);
+   
+   return result;
 }
 
 int test__fmpz_poly_scalar_mul()
@@ -5737,6 +6487,10 @@ void fmpz_poly_test_all()
 {
    int success, all_success = 1;
 
+#if TESTFILE
+   RUN_TEST(fmpz_poly_freadprint); 
+#endif
+   RUN_TEST(fmpz_poly_tofromstring); 
    RUN_TEST(_fmpz_poly_scalar_div); 
    RUN_TEST(fmpz_poly_scalar_div); 
    RUN_TEST(fmpz_poly_scalar_div_mpz); 
@@ -5758,6 +6512,13 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_poly_pseudo_divrem_cohen); 
    RUN_TEST(fmpz_poly_pseudo_divrem_schoup); 
    RUN_TEST(fmpz_poly_div_mulders);
+   RUN_TEST(_fmpz_poly_attach);
+   RUN_TEST(_fmpz_poly_attach_shifted);
+   RUN_TEST(_fmpz_poly_attach_truncate);
+   RUN_TEST(_fmpz_poly_truncate);
+   RUN_TEST(_fmpz_poly_bits);
+   RUN_TEST(_fmpz_poly_bits1);
+   RUN_TEST(_fmpz_poly_max_limbs);
    RUN_TEST(fmpz_poly_convert);
    RUN_TEST(fmpz_poly_getset_ui);
    RUN_TEST(fmpz_poly_getset_si);
@@ -5765,7 +6526,9 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_poly_normalise);
    RUN_TEST(fmpz_poly_getset_coeff);
    RUN_TEST(fmpz_poly_getset_coeff_fmpz);
+   RUN_TEST(fmpz_poly_getset_coeff_mpz);
    RUN_TEST(fmpz_poly_setequal);
+   RUN_TEST(_fmpz_poly_zero_coeffs);
    RUN_TEST(fmpz_poly_swap);
    RUN_TEST(fmpz_poly_neg);
    RUN_TEST(fmpz_poly_shift);
@@ -5789,7 +6552,9 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_poly_mul_KS_trunc);
    RUN_TEST(fmpz_poly_mul_SS);
    RUN_TEST(fmpz_poly_mul_SS_trunc);
+   RUN_TEST(_fmpz_poly_mul);
    RUN_TEST(fmpz_poly_mul_trunc_n);
+   RUN_TEST(_fmpz_poly_mul_trunc_left_n);
    RUN_TEST(fmpz_poly_div_classical);
    RUN_TEST(fmpz_poly_divrem_classical);
    RUN_TEST(fmpz_poly_div_bisection_recursive);

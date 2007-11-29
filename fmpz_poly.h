@@ -37,7 +37,7 @@ a sign/size limb: the number of limbs of the absolute value of the
 coefficient is given by the absolute value of this limb, and the sign 
 of this limb is the sign of the coefficient. (Zero is stored as a 
 sign/size of zero followed by arbitrary data.) The remaining "limbs" 
-limbs represent the qbsolute value of the coefficient, stored in 
+limbs represent the absolute value of the coefficient, stored in 
 GMP's mpn format.
 
 Only the first "length" coefficients actually represent coefficients 
