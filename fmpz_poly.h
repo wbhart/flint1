@@ -93,9 +93,9 @@ do { \
 ****************************************************************************/
 
 /* 
-   Converts fmpz_poly_t "poly_mpn" to a ZmodF_poly.
+   Converts fmpz_poly_t "poly_fmpz" to a ZmodF_poly.
    
-   Each coefficient of poly_mpn is assumed to fit into a coefficient 
+   Each coefficient of poly_fmpz is assumed to fit into a coefficient 
    of poly_f.
    
    The maximum number of *bits* that any coefficient takes is returned
@@ -103,10 +103,10 @@ do { \
    
    Only _length_ coefficients are converted.
    
-   Assumes 0 < length <= poly_mpn->length 
+   Assumes 0 < length <= poly_fmpz->length 
 */
 
-long fmpz_poly_to_ZmodF_poly(ZmodF_poly_t poly_f, const fmpz_poly_t poly_mpn, 
+long fmpz_poly_to_ZmodF_poly(ZmodF_poly_t poly_f, const fmpz_poly_t poly_fmpz, 
                                                          const unsigned long length);
 
 
@@ -114,7 +114,7 @@ long fmpz_poly_to_ZmodF_poly(ZmodF_poly_t poly_f, const fmpz_poly_t poly_mpn,
    Normalise and converts ZmodF_poly "poly_f" to a fmpz_poly_t. 
    
    Each coefficient of poly_f is assumed to fit into a coefficient 
-   of poly_mpn. 
+   of poly_fmpz. 
    
    The normalisation ensures that this function is the inverse of 
    ZmodF_poly_convert_in_mpn.
@@ -122,15 +122,15 @@ long fmpz_poly_to_ZmodF_poly(ZmodF_poly_t poly_f, const fmpz_poly_t poly_mpn,
    Assumes 0 < poly_f->length 
 */
 
-void ZmodF_poly_to_fmpz_poly(fmpz_poly_t poly_mpn, const ZmodF_poly_t poly_f, const long sign);
+void ZmodF_poly_to_fmpz_poly(fmpz_poly_t poly_fmpz, const ZmodF_poly_t poly_f, const long sign);
 
 /* 
    Packs bundle coefficients, each padded out to the given number of limbs, into 
    the first coefficient of poly_f.
    
-   Assumes 0 < bundle <= poly_mpn->length
+   Assumes 0 < bundle <= poly_fmpz->length
 */
-void fmpz_poly_limb_pack(ZmodF_poly_t poly_f, const fmpz_poly_t poly_mpn,
+void fmpz_poly_limb_pack(ZmodF_poly_t poly_f, const fmpz_poly_t poly_fmpz,
                                            const unsigned long bundle, const long limbs);
 
 /* 
@@ -139,7 +139,7 @@ void fmpz_poly_limb_pack(ZmodF_poly_t poly_f, const fmpz_poly_t poly_mpn,
    
    Assumes 0 < bundle <= poly_f->length
 */
-void fmpz_poly_limb_unpack(fmpz_poly_t poly_mpn, const ZmodF_poly_t poly_f, 
+void fmpz_poly_limb_unpack(fmpz_poly_t poly_fmpz, const ZmodF_poly_t poly_f, 
                                   const unsigned long bundle, const unsigned long limbs);
 
 /* 
@@ -149,12 +149,12 @@ void fmpz_poly_limb_unpack(fmpz_poly_t poly_mpn, const ZmodF_poly_t poly_f,
 
    Assumes 0 < bundle <= poly_f->length
 */
-void fmpz_poly_limb_unpack_unsigned(fmpz_poly_t poly_mpn, const ZmodF_poly_t poly_f, 
+void fmpz_poly_limb_unpack_unsigned(fmpz_poly_t poly_fmpz, const ZmodF_poly_t poly_f, 
                                   const unsigned long bundle, const unsigned long limbs);
 
 
 /*
-   Packs poly_mpn down to the bit into poly_f. Each coefficient of poly_f
+   Packs poly_fmpz down to the bit into poly_f. Each coefficient of poly_f
    will have "bundle" coefficients packed into it. Each of the original
    coefficients is packed into a bitfield "bits" bits wide including one 
    bit for a sign bit. 
@@ -162,59 +162,59 @@ void fmpz_poly_limb_unpack_unsigned(fmpz_poly_t poly_mpn, const ZmodF_poly_t pol
    "bits" is assumed to be less than FLINT_BITS. If bits is 
    negative, the input poly is assumed to have signed coefficients.
 
-   Assumes 0 < bundle and 0 < poly_mpn->length
+   Assumes 0 < bundle and 0 < poly_fmpz->length
 */ 
    
-void fmpz_poly_bit_pack(ZmodF_poly_t poly_f, const fmpz_poly_t poly_mpn,
+void fmpz_poly_bit_pack(ZmodF_poly_t poly_f, const fmpz_poly_t poly_fmpz,
      const unsigned long bundle, const long bits, const unsigned long length, const long negate);
 
 
 /*
-   Unpacks poly_f into poly_mpn. This is the inverse of ZmodF_poly_bitpack_mpn, so
+   Unpacks poly_f into poly_fmpz. This is the inverse of ZmodF_poly_bitpack_mpn, so
    long as the final coefficient in the polynomial is positive.
    Each coeff of poly_f is assumed to contain "bundle" coefficients, each stored 
    in a bitfield "bits" bits wide with the most significant bit being reserved for
    the sign. 
    
    The total number of coefficients to be unpacked is given by the length of 
-   poly_mpn. One must ensure each of the coefficients of poly_mpn are set to zero
+   poly_fmpz. One must ensure each of the coefficients of poly_fmpz are set to zero
    before calling this function for the first time since it adds to existing 
-   coefficients of poly_mpn, rather than overwriting them.
+   coefficients of poly_fmpz, rather than overwriting them.
    
    "bits" is assumed to be less than FLINT_BITS. 
 
    Assumes 0 < bundle and 0 < poly_f->length
 */ 
    
-void fmpz_poly_bit_unpack(fmpz_poly_t poly_mpn, const ZmodF_poly_t poly_f, 
+void fmpz_poly_bit_unpack(fmpz_poly_t poly_fmpz, const ZmodF_poly_t poly_f, 
                               const unsigned long bundle, const unsigned long bits);
-void fmpz_poly_bit_unpack_unsigned(fmpz_poly_t poly_mpn, const ZmodF_poly_t poly_f, 
+void fmpz_poly_bit_unpack_unsigned(fmpz_poly_t poly_fmpz, const ZmodF_poly_t poly_f, 
                               const unsigned long bundle, const unsigned long bits);
 
 
      
 /*
-   Packs poly_mpn down to the byte into poly_f. Each coefficient of poly_f
+   Packs poly_fmpz down to the byte into poly_f. Each coefficient of poly_f
    will have "bundle" coefficients packed into it, each packed into a field
    "bytes" bytes wide.
    
    "coeff_bytes" is assumed to be at least FLINT_BITS/8, i.e. the
    coefficients are assumed to be at least a limb wide.
 
-   Assumes 0 < bundle and 0 < poly_mpn->length
+   Assumes 0 < bundle and 0 < poly_fmpz->length
 */ 
    
-void fmpz_poly_byte_pack(ZmodF_poly_t poly_f, const fmpz_poly_t poly_mpn,
+void fmpz_poly_byte_pack(ZmodF_poly_t poly_f, const fmpz_poly_t poly_fmpz,
                    const unsigned long bundle, const unsigned long coeff_bytes,
                                 const unsigned long length, const long negate);
 
      
 /*
-   Unpacks array into poly_mpn. Each coefficient stored in array will have "bundle" 
+   Unpacks array into poly_fmpz. Each coefficient stored in array will have "bundle" 
    coefficients, each packed into a field "bytes" bytes wide.
    
    The total number of coefficients to be unpacked is given by the length of 
-   poly_mpn.
+   poly_fmpz.
    
    "coeff_bytes" is assumed to be at least FLINT_BITS/8, i.e. the
    coefficients are assumed to be at least a limb wide.
@@ -231,25 +231,25 @@ void fmpz_poly_byte_unpack(fmpz_poly_t poly_m, const mp_limb_t* array,
 
      
 /*
-   Splits each coefficient of poly_mpn into pieces "limbs" limbs long and 
+   Splits each coefficient of poly_fmpz into pieces "limbs" limbs long and 
    stores each piece into bundle coefficients of poly_f.
 */
  
-void fmpz_poly_split(ZmodF_poly_t poly_f, fmpz_poly_t poly_mpn,
+void fmpz_poly_split(ZmodF_poly_t poly_f, fmpz_poly_t poly_fmpz,
      unsigned long bundle, unsigned long limbs);
 
      
 /*
    Combines each "bundle" coefficients of poly_f, each taken to be "limbs" 
-   limbs long, into a coefficient of poly_mpn. 
+   limbs long, into a coefficient of poly_fmpz. 
    
    This function is used for testing purposed only, and is the exact inverse
    of ZmodF_poly_split_mpn.
    
-   The number of coefficients extracted is given by the length of poly_mpn.
+   The number of coefficients extracted is given by the length of poly_fmpz.
 */
  
-void fmpz_poly_unsplit(ZmodF_poly_t poly_f, fmpz_poly_t poly_mpn,
+void fmpz_poly_unsplit(ZmodF_poly_t poly_f, fmpz_poly_t poly_fmpz,
      unsigned long bundle, unsigned long limbs);
 
 
@@ -406,7 +406,7 @@ void _fmpz_poly_attach(fmpz_poly_t output, const fmpz_poly_t input)
 */
 
 static inline 
-void _fmpz_poly_attach_shifted(fmpz_poly_t output, 
+void _fmpz_poly_attach_shift(fmpz_poly_t output, 
              const fmpz_poly_t input, unsigned long n)
 {
    if (input->length >= n) output->length = input->length - n;
@@ -430,9 +430,9 @@ void _fmpz_poly_attach_truncate(fmpz_poly_t output,
    _fmpz_poly_normalise(output);
 }
 
-long _fmpz_poly_bits1(const fmpz_poly_t poly_mpn);
+long _fmpz_poly_max_bits1(const fmpz_poly_t poly);
 
-long _fmpz_poly_bits(const fmpz_poly_t poly_mpn);
+long _fmpz_poly_max_bits(const fmpz_poly_t poly);
 
 unsigned long _fmpz_poly_max_limbs(const fmpz_poly_t poly);
 
@@ -591,9 +591,9 @@ unsigned long fmpz_poly_length(const fmpz_poly_t poly)
 }
 
 static inline 
-long fmpz_poly_bits(const fmpz_poly_t poly)
+long fmpz_poly_max_bits(const fmpz_poly_t poly)
 {
-   return _fmpz_poly_bits(poly);
+   return _fmpz_poly_max_bits(poly);
 }
 
 static inline
@@ -793,9 +793,9 @@ void fmpz_poly_zero_coeffs(fmpz_poly_t poly, const unsigned long n)
 }
 
 static inline
-long fmpz_poly_bits1(const fmpz_poly_t poly)
+long fmpz_poly_max_bits1(const fmpz_poly_t poly)
 {
-   return _fmpz_poly_bits1(poly);
+   return _fmpz_poly_max_bits1(poly);
 }
 
 static inline
@@ -939,8 +939,8 @@ void fmpz_poly_scalar_div_mpz(fmpz_poly_t output,
 static inline
 void fmpz_poly_add(fmpz_poly_t output, const fmpz_poly_t input1, const fmpz_poly_t input2)
 {
-   unsigned long bits1 = FLINT_ABS(_fmpz_poly_bits(input1));
-   unsigned long bits2 = FLINT_ABS(_fmpz_poly_bits(input2));
+   unsigned long bits1 = FLINT_ABS(_fmpz_poly_max_bits(input1));
+   unsigned long bits2 = FLINT_ABS(_fmpz_poly_max_bits(input2));
    
    fmpz_poly_fit_length(output, FLINT_MAX(input1->length, input2->length));
    fmpz_poly_fit_limbs(output, FLINT_MAX(bits1, bits2)/FLINT_BITS + 1);
@@ -951,8 +951,8 @@ void fmpz_poly_add(fmpz_poly_t output, const fmpz_poly_t input1, const fmpz_poly
 static inline
 void fmpz_poly_sub(fmpz_poly_t output, const fmpz_poly_t input1, const fmpz_poly_t input2)
 {
-   unsigned long bits1 = FLINT_ABS(_fmpz_poly_bits(input1));
-   unsigned long bits2 = FLINT_ABS(_fmpz_poly_bits(input2));
+   unsigned long bits1 = FLINT_ABS(_fmpz_poly_max_bits(input1));
+   unsigned long bits2 = FLINT_ABS(_fmpz_poly_max_bits(input2));
    
    fmpz_poly_fit_length(output, FLINT_MAX(input1->length, input2->length));
    fmpz_poly_fit_limbs(output, FLINT_MAX(bits1, bits2)/FLINT_BITS + 1);
