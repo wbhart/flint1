@@ -284,9 +284,12 @@ static inline
 long _fmpz_poly_get_coeff(mp_limb_t * output, const fmpz_poly_t poly,
                           const unsigned long n)
 {
-   if (n >= poly->length) F_mpn_clear(output, poly->limbs);
-   if (poly->coeffs[n*(poly->limbs+1)] == 0L) F_mpn_clear(output, poly->limbs);
-   F_mpn_copy(output, poly->coeffs+n*(poly->limbs+1)+1, poly->limbs);
+   F_mpn_clear(output, poly->limbs);
+   if (poly->coeffs[n*(poly->limbs+1)] != 0L)  
+   {
+      F_mpn_copy(output, poly->coeffs+n*(poly->limbs+1)+1, ABS(poly->coeffs[n*(poly->limbs+1)]));
+   }
+      
    return poly->coeffs[n*(poly->limbs+1)];
 }
 
@@ -636,7 +639,7 @@ long fmpz_poly_get_coeff(mp_limb_t * output, const fmpz_poly_t poly,
 {
    if (n >= poly->length)
    {
-       F_mpn_clear(output, n);
+       F_mpn_clear(output, poly->limbs);
        return 0;  
    }
    return _fmpz_poly_get_coeff(output, poly, n);
@@ -969,11 +972,11 @@ void fmpz_poly_div_classical(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly
 
 void fmpz_poly_divrem_classical(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_poly_t A, const fmpz_poly_t B);
 
-void fmpz_poly_div_bisection_recursive(fmpz_poly_t Q, fmpz_poly_t DQ, const fmpz_poly_t A, const fmpz_poly_t B);
+void fmpz_poly_div_divconquer_recursive(fmpz_poly_t Q, fmpz_poly_t DQ, const fmpz_poly_t A, const fmpz_poly_t B);
 
-void fmpz_poly_divrem_bisection(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_poly_t A, const fmpz_poly_t B);
+void fmpz_poly_divrem_divconquer(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_poly_t A, const fmpz_poly_t B);
 
-void fmpz_poly_div_bisection(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t B);
+void fmpz_poly_div_divconquer(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t B);
 
 void fmpz_poly_div_mulders(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t B);
 
@@ -994,7 +997,7 @@ void fmpz_poly_div(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t B)
 static inline
 void fmpz_poly_divrem(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_poly_t A, const fmpz_poly_t B)
 {
-   fmpz_poly_divrem_bisection(Q, R, A, B);
+   fmpz_poly_divrem_divconquer(Q, R, A, B);
 }
 
 void fmpz_poly_power(fmpz_poly_t output, const fmpz_poly_t poly, const unsigned long exp);
@@ -1003,7 +1006,7 @@ void fmpz_poly_power_trunc_n(fmpz_poly_t output, const fmpz_poly_t poly, const u
 
 void fmpz_poly_pseudo_divrem_cohen(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_poly_t A, const fmpz_poly_t B);
 
-void fmpz_poly_pseudo_divrem_schoup(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_poly_t A, const fmpz_poly_t B);
+void fmpz_poly_pseudo_divrem_shoup(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_poly_t A, const fmpz_poly_t B);
 
 void fmpz_poly_pseudo_divrem_basecase(fmpz_poly_t Q, fmpz_poly_t R, 
                                unsigned long * d, const fmpz_poly_t A, const fmpz_poly_t B);

@@ -4823,7 +4823,7 @@ void fmpz_poly_div_classical(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly
    Note BQ is not the remainder but it is B*Q, so the remainder R = A-BQ
 */
  
-void fmpz_poly_div_bisection_recursive(fmpz_poly_t Q, fmpz_poly_t BQ, const fmpz_poly_t A, const fmpz_poly_t B)
+void fmpz_poly_div_divconquer_recursive(fmpz_poly_t Q, fmpz_poly_t BQ, const fmpz_poly_t A, const fmpz_poly_t B)
 {
    if (A->length < B->length)
    {
@@ -4896,7 +4896,7 @@ void fmpz_poly_div_bisection_recursive(fmpz_poly_t Q, fmpz_poly_t BQ, const fmpz
       // d3 is length n2, so we get at most n2 terms in the quotient
       
       fmpz_poly_init(d1q1);
-      fmpz_poly_div_bisection_recursive(Q, d1q1, p1, d3); 
+      fmpz_poly_div_divconquer_recursive(Q, d1q1, p1, d3); 
       fmpz_poly_clear(p1);
       
       /*
@@ -4940,7 +4940,7 @@ void fmpz_poly_div_bisection_recursive(fmpz_poly_t Q, fmpz_poly_t BQ, const fmpz
       fmpz_poly_init(d1q1);
       fmpz_poly_init(q1);
       
-      fmpz_poly_div_bisection_recursive(q1, d1q1, p1, B); 
+      fmpz_poly_div_divconquer_recursive(q1, d1q1, p1, B); 
        
       /* 
          Compute dq1 = d1*q1*x^shift
@@ -4975,7 +4975,7 @@ void fmpz_poly_div_bisection_recursive(fmpz_poly_t Q, fmpz_poly_t BQ, const fmpz
    
       fmpz_poly_init(q2);
       fmpz_poly_init(dq2);
-      fmpz_poly_div_bisection_recursive(q2, dq2, t, B); 
+      fmpz_poly_div_divconquer_recursive(q2, dq2, t, B); 
       fmpz_poly_clear(t);  
       
       /*
@@ -5030,7 +5030,7 @@ void fmpz_poly_div_bisection_recursive(fmpz_poly_t Q, fmpz_poly_t BQ, const fmpz
       
    fmpz_poly_init(d1q1);
    fmpz_poly_init(q1);
-   fmpz_poly_div_bisection_recursive(q1, d1q1, p1, d1); 
+   fmpz_poly_div_divconquer_recursive(q1, d1q1, p1, d1); 
    _fmpz_poly_stack_clear(p1);   
    
    /* 
@@ -5073,7 +5073,7 @@ void fmpz_poly_div_bisection_recursive(fmpz_poly_t Q, fmpz_poly_t BQ, const fmpz
    
    fmpz_poly_init(d1q2);
    fmpz_poly_init(q2);
-   fmpz_poly_div_bisection_recursive(q2, d1q2, t, d1); 
+   fmpz_poly_div_divconquer_recursive(q2, d1q2, t, d1); 
    _fmpz_poly_stack_clear(t);
       
    /*
@@ -5125,7 +5125,7 @@ void fmpz_poly_div_bisection_recursive(fmpz_poly_t Q, fmpz_poly_t BQ, const fmpz
    Divide and conquer division of A by B but only computing the low half of Q*B
 */
 
-void fmpz_poly_div_bisection_recursive_low(fmpz_poly_t Q, fmpz_poly_t BQ, const fmpz_poly_t A, const fmpz_poly_t B)
+void fmpz_poly_div_divconquer_recursive_low(fmpz_poly_t Q, fmpz_poly_t BQ, const fmpz_poly_t A, const fmpz_poly_t B)
 {
    if (A->length < B->length)
    {
@@ -5201,7 +5201,7 @@ void fmpz_poly_div_bisection_recursive_low(fmpz_poly_t Q, fmpz_poly_t BQ, const 
       // We compute only the low n2-1 terms of the product d1q1
       
       fmpz_poly_init(d1q1);
-      fmpz_poly_div_bisection_recursive_low(Q, d1q1, p1, d3); 
+      fmpz_poly_div_divconquer_recursive_low(Q, d1q1, p1, d3); 
       fmpz_poly_clear(p1);
       
       /*
@@ -5245,7 +5245,7 @@ void fmpz_poly_div_bisection_recursive_low(fmpz_poly_t Q, fmpz_poly_t BQ, const 
       fmpz_poly_init(d1q1);
       fmpz_poly_init(q1);
       
-      fmpz_poly_div_bisection_recursive_low(q1, d1q1, p1, B); 
+      fmpz_poly_div_divconquer_recursive_low(q1, d1q1, p1, B); 
        
       /* 
          Compute dq1 = d1*q1*x^shift
@@ -5279,7 +5279,7 @@ void fmpz_poly_div_bisection_recursive_low(fmpz_poly_t Q, fmpz_poly_t BQ, const 
    
       fmpz_poly_init(q2);
       fmpz_poly_init(dq2);
-      fmpz_poly_div_bisection_recursive_low(q2, dq2, t, B); 
+      fmpz_poly_div_divconquer_recursive_low(q2, dq2, t, B); 
       fmpz_poly_clear(t);  
       
       /*
@@ -5335,7 +5335,7 @@ void fmpz_poly_div_bisection_recursive_low(fmpz_poly_t Q, fmpz_poly_t BQ, const 
       
    fmpz_poly_init(d1q1);
    fmpz_poly_init(q1);
-   fmpz_poly_div_bisection_recursive_low(q1, d1q1, p1, d1); 
+   fmpz_poly_div_divconquer_recursive_low(q1, d1q1, p1, d1); 
    _fmpz_poly_stack_clear(p1);   
    
    /* 
@@ -5378,7 +5378,7 @@ void fmpz_poly_div_bisection_recursive_low(fmpz_poly_t Q, fmpz_poly_t BQ, const 
    
    fmpz_poly_init(d1q2);
    fmpz_poly_init(q2);
-   fmpz_poly_div_bisection_recursive_low(q2, d1q2, t, d1); 
+   fmpz_poly_div_divconquer_recursive_low(q2, d1q2, t, d1); 
    _fmpz_poly_stack_clear(t);
       
    /*
@@ -5428,7 +5428,7 @@ void fmpz_poly_div_bisection_recursive_low(fmpz_poly_t Q, fmpz_poly_t BQ, const 
    _fmpz_poly_stack_clear(dq1);
 }
 
-void fmpz_poly_div_bisection(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t B)
+void fmpz_poly_div_divconquer(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t B)
 {
    if (A->length < B->length)
    {
@@ -5494,7 +5494,7 @@ void fmpz_poly_div_bisection(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly
       // d3 is the leading terms of B and so must be normalised
       // d3 is length n2, so we get at most n2 terms in the quotient
       
-      fmpz_poly_div_bisection(Q, p1, d3); 
+      fmpz_poly_div_divconquer(Q, p1, d3); 
       fmpz_poly_clear(p1);
             
       return;   
@@ -5519,7 +5519,7 @@ void fmpz_poly_div_bisection(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly
       fmpz_poly_init(d1q1);
       fmpz_poly_init(q1);
       
-      fmpz_poly_div_bisection_recursive_low(q1, d1q1, p1, B); 
+      fmpz_poly_div_divconquer_recursive_low(q1, d1q1, p1, B); 
        
       /* 
          Compute dq1 = d1*q1*x^shift
@@ -5554,7 +5554,7 @@ void fmpz_poly_div_bisection(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly
       */
    
       fmpz_poly_init(q2);
-      fmpz_poly_div_bisection(q2, t, B); 
+      fmpz_poly_div_divconquer(q2, t, B); 
       fmpz_poly_clear(t);  
       
       /*
@@ -5603,7 +5603,7 @@ void fmpz_poly_div_bisection(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly
       fmpz_poly_init(d1q1);
       fmpz_poly_init(q1);
       
-      fmpz_poly_div_bisection_recursive_low(q1, d1q1, p1, d1); 
+      fmpz_poly_div_divconquer_recursive_low(q1, d1q1, p1, d1); 
       fmpz_poly_clear(p1);
    
    /* 
@@ -5650,7 +5650,7 @@ void fmpz_poly_div_bisection(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly
    */
    
    fmpz_poly_init(q2);
-   fmpz_poly_div_bisection(q2, t, d3); 
+   fmpz_poly_div_divconquer(q2, t, d3); 
    _fmpz_poly_stack_clear(t);  
    _fmpz_poly_stack_clear(dq1);
    _fmpz_poly_stack_clear(d2q1);
@@ -5668,13 +5668,13 @@ void fmpz_poly_div_bisection(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly
    fmpz_poly_clear(q2);   
 }
 
-void fmpz_poly_divrem_bisection(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_poly_t A, const fmpz_poly_t B)
+void fmpz_poly_divrem_divconquer(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_poly_t A, const fmpz_poly_t B)
 {
    fmpz_poly_t QB;
    
    fmpz_poly_init(QB);
    
-   fmpz_poly_div_bisection_recursive(Q, QB, A, B);
+   fmpz_poly_div_divconquer_recursive(Q, QB, A, B);
    
    fmpz_poly_fit_limbs(R, FLINT_MAX(QB->limbs, A->limbs)+1);
    fmpz_poly_fit_length(R, A->length);
@@ -5866,7 +5866,7 @@ void fmpz_poly_div_newton(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t 
       
       fmpz_poly_init(d1q1);
       _fmpz_poly_normalise(p1);
-      fmpz_poly_div_bisection_recursive(Q, d1q1, p1, d1); //******************************
+      fmpz_poly_div_divconquer_recursive(Q, d1q1, p1, d1); //******************************
       fmpz_poly_clear(d1q1);
       _fmpz_poly_stack_clear(p1);
       
@@ -5896,7 +5896,7 @@ void fmpz_poly_div_newton(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t 
       fmpz_poly_init(q1);
    
       _fmpz_poly_normalise(p1);
-      fmpz_poly_div_bisection_recursive(q1, d1q1, p1, g1); //******************************
+      fmpz_poly_div_divconquer_recursive(q1, d1q1, p1, g1); //******************************
       _fmpz_poly_stack_clear(p1);
    }
    
@@ -6045,7 +6045,7 @@ void fmpz_poly_div_mulders(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t
    
    if (A->length > 2*B->length - 1)
    {
-      fmpz_poly_div_bisection(Q, A, B);
+      fmpz_poly_div_divconquer(Q, A, B);
       
       return;              
    }              
@@ -6074,7 +6074,7 @@ void fmpz_poly_div_mulders(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t
    fmpz_poly_init(d1q1);
    fmpz_poly_init(q1);
       
-   fmpz_poly_div_bisection_recursive_low(q1, d1q1, p1, g1); 
+   fmpz_poly_div_divconquer_recursive_low(q1, d1q1, p1, g1); 
    _fmpz_poly_stack_clear(p1);
    
    /* 
@@ -6252,7 +6252,7 @@ void fmpz_poly_pseudo_divrem_cohen(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_poly
    flint_stack_release();
 }
 
-void fmpz_poly_pseudo_divrem_schoup(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_poly_t A, const fmpz_poly_t B)
+void fmpz_poly_pseudo_divrem_shoup(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_poly_t A, const fmpz_poly_t B)
 {
    fmpz_poly_t qB;
    
