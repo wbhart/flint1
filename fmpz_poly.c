@@ -1769,14 +1769,14 @@ void _fmpz_poly_scalar_mul(fmpz_poly_t output, const fmpz_poly_t poly, const fmp
              if (msl) coeffs_out[i*limbs_out+ABS(coeffs2[i*(limbs2+1)])+1] = msl;
              if (((long) coeffs2[i*(limbs2+1)] ^ sign1) < 0) coeffs_out[i*limbs_out] = -total_limbs + (msl == 0L);
              else coeffs_out[i*limbs_out] = total_limbs - (msl == 0L);
-          } else coeffs_out[i*limbs_out] = 0;
+          } else coeffs_out[i*limbs_out] = 0L;
       }
-   } else if (limbs1 + limbs2 > 1000)//FLINT_FFT_LIMBS_CROSSOVER*2)
+   } else if (limbs1 + limbs2 > 1000)
    {
       F_mpn_precomp_t precomp;
    
       F_mpn_mul_precomp_init(precomp, x+1, limbs1, limbs2);   
-      
+             
       for (long i = 0; i < poly->length; i++)
       {
           total_limbs = limbs1 + ABS(coeffs2[i*(limbs2+1)]);
@@ -1785,7 +1785,7 @@ void _fmpz_poly_scalar_mul(fmpz_poly_t output, const fmpz_poly_t poly, const fmp
              msl = F_mpn_mul_precomp(coeffs_out + i*limbs_out + 1, coeffs2 + i*(limbs2+1) + 1, ABS(coeffs2[i*(limbs2+1)]), precomp);
              if (((long) coeffs2[i*(limbs2+1)] ^ sign1) < 0) coeffs_out[i*limbs_out] = -total_limbs + (msl == 0L);
              else coeffs_out[i*limbs_out] = total_limbs - (msl == 0L);
-          } else coeffs_out[i*limbs_out] = 0;
+          } else coeffs_out[i*limbs_out] = 0L;
       }
       F_mpn_mul_precomp_clear(precomp);
    } else
@@ -1801,6 +1801,8 @@ void _fmpz_poly_scalar_mul(fmpz_poly_t output, const fmpz_poly_t poly, const fmp
       {
          for (long i = 0; i < poly->length; i++)
          {
+
+
             fmpz_mul(coeffs_out + i*limbs_out, coeffs2 + i*(limbs2+1), x);
          }
       }
@@ -2189,9 +2191,22 @@ void _fmpz_poly_scalar_div(fmpz_poly_t output, const fmpz_poly_t poly, const fmp
       return;
    }
    
-   for (unsigned long i = 0; i < poly->length; i++)
+   if (poly == output)
    {
-      fmpz_fdiv(output->coeffs+i*(output->limbs+1), poly->coeffs+i*(poly->limbs+1), scalar);
+      fmpz_poly_t temp;
+      fmpz_poly_init(temp);
+      fmpz_poly_set(temp, poly);
+      for (unsigned long i = 0; i < temp->length; i++)
+      {
+         fmpz_fdiv(output->coeffs+i*(output->limbs+1), temp->coeffs+i*(temp->limbs+1), scalar);
+      }
+      fmpz_poly_clear(temp);
+   } else
+   {
+      for (unsigned long i = 0; i < poly->length; i++)
+      {
+         fmpz_fdiv(output->coeffs+i*(output->limbs+1), poly->coeffs+i*(poly->limbs+1), scalar);
+      }
    }
    
    output->length = poly->length;
@@ -4374,7 +4389,7 @@ void fmpz_poly_mul_trunc_left_n(fmpz_poly_t output, const fmpz_poly_t input1,
    unsigned long bits = ABS(bits1) + ABS(bits2) + log_length + sign; 
    
    fmpz_poly_fit_limbs(output, (bits-1)/FLINT_BITS+1);
-   fmpz_poly_fit_length(output, input1->length + input2->length - 1);
+   if (input1->length + input2->length) fmpz_poly_fit_length(output, input1->length + input2->length - 1);
    
    _fmpz_poly_mul_trunc_left_n(output, input1, input2, trunc);
 }

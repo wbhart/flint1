@@ -275,6 +275,11 @@ mp_limb_t __F_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1,
          length>>=1;
          twk>>=2;
       }
+      if (length == 0) 
+      {
+         length = 2;
+         log_length = 1;
+      }
       coeff_limbs = (limbs1+limbs2-1)/length+1;
       while ((limbs1-1)/coeff_limbs+(limbs2-1)/coeff_limbs+2 > length) coeff_limbs++;
       output_bits = (2*coeff_limbs+1)*FLINT_BITS;
@@ -380,6 +385,11 @@ mp_limb_t __F_mpn_mul_trunc(mp_limb_t * res, mp_limb_t * data1, unsigned long li
          log_length--;
          length>>=1;
          twk>>=2;
+      }
+      if (length == 0) 
+      {
+         length = 2;
+         log_length = 1;
       }
       coeff_limbs = (limbs1+limbs2-1)/length+1;
       while ((limbs1-1)/coeff_limbs+(limbs2-1)/coeff_limbs+2 > length) coeff_limbs++;
@@ -616,6 +626,11 @@ void F_mpn_mul_precomp_init(F_mpn_precomp_t precomp, mp_limb_t * data1, unsigned
          log_length--;
          length>>=1;
          twk>>=2;
+      }
+      if (length == 0) 
+      {
+         length = 2;
+         log_length = 1;
       }
       coeff_limbs = (limbs1+limbs2-1)/length+1;
       while ((limbs1-1)/coeff_limbs+(limbs2-1)/coeff_limbs+2 > length) coeff_limbs++;
