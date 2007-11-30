@@ -613,6 +613,8 @@ void fmpz_poly_truncate(fmpz_poly_t poly, const unsigned long length)
 static inline
 void fmpz_poly_swap(fmpz_poly_t x, fmpz_poly_t y)
 {
+   if (x == y) return;
+   
    mp_limb_t temp_l;
    
    temp_l = x->alloc;
@@ -939,6 +941,13 @@ void fmpz_poly_scalar_div_mpz(fmpz_poly_t output,
 static inline
 void fmpz_poly_add(fmpz_poly_t output, const fmpz_poly_t input1, const fmpz_poly_t input2)
 {
+   if (input1 == input2) 
+   {
+      fmpz_poly_scalar_mul_ui(output, input1, 2UL);
+      
+      return;
+   }
+
    unsigned long bits1 = FLINT_ABS(_fmpz_poly_max_bits(input1));
    unsigned long bits2 = FLINT_ABS(_fmpz_poly_max_bits(input2));
    
@@ -951,6 +960,13 @@ void fmpz_poly_add(fmpz_poly_t output, const fmpz_poly_t input1, const fmpz_poly
 static inline
 void fmpz_poly_sub(fmpz_poly_t output, const fmpz_poly_t input1, const fmpz_poly_t input2)
 {
+   if (input1 == input2) 
+   {
+      fmpz_poly_zero(output);
+      
+      return;
+   }
+   
    unsigned long bits1 = FLINT_ABS(_fmpz_poly_max_bits(input1));
    unsigned long bits2 = FLINT_ABS(_fmpz_poly_max_bits(input2));
    

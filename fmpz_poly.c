@@ -1195,7 +1195,7 @@ void _fmpz_poly_set(fmpz_poly_t output, const fmpz_poly_t input)
       return;
    }
    
-   if (output->coeffs != input->coeffs) 
+   if (output != input) 
    {
       unsigned long input_size = input->limbs + 1;
       unsigned long output_size = output->limbs + 1;
@@ -1342,6 +1342,7 @@ unsigned long _fmpz_poly_max_limbs(const fmpz_poly_t poly)
 
 int _fmpz_poly_equal(const fmpz_poly_t input1, const fmpz_poly_t input2)
 {
+   if (input1 == input2) return 1;
    if (input1->length != input2->length) return 0;
    
    long i,j;
@@ -1373,6 +1374,8 @@ void _fmpz_poly_truncate(fmpz_poly_t poly, const unsigned long trunc)
 
 void _fmpz_poly_swap(fmpz_poly_t x, fmpz_poly_t y)
 {
+   if (x == y) return;
+   
    fmpz_t temp_p;
    mp_limb_t temp_l;
    
@@ -1395,7 +1398,7 @@ void _fmpz_poly_swap(fmpz_poly_t x, fmpz_poly_t y)
 
 void _fmpz_poly_neg(fmpz_poly_t output, const fmpz_poly_t input)
 {
-   if (input->coeffs == output->coeffs)
+   if (input == output)
    {
       for (long i = 0; i < input->length; i++)
          output->coeffs[i*(output->limbs+1)] = -output->coeffs[i*(output->limbs+1)];
@@ -1541,6 +1544,13 @@ void _fmpz_poly_reverse(fmpz_poly_t output, const fmpz_poly_t input, const unsig
 
 void _fmpz_poly_add(fmpz_poly_t output, const fmpz_poly_t input1, const fmpz_poly_t input2)
 {
+   if (input1 == input2) 
+   {
+      _fmpz_poly_scalar_mul_ui(output, input1, 2UL);
+      
+      return;
+   }
+   
    unsigned long size1, size2, shorter, size_out;
    fmpz_t coeffs1, coeffs2, coeffs_out;
    
@@ -1590,6 +1600,14 @@ void _fmpz_poly_add(fmpz_poly_t output, const fmpz_poly_t input1, const fmpz_pol
 
 void _fmpz_poly_sub(fmpz_poly_t output, const fmpz_poly_t input1, const fmpz_poly_t input2)
 {
+   if (input1 == input2) 
+   {
+      _fmpz_poly_zero_coeffs(output, input1->length);
+      _fmpz_poly_zero(output);
+      
+      return;
+   }
+   
    unsigned long size1, size2, shorter, size_out;
    fmpz_t coeffs1, coeffs2, coeffs_out;
    
@@ -3454,10 +3472,14 @@ void _fmpz_poly_mul_KS_trunc(fmpz_poly_t output, const fmpz_poly_t in1,
 void _fmpz_poly_mul_SS(fmpz_poly_t output, const fmpz_poly_t in1, const fmpz_poly_t in2)
 {
    unsigned long length1 = in1->length;
-   unsigned long length2 = in2->length;
-   
    while ((length1) && (in1->coeffs[(length1-1)*(in1->limbs+1)] == 0)) length1--;
-   while ((length2) && (in2->coeffs[(length2-1)*(in2->limbs+1)] == 0)) length2--;
+   
+   unsigned long length2;
+   if (in1 != in2)
+   {
+       length2= in2->length;
+      while ((length2) && (in2->coeffs[(length2-1)*(in2->limbs+1)] == 0)) length2--;
+   } else length2 = length1;
    
    if ((length1 == 0) || (length2 == 0)) 
    {
@@ -3486,7 +3508,9 @@ void _fmpz_poly_mul_SS(fmpz_poly_t output, const fmpz_poly_t in1, const fmpz_pol
    unsigned long log_length = 0;
    while ((1<<log_length) < length1) log_length++;
    unsigned long log_length2 = 0;
-   while ((1<<log_length2) < length2) log_length2++;
+   
+   if (in1 != in2) while ((1<<log_length2) < length2) log_length2++;
+   else (log_length2 = log_length);
    
    /* Start with an upper bound on the number of bits needed */
    
@@ -3504,11 +3528,11 @@ void _fmpz_poly_mul_SS(fmpz_poly_t output, const fmpz_poly_t in1, const fmpz_pol
    unsigned long sign = 0;
    
    ZmodF_poly_stack_init(poly1, log_length + 1, n, 1);
-   if (poly1 != poly2) ZmodF_poly_stack_init(poly2, log_length + 1, n, 1);
+   if (in1 != in2) ZmodF_poly_stack_init(poly2, log_length + 1, n, 1);
    ZmodF_poly_stack_init(res, log_length + 1, n, 1);
    
    bits1 = fmpz_poly_to_ZmodF_poly(poly1, input1, length1);
-   if (poly1 != poly2) bits2 = fmpz_poly_to_ZmodF_poly(poly2, input2, length2);
+   if (in1 != in2) bits2 = fmpz_poly_to_ZmodF_poly(poly2, input2, length2);
    else bits2 = bits1;
    
    if ((bits1 < 0) || (bits2 < 0)) 
@@ -3530,23 +3554,19 @@ void _fmpz_poly_mul_SS(fmpz_poly_t output, const fmpz_poly_t in1, const fmpz_pol
    n = (output_bits - 1) / FLINT_BITS + 1;
    
    ZmodF_poly_decrease_n(poly1, n);
-   if (poly1 != poly2) ZmodF_poly_decrease_n(poly2, n);
+   if (in1 != in2) ZmodF_poly_decrease_n(poly2, n);
    ZmodF_poly_decrease_n(res, n);
                     
-   if (poly1 != poly2) ZmodF_poly_convolution(res, poly1, poly2);
+   if (in1 != in2) ZmodF_poly_convolution(res, poly1, poly2);
    else ZmodF_poly_convolution(res, poly1, poly1);
    ZmodF_poly_normalise(res);
           
    output->length = length1 + length2 - 1;
    
-   /*unsigned long j = 0;
-      for (unsigned long i = 0; i < output->length; i++, j+= (output->limbs+1))
-         output->coeffs[j] = 0;
-   */
    ZmodF_poly_to_fmpz_poly(output, res, sign);
    
    ZmodF_poly_stack_clear(res);
-   if (poly1 != poly2) ZmodF_poly_stack_clear(poly2);
+   if (in1 != in2) ZmodF_poly_stack_clear(poly2);
    ZmodF_poly_stack_clear(poly1);
 }
 
@@ -3554,10 +3574,14 @@ void _fmpz_poly_mul_SS_trunc(fmpz_poly_t output, const fmpz_poly_t in1,
                                         const fmpz_poly_t in2, const unsigned long trunc)
 {
    unsigned long length1 = FLINT_MIN(in1->length, trunc);
-   unsigned long length2 = FLINT_MIN(in2->length, trunc);
-   
    while ((length1) && (in1->coeffs[(length1-1)*(in1->limbs+1)] == 0)) length1--;
-   while ((length2) && (in2->coeffs[(length2-1)*(in2->limbs+1)] == 0)) length2--;
+   
+   unsigned long length2;
+   if (in1 != in2)
+   {
+      length2 = FLINT_MIN(in2->length, trunc);
+      while ((length2) && (in2->coeffs[(length2-1)*(in2->limbs+1)] == 0)) length2--;
+   } else length2 = length1;
    
    if ((length1 == 0) || (length2 == 0)) 
    {
@@ -3586,7 +3610,8 @@ void _fmpz_poly_mul_SS_trunc(fmpz_poly_t output, const fmpz_poly_t in1,
    unsigned long log_length = 0;
    while ((1<<log_length) < length1) log_length++;
    unsigned long log_length2 = 0;
-   while ((1<<log_length2) < length2) log_length2++;
+   if (in1 != in2) while ((1<<log_length2) < length2) log_length2++;
+   else log_length2 = log_length;
    
    /* Start with an upper bound on the number of bits needed */
    
@@ -3604,11 +3629,12 @@ void _fmpz_poly_mul_SS_trunc(fmpz_poly_t output, const fmpz_poly_t in1,
    unsigned long sign = 0;
    
    ZmodF_poly_stack_init(poly1, log_length + 1, n, 1);
-   ZmodF_poly_stack_init(poly2, log_length + 1, n, 1);
+   if (in1 != in2) ZmodF_poly_stack_init(poly2, log_length + 1, n, 1);
    ZmodF_poly_stack_init(res, log_length + 1, n, 1);
    
    bits1 = fmpz_poly_to_ZmodF_poly(poly1, input1, length1);
-   bits2 = fmpz_poly_to_ZmodF_poly(poly2, input2, length2);
+   if (in1 != in2) bits2 = fmpz_poly_to_ZmodF_poly(poly2, input2, length2);
+   else (bits2 = bits1);
    
    if ((bits1 < 0) || (bits2 < 0)) 
    {
@@ -3629,10 +3655,12 @@ void _fmpz_poly_mul_SS_trunc(fmpz_poly_t output, const fmpz_poly_t in1,
    n = (output_bits - 1) / FLINT_BITS + 1;
    
    ZmodF_poly_decrease_n(poly1, n);
-   ZmodF_poly_decrease_n(poly2, n);
+   if (in1 != in2) ZmodF_poly_decrease_n(poly2, n);
    ZmodF_poly_decrease_n(res, n);
                     
-   ZmodF_poly_convolution_trunc(res, poly1, poly2, trunc);
+   if (in1 != in2) ZmodF_poly_convolution_trunc(res, poly1, poly2, trunc);
+   else ZmodF_poly_convolution_trunc(res, poly1, poly1, trunc);
+
    res->length = FLINT_MIN(res->length, trunc);
    ZmodF_poly_normalise(res);
           
@@ -3641,7 +3669,7 @@ void _fmpz_poly_mul_SS_trunc(fmpz_poly_t output, const fmpz_poly_t in1,
    ZmodF_poly_to_fmpz_poly(output, res, sign);
    
    ZmodF_poly_stack_clear(res);
-   ZmodF_poly_stack_clear(poly2);
+   if (in1 != in2) ZmodF_poly_stack_clear(poly2);
    ZmodF_poly_stack_clear(poly1);
    _fmpz_poly_normalise(output);
 }
@@ -7497,10 +7525,22 @@ void fmpz_poly_power(fmpz_poly_t output, const fmpz_poly_t poly, const unsigned 
    
    if (poly->length == 2) // Compute using binomial expansion
    {
+      fmpz_t coeff1, coeff2;
+      
+      if (poly == output)
+      {
+         coeff1 = fmpz_init(poly->limbs);
+         fmpz_set(coeff1, poly->coeffs);
+         coeff2 = fmpz_init(poly->limbs);
+         fmpz_set(coeff2, poly->coeffs + poly->limbs + 1);  
+      } else 
+      {
+         coeff1 = poly->coeffs;
+         coeff2 = poly->coeffs + poly->limbs + 1;
+      }
+             
       fmpz_poly_fit_length(output, exp + 1);
       
-      fmpz_t coeff1 = poly->coeffs;
-      fmpz_t coeff2 = poly->coeffs + poly->limbs + 1;
       
       unsigned long bits2 = fmpz_bits(coeff2);
       
@@ -7517,6 +7557,12 @@ void fmpz_poly_power(fmpz_poly_t output, const fmpz_poly_t poly, const unsigned 
          fmpz_pow_ui(coeff_out, coeff2, exp);
          
          output->length = exp + 1;
+         
+         if (poly == output)
+         {
+            fmpz_clear(coeff1);
+            fmpz_clear(coeff2);
+         }      
          
          return;   
       }
@@ -7605,6 +7651,13 @@ void fmpz_poly_power(fmpz_poly_t output, const fmpz_poly_t poly, const unsigned 
       }
       
       output->length = exp + 1;
+      
+      if (poly == output)
+      {
+         fmpz_clear(coeff1);
+         fmpz_clear(coeff2);
+      }      
+         
       return;
    }
    //===================================================================================
@@ -7618,6 +7671,14 @@ void fmpz_poly_power(fmpz_poly_t output, const fmpz_poly_t poly, const unsigned 
    
    unsigned long bits = FLINT_BIT_COUNT(exp);
    
+   fmpz_poly_t polycopy;
+   
+   if (poly == output)
+   {
+      fmpz_poly_init(polycopy);
+      fmpz_poly_set(polycopy, poly);
+   } else _fmpz_poly_attach(polycopy, poly);
+   
    while (bits > 1)
    {
       fmpz_poly_mul(temp, output, output);
@@ -7626,7 +7687,7 @@ void fmpz_poly_power(fmpz_poly_t output, const fmpz_poly_t poly, const unsigned 
       _fmpz_poly_set(output, temp);
       if ((1L<<(bits-2)) & exp)
       {
-         fmpz_poly_mul(temp, output, poly);
+         fmpz_poly_mul(temp, output, polycopy);
          fmpz_poly_fit_length(output, temp->length);
          fmpz_poly_fit_limbs(output, temp->limbs);
          _fmpz_poly_set(output, temp);
@@ -7634,6 +7695,7 @@ void fmpz_poly_power(fmpz_poly_t output, const fmpz_poly_t poly, const unsigned 
       bits--;
    } 
    
+   if (poly == output) fmpz_poly_clear(polycopy);
    /*while (!(exp & 1L))
    {
       fmpz_poly_mul(temp, output, output);
@@ -7705,11 +7767,17 @@ void fmpz_poly_power_trunc_n(fmpz_poly_t output, const fmpz_poly_t poly, const u
    if (poly->length <= n) _fmpz_poly_set(output, poly);
    else 
    {
-      fmpz_poly_t temp2;
-      temp2->coeffs = poly->coeffs;
-      temp2->limbs = poly->limbs;
-      temp2->length = n;
-      _fmpz_poly_set(output, temp2);
+      if (poly == output)
+      {
+         _fmpz_poly_truncate(output, n);
+      } else
+      {
+         fmpz_poly_t temp2;
+         temp2->coeffs = poly->coeffs;
+         temp2->limbs = poly->limbs;
+         temp2->length = n;
+         _fmpz_poly_set(output, temp2);
+      }
       _fmpz_poly_normalise(output);
    }
     
