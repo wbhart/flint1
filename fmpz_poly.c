@@ -2236,14 +2236,35 @@ void _fmpz_poly_scalar_div(fmpz_poly_t output, const fmpz_poly_t poly, const fmp
    Currently doesn't allow aliasing
 */
 
-void _fmpz_poly_mul_classical(fmpz_poly_t output, const fmpz_poly_t input1, const fmpz_poly_t input2)
+void _fmpz_poly_mul_classical(fmpz_poly_t output, const fmpz_poly_t poly1, const fmpz_poly_t poly2)
 {
-   if ((input1->length == 0) || (input2->length == 0)) 
+   if ((poly1->length == 0) || (poly2->length == 0)) 
    {
       _fmpz_poly_zero(output);
       return;
    }
    
+   fmpz_poly_t input1, input2;
+   
+   if (output == poly1)
+   {
+      _fmpz_poly_stack_init(input1, poly1->length, poly1->limbs);
+      _fmpz_poly_set(input1, poly1);
+      if (output == poly2)
+      {
+         _fmpz_poly_attach(input2, input1);
+      } else _fmpz_poly_attach(input2, poly2);
+   } else if (output == poly2)
+   {
+      _fmpz_poly_stack_init(input2, poly2->length, poly2->limbs);
+      _fmpz_poly_set(input2, poly2);
+      _fmpz_poly_attach(input1, poly1);
+   } else
+   {
+      _fmpz_poly_attach(input1, poly1);
+      _fmpz_poly_attach(input2, poly2);
+   }
+
    fmpz_t coeffs_out = output->coeffs;
    fmpz_t coeffs1, coeffs2;
    unsigned long len1, len2; 
@@ -2331,6 +2352,9 @@ void _fmpz_poly_mul_classical(fmpz_poly_t output, const fmpz_poly_t input1, cons
    } 
    
    output->length = len1 + len2 - 1;
+   
+   if (poly1 == output) _fmpz_poly_stack_clear(input1);
+   else if (poly2 == output) _fmpz_poly_stack_clear(input2);
 }
 
 /*
@@ -2338,8 +2362,8 @@ void _fmpz_poly_mul_classical(fmpz_poly_t output, const fmpz_poly_t input1, cons
    Currently doesn't allow aliasing
 */
 
-void _fmpz_poly_mul_classical_trunc(fmpz_poly_t output, const fmpz_poly_t input1, 
-                                          const fmpz_poly_t input2, const unsigned long trunc)
+void _fmpz_poly_mul_classical_trunc(fmpz_poly_t output, const fmpz_poly_t poly1, 
+                                          const fmpz_poly_t poly2, const unsigned long trunc)
 {
    fmpz_t coeffs_out = output->coeffs;
    unsigned long size_out = output->limbs+1;
@@ -2354,7 +2378,7 @@ void _fmpz_poly_mul_classical_trunc(fmpz_poly_t output, const fmpz_poly_t input1
       return;
    }
    
-   if ((input1->length == 0) || (input2->length == 0)) 
+   if ((poly1->length == 0) || (poly2->length == 0)) 
    {
       for (unsigned long i = 0; i < trunc; i++)
       {
@@ -2364,6 +2388,27 @@ void _fmpz_poly_mul_classical_trunc(fmpz_poly_t output, const fmpz_poly_t input1
       return;      
    }
       
+   fmpz_poly_t input1, input2;
+   
+   if (output == poly1)
+   {
+      _fmpz_poly_stack_init(input1, poly1->length, poly1->limbs);
+      _fmpz_poly_set(input1, poly1);
+      if (output == poly2)
+      {
+         _fmpz_poly_attach(input2, input1);
+      } else _fmpz_poly_attach(input2, poly2);
+   } else if (output == poly2)
+   {
+      _fmpz_poly_stack_init(input2, poly2->length, poly2->limbs);
+      _fmpz_poly_set(input2, poly2);
+      _fmpz_poly_attach(input1, poly1);
+   } else
+   {
+      _fmpz_poly_attach(input1, poly1);
+      _fmpz_poly_attach(input2, poly2);
+   }
+
    coeffs1 = input1->coeffs;
    coeffs2 = input2->coeffs;
    size1 = input1->limbs+1;
@@ -2459,6 +2504,9 @@ void _fmpz_poly_mul_classical_trunc(fmpz_poly_t output, const fmpz_poly_t input1
    
    output->length = FLINT_MIN(len1 + len2 - 1, trunc);
    _fmpz_poly_normalise(output);
+   
+   if (poly1 == output) _fmpz_poly_stack_clear(input1);
+   else if (poly2 == output) _fmpz_poly_stack_clear(input2);
 }
 
 /*
@@ -2467,8 +2515,8 @@ void _fmpz_poly_mul_classical_trunc(fmpz_poly_t output, const fmpz_poly_t input1
    Currently doesn't allow aliasing
 */
 
-void _fmpz_poly_mul_classical_trunc_left(fmpz_poly_t output, const fmpz_poly_t input1, 
-                                          const fmpz_poly_t input2, const unsigned long trunc)
+void _fmpz_poly_mul_classical_trunc_left(fmpz_poly_t output, const fmpz_poly_t poly1, 
+                                          const fmpz_poly_t poly2, const unsigned long trunc)
 {
    fmpz_t coeffs_out = output->coeffs;
    unsigned long size_out = output->limbs+1;
@@ -2477,16 +2525,37 @@ void _fmpz_poly_mul_classical_trunc_left(fmpz_poly_t output, const fmpz_poly_t i
    unsigned long len1, len2; 
    unsigned long lenm1;
    
-   if ((input1->length == 0) || (input2->length == 0) || (trunc >= input1->length + input2->length - 1)) 
+   if ((poly1->length == 0) || (poly2->length == 0) || (trunc >= poly1->length + poly2->length - 1)) 
    {
-      for (long i = 0; i < (long) (input1->length + input2->length - 1); i++)
+      for (long i = 0; i < (long) (poly1->length + poly2->length - 1); i++)
       {
-         coeffs_out[i*size_out] = 0;
+         coeffs_out[i*size_out] = 0L;
       }
       _fmpz_poly_zero(output);
       return;      
    }
       
+   fmpz_poly_t input1, input2;
+   
+   if (output == poly1)
+   {
+      _fmpz_poly_stack_init(input1, poly1->length, poly1->limbs);
+      _fmpz_poly_set(input1, poly1);
+      if (output == poly2)
+      {
+         _fmpz_poly_attach(input2, input1);
+      } else _fmpz_poly_attach(input2, poly2);
+   } else if (output == poly2)
+   {
+      _fmpz_poly_stack_init(input2, poly2->length, poly2->limbs);
+      _fmpz_poly_set(input2, poly2);
+      _fmpz_poly_attach(input1, poly1);
+   } else
+   {
+      _fmpz_poly_attach(input1, poly1);
+      _fmpz_poly_attach(input2, poly2);
+   }
+
    coeffs1 = input1->coeffs;
    coeffs2 = input2->coeffs;
    size1 = input1->limbs+1;
@@ -2578,6 +2647,9 @@ void _fmpz_poly_mul_classical_trunc_left(fmpz_poly_t output, const fmpz_poly_t i
    
    output->length = len1 + len2 - 1;
    if (trunc >= output->length) _fmpz_poly_normalise(output);
+   
+   if (poly1 == output) _fmpz_poly_stack_clear(input1);
+   else if (poly2 == output) _fmpz_poly_stack_clear(input2);
 }
 
 void __fmpz_poly_karamul_recursive(fmpz_poly_t res, const fmpz_poly_t a, const fmpz_poly_t b, fmpz_poly_t scratch, fmpz_poly_t scratchb, const unsigned long crossover)
@@ -2729,9 +2801,9 @@ void __fmpz_poly_karamul_recursive(fmpz_poly_t res, const fmpz_poly_t a, const f
    } 
 }
 
-void _fmpz_poly_mul_karatsuba(fmpz_poly_t output, const fmpz_poly_t input1, const fmpz_poly_t input2)
+void _fmpz_poly_mul_karatsuba(fmpz_poly_t output, const fmpz_poly_t poly1, const fmpz_poly_t poly2)
 {
-   if ((input1->length == 0) || (input2->length == 0)) 
+   if ((poly1->length == 0) || (poly2->length == 0)) 
    {
       _fmpz_poly_zero(output);
       return;
@@ -2741,6 +2813,27 @@ void _fmpz_poly_mul_karatsuba(fmpz_poly_t output, const fmpz_poly_t input1, cons
    unsigned long log_length = 0;
    unsigned long crossover;
    
+   fmpz_poly_t input1, input2;
+   
+   if (output == poly1)
+   {
+      _fmpz_poly_stack_init(input1, poly1->length, poly1->limbs);
+      _fmpz_poly_set(input1, poly1);
+      if (output == poly2)
+      {
+         _fmpz_poly_attach(input2, input1);
+      } else _fmpz_poly_attach(input2, poly2);
+   } else if (output == poly2)
+   {
+      _fmpz_poly_stack_init(input2, poly2->length, poly2->limbs);
+      _fmpz_poly_set(input2, poly2);
+      _fmpz_poly_attach(input1, poly1);
+   } else
+   {
+      _fmpz_poly_attach(input1, poly1);
+      _fmpz_poly_attach(input2, poly2);
+   }
+
    fmpz_poly_t scratch, scratchb, temp;
    scratch->coeffs = (fmpz_t) flint_stack_alloc(5*FLINT_MAX(input1->length,input2->length)*(limbs+1));
    scratch->limbs = limbs + 1;
@@ -2757,6 +2850,9 @@ void _fmpz_poly_mul_karatsuba(fmpz_poly_t output, const fmpz_poly_t input1, cons
    
    flint_stack_release(); 
    flint_stack_release();
+   
+   if (poly1 == output) _fmpz_poly_stack_clear(input1);
+   else if (poly2 == output) _fmpz_poly_stack_clear(input2);
 }
 
 void __fmpz_poly_karatrunc_recursive(fmpz_poly_t res, const fmpz_poly_t a, const fmpz_poly_t b, fmpz_poly_t scratch, fmpz_poly_t scratchb, const unsigned long crossover, const unsigned long trunc)
@@ -2952,9 +3048,9 @@ void __fmpz_poly_karatrunc_recursive(fmpz_poly_t res, const fmpz_poly_t a, const
    } 
 }
 
-void _fmpz_poly_mul_karatsuba_trunc(fmpz_poly_t output, const fmpz_poly_t input1, const fmpz_poly_t input2, const unsigned long trunc)
+void _fmpz_poly_mul_karatsuba_trunc(fmpz_poly_t output, const fmpz_poly_t poly1, const fmpz_poly_t poly2, const unsigned long trunc)
 {
-   if ((input1->length == 0) || (input2->length == 0) || (trunc == 0)) 
+   if ((poly1->length == 0) || (poly2->length == 0) || (trunc == 0)) 
    {
       _fmpz_poly_zero(output);
       return;
@@ -2964,6 +3060,27 @@ void _fmpz_poly_mul_karatsuba_trunc(fmpz_poly_t output, const fmpz_poly_t input1
    unsigned long log_length = 0;
    unsigned long crossover;
    
+    fmpz_poly_t input1, input2;
+   
+   if (output == poly1)
+   {
+      _fmpz_poly_stack_init(input1, poly1->length, poly1->limbs);
+      _fmpz_poly_set(input1, poly1);
+      if (output == poly2)
+      {
+         _fmpz_poly_attach(input2, input1);
+      } else _fmpz_poly_attach(input2, poly2);
+   } else if (output == poly2)
+   {
+      _fmpz_poly_stack_init(input2, poly2->length, poly2->limbs);
+      _fmpz_poly_set(input2, poly2);
+      _fmpz_poly_attach(input1, poly1);
+   } else
+   {
+      _fmpz_poly_attach(input1, poly1);
+      _fmpz_poly_attach(input2, poly2);
+   }
+
    fmpz_poly_t scratch, scratchb, temp;
    scratch->coeffs = (fmpz_t) flint_stack_alloc(6*FLINT_MAX(input1->length,input2->length)*(limbs+1));
    scratch->limbs = limbs+1;
@@ -2980,6 +3097,9 @@ void _fmpz_poly_mul_karatsuba_trunc(fmpz_poly_t output, const fmpz_poly_t input1
    
    flint_stack_release(); flint_stack_release();
    _fmpz_poly_normalise(output);
+   
+   if (poly1 == output) _fmpz_poly_stack_clear(input1);
+   else if (poly2 == output) _fmpz_poly_stack_clear(input2);
 }
 
 void __fmpz_poly_karatrunc_left_recursive(fmpz_poly_t res, const fmpz_poly_t a, const fmpz_poly_t b, fmpz_poly_t scratch, fmpz_poly_t scratchb, const unsigned long crossover, const unsigned long trunc)
@@ -3188,9 +3308,9 @@ void __fmpz_poly_karatrunc_left_recursive(fmpz_poly_t res, const fmpz_poly_t a, 
    }     
 }
 
-void _fmpz_poly_mul_karatsuba_trunc_left(fmpz_poly_t output, const fmpz_poly_t input1, const fmpz_poly_t input2, const unsigned long trunc)
+void _fmpz_poly_mul_karatsuba_trunc_left(fmpz_poly_t output, const fmpz_poly_t poly1, const fmpz_poly_t poly2, const unsigned long trunc)
 {
-   if ((input1->length == 0) || (input2->length == 0)) 
+   if ((poly1->length == 0) || (poly2->length == 0)) 
    {
       _fmpz_poly_zero(output);
       return;
@@ -3200,6 +3320,27 @@ void _fmpz_poly_mul_karatsuba_trunc_left(fmpz_poly_t output, const fmpz_poly_t i
    unsigned long log_length = 0;
    unsigned long crossover;
    
+   fmpz_poly_t input1, input2;
+   
+   if (output == poly1)
+   {
+      _fmpz_poly_stack_init(input1, poly1->length, poly1->limbs);
+      _fmpz_poly_set(input1, poly1);
+      if (output == poly2)
+      {
+         _fmpz_poly_attach(input2, input1);
+      } else _fmpz_poly_attach(input2, poly2);
+   } else if (output == poly2)
+   {
+      _fmpz_poly_stack_init(input2, poly2->length, poly2->limbs);
+      _fmpz_poly_set(input2, poly2);
+      _fmpz_poly_attach(input1, poly1);
+   } else
+   {
+      _fmpz_poly_attach(input1, poly1);
+      _fmpz_poly_attach(input2, poly2);
+   }
+
    fmpz_poly_t scratch, scratchb, temp;
    scratch->coeffs = (fmpz_t) flint_stack_alloc(5*FLINT_MAX(input1->length,input2->length)*(limbs+1));
    scratch->limbs = limbs + 1;
@@ -3217,6 +3358,9 @@ void _fmpz_poly_mul_karatsuba_trunc_left(fmpz_poly_t output, const fmpz_poly_t i
    flint_stack_release(); 
    flint_stack_release();
    if (trunc >= input1->length+input2->length-1) _fmpz_poly_normalise(output);
+   
+   if (poly1 == output) _fmpz_poly_stack_clear(input1);
+   else if (poly2 == output) _fmpz_poly_stack_clear(input2);
 }
 
 void _fmpz_poly_mul_KS(fmpz_poly_t output, const fmpz_poly_t in1, const fmpz_poly_t in2)
@@ -7681,53 +7825,15 @@ void fmpz_poly_power(fmpz_poly_t output, const fmpz_poly_t poly, const unsigned 
    
    while (bits > 1)
    {
-      fmpz_poly_mul(temp, output, output);
-      fmpz_poly_fit_length(output, temp->length);
-      fmpz_poly_fit_limbs(output, temp->limbs);
-      _fmpz_poly_set(output, temp);
+      fmpz_poly_mul(output, output, output);
       if ((1L<<(bits-2)) & exp)
       {
-         fmpz_poly_mul(temp, output, polycopy);
-         fmpz_poly_fit_length(output, temp->length);
-         fmpz_poly_fit_limbs(output, temp->limbs);
-         _fmpz_poly_set(output, temp);
+         fmpz_poly_mul(output, output, polycopy);
       }
       bits--;
    } 
    
    if (poly == output) fmpz_poly_clear(polycopy);
-   /*while (!(exp & 1L))
-   {
-      fmpz_poly_mul(temp, output, output);
-      fmpz_poly_fit_length(output, temp->length);
-      fmpz_poly_fit_limbs(output, temp->limbs);
-      _fmpz_poly_set(output, temp);
-      exp >>= 1;
-   }
-   
-   exp >>= 1;
-   if (exp)
-   {
-      fmpz_poly_fit_length(power, output->length);
-      fmpz_poly_fit_limbs(power, output->limbs);
-      _fmpz_poly_set(power, output);
-      
-      while (exp)
-      {
-         fmpz_poly_mul(temp, power, power);
-         fmpz_poly_fit_length(power, temp->length);
-         fmpz_poly_fit_limbs(power, temp->limbs);
-         _fmpz_poly_set(power, temp);
-         if (exp & 1) 
-         {
-            fmpz_poly_mul(temp, output, power);
-            fmpz_poly_fit_length(output, temp->length);
-            fmpz_poly_fit_limbs(output, temp->limbs);
-            _fmpz_poly_set(output, temp);
-         }
-         exp >>= 1;
-      }
-   }*/
 }
 
 void fmpz_poly_power_trunc_n(fmpz_poly_t output, const fmpz_poly_t poly, const unsigned long exponent, const unsigned long n)
@@ -7773,9 +7879,7 @@ void fmpz_poly_power_trunc_n(fmpz_poly_t output, const fmpz_poly_t poly, const u
       } else
       {
          fmpz_poly_t temp2;
-         temp2->coeffs = poly->coeffs;
-         temp2->limbs = poly->limbs;
-         temp2->length = n;
+         _fmpz_poly_attach_truncate(temp2, poly, n);
          _fmpz_poly_set(output, temp2);
       }
       _fmpz_poly_normalise(output);
@@ -7783,9 +7887,7 @@ void fmpz_poly_power_trunc_n(fmpz_poly_t output, const fmpz_poly_t poly, const u
     
    while (!(exp & 1L))  // Square until we get to the first binary 1 in the exponent
    {
-      fmpz_poly_mul_trunc_n(temp, output, output, n);  
-      fmpz_poly_fit_limbs(output, temp->limbs);
-      _fmpz_poly_set(output, temp);
+      fmpz_poly_mul_trunc_n(output, output, output, n);  
       exp >>= 1;
    }
    
@@ -7798,14 +7900,10 @@ void fmpz_poly_power_trunc_n(fmpz_poly_t output, const fmpz_poly_t poly, const u
       
       while (exp)
       {
-         fmpz_poly_mul_trunc_n(temp, power, power, n);
-         fmpz_poly_fit_limbs(power, temp->limbs);
-         _fmpz_poly_set(power, temp);
+         fmpz_poly_mul_trunc_n(power, power, power, n);
          if (exp & 1) 
          {
-            fmpz_poly_mul_trunc_n(temp, output, power, n);
-            fmpz_poly_fit_limbs(output, temp->limbs);
-            _fmpz_poly_set(output, temp);
+            fmpz_poly_mul_trunc_n(output, output, power, n);
          }
          exp >>= 1;
       }
