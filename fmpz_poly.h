@@ -1007,13 +1007,68 @@ void fmpz_poly_div_newton(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t 
 static inline
 void fmpz_poly_div(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t B)
 {
-   fmpz_poly_div_mulders(Q, A, B);
+   if (A == B)
+   {
+      fmpz_poly_fit_length(Q, 1);
+      fmpz_poly_fit_limbs(Q, 1);
+      fmpz_poly_zero(Q);
+      fmpz_poly_set_coeff_ui(Q, 0, 1UL);
+      
+      return;
+   }
+   
+   fmpz_poly_t Ain, Bin;
+   
+   if (A == Q)
+   {
+      _fmpz_poly_stack_init(Ain, A->length, A->limbs);
+      _fmpz_poly_set(Ain, A);
+   } else _fmpz_poly_attach(Ain, A);
+   
+   if (B == Q)
+   {
+      _fmpz_poly_stack_init(Bin, B->length, B->limbs);
+      _fmpz_poly_set(Bin, B);
+   } else _fmpz_poly_attach(Bin, B);
+
+   fmpz_poly_div_mulders(Q, Ain, Bin);
+
+   if (A == Q) _fmpz_poly_stack_clear(Ain);
+   if (B == Q) _fmpz_poly_stack_clear(Bin);
 }
 
 static inline
 void fmpz_poly_divrem(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_poly_t A, const fmpz_poly_t B)
 {
-   fmpz_poly_divrem_divconquer(Q, R, A, B);
+   if (A == B)
+   {
+      fmpz_poly_fit_length(Q, 1);
+      fmpz_poly_fit_limbs(Q, 1);
+      fmpz_poly_zero(Q);
+      fmpz_poly_zero(R);
+      fmpz_poly_set_coeff_ui(Q, 0, 1UL);
+      
+      return;
+   }
+   
+   fmpz_poly_t Ain, Bin;
+   
+   if ((A == R) || (A == Q))
+   {
+      _fmpz_poly_stack_init(Ain, A->length, A->limbs);
+      _fmpz_poly_set(Ain, A);
+   } else _fmpz_poly_attach(Ain, A);
+   
+   if ((B == R) || (B == Q))
+   {
+      _fmpz_poly_stack_init(Bin, B->length, B->limbs);
+      _fmpz_poly_set(Bin, B);
+   } else _fmpz_poly_attach(Bin, B);
+
+   fmpz_poly_divrem_divconquer(Q, R, Ain, Bin);
+
+   if ((A == R) || (A == Q)) _fmpz_poly_stack_clear(Ain);
+   if ((B == R) || (B == Q)) _fmpz_poly_stack_clear(Bin);
 }
 
 void fmpz_poly_power(fmpz_poly_t output, const fmpz_poly_t poly, const unsigned long exp);
@@ -1037,7 +1092,36 @@ static inline
 void fmpz_poly_pseudo_divrem(fmpz_poly_t Q, fmpz_poly_t R, unsigned long * d, 
                                                const fmpz_poly_t A, const fmpz_poly_t B)
 {
-   fmpz_poly_pseudo_divrem_recursive(Q, R, d, A, B);
+   if (A == B)
+   {
+      fmpz_poly_fit_length(Q, 1);
+      fmpz_poly_fit_limbs(Q, 1);
+      fmpz_poly_zero(Q);
+      fmpz_poly_zero(R);
+      d = 0;
+      fmpz_poly_set_coeff_ui(Q, 0, 1UL);
+      
+      return;
+   }
+
+   fmpz_poly_t Ain, Bin;
+   
+   if ((A == R) || (A == Q))
+   {
+      _fmpz_poly_stack_init(Ain, A->length, A->limbs);
+      _fmpz_poly_set(Ain, A);
+   } else _fmpz_poly_attach(Ain, A);
+   
+   if ((B == R) || (B == Q))
+   {
+      _fmpz_poly_stack_init(Bin, B->length, B->limbs);
+      _fmpz_poly_set(Bin, B);
+   } else _fmpz_poly_attach(Bin, B);
+
+   fmpz_poly_pseudo_divrem_recursive(Q, R, d, Ain, Bin);
+   
+   if ((A == R) || (A == Q)) _fmpz_poly_stack_clear(Ain);
+   if ((B == R) || (B == Q)) _fmpz_poly_stack_clear(Bin);
 }
 
 void fmpz_poly_pseudo_div_recursive(fmpz_poly_t Q, unsigned long * d, 
@@ -1047,7 +1131,35 @@ static inline
 void fmpz_poly_pseudo_div(fmpz_poly_t Q, unsigned long * d, 
                                       const fmpz_poly_t A, const fmpz_poly_t B)
 {
-   fmpz_poly_pseudo_div_recursive(Q, d, A, B);
+   if (A == B)
+   {
+      fmpz_poly_fit_length(Q, 1);
+      fmpz_poly_fit_limbs(Q, 1);
+      fmpz_poly_zero(Q);
+      d = 0;
+      fmpz_poly_set_coeff_ui(Q, 0, 1UL);
+      
+      return;
+   }
+   
+   fmpz_poly_t Ain, Bin;
+   
+   if (A == Q)
+   {
+      _fmpz_poly_stack_init(Ain, A->length, A->limbs);
+      _fmpz_poly_set(Ain, A);
+   } else _fmpz_poly_attach(Ain, A);
+   
+   if (B == Q)
+   {
+      _fmpz_poly_stack_init(Bin, B->length, B->limbs);
+      _fmpz_poly_set(Bin, B);
+   } else _fmpz_poly_attach(Bin, B);
+
+   fmpz_poly_pseudo_div_recursive(Q, d, Ain, Bin);
+  
+   if (A == Q) _fmpz_poly_stack_clear(Ain);
+   if (B == Q) _fmpz_poly_stack_clear(Bin);
 }
                                       
 
