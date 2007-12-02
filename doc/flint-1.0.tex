@@ -1,0 +1,290 @@
+\documentclass[a4paper,10pt]{article}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{eucal}
+\usepackage{amscd}
+\usepackage{url}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{wrapfig}
+\urlstyle{sf}
+
+\addtolength{\oddsidemargin}{-0.75in}
+\addtolength{\evensidemargin}{-0.75in}
+\addtolength{\textwidth}{1.5in}
+
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\HH}{\mathcal{H}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\I}{\mathbb{I}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Pee}{\mathbb{P}}
+\newcommand{\EuO}{\mathcal{O}}
+\newcommand{\Qbar}{\overline{\mathbb{Q}}}
+\newcommand{\fn}{\hfill[Function]}
+\newcommand{\macro}{\hfill[Macro]}
+\newcommand{\gmp}{\hfill[GMP]}
+\newcommand{\code}{\lstinline}
+
+\newcommand{\ljk}[2]{\left(\frac{#1}{#2}\right)}
+\newcommand{\modulo}[1]{\;\left(\mbox{mod}\;#1\right)}
+\newcommand{\fr}{\mathfrak}
+
+\def\notdivides{\mathrel{\kern-3pt\not\!\kern4.5pt\bigm|}}
+\def\nmid{\notdivides}
+\def\nsubseteq{\mathrel{\kern-3pt\not\!\kern2.5pt\subseteq}}
+
+\parindent=0pt
+\parskip 4pt plus 2pt minus 2pt
+
+%\email{w.b.hart@maths.warwick.ac.uk}
+
+\title{FLINT 1.0: Fast Library for Number Theory}
+\author{William B. Hart and David Harvey}
+
+\begin{document}
+\maketitle
+\lstset{language=c}
+\lstset{basicstyle=\ttfamily}
+\lstset{keywordstyle=}
+%\lstset{morekeywords={mpz_t,mpz_poly_t,fmpz_poly_t}}
+\lstset{escapeinside=\%\%}
+
+\section{Introduction}
+
+FLINT is a C library of functions for doing number theory. It is highly optimised and can be compiled on numerous platforms. FLINT also has the aim of providing support for multicore and multiprocessor computer architectures, though we do not yet provide this facility.
+
+FLINT is currently maintained by William Hart of Warwick University in the UK and David Harvey of Harvard University in the US.
+
+As of version 1.0, FLINT compiles on and supports 32 and 64 bit x86 processors, the G5 and Alpha processors, though in theory it compiles on any machine with gcc version 4.0.1 or later and with GMP version 4.2.1 or later.
+
+FLINT is supplied as a set of modules, \code{fmpz}, \code{fmpz_poly}, etc., each of which can be linked to a C program making use of their functionality. There are some dependencies amongst the modules, and these are listed in the introductions to the relevant modules below.
+
+All of the functions in FLINT have a corresponding test function provided in an appropriately named test file, e.g: all the functions in the file \code{fmpz_poly.c} have test functions in the file \code{fmpz_poly-test.c}.
+
+\section{The fmpz\_poly module}
+
+The \code{fmpz_poly_t} data type represents elements of $\Z[x]$. It provides routines for memory management, basic arithmetic, and conversions to/from other types.
+
+Each coefficient of an \code{fmpz_poly_t} is an integer of the FLINT \code{fmpz_t} type. Each coefficient of an \code{fmpz_poly_t} has the same number of limbs allocated for it, thus \code{fmpz_poly_t} polynomials are useful for dense polynomial arithmetic where the coefficients are not wildly different sizes.
+
+Unless otherwise specified, all functions in this section permit aliasing between their input and output arguments. 
+\subsection{Simple example}
+
+The following example computes the square of the polynomial $5x^3 - 1$.
+
+\begin{lstlisting}
+#include "mpz_poly.h"
+ ....
+fmpz_poly_t x, y;
+fmpz_poly_init(x);
+fmpz_poly_init(y);
+fmpz_poly_set_coeff_ui(x, 3, 5);
+fmpz_poly_set_coeff_si(x, 0, -1);
+fmpz_poly_mul(y, x, x);
+fmpz_poly_print(x); printf("\n");
+fmpz_poly_print(y); printf("\n");
+fmpz_poly_clear(x);
+fmpz_poly_clear(y);
+\end{lstlisting}
+
+The output is:
+
+\begin{lstlisting}
+4  -1 0 0 5
+7  1 0 0 -10 0 0 25
+\end{lstlisting}
+
+\subsection{Definition of \code{mpz_poly_t}}
+
+The \code{fmpz_poly_t} type is a typedef for an array of length 1 of \code{fmpz_poly_struct}'s. This permits passing parameters  of type \code{fmpz_poly_t} `by reference'.
+
+The \code{fmpz_poly_struct} struct has three members:
+\begin{itemize}
+\item \code{mp_limb_t* coeffs}. This array contains all the \code{fmpz_t}'s consecutively.
+\item \code{unsigned long alloc}. The number of coefficients stored in \code{coeffs}.
+\item \code{unsigned long length}. The current length of the polynomial. Always \code{length <= alloc}. This is the zero polynomial if and only if \code{length == 0}. 
+\end{itemize}
+
+An \code{fmpz_poly_t} is said to be \emph{normalised} if either \code{length == 0}, or if the final coefficient is nonzero. All \code{fmpz_poly} functions expect their inputs to be normalised, and unless otherwise specified they produce output that is normalised. 
+
+It is permissible to access the coefficients directly by modifying the limbs in \code{coeffs}, however if you modify the coefficients in this way, you must ensure that the polynomial is subsequently normalised by calling \code{fmpz_poly_normalise()}.
+
+\subsection{Initialisation and memory management}
+
+\begin{lstlisting}
+void fmpz_poly_init(fmpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Initialise an \code{fmpz_poly_t} for use. All the fields \code{alloc}, \code{length} and \code{limbs} are set to zero. A corresponding call to \code{fmpz_poly_clear} must be made after finishing with the \code{fmpz_poly_t} to free the memory used by the polynomial.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_poly_init2(fmpz_poly_t poly, const unsigned long alloc, 
+                                          const unsigned long limbs)
+\end{lstlisting}
+\begin{quote}
+Initialise an \code{fmpz_poly_t} for use, allocating space for \code{alloc} coefficients each with the given number of limbs of space (plus an additional limb for the sign/size limb for each coefficient). The \code{length} field is set to zero. 
+
+This function should be used when the maximum length of the polynomial and the size of the coefficients is roughly known in advance. It may be faster than having FLINT automatically increase the size of the polynomial as the computation proceeds. 
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_poly_realloc(fmpz_poly_t poly, const unsigned long alloc)
+\end{lstlisting}
+\begin{quote}
+Shrink or expand the polynomial so that it has space for \code{alloc} coefficients. If \code{alloc} is less than the current length, the polynomial is truncated (and then normalised), otherwise the coefficients and current length remain unaffected.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_poly_fit_length(fmpz_poly_t poly, const unsigned long alloc)
+\end{lstlisting}
+\begin{quote}
+Expand the polynomial (if necessary) so that it has space for \code{alloc} coefficients. The coefficients themselves and the current length will remain unaffected.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_poly_resize_limbs(fmpz_poly_t poly, const unsigned long limbs)
+\end{lstlisting}
+\begin{quote}
+Shrink or expand the coefficients so that each of them has space for the given number of limbs. It is required that the existing coefficients still fit into the new limb size. Given this requirement, the coefficients themselves and the current length will remain unaffected.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_poly_clear(fmpz_poly_t poly)\end{lstlisting}
+\begin{quote}
+Free all memory used by the polynomial coefficients. The polynomial cannot be used again until a subsequent call to an initialisation function is made.
+\end{quote}
+
+\subsection{Setting/retrieving coefficients}
+
+\begin{lstlisting}
+void fmpz_poly_get_coeff_mpz(mpz_t x, const fmpz_poly_t poly, 
+                                           const unsigned long n)
+\end{lstlisting}
+\begin{quote}
+Retrieve coefficient $n$ as an \code{mpz_t}. Coefficients are numbered from zero, starting with the constant coefficient.
+\end{quote}
+
+\subsection{String conversions and I/O}
+
+The functions in this section are not intended to be particularly fast. They are intended mainly as a debugging aid.
+
+All of the functions use the same string representation of polynomials. It is given by a sequence of integers, in decimal notation, separated by whitespace. The first integer gives the length of the polynomial; the remaining \code{length} integers are the coefficients. For example $5x^3 - x + 1$ is represented by the string ``\code{4 1 -1 0 5}'', and the zero polynomial is represented by ``\code{0}''. The coefficients may be signed and arbitrary precision (provided they fit in the given polynomial).
+
+\begin{lstlisting}
+int fmpz_poly_from_string(fmpz_poly_t poly, const char* s)
+\end{lstlisting}
+\begin{quote}
+Import a polynomial from a string. If the string represented a valid polynomial the function returns 1, otherwise it returns 0.
+\end{quote}
+
+\begin{lstlisting}
+char* fmpz_poly_to_string(const fmpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Convert a polynomial to a string and return a pointer to the string. \end{quote}
+
+\begin{lstlisting}
+void fmpz_poly_fprint(const fmpz_poly_t poly, FILE* f)\end{lstlisting}
+\begin{quote}
+Convert a polynomial to a string and write it to the given stream. 
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_poly_print(const fmpz_poly_t poly)
+\begin{quote}
+Convert a polynomial to a string and write it to \code{stdout}. 
+\end{quote}
+
+\subsection{Length and degree}
+
+\begin{lstlisting}
+\end{lstlisting}
+\begin{quote}
+\end{quote}
+
+
+\subsection{Assignment}
+
+\begin{lstlisting}
+void fmpz_poly_swap(fmpz_poly_t x, fmpz_poly_t y)
+\end{lstlisting}
+\begin{quote}
+Efficiently swap two polynomials. The coefficients are not moved in memory, pointers are simply switched. 
+\end{quote}
+
+
+\subsection{Conversions}
+
+\begin{lstlisting}
+\end{lstlisting}
+\begin{quote}
+\end{quote}
+
+
+\subsection{Comparison}
+
+
+\begin{lstlisting}
+\end{lstlisting}
+\begin{quote}
+\end{quote}
+
+
+
+\subsection{Addition/subtraction}
+
+
+\begin{lstlisting}
+\end{lstlisting}
+\begin{quote}
+\end{quote}
+
+
+\subsection{Shifting}
+
+\begin{lstlisting}
+\end{lstlisting}
+\begin{quote}
+\end{quote}
+
+
+\subsection{Scalar multiplication and division}
+
+\begin{lstlisting}
+\end{lstlisting}
+\begin{quote}
+\end{quote}
+
+\subsection{Polynomial multiplication}
+
+\begin{lstlisting}
+\end{lstlisting}
+\begin{quote}
+\end{quote}
+
+\subsection{Polynomial division}
+
+\begin{lstlisting}
+\end{lstlisting}
+\begin{quote}
+\end{quote}
+
+
+
+
+\subsection{Miscellaneous}
+
+\begin{lstlisting}
+\end{lstlisting}
+\begin{quote}
+\end{quote}
+
+
+\bibliographystyle{amsalpha}
+\bibliography{flint}
+
+\end{document}

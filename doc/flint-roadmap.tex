@@ -57,26 +57,22 @@ FLINT is currently maintained by Bill Hart from Warwick University and David Har
 
 Although FLINT is designed as a standalone C library for direct use in C programs by number theorists, parts of FLINT will be made available for use in SAGE, maintained by William Stein. 
 
-FLINT 0.5, which includes fast polynomial multiplication (which has been incorporated into the SAGE version of Pari) and fast integer factorisation via the MPQS (multiple polynomial quadratic sieve) have been incorporated into SAGE (the sieve is the qsieve command which appears in SAGE 1.6 and following and the SAGE version of Pari makes use of FLINT from SAGE 2.5.1 onwards).
-
-The intention is to release a series of improvements to Pari and the standalone quadratic sieve starting with FLINT 0.5 and onwards. These releases, FLINT 0.5, 0.6, etc., will be prereleases only. 
-
-FLINT 1.0 will be the first version of FLINT which will be a standalone C library with a documented interface which can be used by an end user. Its anticipated release date is July 1st 2007. 
+FLINT 1.0 is the first version of FLINT which will be a standalone C library with a documented interface which can be used by an end user. Its release date is December 1st 2007. 
 
 \subsection{Code Base}
-FLINT is written entirely in C and all code must conform to the C99 standard. It must compile with the GCC toolset, available on most unix based systems. FLINT should have as few dependencies as possible, but any function from GMP may be used.
+FLINT is written entirely in C and all code must conform to the C99 standard. It must compile with the GCC toolset, available on most unix based systems. FLINT should depend only on tightly coded, highly respected libraries. In particular any function from GMP may be used. There is also an intention to add the packages fpLLL, mpfr, gf2x and GMP-ECM to FLINT in the near future.
 
 The code is maintained at a sourceforge SVN repository. The main development code is available at:
 
-https://svn.sourceforge.net/svnroot/fastlibnt/trunk
+https://flint.svn.sourceforge.net/svnroot/flint/trunk/
 
-Released versions of FLINT are forked from the main trunk and stored in separate folders in the repository, e.g. FLINT 0.5 is at
+Released versions of FLINT are forked from the main trunk and stored in separate folders in the repository, e.g. FLINT 1.0 is at
 
-https://svn.sourceforge.net/svnroot/fastlibnt/flint-0.5
+https://flint.svn.sourceforge.net/svnroot/flint/flint-1.0/
 
 Various experimental branches are held at:
 
-https://svn.sourceforge.net/svnroot/fastlibnt/branches
+https://flint.svn.sourceforge.net/svnroot/flint/branches/
 
 Programmers who wish to fiddle with some new ideas can start a branch ad libitum and play with FLINT files there without affecting the main development code.
 
@@ -85,25 +81,23 @@ The FLINT website is found at:
 
 http://www.flintlib.org/
 
-Information about FLINT (pre)releases, progress updates and future directions can be found there. Profiles will also be linked to from the website for comparison with other comparable packages and projects.
+Information about FLINT (pre)releases, progress updates and future directions can be found there. Profiles will also be displayed on the website for comparison with other comparable packages and projects.
 
 In addition, programmers can access the FLINT sourceforge project at:
 
-http://www.sourceforge.org/flintlibnt/
+http://www.sourceforge.org/flint/
 
 \subsection{Development forums}
 Sourceforge provides us with a development forum. Developers who wish to be added to the FLINT development list can send an email requesting addition to hart\_wb@yahoo.com
 
-In addition, on occasion, FLINT developers find it useful to discuss things on IRC. The channel for this is flint-dev on the irc.freenode.net server. A web based IRC client is available at:
+In addition, on occasion, FLINT developers find it useful to discuss things on IRC. The channel for this is flint-dev on the irc.freenode.net server. 
 
-http://www.rlscnetwork.com/sharedresources/chat.html
- 
 \subsection{Performance}
 The aim is for all FLINT functions to be at least as fast as the comparable functions available in the open source projects of a similar nature. The more elaborate functions will be faster in FLINT than in other open source projects where possible, and sometimes significantly faster.
 
 In particular FLINT will perform as well as or better than NTL, Pari and LiDIA, which seem to be the most popular open source alternatives. FLINT will be regularly profiled and compared against these packages on a function by function basis. The more elaborate functions will have more elaborate profiles.
 
-We also aim to beat MAGMA where possible, however it won't be a condition for a release of FLINT to be made that all functions in FLINT perform better than their MAGMA counterparts. 
+We also aim to beat MAGMA where possible, however it won't be a condition for a release of FLINT to be made that all functions in FLINT perform better eveywhere, than their MAGMA counterparts. 
 
 Profiles comparing FLINT with MAGMA will also be done regularly. However such a comparison is not fair to either FLINT or MAGMA, since MAGMA is an interpreted package, not a C library, and MAGMA is closed source and non-free, whereas FLINT is free and open source.
 
@@ -126,16 +120,18 @@ The general strategies used for testing FLINT functions are:
 
 7) Check boundary cases and just either side of them.
 
-If it is only possible to test a function in situ (i.e. as part of a larger function which calls it), and a simpler version cannot be implemented to test against, insert checkpoints within each branch of the function and run random data through the function until such time as all branches have been worked. Explicitly check that all branches did what they were supposed to. FLINT\_ASSERT's can be used to check that certain conditions were met after the branch executed.
+If it is only possible to test a function in situ (i.e. as part of a larger function which calls it), and a simpler version cannot be implemented to test against, insert checkpoints within each branch of the function and run random data through the function until such time as all branches have been worked. Explicitly check that all branches did what they were supposed to. 
 
-The functions for testing the functions in ssmul.c should all be in a file called ssmul-test.c, etc.
+For convenience, a macro called FLINT\_ASSERT is available. It works like a function which takes a condition as a parameter. If at that point in the code, the condition fails, then the assert will pick that up and tell you the line number where the assert failed. These are particularly useful to check that certain conditions were met after a branch executed. For FLINT\_ASSERT's to be operational, one needs to set the appropriate flag in flint.h.
 
-The final version of a test file should take 1-2 seconds to test each function in the file being test, where possible (sometimes a much longer time may be necessary). However, much more extensive tests should be run by the programmer when the function is first written, to ensure that the function works as expected in every conceivable situation, especially if the function is very involved. Such test code should be retained, but need not execute when a user executes a make test.
+The functions for testing the functions in the module fmpz\_poly.c should all be in a file called fmpz_poly-test.c, etc.
 
-Each final test function should print which function is being tested and then ok or fail. Examples of easy ways to set up such a test file can be found in the trunk of the development code, e.g. Zpoly\_mpn-test.c 
+The final version of a test file should take approximately 1-2 seconds to test each function in the file being tested, where possible (sometimes a much longer time may be necessary). However, much more extensive tests should be run by the programmer when the function is first written, to ensure that the function works as expected in every conceivable situation, especially if the function is very involved. Such test code should be retained, but need not execute when a user executes a make test.
+
+Each final test function should print which function is being tested and then ok or fail. Examples of easy ways to set up such a test file can be found in the trunk of the development code, e.g. fmpz\_poly-test.c 
 
 \subsection{Parallel Processing}
-FLINT will support parallel processing at the thread level using pthreads. All functions that are sufficiently complicated will allow threads to be used. A global \#define USE\_THREADS in flint.h specifies whether threads should be used, and flint files using threads should contain 
+FLINT will eventually support parallel processing at the thread level using pthreads. All functions that are sufficiently complicated will allow threads to be used. A global \#define USE\_THREADS in flint.h will specify whether threads should be used, and flint files using threads should contain 
 
 \begin{verbatim}#include "flint.h"
 
@@ -154,88 +150,81 @@ FLINT has a memory manager. When we were implementing polynomial multiplication,
 
 At the very least, functions should allocate as much of the memory as they need up front, then break it up as needed, rather than allocate lots of small chunks. But even this approach slows some things down. Thus we introduced a memory manager.
 
-The FLINT memory manager is included in files flint-manager.h and flint-manager.c. It is a stack based memory manager (or will be). 
+The FLINT memory manager is included in files memory-manager.h and memory-manager.c. It is a stack based memory manager (or will be). 
 
-Since stack based memory management is not ideal for threaded programs, it is implemented in a slightly strange way. Flint memory allocation functions require a thread number. So if there are numerous threads running within a FLINT function (or indeed a program running multiple threads, each calling different FLINT functions), each thread that is started will have a different stack of memory allocated to it. However the memory manager will be able to transfer blocks of memory from one thread to another if they become available. 
+Since stack based memory management is not ideal for threaded programs, it is implemented in a slightly strange way. Flint memory allocation functions automatically determine the current thread number. So if there are numerous threads running within a FLINT function (or indeed a program running multiple threads, each calling different FLINT functions), each thread that is started will have a different stack of memory allocated to it. 
 
-However, the implementation details of the memory manager are irrelevant, since it will just work, regardless of how it is implemented. The only constraint in actual programming is that since the memory manager is stack based, any given thread should free memory in the reverse order to what it was allocated in the first place, e.g.
+However, the implementation details of the memory manager are irrelevant, since it will just work, regardless of how it is implemented. The only constraint in actual programming is that since the memory manager is stack based, any given thread will free memory in the reverse order to what it was allocated in the first place, e.g.
 
-\begin{verbatim}mp_limb_t * data1 = (mp_limb_t *) flint_malloc(1000);
-mp_limb_t * data2 = (mp_limb_t *) flint_malloc(2000);
-mp_limb_t * data3 = (mp_limb_t *) flint_malloc(300);
+\begin{verbatim}mp_limb_t * data1 = (mp_limb_t *) flint_stack_alloc(1000);
+mp_limb_t * data2 = (mp_limb_t *) flint_stack_alloc(2000);
+mp_limb_t * data3 = (mp_limb_t *) flint_stack_alloc(300);
 
 // intervening code
 
-flint_free(data3);
-flint_free(data2);
-flint_free(data1);\end{verbatim}
+flint_stack_release(); //free data3
+flint_stack_release(); //free data2
+flint_stack_release(); //free data1
+\end{verbatim}
 
 Flint will automatically determine which thread made the call and allocate/deallocate from the correct stack.
 
 \subsection{FLINT modules}
-FLINT is implemented as a series of modules which perform related functions. Examples of modules are Z, Zvec, Zpoly, Zpoly\_mpn, Zmod, Zp, etc.
+FLINT is implemented as a series of modules which perform related functions. Examples of modules are fmpz\_poly, fmpz, ZmodF, ZmodF_poly, mpz\_poly, etc.
 
-Each module has associated .c and .h files named after it, and an associated test file. E.g. the module Zpoly contains functions for doing arithmetic with polynomials over the integers all of which are contained in Zpoly.c and Zpoly.h. Other files may be associated with Zpoly (e.g. ssmul) and these can be determined by looking at the \#includes at the top of Zpoly.h. The test file for Zpoly will be called Zpoly-test.h. Running ``make test'' will compile and run all test files in FLINT. To run a specific test program, one can just type the name of the module, e.g. ./Zpoly-test, after all the test files have compiled. 
+Each module has associated .c and .h files named after it, and an associated test file. E.g. the module fmpz\_poly contains functions for doing arithmetic with polynomials over the integers all of which are contained in fmpz\_poly.c and fmpz\_poly.h. The test file for fmpz\_poly will be called fmpz\_poly-test.h. Running ``make test'' will compile and run all test files in FLINT. To run a specific test program, one can just type the name of the module, e.g. ./fmpz\_poly-test, after all the test files have compiled. 
 
-Files with names like Zpoly-profile.c are for generating profiles for functions in Zpoly. These must be edited by hand to select which function(s) to spit out profile times for. But all such profile files are similar. To make all the profile files, one types ``make profile''. To run a specific profile, one types for example ./Zpoly-profile once they have all compiled.
+Files with names like fmpz\_poly-profile.c are for generating profiles for functions in fmpz\_poly. All such profile files are similar. To make all the profile files, one types ``make profile''. To run a specific profile, one types for example ./fmpz\_poly-profile once they have all compiled and a list of profile targets wil be given.
 
 Eventually FLINT will have all of the following modules:
 
-Z - Arithmetic for GMP mpz\_t integers
+mpz\_extras - Arithmetic for GMP mpz\_t integers
 
-Z\_mpn - Arithmetic for integers at the GMP mpn level, but in sign magnitude format
+fmpz - Arithmetic for the FLINT ``flat'' multi=precision integer format
 
-ZLong - Arithmetic for long/unsigned long integers
+long\_extras - Arithmetic for long/unsigned long integers including modulo arithmetic
 
-ZTwosComp - Arithmetic for multi precision integers in twos complement format
+mpn\_extras - Arithmetic for integers in GMP mpn format
 
-ZFermat - Arithmetic for integers modulo a Fermat number $p = 2^n+1$ where $n = 2^l$
+ZmodF - Arithmetic for integers modulo a Fermat number $p = 2^nB+1$ where $B$ is the number of bits per limb
 
 Zmod - Arithmetic for $Z/nZ$ for a multi precision modulus $n$
-
-ZmodLong - Arithmetic for $Z/nZ$ for a modulus n which fits into an unsigned long
 
 Zp - padic arithmetic
 
 FF - Arithmetic for finite fields 
 
-GF2 - Helper functions for arithmetic over GF2
+GF2 - Functions for arithmetic over GF2
 
 \vspace{5mm}
 
-Zpoly - Polynomials over mpz\_t integers
+mpz\_poly - Polynomials over mpz\_t integers
 
-Zpoly\_mpn - Polynomials over integers in mpn sign magnitude format
+fmpz\_poly - Polynomials over integers in fmpz format
 
-ZpolyTwosComp - Polynomial functions for polys over the twos complement format
+ZmodF\_poly - Polynomial functions for polys mod a Fermat number
 
-ZpolyFermat - Polynomial functions for polys mod a Fermat number
+Zmod\_poly - Polynomials over $Z/nZ$ for multiprecision $n$
 
-ZmodPoly - Polynomials over $Z/nZ$ for multiprecision $n$
+zmod\_poly - Polynomials over $Z/nZ$ for $n$ an unsigned long
 
-ZmodPolyLong - Polynomials over $Z/nZ$ for $n$ an unsigned long
+Zp\_poly - Polys over padics
 
-ZpPoly - Polys over padics
-
-GF2Poly - Polys over GF2
+GF2\_poly - Polys over GF2
 
 \vspace{5mm}
 
-ZMat - Linear Algebra over mpz\_t integers
+mpz\_mat - Linear Algebra over mpz\_t integers
 
-ZMat\_mpn - Linear Algebra over integers in mpn sign magnitude format
+fmpz\_mat - Linear Algebra over integers in fmpz format
 
-ZmodMat - Linear Algebra over $Z/nZ$ for multiprecision $n$
+Zmod\_mat - Linear Algebra over $Z/nZ$ for multiprecision $n$
 
-ZmodLongMat - Linear Algebra over $Z/nZ$ for an unsigned long $n$
+zmod\_mat - Linear Algebra over $Z/nZ$ for an unsigned long $n$
 
-ZpMat - Linear Algebra over padics
+Zp\_mat - Linear Algebra over padics
 
-GF2Poly - Linear Algebra over GF2
-
-\vspace{5mm}
-
-Lattice - Functions for lattices, including lattice based reduction (LLL)
+GF2\_mat - Linear Algebra over GF2
 
 \vspace{5mm}
 
@@ -247,232 +236,23 @@ QZeta - Cyclotomic number fields
 
 NF - General Number Fields
 
-\vspace{5mm}
-
-R - Some basic helper functions for floating point reals
-
-C - Some basic helper functions for multi precision complex numbers
-
-Q - Some basic functions for the rationals
-
 \subsection{Introduction to the FLINT C files}
 The file flint.h contains all the univeral \#defines for flint, including ones that specify how many bits per limb the machine has, whether threads should be used and many other useful pieces of information.
 
-\section{Zpoly}
-The Zpoly interface has functions for doing arithmetic with polynomials defined over integers implemented as GMP mpz\_t's. 
+\section{mpz\_poly}
+The mpz\_poly interface has functions for doing arithmetic with polynomials defined over integers implemented as GMP mpz\_t's. 
 
-The ``alloc'' field of the Zpoly\_t type specifies the number of coefficients which have been allocated and the ``length'' field specifies the current length of the polynomial. Alloc must be at least 1 but length can be 0 for the zero polynomial. Alloc should always be less than or equal to length.
+The ``alloc'' field of the mpz\_poly\_t type specifies the number of coefficients which have been allocated and the ``length'' field specifies the current length of the polynomial. Alloc must be at least 1 but length can be 0 for the zero polynomial. Alloc should always be less than or equal to length.
 
-The module is divided into two halves. The first half implements functions beginning Zpoly, which manage everything for the user. In particular, if the result of a function returns a polynomial which is too long to fit in the allocated space of the output polynomial the whole output polynomial is reallocated automatically.
+\section{fmpz\_poly}
+The fmpz\_poly interface has functions for doing arithmetic with polynomials defined over integers implemented as a special flint type which has a sign and magnitude. Each coefficient has a sign limb, followed by zero or more limbs (the number of which is specified by the absolute value of the sign limb) which contain a multiprecision coefficient. If the coefficient is zero, the sign limb is zero. If the sign limb is negative, the coefficient is interpreted to be negative, etc.
 
-The other half of the module implements functions beginning \_Zpoly. These functions do not allocate extra space and require the user to do the allocation in advance.
+However, each coefficient is allocated exactly the same number of limbs (even if not all of them are used in each coefficient). The number of limbs allocated for each limb (excluding the sign limb) is specified in the ``limbs'' field of the fmpz\_poly\_t type. The length of the polynomial is given by the ``length'' field and the ``alloc'' field specifies the number of currently allocated coefficients (length should always be less than or equal to alloc). Alloc may be 0 and length can be 0 for the zero polynomial. 
 
-The Zpoly module will contain the following functions:
+The fmpz\_poly module is divided into two halves. The first half implements functions beginning fmpz\_poly, which manage everything for the user. In particular, if the result of a function returns a polynomial which is too long to fit in the allocated space of the output polynomial the whole output polynomial is reallocated automatically.
 
-mpz\_t* \_Zpoly\_get\_coeff\_ptr(Zpoly\_t poly, unsigned long n)
+The other half of the module implements functions beginning \_fmpz\_poly. These functions do not allocate extra space and require the user to do the allocation in advance. This includes increasing the number of allocated coefficients and increasing the number of limbs allocated for each coefficient, as necessary.
 
-void \_Zpoly\_get\_coeff(mpz\_t output, Zpoly\_t poly, unsigned long n)
-
-unsigned long \_Zpoly\_get\_coeff\_ui(Zpoly\_t poly, unsigned long n)
-
-long \_Zpoly\_get\_coeff\_si(Zpoly\_t poly, unsigned long n)
-
-void \_Zpoly\_set\_coeff(Zpoly\_t poly, unsigned long n, mpz\_t x)
-
-void \_Zpoly\_set\_coeff\_ui(Zpoly\_t poly, unsigned long n,
-
-void \_Zpoly\_set\_coeff\_si(Zpoly\_t poly, unsigned long n, long x)
-
-void \_Zpoly\_normalise(Zpoly\_t poly);
-
-long \_Zpoly\_get\_degree(Zpoly\_t poly);
-
-unsigned long \_Zpoly\_get\_length(Zpoly\_t poly);
-
-void \_Zpoly\_set(Zpoly\_t output, Zpoly\_t input);
-
-void \_Zpoly\_zero(Zpoly\_t output)
-
-void \_Zpoly\_swap(Zpoly\_t x, Zpoly\_t y)
-
-int \_Zpoly\_equal(Zpoly\_t input1, Zpoly\_t input2);
-
-void \_Zpoly\_add(Zpoly\_t output, Zpoly\_t input1, Zpoly\_t input2);
-
-void \_Zpoly\_sub(Zpoly\_t output, Zpoly\_t input1, Zpoly\_t input2);
-
-void \_Zpoly\_negate(Zpoly\_t output, Zpoly\_t input);
-
-void \_Zpoly\_scalar\_mul(Zpoly\_t poly, mpz\_t x);
-
-void \_Zpoly\_scalar\_mul\_ui(Zpoly\_t poly, unsigned long x);
-
-void \_Zpoly\_scalar\_mul\_si(Zpoly\_t poly, long x);
-
-void \_Zpoly\_scalar\_div(Zpoly\_t poly, mpz\_t x);
-
-void \_Zpoly\_scalar\_div\_ui(Zpoly\_t poly, unsigned long x);
-
-void \_Zpoly\_mul(Zpoly\_t output, Zpoly\_t input1, Zpoly\_t input2);
-
-void \_Zpoly\_mul\_naive(Zpoly\_t output, Zpoly\_t input1, Zpoly\_t input2);
-
-void \_Zpoly\_mul\_karatsuba(Zpoly\_t output, Zpoly\_t input1, Zpoly\_t input2);
-
-void \_Zpoly\_sqr(Zpoly\_t output, Zpoly\_t input);
-
-void \_Zpoly\_sqr\_naive(Zpoly\_t output, Zpoly\_t input);
-
-void \_Zpoly\_sqr\_karatsuba(Zpoly\_t output, Zpoly\_t input);
-
-void \_Zpoly\_left\_shift(Zpoly\_t output, Zpoly\_t input, unsigned long n);
-
-void \_Zpoly\_right\_shift(Zpoly\_t output, Zpoly\_t input, unsigned long n);
-
-void \_Zpoly\_div(Zpoly\_t quotient, Zpoly\_t input1, Zpoly\_t input2);
-
-void \_Zpoly\_rem(Zpoly\_t remainder, Zpoly\_t input1, Zpoly\_t input2);
-
-void \_Zpoly\_div\_rem(Zpoly\_t quotient, Zpoly\_t remainder, Zpoly\_t input1, Zpoly\_t input2);
-
-void \_Zpoly\_gcd(Zpoly\_t output, Zpoly\_t input1, Zpoly\_t input2);
-
-void \_Zpoly\_xgcd(Zpoly\_t a, Zpoly\_t b, Zpoly\_t output, Zpoly\_t input1, Zpoly\_t input2);
-
-void \_Zpoly\_content(mpz\_t content, Zpoly\_t a);
-
-\vspace{10mm}
-
-void Zpoly\_init(Zpoly\_t poly);
-
-void Zpoly\_init2(Zpoly\_t poly, unsigned long alloc);
-
-void Zpoly\_init3(Zpoly\_t poly, unsigned long alloc, unsigned long coeff\_bits);
-
-void Zpoly\_realloc(Zpoly\_t poly, unsigned long alloc);
-
-void Zpoly\_ensure\_space(Zpoly\_t poly, unsigned long alloc)
-
-void Zpoly\_clear(Zpoly\_t poly);
-
-\vspace{5mm}
-
-along with Zpoly versions of all the \_Zpoly functions.
-
-\section{Zpoly\_mpn}
-The Zpoly\_mpn interface has functions for doing arithmetic with polynomials defined over integers implemented as a special flint type which has a sign and magnitude. Each coefficient has a sign limb, followed by zero or more limbs (the number of which is specified by the absolute value of the sign limb) which contain a multiprecision coefficient. If the coefficient is zero, the sign limb is zero. If the sign limb is negative, the coefficient is interpreted to be negative, etc.
-
-However, each coefficient is allocated exactly the same number of limbs (even if not all of them are used in each coefficient). The number of limbs allocated for each limb (excluding the sign limb) is specified in the ``limbs'' field of the Zpoly\_mpn\_t type. The length of the polynomial is given by the ``length'' field and the ``alloc'' field specifies the number of currently allocated coefficients (length should always be less than or equal to alloc). Alloc must be at least 1 but length can be 0 for the zero polynomial. 
-
-The Zpoly\_mpn module is divided into two halves. The first half implements functions beginning Zpoly\_mpn, which manage everything for the user. In particular, if the result of a function returns a polynomial which is too long to fit in the allocated space of the output polynomial the whole output polynomial is reallocated automatically.
-
-The other half of the module implements functions beginning \_Zpoly\_mpn. These functions do not allocate extra space and require the user to do the allocation in advance. This includes increasing the number of allocated coefficients and increasing the number of limbs allocated for each coefficient, as necessary.
-
-The useful feature of the \_Zpoly\_mpn functions is that one can specify a subset of the coefficients of a polynomial and operate on just those coefficients without copying them out to another polynomial first. As such, no such function should modify the ``limbs'' field of any Zpoly\_mpn\_t's that are passed to it. These functions should also never even look at the ``alloc'' field, since it is not even guaranteed to be set. 
-
-The Zpoly\_mpn module will contain the following functions:
-
-\vspace{5mm}
-
-void \_Zpoly\_mpn\_convert\_out(Zpoly\_t poly\_mpz, Zpoly\_mpn\_t poly\_mpn);
-
-void \_Zpoly\_mpn\_convert\_in(Zpoly\_mpn\_t poly\_mpn, Zpoly\_t poly\_mpz);
-                     
-mp\_limb\_t \* \_Zpoly\_mpn\_get\_coeff\_ptr(Zpoly\_mpn\_t poly, unsigned long n)
-
-long \_Zpoly\_mpn\_get\_coeff(mp\_limb\_t \* output, Zpoly\_mpn\_t poly, unsigned long n)
-
-unsigned long \_Zpoly\_mpn\_get\_coeff\_ui(Zpoly\_mpn\_t poly, unsigned long n)
-
-long \_Zpoly\_mpn\_get\_coeff\_si(Zpoly\_mpn\_t poly, unsigned long n)
-
-void \_Zpoly\_mpn\_set\_coeff(Zpoly\_mpn\_t poly, unsigned long n, mp\_limb\_t \* x, long sign, unsigned long size)
-
-void \_Zpoly\_mpn\_set\_coeff\_ui(Zpoly\_mpn\_t poly, unsigned long n, unsigned long x);
-
-void \_Zpoly\_mpn\_set\_coeff\_si(Zpoly\_mpn\_t poly, unsigned long n, long x);
-
-void \_Zpoly\_mpn\_normalise(Zpoly\_mpn\_t poly);
-
-long \_Zpoly\_mpn\_degree(Zpoly\_mpn\_t poly)
-
-unsigned long \_Zpoly\_mpn\_length(Zpoly\_mpn\_t poly)
-
-unsigned long \_Zpoly\_mpn\_limbs(Zpoly\_mpn\_t poly)
-
-long Zpoly\_mpn\_degree(Zpoly\_mpn\_t poly);
-
-unsigned long Zpoly\_mpn\_length(Zpoly\_mpn\_t poly);
-
-void \_Zpoly\_mpn\_set(Zpoly\_mpn\_t output, Zpoly\_mpn\_t input);
-
-void \_Zpoly\_mpn\_zero(Zpoly\_mpn\_t output)
-
-void \_Zpoly\_mpn\_swap(Zpoly\_mpn\_t x, Zpoly\_mpn\_t y);
-
-int \_Zpoly\_mpn\_equal(Zpoly\_mpn\_p input1, Zpoly\_mpn\_p input2);
-
-void \_Zpoly\_mpn\_negate(Zpoly\_mpn\_t output, Zpoly\_mpn\_t input);
-
-void \_Zpoly\_mpn\_add(Zpoly\_mpn\_t output, Zpoly\_mpn\_t input1, Zpoly\_mpn\_t input2);
-
-void \_Zpoly\_mpn\_sub(Zpoly\_mpn\_t output, Zpoly\_mpn\_t input1, Zpoly\_mpn\_t input2);
-
-void \_Zpoly\_mpn\_scalar\_mul(Zpoly\_mpn\_t output, Zpoly\_mpn\_t poly, mp\_limb\_t \* x);
-
-void \_Zpoly\_mpn\_scalar\_mul\_ui(Zpoly\_mpn\_t output, Zpoly\_mpn\_t poly, unsigned long x);
-
-void \_Zpoly\_mpn\_scalar\_mul\_si(Zpoly\_mpn\_t output, Zpoly\_mpn\_t poly, long x);
-
-void \_Zpoly\_mpn\_scalar\_div(Zpoly\_mpn\_t output, Zpoly\_mpn\_t poly, mp\_limb\_t \* x);
-
-void \_Zpoly\_mpn\_scalar\_div\_ui(Zpoly\_mpn\_t output, Zpoly\_mpn\_t poly, unsigned long x);
-
-void \_Zpoly\_mpn\_scalar\_div\_si(Zpoly\_mpn\_t output, Zpoly\_mpn\_t poly, long x);
-
-void \_Zpoly\_mpn\_scalar\_div\_exact\_ui(Zpoly\_mpn\_t output, Zpoly\_mpn\_t poly, unsigned long x);
-
-void \_Zpoly\_mpn\_scalar\_div\_exact\_si(Zpoly\_mpn\_t output, Zpoly\_mpn\_t poly, long x);
-
-void \_Zpoly\_mpn\_mul(Zpoly\_mpn\_t output, Zpoly\_mpn\_t input1, Zpoly\_mpn\_t input2);
-
-void \_Zpoly\_mpn\_mul\_naive(Zpoly\_mpn\_t output, Zpoly\_mpn\_t input1, Zpoly\_mpn\_t input2);
-
-void \_Zpoly\_mpn\_mul\_karatsuba(Zpoly\_mpn\_t output, Zpoly\_mpn\_t input1, Zpoly\_mpn\_t input2);
-
-void \_Zpoly\_mpn\_sqr(Zpoly\_mpn\_t output, Zpoly\_mpn\_t input);
-
-void \_Zpoly\_mpn\_sqr\_naive(Zpoly\_mpn\_t output, Zpoly\_mpn\_t input);
-
-void \_Zpoly\_mpn\_sqr\_karatsuba(Zpoly\_mpn\_t output, Zpoly\_mpn\_t input);
-
-void \_Zpoly\_mpn\_left\_shift(Zpoly\_mpn\_t output, Zpoly\_mpn\_t input, unsigned long n);
-
-void \_Zpoly\_mpn\_right\_shift(Zpoly\_mpn\_t output, Zpoly\_mpn\_t input, unsigned long n);
-
-void \_Zpoly\_mpn\_div(Zpoly\_mpn\_t quotient, Zpoly\_mpn\_t input1, Zpoly\_mpn\_t input2);
-
-void \_Zpoly\_mpn\_rem(Zpoly\_mpn\_t remainder, Zpoly\_mpn\_t input1, Zpoly\_mpn\_t input2);
-
-void \_Zpoly\_mpn\_div\_rem(Zpoly\_mpn\_t quotient, Zpoly\_mpn\_t remainder, Zpoly\_mpn\_t input1, Zpoly\_mpn\_t input2);
-
-void \_Zpoly\_mpn\_gcd(Zpoly\_mpn\_t output, Zpoly\_mpn\_t input1, Zpoly\_mpn\_t input2);
-
-void \_Zpoly\_mpn\_xgcd(Zpoly\_mpn\_t a, Zpoly\_mpn\_t b, Zpoly\_mpn\_t output, Zpoly\_mpn\_t input1, Zpoly\_mpn\_t input2);
-
-void \_Zpoly\_mpn\_content(mp\_limb\_t \* content, Zpoly\_mpn\_t a);
-
-\vspace{10mm}
-
-void Zpoly\_mpn\_init(Zpoly\_mpn\_t poly, unsigned long alloc, unsigned long limbs);
-                                              
-void Zpoly\_mpn\_realloc(Zpoly\_mpn\_t poly, unsigned long alloc);
-
-void Zpoly\_mpn\_clear(Zpoly\_mpn\_t poly);
-
-\vspace{5mm}
-
-along with versions of all the \_Zpoly\_mpn functions for the Zpoly layer.
-
+The useful feature of the \_fmpz\_poly functions is that one can specify a subset of the coefficients of a polynomial and operate on just those coefficients without copying them out to another polynomial first. As such, no such function should modify the ``limbs'' field of any fmpz\_poly\_t's that are passed to it. These functions should also never even look at the ``alloc'' field, since it is not even guaranteed to be set. 
 
 \end{document}
