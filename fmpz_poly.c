@@ -1041,9 +1041,7 @@ void fmpz_poly_unsplit(ZmodF_poly_t poly_f, fmpz_poly_t poly_fmpz,
 
 void _fmpz_poly_stack_init(fmpz_poly_t poly, const unsigned long alloc, const unsigned long limbs)
 {
-   FLINT_ASSERT(limbs >= 1);
-
-   if (alloc) poly->coeffs = (fmpz_t) flint_stack_alloc(alloc*(limbs+1));
+   if ((alloc) && (limbs)) poly->coeffs = (fmpz_t) flint_stack_alloc(alloc*(limbs+1));
    else poly->coeffs = NULL;
    
    poly->alloc = alloc;
@@ -1051,9 +1049,10 @@ void _fmpz_poly_stack_init(fmpz_poly_t poly, const unsigned long alloc, const un
    poly->limbs = limbs;
 }
 
-void _fmpz_poly_stack_clear(const fmpz_poly_t poly)
+void _fmpz_poly_stack_clear(fmpz_poly_t poly)
 {
    if (poly->coeffs) flint_stack_release();
+   poly->coeffs = NULL;
 }
 
 void _fmpz_poly_check(const fmpz_poly_t poly)
@@ -1747,7 +1746,7 @@ void _fmpz_poly_scalar_mul_si(fmpz_poly_t output, const fmpz_poly_t poly, const 
    Scalar multiplication of a polynomial by a scalar
 */
 
-void _fmpz_poly_scalar_mul(fmpz_poly_t output, const fmpz_poly_t poly, const fmpz_t x)
+void _fmpz_poly_scalar_mul_fmpz(fmpz_poly_t output, const fmpz_poly_t poly, const fmpz_t x)
 {
    if (poly->length == 0)
    {
@@ -2195,7 +2194,7 @@ void _fmpz_poly_scalar_div_si(fmpz_poly_t output, const fmpz_poly_t poly, const 
    Divide each coefficient of poly by scalar. Rounds towards minus infinity.
 */
 
-void _fmpz_poly_scalar_div(fmpz_poly_t output, const fmpz_poly_t poly, const fmpz_t scalar)
+void _fmpz_poly_scalar_div_fmpz(fmpz_poly_t output, const fmpz_poly_t poly, const fmpz_t scalar)
 {
    if (scalar[0] == 1L) 
    {
@@ -4061,7 +4060,7 @@ void fmpz_poly_resize_limbs(fmpz_poly_t poly, const unsigned long limbs)
    {
       if (limbs == poly->limbs) return;
       
-      unsigned long i;
+      unsigned long i = 0;
       fmpz_t coeff_i;
       fmpz_t coeff_i_old = poly->coeffs;
       
@@ -4078,16 +4077,19 @@ void fmpz_poly_resize_limbs(fmpz_poly_t poly, const unsigned long limbs)
          } 
       } else
       {
-         fmpz_t temp_coeffs = (mp_limb_t*) flint_heap_alloc(poly->alloc*(limbs+1));
-         coeff_i = temp_coeffs;
-         for (i = 0; i < poly->length; i++)
+         if (poly->alloc)
          {
-            F_mpn_copy(coeff_i, coeff_i_old, poly->limbs+1);
-            coeff_i += (limbs+1);
-            coeff_i_old += (poly->limbs+1);
-         } 
-         if (poly->coeffs) flint_heap_free(poly->coeffs);
-         poly->coeffs = temp_coeffs;
+            fmpz_t temp_coeffs = (mp_limb_t*) flint_heap_alloc(poly->alloc*(limbs+1));
+            coeff_i = temp_coeffs;
+            for (i = 0; i < poly->length; i++)
+            {
+               F_mpn_copy(coeff_i, coeff_i_old, poly->limbs+1);
+               coeff_i += (limbs+1);
+               coeff_i_old += (poly->limbs+1);
+            } 
+            if (poly->coeffs) flint_heap_free(poly->coeffs);
+            poly->coeffs = temp_coeffs;
+         }
       }
       for ( ; i < poly->alloc; i++)
       {
@@ -4390,7 +4392,7 @@ void fmpz_poly_scalar_mul_si(fmpz_poly_t output,
    _fmpz_poly_scalar_mul_si(output, input, x);
 }
 
-void fmpz_poly_scalar_mul(fmpz_poly_t output, 
+void fmpz_poly_scalar_mul_fmpz(fmpz_poly_t output, 
                           const fmpz_poly_t input, const fmpz_t x)
 {
    if ((input->length == 0) || (x[0] == 0))
@@ -4431,7 +4433,7 @@ void fmpz_poly_scalar_mul(fmpz_poly_t output,
       fmpz_poly_fit_limbs(output, ((top_bits + x_bits - 1) >> FLINT_LG_BITS_PER_LIMB) + 1);
    }
    
-   _fmpz_poly_scalar_mul(output, input, x);
+   _fmpz_poly_scalar_mul_fmpz(output, input, x);
 }
 
 void fmpz_poly_scalar_mul_mpz(fmpz_poly_t output, 
@@ -4444,11 +4446,11 @@ void fmpz_poly_scalar_mul_mpz(fmpz_poly_t output,
    }
    fmpz_t x_fmpz = fmpz_stack_init(mpz_size(x));
    mpz_to_fmpz(x_fmpz, x);   
-   fmpz_poly_scalar_mul(output, input, x_fmpz);
+   fmpz_poly_scalar_mul_fmpz(output, input, x_fmpz);
    fmpz_stack_release();
 }
 
-void fmpz_poly_scalar_div(fmpz_poly_t output, 
+void fmpz_poly_scalar_div_fmpz(fmpz_poly_t output, 
                           const fmpz_poly_t input, const fmpz_t x)
 {
    if (input->length == 0)
@@ -4465,7 +4467,7 @@ void fmpz_poly_scalar_div(fmpz_poly_t output,
    if (inlimbs >= xlimbs) fmpz_poly_fit_limbs(output, inlimbs - xlimbs + 1);
    else fmpz_poly_fit_limbs(output, 1);
    
-   _fmpz_poly_scalar_div(output, input, x);
+   _fmpz_poly_scalar_div_fmpz(output, input, x);
 }
 
 void fmpz_poly_scalar_div_mpz(fmpz_poly_t output, 
@@ -4478,7 +4480,7 @@ void fmpz_poly_scalar_div_mpz(fmpz_poly_t output,
    }
    fmpz_t x_fmpz = fmpz_stack_init(mpz_size(x));
    mpz_to_fmpz(x_fmpz, x);   
-   fmpz_poly_scalar_div(output, input, x_fmpz);
+   fmpz_poly_scalar_div_fmpz(output, input, x_fmpz);
    fmpz_stack_release();
 }
 
@@ -4686,7 +4688,7 @@ void fmpz_poly_divrem_classical(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_poly_t 
          NORM(coeff_Q);
          
          fmpz_poly_init2(qB, B->length, B->limbs+ABS(coeff_Q[0]));
-         _fmpz_poly_scalar_mul(qB, B, coeff_Q); 
+         _fmpz_poly_scalar_mul_fmpz(qB, B, coeff_Q); 
          
          fmpz_poly_fit_limbs(R, qB->limbs+1);
          coeffs_R = R->coeffs;
@@ -4828,7 +4830,7 @@ void fmpz_poly_divrem_classical_low(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_pol
          temp->coeffs = B->coeffs;
          temp->length = B->length - 1;
          temp->limbs = B->limbs;
-         _fmpz_poly_scalar_mul(qB, temp, coeff_Q); 
+         _fmpz_poly_scalar_mul_fmpz(qB, temp, coeff_Q); 
          
          fmpz_poly_fit_limbs(R, qB->limbs+1);
          coeffs_R = R->coeffs;
@@ -4985,7 +4987,7 @@ void fmpz_poly_div_classical(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly
             R_sub->coeffs = B->coeffs + (B->length - length)*(B->limbs + 1);
             R_sub->limbs = B->limbs;
             R_sub->length = length;
-            _fmpz_poly_scalar_mul(qB, R_sub, coeff_Q); 
+            _fmpz_poly_scalar_mul_fmpz(qB, R_sub, coeff_Q); 
             
             fmpz_poly_fit_limbs(R, qB->limbs+1);
             coeffs_R = R->coeffs;
@@ -5945,12 +5947,29 @@ void fmpz_poly_newton_invert(fmpz_poly_t Q_inv, const fmpz_poly_t Q, const unsig
 
 void fmpz_poly_div_series(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t B, const unsigned long n)
 {
+   fmpz_poly_t Ain, Bin;
+   
+   if (A == Q)
+   {
+      _fmpz_poly_stack_init(Ain, A->length, A->limbs);
+      _fmpz_poly_set(Ain, A);
+   } else _fmpz_poly_attach(Ain, A);
+   
+   if (B == Q)
+   {
+      _fmpz_poly_stack_init(Bin, B->length, B->limbs);
+      _fmpz_poly_set(Bin, B);
+   } else _fmpz_poly_attach(Bin, B);
+
    fmpz_poly_t B_inv;
    fmpz_poly_init(B_inv);
-   fmpz_poly_newton_invert(B_inv, B, n);
-   fmpz_poly_mul_trunc_n(Q, B_inv, A, n);
+   fmpz_poly_newton_invert(B_inv, Bin, n);
+   fmpz_poly_mul_trunc_n(Q, B_inv, Ain, n);
    
    fmpz_poly_clear(B_inv);
+
+   if (A == Q) _fmpz_poly_stack_clear(Ain);
+   if (B == Q) _fmpz_poly_stack_clear(Bin);
 }
 
 /*
@@ -6395,14 +6414,14 @@ void fmpz_poly_pseudo_divrem_cohen(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_poly
    
    while ((long) R->length >= (long) B->length)
    {
-      _fmpz_poly_scalar_mul(Q, Q, B_lead);
+      _fmpz_poly_scalar_mul_fmpz(Q, Q, B_lead);
       coeff_Q = coeffs_R + (R->length-1)*size_R;
       fmpz_add(Q->coeffs + (R->length-B->length)*size_Q, Q->coeffs + (R->length-B->length)*size_Q, coeff_Q);
       
       if (B->length > 1)
       {
          fmpz_poly_init2(qB, B->length-1, B->limbs+ABS(coeff_Q[0]));
-         _fmpz_poly_scalar_mul(qB, Bm1, coeff_Q); 
+         _fmpz_poly_scalar_mul_fmpz(qB, Bm1, coeff_Q); 
          fmpz_poly_fit_limbs(R, FLINT_MAX(R->limbs + size_B_lead, qB->limbs) + 1);
       } else
       {
@@ -6411,7 +6430,7 @@ void fmpz_poly_pseudo_divrem_cohen(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_poly
       
       coeffs_R = R->coeffs;
       size_R = R->limbs+1;
-      _fmpz_poly_scalar_mul(R, R, B_lead);
+      _fmpz_poly_scalar_mul_fmpz(R, R, B_lead);
       
       fmpz_poly_t R_sub;
       R_sub->coeffs = coeffs_R+(R->length-B->length)*size_R;
@@ -6434,8 +6453,8 @@ void fmpz_poly_pseudo_divrem_cohen(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_poly
    fmpz_pow_ui(pow, B_lead, e);
    fmpz_poly_fit_limbs(Q, Q->limbs+ABS(pow[0]));
    fmpz_poly_fit_limbs(R, R->limbs+ABS(pow[0]));
-   _fmpz_poly_scalar_mul(Q, Q, pow);
-   _fmpz_poly_scalar_mul(R, R, pow);   
+   _fmpz_poly_scalar_mul_fmpz(Q, Q, pow);
+   _fmpz_poly_scalar_mul_fmpz(R, R, pow);   
    flint_stack_release();
 }
 
@@ -6545,7 +6564,7 @@ void fmpz_poly_pseudo_divrem_shoup(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_poly
       if (B->length > 1) 
       {
          fmpz_poly_init2(qB, Bm1->length, Bm1->limbs+ABS(coeff_Q[0]));
-         _fmpz_poly_scalar_mul(qB, Bm1, coeff_Q); 
+         _fmpz_poly_scalar_mul_fmpz(qB, Bm1, coeff_Q); 
          
          fmpz_poly_fit_limbs(R, FLINT_MAX(R->limbs + size_B_lead, qB->limbs) + 1);
          coeffs_R = R->coeffs;
@@ -6555,7 +6574,7 @@ void fmpz_poly_pseudo_divrem_shoup(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_poly
          R_sub->coeffs = coeffs_R+(coeff-B->length)*size_R;
          R_sub->limbs = R->limbs;
          R_sub->length = B->length-1;
-         if (!lead_is_one) _fmpz_poly_scalar_mul(R_sub, R_sub, B_lead);
+         if (!lead_is_one) _fmpz_poly_scalar_mul_fmpz(R_sub, R_sub, B_lead);
          _fmpz_poly_sub(R_sub, R_sub, qB);
       
          fmpz_poly_clear(qB);
@@ -6711,7 +6730,7 @@ void fmpz_poly_pseudo_divrem_basecase(fmpz_poly_t Q, fmpz_poly_t R,
          scale = 0; 
       } else 
       {   
-         _fmpz_poly_scalar_mul(Q, Q, B_lead);
+         _fmpz_poly_scalar_mul_fmpz(Q, Q, B_lead);
          fmpz_set(coeff_Q, coeff_R);
          scale = 1;
          (*d)++;
@@ -6720,7 +6739,7 @@ void fmpz_poly_pseudo_divrem_basecase(fmpz_poly_t Q, fmpz_poly_t R,
       if (B->length > 1)
       {
          fmpz_poly_init2(qB, B->length-1, B->limbs+ABS(coeff_Q[0]));
-         _fmpz_poly_scalar_mul(qB, Bm1, coeff_Q); 
+         _fmpz_poly_scalar_mul_fmpz(qB, Bm1, coeff_Q); 
       }   
       
       if (scale)
@@ -6728,7 +6747,7 @@ void fmpz_poly_pseudo_divrem_basecase(fmpz_poly_t Q, fmpz_poly_t R,
          fmpz_poly_fit_limbs(R, FLINT_MAX(R->limbs + size_B_lead, qB->limbs) + 1);
          coeffs_R = R->coeffs;
          size_R = R->limbs+1;
-         _fmpz_poly_scalar_mul(R, R, B_lead);
+         _fmpz_poly_scalar_mul_fmpz(R, R, B_lead);
       }
       
       fmpz_poly_t R_sub;
@@ -6866,7 +6885,7 @@ void fmpz_poly_pseudo_div_basecase(fmpz_poly_t Q, unsigned long * d,
          scale = 0; 
       } else 
       {   
-         _fmpz_poly_scalar_mul(Q, Q, B_lead);
+         _fmpz_poly_scalar_mul_fmpz(Q, Q, B_lead);
          fmpz_set(coeff_Q, coeff_R);
          scale = 1;
          (*d)++;
@@ -6877,7 +6896,7 @@ void fmpz_poly_pseudo_div_basecase(fmpz_poly_t Q, unsigned long * d,
          if (B->length > 1)
          {
             fmpz_poly_init2(qB, B->length-1, B->limbs+ABS(coeff_Q[0]));
-            _fmpz_poly_scalar_mul(qB, Bm1, coeff_Q); 
+            _fmpz_poly_scalar_mul_fmpz(qB, Bm1, coeff_Q); 
          }   
       
          if (scale)
@@ -6885,7 +6904,7 @@ void fmpz_poly_pseudo_div_basecase(fmpz_poly_t Q, unsigned long * d,
             fmpz_poly_fit_limbs(R, FLINT_MAX(R->limbs + size_B_lead, qB->limbs) + 1);
             coeffs_R = R->coeffs;
             size_R = R->limbs+1;
-            _fmpz_poly_scalar_mul(R, R, B_lead);
+            _fmpz_poly_scalar_mul_fmpz(R, R, B_lead);
          }
       
          fmpz_poly_t R_sub;
@@ -7009,7 +7028,7 @@ void fmpz_poly_pseudo_divrem_recursive(fmpz_poly_t Q, fmpz_poly_t R, unsigned lo
       fmpz_t pow = (fmpz_t) flint_stack_alloc((bits_B_lead*(*d))/FLINT_BITS+2);
       fmpz_pow_ui(pow, B_lead, *d);
       _fmpz_poly_attach_truncate(temp, A, n1+n2-1);
-      _fmpz_poly_scalar_mul(R, temp, pow);
+      _fmpz_poly_scalar_mul_fmpz(R, temp, pow);
       flint_stack_release();
       
       /*
@@ -7072,7 +7091,7 @@ void fmpz_poly_pseudo_divrem_recursive(fmpz_poly_t Q, fmpz_poly_t R, unsigned lo
       
       fmpz_t pow = (fmpz_t) flint_stack_alloc((bits_B_lead*s1)/FLINT_BITS+2);
       fmpz_pow_ui(pow, B_lead, s1);
-      _fmpz_poly_scalar_mul(t, temp, pow);
+      _fmpz_poly_scalar_mul_fmpz(t, temp, pow);
       flint_stack_release();
    
       fmpz_poly_fit_length(r1, r1->length+shift);
@@ -7106,7 +7125,7 @@ void fmpz_poly_pseudo_divrem_recursive(fmpz_poly_t Q, fmpz_poly_t R, unsigned lo
    
       pow = (fmpz_t) flint_stack_alloc((bits_B_lead*s2)/FLINT_BITS+2);
       fmpz_pow_ui(pow, B_lead, s2);
-      _fmpz_poly_scalar_mul(Q, q1, pow);
+      _fmpz_poly_scalar_mul_fmpz(Q, q1, pow);
       fmpz_poly_clear(q1);
       flint_stack_release();
       _fmpz_poly_left_shift(Q, Q, shift);
@@ -7169,7 +7188,7 @@ void fmpz_poly_pseudo_divrem_recursive(fmpz_poly_t Q, fmpz_poly_t R, unsigned lo
    _fmpz_poly_attach_truncate(temp, A, n2+B->length-1);
    fmpz_t pow = (fmpz_t) flint_stack_alloc((bits_B_lead*s1)/FLINT_BITS+2);
    fmpz_pow_ui(pow, B_lead, s1);
-   _fmpz_poly_scalar_mul(t, temp, pow);
+   _fmpz_poly_scalar_mul_fmpz(t, temp, pow);
    flint_stack_release();
    
    fmpz_poly_fit_length(r1, FLINT_MAX(r1->length+2*n2, d2q1->length+n2));
@@ -7203,7 +7222,7 @@ void fmpz_poly_pseudo_divrem_recursive(fmpz_poly_t Q, fmpz_poly_t R, unsigned lo
    fmpz_poly_fit_limbs(Q, FLINT_MAX(q1->limbs + (s2*bits_B_lead)/FLINT_BITS+1, q2->limbs));
    pow = (fmpz_t) flint_stack_alloc((bits_B_lead*s2)/FLINT_BITS+2);
    fmpz_pow_ui(pow, B_lead, s2);
-   _fmpz_poly_scalar_mul(Q, q1, pow);
+   _fmpz_poly_scalar_mul_fmpz(Q, q1, pow);
    fmpz_poly_clear(q1);
    flint_stack_release();
    _fmpz_poly_left_shift(Q, Q, n2);
@@ -7328,7 +7347,7 @@ void fmpz_poly_pseudo_div_recursive(fmpz_poly_t Q, unsigned long * d, const fmpz
       
       fmpz_t pow = (fmpz_t) flint_stack_alloc((bits_B_lead*s1)/FLINT_BITS+2);
       fmpz_pow_ui(pow, B_lead, s1);
-      _fmpz_poly_scalar_mul(t, temp, pow);
+      _fmpz_poly_scalar_mul_fmpz(t, temp, pow);
       flint_stack_release();
    
       fmpz_poly_fit_length(r1, r1->length+shift);
@@ -7361,7 +7380,7 @@ void fmpz_poly_pseudo_div_recursive(fmpz_poly_t Q, unsigned long * d, const fmpz
    
       pow = (fmpz_t) flint_stack_alloc((bits_B_lead*s2)/FLINT_BITS+2);
       fmpz_pow_ui(pow, B_lead, s2);
-      _fmpz_poly_scalar_mul(Q, q1, pow);
+      _fmpz_poly_scalar_mul_fmpz(Q, q1, pow);
       flint_stack_release();
       fmpz_poly_clear(q1);
       _fmpz_poly_left_shift(Q, Q, shift);
@@ -7424,7 +7443,7 @@ void fmpz_poly_pseudo_div_recursive(fmpz_poly_t Q, unsigned long * d, const fmpz
    _fmpz_poly_attach_truncate(temp, A, n2+B->length-1);
    fmpz_t pow = (fmpz_t) flint_stack_alloc((bits_B_lead*s1)/FLINT_BITS+2);
    fmpz_pow_ui(pow, B_lead, s1);
-   _fmpz_poly_scalar_mul(t, temp, pow);
+   _fmpz_poly_scalar_mul_fmpz(t, temp, pow);
    flint_stack_release();
    
    fmpz_poly_fit_length(r1, FLINT_MAX(r1->length+2*n2, d2q1->length+n2));
@@ -7458,7 +7477,7 @@ void fmpz_poly_pseudo_div_recursive(fmpz_poly_t Q, unsigned long * d, const fmpz
    fmpz_poly_fit_limbs(Q, FLINT_MAX(q1->limbs + (s2*bits_B_lead)/FLINT_BITS+1, q2->limbs));
    pow = (fmpz_t) flint_stack_alloc((bits_B_lead*s2)/FLINT_BITS+2);
    fmpz_pow_ui(pow, B_lead, s2);
-   _fmpz_poly_scalar_mul(Q, q1, pow);
+   _fmpz_poly_scalar_mul_fmpz(Q, q1, pow);
    fmpz_poly_clear(q1);
    flint_stack_release();
    _fmpz_poly_left_shift(Q, Q, n2);
@@ -7585,7 +7604,7 @@ void fmpz_poly_pseudo_div_recursive(fmpz_poly_t Q, unsigned long * d, const fmpz
    temp->limbs = A->limbs;
    fmpz_t pow = (fmpz_t) flint_stack_alloc((bits_B_lead*s1)/FLINT_BITS+2);
    fmpz_pow_ui(pow, B_lead, s1);
-   _fmpz_poly_scalar_mul(t, temp, pow);
+   _fmpz_poly_scalar_mul_fmpz(t, temp, pow);
    flint_stack_release();
    
    temp->coeffs = t->coeffs + 2*n2*(t->limbs+1);
@@ -7626,7 +7645,7 @@ void fmpz_poly_pseudo_div_recursive(fmpz_poly_t Q, unsigned long * d, const fmpz
    
    pow = (fmpz_t) flint_stack_alloc((bits_B_lead*s2)/FLINT_BITS+2);
    fmpz_pow_ui(pow, B_lead, s2);
-   _fmpz_poly_scalar_mul(temp, q1, pow);
+   _fmpz_poly_scalar_mul_fmpz(temp, q1, pow);
    flint_stack_release();
    fmpz_poly_clear(q1);
    *d = s1+s2;

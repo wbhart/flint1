@@ -58,11 +58,81 @@ FLINT is a C library of functions for doing number theory. It is highly optimise
 
 FLINT is currently maintained by William Hart of Warwick University in the UK and David Harvey of Harvard University in the US.
 
-As of version 1.0, FLINT compiles on and supports 32 and 64 bit x86 processors, the G5 and Alpha processors, though in theory it compiles on any machine with gcc version 4.0.1 or later and with GMP version 4.2.1 or later.
+As of version 1.0, FLINT compiles on and supports 32 and 64 bit x86 processors, the G5 and Alpha processors, though in theory it compiles on any machine with gcc version 3.4 or later and with GMP version 4.2.1 or later.
 
-FLINT is supplied as a set of modules, \code{fmpz}, \code{fmpz_poly}, etc., each of which can be linked to a C program making use of their functionality. There are some dependencies amongst the modules, and these are listed in the introductions to the relevant modules below.
+FLINT is supplied as a set of modules, \code{fmpz}, \code{fmpz_poly}, etc., each of which can be linked to a C program making use of their functionality. 
 
 All of the functions in FLINT have a corresponding test function provided in an appropriately named test file, e.g: all the functions in the file \code{fmpz_poly.c} have test functions in the file \code{fmpz_poly-test.c}.
+
+\section{Building and using FLINT}
+
+The easiest way to use FLINT is to build a shared library. Simply download the FLINT tarball and untar it on your system.
+
+Next, set the environment variables \code{FLINT_GMP_LIB_DIR} and \code{FLINT_GMP_INC_DIR} to point to your GMP library and include directories respectively. 
+
+Next type:
+
+\code{source flint_env}
+
+in the trunk directory of the FLINT directory tree. 
+
+Finally type:
+
+\code{make library}
+
+Move the library file \code{libflint.so}, \code{libflint.dll} or \code{libflint.dylib} (depending on your platform) into your library path and move all the .h files in the trunk directory of FLINT into your include path.
+
+Now to use FLINT, simply include the appropriate header files for the FLINT modules you wish to use in your C program. Then compile your program, linking against the FLINT library and GMP with the options \code{-lflint -lgmp}.
+
+\section{Test code}
+Each module of FLINT has an extensive associated test module. We strongly recommend running the test programs before relying on results from FLINT on your system. 
+
+To make the test programs, simply type:
+
+\code{make test}
+
+in the FLINT trunk directory.
+
+The following is a list of the test programs which should be run:
+
+\code{mpn_extras-test}
+
+\code{fmpz_poly-test}
+
+\code{fmpz-test}
+
+\code{ZmodF-test}
+
+\code{ZmodF_poly-test}
+
+\code{mpz_poly-test}
+
+\code{ZmodF_mul-test}
+
+\code{long_extras-test}
+
+\section{Reporting bugs}
+The maintainers wish to be made aware of any and all bugs. Please send an email with your bug report to hart\_wb@yahoo.com.
+
+If possible please include details of your system, version of gcc, version of GMP and precise details of how to replicate the bug.
+
+Note that FLINT needs to be linked against version 4.2.1 or later of GMP and must be compiled with gcc version 3.4 or later.
+
+\section{Example programs}
+
+FLINT comes with a number of example programs to demonstrat current and future FLINT features. To make the example programs, type:
+
+\code{make examples}
+
+The current example programs are:
+
+\code{delta_qexp} Compute the first $n$ terms of the delta function, e.g. \code{delta_qexp 1000000} will compute the first one million terms of the $q$-expansion of delta.
+
+\code{BPTJCubes} Implements the algorithm of Beck, Pine, Tarrant and Jensen for finding solutions to the equation $x^3+y^3+z^3 = k$.
+
+\code{bernoulli} Compute bernoulli numbers modulo a large number of primes.
+
+\code{expmod} Computes a very large modular exponentiation.
 
 \section{The fmpz\_poly module}
 
@@ -71,12 +141,13 @@ The \code{fmpz_poly_t} data type represents elements of $\Z[x]$. It provides rou
 Each coefficient of an \code{fmpz_poly_t} is an integer of the FLINT \code{fmpz_t} type. Each coefficient of an \code{fmpz_poly_t} has the same number of limbs allocated for it, thus \code{fmpz_poly_t} polynomials are useful for dense polynomial arithmetic where the coefficients are not wildly different sizes.
 
 Unless otherwise specified, all functions in this section permit aliasing between their input and output arguments. 
+
 \subsection{Simple example}
 
 The following example computes the square of the polynomial $5x^3 - 1$.
 
 \begin{lstlisting}
-#include "mpz_poly.h"
+#include "fmpz_poly.h"
  ....
 fmpz_poly_t x, y;
 fmpz_poly_init(x);
@@ -97,20 +168,38 @@ The output is:
 7  1 0 0 -10 0 0 25
 \end{lstlisting}
 
-\subsection{Definition of \code{mpz_poly_t}}
+\subsection{Definition of the \code{fmpz} polynomial type}
 
-The \code{fmpz_poly_t} type is a typedef for an array of length 1 of \code{fmpz_poly_struct}'s. This permits passing parameters  of type \code{fmpz_poly_t} `by reference'.
+The \code{fmpz_poly_t} type is a typedef for an array of length 1 of \code{fmpz_poly_struct}'s. This permits passing parameters  of type \code{fmpz_poly_t} `by reference' in a manner similar to the way GMP integers of type \code{mpz_t} can be passed by reference. 
 
-The \code{fmpz_poly_struct} struct has three members:
+In reality one never deals directly with the struct and simply deals with objects of type \code{fmpz_poly_t}. For simplicity we will think of an \code{fmpz_poly_t} as a struct, though in practice to access fields of this struct, one needs to dereference first, e.g. to access the \code{limbs} field of an \code{fmpz_poly_t} called \code{poly1} one writes \code{poly1->limbs}. 
+
+With this way of thinking, \code{fmpz_poly_t} then has four fields:
 \begin{itemize}
-\item \code{mp_limb_t* coeffs}. This array contains all the \code{fmpz_t}'s consecutively.
-\item \code{unsigned long alloc}. The number of coefficients stored in \code{coeffs}.
-\item \code{unsigned long length}. The current length of the polynomial. Always \code{length <= alloc}. This is the zero polynomial if and only if \code{length == 0}. 
+\item \code{mp_limb_t* coeffs}. This array contains all the \code{fmpz_t}'s representing the coefficients of the polynomial, consecutively. The first coefficient represents the constant coefficient of the polynomial.
+\item \code{unsigned long limbs}. The number of limbs allocated for the absolute value of each coefficient. An additional limb per coefficient is also allocated to store the sign/size of the coefficient.
+\item \code{unsigned long alloc}. The maximum number of coefficients which can be stored in \code{coeffs}. The total amount of space allocated in \code{coeffs} is thus \code{alloc*(limbs+1)}.
+\item \code{unsigned long length}. The current length of the polynomial, i.e. the number of coefficients which contain actual data. Always \code{length <= alloc}. The polynomial is the zero polynomial if and only if \code{length == 0}. 
 \end{itemize}
 
 An \code{fmpz_poly_t} is said to be \emph{normalised} if either \code{length == 0}, or if the final coefficient is nonzero. All \code{fmpz_poly} functions expect their inputs to be normalised, and unless otherwise specified they produce output that is normalised. 
 
 It is permissible to access the coefficients directly by modifying the limbs in \code{coeffs}, however if you modify the coefficients in this way, you must ensure that the polynomial is subsequently normalised by calling \code{fmpz_poly_normalise()}.
+
+\subsection{Managed versus unmanaged layer}
+The module \code{fmpz_poly} has two layers, a `managed' and an `unmanaged' layer. Functions in the unmanaged layer are differentiated by having a leading underscore, e.g. \code{_fmpz_poly_add}.
+
+Functions in the managed layer do all the memory management for the user. One does not need to specify the maximum length or number of limbs per coefficient in advance before using a polynomial object. FLINT reallocates space automatically as the computation proceeds, if more space is required. 
+
+As a result of the possible need to reallocate, polynomials modified by functions in the managed layer must have been allocated using the FLINT heap memory manager, i.e. only functions such as \code{fmpz_poly_init}, without the leading underscore, can be used to allocate polynomials for use as \emph{outputs} of managed functions. 
+
+On the other hand, the unmanaged layer does no memory management for the user. Each polynomial must have its coefficient limb size and maximum length set in advance. Both the memory management functions in the unmanaged and the managed layer can be used to this end. In particular the unmanaged layer offers stack based memory management options, though note that no reallocation can occur if this option is used. 
+
+A final benefit of the unmanaged layer is that one can operate on a range of coefficients of a polynomial. Functions are provided for attaching an \code{fmpz_poly_t} object to part of an existing polynomial and acting on that part, as though it were a separate polynomial. This can avoid making unnecessary copies of data and increase the performance of code.
+
+Some functions are available in either the managed or unmanaged layer but not in both.
+
+We now describe the functions available in \code{fmpz_poly}.
 
 \subsection{Initialisation and memory management}
 
@@ -118,12 +207,16 @@ It is permissible to access the coefficients directly by modifying the limbs in 
 void fmpz_poly_init(fmpz_poly_t poly)
 \end{lstlisting}
 \begin{quote}
-Initialise an \code{fmpz_poly_t} for use. All the fields \code{alloc}, \code{length} and \code{limbs} are set to zero. A corresponding call to \code{fmpz_poly_clear} must be made after finishing with the \code{fmpz_poly_t} to free the memory used by the polynomial.
+Initialise an \code{fmpz_poly_t} for use. All the fields \code{alloc}, \code{length} and \code{limbs} of \code{poly} are set to zero. A corresponding call to \code{fmpz_poly_clear} must be made after finishing with the \code{fmpz_poly_t} to free the memory used by the polynomial.
+
+For efficiency reasons, a call to \code{fmpz_poly_init} does not actually allocate any memory for coefficients. Each of the managed functions will automatically allocate any space needed for coefficients and in fact the easiest way to use the managed layer is to let FLINT do all the allocation automatically. 
+
+To this end, a user need only ever make calls to the \code{fmpz_poly_init} and \code{fmpz_poly_clear} memory management functions if they so wish. Naturally, more efficient code may result if the other memory management functions are also used.
 \end{quote}
 
 \begin{lstlisting}
-void fmpz_poly_init2(fmpz_poly_t poly, const unsigned long alloc, 
-                                          const unsigned long limbs)
+void fmpz_poly_init2(fmpz_poly_t poly, unsigned long alloc, 
+                                                unsigned long limbs)
 \end{lstlisting}
 \begin{quote}
 Initialise an \code{fmpz_poly_t} for use, allocating space for \code{alloc} coefficients each with the given number of limbs of space (plus an additional limb for the sign/size limb for each coefficient). The \code{length} field is set to zero. 
@@ -132,40 +225,187 @@ This function should be used when the maximum length of the polynomial and the s
 \end{quote}
 
 \begin{lstlisting}
-void fmpz_poly_realloc(fmpz_poly_t poly, const unsigned long alloc)
+void fmpz_poly_realloc(fmpz_poly_t poly, unsigned long alloc)
 \end{lstlisting}
 \begin{quote}
-Shrink or expand the polynomial so that it has space for \code{alloc} coefficients. If \code{alloc} is less than the current length, the polynomial is truncated (and then normalised), otherwise the coefficients and current length remain unaffected.
+Shrink or expand the polynomial so that it has space for precisely \code{alloc} coefficients. If \code{alloc} is less than the current length, the polynomial is truncated (and then normalised), otherwise the coefficients and current length remain unaffected. 
+
+If the parameter \code{alloc} is zero, any space currently allocated for coefficients in \code{poly} is freed. A subsequent call to \code{fmpz_poly_clear} is still permitted and does nothing.
+
+For performance reasons, if \code{poly->limbs} is currently zero, this function does not do any allocation. A subsequent call to \code{fmpz_poly_fit_limbs} will do the actual allocation.
 \end{quote}
 
 \begin{lstlisting}
-void fmpz_poly_fit_length(fmpz_poly_t poly, const unsigned long alloc)
+void fmpz_poly_fit_length(fmpz_poly_t poly, unsigned long alloc)
 \end{lstlisting}
 \begin{quote}
-Expand the polynomial (if necessary) so that it has space for \code{alloc} coefficients. The coefficients themselves and the current length will remain unaffected.
+Expand the polynomial (if necessary) so that it has space for at least \code{alloc} coefficients. This function will never shrink the memory allocated for coefficients and the contents of the existing coefficients and the current length remain unaffected. 
+
+If the \code{limbs} field of \code{poly} is currently zero, then for performance reasons this function does not actually allocate any space. A subsequent call to \code{fmpz_poly_fit_limbs} will do any actual allocation.
 \end{quote}
 
 \begin{lstlisting}
-void fmpz_poly_resize_limbs(fmpz_poly_t poly, const unsigned long limbs)
+void fmpz_poly_resize_limbs(fmpz_poly_t poly, unsigned long limbs)
 \end{lstlisting}
 \begin{quote}
-Shrink or expand the coefficients so that each of them has space for the given number of limbs. It is required that the existing coefficients still fit into the new limb size. Given this requirement, the coefficients themselves and the current length will remain unaffected.
+Shrink or expand the coefficients so that each of them has space for the given number of limbs. It is required that either the existing coefficients still fit into the new limb size or the parameter \code{limbs} is set to zero. Given the former, the contents of the existing coefficients and the current length will remain unaffected.
+
+If the parameter \code{limbs} is zero then any space currently allocated for coefficients in \code{poly} is freed. A subsequent call to \code{fmpz_poly_clear} is still permitted and does nothing.
+
+If \code{poly->alloc} is currently zero, this function does no allocation.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_poly_fit_limbs(fmpz_poly_t poly, unsigned long limbs)
+\end{lstlisting}
+\begin{quote}
+Expand (if necessary) the coefficients so that each of them has space for the given number of limbs. This function will never shrink coefficients, thus existing coefficients and the current length are always preserved.
+
+For performance reasons, no space is allocated if \code{poly->alloc} is currently zero. A subsequent call to \code{fmpz_poly_fit_length} will do the actual allocation.
 \end{quote}
 
 \begin{lstlisting}
 void fmpz_poly_clear(fmpz_poly_t poly)\end{lstlisting}
 \begin{quote}
-Free all memory used by the polynomial coefficients. The polynomial cannot be used again until a subsequent call to an initialisation function is made.
+Free all memory used by the coefficients of \code{poly}. The polynomial object \code{poly} cannot be used again until a subsequent call to an initialisation function is made.
+\end{quote}
+
+\begin{lstlisting}
+void _fmpz_poly_stack_init(fmpz_poly_t poly, unsigned long alloc,  
+                                                   unsigned long limbs)
+\end{lstlisting}
+\begin{quote}
+Initialise a polynomial, allocating space for \code{alloc} coefficients each taking no more than the given number of limbs of space (plus an additional limb for the sign/size). 
+
+Space is allocated on the FLINT stack, and can only be released by a corresponding call to \code{_fmpz_poly_stack_clear}. 
+
+Polynomials initialised and cleared in this way can only be used by unmanaged functions (with a leading underscore) and as \emph{inputs} to managed functions. Reallocation or changing the number of limbs per coefficient is not permitted.
+
+The \code{alloc} and \code{limbs} parameters of this function may be zero, in which case no memory is actually allocated. A subsequent call to \code{_fmpz_poly_stack_clear} is still permitted, but does nothing.
+\end{quote}
+
+\begin{lstlisting}
+void _fmpz_poly_stack_clear(fmpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Release any space allocated for \code{poly} back to the stack. The stack based memory manager requires that polynomials be released in the opposite order to that in which they were initialised with \code{_fmpz_poly_stack_init}.
 \end{quote}
 
 \subsection{Setting/retrieving coefficients}
 
 \begin{lstlisting}
 void fmpz_poly_get_coeff_mpz(mpz_t x, const fmpz_poly_t poly, 
-                                           const unsigned long n)
+                                                 unsigned long n)
+void _fmpz_poly_get_coeff_mpz(mpz_t x, const fmpz_poly_t poly, 
+                                                 unsigned long n)
 \end{lstlisting}
 \begin{quote}
-Retrieve coefficient $n$ as an \code{mpz_t}. Coefficients are numbered from zero, starting with the constant coefficient.
+Retrieve coefficient $n$ as an \code{mpz_t}. 
+
+Coefficients are numbered from zero, starting with the constant coefficient.
+
+The managed version returns zero when $n >= $ \code{poly->length}. 
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_poly_set_coeff_mpz(fmpz_poly_t poly, unsigned long n, 
+                                                            mpz_t x) 
+void _fmpz_poly_set_coeff_mpz(fmpz_poly_t poly, unsigned long n, 
+                                                            mpz_t x) 
+\end{lstlisting}
+\begin{quote}
+Set coefficient $n$ to the value of the given \code{mpz_t}. 
+
+Coefficients are numbered from zero, starting with the constant coefficient. If $n$ represents a coefficient beyond the current length of \code{poly}, zero coefficients are added in between the existing coefficients and the new coefficient, if required.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_poly_get_coeff_fmpz(fmpz_t x, const fmpz_poly_t poly, 
+                                                 unsigned long n)
+void _fmpz_poly_get_coeff_fmpz(fmpz_t x, const fmpz_poly_t poly, 
+                                                 unsigned long n)
+\end{lstlisting}
+\begin{quote}
+Retrieve coefficient $n$ as an \code{fmpz_t}. 
+
+Coefficients are numbered from zero, starting with the constant coefficient.
+
+It is assumed that the \code{fmpz_t} supplied has already been allocated with sufficient space for the coefficient being retrieved.
+
+The managed version returns zero when $n >= $ \code{poly->length}. 
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_poly_set_coeff_fmpz(fmpz_poly_t poly, unsigned long n, 
+                                                           fmpz_t x) 
+void _fmpz_poly_set_coeff_fmpz(fmpz_poly_t poly, unsigned long n, 
+                                                           fmpz_t x) 
+\end{lstlisting}
+\begin{quote}
+Set coefficient $n$ to the value of the given \code{fmpz_t}. 
+
+Coefficients are numbered from zero, starting with the constant coefficient. If $n$ represents a coefficient beyond the current length of \code{poly}, zero coefficients are added in between the existing coefficients and the new coefficient, if required.
+\end{quote}
+
+\begin{lstlisting}
+unsigned long fmpz_poly_get_coeff_ui(const fmpz_poly_t poly, 
+                                                 unsigned long n)
+unsigned long _fmpz_poly_get_coeff_ui(const fmpz_poly_t poly, 
+                                                 unsigned long n)
+\end{lstlisting}
+\begin{quote}
+Return the absolute value of coefficient $n$ as an \code{unsigned long}.
+
+Coefficients are numbered from zero, starting with the constant coefficient. If the coefficient is longer than a single limb, the first limb is returned.
+
+The managed version returns zero when $n >= $ \code{poly->length}. 
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_poly_set_coeff_ui(fmpz_poly_t poly, unsigned long n, 
+                                                    unsigned long x) 
+void _fmpz_poly_set_coeff_ui(fmpz_poly_t poly, unsigned long n, 
+                                                    unsigned long x) 
+\end{lstlisting}
+\begin{quote}
+Set coefficient $n$ to the value of the given \code{unsigned long}. 
+
+Coefficients are numbered from zero, starting with the constant coefficient. If $n$ represents a coefficient beyond the current length of \code{poly}, zero coefficients are added in between the existing coefficients and the new coefficient, if required.
+\end{quote}
+
+\begin{lstlisting}
+long fmpz_poly_get_coeff_si(const fmpz_poly_t poly, unsigned long n)
+long _fmpz_poly_get_coeff_si(const fmpz_poly_t poly, unsigned long n)
+\end{lstlisting}
+\begin{quote}
+Return the value of coefficient $n$ as a \code{long}.
+
+Coefficients are numbered from zero, starting with the constant coefficient. If the coefficient will not fit into a \code{long}, i.e. if its absolute value takes up more than \code{FLINT_BITS - 1} bits then the result is undefined.
+
+The managed version returns zero when $n >= $ \code{poly->length}. 
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_poly_set_coeff_si(fmpz_poly_t poly, unsigned long n, long x) 
+void _fmpz_poly_set_coeff_si(fmpz_poly_t poly, unsigned long n, long x) 
+\end{lstlisting}
+\begin{quote}
+Set coefficient $n$ to the value of the given \code{long}. 
+
+Coefficients are numbered from zero, starting with the constant coefficient. If $n$ represents a coefficient beyond the current length of \code{poly}, zero coefficients are added in between the existing coefficients and the new coefficient, if required.
+\end{quote}
+
+\begin{lstlisting}
+fmpz_t fmpz_poly_get_coeff_ptr(fmpz_poly_t poly, unsigned long n)
+fmpz_t _fmpz_poly_get_coeff_ptr(fmpz_poly_t poly, unsigned long n)
+
+\end{lstlisting}
+\begin{quote}
+Return a pointer to coefficient $n$ of \code{poly}, cast as an \code{fmpz_t}. This function is provided so that individual coefficients can be operated on by functions in the \code{fmpz} module.
+
+Coefficients are numbered from zero, starting with the constant coefficient. 
+
+The managed version returns NULL when $n >= $ \code{poly->length}. 
 \end{quote}
 
 \subsection{String conversions and I/O}
@@ -178,111 +418,838 @@ All of the functions use the same string representation of polynomials. It is gi
 int fmpz_poly_from_string(fmpz_poly_t poly, const char* s)
 \end{lstlisting}
 \begin{quote}
-Import a polynomial from a string. If the string represented a valid polynomial the function returns 1, otherwise it returns 0.
+Import a polynomial from a string. If the string represents a valid polynomial the function returns 1, otherwise it returns 0.
 \end{quote}
 
 \begin{lstlisting}
 char* fmpz_poly_to_string(const fmpz_poly_t poly)
 \end{lstlisting}
 \begin{quote}
-Convert a polynomial to a string and return a pointer to the string. \end{quote}
+Convert a polynomial to a string and return a pointer to the string. Space is allocated for the string by this function and must be freed when it is no longer used, by a call to \code{free}.\end{quote}
 
 \begin{lstlisting}
-void fmpz_poly_fprint(const fmpz_poly_t poly, FILE* f)\end{lstlisting}
+void fmpz_poly_fprint(const fmpz_poly_t poly, FILE* f)
+\end{lstlisting}
 \begin{quote}
 Convert a polynomial to a string and write it to the given stream. 
 \end{quote}
 
 \begin{lstlisting}
 void fmpz_poly_print(const fmpz_poly_t poly)
+\end{lstlisting}
 \begin{quote}
 Convert a polynomial to a string and write it to \code{stdout}. 
 \end{quote}
 
-\subsection{Length and degree}
-
 \begin{lstlisting}
+void fmpz_poly_fread(fmpz_poly_t poly, FILE* f)
 \end{lstlisting}
 \begin{quote}
+Read a polynomial from the given stream. Return 1 if the data from the stream represented a valid polynomial, otherwise return 0.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_poly_read(fmpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Read a polynomial from \code{stdin}. Return 1 if the data read from \code{stdin} represented a valid polynomial, otherwise return 0.
+\end{quote}
+
+\subsection{Polynomial parameters (length, degree, limbs, etc.)}
+
+\begin{lstlisting}
+long fmpz_poly_degree(const fmpz_poly_t poly)
+long _fmpz_poly_degree(const fmpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Return \code{poly->length - 1}. The zero polynomial is defined to have degree $-1$.
+\end{quote}
+
+\begin{lstlisting}
+unsigned long fmpz_poly_length(const fmpz_poly_t poly)
+unsigned long _fmpz_poly_length(const fmpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Return \code{poly->length}. The zero polynomial is defined to have length $0$.
+\end{quote}
+
+\begin{lstlisting}
+unsigned long fmpz_poly_limbs(const fmpz_poly_t poly)
+unsigned long _fmpz_poly_limbs(const fmpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Return \code{poly->limbs}. 
+
+Each coefficient of \code{poly} is allowed up to this many limbs to store its absolute value, plus an additional limb to store its sign/size. Thus the total memory currently allocated for the storage of coefficients is \code{poly->alloc*(poly->limbs+1)}. 
+\end{quote}
+
+\begin{lstlisting}
+unsigned long fmpz_poly_max_limbs(const fmpz_poly_t poly)
+unsigned long _fmpz_poly_max_limbs(const fmpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Returns the maximum number of limbs required to store the absolute value of coefficients of \code{poly}. This may be less than \code{poly->limbs}.
+\end{quote}
+
+\begin{lstlisting}
+long fmpz_poly_max_bits(const fmpz_poly_t poly)
+long _fmpz_poly_max_bits(const fmpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Computes the maximum number of bits $b$ required to store the absolute value of coefficients of \code{poly}. If all the coefficients of \code{poly} are non-negative, $b$ is returned, otherwise $-b$ is returned. \end{quote}
+
+\begin{lstlisting}
+long fmpz_poly_max_bits1(const fmpz_poly_t poly)
+long _fmpz_poly_max_bits1(const fmpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Computes the maximum number of bits $b$ required to store the absolute value of coefficients of \code{poly}. If all the coefficients of \code{poly} are non-negative, $b$ is returned, otherwise $-b$ is returned. 
+
+The assumption is made that the absolute value of each coefficient fits into an unsigned long. This function will be more efficient than the more general \code{fmpz_poly_max_bits} in this situation.
 \end{quote}
 
 
-\subsection{Assignment}
+\subsection{Assignment and basic manipulation}
 
 \begin{lstlisting}
-void fmpz_poly_swap(fmpz_poly_t x, fmpz_poly_t y)
+void fmpz_poly_set(fmpz_poly_t poly1, const fmpz_poly_t poly2)
+void _fmpz_poly_set(fmpz_poly_t poly1, const fmpz_poly_t poly2)
 \end{lstlisting}
 \begin{quote}
-Efficiently swap two polynomials. The coefficients are not moved in memory, pointers are simply switched. 
+Set polynomial \code{x} equal to the polynomial \code{y}.
 \end{quote}
-
-
-\subsection{Conversions}
 
 \begin{lstlisting}
+void fmpz_poly_swap(fmpz_poly_t poly1, fmpz_poly_t poly2)
+void _fmpz_poly_swap(fmpz_poly_t poly1, fmpz_poly_t poly2)
 \end{lstlisting}
 \begin{quote}
+Efficiently swap two polynomials. The coefficients are not moved in memory, pointers are simply switched. The unmanaged version does not swap the \code{alloc} fields of the polynomials.
 \end{quote}
+
+\begin{lstlisting}
+void fmpz_poly_zero(fmpz_poly_t poly) 
+void _fmpz_poly_zero(fmpz_poly_t poly) 
+\end{lstlisting}
+\begin{quote}
+Set the polynomial to the zero polynomial.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_poly_zero_coeffs(fmpz_poly_t poly, unsigned long n) 
+void _fmpz_poly_zero_coeffs(fmpz_poly_t poly, unsigned long n) 
+\end{lstlisting}
+\begin{quote}
+Set the first $n$ coefficients of \code{poly} to zero. 
+
+This function requires that \code{poly} have space allocated for at least $n$ coefficients.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_poly_neg(fmpz_poly_t poly) 
+void _fmpz_poly_neg(fmpz_poly_t poly) 
+\end{lstlisting}
+\begin{quote}
+Negate the polynomial, i.e. set it to \code{-poly}.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_poly_truncate(fmpz_poly_t poly, const unsigned long trunc)
+void _fmpz_poly_truncate(fmpz_poly_t poly, const unsigned long trunc)
+\end{lstlisting}
+\begin{quote}
+If \code{trunc} is greater than the current length of the polynomial, truncate the polynomial to the given length. Note that as the function normalises its output, the eventual length of the polynomial may be less than \code{trunc}.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_poly_reverse(fmpz_poly_t output, const fmpz_poly_t poly,  
+                                                  unsigned long length) 
+void _fmpz_poly_reverse(fmpz_poly_t output, const fmpz_poly_t poly, 
+                                                  unsigned long length) 
+\end{lstlisting}
+\begin{quote}
+This function considers the polynomial \code{poly} to be of length $n$, notionally truncating and zero padding if required, and reverses the result. Since this function normalises its result the eventual length of \code{output} may be less than \code{length}.
+
+This function requires that \code{output} have space allocated for at least \code{length} coefficients and that \code{output->limbs} is at least \code{poly->limbs}.
+\end{quote}
+
+\subsection{Subpolynomials}
+
+A number of functions are provided for attaching an \code{fmpz_poly_t} object to an existing polynomial or to a range of coefficients of an existing polynomial providing an alias for the original polynomial or part thereof. 
+
+Each of the functions in this section normalise the aliases.
+
+One must take care when manipulating the alias, since manipulating it may leave the original polynomial unnormalised.
+
+One must also be careful that one does not pass a polynomial and an alias for that polynomial to the same function since that function will have no way to tell it is dealing with aliases of the same polynomial.
+
+\begin{lstlisting}
+void _fmpz_poly_attach(fmpz_poly_t output, const fmpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Attach the \code{fmpz_poly_t} object \code{output} to the polynomial \code{poly}. Any changes made to the \code{length} field of \code{output} then do not affect \code{poly}.
+\end{quote}
+
+\begin{lstlisting}
+void _fmpz_poly_attach_shift(fmpz_poly_t output, 
+                              const fmpz_poly_t input, unsigned long n)
+\end{lstlisting}
+\begin{quote}
+Attach the \code{fmpz_poly_t} object \code{output} to \code{poly} but shifted to the left by $n$ coefficients. This is equivalent to notionally shifting the original polynomial right then attaching to the result.
+\end{quote}
+
+\begin{lstlisting}
+void _fmpz_poly_attach_truncate(fmpz_poly_t output, 
+                              const fmpz_poly_t input, unsigned long n)
+\end{lstlisting}
+\begin{quote}
+Attach the \code{fmpz_poly_t} object \code{output} to the first $n$ coefficients of the polynomial \code{poly}. This is equivalent to notionally truncating the original polynomial to $n$ coefficients then attaching to the result.
+\end{quote}
+
+\begin{lstlisting}
+void _fmpz_poly_normalise(fmpz_poly_t poly) 
+\end{lstlisting}
+\begin{quote}
+Normalise the polynomial so that either the polynomial is the zero polynomial or the leading coefficient is not zero. 
+
+Since all other functions in \code{fmpz_poly} assume that input and output polynomials are normalised, this function is only used when manipulating the internals of a polynomial directly or when using subpolynomials.
+\end{quote}
+
+%\subsection{Conversions}
+
+%\begin{lstlisting}
+%\end{lstlisting}
+%\begin{quote}
+%\end{quote}
 
 
 \subsection{Comparison}
 
 
 \begin{lstlisting}
+int fmpz_poly_equal(const fmpz_poly_t poly1, const fmpz_poly_t poly2) 
+int _fmpz_poly_equal(const fmpz_poly_t poly1, const fmpz_poly_t poly2) 
 \end{lstlisting}
 \begin{quote}
-\end{quote}
-
-
-
-\subsection{Addition/subtraction}
-
-
-\begin{lstlisting}
-\end{lstlisting}
-\begin{quote}
+Return 1 if the two polynomials are equal, 0 otherwise.
 \end{quote}
 
 
 \subsection{Shifting}
 
 \begin{lstlisting}
+void fmpz_poly_left_shift(fmpz_poly_t output, 
+                             const fmpz_poly_t poly, unsigned long n) 
+void _fmpz_poly_left_shift(fmpz_poly_t output, 
+                             const fmpz_poly_t poly, unsigned long n) 
 \end{lstlisting}
 \begin{quote}
+Shift poly to the left by $n$ coefficients (multiply by $x^n$) and write the result to \code{output}. Zero coefficients are inserted.
+
+This function requires that \code{output} have space allocated for at least \code{n + poly->length} coefficients.
+
+The parameter $n$ must be non-negative, but can be zero.
 \end{quote}
 
+\begin{lstlisting}
+void fmpz_poly_right_shift(fmpz_poly_t output, 
+                             const fmpz_poly_t poly, unsigned long n) 
+void _fmpz_poly_right_shift(fmpz_poly_t output, 
+                             const fmpz_poly_t poly, unsigned long n) 
+\end{lstlisting}
+\begin{quote}
+Shift poly to the right by $n$ coefficients (divide by $x^n$ and discard the remainder) and write the result to \code{output}. 
+
+The parameter $n$ must be non-negative, but can be zero.
+\end{quote}
+
+
+\subsection{Addition/subtraction}
+
+
+\begin{lstlisting}
+void fmpz_poly_add(fmpz_poly_t output, const fmpz_poly_t poly1, 
+                                              const fmpz_poly_t poly2) 
+void _fmpz_poly_add(fmpz_poly_t output, const fmpz_poly_t poly1,
+                                              const fmpz_poly_t poly2) 
+\end{lstlisting}
+\begin{quote}
+Set the output to the sum of the input polynomials. 
+
+Note that if \code{poly1} and \code{poly2} have the same length, cancellation may occur (if the leading coefficients have the same absolute values but opposite signs) and so the result may have less coefficients than either of the inputs. However, this function requires that the output have space allocated for the number of coefficients of the longest of the input polynomials.
+
+When using the unmanaged version, note that overflow may occur when adding coefficients together and so one additional bit may be required to store the output coefficients than was required in either of the input polynomials. The additional bit is only required in the case that overflow occurs. 
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_poly_sub(fmpz_poly_t output, const fmpz_poly_t poly1, 
+                                              const fmpz_poly_t poly2) 
+void _fmpz_poly_sub(fmpz_poly_t output, const fmpz_poly_t poly1,
+                                              const fmpz_poly_t poly2) 
+\end{lstlisting}
+\begin{quote}
+Set the output to \code{poly1 - poly2}. 
+
+Note that if \code{poly1} and \code{poly2} have the same length, cancellation may occur (if the leading coefficients have the same values) and so the result may have less coefficients than either of the inputs. However, this function requires that the output have space allocated for the number of coefficients of the longest of the input polynomials.
+
+When using the unmanaged version, note that overflow may occur when subtracting coefficients of opposite signs and so one additional bit may be required to store the output coefficients than was required in either of the input polynomials. The additional bit is only required in the case that overflow occurs. 
+\end{quote}
 
 \subsection{Scalar multiplication and division}
 
 \begin{lstlisting}
+void _fmpz_poly_scalar_mul_ui(fmpz_poly_t output, 
+                               const fmpz_poly_t poly, unsigned long x)
+void fmpz_poly_scalar_mul_ui(fmpz_poly_t output, 
+                               const fmpz_poly_t poly, unsigned long x)
 \end{lstlisting}
 \begin{quote}
+Multiply \code{poly} by the \code{unsigned long x} and write the result to \code{output}. 
+
+When using the unmanaged version, the coefficients of \code{output} must have space for the largest output coefficient, i.e. the sum of the number of bits of the absolute values of $x$ and the largest coefficient of \code{poly}.
+\end{quote}
+
+\begin{lstlisting}
+void _fmpz_poly_scalar_mul_si(fmpz_poly_t output, 
+                                        const fmpz_poly_t poly, long x)
+void fmpz_poly_scalar_mul_si(fmpz_poly_t output, 
+                                        const fmpz_poly_t poly, long x)
+\end{lstlisting}
+\begin{quote}
+Multiply \code{poly} by the \code{long x} and write the result to \code{output}. 
+
+When using the unmanaged version, the coefficients of \code{output} must have space for the largest output coefficient, i.e. the sum of the number of bits of the absolute values of $x$ and the largest coefficient of \code{poly}.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_poly_scalar_mul_fmpz(fmpz_poly_t output, 
+                                const fmpz_poly_t poly, const fmpz_t x) 
+void _fmpz_poly_scalar_mul_fmpz(fmpz_poly_t output, 
+                                const fmpz_poly_t poly, const fmpz_t x) 
+\end{lstlisting}
+\begin{quote}
+Multiply \code{poly} by the \code{fmpz_t x} and write the result to \code{output}. 
+
+When using the unmanaged version, the coefficients of \code{output} must have space for the largest output coefficient, i.e. the sum of the number of bits of the absolute values of $x$ and the largest coefficient of \code{poly}.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_poly_scalar_mul_mpz(fmpz_poly_t output, 
+                                const fmpz_poly_t poly, const mpz_t x) 
+\end{lstlisting}
+\begin{quote}
+Multiply \code{poly} by the \code{mpz_t x} and write the result to \code{output}. 
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_poly_scalar_div_ui(fmpz_poly_t output, 
+                               const fmpz_poly_t poly, unsigned long x)
+void _fmpz_poly_scalar_div_ui(fmpz_poly_t output, 
+                               const fmpz_poly_t poly, unsigned long x)
+\end{lstlisting}
+\begin{quote}
+Divide \code{poly} by the \code{unsigned long x}, round quotients towards minus infinity, discard remainders and write the result to \code{output}. 
+
+When using the unmanaged version, the coefficients of \code{output} must have space for the largest input coefficient.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_poly_scalar_div_si(fmpz_poly_t output, 
+                                        const fmpz_poly_t poly, long x)
+void _fmpz_poly_scalar_div_si(fmpz_poly_t output, 
+                                        const fmpz_poly_t poly, long x)
+\end{lstlisting}
+\begin{quote}
+Divide \code{poly} by the \code{long x}, round quotients towards minus infinity, discard remainders and write the result to \code{output}. 
+
+When using the unmanaged version, the coefficients of \code{output} must have space for the largest input coefficient.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_poly_scalar_tdiv_ui(fmpz_poly_t output, 
+                               const fmpz_poly_t poly, unsigned long x)
+void _fmpz_poly_scalar_tdiv_ui(fmpz_poly_t output, 
+                               const fmpz_poly_t poly, unsigned long x)
+\end{lstlisting}
+\begin{quote}
+Divide \code{poly} by the \code{unsigned long x}, round quotients towards zero, discard remainders and write the result to \code{output}. 
+
+When using the unmanaged version, the coefficients of \code{output} must have space for the largest input coefficient.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_poly_scalar_tdiv_si(fmpz_poly_t output, 
+                                        const fmpz_poly_t poly, long x)
+void _fmpz_poly_scalar_tdiv_si(fmpz_poly_t output, 
+                                        const fmpz_poly_t poly, long x)
+\end{lstlisting}
+\begin{quote}
+Divide \code{poly} by the \code{long x}, round quotients towards zero, discard remainders and write the result to \code{output}. 
+
+When using the unmanaged version, the coefficients of \code{output} must have space for the largest input coefficient.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_poly_scalar_div_exact_ui(fmpz_poly_t output, 
+                               const fmpz_poly_t poly, unsigned long x)
+void _fmpz_poly_scalar_div_exact_ui(fmpz_poly_t output, 
+                               const fmpz_poly_t poly, unsigned long x)
+\end{lstlisting}
+\begin{quote}
+Divide \code{poly} by the \code{unsigned long x}. Division is assumed to be exact and the result is undefined otherwise.
+
+When using the unmanaged version, the coefficients of \code{output} must have space for the largest input coefficient.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_poly_scalar_div_exact_si(fmpz_poly_t output, 
+                                        const fmpz_poly_t poly, long x)
+void _fmpz_poly_scalar_div_exact_si(fmpz_poly_t output, 
+                                        const fmpz_poly_t poly, long x)
+\end{lstlisting}
+\begin{quote}
+Divide \code{poly} by the \code{long x}. Division is assumed to be exact and the result is undefined otherwise.
+
+When using the unmanaged version, the coefficients of \code{output} must have space for the largest input coefficient.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_poly_scalar_div_fmpz(fmpz_poly_t output, 
+                                const fmpz_poly_t poly, const fmpz_t x) 
+void _fmpz_poly_scalar_div_fmpz(fmpz_poly_t output, 
+                                const fmpz_poly_t poly, const fmpz_t x) 
+\end{lstlisting}
+\begin{quote}
+Divide \code{poly} by the \code{fmpz_t x}, round quotients towards minus infinity, discard remainders, and write the result to \code{output}. 
+
+When using the unmanaged version, the coefficients of the polynomial  \code{output} must have sufficient space allocated for \code{limbs1 - limbs2 + 1} limbs, where \code{limbs1} is the maximum number of limbs of the coefficients in \code{poly} and \code{limbs2} is the number of limbs required to store the absolute value of $x$.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_poly_scalar_div_mpz(fmpz_poly_t output, 
+                                const fmpz_poly_t poly, const mpz_t x) 
+\end{lstlisting}
+\begin{quote}
+Divide \code{poly} by the \code{mpz_t x}, round quotients towards minus infinity, discard remainders, and write the result to \code{output}. 
 \end{quote}
 
 \subsection{Polynomial multiplication}
 
 \begin{lstlisting}
+void fmpz_poly_mul(fmpz_poly_t output, const fmpz_poly_t poly1, 
+                                              const fmpz_poly_t poly2) 
+void _fmpz_poly_mul(fmpz_poly_t output, const fmpz_poly_t poly1, 
+                                              const fmpz_poly_t poly2) 
 \end{lstlisting}
 \begin{quote}
+Multiply the two given polynomials and return the result in \code{output}.
+
+When using the unmanaged version, the coefficients of the output polynomial may be as large as \code{bits1 + bits2 + bits(length2)} where \code{bits1} is the number of bits of the absolute value of the largest coefficient of \code{poly1}, \code{bits2} is the corresponding thing for \code{poly2}, \code{bits(length2)} is the number of bits in the binary representation of the length of the shortest polynomial.
+
+The length of the output polynomial will be \code{poly1->length + poly2->length - 1}.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_poly_mul_trunc_n(fmpz_poly_t output, 
+     const fmpz_poly_t poly1, const fmpz_poly_t poly2, unsigned long n) 
+void _fmpz_poly_mul_trunc_n(fmpz_poly_t output, 
+     const fmpz_poly_t poly1, const fmpz_poly_t poly2, unsigned long n) 
+\end{lstlisting}
+\begin{quote}
+Multiply the two given polynomials and truncate the result to $n$ coefficients, storing the result in \code{output}. This is sometimes known as a short product.
+
+See \code{_fmpz_poly_mul} for a discussion of how big the output coefficients can be.
+
+The length of the output polynomial will be at most the minimum of $n$ and the value \code{poly1->length + poly2->length - 1}. It is permissible to set $n$ to any non-negative value, however the function is optimised for $n$ about half of \code{poly1->length + poly2->length}.
+
+This function is more efficient than multiplying the two polynomials then truncating. It is the operation used when multiplying power series.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_poly_mul_trunc_left_n(fmpz_poly_t output, 
+     const fmpz_poly_t poly1, const fmpz_poly_t poly2, unsigned long n) 
+void _fmpz_poly_mul_trunc_left_n(fmpz_poly_t output, 
+     const fmpz_poly_t poly1, const fmpz_poly_t poly2, unsigned long n) 
+\end{lstlisting}
+\begin{quote}
+Multiply the two given polynomials storing the result in \code{output}. This function guarantees all the coefficients except the first $n$, which may be arbitrary. This is sometimes known as an opposite short product.
+
+See \code{_fmpz_poly_mul} for a discussion of how big the output coefficients can be.
+
+The length of the output polynomial will be \code{poly1->length + poly2->length - 1} unless $n$ is greater than or equal to this value, in which case it will return the zero polynomial. It is permissible to set $n$ to any non-negative value, however the function is optimised for $n$ about half of \code{poly1->length + poly2->length}.
+
+For short polynomials, this function is more efficient than computing the full product.
 \end{quote}
 
 \subsection{Polynomial division}
 
 \begin{lstlisting}
+void fmpz_poly_divrem(fmpz_poly_t Q, fmpz_poly_t R, 
+                              const fmpz_poly_t A, const fmpz_poly_t B) 
 \end{lstlisting}
+\begin{quote}
+Performs division with remainder in $\Z[x]$. Computes polynomials \code{Q} and \code{R} in $\Z[x]$ such that the equation \code{A = B*Q + R}, holds. All but the final \code{B->length - 1} coefficients of \code{R} will be positive and less than the absolute value of the lead coefficient of \code{B}.
+
+Note that in the special cases where the leading coefficient of \code{B} is $\pm 1$ or \code{A = B*Q} for some polynomial \code{Q}, the result of this function is the same as if the computation had been done over $\Q$.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_poly_div(fmpz_poly_t Q, const fmpz_poly_t A, 
+                                                   const fmpz_poly_t B) 
+\end{lstlisting}
+\begin{quote}
+Performs division without remainder in $\Z[x]$. The computation returns the same result as \code{fmpz_poly_divrem}, but no remainder is computed. This is in general faster than computing quotient and remainder. 
+
+Note that in the special cases where the leading coefficient of \code{B} is $\pm 1$ or \code{A = B*Q} for some polynomial \code{Q}, the result of this function is the same as if the computation had been done over $\Q$. In particular it can be used efficiently for exact division in $\Z[x]$.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_poly_div_series(fmpz_poly_t Q, const fmpz_poly_t A, 
+                                  const fmpz_poly_t B, unsigned long n) 
+\end{lstlisting}
+\begin{quote}
+Performs power series division in $\Z[[x]]$. The function considers the polynomials \code{A} and \code{B} to be power series of length $n$ starting with the constant terms. The function assumes that \code{B} is normalised, i.e. that the constant coefficient is $\pm 1$. The result is truncated to length $n$ regardless of the inputs.
+\end{quote}
+
+\subsection{Pseudo division}
+
+\begin{lstlisting}
+void fmpz_poly_pseudo_divrem(fmpz_poly_t Q, fmpz_poly_t R, 
+           unsigned long * d, const fmpz_poly_t A, const fmpz_poly_t B)
+\end{lstlisting}
+\begin{quote}
+Performs division with remainder of two polynomials in $\Z[x]$, notionally returning the results in $\Q[x]$ (actually in $\Z[x]$ with a single common denominator).
+
+Computes polynomials \code{Q} and \code{R} such that \code{lead(B)^d*A = B*Q + R} where \code{R} has degree less than that of \code{B}.
+
+This function may be used to do division of polynomials in $\Q[x]$ as follows. Suppose polynomials \code{C} and \code{D} are given in $\Q[x]$. 
+
+1) Write \code{C = d1*A} and \code{D = d2*B} for some polynomials \code{A} and \code{B} in $\Z[x]$ and integers \code{d1} and \code{d2}.
+
+2) Use pseudo-division to compute \code{Q} and \code{R} in $\Z[x]$ so that \code{l^d*A = B*Q + R} where \code{l} is the leading coefficient of \code{B}. 
+
+3) We can now write \code{C = (d1/d2*D*Q + d1*R)/l^d}.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_poly_pseudo_div(fmpz_poly_t Q, unsigned long * d, 
+                              const fmpz_poly_t A, const fmpz_poly_t B)
+\end{lstlisting}
+\begin{quote}
+Performs division without remainder of two polynomials in $\Z[x]$, notionally returning the results in $\Q[x]$ (actually in $\Z[x]$ with a single common denominator).
+
+Notionally computes polynomials \code{Q} and \code{R} such that \code{lead(B)^d*A = B*Q + R} where \code{R} has degree less than that of \code{B}, but returns only \code{Q}. This is slightly more efficient than computing the quotient and remainder.
+\end{quote}
+
+\subsection{Powering}
+
+\begin{lstlisting}
+void fmpz_poly_power(fmpz_poly_t output, const fmpz_poly_t poly, 
+                                                     unsigned long exp) 
+\end{lstlisting}
+\begin{quote}
+Raises \code{poly} to the power \code{exp} and writes the result in \code{output}.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_poly_power_trunc_n(fmpz_poly_t output, 
+            const fmpz_poly_t poly, unsigned long exp, unsigned long n) 
+\end{lstlisting}
+\begin{quote}
+Notionally raises \code{poly} to the power \code{exp}, truncates the result to length $n$ and writes the result in \code{output}. This is computed much more efficiently than simply powering the polynomial and truncating.
+
+This function can be used to raise power series to a power in an efficient way.
+\end{quote}
+
+\section{The fmpz module}
+The \code{fmpz} module is designed for manipulation of the FLINT flat multiprecision integer format \code{fmpz_t}. An \code{fmpz_t} is not a struct but merely a pointer to an array of limbs laid out in a certain way.
+
+The first limb is a sign/size limb. If it is 0 the integer represented by the \code{fmpz_t} is 0. The absolute value of the sign/size limb is the number of subsequent limbs that the absolute value of the integer being represented, takes up. The absolute value of the integer is then stored as limbs, least significant limb first, in the subsequent limbs after the sign/size limb. If the sign/size limb is positive, a positive integer is intended and if the sign/size limb is negative the negative integer with the stored absolute value is intended.
+
+The \code{fmpz_t} type is not intended as a standalone integer type. It is intended to be used in composite types such as polynomials and matrices which consist of many integer entries. All memory management is then done by the composite type, not by the \code{fmpz} module itself. Thus, none of the functions in the \code{fmpz} module do automatic memory management. It is up to the user to ensure that output \code{fmpz_t}'s have sufficient space allocated for them.
+
+\subsection{A simple example}
+We start with a simple example of the use of the \code{fmpz} module.
+
+This example sets $x$ to 3 and adds 5 to it.
+
+\begin{lstlisting}
+#include "fmpz.h"
+ ....
+fmpz_t x = fmpz_init(1); // Allocate 1 limb of space
+fmpz_set_ui(x, 3);
+fmpz_add_ui_inplace(x, 5);
+printf("3 + 5 is "); fmpz_print(x); printf("\n");
+fmpz_clear(x);
+\end{lstlisting}
+
+We now discuss the functions available in the \code{fmpz} module.
+
+\subsection{Memory management}
+
+\begin{lstlisting}
+fmpz_t fmpz_init(unsigned long limbs) 
+\end{lstlisting}
+\begin{quote}
+Allocates space for an \code{fmpz_t} with the given number of limbs (plus an additional limb for the sign/size) on the heap and return a pointer to the space.
+\end{quote}
+
+\begin{lstlisting}
+fmpz_t fmpz_realloc(fmpz_t f, unsigned long limbs)
+\end{lstlisting}
+\begin{quote}
+Reallocate the space used by the \code{fmpz_t f} so that it has space for the given number of limbs (plus a sign/size limb). The parameter \code{limbs} must be non-negative. The existing contents of \code{f} are not altered if they still fit in the new size.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_clear(const fmpz_t f)
+\end{lstlisting}
+\begin{quote}
+Free space used by the \code{fmpz_t f}.
+\end{quote}
+
+\begin{lstlisting}
+fmpz_t fmpz_stack_init(unsigned long limbs) 
+\end{lstlisting}
+\begin{quote}
+Allocates space for an \code{fmpz_t} with the given number of limbs (plus an additional limb for the sign/size) on the stack and return a pointer to the space.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_stack_clear(const fmpz_t f)
+\end{lstlisting}
+\begin{quote}
+Return space used by the \code{fmpz_t f} to the stack.
+\end{quote}
+
+\subsection{String operations}
+
+\begin{lstlisting}
+void fmpz_print(const fmpz_t f)
+\end{lstlisting}
+Print the multiprecision integer \code{f}.
 \begin{quote}
 \end{quote}
 
+\subsection{fmpz properties}
 
+\begin{lstlisting}
+unsigned long fmpz_size(const fmpz_t f)
+\end{lstlisting}
+\begin{quote}
+Return the number of limbs used to store the absolute value of the multiprecision integer \code{f}.
+\end{quote}
 
+\begin{lstlisting}
+unsigned long fmpz_bits(const fmpz_t f)
+\end{lstlisting}
+\begin{quote}
+Return the number of bits required to store the absolute value of the multiprecision integer \code{f}.
+\end{quote}
+
+\begin{lstlisting}
+long fmpz_sgn(const fmpz_t f)
+\end{lstlisting}
+\begin{quote}
+Return the size/sign limb of the multiprecision integer. The sign of the sign/size limb is the sign of the multiprecision integer. The absolute value of the sign/size limb is the size in limbs of the absolute value of the multiprecision integer \code{f}. 
+\end{quote}
+
+\subsection{Assignment}
+
+\begin{lstlisting}
+void fmpz_set_ui(fmpz_t res, unsigned long x)
+\end{lstlisting}
+\begin{quote}
+Set the multiprecision integer \code{res} to the \code{unsigned long x}.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_set_si(fmpz_t res, long x)
+\end{lstlisting}
+\begin{quote}
+Set the multiprecision integer \code{res} to the \code{long x}.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_set(fmpz_t res, const fmpz_t f)
+\end{lstlisting}
+\begin{quote}
+Set the multiprecision integer \code{res} to equal the multiprecision integer \code{f}.
+\end{quote}
+
+\subsection{Comparison}
+
+\begin{lstlisting}
+int fmpz_equal(const fmpz_t f1, const fmpz_t f2)
+\end{lstlisting}
+\begin{quote}
+Return 1 if \code{f1} is equal to \code{f2}, otherwise return 0.
+\end{quote}
+
+\begin{lstlisting}
+int fmpz_is_one(const fmpz_t f)
+\end{lstlisting}
+\begin{quote}
+Return 1 if \code{f} is one, otherwise return 0.
+\end{quote}
+
+\begin{lstlisting}
+int fmpz_is_zero(const fmpz_t f)
+\end{lstlisting}
+\begin{quote}
+Return 1 if \code{f} is zero, otherwise return 0.
+\end{quote}
+
+\subsection{Conversion}
+
+\begin{lstlisting}
+void mpz_to_fmpz(fmpz_t res, const mpz_t x)
+\end{lstlisting}
+\begin{quote}
+Convert the \code{mpz_t x} to the \code{fmpz_t res}. 
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_to_mpz(mpz_t res, const fmpz_t f)
+\end{lstlisting}
+\begin{quote}
+Convert the \code{fmpz_t f} to the \code{mpz_t res}. 
+\end{quote}
+
+\subsection{Addition/subtraction}
+
+\begin{lstlisting}
+void fmpz_add(fmpz_t res, const fmpz_t f1, const fmpz_t f2)
+\end{lstlisting}
+\begin{quote}
+Set \code{res} to the sum of \code{f1} and \code{f2}.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_add_ui_inplace(fmpz_t res, unsigned long x)
+\end{lstlisting}
+\begin{quote}
+Set \code{res} to the sum of \code{res} and the \code{unsigned long x}.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_add_ui(fmpz_t res, const fmpz_t f, unsigned long x)
+\end{lstlisting}
+\begin{quote}
+Set \code{res} to the sum of \code{f} and the \code{unsigned long x}.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_sub(fmpz_t res, const fmpz_t f1, const fmpz_t f2)
+\end{lstlisting}
+\begin{quote}
+Set \code{res} to \code{f1} minus \code{f2}.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_sub_ui_inplace(fmpz_t res, unsigned long x)
+\end{lstlisting}
+\begin{quote}
+Set \code{res} to \code{res} minus the \code{unsigned long x}.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_sub_ui(fmpz_t res, const fmpz_t f, unsigned long x)
+\end{lstlisting}
+\begin{quote}
+Set \code{res} to \code{f} minus the \code{unsigned long x}.
+\end{quote}
+
+\subsection{Multiplication}
+
+\begin{lstlisting}
+void fmpz_mul(fmpz_t res, const fmpz_t f1, const fmpz_t f2)
+\end{lstlisting}
+\begin{quote}
+Set \code{res} to \code{f1} times \code{f2}.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_mul_ui(fmpz_t res, const fmpz_t f1, unsigned long x)
+\end{lstlisting}
+\begin{quote}
+Set \code{res} to \code{f1} times the \code{unsigned long x}.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_addmul(fmpz_t res, const fmpz_t f1, const fmpz_t f2)
+\end{lstlisting}
+\begin{quote}
+Set \code{res} to \code{res + f1 * f2}.
+\end{quote}
+
+\subsection{Division}
+
+\begin{lstlisting}
+void fmpz_tdiv(fmpz_t res, const fmpz_t f1, const fmpz_t f2)
+\end{lstlisting}
+\begin{quote}
+Set \code{res} to the quotient of \code{f1} by \code{f2}. Round the quotient towards zero and discard the remainder.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_fdiv(fmpz_t res, const fmpz_t f1, const fmpz_t f2)
+\end{lstlisting}
+\begin{quote}
+Set \code{res} to the quotient of \code{f1} by \code{f2}. Round the quotient towards minus infinity and discard the remainder.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_tdiv_ui(fmpz_t res, const fmpz_t f1, unsigned long x)
+\end{lstlisting}
+\begin{quote}
+Set \code{res} to the quotient of \code{f1} by the unsigned long \code{x}. Round the quotient towards zero and discard the remainder.
+\end{quote}
+
+\subsection{Powering}
+
+\begin{lstlisting}
+void fmpz_pow_ui(fmpz_t res, const fmpz_t f, unsigned long exp)
+\end{lstlisting}
+\begin{quote}
+Set \code{res} to \code{f} raised to the power \code{exp}. This requires \code{exp} to be non-negative.
+\end{quote}
+
+\subsection{Number theoretical}
+
+\begin{lstlisting}
+void fmpz_binomial_next(fmpz_t next, const fmpz_t prev, long n, long k)
+\end{lstlisting}
+\begin{quote}
+Assuming \code{prev} is set to the binomial coefficient \code{bin(n, k-1)} this function returns the binomial coefficient \code{bin(n, k)}. For efficiency reasons, this function requires that \code{next} has space for one more limb than the size of \code{prev}.
+\end{quote}
 
 \subsection{Miscellaneous}
 
 \begin{lstlisting}
+void fmpz_normalise(const fmpz_t f)
 \end{lstlisting}
 \begin{quote}
+Normalise the multiprecision integer \code{f}. 
+
+Since all the functions in \code{fmpz} assume that all inputs are normalised and all outputs are normalised, this function is usually used internally by FLINT or can be used when modifying the internals of an \code{fmpz_t}.
 \end{quote}
 
+\section{The quadratic sieve}
+Currently the quadratic sieve is a standalone program which can be built by typing:
+
+\code{make QS}
+
+in the FLINT trunk directory.
+
+The program is called \code{mpQS}. Upon running it, one enters the number to be factored at the prompt. 
+
+The quadratic sieve requires that the number entered not be a prime, not be a perfect power and it must not have very small factors. Trial division and the elliptic curve method should be run before making a call to the quadratic sieve, to remove small factors. The sieve may fail silently if the conditions are not met.
+
+\section{Large integer multiplication}
+In the module \code{mpn_extras} and \code{mpz_extras} are functions \code{F_mpn_mul} and \code{F_mpz_mul} respectively which are drop in replacements for GMP's \code{mpn_mul} and \code{mpz_mul} respectively. 
+
+These replacement functions are substantially faster than GMP 4.2.1 when multiplying integers which are thousands of limbs in size. For smaller multiplications these functions call their respective GMP counterparts.
 
 \bibliographystyle{amsalpha}
 \bibliography{flint}

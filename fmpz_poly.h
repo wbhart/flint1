@@ -261,7 +261,7 @@ void fmpz_poly_unsplit(ZmodF_poly_t poly_f, fmpz_poly_t poly_fmpz,
 
 void _fmpz_poly_stack_init(fmpz_poly_t poly, const unsigned long alloc, const unsigned long limbs);
 
-void _fmpz_poly_stack_clear(const fmpz_poly_t poly);
+void _fmpz_poly_stack_clear(fmpz_poly_t poly);
 
 void _fmpz_poly_check(const fmpz_poly_t poly);
 
@@ -453,13 +453,13 @@ void _fmpz_poly_add(fmpz_poly_t output, const fmpz_poly_t input1, const fmpz_pol
 
 void _fmpz_poly_sub(fmpz_poly_t output, const fmpz_poly_t input1, const fmpz_poly_t input2);
 
-void _fmpz_poly_scalar_mul(fmpz_poly_t output, const fmpz_poly_t poly, const fmpz_t x);
+void _fmpz_poly_scalar_mul_fmpz(fmpz_poly_t output, const fmpz_poly_t poly, const fmpz_t x);
 
 void _fmpz_poly_scalar_mul_ui(fmpz_poly_t output, const fmpz_poly_t poly, const unsigned long x);
 
 void _fmpz_poly_scalar_mul_si(fmpz_poly_t output, const fmpz_poly_t poly, const long x);
 
-void _fmpz_poly_scalar_div(fmpz_poly_t output, const fmpz_poly_t poly, const fmpz_t x);
+void _fmpz_poly_scalar_div_fmpz(fmpz_poly_t output, const fmpz_poly_t poly, const fmpz_t x);
 
 void _fmpz_poly_scalar_tdiv_ui(fmpz_poly_t output, const fmpz_poly_t poly, const unsigned long x);
 
@@ -836,7 +836,7 @@ void fmpz_poly_right_shift(fmpz_poly_t output, const fmpz_poly_t input, const un
    _fmpz_poly_right_shift(output, input, n);
 }
 
-void fmpz_poly_scalar_mul(fmpz_poly_t output, 
+void fmpz_poly_scalar_mul_fmpz(fmpz_poly_t output, 
                           const fmpz_poly_t input, const fmpz_t x);
                           
 void fmpz_poly_scalar_mul_ui(fmpz_poly_t output, 
@@ -932,7 +932,7 @@ void fmpz_poly_scalar_div_exact_si(fmpz_poly_t output, const fmpz_poly_t poly, c
    _fmpz_poly_scalar_div_exact_si(output, poly, x);
 }
                           
-void fmpz_poly_scalar_div(fmpz_poly_t output, 
+void fmpz_poly_scalar_div_fmpz(fmpz_poly_t output, 
                           const fmpz_poly_t input, const fmpz_t x);
                           
 void fmpz_poly_scalar_div_mpz(fmpz_poly_t output, 

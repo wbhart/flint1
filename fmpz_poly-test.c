@@ -5873,7 +5873,7 @@ int test_fmpz_poly_mul()
    return result;
 }
 
-int test__fmpz_poly_scalar_mul()
+int test__fmpz_poly_scalar_mul_fmpz()
 {
    mpz_poly_t test_poly, test_poly2;
    fmpz_poly_t test_fmpz_poly, test_fmpz_poly2;
@@ -5918,7 +5918,7 @@ int test__fmpz_poly_scalar_mul()
           
           for (unsigned long j = 0; j < 1; j++)
           {
-            _fmpz_poly_scalar_mul(test_fmpz_poly2, test_fmpz_poly, x);
+            _fmpz_poly_scalar_mul_fmpz(test_fmpz_poly2, test_fmpz_poly, x);
             fmpz_poly_check_normalisation(test_fmpz_poly2);
           }
           
@@ -5987,7 +5987,7 @@ int test__fmpz_poly_scalar_mul()
           
           for (unsigned long j = 0; j < 5; j++)
           {
-            _fmpz_poly_scalar_mul(test_fmpz_poly2, test_fmpz_poly, x);
+            _fmpz_poly_scalar_mul_fmpz(test_fmpz_poly2, test_fmpz_poly, x);
             fmpz_poly_check_normalisation(test_fmpz_poly2);
           }
           
@@ -6033,7 +6033,7 @@ int test__fmpz_poly_scalar_mul()
    return result; 
 }
 
-int test__fmpz_poly_scalar_div()
+int test__fmpz_poly_scalar_div_fmpz()
 {
    mpz_poly_t test_poly, test_poly2;
    fmpz_poly_t test_fmpz_poly, test_fmpz_poly2;
@@ -6079,7 +6079,7 @@ int test__fmpz_poly_scalar_div()
           
           for (unsigned long j = 0; j < 5; j++)
           {
-            _fmpz_poly_scalar_div(test_fmpz_poly2, test_fmpz_poly, x);
+            _fmpz_poly_scalar_div_fmpz(test_fmpz_poly2, test_fmpz_poly, x);
             fmpz_poly_check_normalisation(test_fmpz_poly2);
           }
           
@@ -6158,7 +6158,7 @@ int test__fmpz_poly_scalar_div()
           randpoly(test_poly, length, bits); 
           mpz_poly_to_fmpz_poly(test_fmpz_poly, test_poly);
           
-          _fmpz_poly_scalar_div(test_fmpz_poly, test_fmpz_poly, x);
+          _fmpz_poly_scalar_div_fmpz(test_fmpz_poly, test_fmpz_poly, x);
           fmpz_poly_check_normalisation(test_fmpz_poly);
           
           mpz_poly_init(test_poly2);
@@ -6214,7 +6214,7 @@ int test__fmpz_poly_scalar_div()
    return result; 
 }
 
-int test_fmpz_poly_scalar_div()
+int test_fmpz_poly_scalar_div_fmpz()
 {
    mpz_poly_t test_poly, test_poly2;
    fmpz_poly_t test_fmpz_poly, test_fmpz_poly2;
@@ -6258,7 +6258,7 @@ int test_fmpz_poly_scalar_div()
           
           for (unsigned long j = 0; j < 5; j++)
           {
-            fmpz_poly_scalar_div(test_fmpz_poly2, test_fmpz_poly, x);
+            fmpz_poly_scalar_div_fmpz(test_fmpz_poly2, test_fmpz_poly, x);
             fmpz_poly_check_normalisation(test_fmpz_poly2);
           }
           
@@ -6337,7 +6337,7 @@ int test_fmpz_poly_scalar_div()
           randpoly(test_poly, length, bits); 
           mpz_poly_to_fmpz_poly(test_fmpz_poly, test_poly);
           
-          fmpz_poly_scalar_div(test_fmpz_poly, test_fmpz_poly, x);
+          fmpz_poly_scalar_div_fmpz(test_fmpz_poly, test_fmpz_poly, x);
           fmpz_poly_check_normalisation(test_fmpz_poly);
           
           mpz_poly_init(test_poly2);
@@ -6495,7 +6495,7 @@ int test_fmpz_poly_scalar_div_mpz()
    return result; 
 }
 
-int test_fmpz_poly_scalar_mul()
+int test_fmpz_poly_scalar_mul_fmpz()
 {
    mpz_poly_t test_poly, test_poly2;
    fmpz_poly_t test_fmpz_poly, test_fmpz_poly2;
@@ -6538,7 +6538,7 @@ int test_fmpz_poly_scalar_mul()
           
           for (unsigned long j = 0; j < 1; j++)
           {
-             fmpz_poly_scalar_mul(test_fmpz_poly2, test_fmpz_poly, x);
+             fmpz_poly_scalar_mul_fmpz(test_fmpz_poly2, test_fmpz_poly, x);
              fmpz_poly_check_normalisation(test_fmpz_poly2);
           }
           
@@ -6606,7 +6606,7 @@ int test_fmpz_poly_scalar_mul()
           
           for (unsigned long j = 0; j < 5; j++)
           {
-            fmpz_poly_scalar_mul(test_fmpz_poly2, test_fmpz_poly, x);
+            fmpz_poly_scalar_mul_fmpz(test_fmpz_poly2, test_fmpz_poly, x);
             fmpz_poly_check_normalisation(test_fmpz_poly2);
           }
           
@@ -6675,7 +6675,7 @@ int test_fmpz_poly_scalar_mul()
           
           for (unsigned long j = 0; j < 2; j++)
           {
-            fmpz_poly_scalar_mul(test_fmpz_poly2, test_fmpz_poly, x);
+            fmpz_poly_scalar_mul_fmpz(test_fmpz_poly2, test_fmpz_poly, x);
             fmpz_poly_check_normalisation(test_fmpz_poly2);
           }
           
@@ -6741,7 +6741,7 @@ int test_fmpz_poly_scalar_mul()
           randpoly(test_poly, length, bits); 
           mpz_poly_to_fmpz_poly(test_fmpz_poly, test_poly);
           
-          fmpz_poly_scalar_mul(test_fmpz_poly, test_fmpz_poly, x);
+          fmpz_poly_scalar_mul_fmpz(test_fmpz_poly, test_fmpz_poly, x);
           fmpz_poly_check_normalisation(test_fmpz_poly);
           
           mpz_poly_init(test_poly2);
@@ -6805,7 +6805,7 @@ int test_fmpz_poly_scalar_mul()
           randpoly(test_poly, length, bits); 
           mpz_poly_to_fmpz_poly(test_fmpz_poly, test_poly);
           
-          fmpz_poly_scalar_mul(test_fmpz_poly, test_fmpz_poly, x);
+          fmpz_poly_scalar_mul_fmpz(test_fmpz_poly, test_fmpz_poly, x);
           fmpz_poly_check_normalisation(test_fmpz_poly);
           
           mpz_poly_init(test_poly2);
@@ -6869,7 +6869,7 @@ int test_fmpz_poly_scalar_mul()
           randpoly(test_poly, length, bits); 
           mpz_poly_to_fmpz_poly(test_fmpz_poly, test_poly);
           
-          fmpz_poly_scalar_mul(test_fmpz_poly, test_fmpz_poly, x);
+          fmpz_poly_scalar_mul_fmpz(test_fmpz_poly, test_fmpz_poly, x);
           fmpz_poly_check_normalisation(test_fmpz_poly);
           
           mpz_poly_init(test_poly2);
@@ -10476,8 +10476,8 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_poly_scalar_mul_ui);
    RUN_TEST(_fmpz_poly_scalar_mul_si);
    RUN_TEST(fmpz_poly_scalar_mul_si);
-   RUN_TEST(_fmpz_poly_scalar_mul); 
-   RUN_TEST(fmpz_poly_scalar_mul); 
+   RUN_TEST(_fmpz_poly_scalar_mul_fmpz); 
+   RUN_TEST(fmpz_poly_scalar_mul_fmpz); 
    RUN_TEST(fmpz_poly_scalar_mul_mpz); 
    RUN_TEST(_fmpz_poly_scalar_div_exact_ui);
    RUN_TEST(_fmpz_poly_scalar_div_exact_si);
@@ -10485,8 +10485,8 @@ void fmpz_poly_test_all()
    RUN_TEST(_fmpz_poly_scalar_tdiv_ui);
    RUN_TEST(_fmpz_poly_scalar_div_si);
    RUN_TEST(_fmpz_poly_scalar_tdiv_si);
-   RUN_TEST(_fmpz_poly_scalar_div); 
-   RUN_TEST(fmpz_poly_scalar_div); 
+   RUN_TEST(_fmpz_poly_scalar_div_fmpz); 
+   RUN_TEST(fmpz_poly_scalar_div_fmpz); 
    RUN_TEST(fmpz_poly_scalar_div_mpz); 
    RUN_TEST(_fmpz_poly_mul_classical);
    RUN_TEST(_fmpz_poly_mul_classical_trunc);
