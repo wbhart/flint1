@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# (C) 2007, Robert Bradshaw, William Hart, William Stein, Michael Abshoff
+
 if [ "`uname`" = "Linux" -a "`uname -m`" = "x86_64" ]; then
    FLINT_TUNE="-mtune=opteron -march=opteron -funroll-loops "
 elif [ "`uname`" = "Darwin" -a "`uname -m`" = "Power Macintosh" ]; then

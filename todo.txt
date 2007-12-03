@@ -41,7 +41,8 @@ FLINT, etc), in one convenient place. (David)
 large integers. (First check how far along the GMP implementation is, and
 compare it speedwise to MAGMA (which presumably is very fast :-) )
 
- * follow up issue related to arithmetic right shifts --- see NTL's #define for this. Add test code to the build process to check for this.
+ * follow up issue related to arithmetic right shifts --- see NTL's #define for 
+   this. Add test code to the build process to check for this.
 
  * write threadsafe limb allocator 
 
@@ -68,7 +69,8 @@ to add a bit of padding.
 
 === fmpz_poly module ===
 
-* for KS, try the idea where we evaluate X1 = f(2^n)g(2^n), X2 = f(-2^n)g(-2^n) and then reconstruct output from X1+X2 and X1-X2
+* for KS, try the idea where we evaluate X1 = f(2^n)g(2^n), X2 = f(-2^n)g(-2^n) 
+  and then reconstruct output from X1+X2 and X1-X2
 
 * It seems a little nuts to be using ZmodF_poly with a single coefficient
   in _fmpz_poly_mul_KS(). There's something wrong with the code structure here.
@@ -116,7 +118,8 @@ to improve locality.
 
 === ZmodF_poly module ===
 
-* reorganise code to permit doing pointwise mults + inner FFTs + inner IFFTs with better locality
+* reorganise code to permit doing pointwise mults + inner FFTs + inner IFFTs 
+  with better locality
 
 
 === ZmodF_mul module ===
@@ -126,11 +129,13 @@ to improve locality.
 
 === Miscellaneous ===
 
-* Write new faster bitpacking routines - see branch (include support for 32 bit machines)
+* Write new faster bitpacking routines - see branch (include support for 32 
+  bit machines)
 
 * change FLINT_LG_BITS_PER_LIMB to FLINT_LG_BITS, same for BYTES, etc
 
-* use mpn_random2 in more places instead of mpz_randombb, in fact come up with some FLINT wide macros perhaps
+* use mpn_random2 in more places instead of mpz_randombb, in fact come up 
+  with some FLINT wide macros perhaps
 
 * Add documents found by Tomasz to FLINT website
 
@@ -140,7 +145,8 @@ to improve locality.
 
 * Add fpLLL, GMP-ECM, mpfr, gf2x
 
-* Optimise fmpz_poly addition, since it is slower than the mpz_poly version and used by a *lot*
+* Optimise fmpz_poly addition, since it is slower than the mpz_poly version 
+  and used by a *lot*
 
 * Implement odd/even karatsuba
 
@@ -148,7 +154,8 @@ to improve locality.
 
 * Make powering shift when there are trailing zeroes
 
-* Make division code use Newton division when monic B and tune the crossover to Newton division in the other cases
+* Make division code use Newton division when monic B and tune the crossover 
+  to Newton division in the other cases
 
 * Clean up code for classical poly division
 
@@ -162,9 +169,11 @@ to improve locality.
 
 * Add functions to print SAGE prettified polynomials
 
-* Retune almost everything and factor out tuning constants (including the one in flint.h)
+* Retune almost everything and factor out tuning constants (including the one 
+  in flint.h)
 
-* Optimise division functions for small coefficients (precomputed inverses?) and particularly for monic B
+* Optimise division functions for small coefficients (precomputed inverses?) 
+  and particularly for monic B
 
 * Implement Graeffe and Kung's tricks
 
@@ -176,12 +185,47 @@ to improve locality.
 
 * Make QS polynomial selection work for very small factorisations
 
-* Write code to time all manner of basic things such as modmuls, in and out of cache memory acccesses etc
+* Write code to time all manner of basic things such as modmuls, in and out 
+  of cache memory acccesses etc
 
-* Add stack based memory management back into recursive division functions where this improves performance, 
-  but do it neatly and safely perhaps using some macros
+* Add stack based memory management back into recursive division functions 
+  where this improves performance, but do it neatly and safely perhaps using 
+  some macros
 
 * Clean up fmpz_poly by putting as much as possible into fmpz
+
+* Do lots more profiling and put it on the website
+
+* Clean up fmpz_poly test code, making much more of it readable with extensive 
+  use of macros.
+
+* Write aliasing test code for series division
+
+* Fix bug in bernoulli_zmod (with standard memory manager on it gives a glib 
+  corruption error)
+
+* Implement REDC
+
+* Implement a small prime FFT
+
+* Implement middle product for series division
+
+* Reimplement splitting
+
+* Comment code
+
+* Implement algorithms for exact division and exact scalar division
+
+* Implement recursive algorithm to check if polynomial is divisible by another
+
+* Implement Karatsuba and classical squaring algorithms
+
+* Implement power series module
+
+* Hash tables for QS
+
+* Get tinyQS working properly
+
 
 
 
