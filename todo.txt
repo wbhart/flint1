@@ -17,6 +17,7 @@
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 
 ===============================================================================*/
+
 === general stuff ===
 
  * try GREDC algorithm
@@ -129,4 +130,59 @@ to improve locality.
 
 * change FLINT_LG_BITS_PER_LIMB to FLINT_LG_BITS, same for BYTES, etc
 
-* use mpn_random2 in more places instead of mpz_randombb 
+* use mpn_random2 in more places instead of mpz_randombb, in fact come up with some FLINT wide macros perhaps
+
+* Add documents found by Tomasz to FLINT website
+
+* Add basic non-truncated non-cache friendly FFT and convolution.
+
+* Add hard coded small FFT's, etc.
+
+* Add fpLLL, GMP-ECM, mpfr, gf2x
+
+* Optimise fmpz_poly addition, since it is slower than the mpz_poly version and used by a *lot*
+
+* Implement odd/even karatsuba
+
+* Make multiplication shift when there are trailing zeroes
+
+* Make powering shift when there are trailing zeroes
+
+* Make division code use Newton division when monic B and tune the crossover to Newton division in the other cases
+
+* Clean up code for classical poly division
+
+* Clean up and factor out the tuning code for integer multiplication
+
+* Clean up recursive poly multiplication code
+
+* Add poly GCD
+
+* Add functions for converting to NTL format
+
+* Add functions to print SAGE prettified polynomials
+
+* Retune almost everything and factor out tuning constants (including the one in flint.h)
+
+* Optimise division functions for small coefficients (precomputed inverses?) and particularly for monic B
+
+* Implement Graeffe and Kung's tricks
+
+* Implement David's KS trick
+
+* Implement Mulders' short product
+
+* Make F_mpz_mul deal with powers of 2 factors
+
+* Make QS polynomial selection work for very small factorisations
+
+* Write code to time all manner of basic things such as modmuls, in and out of cache memory acccesses etc
+
+* Add stack based memory management back into recursive division functions where this improves performance, 
+  but do it neatly and safely perhaps using some macros
+
+* Clean up fmpz_poly by putting as much as possible into fmpz
+
+
+
+
