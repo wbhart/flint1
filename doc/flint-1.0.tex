@@ -728,9 +728,9 @@ When using the unmanaged version, note that overflow may occur when subtracting 
 \subsection{Scalar multiplication and division}
 
 \begin{lstlisting}
-void _fmpz_poly_scalar_mul_ui(fmpz_poly_t output, 
-                               const fmpz_poly_t poly, unsigned long x)
 void fmpz_poly_scalar_mul_ui(fmpz_poly_t output, 
+                               const fmpz_poly_t poly, unsigned long x)
+void _fmpz_poly_scalar_mul_ui(fmpz_poly_t output, 
                                const fmpz_poly_t poly, unsigned long x)
 \end{lstlisting}
 \begin{quote}
@@ -740,9 +740,9 @@ When using the unmanaged version, the coefficients of \code{output} must have sp
 \end{quote}
 
 \begin{lstlisting}
-void _fmpz_poly_scalar_mul_si(fmpz_poly_t output, 
-                                        const fmpz_poly_t poly, long x)
 void fmpz_poly_scalar_mul_si(fmpz_poly_t output, 
+                                        const fmpz_poly_t poly, long x)
+void _fmpz_poly_scalar_mul_si(fmpz_poly_t output, 
                                         const fmpz_poly_t poly, long x)
 \end{lstlisting}
 \begin{quote}
