@@ -1,0 +1,11 @@
+v 1.0 -- 2-Dec-07 : 
+ 
+   * First version of FLINT, includes fmpz_poly, fmpz and mpQS
+
+v 1.0.1 -- 7-Dec-07 : 
+   
+   * Fixed a bug in _fmpz_poly_maxbits1 on 32 bit machines, reported by Michael Abshoff and Carl Witty
+   * Removed some instances of u_int64_t and replaced them with uint64_t, reported by Michael Abshoff
+   * Replaced sys/types.h with stdint.h
+   * Added FLINT macros to documentation
+   * Corrected numerous typos in documentation              
