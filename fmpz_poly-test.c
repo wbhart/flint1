@@ -288,7 +288,7 @@ int test__fmpz_poly_max_bits1()
    mpz_poly_init(test_poly); 
    for (unsigned long count1 = 1; (count1 < 300) && (result == 1) ; count1++)
    {
-      bits = random_ulong(64)+1;
+      bits = random_ulong(FLINT_BITS)+1;
       
       fmpz_poly_init2(test_fmpz_poly, 1, (bits-1)/FLINT_BITS+1);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)

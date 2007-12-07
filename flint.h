@@ -33,6 +33,7 @@
 #include <assert.h>
 #include <gmp.h>
 #include <math.h>
+#include <stdint.h>
 #include "longlong_wrapper.h"
 
 #ifdef __cplusplus

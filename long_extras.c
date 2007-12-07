@@ -29,7 +29,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
-#include <sys/types.h>
+#include <stdint.h>
 #include <gmp.h>
 #include "flint.h"
 #include "long_extras.h"
@@ -45,8 +45,8 @@
 unsigned long z_randint(unsigned long limit) 
 {
 #if FLINT_BITS == 32
-    static u_int64_t randval = 4035456057U;
-    randval = ((u_int64_t)randval*(u_int64_t)1025416097U+(u_int64_t)286824430U)%(u_int64_t)4294967311U;
+    static uint64_t randval = 4035456057U;
+    randval = ((uint64_t)randval*(uint64_t)1025416097U+(uint64_t)286824430U)%(uint64_t)4294967311U;
     
     return (unsigned long)randval%limit;
 #else

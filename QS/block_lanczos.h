@@ -24,7 +24,7 @@
 #define DISPLAY 0 // Display some info about the linear algebra phase
 
 #include <stdlib.h>
-#include <sys/types.h>
+#include <stdint.h>
 
 #include "../memory-manager.h"
 
@@ -34,11 +34,11 @@ typedef struct {
 	unsigned long orig;         /* Original relation number */
 } la_col_t;
 
-u_int64_t get_null_entry(u_int64_t *, long, long);
+uint64_t get_null_entry(uint64_t *, long, long);
 
 void reduce_matrix(unsigned long *, unsigned long *, la_col_t *);
 
-u_int64_t * block_lanczos(unsigned long, unsigned long, unsigned long, la_col_t*);
+uint64_t * block_lanczos(unsigned long, unsigned long, unsigned long, la_col_t*);
 
 /*==========================================================================
    insert_col_entry:
