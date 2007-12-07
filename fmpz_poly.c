@@ -25,7 +25,7 @@ Copyright (C) 2007, William Hart and David Harvey
 
 *****************************************************************************/
 
-#include <sys/types.h>
+#include <stdint.h>
 #include <string.h>
 #include <math.h>
 

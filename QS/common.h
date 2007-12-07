@@ -29,7 +29,7 @@
 #ifndef QS_COMMON_H
 #define QS_COMMON_H
 
-#include <sys/types.h>
+#include <stdint.h>
 
 #include "../fmpz.h"
 
