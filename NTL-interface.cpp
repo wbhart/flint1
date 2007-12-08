@@ -38,20 +38,36 @@ Copyright (C) 2007, William Hart
 #include "fmpz.h"
 #include "fmpz_poly.h"
 #include "NTL-interface.h"
-#include "NTL-interface_impl.h"
 
 #define SIZE(p) (((long *) (p))[1])
 #define DATA(p) ((mp_limb_t *) (((long *) (p)) + 2))
 
 NTL_CLIENT
 
-unsigned long ZZ_limbs(ZZ z)
+unsigned long ZZ_limbs(const ZZ& z)
 {
-   if (z.rep) return SIZE(z.rep);
+   if (z.rep) return FLINT_ABS(SIZE(z.rep));
    else return 0;
 }
 
-void ZZ_to_fmpz(fmpz_t output, ZZ z)
+unsigned long ZZX_maxlimbs(const ZZX& z)
+{
+   unsigned long length = deg(z)+1;
+   unsigned long maxlimbs = 0;
+   unsigned long newlimbs, i;
+   const ZZ *ap; 
+
+   if (length == 0) return 0;
+   
+   for (i = 0, ap = z.rep.elts(); i < length; ap++, i++)
+   {
+      newlimbs = ZZ_limbs(*ap);
+      if (newlimbs > maxlimbs) maxlimbs = newlimbs;
+   }
+   return maxlimbs;
+}
+
+void ZZ_to_fmpz(fmpz_t output, const ZZ& z)
 {
    _ntl_gbigint x = z.rep;
    
@@ -61,15 +77,16 @@ void ZZ_to_fmpz(fmpz_t output, ZZ z)
       return;
    }
    
-   long lw = SIZE(x);
+   unsigned long lw = ZZ_limbs(z);
    mp_limb_t *xp = DATA(x);
 
    F_mpn_copy(output + 1, xp, lw);
    
-   output[0] = lw;
+   if (z < 0L) output[0] = -lw;
+   else output[0] = lw;
 }
 
-void fmpz_to_ZZ(ZZ& output, fmpz_t z)
+void fmpz_to_ZZ(ZZ& output, const fmpz_t z)
 {
    mp_limb_t *xp;
    _ntl_gbigint *x = &output.rep;
@@ -85,15 +102,57 @@ void fmpz_to_ZZ(ZZ& output, fmpz_t z)
 
    F_mpn_copy(xp, z + 1, lw);
    
-   SIZE(*x) = lw; 
+   if ((long) z[0] < 0L) SIZE(*x) = -lw;
+   else SIZE(*x) = lw;
 }
 
-void ZZX_to_fmpz_poly(ZZX& output, fmpz_poly_t poly)
+void fmpz_poly_to_ZZX(ZZX& output, const fmpz_poly_t poly)
 {
+   unsigned long length = poly->length;
+   unsigned long i;
+   fmpz_t coeff;
+   ZZ *ap; 
+   
+   if (length == 0)
+   {
+      output = 0;
+      return;
+   }
+   
+   output.rep.SetLength(length);
+   
+   for (i = 0, ap = output.rep.elts(); i < length; ap++, i++)
+   {
+      coeff = fmpz_poly_get_coeff_ptr(poly, i);
+      fmpz_to_ZZ(*ap, coeff);
+   }
 }
 
-void fmpz_poly_to_ZZX(fmpz_poly_t output, ZZX poly)
+void ZZX_to_fmpz_poly(fmpz_poly_t output, const ZZX& poly)
 {
+  
+   unsigned long length = deg(poly) + 1;
+   unsigned long limbs = ZZX_maxlimbs(poly);
+   unsigned long i;
+   
+   fmpz_t coeff_f;
+   const ZZ *ap; 
+   
+   if (length == 0)
+   {
+      fmpz_poly_zero(output);
+      return;
+   }
+   
+   fmpz_poly_fit_length(output, length);
+   fmpz_poly_fit_limbs(output, limbs);
+   
+   output->length = length;
+   for (i = 0, ap = poly.rep.elts(); i < length; ap++, i++)
+   {
+      coeff_f = fmpz_poly_get_coeff_ptr(output, i);
+      ZZ_to_fmpz(coeff_f, *ap);
+   }
 }
 
  

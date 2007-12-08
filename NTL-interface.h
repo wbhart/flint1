@@ -41,19 +41,32 @@ NTL_CLIENT
    Returns the number of limbs taken up by an NTL ZZ
 */
 
-unsigned long ZZ_limbs(ZZ z);
+unsigned long ZZ_limbs(const ZZ& z);
 
 /* 
    Convert an NTL ZZ to an fmpz_t
    Assumes the fmpz_t has already been allocated to have sufficient space
 */
 
-void ZZ_to_fmpz(fmpz_t output, ZZ z);
+void ZZ_to_fmpz(fmpz_t output, const ZZ& z);
 
 /*
    Convert an fmpz_t to an NTL ZZ
 */
 
-void fmpz_to_ZZ(ZZ& output, fmpz_t z);
+void fmpz_to_ZZ(ZZ& output, const fmpz_t z);
+
+/*
+   Convert an fmpz_poly_t to an NTL ZZX
+*/
+
+void fmpz_poly_to_ZZX(ZZX& output, const fmpz_poly_t poly);
+
+/*
+   Convert an NTL ZZX to an fmpz_poly_t
+*/
+
+void ZZX_to_fmpz_poly(fmpz_poly_t output, const ZZX& poly);
+
 
 #endif
