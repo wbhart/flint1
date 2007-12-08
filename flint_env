@@ -48,3 +48,15 @@ then
 	LD_LIBRARY_PATH=$FLINT_GMP_LIB_DIR
 fi
 export LD_LIBRARY_PATH
+
+if [ -z "$FLINT_NTL_INCLUDE_DIR" ]
+then
+        FLINT_NTL_INCLUDE_DIR="/usr/local/include"
+fi
+export FLINT_NTL_INCLUDE_DIR
+
+if [ -z "$FLINT_NTL_LIB_DIR" ]
+then
+        FLINT_NTL_LIB_DIR="/usr/local/lib"
+fi
+export FLINT_NTL_LIB_DIR

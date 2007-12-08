@@ -24,7 +24,9 @@ CPP = $(FLINT_CPP)
 
 LIBS = -L$(FLINT_GMP_LIB_DIR) $(FLINT_LINK_OPTIONS) -lgmp -lpthread -lm
 
-INCS = -I$(FLINT_GMP_INCLUDE_DIR)
+LIBS2 = -L$(FLINT_GMP_LIB_DIR) -L$(FLINT_NTL_LIB_DIR) $(FLINT_LINK_OPTIONS) -lgmp -lpthread -lntl -lm
+
+INCS = -I$(FLINT_GMP_INCLUDE_DIR) -I$(FLINT_NTL_INCLUDE_DIR)
 
 CFLAGS = $(INCS) $(FLINT_TUNE) -O3
 
@@ -130,6 +132,8 @@ long_extras.o: long_extras.c long_extras.h
 zmod_poly.o: zmod_poly.c $(HEADERS)
 	$(CC) $(CFLAGS) -c zmod_poly.c -o zmod_poly.o
 
+NTL-interface.o: NTL-interface.cpp $(HEADERS)
+	$(CPP) $(CFLAGS) -c NTL-interface.cpp -o NTL-interface.o
 
 ####### test program object files
 
@@ -163,6 +167,9 @@ long_extras-test.o: long_extras-test.c
 zmod_poly-test.o: zmod_poly-test.c
 	$(CC) $(CFLAGS) -c zmod_poly-test.c -o zmod_poly-test.o
 
+NTL-interface-test.o: NTL-interface-test.cpp
+	$(CPP) $(CFLAGS) -c NTL-interface-test.cpp -o NTL-interface-test.o
+
 ####### test program targets
 
 mpn_extras-test: mpn_extras-test.o test-support.o $(FLINTOBJ) $(HEADERS)
@@ -192,6 +199,8 @@ long_extras-test: long_extras.o long_extras-test.o test-support.o memory-manager
 zmod_poly-test: zmod_poly.o zmod_poly-test.o test-support.o $(FLINTOBJ) $(HEADERS)
 	$(CC) $(CFLAGS) zmod_poly.o zmod_poly-test.o test-support.o -o zmod_poly-test $(FLINTOBJ) $(LIBS)
 
+NTL-interface-test: NTL-interface.o NTL-interface-test.o test-support.o $(FLINTOBJ) $(HEADERS)
+	$(CPP) $(CFLAGS) NTL-interface-test.o NTL-interface.o test-support.o $(FLINTOBJ) -o NTL-interface-test $(LIBS)
 
 ####### tuning program object files
 

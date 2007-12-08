@@ -91,6 +91,21 @@ void fmpz_print(fmpz_t in)
 }
 
 /*
+   Generate a random fmpz_t with n limbs with longs strings of 1's and 0's
+*/
+
+void fmpz_random_limbs2(fmpz_t x, unsigned long n)
+{
+   if (n == 0)
+   {
+      x[0] = 0L;
+      return;
+   }
+   mpn_random2(x + 1, n);
+   x[0] = n;     
+}
+
+/*
     Adds two fmpz's together
 */
 

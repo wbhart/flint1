@@ -88,6 +88,8 @@ void fmpz_stack_release(void)
 
 void fmpz_print(fmpz_t in);
 
+void fmpz_random_limbs2(fmpz_t x, unsigned long n);
+
 static inline
 unsigned long fmpz_size(const fmpz_t x)
 {
