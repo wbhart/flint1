@@ -1181,7 +1181,7 @@ void fmpz_poly_pseudo_div(fmpz_poly_t Q, unsigned long * d,
    if (B == Q) _fmpz_poly_stack_clear(Bin);
 }
                                       
-
+void fmpz_poly_content(fmpz_t c, fmpz_poly_t poly);
 
 // *************** end of file
 

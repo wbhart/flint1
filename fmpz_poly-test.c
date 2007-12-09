@@ -10444,6 +10444,75 @@ int test_fmpz_poly_byte_pack()
    return result;
 }
 
+int test_fmpz_poly_content()
+{
+   mpz_poly_t test_poly, test_poly2;
+   fmpz_poly_t test_fmpz_poly, test_fmpz_poly2;
+   int result = 1;
+   unsigned long bits, bits2, limbs2, length;
+   mpz_t temp, x_mpz;
+   mpz_init(temp);
+   mpz_init(x_mpz);
+   mp_limb_t * x;
+   
+   mpz_poly_init(test_poly); 
+   
+   for (unsigned long count1 = 0; (count1 < 1000) && (result == 1) ; count1++)
+   {
+      bits = randint(1000) + 1;
+      bits2 = randint(1000) + 1;
+      limbs2 = (bits2-1)/FLINT_BITS+1;
+      bits2 = limbs2*FLINT_BITS;
+      
+      fmpz_poly_init2(test_fmpz_poly, 1, (bits-1)/FLINT_BITS+1);
+      fmpz_poly_init2(test_fmpz_poly2, 1, (bits-1)/FLINT_BITS+(bits2-1)/FLINT_BITS+2);
+      x = (mp_limb_t*) malloc(sizeof(mp_limb_t)*(limbs2+1));
+      
+      for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
+      { 
+          length = randint(100)+1;        
+#if DEBUG
+          printf("length = %ld, bits = %ld, bits2 = %ld\n",length, bits, bits2);
+#endif
+          fmpz_poly_fit_length(test_fmpz_poly, length);
+          fmpz_poly_fit_length(test_fmpz_poly2, length);
+          
+          F_mpn_clear(x, limbs2+1);
+          mpn_random2(x+1, limbs2);
+          if (randint(2)) 
+              x[0] = limbs2;
+          else x[0] = -limbs2;
+          
+          fmpz_t c = fmpz_init((bits-1)/FLINT_BITS+1);
+          do 
+          {
+             randpoly(test_poly, length, bits); 
+             mpz_poly_to_fmpz_poly(test_fmpz_poly, test_poly);
+             fmpz_poly_content(c, test_fmpz_poly);
+          } while(!fmpz_is_one(c) && (test_fmpz_poly->length != 1));
+          fmpz_clear(c);
+          
+          _fmpz_poly_scalar_mul_fmpz(test_fmpz_poly2, test_fmpz_poly, x);
+          c = fmpz_init((bits+bits2-1)/FLINT_BITS+1);
+          fmpz_poly_content(c, test_fmpz_poly2);
+          
+          if ((long)x[0] < 0L) x[0] = -x[0];
+          
+          result = (fmpz_equal(c, x) || (test_fmpz_poly->length == 1));
+          fmpz_clear(c);
+      }
+      free(x);
+      fmpz_poly_clear(test_fmpz_poly);
+      fmpz_poly_clear(test_fmpz_poly2);
+   }
+
+   mpz_poly_clear(test_poly);
+   mpz_clear(temp);
+   mpz_clear(x_mpz);
+   
+   return result; 
+}
+
 void fmpz_poly_test_all()
 {
    int success, all_success = 1;
@@ -10545,6 +10614,7 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_poly_pseudo_div); 
    RUN_TEST(fmpz_poly_power);
    RUN_TEST(fmpz_poly_power_trunc_n);
+   RUN_TEST(fmpz_poly_content); 
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");

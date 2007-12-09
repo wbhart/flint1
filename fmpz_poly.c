@@ -7787,3 +7787,36 @@ void fmpz_poly_power_trunc_n(fmpz_poly_t output, const fmpz_poly_t poly, const u
       }
    }
 }
+
+/****************************************************************************
+
+   Content
+
+****************************************************************************/
+
+void fmpz_poly_content(fmpz_t c, fmpz_poly_t poly)
+{
+   unsigned long length = poly->length;
+   
+   if (length == 0) 
+   {
+      fmpz_set_ui(c, 0L);
+      return;
+   }
+   
+   if (length == 1)
+   {
+      fmpz_set(c, poly->coeffs);
+      return;
+   }
+   
+   fmpz_t coeff = fmpz_poly_get_coeff_ptr(poly, length - 1);
+   fmpz_set(c, coeff);
+   
+   for (long i = length - 2; (i >= 0L) && !fmpz_is_one(c); i--)
+   {
+      coeff = fmpz_poly_get_coeff_ptr(poly, i);
+      fmpz_gcd(c, c, coeff);
+   }
+}
+
