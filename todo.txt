@@ -165,8 +165,6 @@ to improve locality.
 
 * Add poly GCD
 
-* Add functions for converting to NTL format
-
 * Add functions to print SAGE prettified polynomials
 
 * Retune almost everything and factor out tuning constants (including the one 
@@ -201,7 +199,7 @@ to improve locality.
 
 * Write aliasing test code for series division
 
-* Fix bug in bernoulli_zmod (with standard memory manager on it gives a glib 
+* Fix bug in bernoulli_zmod (with standard memory manager on, it gives a glib 
   corruption error)
 
 * Implement REDC
@@ -225,6 +223,11 @@ to improve locality.
 * Hash tables for QS
 
 * Get tinyQS working properly
+
+* Save making a copy in fmpz_div_2exp
+
+* Make documentation point out where aliasing shouldn't occur in division functions and in fmpz
+
 
 
 
