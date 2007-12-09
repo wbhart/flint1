@@ -708,4 +708,99 @@ void fmpz_pow_ui(fmpz_t output, const fmpz_t input, const unsigned long exp)
    mpz_clear(power);
 }
 
+unsigned long fmpz_power_of_two(const fmpz_t x)
+{
+   if (x[0] == 0) return -1L;
+   return mpn_scan1(x + 1, 0);
+}
+
+void fmpz_mul_2exp(fmpz_t output, fmpz_t x, unsigned long exp)
+{
+   unsigned long limbs = (exp >> FLINT_LG_BITS_PER_LIMB);
+   unsigned long bits = (exp & (FLINT_BITS - 1));
+   mp_limb_t msl = 0L;
+   
+   if (x[0] == 0) 
+   {
+      output[0] = 0L;
+      return;
+   }
+   
+   if (bits) 
+   {
+      msl = mpn_lshift(output + limbs + 1, x + 1, FLINT_ABS(x[0]), bits);
+      if (msl) output[limbs + FLINT_ABS(x[0]) + 1] = msl; 
+   } else F_mpn_copy(output + limbs + 1, x + 1, FLINT_ABS(x[0]));
+   if (limbs) F_mpn_clear(output + 1, limbs);
+   if ((long) x[0] >= 0L) output[0] = x[0] + limbs + (msl != 0L);
+   else output[0] = x[0] - limbs - (msl != 0L);
+}
+
+void fmpz_div_2exp(fmpz_t output, fmpz_t x, unsigned long exp)
+{
+   unsigned long limbs = (exp >> FLINT_LG_BITS_PER_LIMB);
+   unsigned long bits = (exp & (FLINT_BITS - 1));
+   
+   if ((x[0] == 0) || (limbs >= FLINT_ABS(x[0])))
+   {
+      output[0] = 0L;
+      return;
+   }
+   
+   if (bits) 
+   {
+      fmpz_t temp = fmpz_stack_init(FLINT_ABS(x[0]) - limbs);
+      mpn_rshift(temp + 1, x + limbs + 1, FLINT_ABS(x[0]) - limbs, bits);
+      if ((long) x[0] >= 0L) temp[0] = x[0] - limbs;
+      else temp[0] = limbs + x[0];
+      NORM(temp);
+      fmpz_set(output, temp);
+      fmpz_stack_release();
+   } else 
+   {
+      F_mpn_copy(output + 1, x + limbs + 1, FLINT_ABS(x[0]) - limbs);
+      if ((long) x[0] >= 0L) output[0] = x[0] - limbs;
+      else output[0] = limbs + x[0];
+   }
+}
+
+void fmpz_gcd(fmpz_t output, fmpz_t x1, fmpz_t x2)
+{
+   if (x1[0] == 0)
+   {
+      fmpz_set(output, x2);
+      return;
+   }
+   
+   if (x2[0] == 0)
+   {
+      fmpz_set(output, x1);
+      return;
+   }
+   
+   unsigned long twos1 = fmpz_power_of_two(x1);
+   unsigned long twos2 = fmpz_power_of_two(x2);
+   unsigned long n1, n2;
+   
+   fmpz_t a1 = fmpz_init(FLINT_ABS(x1[0]) - (twos1 >> FLINT_LG_BITS_PER_LIMB));
+   fmpz_t a2 = fmpz_init(FLINT_ABS(x2[0]) - (twos2 >> FLINT_LG_BITS_PER_LIMB));
+   
+   fmpz_div_2exp(a1, x1, twos1);
+   fmpz_div_2exp(a2, x2, twos2);
+   
+   if (fmpz_is_one(a1) || fmpz_is_one(a2))
+   {
+      fmpz_set_ui(output, 1UL);
+   } else
+   {
+      n1 = FLINT_ABS(a1[0]);
+      n2 = FLINT_ABS(a2[0]);
+      if (fmpz_bits(a1) >= fmpz_bits(a2)) output[0] = mpn_gcd(output + 1, a1 + 1, n1, a2 + 1, n2);
+      else output[0] = mpn_gcd(output + 1, a2 + 1, n2, a1 + 1, n1);
+   }
+   
+   unsigned long min = FLINT_MIN(twos1, twos2);
+   fmpz_mul_2exp(output, output, min); 
+}
+
 // *************** end of file

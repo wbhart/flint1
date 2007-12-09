@@ -218,6 +218,14 @@ void fmpz_tdiv_ui(fmpz_t output, const fmpz_t input, const unsigned long x);
 
 void fmpz_pow_ui(fmpz_t output, const fmpz_t input, const unsigned long exp);
 
+unsigned long fmpz_power_of_two(const fmpz_t x);
+
+void fmpz_div_2exp(fmpz_t output, fmpz_t x, unsigned long exp);
+
+void fmpz_mul_2exp(fmpz_t output, fmpz_t x, unsigned long exp);
+
+void fmpz_gcd(fmpz_t output, fmpz_t x1, fmpz_t x2);
+
 /*
    Computes the binomial coefficient next := bin(n, k) given prev = bin(n, k-1)
    The output is assumed to have enough space for the result, plus one extra limb
