@@ -159,7 +159,7 @@ to improve locality.
 
 * Clean up code for classical poly division
 
-* Clean up and factor out the tuning code for integer multiplication
+* Make integer multiplication tuning code switch to making things divisible by 3 only when 3-way has a chance of being faster
 
 * Clean up recursive poly multiplication code
 
