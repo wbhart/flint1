@@ -254,6 +254,163 @@ void F_mpn_FFT_combine(mp_limb_t * res, ZmodF_poly_t poly, unsigned long coeff_l
 
 }
 
+/*void F_mpn_mul_tuning(unsigned long * length1, unsigned long * length2, unsigned long * output_bits,
+                      unsigned long * coeff_limbs, unsigned long * log_length, 
+                      unsigned long limbs1, unsigned long limbs2, unsigned long twk)
+{
+   unsigned long length = 1;
+   unsigned long log_length = 0;
+   
+   unsigned long coeff_limbs = limbs1 + limbs2;
+   unsigned long s1 = (FLINT_BIT_COUNT(data1[limbs1-1]) + FLINT_BIT_COUNT(data2[limbs2-1]) <= FLINT_BITS);
+   unsigned long total_limbs = coeff_limbs - s1;
+   unsigned long output_bits = coeff_limbs*FLINT_BITS;
+   unsigned long n = coeff_limbs;
+ 
+   unsigned long length1 = 1;
+   unsigned long length2 = 1;
+   
+   unsigned log_length2 = 0;
+   
+   //==============================================================================
+   printf("%ld, %ld, %ld, %ld, %ld\n", length1, length2, output_bits, coeff_limbs, log_length);
+ 
+   if (twk > 64)
+   {
+      length = 2;
+      log_length = 1;
+      
+      while ((1<<(log_length-1)) < output_bits)
+      {
+         length<<=1;
+         log_length++;
+         coeff_limbs = (limbs1+limbs2-1)/length+1;
+         while ((limbs1-1)/coeff_limbs+(limbs2-1)/coeff_limbs+2 > length) coeff_limbs++;
+         output_bits = (2*coeff_limbs+1)*FLINT_BITS;
+         output_bits = (((output_bits - 1) >> (log_length-1)) + 1) << (log_length-1);
+         coeff_limbs = ((output_bits - FLINT_BITS)/FLINT_BITS)/2;
+         if ((long) coeff_limbs < 1) coeff_limbs = 1;
+         length1 = (limbs1-1)/coeff_limbs+1;
+         length2 = (limbs2-1)/coeff_limbs+1;
+      }
+      
+      while (twk > 64)
+      {
+         log_length--;
+         length>>=1;
+         twk>>=2;
+      }
+      
+      if (length == 0) 
+      {
+         length = 2;
+         log_length = 1;
+      }
+      
+      coeff_limbs = (limbs1+limbs2-1)/length+1;
+      while ((limbs1-1)/coeff_limbs+(limbs2-1)/coeff_limbs+2 > length) coeff_limbs++;
+      output_bits = (2*coeff_limbs+1)*FLINT_BITS;
+      output_bits = (((output_bits - 1) >> (log_length-1)) + 1) << (log_length-1);
+      while ((output_bits%3) != 0) output_bits+=(1<<(log_length-1));
+      coeff_limbs = ((output_bits - FLINT_BITS)/FLINT_BITS)/2;
+      if ((long) coeff_limbs < 1) coeff_limbs = 1;
+      length1 = (limbs1-1)/coeff_limbs+1;
+      length2 = (limbs2-1)/coeff_limbs+1;
+      log_length = 1;
+      while ((1<<log_length) < length1 + length2) log_length++;
+      length = (1<<log_length);        
+   } else
+   {
+      while (twk*length < 2*output_bits)
+      {
+         length<<=1;
+         log_length++;
+         coeff_limbs = (limbs1+limbs2-1)/length+1;
+         while ((limbs1-1)/coeff_limbs+(limbs2-1)/coeff_limbs+2 > length) coeff_limbs++;
+         output_bits = (2*coeff_limbs+1)*FLINT_BITS;
+         output_bits = (((output_bits - 1) >> (log_length-1)) + 1) << (log_length-1);
+         coeff_limbs = ((output_bits - FLINT_BITS)/FLINT_BITS)/2;
+         if ((long) coeff_limbs < 1) coeff_limbs = 1;
+         length1 = (limbs1-1)/coeff_limbs+1;
+         length2 = (limbs2-1)/coeff_limbs+1;
+      }
+   }
+}*/
+
+
+/*
+   Compute optimal lengths for the polynomials that coeff1 and coeff2 are broken into
+   in the convolution based long integer code.
+   We want the sum of the two lengths to satisfy the SS condition (with sqrt2):
+      
+      if 2^l1 < length1 + length2 <= 2^l2 then 2^(l2-1) divides output_bits
+      
+   Requires limbs1 and limbs2 are at least 1, ensures length1 and length2 are at least 1
+*/
+
+#define F_mpn_mul_ADJUST \
+do { \
+   /* Compute the coefficient size for breaking the two long integers up */ \
+   coeff_limbs = (limbs1+limbs2-1)/(length)+1; \
+   if (coeff_limbs == 1L) /* This is as far as we can go */ \
+   \
+   { \
+      length1 = limbs1; \
+      length2 = limbs2; \
+      done = 1; \
+   } \
+   while ((limbs1-1)/(coeff_limbs)+(limbs2-1)/(coeff_limbs)+2 > length) coeff_limbs++; \
+   /* Compute the number of bits for the output coefficients */ \
+   output_bits = (2*coeff_limbs+1)*FLINT_BITS; \
+   output_bits = (((output_bits - 1) >> (log_length-1)) + 1) << (log_length-1); \
+   /* Try and compute a more optimal coefficient size to break up inputs */ \
+   coeff_limbs = ((output_bits - FLINT_BITS)/FLINT_BITS)/2; \
+   if ((long) coeff_limbs <= 1L) coeff_limbs = 1; \
+   /* Compute the lengths of the polys the coefficients will be broken into with this coeff size */ \
+   length1 = (limbs1-1)/coeff_limbs+1; \
+   length2 = (limbs2-1)/coeff_limbs+1; \
+} while (0)
+
+#define F_mpn_mul_TUNING \
+do { \
+   if (twk > 64) \
+   { \
+      length = 2; \
+      log_length = 1; \
+      \
+      int done = 0; \
+      \
+      while ((length < 2*output_bits) && !done) \
+      { \
+         /* We are outside the optimal SS region, so double the length */ \
+         length<<=1; \
+         log_length++; \
+         F_mpn_mul_ADJUST; \
+      } \
+      \
+      while ((twk > 64) && (length >= 4)) \
+      { \
+         log_length--; \
+         length>>=1; \
+         twk>>=2; \
+      } \
+      \
+      F_mpn_mul_ADJUST; \
+      \
+   } else \
+   { \
+      int done = 0; \
+      \
+      while ((twk*length < 2*output_bits) && !done) \
+      { \
+         /* We are outside the optimal SS region, so double the length */ \
+         length<<=1; \
+         log_length++; \
+         F_mpn_mul_ADJUST; \
+      } \
+   } \
+} while (0)
+
 mp_limb_t __F_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1, 
                                       mp_limb_t * data2, unsigned long limbs2, unsigned long twk)
 {
@@ -270,65 +427,9 @@ mp_limb_t __F_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1,
    unsigned long length2 = 1;
    
    unsigned log_length2 = 0;
-   
-   if (twk > 64)
-   {
-      length = 2;
-      log_length = 1;
-      while ((1<<(log_length-1)) < output_bits)
-      {
-         length<<=1;
-         log_length++;
-         coeff_limbs = (limbs1+limbs2-1)/length+1;
-         while ((limbs1-1)/coeff_limbs+(limbs2-1)/coeff_limbs+2 > length) coeff_limbs++;
-         output_bits = (2*coeff_limbs+1)*FLINT_BITS;
-         output_bits = (((output_bits - 1) >> (log_length-1)) + 1) << (log_length-1);
-         coeff_limbs = ((output_bits - FLINT_BITS)/FLINT_BITS)/2;
-         if ((long) coeff_limbs < 1) coeff_limbs = 1;
-         length1 = (limbs1-1)/coeff_limbs+1;
-         length2 = (limbs2-1)/coeff_limbs+1;
-      }
-      while (twk > 64)
-      {
-         log_length--;
-         length>>=1;
-         twk>>=2;
-      }
-      if (length == 0) 
-      {
-         length = 2;
-         log_length = 1;
-      }
-      coeff_limbs = (limbs1+limbs2-1)/length+1;
-      while ((limbs1-1)/coeff_limbs+(limbs2-1)/coeff_limbs+2 > length) coeff_limbs++;
-      output_bits = (2*coeff_limbs+1)*FLINT_BITS;
-      output_bits = (((output_bits - 1) >> (log_length-1)) + 1) << (log_length-1);
-      while ((output_bits%3) != 0) output_bits+=(1<<(log_length-1));
-      coeff_limbs = ((output_bits - FLINT_BITS)/FLINT_BITS)/2;
-      if ((long) coeff_limbs < 1) coeff_limbs = 1;
-      length1 = (limbs1-1)/coeff_limbs+1;
-      length2 = (limbs2-1)/coeff_limbs+1;
-      log_length = 1;
-      while ((1<<log_length) < length1 + length2) log_length++;
-      length = (1<<log_length);        
-   }
-   else
-   {
-      while (twk*length < 2*output_bits)
-      {
-         length<<=1;
-         log_length++;
-         coeff_limbs = (limbs1+limbs2-1)/length+1;
-         while ((limbs1-1)/coeff_limbs+(limbs2-1)/coeff_limbs+2 > length) coeff_limbs++;
-         output_bits = (2*coeff_limbs+1)*FLINT_BITS;
-         output_bits = (((output_bits - 1) >> (log_length-1)) + 1) << (log_length-1);
-         coeff_limbs = ((output_bits - FLINT_BITS)/FLINT_BITS)/2;
-         if ((long) coeff_limbs < 1) coeff_limbs = 1;
-         length1 = (limbs1-1)/coeff_limbs+1;
-         length2 = (limbs2-1)/coeff_limbs+1;
-      }
-   }
-         
+
+   F_mpn_mul_TUNING;
+ 
    n = output_bits/FLINT_BITS;
    //printf("n= %ld\n",n);
 #if DEBUG
@@ -382,64 +483,8 @@ mp_limb_t __F_mpn_mul_trunc(mp_limb_t * res, mp_limb_t * data1, unsigned long li
    
    unsigned log_length2 = 0;
    
-   if (twk > 64)
-   {
-      length = 2;
-      log_length = 1;
-      while ((1<<(log_length-1)) < output_bits)
-      {
-         length<<=1;
-         log_length++;
-         coeff_limbs = (limbs1+limbs2-1)/length+1;
-         while ((limbs1-1)/coeff_limbs+(limbs2-1)/coeff_limbs+2 > length) coeff_limbs++;
-         output_bits = (2*coeff_limbs+1)*FLINT_BITS;
-         output_bits = (((output_bits - 1) >> (log_length-1)) + 1) << (log_length-1);
-         coeff_limbs = ((output_bits - FLINT_BITS)/FLINT_BITS)/2;
-         if ((long) coeff_limbs < 1L) coeff_limbs = 1;
-         length1 = (limbs1-1)/coeff_limbs+1;
-         length2 = (limbs2-1)/coeff_limbs+1;
-      }
-      while (twk > 64)
-      {
-         log_length--;
-         length>>=1;
-         twk>>=2;
-      }
-      if (length == 0) 
-      {
-         length = 2;
-         log_length = 1;
-      }
-      coeff_limbs = (limbs1+limbs2-1)/length+1;
-      while ((limbs1-1)/coeff_limbs+(limbs2-1)/coeff_limbs+2 > length) coeff_limbs++;
-      output_bits = (2*coeff_limbs+1)*FLINT_BITS;
-      output_bits = (((output_bits - 1) >> (log_length-1)) + 1) << (log_length-1);
-      while ((output_bits%3) != 0) output_bits+=(1<<(log_length-1));
-      coeff_limbs = ((output_bits - FLINT_BITS)/FLINT_BITS)/2;
-      if ((long) coeff_limbs < 1L) coeff_limbs = 1;
-      length1 = (limbs1-1)/coeff_limbs+1;
-      length2 = (limbs2-1)/coeff_limbs+1;
-      log_length = 1;
-      while ((1<<log_length) < length1 + length2) log_length++;
-      length = (1<<log_length);        
-   }
-   else
-   {
-      while (twk*length < 2*output_bits)
-      {
-         length<<=1;
-         log_length++;
-         coeff_limbs = (limbs1+limbs2-1)/length+1;
-         while ((limbs1-1)/coeff_limbs+(limbs2-1)/coeff_limbs+2 > length) coeff_limbs++;
-         output_bits = (2*coeff_limbs+1)*FLINT_BITS;
-         output_bits = (((output_bits - 1) >> (log_length-1)) + 1) << (log_length-1);
-         coeff_limbs = ((output_bits - FLINT_BITS)/FLINT_BITS)/2;
-         if ((long) coeff_limbs < 1L) coeff_limbs = 1;
-         length1 = (limbs1-1)/coeff_limbs+1;
-         length2 = (limbs2-1)/coeff_limbs+1;
-      }
-   }
-         
+   F_mpn_mul_TUNING;      
+   
    n = output_bits/FLINT_BITS;
    //printf("n= %ld\n",n);
 #if DEBUG
@@ -623,63 +668,8 @@ void F_mpn_mul_precomp_init(F_mpn_precomp_t precomp, mp_limb_t * data1, unsigned
          }
       }
    }
-   if (twk > 64)
-   {
-      length = 2;
-      log_length = 1;
-      while ((1<<(log_length-1)) < output_bits)
-      {
-         length<<=1;
-         log_length++;
-         coeff_limbs = (limbs1+limbs2-1)/length+1;
-         while ((limbs1-1)/coeff_limbs+(limbs2-1)/coeff_limbs+2 > length) coeff_limbs++;
-         output_bits = (2*coeff_limbs+1)*FLINT_BITS;
-         output_bits = (((output_bits - 1) >> (log_length-1)) + 1) << (log_length-1);
-         coeff_limbs = ((output_bits - FLINT_BITS)/FLINT_BITS)/2;
-         if ((long) coeff_limbs < 1L) coeff_limbs = 1;
-         length1 = (limbs1-1)/coeff_limbs+1;
-         length2 = (limbs2-1)/coeff_limbs+1;
-      }
-      while (twk > 64)
-      {
-         log_length--;
-         length>>=1;
-         twk>>=2;
-      }
-      if (length == 0) 
-      {
-         length = 2;
-         log_length = 1;
-      }
-      coeff_limbs = (limbs1+limbs2-1)/length+1;
-      while ((limbs1-1)/coeff_limbs+(limbs2-1)/coeff_limbs+2 > length) coeff_limbs++;
-      output_bits = (2*coeff_limbs+1)*FLINT_BITS;
-      output_bits = (((output_bits - 1) >> (log_length-1)) + 1) << (log_length-1);
-      while ((output_bits%3) != 0) output_bits+=(1<<(log_length-1));
-      coeff_limbs = ((output_bits - FLINT_BITS)/FLINT_BITS)/2;
-      if ((long) coeff_limbs < 1L) coeff_limbs = 1;
-      length1 = (limbs1-1)/coeff_limbs+1;
-      length2 = (limbs2-1)/coeff_limbs+1;
-      log_length = 1;
-      while ((1<<log_length) < length1 + length2) log_length++;
-      length = (1<<log_length);        
-   }
-   else
-   {
-      while (twk*length < 2*output_bits)
-      {
-         length<<=1;
-         log_length++;
-         coeff_limbs = (limbs1+limbs2-1)/length+1;
-         while ((limbs1-1)/coeff_limbs+(limbs2-1)/coeff_limbs+2 > length) coeff_limbs++;
-         output_bits = (2*coeff_limbs+1)*FLINT_BITS;
-         output_bits = (((output_bits - 1) >> (log_length-1)) + 1) << (log_length-1);
-         coeff_limbs = ((output_bits - FLINT_BITS)/FLINT_BITS)/2;
-         if ((long) coeff_limbs < 1L) coeff_limbs = 1;
-         length1 = (limbs1-1)/coeff_limbs+1;
-         length2 = (limbs2-1)/coeff_limbs+1;
-      }
-   }
+   
+   F_mpn_mul_TUNING;
       
    n = output_bits/FLINT_BITS;
 #if DEBUG
