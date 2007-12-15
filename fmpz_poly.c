@@ -1193,6 +1193,22 @@ void _fmpz_poly_get_coeff_fmpz(fmpz_t x, const fmpz_poly_t poly, const unsigned 
    fmpz_set(x, poly->coeffs + n*(poly->limbs + 1));
 }
 
+void _fmpz_poly_get_coeff_mpz_read_only(mpz_t x, const fmpz_poly_t poly, const unsigned long n)
+{
+   mp_limb_t * coeff = _fmpz_poly_get_coeff_ptr(poly, n);
+   if (poly->length) 
+   {
+      x->_mp_d = coeff + 1;
+      x->_mp_size = coeff[0];
+      x->_mp_alloc = poly->limbs;
+   } else 
+   {
+      x->_mp_d = (mp_limb_t *) &poly; // We need to point to something, and at least this exists
+      x->_mp_size = 0;
+      x->_mp_alloc = FLINT_MAX(1, poly->limbs);
+   }
+}
+
 void _fmpz_poly_normalise(fmpz_poly_t poly)
 {
    while (poly->length && poly->coeffs[(poly->length-1)*(poly->limbs+1)] == 0)
@@ -4230,6 +4246,17 @@ void fmpz_poly_get_coeff_mpz(mpz_t x, const fmpz_poly_t poly, const unsigned lon
       _fmpz_poly_get_coeff_mpz(x, poly, n);
 }
 
+void fmpz_poly_get_coeff_mpz_read_only(mpz_t x, const fmpz_poly_t poly, const unsigned long n)
+{
+   if (n >= poly->length)
+   {
+      x->_mp_alloc = 1;
+      x->_mp_d = (mp_limb_t *) &poly; // We need to point to something, and at least this exists
+      x->_mp_size = 0;  
+   } else 
+      _fmpz_poly_get_coeff_mpz_read_only(x, poly, n);
+}
+
 /****************************************************************************
 
    String conversions and I/O
@@ -4252,37 +4279,25 @@ int fmpz_poly_from_string(fmpz_poly_t poly, const char* s)
    return ok;
 }
 
-// taken from mpz_poly_to_string, and altered using fmpz_to_mpz
 char* fmpz_poly_to_string(const fmpz_poly_t poly)
 {
-   // estimate the size of the string
-   // 20 = enough room for null terminator and length info
-   unsigned long size = 20;
-   mpz_t temp;
-   mpz_init(temp);
-   for (unsigned long i = 0; i < poly->length; i++) {
-      // +2 is for the sign and a space
-		fmpz_to_mpz(temp, poly->coeffs + i*(poly->limbs+1));
-      size += mpz_sizeinbase(temp, 10) + 2;      
-   }   
-   
-   // write the string
-   char* buf = (char*) malloc(size);
-   char* ptr = buf + sprintf(buf, "%ld  ", poly->length);
-   for (long i = 0; i < poly->length; i++)
-   {
-		fmpz_to_mpz(temp, poly->coeffs + i*(poly->limbs+1));
-		mpz_get_str(ptr, 10, temp);
-      ptr += strlen(ptr);
-      *ptr = ' ';
-      ptr++;
-   }
-   
-   mpz_clear(temp);
-   
-   ptr--;
-   *ptr = 0;
-   
+   char* buf;
+   mpz_poly_t m_poly;
+   mpz_poly_init(m_poly);
+   fmpz_poly_to_mpz_poly(m_poly, poly);
+   buf = mpz_poly_to_string(m_poly);
+   mpz_poly_clear(m_poly);
+   return buf;
+}
+
+char* fmpz_poly_to_string_pretty(const fmpz_poly_t poly, const char * x)
+{
+   char* buf;
+   mpz_poly_t m_poly;
+   mpz_poly_init(m_poly);
+   fmpz_poly_to_mpz_poly(m_poly, poly);
+   buf = mpz_poly_to_string_pretty(m_poly, x);
+   mpz_poly_clear(m_poly);
    return buf;
 }
 
@@ -4294,10 +4309,22 @@ void fmpz_poly_fprint(const fmpz_poly_t poly, FILE* f)
    free(s);
 }
 
+void fmpz_poly_fprint_pretty(const fmpz_poly_t poly, FILE* f, const char * x)
+{
+   char* s = fmpz_poly_to_string_pretty(poly, x);
+   fputs(s, f);
+   free(s);
+}
+
 
 void fmpz_poly_print(const fmpz_poly_t poly)
 {
    fmpz_poly_fprint(poly, stdout);
+}
+
+void fmpz_poly_print_pretty(const fmpz_poly_t poly, const char * x)
+{
+   fmpz_poly_fprint_pretty(poly, stdout, x);
 }
 
 

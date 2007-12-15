@@ -185,6 +185,9 @@ void mpz_poly_print(mpz_poly_t poly);
 void mpz_poly_fprint(mpz_poly_t poly, FILE* f);
 int mpz_poly_read(mpz_poly_t poly);
 int mpz_poly_fread(mpz_poly_t poly, FILE* f);
+char* mpz_poly_to_string_pretty(mpz_poly_t poly, const char * x);
+void mpz_poly_fprint_pretty(mpz_poly_t poly, FILE* f, const char * x);
+void mpz_poly_print_pretty(mpz_poly_t poly, const char * x);
 
 
 // ------------------------------------------------------
@@ -249,7 +252,7 @@ void mpz_poly_swap(mpz_poly_t poly1, mpz_poly_t poly2)
 // Conversions
 
 void mpz_poly_to_fmpz_poly(fmpz_poly_t res, mpz_poly_t poly);
-void fmpz_poly_to_mpz_poly(mpz_poly_t res, fmpz_poly_t poly);
+void fmpz_poly_to_mpz_poly(mpz_poly_t res, const fmpz_poly_t poly);
 
 
 // ------------------------------------------------------

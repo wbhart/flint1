@@ -133,12 +133,12 @@ int test__fmpz_poly_convert()
    mpz_poly_init(test_poly2); 
    for (unsigned long count1 = 1; (count1 < 300) && (result == 1) ; count1++)
    {
-      bits = random_ulong(1000) + 1;
+      bits = random_ulong(5) + 1;
       
       fmpz_poly_init2(test_fmpz_poly, 1, (bits-1)/FLINT_BITS+1);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
-          length = random_ulong(1000);
+          length = random_ulong(20);
 #if DEBUG
           printf("%ld, %ld\n",length, bits);
 #endif
@@ -147,8 +147,7 @@ int test__fmpz_poly_convert()
           randpoly(test_poly, length, bits);
            
 #if DEBUG
-          for (unsigned j = 0; j < test_poly->length; j++)
-             gmp_printf("%Zd, ",test_poly->coeffs[j]);
+          mpz_poly_print_pretty(test_poly, "x");
           printf("\n\n");
 #endif
           mpz_poly_to_fmpz_poly(test_fmpz_poly, test_poly);
@@ -1252,6 +1251,59 @@ int test_fmpz_poly_getset_coeff_mpz()
           }
           
           mpz_clear(coeff1);
+          mpz_clear(coeff2);
+      }
+      fmpz_poly_clear(test_fmpz_poly);
+   }
+   
+   mpz_poly_clear(test_poly);
+   
+   return result; 
+}
+
+int test_fmpz_poly_get_coeff_mpz_read_only()
+{
+   mpz_poly_t test_poly;
+   fmpz_poly_t test_fmpz_poly;
+   unsigned long result = 1;
+   unsigned long bits, length, rand_coeff;
+   long sign, sign2;
+   
+   mpz_poly_init(test_poly); 
+           
+   for (unsigned long count1 = 1; (count1 < 400) && (result == 1) ; count1++)
+   {
+      bits = random_ulong(1000)+ 1;
+      
+      fmpz_poly_init2(test_fmpz_poly, 1, (bits-1)/FLINT_BITS+1);
+      for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
+      { 
+          length = random_ulong(1000)+1;        
+#if DEBUG
+          printf("length = %ld, bits = %ld\n",length, bits);
+#endif
+          fmpz_poly_fit_length(test_fmpz_poly, length);
+           do
+          {
+             randpoly(test_poly, length, bits); 
+          } while (test_poly->length != length);
+
+          mpz_poly_to_fmpz_poly(test_fmpz_poly, test_poly);
+          
+          mpz_t coeff1, coeff2;
+          mpz_init(coeff2);
+          
+          unsigned long rand_coeff2 = randint(test_fmpz_poly->length);
+          fmpz_poly_get_coeff_mpz_read_only(coeff1, test_fmpz_poly, rand_coeff2);
+          rand_coeff = randint(test_fmpz_poly->length);
+          if ((test_fmpz_poly->length >= 2) && (rand_coeff != rand_coeff2))
+          {
+             fmpz_poly_set_coeff_mpz(test_fmpz_poly, rand_coeff, coeff1);
+             fmpz_poly_check_normalisation(test_fmpz_poly);
+             fmpz_poly_get_coeff_mpz(coeff2, test_fmpz_poly, rand_coeff);
+             
+             result = (mpz_cmp(coeff1, coeff2) == 0);
+          }
           mpz_clear(coeff2);
       }
       fmpz_poly_clear(test_fmpz_poly);
@@ -10550,6 +10602,7 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_poly_getset_coeff_fmpz);
    RUN_TEST(_fmpz_poly_getset_coeff_mpz);
    RUN_TEST(fmpz_poly_getset_coeff_mpz);
+   RUN_TEST(fmpz_poly_get_coeff_mpz_read_only);
    RUN_TEST(_fmpz_poly_setequal);
    RUN_TEST(_fmpz_poly_zero_coeffs);
    RUN_TEST(fmpz_poly_zero_coeffs);

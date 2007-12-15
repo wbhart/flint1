@@ -332,6 +332,164 @@ char* mpz_poly_to_string(mpz_poly_t poly)
    return buf;
 }
 
+/***************************************************************************************************
+**  LTOA.C
+**
+**  Converts a long integer to a string.
+**
+**  Copyright 1988-90 by Robert B. Stout dba MicroFirm
+**
+**  Released to public domain, 1991
+**
+**  Parameters: 1 - number to be converted
+**              2 - buffer in which to build the converted string
+**              3 - number base to use for conversion
+**
+**  Returns:  A character pointer to the converted string if
+**            successful, a NULL pointer if the number base specified
+**            is out of range.
+***************************************************************************************************/
+
+#define BUFSIZE (sizeof(long) * 8 + 1)
+
+char *flint_ltoa(long N, char *str, int base)
+{
+      register int i = 2;
+      long uarg;
+      char *tail, *head = str, buf[BUFSIZE];
+
+      if (36 < base || 2 > base)
+            base = 10;                    /* can only use 0-9, A-Z        */
+      tail = &buf[BUFSIZE - 1];           /* last character position      */
+      *tail-- = '\0';
+
+      if (10 == base && N < 0L)
+      {
+            *head++ = '-';
+            uarg    = -N;
+      }
+      else  uarg = N;
+
+      if (uarg)
+      {
+            for (i = 1; uarg; ++i)
+            {
+                  register ldiv_t r;
+
+                  r       = ldiv(uarg, base);
+                  *tail-- = (char)(r.rem + ((9L < r.rem) ?
+                                  ('A' - 10L) : '0'));
+                  uarg    = r.quot;
+            }
+      }
+      else  *tail-- = '0';
+
+      memcpy(head, ++tail, i);
+      return str;
+}
+
+/*******************************************************************************************/
+
+char* mpz_poly_to_string_pretty(mpz_poly_t poly, const char * x)
+{
+   if (poly->length == 0)
+   {
+      char* buf = (char*) malloc(2);
+      *buf = '0';
+      buf[1] = 0;
+      return buf;
+   }
+   
+   unsigned long x_len = strlen(x); // String length of the monomial
+   unsigned long exp_len = FLINT_BIT_COUNT(poly->length)/3 + 1; // String length of largest degree
+   // estimate the size of the string
+   // 1 = enough room for null terminator
+   unsigned long size = 1;
+   long i;
+   
+   for (i = 0; i < poly->length; i++)
+      // +3 is for the sign, a carot and a times
+      size += mpz_sizeinbase(poly->coeffs[i], 10) + 3 + x_len + exp_len;
+
+   // write the string
+   char* buf = (char*) malloc(size);
+   char* exp = (char*) malloc(exp_len+1);
+   char* ptr = buf;
+   
+   for (i = poly->length - 1; i >=2; i--)
+   {
+      if ((mpz_sgn(poly->coeffs[i]) > 0L) && (i != poly->length - 1))
+      {
+         *ptr = '+';
+         ptr++;
+      }
+      if (mpz_cmp_si(poly->coeffs[i], -1L) == 0)
+      {
+         *ptr = '-';
+         ptr++;
+      }
+      if (mpz_sgn(poly->coeffs[i]) != 0L)
+      {
+         if ((mpz_cmp_si(poly->coeffs[i], -1L) != 0) && (mpz_cmp_ui(poly->coeffs[i], 1L) != 0))
+         {
+            mpz_get_str(ptr, 10, poly->coeffs[i]);
+            ptr += strlen(ptr);
+            *ptr = '*';
+            ptr++;
+         }
+         strcpy(ptr, x);
+         ptr += strlen(x);
+         *ptr = '^';
+         ptr++;
+         flint_ltoa(i, exp, 10);
+         strcpy(ptr, exp);
+         ptr += strlen(exp);
+      }
+   }
+   
+   if (i == 1)
+   {
+      if ((mpz_sgn(poly->coeffs[i]) > 0L) && (i != poly->length - 1))
+      {
+         *ptr = '+';
+         ptr++;
+      }
+      if (mpz_cmp_si(poly->coeffs[i], -1L) == 0)
+      {
+         *ptr = '-';
+         ptr++;
+      }
+      if (mpz_sgn(poly->coeffs[i]) != 0L)
+      {
+         if ((mpz_cmp_si(poly->coeffs[i], -1L) != 0) && (mpz_cmp_ui(poly->coeffs[i], 1L) != 0))
+         {
+            mpz_get_str(ptr, 10, poly->coeffs[i]);
+            ptr += strlen(ptr);
+            *ptr = '*';
+            ptr++;
+         }
+         strcpy(ptr, x);
+         ptr += strlen(x);
+      }
+      i--;
+   }
+   
+   if ((mpz_sgn(poly->coeffs[i]) > 0L) && (i != poly->length - 1))
+   {
+      *ptr = '+';
+      ptr++;
+   }
+   if (mpz_sgn(poly->coeffs[i]) != 0L)
+   {
+      mpz_get_str(ptr, 10, poly->coeffs[i]);
+      ptr += strlen(ptr);
+   }
+
+   *ptr = 0;
+   
+   return buf;
+}
+
 
 void mpz_poly_fprint(mpz_poly_t poly, FILE* f)
 {
@@ -340,10 +498,22 @@ void mpz_poly_fprint(mpz_poly_t poly, FILE* f)
    free(s);
 }
 
+void mpz_poly_fprint_pretty(mpz_poly_t poly, FILE* f, const char * x)
+{
+   char* s = mpz_poly_to_string_pretty(poly, x);
+   fputs(s, f);
+   free(s);
+}
+
 
 void mpz_poly_print(mpz_poly_t poly)
 {
    mpz_poly_fprint(poly, stdout);
+}
+
+void mpz_poly_print_pretty(mpz_poly_t poly, const char * x)
+{
+   mpz_poly_fprint_pretty(poly, stdout, x);
 }
 
 
@@ -505,7 +675,7 @@ void mpz_poly_to_fmpz_poly(fmpz_poly_t res, mpz_poly_t poly)
 }
 
 
-void fmpz_poly_to_mpz_poly(mpz_poly_t res, fmpz_poly_t poly)
+void fmpz_poly_to_mpz_poly(mpz_poly_t res, const fmpz_poly_t poly)
 {
    mpz_poly_ensure_alloc(res, poly->length);
 

@@ -58,7 +58,7 @@
 
 %\email{w.b.hart@maths.warwick.ac.uk}
 
-\title{FLINT 1.0.1: Fast Library for Number Theory}
+\title{FLINT 1.1: Fast Library for Number Theory}
 \author{William B. Hart and David Harvey}
 
 \begin{document}
@@ -85,7 +85,7 @@ All of the functions in FLINT have a corresponding test function provided in an 
 
 The easiest way to use FLINT is to build a shared library. Simply download the FLINT tarball and untar it on your system.
 
-Next, set the environment variables \code{FLINT_GMP_LIB_DIR} and \code{FLINT_GMP_INCLUDE_DIR} to point to your GMP library and include directories respectively. 
+Next, set the environment variables \code{FLINT_GMP_LIB_DIR} and \code{FLINT_GMP_INCLUDE_DIR} to point to your GMP library and include directories respectively. Similarly, set the environment variables \code{FLINT_NTL_LIB_DIR} and \code{FLINT_NTL_INCLUDE_DIR} to point to your NTL library and include directories respectively. 
 
 Next type:
 
@@ -100,6 +100,8 @@ Finally type:
 Move the library file \code{libflint.so}, \code{libflint.dll} or \code{libflint.dylib} (depending on your platform) into your library path and move all the .h files in the main directory of FLINT into your include path.
 
 Now to use FLINT, simply include the appropriate header files for the FLINT modules you wish to use in your C program. Then compile your program, linking against the FLINT library and GMP with the options \code{-lflint -lgmp}.
+
+If you are using the NTL-interface, you will also need to link against NTL with the \code{-lntl} linker option.
 
 \section{Test code}
 Each module of FLINT has an extensive associated test module. We strongly recommend running the test programs before relying on results from FLINT on your system. 
@@ -127,6 +129,8 @@ The following is a list of the test programs which should be run:
 \code{ZmodF_mul-test}
 
 \code{long_extras-test}
+
+\code{NTL-interface-test}
 
 \section{Reporting bugs}
 The maintainers wish to be made aware of any and all bugs. Please send an email with your bug report to hart\_wb@yahoo.com.
@@ -338,6 +342,20 @@ The managed version returns zero when $n >= $ \code{poly->length}.
 \end{quote}
 
 \begin{lstlisting}
+void fmpz_poly_get_coeff_mpz_read_only(mpz_t x, 
+                         const fmpz_poly_t poly, unsigned long n)
+void _fmpz_poly_get_coeff_mpz_read_only(mpz_t x, 
+                         const fmpz_poly_t poly, unsigned long n)
+\end{lstlisting}
+\begin{quote}
+Retrieve coefficient $n$ as a read only \code{mpz_t}. The function must be passed an uninitialised \code{mpz_t}. The \code{mpz_t} can then be used as an input to a GMP functions, but not as an output. Its contents may be inspected, but not alterered. This function is faster than \code{fmpz_poly_get_coeff_mpz} which makes an extra copy of the data. 
+
+Coefficients are numbered from zero, starting with the constant coefficient.
+
+The managed version returns zero when $n >= $ \code{poly->length}. 
+\end{quote}
+
+\begin{lstlisting}
 void fmpz_poly_set_coeff_mpz(fmpz_poly_t poly, unsigned long n, 
                                                             mpz_t x) 
 void _fmpz_poly_set_coeff_mpz(fmpz_poly_t poly, unsigned long n, 
@@ -442,7 +460,23 @@ The managed version returns NULL when $n >= $ \code{poly->length}.
 
 The functions in this section are not intended to be particularly fast. They are intended mainly as a debugging aid.
 
-All of the functions use the same string representation of polynomials. It is given by a sequence of integers, in decimal notation, separated by whitespace. The first integer gives the length of the polynomial; the remaining \code{length} integers are the coefficients. For example $5x^3 - x + 1$ is represented by the string ``\code{4 1 -1 0 5}'', and the zero polynomial is represented by ``\code{0}''. The coefficients may be signed and arbitrary precision (provided they fit in the given polynomial).
+For the string output functions there are two variants. The first uses a simple string representation of polynomials which prints only the length of the polynomial and the integer coefficients, whilst the latter variant (appended with \code{_pretty} use a more traditional string representation of polynomials which prints a variable name as part of the representation. 
+
+The first string representation is given by a sequence of integers, in decimal notation, separated by whitespace. The first integer gives the length of the polynomial; the remaining \code{length} integers are the coefficients. For example $5x^3 - x + 1$ is represented by the string ``\code{4 1 -1 0 5}'', and the zero polynomial is represented by ``\code{0}''. The coefficients may be signed and arbitrary precision (provided they fit in the given polynomial).
+
+The string representation of the functions appended by \code{_pretty} includes only the non-zero terms of the polynomial, starting with the one of highest degree. Each term starts with a coefficient, prepended with a sign (positive or negative), followed by the character \code{*}, followed by a variaable name, which must be passed as a string parameter to the function, followed by a carot \code{^} followed by a non-negative exponent.
+
+If the sign of the leading coefficient is positive, it is omitted. Also the exponents of the degree 1 and 0 terms are omitted, as is the variable and the \code{*} character in the case of the degree 0 coefficient. If the coefficient is plus or minus one, the coefficient is omitted, except for the sign.
+
+Some examples of the \code{_pretty} representation are:
+
+\begin{lstlisting}
+5*x^3+7*x-4
+x^2+3
+-x^4+2*x-1
+x+1
+5
+\end{lstlisting}
 
 \begin{lstlisting}
 int fmpz_poly_from_string(fmpz_poly_t poly, const char* s)
@@ -453,22 +487,34 @@ Import a polynomial from a string. If the string represents a valid polynomial t
 
 \begin{lstlisting}
 char* fmpz_poly_to_string(const fmpz_poly_t poly)
+char* fmpz_poly_to_string_pretty(const fmpz_poly_t poly, 
+                                                      const char * x)
 \end{lstlisting}
 \begin{quote}
-Convert a polynomial to a string and return a pointer to the string. Space is allocated for the string by this function and must be freed when it is no longer used, by a call to \code{free}.\end{quote}
+Convert a polynomial to a string and return a pointer to the string. Space is allocated for the string by this function and must be freed when it is no longer used, by a call to \code{free}.
+
+The \code{pretty} version must be supplied with a string \code{x} which represents the variable name to be used when printing the polynomial.
+\end{quote}
 
 \begin{lstlisting}
 void fmpz_poly_fprint(const fmpz_poly_t poly, FILE* f)
+void fmpz_poly_fprint_pretty(const fmpz_poly_t poly, FILE* f, 
+                                                      const char * x)
 \end{lstlisting}
 \begin{quote}
 Convert a polynomial to a string and write it to the given stream. 
+
+The \code{pretty} version must be supplied with a string \code{x} which represents the variable name to be used when printing the polynomial.
 \end{quote}
 
 \begin{lstlisting}
 void fmpz_poly_print(const fmpz_poly_t poly)
+void fmpz_poly_print_pretty(const fmpz_poly_t poly, const char * x)
 \end{lstlisting}
 \begin{quote}
 Convert a polynomial to a string and write it to \code{stdout}. 
+
+The \code{pretty} version must be supplied with a string \code{x} which represents the variable name to be used when printing the polynomial.
 \end{quote}
 
 \begin{lstlisting}
@@ -991,6 +1037,15 @@ Notionally raises \code{poly} to the power \code{exp}, truncates the result to l
 This function can be used to raise power series to a power in an efficient way.
 \end{quote}
 
+\subsection{Gaussian content}
+
+\begin{lstlisting}
+void fmpz_poly_content(fmpz_t c, fmpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Set the \code{fmpz_t c} to the Gaussian content of the polynomial \code{poly}, i.e. to the greatest common divisor of its coefficients.
+\end{quote}
+
 \section{The fmpz module}
 The \code{fmpz} module is designed for manipulation of the FLINT flat multiprecision integer format \code{fmpz_t}. An \code{fmpz_t} is not a struct but merely a pointer to an array of limbs laid out in a certain way.
 
@@ -1207,6 +1262,13 @@ Set \code{res} to \code{f1} times the \code{unsigned long x}.
 \end{quote}
 
 \begin{lstlisting}
+void fmpz_mul_2exp(fmpz_t output, fmpz_t x, unsigned long exp)
+\end{lstlisting}
+\begin{quote}
+Multiply \code{x} by $2^exp$.
+\end{quote}
+
+\begin{lstlisting}
 void fmpz_addmul(fmpz_t res, const fmpz_t f1, const fmpz_t f2)
 \end{lstlisting}
 \begin{quote}
@@ -1236,6 +1298,13 @@ void fmpz_tdiv_ui(fmpz_t res, const fmpz_t f1, unsigned long x)
 Set \code{res} to the quotient of \code{f1} by the unsigned long \code{x}. Round the quotient towards zero and discard the remainder.
 \end{quote}
 
+\begin{lstlisting}
+void fmpz_div_2exp(fmpz_t output, fmpz_t x, unsigned long exp)
+\end{lstlisting}
+\begin{quote}
+Divide \code{x} by $2^exp$, returning the quotient and discarding the remainder.
+\end{quote}
+
 \subsection{Powering}
 
 \begin{lstlisting}
@@ -1254,6 +1323,13 @@ void fmpz_binomial_next(fmpz_t next, const fmpz_t prev, long n, long k)
 Assuming \code{prev} is set to the binomial coefficient \code{bin(n, k-1)} this function returns the binomial coefficient \code{bin(n, k)}. For efficiency reasons, this function requires that \code{next} has space for one more limb than the size of \code{prev}.
 \end{quote}
 
+\begin{lstlisting}
+void fmpz_gcd(fmpz_t output, fmpz_t x1, fmpz_t x2)
+\end{lstlisting}
+\begin{quote}
+Compute the greatest common divisor of \code{x1} and \code{x2}. The result is always non-negative and will be zero if both of the inputs is zero.
+\end{quote}
+
 \subsection{Miscellaneous}
 
 \begin{lstlisting}
@@ -1263,6 +1339,47 @@ void fmpz_normalise(const fmpz_t f)
 Normalise the multiprecision integer \code{f}. 
 
 Since all the functions in \code{fmpz} assume that all inputs are normalised and all outputs are normalised, this function is usually used internally by FLINT or can be used when modifying the internals of an \code{fmpz_t}.
+\end{quote}
+
+\begin{lstlisting}
+unsigned long fmpz_power_of_two(const fmpz_t x)
+\end{lstlisting}
+\begin{quote}
+Return the exponent of the greatest power of two dividing \code{x}, i.e. the number of trailing zeroes.
+\end{quote}
+
+\section{NTL interface}
+Various functions are provided for converting between FLINT objects and NTL objects. To make use of these functions one must type:
+
+\code{#include "NTL-interface.h"}
+
+In each case the functions provided for conversion expect the output objects, whether NTL or FLINT objects, to be initialised. However the functions are managed in that a reallocation automatically occurs if insufficient space was allocated by the user.
+
+\begin{lstlisting}
+void ZZ_to_fmpz(fmpz_t output, const ZZ& z)
+\end{lstlisting}
+\begin{quote}
+Convert an NTL \code{ZZ} integer object to a FLINT \code{fmpz_t} integer object.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_to_ZZ(ZZ& output, const fmpz_t z)
+\end{lstlisting}
+\begin{quote}
+Convert a FLINT \code{fmpz_t} integer object to an NTL \code{ZZ} integer object.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_poly_to_ZZX(ZZX& output, const fmpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Convert an NTL \code{ZZX} polynomial object to a FLINT \code{fmpz_poly_t} polynomial object.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_poly_to_ZZX(ZZX& output, const fmpz_poly_t poly)
+\begin{quote}
+Convert a FLINT \code{fmpz_poly_t} polynomial object to an NTL \code{ZZX} polynomial object.
 \end{quote}
 
 \section{The quadratic sieve}

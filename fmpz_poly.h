@@ -289,7 +289,7 @@ void _fmpz_poly_normalise(fmpz_poly_t poly);
 void _fmpz_poly_check_normalisation(const fmpz_poly_t poly);
 
 static inline
-fmpz_t _fmpz_poly_get_coeff_ptr(fmpz_poly_t poly, const unsigned long n)
+fmpz_t _fmpz_poly_get_coeff_ptr(const fmpz_poly_t poly, const unsigned long n)
 {
    return poly->coeffs+n*(poly->limbs+1);
 }
@@ -331,6 +331,8 @@ long _fmpz_poly_get_coeff_si(fmpz_poly_t poly, const unsigned long n)
 }
 
 void _fmpz_poly_get_coeff_mpz(mpz_t x, const fmpz_poly_t poly, const unsigned long n);
+
+void _fmpz_poly_get_coeff_mpz_read_only(mpz_t x, const fmpz_poly_t poly, const unsigned long n);
 
 static inline
 void _fmpz_poly_set_coeff_mpz(fmpz_poly_t poly, const unsigned long n, const mpz_t x)
@@ -585,6 +587,12 @@ void fmpz_poly_fprint(const fmpz_poly_t poly, FILE* f);
 
 int fmpz_poly_fread(fmpz_poly_t poly, FILE* f);
 
+char* fmpz_poly_to_string_pretty(const fmpz_poly_t poly, const char * x);
+
+void fmpz_poly_fprint_pretty(const fmpz_poly_t poly, FILE* f, const char * x);
+
+void fmpz_poly_print_pretty(const fmpz_poly_t poly, const char * x);
+
 static inline 
 int fmpz_poly_read(fmpz_poly_t poly)
 {
@@ -691,6 +699,8 @@ long fmpz_poly_get_coeff_si(const fmpz_poly_t poly, const unsigned long n)
 }
 
 void fmpz_poly_get_coeff_mpz(mpz_t x, const fmpz_poly_t poly, const unsigned long n);
+
+void fmpz_poly_get_coeff_mpz_read_only(mpz_t x, const fmpz_poly_t poly, const unsigned long n);
 
 static inline
 void fmpz_poly_set_coeff_fmpz(fmpz_poly_t poly, const unsigned long n, fmpz_t x) 
