@@ -464,7 +464,7 @@ For the string output functions there are two variants. The first uses a simple 
 
 The first string representation is given by a sequence of integers, in decimal notation, separated by whitespace. The first integer gives the length of the polynomial; the remaining \code{length} integers are the coefficients. For example $5x^3 - x + 1$ is represented by the string ``\code{4 1 -1 0 5}'', and the zero polynomial is represented by ``\code{0}''. The coefficients may be signed and arbitrary precision (provided they fit in the given polynomial).
 
-The string representation of the functions appended by \code{_pretty} includes only the non-zero terms of the polynomial, starting with the one of highest degree. Each term starts with a coefficient, prepended with a sign (positive or negative), followed by the character \code{*}, followed by a variaable name, which must be passed as a string parameter to the function, followed by a carot \code{^} followed by a non-negative exponent.
+The string representation of the functions appended by \code{_pretty} includes only the non-zero terms of the polynomial, starting with the one of highest degree. Each term starts with a coefficient, prepended with a sign (positive or negative), followed by the character \code{*}, followed by a variable name, which must be passed as a string parameter to the function, followed by a carot \code{^} followed by a non-negative exponent.
 
 If the sign of the leading coefficient is positive, it is omitted. Also the exponents of the degree 1 and 0 terms are omitted, as is the variable and the \code{*} character in the case of the degree 0 coefficient. If the coefficient is plus or minus one, the coefficient is omitted, except for the sign.
 
@@ -1327,7 +1327,7 @@ Assuming \code{prev} is set to the binomial coefficient \code{bin(n, k-1)} this 
 void fmpz_gcd(fmpz_t output, fmpz_t x1, fmpz_t x2)
 \end{lstlisting}
 \begin{quote}
-Compute the greatest common divisor of \code{x1} and \code{x2}. The result is always non-negative and will be zero if both of the inputs is zero.
+Compute the greatest common divisor of \code{x1} and \code{x2}. The result is always non-negative and will be zero if both of the inputs are zero.
 \end{quote}
 
 \subsection{Miscellaneous}
@@ -1353,7 +1353,7 @@ Various functions are provided for converting between FLINT objects and NTL obje
 
 \code{#include "NTL-interface.h"}
 
-In each case the functions provided for conversion expect the output objects, whether NTL or FLINT objects, to be initialised. However the functions are managed in that a reallocation automatically occurs if insufficient space was allocated by the user.
+In each case the functions provided for conversion expect the output objects, whether NTL or FLINT objects, to be initialised. However the functions are managed, in that a reallocation automatically occurs if insufficient space was allocated by the user.
 
 \begin{lstlisting}
 void ZZ_to_fmpz(fmpz_t output, const ZZ& z)
@@ -1378,6 +1378,7 @@ Convert an NTL \code{ZZX} polynomial object to a FLINT \code{fmpz_poly_t} polyno
 
 \begin{lstlisting}
 void fmpz_poly_to_ZZX(ZZX& output, const fmpz_poly_t poly)
+\end{lstlisting}
 \begin{quote}
 Convert a FLINT \code{fmpz_poly_t} polynomial object to an NTL \code{ZZX} polynomial object.
 \end{quote}
