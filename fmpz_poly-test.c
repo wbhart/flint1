@@ -10551,6 +10551,15 @@ int test_fmpz_poly_content()
           if ((long)x[0] < 0L) x[0] = -x[0];
           
           result = (fmpz_equal(c, x) || (test_fmpz_poly->length == 1));
+#if DEBUG2
+          if (!result)
+          {
+             fmpz_print(c); printf("\n");
+             fmpz_print(x); printf("\n");
+             fmpz_poly_print_pretty(test_fmpz_poly, "x"); printf("\n");  
+          }
+#endif
+
           fmpz_clear(c);
       }
       free(x);

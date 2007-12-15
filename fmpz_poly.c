@@ -7834,6 +7834,7 @@ void fmpz_poly_content(fmpz_t c, fmpz_poly_t poly)
    if (length == 1)
    {
       fmpz_set(c, poly->coeffs);
+      if ((long) c[0] < 0L) c[0] = -c[0];
       return;
    }
    

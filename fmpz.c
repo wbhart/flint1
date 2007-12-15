@@ -769,12 +769,14 @@ void fmpz_gcd(fmpz_t output, fmpz_t x1, fmpz_t x2)
    if (x1[0] == 0)
    {
       fmpz_set(output, x2);
+      if ((long) output[0] < 0L) output[0] = -output[0];
       return;
    }
    
    if (x2[0] == 0)
    {
       fmpz_set(output, x1);
+      if ((long) output[0] < 0L) output[0] = -output[0];
       return;
    }
    
@@ -786,7 +788,9 @@ void fmpz_gcd(fmpz_t output, fmpz_t x1, fmpz_t x2)
    fmpz_t a2 = fmpz_init(FLINT_ABS(x2[0]) - (twos2 >> FLINT_LG_BITS_PER_LIMB));
    
    fmpz_div_2exp(a1, x1, twos1);
+   if ((long) a1[0] < 0L) a1[0] = -a1[0];
    fmpz_div_2exp(a2, x2, twos2);
+   if ((long) a2[0] < 0L) a2[0] = -a2[0];
    
    if (fmpz_is_one(a1) || fmpz_is_one(a2))
    {
@@ -801,6 +805,9 @@ void fmpz_gcd(fmpz_t output, fmpz_t x1, fmpz_t x2)
    
    unsigned long min = FLINT_MIN(twos1, twos2);
    fmpz_mul_2exp(output, output, min); 
+   
+   fmpz_clear(a1);
+   fmpz_clear(a2);
 }
 
 // *************** end of file

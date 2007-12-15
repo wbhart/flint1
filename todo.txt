@@ -165,8 +165,6 @@ to improve locality.
 
 * Add poly GCD
 
-* Add functions to print SAGE prettified polynomials
-
 * Retune almost everything and factor out tuning constants (including the one 
   in flint.h)
 
