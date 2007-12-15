@@ -8,4 +8,12 @@ v 1.0.1 -- 7-Dec-07 :
    * Removed some instances of u_int64_t and replaced them with uint64_t, reported by Michael Abshoff
    * Replaced sys/types.h with stdint.h
    * Added FLINT macros to documentation
-   * Corrected numerous typos in documentation              
+   * Corrected numerous typos in documentation   
+
+v 1.1 -- :
+
+   * integer gcd (this just wraps the GMP gcd code)
+   * polynomial content
+   * convert to and from FLINT and NTL integers and polynomials
+   * get a coefficient of a polynomial efficiently as a read only mpz_t
+   * print polynomials in a prettified format with a specified variable           
