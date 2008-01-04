@@ -270,13 +270,12 @@ int main (int argc, char const *argv[])
    }
    
    unsigned long p = 2;
-   unsigned long tests = 1000;
+   unsigned long tests = 2000;
    unsigned long fail = 0;
    
    for(unsigned long i = 0; i < tests; i++)
    {
       p = z_nextprime(p);
-      //if(p == 2053) return;
       if(!test_bernoulli_mod_p(p))
       {
          printf("Fails on p = %d\n", p);

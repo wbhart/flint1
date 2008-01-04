@@ -26,6 +26,7 @@
 *****************************************************************************/
 
 #include "zmod_poly.h"
+#include "flint.h"
 
 #define PRINT_LIMB(a) print_limb(#a, a);
 #define PRINT_VAR(a) print_var(#a, a);
@@ -309,14 +310,14 @@ int zmod_poly_read(zmod_poly_t poly)
 
 void zmod_poly_normalise(zmod_poly_t poly)
 {
-   while (poly->length && (poly->coeffs[poly->length-1] == 0))
+   while (poly->length && (poly->coeffs[poly->length-1] == 0L))
       poly->length--;
 }
 
 
 int zmod_poly_normalised(zmod_poly_t poly)
 {
-   return (poly->length == 0) || (poly->coeffs[poly->length-1] != 0);
+   return (poly->length == 0) || (poly->coeffs[poly->length-1] != 0L);
 }
 
 
@@ -327,7 +328,7 @@ void zmod_poly_pad(zmod_poly_t poly, unsigned long length)
    if (poly->length < length)
    {
       for (unsigned long i = poly->length; i < length; i++)
-         poly->coeffs[i] = 0;
+         poly->coeffs[i] = 0L;
       poly->length = length;
    }
 }
@@ -570,7 +571,10 @@ void zmod_poly_neg(zmod_poly_t res, zmod_poly_t poly)
    zmod_poly_ensure_alloc(res, poly->length);
 
    for (unsigned long i = 0; i < poly->length; i++)
-      res->coeffs[i] = poly->p - poly->coeffs[i];
+   {
+      if (poly->coeffs[i]) res->coeffs[i] = poly->p - poly->coeffs[i];
+      else res->coeffs[i] = 0L;
+   }
    
    res->length = poly->length;
 }
@@ -599,13 +603,13 @@ void zmod_poly_lshift(zmod_poly_t res, zmod_poly_t poly, unsigned long k)
       }
       
       for (unsigned long i = 0; i < k; i++)
-         poly->coeffs[i] = 0;
+         poly->coeffs[i] = 0L;
    }
    else
    {
       // not inplace; need to copy data
       for (unsigned long i = 0; i < k; i++)
-         res->coeffs[i] = 0;
+         res->coeffs[i] = 0L;
       
       for (unsigned long i = 0; i < poly->length; i++)
          res->coeffs[i + k] = poly->coeffs[i];
@@ -900,8 +904,8 @@ void zmod_poly_mul_KS(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p input2
    
    unsigned long final_length = length1 + length2 - 1;
    
-   while ((input1->coeffs[length1-1] == 0) && (length1)) length1--;
-   while ((input2->coeffs[length2-1] == 0) && (length2)) length2--;
+   while ((length1) && (input1->coeffs[length1-1] == 0)) length1--;
+   while ((length2) && (input2->coeffs[length2-1] == 0)) length2--;
    
    if ((length1 == 0) || (length2 == 0)) 
    {
@@ -969,7 +973,11 @@ void zmod_poly_mul_KS(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p input2
    if(input1 != input2)
       zmod_poly_bit_pack_mpn(mpn2, input2, bits);
    
+   limbs1 = FLINT_MAX((long)((length1 * bits-1) / FLINT_BITS + 1), 0L);
+   limbs2 = FLINT_MAX((long)((length2 * bits-1) / FLINT_BITS + 1), 0L);
+   
    res = (mp_limb_t*) flint_stack_alloc(limbs1+limbs2);
+   res[limbs1+limbs2-1] = 0L;
    
    F_mpn_mul(res, mpn1, limbs1, mpn2, limbs2);
    
@@ -1007,7 +1015,7 @@ unsigned long zmod_poly_bits(zmod_poly_t poly)
 {
    unsigned long bits = 0;
    unsigned long mask = -1L;
-   for(unsigned int i = 0; i < poly->length; i++)
+   for(unsigned long i = 0; i < poly->length; i++)
    {
       if(poly->coeffs[i])
       {
@@ -1091,6 +1099,8 @@ void zmod_poly_bit_pack_mpn(mp_limb_t * res, zmod_poly_t poly, unsigned long bit
    unsigned long temp_lower;
    unsigned long temp_upper;
    
+   unsigned long total_limbs = FLINT_MAX((long)(((poly->length * bits - 1)>>FLINT_LG_BITS_PER_LIMB) + 1), 0L);
+   
    res[0] = 0L;
    
    if (bits < FLINT_BITS)
@@ -1140,7 +1150,7 @@ void zmod_poly_bit_pack_mpn(mp_limb_t * res, zmod_poly_t poly, unsigned long bit
          if (current_bit >= FLINT_BITS)
          {
             current_limb++;
-            res[current_limb] = 0L;
+            if (current_limb < total_limbs) res[current_limb] = 0L;
             current_bit -= FLINT_BITS;
          }
       }
@@ -1203,7 +1213,7 @@ void zmod_poly_bit_pack_mpn(mp_limb_t * res, zmod_poly_t poly, unsigned long bit
             //printf("GOT HERE ****************\n");
             current_bit -= FLINT_BITS;
             current_limb++;
-            res[current_limb] = 0L;
+            if (current_limb < total_limbs) res[current_limb] = 0L;
          }
       }
    }
