@@ -104,7 +104,6 @@ long _ZmodF_sqr_handle_minus1(ZmodF_t res, ZmodF_t a, unsigned long n)
    Any combinations of a, b, res may be aliased.
    The output is not necessarily normalised.
 */
-inline
 void _ZmodF_mul(ZmodF_t res, ZmodF_t a, ZmodF_t b, mp_limb_t* scratch,
                 unsigned long n)
 {
@@ -628,7 +627,6 @@ void _ZmodF_mul_fft_convolve_modB(unsigned long* out, unsigned long* in1,
    Multiplies (in1_hi*B + in1_lo) by (in2_hi*B + in2_lo) modulo B^2;
    puts result into (out_hi*B + out_lo).
 */
-inline
 void mul_modB2(unsigned long* out_hi, unsigned long* out_lo,
                unsigned long in1_hi, unsigned long in1_lo,
                unsigned long in2_hi, unsigned long in2_lo)
@@ -708,7 +706,6 @@ If a == b, this function automatically uses a faster squaring algorithm.
 
 Expects both inputs to be normalised and != -1 mod p.
 */
-inline
 void _ZmodF_mul_info_mul_fft(ZmodF_mul_info_t info, ZmodF_t res,
                              ZmodF_t a, ZmodF_t b)
 {
@@ -870,7 +867,6 @@ void _ZmodF_mul_threeway_reduce2(mp_limb_t* res, ZmodF_t a, unsigned long m)
 
    Expects both inputs to be normalised and != -1 mod p.
 */
-inline
 void _ZmodF_mul_info_mul_threeway(ZmodF_mul_info_t info,
                                   ZmodF_t res, ZmodF_t a, ZmodF_t b)
 {

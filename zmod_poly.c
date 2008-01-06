@@ -37,7 +37,7 @@
 
 ****************************************************************************/
 
-inline void zmod_poly_init(zmod_poly_t poly, unsigned long p)
+void zmod_poly_init(zmod_poly_t poly, unsigned long p)
 {
    zmod_poly_init_precomp(poly, p, z_precompute_inverse(p));
 }
@@ -53,7 +53,7 @@ void zmod_poly_init_precomp(zmod_poly_t poly, unsigned long p, double p_inv)
    poly->length = 0;
 }
 
-inline void zmod_poly_init2(zmod_poly_t poly, unsigned long p, unsigned long alloc)
+void zmod_poly_init2(zmod_poly_t poly, unsigned long p, unsigned long alloc)
 {
    zmod_poly_init2_precomp(poly, p, z_precompute_inverse(p), alloc);
 }

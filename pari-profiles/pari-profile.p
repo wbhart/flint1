@@ -92,8 +92,8 @@ format_sci(x)={
     s=Str(x);
     
     if(L<0,
-    s=concat(s,"-"),
-    s=concat(s,"+")
+    s=concat(s,"e-"),
+    s=concat(s,"e+")
     );
 
     s=concat(s,Str(floor(abs(L / 10))));
@@ -124,10 +124,8 @@ prof2d_sample(x, y)={
 
           good_count=good_count+1;
           if(good_count==5,
-            print(Str(x,"  ", y,"  ",format_sci(min_time),"
-  ",format_sci(max_time)));
-            write(Pariprof,Str(x,"  ", y,"  ",format_sci(min_time),"
-  ",format_sci(max_time)));
+            print(Str(x,"	", y,"	",format_sci(min_time),"	",format_sci(max_time)));
+            write(Pariprof,Str(x,"	", y,"	",format_sci(min_time),"	",format_sci(max_time)));
 	    return;
           )
       );
@@ -177,8 +175,7 @@ print_header()={
     print("");
     write(Pariprof,"  ");
     print("============================================== begin data");
-    write(Pariprof,"==============================================
- begin data");
+    write(Pariprof,"============================================== begin data");
    
 };
 

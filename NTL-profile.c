@@ -38,6 +38,7 @@ Copyright (C) 2007, Tomasz Lechowski, William Hart and David Harvey
 #include "test-support.h"
 
 #include <NTL/ZZX.h>
+#include <NTL/ZZXFactoring.h>
 #include <NTL/ZZ.h>
 #include <stdio.h>
 
@@ -95,95 +96,18 @@ void run_triangle(unsigned long max_bits, double ratio)
    }
 }
 
-
 // ============================================================================
 
-void sample_NTL_Kar_poly_mul(unsigned long length, unsigned long bits,
+void sample_NTL_factor(unsigned long length, unsigned long bits,
                           void* arg, unsigned long count)
 {
-
-       
-    ZZX poly1;
-    ZZX poly2;
-    ZZX poly3;
-    ZZ a;
-    poly1.SetMaxLength(length+1);
-    poly2.SetMaxLength(length+1);
-    poly3.SetMaxLength((length)+(length)+1);
-
-
-   
-   
-   unsigned long r_count;    // how often to generate new random data
-   
-   if (count >= 1000) r_count = 100;
-   else if (count >= 100) r_count = 10;
-   else if (count >= 20) r_count = 5;
-   else if (count >= 8) r_count = 2;
-   else r_count = 1;
-   
-   for (unsigned long i = 0; i < count; i++)
-   {
-      if (i%r_count == 0)
-      {
-	    for (unsigned long j = 0; j<length+1; j++)
-		{
-		RandomBits(a,bits);
-		SetCoeff(poly1,j,a);
-		RandomBits(a,bits);
-		SetCoeff(poly2,j,a);
-		}
-      }
-       prof_start();
-       KarMul(poly3, poly1, poly2);
-       prof_stop();
-   }
-   
-   
-}
-
-
-
-
-char* profDriverString_NTL_Kar_poly_mul(char* params)
-{
-   return "NTL_Kar_poly_mul over various lengths and various bit sizes.\n"
-   "Parameters are: max bitsize; ratio between consecutive lengths/bitsizes.";
-}
- 
-char* profDriverDefaultParams_NTL_Kar_poly_mul()
-{
-   return "16000000 1.2";
-}
- 
-void profDriver_NTL_Kar_poly_mul(char* params)
-{
-   unsigned long max_bits;
-   double ratio;
+    ZZX poly1, poly2, poly3;
+    ZZ a, c;
+    vec_pair_ZZX_long factors;
     
-   sscanf(params, "%ld %lf", &max_bits, &ratio);
- 
-   test_support_init();
-   prof2d_set_sampler(sample_NTL_Kar_poly_mul);
-   run_triangle(max_bits, ratio);
-   test_support_cleanup();
-}
-
-
-
-// ============================================================================
-
-
-void sample_NTL_Hom_poly_mul(unsigned long length, unsigned long bits,
-                          void* arg, unsigned long count)
-{
-    ZZX poly1;
-    ZZX poly2;
-    ZZX poly3;
-    ZZ a;
-    poly1.SetMaxLength(length+1);
-    poly2.SetMaxLength(length+1);
-    poly3.SetMaxLength((length)+(length)+1);
+    poly1.SetMaxLength(length);
+    //poly2.SetMaxLength(length);
+    //poly3.SetMaxLength(2*length-1);
 
 
    
@@ -199,16 +123,17 @@ void sample_NTL_Hom_poly_mul(unsigned long length, unsigned long bits,
    {
       if (i%r_count == 0)
       {
-	    for (unsigned long j = 0; j<length+1; j++)
+	    for (unsigned long j = 0; j<length; j++)
 		{
 		RandomBits(a,bits);
 		SetCoeff(poly1,j,a);
-		RandomBits(a,bits);
-		SetCoeff(poly2,j,a);
+		//RandomBits(a,bits);
+		//SetCoeff(poly2,j,a);
 		}
+		//mul(poly3, poly1, poly2);
       }
        prof_start();
-       HomMul(poly3, poly1, poly2);
+       factor(c, factors, poly1);
        prof_stop();
    }
    
@@ -218,18 +143,18 @@ void sample_NTL_Hom_poly_mul(unsigned long length, unsigned long bits,
 
 
 
-char* profDriverString_NTL_Hom_poly_mul(char* params)
+char* profDriverString_NTL_factor(char* params)
 {
-   return "NTL_Hom_poly_mul over various lengths and various bit sizes.\n"
+   return "NTL_factor factors polynomials of various lengths and various bit sizes.\n"
    "Parameters are: max bitsize; ratio between consecutive lengths/bitsizes.";
 }
  
-char* profDriverDefaultParams_NTL_Hom_poly_mul()
+char* profDriverDefaultParams_NTL_factor()
 {
-   return "16000000 1.2";
+   return "10000 1.2";
 }
  
-void profDriver_NTL_Hom_poly_mul(char* params)
+void profDriver_NTL_factor(char* params)
 {
    unsigned long max_bits;
    double ratio;
@@ -237,156 +162,12 @@ void profDriver_NTL_Hom_poly_mul(char* params)
    sscanf(params, "%ld %lf", &max_bits, &ratio);
  
    test_support_init();
-   prof2d_set_sampler(sample_NTL_Hom_poly_mul);
-   run_triangle(max_bits, ratio);
-   test_support_cleanup();
-}
-// ============================================================================
-
-void sample_NTL_SS_poly_mul(unsigned long length, unsigned long bits,
-                          void* arg, unsigned long count)
-{
-       
-    ZZX poly1;
-    ZZX poly2;
-    ZZX poly3;
-    ZZ a;
-    poly1.SetMaxLength(length+1);
-    poly2.SetMaxLength(length+1);
-    poly3.SetMaxLength((length)+(length)+1);
-
-   
-   unsigned long r_count;    // how often to generate new random data
-   
-   if (count >= 1000) r_count = 100;
-   else if (count >= 100) r_count = 10;
-   else if (count >= 20) r_count = 5;
-   else if (count >= 8) r_count = 2;
-   else r_count = 1;
-   
-   for (unsigned long i = 0; i < count; i++)
-   {
-      if (i%r_count == 0)
-      {
-	    for (unsigned long j = 0; j<length+1; j++)
-		{
-		RandomBits(a,bits);
-		SetCoeff(poly1,j,a);
-		RandomBits(a,bits);
-		SetCoeff(poly2,j,a);
-		}
-      }
-       prof_start();
-       SSMul(poly3, poly1, poly2);
-       prof_stop();
-   }
-   
-
-   
-}
-
-
-
-
-char* profDriverString_NTL_SS_poly_mul(char* params)
-{
-   return "NTL_SS_poly_mul over various lengths and various bit sizes.\n"
-   "Parameters are: max bitsize; ratio between consecutive lengths/bitsizes.";
-}
- 
-char* profDriverDefaultParams_NTL_SS_poly_mul()
-{
-   return "16000000 1.2";
-}
- 
-void profDriver_NTL_SS_poly_mul(char* params)
-{
-   unsigned long max_bits;
-   double ratio;
-    
-   sscanf(params, "%ld %lf", &max_bits, &ratio);
- 
-   test_support_init();
-   prof2d_set_sampler(sample_NTL_SS_poly_mul);
+   prof2d_set_sampler(sample_NTL_factor);
    run_triangle(max_bits, ratio);
    test_support_cleanup();
 }
 
-
 // ============================================================================
-
-void sample_NTL_Plain_poly_mul(unsigned long length, unsigned long bits,
-                          void* arg, unsigned long count)
-{
-       
-    ZZX poly1;
-    ZZX poly2;
-    ZZX poly3;
-    ZZ a;
-    poly1.SetMaxLength(length+1);
-    poly2.SetMaxLength(length+1);
-    poly3.SetMaxLength((length)+(length)+1);
-
-   
-   unsigned long r_count;    // how often to generate new random data
-   
-   if (count >= 1000) r_count = 100;
-   else if (count >= 100) r_count = 10;
-   else if (count >= 20) r_count = 5;
-   else if (count >= 8) r_count = 2;
-   else r_count = 1;
-   
-   for (unsigned long i = 0; i < count; i++)
-   {
-      if (i%r_count == 0)
-      {
-	    for (unsigned long j = 0; j<length+1; j++)
-		{
-		RandomBits(a,bits);
-		SetCoeff(poly1,j,a);
-		RandomBits(a,bits);
-		SetCoeff(poly2,j,a);
-		}
-      }
-       prof_start();
-       PlainMul(poly3, poly1, poly2);
-       prof_stop();
-   }
-   
-
-   
-}
-
-
-
-
-char* profDriverString_NTL_Plain_poly_mul(char* params)
-{
-   return "NTL_Plain_poly_mul over various lengths and various bit sizes.\n"
-   "Parameters are: max bitsize; ratio between consecutive lengths/bitsizes.";
-}
- 
-char* profDriverDefaultParams_NTL_Plain_poly_mul()
-{
-   return "16000000 1.2";
-}
- 
-void profDriver_NTL_Plain_poly_mul(char* params)
-{
-   unsigned long max_bits;
-   double ratio;
-    
-   sscanf(params, "%ld %lf", &max_bits, &ratio);
- 
-   test_support_init();
-   prof2d_set_sampler(sample_NTL_Plain_poly_mul);
-   run_triangle(max_bits, ratio);
-   test_support_cleanup();
-}
-
-
-// ============================================================================
-
 
 
 void sample_NTL_poly_mul(unsigned long length, unsigned long bits,
@@ -397,9 +178,9 @@ void sample_NTL_poly_mul(unsigned long length, unsigned long bits,
     ZZX poly2;
     ZZX poly3;
     ZZ a;
-    poly1.SetMaxLength(length+1);
-    poly2.SetMaxLength(length+1);
-    poly3.SetMaxLength((length)+(length)+1);
+    poly1.SetMaxLength(length);
+    poly2.SetMaxLength(length);
+    poly3.SetMaxLength(2*length-1);
 
    
    unsigned long r_count;    // how often to generate new random data
@@ -414,7 +195,7 @@ void sample_NTL_poly_mul(unsigned long length, unsigned long bits,
    {
       if (i%r_count == 0)
       {
-	    for (unsigned long j = 0; j<length+1; j++)
+	    for (unsigned long j = 0; j<length; j++)
 		{
 		RandomBits(a,bits);
 		SetCoeff(poly1,j,a);
@@ -472,7 +253,7 @@ void sample_NTL_poly_div1(unsigned long length, unsigned long bits,
     ZZ a;
     poly1.SetMaxLength(length);
     poly2.SetMaxLength(length);
-    poly3.SetMaxLength((length)+(length)-1);
+    poly3.SetMaxLength(2*length-1);
 
 
    
