@@ -145,11 +145,6 @@ void flint_stack_cleanup(void)
 #define EXPIRE_AFTER 3 // 1/4-th number of allocs before expiring unused allocated space
 #define RESALLOC 100 //allocate this many mp_limb_t's at once to save on overheads
 
-inline unsigned long max(unsigned long a, unsigned long b)
-{
-   return (a<b) ? b : a;
-}
-
 typedef struct limb_mem_t //record for managing all allocations of limbs of a certain bitsize
 {
    unsigned long remaining; //number of remaining limbs which are available for allocation

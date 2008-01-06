@@ -232,7 +232,7 @@ int F_mpz_sqrtmod(mpz_t res, mpz_t a, mpz_t p)
      Computes the square root of a modulo p^k when given z, the square root mod p^(k-1)
 */
 
-inline void __sqrtmodpow(mpz_t res, mpz_t z, mpz_t a, mpz_t pk, mpz_t tempsqpow, mpz_t inv)
+void __sqrtmodpow(mpz_t res, mpz_t z, mpz_t a, mpz_t pk, mpz_t tempsqpow, mpz_t inv)
 {
      mpz_mul_ui(inv,z,2);
      mpz_invert(inv,inv,pk);
