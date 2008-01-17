@@ -141,8 +141,8 @@ static inline unsigned long l_shift(unsigned long in, unsigned long shift)
 
 static inline unsigned long FLINT_BIT_COUNT(unsigned long x)
 {
-   unsigned long zeros;
-   count_lead_zeros(zeros, x);
+   unsigned long zeros = 0L;
+   if (x) count_lead_zeros(zeros, x);
    return FLINT_BITS-zeros;
 }
 
