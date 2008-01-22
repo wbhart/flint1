@@ -458,13 +458,12 @@ mp_limb_t __F_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1,
    
    ZmodF_poly_normalise(poly1);
    
-   F_mpn_clear(res, total_limbs);
+   F_mpn_clear(res, limbs1+limbs2);
    
    F_mpn_FFT_combine(res, poly1, coeff_limbs, 2*coeff_limbs+1, total_limbs);
    ZmodF_poly_stack_clear(poly1);
    
-   if (s1) return 0;
-   else return res[limbs1+limbs2-1];
+   return res[limbs1+limbs2-1];
 }
 
 mp_limb_t __F_mpn_mul_trunc(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1, 
