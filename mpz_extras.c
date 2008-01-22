@@ -637,7 +637,7 @@ void __F_mpz_mul(mpz_t res, mpz_t a, mpz_t b, unsigned long twk)
       unsigned long s1 = (FLINT_BIT_COUNT(a->_mp_d[sa-1]) + FLINT_BIT_COUNT(b->_mp_d[sb-1]) <= FLINT_BITS);
    
       mp_limb_t* output = 
-         (mp_limb_t*) flint_stack_alloc(sa + sb - s1);
+         (mp_limb_t*) flint_stack_alloc(sa + sb);
       __F_mpn_mul(output, a->_mp_d, sa, b->_mp_d, sb, twk);
       mpz_import(res, sa+sb-s1, -1, sizeof(mp_limb_t), 0, 0, output);
       if (mpz_sgn(res) != mpz_sgn(a)*mpz_sgn(b)) mpz_neg(res,res);
@@ -654,7 +654,7 @@ void F_mpz_mul(mpz_t res, mpz_t a, mpz_t b)
    {
       unsigned long s1 = (FLINT_BIT_COUNT(a->_mp_d[sa-1]) + FLINT_BIT_COUNT(b->_mp_d[sb-1]) <= FLINT_BITS);
       mp_limb_t* output = 
-         (mp_limb_t*) flint_stack_alloc(sa + sb - s1);
+         (mp_limb_t*) flint_stack_alloc(sa + sb);
       F_mpn_mul(output, a->_mp_d, sa, b->_mp_d, sb);
       mpz_import(res, sa+sb-s1, -1, sizeof(mp_limb_t), 0, 0, output);
       if (mpz_sgn(res) != mpz_sgn(a)*mpz_sgn(b)) mpz_neg(res,res);
