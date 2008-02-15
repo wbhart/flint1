@@ -43,6 +43,8 @@
 #include "ZmodF_mul.h"
 #include "F_mpn_mul-tuning.h"
 
+#define DEBUG2 1
+
 /*=======================================================================================
 
     Performs division by a limb d and places the quotient in qp and returns the 
@@ -196,6 +198,84 @@ unsigned long SQR_TWK_VALS[SQR_TWK_COUNT][3] =
    {4230000, 8350000, 1}
 };
 
+unsigned long FFT_MUL_TWK[FFT_MUL_COUNT][2] = 
+{
+   {1695, 7},
+   {1730, 8},
+   {1790, 7},
+   {1820, 8},
+   {1880, 7},
+   {1920, 8},
+   {3070, 9},
+   {3200, 8},
+   {3450, 9},
+   {3710, 8},
+   {3840, 9},
+   {4080, 8},
+   {4220, 9},
+   {4480, 8},
+   {4600, 9},
+   {4870, 8},
+   {4980, 9},
+   {5230, 8},
+   {5380, 9},
+   {6140, 10},
+   {7150, 9},
+   {7700, 10},
+   {8700, 9},
+   {9200, 10},
+   {12300, 11},
+   {34800, 10},
+   {36900, 12},
+   {41000, 11},
+   {49200, 12},
+   {99000, 13},
+   {130000, 12},
+   {198000, 13},
+   {396000, 14},
+   {526000, 13},
+   {1040000, 14},
+   {3150000, 15},
+   {6300000, 16},
+   {8400000, 15},
+   {12700000, 17},
+   {15900000, 16}
+};
+
+unsigned long FFT_SQR_TWK[FFT_SQR_COUNT][2] = 
+{
+   {1300, 8},
+   {2700, 9},
+   {2950, 8},
+   {3080, 9},
+   {4100, 8},
+   {4240, 9},
+   {5100, 10},
+   {5630, 9},
+   {6150, 10},
+   {8700, 9},
+   {9200, 10},
+   {12300, 11},
+   {24700, 12},
+   {29000, 11},
+   {35000, 10},
+   {36900, 11},
+   {49000, 12},
+   {99000, 13},
+   {130000, 12},
+   {198000, 13},
+   {396000, 14},
+   {660000, 13},
+   {780000, 14},
+   {170000, 15},
+   {210000, 14},
+   {420000, 15},
+   {880000, 16},
+   {1060000, 15},
+   {1260000, 17},
+   {1680000, 16}
+};
+
 /*
    Splits an mpn into segments of length coeff_limbs and stores in a ZmodF_poly
    in zero padded coefficients of length output_limbs, for use in FFT 
@@ -221,6 +301,73 @@ void F_mpn_FFT_split(ZmodF_poly_t poly, mp_limb_t * limbs, unsigned long total_l
    if (i < length) F_mpn_clear(poly->coeffs[i], output_limbs+1);
    if (total_limbs > skip) F_mpn_copy(poly->coeffs[i], limbs+skip, total_limbs-skip);
    
+   poly->length = length;
+}
+
+/*
+   Splits an mpn into segments of length _bits_ and stores in a ZmodF_poly
+   in zero padded coefficients of length output_limbs, for use in FFT 
+   convolution code. Assumes that the input is total_limbs in length. 
+   Used by the large integer multiplication code 
+   (F_mpn_mul)
+   
+   It is assumed that bits is not divisible by FLINT_BITS
+*/
+
+void F_mpn_FFT_split_bits(ZmodF_poly_t poly, mp_limb_t * limbs, unsigned long total_limbs,
+                               unsigned long bits, unsigned long output_limbs)
+{
+   unsigned long length = (FLINT_BITS*total_limbs-1)/bits + 1;
+   unsigned long i, j;
+   
+   unsigned long top_bits = ((FLINT_BITS-1)&bits);
+   if (top_bits == 0)
+   {
+      F_mpn_FFT_split(poly, limbs, total_limbs, bits >> FLINT_LG_BITS_PER_LIMB, output_limbs);
+      return;
+   }
+   unsigned long coeff_limbs = (bits>>FLINT_LG_BITS_PER_LIMB) + 1;
+   unsigned long mask = (1L<<top_bits)-1L;
+   unsigned long shift_bits = 0L;
+   unsigned long * limb_ptr = limbs;                      
+    
+   for (i = 0; i < length - 1; i++)
+   {
+      for (j = 0; j < output_limbs; j += 8) FLINT_PREFETCH(poly->coeffs[i+1], j);
+      
+      F_mpn_clear(poly->coeffs[i], output_limbs+1);
+      // convert a coefficient
+      if (!shift_bits)
+      {
+         F_mpn_copy(poly->coeffs[i], limb_ptr, coeff_limbs);
+         poly->coeffs[i][coeff_limbs-1] &= mask;
+         limb_ptr += (coeff_limbs-1);
+         shift_bits += top_bits;
+      } else
+      {
+         mpn_rshift(poly->coeffs[i], limb_ptr, coeff_limbs, shift_bits);
+         limb_ptr += (coeff_limbs-1);
+         shift_bits += top_bits;
+         if (shift_bits >= FLINT_BITS)
+         {
+            limb_ptr++;
+            poly->coeffs[i][coeff_limbs-1] += (limb_ptr[0] << (FLINT_BITS - (shift_bits - top_bits)));
+            shift_bits -= FLINT_BITS; 
+         }
+         poly->coeffs[i][coeff_limbs-1] &= mask;
+      }                      
+   }
+   
+   F_mpn_clear(poly->coeffs[i], output_limbs+1);
+   unsigned long limbs_left = total_limbs - (limb_ptr - limbs);
+   if (!shift_bits)
+   {
+      F_mpn_copy(poly->coeffs[i], limb_ptr, limbs_left);
+   } else
+   {
+      mpn_rshift(poly->coeffs[i], limb_ptr, limbs_left, shift_bits);
+   }                      
+      
    poly->length = length;
 }
 
@@ -252,6 +399,77 @@ void F_mpn_FFT_combine(mp_limb_t * res, ZmodF_poly_t poly, unsigned long coeff_l
       skip+=coeff_limbs;
    }  
 
+}
+
+/*
+   Recombines coefficients of a ZmodF_poly after doing a convolution. Assumes 
+   each of the coefficients of the ZmodF_poly is output_limbs long, that each 
+   of the coefficients is being shifted by a multiple of _bits_ and added
+   to an mpn which is total_limbs long. It is assumed that the mpn has been 
+   zeroed in advance.
+   Used by the large integer multiplication code (F_mpn_mul)
+   
+   It is assumed that bits is not divisible by FLINT_BITS
+*/
+
+void F_mpn_FFT_combine_bits(mp_limb_t * res, ZmodF_poly_t poly, unsigned long bits, 
+                             unsigned long output_limbs, unsigned long total_limbs)
+{
+   unsigned long top_bits = ((FLINT_BITS-1)&bits);
+   if (top_bits == 0)
+   {
+      F_mpn_FFT_combine(res, poly, bits >> FLINT_LG_BITS_PER_LIMB, output_limbs, total_limbs);
+      return;
+   }
+   
+   unsigned long coeff_limbs = (bits>>FLINT_LG_BITS_PER_LIMB) + 1;
+   unsigned long i, j;
+   unsigned long length = poly->length;
+   unsigned long * temp = (unsigned long *) flint_stack_alloc(output_limbs+1);
+   unsigned long shift_bits = 0;
+   unsigned long * limb_ptr = res;
+   unsigned long * end = res + total_limbs;
+   
+   for (i = 0; (i < length) && (limb_ptr + output_limbs < end); i++)
+   { 
+      for (j = 0; j < output_limbs; j += 8) FLINT_PREFETCH(poly->coeffs[i+1], j);
+      if (shift_bits)
+      {
+         mpn_lshift(temp, poly->coeffs[i], output_limbs+1, shift_bits);
+         mpn_add_n(limb_ptr, limb_ptr, temp, output_limbs+1);
+      } else
+      {
+         mpn_add(limb_ptr, limb_ptr, output_limbs+1, poly->coeffs[i], output_limbs);
+      }
+      shift_bits += top_bits;
+      limb_ptr += (coeff_limbs - 1);
+      if (shift_bits >= FLINT_BITS)
+      {
+         limb_ptr++;
+         shift_bits -= FLINT_BITS;
+      }      
+   } 
+   while ((limb_ptr < end) && (i < length))
+   {
+      if (shift_bits)
+      {
+         mpn_lshift(temp, poly->coeffs[i], output_limbs+1, shift_bits);
+         mpn_add_n(limb_ptr, limb_ptr, temp, end - limb_ptr);
+      } else
+      {
+         mpn_add_n(limb_ptr, limb_ptr, poly->coeffs[i], end - limb_ptr);
+      }
+      shift_bits += top_bits;
+      limb_ptr += (coeff_limbs - 1);
+      if (shift_bits >= FLINT_BITS)
+      {
+         limb_ptr++;
+         shift_bits -= FLINT_BITS;
+      }  
+      i++;    
+   }
+   
+   flint_stack_release();      
 }
 
 /*void F_mpn_mul_tuning(unsigned long * length1, unsigned long * length2, unsigned long * output_bits,
@@ -412,10 +630,9 @@ do { \
 } while (0)
 
 mp_limb_t __F_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1, 
-                                      mp_limb_t * data2, unsigned long limbs2, unsigned long twk)
+                                      mp_limb_t * data2, unsigned long limbs2, unsigned long log_length)
 {
    unsigned long length = 1;
-   unsigned long log_length = 0;
    
    unsigned long coeff_limbs = limbs1 + limbs2;
    unsigned long s1 = (FLINT_BIT_COUNT(data1[limbs1-1]) + FLINT_BIT_COUNT(data2[limbs2-1]) <= FLINT_BITS);
@@ -426,18 +643,29 @@ mp_limb_t __F_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1,
    unsigned long length1 = 1;
    unsigned long length2 = 1;
    
-   unsigned log_length2 = 0;
+   unsigned log_length2 = 1;
 
-   F_mpn_mul_TUNING;
- 
-   n = output_bits/FLINT_BITS;
-   //printf("n= %ld\n",n);
+   unsigned long bits;
+      
+   do
+   {
+      bits = (((limbs1 << FLINT_LG_BITS_PER_LIMB)-1) >> (log_length-1)) + 1;
+      output_bits = 2*bits + log_length2;
+      output_bits = (((output_bits - 1) >> (log_length-1)) + 1) << (log_length-1);
+   
+      bits = (output_bits - log_length2)/2;
+      length1 = ((limbs1 << FLINT_LG_BITS_PER_LIMB)-1)/bits + 1;
+      length2 = ((limbs2 << FLINT_LG_BITS_PER_LIMB)-1)/bits + 1;
+      log_length2++;
+   } while ((length2 > (1L<<(log_length2-1))) || (length1 > (1L<<(log_length-1))));
+   
+   n = (output_bits-1)/FLINT_BITS+1;
 #if DEBUG
-   printf("%ld, %ld, %ld, %ld, %ld\n", length1, length2, output_bits, coeff_limbs, log_length);
+   printf("%ld, %ld, %ld, %ld, %ld, %ld\n", bits, length1, length2, output_bits, coeff_limbs, n);
 #endif   
    ZmodF_poly_t poly1;
    ZmodF_poly_stack_init(poly1, log_length, n, 1);
-   F_mpn_FFT_split(poly1, data1, limbs1, coeff_limbs, n);
+   F_mpn_FFT_split_bits(poly1, data1, limbs1, bits, n);
    
    if ((data1 == data2) && (limbs1 == limbs2))
    {
@@ -449,7 +677,7 @@ mp_limb_t __F_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1,
       // distinct operands case
       ZmodF_poly_t poly2;
       ZmodF_poly_stack_init(poly2, log_length, n, 1);
-      F_mpn_FFT_split(poly2, data2, limbs2, coeff_limbs, n);
+      F_mpn_FFT_split_bits(poly2, data2, limbs2, bits, n);
 
       ZmodF_poly_convolution(poly1, poly1, poly2);
 
@@ -460,7 +688,7 @@ mp_limb_t __F_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1,
    
    F_mpn_clear(res, limbs1+limbs2);
    
-   F_mpn_FFT_combine(res, poly1, coeff_limbs, 2*coeff_limbs+1, total_limbs);
+   F_mpn_FFT_combine_bits(res, poly1, bits, n, total_limbs);
    ZmodF_poly_stack_clear(poly1);
    
    return res[limbs1+limbs2-1];
@@ -537,12 +765,36 @@ mp_limb_t F_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1,
    unsigned long coeff_limbs = limbs1 + limbs2;
    unsigned long twk;
    
-   if (coeff_limbs/2 < FLINT_FFT_LIMBS_CROSSOVER) 
+   if (coeff_limbs/2 > FFT_TUNE_CUTOFF)
    {
-      return mpn_mul(res, data1, limbs1, data2, limbs2);
-   } 
-   
-   if (data1 != data2)
+      twk = 0;
+      while ((1L<<(2*twk)) < FLINT_BITS*coeff_limbs)
+      {
+         twk++;
+      }   
+   } else if (data1 != data2)
+   {
+      if (coeff_limbs/2 < FFT_MUL_TWK[0][0]) 
+         return mpn_mul(res, data1, limbs1, data2, limbs2);
+      else
+      {
+         unsigned long i = 0;
+         while ((i < FFT_MUL_COUNT) && (coeff_limbs/2 > FFT_MUL_TWK[i+1][0])) i++;
+         twk = FFT_MUL_TWK[i][1];
+      }
+   } else
+   {
+      if (coeff_limbs/2 < FFT_SQR_TWK[0][0]) 
+         return mpn_mul(res, data1, limbs1, data1, limbs1);
+      else
+      {
+         unsigned long i = 0;
+         while ((i < FFT_SQR_COUNT) && (coeff_limbs/2 > FFT_SQR_TWK[i+1][0])) i++;
+         twk = FFT_SQR_TWK[i][1];
+      }
+   }
+
+/*if (data1 != data2)
    {
       if (coeff_limbs/2 < MUL_TWK_SMALL_CUTOFF) twk = MUL_TWK_SMALL_DEFAULT;
       else if (coeff_limbs/2 > MUL_TWK_LARGE_CUTOFF) twk = MUL_TWK_LARGE_DEFAULT;
@@ -574,7 +826,7 @@ mp_limb_t F_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1,
             }
          }
       }
-   }
+   }*/
 
    return __F_mpn_mul(res, data1, limbs1, data2, limbs2, twk);
 }
@@ -590,7 +842,36 @@ mp_limb_t F_mpn_mul_trunc(mp_limb_t * res, mp_limb_t * data1, unsigned long limb
    unsigned long coeff_limbs = limbs1 + limbs2;
    unsigned long twk;
    
-   if (coeff_limbs/2 < FLINT_FFT_LIMBS_CROSSOVER) 
+   if (coeff_limbs/2 > FFT_TUNE_CUTOFF)
+   {
+      twk = 0;
+      while ((1L<<(2*twk)) < FLINT_BITS*coeff_limbs)
+      {
+         twk++;
+      }   
+   } else if (data1 != data2)
+   {
+      if (coeff_limbs/2 < FFT_MUL_TWK[0][0]) 
+         return mpn_mul(res, data1, limbs1, data2, limbs2);
+      else
+      {
+         unsigned long i = 0;
+         while ((i < FFT_MUL_COUNT) && (coeff_limbs/2 > FFT_MUL_TWK[i+1][0])) i++;
+         twk = FFT_MUL_TWK[i][1];
+      }
+   } else
+   {
+      if (coeff_limbs/2 < FFT_SQR_TWK[0][0]) 
+         return mpn_mul(res, data1, limbs1, data1, limbs1);
+      else
+      {
+         unsigned long i = 0;
+         while ((i < FFT_SQR_COUNT) && (coeff_limbs/2 > FFT_SQR_TWK[i+1][0])) i++;
+         twk = FFT_SQR_TWK[i][1];
+      }
+   }
+
+   /*if (coeff_limbs/2 < FLINT_FFT_LIMBS_CROSSOVER) 
    {
       return mpn_mul(res, data1, limbs1, data2, limbs2);
    } 
@@ -627,7 +908,7 @@ mp_limb_t F_mpn_mul_trunc(mp_limb_t * res, mp_limb_t * data1, unsigned long limb
             }
          }
       }
-   }
+   }*/
 
    return __F_mpn_mul_trunc(res, data1, limbs1, data2, limbs2, twk, trunc);
 }

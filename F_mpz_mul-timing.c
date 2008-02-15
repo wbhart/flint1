@@ -19,10 +19,10 @@
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 
 ===============================================================================*/
-#define TRIALS 1
+#define TRIALS 5
 
-#define TEST
-//#define TIMING
+//#define TEST
+#define TIMING
 
 
 #include <gmp.h>
@@ -61,8 +61,13 @@ unsigned long run_F_mpz_mul(unsigned long num_trials, unsigned long coeff_bits, 
       // make up random polys
       if (i%20==0)
       {
+#ifdef TEST
+         mpz_rrandomb(data1, state, coeff_bits);
+         mpz_rrandomb(data2, state, coeff_bits);
+#else
          mpz_urandomb(data1, state, coeff_bits);
-         //mpz_urandomb(data2, state, coeff_bits);
+         mpz_urandomb(data2, state, coeff_bits);
+#endif
             /*if (gmp_urandomb_ui(state, 1))
                mpz_neg(data1, data1);
             if (gmp_urandomb_ui(state, 1))
@@ -72,9 +77,9 @@ unsigned long run_F_mpz_mul(unsigned long num_trials, unsigned long coeff_bits, 
 
 #ifdef TEST
       // compute product using F_mpz_mul
-      F_mpz_mul(data3, data1, data1);
+      F_mpz_mul(data3, data2, data1);
       // compute product using GMP
-      mpz_mul(data4, data1, data1);
+      mpz_mul(data4, data2, data1);
       
       if (mpz_size(data3) != mpz_size(data4)) printf("Sizes don't match! %ld, %ld\n", mpz_size(data3), mpz_size(data4));
 
@@ -85,10 +90,10 @@ unsigned long run_F_mpz_mul(unsigned long num_trials, unsigned long coeff_bits, 
       start_clock(0);
       if (fast)
       {
-         __F_mpz_mul(data3, data1, data1, tweak);
+         __F_mpz_mul(data3, data1, data2, tweak);
       } else
       {
-         mpz_mul(data4, data1, data1);
+         mpz_mul(data4, data1, data2);
       }
       stop_clock(0);
 #endif          
@@ -111,22 +116,17 @@ int main (int argc, const char * argv[])
    unsigned long tweak;
    unsigned long bits;
    
-   for (unsigned long words = 1000UL; words < 500000000; words=floor(words*pow(2.0,1.0/128.0))) 
+   for (unsigned long words = 1000UL; words < 500000000; words=floor(words*pow(2.0,1.0/32.0))+1) 
    {
        bits = 64*words;
 #ifdef TIMING
        printf("%ld words\n",words);
        besti = 0;
        best = 1000.0;
-       if (bits/64>20000)
-       {
-          imax = 2;
-          tweak = 1;
-       } else
-       {
-          tweak = 1;
-          imax = 8;
-       }
+       
+       imax = 8;
+       tweak = 8;
+       
        for (unsigned long i = 0; i < imax; i++)
        {
           init_clock(0);
@@ -137,7 +137,7 @@ int main (int argc, const char * argv[])
              best = time1;
              besti = tweak;
           }
-          tweak <<= 2;
+          tweak++;
        }
        printf("FLINT = %lf ", besti, best); 
        init_clock(0);
@@ -145,6 +145,7 @@ int main (int argc, const char * argv[])
        time2 = get_clock(0) / FLINT_CLOCK_SCALE_FACTOR / 1800000000.0;
        printf("GMP = %lf ",time2);   
        printf("ratio = %lf, best = %ld\n",time2/best,besti);
+       run_F_mpz_mul(TRIALS, bits, 1, besti);
 #else       
        printf("%ld\n",bits);
        run_F_mpz_mul(TRIALS, bits, 1, 1);

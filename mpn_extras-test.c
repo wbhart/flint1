@@ -114,6 +114,54 @@ void randpoly_unsigned(mpz_poly_t pol, unsigned long length, unsigned long maxbi
    mpz_clear(temp);
 } 
 
+int test_F_mpn_splitcombine_bits()
+{
+    mp_limb_t * int1, * int2;
+    ZmodF_poly_t poly;
+    int result = 1;
+    
+    for (unsigned long count = 0; (count < 30000) && (result == 1); count++)
+    {
+        unsigned long limbs = randint(300)+1;
+        unsigned long bits = randint(500)+1;
+        unsigned long coeff_limbs = randint(100) + (bits-1)/FLINT_BITS + 1;
+        unsigned long length = (FLINT_BITS*limbs - 1)/bits + 1;
+        unsigned long log_length = 0;
+        while ((1L << log_length) < length) log_length++;
+        
+#if DEBUG
+        printf("limbs = %ld, bits = %ld, coeff_limbs = %ld\n", limbs, bits, coeff_limbs);
+#endif
+        
+        int1 = (mp_limb_t *) malloc(sizeof(mp_limb_t)*limbs);
+        int2 = (mp_limb_t *) malloc(sizeof(mp_limb_t)*limbs);
+        ZmodF_poly_init(poly, log_length, coeff_limbs, 0);
+        
+        mpn_random2(int1, limbs);
+        F_mpn_FFT_split_bits(poly, int1, limbs, bits, coeff_limbs);
+        F_mpn_clear(int2, limbs);
+        F_mpn_FFT_combine_bits(int2, poly, bits, coeff_limbs, limbs);
+
+#if DEBUG
+        F_mpn_printx(int1, limbs); printf("\n\n");
+        for (unsigned long i = 0; i < length; i++) { F_mpn_printx(poly->coeffs[i], coeff_limbs); printf("\n");}
+        printf("\n");
+        F_mpn_printx(int2, limbs); printf("\n\n");
+#endif
+
+        for (unsigned long j = 0; j < limbs; j++)
+        {
+           if (int1[j] != int2[j]) result = 0;
+        }
+        
+        ZmodF_poly_clear(poly);
+        free(int2);
+        free(int1);
+    }
+    
+    return result;
+}
+
 int test_F_mpn_mul_precomp()
 {
    mp_limb_t * int1, * int2, * product, * product2;
@@ -284,6 +332,7 @@ void F_mpn_test_all()
 {
    int success, all_success = 1;
 
+   RUN_TEST(F_mpn_splitcombine_bits);
    RUN_TEST(F_mpn_mul);
    RUN_TEST(F_mpn_mul_trunc);
    RUN_TEST(F_mpn_mul_precomp);

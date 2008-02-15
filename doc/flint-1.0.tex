@@ -588,11 +588,11 @@ The assumption is made that the absolute value of each coefficient fits into an 
 \subsection{Assignment and basic manipulation}
 
 \begin{lstlisting}
-void fmpz_poly_set(fmpz_poly_t poly1, const fmpz_poly_t poly2)
-void _fmpz_poly_set(fmpz_poly_t poly1, const fmpz_poly_t poly2)
+void fmpz_poly_set(fmpz_poly_t output, const fmpz_poly_t poly)
+void _fmpz_poly_set(fmpz_poly_t output, const fmpz_poly_t poly)
 \end{lstlisting}
 \begin{quote}
-Set polynomial \code{x} equal to the polynomial \code{y}.
+Set polynomial \code{output} equal to the polynomial \code{poly}.
 \end{quote}
 
 \begin{lstlisting}
@@ -622,11 +622,11 @@ The unmanaged versiom of this function requires that \code{poly} have space allo
 \end{quote}
 
 \begin{lstlisting}
-void fmpz_poly_neg(fmpz_poly_t poly) 
-void _fmpz_poly_neg(fmpz_poly_t poly) 
+void fmpz_poly_neg(fmpz_poly_t output, fmpz_poly_t poly) 
+void _fmpz_poly_neg(fmpz_poly_t output, fmpz_poly_t poly) 
 \end{lstlisting}
 \begin{quote}
-Negate the polynomial, i.e. set it to \code{-poly}.
+Negate the polynomial \code{poly}, i.e. set \code{output} to \code{-poly}.
 \end{quote}
 
 \begin{lstlisting}
