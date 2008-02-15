@@ -862,12 +862,12 @@ void fmpz_poly_left_shift(fmpz_poly_t output, const fmpz_poly_t input,
 static inline
 void fmpz_poly_right_shift(fmpz_poly_t output, const fmpz_poly_t input, const unsigned long n)
 {
-   if ((long)(input->length - n) <= 0)
+   if ((long)(input->length - n) <= 0L)
    {
       fmpz_poly_zero(output);
       return;
    }
-   fmpz_poly_fit_length(output, input->length + n);
+   fmpz_poly_fit_length(output, input->length - n);
    fmpz_poly_fit_limbs(output, input->limbs);
    _fmpz_poly_right_shift(output, input, n);
 }
