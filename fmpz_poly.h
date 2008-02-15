@@ -862,6 +862,13 @@ void fmpz_poly_left_shift(fmpz_poly_t output, const fmpz_poly_t input,
 static inline
 void fmpz_poly_right_shift(fmpz_poly_t output, const fmpz_poly_t input, const unsigned long n)
 {
+   if ((long)(input->length - n) <= 0)
+   {
+      fmpz_poly_zero(output);
+      return;
+   }
+   fmpz_poly_fit_length(output, input->length + n);
+   fmpz_poly_fit_limbs(output, input->limbs);
    _fmpz_poly_right_shift(output, input, n);
 }
 
@@ -1192,6 +1199,8 @@ void fmpz_poly_pseudo_div(fmpz_poly_t Q, unsigned long * d,
 }
                                       
 void fmpz_poly_content(fmpz_t c, fmpz_poly_t poly);
+
+void fmpz_poly_gcd_subresultant(fmpz_poly_t D, const fmpz_poly_t poly1, const fmpz_poly_t poly2);
 
 // *************** end of file
 
