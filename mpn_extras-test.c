@@ -276,7 +276,7 @@ int test_F_mpn_mul_trunc()
       unsigned long limbs2 = randint(2*FLINT_FFT_LIMBS_CROSSOVER)+1;
       unsigned long limbs1 = limbs2 + randint(1000);
       unsigned long trunc = randint(limbs1 + limbs2)+1;
-   
+      
       int1 = (mp_limb_t *) malloc(sizeof(mp_limb_t)*limbs1);
 
       mpn_random2(int1, limbs1);

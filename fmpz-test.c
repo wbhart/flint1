@@ -216,13 +216,13 @@ int test_fmpz_set_si()
    
    for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
    {
-       bits = random_ulong(63)+1;
+       bits = random_ulong(FLINT_BITS-1)+1;
        x = random_ulong(1L<<bits);
        
 #if SIGNS
        if (random_ulong(2)) x = -x;
 #endif
-       fnum1 = fmpz_init(FLINT_MAX((long)(bits-1)/FLINT_BITS,0)+1);
+       fnum1 = fmpz_init((bits-1)/FLINT_BITS+1);
        
        mpz_set_si(num1, x);
        fmpz_set_si(fnum1, x);
@@ -262,7 +262,7 @@ int test_fmpz_set_ui()
    
    for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
    {
-       bits = random_ulong(63)+1;
+       bits = random_ulong(FLINT_BITS-1)+1;
        x = random_ulong(1L<<bits);
        fnum1 = fmpz_init(FLINT_MAX((long)(bits-1)/FLINT_BITS,0)+1);
        
@@ -779,7 +779,7 @@ int test_fmpz_add_ui_inplace()
    
    for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
    {
-       bits = random_ulong(63)+1;
+       bits = random_ulong(FLINT_BITS-1)+1;
        x = random_ulong(1L<<bits);
        
        bits2 = random_ulong(1000);
@@ -819,7 +819,7 @@ int test_fmpz_add_ui()
    
    for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
    {
-       bits = random_ulong(63)+1;
+       bits = random_ulong(FLINT_BITS-1)+1;
        x = random_ulong(1L<<bits);
        
        bits2 = random_ulong(1000);
@@ -863,7 +863,7 @@ int test___fmpz_add_ui_inplace()
    
    for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
    {
-       bits = random_ulong(63)+1;
+       bits = random_ulong(FLINT_BITS-1)+1;
        x = random_ulong(1L<<bits);
        
        bits2 = random_ulong(1000);
@@ -984,7 +984,7 @@ int test_fmpz_mul_ui()
    
    for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
    {
-       bits = random_ulong(63)+1;
+       bits = random_ulong(FLINT_BITS-1)+1;
        x = random_ulong(1L<<bits);
        
        bits2 = random_ulong(1000);
@@ -1028,7 +1028,7 @@ int test_fmpz_tdiv_ui()
    {
        do
        {
-          bits = random_ulong(63)+1;
+          bits = random_ulong(FLINT_BITS-1)+1;
           x = random_ulong(1L<<bits);
        } while (x == 0);
        

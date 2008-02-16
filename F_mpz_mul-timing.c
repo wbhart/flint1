@@ -19,10 +19,10 @@
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 
 ===============================================================================*/
-#define TRIALS 5
+#define TRIALS 1
 
-//#define TEST
-#define TIMING
+#define TEST
+//#define TIMING
 
 
 #include <gmp.h>
@@ -77,9 +77,9 @@ unsigned long run_F_mpz_mul(unsigned long num_trials, unsigned long coeff_bits, 
 
 #ifdef TEST
       // compute product using F_mpz_mul
-      F_mpz_mul(data3, data2, data1);
+      F_mpz_mul(data3, data1, data1);
       // compute product using GMP
-      mpz_mul(data4, data2, data1);
+      mpz_mul(data4, data1, data1);
       
       if (mpz_size(data3) != mpz_size(data4)) printf("Sizes don't match! %ld, %ld\n", mpz_size(data3), mpz_size(data4));
 

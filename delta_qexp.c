@@ -85,7 +85,8 @@ int main(int argc, char* argv[])
    // print out last coefficient
    fmpz_t coeff = fmpz_poly_get_coeff_ptr(F8, N-1);
    printf("coefficient of q^%d is ", N);
-   fmpz_print(coeff); printf("\n");
+   fmpz_print(coeff); 
+   printf("\n");
    
    // clean up
    fmpz_poly_clear(F8);

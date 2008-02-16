@@ -40,6 +40,10 @@
 #define SQR_TWK_LARGE_DEFAULT 1
 #define SQR_TWK_COUNT 13
 
+#define FFT_MUL_COUNT 40
+#define FFT_SQR_COUNT 30
+#define FFT_TUNE_CUTOFF 20000000L
+
 #ifdef __cplusplus
  }
 #endif
