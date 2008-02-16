@@ -492,10 +492,16 @@ void zmod_poly_add(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
       
    zmod_poly_ensure_alloc(res, poly2->length);
 
-   unsigned long i;
+   unsigned long i, neg1;
    
    for (i = 0; i < poly1->length; i++)
-      res->coeffs[i] = z_mod_precomp(poly1->coeffs[i] + poly2->coeffs[i], poly1->p, poly1->p_inv);
+   {
+      neg1 = poly1->p - poly1->coeffs[i];
+      if (neg1 < poly2->coeffs[i])
+         res->coeffs[i] = poly1->coeffs[i] + poly2->coeffs[i];
+      else 
+         res->coeffs[i] = poly2->coeffs[i] - neg1;
+   }
 
    for (; i < poly2->length; i++)
       res->coeffs[i] = poly2->coeffs[i];
