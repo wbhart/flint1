@@ -197,9 +197,6 @@ to improve locality.
 
 * Write aliasing test code for series division
 
-* Fix bug in bernoulli_zmod (with standard memory manager on, it gives a glib 
-  corruption error)
-
 * Implement REDC
 
 * Implement a small prime FFT
@@ -226,6 +223,19 @@ to improve locality.
 
 * Make documentation point out where aliasing shouldn't occur in division functions and in fmpz
 
+* Implement polynomial evaluation
+
+* Implement polynomial derivative
+
+* Implement polynomial composition
+
+* Implement polynomial remainder and pseudo remainder
+
+* Implement polynomial translation f(x+t)
+
+* Implement polynomial is_zero and is_one
+
+* Support in place polynomial negation
 
 
 
