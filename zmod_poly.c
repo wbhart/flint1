@@ -219,8 +219,11 @@ char* zmod_poly_to_string(zmod_poly_t poly)
    // and another 20 for p value...
    unsigned long size = 20*(2+poly->length);
    for (unsigned long i = 0; i < poly->length; i++)
+   {
       // +2 is for the sign and a space
-      size += (unsigned long)log10(poly->coeffs[i]) + 2;
+      if (poly->coeffs[i]) size += (unsigned long)ceil(log10(poly->coeffs[i])) + 2;
+      else size += 3;
+   }
 
    // write the string
    char* buf = (char*) malloc(size);
@@ -399,63 +402,6 @@ void zmod_poly_set(zmod_poly_t res, zmod_poly_t poly)
 
 /****************************************************************************
 
-   Conversions
-
-****************************************************************************/
-
-
-// assumes coefficients are big enough, and alloc is big enough
-// void _zmod_poly_to_fzmod_poly(fzmod_poly_t res, zmod_poly_t poly)
-// {
-//    FLINT_ASSERT(res->alloc >= poly->length);
-// 
-//    res->length = poly->length;
-//    if (poly->length == 0)
-//       return;
-// 
-//    for (unsigned long i = 0; i < poly->length; i++)
-//    {
-//       FLINT_ASSERT(res->limbs >= mpz_size(poly->coeffs[i]));
-//       mpz_to_fmpz(res->coeffs + i*(res->limbs+1), poly->coeffs[i]);
-//    }
-// }
-// 
-// 
-// void zmod_poly_to_fzmod_poly(fzmod_poly_t res, zmod_poly_t poly)
-// {
-//    unsigned long limbs = zmod_poly_max_limbs(poly);
-// 
-//    // todo: there should be a single function that achieves both of the
-//    // following.... actually we don't even care in this case if the value
-//    // is preserved.
-//    fzmod_poly_fit_length(res, poly->length);
-//    fzmod_poly_fit_limbs(res, limbs);
-// 
-//    _zmod_poly_to_fzmod_poly(res, poly);
-// }
-// 
-// 
-// void fzmod_poly_to_zmod_poly(zmod_poly_t res, fzmod_poly_t poly)
-// {
-//    zmod_poly_ensure_alloc(res, poly->length);
-// 
-//    res->length = poly->length;
-//    
-//    // todo: is there a bug here if poly->coeffs is not actually allocated?
-// 
-//    unsigned long i;
-//    mp_limb_t* ptr = poly->coeffs;
-// 
-//    for (i = 0; i < poly->length; i++, ptr += poly->limbs+1)
-//       fmpz_to_mpz(res->coeffs[i], ptr);
-//    
-//    zmod_poly_normalise(res);
-// 
-// }
-
-
-/****************************************************************************
-
    Comparison
 
 ****************************************************************************/
@@ -497,7 +443,7 @@ void zmod_poly_add(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
    for (i = 0; i < poly1->length; i++)
    {
       neg1 = poly1->p - poly1->coeffs[i];
-      if (neg1 < poly2->coeffs[i])
+      if (neg1 > poly2->coeffs[i])
          res->coeffs[i] = poly1->coeffs[i] + poly2->coeffs[i];
       else 
          res->coeffs[i] = poly2->coeffs[i] - neg1;
@@ -564,7 +510,10 @@ void zmod_poly_sub(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
       }
          
       for (; i < poly2->length; i++)
+      {   
          res->coeffs[i] = poly2->p - poly2->coeffs[i];
+         if (res->coeffs[i] == poly2->p) res->coeffs[i] = 0;
+      }
    }
 
    res->length = poly2->length;
