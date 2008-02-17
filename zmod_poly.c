@@ -725,7 +725,7 @@ void __zmod_poly_mul_naive_mod_last(zmod_poly_t res, zmod_poly_t poly1, zmod_pol
          res->coeffs[i+j] = res->coeffs[i+j] + poly1->coeffs[i] * poly2->coeffs[j];
          
    for (unsigned long i = 0; i < res->length; i++)
-      res->coeffs[i] = z_mod_precomp(res->coeffs[i], res->p, res->p_inv);
+      res->coeffs[i] = z_mod2_precomp(res->coeffs[i], res->p, res->p_inv);
 }
 
 
@@ -737,7 +737,7 @@ void __zmod_poly_mul_naive_mod_throughout(zmod_poly_t res, zmod_poly_t poly1, zm
 {
    for (unsigned long i = 0; i < poly1->length; i++)
       for (unsigned long j = 0; j < poly2->length; j++)
-         res->coeffs[i+j] = z_mod_precomp(res->coeffs[i+j] + z_mulmod_precomp(poly1->coeffs[i], poly2->coeffs[j], poly1->p, poly1->p_inv), poly1->p, poly1->p_inv);
+         res->coeffs[i+j] = z_mod2_precomp(res->coeffs[i+j] + z_mulmod2_precomp(poly1->coeffs[i], poly2->coeffs[j], poly1->p, poly1->p_inv), poly1->p, poly1->p_inv);
 }
 
 
