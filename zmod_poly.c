@@ -794,22 +794,39 @@ void _zmod_poly_sqr_naive(zmod_poly_t res, zmod_poly_t poly)
    res->p = poly->p;
    res->p_inv = poly->p_inv;
    FLINT_ASSERT(res->alloc >= res->length);
+   
+   unsigned long bits = FLINT_BIT_COUNT(poly->p);
 
    for (unsigned long i = 0; i < res->length; i++)
       res->coeffs[i] = 0;
 
    // off-diagonal products
-   for (unsigned long i = 1; i < poly->length; i++)
-      for (unsigned long j = 0; j < i; j++)
-         res->coeffs[i+j] = z_mod_precomp(res->coeffs[i+j] + z_mulmod_precomp(poly->coeffs[i], poly->coeffs[j], poly->p, poly->p_inv), poly->p, poly->p_inv);
-
+   if (bits <= FLINT_D_BITS)
+   {
+      for (unsigned long i = 1; i < poly->length; i++)
+         for (unsigned long j = 0; j < i; j++)
+            res->coeffs[i+j] = z_mod_add(res->coeffs[i+j], z_mulmod_precomp(poly->coeffs[i], poly->coeffs[j], poly->p, poly->p_inv), poly->p);
+   } else
+   {
+      for (unsigned long i = 1; i < poly->length; i++)
+         for (unsigned long j = 0; j < i; j++)
+            res->coeffs[i+j] = z_mod_add(res->coeffs[i+j], z_mulmod2_precomp(poly->coeffs[i], poly->coeffs[j], poly->p, poly->p_inv), poly->p);
+   }
+   
    // double the off-diagonal products
    for (unsigned long i = 1; i < res->length - 1; i++)
-      res->coeffs[i] = z_mod_precomp(2*res->coeffs[i], poly->p, poly->p_inv);
+      res->coeffs[i] = z_mod_add(res->coeffs[i], res->coeffs[i], poly->p);
 
    // add in diagonal products
-   for (unsigned long i = 0; i < poly->length; i++)
-      res->coeffs[2*i] = z_mod_precomp(res->coeffs[2*i] + z_mulmod_precomp(poly->coeffs[i], poly->coeffs[i], poly->p, poly->p_inv), poly->p, poly->p_inv);
+   if (bits <= FLINT_D_BITS)
+   {
+      for (unsigned long i = 0; i < poly->length; i++)
+         res->coeffs[2*i] = z_mod_add(res->coeffs[2*i], z_mulmod_precomp(poly->coeffs[i], poly->coeffs[i], poly->p, poly->p_inv), poly->p);
+   } else
+   {
+      for (unsigned long i = 0; i < poly->length; i++)
+         res->coeffs[2*i] = z_mod_add(res->coeffs[2*i], z_mulmod2_precomp(poly->coeffs[i], poly->coeffs[i], poly->p, poly->p_inv), poly->p);
+   }
 }
 
 

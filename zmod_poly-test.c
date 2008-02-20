@@ -489,6 +489,64 @@ int test_zmod_poly_mul_naiveKS()
    return result;
 }
 
+int test_zmod_poly_sqr_naiveKS()
+{
+   int result = 1;
+   zmod_poly_t pol1, res1, res2;
+   unsigned long bits;
+   
+   for (unsigned long count1 = 0; (count1 < 50) && (result == 1); count1++)
+   {
+      bits = randint(FLINT_BITS-2)+2;
+      unsigned long modulus;
+      
+      do {modulus = randbits(bits);} while (modulus < 2);
+      
+      zmod_poly_init(pol1, modulus);
+      zmod_poly_init(res1, modulus);
+      zmod_poly_init(res2, modulus);
+      
+      for (unsigned long count2 = 0; (count2 < 50) && (result == 1); count2++)
+      {
+         unsigned long length1 = randint(400);
+         
+         unsigned log_length = 0L;
+         while ((1L<<log_length) < length1) log_length++;
+         
+         if (2*FLINT_BIT_COUNT(modulus) + log_length <= 2*FLINT_BITS)
+         {
+         
+#if DEBUG
+            printf("bits = %ld, length1 = %ld, length2 = %ld, modulus = %ld\n", bits, length1, length2, modulus);
+#endif
+
+            randpoly(pol1, length1, modulus);
+            
+            zmod_poly_sqr_naive(res1, pol1);
+            zmod_poly_mul_KS(res2, pol1, pol1, 0);
+         
+            result &= zmod_poly_equal(res1, res2);
+         
+#if DEBUG
+            if (!result)
+            {
+               zmod_poly_print(pol1); printf("\n\n");
+               zmod_poly_print(res1); printf("\n\n");
+               zmod_poly_print(res2); printf("\n\n");
+            }
+#endif
+         }
+      
+      }
+      
+      zmod_poly_clear(pol1);
+      zmod_poly_clear(res1);  
+      zmod_poly_clear(res2);  
+   }
+   
+   return result;
+}
+
 
 void fmpz_poly_test_all()
 {
@@ -503,6 +561,7 @@ void fmpz_poly_test_all()
    RUN_TEST(zmod_poly_setequal); 
    RUN_TEST(zmod_poly_getset_coeff); 
    RUN_TEST(zmod_poly_mul_naiveKS); 
+   RUN_TEST(zmod_poly_sqr_naiveKS); 
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");
