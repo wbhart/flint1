@@ -226,17 +226,21 @@ void zmod_poly_rshift(zmod_poly_t res, zmod_poly_t poly, unsigned long k);
 
 /*
    Polynomial multiplication
+   
+   All multiplication functions require that the modulus be no more than FLINT_BITS-1 bits
 */
 
 void zmod_poly_mul(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2);
 void zmod_poly_sqr(zmod_poly_t res, zmod_poly_t poly);
 
+/* Requires that poly1 bits + poly2 bits + log_length is not greater than 2*FLINT_BITS */
+
 void zmod_poly_mul_KS(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long bits_input);
 
 void _zmod_poly_mul_naive(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2);
-void _zmod_poly_mul_naive_mod_throughout(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2);
-void __zmod_poly_mul_naive_mod_last(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2);
-void __zmod_poly_mul_naive_mod_throughout(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2);
+void _zmod_poly_mul_naive_mod_throughout(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long bits);
+void __zmod_poly_mul_naive_mod_last(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long bits);
+void __zmod_poly_mul_naive_mod_throughout(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long bits);
 void zmod_poly_mul_naive(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2);
 void _zmod_poly_sqr_naive(zmod_poly_t res, zmod_poly_t poly);
 void zmod_poly_sqr_naive(zmod_poly_t res, zmod_poly_t poly);

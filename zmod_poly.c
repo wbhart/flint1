@@ -439,14 +439,11 @@ void zmod_poly_add(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
    zmod_poly_ensure_alloc(res, poly2->length);
 
    unsigned long i, neg1;
+   /* The following standard technique was found in David Harvey's zn_poly */
    
    for (i = 0; i < poly1->length; i++)
    {
-      neg1 = poly1->p - poly1->coeffs[i];
-      if (neg1 > poly2->coeffs[i])
-         res->coeffs[i] = poly1->coeffs[i] + poly2->coeffs[i];
-      else 
-         res->coeffs[i] = poly2->coeffs[i] - neg1;
+      res->coeffs[i] = z_mod_add(poly1->coeffs[i], poly2->coeffs[i], poly1->p);
    }
 
    for (; i < poly2->length; i++)
@@ -482,14 +479,7 @@ void zmod_poly_sub(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
    {
       for (i = 0; i < poly1->length; i++)
       {
-         if (poly2->coeffs[i] < poly1->coeffs[i])
-         {
-            res->coeffs[i] = poly2->p + poly2->coeffs[i] - poly1->coeffs[i];
-         }
-         else
-         {
-            res->coeffs[i] = poly2->coeffs[i] - poly1->coeffs[i];
-         }
+         res->coeffs[i] = z_mod_sub(poly2->coeffs[i], poly1->coeffs[i], poly2->p);
       }
          
       for (; i < poly2->length; i++)
@@ -499,14 +489,7 @@ void zmod_poly_sub(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
    {
       for (i = 0; i < poly1->length; i++)
       {
-         if (poly1->coeffs[i] < poly2->coeffs[i])
-         {
-            res->coeffs[i] = poly2->p + poly1->coeffs[i] - poly2->coeffs[i];
-         }
-         else
-         {
-            res->coeffs[i] = poly1->coeffs[i] - poly2->coeffs[i];
-         }
+         res->coeffs[i] = z_mod_sub(poly1->coeffs[i], poly2->coeffs[i], poly2->p);
       }
          
       for (; i < poly2->length; i++)
@@ -678,23 +661,24 @@ void _zmod_poly_mul_naive(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
       // the numbers of bits in the output of each coeff will be less than FLINT_BITS
       // so don't need to mod to stay in the single limb, hence can leave this for the
       // end...
-      __zmod_poly_mul_naive_mod_last(res, poly1, poly2);
+      __zmod_poly_mul_naive_mod_last(res, poly1, poly2, bits);
    }
    else
    {
       bits = zmod_poly_bits(poly1) + zmod_poly_bits(poly2) + log_length;
       if (bits < FLINT_BITS)
       {
-         __zmod_poly_mul_naive_mod_last(res, poly1, poly2);
+         __zmod_poly_mul_naive_mod_last(res, poly1, poly2, bits);
       }
       else
       {
-         __zmod_poly_mul_naive_mod_throughout(res, poly1, poly2);
+         __zmod_poly_mul_naive_mod_throughout(res, poly1, poly2, bits);
       }
    }
 }
 
-void _zmod_poly_mul_naive_mod_throughout(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
+void _zmod_poly_mul_naive_mod_throughout(zmod_poly_t res, zmod_poly_t poly1, 
+                                            zmod_poly_t poly2, unsigned long bits)
 {
    FLINT_ASSERT(res != poly1);
    FLINT_ASSERT(res != poly2);
@@ -709,7 +693,7 @@ void _zmod_poly_mul_naive_mod_throughout(zmod_poly_t res, zmod_poly_t poly1, zmo
    for (unsigned long i = 0; i < res->length; i++)
       res->coeffs[i] = 0;
 
-   __zmod_poly_mul_naive_mod_throughout(res, poly1, poly2);
+   __zmod_poly_mul_naive_mod_throughout(res, poly1, poly2, bits);
 }
 
 
@@ -718,14 +702,22 @@ void _zmod_poly_mul_naive_mod_throughout(zmod_poly_t res, zmod_poly_t poly1, zmo
    of the computations.
 */
 
-void __zmod_poly_mul_naive_mod_last(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
+void __zmod_poly_mul_naive_mod_last(zmod_poly_t res, zmod_poly_t poly1, 
+                                             zmod_poly_t poly2, unsigned long bits)
 {
    for (unsigned long i = 0; i < poly1->length; i++)
       for (unsigned long j = 0; j < poly2->length; j++)
          res->coeffs[i+j] = res->coeffs[i+j] + poly1->coeffs[i] * poly2->coeffs[j];
          
-   for (unsigned long i = 0; i < res->length; i++)
-      res->coeffs[i] = z_mod2_precomp(res->coeffs[i], res->p, res->p_inv);
+   if (bits <= FLINT_D_BITS)
+   { 
+      for (unsigned long i = 0; i < res->length; i++)
+         res->coeffs[i] = z_mod_precomp(res->coeffs[i], res->p, res->p_inv);
+   } else 
+   { 
+      for (unsigned long i = 0; i < res->length; i++)
+         res->coeffs[i] = z_mod2_precomp(res->coeffs[i], res->p, res->p_inv);
+   } 
 }
 
 
@@ -733,11 +725,20 @@ void __zmod_poly_mul_naive_mod_last(zmod_poly_t res, zmod_poly_t poly1, zmod_pol
    Computes the naive multiplication, applying mods at each step.
 */
 
-void __zmod_poly_mul_naive_mod_throughout(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
+void __zmod_poly_mul_naive_mod_throughout(zmod_poly_t res, zmod_poly_t poly1, 
+                                            zmod_poly_t poly2, unsigned long bits)
 {
-   for (unsigned long i = 0; i < poly1->length; i++)
-      for (unsigned long j = 0; j < poly2->length; j++)
-         res->coeffs[i+j] = z_mod2_precomp(res->coeffs[i+j] + z_mulmod2_precomp(poly1->coeffs[i], poly2->coeffs[j], poly1->p, poly1->p_inv), poly1->p, poly1->p_inv);
+   if (bits <= FLINT_D_BITS)
+   {
+      for (unsigned long i = 0; i < poly1->length; i++)
+         for (unsigned long j = 0; j < poly2->length; j++)
+            res->coeffs[i+j] = z_mod_add(res->coeffs[i+j], z_mulmod_precomp(poly1->coeffs[i], poly2->coeffs[j], poly1->p, poly1->p_inv), poly1->p);
+   } else
+   {
+      for (unsigned long i = 0; i < poly1->length; i++)
+         for (unsigned long j = 0; j < poly2->length; j++)
+            res->coeffs[i+j] = z_mod_add(res->coeffs[i+j], z_mulmod2_precomp(poly1->coeffs[i], poly2->coeffs[j], poly1->p, poly1->p_inv), poly1->p);
+   }
 }
 
 
@@ -934,7 +935,8 @@ void zmod_poly_mul_KS(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p input2
    res = (mp_limb_t*) flint_stack_alloc(limbs1+limbs2);
    res[limbs1+limbs2-1] = 0L;
    
-   F_mpn_mul(res, mpn1, limbs1, mpn2, limbs2);
+   if (input1 != input2) F_mpn_mul(res, mpn1, limbs1, mpn2, limbs2);
+   else F_mpn_mul(res, mpn1, limbs1, mpn1, limbs1);
    
    zmod_poly_ensure_alloc(output, final_length);
    
@@ -949,8 +951,7 @@ void zmod_poly_mul_KS(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p input2
    flint_stack_release();
    if(input1 != input2)
       flint_stack_release();
-
-   
+  
    output->length = final_length;
 }
 
@@ -1228,7 +1229,11 @@ void zmod_poly_bit_unpack_mpn(zmod_poly_t res, mp_limb_t * mpn, unsigned long le
              //print_limb("temp_upper |= temp_lower", temp_upper);
              temp_upper &= mask;
              //print_limb("temp_upper &= mask      ", temp_upper);
-             _zmod_poly_set_coeff(res, i, z_mod2_precomp(temp_upper, res->p, res->p_inv));
+             if (bits <= FLINT_D_BITS)
+                _zmod_poly_set_coeff(res, i, z_mod_precomp(temp_upper, res->p, res->p_inv));
+             else 
+                _zmod_poly_set_coeff(res, i, z_mod2_precomp(temp_upper, res->p, res->p_inv));
+             
              current_bit = bits + current_bit - FLINT_BITS;
              mpn[current_limb] = mpn[current_limb] >> current_bit;
              //print_limb("mpn[current_limb+1]     ", mpn[current_limb]);
@@ -1243,8 +1248,11 @@ void zmod_poly_bit_unpack_mpn(zmod_poly_t res, mp_limb_t * mpn, unsigned long le
              // less than a limb in size, so must be smaller than an unsigned long...
 
              //zmod_poly_set_coeff(res, i, temp_lower);
-             _zmod_poly_set_coeff(res, i, z_mod2_precomp(temp_lower, res->p, res->p_inv));
-
+             if (bits <= FLINT_D_BITS)
+                _zmod_poly_set_coeff(res, i, z_mod_precomp(temp_lower, res->p, res->p_inv));
+             else 
+                _zmod_poly_set_coeff(res, i, z_mod2_precomp(temp_lower, res->p, res->p_inv));
+                
              mpn[current_limb] = mpn[current_limb] >> bits;
              //print_limb("mpn[current_limb]       ", mpn[current_limb]);
              current_bit += bits;
@@ -1287,7 +1295,7 @@ void zmod_poly_bit_unpack_mpn(zmod_poly_t res, mp_limb_t * mpn, unsigned long le
       {
          if(current_bit == 0)
          {
-            // printf("Coeff accross one boundary... current_bit == 0\n");
+            // printf("Coeff across one boundary... current_bit == 0\n");
             temp_lower = mpn[current_limb];
             // PRINT_LIMB(temp_lower);
             current_limb++;

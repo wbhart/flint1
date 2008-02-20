@@ -144,7 +144,7 @@ unsigned long z_ll_mod_precomp(unsigned long a_hi, unsigned long a_lo,
    if (a_hi >= n) 
    {
       if (((n>>(FLINT_BITS/2)) == 0) && (a_hi >= n*n)) a_hi = a_hi%n;
-      else a_hi = z_mod_precomp(a_hi, n, ninv);
+      else a_hi = z_mod2_precomp(a_hi, n, ninv);
    }
    
 #if UDIV_NEEDS_NORMALIZATION

@@ -89,6 +89,25 @@ unsigned long z_randint(unsigned long limit);
 
 double z_precompute_inverse(unsigned long n);
 
+static inline
+unsigned long z_mod_add(unsigned long a, unsigned long b, unsigned long p)
+{
+   unsigned long neg1 = p - a;
+   if (neg1 > b)
+      return a + b;
+   else 
+      return b - neg1;
+}
+
+static inline
+unsigned long z_mod_sub(unsigned long a, unsigned long b, unsigned long p)
+{
+   if (a < b)
+      return p + a - b;
+   else
+      return a - b;
+}
+
 unsigned long z_mod_precomp(unsigned long a, unsigned long n, double ninv);
 
 unsigned long z_div_64_precomp(unsigned long a, unsigned long n, double ninv);
