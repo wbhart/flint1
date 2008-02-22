@@ -147,7 +147,7 @@ long zmod_poly_degree(zmod_poly_t poly)
 
 
 static inline
-unsigned long zmod_poly_mod(zmod_poly_t poly)
+unsigned long zmod_poly_modulus(zmod_poly_t poly)
 {
    return poly->p;
 }

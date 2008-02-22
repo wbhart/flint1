@@ -21,6 +21,8 @@
 # (C) 2007 David Harvey, GPL license yadda yadda
 
 import sys
+import matplotlib
+matplotlib.use('Agg')
 from optparse import OptionParser
 from matplotlib.colors import LinearSegmentedColormap
 import pylab

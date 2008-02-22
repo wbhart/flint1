@@ -464,7 +464,7 @@ int test_zmod_poly_mul_naiveKS()
          
             zmod_poly_mul_naive(res1, pol1, pol2);
             zmod_poly_mul_KS(res2, pol1, pol2, 0);
-         
+            
             result &= zmod_poly_equal(res1, res2);
          
 #if DEBUG

@@ -604,15 +604,44 @@ void zmod_poly_rshift(zmod_poly_t res, zmod_poly_t poly, unsigned long k)
 
 void zmod_poly_mul(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
 {
-   // use naive for now
-   zmod_poly_mul_naive(res, poly1, poly2);
+   if (poly1 == poly2)
+   {
+      zmod_poly_sqr(res, poly1);
+   }
+   
+   if (poly1->length + poly2->length <= 6)
+   {
+      zmod_poly_mul_naive(res, poly1, poly2);
+      return;
+   }
+   
+   unsigned long bits = FLINT_BIT_COUNT(poly1->p);
+   if ((bits <= 32) && (poly1->length + poly2->length <= 8))
+   {
+      zmod_poly_mul_naive(res, poly1, poly2);
+      return;
+   }
+
+   zmod_poly_mul_KS(res, poly1, poly2, 0); 
 }
 
 
 void zmod_poly_sqr(zmod_poly_t res, zmod_poly_t poly)
 {
-   // use naive for now
-   zmod_poly_sqr_naive(res, poly);
+   if (poly->length <= 4)
+   {
+      zmod_poly_sqr_naive(res, poly);
+      return;
+   }
+   
+   unsigned long bits = FLINT_BIT_COUNT(poly->p);
+   if ((bits >= 32) && (bits <= 50) && (poly->length <= 10))
+   {
+      zmod_poly_sqr_naive(res, poly);
+      return;
+   }
+
+   zmod_poly_mul_KS(res, poly, poly, 0); 
 }
 
 
@@ -709,15 +738,19 @@ void __zmod_poly_mul_naive_mod_last(zmod_poly_t res, zmod_poly_t poly1,
       for (unsigned long j = 0; j < poly2->length; j++)
          res->coeffs[i+j] = res->coeffs[i+j] + poly1->coeffs[i] * poly2->coeffs[j];
          
+#if FLINT_BITS == 64
    if (bits <= FLINT_D_BITS)
    { 
       for (unsigned long i = 0; i < res->length; i++)
          res->coeffs[i] = z_mod_precomp(res->coeffs[i], res->p, res->p_inv);
    } else 
    { 
+#endif
       for (unsigned long i = 0; i < res->length; i++)
          res->coeffs[i] = z_mod2_precomp(res->coeffs[i], res->p, res->p_inv);
+#if FLINT_BITS == 64
    } 
+#endif
 }
 
 
@@ -728,6 +761,7 @@ void __zmod_poly_mul_naive_mod_last(zmod_poly_t res, zmod_poly_t poly1,
 void __zmod_poly_mul_naive_mod_throughout(zmod_poly_t res, zmod_poly_t poly1, 
                                             zmod_poly_t poly2, unsigned long bits)
 {
+#if FLINT_BITS == 64
    if (bits <= FLINT_D_BITS)
    {
       for (unsigned long i = 0; i < poly1->length; i++)
@@ -735,10 +769,13 @@ void __zmod_poly_mul_naive_mod_throughout(zmod_poly_t res, zmod_poly_t poly1,
             res->coeffs[i+j] = z_mod_add(res->coeffs[i+j], z_mulmod_precomp(poly1->coeffs[i], poly2->coeffs[j], poly1->p, poly1->p_inv), poly1->p);
    } else
    {
+#endif
       for (unsigned long i = 0; i < poly1->length; i++)
          for (unsigned long j = 0; j < poly2->length; j++)
             res->coeffs[i+j] = z_mod_add(res->coeffs[i+j], z_mulmod2_precomp(poly1->coeffs[i], poly2->coeffs[j], poly1->p, poly1->p_inv), poly1->p);
+#if FLINT_BITS == 64
    }
+#endif
 }
 
 
@@ -775,6 +812,8 @@ void zmod_poly_mul_naive(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
       zmod_poly_ensure_alloc(res, length);
       _zmod_poly_mul_naive(res, poly1, poly2);
    }
+   
+   zmod_poly_normalise(res);
 }
 
 
@@ -801,6 +840,7 @@ void _zmod_poly_sqr_naive(zmod_poly_t res, zmod_poly_t poly)
       res->coeffs[i] = 0;
 
    // off-diagonal products
+#if FLINT_BITS == 64
    if (bits <= FLINT_D_BITS)
    {
       for (unsigned long i = 1; i < poly->length; i++)
@@ -808,25 +848,32 @@ void _zmod_poly_sqr_naive(zmod_poly_t res, zmod_poly_t poly)
             res->coeffs[i+j] = z_mod_add(res->coeffs[i+j], z_mulmod_precomp(poly->coeffs[i], poly->coeffs[j], poly->p, poly->p_inv), poly->p);
    } else
    {
+#endif
       for (unsigned long i = 1; i < poly->length; i++)
          for (unsigned long j = 0; j < i; j++)
             res->coeffs[i+j] = z_mod_add(res->coeffs[i+j], z_mulmod2_precomp(poly->coeffs[i], poly->coeffs[j], poly->p, poly->p_inv), poly->p);
+#if FLINT_BITS == 64
    }
+#endif
    
    // double the off-diagonal products
    for (unsigned long i = 1; i < res->length - 1; i++)
       res->coeffs[i] = z_mod_add(res->coeffs[i], res->coeffs[i], poly->p);
 
    // add in diagonal products
+#if FLINT_BITS == 64
    if (bits <= FLINT_D_BITS)
    {
       for (unsigned long i = 0; i < poly->length; i++)
          res->coeffs[2*i] = z_mod_add(res->coeffs[2*i], z_mulmod_precomp(poly->coeffs[i], poly->coeffs[i], poly->p, poly->p_inv), poly->p);
    } else
    {
+#endif
       for (unsigned long i = 0; i < poly->length; i++)
          res->coeffs[2*i] = z_mod_add(res->coeffs[2*i], z_mulmod2_precomp(poly->coeffs[i], poly->coeffs[i], poly->p, poly->p_inv), poly->p);
+#if FLINT_BITS == 64
    }
+#endif
 }
 
 
@@ -858,6 +905,8 @@ void zmod_poly_sqr_naive(zmod_poly_t res, zmod_poly_t poly)
       zmod_poly_ensure_alloc(res, length);
       _zmod_poly_sqr_naive(res, poly);
    }
+   
+   zmod_poly_normalise(res);
 }
 
 /*
@@ -876,9 +925,6 @@ void zmod_poly_mul_KS(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p input2
    unsigned long length2 = input2->length;
    
    unsigned long final_length = length1 + length2 - 1;
-   
-   while ((length1) && (input1->coeffs[length1-1] == 0)) length1--;
-   while ((length2) && (input2->coeffs[length2-1] == 0)) length2--;
    
    if ((length1 == 0) || (length2 == 0)) 
    {
@@ -926,9 +972,9 @@ void zmod_poly_mul_KS(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p input2
 
    unsigned long limbs1, limbs2;
 
-   limbs1 = (unsigned long) ((input1->length * bits-1) / FLINT_BITS + 1);
-   limbs2 = (unsigned long) ((input2->length * bits-1) / FLINT_BITS + 1);
-   
+   limbs1 = FLINT_MAX((long)((length1 * bits-1) / FLINT_BITS + 1), 0L);
+   limbs2 = FLINT_MAX((long)((length2 * bits-1) / FLINT_BITS + 1), 0L);
+      
    mpn1 = (mp_limb_t*) flint_stack_alloc(limbs1);
    mpn2 = (input1 == input2) ? mpn1 : (mp_limb_t*) flint_stack_alloc(limbs2);
 
@@ -946,9 +992,6 @@ void zmod_poly_mul_KS(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p input2
    if(input1 != input2)
       zmod_poly_bit_pack_mpn(mpn2, input2, bits);
    
-   limbs1 = FLINT_MAX((long)((length1 * bits-1) / FLINT_BITS + 1), 0L);
-   limbs2 = FLINT_MAX((long)((length2 * bits-1) / FLINT_BITS + 1), 0L);
-   
    res = (mp_limb_t*) flint_stack_alloc(limbs1+limbs2);
    res[limbs1+limbs2-1] = 0L;
    
@@ -957,12 +1000,7 @@ void zmod_poly_mul_KS(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p input2
    
    zmod_poly_ensure_alloc(output, final_length);
    
-   zmod_poly_bit_unpack_mpn(output, res, length1 + length2 - 1, bits);
-   
-   for (unsigned long i = length1 + length2 - 1; i < final_length; i++)
-   {
-      _zmod_poly_set_coeff(output, i, 0L);
-   } 
+   zmod_poly_bit_unpack_mpn(output, res, length1 + length2 - 1, bits); 
    
    flint_stack_release();
    flint_stack_release();
@@ -970,6 +1008,8 @@ void zmod_poly_mul_KS(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p input2
       flint_stack_release();
   
    output->length = final_length;
+   /* The modulus may not be prime, so normalisation may be necessary */
+   zmod_poly_normalise(output);
 }
 
 
@@ -1265,9 +1305,11 @@ void zmod_poly_bit_unpack_mpn(zmod_poly_t res, mp_limb_t * mpn, unsigned long le
              // less than a limb in size, so must be smaller than an unsigned long...
 
              //zmod_poly_set_coeff(res, i, temp_lower);
+#if FLINT_BITS == 64
              if (bits <= FLINT_D_BITS)
                 _zmod_poly_set_coeff(res, i, z_mod_precomp(temp_lower, res->p, res->p_inv));
              else 
+#endif
                 _zmod_poly_set_coeff(res, i, z_mod2_precomp(temp_lower, res->p, res->p_inv));
                 
              mpn[current_limb] = mpn[current_limb] >> bits;
