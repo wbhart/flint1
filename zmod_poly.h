@@ -162,6 +162,7 @@ double zmod_poly_mod_precomputed_inverse(zmod_poly_t poly)
 // ------------------------------------------------------
 // Assignment
 
+void _zmod_poly_set(zmod_poly_t res, zmod_poly_t poly);
 void zmod_poly_set(zmod_poly_t res, zmod_poly_t poly);
 
 
@@ -236,25 +237,46 @@ void zmod_poly_sqr(zmod_poly_t res, zmod_poly_t poly);
 /* Requires that poly1 bits + poly2 bits + log_length is not greater than 2*FLINT_BITS */
 
 void zmod_poly_mul_KS(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long bits_input);
+void _zmod_poly_mul_KS(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long bits_input);
 
-void _zmod_poly_mul_naive(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2);
-void _zmod_poly_mul_naive_mod_throughout(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long bits);
-void __zmod_poly_mul_naive_mod_last(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long bits);
-void __zmod_poly_mul_naive_mod_throughout(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long bits);
-void zmod_poly_mul_naive(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2);
-void _zmod_poly_sqr_naive(zmod_poly_t res, zmod_poly_t poly);
-void zmod_poly_sqr_naive(zmod_poly_t res, zmod_poly_t poly);
+void zmod_poly_mul_KS_trunc(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long bits_input, unsigned long trunc);
+void _zmod_poly_mul_KS_trunc(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long bits_input, unsigned long trunc);
+
+void _zmod_poly_mul_classical(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2);
+void __zmod_poly_mul_classical_mod_last(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long bits);
+void __zmod_poly_mul_classical_mod_throughout(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long bits);
+void zmod_poly_mul_classical(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2);
+void _zmod_poly_sqr_classical(zmod_poly_t res, zmod_poly_t poly);
+void zmod_poly_sqr_classical(zmod_poly_t res, zmod_poly_t poly);
+
+void _zmod_poly_mul_classical_trunc(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long trunc);
+void __zmod_poly_mul_classical_trunc_mod_last(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long bits, unsigned long trunc);
+void __zmod_poly_mul_classical_trunc_mod_throughout(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long bits, unsigned long trunc);
+void zmod_poly_mul_classical_trunc(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long trunc);
+
+void _zmod_poly_mul_classical_trunc_left(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long trunc);
+void __zmod_poly_mul_classical_trunc_left_mod_last(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long bits, unsigned long trunc);
+void __zmod_poly_mul_classical_trunc_left_mod_throughout(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long bits, unsigned long trunc);
+void zmod_poly_mul_classical_trunc_left(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long trunc);
 
 /*
 	Bit packing functions
 */
 
 unsigned long zmod_poly_bits(zmod_poly_t poly);
-void zmod_poly_bit_pack_mpn(mp_limb_t * res, zmod_poly_t poly, unsigned long bits);
+void zmod_poly_bit_pack_mpn(mp_limb_t * res, zmod_poly_t poly, unsigned long bits, unsigned long length);
 void zmod_poly_bit_unpack_mpn(zmod_poly_t poly, mp_limb_t *mpn, unsigned long length, unsigned long bits);
 
 void print_binary(unsigned long n, unsigned long len);
 void print_binary2(unsigned long n, unsigned long len, unsigned long space_bit);
+
+/*
+   Scalar multiplication
+*/
+
+void _zmod_poly_scalar_mul(zmod_poly_t res, zmod_poly_t poly, unsigned long scalar);
+void zmod_poly_scalar_mul(zmod_poly_t res, zmod_poly_t poly, unsigned long scalar);
+
 
 #ifdef __cplusplus
  }

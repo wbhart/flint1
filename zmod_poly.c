@@ -381,15 +381,11 @@ void zmod_poly_truncate(zmod_poly_t res, zmod_poly_t poly, unsigned long length)
 ****************************************************************************/
 
 
-void zmod_poly_set(zmod_poly_t res, zmod_poly_t poly)
+void _zmod_poly_set(zmod_poly_t res, zmod_poly_t poly)
 {
    if (res == poly)
       return;
 
-   // todo: use mpz_init_set where appropriate
-
-   zmod_poly_ensure_alloc(res, poly->length);
-   
    for (unsigned long i = 0; i < poly->length; i++)
       res->coeffs[i] = poly->coeffs[i];
       
@@ -397,6 +393,16 @@ void zmod_poly_set(zmod_poly_t res, zmod_poly_t poly)
    
    res->p = poly->p;
    res->p_inv = poly->p_inv;
+}
+
+void zmod_poly_set(zmod_poly_t res, zmod_poly_t poly)
+{
+   if (res == poly)
+      return;
+
+   zmod_poly_ensure_alloc(res, poly->length);
+   
+   _zmod_poly_set(res, poly);
 }
 
 
@@ -611,14 +617,14 @@ void zmod_poly_mul(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
    
    if (poly1->length + poly2->length <= 6)
    {
-      zmod_poly_mul_naive(res, poly1, poly2);
+      zmod_poly_mul_classical(res, poly1, poly2);
       return;
    }
    
    unsigned long bits = FLINT_BIT_COUNT(poly1->p);
    if ((bits <= 32) && (poly1->length + poly2->length <= 8))
    {
-      zmod_poly_mul_naive(res, poly1, poly2);
+      zmod_poly_mul_classical(res, poly1, poly2);
       return;
    }
 
@@ -630,14 +636,14 @@ void zmod_poly_sqr(zmod_poly_t res, zmod_poly_t poly)
 {
    if (poly->length <= 4)
    {
-      zmod_poly_sqr_naive(res, poly);
+      zmod_poly_sqr_classical(res, poly);
       return;
    }
    
    unsigned long bits = FLINT_BIT_COUNT(poly->p);
    if ((bits >= 32) && (bits <= 50) && (poly->length <= 10))
    {
-      zmod_poly_sqr_naive(res, poly);
+      zmod_poly_sqr_classical(res, poly);
       return;
    }
 
@@ -646,19 +652,24 @@ void zmod_poly_sqr(zmod_poly_t res, zmod_poly_t poly)
 
 
 /*
- This is just like zmod_poly_mul_naive(), with the following restrictions:
+ This is just like zmod_poly_mul_classical(), with the following restrictions:
 
   * assumes res does not alias poly1 and poly2
-  * neither polynomial is zero
   * res->alloc >= poly1->length + poly2->length - 1
      (i.e. output has enough room for product)
 */
 
-void _zmod_poly_mul_naive(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
+void _zmod_poly_mul_classical(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
 {
    FLINT_ASSERT(res != poly1);
    FLINT_ASSERT(res != poly2);
-   FLINT_ASSERT(poly1->length && poly2->length);
+   
+   if (!poly1->length || !poly2->length)
+   {
+      // one of the polys is zero
+      res->length = 0;
+      return;
+   }
 
    res->length = poly1->length + poly2->length - 1;
    res->p = poly1->p;
@@ -690,48 +701,30 @@ void _zmod_poly_mul_naive(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
       // the numbers of bits in the output of each coeff will be less than FLINT_BITS
       // so don't need to mod to stay in the single limb, hence can leave this for the
       // end...
-      __zmod_poly_mul_naive_mod_last(res, poly1, poly2, bits);
+      __zmod_poly_mul_classical_mod_last(res, poly1, poly2, bits);
    }
    else
    {
       bits = zmod_poly_bits(poly1) + zmod_poly_bits(poly2) + log_length;
       if (bits < FLINT_BITS)
       {
-         __zmod_poly_mul_naive_mod_last(res, poly1, poly2, bits);
+         __zmod_poly_mul_classical_mod_last(res, poly1, poly2, bits);
       }
       else
       {
-         __zmod_poly_mul_naive_mod_throughout(res, poly1, poly2, bits);
+         __zmod_poly_mul_classical_mod_throughout(res, poly1, poly2, bits);
       }
    }
+      
+   zmod_poly_normalise(res);
 }
-
-void _zmod_poly_mul_naive_mod_throughout(zmod_poly_t res, zmod_poly_t poly1, 
-                                            zmod_poly_t poly2, unsigned long bits)
-{
-   FLINT_ASSERT(res != poly1);
-   FLINT_ASSERT(res != poly2);
-   FLINT_ASSERT(poly1->length && poly2->length);
-
-   res->length = poly1->length + poly2->length - 1;
-   res->p = poly1->p;
-   res->p_inv = poly1->p_inv;
-
-   FLINT_ASSERT(res->alloc >= res->length);
-
-   for (unsigned long i = 0; i < res->length; i++)
-      res->coeffs[i] = 0;
-
-   __zmod_poly_mul_naive_mod_throughout(res, poly1, poly2, bits);
-}
-
 
 /*
-   Actually computes the naive multiplication, only applying mod at the end
+   Actually computes the classical multiplication, only applying mod at the end
    of the computations.
 */
 
-void __zmod_poly_mul_naive_mod_last(zmod_poly_t res, zmod_poly_t poly1, 
+void __zmod_poly_mul_classical_mod_last(zmod_poly_t res, zmod_poly_t poly1, 
                                              zmod_poly_t poly2, unsigned long bits)
 {
    for (unsigned long i = 0; i < poly1->length; i++)
@@ -755,10 +748,10 @@ void __zmod_poly_mul_naive_mod_last(zmod_poly_t res, zmod_poly_t poly1,
 
 
 /*
-   Computes the naive multiplication, applying mods at each step.
+   Computes the classical multiplication, applying mods at each step.
 */
 
-void __zmod_poly_mul_naive_mod_throughout(zmod_poly_t res, zmod_poly_t poly1, 
+void __zmod_poly_mul_classical_mod_throughout(zmod_poly_t res, zmod_poly_t poly1, 
                                             zmod_poly_t poly2, unsigned long bits)
 {
 #if FLINT_BITS == 64
@@ -779,7 +772,7 @@ void __zmod_poly_mul_naive_mod_throughout(zmod_poly_t res, zmod_poly_t poly1,
 }
 
 
-void zmod_poly_mul_naive(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
+void zmod_poly_mul_classical(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
 {   
    if (!poly1->length || !poly2->length)
    {
@@ -791,7 +784,7 @@ void zmod_poly_mul_naive(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
    if (poly1 == poly2)
    {
       // polys are identical, so call specialised squaring routine
-      zmod_poly_sqr_naive(res, poly1);
+      zmod_poly_sqr_classical(res, poly1);
       return;
    }
 
@@ -802,7 +795,7 @@ void zmod_poly_mul_naive(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
       // output is inplace, so need a temporary
       zmod_poly_t temp;
       zmod_poly_init2(temp, poly1->p, length);
-      _zmod_poly_mul_naive(temp, poly1, poly2);
+      _zmod_poly_mul_classical(temp, poly1, poly2);
       zmod_poly_swap(temp, res);
       zmod_poly_clear(temp);
    }
@@ -810,24 +803,28 @@ void zmod_poly_mul_naive(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
    {
       // output not inplace
       zmod_poly_ensure_alloc(res, length);
-      _zmod_poly_mul_naive(res, poly1, poly2);
+      _zmod_poly_mul_classical(res, poly1, poly2);
    }
-   
-   zmod_poly_normalise(res);
 }
 
 
 /*
- This is just like zmod_poly_sqr_naive(), with the following restrictions:
+ This is just like zmod_poly_sqr_classical(), with the following restrictions:
 
   * assumes res does not alias poly
-  * poly is nonzero
   * res->alloc >= 2*poly->length - 1  (i.e. output has enough room for product)
 */
-void _zmod_poly_sqr_naive(zmod_poly_t res, zmod_poly_t poly)
+void _zmod_poly_sqr_classical(zmod_poly_t res, zmod_poly_t poly)
 {
    FLINT_ASSERT(res != poly);
    FLINT_ASSERT(poly->length);
+
+   if (!poly->length)
+   {
+      // input is zero
+      res->length = 0;
+      return;
+   }
 
    res->length = 2*poly->length - 1;
    res->p = poly->p;
@@ -874,10 +871,12 @@ void _zmod_poly_sqr_naive(zmod_poly_t res, zmod_poly_t poly)
 #if FLINT_BITS == 64
    }
 #endif
+      
+   zmod_poly_normalise(res);
 }
 
 
-void zmod_poly_sqr_naive(zmod_poly_t res, zmod_poly_t poly)
+void zmod_poly_sqr_classical(zmod_poly_t res, zmod_poly_t poly)
 {
    if (!poly->length)
    {
@@ -893,7 +892,7 @@ void zmod_poly_sqr_naive(zmod_poly_t res, zmod_poly_t poly)
       // output is inplace, so need a temporary
       zmod_poly_t temp;
       zmod_poly_init2(temp, poly->p, length);
-      _zmod_poly_sqr_naive(temp, poly);
+      _zmod_poly_sqr_classical(temp, poly);
       zmod_poly_swap(temp, res);
       zmod_poly_clear(temp);
    }
@@ -903,11 +902,346 @@ void zmod_poly_sqr_naive(zmod_poly_t res, zmod_poly_t poly)
 
       // allocate more coefficients if necessary
       zmod_poly_ensure_alloc(res, length);
-      _zmod_poly_sqr_naive(res, poly);
+      _zmod_poly_sqr_classical(res, poly);
+   }
+}
+
+//=======================================================================
+
+/*
+ This is just like zmod_poly_mul_classical_trunc(), with the following restrictions:
+
+  * assumes res does not alias poly1 and poly2
+  * res->alloc >= MIN(trunc, poly1->length + poly2->length - 1)
+     (i.e. output has enough room for truncated product)
+*/
+
+void _zmod_poly_mul_classical_trunc(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long trunc)
+{
+   FLINT_ASSERT(res != poly1);
+   FLINT_ASSERT(res != poly2);
+   
+   if (!poly1->length || !poly2->length || !trunc)
+   {
+      // one of the polys is zero
+      res->length = 0;
+      return;
+   }
+   
+   if (trunc >= poly1->length + poly2->length - 1)
+   {
+      // there's no truncating to be done
+      _zmod_poly_mul_classical(res, poly1, poly2);
+      return;
+   }
+
+   res->length = trunc;
+   res->p = poly1->p;
+   res->p_inv = poly1->p_inv;
+   
+   unsigned long length;
+   
+   if (poly1->length <= poly2->length)
+   {
+      length = poly1->length;
+   }
+   else
+   {
+      length = poly2->length;
+   }
+   
+   unsigned log_length = 0;
+   while ((1<<log_length) < length) log_length++;
+   
+   unsigned long bits = (FLINT_BIT_COUNT(poly1->p)<<1) + log_length;
+
+   FLINT_ASSERT(res->alloc >= res->length);
+
+   for (unsigned long i = 0; i < res->length; i++)
+      res->coeffs[i] = 0;
+
+   if(bits < FLINT_BITS)
+   {
+      // the numbers of bits in the output of each coeff will be less than FLINT_BITS
+      // so don't need to mod to stay in the single limb, hence can leave this for the
+      // end...
+      __zmod_poly_mul_classical_trunc_mod_last(res, poly1, poly2, bits, trunc);
+   }
+   else
+   {
+      bits = zmod_poly_bits(poly1) + zmod_poly_bits(poly2) + log_length;
+      if (bits < FLINT_BITS)
+      {
+         __zmod_poly_mul_classical_trunc_mod_last(res, poly1, poly2, bits, trunc);
+      }
+      else
+      {
+         __zmod_poly_mul_classical_trunc_mod_throughout(res, poly1, poly2, bits, trunc);
+      }
    }
    
    zmod_poly_normalise(res);
 }
+
+/*
+   Actually computes the truncated classical multiplication, only applying mod at the end
+   of the computations.
+   
+   Assumes neither poly length is zero and trunc is not zero
+   Assumes res does not alias poly1 or poly2
+   Assumes trunc < poly1->length + poly2->length - 1
+*/
+
+void __zmod_poly_mul_classical_trunc_mod_last(zmod_poly_t res, zmod_poly_t poly1, 
+                                             zmod_poly_t poly2, unsigned long bits, unsigned long trunc)
+{
+   for (unsigned long i = 0; i < poly1->length; i++)
+      for (unsigned long j = 0; j < poly2->length; j++)
+         if (i + j < trunc) 
+            res->coeffs[i+j] = res->coeffs[i+j] + poly1->coeffs[i] * poly2->coeffs[j];
+         
+#if FLINT_BITS == 64
+   if (bits <= FLINT_D_BITS)
+   { 
+      for (unsigned long i = 0; i < trunc; i++)
+         res->coeffs[i] = z_mod_precomp(res->coeffs[i], res->p, res->p_inv);
+   } else 
+   { 
+#endif
+      for (unsigned long i = 0; i < trunc; i++)
+         res->coeffs[i] = z_mod2_precomp(res->coeffs[i], res->p, res->p_inv);
+#if FLINT_BITS == 64
+   } 
+#endif
+}
+
+
+/*
+   Computes the classical multiplication, applying mods at each step.
+   
+   Assumes neither poly length is zero and trunc is not zero
+   Assumes res does not alias poly1 or poly2
+   Assumes trunc < poly1->length + poly2->length - 1
+
+*/
+
+void __zmod_poly_mul_classical_trunc_mod_throughout(zmod_poly_t res, zmod_poly_t poly1, 
+                                            zmod_poly_t poly2, unsigned long bits, unsigned long trunc)
+{
+#if FLINT_BITS == 64
+   if (bits <= FLINT_D_BITS)
+   {
+      for (unsigned long i = 0; i < poly1->length; i++)
+         for (unsigned long j = 0; j < poly2->length; j++)
+            if (i + j < trunc)
+               res->coeffs[i+j] = z_mod_add(res->coeffs[i+j], z_mulmod_precomp(poly1->coeffs[i], poly2->coeffs[j], poly1->p, poly1->p_inv), poly1->p);
+   } else
+   {
+#endif
+      for (unsigned long i = 0; i < poly1->length; i++)
+         for (unsigned long j = 0; j < poly2->length; j++)
+            if (i + j < trunc)
+               res->coeffs[i+j] = z_mod_add(res->coeffs[i+j], z_mulmod2_precomp(poly1->coeffs[i], poly2->coeffs[j], poly1->p, poly1->p_inv), poly1->p);
+#if FLINT_BITS == 64
+   }
+#endif
+}
+
+
+void zmod_poly_mul_classical_trunc(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long trunc)
+{   
+   if (!poly1->length || !poly2->length || !trunc)
+   {
+      // one of the polys is zero
+      res->length = 0;
+      return;
+   }
+
+   /*if (poly1 == poly2)
+   {
+      // polys are identical, so call specialised truncated squaring routine
+      zmod_poly_sqr_classical_trunc(res, poly1. trunc);
+      return;
+   }*/
+
+   unsigned long length = poly1->length + poly2->length - 1;
+
+   if (res == poly1 || res == poly2)
+   {
+      // output is inplace, so need a temporary
+      zmod_poly_t temp;
+      zmod_poly_init2(temp, poly1->p, FLINT_MIN(length, trunc));
+      _zmod_poly_mul_classical_trunc(temp, poly1, poly2, trunc);
+      zmod_poly_swap(temp, res);
+      zmod_poly_clear(temp);
+   }
+   else
+   {
+      // output not inplace
+      zmod_poly_ensure_alloc(res, FLINT_MIN(length, trunc));
+      _zmod_poly_mul_classical_trunc(res, poly1, poly2, trunc);
+   }
+}
+
+//===================================================================================
+
+void _zmod_poly_mul_classical_trunc_left(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long trunc)
+{
+   FLINT_ASSERT(res != poly1);
+   FLINT_ASSERT(res != poly2);
+   
+   if (!poly1->length || !poly2->length || (trunc >= poly1->length + poly2->length - 1))
+   {
+      // one of the polys is zero
+      res->length = 0;
+      return;
+   }
+   
+   if (trunc == 0)
+   {
+      _zmod_poly_mul_classical(res, poly1, poly2);
+   }
+
+   res->length = poly1->length + poly2->length - 1;
+   res->p = poly1->p;
+   res->p_inv = poly1->p_inv;
+   
+   unsigned long length;
+   
+   if (poly1->length <= poly2->length)
+   {
+      length = poly1->length;
+   }
+   else
+   {
+      length = poly2->length;
+   }
+   
+   unsigned log_length = 0;
+   while ((1<<log_length) < length) log_length++;
+   
+   unsigned long bits = (FLINT_BIT_COUNT(poly1->p)<<1) + log_length;
+
+   FLINT_ASSERT(res->alloc >= res->length);
+
+   for (unsigned long i = 0; i < res->length; i++)
+      res->coeffs[i] = 0;
+
+   if(bits < FLINT_BITS)
+   {
+      // the numbers of bits in the output of each coeff will be less than FLINT_BITS
+      // so don't need to mod to stay in the single limb, hence can leave this for the
+      // end...
+      __zmod_poly_mul_classical_trunc_left_mod_last(res, poly1, poly2, bits, trunc);
+   }
+   else
+   {
+      bits = zmod_poly_bits(poly1) + zmod_poly_bits(poly2) + log_length;
+      if (bits < FLINT_BITS)
+      {
+         __zmod_poly_mul_classical_trunc_left_mod_last(res, poly1, poly2, bits, trunc);
+      }
+      else
+      {
+         __zmod_poly_mul_classical_trunc_left_mod_throughout(res, poly1, poly2, bits, trunc);
+      }
+   }
+      
+   zmod_poly_normalise(res);
+}
+
+/*
+   Actually computes the classical multiplication, only applying mod at the end
+   of the computations.
+*/
+
+void __zmod_poly_mul_classical_trunc_left_mod_last(zmod_poly_t res, zmod_poly_t poly1, 
+                                             zmod_poly_t poly2, unsigned long bits, unsigned long trunc)
+{
+   for (unsigned long i = 0; i < poly1->length; i++)
+      for (unsigned long j = 0; j < poly2->length; j++)
+         if (i + j >= trunc)
+            res->coeffs[i+j] = res->coeffs[i+j] + poly1->coeffs[i] * poly2->coeffs[j];
+         
+#if FLINT_BITS == 64
+   if (bits <= FLINT_D_BITS)
+   { 
+      for (unsigned long i = trunc; i < res->length; i++)
+         res->coeffs[i] = z_mod_precomp(res->coeffs[i], res->p, res->p_inv);
+   } else 
+   { 
+#endif
+      for (unsigned long i = trunc; i < res->length; i++)
+         res->coeffs[i] = z_mod2_precomp(res->coeffs[i], res->p, res->p_inv);
+#if FLINT_BITS == 64
+   } 
+#endif
+}
+
+
+/*
+   Computes the classical multiplication, applying mods at each step.
+*/
+
+void __zmod_poly_mul_classical_trunc_left_mod_throughout(zmod_poly_t res, zmod_poly_t poly1, 
+                                            zmod_poly_t poly2, unsigned long bits, unsigned long trunc)
+{
+#if FLINT_BITS == 64
+   if (bits <= FLINT_D_BITS)
+   {
+      for (unsigned long i = 0; i < poly1->length; i++)
+         for (unsigned long j = 0; j < poly2->length; j++)
+            if (i + j >= trunc)
+               res->coeffs[i+j] = z_mod_add(res->coeffs[i+j], z_mulmod_precomp(poly1->coeffs[i], poly2->coeffs[j], poly1->p, poly1->p_inv), poly1->p);
+   } else
+   {
+#endif
+      for (unsigned long i = 0; i < poly1->length; i++)
+         for (unsigned long j = 0; j < poly2->length; j++)
+            if (i + j >= trunc)
+               res->coeffs[i+j] = z_mod_add(res->coeffs[i+j], z_mulmod2_precomp(poly1->coeffs[i], poly2->coeffs[j], poly1->p, poly1->p_inv), poly1->p);
+#if FLINT_BITS == 64
+   }
+#endif
+}
+
+
+void zmod_poly_mul_classical_trunc_left(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long trunc)
+{   
+   if (!poly1->length || !poly2->length)
+   {
+      // one of the polys is zero
+      res->length = 0;
+      return;
+   }
+
+   /*if (poly1 == poly2)
+   {
+      // polys are identical, so call specialised squaring routine
+      zmod_poly_sqr_classical_trunc_left(res, poly1, trunc);
+      return;
+   }*/
+
+   unsigned long length = poly1->length + poly2->length - 1;
+
+   if (res == poly1 || res == poly2)
+   {
+      // output is inplace, so need a temporary
+      zmod_poly_t temp;
+      zmod_poly_init2(temp, poly1->p, length);
+      _zmod_poly_mul_classical_trunc_left(temp, poly1, poly2, trunc);
+      zmod_poly_swap(temp, res);
+      zmod_poly_clear(temp);
+   }
+   else
+   {
+      // output not inplace
+      zmod_poly_ensure_alloc(res, length);
+      _zmod_poly_mul_classical_trunc_left(res, poly1, poly2, trunc);
+   }
+}
+
+//============================================================================================
 
 /*
    Debugging function
@@ -918,13 +1252,42 @@ void print_var(char *name, unsigned long value)
    printf("%s = %d\n", name, value);
 }
 
-
 void zmod_poly_mul_KS(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p input2, unsigned long bits_input)
-{   
+{ 
    unsigned long length1 = input1->length;
    unsigned long length2 = input2->length;
    
-   unsigned long final_length = length1 + length2 - 1;
+   if ((length1 == 0) || (length2 == 0)) 
+   {
+      zmod_poly_zero(output);
+      return;
+   }
+   
+   unsigned long length = length1 + length2 - 1;
+   
+   zmod_poly_ensure_alloc(output, length);
+   
+   if (output == input1 || output == input2)
+   {
+      // output is inplace, so need a temporary
+      zmod_poly_t temp;
+      zmod_poly_init2(temp, input1->p, length);
+      _zmod_poly_mul_KS(temp, input1, input2, bits_input);
+      zmod_poly_swap(temp, output);
+      zmod_poly_clear(temp);
+   }
+   else
+   {
+      // output not inplace
+      zmod_poly_ensure_alloc(output, length);
+      _zmod_poly_mul_KS(output, input1, input2, bits_input);
+   }
+} 
+      
+void _zmod_poly_mul_KS(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p input2, unsigned long bits_input)
+{   
+   unsigned long length1 = input1->length;
+   unsigned long length2 = input2->length;
    
    if ((length1 == 0) || (length2 == 0)) 
    {
@@ -932,6 +1295,8 @@ void zmod_poly_mul_KS(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p input2
       return;
    }
 
+   unsigned long final_length = length1 + length2 - 1;
+   
    if (length2 > length1) 
    {
       unsigned long temp = length1;
@@ -955,19 +1320,6 @@ void zmod_poly_mul_KS(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p input2
       bits = bits_input;
    }
    
-   // else
-   // {
-   //    printf("Bits: %d\n", bits);
-   // }
-   
-   //print_var("bits", bits);
-   // if (bits > FLINT_BITS)
-   // {
-   //    printf("Cannot multiply this\n");
-   //    zmod_poly_zero(output);
-   //    return;
-   // }
-
    mp_limb_t *mpn1, *mpn2, *res;
 
    unsigned long limbs1, limbs2;
@@ -978,27 +1330,16 @@ void zmod_poly_mul_KS(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p input2
    mpn1 = (mp_limb_t*) flint_stack_alloc(limbs1);
    mpn2 = (input1 == input2) ? mpn1 : (mp_limb_t*) flint_stack_alloc(limbs2);
 
-   zmod_poly_bit_pack_mpn(mpn1, input1, bits);
-   
-   // print_var("limbs1", limbs1);
-   //  
-   //  for (unsigned long i = 0; i < limbs1; i++)
-   //  {
-   //     print_binary(mpn1[i], FLINT_BITS);
-   //     printf(" ");
-   //  }
-   //  printf("\n");
+   zmod_poly_bit_pack_mpn(mpn1, input1, bits, length1);
    
    if(input1 != input2)
-      zmod_poly_bit_pack_mpn(mpn2, input2, bits);
+      zmod_poly_bit_pack_mpn(mpn2, input2, bits, length2);
    
    res = (mp_limb_t*) flint_stack_alloc(limbs1+limbs2);
    res[limbs1+limbs2-1] = 0L;
    
    if (input1 != input2) F_mpn_mul(res, mpn1, limbs1, mpn2, limbs2);
    else F_mpn_mul(res, mpn1, limbs1, mpn1, limbs1);
-   
-   zmod_poly_ensure_alloc(output, final_length);
    
    zmod_poly_bit_unpack_mpn(output, res, length1 + length2 - 1, bits); 
    
@@ -1008,6 +1349,116 @@ void zmod_poly_mul_KS(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p input2
       flint_stack_release();
   
    output->length = final_length;
+
+   /* The modulus may not be prime, so normalisation may be necessary */
+   zmod_poly_normalise(output);
+}
+
+//==========================================================================
+
+void zmod_poly_mul_KS_trunc(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p input2, unsigned long bits_input, unsigned long trunc)
+{ 
+   unsigned long length1 = input1->length;
+   unsigned long length2 = input2->length;
+   
+   if ((length1 == 0) || (length2 == 0) || (trunc == 0)) 
+   {
+      zmod_poly_zero(output);
+      return;
+   }
+   
+   unsigned long length = length1 + length2 - 1;
+   
+   if (output == input1 || output == input2)
+   {
+      // output is inplace, so need a temporary
+      zmod_poly_t temp;
+      zmod_poly_init2(temp, input1->p, FLINT_MIN(length, trunc));
+      _zmod_poly_mul_KS_trunc(temp, input1, input2, bits_input, trunc);
+      zmod_poly_swap(temp, output);
+      zmod_poly_clear(temp);
+   }
+   else
+   {
+      // output not inplace
+      zmod_poly_ensure_alloc(output, FLINT_MIN(length, trunc));
+      _zmod_poly_mul_KS_trunc(output, input1, input2, bits_input, trunc);
+   }
+} 
+      
+void _zmod_poly_mul_KS_trunc(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p input2, unsigned long bits_input, unsigned long trunc)
+{   
+   unsigned long length1 = FLINT_MIN(input1->length, trunc);
+   unsigned long length2 = FLINT_MIN(input2->length, trunc);
+   
+   while ((length1) && (input1->coeffs[length1-1] == 0)) length1--;
+   while ((length2) && (input2->coeffs[length2-1] == 0)) length2--;
+   
+   if ((length1 == 0) || (length2 == 0)) 
+   {
+      zmod_poly_zero(output);
+      return;
+   }
+
+   unsigned long length = length1 + length2 - 1;
+     
+   if (trunc > length) trunc = length;
+   
+   if (length2 > length1) 
+   {
+      unsigned long temp = length1;
+      length1 = length2;
+      length2 = temp;
+      SWAP_ZMOD_POLY_PTRS(input1, input2);
+   }
+      
+   unsigned long bits1, bits2;
+   
+   bits1 = zmod_poly_bits(input1);
+   bits2 = (input1 == input2) ? bits1 : zmod_poly_bits(input2);
+   
+   unsigned long length_short = length2;
+   unsigned log_length = 0;
+   while ((1<<log_length) < length_short) log_length++;
+   unsigned long bits = bits1 + bits2 + log_length;
+   
+   if (bits_input) 
+   {
+      bits = bits_input;
+   }
+   
+   mp_limb_t *mpn1, *mpn2, *res;
+
+   unsigned long limbs1, limbs2;
+
+   limbs1 = FLINT_MAX((long)((length1 * bits-1) / FLINT_BITS + 1), 0L);
+   limbs2 = FLINT_MAX((long)((length2 * bits-1) / FLINT_BITS + 1), 0L);
+      
+   mpn1 = (mp_limb_t*) flint_stack_alloc(limbs1);
+   mpn2 = (input1 == input2) ? mpn1 : (mp_limb_t*) flint_stack_alloc(limbs2);
+
+   zmod_poly_bit_pack_mpn(mpn1, input1, bits, length1);
+   
+   if(input1 != input2)
+      zmod_poly_bit_pack_mpn(mpn2, input2, bits, length2);
+   
+   res = (mp_limb_t*) flint_stack_alloc(limbs1+limbs2);
+   res[limbs1+limbs2-1] = 0L;
+   
+   unsigned long output_length = FLINT_MIN(length1 + length2 - 1, trunc);
+   
+   if (input1 != input2) F_mpn_mul_trunc(res, mpn1, limbs1, mpn2, limbs2, (output->length*bits-1)/FLINT_BITS+1);
+   else F_mpn_mul_trunc(res, mpn1, limbs1, mpn1, limbs1, (output->length*bits-1)/FLINT_BITS+1);
+      
+   zmod_poly_bit_unpack_mpn(output, res, output_length, bits); 
+   
+   flint_stack_release();
+   flint_stack_release();
+   if(input1 != input2)
+      flint_stack_release();
+  
+   output->length = output_length;
+   
    /* The modulus may not be prime, so normalisation may be necessary */
    zmod_poly_normalise(output);
 }
@@ -1104,7 +1555,7 @@ void print_limb(char *name, unsigned long limb)
    Packs the zmod_poly into an mpn, using `bits` bits for each coefficient
 */
 
-void zmod_poly_bit_pack_mpn(mp_limb_t * res, zmod_poly_t poly, unsigned long bits)
+void zmod_poly_bit_pack_mpn(mp_limb_t * res, zmod_poly_t poly, unsigned long bits, unsigned long length)
 {  
    unsigned long current_limb = 0;
    unsigned int current_bit = 0;
@@ -1112,7 +1563,7 @@ void zmod_poly_bit_pack_mpn(mp_limb_t * res, zmod_poly_t poly, unsigned long bit
    unsigned long temp_lower;
    unsigned long temp_upper;
    
-   unsigned long total_limbs = FLINT_MAX((long)(((poly->length * bits - 1)>>FLINT_LG_BITS_PER_LIMB) + 1), 0L);
+   unsigned long total_limbs = FLINT_MAX((long)(((length * bits - 1)>>FLINT_LG_BITS_PER_LIMB) + 1), 0L);
    
    res[0] = 0L;
    
@@ -1123,7 +1574,7 @@ void zmod_poly_bit_pack_mpn(mp_limb_t * res, zmod_poly_t poly, unsigned long bit
       //printf("Packing polynomial ****************************************\n");
       //print_limb("res[0]", res[0]);
 
-      for(unsigned long i = 0; i < poly->length; i++)
+      for(unsigned long i = 0; i < length; i++)
       {
          if (current_bit > boundary_limit_bit)
          {
@@ -1170,14 +1621,14 @@ void zmod_poly_bit_pack_mpn(mp_limb_t * res, zmod_poly_t poly, unsigned long bit
    }
    else if (bits == FLINT_BITS)
    {
-      for (unsigned long i = 0; i < poly->length; i++)
+      for (unsigned long i = 0; i < length; i++)
       {
          res[i] = poly->coeffs[i];
       }
    }
    else if (bits == 2*FLINT_BITS)
    {
-      for (unsigned long i = 0; i < poly->length; i++)
+      for (unsigned long i = 0; i < length; i++)
       {
          res[current_limb] = poly->coeffs[i];
          current_limb++;
@@ -1189,7 +1640,7 @@ void zmod_poly_bit_pack_mpn(mp_limb_t * res, zmod_poly_t poly, unsigned long bit
    {
       //printf("Packing Coeffs in Poly =============================================");
       
-      for(unsigned long i = 0; i < poly->length; i++)
+      for(unsigned long i = 0; i < length; i++)
       {
          //PRINT_VAR(current_bit);
          // the coefficient will be added accross a limb boundary,
@@ -1424,5 +1875,62 @@ void zmod_poly_bit_unpack_mpn(zmod_poly_t res, mp_limb_t * mpn, unsigned long le
          }     
       }
    }
-   //printf("Unpacking poly **********************************************\n");
+}
+
+/*******************************************************************************
+
+   Scalar multiplication
+
+********************************************************************************/
+
+/* 
+   Scalar multiplication
+   
+   Assumes the scalar is reduced modulo poly->p
+*/
+
+void _zmod_poly_scalar_mul(zmod_poly_t res, zmod_poly_t poly, unsigned long scalar)
+{
+   if (scalar == 0) 
+   {
+      res->length = 0;
+      return;
+   }
+   
+   if (scalar == 1L) 
+   {
+      _zmod_poly_set(res, poly);
+      return;
+   }
+   
+   unsigned long bits = FLINT_BIT_COUNT(poly->p);
+   
+#if FLINT_BITS == 64
+   if (bits <= FLINT_D_BITS)
+   {
+      for (unsigned long i = 0; i < poly->length; i++)
+      {
+          res->coeffs[i] = z_mulmod_precomp(poly->coeffs[i], scalar, poly->p, poly->p_inv);
+      }
+   } else
+   {
+#endif
+      for (unsigned long i = 0; i < poly->length; i++)
+      {
+          res->coeffs[i] = z_mulmod2_precomp(poly->coeffs[i], scalar, poly->p, poly->p_inv);
+      }
+#if FLINT_BITS == 64
+   }
+#endif
+   
+   res->length = poly->length;
+   zmod_poly_normalise(res);
+}
+
+void zmod_poly_scalar_mul(zmod_poly_t res, zmod_poly_t poly, unsigned long scalar)
+{
+   if (poly != res)
+      zmod_poly_ensure_alloc(res, poly->length);
+      
+   _zmod_poly_scalar_mul(res, poly, scalar);
 }
