@@ -182,7 +182,7 @@ void profDriver_zmod_poly_mul_KS(char* params)
 
 //==================================================================================
 
-void sample_zmod_poly_mul_naive(unsigned long length, unsigned long bits, void* arg, unsigned long count)
+void sample_zmod_poly_mul_KS_trunc(unsigned long length, unsigned long bits, void* arg, unsigned long count)
 {
    zmod_poly_t pol1, pol2, res1;
    unsigned long modulus;
@@ -223,7 +223,7 @@ void sample_zmod_poly_mul_naive(unsigned long length, unsigned long bits, void* 
 #endif
    
       prof_start();
-      zmod_poly_mul_naive(res1, pol1, pol2);
+      zmod_poly_mul_KS_trunc(res1, pol1, pol2, 0, length);
       prof_stop();
       
    }
@@ -234,28 +234,319 @@ void sample_zmod_poly_mul_naive(unsigned long length, unsigned long bits, void* 
 }
 
 
-char* profDriverString_zmod_poly_mul_naive(char* params)
+char* profDriverString_zmod_poly_mul_KS_trunc(char* params)
 {
    return
-   "zmod_poly_mul_naive over various lengths and various bit sizes.\n"
+   "zmod_poly_mul_KS_trunc over various lengths and various bit sizes.\n"
    "Parameters: n_min, n_max, n_ratio.\n";
 }
 
 
-char* profDriverDefaultParams_zmod_poly_mul_naive()
+char* profDriverDefaultParams_zmod_poly_mul_KS_trunc()
 {
    return "1 1000 1.2";
 }
 
 
-void profDriver_zmod_poly_mul_naive(char* params)
+void profDriver_zmod_poly_mul_KS_trunc(char* params)
 {
    unsigned long n, n_min, n_max;
    double n_ratio;
    sscanf(params, "%ld %ld %lf", &n_min, &n_max, &n_ratio);
    unsigned long last_n = 0;
    
-   prof2d_set_sampler(sample_zmod_poly_mul_naive);
+   prof2d_set_sampler(sample_zmod_poly_mul_KS_trunc);
+   
+   int max_iter = (int) ceil(log((double) n_max) / log(n_ratio));
+   int min_iter = (int) ceil(log((double) n_min) / log(n_ratio));
+      
+   for (unsigned long i = min_iter; i < max_iter; i++)
+   {
+      n = (unsigned long) floor(pow(n_ratio, i));
+      if (n != last_n)
+      {
+         last_n = n;
+         for (unsigned long bits = 2; bits < 64; bits++)
+         {
+             unsigned long log_length = 0;
+             while ((1L<<log_length)<n) log_length++;
+             if (2*bits + log_length <= 2*FLINT_BITS)
+                prof2d_sample(n, bits, NULL);
+         }
+      }
+   }
+}
+
+//==================================================================================
+
+void sample_zmod_poly_mul_classical(unsigned long length, unsigned long bits, void* arg, unsigned long count)
+{
+   zmod_poly_t pol1, pol2, res1;
+   unsigned long modulus;
+      
+   zmod_poly_init(pol1, modulus);
+   zmod_poly_init(pol2, modulus);
+   zmod_poly_init(res1, modulus);
+    
+   unsigned long r_count;    // how often to generate new random data
+   
+   if (count >= 1000) r_count = 100;
+   else if (count >= 100) r_count = 10;
+   else if (count >= 20) r_count = 5;
+   else if (count >= 8) r_count = 2;
+   else r_count = 1;
+     
+   for (unsigned long count2 = 0; count2 < count; count2++)
+   {     
+                
+      if (count2 % r_count == 0)
+      {
+         do {modulus = randbits(bits);} while (modulus < 2);
+         
+         zmod_poly_clear(pol1);
+         zmod_poly_clear(pol2);
+         zmod_poly_clear(res1);  
+         
+         zmod_poly_init(pol1, modulus);
+         zmod_poly_init(pol2, modulus);
+         zmod_poly_init(res1, modulus);
+
+         randpoly(pol1, length, modulus);
+         randpoly(pol2, length, modulus);
+      }
+        
+#if DEBUG
+      printf("bits = %ld, length = %ld, modulus = %ld\n", bits, length, modulus);
+#endif
+   
+      prof_start();
+      zmod_poly_mul_classical(res1, pol1, pol2);
+      prof_stop();
+      
+   }
+      
+   zmod_poly_clear(pol1);
+   zmod_poly_clear(pol2);
+   zmod_poly_clear(res1);  
+}
+
+
+char* profDriverString_zmod_poly_mul_classical(char* params)
+{
+   return
+   "zmod_poly_mul_classical over various lengths and various bit sizes.\n"
+   "Parameters: n_min, n_max, n_ratio.\n";
+}
+
+
+char* profDriverDefaultParams_zmod_poly_mul_classical()
+{
+   return "1 1000 1.2";
+}
+
+
+void profDriver_zmod_poly_mul_classical(char* params)
+{
+   unsigned long n, n_min, n_max;
+   double n_ratio;
+   sscanf(params, "%ld %ld %lf", &n_min, &n_max, &n_ratio);
+   unsigned long last_n = 0;
+   
+   prof2d_set_sampler(sample_zmod_poly_mul_classical);
+   
+   int max_iter = (int) ceil(log((double) n_max) / log(n_ratio));
+   int min_iter = (int) ceil(log((double) n_min) / log(n_ratio));
+      
+   for (unsigned long i = min_iter; i < max_iter; i++)
+   {
+      n = (unsigned long) floor(pow(n_ratio, i));
+      if (n != last_n)
+      {
+         last_n = n;
+         for (unsigned long bits = 2; bits < 64; bits++)
+         {
+             unsigned long log_length = 0;
+             while ((1L<<log_length)<n) log_length++;
+             if (2*bits + log_length <= 2*FLINT_BITS)
+                prof2d_sample(n, bits, NULL);
+         }
+      }
+   }
+}
+
+//==============================================================================
+
+void sample_zmod_poly_mul_classical_trunc(unsigned long length, unsigned long bits, void* arg, unsigned long count)
+{
+   zmod_poly_t pol1, pol2, res1;
+   unsigned long modulus;
+      
+   zmod_poly_init(pol1, modulus);
+   zmod_poly_init(pol2, modulus);
+   zmod_poly_init(res1, modulus);
+    
+   unsigned long r_count;    // how often to generate new random data
+   
+   if (count >= 1000) r_count = 100;
+   else if (count >= 100) r_count = 10;
+   else if (count >= 20) r_count = 5;
+   else if (count >= 8) r_count = 2;
+   else r_count = 1;
+     
+   for (unsigned long count2 = 0; count2 < count; count2++)
+   {     
+                
+      if (count2 % r_count == 0)
+      {
+         do {modulus = randbits(bits);} while (modulus < 2);
+         
+         zmod_poly_clear(pol1);
+         zmod_poly_clear(pol2);
+         zmod_poly_clear(res1);  
+         
+         zmod_poly_init(pol1, modulus);
+         zmod_poly_init(pol2, modulus);
+         zmod_poly_init(res1, modulus);
+
+         randpoly(pol1, length, modulus);
+         randpoly(pol2, length, modulus);
+      }
+        
+#if DEBUG
+      printf("bits = %ld, length = %ld, modulus = %ld\n", bits, length, modulus);
+#endif
+   
+      prof_start();
+      zmod_poly_mul_classical_trunc(res1, pol1, pol2, length);
+      prof_stop();
+      
+   }
+      
+   zmod_poly_clear(pol1);
+   zmod_poly_clear(pol2);
+   zmod_poly_clear(res1);  
+}
+
+
+char* profDriverString_zmod_poly_mul_classical_trunc(char* params)
+{
+   return
+   "zmod_poly_mul_classical_trunc over various lengths and various bit sizes.\n"
+   "Parameters: n_min, n_max, n_ratio.\n";
+}
+
+
+char* profDriverDefaultParams_zmod_poly_mul_classical_trunc()
+{
+   return "1 1000 1.2";
+}
+
+
+void profDriver_zmod_poly_mul_classical_trunc(char* params)
+{
+   unsigned long n, n_min, n_max;
+   double n_ratio;
+   sscanf(params, "%ld %ld %lf", &n_min, &n_max, &n_ratio);
+   unsigned long last_n = 0;
+   
+   prof2d_set_sampler(sample_zmod_poly_mul_classical_trunc);
+   
+   int max_iter = (int) ceil(log((double) n_max) / log(n_ratio));
+   int min_iter = (int) ceil(log((double) n_min) / log(n_ratio));
+      
+   for (unsigned long i = min_iter; i < max_iter; i++)
+   {
+      n = (unsigned long) floor(pow(n_ratio, i));
+      if (n != last_n)
+      {
+         last_n = n;
+         for (unsigned long bits = 2; bits < 64; bits++)
+         {
+             unsigned long log_length = 0;
+             while ((1L<<log_length)<n) log_length++;
+             if (2*bits + log_length <= 2*FLINT_BITS)
+                prof2d_sample(n, bits, NULL);
+         }
+      }
+   }
+}
+
+//==============================================================================
+
+void sample_zmod_poly_mul_classical_trunc_left(unsigned long length, unsigned long bits, void* arg, unsigned long count)
+{
+   zmod_poly_t pol1, pol2, res1;
+   unsigned long modulus;
+      
+   zmod_poly_init(pol1, modulus);
+   zmod_poly_init(pol2, modulus);
+   zmod_poly_init(res1, modulus);
+    
+   unsigned long r_count;    // how often to generate new random data
+   
+   if (count >= 1000) r_count = 100;
+   else if (count >= 100) r_count = 10;
+   else if (count >= 20) r_count = 5;
+   else if (count >= 8) r_count = 2;
+   else r_count = 1;
+     
+   for (unsigned long count2 = 0; count2 < count; count2++)
+   {     
+                
+      if (count2 % r_count == 0)
+      {
+         do {modulus = randbits(bits);} while (modulus < 2);
+         
+         zmod_poly_clear(pol1);
+         zmod_poly_clear(pol2);
+         zmod_poly_clear(res1);  
+         
+         zmod_poly_init(pol1, modulus);
+         zmod_poly_init(pol2, modulus);
+         zmod_poly_init(res1, modulus);
+
+         randpoly(pol1, length, modulus);
+         randpoly(pol2, length, modulus);
+      }
+        
+#if DEBUG
+      printf("bits = %ld, length = %ld, modulus = %ld\n", bits, length, modulus);
+#endif
+   
+      prof_start();
+      zmod_poly_mul_classical_trunc_left(res1, pol1, pol2, length);
+      prof_stop();
+      
+   }
+      
+   zmod_poly_clear(pol1);
+   zmod_poly_clear(pol2);
+   zmod_poly_clear(res1);  
+}
+
+
+char* profDriverString_zmod_poly_mul_classical_trunc_left(char* params)
+{
+   return
+   "zmod_poly_mul_classical_trunc_left over various lengths and various bit sizes.\n"
+   "Parameters: n_min, n_max, n_ratio.\n";
+}
+
+
+char* profDriverDefaultParams_zmod_poly_mul_classical_trunc_left()
+{
+   return "1 1000 1.2";
+}
+
+
+void profDriver_zmod_poly_mul_classical_trunc_left(char* params)
+{
+   unsigned long n, n_min, n_max;
+   double n_ratio;
+   sscanf(params, "%ld %ld %lf", &n_min, &n_max, &n_ratio);
+   unsigned long last_n = 0;
+   
+   prof2d_set_sampler(sample_zmod_poly_mul_classical_trunc_left);
    
    int max_iter = (int) ceil(log((double) n_max) / log(n_ratio));
    int min_iter = (int) ceil(log((double) n_min) / log(n_ratio));
@@ -371,7 +662,7 @@ void profDriver_zmod_poly_sqr_KS(char* params)
 
 //==================================================================================
 
-void sample_zmod_poly_sqr_naive(unsigned long length, unsigned long bits, void* arg, unsigned long count)
+void sample_zmod_poly_sqr_classical(unsigned long length, unsigned long bits, void* arg, unsigned long count)
 {
    zmod_poly_t pol1, res1;
    unsigned long modulus;
@@ -408,7 +699,7 @@ void sample_zmod_poly_sqr_naive(unsigned long length, unsigned long bits, void* 
 #endif
    
       prof_start();
-      zmod_poly_sqr_naive(res1, pol1);
+      zmod_poly_sqr_classical(res1, pol1);
       prof_stop();
       
    }
@@ -418,28 +709,28 @@ void sample_zmod_poly_sqr_naive(unsigned long length, unsigned long bits, void* 
 }
 
 
-char* profDriverString_zmod_poly_sqr_naive(char* params)
+char* profDriverString_zmod_poly_sqr_classical(char* params)
 {
    return
-   "zmod_poly_sqr_naive over various lengths and various bit sizes.\n"
+   "zmod_poly_sqr_classical over various lengths and various bit sizes.\n"
    "Parameters: n_min, n_max, n_ratio.\n";
 }
 
 
-char* profDriverDefaultParams_zmod_poly_sqr_naive()
+char* profDriverDefaultParams_zmod_poly_sqr_classical()
 {
    return "1 1000 1.2";
 }
 
 
-void profDriver_zmod_poly_sqr_naive(char* params)
+void profDriver_zmod_poly_sqr_classical(char* params)
 {
    unsigned long n, n_min, n_max;
    double n_ratio;
    sscanf(params, "%ld %ld %lf", &n_min, &n_max, &n_ratio);
    unsigned long last_n = 0;
    
-   prof2d_set_sampler(sample_zmod_poly_sqr_naive);
+   prof2d_set_sampler(sample_zmod_poly_sqr_classical);
    
    int max_iter = (int) ceil(log((double) n_max) / log(n_ratio));
    int min_iter = (int) ceil(log((double) n_min) / log(n_ratio));

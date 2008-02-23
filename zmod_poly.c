@@ -1419,7 +1419,7 @@ void _zmod_poly_mul_KS_trunc(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p
    
    unsigned long length_short = length2;
    unsigned log_length = 0;
-   while ((1<<log_length) < length_short) log_length++;
+   while ((1L<<log_length) < length_short) log_length++;
    unsigned long bits = bits1 + bits2 + log_length;
    
    if (bits_input) 
@@ -1436,7 +1436,7 @@ void _zmod_poly_mul_KS_trunc(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p
       
    mpn1 = (mp_limb_t*) flint_stack_alloc(limbs1);
    mpn2 = (input1 == input2) ? mpn1 : (mp_limb_t*) flint_stack_alloc(limbs2);
-
+   
    zmod_poly_bit_pack_mpn(mpn1, input1, bits, length1);
    
    if(input1 != input2)
@@ -1447,8 +1447,8 @@ void _zmod_poly_mul_KS_trunc(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p
    
    unsigned long output_length = FLINT_MIN(length1 + length2 - 1, trunc);
    
-   if (input1 != input2) F_mpn_mul_trunc(res, mpn1, limbs1, mpn2, limbs2, (output->length*bits-1)/FLINT_BITS+1);
-   else F_mpn_mul_trunc(res, mpn1, limbs1, mpn1, limbs1, (output->length*bits-1)/FLINT_BITS+1);
+   if (input1 != input2) F_mpn_mul_trunc(res, mpn1, limbs1, mpn2, limbs2, (output_length*bits-1)/FLINT_BITS+1);
+   else F_mpn_mul_trunc(res, mpn1, limbs1, mpn1, limbs1, (output_length*bits-1)/FLINT_BITS+1);
       
    zmod_poly_bit_unpack_mpn(output, res, output_length, bits); 
    
@@ -1875,6 +1875,40 @@ void zmod_poly_bit_unpack_mpn(zmod_poly_t res, mp_limb_t * mpn, unsigned long le
          }     
       }
    }
+}
+
+void zmod_poly_mul_trunc_n(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long trunc)
+{
+   if (poly1->length + poly2->length <= 6)
+   {
+      zmod_poly_mul_classical_trunc(res, poly1, poly2, trunc);
+      return;
+   }
+   
+   if ((FLINT_BIT_COUNT(poly1->p) <= 30) && (poly1->length + poly2->length <= 16))
+   {
+      zmod_poly_mul_classical_trunc(res, poly1, poly2, trunc);
+      return;
+   }
+   
+   zmod_poly_mul_KS_trunc(res, poly1, poly2, 0, trunc);
+}
+
+void zmod_poly_mul_trunc_left_n(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long trunc)
+{
+   if (poly1->length + poly2->length <= 10)
+   {
+      zmod_poly_mul_classical_trunc_left(res, poly1, poly2, trunc);
+      return;
+   }
+   
+   if ((FLINT_BIT_COUNT(poly1->p) <= 30) && (poly1->length + poly2->length < 30))
+   {
+      zmod_poly_mul_classical_trunc_left(res, poly1, poly2, trunc);
+      return;
+   }
+   
+   zmod_poly_mul_KS(res, poly1, poly2, 0);
 }
 
 /*******************************************************************************
