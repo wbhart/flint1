@@ -459,8 +459,7 @@ void zmod_poly_add(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
    zmod_poly_normalise(res);
 }
 
-
-void zmod_poly_sub(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
+void _zmod_poly_sub(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
 {
    if (poly1 == poly2)
    {
@@ -468,7 +467,6 @@ void zmod_poly_sub(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
       res->length = 0;
       return;
    }
-
    // rearrange parameters to make poly1 no longer than poly2
    int swapped = 0;
    if (poly1->length > poly2->length)
@@ -477,8 +475,6 @@ void zmod_poly_sub(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
       SWAP_ZMOD_POLY_PTRS(poly1, poly2);
    }
       
-   zmod_poly_ensure_alloc(res, poly2->length);
-
    unsigned long i;
    
    if (swapped)
@@ -509,7 +505,24 @@ void zmod_poly_sub(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
    zmod_poly_normalise(res);
 }
 
+void zmod_poly_sub(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
+{
+   if (poly1 == poly2)
+   {
+      // equal operands
+      res->length = 0;
+      return;
+   }
 
+   // rearrange parameters to make poly1 no longer than poly2
+   if (poly1->length > poly2->length)
+   {
+      zmod_poly_ensure_alloc(res, poly1->length);
+   } else zmod_poly_ensure_alloc(res, poly2->length);
+   
+   _zmod_poly_sub(res, poly1, poly2);
+}
+ 
 void zmod_poly_neg(zmod_poly_t res, zmod_poly_t poly)
 {
    zmod_poly_ensure_alloc(res, poly->length);
@@ -613,6 +626,7 @@ void zmod_poly_mul(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
    if (poly1 == poly2)
    {
       zmod_poly_sqr(res, poly1);
+      return;
    }
    
    if (poly1->length + poly2->length <= 6)
@@ -1967,4 +1981,74 @@ void zmod_poly_scalar_mul(zmod_poly_t res, zmod_poly_t poly, unsigned long scala
       zmod_poly_ensure_alloc(res, poly->length);
       
    _zmod_poly_scalar_mul(res, poly, scalar);
+}
+
+/*
+   Classical basecase division
+   
+   Requires that the leading coefficient be invertible modulo B->p
+*/
+
+void zmod_poly_divrem_classical(zmod_poly_t Q, zmod_poly_t R, zmod_poly_t A, zmod_poly_t B)
+{
+   if (B->length == 0)
+   {
+      printf("Error: Divide by zero\n");
+      abort();      
+   }
+   
+   unsigned long p = B->p;
+   double p_inv = B->p_inv;
+   unsigned long lead_inv = z_invert(B->coeffs[B->length - 1], p);
+   unsigned long * coeff_Q;
+   
+   zmod_poly_t qB;
+   zmod_poly_init2(qB, p, B->length);
+   
+   long coeff = A->length - 1;
+   
+   zmod_poly_set(R, A);
+   
+   if (A->length >= B->length)
+   {
+      zmod_poly_ensure_alloc(Q, A->length - B->length + 1);
+      Q->length = A->length - B->length + 1;
+   } else zmod_poly_zero(Q); 
+
+   coeff_Q = Q->coeffs - B->length + 1;
+   
+#if FLINT_BITS == 64
+   int small = (FLINT_BIT_COUNT(p) <= FLINT_D_BITS);
+#endif   
+      
+   while (coeff >= (long) B->length - 1)
+   {
+      while ((coeff >= (long) B->length - 1) && (R->coeffs[coeff] == 0L))
+      {
+         coeff_Q[coeff] = 0L;
+         coeff--;
+      }
+      
+      if (coeff >= (long) B->length - 1)
+      {
+#if FLINT_BITS == 64
+         if (small) coeff_Q[coeff] = z_mulmod_precomp(R->coeffs[coeff], lead_inv, p, p_inv); 
+         else    
+#endif
+         coeff_Q[coeff] = z_mulmod2_precomp(R->coeffs[coeff], lead_inv, p, p_inv);
+         
+         zmod_poly_scalar_mul(qB, B, coeff_Q[coeff]);
+         
+         zmod_poly_t R_sub;
+         R_sub->p = p;
+         R_sub->coeffs = R->coeffs + coeff - B->length + 1;
+         R_sub->length = B->length;
+         _zmod_poly_sub(R_sub, R_sub, qB);
+         
+         coeff--;
+      }
+   }
+   
+   zmod_poly_normalise(R);
+   zmod_poly_clear(qB);
 }

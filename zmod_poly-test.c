@@ -801,6 +801,73 @@ int test_zmod_poly_scalar_mul()
    return result;
 }
 
+int test_zmod_poly_divrem_classical()
+{
+   int result = 1;
+   zmod_poly_t pol1, pol2, res1, Q, R;
+   unsigned long bits;
+   
+   for (unsigned long count1 = 0; (count1 < 400) && (result == 1); count1++)
+   {
+      bits = randint(FLINT_BITS-2)+2;
+      unsigned long modulus;
+      
+      do {modulus = randprime(bits);} while (modulus < 2);
+      
+      zmod_poly_init(pol1, modulus);
+      zmod_poly_init(pol2, modulus);
+      zmod_poly_init(res1, modulus);
+      zmod_poly_init(Q, modulus);
+      zmod_poly_init(R, modulus);
+      
+      for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
+      {
+         unsigned long length1 = randint(100);
+         unsigned long length2 = randint(100);
+         
+#if DEBUG
+         printf("length1 = %ld, length2 = %ld, bits = %ld, modulus = %ld\n", length1, length2, bits, modulus);
+#endif
+         
+         unsigned log_length = 0L;
+         while ((1L<<log_length) < FLINT_MIN(length1, length2)) log_length++;
+         
+         if (2*FLINT_BIT_COUNT(modulus) + log_length <= 2*FLINT_BITS)
+         {
+            randpoly(pol1, length1, modulus);
+            randpoly(pol2, length2, modulus);
+         
+            zmod_poly_mul(res1, pol1, pol2);
+            if (pol2->length)
+            {
+               zmod_poly_divrem_classical(Q, R, res1, pol2);
+         
+               result &= zmod_poly_equal(Q, pol1);
+            }
+         }
+         
+#if DEBUG
+         if (!result)
+         {
+            zmod_poly_print(pol1); printf("\n\n");
+            zmod_poly_print(pol2); printf("\n\n");
+            zmod_poly_print(res1); printf("\n\n");
+            zmod_poly_print(Q); printf("\n\n");
+            zmod_poly_print(R); printf("\n\n");
+         }
+#endif
+      }
+      
+      zmod_poly_clear(pol1);
+      zmod_poly_clear(pol2);
+      zmod_poly_clear(res1); 
+      zmod_poly_clear(Q); 
+      zmod_poly_clear(R); 
+   }
+   
+   return result;
+}
+
 void fmpz_poly_test_all()
 {
    int success, all_success = 1;
@@ -819,6 +886,7 @@ void fmpz_poly_test_all()
    RUN_TEST(zmod_poly_mul_KS_trunc); 
    RUN_TEST(zmod_poly_mul_classical_trunc_left); 
    RUN_TEST(zmod_poly_scalar_mul); 
+   RUN_TEST(zmod_poly_divrem_classical); 
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");

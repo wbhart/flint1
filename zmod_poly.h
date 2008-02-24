@@ -215,6 +215,7 @@ int zmod_poly_equal(zmod_poly_t poly1, zmod_poly_t poly2);
 
 void zmod_poly_add(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2);
 void zmod_poly_sub(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2);
+void _zmod_poly_sub(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2);
 void zmod_poly_neg(zmod_poly_t res, zmod_poly_t poly);
 
 
@@ -279,6 +280,12 @@ void print_binary2(unsigned long n, unsigned long len, unsigned long space_bit);
 
 void _zmod_poly_scalar_mul(zmod_poly_t res, zmod_poly_t poly, unsigned long scalar);
 void zmod_poly_scalar_mul(zmod_poly_t res, zmod_poly_t poly, unsigned long scalar);
+
+/* 
+   Division
+*/
+
+void zmod_poly_divrem_classical(zmod_poly_t Q, zmod_poly_t R, zmod_poly_t A, zmod_poly_t B);
 
 
 #ifdef __cplusplus
