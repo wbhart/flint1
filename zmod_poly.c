@@ -104,7 +104,7 @@ void zmod_poly_realloc(zmod_poly_t poly, unsigned long alloc)
 }
 
 
-void __zmod_poly_ensure_alloc(zmod_poly_t poly, unsigned long alloc)
+void __zmod_poly_fit_length(zmod_poly_t poly, unsigned long alloc)
 {
    FLINT_ASSERT(alloc > poly->alloc);
 
@@ -124,7 +124,7 @@ void zmod_poly_set_coeff(zmod_poly_t poly, unsigned long n, unsigned long c)
 {
    c = z_mod_precomp(c, poly->p, poly->p_inv);
    
-   zmod_poly_ensure_alloc(poly, n+1);
+   zmod_poly_fit_length(poly, n+1);
    
    if (n+1 < poly->length)
       // set interior coefficient
@@ -185,7 +185,7 @@ int zmod_poly_from_string(zmod_poly_t poly, char* s)
    s += strcspn(s, whitespace);
    
    poly->length = 0;
-   zmod_poly_ensure_alloc(poly, length);
+   zmod_poly_fit_length(poly, length);
    
    for (unsigned long i = 0; i < length; i++)
    {
@@ -278,7 +278,7 @@ int zmod_poly_fread(zmod_poly_t poly, FILE* f)
    poly->p = p;
    poly->p_inv = z_precompute_inverse(p);
    
-   zmod_poly_ensure_alloc(poly, length);
+   zmod_poly_fit_length(poly, length);
 
    // read coefficients
    for (unsigned long i = 0; i < length; i++)
@@ -326,7 +326,7 @@ int zmod_poly_normalised(zmod_poly_t poly)
 
 void zmod_poly_pad(zmod_poly_t poly, unsigned long length)
 {
-   zmod_poly_ensure_alloc(poly, length);
+   zmod_poly_fit_length(poly, length);
 
    if (poly->length < length)
    {
@@ -358,7 +358,7 @@ void zmod_poly_truncate(zmod_poly_t res, zmod_poly_t poly, unsigned long length)
 
       // todo: use mpz_init_set where appropriate
       
-      zmod_poly_ensure_alloc(res, length);
+      zmod_poly_fit_length(res, length);
 
       for (unsigned long i = 0; i < length; i++)
          res->coeffs[i] = poly->coeffs[i];
@@ -400,7 +400,7 @@ void zmod_poly_set(zmod_poly_t res, zmod_poly_t poly)
    if (res == poly)
       return;
 
-   zmod_poly_ensure_alloc(res, poly->length);
+   zmod_poly_fit_length(res, poly->length);
    
    _zmod_poly_set(res, poly);
 }
@@ -442,7 +442,7 @@ void zmod_poly_add(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
    if (poly1->length > poly2->length)
       SWAP_ZMOD_POLY_PTRS(poly1, poly2);
       
-   zmod_poly_ensure_alloc(res, poly2->length);
+   zmod_poly_fit_length(res, poly2->length);
 
    unsigned long i, neg1;
    /* The following standard technique was found in David Harvey's zn_poly */
@@ -517,15 +517,15 @@ void zmod_poly_sub(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
    // rearrange parameters to make poly1 no longer than poly2
    if (poly1->length > poly2->length)
    {
-      zmod_poly_ensure_alloc(res, poly1->length);
-   } else zmod_poly_ensure_alloc(res, poly2->length);
+      zmod_poly_fit_length(res, poly1->length);
+   } else zmod_poly_fit_length(res, poly2->length);
    
    _zmod_poly_sub(res, poly1, poly2);
 }
  
 void zmod_poly_neg(zmod_poly_t res, zmod_poly_t poly)
 {
-   zmod_poly_ensure_alloc(res, poly->length);
+   zmod_poly_fit_length(res, poly->length);
 
    for (unsigned long i = 0; i < poly->length; i++)
    {
@@ -545,9 +545,9 @@ void zmod_poly_neg(zmod_poly_t res, zmod_poly_t poly)
 ****************************************************************************/
 
 
-void zmod_poly_lshift(zmod_poly_t res, zmod_poly_t poly, unsigned long k)
+void zmod_poly_left_shift(zmod_poly_t res, zmod_poly_t poly, unsigned long k)
 {
-   zmod_poly_ensure_alloc(res, poly->length + k);
+   zmod_poly_fit_length(res, poly->length + k);
 
    unsigned long temp;
 
@@ -579,7 +579,7 @@ void zmod_poly_lshift(zmod_poly_t res, zmod_poly_t poly, unsigned long k)
 }
 
 
-void zmod_poly_rshift(zmod_poly_t res, zmod_poly_t poly, unsigned long k)
+void zmod_poly_right_shift(zmod_poly_t res, zmod_poly_t poly, unsigned long k)
 {
    if (k >= poly->length)
    {
@@ -600,7 +600,7 @@ void zmod_poly_rshift(zmod_poly_t res, zmod_poly_t poly, unsigned long k)
    else
    {
       // not inplace; need to copy data
-      zmod_poly_ensure_alloc(res, poly->length - k);
+      zmod_poly_fit_length(res, poly->length - k);
 
       for (unsigned long i = k; i < poly->length; i++)
          res->coeffs[i - k] = poly->coeffs[i];
@@ -816,7 +816,7 @@ void zmod_poly_mul_classical(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t pol
    else
    {
       // output not inplace
-      zmod_poly_ensure_alloc(res, length);
+      zmod_poly_fit_length(res, length);
       _zmod_poly_mul_classical(res, poly1, poly2);
    }
 }
@@ -915,7 +915,7 @@ void zmod_poly_sqr_classical(zmod_poly_t res, zmod_poly_t poly)
       // output not inplace
 
       // allocate more coefficients if necessary
-      zmod_poly_ensure_alloc(res, length);
+      zmod_poly_fit_length(res, length);
       _zmod_poly_sqr_classical(res, poly);
    }
 }
@@ -1092,7 +1092,7 @@ void zmod_poly_mul_classical_trunc(zmod_poly_t res, zmod_poly_t poly1, zmod_poly
    else
    {
       // output not inplace
-      zmod_poly_ensure_alloc(res, FLINT_MIN(length, trunc));
+      zmod_poly_fit_length(res, FLINT_MIN(length, trunc));
       _zmod_poly_mul_classical_trunc(res, poly1, poly2, trunc);
    }
 }
@@ -1250,7 +1250,7 @@ void zmod_poly_mul_classical_trunc_left(zmod_poly_t res, zmod_poly_t poly1, zmod
    else
    {
       // output not inplace
-      zmod_poly_ensure_alloc(res, length);
+      zmod_poly_fit_length(res, length);
       _zmod_poly_mul_classical_trunc_left(res, poly1, poly2, trunc);
    }
 }
@@ -1279,7 +1279,7 @@ void zmod_poly_mul_KS(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p input2
    
    unsigned long length = length1 + length2 - 1;
    
-   zmod_poly_ensure_alloc(output, length);
+   zmod_poly_fit_length(output, length);
    
    if (output == input1 || output == input2)
    {
@@ -1293,7 +1293,7 @@ void zmod_poly_mul_KS(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p input2
    else
    {
       // output not inplace
-      zmod_poly_ensure_alloc(output, length);
+      zmod_poly_fit_length(output, length);
       _zmod_poly_mul_KS(output, input1, input2, bits_input);
    }
 } 
@@ -1395,7 +1395,7 @@ void zmod_poly_mul_KS_trunc(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p 
    else
    {
       // output not inplace
-      zmod_poly_ensure_alloc(output, FLINT_MIN(length, trunc));
+      zmod_poly_fit_length(output, FLINT_MIN(length, trunc));
       _zmod_poly_mul_KS_trunc(output, input1, input2, bits_input, trunc);
    }
 } 
@@ -1978,7 +1978,7 @@ void _zmod_poly_scalar_mul(zmod_poly_t res, zmod_poly_t poly, unsigned long scal
 void zmod_poly_scalar_mul(zmod_poly_t res, zmod_poly_t poly, unsigned long scalar)
 {
    if (poly != res)
-      zmod_poly_ensure_alloc(res, poly->length);
+      zmod_poly_fit_length(res, poly->length);
       
    _zmod_poly_scalar_mul(res, poly, scalar);
 }
@@ -2005,13 +2005,16 @@ void zmod_poly_divrem_classical(zmod_poly_t Q, zmod_poly_t R, zmod_poly_t A, zmo
    zmod_poly_t qB;
    zmod_poly_init2(qB, p, B->length);
    
+   zmod_poly_t Bm1;
+   _zmod_poly_attach_truncate(Bm1, B, B->length - 1);
+   
    long coeff = A->length - 1;
    
    zmod_poly_set(R, A);
    
    if (A->length >= B->length)
    {
-      zmod_poly_ensure_alloc(Q, A->length - B->length + 1);
+      zmod_poly_fit_length(Q, A->length - B->length + 1);
       Q->length = A->length - B->length + 1;
    } else zmod_poly_zero(Q); 
 
@@ -2037,18 +2040,618 @@ void zmod_poly_divrem_classical(zmod_poly_t Q, zmod_poly_t R, zmod_poly_t A, zmo
 #endif
          coeff_Q[coeff] = z_mulmod2_precomp(R->coeffs[coeff], lead_inv, p, p_inv);
          
-         zmod_poly_scalar_mul(qB, B, coeff_Q[coeff]);
+         zmod_poly_scalar_mul(qB, Bm1, coeff_Q[coeff]);
          
          zmod_poly_t R_sub;
          R_sub->p = p;
          R_sub->coeffs = R->coeffs + coeff - B->length + 1;
-         R_sub->length = B->length;
+         R_sub->length = B->length - 1;
          _zmod_poly_sub(R_sub, R_sub, qB);
          
          coeff--;
       }
    }
    
+   R->length = B->length - 1;
    zmod_poly_normalise(R);
    zmod_poly_clear(qB);
+}
+
+/*
+   Classical basecase division, without remainder
+   
+   Requires that the leading coefficient be invertible modulo B->p
+*/
+
+void zmod_poly_div_classical(zmod_poly_t Q, zmod_poly_t A, zmod_poly_t B)
+{
+   if (B->length == 0)
+   {
+      printf("Error: Divide by zero\n");
+      abort();      
+   }
+   
+   unsigned long p = B->p;
+   double p_inv = B->p_inv;
+   unsigned long lead_inv = z_invert(B->coeffs[B->length - 1], p);
+   unsigned long * coeff_Q;
+   
+   zmod_poly_t qB;
+   zmod_poly_init2(qB, p, B->length);
+   zmod_poly_t R;
+   zmod_poly_init(R, p);
+   
+   zmod_poly_t Bm1;
+   _zmod_poly_attach_truncate(Bm1, B, B->length - 1);
+   
+   long coeff = A->length - 1;
+   
+   zmod_poly_set(R, A);
+   
+   if (A->length >= B->length)
+   {
+      zmod_poly_fit_length(Q, A->length - B->length + 1);
+      Q->length = A->length - B->length + 1;
+   } else zmod_poly_zero(Q); 
+
+   coeff_Q = Q->coeffs - B->length + 1;
+   
+#if FLINT_BITS == 64
+   int small = (FLINT_BIT_COUNT(p) <= FLINT_D_BITS);
+#endif   
+      
+   while (coeff >= (long) B->length - 1)
+   {
+      while ((coeff >= (long) B->length - 1) && (R->coeffs[coeff] == 0L))
+      {
+         coeff_Q[coeff] = 0L;
+         coeff--;
+      }
+      
+      if (coeff >= (long) B->length - 1)
+      {
+#if FLINT_BITS == 64
+         if (small) coeff_Q[coeff] = z_mulmod_precomp(R->coeffs[coeff], lead_inv, p, p_inv); 
+         else    
+#endif
+         coeff_Q[coeff] = z_mulmod2_precomp(R->coeffs[coeff], lead_inv, p, p_inv);
+         
+         if (coeff >= (long) B->length)
+         {
+            zmod_poly_scalar_mul(qB, Bm1, coeff_Q[coeff]);
+         
+            zmod_poly_t R_sub;
+            R_sub->p = p;
+            R_sub->coeffs = R->coeffs + coeff - B->length + 1;
+            R_sub->length = B->length - 1;
+            _zmod_poly_sub(R_sub, R_sub, qB);
+         }
+         
+         coeff--;
+      }
+   }
+   
+   zmod_poly_clear(R);
+   zmod_poly_clear(qB);
+}
+
+/*
+   Divide and conquer division
+*/
+
+void zmod_poly_div_divconquer_recursive(zmod_poly_t Q, zmod_poly_t BQ, zmod_poly_t A, zmod_poly_t B)
+{
+   if (A->length < B->length)
+   {
+      zmod_poly_zero(Q);
+      zmod_poly_zero(BQ);
+
+      return;
+   }
+   
+   // A->length is now >= B->length
+   
+   unsigned long p = A->p;
+   unsigned long crossover = 16;
+   unsigned long crossover2 = 128;
+   
+   if ((B->length <= crossover) 
+   || ((A->length > 2*B->length - 1) && (A->length < crossover2)))
+   {
+      /*
+         Use the classical algorithm to compute the
+         quotient and remainder, then use A-R to compute BQ
+      */
+      
+      zmod_poly_t Rb;
+      zmod_poly_init(Rb, p);
+      zmod_poly_divrem_classical(Q, Rb, A, B);
+      zmod_poly_sub(BQ, A, Rb);
+      zmod_poly_clear(Rb);
+      
+      return;
+   }
+   
+   zmod_poly_t d1, d2, d3, d4, p1, q1, q2, dq1, dq2, d1q1, d2q1, d2q2, d1q2, t, temp;
+   
+   unsigned long n1 = (B->length+1)/2;
+   unsigned long n2 = B->length - n1;
+   
+   /* We let B = d1*x^n2 + d2 */
+   
+   _zmod_poly_attach_shift(d1, B, n2);
+   _zmod_poly_attach_truncate(d2, B, n2);
+   _zmod_poly_attach_shift(d3, B, n1);
+   _zmod_poly_attach_truncate(d4, B, n1);
+   
+   if (A->length <= n2 + B->length - 1)
+   {
+      /*
+         If A->length <= B->length + n2 - 1
+         then only a single quotient is needed
+         We do a division of at most 2*n2 - 1
+         terms by n2 terms yielding a quotient of
+         at most n2 terms 
+      */
+      
+      // Set p1 to be A without the last
+      // n1 coefficients
+      // 2*n2-1 >= p1->length > 0
+      
+      zmod_poly_init(p1, p);
+      zmod_poly_right_shift(p1, A, n1);
+      
+      // Since A was normalised, then p1 will be
+      // d3 is the leading terms of B and so must be normalised
+      // d3 is length n2, so we get at most n2 terms in the quotient
+      
+      zmod_poly_init(d1q1, p);
+      zmod_poly_div_divconquer_recursive(Q, d1q1, p1, d3); 
+      zmod_poly_clear(p1);
+      
+      /*
+         Compute d2q1 = Q*d4
+         It is of length at most n1+n2-1 terms
+      */
+      
+      zmod_poly_init(d2q1, p);
+      zmod_poly_mul(d2q1, Q, d4);
+      
+      /*
+         Compute BQ = d1q1*x^n1 + d2q1
+         It has length at most n1+2*n2-1
+      */
+      
+      zmod_poly_left_shift(BQ, d1q1, n1);
+      zmod_poly_clear(d1q1);
+      zmod_poly_add(BQ, BQ, d2q1);
+      zmod_poly_clear(d2q1);
+            
+      return;   
+   } 
+   
+   if (A->length > 2*B->length - 1)
+   {
+      // We shift A right until it is length 2*B->length -1
+      // We call this polynomial p1
+      
+      unsigned long shift = A->length - 2*B->length + 1;
+      _zmod_poly_attach_shift(p1, A, shift);
+      
+      /* 
+         Set q1 to p1 div B 
+         This is a 2*B->length-1 by B->length division so 
+         q1 ends up being at most length B->length
+         d1q1 = d1*q1 is length at most 2*B->length-1
+      */
+      
+      zmod_poly_init(d1q1, p);
+      zmod_poly_init(q1, p);
+      
+      zmod_poly_div_divconquer_recursive(q1, d1q1, p1, B); 
+       
+      /* 
+         Compute dq1 = d1*q1*x^shift
+         dq1 is then of length at most A->length
+         dq1 is normalised since d1q1 was
+      */
+   
+      zmod_poly_init(dq1, p);
+      
+      zmod_poly_left_shift(dq1, d1q1, shift);
+      zmod_poly_clear(d1q1);
+      
+      /*
+         Compute t = A - dq1 
+         The first B->length coefficients cancel
+         if the division is exact, leaving
+          A->length - B->length significant terms
+         otherwise we truncate at this length 
+      */
+   
+      zmod_poly_init(t, p);
+      zmod_poly_sub(t, A, dq1);
+      zmod_poly_truncate(t, t, A->length - B->length);
+      
+      /*
+         Compute q2 = t div B
+         It is a smaller division than the original 
+         since t->length <= A->length-B->length
+      */
+   
+      zmod_poly_init(q2, p);
+      zmod_poly_init(dq2, p);
+      zmod_poly_div_divconquer_recursive(q2, dq2, t, B); 
+      zmod_poly_clear(t);  
+      
+      /*
+         Write out Q = q1*x^shift + q2
+         Q has length at most B->length+shift
+         Note q2 has length at most shift since 
+         at most it is an A->length-B->length 
+         by B->length division
+      */
+   
+      zmod_poly_left_shift(Q, q1, shift);
+      zmod_poly_clear(q1);
+      zmod_poly_add(Q, Q, q2);
+      zmod_poly_clear(q2);
+      
+      /*
+         Write out BQ = dq1 + dq2
+      */
+      
+      zmod_poly_add(BQ, dq1, dq2);
+      zmod_poly_clear(dq1);
+      zmod_poly_clear(dq2);
+      
+      return;
+   } 
+   
+   // n2 + B->length - 1 < A->length <= n1 + n2 + B->length - 1
+    
+   /* 
+      We let A = a1*x^(n1+2*n2-1) + a2*x^(n1+n2-1) + a3 
+      where a1 is length at most n1 (and at least 1), 
+      a2 is length n2 and a3 is length n1+n2-1 
+      We set p1 = a1*x^(n1-1)+ other terms, so it has 
+      length at most 2*n1-1 
+   */
+      
+   zmod_poly_init(p1, p);
+   zmod_poly_right_shift(p1, A, 2*n2);
+      
+   /* 
+      Set q1 to p1 div d1 
+      This is at most a 2*n1-1 by n1 division so 
+      q1 ends up being at most length n1
+      d1q1 = d1*q1 is length at most 2*n1-1
+   */
+      
+   zmod_poly_init(d1q1, p);
+   zmod_poly_init(q1, p);
+   zmod_poly_div_divconquer_recursive(q1, d1q1, p1, d1); 
+   zmod_poly_clear(p1);   
+   
+   /* 
+      Compute d2q1 = d2*q1 
+      which ends up being at most length n1+n2-1
+   */  
+   
+   zmod_poly_init(d2q1, p);
+   zmod_poly_mul(d2q1, d2, q1);
+   
+   /* 
+      Compute dq1 = d1*q1*x^n2 + d2*q1
+      dq1 is then of length at most 2*n1+n2-1
+   */
+   
+   zmod_poly_init(dq1, p);
+   zmod_poly_left_shift(dq1, d1q1, n2);
+   zmod_poly_clear(d1q1);
+   zmod_poly_add(dq1, dq1, d2q1);
+   zmod_poly_clear(d2q1);
+   
+   /*
+      Compute t = p1*x^(n1+n2-1) + p2*x^(n1-1) - dq1
+      which has length at most 2*n1+n2-1, but we are not interested 
+      in up to the first n1 coefficients, so it has 
+      effective length at most n1+n2-1
+   */
+   
+   zmod_poly_init(t, p);
+   zmod_poly_right_shift(t, A, n2);
+   zmod_poly_sub(t, t, dq1);
+   zmod_poly_truncate(t, t, B->length - 1);
+   
+   /*
+      Compute q2 = t div d1
+      It is at most an n1+n2-1 by n1 division, so
+      the length of q2 will be at most n2
+      Also compute d1q2 of length at most n1+n2-1
+   */
+   
+   zmod_poly_init(d1q2, p);
+   zmod_poly_init(q2, p);
+   zmod_poly_div_divconquer_recursive(q2, d1q2, t, d1); 
+   zmod_poly_clear(t);
+      
+   /*
+      Compute d2q2 = d2*q2 which is of length 
+      at most n1+n2-1
+   */
+   
+   zmod_poly_init(d2q2, p);
+   zmod_poly_mul(d2q2, d2, q2);
+   
+   /*
+      Compute dq2 = d1*q2*x^n2 + d2q2
+      which is of length at most n1+2*n2-1
+   */
+   
+   zmod_poly_init(dq2, p);
+   zmod_poly_left_shift(dq2, d1q2, n2);
+   zmod_poly_clear(d1q2);
+   zmod_poly_add(dq2, dq2, d2q2);
+   zmod_poly_clear(d2q2);
+   
+   /*
+      Write out Q = q1*x^n2 + q2
+      Q has length at most n1+n2
+   */
+   
+   zmod_poly_left_shift(Q, q1, n2);
+   zmod_poly_clear(q1);
+   zmod_poly_add(Q, Q, q2);
+   zmod_poly_clear(q2);
+   
+   /*
+      Write out BQ = dq1*x^n2 + dq2
+      BQ has length at most 2*(n1+n2)-1
+   */
+   
+   zmod_poly_left_shift(BQ, dq1, n2);
+   zmod_poly_add(BQ, BQ, dq2);
+   
+   zmod_poly_clear(dq2);
+   zmod_poly_clear(dq1);
+}
+
+void zmod_poly_div_divconquer(zmod_poly_t Q, zmod_poly_t A, zmod_poly_t B)
+{
+   if (A->length < B->length)
+   {
+      zmod_poly_zero(Q);
+      
+      return;
+   }
+
+   // A->length is now >= B->length
+    
+   unsigned long crossover = 16;
+   unsigned long crossover2 = 256;
+   
+   unsigned long p = B->p;
+   
+   if ((B->length <= crossover) 
+   || ((A->length > 2*B->length - 1) && (A->length < crossover2)))
+   {
+      zmod_poly_div_classical(Q, A, B);
+      
+      return;
+   }
+   
+   // B->length is now >= crossover (16)
+   
+   zmod_poly_t d1, d2, d3, p1, q1, q2, dq1, dq2, d1q1, d2q1, d2q2, d1q2, t, temp;
+      
+   unsigned long n1 = (B->length+1)/2;
+   unsigned long n2 = B->length - n1;
+   
+   // n1 and n2 are at least 4
+   
+   /* We let B = d1*x^n2 + d2 
+      d1 is of length n1 and
+      d2 of length n2
+   */
+
+   _zmod_poly_attach_shift(d1, B, n2);
+   _zmod_poly_attach_truncate(d2, B, n2);
+   _zmod_poly_attach_shift(d3, B, n1);
+   
+   if (A->length <= n2 + B->length - 1)
+   {
+      /*
+         If A->length <= B->length + n2 - 1
+         then only a single quotient is needed
+         We do a division of at most 2*n2 - 1
+         terms by n2 terms yielding a quotient of
+         at most n2 terms 
+      */
+      
+      // Set p1 to be A without the last
+      // n1 coefficients
+      // 2*n2-1 >= p1->length > 0
+      
+      zmod_poly_init(p1, p);
+      zmod_poly_right_shift(p1, A, n1);
+      
+      // Since A was normalised, then p1 will be
+      // d3 is the leading terms of B and so must be normalised
+      // d3 is length n2, so we get at most n2 terms in the quotient
+      
+      zmod_poly_div_divconquer(Q, p1, d3); 
+      zmod_poly_clear(p1);
+            
+      return;   
+   } 
+   
+   if (A->length > 2*B->length - 1)
+   {
+      // We shift A right until it is length 2*B->length -1
+      // We call this polynomial p1
+      
+      unsigned long shift = A->length - 2*B->length + 1;
+      _zmod_poly_attach_shift(p1, A, shift);
+      
+      /* 
+         Set q1 to p1 div B 
+         This is a 2*B->length-1 by B->length division so 
+         q1 ends up being at most length B->length
+         d1q1 = low(d1*q1) is length at most 2*B->length-1
+         We discard the lower B->length-1 terms
+      */
+      
+      zmod_poly_init(d1q1, p);
+      zmod_poly_init(q1, p);
+      
+      zmod_poly_div_divconquer_recursive(q1, d1q1, p1, B); 
+       
+      /* 
+         Compute dq1 = d1*q1*x^shift
+         dq1 is then of length at most A->length
+         dq1 is normalised since d1q1 was
+      */
+   
+      zmod_poly_init(dq1, p);
+      
+      zmod_poly_left_shift(dq1, d1q1, shift);
+      zmod_poly_clear(d1q1); 
+      
+      /*
+         Compute t = A - dq1 
+         The first B->length coefficients cancel
+         if the division is exact, leaving
+          A->length - B->length significant terms
+         otherwise we truncate at this length 
+      */
+   
+      zmod_poly_init(t, p);
+      zmod_poly_sub(t, A, dq1);
+      zmod_poly_clear(dq1);
+      zmod_poly_truncate(t, t, A->length - B->length);
+      
+      /*
+         Compute q2 = t div B
+         It is a smaller division than the original 
+         since t->length <= A->length-B->length
+      */
+   
+      zmod_poly_init(q2, p);
+      zmod_poly_div_divconquer(q2, t, B); 
+      zmod_poly_clear(t);  
+      
+      /*
+         Write out Q = q1*x^shift + q2
+         Q has length at most B->length+shift
+         Note q2 has length at most shift since 
+         at most it is an A->length-B->length 
+         by B->length division
+      */
+   
+      zmod_poly_left_shift(Q, q1, shift);
+      zmod_poly_clear(q1);
+      zmod_poly_add(Q, Q, q2);
+      zmod_poly_clear(q2);
+      
+      return;
+   }
+   // We now have n2 + B->length - 1 < A->length <= 2*B->length - 1
+   
+   /* 
+      We let A = a1*x^(n1+2*n2-1) + a2*x^(n1+n2-1) + a3 
+      where a1 is length at most n1 and a2 is length n2 
+      and a3 is length n1+n2-1 
+   */
+      
+      // Set p1 to a1*x^(n1-1) + other terms
+      // It has length at most 2*n1-1 and is normalised
+      // A->length >= 2*n2
+      
+      zmod_poly_init(p1, p);
+      zmod_poly_right_shift(p1, A, 2*n2);
+      
+      /* 
+         Set q1 to p1 div d1 
+         This is at most a 2*n1-1 by n1 division so 
+         q1 ends up being at most length n1
+         d1q1 = low(d1*q1) is length at most n1-1
+         Thus we have discarded the leading n1 terms (at most)
+      */
+      
+      zmod_poly_init(d1q1, p);
+      zmod_poly_init(q1, p);
+      
+      zmod_poly_div_divconquer_recursive(q1, d1q1, p1, d1); 
+      zmod_poly_clear(p1);
+   
+   /* 
+      Compute d2q1 = d2*q1 with low n1 - 1 terms zeroed
+      d2*q1 is length at most n1+n2-1 leaving at most
+      n2 non-zero terms to the left
+   */  
+   
+   zmod_poly_init(d2q1, p); 
+   zmod_poly_mul_trunc_left_n(d2q1, d2, q1, n1 - 1);
+       
+   /* 
+      Compute dq1 = d1*q1*x^n2 + d2*q1
+      dq1 is then of length at most 2*n1+n2-1
+      but may have any length below this        
+   */
+   
+   zmod_poly_init(dq1, p);
+   zmod_poly_left_shift(dq1, d1q1, n2);
+   zmod_poly_clear(d1q1); 
+   zmod_poly_add(dq1, dq1, d2q1);
+   
+   /*
+      Compute t = a1*x^(2*n2-1) + a2*x^(n2-1) - dq1 
+      after shifting dq1 to the right by (n1-n2)
+      which has length at most 2*n1+n2-1, but we 
+      discard up to n1 coefficients, so it has 
+      effective length 2*n2-1 with the last n2-1
+      coefficients ignored. Thus there are at most n2 
+      significant coefficients
+   */
+   
+   
+   zmod_poly_init(t, p);
+   zmod_poly_right_shift(t, A, n1);
+   _zmod_poly_attach_shift(temp, dq1, n1-n2);
+   zmod_poly_sub(t, t, temp);
+   zmod_poly_truncate(t, t, 2*n2-1);
+     
+   /*
+      Compute q2 = t div d3
+      It is at most a 2*n2-1 by n2 division, so
+      the length of q2 will be n2 at most
+   */
+   
+   zmod_poly_init(q2, p);
+   zmod_poly_div_divconquer(q2, t, d3); 
+   zmod_poly_clear(t);  
+   zmod_poly_clear(dq1);
+   zmod_poly_clear(d2q1);
+   
+   /*
+      Write out Q = q1*x^n2 + q2
+      Q has length n1+n2
+   */
+   
+   zmod_poly_left_shift(Q, q1, n2);
+   zmod_poly_clear(q1);
+   zmod_poly_add(Q, Q, q2);
+   zmod_poly_clear(q2);   
+}
+
+void zmod_poly_divrem_divconquer(zmod_poly_t Q, zmod_poly_t R, zmod_poly_t A, zmod_poly_t B)
+{
+   zmod_poly_t QB;
+   zmod_poly_init(QB, B->p);
+   
+   zmod_poly_div_divconquer_recursive(Q, QB, A, B);   
+   zmod_poly_sub(R, A, QB);
+   
+   zmod_poly_clear(QB);
 }

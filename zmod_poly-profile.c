@@ -71,12 +71,12 @@ void randpoly(zmod_poly_t poly, long length, unsigned long n)
 {
    if (length == 0) 
    {
-      zmod_poly_ensure_alloc(poly, 1);
+      zmod_poly_fit_length(poly, 1);
       poly->length = 0;
       return;
    }
               
-   zmod_poly_ensure_alloc(poly, length);
+   zmod_poly_fit_length(poly, length);
    
    for (unsigned long i = 0; i < length; i++)
       poly->coeffs[i] = randint(n);

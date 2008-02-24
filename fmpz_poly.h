@@ -438,14 +438,14 @@ void _fmpz_poly_attach_shift(fmpz_poly_t output,
 
 /*
    Attach input to first n coefficients of input
-   n must be <= input->length
 */
 
 static inline 
 void _fmpz_poly_attach_truncate(fmpz_poly_t output, 
              const fmpz_poly_t input, unsigned long n)
 {
-   output->length = n;
+   if (input->length < n) output->length = input->length;
+   else output->length = n;
    output->limbs = input->limbs;
    output->coeffs = input->coeffs;
    _fmpz_poly_normalise(output);

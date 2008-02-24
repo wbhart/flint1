@@ -237,7 +237,7 @@ to improve locality.
 
 * Support in place polynomial negation
 
-
+* In zmod_poly make truncate in place always in line with fmpz_poly
 
 
 

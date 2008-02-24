@@ -76,15 +76,15 @@ void zmod_poly_realloc(zmod_poly_t poly, unsigned long alloc);
 // _bits_ only applies to newly allocated coefficients, not existing ones...
 
 // this non-inlined version REQUIRES that alloc > poly->alloc
-void __zmod_poly_ensure_alloc(zmod_poly_t poly, unsigned long alloc);
+void __zmod_poly_fit_length(zmod_poly_t poly, unsigned long alloc);
 
 // this is arranged so that the initial comparison (very frequent) is inlined,
 // but the actual allocation (infrequent) is not
 static inline
-void zmod_poly_ensure_alloc(zmod_poly_t poly, unsigned long alloc)
+void zmod_poly_fit_length(zmod_poly_t poly, unsigned long alloc)
 {
    if (alloc > poly->alloc)
-      __zmod_poly_ensure_alloc(poly, alloc);
+      __zmod_poly_fit_length(poly, alloc);
 }
 
 // ------------------------------------------------------
@@ -201,6 +201,50 @@ void zmod_poly_swap(zmod_poly_t poly1, zmod_poly_t poly2)
     poly2->p_inv = temp_p_inv;
 }
 
+/*
+   Subpolynomials
+*/
+
+static inline 
+void _zmod_poly_attach(zmod_poly_t output, zmod_poly_t input)
+{
+   output->length = input->length;
+   output->coeffs = input->coeffs;
+   output->p = input->p;
+   output->p_inv = input->p_inv;
+}
+
+/*
+   Attach input shifted right by n to output
+*/
+
+static inline 
+void _zmod_poly_attach_shift(zmod_poly_t output, 
+                   zmod_poly_t input, unsigned long n)
+{
+   if (input->length >= n) output->length = input->length - n;
+   else output->length = 0;
+   output->coeffs = input->coeffs + n;
+   output->p = input->p;
+   output->p_inv = input->p_inv;
+}
+
+/*
+   Attach input to first n coefficients of input
+*/
+
+static inline 
+void _zmod_poly_attach_truncate(zmod_poly_t output, 
+                     zmod_poly_t input, unsigned long n)
+{
+   if (input->length < n) output->length = input->length;
+   else output->length = n;
+   output->coeffs = input->coeffs;
+   output->p = input->p;
+   output->p_inv = input->p_inv;
+   zmod_poly_normalise(output);
+}
+
 
 /*
    Comparison functions
@@ -223,8 +267,8 @@ void zmod_poly_neg(zmod_poly_t res, zmod_poly_t poly);
    Shifting functions
 */
 
-void zmod_poly_lshift(zmod_poly_t res, zmod_poly_t poly, unsigned long k);
-void zmod_poly_rshift(zmod_poly_t res, zmod_poly_t poly, unsigned long k);
+void zmod_poly_left_shift(zmod_poly_t res, zmod_poly_t poly, unsigned long k);
+void zmod_poly_right_shift(zmod_poly_t res, zmod_poly_t poly, unsigned long k);
 
 /*
    Polynomial multiplication
@@ -286,7 +330,10 @@ void zmod_poly_scalar_mul(zmod_poly_t res, zmod_poly_t poly, unsigned long scala
 */
 
 void zmod_poly_divrem_classical(zmod_poly_t Q, zmod_poly_t R, zmod_poly_t A, zmod_poly_t B);
-
+void zmod_poly_div_classical(zmod_poly_t Q, zmod_poly_t A, zmod_poly_t B);
+void zmod_poly_div_divconquer_recursive(zmod_poly_t Q, zmod_poly_t BQ, zmod_poly_t A, zmod_poly_t B);
+void zmod_poly_divrem_divconquer(zmod_poly_t Q, zmod_poly_t R, zmod_poly_t A, zmod_poly_t B);
+void zmod_poly_div_divconquer(zmod_poly_t Q, zmod_poly_t A, zmod_poly_t B);
 
 #ifdef __cplusplus
  }
