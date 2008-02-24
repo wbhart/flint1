@@ -1191,6 +1191,53 @@ int test_zmod_poly_newton_invert_basecase()
    return result; 
 }
 
+int test_zmod_poly_newton_invert()
+{
+   zmod_poly_t poly, poly2, poly3;
+   int result = 1;
+   unsigned long bits, length;
+   
+   for (unsigned long count1 = 0; (count1 < 3000) && (result == 1) ; count1++)
+   {
+      bits = randint(FLINT_BITS-2)+2;
+      unsigned long modulus;
+      
+      do {modulus = randprime(bits);} while (modulus < 2);
+      
+      zmod_poly_init(poly, modulus);
+      zmod_poly_init(poly2, modulus);
+      zmod_poly_init(poly3, modulus);
+            
+      length = random_ulong(250)+1;
+       
+#if DEBUG
+      printf("length = %ld, bits = %ld\n", length, bits);
+#endif
+
+      unsigned log_length = 0L;
+      while ((1L<<log_length) < length) log_length++;
+         
+      if (2*FLINT_BIT_COUNT(modulus) + log_length <= 2*FLINT_BITS)
+      {
+         do randpoly(poly, length, modulus); 
+         while ((poly->length == 0) || (poly->coeffs[0] == 0L));
+            
+         zmod_poly_newton_invert(poly2, poly, length);
+      
+         zmod_poly_mul_trunc_n(poly3, poly, poly2, length);
+            
+         result &= (poly3->length == 1);
+         result &= (poly3->coeffs[0] == 1L);
+      }
+      
+      zmod_poly_clear(poly);
+      zmod_poly_clear(poly2);
+      zmod_poly_clear(poly3);
+   }
+   
+   return result; 
+}
+
 void zmod_poly_test_all()
 {
    int success, all_success = 1;
@@ -1215,6 +1262,7 @@ void zmod_poly_test_all()
    RUN_TEST(zmod_poly_divrem_divconquer); 
    RUN_TEST(zmod_poly_div_divconquer); 
    RUN_TEST(zmod_poly_newton_invert_basecase); 
+   RUN_TEST(zmod_poly_newton_invert); 
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");

@@ -2726,6 +2726,8 @@ void zmod_poly_divrem_divconquer(zmod_poly_t Q, zmod_poly_t R, zmod_poly_t A, zm
 
 ****************************************************************************/
 
+#define FLINT_ZMOD_NEWTON_INVERSE_BASECASE_CUTOFF 32
+
 /*
    Compute the polynomial X^{2n} / Q. 
    Used by Newton iteration to bootstrap power series inversion.
@@ -2746,3 +2748,40 @@ void zmod_poly_newton_invert_basecase(zmod_poly_t Q_inv, zmod_poly_t Q, unsigned
    zmod_poly_clear(X2n);
 }
 
+/*
+   Recursively compute 1 / Q mod x^n using Newton iteration
+   Assumes Q is given as a power series to the full precision n required 
+   with invertible constant term with respect to the modulus
+*/
+
+void zmod_poly_newton_invert(zmod_poly_t Q_inv, zmod_poly_t Q, unsigned long n)
+{
+   if (n < FLINT_ZMOD_NEWTON_INVERSE_BASECASE_CUTOFF)
+   {
+      zmod_poly_t Q_rev;
+      zmod_poly_init2(Q_rev, Q->p, n);
+      _zmod_poly_reverse(Q_rev, Q, n);
+      zmod_poly_newton_invert_basecase(Q_inv, Q_rev, n);
+      zmod_poly_reverse(Q_inv, Q_inv, n);
+      zmod_poly_clear(Q_rev);
+      
+      return;
+   }
+   
+   unsigned long m = (n+1)/2;
+   unsigned long p = Q->p;
+   
+   zmod_poly_t g0, prod, prod2;
+   zmod_poly_init(g0, p);
+   zmod_poly_init(prod, p);
+   zmod_poly_init(prod2, p);
+   zmod_poly_newton_invert(g0, Q, m);
+   zmod_poly_mul_trunc_n(prod, Q, g0, n);
+   prod->coeffs[0] = z_mod_sub(prod->coeffs[0], 1L, p);
+   zmod_poly_mul_trunc_n(prod2, prod, g0, n);
+   zmod_poly_sub(Q_inv, g0, prod2);
+   
+   zmod_poly_clear(prod2);
+   zmod_poly_clear(prod);
+   zmod_poly_clear(g0);
+}
