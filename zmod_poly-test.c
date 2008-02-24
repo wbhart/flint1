@@ -142,7 +142,73 @@ void randpoly(zmod_poly_t poly, long length, unsigned long n)
    success = test_##targetfunc();                      \
    all_success = all_success && success;               \
    printf(success ? "ok\n" : "FAIL!\n");
+ 
+int test_zmod_poly_reverse()
+{
+   zmod_poly_t poly, poly2;
+   int result = 1;
+   unsigned long bits, length, length2;
    
+   for (unsigned long count1 = 0; (count1 < 5000) && (result == 1) ; count1++)
+   {
+      bits = randint(FLINT_BITS-1)+2;
+      unsigned long modulus;
+      
+      do {modulus = randbits(bits);} while (modulus < 2);
+      
+      zmod_poly_init(poly, modulus);
+      zmod_poly_init(poly2, modulus);   
+      
+      length = randint(100);
+      length2 = length + randint(200);
+       
+#if DEBUG
+      printf("length = %ld, length2 = %ld, bits = %ld\n", length, length2, bits);
+#endif
+
+      randpoly(poly, length, modulus); 
+                
+      zmod_poly_reverse(poly2, poly, length2);
+      zmod_poly_reverse(poly2, poly2, length2);
+           
+      result = zmod_poly_equal(poly2, poly);
+      
+      zmod_poly_clear(poly);
+      zmod_poly_clear(poly2);
+   }
+   
+   for (unsigned long count1 = 0; (count1 < 5000) && (result == 1) ; count1++)
+   {
+      bits = randint(FLINT_BITS-1)+2;
+      unsigned long modulus;
+      
+      do {modulus = randbits(bits);} while (modulus < 2);
+      
+      zmod_poly_init(poly, modulus);
+      zmod_poly_init(poly2, modulus);   
+      
+      length = randint(100);
+      length2 = length + randint(200);
+       
+#if DEBUG
+      printf("length = %ld, length2 = %ld, bits = %ld\n", length, length2, bits);
+#endif
+
+      randpoly(poly, length, modulus); 
+          
+      zmod_poly_set(poly2, poly);
+      zmod_poly_reverse(poly, poly, length2);
+      zmod_poly_reverse(poly, poly, length2);
+           
+      result = zmod_poly_equal(poly2, poly);
+      
+      zmod_poly_clear(poly);
+      zmod_poly_clear(poly2);
+   }
+      
+   return result; 
+}
+  
 int test_zmod_poly_addsub()
 {
    int result = 1;
@@ -1063,12 +1129,13 @@ int test_zmod_poly_div_divconquer()
    return result;
 }
 
-void fmpz_poly_test_all()
+void zmod_poly_test_all()
 {
    int success, all_success = 1;
 
 #if TESTFILE
 #endif
+   RUN_TEST(zmod_poly_reverse); 
    RUN_TEST(zmod_poly_addsub); 
    RUN_TEST(zmod_poly_neg); 
    RUN_TEST(zmod_poly_shift); 
@@ -1093,7 +1160,7 @@ void fmpz_poly_test_all()
 int main()
 {
    test_support_init();
-   fmpz_poly_test_all();
+   zmod_poly_test_all();
    test_support_cleanup();
    
    flint_stack_cleanup();

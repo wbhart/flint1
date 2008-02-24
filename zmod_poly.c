@@ -428,6 +428,70 @@ int zmod_poly_equal(zmod_poly_t poly1, zmod_poly_t poly2)
    return 1;
 }
 
+/****************************************************************************
+
+   Reversal
+
+****************************************************************************/
+
+
+/* 
+   Sets output to the reverse of input (i.e. reverse the order of the coefficients)
+   assuming input to be a polynomial with _length_ coefficients (it may have a length
+   that is less than _length_).
+*/ 
+
+void _zmod_poly_reverse(zmod_poly_t output, zmod_poly_t input, unsigned long length)
+{
+   long i;
+   
+   if (input != output)
+   {
+      for (i = 0; i < FLINT_MIN(length, input->length); i++)
+      {
+         output->coeffs[length - i - 1] = input->coeffs[i];
+      }
+      for ( ; i < length; i++)
+      {
+         output->coeffs[length - i - 1] = 0L;
+      }
+      output->length = length;
+      zmod_poly_normalise(output);
+   } else
+   {
+      unsigned long temp;
+      
+      for (i = 0; i < length/2; i++)
+      {
+         if (i < input->length)
+         {
+            temp = input->coeffs[i];
+         } else
+         {
+            temp = 0L;            
+         }
+         if (length - i - 1 < input->length)
+         {
+            input->coeffs[i] = input->coeffs[length - i - 1];
+         } else
+         {
+            input->coeffs[i] = 0L;
+         }
+         input->coeffs[length - i - 1] =  temp;
+      }
+      if ((length & 1) && (i >= input->length)) input->coeffs[i] = 0L;
+
+      output->length = length;
+      zmod_poly_normalise(output);
+   }
+}
+
+void zmod_poly_reverse(zmod_poly_t output, zmod_poly_t input, unsigned long length)
+{
+   zmod_poly_fit_length(output, length);
+   
+   _zmod_poly_reverse(output, input, length);
+}
 
 /****************************************************************************
 

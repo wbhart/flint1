@@ -252,6 +252,12 @@ void _zmod_poly_attach_truncate(zmod_poly_t output,
 
 int zmod_poly_equal(zmod_poly_t poly1, zmod_poly_t poly2);
 
+/*
+   Reversal
+*/
+
+void _zmod_poly_reverse(zmod_poly_t output, zmod_poly_t input, unsigned long length);
+void zmod_poly_reverse(zmod_poly_t output, zmod_poly_t input, unsigned long length);
 
 /*
    Addition and subtraction
