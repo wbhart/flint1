@@ -239,5 +239,10 @@ to improve locality.
 
 * In zmod_poly make truncate in place always in line with fmpz_poly
 
+* In zmod_poly make set_coeff set_coeff_ui in line with fmpz_poly
+
+* Figure out carefully how the limitations on the number of bits in zmod_poly_mul_KS affects the number of bits 
+  in all the other functions (or make mul_KS work without restriction up to FLINT_BITS)
+
 
 

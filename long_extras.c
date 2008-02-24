@@ -744,6 +744,7 @@ unsigned long z_nextprime(unsigned long n)
 unsigned long z_invert(unsigned long a, unsigned long p)
 {
    if (a == 0) return 0;
+   if (a == 1) return 1; // Important to optimise for Newton inversion
    
    long u1=1, u3=a;
    long v1=0, v3=p;

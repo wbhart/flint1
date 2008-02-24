@@ -2719,3 +2719,30 @@ void zmod_poly_divrem_divconquer(zmod_poly_t Q, zmod_poly_t R, zmod_poly_t A, zm
    
    zmod_poly_clear(QB);
 }
+
+/****************************************************************************
+
+   Newton Inversion
+
+****************************************************************************/
+
+/*
+   Compute the polynomial X^{2n} / Q. 
+   Used by Newton iteration to bootstrap power series inversion.
+   Q must have length >= n and leading coefficient invertible with respect to the modulus.
+*/
+
+void zmod_poly_newton_invert_basecase(zmod_poly_t Q_inv, zmod_poly_t Q, unsigned long n)
+{
+   zmod_poly_t X2n, Qn;
+   
+   zmod_poly_init2(X2n, Q->p, 2*n-1);
+   zmod_poly_set_coeff(X2n, 2*n - 2, 1L);
+   
+   _zmod_poly_attach_shift(Qn, Q, Q->length - n);
+   
+   zmod_poly_div_divconquer(Q_inv, X2n, Qn);
+      
+   zmod_poly_clear(X2n);
+}
+

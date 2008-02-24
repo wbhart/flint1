@@ -1129,6 +1129,68 @@ int test_zmod_poly_div_divconquer()
    return result;
 }
 
+int test_zmod_poly_newton_invert_basecase()
+{
+   zmod_poly_t poly, poly2, poly3;
+   int result = 1;
+   unsigned long bits, length, n;
+   
+   for (unsigned long count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+   {
+      bits = randint(FLINT_BITS-2)+2;
+      unsigned long modulus;
+      
+      do {modulus = randprime(bits);} while (modulus < 2);
+      
+      zmod_poly_init(poly, modulus);
+      zmod_poly_init(poly2, modulus);
+      zmod_poly_init(poly3, modulus);
+           
+      length = random_ulong(64)+1;
+       
+#if DEBUG
+      printf("length = %ld, bits = %ld\n", length, bits);
+#endif
+
+      unsigned log_length = 0L;
+      while ((1L<<log_length) < length) log_length++;
+         
+      if (2*FLINT_BIT_COUNT(modulus) + log_length <= 2*FLINT_BITS)
+      {
+         do randpoly(poly, length, modulus); 
+         while (poly->length == 0);
+      
+         zmod_poly_set_coeff(poly, poly->length - 1, 1L);
+      
+         n = randint(poly->length) + 1;
+      
+         zmod_poly_newton_invert_basecase(poly2, poly, n);
+      
+         zmod_poly_mul(poly3, poly, poly2);
+           
+         for (unsigned long i = 0; i < n - 1; i++)
+         {
+            result &= (poly3->coeffs[i+poly3->length-n] == 0L);
+         }
+         result &= (poly3->coeffs[poly3->length-1] == 1L);
+      }
+      
+#if DEBUG
+      if (!result)
+      {
+         zmod_poly_print(poly); printf("\n");
+         zmod_poly_print(poly2); printf("\n");
+         zmod_poly_print(poly3); printf("\n");
+      }
+#endif
+      zmod_poly_clear(poly);
+      zmod_poly_clear(poly2);
+      zmod_poly_clear(poly3);
+   }
+      
+   return result; 
+}
+
 void zmod_poly_test_all()
 {
    int success, all_success = 1;
@@ -1152,6 +1214,7 @@ void zmod_poly_test_all()
    RUN_TEST(zmod_poly_div_classical); 
    RUN_TEST(zmod_poly_divrem_divconquer); 
    RUN_TEST(zmod_poly_div_divconquer); 
+   RUN_TEST(zmod_poly_newton_invert_basecase); 
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");
