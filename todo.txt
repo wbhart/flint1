@@ -244,5 +244,12 @@ to improve locality.
 * Figure out carefully how the limitations on the number of bits in zmod_poly_mul_KS affects the number of bits 
   in all the other functions (or make mul_KS work without restriction up to FLINT_BITS)
 
+* In fmpz_poly_div_series and zmod_poly_div_series, allow A and B to be aliased
+
+* In fmpz_poly_div_series and zmod_poly_div_series, deal with special case where the numerator is the series 1 by calling 
+  newton_invert
+
+* In fmpz_poly_div_newton the special case doesn't need to set a coefficient to zero then normalise
+
 
 

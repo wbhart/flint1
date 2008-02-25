@@ -2785,3 +2785,72 @@ void zmod_poly_newton_invert(zmod_poly_t Q_inv, zmod_poly_t Q, unsigned long n)
    zmod_poly_clear(prod);
    zmod_poly_clear(g0);
 }
+
+/****************************************************************************
+
+   Newton Division
+
+****************************************************************************/
+
+/* 
+   Yields a precision n power series quotient of A by B assuming A and B are both 
+   given to precision n and B is normalised (i.e. constant coefficient is invertible).
+*/
+
+void zmod_poly_div_series(zmod_poly_t Q, zmod_poly_t A, zmod_poly_t B, unsigned long n)
+{
+   zmod_poly_t Ain, Bin;
+   unsigned long p = B->p;
+   
+   if (A == Q)
+   {
+      zmod_poly_init(Ain, p);
+      zmod_poly_set(Ain, A);
+   } else _zmod_poly_attach(Ain, A);
+   
+   if (B == Q)
+   {
+      zmod_poly_init(Bin, p);
+      zmod_poly_set(Bin, B);
+   } else _zmod_poly_attach(Bin, B);
+
+   zmod_poly_t B_inv;
+   zmod_poly_init(B_inv, p);
+   zmod_poly_newton_invert(B_inv, Bin, n);
+   zmod_poly_mul_trunc_n(Q, B_inv, Ain, n);
+   
+   zmod_poly_clear(B_inv);
+
+   if (A == Q) zmod_poly_clear(Ain);
+   if (B == Q) zmod_poly_clear(Bin);
+}
+
+/*
+   Polynomial division of A by B
+   The remainder is not computed, to save time
+*/
+
+void zmod_poly_div_newton(zmod_poly_t Q, zmod_poly_t A, zmod_poly_t B)
+{
+   if (A->length < B->length)
+   {
+      zmod_poly_zero(Q);
+      return;
+   }
+   
+   unsigned long p = B->p;
+   
+   zmod_poly_t A_rev, B_rev;
+   zmod_poly_init2(A_rev, p, A->length);
+   zmod_poly_init2(B_rev, p, B->length);
+   
+   zmod_poly_reverse(A_rev, A, A->length);
+   zmod_poly_reverse(B_rev, B, B->length);
+   
+   zmod_poly_div_series(Q, A_rev, B_rev, A->length - B->length + 1);
+   
+   zmod_poly_reverse(Q, Q, A->length - B->length + 1);
+   
+   zmod_poly_clear(B_rev);
+   zmod_poly_clear(A_rev);
+}
