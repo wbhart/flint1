@@ -252,6 +252,13 @@ void _zmod_poly_attach_truncate(zmod_poly_t output,
 
 int zmod_poly_equal(zmod_poly_t poly1, zmod_poly_t poly2);
 
+static inline
+int zmod_poly_is_one(zmod_poly_t poly1)
+{ 
+   if ((poly1->length == 1) && (poly1->coeffs[0] == 1L)) return 1;
+   return 0;
+}
+
 /*
    Reversal
 */
@@ -354,6 +361,13 @@ void zmod_poly_newton_invert(zmod_poly_t Q_inv, zmod_poly_t Q, unsigned long n);
 
 void zmod_poly_div_series(zmod_poly_t Q, zmod_poly_t A, zmod_poly_t B, unsigned long n);
 void zmod_poly_div_newton(zmod_poly_t Q, zmod_poly_t A, zmod_poly_t B);
+void zmod_poly_divrem_newton(zmod_poly_t Q, zmod_poly_t R, zmod_poly_t A, zmod_poly_t B);
+
+/*
+   GCD
+*/
+
+void zmod_poly_gcd(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2);
 
 #ifdef __cplusplus
  }

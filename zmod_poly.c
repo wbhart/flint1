@@ -2854,3 +2854,76 @@ void zmod_poly_div_newton(zmod_poly_t Q, zmod_poly_t A, zmod_poly_t B)
    zmod_poly_clear(B_rev);
    zmod_poly_clear(A_rev);
 }
+
+void zmod_poly_divrem_newton(zmod_poly_t Q, zmod_poly_t R, zmod_poly_t A, zmod_poly_t B)
+{
+   zmod_poly_t QB, A_trunc;
+   zmod_poly_init(QB, B->p);
+   
+   zmod_poly_div_newton(Q, A, B);
+   zmod_poly_mul_trunc_n(QB, Q, B, B->length - 1);
+   _zmod_poly_attach_truncate(A_trunc, A, B->length - 1);
+   zmod_poly_sub(R, A_trunc, QB);
+   
+   zmod_poly_clear(QB); 
+}
+
+void zmod_poly_gcd(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
+{
+   zmod_poly_t Q, R, A, B;
+   
+   if ((poly1->length == 0) || (poly2->length == 0)) 
+   {
+      zmod_poly_zero(res);
+      return;
+   }
+
+   if ((poly1->length == 1) || (poly2->length == 1))
+   {
+      zmod_poly_set_coeff(res, 0, 1L);
+      res->length = 1;
+      return;
+   }
+   
+   unsigned long p = poly1->p;
+   zmod_poly_init(Q, p);
+   zmod_poly_init(R, p);    
+
+   if (poly1->length > poly2->length)
+   {
+      _zmod_poly_attach(A, poly1);
+      _zmod_poly_attach(B, poly2);
+   } else
+   {
+      _zmod_poly_attach(A, poly2);
+      _zmod_poly_attach(B, poly1);
+   }
+
+   int steps = 1;
+   
+   while (B->length > 1)
+   {
+      zmod_poly_divrem_newton(Q, R, A, B);
+      zmod_poly_swap(A, B);
+      if (steps > 2) zmod_poly_clear(B);
+      _zmod_poly_attach(B, R);
+      zmod_poly_init(R, p); 
+      steps++;    
+   }
+   
+   if  (B->length == 1) 
+   {
+      zmod_poly_set_coeff(res, 0, 1L);
+      res->length = 1;
+   }
+   else zmod_poly_set(res, A);
+
+   if (steps > 2) 
+   {
+      zmod_poly_clear(A);
+   } 
+
+   zmod_poly_clear(B);
+   zmod_poly_clear(R);
+   zmod_poly_clear(Q);
+}
