@@ -1436,6 +1436,79 @@ int test_zmod_poly_gcd()
    return result;
 }
 
+int test_zmod_poly_gcd_invert()
+{
+   int result = 1;
+   zmod_poly_t pol1, pol2, pol3, res1, res2, res3, res4;
+   unsigned long bits;
+   
+   for (unsigned long count1 = 0; (count1 < 100) && (result == 1); count1++)
+   {
+      bits = randint(FLINT_BITS-2)+2;
+      unsigned long modulus;
+      
+      do {modulus = randprime(bits);} while (modulus < 2);
+      
+      zmod_poly_init(pol1, modulus);
+      zmod_poly_init(pol2, modulus);
+      zmod_poly_init(pol3, modulus);
+      zmod_poly_init(res1, modulus);
+      zmod_poly_init(res2, modulus);
+      zmod_poly_init(res3, modulus);
+      zmod_poly_init(res4, modulus);
+      
+      for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
+      {
+         unsigned long length1 = randint(100)+1;
+         unsigned long length2 = randint(100)+2;
+         
+#if DEBUG
+         printf("length1 = %ld, length2 = %ld, bits = %ld, modulus = %ld\n", length1, length2, bits, modulus);
+#endif
+         
+         unsigned log_length = 0L;
+         while ((1L<<log_length) < FLINT_MAX(length1, length2)) log_length++;
+         
+         if (2*FLINT_BIT_COUNT(modulus) + log_length <= 2*FLINT_BITS)
+         {
+            do 
+            {
+               randpoly(pol1, length1, modulus);
+               randpoly(pol2, length2, modulus);
+               zmod_poly_gcd(res1, pol1, pol2);          
+            } while ((res1->length != 1) || (pol2->length == 1));
+
+            zmod_poly_gcd_invert(res1, pol1, pol2);
+            zmod_poly_mul(res2, res1, pol1);
+            zmod_poly_divrem_newton(res4, res3, res2, pol2);
+            
+            result &= (res3->length == 1);
+         }
+         
+#if DEBUG
+         if (!result)
+         {
+            zmod_poly_print(pol1); printf("\n\n");
+            zmod_poly_print(pol2); printf("\n\n");
+            zmod_poly_print(res1); printf("\n\n");
+            zmod_poly_print(res2); printf("\n\n");
+            zmod_poly_print(res3); printf("\n\n");
+         }
+#endif
+      }
+      
+      zmod_poly_clear(pol1);
+      zmod_poly_clear(pol2);
+      zmod_poly_clear(pol3);
+      zmod_poly_clear(res1); 
+      zmod_poly_clear(res2); 
+      zmod_poly_clear(res3); 
+      zmod_poly_clear(res4); 
+   }
+   
+   return result;
+}
+
 void zmod_poly_test_all()
 {
    int success, all_success = 1;
@@ -1464,6 +1537,7 @@ void zmod_poly_test_all()
    RUN_TEST(zmod_poly_div_series); 
    RUN_TEST(zmod_poly_div_newton); 
    RUN_TEST(zmod_poly_gcd); 
+   RUN_TEST(zmod_poly_gcd_invert); 
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");
