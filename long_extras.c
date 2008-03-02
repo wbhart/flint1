@@ -822,7 +822,7 @@ long z_gcd_invert(long* a, long x, long y)
             if (quot < 0)
             { 
                rem = u3;
-               u2 = u1; u1 = t1; u3 = v3;
+               t1 = u2; u2 = u1; u1 = t1; u3 = v3;
                v3 = rem;
             } else 
             {
@@ -849,6 +849,7 @@ long z_gcd_invert(long* a, long x, long y)
    if (xsign)
       u1 = -u1;
 
+   if (u1 < 0L) u1 += y;
    *a = u1;
    
    return u3;
@@ -890,7 +891,7 @@ long z_extgcd(long* a, long* b, long x, long y)
             if (quot < 0)
             { 
                rem = u3;
-               u2 = u1; u1 = t1; u3 = v3;
+               t1 = u2; u2 = u1; u1 = t1; u3 = v3;
                v2 = v1; v1 = t2; v3 = rem;
             } else 
             {

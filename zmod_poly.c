@@ -3106,3 +3106,118 @@ void zmod_poly_gcd_invert(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
    zmod_poly_clear(R);
    zmod_poly_clear(Q);
 }
+
+/*
+   Compute res = gcd(poly1, poly2)
+   Find s and t such that res = s*poly1 + t*poly2
+*/
+
+void zmod_poly_xgcd(zmod_poly_t res, zmod_poly_t s, zmod_poly_t t, zmod_poly_t poly1, zmod_poly_t poly2)
+{
+   zmod_poly_t Q, R, A, B, u1, u2, v1, v2, prod;
+   unsigned long a;
+
+   if ((poly1->length == 0) || (poly2->length == 0))
+   {
+      zmod_poly_zero(s);
+      zmod_poly_zero(t);
+      zmod_poly_zero(res);
+      return;
+   }
+   
+   if (poly1->length == 1)
+   {
+      z_gcd_invert(&a, poly1->coeffs[0], poly2->p);
+      zmod_poly_set_coeff(s, 0, a);
+      s->length = 1;
+      zmod_poly_set_coeff(res, 0, 1L);
+      res->length = 1;
+      zmod_poly_zero(t);
+      return;
+   }
+   
+   if (poly2->length == 1)
+   {
+      z_gcd_invert(&a, poly2->coeffs[0], poly2->p);
+      zmod_poly_set_coeff(t, 0, a);
+      t->length = 1;
+      zmod_poly_set_coeff(res, 0, 1L);
+      res->length = 1;
+      zmod_poly_zero(s);
+      return;
+   }
+   
+   unsigned long p = poly1->p;
+   zmod_poly_init(Q, p);
+   zmod_poly_init(R, p);
+   zmod_poly_init(u1, p);
+   zmod_poly_init(u2, p);
+   zmod_poly_init(v1, p);
+   zmod_poly_init(v2, p);
+   zmod_poly_init(prod, p);
+
+   zmod_poly_set_coeff(u1, 0, 1L);
+   u1->length = 1;
+   zmod_poly_zero(u2);    
+   zmod_poly_set_coeff(v2, 0, 1L);
+   v2->length = 1;
+   zmod_poly_zero(v1);    
+
+   if (poly1->length > poly2->length)
+   {
+      _zmod_poly_attach(A, poly1);
+      _zmod_poly_attach(B, poly2);
+   } else
+   {
+      _zmod_poly_attach(A, poly2);
+      _zmod_poly_attach(B, poly1);
+      zmod_poly_swap(u1, u2);
+      zmod_poly_swap(v1, v2);
+   }
+
+   int steps = 1;
+   
+   while (B->length > 1)
+   {
+      zmod_poly_divrem_newton(Q, R, A, B);
+     
+      zmod_poly_mul(prod, Q, u2);
+      zmod_poly_swap(u1, u2);
+      zmod_poly_sub(u2, u2, prod);
+
+      zmod_poly_mul(prod, Q, v2);
+      zmod_poly_swap(v1, v2);
+      zmod_poly_sub(v2, v2, prod);
+
+      zmod_poly_swap(A, B);
+      if (steps > 2) zmod_poly_clear(B);
+      _zmod_poly_attach(B, R);
+      zmod_poly_init(R, p); 
+      steps++;    
+   }
+   
+   if (B->length == 1) 
+   {
+      zmod_poly_swap(u1, u2);     
+      zmod_poly_swap(v1, v2);
+      zmod_poly_set_coeff(res, 0, 1L);
+      res->length = 1;
+   } else zmod_poly_set(res, A);  
+
+   zmod_poly_set(s, u1);
+   zmod_poly_set(t, v1);
+
+   if (steps > 2) 
+   {
+      zmod_poly_clear(A);
+   } 
+
+   zmod_poly_clear(u1);
+   zmod_poly_clear(u2);
+   zmod_poly_clear(v1);
+   zmod_poly_clear(v2);
+   zmod_poly_clear(prod);
+   zmod_poly_clear(B);
+   zmod_poly_clear(R);
+   zmod_poly_clear(Q);
+}

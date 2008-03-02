@@ -253,28 +253,7 @@ to improve locality.
 
 * Have zmod_poly_divrem_newton switch out to divrem_divconquer for small lengths
 
-for i := 1 to 100 do
-bits := Random(59)+2;
-p:=NextPrime(Random(2^bits-1));S:=GF(p,1);
-R<x>:=PolynomialRing(S);
-length:=200;
-for j := 1 to 10 do
-a:=Polynomial([Random(S): x in [1..length]]);
-b:=Polynomial([Random(S): x in [1..length]]);
-c:=a*b;
-d:=c div a;
-end for;
-end for;
-
-bits := Random(59)+2;
-p:=NextPrime(Random(2^bits-1));S:=GF(p,1);
-R<x>:=PolynomialRing(S);
-length:=200;
-a:=Polynomial([Random(S): x in [1..length]]);
-b:=Polynomial([Random(S): x in [1..length]]);
-c:=a*b;
-d:=c div a;
-
+* Write test functions for long_extras gcd functions
 
 
 
