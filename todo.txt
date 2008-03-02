@@ -255,6 +255,8 @@ to improve locality.
 
 * Write test functions for long_extras gcd functions
 
+* Decide if zmod_poly gcd functions should return 1 if polys are coprime, or just return any unit. 
+  Decide if the gcd ought to be monic.
 
 
 

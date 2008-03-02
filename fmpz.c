@@ -672,24 +672,28 @@ void fmpz_tdiv_ui(fmpz_t output, const fmpz_t input, const unsigned long x)
 {
    output[0] = input[0];
    unsigned long size = FLINT_ABS(input[0]);
-   unsigned long xnorm;
      
-   if (size > 2) 
-   {
-      unsigned long norm;
-      mp_limb_t xinv;
-      
-      count_lead_zeros(norm, x);
-      xnorm = (x<<norm);
-      invert_limb(xinv, xnorm);
-      
-      F_mpn_divmod_1_preinv(output+1, input+1, size, x, xinv, norm);
-   } else
-   {
-      mpn_divmod_1(output+1, input+1, size, x);
-   }
+   mpn_divmod_1(output+1, input+1, size, x);
    
    NORM(output);
+}
+
+/*
+   Returns input % x. Output will be reduced mod x.
+*/
+
+unsigned long fmpz_mod_ui(const fmpz_t input, const unsigned long x)
+{
+   unsigned long size = FLINT_ABS(input[0]);
+   unsigned long mod;
+   
+   mod = mpn_mod_1(input+1, size, x);
+   
+   if (!mod) return mod;
+   else if ((long) input[0] < 0L) 
+   {
+      return x - mod;
+   } else return mod;
 }
 
 /*

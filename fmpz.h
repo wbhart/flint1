@@ -216,6 +216,8 @@ void fmpz_fdiv(fmpz_t res, const fmpz_t a, const fmpz_t b);
 
 void fmpz_tdiv_ui(fmpz_t output, const fmpz_t input, const unsigned long x);
 
+unsigned long fmpz_mod_ui(const fmpz_t input, const unsigned long x);
+
 void fmpz_pow_ui(fmpz_t output, const fmpz_t input, const unsigned long exp);
 
 unsigned long fmpz_power_of_two(const fmpz_t x);

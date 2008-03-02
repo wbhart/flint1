@@ -791,6 +791,7 @@ unsigned long z_invert(unsigned long a, unsigned long p)
 
 /* 
      returns gcd(x, y) = a*x + b*y. If gcd = 1 then a = x^-1 mod y
+     We ensure a is reduced mod y
 */
 
 long z_gcd_invert(long* a, long x, long y)

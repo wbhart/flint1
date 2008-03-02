@@ -1059,6 +1059,55 @@ int test_fmpz_tdiv_ui()
    return result;
 }
 
+int test_fmpz_mod_ui()
+{
+   mpz_t num1, num2;
+   fmpz_t fnum1, fnum2;
+   unsigned long bits, bits2, x, mod, mod2;
+   int result = 1;
+   
+   mpz_init(num1);
+   mpz_init(num2);
+   
+   for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+   {
+       do
+       {
+          bits = random_ulong(FLINT_BITS-1)+1;
+          x = random_ulong(1L<<bits);
+       } while (x == 0);
+       
+       bits2 = random_ulong(1000);
+       fnum1 = fmpz_init((long) FLINT_MAX(bits2-1, 0)/FLINT_BITS+1);
+       fnum2 = fmpz_init((long) FLINT_MAX(bits2-1, 0)/FLINT_BITS+1);
+       
+       mpz_rrandomb(num1, state, bits2);
+#if SIGNS
+       if (random_ulong(2)) mpz_neg(num1, num1);
+#endif
+
+       mpz_to_fmpz(fnum1, num1);
+       mod = fmpz_mod_ui(fnum1, x);
+       mod2 = mpz_mod_ui(num2, num1, x);
+             
+       result = (mod == mod2);
+#if DEBUG2
+       if (!result)
+       {
+          printf("%ld != %ld\n", mod, mod2);
+       }
+#endif
+       
+       fmpz_clear(fnum1);
+       fmpz_clear(fnum2);
+   }
+   
+   mpz_clear(num1);
+   mpz_clear(num2);
+   
+   return result;
+}
+
 int test_fmpz_pow_ui()
 {
    mpz_t num1, num2;
@@ -1377,6 +1426,7 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_tdiv);
    RUN_TEST(fmpz_fdiv);
    RUN_TEST(fmpz_tdiv_ui);
+   RUN_TEST(fmpz_mod_ui);
    RUN_TEST(fmpz_pow_ui);
    RUN_TEST(fmpz_is_one);
    RUN_TEST(fmpz_is_zero);

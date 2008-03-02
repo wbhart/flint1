@@ -3197,11 +3197,11 @@ void zmod_poly_xgcd(zmod_poly_t res, zmod_poly_t s, zmod_poly_t t, zmod_poly_t p
    }
    
    if (B->length == 1) 
-   {
-      zmod_poly_swap(u1, u2);     
+   {      
+      zmod_poly_swap(u1, u2);      
       zmod_poly_swap(v1, v2);
-      zmod_poly_set_coeff(res, 0, 1L);
-      res->length = 1;
+      
+      zmod_poly_set(res, B);
    } else zmod_poly_set(res, A);  
 
    zmod_poly_set(s, u1);

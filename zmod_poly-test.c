@@ -1463,14 +1463,17 @@ int test_zmod_poly_xgcd()
             if (pol3->length != 0) zmod_poly_divrem_newton(res2, res3, res1, pol3);
             else zmod_poly_zero(res3);
 
-            result &= ((res3->length == 0) && (res1->length == pol3->length));
+            zmod_poly_mul(s, s, pol1);
+            zmod_poly_mul(t, t, pol2);
+            zmod_poly_add(s, s, t);
+
+            result &= ((res3->length == 0) && (res1->length == pol3->length) && zmod_poly_equal(res1, s));
          
 #if DEBUG
          if (!result)
          {
-            zmod_poly_print(pol1); printf("\n\n");
-            zmod_poly_print(pol2); printf("\n\n");
             zmod_poly_print(res1); printf("\n\n");
+            zmod_poly_print(s); printf("\n\n");
          }
 #endif
       }
