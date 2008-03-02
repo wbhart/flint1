@@ -1714,7 +1714,7 @@ void zmod_poly_bit_pack_mpn(mp_limb_t * res, zmod_poly_t poly, unsigned long bit
          current_limb++;
       }
    }
-   else
+   else if (bits < 2*FLINT_BITS)
    {
       //printf("Packing Coeffs in Poly =============================================");
       
@@ -1753,6 +1753,35 @@ void zmod_poly_bit_pack_mpn(mp_limb_t * res, zmod_poly_t poly, unsigned long bit
          if (current_bit >= FLINT_BITS)
          {
             //printf("GOT HERE ****************\n");
+            current_bit -= FLINT_BITS;
+            current_limb++;
+            if (current_limb < total_limbs) res[current_limb] = 0L;
+         }
+      }
+   } else // 2*FLINT_BITS < bits < 3*FLINT_BITS
+   {      
+      for(unsigned long i = 0; i < length; i++)
+      {
+         // the part of the coeff that will be in the current limb
+         temp_lower = poly->coeffs[i] << current_bit;
+         // the part of the coeff that will be in the next limb
+         if (current_bit)
+         {
+            temp_upper = poly->coeffs[i] >> (FLINT_BITS - current_bit);
+         }
+         else
+         {
+            temp_upper = 0L;
+         }
+         res[current_limb] |= temp_lower;
+         current_limb++;
+         res[current_limb] = temp_upper;
+         current_limb++;
+         if (current_limb < total_limbs) res[current_limb] = 0L;
+         current_bit += bits - 2*FLINT_BITS;
+         
+         if (current_bit >= FLINT_BITS)
+         {
             current_bit -= FLINT_BITS;
             current_limb++;
             if (current_limb < total_limbs) res[current_limb] = 0L;
@@ -1869,7 +1898,7 @@ void zmod_poly_bit_unpack_mpn(zmod_poly_t res, mp_limb_t * mpn, unsigned long le
          current_limb+=2;
       }
    }
-   else  // FLINT_BITS < bits < 2*FLINT_BITS
+   else if (bits < 2*FLINT_BITS) // FLINT_BITS < bits < 2*FLINT_BITS
    {
       unsigned long current_limb = 0;
       unsigned long current_bit = 0;
@@ -1949,6 +1978,77 @@ void zmod_poly_bit_unpack_mpn(zmod_poly_t res, mp_limb_t * mpn, unsigned long le
          {
             current_bit = 0; 
             // PRINT_VAR(current_bit);
+            current_limb++;  
+         }     
+      }
+   } else // 2*FLINT_BITS < bits < 3*FLINT_BITS
+   {
+      unsigned long current_limb = 0;
+      unsigned long current_bit = 0;
+
+      unsigned long double_boundary_limit_bit = bits - 2*FLINT_BITS;
+
+      unsigned long temp_lower;
+      unsigned long temp_upper;
+      unsigned long temp_upper2;
+      
+      for (i = 0; i < length; i++)
+      {
+         if(current_bit == 0)
+         {
+            // printf("Coeff across two boundaries... current_bit == 0\n");
+            temp_lower = mpn[current_limb+1];
+            temp_upper = (mpn[current_limb+2] << (3*FLINT_BITS - bits)) >> (3*FLINT_BITS - bits);
+            temp_upper = z_ll_mod_precomp(temp_upper, temp_lower, res->p, res->p_inv);
+            temp_lower = mpn[current_limb];
+            current_limb+=2;
+            _zmod_poly_set_coeff(res, i, z_ll_mod_precomp(temp_upper, temp_lower, res->p, res->p_inv));
+            mpn[current_limb] >>= (bits - 2*FLINT_BITS);
+            current_bit = 3*FLINT_BITS - bits;
+         }
+         else if (current_bit >= double_boundary_limit_bit)
+         {
+            // the coeff will be across two limb boundaries...
+            temp_lower = mpn[current_limb];
+            current_limb++;
+            temp_lower |= (mpn[current_limb] << current_bit);
+            
+            temp_upper = mpn[current_limb] >> (FLINT_BITS - current_bit);
+            current_limb++;
+            temp_upper |= (mpn[current_limb] << current_bit);
+            temp_upper2 = mpn[current_limb] >> (FLINT_BITS - current_bit);
+            temp_upper2 <<= 3*FLINT_BITS - bits;
+            temp_upper2 >>= 3*FLINT_BITS - bits;
+            temp_upper = z_ll_mod_precomp(temp_upper2, temp_upper, res->p, res->p_inv);
+            _zmod_poly_set_coeff(res, i, z_ll_mod_precomp(temp_upper, temp_lower, res->p, res->p_inv));
+            mpn[current_limb] >>= (bits - current_bit - FLINT_BITS);
+            current_bit = 2*FLINT_BITS + current_bit - bits;
+            if (!current_bit) current_limb++;
+         }
+         else 
+         {
+            // the coeff will be across three limb boundaries...
+            temp_lower = mpn[current_limb];
+            current_limb++;
+            temp_lower |= (mpn[current_limb] << current_bit);
+            
+            temp_upper = mpn[current_limb] >> (FLINT_BITS - current_bit);
+            current_limb++;
+            temp_upper |= (mpn[current_limb] << current_bit);
+            temp_upper2 = mpn[current_limb] >> (FLINT_BITS - current_bit);
+            current_limb++;
+            temp_upper2 |= (mpn[current_limb] << current_bit);
+            temp_upper2 <<= 3*FLINT_BITS - bits;
+            temp_upper2 >>= 3*FLINT_BITS - bits;
+            temp_upper = z_ll_mod_precomp(temp_upper2, temp_upper, res->p, res->p_inv);
+            _zmod_poly_set_coeff(res, i, z_ll_mod_precomp(temp_upper, temp_lower, res->p, res->p_inv));
+            mpn[current_limb] >>= (bits - current_bit - 2*FLINT_BITS);
+            current_bit = 3*FLINT_BITS + current_bit - bits;
+        }
+
+         if(current_bit == FLINT_BITS)
+         {
+            current_bit = 0; 
             current_limb++;  
          }     
       }
@@ -2857,6 +2957,13 @@ void zmod_poly_div_newton(zmod_poly_t Q, zmod_poly_t A, zmod_poly_t B)
 
 void zmod_poly_divrem_newton(zmod_poly_t Q, zmod_poly_t R, zmod_poly_t A, zmod_poly_t B)
 {
+   if (A->length < B->length)
+   {
+      zmod_poly_zero(Q);
+      zmod_poly_set(R, A);
+      return;
+   }
+
    zmod_poly_t QB, A_trunc;
    zmod_poly_init(QB, B->p);
    
@@ -2928,12 +3035,17 @@ void zmod_poly_gcd(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
    zmod_poly_clear(Q);
 }
 
+/* 
+   Computes poly1^(-1) mod poly2
+   Assumes poly1 is not zero and is already reduced mod poly2
+*/
+
 void zmod_poly_gcd_invert(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
 {
    zmod_poly_t Q, R, A, B, u1, u2, prod;
    unsigned long a;
 
-   if ((poly1->length == 0) || (poly2->length < 2))
+   if (poly1->length == 0)
    {
       printf("FLINT Exception: Divide by zero\n");
       abort();
@@ -2954,21 +3066,13 @@ void zmod_poly_gcd_invert(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
    zmod_poly_init(u2, p);
    zmod_poly_init(prod, p);
 
-   zmod_poly_set_coeff(u1, 0, 1L);
-   u1->length = 1;
-   zmod_poly_zero(u2);    
+   zmod_poly_set_coeff(u2, 0, 1L);
+   u2->length = 1;
+   zmod_poly_zero(u1);    
 
-   if (poly1->length > poly2->length)
-   {
-      _zmod_poly_attach(A, poly1);
-      _zmod_poly_attach(B, poly2);
-   } else
-   {
-      _zmod_poly_attach(A, poly2);
-      _zmod_poly_attach(B, poly1);
-      zmod_poly_swap(u1, u2);
-   }
-
+   _zmod_poly_attach(A, poly2);
+   _zmod_poly_attach(B, poly1);
+   
    int steps = 1;
    
    while (B->length > 1)
