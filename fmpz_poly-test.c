@@ -34,6 +34,7 @@ Copyright (C) 2007, William Hart and David Harvey
 #include "memory-manager.h"
 #include "ZmodF_poly.h"
 #include "test-support.h"
+#include "zmod_poly.h"
 
 #define VARY_BITS 0
 #define SIGNS 1
@@ -10657,6 +10658,85 @@ int test_fmpz_poly_gcd_subresultant()
    return result;
 }
 
+int test_fmpz_poly_CRT()
+{
+   mpz_poly_t pol1;
+   fmpz_poly_t fpol1, fpol2;
+   zmod_poly_t zpol;
+   unsigned long bits, length;
+   int result = 1;
+   
+   mpz_poly_init(pol1);
+   fmpz_poly_init(fpol1);
+   fmpz_poly_init(fpol2);
+   
+   for (unsigned long i = 0; (i < 4000) && (result == 1); i++)
+   {
+       bits = random_ulong(1000)+1;
+       length = random_ulong(100)+1;
+
+       randpoly_unsigned(pol1, length, bits);
+       mpz_poly_to_fmpz_poly(fpol1, pol1);
+
+#if DEBUG
+       printf("bits = %ld, length = %ld\n", bits, length);
+#endif
+      
+       unsigned long * primes = flint_stack_alloc((long) FLINT_MAX(bits-1, 0)/(FLINT_BITS-2)+1);      
+       unsigned long num_primes = 0;
+       fmpz_t modulus = fmpz_stack_init((long) FLINT_MAX(bits-1, 0)/FLINT_BITS+2);
+       
+       primes[0] = z_nextprime(1L<<(FLINT_BITS-2));
+       fmpz_set_ui(modulus, primes[0]);
+       
+       while (fmpz_bits(modulus) <= bits)
+       {
+          primes[num_primes+1] = z_nextprime(primes[num_primes]);
+          fmpz_mul_ui(modulus, modulus, primes[num_primes+1]);
+          num_primes++;
+       }
+       num_primes++;
+
+       zmod_poly_init(zpol, primes[0]);
+       fmpz_poly_to_zmod_poly(zpol, fpol1);
+       zmod_poly_to_fmpz_poly(fpol2, zpol);
+       fmpz_set_ui(modulus, primes[0]);
+       
+       unsigned long c, r2;
+       double pre;
+
+       for (unsigned long i = 1; i < num_primes; i++)
+       {
+          
+          zmod_poly_clear(zpol);
+          zmod_poly_init(zpol, primes[i]);
+          fmpz_poly_to_zmod_poly(zpol, fpol1);
+          fmpz_poly_CRT(fpol2, zpol, modulus);
+          fmpz_mul_ui(modulus, modulus, primes[i]);
+       }
+
+       result = (fmpz_poly_equal(fpol1, fpol2));
+
+#if DEBUG
+       if (!result)
+       {
+          fmpz_poly_print(fpol1); printf("\n\n");
+          fmpz_poly_print(fpol2); printf("\n\n");
+       }
+#endif
+       
+       zmod_poly_clear(zpol);
+       fmpz_stack_release();
+       flint_stack_release();
+   }
+   
+   mpz_poly_clear(pol1);
+   fmpz_poly_clear(fpol1);
+   fmpz_poly_clear(fpol2);
+   
+   return result;
+}
+
 void fmpz_poly_test_all()
 {
    int success, all_success = 1;
@@ -10761,7 +10841,8 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_poly_power_trunc_n);
    RUN_TEST(fmpz_poly_content); 
    RUN_TEST(fmpz_poly_gcd_subresultant); 
-   
+   RUN_TEST(fmpz_poly_CRT);
+
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");
 }

@@ -39,6 +39,7 @@ Copyright (C) 2007, William Hart and David Harvey
 #include "memory-manager.h"
 #include "ZmodF_poly.h"
 #include "long_extras.h"
+#include "zmod_poly.h"
 
 /****************************************************************************
 
@@ -1042,6 +1043,135 @@ void fmpz_poly_unsplit(ZmodF_poly_t poly_f, fmpz_poly_t poly_fmpz,
                            unsigned long bundle, unsigned long limbs)
 {
    abort();
+}
+
+void fmpz_poly_to_zmod_poly(zmod_poly_t zpol, fmpz_poly_t fpol)
+{
+   unsigned long p = zpol->p;
+
+   if (fpol->length == 0) 
+   {
+      zmod_poly_zero(zpol);
+      return;
+   } 
+   
+   zmod_poly_fit_length(zpol, fpol->length);
+   
+   unsigned long sizef = fpol->limbs+1;
+   fmpz_t fcoeff = fpol->coeffs;
+   unsigned long * zcoeff = zpol->coeffs;
+
+   for (unsigned long i = 0; i < fpol->length; i++)
+   {
+      zcoeff[i] = fmpz_mod_ui(fcoeff, p);
+      fcoeff += sizef;
+   }
+
+   zpol->length = fpol->length;
+   zmod_poly_normalise(zpol);
+}
+
+void zmod_poly_to_fmpz_poly(fmpz_poly_t fpol, zmod_poly_t zpol)
+{
+   unsigned long p = zpol->p;
+
+   if (zpol->length == 0) 
+   {
+      fmpz_poly_zero(fpol);
+      return;
+   } 
+
+   fmpz_poly_fit_length(fpol, zpol->length);
+   fmpz_poly_fit_limbs(fpol, 1);
+
+   unsigned long sizef = fpol->limbs+1;
+   fmpz_t fcoeff = fpol->coeffs;
+   unsigned long * zcoeff = zpol->coeffs;
+
+   for (unsigned long i = 0; i < zpol->length; i++)
+   {
+      fcoeff[0] = 1L;
+      fcoeff[1] = zcoeff[i];
+      fcoeff += sizef;
+   }
+   
+   fpol->length = zpol->length;
+}
+
+void fmpz_poly_CRT(fmpz_poly_t fpol, zmod_poly_t zpol, fmpz_t oldmod)
+{
+   unsigned long p = zpol->p;
+   double pre = zpol->p_inv;
+   unsigned long c, r1;
+
+   c = fmpz_mod_ui(oldmod, p);
+   c = z_invert(c, p);
+   
+   unsigned long shortest = (fpol->length < zpol->length) ? fpol->length : zpol->length;
+
+   unsigned limbs = fmpz_poly_max_limbs(fpol);
+   if (fpol->limbs < limbs + 1) fmpz_poly_fit_limbs(fpol, limbs+1);
+
+   unsigned long sizef = fpol->limbs+1;
+   fmpz_t fcoeff = fpol->coeffs;
+   unsigned long * zcoeff = zpol->coeffs;
+  
+#if FLINT_BITS == 64
+   if (FLINT_BIT_COUNT(p) > FLINT_D_BITS-1)
+   {
+      for (unsigned long i = 0; i < shortest; i++)
+      {
+         fmpz_CRT_ui2_precomp(fcoeff, fcoeff, oldmod, zcoeff[i], p, c, pre);
+         fcoeff += sizef;
+      }
+   } else
+#endif 
+   for (unsigned long i = 0; i < shortest; i++)
+   {
+      fmpz_CRT_ui_precomp(fcoeff, fcoeff, oldmod, zcoeff[i], p, c, pre);
+      fcoeff += sizef;
+   }
+
+   /* fpol is longer */
+#if FLINT_BITS == 64
+   if (FLINT_BIT_COUNT(p) > FLINT_D_BITS-1)
+   {
+      for (unsigned long i = shortest; i < fpol->length; i++)
+      {
+         fmpz_CRT_ui2_precomp(fcoeff, fcoeff, oldmod, 0L, p, c, pre);
+         fcoeff += sizef;
+      } 
+   } else
+#endif 
+   for (unsigned long i = 0; i < shortest; i++)
+   {
+      fmpz_CRT_ui_precomp(fcoeff, fcoeff, oldmod, 0, p, c, pre);
+      fcoeff += sizef;
+   }
+
+   /* zpol is longer */
+   unsigned long s;
+   fmpz_t sm1 = fmpz_stack_init(oldmod[0] + 1);
+#if FLINT_BITS == 64
+   if (FLINT_BIT_COUNT(p) > FLINT_D_BITS-1)
+   {
+      for (unsigned long i = shortest; i < zpol->length; i++)
+      {
+         s = z_mulmod2_precomp(zcoeff[i], c, p, pre);
+         fmpz_mul_ui(sm1, fcoeff, s);
+         fmpz_add(fcoeff, fcoeff, sm1);
+         fcoeff += sizef;
+      }
+   } else
+#endif 
+   for (unsigned long i = shortest; i < zpol->length; i++)
+   {
+      s = z_mulmod_precomp(zcoeff[i], c, p, pre);
+      fmpz_mul_ui(sm1, fcoeff, s);
+      fmpz_add(fcoeff, fcoeff, sm1);
+      fcoeff += sizef;
+   }
+   fmpz_stack_release(); 
 }
 
 /****************************************************************************

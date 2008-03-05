@@ -37,6 +37,7 @@ Copyright (C) 2007, William Hart and David Harvey
 #include <gmp.h>
 #include "mpn_extras.h"
 #include "fmpz.h"
+#include "zmod_poly.h"
 
 /****************************************************************************
 
@@ -271,6 +272,30 @@ void fmpz_poly_split(ZmodF_poly_t poly_f, fmpz_poly_t poly_fmpz,
 void fmpz_poly_unsplit(ZmodF_poly_t poly_f, fmpz_poly_t poly_fmpz,
      unsigned long bundle, unsigned long limbs);
 
+/*
+   Reduce coefficients of the given fmpz_poly fpol, modulo the modulus of the given 
+   zmod_poly zpol, and store the result in zpol.
+*/
+
+void fmpz_poly_to_zmod_poly(zmod_poly_t zpol, fmpz_poly_t fpol);
+
+/*
+   Store the unsigned long coefficients of the zmod_poly zpol in the given fmpz_poly fpol.
+*/
+
+void zmod_poly_to_fmpz_poly(fmpz_poly_t fpol, zmod_poly_t zpol);
+
+/*
+   Given an fmpz_poly_t fpol representing the reduction modulo oldmod of a polynomial 
+   and a zmod_poly zpol with modulus p, use Chinese remaindering to reconstruct the 
+   polynomial modulo newmod, with newmod = p*oldmod, where each new coefficient fpol[i] 
+   is set to the unique non-negative integer in [0, newmod) which is fpol[i] mod oldmod 
+   and zpol[i] mod p. 
+
+   Assumes p and oldmod are coprime.
+*/
+
+void fmpz_poly_CRT(fmpz_poly_t fpol, zmod_poly_t zpol, fmpz_t oldmod);
 
 /*============================================================================
   

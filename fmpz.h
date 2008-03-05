@@ -35,6 +35,7 @@
 #include <gmp.h>
 #include "memory-manager.h"
 #include "flint.h"
+#include "long_extras.h"
 
 typedef mp_limb_t * fmpz_t;
 
@@ -261,6 +262,60 @@ static inline
 void fmpz_normalise(const fmpz_t f)
 {
    NORM(f);
+}
+
+static inline
+int fmpz_cmpabs(const fmpz_t f1, const fmpz_t f2)
+{
+   unsigned long size1 = FLINT_ABS(f1[0]);
+   unsigned long size2 = FLINT_ABS(f2[0]);
+
+   if (size1 < size2) return -1;
+   if (size1 > size2) return 1;
+
+   return mpn_cmp(f1 + 1, f2 + 1, size1);
+   
+}
+
+/*
+   Computes the unique integer mod m1*m2 which is r1 mod m1 and r2 mod m2
+   where m1 is an fmpz_t and m2 is a coprime unsigned long. 
+
+   Assumes both m1 and m2 are reduced modulo their respective moduli.
+   c must be set to m1^{-1} mod m2.
+   pre must be set to a precomputed inverse of m2
+   Assumes the number of bits of m2 is at most FLINT_D_BITS-1
+*/
+
+static inline
+void fmpz_CRT_ui_precomp(fmpz_t out, fmpz_t r1, fmpz_t m1, unsigned long r2,
+                                  unsigned long m2, unsigned long c, double pre)
+{
+   unsigned long r1mod = fmpz_mod_ui(r1, m2);
+   unsigned long s = z_mod_sub(r2, r1mod, m2);
+   s = z_mulmod_precomp(s, c, m2, pre); 
+   fmpz_t sm1 = fmpz_stack_init(m1[0] + 1);
+   fmpz_mul_ui(sm1, m1, s);
+   fmpz_add(out, r1, sm1);
+   fmpz_stack_release();
+}
+
+/*
+   As for fmpz_CRT_ui_precomp except that it assumes the number of bits of m2 
+   is at most FLINT_BITS-1
+*/
+
+static inline
+void fmpz_CRT_ui2_precomp(fmpz_t out, fmpz_t r1, fmpz_t m1, unsigned long r2,
+                                  unsigned long m2, unsigned long c, double pre)
+{
+   unsigned long r1mod = fmpz_mod_ui(r1, m2);
+   unsigned long s = z_mod_sub(r2, r1mod, m2);
+   s = z_mulmod2_precomp(s, c, m2, pre); 
+   fmpz_t sm1 = fmpz_stack_init(m1[0] + 1);
+   fmpz_mul_ui(sm1, m1, s);
+   fmpz_add(out, r1, sm1);
+   fmpz_stack_release();
 }
 
 #ifdef __cplusplus

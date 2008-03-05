@@ -55,7 +55,8 @@ HEADERS = \
 	profiler-main.h \
 	profiler.h \
 	test-support.h \
-	long_extras.h
+	long_extras.h \
+        zmod_poly.h 
 
 
 ####### library object files
@@ -72,7 +73,8 @@ FLINTOBJ = \
 	mpz_poly-tuning.o \
 	mpz_poly.o \
 	ZmodF_poly.o \
-	long_extras.o
+	long_extras.o \
+        zmod_poly.o
 
 QS: mpQS tinyQS
 
