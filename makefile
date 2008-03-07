@@ -202,8 +202,8 @@ ZmodF_mul-test: ZmodF_mul-test.o test-support.o $(FLINTOBJ) $(HEADERS)
 long_extras-test: long_extras.o long_extras-test.o test-support.o memory-manager.o
 	$(CC) $(CFLAGS) long_extras.o long_extras-test.o test-support.o memory-manager.o -o long_extras-test $(LIBS)
 
-zmod_poly-test: zmod_poly.o zmod_poly-test.o test-support.o $(FLINTOBJ) $(HEADERS)
-	$(CC) $(CFLAGS) zmod_poly.o zmod_poly-test.o test-support.o -o zmod_poly-test $(FLINTOBJ) $(LIBS)
+zmod_poly-test: zmod_poly-test.o test-support.o $(FLINTOBJ) $(HEADERS)
+	$(CC) $(CFLAGS) zmod_poly-test.o test-support.o -o zmod_poly-test $(FLINTOBJ) $(LIBS)
 
 NTL-interface-test: NTL-interface.o NTL-interface-test.o test-support.o $(FLINTOBJ) $(HEADERS)
 	$(CPP) $(CFLAGS) NTL-interface-test.o NTL-interface.o test-support.o $(FLINTOBJ) -o NTL-interface-test $(LIBS2)
@@ -348,8 +348,8 @@ bernoulli_fmpz: bernoulli_fmpz.o $(FLINTOBJ)
 bernoulli_zmod.o: bernoulli_zmod.c $(HEADERS)
 	$(CC) $(CFLAGS) -c bernoulli_zmod.c -o bernoulli_zmod.o
 
-bernoulli_zmod: bernoulli_zmod.o zmod_poly.o $(FLINTOBJ)
-	$(CC) $(CFLAGS) -o bernoulli_zmod bernoulli_zmod.o zmod_poly.o $(FLINTOBJ) $(LIBS)
+bernoulli_zmod: bernoulli_zmod.o $(FLINTOBJ)
+	$(CC) $(CFLAGS) -o bernoulli_zmod bernoulli_zmod.o $(FLINTOBJ) $(LIBS)
 
 ####### Quadratic sieve
 
@@ -391,7 +391,7 @@ mpQS: QS/mpQS.c QS/mpQS.h mp_factor_base.o mp_poly.o mp_sieve.o mp_linear_algebr
 
 ####### Integer multiplication timing
 
-ZMULOBJ = memory-manager.o fmpz.o ZmodF_mul-tuning.o mpz_poly.o mpz_poly-tuning.o fmpz_poly.o ZmodF_poly.o mpz_extras.o profiler.o ZmodF_mul.o ZmodF.o mpn_extras.o F_mpz_mul-timing.o
+ZMULOBJ = zmod_poly.o memory-manager.o fmpz.o ZmodF_mul-tuning.o mpz_poly.o mpz_poly-tuning.o fmpz_poly.o ZmodF_poly.o mpz_extras.o profiler.o ZmodF_mul.o ZmodF.o mpn_extras.o F_mpz_mul-timing.o long_extras.o
 
 F_mpz_mul-timing: $(ZMULOBJ)
 	$(CC) $(ZMULOBJ) -o Zmul $(LIBS)

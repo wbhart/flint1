@@ -281,9 +281,12 @@ void fmpz_poly_to_zmod_poly(zmod_poly_t zpol, fmpz_poly_t fpol);
 
 /*
    Store the unsigned long coefficients of the zmod_poly zpol in the given fmpz_poly fpol.
+   The unsigned version normalised to [0, p) the other version to [-p/2, p/2]
 */
 
 void zmod_poly_to_fmpz_poly(fmpz_poly_t fpol, zmod_poly_t zpol);
+
+void zmod_poly_to_fmpz_poly_unsigned(fmpz_poly_t fpol, zmod_poly_t zpol);
 
 /*
    Given an fmpz_poly_t fpol representing the reduction modulo oldmod of a polynomial 
@@ -293,9 +296,19 @@ void zmod_poly_to_fmpz_poly(fmpz_poly_t fpol, zmod_poly_t zpol);
    and zpol[i] mod p. 
 
    Assumes p and oldmod are coprime.
+
+   Returns 1 if the CRT has stabilised, i.e. if the new output equals the old input
+   else it returns 0.
+
+   The unsigned version normalises the output to [0, newmod) the main version
+   normalises to [-nemod/2, newmod/2].
+
+   Allows aliasing of fpol and res.
 */
 
-void fmpz_poly_CRT(fmpz_poly_t fpol, zmod_poly_t zpol, fmpz_t oldmod);
+int fmpz_poly_CRT(fmpz_poly_t res, fmpz_poly_t fpol, zmod_poly_t zpol, fmpz_t newmod, fmpz_t oldmod);
+
+int fmpz_poly_CRT_unsigned(fmpz_poly_t res, fmpz_poly_t fpol, zmod_poly_t zpol, fmpz_t newmod, fmpz_t oldmod);
 
 /*============================================================================
   
@@ -317,6 +330,13 @@ static inline
 fmpz_t _fmpz_poly_get_coeff_ptr(const fmpz_poly_t poly, const unsigned long n)
 {
    return poly->coeffs+n*(poly->limbs+1);
+}
+
+static inline
+fmpz_t _fmpz_poly_lead(const fmpz_poly_t poly)
+{
+   if (poly->length == 0) return NULL;
+   return poly->coeffs+(poly->length-1)*(poly->limbs+1);
 }
 
 /* 
@@ -1132,6 +1152,26 @@ void fmpz_poly_divrem(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_poly_t A, const f
    if ((B == R) || (B == Q)) _fmpz_poly_stack_clear(Bin);
 }
 
+/*
+   Returns 1 and the quotient if B divides A
+   else returns 0
+*/
+
+static inline
+int fmpz_poly_divides(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B)
+{
+   fmpz_poly_t R;
+   int divides = 0;
+
+   fmpz_poly_init(R);
+
+   fmpz_poly_divrem(Q, R, A, B);
+   if (R->length == 0) divides = 1;
+   fmpz_poly_clear(R);
+
+   return divides;
+}
+
 void fmpz_poly_power(fmpz_poly_t output, const fmpz_poly_t poly, const unsigned long exp);
 
 void fmpz_poly_power_trunc_n(fmpz_poly_t output, const fmpz_poly_t poly, const unsigned long exp, const unsigned long n);
@@ -1226,6 +1266,8 @@ void fmpz_poly_pseudo_div(fmpz_poly_t Q, unsigned long * d,
 void fmpz_poly_content(fmpz_t c, fmpz_poly_t poly);
 
 void fmpz_poly_gcd_subresultant(fmpz_poly_t D, const fmpz_poly_t poly1, const fmpz_poly_t poly2);
+
+void fmpz_poly_gcd_modular(fmpz_poly_t H, const fmpz_poly_t poly1, const fmpz_poly_t poly2);
 
 // *************** end of file
 

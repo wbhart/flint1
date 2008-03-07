@@ -267,6 +267,12 @@ void _zmod_poly_reverse(zmod_poly_t output, zmod_poly_t input, unsigned long len
 void zmod_poly_reverse(zmod_poly_t output, zmod_poly_t input, unsigned long length);
 
 /*
+   Monic polys
+*/
+
+void zmod_poly_make_monic(zmod_poly_t pol);
+
+/*
    Addition and subtraction
 */
 

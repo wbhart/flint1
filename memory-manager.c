@@ -460,10 +460,18 @@ void* flint_heap_alloc_bytes(unsigned long bytes)
 void* flint_heap_realloc(void * block_void, unsigned long limbs)
 {
    unsigned long * block = (unsigned long *) block_void;
+   block--;
+   unsigned long length = block[0];
+   for (unsigned long i = 0; i < 100; i++)
+      if (block[length+i+1] != 0L) 
+      {
+         printf("Error: Block overrun detected by heap memory (re)allocator!!\n");
+         abort();
+      }
 #if DEBUG_PRINT
-   printf("Reallocing to %ld limbs on heap\n", limbs);
+   printf("Reallocing from %ld to %ld limbs on heap\n", length, limbs);
 #endif
-   unsigned long* buf = realloc(block-1, (limbs+101) * sizeof(mp_limb_t));
+   unsigned long* buf = realloc(block, (limbs+101) * sizeof(mp_limb_t));
    if (!buf)
       flint_memory_failure();
    buf[0] = limbs;

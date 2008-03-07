@@ -495,6 +495,25 @@ void zmod_poly_reverse(zmod_poly_t output, zmod_poly_t input, unsigned long leng
 
 /****************************************************************************
 
+   Monic polys
+
+****************************************************************************/
+
+void zmod_poly_make_monic(zmod_poly_t pol)
+{
+   if (!pol->length) return;
+
+   unsigned long lead_inv = pol->coeffs[pol->length-1];
+
+   if (lead_inv == 1L) return;
+
+   lead_inv = z_invert(lead_inv, pol->p);
+
+   zmod_poly_scalar_mul(pol, pol, lead_inv);
+}
+
+/****************************************************************************
+
    Addition/subtraction
 
 ****************************************************************************/
@@ -1477,7 +1496,7 @@ void _zmod_poly_mul_KS_trunc(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p
       zmod_poly_zero(output);
       return;
    }
-
+      
    unsigned long length = length1 + length2 - 1;
      
    if (trunc > length) trunc = length;
@@ -1489,7 +1508,7 @@ void _zmod_poly_mul_KS_trunc(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p
       length2 = temp;
       SWAP_ZMOD_POLY_PTRS(input1, input2);
    }
-      
+         
    unsigned long bits1, bits2;
    
    bits1 = zmod_poly_bits(input1);
@@ -1499,7 +1518,7 @@ void _zmod_poly_mul_KS_trunc(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p
    unsigned log_length = 0;
    while ((1L<<log_length) < length_short) log_length++;
    unsigned long bits = bits1 + bits2 + log_length;
-   
+      
    if (bits_input) 
    {
       bits = bits_input;
@@ -1508,18 +1527,18 @@ void _zmod_poly_mul_KS_trunc(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p
    mp_limb_t *mpn1, *mpn2, *res;
 
    unsigned long limbs1, limbs2;
-
+   
    limbs1 = FLINT_MAX((long)((length1 * bits-1) / FLINT_BITS + 1), 0L);
    limbs2 = FLINT_MAX((long)((length2 * bits-1) / FLINT_BITS + 1), 0L);
       
    mpn1 = (mp_limb_t*) flint_stack_alloc(limbs1);
    mpn2 = (input1 == input2) ? mpn1 : (mp_limb_t*) flint_stack_alloc(limbs2);
-   
+         
    zmod_poly_bit_pack_mpn(mpn1, input1, bits, length1);
    
    if(input1 != input2)
       zmod_poly_bit_pack_mpn(mpn2, input2, bits, length2);
-   
+         
    res = (mp_limb_t*) flint_stack_alloc(limbs1+limbs2);
    res[limbs1+limbs2-1] = 0L;
    
@@ -1527,11 +1546,10 @@ void _zmod_poly_mul_KS_trunc(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p
    
    if (input1 != input2) F_mpn_mul_trunc(res, mpn1, limbs1, mpn2, limbs2, (output_length*bits-1)/FLINT_BITS+1);
    else F_mpn_mul_trunc(res, mpn1, limbs1, mpn1, limbs1, (output_length*bits-1)/FLINT_BITS+1);
-      
+         
    zmod_poly_bit_unpack_mpn(output, res, output_length, bits); 
-   
-   flint_stack_release();
-   flint_stack_release();
+   flint_stack_release(); //release res
+   flint_stack_release(); //release mpn1 and mpn2
    if(input1 != input2)
       flint_stack_release();
   
@@ -1539,6 +1557,7 @@ void _zmod_poly_mul_KS_trunc(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p
    
    /* The modulus may not be prime, so normalisation may be necessary */
    zmod_poly_normalise(output);
+    
 }
 
 
@@ -2161,6 +2180,14 @@ void zmod_poly_divrem_classical(zmod_poly_t Q, zmod_poly_t R, zmod_poly_t A, zmo
       abort();      
    }
    
+   if (A->length < B->length)
+   {
+      zmod_poly_zero(Q);
+      zmod_poly_set(R, A);
+
+      return;
+   }
+   
    unsigned long p = B->p;
    double p_inv = B->p_inv;
    unsigned long lead_inv = z_invert(B->coeffs[B->length - 1], p);
@@ -2233,6 +2260,13 @@ void zmod_poly_div_classical(zmod_poly_t Q, zmod_poly_t A, zmod_poly_t B)
    {
       printf("Error: Divide by zero\n");
       abort();      
+   }
+   
+   if (A->length < B->length)
+   {
+      zmod_poly_zero(Q);
+      
+      return;
    }
    
    unsigned long p = B->p;
@@ -2826,7 +2860,7 @@ void zmod_poly_divrem_divconquer(zmod_poly_t Q, zmod_poly_t R, zmod_poly_t A, zm
 
 ****************************************************************************/
 
-#define FLINT_ZMOD_NEWTON_INVERSE_BASECASE_CUTOFF 32
+#define FLINT_ZMOD_NEWTON_INVERSE_BASECASE_CUTOFF 64 //32
 
 /*
    Compute the polynomial X^{2n} / Q. 
@@ -2963,7 +2997,7 @@ void zmod_poly_divrem_newton(zmod_poly_t Q, zmod_poly_t R, zmod_poly_t A, zmod_p
       zmod_poly_set(R, A);
       return;
    }
-
+   
    zmod_poly_t QB, A_trunc;
    zmod_poly_init(QB, B->p);
    
@@ -3007,7 +3041,7 @@ void zmod_poly_gcd(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
    }
 
    int steps = 1;
-   
+      
    while (B->length > 1)
    {
       zmod_poly_divrem_newton(Q, R, A, B);
@@ -3015,9 +3049,9 @@ void zmod_poly_gcd(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
       if (steps > 2) zmod_poly_clear(B);
       _zmod_poly_attach(B, R);
       zmod_poly_init(R, p); 
-      steps++;    
+      steps++;   
    }
-   
+      
    if  (B->length == 1) 
    {
       zmod_poly_set_coeff(res, 0, 1L);

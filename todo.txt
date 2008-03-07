@@ -258,6 +258,9 @@ to improve locality.
 * Decide if zmod_poly gcd functions should return 1 if polys are coprime, or just return any unit. 
   Decide if the gcd ought to be monic.
 
+* Speed up CRT by checking if any new coefficients have more limbs than the old coefficient and only 
+  doing the full equality comparison if not. Also get rid of the allocation of scratch space in the
+  fmpz_CRT_precomp routines.
 
 
 

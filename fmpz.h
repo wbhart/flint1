@@ -95,7 +95,7 @@ static inline
 unsigned long fmpz_size(const fmpz_t x)
 {
    long limb = (long) x[0];
-   return (unsigned long)  ((limb < 0) ? -limb : limb);
+   return (unsigned long)  ((limb < 0L) ? -limb : limb);
 }
 
 static inline
