@@ -241,9 +241,6 @@ to improve locality.
 
 * In zmod_poly make set_coeff set_coeff_ui in line with fmpz_poly
 
-* Figure out carefully how the limitations on the number of bits in zmod_poly_mul_KS affects the number of bits 
-  in all the other functions (or make mul_KS work without restriction up to FLINT_BITS)
-
 * In fmpz_poly_div_series and zmod_poly_div_series, allow A and B to be aliased
 
 * In fmpz_poly_div_series and zmod_poly_div_series, deal with special case where the numerator is the series 1 by calling 
@@ -262,8 +259,8 @@ to improve locality.
   doing the full equality comparison if not. Also get rid of the allocation of scratch space in the
   fmpz_CRT_precomp routines.
 
+* Add FFT caching to newton inversion functions
 
-
-
+* Try unrolling loops in mpn_extras, but beware compiler flags may already make this happen.
 
 

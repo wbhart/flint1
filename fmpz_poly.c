@@ -1090,8 +1090,11 @@ void zmod_poly_to_fmpz_poly_unsigned(fmpz_poly_t fpol, zmod_poly_t zpol)
 
    for (unsigned long i = 0; i < zpol->length; i++)
    {
-      fcoeff[0] = 1L;
-      fcoeff[1] = zcoeff[i];
+      if (zcoeff[i])
+      {
+         fcoeff[0] = 1L;
+         fcoeff[1] = zcoeff[i];
+      } else fcoeff[0] = 0L;
       fcoeff += sizef;
    }
    
@@ -1118,7 +1121,10 @@ void zmod_poly_to_fmpz_poly(fmpz_poly_t fpol, zmod_poly_t zpol)
 
    for (unsigned long i = 0; i < zpol->length; i++)
    {
-      if (zcoeff[i] > pdiv2)
+      if (zcoeff[i] == 0)
+      {
+         fcoeff[0] = 0L;
+      } else if (zcoeff[i] > pdiv2)
       {
          fcoeff[0] = -1L;
          fcoeff[1] = p - zcoeff[i];
@@ -8283,9 +8289,9 @@ void fmpz_poly_gcd_subresultant(fmpz_poly_t D, const fmpz_poly_t poly1, const fm
          } else if (delta == 1)
          {
             olddelta = 1;
-            /*fmpz_clear(h);
+            fmpz_clear(h);
             h = fmpz_init(fmpz_size(g));
-            fmpz_set(h, g);*/
+            fmpz_set(h, g);
          } else
          {
             temp = fmpz_stack_init((delta-1)*fmpz_size(h)+1);

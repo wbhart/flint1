@@ -36,9 +36,9 @@ Copyright (C) 2007, William Hart and David Harvey
 #include "test-support.h"
 #include "zmod_poly.h"
 
-#define VARY_BITS 0
-#define SIGNS 0
-#define SPARSE 0
+#define VARY_BITS 1
+#define SIGNS 1
+#define SPARSE 1
 
 #define TESTFILE 0 // Set this to test polynomial reading and writing to a file in the current dir
 
@@ -10588,7 +10588,7 @@ int test_fmpz_poly_gcd_subresultant()
    mpz_poly_init(test_poly3); 
    mpz_poly_init(test_poly4); 
       
-   for (unsigned long count1 = 0; count1 < 300; count1++)
+   for (unsigned long count1 = 0; count1 < 3000; count1++)
    {
       bits = random_ulong(1000) + 1;
       bits2 = random_ulong(1000) + 1;
@@ -10608,7 +10608,7 @@ int test_fmpz_poly_gcd_subresultant()
       mpz_poly_realloc(test_poly2, length2);
       mpz_poly_realloc(test_poly3, length3);
       
-      for (unsigned long count2 = 0; (count2 < 3) && (result == 1); count2++)
+      for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
          do
          {
@@ -10633,6 +10633,9 @@ int test_fmpz_poly_gcd_subresultant()
          printf("GCD = "); fmpz_poly_print_pretty(test_fmpz_poly3, "x"); printf("\n\n");
 #endif
                   
+         if (test_fmpz_poly3->length)
+            if (fmpz_sgn(_fmpz_poly_lead(test_fmpz_poly4)) != fmpz_sgn(_fmpz_poly_lead(test_fmpz_poly3)))
+               fmpz_poly_neg(test_fmpz_poly4, test_fmpz_poly4);
          result = fmpz_poly_equal(test_fmpz_poly3, test_fmpz_poly4); 
          fmpz_poly_clear(test_fmpz_poly4);
          
@@ -10670,7 +10673,7 @@ int test_fmpz_poly_gcd_modular()
    mpz_poly_init(test_poly3); 
    mpz_poly_init(test_poly4); 
       
-   for (unsigned long count1 = 0; count1 < 300; count1++)
+   for (unsigned long count1 = 0; count1 < 3000; count1++)
    {
       bits = random_ulong(100) + 1;
       bits2 = random_ulong(100) + 1;
@@ -10690,7 +10693,7 @@ int test_fmpz_poly_gcd_modular()
       mpz_poly_realloc(test_poly2, length2);
       mpz_poly_realloc(test_poly3, length3);
       
-      for (unsigned long count2 = 0; (count2 < 5) && (result == 1); count2++)
+      for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
          randpoly(test_poly, length, bits);
          randpoly(test_poly2, length2, bits2);
@@ -10879,11 +10882,21 @@ int test_fmpz_poly_CRT()
        result = (fmpz_poly_equal(fpol1, fpol2));
 
 #if DEBUG
-       if (!result)
+       for (unsigned long i = 0; i < fpol1->length; i++)
+       {
+           fmpz_t c1 = fmpz_poly_get_coeff_ptr(fpol1, i);
+           fmpz_t c2 = fmpz_poly_get_coeff_ptr(fpol2, i);
+           if (!fmpz_equal(c1, c2)) 
+           {
+              fmpz_print(c1); printf("\n\n");
+              fmpz_print(c2); printf("\n\n");
+           }
+       }
+       /*if (!result)
        {
           fmpz_poly_print(fpol1); printf("\n\n");
           fmpz_poly_print(fpol2); printf("\n\n");
-       }
+       }*/
 #endif
        
        zmod_poly_clear(zpol);
