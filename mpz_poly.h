@@ -285,6 +285,10 @@ void mpz_poly_shift(mpz_poly_t res, mpz_poly_t poly, long k)
       mpz_poly_rshift(res, poly, -k);
 }
 
+//-------------------------------------------------------
+// Norms
+
+void mpz_poly_2norm(mpz_t norm, mpz_poly_t poly);
 
 // ------------------------------------------------------
 // Scalar multiplication and division

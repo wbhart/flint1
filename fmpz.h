@@ -277,6 +277,8 @@ int fmpz_cmpabs(const fmpz_t f1, const fmpz_t f2)
    
 }
 
+void fmpz_sqrtrem(fmpz_t sqrt, fmpz_t rem, fmpz_t n);
+
 /*
    Computes the unique integer mod m1*m2 which is r1 mod m1 and r2 mod m2
    where m1 is an fmpz_t and m2 is a coprime unsigned long. 

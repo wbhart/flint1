@@ -263,4 +263,5 @@ to improve locality.
 
 * Try unrolling loops in mpn_extras, but beware compiler flags may already make this happen.
 
-
+* Check that aliasing checks both poly1 == poly2 and poly1->length == poly2->length for unmanaged functions, 
+  but only the former for managed functions.

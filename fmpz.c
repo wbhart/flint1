@@ -814,4 +814,31 @@ void fmpz_gcd(fmpz_t output, fmpz_t x1, fmpz_t x2)
    fmpz_clear(a2);
 }
 
+/*
+   Sets sqrt to the square root of n and sets rem to the remainder
+   No aliasing of sqrt and n
+*/
+
+void fmpz_sqrtrem(fmpz_t sqrt, fmpz_t rem, fmpz_t n)
+{
+   long size = n[0];
+
+   if (size < 0L) 
+   {
+      printf("Cannot take the square root of a negative number!\n");
+      abort();
+   }
+   
+   if (!size)
+   {
+      fmpz_set_ui(sqrt, 0L);
+      fmpz_set_ui(rem, 0L);
+      return;
+   }
+   
+   rem[0] = mpn_sqrtrem(sqrt+1, rem+1, n+1, size);
+
+   sqrt[0] = (size+1)/2;
+}
+
 // *************** end of file

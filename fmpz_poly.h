@@ -917,6 +917,8 @@ void fmpz_poly_right_shift(fmpz_poly_t output, const fmpz_poly_t input, const un
    _fmpz_poly_right_shift(output, input, n);
 }
 
+void fmpz_poly_2norm(fmpz_t norm, fmpz_poly_t pol);
+
 void fmpz_poly_scalar_mul_fmpz(fmpz_poly_t output, 
                           const fmpz_poly_t input, const fmpz_t x);
                           
@@ -1265,9 +1267,18 @@ void fmpz_poly_pseudo_div(fmpz_poly_t Q, unsigned long * d,
                                       
 void fmpz_poly_content(fmpz_t c, fmpz_poly_t poly);
 
-void fmpz_poly_gcd_subresultant(fmpz_poly_t D, const fmpz_poly_t poly1, const fmpz_poly_t poly2);
+void fmpz_poly_gcd_subresultant(fmpz_poly_t res, const fmpz_poly_t poly1, const fmpz_poly_t poly2);
 
-void fmpz_poly_gcd_modular(fmpz_poly_t H, const fmpz_poly_t poly1, const fmpz_poly_t poly2);
+void fmpz_poly_gcd_modular(fmpz_poly_t res, const fmpz_poly_t poly1, const fmpz_poly_t poly2);
+
+void fmpz_poly_gcd(fmpz_poly_t res, const fmpz_poly_t poly1, const fmpz_poly_t poly2);
+
+void fmpz_poly_invmod_modular(fmpz_poly_t H, fmpz_poly_t poly1, fmpz_poly_t poly2);
+
+unsigned long fmpz_poly_resultant_bound(fmpz_poly_t a, fmpz_poly_t b);
+
+void fmpz_poly_resultant(fmpz_t res, fmpz_poly_t a, fmpz_poly_t b);
+
 
 // *************** end of file
 

@@ -369,12 +369,31 @@ void zmod_poly_div_series(zmod_poly_t Q, zmod_poly_t A, zmod_poly_t B, unsigned 
 void zmod_poly_div_newton(zmod_poly_t Q, zmod_poly_t A, zmod_poly_t B);
 void zmod_poly_divrem_newton(zmod_poly_t Q, zmod_poly_t R, zmod_poly_t A, zmod_poly_t B);
 
+static inline
+void zmod_poly_divrem(zmod_poly_t Q, zmod_poly_t R, zmod_poly_t A, zmod_poly_t B)
+{
+   zmod_poly_divrem_newton(Q, R, A, B);
+}
+
+
+/*
+   Resultant
+*/
+
+unsigned long zmod_poly_resultant_euclidean(zmod_poly_t a, zmod_poly_t b);
+
+static inline
+unsigned long zmod_poly_resultant(zmod_poly_t a, zmod_poly_t b)
+{
+   return zmod_poly_resultant_euclidean(a, b);
+}
+
 /*
    GCD
 */
 
 void zmod_poly_gcd(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2);
-void zmod_poly_gcd_invert(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2);
+int zmod_poly_gcd_invert(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2);
 void zmod_poly_xgcd(zmod_poly_t res, zmod_poly_t s, zmod_poly_t t, zmod_poly_t poly1, zmod_poly_t poly2);
 
 #ifdef __cplusplus

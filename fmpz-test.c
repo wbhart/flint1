@@ -1476,6 +1476,48 @@ int test_fmpz_CRT_ui()
    return result;
 }
 
+int test_fmpz_sqrtrem()
+{
+   mpz_t num1;
+   fmpz_t fnum1, fnum2, fnum3, fnum4;
+   unsigned long bits, bits2;
+   int result = 1;
+   
+   mpz_init(num1);
+   
+   for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+   {
+       bits = random_ulong(1000);
+       fnum1 = fmpz_init(FLINT_MAX((long)(bits-1)/FLINT_BITS,0)+1);
+       fnum2 = fmpz_init(FLINT_MAX((long)(bits-1)/FLINT_BITS,0)+1);
+       fnum3 = fmpz_init(FLINT_MAX((long)(bits-1)/FLINT_BITS,0)+1);
+       fnum4 = fmpz_init(FLINT_MAX((long)(bits-1)/FLINT_BITS,0)+1);
+
+       mpz_rrandomb(num1, state, bits);
+       mpz_to_fmpz(fnum1, num1);
+       
+       fmpz_sqrtrem(fnum2, fnum3, fnum1);
+       fmpz_mul(fnum4, fnum2, fnum2);
+       fmpz_add(fnum4, fnum4, fnum3);
+          
+       result = (fmpz_equal(fnum1, fnum4));
+       
+#if DEBUG2
+       if (!result) gmp_printf("%Zd\n", num1);
+#endif
+       
+       fmpz_clear(fnum1);
+       fmpz_clear(fnum2);
+       fmpz_clear(fnum3);
+       fmpz_clear(fnum4);
+   }
+      
+   mpz_clear(num1);
+   
+   return result;
+}
+
+
 void fmpz_poly_test_all()
 {
    int success, all_success = 1;
@@ -1510,6 +1552,7 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_muldiv_2exp);
    RUN_TEST(fmpz_gcd);
    RUN_TEST(fmpz_CRT_ui);
+   RUN_TEST(fmpz_sqrtrem);
       
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");

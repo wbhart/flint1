@@ -1491,6 +1491,122 @@ int test_zmod_poly_xgcd()
    return result;
 }
 
+int test_zmod_poly_resultant_euclidean()
+{
+   int result = 1;
+   zmod_poly_t pol1, pol2, lin;
+   unsigned long bits;
+   
+   for (unsigned long count1 = 0; (count1 < 500) && (result == 1); count1++)
+   {
+      bits = randint(FLINT_BITS-2)+2;
+      unsigned long modulus;
+      
+      do {modulus = randprime(bits);} while (modulus < 2);
+      
+      zmod_poly_init(pol1, modulus);
+      zmod_poly_init(pol2, modulus);
+      zmod_poly_init(lin, modulus);
+
+      unsigned long r1 = randint(FLINT_MIN(10, modulus)); 
+      unsigned long r2 = randint(FLINT_MIN(10, modulus)); 
+      unsigned long * roots1 = flint_stack_alloc(r1+1);
+      unsigned long * roots2 = flint_stack_alloc(r2+1);
+      
+      for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
+      {
+#if DEBUG
+            printf("r1 = %ld, r2 = %ld, modulus = %ld\n", r1, r2, modulus);
+#endif
+
+            int exists;
+
+            for (unsigned long i = 0; i < r1; )
+            {
+               exists = 0;
+               unsigned long n = randint(modulus);
+               for (unsigned long j = 0; j < i; j++)
+                  if (roots1[j] == n) exists = 1;
+               if (!exists) 
+               {
+                  roots1[i] = n;
+                  i++;
+               }
+            }
+            
+            for (unsigned long i = 0; i < r2; )
+            {
+               exists = 0;
+               unsigned long n = randint(modulus);
+               for (unsigned long j = 0; j < i; j++)
+                  if (roots2[j] == n) exists = 1;
+               if (!exists) 
+               {
+                  roots2[i] = n;
+                  i++;
+               }
+            }
+            
+            zmod_poly_set_coeff(pol1, 0, 1);
+            pol1->length = 1;
+            zmod_poly_set_coeff(pol2, 0, 1);
+            pol2->length = 1;
+
+            zmod_poly_set_coeff(lin, 1, 1L);
+            lin->length = 2;
+            
+            for (unsigned long i = 0; i < r1; i++)
+            {
+               zmod_poly_set_coeff(lin, 0, z_mod_sub(0, roots1[i], modulus));
+               zmod_poly_mul(pol1, pol1, lin);
+            }
+
+            for (unsigned long i = 0; i < r2; i++)
+            {
+               zmod_poly_set_coeff(lin, 0, z_mod_sub(0, roots2[i], modulus));
+               zmod_poly_mul(pol2, pol2, lin);
+            }
+
+            unsigned long res1, res2;
+
+            res1 = 1;
+            for (unsigned long i = 0; i < r1; i++)
+            {
+               for (unsigned long j = 0; j < r2; j++)
+               {
+                  res1 = z_mulmod2_precomp(res1, z_mod_sub(roots1[i], roots2[j], modulus), modulus, pol1->p_inv);
+               }
+            }
+ 
+            res2 = zmod_poly_resultant_euclidean(pol1, pol2);
+
+            result = (res1 == res2);
+         
+#if DEBUG
+            if (!result)
+            {
+               printf("res1 = %ld, res2 = %ld\n", res1, res2);
+               zmod_poly_print(pol1); printf("\n\n");
+               zmod_poly_print(pol2); printf("\n\n");
+               for (unsigned long i = 0; i < r1; i++) printf("%ld, ", roots1[i]); 
+               printf("\n");
+               for (unsigned long i = 0; i < r2; i++) printf("%ld, ", roots2[i]); 
+               printf("\n");
+            }
+#endif
+      
+      }
+      
+      flint_stack_release();
+      flint_stack_release();
+      zmod_poly_clear(lin);
+      zmod_poly_clear(pol1);
+      zmod_poly_clear(pol2);
+   }
+   
+   return result;
+}
+
 void zmod_poly_test_all()
 {
    int success, all_success = 1;
@@ -1521,6 +1637,7 @@ void zmod_poly_test_all()
    RUN_TEST(zmod_poly_gcd); 
    RUN_TEST(zmod_poly_gcd_invert); 
    RUN_TEST(zmod_poly_xgcd); 
+   RUN_TEST(zmod_poly_resultant_euclidean); 
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");

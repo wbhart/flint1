@@ -860,6 +860,35 @@ void mpz_poly_rshift(mpz_poly_t res, mpz_poly_t poly, unsigned long k)
 }
 
 
+/****************************************************************************
+
+   Norms
+
+****************************************************************************/
+
+void mpz_poly_2norm(mpz_t norm, mpz_poly_t poly)
+{
+   mpz_set_ui(norm, 0L);
+   
+   if (poly->length == 0)
+   {
+      return;
+   }   
+
+   mpz_t sqr;
+   mpz_init(sqr);
+   
+   for (unsigned long i = 0; i < poly->length; i++)
+   {
+      mpz_mul(sqr, poly->coeffs[i], poly->coeffs[i]);
+      mpz_add(norm, norm, sqr);
+   }
+
+   mpz_sqrtrem(norm, sqr, norm);
+   if (mpz_sgn(sqr) != 0L) mpz_add_ui(norm, norm, 1L);
+
+   mpz_clear(sqr);
+}
 
 /****************************************************************************
 
