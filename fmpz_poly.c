@@ -8546,13 +8546,19 @@ void fmpz_poly_invmod_modular(fmpz_poly_t H, fmpz_poly_t poly1, fmpz_poly_t poly
       return;
    }
 
-   unsigned long bound = fmpz_poly_resultant_bound(poly1, poly2) + 2;
+   //unsigned long bound = fmpz_poly_resultant_bound(poly1, poly2) + 2;
    
-   fmpz_t res = fmpz_init(bound/FLINT_BITS + 2);
+   //fmpz_t res = fmpz_init(bound/FLINT_BITS + 2);
    
-   fmpz_poly_resultant(res, poly1, poly2);
+   //fmpz_poly_resultant(res, poly1, poly2);
 
-   if (res[0] == 0)
+   /*if (res[0] == 0)
+   {
+      printf("Error: divide by zero!\n");
+      abort();
+   }*/
+
+   if ((poly1->length == 0) || (poly2->length == 0)) 
    {
       printf("Error: divide by zero!\n");
       abort();
@@ -8592,15 +8598,16 @@ void fmpz_poly_invmod_modular(fmpz_poly_t H, fmpz_poly_t poly1, fmpz_poly_t poly
       zmod_poly_init(b, p);
       zmod_poly_init(h, p);
 
-      unsigned long r = fmpz_mod_ui(res, p);
+      fmpz_poly_to_zmod_poly(a, A);
+      fmpz_poly_to_zmod_poly(b, B);
+      
+      unsigned long r = zmod_poly_resultant(a, b);//fmpz_mod_ui(res, p);
 
       if ((fmpz_mod_ui(_fmpz_poly_lead(A), p) == 0L) || (r == 0L))
       {
          continue;
       }
 
-      fmpz_poly_to_zmod_poly(a, A);
-      fmpz_poly_to_zmod_poly(b, B);
       unsigned long coprime = zmod_poly_gcd_invert(h, a, b);
       if (!coprime) 
       {

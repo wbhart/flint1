@@ -11199,6 +11199,7 @@ void fmpz_poly_test_all()
 {
    int success, all_success = 1;
    
+   RUN_TEST(fmpz_poly_invmod_modular);
 #if TESTFILE
    RUN_TEST(fmpz_poly_freadprint); 
 #endif
