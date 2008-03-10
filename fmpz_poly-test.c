@@ -38,7 +38,7 @@ Copyright (C) 2007, William Hart and David Harvey
 
 #define VARY_BITS 1
 #define SIGNS 1
-#define SPARSE 0
+#define SPARSE 1
 
 #define TESTFILE 0 // Set this to test polynomial reading and writing to a file in the current dir
 
@@ -10588,7 +10588,7 @@ int test_fmpz_poly_gcd_subresultant()
    mpz_poly_init(test_poly3); 
    mpz_poly_init(test_poly4); 
       
-   for (unsigned long count1 = 0; count1 < 3000; count1++)
+   for (unsigned long count1 = 0; (count1 < 3000) && (result == 1); count1++)
    {
       bits = random_ulong(1000) + 1;
       bits2 = random_ulong(1000) + 1;
@@ -10673,7 +10673,7 @@ int test_fmpz_poly_gcd_modular()
    mpz_poly_init(test_poly3); 
    mpz_poly_init(test_poly4); 
       
-   for (unsigned long count1 = 0; count1 < 3000; count1++)
+   for (unsigned long count1 = 0; (count1 < 3000) && (result == 1); count1++)
    {
       bits = random_ulong(100) + 1;
       bits2 = random_ulong(100) + 1;
@@ -10922,7 +10922,7 @@ int test_fmpz_poly_invmod_modular()
    mpz_poly_init(test_poly); 
    mpz_poly_init(test_poly2); 
       
-   for (unsigned long count1 = 0; (count1 < 50) && (result == 1); count1++)
+   for (unsigned long count1 = 0; (count1 < 500) && (result == 1); count1++)
    {
       bits = random_ulong(100) + 1;
       bits2 = random_ulong(100) + 1;
@@ -11150,7 +11150,7 @@ int test_fmpz_poly_resultant()
                }
             }
  
-            unsigned long bound = fmpz_poly_resultant_bound(pol1, pol2);
+            unsigned long bound = fmpz_poly_resultant_bound(pol1, pol2)+2;
             
             fmpz_t res = fmpz_init(bound/FLINT_BITS + 2);
             fmpz_poly_resultant(res, pol1, pol2);
@@ -11195,11 +11195,92 @@ int test_fmpz_poly_resultant()
    return result;
 }
 
+int test_fmpz_poly_xgcd_modular()
+{
+   mpz_poly_t test_poly, test_poly2;
+   fmpz_poly_t test_fmpz_poly, test_fmpz_poly2, test_fmpz_poly3, test_fmpz_poly4, test_fmpz_poly5;
+   
+   int result = 1;
+   unsigned long bits, bits2, length, length2;
+   
+   mpz_poly_init(test_poly); 
+   mpz_poly_init(test_poly2); 
+      
+   for (unsigned long count1 = 0; (count1 < 1000) && (result == 1); count1++)
+   {
+      bits = random_ulong(100) + 1;
+      bits2 = random_ulong(100) + 1;
+      length2 = random_ulong(30)+1; 
+      length = random_ulong(30)+1;   
+      
+      fmpz_poly_init(test_fmpz_poly);
+      fmpz_poly_init(test_fmpz_poly2);
+      fmpz_poly_init(test_fmpz_poly3);
+      fmpz_poly_init(test_fmpz_poly4);
+      fmpz_poly_init(test_fmpz_poly5);
+
+#if DEBUG
+      printf("%ld, %ld, %ld, %ld\n", length, length2, bits, bits2);
+#endif
+      mpz_poly_realloc(test_poly, length);
+      mpz_poly_realloc(test_poly2, length2);
+      
+      for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
+      { 
+         do
+         {
+            randpoly(test_poly, length, bits);
+            randpoly(test_poly2, length2, bits2);
+         
+            mpz_poly_to_fmpz_poly(test_fmpz_poly2, test_poly2);
+            mpz_poly_to_fmpz_poly(test_fmpz_poly, test_poly);
+            
+            fmpz_poly_primitive_part(test_fmpz_poly, test_fmpz_poly);
+            fmpz_poly_primitive_part(test_fmpz_poly2, test_fmpz_poly2);
+ 
+            fmpz_poly_gcd(test_fmpz_poly3, test_fmpz_poly, test_fmpz_poly2);
+         } while (test_fmpz_poly3->length > 1);
+
+         unsigned long bound = fmpz_poly_resultant_bound(test_fmpz_poly, test_fmpz_poly2)+2;
+         fmpz_t res = fmpz_init(bound/FLINT_BITS+2); 
+          
+         fmpz_poly_xgcd_modular(res, test_fmpz_poly3, test_fmpz_poly4, test_fmpz_poly, test_fmpz_poly2);
+         if (res[0] != 0L)
+         {
+            fmpz_poly_mul(test_fmpz_poly3, test_fmpz_poly3, test_fmpz_poly);         
+            fmpz_poly_mul(test_fmpz_poly4, test_fmpz_poly4, test_fmpz_poly2);         
+            fmpz_poly_add(test_fmpz_poly5, test_fmpz_poly3, test_fmpz_poly4);
+            result = ((test_fmpz_poly5->length == 1) && (fmpz_equal(test_fmpz_poly5->coeffs, res))); 
+         }
+
+#if DEBUG
+         if (!result)
+         {
+            printf("Resultant = "); fmpz_poly_print(test_fmpz_poly5); printf("\n\n");
+            printf("Resultant = "); fmpz_print(res); printf("\n\n");
+         }
+#endif    
+         fmpz_clear(res);             
+     }   
+   
+      fmpz_poly_clear(test_fmpz_poly5);
+      fmpz_poly_clear(test_fmpz_poly4);
+      fmpz_poly_clear(test_fmpz_poly3);
+      fmpz_poly_clear(test_fmpz_poly2);
+      fmpz_poly_clear(test_fmpz_poly);
+   
+   }
+   
+   mpz_poly_clear(test_poly);
+   mpz_poly_clear(test_poly2);
+   
+   return result;
+}
+
 void fmpz_poly_test_all()
 {
    int success, all_success = 1;
    
-   RUN_TEST(fmpz_poly_invmod_modular);
 #if TESTFILE
    RUN_TEST(fmpz_poly_freadprint); 
 #endif
@@ -11305,8 +11386,8 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_poly_gcd_modular);
    RUN_TEST(fmpz_poly_resultant);
    RUN_TEST(fmpz_poly_2norm);
-   RUN_TEST(fmpz_poly_resultant);
    RUN_TEST(fmpz_poly_invmod_modular);
+   RUN_TEST(fmpz_poly_xgcd_modular);
 
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");

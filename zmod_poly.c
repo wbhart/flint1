@@ -3171,7 +3171,7 @@ void zmod_poly_xgcd(zmod_poly_t res, zmod_poly_t s, zmod_poly_t t, zmod_poly_t p
    
    if (poly1->length == 1)
    {
-      z_gcd_invert(&a, poly1->coeffs[0], poly2->p);
+      a = z_invert(poly1->coeffs[0], poly2->p);
       zmod_poly_set_coeff(s, 0, a);
       s->length = 1;
       zmod_poly_set_coeff(res, 0, 1L);
@@ -3182,7 +3182,7 @@ void zmod_poly_xgcd(zmod_poly_t res, zmod_poly_t s, zmod_poly_t t, zmod_poly_t p
    
    if (poly2->length == 1)
    {
-      z_gcd_invert(&a, poly2->coeffs[0], poly2->p);
+      a = z_invert(poly2->coeffs[0], poly2->p);
       zmod_poly_set_coeff(t, 0, a);
       t->length = 1;
       zmod_poly_set_coeff(res, 0, 1L);
@@ -3250,7 +3250,11 @@ void zmod_poly_xgcd(zmod_poly_t res, zmod_poly_t s, zmod_poly_t t, zmod_poly_t p
 
    zmod_poly_set(s, u1);
    zmod_poly_set(t, v1);
+   zmod_poly_scalar_mul(s, s, z_invert(res->coeffs[res->length-1], p));
+   zmod_poly_scalar_mul(t, t, z_invert(res->coeffs[res->length-1], p));
 
+   zmod_poly_make_monic(res);
+   
    if (steps > 2) 
    {
       zmod_poly_clear(A);
