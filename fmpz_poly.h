@@ -1288,7 +1288,7 @@ void fmpz_poly_gcd_modular(fmpz_poly_t res, const fmpz_poly_t poly1, const fmpz_
 
 void fmpz_poly_gcd(fmpz_poly_t res, const fmpz_poly_t poly1, const fmpz_poly_t poly2);
 
-void fmpz_poly_invmod_modular(fmpz_poly_t H, fmpz_poly_t poly1, fmpz_poly_t poly2);
+void fmpz_poly_invmod_modular(fmpz_t d, fmpz_poly_t H, fmpz_poly_t poly1, fmpz_poly_t poly2);
 
 unsigned long fmpz_poly_resultant_bound(fmpz_poly_t a, fmpz_poly_t b);
 

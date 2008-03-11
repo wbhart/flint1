@@ -7902,6 +7902,14 @@ void fmpz_poly_power(fmpz_poly_t output, const fmpz_poly_t poly, const unsigned 
       output->length = 1;
       return;
    } 
+   if (poly->length == 1)
+   {
+      fmpz_poly_fit_length(output, 1);
+      fmpz_poly_fit_limbs(output, fmpz_size(poly->coeffs)*exp);
+      fmpz_pow_ui(output->coeffs, poly->coeffs, exp);
+      output->length = 1;
+      return;
+   }
    if (poly->length == 0)
    {
       fmpz_poly_fit_limbs(output, 1);
@@ -7963,13 +7971,13 @@ void fmpz_poly_power(fmpz_poly_t output, const fmpz_poly_t poly, const unsigned 
       fmpz_t pow;
       if (!(fmpz_is_one(coeff1) && fmpz_is_one(coeff2)))
       {
-         bits = FLINT_MAX(exp + (bits1+bits2)*((exp+1)/2), exp*bits);
+         bits = exp*(bits+1);
       } else
       {
          bits = exp;
       }
       
-      fmpz_poly_fit_limbs(output, (bits-1)/FLINT_BITS+1);
+      fmpz_poly_fit_limbs(output, (bits-1)/FLINT_BITS+2);
       
       long i;
       unsigned long cbits;
@@ -7996,7 +8004,6 @@ void fmpz_poly_power(fmpz_poly_t output, const fmpz_poly_t poly, const unsigned 
             coeff_out = output->coeffs + exp*(output->limbs+1);   
             for (i = exp-1; i >= 0; i--)
             {
-               fmpz_poly_fit_limbs(output, (bits1 + fmpz_bits(coeff_out) - 1)/FLINT_BITS + 2);
                coeff_out = output->coeffs + i*(output->limbs+1);   
                last_coeff = coeff_out + output->limbs+1;
                fmpz_binomial_next(coeff_out, last_coeff, exp, exp - i);
@@ -8014,7 +8021,6 @@ void fmpz_poly_power(fmpz_poly_t output, const fmpz_poly_t poly, const unsigned 
             for (i = 1; i <= exp; i++)
             {
                output->length++;
-               fmpz_poly_fit_limbs(output, (bits2 + fmpz_bits(coeff_out) - 1)/FLINT_BITS + 2);
                coeff_out = output->coeffs + i*(output->limbs+1);   
                last_coeff = coeff_out - output->limbs - 1;
                fmpz_binomial_next(coeff_out, last_coeff, exp, i);
@@ -8022,14 +8028,12 @@ void fmpz_poly_power(fmpz_poly_t output, const fmpz_poly_t poly, const unsigned 
             }
          } else
          {
-            fmpz_poly_fit_limbs(output, (bits1*exp - 1)/FLINT_BITS + 1);
             coeff_out = output->coeffs;
             fmpz_pow_ui(coeff_out, coeff1, exp);
                
             for (i = 1; i <= exp; i++)
             {
                output->length++;
-               fmpz_poly_fit_limbs(output, (bits2 - bits1 + fmpz_bits(coeff_out) - 1)/FLINT_BITS + 2);
                coeff_out = output->coeffs + i*(output->limbs+1);   
                last_coeff = coeff_out - output->limbs - 1;
                fmpz_tdiv(coeff_out, last_coeff, coeff1);
@@ -8530,17 +8534,19 @@ void fmpz_poly_gcd(fmpz_poly_t res, const fmpz_poly_t poly1, const fmpz_poly_t p
 }
 
 /*
-   Invert poly1 modulo poly2 
+   Invert poly1 modulo poly2 with denominator (not guaranteed to be the resultant)
+   i.e. H*poly1 = d modulo poly2
    Assumes poly1 is reduced modulo poly2, which is monic and irreducible
-   Assumes poly1 has trivial content
+   Assumes d has enough space to store fmpz_poly_resultant_bound(poly1, poly2)/FLINT_BITS + 2 limbs
 */
 
-void fmpz_poly_invmod_modular(fmpz_poly_t H, fmpz_poly_t poly1, fmpz_poly_t poly2)
+void fmpz_poly_invmod_modular(fmpz_t d, fmpz_poly_t H, fmpz_poly_t poly1, fmpz_poly_t poly2)
 {
    FLINT_ASSERT(poly2->length > poly1->length);
    
    if ((poly1->length == 1) && (poly2->length > 1))
    {
+      fmpz_set(d, poly1->coeffs);
       fmpz_poly_set_coeff_ui(H, 0, 1L);
       H->length = 1;
       return;
@@ -8558,6 +8564,11 @@ void fmpz_poly_invmod_modular(fmpz_poly_t H, fmpz_poly_t poly1, fmpz_poly_t poly
    
    fmpz_poly_set(A, poly1);
    fmpz_poly_set(B, poly2);
+
+   fmpz_poly_t prod, quot, rem;
+   fmpz_poly_init(prod);
+   fmpz_poly_init(quot);
+   fmpz_poly_init(rem);
    
    unsigned long p = (1L<<(FLINT_BITS-2));
    
@@ -8620,7 +8631,13 @@ void fmpz_poly_invmod_modular(fmpz_poly_t H, fmpz_poly_t poly1, fmpz_poly_t poly
          fmpz_poly_scalar_div_fmpz(H, H, hc);
          fmpz_clear(hc); // release hc
          fmpz_clear(newmod); // release newmod
-         break;
+         fmpz_poly_mul(prod, H, poly1);
+         fmpz_poly_divrem(quot, rem, prod, poly2);
+         if (rem->length == 1)
+         {
+            fmpz_set(d, rem->coeffs);
+            break;
+         }
       }
       
       if (newmod[0] >= modsize) 
@@ -8636,7 +8653,11 @@ void fmpz_poly_invmod_modular(fmpz_poly_t H, fmpz_poly_t poly1, fmpz_poly_t poly
    zmod_poly_clear(b);
    zmod_poly_clear(h); 
        
-   fmpz_poly_clear(A);
+   fmpz_poly_clear(quot);
+   fmpz_poly_clear(rem);
+   fmpz_poly_clear(prod);
+   
+fmpz_poly_clear(A);
    fmpz_poly_clear(B);
    fmpz_poly_clear(Q);
    fmpz_clear(modulus);

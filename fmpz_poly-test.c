@@ -10965,12 +10965,15 @@ int test_fmpz_poly_invmod_modular()
          printf("length1 = %ld, length2 = %ld, bits1 = %ld, bits2 = %ld\n", test_fmpz_poly->length, test_fmpz_poly2->length, bits, bits2);
 #endif
          
-         fmpz_poly_invmod_modular(test_fmpz_poly4, test_fmpz_poly, test_fmpz_poly2);
+         fmpz_t d = fmpz_init(fmpz_poly_resultant_bound(test_fmpz_poly, test_fmpz_poly2)/FLINT_BITS+2);
+         fmpz_poly_invmod_modular(d, test_fmpz_poly4, test_fmpz_poly, test_fmpz_poly2);
          
          fmpz_poly_mul(test_fmpz_poly5, test_fmpz_poly4, test_fmpz_poly);
          fmpz_poly_divrem(test_fmpz_poly3, test_fmpz_poly, test_fmpz_poly5, test_fmpz_poly2);
          
-         result = (test_fmpz_poly->length == 1); 
+         result = ((test_fmpz_poly->length == 1) && (fmpz_equal(d, test_fmpz_poly->coeffs))); 
+    
+         fmpz_clear(d);
 
 #if DEBUG
          if (!result)
@@ -11280,7 +11283,8 @@ int test_fmpz_poly_xgcd_modular()
 void fmpz_poly_test_all()
 {
    int success, all_success = 1;
-   
+   printf("bits = %ld\n", FLINT_BITS);
+
 #if TESTFILE
    RUN_TEST(fmpz_poly_freadprint); 
 #endif
