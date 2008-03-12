@@ -366,6 +366,15 @@ Coefficients are numbered from zero, starting with the constant coefficient.
 Returns NULL when $n >= $ \code{poly->length}. 
 \end{quote}
 
+\begin{lstlisting}
+fmpz_t fmpz_poly_lead(const fmpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Return a reference to leading coefficient (as an \code{fmpz_t}) of \code{poly}. This function is provided so that the leading coefficient can be easily accessed and operated on by functions in the \code{fmpz} module. This function does not make a copy of the data, but returns a reference to the actual coefficient.
+
+Returns NULL when the polynomial has length zero. 
+\end{quote}
+
 \subsection{String conversions and I/O}
 
 The functions in this section are not intended to be particularly fast. They are intended mainly as a debugging aid.
@@ -445,7 +454,6 @@ Read a polynomial from \code{stdin}. Return 1 if the data read from \code{stdin}
 
 \begin{lstlisting}
 long fmpz_poly_degree(const fmpz_poly_t poly)
-long _fmpz_poly_degree(const fmpz_poly_t poly)
 \end{lstlisting}
 \begin{quote}
 Return \code{poly->length - 1}. The zero polynomial is defined to have degree $-1$.
@@ -453,7 +461,6 @@ Return \code{poly->length - 1}. The zero polynomial is defined to have degree $-
 
 \begin{lstlisting}
 unsigned long fmpz_poly_length(const fmpz_poly_t poly)
-unsigned long _fmpz_poly_length(const fmpz_poly_t poly)
 \end{lstlisting}
 \begin{quote}
 Return \code{poly->length}. The zero polynomial is defined to have length $0$.
@@ -532,13 +539,50 @@ void fmpz_poly_reverse(fmpz_poly_t output, const fmpz_poly_t poly,
 This function considers the polynomial \code{poly} to be of length $n$, notionally truncating and zero padding if required, and reverses the result. Since this function normalises its result the eventual length of \code{output} may be less than \code{length}.
 \end{quote}
 
-%\subsection{Conversions}
+\subsection{Conversions}
 
-%\begin{lstlisting}
-%\end{lstlisting}
-%\begin{quote}
-%\end{quote}
+\begin{lstlisting}
+void fmpz_poly_to_zmod_poly(zmod_poly_t zpol, fmpz_poly_t fpol)
+\end{lstlisting}
+\begin{quote}
+Reduce each of the coefficients of the \code{fmpz_poly_t fpol} modulo the modulus of the \code{zmod_poly_t zpol} and store the result in \code{zpol}.
 
+This function is provided to enable the implementation of multimodular algorithms.
+\end{quote}
+
+\begin{lstlisting}
+void zmod_poly_to_fmpz_poly_unsigned(fmpz_poly_t fpol, zmod_poly_t zpol)\end{lstlisting}
+\begin{quote}
+Convert the \code{zmod_poly_t zpol} to an \code{fmpz_poly_t}. The coefficients of the resulting \code{fmpz_poly_t} will all be unsigned.
+\end{quote}
+
+\begin{lstlisting}
+void zmod_poly_to_fmpz_poly(fmpz_poly_t fpol, zmod_poly_t zpol)\end{lstlisting}
+\begin{quote}
+Convert the \code{zmod_poly_t zpol} to an \code{fmpz_poly_t}. If \code{p} is the modulus of \code{zpol} then coefficients which lie in $[0, p/2]$ are unchanged, however, coefficients $a$ in the range $(p/2, p)$ become $a - p$.
+
+This function is provided to enable the implementation of multimodular algorithms.
+\end{quote}
+
+\subsection{Chinese remaindering}
+
+\begin{lstlisting}
+int fmpz_poly_CRT_unsigned(fmpz_poly_t res, fmpz_poly_t fpol, zmod_poly_t zpol, 
+                                                fmpz_t newmod, fmpz_t oldmod)
+\end{lstlisting}
+\begin{quote}
+Performs modular recombination using the Chinese Remainder Theorem. If \code{zpol} has modulus $p$, \code{newmod} is set equal to \code{oldmod*p} and each coefficient of \code{res} is set to the unique value modulo \code{newmod}, in the range $[0, newmod)$ which is $a$ modulo \code{oldmod} and $b$ modulo $p$, where $a$ is the coefficient of \code{fpol} and $b$ is the corresponding coefficient of \code{zpol}.
+
+The coefficients of \code{fpol} are assumed to be unsigned. 
+\end{quote}
+
+\begin{lstlisting}
+int fmpz_poly_CRT(fmpz_poly_t res, fmpz_poly_t fpol, zmod_poly_t zpol, 
+                                                fmpz_t newmod, fmpz_t oldmod)
+\end{lstlisting}
+\begin{quote}
+Performs modular recombination using the Chinese Remainder Theorem. If \code{zpol} has modulus $p$, \code{newmod} is set equal to \code{oldmod*p} and each coefficient of \code{res} is set to the unique value modulo \code{newmod}, in the range $(-newmod/2, newmod/2]$ which is $a$ modulo \code{oldmod} and $b$ modulo $p$, where $a$ is the coefficient of \code{fpol} and $b$ is the corresponding coefficient of \code{zpol}. 
+\end{quote}
 
 \subsection{Comparison}
 
@@ -571,6 +615,15 @@ void fmpz_poly_right_shift(fmpz_poly_t output,
 Shift poly to the right by $n$ coefficients (divide by $x^n$ and discard the remainder) and write the result to \code{output}. 
 
 The parameter $n$ must be non-negative, but can be zero. Shifting right by more than the current length of the polynomial results in the zero polynomial.
+\end{quote}
+
+
+\subsection{Norms}
+
+\begin{lstlisting}
+void fmpz_poly_2norm(fmpz_t norm, fmpz_poly_t pol)\end{lstlisting}
+\begin{quote}
+Sets \code{norm} to the euclidean norm of \code{pol}, i.e. the integer square root of the sum of the squares of the coefficients of \code{pol}.
 \end{quote}
 
 
@@ -817,8 +870,58 @@ This function can be used to raise power series to a power in an efficient way.
 void fmpz_poly_content(fmpz_t c, fmpz_poly_t poly)
 \end{lstlisting}
 \begin{quote}
-Set the \code{fmpz_t c} to the Gaussian content of the polynomial \code{poly}, i.e. to the greatest common divisor of its coefficients.
+Set the \code{fmpz_t c} to the gaussian content of the polynomial \code{poly}, i.e. to the greatest common divisor of its coefficients.
 \end{quote}
+
+\begin{lstlisting}
+void _fmpz_poly_primitive_part(fmpz_poly_t prim, fmpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Set \code{prim} to the primitive part of the polynomial \code{poly}, i.e. to \code{poly} divided by its gaussian content.
+\end{quote}
+
+\subsection{Greatest common divisor and resultant}
+\begin{lstlisting}
+void fmpz_poly_gcd(fmpz_poly_t res, const fmpz_poly_t poly1, const fmpz_poly_t poly2)
+\end{lstlisting}
+\begin{quote}
+Sets \code{res} to the greatest common divisor of the polynomials \code{poly1} and \code{poly2}.
+\end{quote}
+
+\begin{lstlisting}
+unsigned long fmpz_poly_resultant_bound(fmpz_poly_t a, fmpz_poly_t b)
+void fmpz_poly_resultant(fmpz_t r, fmpz_poly_t a, fmpz_poly_t b)\end{lstlisting}
+\begin{quote}
+Compute the resultant of the polynomials \code{a} and \code{b}. If \code{a} and \code{b} are monic with $a(x) = \prod_i (x - \alpha_i)$ and $b(x) = \prod_j (x - \beta_j)$ then the resultant is given by the expression $r(x) = \prod_{i,j} (\alpha_i - \beta_j)$. If the polynomials are not monic, and \code{a} and \code{b} have leading coefficients $l_1$ and $l_2$ and degrees $d_1$ and $d_2$ respectively, then this quantity is multiplied by $l_1^{d_2-1}l_2^{d_1-1}$.
+
+Note that the resultant is zero iff the polynomials share a root over the algebraic closure of $\Q$.
+
+Currently it is necessary to ensure \code{r} has sufficient space to store the result. The function \code{fmpz_poly_resultant_bound} is used to determine a bit bound on the number of bits \code{b} required and \code{r} must have space for \code{b/FLINT_BITS + 2} limbs.
+
+In a future version of FLINT, this computation will not be necessary.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_poly_xgcd_modular(fmpz_t r, fmpz_poly_t s, fmpz_poly_t t, fmpz_poly_t a, fmpz_poly_t b)
+\end{lstlisting}
+\begin{quote}
+Given coprime polynomials \code{a} and \code{b} this function computes polynomials \code{s} and \code{t} and the resultant \code{r} of the polynomials such that \code{r = a*s + b*t}.
+
+See the function \code{fmpz_poly_resultant} for information on how large \code{r} needs to be to hold the result.
+\end{quote}
+
+\subsection{Modular arithmetic}
+\begin{lstlisting}
+void fmpz_poly_invmod_modular(fmpz_t d, fmpz_poly_t H, fmpz_poly_t poly1, fmpz_poly_t poly2)
+\end{lstlisting}
+\begin{quote}
+Computes a polynomial \code{H} and a denominator \code{d} such that \code{poly1*H} is \code{d} modulo \code{poly2}. 
+
+Assumes that \code{poly1} and \code{poly2} are coprime and that \code{poly2} is monic.
+\end{quote}
+
+
+
 
 \section{The fmpz module}
 The \code{fmpz} module is designed for manipulation of the FLINT flat multiprecision integer format \code{fmpz_t}. 

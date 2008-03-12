@@ -1833,9 +1833,11 @@ void _zmod_poly_bit_unpack_mpn(zmod_poly_t res, mp_limb_t * mpn, unsigned long l
              //print_limb("temp_upper |= temp_lower", temp_upper);
              temp_upper &= mask;
              //print_limb("temp_upper &= mask      ", temp_upper);
+#if FLINT_BITS == 64
              if (bits <= FLINT_D_BITS)
                 _zmod_poly_set_coeff(res, i, z_mod_precomp(temp_upper, res->p, res->p_inv));
              else 
+#endif
                 _zmod_poly_set_coeff(res, i, z_mod2_precomp(temp_upper, res->p, res->p_inv));
              
              current_bit = bits + current_bit - FLINT_BITS;

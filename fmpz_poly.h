@@ -339,6 +339,13 @@ fmpz_t _fmpz_poly_lead(const fmpz_poly_t poly)
    return poly->coeffs+(poly->length-1)*(poly->limbs+1);
 }
 
+static inline
+fmpz_t fmpz_poly_lead(const fmpz_poly_t poly)
+{
+   if (poly->length == 0) return NULL;
+   return poly->coeffs+(poly->length-1)*(poly->limbs+1);
+}
+
 /* 
    Set "output" to the given coefficient and return the sign
    Assumes length of output is poly->limbs limbs long.  
