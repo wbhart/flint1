@@ -722,6 +722,7 @@ This function is more efficient than multiplying the two polynomials then trunca
 \begin{lstlisting}
 void fmpz_poly_mul_trunc_left_n(fmpz_poly_t output, 
      const fmpz_poly_t poly1, const fmpz_poly_t poly2, unsigned long n) 
+\end{lstlisting}
 \begin{quote}
 Multiply the two given polynomials storing the result in \code{output}. This function guarantees all the coefficients except the first $n$, which may be arbitrary. This is sometimes known as an opposite short product.
 
