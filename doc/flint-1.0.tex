@@ -882,7 +882,8 @@ Set \code{prim} to the primitive part of the polynomial \code{poly}, i.e. to \co
 
 \subsection{Greatest common divisor and resultant}
 \begin{lstlisting}
-void fmpz_poly_gcd(fmpz_poly_t res, const fmpz_poly_t poly1, const fmpz_poly_t poly2)
+void fmpz_poly_gcd(fmpz_poly_t res, const fmpz_poly_t poly1, 
+                                             const fmpz_poly_t poly2)
 \end{lstlisting}
 \begin{quote}
 Sets \code{res} to the greatest common divisor of the polynomials \code{poly1} and \code{poly2}.
@@ -890,7 +891,8 @@ Sets \code{res} to the greatest common divisor of the polynomials \code{poly1} a
 
 \begin{lstlisting}
 unsigned long fmpz_poly_resultant_bound(fmpz_poly_t a, fmpz_poly_t b)
-void fmpz_poly_resultant(fmpz_t r, fmpz_poly_t a, fmpz_poly_t b)\end{lstlisting}
+void fmpz_poly_resultant(fmpz_t r, fmpz_poly_t a, fmpz_poly_t b)
+\end{lstlisting}
 \begin{quote}
 Compute the resultant of the polynomials \code{a} and \code{b}. If \code{a} and \code{b} are monic with $a(x) = \prod_i (x - \alpha_i)$ and $b(x) = \prod_j (x - \beta_j)$ then the resultant is given by the expression $r(x) = \prod_{i,j} (\alpha_i - \beta_j)$. If the polynomials are not monic, and \code{a} and \code{b} have leading coefficients $l_1$ and $l_2$ and degrees $d_1$ and $d_2$ respectively, then this quantity is multiplied by $l_1^{d_2-1}l_2^{d_1-1}$.
 
@@ -902,7 +904,8 @@ In a future version of FLINT, this computation will not be necessary.
 \end{quote}
 
 \begin{lstlisting}
-void fmpz_poly_xgcd_modular(fmpz_t r, fmpz_poly_t s, fmpz_poly_t t, fmpz_poly_t a, fmpz_poly_t b)
+void fmpz_poly_xgcd(fmpz_t r, fmpz_poly_t s, fmpz_poly_t t, 
+                                          fmpz_poly_t a, fmpz_poly_t b)
 \end{lstlisting}
 \begin{quote}
 Given coprime polynomials \code{a} and \code{b} this function computes polynomials \code{s} and \code{t} and the resultant \code{r} of the polynomials such that \code{r = a*s + b*t}.
@@ -912,16 +915,14 @@ See the function \code{fmpz_poly_resultant} for information on how large \code{r
 
 \subsection{Modular arithmetic}
 \begin{lstlisting}
-void fmpz_poly_invmod_modular(fmpz_t d, fmpz_poly_t H, fmpz_poly_t poly1, fmpz_poly_t poly2)
+void fmpz_poly_invmod(fmpz_t d, fmpz_poly_t H, fmpz_poly_t poly1, 
+                                                    fmpz_poly_t poly2)
 \end{lstlisting}
 \begin{quote}
 Computes a polynomial \code{H} and a denominator \code{d} such that \code{poly1*H} is \code{d} modulo \code{poly2}. 
 
 Assumes that \code{poly1} and \code{poly2} are coprime and that \code{poly2} is monic.
 \end{quote}
-
-
-
 
 \section{The fmpz module}
 The \code{fmpz} module is designed for manipulation of the FLINT flat multiprecision integer format \code{fmpz_t}. 
