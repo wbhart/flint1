@@ -162,9 +162,6 @@ unsigned long z_powmod(unsigned long a, long exp, unsigned long n);
                                                     
 unsigned long z_sqrtmod(unsigned long a, unsigned long p); 
 
-unsigned long z_cuberootmod(unsigned long * cuberoot1, unsigned long a, 
-       unsigned long p);
-
 unsigned long z_cuberootmod(unsigned long * cuberoot1, 
                                unsigned long a, unsigned long p);
 

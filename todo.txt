@@ -265,3 +265,7 @@ to improve locality.
 
 * Check that aliasing checks both poly1 == poly2 and poly1->length == poly2->length for unmanaged functions, 
   but only the former for managed functions.
+
+* Remove NTL as a build dependency of FLINT
+
+* Make the functions which read a polynomial from a string, set the size of the coefficients before reading in).

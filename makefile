@@ -80,11 +80,11 @@ QS: mpQS tinyQS
 
 tune: ZmodF_mul-tune mpz_poly-tune 
 
-test: mpn_extras-test fmpz_poly-test fmpz-test ZmodF-test ZmodF_poly-test mpz_poly-test ZmodF_mul-test long_extras-test 
+test: mpn_extras-test fmpz_poly-test fmpz-test ZmodF-test ZmodF_poly-test mpz_poly-test ZmodF_mul-test long_extras-test zmod_poly-test 
 
 profile: ZmodF_poly-profile kara-profile fmpz_poly-profile mpz_poly-profile ZmodF_mul-profile 
 
-examples: delta_qexp BPTJCubes bernoulli F_mpz_mul-timing expmod
+examples: delta_qexp BPTJCubes bernoulli_zmod F_mpz_mul-timing expmod
 
 all: QS tune test profile examples
 
