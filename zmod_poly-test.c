@@ -1563,7 +1563,7 @@ int test_zmod_poly_resultant_euclidean()
 
             for (unsigned long i = 0; i < r2; i++)
             {
-               zmod_poly_set_coeff(lin, 0, z_mod_sub(0, roots2[i], modulus));
+               zmod_poly_set_coeff(lin, 0, z_submod(0, roots2[i], modulus));
                zmod_poly_mul(pol2, pol2, lin);
             }
 
@@ -1574,7 +1574,7 @@ int test_zmod_poly_resultant_euclidean()
             {
                for (unsigned long j = 0; j < r2; j++)
                {
-                  res1 = z_mulmod2_precomp(res1, z_mod_sub(roots1[i], roots2[j], modulus), modulus, pol1->p_inv);
+                  res1 = z_mulmod2_precomp(res1, z_submod(roots1[i], roots2[j], modulus), modulus, pol1->p_inv);
                }
             }
  
