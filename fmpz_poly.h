@@ -442,8 +442,6 @@ unsigned long _fmpz_poly_limbs(const fmpz_poly_t poly)
 
 void _fmpz_poly_set(fmpz_poly_t output, const fmpz_poly_t input);
 
-void _fmpz_poly_swap(fmpz_poly_t x, fmpz_poly_t y);
-
 /* 
    Zero the polynomial by setting the length to zero.
    Does not set the actual limbs to zero.
@@ -662,6 +660,12 @@ unsigned long fmpz_poly_length(const fmpz_poly_t poly)
    return poly->length;
 }
 
+static inline
+long fmpz_poly_max_bits1(const fmpz_poly_t poly)
+{
+   return _fmpz_poly_max_bits1(poly);
+}
+
 static inline 
 long fmpz_poly_max_bits(const fmpz_poly_t poly)
 {
@@ -686,6 +690,7 @@ static inline
 void fmpz_poly_swap(fmpz_poly_t x, fmpz_poly_t y)
 {
    if (x == y) return;
+   fmpz_t temp_p;
    
    mp_limb_t temp_l;
    
@@ -693,7 +698,17 @@ void fmpz_poly_swap(fmpz_poly_t x, fmpz_poly_t y)
    x->alloc = y->alloc;
    y->alloc = temp_l;
    
-   _fmpz_poly_swap(x, y);
+   temp_p = x->coeffs;
+   x->coeffs = y->coeffs;
+   y->coeffs = temp_p;
+   
+   temp_l = x->length;
+   x->length = y->length;
+   y->length = temp_l;
+   
+   temp_l = x->limbs;
+   x->limbs = y->limbs;
+   y->limbs = temp_l;
 }
 
 
@@ -866,12 +881,6 @@ void fmpz_poly_zero_coeffs(fmpz_poly_t poly, const unsigned long n)
       return;
    }
    _fmpz_poly_zero_coeffs(poly, n);
-}
-
-static inline
-long fmpz_poly_max_bits1(const fmpz_poly_t poly)
-{
-   return _fmpz_poly_max_bits1(poly);
 }
 
 static inline
@@ -1268,6 +1277,21 @@ void fmpz_poly_pseudo_div(fmpz_poly_t Q, unsigned long * d,
 void fmpz_poly_content(fmpz_t c, fmpz_poly_t poly);
 
 static inline
+void _fmpz_poly_primitive_part(fmpz_poly_t prim, fmpz_poly_t poly)
+{
+   if (poly->length == 0)
+   {
+      _fmpz_poly_zero(prim);
+      return;
+   }
+
+   fmpz_t c = fmpz_init(poly->limbs);
+   _fmpz_poly_content(c, poly);
+   _fmpz_poly_scalar_div_fmpz(prim, poly, c);
+   fmpz_clear(c);
+}
+
+static inline
 void fmpz_poly_primitive_part(fmpz_poly_t prim, fmpz_poly_t poly)
 {
    if (poly->length == 0)
@@ -1276,10 +1300,10 @@ void fmpz_poly_primitive_part(fmpz_poly_t prim, fmpz_poly_t poly)
       return;
    }
 
-   fmpz_t c = fmpz_stack_init(poly->limbs);
+   fmpz_t c = fmpz_init(poly->limbs);
    fmpz_poly_content(c, poly);
    fmpz_poly_scalar_div_fmpz(prim, poly, c);
-   fmpz_stack_release();
+   fmpz_clear(c);
 }
 
 void fmpz_poly_gcd_subresultant(fmpz_poly_t res, const fmpz_poly_t poly1, const fmpz_poly_t poly2);
@@ -1290,11 +1314,23 @@ void fmpz_poly_gcd(fmpz_poly_t res, const fmpz_poly_t poly1, const fmpz_poly_t p
 
 void fmpz_poly_invmod_modular(fmpz_t d, fmpz_poly_t H, fmpz_poly_t poly1, fmpz_poly_t poly2);
 
+static inline
+void fmpz_poly_invmod(fmpz_t d, fmpz_poly_t H, fmpz_poly_t poly1, fmpz_poly_t poly2)
+{
+   fmpz_poly_invmod_modular(d, H, poly1, poly2);
+}
+
 unsigned long fmpz_poly_resultant_bound(fmpz_poly_t a, fmpz_poly_t b);
 
 void fmpz_poly_resultant(fmpz_t res, fmpz_poly_t a, fmpz_poly_t b);
 
 void fmpz_poly_xgcd_modular(fmpz_t r, fmpz_poly_t s, fmpz_poly_t t, fmpz_poly_t a, fmpz_poly_t b);
+
+static inline
+void fmpz_poly_xgcd(fmpz_t r, fmpz_poly_t s, fmpz_poly_t t, fmpz_poly_t a, fmpz_poly_t b)
+{
+   fmpz_poly_xgcd_modular(r, s, t, a, b);
+}
 
 // *************** end of file
 

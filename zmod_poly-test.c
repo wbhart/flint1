@@ -133,7 +133,7 @@ void randpoly(zmod_poly_t poly, long length, unsigned long n)
       poly->coeffs[i] = randint(n);
    poly->length = length;
       
-   zmod_poly_normalise(poly);
+   __zmod_poly_normalise(poly);
 } 
 
 #define RUN_TEST(targetfunc) \
@@ -633,7 +633,7 @@ int test_zmod_poly_mul_classical_trunc()
             randpoly(pol2, length2, modulus);
          
             zmod_poly_mul_classical(res1, pol1, pol2);
-            zmod_poly_truncate(res1, res1, trunc);
+            zmod_poly_truncate(res1, trunc);
             zmod_poly_mul_classical_trunc(res2, pol1, pol2, trunc);
             
             result &= zmod_poly_equal(res1, res2);
@@ -693,7 +693,7 @@ int test_zmod_poly_mul_KS_trunc()
             randpoly(pol2, length2, modulus);
          
             zmod_poly_mul_KS(res1, pol1, pol2, 0);
-            zmod_poly_truncate(res1, res1, trunc);
+            zmod_poly_truncate(res1, trunc);
             zmod_poly_mul_KS_trunc(res2, pol1, pol2, 0, trunc);
             
             result &= zmod_poly_equal(res1, res2);

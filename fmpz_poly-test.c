@@ -10766,8 +10766,8 @@ int test_fmpz_poly_CRT_unsigned()
       
        unsigned long * primes = flint_stack_alloc((long) FLINT_MAX(bits-1, 0)/(FLINT_BITS-2)+1);      
        unsigned long num_primes = 0;
-       fmpz_t modulus = fmpz_stack_init((long) FLINT_MAX(bits-1, 0)/FLINT_BITS+2);
-       fmpz_t new_modulus = fmpz_stack_init((long) FLINT_MAX(bits-1, 0)/FLINT_BITS+2);
+       fmpz_t modulus = fmpz_init((long) FLINT_MAX(bits-1, 0)/FLINT_BITS+2);
+       fmpz_t new_modulus = fmpz_init((long) FLINT_MAX(bits-1, 0)/FLINT_BITS+2);
        
        primes[0] = z_nextprime(1L<<(FLINT_BITS-2));
        fmpz_set_ui(modulus, primes[0]);
@@ -10809,8 +10809,8 @@ int test_fmpz_poly_CRT_unsigned()
 #endif
        
        zmod_poly_clear(zpol);
-       fmpz_stack_release();
-       flint_stack_release();
+       fmpz_clear(modulus);
+       fmpz_clear(new_modulus);
        flint_stack_release();
    }
    
@@ -10847,8 +10847,8 @@ int test_fmpz_poly_CRT()
       
        unsigned long * primes = flint_stack_alloc((long) FLINT_MAX(bits, 0)/(FLINT_BITS-2)+1);      
        unsigned long num_primes = 0;
-       fmpz_t modulus = fmpz_stack_init((long) FLINT_MAX(bits, 0)/FLINT_BITS+2);
-       fmpz_t new_modulus = fmpz_stack_init((long) FLINT_MAX(bits, 0)/FLINT_BITS+2);
+       fmpz_t modulus = fmpz_init((long) FLINT_MAX(bits, 0)/FLINT_BITS+2);
+       fmpz_t new_modulus = fmpz_init((long) FLINT_MAX(bits, 0)/FLINT_BITS+2);
        
        primes[0] = z_nextprime(1L<<(FLINT_BITS-2));
        fmpz_set_ui(modulus, primes[0]);
@@ -10900,8 +10900,8 @@ int test_fmpz_poly_CRT()
 #endif
        
        zmod_poly_clear(zpol);
-       fmpz_stack_release();
-       fmpz_stack_release();
+       fmpz_clear(modulus);
+       fmpz_clear(new_modulus);
        flint_stack_release();
    }
    

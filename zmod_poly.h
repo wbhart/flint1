@@ -126,10 +126,9 @@ int zmod_poly_fread(zmod_poly_t poly, FILE* f);
 // ------------------------------------------------------
 // Length and degree
 
-void zmod_poly_normalise(zmod_poly_t poly);
-int zmod_poly_normalised(zmod_poly_t poly);
-void zmod_poly_pad(zmod_poly_t poly, unsigned long length);
-void zmod_poly_truncate(zmod_poly_t res, zmod_poly_t poly, unsigned long length);
+void __zmod_poly_normalise(zmod_poly_t poly);
+int __zmod_poly_normalised(zmod_poly_t poly);
+void zmod_poly_truncate(zmod_poly_t poly, unsigned long length);
 
 
 static inline
@@ -153,7 +152,7 @@ unsigned long zmod_poly_modulus(zmod_poly_t poly)
 }
 
 static inline
-double zmod_poly_mod_precomputed_inverse(zmod_poly_t poly)
+double zmod_poly_precomputed_inverse(zmod_poly_t poly)
 {
    return poly->p_inv;
 }
@@ -242,7 +241,7 @@ void _zmod_poly_attach_truncate(zmod_poly_t output,
    output->coeffs = input->coeffs;
    output->p = input->p;
    output->p_inv = input->p_inv;
-   zmod_poly_normalise(output);
+   __zmod_poly_normalise(output);
 }
 
 
@@ -270,7 +269,7 @@ void zmod_poly_reverse(zmod_poly_t output, zmod_poly_t input, unsigned long leng
    Monic polys
 */
 
-void zmod_poly_make_monic(zmod_poly_t pol);
+void zmod_poly_make_monic(zmod_poly_t output, zmod_poly_t pol);
 
 /*
    Addition and subtraction
@@ -331,8 +330,8 @@ void zmod_poly_mul_trunc_left_n(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t 
 */
 
 unsigned long zmod_poly_bits(zmod_poly_t poly);
-void zmod_poly_bit_pack_mpn(mp_limb_t * res, zmod_poly_t poly, unsigned long bits, unsigned long length);
-void zmod_poly_bit_unpack_mpn(zmod_poly_t poly, mp_limb_t *mpn, unsigned long length, unsigned long bits);
+void _zmod_poly_bit_pack_mpn(mp_limb_t * res, zmod_poly_t poly, unsigned long bits, unsigned long length);
+void _zmod_poly_bit_unpack_mpn(zmod_poly_t poly, mp_limb_t *mpn, unsigned long length, unsigned long bits);
 
 void print_binary(unsigned long n, unsigned long len);
 void print_binary2(unsigned long n, unsigned long len, unsigned long space_bit);

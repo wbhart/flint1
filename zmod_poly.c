@@ -99,7 +99,7 @@ void zmod_poly_realloc(zmod_poly_t poly, unsigned long alloc)
    if (poly->length > alloc)
    {
       poly->length = alloc;
-      zmod_poly_normalise(poly);
+      __zmod_poly_normalise(poly);
    }
 }
 
@@ -139,7 +139,7 @@ void zmod_poly_set_coeff(zmod_poly_t poly, unsigned long n, unsigned long c)
       {
          // set leading coefficient to zero
          poly->length--;
-         zmod_poly_normalise(poly);
+         __zmod_poly_normalise(poly);
       }
    }
    
@@ -200,7 +200,7 @@ int zmod_poly_from_string(zmod_poly_t poly, char* s)
       s += strcspn(s, whitespace);
    }
    
-   zmod_poly_normalise(poly);
+   __zmod_poly_normalise(poly);
    
    return 1;
 }
@@ -288,7 +288,7 @@ int zmod_poly_fread(zmod_poly_t poly, FILE* f)
       poly->length++;
    }
 
-   zmod_poly_normalise(poly);
+   __zmod_poly_normalise(poly);
    
    return 1;
 }
@@ -311,65 +311,27 @@ int zmod_poly_read(zmod_poly_t poly)
 ****************************************************************************/
 
 
-void zmod_poly_normalise(zmod_poly_t poly)
+void __zmod_poly_normalise(zmod_poly_t poly)
 {
    while (poly->length && (poly->coeffs[poly->length-1] == 0L))
       poly->length--;
 }
 
 
-int zmod_poly_normalised(zmod_poly_t poly)
+int __zmod_poly_normalised(zmod_poly_t poly)
 {
    return (poly->length == 0) || (poly->coeffs[poly->length-1] != 0L);
 }
 
 
-void zmod_poly_pad(zmod_poly_t poly, unsigned long length)
+void zmod_poly_truncate(zmod_poly_t poly, unsigned long length)
 {
-   zmod_poly_fit_length(poly, length);
+   // inplace truncation
 
-   if (poly->length < length)
-   {
-      for (unsigned long i = poly->length; i < length; i++)
-         poly->coeffs[i] = 0L;
-      poly->length = length;
-   }
-}
-
-
-void zmod_poly_truncate(zmod_poly_t res, zmod_poly_t poly, unsigned long length)
-{
-   if (poly == res)
-   {
-      // inplace truncation
-
-      if (length < poly->length)
+   if (length < poly->length)
          poly->length = length;
-   }
-   else
-   {
-      // copy and truncate
-
-      if (length > poly->length)
-      {
-         zmod_poly_set(res, poly);
-         return;
-      }
-
-      // todo: use mpz_init_set where appropriate
-      
-      zmod_poly_fit_length(res, length);
-
-      for (unsigned long i = 0; i < length; i++)
-         res->coeffs[i] = poly->coeffs[i];
-         
-      res->length = length;
-      
-      res->p = poly->p;
-      res->p_inv = poly->p_inv;
-   }
    
-   zmod_poly_normalise(res);
+   __zmod_poly_normalise(poly);
 }
 
 
@@ -456,7 +418,7 @@ void _zmod_poly_reverse(zmod_poly_t output, zmod_poly_t input, unsigned long len
          output->coeffs[length - i - 1] = 0L;
       }
       output->length = length;
-      zmod_poly_normalise(output);
+      __zmod_poly_normalise(output);
    } else
    {
       unsigned long temp;
@@ -482,7 +444,7 @@ void _zmod_poly_reverse(zmod_poly_t output, zmod_poly_t input, unsigned long len
       if ((length & 1) && (i >= input->length)) input->coeffs[i] = 0L;
 
       output->length = length;
-      zmod_poly_normalise(output);
+      __zmod_poly_normalise(output);
    }
 }
 
@@ -499,17 +461,25 @@ void zmod_poly_reverse(zmod_poly_t output, zmod_poly_t input, unsigned long leng
 
 ****************************************************************************/
 
-void zmod_poly_make_monic(zmod_poly_t pol)
+void zmod_poly_make_monic(zmod_poly_t output, zmod_poly_t pol)
 {
-   if (!pol->length) return;
+   if (!pol->length) 
+   {
+      output->length = 0;
+      return;
+   }
 
    unsigned long lead_inv = pol->coeffs[pol->length-1];
 
-   if (lead_inv == 1L) return;
+   if (lead_inv == 1L) 
+   {
+      zmod_poly_set(output, pol);
+      return;
+   }
 
    lead_inv = z_invert(lead_inv, pol->p);
 
-   zmod_poly_scalar_mul(pol, pol, lead_inv);
+   zmod_poly_scalar_mul(output, pol, lead_inv);
 }
 
 /****************************************************************************
@@ -532,14 +502,14 @@ void zmod_poly_add(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
    
    for (i = 0; i < poly1->length; i++)
    {
-      res->coeffs[i] = z_mod_add(poly1->coeffs[i], poly2->coeffs[i], poly1->p);
+      res->coeffs[i] = z_addmod(poly1->coeffs[i], poly2->coeffs[i], poly1->p);
    }
 
    for (; i < poly2->length; i++)
       res->coeffs[i] = poly2->coeffs[i];
 
    res->length = poly2->length;
-   zmod_poly_normalise(res);
+   __zmod_poly_normalise(res);
 }
 
 void _zmod_poly_sub(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
@@ -564,7 +534,7 @@ void _zmod_poly_sub(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
    {
       for (i = 0; i < poly1->length; i++)
       {
-         res->coeffs[i] = z_mod_sub(poly2->coeffs[i], poly1->coeffs[i], poly2->p);
+         res->coeffs[i] = z_submod(poly2->coeffs[i], poly1->coeffs[i], poly2->p);
       }
          
       for (; i < poly2->length; i++)
@@ -574,7 +544,7 @@ void _zmod_poly_sub(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
    {
       for (i = 0; i < poly1->length; i++)
       {
-         res->coeffs[i] = z_mod_sub(poly1->coeffs[i], poly2->coeffs[i], poly2->p);
+         res->coeffs[i] = z_submod(poly1->coeffs[i], poly2->coeffs[i], poly2->p);
       }
          
       for (; i < poly2->length; i++)
@@ -585,7 +555,7 @@ void _zmod_poly_sub(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
    }
 
    res->length = poly2->length;
-   zmod_poly_normalise(res);
+   __zmod_poly_normalise(res);
 }
 
 void zmod_poly_sub(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
@@ -813,7 +783,7 @@ void _zmod_poly_mul_classical(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t po
       }
    }
       
-   zmod_poly_normalise(res);
+   __zmod_poly_normalise(res);
 }
 
 /*
@@ -856,13 +826,13 @@ void __zmod_poly_mul_classical_mod_throughout(zmod_poly_t res, zmod_poly_t poly1
    {
       for (unsigned long i = 0; i < poly1->length; i++)
          for (unsigned long j = 0; j < poly2->length; j++)
-            res->coeffs[i+j] = z_mod_add(res->coeffs[i+j], z_mulmod_precomp(poly1->coeffs[i], poly2->coeffs[j], poly1->p, poly1->p_inv), poly1->p);
+            res->coeffs[i+j] = z_addmod(res->coeffs[i+j], z_mulmod_precomp(poly1->coeffs[i], poly2->coeffs[j], poly1->p, poly1->p_inv), poly1->p);
    } else
    {
 #endif
       for (unsigned long i = 0; i < poly1->length; i++)
          for (unsigned long j = 0; j < poly2->length; j++)
-            res->coeffs[i+j] = z_mod_add(res->coeffs[i+j], z_mulmod2_precomp(poly1->coeffs[i], poly2->coeffs[j], poly1->p, poly1->p_inv), poly1->p);
+            res->coeffs[i+j] = z_addmod(res->coeffs[i+j], z_mulmod2_precomp(poly1->coeffs[i], poly2->coeffs[j], poly1->p, poly1->p_inv), poly1->p);
 #if FLINT_BITS == 64
    }
 #endif
@@ -939,37 +909,37 @@ void _zmod_poly_sqr_classical(zmod_poly_t res, zmod_poly_t poly)
    {
       for (unsigned long i = 1; i < poly->length; i++)
          for (unsigned long j = 0; j < i; j++)
-            res->coeffs[i+j] = z_mod_add(res->coeffs[i+j], z_mulmod_precomp(poly->coeffs[i], poly->coeffs[j], poly->p, poly->p_inv), poly->p);
+            res->coeffs[i+j] = z_addmod(res->coeffs[i+j], z_mulmod_precomp(poly->coeffs[i], poly->coeffs[j], poly->p, poly->p_inv), poly->p);
    } else
    {
 #endif
       for (unsigned long i = 1; i < poly->length; i++)
          for (unsigned long j = 0; j < i; j++)
-            res->coeffs[i+j] = z_mod_add(res->coeffs[i+j], z_mulmod2_precomp(poly->coeffs[i], poly->coeffs[j], poly->p, poly->p_inv), poly->p);
+            res->coeffs[i+j] = z_addmod(res->coeffs[i+j], z_mulmod2_precomp(poly->coeffs[i], poly->coeffs[j], poly->p, poly->p_inv), poly->p);
 #if FLINT_BITS == 64
    }
 #endif
    
    // double the off-diagonal products
    for (unsigned long i = 1; i < res->length - 1; i++)
-      res->coeffs[i] = z_mod_add(res->coeffs[i], res->coeffs[i], poly->p);
+      res->coeffs[i] = z_addmod(res->coeffs[i], res->coeffs[i], poly->p);
 
    // add in diagonal products
 #if FLINT_BITS == 64
    if (bits <= FLINT_D_BITS)
    {
       for (unsigned long i = 0; i < poly->length; i++)
-         res->coeffs[2*i] = z_mod_add(res->coeffs[2*i], z_mulmod_precomp(poly->coeffs[i], poly->coeffs[i], poly->p, poly->p_inv), poly->p);
+         res->coeffs[2*i] = z_addmod(res->coeffs[2*i], z_mulmod_precomp(poly->coeffs[i], poly->coeffs[i], poly->p, poly->p_inv), poly->p);
    } else
    {
 #endif
       for (unsigned long i = 0; i < poly->length; i++)
-         res->coeffs[2*i] = z_mod_add(res->coeffs[2*i], z_mulmod2_precomp(poly->coeffs[i], poly->coeffs[i], poly->p, poly->p_inv), poly->p);
+         res->coeffs[2*i] = z_addmod(res->coeffs[2*i], z_mulmod2_precomp(poly->coeffs[i], poly->coeffs[i], poly->p, poly->p_inv), poly->p);
 #if FLINT_BITS == 64
    }
 #endif
       
-   zmod_poly_normalise(res);
+   __zmod_poly_normalise(res);
 }
 
 
@@ -1077,7 +1047,7 @@ void _zmod_poly_mul_classical_trunc(zmod_poly_t res, zmod_poly_t poly1, zmod_pol
       }
    }
    
-   zmod_poly_normalise(res);
+   __zmod_poly_normalise(res);
 }
 
 /*
@@ -1131,14 +1101,14 @@ void __zmod_poly_mul_classical_trunc_mod_throughout(zmod_poly_t res, zmod_poly_t
       for (unsigned long i = 0; i < poly1->length; i++)
          for (unsigned long j = 0; j < poly2->length; j++)
             if (i + j < trunc)
-               res->coeffs[i+j] = z_mod_add(res->coeffs[i+j], z_mulmod_precomp(poly1->coeffs[i], poly2->coeffs[j], poly1->p, poly1->p_inv), poly1->p);
+               res->coeffs[i+j] = z_addmod(res->coeffs[i+j], z_mulmod_precomp(poly1->coeffs[i], poly2->coeffs[j], poly1->p, poly1->p_inv), poly1->p);
    } else
    {
 #endif
       for (unsigned long i = 0; i < poly1->length; i++)
          for (unsigned long j = 0; j < poly2->length; j++)
             if (i + j < trunc)
-               res->coeffs[i+j] = z_mod_add(res->coeffs[i+j], z_mulmod2_precomp(poly1->coeffs[i], poly2->coeffs[j], poly1->p, poly1->p_inv), poly1->p);
+               res->coeffs[i+j] = z_addmod(res->coeffs[i+j], z_mulmod2_precomp(poly1->coeffs[i], poly2->coeffs[j], poly1->p, poly1->p_inv), poly1->p);
 #if FLINT_BITS == 64
    }
 #endif
@@ -1244,7 +1214,7 @@ void _zmod_poly_mul_classical_trunc_left(zmod_poly_t res, zmod_poly_t poly1, zmo
       }
    }
       
-   zmod_poly_normalise(res);
+   __zmod_poly_normalise(res);
 }
 
 /*
@@ -1289,14 +1259,14 @@ void __zmod_poly_mul_classical_trunc_left_mod_throughout(zmod_poly_t res, zmod_p
       for (unsigned long i = 0; i < poly1->length; i++)
          for (unsigned long j = 0; j < poly2->length; j++)
             if (i + j >= trunc)
-               res->coeffs[i+j] = z_mod_add(res->coeffs[i+j], z_mulmod_precomp(poly1->coeffs[i], poly2->coeffs[j], poly1->p, poly1->p_inv), poly1->p);
+               res->coeffs[i+j] = z_addmod(res->coeffs[i+j], z_mulmod_precomp(poly1->coeffs[i], poly2->coeffs[j], poly1->p, poly1->p_inv), poly1->p);
    } else
    {
 #endif
       for (unsigned long i = 0; i < poly1->length; i++)
          for (unsigned long j = 0; j < poly2->length; j++)
             if (i + j >= trunc)
-               res->coeffs[i+j] = z_mod_add(res->coeffs[i+j], z_mulmod2_precomp(poly1->coeffs[i], poly2->coeffs[j], poly1->p, poly1->p_inv), poly1->p);
+               res->coeffs[i+j] = z_addmod(res->coeffs[i+j], z_mulmod2_precomp(poly1->coeffs[i], poly2->coeffs[j], poly1->p, poly1->p_inv), poly1->p);
 #if FLINT_BITS == 64
    }
 #endif
@@ -1427,10 +1397,10 @@ void _zmod_poly_mul_KS(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p input
    mpn1 = (mp_limb_t*) flint_stack_alloc(limbs1);
    mpn2 = (input1 == input2) ? mpn1 : (mp_limb_t*) flint_stack_alloc(limbs2);
 
-   zmod_poly_bit_pack_mpn(mpn1, input1, bits, length1);
+   _zmod_poly_bit_pack_mpn(mpn1, input1, bits, length1);
    
    if(input1 != input2)
-      zmod_poly_bit_pack_mpn(mpn2, input2, bits, length2);
+      _zmod_poly_bit_pack_mpn(mpn2, input2, bits, length2);
    
    res = (mp_limb_t*) flint_stack_alloc(limbs1+limbs2);
    res[limbs1+limbs2-1] = 0L;
@@ -1438,7 +1408,7 @@ void _zmod_poly_mul_KS(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p input
    if (input1 != input2) F_mpn_mul(res, mpn1, limbs1, mpn2, limbs2);
    else F_mpn_mul(res, mpn1, limbs1, mpn1, limbs1);
    
-   zmod_poly_bit_unpack_mpn(output, res, length1 + length2 - 1, bits); 
+   _zmod_poly_bit_unpack_mpn(output, res, length1 + length2 - 1, bits); 
    
    flint_stack_release();
    flint_stack_release();
@@ -1448,7 +1418,7 @@ void _zmod_poly_mul_KS(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p input
    output->length = final_length;
 
    /* The modulus may not be prime, so normalisation may be necessary */
-   zmod_poly_normalise(output);
+   __zmod_poly_normalise(output);
 }
 
 //==========================================================================
@@ -1534,10 +1504,10 @@ void _zmod_poly_mul_KS_trunc(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p
    mpn1 = (mp_limb_t*) flint_stack_alloc(limbs1);
    mpn2 = (input1 == input2) ? mpn1 : (mp_limb_t*) flint_stack_alloc(limbs2);
          
-   zmod_poly_bit_pack_mpn(mpn1, input1, bits, length1);
+   _zmod_poly_bit_pack_mpn(mpn1, input1, bits, length1);
    
    if(input1 != input2)
-      zmod_poly_bit_pack_mpn(mpn2, input2, bits, length2);
+      _zmod_poly_bit_pack_mpn(mpn2, input2, bits, length2);
          
    res = (mp_limb_t*) flint_stack_alloc(limbs1+limbs2);
    res[limbs1+limbs2-1] = 0L;
@@ -1547,7 +1517,7 @@ void _zmod_poly_mul_KS_trunc(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p
    if (input1 != input2) F_mpn_mul_trunc(res, mpn1, limbs1, mpn2, limbs2, (output_length*bits-1)/FLINT_BITS+1);
    else F_mpn_mul_trunc(res, mpn1, limbs1, mpn1, limbs1, (output_length*bits-1)/FLINT_BITS+1);
          
-   zmod_poly_bit_unpack_mpn(output, res, output_length, bits); 
+   _zmod_poly_bit_unpack_mpn(output, res, output_length, bits); 
    flint_stack_release(); //release res
    flint_stack_release(); //release mpn1 and mpn2
    if(input1 != input2)
@@ -1556,7 +1526,7 @@ void _zmod_poly_mul_KS_trunc(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p
    output->length = output_length;
    
    /* The modulus may not be prime, so normalisation may be necessary */
-   zmod_poly_normalise(output);
+   __zmod_poly_normalise(output);
     
 }
 
@@ -1652,7 +1622,7 @@ void print_limb(char *name, unsigned long limb)
    Packs the zmod_poly into an mpn, using `bits` bits for each coefficient
 */
 
-void zmod_poly_bit_pack_mpn(mp_limb_t * res, zmod_poly_t poly, unsigned long bits, unsigned long length)
+void _zmod_poly_bit_pack_mpn(mp_limb_t * res, zmod_poly_t poly, unsigned long bits, unsigned long length)
 {  
    unsigned long current_limb = 0;
    unsigned int current_bit = 0;
@@ -1814,7 +1784,7 @@ void zmod_poly_bit_pack_mpn(mp_limb_t * res, zmod_poly_t poly, unsigned long bit
    Unpacks a zmod_poly of length `length` from an mpn `mpn` with coeffs packed in `bits` bits.
 */
 
-void zmod_poly_bit_unpack_mpn(zmod_poly_t res, mp_limb_t * mpn, unsigned long length, unsigned long bits)
+void _zmod_poly_bit_unpack_mpn(zmod_poly_t res, mp_limb_t * mpn, unsigned long length, unsigned long bits)
 {
    unsigned long i;
    
@@ -2155,7 +2125,7 @@ void _zmod_poly_scalar_mul(zmod_poly_t res, zmod_poly_t poly, unsigned long scal
 #endif
    
    res->length = poly->length;
-   zmod_poly_normalise(res);
+   __zmod_poly_normalise(res);
 }
 
 void zmod_poly_scalar_mul(zmod_poly_t res, zmod_poly_t poly, unsigned long scalar)
@@ -2244,7 +2214,7 @@ void zmod_poly_divrem_classical(zmod_poly_t Q, zmod_poly_t R, zmod_poly_t A, zmo
    }
    
    R->length = B->length - 1;
-   zmod_poly_normalise(R);
+   __zmod_poly_normalise(R);
    zmod_poly_clear(qB);
 }
 
@@ -2469,7 +2439,7 @@ void zmod_poly_div_divconquer_recursive(zmod_poly_t Q, zmod_poly_t BQ, zmod_poly
    
       zmod_poly_init(t, p);
       zmod_poly_sub(t, A, dq1);
-      zmod_poly_truncate(t, t, A->length - B->length);
+      zmod_poly_truncate(t, A->length - B->length);
       
       /*
          Compute q2 = t div B
@@ -2560,7 +2530,7 @@ void zmod_poly_div_divconquer_recursive(zmod_poly_t Q, zmod_poly_t BQ, zmod_poly
    zmod_poly_init(t, p);
    zmod_poly_right_shift(t, A, n2);
    zmod_poly_sub(t, t, dq1);
-   zmod_poly_truncate(t, t, B->length - 1);
+   zmod_poly_truncate(t, B->length - 1);
    
    /*
       Compute q2 = t div d1
@@ -2727,7 +2697,7 @@ void zmod_poly_div_divconquer(zmod_poly_t Q, zmod_poly_t A, zmod_poly_t B)
       zmod_poly_init(t, p);
       zmod_poly_sub(t, A, dq1);
       zmod_poly_clear(dq1);
-      zmod_poly_truncate(t, t, A->length - B->length);
+      zmod_poly_truncate(t, A->length - B->length);
       
       /*
          Compute q2 = t div B
@@ -2818,7 +2788,7 @@ void zmod_poly_div_divconquer(zmod_poly_t Q, zmod_poly_t A, zmod_poly_t B)
    zmod_poly_right_shift(t, A, n1);
    _zmod_poly_attach_shift(temp, dq1, n1-n2);
    zmod_poly_sub(t, t, temp);
-   zmod_poly_truncate(t, t, 2*n2-1);
+   zmod_poly_truncate(t, 2*n2-1);
      
    /*
       Compute q2 = t div d3
@@ -2911,7 +2881,7 @@ void zmod_poly_newton_invert(zmod_poly_t Q_inv, zmod_poly_t Q, unsigned long n)
    zmod_poly_init(prod2, p);
    zmod_poly_newton_invert(g0, Q, m);
    zmod_poly_mul_trunc_n(prod, Q, g0, n);
-   prod->coeffs[0] = z_mod_sub(prod->coeffs[0], 1L, p);
+   prod->coeffs[0] = z_submod(prod->coeffs[0], 1L, p);
    zmod_poly_mul_trunc_n(prod2, prod, g0, n);
    zmod_poly_sub(Q_inv, g0, prod2);
    
@@ -3253,7 +3223,7 @@ void zmod_poly_xgcd(zmod_poly_t res, zmod_poly_t s, zmod_poly_t t, zmod_poly_t p
    zmod_poly_scalar_mul(s, s, z_invert(res->coeffs[res->length-1], p));
    zmod_poly_scalar_mul(t, t, z_invert(res->coeffs[res->length-1], p));
 
-   zmod_poly_make_monic(res);
+   zmod_poly_make_monic(res, res);
    
    if (steps > 2) 
    {

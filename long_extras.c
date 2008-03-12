@@ -988,8 +988,8 @@ unsigned long z_gcd(long x, long y)
    Requires n1*n2 to be at most FLINT_BITS-1 bits
 */
 
-unsigned long z_CRT(unsigned long x1, unsigned long x2, 
-                       unsigned long n1, unsigned long n2)
+unsigned long z_CRT(unsigned long x1, unsigned long n1,  
+                        unsigned long x2, unsigned long n2)
 {
      unsigned long n, res, ch;
      double ninv;

@@ -712,7 +712,7 @@ void fmpz_pow_ui(fmpz_t output, const fmpz_t input, const unsigned long exp)
    mpz_clear(power);
 }
 
-unsigned long fmpz_power_of_two(const fmpz_t x)
+unsigned long __fmpz_power_of_two(const fmpz_t x)
 {
    if (x[0] == 0) return -1L;
    return mpn_scan1(x + 1, 0);
@@ -753,13 +753,13 @@ void fmpz_div_2exp(fmpz_t output, fmpz_t x, unsigned long exp)
    
    if (bits) 
    {
-      fmpz_t temp = fmpz_stack_init(FLINT_ABS(x[0]) - limbs);
+      fmpz_t temp = fmpz_init(FLINT_ABS(x[0]) - limbs);
       mpn_rshift(temp + 1, x + limbs + 1, FLINT_ABS(x[0]) - limbs, bits);
       if ((long) x[0] >= 0L) temp[0] = x[0] - limbs;
       else temp[0] = limbs + x[0];
       NORM(temp);
       fmpz_set(output, temp);
-      fmpz_stack_release();
+      fmpz_clear(temp);
    } else 
    {
       F_mpn_copy(output + 1, x + limbs + 1, FLINT_ABS(x[0]) - limbs);
@@ -784,8 +784,8 @@ void fmpz_gcd(fmpz_t output, fmpz_t x1, fmpz_t x2)
       return;
    }
    
-   unsigned long twos1 = fmpz_power_of_two(x1);
-   unsigned long twos2 = fmpz_power_of_two(x2);
+   unsigned long twos1 = __fmpz_power_of_two(x1);
+   unsigned long twos2 = __fmpz_power_of_two(x2);
    unsigned long n1, n2;
    
    fmpz_t a1 = fmpz_init(FLINT_ABS(x1[0]) - (twos1 >> FLINT_LG_BITS_PER_LIMB));

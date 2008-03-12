@@ -598,7 +598,7 @@ int test_z_CRT()
 
       for (unsigned long i = 0; i < 10; i++)
       {
-         res = z_CRT(x1, x2, n1, n2);
+         res = z_CRT(x1, n1, x2, n2);
       }
       result = (((res % n1) == x1) && ((res % n2) == x2));
       

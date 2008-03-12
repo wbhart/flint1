@@ -1068,7 +1068,7 @@ void fmpz_poly_to_zmod_poly(zmod_poly_t zpol, fmpz_poly_t fpol)
    }
 
    zpol->length = fpol->length;
-   zmod_poly_normalise(zpol);
+   __zmod_poly_normalise(zpol);
 }
 
 void zmod_poly_to_fmpz_poly_unsigned(fmpz_poly_t fpol, zmod_poly_t zpol)
@@ -1282,7 +1282,7 @@ int fmpz_poly_CRT(fmpz_poly_t res, fmpz_poly_t fpol, zmod_poly_t zpol, fmpz_t ne
    fmpz_t fcoeff = fpol->coeffs;
    fmpz_t ocoeff = out->coeffs;
    unsigned long * zcoeff = zpol->coeffs;
-   fmpz_t moddiv2 = fmpz_stack_init(newmod[0]);
+   fmpz_t moddiv2 = fmpz_init(newmod[0]);
 
    fmpz_div_2exp(moddiv2, newmod, 1);
   
@@ -1371,7 +1371,7 @@ int fmpz_poly_CRT(fmpz_poly_t res, fmpz_poly_t fpol, zmod_poly_t zpol, fmpz_t ne
       same = fmpz_poly_equal(fpol, res);
    }
 
-   fmpz_stack_release(); 
+   fmpz_clear(moddiv2); 
 
    return same;
 }
@@ -1732,30 +1732,6 @@ void _fmpz_poly_truncate(fmpz_poly_t poly, const unsigned long trunc)
 {
    if (poly->length > trunc) poly->length = trunc;
    _fmpz_poly_normalise(poly);
-}
-
-/*
-   Efficiently swap two polynomials by swapping pointers
-*/
-
-void _fmpz_poly_swap(fmpz_poly_t x, fmpz_poly_t y)
-{
-   if (x == y) return;
-   
-   fmpz_t temp_p;
-   mp_limb_t temp_l;
-   
-   temp_p = x->coeffs;
-   x->coeffs = y->coeffs;
-   y->coeffs = temp_p;
-   
-   temp_l = x->length;
-   x->length = y->length;
-   y->length = temp_l;
-   
-   temp_l = x->limbs;
-   x->limbs = y->limbs;
-   y->limbs = temp_l;
 }
 
 /*
@@ -4823,10 +4799,10 @@ void fmpz_poly_scalar_mul_mpz(fmpz_poly_t output,
       _fmpz_poly_zero(output);
       return;
    }
-   fmpz_t x_fmpz = fmpz_stack_init(mpz_size(x));
+   fmpz_t x_fmpz = fmpz_init(mpz_size(x));
    mpz_to_fmpz(x_fmpz, x);   
    fmpz_poly_scalar_mul_fmpz(output, input, x_fmpz);
-   fmpz_stack_release();
+   fmpz_clear(x_fmpz);
 }
 
 void fmpz_poly_scalar_div_fmpz(fmpz_poly_t output, 
@@ -4857,10 +4833,10 @@ void fmpz_poly_scalar_div_mpz(fmpz_poly_t output,
       _fmpz_poly_zero(output);
       return;
    }
-   fmpz_t x_fmpz = fmpz_stack_init(mpz_size(x));
+   fmpz_t x_fmpz = fmpz_init(mpz_size(x));
    mpz_to_fmpz(x_fmpz, x);   
    fmpz_poly_scalar_div_fmpz(output, input, x_fmpz);
-   fmpz_stack_release();
+   fmpz_clear(x_fmpz);
 }
 
 
@@ -7067,7 +7043,7 @@ void fmpz_poly_pseudo_divrem_basecase(fmpz_poly_t Q, fmpz_poly_t R,
    {
       coeff_Q = Q->coeffs+(R->length - B->length)*size_Q;
           
-      fmpz_normalise(coeff_R);
+      __fmpz_normalise(coeff_R);
       sign_quot = ABS(coeff_R[0]) - size_B_lead + 1;
          
       if (((long) sign_quot > 1) || ((sign_quot == 1) && (mpn_cmp(coeff_R+1, B_lead+1, size_B_lead) >= 0)))
@@ -7076,7 +7052,7 @@ void fmpz_poly_pseudo_divrem_basecase(fmpz_poly_t Q, fmpz_poly_t R,
       
          rem[0] = size_B_lead;
          
-         fmpz_normalise(rem);
+         __fmpz_normalise(rem);
       } else
       {
          coeff_Q[0] = 0;
@@ -7229,7 +7205,7 @@ void fmpz_poly_pseudo_div_basecase(fmpz_poly_t Q, unsigned long * d,
    {
       coeff_Q = Q->coeffs+(R->length - B->length)*size_Q;
           
-      fmpz_normalise(coeff_R);
+      __fmpz_normalise(coeff_R);
       sign_quot = ABS(coeff_R[0]) - size_B_lead + 1;
          
       if (((long) sign_quot > 1) || ((sign_quot == 1) && (mpn_cmp(coeff_R+1, B_lead+1, size_B_lead) >= 0)))
@@ -7238,7 +7214,7 @@ void fmpz_poly_pseudo_div_basecase(fmpz_poly_t Q, unsigned long * d,
       
          rem[0] = size_B_lead;
          
-         fmpz_normalise(rem);
+         __fmpz_normalise(rem);
       } else
       {
          coeff_Q[0] = 0;
@@ -7996,7 +7972,7 @@ void fmpz_poly_power(fmpz_poly_t output, const fmpz_poly_t poly, const unsigned 
             {
                last_coeff = coeff_out;
                coeff_out += (output->limbs+1);
-               fmpz_binomial_next(coeff_out, last_coeff, exp, i);
+               __fmpz_binomial_next(coeff_out, last_coeff, exp, i);
             }
          } else
          {
@@ -8006,7 +7982,7 @@ void fmpz_poly_power(fmpz_poly_t output, const fmpz_poly_t poly, const unsigned 
             {
                coeff_out = output->coeffs + i*(output->limbs+1);   
                last_coeff = coeff_out + output->limbs+1;
-               fmpz_binomial_next(coeff_out, last_coeff, exp, exp - i);
+               __fmpz_binomial_next(coeff_out, last_coeff, exp, exp - i);
                fmpz_mul(coeff_out, coeff_out, coeff1);
             }
          }
@@ -8023,7 +7999,7 @@ void fmpz_poly_power(fmpz_poly_t output, const fmpz_poly_t poly, const unsigned 
                output->length++;
                coeff_out = output->coeffs + i*(output->limbs+1);   
                last_coeff = coeff_out - output->limbs - 1;
-               fmpz_binomial_next(coeff_out, last_coeff, exp, i);
+               __fmpz_binomial_next(coeff_out, last_coeff, exp, i);
                fmpz_mul(coeff_out, coeff_out, coeff2);
             }
          } else
@@ -8037,7 +8013,7 @@ void fmpz_poly_power(fmpz_poly_t output, const fmpz_poly_t poly, const unsigned 
                coeff_out = output->coeffs + i*(output->limbs+1);   
                last_coeff = coeff_out - output->limbs - 1;
                fmpz_tdiv(coeff_out, last_coeff, coeff1);
-               fmpz_binomial_next(coeff_out, coeff_out, exp, i);
+               __fmpz_binomial_next(coeff_out, coeff_out, exp, i);
                fmpz_mul(coeff_out, coeff_out, coeff2);
             }
          }
@@ -8221,8 +8197,8 @@ void fmpz_poly_gcd_subresultant(fmpz_poly_t D, const fmpz_poly_t poly1, const fm
    }
    
    fmpz_t a, b, d;
-   a = fmpz_stack_init(Ain->limbs);
-   b = fmpz_stack_init(Bin->limbs);
+   a = fmpz_init(Ain->limbs);
+   b = fmpz_init(Bin->limbs);
    fmpz_poly_content(a, Ain);
    fmpz_poly_content(b, Bin);
    //printf("a = "); fmpz_print(a); printf("\n");
@@ -8239,8 +8215,8 @@ void fmpz_poly_gcd_subresultant(fmpz_poly_t D, const fmpz_poly_t poly1, const fm
    
    fmpz_poly_scalar_div_fmpz(A, Ain, a);
    fmpz_poly_scalar_div_fmpz(B, Bin, b);
-   fmpz_stack_release(); //release b
-   fmpz_stack_release(); //release a
+   fmpz_clear(b); //release b
+   fmpz_clear(a); //release a
    
    int done = 0;
    
@@ -8266,23 +8242,23 @@ void fmpz_poly_gcd_subresultant(fmpz_poly_t D, const fmpz_poly_t poly1, const fm
          fmpz_t r;
          if (olddelta == 1) 
          {
-            r = fmpz_stack_init((delta+1)*fmpz_size(g)+1);
+            r = fmpz_init((delta+1)*fmpz_size(g)+1);
             fmpz_pow_ui(r, g, delta+1);
          } else
          {
-            r = fmpz_stack_init(fmpz_size(g) + delta*fmpz_size(h)+1);
+            r = fmpz_init(fmpz_size(g) + delta*fmpz_size(h)+1);
             fmpz_pow_ui(r, h, delta);
             fmpz_mul(r, r, g);
          }
          
          g = fmpz_poly_get_coeff_ptr(A, A->length - 1);
-         fmpz_t temp = fmpz_stack_init((delta-s+1)*fmpz_size(g)+1);
+         fmpz_t temp = fmpz_init((delta-s+1)*fmpz_size(g)+1);
          fmpz_pow_ui(temp, g, delta-s+1);
          fmpz_poly_scalar_mul_fmpz(R, R, temp);
-         fmpz_stack_release(); // release temp
+         fmpz_clear(temp); // release temp
          
          fmpz_poly_scalar_div_fmpz(B, R, r);
-         fmpz_stack_release(); // release r
+         fmpz_clear(r); // release r
          
          olddelta = delta;
          if (delta == 0)
@@ -8298,15 +8274,15 @@ void fmpz_poly_gcd_subresultant(fmpz_poly_t D, const fmpz_poly_t poly1, const fm
             fmpz_set(h, g);
          } else
          {
-            temp = fmpz_stack_init((delta-1)*fmpz_size(h)+1);
+            temp = fmpz_init((delta-1)*fmpz_size(h)+1);
             fmpz_pow_ui(temp, h, delta - 1);
             fmpz_clear(h);
             h = fmpz_init(delta*fmpz_size(g)+1);
-            fmpz_t temp2 = fmpz_stack_init(delta*fmpz_size(g)+1);
+            fmpz_t temp2 = fmpz_init(delta*fmpz_size(g)+1);
             fmpz_pow_ui(temp2, g, delta);
             fmpz_fdiv(h, temp2, temp);
-            fmpz_stack_release(); // release temp2
-            fmpz_stack_release(); // release temp
+            fmpz_clear(temp2); // release temp2
+            fmpz_clear(temp); // release temp
          }
       } else
       {
@@ -8320,13 +8296,13 @@ void fmpz_poly_gcd_subresultant(fmpz_poly_t D, const fmpz_poly_t poly1, const fm
    }
    
    //printf("B = "); fmpz_poly_print_pretty(B, "x"); printf("\n");
-   b = fmpz_stack_init(B->limbs+1);
+   b = fmpz_init(B->limbs+1);
    fmpz_poly_content(b, B);
    //printf("b = "); fmpz_print(b); printf("\n");
    //printf("d = "); fmpz_print(d); printf("\n");
    fmpz_poly_scalar_div_fmpz(D, B, b);
    fmpz_poly_scalar_mul_fmpz(D, D, d);
-   fmpz_stack_release(); // release b
+   fmpz_clear(b); // release b
          
    if ((long) (_fmpz_poly_lead(D)[0]) < 0L) fmpz_poly_neg(D, D);
    
@@ -8362,8 +8338,8 @@ void fmpz_poly_gcd_modular(fmpz_poly_t H, const fmpz_poly_t poly1, const fmpz_po
    }
    
    fmpz_t ac, bc, d;
-   ac = fmpz_stack_init(Ain->limbs);
-   bc = fmpz_stack_init(Bin->limbs);
+   ac = fmpz_init(Ain->limbs);
+   bc = fmpz_init(Bin->limbs);
    fmpz_poly_content(ac, Ain);
    fmpz_poly_content(bc, Bin);
    //printf("a = "); fmpz_print(a); printf("\n");
@@ -8376,8 +8352,8 @@ void fmpz_poly_gcd_modular(fmpz_poly_t H, const fmpz_poly_t poly1, const fmpz_po
       fmpz_poly_set_coeff_fmpz(H, 0, d);
       H->length = 1;
       fmpz_clear(d);
-      fmpz_stack_release(); // release ac
-      fmpz_stack_release(); // release bc
+      fmpz_clear(ac); // release ac
+      fmpz_clear(bc); // release bc
       return;
    }
    
@@ -8387,8 +8363,8 @@ void fmpz_poly_gcd_modular(fmpz_poly_t H, const fmpz_poly_t poly1, const fmpz_po
    
    fmpz_poly_scalar_div_fmpz(A, Ain, ac);
    fmpz_poly_scalar_div_fmpz(B, Bin, bc);
-   fmpz_stack_release(); //release bc
-   fmpz_stack_release(); //release ac
+   fmpz_clear(bc); //release bc
+   fmpz_clear(ac); //release ac
    
    fmpz_t lead_A = _fmpz_poly_lead(A);
    fmpz_t lead_B = _fmpz_poly_lead(B);
@@ -8440,7 +8416,7 @@ void fmpz_poly_gcd_modular(fmpz_poly_t H, const fmpz_poly_t poly1, const fmpz_po
       if (h->length - 1 > n) // discard
          continue;      
       
-      if (g_pm1) zmod_poly_make_monic(h);
+      if (g_pm1) zmod_poly_make_monic(h, h);
       else
       {
          unsigned long h_inv = z_invert(h->coeffs[h->length-1], h->p);
@@ -8792,9 +8768,9 @@ void fmpz_poly_2norm(fmpz_t norm, fmpz_poly_t pol)
       return;
    }
 
-   fmpz_t sqr = fmpz_stack_init(2*pol->limbs);
-   fmpz_t sum = fmpz_stack_init(2*pol->limbs + 1);
-   fmpz_t temp = fmpz_stack_init(2*pol->limbs + 1);
+   fmpz_t sqr = fmpz_init(2*pol->limbs);
+   fmpz_t sum = fmpz_init(2*pol->limbs + 1);
+   fmpz_t temp = fmpz_init(2*pol->limbs + 1);
    
    unsigned long size = pol->limbs+1;
    fmpz_t coeff = pol->coeffs;
@@ -8810,9 +8786,9 @@ void fmpz_poly_2norm(fmpz_t norm, fmpz_poly_t pol)
    fmpz_sqrtrem(norm, temp, sum);
    if (temp[0]) fmpz_add_ui(norm, norm, 1L);
 
-   fmpz_stack_release(); // release temp
-   fmpz_stack_release(); // release sum
-   fmpz_stack_release(); // release sqr
+   fmpz_clear(temp); // release temp
+   fmpz_clear(sum); // release sum
+   fmpz_clear(sqr); // release sqr
 } 
 
 unsigned long fmpz_poly_resultant_bound(fmpz_poly_t a, fmpz_poly_t b)

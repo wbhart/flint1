@@ -90,7 +90,7 @@ unsigned long z_randint(unsigned long limit);
 double z_precompute_inverse(unsigned long n);
 
 static inline
-unsigned long z_mod_add(unsigned long a, unsigned long b, unsigned long p)
+unsigned long z_addmod(unsigned long a, unsigned long b, unsigned long p)
 {
    unsigned long neg1 = p - a;
    if (neg1 > b)
@@ -100,7 +100,7 @@ unsigned long z_mod_add(unsigned long a, unsigned long b, unsigned long p)
 }
 
 static inline
-unsigned long z_mod_sub(unsigned long a, unsigned long b, unsigned long p)
+unsigned long z_submod(unsigned long a, unsigned long b, unsigned long p)
 {
    if (a < b)
       return p + a - b;
@@ -195,8 +195,8 @@ static inline int z_issquare(long x)
    return (x == sqroot*sqroot);
 }
 
-unsigned long z_CRT(unsigned long x1, unsigned long x2, 
-                       unsigned long n1, unsigned long n2);
+unsigned long z_CRT(unsigned long x1, unsigned long n1, 
+                        unsigned long x2, unsigned long n2);
                        
 int z_issquarefree(unsigned long n);
 

@@ -1220,7 +1220,7 @@ int test_fmpz_is_zero()
    return result;
 }
 
-int test_fmpz_normalise()
+int test___fmpz_normalise()
 {
    mpz_t num1, num2;
    fmpz_t fnum1;
@@ -1246,7 +1246,7 @@ int test_fmpz_normalise()
           fnum1[j] = 0L;
        }
        fnum1[0] = limbs + limbs2;
-       fmpz_normalise(fnum1);
+       __fmpz_normalise(fnum1);
        fmpz_check_normalisation(fnum1);
               
        result = (mpz_size(num1) == fmpz_size(fnum1));
@@ -1260,7 +1260,7 @@ int test_fmpz_normalise()
    return result;
 }
 
-int test_fmpz_binomial_next()
+int test___fmpz_binomial_next()
 {
    mpz_t num1, num2;
    fmpz_t fnum1;
@@ -1280,7 +1280,7 @@ int test_fmpz_binomial_next()
        fmpz_set_ui(fnum1, 1L);
        for (long j = 1; j <= m; j++)
        {
-          fmpz_binomial_next(fnum1, fnum1, n, j);
+          __fmpz_binomial_next(fnum1, fnum1, n, j);
           fmpz_check_normalisation(fnum1);
        }
        mpz_bin_uiui(num1, n, m);
@@ -1425,7 +1425,7 @@ int test_fmpz_CRT_ui()
 
        unsigned long * primes = flint_stack_alloc((long) FLINT_MAX(bits2-1, 0)/(FLINT_BITS-2)+1);      
        unsigned long num_primes = 0;
-       fmpz_t modulus = fmpz_stack_init((long) FLINT_MAX(bits2-1, 0)/FLINT_BITS+2);
+       fmpz_t modulus = fmpz_init((long) FLINT_MAX(bits2-1, 0)/FLINT_BITS+2);
        
        primes[0] = z_nextprime(1L<<(FLINT_BITS-2));
        fmpz_set_ui(modulus, primes[0]);
@@ -1465,7 +1465,7 @@ int test_fmpz_CRT_ui()
        }
 #endif
        
-       fmpz_stack_release();
+       fmpz_clear(modulus);
        flint_stack_release();
        fmpz_clear(fnum1);
        fmpz_clear(fnum2);
@@ -1547,8 +1547,8 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_pow_ui);
    RUN_TEST(fmpz_is_one);
    RUN_TEST(fmpz_is_zero);
-   RUN_TEST(fmpz_normalise);
-   RUN_TEST(fmpz_binomial_next);
+   RUN_TEST(__fmpz_normalise);
+   RUN_TEST(__fmpz_binomial_next);
    RUN_TEST(fmpz_muldiv_2exp);
    RUN_TEST(fmpz_gcd);
    RUN_TEST(fmpz_CRT_ui);

@@ -70,21 +70,9 @@ fmpz_t fmpz_realloc(fmpz_t f, const unsigned long limbs)
 }
 
 static inline
-fmpz_t fmpz_stack_init(const unsigned long limbs)
-{
-   return (fmpz_t) flint_stack_alloc(limbs + 1);
-}
-
-static inline
 void fmpz_clear(const fmpz_t f)
 {
    flint_heap_free(f);
-}
-
-static inline
-void fmpz_stack_release(void)
-{
-   flint_stack_release();
 }
 
 void fmpz_print(fmpz_t in);
@@ -221,7 +209,7 @@ unsigned long fmpz_mod_ui(const fmpz_t input, const unsigned long x);
 
 void fmpz_pow_ui(fmpz_t output, const fmpz_t input, const unsigned long exp);
 
-unsigned long fmpz_power_of_two(const fmpz_t x);
+unsigned long __fmpz_power_of_two(const fmpz_t x);
 
 void fmpz_div_2exp(fmpz_t output, fmpz_t x, unsigned long exp);
 
@@ -239,7 +227,7 @@ void fmpz_gcd(fmpz_t output, fmpz_t x1, fmpz_t x2);
 */
 
 static inline
-void fmpz_binomial_next(fmpz_t next, const fmpz_t prev, const long n, const long k)
+void __fmpz_binomial_next(fmpz_t next, const fmpz_t prev, const long n, const long k)
 {
    fmpz_mul_ui(next, prev, n-k+1);
    fmpz_tdiv_ui(next, next, k);
@@ -259,7 +247,7 @@ int fmpz_is_zero(const fmpz_t f)
 }
 
 static inline
-void fmpz_normalise(const fmpz_t f)
+void __fmpz_normalise(const fmpz_t f)
 {
    NORM(f);
 }
@@ -294,12 +282,12 @@ void fmpz_CRT_ui_precomp(fmpz_t out, fmpz_t r1, fmpz_t m1, unsigned long r2,
                                   unsigned long m2, unsigned long c, double pre)
 {
    unsigned long r1mod = fmpz_mod_ui(r1, m2);
-   unsigned long s = z_mod_sub(r2, r1mod, m2);
+   unsigned long s = z_submod(r2, r1mod, m2);
    s = z_mulmod_precomp(s, c, m2, pre); 
-   fmpz_t sm1 = fmpz_stack_init(m1[0] + 1);
+   fmpz_t sm1 = fmpz_init(m1[0] + 1);
    fmpz_mul_ui(sm1, m1, s);
    fmpz_add(out, r1, sm1);
-   fmpz_stack_release();
+   fmpz_clear(sm1);
 }
 
 /*
@@ -312,12 +300,12 @@ void fmpz_CRT_ui2_precomp(fmpz_t out, fmpz_t r1, fmpz_t m1, unsigned long r2,
                                   unsigned long m2, unsigned long c, double pre)
 {
    unsigned long r1mod = fmpz_mod_ui(r1, m2);
-   unsigned long s = z_mod_sub(r2, r1mod, m2);
+   unsigned long s = z_submod(r2, r1mod, m2);
    s = z_mulmod2_precomp(s, c, m2, pre); 
-   fmpz_t sm1 = fmpz_stack_init(m1[0] + 1);
+   fmpz_t sm1 = fmpz_init(m1[0] + 1);
    fmpz_mul_ui(sm1, m1, s);
    fmpz_add(out, r1, sm1);
-   fmpz_stack_release();
+   fmpz_clear(sm1);
 }
 
 #ifdef __cplusplus
