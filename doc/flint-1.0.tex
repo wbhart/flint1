@@ -571,7 +571,7 @@ int fmpz_poly_CRT_unsigned(fmpz_poly_t res, fmpz_poly_t fpol,
                      zmod_poly_t zpol, fmpz_t newmod, fmpz_t oldmod)
 \end{lstlisting}
 \begin{quote}
-Performs modular recombination using the Chinese Remainder Theorem. If \code{zpol} has modulus $p$, \code{newmod} is set equal to \code{oldmod*p} and each coefficient of \code{res} is set to the unique value modulo \code{newmod}, in the range $[0, newmod)$ which is $a$ modulo \code{oldmod} and $b$ modulo $p$, where $a$ is the coefficient of \code{fpol} and $b$ is the corresponding coefficient of \code{zpol}.
+Performs modular recombination using the Chinese Remainder Theorem. If \code{zpol} has modulus $p$, \code{newmod} is set equal to \code{oldmod*p} and each coefficient of \code{res} is set to the unique value modulo \code{newmod}, in the range $[0, \mbox{newmod})$ which is $a$ modulo \code{oldmod} and $b$ modulo $p$, where $a$ is the coefficient of \code{fpol} and $b$ is the corresponding coefficient of \code{zpol}.
 
 The coefficients of \code{fpol} are assumed to be unsigned. 
 \end{quote}
@@ -581,7 +581,7 @@ int fmpz_poly_CRT(fmpz_poly_t res, fmpz_poly_t fpol,
                      zmod_poly_t zpol, fmpz_t newmod, fmpz_t oldmod)
 \end{lstlisting}
 \begin{quote}
-Performs modular recombination using the Chinese Remainder Theorem. If \code{zpol} has modulus $p$, \code{newmod} is set equal to \code{oldmod*p} and each coefficient of \code{res} is set to the unique value modulo \code{newmod}, in the range $(-newmod/2, newmod/2]$ which is $a$ modulo \code{oldmod} and $b$ modulo $p$, where $a$ is the coefficient of \code{fpol} and $b$ is the corresponding coefficient of \code{zpol}. 
+Performs modular recombination using the Chinese Remainder Theorem. If \code{zpol} has modulus $p$, \code{newmod} is set equal to \code{oldmod*p} and each coefficient of \code{res} is set to the unique value modulo \code{newmod}, in the range $(-\mbox{newmod}/2, \mbox{newmod}/2]$ which is $a$ modulo \code{oldmod} and $b$ modulo $p$, where $a$ is the coefficient of \code{fpol} and $b$ is the corresponding coefficient of \code{zpol}. 
 \end{quote}
 
 \subsection{Comparison}
@@ -879,14 +879,14 @@ This function can be used to raise power series to a power in an efficient way.
 void fmpz_poly_content(fmpz_t c, fmpz_poly_t poly)
 \end{lstlisting}
 \begin{quote}
-Set the \code{fmpz_t c} to the gaussian content of the polynomial \code{poly}, i.e. to the greatest common divisor of its coefficients.
+Set the \code{fmpz_t c} to the Gaussian content of the polynomial \code{poly}, i.e. to the greatest common divisor of its coefficients.
 \end{quote}
 
 \begin{lstlisting}
 void _fmpz_poly_primitive_part(fmpz_poly_t prim, fmpz_poly_t poly)
 \end{lstlisting}
 \begin{quote}
-Set \code{prim} to the primitive part of the polynomial \code{poly}, i.e. to \code{poly} divided by its gaussian content.
+Set \code{prim} to the primitive part of the polynomial \code{poly}, i.e. to \code{poly} divided by its Gaussian content.
 \end{quote}
 
 \subsection{Greatest common divisor and resultant}
@@ -903,7 +903,7 @@ unsigned long fmpz_poly_resultant_bound(fmpz_poly_t a, fmpz_poly_t b)
 void fmpz_poly_resultant(fmpz_t r, fmpz_poly_t a, fmpz_poly_t b)
 \end{lstlisting}
 \begin{quote}
-Compute the resultant of the polynomials \code{a} and \code{b}. If \code{a} and \code{b} are monic with $a(x) = \prod_i (x - \alpha_i)$ and $b(x) = \prod_j (x - \beta_j)$ then the resultant is given by the expression $r(x) = \prod_{i,j} (\alpha_i - \beta_j)$. If the polynomials are not monic, and \code{a} and \code{b} have leading coefficients $l_1$ and $l_2$ and degrees $d_1$ and $d_2$ respectively, then this quantity is multiplied by $l_1^{d_2-1}l_2^{d_1-1}$.
+Compute the resultant of the polynomials \code{a} and \code{b}. If \code{a} and \code{b} are monic with $a(x) = \prod_i (x - \alpha_i)$ and $b(x) = \prod_j (x - \beta_j)$, when factored over the complex numbers, then the resultant is given by the expression $r(x) = \prod_{i,j} (\alpha_i - \beta_j)$. If the polynomials are not monic, and \code{a} and \code{b} have leading coefficients $l_1$ and $l_2$ and degrees $d_1$ and $d_2$ respectively, then this quantity is multiplied by $l_1^{d_2-1}l_2^{d_1-1}$.
 
 Note that the resultant is zero iff the polynomials share a root over the algebraic closure of $\Q$.
 
@@ -942,9 +942,9 @@ The \code{fmpz_t} type is not intended as a standalone integer type. It is inten
 
 Currently the user is responsible for memory management of \code{fmpz_t}'s, i.e. one must ensure that the output of a function in the \code{fmpz} module contains sufficient space to store the result. This will be changed in a later version of FLINT, where automatic memory management will be done for the user. 
 
-To ensure that the correct number of limbs are available in each \code{fmpz_t} of an \code{fmpz_poly_t} one must currently call \code{void fmpz_poly_fit_limbs(fmpz_poly_t pol, unsigned long limbs}, which will then ensure that each coefficient of \code{pol} has space for at least the given number of limbs (referring to the absolute value of the coefficients). Again, in a later version of FLINT, this step will be unnecessary as automatic memory management will be done for all \code{fmpz_t}'s, including coefficients of \code{fmpz_poly_t}'s.
+To ensure that the correct number of limbs are available in each \code{fmpz_t} of an \code{fmpz_poly_t} one must currently call \code{void fmpz_poly_fit_limbs(fmpz_poly_t pol, unsigned long limbs)}, which will then ensure that each coefficient of \code{pol} has space for at least the given number of limbs (referring to the absolute value of the coefficients). Again, in a later version of FLINT, this step will be unnecessary as automatic memory management will be done for all \code{fmpz_t}'s, including coefficients of \code{fmpz_poly_t}'s.
 
-Note that \code{fmpz_t}'s are not currently guaranteed to all aliasing between inputs or between inputs and outputs. However some optimised inplace functions are provided.
+Note that \code{fmpz_t}'s are not currently guaranteed to allow aliasing between inputs or between inputs and outputs. However some optimised inplace functions are provided.
 
 \subsection{A simple example}
 We start with a simple example of the use of the \code{fmpz} module.
@@ -1144,7 +1144,7 @@ Set \code{res} to \code{f1} times the \code{unsigned long x}.
 void fmpz_mul_2exp(fmpz_t output, fmpz_t x, unsigned long exp)
 \end{lstlisting}
 \begin{quote}
-Multiply \code{x} by $2^exp$.
+Multiply \code{x} by $2^{\mbox{exp}}$.
 \end{quote}
 
 \begin{lstlisting}
@@ -1181,7 +1181,7 @@ Set \code{res} to the quotient of \code{f1} by the unsigned long \code{x}. Round
 void fmpz_div_2exp(fmpz_t output, fmpz_t x, unsigned long exp)
 \end{lstlisting}
 \begin{quote}
-Divide \code{x} by $2^exp$, returning the quotient and discarding the remainder.
+Divide \code{x} by $2^{\mbox{exp}}$, returning the quotient and discarding the remainder.
 \end{quote}
 
 \subsection{Powering}
