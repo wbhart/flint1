@@ -85,6 +85,9 @@ typedef struct factor_s
    unsigned long exp[15];
 } factor_t;
 
+#define pre_inv_t double
+#define pre_inv2_t double
+
 unsigned long z_randint(unsigned long limit);
 
 double z_precompute_inverse(unsigned long n);

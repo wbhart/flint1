@@ -986,6 +986,15 @@ void fmpz_clear(const fmpz_t f)
 Free space used by the \code{fmpz_t f}.
 \end{quote}
 
+\subsection{Random numbers}
+
+\begin{lstlisting}
+void fmpz_random_limbs2(fmpz_t x, unsigned long n)
+\end{lstlisting}
+\begin{quote}
+Set \code{x} to a random number of $n$ limbs consisting of long strings of ones and zeroes.
+\end{quote}
+
 \subsection{String operations}
 
 \begin{lstlisting}
@@ -1062,6 +1071,13 @@ int fmpz_is_zero(const fmpz_t f)
 \end{lstlisting}
 \begin{quote}
 Return 1 if \code{f} is zero, otherwise return 0.
+\end{quote}
+
+\begin{lstlisting}
+int fmpz_cmpabs(const fmpz_t f1, const fmpz_t f2)
+\end{lstlisting}
+\begin{quote}
+Compares the absolute values of \code{f1} and \code{f2}. If the absolute value of \code{f1} is less than that of \code{f2} then a negative value is returned. If the absolute value of \code{f1} is greater than that of \code{f2} then a positive value is returned. If the absolute values are equal, then zero is returned. 
 \end{quote}
 
 \subsection{Conversion}
@@ -1184,6 +1200,13 @@ void fmpz_div_2exp(fmpz_t output, fmpz_t x, unsigned long exp)
 Divide \code{x} by $2^{\mbox{exp}}$, returning the quotient and discarding the remainder.
 \end{quote}
 
+\begin{lstlisting}
+unsigned long fmpz_mod_ui(const fmpz_t input, const unsigned long x)
+\end{lstlisting}
+\begin{quote}
+Returns \code{f1} modulo the \code{unsigned long x}. Note that \code{f1} may be unsigned. 
+\end{quote}
+
 \subsection{Powering}
 
 \begin{lstlisting}
@@ -1193,6 +1216,17 @@ void fmpz_pow_ui(fmpz_t res, const fmpz_t f, unsigned long exp)
 Set \code{res} to \code{f} raised to the power \code{exp}. This requires \code{exp} to be non-negative.
 \end{quote}
 
+\subsection{Root extraction}
+
+\begin{lstlisting}
+void fmpz_sqrtrem(fmpz_t sqrt, fmpz_t rem, fmpz_t x)
+\end{lstlisting}
+\begin{quote}
+Computes the square root of \code{x} and returns the integer part of the square root, \code{sqrt}, and the remainder, \code{rem = x - sqrt^2}. 
+
+Note that \code{x} must be non-negative, else an exception is raised.
+\end{quote}
+
 \subsection{Number theoretical}
 
 \begin{lstlisting}
@@ -1200,6 +1234,19 @@ void fmpz_gcd(fmpz_t output, fmpz_t x1, fmpz_t x2)
 \end{lstlisting}
 \begin{quote}
 Compute the greatest common divisor of \code{x1} and \code{x2}. The result is always non-negative and will be zero if both of the inputs are zero.
+\end{quote}
+
+\subsection{Chinese remaindering}
+\begin{lstlisting}
+void fmpz_CRT_ui_precomp(fmpz_t x, fmpz_t r1, fmpz_t m1, unsigned long r2,
+                             unsigned long m2, unsigned long c, pre_inv_t pre)
+void fmpz_CRT_ui2_precomp(fmpz_t x, fmpz_t r1, fmpz_t m1, unsigned long r2,
+                            unsigned long m2, unsigned long c, pre_inv2_t pre)
+\end{lstlisting}
+\begin{quote}
+Computes the unique value \code{x} modulo \code{m1*m2} that is \code{r1} modulo \code{m1} and \code{r2} modulo \code{m2}. Requires \code{m1} and \code{m2} to be coprime, \code{c} to be set to the value \code{m1} modulo \code{m2} and \code{pre} to be a precomputed inverse of \code{m2} (computed using \code{z_precompute_inverse(m2)}). 
+
+The first version of the function requires that \code{m2} be no more than \code{FLINT_D_BITS} bits, whereas the second version requires \code{m2} to be no more than \code{FLINT_BITS - 1} bits.
 \end{quote}
 
 \section{NTL interface}
