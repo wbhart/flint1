@@ -250,6 +250,13 @@ Expand the polynomial (if necessary) so that it has space for at least \code{all
 \end{quote}
 
 \begin{lstlisting}
+void fmpz_poly_fit_limbs(fmpz_poly_t poly, unsigned long limbs)
+\end{lstlisting}
+\begin{quote}
+Currently all the coefficients of an \code{fmpz_poly_t} have the same number of limbs of space allocated for them (plus an additional limb for the sign/size limb). This function can be used to increase the space allocated for the coefficients. As all functions in the \code{fmpz_poly} module automatically manage memory allocation for the user, this function should only be used when directly manipulating the coefficients by means of the functions in the \code{fmpz} module (described below). In a later version of FLINT, this function will become defunct, as FLINT will automatically reallocate \code{fmpz_t}'s when there is insufficient space, and this will include polynomial coefficients.
+\end{quote}
+
+\begin{lstlisting}
 void fmpz_poly_clear(fmpz_poly_t poly)\end{lstlisting}
 \begin{quote}
 Free all memory used by the coefficients of \code{poly}. The polynomial object \code{poly} cannot be used again until a subsequent call to an initialisation function is made.
@@ -537,6 +544,13 @@ void fmpz_poly_reverse(fmpz_poly_t output, const fmpz_poly_t poly,
 \end{lstlisting}
 \begin{quote}
 This function considers the polynomial \code{poly} to be of length $n$, notionally truncating and zero padding if required, and reverses the result. Since this function normalises its result the eventual length of \code{output} may be less than \code{length}.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_poly_normalise(fmpz_poly_t poly) 
+\end{lstlisting}
+\begin{quote}
+This function normalises \code{poly} so that the leading coefficient is non-zero (or the polynomial is the zero polynomial). As all functions in \code{fmpz_poly} expect and return normalised polynomials, this function is only used when manipulating the coefficients directly by making use of the functions in the \code{fmpz} module (described below).
 \end{quote}
 
 \subsection{Conversions}
@@ -931,6 +945,38 @@ void fmpz_poly_invmod(fmpz_t d, fmpz_poly_t H, fmpz_poly_t poly1,
 Computes a polynomial \code{H} and a denominator \code{d} such that \code{poly1*H} is \code{d} modulo \code{poly2}. 
 
 Assumes that \code{poly1} and \code{poly2} are coprime and that \code{poly2} is monic.
+\end{quote}
+
+\subsection{Subpolynomials}
+A number of functions are provided for attaching an \code{fmpz_poly_t} object to an existing polynomial or to a range of coefficients of an existing polynomial providing an alias for the original polynomial or part thereof. 
+
+Each of the functions in this section normalise the subpolynomials so that they can be used as inputs to \code{fmpz_poly} functions. 
+
+As FLINT has no way of reallocating space in subpolynomials, they should not be used for outputs of \code{fmpz_poly} functions, but only for inputs. In a later version of FLINT, this restriction will be lifted.
+
+Note that FLINT may perform suboptimally if a polynomial and an alias of the polynomial are passed as inputs to the same function, as FLINT has no way to tell that it is dealing with aliases of the same polynomial.
+
+\begin{lstlisting}
+void _fmpz_poly_attach(fmpz_poly_t output, const fmpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Attach the \code{fmpz_poly_t} object \code{output} to the polynomial \code{poly}. Any changes made to the \code{length} field of \code{output} then do not affect \code{poly}.
+\end{quote}
+
+\begin{lstlisting}
+void _fmpz_poly_attach_shift(fmpz_poly_t output, 
+                              const fmpz_poly_t input, unsigned long n)
+\end{lstlisting}
+\begin{quote}
+Attach the \code{fmpz_poly_t} object \code{output} to \code{poly} but shifted to the left by $n$ coefficients. This is equivalent to notionally shifting the original polynomial right (dividing by $x^n$) then attaching to the result.
+\end{quote}
+
+\begin{lstlisting}
+void _fmpz_poly_attach_truncate(fmpz_poly_t output, 
+                              const fmpz_poly_t input, unsigned long n)
+\end{lstlisting}
+\begin{quote}
+Attach the \code{fmpz_poly_t} object \code{output} to the first $n$ coefficients of the polynomial \code{poly}. This is equivalent to notionally truncating the original polynomial to $n$ coefficients then attaching to the result.
 \end{quote}
 
 \section{The fmpz module}
