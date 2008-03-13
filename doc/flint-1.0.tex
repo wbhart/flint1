@@ -567,8 +567,8 @@ This function is provided to enable the implementation of multimodular algorithm
 \subsection{Chinese remaindering}
 
 \begin{lstlisting}
-int fmpz_poly_CRT_unsigned(fmpz_poly_t res, fmpz_poly_t fpol, zmod_poly_t zpol, 
-                                                fmpz_t newmod, fmpz_t oldmod)
+int fmpz_poly_CRT_unsigned(fmpz_poly_t res, fmpz_poly_t fpol, 
+                     zmod_poly_t zpol, fmpz_t newmod, fmpz_t oldmod)
 \end{lstlisting}
 \begin{quote}
 Performs modular recombination using the Chinese Remainder Theorem. If \code{zpol} has modulus $p$, \code{newmod} is set equal to \code{oldmod*p} and each coefficient of \code{res} is set to the unique value modulo \code{newmod}, in the range $[0, newmod)$ which is $a$ modulo \code{oldmod} and $b$ modulo $p$, where $a$ is the coefficient of \code{fpol} and $b$ is the corresponding coefficient of \code{zpol}.
@@ -577,8 +577,8 @@ The coefficients of \code{fpol} are assumed to be unsigned.
 \end{quote}
 
 \begin{lstlisting}
-int fmpz_poly_CRT(fmpz_poly_t res, fmpz_poly_t fpol, zmod_poly_t zpol, 
-                                                fmpz_t newmod, fmpz_t oldmod)
+int fmpz_poly_CRT(fmpz_poly_t res, fmpz_poly_t fpol, 
+                     zmod_poly_t zpol, fmpz_t newmod, fmpz_t oldmod)
 \end{lstlisting}
 \begin{quote}
 Performs modular recombination using the Chinese Remainder Theorem. If \code{zpol} has modulus $p$, \code{newmod} is set equal to \code{oldmod*p} and each coefficient of \code{res} is set to the unique value modulo \code{newmod}, in the range $(-newmod/2, newmod/2]$ which is $a$ modulo \code{oldmod} and $b$ modulo $p$, where $a$ is the coefficient of \code{fpol} and $b$ is the corresponding coefficient of \code{zpol}. 
@@ -812,6 +812,15 @@ void fmpz_poly_div_series(fmpz_poly_t Q, const fmpz_poly_t A,
 \end{lstlisting}
 \begin{quote}
 Performs power series division in $\Z[[x]]$. The function considers the polynomials \code{A} and \code{B} to be power series of length $n$ starting with the constant terms. The function assumes that \code{B} is normalised, i.e. that the constant coefficient is $\pm 1$. The result is truncated to length $n$ regardless of the inputs.
+\end{quote}
+
+\begin{lstlisting}
+int fmpz_poly_divides(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B)
+\end{lstlisting}
+\begin{quote}
+If the polynomial \code{A} is divisible by the polynomial \code{B} this function returns 1 and sets \code{Q} to the quotient, otherwise it returns 0.
+
+At this point, this function is provided for convenience only; it is not efficient when \code{B} does not actually divide \code{A}. 
 \end{quote}
 
 \subsection{Pseudo division}
