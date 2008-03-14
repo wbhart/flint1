@@ -1297,7 +1297,7 @@ The first version of the function requires that \code{m2} be no more than \code{
 
 \section{The zmod\_poly module}
 
-The \code{zmod_poly_t} data type represents elements of $\Z/\nZ[x]$ for some word sized integer $n$. Most of the functions work for an arbitrary $n$, however the division functions require the leading coefficient of the divisor polynomial to be invertible modulo $n$ and the gcd and resultant functions require $n$ to be prime.
+The \code{zmod_poly_t} data type represents elements of $\Z/n\Z[x]$ for some word sized integer $n$. Most of the functions work for an arbitrary $n$, however the division functions require the leading coefficient of the divisor polynomial to be invertible modulo $n$ and the gcd and resultant functions require $n$ to be prime.
 
 The \code{zmod_poly} module provides routines for memory management, basic manipulation and basic arithmetic.
 
@@ -1606,27 +1606,34 @@ void zmod_poly_right_shift(zmod_poly_t res, zmod_poly_t poly,
 Shift the polynomial \code{poly} right by \code{k} coefficients, i.e. divide the polynomial by $x^k$, ignoring the remainder and store the result in \code{res}. The value of $k$ must be non-negative. If $k$ is greater than or equal to the current length of \code{poly}, \code{res} is set to equal the zero polynomial.
 \end{quote}
 
+\subsection{Polynomial multiplication}
 \begin{lstlisting}
 void zmod_poly_mul(zmod_poly_t res, zmod_poly_t poly1, 
                                                    zmod_poly_t poly2)
 \end{lstlisting}
 \begin{quote}
+Set \code{res} to \code{poly1} multiplied by \code{poly2}. The length of \code{res} will be at most one less than the sum of the lengths of \code{poly1} and \code{poly2}.
 \end{quote}
 
 \begin{lstlisting}
 void zmod_poly_mul_trunc_n(zmod_poly_t res, zmod_poly_t poly1, 
-                              zmod_poly_t poly2, unsigned long trunc)
+                              zmod_poly_t poly2, unsigned long n)
 \end{lstlisting}
 \begin{quote}
+Set \code{res} to \code{poly1} multiplied by \code{poly2} and truncate to length \code{n} if this is less than the length of the full product. This function is usually more efficient than simply doing the multiplication and then truncating. The function is tuned for \code{n} about half the length of a full product. This function is sometimes called a short product.
+
+This function can be used for power series multiplication.
 \end{quote}
 
 \begin{lstlisting}
 void zmod_poly_mul_trunc_left_n(zmod_poly_t res, zmod_poly_t poly1, 
-                              zmod_poly_t poly2, unsigned long trunc)
+                              zmod_poly_t poly2, unsigned long n)
 \end{lstlisting}
 \begin{quote}
+Set \code{res} to \code{poly1} multiplied by \code{poly2} ignoring the least significant \code{n} terms of the result which may be set to anything. This function is more efficient than doing the full multiplication if the operands are relatively short. It is tuned for \code{n} about half the length of a full product. This function is sometimes called an opposite short product. 
 \end{quote}
 
+\subsection{Polynomial division}
 \begin{lstlisting}
 void zmod_poly_newton_invert(zmod_poly_t Q_inv, zmod_poly_t Q, 
                                                      unsigned long n)
