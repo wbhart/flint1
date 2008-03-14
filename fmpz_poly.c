@@ -8336,6 +8336,8 @@ void fmpz_poly_gcd_modular(fmpz_poly_t H, const fmpz_poly_t poly1, const fmpz_po
       fmpz_poly_set(H, Ain);
       return;
    }
+
+   unsigned long bits = FLINT_MAX(fmpz_poly_max_bits(poly1), fmpz_poly_max_bits(poly2));
    
    fmpz_t ac, bc, d;
    ac = fmpz_init(Ain->limbs);
@@ -8374,7 +8376,10 @@ void fmpz_poly_gcd_modular(fmpz_poly_t H, const fmpz_poly_t poly1, const fmpz_po
    int g_pm1 = 0;
    if ((FLINT_ABS(g[0]) == 1L) && (g[1] == 1L)) g_pm1 = 1;
 
-   unsigned long p = (1L<<(FLINT_BITS-2));
+   unsigned long p;
+
+   if (bits < FLINT_BITS-3) p = (1L<<(bits+2));
+   else p = (1L<<(FLINT_BITS-2));
    
    zmod_poly_t a, b, h;
    
@@ -8428,6 +8433,15 @@ void fmpz_poly_gcd_modular(fmpz_poly_t H, const fmpz_poly_t poly1, const fmpz_po
       if (h->length - 1 < n)
       {
          zmod_poly_to_fmpz_poly(H, h);
+         if (FLINT_BITS - 2 > bits)
+         { 
+            fmpz_t hc = fmpz_init(H->limbs);
+            fmpz_poly_content(hc, H);
+            fmpz_poly_scalar_div_fmpz(H, H, hc);
+            fmpz_clear(hc); // release hc
+            if (fmpz_poly_divides(Q, A, H) && fmpz_poly_divides(Q, B, H)) 
+               break;
+         }
          fmpz_set_ui(modulus, p);
          n = h->length - 1;
          continue;
@@ -8488,9 +8502,15 @@ void fmpz_poly_gcd(fmpz_poly_t res, const fmpz_poly_t poly1, const fmpz_poly_t p
       return;
    }
    
+   if ((poly1->length <= 6) && (poly2->length <= 6)) 
+   {
+      fmpz_poly_gcd_subresultant(res, poly1, poly2);
+      return;
+   }
+   
    unsigned long max_length = (poly1->length > poly2->length) ? poly1->length : poly2->length;
    
-   if (max_length > 32)
+   if (max_length > 16)
    {
       fmpz_poly_gcd_modular(res, poly1, poly2);
       return;
@@ -8500,7 +8520,13 @@ void fmpz_poly_gcd(fmpz_poly_t res, const fmpz_poly_t poly1, const fmpz_poly_t p
    unsigned long bits2 = FLINT_ABS(fmpz_poly_max_bits(poly2));
    unsigned long max_bits = FLINT_MAX(bits1, bits2);
  
-   if (max_length*max_length*max_length*max_bits > 256000UL)
+   if (max_bits < FLINT_BITS)
+   {
+      fmpz_poly_gcd_modular(res, poly1, poly2);
+      return;
+   }
+
+   if (max_length*max_length*max_length*max_length*max_bits > 2000000UL)
    {
       fmpz_poly_gcd_modular(res, poly1, poly2);
       return;

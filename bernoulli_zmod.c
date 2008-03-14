@@ -121,15 +121,15 @@ int bernoulli_mod_p(unsigned long *res, unsigned long p)
       g_power_inv = z_mulmod_precomp(g_power_inv, g_inv, p, p_inv);
       
       // store coefficient g^{i^2} h(g^i)/g^i
-      zmod_poly_set_coeff(G, i, z_mulmod_precomp(h, fudge, p, p_inv));
-      zmod_poly_set_coeff(F, i, fudge_inv);
+      zmod_poly_set_coeff_ui(G, i, z_mulmod_precomp(h, fudge, p, p_inv));
+      zmod_poly_set_coeff_ui(F, i, fudge_inv);
       
       // update fudge and fudge_inv
       fudge = z_mulmod_precomp(z_mulmod_precomp(fudge, g_power, p, p_inv), z_mulmod_precomp(g_power, g, p, p_inv), p, p_inv);
       fudge_inv = z_mulmod_precomp(z_mulmod_precomp(fudge_inv, g_power_inv, p, p_inv), z_mulmod_precomp(g_power_inv, g, p, p_inv), p, p_inv);
    }
    
-   zmod_poly_set_coeff(F, 0, 0);
+   zmod_poly_set_coeff_ui(F, 0, 0);
    
    // step 2: multiply the polynomials...
    
@@ -148,15 +148,15 @@ int bernoulli_mod_p(unsigned long *res, unsigned long p)
 
    for(i = 1; i < poly_size; i++)
    {
-      value = zmod_poly_get_coeff(product, i + poly_size);
+      value = zmod_poly_get_coeff_ui(product, i + poly_size);
       
       if(is_odd)
       {
-         value = z_mod_precomp(zmod_poly_get_coeff(G, i) + zmod_poly_get_coeff(product, i) + p - value, p, p_inv);
+         value = z_mod_precomp(zmod_poly_get_coeff_ui(G, i) + zmod_poly_get_coeff_ui(product, i) + p - value, p, p_inv);
       }
       else
       {
-         value = z_mod_precomp(zmod_poly_get_coeff(G, i) + zmod_poly_get_coeff(product, i) + value, p, p_inv);
+         value = z_mod_precomp(zmod_poly_get_coeff_ui(G, i) + zmod_poly_get_coeff_ui(product, i) + value, p, p_inv);
       }
       
       value = z_mulmod_precomp(z_mulmod_precomp(z_mulmod_precomp(4L, i, p, p_inv), fudge, p, p_inv), value, p, p_inv);

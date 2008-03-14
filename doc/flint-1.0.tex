@@ -206,7 +206,7 @@ The output is:
 7  1 0 0 -10 0 0 25
 \end{lstlisting}
 
-\subsection{Definition of the \code{fmpz} polynomial type}
+\subsection{Definition of the \code{fmpz_poly_t} polynomial type}
 
 The \code{fmpz_poly_t} type is a typedef for an array of length 1 of \code{fmpz_poly_struct}'s. This permits passing parameters  of type \code{fmpz_poly_t} `by reference' in a manner similar to the way GMP integers of type \code{mpz_t} can be passed by reference. 
 
@@ -457,7 +457,7 @@ void fmpz_poly_read(fmpz_poly_t poly)
 Read a polynomial from \code{stdin}. Return 1 if the data read from \code{stdin} represented a valid polynomial, otherwise return 0.
 \end{quote}
 
-\subsection{Polynomial parameters (length, degree, limbs, etc.)}
+\subsection{Polynomial parameters (length, degree, max limbs, etc.)}
 
 \begin{lstlisting}
 long fmpz_poly_degree(const fmpz_poly_t poly)
@@ -957,14 +957,14 @@ As FLINT has no way of reallocating space in subpolynomials, they should not be 
 Note that FLINT may perform suboptimally if a polynomial and an alias of the polynomial are passed as inputs to the same function, as FLINT has no way to tell that it is dealing with aliases of the same polynomial.
 
 \begin{lstlisting}
-void _fmpz_poly_attach(fmpz_poly_t output, const fmpz_poly_t poly)
+void fmpz_poly_attach(fmpz_poly_t output, const fmpz_poly_t poly)
 \end{lstlisting}
 \begin{quote}
 Attach the \code{fmpz_poly_t} object \code{output} to the polynomial \code{poly}. Any changes made to the \code{length} field of \code{output} then do not affect \code{poly}.
 \end{quote}
 
 \begin{lstlisting}
-void _fmpz_poly_attach_shift(fmpz_poly_t output, 
+void fmpz_poly_attach_shift(fmpz_poly_t output, 
                               const fmpz_poly_t input, unsigned long n)
 \end{lstlisting}
 \begin{quote}
@@ -972,7 +972,7 @@ Attach the \code{fmpz_poly_t} object \code{output} to \code{poly} but shifted to
 \end{quote}
 
 \begin{lstlisting}
-void _fmpz_poly_attach_truncate(fmpz_poly_t output, 
+void fmpz_poly_attach_truncate(fmpz_poly_t output, 
                               const fmpz_poly_t input, unsigned long n)
 \end{lstlisting}
 \begin{quote}
@@ -1293,6 +1293,390 @@ void fmpz_CRT_ui2_precomp(fmpz_t x, fmpz_t r1, fmpz_t m1, unsigned long r2,
 Computes the unique value \code{x} modulo \code{m1*m2} that is \code{r1} modulo \code{m1} and \code{r2} modulo \code{m2}. Requires \code{m1} and \code{m2} to be coprime, \code{c} to be set to the value \code{m1} modulo \code{m2} and \code{pre} to be a precomputed inverse of \code{m2} (computed using \code{z_precompute_inverse(m2)}). 
 
 The first version of the function requires that \code{m2} be no more than \code{FLINT_D_BITS} bits, whereas the second version requires \code{m2} to be no more than \code{FLINT_BITS - 1} bits.
+\end{quote}
+
+\section{The zmod\_poly module}
+
+The \code{zmod_poly_t} data type represents elements of $\Z/\nZ[x]$ for some word sized integer $n$. Most of the functions work for an arbitrary $n$, however the division functions require the leading coefficient of the divisor polynomial to be invertible modulo $n$ and the gcd and resultant functions require $n$ to be prime.
+
+The \code{zmod_poly} module provides routines for memory management, basic manipulation and basic arithmetic.
+
+Each coefficient of a \code{zmod_poly_t} is stored as an \code{unsigned long} and is assumed to be reduced modulo the modulus $n$.
+
+Unless otherwise specified, all functions in this section permit aliasing between their input arguments and between their input and output arguments. 
+
+\subsection{Simple example}
+
+The following example computes the square of the polynomial $5x^3 + 1$, where the coefficients are understood to be in $\Z/7\Z$.
+
+\begin{lstlisting}
+#include "zmod_poly.h"
+ ....
+zmod_poly_t x, y;
+zmod_poly_init(x, 7);
+zmod_poly_init(y);
+zmod_poly_set_coeff_ui(x, 3, 5);
+zmod_poly_set_coeff_ui(x, 0, 1);
+zmod_poly_mul(y, x, x);
+zmod_poly_print(x); printf("\n");
+zmod_poly_print(y); printf("\n");
+zmod_poly_clear(x);
+zmod_poly_clear(y);
+\end{lstlisting}
+
+The output is:
+
+\begin{lstlisting}
+4  1 0 0 5
+7  1 0 0 3 0 0 4
+\end{lstlisting}
+
+\subsection{Definition of the \code{zmod_poly_t} polynomial type}
+
+The \code{zmod_poly_t} type is a typedef for an array of length 1 of \code{zmod_poly_struct}'s. This permits passing parameters  of type \code{zmod_poly_t} `by reference'. 
+
+All \code{zmod_poly} functions expect their inputs to be normalised, and unless otherwise specified they produce output that is normalised. 
+
+It is recommended that users do not access the fields of a \code{zmod_poly_t} or its coefficient data directly, but make use of the functions designed for this purpose (detailed below). The type has fields for the length of the polynomial, the number of coefficients allocated (the length is always less than or equal to this), a modulus $n$ and possibly a precomputed inverse of $n$.
+
+Functions in \code{zmod_poly} do all the memory management for the user. One does not need to specify the maximum length in advance before using a \code{zmod_poly_t} polynomial object, but it may be more efficient to do so. FLINT reallocates space automatically as the computation proceeds, if more space is required. 
+
+We now describe the functions available in \code{zmod_poly}.
+
+\subsection{Memory management}
+
+\begin{lstlisting}
+void zmod_poly_init(zmod_poly_t poly, unsigned long p)
+\end{lstlisting}
+\begin{quote}
+Initialise \code{poly} as a polynomial over $\Z/p\Z$. 
+\end{quote}
+
+\begin{lstlisting}
+void zmod_poly_init2(zmod_poly_t poly, unsigned long p, 
+                                                  unsigned long alloc)
+\end{lstlisting}
+\begin{quote}
+Initialise \code{poly} as a polynomial over $\Z/p\Z$, allocating space for at least the given number of coefficients. 
+\end{quote}
+
+\begin{lstlisting}
+void zmod_poly_clear(zmod_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Released the memory used by \code{poly}, which cannot then be used again until it is initialised again.
+\end{quote}
+
+\begin{lstlisting}
+void zmod_poly_realloc(zmod_poly_t poly, unsigned long alloc)
+\end{lstlisting}
+\begin{quote}
+Reallocate \code{poly} so that it has space for \code{alloc} coefficients. If alloc is greater than the current length of the polynomial, the existing coefficients are retained.
+\end{quote}
+
+\begin{lstlisting}
+void zmod_poly_fit_length(zmod_poly_t poly, unsigned long alloc)
+\end{lstlisting}
+\begin{quote}
+Reallocate \code{poly} so that it has space for at least \code{alloc} coefficients. This function will not reduce the number of allocated coefficients, so no data will be lost.
+\end{quote}
+
+\subsection{Setting/retrieving coefficients}
+
+\begin{lstlisting}
+unsigned long zmod_poly_get_coeff_ui(zmod_poly_t poly, unsigned long n)
+\end{lstlisting}
+\begin{quote}
+Return the $n$-th coefficient as an \code{unsigned long}. Coefficients are number from zero, starting with the constant coefficient. If $n$ is greater than or equal to the current length of the polynomial, zero is returned.
+\end{quote}
+
+\begin{lstlisting}
+void zmod_poly_set_coeff_ui(zmod_poly_t poly, unsigned long n, 
+                                                       unsigned long c)
+\end{lstlisting}
+\begin{quote}
+Set the $n$-th coefficient to the \code{unsigned long c}. It is assumed that \code{c} is already reduced modulo the modulus of the polynomial. Coefficients are number from zero, starting with the constant coefficient. If $n$ is greater than the current length of the polynomial, zeroes are inserted between the new coefficient and the existing coefficients if required.
+\end{quote}
+
+\subsection{String conversions and I/O}
+The functions in this section read/write a polynomial to/from a string representation. The representation starts with the length of the polynomial, a space and then the modulus of the polynomial. If the length is not zero, this is followed by a space and then a space separated list of the coefficients starting from the constant coefficient. Each coefficient is represented as an integer between zero and one less than the modulus.
+
+The polynomial $3*x^2+2$ in $\Z/7\Z[x]$ would be represented:
+
+\begin{lstlisting}
+3 7 2 0 3
+\end{lstlisting}
+
+\begin{lstlisting}
+int zmod_poly_from_string(zmod_poly_t poly, char* s)
+\end{lstlisting}
+\begin{quote}
+Load \code{poly} from the given string \code{s}.
+\end{quote}
+
+\begin{lstlisting}
+char* zmod_poly_to_string(zmod_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Return a pointer to a string representing \code{poly}. Space is allocated for the string and must be free'd after use.
+\end{quote}
+
+\begin{lstlisting}
+void zmod_poly_print(zmod_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Print the string representation of \code{poly} to \code{stdout}.
+\end{quote}
+
+\begin{lstlisting}
+void zmod_poly_fprint(zmod_poly_t poly, FILE* f)
+\end{lstlisting}
+\begin{quote}
+Print the string representation of \code{poly} to the given file/stream \code{f}.
+\end{quote}
+
+\begin{lstlisting}
+int zmod_poly_read(zmod_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Read a polynomial in string representation from \code{stdin}. The function returns 1 if the string represented a valid polynomial, otherwise it returns 0.
+\end{quote}
+
+\begin{lstlisting}
+int zmod_poly_fread(zmod_poly_t poly, FILE* f)
+\end{lstlisting}
+\begin{quote}
+Read a polynomial in string representation from the given file/stream \code{f}. The function returns 1 if the string represented a valid polynomial, otherwise it returns 0.
+\end{quote}
+
+\subsection{Polynomial parameters (length, degree, modulus, etc.)}
+\begin{lstlisting}
+unsigned long zmod_poly_length(zmod_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Return the current length of the polynomial. The zero polynomial has length 0.
+\end{quote}
+
+\begin{lstlisting}
+long zmod_poly_degree(zmod_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Return the degree of the polynomial. The zero polynomial is defined to have length $-1$.
+\end{quote}
+
+\begin{lstlisting}
+unsigned long zmod_poly_modulus(zmod_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Return the modulus of the polynomial, i.e. if $n$ is returned, the polynomial is an element of $\Z/n\Z$.\end{quote}
+
+\subsection{Assignment and basic manipulation}
+\begin{lstlisting}
+void zmod_poly_truncate(zmod_poly_t poly, unsigned long length)
+\end{lstlisting}
+\begin{quote}
+Truncate \code{poly} to the given length and normalise.
+\end{quote}
+
+\begin{lstlisting}
+void zmod_poly_set(zmod_poly_t res, zmod_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Set \code{res} to equal \code{poly}.
+\end{quote}
+
+\begin{lstlisting}
+void zmod_poly_zero(zmod_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Set \code{poly} to be the zero polynomial.
+\end{quote}
+
+\begin{lstlisting}
+void zmod_poly_swap(zmod_poly_t poly1, zmod_poly_t poly2)
+\end{lstlisting}
+\begin{quote}
+Efficiently swap \code{poly1} and \code{poly2}. Data is not actually copied in memory. Instead, pointers are swapped.
+\end{quote}
+
+\begin{lstlisting}
+void zmod_poly_neg(zmod_poly_t res, zmod_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Negate the polynomial \code{poly}, i.e. set \code{res} to \code{-poly}.
+\end{quote}
+
+\begin{lstlisting}
+void zmod_poly_reverse(zmod_poly_t output, zmod_poly_t input,
+                                                 unsigned long length)
+\end{lstlisting}
+\begin{quote}
+Notionally zero padding or truncating if necessary, this function considers \code{input} to be a polynomial of the given length and reverses it, storing the result in \code{output}.
+\end{quote}
+
+\subsection{Subpolynomials}
+These functions allow one to attach a \code{zmod_poly_t} object to an existing polynomial or subpolynomial thereof. The subpolynomial is normalised if necessary.
+
+Since FLINT cannot reallocate the attached polynomial object, these functions should only be used to construct polynomial objects to be used as inputs to other \code{zmod_poly} functions.
+
+\begin{lstlisting}
+void zmod_poly_attach(zmod_poly_t poly1, zmod_poly_t poly2)
+\end{lstlisting}
+\begin{quote}
+Attach \code{poly2} to the polynomial object \code{poly1}.
+\end{quote}
+
+\begin{lstlisting}
+void zmod_poly_attach_shift(zmod_poly_t poly1, 
+                   zmod_poly_t poly2, unsigned long n)
+\end{lstlisting}
+\begin{quote}
+This function notionally shifts \code{poly2} to the right by \code{n} coefficients and then attaches the polynomial object \code{poly1} to the result.
+\end{quote}
+
+\begin{lstlisting}
+void zmod_poly_attach_truncate(zmod_poly_t output, 
+                     zmod_poly_t input, unsigned long n)
+\end{lstlisting}
+\begin{quote}
+This function notionally truncates \code{poly2} to length \code{n} and then attaches the polynomial object \code{poly1} to the result.
+\end{quote}
+
+\subsection{Comparison}
+\begin{lstlisting}
+int zmod_poly_equal(zmod_poly_t poly1, zmod_poly_t poly2)
+\end{lstlisting}
+\begin{quote}
+Returns 1 if the two polynomials are equal, otherwise returns 0.
+\end{quote}
+
+\begin{lstlisting}
+int zmod_poly_is_one(zmod_poly_t poly1)
+\end{lstlisting}
+\begin{quote}
+Returns 1 if the polynomial is equal to the constant polynomial 1, otherwise returns 0.
+\end{quote}
+
+\subsection{Scalar multiplication and division}
+\begin{lstlisting}
+void zmod_poly_scalar_mul(zmod_poly_t res, zmod_poly_t poly, unsigned long scalar)
+\end{lstlisting}
+\begin{quote}
+Multiply the polynomial through by the given scalar. It is assumed that \code{scalar} is already reduced modulo the modulus of the polynomial.
+\end{quote}
+
+\begin{lstlisting}
+void zmod_poly_make_monic(zmod_poly_t output, zmod_poly_t pol)
+\end{lstlisting}
+\begin{quote}
+Divide the polynomial through by the inverse of the leading coefficient of the polynomial. It is assumed that the leading coefficient is invertible modulo the modulus of the polynomial. This function results in a monic polynomial if this condition is met, otherwise the results are undefined.
+\end{quote}
+
+\subsection{Addition/subtraction}
+\begin{lstlisting}
+void zmod_poly_add(zmod_poly_t res, zmod_poly_t poly1, 
+                                                   zmod_poly_t poly2)
+\end{lstlisting}
+\begin{quote}
+Set \code{res} to the sum of \code{poly1} and \code{poly2}. Note that if cancellation occurs, \code{res} may have a lesser length than either of the two input polynomials.
+\end{quote}
+
+\begin{lstlisting}
+void zmod_poly_sub(zmod_poly_t res, zmod_poly_t poly1, 
+                                                   zmod_poly_t poly2)
+\end{lstlisting}
+\begin{quote}
+Set \code{res} to \code{poly1} minus \code{poly2}. Note that if cancellation occurs, \code{res} may have a lesser length than either of the two input polynomials.
+\end{quote}
+
+\subsection{Shifting}
+\begin{lstlisting}
+void zmod_poly_left_shift(zmod_poly_t res, zmod_poly_t poly, 
+                                                     unsigned long k)
+\end{lstlisting}
+\begin{quote}
+Shift the polynomial \code{poly} left by \code{k} coefficients, i.e. multiply the polynomial by $x^k$ and store the result in \code{res}. The value of $k$ must be non-negative.
+\end{quote}
+
+\begin{lstlisting}
+void zmod_poly_right_shift(zmod_poly_t res, zmod_poly_t poly, 
+                                                     unsigned long k)
+\end{lstlisting}
+\begin{quote}
+Shift the polynomial \code{poly} right by \code{k} coefficients, i.e. divide the polynomial by $x^k$, ignoring the remainder and store the result in \code{res}. The value of $k$ must be non-negative. If $k$ is greater than or equal to the current length of \code{poly}, \code{res} is set to equal the zero polynomial.
+\end{quote}
+
+\begin{lstlisting}
+void zmod_poly_mul(zmod_poly_t res, zmod_poly_t poly1, 
+                                                   zmod_poly_t poly2)
+\end{lstlisting}
+\begin{quote}
+\end{quote}
+
+\begin{lstlisting}
+void zmod_poly_mul_trunc_n(zmod_poly_t res, zmod_poly_t poly1, 
+                              zmod_poly_t poly2, unsigned long trunc)
+\end{lstlisting}
+\begin{quote}
+\end{quote}
+
+\begin{lstlisting}
+void zmod_poly_mul_trunc_left_n(zmod_poly_t res, zmod_poly_t poly1, 
+                              zmod_poly_t poly2, unsigned long trunc)
+\end{lstlisting}
+\begin{quote}
+\end{quote}
+
+\begin{lstlisting}
+void zmod_poly_newton_invert(zmod_poly_t Q_inv, zmod_poly_t Q, 
+                                                     unsigned long n)
+\end{lstlisting}
+\begin{quote}
+\end{quote}
+
+\begin{lstlisting}
+void zmod_poly_div_series(zmod_poly_t Q, zmod_poly_t A, zmod_poly_t B, unsigned long n)
+\end{lstlisting}
+\begin{quote}
+\end{quote}
+
+\begin{lstlisting}
+void zmod_poly_div(zmod_poly_t Q, zmod_poly_t A, zmod_poly_t B)
+\end{lstlisting}
+\begin{quote}
+\end{quote}
+
+\begin{lstlisting}
+void zmod_poly_divrem(zmod_poly_t Q, zmod_poly_t R, zmod_poly_t A, zmod_poly_t B)
+\end{lstlisting}
+\begin{quote}
+\end{quote}
+
+\begin{lstlisting}
+unsigned long zmod_poly_resultant(zmod_poly_t a, zmod_poly_t b)
+\end{lstlisting}
+\begin{quote}
+\end{quote}
+
+\begin{lstlisting}
+void zmod_poly_gcd(zmod_poly_t res, zmod_poly_t poly1, 
+                                                   zmod_poly_t poly2)
+\end{lstlisting}
+\begin{quote}
+\end{quote}
+
+\begin{lstlisting}
+int zmod_poly_gcd_invert(zmod_poly_t res, zmod_poly_t poly1, 
+                                                   zmod_poly_t poly2)
+\end{lstlisting}
+\begin{quote}
+\end{quote}
+
+\begin{lstlisting}
+void zmod_poly_xgcd(zmod_poly_t res, zmod_poly_t s, zmod_poly_t t,  
+                                 zmod_poly_t poly1, zmod_poly_t poly)
+\end{lstlisting}
+\begin{quote}
 \end{quote}
 
 \section{NTL interface}

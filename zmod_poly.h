@@ -91,7 +91,7 @@ void zmod_poly_fit_length(zmod_poly_t poly, unsigned long alloc)
 // Setting/retrieving coefficients
 
 static inline
-unsigned long zmod_poly_get_coeff(zmod_poly_t poly, unsigned long n)
+unsigned long zmod_poly_get_coeff_ui(zmod_poly_t poly, unsigned long n)
 {
    if (n >= poly->length)
       return 0;
@@ -99,15 +99,15 @@ unsigned long zmod_poly_get_coeff(zmod_poly_t poly, unsigned long n)
 }
 
 static inline
-unsigned long _zmod_poly_get_coeff(zmod_poly_t poly, unsigned long n)
+unsigned long _zmod_poly_get_coeff_ui(zmod_poly_t poly, unsigned long n)
 {
    return poly->coeffs[n];
 }
 
-void zmod_poly_set_coeff(zmod_poly_t poly, unsigned long n, unsigned long c);
+void zmod_poly_set_coeff_ui(zmod_poly_t poly, unsigned long n, unsigned long c);
 
 static inline
-void _zmod_poly_set_coeff(zmod_poly_t poly, unsigned long n, unsigned long c)
+void _zmod_poly_set_coeff_ui(zmod_poly_t poly, unsigned long n, unsigned long c)
 {
 	poly->coeffs[n] = c;
 }
@@ -213,6 +213,12 @@ void _zmod_poly_attach(zmod_poly_t output, zmod_poly_t input)
    output->p_inv = input->p_inv;
 }
 
+static inline 
+void zmod_poly_attach(zmod_poly_t output, zmod_poly_t input)
+{
+   _zmod_poly_attach(output, input);
+}
+
 /*
    Attach input shifted right by n to output
 */
@@ -226,6 +232,13 @@ void _zmod_poly_attach_shift(zmod_poly_t output,
    output->coeffs = input->coeffs + n;
    output->p = input->p;
    output->p_inv = input->p_inv;
+}
+
+static inline 
+void zmod_poly_attach_shift(zmod_poly_t output, 
+                   zmod_poly_t input, unsigned long n)
+{
+   _zmod_poly_attach_shift(output, input, n);
 }
 
 /*
@@ -242,6 +255,13 @@ void _zmod_poly_attach_truncate(zmod_poly_t output,
    output->p = input->p;
    output->p_inv = input->p_inv;
    __zmod_poly_normalise(output);
+}
+
+static inline 
+void zmod_poly_attach_truncate(zmod_poly_t output, 
+                     zmod_poly_t input, unsigned long n)
+{
+   _zmod_poly_attach_truncate(output, input, n);
 }
 
 
@@ -368,10 +388,30 @@ void zmod_poly_div_series(zmod_poly_t Q, zmod_poly_t A, zmod_poly_t B, unsigned 
 void zmod_poly_div_newton(zmod_poly_t Q, zmod_poly_t A, zmod_poly_t B);
 void zmod_poly_divrem_newton(zmod_poly_t Q, zmod_poly_t R, zmod_poly_t A, zmod_poly_t B);
 
+#define ZMOD_DIV_BASECASE_CUTOFF 64
+
 static inline
 void zmod_poly_divrem(zmod_poly_t Q, zmod_poly_t R, zmod_poly_t A, zmod_poly_t B)
 {
+   if ((B->length < ZMOD_DIV_BASECASE_CUTOFF) && (A->length < 2*ZMOD_DIV_BASECASE_CUTOFF))
+   {
+      zmod_poly_divrem_classical(Q, R, A, B);
+      return;
+   }
+
    zmod_poly_divrem_newton(Q, R, A, B);
+}
+
+static inline
+void zmod_poly_div(zmod_poly_t Q, zmod_poly_t A, zmod_poly_t B)
+{
+   if ((B->length < ZMOD_DIV_BASECASE_CUTOFF) && (A->length < 2*ZMOD_DIV_BASECASE_CUTOFF))
+   {
+      zmod_poly_div_classical(Q, A, B);
+      return;
+   }
+   
+   zmod_poly_div_newton(Q, A, B);
 }
 
 

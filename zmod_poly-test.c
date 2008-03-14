@@ -467,13 +467,13 @@ int test_zmod_poly_getset_coeff()
          
          randpoly(pol1, length1, modulus);
          zmod_poly_set(pol2, pol1);
-         zmod_poly_set_coeff(pol1, num, coeff);
+         zmod_poly_set_coeff_ui(pol1, num, coeff);
          
-         result &= (coeff == zmod_poly_get_coeff(pol1, num));
+         result &= (coeff == zmod_poly_get_coeff_ui(pol1, num));
          
          if (num + 1 > length1) 
          {
-            zmod_poly_set_coeff(pol1, num, 0);
+            zmod_poly_set_coeff_ui(pol1, num, 0);
             result &= zmod_poly_equal(pol1, pol2);
          }
          
@@ -1093,7 +1093,7 @@ int test_zmod_poly_newton_invert_basecase()
          do randpoly(poly, length, modulus); 
          while (poly->length == 0);
       
-         zmod_poly_set_coeff(poly, poly->length - 1, 1L);
+         zmod_poly_set_coeff_ui(poly, poly->length - 1, 1L);
       
          n = randint(poly->length) + 1;
       
@@ -1547,23 +1547,23 @@ int test_zmod_poly_resultant_euclidean()
                }
             }
             
-            zmod_poly_set_coeff(pol1, 0, 1);
+            zmod_poly_set_coeff_ui(pol1, 0, 1);
             pol1->length = 1;
-            zmod_poly_set_coeff(pol2, 0, 1);
+            zmod_poly_set_coeff_ui(pol2, 0, 1);
             pol2->length = 1;
 
-            zmod_poly_set_coeff(lin, 1, 1L);
+            zmod_poly_set_coeff_ui(lin, 1, 1L);
             lin->length = 2;
             
             for (unsigned long i = 0; i < r1; i++)
             {
-               zmod_poly_set_coeff(lin, 0, z_submod(0, roots1[i], modulus));
+               zmod_poly_set_coeff_ui(lin, 0, z_submod(0, roots1[i], modulus));
                zmod_poly_mul(pol1, pol1, lin);
             }
 
             for (unsigned long i = 0; i < r2; i++)
             {
-               zmod_poly_set_coeff(lin, 0, z_submod(0, roots2[i], modulus));
+               zmod_poly_set_coeff_ui(lin, 0, z_submod(0, roots2[i], modulus));
                zmod_poly_mul(pol2, pol2, lin);
             }
 

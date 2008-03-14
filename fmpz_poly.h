@@ -472,6 +472,12 @@ void _fmpz_poly_attach(fmpz_poly_t output, const fmpz_poly_t input)
    output->coeffs = input->coeffs;
 }
 
+static inline 
+void fmpz_poly_attach(fmpz_poly_t output, const fmpz_poly_t input)
+{
+   _fmpz_poly_attach(output, input);
+}
+
 /*
    Attach input shifted right by n to output
 */
@@ -484,6 +490,13 @@ void _fmpz_poly_attach_shift(fmpz_poly_t output,
    else output->length = 0;
    output->limbs = input->limbs;
    output->coeffs = input->coeffs + n*(input->limbs+1);
+}
+
+static inline 
+void fmpz_poly_attach_shift(fmpz_poly_t output, 
+             const fmpz_poly_t input, unsigned long n)
+{
+   _fmpz_poly_attach_shift(output, input, n);
 }
 
 /*
@@ -499,6 +512,13 @@ void _fmpz_poly_attach_truncate(fmpz_poly_t output,
    output->limbs = input->limbs;
    output->coeffs = input->coeffs;
    _fmpz_poly_normalise(output);
+}
+
+static inline 
+void fmpz_poly_attach_truncate(fmpz_poly_t output, 
+             const fmpz_poly_t input, unsigned long n)
+{
+   _fmpz_poly_attach_truncate(output, input, n);
 }
 
 long _fmpz_poly_max_bits1(const fmpz_poly_t poly);

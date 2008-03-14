@@ -82,7 +82,7 @@ void randpoly(zmod_poly_t poly, long length, unsigned long n)
       poly->coeffs[i] = randint(n);
    poly->length = length;
       
-   zmod_poly_normalise(poly);
+   __zmod_poly_normalise(poly);
 } 
 
 void sample_zmod_poly_mul_KS(unsigned long length, unsigned long bits, void* arg, unsigned long count)
