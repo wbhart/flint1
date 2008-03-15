@@ -47,6 +47,8 @@ extern gmp_randstate_t randstate;
 // returns random unsigned long in [0, max)
 unsigned long random_ulong(unsigned long max);
 
+unsigned long random_ulong2(unsigned long max);
+
 // returns random limb
 mp_limb_t random_limb();
 

@@ -92,6 +92,15 @@ unsigned long z_randint(unsigned long limit);
 
 double z_precompute_inverse(unsigned long n);
 
+/*
+uint32_t z_precompute_inverse32(unsigned long n);
+
+uint32_t z_mod32_precomp(unsigned long n64, uint32_t d, uint32_t di);				
+
+unsigned long z_mulmod32_precomp(unsigned long a, unsigned long b, 
+                                         unsigned long n, uint32_t ninv);
+*/
+
 static inline
 unsigned long z_addmod(unsigned long a, unsigned long b, unsigned long p)
 {
@@ -109,6 +118,15 @@ unsigned long z_submod(unsigned long a, unsigned long b, unsigned long p)
       return p + a - b;
    else
       return a - b;
+}
+
+static inline
+unsigned long z_negmod(unsigned long a, unsigned long p)
+{
+   if (a)
+      return p - a;
+   else
+      return 0;
 }
 
 unsigned long z_mod_precomp(unsigned long a, unsigned long n, double ninv);

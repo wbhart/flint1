@@ -60,6 +60,16 @@ unsigned long random_ulong(unsigned long max)
    return gmp_urandomm_ui(randstate, max);
 }
 
+unsigned long random_ulong2(unsigned long max)
+{
+   unsigned long bits = FLINT_BIT_COUNT(max);
+   mpz_t rand;
+   mpz_init(rand);
+   mpz_rrandomb(rand, randstate, bits);
+   unsigned long randi = mpz_get_ui(rand) % max; 
+   mpz_clear(rand);
+   return randi;
+}
 
 mp_limb_t random_limb()
 {

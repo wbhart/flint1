@@ -157,6 +157,62 @@ unsigned long z_ll_mod_precomp(unsigned long a_hi, unsigned long a_lo,
    return r;
 }
 
+/*
+   I don't trust the code below. It is for precomputed inverses of 32 bits.
+   It should work without modification up to 32 bits, but does not.
+
+   The code is a brutalisation of code found in GMP.
+
+#define invert_limb32(invxl, xl)                  \
+  do {                                          \
+    invxl = (~(((unsigned long)xl)<<32))/xl; \
+  } while (0)
+
+#define LIMB_HIGHBIT_TO_MASK32(n)                                 \
+  ((n) & (1<<31)) ? (~0) : (0))
+
+uint32_t z_mod32_precomp(unsigned long n64, uint32_t d, uint32_t di)				
+{									
+    uint32_t xh, xl, nh, nl, nmask, nadj, q1;			
+    unsigned long x;							
+
+    nh = ((uint32_t) (n64 >> 32));								
+    nl = ((uint32_t) n64);							
+    nmask = LIMB_HIGHBIT_TO_MASK (nl);				
+    nadj = nl + (nmask & d);				
+    x = (unsigned long) di * (unsigned long) (nh - nmask);			
+    x += (((unsigned long)nh)<<32) + (unsigned long) nadj;
+    q1 = ~(x>>32);								
+    x = (unsigned long) q1 * (unsigned long) d; 
+    x += n64;
+    xh = (uint32_t) (x >> 32);								
+    xl = (uint32_t) x;							
+    xh -= d;
+    return xl + ((xh) & d);						
+} 
+
+uint32_t z_precompute_inverse32(unsigned long n)
+{
+   unsigned long norm;
+   count_lead_zeros(norm, n);
+   uint32_t ninv;
+   invert_limb32(ninv, (n<<(norm-32)));
+   return ninv;
+}
+
+unsigned long z_mulmod32_precomp(unsigned long a, unsigned long b, 
+                                         unsigned long n, uint32_t ninv)
+{
+   unsigned long norm;
+   unsigned long prod = a*b;
+   count_lead_zeros(norm, n);
+   norm -= 32;
+   unsigned long res = (unsigned long) z_mod32_precomp(prod<<norm, n<<norm, ninv);
+   res >>= norm;
+   if (res >= n) res -= n;
+   return res;
+}*/
+
 /* 
    Computes a*b mod n, given a precomputed inverse ninv
    Assumes a an b are both in [0,n). 

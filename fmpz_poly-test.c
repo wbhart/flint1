@@ -11285,6 +11285,7 @@ void fmpz_poly_test_all()
    int success, all_success = 1;
    printf("bits = %ld\n", FLINT_BITS);
 
+   RUN_TEST(fmpz_poly_gcd_modular);
 #if TESTFILE
    RUN_TEST(fmpz_poly_freadprint); 
 #endif
@@ -11392,6 +11393,7 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_poly_2norm);
    RUN_TEST(fmpz_poly_invmod_modular);
    RUN_TEST(fmpz_poly_xgcd_modular);
+   RUN_TEST(fmpz_poly_gcd_modular);
 
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");

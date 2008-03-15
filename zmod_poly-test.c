@@ -785,7 +785,7 @@ int test_zmod_poly_scalar_mul()
    zmod_poly_t pol1, res1;
    unsigned long bits;
    
-   for (unsigned long count1 = 0; (count1 < 100) && (result == 1); count1++)
+   for (unsigned long count1 = 0; (count1 < 1000) && (result == 1); count1++)
    {
       bits = randint(FLINT_BITS-2)+2;
       unsigned long modulus;

@@ -43,6 +43,60 @@ Copyright (C) 2007, William Hart and David Harvey
    all_success = all_success && success;               \
    printf(success ? "ok\n" : "FAIL!\n");
 
+/*int test_z_mulmod32_precomp()
+{
+   uint32_t ninv;
+   unsigned long n;
+   unsigned long a, b, res1, res2, bits;
+   
+   int result = 1;
+   
+   mpz_t mpz_a, mpz_b, mpz_n, mpz_res;
+   mpz_init(mpz_a);
+   mpz_init(mpz_b);
+   mpz_init(mpz_n);
+   mpz_init(mpz_res); 
+
+   for (unsigned long count = 0; (count < 10000) && (result == 1); count++)
+   { 
+      bits = z_randint(32)+1;
+      n = random_ulong2((1UL<<bits)-1)+1;
+      
+      ninv = z_precompute_inverse32(n);
+      
+      for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
+      {
+         a = random_ulong2(n);
+         b = random_ulong2(n);
+         
+         res1 = z_mulmod32_precomp(a, b, n, ninv);
+                  
+         mpz_set_ui(mpz_a, a);
+         mpz_set_ui(mpz_b, b);
+         mpz_set_ui(mpz_n, n);
+         mpz_mul(mpz_res, mpz_a, mpz_b);
+         mpz_mod(mpz_res, mpz_res, mpz_n);       
+         res2 = mpz_get_ui(mpz_res);
+         
+#if DEBUG2              
+         if (res1 != res2)
+         {
+            printf("a = %ld, b = %ld, n = %ld, ninv = %ld, res1 = %ld, res2 = %ld\n", a, b, n, ninv, res1, res2);
+         }
+#endif
+         
+         result = (res1 == res2);
+      }
+   }
+   
+   mpz_clear(mpz_a);
+   mpz_clear(mpz_b);
+   mpz_clear(mpz_n);
+   mpz_clear(mpz_res); 
+   
+   return result;
+}*/
+
 int test_z_mod_precomp()
 {
    double ninv;
@@ -60,7 +114,7 @@ int test_z_mod_precomp()
       
       for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
       {
-         a = random_ulong(n*n);
+         a = random_ulong2(n*n);
          
          for (unsigned long count = 0; count < 100; count++)   
             res1 = z_mod_precomp(a, n, ninv);
@@ -99,7 +153,7 @@ int test_z_div2_precomp()
       for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
       {
          bits = z_randint(FLINT_BITS-1)+1;
-         a = random_ulong((1UL<<bits)-1)+1;
+         a = random_ulong2((1UL<<bits)-1)+1;
          
          for (unsigned long count = 0; count < 100; count++)   
             res1 = z_div2_precomp(a, n, ninv);
@@ -138,7 +192,7 @@ int test_z_mod2_precomp()
       for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
       {
          bits = z_randint(FLINT_BITS-1)+1;
-         a = random_ulong((1UL<<bits)-1)+1;
+         a = random_ulong2((1UL<<bits)-1)+1;
          
          for (unsigned long count = 0; count < 100; count++)   
             res1 = z_mod2_precomp(a, n, ninv);
@@ -183,8 +237,8 @@ int test_z_ll_mod_precomp()
       for (unsigned long count2 = 0; (count2 < 1000) && (result == 1); count2++)
       {
          bits = z_randint(FLINT_D_BITS-1)+1;
-         a = random_ulong((1UL<<bits)-1)+1;
-         b = random_ulong(-1L);
+         a = random_ulong2((1UL<<bits)-1)+1;
+         b = random_ulong2(-1L);
          
          for (unsigned long count = 0; count < 100; count++)   
             res1 = z_ll_mod_precomp(a, b, n, ninv);
@@ -238,8 +292,8 @@ int test_z_mulmod_precomp()
       
       for (unsigned long count2 = 0; (count2 < 1000) && (result == 1); count2++)
       {
-         a = random_ulong(n);
-         b = random_ulong(n);
+         a = random_ulong2(n);
+         b = random_ulong2(n);
          
          for (unsigned long count = 0; count < 100; count++)   
             res1 = z_mulmod_precomp(a, b, n, ninv);
@@ -293,8 +347,8 @@ int test_z_mulmod2_precomp()
       
       for (unsigned long count2 = 0; (count2 < 1000) && (result == 1); count2++)
       {
-         a = random_ulong(n);
-         b = random_ulong(n);
+         a = random_ulong2(n);
+         b = random_ulong2(n);
          
          for (unsigned long count = 0; count < 100; count++)   
             res1 = z_mulmod2_precomp(a, b, n, ninv);
@@ -344,9 +398,9 @@ int test_z_powmod()
       
       for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
       {
-         a = random_ulong(n); 
+         a = random_ulong2(n); 
          bits = z_randint(FLINT_BITS-1)+1;
-         exp = random_ulong((1UL<<bits)-1)+1;
+         exp = random_ulong2((1UL<<bits)-1)+1;
          
          for (unsigned long count = 0; count < 100; count++)   
             res1 = z_powmod(a, exp, n);
@@ -392,9 +446,9 @@ int test_z_powmod2()
       
       for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
       {
-         a = random_ulong(n); 
+         a = random_ulong2(n); 
          bits = z_randint(FLINT_BITS-1)+1;
-         exp = random_ulong((1UL<<bits)-1)+1;
+         exp = random_ulong2((1UL<<bits)-1)+1;
          
          for (unsigned long count = 0; count < 100; count++)   
             res1 = z_powmod2(a, exp, n);
@@ -441,7 +495,7 @@ int test_z_sqrtmod()
       
       for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
       {
-         a = random_ulong(p); 
+         a = random_ulong2(p); 
          
          for (unsigned long count3 = 0; count3 < 1; count3++)   
             res1 = z_sqrtmod(a, p);
@@ -495,7 +549,7 @@ int test_z_cuberootmod()
       
       for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
       {
-         a = random_ulong(p-1)+1; 
+         a = random_ulong2(p-1)+1; 
 #if DEBUG 
          printf("bits = %ld, p = %ld, a = %ld\n", bits, p, a);
 #endif
@@ -589,8 +643,8 @@ int test_z_CRT()
       do n2 = random_ulong((1UL<<bits2)-1UL)+1;
       while (z_gcd(n1, n2) != 1); 
       
-      x1 = random_ulong(n1);
-      x2 = random_ulong(n2);
+      x1 = random_ulong2(n1);
+      x2 = random_ulong2(n2);
       
 #if DEBUG
       printf("x1 = %ld, n1 = %ld, x2 = %ld, n2 = %ld\n", x1, n1, x2, n2);
@@ -818,6 +872,7 @@ void fmpz_poly_test_all()
    int success, all_success = 1;
 
 
+   //RUN_TEST(z_mulmod32_precomp);
    RUN_TEST(z_primitive_root);
    RUN_TEST(z_mod_precomp);
    RUN_TEST(z_div2_precomp);

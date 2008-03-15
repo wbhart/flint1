@@ -296,6 +296,7 @@ void zmod_poly_make_monic(zmod_poly_t output, zmod_poly_t pol);
 */
 
 void zmod_poly_add(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2);
+void zmod_poly_add_without_mod(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2);
 void zmod_poly_sub(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2);
 void _zmod_poly_sub(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2);
 void zmod_poly_neg(zmod_poly_t res, zmod_poly_t poly);
@@ -362,12 +363,14 @@ void print_binary2(unsigned long n, unsigned long len, unsigned long space_bit);
 
 void _zmod_poly_scalar_mul(zmod_poly_t res, zmod_poly_t poly, unsigned long scalar);
 void zmod_poly_scalar_mul(zmod_poly_t res, zmod_poly_t poly, unsigned long scalar);
+void zmod_poly_scalar_mul_without_mod(zmod_poly_t res, zmod_poly_t poly, unsigned long scalar);
 
 /* 
    Division
 */
 
 void zmod_poly_divrem_classical(zmod_poly_t Q, zmod_poly_t R, zmod_poly_t A, zmod_poly_t B);
+void zmod_poly_divrem_classical_mod_later(zmod_poly_t Q, zmod_poly_t R, zmod_poly_t A, zmod_poly_t B);
 void zmod_poly_div_classical(zmod_poly_t Q, zmod_poly_t A, zmod_poly_t B);
 void zmod_poly_div_divconquer_recursive(zmod_poly_t Q, zmod_poly_t BQ, zmod_poly_t A, zmod_poly_t B);
 void zmod_poly_divrem_divconquer(zmod_poly_t Q, zmod_poly_t R, zmod_poly_t A, zmod_poly_t B);
