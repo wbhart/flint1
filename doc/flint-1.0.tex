@@ -1559,7 +1559,8 @@ Returns 1 if the polynomial is equal to the constant polynomial 1, otherwise ret
 
 \subsection{Scalar multiplication and division}
 \begin{lstlisting}
-void zmod_poly_scalar_mul(zmod_poly_t res, zmod_poly_t poly, unsigned long scalar)
+void zmod_poly_scalar_mul(zmod_poly_t res, zmod_poly_t poly, 
+                                                   unsigned long scalar)
 \end{lstlisting}
 \begin{quote}
 Multiply the polynomial through by the given scalar. It is assumed that \code{scalar} is already reduced modulo the modulus of the polynomial.
@@ -1639,30 +1640,43 @@ void zmod_poly_newton_invert(zmod_poly_t Q_inv, zmod_poly_t Q,
                                                      unsigned long n)
 \end{lstlisting}
 \begin{quote}
+Treat the polynomial \code{Q} as a series of length \code{n} (the constant coefficient of the series is taken to be the constant coefficient of the polynomial) and invert it, yielding a series \code{Q_inv} also given to precision \code{n}. 
 \end{quote}
 
 \begin{lstlisting}
-void zmod_poly_div_series(zmod_poly_t Q, zmod_poly_t A, zmod_poly_t B, unsigned long n)
+void zmod_poly_div_series(zmod_poly_t Q, zmod_poly_t A, zmod_poly_t B, 
+                                                           unsigned long n)
 \end{lstlisting}
 \begin{quote}
+Treat the polynomials \code{A} and \code{B} as series of length \code{n} and compute the quotient series \code{Q = A/B}.
 \end{quote}
 
 \begin{lstlisting}
 void zmod_poly_div(zmod_poly_t Q, zmod_poly_t A, zmod_poly_t B)
 \end{lstlisting}
 \begin{quote}
+Divide the polynomial \code{A} by the polynomial \code{B} and set \code{Q} to the result.
 \end{quote}
 
 \begin{lstlisting}
-void zmod_poly_divrem(zmod_poly_t Q, zmod_poly_t R, zmod_poly_t A, zmod_poly_t B)
+void zmod_poly_divrem(zmod_poly_t Q, zmod_poly_t R, zmod_poly_t A, 
+                                                            zmod_poly_t B)
 \end{lstlisting}
 \begin{quote}
+Divide the polynomial \code{A} by \code{B} and set \code{Q} to the quotient and \code{R} to the remainder.
 \end{quote}
 
+\subsection{Greatest common divisor and resultant}
 \begin{lstlisting}
 unsigned long zmod_poly_resultant(zmod_poly_t a, zmod_poly_t b)
 \end{lstlisting}
 \begin{quote}
+Compute the resultant of the polynomials \code{a} and \code{b}. 
+
+If \code{a} and \code{b} are monic with $a(x) = \prod_i (x - \alpha_i)$ and $b(x) = \prod_j (x - \beta_j)$, when factored over an algebraic closure of the field of coefficients, then the resultant is given by the expression $r(x) = \prod_{i,j} (\alpha_i - \beta_j)$. If the polynomials are not monic, and \code{a} and \code{b} have leading coefficients $l_1$ and $l_2$ and degrees $d_1$ and $d_2$ respectively, then this quantity is multiplied by $l_1^{d_2-1}l_2^{d_1-1}$.
+
+Note that the resultant is zero iff the polynomials share a root over an algebraic closure of the coefficient ring.
+
 \end{quote}
 
 \begin{lstlisting}
@@ -1670,6 +1684,7 @@ void zmod_poly_gcd(zmod_poly_t res, zmod_poly_t poly1,
                                                    zmod_poly_t poly2)
 \end{lstlisting}
 \begin{quote}
+Conmpute the greatest common divisor of the polynomials \code{poly1} and \code{poly2}.
 \end{quote}
 
 \begin{lstlisting}
@@ -1677,6 +1692,7 @@ int zmod_poly_gcd_invert(zmod_poly_t res, zmod_poly_t poly1,
                                                    zmod_poly_t poly2)
 \end{lstlisting}
 \begin{quote}
+Compute a polynomial \code{res} such that \code{res*poly1} is a constant modulo \code{poly2}. The two polynomials \code{poly1} and \code{poly2} are assumed to be coprime. If this is not the case, the function returns 0, otherwise it returns 1.
 \end{quote}
 
 \begin{lstlisting}
@@ -1684,6 +1700,7 @@ void zmod_poly_xgcd(zmod_poly_t res, zmod_poly_t s, zmod_poly_t t,
                                  zmod_poly_t poly1, zmod_poly_t poly)
 \end{lstlisting}
 \begin{quote}
+Compute polynomials \code{s} and \code{t} such that \code{s*poly1+t*poly2} is the resultant of the polynomials \code{poly1} and \code{poly2}. The polynomials \code{poly1} and \code{poly2} are assumed to be coprime.
 \end{quote}
 
 \section{NTL interface}
