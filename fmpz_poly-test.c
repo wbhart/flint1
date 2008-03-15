@@ -11283,9 +11283,8 @@ int test_fmpz_poly_xgcd_modular()
 void fmpz_poly_test_all()
 {
    int success, all_success = 1;
-   printf("bits = %ld\n", FLINT_BITS);
+   printf("FLINT_BITS = %ld\n", FLINT_BITS);
 
-   RUN_TEST(fmpz_poly_gcd_modular);
 #if TESTFILE
    RUN_TEST(fmpz_poly_freadprint); 
 #endif
