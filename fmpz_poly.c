@@ -2357,12 +2357,12 @@ void _fmpz_poly_scalar_tdiv_ui(fmpz_poly_t output, const fmpz_poly_t poly, const
       
       count_lead_zeros(norm, x);
       xnorm = (x<<norm);
-      invert_limb(xinv, xnorm);
+      xinv = F_mpn_precompute_inverse(xnorm);
       
       for (unsigned long i = 0; i < poly->length; i++)
       {
          coeffs_out[i*size_out] = coeffs1[i*size1];
-         F_mpn_divmod_1_preinv(coeffs_out+i*size_out+1, coeffs1+i*size1+1, ABS(coeffs1[i*size1]), x, xinv, norm);
+         F_mpn_divrem_ui_precomp(coeffs_out+i*size_out+1, coeffs1+i*size1+1, ABS(coeffs1[i*size1]), x, xinv);
          NORM(coeffs_out+i*size_out);
       }
    } else
@@ -2406,12 +2406,12 @@ void _fmpz_poly_scalar_div_ui(fmpz_poly_t output, const fmpz_poly_t poly, const 
       
       count_lead_zeros(norm, x);
       xnorm = (x<<norm);
-      invert_limb(xinv, xnorm);
+      xinv = F_mpn_precompute_inverse(xnorm);
       
       for (unsigned long i = 0; i < poly->length; i++)
       {
          coeffs_out[i*size_out] = coeffs1[i*size1];
-         rem = F_mpn_divmod_1_preinv(coeffs_out+i*size_out+1, coeffs1+i*size1+1, ABS(coeffs1[i*size1]), x, xinv, norm);
+         rem = F_mpn_divrem_ui_precomp(coeffs_out+i*size_out+1, coeffs1+i*size1+1, ABS(coeffs1[i*size1]), x, xinv);
          if (((long) coeffs_out[i*size_out] < 0L) && (rem))
          {
             NORM(coeffs_out+i*size_out);
@@ -2470,13 +2470,13 @@ void _fmpz_poly_scalar_tdiv_si(fmpz_poly_t output, const fmpz_poly_t poly, const
       
       count_lead_zeros(norm, (unsigned long) x);
       xnorm = ((unsigned long) x<<norm);
-      invert_limb(xinv, xnorm);
+      xinv = F_mpn_precompute_inverse(xnorm);
       
       for (unsigned long i = 0; i < poly->length; i++)
       {
          if (sign) coeffs_out[i*size_out] = -coeffs1[i*size1];
          else coeffs_out[i*size_out] = coeffs1[i*size1];
-         F_mpn_divmod_1_preinv(coeffs_out+i*size_out+1, coeffs1+i*size1+1, ABS(coeffs1[i*size1]), x, xinv, norm);
+         F_mpn_divrem_ui_precomp(coeffs_out+i*size_out+1, coeffs1+i*size1+1, ABS(coeffs1[i*size1]), x, xinv);
          NORM(coeffs_out+i*size_out);
       }
    } else
@@ -2523,13 +2523,13 @@ void _fmpz_poly_scalar_div_si(fmpz_poly_t output, const fmpz_poly_t poly, const 
       
       count_lead_zeros(norm, (unsigned long) x);
       xnorm = ((unsigned long) x<<norm);
-      invert_limb(xinv, xnorm);
+      xinv = F_mpn_precompute_inverse(xnorm);
       
       for (unsigned long i = 0; i < poly->length; i++)
       {
          if (sign) coeffs_out[i*size_out] = -coeffs1[i*size1];
          else coeffs_out[i*size_out] = coeffs1[i*size1];
-         rem = F_mpn_divmod_1_preinv(coeffs_out+i*size_out+1, coeffs1+i*size1+1, ABS(coeffs1[i*size1]), x, xinv, norm);
+         rem = F_mpn_divrem_ui_precomp(coeffs_out+i*size_out+1, coeffs1+i*size1+1, ABS(coeffs1[i*size1]), x, xinv);
          if (((long) coeffs_out[i*size_out] < 0L) && (rem))
          {
             NORM(coeffs_out+i*size_out);

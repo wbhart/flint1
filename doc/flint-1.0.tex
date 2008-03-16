@@ -85,7 +85,7 @@ All of the functions in FLINT have a corresponding test function provided in an 
 
 The easiest way to use FLINT is to build a shared library. Simply download the FLINT tarball and untar it on your system.
 
-Next, set the environment variables \code{FLINT_GMP_LIB_DIR} and \code{FLINT_GMP_INCLUDE_DIR} to point to your GMP library and include directories respectively. Similarly, set the environment variables \code{FLINT_NTL_LIB_DIR} and \code{FLINT_NTL_INCLUDE_DIR} to point to your NTL library and include directories respectively. 
+Next, set the environment variables \code{FLINT_GMP_LIB_DIR} and \code{FLINT_GMP_INCLUDE_DIR} to point to your GMP library and include directories respectively. Also set the environment variables \code{FLINT_NTL_LIB_DIR} and \code{FLINT_NTL_INCLUDE_DIR} to point to your NTL library and include directories respectively. 
 
 Next type:
 
@@ -206,7 +206,7 @@ The output is:
 7  1 0 0 -10 0 0 25
 \end{lstlisting}
 
-\subsection{Definition of the \code{fmpz_poly_t} polynomial type}
+\subsection{Definition of the fmpz\_poly\_t polynomial type}
 
 The \code{fmpz_poly_t} type is a typedef for an array of length 1 of \code{fmpz_poly_struct}'s. This permits passing parameters  of type \code{fmpz_poly_t} `by reference' in a manner similar to the way GMP integers of type \code{mpz_t} can be passed by reference. 
 
@@ -290,7 +290,7 @@ Sets \code{x} to zero when $n >= $ \code{poly->length}.
 
 \begin{lstlisting}
 void fmpz_poly_set_coeff_mpz(fmpz_poly_t poly, unsigned long n, 
-                                                            mpz_t x) 
+                                                         mpz_t x) 
 \end{lstlisting}
 \begin{quote}
 Set coefficient $n$ to the value of the given \code{mpz_t}. 
@@ -312,7 +312,7 @@ Sets \code{x} to zero when $n >= $ \code{poly->length}.
 
 \begin{lstlisting}
 void fmpz_poly_set_coeff_fmpz(fmpz_poly_t poly, unsigned long n, 
-                                                           fmpz_t x) 
+                                                         fmpz_t x) 
 \end{lstlisting}
 \begin{quote}
 Set coefficient $n$ to the value of the given \code{fmpz_t}. 
@@ -334,7 +334,7 @@ Returns zero when $n >= $ \code{poly->length}.
 
 \begin{lstlisting}
 void fmpz_poly_set_coeff_ui(fmpz_poly_t poly, unsigned long n, 
-                                                    unsigned long x) 
+                                                 unsigned long x) 
 \end{lstlisting}
 \begin{quote}
 Set coefficient $n$ to the value of the given \code{unsigned long}. 
@@ -343,7 +343,8 @@ Coefficients are numbered from zero, starting with the constant coefficient. If 
 \end{quote}
 
 \begin{lstlisting}
-long fmpz_poly_get_coeff_si(const fmpz_poly_t poly, unsigned long n)
+long fmpz_poly_get_coeff_si(const fmpz_poly_t poly, 
+                                                  unsigned long n)
 \end{lstlisting}
 \begin{quote}
 Return the value of coefficient $n$ as a \code{long}.
@@ -354,7 +355,8 @@ Returns zero when $n >= $ \code{poly->length}.
 \end{quote}
 
 \begin{lstlisting}
-void fmpz_poly_set_coeff_si(fmpz_poly_t poly, unsigned long n, long x) 
+void fmpz_poly_set_coeff_si(fmpz_poly_t poly, unsigned long n, 
+                                                           long x) 
 \end{lstlisting}
 \begin{quote}
 Set coefficient $n$ to the value of the given \code{long}. 
@@ -414,7 +416,7 @@ Import a polynomial from a string. If the string represents a valid polynomial t
 \begin{lstlisting}
 char* fmpz_poly_to_string(const fmpz_poly_t poly)
 char* fmpz_poly_to_string_pretty(const fmpz_poly_t poly, 
-                                                      const char * x)
+                                                   const char * x)
 \end{lstlisting}
 \begin{quote}
 Convert a polynomial to a string and return a pointer to the string. Space is allocated for the string by this function and must be freed when it is no longer used, by a call to \code{free}.
@@ -425,7 +427,7 @@ The \code{pretty} version must be supplied with a string \code{x} which represen
 \begin{lstlisting}
 void fmpz_poly_fprint(const fmpz_poly_t poly, FILE* f)
 void fmpz_poly_fprint_pretty(const fmpz_poly_t poly, FILE* f, 
-                                                      const char * x)
+                                                   const char * x)
 \end{lstlisting}
 \begin{quote}
 Convert a polynomial to a string and write it to the given stream. 
@@ -539,8 +541,8 @@ If \code{trunc} is less than the current length of the polynomial, truncate the 
 \end{quote}
 
 \begin{lstlisting}
-void fmpz_poly_reverse(fmpz_poly_t output, const fmpz_poly_t poly,  
-                                                  unsigned long length) 
+void fmpz_poly_reverse(fmpz_poly_t output, 
+                     const fmpz_poly_t poly, unsigned long length) 
 \end{lstlisting}
 \begin{quote}
 This function considers the polynomial \code{poly} to be of length $n$, notionally truncating and zero padding if required, and reverses the result. Since this function normalises its result the eventual length of \code{output} may be less than \code{length}.
@@ -559,19 +561,22 @@ This function normalises \code{poly} so that the leading coefficient is non-zero
 void fmpz_poly_to_zmod_poly(zmod_poly_t zpol, fmpz_poly_t fpol)
 \end{lstlisting}
 \begin{quote}
-Reduce each of the coefficients of the \code{fmpz_poly_t fpol} modulo the modulus of the \code{zmod_poly_t zpol} and store the result in \code{zpol}.
+Reduce the coefficients of the \code{fmpz_poly_t fpol} mod the modulus of the \code{zmod_poly_t zpol} and store the result in \code{zpol}.
 
 This function is provided to enable the implementation of multimodular algorithms.
 \end{quote}
 
 \begin{lstlisting}
-void zmod_poly_to_fmpz_poly_unsigned(fmpz_poly_t fpol, zmod_poly_t zpol)\end{lstlisting}
+void zmod_poly_to_fmpz_poly_unsigned(fmpz_poly_t fpol, 
+                                                 zmod_poly_t zpol)
+\end{lstlisting}
 \begin{quote}
-Convert the \code{zmod_poly_t zpol} to an \code{fmpz_poly_t}. The coefficients of the resulting \code{fmpz_poly_t} will all be unsigned.
+Convert the \code{zmod_poly_t zpol} to an \code{fmpz_poly_t}. The coefficients of the \code{fmpz_poly_t} will all be unsigned.
 \end{quote}
 
 \begin{lstlisting}
-void zmod_poly_to_fmpz_poly(fmpz_poly_t fpol, zmod_poly_t zpol)\end{lstlisting}
+void zmod_poly_to_fmpz_poly(fmpz_poly_t fpol, zmod_poly_t zpol)
+\end{lstlisting}
 \begin{quote}
 Convert the \code{zmod_poly_t zpol} to an \code{fmpz_poly_t}. If \code{p} is the modulus of \code{zpol} then coefficients which lie in $[0, p/2]$ are unchanged, however, coefficients $a$ in the range $(p/2, p)$ become $a - p$.
 
@@ -582,7 +587,7 @@ This function is provided to enable the implementation of multimodular algorithm
 
 \begin{lstlisting}
 int fmpz_poly_CRT_unsigned(fmpz_poly_t res, fmpz_poly_t fpol, 
-                     zmod_poly_t zpol, fmpz_t newmod, fmpz_t oldmod)
+                   zmod_poly_t zpol, fmpz_t newmod, fmpz_t oldmod)
 \end{lstlisting}
 \begin{quote}
 Performs modular recombination using the Chinese Remainder Theorem. If \code{zpol} has modulus $p$, \code{newmod} is set equal to \code{oldmod*p} and each coefficient of \code{res} is set to the unique value modulo \code{newmod}, in the range $[0, \mbox{newmod})$ which is $a$ modulo \code{oldmod} and $b$ modulo $p$, where $a$ is the coefficient of \code{fpol} and $b$ is the corresponding coefficient of \code{zpol}.
@@ -592,7 +597,7 @@ The coefficients of \code{fpol} are assumed to be unsigned.
 
 \begin{lstlisting}
 int fmpz_poly_CRT(fmpz_poly_t res, fmpz_poly_t fpol, 
-                     zmod_poly_t zpol, fmpz_t newmod, fmpz_t oldmod)
+                   zmod_poly_t zpol, fmpz_t newmod, fmpz_t oldmod)
 \end{lstlisting}
 \begin{quote}
 Performs modular recombination using the Chinese Remainder Theorem. If \code{zpol} has modulus $p$, \code{newmod} is set equal to \code{oldmod*p} and each coefficient of \code{res} is set to the unique value modulo \code{newmod}, in the range $(-\mbox{newmod}/2, \mbox{newmod}/2]$ which is $a$ modulo \code{oldmod} and $b$ modulo $p$, where $a$ is the coefficient of \code{fpol} and $b$ is the corresponding coefficient of \code{zpol}. 
@@ -602,7 +607,8 @@ Performs modular recombination using the Chinese Remainder Theorem. If \code{zpo
 
 
 \begin{lstlisting}
-int fmpz_poly_equal(const fmpz_poly_t poly1, const fmpz_poly_t poly2) 
+int fmpz_poly_equal(const fmpz_poly_t poly1, 
+                                          const fmpz_poly_t poly2) 
 \end{lstlisting}
 \begin{quote}
 Return 1 if the two polynomials are equal, 0 otherwise.
@@ -613,7 +619,7 @@ Return 1 if the two polynomials are equal, 0 otherwise.
 
 \begin{lstlisting}
 void fmpz_poly_left_shift(fmpz_poly_t output, 
-                             const fmpz_poly_t poly, unsigned long n) 
+                          const fmpz_poly_t poly, unsigned long n) 
 \end{lstlisting}
 \begin{quote}
 Shift poly to the left by $n$ coefficients (multiply by $x^n$) and write the result to \code{output}. Zero coefficients are inserted.
@@ -623,7 +629,7 @@ The parameter $n$ must be non-negative, but can be zero.
 
 \begin{lstlisting}
 void fmpz_poly_right_shift(fmpz_poly_t output, 
-                             const fmpz_poly_t poly, unsigned long n) 
+                          const fmpz_poly_t poly, unsigned long n) 
 \end{lstlisting}
 \begin{quote}
 Shift poly to the right by $n$ coefficients (divide by $x^n$ and discard the remainder) and write the result to \code{output}. 
@@ -635,7 +641,8 @@ The parameter $n$ must be non-negative, but can be zero. Shifting right by more 
 \subsection{Norms}
 
 \begin{lstlisting}
-void fmpz_poly_2norm(fmpz_t norm, fmpz_poly_t pol)\end{lstlisting}
+void fmpz_poly_2norm(fmpz_t norm, fmpz_poly_t pol)
+\end{lstlisting}
 \begin{quote}
 Sets \code{norm} to the euclidean norm of \code{pol}, i.e. the integer square root of the sum of the squares of the coefficients of \code{pol}.
 \end{quote}
@@ -646,7 +653,7 @@ Sets \code{norm} to the euclidean norm of \code{pol}, i.e. the integer square ro
 
 \begin{lstlisting}
 void fmpz_poly_add(fmpz_poly_t output, const fmpz_poly_t poly1, 
-                                              const fmpz_poly_t poly2) 
+                                          const fmpz_poly_t poly2) 
 \end{lstlisting}
 \begin{quote}
 Set the output to the sum of the input polynomials. 
@@ -656,7 +663,7 @@ Note that if \code{poly1} and \code{poly2} have the same length, cancellation ma
 
 \begin{lstlisting}
 void fmpz_poly_sub(fmpz_poly_t output, const fmpz_poly_t poly1, 
-                                              const fmpz_poly_t poly2) 
+                                          const fmpz_poly_t poly2) 
 \end{lstlisting}
 \begin{quote}
 Set the output to \code{poly1 - poly2}. 
@@ -668,7 +675,7 @@ Note that if \code{poly1} and \code{poly2} have the same length, cancellation ma
 
 \begin{lstlisting}
 void fmpz_poly_scalar_mul_ui(fmpz_poly_t output, 
-                               const fmpz_poly_t poly, unsigned long x)
+                          const fmpz_poly_t poly, unsigned long x)
 \end{lstlisting}
 \begin{quote}
 Multiply \code{poly} by the \code{unsigned long x} and write the result to \code{output}. 
@@ -676,7 +683,7 @@ Multiply \code{poly} by the \code{unsigned long x} and write the result to \code
 
 \begin{lstlisting}
 void fmpz_poly_scalar_mul_si(fmpz_poly_t output, 
-                                        const fmpz_poly_t poly, long x)
+                                   const fmpz_poly_t poly, long x)
 \end{lstlisting}
 \begin{quote}
 Multiply \code{poly} by the \code{long x} and write the result to \code{output}. 
@@ -684,7 +691,7 @@ Multiply \code{poly} by the \code{long x} and write the result to \code{output}.
 
 \begin{lstlisting}
 void fmpz_poly_scalar_mul_fmpz(fmpz_poly_t output, 
-                                const fmpz_poly_t poly, const fmpz_t x) 
+                           const fmpz_poly_t poly, const fmpz_t x) 
 \end{lstlisting}
 \begin{quote}
 Multiply \code{poly} by the \code{fmpz_t x} and write the result to \code{output}. 
@@ -692,7 +699,7 @@ Multiply \code{poly} by the \code{fmpz_t x} and write the result to \code{output
 
 \begin{lstlisting}
 void fmpz_poly_scalar_mul_mpz(fmpz_poly_t output, 
-                                const fmpz_poly_t poly, const mpz_t x) 
+                            const fmpz_poly_t poly, const mpz_t x) 
 \end{lstlisting}
 \begin{quote}
 Multiply \code{poly} by the \code{mpz_t x} and write the result to \code{output}. 
@@ -700,7 +707,7 @@ Multiply \code{poly} by the \code{mpz_t x} and write the result to \code{output}
 
 \begin{lstlisting}
 void fmpz_poly_scalar_div_ui(fmpz_poly_t output, 
-                               const fmpz_poly_t poly, unsigned long x)
+                          const fmpz_poly_t poly, unsigned long x)
 \end{lstlisting}
 \begin{quote}
 Divide \code{poly} by the \code{unsigned long x}, round quotients towards minus infinity, discard remainders and write the result to \code{output}. 
@@ -708,7 +715,7 @@ Divide \code{poly} by the \code{unsigned long x}, round quotients towards minus 
 
 \begin{lstlisting}
 void fmpz_poly_scalar_div_si(fmpz_poly_t output, 
-                                        const fmpz_poly_t poly, long x)
+                                   const fmpz_poly_t poly, long x)
 \end{lstlisting}
 \begin{quote}
 Divide \code{poly} by the \code{long x}, round quotients towards minus infinity, discard remainders and write the result to \code{output}.
@@ -716,7 +723,7 @@ Divide \code{poly} by the \code{long x}, round quotients towards minus infinity,
 
 \begin{lstlisting}
 void fmpz_poly_scalar_tdiv_ui(fmpz_poly_t output, 
-                               const fmpz_poly_t poly, unsigned long x)
+                          const fmpz_poly_t poly, unsigned long x)
 \end{lstlisting}
 \begin{quote}
 Divide \code{poly} by the \code{unsigned long x}, round quotients towards zero, discard remainders and write the result to \code{output}.
@@ -724,7 +731,7 @@ Divide \code{poly} by the \code{unsigned long x}, round quotients towards zero, 
 
 \begin{lstlisting}
 void fmpz_poly_scalar_tdiv_si(fmpz_poly_t output, 
-                                        const fmpz_poly_t poly, long x)
+                                   const fmpz_poly_t poly, long x)
 \end{lstlisting}
 \begin{quote}
 Divide \code{poly} by the \code{long x}, round quotients towards zero, discard remainders and write the result to \code{output}.
@@ -732,7 +739,7 @@ Divide \code{poly} by the \code{long x}, round quotients towards zero, discard r
 
 \begin{lstlisting}
 void fmpz_poly_scalar_div_exact_ui(fmpz_poly_t output, 
-                               const fmpz_poly_t poly, unsigned long x)
+                          const fmpz_poly_t poly, unsigned long x)
 \end{lstlisting}
 \begin{quote}
 Divide \code{poly} by the \code{unsigned long x}. Division is assumed to be exact and the result is undefined otherwise.
@@ -740,7 +747,7 @@ Divide \code{poly} by the \code{unsigned long x}. Division is assumed to be exac
 
 \begin{lstlisting}
 void fmpz_poly_scalar_div_exact_si(fmpz_poly_t output, 
-                                        const fmpz_poly_t poly, long x)
+                                   const fmpz_poly_t poly, long x)
 \end{lstlisting}
 \begin{quote}
 Divide \code{poly} by the \code{long x}. Division is assumed to be exact and the result is undefined otherwise.
@@ -748,7 +755,7 @@ Divide \code{poly} by the \code{long x}. Division is assumed to be exact and the
 
 \begin{lstlisting}
 void fmpz_poly_scalar_div_fmpz(fmpz_poly_t output, 
-                                const fmpz_poly_t poly, const fmpz_t x) 
+                           const fmpz_poly_t poly, const fmpz_t x) 
 \end{lstlisting}
 \begin{quote}
 Divide \code{poly} by the \code{fmpz_t x}, round quotients towards minus infinity, discard remainders, and write the result to \code{output}. 
@@ -756,7 +763,7 @@ Divide \code{poly} by the \code{fmpz_t x}, round quotients towards minus infinit
 
 \begin{lstlisting}
 void fmpz_poly_scalar_div_mpz(fmpz_poly_t output, 
-                                const fmpz_poly_t poly, const mpz_t x) 
+                            const fmpz_poly_t poly, const mpz_t x) 
 \end{lstlisting}
 \begin{quote}
 Divide \code{poly} by the \code{mpz_t x}, round quotients towards minus infinity, discard remainders, and write the result to \code{output}. 
@@ -766,7 +773,7 @@ Divide \code{poly} by the \code{mpz_t x}, round quotients towards minus infinity
 
 \begin{lstlisting}
 void fmpz_poly_mul(fmpz_poly_t output, const fmpz_poly_t poly1, 
-                                              const fmpz_poly_t poly2) 
+                                          const fmpz_poly_t poly2) 
 \end{lstlisting}
 \begin{quote}
 Multiply the two given polynomials and return the result in \code{output}.
@@ -776,7 +783,7 @@ The length of the output polynomial will be \code{poly1->length + poly2->length 
 
 \begin{lstlisting}
 void fmpz_poly_mul_trunc_n(fmpz_poly_t output, 
-     const fmpz_poly_t poly1, const fmpz_poly_t poly2, unsigned long n) 
+ const fmpz_poly_t poly1, const fmpz_poly_t poly2, unsigned long n) 
 \end{lstlisting}
 \begin{quote}
 Multiply the two given polynomials and truncate the result to $n$ coefficients, storing the result in \code{output}. This is sometimes known as a short product.
@@ -788,7 +795,7 @@ This function is more efficient than multiplying the two polynomials then trunca
 
 \begin{lstlisting}
 void fmpz_poly_mul_trunc_left_n(fmpz_poly_t output, 
-     const fmpz_poly_t poly1, const fmpz_poly_t poly2, unsigned long n) 
+ const fmpz_poly_t poly1, const fmpz_poly_t poly2, unsigned long n) 
 \end{lstlisting}
 \begin{quote}
 Multiply the two given polynomials storing the result in \code{output}. This function guarantees all the coefficients except the first $n$, which may be arbitrary. This is sometimes known as an opposite short product.
@@ -802,7 +809,7 @@ For short polynomials, this function is more efficient than computing the full p
 
 \begin{lstlisting}
 void fmpz_poly_divrem(fmpz_poly_t Q, fmpz_poly_t R, 
-                              const fmpz_poly_t A, const fmpz_poly_t B) 
+                         const fmpz_poly_t A, const fmpz_poly_t B) 
 \end{lstlisting}
 \begin{quote}
 Performs division with remainder in $\Z[x]$. Computes polynomials \code{Q} and \code{R} in $\Z[x]$ such that the equation \code{A = B*Q + R}, holds. All but the final \code{B->length - 1} coefficients of \code{R} will be positive and less than the absolute value of the lead coefficient of \code{B}.
@@ -812,7 +819,7 @@ Note that in the special cases where the leading coefficient of \code{B} is $\pm
 
 \begin{lstlisting}
 void fmpz_poly_div(fmpz_poly_t Q, const fmpz_poly_t A, 
-                                                   const fmpz_poly_t B) 
+                                              const fmpz_poly_t B) 
 \end{lstlisting}
 \begin{quote}
 Performs division without remainder in $\Z[x]$. The computation returns the same result as \code{fmpz_poly_divrem}, but no remainder is computed. This is in general faster than computing quotient and remainder. 
@@ -822,7 +829,7 @@ Note that in the special cases where the leading coefficient of \code{B} is $\pm
 
 \begin{lstlisting}
 void fmpz_poly_div_series(fmpz_poly_t Q, const fmpz_poly_t A, 
-                                  const fmpz_poly_t B, unsigned long n) 
+                             const fmpz_poly_t B, unsigned long n) 
 \end{lstlisting}
 \begin{quote}
 Performs power series division in $\Z[[x]]$. The function considers the polynomials \code{A} and \code{B} to be power series of length $n$ starting with the constant terms. The function assumes that \code{B} is normalised, i.e. that the constant coefficient is $\pm 1$. The result is truncated to length $n$ regardless of the inputs.
@@ -841,7 +848,7 @@ At this point, this function is provided for convenience only; it is not efficie
 
 \begin{lstlisting}
 void fmpz_poly_pseudo_divrem(fmpz_poly_t Q, fmpz_poly_t R, 
-           unsigned long * d, const fmpz_poly_t A, const fmpz_poly_t B)
+      unsigned long * d, const fmpz_poly_t A, const fmpz_poly_t B)
 \end{lstlisting}
 \begin{quote}
 Performs division with remainder of two polynomials in $\Z[x]$, notionally returning the results in $\Q[x]$ (actually in $\Z[x]$ with a single common denominator).
@@ -859,7 +866,7 @@ This function may be used to do division of polynomials in $\Q[x]$ as follows. S
 
 \begin{lstlisting}
 void fmpz_poly_pseudo_div(fmpz_poly_t Q, unsigned long * d, 
-                              const fmpz_poly_t A, const fmpz_poly_t B)
+                         const fmpz_poly_t A, const fmpz_poly_t B)
 \end{lstlisting}
 \begin{quote}
 Performs division without remainder of two polynomials in $\Z[x]$, notionally returning the results in $\Q[x]$ (actually in $\Z[x]$ with a single common denominator).
@@ -871,7 +878,7 @@ Notionally computes polynomials \code{Q} and \code{R} such that \code{lead(B)^d*
 
 \begin{lstlisting}
 void fmpz_poly_power(fmpz_poly_t output, const fmpz_poly_t poly, 
-                                                     unsigned long exp) 
+                                                unsigned long exp) 
 \end{lstlisting}
 \begin{quote}
 Raises \code{poly} to the power \code{exp} and writes the result in \code{output}.
@@ -879,7 +886,7 @@ Raises \code{poly} to the power \code{exp} and writes the result in \code{output
 
 \begin{lstlisting}
 void fmpz_poly_power_trunc_n(fmpz_poly_t output, 
-            const fmpz_poly_t poly, unsigned long exp, unsigned long n) 
+       const fmpz_poly_t poly, unsigned long exp, unsigned long n) 
 \end{lstlisting}
 \begin{quote}
 Notionally raises \code{poly} to the power \code{exp}, truncates the result to length $n$ and writes the result in \code{output}. This is computed much more efficiently than simply powering the polynomial and truncating.
@@ -906,14 +913,15 @@ Set \code{prim} to the primitive part of the polynomial \code{poly}, i.e. to \co
 \subsection{Greatest common divisor and resultant}
 \begin{lstlisting}
 void fmpz_poly_gcd(fmpz_poly_t res, const fmpz_poly_t poly1, 
-                                             const fmpz_poly_t poly2)
+                                          const fmpz_poly_t poly2)
 \end{lstlisting}
 \begin{quote}
 Sets \code{res} to the greatest common divisor of the polynomials \code{poly1} and \code{poly2}.
 \end{quote}
 
 \begin{lstlisting}
-unsigned long fmpz_poly_resultant_bound(fmpz_poly_t a, fmpz_poly_t b)
+unsigned long fmpz_poly_resultant_bound(fmpz_poly_t a, 
+                                                    fmpz_poly_t b)
 void fmpz_poly_resultant(fmpz_t r, fmpz_poly_t a, fmpz_poly_t b)
 \end{lstlisting}
 \begin{quote}
@@ -928,7 +936,7 @@ In a future version of FLINT, this computation will not be necessary.
 
 \begin{lstlisting}
 void fmpz_poly_xgcd(fmpz_t r, fmpz_poly_t s, fmpz_poly_t t, 
-                                          fmpz_poly_t a, fmpz_poly_t b)
+                                     fmpz_poly_t a, fmpz_poly_t b)
 \end{lstlisting}
 \begin{quote}
 Given coprime polynomials \code{a} and \code{b} this function computes polynomials \code{s} and \code{t} and the resultant \code{r} of the polynomials such that \code{r = a*s + b*t}.
@@ -939,7 +947,7 @@ See the function \code{fmpz_poly_resultant} for information on how large \code{r
 \subsection{Modular arithmetic}
 \begin{lstlisting}
 void fmpz_poly_invmod(fmpz_t d, fmpz_poly_t H, fmpz_poly_t poly1, 
-                                                    fmpz_poly_t poly2)
+                                                fmpz_poly_t poly2)
 \end{lstlisting}
 \begin{quote}
 Computes a polynomial \code{H} and a denominator \code{d} such that \code{poly1*H} is \code{d} modulo \code{poly2}. 
@@ -965,7 +973,7 @@ Attach the \code{fmpz_poly_t} object \code{output} to the polynomial \code{poly}
 
 \begin{lstlisting}
 void fmpz_poly_attach_shift(fmpz_poly_t output, 
-                              const fmpz_poly_t input, unsigned long n)
+                         const fmpz_poly_t input, unsigned long n)
 \end{lstlisting}
 \begin{quote}
 Attach the \code{fmpz_poly_t} object \code{output} to \code{poly} but shifted to the left by $n$ coefficients. This is equivalent to notionally shifting the original polynomial right (dividing by $x^n$) then attaching to the result.
@@ -973,7 +981,7 @@ Attach the \code{fmpz_poly_t} object \code{output} to \code{poly} but shifted to
 
 \begin{lstlisting}
 void fmpz_poly_attach_truncate(fmpz_poly_t output, 
-                              const fmpz_poly_t input, unsigned long n)
+                         const fmpz_poly_t input, unsigned long n)
 \end{lstlisting}
 \begin{quote}
 Attach the \code{fmpz_poly_t} object \code{output} to the first $n$ coefficients of the polynomial \code{poly}. This is equivalent to notionally truncating the original polynomial to $n$ coefficients then attaching to the result.
@@ -1126,7 +1134,7 @@ int fmpz_cmpabs(const fmpz_t f1, const fmpz_t f2)
 Compares the absolute values of \code{f1} and \code{f2}. If the absolute value of \code{f1} is less than that of \code{f2} then a negative value is returned. If the absolute value of \code{f1} is greater than that of \code{f2} then a positive value is returned. If the absolute values are equal, then zero is returned. 
 \end{quote}
 
-\subsection{Conversion}
+\subsection{Conversions}
 
 \begin{lstlisting}
 void mpz_to_fmpz(fmpz_t res, const mpz_t x)
@@ -1247,7 +1255,8 @@ Divide \code{x} by $2^{\mbox{exp}}$, returning the quotient and discarding the r
 \end{quote}
 
 \begin{lstlisting}
-unsigned long fmpz_mod_ui(const fmpz_t input, const unsigned long x)
+unsigned long fmpz_mod_ui(const fmpz_t input, 
+                                            const unsigned long x)
 \end{lstlisting}
 \begin{quote}
 Returns \code{f1} modulo the \code{unsigned long x}. Note that \code{f1} may be unsigned. 
@@ -1284,10 +1293,12 @@ Compute the greatest common divisor of \code{x1} and \code{x2}. The result is al
 
 \subsection{Chinese remaindering}
 \begin{lstlisting}
-void fmpz_CRT_ui_precomp(fmpz_t x, fmpz_t r1, fmpz_t m1, unsigned long r2,
-                             unsigned long m2, unsigned long c, pre_inv_t pre)
-void fmpz_CRT_ui2_precomp(fmpz_t x, fmpz_t r1, fmpz_t m1, unsigned long r2,
-                            unsigned long m2, unsigned long c, pre_inv2_t pre)
+void fmpz_CRT_ui_precomp(fmpz_t x, fmpz_t r1, fmpz_t m1, 
+          unsigned long r2, unsigned long m2, unsigned long c, 
+                                                    pre_inv_t pre)
+void fmpz_CRT_ui2_precomp(fmpz_t x, fmpz_t r1, fmpz_t m1, 
+          unsigned long r2, unsigned long m2, unsigned long c, 
+                                                   pre_inv2_t pre)
 \end{lstlisting}
 \begin{quote}
 Computes the unique value \code{x} modulo \code{m1*m2} that is \code{r1} modulo \code{m1} and \code{r2} modulo \code{m2}. Requires \code{m1} and \code{m2} to be coprime, \code{c} to be set to the value \code{m1} modulo \code{m2} and \code{pre} to be a precomputed inverse of \code{m2} (computed using \code{z_precompute_inverse(m2)}). 
@@ -1331,7 +1342,7 @@ The output is:
 7  1 0 0 3 0 0 4
 \end{lstlisting}
 
-\subsection{Definition of the \code{zmod_poly_t} polynomial type}
+\subsection{Definition of the zmod\_poly\_t polynomial type}
 
 The \code{zmod_poly_t} type is a typedef for an array of length 1 of \code{zmod_poly_struct}'s. This permits passing parameters  of type \code{zmod_poly_t} `by reference'. 
 
@@ -1354,7 +1365,7 @@ Initialise \code{poly} as a polynomial over $\Z/p\Z$.
 
 \begin{lstlisting}
 void zmod_poly_init2(zmod_poly_t poly, unsigned long p, 
-                                                  unsigned long alloc)
+                                              unsigned long alloc)
 \end{lstlisting}
 \begin{quote}
 Initialise \code{poly} as a polynomial over $\Z/p\Z$, allocating space for at least the given number of coefficients. 
@@ -1384,7 +1395,8 @@ Reallocate \code{poly} so that it has space for at least \code{alloc} coefficien
 \subsection{Setting/retrieving coefficients}
 
 \begin{lstlisting}
-unsigned long zmod_poly_get_coeff_ui(zmod_poly_t poly, unsigned long n)
+unsigned long zmod_poly_get_coeff_ui(zmod_poly_t poly, 
+                                                  unsigned long n)
 \end{lstlisting}
 \begin{quote}
 Return the $n$-th coefficient as an \code{unsigned long}. Coefficients are number from zero, starting with the constant coefficient. If $n$ is greater than or equal to the current length of the polynomial, zero is returned.
@@ -1392,7 +1404,7 @@ Return the $n$-th coefficient as an \code{unsigned long}. Coefficients are numbe
 
 \begin{lstlisting}
 void zmod_poly_set_coeff_ui(zmod_poly_t poly, unsigned long n, 
-                                                       unsigned long c)
+                                                  unsigned long c)
 \end{lstlisting}
 \begin{quote}
 Set the $n$-th coefficient to the \code{unsigned long c}. It is assumed that \code{c} is already reduced modulo the modulus of the polynomial. Coefficients are number from zero, starting with the constant coefficient. If $n$ is greater than the current length of the polynomial, zeroes are inserted between the new coefficient and the existing coefficients if required.
@@ -1508,7 +1520,7 @@ Negate the polynomial \code{poly}, i.e. set \code{res} to \code{-poly}.
 
 \begin{lstlisting}
 void zmod_poly_reverse(zmod_poly_t output, zmod_poly_t input,
-                                                 unsigned long length)
+                                             unsigned long length)
 \end{lstlisting}
 \begin{quote}
 Notionally zero padding or truncating if necessary, this function considers \code{input} to be a polynomial of the given length and reverses it, storing the result in \code{output}.
@@ -1528,7 +1540,7 @@ Attach \code{poly2} to the polynomial object \code{poly1}.
 
 \begin{lstlisting}
 void zmod_poly_attach_shift(zmod_poly_t poly1, 
-                   zmod_poly_t poly2, unsigned long n)
+                               zmod_poly_t poly2, unsigned long n)
 \end{lstlisting}
 \begin{quote}
 This function notionally shifts \code{poly2} to the right by \code{n} coefficients and then attaches the polynomial object \code{poly1} to the result.
@@ -1536,7 +1548,7 @@ This function notionally shifts \code{poly2} to the right by \code{n} coefficien
 
 \begin{lstlisting}
 void zmod_poly_attach_truncate(zmod_poly_t output, 
-                     zmod_poly_t input, unsigned long n)
+                               zmod_poly_t input, unsigned long n)
 \end{lstlisting}
 \begin{quote}
 This function notionally truncates \code{poly2} to length \code{n} and then attaches the polynomial object \code{poly1} to the result.
@@ -1560,7 +1572,7 @@ Returns 1 if the polynomial is equal to the constant polynomial 1, otherwise ret
 \subsection{Scalar multiplication and division}
 \begin{lstlisting}
 void zmod_poly_scalar_mul(zmod_poly_t res, zmod_poly_t poly, 
-                                                   unsigned long scalar)
+                                             unsigned long scalar)
 \end{lstlisting}
 \begin{quote}
 Multiply the polynomial through by the given scalar. It is assumed that \code{scalar} is already reduced modulo the modulus of the polynomial.
@@ -1576,7 +1588,7 @@ Divide the polynomial through by the inverse of the leading coefficient of the p
 \subsection{Addition/subtraction}
 \begin{lstlisting}
 void zmod_poly_add(zmod_poly_t res, zmod_poly_t poly1, 
-                                                   zmod_poly_t poly2)
+                                                zmod_poly_t poly2)
 \end{lstlisting}
 \begin{quote}
 Set \code{res} to the sum of \code{poly1} and \code{poly2}. Note that if cancellation occurs, \code{res} may have a lesser length than either of the two input polynomials.
@@ -1584,7 +1596,7 @@ Set \code{res} to the sum of \code{poly1} and \code{poly2}. Note that if cancell
 
 \begin{lstlisting}
 void zmod_poly_sub(zmod_poly_t res, zmod_poly_t poly1, 
-                                                   zmod_poly_t poly2)
+                                                zmod_poly_t poly2)
 \end{lstlisting}
 \begin{quote}
 Set \code{res} to \code{poly1} minus \code{poly2}. Note that if cancellation occurs, \code{res} may have a lesser length than either of the two input polynomials.
@@ -1593,7 +1605,7 @@ Set \code{res} to \code{poly1} minus \code{poly2}. Note that if cancellation occ
 \subsection{Shifting}
 \begin{lstlisting}
 void zmod_poly_left_shift(zmod_poly_t res, zmod_poly_t poly, 
-                                                     unsigned long k)
+                                                  unsigned long k)
 \end{lstlisting}
 \begin{quote}
 Shift the polynomial \code{poly} left by \code{k} coefficients, i.e. multiply the polynomial by $x^k$ and store the result in \code{res}. The value of $k$ must be non-negative.
@@ -1601,7 +1613,7 @@ Shift the polynomial \code{poly} left by \code{k} coefficients, i.e. multiply th
 
 \begin{lstlisting}
 void zmod_poly_right_shift(zmod_poly_t res, zmod_poly_t poly, 
-                                                     unsigned long k)
+                                                  unsigned long k)
 \end{lstlisting}
 \begin{quote}
 Shift the polynomial \code{poly} right by \code{k} coefficients, i.e. divide the polynomial by $x^k$, ignoring the remainder and store the result in \code{res}. The value of $k$ must be non-negative. If $k$ is greater than or equal to the current length of \code{poly}, \code{res} is set to equal the zero polynomial.
@@ -1610,7 +1622,7 @@ Shift the polynomial \code{poly} right by \code{k} coefficients, i.e. divide the
 \subsection{Polynomial multiplication}
 \begin{lstlisting}
 void zmod_poly_mul(zmod_poly_t res, zmod_poly_t poly1, 
-                                                   zmod_poly_t poly2)
+                                                zmod_poly_t poly2)
 \end{lstlisting}
 \begin{quote}
 Set \code{res} to \code{poly1} multiplied by \code{poly2}. The length of \code{res} will be at most one less than the sum of the lengths of \code{poly1} and \code{poly2}.
@@ -1618,7 +1630,7 @@ Set \code{res} to \code{poly1} multiplied by \code{poly2}. The length of \code{r
 
 \begin{lstlisting}
 void zmod_poly_mul_trunc_n(zmod_poly_t res, zmod_poly_t poly1, 
-                              zmod_poly_t poly2, unsigned long n)
+                               zmod_poly_t poly2, unsigned long n)
 \end{lstlisting}
 \begin{quote}
 Set \code{res} to \code{poly1} multiplied by \code{poly2} and truncate to length \code{n} if this is less than the length of the full product. This function is usually more efficient than simply doing the multiplication and then truncating. The function is tuned for \code{n} about half the length of a full product. This function is sometimes called a short product.
@@ -1627,8 +1639,8 @@ This function can be used for power series multiplication.
 \end{quote}
 
 \begin{lstlisting}
-void zmod_poly_mul_trunc_left_n(zmod_poly_t res, zmod_poly_t poly1, 
-                              zmod_poly_t poly2, unsigned long n)
+void zmod_poly_mul_trunc_left_n(zmod_poly_t res, 
+            zmod_poly_t poly1, zmod_poly_t poly2, unsigned long n)
 \end{lstlisting}
 \begin{quote}
 Set \code{res} to \code{poly1} multiplied by \code{poly2} ignoring the least significant \code{n} terms of the result which may be set to anything. This function is more efficient than doing the full multiplication if the operands are relatively short. It is tuned for \code{n} about half the length of a full product. This function is sometimes called an opposite short product. 
@@ -1637,15 +1649,15 @@ Set \code{res} to \code{poly1} multiplied by \code{poly2} ignoring the least sig
 \subsection{Polynomial division}
 \begin{lstlisting}
 void zmod_poly_newton_invert(zmod_poly_t Q_inv, zmod_poly_t Q, 
-                                                     unsigned long n)
+                                                  unsigned long n)
 \end{lstlisting}
 \begin{quote}
 Treat the polynomial \code{Q} as a series of length \code{n} (the constant coefficient of the series is taken to be the constant coefficient of the polynomial) and invert it, yielding a series \code{Q_inv} also given to precision \code{n}. 
 \end{quote}
 
 \begin{lstlisting}
-void zmod_poly_div_series(zmod_poly_t Q, zmod_poly_t A, zmod_poly_t B, 
-                                                           unsigned long n)
+void zmod_poly_div_series(zmod_poly_t Q, zmod_poly_t A, 
+                                   zmod_poly_t B, unsigned long n)
 \end{lstlisting}
 \begin{quote}
 Treat the polynomials \code{A} and \code{B} as series of length \code{n} and compute the quotient series \code{Q = A/B}.
@@ -1659,8 +1671,8 @@ Divide the polynomial \code{A} by the polynomial \code{B} and set \code{Q} to th
 \end{quote}
 
 \begin{lstlisting}
-void zmod_poly_divrem(zmod_poly_t Q, zmod_poly_t R, zmod_poly_t A, 
-                                                            zmod_poly_t B)
+void zmod_poly_divrem(zmod_poly_t Q, zmod_poly_t R, 
+                                     zmod_poly_t A, zmod_poly_t B)
 \end{lstlisting}
 \begin{quote}
 Divide the polynomial \code{A} by \code{B} and set \code{Q} to the quotient and \code{R} to the remainder.
@@ -1681,7 +1693,7 @@ Note that the resultant is zero iff the polynomials share a root over an algebra
 
 \begin{lstlisting}
 void zmod_poly_gcd(zmod_poly_t res, zmod_poly_t poly1, 
-                                                   zmod_poly_t poly2)
+                                                zmod_poly_t poly2)
 \end{lstlisting}
 \begin{quote}
 Conmpute the greatest common divisor of the polynomials \code{poly1} and \code{poly2}.
@@ -1689,7 +1701,7 @@ Conmpute the greatest common divisor of the polynomials \code{poly1} and \code{p
 
 \begin{lstlisting}
 int zmod_poly_gcd_invert(zmod_poly_t res, zmod_poly_t poly1, 
-                                                   zmod_poly_t poly2)
+                                                zmod_poly_t poly2)
 \end{lstlisting}
 \begin{quote}
 Compute a polynomial \code{res} such that \code{res*poly1} is a constant modulo \code{poly2}. The two polynomials \code{poly1} and \code{poly2} are assumed to be coprime. If this is not the case, the function returns 0, otherwise it returns 1.
@@ -1697,7 +1709,7 @@ Compute a polynomial \code{res} such that \code{res*poly1} is a constant modulo 
 
 \begin{lstlisting}
 void zmod_poly_xgcd(zmod_poly_t res, zmod_poly_t s, zmod_poly_t t,  
-                                 zmod_poly_t poly1, zmod_poly_t poly)
+                              zmod_poly_t poly1, zmod_poly_t poly)
 \end{lstlisting}
 \begin{quote}
 Compute polynomials \code{s} and \code{t} such that \code{s*poly1+t*poly2} is the resultant of the polynomials \code{poly1} and \code{poly2}. The polynomials \code{poly1} and \code{poly2} are assumed to be coprime.
@@ -1712,7 +1724,7 @@ On 64 bit machines, \code{FLINT_BITS} is 64 and \code{FLINT_D_BITS} is 53 bits. 
 
 The functions which begin \code{z_ll_} generally take a parameter consisting of two \code{unsigned long}'s thought of as an integer of twice the normal size, e.g. on a 64 bit machine these functions would support an input of 128 bits.
 
-Many of the functions in this module can be used to manipulate the individual coefficients of \code{zmod_poly_t}'s.
+Many of the functions in this module can be used to manipulate the individual coefficients of polynomials of type \code{zmod_poly_t}.
 
 \begin{lstlisting}
 pre_inv_t z_precompute_inverse(unsigned long n)
@@ -1726,14 +1738,16 @@ Return a precomputed inverse of the integer \code{n}. The first version returns 
 \end{quote}
 
 \begin{lstlisting}
-unsigned long z_addmod(unsigned long a, unsigned long b, unsigned long p)
+unsigned long z_addmod(unsigned long a, unsigned long b, 
+                                                  unsigned long p)
 \end{lstlisting}
 \begin{quote}
 Return the sum of \code{a} and \code{b} modulo \code{p}. Both \code{a} and \code{b} are assumed to be reduced modulo \code{p} when calling this function. 
 \end{quote}
 
 \begin{lstlisting}
-unsigned long z_submod(unsigned long a, unsigned long b, unsigned long p)
+unsigned long z_submod(unsigned long a, unsigned long b, 
+                                                  unsigned long p)
 \end{lstlisting}
 \begin{quote}
 Return \code{a} minus \code{b} modulo \code{p}. Both \code{a} and \code{b} are assumed to be reduced modulo \code{p} when calling this function. 
@@ -1747,19 +1761,22 @@ Return minus \code{a} modulo \code{p}. The value \code{a} is assumed to be reduc
 \end{quote}
 
 \begin{lstlisting}
-unsigned long z_div2_precomp(unsigned long a, unsigned long n, pre_inv2_t ninv)
+unsigned long z_div2_precomp(unsigned long a, unsigned long n, 
+                                                  pre_inv2_t ninv)
 \end{lstlisting}
 \begin{quote}
 Return the floor of the quotient of \code{a} by \code{n}. There are no restrictions on the size of \code{a}.
 \end{quote}
 
 \begin{lstlisting}
-unsigned long z_mod_precomp(unsigned long a, unsigned long n, pre_inv_t ninv)
+unsigned long z_mod_precomp(unsigned long a, unsigned long n, 
+                                                   pre_inv_t ninv)
 
-unsigned long z_mod2_precomp(unsigned long a, unsigned long n, pre_inv2_t ninv)
+unsigned long z_mod2_precomp(unsigned long a, unsigned long n, 
+                                                  pre_inv2_t ninv)
 
-unsigned long z_ll_mod_precomp(unsigned long a_hi, unsigned long a_lo, 
-                                             unsigned long n, pre_inv_ll_t ninv)
+unsigned long z_ll_mod_precomp(unsigned long a_hi,
+           unsigned long a_lo, unsigned long n, pre_inv_ll_t ninv)
 \end{lstlisting}
 \begin{quote}
 Return \code{a} modulo \code{n}. The first version assumes that \code{a} is less than \code{n^2}. The second and third versions replaces no restrictions on \code{a}.
@@ -1767,10 +1784,10 @@ Return \code{a} modulo \code{n}. The first version assumes that \code{a} is less
 
 \begin{lstlisting}
 unsigned long z_mulmod_precomp(unsigned long a, unsigned long b, 
-                                         unsigned long n, pre_inv_t ninv)
+                                  unsigned long n, pre_inv_t ninv)
                                          
 unsigned long z_mulmod2_precomp(unsigned long a, unsigned long b, 
-                                         unsigned long n, pre_inv2_t ninv)
+                                 unsigned long n, pre_inv2_t ninv)
 \end{lstlisting}
 \begin{quote}
 Return \code{a} times \code{b} modulo \code{n}. The first version assumes that \code{a} and \code{b} have been reduced modulo \code{n} before calling the function. The second version places no restrictions on \code{a} and \code{b}, i.e. their product may be up to two full limbs.
@@ -1782,17 +1799,18 @@ unsigned long z_powmod(unsigned long a, long exp, unsigned long n)
 unsigned long z_powmod2(unsigned long a, long exp, unsigned long n)
 
 unsigned long z_powmod_precomp(unsigned long a, long exp, 
-                                     unsigned long n, pre_inv_t ninv)
+                                  unsigned long n, pre_inv_t ninv)
                                      
 unsigned long z_powmod2_precomp(unsigned long a, long exp, 
-                                     unsigned long n, pre_inv2_t ninv)
+                                 unsigned long n, pre_inv2_t ninv)
 \end{lstlisting}
 \begin{quote}
 Raise \code{a} to the power \code{exp} modulo \code{n}. All versions assume \code{a} is reduced modulo \code{n}, but there are no restrictions on \code{exp}, which may be negative (assuming \code{a} is invertible modulo \code{n}) or zero. 
 \end{quote}                              
 
 \begin{lstlisting}
-int z_jacobi_precomp(unsigned long a, unsigned long p, pre_inv_t pinv)
+int z_jacobi_precomp(unsigned long a, unsigned long p, 
+                                                   pre_inv_t pinv)
 \end{lstlisting}
 \begin{quote}
 Computes the Jacobi symbol of \code{a} modulo \code{p} for a prime \code{p}. Assumes that \code{a} is reduced modulo \code{p}.
@@ -1814,7 +1832,7 @@ Returns a square root of \code{a} modulo \code{p}. Assumes \code{a} is reduced m
 
 \begin{lstlisting}
 unsigned long z_cuberootmod(unsigned long * cuberoot1, 
-                               unsigned long a, unsigned long p)
+                                 unsigned long a, unsigned long p)
 \end{lstlisting}
 \begin{quote}
 Returns a cube root of \code{a} modulo a prime \code{p}. Assumes \code{a} is reduced modulo \code{p}. If \code{a} is not 0, the function also sets \code{cuberoot1} to a cube root of unity modulo \code{p} if the cube roots of \code{a} are distinct, otherwise \code{cuberoot1} is set to 1. If \code{a} is not a cubic residue modulo \code{p} the function returns 0.
@@ -1850,7 +1868,7 @@ Returns the greatest common divisor \code{d} of \code{x} and \code{y} (which may
 
 \begin{lstlisting}
 unsigned long z_CRT(unsigned long x1, unsigned long n1, 
-                        unsigned long x2, unsigned long n2)
+                               unsigned long x2, unsigned long n2)
 \end{lstlisting}
 \begin{quote}
 Returns the unique integer \code{d} reduced modulo \code{n1*n2} which is \code{x1} modulo \code{n1} and \code{x2} modulo \code{n2}. Assumes \code{x1} is reduced modulo \code{n1} and \code{x2} is reduced modulo \code{n2}. Also assumes \code{n1*n2} is no more than \code{FLINT_BITS - 1} bits and that \code{n1} and \code{n2} are coprime.
@@ -1868,6 +1886,121 @@ unsigned long z_randbits(unsigned long bits)
 \end{lstlisting}
 \begin{quote}
 Returns a random uniformly distributed integer with (up to) the given number of bits. If \code{bits} is set to 0, the function returns a full random limb.
+\end{quote}
+
+\section{The mpn\_extras module}
+
+The \code{mpn\_extras} module is designed to supplement the low level \code{mpn} functions provided in GMP. These functions are designed to operate on raw limbs of multiprecision integer data. Each such integer consists of a string of limbs representing an integer, with the least significant limb first. The integers may either be unsigned or signed in twos complement format.
+
+\begin{lstlisting}
+void F_mpn_negate(mp_limb_t* dest, mp_limb_t* src, 
+                                              unsigned long count)
+\end{lstlisting}
+\begin{quote}
+Considering the data at the location \code{src} to be an integer of \code{count} limbs stored in twos complement format, this function negates the integer and stores the result at the location \code{dest}.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpn_copy(mp_limb_t* dest, const mp_limb_t* src, 
+                                              unsigned long count)
+\end{lstlisting}
+\begin{quote}
+Copy \code{count} raw limbs at \code{src} to the location \code{dest}. Copying begins with the most significant limb first, thus the destination limbs may overlap the source limbs only if \code{dest > src} in memory.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpn_copy_forward(mp_limb_t* dest, const mp_limb_t* src,  
+                                              unsigned long count)
+\end{lstlisting}
+\begin{quote}
+Copy \code{count} raw limbs at \code{src} to the location \code{dest}. Copying begins with the least significant limb first, thus the destination limbs may overlap the source limbs only if \code{dest < src} in memory.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpn_clear(mp_limb_t* dest, unsigned long count)
+\end{lstlisting}
+\begin{quote}
+Set all bits of the \code{count} limbs starting at \code{dest} to binary zeros.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpn_set(mp_limb_t* dest, unsigned long count)
+\end{lstlisting}
+\begin{quote}
+Set all bits of the \code{count} limbs starting at \code{dest} to binary ones.
+\end{quote}
+
+\begin{lstlisting}
+pre_limb_t F_mpn_precompute_inverse(mp_limb_t d)                  
+\end{lstlisting}
+\begin{quote}
+Returns a precomputed inverse of \code{d} for use in \code{F_mpn} functions which take a \code{pre_limb_t} precomputed inverse \code{dinv} of \code{d}. 
+
+One needs to normalise \code{d} before computing the precomputed inverse, however the original value of \code{d} itself is passed to the functions. This computation can be done as follows:
+\end{quote}
+
+\begin{lstlisting}
+#include "flint.h"
+
+unsigned long norm;
+count_lead_zeros(norm, d);
+pre_limb_t xinv = F_mpn_precompute_inverse(x<<norm);
+\end{lstlisting}
+
+\begin{lstlisting}
+mp_limb_t F_mpn_divrem_ui_precomp(mp_limb_t * quot, 
+    mp_limb_t * x, unsigned long xn, mp_limb_t d, pre_limb_t dinv)
+\end{lstlisting}
+\begin{quote}
+Compute the quotient of the unsigned multiprecision integer of \code{xn} limbs at \code{x} by the limb \code{d}, placing the quotient at \code{quot} and returning the remainder. The location \code{quot} needs space for \code{count} limbs. The function takes a precomputed inverse of \code{d}.
+\end{quote}
+             
+\begin{lstlisting}
+mp_limb_t F_mpn_mul(mp_limb_t * rn, mp_limb_t * s1p, 
+            unsigned long s1n, mp_limb_t * s2p, unsigned long s2n)
+\end{lstlisting}
+\begin{quote}
+Set \code{rn} to \code{s1p*s2p) where \code{s1p} has \code{s1n} limbs and \code{s2p} has \code{s2n} limbs. The number of limbs written is \code{s1n + s2n}. The most significant limb of the result (which may be zero) is returned by the function.
+
+This function simply calls the GMP \code{mpn_mul} function for small operands, however for integers of FFT size (larger than about 1300 limbs for multiplication and 1000 limbs for squares) the function is significantly faster than GMP 4.2.2.
+\end{quote}
+                                      
+\begin{lstlisting}
+mp_limb_t F_mpn_mul_trunc(mp_limb_t * rn, mp_limb_t * s1p, 
+        unsigned long s1n, mp_limb_t * s2p, unsigned long s2n, 
+                                                 unsigned long tn)
+\end{lstlisting}
+\begin{quote}
+Set \code{rn} to \code{s1p*s2p) where \code{s1p} has \code{s1n} limbs and \code{s2p} has \code{s2n} limbs. The output is truncated to \code{tn} limbs, where \code{tn} must be at most \code{s1n+s2n}. The most significant limb of the result (i.e. limb \code{tn}) is returned by the function.
+
+The location \code{rn} must have space for \code{s1n + s2n} limbs, regardless of the value of \code{tn}.
+
+This function simply calls the GMP \code{mpn_mul} function for small operands, however for integers of FFT size the function is significantly faster than GMP 4.2.2. and slightly faster than doing a full multiplication.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpn_mul_precomp_init(F_mpn_precomp_t precomp, 
+                          mp_limb_t * s1p, unsigned long s1n, s2n)
+\end{lstlisting}
+\begin{quote}
+When multiplying a single large integer \code{s1p} of \code{s1n} limbs (usually hundreds or more), by many other integers whose maximum size is \code{s2n} limbs, one can cache the FFT of \code{s1p} to speed up the multiplications. The precomputed data is attached to an \code{F_mpn_precomp_t precomp} by this function for use in the functions below.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpn_mul_precomp_clear(F_mpn_precomp_t precomp)
+\end{lstlisting}
+\begin{quote}
+Release the memory allocated for the data attached to the \code{F_mpn_precomp_t precomp} once it is finished with.
+\end{quote}
+
+\begin{lstlisting}
+mp_limb_t F_mpn_mul_precomp(mp_limb_t * rp, mp_limb_t * s2p, 
+                       unsigned long s2n, F_mpn_precomp_t precomp)
+\end{lstlisting}
+\begin{quote}
+Multiply the integer \code{s2p} of \code{s2n} limbs by the integer whose FFT has been cached and attached to the \code{F_mpn_precomp_t precomp}, computed previously with \code{F_mpn_mul_precomp_init}. 
+
+The total number of limbs written is \code{s1n + s2n} (even if the final limb is zero) where \code{s1n} is the size of the integer whose FFT was cached. The most significant limb of the product is returned by the function.
 \end{quote}
                       
 \section{NTL interface}

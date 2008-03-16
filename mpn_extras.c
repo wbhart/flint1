@@ -57,18 +57,22 @@
     (divrem_1.c) (C) Free Software Foundation
 */
 
-mp_limb_t F_mpn_divmod_1_preinv(mp_limb_t * qp, mp_limb_t * up, 
-                                  unsigned long un, mp_limb_t d, mp_limb_t dinv, unsigned long norm)
+mp_limb_t F_mpn_divrem_ui_precomp(mp_limb_t * qp, mp_limb_t * up, 
+                                  unsigned long un, mp_limb_t d, mp_limb_t dinv)
 {
   mp_size_t  n;
   mp_size_t  i;
   mp_limb_t  n1, n0;
   mp_limb_t  r = 0;
+ 
+  unsigned long norm;
 
   n = un;
   if (n == 0)
     return 0;
   
+  count_lead_zeros(norm, d);
+
   qp += (n - 1);   /* Make qp point at most significant quotient limb */
 
   if ((d & (1L<<(FLINT_BITS-1))) != 0)
@@ -148,6 +152,7 @@ mp_limb_t F_mpn_addmul(mp_limb_t * rp, mp_limb_t * s1p, unsigned long s1n,
       carry = mpn_add_1(rp+i+s1n-1, rp+i+s1n-1, 1, carry); 
       if (s2p[i]) carry += mpn_addmul_1(rp+i, s1p, s1n, s2p[i]);
    }
+   carry = mpn_add_1(rp+s2n+s1n-1, rp+s2n+s1n-1, 1, carry); 
    return carry;
 }
 
@@ -864,8 +869,10 @@ mp_limb_t F_mpn_mul_trunc(mp_limb_t * res, mp_limb_t * data1, unsigned long limb
    } else if ((data1 != data2) || (limbs1 != limbs2))
    {
       if (coeff_limbs/2 < FFT_MUL_TWK[0][0]) 
-         return mpn_mul(res, data1, limbs1, data2, limbs2);
-      else
+      {
+         mpn_mul(res, data1, limbs1, data2, limbs2);
+         return res[trunc-1];
+      } else
       {
          unsigned long i = 0;
          while ((i < FFT_MUL_COUNT-1) && (coeff_limbs/2 > FFT_MUL_TWK[i+1][0])) i++;
@@ -874,8 +881,10 @@ mp_limb_t F_mpn_mul_trunc(mp_limb_t * res, mp_limb_t * data1, unsigned long limb
    } else
    {
       if (coeff_limbs/2 < FFT_SQR_TWK[0][0]) 
-         return mpn_mul(res, data1, limbs1, data1, limbs1);
-      else
+      {
+         mpn_mul(res, data1, limbs1, data1, limbs1);
+         return res[trunc-1];
+      } else
       {
          unsigned long i = 0;
          while ((i < FFT_SQR_COUNT-1) && (coeff_limbs/2 > FFT_SQR_TWK[i+1][0])) i++;

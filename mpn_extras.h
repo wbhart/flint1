@@ -25,6 +25,10 @@
 #include "flint.h"
 #include "ZmodF_poly.h"
 
+#include "longlong_wrapper.h"
+#include "longlong.h"
+
+
 /*============================================================================
 
 "mpn-wannabe" code.
@@ -32,6 +36,16 @@
 These are functions that I wish were in GMP's mpn layer.
 
 =============================================================================*/
+
+#define pre_limb_t mp_limb_t
+
+static inline
+mp_limb_t F_mpn_precompute_inverse(mp_limb_t xl)                  
+{                                          
+    mp_limb_t dummy, invxl;                            
+    udiv_qrnnd (invxl, dummy, ~(xl), ~(0L), xl);  
+    return invxl;
+}
 
 /*
 Computes the negation of a multiple-precision integer in 2's complement.
@@ -118,8 +132,8 @@ static inline void F_mpn_set(mp_limb_t* dest, unsigned long count)
 
 
 
-mp_limb_t F_mpn_divmod_1_preinv(mp_limb_t * qp, mp_limb_t * up, 
-             unsigned long un, mp_limb_t d, mp_limb_t dinv, unsigned long norm);
+mp_limb_t F_mpn_divrem_ui_precomp(mp_limb_t * qp, mp_limb_t * up, 
+             unsigned long un, mp_limb_t d, mp_limb_t dinv);
              
 mp_limb_t F_mpn_addmul(mp_limb_t * rp, mp_limb_t * s1p, unsigned long s1n, 
                                       mp_limb_t * s2p, unsigned long s2n);
