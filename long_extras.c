@@ -37,9 +37,9 @@
 #include "longlong.h"
 #include "memory-manager.h"
 
-/*  
-   Returns a pseudorandom integer in the range [0, limit)
-   todo: get rid of divisions
+/* 
+   Generate a random integer in the range [0, limit) 
+   If limit == 0, return a random limb
 */
 
 unsigned long z_randint(unsigned long limit) 
@@ -48,6 +48,8 @@ unsigned long z_randint(unsigned long limit)
     static uint64_t randval = 4035456057U;
     randval = ((uint64_t)randval*(uint64_t)1025416097U+(uint64_t)286824430U)%(uint64_t)4294967311U;
     
+    if (limit == 0L) return (unsigned long) randval;
+    
     return (unsigned long)randval%limit;
 #else
     static unsigned long randval = 4035456057U;
@@ -55,8 +57,19 @@ unsigned long z_randint(unsigned long limit)
     randval = ((unsigned long)randval*(unsigned long)1025416097U+(unsigned long)286824428U)%(unsigned long)4294967311U;
     randval2 = ((unsigned long)randval2*(unsigned long)1647637699U+(unsigned long)286824428U)%(unsigned long)4294967357U;
     
+    if (limit == 0L) return (unsigned long) randval;
+    
     return (unsigned long)(randval+(randval2<<32))%limit;
 #endif
+}
+
+/*
+   Generate a random integer with up to the given number of bits [0, FLINT_BITS]
+*/
+
+unsigned long z_randbits(unsigned long bits)
+{
+   return z_randint(l_shift(1L, bits));
 }
 
 /* 
@@ -460,11 +473,11 @@ unsigned long z_sqrtmod(unsigned long a, unsigned long p)
 }                      
 
 /* 
-   Computes a cube root of _a_ mod p for an off prime p and returns a cube 
+   Computes a cube root of _a_ mod p for a prime p and returns a cube 
    root of unity if the cube roots of _a_ are distinct else the cube 
    root is set to 1
    If _a_ is not a cube modulo p then 0 is returned
-   This function assumes _a_ is not 0 and that _a_ is reduced modulo p
+   This function assumes _a_ is reduced modulo p
    Requires p be no more than FLINT_BITS-1 bits
 */
 
@@ -474,6 +487,8 @@ unsigned long z_cuberootmod(unsigned long * cuberoot1, unsigned long a,
    unsigned long x;
    double pinv; 
     
+   if (a == 0) return 0;
+
    pinv = z_precompute_inverse(p);
    
    if ((p % 3) == 2)

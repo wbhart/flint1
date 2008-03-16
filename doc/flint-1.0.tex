@@ -1703,6 +1703,173 @@ void zmod_poly_xgcd(zmod_poly_t res, zmod_poly_t s, zmod_poly_t t,
 Compute polynomials \code{s} and \code{t} such that \code{s*poly1+t*poly2} is the resultant of the polynomials \code{poly1} and \code{poly2}. The polynomials \code{poly1} and \code{poly2} are assumed to be coprime.
 \end{quote}
 
+\section{The long\_extras module}
+The \code{long_extras} module contains functions for doing arithmetic with integers which will fit into an \code{unsigned long}, including functions for modular arithmetic.
+
+Many of the functions take a precomputed inverse, which increases performance. The functions which include 2 in the name support moduli up to \code{FLINT_BITS - 1} bits, i.e. 63 bits, and the remainder work with moduli up to and including \code{FLINT_D_BITS}. 
+
+On 64 bit machines, \code{FLINT_BITS} is 64 and \code{FLINT_D_BITS} is 53 bits. On a 32 bit machine the functions with 2 in the name are in fact macros aliasing the corresponding unadorned version. In this case \code{FLINT_BITS} is 32.
+
+The functions which begin \code{z_ll_} generally take a parameter consisting of two \code{unsigned long}'s thought of as an integer of twice the normal size, e.g. on a 64 bit machine these functions would support an input of 128 bits.
+
+Many of the functions in this module can be used to manipulate the individual coefficients of \code{zmod_poly_t}'s.
+
+\begin{lstlisting}
+pre_inv_t z_precompute_inverse(unsigned long n)
+
+pre_inv2_t z_precompute_inverse2(unsigned long n)
+
+pre_inv_ll_t z_ll_precompute_inverse2(unsigned long n)
+\end{lstlisting}
+\begin{quote}
+Return a precomputed inverse of the integer \code{n}. The first version returns a \code{pre_inv_t}, which is used with functions taking parameters up to \code{FLINT_D_BITS}. The second version returns a \code{pre_inv2_t} for use with function with second versions of functions taking a precomputed inverse, which support parameters up to \code{FLINT_BITS - 1} bits. The third version returns an inverse suitable for use with \code{z_ll_} functions which support an operand consisting of two \code{unsigned long}'s for twice the normal integer precision.
+\end{quote}
+
+\begin{lstlisting}
+unsigned long z_addmod(unsigned long a, unsigned long b, unsigned long p)
+\end{lstlisting}
+\begin{quote}
+Return the sum of \code{a} and \code{b} modulo \code{p}. Both \code{a} and \code{b} are assumed to be reduced modulo \code{p} when calling this function. 
+\end{quote}
+
+\begin{lstlisting}
+unsigned long z_submod(unsigned long a, unsigned long b, unsigned long p)
+\end{lstlisting}
+\begin{quote}
+Return \code{a} minus \code{b} modulo \code{p}. Both \code{a} and \code{b} are assumed to be reduced modulo \code{p} when calling this function. 
+\end{quote}
+
+\begin{lstlisting}
+unsigned long z_negmod(unsigned long a, unsigned long p)
+\end{lstlisting}
+\begin{quote}
+Return minus \code{a} modulo \code{p}. The value \code{a} is assumed to be reduced modulo \code{p} when calling this function. 
+\end{quote}
+
+\begin{lstlisting}
+unsigned long z_div2_precomp(unsigned long a, unsigned long n, pre_inv2_t ninv)
+\end{lstlisting}
+\begin{quote}
+Return the floor of the quotient of \code{a} by \code{n}. There are no restrictions on the size of \code{a}.
+\end{quote}
+
+\begin{lstlisting}
+unsigned long z_mod_precomp(unsigned long a, unsigned long n, pre_inv_t ninv)
+
+unsigned long z_mod2_precomp(unsigned long a, unsigned long n, pre_inv2_t ninv)
+
+unsigned long z_ll_mod_precomp(unsigned long a_hi, unsigned long a_lo, 
+                                             unsigned long n, pre_inv_ll_t ninv)
+\end{lstlisting}
+\begin{quote}
+Return \code{a} modulo \code{n}. The first version assumes that \code{a} is less than \code{n^2}. The second and third versions replaces no restrictions on \code{a}.
+\end{quote}
+
+\begin{lstlisting}
+unsigned long z_mulmod_precomp(unsigned long a, unsigned long b, 
+                                         unsigned long n, pre_inv_t ninv)
+                                         
+unsigned long z_mulmod2_precomp(unsigned long a, unsigned long b, 
+                                         unsigned long n, pre_inv2_t ninv)
+\end{lstlisting}
+\begin{quote}
+Return \code{a} times \code{b} modulo \code{n}. The first version assumes that \code{a} and \code{b} have been reduced modulo \code{n} before calling the function. The second version places no restrictions on \code{a} and \code{b}, i.e. their product may be up to two full limbs.
+\end{quote}
+                                         
+\begin{lstlisting}
+unsigned long z_powmod(unsigned long a, long exp, unsigned long n)
+
+unsigned long z_powmod2(unsigned long a, long exp, unsigned long n)
+
+unsigned long z_powmod_precomp(unsigned long a, long exp, 
+                                     unsigned long n, pre_inv_t ninv)
+                                     
+unsigned long z_powmod2_precomp(unsigned long a, long exp, 
+                                     unsigned long n, pre_inv2_t ninv)
+\end{lstlisting}
+\begin{quote}
+Raise \code{a} to the power \code{exp} modulo \code{n}. All versions assume \code{a} is reduced modulo \code{n}, but there are no restrictions on \code{exp}, which may be negative (assuming \code{a} is invertible modulo \code{n}) or zero. 
+\end{quote}                              
+
+\begin{lstlisting}
+int z_jacobi_precomp(unsigned long a, unsigned long p, pre_inv_t pinv)
+\end{lstlisting}
+\begin{quote}
+Computes the Jacobi symbol of \code{a} modulo \code{p} for a prime \code{p}. Assumes that \code{a} is reduced modulo \code{p}.
+\end{quote}
+
+\begin{lstlisting}
+unsigned long z_pow(unsigned long a, unsigned long exp)
+\end{lstlisting}
+\begin{quote}
+Computes \code{a} to the power \code{exp} which must be non-negative. Assumes that the result will fit in an \code{unsigned long}.
+\end{quote}
+
+\begin{lstlisting}
+unsigned long z_sqrtmod(unsigned long a, unsigned long p)
+\end{lstlisting}
+\begin{quote}
+Returns a square root of \code{a} modulo \code{p}. Assumes \code{a} is reduced modulo \code{p}. The function returns 0 if \code{a} is not a quadratic residue modulo a prime \code{p}.
+\end{quote}
+
+\begin{lstlisting}
+unsigned long z_cuberootmod(unsigned long * cuberoot1, 
+                               unsigned long a, unsigned long p)
+\end{lstlisting}
+\begin{quote}
+Returns a cube root of \code{a} modulo a prime \code{p}. Assumes \code{a} is reduced modulo \code{p}. If \code{a} is not 0, the function also sets \code{cuberoot1} to a cube root of unity modulo \code{p} if the cube roots of \code{a} are distinct, otherwise \code{cuberoot1} is set to 1. If \code{a} is not a cubic residue modulo \code{p} the function returns 0.
+\end{quote}
+
+\begin{lstlisting}
+unsigned long z_gcd(long x, long y)
+\end{lstlisting}
+\begin{quote}
+Returns the greatest common divisor of \code{x} and \code{y}, which may be signed.
+\end{quote}
+
+\begin{lstlisting}
+unsigned long z_invert(unsigned long a, unsigned long n)
+\end{lstlisting}
+\begin{quote}
+Returns a multiplicative inverse of \code{a} modulo \code{n}. Assumes \code{a} is reduced modulo \code{p}.
+\end{quote}
+
+\begin{lstlisting}
+long z_gcd_invert(long* a, long x, long y)
+\end{lstlisting}
+\begin{quote}
+Returns the greatest common divisor \code{d} of \code{x} and \code{y} (which may be signed) and sets \code{a} such that \code{a*x} is \code{d} modulo \code{y}. We ensure \code{a} is reduced modulo \code{y}.
+\end{quote}
+
+\begin{lstlisting}
+long z_extgcd(long* a, long* b, long x, long y)
+\end{lstlisting}
+\begin{quote}
+Returns the greatest common divisor \code{d} of \code{x} and \code{y} (which may be signed) and sets \code{a} and \code{b} such that \code{d = a*x+b*y}. 
+\end{quote}
+
+\begin{lstlisting}
+unsigned long z_CRT(unsigned long x1, unsigned long n1, 
+                        unsigned long x2, unsigned long n2)
+\end{lstlisting}
+\begin{quote}
+Returns the unique integer \code{d} reduced modulo \code{n1*n2} which is \code{x1} modulo \code{n1} and \code{x2} modulo \code{n2}. Assumes \code{x1} is reduced modulo \code{n1} and \code{x2} is reduced modulo \code{n2}. Also assumes \code{n1*n2} is no more than \code{FLINT_BITS - 1} bits and that \code{n1} and \code{n2} are coprime.
+\end{quote}
+
+\begin{lstlisting}
+unsigned long z_randint(unsigned long limit)
+\end{lstlisting}
+\begin{quote}
+Returns a random uniformly distributed integer in the range $[0, $ \code{limit}$)$. If \code{limit} is set to 0, the function returns a random limb, i.e. a random integer in the range $[0, 2^$ \code{FLINT_BITS}$)$.  
+\end{quote}
+ 
+\begin{lstlisting}
+unsigned long z_randbits(unsigned long bits)
+\end{lstlisting}
+\begin{quote}
+Returns a random uniformly distributed integer with up to the given number of bits. If \code{bits} is set to 0, the function returns a random limb, i.e. a random integer in the range $[0, 2^$ \code{FLINT_BITS}$)$.  
+\end{quote}
+                      
 \section{NTL interface}
 Various functions are provided for converting between FLINT objects and NTL objects. To make use of these functions one must type:
 

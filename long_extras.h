@@ -87,10 +87,17 @@ typedef struct factor_s
 
 #define pre_inv_t double
 #define pre_inv2_t double
+#define pre_inv_ll_t double
 
 unsigned long z_randint(unsigned long limit);
 
+unsigned long z_randbits(unsigned long bits);
+
 double z_precompute_inverse(unsigned long n);
+
+double z_precompute_inverse2(unsigned long n);
+
+double z_ll_precompute_inverse(unsigned long n);
 
 /*
 uint32_t z_precompute_inverse32(unsigned long n);
@@ -178,8 +185,6 @@ int z_isprime_precomp(unsigned long n, double ninv);
 unsigned long z_nextprime(unsigned long n);
 
 unsigned long z_pow(unsigned long a, unsigned long exp);
-
-unsigned long z_powmod(unsigned long a, long exp, unsigned long n);
                                                     
 unsigned long z_sqrtmod(unsigned long a, unsigned long p); 
 
