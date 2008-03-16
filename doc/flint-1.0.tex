@@ -1860,14 +1860,14 @@ Returns the unique integer \code{d} reduced modulo \code{n1*n2} which is \code{x
 unsigned long z_randint(unsigned long limit)
 \end{lstlisting}
 \begin{quote}
-Returns a random uniformly distributed integer in the range $[0, \mbox{limit})$. If \code{limit} is set to 0, the function returns a random limb, i.e. a random integer in the range $[0, 2^\mbox{FLINT\_BITS})$.  
+Returns a random uniformly distributed integer in the range 0 to \code{limit - 1} inclusive. If \code{limit} is set to 0, the function returns a full random limb.
 \end{quote}
  
 \begin{lstlisting}
 unsigned long z_randbits(unsigned long bits)
 \end{lstlisting}
 \begin{quote}
-Returns a random uniformly distributed integer with up to the given number of bits. If \code{bits} is set to 0, the function returns a random limb, i.e. a random integer in the range $[0, 2^\mbox{FLINT\_BITS})$.  
+Returns a random uniformly distributed integer with (up to) the given number of bits. If \code{bits} is set to 0, the function returns a full random limb.
 \end{quote}
                       
 \section{NTL interface}
