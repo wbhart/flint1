@@ -936,7 +936,7 @@ int test_ZmodF_poly_convolution()
    return success;
 }
 
-int test_ZmodF_poly_convolution_trunc()
+int test_ZmodF_poly_convolution_range()
 {
    mpz_poly_t poly1, poly2, poly3, poly4;
    mpz_poly_init(poly1);
@@ -1003,7 +1003,7 @@ int test_ZmodF_poly_convolution_trunc()
             for (unsigned long i = len2; i < size; i++)
                mpz_set_ui(poly2->coeffs[i], 0);
 
-            ZmodF_poly_convolution_trunc(f3, f1, f2, trunc);
+            ZmodF_poly_convolution_range(f3, f1, f2, 0, trunc);
 
             ZmodF_poly_convert_out(poly3, f3);
             if (use_really_naive)
@@ -1200,7 +1200,7 @@ void ZmodF_poly_test_all()
    RUN_TEST(_ZmodF_poly_IFFT_iterative);
    RUN_TEST(_ZmodF_poly_IFFT);
    RUN_TEST(ZmodF_poly_convolution);
-   RUN_TEST(ZmodF_poly_convolution_trunc);
+   RUN_TEST(ZmodF_poly_convolution_range);
    RUN_TEST(ZmodF_poly_negacyclic_convolution);
 
    printf(all_success ? "\nAll tests passed\n" :

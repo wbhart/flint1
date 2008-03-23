@@ -172,7 +172,7 @@ int test_F_mpn_mul_precomp()
    for (unsigned long count = 0; (count < 30) && (result == 1); count++)
    {
       unsigned long limbs2 = randint(2*FLINT_FFT_LIMBS_CROSSOVER)+1;
-      unsigned long limbs1 = limbs2 + randint(1000);
+      unsigned long limbs1 = randint(2*FLINT_FFT_LIMBS_CROSSOVER)+1;
    
       int1 = (mp_limb_t *) malloc(sizeof(mp_limb_t)*limbs1);
 
@@ -186,20 +186,81 @@ int test_F_mpn_mul_precomp()
          printf("%ld, %ld\n",limbs1, limbs2);
 #endif
 
-         int2 = (mp_limb_t *) malloc(sizeof(mp_limb_t)*limbs2);
+         unsigned long limbs3 = randint(limbs2)+1;
+         int2 = (mp_limb_t *) malloc(sizeof(mp_limb_t)*limbs3);
          product = (mp_limb_t *) malloc(sizeof(mp_limb_t)*(limbs1+limbs2));
          product2 = (mp_limb_t *) malloc(sizeof(mp_limb_t)*(limbs1+limbs2));
          
-         F_mpn_clear(int2, limbs2);
-         mpn_random2(int2, randint(limbs2-1)+1);
+         F_mpn_clear(int2, limbs3);
+         mpn_random2(int2, limbs3);
       
-         F_mpn_mul_precomp(product, int2, limbs2, precomp);
+         F_mpn_mul_precomp(product, int2, limbs3, precomp);
          
-         msl = mpn_mul(product2, int1, limbs1, int2, limbs2);
+         if (limbs1 > limbs3) msl = mpn_mul(product2, int1, limbs1, int2, limbs3);
+         else msl = mpn_mul(product2, int2, limbs3, int1, limbs1);
       
-         for (unsigned long j = 0; j < limbs1+limbs2 - (msl == 0); j++)
+         for (unsigned long j = 0; j < limbs1+limbs3 - (msl == 0); j++)
          {
             if (product[j] != product2[j]) result = 0;
+         }
+      
+         free(product2);
+         free(product);
+         free(int2);
+      }
+   
+      F_mpn_mul_precomp_clear(precomp);
+      
+      free(int1);
+   }   
+   
+   return result;
+}
+
+int test_F_mpn_mul_precomp_trunc()
+{
+   mp_limb_t * int1, * int2, * product, * product2;
+   F_mpn_precomp_t precomp;
+   mp_limb_t msl;
+   int result = 1;
+   
+   for (unsigned long count = 0; (count < 30) && (result == 1); count++)
+   {
+      unsigned long limbs2 = randint(2*FLINT_FFT_LIMBS_CROSSOVER)+1;
+      unsigned long limbs1 = randint(2*FLINT_FFT_LIMBS_CROSSOVER)+1;
+   
+      int1 = (mp_limb_t *) malloc(sizeof(mp_limb_t)*limbs1);
+
+      mpn_random2(int1, limbs1);
+   
+      F_mpn_mul_precomp_init(precomp, int1, limbs1, limbs2);   
+           
+      for (unsigned long count2 = 0; (count2 < 30) && (result == 1); count2++)
+      {    
+         unsigned long limbs3 = randint(limbs2)+1;
+         unsigned long trunc = randint(2*(limbs1+limbs3));
+#if DEBUG
+         printf("limbs1 = %ld, limbs3 = %ld, trunc = %ld\n", limbs1, limbs3, trunc);
+#endif
+
+         int2 = (mp_limb_t *) malloc(sizeof(mp_limb_t)*limbs3);
+         product = (mp_limb_t *) malloc(sizeof(mp_limb_t)*(limbs1+limbs2));
+         product2 = (mp_limb_t *) malloc(sizeof(mp_limb_t)*(limbs1+limbs2));
+         
+         F_mpn_clear(int2, limbs3);
+         mpn_random2(int2, limbs3);
+      
+         if (limbs1 > limbs3) F_mpn_mul_trunc(product2, int1, limbs1, int2, limbs3, trunc);
+         else F_mpn_mul_trunc(product2, int2, limbs3, int1, limbs1, trunc);
+         F_mpn_mul_precomp_trunc(product, int2, limbs3, precomp, trunc);
+      
+         for (unsigned long j = 0; j < FLINT_MIN(trunc, limbs1+limbs3); j++)
+         {
+            if (product[j] != product2[j]) 
+            {
+               printf("Failure at %ld\n", j);
+               result = 0;
+            }
          }
       
          free(product2);
@@ -275,7 +336,6 @@ int test_F_mpn_mul_trunc()
    {
       unsigned long limbs2 = randint(2*FLINT_FFT_LIMBS_CROSSOVER)+1;
       unsigned long limbs1 = limbs2 + randint(1000);
-      unsigned long trunc = randint(limbs1 + limbs2)+1;
       
       int1 = (mp_limb_t *) malloc(sizeof(mp_limb_t)*limbs1);
 
@@ -287,12 +347,13 @@ int test_F_mpn_mul_trunc()
          printf("%ld, %ld\n",limbs1, limbs2);
 #endif
 
+         unsigned long trunc = randint(limbs1 + limbs2 - 1)+1;
          int2 = (mp_limb_t *) malloc(sizeof(mp_limb_t)*limbs2);
          product = (mp_limb_t *) malloc(sizeof(mp_limb_t)*(limbs1+limbs2));
          product2 = (mp_limb_t *) malloc(sizeof(mp_limb_t)*(limbs1+limbs2));
          
          F_mpn_clear(int2, limbs2);
-         mpn_random2(int2, randint(limbs2-1)+1);
+         mpn_random2(int2, limbs2);
       
          F_mpn_mul_trunc(product, int1, limbs1, int2, limbs2, trunc);
          
@@ -336,6 +397,7 @@ void F_mpn_test_all()
    RUN_TEST(F_mpn_mul);
    RUN_TEST(F_mpn_mul_trunc);
    RUN_TEST(F_mpn_mul_precomp);
+   RUN_TEST(F_mpn_mul_precomp_trunc);
 
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");

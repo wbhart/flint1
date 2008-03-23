@@ -40,6 +40,8 @@
 #include "longlong_wrapper.h"
 #include "longlong.h"
 
+#define PREINV32 0 // Whether or not to use the 32 bit precomputed inverse code
+
 //======================================================================================
 //
 //   The code in this section is borrowed from the GMP library v 4.2.1
@@ -99,14 +101,14 @@ double z_precompute_inverse2(unsigned long n);
 
 double z_ll_precompute_inverse(unsigned long n);
 
-/*
+#if PREINV32
 uint32_t z_precompute_inverse32(unsigned long n);
 
 uint32_t z_mod32_precomp(unsigned long n64, uint32_t d, uint32_t di);				
 
 unsigned long z_mulmod32_precomp(unsigned long a, unsigned long b, 
                                          unsigned long n, uint32_t ninv);
-*/
+#endif
 
 static inline
 unsigned long z_addmod(unsigned long a, unsigned long b, unsigned long p)

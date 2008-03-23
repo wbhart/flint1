@@ -4172,8 +4172,8 @@ void _fmpz_poly_mul_SS_trunc(fmpz_poly_t output, const fmpz_poly_t in1,
    if (in1 != in2) ZmodF_poly_decrease_n(poly2, n);
    ZmodF_poly_decrease_n(res, n);
                     
-   if (in1 != in2) ZmodF_poly_convolution_trunc(res, poly1, poly2, trunc);
-   else ZmodF_poly_convolution_trunc(res, poly1, poly1, trunc);
+   if (in1 != in2) ZmodF_poly_convolution_range(res, poly1, poly2, 0, trunc);
+   else ZmodF_poly_convolution_range(res, poly1, poly1, 0, trunc);
 
    res->length = FLINT_MIN(res->length, trunc);
    ZmodF_poly_normalise(res);

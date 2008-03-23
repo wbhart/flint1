@@ -205,14 +205,14 @@ void ZmodF_poly_rescale(ZmodF_poly_t poly)
                            poly->depth, poly->n);
 }
 
-void ZmodF_poly_rescale_trunc(ZmodF_poly_t poly, unsigned long trunc)
+void ZmodF_poly_rescale_range(ZmodF_poly_t poly, unsigned long start, unsigned long n)
 {
    if (poly->depth == 0)
       return;
       
-   unsigned long length = FLINT_MIN(trunc, poly->length);
-
-   for (unsigned long i = 0; i < length; i++)
+   unsigned long length = FLINT_MIN(n, poly->length);
+   
+   for (unsigned long i = start; i < length; i++)
       ZmodF_short_div_2exp(poly->coeffs[i], poly->coeffs[i],
                            poly->depth, poly->n);
 }
@@ -1428,9 +1428,10 @@ void ZmodF_poly_convolution(ZmodF_poly_t res, ZmodF_poly_t x, ZmodF_poly_t y)
 
 // res may alias x or y
 // x and y may alias each other
-// only computes the first trunc coeffs (the remainder are garbage)
-void ZmodF_poly_convolution_trunc(ZmodF_poly_t res, ZmodF_poly_t x, 
-                                        ZmodF_poly_t y, unsigned long trunc)
+// only computes the coefficients in the range 
+// [start, n) the rest are rubbish
+void ZmodF_poly_convolution_range(ZmodF_poly_t res, ZmodF_poly_t x, 
+                                        ZmodF_poly_t y, unsigned long start, unsigned long n)
 {
    FLINT_ASSERT(x->depth == y->depth);
    FLINT_ASSERT(x->depth == res->depth);
@@ -1448,7 +1449,7 @@ void ZmodF_poly_convolution_trunc(ZmodF_poly_t res, ZmodF_poly_t x,
       
    ZmodF_poly_pointwise_mul(res, x, y);
    ZmodF_poly_IFFT(res);
-   ZmodF_poly_rescale_trunc(res, trunc);
+   ZmodF_poly_rescale_range(res, start, n);
 }
 
 

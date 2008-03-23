@@ -221,7 +221,7 @@ void ZmodF_poly_rescale(ZmodF_poly_t poly);
    running an inverse fourier transform of one only wants the first trunc
    coefficients.
 */
-void ZmodF_poly_rescale_trunc(ZmodF_poly_t poly, unsigned long trunc);
+void ZmodF_poly_rescale_range(ZmodF_poly_t poly, unsigned long start, unsigned long n);
 
 
 /****************************************************************************
@@ -297,8 +297,8 @@ void ZmodF_poly_IFFT(ZmodF_poly_t poly);
 */
 void ZmodF_poly_convolution(ZmodF_poly_t res, ZmodF_poly_t x, ZmodF_poly_t y);
 
-void ZmodF_poly_convolution_trunc(ZmodF_poly_t res, ZmodF_poly_t x, 
-                                        ZmodF_poly_t y, unsigned long trunc);
+void ZmodF_poly_convolution_range(ZmodF_poly_t res, ZmodF_poly_t x, 
+                                        ZmodF_poly_t y, unsigned long start, unsigned long n);
 
 
 // internal functions

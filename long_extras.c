@@ -174,7 +174,9 @@ unsigned long z_ll_mod_precomp(unsigned long a_hi, unsigned long a_lo,
    I don't trust the code below. It is for precomputed inverses of 32 bits.
    It should work without modification up to 32 bits, but does not.
 
-   The code is a brutalisation of code found in GMP.
+   The code is a brutalisation of code found in GMP. */
+
+#if PREINV32
 
 #define invert_limb32(invxl, xl)                  \
   do {                                          \
@@ -224,7 +226,9 @@ unsigned long z_mulmod32_precomp(unsigned long a, unsigned long b,
    res >>= norm;
    if (res >= n) res -= n;
    return res;
-}*/
+}
+
+#endif
 
 /* 
    Computes a*b mod n, given a precomputed inverse ninv

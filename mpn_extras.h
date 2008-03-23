@@ -162,6 +162,7 @@ typedef struct
    unsigned long limbs1;
    unsigned long limbs2;
    unsigned long msl_bits;
+   unsigned long bits;
 } F_mpn_precomp_s;
 
 typedef F_mpn_precomp_s F_mpn_precomp_t[1]; 
@@ -188,6 +189,14 @@ void F_mpn_mul_precomp_clear(F_mpn_precomp_t precomp);
 
 mp_limb_t F_mpn_mul_precomp(mp_limb_t * res, mp_limb_t * data2, unsigned long limbs2, F_mpn_precomp_t precomp);
       
+mp_limb_t F_mpn_mul_precomp_trunc(mp_limb_t * res, mp_limb_t * data2, unsigned long limbs2, F_mpn_precomp_t precomp, unsigned long trunc);
 
+mp_limb_t __F_mpn_mul_middle(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1, 
+                                      mp_limb_t * data2, unsigned long limbs2, 
+                                      unsigned long start, unsigned long trunc);
+
+mp_limb_t __F_mpn_mul_middle_precomp(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1, 
+                                      F_mpn_precomp_t pre, 
+                                      unsigned long start, unsigned long trunc);
 #endif
 

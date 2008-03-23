@@ -26,6 +26,7 @@
 *****************************************************************************/
 
 #include "zmod_poly.h"
+#include "long_extras.h"
 #include "flint.h"
 
 #define PRINT_LIMB(a) print_limb(#a, a);
@@ -48,7 +49,9 @@ void zmod_poly_init_precomp(zmod_poly_t poly, unsigned long p, double p_inv)
    
    poly->p = p;
    poly->p_inv = p_inv;
-   
+#if PREINV32
+   if (FLINT_BIT_COUNT(p) <= 32) poly->p32_inv = z_precompute_inverse32(p);
+#endif
    poly->alloc = 1;
    poly->length = 0;
 }
@@ -66,6 +69,9 @@ void zmod_poly_init2_precomp(zmod_poly_t poly, unsigned long p, double p_inv, un
    
    poly->p = p;
    poly->p_inv = p_inv;
+#if PREINV32
+   poly->p32_inv = z_precompute_inverse32(p);
+#endif
    
    poly->alloc = alloc;
    poly->length = 0;
@@ -180,6 +186,9 @@ int zmod_poly_from_string(zmod_poly_t poly, char* s)
       
    poly->p = p;
    poly->p_inv = z_precompute_inverse(p);
+#if PREINV32
+   poly->p32_inv = z_precompute_inverse32(p);
+#endif
 
    // jump to next whitespace
    s += strcspn(s, whitespace);
@@ -277,6 +286,9 @@ int zmod_poly_fread(zmod_poly_t poly, FILE* f)
    poly->length = 0;
    poly->p = p;
    poly->p_inv = z_precompute_inverse(p);
+#if PREINV32
+   poly->p32_inv = z_precompute_inverse32(p);
+#endif
    
    zmod_poly_fit_length(poly, length);
 
@@ -355,6 +367,10 @@ void _zmod_poly_set(zmod_poly_t res, zmod_poly_t poly)
    
    res->p = poly->p;
    res->p_inv = poly->p_inv;
+#if PREINV32
+   res->p32_inv = poly->p32_inv;
+#endif
+
 }
 
 void zmod_poly_set(zmod_poly_t res, zmod_poly_t poly)
@@ -646,6 +662,10 @@ void zmod_poly_left_shift(zmod_poly_t res, zmod_poly_t poly, unsigned long k)
          
       res->p = poly->p;
       res->p_inv = poly->p_inv;
+#if PREINV32
+      res->p32_inv = poly->p32_inv;
+#endif
+
    }
    
    res->length = poly->length + k;
@@ -660,6 +680,10 @@ void zmod_poly_right_shift(zmod_poly_t res, zmod_poly_t poly, unsigned long k)
       res->length = 0;
       res->p = poly->p;
       res->p_inv = poly->p_inv;
+#if PREINV32
+      res->p32_inv = poly->p32_inv;
+#endif
+
       return;
    }
 
@@ -680,6 +704,10 @@ void zmod_poly_right_shift(zmod_poly_t res, zmod_poly_t poly, unsigned long k)
          
       res->p = poly->p;
       res->p_inv = poly->p_inv;
+#if PREINV32
+      res->p32_inv = poly->p32_inv;
+#endif
+
    }
    
    res->length = poly->length - k;
@@ -761,6 +789,9 @@ void _zmod_poly_mul_classical(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t po
    res->length = poly1->length + poly2->length - 1;
    res->p = poly1->p;
    res->p_inv = poly1->p_inv;
+#if PREINV32
+   res->p32_inv = poly1->p32_inv;
+#endif
    
    unsigned long length;
    
@@ -916,6 +947,9 @@ void _zmod_poly_sqr_classical(zmod_poly_t res, zmod_poly_t poly)
    res->length = 2*poly->length - 1;
    res->p = poly->p;
    res->p_inv = poly->p_inv;
+#if PREINV32
+   res->p32_inv = poly->p32_inv;
+#endif
    FLINT_ASSERT(res->alloc >= res->length);
    
    unsigned long bits = FLINT_BIT_COUNT(poly->p);
@@ -1025,6 +1059,9 @@ void _zmod_poly_mul_classical_trunc(zmod_poly_t res, zmod_poly_t poly1, zmod_pol
    res->length = trunc;
    res->p = poly1->p;
    res->p_inv = poly1->p_inv;
+#if PREINV32
+   res->p32_inv = poly1->p32_inv;
+#endif
    
    unsigned long length;
    
@@ -1192,6 +1229,9 @@ void _zmod_poly_mul_classical_trunc_left(zmod_poly_t res, zmod_poly_t poly1, zmo
    res->length = poly1->length + poly2->length - 1;
    res->p = poly1->p;
    res->p_inv = poly1->p_inv;
+#if PREINV32
+   res->p32_inv = poly1->p32_inv;
+#endif
    
    unsigned long length;
    
@@ -1475,6 +1515,12 @@ void zmod_poly_mul_KS_trunc(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p 
       
 void _zmod_poly_mul_KS_trunc(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p input2, unsigned long bits_input, unsigned long trunc)
 {   
+   if ((input1->length == 0) || (input2->length == 0) || (trunc == 0))
+   {
+      output->length = 0;
+      return;
+   }
+
    unsigned long length1 = FLINT_MIN(input1->length, trunc);
    unsigned long length2 = FLINT_MIN(input2->length, trunc);
    
@@ -1550,6 +1596,361 @@ void _zmod_poly_mul_KS_trunc(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p
     
 }
 
+void zmod_poly_mul_trunc_n_precomp(zmod_poly_t output, zmod_poly_p input1, zmod_poly_precomp_t pre, unsigned long trunc)
+{ 
+   if ((input1->length == 0) || (pre->length2 == 0) || (trunc == 0))
+   {
+      output->length = 0;
+      return;
+   }
+   
+   unsigned long length = input1->length + pre->length2 - 1;
+
+   zmod_poly_fit_length(output, FLINT_MIN(length, trunc));
+   _zmod_poly_mul_KS_trunc_precomp(output, input1, pre, 0, trunc);
+}
+
+/*
+   Prepare for caching of FFT for a truncated multiplicaton of input2, with the given number of 
+   bits per output coefficient (0 if this is to be computed automatically) where the output will
+   be truncated to the given length
+*/
+   
+void zmod_poly_mul_trunc_n_precomp_init(zmod_poly_precomp_t pre, zmod_poly_p input2, unsigned long bits_input, unsigned long trunc)
+{
+   unsigned long length2 = FLINT_MIN(input2->length, trunc);
+   while ((length2) && (input2->coeffs[length2-1] == 0)) length2--;
+
+   pre->length2 = length2;
+   if ((length2 == 0) || (trunc == 0))
+   {
+      F_mpn_mul_precomp_init(pre->precomp, NULL, 0, 0);
+      return;
+   }
+  
+   unsigned log_length = 0;
+   while ((1L<<log_length) < length2) log_length++;
+   unsigned long bits = 2*FLINT_BIT_COUNT(input2->p) + log_length;
+      
+   if (bits_input) 
+   {
+      bits = bits_input;
+   }
+
+   unsigned long limbs1 = FLINT_MAX((long)((trunc * bits-1) / FLINT_BITS + 1), 0L);
+   unsigned long limbs2 = FLINT_MAX((long)((length2 * bits-1) / FLINT_BITS + 1), 0L);
+   pre->limbs2 = limbs2;
+
+   mp_limb_t* mpn2 = (mp_limb_t*) flint_stack_alloc(limbs2);
+         
+   _zmod_poly_bit_pack_mpn(mpn2, input2, bits, length2);
+
+   F_mpn_mul_precomp_init(pre->precomp, mpn2, limbs2, limbs1);
+
+   flint_stack_release(); // release mpn2 
+}
+
+void zmod_poly_mul_precomp_init(zmod_poly_precomp_t pre, zmod_poly_t input2, unsigned long bits_input, unsigned long length1)
+{
+   unsigned long length2 = input2->length;
+   while ((length2) && (input2->coeffs[length2-1] == 0)) length2--;
+
+   pre->length2 = length2;
+   if (length2 == 0)
+   {
+      F_mpn_mul_precomp_init(pre->precomp, NULL, 0, 0);
+      return;
+   }
+  
+   unsigned log_length = 0;
+   while ((1L<<log_length) < length2) log_length++;
+   unsigned long bits = 2*FLINT_BIT_COUNT(input2->p) + log_length;
+      
+   if (bits_input) 
+   {
+      bits = bits_input;
+   }
+
+   unsigned long limbs1 = FLINT_MAX((long)((length1 * bits-1) / FLINT_BITS + 1), 0L);
+   unsigned long limbs2 = FLINT_MAX((long)((length2 * bits-1) / FLINT_BITS + 1), 0L);
+   pre->limbs2 = limbs2;
+
+   mp_limb_t* mpn2 = (mp_limb_t*) flint_stack_alloc(limbs2);
+         
+   _zmod_poly_bit_pack_mpn(mpn2, input2, bits, length2);
+
+   F_mpn_mul_precomp_init(pre->precomp, mpn2, limbs2, limbs1);
+
+   flint_stack_release(); // release mpn2 
+}
+
+void zmod_poly_precomp_clear(zmod_poly_precomp_t pre)
+{
+   F_mpn_mul_precomp_clear(pre->precomp);
+}
+
+void _zmod_poly_mul_KS_trunc_precomp(zmod_poly_t output, zmod_poly_t input1, zmod_poly_precomp_t pre, unsigned long bits_input, unsigned long trunc)
+{   
+   unsigned long length1 = FLINT_MIN(input1->length, trunc);
+   
+   while ((length1) && (input1->coeffs[length1-1] == 0)) length1--;
+   
+   unsigned long length2 = pre->length2;
+   
+   unsigned long length = length1 + length2 - 1;
+     
+   if (trunc > length) trunc = length;
+         
+   if ((length1 == 0) || (length2 == 0) || (trunc == 0))
+   {
+      output->length = 0;
+      return;
+   }
+   unsigned log_length = 0;
+   while ((1L<<log_length) < length2) log_length++;
+   unsigned long bits = 2*FLINT_BIT_COUNT(input1->p) + log_length;
+      
+   if (bits_input) 
+   {
+      bits = bits_input;
+   }
+   
+   mp_limb_t *mpn1, *res;
+
+   unsigned long limbs1, limbs2;
+   
+   limbs1 = FLINT_MAX((long)((length1 * bits-1) / FLINT_BITS + 1), 0L);
+   limbs2 = pre->limbs2;
+   
+   mpn1 = (mp_limb_t*) flint_stack_alloc(limbs1);
+         
+   _zmod_poly_bit_pack_mpn(mpn1, input1, bits, length1);
+         
+   res = (mp_limb_t*) flint_stack_alloc(limbs1+limbs2);
+   F_mpn_clear(res, limbs1+limbs2);
+   
+   unsigned long output_length = FLINT_MIN(trunc, length);
+   F_mpn_mul_precomp_trunc(res, mpn1, limbs1, pre->precomp, (output_length*bits-1)/FLINT_BITS+1);
+        
+   _zmod_poly_bit_unpack_mpn(output, res, output_length, bits); 
+   flint_stack_release(); //release res
+   flint_stack_release(); //release mpn1
+   
+   output->length = output_length;
+   
+   /* The modulus may not be prime, so normalisation may be necessary */
+   __zmod_poly_normalise(output);
+    
+}
+
+void _zmod_poly_mul_KS_precomp(zmod_poly_t output, zmod_poly_t input1, zmod_poly_precomp_t pre, unsigned long bits_input)
+{   
+   unsigned long length1 = input1->length;
+   
+   while ((length1) && (input1->coeffs[length1-1] == 0)) length1--;
+   
+   unsigned long length2 = pre->length2;
+   
+   unsigned long length = length1 + length2 - 1;
+     
+   if ((length1 == 0) || (length2 == 0))
+   {
+      output->length = 0;
+      return;
+   }
+   unsigned log_length = 0;
+   while ((1L<<log_length) < length2) log_length++;
+   unsigned long bits = 2*FLINT_BIT_COUNT(input1->p) + log_length;
+      
+   if (bits_input) 
+   {
+      bits = bits_input;
+   }
+   
+   mp_limb_t *mpn1, *res;
+
+   unsigned long limbs1, limbs2;
+   
+   limbs1 = FLINT_MAX((long)((length1 * bits-1) / FLINT_BITS + 1), 0L);
+   limbs2 = pre->limbs2;
+   
+   mpn1 = (mp_limb_t*) flint_stack_alloc(limbs1);
+         
+   _zmod_poly_bit_pack_mpn(mpn1, input1, bits, length1);
+         
+   res = (mp_limb_t*) flint_stack_alloc(limbs1+limbs2);
+   res[limbs1+limbs2-1] = 0L;
+   
+   F_mpn_mul_precomp(res, mpn1, limbs1, pre->precomp);
+        
+   zmod_poly_fit_length(output, length);
+   _zmod_poly_bit_unpack_mpn(output, res, length, bits); 
+   flint_stack_release(); //release res
+   flint_stack_release(); //release mpn1
+   
+   output->length = length;
+   /* The modulus may not be prime, so normalisation may be necessary */
+   __zmod_poly_normalise(output);
+    
+}
+
+void _zmod_poly_mul_KS_middle_precomp(zmod_poly_t output, zmod_poly_p input1, zmod_poly_precomp_t pre, unsigned long bits_input, unsigned long trunc)
+{   
+   unsigned long length1 = FLINT_MIN(input1->length, trunc);
+   
+   while ((length1) && (input1->coeffs[length1-1] == 0)) length1--;
+   
+   unsigned long length2 = pre->length2;
+   
+   unsigned long length = length1 + length2 - 1;
+     
+   if (trunc > length) trunc = length;
+         
+   unsigned log_length = 0;
+   while ((1L<<log_length) < length2) log_length++;
+   unsigned long bits = 2*FLINT_BIT_COUNT(input1->p) + log_length;
+      
+   if (bits_input) 
+   {
+      bits = bits_input;
+   }
+   
+   mp_limb_t *mpn1, *res;
+
+   unsigned long limbs1, limbs2;
+   
+   limbs1 = FLINT_MAX((long)((length1 * bits-1) / FLINT_BITS + 1), 0L);
+   limbs2 = pre->limbs2;
+   
+   mpn1 = (mp_limb_t*) flint_stack_alloc(limbs1);
+         
+   _zmod_poly_bit_pack_mpn(mpn1, input1, bits, length1);
+         
+   res = (mp_limb_t*) flint_stack_alloc(limbs1+limbs2);
+   res[limbs1+limbs2-1] = 0L;
+   
+   unsigned long output_length = FLINT_MIN(length1 + length2 - 1, trunc);
+   unsigned long start = (trunc-1)/2;
+   
+   __F_mpn_mul_middle_precomp(res, mpn1, limbs1, pre->precomp, (start*bits)/FLINT_BITS, (output_length*bits-1)/FLINT_BITS+1);
+        
+   _zmod_poly_bit_unpack_mpn(output, res, output_length, bits); 
+   flint_stack_release(); //release res
+   flint_stack_release(); //release mpn1
+   
+   output->length = output_length;
+   
+   /* The modulus may not be prime, so normalisation may be necessary */
+   __zmod_poly_normalise(output);
+    
+}
+
+void _zmod_poly_mul_KS_middle(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p input2, unsigned long bits_input, unsigned long trunc)
+{   
+   unsigned long length1 = FLINT_MIN(input1->length, trunc);
+   unsigned long length2 = FLINT_MIN(input2->length, trunc);
+   
+   while ((length1) && (input1->coeffs[length1-1] == 0)) length1--;
+   while ((length2) && (input2->coeffs[length2-1] == 0)) length2--;
+   
+   if ((length1 == 0) || (length2 == 0)) 
+   {
+      zmod_poly_zero(output);
+      return;
+   }
+      
+   unsigned long length = length1 + length2 - 1;
+     
+   if (trunc > length) trunc = length;
+   
+   if (length2 > length1) 
+   {
+      unsigned long temp = length1;
+      length1 = length2;
+      length2 = temp;
+      SWAP_ZMOD_POLY_PTRS(input1, input2);
+   }
+         
+   unsigned long bits1, bits2;
+   
+   bits1 = zmod_poly_bits(input1);
+   bits2 = zmod_poly_bits(input2);
+   
+   unsigned long length_short = length2;
+   unsigned log_length = 0;
+   while ((1L<<log_length) < length_short) log_length++;
+   unsigned long bits = bits1 + bits2 + log_length;
+      
+   if (bits_input) 
+   {
+      bits = bits_input;
+   }
+   
+   mp_limb_t *mpn1, *mpn2, *res;
+
+   unsigned long limbs1, limbs2;
+   
+   limbs1 = FLINT_MAX((long)((length1 * bits-1) / FLINT_BITS + 1), 0L);
+   limbs2 = FLINT_MAX((long)((length2 * bits-1) / FLINT_BITS + 1), 0L);
+      
+   mpn1 = (mp_limb_t*) flint_stack_alloc(limbs1);
+   mpn2 = (input1 == input2) ? mpn1 : (mp_limb_t*) flint_stack_alloc(limbs2);
+         
+   _zmod_poly_bit_pack_mpn(mpn1, input1, bits, length1);
+   
+   _zmod_poly_bit_pack_mpn(mpn2, input2, bits, length2);
+         
+   res = (mp_limb_t*) flint_stack_alloc(limbs1+limbs2);
+   res[limbs1+limbs2-1] = 0L;
+   
+   unsigned long output_length = FLINT_MIN(length1 + length2 - 1, trunc);
+   unsigned long start = (trunc-1)/2;
+   
+   __F_mpn_mul_middle(res, mpn1, limbs1, mpn2, limbs2, (start*bits)/FLINT_BITS, (output_length*bits-1)/FLINT_BITS+1);
+         
+   _zmod_poly_bit_unpack_mpn(output, res, output_length, bits); 
+   flint_stack_release(); //release res
+   flint_stack_release(); //release mpn1 and mpn2
+   flint_stack_release();
+  
+   for (unsigned long i = 0; i < start; i++)
+      output->coeffs[i] = 0L;
+   output->length = output_length;
+   
+   /* The modulus may not be prime, so normalisation may be necessary */
+   __zmod_poly_normalise(output);
+    
+}
+
+void zmod_poly_mul_KS_middle(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p input2, unsigned long bits_input, unsigned long trunc)
+{ 
+   unsigned long length1 = input1->length;
+   unsigned long length2 = input2->length;
+   
+   if ((length1 == 0) || (length2 == 0) || (trunc == 0)) 
+   {
+      zmod_poly_zero(output);
+      return;
+   }
+   
+   unsigned long length = length1 + length2 - 1;
+   
+   if (output == input1 || output == input2)
+   {
+      // output is inplace, so need a temporary
+      zmod_poly_t temp;
+      zmod_poly_init2(temp, input1->p, FLINT_MIN(length, trunc));
+      _zmod_poly_mul_KS_middle(temp, input1, input2, bits_input, trunc);
+      zmod_poly_swap(temp, output);
+      zmod_poly_clear(temp);
+   }
+   else
+   {
+      // output not inplace
+      zmod_poly_fit_length(output, FLINT_MIN(length, trunc));
+      _zmod_poly_mul_KS_middle(output, input1, input2, bits_input, trunc);
+   }
+} 
 
 /*******************************************************************************
 
@@ -1810,6 +2211,85 @@ void _zmod_poly_bit_unpack_mpn(zmod_poly_t res, mp_limb_t * mpn, unsigned long l
    
    //PRINT_VAR(bits);
    
+#if FLINT_BITS == 64 && PREINV32
+   if (bits < 32)
+   {
+      unsigned long current_limb = 0;
+      unsigned long current_bit = 0;
+
+      unsigned long boundary_limit_bit = FLINT_BITS - bits;
+
+      unsigned long temp_lower;
+      unsigned long temp_upper;
+      
+      unsigned long norm;
+      count_lead_zeros(norm, res->p);
+      norm -= 32;
+      
+      unsigned long mask;
+      mask = 1L;
+      i = bits - 1;
+      while(i)
+      {
+         mask <<= 1;
+         mask |= 1L;
+         i--;
+      }
+      
+      for (i = 0; i < length; i++)
+      {
+          if (current_bit > boundary_limit_bit)
+          {
+             // the coeff will be across a limb boundary...
+             //printf("coeff won't only be in current limb...\n");
+
+             // temp lower contains the part in the current limb
+             temp_lower = mpn[current_limb];
+             //print_limb("mpn[current_limb]       ", temp_lower);
+
+             // need (bits - (FLINT_BITS - current_bit)) bits 
+             // from the LSB side of this limb to complete the coeff...
+             current_limb++;
+             //print_limb("mpn[current_limb+1]     ", mpn[current_limb]);
+             // so shift them up, OR with the lower part and apply the mask
+             temp_upper = mpn[current_limb] << (FLINT_BITS - current_bit);
+             //print_limb("temp_upper              ", temp_upper);
+             temp_upper |= temp_lower;
+             //print_limb("temp_upper |= temp_lower", temp_upper);
+             temp_upper &= mask;
+             //print_limb("temp_upper &= mask      ", temp_upper);
+             _zmod_poly_set_coeff_ui(res, i, z_mod32_precomp(temp_upper<<norm, res->p<<norm, res->p32_inv)>>norm);
+             
+             current_bit = bits + current_bit - FLINT_BITS;
+             mpn[current_limb] = mpn[current_limb] >> current_bit;
+             //print_limb("mpn[current_limb+1]     ", mpn[current_limb]);
+          }
+          else
+          {
+             // the coeff will fit in the current limb...
+             //printf("coeff will be in current limb...\n");
+             //print_limb("mpn[current_limb]       ", mpn[current_limb]);
+             temp_lower = mpn[current_limb] & mask;
+             //print_limb("temp_lower              ", temp_lower);
+             // less than a limb in size, so must be smaller than an unsigned long...
+
+             //zmod_poly_set_coeff_ui(res, i, temp_lower);
+             _zmod_poly_set_coeff_ui(res, i, z_mod32_precomp(temp_lower<<norm, res->p<<norm, res->p32_inv)>>norm);
+                
+             mpn[current_limb] = mpn[current_limb] >> bits;
+             //print_limb("mpn[current_limb]       ", mpn[current_limb]);
+             current_bit += bits;
+          }
+
+          if(current_bit == FLINT_BITS)
+          {
+             current_bit = 0;
+             current_limb++;
+          }
+      }
+   }
+   else 
+#endif
    if (bits < FLINT_BITS)
    {
       unsigned long current_limb = 0;
@@ -3084,6 +3564,8 @@ void zmod_poly_newton_invert_basecase(zmod_poly_t Q_inv, zmod_poly_t Q, unsigned
    with invertible constant term with respect to the modulus
 */
 
+#define FLINT_ZMOD_NEWTON_INVERSE_CACHE_CUTOFF 2000
+
 void zmod_poly_newton_invert(zmod_poly_t Q_inv, zmod_poly_t Q, unsigned long n)
 {
    if (n < FLINT_ZMOD_NEWTON_INVERSE_BASECASE_CUTOFF)
@@ -3106,9 +3588,40 @@ void zmod_poly_newton_invert(zmod_poly_t Q_inv, zmod_poly_t Q, unsigned long n)
    zmod_poly_init(prod, p);
    zmod_poly_init(prod2, p);
    zmod_poly_newton_invert(g0, Q, m);
-   zmod_poly_mul_trunc_n(prod, Q, g0, n);
-   prod->coeffs[0] = z_submod(prod->coeffs[0], 1L, p);
-   zmod_poly_mul_trunc_n(prod2, prod, g0, n);
+   if (n < FLINT_ZMOD_NEWTON_INVERSE_CACHE_CUTOFF)
+   {
+      zmod_poly_mul_trunc_n(prod, Q, g0, n);
+      prod->coeffs[0] = z_submod(prod->coeffs[0], 1L, p);
+      //zmod_poly_mul_trunc_n(prod2, prod, g0, n);
+      zmod_poly_t prod_s;
+      zmod_poly_attach_shift(prod_s, prod, (n+1)/2);
+      
+      zmod_poly_t prod2_s;
+      zmod_poly_fit_length(prod2, n);
+      zmod_poly_attach_shift(prod2_s, prod2, (n+1)/2);
+      _zmod_poly_mul_KS_trunc(prod2_s, prod_s, g0, 0, n - (n+1)/2);
+      
+      prod2->length = (n+1)/2 + prod2_s->length;
+      for (unsigned long i = 0; i < (n+1)/2; i++)
+         prod2->coeffs[i] = 0L;
+   } else
+   {
+      zmod_poly_precomp_t pre;
+      zmod_poly_mul_trunc_n_precomp_init(pre, g0, 0, (n+1)/2);
+      zmod_poly_fit_length(prod, n);
+      _zmod_poly_mul_KS_middle_precomp(prod, Q, pre, 0, n);
+      zmod_poly_t prod_s;
+      zmod_poly_attach_shift(prod_s, prod, (n+1)/2);
+      
+      zmod_poly_t prod2_s;
+      zmod_poly_fit_length(prod2, n);
+      zmod_poly_attach_shift(prod2_s, prod2, (n+1)/2);
+      _zmod_poly_mul_KS_trunc_precomp(prod2_s, prod_s, pre, 0, n - (n+1)/2);
+      zmod_poly_precomp_clear(pre);
+      prod2->length = (n+1)/2 + prod2_s->length;
+      for (unsigned long i = 0; i < (n+1)/2; i++)
+         prod2->coeffs[i] = 0L;
+   }
    zmod_poly_sub(Q_inv, g0, prod2);
    
    zmod_poly_clear(prod2);
