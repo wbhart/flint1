@@ -62,14 +62,26 @@ typedef mp_limb_t block; // A block is a set of MPIR_BLOCK integers contiguously
 typedef struct
 {
    block * block_ptr;
-   long n;
-   ulong pad; 
+   ulong n;
+   ulong count; 
+   block * pad1;
+   block * pad2;
+   block * pad3;
+   block * pad4;
+   block * pad5;
+   block * pad6;
 } table_entry;
 #else // For LP64 and ILP32 machines
 typedef struct
 {
    block * block_ptr;
-   long n;
+   ulong n;
+   ulong count; 
+   ulong pad1; 
+   ulong pad2; 
+   ulong pad3; 
+   ulong pad4; 
+   ulong pad5; 
 } table_entry;
 #endif
 
@@ -81,15 +93,15 @@ typedef struct
 
 void fmpz_block_init(table_entry * entry);
 
-void fmpz_block_init2(table_entry * entry, long n);
+void fmpz_block_init2(table_entry * entry, ulong n);
 
-void fmpz_block_init_single(table_entry * entry);
+void fmpz_block_init_small(table_entry * entry, ulong m);
 
-void fmpz_block_init2_single(table_entry * entry, long n);
+void fmpz_block_init2_small(table_entry * entry, ulong m, ulong n);
 
-void fmpz_block_realloc(table_entry * entry, long n);
+void fmpz_block_realloc(table_entry * entry, ulong n);
 
-void fmpz_block_fit_limbs(table_entry * entry, long n);
+int fmpz_block_fit_limbs(table_entry * entry, ulong n);
 
 fmpz_t * fmpz_realloc_array(fmpz_t * arr, ulong old_count, ulong count);
 
@@ -111,7 +123,7 @@ void fmpz_clear_array(fmpz_t * f, ulong count);
 
 void fmpz_realloc(fmpz_t* f, ulong n);
 
-void fmpz_fit_limbs(fmpz_t* f, ulong n);
+int fmpz_fit_limbs(fmpz_t* f, ulong n);
 
 /* ==============================================================================
 
@@ -129,7 +141,8 @@ mp_limb_t * fmpz_data(fmpz_t * int_in)
 static inline
 ulong fmpz_size(fmpz_t * in)
 {
-   return MPIR_ABS(fmpz_data(in)[0]);
+   if (ENTRY_PTR(in)->n) return MPIR_ABS(fmpz_data(in)[0]);
+   else return 0;
 }
 
 /* ==============================================================================

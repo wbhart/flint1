@@ -492,13 +492,15 @@ void mpir_free(void* block)
 
 void* mpir_aligned_alloc(ulong bytes)
 {
-   void* block = malloc(sizeof(char *) + sizeof(ulong) + MPIR_ALIGN + bytes - 1);
+   void* block = malloc(sizeof(void *) + sizeof(ulong) + MPIR_ALIGN + bytes - 1);
    void ** ptr = (void **) block;
-   ptr++;
-   char* ptr2 = (char *) ptr;
-   ptr2 += ((MPIR_ALIGN - ((ulong)ptr2 & (MPIR_ALIGN - 1UL))) & (MPIR_ALIGN - 1UL));
+   ptr++; 
+   ulong * ptr_u = (ulong *) ptr;
+   ptr_u++;
+   char* ptr2 = (char *) ptr_u;
+   ptr2 += ((MPIR_ALIGN - ((ulong)ptr2 & (MPIR_ALIGN - 1UL))) & (MPIR_ALIGN - 1UL)); 
    ptr = (void **) ptr2;
-   ptr--;
+   ptr--; 
    ptr[0] = block;
    ulong * ptr3 = (ulong *) ptr;
    ptr3--;

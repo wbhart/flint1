@@ -70,8 +70,8 @@
 #define MPIR_LG_BITS 6
 #define MPIR_BYTES 8
 #define MPIR_LG_BYTES 3
-#define MPIR_ALIGN 16
-#define MPIR_LG_ALIGN 4
+#define MPIR_ALIGN 64
+#define MPIR_LG_ALIGN 6
 
 #else
 // only 32 and 64 bits are supported

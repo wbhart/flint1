@@ -86,28 +86,30 @@ int test_fmpz_block_init_realloc_clear()
    for (ulong i = 0; (i < 10000) && (result == 1); i++)
    {
        ulong n = randint(100)+1;
-       fmpz_block_init2_single(entry, n);
-       mpn_random2(entry->block_ptr, n+1);
-       mp_limb_t * temp = (mp_limb_t *) mpir_alloc((n+1)*sizeof(mp_limb_t));
-       F_mpn_copy(temp, entry->block_ptr, n+1);
+       ulong m = randint(MPIR_BLOCK)+1;
+       fmpz_block_init2_small(entry, m, n);
+       mpn_random2(entry->block_ptr, m*(n+1));
+       mp_limb_t * temp = (mp_limb_t *) mpir_alloc(m*(n+1)*sizeof(mp_limb_t));
+       F_mpn_copy(temp, entry->block_ptr, m*(n+1));
        fmpz_block_realloc(entry, n+randint(100)+1);
        fmpz_block_realloc(entry, n);
-       result = (mpn_cmp(entry->block_ptr, temp, n+1) == 0);
+       result = (mpn_cmp(entry->block_ptr, temp, m*(n+1)) == 0);
        fmpz_block_clear(entry);
        mpir_free(temp);
    }
-
+   
    for (ulong i = 0; (i < 10000) && (result == 1); i++)
    {
        ulong n = randint(100)+1;
-       fmpz_block_init_single(entry);
+       ulong m = randint(MPIR_BLOCK)+1;
+       fmpz_block_init_small(entry, m);
        fmpz_block_realloc(entry, n);
-       mpn_random2(entry->block_ptr, n+1);
-       mp_limb_t * temp = (mp_limb_t *) mpir_alloc((n+1)*sizeof(mp_limb_t));
-       F_mpn_copy(temp, entry->block_ptr, n+1);
+       mpn_random2(entry->block_ptr, m*(n+1));
+       mp_limb_t * temp = (mp_limb_t *) mpir_alloc(m*(n+1)*sizeof(mp_limb_t));
+       F_mpn_copy(temp, entry->block_ptr, m*(n+1));
        fmpz_block_realloc(entry, n+randint(100)+1);
        fmpz_block_realloc(entry, n);
-       result = (mpn_cmp(entry->block_ptr, temp, n+1) == 0);
+       result = (mpn_cmp(entry->block_ptr, temp, m*(n+1)) == 0);
        fmpz_block_clear(entry);
        mpir_free(temp);
    }
