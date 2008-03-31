@@ -258,9 +258,24 @@ void fmpz_add(fmpz_t * out, fmpz_t * f1, fmpz_t * f2);
 
 void fmpz_sub(fmpz_t * out, fmpz_t * f1, fmpz_t * f2);
 
+/* ==============================================================================
+
+   Addmul/submul
+
+===============================================================================*/
+
 void fmpz_addmul_ui (fmpz_t * w, fmpz_t * x, ulong y);
 
 void fmpz_submul_ui(fmpz_t * w, fmpz_t * x, ulong y);
+
+/* ==============================================================================
+
+   Multiplication
+
+===============================================================================*/
+
+void fmpz_mul_2exp(fmpz_t * w, fmpz_t * u, ulong exp);
+
 
 #ifdef __cplusplus
  }

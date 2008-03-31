@@ -577,6 +577,12 @@ void fmpz_sub(fmpz_t * out, fmpz_t * f1, fmpz_t * f2)
    }
 }
 
+/* ==============================================================================
+
+   Addmul/submul
+
+===============================================================================*/
+
 /*
    w = w + x*y
 */
@@ -840,5 +846,62 @@ void fmpz_submul_ui(fmpz_t * w, fmpz_t * x, ulong y)
     wp[0] = ((long) wss >= 0L ? new_wn : -new_wn);
     NORM(wp);
 }
+
+/* ==============================================================================
+
+   Multiplication
+
+===============================================================================*/
+
+/*
+   w = u*2^exp for 0 <= exp
+*/
+
+void fmpz_mul_2exp(fmpz_t * w, fmpz_t * u, ulong exp)
+{
+   mp_limb_t * up = fmpz_data(u);
+   long uss = up[0];
+   ulong un = MPIR_ABS(uss);
+   ulong wn;
+   ulong limb_cnt;
+   mp_limb_t * wp;
+   mp_limb_t wlimb;
+
+   if (uss == 0L)
+   {
+      fmpz_fit_limbs(w, 1L);
+      fmpz_data(w)[0] = 0L;
+      return;
+   }
+
+   limb_cnt = (exp>>MPIR_LG_BITS);
+   exp &= (MPIR_BITS-1);
+  
+   int re = fmpz_fit_limbs(w, un + limb_cnt + (exp != 0L));
+   if (re) up = fmpz_data(u);
+   
+   wp = fmpz_data(w);
+   wn = un + limb_cnt;
+
+   if (exp)
+   {
+      wlimb = mpn_lshift(wp + limb_cnt + 1, up + 1, un, exp);
+      if (wlimb)
+	  {
+	     wp[wn + 1] = wlimb;
+	     wn++;
+      }
+   } else
+   {
+      F_mpn_copy(wp + limb_cnt + 1, up + 1, un);
+   }
+
+   /* Zero all whole limbs at low end.  Do it here and not before calling
+      mpn_lshift, so as not to lose data when U == W.  */
+   F_mpn_clear(wp + 1, limb_cnt);
+
+   wp[0] = (uss >= 0L ? wn : -wn);
+}
+
 
 // *************** end of file
