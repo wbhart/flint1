@@ -45,8 +45,6 @@
 
 #define OFFSET(xxx) ((ulong) xxx & ((1L<<MPIR_LG_BLOCK)-1L))
 
-#define FMPZ_DATA(xxx) ENTRY_PTR(xxx)->n
-
 /*
    Returns a pointer to the actual data in the given fmpz_t
    The first limb is a sign/size limb, the remainder is the 
@@ -101,7 +99,21 @@ void fmpz_block_init2_small(table_entry * entry, ulong m, ulong n);
 
 void fmpz_block_realloc(table_entry * entry, ulong n);
 
-int fmpz_block_fit_limbs(table_entry * entry, ulong n);
+/*
+   If n is greater than the current value of n for the block, reallocate
+   the block so that the integers in the block have n limbs plus a 
+   sign/size limb
+*/
+
+static inline 
+int fmpz_block_fit_limbs(table_entry * entry, ulong n)
+{
+   if (n > entry->n) 
+   {
+      fmpz_block_realloc(entry, n);
+      return 1;
+   } else return 0;
+}
 
 fmpz_t * fmpz_realloc_array(fmpz_t * arr, ulong old_count, ulong count);
 
@@ -121,9 +133,29 @@ void fmpz_clear(fmpz_t * f);
 
 void fmpz_clear_array(fmpz_t * f, ulong count);
 
-void fmpz_realloc(fmpz_t* f, ulong n);
+/* 
+   Make the integer f (and all others in the same block) have space
+   for n limbs
+*/
 
-int fmpz_fit_limbs(fmpz_t* f, ulong n);
+static inline
+void fmpz_realloc(fmpz_t* f, ulong n)
+{
+   fmpz_block_realloc(ENTRY_PTR(f), n);
+}
+
+/* 
+   Make the integer f (and all others in the same block) have space 
+   for at least n limbs
+   Integers will not be shrunk if the new n is smaller than the current 
+   value of n for the block
+*/
+
+static inline
+int fmpz_fit_limbs(fmpz_t* f, ulong n)
+{
+   return fmpz_block_fit_limbs(ENTRY_PTR(f), n);
+}
 
 /* ==============================================================================
 
@@ -198,6 +230,14 @@ unsigned long fmpz_get_ui(fmpz_t * res)
 
 /* ==============================================================================
 
+   Negation
+
+===============================================================================*/
+
+void fmpz_neg(fmpz_t * out, fmpz_t * f);
+
+/* ==============================================================================
+
    Comparison
 
 ===============================================================================*/
@@ -218,6 +258,9 @@ void fmpz_add(fmpz_t * out, fmpz_t * f1, fmpz_t * f2);
 
 void fmpz_sub(fmpz_t * out, fmpz_t * f1, fmpz_t * f2);
 
+void fmpz_addmul_ui (fmpz_t * w, fmpz_t * x, ulong y);
+
+void fmpz_submul_ui(fmpz_t * w, fmpz_t * x, ulong y);
 
 #ifdef __cplusplus
  }

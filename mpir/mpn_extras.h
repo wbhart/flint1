@@ -40,7 +40,15 @@ Input is count limbs stored at src. Output is stored at dest.
 src and dest can be the same buffer. If they're not, they should be disjoint.
 */
 
-static inline void F_mpn_negate(mp_limb_t* dest, mp_limb_t* src, unsigned long count)
+static inline 
+void F_mpn_com(mp_limb_t* dest, mp_limb_t* src, ulong count)
+{
+   for (long i = count - 1; i >= 0; i--)
+      dest[i] = ~src[i];
+}
+
+static inline 
+void F_mpn_negate(mp_limb_t* dest, mp_limb_t* src, ulong count)
 {
    for (long i = count - 1; i >= 0; i--)
       dest[i] = ~src[i];
@@ -55,7 +63,8 @@ Input is count limbs stored at src. Output is stored at dest.
 src and dest can be the same buffer. If they're not, they should be disjoint.
 
  */
-static inline void F_mpn_copy(mp_limb_t* dest, const mp_limb_t* src, unsigned long count)
+static inline 
+void F_mpn_copy(mp_limb_t* dest, const mp_limb_t* src, ulong count)
 {
    for (long i = count - 1; i >= 0; i--)
    {
@@ -63,7 +72,8 @@ static inline void F_mpn_copy(mp_limb_t* dest, const mp_limb_t* src, unsigned lo
    }
 }
 
-static inline void F_mpn_copy_forward(mp_limb_t* dest, const mp_limb_t* src, unsigned long count)
+static inline 
+void F_mpn_copy_forward(mp_limb_t* dest, const mp_limb_t* src, ulong count)
 {
    for (long i = 0; i < count; i++)
    {
@@ -71,11 +81,12 @@ static inline void F_mpn_copy_forward(mp_limb_t* dest, const mp_limb_t* src, uns
    }
 }
 
-
 /*
-Sets a bunch of limbs to zero.
- */
-static inline void F_mpn_clear(mp_limb_t* dest, unsigned long count)
+   Sets a bunch of limbs to zero.
+*/
+
+static inline 
+void F_mpn_clear(mp_limb_t* dest, ulong count)
 {
    for (long i = count - 1; i >= 0; i--)
       dest[i] = 0;
@@ -84,7 +95,8 @@ static inline void F_mpn_clear(mp_limb_t* dest, unsigned long count)
 /*
 Sets a bunch of limbs to 0xfff....
  */
-static inline void F_mpn_set(mp_limb_t* dest, unsigned long count)
+static inline 
+void F_mpn_set(mp_limb_t* dest, ulong count)
 {
    for (long i = count - 1; i >= 0; i--)
       dest[i] = (mp_limb_t)(-1L);

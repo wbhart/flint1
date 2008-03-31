@@ -36,9 +36,16 @@
 #include "longlong.h"
 #include "mpn_extras.h"
 
-#define SWAP_PTRS(xxx, yyy) \
+#define SWAP_FMPZ_PTRS(xxx, yyy) \
 do { \
    fmpz_t * temp_ptr_zzz = yyy; \
+   yyy = xxx; \
+   xxx = temp_ptr_zzz; \
+} while (0);
+
+#define SWAP_LIMB_PTRS(xxx, yyy) \
+do { \
+   mp_limb_t * temp_ptr_zzz = yyy; \
    yyy = xxx; \
    xxx = temp_ptr_zzz; \
 } while (0);
@@ -176,21 +183,6 @@ void fmpz_block_realloc(table_entry * entry, ulong n)
 }
 
 /*
-   If n is greater than the current value of n for the block, reallocate
-   the block so that the integers in the block have n limbs plus a 
-   sign/size limb
-*/
-
-int fmpz_block_fit_limbs(table_entry * entry, ulong n)
-{
-   if (n > entry->n) 
-   {
-      fmpz_block_realloc(entry, n);
-      return 1;
-   } else return 0;
-}
-
-/*
    Clear a block (whether small or not) of integers
 */
 
@@ -262,16 +254,6 @@ void fmpz_clear_array(fmpz_t * f, ulong count)
    mpir_aligned_free((void*) f);
 }
 
-/* 
-   Make the integer f (and all others in the same block) have space
-   for n limbs
-*/
-
-void fmpz_realloc(fmpz_t* f, ulong n)
-{
-   fmpz_block_realloc(ENTRY_PTR(f), n);
-}
-
 /*
    Realloc an array of fmpz_t's from length old_count to count
 */
@@ -316,18 +298,6 @@ fmpz_t * fmpz_realloc_array(fmpz_t * arr, ulong old_count, ulong count)
    }
 
    return arr;
-}
-
-/* 
-   Make the integer f (and all others in the same block) have space 
-   for at least n limbs
-   Integers will not be shrunk if the new n is smaller than the current 
-   value of n for the block
-*/
-
-int fmpz_fit_limbs(fmpz_t* f, ulong n)
-{
-   return fmpz_block_fit_limbs(ENTRY_PTR(f), n);
 }
 
 /* ==============================================================================
@@ -378,15 +348,40 @@ void fmpz_to_mpz(mpz_t res, fmpz_t * x)
 
 void fmpz_set(fmpz_t * out, fmpz_t * f)
 {
-   unsigned long d1n;
-
    if (out != f)
    {
-      ulong dn = MPIR_ABS(fmpz_data(f)[0]);
-      fmpz_fit_limbs(out, MPIR_MAX(dn, 1L));
-      mp_limb_t * rp = fmpz_data(out);
+      unsigned long d1n;
       mp_limb_t * dp = fmpz_data(f);
+      ulong dn = MPIR_ABS(dp[0]);
+      int re = fmpz_fit_limbs(out, MPIR_MAX(dn, 1L));
+      mp_limb_t * rp = fmpz_data(out);
+      if (re) dp = fmpz_data(f);
       F_mpn_copy(rp, dp, dn + 1); 
+   }
+}
+
+/* ==============================================================================
+
+   Negation
+
+===============================================================================*/
+
+void fmpz_neg(fmpz_t * out, fmpz_t * f)
+{
+   if (out != f)
+   {
+      unsigned long d1n;
+      mp_limb_t * dp = fmpz_data(f);
+      ulong dn = MPIR_ABS(dp[0]);
+      int re = fmpz_fit_limbs(out, MPIR_MAX(dn, 1L));
+      mp_limb_t * rp = fmpz_data(out);
+      if (re) dp = fmpz_data(f);
+      F_mpn_copy(rp + 1, dp + 1, dn); 
+      rp[0] = -dp[0];
+   } else
+   { 
+      mp_limb_t * rp = fmpz_data(out);
+      rp[0] = -rp[0];
    }
 }
 
@@ -406,11 +401,108 @@ void fmpz_add(fmpz_t * out, fmpz_t * f1, fmpz_t * f2)
    
    if (d1n < d2n) 
    {
-      SWAP_PTRS(f1, f2);
+      SWAP_FMPZ_PTRS(f1, f2);
       SWAP_SIZES(d1n, d2n);
-      mp_limb_t * temp = d1p;
-      d1p = d2p;
-      d2p = temp;
+      SWAP_LIMB_PTRS(d1p, d2p);
+   } 
+
+   int d11 = 0;
+   int re;
+   if ((OFFSET(out) == 0) & (d1n))
+   {
+      if (MPIR_BIT_COUNT(d1p[d1n]) == MPIR_BITS) 
+      {
+         re = fmpz_fit_limbs(out, d1n+1);
+         d11 = 1;
+      } else re = fmpz_fit_limbs(out, d1n);
+   } else re = fmpz_fit_limbs(out, MPIR_MAX(d1n, 1L));
+
+   mp_limb_t * rp = fmpz_data(out);
+   if (re)
+   {
+      d1p = fmpz_data(f1);
+      d2p = fmpz_data(f2); 
+   }
+
+   if (!d2n)
+   {
+      if (!d1n) rp[0] = 0L;
+      else
+      {
+         if (rp != d1p) F_mpn_copy(rp, d1p, d1n+1);
+      }
+   } else if ((long) (d1p[0] ^ d2p[0]) >= 0L)
+   {
+      rp[0] = d1p[0];
+      if (d1n == 1)
+      {
+         add_ssaaaa(cy, rp[1], 0L, d1p[1], 0L, d2p[1]);
+      } else 
+         cy = mpn_add(rp+1, d1p+1, d1n, d2p+1, d2n);
+      if (cy) 
+      {
+         if (!d11)
+         {
+            re = fmpz_fit_limbs(out, d1n + 1);
+            if (re) rp = fmpz_data(out);
+         }
+         rp[d1n+1] = cy;
+         if ((long) rp[0] < 0L) rp[0]--;
+         else rp[0]++;
+      }
+   } else
+   {
+      cy = 0;
+      if (d1n == 1)
+      {
+         mp_limb_t diff = d1p[1] - d2p[1];
+         if (d1p[1] > d2p[1]) 
+         {
+            rp[1] = d1p[1] - d2p[1];
+            rp[0] = d1p[0];
+         } else if (d1p[1] < d2p[1])
+         {
+            rp[1] = d2p[1] - d1p[1];
+            rp[0] = -d1p[0];
+         } else rp[0] = 0L;
+      } else
+      {
+         if (d1n != d2n) cy = 1;
+         else cy = mpn_cmp(d1p+1, d2p+1, d1n); 
+          
+         if (cy == 0) rp[0] = 0L;
+         else if (cy > 0) 
+         {
+            mpn_sub(rp+1, d1p+1, d1n, d2p+1, d2n);
+            rp[0] = d1p[0];
+            NORM(rp);
+         }
+         else
+         {
+            mpn_sub_n(rp+1, d2p+1, d1p+1, d1n);
+            rp[0] = -d1p[0];
+            NORM(rp);
+         }
+      }
+   }
+}
+
+void fmpz_sub(fmpz_t * out, fmpz_t * f1, fmpz_t * f2)
+{
+   long cy;
+   mp_limb_t * d1p = fmpz_data(f1);
+   mp_limb_t * d2p = fmpz_data(f2);
+   unsigned long d1n = MPIR_ABS(d1p[0]);
+   unsigned long d2n = MPIR_ABS(d2p[0]);
+   
+   int in_order = 1;
+
+   if (d1n < d2n) 
+   {
+      SWAP_FMPZ_PTRS(f1, f2);
+      SWAP_SIZES(d1n, d2n);
+      SWAP_LIMB_PTRS(d1p, d2p);
+      in_order = 0;
    } 
 
    int d11 = 0;
@@ -431,75 +523,6 @@ void fmpz_add(fmpz_t * out, fmpz_t * f1, fmpz_t * f2)
       d1p = fmpz_data(f1);
       d2p = fmpz_data(f2); 
    }
-
-   if (!d2n)
-   {
-      if (!d1n) rp[0] = 0L;
-      else
-      {
-         if (rp != d1p) F_mpn_copy(rp, d1p, d1n+1);
-      }
-   } else if ((long) (d1p[0] ^ d2p[0]) >= 0L)
-   {
-      rp[0] = d1p[0];
-      if (d2n == 1)
-      {
-         cy = mpn_add_1(rp+1, d1p+1, d1n, d2p[1]);
-      } else 
-      cy = mpn_add(rp+1, d1p+1, d1n, d2p+1, d2n);
-      if (cy) 
-      {
-         if (!d11)
-         {
-            re = fmpz_fit_limbs(out, d1n + 1);
-            if (re) rp = fmpz_data(out);
-         }
-         rp[d1n+1] = cy;
-         if ((long) rp[0] < 0L) rp[0]--;
-         else rp[0]++;
-      }
-   } else
-   {
-      cy = 0;
-      if (d1n != d2n) cy = 1;
-      else cy = mpn_cmp(d1p+1, d2p+1, d1n); 
-          
-      if (cy == 0) rp[0] = 0L;
-      else if (cy > 0) 
-      {
-         if (d2n == 1) mpn_sub_1(rp+1, d1p+1, d1n, d2p[1]);
-         else mpn_sub(rp+1, d1p+1, d1n, d2p+1, d2n);
-         rp[0] = d1p[0];
-         NORM(rp);
-      }
-      else
-      {
-         if (d2n == 1) rp[1] = d2p[1] - d1p[1];
-         else mpn_sub_n(rp+1, d2p+1, d1p+1, d1n);
-         rp[0] = -d1p[0];
-         NORM(rp);
-      }
-   }
-}
-
-void fmpz_sub(fmpz_t * out, fmpz_t * f1, fmpz_t * f2)
-{
-   long cy;
-   unsigned long d1n = MPIR_ABS(fmpz_data(f1)[0]);
-   unsigned long d2n = MPIR_ABS(fmpz_data(f2)[0]);
-   
-   int in_order = 1;
-   if (d1n < d2n) 
-   {
-      SWAP_PTRS(f1, f2);
-      SWAP_SIZES(d1n, d2n);
-      in_order = 0;
-   } 
-
-   fmpz_fit_limbs(out, MPIR_MAX(d1n, 1L));
-   mp_limb_t * rp = fmpz_data(out);
-   mp_limb_t * d1p = fmpz_data(f1);
-   mp_limb_t * d2p = fmpz_data(f2); 
    
    if (!d2n)
    {
@@ -513,11 +536,17 @@ void fmpz_sub(fmpz_t * out, fmpz_t * f1, fmpz_t * f2)
    {
       if (in_order) rp[0] = d1p[0];
       else rp[0] = -d1p[0];
-      cy = mpn_add(rp+1, d1p+1, d1n, d2p+1, d2n);
+      if (d2n == 1)
+      {
+         cy = mpn_add_1(rp+1, d1p+1, d1n, d2p[1]);
+      } else cy = mpn_add(rp+1, d1p+1, d1n, d2p+1, d2n);
       if (cy) 
       {
-         fmpz_fit_limbs(out, d1n+1);
-         rp = fmpz_data(out);
+         if (!d11)
+         {
+            re = fmpz_fit_limbs(out, d1n+1);
+            if (re) rp = fmpz_data(out);
+         }
          rp[d1n+1] = cy;
          if ((long) rp[0] < 0) rp[0]--;
          else rp[0]++;
@@ -531,19 +560,285 @@ void fmpz_sub(fmpz_t * out, fmpz_t * f1, fmpz_t * f2)
       if (cy == 0) rp[0] = 0L;
       else if (cy > 0) 
       {
-         mpn_sub(rp+1, d1p+1, d1n, d2p+1, d2n);
+         if (d2n == 1) mpn_sub_1(rp+1, d1p+1, d1n, d2p[1]);
+         else mpn_sub(rp+1, d1p+1, d1n, d2p+1, d2n);
          if (in_order) rp[0] = d1p[0];
          else rp[0] = -d1p[0];
          NORM(rp);
       }
       else
       {
-         mpn_sub_n(rp+1, d2p+1, d1p+1, d1n);
+         if (d1n == 1) rp[1] = d2p[1] - d1p[1];
+         else mpn_sub_n(rp+1, d2p+1, d1p+1, d1n);
          if (in_order) rp[0] = -d1p[0];
          else rp[0] = d1p[0];
          NORM(rp);
       }
    }
+}
+
+/*
+   w = w + x*y
+*/
+
+void fmpz_addmul_ui(fmpz_t * w, fmpz_t * x, ulong y)
+{
+   ulong  xn, wn, wss, new_wn, min_n, dn;
+   mp_limb_t * xp = fmpz_data(x);
+   mp_limb_t * wp = fmpz_data(w);
+   mp_limb_t cy;
+   int re;
+
+   xn = xp[0];
+   if (xn == 0 || y == 0)
+     return;
+
+   mp_limb_t sub = xn;
+   xn = MPIR_ABS(xn);
+
+   wss = wp[0];
+   if (wss == 0L)
+   {
+      re = fmpz_fit_limbs(w, xn+1);
+      if (re) 
+      {
+         wp = fmpz_data(w);
+         xp = fmpz_data(x);
+      }
+      cy = mpn_mul_1(wp+1, xp+1, xn, y);
+      wp[xn+1] = cy;
+      xn += (cy != 0L);
+      wp[0] = ((long) sub >= 0L ? xn : -xn);
+      return;
+   }
+
+   sub ^= wss;
+   wn = MPIR_ABS(wss);
+   new_wn = MPIR_MAX(wn, xn);
+   re = fmpz_fit_limbs(w, new_wn+1);
+   if (re)
+   {
+      wp = fmpz_data(w);
+      xp = fmpz_data(x);
+   }
+   min_n = MPIR_MIN(wn, xn);
+
+   if ((long) sub >= 0L)
+   {
+      /* addmul of absolute values */
+
+      cy = mpn_addmul_1 (wp+1, xp+1, min_n, y);
+      wp += min_n;
+      xp += min_n;
+
+      dn = xn - wn;
+      if (dn)
+      {
+         mp_limb_t cy2;
+         if ((long) dn > 0L)
+            cy2 = mpn_mul_1(wp+1, xp+1, dn, y);
+         else
+         {
+            dn = -dn;
+            cy2 = 0L;
+         }
+         cy = cy2 + mpn_add_1(wp+1, wp+1, dn, cy);
+      }
+      wp[dn+1] = cy;
+      new_wn += (cy != 0L);
+      wp -= min_n;
+   } else
+   {
+      /* submul of absolute values */
+
+      cy = mpn_submul_1(wp+1, xp+1, min_n, y);
+      if (wn >= xn)
+      {
+         /* if w bigger than x, then propagate borrow through it */
+         if (wn != xn)
+            cy = mpn_sub_1(wp+xn+1, wp+xn+1, wn-xn, cy);
+
+         if (cy != 0)
+         {
+            /* Borrow out of w, take twos complement negative to get
+               absolute value, flip sign of w.  */
+            wp[new_wn+1] = ~-cy;  /* extra limb is 0-cy */
+            F_mpn_com(wp+1, wp+1, new_wn);
+            new_wn++;
+            mpn_add_1(wp+1, wp+1, new_wn, 1L); // No carry
+            wss = -wss;
+         }
+      }
+      else /* wsize < xsize */
+      {
+         /* x bigger than w, so want x*y-w.  Submul has given w-x*y, so
+            take twos complement and use an mpn_mul_1 for the rest.  */
+
+         mp_limb_t cy2;
+
+         /* -(-cy*b^n + w-x*y) = (cy-1)*b^n + ~(w-x*y) + 1 */
+         F_mpn_com(wp+1, wp+1, wn);
+         cy += mpn_add_1(wp+1, wp+1, wn, 1L);
+         cy -= 1;
+
+         /* If cy-1 == -1 then hold that -1 for latter.  mpn_submul_1 never
+            returns cy==UINT_MAX so that value always indicates a -1. */
+         cy2 = (cy == -1L);
+         cy += cy2;
+         mp_limb_t cy3;
+         cy3 = mpn_mul_1(wp+wn+1, xp+wn+1, xn-wn, y);               
+         cy = cy3 + mpn_add_1(wp+wn+1, wp+wn+1, xn-wn, cy);    
+         wp[new_wn+1] = cy;
+         new_wn += (cy != 0);
+
+          /* Apply any -1 from above.  The value at wp+wsize is non-zero
+             because y!=0 and the high limb of x will be non-zero.  */
+         if (cy2)
+            mpn_sub_1(wp+wn+1, wp+wn+1, new_wn-wn, 1L);
+
+          wss = -wss;
+        }
+
+        /* submul can produce high zero limbs due to cancellation, both when w
+           has more limbs or x has more  */
+        wp[0] = new_wn;
+        NORM(wp);
+    }
+
+    wp[0] = ((long) wss >= 0L ? new_wn : -new_wn);
+    NORM(wp);
+}
+
+/*
+   w = w - x*y
+*/
+
+void fmpz_submul_ui(fmpz_t * w, fmpz_t * x, ulong y)
+{
+   ulong  xn, wn, wss, new_wn, min_n, dn;
+   mp_limb_t * xp = fmpz_data(x);
+   mp_limb_t * wp = fmpz_data(w);
+   mp_limb_t cy;
+   int re;
+
+   xn = xp[0];
+   if (xn == 0 || y == 0)
+     return;
+
+   mp_limb_t sub = ~xn;
+   xn = MPIR_ABS(xn);
+
+   wss = wp[0];
+   if (wss == 0L)
+   {
+      re = fmpz_fit_limbs(w, xn+1);
+      if (re) 
+      {
+         wp = fmpz_data(w);
+         xp = fmpz_data(x);
+      }
+      cy = mpn_mul_1(wp+1, xp+1, xn, y);
+      wp[xn+1] = cy;
+      xn += (cy != 0L);
+      wp[0] = ((long) sub >= 0L ? xn : -xn);
+      return;
+   }
+
+   sub ^= wss;
+   wn = MPIR_ABS(wss);
+   new_wn = MPIR_MAX(wn, xn);
+   re = fmpz_fit_limbs(w, new_wn+1);
+   if (re)
+   {
+      wp = fmpz_data(w);
+      xp = fmpz_data(x);
+   }
+   min_n = MPIR_MIN(wn, xn);
+
+   if ((long) sub >= 0L)
+   {
+      /* addmul of absolute values */
+
+      cy = mpn_addmul_1 (wp+1, xp+1, min_n, y);
+      wp += min_n;
+      xp += min_n;
+
+      dn = xn - wn;
+      if (dn)
+      {
+         mp_limb_t cy2;
+         if ((long) dn > 0L)
+            cy2 = mpn_mul_1(wp+1, xp+1, dn, y);
+         else
+         {
+            dn = -dn;
+            cy2 = 0L;
+         }
+         cy = cy2 + mpn_add_1(wp+1, wp+1, dn, cy);
+      }
+      wp[dn+1] = cy;
+      new_wn += (cy != 0L);
+      wp -= min_n;
+   } else
+   {
+      /* submul of absolute values */
+
+      cy = mpn_submul_1(wp+1, xp+1, min_n, y);
+      if (wn >= xn)
+      {
+         /* if w bigger than x, then propagate borrow through it */
+         if (wn != xn)
+            cy = mpn_sub_1(wp+xn+1, wp+xn+1, wn-xn, cy);
+
+         if (cy != 0)
+         {
+            /* Borrow out of w, take twos complement negative to get
+               absolute value, flip sign of w.  */
+            wp[new_wn+1] = ~-cy;  /* extra limb is 0-cy */
+            F_mpn_com(wp+1, wp+1, new_wn);
+            new_wn++;
+            mpn_add_1(wp+1, wp+1, new_wn, 1L); // No carry
+            wss = -wss;
+         }
+      }
+      else /* wsize < xsize */
+      {
+         /* x bigger than w, so want x*y-w.  Submul has given w-x*y, so
+            take twos complement and use an mpn_mul_1 for the rest.  */
+
+         mp_limb_t cy2;
+
+         /* -(-cy*b^n + w-x*y) = (cy-1)*b^n + ~(w-x*y) + 1 */
+         F_mpn_com(wp+1, wp+1, wn);
+         cy += mpn_add_1(wp+1, wp+1, wn, 1L);
+         cy -= 1;
+
+         /* If cy-1 == -1 then hold that -1 for latter.  mpn_submul_1 never
+            returns cy==UINT_MAX so that value always indicates a -1. */
+         cy2 = (cy == -1L);
+         cy += cy2;
+         mp_limb_t cy3;
+         cy3 = mpn_mul_1(wp+wn+1, xp+wn+1, xn-wn, y);               
+         cy = cy3 + mpn_add_1(wp+wn+1, wp+wn+1, xn-wn, cy);    
+         wp[new_wn+1] = cy;
+         new_wn += (cy != 0);
+
+          /* Apply any -1 from above.  The value at wp+wsize is non-zero
+             because y!=0 and the high limb of x will be non-zero.  */
+         if (cy2)
+            mpn_sub_1(wp+wn+1, wp+wn+1, new_wn-wn, 1L);
+
+          wss = -wss;
+        }
+
+        /* submul can produce high zero limbs due to cancellation, both when w
+           has more limbs or x has more  */
+        wp[0] = new_wn;
+        NORM(wp);
+    }
+
+    wp[0] = ((long) wss >= 0L ? new_wn : -new_wn);
+    NORM(wp);
 }
 
 // *************** end of file

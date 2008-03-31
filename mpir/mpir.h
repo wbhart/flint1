@@ -61,8 +61,6 @@
 #define MPIR_LG_BITS 5
 #define MPIR_BYTES 4
 #define MPIR_LG_BYTES 2
-#define MPIR_ALIGN 8
-#define MPIR_LG_ALIGN 3
 
 #elif ULONG_MAX == 18446744073709551615U
 #define MPIR_BITS 64
@@ -70,14 +68,14 @@
 #define MPIR_LG_BITS 6
 #define MPIR_BYTES 8
 #define MPIR_LG_BYTES 3
-#define MPIR_ALIGN 64
-#define MPIR_LG_ALIGN 6
 
 #else
 // only 32 and 64 bits are supported
 #error MPIR requires that ulong is 32 bits or 64 bits
 #endif
 
+#define MPIR_ALIGN MPIR_BITS
+#define MPIR_LG_ALIGN MPIR_LG_BITS
 #define MPIR_BLOCK MPIR_ALIGN
 #define MPIR_LG_BLOCK MPIR_LG_ALIGN
 

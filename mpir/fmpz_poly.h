@@ -41,8 +41,8 @@
 typedef struct
 {
    fmpz_t * coeffs;
-   unsigned long alloc;
-   unsigned long length;
+   ulong alloc;
+   ulong length;
 } fmpz_poly_struct;
 
 // fmpz_poly_t allows reference-like semantics for fmpz_poly_struct:
@@ -94,6 +94,8 @@ void fmpz_poly_to_mpz_poly(mpz_poly_t res, fmpz_poly_t poly);
 ===============================================================================*/
 
 void fmpz_poly_add(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_t input2);
+
+void fmpz_poly_sub(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_t input2);
 
 
 #ifdef __cplusplus

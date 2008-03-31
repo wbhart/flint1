@@ -19,7 +19,7 @@
 ===============================================================================*/
 /****************************************************************************
 
-   fmpz.c: "flat" integer format
+   fmpz_poly.c: Polynomials over "flat" multiprecision integers
 
    Copyright (C) 2007, William Hart
 
@@ -181,6 +181,49 @@ void fmpz_poly_add(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_t input2)
       {
          fmpz_set(coeffs_out+i, coeffs2+i);
       }
+   }
+   
+   output->length = longer;
+   if (input1->length == input2->length) _fmpz_poly_normalise(output);
+}
+
+void fmpz_poly_sub(fmpz_poly_t output, fmpz_poly_t input1, fmpz_poly_t input2)
+{
+   ulong shorter, longer;
+   fmpz_t * coeffs1, * coeffs2, * coeffs_out;   
+   
+   if (input1->length > input2->length)
+   {
+      shorter = input2->length;
+      longer = input1->length;
+   } else
+   {
+      shorter = input1->length;
+      longer = input2->length;
+   }
+   
+   fmpz_poly_fit_length(output, longer);
+
+   coeffs_out = output->coeffs;
+   coeffs1 = input1->coeffs;
+   coeffs2 = input2->coeffs;
+   
+   for (ulong i = 0; i < shorter; i++)
+   {
+      fmpz_sub(coeffs_out+i, coeffs1+i, coeffs2+i);
+   }    
+   
+   if (input1 != output)
+   {
+      for (ulong i = shorter; i < input1->length; i++)
+      {
+          fmpz_set(coeffs_out+i, coeffs1+i);
+      }
+   }
+
+   for (ulong i = shorter; i < input2->length; i++)
+   {
+      fmpz_neg(coeffs_out+i, coeffs2+i);
    }
    
    output->length = longer;
