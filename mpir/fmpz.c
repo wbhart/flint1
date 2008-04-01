@@ -25,8 +25,8 @@
 
 *****************************************************************************/
 
-#include <gmp.h>
 #include <stdio.h>
+#include <gmp.h>
 #include <stdlib.h>
 
 #include "fmpz.h"
@@ -338,6 +338,30 @@ void fmpz_to_mpz(mpz_t res, fmpz_t * x)
    } else
       mpz_set_ui(res, 0L);
    
+}
+
+/* ==============================================================================
+
+   String functions
+
+===============================================================================*/
+
+void fmpz_print(fmpz_t * in)
+{
+   mpz_t x;
+   mpz_init(x);
+   fmpz_to_mpz(x, in);
+   gmp_printf("%Zd", x); 
+   mpz_clear(x);
+}
+
+void fmpz_fread(fmpz_t * in, FILE * f)
+{
+   mpz_t x;
+   mpz_init(x);
+   mpz_inp_str(x, f, 10);
+   mpz_to_fmpz(in, x);
+   mpz_clear(x);
 }
 
 /* ==============================================================================

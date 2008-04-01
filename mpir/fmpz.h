@@ -32,6 +32,8 @@
  extern "C" {
 #endif
  
+#include <string.h>
+#include <stdio.h>
 #include <gmp.h>
 #include "memory_manager.h"
 #include "mpir.h"
@@ -186,6 +188,16 @@ ulong fmpz_size(fmpz_t * in)
 void mpz_to_fmpz(fmpz_t * res, mpz_t x);
 
 void fmpz_to_mpz(mpz_t res, fmpz_t * x);
+
+/* ==============================================================================
+
+   Read/print
+
+===============================================================================*/
+
+void fmpz_print(fmpz_t * in);
+
+void fmpz_fread(fmpz_t * in, FILE * f);
 
 /* ==============================================================================
 
