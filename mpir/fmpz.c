@@ -366,6 +366,35 @@ void fmpz_fread(fmpz_t * in, FILE * f)
 
 /* ==============================================================================
 
+   Random generation
+
+===============================================================================*/
+
+/*
+  This is not a serious random generator, it is just here for testing 
+  purposes at this stage
+  Bits must be non-zero
+*/
+
+void fmpz_random(fmpz_t * f, ulong bits)
+{
+   ulong limbs = ((bits-1)>>MPIR_LG_BITS)+1;
+   ulong rem = (bits & (MPIR_BITS - 1));
+   
+   fmpz_fit_limbs(f, limbs);
+   mp_limb_t * fp = fmpz_data(f);
+   fp[0] = limbs;
+   mpn_random(fp + 1, limbs);
+   if (rem)
+   {
+      ulong mask = ((1L<<rem)-1L);
+      fp[limbs] &= mask;
+   }
+   NORM(fp);
+}
+
+/* ==============================================================================
+
    Set/get
 
 ===============================================================================*/

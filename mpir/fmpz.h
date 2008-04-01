@@ -175,8 +175,18 @@ mp_limb_t * fmpz_data(fmpz_t * int_in)
 static inline
 ulong fmpz_size(fmpz_t * in)
 {
-   if (ENTRY_PTR(in)->n) return MPIR_ABS(fmpz_data(in)[0]);
-   else return 0;
+   return MPIR_ABS(fmpz_data(in)[0]);
+}
+
+static inline
+ulong fmpz_bits(fmpz_t * in)
+{
+   mp_limb_t * dp = fmpz_data(in);
+   ulong limbs = MPIR_ABS(dp[0]);
+   if (limbs)
+   {
+      return ((limbs-1)<<MPIR_LG_BITS) + MPIR_BIT_COUNT(dp[limbs]);
+   } else return 0;
 }
 
 /* ==============================================================================
@@ -188,6 +198,14 @@ ulong fmpz_size(fmpz_t * in)
 void mpz_to_fmpz(fmpz_t * res, mpz_t x);
 
 void fmpz_to_mpz(mpz_t res, fmpz_t * x);
+
+/* ==============================================================================
+
+   Random generation
+
+===============================================================================*/
+
+void fmpz_random(fmpz_t * f, ulong bits);
 
 /* ==============================================================================
 

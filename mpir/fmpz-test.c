@@ -556,7 +556,7 @@ int test_fmpz_mul_2exp()
        exp = randint(1000);
        
 #if DEBUG
-       printf("Bits = %ld, bits2 = %ld\n", bits, bits2);
+       printf("Bits = %ld\n", bits);
 #endif
        
        fnum1 = fmpz_init();
@@ -584,6 +584,45 @@ int test_fmpz_mul_2exp()
    return result;
 }
 
+int test_fmpz_random_bits()
+{
+   mpz_t num1, num2;
+   fmpz_t * fnum1, * fnum2;
+   ulong bits, exp;
+   int result = 1;
+   
+   mpz_init(num1);
+      
+   for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+   {
+       bits = randint(1000)+1;
+       
+#if DEBUG
+       printf("Bits = %ld\n", bits);
+#endif
+       
+       fnum1 = fmpz_init();
+
+       fmpz_random(fnum1, bits);
+       
+       fmpz_to_mpz(num1, fnum1);
+       
+       ulong bits1 = fmpz_bits(fnum1);
+       ulong bits2 = mpz_sizeinbase(num1, 2);  
+         
+       result = (((bits1 == bits2) || ((bits1 == 0) && (bits2 == 1))) && (bits1 <= bits));
+#if DEBUG
+       if (!result) printf("Bits = %ld, bits1 = %ld, bits2 = %ld\n", bits, bits1, bits2);
+#endif
+       
+       fmpz_clear(fnum1);
+   }
+   
+   mpz_clear(num1);
+   
+   return result;
+}
+
 void fmpz_poly_test_all()
 {
    int success, all_success = 1;
@@ -600,6 +639,7 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_addmul_ui);
    RUN_TEST(fmpz_submul_ui);
    RUN_TEST(fmpz_mul_2exp);
+   RUN_TEST(fmpz_random_bits);
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");
