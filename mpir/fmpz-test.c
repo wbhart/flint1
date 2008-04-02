@@ -190,6 +190,44 @@ int test_fmpz_to_mpz()
    return result;
 }
 
+int test_fmpz_set_equal()
+{
+   mpz_t num1;
+   fmpz_t * fnum1, * fnum2;
+   unsigned long bits, bits2;
+   int result = 1;
+   
+   mpz_init(num1);
+   
+   for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+   {
+       bits = randint(1000);
+       fnum1 = fmpz_init();
+       fnum2 = fmpz_init();
+
+       mpz_rrandomb(num1, state, bits);
+#if SIGNS
+       if (randint(2)) mpz_neg(num1, num1);
+#endif
+       mpz_to_fmpz(fnum1, num1);
+       
+       fmpz_set(fnum2, fnum1);
+          
+       result = (fmpz_equal(fnum1, fnum2));
+       
+#if DEBUG
+       if (!result) gmp_printf("%Zd\n", num1);
+#endif
+       
+       fmpz_clear(fnum1);
+   }
+   
+   mpz_clear(num1);
+   
+   return result;
+}
+
+
 int test_fmpz_size()
 {
    mpz_t num1, num2;
@@ -623,6 +661,45 @@ int test_fmpz_random_bits()
    return result;
 }
 
+int test_fmpz_get_d()
+{
+   mpz_t num1, num2;
+   fmpz_t * fnum1, * fnum2;
+   ulong bits, exp;
+   int result = 1;
+   
+   mpz_init(num1);
+      
+   for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+   {
+       bits = randint(1000)+1;
+       
+#if DEBUG
+       printf("Bits = %ld\n", bits);
+#endif
+       
+       fnum1 = fmpz_init();
+
+       fmpz_random(fnum1, bits);
+       
+       fmpz_to_mpz(num1, fnum1);
+       
+       double d1 = fmpz_get_d(fnum1);
+       double d2 = mpz_get_d(num1);  
+         
+       result = (d1 == d2);
+#if DEBUG2
+       if (!result) printf("%f, %f\n", d1, d2);
+#endif
+       
+       fmpz_clear(fnum1);
+   }
+   
+   mpz_clear(num1);
+   
+   return result;
+}
+
 void fmpz_poly_test_all()
 {
    int success, all_success = 1;
@@ -631,6 +708,7 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_init_fit_limbs_clear);
    RUN_TEST(fmpz_init_fit_limbs_clear_array);
    RUN_TEST(fmpz_to_mpz);
+   RUN_TEST(fmpz_set_equal);
    RUN_TEST(fmpz_size);
    RUN_TEST(fmpz_get_set_ui);
    RUN_TEST(fmpz_neg);
@@ -640,6 +718,7 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_submul_ui);
    RUN_TEST(fmpz_mul_2exp);
    RUN_TEST(fmpz_random_bits);
+   RUN_TEST(fmpz_get_d);
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");

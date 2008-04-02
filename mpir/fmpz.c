@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <gmp.h>
 #include <stdlib.h>
+#include <math.h>
 
 #include "fmpz.h"
 #include "mpir.h"
@@ -340,6 +341,22 @@ void fmpz_to_mpz(mpz_t res, fmpz_t * x)
    
 }
 
+double fmpz_get_d(fmpz_t * f)
+{
+   mp_limb_t * fp = fmpz_data(f);
+   if (fp[0] == 0L) return 0;
+   ulong limbs = MPIR_ABS(fp[0]);
+   ulong bits = MPIR_BIT_COUNT(fp[limbs]);
+   if (bits >= MPIR_D_BITS) 
+   {
+      if (fp[0] < 0L) return -ldexp((fp[limbs]>>(bits-MPIR_D_BITS)), ((limbs-1)<<MPIR_LG_BITS) + (bits-MPIR_D_BITS));
+      else return ldexp((fp[limbs]>>(bits-MPIR_D_BITS)), ((limbs-1)<<MPIR_LG_BITS) + (bits-MPIR_D_BITS));
+   }
+   ulong top = ((fp[limbs]<<(MPIR_D_BITS - bits)) | (fp[limbs-1]>>(MPIR_BITS - MPIR_D_BITS + bits)));
+   if (fp[0] < 0L) return -ldexp(top, ((limbs-1)<<MPIR_LG_BITS) - (MPIR_D_BITS - bits));
+   else return ldexp(top, ((limbs-1)<<MPIR_LG_BITS) - (MPIR_D_BITS - bits));
+}
+
 /* ==============================================================================
 
    String functions
@@ -373,7 +390,7 @@ void fmpz_fread(fmpz_t * in, FILE * f)
 /*
   This is not a serious random generator, it is just here for testing 
   purposes at this stage
-  Bits must be non-zero
+  We require bits to be non-zero
 */
 
 void fmpz_random(fmpz_t * f, ulong bits)
@@ -436,6 +453,25 @@ void fmpz_neg(fmpz_t * out, fmpz_t * f)
       mp_limb_t * rp = fmpz_data(out);
       rp[0] = -rp[0];
    }
+}
+
+/* ==============================================================================
+
+   Comparison
+
+===============================================================================*/
+
+int fmpz_equal(fmpz_t * f2, fmpz_t * f1)
+{
+   if (f1 == f2) return 1;
+   mp_limb_t * fp1 = fmpz_data(f1);
+   mp_limb_t * fp2 = fmpz_data(f2);
+   if (fp1[0] != fp2[0]) return 0;
+   for (ulong i = 0; i < MPIR_ABS(fp1[0]); i++)
+   {
+      if (fp1[i+1] != fp2[i+1]) return 0;
+   }
+   return 1;
 }
 
 /* ==============================================================================

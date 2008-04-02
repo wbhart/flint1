@@ -199,6 +199,8 @@ void mpz_to_fmpz(fmpz_t * res, mpz_t x);
 
 void fmpz_to_mpz(mpz_t res, fmpz_t * x);
 
+double fmpz_get_d(fmpz_t * f);
+
 /* ==============================================================================
 
    Random generation
@@ -277,6 +279,8 @@ int fmpz_is_zero(fmpz_t * x)
 {
    return (fmpz_data(x)[0] == 0L);
 }
+
+int fmpz_equal(fmpz_t * f2, fmpz_t * f1);
 
 /* ==============================================================================
 
