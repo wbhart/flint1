@@ -38,52 +38,15 @@
 #include "memory_manager.h"
 #include "mpir.h"
 
-#define TOP_MASK (1L<<(MPIR_BITS-1))
-#if ULONG_MAX != ((size_t)-1) // For LLP64 machines
-#define ENTRY_PTR(xxx) ((table_entry*) ((uint64_t) xxx & (((uint64_t)-1)<<MPIR_LG_BLOCK)))
+#define fmpz_t __mpz_struct
+
+#if MPIR_BITS == 64
+#define TAB_START(xxx) ((fmpz_t *) ((uint64_t) xxx & (((uint64_t)-1)<<MPIR_LG_ALIGN)))
 #else
-#define ENTRY_PTR(xxx) ((table_entry*) ((ulong) xxx & (((ulong)-1)<<MPIR_LG_BLOCK)))
+#define TAB_START(xxx) ((fmpz_t *) ((uint32_t) xxx & (((uint32_t)-1)<<MPIR_LG_ALIGN)))
 #endif
 
-#define OFFSET(xxx) ((ulong) xxx & ((1L<<MPIR_LG_BLOCK)-1L))
-
-/*
-   Returns a pointer to the actual data in the given fmpz_t
-   The first limb is a sign/size limb, the remainder is the 
-   absolute value of the integer
-*/
-
-typedef char fmpz_t; // fmpz_t * will have char * arithmetic, but will never be
-                    // dereferenced directly
-
-typedef mp_limb_t block; // A block is a set of MPIR_BLOCK integers contiguously in memory
-
-#if ULONG_MAX != ((size_t)-1) // For LLP64 machines
-typedef struct
-{
-   block * block_ptr;
-   ulong n;
-   ulong count; 
-   block * pad1;
-   block * pad2;
-   block * pad3;
-   block * pad4;
-   block * pad5;
-   block * pad6;
-} table_entry;
-#else // For LP64 and ILP32 machines
-typedef struct
-{
-   block * block_ptr;
-   ulong n;
-   ulong count; 
-   ulong pad1; 
-   ulong pad2; 
-   ulong pad3; 
-   ulong pad4; 
-   ulong pad5; 
-} table_entry;
-#endif
+#define IMM_MAX (1UL<<(MPIR_BITS-2))-1UL
 
 /* ==============================================================================
 
@@ -91,15 +54,11 @@ typedef struct
 
 ===============================================================================*/
 
-void fmpz_block_init(table_entry * entry);
+void fmpz_block_init(fmpz_t * entry, ulong m);
 
-void fmpz_block_init2(table_entry * entry, ulong n);
+void fmpz_block_init2(fmpz_t * entry, ulong m, ulong n);
 
-void fmpz_block_init_small(table_entry * entry, ulong m);
-
-void fmpz_block_init2_small(table_entry * entry, ulong m, ulong n);
-
-void fmpz_block_realloc(table_entry * entry, ulong n);
+void fmpz_block_realloc(fmpz_t * entry, ulong n);
 
 /*
    If n is greater than the current value of n for the block, reallocate
@@ -108,18 +67,16 @@ void fmpz_block_realloc(table_entry * entry, ulong n);
 */
 
 static inline 
-int fmpz_block_fit_limbs(table_entry * entry, ulong n)
+int fmpz_block_fit_limbs(fmpz_t * entry, ulong n)
 {
-   if (n > entry->n) 
+   if UNLIKELY(n > entry->_mp_alloc) 
    {
       fmpz_block_realloc(entry, n);
       return 1;
    } else return 0;
 }
 
-fmpz_t * fmpz_realloc_array(fmpz_t * arr, ulong old_count, ulong count);
-
-void fmpz_block_clear(table_entry * entry);
+void fmpz_block_clear(fmpz_t * entry);
 
 /* ==============================================================================
 
@@ -129,11 +86,19 @@ void fmpz_block_clear(table_entry * entry);
 
 fmpz_t * fmpz_init_array(ulong count);
 
-fmpz_t * fmpz_init(void);
-
-void fmpz_clear(fmpz_t * f);
+static inline
+fmpz_t * fmpz_init(void)
+{
+   return fmpz_init_array(1L);
+}
 
 void fmpz_clear_array(fmpz_t * f, ulong count);
+
+static inline
+void fmpz_clear(fmpz_t * f)
+{
+   fmpz_clear_array(f, 1L);
+}
 
 /* 
    Make the integer f (and all others in the same block) have space
@@ -141,10 +106,12 @@ void fmpz_clear_array(fmpz_t * f, ulong count);
 */
 
 static inline
-void fmpz_realloc(fmpz_t* f, ulong n)
+void fmpz_realloc(fmpz_t * f, ulong n)
 {
-   fmpz_block_realloc(ENTRY_PTR(f), n);
+   fmpz_block_realloc(TAB_START(f), n);
 }
+
+fmpz_t * fmpz_realloc_array(fmpz_t * arr, ulong old_count, ulong count);
 
 /* 
    Make the integer f (and all others in the same block) have space 
@@ -154,9 +121,9 @@ void fmpz_realloc(fmpz_t* f, ulong n)
 */
 
 static inline
-int fmpz_fit_limbs(fmpz_t* f, ulong n)
+int fmpz_fit_limbs(fmpz_t * f, ulong n)
 {
-   return fmpz_block_fit_limbs(ENTRY_PTR(f), n);
+   return fmpz_block_fit_limbs(TAB_START(f), n);
 }
 
 /* ==============================================================================
@@ -166,26 +133,34 @@ int fmpz_fit_limbs(fmpz_t* f, ulong n)
 ===============================================================================*/
 
 static inline 
-mp_limb_t * fmpz_data(fmpz_t * int_in)
+mp_limb_t * fmpz_data(fmpz_t * in)
 {
-   table_entry * entry = ENTRY_PTR(int_in);
-   return entry->block_ptr + (entry->n+1) * OFFSET(int_in);
+   return in->_mp_d;
 }
 
 static inline
 ulong fmpz_size(fmpz_t * in)
 {
-   return MPIR_ABS(fmpz_data(in)[0]);
+   ulong alloc = in->_mp_alloc;
+   if (alloc > 1L) return MPIR_ABS(in->_mp_size);
+   if ((long) in->_mp_d == 0L) return 0L;
+   return 1L;
 }
 
 static inline
 ulong fmpz_bits(fmpz_t * in)
 {
-   mp_limb_t * dp = fmpz_data(in);
-   ulong limbs = MPIR_ABS(dp[0]);
+   if (in->_mp_alloc == 1L)
+   {
+      long i_int = (long) in->_mp_d;
+      if (i_int) return MPIR_BIT_COUNT(MPIR_ABS(i_int));
+      else return 0L;
+   }
+   ulong limbs = fmpz_size(in);
+   mp_limb_t * dp = in->_mp_d;
    if (limbs)
    {
-      return ((limbs-1)<<MPIR_LG_BITS) + MPIR_BIT_COUNT(dp[limbs]);
+      return ((limbs-1)<<MPIR_LG_BITS) + MPIR_BIT_COUNT(dp[limbs-1]);
    } else return 0;
 }
 
@@ -195,11 +170,17 @@ ulong fmpz_bits(fmpz_t * in)
 
 ===============================================================================*/
 
-void mpz_to_fmpz(fmpz_t * res, mpz_t x);
+void mpz_to_fmpz(fmpz_t * fnum, mpz_t num);
 
-void fmpz_to_mpz(mpz_t res, fmpz_t * x);
+void fmpz_to_mpz(mpz_t num, fmpz_t * fnum);
+
+extern double __gmpn_get_d(mp_limb_t * fp, ulong limbs, ulong size, long exp);
+
+void gmpz_set(mpz_ptr w, mpz_srcptr u);
 
 double fmpz_get_d(fmpz_t * f);
+
+double fmpz_get_d_2exp(long * exp, fmpz_t * f);
 
 /* ==============================================================================
 
@@ -219,11 +200,24 @@ void fmpz_print(fmpz_t * in);
 
 void fmpz_fread(fmpz_t * in, FILE * f);
 
+static inline
+void fmpz_read(fmpz_t * in)
+{
+   fmpz_fread(in, stdin);
+}
+
 /* ==============================================================================
 
    Set/get
 
 ===============================================================================*/
+
+static inline
+void fmpz_zero(fmpz_t * f)
+{
+   if (f->_mp_alloc == 1L) f->_mp_d = (mp_limb_t *) 0L;
+   else f->_mp_size = 0L;
+}
 
 void fmpz_set(fmpz_t * out, fmpz_t * f);
 
@@ -232,19 +226,22 @@ void fmpz_set(fmpz_t * out, fmpz_t * f);
 */
 
 static inline
-void fmpz_set_ui(fmpz_t * res, unsigned long x)
+void fmpz_set_ui(fmpz_t * res, ulong x)
 {
-   fmpz_fit_limbs(res, 1);
-   
-   mp_limb_t * data = fmpz_data(res);
-
-   if (x) 
+   if (res->_mp_alloc > 1L)
+   { 
+      if (x == 0L) res->_mp_size = 0L;
+      else
+      {
+         res->_mp_size = 1L;
+         res->_mp_d[0] = x;
+      }
+   } else if (x > IMM_MAX)
    {
-      data[0] = 1UL;
-      data[1] = x;
-   }
-   else
-      data[0] = 0UL;
+      fmpz_fit_limbs(res, 2L);
+      res->_mp_size = 1L;
+      res->_mp_d[0] = x;      
+   } else res->_mp_d = (mp_limb_t *) x;
 }
 
 /*
@@ -254,10 +251,57 @@ void fmpz_set_ui(fmpz_t * res, unsigned long x)
 static inline
 unsigned long fmpz_get_ui(fmpz_t * res)
 {
-   mp_limb_t * data = fmpz_data(res);
+   ulong alloc = res->_mp_alloc;
+   if (alloc > 1L) return mpz_get_ui(res);
 
-   if (data[0]) return data[1];
-   else return 0UL;
+   long r_int = (long) res->_mp_d;
+   if (r_int > 0L) return r_int;
+   else return -r_int;
+}
+
+/*
+   Set res to the signed long x
+*/
+
+static inline
+void fmpz_set_si(fmpz_t * res, long x)
+{
+   if (res->_mp_alloc > 1L)
+   {  
+      if (x < 0L)
+      {
+         res->_mp_size = -1L;
+         res->_mp_d[0] = -x;
+      } else if (x > 0L)
+      {
+         res->_mp_size = 1L;
+         res->_mp_d[0] = x;
+      } else res->_mp_size = 0L;
+   } else if (MPIR_ABS(x) > IMM_MAX)
+   {
+      fmpz_fit_limbs(res, 2L);
+      if (x < 0L)
+      {
+         res->_mp_size = -1L;
+         res->_mp_d[0] = -x;
+      } else if (x > 0L)
+      {
+         res->_mp_size = 1L;
+         res->_mp_d[0] = x;
+      } else res->_mp_size = 0L;      
+   } else res->_mp_d = (mp_limb_t *) x;
+}
+
+/*
+   Return the least significant limb of x as a signed quantity
+*/
+
+static inline
+long fmpz_get_si(fmpz_t * res)
+{
+   if (res->_mp_alloc > 1L) return mpz_get_si(res);
+
+   return (long) res->_mp_d;
 }
 
 /* ==============================================================================
@@ -277,7 +321,8 @@ void fmpz_neg(fmpz_t * out, fmpz_t * f);
 static inline
 int fmpz_is_zero(fmpz_t * x)
 {
-   return (fmpz_data(x)[0] == 0L);
+   if (x->_mp_alloc == 1L) return (((long) x->_mp_d) == 0L);
+   else return (x->_mp_size == 0L);
 }
 
 int fmpz_equal(fmpz_t * f2, fmpz_t * f1);
@@ -288,7 +333,11 @@ int fmpz_equal(fmpz_t * f2, fmpz_t * f1);
 
 ===============================================================================*/
 
+void _fmpz_add_IMM(fmpz_t * out, fmpz_t * f1, long c);
+
 void fmpz_add(fmpz_t * out, fmpz_t * f1, fmpz_t * f2);
+
+void _fmpz_sub_IMM(fmpz_t * out, fmpz_t * f1, long c);
 
 void fmpz_sub(fmpz_t * out, fmpz_t * f1, fmpz_t * f2);
 

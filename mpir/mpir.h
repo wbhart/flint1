@@ -74,10 +74,10 @@
 #error MPIR requires that ulong is 32 bits or 64 bits
 #endif
 
-#define MPIR_ALIGN MPIR_BITS
-#define MPIR_LG_ALIGN MPIR_LG_BITS
-#define MPIR_BLOCK MPIR_ALIGN
-#define MPIR_LG_BLOCK MPIR_LG_ALIGN
+#define MPIR_LG_BLOCK 6
+#define MPIR_BLOCK (1L<<MPIR_LG_BLOCK)
+#define MPIR_LG_ALIGN 10
+#define MPIR_ALIGN (1L<<MPIR_LG_ALIGN)
 
 #if defined(__GNUC__) 
 #if MPIR_BITS == 64
@@ -94,6 +94,9 @@
 #else
 #error Currently MPIR only compiles with GCC
 #endif
+
+#define LIKELY(cond)    (__builtin_expect ((cond) != 0, 1))
+#define UNLIKELY(cond)  (__builtin_expect ((cond) != 0, 0))
 
 static inline ulong MPIR_BIT_COUNT(ulong x)
 {

@@ -49,6 +49,7 @@
 typedef struct
 {
    fmpz_t * entries;
+   fmpz_t ** row_arr;
    ulong rows;
    ulong cols;
    ulong stride;
@@ -77,21 +78,15 @@ void fmpz_mat_set_entry_ui(fmpz_mat_t mat, ulong r, ulong c, ulong x);
 
 ulong fmpz_mat_get_entry_ui(fmpz_mat_t mat, ulong r, ulong c);
 
-fmpz_mat_row_copy_in(fmpz_mat_t mat, ulong r, fmpz_t * Btmp);
-
-fmpz_mat_row_copy_out(fmpz_t * Btmp, fmpz_mat_t mat, ulong r);
-
-fmpz_mat_row_set(fmpz_mat_t mat, ulong r1, ulong r2); 
-
 /* ==============================================================================
 
    Addition/subtraction 
 
 ===============================================================================*/
 
-fmpz_mat_row_add(fmpz_mat_t mat, ulong r1, ulong r2, ulong n);
+void fmpz_mat_row_add(fmpz_mat_t mat, ulong r1, ulong r2, ulong n);
 
-fmpz_mat_row_sub(fmpz_mat_t mat, ulong r1, ulong r2, ulong n);
+void fmpz_mat_row_sub(fmpz_mat_t mat, ulong r1, ulong r2, ulong n);
 
 /* ==============================================================================
 
@@ -99,13 +94,13 @@ fmpz_mat_row_sub(fmpz_mat_t mat, ulong r1, ulong r2, ulong n);
 
 ===============================================================================*/
 
-fmpz_mat_row_addmul_ui(fmpz_mat_t mat, ulong r1, ulong r2, ulong c, ulong n);
+void fmpz_mat_row_addmul_ui(fmpz_mat_t mat, ulong r1, ulong r2, ulong c, ulong n);
 
-fmpz_mat_row_submul_ui(fmpz_mat_t mat, ulong r1, ulong r2, ulong c, ulong n);
+void fmpz_mat_row_submul_ui(fmpz_mat_t mat, ulong r1, ulong r2, ulong c, ulong n);
 
-fmpz_mat_row_addmul_2exp_ui(fmpz_mat_t mat, ulong r1, ulong r2, ulong c, ulong exp, ulong n);
+void fmpz_mat_row_addmul_2exp_ui(fmpz_mat_t mat, ulong r1, ulong r2, ulong c, ulong exp, ulong n, fmpz_t * temp);
 
-fmpz_mat_row_submul_2exp_ui(fmpz_mat_t mat, ulong r1, ulong r2, ulong c, ulong exp, ulong n);
+void fmpz_mat_row_submul_2exp_ui(fmpz_mat_t mat, ulong r1, ulong r2, ulong c, ulong exp, ulong n, fmpz_t * temp);
 
 /* ==============================================================================
 
@@ -114,14 +109,6 @@ fmpz_mat_row_submul_2exp_ui(fmpz_mat_t mat, ulong r1, ulong r2, ulong c, ulong e
 ===============================================================================*/
 
 void fmpz_mat_print(fmpz_mat_t mat, int rows, int cols);
-
-/* ==============================================================================
-
-   Conversion
-
-===============================================================================*/
-
-fmpz_mat_row_to_doubles(double * row_f, fmpz_mat_t mat, ulong row_z, ulong cols);
 
 #ifdef __cplusplus
  }

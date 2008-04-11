@@ -114,9 +114,7 @@ void mpz_poly_to_fmpz_poly(fmpz_poly_t res, mpz_poly_t poly)
       return;
 
    for (ulong i = 0; i < poly->length; i++)
-   {
       mpz_to_fmpz(res->coeffs + i, poly->coeffs[i]);
-   }
 }
 
 
@@ -129,10 +127,9 @@ void fmpz_poly_to_mpz_poly(mpz_poly_t res, fmpz_poly_t poly)
    if (poly->length == 0) return;
    
    for (ulong i = 0; i < poly->length; i++)
+   {
       fmpz_to_mpz(res->coeffs[i], poly->coeffs + i);
-   
-   mpz_poly_normalise(res);
-
+   }
 }
 
 /* ==============================================================================

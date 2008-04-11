@@ -40,8 +40,9 @@ HEADERS = \
 	test_support.h \
 	fmpz_poly.h \
 	mpz_poly.h \
-        fmpz_mat.h
-	
+        fmpz_mat.h \
+	fmpz_LLL_fast_d.h \
+	d_mat.h
 
 ####### library object files
 
@@ -50,7 +51,9 @@ MPIROBJ = \
 	fmpz.o \
 	fmpz_poly.o \
 	mpz_poly.o \
-        fmpz_mat.o
+        fmpz_mat.o \
+	fmpz_LLL_fast_d.o \
+	d_mat.o
 
 test: memory_manager-test fmpz-test fmpz_poly-test 
 	./memory_manager-test
@@ -86,6 +89,12 @@ mpz_poly.o: mpz_poly.c $(HEADERS)
 fmpz_mat.o: fmpz_mat.c $(HEADERS)
 	$(CC) $(CFLAGS) -c fmpz_mat.c -o fmpz_mat.o
 
+fmpz_LLL_fast_d.o: fmpz_LLL_fast_d.c $(HEADERS)
+	$(CC) $(CFLAGS) -c fmpz_LLL_fast_d.c -o fmpz_LLL_fast_d.o
+
+d_mat.o: d_mat.c $(HEADERS)
+	$(CC) $(CFLAGS) -c d_mat.c -o d_mat.o
+
 ####### test program object files
 
 test_support.o: test_support.c test_support.h $(HEADERS)
@@ -103,6 +112,9 @@ fmpz_poly-test.o: fmpz_poly-test.c $(HEADERS)
 fmpz_mat-test.o: fmpz_mat-test.c $(HEADERS)
 	$(CC) $(CFLAGS) -c fmpz_mat-test.c -o fmpz_mat-test.o
 
+fmpz_LLL_fast_d-test.o: fmpz_LLL_fast_d-test.c $(HEADERS)
+	$(CC) $(CFLAGS) -c fmpz_LLL_fast_d-test.c -o fmpz_LLL_fast_d-test.o
+
 ####### test program targets
 
 memory_manager-test: memory_manager-test.o $(MPIROBJ) $(HEADERS)
@@ -116,6 +128,9 @@ fmpz_poly-test: fmpz_poly-test.o test_support.o $(MPIROBJ) $(HEADERS)
 
 fmpz_mat-test: fmpz_mat-test.o test_support.o $(MPIROBJ) $(HEADERS)
 	$(CC) $(CFLAGS) fmpz_mat-test.o -o fmpz_mat-test $(MPIROBJ) test_support.o $(LIBS)
+
+fmpz_LLL_fast_d-test: fmpz_LLL_fast_d-test.o test_support.o $(MPIROBJ) $(HEADERS)
+	$(CC) $(CFLAGS) fmpz_LLL_fast_d-test.o -o fmpz_LLL_fast_d-test $(MPIROBJ) test_support.o $(LIBS)
 
 ####### tuning object files 
 
