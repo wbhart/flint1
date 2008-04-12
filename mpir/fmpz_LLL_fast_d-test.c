@@ -95,25 +95,28 @@ void simdioph(fmpz_mat_t B, int bits, int bits2, int d)
    On the equidistribution of Hecke points, Forum Mathematicum, 15:165-189, 2003
 */
 
-/*void goldstein_mayer(fmpz_mat_t B, int bits, int d)
+void goldstein_mayer(fmpz_mat_t B, int bits, int d)
 {
    int i, j;
+   fmpz_t * row;
+   
+   row = B->row_arr[0];
+   do fmpz_random(row, bits);
+   while ((fmpz_probab_prime_p(row, 10)) == 0);
+   for (i = 1; i < d; i++) 
+      fmpz_set_ui(row + i, 0L);
 
-   do ZRANDB (B->coeff[1][1], state, bits);
-   while ((mpz_probab_prime_p (B->coeff[1][1], 10))==0);
-   for (i=2; i<=d; i++) 
-      ZSET_UI (B->coeff[1][i], 0);
-
-   for (i=2; i<=d; i++)
+   for (i = 1; i < d; i++)
    {
-      ZRANDM (B->coeff[i][1], state, B->coeff[1][1]);
-      for (j=2; j<i; j++)
-	     ZSET_UI (B->coeff[i][j], 0);
-      ZSET_UI (B->coeff[i][i], 1);
-      for (j=i+1; j<=d; j++)
-	     ZSET_UI (B->coeff[i][j], 0);
+      row = B->row_arr[i];
+      fmpz_randomm(row, B->row_arr[0]);
+      for (j = 1; j < i; j++)
+	     fmpz_set_ui(row + j, 0L);
+      fmpz_set_ui(row + i, 1L);
+      for (j = i + 1; j < d; j++)
+	     fmpz_set_ui(row + j, 0L);
    }
-}*/
+}
 
 void uniform(fmpz_mat_t B, int bits, int d)
 {
@@ -297,6 +300,8 @@ void uniform(fmpz_mat_t B, int bits, int d)
 
 int main(int argc, char *argv[])
 {
+   gmp_randinit_default(state);
+   
    int d=0, i, j, n, bits, bits2=0, decal;
    double alpha;
    fmpz_mat_t B;
@@ -407,6 +412,14 @@ int main(int argc, char *argv[])
       uniform(B, bits, d); 
    }  
 
+   if (strcmp(argv[decal], "g")==0)
+   {
+      d = atoi(argv[decal+1]);
+      bits = atoi(argv[decal+2]);
+      fmpz_mat_init(B, d, d);
+      goldstein_mayer(B, bits, d); 
+   }  
+
    /*if (strcmp(argv[decal], "n")==0)
    {
       d = atoi(argv[decal+1]);
@@ -425,11 +438,13 @@ int main(int argc, char *argv[])
       ntrulike2(B, bits, d, i); 
    }  */
     
-   fmpz_mat_print(B, B->rows, B->cols); printf("\n");
+   //fmpz_mat_print(B, B->rows, B->cols); printf("\n");
    LLL(B);
-   fmpz_mat_print(B, B->rows, B->cols); printf("\n");
+   //fmpz_mat_print(B, B->rows, B->cols); printf("\n");
    
    fmpz_mat_clear(B);
+   
+   gmp_randclear(state);
 
    return 0;
 }

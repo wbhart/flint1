@@ -36,6 +36,7 @@
 #include "longlong_wrapper.h"
 #include "longlong.h"
 #include "mpn_extras.h"
+#include "test_support.h"
 
 #define SWAP_FMPZ_PTRS(xxx, yyy) \
 do { \
@@ -529,6 +530,45 @@ void fmpz_random(fmpz_t * f, ulong bits)
       fp[limbs-1] &= mask;
    }
    NORM(f, fp);
+}
+
+void fmpz_randomm(fmpz_t * out, fmpz_t * in)
+{
+   if ((in->_mp_alloc > 1L) && (out->_mp_alloc > 1L)) 
+   {
+      fmpz_fit_limbs(out, MPIR_ABS(in->_mp_size));
+      mpz_urandomm(out, state, in);
+   } else
+   {
+      mpz_t temp1, temp2;
+      mpz_init(temp1);
+      mpz_init(temp2);
+      fmpz_to_mpz(temp1, in);
+      mpz_urandomm(temp2, state, temp1);
+      mpz_to_fmpz(out, temp2);
+      mpz_clear(temp1);
+      mpz_clear(temp2);
+   }
+}
+
+/* ==============================================================================
+
+   Number theoretical
+
+===============================================================================*/
+
+int fmpz_probab_prime_p(fmpz_t * p, ulong n)
+{
+   if (p->_mp_alloc > 1L) return mpz_probab_prime_p(p, n);
+   else
+   {
+      mpz_t temp1;
+      mpz_init(temp1);
+      fmpz_to_mpz(temp1, p);
+      int prime = mpz_probab_prime_p(temp1, n);
+      mpz_clear(temp1); 
+      return prime;     
+   }
 }
 
 /* ==============================================================================

@@ -190,6 +190,8 @@ double fmpz_get_d_2exp(long * exp, fmpz_t * f);
 
 void fmpz_random(fmpz_t * f, ulong bits);
 
+void fmpz_randomm(fmpz_t * out, fmpz_t * in);
+
 /* ==============================================================================
 
    Read/print
@@ -205,6 +207,14 @@ void fmpz_read(fmpz_t * in)
 {
    fmpz_fread(in, stdin);
 }
+
+/* ==============================================================================
+
+   Number theoretical
+
+===============================================================================*/
+
+int fmpz_probab_prime_p(fmpz_t * p, ulong n);
 
 /* ==============================================================================
 

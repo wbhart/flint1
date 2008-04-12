@@ -29,8 +29,6 @@ Copyright (C) 2007, William Hart and David Harvey
 #include "mpir.h"
 #include "test_support.h"
 
-gmp_randstate_t randstate;
-
 /*
    Generate a random integer with up to the given limit. 
    If the limit is 0, a random limb is generated.

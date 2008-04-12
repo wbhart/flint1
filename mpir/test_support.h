@@ -32,6 +32,8 @@ Copyright (C) 2007, William Hart and David Harvey
  extern "C" {
 #endif
  
+gmp_randstate_t state;
+
 unsigned long randint(unsigned long limit);
 
 unsigned long randbits(unsigned long bits);
