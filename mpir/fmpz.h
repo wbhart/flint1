@@ -142,7 +142,7 @@ static inline
 ulong fmpz_size(fmpz_t * in)
 {
    ulong alloc = in->_mp_alloc;
-   if (alloc > 1L) return MPIR_ABS(in->_mp_size);
+   if (alloc > 0L) return MPIR_ABS(in->_mp_size);
    if ((long) in->_mp_d == 0L) return 0L;
    return 1L;
 }
@@ -150,7 +150,7 @@ ulong fmpz_size(fmpz_t * in)
 static inline
 ulong fmpz_bits(fmpz_t * in)
 {
-   if (in->_mp_alloc == 1L)
+   if (in->_mp_alloc == 0L)
    {
       long i_int = (long) in->_mp_d;
       if (i_int) return MPIR_BIT_COUNT(MPIR_ABS(i_int));
@@ -161,7 +161,7 @@ ulong fmpz_bits(fmpz_t * in)
    if (limbs)
    {
       return ((limbs-1)<<MPIR_LG_BITS) + MPIR_BIT_COUNT(dp[limbs-1]);
-   } else return 0;
+   } else return 0L;
 }
 
 /* ==============================================================================
@@ -225,7 +225,7 @@ int fmpz_probab_prime_p(fmpz_t * p, ulong n);
 static inline
 void fmpz_zero(fmpz_t * f)
 {
-   if (f->_mp_alloc == 1L) f->_mp_d = (mp_limb_t *) 0L;
+   if (f->_mp_alloc == 0L) f->_mp_d = (mp_limb_t *) 0L;
    else f->_mp_size = 0L;
 }
 
@@ -238,7 +238,7 @@ void fmpz_set(fmpz_t * out, fmpz_t * f);
 static inline
 void fmpz_set_ui(fmpz_t * res, ulong x)
 {
-   if (res->_mp_alloc > 1L)
+   if (res->_mp_alloc > 0L)
    { 
       if (x == 0L) res->_mp_size = 0L;
       else
@@ -248,7 +248,7 @@ void fmpz_set_ui(fmpz_t * res, ulong x)
       }
    } else if (x > IMM_MAX)
    {
-      fmpz_fit_limbs(res, 2L);
+      fmpz_fit_limbs(res, 1L);
       res->_mp_size = 1L;
       res->_mp_d[0] = x;      
    } else res->_mp_d = (mp_limb_t *) x;
@@ -262,10 +262,10 @@ static inline
 unsigned long fmpz_get_ui(fmpz_t * res)
 {
    ulong alloc = res->_mp_alloc;
-   if (alloc > 1L) return mpz_get_ui(res);
+   if (alloc > 0L) return mpz_get_ui(res);
 
    long r_int = (long) res->_mp_d;
-   if (r_int > 0L) return r_int;
+   if (r_int >= 0L) return r_int;
    else return -r_int;
 }
 
@@ -276,7 +276,7 @@ unsigned long fmpz_get_ui(fmpz_t * res)
 static inline
 void fmpz_set_si(fmpz_t * res, long x)
 {
-   if (res->_mp_alloc > 1L)
+   if (res->_mp_alloc > 0L)
    {  
       if (x < 0L)
       {
@@ -289,7 +289,7 @@ void fmpz_set_si(fmpz_t * res, long x)
       } else res->_mp_size = 0L;
    } else if (MPIR_ABS(x) > IMM_MAX)
    {
-      fmpz_fit_limbs(res, 2L);
+      fmpz_fit_limbs(res, 1L);
       if (x < 0L)
       {
          res->_mp_size = -1L;
@@ -309,7 +309,7 @@ void fmpz_set_si(fmpz_t * res, long x)
 static inline
 long fmpz_get_si(fmpz_t * res)
 {
-   if (res->_mp_alloc > 1L) return mpz_get_si(res);
+   if (res->_mp_alloc > 0L) return mpz_get_si(res);
 
    return (long) res->_mp_d;
 }
@@ -331,7 +331,7 @@ void fmpz_neg(fmpz_t * out, fmpz_t * f);
 static inline
 int fmpz_is_zero(fmpz_t * x)
 {
-   if (x->_mp_alloc == 1L) return (((long) x->_mp_d) == 0L);
+   if (x->_mp_alloc == 0L) return (((long) x->_mp_d) == 0L);
    else return (x->_mp_size == 0L);
 }
 

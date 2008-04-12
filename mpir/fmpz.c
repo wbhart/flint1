@@ -109,13 +109,12 @@ do { \
 void fmpz_block_init(fmpz_t * entry, ulong m)
 {
    entry->_mp_size = m;
-   entry->_mp_alloc = 1L;
+   entry->_mp_alloc = 0L;
    entry->_mp_d = (mp_limb_t *) 0L;
    entry++;
    for (ulong i = 1; i < m; i++, entry++)
    {
-      entry->_mp_alloc = 1L;
-      entry->_mp_size = 0L;
+      entry->_mp_alloc = 0L;
       entry->_mp_d = (mp_limb_t *) 0L;
    }
 }
@@ -127,7 +126,7 @@ void fmpz_block_init(fmpz_t * entry, ulong m)
 
 void fmpz_block_init2(fmpz_t * entry, ulong m, ulong n)
 {
-   if (n <= 1L)
+   if (n == 0L)
    {
       fmpz_block_init(entry, m);
       return;
@@ -152,23 +151,10 @@ void fmpz_block_init2(fmpz_t * entry, ulong m, ulong n)
 void fmpz_block_realloc(fmpz_t * entry, ulong n)
 {
    long oldn = entry->_mp_alloc;
-   if ((n == 1L) && (oldn > 1L)) n = 2L; // Cannot realloc back to 1 limb per integer
-   
-   if UNLIKELY(n == 0L)
-   {
-      if (oldn)
-      {
-         mp_limb_t * data = entry->_mp_d - 1;
-         ulong m = data[0];
-         fmpz_block_clear(entry);
-         fmpz_block_init(entry, m);
-      }
-      return;
-   }
    
    if (oldn < n)
    {
-      if (oldn == 1L)
+      if (oldn == 0L)
       {
          ulong intsize = (n<<MPIR_LG_BYTES);
          ulong m = entry->_mp_size;
@@ -213,10 +199,22 @@ void fmpz_block_realloc(fmpz_t * entry, ulong n)
       free(block_ptr - 1);
    } else if (oldn > n)
    {
-      ulong intsize = (n<<MPIR_LG_BYTES);
       mp_limb_t * block_ptr = entry->_mp_d - 1;
       ulong m = block_ptr[0];
+      if (n == 0L)
+      {
+         for (ulong i = 0; i < m; i++, entry++)
+         {
+             if (entry->_mp_size > 0L) entry->_mp_d = (mp_limb_t *) entry->_mp_d[0];
+             else if (entry->_mp_size < 0L) entry->_mp_d = (mp_limb_t *) -entry->_mp_d[0];
+             else entry->_mp_d = (mp_limb_t *) 0L;
+             entry->_mp_alloc = 0L;
+         }
+         free(block_ptr);
+         return;
+      }
       block_ptr++;
+      ulong intsize = (n<<MPIR_LG_BYTES);
       mp_limb_t * new_block = (mp_limb_t *) mpir_alloc(intsize*m+sizeof(mp_limb_t));
       new_block[0] = m;
       new_block++;
@@ -239,7 +237,7 @@ void fmpz_block_realloc(fmpz_t * entry, ulong n)
 
 void fmpz_block_clear(fmpz_t * entry)
 {
-   if (entry->_mp_alloc > 1L) 
+   if (entry->_mp_alloc > 0L) 
    {
       mp_limb_t * data = entry->_mp_d - 1;
       free(data);
@@ -307,15 +305,14 @@ fmpz_t * fmpz_realloc_array(fmpz_t * arr, ulong old_count, ulong count)
          if (old_blocks != old_blocks2)
          {
             ulong n = entry->_mp_alloc;
-            if (n == 1L)
+            if (n == 0L)
             {
                ulong m = entry->_mp_size;
                entry->_mp_size = MPIR_BLOCK;
                entry += m;
                for (ulong i = m; i < MPIR_BLOCK; i++, entry++)
                {
-                  entry->_mp_alloc = 1L;
-                  entry->_mp_size = 0L;
+                  entry->_mp_alloc = 0L;
                   entry->_mp_d = (mp_limb_t *) 0L;
                }              
             } else  
@@ -350,18 +347,17 @@ fmpz_t * fmpz_realloc_array(fmpz_t * arr, ulong old_count, ulong count)
       {
          ulong n = entry->_mp_alloc;
          ulong newm = count - (old_blocks2<<MPIR_LG_BLOCK);
-         if (n == 1L)
+         if (n == 0L)
          {
             ulong m = entry->_mp_size;
             entry->_mp_size = newm;
             entry += m;
             for (ulong i = m; i < newm; i++, entry++)
             {
-               entry->_mp_alloc = 1L;
-               entry->_mp_size = 0L;
+               entry->_mp_alloc = 0L;
                entry->_mp_d = (mp_limb_t *) 0L;
             }              
-         } else //if (n)
+         } else 
          {
             mp_limb_t * block_ptr = entry->_mp_d - 1;
             ulong m = block_ptr[0];
@@ -405,19 +401,16 @@ void mpz_to_fmpz(fmpz_t * fnum, mpz_t num)
 {
    ulong size = mpz_size(num);
    
-   if (size > 1L) 
+   if ((size > 1L) || (fnum->_mp_alloc > 0L))
    {
       fmpz_fit_limbs(fnum, size);
       mpz_set(fnum, num);
-   } else if (fnum->_mp_alloc > 1L)
-   {
-      mpz_set(fnum, num);            
    } else
    {
       ulong m_int = mpz_get_ui(num);
       if (m_int > IMM_MAX) 
       {
-         fmpz_fit_limbs(fnum, 2L);
+         fmpz_fit_limbs(fnum, 1L);
          mpz_set(fnum, num);   
       } else
       {
@@ -428,7 +421,7 @@ void mpz_to_fmpz(fmpz_t * fnum, mpz_t num)
 
 void fmpz_to_mpz(mpz_t num, fmpz_t * fnum)
 {
-   if (fnum->_mp_alloc > 1L) mpz_set(num, fnum);
+   if (fnum->_mp_alloc > 0L) mpz_set(num, fnum);
    else
    {
       mpz_set_si(num, (long) fnum->_mp_d);
@@ -437,21 +430,19 @@ void fmpz_to_mpz(mpz_t num, fmpz_t * fnum)
 
 double fmpz_get_d(fmpz_t * f)
 {
-   if (f->_mp_alloc == 1L)
+   if (f->_mp_alloc == 0L)
    {
       long int_f = (long) f->_mp_d;
       if (int_f == 0) return 0.0;
-      if (int_f < 0L) 
-      {
-         int_f = -int_f;
-         return __gmpn_get_d(&int_f, 1L, -1L, 0L);
-      } else return __gmpn_get_d(&int_f, 1L, 1L, 0L);
+      ulong int_abs = MPIR_ABS(int_f);
+      if (int_f < 0L) return __gmpn_get_d(&int_abs, 1L, -1L, 0L);
+      else return __gmpn_get_d(&int_abs, 1L, 1L, 0L);
    } else return mpz_get_d(f);
 }
 
 double fmpz_get_d_2exp(long * exp, fmpz_t * f)
 {
-   if (f->_mp_alloc == 1L)
+   if (f->_mp_alloc == 0L)
    {
       double d;
       long int_f = (long) f->_mp_d;
@@ -460,13 +451,10 @@ double fmpz_get_d_2exp(long * exp, fmpz_t * f)
          (*exp) = 0L;
          return 0.0;
       }
-      if (int_f < 0L) 
-      {
-         int_f = -int_f;
-         d = __gmpn_get_d(&int_f, 1L, -1L, 0L);
-      } else d = __gmpn_get_d(&int_f, 1L, 1L, 0L);
-      (*exp) = MPIR_BIT_COUNT(int_f);
-      return ldexp(d, -(*exp)); 
+      ulong int_abs = MPIR_ABS(int_f);
+      (*exp) = MPIR_BIT_COUNT(int_abs);
+      if (int_f < 0L) return __gmpn_get_d(&int_abs, 1L, -1L, -*exp);
+      else return __gmpn_get_d(&int_f, 1L, 1L, -*exp);
    } else return mpz_get_d_2exp(exp, f);
 }
 
@@ -482,7 +470,7 @@ double fmpz_get_d_2exp(long * exp, fmpz_t * f)
 
 void fmpz_print(fmpz_t * in)
 {
-   if (in->_mp_alloc == 1L) printf("%ld", (long) in->_mp_d);
+   if (in->_mp_alloc == 0L) printf("%ld", (long) in->_mp_d);
    else gmp_printf("%Zd", in);
 }
 
@@ -509,7 +497,7 @@ void fmpz_fread(fmpz_t * in, FILE * f)
 
 void fmpz_random(fmpz_t * f, ulong bits)
 {
-   if ((f->_mp_alloc == 1L) && (bits <= MPIR_BITS - 2))
+   if ((f->_mp_alloc == 0L) && (bits <= MPIR_BITS - 2))
    {
       ulong temp;
       mpn_random(&temp, 1L);
@@ -520,7 +508,7 @@ void fmpz_random(fmpz_t * f, ulong bits)
    ulong limbs = ((bits-1)>>MPIR_LG_BITS)+1;
    ulong rem = (bits & (MPIR_BITS - 1));
    
-   fmpz_fit_limbs(f, MPIR_MAX(limbs, 2L));
+   fmpz_fit_limbs(f, limbs);
    mp_limb_t * fp = f->_mp_d;
    f->_mp_size = limbs;
    mpn_random(fp, limbs);
@@ -534,7 +522,7 @@ void fmpz_random(fmpz_t * f, ulong bits)
 
 void fmpz_randomm(fmpz_t * out, fmpz_t * in)
 {
-   if ((in->_mp_alloc > 1L) && (out->_mp_alloc > 1L)) 
+   if ((in->_mp_alloc > 0L) && (out->_mp_alloc > 0L)) 
    {
       fmpz_fit_limbs(out, MPIR_ABS(in->_mp_size));
       mpz_urandomm(out, state, in);
@@ -559,7 +547,7 @@ void fmpz_randomm(fmpz_t * out, fmpz_t * in)
 
 int fmpz_probab_prime_p(fmpz_t * p, ulong n)
 {
-   if (p->_mp_alloc > 1L) return mpz_probab_prime_p(p, n);
+   if (p->_mp_alloc > 0L) return mpz_probab_prime_p(p, n);
    else
    {
       mpz_t temp1;
@@ -581,7 +569,7 @@ void fmpz_set(fmpz_t * w, fmpz_t * u)
 {
   if (u != w) 
   {
-     if (u->_mp_alloc == 1L)
+     if (u->_mp_alloc == 0L)
      {
         fmpz_set_si(w, (long) u->_mp_d);
      } else
@@ -590,9 +578,14 @@ void fmpz_set(fmpz_t * w, fmpz_t * u)
         mp_size_t usize, size;
 
         usize = u->_mp_size;
+        if (usize == 0L) 
+        {
+           fmpz_set_ui(w, 0L);
+           return;
+        }
         size = MPIR_ABS (usize);
 
-        fmpz_fit_limbs(w, MPIR_MAX(size, 2L)); 
+        fmpz_fit_limbs(w, size); 
 
         wp = w->_mp_d;
         up = u->_mp_d;
@@ -612,7 +605,7 @@ void fmpz_set(fmpz_t * w, fmpz_t * u)
 void fmpz_neg(fmpz_t * out, fmpz_t * f)
 {
    if (out != f) fmpz_set(out, f);
-   if (out->_mp_alloc == 1L) out->_mp_d = (mp_limb_t *) -((long) out->_mp_d);
+   if (out->_mp_alloc == 0L) out->_mp_d = (mp_limb_t *) -((long) out->_mp_d);
    else out->_mp_size = -out->_mp_size;
 }
 
@@ -627,10 +620,10 @@ int fmpz_equal(fmpz_t * f2, fmpz_t * f1)
    if UNLIKELY(f1 == f2) return 1;
    ulong a1 = f1->_mp_alloc;
    ulong a2 = f1->_mp_alloc;
-   if ((a1 > 1L) && (a2 > 1L)) return (mpz_cmp(f1, f2) == 0);
-   if (a1 == 1L)
+   if ((a1 > 0L) && (a2 > 0L)) return (mpz_cmp(f1, f2) == 0);
+   if (a1 == 0L)
    {
-      if (a2 == 1L) return (f1->_mp_d == f2->_mp_d);
+      if (a2 == 0L) return (f1->_mp_d == f2->_mp_d);
       return (mpz_cmp_si(f2, (long) f1->_mp_d) == 0);
    }
    return (mpz_cmp_si(f1, (long) f2->_mp_d) == 0);
@@ -648,12 +641,12 @@ int fmpz_equal(fmpz_t * f2, fmpz_t * f1)
 
 void _fmpz_add_IMM(fmpz_t * out, fmpz_t * f1, long c)
 {
-   if (f1->_mp_alloc == 1L)
+   if (f1->_mp_alloc == 0L)
    {
       fmpz_set_si(out, c + (long) f1->_mp_d); 
    } else
    {
-      fmpz_fit_limbs(out, MPIR_MAX(MPIR_ABS(f1->_mp_size) + 1, 2L));
+      fmpz_fit_limbs(out, MPIR_ABS(f1->_mp_size) + 1);
       if (c >= 0L) mpz_add_ui(out, f1, c);
       else mpz_sub_ui(out, f1, -c);
    }
@@ -661,11 +654,11 @@ void _fmpz_add_IMM(fmpz_t * out, fmpz_t * f1, long c)
 
 void fmpz_add(fmpz_t * out, fmpz_t * f1, fmpz_t * f2)
 {
-   if (f1->_mp_alloc == 1L)
+   if (f1->_mp_alloc == 0L)
    {
       _fmpz_add_IMM(out, f2, (long) f1->_mp_d);
       return;
-   } else if (f2->_mp_alloc == 1L)
+   } else if (f2->_mp_alloc == 0L)
    {
       _fmpz_add_IMM(out, f1, (long) f2->_mp_d);
       return;
@@ -682,7 +675,7 @@ void fmpz_add(fmpz_t * out, fmpz_t * f1, fmpz_t * f2)
    } 
 
    int re;
-   re = fmpz_fit_limbs(out, MPIR_MAX(d1n + 1, 2L));
+   re = fmpz_fit_limbs(out, d1n + 1);
 
    mp_limb_t * rp = fmpz_data(out);
    mp_limb_t * d1p = fmpz_data(f1);
@@ -737,12 +730,12 @@ void fmpz_add(fmpz_t * out, fmpz_t * f1, fmpz_t * f2)
 
 void _fmpz_sub_IMM(fmpz_t * out, fmpz_t * f1, long c)
 {
-   if (f1->_mp_alloc == 1L)
+   if (f1->_mp_alloc == 0L)
    {
       fmpz_set_si(out, ((long) f1->_mp_d) - c); 
    } else
    {
-      fmpz_fit_limbs(out, MPIR_MAX(MPIR_ABS(f1->_mp_size) + 1, 2L));
+      fmpz_fit_limbs(out, MPIR_ABS(f1->_mp_size) + 1);
       if (c >= 0L) mpz_sub_ui(out, f1, c);
       else mpz_add_ui(out, f1, -c);
    }
@@ -750,12 +743,12 @@ void _fmpz_sub_IMM(fmpz_t * out, fmpz_t * f1, long c)
 
 void fmpz_sub(fmpz_t * out, fmpz_t * f1, fmpz_t * f2)
 {
-   if (f1->_mp_alloc == 1L)
+   if (f1->_mp_alloc == 0L)
    {
       _fmpz_sub_IMM(out, f2, (long) f1->_mp_d);
       fmpz_neg(out, out);
       return;
-   } else if (f2->_mp_alloc == 1L)
+   } else if (f2->_mp_alloc == 0L)
    {
       _fmpz_sub_IMM(out, f1, (long) f2->_mp_d);
       return;
@@ -774,7 +767,7 @@ void fmpz_sub(fmpz_t * out, fmpz_t * f1, fmpz_t * f2)
    } 
 
    int re;
-   re = fmpz_fit_limbs(out, MPIR_MAX(d1n + 1, 2L));
+   re = fmpz_fit_limbs(out, d1n + 1);
 
    mp_limb_t * rp = fmpz_data(out);
    mp_limb_t * d1p = fmpz_data(f1);
@@ -923,7 +916,7 @@ void _fmpz_addmul_ui(fmpz_t * w, fmpz_t * x, ulong y)
    mp_limb_t sub = xn;
    xn = MPIR_ABS(xn);
 
-   if (w->_mp_alloc == 1L)
+   if (w->_mp_alloc == 0L)
    {
       if ((long) w->_mp_d < 0L) wss = -1L;
       else if ((long) w->_mp_d > 0L) wss = 1L;
@@ -932,7 +925,7 @@ void _fmpz_addmul_ui(fmpz_t * w, fmpz_t * x, ulong y)
    
    if UNLIKELY(wss == 0L)
    {
-      fmpz_fit_limbs(w, MPIR_MAX(xn+1, 2L));
+      fmpz_fit_limbs(w, xn+1);
       wp = fmpz_data(w);
       xp = fmpz_data(x);
       cy = mpn_mul_1(wp, xp, xn, y);
@@ -945,7 +938,7 @@ void _fmpz_addmul_ui(fmpz_t * w, fmpz_t * x, ulong y)
    sub ^= wss;
    wn = MPIR_ABS(wss);
    new_wn = MPIR_MAX(wn, xn);
-   fmpz_fit_limbs(w, MPIR_MAX(new_wn+1, 2L));
+   fmpz_fit_limbs(w, new_wn+1);
    wp = fmpz_data(w);
    xp = fmpz_data(x);
    
@@ -1039,7 +1032,7 @@ void _fmpz_addmul_ui(fmpz_t * w, fmpz_t * x, ulong y)
 
 void fmpz_addmul_ui(fmpz_t * w, fmpz_t * x, ulong y)
 {
-   if (x->_mp_alloc == 1L)
+   if (x->_mp_alloc == 0L)
    {
       long x_int = (long) x->_mp_d;
       ulong xabs = MPIR_ABS(x_int);
@@ -1088,7 +1081,7 @@ void _fmpz_submul_ui(fmpz_t * w, fmpz_t * x, ulong y)
    mp_limb_t sub = ~xn;
    xn = MPIR_ABS(xn);
 
-   if (w->_mp_alloc == 1L)
+   if (w->_mp_alloc == 0L)
    {
       if ((long) w->_mp_d < 0L) wss = -1L;
       else if ((long) w->_mp_d > 0L) wss = 1L;
@@ -1097,7 +1090,7 @@ void _fmpz_submul_ui(fmpz_t * w, fmpz_t * x, ulong y)
    
    if UNLIKELY(wss == 0L)
    {
-      fmpz_fit_limbs(w, MPIR_MAX(xn+1, 2L));
+      fmpz_fit_limbs(w, xn+1);
       wp = fmpz_data(w);
       xp = fmpz_data(x);
       cy = mpn_mul_1(wp, xp, xn, y);
@@ -1110,7 +1103,7 @@ void _fmpz_submul_ui(fmpz_t * w, fmpz_t * x, ulong y)
    sub ^= wss;
    wn = MPIR_ABS(wss);
    new_wn = MPIR_MAX(wn, xn);
-   fmpz_fit_limbs(w, MPIR_MAX(new_wn+1, 2L));
+   fmpz_fit_limbs(w, new_wn+1);
    wp = fmpz_data(w);
    xp = fmpz_data(x);
    
@@ -1204,7 +1197,7 @@ void _fmpz_submul_ui(fmpz_t * w, fmpz_t * x, ulong y)
 
 void fmpz_submul_ui(fmpz_t * w, fmpz_t * x, ulong y)
 {
-   if (x->_mp_alloc == 1L)
+   if (x->_mp_alloc == 0L)
    {
       long x_int = (long) x->_mp_d;
       ulong xabs = MPIR_ABS(x_int);
@@ -1257,7 +1250,7 @@ void _fmpz_mul_2exp(fmpz_t * w, fmpz_t * u, ulong exp)
 
    if UNLIKELY(uss == 0L)
    {
-      if (w->_mp_alloc == 1L) w->_mp_d = (mp_limb_t *) 0L;
+      if (w->_mp_alloc == 0L) w->_mp_d = (mp_limb_t *) 0L;
       else w->_mp_size = 0L;
       return;
    }
@@ -1265,7 +1258,7 @@ void _fmpz_mul_2exp(fmpz_t * w, fmpz_t * u, ulong exp)
    limb_cnt = (exp>>MPIR_LG_BITS);
    exp &= (MPIR_BITS-1);
   
-   fmpz_fit_limbs(w, MPIR_MAX(un + limb_cnt + (exp != 0L), 2L));
+   fmpz_fit_limbs(w, un + limb_cnt + (exp != 0L));
    
    up = fmpz_data(u);
    wp = fmpz_data(w);
@@ -1293,7 +1286,7 @@ void _fmpz_mul_2exp(fmpz_t * w, fmpz_t * u, ulong exp)
 
 void fmpz_mul_2exp(fmpz_t * w, fmpz_t * u, ulong exp)
 {
-   if (u->_mp_alloc == 1L)
+   if (u->_mp_alloc == 0L)
    {
       long u_int = (long) u->_mp_d; 
       ulong u_abs = MPIR_ABS(u_int);

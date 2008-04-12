@@ -58,13 +58,13 @@ int test_fmpz_block_init_realloc_clear()
        
    for (ulong i = 0; (i < 100000) && (result == 1); i++)
    {
-       ulong n = randint(100)+1;
+       ulong n = randint(100);
        ulong m = randint(MPIR_BLOCK)+1;
 #if DEBUG
-       printf("n = %ld, m = %ld", n, m);
+       printf("n = %ld, m = %ld\n", n, m);
 #endif
        fmpz_block_init2(entry, m, n);
-       if (n == 1)
+       if (n == 0L)
        {
           fmpz_t * ptr = entry;
           for (ulong i = 0; i < m; i++, ptr++)
@@ -80,44 +80,32 @@ int test_fmpz_block_init_realloc_clear()
        }
        ulong newn = n+randint(100);
 #if DEBUG
-       printf(", newn = %ld\n", newn);
+       printf("newn = %ld\n", newn);
 #endif
        fmpz_block_realloc(entry, newn);
        fmpz_block_realloc(entry, n);
-       if ((n == 1) && (newn == 1))
+       if (n == 0L)
        {
           fmpz_t * ptr = entry;
           for (ulong i = 0; i < m; i++, ptr++)
           {
              result &= (temp_arr[i] == (long) ptr->_mp_d);
           }        
-       } else if (n == 1)
-       {
-          fmpz_t * ptr = entry;
-          for (ulong i = 0; i < m; i++, ptr++)
-          {
-             if ((long) ptr->_mp_size < 0L) result &= (temp_arr[i] == -ptr->_mp_d[0]);
-             else if ((long) ptr->_mp_size > 0L) result &= (temp_arr[i] == ptr->_mp_d[0]);
-             else result &= (temp_arr[i] == 0L);
-#if DEBUG
-             if (!result) printf("%ld, %ld\n", temp_arr[i], ptr->_mp_d[0]);
-#endif
-          }                  
        } else result &= (mpn_cmp(entry->_mp_d, temp, m*n) == 0);
        fmpz_block_clear(entry);
-       if (n != 1) mpir_free(temp);
+       if (n != 0L) mpir_free(temp);
    }
    
    for (ulong i = 0; (i < 10000) && (result == 1); i++)
    {
-       ulong n = randint(100)+1;
+       ulong n = randint(100);
        ulong m = randint(MPIR_BLOCK)+1;
 #if DEBUG
        printf("n = %ld, m = %ld", n, m);
 #endif
        fmpz_block_init(entry, m);
        fmpz_block_realloc(entry, n);
-       if (n == 1)
+       if (n == 0L)
        {
           fmpz_t * ptr = entry;
           for (ulong i = 0; i < m; i++, ptr++)
@@ -137,28 +125,17 @@ int test_fmpz_block_init_realloc_clear()
 #endif
        fmpz_block_realloc(entry, newn);
        fmpz_block_realloc(entry, n);
-       if ((n == 1) && (newn == 1))
+       if (n == 0L)
        {
           fmpz_t * ptr = entry;
           for (ulong i = 0; i < m; i++, ptr++)
           {
              result &= (temp_arr[i] == (long) ptr->_mp_d);
           }        
-       } else if (n == 1)
-       {
-          fmpz_t * ptr = entry;
-          for (ulong i = 0; i < m; i++, ptr++)
-          {
-             if ((long) ptr->_mp_size < 0L) result &= (temp_arr[i] == -ptr->_mp_d[0]);
-             else if ((long) ptr->_mp_size > 0L) result &= (temp_arr[i] == ptr->_mp_d[0]);
-             else result &= (temp_arr[i] == 0L);
-#if DEBUG
-             if (!result) printf("%ld, %ld\n", temp_arr[i], ptr->_mp_d[0]);
-#endif
-          }                  
        } else result &= (mpn_cmp(entry->_mp_d, temp, m*n) == 0);
+       
        fmpz_block_clear(entry);
-       if (n != 1) mpir_free(temp);
+       if (n != 0L) mpir_free(temp);
    }
       
    return result;
@@ -175,7 +152,7 @@ int test_fmpz_init_fit_limbs_clear_array()
        int_arr = fmpz_init_array(num_ints);
        for (ulong j = 0; j < 1000; j++)
        {
-          fmpz_fit_limbs(int_arr + randint(num_ints), randint(100)+1);
+          fmpz_fit_limbs(int_arr + randint(num_ints), randint(100));
        }
        fmpz_clear_array(int_arr, num_ints);
    }
