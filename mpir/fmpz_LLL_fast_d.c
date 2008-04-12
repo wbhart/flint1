@@ -23,6 +23,15 @@
 
 */
 
+/*
+   Modifications: This code has been modified to work with mpir's fmpz "flat" 
+   multiprecision integer package. 
+   
+   Copyright 2008 William Hart.
+   
+   Modifications distributed under the GPL.
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

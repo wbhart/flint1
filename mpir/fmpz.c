@@ -17,6 +17,12 @@
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 
 ===============================================================================*/
+
+/*
+   Numerous functions in this file have been adapted from the GNU Multi 
+   Precision library (GMP), Copyright Free Software Foundation, Inc, 
+*/
+
 /****************************************************************************
 
    fmpz.c: "flat" integer format
@@ -70,6 +76,11 @@ do { \
    } \
 } while (0);
 
+/*
+   The following macros are taken from the GNU Multi Precision library (GMP)
+   Copyright Free Software Foundation, Inc.
+*/
+
 #define MPN_COPY_INCR(dst, src, n)                      \
   do {                                                  \
     ASSERT ((n) >= 0);                                  \
@@ -94,6 +105,59 @@ do { \
       }                                                 \
   } while (0)
 
+#define mpn_incr_u(p,incr)                              \
+  do {                                                  \
+    mp_limb_t __x;                                      \
+    mp_ptr __p = (p);                                   \
+    if (__builtin_constant_p (incr) && (incr) == 1)     \
+      {                                                 \
+        while (++(*(__p++)) == 0)                       \
+          ;                                             \
+      }                                                 \
+    else                                                \
+      {                                                 \
+        __x = *__p + (incr);                            \
+        *__p = __x;                                     \
+        if (__x < (incr))                               \
+          while (++(*(++__p)) == 0)                     \
+            ;                                           \
+      }                                                 \
+  } while (0)
+
+#define mpn_decr_u(p,incr)                              \
+  do {                                                  \
+    mp_limb_t __x;                                      \
+    mp_ptr __p = (p);                                   \
+    if (__builtin_constant_p (incr) && (incr) == 1)     \
+      {                                                 \
+        while ((*(__p++))-- == 0)                       \
+          ;                                             \
+      }                                                 \
+    else                                                \
+      {                                                 \
+        __x = *__p;                                     \
+        *__p = __x - (incr);                            \
+        if (__x < (incr))                               \
+          while ((*(++__p))-- == 0)                     \
+            ;                                           \
+      }                                                 \
+  } while (0)
+
+#define MPN_INCR_U(ptr, size, n)   mpn_incr_u (ptr, n)
+#define MPN_DECR_U(ptr, size, n)   mpn_decr_u (ptr, n)
+
+#define mpn_com_n(d,s,n)                                \
+  do {                                                  \
+    mp_ptr     __d = (d);                               \
+    mp_srcptr  __s = (s);                               \
+    mp_size_t  __n = (n);                               \
+    ASSERT (__n >= 1);                                  \
+    ASSERT (MPN_SAME_OR_SEPARATE_P (__d, __s, __n));    \
+    do                                                  \
+      *__d++ = (~ *__s++) & GMP_NUMB_MASK;              \
+    while (--__n);                                      \
+  } while (0)
+
 /* ==============================================================================
 
    Block memory management
@@ -101,7 +165,7 @@ do { \
 ===============================================================================*/
 
 /*
-   Initialises a block with 0 < m < MPIR_BLOCK  integers in it, but 
+   Initialises a block with 0 < m <= MPIR_BLOCK  integers in it, but 
    doesn't actually allocate any memory 
    fmpz_block_realloc and fmpz_block_clear can be called on the block
 */
@@ -120,8 +184,8 @@ void fmpz_block_init(fmpz_t * entry, ulong m)
 }
 
 /*
-   Initialises a block, allocating space for MPIR_BLOCK integers 
-   of size 0 < n. 
+   Initialises a block, allocating space for 0 < m <= MPIR_BLOCK integers 
+   of size 0 < n. If n == 0, no space is allocated.
 */
 
 void fmpz_block_init2(fmpz_t * entry, ulong m, ulong n)
@@ -145,7 +209,7 @@ void fmpz_block_init2(fmpz_t * entry, ulong m, ulong n)
 }
 
 /*
-   Reallocate the integers in a block to have n limbs plus a sign/size limb
+   Reallocate the integers in a block to have n limbs each
 */
 
 void fmpz_block_realloc(fmpz_t * entry, ulong n)
@@ -490,8 +554,9 @@ void fmpz_fread(fmpz_t * in, FILE * f)
 ===============================================================================*/
 
 /*
-  This is not a serious random generator, it is just here for testing 
+  These are not serious random generators, they are just here for testing 
   purposes at this stage
+
   We require bits to be non-zero
 */
 
@@ -545,6 +610,10 @@ void fmpz_randomm(fmpz_t * out, fmpz_t * in)
 
 ===============================================================================*/
 
+/* 
+   Not intended to be particularly efficient at this point
+*/
+
 int fmpz_probab_prime_p(fmpz_t * p, ulong n)
 {
    if (p->_mp_alloc > 0L) return mpz_probab_prime_p(p, n);
@@ -564,6 +633,11 @@ int fmpz_probab_prime_p(fmpz_t * p, ulong n)
    Set/get
 
 ===============================================================================*/
+
+/*
+   The following function is adapted from the GNU Multi Precision library (GMP)
+   Copyright Free Software Foundation, Inc.
+*/
 
 void fmpz_set(fmpz_t * w, fmpz_t * u)
 {
@@ -651,6 +725,11 @@ void _fmpz_add_IMM(fmpz_t * out, fmpz_t * f1, long c)
       else mpz_sub_ui(out, f1, -c);
    }
 }
+
+/*
+   The following function is adapted from the GNU Multi Precision library (GMP)
+   Copyright Free Software Foundation, Inc.
+*/
 
 void fmpz_add(fmpz_t * out, fmpz_t * f1, fmpz_t * f2)
 {
@@ -740,6 +819,11 @@ void _fmpz_sub_IMM(fmpz_t * out, fmpz_t * f1, long c)
       else mpz_add_ui(out, f1, -c);
    }
 }
+
+/*
+   The following function is adapted from the GNU Multi Precision library (GMP)
+   Copyright Free Software Foundation, Inc.
+*/
 
 void fmpz_sub(fmpz_t * out, fmpz_t * f1, fmpz_t * f2)
 {
@@ -845,63 +929,16 @@ void fmpz_sub(fmpz_t * out, fmpz_t * f1, fmpz_t * f2)
    Addmul/submul
 
 ===============================================================================*/
-#define mpn_incr_u(p,incr)                              \
-  do {                                                  \
-    mp_limb_t __x;                                      \
-    mp_ptr __p = (p);                                   \
-    if (__builtin_constant_p (incr) && (incr) == 1)     \
-      {                                                 \
-        while (++(*(__p++)) == 0)                       \
-          ;                                             \
-      }                                                 \
-    else                                                \
-      {                                                 \
-        __x = *__p + (incr);                            \
-        *__p = __x;                                     \
-        if (__x < (incr))                               \
-          while (++(*(++__p)) == 0)                     \
-            ;                                           \
-      }                                                 \
-  } while (0)
-
-#define mpn_decr_u(p,incr)                              \
-  do {                                                  \
-    mp_limb_t __x;                                      \
-    mp_ptr __p = (p);                                   \
-    if (__builtin_constant_p (incr) && (incr) == 1)     \
-      {                                                 \
-        while ((*(__p++))-- == 0)                       \
-          ;                                             \
-      }                                                 \
-    else                                                \
-      {                                                 \
-        __x = *__p;                                     \
-        *__p = __x - (incr);                            \
-        if (__x < (incr))                               \
-          while ((*(++__p))-- == 0)                     \
-            ;                                           \
-      }                                                 \
-  } while (0)
-
-#define MPN_INCR_U(ptr, size, n)   mpn_incr_u (ptr, n)
-#define MPN_DECR_U(ptr, size, n)   mpn_decr_u (ptr, n)
-
-#define mpn_com_n(d,s,n)                                \
-  do {                                                  \
-    mp_ptr     __d = (d);                               \
-    mp_srcptr  __s = (s);                               \
-    mp_size_t  __n = (n);                               \
-    ASSERT (__n >= 1);                                  \
-    ASSERT (MPN_SAME_OR_SEPARATE_P (__d, __s, __n));    \
-    do                                                  \
-      *__d++ = (~ *__s++) & GMP_NUMB_MASK;              \
-    while (--__n);                                      \
-  } while (0)
 
 /*
    w = w + x*y
 */
  
+/*
+   The following function is adapted from the GNU Multi Precision library (GMP)
+   Copyright Free Software Foundation, Inc.
+*/
+
 void _fmpz_addmul_ui(fmpz_t * w, fmpz_t * x, ulong y)
 {
    ulong  xn, wn, wss, new_wn, min_n, dn;
@@ -1067,6 +1104,11 @@ void fmpz_addmul_ui(fmpz_t * w, fmpz_t * x, ulong y)
    w = w - x*y
 */
 
+/*
+   The following function is adapted from the GNU Multi Precision library (GMP)
+   Copyright Free Software Foundation, Inc.
+*/
+
 void _fmpz_submul_ui(fmpz_t * w, fmpz_t * x, ulong y)
 {
    ulong  xn, wn, wss, new_wn, min_n, dn;
@@ -1184,7 +1226,7 @@ void _fmpz_submul_ui(fmpz_t * w, fmpz_t * x, ulong y)
 
           wss = -wss;
         }
-
+        
         // we can have high zero limbs due to cancellation, both when w
         // has more limbs or x has more  
         w->_mp_size = new_wn;
@@ -1236,6 +1278,11 @@ void fmpz_submul_ui(fmpz_t * w, fmpz_t * x, ulong y)
 
 /*
    w = u*2^exp for 0 <= exp
+*/
+
+/*
+   The following function is adapted from the GNU Multi Precision library (GMP)
+   Copyright Free Software Foundation, Inc.
 */
 
 void _fmpz_mul_2exp(fmpz_t * w, fmpz_t * u, ulong exp)

@@ -38,7 +38,6 @@ Copyright (C) 2007, William Hart and David Harvey
 
 #define DEBUG 0 // prints debug information
 #define DEBUG2 1 
-#define SIGNS 1
 
 gmp_randstate_t state;
 
