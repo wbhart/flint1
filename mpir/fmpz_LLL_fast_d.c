@@ -68,6 +68,24 @@ double fpNorm(double *vec, int n)
 
 } 
 
+ulong getShift(fmpz_mat_t B)
+{
+   ulong n = B->cols;
+   ulong shift = 0;
+   for (ulong i = 0; i < B->rows; i++)
+   {
+      fmpz_t * row = B->row_arr[i];
+
+      ulong j;
+      for (j = n-1; j >= 0 && fmpz_size(row + j) == 0L; j--);  
+      
+      if (shift < j-i) shift = j-i;
+      
+   }
+
+   return shift;
+}
+
 /***********************************/
 /* Babai's Nearest Plane algorithm */
 /***********************************/
@@ -287,6 +305,7 @@ void LLL (fmpz_mat_t B)
    
    n = B->cols;
    d = B->rows;
+   ulong shift = getShift(B);
 
    alpha = (int *) malloc(d * sizeof(int)); 
    expo = (int *) malloc(d * sizeof(int)); 
@@ -348,7 +367,7 @@ void LLL (fmpz_mat_t B)
       /* ********************************** */   
 
       Babai (kappa, B, mu, r, s, appB, expo, appSP, 
-                                      alpha[kappa], zeros, kappamax, n, ztmp); 
+                                      alpha[kappa], zeros, kappamax, MPIR_MIN(kappamax+1+shift, n), ztmp); 
       
       /* ************************************ */
       /* Step4: Success of Lovasz's condition */
