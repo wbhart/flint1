@@ -110,17 +110,9 @@ static inline ulong MPIR_BIT_COUNT(ulong x)
    So we define these macros for use in situations where this would be a problem
 */
 
-static inline ulong MPIR_RSHIFT(ulong in, ulong shift)
-{
-   if (shift == MPIR_BITS) return 0L;
-   return (in>>shift);
-}
+#define MPIR_RSHIFT(xxx, xxxshift) (xxxshift != MPIR_BITS ? (xxx>>xxxshift) : 0L)
 
-static inline ulong MPIR_LSHIFT(ulong in, ulong shift)
-{
-   if (shift == MPIR_BITS) return 0L;
-   return (in<<shift);
-}
+#define MPIR_LSHIFT(xxx, xxxshift) (xxxshift != MPIR_BITS ? (xxx<<xxxshift) : 0L)
 
 #ifdef __cplusplus
  }

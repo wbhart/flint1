@@ -81,12 +81,12 @@ do { \
    Copyright Free Software Foundation, Inc.
 */
 
-#define MPN_COPY_INCR(dst, src, n)                      \
-  do {                                                  \
-    ASSERT ((n) >= 0);                                  \
-    ASSERT (MPN_SAME_OR_INCR_P (dst, src, n));          \
-    if ((n) != 0)                                       \
-      {                                                 \
+#define MPN_COPY_INCR(dst, src, n)                  \
+  do {                                              \
+    ASSERT ((n) >= 0);                              \
+    ASSERT (MPN_SAME_OR_INCR_P (dst, src, n));      \
+    if ((n) != 0)                                   \
+      {                                             \
 	mp_size_t __n = (n) - 1;                        \
 	mp_ptr __dst = (dst);                           \
 	mp_srcptr __src = (src);                        \
@@ -96,13 +96,13 @@ do { \
 	  {                                             \
 	    do                                          \
 	      {                                         \
-		*__dst++ = __x;                         \
-		__x = *__src++;                         \
+		*__dst++ = __x;                             \
+		__x = *__src++;                             \
 	      }                                         \
 	    while (--__n);                              \
 	  }                                             \
 	*__dst++ = __x;                                 \
-      }                                                 \
+      }                                             \
   } while (0)
 
 #define mpn_incr_u(p,incr)                              \
@@ -1355,6 +1355,98 @@ void fmpz_mul_2exp(fmpz_t * w, fmpz_t * u, ulong exp)
    {
       _fmpz_mul_2exp(w, u, exp);
    }
+}
+
+/* ==============================================================================
+
+   Division
+
+===============================================================================*/
+
+/*
+   The following function is adapted from the GNU Multi Precision library (GMP)
+   Copyright Free Software Foundation, Inc.
+*/
+
+void _fmpz_tdiv_q_2exp(fmpz_t * w, fmpz_t * u, ulong cnt)
+{
+   long usize, wsize;
+   ulong limb_cnt;
+
+   usize = u->_mp_size;
+   limb_cnt = (cnt>>MPIR_LG_BITS);
+   wsize = MPIR_ABS(usize) - limb_cnt;
+   if (wsize <= 0L)
+      w->_mp_size = 0L;
+   else
+   {
+      mp_limb_t * wp, * up;
+
+      fmpz_fit_limbs(w, wsize);
+
+      wp = w->_mp_d;
+      up = u->_mp_d;
+
+      cnt &= (MPIR_BITS-1);
+      if (cnt != 0L)
+	  {
+	     mpn_rshift(wp, up + limb_cnt, wsize, cnt);
+	     wsize -= wp[wsize - 1] == 0L;
+	  } else
+	  {
+	     MPN_COPY_INCR(wp, up + limb_cnt, wsize);
+	  }
+
+      w->_mp_size = (usize >= 0L ? wsize : -wsize);
+   }
+}
+
+void fmpz_tdiv_q_2exp(fmpz_t * w, fmpz_t * u, ulong cnt)
+{
+   if (w->_mp_alloc == 0L)
+   {
+      long bits = fmpz_bits(u) - cnt;
+      if (bits <= (long) MPIR_BITS - 2L) // fits into the __mpz_struct
+      {
+         if (bits <= 0L) 
+         {
+            w->_mp_d = (mp_limb_t *) 0L;
+            return;
+         }
+         if (u->_mp_alloc == 0L)
+         {
+            long u_int = (long) u->_mp_d;
+            ulong u_abs = MPIR_ABS(u_int);
+            if (u_int >= 0L) w->_mp_d = (mp_limb_t *) (u_abs >> cnt);
+            else w->_mp_d = (mp_limb_t *) -(u_abs >> cnt);
+            return;
+         }
+         ulong ulimbs = MPIR_ABS(u->_mp_size);
+         bits = cnt - ((ulimbs-1)<<MPIR_LG_BITS);
+         if (bits >= 0L)
+         {
+            if (u->_mp_size > 0L) w->_mp_d = (mp_limb_t *) (u->_mp_d[ulimbs - 1]>>bits);
+            if (u->_mp_size < 0L) w->_mp_d = (mp_limb_t *) -(u->_mp_d[ulimbs - 1]>>bits);
+            return;
+         } else
+         {
+            mp_limb_t * up = u->_mp_d;
+            bits = -bits;
+            ulong temp = (up[ulimbs - 1]<<bits);
+            temp |= (up[ulimbs - 2]>>(MPIR_BITS - bits));
+            if ((long) u->_mp_size > 0L) w->_mp_d = (mp_limb_t *) temp;
+            if ((long) u->_mp_size < 0L) w->_mp_d = (mp_limb_t *) -temp; 
+            return;           
+         }
+      }
+   } 
+   if (u->_mp_alloc == 0L)
+   {
+      long u_int = (long)u->_mp_d;
+      ulong u_abs = MPIR_ABS(u_int);
+      if (u_int > 0L) fmpz_set_ui(w, MPIR_RSHIFT(u_abs, MPIR_MIN(cnt, MPIR_BITS)));
+      else fmpz_set_si(w, -MPIR_RSHIFT(u_abs, MPIR_MIN(cnt, MPIR_BITS)));
+   } else _fmpz_tdiv_q_2exp(w, u, cnt);
 }
 
 // *************** end of file

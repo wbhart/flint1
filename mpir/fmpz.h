@@ -369,6 +369,15 @@ void fmpz_submul_ui(fmpz_t * w, fmpz_t * x, ulong y);
 
 void fmpz_mul_2exp(fmpz_t * w, fmpz_t * u, ulong exp);
 
+/* ==============================================================================
+
+   Division
+
+===============================================================================*/
+
+void fmpz_tdiv_q_2exp(fmpz_t * w, fmpz_t * u, ulong cnt);
+
+
 
 #ifdef __cplusplus
  }

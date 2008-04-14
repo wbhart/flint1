@@ -1046,6 +1046,58 @@ int test_fmpz_get_d_2exp()
    return result;
 }
 
+int test_fmpz_tdiv_q_2exp()
+{
+   mpz_t num1, num2;
+   fmpz_t * fnum_arr, * fnum;
+   unsigned long bits, exp;
+   int result = 1;
+   
+   mpz_init(num1);
+   mpz_init(num2);
+   
+   for (unsigned long i = 0; (i < 5000) && (result == 1); i++)
+   {
+       ulong length = randint(1000)+1;
+       fnum_arr = fmpz_init_array(length);
+       
+       for (ulong j = 0; (j < 100) && (result == 1); j++)
+       {
+          bits = randint(500);
+          mpz_rrandomb(num1, state, bits);
+#if SIGNS
+          if (randint(2)) mpz_neg(num1, num1);
+#endif
+          ulong coeff = randint(length);
+          
+          exp = randint(500);
+#if DEBUG
+       printf("length = %ld, bits = %ld, exp = %ld\n", length, bits, exp);
+#endif          
+          fnum = fmpz_init();
+          mpz_to_fmpz(fnum, num1);
+          fmpz_tdiv_q_2exp(fnum_arr + coeff, fnum, exp);
+          mpz_tdiv_q_2exp(num2, num1, exp);
+          fmpz_to_mpz(num1, fnum_arr + coeff);
+          
+          result &= (mpz_cmp(num2, num1) == 0);
+          
+          fmpz_clear(fnum);
+       }
+       
+#if DEBUG2
+       if (!result) gmp_printf("%Zd, %Zd\n", num1, num2);
+#endif
+       
+       fmpz_clear_array(fnum_arr, length);
+   }
+   
+   mpz_clear(num1);
+   mpz_clear(num2);
+   
+   return result;
+}
+
 void fmpz_poly_test_all()
 {
    int success, all_success = 1;
@@ -1069,6 +1121,7 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_random_bits);
    RUN_TEST(fmpz_get_d);
    RUN_TEST(fmpz_get_d_2exp);
+   RUN_TEST(fmpz_tdiv_q_2exp);
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");
