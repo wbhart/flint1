@@ -58,7 +58,7 @@
 
 %\email{w.b.hart@maths.warwick.ac.uk}
 
-\title{FLINT 1.1: Fast Library for Number Theory}
+\title{FLINT 1.0.10: Fast Library for Number Theory}
 \author{William B. Hart and David Harvey}
 
 \begin{document}
@@ -2029,14 +2029,14 @@ Convert a FLINT \code{fmpz_t} integer object to an NTL \code{ZZ} integer object.
 void fmpz_poly_to_ZZX(ZZX& output, const fmpz_poly_t poly)
 \end{lstlisting}
 \begin{quote}
-Convert an NTL \code{ZZX} polynomial object to a FLINT \code{fmpz_poly_t} polynomial object.
+Convert a FLINT \code{fmpz_poly_t} polynomial object to an NTL \code{ZZX} polynomial object.
 \end{quote}
 
 \begin{lstlisting}
-void fmpz_poly_to_ZZX(ZZX& output, const fmpz_poly_t poly)
+void ZZX_to_fmpz_poly(fmpz_poly_t output, const ZZX& poly)
 \end{lstlisting}
 \begin{quote}
-Convert a FLINT \code{fmpz_poly_t} polynomial object to an NTL \code{ZZX} polynomial object.
+Convert an NTL \code{ZZX} polynomial object to a FLINT \code{fmpz_poly_t} polynomial object.
 \end{quote}
 
 \section{The quadratic sieve}
