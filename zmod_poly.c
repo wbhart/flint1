@@ -1794,6 +1794,7 @@ void _zmod_poly_mul_KS_precomp(zmod_poly_t output, zmod_poly_t input1, zmod_poly
     
 }
 
+#if USE_MIDDLE_PRODUCT
 void _zmod_poly_mul_KS_middle_precomp(zmod_poly_t output, zmod_poly_p input1, zmod_poly_precomp_t pre, unsigned long bits_input, unsigned long trunc)
 {   
    unsigned long length1 = FLINT_MIN(input1->length, trunc);
@@ -1951,6 +1952,7 @@ void zmod_poly_mul_KS_middle(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p
       _zmod_poly_mul_KS_middle(output, input1, input2, bits_input, trunc);
    }
 } 
+#endif
 
 /*******************************************************************************
 
@@ -3588,8 +3590,10 @@ void zmod_poly_newton_invert(zmod_poly_t Q_inv, zmod_poly_t Q, unsigned long n)
    zmod_poly_init(prod, p);
    zmod_poly_init(prod2, p);
    zmod_poly_newton_invert(g0, Q, m);
+#if USE_MIDDLE_PRODUCT
    if (n < FLINT_ZMOD_NEWTON_INVERSE_CACHE_CUTOFF)
    {
+#endif
       zmod_poly_mul_trunc_n(prod, Q, g0, n);
       prod->coeffs[0] = z_submod(prod->coeffs[0], 1L, p);
       //zmod_poly_mul_trunc_n(prod2, prod, g0, n);
@@ -3604,6 +3608,7 @@ void zmod_poly_newton_invert(zmod_poly_t Q_inv, zmod_poly_t Q, unsigned long n)
       prod2->length = (n+1)/2 + prod2_s->length;
       for (unsigned long i = 0; i < (n+1)/2; i++)
          prod2->coeffs[i] = 0L;
+#if USE_MIDDLE_PRODUCT
    } else
    {
       zmod_poly_precomp_t pre;
@@ -3622,6 +3627,7 @@ void zmod_poly_newton_invert(zmod_poly_t Q_inv, zmod_poly_t Q, unsigned long n)
       for (unsigned long i = 0; i < (n+1)/2; i++)
          prod2->coeffs[i] = 0L;
    }
+#endif
    zmod_poly_sub(Q_inv, g0, prod2);
    
    zmod_poly_clear(prod2);
