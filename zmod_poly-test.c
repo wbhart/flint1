@@ -843,6 +843,7 @@ int test_zmod_poly_mul_KS_precomp()
    return result;
 }
 
+#if USE_MIDDLE_PRODUCT
 int test_zmod_poly_mul_KS_middle()
 {
    int result = 1;
@@ -902,6 +903,7 @@ int test_zmod_poly_mul_KS_middle()
    
    return result;
 }
+#endif
 
 int test_zmod_poly_mul_classical_trunc_left()
 {
@@ -1811,7 +1813,9 @@ void zmod_poly_test_all()
    RUN_TEST(zmod_poly_sqr_classicalKS); 
    RUN_TEST(zmod_poly_mul_classical_trunc); 
    RUN_TEST(zmod_poly_mul_KS_trunc); 
+#if USE_MIDDLE_PRODUCT
    RUN_TEST(zmod_poly_mul_KS_middle); 
+#endif
    RUN_TEST(zmod_poly_mul_KS_precomp); 
    RUN_TEST(zmod_poly_mul_KS_trunc_precomp); 
    RUN_TEST(zmod_poly_mul_classical_trunc_left); 
