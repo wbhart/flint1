@@ -2009,7 +2009,8 @@ Various functions are provided for converting between FLINT objects and NTL obje
 
 \code{#include "NTL-interface.h"}
 
-In each case the functions provided for conversion expect the output objects, whether NTL or FLINT objects, to be initialised. However the functions are managed, in that a reallocation automatically occurs if insufficient space was allocated by the user.
+In each case the functions provided for conversion expect the output objects, whether NTL or FLINT objects, to be initialised. The first function is unmanaged in that the 
+user must ensure that sufficient space is allocated in the \code{fmpz_t} to hold the integer contained in the \code{ZZ}.
 
 \begin{lstlisting}
 void ZZ_to_fmpz(fmpz_t output, const ZZ& z)
@@ -2017,6 +2018,8 @@ void ZZ_to_fmpz(fmpz_t output, const ZZ& z)
 \begin{quote}
 Convert an NTL \code{ZZ} integer object to a FLINT \code{fmpz_t} integer object.
 \end{quote}
+
+The following functions are managed, in that a reallocation automatically occurs if insufficient space was allocated by the user.
 
 \begin{lstlisting}
 void fmpz_to_ZZ(ZZ& output, const fmpz_t z)
