@@ -40,7 +40,7 @@ Copyright (C) 2007, William Hart and David Harvey
 #include "ZmodF_poly.h"
 #include "long_extras.h"
 #include "zmod_poly.h"
-
+#include "zn_poly.h"
 /****************************************************************************
 
    Conversion Routines
@@ -2725,6 +2725,143 @@ void _fmpz_poly_mul_classical(fmpz_poly_t output, const fmpz_poly_t poly1, const
    
    if (poly1 == output) _fmpz_poly_stack_clear(input1);
    else if (poly2 == output) _fmpz_poly_stack_clear(input2);
+}
+
+/*
+   Multiply two polynomials using the multimodular technique.
+   This version requires an appropriate fmpz_comb_t struct, already initialized with primes
+   This function allows aliasing
+*/
+void __fmpz_poly_mul_modular_comb(fmpz_poly_t output, const fmpz_poly_t poly1, const fmpz_poly_t poly2,
+        fmpz_comb_t comb)
+{
+    if ((poly1->length == 0) || (poly2->length == 0))
+    {
+        _fmpz_poly_zero(output);
+        return;
+    }
+
+    // Multi-reduce poly1, place result into block1
+    unsigned long len1 = poly1->length;
+    unsigned long * block1 = flint_heap_alloc(len1 << comb->n);
+    for(int i=0; i<len1; i++) {
+        fmpz_multi_mod_ui(block1 + (i << comb->n),
+                _fmpz_poly_get_coeff_ptr(poly1, i), comb);
+    }
+
+    // Multi-reduce poly2, place result into block2
+    unsigned long len2 = poly2->length;
+    unsigned long * block2 = flint_heap_alloc(len2 << comb->n);
+    for(int i=0; i<len2; i++) {
+        fmpz_multi_mod_ui(block2 + (i << comb->n),
+                _fmpz_poly_get_coeff_ptr(poly2, i), comb);
+    }
+
+    unsigned long len_out = len1 + len2 - 1;
+    unsigned long * block_out = flint_heap_alloc(len_out << comb->n);
+
+    // Inputs for zn_array_mul
+    unsigned long * in1 = flint_heap_alloc(len1);
+    unsigned long * in2 = flint_heap_alloc(len2);
+
+    // Output for zn_array_mul
+    unsigned long * out = flint_heap_alloc(len_out);
+
+    unsigned long numprimes = (1UL << comb->n);
+
+    // FIXME: reorganize this loop to optimize cache line usage
+    for(int i=0; i<numprimes; i++) {
+
+        // in1 := poly1 % comb->primes[i]
+        for(int j=0; j<len1; j++) {
+            in1[j] = block1[i + (j << comb->n)];
+        }
+
+        // in2 := poly2 % comb->primes[i]
+        for(int j=0; j<len2; j++) {
+            in2[j] = block2[i + (j << comb->n)];
+        }
+
+        // multiply using zn_poly (requires len1>=len2>=1)
+        if(len1>=len2)
+            zn_array_mul(out, in1, len1, in2, len2, comb->mod[i]);
+        else
+            zn_array_mul(out, in2, len2, in1, len1, comb->mod[i]);
+
+        // place result in block_out with proper spacing
+        for(int j=0; j<len_out; j++) {
+            block_out[i + (j << comb->n)] = out[j];
+        }
+    }
+
+    // Reconstruct output from data in block_out
+    for(int i=0; i<len_out; i++) {
+        fmpz_t coeff = _fmpz_poly_get_coeff_ptr(output, i);
+        fmpz_multi_crt_ui(coeff, block_out + (i << comb->n), comb);
+    }
+    
+    output->length = len_out;
+    _fmpz_poly_normalise(output);
+    // Free all stuff
+    flint_heap_free(block1);
+    flint_heap_free(block2);
+    flint_heap_free(block_out);
+    flint_heap_free(in1);
+    flint_heap_free(in2);
+    flint_heap_free(out);
+}
+
+/*
+   Multiply two polynomials using the multimodular technique.
+   This function allows aliasing
+*/
+void _fmpz_poly_mul_modular(fmpz_poly_t output, const fmpz_poly_t poly1, const fmpz_poly_t poly2)
+{
+
+#if FLINT_BITS == 32
+    // start from nextprime(2^31)
+    // WARNING: there are only about 2^26 primes between 2^31 and 2^32
+    // this limits the size of output coefficients to about 65M limbs
+    unsigned long p0 = z_nextprime(1UL << 31);
+    // primes_per_limb = 32/log2(p0)
+    // = 1.0322580642700560413378333946892625831
+    double primes_per_limb = 1.0322580642701;
+#elif FLINT_BITS == 64
+    // start from nextprime(2^64 - 2^56)
+    // There should be about 2^50 primes starting there, which should
+    // be enough to coefficients of almost 2^50 limbs.
+    unsigned long p0 = z_nextprime((unsigned long) -(1L << 56));
+    // primes_per_limb = 64/log2(p0)
+    // = 1.0000882353338675941356105657797766168
+    double primes_per_limb = 1.0000882353339;
+#else
+#error Bill promised FLINT_BITS is either 32 or 64
+#endif
+
+    // estimated bound for the size of output coefficients
+    unsigned long output_limbs = poly1->limbs + poly2->limbs + 1;
+
+    // round up number of primes to a power of two;
+    unsigned long n = ceil_log2( output_limbs * primes_per_limb + 1 );
+
+    unsigned long numprimes = 1UL << n;
+    unsigned long* primes = flint_heap_alloc(numprimes);
+
+    unsigned long p = p0;
+    for(unsigned long i = 0; i < numprimes; i++) {
+        primes[i] = p;
+        p = z_nextprime(p);
+    }
+
+    // precomputation space
+    fmpz_comb_t comb;
+
+    fmpz_comb_init(comb, primes, n);
+    __fmpz_poly_mul_modular_comb(output, poly1, poly2, comb);
+    fmpz_comb_clear(comb);
+
+    // Free allocated stuff
+    flint_heap_free(primes);
 }
 
 /*

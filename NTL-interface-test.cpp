@@ -157,7 +157,6 @@ int test_ZZ_to_fmpz()
 int test_ZZX_to_fmpz_poly()
 {
    mpz_poly_t test_poly;
-   ZZX ZZX_poly;
    fmpz_poly_t test_fmpz_poly, test_fmpz_poly2;
    int result = 1;
    unsigned long bits, length;
@@ -171,6 +170,7 @@ int test_ZZX_to_fmpz_poly()
       fmpz_poly_init(test_fmpz_poly2);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
+          ZZX ZZX_poly;
           length = random_ulong(1000);
 #if DEBUG
           printf("%ld, %ld\n",length, bits);

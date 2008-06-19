@@ -36,8 +36,23 @@
 #include "memory-manager.h"
 #include "flint.h"
 #include "long_extras.h"
+#include "zn_poly.h"
 
 typedef mp_limb_t * fmpz_t;
+
+typedef struct
+{
+   unsigned long* primes;
+   unsigned long n; // we have 2^n primes
+   unsigned long log_comb; // the number of levels of products we have computed already
+   unsigned long log_res; // the number of levels of relative residues computed already
+   fmpz_t ** comb; // array of arrays of products
+   fmpz_t ** res;  // successive residues r_i^-1 mod r_{i+1} for pairs r_i, r_{i+1}
+   fmpz_t ** temp; // temporary space for reductions
+   zn_mod_t * mod;
+} fmpz_comb_struct;
+
+typedef fmpz_comb_struct fmpz_comb_t[1];
 
 #define ABS(x) (((long) x < 0) ? -x : x)
 
@@ -54,6 +69,10 @@ do { \
       } \
    } \
 } while (0);
+
+void fmpz_comb_init(fmpz_comb_t comb, unsigned long * primes, unsigned long n);
+
+void fmpz_comb_clear(fmpz_comb_t comb);
 
 void fmpz_check_normalisation(const fmpz_t x);
 
@@ -203,6 +222,8 @@ void fmpz_tdiv(fmpz_t res, const fmpz_t a, const fmpz_t b);
 
 void fmpz_fdiv(fmpz_t res, const fmpz_t a, const fmpz_t b);
 
+void fmpz_mod(fmpz_t res, const fmpz_t a, const fmpz_t b);
+
 void fmpz_tdiv_ui(fmpz_t output, const fmpz_t input, const unsigned long x);
 
 unsigned long fmpz_mod_ui(const fmpz_t input, const unsigned long x);
@@ -216,6 +237,8 @@ void fmpz_div_2exp(fmpz_t output, fmpz_t x, unsigned long exp);
 void fmpz_mul_2exp(fmpz_t output, fmpz_t x, unsigned long exp);
 
 void fmpz_gcd(fmpz_t output, fmpz_t x1, fmpz_t x2);
+
+void fmpz_invert(fmpz_t res, fmpz_t x, fmpz_t m);
 
 /*
    Computes the binomial coefficient next := bin(n, k) given prev = bin(n, k-1)
@@ -307,6 +330,10 @@ void fmpz_CRT_ui2_precomp(fmpz_t out, fmpz_t r1, fmpz_t m1, unsigned long r2,
    fmpz_add(out, r1, sm1);
    fmpz_clear(sm1);
 }
+
+unsigned long fmpz_multi_mod_ui(unsigned long * out, fmpz_t in, fmpz_comb_t comb);
+
+void fmpz_multi_crt_ui(fmpz_t output, unsigned long * residues, fmpz_comb_t comb);
 
 #ifdef __cplusplus
  }

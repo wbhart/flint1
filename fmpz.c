@@ -37,6 +37,7 @@
 #include "mpn_extras.h"
 #include "F_mpn_mul-tuning.h"
 #include "long_extras.h"
+#include "zn_poly.h"
 
 #define SWAP_PTRS(x_dummy_p, y_dummy_p) \
 do { \
@@ -668,6 +669,59 @@ void fmpz_fdiv(fmpz_t res, const fmpz_t a, const fmpz_t b)
    }
 }     
 
+/*
+   Reduce a mod b, assuming b is positive
+*/
+
+void fmpz_mod(fmpz_t res, const fmpz_t a, const fmpz_t b) 
+{
+   long a0 = a[0];
+   long b0 = b[0];
+   unsigned long sizea = FLINT_ABS(a0);
+   unsigned long sizeb = b0;
+   while ((!a[sizea]) && (sizea)) sizea--;
+   while ((!b[sizeb]) && (sizeb)) sizeb--;
+      
+
+   mp_limb_t mslimb;
+   fmpz_t temp, temp2;
+      
+   if (sizeb == 0)
+   {
+      printf("Error: division by zero!\n");
+      abort();          
+   } else if (sizea < sizeb) // Todo: make this deal with sizea == sizeb but a < b
+   {
+      if ((long) a0 < 0L) 
+      {
+         fmpz_add(res, a, b);  
+      } else fmpz_set(res, a);
+      return;
+   } else 
+   {
+      temp = (fmpz_t) flint_stack_alloc(sizea - sizeb + 1);
+      temp2 = (fmpz_t) flint_stack_alloc(sizeb + 2);
+      mpn_tdiv_qr(temp, temp2+1, 0, a+1, sizea, b+1, sizeb);
+      temp2[0] = sizeb;
+      NORM(temp2);
+      if (a0 < 0L)
+      {
+         unsigned long i = 0; 
+         for (; i < sizeb; i++)
+         {
+            if (temp2[i+1]) break;
+         }
+         if (i < sizeb)
+         {
+            fmpz_sub(temp2, b, temp2);
+         } 
+         fmpz_set(res, temp2);
+      } else fmpz_set(res, temp2);
+      flint_stack_release();  
+      flint_stack_release();  
+   }
+}     
+
 void fmpz_tdiv_ui(fmpz_t output, const fmpz_t input, const unsigned long x)
 {
    output[0] = input[0];
@@ -840,5 +894,287 @@ void fmpz_sqrtrem(fmpz_t sqrt, fmpz_t rem, fmpz_t n)
 
    sqrt[0] = (size+1)/2;
 }
+
+/*
+   Invert x modulo m assuming m is positive
+*/
+
+void fmpz_invert(fmpz_t res, fmpz_t x, fmpz_t m)
+{
+   if (m[0] == 0)
+   {
+      printf("Error: division by zero!\n");
+      abort(); 
+   }
+
+   fmpz_t m_temp, x_temp, x_temp2, r, a, temp, temp2;
+   x_temp = (fmpz_t) flint_stack_alloc(m[0]+2);
+   x_temp2 = (fmpz_t) flint_stack_alloc(m[0]+2);
+   m_temp = (fmpz_t) flint_stack_alloc(m[0]+2);
+   r = (fmpz_t) flint_stack_alloc(m[0]+2);
+   a = (fmpz_t) flint_stack_alloc(m[0]+2);
+   fmpz_mod(x_temp, x, m);
+   fmpz_set(x_temp2, x_temp);
+   fmpz_set(m_temp, m);
+   mpn_gcdext(r + 1, a + 1, a, m_temp + 1, m_temp[0], x_temp + 1, x_temp[0]);
+   temp = flint_stack_alloc(FLINT_ABS(a[0])+m[0]+1);
+   temp2 = flint_stack_alloc(FLINT_ABS(a[0])+m[0]+1);
+   fmpz_mul(temp, a, m);
+   fmpz_sub_ui_inplace(temp, 1);  
+   temp[0] = -temp[0]; 
+   fmpz_fdiv(temp2, temp, x_temp2);
+   fmpz_mod(res, temp2, m);
+   
+   flint_stack_release(); //temp2
+   flint_stack_release(); //temp
+   flint_stack_release(); //a
+   flint_stack_release(); //r
+   flint_stack_release(); //m_temp
+   flint_stack_release(); //x_temp2
+   flint_stack_release(); //x_temp
+}
+
+void fmpz_comb_init(fmpz_comb_t comb, unsigned long * primes, unsigned long n)
+{
+   comb->primes = primes;
+   comb->n = n;
+   comb->log_comb = 0;
+   comb->log_res = 0;
+   comb->comb = (fmpz_t **) flint_heap_alloc(n);
+   comb->temp = (fmpz_t **) flint_heap_alloc(n);
+   comb->res = (fmpz_t **) flint_heap_alloc(n);
+   unsigned long j = (1L<<(n-1));
+   unsigned long num_primes = j*2;
+   comb->mod = (zn_mod_t *) flint_heap_alloc_bytes(sizeof(zn_mod_t)*num_primes);
+   for (unsigned long i = 0; i < num_primes; i++) 
+      zn_mod_init(comb->mod[i], primes[i]);
+   unsigned long size = 2;
+   mp_limb_t * ptr;
+   for (unsigned i = 0; i < n; i++)
+   {
+      comb->comb[i] = (fmpz_t *) flint_heap_alloc(j);
+      ptr = (mp_limb_t *) flint_heap_alloc(num_primes+j);
+      for (unsigned long k = 0; k < j; k++, ptr += (size+1))
+      {
+         comb->comb[i][k] = ptr;
+      }
+      j/=2;
+      size*=2;
+   }
+   j = (1L<<(n-1));
+   size = 2;
+   for (unsigned i = 0; i < n; i++)
+   {
+      comb->temp[i] = (fmpz_t *) flint_heap_alloc(j);
+      ptr = (mp_limb_t *) flint_heap_alloc(num_primes+j);
+      for (unsigned long k = 0; k < j; k++, ptr += (size+1))
+      {
+         comb->temp[i][k] = ptr;
+      }
+      j/=2;
+      size*=2;
+   }
+   j = (1L<<(n-1));
+   size = 2;
+   for (unsigned i = 0; i < n; i++)
+   {
+      comb->res[i] = (fmpz_t *) flint_heap_alloc(j);
+      ptr = (mp_limb_t *) flint_heap_alloc(num_primes+j);
+      for (unsigned long k = 0; k < j; k++, ptr += (size+1))
+      {
+         comb->res[i][k] = ptr;
+      }
+      j/=2;
+      size*=2;
+   }
+}
+
+void fmpz_comb_clear(fmpz_comb_t comb)
+{
+   unsigned long n = comb->n;
+
+   for (unsigned i = 0; i < n; i++)
+   {
+      flint_heap_free(comb->comb[i][0]);
+      flint_heap_free(comb->comb[i]);
+      flint_heap_free(comb->temp[i][0]);
+      flint_heap_free(comb->temp[i]);
+      flint_heap_free(comb->res[i][0]);
+      flint_heap_free(comb->res[i]);
+   }
+   flint_heap_free(comb->comb);
+   flint_heap_free(comb->temp);
+   flint_heap_free(comb->res);
+   flint_heap_free(comb->mod);
+}
+
+unsigned long fmpz_multi_mod_ui_basecase(unsigned long * out, fmpz_t in, 
+                               unsigned long * primes, unsigned long num_primes)
+{
+   for (unsigned long i = 0; i < num_primes; i++)
+   {
+      out[i] = fmpz_mod_ui(in, primes[i]);
+   }
+}
+
+#define FLINT_LOG_MULTI_MOD_CUTOFF 2
+
+unsigned long fmpz_multi_mod_ui(unsigned long * out, fmpz_t in, fmpz_comb_t comb)
+{
+   unsigned long n = comb->n;
+   unsigned long i, j;
+   long log_comb = (long) comb->log_comb;
+   unsigned long num = (1L<<(n-log_comb));
+   if (!log_comb)
+   {
+      for (i = 0, j = 0; i < num; i += 2, j++)
+      {
+         fmpz_set_ui(comb->comb[0][j], comb->primes[i]);
+         fmpz_mul_ui(comb->comb[0][j], comb->comb[0][j], comb->primes[i+1]);
+      }
+   }
+   log_comb = 1;
+   num = (1L<<(n-1));
+   while (fmpz_cmpabs(in, comb->comb[log_comb-1][0]) >= 0L)
+   {
+      if (log_comb >= comb->log_comb)
+      {
+         for (i = 0, j = 0; i < num; i += 2, j++)
+         {
+            fmpz_mul(comb->comb[log_comb][j], comb->comb[log_comb-1][i], comb->comb[log_comb-1][i+1]);
+         }
+      }
+      log_comb++;
+      num /= 2;
+   }
+   comb->log_comb = log_comb;
+   log_comb--;
+   
+   for (i = 0; i < num; i++)
+   {
+      fmpz_set(comb->temp[log_comb][i], in);
+   }
+   log_comb--;
+   num *= 2;
+   
+   while (log_comb > FLINT_LOG_MULTI_MOD_CUTOFF)
+   {
+      for (i = 0, j = 0; i < num; i += 2, j++)
+      {
+         fmpz_mod(comb->temp[log_comb][i], comb->temp[log_comb + 1][j], comb->comb[log_comb][i]);
+         fmpz_mod(comb->temp[log_comb][i+1], comb->temp[log_comb + 1][j], comb->comb[log_comb][i+1]);
+      }
+      num *= 2;
+      log_comb--;
+   }
+   
+   num /= 2;
+   log_comb++;
+   unsigned long stride = (1L << (log_comb+1));
+   for (i = 0, j = 0; i < num; i++, j += stride)
+   {
+      fmpz_multi_mod_ui_basecase(out + j, comb->temp[log_comb][i], comb->primes + j, stride);
+   }
+   /*for (i = 0, j = 0; i < num; i += 2, j++)
+   {
+      out[i] = fmpz_mod_ui(comb->temp[0][j], comb->primes[i]);
+      out[i+1] = fmpz_mod_ui(comb->temp[0][j], comb->primes[i+1]);
+   }*/
+}
+
+void fmpz_multi_crt_ui(fmpz_t output, unsigned long * residues, fmpz_comb_t comb)
+{
+   unsigned long i, j;
+   unsigned long n = comb->n;
+   unsigned long num;
+   unsigned long log_res;
+   if (comb->log_res != n)
+   {
+      unsigned long log_comb = comb->log_comb;
+      num = (1L<<(n-log_comb));
+      while (log_comb < n)
+      {
+         for (i = 0, j = 0; i < num; i += 2, j++)
+         {
+            fmpz_mul(comb->comb[log_comb][j], comb->comb[log_comb-1][i], comb->comb[log_comb-1][i+1]);
+         }
+         log_comb++;
+         num /= 2;
+      }
+      comb->log_comb = log_comb;
+      
+      log_res = comb->log_res;
+      if (log_res == 0)
+      {
+         fmpz_t temp = (fmpz_t) flint_stack_alloc(2);
+         fmpz_t temp2 = (fmpz_t) flint_stack_alloc(2);
+         num = (1L<<n);
+         for (i = 0, j = 0; i < num; i += 2, j++)
+         {
+            fmpz_set_ui(temp, comb->primes[i]);
+            fmpz_set_ui(temp2, comb->primes[i+1]);
+            fmpz_invert(comb->res[0][j], temp, temp2);
+         }
+         flint_stack_release(); //temp2
+         flint_stack_release(); //temp
+      }
+      log_res++;
+      num /= 2;
+
+      while (log_res < n)
+      {
+         for (i = 0, j = 0; i < num; i += 2, j++)
+         {
+            fmpz_invert(comb->res[log_res][j], comb->comb[log_res-1][i], comb->comb[log_res-1][i+1]);
+         }
+         log_res++;
+         num /= 2;
+      }
+      comb->log_res = log_res;   
+   }
+
+   num = (1L<<n);
+   fmpz_t temp = (fmpz_t) flint_stack_alloc(3);
+   fmpz_t temp2 = (fmpz_t) flint_stack_alloc(3);
+   for (i = 0, j = 0; i < num; i += 2, j++)
+   {
+      fmpz_set_ui(temp, residues[i]);
+      fmpz_set_ui(temp2, fmpz_mod_ui(temp, comb->primes[i+1]));
+      fmpz_sub_ui_inplace(temp2, residues[i+1]);
+      temp2[0] = -temp2[0];
+      fmpz_mul(temp, temp2, comb->res[0][j]);
+      fmpz_set_ui(temp2, fmpz_mod_ui(temp, comb->primes[i+1]));
+      fmpz_mul_ui(temp, temp2, comb->primes[i]); 
+      fmpz_add_ui(comb->temp[0][j], temp, residues[i]);
+   }
+   flint_stack_release(); //temp2
+   flint_stack_release(); //temp
+    
+   temp = (fmpz_t) flint_stack_alloc(2*num+1); 
+   temp2 = (fmpz_t) flint_stack_alloc(2*num+1); 
+   num /= 2;
+   log_res = 1;
+   while (log_res < n)
+   {
+      for (i = 0, j = 0; i < num; i += 2, j++)
+      {
+         fmpz_mod(temp2, comb->temp[log_res-1][i], comb->comb[log_res-1][i+1]);
+         fmpz_sub(temp, temp2, comb->temp[log_res-1][i+1]);
+         temp[0] = -temp[0];
+         fmpz_mul(temp2, temp, comb->res[log_res][j]);
+         fmpz_mod(temp, temp2, comb->comb[log_res-1][i+1]);
+         fmpz_mul(temp2, temp, comb->comb[log_res-1][i]);
+         fmpz_add(comb->temp[log_res][j], temp2, comb->temp[log_res-1][i]);
+      }     
+      log_res++;
+      num /= 2; 
+   }
+
+   fmpz_set(output, comb->temp[log_res-1][0]);
+
+   flint_stack_release(); //temp2
+   flint_stack_release(); //temp 
+}
+
 
 // *************** end of file
