@@ -28,6 +28,7 @@ Copyright (C) 2007, William Hart and David Harvey
 #include <stdint.h>
 #include <string.h>
 #include <math.h>
+#include <time.h>
 
 #include "mpz_poly.h"
 #include "flint.h"
@@ -2748,7 +2749,7 @@ void __fmpz_poly_mul_modular_comb(fmpz_poly_t output, const fmpz_poly_t poly1, c
         fmpz_multi_mod_ui(block1 + (i << comb->n),
                 _fmpz_poly_get_coeff_ptr(poly1, i), comb);
     }
-
+    
     // Multi-reduce poly2, place result into block2
     unsigned long len2 = poly2->length;
     unsigned long * block2 = flint_heap_alloc(len2 << comb->n);
@@ -2756,7 +2757,7 @@ void __fmpz_poly_mul_modular_comb(fmpz_poly_t output, const fmpz_poly_t poly1, c
         fmpz_multi_mod_ui(block2 + (i << comb->n),
                 _fmpz_poly_get_coeff_ptr(poly2, i), comb);
     }
-
+    
     unsigned long len_out = len1 + len2 - 1;
     unsigned long * block_out = flint_heap_alloc(len_out << comb->n);
 
@@ -2770,6 +2771,7 @@ void __fmpz_poly_mul_modular_comb(fmpz_poly_t output, const fmpz_poly_t poly1, c
     unsigned long numprimes = (1UL << comb->n);
 
     // FIXME: reorganize this loop to optimize cache line usage
+    
     for(int i=0; i<numprimes; i++) {
 
         // in1 := poly1 % comb->primes[i]
@@ -2787,11 +2789,11 @@ void __fmpz_poly_mul_modular_comb(fmpz_poly_t output, const fmpz_poly_t poly1, c
             zn_array_mul(out, in1, len1, in2, len2, comb->mod[i]);
         else
             zn_array_mul(out, in2, len2, in1, len1, comb->mod[i]);
-
         // place result in block_out with proper spacing
         for(int j=0; j<len_out; j++) {
             block_out[i + (j << comb->n)] = out[j];
         }
+        
     }
 
     // Reconstruct output from data in block_out
@@ -2839,10 +2841,16 @@ void _fmpz_poly_mul_modular(fmpz_poly_t output, const fmpz_poly_t poly1, const f
 #endif
 
     // estimated bound for the size of output coefficients
-    unsigned long output_limbs = poly1->limbs + poly2->limbs + 1;
+    unsigned long length = FLINT_MIN(poly1->length, poly2->length);
+	long bits1 = fmpz_poly_max_bits(poly1);
+	long bits2 = fmpz_poly_max_bits(poly2);
+	unsigned long log_length = 0;
+    while (length > (1L<<log_length)) log_length++;
+    unsigned long output_bits = FLINT_ABS(bits1) + FLINT_ABS(bits2) + log_length + ((bits1 < 0L) || (bits2 < 0L));
 
     // round up number of primes to a power of two;
-    unsigned long n = ceil_log2( output_limbs * primes_per_limb + 1 );
+    unsigned long n = ceil_log2( (output_bits * primes_per_limb)/FLINT_BITS + 1 );
+    if (!n) n++;
 
     unsigned long numprimes = 1UL << n;
     unsigned long* primes = flint_heap_alloc(numprimes);

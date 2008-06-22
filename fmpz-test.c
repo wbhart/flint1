@@ -39,13 +39,6 @@ Copyright (C) 2007, William Hart and David Harvey
 #define DEBUG2 1 
 
 gmp_randstate_t state;
-
-#define RUN_TEST(targetfunc) \
-   printf("Testing " #targetfunc "()... ");            \
-   fflush(stdout);                                     \
-   success = test_##targetfunc();                      \
-   all_success = all_success && success;               \
-   printf(success ? "ok\n" : "FAIL!\n");
    
 int test_fmpz_convert()
 {
@@ -1667,7 +1660,7 @@ int test_fmpz_multi_mod_crt_ui()
    unsigned long * output, * output2;
       
    mpz_init(num1);
-   for (unsigned long i = 0; (i < 1000) && (result == 1); i++)
+   for (unsigned long i = 0; (i < 100) && (result == 1); i++)
    {
       unsigned long n = random_ulong(10);
       unsigned long limbs = (1L<<n) + random_ulong(1L<<n);
@@ -1726,8 +1719,6 @@ void fmpz_poly_test_all()
    int success, all_success = 1;
 
    RUN_TEST(fmpz_invert);
-   RUN_TEST(fmpz_comb_init_clear);
-   RUN_TEST(fmpz_multi_mod_crt_ui);
    RUN_TEST(fmpz_convert);
    RUN_TEST(fmpz_size);
    RUN_TEST(fmpz_bits);
@@ -1760,6 +1751,8 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_gcd);
    RUN_TEST(fmpz_CRT_ui);
    RUN_TEST(fmpz_sqrtrem);
+   RUN_TEST(fmpz_comb_init_clear);
+   RUN_TEST(fmpz_multi_mod_crt_ui);
       
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");

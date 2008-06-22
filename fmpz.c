@@ -694,7 +694,10 @@ void fmpz_mod(fmpz_t res, const fmpz_t a, const fmpz_t b)
    {
       if ((long) a0 < 0L) 
       {
-         fmpz_add(res, a, b);  
+         temp = (fmpz_t) flint_stack_alloc(sizeb + 2);
+         fmpz_add(temp, a, b);
+         fmpz_set(res, temp);
+         flint_stack_release();  
       } else fmpz_set(res, a);
       return;
    } else 
@@ -903,35 +906,32 @@ void fmpz_invert(fmpz_t res, fmpz_t x, fmpz_t m)
 {
    if (m[0] == 0)
    {
-      printf("Error: division by zero!\n");
-      abort(); 
+       printf("Error: division by zero!\n");
+       abort();
    }
 
-   fmpz_t m_temp, x_temp, x_temp2, r, a, temp, temp2;
-   x_temp = (fmpz_t) flint_stack_alloc(m[0]+2);
-   x_temp2 = (fmpz_t) flint_stack_alloc(m[0]+2);
-   m_temp = (fmpz_t) flint_stack_alloc(m[0]+2);
-   r = (fmpz_t) flint_stack_alloc(m[0]+2);
-   a = (fmpz_t) flint_stack_alloc(m[0]+2);
-   fmpz_mod(x_temp, x, m);
-   fmpz_set(x_temp2, x_temp);
-   fmpz_set(m_temp, m);
-   mpn_gcdext(r + 1, a + 1, a, m_temp + 1, m_temp[0], x_temp + 1, x_temp[0]);
-   temp = flint_stack_alloc(FLINT_ABS(a[0])+m[0]+1);
-   temp2 = flint_stack_alloc(FLINT_ABS(a[0])+m[0]+1);
-   fmpz_mul(temp, a, m);
-   fmpz_sub_ui_inplace(temp, 1);  
-   temp[0] = -temp[0]; 
-   fmpz_fdiv(temp2, temp, x_temp2);
-   fmpz_mod(res, temp2, m);
-   
-   flint_stack_release(); //temp2
-   flint_stack_release(); //temp
-   flint_stack_release(); //a
-   flint_stack_release(); //r
-   flint_stack_release(); //m_temp
-   flint_stack_release(); //x_temp2
-   flint_stack_release(); //x_temp
+   fmpz_t s0, U, V, temp;
+   unsigned long size = fmpz_size(m);
+   // U may use fmpz_size(m) + 1 limbs after the sum, and gmp requires +1
+   U = fmpz_init(size + 2);
+   V = fmpz_init(size + 2);
+   s0 = fmpz_init(size + 2);
+   temp = fmpz_init(size + 2);
+
+   // U := (x%m) + abs(m)
+   // V := abs(m)
+   fmpz_abs(V, m);
+   fmpz_mod(U, x, V);
+   fmpz_add(U, U, V);
+
+   // Compute s0 such that 1 = s0 * x  %  m
+   mpn_gcdext(temp+1, s0+1, s0, U+1, fmpz_size(U), V+1, fmpz_size(V));
+   fmpz_mod(res, s0, m);
+
+   fmpz_clear(temp);
+   fmpz_clear(s0);
+   fmpz_clear(V);
+   fmpz_clear(U);
 }
 
 void fmpz_comb_init(fmpz_comb_t comb, unsigned long * primes, unsigned long n)

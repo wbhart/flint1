@@ -115,14 +115,6 @@ void randpoly_unsigned(mpz_poly_t pol, long length, unsigned long maxbits)
    
    mpz_clear(temp);
 } 
-
-
-#define RUN_TEST(targetfunc) \
-   printf("Testing " #targetfunc "()... ");            \
-   fflush(stdout);                                     \
-   success = test_##targetfunc();                      \
-   all_success = all_success && success;               \
-   printf(success ? "ok\n" : "FAIL!\n");
    
 int test_ZZ_to_fmpz()
 {

@@ -153,7 +153,7 @@ If x == 0, returns 0.
 static inline unsigned long ceil_log2(unsigned long x)
 {
    unsigned long result = 0;
-   if (x)
+   if (x > 1)
    {
       x--;
       result = FLINT_BIT_COUNT(x);

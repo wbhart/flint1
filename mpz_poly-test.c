@@ -1174,14 +1174,6 @@ int test_mpz_poly_max_bits()
 
 ****************************************************************************/
 
-#define RUN_TEST(targetfunc) \
-   printf("Testing " #targetfunc "()... ");            \
-   fflush(stdout);                                     \
-   success = test_##targetfunc();                      \
-   all_success = all_success && success;               \
-   printf(success ? "ok\n" : "FAIL!\n");
-
-
 void mpz_poly_test_all()
 {
    int success, all_success = 1;

@@ -36,13 +36,6 @@ Copyright (C) 2007, William Hart and David Harvey
 #define DEBUG 0 // prints debug information
 #define DEBUG2 1 
 
-#define RUN_TEST(targetfunc) \
-   printf("Testing " #targetfunc "()... ");            \
-   fflush(stdout);                                     \
-   success = test_##targetfunc();                      \
-   all_success = all_success && success;               \
-   printf(success ? "ok\n" : "FAIL!\n");
-
 /*int test_z_mulmod32_precomp()
 {
    uint32_t ninv;

@@ -400,7 +400,7 @@ cleanup_2:
 
 
 ===========================================================================*/
-int main(int argc, unsigned char *argv[])
+int main(int argc, char *argv[])
 {
     mpz_t N;
     mpz_init(N); 
@@ -415,7 +415,7 @@ int main(int argc, unsigned char *argv[])
     mpz_clear(N);
 }
 
-/*int main(int argc, unsigned char *argv[])
+/*int main(int argc, char *argv[])
 {
     mpz_t N;
     mpz_init(N); 

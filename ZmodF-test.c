@@ -797,16 +797,6 @@ int test_ZmodF_simple_butterfly()
    return 1;
 }
 
-
-
-#define RUN_TEST(targetfunc) \
-   printf("Testing " #targetfunc "()... ");            \
-   fflush(stdout);                                     \
-   success = test_##targetfunc();                      \
-   all_success = all_success && success;               \
-   printf(success ? "ok\n" : "FAIL!\n");
-
-
 void ZmodF_test_all()
 {
    int success, all_success = 1;

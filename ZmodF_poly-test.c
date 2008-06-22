@@ -1182,14 +1182,6 @@ int test_ZmodF_poly_negacyclic_convolution()
 
 ****************************************************************************/
 
-#define RUN_TEST(targetfunc) \
-   printf("Testing " #targetfunc "()... ");            \
-   fflush(stdout);                                     \
-   success = test_##targetfunc();                      \
-   all_success = all_success && success;               \
-   printf(success ? "ok\n" : "FAIL!\n");
-
-
 void ZmodF_poly_test_all()
 {
    int success, all_success = 1;

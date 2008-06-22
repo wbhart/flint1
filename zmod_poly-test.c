@@ -136,13 +136,6 @@ void randpoly(zmod_poly_t poly, long length, unsigned long n)
    __zmod_poly_normalise(poly);
 } 
 
-#define RUN_TEST(targetfunc) \
-   printf("Testing " #targetfunc "()... ");            \
-   fflush(stdout);                                     \
-   success = test_##targetfunc();                      \
-   all_success = all_success && success;               \
-   printf(success ? "ok\n" : "FAIL!\n");
- 
 int test_zmod_poly_reverse()
 {
    zmod_poly_t poly, poly2;

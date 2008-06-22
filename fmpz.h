@@ -122,7 +122,6 @@ long fmpz_sgn(const fmpz_t x)
    return (long) x[0];
 }
 
-
 // res := x
 // if x == 0, then res needs room only for the control limb
 // if x != 0, res needs room for one limb beyond control limb
@@ -189,6 +188,27 @@ void fmpz_set(fmpz_t res, const fmpz_t op)
       i--;
    }
    while (i >= 0);
+}
+
+// Absolute value
+static inline
+void fmpz_abs(fmpz_t res, const fmpz_t x)
+{
+   if (res != x) // check for aliasing
+       fmpz_set(res, x);
+
+   if (fmpz_sgn(res) < 0)
+       res[0] = -res[0];
+}
+
+// Negative
+static inline
+void fmpz_neg(fmpz_t res, const fmpz_t x)
+{
+   if (res != x) // check for aliasing
+       fmpz_set(res, x);
+
+   res[0] = -res[0];
 }
 
 // res must have enough space for x

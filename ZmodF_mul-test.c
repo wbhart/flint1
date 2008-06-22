@@ -601,15 +601,6 @@ int test_ZmodF_mul_info_mul_fft()
 
 ****************************************************************************/
 
-
-#define RUN_TEST(targetfunc) \
-   printf("Testing " #targetfunc "()... ");            \
-   fflush(stdout);                                     \
-   success = test_##targetfunc();                      \
-   all_success = all_success && success;               \
-   printf(success ? "ok\n" : "FAIL!\n");
-
-
 void ZmodF_mul_test_all()
 {
    int success, all_success = 1;

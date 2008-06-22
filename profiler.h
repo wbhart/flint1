@@ -26,6 +26,7 @@
 ******************************************************************************/
 
 
+#include <time.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 
@@ -36,8 +37,53 @@
 #ifdef __cplusplus
  extern "C" {
 #endif
- 
+
+/* 
+   Quick and dirty timing (gives wall and user time - useful for parallel programming)
+
+   Example usage:
+
+   timeit_t t0;
+
+   ///....
+
+   timeit_start(t0);
+
+   /// do stuff, take some time
+
+   timeit_stop(t0);
+
+   printf("cpu = %ld ms  wall = %ld ms\n", t0->cpu, t0->wall);
+*/
+
+
+typedef struct
+{
+   long cpu;
+   long wall;
+} timeit_t[1];
+
+static inline
+void timeit_start(timeit_t t)
+{
+   struct timeval tv;
+   gettimeofday(&tv, 0);
+   t->wall = - tv.tv_sec * 1000 - tv.tv_usec / 1000;
+   t->cpu = - clock() * 1000 / CLOCKS_PER_SEC;
+}
+
+static inline
+void timeit_stop(timeit_t t)
+{
+   struct timeval tv;
+   gettimeofday(&tv, 0);
+   t->wall += tv.tv_sec * 1000 + tv.tv_usec / 1000;
+   t->cpu += clock() * 1000 / CLOCKS_PER_SEC;
+}
+
+// More refined timing routines
 // number of independent global clocks
+
 #define FLINT_NUM_CLOCKS 20
 
 
