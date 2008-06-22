@@ -43,6 +43,7 @@ typedef mp_limb_t * fmpz_t;
 typedef struct
 {
    unsigned long* primes;
+   unsigned long num_primes;
    unsigned long n; // we have 2^n primes
    unsigned long log_comb; // the number of levels of products we have computed already
    unsigned long log_res; // the number of levels of relative residues computed already
@@ -70,7 +71,7 @@ do { \
    } \
 } while (0);
 
-void fmpz_comb_init(fmpz_comb_t comb, unsigned long * primes, unsigned long n);
+void fmpz_comb_init(fmpz_comb_t comb, unsigned long * primes, unsigned long num_primes);
 
 void fmpz_comb_clear(fmpz_comb_t comb);
 

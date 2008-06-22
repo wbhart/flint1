@@ -1477,7 +1477,6 @@ int test_fmpz_invert()
 #endif
 
        bits2 = random_ulong(1000)+10;
-       
        fnum1 = fmpz_init((bits-1)/FLINT_BITS+1);
        fnum2 = fmpz_init((bits2-1)/FLINT_BITS+1);
        fnum3 = fmpz_init((bits2-1)/FLINT_BITS+2);
@@ -1644,7 +1643,7 @@ int test_fmpz_comb_init_clear()
       printf("n = %ld, num_primes = %ld\n", n, num_primes);
 #endif
       fmpz_comb_t comb;
-      fmpz_comb_init(comb, primes, n);
+      fmpz_comb_init(comb, primes, num_primes);
       fmpz_comb_clear(comb);
       flint_heap_free(primes);
    }
@@ -1662,12 +1661,10 @@ int test_fmpz_multi_mod_crt_ui()
    mpz_init(num1);
    for (unsigned long i = 0; (i < 100) && (result == 1); i++)
    {
-      unsigned long n = random_ulong(10);
-      unsigned long limbs = (1L<<n) + random_ulong(1L<<n);
-      n++;
-      unsigned long num_primes = (1L<<n);
+      unsigned long limbs = random_ulong(1000);
+      unsigned long num_primes = limbs+1;
 #if DEBUG
-      printf("n = %ld, limbs = %ld, num_primes = %ld\n", n, limbs, num_primes);
+      printf("limbs = %ld, num_primes = %ld\n", limbs, num_primes);
 #endif
       unsigned long * primes = (unsigned long *) flint_heap_alloc(num_primes);
       unsigned long prime = z_nextprime(-1L - 10000000L);
@@ -1682,11 +1679,11 @@ int test_fmpz_multi_mod_crt_ui()
       output = (unsigned long *) flint_heap_alloc(num_primes);
       output2 = (unsigned long *) flint_heap_alloc(num_primes);
       fmpz_comb_t comb;
-      fmpz_comb_init(comb, primes, n);
+      fmpz_comb_init(comb, primes, num_primes);
       for(unsigned long j = 0; j < 1; j++)
          fmpz_multi_mod_ui(output, input, comb);
       
-      fmpz_t temp = flint_heap_alloc(num_primes + 1);
+      fmpz_t temp = flint_heap_alloc(limbs + 1);
       for(unsigned long j = 0; j < 1; j++)
       {
          fmpz_multi_crt_ui(temp, output, comb);
@@ -1718,6 +1715,8 @@ void fmpz_poly_test_all()
 {
    int success, all_success = 1;
 
+   RUN_TEST(fmpz_comb_init_clear);
+   RUN_TEST(fmpz_multi_mod_crt_ui);
    RUN_TEST(fmpz_invert);
    RUN_TEST(fmpz_convert);
    RUN_TEST(fmpz_size);
@@ -1751,8 +1750,6 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_gcd);
    RUN_TEST(fmpz_CRT_ui);
    RUN_TEST(fmpz_sqrtrem);
-   RUN_TEST(fmpz_comb_init_clear);
-   RUN_TEST(fmpz_multi_mod_crt_ui);
       
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");

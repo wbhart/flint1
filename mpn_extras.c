@@ -737,7 +737,7 @@ mp_limb_t F_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1,
    Assumes none of limbs1, limbs2 and trunc is zero. 
    
    WARNING: the output "res" needs to have "limbs1+limbs2"
-   limbs allocated.
+   limbs allocated and we must have limbs1 >= limbs2 >= 1.
 */
 
 mp_limb_t F_mpn_mul_trunc(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1, 

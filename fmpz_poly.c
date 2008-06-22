@@ -2768,7 +2768,7 @@ void __fmpz_poly_mul_modular_comb(fmpz_poly_t output, const fmpz_poly_t poly1, c
     // Output for zn_array_mul
     unsigned long * out = flint_heap_alloc(len_out);
 
-    unsigned long numprimes = (1UL << comb->n);
+    unsigned long numprimes = comb->num_primes;
 
     // FIXME: reorganize this loop to optimize cache line usage
     
@@ -2849,11 +2849,10 @@ void _fmpz_poly_mul_modular(fmpz_poly_t output, const fmpz_poly_t poly1, const f
     unsigned long output_bits = FLINT_ABS(bits1) + FLINT_ABS(bits2) + log_length + ((bits1 < 0L) || (bits2 < 0L));
 
     // round up number of primes to a power of two;
-    unsigned long n = ceil_log2( (output_bits * primes_per_limb)/FLINT_BITS + 1 );
-    if (!n) n++;
-
-    unsigned long numprimes = 1UL << n;
-    unsigned long* primes = flint_heap_alloc(numprimes);
+    unsigned long numprimes = (output_bits * primes_per_limb)/FLINT_BITS + 1;
+	if (numprimes == 1) numprimes++;
+    
+	unsigned long* primes = flint_heap_alloc(numprimes);
 
     unsigned long p = p0;
     for(unsigned long i = 0; i < numprimes; i++) {
@@ -2864,7 +2863,7 @@ void _fmpz_poly_mul_modular(fmpz_poly_t output, const fmpz_poly_t poly1, const f
     // precomputation space
     fmpz_comb_t comb;
 
-    fmpz_comb_init(comb, primes, n);
+    fmpz_comb_init(comb, primes, numprimes);
     __fmpz_poly_mul_modular_comb(output, poly1, poly2, comb);
     fmpz_comb_clear(comb);
 

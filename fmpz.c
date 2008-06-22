@@ -690,7 +690,7 @@ void fmpz_mod(fmpz_t res, const fmpz_t a, const fmpz_t b)
    {
       printf("Error: division by zero!\n");
       abort();          
-   } else if (sizea < sizeb) // Todo: make this deal with sizea == sizeb but a < b
+   } else if (sizea < sizeb) 
    {
       if ((long) a0 < 0L) 
       {
@@ -700,9 +700,19 @@ void fmpz_mod(fmpz_t res, const fmpz_t a, const fmpz_t b)
          flint_stack_release();  
       } else fmpz_set(res, a);
       return;
-   } else 
+   } else if ((sizea == sizeb) && (fmpz_cmpabs(a, b) < 0L))
    {
-      temp = (fmpz_t) flint_stack_alloc(sizea - sizeb + 1);
+      if (fmpz_sgn(a) < 0L) fmpz_add(res, a, b);
+      else fmpz_set(res, a);
+	  return;
+   } else
+   {
+      if (fmpz_is_one(b)) 
+	  {
+	     fmpz_set_ui(res, 0L); 
+		 return;
+	  }
+	  temp = (fmpz_t) flint_stack_alloc(sizea - sizeb + 1);
       temp2 = (fmpz_t) flint_stack_alloc(sizeb + 2);
       mpn_tdiv_qr(temp, temp2+1, 0, a+1, sizea, b+1, sizeb);
       temp2[0] = sizeb;
@@ -934,9 +944,12 @@ void fmpz_invert(fmpz_t res, fmpz_t x, fmpz_t m)
    fmpz_clear(U);
 }
 
-void fmpz_comb_init(fmpz_comb_t comb, unsigned long * primes, unsigned long n)
+void fmpz_comb_init(fmpz_comb_t comb, unsigned long * primes, unsigned long num_primes)
 {
    comb->primes = primes;
+   comb->num_primes = num_primes;
+   unsigned long n = 0L;
+   while (num_primes > (1L<<n)) n++;
    comb->n = n;
    comb->log_comb = 0;
    comb->log_res = 0;
@@ -944,7 +957,6 @@ void fmpz_comb_init(fmpz_comb_t comb, unsigned long * primes, unsigned long n)
    comb->temp = (fmpz_t **) flint_heap_alloc(n);
    comb->res = (fmpz_t **) flint_heap_alloc(n);
    unsigned long j = (1L<<(n-1));
-   unsigned long num_primes = j*2;
    comb->mod = (zn_mod_t *) flint_heap_alloc_bytes(sizeof(zn_mod_t)*num_primes);
    for (unsigned long i = 0; i < num_primes; i++) 
       zn_mod_init(comb->mod[i], primes[i]);
@@ -953,7 +965,7 @@ void fmpz_comb_init(fmpz_comb_t comb, unsigned long * primes, unsigned long n)
    for (unsigned i = 0; i < n; i++)
    {
       comb->comb[i] = (fmpz_t *) flint_heap_alloc(j);
-      ptr = (mp_limb_t *) flint_heap_alloc(num_primes+j);
+      ptr = (mp_limb_t *) flint_heap_alloc((1L<<n)+j);
       for (unsigned long k = 0; k < j; k++, ptr += (size+1))
       {
          comb->comb[i][k] = ptr;
@@ -966,7 +978,7 @@ void fmpz_comb_init(fmpz_comb_t comb, unsigned long * primes, unsigned long n)
    for (unsigned i = 0; i < n; i++)
    {
       comb->temp[i] = (fmpz_t *) flint_heap_alloc(j);
-      ptr = (mp_limb_t *) flint_heap_alloc(num_primes+j);
+      ptr = (mp_limb_t *) flint_heap_alloc((1L<<n)+j);
       for (unsigned long k = 0; k < j; k++, ptr += (size+1))
       {
          comb->temp[i][k] = ptr;
@@ -979,7 +991,7 @@ void fmpz_comb_init(fmpz_comb_t comb, unsigned long * primes, unsigned long n)
    for (unsigned i = 0; i < n; i++)
    {
       comb->res[i] = (fmpz_t *) flint_heap_alloc(j);
-      ptr = (mp_limb_t *) flint_heap_alloc(num_primes+j);
+      ptr = (mp_limb_t *) flint_heap_alloc((1L<<n)+j);
       for (unsigned long k = 0; k < j; k++, ptr += (size+1))
       {
          comb->res[i][k] = ptr;
@@ -1025,13 +1037,25 @@ unsigned long fmpz_multi_mod_ui(unsigned long * out, fmpz_t in, fmpz_comb_t comb
    unsigned long i, j;
    long log_comb = (long) comb->log_comb;
    unsigned long num = (1L<<(n-log_comb));
+   unsigned long num_primes = comb->num_primes;
    if (!log_comb)
    {
-      for (i = 0, j = 0; i < num; i += 2, j++)
+      for (i = 0, j = 0; i+2 <= num_primes; i += 2, j++)
       {
          fmpz_set_ui(comb->comb[0][j], comb->primes[i]);
          fmpz_mul_ui(comb->comb[0][j], comb->comb[0][j], comb->primes[i+1]);
       }
+	  if (i < num_primes) 
+	  {
+		 fmpz_set_ui(comb->comb[0][j], comb->primes[i]);
+	     i+=2;
+	     j++;
+	  }
+      num = (1L<<n);
+	  for (; i < num; i += 2, j++)
+      {
+         fmpz_set_ui(comb->comb[0][j], 1L);
+	  }
    }
    log_comb = 1;
    num = (1L<<(n-1));
@@ -1071,15 +1095,10 @@ unsigned long fmpz_multi_mod_ui(unsigned long * out, fmpz_t in, fmpz_comb_t comb
    num /= 2;
    log_comb++;
    unsigned long stride = (1L << (log_comb+1));
-   for (i = 0, j = 0; i < num; i++, j += stride)
+   for (i = 0, j = 0; j < num_primes; i++, j += stride)
    {
-      fmpz_multi_mod_ui_basecase(out + j, comb->temp[log_comb][i], comb->primes + j, stride);
+	   fmpz_multi_mod_ui_basecase(out + j, comb->temp[log_comb][i], comb->primes + j, FLINT_MIN(stride, num_primes - j));
    }
-   /*for (i = 0, j = 0; i < num; i += 2, j++)
-   {
-      out[i] = fmpz_mod_ui(comb->temp[0][j], comb->primes[i]);
-      out[i+1] = fmpz_mod_ui(comb->temp[0][j], comb->primes[i+1]);
-   }*/
 }
 
 void fmpz_multi_crt_ui(fmpz_t output, unsigned long * residues, fmpz_comb_t comb)
@@ -1088,6 +1107,7 @@ void fmpz_multi_crt_ui(fmpz_t output, unsigned long * residues, fmpz_comb_t comb
    unsigned long n = comb->n;
    unsigned long num;
    unsigned long log_res;
+   unsigned long num_primes = comb->num_primes;
    if (comb->log_res != n)
    {
       unsigned long log_comb = comb->log_comb;
@@ -1109,13 +1129,13 @@ void fmpz_multi_crt_ui(fmpz_t output, unsigned long * residues, fmpz_comb_t comb
          fmpz_t temp = (fmpz_t) flint_stack_alloc(2);
          fmpz_t temp2 = (fmpz_t) flint_stack_alloc(2);
          num = (1L<<n);
-         for (i = 0, j = 0; i < num; i += 2, j++)
+         for (i = 0, j = 0; i + 2 <= num_primes; i += 2, j++)
          {
             fmpz_set_ui(temp, comb->primes[i]);
             fmpz_set_ui(temp2, comb->primes[i+1]);
             fmpz_invert(comb->res[0][j], temp, temp2);
          }
-         flint_stack_release(); //temp2
+		 flint_stack_release(); //temp2
          flint_stack_release(); //temp
       }
       log_res++;
@@ -1136,7 +1156,7 @@ void fmpz_multi_crt_ui(fmpz_t output, unsigned long * residues, fmpz_comb_t comb
    num = (1L<<n);
    fmpz_t temp = (fmpz_t) flint_stack_alloc(3);
    fmpz_t temp2 = (fmpz_t) flint_stack_alloc(3);
-   for (i = 0, j = 0; i < num; i += 2, j++)
+   for (i = 0, j = 0; i+2 <= num_primes; i += 2, j++)
    {
       fmpz_set_ui(temp, residues[i]);
       fmpz_set_ui(temp2, fmpz_mod_ui(temp, comb->primes[i+1]));
@@ -1147,6 +1167,7 @@ void fmpz_multi_crt_ui(fmpz_t output, unsigned long * residues, fmpz_comb_t comb
       fmpz_mul_ui(temp, temp2, comb->primes[i]); 
       fmpz_add_ui(comb->temp[0][j], temp, residues[i]);
    }
+   if (i < num_primes) fmpz_set_ui(comb->temp[0][j], residues[i]);
    flint_stack_release(); //temp2
    flint_stack_release(); //temp
     
@@ -1158,13 +1179,19 @@ void fmpz_multi_crt_ui(fmpz_t output, unsigned long * residues, fmpz_comb_t comb
    {
       for (i = 0, j = 0; i < num; i += 2, j++)
       {
-         fmpz_mod(temp2, comb->temp[log_res-1][i], comb->comb[log_res-1][i+1]);
-         fmpz_sub(temp, temp2, comb->temp[log_res-1][i+1]);
-         temp[0] = -temp[0];
-         fmpz_mul(temp2, temp, comb->res[log_res][j]);
-         fmpz_mod(temp, temp2, comb->comb[log_res-1][i+1]);
-         fmpz_mul(temp2, temp, comb->comb[log_res-1][i]);
-         fmpz_add(comb->temp[log_res][j], temp2, comb->temp[log_res-1][i]);
+         if (fmpz_is_one(comb->comb[log_res-1][i+1]))
+		 {
+		    if (!fmpz_is_one(comb->comb[log_res-1][i])) fmpz_set(comb->temp[log_res][j], comb->temp[log_res-1][i]);
+		 } else
+		 {
+			fmpz_mod(temp2, comb->temp[log_res-1][i], comb->comb[log_res-1][i+1]);
+            fmpz_sub(temp, temp2, comb->temp[log_res-1][i+1]);
+            temp[0] = -temp[0];
+            fmpz_mul(temp2, temp, comb->res[log_res][j]);
+            fmpz_mod(temp, temp2, comb->comb[log_res-1][i+1]);
+            fmpz_mul(temp2, temp, comb->comb[log_res-1][i]);
+            fmpz_add(comb->temp[log_res][j], temp2, comb->temp[log_res-1][i]);
+		 }
       }     
       log_res++;
       num /= 2; 
