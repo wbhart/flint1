@@ -2850,8 +2850,7 @@ void _fmpz_poly_mul_modular(fmpz_poly_t output, const fmpz_poly_t poly1, const f
 
     // round up number of primes to a power of two;
     unsigned long numprimes = (output_bits * primes_per_limb)/FLINT_BITS + 1;
-	if (numprimes == 1) numprimes++;
-    
+	
 	unsigned long* primes = flint_heap_alloc(numprimes);
 
     unsigned long p = p0;

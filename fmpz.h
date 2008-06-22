@@ -352,7 +352,7 @@ void fmpz_CRT_ui2_precomp(fmpz_t out, fmpz_t r1, fmpz_t m1, unsigned long r2,
    fmpz_clear(sm1);
 }
 
-unsigned long fmpz_multi_mod_ui(unsigned long * out, fmpz_t in, fmpz_comb_t comb);
+void fmpz_multi_mod_ui(unsigned long * out, fmpz_t in, fmpz_comb_t comb);
 
 void fmpz_multi_crt_ui(fmpz_t output, unsigned long * residues, fmpz_comb_t comb);
 

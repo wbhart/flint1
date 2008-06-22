@@ -1031,13 +1031,19 @@ unsigned long fmpz_multi_mod_ui_basecase(unsigned long * out, fmpz_t in,
 
 #define FLINT_LOG_MULTI_MOD_CUTOFF 2
 
-unsigned long fmpz_multi_mod_ui(unsigned long * out, fmpz_t in, fmpz_comb_t comb)
+void fmpz_multi_mod_ui(unsigned long * out, fmpz_t in, fmpz_comb_t comb)
 {
    unsigned long n = comb->n;
    unsigned long i, j;
    long log_comb = (long) comb->log_comb;
    unsigned long num = (1L<<(n-log_comb));
    unsigned long num_primes = comb->num_primes;
+   if (num_primes == 1) 
+   {
+	  if (in[0]) out[0] = in[1];
+	  else out[0] = 0L;
+	  return;
+   }
    if (!log_comb)
    {
       for (i = 0, j = 0; i+2 <= num_primes; i += 2, j++)
@@ -1108,6 +1114,11 @@ void fmpz_multi_crt_ui(fmpz_t output, unsigned long * residues, fmpz_comb_t comb
    unsigned long num;
    unsigned long log_res;
    unsigned long num_primes = comb->num_primes;
+   if (num_primes == 1)
+   {
+      fmpz_set_ui(output, residues[0]);
+	  return;
+   }
    if (comb->log_res != n)
    {
       unsigned long log_comb = comb->log_comb;
