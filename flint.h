@@ -79,14 +79,20 @@
 #endif
 
 /* 
-Cache hints to speed up reads from data in memory
+Cache/branch hints to speed up reads from data in memory/branches
 */
 #if defined(__GNUC__) 
 #define FLINT_PREFETCH(addr,n) __builtin_prefetch((unsigned long*)addr+n,1,0) 
+#define LIKELY(cond)    (__builtin_expect ((cond) != 0, 1))
+#define UNLIKELY(cond)  (__builtin_expect ((cond) != 0, 0))
 #elif defined(_MSC_VER) && _MSC_VER >= 1400
 #define FLINT_PREFETCH(addr,n) PreFetchCacheLine(PF_TEMPORAL_LEVEL_1, (unsigned long*)addr+n)
+#define LIKELY(cond)
+#define UNLIKELY(cond)
 #else
 #define FLINT_PREFETCH(addr,n) /* nothing */
+#define LIKELY(cond)
+#define UNLIKELY(cond)
 #endif
 
 /*

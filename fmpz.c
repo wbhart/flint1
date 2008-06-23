@@ -763,6 +763,61 @@ unsigned long fmpz_mod_ui(const fmpz_t input, const unsigned long x)
    } else return mod;
 }
 
+// truncated multiplication for fmpz
+void fmpz_mul_trunc(fmpz_t res, fmpz_t a, fmpz_t b, unsigned long trunc)
+{
+    unsigned long sizea = FLINT_MIN(fmpz_size(a), trunc);
+    unsigned long sizeb = FLINT_MIN(fmpz_size(b), trunc);
+    while ((!a[sizea]) && (sizea)) sizea--;
+    while ((!b[sizeb]) && (sizeb)) sizeb--;
+
+    if ((sizea == 0) || (sizeb == 0)) {
+        res[0] = 0;
+        return;
+    }
+
+    if (trunc >= sizea + sizeb) {
+        mp_limb_t mslimb;
+        if (sizea >= sizeb) mslimb = F_mpn_mul(res+1, a+1, sizea, b+1, sizeb);
+        else mslimb = F_mpn_mul(res+1, b+1, sizeb, a+1, sizea);
+        res[0] = sizea + sizeb - (mslimb == 0);
+    } else {
+        mp_limb_t mslimb;
+        fmpz_t temp = flint_stack_alloc(sizea + sizeb + 1);
+        if (sizea >= sizeb) mslimb = F_mpn_mul_trunc(temp+1, a+1, sizea, b+1, sizeb, trunc);
+        else mslimb = F_mpn_mul_trunc(temp+1, b+1, sizeb, a+1, sizea, trunc);
+        temp[0] = trunc;
+        if (UNLIKELY(!mslimb))
+            __fmpz_normalise(temp); // normalise if most significant limb == 0
+        fmpz_set(res, temp);
+        flint_stack_release();
+    }
+    if ((long) (a[0] ^ b[0]) < 0L) res[0] = -res[0];
+}
+
+// Compute a*b mod m
+void fmpz_mulmod(fmpz_t res, fmpz_t a, fmpz_t b, fmpz_t m)
+{
+    fmpz_t ab = fmpz_init(fmpz_size(a) + fmpz_size(b));
+    fmpz_mul(ab, a, b);
+    fmpz_mod(res, ab, m);
+
+    fmpz_clear(ab);
+}
+
+// Compute a/b mod m
+void fmpz_divmod(fmpz_t res, fmpz_t a, fmpz_t b, fmpz_t m)
+{
+    fmpz_t b_inv = fmpz_init(fmpz_size(m));
+    fmpz_invert(b_inv, b, m);
+
+    fmpz_t ab = fmpz_init(fmpz_size(a) + fmpz_size(b_inv));
+    fmpz_mul(ab, a, b_inv);
+    fmpz_mod(res, ab, m);
+
+    fmpz_clear(ab);
+    fmpz_clear(b_inv);
+}
 /*
    Raise input to the power exp
    Very simplistic at this point. It just converts to an mpz_t and uses
@@ -1240,5 +1295,7 @@ void fmpz_multi_crt_sign(fmpz_t output, fmpz_t input, fmpz_comb_t comb)
    fmpz_clear(temp);
    return;
 }
+
+#include "fmpz_montgomery.c"
 
 // *************** end of file

@@ -245,6 +245,12 @@ void fmpz_fdiv(fmpz_t res, const fmpz_t a, const fmpz_t b);
 
 void fmpz_mod(fmpz_t res, const fmpz_t a, const fmpz_t b);
 
+void fmpz_mul_trunc(fmpz_t res, fmpz_t a, fmpz_t b, unsigned long trunc);
+
+void fmpz_mulmod(fmpz_t res, fmpz_t a, fmpz_t b, fmpz_t m);
+
+void fmpz_divmod(fmpz_t res, fmpz_t a, fmpz_t b, fmpz_t m);
+
 void fmpz_tdiv_ui(fmpz_t output, const fmpz_t input, const unsigned long x);
 
 unsigned long fmpz_mod_ui(const fmpz_t input, const unsigned long x);
@@ -357,6 +363,8 @@ void fmpz_multi_mod_ui(unsigned long * out, fmpz_t in, fmpz_comb_t comb);
 void fmpz_multi_crt_ui(fmpz_t output, unsigned long * residues, fmpz_comb_t comb);
 
 void fmpz_multi_crt_sign(fmpz_t output, fmpz_t input, fmpz_comb_t comb);
+
+#include "fmpz_montgomery.h"
 
 #ifdef __cplusplus
  }

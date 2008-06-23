@@ -1785,6 +1785,280 @@ int test_fmpz_multi_mod_crt_ui_signed()
    return result;
 }
 
+int test_fmpz_mulmod()
+{
+    mpz_t num1, num2, num3, num4, num5;
+    fmpz_t fnum1, fnum2, fnum3, fnum4;
+    unsigned long bits;
+    int result = 1;
+
+    mpz_init(num1);
+    mpz_init(num2);
+    mpz_init(num3);
+    mpz_init(num4);
+    mpz_init(num5);
+
+    for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+    {
+        // modulus
+        bits = random_ulong(1000) + 1;
+        do {
+            mpz_rrandomb(num1, state, bits);
+        } while( mpz_sgn(num1) == 0 || mpz_even_p(num1) );
+
+        mpz_rrandomb(num2, state, bits);
+        mpz_rrandomb(num3, state, bits);
+
+        fnum1 = fmpz_init(FLINT_MAX((long)(bits-1)/FLINT_BITS,0)+1);
+        fnum2 = fmpz_init(FLINT_MAX((long)(bits-1)/FLINT_BITS,0)+1);
+        fnum3 = fmpz_init(FLINT_MAX((long)(bits-1)/FLINT_BITS,0)+1);
+        fnum4 = fmpz_init(FLINT_MAX((long)(bits-1)/FLINT_BITS,0)+1);
+
+        mpz_to_fmpz(fnum1, num1);
+        mpz_to_fmpz(fnum2, num2);
+        mpz_to_fmpz(fnum3, num3);
+
+        fmpz_mulmod(fnum4, fnum3, fnum2, fnum1);
+        fmpz_check_normalisation(fnum4);
+        fmpz_to_mpz(num4, fnum4);
+
+        mpz_mul(num5, num3, num2);
+        mpz_mod(num5, num5, num1);
+
+        result = (mpz_cmp(num4, num5) == 0);
+
+        fmpz_clear(fnum1);
+        fmpz_clear(fnum2);
+        fmpz_clear(fnum3);
+        fmpz_clear(fnum4);
+    }
+
+    mpz_clear(num1);
+    mpz_clear(num2);
+    mpz_clear(num3);
+    mpz_clear(num4);
+    mpz_clear(num5);
+
+    return result;
+}
+
+int test_fmpz_divmod()
+{
+    mpz_t num1, num2, num3, num4, num5;
+    fmpz_t fnum1, fnum2, fnum3, fnum4;
+    unsigned long bits;
+    int result = 1;
+
+    mpz_init(num1);
+    mpz_init(num2);
+    mpz_init(num3);
+    mpz_init(num4);
+    mpz_init(num5);
+
+    for (unsigned long i = 0; (i < 10000) && (result == 1); i++)
+    {
+        // m
+        bits = random_ulong(1000) + 1;
+
+        fnum1 = fmpz_init(FLINT_MAX((long)(bits-1)/FLINT_BITS,0)+1);
+        fnum2 = fmpz_init(FLINT_MAX((long)(bits-1)/FLINT_BITS,0)+1);
+        fnum3 = fmpz_init(FLINT_MAX((long)(bits-1)/FLINT_BITS,0)+1);
+        fnum4 = fmpz_init(FLINT_MAX((long)(bits-1)/FLINT_BITS,0)+1);
+
+        do {
+            mpz_rrandomb(num1, state, bits);
+            const char * s = mpz_get_str(0, 10, num1);
+            free((void *)s);
+        } while( mpz_sgn(num1) == 0 || mpz_even_p(num1) );
+
+        mpz_to_fmpz(fnum1, num1);
+
+        do {
+            mpz_rrandomb(num2, state, bits);
+            mpz_to_fmpz(fnum2, num2);
+            fmpz_gcd(fnum3, fnum1, fnum2);
+        } while (!fmpz_is_one(fnum3));
+
+        mpz_rrandomb(num3, state, bits);
+        mpz_to_fmpz(fnum3, num3);
+
+        fmpz_divmod(fnum4, fnum3, fnum2, fnum1);
+        fmpz_check_normalisation(fnum4);
+        fmpz_to_mpz(num4, fnum4);
+
+        mpz_invert(num5, num2, num1);
+        mpz_mul(num5, num5, num3);
+        mpz_mod(num5, num5, num1);
+
+        result = (mpz_cmp(num4, num5) == 0);
+
+        fmpz_clear(fnum1);
+        fmpz_clear(fnum2);
+        fmpz_clear(fnum3);
+        fmpz_clear(fnum4);
+    }
+
+    mpz_clear(num1);
+    mpz_clear(num2);
+    mpz_clear(num3);
+    mpz_clear(num4);
+    mpz_clear(num5);
+
+    return result;
+}
+
+int test_fmpz_mul_trunc()
+{
+    mpz_t num1, num2, num3, num4, num5;
+    fmpz_t fnum1, fnum2, fnum3;
+    unsigned long bits, bits2, trunc;
+    int result = 1;
+
+    mpz_init(num1);
+	mpz_init(num2);
+    mpz_init(num3);
+    mpz_init(num4);
+    mpz_init(num5);
+
+    for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+    {
+        bits = random_ulong(1000);
+        mpz_rrandomb(num1, state, bits);
+#if SIGNS
+        if (random_ulong(2)) mpz_neg(num1, num1);
+#endif
+
+        bits2 = random_ulong(1000);
+        mpz_rrandomb(num2, state, bits2);
+#if SIGNS
+        if (random_ulong(2)) mpz_neg(num2, num2);
+#endif
+
+        trunc = random_ulong(2*(bits + bits2)/FLINT_BITS+1);
+
+        fnum1 = fmpz_init(FLINT_MAX((long)(bits-1)/FLINT_BITS,0)+1);
+        fnum2 = fmpz_init(FLINT_MAX((long)(bits2-1)/FLINT_BITS,0)+1);
+        fnum3 = fmpz_init(trunc+1);
+
+        mpz_to_fmpz(fnum1, num1);
+        mpz_to_fmpz(fnum2, num2);
+
+        fmpz_mul_trunc(fnum3, fnum2, fnum1, trunc);
+        fmpz_check_normalisation(fnum3);
+        fmpz_to_mpz(num3, fnum3);
+
+        mpz_mul(num4, num2, num1);
+        int sgn = mpz_sgn(num4);
+        if (sgn<0) mpz_neg(num4, num4);
+        mpz_set_ui(num5, 1);
+        mpz_mul_2exp(num5, num5, trunc*FLINT_BITS);
+        mpz_mod(num4, num4, num5);
+        if (sgn<0) mpz_neg(num4, num4);
+
+        result = (mpz_cmp(num4, num3) == 0);
+
+        fmpz_clear(fnum1);
+        fmpz_clear(fnum2);
+        fmpz_clear(fnum3);
+    }
+
+    mpz_clear(num1);
+    mpz_clear(num2);
+    mpz_clear(num3);
+    mpz_clear(num4);
+    mpz_clear(num5);
+
+    return result;
+}
+
+int test_fmpz_abs()
+{
+    mpz_t num1, num2, num3;
+    fmpz_t fnum1, fnum2;
+    unsigned long bits;
+    int result = 1;
+
+    mpz_init(num1);
+    mpz_init(num2);
+    mpz_init(num3);
+
+    for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+    {
+        bits = random_ulong(1000);
+        mpz_rrandomb(num1, state, bits);
+#if SIGNS
+        if (random_ulong(2)) mpz_neg(num1, num1);
+#endif
+
+        fnum1 = fmpz_init(FLINT_MAX((long)(bits-1)/FLINT_BITS,0)+1);
+        fnum2 = fmpz_init(FLINT_MAX((long)(bits-1)/FLINT_BITS,0)+1);
+
+        mpz_to_fmpz(fnum1, num1);
+
+        fmpz_abs(fnum2, fnum1);
+        fmpz_check_normalisation(fnum2);
+        fmpz_to_mpz(num2, fnum2);
+
+        mpz_abs(num3, num1);
+
+        result = (mpz_cmp(num3, num2) == 0);
+
+        fmpz_clear(fnum1);
+        fmpz_clear(fnum2);
+    }
+
+    mpz_clear(num1);
+    mpz_clear(num2);
+    mpz_clear(num3);
+
+    return result;
+}
+
+int test_fmpz_neg()
+{
+    mpz_t num1, num2, num3;
+    fmpz_t fnum1, fnum2;
+    unsigned long bits;
+    int result = 1;
+
+    mpz_init(num1);
+    mpz_init(num2);
+    mpz_init(num3);
+
+    for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+    {
+        bits = random_ulong(1000);
+        mpz_rrandomb(num1, state, bits);
+#if SIGNS
+        if (random_ulong(2)) mpz_neg(num1, num1);
+#endif
+
+        fnum1 = fmpz_init(FLINT_MAX((long)(bits-1)/FLINT_BITS,0)+1);
+        fnum2 = fmpz_init(FLINT_MAX((long)(bits-1)/FLINT_BITS,0)+1);
+
+        mpz_to_fmpz(fnum1, num1);
+
+        fmpz_neg(fnum2, fnum1);
+        fmpz_check_normalisation(fnum2);
+        fmpz_to_mpz(num2, fnum2);
+
+        mpz_neg(num3, num1);
+
+        result = (mpz_cmp(num3, num2) == 0);
+
+        fmpz_clear(fnum1);
+        fmpz_clear(fnum2);
+    }
+
+    mpz_clear(num1);
+    mpz_clear(num2);
+    mpz_clear(num3);
+
+    return result;
+}
+
+#include "fmpz_montgomery-test.c"
+
 void fmpz_poly_test_all()
 {
    int success, all_success = 1;
@@ -1793,6 +2067,8 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_size);
    RUN_TEST(fmpz_bits);
    RUN_TEST(fmpz_sgn);
+   RUN_TEST(fmpz_abs);
+   RUN_TEST(fmpz_neg);
    RUN_TEST(fmpz_set_si);
    RUN_TEST(fmpz_set_ui);
    RUN_TEST(fmpz_set_equal);
@@ -1818,6 +2094,13 @@ void fmpz_poly_test_all()
    RUN_TEST(__fmpz_normalise);
    RUN_TEST(__fmpz_binomial_next);
    RUN_TEST(fmpz_muldiv_2exp);
+   RUN_TEST(fmpz_mul_trunc);
+   RUN_TEST(fmpz_mulmod);
+   RUN_TEST(fmpz_divmod);
+   RUN_TEST(fmpz_montgomery_mod);
+   RUN_TEST(fmpz_montgomery_mulmod);
+   RUN_TEST(fmpz_montgomery_divmod);
+   RUN_TEST(fmpz_montgomery_redc);
    RUN_TEST(fmpz_gcd);
    RUN_TEST(fmpz_invert);
    RUN_TEST(fmpz_CRT_ui);
