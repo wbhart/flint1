@@ -37,9 +37,9 @@ Copyright (C) 2007, William Hart and David Harvey
 #include "test-support.h"
 #include "zmod_poly.h"
 
-#define VARY_BITS 0
-#define SIGNS 0
-#define SPARSE 0 
+#define VARY_BITS 1
+#define SIGNS 1
+#define SPARSE 1 
 
 #define TEST 1
 
@@ -11518,8 +11518,6 @@ void fmpz_poly_test_all()
 #if TESTFILE
    RUN_TEST(fmpz_poly_freadprint); 
 #endif
-   RUN_TEST(_fmpz_poly_mul_modular);
-   RUN_TEST(fmpz_poly_mul);
    RUN_TEST(fmpz_poly_tofromstring); 
    RUN_TEST(fmpz_poly_to_ZmodF_poly); 
    RUN_TEST(fmpz_poly_bit_pack); 

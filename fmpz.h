@@ -356,6 +356,8 @@ void fmpz_multi_mod_ui(unsigned long * out, fmpz_t in, fmpz_comb_t comb);
 
 void fmpz_multi_crt_ui(fmpz_t output, unsigned long * residues, fmpz_comb_t comb);
 
+void fmpz_multi_crt_sign(fmpz_t output, fmpz_t input, fmpz_comb_t comb);
+
 #ifdef __cplusplus
  }
 #endif

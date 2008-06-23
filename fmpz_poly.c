@@ -2800,6 +2800,7 @@ void __fmpz_poly_mul_modular_comb(fmpz_poly_t output, const fmpz_poly_t poly1, c
     for(int i=0; i<len_out; i++) {
         fmpz_t coeff = _fmpz_poly_get_coeff_ptr(output, i);
         fmpz_multi_crt_ui(coeff, block_out + (i << comb->n), comb);
+		fmpz_multi_crt_sign(coeff, coeff, comb);
     }
     
     output->length = len_out;
@@ -2846,7 +2847,7 @@ void _fmpz_poly_mul_modular(fmpz_poly_t output, const fmpz_poly_t poly1, const f
 	long bits2 = fmpz_poly_max_bits(poly2);
 	unsigned long log_length = 0;
     while (length > (1L<<log_length)) log_length++;
-    unsigned long output_bits = FLINT_ABS(bits1) + FLINT_ABS(bits2) + log_length + ((bits1 < 0L) || (bits2 < 0L));
+    unsigned long output_bits = FLINT_ABS(bits1) + FLINT_ABS(bits2) + log_length + 1;
 
     // round up number of primes to a power of two;
     unsigned long numprimes = (output_bits * primes_per_limb)/FLINT_BITS + 1;

@@ -1659,7 +1659,7 @@ int test_fmpz_multi_mod_crt_ui()
    unsigned long * output, * output2;
       
    mpz_init(num1);
-   for (unsigned long i = 0; (i < 300) && (result == 1); i++)
+   for (unsigned long i = 0; (i < 1000) && (result == 1); i++)
    {
       unsigned long bits = random_ulong(300)+1;
 #if FLINT_BITS == 32
@@ -1716,14 +1716,79 @@ int test_fmpz_multi_mod_crt_ui()
    return result;
 }
 
+int test_fmpz_multi_mod_crt_ui_signed()
+{
+   int result = 1;
+   fmpz_t input;
+   mpz_t num1;
+   unsigned long * output, * output2;
+      
+   mpz_init(num1);
+   for (unsigned long i = 0; (i < 1000) && (result == 1); i++)
+   {
+      unsigned long bits = random_ulong(300)+1;
+#if FLINT_BITS == 32
+      double primes_per_limb = 1.0322580642701;
+#elif FLINT_BITS == 64
+      double primes_per_limb = 1.0000882353339;
+#endif
+	  unsigned long num_primes = ((bits+1)*primes_per_limb)/FLINT_BITS + 1;
+#if DEBUG
+      printf("bits = %ld, num_primes = %ld\n", bits, num_primes);
+#endif
+      unsigned long * primes = (unsigned long *) flint_heap_alloc(num_primes);
+      unsigned long prime = z_nextprime(-1L - 10000000L);
+      for (unsigned long j = 0; j < num_primes; j++)
+      {
+         primes[j] = prime;
+         prime = z_nextprime(prime);
+      }
+      unsigned long limbs = num_primes;
+	  input = fmpz_init(limbs);
+      mpz_rrandomb(num1, state, bits);
+#if SIGNS
+	  if (random_ulong(2)) mpz_neg(num1, num1);
+#endif
+      mpz_to_fmpz(input, num1);
+      output = (unsigned long *) flint_heap_alloc(num_primes);
+      output2 = (unsigned long *) flint_heap_alloc(num_primes);
+      fmpz_comb_t comb;
+      fmpz_comb_init(comb, primes, num_primes);
+      for(unsigned long j = 0; j < 1; j++)
+		 fmpz_multi_mod_ui(output, input, comb);
+      
+      fmpz_t temp = flint_heap_alloc(limbs + 1);
+      for(unsigned long j = 0; j < 1; j++)
+      {
+         fmpz_multi_crt_ui(temp, output, comb);
+		 fmpz_multi_crt_sign(temp, temp, comb);
+         if (!fmpz_equal(temp, input)) result = 0;
+      }
+      flint_heap_free(temp);
+
+      for (unsigned long k = 0; k < num_primes; k++)
+      {
+         output2[k] = fmpz_mod_ui(input, primes[k]);
+      }
+      for (unsigned long k = 0; k < num_primes; k++)
+      {
+         if (output[k] != output2[k]) result = 0;
+      }
+      fmpz_comb_clear(comb);
+      fmpz_clear(input);
+      flint_heap_free(output);
+      flint_heap_free(output2);
+      flint_heap_free(primes);
+   }
+   mpz_clear(num1);
+         
+   return result;
+}
 
 void fmpz_poly_test_all()
 {
    int success, all_success = 1;
 
-   RUN_TEST(fmpz_comb_init_clear);
-   RUN_TEST(fmpz_multi_mod_crt_ui);
-   RUN_TEST(fmpz_invert);
    RUN_TEST(fmpz_convert);
    RUN_TEST(fmpz_size);
    RUN_TEST(fmpz_bits);
@@ -1754,7 +1819,11 @@ void fmpz_poly_test_all()
    RUN_TEST(__fmpz_binomial_next);
    RUN_TEST(fmpz_muldiv_2exp);
    RUN_TEST(fmpz_gcd);
+   RUN_TEST(fmpz_invert);
    RUN_TEST(fmpz_CRT_ui);
+   RUN_TEST(fmpz_comb_init_clear);
+   RUN_TEST(fmpz_multi_mod_crt_ui);
+   RUN_TEST(fmpz_multi_mod_crt_ui_signed);
    RUN_TEST(fmpz_sqrtrem);
       
    printf(all_success ? "\nAll tests passed\n" :

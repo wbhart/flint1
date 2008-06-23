@@ -1040,7 +1040,8 @@ void fmpz_multi_mod_ui(unsigned long * out, fmpz_t in, fmpz_comb_t comb)
    unsigned long num_primes = comb->num_primes;
    if (num_primes == 1) 
    {
-	  if (in[0]) out[0] = in[1];
+	  if ((long)in[0] > 0L) out[0] = in[1];
+	  else if ((long)in[0] < 0L) out[0] = comb->primes[0] - in[1];
 	  else out[0] = 0L;
 	  return;
    }
@@ -1214,5 +1215,30 @@ void fmpz_multi_crt_ui(fmpz_t output, unsigned long * residues, fmpz_comb_t comb
    flint_stack_release(); //temp 
 }
 
+void fmpz_multi_crt_sign(fmpz_t output, fmpz_t input, fmpz_comb_t comb)
+{
+   unsigned long n = comb->n;
+   if (n == 0L) 
+   {
+      if (input[0] == 0L) 
+	  {
+	     fmpz_set_ui(output, 0L);
+	     return;
+	  }
+	  unsigned long p = comb->primes[0];
+	  if ((p - input[1]) < input[1]) fmpz_set_si(output, (long) (input[1] - p));
+	  else fmpz_set_ui(output, input[1]);
+	  return;
+   }
+   fmpz_t temp = fmpz_init(fmpz_size(comb->comb[n-1][0]));
+   
+   fmpz_sub(temp, input, comb->comb[comb->n-1][0]);
+
+   if (fmpz_cmpabs(temp, input) <= 0L) fmpz_set(output, temp);
+   else fmpz_set(output, input);
+
+   fmpz_clear(temp);
+   return;
+}
 
 // *************** end of file
