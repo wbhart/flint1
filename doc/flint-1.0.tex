@@ -1252,7 +1252,7 @@ Set \code{res} to the quotient of \code{f1} by the unsigned long \code{x}. Round
 void fmpz_div_2exp(fmpz_t output, fmpz_t x, unsigned long exp)
 \end{lstlisting}
 \begin{quote}
-Divide \code{x} by $2^{\mbox{exp}}$, returning the quotient and discarding the remainder.
+Divide \code{x} by $2^{\mbox{exp}}$, returning the quotient and discarding the remainder. Rounding occurs towards zero.
 \end{quote}
 
 \begin{lstlisting}
