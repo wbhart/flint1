@@ -1624,6 +1624,8 @@ int test_fmpz_sqrtrem()
    return result;
 }
 
+#ifdef HAVE_ZNPOLY
+
 int test_fmpz_comb_init_clear()
 {
    int result = 1;
@@ -1784,6 +1786,8 @@ int test_fmpz_multi_mod_crt_ui_signed()
          
    return result;
 }
+
+#endif
 
 int test_fmpz_mulmod()
 {
@@ -2104,9 +2108,11 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_gcd);
    RUN_TEST(fmpz_invert);
    RUN_TEST(fmpz_CRT_ui);
+#ifdef HAVE_ZNPOLY
    RUN_TEST(fmpz_comb_init_clear);
    RUN_TEST(fmpz_multi_mod_crt_ui);
    RUN_TEST(fmpz_multi_mod_crt_ui_signed);
+#endif
    RUN_TEST(fmpz_sqrtrem);
       
    printf(all_success ? "\nAll tests passed\n" :

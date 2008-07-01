@@ -2728,6 +2728,7 @@ void _fmpz_poly_mul_classical(fmpz_poly_t output, const fmpz_poly_t poly1, const
    else if (poly2 == output) _fmpz_poly_stack_clear(input2);
 }
 
+#ifdef HAVE_ZNPOLY
 /*
    Multiply two polynomials using the multimodular technique.
    This version requires an appropriate fmpz_comb_t struct, already initialized with primes
@@ -2870,6 +2871,7 @@ void _fmpz_poly_mul_modular(fmpz_poly_t output, const fmpz_poly_t poly1, const f
     // Free allocated stuff
     flint_heap_free(primes);
 }
+#endif
 
 /*
    Multiply two polynomials using the classical technique truncating the result to trunc terms.

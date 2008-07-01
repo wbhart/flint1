@@ -4632,6 +4632,8 @@ int test__fmpz_poly_mul_karatsuba_trunc_left()
    return result; 
 }
 
+#ifdef HAVE_ZNPOLY
+
 int test__fmpz_poly_mul_modular()
 {
    mpz_poly_t test_poly, test_poly2, test_poly3, test_poly4;
@@ -4843,6 +4845,7 @@ int test__fmpz_poly_mul_modular()
    
    return result; 
 }
+#endif
 
 int test__fmpz_poly_mul_KS()
 {
@@ -11581,7 +11584,9 @@ void fmpz_poly_test_all()
    RUN_TEST(_fmpz_poly_mul_karatsuba);
    RUN_TEST(_fmpz_poly_mul_karatsuba_trunc);
    RUN_TEST(_fmpz_poly_mul_karatsuba_trunc_left);
+#ifdef HAVE_ZNPOLY
    RUN_TEST(_fmpz_poly_mul_modular);
+#endif
    RUN_TEST(_fmpz_poly_mul_KS);
    RUN_TEST(_fmpz_poly_mul_KS_trunc);
    RUN_TEST(_fmpz_poly_mul_SS);

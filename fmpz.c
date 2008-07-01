@@ -37,7 +37,10 @@
 #include "mpn_extras.h"
 #include "F_mpn_mul-tuning.h"
 #include "long_extras.h"
+
+#ifdef HAVE_ZNPOLY
 #include "zn_poly.h"
+#endif
 
 #define SWAP_PTRS(x_dummy_p, y_dummy_p) \
 do { \
@@ -999,6 +1002,8 @@ void fmpz_invert(fmpz_t res, fmpz_t x, fmpz_t m)
    fmpz_clear(U);
 }
 
+#ifdef HAVE_ZNPOLY
+
 void fmpz_comb_init(fmpz_comb_t comb, unsigned long * primes, unsigned long num_primes)
 {
    comb->primes = primes;
@@ -1295,6 +1300,7 @@ void fmpz_multi_crt_sign(fmpz_t output, fmpz_t input, fmpz_comb_t comb)
    fmpz_clear(temp);
    return;
 }
+#endif
 
 #include "fmpz_montgomery.c"
 

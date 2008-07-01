@@ -22,9 +22,14 @@ endif
 
 CPP = $(FLINT_CPP) 
 
-LIBS = -L$(FLINT_GMP_LIB_DIR) -L$(FLINT_ZNPOLY_LIB_DIR) $(FLINT_LINK_OPTIONS) -lgmp -lpthread -lm -lzn_poly
+ifdef HAVE_ZNPOLY
+	ZNPOLY_LIB=-lzn_poly
+	WITH_ZNPOLY=-DHAVE_ZNPOLY
+endif
 
-LIBS2 = -L$(FLINT_GMP_LIB_DIR) -L$(FLINT_NTL_LIB_DIR) $(FLINT_LINK_OPTIONS) -lgmp -lpthread -lntl -lm -lzn_poly
+LIBS = -L$(FLINT_GMP_LIB_DIR) -L$(FLINT_ZNPOLY_LIB_DIR) $(FLINT_LINK_OPTIONS) -lgmp -lpthread -lm $(ZNPOLY_LIB)
+
+LIBS2 = -L$(FLINT_GMP_LIB_DIR) -L$(FLINT_NTL_LIB_DIR) $(FLINT_LINK_OPTIONS) -lgmp -lpthread -lntl -lm $(ZNPOLY_LIB)
 
 ifndef FLINT_NTL_INCLUDE_DIR
 	INCS = -I$(FLINT_GMP_INCLUDE_DIR) -I$(FLINT_ZNPOLY_INCLUDE_DIR)
@@ -118,10 +123,10 @@ ZmodF_mul-tuning.o: ZmodF_mul-tuning.c $(HEADERS)
 	$(CC) $(CFLAGS) -c ZmodF_mul-tuning.c -o ZmodF_mul-tuning.o
 
 fmpz.o: fmpz.c $(HEADERS)
-	$(CC) $(CFLAGS) -c fmpz.c -o fmpz.o
+	$(CC) $(CFLAGS) $(WITH_ZNPOLY) -c fmpz.c -o fmpz.o
 
 fmpz_poly.o: fmpz_poly.c $(HEADERS)
-	$(CC) $(CFLAGS) -c fmpz_poly.c -o fmpz_poly.o
+	$(CC) $(CFLAGS) $(WITH_ZNPOLY) -c fmpz_poly.c -o fmpz_poly.o
 
 mpz_poly.o: mpz_poly.c $(HEADERS)
 	$(CC) $(CFLAGS) -c mpz_poly.c -o mpz_poly.o
@@ -147,10 +152,10 @@ test-support.o: test-support.c $(HEADERS)
 	$(CC) $(CFLAGS) -c test-support.c -o test-support.o
 
 fmpz_poly-test.o: fmpz_poly-test.c $(HEADERS)
-	$(CC) $(CFLAGS) -c fmpz_poly-test.c -o fmpz_poly-test.o
+	$(CC) $(CFLAGS) $(WITH_ZNPOLY) -c fmpz_poly-test.c -o fmpz_poly-test.o
 
 fmpz-test.o: fmpz-test.c $(HEADERS)
-	$(CC) $(CFLAGS) -c fmpz-test.c -o fmpz-test.o
+	$(CC) $(CFLAGS) $(WITH_ZNPOLY) -c fmpz-test.c -o fmpz-test.o
 
 ZmodF-test.o: ZmodF-test.c $(HEADERS)
 	$(CC) $(CFLAGS) -c ZmodF-test.c -o ZmodF-test.o
