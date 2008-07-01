@@ -604,6 +604,9 @@ void _fmpz_poly_mul_KS(fmpz_poly_t output, const fmpz_poly_t input1,
 void _fmpz_poly_mul_KS_trunc(fmpz_poly_t output, const fmpz_poly_t input1, 
                                         const fmpz_poly_t input2, const unsigned long trunc);
 
+void _fmpz_poly_mul_KS_trunc_bits(fmpz_poly_t output, const fmpz_poly_t in1, 
+                                        const fmpz_poly_t in2, const unsigned long trunc, long bits_per_coeff);
+
 void _fmpz_poly_mul_SS(fmpz_poly_t output, const fmpz_poly_t input1, 
                                                       const fmpz_poly_t input2);
                                                             
