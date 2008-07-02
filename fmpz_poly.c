@@ -41,7 +41,11 @@ Copyright (C) 2007, William Hart and David Harvey
 #include "ZmodF_poly.h"
 #include "long_extras.h"
 #include "zmod_poly.h"
-//#include "zn_poly.h"
+
+#ifdef HAVE_ZNPOLY
+#include "zn_poly.h"
+#endif
+
 /****************************************************************************
 
    Conversion Routines
