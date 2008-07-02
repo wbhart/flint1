@@ -27,6 +27,7 @@ Copyright (C) 2007, William Hart and David Harvey
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <gmp.h>
 #include "flint.h"
 #include "test-support.h"

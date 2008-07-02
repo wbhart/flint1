@@ -36,10 +36,14 @@
 #include "memory-manager.h"
 #include "flint.h"
 #include "long_extras.h"
+
+#ifdef HAVE_ZNPOLY
 #include "zn_poly.h"
+#endif
 
 typedef mp_limb_t * fmpz_t;
 
+#ifdef HAVE_ZNPOLY
 typedef struct
 {
    unsigned long* primes;
@@ -54,6 +58,7 @@ typedef struct
 } fmpz_comb_struct;
 
 typedef fmpz_comb_struct fmpz_comb_t[1];
+#endif
 
 #define ABS(x) (((long) x < 0) ? -x : x)
 
@@ -71,9 +76,11 @@ do { \
    } \
 } while (0);
 
+#ifdef HAVE_ZNPOLY
 void fmpz_comb_init(fmpz_comb_t comb, unsigned long * primes, unsigned long num_primes);
 
 void fmpz_comb_clear(fmpz_comb_t comb);
+#endif
 
 void fmpz_check_normalisation(const fmpz_t x);
 
@@ -358,11 +365,13 @@ void fmpz_CRT_ui2_precomp(fmpz_t out, fmpz_t r1, fmpz_t m1, unsigned long r2,
    fmpz_clear(sm1);
 }
 
+#ifdef HAVE_ZNPOLY
 void fmpz_multi_mod_ui(unsigned long * out, fmpz_t in, fmpz_comb_t comb);
 
 void fmpz_multi_crt_ui(fmpz_t output, unsigned long * residues, fmpz_comb_t comb);
 
 void fmpz_multi_crt_sign(fmpz_t output, fmpz_t input, fmpz_comb_t comb);
+#endif
 
 #include "fmpz_montgomery.h"
 
