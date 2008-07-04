@@ -993,7 +993,7 @@ void fmpz_invert(fmpz_t res, fmpz_t x, fmpz_t m)
    fmpz_add(U, U, V);
 
    // Compute s0 such that 1 = s0 * x  %  m
-   mpn_gcdext(temp+1, s0+1, s0, U+1, fmpz_size(U), V+1, fmpz_size(V));
+   mpn_gcdext(temp+1, s0+1, (long *) s0, U+1, fmpz_size(U), V+1, fmpz_size(V));
    fmpz_mod(res, s0, m);
 
    fmpz_clear(temp);

@@ -3792,7 +3792,8 @@ void zmod_poly_gcd(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
 int zmod_poly_gcd_invert(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
 {
    zmod_poly_t Q, R, A, B, u1, u2, prod;
-   unsigned long a, coprime;
+   long a;
+   unsigned long coprime;
 
    if (poly1->length == 0)
    {
@@ -3803,7 +3804,8 @@ int zmod_poly_gcd_invert(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
    if (poly1->length == 1)
    {
       z_gcd_invert(&a, poly1->coeffs[0], poly2->p);
-      zmod_poly_set_coeff_ui(res, 0, a);
+      if (a < 0L) zmod_poly_set_coeff_ui(res, 0, poly2->p + a);
+	  else zmod_poly_set_coeff_ui(res, 0, a);
       res->length = 1;
       return 1;
    }
