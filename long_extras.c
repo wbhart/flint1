@@ -1230,6 +1230,57 @@ unsigned long z_factor_trial(factor_t * factors, unsigned long n)
 }
 
 /*
+   Finds prime factors of n by trial factoring wrt some list of precomputed primes
+   or until the product of the factors found is greater than the provided limit
+   Returns the cofactor after removing these factors and sets prod to the product
+   of the removed factors
+   Assumes n is not prime
+*/
+
+unsigned long z_factor_partial_trial(factor_t * factors, unsigned long * prod, unsigned long n, unsigned long limit)
+{
+   int num_factors = 0;
+   int exp;
+   *prod = 1;
+   
+   for (unsigned long i = 0; (i < TF_CUTOFF) && (primes[i]*primes[i] <= n); i++)
+   {
+      exp = z_remove(&n, primes[i]);
+      if (exp)
+      {
+         factors->p[num_factors] = primes[i];
+         factors->exp[num_factors] = exp;
+         num_factors++;
+		 *prod *= z_pow(primes[i], exp);
+		 if (*prod > limit) 
+		 {
+            factors->num = num_factors;
+	        return n;
+		 }
+      }  
+   }
+       
+   factors->num = num_factors;
+   return 0;
+}
+
+/*
+   Partially factors n into primes. Keeps finding prime factors until the product
+   of all the factors found surpasses limit.
+   Currently just calls z_factor_partial_trial and returns 0 if this was unable to
+   factorise the number sufficiently well, otherwise it returns the cofactor after 
+   removing the highest powers of all the prime factors found that it can remove
+*/
+
+unsigned long z_factor_partial(factor_t * factors, unsigned long n, unsigned long limit)
+{
+   unsigned long prod;
+   unsigned long cofactor = z_factor_partial_trial(factors, &prod, n, limit);
+   if (prod <= limit) return 0;
+   else return cofactor;
+}
+
+/*
    Square forms factoring algorithm of Shanks
    Adapted from the (simplified) algorithm as described by 
    Gower and Wagstaff Math of Comp. (Preprint May 2007)

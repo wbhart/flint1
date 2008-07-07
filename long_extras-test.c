@@ -841,12 +841,58 @@ int test_z_factor()
    return result;
 }
 
+int test_z_factor_partial()
+{
+   unsigned long n, prod, orig_n, limit;
+   factor_t factors;
+   int i;
+
+   int result = 1;
+   
+   for (unsigned long count = 0; (count < 100000) && (result == 1); )
+   { 
+      orig_n = random_ulong(1000000);
+      limit = z_intsqrt(orig_n);
+
+      n = z_factor_partial(&factors, orig_n, limit);
+      
+      prod = 1;
+      for (i = 0; i < factors.num; i++)
+      {
+          prod *= z_pow(factors.p[i], factors.exp[i]);
+      }
+      
+	  if (n)
+	  {
+	     if (n*prod != orig_n) result = 0;
+		 if (prod <= limit) result = 0;
+		 count++;
+	  }
+
+#if DEBUG
+      if (!result)
+      {
+         printf("n = %ld: [", orig_n);
+         for (i = 0; i < factors.num - 1; i++)
+         {
+            printf("%ld, %ld; ", factors.p[i], factors.exp[i]);
+         }
+         printf("%ld, %ld", factors.p[i], factors.exp[i]);
+         printf("]\nprod = %ld, cofactor = %ld, limit = %ld\n", prod, n, limit);
+      }
+#endif
+
+   }  
+   
+   return result;
+}
+
 int test_z_primitive_root()
 {
    unsigned long p = 2;
    unsigned long r;
    
-   for(int i = 0; i < 100; i++) {
+   for(int i = 0; i < 100000; i++) {
       p = z_nextprime(p);
       r = z_primitive_root(p);
       if(r == 0) {
@@ -883,6 +929,7 @@ void fmpz_poly_test_all()
    RUN_TEST(z_factor_trial);
    RUN_TEST(z_factor_SQUFOF);
    RUN_TEST(z_factor);
+   RUN_TEST(z_factor_partial);
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");
