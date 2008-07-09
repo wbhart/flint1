@@ -163,6 +163,7 @@ unsigned long z_ll_mod_precomp(unsigned long a_hi, unsigned long a_lo,
 #if UDIV_NEEDS_NORMALIZATION
    count_lead_zeros(norm, n);
    udiv_qrnnd(q, r, (a_hi<<norm) + (a_lo>>(FLINT_BITS-norm)), a_lo<<norm, n<<norm);
+   r >>= norm;
 #else
    udiv_qrnnd(q, r, a_hi, a_lo, n);
 #endif
@@ -1243,7 +1244,7 @@ unsigned long z_factor_partial_trial(factor_t * factors, unsigned long * prod, u
    int exp;
    *prod = 1;
    
-   for (unsigned long i = 0; (i < TF_CUTOFF) && (primes[i]*primes[i] <= n); i++)
+   for (unsigned long i = 0; (i < TF_CUTOFF) && ((primes[i]-1)*(primes[i]-1) <= n); i++)
    {
       exp = z_remove(&n, primes[i]);
       if (exp)
