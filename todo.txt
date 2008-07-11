@@ -271,3 +271,5 @@ to improve locality.
 * Write a z_div_precomp function
 
 * Fix RUN_TEST in test-support.h so that timing works on machines without cycle counter
+
+* deal with zeroing better and truncate inputs in __fmpz_poly_mul_karatrunc_recursive
