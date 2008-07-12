@@ -574,6 +574,7 @@ int test__ZmodF_poly_IFFT_recursive_case(
       if (mpz_cmp(poly2->coeffs[length], extra_coeff))
          success = 0;
 
+   mpz_clear(extra_coeff);
    ZmodF_poly_clear(f);
    mpz_poly_clear(poly2);
    mpz_poly_clear(poly1);
@@ -656,6 +657,7 @@ int test__ZmodF_poly_IFFT_iterative_case(unsigned long depth,
       if (mpz_cmp(poly1->coeffs[i], poly2->coeffs[i]))
          success = 0;
 
+   mpz_clear(extra_coeff);
    ZmodF_poly_clear(f);
    mpz_poly_clear(poly2);
    mpz_poly_clear(poly1);
@@ -908,16 +910,19 @@ int test_ZmodF_poly_convolution()
 
             ZmodF_poly_convolution(f3, f1, f2);
 
+            unsigned long out_len = len1 + len2 - 1;
+            if (out_len > size)
+               out_len = size;
+            
+			for (unsigned long i = out_len; i < size; i++)
+				ZmodF_zero(f3->coeffs[i], n);
+
             ZmodF_poly_convert_out(poly3, f3);
             if (use_really_naive)
                really_naive_convolution(poly4, poly1, poly2, depth);
             else
                naive_convolution(poly4, poly1, poly2, depth, n);
             
-            unsigned long out_len = len1 + len2 - 1;
-            if (out_len > size)
-               out_len = size;
-
             for (unsigned long i = 0; i < out_len; i++)
                if (mpz_cmp(poly3->coeffs[i], poly4->coeffs[i]))
                   success = 0;
@@ -1006,7 +1011,10 @@ int test_ZmodF_poly_convolution_range()
             ZmodF_poly_convolution_range(f3, f1, f2, 0, trunc);
 
             ZmodF_poly_convert_out(poly3, f3);
-            if (use_really_naive)
+            for (unsigned long i = trunc; i < size; i++)
+				ZmodF_zero(f3->coeffs[i], n);
+
+			if (use_really_naive)
                really_naive_convolution(poly4, poly1, poly2, depth);
             else
                naive_convolution(poly4, poly1, poly2, depth, n);
