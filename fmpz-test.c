@@ -309,6 +309,7 @@ int test_fmpz_set_equal()
 #endif
        
        fmpz_clear(fnum1);
+       fmpz_clear(fnum2);
    }
    
    for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
