@@ -1010,10 +1010,10 @@ int test_ZmodF_poly_convolution_range()
 
             ZmodF_poly_convolution_range(f3, f1, f2, 0, trunc);
 
-            ZmodF_poly_convert_out(poly3, f3);
             for (unsigned long i = trunc; i < size; i++)
 				ZmodF_zero(f3->coeffs[i], n);
-
+            ZmodF_poly_convert_out(poly3, f3);
+            
 			if (use_really_naive)
                really_naive_convolution(poly4, poly1, poly2, depth);
             else

@@ -521,6 +521,8 @@ int test_ZmodF_mul_info_mul_fft()
             {
                if (m + k < target_m)
                   continue;
+			   if (m + k > n)
+			      continue;
                if (k > m)
                   continue;
             
