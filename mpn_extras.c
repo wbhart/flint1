@@ -297,7 +297,8 @@ void F_mpn_FFT_split(ZmodF_poly_t poly, mp_limb_t * limbs, unsigned long total_l
    
    for (skip = 0, i = 0; skip+coeff_limbs <= total_limbs; skip+=coeff_limbs, i++)
    {
-      for (j = 0; j < output_limbs; j += 8) FLINT_PREFETCH(poly->coeffs[i+1], j);
+      if (i + 1 < length)
+		 for (j = 0; j + 8 < output_limbs; j += 8) FLINT_PREFETCH(poly->coeffs[i+1], j);
       
       F_mpn_clear(poly->coeffs[i], output_limbs+1);
       // convert a coefficient
@@ -338,7 +339,7 @@ void F_mpn_FFT_split_bits(ZmodF_poly_t poly, mp_limb_t * limbs, unsigned long to
     
    for (i = 0; i < length - 1; i++)
    {
-      for (j = 0; j < output_limbs; j += 8) FLINT_PREFETCH(poly->coeffs[i+1], j);
+      for (j = 0; j + 8 < output_limbs; j += 8) FLINT_PREFETCH(poly->coeffs[i+1], j);
       
       F_mpn_clear(poly->coeffs[i], output_limbs+1);
       // convert a coefficient
