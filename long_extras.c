@@ -1521,3 +1521,63 @@ unsigned long z_primitive_root_precomp(unsigned long p, double p_inv)
    return res;
 }
 
+/*unsigned long z_intsqrt(unsigned long r)
+{
+#if FLINT_BITS == 32
+    float x, z;
+	union {
+	  float f;
+      unsigned long l;
+	} temp;
+
+	temp.f = (float) r;
+	temp.l = (0xbe6ec85eUL - temp.l)>>1; // estimate of 1/sqrt(y) 
+	x =  temp.f;
+	z =  (float) r*0.5;                        
+    x = (1.5*x) - (x*x)*(x*z);
+	x = (1.5*x) - (x*x)*(x*z);
+	x = (1.5*x) - (x*x)*(x*z);
+	x = (1.5*x) - (x*x)*(x*z);
+    unsigned long res =  is + ((is+1)*(is+1) <= r);
+    return res - (res*res > r);
+#else
+    unsigned long is;
+	
+	double x, z;
+	union {
+	  double f;
+      unsigned long l;
+	} temp;
+
+	temp.f = (double) r;
+	temp.l = (0xbfcdd90a00000000UL - temp.l)>>1; // estimate of 1/sqrt(y) 
+	x =  temp.f;
+	z =  (double) r*0.5;                        
+    x = (1.5*x) - (x*x)*(x*z);
+	x = (1.5*x) - (x*x)*(x*z);
+	x = (1.5*x) - (x*x)*(x*z);
+	x = (1.5*x) - (x*x)*(x*z);
+	x = (1.5*x) - (x*x)*(x*z);
+    is = (unsigned long) (x*(double) r);
+    unsigned long res =  is + ((is+1)*(is+1) <= r);
+    return res - (res*res > r);
+#endif
+}*/
+
+unsigned long z_intsqrt(unsigned long r)
+{
+   unsigned long is;
+#if FLINT_BITS == 64
+   if (r >= 70368744177664UL)
+   {
+	  is = (unsigned long) floor(sqrt((double) r));
+   } else
+   {
+#endif
+	   is = (unsigned long) floorf(sqrtf((float) r));
+#if FLINT_BITS == 64
+   }
+#endif
+   unsigned long res =  is + ((is+1)*(is+1) <= r);
+   return res - (res*res > r);
+}

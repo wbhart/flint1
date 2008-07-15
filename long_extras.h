@@ -201,10 +201,7 @@ long z_extgcd(long* a, long* b, long x, long y);
 
 unsigned long z_gcd(long x, long y);
 
-static inline unsigned long z_intsqrt(unsigned long n)
-{
-   return (unsigned long) floor(sqrt((double)n));
-}
+unsigned long z_intsqrt(unsigned long r);
 
 static inline int z_issquare(long x)
 {

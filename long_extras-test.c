@@ -90,6 +90,36 @@ Copyright (C) 2007, William Hart and David Harvey
    return result;
 }*/
 
+int test_z_intsqrt()
+{
+   unsigned long n;
+   unsigned long a, res1, bits;
+   
+   int result = 1;
+   
+   for (unsigned long count = 0; (count < 20000) && (result == 1); count++)
+   { 
+      bits = z_randint(FLINT_BITS/2-1)+1;
+      n = random_ulong((1UL<<bits)-1)+1;
+      
+      a = n*n;
+         
+      for (unsigned long i = 0; i < 100; i++)
+		 res1 = z_intsqrt(a);
+         
+#if DEBUG2            
+      if (res1 != n)
+      {
+         printf("a = %ld, n = %ld, res1 = %ld\n", a, n, res1);
+      }
+#endif
+         
+      result = (res1 == n);
+   } 
+     
+   return result;
+}
+
 int test_z_mod_precomp()
 {
    double ninv;
@@ -912,6 +942,7 @@ void fmpz_poly_test_all()
 
 
    //RUN_TEST(z_mulmod32_precomp); // Not current available due to lack of proof of code
+   RUN_TEST(z_intsqrt);
    RUN_TEST(z_primitive_root);
    RUN_TEST(z_mod_precomp);
    RUN_TEST(z_div2_precomp);
