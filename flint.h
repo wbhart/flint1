@@ -102,6 +102,8 @@ Cache size in bytes.
 
 #define FLINT_POL_DIV_1_LENGTH 10
 
+#define ulong unsigned long
+
 #if FLINT_BITS == 32
 #define half_ulong uint16_t
 #define half_long int16_t

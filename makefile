@@ -61,7 +61,8 @@ HEADERS = \
 	profiler.h \
 	test-support.h \
 	long_extras.h \
-        zmod_poly.h 
+        zmod_poly.h \
+	theta.h 
 
 
 ####### library object files
@@ -79,7 +80,8 @@ FLINTOBJ = \
 	mpz_poly.o \
 	ZmodF_poly.o \
 	long_extras.o \
-        zmod_poly.o
+        zmod_poly.o \
+	theta.o
 
 QS: mpQS tinyQS
 
@@ -145,6 +147,9 @@ zmod_poly.o: zmod_poly.c $(HEADERS)
 
 NTL-interface.o: NTL-interface.cpp $(HEADERS)
 	$(CPP) $(CFLAGS) -c NTL-interface.cpp -o NTL-interface.o
+
+theta.o: theta.c $(HEADERS)
+	$(CC) $(CFLAGS) -c theta.c -o theta.o
 
 ####### test program object files
 
@@ -355,6 +360,12 @@ bernoulli_zmod.o: bernoulli_zmod.c $(HEADERS)
 
 bernoulli_zmod: bernoulli_zmod.o $(FLINTOBJ)
 	$(CC) $(CFLAGS) -o bernoulli_zmod bernoulli_zmod.o $(FLINTOBJ) $(LIBS)
+
+thetaproduct.o: thetaproduct.c $(HEADERS)
+	$(CC) $(CFLAGS) $(WITH_ZNPOLY) -c thetaproduct.c -o thetaproduct.o
+
+thetaproduct: thetaproduct.o $(FLINTOBJ)
+	$(CC) $(CFLAGS) -o thetaproduct thetaproduct.o $(FLINTOBJ) $(LIBS)
 
 ####### Quadratic sieve
 
