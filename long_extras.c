@@ -650,7 +650,7 @@ int z_miller_rabin_precomp(unsigned long n, double ninv, unsigned long reps)
    Todo: use the table here: http://oldweb.cecm.sfu.ca/pseudoprime/
    to make this into an unconditional primality test for larger n 
    This test is intended to be run after checking for divisibility by
-   primes up to 257 say.
+   primes up to 257 say, but returns a correct result if n is odd and n > 2.
    Requires n is no more than FLINT_BITS-1 bits
 */
 int z_isprime_precomp(unsigned long n, double ninv)
@@ -660,6 +660,12 @@ int z_isprime_precomp(unsigned long n, double ninv)
    do {
       d>>=1; 
    } while ((d&1) == 0);
+   
+   if (n < 2047)
+   {
+      if (SPRP(2UL, d, n, ninv)) return 1;
+      else return 0;
+   }
    
    if (n < 9080191UL) 
    { 
@@ -707,19 +713,19 @@ unsigned int primes[] =
 
 /* 
    This is a deterministic prime test up to 10^16. 
-   Todo: use the table here: http://oldweb.cecm.sfu.ca/pseudoprime/
-   to make this into an unconditional primality test for larger n 
    Requires n to be at most FLINT_BITS-1 bits
 */
 
 int z_isprime(unsigned long n)
 {
+   if (n <= 1UL) return 0;
+   if (n == 2UL) return 1;
+   if ((n & 1UL) == 0) return 0;
+  
    double ninv;
 
    ninv = z_precompute_inverse(n);
-   for (int i=0; i<55; i++)
-      if (primes[i]==n) return 1;
-
+   
    return z_isprime_precomp(n, ninv);
 }
 
