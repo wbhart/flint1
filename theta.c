@@ -385,6 +385,90 @@ void theta_1d_quadchar(long * character, unsigned long a, unsigned long b, unsig
 }
 
 /*
+   Compute Sum_{i=0,infty} (2*a*x+b)/m * q^{ax^2+bx+c} with a quadratic character mod 4
+   i.e. theta series Sum_{i=0, infty} a_{x mod 4} * (2*a*x+b)/m * q^{ax^2+bx+c} where a_i = quad[i], i = 0..3 
+   are in -1, 0, 1
+   Assumes that start is either 0 or quite large compared to a an b
+   Also assumes a, b and c are positive
+*/
+
+void theta_1d_quadchar_0(long * character, unsigned long a, unsigned long b, unsigned long c,
+				                        unsigned long m, long * out, ulong start, ulong len)
+{
+   unsigned long a1 = (2*a)/m;
+   unsigned long b1 = b/m;
+
+   // zero all the coefficients
+   for(ulong i=0; i<len; i++)
+      out[i] = 0;
+
+   ulong i, x;
+   long fac;
+   
+   if (start == 0)
+   {
+      long disc = b*b - 4*a*c;
+
+	  if (disc < 0L) // no intersection with x-axis
+	  {
+		 x = 0;
+
+		 fac = b1;
+
+		 i = c;
+
+		 while (i < len)
+         {
+            out[i] += fac*character[x&3];
+	        
+	        i += (a*x + b);
+	        fac += a1;
+			x += 1;
+		    i += (a*x);
+         }  
+	  } else // discriminant >= 0
+	  {
+		 x = 0;
+
+		 fac = b1;
+
+		 long j = c;
+
+		 while (j < (long) len)
+         {
+            if (j >= 0L) out[j] += fac*character[x&3];
+			
+	        j += (a*x + b);
+	        fac += a1;
+			x += 1;
+		    j += (a*x);
+         }
+	  }
+   } else
+   {
+      x = z_intsqrt(start/a-1)+1; // start <= ax^2
+
+      while (a*x*x + b*x + c >= start) x--; 
+      x++; // start <= ax^2+bx+c
+
+      fac = a1*x + b1;
+
+	  i = a*x*x + b*x + c - start;
+
+      while (i < len)
+      {
+         out[i] = fac*character[x&3];
+	     
+	     i += (a*x + b);
+	     fac += a1;
+		 x += 1;
+		 i += (a*x);
+      }
+   }
+}
+
+
+/*
    Compute Sum (2*a*x+b)/m * q^{ax^2+bx+c} with a quadratic character mod 4
    i.e. theta series Sum a_{x mod 4} * (2*a*x+b)/m * q^{ax^2+bx+c} where a_i = quad[i], i = 0..3 
    are in -1, 0, 1
@@ -420,7 +504,7 @@ void theta_1d_quadchar_2(long * character, unsigned long a, unsigned long b, uns
 		 while (i < len)
          {
             out[i] = fac*character[(-x)&3];
-	  
+	        
 	        i += (a*x - b);
 			fac -= a1;
 	        x += 1;
@@ -452,7 +536,7 @@ void theta_1d_quadchar_2(long * character, unsigned long a, unsigned long b, uns
 		 while (i < len)
          {
             out[i] += fac*character[x&3];
-	  
+	        
 	        i += (a*x + b);
 	        fac += a1;
 			x += 1;
@@ -469,7 +553,7 @@ void theta_1d_quadchar_2(long * character, unsigned long a, unsigned long b, uns
 		 while (j < (long)len)
          {
             if (j >= 0L) out[j] = fac*character[(-x)&3];
-	  
+	        
 	        j += (a*x - b);
 			fac += a1;
 	        x += 1;
@@ -501,7 +585,7 @@ void theta_1d_quadchar_2(long * character, unsigned long a, unsigned long b, uns
 		 while (j < (long) len)
          {
             if (j >= 0L) out[j] += fac*character[x&3];
-	  
+			
 	        j += (a*x + b);
 	        fac += a1;
 			x += 1;
@@ -522,7 +606,7 @@ void theta_1d_quadchar_2(long * character, unsigned long a, unsigned long b, uns
       while (i < len)
       {
          out[i] = fac*character[x&3];
-	  
+	     
 	     i += (a*x + b);
 	     fac += a1;
 		 x += 1;
@@ -540,7 +624,7 @@ void theta_1d_quadchar_2(long * character, unsigned long a, unsigned long b, uns
       while (i < len)
       {
          out[i] += fac*character[(-x)&3];
-	  
+	     
 	     i += (a*x - b);
 	     fac -= a1;
 		 x += 1;
@@ -633,7 +717,7 @@ void theta_2d(long *out, ulong start, ulong len)
     while(N0 <= B) {
 
         // count x = 0
-        out[N0-A] += 2;
+        out[N0-A] += 4;
         
         // start from x=1
         long x = 1;
@@ -653,6 +737,8 @@ void theta_2d(long *out, ulong start, ulong len)
         y += 1;
         N0 += y;
     }
+
+	if (start == 0) out[0] = 1;
 }
 
 /*
@@ -885,3 +971,77 @@ void theta_2d_B(long *out, ulong start, ulong len)
     }
 }
 
+/*
+   Compute theta series Sum (-1)^(x+y) x^2+y^2
+*/
+
+void theta_2d_C(long *out, ulong start, ulong len)
+{
+    for(ulong i=0; i<len; i++)
+        out[i] = 0;
+
+    long A = start;
+    long B = start+len-1;
+
+    long y = 1;
+    long N0 = 1; // N0 = y^2
+
+    long x = z_intsqrt(B-N0); // largest x such that x^2 + y^2 <= B
+
+    // First loop, where x won't reach 0
+    while(N0 < A) {
+
+        long N = N0 + x * x; // x^2 + y^2
+
+        while(N > B) {
+            // iterate x-- and update N = x^2 + y^2
+            N -= x;
+            x -= 1;
+            N -= x;
+        }
+
+        while(N >= A) {
+            if (N & 1) out[N-A] -= 4;
+			else out[N-A] += 4;
+
+            // iterate x-- and update N = x^2 + y^2
+            N -= x;
+            x -= 1;
+            N -= x;
+        }
+
+        // iterate y++ and update N0 = y^2
+        N0 += y;
+        y += 1;
+        N0 += y;
+    }
+
+    // Second loop, where x starts from 0
+    while(N0 <= B) {
+
+        // count x = 0
+        if (N0 & 1) out[N0-A] -= 4;
+		else out[N0-A] += 4;
+        
+        // start from x=1
+        long x = 1;
+        long N = N0 + x*x; // x^2 + y^2
+
+        while(N <= B) {
+            if (N & 1) out[N-A] -= 4;
+			else out[N-A] += 4;
+
+            // iterate x+=1 and update N = x^2 + y^2
+            N += x;
+            x += 1;
+            N += x;
+        }
+
+        // iterate y++ and update N0 = y^2
+        N0 += y;
+        y += 1;
+        N0 += y;
+    }
+
+	if (start == 0) out[0] = 1;
+}

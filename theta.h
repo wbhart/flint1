@@ -48,6 +48,9 @@ void theta_1d_quad(unsigned long a, unsigned long b, unsigned long c,
 void theta_1d_quadchar(long * character, unsigned long a, unsigned long b, unsigned long c,
 				                                          long * out, ulong start, ulong len);
 
+void theta_1d_quadchar_0(long * character, unsigned long a, unsigned long b, unsigned long c,
+				                        unsigned long m, long * out, ulong start, ulong len);
+
 void theta_1d_quadchar_2(long * character, unsigned long a, unsigned long b, unsigned long c,
 				                        unsigned long m, long * out, ulong start, ulong len);
 
@@ -60,6 +63,8 @@ void theta_2d_A1(long *out, ulong start, ulong len);
 void theta_2d_A2(long *out, ulong start, ulong len);
 
 void theta_2d_B(long *out, ulong start, ulong len);
+
+void theta_2d_C(long *out, ulong start, ulong len);
 
 #ifdef __cplusplus
  }
