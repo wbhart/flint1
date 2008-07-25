@@ -126,6 +126,37 @@ to improve locality.
 
 * for squaring, we don't need to allocate so much memory  
 
+=== Quadratic Sieve ===
+
+* Check for instances where there is p-a mod p not reduced to zero when a = 0 in tinyQS
+
+* p^2 inverse in 32 bit mode in sieve (line 271 mp_poly.c)
+
+* Use smaller sieve sizes
+
+* Thresholds, sieve_size, firstprime, use faster modmul at appropriate point, do sqrt(n) computation in floating point, sievemask, error_amounts (currently 13) in evaluate candidate. 
+
+* deal with case where n is only one limb not two.
+
+* Try a buffered solution for the merged relation storage
+
+* Move matrix routines such as copy_col, etc, from block_lanczos.h to linear_algebra.h
+
+* Buffer relation array and Y_arr in case there are lots of duplicate relations. Currently it is just set to twice the number of relations sought.
+
+* Use precomputed inverses in expmods in sqrt code.
+
+* Write readme file for qsieve
+
+* Make ctrl-c delete temporary large prime files
+
+* Make combine_large_primes return a factor if found
+
+* In trial factoring stage don't do a mod p when the value is < p
+
+* Fix round function on 32 bit machine in mpQS (and possibly tinyQS)
+
+* limbs+2 instead of limbs+1 on 32 bit machine in mpQS
 
 === Miscellaneous ===
 
@@ -193,7 +224,7 @@ to improve locality.
 * Do lots more profiling and put it on the website
 
 * Clean up fmpz_poly test code, making much more of it readable with extensive 
-  use of macros.
+  use of macros. Remove stack based memory management.
 
 * Write aliasing test code for series division
 
@@ -273,3 +304,64 @@ to improve locality.
 * Fix RUN_TEST in test-support.h so that timing works on machines without cycle counter
 
 * deal with zeroing better and truncate inputs in __fmpz_poly_mul_karatrunc_recursive
+
+* classical multiplication routine for sparse polynomials
+
+* transition from one to two limbs and back in _fmpz_poly_mul_KS may not be optimal
+
+* make profile targets work from command line
+
+* build patches Michael mentioned
+
+* factor out some of the common contents of the multiplication and precomputed multiplication functions
+
+* make greater use of FLINT_ASSERTS and test to see they work
+
+* add dirty mode to memory manager, which dirties up the limbs when allocated
+
+* switch to alloc and alloc_limbs instead of alloc and alloc_bytes
+
+* use ulong macro throughout
+
+* new memory managed 64 integer block fmpz type
+
+* incorporate the GMP memory manager
+
+* shifted polynomial addition/subtraction
+
+* polynomial addmul, polynomial scalar addmul/submul
+
+* Code exact polynomial division by starting at both ends of the problem. Look at Krandick's high order division algorithm and the paper downloaded on the Karatsuba like division algorithm.
+
+* faster isdivisible for polynomials
+
+* speed up z_jacobi by using quadratic reciprocity
+
+* speed up z_sqrtmod by using expmod (see wikipedia)
+
+* see if long_invert can be made to work with 64 bit n
+
+* optimise z_issquare once z_intsqrt is sped up
+
+* Use fast return in "step 4" of SQUFOF
+
+* Make SQUFOF factor up to 64 bit numbers on a 32 bit machine.
+
+* Allow number of trials to be passed to SQUFOF and trial division
+
+* Allow one to set the number of precomputed primes
+
+* solve the magma modular reduction mod sparse p problem and write faster version of mpz_mod_ui
+
+* classical and karatsuba square functions
+
+* Rewrite test code for fmpz_poly to generate random polys of fmpz type instead of mpz type
+
+* Make scalar_div_ui round appropriately
+
+* Write a 32 bit div function in long_extras.c
+
+* Make _fmpz_poly_scalar_div_ui use precomputed inverses when bitlength is long as well as the case already implemented when the poly length is long
+
+
+
