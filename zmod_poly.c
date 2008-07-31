@@ -4054,3 +4054,45 @@ unsigned long zmod_poly_resultant_euclidean(zmod_poly_t a, zmod_poly_t b)
 
    return res;
 }
+
+/****************************************************************************
+
+   Differentiation
+
+****************************************************************************/
+
+/**
+ * Set's the polynomial x_primed to be the derivative of the polynomial x. It reduces all the coefficients
+ * mod p after the differentiation so x_primed is in <b>Z</b>/p<b>Z</b>[X]
+ * @param  x_primed  The derivative of the x param
+ * @param  x The polynomial to be differentiated
+ * @return void
+ */
+void zmod_poly_derivative(zmod_poly_t x_primed, zmod_poly_t x)
+{
+	//get the degree and modulus of the polynomial we are working with
+	unsigned long length = zmod_poly_length(x);
+	unsigned long p = zmod_poly_modulus(x);
+	
+	if (length <= 1) 
+	{
+	   zmod_poly_zero(x_primed);
+	   return;
+    }
+
+    zmod_poly_fit_length(x_primed, length - 1);	
+	pre_inv_t p_inv = z_precompute_inverse(p);
+	
+	unsigned long k = 1L;
+	for (unsigned long j = 1; j < length; j++)
+	{
+		if (k == 0L) x_primed->coeffs[j-1] = 0L; 
+		else if (k == 1L) x_primed->coeffs[j-1] = zmod_poly_get_coeff_ui(x, j);
+		else x_primed->coeffs[j-1] = z_mulmod2_precomp(zmod_poly_get_coeff_ui(x, j), k, p, p_inv);
+		if (k == p - 1) k = 0L;
+		else k++;
+	}
+
+	x_primed->length = length - 1;
+	__zmod_poly_normalise(x_primed); // final coefficients may be zero
+}

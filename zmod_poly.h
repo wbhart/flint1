@@ -467,6 +467,11 @@ void zmod_poly_gcd(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2);
 int zmod_poly_gcd_invert(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2);
 void zmod_poly_xgcd(zmod_poly_t res, zmod_poly_t s, zmod_poly_t t, zmod_poly_t poly1, zmod_poly_t poly2);
 
+/*
+   Derivative
+*/
+void zmod_poly_derivative(zmod_poly_t x_primed, zmod_poly_t x);
+
 #ifdef __cplusplus
  }
 #endif

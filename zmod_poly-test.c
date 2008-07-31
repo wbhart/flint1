@@ -34,6 +34,7 @@ Copyright (C) 2007, William Hart and David Harvey
 #include "test-support.h"
 #include "zmod_poly.h"
 #include "long_extras.h"
+#include "mpz_poly.h"
 
 #define VARY_BITS 0
 #define SPARSE 0
@@ -1789,6 +1790,156 @@ int test_zmod_poly_resultant_euclidean()
    return result;
 }
 
+//simple theoretically failsafe derivative function
+void simple_derivative(zmod_poly_t x_primed, zmod_poly_t x)
+{
+	unsigned long length = zmod_poly_length(x);
+	unsigned long p = zmod_poly_modulus(x);
+	mpz_t num, index;
+	mpz_init(index);
+	mpz_init(num);
+	pre_inv_t p_inv = z_precompute_inverse(p);
+
+	//First of all, we make a fmpz_poly of the polynomial
+	mpz_poly_t f;
+	mpz_poly_init(f);
+	
+	for(unsigned long i = 0; i < length; ++i)
+	   mpz_poly_set_coeff_ui(f, i, zmod_poly_get_coeff_ui(x, i));
+	
+	//Now we take the derivative of that:
+	mpz_init(index);
+	mpz_init(num);
+	for(unsigned long i = 0; i < length; ++i)
+	{
+	   mpz_poly_get_coeff(num, f, i+1); // mpn_poly returns 0 if i+1 > length - 1 
+	   mpz_set_ui(index, i+1);		
+	   mpz_mul(num, num, index);
+	   mpz_poly_set_coeff(f, i, num);
+	}
+	mpz_clear(index);
+	mpz_clear(num);	
+	   
+	//zero the polynomial
+	zmod_poly_zero(x_primed);
+
+	//now we reduce all the coefficients mod p and reconstruct the polynomial.
+	mpz_t coeff, new_coeff;
+	//final poly will have degree one less than original so we must ignore the last coefficient
+	if(length !=0) length--;
+	mpz_init(coeff);
+	mpz_init(new_coeff);
+    for (unsigned long i = 0; i < length; i++)
+	{
+	   mpz_poly_get_coeff (coeff , f , i);
+	   zmod_poly_set_coeff_ui(x_primed, i, mpz_mod_ui(new_coeff, coeff, p));		
+	}
+    mpz_clear(coeff);
+	mpz_clear(new_coeff);
+	mpz_poly_clear(f);
+}
+
+int test_zmod_poly_derivative()
+{
+	int result = 1;
+	zmod_poly_t poly1, res1, res2;
+	unsigned long bits;
+    unsigned long modulus;
+
+	//test random polynomials
+	for (unsigned long count1 = 0; (count1 < 100) && (result == 1); count1++)
+	{
+		bits = randint(FLINT_BITS-2)+2;
+		
+		do {modulus = randprime(bits);} while (modulus < 2);
+		
+		for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
+		{
+
+			unsigned long length = randint(100)+1;
+#if DEBUG
+            printf("length = %ld, bits = %ld, modulus = %ld\n", length, bits, modulus);
+#endif			
+	 		//init
+			zmod_poly_init(poly1, modulus);
+			zmod_poly_init(res1, modulus);
+			zmod_poly_init(res2, modulus);
+			
+			//random poly test
+			randpoly(poly1, length, modulus);
+			zmod_poly_derivative(res1, poly1);
+			simple_derivative(res2, poly1);
+			result &= zmod_poly_equal(res1, res2);
+
+			if (!result)
+			{
+				printf("\npoly1 = ");zmod_poly_print(poly1); printf("\n\n");
+				printf("res1 = "); zmod_poly_print(res1); printf("\n\n");
+				printf("res2 = "); zmod_poly_print(res2); printf("\n\n");
+			}
+			
+			zmod_poly_clear(poly1);
+			zmod_poly_clear(res1);
+			zmod_poly_clear(res2);
+		}
+	}
+	
+	for (unsigned long count1 = 0; (count1 < 100) && (result == 1); count1++)
+	{
+	   bits = randint(FLINT_BITS-2)+2;
+		
+	   do {modulus = randprime(bits);} while (modulus < 2);
+	   //create zero polynomials
+#if DEBUG
+            printf("bits = %ld, modulus = %ld\n", bits, modulus);
+#endif			
+	   zmod_poly_init(poly1, modulus);
+	   zmod_poly_zero(poly1);
+	   zmod_poly_init(res1, modulus);
+	   zmod_poly_init(res2, modulus);
+	   zmod_poly_zero(res2);
+			
+	   zmod_poly_derivative(res1, poly1);
+	   result &= zmod_poly_equal(res1, res2);
+	   if(!result) printf("Failed on zero test\n");
+			
+	   zmod_poly_clear(poly1);
+       zmod_poly_clear(res1);
+	   zmod_poly_clear(res2);
+	}
+			
+	//test special case poly1 == poly2
+	for (unsigned long count1 = 0; (count1 < 100) && (result == 1); count1++)
+	{
+		bits = randint(FLINT_BITS-2)+2;
+		
+		do {modulus = randprime(bits);} while (modulus < 2);
+		
+		for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
+		{
+
+			unsigned long length = randint(100)+1;
+#if DEBUG
+            printf("length = %ld, bits = %ld, modulus = %ld\n", length, bits, modulus);
+#endif			
+			zmod_poly_init(poly1, modulus);
+			zmod_poly_init(res1, modulus);
+			randpoly(poly1, length, modulus);
+			
+			zmod_poly_derivative(res1, poly1);
+			zmod_poly_derivative(poly1, poly1);
+			result &= zmod_poly_equal(res1, poly1);
+			if(!result)
+				printf("failed on equal \n");
+			
+			zmod_poly_clear(poly1);
+			zmod_poly_clear(res1);
+		}	
+	}
+	
+	return result;
+}
+
 void zmod_poly_test_all()
 {
    int success, all_success = 1;
@@ -1801,6 +1952,7 @@ void zmod_poly_test_all()
    RUN_TEST(zmod_poly_shift); 
    RUN_TEST(zmod_poly_swap); 
    RUN_TEST(zmod_poly_setequal); 
+   RUN_TEST(zmod_poly_derivative); 
    RUN_TEST(zmod_poly_getset_coeff); 
    RUN_TEST(zmod_poly_mul_classicalKS); 
    RUN_TEST(zmod_poly_sqr_classicalKS); 
