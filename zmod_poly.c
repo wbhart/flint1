@@ -4096,3 +4096,87 @@ void zmod_poly_derivative(zmod_poly_t x_primed, zmod_poly_t x)
 	x_primed->length = length - 1;
 	__zmod_poly_normalise(x_primed); // final coefficients may be zero
 }
+
+/****************************************************************************
+
+   Modular arithmetic (modulo a polynomial)
+
+****************************************************************************/
+
+/*
+   Multiplies poly1 and poly2 modulo f
+   Assumes poly1 and poly2 are reduced mod f
+*/
+
+void zmod_poly_mulmod(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, zmod_poly_t f)
+{
+   unsigned long p = f->p;
+   
+   if (f->length == 0)
+   {
+      printf("FLINT Exception: Divide by zero\n");
+      abort();
+   }
+   if ((f->length == 1) || (poly1->length == 0) || (poly2->length == 0))
+   {
+      zmod_poly_zero(res);
+	  return;
+   }
+
+   zmod_poly_t prod, quot;
+   zmod_poly_init(prod, p);
+   zmod_poly_init(quot, p);
+   zmod_poly_mul(prod, poly1, poly2);
+   zmod_poly_divrem(quot, res, prod, f);
+   zmod_poly_clear(quot);
+   zmod_poly_clear(prod);
+}
+
+/*
+   Returns poly^exp modulo f
+   Assumes poly is reduced mod f
+   There are no restrictions on exp, i.e. it can be zero or negative
+   The leading coefficient of f must be invertible modulo the modulus
+*/
+
+void zmod_poly_powmod(zmod_poly_t res, zmod_poly_t pol, long exp, zmod_poly_t f)
+{
+   zmod_poly_t y;
+   
+   unsigned long e;
+   unsigned long p = f->p;
+
+   if (pol->length == 0) 
+   {
+      if (exp <= 0L) 
+	  {
+         printf("FLINT Exception: Divide by zero\n");
+         abort();   
+	  }
+	  zmod_poly_zero(res);
+	  return;
+   }
+
+   if (exp < 0L)
+      e = (unsigned long) -exp;
+   else
+      e = exp;
+   
+   zmod_poly_set_coeff_ui(res, 0, 1L);
+   res->length = 1;
+
+   if (exp) 
+   {
+	  zmod_poly_init(y, p);
+	  zmod_poly_set(y, pol);
+   }
+   
+   while (e) {
+      if (e & 1) zmod_poly_mulmod(res, res, y, f);
+      e = e >> 1;
+	  if (e) zmod_poly_mulmod(y, y, y, f);
+   }
+
+   if (exp < 0L) zmod_poly_gcd_invert(res, res, f);
+   if (exp) zmod_poly_clear(y);
+} 

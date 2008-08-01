@@ -363,5 +363,10 @@ to improve locality.
 
 * Make _fmpz_poly_scalar_div_ui use precomputed inverses when bitlength is long as well as the case already implemented when the poly length is long
 
+* Make zmod_poly_derivative use z_mulmod_precomp instead of z_mulmod2_precomp where appropriate
 
+* Use precomputed inverses in modulo arithmetic section in zmod_poly
 
+* See if there is a way of using the special form of pol^p to make zmod_poly_powmod faster
+
+* Implement negative powers in zmod_poly_powmod

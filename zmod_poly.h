@@ -293,6 +293,12 @@ int zmod_poly_is_one(zmod_poly_t poly1)
    return 0;
 }
 
+static inline
+int zmod_poly_is_zero(zmod_poly_t poly1)
+{ 
+   return (poly1->length == 0L);
+}
+
 /*
    Reversal
 */
@@ -470,7 +476,15 @@ void zmod_poly_xgcd(zmod_poly_t res, zmod_poly_t s, zmod_poly_t t, zmod_poly_t p
 /*
    Derivative
 */
+
 void zmod_poly_derivative(zmod_poly_t x_primed, zmod_poly_t x);
+
+/*
+   Modular Arithmetic
+*/
+
+void zmod_poly_mulmod(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, zmod_poly_t f);
+void zmod_poly_powmod(zmod_poly_t res, zmod_poly_t pol, long exp, zmod_poly_t f);
 
 #ifdef __cplusplus
  }
