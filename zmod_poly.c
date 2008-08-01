@@ -4180,3 +4180,189 @@ void zmod_poly_powmod(zmod_poly_t res, zmod_poly_t pol, long exp, zmod_poly_t f)
    if (exp < 0L) zmod_poly_gcd_invert(res, res, f);
    if (exp) zmod_poly_clear(y);
 } 
+
+/**************************************************************************************************
+
+   Factorisation
+
+**************************************************************************************************/
+
+/**
+ * Initialises an array of zmod_poly's
+ */
+void zmod_poly_factor_init(zmod_poly_factor_t fac)
+{
+   fac->alloc = 5;
+   fac->num_factors = 0;
+   fac->factors = (zmod_poly_t *) flint_heap_alloc_bytes(sizeof(zmod_poly_t)*5);
+   fac->exponents = (unsigned long *) flint_heap_alloc(5);
+   for (unsigned long i = 0; i < 5; i++)
+   {
+	  fac->factors[i]->coeffs = (unsigned long*) flint_heap_alloc(1);
+	  fac->factors[i]->alloc = 1;
+      fac->factors[i]->length = 0;
+   }
+}
+
+/** 
+ * Frees up memory being used
+ */
+void zmod_poly_factor_clear(zmod_poly_factor_t fac)
+{
+	for (unsigned long i = 0; i < fac->alloc; i++)
+	   zmod_poly_clear(fac->factors[i]);
+	free(fac->factors);
+	free(fac->exponents);
+}
+
+/**
+ * Adds an extra element to the array
+ */
+void zmod_poly_factor_add(zmod_poly_factor_t fac, zmod_poly_t poly)
+{
+   if (poly->length <= 1) return;
+   
+   // how much space left in the array?, 
+   // if none make a new one twice as big (for efficiency) and copy contents across
+   if(fac->alloc == fac->num_factors)
+   {
+      fac->factors = (zmod_poly_t *) flint_heap_realloc_bytes(fac->factors, sizeof(zmod_poly_t)*2*fac->alloc);
+	  fac->exponents = (unsigned long *) flint_heap_realloc(fac->exponents, 2*fac->alloc);
+	  for (unsigned long i = fac->alloc; i < 2*fac->alloc; i++)
+      {
+	     fac->factors[i]->coeffs = (unsigned long*) flint_heap_alloc(1);
+	     fac->factors[i]->alloc = 1;
+         fac->factors[i]->length = 0;
+	  }
+      fac->alloc = 2*fac->alloc;
+   } 
+	
+   zmod_poly_set(fac->factors[fac->num_factors], poly);
+   fac->exponents[fac->num_factors] = 1;
+   fac->num_factors++;
+}
+
+/**
+ * Concatenates array res to res + fac
+ */
+void zmod_poly_factor_concat(zmod_poly_factor_t res, zmod_poly_factor_t fac)
+{
+   for(unsigned long i = 0; i < fac->num_factors; i++)
+	  zmod_poly_factor_add(res, fac->factors[i]);
+}
+
+/**
+ * Dumps the array to stdout
+ */
+void zmod_poly_factor_print(zmod_poly_factor_t fac)
+{
+   for(unsigned long i = 0; i < fac->num_factors; i++)
+   {
+      zmod_poly_print(fac->factors[i]); 
+      printf(" ^ %ld\n", fac->exponents[i]);
+   }	
+}
+
+/**
+ * Raise the exponents of a factor array to the given exponent
+ */
+void zmod_poly_factor_pow(zmod_poly_factor_t fac, unsigned long exp)
+{
+   for (unsigned long i = 0; i < fac->num_factors; i++)
+      fac->exponents[i] *= exp;
+}
+
+/**
+ * Square-Free Algorithm, takes an arbitary polynomial in F_p[X] and returns an array of square free factors
+ * LOW MULTIPLICITIES
+ */
+void zmod_poly_factor_square_free(zmod_poly_factor_t res, zmod_poly_t f)
+{
+    if (f->length <= 1) 
+	{
+	   res->num_factors = 0;
+       return;
+	}
+
+	if (f->length == 2)
+	{
+	   zmod_poly_factor_add(res, f);
+	   return;
+	}
+
+    unsigned long p = zmod_poly_modulus(f);    //order of the field
+    unsigned long deg = zmod_poly_degree(f); //degree of the polynomial
+    
+	//Step 1, look at f', if it is zero then we are done since f = h(x)^p
+	//for some particular h(x), clearly f(x) = sum a_k x^kp, k <= deg(f)
+    zmod_poly_t f_d, g, g_1;
+
+    zmod_poly_init(g_1, p);
+    zmod_poly_init(f_d, p);
+    zmod_poly_init(g, p);
+
+    zmod_poly_derivative(f_d, f);
+
+    //CASE 1:
+    if(zmod_poly_is_zero(f_d))
+    {
+        zmod_poly_t h;
+        zmod_poly_init(h, p);
+        for(unsigned long i = 0; i <= deg/p; ++i)    //this will be an integer since f'=0
+        {
+            zmod_poly_set_coeff_ui(h, i, zmod_poly_get_coeff_ui(f, i*p));
+        }
+        
+		//now run square-free on h, and return it to the pth power
+        zmod_poly_factor_t new_res;
+        zmod_poly_factor_init(new_res);
+
+        zmod_poly_factor_square_free(new_res, h);
+        //now raise it to the power of p
+        zmod_poly_factor_pow(new_res, p);
+			    
+        zmod_poly_factor_concat(res, new_res);    //note, concatenating is equivalent to multiplying   
+    }
+    else 
+    { 
+        zmod_poly_gcd(g, f, f_d);
+        zmod_poly_div(g_1, f, g);
+        unsigned long i = 1;
+
+        //CASE 2:
+        while (!zmod_poly_is_one(g_1)) 
+        {
+            zmod_poly_t h, z;
+            zmod_poly_init(h, p);
+            zmod_poly_init(z, p);
+            
+			zmod_poly_gcd(h, g_1, g);
+            zmod_poly_div(z, g_1, h);
+            //out <- out.z
+            
+            zmod_poly_factor_add(res, z);
+            if (res->num_factors) res->exponents[res->num_factors-1] *= i;
+			i++;
+			zmod_poly_set(g_1, h);
+            zmod_poly_div(g, g, h);
+        }
+        
+        if(!zmod_poly_is_one(g))
+        {
+            //so now we multiply res with square-free(g^1/p) ^ p 
+            zmod_poly_t g_p; //g^(1/p)
+            zmod_poly_init(g_p, p);
+
+            for(unsigned long i = 0; i <= zmod_poly_degree(g)/p; i++)    
+                zmod_poly_set_coeff_ui(g_p, i, zmod_poly_get_coeff_ui(g, i*p));
+            
+            zmod_poly_factor_t new_res_2;
+            zmod_poly_factor_init(new_res_2);
+            //square-free(g^(1/p))
+            zmod_poly_factor_square_free(new_res_2, g_p);
+            //now raise it to the power of p
+            zmod_poly_factor_pow(new_res_2, p);
+			zmod_poly_factor_concat(res, new_res_2);
+        }
+    }
+}

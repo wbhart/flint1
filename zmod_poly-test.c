@@ -2086,12 +2086,44 @@ int test_zmod_poly_powmod()
    return result;
 }
 
+int test_zmod_poly_factor_square_free()
+{
+   int result = 1;
+   zmod_poly_t pol1;
+   zmod_poly_factor_t res;
+   unsigned long bits;
+   unsigned long modulus;
+
+   for (unsigned long count1 = 0; (count1 < 10000) && (result == 1); count1++)
+   {
+      bits = randint(FLINT_BITS-2)+2;
+      
+      do {modulus = randprime(bits);} while (modulus < 2);
+      
+ #if DEBUG
+      printf("bits = %ld, modulus = %ld\n", bits, modulus);
+#endif
+
+	  zmod_poly_init(pol1, modulus);
+      zmod_poly_factor_init(res);
+
+	  zmod_poly_set_coeff_ui(pol1, randint(20), 1L);
+
+	  zmod_poly_factor_square_free(res, pol1);
+      //zmod_poly_factor_print(res);
+      
+	  zmod_poly_clear(pol1);
+	  zmod_poly_factor_clear(res);
+   }
+}
+
 void zmod_poly_test_all()
 {
    int success, all_success = 1;
 
 #if TESTFILE
 #endif
+   RUN_TEST(zmod_poly_factor_square_free); 
    RUN_TEST(zmod_poly_reverse); 
    RUN_TEST(zmod_poly_addsub); 
    RUN_TEST(zmod_poly_neg); 

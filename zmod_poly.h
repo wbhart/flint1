@@ -71,6 +71,25 @@ typedef struct
 
 typedef zmod_poly_precomp_struct zmod_poly_precomp_t[1];
 
+/**
+ * This is the data type for storing factors for a polynomial
+ * It contains an array of polynomials <code>factors</code> that contains the factors of the polynomial.
+ * The variable <code>alloc<code> is the number of factors that can be stored in total.
+ * <code>num_factor</code> is the number of factors currently stored.
+ */
+typedef struct
+{
+	zmod_poly_t* factors;
+	unsigned long * exponents;
+	unsigned long alloc;
+	unsigned long num_factors;
+} zmod_poly_factor_struct;
+
+/**
+ * This is the data type actually used allowing us to pass the factor array by reference
+ */
+typedef zmod_poly_factor_struct zmod_poly_factor_t[1];
+
 #define SWAP_ZMOD_POLY_PTRS(x, y)    \
 do {                                \
    zmod_poly_p zzz_ptr = (x);        \
@@ -485,6 +504,57 @@ void zmod_poly_derivative(zmod_poly_t x_primed, zmod_poly_t x);
 
 void zmod_poly_mulmod(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, zmod_poly_t f);
 void zmod_poly_powmod(zmod_poly_t res, zmod_poly_t pol, long exp, zmod_poly_t f);
+
+/*
+   Factorisation
+*/
+
+/**
+ * Initialises polynomial factor structure. 
+ * @param arr		The array that will be storing the factors.
+ */ 
+void zmod_poly_factor_init(zmod_poly_factor_t fac);
+
+/**
+ * Frees up the memory being used by the factor array. After calling this init will need to be called in order to use the structure again.
+ * @param arr		The array to be cleared.
+ */
+void zmod_poly_factor_clear(zmod_poly_factor_t fac);
+
+/**
+ * Adds a polynomial to the factor array. Automatically allocates new memory if needed. 
+ * @param fac		Factor array to be augmented.
+ * @param poly		Polynomial to be added to the array.
+ */
+void zmod_poly_factor_add(zmod_poly_factor_t fac, zmod_poly_t poly);
+
+/**
+ * Concatenates two polynomial factor structures together setting <code>res = {res, fac}</code>. 
+ * Automatically makes res bigger if this is required.
+ * @param res		The result of the concatenation and the first of the factor structures to be concatenated.
+ * @param fac		The struct to be concatenated to res.
+ */
+void zmod_poly_factor_concat(zmod_poly_factor_t res, zmod_poly_factor_t fac);
+
+/**
+ * Prints the given list of factors to stdout using <code>zmod_poly_print()</code>, each one on a new line.
+ * @param fac   	Factor structure to be printed.
+ */
+void zmod_poly_factor_print(zmod_poly_factor_t fac);	
+
+/**
+ * Multiply the exponents of the given factor struct to the given value
+ * @param fac   	Factor structure to be raised to a power.
+ * @param exp		Exponent to raise the factor to
+ */
+void zmod_poly_factor_pow(zmod_poly_factor_t fac, unsigned long exp);
+
+/**
+ * Computes the square free factorisation of the given polynomial.
+ * @param f 		The polynomial to factorise.
+ * @param fac		The factorisation into square free factors of <code>f</code>.
+ */
+void zmod_poly_factor_square_free(zmod_poly_factor_t res, zmod_poly_t f);
 
 #ifdef __cplusplus
  }

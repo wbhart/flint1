@@ -370,3 +370,7 @@ to improve locality.
 * See if there is a way of using the special form of pol^p to make zmod_poly_powmod faster
 
 * Implement negative powers in zmod_poly_powmod
+
+* See if there are any special cases zmod_poly_factor_square_free can recognise easily, e.g. x^2 or degree 2 polynomials
+
+* Put non-trivial test code in for zmod_poly_factor_square_free once is_irreducible is coded
