@@ -61,9 +61,9 @@ HEADERS = \
 	profiler.h \
 	test-support.h \
 	long_extras.h \
-        zmod_poly.h \
-	theta.h 
-
+	zmod_poly.h \
+	theta.h \
+	zmod_mat.h
 
 ####### library object files
 
@@ -80,14 +80,15 @@ FLINTOBJ = \
 	mpz_poly.o \
 	ZmodF_poly.o \
 	long_extras.o \
-        zmod_poly.o \
-	theta.o
+	zmod_poly.o \
+	theta.o \
+	zmod_mat.o
 
 QS: mpQS tinyQS
 
 tune: ZmodF_mul-tune mpz_poly-tune 
 
-test: mpn_extras-test fmpz_poly-test fmpz-test ZmodF-test ZmodF_poly-test mpz_poly-test ZmodF_mul-test long_extras-test zmod_poly-test 
+test: mpn_extras-test fmpz_poly-test fmpz-test ZmodF-test ZmodF_poly-test mpz_poly-test ZmodF_mul-test long_extras-test zmod_poly-test
 
 profile: ZmodF_poly-profile kara-profile fmpz_poly-profile mpz_poly-profile ZmodF_mul-profile 
 
@@ -150,6 +151,9 @@ NTL-interface.o: NTL-interface.cpp $(HEADERS)
 
 theta.o: theta.c $(HEADERS)
 	$(CC) $(CFLAGS) -c theta.c -o theta.o
+
+zmod_mat.o: zmod_mat.c $(HEADERS)
+	$(CC) $(CFLAGS) -c zmod_mat.c -o zmod_mat.o
 
 ####### test program object files
 
