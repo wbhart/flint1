@@ -26,6 +26,7 @@
 *****************************************************************************/
 
 #include "zmod_poly.h"
+#include "zmod_mat.h"
 #include "long_extras.h"
 #include "flint.h"
 
@@ -4365,4 +4366,146 @@ void zmod_poly_factor_square_free(zmod_poly_factor_t res, zmod_poly_t f)
 			zmod_poly_factor_concat(res, new_res_2);
         }
     }
+}
+
+#define DBG 1
+#define NL printf("\n");
+
+/*
+   Berlekamp polynomial factoring algorithm
+   It accepts a polynomial f and either factors it, returns f itself as the only factor
+   (in which case it is irreducible) or fails to factorise the polynomial
+*/
+
+void zmod_poly_factor_berlekamp(zmod_poly_factor_t factors, zmod_poly_t f)
+{
+	//if(DBG) { printf("Input poly: "); zmod_poly_print(f); NL }
+
+	unsigned long p = zmod_poly_modulus(f); //order of the field
+	unsigned long n = zmod_poly_degree(f);
+
+	//Step 1, we compute x^p mod f in F_p[X]/<f>
+	zmod_poly_t x, x_p;
+	zmod_poly_init(x, p);
+	zmod_poly_init(x_p, p);
+	
+	zmod_poly_set_coeff_ui(x, 1, 1);
+	zmod_poly_powmod(x_p, x, p, f);
+	//if(DBG) { printf(" x^%lu = ",p); zmod_poly_print(x_p); NL }
+
+	//Step 2, compute the matrix for the Berlekamp Map
+	zmod_mat_t matrix;
+	zmod_mat_init(matrix, p, n, n);//zmod_poly_factor_init(output,p);
+	zmod_poly_t x_pi, x_pi2;
+	zmod_poly_init(x_pi, p);
+	zmod_poly_init(x_pi2, p);
+	zmod_poly_set_coeff_ui(x_pi, 0, 1);
+    ulong coeff;
+
+	for (long i = 0; i < n; i++)
+	{
+		//if(DBG) { printf(" x^(%lu*%lu) = ", p,i); zmod_poly_print(x_pi); NL }
+		//Q - I
+		zmod_poly_set(x_pi2, x_pi);
+		coeff = zmod_poly_get_coeff_ui(x_pi2, i);
+		if (coeff) zmod_poly_set_coeff_ui(x_pi2, i, coeff - 1);
+		else zmod_poly_set_coeff_ui(x_pi2, i, p - 1);
+		zmod_poly_to_zmod_mat_row(matrix, i, x_pi2);
+        if (i < n - 1) zmod_poly_mulmod(x_pi, x_pi, x_p, f); 
+	}
+    zmod_poly_clear(x_pi);
+    zmod_poly_clear(x_pi2);
+
+	//Now we do Gauss-Jordan on Q-I
+	//if(DBG) { printf("Before Gauss-Jordan: \n");zmod_mat_print(matrix); NL}
+	//might implement back substitution instead since it is potentially faster
+	ulong nullity = n - zmod_mat_row_reduce_gauss_jordan(matrix);
+	//if(DBG) { printf("After Gauss-Jordan: \n");zmod_mat_print(matrix); NL}
+	
+	//Try and find a basis for the nullspace
+	zmod_poly_t * basis = (zmod_poly_t *) flint_heap_alloc(nullity * sizeof(zmod_poly_t));
+    
+	ulong col = 0;
+	ulong row = 0;
+	for (ulong i = 0; i < nullity; i++)
+	{
+	   zmod_poly_init(basis[i], p);
+	   while (zmod_mat_get_coeff_ui(matrix, row, col)) 
+	   {
+	      row++;
+		  col++;
+	   }
+	   zmod_mat_col_to_zmod_poly(basis[i], matrix, col);
+	   zmod_poly_set_coeff_ui(basis[i], col, p - 1);
+	   col++;
+	}
+	
+	if (nullity == 1) //we are done
+	{
+		//if(DBG)  {printf("f is irreducible : "); zmod_poly_print(f); NL  }
+		zmod_poly_factor_add(factors, f);
+	} else
+	{		
+		/*if (DBG)
+		{
+		   for (ulong i = 0; i < nullity; i++)
+		   {
+			  printf("Poly[%ld] = ", i); zmod_poly_print(basis[i]); printf("\n");
+		   }
+		}*/
+		//generate num random numbers
+		zmod_poly_t factor, b, power;
+		zmod_poly_init(factor, p); zmod_poly_init(b, p); zmod_poly_init(power, p);
+         
+		zmod_poly_t g;
+		zmod_poly_init(g, p);
+		    
+		ulong tries;
+		for (tries = 0; tries < 100; tries++)
+		{
+		   zmod_poly_zero(factor);
+		   zmod_poly_set_coeff_ui(factor, 0, 1);
+		   while(zmod_poly_is_one(factor) || zmod_poly_is_zero(factor))
+		   {
+		      zmod_poly_zero(factor);
+			  for(ulong i = 0; i < nullity; i++)
+			  {
+			     zmod_poly_scalar_mul(b, basis[i], z_randint(p));
+			     zmod_poly_add(factor, factor, b);
+			  }
+			  zmod_poly_make_monic(factor, factor);
+			  //if(DBG)  {printf("Factor = ");zmod_poly_print(factor); NL }
+		   }
+		
+		   zmod_poly_gcd(g, f, factor);
+		   //if (DBG) { printf("GCD =  "); zmod_poly_print(g); NL }
+		   if (zmod_poly_length(g) != 1) break;
+		   if (p != 2) zmod_poly_powmod(power, factor, (p-1)/2, f);
+		   power->coeffs[0] = z_addmod(power->coeffs[0], p - 1, p);
+		   zmod_poly_gcd(g, f, power);
+		   if ((zmod_poly_length(g) != 1) && (g->length != f->length)) break;
+		}
+		 
+		if (tries == 100) 
+		{
+		   if (DBG) printf("Fail\n");
+		   return;
+		}
+		 
+		//if(DBG) { printf("Success! \nFactor = "); zmod_poly_print(g); NL }
+	     zmod_poly_factor_t fac1, fac2;
+	     zmod_poly_factor_init(fac1); zmod_poly_factor_init(fac2);
+		 zmod_poly_factor_berlekamp(fac1, g);
+		 zmod_poly_t Q;
+		 zmod_poly_init(Q, p);
+		 zmod_poly_div(Q, f, g);
+		 zmod_poly_factor_berlekamp(fac2, Q);
+		 zmod_poly_factor_cat(factors, fac1);
+	     zmod_poly_factor_cat(factors, fac2);
+		 zmod_poly_clear(Q);
+		 zmod_poly_clear(power);
+		 zmod_poly_clear(g);
+		 zmod_poly_clear(factor);
+		 zmod_poly_clear(b);
+	  }			
 }

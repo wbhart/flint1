@@ -556,6 +556,13 @@ void zmod_poly_factor_pow(zmod_poly_factor_t fac, unsigned long exp);
  */
 void zmod_poly_factor_square_free(zmod_poly_factor_t res, zmod_poly_t f);
 
+/**
+ * Computes the factorisation of the given polynomial.
+ * @param f 		The polynomial to factorise.
+ * @param factors	The factorisation of <code>f</code>.
+ */
+void zmod_poly_factor_berlekamp(zmod_poly_factor_t factors, zmod_poly_t f);
+
 #ifdef __cplusplus
  }
 #endif
