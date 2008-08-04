@@ -2143,7 +2143,9 @@ int test_zmod_poly_factor_berlekamp()
 	  zmod_poly_set_coeff_ui(pol1, 2*n+1, 1L);
 
 	  zmod_poly_factor_berlekamp(res, pol1);
-      zmod_poly_factor_print(res);
+	  printf("Factors are:\n");
+	  zmod_poly_factor_print(res);
+	  printf("\n\n");
       
 	  zmod_poly_clear(pol1);
 	  zmod_poly_factor_clear(res);

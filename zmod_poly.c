@@ -4461,7 +4461,7 @@ void zmod_poly_factor_berlekamp(zmod_poly_factor_t factors, zmod_poly_t f)
 		zmod_poly_init(g, p);
 		    
 		ulong tries;
-		for (tries = 0; tries < 100; tries++)
+		for (tries = 0; tries < 1000; tries++)
 		{
 		   zmod_poly_zero(factor);
 		   zmod_poly_set_coeff_ui(factor, 0, 1);
@@ -4480,15 +4480,18 @@ void zmod_poly_factor_berlekamp(zmod_poly_factor_t factors, zmod_poly_t f)
 		   zmod_poly_gcd(g, f, factor);
 		   //if (DBG) { printf("GCD =  "); zmod_poly_print(g); NL }
 		   if (zmod_poly_length(g) != 1) break;
-		   if (p != 2) zmod_poly_powmod(power, factor, (p-1)/2, f);
-		   power->coeffs[0] = z_addmod(power->coeffs[0], p - 1, p);
-		   zmod_poly_gcd(g, f, power);
-		   if ((zmod_poly_length(g) != 1) && (g->length != f->length)) break;
+		   if (p != 2) 
+		   {
+			  zmod_poly_powmod(power, factor, (p-1)/2, f);
+		      power->coeffs[0] = z_addmod(power->coeffs[0], p - 1, p);
+		      zmod_poly_gcd(g, f, power);
+		      if ((zmod_poly_length(g) != 1) && (g->length != f->length)) break;
+		   }
 		}
 		 
-		if (tries == 100) 
+		if (tries == 1000) 
 		{
-		   if (DBG) printf("Fail\n");
+		   //if (DBG) printf("Fail\n");
 		   return;
 		}
 		 
@@ -4500,8 +4503,8 @@ void zmod_poly_factor_berlekamp(zmod_poly_factor_t factors, zmod_poly_t f)
 		 zmod_poly_init(Q, p);
 		 zmod_poly_div(Q, f, g);
 		 zmod_poly_factor_berlekamp(fac2, Q);
-		 zmod_poly_factor_cat(factors, fac1);
-	     zmod_poly_factor_cat(factors, fac2);
+		 zmod_poly_factor_concat(factors, fac1);
+	     zmod_poly_factor_concat(factors, fac2);
 		 zmod_poly_clear(Q);
 		 zmod_poly_clear(power);
 		 zmod_poly_clear(g);
