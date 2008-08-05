@@ -2125,7 +2125,7 @@ int test_zmod_poly_factor_berlekamp()
    unsigned long bits;
    unsigned long modulus;
 
-   for (unsigned long count1 = 0; (count1 < 10000) && (result == 1); count1++)
+   for (unsigned long count1 = 0; (count1 < 1000) && (result == 1); count1++)
    {
       bits = randint(FLINT_BITS-2)+2;
       
@@ -2143,9 +2143,11 @@ int test_zmod_poly_factor_berlekamp()
 	  zmod_poly_set_coeff_ui(pol1, 2*n+1, 1L);
 
 	  zmod_poly_factor_berlekamp(res, pol1);
-	  printf("Factors are:\n");
+	  /*printf("Polynomial:\n");
+	  zmod_poly_print(pol1);
+	  printf("\nFactors are:\n");
 	  zmod_poly_factor_print(res);
-	  printf("\n\n");
+	  printf("\n");*/
       
 	  zmod_poly_clear(pol1);
 	  zmod_poly_factor_clear(res);

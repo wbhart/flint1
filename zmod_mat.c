@@ -88,6 +88,31 @@ void zmod_poly_to_zmod_mat_row(zmod_mat_t mat, ulong row, zmod_poly_t poly)
    for ( ; i < cols; i++)
       r1[i] = 0L;
 }
+/*
+   Set a column to the coefficients of a polynomial, starting with the constant coefficient
+   Assumes that poly->length <= mat->rows
+*/
+
+void zmod_poly_to_zmod_mat_col(zmod_mat_t mat, ulong col, zmod_poly_t poly)
+{
+   ulong * r1; 
+   ulong * coeffs = poly->coeffs;
+   ulong rows = mat->rows;
+
+   long i;
+   
+   for (i = 0; i < poly->length; i++)
+   {
+	  r1 = mat->arr[i];
+	  r1[col] = coeffs[i];
+   }
+   
+   for ( ; i < rows; i++)
+   {
+	  r1 = mat->arr[i];
+	  r1[col] = 0L;
+   }
+}
 
 /*
    Set a zmod_poly's coefficients to the entries in a column, starting with the constant coefficient
@@ -102,6 +127,31 @@ void zmod_mat_col_to_zmod_poly(zmod_poly_t poly, zmod_mat_t mat, ulong col)
    {  
 	  ptr = mat->arr[i];
       poly->coeffs[i] = ptr[col];
+   }
+
+   poly->length = rows;
+   __zmod_poly_normalise(poly);
+}
+
+/*
+   Set a zmod_poly's coefficients to the entries in a column, starting with the constant coefficient
+   but shifting along by one for every non-zero entry in shift
+*/
+void zmod_mat_col_to_zmod_poly_shifted(zmod_poly_t poly, zmod_mat_t mat, ulong col, ulong * shift)
+{
+   ulong rows = mat->rows;
+   ulong * ptr;
+   
+   zmod_poly_fit_length(poly, rows);
+   for (ulong i = 0, j = 0; j < rows; j++)
+   {  
+	  if (shift[j]) poly->coeffs[j] = 0L;
+	  else
+	  {
+		 ptr = mat->arr[i];
+         poly->coeffs[j] = ptr[col];
+	     i++;
+	  }
    }
 
    poly->length = rows;
