@@ -374,3 +374,13 @@ to improve locality.
 * See if there are any special cases zmod_poly_factor_square_free can recognise easily, e.g. x^2 or degree 2 polynomials
 
 * Put non-trivial test code in for zmod_poly_factor_square_free once is_irreducible is coded
+
+* try implementing back substitution instead of Gauss-Jordan elimination in Berlekamp
+
+* First column of Berlekamp matrix is always zero - don't reduce it
+
+* Try Pari's trick of finding other random polys and taking gcds with all factors found so far, in Berlekamp, to save recursing Berlekamp (maybe it is possible to derive the Berlekamp basis of the factors from that of the whole poly?)
+
+* Add code for finding trivial polynomial factorisations, e.g. of differences of squares, powers of x, binomials, etc.
+
+* Asymptotically fast matrix nullspace code to speed up Berlekamp

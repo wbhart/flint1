@@ -4368,19 +4368,14 @@ void zmod_poly_factor_square_free(zmod_poly_factor_t res, zmod_poly_t f)
     }
 }
 
-#define DBG 0
-#define NL printf("\n");
-
 /*
    Berlekamp polynomial factoring algorithm
-   It accepts a polynomial f and either factors it, returns f itself as the only factor
-   (in which case it is irreducible) or fails to factorise the polynomial
+   It accepts a polynomial f and either factors it or returns f itself as the only factor
+   (in which case it is irreducible)
 */
 
 void zmod_poly_factor_berlekamp(zmod_poly_factor_t factors, zmod_poly_t f)
 {
-	if(DBG) { printf("Input poly: "); zmod_poly_print(f); NL }
-
 	if (f->length <= 2)
 	{
 		zmod_poly_factor_add(factors, f);
@@ -4397,23 +4392,21 @@ void zmod_poly_factor_berlekamp(zmod_poly_factor_t factors, zmod_poly_t f)
 	
 	zmod_poly_set_coeff_ui(x, 1, 1);
 	zmod_poly_powmod(x_p, x, p, f);
-	//if(DBG) { printf(" x^%lu = ", p); zmod_poly_print(x_p); NL }
-
+	zmod_poly_clear(x);
+	
 	//Step 2, compute the matrix for the Berlekamp Map
 	zmod_mat_t matrix;
-	zmod_mat_init(matrix, p, n, n);//zmod_poly_factor_init(output,p);
-	zmod_poly_t x_pi, x_pi2, g;
+	zmod_mat_init(matrix, p, n, n); 
+	zmod_poly_t x_pi, x_pi2;
 	zmod_poly_init(x_pi, p);
 	zmod_poly_init(x_pi2, p);
-	zmod_poly_init(g, p);
 	zmod_poly_set_coeff_ui(x_pi, 0, 1);
     ulong coeff;
 
 	int reducible = 0;
 	for (long i = 0; i < n; i++)
 	{
-	    //if(DBG) { printf(" x^(%lu*%lu) = ", p,i); zmod_poly_print(x_pi); NL }
-		//Q - I
+	    //Q - I
 		zmod_poly_set(x_pi2, x_pi);
 		coeff = zmod_poly_get_coeff_ui(x_pi2, i);
 		if (coeff) zmod_poly_set_coeff_ui(x_pi2, i, coeff - 1);
@@ -4421,23 +4414,23 @@ void zmod_poly_factor_berlekamp(zmod_poly_factor_t factors, zmod_poly_t f)
 		zmod_poly_to_zmod_mat_col(matrix, i, x_pi2);
         zmod_poly_mulmod(x_pi, x_pi, x_p, f); 
 	}
+    zmod_poly_clear(x_p);
     zmod_poly_clear(x_pi);
     zmod_poly_clear(x_pi2);
 
 	//Now we do Gauss-Jordan on Q-I
-	if(DBG) { printf("Before Gauss-Jordan: \n");zmod_mat_print(matrix); NL}
-	//might implement back substitution instead since it is potentially faster
+	//todo: try implementing back substitution instead since it is potentially faster
 	ulong nullity = n - zmod_mat_row_reduce_gauss_jordan(matrix);
-	if(DBG) { printf("After Gauss-Jordan: \n");zmod_mat_print(matrix); NL}
 	
 	//Try and find a basis for the nullspace
 	zmod_poly_t * basis = (zmod_poly_t *) flint_heap_alloc(nullity * sizeof(zmod_poly_t));
     ulong * shift = (ulong *) flint_heap_alloc(n);
     F_mpn_clear(shift, n);
 
-	ulong col = 0;
+	ulong col = 1; // first column is always zero
 	ulong row = 0;
-	for (ulong i = 0; i < nullity; i++)
+	shift[0] = 1;
+	for (ulong i = 1; i < nullity; i++)
 	{
 	   zmod_poly_init(basis[i], p);
 	   while (zmod_mat_get_coeff_ui(matrix, row, col)) 
@@ -4451,29 +4444,20 @@ void zmod_poly_factor_berlekamp(zmod_poly_factor_t factors, zmod_poly_t f)
 	   col++;
 	}
 	flint_heap_free(shift);
+	zmod_mat_clear(matrix);
 
 	if (nullity == 1) //we are done
 	{
-		//if(DBG)  {printf("f is irreducible : "); zmod_poly_print(f); NL  }
 		zmod_poly_factor_add(factors, f);
+		flint_heap_free(basis);
 	} else
 	{		
-		if (DBG)
-		{
-		   for (ulong i = 0; i < nullity; i++)
-		   {
-			  printf("Poly[%ld] = ", i); zmod_poly_print(basis[i]); printf("\n");
-		   }
-		}
 		//generate num random numbers
-		zmod_poly_t factor, b, power;
-		zmod_poly_init(factor, p); zmod_poly_init(b, p); zmod_poly_init(power, p);
-         
-		zmod_poly_t g;
-		zmod_poly_init(g, p);
+		zmod_poly_t factor, b, power, g;
+		zmod_poly_init(factor, p); zmod_poly_init(b, p); 
+		zmod_poly_init(power, p); zmod_poly_init(g, p);
 		    
-		ulong tries;
-		for (tries = 0; tries < 1000000; tries++)
+		while (1)
 		{
 		   do {
 		      zmod_poly_zero(factor);
@@ -4484,43 +4468,40 @@ void zmod_poly_factor_berlekamp(zmod_poly_factor_t factors, zmod_poly_t f)
 			  }
 			  zmod_poly_set_coeff_ui(factor, 0, z_randint(p));
 			  zmod_poly_make_monic(factor, factor);
-			  //if(DBG)  {printf("Factor = ");zmod_poly_print(factor); NL }
 		   } while(zmod_poly_is_one(factor) || zmod_poly_is_zero(factor));
 		
 		   zmod_poly_gcd(g, f, factor);
-		   //if (DBG) { printf("GCD =  "); zmod_poly_print(g); NL }
 		   if (zmod_poly_length(g) != 1) break;
-		   zmod_poly_powmod(power, factor, p>>1, f);
+		   if (p > 3) zmod_poly_powmod(power, factor, p>>1, f);
+		   else zmod_poly_set(power, factor);
 		   power->coeffs[0] = z_addmod(power->coeffs[0], p - 1, p);
-		   //if (DBG) { printf("power = "); zmod_poly_print(power); NL }
 		   zmod_poly_gcd(g, power, f);
 		   if (zmod_poly_length(g) != 1) break;
 		}
-		 
-		if (tries == 1000000) 
+
+		for (ulong i = 1; i < nullity; i++)
 		{
-		   if (DBG) { printf("Fail: "); zmod_poly_print(f); printf("\n"); }
-		   zmod_poly_factor_add(factors, f);
-		   abort();
-		   return;
+		   zmod_poly_clear(basis[i]);
 		}
-		 
-		 zmod_poly_make_monic(g, g);
-		 if(DBG) { printf("Success! \nFactor = "); zmod_poly_print(g); NL }
-	     zmod_poly_factor_t fac1, fac2;
-	     zmod_poly_factor_init(fac1); zmod_poly_factor_init(fac2);
-		 zmod_poly_factor_berlekamp(fac1, g);
-		 zmod_poly_t Q;
-		 zmod_poly_init(Q, p);
-		 zmod_poly_div(Q, f, g);
-		 zmod_poly_make_monic(Q, Q);
-		 zmod_poly_factor_berlekamp(fac2, Q);
-		 zmod_poly_factor_concat(factors, fac1);
-	     zmod_poly_factor_concat(factors, fac2);
-		 zmod_poly_clear(Q);
-		 zmod_poly_clear(power);
-		 zmod_poly_clear(g);
-		 zmod_poly_clear(factor);
-		 zmod_poly_clear(b);
-	  }			
+		flint_heap_free(basis);
+        zmod_poly_clear(power);
+		zmod_poly_clear(factor);
+		zmod_poly_clear(b);
+
+		zmod_poly_make_monic(g, g);
+		zmod_poly_factor_t fac1, fac2;
+	    zmod_poly_factor_init(fac1); zmod_poly_factor_init(fac2);
+		zmod_poly_factor_berlekamp(fac1, g);
+		zmod_poly_t Q;
+		zmod_poly_init(Q, p);
+		zmod_poly_div(Q, f, g);
+		zmod_poly_make_monic(Q, Q);
+		zmod_poly_factor_berlekamp(fac2, Q);
+		zmod_poly_factor_concat(factors, fac1);
+	    zmod_poly_factor_concat(factors, fac2);
+		zmod_poly_factor_clear(fac1);
+		zmod_poly_factor_clear(fac2);
+		zmod_poly_clear(Q);
+		zmod_poly_clear(g);
+	}			
 }
