@@ -95,6 +95,8 @@ unsigned long z_randint(unsigned long limit);
 
 unsigned long z_randbits(unsigned long bits);
 
+unsigned long z_randprime(unsigned long bits);
+
 double z_precompute_inverse(unsigned long n);
 
 double z_precompute_inverse2(unsigned long n);
@@ -178,7 +180,9 @@ unsigned long z_powmod_64_precomp(unsigned long a, long exp,
 #endif
 
 
-int z_jacobi_precomp(unsigned long a, unsigned long p, double pinv);
+int z_legendre_precomp(unsigned long a, unsigned long p, double pinv);
+
+int z_ispseudoprime_fermat(unsigned long const n, unsigned long const i);
 
 int z_isprime(unsigned long n);
 

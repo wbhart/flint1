@@ -72,6 +72,45 @@ unsigned long z_randbits(unsigned long bits)
    return z_randint(l_shift(1L, bits));
 }
 
+/*
+   Generates a random prime of _bits_ bits
+*/
+
+unsigned long z_randprime(unsigned long bits)
+{
+	unsigned long limit, rand;
+   
+	if (bits < 2)
+	{
+		printf("FLINT Exception: attempt to generate prime < 2!\n");
+		abort();
+	}
+   
+	if (bits == FLINT_BITS)
+	{
+		do
+		{
+			rand = z_randbits(bits);
+      
+#if FLINT_BITS == 32
+		}  while (rand > 4294967290UL);
+#else
+	    }  while (rand > 18446744073709551556UL);
+#endif
+	    rand = z_nextprime(rand);
+
+    } else
+    {
+	   do
+	   {
+	      rand = z_randbits(bits);
+		  rand = z_nextprime(rand);
+	   } while ((rand >> bits) > 0L);
+   }
+   
+   return rand;
+}
+
 /* 
    Computes a double floating point approximate inverse, 
    i.e. 53 bits of 1 / n 
@@ -400,7 +439,7 @@ unsigned long z_powmod_64_precomp(unsigned long a, long exp,
    is reduced modulo p
 */
 
-int z_jacobi_precomp(unsigned long a, unsigned long p, double pinv)
+int z_legendre_precomp(unsigned long a, unsigned long p, double pinv)
 {
    if (a == 0) return 0;  
    if (z_powmod2_precomp(a, (p-1)/2, p, pinv) == p-1) return -1;
@@ -426,7 +465,7 @@ unsigned long z_sqrtmod(unsigned long a, unsigned long p)
      
      pinv = z_precompute_inverse(p);
      
-     if (z_jacobi_precomp(a, p, pinv) == -1) return 0;
+     if (z_legendre_precomp(a, p, pinv) == -1) return 0;
      
      if ((p&3)==3)
      {
@@ -445,7 +484,7 @@ unsigned long z_sqrtmod(unsigned long a, unsigned long p)
      
      for (k=2UL; ;k++)
      {
-         if (z_jacobi_precomp(k, p, pinv) == -1) break;
+         if (z_legendre_precomp(k, p, pinv) == -1) break;
      }
      
      g = z_powmod2_precomp(k, p1, p, pinv);
@@ -567,6 +606,19 @@ unsigned long z_pow(unsigned long a, unsigned long exp)
       power *= a;
 
    return power;
+}
+
+/*
+   Checks to see if n is  fermat pseudoprime with base i
+   Assumes n doesn't divide i
+*/
+
+int z_ispseudoprime_fermat(unsigned long const n, unsigned long const i)
+{
+    /* 
+	   By Fermats little thm if i^n-1 is not congruent to 1 then n is not prime 
+    */
+	return (z_powmod2(i, n-1, n) == 1);
 }
 
 /* 
@@ -1210,6 +1262,26 @@ int z_remove(unsigned long * n, unsigned long p)
 #define TF_FACTORS_IN_LIMB 8 // how many factors above the TF cutoff could
                              // an integer one limb wide have
 
+void insert_factor(factor_t * factors, unsigned long p)
+{
+   int i = 0;
+   
+   for (i = 0; i < factors->num; i++)
+   {
+      if (factors->p[i] == p)
+      {
+         factors->exp[i]++;
+         break;
+      }
+   }
+   if (i == factors->num)
+   {
+      factors->p[i] = p;
+      factors->exp[i] = 1;
+      factors->num++;
+   }
+}
+
 /*
    Finds all the factors of n by trial factoring up to some limit
    Returns the cofactor after removing these factors
@@ -1259,32 +1331,53 @@ unsigned long z_factor_partial_trial(factor_t * factors, unsigned long * prod, u
          factors->exp[num_factors] = exp;
          num_factors++;
 		 *prod *= z_pow(primes[i], exp);
-		 if (*prod > limit) 
-		 {
-            factors->num = num_factors;
-	        return n;
-		 }
+		 if (*prod > limit) break;
       }  
    }
        
    factors->num = num_factors;
-   return 0;
+   return n;
 }
 
 /*
-   Partially factors n into primes. Keeps finding prime factors until the product
-   of all the factors found surpasses limit.
-   Currently just calls z_factor_partial_trial and returns 0 if this was unable to
-   factorise the number sufficiently well, otherwise it returns the cofactor after 
-   removing the highest powers of all the prime factors found that it can remove
+   Factors _n_ until the product of the factor found is > _limit_. It puts the factors
+   in _factors_ and returns the cofactor.
+   If factorisation cannot be achieved as n is too large (for SQUFOF), 0 is returned
 */
 
 unsigned long z_factor_partial(factor_t * factors, unsigned long n, unsigned long limit)
 {
-   unsigned long prod;
-   unsigned long cofactor = z_factor_partial_trial(factors, &prod, n, limit);
-   if (prod <= limit) return 0;
-   else return cofactor;
+	unsigned long prod, cofactor;
+	unsigned long factor_arr[TF_FACTORS_IN_LIMB];
+	unsigned long cutoff = primes[TF_CUTOFF-1]*primes[TF_CUTOFF-1];
+	unsigned long factors_left = 1;
+	unsigned long factor;
+   
+	cofactor = z_factor_partial_trial(factors, &prod, n, limit);
+	if (prod != n && prod <= limit)
+	{
+		factor = factor_arr[0] = cofactor;
+      		
+		while (factors_left > 0 && prod <= limit)
+		{
+			factor = factor_arr[factors_left-1];
+			
+			if ((factor < cutoff) || z_isprime(factor))
+			{
+				insert_factor(factors, factor);
+				prod *= factor;
+				factors_left--;
+			} else
+			{
+				factor = factor_arr[factors_left] = z_factor_SQUFOF(factor);
+				if (!factor_arr[factors_left]) return 0;
+				factor_arr[factors_left-1] /= factor;
+				factors_left++;
+			}
+		}
+		return n/prod;
+	} 
+	return cofactor;
 }
 
 /*
@@ -1401,26 +1494,6 @@ unsigned long z_factor_SQUFOF(unsigned long n)
       }
    }
    return factor; 
-}
-
-void insert_factor(factor_t * factors, unsigned long p)
-{
-   int i = 0;
-   
-   for (i = 0; i < factors->num; i++)
-   {
-      if (factors->p[i] == p)
-      {
-         factors->exp[i]++;
-         break;
-      }
-   }
-   if (i == factors->num)
-   {
-      factors->p[i] = p;
-      factors->exp[i] = 1;
-      factors->num++;
-   }
 }
 
 /*
@@ -1570,6 +1643,10 @@ unsigned long z_primitive_root_precomp(unsigned long p, double p_inv)
 #endif
 }*/
 
+/*
+   Returns the integer part of the square root of r
+   i.e. floor(sqrt(r))
+*/
 unsigned long z_intsqrt(unsigned long r)
 {
    unsigned long is;

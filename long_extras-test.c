@@ -649,6 +649,71 @@ int test_z_nextprime()
    return result;
 }
 
+int test_z_ispseudoprime_fermat()
+{
+   unsigned long n;
+   unsigned long res;
+   
+   mpz_t mpz_n;
+   mpz_init(mpz_n);
+       
+   int result = 1;
+   
+   for (unsigned long count = 0; (count < 100000) && (result == 1); count++)
+   { 
+	  unsigned long bits = z_randint(FLINT_D_BITS-1)+1;
+      n = random_ulong((1UL<<bits)-1UL)+1; 
+      mpz_set_ui(mpz_n, n);
+
+      mpz_nextprime(mpz_n, mpz_n);
+      res = mpz_get_ui(mpz_n);
+
+      ulong i = z_randint(1000000)+2;
+	  if ((i % res) == 0) i++;
+	  result = (z_ispseudoprime_fermat(res, i) == 1);
+
+#if DEBUG
+      if (!result) printf("i = %ld, n = %ld\n", i, n);
+#endif
+
+   }  
+   
+   mpz_clear(mpz_n); 
+
+   return result;
+}
+
+int test_z_isprime()
+{
+   unsigned long n;
+   unsigned long res;
+   
+   mpz_t mpz_n;
+   mpz_init(mpz_n);
+       
+   int result = 1;
+   
+   for (unsigned long count = 0; (count < 100000) && (result == 1); count++)
+   { 
+	  unsigned long bits = z_randint(FLINT_D_BITS-1)+1;
+	  n = random_ulong((1UL<<bits)-1UL)+1; 
+      mpz_set_ui(mpz_n, n);
+
+#if DEBUG
+      printf("n = %ld\n", n);
+#endif
+
+      mpz_nextprime(mpz_n, mpz_n);
+      res = mpz_get_ui(mpz_n);
+
+      result = (z_isprime(res));
+   }  
+   
+   mpz_clear(mpz_n); 
+
+   return result;
+}
+
 int test_z_CRT()
 {
    unsigned long x1, x2, n1, n2;
@@ -873,7 +938,7 @@ int test_z_factor()
 
 int test_z_factor_partial()
 {
-   unsigned long n, prod, orig_n, limit;
+   unsigned long n, prod, cofactor, out, orig_n, limit;
    factor_t factors;
    int i;
 
@@ -892,12 +957,9 @@ int test_z_factor_partial()
           prod *= z_pow(factors.p[i], factors.exp[i]);
       }
       
-	  if (n)
-	  {
-	     if (n*prod != orig_n) result = 0;
-		 if (prod <= limit) result = 0;
-		 count++;
-	  }
+	  if (n*prod != orig_n) result = 0;
+	  if (prod <= limit) result = 0;
+	  count++;
 
 #if DEBUG
       if (!result)
@@ -914,6 +976,38 @@ int test_z_factor_partial()
 
    }  
    
+   for (int i = 0; (i < 10000) && (result == 1); i++)
+   {
+	  do {
+#if FLINT_BITS == 64
+		 n = z_randint(z_pow(10, 17))+1;
+#else
+		 n = z_randint(-1L)+1;
+#endif
+	  } while (z_isprime(n));
+
+	  limit = z_randint(n);
+	  cofactor = z_factor_partial(&factors, n, limit);
+	  out = 1;
+
+	  for (int j = 0; j < factors.num; j++)
+	  {
+		 out*=z_pow(factors.p[j], factors.exp[j]);
+	  }
+
+	  if (out*cofactor != n || out <= limit) 
+	  {
+		 result = 0;
+#if DEBUG2
+		 printf("failed to factor %ld got to %ld\n", n, out);
+		 for (int j = 0; j < factors.num; j++)
+		 {
+			printf("%ld^%ld ", factors.p[j], factors.exp[j]);
+		 }
+#endif
+	  }
+   }
+
    return result;
 }
 
@@ -954,6 +1048,8 @@ void fmpz_poly_test_all()
    RUN_TEST(z_powmod2);
    RUN_TEST(z_sqrtmod);
    RUN_TEST(z_cuberootmod);
+   RUN_TEST(z_ispseudoprime_fermat);
+   RUN_TEST(z_isprime);
    RUN_TEST(z_nextprime);
    RUN_TEST(z_CRT);
    RUN_TEST(z_issquarefree);

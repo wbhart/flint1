@@ -4452,7 +4452,7 @@ void zmod_poly_factor_berlekamp(zmod_poly_factor_t factors, zmod_poly_t f)
 		flint_heap_free(basis);
 	} else
 	{		
-		//generate num random numbers
+		//generate random linear combinations
 		zmod_poly_t factor, b, power, g;
 		zmod_poly_init(factor, p); zmod_poly_init(b, p); 
 		zmod_poly_init(power, p); zmod_poly_init(g, p);
