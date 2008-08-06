@@ -384,3 +384,5 @@ to improve locality.
 * Add code for finding trivial polynomial factorisations, e.g. of differences of squares, powers of x, binomials, etc.
 
 * Asymptotically fast matrix nullspace code to speed up Berlekamp
+
+* Make random generator in test code seed generator from time and print seed

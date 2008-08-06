@@ -871,6 +871,99 @@ unsigned long z_nextprime(unsigned long n)
    return n;
 }
 
+/*
+   Proves that n is prime using a Pocklington-Lehmer test
+   returns 0 if composite, 1 if prime, -2 if it failed to factor
+   the number sufficiently and -1 if it failed to prove either way
+   
+   Note: I think this could be optimised a lot more.
+*/
+
+int z_isprime_pocklington(unsigned long const n, unsigned long const iterations)
+{
+	int i, j, k, pass, test, exp;
+	unsigned long sqrt, n1, f, factor, prod, temp, b, c;
+	factor_t factors;
+	pre_inv_t inv;
+	
+	/* 2 is prime, all other even numbers are not */
+	
+	if (n%2 == 0){
+		if (n == 2) return 1;
+		else return 0;
+	}
+	
+	n1 = n - 1;
+	f = 1;
+	factors.num = 0;
+	sqrt = z_intsqrt(n1);
+
+	if(!z_factor_partial(&factors, n1, sqrt))
+	{
+		return -2;
+	}
+	
+	inv = z_precompute_inverse(n);
+
+	//for (i = factors.num-1; i >= 0 ; i--)		//Quicker?? keeps exponents down so maybe.
+	for (i = 0; i < factors.num; i++)
+	{
+		/*pass = 0;
+		unsigned long exp = n1/factors.p[i];
+		
+		for (j = 2; j < iterations && pass == 0; j++)
+		{
+
+			if (z_fermat_pseudoprime(n, j)){
+				if ((z_gcd(z_powmod2(j, exp, n) - 1, n) == 1)){
+					pass = 1;
+				}
+			}
+		}
+		
+		if (pass == 0)
+		{
+			if (j == iterations){
+				//printf("%ld: failed on factor:%ld exp:%ld n1:%ld\n", n, factors.p[i], exp, n1);
+				return -2;
+			} else {
+				return 0;
+			}
+		}*/
+		
+		/*
+			Another method found in http://www.jstor.org/stable/2005583?seq=1
+		*/
+		
+		pass = 0;
+		c = 1;
+		unsigned long exp = n1/factors.p[i];
+		
+		for (j = 2; j < iterations && pass == 0; j++)
+		{
+			if (z_ispseudoprime_fermat(n, j))
+			{
+				b = z_submod(z_powmod2(j, exp, n), 1, n);
+				if (b != 0)
+				{
+					c = z_mulmod_precomp(c, b, n, inv);	
+					pass = 1;
+				}
+			}
+			if (c == 0)
+			{
+				return 0;
+			}
+		}
+		if(j == iterations){
+			return -1;
+		}
+	}
+
+	if (z_gcd(c, n) != 1) return 0;
+	return 1;
+}
+
 /* 
     returns the inverse of a modulo p
 */
@@ -1226,8 +1319,8 @@ int z_remove(unsigned long * n, unsigned long p)
       if (exp)
       {
          *n = ((*n)>>exp);
-         return exp;      
       }
+      return exp;      
    }
    
    powp[0] = p;
@@ -1354,6 +1447,7 @@ unsigned long z_factor_partial(factor_t * factors, unsigned long n, unsigned lon
 	unsigned long factor;
    
 	cofactor = z_factor_partial_trial(factors, &prod, n, limit);
+	if (n == 1) printf("%ld, %ld, %ld, %ld, %ld\n", n, prod, limit, cofactor, factors->num);
 	if (prod != n && prod <= limit)
 	{
 		factor = factor_arr[0] = cofactor;

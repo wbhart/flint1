@@ -190,6 +190,8 @@ int z_isprime_precomp(unsigned long n, double ninv);
 
 unsigned long z_nextprime(unsigned long n);
 
+int z_isprime_pocklington(unsigned long const n, unsigned long const iterations);
+
 unsigned long z_pow(unsigned long a, unsigned long exp);
                                                     
 unsigned long z_sqrtmod(unsigned long a, unsigned long p); 

@@ -714,6 +714,74 @@ int test_z_isprime()
    return result;
 }
 
+int test_z_isprime_pocklington()
+{
+   unsigned long n;
+   unsigned long res, res2;
+   
+   mpz_t mpz_n;
+   mpz_init(mpz_n);
+       
+   int result = 1;
+   
+   for (unsigned long count = 0; (count < 100000) && (result == 1); count++)
+   { 
+	  unsigned long bits = z_randint(FLINT_D_BITS-1)+1;
+	  n = random_ulong((1UL<<bits)-1UL)+1; 
+      mpz_set_ui(mpz_n, n);
+
+#if DEBUG
+      printf("n = %ld\n", n);
+#endif
+
+      mpz_nextprime(mpz_n, mpz_n);
+      res = mpz_get_ui(mpz_n);
+
+      result = (z_isprime_pocklington(res, 1000));
+   }  
+   
+   for (unsigned long count = 0; (count < 100000) && (result == 1); count++)
+   { 
+	  unsigned long bits = z_randint(FLINT_D_BITS/2 - 1)+1;
+	  n = random_ulong((1UL<<bits)-1UL)+1; 
+      mpz_set_ui(mpz_n, n);
+
+#if DEBUG
+      printf("n = %ld\n", n);
+#endif
+
+      mpz_nextprime(mpz_n, mpz_n);
+      res = mpz_get_ui(mpz_n);
+
+	  n = random_ulong((1UL<<bits)-1UL)+1; 
+      mpz_set_ui(mpz_n, n);
+
+#if DEBUG
+      printf("n = %ld\n", n);
+#endif
+
+      mpz_nextprime(mpz_n, mpz_n);
+      res2 = mpz_get_ui(mpz_n);
+
+      int resval = z_isprime_pocklington(res*res2, 1000);
+
+#if DEBUG2
+	  if (resval < 0L) printf("Failure %ld, %ld, %d\n", res, res2, resval);
+#endif
+
+	  result = (!resval);
+
+#if DEBUG2
+	  if (!result) printf("res = %ld, res2 = %ld\n", res, res2);
+#endif
+
+   }  
+   
+   mpz_clear(mpz_n); 
+
+   return result;
+}
+
 int test_z_CRT()
 {
    unsigned long x1, x2, n1, n2;
@@ -811,7 +879,7 @@ int test_z_factor_trial()
    
    for (unsigned long count = 0; (count < 100000) && (result == 1); count++)
    { 
-      orig_n = random_ulong(1000000);
+      orig_n = random_ulong(1000000)+1;
            
       for (unsigned long j = 0; j < 10; j++)
          n = z_factor_trial(&factors, orig_n);
@@ -946,7 +1014,7 @@ int test_z_factor_partial()
    
    for (unsigned long count = 0; (count < 100000) && (result == 1); )
    { 
-      orig_n = random_ulong(1000000);
+      orig_n = random_ulong(1000000)+1;
       limit = z_intsqrt(orig_n);
 
       n = z_factor_partial(&factors, orig_n, limit);
@@ -961,7 +1029,7 @@ int test_z_factor_partial()
 	  if (prod <= limit) result = 0;
 	  count++;
 
-#if DEBUG
+#if DEBUG2
       if (!result)
       {
          printf("n = %ld: [", orig_n);
@@ -1050,6 +1118,7 @@ void fmpz_poly_test_all()
    RUN_TEST(z_cuberootmod);
    RUN_TEST(z_ispseudoprime_fermat);
    RUN_TEST(z_isprime);
+   RUN_TEST(z_isprime_pocklington);
    RUN_TEST(z_nextprime);
    RUN_TEST(z_CRT);
    RUN_TEST(z_issquarefree);
