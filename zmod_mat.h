@@ -134,6 +134,10 @@ void zmod_mat_row_scalar_submul_right(zmod_mat_t mat, ulong row1, ulong row2, ul
 
 void zmod_mat_row_scalar_mul_right(zmod_mat_t mat, ulong row, ulong u, ulong start);
 
+void zmod_vec_scalar_mul_range(ulong * r1, ulong * r2, ulong u, ulong p, double p_inv, ulong start, ulong end);
+
+void zmod_vec_sub_range(ulong * r1, ulong * r2, ulong p, ulong start, ulong end);
+
 /*******************************************************************************************
 
    Row reduction
@@ -141,6 +145,8 @@ void zmod_mat_row_scalar_mul_right(zmod_mat_t mat, ulong row, ulong u, ulong sta
 *******************************************************************************************/
 
 ulong zmod_mat_row_reduce_gauss(zmod_mat_t mat);
+
+ulong zmod_mat_row_reduce_gauss_small(zmod_mat_t mat);
 
 ulong zmod_mat_row_reduce_gauss_jordan(zmod_mat_t mat);
 

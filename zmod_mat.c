@@ -255,6 +255,38 @@ void zmod_mat_row_scalar_mul_right(zmod_mat_t mat, ulong row, ulong u, ulong sta
    }
 }
 
+/*
+   r1 = r2 * u
+   only columns [start..end) are affected
+   assumes u is reduced mod p
+*/
+void zmod_vec_scalar_mul_range(ulong * r1, ulong * r2, ulong u, ulong p, double p_inv, ulong start, ulong end)
+{
+
+#if FLINT_BITS == 64
+   if (FLINT_BIT_COUNT(p) >= FLINT_D_BITS)
+   {
+	  for (ulong i = start; i < end; i++)
+	     r1[i] = z_mulmod2_precomp(r2[i], u, p, p_inv);
+   } else
+#endif
+   {
+	  for (ulong i = start; i < end; i++)
+	     r1[i] = z_mulmod_precomp(r2[i], u, p, p_inv);
+   }
+}
+
+/*
+   r1 = r1 - r2
+   only columns [start..end) are affected
+*/
+void zmod_vec_sub_range(ulong * r1, ulong * r2, ulong p, ulong start, ulong end)
+{
+   for (ulong i = start; i < end; i++)
+   {
+      r1[i] = z_submod(r1[i], r2[i], p);
+   }
+}
 
 /*******************************************************************************************
 
@@ -306,15 +338,64 @@ void zmod_mat_print(zmod_mat_t mat)
    Gaussian Elimination
    After the algorithm has run, A will be in upper-triangular form
    Returns the rank of the matrix
+   Assumes the modulus is a very small prime
  */
-ulong zmod_mat_row_reduce_gauss(zmod_mat_t mat)
+ulong zmod_mat_row_reduce_gauss_small(zmod_mat_t mat)
 {
 	ulong i = 0, j = 0, k;
     ulong rows = mat->rows;
 	ulong cols = mat->cols;
 	ulong coeff;
 	ulong p = mat->p;
+	double p_inv = mat->p_inv;
+	ulong * temp = (ulong *) flint_heap_alloc(cols);
 
+	while ((i < rows) && (j < cols))
+	{
+		for(k = i; k < rows; k++)
+		   if (zmod_mat_get_coeff_ui(mat, k, j)) break;
+		
+		if (k < rows)
+		{
+			if (k != i) zmod_mat_swap_rows(mat, i, k);
+			ulong n = zmod_mat_get_coeff_ui(mat, i, j);
+			ulong n_inv = z_invert(n, p);
+			zmod_mat_row_scalar_mul_right(mat, i, n_inv, j);
+			for (ulong lead = 1; lead < p; lead++)
+			{
+			   zmod_vec_scalar_mul_range(temp, mat->arr[i], lead, p, p_inv, j, cols);
+			   for(ulong u = i + 1; u < rows; u++)
+			   {
+			      if (zmod_mat_get_coeff_ui(mat, u, j) == lead)
+			          zmod_vec_sub_range(mat->arr[u], temp, p, j, cols);
+			   }
+			}
+			i++;
+		}
+		j++;
+	}
+
+	flint_heap_free(temp);
+	return i;
+}
+
+/*
+   Gaussian Elimination
+   After the algorithm has run, A will be in upper-triangular form
+   Returns the rank of the matrix
+ */
+ulong zmod_mat_row_reduce_gauss(zmod_mat_t mat)
+{
+	ulong p = mat->p;
+    if (p < 16)
+	{
+	   return zmod_mat_row_reduce_gauss_small(mat); 
+	}
+    ulong i = 0, j = 0, k;
+    ulong rows = mat->rows;
+	ulong cols = mat->cols;
+	ulong coeff;
+	
 	while ((i < rows) && (j < cols))
 	{
 		for(k = i; k < rows; k++)
