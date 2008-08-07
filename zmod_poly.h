@@ -22,6 +22,8 @@
    zmod_poly.h: Polynomials over (unsigned) long mod p, for p prime.
    
    Copyright (C) 2007, David Howden
+   Copyright (C) 2007, 2008 William Hart
+   Copyright (C) 2008, Richard Howell-Peak
 
 *****************************************************************************/
 

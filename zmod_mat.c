@@ -22,6 +22,7 @@
    zmod_mat.c: Matrices over (unsigned) long mod p, for p prime.
    
    Copyright (C) 2008, William Hart.
+   Copyright (C) 2008, Richard Howell-Peak
    
 *****************************************************************************/
 

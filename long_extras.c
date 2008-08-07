@@ -21,7 +21,8 @@
 
    long_extras.c: extra functions for longs and unsigned longs
 
-   Copyright (C) 2007, William Hart
+   Copyright (C) 2007, 2008 William Hart
+   Copyright (C) 2008, Peter Shrimpton
 
 *****************************************************************************/
 

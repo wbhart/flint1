@@ -22,7 +22,8 @@
  long_extras.h
  Header file for long_extras.c.
 
- (C) 2006 William Hart
+ (C) 2006, 2007, 2008 William Hart
+ Copyright (C) 2008, Peter Shrimpton
  
  Some of the macros in this file were borrowed from GMP, (C) Free Software Foundation
 
