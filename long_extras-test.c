@@ -737,7 +737,7 @@ int test_z_isprime_pocklington()
       mpz_nextprime(mpz_n, mpz_n);
       res = mpz_get_ui(mpz_n);
 
-      result = (z_isprime_pocklington(res, 1000));
+      result = (z_isprime_pocklington(res, 100));
    }  
    
    for (unsigned long count = 0; (count < 100000) && (result == 1); count++)
@@ -763,7 +763,7 @@ int test_z_isprime_pocklington()
       mpz_nextprime(mpz_n, mpz_n);
       res2 = mpz_get_ui(mpz_n);
 
-      int resval = z_isprime_pocklington(res*res2, 1000);
+      int resval = z_isprime_pocklington(res*res2, 100);
 
 #if DEBUG2
 	  if (resval < 0L) printf("Failure %ld, %ld, %d\n", res, res2, resval);

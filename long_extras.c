@@ -949,7 +949,7 @@ int z_isprime_pocklington(unsigned long const n, unsigned long const iterations)
 					c = z_mulmod_precomp(c, b, n, inv);	
 					pass = 1;
 				}
-			}
+			} else return 0;
 			if (c == 0)
 			{
 				return 0;
