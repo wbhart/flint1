@@ -88,7 +88,7 @@ QS: mpQS tinyQS
 
 tune: ZmodF_mul-tune mpz_poly-tune 
 
-test: mpn_extras-test fmpz_poly-test fmpz-test ZmodF-test ZmodF_poly-test mpz_poly-test ZmodF_mul-test long_extras-test zmod_poly-test
+test: mpn_extras-test fmpz_poly-test fmpz-test ZmodF-test ZmodF_poly-test mpz_poly-test ZmodF_mul-test long_extras-test zmod_poly-test zmod_mat-test
 
 profile: ZmodF_poly-profile kara-profile fmpz_poly-profile mpz_poly-profile ZmodF_mul-profile 
 
@@ -187,6 +187,9 @@ long_extras-test.o: long_extras-test.c
 zmod_poly-test.o: zmod_poly-test.c
 	$(CC) $(CFLAGS) -c zmod_poly-test.c -o zmod_poly-test.o
 
+zmod_mat-test.o: zmod_mat-test.c
+	$(CC) $(CFLAGS) -c zmod_mat-test.c -o zmod_mat-test.o
+
 NTL-interface-test.o: NTL-interface-test.cpp
 	$(CPP) $(CFLAGS) -c NTL-interface-test.cpp -o NTL-interface-test.o
 
@@ -218,6 +221,9 @@ long_extras-test: long_extras.o long_extras-test.o test-support.o memory-manager
 
 zmod_poly-test: zmod_poly-test.o test-support.o $(FLINTOBJ) $(HEADERS)
 	$(CC) $(CFLAGS) zmod_poly-test.o test-support.o -o zmod_poly-test $(FLINTOBJ) $(LIBS)
+
+zmod_mat-test: zmod_mat-test.o test-support.o $(FLINTOBJ) $(HEADERS)
+	$(CC) $(CFLAGS) zmod_mat-test.o test-support.o -o zmod_mat-test $(FLINTOBJ) $(LIBS)
 
 NTL-interface-test: NTL-interface.o NTL-interface-test.o test-support.o $(FLINTOBJ) $(HEADERS)
 	$(CPP) $(CFLAGS) NTL-interface-test.o NTL-interface.o test-support.o $(FLINTOBJ) -o NTL-interface-test $(LIBS2)
