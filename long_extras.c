@@ -450,7 +450,6 @@ int z_legendre_precomp(unsigned long a, unsigned long p, double pinv)
 /*
     Calculates the jacobi symbol (x/y)
     Assumes that gcd(x,y) = 1 and y is odd
-    Note: if one knows that y is prime it may be cheaper to use z_lagrange
 */
 
 int z_jacobi(long x, unsigned long y)
@@ -473,21 +472,22 @@ int z_jacobi(long x, unsigned long y)
 	a = a % b;
 	if (a == 0)
 	{
-		return 1;
+		if (b == 1) return 1;
+		else return 0;
 	}
 	while (b != 1)
 	{
 		a = a % b;
 	    exp = z_remove(&a, 2);
-		if (((exp*(b*b-1))/8)%2 == 1)
-		{
+		if (((exp*(b*b-1))/8)%2 == 1) // we are only interested in values mod 8, 
+		{	                          //so overflows don't matter here
 			s = -s;
 		}
 		temp = a;
 		a = b;
 		b = temp;
-		if (((a-1)*(b-1)/4)%2 == 1)
-		{
+		if (((a-1)*(b-1)/4)%2 == 1) // we are only interested in values mod 4, 
+		{	                        //so overflows don't matter here
 			s = -s;
 		}
 	}

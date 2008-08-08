@@ -621,17 +621,20 @@ int test_z_jacobi()
 	mpz_init(m2);
     int result = 1;
 
-	for (i = 0; (i < 10000) && (result == 1); i++)
+	for (i = 0; (i < 1000000) && (result == 1); i++)
 	{
-	    ulong bits1 = z_randint(FLINT_BITS+1);
-		ulong bits2 = z_randint(FLINT_BITS);
+	    ulong bits1 = z_randint(FLINT_BITS);
+		ulong bits2 = z_randint(FLINT_BITS-1);
 
 		a = z_randbits(bits1); 
 		do {
 			m = 2*z_randbits(bits2) + 1;
-		} while (z_gcd(a,m) > 1);
+			if ((long) m < 0L) m = -m;
+		} while ((a!= 0) && (z_gcd(a,m) > 1));
 
-#if DEBUG2
+		if (z_randint(2)) a = -a;
+
+#if DEBUG
         printf("(%ld/%ld), bits1 = %ld, bits2 = %ld\n", a, m, bits1, bits2);
 #endif
 
@@ -640,6 +643,51 @@ int test_z_jacobi()
 
 		res1 = z_jacobi(a, m);
 		res2 = mpz_jacobi(a2, m2);
+
+		result = (res1 == res2);
+
+#if DEBUG2
+		if (!result)
+		{
+			printf("FAIL (%ld/%ld) FLINT:%d GMP:%d gcd:%ld\n", a, m, res1, res2, z_gcd(a,m));
+		}
+#endif
+	}
+	
+	return result;
+}
+
+int test_z_legendre_precomp()
+{
+	unsigned long m, i;
+	long a;
+	int res1, res2;
+	mpz_t a2, m2;
+	mpz_init(a2);
+	mpz_init(m2);
+    int result = 1;
+	double m_inv;
+
+	for (i = 0; (i < 100000) && (result == 1); i++)
+	{
+	    ulong bits1 = z_randint(FLINT_BITS);
+		ulong bits2 = z_randint(FLINT_BITS-2)+2;
+
+		a = z_randbits(bits1); 
+		m = z_randprime(bits2);
+	    if (m == 2) m++;
+		a = a % m;
+
+#if DEBUG
+        printf("(%ld/%ld), bits1 = %ld, bits2 = %ld\n", a, m, bits1, bits2);
+#endif
+
+		mpz_set_si(a2, a);
+		mpz_set_ui(m2, m);
+
+		m_inv = z_precompute_inverse(m);
+		res1 = z_legendre_precomp(a, m, m_inv);
+		res2 = mpz_legendre(a2, m2);
 
 		result = (res1 == res2);
 
@@ -1157,6 +1205,7 @@ void fmpz_poly_test_all()
    RUN_TEST(z_mulmod2_precomp);
    RUN_TEST(z_powmod);
    RUN_TEST(z_powmod2);
+   RUN_TEST(z_legendre_precomp);
    RUN_TEST(z_jacobi);
    RUN_TEST(z_sqrtmod);
    RUN_TEST(z_cuberootmod);
