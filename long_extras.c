@@ -435,7 +435,7 @@ unsigned long z_powmod_64_precomp(unsigned long a, long exp,
 } 
 
 /* 
-   Computes the Jacobi symbol of _a_ modulo p
+   Computes the Legendre symbol of _a_ modulo p
    Assumes p is a prime of no more than FLINT_BITS-1 bits and that _a_
    is reduced modulo p
 */
@@ -446,7 +446,55 @@ int z_legendre_precomp(unsigned long a, unsigned long p, double pinv)
    if (z_powmod2_precomp(a, (p-1)/2, p, pinv) == p-1) return -1;
    else return 1;                                            
 }
-                      
+   
+/*
+    Calculates the jacobi symbol (x/y)
+    Assumes that gcd(x,y) = 1 and y is odd
+    Note: if one knows that y is prime it may be cheaper to use z_lagrange
+*/
+
+int z_jacobi(long x, unsigned long y)
+{
+	unsigned long b, temp;
+	long a;
+	int s, exp;
+	pre_inv2_t inv;
+	a = x;
+	b = y;
+	s = 1;
+	if (a < 0)
+	{
+		if (((b-1)/2)%2 == 1)
+		{
+			s = -s;
+		}
+		a = -a;
+	}
+	a = a % b;
+	if (a == 0)
+	{
+		return 1;
+	}
+	while (b != 1)
+	{
+		a = a % b;
+	    exp = z_remove(&a, 2);
+		if (((exp*(b*b-1))/8)%2 == 1)
+		{
+			s = -s;
+		}
+		temp = a;
+		a = b;
+		b = temp;
+		if (((a-1)*(b-1)/4)%2 == 1)
+		{
+			s = -s;
+		}
+	}
+
+	return s;
+}
+
 /* 
    Computes a square root of _a_ modulo p.
    Assumes p is a prime of no more than FLINT_BITS-1 bits,

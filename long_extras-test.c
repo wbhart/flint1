@@ -611,6 +611,49 @@ int test_z_cuberootmod()
    return result;
 }
 
+int test_z_jacobi()
+{
+	unsigned long m, i;
+	long a;
+	int res1, res2;
+	mpz_t a2, m2;
+	mpz_init(a2);
+	mpz_init(m2);
+    int result = 1;
+
+	for (i = 0; (i < 10000) && (result == 1); i++)
+	{
+	    ulong bits1 = z_randint(FLINT_BITS+1);
+		ulong bits2 = z_randint(FLINT_BITS);
+
+		a = z_randbits(bits1); 
+		do {
+			m = 2*z_randbits(bits2) + 1;
+		} while (z_gcd(a,m) > 1);
+
+#if DEBUG2
+        printf("(%ld/%ld), bits1 = %ld, bits2 = %ld\n", a, m, bits1, bits2);
+#endif
+
+		mpz_set_si(a2, a);
+		mpz_set_ui(m2, m);
+
+		res1 = z_jacobi(a, m);
+		res2 = mpz_jacobi(a2, m2);
+
+		result = (res1 == res2);
+
+#if DEBUG2
+		if (!result)
+		{
+			printf("FAIL (%ld/%ld) FLINT:%d GMP:%d gcd:%ld\n", a, m, res1, res2, z_gcd(a,m));
+		}
+#endif
+	}
+	
+	return result;
+}
+
 int test_z_nextprime()
 {
    unsigned long n;
@@ -1114,6 +1157,7 @@ void fmpz_poly_test_all()
    RUN_TEST(z_mulmod2_precomp);
    RUN_TEST(z_powmod);
    RUN_TEST(z_powmod2);
+   RUN_TEST(z_jacobi);
    RUN_TEST(z_sqrtmod);
    RUN_TEST(z_cuberootmod);
    RUN_TEST(z_ispseudoprime_fermat);

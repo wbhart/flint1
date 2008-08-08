@@ -183,6 +183,8 @@ unsigned long z_powmod_64_precomp(unsigned long a, long exp,
 
 int z_legendre_precomp(unsigned long a, unsigned long p, double pinv);
 
+int z_jacobi(long x, unsigned long y);
+
 int z_ispseudoprime_fermat(unsigned long const n, unsigned long const i);
 
 int z_isprime(unsigned long n);
