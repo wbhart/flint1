@@ -508,8 +508,16 @@ void zmod_poly_mulmod(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, zmo
 void zmod_poly_powmod(zmod_poly_t res, zmod_poly_t pol, long exp, zmod_poly_t f);
 
 /*
-   Factorisation
+   Factorisation/Irreducibility
 */
+
+/**
+ * Irreducibility test for polynomials over Z/pZ
+ * @param input        Arbitary polynomial
+ * @returns    1 if irredicible, 0 if not
+*/
+
+int zmod_poly_isirreducible(zmod_poly_t f);
 
 /**
  * Initialises polynomial factor structure. 

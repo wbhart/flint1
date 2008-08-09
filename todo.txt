@@ -386,3 +386,5 @@ to improve locality.
 * Asymptotically fast matrix nullspace code to speed up Berlekamp
 
 * Make random generator in test code seed generator from time and print seed
+
+* Add test code for all new primality test and zmod polynomial functions added over the summer (some of the tests currently do only trivial tests) 
