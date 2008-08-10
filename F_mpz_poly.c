@@ -471,6 +471,62 @@ void F_mpz_poly_to_mpz_poly(mpz_poly_t m_poly, const F_mpz_poly_t F_poly)
 
 /*===============================================================================
 
+	Assignment
+
+================================================================================*/
+
+void F_mpz_poly_set(F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
+{
+	ulong length = poly2->length;
+	
+	if (poly1 != poly2)
+	{
+		F_mpz_poly_fit_length(poly1, poly2->length);
+		for (ulong i = 0; i < poly2->length; i++)
+		   _F_mpz_set(poly1, i, poly2, i);
+		poly1->length = poly2->length;
+	}
+}
+
+/*===============================================================================
+
+	Subpolynomials
+
+================================================================================*/
+
+void F_mpz_poly_attach(F_mpz_poly_t poly1, const F_mpz_poly_t poly2, ulong n)
+{
+   poly1->coeffs = poly2->coeffs;
+	poly1->mpz_coeffs = poly2->mpz_coeffs;
+	poly1->length = poly2->length;
+}
+
+void F_mpz_poly_attach_truncate(F_mpz_poly_t poly1, const F_mpz_poly_t poly2, ulong n)
+{
+   poly1->coeffs = poly2->coeffs;
+	poly1->mpz_coeffs = poly2->mpz_coeffs;
+	if (poly2->length < n) poly1->length = poly2->length;
+	else 
+	{
+		poly1->length = n;
+		_F_mpz_poly_normalise(poly1);
+	}
+}
+
+void F_mpz_poly_attach_shift(F_mpz_poly_t poly1, const F_mpz_poly_t poly2, ulong n)
+{
+   poly1->mpz_coeffs = poly2->mpz_coeffs;
+	if (poly2->length <= n) 
+	   poly1->length = 0;
+	else 
+	{
+		poly1->coeffs = poly2->coeffs + n;
+		poly1->length = poly2->length - n;
+	}
+}
+
+/*===============================================================================
+
 	Addition/subtraction
 
 ================================================================================*/

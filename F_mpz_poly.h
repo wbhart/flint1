@@ -328,14 +328,23 @@ void F_mpz_poly_get_coeff_mpz(mpz_t x, const F_mpz_poly_t poly, const ulong n);
 
 ================================================================================*/
 
+/** 
+   \fn     long F_mpz_poly_degree(const fmpz_poly_t poly)
+   \brief  Returns the degree of the polynomial. If the polynomial is zero, then
+	        minus one is returned for the degree.
+*/
 static inline 
-long F_mpz_poly_degree(const fmpz_poly_t poly)
+long F_mpz_poly_degree(const F_mpz_poly_t poly)
 {
    return poly->length - 1;
 }
 
+/** 
+   \fn     unsigned long F_mpz_poly_length(const fmpz_poly_t poly)
+   \brief  Returns the length of the polynomial. The zero polynomial has length zero.
+*/
 static inline 
-unsigned long F_mpz_poly_length(const fmpz_poly_t poly)
+unsigned long F_mpz_poly_length(const F_mpz_poly_t poly)
 {
    return poly->length;
 }
@@ -380,6 +389,69 @@ void mpz_poly_to_F_mpz_poly(F_mpz_poly_t F_poly, const mpz_poly_t m_poly);
    \brief  Convert an F_mpz_poly_t to an mpz_poly_t
 */
 void F_mpz_poly_to_mpz_poly(mpz_poly_t m_poly, const F_mpz_poly_t F_poly);
+
+
+/*===============================================================================
+
+	Assignment
+
+================================================================================*/
+
+/** 
+   \fn     void F_mpz_poly_zero(F_mpz_poly_t poly)
+   \brief  Sets poly to the zero polynomial
+*/
+static inline 
+void F_mpz_poly_zero(F_mpz_poly_t poly)
+{
+   poly->length = 0;
+}
+
+/** 
+   \fn     void F_mpz_poly_zero_coeffs(F_mpz_poly_t poly, const ulong n)
+   \brief  Zero the first n coefficients of poly regardless of its length
+*/
+static inline
+void F_mpz_poly_zero_coeffs(F_mpz_poly_t poly, const ulong n)
+{
+	if (n >= poly->length) F_mpz_poly_zero(poly);
+	else F_mpn_clear(poly->coeffs, n);
+}
+
+/** 
+   \fn     void F_mpz_poly_set(fmpz_poly_t poly1, const fmpz_poly_t poly2)
+   \brief  Sets poly1 to equal poly2
+*/
+void F_mpz_poly_set(F_mpz_poly_t poly1, const F_mpz_poly_t poly2);
+
+/*===============================================================================
+
+	Subpolynomials
+
+================================================================================*/
+
+/** 
+   \fn     void F_mpz_poly_attach(F_mpz_poly_t poly1, const F_mpz_poly_t poly2, ulong n)
+   \brief  Attach the read only polynomial poly1 to poly2 
+*/
+void F_mpz_poly_attach(F_mpz_poly_t poly1, const F_mpz_poly_t poly2, ulong n);
+
+/** 
+   \fn     void F_mpz_poly_attach_truncate(F_mpz_poly_t poly1, const F_mpz_poly_t poly2, ulong n)
+   \brief  Attach the read only polynomial poly1 to poly2 and truncate it to the
+	        given length n
+*/
+void F_mpz_poly_attach_truncate(F_mpz_poly_t poly1, const F_mpz_poly_t poly2, ulong n);
+
+/** 
+   \fn     void F_mpz_poly_attach_shift(F_mpz_poly_t poly1, const F_mpz_poly_t poly2, ulong n)
+   \brief  Attach the read only polynomial poly1 to poly2 but shifted left by n 
+	        coefficients
+*/
+static inline 
+void F_mpz_poly_attach_shift(F_mpz_poly_t poly1, const F_mpz_poly_t poly2, ulong n);
+
+
 
 /*===============================================================================
 

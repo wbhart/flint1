@@ -495,6 +495,47 @@ int test_F_mpz_poly_getset_mpz()
 	return result; 
 }
 
+int test_F_mpz_poly_set()
+{
+   mpz_poly_t m_poly1, m_poly2;
+   F_mpz_poly_t F_poly1, F_poly2;
+   int result = 1;
+   ulong bits, length;
+   
+   mpz_poly_init(m_poly1); 
+   mpz_poly_init(m_poly2); 
+
+   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1) ; count1++)
+   {
+      F_mpz_poly_init(F_poly1);
+      F_mpz_poly_init(F_poly2);
+
+      bits = z_randint(200) + 1;
+      length = z_randint(100);
+      mpz_randpoly(m_poly1, length, bits);
+           
+      mpz_poly_to_F_mpz_poly(F_poly1, m_poly1);
+      F_mpz_poly_set(F_poly2, F_poly1);
+		F_mpz_poly_to_mpz_poly(m_poly2, F_poly2);
+          
+      result = mpz_poly_equal(m_poly1, m_poly2); 
+		if (!result) 
+		{
+			printf("Error: length = %ld, bits = %ld, length1 = %ld, length2 = %ld\n", length, bits, m_poly1->length, m_poly2->length);
+         mpz_poly_print_pretty(m_poly1, "x"); printf("\n");
+         mpz_poly_print_pretty(m_poly2, "x"); printf("\n");
+		}
+          
+      F_mpz_poly_clear(F_poly1);
+      F_mpz_poly_clear(F_poly2);
+   }
+   
+   mpz_poly_clear(m_poly1);
+   mpz_poly_clear(m_poly2);
+   
+   return result;
+}
+
 void F_mpz_poly_test_all()
 {
    int success, all_success = 1;
@@ -508,6 +549,7 @@ void F_mpz_poly_test_all()
    RUN_TEST(F_mpz_poly_getset_si); 
    RUN_TEST(F_mpz_poly_getset_ui); 
    RUN_TEST(F_mpz_poly_getset_mpz); 
+   RUN_TEST(F_mpz_poly_set); 
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");
