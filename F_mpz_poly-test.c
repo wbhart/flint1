@@ -85,46 +85,87 @@ int test_F_mpz_poly_convert()
 {
    mpz_poly_t m_poly1, m_poly2;
    F_mpz_poly_t F_poly;
-   mpz_t temp;
-   mpz_init(temp);
    int result = 1;
-   unsigned long bits, length;
+   ulong bits, length;
    
    mpz_poly_init(m_poly1); 
    mpz_poly_init(m_poly2); 
 
-   for (unsigned long count1 = 1; (count1 < 300000*ITER) && (result == 1) ; count1++)
+   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1) ; count1++)
    {
-      bits = random_ulong(200) + 1;
-      
       F_mpz_poly_init(F_poly);
 
-      length = random_ulong(20);
-#if DEBUG
-      printf("%ld, %ld\n",length, bits);
-#endif
+      bits = z_randint(200) + 1;
+      length = z_randint(100);
       mpz_randpoly(m_poly1, length, bits);
            
-#if DEBUG
-      mpz_poly_print_pretty(m_poly1, "x");
-      printf("\n\n");
-#endif
       mpz_poly_to_F_mpz_poly(F_poly, m_poly1);
       F_mpz_poly_to_mpz_poly(m_poly2, F_poly);
-
-#if DEBUG
-      mpz_poly_print_pretty(m_poly2, "x");
-      printf("\n\n");
-#endif
           
       result = mpz_poly_equal(m_poly1, m_poly2); 
 		if (!result) 
+		{
 			printf("Error: length = %ld, bits = %ld, length1 = %ld, length2 = %ld\n", length, bits, m_poly1->length, m_poly2->length);
+         mpz_poly_print_pretty(m_poly1, "x"); printf("\n");
+         mpz_poly_print_pretty(m_poly2, "x"); printf("\n");
+		}
           
       F_mpz_poly_clear(F_poly);
    }
    
-   mpz_clear(temp);
+   mpz_poly_clear(m_poly1);
+   mpz_poly_clear(m_poly2);
+   
+   return result;
+}
+
+int test_F_mpz_poly_add()
+{
+   mpz_poly_t m_poly1, m_poly2, res1, res2;
+   F_mpz_poly_t F_poly1, F_poly2, res;
+   int result = 1;
+   ulong bits1, bits2, length1, length2;
+   
+   mpz_poly_init(m_poly1); 
+   mpz_poly_init(m_poly2); 
+   mpz_poly_init(res1); 
+   mpz_poly_init(res2); 
+
+   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1) ; count1++)
+   {
+      F_mpz_poly_init(F_poly1);
+      F_mpz_poly_init(F_poly2);
+      F_mpz_poly_init(res);
+
+		bits1 = z_randint(200) + 1;
+      bits2 = z_randint(200) + 1;
+      length1 = z_randint(100);
+      length2 = z_randint(100);
+      mpz_randpoly(m_poly1, length1, bits1);
+      mpz_randpoly(m_poly2, length2, bits2);
+           
+      mpz_poly_to_F_mpz_poly(F_poly1, m_poly1);
+      mpz_poly_to_F_mpz_poly(F_poly2, m_poly2);
+      
+		F_mpz_poly_add(res, F_poly1, F_poly2);
+		F_mpz_poly_to_mpz_poly(res2, res);
+      mpz_poly_add(res1, m_poly1, m_poly2);		
+		    
+      result = mpz_poly_equal(res1, res2); 
+		if (!result) 
+		{
+			printf("Error: length1 = %ld, bits1 = %ld, length2 = %ld, bits2 = %ld\n", length1, bits1, length2, bits2);
+         mpz_poly_print_pretty(res1, "x"); printf("\n");
+         mpz_poly_print_pretty(res2, "x"); printf("\n");
+		}
+          
+      F_mpz_poly_clear(F_poly1);
+		F_mpz_poly_clear(F_poly2);
+		F_mpz_poly_clear(res);
+   }
+   
+   mpz_poly_clear(res1);
+   mpz_poly_clear(res2);
    mpz_poly_clear(m_poly1);
    mpz_poly_clear(m_poly2);
    
@@ -139,6 +180,7 @@ void F_mpz_poly_test_all()
 #if TESTFILE
 #endif
    RUN_TEST(F_mpz_poly_convert); 
+   RUN_TEST(F_mpz_poly_add); 
 
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");

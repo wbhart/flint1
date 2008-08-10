@@ -47,30 +47,23 @@ F_mpz_poly_t represents a dense polynomial in Z[x]
 
 There are two things each entry in this array can represent:
 
-1) If the next to most significant bit is set, the entry represents
+1) If the most significant two bits are 01, then the entry represents
 an index into the array "mpz_coeffs", and the mpz_t in that array
 contains the coefficient.
 
-2) If the next to msb is not set, the entry represents a signed coefficient
+2) Otherwise, the entry represents a signed coefficient
 whose absolute value is no more than FLINT_BIT - 2 bits in length. The
-coefficient is stored in sign/absolute value format with the sign being 
-indicated by the most significant bit (1 for -ve) and the remaining bits 
-corresponding to the absolute value.
-
-----------------------------------------------
-| sign | mpz | abs | abs | abs | ...... | abs |
-----------------------------------------------
+coefficient is stored in twos complement format.
 
 "mpz_coeffs" is an array of coefficients in mpz_t format (actually an array of
-__mpz_struct's). Only coefficients which do not fit into FLINT_BITS - 2 bits are 
-stored in an mpz_t.
+__mpz_struct's). Only coefficients whose absolute value does not fit into 
+FLINT_BITS - 2 bits are stored in an mpz_t.
 
 "alloc" is the number of allocated coefficients. Obviously we always have
 alloc >= length.
 
 "length" is the length of the polynomial. If length == 0, this is the zero 
-polynomial. All functions normalise so that the (length-1)-th coefficient 
-is non-zero.
+polynomial. All functions normalise so that the top coefficient is non-zero.
 
 "mpz_alloc" is the number of allocated mpz_coefficients
 
@@ -93,17 +86,19 @@ typedef F_mpz_poly_struct F_mpz_poly_t[1];
 
 #define MPZ_BLOCK 16 // number of additional mpz_t's to initialise at a time
 
-#define FMPZ_UVAL_MASK ((1L<<(FLINT_BITS-2))-1L) // mask with bottom FLINT_BITS - 2 bits set
+// maximum positive value a small coefficient can have
+#define COEFF_MAX ((1L<<(FLINT_BITS-2))-1L)
 
-#define FMPZ_MPZ_MASK (1L<<(FLINT_BITS - 2)) // mask with just the mpz bit set
+// minimum negative value a small coefficient can have
+#define COEFF_MIN (-((1L<<(FLINT_BITS-2))-1L))
 
-#define FMPZ_SIGN_MASK (1L<<(FLINT_BITS - 1)) // mask with just the sign bit set
+// turn an integer offset for the mpz_coeff array into an F_mpz_poly_t coefficient
+#define OFF_TO_COEFF(xxx) ((xxx) | (1L<<(FLINT_BITS - 2))) 
 
-#define FMPZ_UVAL(xxx) ((xxx) & FMPZ_UVAL_MASK) // the bottom FLINT_BITS - 2 bits of xxx
+// returns the index as an integer
+#define COEFF_TO_OFF(xxx) ((xxx) & ((1L<<(FLINT_BITS - 2))-1)) 
 
-#define FMPZ_MPZ(xxx) ((xxx) | FMPZ_MPZ_MASK) // xxx + the mpz bit set
-
-#define FMPZ_IS_MPZ(xxx) ((xxx) & FMPZ_MPZ_MASK) // is the mpz bit set pf xxx set
+#define COEFF_IS_MPZ(xxx) ((xxx>>(FLINT_BITS-2)) == 1L) // is xxx an index into mpz_coeffs?
 
 /*===============================================================================
 
@@ -181,16 +176,22 @@ void _F_mpz_poly_normalise(F_mpz_poly_t poly);
 ================================================================================*/
 
 /** 
-   \fn     void _F_mpz_promote(F_mpz_poly_t const poly, ulong coeff);
+   \fn     __mpz_struct * _F_mpz_promote(F_mpz_poly_t const poly, ulong coeff);
    \brief  Promote the given coefficient of poly to an mpz_t coefficient. The value
-	        of the coefficient is not preserved.
+	        of the coefficient is not preserved. A pointer to an __mpz_struct
+			  corresponding to the coefficient, is returned.
 */
 static inline
-void _F_mpz_promote(F_mpz_poly_t poly, const ulong coeff)
+__mpz_struct * _F_mpz_promote(F_mpz_poly_t poly, const ulong coeff)
 {
-   _F_mpz_poly_mpz_coeffs_new(poly);
-	
-	poly->coeffs[coeff] = FMPZ_MPZ(poly->mpz_length - 1);
+   ulong c = poly->coeffs[coeff];
+	if (!COEFF_IS_MPZ(c))
+	{
+	   _F_mpz_poly_mpz_coeffs_new(poly);
+	   poly->coeffs[coeff] = OFF_TO_COEFF(poly->mpz_length - 1);
+		return poly->mpz_coeffs + poly->mpz_length - 1;
+	} else
+      return poly->mpz_coeffs + COEFF_TO_OFF(c);
 }
 
 /** 
@@ -218,6 +219,12 @@ void _F_mpz_get_mpz(mpz_t x, const F_mpz_poly_t poly, const ulong coeff);
    \brief  Sets the given coefficient to the given mpz_t
 */
 void _F_mpz_set_mpz(F_mpz_poly_t poly, ulong coeff, const mpz_t x);
+
+/** 
+   \fn     void _F_mpz_set(F_mpz_poly_t poly1, ulong coeff1, const F_mpz_poly_t poly2, const ulong coeff2)
+   \brief  Sets coeff1 of poly1 to equal coeff2 of poly2
+*/
+void _F_mpz_set(F_mpz_poly_t poly1, ulong coeff1, const F_mpz_poly_t poly2, const ulong coeff2);
 
 /** 
    \fn     _F_mpz_add(F_mpz_poly_t res, ulong coeff3, const F_mpz_poly_t poly1, const ulong coeff1, 
@@ -269,6 +276,18 @@ void mpz_poly_to_F_mpz_poly(F_mpz_poly_t F_poly, const mpz_poly_t m_poly);
    \brief  Convert an F_mpz_poly_t to an mpz_poly_t
 */
 void F_mpz_poly_to_mpz_poly(mpz_poly_t m_poly, const F_mpz_poly_t F_poly);
+
+/*===============================================================================
+
+	Addition/subtraction
+
+================================================================================*/
+
+/** 
+   \fn     void F_mpz_poly_add(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
+   \brief  Sets res to the sum of poly1 and poly2.
+*/
+void F_mpz_poly_add(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2);
 
 #ifdef __cplusplus
  }
