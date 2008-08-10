@@ -185,20 +185,20 @@ static inline
 __mpz_struct * _F_mpz_promote(F_mpz_poly_t poly, const ulong coeff)
 {
    ulong c = poly->coeffs[coeff];
-	if (!COEFF_IS_MPZ(c))
+	if (!COEFF_IS_MPZ(c)) // coeff is small so promote it
 	{
 	   _F_mpz_poly_mpz_coeffs_new(poly);
 	   poly->coeffs[coeff] = OFF_TO_COEFF(poly->mpz_length - 1);
 		return poly->mpz_coeffs + poly->mpz_length - 1;
-	} else
+	} else // coeff is large already, just return the pointer
       return poly->mpz_coeffs + COEFF_TO_OFF(c);
 }
 
 /** 
    \fn     _F_mpz_demote_val(F_mpz_poly_t poly, const ulong coeff);
    \brief  If the given coefficient (which is assumed to be an mpz_t) will fit into
-	        FLINT_BIT - 2 bits, it is demoted to a limb instead of an mpz_t, otherwise
-			  nothing happens.
+	        FLINT_BIT - 2 bits, it is demoted to a limb instead of an mpz_t, preserving
+			  the value, otherwise nothing happens.
 */
 void _F_mpz_demote_val(F_mpz_poly_t poly, const ulong coeff);
 
@@ -222,19 +222,36 @@ void _F_mpz_set_mpz(F_mpz_poly_t poly, ulong coeff, const mpz_t x);
 
 /** 
    \fn     void _F_mpz_set(F_mpz_poly_t poly1, ulong coeff1, const F_mpz_poly_t poly2, const ulong coeff2)
-   \brief  Sets coeff1 of poly1 to equal coeff2 of poly2
+   \brief  Sets coeff1 of poly1 to equal coeff2 of poly2. Assumes the coefficients are distinct.
 */
 void _F_mpz_set(F_mpz_poly_t poly1, ulong coeff1, const F_mpz_poly_t poly2, const ulong coeff2);
+
+/** 
+   \fn     void _F_mpz_negate(F_mpz_poly_t poly1, ulong coeff1, const F_mpz_poly_t poly2, const ulong coeff2)
+   \brief  Sets coeff1 of poly1 to minus coeff2 of poly2. Assumes the coefficients are distinct.
+*/
+void _F_mpz_neg(F_mpz_poly_t poly1, ulong coeff1, const F_mpz_poly_t poly2, const ulong coeff2);
 
 /** 
    \fn     _F_mpz_add(F_mpz_poly_t res, ulong coeff3, const F_mpz_poly_t poly1, const ulong coeff1, 
 					                                       const F_mpz_poly_t poly2, const ulong coeff2)
    \brief  Add the given coefficients of poly1 and poly2 and set the given coefficient 
 	        of res to the result. Assumes the coefficient of res is distinct from the 
-			  other two coefficients.
+			  other two coefficients. 
 
 */
 void _F_mpz_add(F_mpz_poly_t res, ulong coeff3, const F_mpz_poly_t poly1, const ulong coeff1, 
+					                                 const F_mpz_poly_t poly2, const ulong coeff2);
+
+/** 
+   \fn     _F_mpz_sub(F_mpz_poly_t res, ulong coeff3, const F_mpz_poly_t poly1, const ulong coeff1, 
+					                                       const F_mpz_poly_t poly2, const ulong coeff2)
+   \brief  Subtract the given coefficients of poly1 and poly2 and set the given coefficient 
+	        of res to the result. Assumes the coefficient of res is distinct from the 
+			  other two coefficients.
+
+*/
+void _F_mpz_sub(F_mpz_poly_t res, ulong coeff3, const F_mpz_poly_t poly1, const ulong coeff1, 
 					                                 const F_mpz_poly_t poly2, const ulong coeff2);
 
 /*===============================================================================
@@ -252,7 +269,7 @@ void _F_mpz_add(F_mpz_poly_t res, ulong coeff3, const F_mpz_poly_t poly1, const 
 static inline
 void F_mpz_poly_truncate(F_mpz_poly_t poly, const ulong length)
 {
-	if (poly->length > length)
+	if (poly->length > length) // only truncate if necessary
    {
       poly->length = length;
       _F_mpz_poly_normalise(poly);
@@ -288,6 +305,12 @@ void F_mpz_poly_to_mpz_poly(mpz_poly_t m_poly, const F_mpz_poly_t F_poly);
    \brief  Sets res to the sum of poly1 and poly2.
 */
 void F_mpz_poly_add(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2);
+
+/** 
+   \fn     void F_mpz_poly_sub(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
+   \brief  Sets res to the difference of poly1 and poly2.
+*/
+void F_mpz_poly_sub(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2);
 
 #ifdef __cplusplus
  }
