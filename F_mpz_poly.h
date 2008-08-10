@@ -203,10 +203,38 @@ __mpz_struct * _F_mpz_promote(F_mpz_poly_t poly, const ulong coeff)
 void _F_mpz_demote_val(F_mpz_poly_t poly, const ulong coeff);
 
 /** 
+   \fn     void _F_mpz_zero(F_mpz_poly_t poly, const ulong coeff)
+   \brief  Set the given coefficient to zero
+*/
+static inline
+void _F_mpz_zero(F_mpz_poly_t poly, const ulong coeff)
+{
+	poly->coeffs[coeff] = 0;
+}
+
+/** 
    \fn     _F_mpz_set_si(F_mpz_poly_t poly, ulong coeff, const long val)
-   \brief  Set the given coefficient of poly to a signed value val
+   \brief  Set the given coefficient of poly to a signed long value val
 */
 void _F_mpz_set_si(F_mpz_poly_t poly, ulong coeff, const long val);
+
+/** 
+   \fn     long _F_mpz_get_si(const F_mpz_poly_t poly, const ulong coeff)
+   \brief  Return the value of the given coefficient of poly as a long
+*/
+long _F_mpz_get_si(const F_mpz_poly_t poly, const ulong coeff);
+
+/** 
+   \fn     _F_mpz_set_ui(F_mpz_poly_t poly, ulong coeff, const long val)
+   \brief  Set the given coefficient of poly to an unsigned long value val
+*/
+void _F_mpz_set_ui(F_mpz_poly_t poly, ulong coeff, const ulong val);
+
+/** 
+   \fn     long _F_mpz_get_ui(const F_mpz_poly_t poly, const ulong coeff)
+   \brief  Return the value of the given coefficient of poly as an unsigned long
+*/
+ulong _F_mpz_get_ui(const F_mpz_poly_t poly, const ulong coeff);
 
 /** 
    \fn     _F_mpz_get_mpz(mpz_t x, const F_mpz_poly_t poly, const ulong coeff)
@@ -238,7 +266,6 @@ void _F_mpz_neg(F_mpz_poly_t poly1, ulong coeff1, const F_mpz_poly_t poly2, cons
    \brief  Add the given coefficients of poly1 and poly2 and set the given coefficient 
 	        of res to the result. Assumes the coefficient of res is distinct from the 
 			  other two coefficients. 
-
 */
 void _F_mpz_add(F_mpz_poly_t res, ulong coeff3, const F_mpz_poly_t poly1, const ulong coeff1, 
 					                                 const F_mpz_poly_t poly2, const ulong coeff2);
@@ -249,10 +276,37 @@ void _F_mpz_add(F_mpz_poly_t res, ulong coeff3, const F_mpz_poly_t poly1, const 
    \brief  Subtract the given coefficients of poly1 and poly2 and set the given coefficient 
 	        of res to the result. Assumes the coefficient of res is distinct from the 
 			  other two coefficients.
-
 */
 void _F_mpz_sub(F_mpz_poly_t res, ulong coeff3, const F_mpz_poly_t poly1, const ulong coeff1, 
 					                                 const F_mpz_poly_t poly2, const ulong coeff2);
+
+/** 
+   \fn     void F_mpz_poly_set_coeff_si(F_mpz_poly_t poly, ulong n, const long x)
+   \brief  Set coefficient n to the signed long value x. Coefficients are numbered
+	        from the constant coefficient, starting at zero.
+*/
+void F_mpz_poly_set_coeff_si(F_mpz_poly_t poly, ulong n, const long x);
+
+/** 
+   \fn     void F_mpz_poly_get_coeff_si(F_mpz_poly_t poly, ulong n, const long x)
+   \brief  Return coefficient n of poly as a signed long. If n is greater than the degree
+	        of poly, then zero is returned.
+*/
+long F_mpz_poly_get_coeff_si(const F_mpz_poly_t poly, const ulong n);
+
+/** 
+   \fn     void F_mpz_poly_set_coeff_ui(F_mpz_poly_t poly, ulong n, const long x)
+   \brief  Set coefficient n to the unsigned long value x. Coefficients are numbered
+	        from the constant coefficient, starting at zero.
+*/
+void F_mpz_poly_set_coeff_ui(F_mpz_poly_t poly, ulong n, const ulong x);
+
+/** 
+   \fn     void F_mpz_poly_get_coeff_ui(F_mpz_poly_t poly, ulong n, const long x)
+   \brief  Return coefficient n of poly as an usigned long. If n is greater than the degree
+	        of poly, then zero is returned.
+*/
+ulong F_mpz_poly_get_coeff_ui(const F_mpz_poly_t poly, const ulong n);
 
 /*===============================================================================
 

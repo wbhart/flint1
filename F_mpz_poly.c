@@ -171,7 +171,7 @@ void _F_mpz_demote_val(F_mpz_poly_t poly, const ulong coeff)
 	
 	if (size == 0L) // coefficient is zero
 	{
-		poly->coeffs[coeff] = 0;
+		_F_mpz_zero(poly, coeff);
 	} else if (size == 1L) // coefficient is positive and 1 limb
 	{
 	   ulong uval = mpz_get_ui(mpz_ptr);
@@ -194,6 +194,31 @@ void _F_mpz_set_si(F_mpz_poly_t poly, ulong coeff, const long val)
 	} else poly->coeffs[coeff] = val; // val is small
 }
 
+void _F_mpz_set_ui(F_mpz_poly_t poly, ulong coeff, const ulong val)
+{
+   if (val > COEFF_MAX) // val is large
+	{
+		__mpz_struct * mpz_coeff = _F_mpz_promote(poly, coeff);
+		mpz_set_ui(mpz_coeff, val);
+	} else poly->coeffs[coeff] = val; // val is small
+}
+
+long _F_mpz_get_si(const F_mpz_poly_t poly, const ulong coeff)
+{
+   ulong c = poly->coeffs[coeff];
+
+	if (!COEFF_IS_MPZ(c)) return c;
+	return mpz_get_si(poly->mpz_coeffs + COEFF_TO_OFF(c));
+}
+
+ulong _F_mpz_get_ui(const F_mpz_poly_t poly, const ulong coeff)
+{
+   ulong c = poly->coeffs[coeff];
+
+	if (!COEFF_IS_MPZ(c)) return c;
+	return mpz_get_ui(poly->mpz_coeffs + COEFF_TO_OFF(c));
+}
+
 void _F_mpz_get_mpz(mpz_t x, const F_mpz_poly_t poly, const ulong coeff)
 {
 	mp_limb_t c = poly->coeffs[coeff];
@@ -208,7 +233,7 @@ void _F_mpz_set_mpz(F_mpz_poly_t poly, ulong coeff, const mpz_t x)
 	
 	if (size == 0L) // x is zero
 	{
-		poly->coeffs[coeff] = 0;
+		_F_mpz_zero(poly, coeff);
 	} else if (size == 1L) // x is positive and 1 limb
 	{
 	   ulong uval = mpz_get_ui(x);
@@ -344,6 +369,53 @@ void _F_mpz_sub(F_mpz_poly_t res, ulong coeff3, const F_mpz_poly_t poly1, const 
 	}
 }
 
+void F_mpz_poly_set_coeff_si(F_mpz_poly_t poly, ulong n, const long x)
+{
+   F_mpz_poly_fit_length(poly, n + 1);
+   
+	if (n + 1 > poly->length) // insert zeroes between end of poly and new coeff if needed
+   {
+      for (ulong i = poly->length; i + 1 < n; i++)
+         _F_mpz_zero(poly, i);
+      poly->length = n+1;
+   }
+   
+	_F_mpz_set_si(poly, n, x);
+   _F_mpz_poly_normalise(poly);
+}
+
+void F_mpz_poly_set_coeff_ui(F_mpz_poly_t poly, ulong n, const ulong x)
+{
+   F_mpz_poly_fit_length(poly, n+1);
+
+   if (n + 1 > poly->length) // insert zeroes between end of poly and new coeff if needed
+   {
+      for (long i = poly->length; i + 1 < n; i++)
+         _F_mpz_zero(poly, i); 
+      poly->length = n+1;
+   }
+
+   _F_mpz_set_ui(poly, n, x);
+   _F_mpz_poly_normalise(poly);
+}
+
+long F_mpz_poly_get_coeff_si(const F_mpz_poly_t poly, const ulong n)
+{
+   if (n + 1 > poly->length) // coefficient is beyond end of polynomial
+      return 0;
+   
+	return _F_mpz_get_si(poly, n);
+}
+
+ulong F_mpz_poly_get_coeff_ui(const F_mpz_poly_t poly, const ulong n)
+{
+   if (n + 1 > poly->length) // coefficient is beyond end of polynomial
+      return 0;
+   
+	return _F_mpz_get_ui(poly, n);
+}
+
+
 /*===============================================================================
 
 	Conversions
@@ -416,10 +488,9 @@ void F_mpz_poly_sub(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly
       for (ulong i = shorter; i < poly1->length; i++)
          _F_mpz_set(res, i, poly1, i);
 
-   if (poly2 != res) // copy any remaining coefficients from poly2
-      for (ulong i = shorter; i < poly2->length; i++)
-         _F_mpz_neg(res, i, poly2, i);
-   
+   for (ulong i = shorter; i < poly2->length; i++)
+      _F_mpz_neg(res, i, poly2, i);
+
    if (poly1->length == poly2->length)
    {
       res->length = poly1->length;
