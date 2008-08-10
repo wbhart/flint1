@@ -399,6 +399,21 @@ void F_mpz_poly_set_coeff_ui(F_mpz_poly_t poly, ulong n, const ulong x)
    _F_mpz_poly_normalise(poly);
 }
 
+void F_mpz_poly_set_coeff_mpz(F_mpz_poly_t poly, ulong n, const mpz_t x)
+{
+   F_mpz_poly_fit_length(poly, n+1);
+
+   if (n + 1 > poly->length) // insert zeroes between end of poly and new coeff if needed
+   {
+      for (long i = poly->length; i + 1 < n; i++)
+         _F_mpz_zero(poly, i); 
+      poly->length = n+1;
+   }
+
+   _F_mpz_set_mpz(poly, n, x);
+	_F_mpz_poly_normalise(poly);
+}
+
 long F_mpz_poly_get_coeff_si(const F_mpz_poly_t poly, const ulong n)
 {
    if (n + 1 > poly->length) // coefficient is beyond end of polynomial
@@ -413,6 +428,18 @@ ulong F_mpz_poly_get_coeff_ui(const F_mpz_poly_t poly, const ulong n)
       return 0;
    
 	return _F_mpz_get_ui(poly, n);
+}
+
+void F_mpz_poly_get_coeff_mpz(mpz_t x, const F_mpz_poly_t poly, const ulong n)
+{
+   if (n + 1 > poly->length) // coefficient is beyond end of polynomial
+	{
+		mpz_set_ui(x, 0);
+		return;
+   }
+   
+	_F_mpz_get_mpz(x, poly, n);
+	return;
 }
 
 

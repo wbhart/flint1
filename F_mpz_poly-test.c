@@ -446,6 +446,55 @@ int test_F_mpz_poly_getset_ui()
    return result; 
 }
 
+int test_F_mpz_poly_getset_mpz()
+{
+   F_mpz_poly_t F_poly;
+   int result = 1;
+   ulong bits, length;
+   mpz_t coeff, coeff2;
+   ulong coeff_bits, coeff_num;
+	mpz_init(coeff);
+	mpz_init(coeff2);
+   
+   for (ulong count1 = 0; (count1 < 5000) && (result == 1) ; count1++)
+   {
+      bits = random_ulong(200)+ 1;
+      
+      F_mpz_poly_init(F_poly);
+
+      length = z_randint(100)+1;        
+      
+		F_mpz_randpoly(F_poly, length, bits); 
+		    
+      for (ulong count2 = 0; (count2 < 300) && result == 1; count2++)
+      {
+          coeff_bits = z_randint(200);
+          mpz_rrandomb(coeff, randstate, coeff_bits);
+          coeff_num = z_randint(F_poly->length);
+              
+			 if (z_randint(2)) mpz_neg(coeff, coeff);
+              
+			 if (F_poly->length)
+          {
+              F_mpz_poly_set_coeff_mpz(F_poly, coeff_num, coeff);
+              F_mpz_poly_get_coeff_mpz(coeff2, F_poly, coeff_num);
+				  
+				  result = (mpz_cmp(coeff2, coeff) == 0);
+				  if (!result)
+				  {
+					  gmp_printf("Error: length = %ld, coeff_num = %ld, coeff = %Zd, coeff2 = %Zd\n", length, coeff_num, coeff, coeff2);
+				  }
+          }
+      }
+
+      F_mpz_poly_clear(F_poly);
+   }
+   
+   mpz_clear(coeff);
+	mpz_clear(coeff2);
+	return result; 
+}
+
 void F_mpz_poly_test_all()
 {
    int success, all_success = 1;
@@ -458,6 +507,7 @@ void F_mpz_poly_test_all()
    RUN_TEST(F_mpz_poly_sub); 
    RUN_TEST(F_mpz_poly_getset_si); 
    RUN_TEST(F_mpz_poly_getset_ui); 
+   RUN_TEST(F_mpz_poly_getset_mpz); 
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");

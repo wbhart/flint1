@@ -308,6 +308,39 @@ void F_mpz_poly_set_coeff_ui(F_mpz_poly_t poly, ulong n, const ulong x);
 */
 ulong F_mpz_poly_get_coeff_ui(const F_mpz_poly_t poly, const ulong n);
 
+/** 
+   \fn     void F_mpz_poly_set_coeff_mpz(F_mpz_poly_t poly, ulong n, const mpz_t x)
+   \brief  Set coefficient n to the mpz_t value x. Coefficients are numbered
+	        from the constant coefficient, starting at zero.
+*/
+void F_mpz_poly_set_coeff_mpz(F_mpz_poly_t poly, ulong n, const mpz_t x);
+
+/** 
+   \fn     void F_mpz_poly_get_coeff_mpz(mpz_t x, const F_mpz_poly_t poly, const ulong n)
+   \brief  Return coefficient n of poly as an mpz_t. If n is greater than the degree
+	        of poly, then zero is returned.
+*/
+void F_mpz_poly_get_coeff_mpz(mpz_t x, const F_mpz_poly_t poly, const ulong n);
+
+/*===============================================================================
+
+	Attributes
+
+================================================================================*/
+
+static inline 
+long F_mpz_poly_degree(const fmpz_poly_t poly)
+{
+   return poly->length - 1;
+}
+
+static inline 
+unsigned long F_mpz_poly_length(const fmpz_poly_t poly)
+{
+   return poly->length;
+}
+
+
 /*===============================================================================
 
 	Truncation
