@@ -255,6 +255,12 @@ void _F_mpz_set_mpz(F_mpz_poly_t poly, ulong coeff, const mpz_t x);
 void _F_mpz_set(F_mpz_poly_t poly1, ulong coeff1, const F_mpz_poly_t poly2, const ulong coeff2);
 
 /** 
+   \fn     int _F_mpz_equal(const F_mpz_poly_t poly1, const ulong coeff1, const F_mpz_poly_t poly2, const ulong coeff2)
+   \brief  Returns 1 if coeff1 of poly1 is equal to coeff2 of poly2, otherwise returns 0.
+*/
+int _F_mpz_equal(const F_mpz_poly_t poly1, const ulong coeff1, const F_mpz_poly_t poly2, const ulong coeff2);
+
+/** 
    \fn     void _F_mpz_negate(F_mpz_poly_t poly1, ulong coeff1, const F_mpz_poly_t poly2, const ulong coeff2)
    \brief  Sets coeff1 of poly1 to minus coeff2 of poly2. Assumes the coefficients are distinct.
 */
@@ -426,6 +432,19 @@ void F_mpz_poly_set(F_mpz_poly_t poly1, const F_mpz_poly_t poly2);
 
 /*===============================================================================
 
+	Comparison
+
+================================================================================*/
+
+/** 
+   \fn     int F_mpz_poly_equal(const F_mpz_poly_t poly1, const F_mpz_poly_t poly2);
+   \brief  Returns 1 if poly1 and poly2 are equal (arithmetically), otherwise
+	        returns 0.
+*/
+int F_mpz_poly_equal(const F_mpz_poly_t poly1, const F_mpz_poly_t poly2);
+
+/*===============================================================================
+
 	Subpolynomials
 
 ================================================================================*/
@@ -451,7 +470,38 @@ void F_mpz_poly_attach_truncate(F_mpz_poly_t poly1, const F_mpz_poly_t poly2, ul
 static inline 
 void F_mpz_poly_attach_shift(F_mpz_poly_t poly1, const F_mpz_poly_t poly2, ulong n);
 
+/*===============================================================================
 
+	Coefficient sizes
+
+================================================================================*/
+
+/** 
+   \fn     long F_mpz_poly_max_bits(F_mpz_poly_t poly)
+   \brief  Computes the largest number of bits n that any coefficient has and returns
+	        -n if a negative coefficient exists in poly, else it returns n. Zero is 
+			  returned for the zero polynomial.
+*/
+long F_mpz_poly_max_bits(F_mpz_poly_t poly);
+
+/** 
+   \fn     ulong F_mpz_poly_max_limbs(F_mpz_poly_t poly)
+   \brief  Returns the largest number of limbs required to store the absolute value
+	        of coefficients of poly. Zero is returned for the zero polynomial.
+*/
+ulong F_mpz_poly_max_limbs(F_mpz_poly_t poly);
+
+/*===============================================================================
+
+	Negation
+
+================================================================================*/
+
+/** 
+   \fn     void F_mpz_poly_neg(F_mpz_poly_t res, const F_mpz_poly_t poly)
+   \brief  Set res to the negative of poly.
+*/
+void F_mpz_poly_neg(F_mpz_poly_t res, const F_mpz_poly_t poly);
 
 /*===============================================================================
 

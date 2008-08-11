@@ -274,6 +274,16 @@ void _F_mpz_set(F_mpz_poly_t poly1, ulong coeff1, const F_mpz_poly_t poly2, cons
 	}
 }
 
+int _F_mpz_equal(const F_mpz_poly_t poly1, const ulong coeff1, const F_mpz_poly_t poly2, const ulong coeff2)
+{
+	ulong c1 = poly1->coeffs[coeff1];
+   ulong c2 = poly2->coeffs[coeff2];
+
+	if (!COEFF_IS_MPZ(c1)) return (c1 == c2);
+	else if (!COEFF_IS_MPZ(c2)) return 0;
+	else return (!mpz_cmp(poly1->mpz_coeffs + COEFF_TO_OFF(c1), poly2->mpz_coeffs + COEFF_TO_OFF(c2))); 
+}
+
 void _F_mpz_neg(F_mpz_poly_t poly1, ulong coeff1, const F_mpz_poly_t poly2, const ulong coeff2)
 {
    ulong c = poly2->coeffs[coeff2];
@@ -490,6 +500,23 @@ void F_mpz_poly_set(F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
 
 /*===============================================================================
 
+	Comparison
+
+================================================================================*/
+
+int F_mpz_poly_equal(const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
+{
+   if (poly1 == poly2) return 1;
+	if (poly1->length != poly2->length) return 0;
+
+	for (ulong i = 0; i < poly1->length; i++)
+		if (!_F_mpz_equal(poly1, i, poly2, i)) return 0;
+
+	return 1;
+}
+
+/*===============================================================================
+
 	Subpolynomials
 
 ================================================================================*/
@@ -523,6 +550,89 @@ void F_mpz_poly_attach_shift(F_mpz_poly_t poly1, const F_mpz_poly_t poly2, ulong
 		poly1->coeffs = poly2->coeffs + n;
 		poly1->length = poly2->length - n;
 	}
+}
+
+/*===============================================================================
+
+	Coefficient sizes
+
+================================================================================*/
+
+long F_mpz_poly_max_bits(F_mpz_poly_t poly)
+{
+	int sign = 0;
+	ulong max = 0;
+   ulong bits = 0;
+   ulong i;
+	ulong c;
+
+	// search until we find an mpz coefficient of one of FLINT_BITS - 2 bits
+	for (i = 0; i < poly->length; i++) 
+	{
+		c = poly->coeffs[i];
+		if (COEFF_IS_MPZ(c)) break;
+      if ((long) c < 0L) 
+		{
+			sign = 1;
+         bits = FLINT_BIT_COUNT(-c);
+		} else bits = FLINT_BIT_COUNT(c);
+		if (bits > max) max = bits;
+		if (max == FLINT_BITS - 2) break;
+	}
+
+   // search through mpz coefficients
+	for ( ; i < poly->length; i++)
+	{
+		c = poly->coeffs[i];
+      if (COEFF_IS_MPZ(c))
+		{
+			__mpz_struct * mpz_ptr = poly->mpz_coeffs + COEFF_TO_OFF(c);
+			if (mpz_sgn(mpz_ptr) < 0) sign = 1;
+			bits = mpz_sizeinbase(mpz_ptr, 2);
+			if (bits > max) max = bits;
+		} else if ((long) c < 0L) sign = 1; // still need to check the sign of small coefficients
+	}
+
+	if (sign) return -max;
+	else return max;
+}
+
+ulong F_mpz_poly_max_limbs(F_mpz_poly_t poly)
+{
+	if (poly->length == 0) return 0; 
+
+	ulong max = 1; // all other coefficients have at least one limb
+   ulong limbs;
+	ulong c;
+
+   // search through mpz coefficients
+	for (ulong i = 0; i < poly->length; i++)
+	{
+		c = poly->coeffs[i];
+      if (COEFF_IS_MPZ(c))
+		{
+			limbs = mpz_size(poly->mpz_coeffs + COEFF_TO_OFF(c));
+			if (limbs > max) max = limbs;
+		} 
+	}
+
+	return max;
+}
+
+/*===============================================================================
+
+	Negation
+
+================================================================================*/
+
+void F_mpz_poly_neg(F_mpz_poly_t res, const F_mpz_poly_t poly)
+{
+	F_mpz_poly_fit_length(res, poly->length);
+	
+	for (ulong i = 0; i < poly->length; i++)
+		_F_mpz_neg(res, i, poly, i);
+
+	res->length = poly->length;
 }
 
 /*===============================================================================
