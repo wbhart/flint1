@@ -261,6 +261,12 @@ void _F_mpz_set(F_mpz_poly_t poly1, ulong coeff1, const F_mpz_poly_t poly2, cons
 int _F_mpz_equal(const F_mpz_poly_t poly1, const ulong coeff1, const F_mpz_poly_t poly2, const ulong coeff2);
 
 /** 
+   \fn     void _F_mpz_swap(F_mpz_poly_t poly1, ulong coeff1, F_mpz_poly_t poly2, ulong coeff2)
+   \brief  Efficiently swaps coeff1 of poly1 and coeff2 of poly2. 
+*/
+void _F_mpz_swap(F_mpz_poly_t poly1, ulong coeff1, F_mpz_poly_t poly2, ulong coeff2);
+
+/** 
    \fn     void _F_mpz_negate(F_mpz_poly_t poly1, ulong coeff1, const F_mpz_poly_t poly2, const ulong coeff2)
    \brief  Sets coeff1 of poly1 to minus coeff2 of poly2. Assumes the coefficients are distinct.
 */
@@ -490,6 +496,19 @@ long F_mpz_poly_max_bits(F_mpz_poly_t poly);
 	        of coefficients of poly. Zero is returned for the zero polynomial.
 */
 ulong F_mpz_poly_max_limbs(F_mpz_poly_t poly);
+
+/*===============================================================================
+
+	Reverse
+
+================================================================================*/
+
+/** 
+   \fn     void F_mpz_poly_reverse(F_mpz_poly_t res, const F_mpz_poly_t poly, const ulong length)
+   \brief  Treats poly as though it were the given length (with leading zeroes if 
+	        necessary) and sets res to the reverse polynomial.
+*/
+void F_mpz_poly_reverse(F_mpz_poly_t res, const F_mpz_poly_t poly, const ulong length);
 
 /*===============================================================================
 

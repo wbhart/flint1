@@ -284,6 +284,37 @@ int _F_mpz_equal(const F_mpz_poly_t poly1, const ulong coeff1, const F_mpz_poly_
 	else return (!mpz_cmp(poly1->mpz_coeffs + COEFF_TO_OFF(c1), poly2->mpz_coeffs + COEFF_TO_OFF(c2))); 
 }
 
+void _F_mpz_swap(F_mpz_poly_t poly1, ulong coeff1, F_mpz_poly_t poly2, ulong coeff2)
+{
+	ulong c1 = poly1->coeffs[coeff1];
+   ulong c2 = poly2->coeffs[coeff2];
+
+   if (!COEFF_IS_MPZ(c1))
+	{
+		if (!COEFF_IS_MPZ(c2)) // both coefficients are small
+		{
+	      poly1->coeffs[coeff1] = c2;
+	      poly2->coeffs[coeff2] = c1;
+		} else // c1 is small, c2 is large
+		{
+			__mpz_struct * mpz_ptr = _F_mpz_promote(poly1, coeff1);
+			mpz_swap(mpz_ptr, poly2->mpz_coeffs + COEFF_TO_OFF(c2));
+			poly2->coeffs[coeff2] = c1;
+		}
+	} else
+	{
+      if (!COEFF_IS_MPZ(c2)) // c2 is small, c1 is large
+		{
+         __mpz_struct * mpz_ptr = _F_mpz_promote(poly2, coeff2);
+			mpz_swap(mpz_ptr, poly1->mpz_coeffs + COEFF_TO_OFF(c1));
+			poly1->coeffs[coeff1] = c2;
+		} else // both coefficients are large
+		{
+			mpz_swap(poly1->mpz_coeffs + COEFF_TO_OFF(c1), poly2->mpz_coeffs + COEFF_TO_OFF(c2));
+		}
+	}
+}
+
 void _F_mpz_neg(F_mpz_poly_t poly1, ulong coeff1, const F_mpz_poly_t poly2, const ulong coeff2)
 {
    ulong c = poly2->coeffs[coeff2];
@@ -617,6 +648,44 @@ ulong F_mpz_poly_max_limbs(F_mpz_poly_t poly)
 	}
 
 	return max;
+}
+
+/*===============================================================================
+
+	Reverse
+
+================================================================================*/
+
+void F_mpz_poly_reverse(F_mpz_poly_t res, const F_mpz_poly_t poly, const ulong length)
+{
+   long i;
+   
+   F_mpz_poly_fit_length(res, length);
+	
+	if (poly != res)
+   {
+      for (i = 0; i < FLINT_MIN(length, poly->length); i++)
+         _F_mpz_set(res, length - i - 1, poly, i);
+
+      for ( ; i < length; i++)
+         _F_mpz_zero(res, length - i - 1);
+
+   } else
+   {
+      for (i = 0; i < length/2; i++)
+      {
+         if (length - i - 1 < res->length) _F_mpz_swap(res, i, res, length - i - 1);
+			else
+			{
+				_F_mpz_set(res, length - i - 1, res, i);
+			   _F_mpz_zero(res, i);
+		   }
+		}
+      if ((length & 1) && (i >= poly->length)) _F_mpz_zero(res, i);
+   }
+	
+	res->length = length;
+   _F_mpz_poly_normalise(res);
 }
 
 /*===============================================================================

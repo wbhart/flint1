@@ -772,6 +772,67 @@ int test_F_mpz_poly_neg()
    return result;
 }
 
+int test_F_mpz_poly_reverse()
+{
+   F_mpz_poly_t F_poly, F_poly2;
+   int result = 1;
+   unsigned long bits, length, length2;
+   
+   for (unsigned long count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+   {
+      bits = z_randint(200)+ 1;
+      
+      F_mpz_poly_init(F_poly);
+      F_mpz_poly_init(F_poly2);   
+      
+      length = z_randint(100);
+      length2 = length + z_randint(200);
+      
+      F_mpz_randpoly(F_poly, length, bits); 
+                
+      F_mpz_poly_reverse(F_poly2, F_poly, length2);
+		F_mpz_poly_reverse(F_poly2, F_poly2, length2);
+           
+      result = F_mpz_poly_equal(F_poly2, F_poly);
+      if (!result)
+		{
+			printf("Error: length = %ld, length2 = %ld, bits = %ld\n", length, length2, bits);
+			printf("F_poly->length = %ld, F_poly2->length = %ld\n", F_poly->length, F_poly2->length);
+		}
+
+      F_mpz_poly_clear(F_poly);
+      F_mpz_poly_clear(F_poly2);
+   }
+   
+   for (unsigned long count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+   {
+      bits = z_randint(200)+ 1;
+      
+      F_mpz_poly_init(F_poly);
+      F_mpz_poly_init(F_poly2);   
+      
+      length = z_randint(100);
+      length2 = length + z_randint(200);
+       
+      F_mpz_randpoly(F_poly, length, bits); 
+         
+      F_mpz_poly_set(F_poly2, F_poly);
+      F_mpz_poly_reverse(F_poly, F_poly, length2);
+      F_mpz_poly_reverse(F_poly, F_poly, length2);
+           
+      result = F_mpz_poly_equal(F_poly2, F_poly);
+		if (!result)
+		{
+			printf("Error: length = %ld, length2 = %ld, bits = %ld\n", length, length2, bits);
+			printf("F_poly->length = %ld, F_poly2->length = %ld\n", F_poly->length, F_poly2->length);
+		}
+      
+      F_mpz_poly_clear(F_poly);
+      F_mpz_poly_clear(F_poly2);
+   }
+
+   return result; 
+}
 
 void F_mpz_poly_test_all()
 {
@@ -788,6 +849,7 @@ void F_mpz_poly_test_all()
    RUN_TEST(F_mpz_poly_max_bits); 
    RUN_TEST(F_mpz_poly_max_limbs); 
    RUN_TEST(F_mpz_poly_equal); 
+   RUN_TEST(F_mpz_poly_reverse); 
    RUN_TEST(F_mpz_poly_neg); 
    RUN_TEST(F_mpz_poly_add); 
    RUN_TEST(F_mpz_poly_sub); 
