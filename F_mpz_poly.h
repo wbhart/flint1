@@ -293,6 +293,18 @@ void _F_mpz_sub(F_mpz_poly_t res, ulong coeff3, const F_mpz_poly_t poly1, const 
 					                                 const F_mpz_poly_t poly2, const ulong coeff2);
 
 /** 
+   \fn     void _F_mpz_mul_ui(F_mpz_poly_t poly1, ulong coeff1, F_mpz_poly_t poly2, ulong coeff2, ulong x)
+   \brief  Multiply coeff2 of poly2 by the unsigned long x and set coeff1 of poly1 to the result
+*/
+void _F_mpz_mul_ui(F_mpz_poly_t poly1, ulong coeff1, F_mpz_poly_t poly2, ulong coeff2, ulong x);
+
+/** 
+   \fn     void _F_mpz_mul_ui(F_mpz_poly_t poly1, ulong coeff1, F_mpz_poly_t poly2, ulong coeff2, long x)
+   \brief  Multiply coeff2 of poly2 by the signed long x and set coeff1 of poly1 to the result
+*/
+void _F_mpz_mul_si(F_mpz_poly_t poly1, ulong coeff1, F_mpz_poly_t poly2, ulong coeff2, long x);
+
+/** 
    \fn     void F_mpz_poly_set_coeff_si(F_mpz_poly_t poly, ulong n, const long x)
    \brief  Set coefficient n to the signed long value x. Coefficients are numbered
 	        from the constant coefficient, starting at zero.
@@ -530,6 +542,24 @@ void F_mpz_poly_left_shift(F_mpz_poly_t res, const F_mpz_poly_t poly, const ulon
    \brief  Divides poly by x^n, discarding any remainder, and sets res to the result.
 */
 void F_mpz_poly_right_shift(F_mpz_poly_t res, const F_mpz_poly_t poly, const ulong n);
+
+/*===============================================================================
+
+	Scalar multiplication
+
+================================================================================*/
+
+/** 
+   \fn     void F_mpz_poly_scalar_mul_ui(F_mpz_poly_t poly1, F_mpz_poly_t poly2, ulong x)
+   \brief  Multiply poly2 by the unsigned long x and set poly1 to the result.
+*/
+void F_mpz_poly_scalar_mul_ui(F_mpz_poly_t poly1, F_mpz_poly_t poly2, ulong x);
+
+/** 
+   \fn     void F_mpz_poly_scalar_mul_si(F_mpz_poly_t poly1, F_mpz_poly_t poly2, long x)
+   \brief  Multiply poly2 by the signed long x and set poly1 to the result.
+*/
+void F_mpz_poly_scalar_mul_si(F_mpz_poly_t poly1, F_mpz_poly_t poly2, long x);
 
 #ifdef __cplusplus
  }

@@ -368,7 +368,7 @@ int test_F_mpz_poly_getset_si()
    
    for (ulong count1 = 0; (count1 < 10000) && (result == 1) ; count1++)
    {
-      bits = random_ulong(200)+ 1;
+      bits = z_randint(200)+ 1;
       
       F_mpz_poly_init(F_poly);
 
@@ -413,7 +413,7 @@ int test_F_mpz_poly_getset_ui()
    
    for (ulong count1 = 0; (count1 < 10000) && (result == 1) ; count1++)
    {
-      bits = random_ulong(200)+ 1;
+      bits = z_randint(200)+ 1;
       
       F_mpz_poly_init(F_poly);
 
@@ -458,7 +458,7 @@ int test_F_mpz_poly_getset_mpz()
    
    for (ulong count1 = 0; (count1 < 5000) && (result == 1) ; count1++)
    {
-      bits = random_ulong(200)+ 1;
+      bits = z_randint(200)+ 1;
       
       F_mpz_poly_init(F_poly);
 
@@ -846,7 +846,7 @@ int test_F_mpz_poly_shift()
       
 	for (unsigned long count1 = 0; (count1 < 1000) && (result == 1) ; count1++)
    {
-      bits = random_ulong(500)+ 1;
+      bits = z_randint(500)+ 1;
       length = z_randint(500);        
       shift = z_randint(100);
 		    
@@ -862,7 +862,7 @@ int test_F_mpz_poly_shift()
 
    for (unsigned long count2 = 0; (count2 < 1000) && (result == 1); count2++)
    { 
-       bits = random_ulong(500)+ 1;
+       bits = z_randint(500)+ 1;
        length = z_randint(500);        
        if (length) shift = z_randint(length);
 		 else shift = 0;
@@ -886,6 +886,206 @@ int test_F_mpz_poly_shift()
    return result; 
 }
 
+int test_F_mpz_poly_scalar_mul_ui()
+{
+   mpz_poly_t m_poly, m_poly2;
+   F_mpz_poly_t F_poly, F_poly2;
+   int result = 1;
+   ulong bits, bits2, length;
+   ulong mult;
+   mpz_t temp;
+   mpz_init(temp);
+   
+   mpz_poly_init(m_poly); 
+   mpz_poly_init(m_poly2); 
+   
+   for (ulong count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+   {
+      bits = z_randint(200)+ 1;
+      length = z_randint(200);  
+
+      F_mpz_poly_init(F_poly);
+      F_mpz_poly_init(F_poly2);
+      
+      mpz_randpoly(m_poly, length, bits); 
+      mpz_poly_to_F_mpz_poly(F_poly, m_poly);
+          
+      bits2 = z_randint(FLINT_BITS+1);
+		mult = z_randbits(bits2);
+      
+		F_mpz_poly_scalar_mul_ui(F_poly2, F_poly, mult);
+          
+      mpz_poly_init(m_poly2);
+      F_mpz_poly_to_mpz_poly(m_poly2, F_poly2); 
+          
+      if (mult == 0L) result = (F_poly2->length == 0);
+		else
+		{
+			for (ulong i = 0; i < m_poly->length; i++)
+         {
+            mpz_mul_ui(temp, m_poly->coeffs[i], mult);
+            result &= (mpz_cmp(temp, m_poly2->coeffs[i]) == 0);
+         }
+		}
+
+		if (!result) 
+		{
+			printf("Error: length = %ld, bits = %ld, bits2 = %ld, mult = %ld\n", length, bits, bits2, mult);
+         mpz_poly_print_pretty(m_poly, "x"); printf("\n");
+         mpz_poly_print_pretty(m_poly2, "x"); printf("\n");
+		}
+
+      F_mpz_poly_clear(F_poly2);
+      F_mpz_poly_clear(F_poly);
+   }
+   
+   for (ulong count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+   {
+      bits = z_randint(200)+ 1;
+      length = z_randint(200);        
+
+      F_mpz_poly_init(F_poly);
+      
+		mpz_randpoly(m_poly, length, bits); 
+      mpz_poly_to_F_mpz_poly(F_poly, m_poly);
+          
+      bits2 = z_randint(FLINT_BITS+1);
+		mult = z_randbits(bits2);
+          
+		F_mpz_poly_scalar_mul_ui(F_poly, F_poly, mult);
+      F_mpz_poly_to_mpz_poly(m_poly2, F_poly); 
+          
+      if (mult == 0L) result = (F_poly->length == 0);
+		else
+		{
+			for (ulong i = 0; i < m_poly->length; i++)
+         {
+            mpz_mul_ui(temp, m_poly->coeffs[i], mult);
+            result &= (mpz_cmp(temp, m_poly2->coeffs[i]) == 0);
+         }
+		}
+
+		if (!result) 
+		{
+			printf("Error: length = %ld, bits = %ld, bits2 = %ld, mult = %ld\n", length, bits, bits2, mult);
+         mpz_poly_print_pretty(m_poly, "x"); printf("\n");
+         mpz_poly_print_pretty(m_poly2, "x"); printf("\n");
+		}
+
+      F_mpz_poly_clear(F_poly);
+   }
+   
+   mpz_poly_clear(m_poly);
+   mpz_poly_clear(m_poly2);
+   mpz_clear(temp);
+   
+   return result; 
+}
+
+int test_F_mpz_poly_scalar_mul_si()
+{
+   mpz_poly_t m_poly, m_poly2;
+   F_mpz_poly_t F_poly, F_poly2;
+   int result = 1;
+   ulong bits, bits2, length;
+   long mult;
+   mpz_t temp;
+   mpz_init(temp);
+   
+   mpz_poly_init(m_poly); 
+   mpz_poly_init(m_poly2); 
+   
+   for (ulong count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+   {
+      bits = z_randint(200)+ 1;
+      length = z_randint(200);  
+
+      F_mpz_poly_init(F_poly);
+      F_mpz_poly_init(F_poly2);
+      
+      mpz_randpoly(m_poly, length, bits); 
+      mpz_poly_to_F_mpz_poly(F_poly, m_poly);
+          
+      bits2 = z_randint(FLINT_BITS+1);
+		mult = z_randbits(bits2);
+      
+		F_mpz_poly_scalar_mul_si(F_poly2, F_poly, mult);
+          
+      mpz_poly_init(m_poly2);
+      F_mpz_poly_to_mpz_poly(m_poly2, F_poly2); 
+          
+      if (mult == 0L) result = (F_poly2->length == 0);
+		else
+		{
+			for (ulong i = 0; i < m_poly->length; i++)
+         {
+            if (mult < 0L) 
+			   {
+				   mpz_mul_ui(temp, m_poly->coeffs[i], -mult);
+				   mpz_neg(temp, temp);
+			   } else mpz_mul_ui(temp, m_poly->coeffs[i], mult);
+            result &= (mpz_cmp(temp, m_poly2->coeffs[i]) == 0);
+         }
+		}
+
+		if (!result) 
+		{
+			printf("Error: length = %ld, bits = %ld, bits2 = %ld, mult = %ld\n", length, bits, bits2, mult);
+         mpz_poly_print_pretty(m_poly, "x"); printf("\n");
+         mpz_poly_print_pretty(m_poly2, "x"); printf("\n");
+		}
+
+      F_mpz_poly_clear(F_poly2);
+      F_mpz_poly_clear(F_poly);
+   }
+   
+   for (ulong count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+   {
+      bits = z_randint(200)+ 1;
+      length = z_randint(200);        
+
+      F_mpz_poly_init(F_poly);
+      
+		mpz_randpoly(m_poly, length, bits); 
+      mpz_poly_to_F_mpz_poly(F_poly, m_poly);
+          
+      bits2 = z_randint(FLINT_BITS+1);
+		mult = z_randbits(bits2);
+          
+		F_mpz_poly_scalar_mul_si(F_poly, F_poly, mult);
+      F_mpz_poly_to_mpz_poly(m_poly2, F_poly); 
+          
+      if (mult == 0L) result = (F_poly->length == 0);
+		else
+		{
+			for (ulong i = 0; i < m_poly->length; i++)
+         {
+            if (mult < 0L) 
+			   {
+				   mpz_mul_ui(temp, m_poly->coeffs[i], -mult);
+				   mpz_neg(temp, temp);
+			   } else mpz_mul_ui(temp, m_poly->coeffs[i], mult);
+            result &= (mpz_cmp(temp, m_poly2->coeffs[i]) == 0);
+         }          
+	   }
+		
+	   if (!result) 
+		{
+			printf("Error: length = %ld, bits = %ld, bits2 = %ld, mult = %ld\n", length, bits, bits2, mult);
+         mpz_poly_print_pretty(m_poly, "x"); printf("\n");
+         mpz_poly_print_pretty(m_poly2, "x"); printf("\n");
+		}
+
+      F_mpz_poly_clear(F_poly);
+   }
+   
+   mpz_poly_clear(m_poly);
+   mpz_poly_clear(m_poly2);
+   mpz_clear(temp);
+   
+   return result; 
+}
+
 void F_mpz_poly_test_all()
 {
    int success, all_success = 1;
@@ -906,6 +1106,8 @@ void F_mpz_poly_test_all()
    RUN_TEST(F_mpz_poly_add); 
    RUN_TEST(F_mpz_poly_sub); 
    RUN_TEST(F_mpz_poly_shift); 
+   RUN_TEST(F_mpz_poly_scalar_mul_ui); 
+   RUN_TEST(F_mpz_poly_scalar_mul_si); 
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");
