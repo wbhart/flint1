@@ -305,6 +305,12 @@ void _F_mpz_mul_ui(F_mpz_poly_t poly1, ulong coeff1, F_mpz_poly_t poly2, ulong c
 void _F_mpz_mul_si(F_mpz_poly_t poly1, ulong coeff1, F_mpz_poly_t poly2, ulong coeff2, long x);
 
 /** 
+   \fn     void _F_mpz_mul_mpz(F_mpz_poly_t poly1, ulong coeff1, F_mpz_poly_t poly2, ulong coeff2, mpz_t x)
+   \brief  Multiply coeff2 of poly2 by the mpz_t x and set coeff1 of poly1 to the result
+*/
+void _F_mpz_mul_mpz(F_mpz_poly_t poly1, ulong coeff1, F_mpz_poly_t poly2, ulong coeff2, mpz_t x);
+
+/** 
    \fn     void F_mpz_poly_set_coeff_si(F_mpz_poly_t poly, ulong n, const long x)
    \brief  Set coefficient n to the signed long value x. Coefficients are numbered
 	        from the constant coefficient, starting at zero.
@@ -560,6 +566,13 @@ void F_mpz_poly_scalar_mul_ui(F_mpz_poly_t poly1, F_mpz_poly_t poly2, ulong x);
    \brief  Multiply poly2 by the signed long x and set poly1 to the result.
 */
 void F_mpz_poly_scalar_mul_si(F_mpz_poly_t poly1, F_mpz_poly_t poly2, long x);
+
+/** 
+   \fn     void F_mpz_poly_scalar_mul_mpz(F_mpz_poly_t poly1, F_mpz_poly_t poly2, mpz_t x)
+   \brief  Multiply poly2 by the mpz_t x and set poly1 to the result.
+*/
+void F_mpz_poly_scalar_mul_mpz(F_mpz_poly_t poly1, F_mpz_poly_t poly2, mpz_t x);
+
 
 #ifdef __cplusplus
  }

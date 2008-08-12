@@ -463,6 +463,26 @@ void _F_mpz_mul_si(F_mpz_poly_t poly1, ulong coeff1, F_mpz_poly_t poly2, ulong c
 	}
 }
 
+void _F_mpz_mul_mpz(F_mpz_poly_t poly1, ulong coeff1, F_mpz_poly_t poly2, ulong coeff2, mpz_t x)
+{
+	ulong c2 = poly2->coeffs[coeff2];
+   
+	if (mpz_size(x) <= 1)
+	{
+		long x_limb = mpz_get_ui(x);
+      _F_mpz_mul_ui(poly1, coeff1, poly2, coeff2, x_limb);
+		if (mpz_sgn(x) < 0) _F_mpz_neg(poly1, coeff1, poly1, coeff1);
+		return;
+	}
+
+   __mpz_struct * mpz_ptr = _F_mpz_promote(poly1, coeff1);
+
+	if (!COEFF_IS_MPZ(c2)) // coeff2 is small
+	   mpz_mul_si(mpz_ptr, x, c2);
+	else // coeff2 is large
+	   mpz_mul(mpz_ptr, poly2->mpz_coeffs + COEFF_TO_OFF(c2), x);
+}
+
 void F_mpz_poly_set_coeff_si(F_mpz_poly_t poly, ulong n, const long x)
 {
    F_mpz_poly_fit_length(poly, n + 1);
@@ -873,6 +893,28 @@ void F_mpz_poly_scalar_mul_si(F_mpz_poly_t poly1, F_mpz_poly_t poly2, long x)
 	F_mpz_poly_fit_length(poly1, poly2->length);
 	
 	for (ulong i = 0; i < poly2->length; i++) _F_mpz_mul_si(poly1, i, poly2, i, x);
+
+	poly1->length = poly2->length;
+}
+
+void F_mpz_poly_scalar_mul_mpz(F_mpz_poly_t poly1, F_mpz_poly_t poly2, mpz_t x)
+{
+	if ((mpz_cmpabs_ui(x, 0L) == 0) || (poly2->length == 0)) 
+	{
+	   F_mpz_poly_zero(poly1);
+		return;
+	}
+	
+	if (mpz_cmpabs_ui(x, 1L) == 0)
+	{
+	   if (mpz_sgn(x) < 0) F_mpz_poly_neg(poly1, poly2);
+		else F_mpz_poly_set(poly1, poly2);
+		return;
+	}
+	
+	F_mpz_poly_fit_length(poly1, poly2->length);
+	
+	for (ulong i = 0; i < poly2->length; i++) _F_mpz_mul_mpz(poly1, i, poly2, i, x);
 
 	poly1->length = poly2->length;
 }
