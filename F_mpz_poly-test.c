@@ -834,6 +834,58 @@ int test_F_mpz_poly_reverse()
    return result; 
 }
 
+int test_F_mpz_poly_shift()
+{
+   F_mpz_poly_t F_poly, F_poly2, F_poly3;
+   int result = 1;
+   unsigned long bits, length;
+   unsigned long shift;
+   
+   F_mpz_poly_init(F_poly);
+   F_mpz_poly_init(F_poly2);
+      
+	for (unsigned long count1 = 0; (count1 < 1000) && (result == 1) ; count1++)
+   {
+      bits = random_ulong(500)+ 1;
+      length = z_randint(500);        
+      shift = z_randint(100);
+		    
+		F_mpz_randpoly(F_poly, length, bits); 
+      F_mpz_poly_set(F_poly2, F_poly);
+      
+		F_mpz_poly_left_shift(F_poly, F_poly, shift); 
+      F_mpz_poly_right_shift(F_poly, F_poly, shift);
+      
+      result = F_mpz_poly_equal(F_poly2, F_poly);
+		if (!result) printf("Error: bits = %ld, length = %ld, shift = %ld\n", bits, length, shift);
+   }
+
+   for (unsigned long count2 = 0; (count2 < 1000) && (result == 1); count2++)
+   { 
+       bits = random_ulong(500)+ 1;
+       length = z_randint(500);        
+       if (length) shift = z_randint(length);
+		 else shift = 0;
+		
+       do F_mpz_randpoly(F_poly, length, bits); 
+       while (F_poly->length < length);
+
+       F_poly3->length = F_poly->length - shift;
+       F_poly3->coeffs = F_poly->coeffs + shift;
+		 F_poly3->mpz_coeffs = F_poly->mpz_coeffs;
+		 
+		 F_mpz_poly_right_shift(F_poly2, F_poly, shift);      
+          
+		 result = F_mpz_poly_equal(F_poly3, F_poly2);
+		 if (!result) printf("Error: bits = %ld, length = %ld, shift = %ld\n", bits, length, shift);
+   }
+
+   F_mpz_poly_clear(F_poly);
+   F_mpz_poly_clear(F_poly2);
+  
+   return result; 
+}
+
 void F_mpz_poly_test_all()
 {
    int success, all_success = 1;
@@ -853,6 +905,7 @@ void F_mpz_poly_test_all()
    RUN_TEST(F_mpz_poly_neg); 
    RUN_TEST(F_mpz_poly_add); 
    RUN_TEST(F_mpz_poly_sub); 
+   RUN_TEST(F_mpz_poly_shift); 
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");

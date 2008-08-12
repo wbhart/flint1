@@ -48,9 +48,9 @@ void _F_mpz_poly_mpz_coeffs_new(F_mpz_poly_t poly)
 	if (poly->mpz_length == poly->mpz_alloc) // time to allocate MPZ_BLOCK more mpz_t's
 	{
 	   if (poly->mpz_alloc) 
-		   poly->mpz_coeffs = (__mpz_struct*) flint_heap_realloc_bytes(poly->mpz_coeffs, (poly->mpz_alloc + MPZ_BLOCK)*sizeof(__mpz_struct));
+			poly->mpz_coeffs = (__mpz_struct*) flint_heap_realloc_bytes(poly->mpz_coeffs, (poly->mpz_alloc + MPZ_BLOCK)*sizeof(__mpz_struct));
 		else
-		   poly->mpz_coeffs = (__mpz_struct*) flint_heap_alloc_bytes(MPZ_BLOCK*sizeof(__mpz_struct));
+			poly->mpz_coeffs = (__mpz_struct*) flint_heap_alloc_bytes(MPZ_BLOCK*sizeof(__mpz_struct));	
 		
 		// initialise the new mpz_t's
 		for (ulong i = poly->mpz_alloc; i < poly->mpz_alloc + MPZ_BLOCK; i++)
@@ -263,7 +263,7 @@ void _F_mpz_set_mpz(F_mpz_poly_t poly, ulong coeff, const mpz_t x)
 void _F_mpz_set(F_mpz_poly_t poly1, ulong coeff1, const F_mpz_poly_t poly2, const ulong coeff2)
 {
    ulong c = poly2->coeffs[coeff2];
-
+   
 	if (!COEFF_IS_MPZ(c)) // coeff is small
 	{
 		poly1->coeffs[coeff1] = c;
@@ -523,8 +523,10 @@ void F_mpz_poly_set(F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
 	if (poly1 != poly2)
 	{
 		F_mpz_poly_fit_length(poly1, poly2->length);
+
 		for (ulong i = 0; i < poly2->length; i++)
-		   _F_mpz_set(poly1, i, poly2, i);
+			_F_mpz_set(poly1, i, poly2, i);
+		
 		poly1->length = poly2->length;
 	}
 }
@@ -544,43 +546,6 @@ int F_mpz_poly_equal(const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
 		if (!_F_mpz_equal(poly1, i, poly2, i)) return 0;
 
 	return 1;
-}
-
-/*===============================================================================
-
-	Subpolynomials
-
-================================================================================*/
-
-void F_mpz_poly_attach(F_mpz_poly_t poly1, const F_mpz_poly_t poly2, ulong n)
-{
-   poly1->coeffs = poly2->coeffs;
-	poly1->mpz_coeffs = poly2->mpz_coeffs;
-	poly1->length = poly2->length;
-}
-
-void F_mpz_poly_attach_truncate(F_mpz_poly_t poly1, const F_mpz_poly_t poly2, ulong n)
-{
-   poly1->coeffs = poly2->coeffs;
-	poly1->mpz_coeffs = poly2->mpz_coeffs;
-	if (poly2->length < n) poly1->length = poly2->length;
-	else 
-	{
-		poly1->length = n;
-		_F_mpz_poly_normalise(poly1);
-	}
-}
-
-void F_mpz_poly_attach_shift(F_mpz_poly_t poly1, const F_mpz_poly_t poly2, ulong n)
-{
-   poly1->mpz_coeffs = poly2->mpz_coeffs;
-	if (poly2->length <= n) 
-	   poly1->length = 0;
-	else 
-	{
-		poly1->coeffs = poly2->coeffs + n;
-		poly1->length = poly2->length - n;
-	}
 }
 
 /*===============================================================================
@@ -761,4 +726,46 @@ void F_mpz_poly_sub(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly
       res->length = longer;
 }
 
+/*===============================================================================
 
+	Shifting
+
+================================================================================*/
+
+void F_mpz_poly_left_shift(F_mpz_poly_t res, const F_mpz_poly_t poly, const ulong n)
+{
+   if (n == 0) 
+	{
+		if (res != poly) F_mpz_poly_set(res, poly);
+		return;
+	}
+	
+	if (poly->length == 0) 
+	{
+		res->length = 0;
+		return;
+	}
+	
+	F_mpz_poly_fit_length(res, poly->length + n);
+	
+	for (long i = poly->length - 1; i >= 0; i--) _F_mpz_set(res, i + n, poly, i);
+
+   for (ulong i = 0; i < n; i++) _F_mpz_zero(res, i);
+   
+   res->length = poly->length + n;
+}
+
+void F_mpz_poly_right_shift(F_mpz_poly_t res, const F_mpz_poly_t poly, const ulong n)
+{
+   if (poly->length <= n) 
+   {
+      F_mpz_poly_zero(res);
+      return;
+   }
+
+   F_mpz_poly_fit_length(res, poly->length - n);
+	
+	for (ulong i = 0; i < poly->length - n; i++) _F_mpz_set(res, i, poly, i + n);
+	
+	res->length = poly->length - n;
+}

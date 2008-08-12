@@ -451,33 +451,6 @@ int F_mpz_poly_equal(const F_mpz_poly_t poly1, const F_mpz_poly_t poly2);
 
 /*===============================================================================
 
-	Subpolynomials
-
-================================================================================*/
-
-/** 
-   \fn     void F_mpz_poly_attach(F_mpz_poly_t poly1, const F_mpz_poly_t poly2, ulong n)
-   \brief  Attach the read only polynomial poly1 to poly2 
-*/
-void F_mpz_poly_attach(F_mpz_poly_t poly1, const F_mpz_poly_t poly2, ulong n);
-
-/** 
-   \fn     void F_mpz_poly_attach_truncate(F_mpz_poly_t poly1, const F_mpz_poly_t poly2, ulong n)
-   \brief  Attach the read only polynomial poly1 to poly2 and truncate it to the
-	        given length n
-*/
-void F_mpz_poly_attach_truncate(F_mpz_poly_t poly1, const F_mpz_poly_t poly2, ulong n);
-
-/** 
-   \fn     void F_mpz_poly_attach_shift(F_mpz_poly_t poly1, const F_mpz_poly_t poly2, ulong n)
-   \brief  Attach the read only polynomial poly1 to poly2 but shifted left by n 
-	        coefficients
-*/
-static inline 
-void F_mpz_poly_attach_shift(F_mpz_poly_t poly1, const F_mpz_poly_t poly2, ulong n);
-
-/*===============================================================================
-
 	Coefficient sizes
 
 ================================================================================*/
@@ -539,6 +512,24 @@ void F_mpz_poly_add(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly
    \brief  Sets res to the difference of poly1 and poly2.
 */
 void F_mpz_poly_sub(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2);
+
+/*===============================================================================
+
+	Shifting
+
+================================================================================*/
+
+/** 
+   \fn     void F_mpz_poly_left_shift(F_mpz_poly_t res, const F_mpz_poly_t poly, const ulong n)
+   \brief  Multiplies poly by x^n and sets res to the result.
+*/
+void F_mpz_poly_left_shift(F_mpz_poly_t res, const F_mpz_poly_t poly, const ulong n);
+
+/** 
+   \fn     void F_mpz_poly_right_shift(F_mpz_poly_t res, const F_mpz_poly_t poly, const ulong n)
+   \brief  Divides poly by x^n, discarding any remainder, and sets res to the result.
+*/
+void F_mpz_poly_right_shift(F_mpz_poly_t res, const F_mpz_poly_t poly, const ulong n);
 
 #ifdef __cplusplus
  }
