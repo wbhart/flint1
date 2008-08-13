@@ -37,16 +37,17 @@ Copyright (C) 2008, William Hart
 #include "test-support.h"
 #include "zmod_poly.h"
 
-#define VARY_BITS 1
-#define SIGNS 1
-#define SPARSE 1 
-#define ITER 1
+#define VARY_BITS 1 // random coefficients have random number of bits up to the limit given
+#define SIGNS 1 // random coefficients will be randomly signed
+#define SPARSE 1 // polynomials are spares (triggers more corner cases)
+#define ITER 1 // if you want all tests to run longer, increase this
 
 #define TESTFILE 0 // Set this to test polynomial reading and writing to a file in the current dir
 
-#define DEBUG 0 // prints debug information
+#define DEBUG 0 // allows easy switching of debugging code on and off when debugging (if inserted)
 #define DEBUG2 1 
 
+// generate a random mpz_poly_t with up to the given length and number of bits per coefficient
 void mpz_randpoly(mpz_poly_t pol, long length, ulong maxbits)
 {
    ulong bits;
@@ -81,6 +82,8 @@ void mpz_randpoly(mpz_poly_t pol, long length, ulong maxbits)
    mpz_clear(temp);
 } 
 
+// same as for mpz_randpoly above, except it creates an F_mpz_poly
+// WARNING: do not use for testing of conversion between the two formats
 void F_mpz_randpoly(F_mpz_poly_t poly, ulong length, ulong bits)
 {
 	mpz_poly_t m_poly;
@@ -173,6 +176,7 @@ int test_F_mpz_poly_add()
 		F_mpz_poly_clear(res);
    }
    
+	// test aliasing of res and poly1
 	for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -204,7 +208,8 @@ int test_F_mpz_poly_add()
 		F_mpz_poly_clear(res);
    }
    
-   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
+   // test aliasing of res and poly2
+	for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(res);
@@ -288,7 +293,8 @@ int test_F_mpz_poly_sub()
 		F_mpz_poly_clear(res);
    }
    
-   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
+   // test aliasing of res and poly1
+	for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(res);
@@ -319,7 +325,8 @@ int test_F_mpz_poly_sub()
 		F_mpz_poly_clear(res);
    }
    
-   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
+   // test aliasing of res and poly2
+	for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(res);
@@ -376,7 +383,8 @@ int test_F_mpz_poly_getset_si()
       
 		F_mpz_randpoly(F_poly, length, bits); 
 		    
-      for (ulong count2 = 0; (count2 < 500) && result == 1; count2++)
+      // set random coeffs in the poly
+		for (ulong count2 = 0; (count2 < 500) && result == 1; count2++)
       {
           coeff_bits = z_randint(FLINT_BITS);
           coeff = z_randbits(coeff_bits);
@@ -421,7 +429,8 @@ int test_F_mpz_poly_getset_ui()
       
 		F_mpz_randpoly(F_poly, length, bits); 
 		    
-      for (ulong count2 = 0; (count2 < 500) && result == 1; count2++)
+      // set random coeffs in the poly
+		for (ulong count2 = 0; (count2 < 500) && result == 1; count2++)
       {
           coeff_bits = z_randint(FLINT_BITS+1);
           coeff = z_randbits(coeff_bits);
@@ -466,7 +475,8 @@ int test_F_mpz_poly_getset_mpz()
       
 		F_mpz_randpoly(F_poly, length, bits); 
 		    
-      for (ulong count2 = 0; (count2 < 300) && result == 1; count2++)
+      // set random coeffs in the poly
+		for (ulong count2 = 0; (count2 < 300) && result == 1; count2++)
       {
           coeff_bits = z_randint(200);
           mpz_rrandomb(coeff, randstate, coeff_bits);
@@ -530,6 +540,8 @@ int test_F_mpz_poly_set()
       F_mpz_poly_clear(F_poly2);
    }
    
+	// aliasing is trivial for set and doesn't need testing
+
    mpz_poly_clear(m_poly1);
    mpz_poly_clear(m_poly2);
    
@@ -637,7 +649,8 @@ int test_F_mpz_poly_equal()
    mpz_poly_init(m_poly1); 
    mpz_poly_init(m_poly2); 
    
-   for (ulong count1 = 0; (count1 < 20000*ITER) && (result == 1); count1++)
+   // random polys unlikely to be equal, test against mpz_poly_equal
+	for (ulong count1 = 0; (count1 < 20000*ITER) && (result == 1); count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -664,6 +677,7 @@ int test_F_mpz_poly_equal()
 		F_mpz_poly_clear(F_poly2);
    }
 
+	// polys are equal
 	for (ulong count1 = 0; (count1 < 20000*ITER) && (result == 1); count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -686,6 +700,7 @@ int test_F_mpz_poly_equal()
 		F_mpz_poly_clear(F_poly2);
    }
 
+	// polys are aliased
 	for (ulong count1 = 0; (count1 < 20000*ITER) && (result == 1); count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -717,7 +732,8 @@ int test_F_mpz_poly_neg()
    int result = 1;
    ulong bits1, bits2, length1, length2;
    
-   for (ulong count1 = 0; (count1 < 20000*ITER) && (result == 1); count1++)
+   // negate and negate back
+	for (ulong count1 = 0; (count1 < 20000*ITER) && (result == 1); count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -739,6 +755,7 @@ int test_F_mpz_poly_neg()
 		F_mpz_poly_clear(F_poly2);
    }
 
+	// sub equals negate and add, included aliased negation
 	for (ulong count1 = 0; (count1 < 20000*ITER) && (result == 1); count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -778,7 +795,8 @@ int test_F_mpz_poly_reverse()
    int result = 1;
    unsigned long bits, length, length2;
    
-   for (unsigned long count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+   // reverse and reverse back, second time aliased
+	for (unsigned long count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
    {
       bits = z_randint(200)+ 1;
       
@@ -804,7 +822,8 @@ int test_F_mpz_poly_reverse()
       F_mpz_poly_clear(F_poly2);
    }
    
-   for (unsigned long count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+   // completely aliased reverse and reverse back
+	for (unsigned long count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
    {
       bits = z_randint(200)+ 1;
       
@@ -843,8 +862,30 @@ int test_F_mpz_poly_shift()
    
    F_mpz_poly_init(F_poly);
    F_mpz_poly_init(F_poly2);
+   F_mpz_poly_init(F_poly3);
       
-	for (unsigned long count1 = 0; (count1 < 1000) && (result == 1) ; count1++)
+	//left shift followed by right shift
+	for (unsigned long count1 = 0; (count1 < 700) && (result == 1) ; count1++)
+   {
+      bits = z_randint(500)+ 1;
+      length = z_randint(500);        
+      shift = z_randint(100);
+		    
+		F_mpz_randpoly(F_poly, length, bits); 
+      F_mpz_poly_set(F_poly3, F_poly);
+      
+		F_mpz_poly_left_shift(F_poly2, F_poly, shift); 
+      F_mpz_poly_right_shift(F_poly, F_poly2, shift);
+      
+      result = F_mpz_poly_equal(F_poly3, F_poly);
+		if (!result) printf("Error: bits = %ld, length = %ld, shift = %ld\n", bits, length, shift);
+   }
+
+	// F_poly3 is used uninitialised after this point so clear it
+	F_mpz_poly_clear(F_poly3);
+
+   //left shift followed by right shift, completely aliased
+	for (unsigned long count1 = 0; (count1 < 700) && (result == 1) ; count1++)
    {
       bits = z_randint(500)+ 1;
       length = z_randint(500);        
@@ -859,8 +900,9 @@ int test_F_mpz_poly_shift()
       result = F_mpz_poly_equal(F_poly2, F_poly);
 		if (!result) printf("Error: bits = %ld, length = %ld, shift = %ld\n", bits, length, shift);
    }
-
-   for (unsigned long count2 = 0; (count2 < 1000) && (result == 1); count2++)
+   
+   // explicit check of right shift
+	for (unsigned long count2 = 0; (count2 < 1000) && (result == 1); count2++)
    { 
        bits = z_randint(500)+ 1;
        length = z_randint(500);        
@@ -939,7 +981,8 @@ int test_F_mpz_poly_scalar_mul_ui()
       F_mpz_poly_clear(F_poly);
    }
    
-   for (ulong count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+   // aliased multiply
+	for (ulong count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
    {
       bits = z_randint(200)+ 1;
       length = z_randint(200);        
@@ -1039,7 +1082,8 @@ int test_F_mpz_poly_scalar_mul_si()
       F_mpz_poly_clear(F_poly);
    }
    
-   for (ulong count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+   // aliased multiply
+	for (ulong count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
    {
       bits = z_randint(200)+ 1;
       length = z_randint(200);        
@@ -1101,7 +1145,7 @@ int test_F_mpz_poly_scalar_mul_mpz()
    
    for (ulong count1 = 0; (count1 < 10000) && (result == 1) ; count1++)
    {
-      bits = z_randint(200)+ 1;
+      bits = z_randint(300)+ 1;
       length = z_randint(200);  
 
       F_mpz_poly_init(F_poly);
@@ -1140,9 +1184,10 @@ int test_F_mpz_poly_scalar_mul_mpz()
       F_mpz_poly_clear(F_poly);
    }
    
-   for (ulong count1 = 0; (count1 < 10000) && (result == 1) ; count1++)
+   // aliased multiply
+	for (ulong count1 = 0; (count1 < 10000) && (result == 1) ; count1++)
    {
-      bits = z_randint(200)+ 1;
+      bits = z_randint(300)+ 1;
       length = z_randint(200);        
 
       F_mpz_poly_init(F_poly);
