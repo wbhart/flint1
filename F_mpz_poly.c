@@ -412,7 +412,8 @@ void _F_mpz_sub(F_mpz_poly_t res, ulong coeff3, const F_mpz_poly_t poly1, const 
 	}
 }
 
-void _F_mpz_mul_ui(F_mpz_poly_t poly1, ulong coeff1, F_mpz_poly_t poly2, ulong coeff2, ulong x)
+void _F_mpz_mul_ui(F_mpz_poly_t poly1, ulong coeff1, const F_mpz_poly_t poly2, 
+						                                   const ulong coeff2, const ulong x)
 {
 	ulong c2 = poly2->coeffs[coeff2];
 
@@ -441,7 +442,8 @@ void _F_mpz_mul_ui(F_mpz_poly_t poly1, ulong coeff1, F_mpz_poly_t poly2, ulong c
 	}
 }
 
-void _F_mpz_mul_si(F_mpz_poly_t poly1, ulong coeff1, F_mpz_poly_t poly2, ulong coeff2, long x)
+void _F_mpz_mul_si(F_mpz_poly_t poly1, ulong coeff1, const F_mpz_poly_t poly2, 
+						                                   const ulong coeff2, const long x)
 {
 	ulong c2 = poly2->coeffs[coeff2];
 
@@ -490,6 +492,281 @@ void _F_mpz_mul_mpz(F_mpz_poly_t poly1, ulong coeff1, F_mpz_poly_t poly2, ulong 
 	   mpz_mul_si(mpz_ptr, x, c2);
 	else // coeff2 is large
 	   mpz_mul(mpz_ptr, poly2->mpz_coeffs + COEFF_TO_OFF(c2), x);
+}
+
+void _F_mpz_mul(F_mpz_poly_t res, ulong coeff3, const F_mpz_poly_t poly1, const ulong coeff1, 
+					                                 const F_mpz_poly_t poly2, const ulong coeff2)
+{
+	ulong c1 = poly1->coeffs[coeff1];
+   
+	if (!COEFF_IS_MPZ(c1)) // c1 is small
+	{
+		_F_mpz_mul_si(res, coeff3, poly2, coeff2, c1);
+      return;
+	}
+	
+	__mpz_struct * mpz_ptr = _F_mpz_promote(res, coeff3);
+	ulong c2 = poly2->coeffs[coeff2];
+   	
+	if (!COEFF_IS_MPZ(c2)) // c1 is large, c2 is small
+		mpz_mul_si(mpz_ptr, poly1->mpz_coeffs + COEFF_TO_OFF(c1), c2);
+   else // c1 and c2 are large
+	   mpz_mul(mpz_ptr, poly1->mpz_coeffs + COEFF_TO_OFF(c1), poly2->mpz_coeffs + COEFF_TO_OFF(c2));
+}
+
+void _F_mpz_add_ui_inplace(F_mpz_poly_t res, ulong coeff, const ulong x)
+{
+	ulong c = res->coeffs[coeff];
+
+	if (!COEFF_IS_MPZ(c)) // coeff is small
+	{
+      mp_limb_t sum[2];
+		if ((long) c >= 0L) // both operands non-negative
+		{
+			add_ssaaaa(sum[1], sum[0], 0, c, 0, x);
+			if (sum[1] == 0) _F_mpz_set_ui(res, coeff, sum[0]); // result fits in 1 limb
+			else // result takes two limbs
+			{
+				mpz_t temp;
+				temp->_mp_d = sum;
+				temp->_mp_size = 2; // result is sum of two non-negative numbers and is hence non-negative
+				__mpz_struct * mpz_ptr = _F_mpz_promote(res, coeff);
+				mpz_set(mpz_ptr, temp);
+			}
+		} else // coeff is negative, x positive
+		{
+			if (-c > x) _F_mpz_set_si(res, coeff, x + c); // can't overflow as coeff is small and x smaller
+			else _F_mpz_set_ui(res, coeff, x + c); // won't be negative and has to be less than x
+		}
+	} else
+	{
+		__mpz_struct * mpz_ptr = res->mpz_coeffs + COEFF_TO_OFF(c);
+		mpz_add_ui(mpz_ptr, mpz_ptr, x);
+		_F_mpz_demote_val(res, coeff); // cancellation may have occurred
+	}
+}
+
+void _F_mpz_sub_ui_inplace(F_mpz_poly_t res, ulong coeff, const ulong x)
+{
+	ulong c = res->coeffs[coeff];
+
+	if (!COEFF_IS_MPZ(c)) // coeff is small
+	{
+      mp_limb_t sum[2];
+		if ((long) c < 0L) // coeff negative, x positive, so difference is negative
+		{
+			add_ssaaaa(sum[1], sum[0], 0, -c, 0, x);
+			if (sum[1] == 0) 
+			{   
+				_F_mpz_set_ui(res, coeff, sum[0]); // result fits in 1 limb
+				_F_mpz_neg(res, coeff, res, coeff);
+			} else // result takes two limbs
+			{
+				mpz_t temp;
+				temp->_mp_d = sum;
+				temp->_mp_size = -2; // result is negative number minus negative number, hence negative
+				__mpz_struct * mpz_ptr = _F_mpz_promote(res, coeff);
+				mpz_set(mpz_ptr, temp);
+			}
+		} else // coeff is non-negative, x non-negative
+		{
+			if (x < c) _F_mpz_set_ui(res, coeff, c - x); // won't be negative and is smaller than c
+			else 
+			{
+				_F_mpz_set_ui(res, coeff, x - c); // positive or zero
+				_F_mpz_neg(res, coeff, res, coeff);
+			}
+		}
+	} else
+	{
+		__mpz_struct * mpz_ptr = res->mpz_coeffs + COEFF_TO_OFF(c);
+		mpz_sub_ui(mpz_ptr, mpz_ptr, x);
+		_F_mpz_demote_val(res, coeff); // cancellation may have occurred
+	}
+}
+
+void _F_mpz_addmul_ui(F_mpz_poly_t res, ulong coeff2, const F_mpz_poly_t poly1, 
+							                                 const ulong coeff1, const ulong x)
+{
+	ulong c1 = poly1->coeffs[coeff1];
+   if ((x == 0) || (c1 == 0)) return; // product is zero
+   
+	ulong r = res->coeffs[coeff2];
+	if (r == 0) 
+	{
+		_F_mpz_mul_ui(res, coeff2, poly1, coeff1, x); // we are adding product to 0
+		return;
+	}
+
+	if (!COEFF_IS_MPZ(c1)) // c1 is small
+	{
+      mp_limb_t prod[2];
+	   ulong uc1 = FLINT_ABS(c1);
+      
+		umul_ppmm(prod[1], prod[0], uc1, x); // compute product
+
+		if (prod[1] == 0) // product fits in one limb
+		{
+			if ((long) c1 < 0L) _F_mpz_sub_ui_inplace(res, coeff2, prod[0]);
+			else _F_mpz_add_ui_inplace(res, coeff2, prod[0]);
+			return;
+		} else if ((prod[1] == 1) && (!COEFF_IS_MPZ(r)) && ((long)(r ^ c1) < 0L))
+		{
+			// only chance at cancellation is if product is one bit past a limb
+			// and res is small and opposite sign to this product
+			
+			ulong ur = FLINT_ABS(r);
+			if (ur > prod[0]) // cancellation will occur
+			{
+				_F_mpz_set_ui(res, coeff2, prod[0] - ur);
+				if ((long) r > 0L) _F_mpz_neg(res, coeff2, res, coeff2);
+				return;
+			} 
+		}
+		
+		// in all remaining cases res is either big already, or will be big in the end
+	   __mpz_struct * mpz_ptr = _F_mpz_promote(res, coeff2);
+		if (!COEFF_IS_MPZ(r)) // res is small
+		   mpz_set_si(mpz_ptr, r);
+      
+		mpz_t temp; // set up a temporary, cheap mpz_t to contain prod
+	   temp->_mp_d = prod;
+	   temp->_mp_size = ((long) c1 < 0L ? -2 : 2);
+	   mpz_add(mpz_ptr, mpz_ptr, temp);
+		_F_mpz_demote_val(res, coeff2); // cancellation may have occurred
+	} else // c1 is large
+	{
+      __mpz_struct * mpz_ptr = _F_mpz_promote(res, coeff2);
+		if (!COEFF_IS_MPZ(r)) // res is small
+		   mpz_set_si(mpz_ptr, r);
+
+      mpz_addmul_ui(mpz_ptr, poly1->mpz_coeffs + COEFF_TO_OFF(c1), x);
+		_F_mpz_demote_val(res, coeff2); // cancellation may have occurred
+	}
+}
+
+void _F_mpz_submul_ui(F_mpz_poly_t res, ulong coeff2, const F_mpz_poly_t poly1, 
+							                                 const ulong coeff1, const ulong x)
+{
+	ulong c1 = poly1->coeffs[coeff1];
+   if ((x == 0) || (c1 == 0)) return; // product is zero
+   
+	ulong r = res->coeffs[coeff2];
+	if (r == 0) 
+	{
+		_F_mpz_mul_ui(res, coeff2, poly1, coeff1, x); // we are adding product to 0
+		_F_mpz_neg(res, coeff2, res, coeff2);
+		return;
+	}
+
+	mp_limb_t prod[2];
+	
+	if (!COEFF_IS_MPZ(c1)) // c1 is small
+	{
+      ulong uc1 = FLINT_ABS(c1);
+      
+		umul_ppmm(prod[1], prod[0], uc1, x); // compute product
+
+		if (prod[1] == 0) // product fits in one limb
+		{
+			if ((long) c1 < 0L) _F_mpz_add_ui_inplace(res, coeff2, prod[0]);
+			else _F_mpz_sub_ui_inplace(res, coeff2, prod[0]);
+			return;
+		} else if ((prod[1] == 1) && (!COEFF_IS_MPZ(r)) && ((long)(r ^ c1) >= 0L))
+		{
+			// only chance at cancellation is if product is one bit past a limb
+			// and res is small and same sign as this product
+			
+			ulong ur = FLINT_ABS(r);
+			if (ur > prod[0]) // cancellation will occur
+			{
+				_F_mpz_set_ui(res, coeff2, prod[0] - ur);
+				if ((long) r > 0L) _F_mpz_neg(res, coeff2, res, coeff2);
+				return;
+			} 
+		}
+		
+		// in all remaining cases res is either big already, or will be big in the end
+	   __mpz_struct * mpz_ptr = _F_mpz_promote(res, coeff2);
+		if (!COEFF_IS_MPZ(r)) // res is small
+		   mpz_set_si(mpz_ptr, r);
+
+		mpz_t temp; // set up a temporary, cheap mpz_t to contain prod
+	   temp->_mp_d = prod;
+	   temp->_mp_size = ((long) c1 < 0L ? -2 : 2);
+	   mpz_sub(mpz_ptr, mpz_ptr, temp);
+		_F_mpz_demote_val(res, coeff2); // cancellation may have occurred
+	} else // c1 is large
+	{
+      __mpz_struct * mpz_ptr = _F_mpz_promote(res, coeff2);
+		if (!COEFF_IS_MPZ(r)) // res is small
+		   mpz_set_si(mpz_ptr, r);
+
+      mpz_submul_ui(mpz_ptr, poly1->mpz_coeffs + COEFF_TO_OFF(c1), x);
+		_F_mpz_demote_val(res, coeff2); // cancellation may have occurred
+	}
+}
+
+void _F_mpz_addmul(F_mpz_poly_t res, ulong coeff3, const F_mpz_poly_t poly1, const ulong coeff1, 
+						                                 const F_mpz_poly_t poly2, const ulong coeff2)
+{
+	ulong c1 = poly1->coeffs[coeff1];
+	
+	if (!COEFF_IS_MPZ(c1)) // c1 is small
+	{
+		if ((long) c1 < 0) _F_mpz_submul_ui(res, coeff3, poly2, coeff2, -c1);
+		else _F_mpz_addmul_ui(res, coeff3, poly2, coeff2, c1);
+		return;
+	} 
+
+	ulong c2 = poly2->coeffs[coeff2];
+   
+	if (!COEFF_IS_MPZ(c2)) // c2 is small
+	{
+		if ((long) c2 < 0) _F_mpz_submul_ui(res, coeff3, poly1, coeff1, -c2);
+		else _F_mpz_addmul_ui(res, coeff3, poly1, coeff1, c2);
+		return;
+	} 
+
+	// both c1 and c2 are large
+   ulong r = res->coeffs[coeff3];
+	__mpz_struct * mpz_ptr = _F_mpz_promote(res, coeff3);
+	if (!COEFF_IS_MPZ(r)) // res is small
+		mpz_set_si(mpz_ptr, r);
+
+   mpz_addmul(mpz_ptr, poly1->mpz_coeffs + COEFF_TO_OFF(c1), poly2->mpz_coeffs + COEFF_TO_OFF(c2));
+	_F_mpz_demote_val(res, coeff3); // cancellation may have occurred
+}
+
+void _F_mpz_submul(F_mpz_poly_t res, ulong coeff3, const F_mpz_poly_t poly1, const ulong coeff1, 
+						                                 const F_mpz_poly_t poly2, const ulong coeff2)
+{
+	ulong c1 = poly1->coeffs[coeff1];
+	
+	if (!COEFF_IS_MPZ(c1)) // c1 is small
+	{
+		if ((long) c1 < 0) _F_mpz_addmul_ui(res, coeff3, poly2, coeff2, -c1);
+		else _F_mpz_submul_ui(res, coeff3, poly2, coeff2, c1);
+		return;
+	} 
+
+	ulong c2 = poly2->coeffs[coeff2];
+   
+	if (!COEFF_IS_MPZ(c2)) // c2 is small
+	{
+		if ((long) c2 < 0) _F_mpz_addmul_ui(res, coeff3, poly1, coeff1, -c2);
+		else _F_mpz_submul_ui(res, coeff3, poly1, coeff1, c2);
+		return;
+	} 
+
+	// both c1 and c2 are large
+   ulong r = res->coeffs[coeff3];
+	__mpz_struct * mpz_ptr = _F_mpz_promote(res, coeff3);
+	if (!COEFF_IS_MPZ(r)) // res is small
+		mpz_set_si(mpz_ptr, r);
+
+   mpz_submul(mpz_ptr, poly1->mpz_coeffs + COEFF_TO_OFF(c1), poly2->mpz_coeffs + COEFF_TO_OFF(c2));
+	_F_mpz_demote_val(res, coeff3); // cancellation may have occurred
 }
 
 void F_mpz_poly_set_coeff_si(F_mpz_poly_t poly, ulong n, const long x)
@@ -594,7 +871,7 @@ void F_mpz_poly_to_mpz_poly(mpz_poly_t m_poly, const F_mpz_poly_t F_poly)
 
 /*===============================================================================
 
-	Assignment
+	Assignment/swap
 
 ================================================================================*/
 
@@ -611,6 +888,37 @@ void F_mpz_poly_set(F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
 		
 		poly1->length = poly2->length;
 	}
+}
+
+void F_mpz_poly_swap(F_mpz_poly_t poly1, F_mpz_poly_t poly2)
+{
+	if (poly1 == poly2) return;
+
+	ulong temp = poly1->length;
+	poly1->length = poly2->length;
+	poly2->length = temp;
+	
+	temp = poly1->alloc;
+	poly1->alloc = poly2->alloc;
+	poly2->alloc = temp;
+	
+	temp = poly1->mpz_alloc;
+	poly1->mpz_alloc = poly2->mpz_alloc;
+	poly2->mpz_alloc = temp;
+	
+	temp = poly1->mpz_length;
+	poly1->mpz_length = poly2->mpz_length;
+	poly2->mpz_length = temp;
+
+	ulong * temp_c = poly1->coeffs;
+	poly1->coeffs = poly2->coeffs;
+	poly2->coeffs = temp_c;
+
+   __mpz_struct * temp_m = poly1->mpz_coeffs;
+	poly1->mpz_coeffs = poly2->mpz_coeffs;
+	poly2->mpz_coeffs = temp_m;
+
+   return;
 }
 
 /*===============================================================================
@@ -941,3 +1249,132 @@ void F_mpz_poly_scalar_mul_mpz(F_mpz_poly_t poly1, F_mpz_poly_t poly2, mpz_t x)
 	poly1->length = poly2->length;
 }
 
+/*===============================================================================
+
+	Multiplication
+
+================================================================================*/
+
+void _F_mpz_poly_sqr_classical(F_mpz_poly_t res, const F_mpz_poly_t poly)
+{
+   F_mpz_poly_fit_length(res, 2*poly->length - 1);
+	res->length = 2*poly->length - 1;
+
+   for (ulong i = 0; i < res->length; i++)
+      _F_mpz_zero(res, i);
+   
+   // off-diagonal products
+   for (ulong i = 1; i < poly->length; i++)
+      for (ulong j = 0; j < i; j++)
+         _F_mpz_addmul(res, i+j, poly, i, poly, j);
+         
+   // double the off-diagonal products
+   for (ulong i = 1; i < res->length - 1; i++)
+      _F_mpz_add(res, i, res, i, res, i);
+      
+   // add in diagonal products
+   for (ulong i = 0; i < poly->length; i++)
+      _F_mpz_addmul(res, 2*i, poly, i, poly, i);
+}
+
+void F_mpz_poly_sqr_classical(F_mpz_poly_t res, const F_mpz_poly_t poly)
+{
+   if (!poly->length)
+   {
+      // input is zero
+      F_mpz_poly_zero(res);
+      return;
+   }
+   
+   ulong length = 2*poly->length - 1;
+   
+   if (res == poly)
+   {
+      // output is in place, so need a temporary
+      F_mpz_poly_t temp;
+      F_mpz_poly_init(temp);
+      _F_mpz_poly_sqr_classical(temp, poly);
+      F_mpz_poly_swap(temp, res);
+      F_mpz_poly_clear(temp);
+   }
+   else
+   {
+      // output not inplace
+      _F_mpz_poly_sqr_classical(res, poly);
+   }
+}
+
+void _F_mpz_poly_mul_classical(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
+{
+   ulong len1 = poly1->length;
+   ulong len2 = poly2->length;
+
+	F_mpz_poly_fit_length(res, len1 + len2 - 1);
+      
+   if ((len1 == 1) && (len2 == 1)) // Special case if the length of both inputs is 1
+   {
+      _F_mpz_mul(res, 0, poly1, 0, poly2, 0);      
+   } else // Ordinary case
+   {
+      long i, j;
+      
+      // Set res[i] = poly1[i]*poly2[0] 
+      if (poly2->coeffs[0])
+			for (i = 0; i < len1; i++)
+            _F_mpz_mul(res, i, poly1, i, poly2, 0);
+		else 
+			for (i = 0; i < len1; i++)
+            _F_mpz_zero(res, i);
+
+      // Set res[i+len1-1] = in1[len1-1]*in2[i]
+      if (poly1->coeffs[len1 - 1])
+		   for (i = 1; i < len2; i++)
+            _F_mpz_mul(res, i + len1 - 1, poly1, len1 - 1, poly2, i);  
+		else 
+         for (i = 1; i < len2; i++)
+            _F_mpz_zero(res, i + len1 - 1);
+      
+      // out[i+j] += in1[i]*in2[j] 
+      for (i = 0; i < len1 - 1; i++)
+      {      
+         ulong c = poly1->coeffs[i];
+			if (c)
+			{
+				if (!COEFF_IS_MPZ(c))
+				{
+					if ((long) c < 0L) 
+						for (j = 1; j < len2; j++)
+                     _F_mpz_submul_ui(res, i + j, poly2, j, -c);
+					else
+                  for (j = 1; j < len2; j++)
+                     _F_mpz_addmul_ui(res, i + j, poly2, j, c);
+				} else
+					for (j = 1; j < len2; j++)
+                  _F_mpz_addmul(res, i + j, poly1, i, poly2, j);
+			}
+      }
+   } 
+   
+   res->length = len1 + len2 - 1;
+}
+
+void F_mpz_poly_mul_classical(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
+{
+	if ((poly1->length == 0) || (poly2->length == 0)) // special case if either poly is zero
+   {
+      F_mpz_poly_zero(res);
+      return;
+   }
+
+	if (poly1 == poly2) F_mpz_poly_sqr_classical(res, poly1);
+ 
+	if ((poly1 == res) || (poly2 == res)) // aliased inputs
+	{
+		F_mpz_poly_t output; // create temporary
+		F_mpz_poly_init(output);
+		_F_mpz_poly_mul_classical(output, poly1, poly2);
+		F_mpz_poly_swap(output, res); // swap temporary with real output
+		F_mpz_poly_clear(output);
+	} else // ordinary case
+		_F_mpz_poly_mul_classical(res, poly1, poly2);
+}

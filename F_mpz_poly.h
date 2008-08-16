@@ -293,22 +293,79 @@ void _F_mpz_sub(F_mpz_poly_t res, ulong coeff3, const F_mpz_poly_t poly1, const 
 					                                 const F_mpz_poly_t poly2, const ulong coeff2);
 
 /** 
-   \fn     void _F_mpz_mul_ui(F_mpz_poly_t poly1, ulong coeff1, F_mpz_poly_t poly2, ulong coeff2, ulong x)
-   \brief  Multiply coeff2 of poly2 by the unsigned long x and set coeff1 of poly1 to the result
+   \fn     void _F_mpz_mul_ui(F_mpz_poly_t poly1, ulong coeff1, const F_mpz_poly_t poly2, 
+						                                              const ulong coeff2, const ulong x)
+   \brief  Multiply coeff2 of poly2 by the unsigned long x and set coeff1 of poly1 to the result.
 */
-void _F_mpz_mul_ui(F_mpz_poly_t poly1, ulong coeff1, F_mpz_poly_t poly2, ulong coeff2, ulong x);
+void _F_mpz_mul_ui(F_mpz_poly_t poly1, ulong coeff1, const F_mpz_poly_t poly2, 
+						                                   const ulong coeff2, const ulong x);
 
 /** 
-   \fn     void _F_mpz_mul_ui(F_mpz_poly_t poly1, ulong coeff1, F_mpz_poly_t poly2, ulong coeff2, long x)
-   \brief  Multiply coeff2 of poly2 by the signed long x and set coeff1 of poly1 to the result
+   \fn     void _F_mpz_mul_si(F_mpz_poly_t poly1, ulong coeff1, const F_mpz_poly_t poly2, 
+						                                   const ulong coeff2, const long x)
+   \brief  Multiply coeff2 of poly2 by the signed long x and set coeff1 of poly1 to the result.
 */
-void _F_mpz_mul_si(F_mpz_poly_t poly1, ulong coeff1, F_mpz_poly_t poly2, ulong coeff2, long x);
+void _F_mpz_mul_si(F_mpz_poly_t poly1, ulong coeff1, const F_mpz_poly_t poly2, 
+						                                   const ulong coeff2, const long x);
 
 /** 
    \fn     void _F_mpz_mul_mpz(F_mpz_poly_t poly1, ulong coeff1, F_mpz_poly_t poly2, ulong coeff2, mpz_t x)
-   \brief  Multiply coeff2 of poly2 by the mpz_t x and set coeff1 of poly1 to the result
+   \brief  Multiply coeff2 of poly2 by the mpz_t x and set coeff1 of poly1 to the result.
 */
 void _F_mpz_mul_mpz(F_mpz_poly_t poly1, ulong coeff1, F_mpz_poly_t poly2, ulong coeff2, mpz_t x);
+
+/** 
+   \fn     void _F_mpz_mul(F_mpz_poly_t res, ulong coeff3, const F_mpz_poly_t poly1, const ulong coeff1, 
+					                                            const F_mpz_poly_t poly2, const ulong coeff2)
+
+   \brief  Multiply coeff1 of poly1 by coeff2 of poly2 and set coeff3 of res to the result.
+*/
+void _F_mpz_mul(F_mpz_poly_t res, ulong coeff3, const F_mpz_poly_t poly1, const ulong coeff1, 
+					                                 const F_mpz_poly_t poly2, const ulong coeff2);
+
+/** 
+   \fn     void _F_mpz_add_ui_inplace(F_mpz_poly_t res, ulong coeff, const ulong x)
+   \brief  Add the unsigned long x to the given coefficient of res, in place.
+*/
+void _F_mpz_add_ui_inplace(F_mpz_poly_t res, ulong coeff, const ulong x);
+
+/** 
+   \fn     void _F_mpz_sub_ui_inplace(F_mpz_poly_t res, ulong coeff, const ulong x)
+   \brief  Subtract the unsigned long x from the given coefficient of res, in place.
+*/
+void _F_mpz_sub_ui_inplace(F_mpz_poly_t res, ulong coeff, const ulong x);
+
+/** 
+   \fn     void _F_mpz_addmul_ui(F_mpz_poly_t res, ulong coeff2, const F_mpz_poly_t poly1, 
+							                                            const ulong coeff1, const ulong x)
+   \brief  Multiply coeff1 of poly1 by the unsigned long x and add the result to res, in place.
+*/
+void _F_mpz_addmul_ui(F_mpz_poly_t res, ulong coeff2, const F_mpz_poly_t poly1, 
+							                                 const ulong coeff1, const ulong x);
+
+/** 
+   \fn     void _F_mpz_submul_ui(F_mpz_poly_t res, ulong coeff2, const F_mpz_poly_t poly1, 
+							                                            const ulong coeff1, const ulong x)
+   \brief  Multiply coeff1 of poly1 by the unsigned long x and subtract the result from res, in place.
+*/
+void _F_mpz_submul_ui(F_mpz_poly_t res, ulong coeff2, const F_mpz_poly_t poly1, 
+							                                 const ulong coeff1, const ulong x);
+
+/** 
+   \fn     _F_mpz_addmul(F_mpz_poly_t res, ulong coeff3, const F_mpz_poly_t poly1, const ulong coeff1, 
+						                                       const F_mpz_poly_t poly2, const ulong coeff2)
+   \brief  Multiply coeff1 of poly1 by coeff2 of poly2 and add the result to res, in place.
+*/
+void _F_mpz_addmul(F_mpz_poly_t res, ulong coeff3, const F_mpz_poly_t poly1, const ulong coeff1, 
+						                                 const F_mpz_poly_t poly2, const ulong coeff2);
+
+/** 
+   \fn     _F_mpz_submul(F_mpz_poly_t res, ulong coeff3, const F_mpz_poly_t poly1, const ulong coeff1, 
+						                                       const F_mpz_poly_t poly2, const ulong coeff2)
+   \brief  Multiply coeff1 of poly1 by coeff2 of poly2 and subtract the result from res, inplace.
+*/
+void _F_mpz_submul(F_mpz_poly_t res, ulong coeff3, const F_mpz_poly_t poly1, const ulong coeff1, 
+						                                 const F_mpz_poly_t poly2, const ulong coeff2);
 
 /** 
    \fn     void F_mpz_poly_set_coeff_si(F_mpz_poly_t poly, ulong n, const long x)
@@ -573,6 +630,17 @@ void F_mpz_poly_scalar_mul_si(F_mpz_poly_t poly1, F_mpz_poly_t poly2, long x);
 */
 void F_mpz_poly_scalar_mul_mpz(F_mpz_poly_t poly1, F_mpz_poly_t poly2, mpz_t x);
 
+/*===============================================================================
+
+	Multiplication
+
+================================================================================*/
+
+/** 
+   \fn     void F_mpz_poly_mul_classical(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
+   \brief  Multiply poly1 by poly2 and set res to the result.
+*/
+void F_mpz_poly_mul_classical(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2);
 
 #ifdef __cplusplus
  }
