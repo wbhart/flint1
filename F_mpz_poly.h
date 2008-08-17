@@ -195,6 +195,27 @@ __mpz_struct * _F_mpz_promote(F_mpz_poly_t poly, const ulong coeff)
 }
 
 /** 
+   \fn     __mpz_struct * _F_mpz_promote_val(F_mpz_poly_t const poly, ulong coeff);
+   \brief  Promote the given coefficient of poly to an mpz_t coefficient. The value
+	        of the coefficient is preserved. A pointer to an __mpz_struct
+			  corresponding to the coefficient, is returned.
+*/
+static inline
+__mpz_struct * _F_mpz_promote_val(F_mpz_poly_t poly, const ulong coeff)
+{
+   ulong c = poly->coeffs[coeff];
+	if (!COEFF_IS_MPZ(c)) // coeff is small so promote it
+	{
+	   _F_mpz_poly_mpz_coeffs_new(poly);
+	   poly->coeffs[coeff] = OFF_TO_COEFF(poly->mpz_length - 1);
+		__mpz_struct * mpz_ptr = poly->mpz_coeffs + poly->mpz_length - 1;
+		mpz_set_si(mpz_ptr, c);
+		return mpz_ptr;
+	} else // coeff is large already, just return the pointer
+      return poly->mpz_coeffs + COEFF_TO_OFF(c);
+}
+
+/** 
    \fn     _F_mpz_demote_val(F_mpz_poly_t poly, const ulong coeff);
    \brief  If the given coefficient (which is assumed to be an mpz_t) will fit into
 	        FLINT_BIT - 2 bits, it is demoted to a limb instead of an mpz_t, preserving
@@ -641,6 +662,36 @@ void F_mpz_poly_scalar_mul_mpz(F_mpz_poly_t poly1, F_mpz_poly_t poly2, mpz_t x);
    \brief  Multiply poly1 by poly2 and set res to the result.
 */
 void F_mpz_poly_mul_classical(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2);
+
+/** 
+   \fn     void _F_mpz_poly_mul_kara_recursive(F_mpz_poly_t out, ulong ostart, F_mpz_poly_t in1, ulong istart1, 
+											              ulong len1, F_mpz_poly_t in2, ulong istart2, ulong len2, 
+											              F_mpz_poly_t scratch, ulong sstart, ulong skip, ulong crossover)
+   \brief  Recursive portion of karatsuba multiplication.
+
+           Input polys are in1 and in2, each staggered by skip. We specify a starting point 
+           in the coefficients for the output and inputs and scratch space and a length, 
+           len1 and len2 for each of the intputs. Then out will be of length len1 + len2 - 1, 
+           also staggered by skip.
+
+           The scratch buffer should be length len1 + len2, also staggered by skip.
+
+           All input/output/scratch polys should be initialised, and shouldn't overlap.
+
+           Must have 1 <= len1 <= len2.
+
+           If len1*len2 <= crossover, we use the classical multiplication algorithm. 
+           The crossover parameter is passed down recursively to subproducts.
+*/
+void _F_mpz_poly_mul_kara_recursive(F_mpz_poly_t out, ulong ostart, F_mpz_poly_t in1, ulong istart1, 
+											ulong len1, F_mpz_poly_t in2, ulong istart2, ulong len2, 
+											F_mpz_poly_t scratch, ulong sstart, ulong skip, ulong crossover);
+
+/** 
+   \fn     void F_mpz_poly_mul_karatsuba(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
+   \brief  Multiply poly1 by poly2 and set res to the result, using the karatsuba method.
+*/
+void F_mpz_poly_mul_karatsuba(F_mpz_poly_t res, F_mpz_poly_t poly1, F_mpz_poly_t poly2);
 
 #ifdef __cplusplus
  }
