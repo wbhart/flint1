@@ -1265,9 +1265,24 @@ void _F_mpz_poly_sqr_classical(F_mpz_poly_t res, const F_mpz_poly_t poly)
    
    // off-diagonal products
    for (ulong i = 1; i < poly->length; i++)
-      for (ulong j = 0; j < i; j++)
-         _F_mpz_addmul(res, i+j, poly, i, poly, j);
-         
+	{
+		ulong c = poly->coeffs[i];
+	   if (c)
+		{
+			if (!COEFF_IS_MPZ(c))
+			{
+				if ((long) c < 0L) 
+					for (ulong j = 0; j < i; j++)
+                  _F_mpz_submul_ui(res, i + j, poly, j, -c);
+				else
+               for (ulong j = 0; j < i; j++)
+                  _F_mpz_addmul_ui(res, i + j, poly, j, c);
+			} else
+		      for (ulong j = 0; j < i; j++)
+               _F_mpz_addmul(res, i+j, poly, i, poly, j);
+		}
+	}
+
    // double the off-diagonal products
    for (ulong i = 1; i < res->length - 1; i++)
       _F_mpz_add(res, i, res, i, res, i);
