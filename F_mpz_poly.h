@@ -693,6 +693,44 @@ void _F_mpz_poly_mul_kara_recursive(F_mpz_poly_t out, ulong ostart, F_mpz_poly_t
 */
 void F_mpz_poly_mul_karatsuba(F_mpz_poly_t res, F_mpz_poly_t poly1, F_mpz_poly_t poly2);
 
+/*===============================================================================
+
+	Bit/byte/limb packing
+
+================================================================================*/
+
+/** 
+   \fn     F_mpz_poly_bit_pack(ZmodF_poly_t poly_f, const F_mpz_poly_t poly_F_mpz,
+                                                    const ulong bundle, const long bitwidth, 
+                                                    const ulong length, const long negate)
+   \brief  Pack bundle coefficients at a time into coefficients of the ZmodFpoly_t poly_f.
+	        with each coefficient bundled into a bitfield with the given bitwidth. Precisely
+			  length coefficients will be packed. If negate is -1L then each coefficient will 
+			  be negated before being packed. The final large coefficient is sign extended to 
+			  the end of the coefficient. If bitwidth is negative this means the coefficients 
+			  are expected to be signed. Each coefficient is stored in bit packed format in 
+			  twos complement format and if negative, 1 is borrowed from the next coefficient
+			  before it is packed. 
+*/
+void F_mpz_poly_bit_pack(ZmodF_poly_t poly_f, const F_mpz_poly_t poly_F_mpz,
+                                              const ulong bundle, const long bitwidth, 
+                                              const ulong length, const long negate);
+
+/** 
+   \fn     F_mpz_poly_bit_unpack(F_mpz_poly_t poly_F_mpz, const ZmodF_poly_t poly_f, 
+                                                    const ulong bundle, const ulong bits)
+   \brief  Coefficients are unpacked from the ZmodF_poly_t, from fields of the given number
+	        of bits in width. The coefficients are assumed to be signed. If a negative 
+			  coefficient is unpacked, the next coefficient gets 1 added to it for the borrow
+			  that was effectively made by that previous coefficient. The output coefficients 
+			  are written to the coefficients of the F_mpz_poly_t poly_F_mpz, the starting point
+			  to write the unpacked coefficients of each large coefficient being staggered by
+			  bundle small coefficients at a time. Thus overlap occurs and coefficients are 
+			  added or subtracted respectively as they are written out.
+*/
+void F_mpz_poly_bit_unpack(F_mpz_poly_t poly_F_mpz, const ZmodF_poly_t poly_f, 
+                                                    const ulong bundle, const ulong bits);
+
 #ifdef __cplusplus
  }
 #endif
