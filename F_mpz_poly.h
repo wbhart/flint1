@@ -557,14 +557,14 @@ int F_mpz_poly_equal(const F_mpz_poly_t poly1, const F_mpz_poly_t poly2);
 	        -n if a negative coefficient exists in poly, else it returns n. Zero is 
 			  returned for the zero polynomial.
 */
-long F_mpz_poly_max_bits(F_mpz_poly_t poly);
+long F_mpz_poly_max_bits(const F_mpz_poly_t poly);
 
 /** 
    \fn     ulong F_mpz_poly_max_limbs(F_mpz_poly_t poly)
    \brief  Returns the largest number of limbs required to store the absolute value
 	        of coefficients of poly. Zero is returned for the zero polynomial.
 */
-ulong F_mpz_poly_max_limbs(F_mpz_poly_t poly);
+ulong F_mpz_poly_max_limbs(const F_mpz_poly_t poly);
 
 /*===============================================================================
 
@@ -717,6 +717,18 @@ void F_mpz_poly_bit_pack(ZmodF_poly_t poly_f, const F_mpz_poly_t poly_F_mpz,
                                               const ulong length, const long negate);
 
 /** 
+   \fn     F_mpz_poly_bit_pack_unsigned(ZmodF_poly_t poly_f, const F_mpz_poly_t poly_F_mpz,
+                                                    const ulong bundle, const long bitwidth, 
+                                                    const ulong length, const long negate)
+   \brief  Pack bundle coefficients at a time into coefficients of the ZmodFpoly_t poly_f.
+	        with each coefficient bundled into a bitfield with the given bitwidth. Precisely
+			  length coefficients will be packed. 
+*/
+void F_mpz_poly_bit_pack_unsigned(ZmodF_poly_t poly_f, const F_mpz_poly_t poly_F_mpz,
+                                                       const ulong bundle, const ulong bits, 
+                                                       const ulong length, const long negate);
+
+/** 
    \fn     F_mpz_poly_bit_unpack(F_mpz_poly_t poly_F_mpz, const ZmodF_poly_t poly_f, 
                                                     const ulong bundle, const ulong bits)
    \brief  Coefficients are unpacked from the ZmodF_poly_t, from fields of the given number
@@ -730,6 +742,26 @@ void F_mpz_poly_bit_pack(ZmodF_poly_t poly_f, const F_mpz_poly_t poly_F_mpz,
 */
 void F_mpz_poly_bit_unpack(F_mpz_poly_t poly_F_mpz, const ZmodF_poly_t poly_f, 
                                                     const ulong bundle, const ulong bits);
+
+/** 
+   \fn     F_mpz_poly_bit_unpack(F_mpz_poly_t poly_F_mpz, const ZmodF_poly_t poly_f, 
+                                                    const ulong bundle, const ulong bits)
+   \brief  Coefficients are unpacked from the ZmodF_poly_t, from fields of the given number
+	        of bits in width. The coefficients are assumed to be unsigned. The output coefficients 
+			  are written to the coefficients of the F_mpz_poly_t poly_F_mpz, the starting point
+			  to write the unpacked coefficients of each large coefficient being staggered by
+			  bundle small coefficients at a time. Thus overlap occurs and coefficients are 
+			  added as they are written out.
+*/
+void F_mpz_poly_bit_unpack_unsigned(F_mpz_poly_t poly_F_mpz, const ZmodF_poly_t poly_f, 
+                                                             const ulong bundle, const ulong bits);
+
+/** 
+   \fn     F_mpz_poly_mul_KS(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
+   \brief  Multiply poly1 by poly2 and set res to the result, using the Kronecker method.
+*/
+void F_mpz_poly_mul_KS(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2);
+
 
 #ifdef __cplusplus
  }
