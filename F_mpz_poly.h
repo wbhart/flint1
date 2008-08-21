@@ -33,6 +33,7 @@
 #include <stdio.h>
 #include <gmp.h>
 #include "mpn_extras.h"
+#include "mpz_poly.h"
 #include "zmod_poly.h"
 #include "flint.h"
 
@@ -717,6 +718,18 @@ void F_mpz_poly_bit_pack(ZmodF_poly_t poly_f, const F_mpz_poly_t poly_F_mpz,
                                               const ulong length, const long negate);
 
 /** 
+   \fn     F_mpz_poly_bit_pack2(ZmodF_poly_t poly_f, ZmodF_poly_t poly_f2, const F_mpz_poly_t poly_F_mpz, 
+								                     const ulong bundle, const long bitwidth, const ulong length, 
+								                                         const long negate, const long negate2)
+   \brief  As for F_mpz_poly_bit_pack, except that two ZmodF_poly_t's are packed. The second
+	        is packed from the same data, except the signs are alternated before packing, starting
+			  with the sign given by negative2 for the constant coefficient.
+
+void F_mpz_poly_bit_pack2(ZmodF_poly_t poly_f, ZmodF_poly_t poly_f2, const F_mpz_poly_t poly_F_mpz, 
+								       const ulong bundle, const long bitwidth, const ulong length, 
+								                           const long negate, long negate2);*/
+
+/** 
    \fn     F_mpz_poly_bit_pack_unsigned(ZmodF_poly_t poly_f, const F_mpz_poly_t poly_F_mpz,
                                                     const ulong bundle, const long bitwidth, 
                                                     const ulong length, const long negate)
@@ -761,7 +774,6 @@ void F_mpz_poly_bit_unpack_unsigned(F_mpz_poly_t poly_F_mpz, const ZmodF_poly_t 
    \brief  Multiply poly1 by poly2 and set res to the result, using the Kronecker method.
 */
 void F_mpz_poly_mul_KS(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2);
-
 
 #ifdef __cplusplus
  }

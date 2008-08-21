@@ -43,7 +43,7 @@ Copyright (C) 2007, William Hart and David Harvey
 
 void mpz_poly_init(mpz_poly_t poly)
 {
-   poly->coeffs = (mpz_t*) flint_heap_alloc(sizeof(mpz_t));
+   poly->coeffs = (mpz_t*) flint_heap_alloc_bytes(sizeof(mpz_t));
    mpz_init(poly->coeffs[0]);
    poly->alloc = 1;
    poly->length = 0;
@@ -54,7 +54,7 @@ void mpz_poly_init2(mpz_poly_t poly, unsigned long alloc)
 {
    if ((long) alloc <= 0) mpz_poly_init(poly);
    
-   poly->coeffs = (mpz_t*) flint_heap_alloc(alloc * sizeof(mpz_t));
+   poly->coeffs = (mpz_t*) flint_heap_alloc_bytes(alloc * sizeof(mpz_t));
    for (unsigned long i = 0; i < alloc; i++)
       mpz_init(poly->coeffs[i]);
    
@@ -67,7 +67,7 @@ void mpz_poly_init3(mpz_poly_t poly, unsigned long alloc, unsigned long bits)
 {
    if ((long) alloc <= 0) mpz_poly_init(poly);
    
-   poly->coeffs = (mpz_t*) flint_heap_alloc(alloc * sizeof(mpz_t));
+   poly->coeffs = (mpz_t*) flint_heap_alloc_bytes(alloc * sizeof(mpz_t));
    for (unsigned long i = 0; i < alloc; i++)
       mpz_init2(poly->coeffs[i], bits);
    
@@ -93,7 +93,7 @@ void mpz_poly_realloc(mpz_poly_t poly, unsigned long alloc)
    for (unsigned long i = alloc; i < poly->alloc; i++)
       mpz_clear(poly->coeffs[i]);
 
-   poly->coeffs = (mpz_t*) flint_heap_realloc(poly->coeffs,
+   poly->coeffs = (mpz_t*) flint_heap_realloc_bytes(poly->coeffs,
                                               alloc * sizeof(mpz_t));
    
    // init any new mpz_t's required
@@ -120,7 +120,7 @@ void mpz_poly_realloc2(mpz_poly_t poly, unsigned long alloc,
    for (unsigned long i = alloc; i < poly->alloc; i++)
       mpz_clear(poly->coeffs[i]);
 
-   poly->coeffs = (mpz_t*) flint_heap_realloc(poly->coeffs,
+   poly->coeffs = (mpz_t*) flint_heap_realloc_bytes(poly->coeffs,
                                               alloc * sizeof(mpz_t));
    
    // init any new mpz_t's required
