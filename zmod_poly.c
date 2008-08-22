@@ -4165,24 +4165,39 @@ void zmod_poly_powmod(zmod_poly_t res, zmod_poly_t pol, long exp, zmod_poly_t f)
    else
       e = exp;
    
-   zmod_poly_set_coeff_ui(res, 0, 1L);
-   res->length = 1;
-
    if (exp) 
    {
 	  zmod_poly_init(y, p);
 	  zmod_poly_set(y, pol);
    }
+
+	zmod_poly_zero(res);
+	zmod_poly_set_coeff_ui(res, 0, 1L);
+   res->length = 1;
    
    while (e) {
       if (e & 1) zmod_poly_mulmod(res, res, y, f);
       e = e >> 1;
-	  if (e) zmod_poly_mulmod(y, y, y, f);
+	   if (e) zmod_poly_mulmod(y, y, y, f);
    }
-
+   
    if (exp < 0L) zmod_poly_gcd_invert(res, res, f);
    if (exp) zmod_poly_clear(y);
 } 
+
+void zmod_poly_powpowmod(zmod_poly_t res, zmod_poly_t pol, ulong exp, ulong exp2, zmod_poly_t f)
+{
+	zmod_poly_t pow;
+	zmod_poly_init(pow, f->p);
+	zmod_poly_powmod(pow, pol, exp, f);
+	zmod_poly_set(res, pow);
+	
+   if (!zmod_poly_equal(pow, pol)) 
+		for (ulong i = 0; i < exp2 - 1; i++)
+         zmod_poly_powmod(res, res, exp, f);
+
+	zmod_poly_clear(pow);
+}
 
 /**************************************************************************************************
 
@@ -4201,41 +4216,36 @@ int zmod_poly_isirreducible(zmod_poly_t f)
         //Some polynomials we will need
         
         zmod_poly_t a, x, x_p, x_modf, Q;
-        zmod_poly_init(Q, p);
         zmod_poly_init(a, p);
         zmod_poly_init(x, p);
         zmod_poly_init(x_p, p);
-        zmod_poly_init(x_modf, p);
         //Set up the constant polynomials
         zmod_poly_set_coeff_ui(x, 1, 1);
-        //compute x^q mod f
-        zmod_poly_powmod(x_p, x,  p, f);
-        //compute x_q^n mod f
-        zmod_poly_powmod(a, x_p, n, f);
-        //now reduce x mod f and do the comparison, it is VITAL the comparison is done mod f
-        zmod_poly_divrem(Q, x_modf, x, f);
-        //now do the irreducibility test
-        if (!zmod_poly_equal(a, x_modf))
-            return 0;
+		  //compute x^q mod f
+        zmod_poly_powpowmod(x_p, x, p, n, f);
+        zmod_poly_make_monic(x_p, x_p);
+		  //now do the irreducibility test
+        if (!zmod_poly_equal(x_p, x))
+		     return 0;
         else
         {
-            factor_t* factors;
-            z_factor(factors, n);
-            for (unsigned long i = 0; i < factors->num; i++)
+            factor_t factors;
+            z_factor(&factors, n);
+            for (unsigned long i = 0; i < factors.num; i++)
             {
-                zmod_poly_powmod(a, x_p,  n/factors->p[i], f);
-                zmod_poly_sub(a, a, x);
-                zmod_poly_gcd(a, a, f);
-                if (!zmod_poly_is_one(a))
-                    return 0;
-            }
+               zmod_poly_powpowmod(a, x, p, n/factors.p[i], f);
+               zmod_poly_sub(a, a, x);
+               zmod_poly_make_monic(a, a);
+					zmod_poly_gcd(a, a, f);
+               
+					if (a->length != 1)
+                  return 0;
+				}
         }
 
-        zmod_poly_clear(Q);
         zmod_poly_clear(a);
         zmod_poly_clear(x);
-        zmod_poly_clear(x_p);    
-        zmod_poly_clear(x_modf);
+        zmod_poly_clear(x_p); 	
     }
 
     return 1;

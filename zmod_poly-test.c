@@ -2015,7 +2015,7 @@ int test_zmod_poly_powmod()
    unsigned long bits;
    long exp;
    
-   for (unsigned long count1 = 0; (count1 < 1000) && (result == 1); count1++)
+   for (unsigned long count1 = 0; (count1 < 10000) && (result == 1); count1++)
    {
       bits = randint(FLINT_BITS-2)+2;
       unsigned long modulus;
@@ -2088,6 +2088,67 @@ int test_zmod_poly_powmod()
    return result;
 }
 
+int test_zmod_poly_isirreducible()
+{
+   zmod_poly_t poly, poly2, poly3;
+   int result = 1;
+   unsigned long bits, length, length2;
+   
+   for (unsigned long count1 = 0; (count1 < 200) && (result == 1) ; count1++)
+   {
+      bits = randint(FLINT_BITS-1)+2;
+      unsigned long modulus;
+      
+      do {modulus = randprime(bits);} while (modulus < 2);
+      
+      zmod_poly_init(poly, modulus);
+      zmod_poly_init(poly2, modulus);
+      zmod_poly_init(poly3, modulus);
+      
+		ulong length = randint(10) + 2;
+      do 
+		{
+			randpoly(poly, length, modulus); 
+			zmod_poly_make_monic(poly, poly);
+		}
+      while ((!zmod_poly_isirreducible(poly)) || (poly->length < 2));
+      
+      zmod_poly_factor_t factors;
+		zmod_poly_factor_init(factors);
+		zmod_poly_factor_berlekamp(factors, poly);
+		result &= (factors->num_factors == 1);
+		if (!result)
+		{
+			printf("Error: irreducible polynomial should not have non-trivial factors!\n");
+			zmod_poly_print(poly); printf("\n");
+		}
+      zmod_poly_factor_clear(factors);
+
+		ulong length2 = randint(10) + 2;
+      
+		do 
+		{
+			randpoly(poly2, length2, modulus); 
+         zmod_poly_make_monic(poly2, poly2);
+		} while ((!zmod_poly_isirreducible(poly2)) || (poly2->length < 2));
+
+      zmod_poly_mul(poly3, poly, poly2);
+
+      result &= !zmod_poly_isirreducible(poly3);
+      if (!result)
+		{
+			printf("Error: reducible polynomial declared irreducible!\n");
+			zmod_poly_print(poly3); printf("\n");
+		}
+
+      zmod_poly_clear(poly);
+      zmod_poly_clear(poly2);
+      zmod_poly_clear(poly3);
+   }
+
+   return result; 
+}
+
 int test_zmod_poly_factor_square_free()
 {
    int result = 1;
@@ -2107,7 +2168,7 @@ int test_zmod_poly_factor_square_free()
 #endif
 
 	  zmod_poly_init(pol1, modulus);
-      zmod_poly_factor_init(res);
+     zmod_poly_factor_init(res);
 
 	  zmod_poly_set_coeff_ui(pol1, randint(20), 1L);
 
@@ -2122,37 +2183,53 @@ int test_zmod_poly_factor_square_free()
 int test_zmod_poly_factor_berlekamp()
 {
    int result = 1;
-   zmod_poly_t pol1;
+   zmod_poly_t pol1, poly, quot, rem;
    zmod_poly_factor_t res;
    unsigned long bits;
    unsigned long modulus;
 
-   for (unsigned long count1 = 0; (count1 < 1000) && (result == 1); count1++)
+   for (unsigned long count1 = 0; (count1 < 100) && (result == 1); count1++)
    {
       bits = randint(FLINT_BITS-2)+2;
       
       do {modulus = randprime(bits);} while (modulus < 2);
       
- #if DEBUG
-      printf("bits = %ld, modulus = %ld\n", bits, modulus);
-#endif
+ 	   zmod_poly_init(pol1, modulus);
+      zmod_poly_init(poly, modulus);
+      zmod_poly_init(quot, modulus);
+      zmod_poly_init(rem, modulus);
+     
+	   ulong length = randint(10) + 2;
+      do 
+	   {
+	      randpoly(pol1, length, modulus); 
+		   zmod_poly_make_monic(pol1, pol1);
+	   }
+      while ((!zmod_poly_isirreducible(pol1)) || (pol1->length < 2));
+		  
+	   ulong num_factors = randint(5) + 1;
+	   for (ulong i = 1; i < num_factors; i++)
+	   {
+		   length = randint(10) + 2;
+         do 
+	      {
+	         randpoly(poly, length, modulus); 
+		      zmod_poly_make_monic(poly, poly);
+			   if (poly->length) zmod_poly_divrem(quot, rem, pol1, poly);
+	      }
+         while ((!zmod_poly_isirreducible(poly)) || (poly->length < 2) || (rem->length == 0));
+		   zmod_poly_mul(pol1, pol1, poly);
+	   }
+     
+	   zmod_poly_factor_init(res);
+      zmod_poly_factor_berlekamp(res, pol1);
 
-	  zmod_poly_init(pol1, modulus);
-      zmod_poly_factor_init(res);
-
-	  zmod_poly_set_coeff_ui(pol1, 0, modulus - 1);
-      ulong n = randint(20)+1;
-	  zmod_poly_set_coeff_ui(pol1, 2*n+1, 1L);
-
-	  zmod_poly_factor_berlekamp(res, pol1);
-	  /*printf("Polynomial:\n");
-	  zmod_poly_print(pol1);
-	  printf("\nFactors are:\n");
-	  zmod_poly_factor_print(res);
-	  printf("\n");*/
+	   result = (res->num_factors == num_factors);
       
-	  zmod_poly_clear(pol1);
-	  zmod_poly_factor_clear(res);
+	   zmod_poly_clear(quot);
+	   zmod_poly_clear(rem);
+	   zmod_poly_clear(pol1);
+	   zmod_poly_factor_clear(res);
    }
 }
 
@@ -2162,6 +2239,7 @@ void zmod_poly_test_all()
 
 #if TESTFILE
 #endif
+   RUN_TEST(zmod_poly_isirreducible); 
    RUN_TEST(zmod_poly_factor_berlekamp); 
    RUN_TEST(zmod_poly_factor_square_free); 
    RUN_TEST(zmod_poly_reverse); 
