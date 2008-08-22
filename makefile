@@ -37,7 +37,7 @@ else
 	INCS = -I$(FLINT_GMP_INCLUDE_DIR) -I$(FLINT_NTL_INCLUDE_DIR) -I$(FLINT_ZNPOLY_INCLUDE_DIR)
 endif
 
-CFLAGS = $(INCS) $(FLINT_TUNE) -O3
+CFLAGS = $(INCS) $(FLINT_TUNE) -O3 
 
 RM = rm -f
 
@@ -274,6 +274,13 @@ fmpz_poly-profile-tables.o: fmpz_poly-profile.c $(HEADERS)
 fmpz_poly-profile.o: fmpz_poly-profile.c $(HEADERS)
 	$(CC) $(CFLAGS) -c fmpz_poly-profile.c -o fmpz_poly-profile.o
 
+F_mpz_poly-profile-tables.o: F_mpz_poly-profile.c $(HEADERS)
+	$(FLINT_PY) make-profile-tables.py F_mpz_poly
+	$(CC) $(CFLAGS) -c F_mpz_poly-profile-tables.c -o F_mpz_poly-profile-tables.o
+	rm F_mpz_poly-profile-tables.c
+			
+F_mpz_poly-profile.o: F_mpz_poly-profile.c $(HEADERS)
+	$(CC) $(CFLAGS) -c F_mpz_poly-profile.c -o F_mpz_poly-profile.o
 
 mpz_poly-profile-tables.o: mpz_poly-profile.c $(HEADERS)
 	$(FLINT_PY) make-profile-tables.py mpz_poly
@@ -327,6 +334,9 @@ PROFOBJ = $(FLINTOBJ) profiler.o profiler-main.o
 
 fmpz_poly-profile: fmpz_poly-profile.o fmpz_poly-profile-tables.o test-support.o $(PROFOBJ)
 	$(CC) $(CFLAGS) -o fmpz_poly-profile fmpz_poly-profile.o fmpz_poly-profile-tables.o test-support.o $(PROFOBJ) $(LIBS)
+
+F_mpz_poly-profile: F_mpz_poly-profile.o F_mpz_poly-profile-tables.o test-support.o $(PROFOBJ)
+	$(CC) $(CFLAGS) -o F_mpz_poly-profile F_mpz_poly-profile.o F_mpz_poly-profile-tables.o test-support.o $(PROFOBJ) $(LIBS)
 
 mpz_poly-profile: mpz_poly-profile.o mpz_poly-profile-tables.o test-support.o $(PROFOBJ)
 	$(CC) $(CFLAGS) -o mpz_poly-profile mpz_poly-profile.o mpz_poly-profile-tables.o test-support.o $(PROFOBJ) $(LIBS)
@@ -428,7 +438,7 @@ mpQS: QS/mpQS.c QS/mpQS.h mp_factor_base.o mp_poly.o mp_sieve.o mp_linear_algebr
 
 ####### Integer multiplication timing
 
-ZMULOBJ = zmod_poly.o memory-manager.o fmpz.o ZmodF_mul-tuning.o mpz_poly.o mpz_poly-tuning.o fmpz_poly.o ZmodF_poly.o mpz_extras.o profiler.o ZmodF_mul.o ZmodF.o mpn_extras.o F_mpz_mul-timing.o long_extras.o
+ZMULOBJ = zmod_mat.o zmod_poly.o memory-manager.o fmpz.o ZmodF_mul-tuning.o mpz_poly.o mpz_poly-tuning.o fmpz_poly.o ZmodF_poly.o mpz_extras.o profiler.o ZmodF_mul.o ZmodF.o mpn_extras.o F_mpz_mul-timing.o long_extras.o
 
 F_mpz_mul-timing: $(ZMULOBJ)
 	$(CC) $(ZMULOBJ) -o Zmul $(LIBS)
