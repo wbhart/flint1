@@ -389,4 +389,10 @@ to improve locality.
 
 * Speed up zmod_poly_powpowmod (not a typo) by using an fmpz for the power of a power and using the repeated squaring trick right the way up to the full exponent. Check to see if there are any special cases where it can bail out early in zmod_poly_isirreducible. 
 
-* Ensur pocklington test code doesn't fail on account of Carmichael numbers. 
+* Ensure pocklington test code doesn't fail on account of Carmichael numbers. 
+
+* Replace z_isprime with unconditional test up to 10^16 as currently implemented plus Pocklington test for larger numbers.
+
+* Speed up Lucas pseudoprime test for numbers less than 2^52 on 64 bit machine by using z_mod_precomp and z_mulmod_precomp instead of mod2 and mulmod2 versions.
+
+* Write z_isprobable_prime using unconditional test up to some tuned limit, followed by 2-SPRP and Lucas.

@@ -832,6 +832,52 @@ int test_z_ispseudoprime_lucas()
    return result;
 }
 
+int test_z_ispseudoprime_lucas_ab()
+{
+   ulong n;
+   ulong res;
+   
+   mpz_t mpz_n;
+   mpz_init(mpz_n);
+       
+   int result = 1;
+   
+   for (ulong count = 0; (count < 100000) && (result == 1); count++)
+   { 
+	   ulong bits = z_randint(FLINT_BITS - 1) + 1;
+      n = random_ulong((1UL<<bits) - 1UL) + 256; 
+      mpz_set_ui(mpz_n, n);
+
+      mpz_nextprime(mpz_n, mpz_n);
+      res = mpz_get_ui(mpz_n);
+		int a = 1;
+      int b = 1;
+
+      result = (z_ispseudoprime_lucas_ab(res, a, b) == 1);
+		if (!result) printf("Error: prime not pseudoprime, n = %ld, a = %d, b = %d\n", n, a, b);
+   } 
+
+#define LUCAS2_COUNT 100000
+	
+	ulong comp = 0;
+	for (ulong count = 0; count < LUCAS2_COUNT; count++)
+   { 
+		ulong bits = z_randint(FLINT_BITS/2 - 2) + 2;
+      n = z_randprime(bits); 
+		n *= z_randint(bits) + 2;
+      int a = 1;
+      int b = 1;
+      if (z_ispseudoprime_lucas_ab(n, a, b) != 1) comp++; 
+	}
+   double frac = (double) comp / (double) LUCAS2_COUNT;
+	result = (frac > 0.50); 
+	if (!result) printf("Error: only %lf%% of composites declared composite\n", frac*100.0);
+
+   mpz_clear(mpz_n); 
+
+   return result;
+}
+
 int test_z_isprime()
 {
    unsigned long n;
@@ -1283,6 +1329,7 @@ void fmpz_poly_test_all()
    RUN_TEST(z_cuberootmod);
    RUN_TEST(z_ispseudoprime_fermat);
    RUN_TEST(z_ispseudoprime_lucas);
+   RUN_TEST(z_ispseudoprime_lucas_ab);
    RUN_TEST(z_isprime);
    RUN_TEST(z_isprime_pocklington);
    RUN_TEST(z_nextprime);
