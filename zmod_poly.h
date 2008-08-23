@@ -470,7 +470,15 @@ void zmod_poly_div(zmod_poly_t Q, zmod_poly_t A, zmod_poly_t B)
       return;
    }
    
-   zmod_poly_div_newton(Q, A, B);
+   if ((Q == A) || (Q == B))
+	{
+		zmod_poly_t temp;
+		zmod_poly_init(temp, A->p);
+      zmod_poly_div_newton(temp, A, B);
+      zmod_poly_swap(temp, Q);
+		zmod_poly_clear(temp);
+	} else
+		zmod_poly_div_newton(Q, A, B);
 }
 
 

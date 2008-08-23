@@ -4312,7 +4312,10 @@ void zmod_poly_factor_add(zmod_poly_factor_t fac, zmod_poly_t poly)
 void zmod_poly_factor_concat(zmod_poly_factor_t res, zmod_poly_factor_t fac)
 {
    for(unsigned long i = 0; i < fac->num_factors; i++)
-	  zmod_poly_factor_add(res, fac->factors[i]);
+	{  
+		zmod_poly_factor_add(res, fac->factors[i]);
+		res->exponents[res->num_factors - 1] = fac->exponents[i];
+	}
 }
 
 /**
@@ -4342,7 +4345,7 @@ void zmod_poly_factor_pow(zmod_poly_factor_t fac, unsigned long exp)
  */
 void zmod_poly_factor_square_free(zmod_poly_factor_t res, zmod_poly_t f)
 {
-    if (f->length <= 1) 
+   if (f->length <= 1) 
 	{
 	   res->num_factors = 0;
        return;
@@ -4354,22 +4357,22 @@ void zmod_poly_factor_square_free(zmod_poly_factor_t res, zmod_poly_t f)
 	   return;
 	}
 
-    unsigned long p = zmod_poly_modulus(f);    //order of the field
-    unsigned long deg = zmod_poly_degree(f); //degree of the polynomial
+   unsigned long p = zmod_poly_modulus(f);    //order of the field
+   unsigned long deg = zmod_poly_degree(f); //degree of the polynomial
     
 	//Step 1, look at f', if it is zero then we are done since f = h(x)^p
 	//for some particular h(x), clearly f(x) = sum a_k x^kp, k <= deg(f)
-    zmod_poly_t f_d, g, g_1;
+   zmod_poly_t f_d, g, g_1;
 
-    zmod_poly_init(g_1, p);
-    zmod_poly_init(f_d, p);
-    zmod_poly_init(g, p);
+   zmod_poly_init(g_1, p);
+   zmod_poly_init(f_d, p);
+   zmod_poly_init(g, p);
 
-    zmod_poly_derivative(f_d, f);
+   zmod_poly_derivative(f_d, f);
 
-    //CASE 1:
-    if(zmod_poly_is_zero(f_d))
-    {
+   //CASE 1:
+   if(zmod_poly_is_zero(f_d))
+   {
         zmod_poly_t h;
         zmod_poly_init(h, p);
         for(unsigned long i = 0; i <= deg/p; ++i)    //this will be an integer since f'=0
@@ -4377,7 +4380,7 @@ void zmod_poly_factor_square_free(zmod_poly_factor_t res, zmod_poly_t f)
             zmod_poly_set_coeff_ui(h, i, zmod_poly_get_coeff_ui(f, i*p));
         }
         
-		//now run square-free on h, and return it to the pth power
+		  //now run square-free on h, and return it to the pth power
         zmod_poly_factor_t new_res;
         zmod_poly_factor_init(new_res);
 
@@ -4385,33 +4388,41 @@ void zmod_poly_factor_square_free(zmod_poly_factor_t res, zmod_poly_t f)
         //now raise it to the power of p
         zmod_poly_factor_pow(new_res, p);
 			    
-        zmod_poly_factor_concat(res, new_res);    //note, concatenating is equivalent to multiplying   
-    }
-    else 
-    { 
+        zmod_poly_factor_concat(res, new_res);    //note, concatenating is equivalent to multiplying
+		  zmod_poly_clear(h);
+		  zmod_poly_factor_clear(new_res);
+   }
+   else 
+   { 
         zmod_poly_gcd(g, f, f_d);
         zmod_poly_div(g_1, f, g);
         unsigned long i = 1;
 
+        zmod_poly_t h, z;
+        zmod_poly_init(h, p);
+        zmod_poly_init(z, p);
         //CASE 2:
         while (!zmod_poly_is_one(g_1)) 
         {
-            zmod_poly_t h, z;
-            zmod_poly_init(h, p);
-            zmod_poly_init(z, p);
             
-			zmod_poly_gcd(h, g_1, g);
+			   zmod_poly_gcd(h, g_1, g);
             zmod_poly_div(z, g_1, h);
-            //out <- out.z
             
-            zmod_poly_factor_add(res, z);
-            if (res->num_factors) res->exponents[res->num_factors-1] *= i;
-			i++;
-			zmod_poly_set(g_1, h);
+				// out <- out.z
+            if (z->length > 1)
+				{
+					zmod_poly_factor_add(res, z);
+               if (res->num_factors) res->exponents[res->num_factors-1] *= i;
+				}
+			   i++;
+				zmod_poly_set(g_1, h);
             zmod_poly_div(g, g, h);
         }
+		  zmod_poly_clear(h);
+		  zmod_poly_clear(z);
         
-        if(!zmod_poly_is_one(g))
+		  zmod_poly_make_monic(g, g);
+		  if(!zmod_poly_is_one(g))
         {
             //so now we multiply res with square-free(g^1/p) ^ p 
             zmod_poly_t g_p; //g^(1/p)
@@ -4426,9 +4437,14 @@ void zmod_poly_factor_square_free(zmod_poly_factor_t res, zmod_poly_t f)
             zmod_poly_factor_square_free(new_res_2, g_p);
             //now raise it to the power of p
             zmod_poly_factor_pow(new_res_2, p);
-			zmod_poly_factor_concat(res, new_res_2);
+			   zmod_poly_factor_concat(res, new_res_2);
+				zmod_poly_clear(g_p);
+				zmod_poly_factor_clear(new_res_2);
         }
-    }
+   }
+	zmod_poly_clear(g_1);
+   zmod_poly_clear(f_d);
+   zmod_poly_clear(g);
 }
 
 /*

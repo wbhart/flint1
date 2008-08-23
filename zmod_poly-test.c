@@ -2152,31 +2152,78 @@ int test_zmod_poly_isirreducible()
 int test_zmod_poly_factor_square_free()
 {
    int result = 1;
-   zmod_poly_t pol1;
+   zmod_poly_t pol1, poly, quot, rem;
    zmod_poly_factor_t res;
    unsigned long bits;
    unsigned long modulus;
+   ulong exponents[5];
 
-   for (unsigned long count1 = 0; (count1 < 10000) && (result == 1); count1++)
+   for (unsigned long count1 = 0; (count1 < 300) && (result == 1); count1++)
    {
       bits = randint(FLINT_BITS-2)+2;
       
       do {modulus = randprime(bits);} while (modulus < 2);
       
- #if DEBUG
-      printf("bits = %ld, modulus = %ld\n", bits, modulus);
-#endif
+ 	   zmod_poly_init(pol1, modulus);
+      zmod_poly_init(poly, modulus);
+      zmod_poly_init(quot, modulus);
+      zmod_poly_init(rem, modulus);
+     
+	   zmod_poly_zero(pol1);
+		zmod_poly_set_coeff_ui(pol1, 0, 1);
+		
+		ulong length = randint(7) + 2;
+      do 
+	   {
+	      randpoly(poly, length, modulus); 
+		   zmod_poly_make_monic(poly, poly);
+	   }
+      while ((!zmod_poly_isirreducible(poly)) || (poly->length < 2));
+      exponents[0] = z_randprime(5);
+		ulong prod1 = exponents[0];
+		for (ulong i = 0; i < exponents[0]; i++) zmod_poly_mul(pol1, pol1, poly);
+		
+	   ulong num_factors = 5;
+	   for (ulong i = 1; i < num_factors; i++)
+	   {
+		   length = randint(7) + 2;
+         do 
+	      {
+	         randpoly(poly, length, modulus); 
+		      zmod_poly_make_monic(poly, poly);
+			   if (poly->length) zmod_poly_divrem(quot, rem, pol1, poly);
+	      }
+         while ((!zmod_poly_isirreducible(poly)) || (poly->length < 2) || (rem->length == 0));
+		   do exponents[i] = z_randprime(5);
+			while (prod1 % exponents[i] == 0);
+         prod1 *= exponents[i];
+		   for (ulong j = 0; j < exponents[i]; j++) zmod_poly_mul(pol1, pol1, poly);
+	   }
+     
+		zmod_poly_factor_init(res);
+      zmod_poly_factor_square_free(res, pol1);
 
-	  zmod_poly_init(pol1, modulus);
-     zmod_poly_factor_init(res);
+	   result &= (res->num_factors == num_factors);
+		if (result)
+		{
+			ulong prod2 = 1;
+			for (ulong i = 0; i < num_factors; i++)
+				prod2 *= res->exponents[i];
+         result &= (prod1 == prod2);
+		}
+		if (!result)
+		{
+			printf("Error: exponents don't match. Modulus = %ld\n", modulus);
+			for (ulong i = 0; i < res->num_factors; i++) printf("%ld ", res->exponents[i]);
+			printf("\n");
+         for (ulong i = 0; i < num_factors; i++) printf("%ld ", exponents[i]);
+			printf("\n");
+		}
 
-	  zmod_poly_set_coeff_ui(pol1, randint(20), 1L);
-
-	  zmod_poly_factor_square_free(res, pol1);
-      //zmod_poly_factor_print(res);
-      
-	  zmod_poly_clear(pol1);
-	  zmod_poly_factor_clear(res);
+	   zmod_poly_clear(quot);
+	   zmod_poly_clear(rem);
+	   zmod_poly_clear(pol1);
+	   zmod_poly_factor_clear(res);
    }
 }
 
