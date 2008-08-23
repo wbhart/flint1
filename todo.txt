@@ -373,8 +373,6 @@ to improve locality.
 
 * See if there are any special cases zmod_poly_factor_square_free can recognise easily, e.g. x^2 or degree 2 polynomials
 
-* Put non-trivial test code in for zmod_poly_factor_square_free once is_irreducible is coded
-
 * try implementing back substitution instead of Gauss-Jordan elimination in Berlekamp
 
 * First column of Berlekamp matrix is always zero - don't reduce it
@@ -387,4 +385,6 @@ to improve locality.
 
 * Make random generator in test code seed generator from time and print seed
 
-* Add test code for all new primality test and zmod polynomial functions added over the summer (some of the tests currently do only trivial tests) 
+* Add test code for all new primality test functions added over the summer (some of the tests currently do only trivial tests)
+
+* Speed up zmod_poly_powpowmod (not a typo) by using an fmpz for the power of a power and using the repeated squaring trick right the way up to the full exponent. Check to see if there are any special cases where it can bail out early in zmod_poly_isirreducible. 

@@ -568,11 +568,12 @@ void zmod_poly_factor_print(zmod_poly_factor_t fac);
 void zmod_poly_factor_pow(zmod_poly_factor_t fac, unsigned long exp);
 
 /**
- * Computes the square free factorisation of the given polynomial.
- * @param f 		The polynomial to factorise.
- * @param fac		The factorisation into square free factors of <code>f</code>.
- */
-void zmod_poly_factor_square_free(zmod_poly_factor_t res, zmod_poly_t f);
+ * Computes the square free factorisation of the given polynomial. Input must be a monic 
+ * polynomial. All the factors will be monic.
+ * The algorithm used is efficient when the multiplicities of factors is relatively low.
+ * @param f         The polynomial to factorise.
+ * @param fac        The factorisation into monic square free factors of <code>f</code>.
+ */void zmod_poly_factor_square_free(zmod_poly_factor_t res, zmod_poly_t f);
 
 /**
  * Computes the factorisation of the given polynomial.
@@ -580,6 +581,8 @@ void zmod_poly_factor_square_free(zmod_poly_factor_t res, zmod_poly_t f);
  * @param factors	The factorisation of <code>f</code>.
  */
 void zmod_poly_factor_berlekamp(zmod_poly_factor_t factors, zmod_poly_t f);
+
+unsigned long zmod_poly_factor(zmod_poly_factor_t result, zmod_poly_t input);
 
 #ifdef __cplusplus
  }

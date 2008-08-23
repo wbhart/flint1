@@ -494,7 +494,7 @@ int test_zmod_poly_mul_classicalKS()
    zmod_poly_t pol1, pol2, res1, res2;
    unsigned long bits;
    
-   for (unsigned long count1 = 0; (count1 < 1) && (result == 1); count1++)
+   for (unsigned long count1 = 0; (count1 < 100) && (result == 1); count1++)
    {
       bits = randint(FLINT_BITS-2)+2;
       unsigned long modulus;
@@ -506,7 +506,7 @@ int test_zmod_poly_mul_classicalKS()
       zmod_poly_init(res1, modulus);
       zmod_poly_init(res2, modulus);
       
-      for (unsigned long count2 = 0; (count2 < 1) && (result == 1); count2++)
+      for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       {
          unsigned long length1 = randint(400);
          unsigned long length2 = randint(400);
@@ -2015,7 +2015,7 @@ int test_zmod_poly_powmod()
    unsigned long bits;
    long exp;
    
-   for (unsigned long count1 = 0; (count1 < 10000) && (result == 1); count1++)
+   for (unsigned long count1 = 0; (count1 < 3000) && (result == 1); count1++)
    {
       bits = randint(FLINT_BITS-2)+2;
       unsigned long modulus;
@@ -2183,13 +2183,13 @@ int test_zmod_poly_factor_square_free()
 		ulong prod1 = exponents[0];
 		for (ulong i = 0; i < exponents[0]; i++) zmod_poly_mul(pol1, pol1, poly);
 		
-	   ulong num_factors = 5;
+	   ulong num_factors = z_randint(5)+1;
 	   for (ulong i = 1; i < num_factors; i++)
 	   {
-		   length = randint(7) + 2;
-         do 
+		   do 
 	      {
-	         randpoly(poly, length, modulus); 
+	         length = randint(7) + 2;
+            randpoly(poly, length, modulus); 
 		      zmod_poly_make_monic(poly, poly);
 			   if (poly->length) zmod_poly_divrem(quot, rem, pol1, poly);
 	      }
@@ -2257,10 +2257,10 @@ int test_zmod_poly_factor_berlekamp()
 	   ulong num_factors = randint(5) + 1;
 	   for (ulong i = 1; i < num_factors; i++)
 	   {
-		   length = randint(10) + 2;
-         do 
+		   do 
 	      {
-	         randpoly(poly, length, modulus); 
+	         length = randint(10) + 2;
+            randpoly(poly, length, modulus); 
 		      zmod_poly_make_monic(poly, poly);
 			   if (poly->length) zmod_poly_divrem(quot, rem, pol1, poly);
 	      }
@@ -2280,15 +2280,93 @@ int test_zmod_poly_factor_berlekamp()
    }
 }
 
+int test_zmod_poly_factor()
+{
+   int result = 1;
+   zmod_poly_t pol1, poly, quot, rem;
+   zmod_poly_factor_t res;
+   unsigned long bits;
+   unsigned long modulus;
+   ulong exponents[5];
+
+   for (unsigned long count1 = 0; (count1 < 300) && (result == 1); count1++)
+   {
+      bits = randint(FLINT_BITS-2)+2;
+      
+      do {modulus = randprime(bits);} while (modulus < 2);
+      
+ 	   zmod_poly_init(pol1, modulus);
+      zmod_poly_init(poly, modulus);
+      zmod_poly_init(quot, modulus);
+      zmod_poly_init(rem, modulus);
+     
+	   zmod_poly_zero(pol1);
+		zmod_poly_set_coeff_ui(pol1, 0, 1);
+		
+		ulong length = randint(7) + 2;
+      do 
+	   {
+	      randpoly(poly, length, modulus); 
+		   zmod_poly_make_monic(poly, poly);
+	   }
+      while ((!zmod_poly_isirreducible(poly)) || (poly->length < 2));
+      exponents[0] = z_randint(30)+1;
+		ulong prod1 = exponents[0];
+		for (ulong i = 0; i < exponents[0]; i++) zmod_poly_mul(pol1, pol1, poly);
+		
+	   ulong num_factors = z_randint(5)+1;
+	   for (ulong i = 1; i < num_factors; i++)
+	   {
+		   do 
+	      {
+	         length = randint(7) + 2;
+            randpoly(poly, length, modulus); 
+		      zmod_poly_make_monic(poly, poly);
+			   if (poly->length) zmod_poly_divrem(quot, rem, pol1, poly);
+	      }
+         while ((!zmod_poly_isirreducible(poly)) || (poly->length < 2) || (rem->length == 0));
+		   exponents[i] = z_randint(30)+1;
+			prod1 *= exponents[i];
+		   for (ulong j = 0; j < exponents[i]; j++) zmod_poly_mul(pol1, pol1, poly);
+	   }
+     
+		zmod_poly_factor_init(res);
+      ulong lead = zmod_poly_factor(res, pol1);
+      
+	   result &= (res->num_factors == num_factors);
+		if (!result)
+		   printf("Error: number of factors incorrect, %ld, %ld\n", res->num_factors, num_factors);
+		
+
+		zmod_poly_t product;
+		zmod_poly_init(product, pol1->p);
+		zmod_poly_set_coeff_ui(product, 0, 1);
+		for (ulong i = 0; i < res->num_factors; i++)
+			for (ulong j = 0; j < res->exponents[i]; j++)
+				zmod_poly_mul(product, product, res->factors[i]);
+		zmod_poly_scalar_mul(product, product, lead);
+		result &= zmod_poly_equal(pol1, product);
+		if (!result)
+		{
+			printf("Error: product of factors does not equal original polynomial\n");
+			zmod_poly_print(pol1); printf("\n");
+			zmod_poly_print(product); printf("\n");
+		}
+		zmod_poly_clear(product);
+      
+	   zmod_poly_clear(quot);
+	   zmod_poly_clear(rem);
+	   zmod_poly_clear(pol1);
+	   zmod_poly_factor_clear(res);
+   }
+}
+
 void zmod_poly_test_all()
 {
    int success, all_success = 1;
 
 #if TESTFILE
 #endif
-   RUN_TEST(zmod_poly_isirreducible); 
-   RUN_TEST(zmod_poly_factor_berlekamp); 
-   RUN_TEST(zmod_poly_factor_square_free); 
    RUN_TEST(zmod_poly_reverse); 
    RUN_TEST(zmod_poly_addsub); 
    RUN_TEST(zmod_poly_neg); 
@@ -2322,6 +2400,10 @@ void zmod_poly_test_all()
    RUN_TEST(zmod_poly_resultant_euclidean); 
    RUN_TEST(zmod_poly_mulmod); 
    RUN_TEST(zmod_poly_powmod); 
+   RUN_TEST(zmod_poly_isirreducible); 
+   RUN_TEST(zmod_poly_factor_berlekamp); 
+   RUN_TEST(zmod_poly_factor_square_free); 
+   RUN_TEST(zmod_poly_factor); 
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");

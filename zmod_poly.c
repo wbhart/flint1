@@ -4339,10 +4339,10 @@ void zmod_poly_factor_pow(zmod_poly_factor_t fac, unsigned long exp)
       fac->exponents[i] *= exp;
 }
 
-/**
- * Square-Free Algorithm, takes an arbitary polynomial in F_p[X] and returns an array of square free factors
- * LOW MULTIPLICITIES
- */
+/** 
+ * Square-Free Algorithm, takes an arbitary polynomial in F_p[X] and returns an array of square free factors 
+ * LOW MULTIPLICITIES 
+ */ 
 void zmod_poly_factor_square_free(zmod_poly_factor_t res, zmod_poly_t f)
 {
    if (f->length <= 1) 
@@ -4412,7 +4412,8 @@ void zmod_poly_factor_square_free(zmod_poly_factor_t res, zmod_poly_t f)
             if (z->length > 1)
 				{
 					zmod_poly_factor_add(res, z);
-               if (res->num_factors) res->exponents[res->num_factors-1] *= i;
+               zmod_poly_make_monic(res->factors[res->num_factors - 1], res->factors[res->num_factors - 1]);
+					if (res->num_factors) res->exponents[res->num_factors-1] *= i;
 				}
 			   i++;
 				zmod_poly_set(g_1, h);
@@ -4583,4 +4584,52 @@ void zmod_poly_factor_berlekamp(zmod_poly_factor_t factors, zmod_poly_t f)
 		zmod_poly_clear(Q);
 		zmod_poly_clear(g);
 	}			
+}
+
+/**
+ * This function takes an arbitary polynomial and factorises it. It first 
+ * performs a square-free factorisation, then factorises all of the square 
+ * free polynomails and returns the leading coefficient, all the factors will 
+ * be monic. If the zero polynomial is passed, 0 is return. If a constant is 
+ * passed, that constant is returned (and no factors).
+ */
+unsigned long zmod_poly_factor(zmod_poly_factor_t result, zmod_poly_t input)
+{
+   if (input->length == 0) return 0;
+	
+	//This will store all of the square-free factors
+   zmod_poly_factor_t sqfree_factors;
+   zmod_poly_factor_init(sqfree_factors);
+   zmod_poly_t monic_input;
+   zmod_poly_init(monic_input, zmod_poly_modulus(input));
+   
+	//Now we must make sure the input polynomial is monic. Get the highest coeff and store it then call make monic
+   unsigned long leading_coeff = zmod_poly_get_coeff_ui(input, zmod_poly_degree(input));
+   zmod_poly_make_monic(monic_input, input);
+	if (input->length == 1) return leading_coeff;
+
+   //Now we do the square-free factorisation of the input polynomial
+   zmod_poly_factor_square_free(sqfree_factors, monic_input);
+
+   //space to store factors
+   zmod_poly_factor_t factors;
+   
+   //Run berlekamp on each of the square-free factors
+   for (unsigned long i = 0; i < sqfree_factors->num_factors; i++)
+   {
+      zmod_poly_factor_init(factors);
+      
+      zmod_poly_factor_berlekamp(factors, sqfree_factors->factors[i]);
+      zmod_poly_factor_pow(factors, sqfree_factors->exponents[i]);
+
+      //Now add all the factors to the final array
+      zmod_poly_factor_concat(result, factors);
+
+      //clean up the memory being used
+      zmod_poly_factor_clear(factors);
+   }
+
+   //clean up memory
+   zmod_poly_factor_clear(sqfree_factors);
+   return leading_coeff;   
 }
