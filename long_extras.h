@@ -88,6 +88,11 @@ typedef struct factor_s
    unsigned long exp[15];
 } factor_t;
 
+typedef struct pair_s
+{
+	ulong x, y;
+} pair_t;
+
 #define pre_inv_t double
 #define pre_inv2_t double
 #define pre_inv_ll_t double
@@ -194,6 +199,10 @@ int z_isprime_precomp(unsigned long n, double ninv);
 unsigned long z_nextprime(unsigned long n);
 
 int z_isprime_pocklington(unsigned long const n, unsigned long const iterations);
+
+int z_ispseudoprime_lucas_ab(ulong n, int a, int b);
+
+int z_ispseudoprime_lucas(ulong n);
 
 unsigned long z_pow(unsigned long a, unsigned long exp);
                                                     

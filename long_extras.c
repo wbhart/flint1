@@ -1013,6 +1013,137 @@ int z_isprime_pocklington(unsigned long const n, unsigned long const iterations)
 	return 1;
 }
 
+/*
+    Computes the pair (V_m,V_m+1) using a Lucas chain with the rules:
+    V_2j=V_j*V_j-2 mod n
+    V_(2j+1)=V_j*V_(j+1)-a mod n
+    
+*/
+
+pair_t z_lchain_mod_precomp(ulong m, ulong a, ulong n, pre_inv2_t ninv)
+{
+	pair_t current, old;
+	int length, i;
+	ulong power, xy, xx, yy;
+	
+	old.x = 2;
+	old.y = a;
+	
+	length = FLINT_BIT_COUNT(m);
+	power = (1L<<(length-1));
+	for (i = 0; i < length; i++)
+	{
+		xy = z_mulmod2_precomp(old.x, old.y, n, ninv);
+		xy = z_mod2_precomp(xy - a + n, n, ninv);
+		if (((m & power) > 0))
+		{
+			yy = z_mulmod2_precomp(old.y, old.y, n, ninv);
+			yy = z_mod2_precomp(yy - 2L + n, n, ninv);
+			current.x = xy;
+			current.y = yy;
+		} else 
+		{
+			xx = z_mulmod2_precomp(old.x, old.x, n, ninv);
+			xx = z_mod2_precomp(xx -2L + n, n, ninv);
+			current.x = xx;
+			current.y = xy;
+		}
+		power = (power>>1);
+		old = current;
+	}
+
+	return current;
+}
+
+/*
+    Test to see if _n_ is a Lucas Pseudoprime. Returns 0 if 
+    _n_ is composite or fails gcd(n, 2*a*b(a*a - 4*b)) = 1, -1 if delta
+    is square and 1 if it is a Lucas Pseudoprime w.r.t x^2 - ax + b  
+	 Assumes n has been checked for primality using trial factoring up to 256.
+	 The absolute values of a and b should be < 128.
+*/
+
+int z_ispseudoprime_lucas_ab(ulong n, int a, int b)
+{
+	int b2, delta;
+	ulong m, A, left, right, binv;
+	pre_inv2_t inv;
+	pair_t V;
+	
+	delta = a*a - 4*b;
+	if (z_issquare(delta)) return -1;
+	
+	if (z_gcd(n, (long) (2*a*b*delta)) != 1) return 0;
+	
+	m = (n - z_jacobi(delta, n))/2;
+	
+	if (b < 0) A = a*a*z_invert(n + b, n) - 2;
+	else A = a*a*z_invert(b, n) - 2;
+	
+	inv = z_precompute_inverse(n);
+	if ((long) A < 0L) A = A + n;
+	
+	A = z_mod2_precomp(A, n, inv);
+	
+	V = z_lchain_mod_precomp(m, A, n, inv);
+	
+	left = z_mulmod2_precomp(A, V.x, n, inv);
+	right = z_mulmod2_precomp(2, V.y, n, inv);
+	
+	if (left == right) return 1;
+	else return 0;
+}
+
+/*
+   A second version of the Lucas pseudoprime test. This uses the algorithm described in 
+   http://www.jstor.org/sici?sici=0025-5718(198010)35%3A152%3C1391%3ALP%3E2.0.CO%3B2-N
+   where it picks D, P, Q using algorithm A.
+	Assumes n has been checked for primality using trial factoring up to 256.
+*/
+
+int z_ispseudoprime_lucas(ulong n)
+{
+	int i, D, Q;
+	long A;
+	ulong left, right;
+	pair_t V;
+	D = 0;
+	Q = 0;
+	D = 0;
+	
+	if (n % 2 == 0)
+	{
+		if (n == 2) return 1;
+		else return 0;
+	}
+	
+	for (i = 0; i < 100; i++)
+	{
+		D = 5 + 2*i;
+		if (z_gcd(D, n) != 1) return 0;
+		if (i % 2 == 1) D = -D;
+		if (z_jacobi(D, n) == -1) break;
+	}
+
+	if (i == 100)
+	{
+		if (z_issquare(n)) return -1;
+		else return 1;
+	}
+   
+	Q = (1 - D)/4;
+	A = z_invert(Q + n, n) - 2;
+	
+	pre_inv_t inv = z_precompute_inverse(n);
+	V = z_lchain_mod_precomp(n+1, A, n, inv);
+	
+	left = z_mulmod2_precomp(A, V.x, n, inv);
+	right = z_mulmod2_precomp(2, V.y, n, inv);
+	
+	if (left == right) return 1;
+	else return 0;
+}
+
 /* 
     returns the inverse of a modulo p
 */

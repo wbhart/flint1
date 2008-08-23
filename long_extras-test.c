@@ -760,8 +760,8 @@ int test_z_ispseudoprime_fermat()
       res = mpz_get_ui(mpz_n);
 
       ulong i = z_randint(1000000)+2;
-	  if ((i % res) == 0) i++;
-	  result = (z_ispseudoprime_fermat(res, i) == 1);
+	   if ((i % res) == 0) i++;
+	   result = (z_ispseudoprime_fermat(res, i) == 1);
 
 #if DEBUG
       if (!result) printf("i = %ld, n = %ld\n", i, n);
@@ -769,6 +769,64 @@ int test_z_ispseudoprime_fermat()
 
    }  
    
+#define FERMAT_COUNT 100000
+	
+	ulong comp = 0;
+	for (ulong count = 0; count < FERMAT_COUNT; count++)
+   { 
+		ulong bits = z_randint(FLINT_BITS/2 - 2) + 2;
+      n = z_randprime(bits); 
+		n *= z_randint(bits) + 2;
+      ulong i = z_randint(1000000)+2;
+	   if ((i % n) == 0) i++;
+	   if (z_ispseudoprime_fermat(n, i) != 1) comp++; 
+	}
+   double frac = (double) comp / (double) FERMAT_COUNT;
+	result = (frac > 0.9); 
+	if (!result) printf("Error: only %lf%% of composites declared composite\n", frac*100.0);
+
+   mpz_clear(mpz_n); 
+
+   return result;
+}
+
+int test_z_ispseudoprime_lucas()
+{
+   ulong n;
+   ulong res;
+   
+   mpz_t mpz_n;
+   mpz_init(mpz_n);
+       
+   int result = 1;
+   
+   for (ulong count = 0; (count < 100000) && (result == 1); count++)
+   { 
+	   ulong bits = z_randint(FLINT_BITS - 1) + 1;
+      n = random_ulong((1UL<<bits) - 1UL) + 256; 
+      mpz_set_ui(mpz_n, n);
+
+      mpz_nextprime(mpz_n, mpz_n);
+      res = mpz_get_ui(mpz_n);
+
+      result = (z_ispseudoprime_lucas(res) == 1);
+		if (!result) printf("Error: prime not pseudoprime, n = %ld\n", n);
+   } 
+
+#define LUCAS_COUNT 100000
+	
+	ulong comp = 0;
+	for (ulong count = 0; count < LUCAS_COUNT; count++)
+   { 
+		ulong bits = z_randint(FLINT_BITS/2 - 2) + 2;
+      n = z_randprime(bits); 
+		n *= z_randint(bits) + 2;
+      if (z_ispseudoprime_lucas(n) != 1) comp++; 
+	}
+   double frac = (double) comp / (double) LUCAS_COUNT;
+	result = (frac > 0.99); 
+	if (!result) printf("Error: only %lf%% of composites declared composite\n", frac*100.0);
+
    mpz_clear(mpz_n); 
 
    return result;
@@ -799,6 +857,20 @@ int test_z_isprime()
 
       result = (z_isprime(res));
    }  
+
+#define PRIME_COUNT 100000
+	
+	ulong comp = 0;
+	for (ulong count = 0; count < PRIME_COUNT; count++)
+   { 
+		ulong bits = z_randint(FLINT_BITS/2 - 2) + 2;
+      n = z_randprime(bits); 
+		n *= z_randint(bits) + 2;
+      if (z_isprime(n) != 1) comp++; 
+	}
+   double frac = (double) comp / (double) PRIME_COUNT;
+	result = (frac > 0.99); 
+	if (!result) printf("Error: only %lf%% of composites declared composite\n", frac*100.0);
    
    mpz_clear(mpz_n); 
 
@@ -844,7 +916,7 @@ int test_z_isprime_pocklington()
       mpz_nextprime(mpz_n, mpz_n);
       res = mpz_get_ui(mpz_n);
 
-	  n = random_ulong((1UL<<bits)-1UL)+1; 
+	   n = random_ulong((1UL<<bits)-1UL)+1; 
       mpz_set_ui(mpz_n, n);
 
 #if DEBUG
@@ -1210,6 +1282,7 @@ void fmpz_poly_test_all()
    RUN_TEST(z_sqrtmod);
    RUN_TEST(z_cuberootmod);
    RUN_TEST(z_ispseudoprime_fermat);
+   RUN_TEST(z_ispseudoprime_lucas);
    RUN_TEST(z_isprime);
    RUN_TEST(z_isprime_pocklington);
    RUN_TEST(z_nextprime);
