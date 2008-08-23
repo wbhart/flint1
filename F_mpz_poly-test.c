@@ -37,9 +37,9 @@ Copyright (C) 2008, William Hart
 #include "test-support.h"
 #include "zmod_poly.h"
 
-#define VARY_BITS 1 // random coefficients have random number of bits up to the limit given
-#define SIGNS 1 // random coefficients will be randomly signed
-#define SPARSE 1 // polynomials are spares (triggers more corner cases)
+#define VARY_BITS 0 // random coefficients have random number of bits up to the limit given
+#define SIGNS 0 // random coefficients will be randomly signed
+#define SPARSE 0 // polynomials are spares (triggers more corner cases)
 #define ITER 1 // if you want all tests to run longer, increase this
 
 #define TESTFILE 0 // Set this to test polynomial reading and writing to a file in the current dir
@@ -1775,7 +1775,7 @@ int test_F_mpz_poly_mul_karatsuba()
    return result;
 }
 
-int test_F_mpz_poly_bit_pack()
+/*int test_F_mpz_poly_bit_pack()
 {
    mpz_poly_t m_poly, m_poly2;
    F_mpz_poly_t F_poly, F_poly2;
@@ -1979,7 +1979,7 @@ int test_F_mpz_poly_bit_pack_unsigned()
    mpz_poly_clear(m_poly2);
    
    return result;
-}
+}*/
 
 /*int test_F_mpz_poly_bit_pack2()
 {
@@ -2076,7 +2076,7 @@ int test_F_mpz_poly_mul_KS()
    mpz_poly_init(res1); 
    mpz_poly_init(res2); 
 
-   for (ulong count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
+   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -2272,8 +2272,8 @@ void F_mpz_poly_test_all()
    RUN_TEST(F_mpz_submul_ui); 
    RUN_TEST(F_mpz_poly_mul_classical); 
    RUN_TEST(F_mpz_poly_mul_karatsuba); 
-	RUN_TEST(F_mpz_poly_bit_pack);
-   RUN_TEST(F_mpz_poly_bit_pack_unsigned);
+	//RUN_TEST(F_mpz_poly_bit_pack);
+   //RUN_TEST(F_mpz_poly_bit_pack_unsigned);
    RUN_TEST(F_mpz_poly_mul_KS); 
 	
    printf(all_success ? "\nAll tests passed\n" :
