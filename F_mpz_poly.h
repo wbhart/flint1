@@ -727,16 +727,16 @@ void F_mpz_poly_bit_pack(mp_limb_t * array, ulong n, const F_mpz_poly_t poly_F_m
 void F_mpz_poly_bit_pack_unsigned(mp_limb_t * array, ulong n, const F_mpz_poly_t poly_F_mpz,
                                                             const ulong bits, const ulong length);
 /** 
-   \fn     F_mpz_poly_bit_pack2(ZmodF_poly_t poly_f, ZmodF_poly_t poly_f2, const F_mpz_poly_t poly_F_mpz, 
-								                     const ulong bundle, const long bitwidth, const ulong length, 
-								                                         const long negate, const long negate2)
-   \brief  As for F_mpz_poly_bit_pack, except that two ZmodF_poly_t's are packed. The second
+   \fn     void F_mpz_poly_bit_pack2(mp_limb_t * array, mp_limb_t * array2, ulong n, const F_mpz_poly_t poly_F_mpz, 
+                                            const long bitwidth, const ulong length, const long negate, long negate2)
+
+   \brief  As for F_mpz_poly_bit_pack, except that two arrays are packed. The second
 	        is packed from the same data, except the signs are alternated before packing, starting
 			  with the sign given by negative2 for the constant coefficient.
 
-void F_mpz_poly_bit_pack2(ZmodF_poly_t poly_f, ZmodF_poly_t poly_f2, const F_mpz_poly_t poly_F_mpz, 
-								       const ulong bundle, const long bitwidth, const ulong length, 
-								                           const long negate, long negate2);*/
+*/
+void F_mpz_poly_bit_pack2(mp_limb_t * array, mp_limb_t * array2, ulong n, const F_mpz_poly_t poly_F_mpz, 
+                                 const long bitwidth, const ulong length, const long negate, long negate2);
 
 /** 
    \fn     void F_mpz_poly_bit_unpack(F_mpz_poly_t poly_F_mpz, const mp_limb_t * array, ulong n,
