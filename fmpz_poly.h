@@ -792,7 +792,7 @@ long fmpz_poly_get_coeff_si(const fmpz_poly_t poly, const unsigned long n)
       return 0;
    }
    if (poly->coeffs[n*(poly->limbs+1)] == 0) return 0;
-   if (poly->coeffs[n*(poly->limbs+1)] >= 1L) 
+   if ((long) poly->coeffs[n*(poly->limbs+1)] >= 1L) 
                                  return poly->coeffs[n*(poly->limbs+1)+1];
    else return -poly->coeffs[n*(poly->limbs+1)+1];
 }
