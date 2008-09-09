@@ -90,16 +90,21 @@ void linear_algebra_clear(linalg_t * la_inf, QS_t * qs_inf)
    la_col_t * matrix = la_inf->matrix;
    la_col_t * unmerged = la_inf->unmerged;
    mpz_t * Y_arr = la_inf->Y_arr;
-   const unsigned long buffer_size = 4*(qs_inf->num_primes + EXTRA_RELS + 200)/2;
+   const unsigned long buffer_size = 2*(qs_inf->num_primes + EXTRA_RELS + 200);
    
    for (unsigned long i = 0; i < buffer_size; i++) 
    {
       mpz_clear(Y_arr[i]);
    }
    
-   for (unsigned long i = 0; i < la_inf->columns; i++) // Clear all used columns
+   void * ptr;
+	if (la_inf->columns == 781) ptr = (void *) matrix[728].data;
+	else ptr = NULL;
+
+	for (unsigned long i = 0; i < la_inf->columns; i++) // Clear all used columns
    {
-      free_col(matrix + i);
+		if ((void*)matrix[i].data == ptr) printf("Error: %ld\n", i);
+		free_col(matrix + i);
    }
    
    for (unsigned long i = 0; i < la_inf->num_unmerged; i++) // Clear all used columns
@@ -152,7 +157,7 @@ int relations_cmp2(const void *a, const void *b)
   if (ra->weight > rb->weight) return 1;
   else if (ra->weight < rb->weight) return -1;
   
-  for (point = ra->weight-1; (ra->data[point] == rb->data[point]) && (point >= 0); point--)
+  for (point = ra->weight-1; (point >= 0) && (ra->data[point] == rb->data[point]); point--)
   {
       ;
   }
@@ -203,7 +208,8 @@ unsigned long merge_sort(linalg_t * la_inf)
          case 1 : 
          {
             copy_col(matrix + i, matrix + columns - 1L);
-            columns--;
+            if (i != columns - 1) clear_col(matrix + columns - 1);
+				columns--;
             break;
          }
          case 0 : 

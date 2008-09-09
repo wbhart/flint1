@@ -52,7 +52,8 @@ void poly_init(QS_t * qs_inf, poly_t * poly_inf, mpz_t N)
 {
    unsigned long num_primes = qs_inf->num_primes;
    unsigned long s = (qs_inf->bits-1)/28+1;
-   prime_t * factor_base = qs_inf->factor_base;
+   if (s <= 2) s = 3;
+	prime_t * factor_base = qs_inf->factor_base;
    unsigned long fact_approx, fact, span;
    long min; 
    
@@ -94,20 +95,20 @@ void poly_init(QS_t * qs_inf, poly_t * poly_inf, mpz_t N)
    for (fact = 0; fact_approx >= factor_base[fact].p; fact++); 
    
    span = num_primes/s/s/2;
-   if (span < 4*s) span = 4*s;
+   if (span < 6*s) span = 6*s;
    min = fact - span/2;
    if (min < SMALL_PRIMES) min = SMALL_PRIMES;
-   if (min + span >= qs_inf->num_primes) span = num_primes - min - 1;
+	if (min + span >= num_primes - 1) span = num_primes - min - 1;
    fact = min + span/2;
 
 #if POLY_PARAMS   
-   printf("min = FB[%ld], span = %ld, number of factors = %ld\n", min, span, s);
+   printf("num_primes = %ld, min = FB[%ld], span = %ld, number of factors = %ld\n", num_primes, min, span, s);
 #endif
    
    poly_inf->min = min;
    poly_inf->fact = fact;
    poly_inf->span = span;
-          
+         
    mpz_clear(temp); 
 }
 

@@ -35,11 +35,11 @@
 
 #define QS_INFO 0 // Print some info about what is being factored, etc
 
-#define MAXBITS 128 // Largest bits including multiplier that can be factored
+#define MAXBITS 81 // Largest bits including multiplier that can be factored
 
 #define TEST 0
 
-#define PRINT_FACTORS 1
+#define PRINT_FACTORS 0
 
 typedef struct F_mpz_fact_s
 {

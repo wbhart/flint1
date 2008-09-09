@@ -51,7 +51,7 @@ void linear_algebra_init(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly_inf)
    la_col_t * matrix;
    mpz_t * Y_arr;
    
-   const unsigned long buffer_size = 3*(qs_inf->num_primes + EXTRA_RELS + 100)/2; // Allows for 1/3 of relations to be duplicates
+   const unsigned long buffer_size = 2*(qs_inf->num_primes + EXTRA_RELS + 100); // Allows for 1/2 of relations to be duplicates
    
    la_inf->small = (unsigned long *) flint_stack_alloc(SMALL_PRIMES);
    la_inf->factor = (fac_t *) flint_stack_alloc_bytes(sizeof(fac_t)*MAX_FACS);
@@ -66,7 +66,7 @@ void linear_algebra_init(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly_inf)
    {
       mpz_init2(Y_arr[i], 128);
    }
-   for (unsigned long i = 0; i < qs_inf->num_primes + EXTRA_RELS + 200; i++) 
+   for (unsigned long i = 0; i < qs_inf->num_primes + EXTRA_RELS + 100; i++) 
    {
       matrix[i].weight = 0;
    }
@@ -81,7 +81,7 @@ void linear_algebra_clear(linalg_t * la_inf, QS_t * qs_inf)
    la_col_t * matrix = la_inf->matrix;
    la_col_t * unmerged = la_inf->unmerged;
    mpz_t * Y_arr = la_inf->Y_arr;
-   const unsigned long buffer_size = 3*(qs_inf->num_primes + EXTRA_RELS + 100)/2;
+   const unsigned long buffer_size = 2*(qs_inf->num_primes + EXTRA_RELS + 100);
    
    for (unsigned long i = 0; i < buffer_size; i++) 
    {
@@ -192,7 +192,8 @@ unsigned long merge_sort(linalg_t * la_inf)
          case 1 : 
          {
             copy_col(matrix + i, matrix + columns - 1L);
-            columns--;
+            if (i != columns - 1) clear_col(matrix + columns - 1);
+				columns--;
             break;
          }
          case 0 : 

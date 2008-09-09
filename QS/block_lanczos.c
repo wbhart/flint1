@@ -137,7 +137,7 @@ void reduce_matrix(unsigned long *nrows,
 						counts[col->data[k]]--;
 					}
 					free_col(col);
-				    clear_col(col);
+				   clear_col(col);
 				}
 				else {
 					cols[j++] = cols[i];

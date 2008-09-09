@@ -389,7 +389,7 @@ cleanup_1a:
    mpz_clear(qs_inf.mpz_n);
 cleanup_2:
    flint_stack_release(); // release n
-
+   
    return small_factor;    
 }
 
@@ -407,7 +407,7 @@ int main(int argc, char *argv[])
     
     F_mpz_factor_t factors;
     
-    printf("Input number to factor [ >= 40 decimal digits ] : "); 
+    printf("Input number to factor [ >= 17 decimal digits ] : "); 
     gmp_scanf("%Zd", N); getchar();
     
     F_mpz_factor_mpQS(factors, N);
@@ -428,27 +428,27 @@ int main(int argc, char *argv[])
     unsigned long succeed = 0;
     unsigned long bits1, bits2, bits3, i;
     
-    for (i = 0; i < 1; i++)
+    for (i = 0; i < 10000; i++)
     {
-       mpz_set_ui(N, z_nextprime(z_randint(4000000000000000000UL)));
-       mpz_mul_ui(N, N, z_nextprime(z_randint(4000000000000000000UL)));
-       mpz_mul_ui(N, N, z_nextprime(z_randint(4000000000000000UL)));
-       mpz_mul_ui(N, N, z_nextprime(z_randint(1000000000UL)));
-       //bits1 = z_randint(41UL)+13UL;
-       //bits2 = z_randint(22UL)+13UL;
-       //bits3 = z_randint(22UL)+13UL;
-       //mpz_set_ui(N, z_nextprime(z_randint((1UL<<bits1)-1UL)+1UL));
-       //mpz_mul_ui(N, N, z_nextprime(z_randint((1UL<<bits2)-1UL)+1UL));
-       //mpz_mul_ui(N, N, z_nextprime(z_randint((1UL<<bits3)-1UL)+1UL));
+       printf("i = %ld\n", i);
+		 bits1 = z_randint(50UL)+12UL;
+       bits2 = z_randint(50UL)+12UL;
+       bits3 = z_randint(50UL)+12UL;
+       if (bits1 + bits2 + bits3 > 64)
+		 {
+			 mpz_set_ui(N, z_nextprime(z_randbits(bits1)+1UL));
+          mpz_mul_ui(N, N, z_nextprime(z_randbits(bits2)+1UL));
+          mpz_mul_ui(N, N, z_nextprime(z_randbits(bits3)+1UL));
 
 #if QS_INFO
-       gmp_printf("Factoring %Zd\n", N);
+          gmp_printf("Factoring %Zd\n", N);
 #endif
 
-       factor = F_mpz_factor_mpQS(factors, N);
-       if (!factor) failed++;
-       if (factor > 1) small_factors++;
-       if (factor == 1) succeed++; 
+          factor = F_mpz_factor_mpQS(factors, N);
+          if (!factor) failed++;
+          if (factor > 1) small_factors++;
+          if (factor == 1) succeed++; 
+		 }
     }
     
     printf("mpQS succeeded %ld times, found a small factor %ld times\n", succeed, small_factors);

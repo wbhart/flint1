@@ -54,7 +54,7 @@ static inline void insert_col_entry(la_col_t* col, unsigned long entry)
    if (((col->weight >> 4) << 4) == col->weight) //need more space
    {
       if (col->weight != 0) col->data = (unsigned long *) flint_heap_realloc(col->data, col->weight+16);
-      else col->data = (unsigned long*) flint_heap_alloc(16);
+		else col->data = (unsigned long*) flint_heap_alloc(16);
    }
    
    col->data[col->weight] = entry;

@@ -36,7 +36,7 @@
 
 #define QS_INFO 1 // Print some info about what is being factored, etc
 
-#define MINBITS 64 // Smallest bits including multiplier that can be factored
+#define MINBITS 40 // Smallest bits including multiplier that can be factored
 
 #define TEST 0 // Test that squares have come out of the linear algebra phase
 

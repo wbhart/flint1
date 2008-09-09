@@ -170,13 +170,13 @@ unsigned long knuth_schroeppel(QS_t * qs_inf)
     }
     
     prime = 3;
-    while ((prime < KSMAX) && (fb_prime < max_fb_primes))
+    while (prime < KSMAX)// && (fb_prime < max_fb_primes))
     {
           pinv = z_precompute_inverse(prime);
           logpdivp = log((float)prime) / (float)prime; // log p / p
           nmod = mpn_mod_1(n + 1, n[0], prime);
           if (nmod == 0) return prime;
-          kron = z_jacobi_precomp(nmod, prime, pinv); 
+          kron = z_jacobi(nmod, prime); 
           for (multindex = 0; multindex < NUMMULTS; multindex++)
           {
               mult = multipliers[multindex];
@@ -186,7 +186,7 @@ unsigned long knuth_schroeppel(QS_t * qs_inf)
                  else mult = z_mod_precomp(mult, prime, pinv);
               }
               if (mult == 0) factors[multindex] += logpdivp;
-              else if (kron*z_jacobi_precomp(mult, prime, pinv) == 1) 
+              else if (kron*z_jacobi(mult, prime) == 1) 
                  factors[multindex] += 2.0*logpdivp;
           }
           
@@ -241,7 +241,7 @@ unsigned long compute_factor_base(QS_t * qs_inf)
       {
          if (z_mod_precomp(multiplier, prime, pinv) != 0) return prime;
       }
-      kron = z_jacobi_precomp(nmod, prime, pinv); 
+      kron = z_jacobi(nmod, prime); 
       if (kron == 1)
       {
          factor_base[fb_prime].p = prime;
