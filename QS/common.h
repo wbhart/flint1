@@ -80,6 +80,12 @@ static const unsigned long prime_tab[][5] =
 
 #define SIEVE_SIZE 64000 // Used by tinyQS Todo: make this a variable
                     
+typedef struct hash_s
+{
+	int offset;
+	char size;
+} hash_entry;
+
 typedef struct prime_s
 {
    uint32_t p; // prime
