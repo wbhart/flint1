@@ -230,7 +230,7 @@ void do_sieving3(QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve,
    register unsigned char * pos1;
    unsigned char * pos2;
    unsigned long size;
-   
+	
    for (unsigned long prime = first_prime; prime < second_prime; prime++) 
    {
       if (soln2[prime] == -1) continue;
@@ -249,6 +249,79 @@ void do_sieving3(QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve,
          (*pos1)+=size, pos1+=p;
       } 
    }  
+}
+
+void do_sieving4(QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve, 
+                  unsigned long first_prime, unsigned long second_prime, 
+                  unsigned long M)
+{
+   uint32_t * soln1 = poly_inf->soln1;
+   uint32_t * soln2 = poly_inf->soln2;
+   prime_t * factor_base = qs_inf->factor_base;
+   unsigned long p;
+   unsigned char * start;
+   unsigned char * sizes = qs_inf->sizes;
+   
+	const unsigned long num_blocks = M/SIEVE_BLOCK;
+	hash_entry * hash_tables = (hash_entry *) flint_heap_alloc_bytes(num_blocks*4096*sizeof(hash_entry));
+	unsigned long * counts = (unsigned long *) flint_heap_alloc(num_blocks);
+	for (ulong i = 0; i < num_blocks; i++) counts[i] = 0;
+
+	unsigned long off1;
+   unsigned long off2;
+   unsigned long size;
+	unsigned long index;
+	unsigned long ind;
+   
+   for (unsigned long prime = first_prime; prime < second_prime; prime+=100) 
+   {
+      unsigned long count = 100;
+		if (second_prime - prime < 100) count = second_prime - prime;
+		for (unsigned long i = 0; i < count; i++)
+		{
+		   if (soln2[prime+i] == -1) continue;
+      
+         p = factor_base[prime+i].p;
+         size = sizes[prime+i];
+         off1 = soln1[prime+i];
+         off2 = soln2[prime+i];
+              
+         while (M > off2)
+         { 
+            index = (off2 >> 16); 
+			   ind = (index << 12) + counts[index];
+				hash_tables[ind].offset = (off2 & 65535);
+			   hash_tables[ind].size = size;
+			   counts[index]++;
+			   off2+=p;
+         }
+	
+         while (M > off1)
+         { 
+            index = (off1 >> 16);
+			   ind = (index << 12) + counts[index];
+				hash_tables[ind].offset = (off1 & 65535);
+			   hash_tables[ind].size = size;
+			   counts[index]++;
+			   off1+=p;
+         }
+		}
+
+		for (index = 0; index < num_blocks; index++)
+	   {
+		   start = sieve + 65536*index;
+		   hash_entry * hash_start = hash_tables + (index << 12);
+		   for (unsigned long i = 0; i < counts[index]; i++)
+		   {
+			   start[hash_start[i].offset] += hash_start[i].size;
+		   }
+		   counts[index] = 0;
+	   }
+   
+   }  
+   
+	flint_heap_free(hash_tables);
+	flint_heap_free(counts);
 }
 
 /*==========================================================================

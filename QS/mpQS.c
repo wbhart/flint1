@@ -179,11 +179,15 @@ unsigned long collect_relations(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly_
       }
       else
       {
-         unsigned long blocks = sieve_size/SIEVE_BLOCK;
+
+#define THIRD_PRIME 12000
+
+			unsigned long blocks = sieve_size/SIEVE_BLOCK;
          unsigned long offset = SIEVE_BLOCK;
          unsigned long sieve_fill = qs_inf->sieve_fill;
          unsigned long second_prime = FLINT_MIN(SECOND_PRIME, qs_inf->num_primes);
-         memset(sieve, sieve_fill, sieve_size);
+         unsigned long third_prime = FLINT_MIN(THIRD_PRIME, qs_inf->num_primes);
+			memset(sieve, sieve_fill, sieve_size);
          *(sieve+sieve_size) = 255;
          
          do_sieving(qs_inf, poly_inf, sieve, small_primes, second_prime, SIEVE_BLOCK, 1, 0);
@@ -191,7 +195,8 @@ unsigned long collect_relations(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly_
             do_sieving(qs_inf, poly_inf, sieve, small_primes, second_prime, offset+SIEVE_BLOCK, 0, 0);
          do_sieving(qs_inf, poly_inf, sieve, small_primes, second_prime, sieve_size, 0, 1);
          
-         do_sieving3(qs_inf, poly_inf, sieve, second_prime, qs_inf->num_primes, sieve_size);
+         do_sieving3(qs_inf, poly_inf, sieve, second_prime, third_prime, sieve_size);
+         do_sieving4(qs_inf, poly_inf, sieve, third_prime, qs_inf->num_primes, sieve_size);
       }
          
       relations += evaluate_sieve(la_inf, qs_inf, poly_inf, sieve);
