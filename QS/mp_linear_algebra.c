@@ -54,13 +54,13 @@ void linear_algebra_init(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly_inf)
    unsigned long prec = qs_inf->prec+1;
    unsigned long small_primes = qs_inf->small_primes;
    
-   const unsigned long buffer_size = 2*(qs_inf->num_primes + EXTRA_RELS + 200); // Allows for 1/2 of relations to be duplicates
+   const unsigned long buffer_size = 2*(qs_inf->num_primes + EXTRA_RELS + 500); // Allows for 1/2 of relations to be duplicates
    
    la_inf->small = (unsigned long *) flint_stack_alloc(small_primes);
    la_inf->factor = (fac_t *) flint_stack_alloc_bytes(sizeof(fac_t)*MAX_FACS);
    
-   matrix = la_inf->matrix = (la_col_t *) flint_stack_alloc_bytes(sizeof(la_col_t)*(qs_inf->num_primes + EXTRA_RELS + 400));
-   la_inf->unmerged = la_inf->matrix + qs_inf->num_primes + EXTRA_RELS + 200;
+   matrix = la_inf->matrix = (la_col_t *) flint_stack_alloc_bytes(sizeof(la_col_t)*(qs_inf->num_primes + EXTRA_RELS + 1000));
+   la_inf->unmerged = la_inf->matrix + qs_inf->num_primes + EXTRA_RELS + 500;
    Y_arr = la_inf->Y_arr = (mpz_t *) flint_stack_alloc_bytes(sizeof(mpz_t)*buffer_size);
    la_inf->curr_rel = la_inf->relation = (unsigned long *) flint_stack_alloc(buffer_size*MAX_FACS*2);
    la_inf->qsort_arr = (la_col_t **) flint_stack_alloc(200);
@@ -74,7 +74,7 @@ void linear_algebra_init(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly_inf)
    {
       mpz_init2(Y_arr[i], prec);
    }
-   for (unsigned long i = 0; i < qs_inf->num_primes + EXTRA_RELS + 400; i++) 
+   for (unsigned long i = 0; i < qs_inf->num_primes + EXTRA_RELS + 1000; i++) 
    {
       matrix[i].weight = 0;
    }
@@ -90,20 +90,15 @@ void linear_algebra_clear(linalg_t * la_inf, QS_t * qs_inf)
    la_col_t * matrix = la_inf->matrix;
    la_col_t * unmerged = la_inf->unmerged;
    mpz_t * Y_arr = la_inf->Y_arr;
-   const unsigned long buffer_size = 2*(qs_inf->num_primes + EXTRA_RELS + 200);
+   const unsigned long buffer_size = 2*(qs_inf->num_primes + EXTRA_RELS + 500);
    
    for (unsigned long i = 0; i < buffer_size; i++) 
    {
       mpz_clear(Y_arr[i]);
    }
    
-   void * ptr;
-	if (la_inf->columns == 781) ptr = (void *) matrix[728].data;
-	else ptr = NULL;
-
 	for (unsigned long i = 0; i < la_inf->columns; i++) // Clear all used columns
    {
-		if ((void*)matrix[i].data == ptr) printf("Error: %ld\n", i);
 		free_col(matrix + i);
    }
    

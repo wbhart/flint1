@@ -33,18 +33,8 @@
 
 #include "common.h"
 
-#define QS_INFO 0 // Print some info about what is being factored, etc
-
 #define MAXBITS 81 // Largest bits including multiplier that can be factored
 
-#define TEST 0
-
-#define PRINT_FACTORS 0
-
-typedef struct F_mpz_fact_s
-{
-   mpz_t * fact;
-   unsigned long num;         
-} F_mpz_factor_t;
+int F_mpz_factor_tinyQS(F_mpz_factor_t factors, mpz_t N);
 
 #endif

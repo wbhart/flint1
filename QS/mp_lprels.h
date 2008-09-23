@@ -41,6 +41,8 @@ int mpqs_relations_cmp(const void *a, const void *b);
 
 void flint_fputs(char *s, FILE *file);
 
+void flint_remove(char * name);
+
 long sort_lp_file(char *filename);
 
 long append_file(FILE *fp, FILE *fp1);

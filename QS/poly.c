@@ -48,7 +48,7 @@
  
 ==========================================================================*/
 
-void poly_init(QS_t * qs_inf, poly_t * poly_inf, mpz_t N)
+void tiny_poly_init(QS_t * qs_inf, poly_t * poly_inf, mpz_t N)
 {
    unsigned long num_primes = qs_inf->num_primes;
    unsigned long s = (qs_inf->bits-1)/28+1;
@@ -112,7 +112,7 @@ void poly_init(QS_t * qs_inf, poly_t * poly_inf, mpz_t N)
    mpz_clear(temp); 
 }
 
-void poly_clear(poly_t * poly_inf)
+void tiny_poly_clear(poly_t * poly_inf)
 {
    mpz_clear(poly_inf->C);
    flint_stack_release(); // release all A_inv2B[i]
@@ -135,7 +135,7 @@ void poly_clear(poly_t * poly_inf)
  
 ==========================================================================*/
 
-void compute_A(QS_t * qs_inf, poly_t * poly_inf)
+void tiny_compute_A(QS_t * qs_inf, poly_t * poly_inf)
 {
    unsigned long min = poly_inf->min;
    unsigned long span = poly_inf->span;
@@ -258,7 +258,7 @@ void compute_A(QS_t * qs_inf, poly_t * poly_inf)
  
 ==========================================================================*/
 
-void compute_B_terms(QS_t * qs_inf, poly_t * poly_inf)
+void tiny_compute_B_terms(QS_t * qs_inf, poly_t * poly_inf)
 {
    unsigned long s = poly_inf->s;
    unsigned long * A_ind = poly_inf->A_ind;
@@ -299,7 +299,7 @@ void compute_B_terms(QS_t * qs_inf, poly_t * poly_inf)
  
 ==========================================================================*/
 
-void compute_off_adj(QS_t * qs_inf, poly_t * poly_inf)
+void tiny_compute_off_adj(QS_t * qs_inf, poly_t * poly_inf)
 {
    unsigned long num_primes = qs_inf->num_primes;
    unsigned long A = poly_inf->A;
@@ -354,7 +354,7 @@ void compute_off_adj(QS_t * qs_inf, poly_t * poly_inf)
              hypercube method
  
 ==========================================================================*/
-void compute_A_factor_offsets(QS_t * qs_inf, poly_t * poly_inf)
+void tiny_compute_A_factor_offsets(QS_t * qs_inf, poly_t * poly_inf)
 {
    unsigned long s = poly_inf->s;
    unsigned long * A_ind = poly_inf->A_ind;
@@ -410,7 +410,7 @@ void compute_A_factor_offsets(QS_t * qs_inf, poly_t * poly_inf)
  
 ==========================================================================*/
 
-void compute_C(QS_t * qs_inf, poly_t * poly_inf)
+void tiny_compute_C(QS_t * qs_inf, poly_t * poly_inf)
 {
    unsigned long A = poly_inf->A;
    unsigned long B = poly_inf->B;

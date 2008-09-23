@@ -54,7 +54,8 @@ void poly_init(QS_t * qs_inf, poly_t * poly_inf, mpz_t N)
 {
    unsigned long num_primes = qs_inf->num_primes;
    unsigned long s = (qs_inf->bits-1)/28+1;
-   prime_t * factor_base = qs_inf->factor_base;
+   if (s <= 2) s = 3;
+	prime_t * factor_base = qs_inf->factor_base;
    unsigned long fact_approx, fact, span;
    unsigned long sieve_size = qs_inf->sieve_size;
    unsigned long small_primes = qs_inf->small_primes;
@@ -107,8 +108,8 @@ void poly_init(QS_t * qs_inf, poly_t * poly_inf, mpz_t N)
    span = num_primes/s/s/2;
    if (span < 6*s) span = 6*s;
    min = fact - span/2;
-   if (min < small_primes) min = small_primes;
-   if (min + span >= qs_inf->num_primes) span = num_primes - min - 1;
+   if (min < (long) small_primes) min = small_primes;
+   if (min + span >= qs_inf->num_primes - 1) span = num_primes - min - 1;
    fact = min + span/2;
 
 #if POLY_PARAMS   

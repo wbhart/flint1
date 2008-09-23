@@ -46,7 +46,7 @@
  
 ==========================================================================*/
 
-unsigned long num_FB_primes(unsigned long bits)
+unsigned long tiny_num_FB_primes(unsigned long bits)
 {
    unsigned long i;
    
@@ -66,12 +66,12 @@ unsigned long num_FB_primes(unsigned long bits)
  
 ==========================================================================*/
 
-void sqrts_init(QS_t * qs_inf)
+void tiny_sqrts_init(QS_t * qs_inf)
 {
    qs_inf->sqrts = (uint32_t *) flint_stack_alloc_bytes(sizeof(uint32_t)*qs_inf->num_primes);
 }
 
-void sqrts_clear(void)
+void tiny_sqrts_clear(void)
 {
    flint_stack_release();
 }
@@ -84,16 +84,16 @@ void sqrts_clear(void)
  
 ==========================================================================*/
 
-void primes_init(QS_t * qs_inf)
+void tiny_primes_init(QS_t * qs_inf)
 {
    unsigned long bits = qs_inf->bits; // set bits to the number of bits of kn
    
-   qs_inf->num_primes = num_FB_primes(bits); 
+   qs_inf->num_primes = tiny_num_FB_primes(bits); 
    
    qs_inf->factor_base = (prime_t *) flint_stack_alloc_bytes(qs_inf->num_primes*sizeof(prime_t));
 }
 
-void primes_clear(void)
+void tiny_primes_clear(void)
 {
    flint_stack_release();
 }
@@ -104,7 +104,7 @@ void primes_clear(void)
    Function: Computes the size in bits of each prime in the factor base
  
 ===========================================================================*/
-void compute_sizes(QS_t * qs_inf)
+void tiny_compute_sizes(QS_t * qs_inf)
 {
      unsigned long num_primes = qs_inf->num_primes;
      
@@ -120,7 +120,7 @@ void compute_sizes(QS_t * qs_inf)
      return;
 }
 
-void sizes_clear(void)
+void tiny_sizes_clear(void)
 {
    flint_stack_release();
 }
@@ -141,7 +141,7 @@ void sizes_clear(void)
  
 ==========================================================================*/
 
-unsigned long knuth_schroeppel(QS_t * qs_inf)
+unsigned long tiny_knuth_schroeppel(QS_t * qs_inf)
 {
     float best_factor = -10.0f;
     unsigned long multiplier = 1;
@@ -215,13 +215,13 @@ unsigned long knuth_schroeppel(QS_t * qs_inf)
 ==========================================================================*/
 
 
-unsigned long compute_factor_base(QS_t * qs_inf)
+unsigned long tiny_compute_factor_base(QS_t * qs_inf)
 {
    unsigned long fb_prime = 2;
    unsigned long multiplier = qs_inf->k;
    prime_t * factor_base = qs_inf->factor_base;
    uint32_t * sqrts = qs_inf->sqrts;
-   unsigned long num_primes = num_FB_primes(qs_inf->bits);
+   unsigned long num_primes = tiny_num_FB_primes(qs_inf->bits);
    unsigned long prime, nmod;
    double pinv;
    fmpz_t n = qs_inf->n;

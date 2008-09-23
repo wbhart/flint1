@@ -65,14 +65,14 @@ typedef struct linalg_s
    la_col_t ** qsort_arr; // An array of pointers to the unmerged relations for quicksort
 } linalg_t;
 
-void linear_algebra_init(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly_inf);
+void tiny_linear_algebra_init(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly_inf);
    
-void linear_algebra_clear(linalg_t * la_inf, QS_t * qs_inf);
+void tiny_linear_algebra_clear(linalg_t * la_inf, QS_t * qs_inf);
 
-unsigned long merge_sort(linalg_t * la_inf);
+unsigned long tiny_merge_sort(linalg_t * la_inf);
       
-unsigned long merge_relations(linalg_t * la_inf);
+unsigned long tiny_merge_relations(linalg_t * la_inf);
 
-unsigned long insert_relation(linalg_t * la_inf, poly_t * poly_inf, mpz_t Y);
+unsigned long tiny_insert_relation(linalg_t * la_inf, poly_t * poly_inf, mpz_t Y);
 
 #endif

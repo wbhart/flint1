@@ -39,12 +39,15 @@
 #include "../flint.h"
 #include "../mpn_extras.h"
 
+#include "common.h"
 #include "mpQS.h"
 #include "mp_factor_base.h"
 #include "mp_poly.h"
+#include "mp_lprels.h"
 #include "mp_sieve.h"
 #include "mp_linear_algebra.h"
 #include "block_lanczos.h"
+#include "tinyQS.h"
 
 /*===========================================================================
    Square Root:
@@ -262,8 +265,9 @@ int F_mpz_factor_mpQS(F_mpz_factor_t factors, mpz_t N)
    linalg_t la_inf;
    
    qs_inf.bits = mpz_sizeinbase(N,2);
-   if (qs_inf.bits < MINBITS) return 0; // Number too small for mpQS 
-   
+   if (qs_inf.bits <= TINY_BITS) 
+		return F_mpz_factor_tinyQS(factors, N); // Better to use tinyQS 
+
    prec = (qs_inf.bits + max_mult_size - 1)/FLINT_BITS + 1;
    
    qs_inf.n = (fmpz_t) flint_stack_alloc(prec+1);
@@ -273,20 +277,29 @@ int F_mpz_factor_mpQS(F_mpz_factor_t factors, mpz_t N)
    qs_inf.prec = (prec + 1)/2;
    
    small_factor = knuth_schroeppel(&qs_inf); // Compute multiplier and some FB primes
-   if (small_factor) goto cleanup_2;
-
+   
+	mpz_init(qs_inf.mpz_n);
+   mpz_set(qs_inf.mpz_n, N);
+   
+	if (small_factor) 
+	{
+		printf("FACTORS:\n");
+		printf("%ld\n", small_factor);
+		mpz_div_ui(qs_inf.mpz_n, N, small_factor);
+		gmp_printf("%Zd\n", qs_inf.mpz_n);
+		goto cleanup_2;
+	}
+	
 #if QS_INFO
    printf("Multiplier = %ld\n", qs_inf.k);
 #endif
    
-   mpz_init(qs_inf.mpz_n);
-   mpz_set(qs_inf.mpz_n, N);
    mpz_mul_ui(qs_inf.mpz_n, qs_inf.mpz_n, qs_inf.k);
    qs_inf.bits = mpz_sizeinbase(qs_inf.mpz_n, 2);
    if (qs_inf.bits < MINBITS) 
    {
       small_factor = 0; // Number too small for mpQS 
-      goto cleanup_1a;
+      goto cleanup_2;
    }
    mpz_to_fmpz(qs_inf.n, qs_inf.mpz_n); // set n to the number to be factored times k
    
@@ -295,13 +308,21 @@ int F_mpz_factor_mpQS(F_mpz_factor_t factors, mpz_t N)
       
    if (qs_inf.bits < MINBITS) 
    {
-      small_factor = 0; // kn too big for tinyQS
+      small_factor = 0; // kn too small for mpQS
       goto cleanup_1;
    }
    
    small_factor = compute_factor_base(&qs_inf); // Computes the factor base primes and modular square roots
-   if (small_factor) goto cleanup_1;
-   compute_sizes(&qs_inf);
+   if (small_factor) 
+	{
+		printf("FACTORS:\n");
+		printf("%ld\n", small_factor);
+		mpz_div_ui(qs_inf.mpz_n, N, small_factor);
+		gmp_printf("%Zd\n", qs_inf.mpz_n);
+		goto cleanup_1;
+	}
+	
+	compute_sizes(&qs_inf);
    get_sieve_params(&qs_inf);
    
    poly_init(&qs_inf, &poly_inf, N);
@@ -352,7 +373,7 @@ int F_mpz_factor_mpQS(F_mpz_factor_t factors, mpz_t N)
    mpz_set(F, N);
     
 #if PRINT_FACTORS
-   gmp_printf("Factors of %Zd:\n", N);
+   printf("FACTORS:\n");
 #endif
 
    for (unsigned long l = 0; l < 64; l++)
@@ -377,7 +398,12 @@ int F_mpz_factor_mpQS(F_mpz_factor_t factors, mpz_t N)
       }
    }
    
-   small_factor = 1; // sieve was successful
+	flint_remove("comb");
+   flint_remove("lprels");
+   flint_remove("lpnew");
+
+   free(nullrows);
+	small_factor = 1; // sieve was successful
    mpz_clear(Q);
    mpz_clear(R);
    mpz_clear(F);
@@ -390,9 +416,8 @@ int F_mpz_factor_mpQS(F_mpz_factor_t factors, mpz_t N)
 cleanup_1:
    sqrts_clear(); // release modular square roots
    primes_clear(); // release factor_base
-cleanup_1a:
-   mpz_clear(qs_inf.mpz_n);
 cleanup_2:
+   mpz_clear(qs_inf.mpz_n);
    flint_stack_release(); // release n
    
    return small_factor;    
@@ -412,7 +437,7 @@ int main(int argc, char *argv[])
     
     F_mpz_factor_t factors;
     
-    printf("Input number to factor [ >= 17 decimal digits ] : "); 
+    printf("Input number to factor [ > 24 bits ] : "); 
     gmp_scanf("%Zd", N); getchar();
     
     F_mpz_factor_mpQS(factors, N);
@@ -433,14 +458,21 @@ int main(int argc, char *argv[])
     unsigned long succeed = 0;
     unsigned long bits1, bits2, bits3, i;
     
-    for (i = 0; i < 10000; i++)
+    for (i = 0; i < 1000; )
     {
        printf("i = %ld\n", i);
+#if FLINT_BITS == 64
 		 bits1 = z_randint(50UL)+12UL;
        bits2 = z_randint(50UL)+12UL;
        bits3 = z_randint(50UL)+12UL;
-       if (bits1 + bits2 + bits3 > 64)
+#else
+		 bits1 = z_randint(20UL)+12UL;
+       bits2 = z_randint(20UL)+12UL;
+       bits3 = z_randint(20UL)+12UL;
+#endif
+       if (bits1 + bits2 + bits3 > 24)
 		 {
+			 i++;
 			 mpz_set_ui(N, z_nextprime(z_randbits(bits1)+1UL));
           mpz_mul_ui(N, N, z_nextprime(z_randbits(bits2)+1UL));
           mpz_mul_ui(N, N, z_nextprime(z_randbits(bits3)+1UL));

@@ -52,7 +52,7 @@
 
 ===========================================================================*/
 
-static inline void square_root(mpz_t X, mpz_t Y, QS_t * qs_inf, linalg_t * la_inf, 
+static inline void tiny_square_root(mpz_t X, mpz_t Y, QS_t * qs_inf, linalg_t * la_inf, 
    uint64_t * nullrows, unsigned long ncols, unsigned long l, mpz_t N)
 {
    unsigned long position;
@@ -117,7 +117,7 @@ static inline void square_root(mpz_t X, mpz_t Y, QS_t * qs_inf, linalg_t * la_in
 
 ===========================================================================*/
 
-unsigned long collect_relations(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve)
+unsigned long tiny_collect_relations(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve)
 {
    unsigned long s = poly_inf->s;
    unsigned long * poly_corr;
@@ -126,11 +126,11 @@ unsigned long collect_relations(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly_
    unsigned long poly_index, j;
    unsigned long poly_add;
    
-   compute_A(qs_inf, poly_inf);
-   compute_B_terms(qs_inf, poly_inf);
-   compute_off_adj(qs_inf, poly_inf);
-   compute_A_factor_offsets(qs_inf, poly_inf);
-   compute_C(qs_inf, poly_inf);          
+   tiny_compute_A(qs_inf, poly_inf);
+   tiny_compute_B_terms(qs_inf, poly_inf);
+   tiny_compute_off_adj(qs_inf, poly_inf);
+   tiny_compute_A_factor_offsets(qs_inf, poly_inf);
+   tiny_compute_C(qs_inf, poly_inf);          
    
    for (poly_index = 1; poly_index < (1<<(s-1)); poly_index++)
    {
@@ -143,21 +143,21 @@ unsigned long collect_relations(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly_
       
       poly_corr = A_inv2B[j];
            
-      do_sieving(qs_inf, poly_inf, sieve);
+      tiny_do_sieving(qs_inf, poly_inf, sieve);
       
-      relations += evaluate_sieve(la_inf, qs_inf, poly_inf, sieve);
+      relations += tiny_evaluate_sieve(la_inf, qs_inf, poly_inf, sieve);
       
-      update_offsets(poly_add, poly_corr, qs_inf, poly_inf);
+      tiny_update_offsets(poly_add, poly_corr, qs_inf, poly_inf);
       
       if (poly_add) poly_inf->B += (2*poly_inf->B_terms[j]); 
       else poly_inf->B -= (2*poly_inf->B_terms[j]); 
       
-      compute_C(qs_inf, poly_inf);          
+      tiny_compute_C(qs_inf, poly_inf);          
       
-      compute_A_factor_offsets(qs_inf, poly_inf);    
+      tiny_compute_A_factor_offsets(qs_inf, poly_inf);    
    }
    
-   relations += merge_relations(la_inf);
+   relations += tiny_merge_relations(la_inf);
    
    return relations;
 }
@@ -193,8 +193,15 @@ int F_mpz_factor_tinyQS(F_mpz_factor_t factors, mpz_t N)
 #if DEBUG
 	printf("Knuth Schroepel\n");
 #endif
-	small_factor = knuth_schroeppel(&qs_inf); // Compute multiplier and some FB primes
-   if (small_factor) goto cleanup_2;
+	small_factor = tiny_knuth_schroeppel(&qs_inf); // Compute multiplier and some FB primes
+   if (small_factor) 
+	{
+		printf("FACTORS:\n");
+		printf("%ld\n", small_factor);
+		mpz_div_ui(qs_inf.mpz_n, N, small_factor);
+		gmp_printf("%Zd\n", qs_inf.mpz_n); 
+		goto cleanup_2;
+	}
 
 #if QS_INFO
    printf("Multiplier = %ld\n", qs_inf.k);
@@ -213,8 +220,8 @@ int F_mpz_factor_tinyQS(F_mpz_factor_t factors, mpz_t N)
 #if DEBUG
    printf("Init\n");
 #endif
-	primes_init(&qs_inf);
-   sqrts_init(&qs_inf);
+	tiny_primes_init(&qs_inf);
+   tiny_sqrts_init(&qs_inf);
       
    if (qs_inf.bits > MAXBITS) 
    {
@@ -225,18 +232,29 @@ int F_mpz_factor_tinyQS(F_mpz_factor_t factors, mpz_t N)
 #if DEBUG
    printf("Compute factor base\n");
 #endif
-	small_factor = compute_factor_base(&qs_inf); // Computes the factor base primes and modular square roots
-   if (small_factor) goto cleanup_1;
-   compute_sizes(&qs_inf);
+	small_factor = tiny_compute_factor_base(&qs_inf); // Computes the factor base primes and modular square roots
+   if (small_factor) 
+	{
+		printf("FACTORS:\n");
+		printf("%ld\n", small_factor);
+		mpz_t temp;
+		mpz_init(temp);
+		mpz_div_ui(temp, N, small_factor);
+		gmp_printf("%Zd\n", temp); 
+		mpz_clear(temp);
+		goto cleanup_1;
+	}
+
+   tiny_compute_sizes(&qs_inf);
    
 #if DEBUG
    printf("Initialise polys\n");
 #endif
-	poly_init(&qs_inf, &poly_inf, N);
+	tiny_poly_init(&qs_inf, &poly_inf, N);
 #if DEBUG
    printf("Initialise linear algebra\n");
 #endif
-	linear_algebra_init(&la_inf, &qs_inf, &poly_inf);
+	tiny_linear_algebra_init(&la_inf, &qs_inf, &poly_inf);
    
 #if DEBUG
    printf("Collect relations\n");
@@ -244,7 +262,7 @@ int F_mpz_factor_tinyQS(F_mpz_factor_t factors, mpz_t N)
 	unsigned char * sieve = (unsigned char *) flint_stack_alloc_bytes(SIEVE_SIZE+1);
    while (rels_found < qs_inf.num_primes + EXTRA_RELS)
    {
-      rels_found += collect_relations(&la_inf, &qs_inf, &poly_inf, sieve);
+      rels_found += tiny_collect_relations(&la_inf, &qs_inf, &poly_inf, sieve);
    }
    flint_stack_release(); // release sieve
    
@@ -291,7 +309,7 @@ int F_mpz_factor_tinyQS(F_mpz_factor_t factors, mpz_t N)
    mpz_set(F, N);
     
 #if PRINT_FACTORS
-   gmp_printf("Factors of %Zd:\n", N);
+   printf("FACTORS:\n");
 #endif
 
 #if DEBUG
@@ -301,7 +319,7 @@ int F_mpz_factor_tinyQS(F_mpz_factor_t factors, mpz_t N)
    {
       if (mask & ((uint64_t)(1) << l))
       {
-         square_root(X, Y, &qs_inf, &la_inf, nullrows, ncols, l, N); 
+         tiny_square_root(X, Y, &qs_inf, &la_inf, nullrows, ncols, l, N); 
          mpz_sub(X, X, Y);
          mpz_gcd(X, X, N);
          if ((mpz_cmp(X, N) != 0) && (mpz_cmp_ui(X, 1) != 0))
@@ -320,18 +338,19 @@ int F_mpz_factor_tinyQS(F_mpz_factor_t factors, mpz_t N)
    }
    
    small_factor = 1; // sieve was successful
-   mpz_clear(Q);
+   free(nullrows);
+	mpz_clear(Q);
    mpz_clear(R);
    mpz_clear(F);
    mpz_clear(X);
    mpz_clear(Y);
    flint_stack_release(); // release prime_count
-   linear_algebra_clear(&la_inf, &qs_inf);
-   poly_clear(&poly_inf);
-   sizes_clear();
+   tiny_linear_algebra_clear(&la_inf, &qs_inf);
+   tiny_poly_clear(&poly_inf);
+   tiny_sizes_clear();
 cleanup_1:
-   sqrts_clear(); // release modular square roots
-   primes_clear(); // release factor_base
+   tiny_sqrts_clear(); // release modular square roots
+   tiny_primes_clear(); // release factor_base
 cleanup_2:
    flint_stack_release(); // release n
    mpz_clear(qs_inf.mpz_n);
@@ -361,7 +380,7 @@ cleanup_2:
     mpz_clear(N);
 }*/
 
-int main(int argc, char *argv[])
+/*int main(int argc, char *argv[])
 {
     mpz_t N, rem, sqrt;
     mpz_init(N); 
@@ -375,7 +394,7 @@ int main(int argc, char *argv[])
     unsigned long succeed = 0;
     unsigned long bits1, bits2, i;
     
-    for (i = 0; i < 100000; i++)
+    for (i = 0; i < 10000; i++)
     {
        printf("i = %ld\n", i);
 		 do
@@ -412,4 +431,4 @@ int main(int argc, char *argv[])
     mpz_clear(N);
     mpz_clear(rem);
     mpz_clear(sqrt);
-}
+}*/

@@ -56,18 +56,18 @@ typedef struct poly_s
     unsigned long * B_terms;
 } poly_t;
 
-void poly_init(QS_t * qs_inf, poly_t * poly_inf, mpz_t N);
+void tiny_poly_init(QS_t * qs_inf, poly_t * poly_inf, mpz_t N);
 
-void poly_clear(poly_t * poly_inf);
+void tiny_poly_clear(poly_t * poly_inf);
 
-void compute_A(QS_t * qs_inf, poly_t * poly_inf);
+void tiny_compute_A(QS_t * qs_inf, poly_t * poly_inf);
 
-void compute_B_terms(QS_t * qs_inf, poly_t * poly_inf);
+void tiny_compute_B_terms(QS_t * qs_inf, poly_t * poly_inf);
 
-void compute_C(QS_t * qs_inf, poly_t * poly_inf);
+void tiny_compute_C(QS_t * qs_inf, poly_t * poly_inf);
 
-void compute_off_adj(QS_t * qs_inf, poly_t * poly_inf);
+void tiny_compute_off_adj(QS_t * qs_inf, poly_t * poly_inf);
 
-void compute_A_factor_offsets(QS_t * qs_inf, poly_t * poly_inf);
+void tiny_compute_A_factor_offsets(QS_t * qs_inf, poly_t * poly_inf);
 
 #endif

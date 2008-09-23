@@ -46,7 +46,7 @@
  
 ==========================================================================*/
 
-void linear_algebra_init(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly_inf)
+void tiny_linear_algebra_init(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly_inf)
 {
    la_col_t * matrix;
    mpz_t * Y_arr;
@@ -76,7 +76,7 @@ void linear_algebra_init(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly_inf)
    la_inf->num_relations = 0;
 }
    
-void linear_algebra_clear(linalg_t * la_inf, QS_t * qs_inf)
+void tiny_linear_algebra_clear(linalg_t * la_inf, QS_t * qs_inf)
 {
    la_col_t * matrix = la_inf->matrix;
    la_col_t * unmerged = la_inf->unmerged;
@@ -113,7 +113,7 @@ void linear_algebra_clear(linalg_t * la_inf, QS_t * qs_inf)
    Function: Compare two relations; used by qsort
  
 ==========================================================================*/
-int relations_cmp(const void *a, const void *b)
+int tiny_relations_cmp(const void *a, const void *b)
 {
   la_col_t * ra = *((la_col_t **) a);
   la_col_t * rb = *((la_col_t **) b);
@@ -132,7 +132,7 @@ int relations_cmp(const void *a, const void *b)
   else if (ra->data[point] < rb->data[point]) return -1;
 }
 
-int relations_cmp2(const void *a, const void *b)
+int tiny_relations_cmp2(const void *a, const void *b)
 {
   la_col_t * ra = (la_col_t *) a;
   la_col_t * rb = (la_col_t *) b;
@@ -161,7 +161,7 @@ int relations_cmp2(const void *a, const void *b)
    
 ===========================================================================*/
 
-unsigned long merge_sort(linalg_t * la_inf)
+unsigned long tiny_merge_sort(linalg_t * la_inf)
 {
    la_col_t * matrix = la_inf->matrix;
    long columns = la_inf->columns;
@@ -178,7 +178,7 @@ unsigned long merge_sort(linalg_t * la_inf)
       else if (!num_unmerged) comp = 1;
       else 
       {
-         comp = relations_cmp2(matrix + columns - 1L, qsort_arr[num_unmerged - 1L]);
+         comp = tiny_relations_cmp2(matrix + columns - 1L, qsort_arr[num_unmerged - 1L]);
       }
       switch (comp)
       {
@@ -237,7 +237,7 @@ unsigned long merge_sort(linalg_t * la_inf)
    
 ===========================================================================*/
 
-unsigned long merge_relations(linalg_t * la_inf)
+unsigned long tiny_merge_relations(linalg_t * la_inf)
 {
    const unsigned long num_unmerged = la_inf->num_unmerged;
    la_col_t * unmerged = la_inf->unmerged;
@@ -249,9 +249,9 @@ unsigned long merge_relations(linalg_t * la_inf)
       {
          qsort_arr[i] = unmerged + i;
       }
-      qsort(qsort_arr, num_unmerged, sizeof(la_col_t *), relations_cmp);
+      qsort(qsort_arr, num_unmerged, sizeof(la_col_t *), tiny_relations_cmp);
 
-      return merge_sort(la_inf);
+      return tiny_merge_sort(la_inf);
    }
    
    return 0;
@@ -264,7 +264,7 @@ unsigned long merge_relations(linalg_t * la_inf)
    
 ===========================================================================*/
 
-unsigned long insert_relation(linalg_t * la_inf, poly_t * poly_inf, mpz_t Y)
+unsigned long tiny_insert_relation(linalg_t * la_inf, poly_t * poly_inf, mpz_t Y)
 {
    la_col_t * unmerged = la_inf->unmerged;
    unsigned long num_unmerged = la_inf->num_unmerged;
@@ -307,7 +307,7 @@ unsigned long insert_relation(linalg_t * la_inf, poly_t * poly_inf, mpz_t Y)
    
    if (la_inf->num_unmerged == 100)
    {
-      return merge_relations(la_inf);
+      return tiny_merge_relations(la_inf);
    }
    
    return 0;

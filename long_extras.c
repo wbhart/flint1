@@ -31,6 +31,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <stdint.h>
+#include <math.h>
 #include <gmp.h>
 #include "flint.h"
 #include "long_extras.h"
@@ -1603,7 +1604,7 @@ unsigned long z_factor_partial_trial(factor_t * factors, unsigned long * prod, u
          factors->p[num_factors] = primes[i];
          factors->exp[num_factors] = exp;
          num_factors++;
-		 *prod *= z_pow(primes[i], exp);
+		   *prod *= z_pow(primes[i], exp);
 		 if (*prod > limit) break;
       }  
    }
@@ -1627,7 +1628,6 @@ unsigned long z_factor_partial(factor_t * factors, unsigned long n, unsigned lon
 	unsigned long factor;
    
 	cofactor = z_factor_partial_trial(factors, &prod, n, limit);
-	if (n == 1) printf("%ld, %ld, %ld, %ld, %ld\n", n, prod, limit, cofactor, factors->num);
 	if (prod != n && prod <= limit)
 	{
 		factor = factor_arr[0] = cofactor;

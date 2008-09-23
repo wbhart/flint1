@@ -1259,7 +1259,7 @@ int test_z_factor_partial()
 #if FLINT_BITS == 64
 		 n = z_randint(z_pow(10, 17))+1;
 #else
-		 n = z_randint(-1L)+1;
+		 n = z_randint(z_pow(2, 28))+1;
 #endif
 	  } while (z_isprime(n));
 
@@ -1272,11 +1272,11 @@ int test_z_factor_partial()
 		 out*=z_pow(factors.p[j], factors.exp[j]);
 	  }
 
-	  if (out*cofactor != n || out <= limit) 
+	  if ((cofactor) && (out*cofactor != n || out <= limit))
 	  {
 		 result = 0;
 #if DEBUG2
-		 printf("failed to factor %ld got to %ld\n", n, out);
+		 printf("failed to factor %ld got to %ld, limit = %ld\n", n, out, limit);
 		 for (int j = 0; j < factors.num; j++)
 		 {
 			printf("%ld^%ld ", factors.p[j], factors.exp[j]);

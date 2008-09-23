@@ -81,13 +81,32 @@ FILE * flint_fopen(char * name, char * mode)
   char * tmp_dir = getenv("TMPDIR");
 #endif
   if (tmp_dir == NULL) tmp_dir = "./";
-  FILE * temp_file = fopen(get_filename(tmp_dir,unique_filename(name)),mode);
+  char * unique = unique_filename(name);
+  char * full_name = get_filename(tmp_dir, unique);
+  FILE * temp_file = fopen(full_name, mode);
   if (!temp_file)
   {
      printf("Unable to open temporary file\n");
      abort();
   }
+  free(unique);
+  free(full_name);
   return temp_file;
+}
+
+void flint_remove(char * name)
+{
+	#if defined(WINCE) || defined(macintosh)
+  char * tmp_dir = NULL;
+#else
+  char * tmp_dir = getenv("TMPDIR");
+#endif
+  if (tmp_dir == NULL) tmp_dir = "./";
+  char * unique = unique_filename(name);
+  char * full_name = get_filename(tmp_dir, unique);
+  remove(full_name);
+  free(unique);
+  free(full_name);
 }
 
 /* 
@@ -498,8 +517,12 @@ long mergesort_lp_file(char *REL_str, char *NEW_str, char *TMP_str, FILE *COMB)
   char * tmp_dir = getenv("TMPDIR");
 #endif
   if (tmp_dir == NULL) tmp_dir = "./";
-  char * TMP_name = get_filename(tmp_dir,unique_filename(TMP_str));
-  char * REL_name = get_filename(tmp_dir,unique_filename(REL_str));
+  char * unique = unique_filename(TMP_str);
+  char * TMP_name = get_filename(tmp_dir, unique);
+  free(unique);
+  unique = unique_filename(REL_str);
+  char * REL_name = get_filename(tmp_dir, unique);
+  free(unique);
   FILE * TMP = fopen(TMP_name,"w");
   FILE * REL = fopen(REL_name,"r");
   if ((!TMP) || (!REL))
@@ -517,6 +540,8 @@ long mergesort_lp_file(char *REL_str, char *NEW_str, char *TMP_str, FILE *COMB)
      printf("Cannot rename file %s to %s", TMP_str, REL_str);
      abort();
   } 
+  free(TMP_name);
+  free(REL_name);
   return tp;
 }
 
@@ -631,6 +656,7 @@ unsigned long combine_large_primes(QS_t * qs_inf, linalg_t * la_inf, poly_t * po
     }
     mpz_set(factor, inv_q);
     free(ei);
+    mpz_clear(inv_q); mpz_clear(Y1); mpz_clear(Y2); mpz_clear(new_Y); mpz_clear(new_Y1);
     return c;
   }
   gmp_sscanf(e[0].Y, "%Zd", Y1);
@@ -653,6 +679,7 @@ unsigned long combine_large_primes(QS_t * qs_inf, linalg_t * la_inf, poly_t * po
         }
         mpz_set(factor, inv_q);
         free(ei);
+        mpz_clear(inv_q); mpz_clear(Y1); mpz_clear(Y2); mpz_clear(new_Y); mpz_clear(new_Y1);
         return c;
       }
       gmp_sscanf(e[i].Y, "%Zd", Y1);

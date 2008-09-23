@@ -39,7 +39,7 @@
 #include "poly.h"
 #include "linear_algebra.h"
 
-void do_sieving(QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve)
+void tiny_do_sieving(QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve)
 {
    unsigned long num_primes = qs_inf->num_primes;
    unsigned long * soln1 = poly_inf->soln1;
@@ -90,7 +90,7 @@ void do_sieving(QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve)
    }
 }
 
-void update_offsets(unsigned long poly_add, unsigned long * poly_corr, 
+void tiny_update_offsets(unsigned long poly_add, unsigned long * poly_corr, 
              QS_t * qs_inf, poly_t * poly_inf)
 {
    unsigned long num_primes = qs_inf->num_primes;
@@ -118,7 +118,7 @@ void update_offsets(unsigned long poly_add, unsigned long * poly_corr,
 
 ===========================================================================*/
 
-unsigned long evaluate_candidate(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly_inf, 
+unsigned long tiny_evaluate_candidate(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly_inf, 
                           unsigned long i, unsigned char * sieve)
 {
    unsigned long bits, exp, extra_bits, modp, prime;
@@ -252,7 +252,7 @@ unsigned long evaluate_candidate(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly
             }
          }
          la_inf->num_factors = num_factors;
-         relations += insert_relation(la_inf, poly_inf, Y);  // Insert the relation in the matrix
+         relations += tiny_insert_relation(la_inf, poly_inf, Y);  // Insert the relation in the matrix
          if (la_inf->num_relations >= 2*(qs_inf->num_primes + EXTRA_RELS + 100))
          {
             printf("Error: too many duplicate relations!\n");
@@ -280,7 +280,7 @@ cleanup:
    Function: searches sieve for relations and sticks them into a matrix
 
 ===========================================================================*/
-unsigned long evaluate_sieve(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve)
+unsigned long tiny_evaluate_sieve(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve)
 {
    unsigned long i = 0;
    unsigned long j=0;
@@ -295,7 +295,7 @@ unsigned long evaluate_sieve(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly_inf
       {
          if (sieve[i] > 38) 
          {
-             rels += evaluate_candidate(la_inf, qs_inf, poly_inf, i, sieve);
+             rels += tiny_evaluate_candidate(la_inf, qs_inf, poly_inf, i, sieve);
          }
          i++;
       }
