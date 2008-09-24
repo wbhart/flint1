@@ -9365,3 +9365,297 @@ void fmpz_poly_resultant(fmpz_t res, fmpz_poly_t a, fmpz_poly_t b)
    fmpz_clear(proddiv2);
    fmpz_clear(prod);
 }
+
+/****************************************************************************
+
+   Derivative
+
+****************************************************************************/
+
+void fmpz_poly_derivative(fmpz_poly_t der, fmpz_poly_t poly)
+{
+	if (poly->length <= 1)
+	{
+		fmpz_poly_zero(der);
+		return;
+	}
+	
+	ulong bits = FLINT_ABS(_fmpz_poly_max_bits(poly));
+	bits += ceil_log2(poly->length);
+	fmpz_poly_fit_length(der, poly->length - 1);
+   fmpz_poly_fit_limbs(der, (bits - 1)/FLINT_BITS + 1);
+
+	ulong size_d = der->limbs + 1;
+	ulong size_p = poly->limbs + 1;
+   fmpz_t coeff_d = der->coeffs;
+	fmpz_t coeff_p = poly->coeffs + size_p;
+	
+	for (ulong i = 0; i < poly->length - 1; i++)
+	{
+		fmpz_mul_ui(coeff_d, coeff_p, i + 1);
+		coeff_d += size_d;
+		coeff_p += size_p;
+	}
+
+	der->length = poly->length - 1;
+}
+
+/****************************************************************************
+
+   Evaluation
+
+****************************************************************************/
+
+/*
+    Treat the n coefficients starting at the given coefficient of poly as a polynomial
+	 and evaluate this polynomial at the given value
+*/
+
+void fmpz_poly_evaluate_horner_range(fmpz_t output, fmpz_poly_t poly, fmpz_t val, ulong start, ulong n)
+{
+    if ((n == 0) || (val[0] == 0L))
+	 {
+		 output[0] = 0L;
+		 return;
+	 }
+
+	 if (n == 1)
+	 {
+		 fmpz_set(output, poly->coeffs + start*(poly->limbs+1));
+		 return;
+	 }
+
+	 ulong size_p = poly->limbs + 1;
+	 fmpz_t coeff_p = poly->coeffs + (start + n - 1)* size_p;
+	 
+	 fmpz_set(output, coeff_p); // set output to top coefficient
+
+	 if (val[0] == 1L)
+	 {
+		 if (val[1] == 1L) // special case, value == 1
+	    {
+		    for (long i = n - 2; i >= 0L; i--)
+		    {
+             coeff_p -= size_p;
+			    fmpz_add(output, output, coeff_p);
+		    }
+
+		    return;
+	    }
+
+		 // value is a positive single limb
+       ulong value = val[1];
+		 
+		 for (long i = n - 2; i >= 0L; i--)
+		 {
+          coeff_p -= size_p;
+			 fmpz_mul_ui(output, output, value);
+			 fmpz_add(output, output, coeff_p);
+		 }
+
+		 return;
+	 }
+
+	 if (val[0] == -1L)
+	 {
+		 if (val[1] == 1L) // special case, value == -1
+	    {
+		    long i;
+
+		    for (i = n - 2; i >= 1L; i-=2)
+		    {
+             coeff_p -= size_p;
+			    fmpz_sub(output, output, coeff_p);
+             coeff_p -= size_p;
+			    fmpz_add(output, output, coeff_p);
+		    }
+
+          if (i == 0) 
+		    {
+			    coeff_p -= size_p;
+			    fmpz_sub(output, output, coeff_p);
+			    output[0] = -output[0];
+		    }
+		    return;
+	    }
+
+		 // value is a negative single limb
+       ulong value = val[1];
+		 long i;
+
+		 for (i = n - 2; i >= 1L; i-=2)
+		 {
+          coeff_p -= size_p;
+			 fmpz_mul_ui(output, output, value);
+			 fmpz_sub(output, output, coeff_p);
+          coeff_p -= size_p;
+			 fmpz_mul_ui(output, output, value);
+			 fmpz_add(output, output, coeff_p);
+		 }
+		 
+		 if (i == 0)
+		 {
+			 coeff_p -= size_p;
+			 fmpz_mul_ui(output, output, value);
+			 fmpz_sub(output, output, coeff_p);
+          output[0] = -output[0];
+		 }
+
+		 return;
+	 }
+	 
+	 // value is more than one limb
+	 for (long i = n - 2; i >= 0L; i--)
+    {
+       coeff_p -= size_p;
+		 fmpz_mul(output, output, val);
+		 fmpz_add(output, output, coeff_p);
+	 }
+}
+
+void fmpz_poly_evaluate_divconquer(fmpz_t output, fmpz_poly_t poly, fmpz_t val)
+{
+	if ((poly->length == 0) || (val[0] == 0))
+	{
+		fmpz_set_ui(output, 0L);
+		return;
+	}
+
+	if (((FLINT_ABS(val[0]) == 1) && (val[1] == 1)) || (poly->length == 2))
+	{
+		fmpz_poly_evaluate_horner(output, poly, val);
+		return;
+	}
+
+	if (poly->length == 1)
+	{
+		fmpz_set(output, poly->coeffs);
+		return;
+	}
+
+	fmpz_poly_t half, temp;
+
+	ulong val_bits = fmpz_bits(val);
+	ulong bits = FLINT_ABS(fmpz_poly_max_bits(poly)) + val_bits;
+	fmpz_poly_init2(temp, (poly->length + 1)/2, bits/FLINT_BITS + 1);
+
+	ulong size_t = poly->limbs + 1;
+   ulong size_h = temp->limbs + 1;
+	fmpz_t coeff_t = poly->coeffs;
+	fmpz_t coeff_h = temp->coeffs;
+
+	for (ulong i = 0; i < poly->length/2; i++)
+	{
+		fmpz_mul(coeff_h, coeff_t + size_t, val);
+		fmpz_add(coeff_h, coeff_h, coeff_t);
+		coeff_t += (size_t*2);
+		coeff_h += size_h;
+	}
+
+	if (poly->length & 1) fmpz_set(coeff_h, coeff_t);
+	temp->length = (poly->length + 1)/2;
+
+	ulong log_iter = 1;
+	fmpz_t val_pow = fmpz_init((val_bits*(1L<<ceil_log2(poly->length)))/FLINT_BITS + 1);
+	fmpz_mul(val_pow, val, val);
+
+	while (temp->length > 2)
+	{
+		bits = FLINT_ABS(fmpz_poly_max_bits(temp)) + (val_bits<<log_iter);
+		fmpz_poly_init2(half, (temp->length + 1)/2, bits/FLINT_BITS + 1);
+
+		size_t = temp->limbs + 1;
+      size_h = half->limbs + 1;
+	   coeff_t = temp->coeffs;
+	   coeff_h = half->coeffs;
+
+		for (ulong i = 0; i < temp->length/2; i++)
+	   {
+		   fmpz_mul(coeff_h, coeff_t + size_t, val_pow);
+		   fmpz_add(coeff_h, coeff_h, coeff_t);
+		   coeff_t += (size_t*2);
+		   coeff_h += size_h;
+	   }
+
+		half->length = (temp->length + 1)/2;
+
+		fmpz_mul(val_pow, val_pow, val_pow);
+
+		if (temp->length & 1) fmpz_set(coeff_h, coeff_t);
+	
+		fmpz_poly_swap(half, temp);
+		fmpz_poly_clear(half);
+		log_iter++;
+	}
+   
+	fmpz_mul(output, temp->coeffs + temp->limbs + 1, val_pow);
+   fmpz_add(output, output, temp->coeffs);
+		
+	fmpz_poly_clear(temp);
+	fmpz_clear(val_pow);
+}
+
+void fmpz_poly_evaluate(fmpz_t output, fmpz_poly_t poly, fmpz_t val)
+{
+   if ((poly->length == 0) || (val[0] == 0)) 
+	{
+      output[0] = 0L;
+		return;
+	}
+
+	if (((FLINT_ABS(val[0]) == 1) && (val[1] == 1)) || (poly->length == 2))
+	{
+		fmpz_poly_evaluate_horner(output, poly, val);
+		return;
+	}
+
+	if (poly->length == 1)
+	{
+		fmpz_set(output, poly->coeffs);
+		return;
+	}
+
+	ulong eval_length;
+	ulong val_bits = fmpz_bits(val);
+	if (val_bits <= 6) eval_length = 256;
+	else if (val_bits <= 12) eval_length = 128;
+	else if (val_bits <= 128) eval_length = 64;
+	else 
+	{
+		fmpz_poly_evaluate_divconquer(output, poly, val);
+		return;
+	}
+
+	ulong bits = FLINT_ABS(fmpz_poly_max_bits(poly)) + val_bits*eval_length;
+	ulong short_length = (poly->length - 1)/eval_length + 1;
+
+	fmpz_poly_t temp;
+	fmpz_poly_init2(temp, short_length, bits/FLINT_BITS + 1);
+
+	fmpz_t coeff_t = temp->coeffs;
+	ulong size_t = temp->limbs + 1;
+
+	long i;
+	for (i = 0; i < short_length - 1; i++)
+	{
+		fmpz_poly_evaluate_horner_range(coeff_t, poly, val, i*eval_length, eval_length);
+		coeff_t += size_t;
+	}
+   if (short_length == 1)
+		fmpz_poly_evaluate_horner(output, poly, val);
+	else
+	{
+		fmpz_poly_evaluate_horner_range(coeff_t, poly, val, i*eval_length, poly->length - i*eval_length);
+
+	   temp->length = short_length;
+
+	   fmpz_t val_pow = fmpz_init((val_bits*eval_length - 1)/FLINT_BITS + 1);
+	   fmpz_pow_ui(val_pow, val, eval_length);
+
+	   fmpz_poly_evaluate_divconquer(output, temp, val_pow);
+
+	   fmpz_clear(val_pow);
+	}
+	
+	fmpz_poly_clear(temp);
+}

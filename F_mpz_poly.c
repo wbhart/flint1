@@ -2289,7 +2289,7 @@ void _F_mpz_poly_mul_KS(F_mpz_poly_t output, const F_mpz_poly_t input1, const F_
   David Harvey's KS2 algorithm.
   This is faster than ordinary KS for about lengths 300-4000. (The overhead prevents it
   from being faster for smaller multiplications, the FFT's quasilinear run time prevents
-  it from being faster for larger coefficients).
+  it from being faster for larger lengths).
   It uses the identity f(x)*g(x) = (f(x)*g(x) + f(-x)*g(-x))/2 + (f(x)*g(x) - f(-x)*g(-x))/2
   to reduce multiplication to two half sized multiplications which is faster when the 
   multiplication is worse than quasi-linear time. The multiplications are half the size

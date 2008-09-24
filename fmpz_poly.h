@@ -1371,6 +1371,20 @@ void fmpz_poly_xgcd(fmpz_t r, fmpz_poly_t s, fmpz_poly_t t, fmpz_poly_t a, fmpz_
    fmpz_poly_xgcd_modular(r, s, t, a, b);
 }
 
+void fmpz_poly_derivative(fmpz_poly_t der, fmpz_poly_t poly);
+
+void fmpz_poly_evaluate_horner_range(fmpz_t output, fmpz_poly_t poly, fmpz_t val, ulong start, ulong n);
+
+static inline
+void fmpz_poly_evaluate_horner(fmpz_t output, fmpz_poly_t poly, fmpz_t val)
+{
+	fmpz_poly_evaluate_horner_range(output, poly, val, 0, poly->length);
+}
+
+void fmpz_poly_evaluate_divconquer(fmpz_t output, fmpz_poly_t poly, fmpz_t val);
+
+void fmpz_poly_evaluate(fmpz_t output, fmpz_poly_t poly, fmpz_t val);
+
 // *************** end of file
 
 #ifdef __cplusplus
