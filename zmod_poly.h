@@ -46,7 +46,7 @@
  extern "C" {
 #endif
 
-#define USE_MIDDLE_PRODUCT 0 // Middle product code currently has no proof 
+#define USE_MIDDLE_PRODUCT 1 // Middle product code currently has no proof 
                              // and so is not switched on by default
 
 typedef struct

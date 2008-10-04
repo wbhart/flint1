@@ -873,7 +873,7 @@ int test_zmod_poly_mul_KS_middle()
             randpoly(pol2, length2, modulus);
          
             zmod_poly_mul_KS_trunc(res1, pol1, pol2, 0, trunc);
-            for (unsigned long i = 0; i < (trunc-1)/2; i++)
+            for (unsigned long i = 0; i < trunc/2; i++)
                res1->coeffs[i] = 0L;
             zmod_poly_mul_KS_middle(res2, pol1, pol2, 0, trunc);
             

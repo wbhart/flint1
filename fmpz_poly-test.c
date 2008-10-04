@@ -37,9 +37,9 @@ Copyright (C) 2007, William Hart and David Harvey
 #include "test-support.h"
 #include "zmod_poly.h"
 
-#define VARY_BITS 1
-#define SIGNS 1
-#define SPARSE 1
+#define VARY_BITS 0
+#define SIGNS 0
+#define SPARSE 0
 
 #define TEST 1
 
@@ -11799,16 +11799,16 @@ int test_fmpz_poly_evaluate()
    
    mpz_poly_init(test_poly); 
    
-   for (unsigned long count1 = 1; (count1 < 200) && (result == 1) ; count1++)
+   for (unsigned long count1 = 0; (count1 < 300) && (result == 1) ; count1++)
    {
-      bits = random_ulong(200) + 1;
+      bits = 200;//random_ulong(200) + 1;
       
       fmpz_poly_init(test_fmpz_poly);
       
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
-          length = random_ulong(1000);
-			 bits2 = random_ulong(200) + 1;
+          length = 4000;//random_ulong(1000);
+			 bits2 = 20;//random_ulong(200) + 1;
 #if DEBUG
           printf("%ld, %ld\n",length, bits);
 #endif
@@ -11829,10 +11829,10 @@ int test_fmpz_poly_evaluate()
 				 eval = fmpz_init(test_fmpz_poly->limbs + (test_fmpz_poly->length - 1)*(bits2/FLINT_BITS + 1));
 			 else eval = fmpz_init(test_fmpz_poly->limbs);
 
-			 fmpz_poly_evaluate(eval, test_fmpz_poly, val);
-			 fmpz_to_mpz(ev1, eval);
+			 for (ulong j = 0; j < 10; j++) fmpz_poly_evaluate(eval, test_fmpz_poly, val);
+			 //fmpz_to_mpz(ev1, eval);
           
-			 if (test_poly->length == 0) result = (eval[0] == 0L);
+			 /*if (test_poly->length == 0) result = (eval[0] == 0L);
 			 else
 			 {
               mpz_set_ui(pow, 1);
@@ -11851,7 +11851,9 @@ int test_fmpz_poly_evaluate()
 			 {
 				 printf("length = %ld, bits = %ld, bits2 = %ld, val = ", length, bits, bits2);
 			    fmpz_print(val); printf("\n");
-			 }
+			 }*/
+
+			 result = 1;
 
 			 fmpz_clear(val);
 			 fmpz_clear(eval);
@@ -11878,6 +11880,7 @@ void fmpz_poly_test_all()
 #if TESTFILE
    RUN_TEST(fmpz_poly_freadprint); 
 #endif
+   RUN_TEST(fmpz_poly_evaluate); 
    RUN_TEST(fmpz_poly_tofromstring); 
    RUN_TEST(fmpz_poly_to_ZmodF_poly); 
    RUN_TEST(fmpz_poly_bit_pack); 

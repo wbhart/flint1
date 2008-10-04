@@ -954,6 +954,11 @@ mp_limb_t F_mpn_mul_precomp_trunc(mp_limb_t * res, mp_limb_t * data2, unsigned l
    return res[trunc-1];
 }
 
+/*
+   Multiply integers data1 of length limbs1 by data2 of length limbs2 and return limbs
+	[start... trunc) of the output assuming that limbs2 <= limbs1/2
+*/
+
 mp_limb_t __F_mpn_mul_middle(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1, 
                                       mp_limb_t * data2, unsigned long limbs2, 
                                       unsigned long start, unsigned long trunc)
@@ -1018,9 +1023,16 @@ mp_limb_t __F_mpn_mul_middle(mp_limb_t * res, mp_limb_t * data1, unsigned long l
       length1 = ((limbs1 << FLINT_LG_BITS_PER_LIMB)-1)/bits + 1;
       length2 = ((limbs2 << FLINT_LG_BITS_PER_LIMB)-1)/bits + 1;
       log_length2++;
-   } while ((length2 > (1L<<(log_length2))) || (length1 > (1L<<(log_length))));
+   } while ((length2 > (1L<<(log_length2))) || (length1 > (1L<<(log_length))) || (length1 + length2 > (1L<<log_length) + (1L<<(log_length-1))));
    
    n = (output_bits-1)/FLINT_BITS+1;
+
+	// We break limbs1 and limbs2 into length1 and length2 chunks of _bits_ bits 
+	// such that length1 <= 2^log_length and we set output_bits so that it is
+   // divisible by 2^(log_length-1) and >= 2*bits + log_length2
+	// we make nB >= output_bits
+	// we also ensure that no more than 1/3 of the product wraps around
+
 #if DEBUG
    printf("%ld, %ld, %ld, %ld, %ld, %ld, %ld\n", bits, length1, length2, output_bits, coeff_limbs, n, log_length);
 #endif   
@@ -1028,10 +1040,25 @@ mp_limb_t __F_mpn_mul_middle(mp_limb_t * res, mp_limb_t * data1, unsigned long l
    ZmodF_poly_stack_init(poly1, log_length, n, 1);
    F_mpn_FFT_split_bits(poly1, data1, limbs1, bits, n);
    
-   if ((data1 == data2) && (limbs1 == limbs2))
+	// we perform a convolution of length 2^log_length
+	// if length2 <= 2^(log_length-1) then the total length of a full product would be 
+	// < 2^log_length + 2^(log_length-1)
+	// as the FFT will wrap around, the bottom 2^(log_length-1)-1 terms may be messed up
+
+	// we are only interested in limbs [start, trunc) of the output and as each of the FFT
+	// coefficients will be staggered by _bits_ bits when added to the output, we are only
+	// interested in the terms (start*FLINT_BITS - output_bits)/bits-1 ... 
+	// (trunc*FLINT_BITS-1)/bits+1 of the output of the FFT
+	// note it is not (start*FLINT_BITS)/bits as the previous terms are output_bits wide 
+	// and so may overlap the limb we want 
+
+   long first_term = (start*FLINT_BITS - output_bits)/bits;
+	if (first_term < 0L) first_term = 0L;
+	
+	if ((data1 == data2) && (limbs1 == limbs2))
    {
       // identical operands case
-      ZmodF_poly_convolution_range(poly1, poly1, poly1, (start*FLINT_BITS)/bits-1, (trunc*FLINT_BITS-1)/bits+1);
+      ZmodF_poly_convolution_range(poly1, poly1, poly1, first_term, (trunc*FLINT_BITS-1)/bits+1);
    }
    else
    {
@@ -1040,7 +1067,7 @@ mp_limb_t __F_mpn_mul_middle(mp_limb_t * res, mp_limb_t * data1, unsigned long l
       ZmodF_poly_stack_init(poly2, log_length, n, 1);
       F_mpn_FFT_split_bits(poly2, data2, limbs2, bits, n);
 
-      ZmodF_poly_convolution_range(poly1, poly1, poly2, (start*FLINT_BITS)/bits-1, (trunc*FLINT_BITS-1)/bits+1);
+      ZmodF_poly_convolution_range(poly1, poly1, poly2, first_term, (trunc*FLINT_BITS-1)/bits+1);
 
       ZmodF_poly_stack_clear(poly2);
    }
@@ -1050,11 +1077,34 @@ mp_limb_t __F_mpn_mul_middle(mp_limb_t * res, mp_limb_t * data1, unsigned long l
    
    F_mpn_clear(res, trunc);
    
-   F_mpn_FFT_combine_bits(res, poly1, bits, n, trunc);
+   // When we combine the FFT terms it is possible that there is a carry out of the 
+	// top term which wrapped around, which may add 1 to the first limb we are interested in
+	// However suppose we are in the special case where the integers being multiplied are 
+	// Kronecker segmented versions of polynomials of length 2n and n respectively, where
+	// each coefficient is packed into _bits_ bits
+	// Then the top _bits_ bits of the product of the integers is necessarily 0, as the length 
+	// of the product is only 3n-1
+	// Thus to prove that a carry does not occur into the terms we are interested in, it is
+	// sufficient to note that the n-th term of the product cannot be 2^bits - 1 (the only
+	// situation where a carry from earlier overlaps could cause a carry out of the n-th term)
+	// Suppose the number of bits of the original coefficients of the polynomials is b and 
+	// that n <= 2^k so that 2*b + k <= bits
+	// Then the n-th coefficient of the product polynomial can be at most 2^k * (2^b-1)^2. QED.
+
+	F_mpn_FFT_combine_bits(res, poly1, bits, n, trunc);
    ZmodF_poly_stack_clear(poly1);
    
    return res[trunc-1];
 }
+
+/*
+   This function is intended to be used with F_mpn_mul_precomp_init
+	It computes the product as per __F_mpn_mul_middle, however there is no wrap around
+	of the FFT as F_mpn_mul_precomp_init precomputed the FFT for use with a full 
+	precomputed product
+	The saving here is that only the required coefficients are computed, and of course
+	the precomputed FFT can be reused
+*/
 
 mp_limb_t __F_mpn_mul_middle_precomp(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1, 
                                       F_mpn_precomp_t precomp, 
@@ -1065,12 +1115,14 @@ mp_limb_t __F_mpn_mul_middle_precomp(mp_limb_t * res, mp_limb_t * data1, unsigne
    F_mpn_FFT_split_bits(poly1, data1, limbs1, precomp->bits, precomp->poly->n);
    
    unsigned long length = precomp->poly->length + poly1->length - 1;
+	unsigned long log_length2 = ceil_log2(poly1->length);
+	unsigned long output_bits = 2*precomp->bits + log_length2;
    unsigned long size = (1L<<precomp->poly->depth);
    if (length > size) length = size;
    ZmodF_poly_FFT(poly1, length);
    ZmodF_poly_pointwise_mul(poly1, poly1, precomp->poly);
    ZmodF_poly_IFFT(poly1);
-   ZmodF_poly_rescale_range(poly1, (start*FLINT_BITS)/precomp->bits-1, (trunc*FLINT_BITS-1)/precomp->bits+1);
+   ZmodF_poly_rescale_range(poly1, (start*FLINT_BITS - output_bits)/precomp->bits, (trunc*FLINT_BITS-1)/precomp->bits+1);
    
    poly1->length = FLINT_MIN(poly1->length, (trunc*FLINT_BITS-1)/precomp->bits+1);
    ZmodF_poly_normalise(poly1);

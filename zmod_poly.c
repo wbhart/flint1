@@ -1798,6 +1798,15 @@ void _zmod_poly_mul_KS_precomp(zmod_poly_t output, zmod_poly_t input1, zmod_poly
 }
 
 #if USE_MIDDLE_PRODUCT
+/*
+   This function can be used with _zmod_poly_mul_KS_precomp_init (which actually
+	precomputes an FFT for a full product, not a middle product). The saving is that
+	only the middle terms of the product are actually computed (and the precomputed
+	FFT can be reused)
+	The terms that are computed are [trunc/2, trunc), thus if the product is 2n x n
+	and trunc is set to 2n, then terms [n, 2n) of the product will be computed
+*/
+
 void _zmod_poly_mul_KS_middle_precomp(zmod_poly_t output, zmod_poly_p input1, zmod_poly_precomp_t pre, unsigned long bits_input, unsigned long trunc)
 {   
    unsigned long length1 = FLINT_MIN(input1->length, trunc);
@@ -1834,7 +1843,7 @@ void _zmod_poly_mul_KS_middle_precomp(zmod_poly_t output, zmod_poly_p input1, zm
    res[limbs1+limbs2-1] = 0L;
    
    unsigned long output_length = FLINT_MIN(length1 + length2 - 1, trunc);
-   unsigned long start = (trunc-1)/2;
+   unsigned long start = trunc/2;
    
    __F_mpn_mul_middle_precomp(res, mpn1, limbs1, pre->precomp, (start*bits)/FLINT_BITS, (output_length*bits-1)/FLINT_BITS+1);
         
@@ -1848,6 +1857,12 @@ void _zmod_poly_mul_KS_middle_precomp(zmod_poly_t output, zmod_poly_p input1, zm
    __zmod_poly_normalise(output);
     
 }
+
+/*
+   Computes a middle product of two polynomials
+	The terms that are computed are [trunc/2, trunc), thus if the product is 2n x n
+	and trunc is set to 2n, then terms [n, 2n) of the product will be computed
+*/
 
 void _zmod_poly_mul_KS_middle(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p input2, unsigned long bits_input, unsigned long trunc)
 {   
@@ -1908,7 +1923,7 @@ void _zmod_poly_mul_KS_middle(zmod_poly_t output, zmod_poly_p input1, zmod_poly_
    res[limbs1+limbs2-1] = 0L;
    
    unsigned long output_length = FLINT_MIN(length1 + length2 - 1, trunc);
-   unsigned long start = (trunc-1)/2;
+   unsigned long start = trunc/2;
    
    __F_mpn_mul_middle(res, mpn1, limbs1, mpn2, limbs2, (start*bits)/FLINT_BITS, (output_length*bits-1)/FLINT_BITS+1);
          
