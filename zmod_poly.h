@@ -46,8 +46,7 @@
  extern "C" {
 #endif
 
-#define USE_MIDDLE_PRODUCT 1 // Middle product code currently has no proof 
-                             // and so is not switched on by default
+#define USE_MIDDLE_PRODUCT 1 
 
 typedef struct
 {
@@ -247,6 +246,9 @@ void _zmod_poly_attach(zmod_poly_t output, zmod_poly_t input)
    output->coeffs = input->coeffs;
    output->p = input->p;
    output->p_inv = input->p_inv;
+#if PREINV32
+	output->p32_inv = input->p32_inv;
+#endif
 }
 
 static inline 
@@ -268,6 +270,9 @@ void _zmod_poly_attach_shift(zmod_poly_t output,
    output->coeffs = input->coeffs + n;
    output->p = input->p;
    output->p_inv = input->p_inv;
+#if PREINV32
+	output->p32_inv = input->p32_inv;
+#endif
 }
 
 static inline 
@@ -290,6 +295,9 @@ void _zmod_poly_attach_truncate(zmod_poly_t output,
    output->coeffs = input->coeffs;
    output->p = input->p;
    output->p_inv = input->p_inv;
+#if PREINV32
+	output->p32_inv = input->p32_inv;
+#endif
    __zmod_poly_normalise(output);
 }
 

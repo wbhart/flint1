@@ -73,7 +73,7 @@ void zmod_poly_init2_precomp(zmod_poly_t poly, unsigned long p, double p_inv, un
    poly->p = p;
    poly->p_inv = p_inv;
 #if PREINV32
-   poly->p32_inv = z_precompute_inverse32(p);
+   if (FLINT_BIT_COUNT(p) <= 32) poly->p32_inv = z_precompute_inverse32(p);
 #endif
    
    poly->alloc = alloc;
@@ -190,7 +190,7 @@ int zmod_poly_from_string(zmod_poly_t poly, char* s)
    poly->p = p;
    poly->p_inv = z_precompute_inverse(p);
 #if PREINV32
-   poly->p32_inv = z_precompute_inverse32(p);
+   if (FLINT_BIT_COUNT(p) <= 32) poly->p32_inv = z_precompute_inverse32(p);
 #endif
 
    // jump to next whitespace
@@ -290,7 +290,7 @@ int zmod_poly_fread(zmod_poly_t poly, FILE* f)
    poly->p = p;
    poly->p_inv = z_precompute_inverse(p);
 #if PREINV32
-   poly->p32_inv = z_precompute_inverse32(p);
+   if (FLINT_BIT_COUNT(p) <= 32) poly->p32_inv = z_precompute_inverse32(p);
 #endif
    
    zmod_poly_fit_length(poly, length);
@@ -2229,10 +2229,8 @@ void _zmod_poly_bit_unpack_mpn(zmod_poly_t res, mp_limb_t * mpn, unsigned long l
 {
    unsigned long i;
    
-   //PRINT_VAR(bits);
-   
 #if FLINT_BITS == 64 && PREINV32
-   if (bits < 32)
+   if ((bits <= 32) && (FLINT_BIT_COUNT(res->p) <= 32))
    {
       unsigned long current_limb = 0;
       unsigned long current_bit = 0;
@@ -3592,7 +3590,7 @@ void zmod_poly_newton_invert(zmod_poly_t Q_inv, zmod_poly_t Q, unsigned long n)
    {
       zmod_poly_t Q_rev;
       zmod_poly_init2(Q_rev, Q->p, n);
-      _zmod_poly_reverse(Q_rev, Q, n);
+		_zmod_poly_reverse(Q_rev, Q, n);
       zmod_poly_newton_invert_basecase(Q_inv, Q_rev, n);
       zmod_poly_reverse(Q_inv, Q_inv, n);
       zmod_poly_clear(Q_rev);
@@ -4612,20 +4610,23 @@ unsigned long zmod_poly_factor(zmod_poly_factor_t result, zmod_poly_t input)
 {
    if (input->length == 0) return 0;
 	
-	//This will store all of the square-free factors
-   zmod_poly_factor_t sqfree_factors;
-   zmod_poly_factor_init(sqfree_factors);
-   zmod_poly_t monic_input;
+	zmod_poly_t monic_input;
    zmod_poly_init(monic_input, zmod_poly_modulus(input));
    
 	//Now we must make sure the input polynomial is monic. Get the highest coeff and store it then call make monic
    unsigned long leading_coeff = zmod_poly_get_coeff_ui(input, zmod_poly_degree(input));
-   zmod_poly_make_monic(monic_input, input);
-	if (input->length == 1) return leading_coeff;
+   if (input->length == 1) return leading_coeff;
 
-   //Now we do the square-free factorisation of the input polynomial
+	zmod_poly_make_monic(monic_input, input);
+	
+   //This will store all of the square-free factors
+   zmod_poly_factor_t sqfree_factors;
+   zmod_poly_factor_init(sqfree_factors);
+   
+	//Now we do the square-free factorisation of the input polynomial
    zmod_poly_factor_square_free(sqfree_factors, monic_input);
-
+	zmod_poly_clear(monic_input);
+	
    //space to store factors
    zmod_poly_factor_t factors;
    
@@ -4646,5 +4647,6 @@ unsigned long zmod_poly_factor(zmod_poly_factor_t result, zmod_poly_t input)
 
    //clean up memory
    zmod_poly_factor_clear(sqfree_factors);
+   	
    return leading_coeff;   
 }

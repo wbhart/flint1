@@ -220,33 +220,85 @@ unsigned long z_ll_mod_precomp(unsigned long a_hi, unsigned long a_lo,
 
 #if PREINV32
 
+/*
+   Computes a 32 bit approximation to 1/xl - 1
+	Here xl is thought of as being between 0.5 and (2^32 - 1)/2^32
+	This is basically a 33 bit approximation to 1/xl without the leading 1
+	The product of this and a 64 bit integer will give the quotient which
+	will at worst be 1 too small
+*/
+
 #define invert_limb32(invxl, xl)                  \
   do {                                          \
-    invxl = (~(((unsigned long)xl)<<32))/xl; \
+    invxl = ((~(((unsigned long)xl)<<32))/xl); \
   } while (0)
 
-#define LIMB_HIGHBIT_TO_MASK32(n)                                 \
-  ((n) & (1<<31)) ? (~0) : (0))
+/*
+   -1 if high bit set
+	0 otherwise
+*/
 
-uint32_t z_mod32_precomp(unsigned long n64, uint32_t d, uint32_t di)				
+#define LIMB_HIGHBIT_TO_MASK32(n)                                 \
+  (((n) & (1<<31)) ? (~0) : (0))
+
+
+/*uint32_t z_mod32_precomp(unsigned long n64, uint32_t d, uint32_t di)				
 {									
     uint32_t xh, xl, nh, nl, nmask, nadj, q1;			
     unsigned long x;							
 
     nh = ((uint32_t) (n64 >> 32));								
     nl = ((uint32_t) n64);							
-    nmask = LIMB_HIGHBIT_TO_MASK (nl);				
-    nadj = nl + (nmask & d);				
-    x = (unsigned long) di * (unsigned long) (nh - nmask);			
-    x += (((unsigned long)nh)<<32) + (unsigned long) nadj;
-    q1 = ~(x>>32);								
+    nmask = LIMB_HIGHBIT_TO_MASK32(nl);	// nmask = -1 if high bit of nl is set, else nmask = 0			
+    nadj = nl + (nmask & d); // nadj = nl if high bit of nl was 0, else it is nl + d - 2^32	
+
+	 // di may be too small, so that if we compute q = floor( (2^32+di)*nh + (2^32+di)*nl/2^32 )
+	 // we will not be more than 1 out (after shifting by 32) even if we only take notice of 
+	 // the top bit of nl
+	 // thus if that top bit is 0 we can use q = (2^32+di)*nh + nl
+	 // if the top bit is 1 then q = (2^32+di)*nh + nl may be 2 too small after shifting by 32
+	 // we need to add di/2 to q to ensure that we are no more than one out after shifting by 32
+	                          
+    x = (unsigned long) di * (unsigned long) (nh - nmask); // x = di * nh if high bit of nl was 0
+	                                                        // else x = di * (nh + 1)
+    x += (((unsigned long)nh)<<32) + (unsigned long) nadj; // x = di * nh + n64 if high bit of nl was 0
+	                                                // else x = di * (nh + 1) + 2^32 * nh - 2^32 + nl + d
+    q1 = ~(x>>32); // if high bit of nl is 0 then we want q = (2^32+di)*nh >> 32 
+	                // else we get q = (2^32+di)*nh + nl + (di + d) - 2^32
+	                // and q1 = 2^32 - q - 1							
     x = (unsigned long) q1 * (unsigned long) d; 
-    x += n64;
+    x += n64; // now x = n64 + 2^32*d - q*d - d
     xh = (uint32_t) (x >> 32);								
     xl = (uint32_t) x;							
-    xh -= d;
-    return xl + ((xh) & d);						
-} 
+    xh -= d; // makes up for the 2^32, and now xh is -1 or 0
+    return xl + ((xh) & d); // if xh is -1 we have gone too far, so add d, else we are done
+} */
+
+uint32_t z_mod32_precomp(unsigned long n64, uint32_t d, uint32_t di)				
+{									
+   uint32_t xl, nh;
+	unsigned long q, x;
+    
+   nh = ((uint32_t) (n64 >> 32));								
+    
+	q = (unsigned long) nh * (unsigned long) di;					
+   q += (((unsigned long)nh)<<32);	// Compensate, di is 2^FLINT_BITS too small 	
+
+   x = (q>>32)*(unsigned long)d;
+	x = n64 - x;
+
+	if (x>>32)							
+   {									
+	   x -= (unsigned long) d;
+		if (x>>32) x -= (unsigned long) d;														
+   }									
+   
+	xl = (uint32_t) x;
+	if (xl >= d) xl -= d;	
+   
+	return xl;							
+}
+
 
 uint32_t z_precompute_inverse32(unsigned long n)
 {
@@ -266,7 +318,7 @@ unsigned long z_mulmod32_precomp(unsigned long a, unsigned long b,
    norm -= 32;
    unsigned long res = (unsigned long) z_mod32_precomp(prod<<norm, n<<norm, ninv);
    res >>= norm;
-   if (res >= n) res -= n;
+   
    return res;
 }
 

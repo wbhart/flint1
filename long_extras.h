@@ -42,7 +42,7 @@
 #include "longlong.h"
 #include "flint.h"
 
-#define PREINV32 0 // Whether or not to use the 32 bit precomputed inverse code
+#define PREINV32 1 // Whether or not to use the 32 bit precomputed inverse code
 
 //======================================================================================
 //

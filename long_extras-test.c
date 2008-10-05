@@ -36,7 +36,7 @@ Copyright (C) 2007, William Hart and David Harvey
 #define DEBUG 0 // prints debug information
 #define DEBUG2 1 
 
-/*int test_z_mulmod32_precomp()
+int test_z_mulmod32_precomp()
 {
    uint32_t ninv;
    unsigned long n;
@@ -53,7 +53,7 @@ Copyright (C) 2007, William Hart and David Harvey
    for (unsigned long count = 0; (count < 10000) && (result == 1); count++)
    { 
       bits = z_randint(32)+1;
-      n = random_ulong2((1UL<<bits)-1)+1;
+      n = z_randbits(bits)+1;
       
       ninv = z_precompute_inverse32(n);
       
@@ -88,7 +88,7 @@ Copyright (C) 2007, William Hart and David Harvey
    mpz_clear(mpz_res); 
    
    return result;
-}*/
+}
 
 int test_z_intsqrt()
 {
@@ -1312,7 +1312,7 @@ void fmpz_poly_test_all()
    int success, all_success = 1;
 
 
-   //RUN_TEST(z_mulmod32_precomp); // Not current available due to lack of proof of code
+   RUN_TEST(z_mulmod32_precomp); // Not current available due to lack of proof of code
    RUN_TEST(z_intsqrt);
    RUN_TEST(z_primitive_root);
    RUN_TEST(z_mod_precomp);
