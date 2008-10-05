@@ -284,6 +284,10 @@ uint32_t z_mod32_precomp(unsigned long n64, uint32_t d, uint32_t di)
 	q = (unsigned long) nh * (unsigned long) di;					
    q += (((unsigned long)nh)<<32);	// Compensate, di is 2^FLINT_BITS too small 	
 
+	// As we only use nh which is only 32 bits, the quotient may be incorrect in 
+	// the last 2 bits, i.e. it may be up to 3 too small
+	// we adjust for this below
+
    x = (q>>32)*(unsigned long)d;
 	x = n64 - x;
 
