@@ -164,6 +164,7 @@ void fmpz_set_si(fmpz_t res, const long x)
       res[0] = 0UL;
 }
 
+double fmpz_get_d(fmpz_t x);
 
 // returns nonzero if op1 == op2
 static inline

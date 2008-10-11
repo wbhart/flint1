@@ -2063,6 +2063,44 @@ int test_fmpz_neg()
     return result;
 }
 
+int test_fmpz_get_d()
+{
+   mpz_t num1, num2;
+   fmpz_t fnum;
+   unsigned long bits, bits2;
+   int result = 1;
+   
+   mpz_init(num1);
+   mpz_init(num2);
+   
+   for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+   {
+       bits = z_randint(1000)+1;
+       fnum = fmpz_init((bits - 1)/FLINT_BITS + 1);
+       mpz_rrandomb(num1, state, bits);
+#if SIGNS
+       if (z_randint(2)) mpz_neg(num1, num1);
+#endif
+       mpz_to_fmpz(fnum, num1);
+       
+       double d1 = fmpz_get_d(fnum);
+       double d2 = mpz_get_d(num1);
+          
+       result &= (d1 == d2);
+       
+#if DEBUG
+       if (!result) gmp_printf("%Zd\n", num1);
+#endif
+       
+       fmpz_clear(fnum);
+   }
+   
+   mpz_clear(num1);
+   mpz_clear(num2);
+   
+   return result;
+}
+
 #include "fmpz_montgomery-test.c"
 
 void fmpz_poly_test_all()
@@ -2078,6 +2116,7 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_set_si);
    RUN_TEST(fmpz_set_ui);
    RUN_TEST(fmpz_set_equal);
+   RUN_TEST(fmpz_get_d);
    RUN_TEST(fmpz_add);
    RUN_TEST(fmpz_add_ui_inplace);
    RUN_TEST(fmpz_add_ui);

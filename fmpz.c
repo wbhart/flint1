@@ -1302,6 +1302,15 @@ void fmpz_multi_crt_sign(fmpz_t output, fmpz_t input, fmpz_comb_t comb)
 }
 #endif
 
+double fmpz_get_d(fmpz_t x)
+{
+	mpz_t x_m;
+	x_m->_mp_d = x + 1;
+	x_m->_mp_size = x[0];
+	x_m->_mp_alloc = FLINT_ABS(x[0]);
+	return mpz_get_d(x_m);
+}
+
 #include "fmpz_montgomery.c"
 
 // *************** end of file
