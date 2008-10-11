@@ -218,7 +218,7 @@ unsigned long z_ll_mod_precomp(unsigned long a_hi, unsigned long a_lo,
 
    The code is a brutalisation of code found in GMP. */
 
-#if PREINV32
+#if FLINT_BITS == 64
 
 /*
    Computes a 32 bit approximation to 1/xl - 1
@@ -302,7 +302,6 @@ uint32_t z_mod32_precomp(unsigned long n64, uint32_t d, uint32_t di)
    
 	return xl;							
 }
-
 
 uint32_t z_precompute_inverse32(unsigned long n)
 {

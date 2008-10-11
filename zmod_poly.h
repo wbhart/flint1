@@ -55,7 +55,7 @@ typedef struct
    unsigned long length;
    unsigned long p;
    double p_inv;
-#if PREINV32
+#if FLINT_BITS == 64
    uint32_t p32_inv;
 #endif
 } zmod_poly_struct;
@@ -246,7 +246,7 @@ void _zmod_poly_attach(zmod_poly_t output, zmod_poly_t input)
    output->coeffs = input->coeffs;
    output->p = input->p;
    output->p_inv = input->p_inv;
-#if PREINV32
+#if FLINT_BITS == 64
 	output->p32_inv = input->p32_inv;
 #endif
 }
@@ -270,7 +270,7 @@ void _zmod_poly_attach_shift(zmod_poly_t output,
    output->coeffs = input->coeffs + n;
    output->p = input->p;
    output->p_inv = input->p_inv;
-#if PREINV32
+#if FLINT_BITS == 64
 	output->p32_inv = input->p32_inv;
 #endif
 }
@@ -295,7 +295,7 @@ void _zmod_poly_attach_truncate(zmod_poly_t output,
    output->coeffs = input->coeffs;
    output->p = input->p;
    output->p_inv = input->p_inv;
-#if PREINV32
+#if FLINT_BITS == 64
 	output->p32_inv = input->p32_inv;
 #endif
    __zmod_poly_normalise(output);

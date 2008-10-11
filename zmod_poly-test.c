@@ -2096,7 +2096,7 @@ int test_zmod_poly_isirreducible()
    
    for (unsigned long count1 = 0; (count1 < 200) && (result == 1) ; count1++)
    {
-      bits = randint(FLINT_BITS-1)+2;
+      bits = randint(FLINT_BITS-2)+2;
       unsigned long modulus;
       
       do {modulus = randprime(bits);} while (modulus < 2);

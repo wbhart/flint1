@@ -36,6 +36,7 @@ Copyright (C) 2007, William Hart and David Harvey
 #define DEBUG 0 // prints debug information
 #define DEBUG2 1 
 
+#if FLINT_BITS == 64
 int test_z_mulmod32_precomp()
 {
    uint32_t ninv;
@@ -89,6 +90,7 @@ int test_z_mulmod32_precomp()
    
    return result;
 }
+#endif
 
 int test_z_intsqrt()
 {
@@ -1312,8 +1314,10 @@ void fmpz_poly_test_all()
    int success, all_success = 1;
 
 
-   RUN_TEST(z_mulmod32_precomp); // Not current available due to lack of proof of code
-   RUN_TEST(z_intsqrt);
+#if FLINT_BITS == 64
+	RUN_TEST(z_mulmod32_precomp); 
+#endif
+	RUN_TEST(z_intsqrt);
    RUN_TEST(z_primitive_root);
    RUN_TEST(z_mod_precomp);
    RUN_TEST(z_div2_precomp);

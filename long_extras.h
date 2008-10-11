@@ -42,8 +42,6 @@
 #include "longlong.h"
 #include "flint.h"
 
-#define PREINV32 1 // Whether or not to use the 32 bit precomputed inverse code
-
 //======================================================================================
 //
 //   The code in this section is borrowed from the GMP library v 4.2.1
@@ -110,7 +108,7 @@ double z_precompute_inverse2(unsigned long n);
 
 double z_ll_precompute_inverse(unsigned long n);
 
-#if PREINV32
+#if FLINT_BITS == 64
 uint32_t z_precompute_inverse32(unsigned long n);
 
 uint32_t z_mod32_precomp(unsigned long n64, uint32_t d, uint32_t di);				

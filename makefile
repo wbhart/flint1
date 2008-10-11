@@ -37,7 +37,7 @@ else
 	INCS = -I$(FLINT_GMP_INCLUDE_DIR) -I$(FLINT_NTL_INCLUDE_DIR) -I$(FLINT_ZNPOLY_INCLUDE_DIR)
 endif
 
-CFLAGS = $(INCS) $(FLINT_TUNE) -O3 
+CFLAGS = $(INCS) $(FLINT_TUNE) -O3
 
 RM = rm -f
 
@@ -86,7 +86,7 @@ FLINTOBJ = \
 	zmod_mat.o \
 	F_mpz_poly.c
 
-QS: mpQS tinyQS
+QS: mpQS
 
 tune: ZmodF_mul-tune mpz_poly-tune 
 
