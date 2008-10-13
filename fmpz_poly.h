@@ -532,6 +532,8 @@ int _fmpz_poly_equal(const fmpz_poly_t input1, const fmpz_poly_t input2);
 
 void _fmpz_poly_neg(fmpz_poly_t output, const fmpz_poly_t input);
 
+void _fmpz_poly_scalar_abs(fmpz_poly_t output, const fmpz_poly_t input);
+
 void _fmpz_poly_truncate(fmpz_poly_t poly, const unsigned long trunc);
 
 void _fmpz_poly_reverse(fmpz_poly_t output, const fmpz_poly_t input, const unsigned long length);
@@ -933,6 +935,14 @@ void fmpz_poly_neg(fmpz_poly_t output, const fmpz_poly_t input)
    fmpz_poly_fit_length(output, input->length);
    fmpz_poly_fit_limbs(output, input->limbs);
    _fmpz_poly_neg(output, input);
+}
+
+static inline
+void fmpz_poly_scalar_abs(fmpz_poly_t output, const fmpz_poly_t input)
+{
+   fmpz_poly_fit_length(output, input->length);
+   fmpz_poly_fit_limbs(output, input->limbs);
+   _fmpz_poly_scalar_abs(output, input);
 }
 
 static inline

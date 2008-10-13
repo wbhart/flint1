@@ -1794,6 +1794,29 @@ void _fmpz_poly_neg(fmpz_poly_t output, const fmpz_poly_t input)
    output->length = input->length;
 }
 
+void _fmpz_poly_scalar_abs(fmpz_poly_t output, const fmpz_poly_t input)
+{
+   if (input == output)
+   {
+      for (long i = 0; i < input->length; i++)
+         output->coeffs[i*(output->limbs+1)] = FLINT_ABS(output->coeffs[i*(output->limbs+1)]);
+   } else
+   {
+      unsigned long input_size = input->limbs + 1;
+      unsigned long output_size = output->limbs + 1;
+      for (long i = 0; i < input->length; i++)
+      {
+         if (!input->coeffs[i*input_size]) output->coeffs[i*output_size] = 0;
+         else 
+         {
+            output->coeffs[i*output_size] = FLINT_ABS(input->coeffs[i*input_size]);
+            F_mpn_copy(output->coeffs+i*output_size+1, input->coeffs+i*input_size+1, ABS(input->coeffs[i*input_size]));
+         }
+      }
+   }
+   output->length = input->length;
+}
+
 /* 
    Set n of the coefficients of poly to zero starting with
    the constant term *regardless of the original length*. 

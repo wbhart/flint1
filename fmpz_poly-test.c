@@ -1758,6 +1758,65 @@ int test__fmpz_poly_shift()
 }
 
 
+int test__fmpz_poly_scalar_abs()
+{
+   mpz_poly_t test_poly, test_poly2, test_poly3;
+   fmpz_poly_t test_fmpz_poly, test_fmpz_poly2;
+   int result = 1;
+   unsigned long bits, length, check_coeff;
+   unsigned long extra_bits1, extra_bits2;
+   
+   mpz_poly_init(test_poly); 
+   mpz_poly_init(test_poly2); 
+   mpz_poly_init(test_poly3); 
+   
+   for (unsigned long count1 = 1; (count1 < 200) && (result == 1) ; count1++)
+   {
+      bits = random_ulong(1000)+ 1;
+      extra_bits1 = randint(200);
+      extra_bits2 = randint(200);
+      
+      fmpz_poly_init2(test_fmpz_poly, 1, (bits-1)/FLINT_BITS+1);
+      fmpz_poly_init2(test_fmpz_poly2, 1, (bits+extra_bits1-1)/FLINT_BITS+1);
+      for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
+      { 
+          length = random_ulong(1000);      
+#if DEBUG
+          printf("length = %ld, bits = %ld\n",length, bits);
+#endif
+          fmpz_poly_fit_length(test_fmpz_poly, length);
+          fmpz_poly_fit_length(test_fmpz_poly2, length);
+          
+          do randpoly(test_poly, length, bits); 
+          while (mpz_poly_length(test_poly) < length);
+          
+          check_coeff = randint(length);
+
+          mpz_poly_to_fmpz_poly(test_fmpz_poly, test_poly);
+          _fmpz_poly_scalar_abs(test_fmpz_poly2, test_fmpz_poly);
+          _fmpz_poly_scalar_abs(test_fmpz_poly, test_fmpz_poly);
+          fmpz_poly_check_normalisation(test_fmpz_poly);
+          fmpz_poly_check_normalisation(test_fmpz_poly2);
+
+			 for (ulong i = 0; i < test_poly->length; i++)
+			    mpz_abs(test_poly->coeffs[i], test_poly->coeffs[i]);
+
+			 fmpz_poly_to_mpz_poly(test_poly2, test_fmpz_poly);
+          fmpz_poly_to_mpz_poly(test_poly3, test_fmpz_poly2);
+          
+          result = (mpz_poly_equal(test_poly, test_poly2) && mpz_poly_equal(test_poly, test_poly3));
+      }
+      fmpz_poly_clear(test_fmpz_poly);
+      fmpz_poly_clear(test_fmpz_poly2);
+   }
+   
+   mpz_poly_clear(test_poly);
+   mpz_poly_clear(test_poly2);
+   mpz_poly_clear(test_poly3);
+   
+   return result; 
+}
+
 int test__fmpz_poly_neg()
 {
    mpz_poly_t test_poly;
@@ -11917,6 +11976,7 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_poly_swap);
    RUN_TEST(_fmpz_poly_reverse);
    RUN_TEST(_fmpz_poly_neg);
+   RUN_TEST(_fmpz_poly_scalar_abs);
    RUN_TEST(_fmpz_poly_shift);
    RUN_TEST(fmpz_poly_derivative);
    RUN_TEST(fmpz_poly_evaluate_horner); 
