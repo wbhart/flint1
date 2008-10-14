@@ -1400,6 +1400,39 @@ void fmpz_poly_evaluate_divconquer(fmpz_t output, fmpz_poly_t poly, fmpz_t val);
 
 void fmpz_poly_evaluate(fmpz_t output, fmpz_poly_t poly, fmpz_t val);
 
+void fmpz_poly_compose(fmpz_poly_t output, fmpz_poly_t poly, fmpz_poly_t val);
+
+void fmpz_poly_array_compose_divconquer(fmpz_poly_t output, fmpz_poly_t * poly, ulong length, fmpz_poly_t val);
+
+void fmpz_poly_compose_divconquer(fmpz_poly_t output, fmpz_poly_t poly, fmpz_poly_t val);
+
+void fmpz_poly_compose_horner_range(fmpz_poly_t output, fmpz_poly_t poly, fmpz_poly_t val, ulong start, ulong n);
+
+static inline
+void fmpz_poly_compose_horner(fmpz_poly_t output, fmpz_poly_t poly, fmpz_poly_t val)
+{
+	if (poly->length == 0) 
+	{
+		fmpz_poly_zero(output);
+		return;
+	}
+	
+	if (val->length == 0)
+	{
+		fmpz_poly_zero(output);
+		fmpz_poly_set_coeff_fmpz(output, 0, poly->coeffs); 
+		return;
+	}
+
+	if (poly->length == 1)
+	{
+		fmpz_poly_set(output, poly);
+		return;
+	}
+
+	fmpz_poly_compose_horner_range(output, poly, val, 0, poly->length);
+}
+
 // *************** end of file
 
 #ifdef __cplusplus

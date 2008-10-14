@@ -9682,3 +9682,224 @@ void fmpz_poly_evaluate(fmpz_t output, fmpz_poly_t poly, fmpz_t val)
 	
 	fmpz_poly_clear(temp);
 }
+
+/****************************************************************************
+
+   Composition
+
+****************************************************************************/
+
+void fmpz_poly_compose_horner_range(fmpz_poly_t output, fmpz_poly_t poly, fmpz_poly_t val, ulong start, ulong n)
+{
+	ulong size_p = poly->limbs + 1;
+   fmpz_t coeff_p = poly->coeffs + (start + n - 1)* size_p;
+   fmpz_poly_zero(output);
+	fmpz_poly_set_coeff_fmpz(output,0,coeff_p);
+   fmpz_poly_fit_limbs(output,size_p);
+	for (long i = n - 2; i >= 0L; i--)
+   {
+      coeff_p -= size_p;
+		fmpz_poly_mul(output, output, val);
+		fmpz_add(output->coeffs, output->coeffs, coeff_p);
+	}
+}
+
+void fmpz_poly_compose_divconquer(fmpz_poly_t output, fmpz_poly_t poly, fmpz_poly_t val)
+{
+	if (poly->length == 0) 
+	{
+		fmpz_poly_zero(output);
+		return;
+	}
+	
+	if (val->length == 0)
+	{
+		fmpz_poly_zero(output);
+		fmpz_poly_set_coeff_fmpz(output, 0, poly->coeffs); 
+		return;
+	}
+
+	if (poly->length == 1)
+	{
+		fmpz_poly_set(output, poly);
+		return;
+	}
+
+	if (poly->length == 2)
+	{
+		fmpz_poly_compose_horner(output, poly, val);
+		return;
+	}
+
+	fmpz_poly_t * half = (fmpz_poly_t *) flint_heap_alloc(((poly->length + 1)/2)*sizeof(fmpz_poly_t));
+	fmpz_poly_t * temp  = (fmpz_poly_t *) flint_heap_alloc(((poly->length + 1)/2)*sizeof(fmpz_poly_t));
+
+	for (ulong i = 0; i < (poly->length + 1)/2; i++) fmpz_poly_init(temp[i]);
+   for (ulong i = 0; i < (poly->length + 1)/2; i++) fmpz_poly_init(half[i]);
+
+	ulong size_t = poly->limbs + 1;
+   fmpz_t coeff_t = poly->coeffs;
+	
+	ulong i;
+	for (i = 0; i < poly->length/2; i++)
+	{
+		fmpz_poly_scalar_mul_fmpz(temp[i], val, coeff_t + size_t);
+		fmpz_poly_fit_limbs(temp[i], size_t);
+		fmpz_add(temp[i]->coeffs, temp[i]->coeffs, coeff_t);
+		coeff_t += (size_t*2);
+	}
+
+	if (poly->length & 1) 
+	{
+		fmpz_poly_zero(temp[i]);
+		fmpz_poly_set_coeff_fmpz(temp[i], 0, coeff_t);
+	}
+
+   ulong length = (poly->length + 1)/2;
+
+	fmpz_poly_t val_pow;
+	fmpz_poly_init(val_pow);
+	fmpz_poly_mul(val_pow, val, val);
+
+	while (length > 2)
+	{
+		ulong i;
+		for (i = 0; i < length/2; i++)
+	   {
+		   fmpz_poly_mul(half[i], temp[2*i+1], val_pow);
+		   fmpz_poly_add(half[i], half[i], temp[2*i]);
+	   }
+
+		if (length & 1) fmpz_poly_set(half[i], temp[2*i]);
+	
+		fmpz_poly_mul(val_pow, val_pow, val_pow);
+
+		for (ulong i = 0; i < length; i++) fmpz_poly_swap(half[i], temp[i]);
+
+		length = (length + 1)/2;
+	}
+   
+	fmpz_poly_mul(output, temp[1], val_pow);
+   fmpz_poly_add(output, output, temp[0]);
+		
+	for (ulong i = 0; i < (poly->length + 1)/2; i++) fmpz_poly_clear(temp[i]);
+   for (ulong i = 0; i < (poly->length + 1)/2; i++) fmpz_poly_clear(half[i]);
+
+	fmpz_poly_clear(val_pow);
+
+	flint_heap_free(temp);
+	flint_heap_free(half);
+}
+
+void fmpz_poly_array_compose_divconquer(fmpz_poly_t output, fmpz_poly_t * poly, ulong length, fmpz_poly_t val)
+{
+	fmpz_poly_t * half = (fmpz_poly_t *) flint_heap_alloc(((length + 1)/2)*sizeof(fmpz_poly_t));
+	fmpz_poly_t * temp  = (fmpz_poly_t *) flint_heap_alloc(((length + 1)/2)*sizeof(fmpz_poly_t));
+
+	for (ulong i = 0; i < (length + 1)/2; i++) fmpz_poly_init(temp[i]);
+   for (ulong i = 0; i < (length + 1)/2; i++) fmpz_poly_init(half[i]);
+
+	ulong i;
+	for (i = 0; i < length/2; i++)
+	{
+		fmpz_poly_mul(temp[i], val, poly[2*i+1]);
+		fmpz_poly_add(temp[i], temp[i], poly[2*i]);
+	}
+
+	if (length & 1) 
+	   fmpz_poly_set(temp[i], poly[2*i]);
+
+   length = (length + 1)/2;
+
+	fmpz_poly_t val_pow;
+	fmpz_poly_init(val_pow);
+	fmpz_poly_mul(val_pow, val, val);
+
+	while (length > 2)
+	{
+		ulong i;
+		for (i = 0; i < length/2; i++)
+	   {
+		   fmpz_poly_mul(half[i], temp[2*i+1], val_pow);
+		   fmpz_poly_add(half[i], half[i], temp[2*i]);
+	   }
+
+		if (length & 1) fmpz_poly_set(half[i], temp[2*i]);
+	
+		fmpz_poly_mul(val_pow, val_pow, val_pow);
+
+		for (ulong i = 0; i < (length+1)/2; i++) fmpz_poly_swap(half[i], temp[i]);
+
+		length = (length + 1)/2;
+	}
+   
+	fmpz_poly_mul(output, temp[1], val_pow);
+   fmpz_poly_add(output, output, temp[0]);
+		
+	for (ulong i = 0; i < (length + 1)/2; i++) fmpz_poly_clear(temp[i]);
+   for (ulong i = 0; i < (length + 1)/2; i++) fmpz_poly_clear(half[i]);
+
+	fmpz_poly_clear(val_pow);
+
+	flint_heap_free(temp);
+	flint_heap_free(half);
+}
+
+void fmpz_poly_compose(fmpz_poly_t output, fmpz_poly_t poly, fmpz_poly_t val)
+{
+	if (poly->length == 0) 
+	{
+		fmpz_poly_zero(output);
+		return;
+	}
+	
+	if (val->length == 0)
+	{
+		fmpz_poly_zero(output);
+		fmpz_poly_set_coeff_fmpz(output, 0, poly->coeffs); 
+		return;
+	}
+
+	if (poly->length == 1)
+	{
+		fmpz_poly_set(output, poly);
+		return;
+	}
+
+	if (poly->length <= 8) 
+	{
+		fmpz_poly_compose_divconquer(output, poly, val);
+		return;
+	}
+   ulong eval_length = 4;
+
+	ulong short_length = (poly->length - 1)/eval_length + 1;
+
+	fmpz_poly_t * temp  = (fmpz_poly_t *) flint_heap_alloc(short_length*sizeof(fmpz_poly_t));
+
+	for (ulong i = 0; i < short_length; i++) fmpz_poly_init(temp[i]);
+   
+	long i;
+	for (i = 0; i < short_length - 1; i++)
+	{
+		fmpz_poly_compose_horner_range(temp[i], poly, val, i*eval_length, eval_length);
+	}
+
+   if (short_length == 1)
+		fmpz_poly_compose_horner_range(output, poly, val, 0, poly->length);
+	else
+	{
+		fmpz_poly_compose_horner_range(temp[i], poly, val, i*eval_length, poly->length - i*eval_length);
+
+	   fmpz_poly_t val_pow;
+		fmpz_poly_init(val_pow);
+		
+		fmpz_poly_power(val_pow, val, eval_length);
+
+	   fmpz_poly_array_compose_divconquer(output, temp, short_length, val_pow);
+
+	   fmpz_poly_clear(val_pow);
+	}
+	
+	for (ulong i = 0; i < short_length; i++) fmpz_poly_clear(temp[i]);
+}
