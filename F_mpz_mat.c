@@ -460,6 +460,31 @@ void _F_mpz_entry_mul_mpz(F_mpz_mat_t mat1, ulong r1, ulong c1, F_mpz_mat_t mat2
 	   mpz_mul(mpz_ptr, mat1->mpz_entries + ENTRY_TO_OFF(c1), mat2->mpz_entries + ENTRY_TO_OFF(c2));
 }*/
 
+void _F_mpz_entry_mul_2exp(F_mpz_mat_t mat2, ulong r2, ulong c2, const F_mpz_mat_t mat1, 
+									                  const ulong r1, const ulong c1, const ulong exp)
+{
+	long d = mat1->rows[r1][c1];
+
+	if (!ENTRY_IS_MPZ(d)) // entry is small
+	{
+		ulong dabs = FLINT_ABS(d);
+		ulong bits = FLINT_BIT_COUNT(dabs);
+		if (bits + exp <= FLINT_BITS - 2) // result will fit in small
+		{
+			_F_mpz_entry_set_si(mat2, r2, c2, d<<exp);
+		} else // result is large
+		{
+			__mpz_struct * mpz_ptr = _F_mpz_entry_promote(mat2, r2, c2);
+         mpz_set_si(mpz_ptr, d); 
+	      mpz_mul_2exp(mpz_ptr, mpz_ptr, exp);
+		}
+	} else // entry is large
+	{
+      __mpz_struct * mpz_ptr = _F_mpz_entry_promote(mat2, r2, c2);
+      mpz_mul_2exp(mpz_ptr, mat1->mpz_entries + ENTRY_TO_OFF(d), exp);   
+	}
+}
+
 void _F_mpz_entry_add_ui_inplace(F_mpz_mat_t res, ulong r, ulong c, const ulong x)
 {
 	ulong d = res->rows[r][c];
@@ -1125,5 +1150,79 @@ void F_mpz_mat_row_submul_ui(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong
 	
 	for (ulong i = start; i < start + n; i++)
 		_F_mpz_entry_submul_ui(mat1, r1, i, mat2, r2, i, x);
+}
+
+void F_mpz_mat_row_addmul_2exp_ui(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong r2, 
+								               ulong start, ulong n, ulong c, ulong exp, F_mpz_mat_t temp)
+{
+	// scalar is zero, nothing to add
+	if (c == 0)
+	{
+	   return;
+	}
+	
+	// scalar is 1, just add 2^exp times the entry
+	if (c == 1)
+	{
+	   for (ulong i = start; i < start + n; i++)
+		{
+			_F_mpz_entry_mul_2exp(temp, 0, i, mat2, r2, i, exp);
+         _F_mpz_entry_add(mat1, r1, i, mat1, r1, i, temp, 0, i);
+		}
+
+		return;
+	}
+	
+	// exp is 1, just do addmul
+	if (exp == 0)
+	{
+	   for (ulong i = start; i < start + n; i++)
+		   _F_mpz_entry_addmul_ui(mat1, r1, i, mat2, r2, i, c);
+
+		return;
+	}
+	
+	for (ulong i = start; i < start + n; i++)
+	{
+		_F_mpz_entry_mul_2exp(temp, 0, i, mat2, r2, i, exp);
+	   _F_mpz_entry_addmul_ui(mat1, r1, i, temp, 0, i, c);
+	}
+}
+
+void F_mpz_mat_row_submul_2exp_ui(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong r2, 
+								               ulong start, ulong n, ulong c, ulong exp, F_mpz_mat_t temp)
+{
+	// scalar is zero, nothing to add
+	if (c == 0)
+	{
+	   return;
+	}
+	
+	// scalar is 1, just add 2^exp times the entry
+	if (c == 1)
+	{
+	   for (ulong i = start; i < start + n; i++)
+		{
+			_F_mpz_entry_mul_2exp(temp, 0, i, mat2, r2, i, exp);
+         _F_mpz_entry_sub(mat1, r1, i, mat1, r1, i, temp, 0, i);
+		}
+
+		return;
+	}
+	
+	// exp is 1, just do addmul
+	if (exp == 0)
+	{
+	   for (ulong i = start; i < start + n; i++)
+		   _F_mpz_entry_submul_ui(mat1, r1, i, mat2, r2, i, c);
+
+		return;
+	}
+	
+	for (ulong i = start; i < start + n; i++)
+	{
+		_F_mpz_entry_mul_2exp(temp, 0, i, mat2, r2, i, exp);
+	   _F_mpz_entry_submul_ui(mat1, r1, i, temp, 0, i, c);
+	}
 }
 

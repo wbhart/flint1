@@ -313,6 +313,14 @@ void _F_mpz_entry_mul_si(F_mpz_mat_t mat1, const ulong r1, const ulong c1, const
 //					                                 const F_mpz_mat_t mat2, const ulong entry2);
 
 /** 
+   \fn     void _F_mpz_entry_mul_2exp(F_mpz_mat_t mat2, ulong r2, ulong c2, const F_mpz_mat_t mat1, 
+									                  const ulong r1, const ulong c1, const ulong exp)
+   \brief  Multiply entry1 of mat1 by 2^exp and set entry2 of mat2 to the result.
+*/
+
+void _F_mpz_entry_mul_2exp(F_mpz_mat_t mat2, ulong r2, ulong c2, const F_mpz_mat_t mat1, 
+									                  const ulong r1, const ulong c1, const ulong exp);
+/** 
    \fn     void _F_mpz_entry_add_ui_inplace(F_mpz_mat_t res, ulong entry, const ulong x)
    \brief  Add the unsigned long x to the given entry of res, in place.
 */
@@ -594,6 +602,29 @@ void F_mpz_mat_row_addmul_ui(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong
 */
 void F_mpz_mat_row_submul_ui(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong r2, 
 								                               ulong start, ulong n, ulong x);
+
+/** 
+   \fn     void F_mpz_mat_row_addmul_2exp_ui(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong r2, 
+								               ulong start, ulong n, ulong c, ulong exp, F_mpz_mat_t temp)
+   \brief  Multiply entry from row r2 of mat2 by c*2^exp and add to entry from row r1 of mat1.
+	        This function takes a row "temp" which must be a 1 x c matrix where c is the column
+			  width of mat1 and mat2.
+*/
+
+void F_mpz_mat_row_addmul_2exp_ui(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong r2, 
+								               ulong start, ulong n, ulong c, ulong exp, F_mpz_mat_t temp);
+
+/** 
+   \fn     void F_mpz_mat_row_submul_2exp_ui(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong r2, 
+								               ulong start, ulong n, ulong c, ulong exp, F_mpz_mat_t temp)
+   \brief  Multiply entry from row r2 of mat2 by c*2^exp and subtract from entry from row r1 of mat1.
+	        This function takes a row "temp" which must be a 1 x c matrix where c is the column
+			  width of mat1 and mat2.
+*/
+
+void F_mpz_mat_row_submul_2exp_ui(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong r2, 
+								               ulong start, ulong n, ulong c, ulong exp, F_mpz_mat_t temp);
+
 
 #ifdef __cplusplus
  }
