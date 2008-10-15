@@ -9695,12 +9695,20 @@ void fmpz_poly_compose_horner_range(fmpz_poly_t output, fmpz_poly_t poly, fmpz_p
    fmpz_t coeff_p = poly->coeffs + (start + n - 1)* size_p;
    fmpz_poly_zero(output);
 	fmpz_poly_set_coeff_fmpz(output,0,coeff_p);
-   fmpz_poly_fit_limbs(output,size_p);
+   fmpz_poly_fit_length(output, 1);
+	fmpz_poly_fit_limbs(output, size_p);
 	for (long i = n - 2; i >= 0L; i--)
    {
       coeff_p -= size_p;
 		fmpz_poly_mul(output, output, val);
+		if (output->length) fmpz_poly_fit_limbs(output, FLINT_ABS(output->coeffs[0])+1);
+	   else 
+		{
+			output->coeffs[0] = 0;
+			output->length = 1;
+		}
 		fmpz_add(output->coeffs, output->coeffs, coeff_p);
+		_fmpz_poly_normalise(output);
 	}
 }
 
@@ -9745,7 +9753,15 @@ void fmpz_poly_compose_divconquer(fmpz_poly_t output, fmpz_poly_t poly, fmpz_pol
 	{
 		fmpz_poly_scalar_mul_fmpz(temp[i], val, coeff_t + size_t);
 		fmpz_poly_fit_limbs(temp[i], size_t);
+		fmpz_poly_fit_length(temp[i], 1);
+		if (temp[i]->length) fmpz_poly_fit_limbs(temp[i], FLINT_ABS(temp[i]->coeffs[0])+1);
+	   else 
+		{
+			temp[i]->coeffs[0] = 0;
+			temp[i]->length = 1;
+		}
 		fmpz_add(temp[i]->coeffs, temp[i]->coeffs, coeff_t);
+		_fmpz_poly_normalise(temp[i]);
 		coeff_t += (size_t*2);
 	}
 
@@ -9756,7 +9772,7 @@ void fmpz_poly_compose_divconquer(fmpz_poly_t output, fmpz_poly_t poly, fmpz_pol
 	}
 
    ulong length = (poly->length + 1)/2;
-
+   
 	fmpz_poly_t val_pow;
 	fmpz_poly_init(val_pow);
 	fmpz_poly_mul(val_pow, val, val);
@@ -9791,8 +9807,29 @@ void fmpz_poly_compose_divconquer(fmpz_poly_t output, fmpz_poly_t poly, fmpz_pol
 	flint_heap_free(half);
 }
 
-void fmpz_poly_array_compose_divconquer(fmpz_poly_t output, fmpz_poly_t * poly, ulong length, fmpz_poly_t val)
+void fmpz_poly_array_compose_divconquer(fmpz_poly_t output, fmpz_poly_t * poly, ulong length_in, fmpz_poly_t val)
 {
+	if (length_in == 0)
+	{
+		fmpz_poly_zero(output);
+		return;
+	}
+	
+	if (length_in == 1)
+	{
+		fmpz_poly_set(output, poly[0]);
+		return;
+	}
+
+	if (length_in == 2)
+	{
+		fmpz_poly_mul(output, poly[1], val);
+		fmpz_poly_add(output, output, poly[0]);
+		return;
+	}
+
+	ulong length = length_in;
+	
 	fmpz_poly_t * half = (fmpz_poly_t *) flint_heap_alloc(((length + 1)/2)*sizeof(fmpz_poly_t));
 	fmpz_poly_t * temp  = (fmpz_poly_t *) flint_heap_alloc(((length + 1)/2)*sizeof(fmpz_poly_t));
 
@@ -9836,8 +9873,8 @@ void fmpz_poly_array_compose_divconquer(fmpz_poly_t output, fmpz_poly_t * poly, 
 	fmpz_poly_mul(output, temp[1], val_pow);
    fmpz_poly_add(output, output, temp[0]);
 		
-	for (ulong i = 0; i < (length + 1)/2; i++) fmpz_poly_clear(temp[i]);
-   for (ulong i = 0; i < (length + 1)/2; i++) fmpz_poly_clear(half[i]);
+	for (ulong i = 0; i < (length_in + 1)/2; i++) fmpz_poly_clear(temp[i]);
+   for (ulong i = 0; i < (length_in + 1)/2; i++) fmpz_poly_clear(half[i]);
 
 	fmpz_poly_clear(val_pow);
 
@@ -9866,7 +9903,7 @@ void fmpz_poly_compose(fmpz_poly_t output, fmpz_poly_t poly, fmpz_poly_t val)
 		return;
 	}
 
-	if (poly->length <= 8) 
+	if (poly->length <= 4) 
 	{
 		fmpz_poly_compose_divconquer(output, poly, val);
 		return;
@@ -9891,7 +9928,7 @@ void fmpz_poly_compose(fmpz_poly_t output, fmpz_poly_t poly, fmpz_poly_t val)
 	{
 		fmpz_poly_compose_horner_range(temp[i], poly, val, i*eval_length, poly->length - i*eval_length);
 
-	   fmpz_poly_t val_pow;
+		fmpz_poly_t val_pow;
 		fmpz_poly_init(val_pow);
 		
 		fmpz_poly_power(val_pow, val, eval_length);

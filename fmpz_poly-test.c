@@ -11912,8 +11912,6 @@ int test_fmpz_poly_evaluate()
 			    fmpz_print(val); printf("\n");
 			 }
 
-			 result = 1;
-
 			 fmpz_clear(val);
 			 fmpz_clear(eval);
       }   
@@ -11942,7 +11940,7 @@ int test_fmpz_poly_compose_horner_divconquer()
    mpz_poly_init(test_poly); 
    mpz_poly_init(test_poly2); 
    
-   for (unsigned long count1 = 0; (count1 < 100) && (result == 1) ; count1++)
+   for (unsigned long count1 = 0; (count1 < 1000) && (result == 1) ; count1++)
    {
       length = random_ulong(30);
 	   bits = random_ulong(200) + 1;
@@ -11980,9 +11978,6 @@ int test_fmpz_poly_compose_horner_divconquer()
 			 {
 				 printf("length = %ld, length2 = %ld, bits = %ld, bits2 = %ld, val = ", length, length2, bits, bits2);
 			 }
-
-			 result = 1;
-
      }   
 
      fmpz_poly_clear(test_fmpz_poly);
@@ -12008,7 +12003,7 @@ int test_fmpz_poly_compose_divconquer()
    mpz_poly_init(test_poly); 
    mpz_poly_init(test_poly2); 
    
-   for (unsigned long count1 = 0; (count1 < 100) && (result == 1) ; count1++)
+   for (unsigned long count1 = 0; (count1 < 1000) && (result == 1) ; count1++)
    {
       length = random_ulong(30);
 	   bits = random_ulong(200) + 1;
@@ -12026,7 +12021,7 @@ int test_fmpz_poly_compose_divconquer()
           printf("%ld, %ld, %ld, %ld\n",length, bits, length2, bits2);
 #endif
           randpoly(test_poly, length, bits);
-          randpoly(test_poly2, length, bits);
+          randpoly(test_poly2, length2, bits2);
            
 #if DEBUG
           mpz_poly_print_pretty(test_poly, "x");
@@ -12039,16 +12034,18 @@ int test_fmpz_poly_compose_divconquer()
 
 			 fmpz_poly_compose(test_fmpz_poly3, test_fmpz_poly, test_fmpz_poly2);
           fmpz_poly_compose_divconquer(test_fmpz_poly4, test_fmpz_poly, test_fmpz_poly2);
-
+          
           result = (fmpz_poly_equal(test_fmpz_poly3, test_fmpz_poly4));
 
           if (!result) 
 			 {
-				 printf("length = %ld, length2 = %ld, bits = %ld, bits2 = %ld, val = ", length, length2, bits, bits2);
+				 printf("length = %ld, length2 = %ld, bits = %ld, bits2 = %ld\n", test_fmpz_poly->length, test_fmpz_poly2->length, bits, bits2);
+				 printf("length3 = %ld, length4 = %ld\n", test_fmpz_poly3->length, test_fmpz_poly4->length);
+				 fmpz_poly_print(test_fmpz_poly); printf("\n");
+				 fmpz_poly_print(test_fmpz_poly2); printf("\n");
+				 fmpz_poly_print(test_fmpz_poly3); printf("\n");
+				 fmpz_poly_print(test_fmpz_poly4); printf("\n");
 			 }
-
-			 result = 1;
-
      }   
 
      fmpz_poly_clear(test_fmpz_poly);
