@@ -1774,6 +1774,7 @@ extern UWtype mpn_udiv_qrnnd_r _PROTO ((UWtype, UWtype, UWtype, UWtype *));
 /* If the processor has no udiv_qrnnd but sdiv_qrnnd, go through
    __udiv_w_sdiv (defined in libgcc or elsewhere).  */
 #if !defined (udiv_qrnnd) && defined (sdiv_qrnnd)
+extern mp_limb_t __gmpn_udiv_w_sdiv(mp_limb_t * rp, mp_limb_t a1, mp_limb_t a0, mp_limb_t d);
 #define udiv_qrnnd(q, r, nh, nl, d) \
   do {									\
     UWtype __r;								\
