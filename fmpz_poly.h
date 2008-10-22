@@ -723,8 +723,7 @@ long fmpz_poly_max_limbs(const fmpz_poly_t poly)
 static inline 
 void fmpz_poly_truncate(fmpz_poly_t poly, const unsigned long length)
 {
-   FLINT_ASSERT(poly->length >= length);
-   poly->length = length;
+   poly->length = FLINT_MIN(length, poly->length);
    _fmpz_poly_normalise(poly);
 }
 
