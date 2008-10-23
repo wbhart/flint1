@@ -73,6 +73,8 @@ FLINT_BITS - 2 bits are stored in an mpz_t.
 
 ================================================================================*/
  
+gmp_randstate_t state; // Used for random generation in testing only
+
 typedef struct
 {
    mp_limb_t * entries;
@@ -231,6 +233,12 @@ ulong _F_mpz_entry_get_ui(const F_mpz_mat_t mat, const ulong r, const ulong c);
 void _F_mpz_entry_get_mpz(mpz_t x, const F_mpz_mat_t mat, const ulong r, const ulong c);
 
 /** 
+   \fn     double _F_mpz_entry_get_d_2exp(long * exp, const F_mpz_mat_t mat, const ulong r, const ulong c)
+   \brief  Returns the given entry of mat as an double mantissa and a long exponent
+*/
+double _F_mpz_entry_get_d_2exp(long * exp, const F_mpz_mat_t mat, const ulong r, const ulong c);
+
+/** 
    \fn     _F_mpz_entry_set_mpz(F_mpz_mat_t mat, ulong entry, const mpz_t x)
    \brief  Sets the given entry to the given mpz_t
 */
@@ -365,6 +373,39 @@ void _F_mpz_entry_mul_2exp(F_mpz_mat_t mat2, ulong r2, ulong c2, const F_mpz_mat
 //						                                 const F_mpz_mat_t mat2, const ulong entry2);
 
 /** 
+   \fn     ulong _F_mpz_entry_size(F_mpz_mat_t mat, const ulong r, const ulong c)
+   \brief  Return size in limbs of the given matrix entry.
+*/
+ulong _F_mpz_entry_size(F_mpz_mat_t mat, const ulong r, const ulong c);
+
+/** 
+   \fn     ulong _F_mpz_entry_print(F_mpz_mat_t mat, const ulong r, const ulong c)
+   \brief  Print given matrix entry.
+*/
+ulong _F_mpz_entry_print(F_mpz_mat_t mat, const ulong r, const ulong c);
+
+/** 
+   \fn     void F_mpz_entry_random(F_mpz_mat_t mat, const ulong r, const ulong c, const ulong bits)
+
+   \brief  Set the given entry of mat to a random value with up to the given number of bits.
+*/
+void F_mpz_entry_random(F_mpz_mat_t mat, const ulong r, const ulong c, const ulong bits);
+
+/** 
+   \fn     void F_mpz_entry_randomm(F_mpz_mat_t mat, const ulong r, const ulong c, const mpz_t in)
+
+   \brief  Set the given entry of mat to a random value in [0, in).
+*/
+void F_mpz_entry_randomm(F_mpz_mat_t mat, const ulong r, const ulong c, const mpz_t in);
+
+/** 
+   \fn     void F_mpz_entry_read(F_mpz_mat_t mat, const ulong r, const ulong c)
+
+   \brief  Read the given matrix entry from stdin as a multiprecision integer.
+*/
+void F_mpz_entry_read(F_mpz_mat_t mat, const ulong r, const ulong c);
+
+/** 
    \fn     void F_mpz_mat_set_entry_si(F_mpz_mat_t mat, ulong n, const long x)
    \brief  Set entry n to the signed long value x. Coefficients are numbered
 	        from the constant entry, starting at zero.
@@ -414,9 +455,15 @@ void _F_mpz_entry_mul_2exp(F_mpz_mat_t mat2, ulong r2, ulong c2, const F_mpz_mat
 
 /*===============================================================================
 
-	Truncation
+	Input/Output
 
 ================================================================================*/
+
+/** 
+   \fn     void F_mpz_mat_print(F_mpz_mat_t mat)
+   \brief  Print an F_mpz_mat to stdout.
+*/
+void F_mpz_mat_print(F_mpz_mat_t mat);
 
 /*===============================================================================
 
@@ -436,6 +483,11 @@ void mpz_mat_to_F_mpz_mat(F_mpz_mat_t F_mat, const mpz_mat_t m_mat);
 */
 void F_mpz_mat_to_mpz_mat(mpz_mat_t m_mat, const F_mpz_mat_t F_mat);
 
+/** 
+   \fn     int F_mpz_mat_set_line_d(double * appv, const F_mpz_mat_t mat, const ulong r, const int n)
+   \brief  Sets the entries of appv to the double mantissa of the entries of the given row of mat
+*/
+int F_mpz_mat_set_line_d(double * appv, const F_mpz_mat_t mat, const ulong r, const int n);
 
 /*===============================================================================
 
@@ -524,10 +576,28 @@ void F_mpz_mat_neg(F_mpz_mat_t mat1, const F_mpz_mat_t mat2);
 void F_mpz_mat_add(F_mpz_mat_t res, const F_mpz_mat_t mat1, const F_mpz_mat_t mat2);
 
 /** 
+   \fn     void F_mpz_mat_row_add(F_mpz_mat_t res, const ulong r3, const F_mpz_mat_t mat1, 
+	                                 const ulong r1, const F_mpz_mat_t mat2, const ulong r1, 
+												                       const ulong start, const ulong n)
+   \brief  Sets the given row of res to the sum of the given rows of mat1 and mat2.
+*/
+void F_mpz_mat_row_add(F_mpz_mat_t res, const ulong r3, const F_mpz_mat_t mat1, const ulong r1, 
+							  const F_mpz_mat_t mat2, const ulong r2, const ulong start, const ulong n);
+
+/** 
    \fn     void F_mpz_mat_sub(F_mpz_mat_t res, const F_mpz_mat_t mat1, const F_mpz_mat_t mat2)
    \brief  Sets res to the difference of mat1 and mat2.
 */
 void F_mpz_mat_sub(F_mpz_mat_t res, const F_mpz_mat_t mat1, const F_mpz_mat_t mat2);
+
+/** 
+   \fn     void F_mpz_mat_row_sub(F_mpz_mat_t res, const ulong r3, const F_mpz_mat_t mat1, 
+	                                 const ulong r1, const F_mpz_mat_t mat2, const ulong r1, 
+												                       const ulong start, const ulong n)
+   \brief  Sets the given row of res to the difference of the given rows of mat1 and mat2.
+*/
+void F_mpz_mat_row_sub(F_mpz_mat_t res, const ulong r3, const F_mpz_mat_t mat1, const ulong r1, 
+							  const F_mpz_mat_t mat2, const ulong r2, const ulong start, const ulong n);
 
 /*===============================================================================
 

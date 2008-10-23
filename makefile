@@ -66,7 +66,9 @@ HEADERS = \
 	zmod_mat.h \
 	F_mpz_poly.h \
 	F_mpz_mat.h \
-	mpz_mat.h
+	mpz_mat.h \
+	d_mat.h \
+	F_mpz_LLL_fast_d.h
 
 ####### library object files
 
@@ -88,7 +90,9 @@ FLINTOBJ = \
 	zmod_mat.o \
 	F_mpz_poly.c \
 	mpz_mat.o \
-	F_mpz_mat.o
+	F_mpz_mat.o \
+	d_mat.o \
+	F_mpz_LLL_fast_d.o
 
 QS: mpQS
 
@@ -140,6 +144,12 @@ fmpz_poly.o: fmpz_poly.c $(HEADERS)
 F_mpz_mat.o: F_mpz_mat.c $(HEADERS)
 	$(CC) $(CFLAGS) -c F_mpz_mat.c -o F_mpz_mat.o
 
+F_mpz_LLL_fast_d.o: F_mpz_LLL_fast_d.c $(HEADERS)
+	$(CC) $(CFLAGS) -c F_mpz_LLL_fast_d.c -o F_mpz_LLL_fast_d.o
+
+d_mat.o: d_mat.c $(HEADERS)
+	$(CC) $(CFLAGS) -c d_mat.c -o d_mat.o
+
 mpz_poly.o: mpz_poly.c $(HEADERS)
 	$(CC) $(CFLAGS) -c mpz_poly.c -o mpz_poly.o
 
@@ -181,6 +191,9 @@ fmpz_poly-test.o: fmpz_poly-test.c $(HEADERS)
 F_mpz_mat-test.o: F_mpz_mat-test.c $(HEADERS)
 	$(CC) $(CFLAGS) $(WITH_ZNPOLY) -c F_mpz_mat-test.c -o F_mpz_mat-test.o
 
+F_mpz_LLL_fast_d-test.o: F_mpz_LLL_fast_d.c $(HEADERS)
+	$(CC) $(CFLAGS) -c F_mpz_LLL_fast_d-test.c -o F_mpz_LLL_fast_d-test.o
+	
 fmpz-test.o: fmpz-test.c $(HEADERS)
 	$(CC) $(CFLAGS) $(WITH_ZNPOLY) -c fmpz-test.c -o fmpz-test.o
 
@@ -237,6 +250,9 @@ mpz_poly-test: mpz_poly-test.o test-support.o $(FLINTOBJ) $(HEADERS)
 F_mpz_mat-test: F_mpz_mat-test.o test-support.o $(FLINTOBJ) $(HEADERS)
 	$(CC) $(CFLAGS) F_mpz_mat-test.o test-support.o -o F_mpz_mat-test $(FLINTOBJ) $(LIBS)
 
+F_mpz_LLL_fast_d-test: F_mpz_LLL_fast_d-test.o test-support.o $(FLINTOBJ) $(HEADERS)
+	$(CC) $(CFLAGS) F_mpz_LLL_fast_d-test.o test-support.o -o F_mpz_LLL_fast_d-test $(FLINTOBJ) $(LIBS)
+	
 ZmodF_mul-test: ZmodF_mul-test.o test-support.o $(FLINTOBJ) $(HEADERS)
 	$(CC) $(CFLAGS) ZmodF_mul-test.o test-support.o -o ZmodF_mul-test $(FLINTOBJ) $(LIBS)
 

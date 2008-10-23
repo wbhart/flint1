@@ -22,9 +22,11 @@
 
 ===============================================================================*/
 
+#include <stdio.h>
 #include <stdint.h>
 #include <string.h>
 #include <math.h>
+#include <gmp.h>
 
 #include "flint.h"
 #include "mpn_extras.h"
@@ -173,6 +175,27 @@ void _F_mpz_entry_get_mpz(mpz_t x, const F_mpz_mat_t mat, const ulong r, const u
 
 	if (!ENTRY_IS_MPZ(d)) mpz_set_si(x, d); // set x to small entry
 	else mpz_set(x, mat->mpz_entries + ENTRY_TO_OFF(d)); // set x to large entry
+}
+
+extern double __gmpn_get_d(mp_limb_t *, size_t, size_t, long);
+
+double _F_mpz_entry_get_d_2exp(long * exp, const F_mpz_mat_t mat, const ulong r, const ulong c)
+{
+   mp_limb_t d = mat->rows[r][c];
+
+	if (!ENTRY_IS_MPZ(d))
+   {
+      if (d == 0L) 
+      {
+         (*exp) = 0L;
+         return 0.0;
+      }
+      ulong d_abs = FLINT_ABS(d);
+      (*exp) = FLINT_BIT_COUNT(d_abs);
+      if ((long) d < 0L) return __gmpn_get_d(&d_abs, 1L, -1L, -*exp);
+      else return __gmpn_get_d(&d, 1L, 1L, -*exp);
+   } else 
+	   return mpz_get_d_2exp(exp, mat->mpz_entries + ENTRY_TO_OFF(d));
 }
 
 void _F_mpz_entry_set_mpz(F_mpz_mat_t mat, const ulong r, const ulong c, const mpz_t x)
@@ -732,81 +755,137 @@ void _F_mpz_entry_submul(F_mpz_mat_t res, ulong entry3, const F_mpz_mat_t mat1, 
 	
    mpz_submul(mpz_ptr, mat1->mpz_entries + ENTRY_TO_OFF(c1), mat2->mpz_entries + ENTRY_TO_OFF(c2));
 	_F_mpz_entry_demote_val(res, entry3); // cancellation may have occurred
-}
-
-void F_mpz_mat_set_entry_si(F_mpz_mat_t mat, ulong n, const long x)
-{
-   F_mpz_mat_fit_length(mat, n + 1);
-   
-	if (n + 1 > mat->length) // insert zeroes between end of mat and new entry if needed
-   {
-      for (ulong i = mat->length; i + 1 < n; i++)
-         _F_mpz_entry_zero(mat, i);
-      mat->length = n+1;
-   }
-   
-	_F_mpz_entry_set_si(mat, n, x);
-   _F_mpz_entry_mat_normalise(mat); // we may have set leading entry to zero
-}
-
-void F_mpz_mat_set_entry_ui(F_mpz_mat_t mat, ulong n, const ulong x)
-{
-   F_mpz_mat_fit_length(mat, n+1);
-
-   if (n + 1 > mat->length) // insert zeroes between end of mat and new entry if needed
-   {
-      for (long i = mat->length; i + 1 < n; i++)
-         _F_mpz_entry_zero(mat, i); 
-      mat->length = n+1;
-   }
-
-   _F_mpz_entry_set_ui(mat, n, x);
-   _F_mpz_entry_mat_normalise(mat); // we may have set leading entry to zero
-}
-
-void F_mpz_mat_set_entry_mpz(F_mpz_mat_t mat, ulong n, const mpz_t x)
-{
-   F_mpz_mat_fit_length(mat, n+1);
-
-   if (n + 1 > mat->length) // insert zeroes between end of mat and new entry if needed
-   {
-      for (long i = mat->length; i + 1 < n; i++)
-         _F_mpz_entry_zero(mat, i); 
-      mat->length = n+1;
-   }
-
-   _F_mpz_entry_set_mpz(mat, n, x);
-	_F_mpz_entry_mat_normalise(mat); // we may have set leading entry to zero
-}
-
-long F_mpz_mat_get_entry_si(const F_mpz_mat_t mat, const ulong n)
-{
-   if (n + 1 > mat->length) // entry is beyond end of matrix
-      return 0;
-   
-	return _F_mpz_entry_get_si(mat, n);
-}
-
-ulong F_mpz_mat_get_entry_ui(const F_mpz_mat_t mat, const ulong n)
-{
-   if (n + 1 > mat->length) // entry is beyond end of matrix
-      return 0;
-   
-	return _F_mpz_entry_get_ui(mat, n);
-}
-
-void F_mpz_mat_get_entry_mpz(mpz_t x, const F_mpz_mat_t mat, const ulong n)
-{
-   if (n + 1 > mat->length) // entry is beyond end of matrix
-	{
-		mpz_set_ui(x, 0);
-		return;
-   }
-   
-	_F_mpz_entry_get_mpz(x, mat, n);
-	return;
 }*/
 
+ulong _F_mpz_entry_size(F_mpz_mat_t mat, const ulong r, const ulong c)
+{
+	ulong d = mat->rows[r][c];
+
+	if (d == 0) return 0;
+   if (!ENTRY_IS_MPZ(d)) // c1 is small
+	{
+		return 1;
+	}
+
+	return mpz_size(mat->mpz_entries + ENTRY_TO_OFF(d));
+}
+
+ulong _F_mpz_entry_print(F_mpz_mat_t mat, const ulong r, const ulong c)
+{
+   ulong d = mat->rows[r][c];
+
+	if (!ENTRY_IS_MPZ(d)) 
+	   printf("%ld", d);
+   else
+	   gmp_printf("%Zd", mat->mpz_entries + ENTRY_TO_OFF(d));
+}
+
+/* ==============================================================================
+
+   Random generation
+
+===============================================================================*/
+
+/*
+  These are not serious random generators, they are just here for testing 
+  purposes at this stage
+
+  We require bits to be non-zero
+*/
+
+#define NORM(xxx, coeffxxx) \
+do { \
+   if ((long) xxx->_mp_size < 0L) \
+   { \
+      while ((xxx->_mp_size) && (!(coeffxxx)[-xxx->_mp_size - 1])) xxx->_mp_size++; \
+   } else if ((long) xxx->_mp_size > 0L) \
+   { \
+      while ((xxx->_mp_size) && (!(coeffxxx)[xxx->_mp_size - 1])) xxx->_mp_size--; \
+   } \
+} while (0);
+
+void F_mpz_entry_random(F_mpz_mat_t mat, const ulong r, const ulong c, const ulong bits)
+{
+   mp_limb_t d = mat->rows[r][c];
+   
+	if (bits <= FLINT_BITS - 2)
+   {
+      ulong temp;
+      mpn_random(&temp, 1L);
+      ulong mask = ((1L<<bits)-1L);
+      mat->rows[r][c] = temp & mask;
+      return;
+   }
+   
+	ulong limbs = ((bits-1)>>FLINT_LG_BITS_PER_LIMB)+1;
+   ulong rem = (bits & (FLINT_BITS - 1));
+   
+   __mpz_struct * mpz_ptr = _F_mpz_entry_promote(mat, r, c);
+   mpz_realloc2(mpz_ptr, bits);
+	
+	mp_limb_t * fp = mpz_ptr->_mp_d;
+   mpz_ptr->_mp_size = limbs;
+   mpn_random(fp, limbs);
+   if (rem)
+   {
+      ulong mask = ((1L<<rem)-1L);
+      fp[limbs-1] &= mask;
+   }
+   NORM(mpz_ptr, fp);
+	_F_mpz_entry_demote_val(mat, r, c);
+}
+
+void F_mpz_entry_randomm(F_mpz_mat_t mat, const ulong r, const ulong c, const mpz_t in)
+{
+   if (mpz_size(in) > 1) 
+   {
+      __mpz_struct * mpz_ptr = _F_mpz_entry_promote(mat, r, c);
+		mpz_urandomm(mpz_ptr, state, in);
+		_F_mpz_entry_demote_val(mat, r, c);
+   } else
+   {
+      ulong val = mpz_get_ui(in);
+		ulong rnd = (val == 0 ? 0L : z_randint(val));
+		_F_mpz_entry_set_ui(mat, r, c, rnd);
+   }
+}
+
+/* ==============================================================================
+
+   Input/Output
+
+===============================================================================*/
+
+void F_mpz_entry_read(F_mpz_mat_t mat, const ulong r, const ulong c)
+{
+	mpz_t temp;
+	mpz_init(temp);
+
+	mpz_inp_str(temp, stdin, 10);
+	_F_mpz_entry_set_mpz(mat, r, c, temp);
+
+	mpz_clear(temp);
+}
+
+void F_mpz_mat_print(F_mpz_mat_t mat) 
+{
+   ulong i, j; 
+   ulong r = mat->r;
+   ulong c = mat->c;
+	
+   printf("[");
+   for (i = 0; i < r; i++) 
+   {
+      printf("[");
+      for (j = 0; j < c; j++) 
+	   { 
+	      _F_mpz_entry_print(mat, i, j); 
+	      if (j < c - 1) printf(" "); 
+	   }
+      if (i != r - 1) printf("]\n"); 
+   }  
+   printf("]]\n"); 
+}
 
 /*===============================================================================
 
@@ -832,6 +911,23 @@ void F_mpz_mat_to_mpz_mat(mpz_mat_t m_mat, const F_mpz_mat_t F_mat)
 		for (ulong c = 0; c < m_mat->c; c++)
 	   _F_mpz_entry_get_mpz(m_mat->entries[row+c], F_mat, r, c);
 	}
+}
+
+int F_mpz_mat_set_line_d(double * appv, const F_mpz_mat_t mat, const ulong r, const int n)
+{
+   long * exp, i, maxexp = 0L;
+   exp = (long *) malloc(n * sizeof(long)); 
+  
+   for (i = 0; i < n; i++)
+   {
+      appv[i] = _F_mpz_entry_get_d_2exp(&exp[i], mat, r, i);
+      if (exp[i] > maxexp) maxexp = exp[i];
+   }
+
+   for (i = 0; i < n; i++) appv[i] = ldexp(appv[i], exp[i] - maxexp);
+
+   free(exp);
+   return maxexp;
 }
 
 /*===============================================================================
@@ -1003,6 +1099,14 @@ void F_mpz_mat_add(F_mpz_mat_t res, const F_mpz_mat_t mat1, const F_mpz_mat_t ma
 			_F_mpz_entry_add(res, i, j, mat1, i, j, mat2, i, j);   
 }
 
+void F_mpz_mat_row_add(F_mpz_mat_t res, const ulong r3, const F_mpz_mat_t mat1, 
+							  const ulong r1, const F_mpz_mat_t mat2, const ulong r2, 
+							                         const ulong start, const ulong n)
+{
+   for (ulong i = start; i < start + n; i++) 
+		_F_mpz_entry_add(res, r3, i, mat1, r1, i, mat2, r2, i);   
+}
+
 void F_mpz_mat_sub(F_mpz_mat_t res, const F_mpz_mat_t mat1, const F_mpz_mat_t mat2)
 {
    ulong r = mat1->r;
@@ -1012,6 +1116,15 @@ void F_mpz_mat_sub(F_mpz_mat_t res, const F_mpz_mat_t mat1, const F_mpz_mat_t ma
 		for (ulong j = 0; j < c; j++)
 			_F_mpz_entry_sub(res, i, j, mat1, i, j, mat2, i, j);   
 }
+
+void F_mpz_mat_row_sub(F_mpz_mat_t res, const ulong r3, const F_mpz_mat_t mat1, 
+							  const ulong r1, const F_mpz_mat_t mat2, const ulong r2, 
+							                          const ulong start, const ulong n)
+{
+   for (ulong i = start; i < start + n; i++) 
+		_F_mpz_entry_sub(res, r3, i, mat1, r1, i, mat2, r2, i);   
+}
+
 
 /*===============================================================================
 
