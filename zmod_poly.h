@@ -72,6 +72,16 @@ typedef struct
 
 typedef zmod_poly_precomp_struct zmod_poly_precomp_t[1];
 
+typedef struct
+{
+	zmod_poly_t a;
+	zmod_poly_t b;
+	zmod_poly_t c;
+	zmod_poly_t d;
+} zmod_poly_2x2_mat_struct;
+
+typedef zmod_poly_2x2_mat_struct zmod_poly_2x2_mat_t[1];
+
 /**
  * This is the data type for storing factors for a polynomial
  * It contains an array of polynomials <code>factors</code> that contains the factors of the polynomial.
@@ -121,6 +131,10 @@ void zmod_poly_fit_length(zmod_poly_t poly, unsigned long alloc)
    if (alloc > poly->alloc)
       __zmod_poly_fit_length(poly, alloc);
 }
+
+void zmod_poly_2x2_mat_init(zmod_poly_2x2_mat_t mat, ulong modulus);
+
+void zmod_poly_2x2_mat_clear(zmod_poly_2x2_mat_t mat);
 
 // ------------------------------------------------------
 // Setting/retrieving coefficients
@@ -591,6 +605,14 @@ void zmod_poly_factor_pow(zmod_poly_factor_t fac, unsigned long exp);
 void zmod_poly_factor_berlekamp(zmod_poly_factor_t factors, zmod_poly_t f);
 
 unsigned long zmod_poly_factor(zmod_poly_factor_t result, zmod_poly_t input);
+
+/*
+   zmod_poly matrix routines
+*/
+
+void zmod_poly_2x2_mat_mul_classical(zmod_poly_2x2_mat_t R, zmod_poly_2x2_mat_t A, zmod_poly_2x2_mat_t B);
+
+void zmod_poly_2x2_mat_mul_strassen(zmod_poly_2x2_mat_t R, zmod_poly_2x2_mat_t A, zmod_poly_2x2_mat_t B);
 
 #ifdef __cplusplus
  }

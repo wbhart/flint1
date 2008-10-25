@@ -19,7 +19,7 @@
 ===============================================================================*/
 /*****************************************************************************
 
-   zmod_poly.c: Polynomials over (unsigned) long mod p, for p prime.
+   zmod_poly->c: Polynomials over (unsigned) long mod p, for p prime.
    
    Copyright (C) 2007, David Howden.
    Copyright (C) 2007, 2008, William Hart
@@ -122,6 +122,21 @@ void __zmod_poly_fit_length(zmod_poly_t poly, unsigned long alloc)
    zmod_poly_realloc(poly, alloc);
 }
 
+void zmod_poly_2x2_mat_init(zmod_poly_2x2_mat_t mat, ulong modulus)
+{
+   zmod_poly_init(mat->a, modulus);
+   zmod_poly_init(mat->b, modulus);
+   zmod_poly_init(mat->c, modulus);
+   zmod_poly_init(mat->d, modulus);
+}
+
+void zmod_poly_2x2_mat_clear(zmod_poly_2x2_mat_t mat)
+{
+   zmod_poly_clear(mat->a);
+   zmod_poly_clear(mat->b);
+   zmod_poly_clear(mat->c);
+   zmod_poly_clear(mat->d);
+}
 
 /****************************************************************************
 
@@ -4650,3 +4665,77 @@ unsigned long zmod_poly_factor(zmod_poly_factor_t result, zmod_poly_t input)
    	
    return leading_coeff;   
 }
+
+/**************************************************************************************************
+
+   zmod_poly matrix routines
+
+**************************************************************************************************/
+
+void zmod_poly_2x2_mat_mul_classical(zmod_poly_2x2_mat_t R, zmod_poly_2x2_mat_t A, zmod_poly_2x2_mat_t B)
+{
+	zmod_poly_t temp;
+	zmod_poly_init_precomp(temp, A->a->p, A->a->p_inv);
+   
+	zmod_poly_mul(R->a, A->a, B->a);
+	zmod_poly_mul(temp, A->b, B->c);
+	zmod_poly_add(R->a, R->a, temp);
+
+   zmod_poly_mul(R->b, A->a, B->b);
+	zmod_poly_mul(temp, A->b, B->d);
+	zmod_poly_add(R->b, R->b, temp);
+
+   zmod_poly_mul(R->c, A->c, B->a);
+	zmod_poly_mul(temp, A->d, B->c);
+	zmod_poly_add(R->c, R->c, temp);
+
+   zmod_poly_mul(R->d, A->c, B->b);
+	zmod_poly_mul(temp, A->d, B->d);
+	zmod_poly_add(R->d, R->d, temp);
+
+	zmod_poly_clear(temp);
+}
+
+void zmod_poly_2x2_mat_mul_strassen(zmod_poly_2x2_mat_t R, zmod_poly_2x2_mat_t A, zmod_poly_2x2_mat_t B)
+{
+	zmod_poly_t x0;
+	zmod_poly_t x1;
+	zmod_poly_init_precomp(x0, A->a->p, A->a->p_inv);
+	zmod_poly_init_precomp(x1, A->a->p, A->a->p_inv);
+
+   zmod_poly_sub(x0, A->a, A->c);
+	zmod_poly_sub(x1, B->d, B->b);
+	zmod_poly_mul(R->c, x0, x1);
+
+	zmod_poly_add(x0, A->c, A->d);
+	zmod_poly_sub(x1, B->b, B->a);
+	zmod_poly_mul(R->d, x0, x1);
+
+   zmod_poly_sub(x0, x0, A->a);
+	zmod_poly_sub(x1, B->d, x1);
+	zmod_poly_mul(R->b, x0, x1);
+
+	zmod_poly_sub(x0, A->b, x0);
+	zmod_poly_mul(R->a, x0, B->d);
+
+	zmod_poly_mul(x0, A->a, B->a);
+
+	zmod_poly_add(R->b, x0, R->b);
+	zmod_poly_add(R->c, R->b, R->c);
+	zmod_poly_add(R->b, R->b, R->d);
+	zmod_poly_add(R->d, R->c, R->d);
+	zmod_poly_add(R->b, R->b, R->a);
+	zmod_poly_sub(x1, x1, B->c);
+	zmod_poly_mul(R->a, A->d, x1);
+
+	zmod_poly_sub(R->c, R->c, R->a);
+	zmod_poly_mul(R->a, A->b, B->c);
+
+	zmod_poly_add(R->a, R->a, x0);
+
+	zmod_poly_clear(x0);
+	zmod_poly_clear(x1);
+}
+
+#define ZMOD_POLY_2X2_STRASSEN_CUTOFF 20
+
