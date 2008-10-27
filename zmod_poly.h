@@ -610,9 +610,14 @@ unsigned long zmod_poly_factor(zmod_poly_factor_t result, zmod_poly_t input);
    zmod_poly matrix routines
 */
 
-void zmod_poly_2x2_mat_mul_classical(zmod_poly_2x2_mat_t R, zmod_poly_2x2_mat_t A, zmod_poly_2x2_mat_t B);
+void zmod_poly_2x2_mat_mul_classical(zmod_poly_2x2_mat_t R, zmod_poly_2x2_mat_t A, 
+												                        zmod_poly_2x2_mat_t B);
 
-void zmod_poly_2x2_mat_mul_strassen(zmod_poly_2x2_mat_t R, zmod_poly_2x2_mat_t A, zmod_poly_2x2_mat_t B);
+void zmod_poly_2x2_mat_mul_strassen(zmod_poly_2x2_mat_t R, zmod_poly_2x2_mat_t A, 
+												                        zmod_poly_2x2_mat_t B);
+
+void zmod_poly_2x2_mat_mul(zmod_poly_2x2_mat_t R, zmod_poly_2x2_mat_t A, 
+									                         zmod_poly_2x2_mat_t B);
 
 #ifdef __cplusplus
  }

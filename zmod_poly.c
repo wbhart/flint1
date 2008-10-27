@@ -125,9 +125,10 @@ void __zmod_poly_fit_length(zmod_poly_t poly, unsigned long alloc)
 void zmod_poly_2x2_mat_init(zmod_poly_2x2_mat_t mat, ulong modulus)
 {
    zmod_poly_init(mat->a, modulus);
-   zmod_poly_init(mat->b, modulus);
-   zmod_poly_init(mat->c, modulus);
-   zmod_poly_init(mat->d, modulus);
+   double p_inv = mat->a->p_inv;
+	zmod_poly_init_precomp(mat->b, modulus, p_inv);
+   zmod_poly_init_precomp(mat->c, modulus, p_inv);
+   zmod_poly_init_precomp(mat->d, modulus, p_inv);
 }
 
 void zmod_poly_2x2_mat_clear(zmod_poly_2x2_mat_t mat)
@@ -4738,4 +4739,35 @@ void zmod_poly_2x2_mat_mul_strassen(zmod_poly_2x2_mat_t R, zmod_poly_2x2_mat_t A
 }
 
 #define ZMOD_POLY_2X2_STRASSEN_CUTOFF 20
+
+void zmod_poly_2x2_mat_mul(zmod_poly_2x2_mat_t R, zmod_poly_2x2_mat_t A, 
+									                         zmod_poly_2x2_mat_t B)
+{
+	ulong min_A = FLINT_MIN(FLINT_MIN(A->a->length, A->b->length), FLINT_MIN(A->c->length, A->d->length));
+   ulong min_B = FLINT_MIN(FLINT_MIN(B->a->length, B->b->length), FLINT_MIN(B->c->length, B->d->length));
+
+	if ((R == A) || (R == B))
+	{
+		zmod_poly_2x2_mat_t T;
+		zmod_poly_2x2_mat_init(T, A->a->p);
+
+		if (FLINT_MIN(min_A, min_B) < ZMOD_POLY_2X2_STRASSEN_CUTOFF)
+			zmod_poly_2x2_mat_mul_classical(T, A, B);
+		else
+         zmod_poly_2x2_mat_mul_strassen(T, A, B);
+		
+		zmod_poly_swap(T->a, R->a);
+      zmod_poly_swap(T->b, R->b);
+      zmod_poly_swap(T->c, R->c);
+      zmod_poly_swap(T->d, R->d);
+      
+		zmod_poly_2x2_mat_clear(T);
+	} else
+	{
+		if (FLINT_MIN(min_A, min_B) < ZMOD_POLY_2X2_STRASSEN_CUTOFF)
+			zmod_poly_2x2_mat_mul_classical(R, A, B);
+		else
+         zmod_poly_2x2_mat_mul_strassen(R, A, B);
+	}
+}
 

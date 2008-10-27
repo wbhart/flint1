@@ -2417,6 +2417,120 @@ int test_zmod_poly_2x2_mat_mul_classical_strassen()
    return result;
 }
 
+int test_zmod_poly_2x2_mat_mul()
+{
+   int result = 1;
+   zmod_poly_2x2_mat_t A, B, R1, R2;
+   unsigned long bits, length;
+   
+   for (unsigned long count1 = 0; (count1 < 100) && (result == 1); count1++)
+   {
+      bits = randint(FLINT_BITS-1)+2;
+      unsigned long modulus;
+      
+      do {modulus = randbits(bits);} while (modulus < 2);
+      
+      zmod_poly_2x2_mat_init(A, modulus);
+      zmod_poly_2x2_mat_init(B, modulus);
+      zmod_poly_2x2_mat_init(R1, modulus);
+      zmod_poly_2x2_mat_init(R2, modulus);
+      
+      for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
+      {
+         unsigned long length = randint(100)+1;
+         
+         randpoly(A->a, randint(length), modulus);
+         randpoly(A->b, randint(length), modulus);
+         randpoly(A->c, randint(length), modulus);
+         randpoly(A->d, randint(length), modulus);
+         
+         randpoly(B->a, randint(length), modulus);
+         randpoly(B->b, randint(length), modulus);
+         randpoly(B->c, randint(length), modulus);
+         randpoly(B->d, randint(length), modulus);
+         
+			zmod_poly_2x2_mat_mul_strassen(R2, A, B);
+         zmod_poly_2x2_mat_mul(R1, A, B);
+         
+         result &= zmod_poly_equal(R1->a, R2->a);
+         result &= zmod_poly_equal(R1->b, R2->b);
+         result &= zmod_poly_equal(R1->c, R2->c);
+         result &= zmod_poly_equal(R1->d, R2->d);
+         
+         if (!result)
+         {
+				printf("%ld, %ld, %ld, %ld\n", A->a->length, A->b->length, A->c->length, A->d->length);
+				printf("%ld, %ld, %ld, %ld\n", B->a->length, B->b->length, B->c->length, B->d->length);
+         }
+      }
+      
+      for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
+      {
+         unsigned long length = randint(100)+1;
+         
+         randpoly(A->a, randint(length), modulus);
+         randpoly(A->b, randint(length), modulus);
+         randpoly(A->c, randint(length), modulus);
+         randpoly(A->d, randint(length), modulus);
+         
+         randpoly(B->a, randint(length), modulus);
+         randpoly(B->b, randint(length), modulus);
+         randpoly(B->c, randint(length), modulus);
+         randpoly(B->d, randint(length), modulus);
+         
+			zmod_poly_2x2_mat_mul_strassen(R2, A, B);
+         zmod_poly_2x2_mat_mul(A, A, B);
+         
+         result &= zmod_poly_equal(A->a, R2->a);
+         result &= zmod_poly_equal(A->b, R2->b);
+         result &= zmod_poly_equal(A->c, R2->c);
+         result &= zmod_poly_equal(A->d, R2->d);
+         
+         if (!result)
+         {
+				printf("%ld, %ld, %ld, %ld\n", A->a->length, A->b->length, A->c->length, A->d->length);
+				printf("%ld, %ld, %ld, %ld\n", B->a->length, B->b->length, B->c->length, B->d->length);
+         }
+      }
+      
+      for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
+      {
+         unsigned long length = randint(100)+1;
+         
+         randpoly(A->a, randint(length), modulus);
+         randpoly(A->b, randint(length), modulus);
+         randpoly(A->c, randint(length), modulus);
+         randpoly(A->d, randint(length), modulus);
+         
+         randpoly(B->a, randint(length), modulus);
+         randpoly(B->b, randint(length), modulus);
+         randpoly(B->c, randint(length), modulus);
+         randpoly(B->d, randint(length), modulus);
+         
+			zmod_poly_2x2_mat_mul_strassen(R2, A, B);
+         zmod_poly_2x2_mat_mul(B, A, B);
+         
+         result &= zmod_poly_equal(B->a, R2->a);
+         result &= zmod_poly_equal(B->b, R2->b);
+         result &= zmod_poly_equal(B->c, R2->c);
+         result &= zmod_poly_equal(B->d, R2->d);
+         
+         if (!result)
+         {
+				printf("%ld, %ld, %ld, %ld\n", A->a->length, A->b->length, A->c->length, A->d->length);
+				printf("%ld, %ld, %ld, %ld\n", B->a->length, B->b->length, B->c->length, B->d->length);
+         }
+      }
+      
+      zmod_poly_2x2_mat_clear(A);
+      zmod_poly_2x2_mat_clear(B);
+      zmod_poly_2x2_mat_clear(R1);
+      zmod_poly_2x2_mat_clear(R2);
+   }
+   
+   return result;
+}
+
 void zmod_poly_test_all()
 {
    int success, all_success = 1;
@@ -2461,6 +2575,7 @@ void zmod_poly_test_all()
    RUN_TEST(zmod_poly_factor_square_free); 
    RUN_TEST(zmod_poly_factor); 
    RUN_TEST(zmod_poly_2x2_mat_mul_classical_strassen); 
+   RUN_TEST(zmod_poly_2x2_mat_mul); 
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");
