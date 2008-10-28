@@ -4093,6 +4093,59 @@ unsigned long zmod_poly_resultant_euclidean(zmod_poly_t a, zmod_poly_t b)
    return res;
 }
 
+long zmod_poly_half_gcd_iter(zmod_poly_2x2_mat_t res, zmod_poly_t a, zmod_poly_t b)
+{
+	ulong m = a->length/2;
+	
+	zmod_poly_fit_length(res->a, 1);
+   zmod_poly_fit_length(res->d, 1);
+   zmod_poly_zero(res->a);
+   zmod_poly_zero(res->b);
+   zmod_poly_zero(res->c);
+   zmod_poly_zero(res->d);
+   zmod_poly_set_coeff_ui(res->a, 0, 1);
+   zmod_poly_set_coeff_ui(res->d, 0, 1);
+   
+	if (b->length < m+1) return 1;
+	
+	zmod_poly_t U, V, Q, temp;
+	zmod_poly_init(U, a->p);
+	zmod_poly_init(V, a->p);
+   zmod_poly_init(Q, a->p);
+   zmod_poly_init(temp, a->p);
+  
+	zmod_poly_set(U, a);
+   zmod_poly_set(V, b);
+
+	long sign = 1;
+
+	while (V->length >= m+1)
+	{
+		zmod_poly_divrem(Q, U, U, V);
+		zmod_poly_swap(U, V);
+      
+		zmod_poly_mul(temp, Q, res->c);
+		zmod_poly_add(temp, res->d, temp);
+      zmod_poly_swap(res->d, res->c);
+		zmod_poly_swap(res->c, temp);
+
+		zmod_poly_mul(temp, Q, res->a);
+		zmod_poly_add(temp, res->b, temp);
+      zmod_poly_swap(res->b, res->a);
+		zmod_poly_swap(res->a, temp);
+		sign = -sign;
+	}
+
+	zmod_poly_clear(temp);
+	zmod_poly_clear(Q);
+	zmod_poly_clear(U);
+	zmod_poly_clear(V);
+
+	return sign;
+}
+
+#define FLINT_ZMOD_POLY_HGCD_CUTOFF 75
+
 long zmod_poly_half_gcd(zmod_poly_2x2_mat_t res, zmod_poly_t a, zmod_poly_t b)
 {
    ulong m = a->length/2;
@@ -4109,12 +4162,16 @@ long zmod_poly_half_gcd(zmod_poly_2x2_mat_t res, zmod_poly_t a, zmod_poly_t b)
       zmod_poly_set_coeff_ui(res->d, 0, 1);
       return 1L;
 	}
-
+	//printf("hgcd: b->length = %ld\n", b->length);
+	
    zmod_poly_t a0, b0;
 	_zmod_poly_attach_shift(a0, a, m);
    _zmod_poly_attach_shift(b0, b, m);
 
-	long R_sign = zmod_poly_half_gcd(res, a0, b0);
+	long R_sign;
+	
+	if (a0->length < FLINT_ZMOD_POLY_HGCD_CUTOFF) R_sign = zmod_poly_half_gcd_iter(res, a0, b0);
+	else R_sign = zmod_poly_half_gcd(res, a0, b0);
    
 	zmod_poly_t temp, a2, b2; 
 	zmod_poly_init(temp, a->p);
@@ -4125,6 +4182,8 @@ long zmod_poly_half_gcd(zmod_poly_2x2_mat_t res, zmod_poly_t a, zmod_poly_t b)
 	if (R_sign < 0L) zmod_poly_sub(b2, b2, temp);
 	else zmod_poly_sub(b2, temp, b2);
 
+	//printf("hgcd: b2->length = %ld\n", b2->length);
+	
 	if (b2->length < m + 1)
 	{
 	   zmod_poly_clear(temp);
@@ -4145,13 +4204,17 @@ long zmod_poly_half_gcd(zmod_poly_2x2_mat_t res, zmod_poly_t a, zmod_poly_t b)
 
 	zmod_poly_divrem(q, d, a2, b2);
 	long k = 2*m - b2->length + 1;
+	//printf("hgcd: d->length = %ld\n", d->length);
 	
 	zmod_poly_t c0, d0;
    _zmod_poly_attach_shift(c0, b2, k);
    _zmod_poly_attach_shift(d0, d, k);
    zmod_poly_2x2_mat_t S;
 	zmod_poly_2x2_mat_init(S, a->p);
-	long S_sign = zmod_poly_half_gcd(S, c0, d0);
+	
+	long S_sign;
+	if (c0->length < FLINT_ZMOD_POLY_HGCD_CUTOFF) S_sign = zmod_poly_half_gcd_iter(S, c0, d0);
+	else R_sign = zmod_poly_half_gcd(S, c0, d0);
    
 	zmod_poly_swap(S->a, S->c);
 	zmod_poly_swap(S->b, S->d);
@@ -4170,6 +4233,96 @@ long zmod_poly_half_gcd(zmod_poly_2x2_mat_t res, zmod_poly_t a, zmod_poly_t b)
 	zmod_poly_clear(b2);
 	
 	return -R_sign*S_sign;
+}
+
+#define FLINT_ZMOD_POLY_GCD_CUTOFF 100
+
+void zmod_poly_gcd_hgcd(zmod_poly_t res, zmod_poly_t f, zmod_poly_t g)
+{
+   if (f->length == 0)
+	{
+		zmod_poly_set(res, g);
+		return;
+	}
+	
+	ulong p = f->p;
+	
+	zmod_poly_t h, j, q, r, temp;
+	zmod_poly_init(q, p);
+	zmod_poly_init(r, p);
+
+	zmod_poly_divrem(q, r, f, g);
+	if (r->length == 0)
+	{
+		zmod_poly_set(res, g);
+	   zmod_poly_clear(q);
+	   zmod_poly_clear(r);
+      return;
+	}
+
+	if (g->length < FLINT_ZMOD_POLY_GCD_CUTOFF)
+	{
+		zmod_poly_gcd(res, g, r);
+		return;
+	}
+
+	zmod_poly_2x2_mat_t R;
+	zmod_poly_2x2_mat_init(R, p);
+
+	zmod_poly_half_gcd(R, g, r);
+	
+	zmod_poly_init(j, p);
+	zmod_poly_init(h, p);
+	zmod_poly_init(temp, p);
+
+	zmod_poly_mul(h, R->d, g);
+	zmod_poly_mul(temp, R->b, r);
+	zmod_poly_sub(h, h, temp);
+
+	zmod_poly_mul(j, R->c, g);
+	zmod_poly_mul(temp, R->a, r);
+	zmod_poly_sub(j, temp, j);
+
+	while (j->length != 0)
+	{
+      zmod_poly_divrem(q, r, h, j);
+	
+		if (r->length == 0)
+	   {
+		   zmod_poly_set(res, j);
+	      zmod_poly_2x2_mat_clear(R);
+	      zmod_poly_clear(temp);
+	      zmod_poly_clear(j);
+	      zmod_poly_clear(q);
+	      zmod_poly_clear(r);
+         return;
+	   }
+
+		if (j->length < FLINT_ZMOD_POLY_GCD_CUTOFF)
+	   {
+		   zmod_poly_gcd(res, j, r);
+		   return;
+	   }
+
+      zmod_poly_half_gcd(R, j, r);
+	   
+      zmod_poly_mul(h, R->d, j);
+	   zmod_poly_mul(temp, R->b, r);
+	   zmod_poly_sub(h, h, temp);
+
+	   zmod_poly_mul(j, R->c, j);
+	   zmod_poly_mul(temp, R->a, r);
+	   zmod_poly_sub(j, temp, j);
+		printf("j->length = %ld\n", j->length);
+	}
+
+	zmod_poly_set(res, h);
+
+	zmod_poly_2x2_mat_clear(R);
+	zmod_poly_clear(temp);
+	zmod_poly_clear(j);
+	zmod_poly_clear(q);
+	zmod_poly_clear(r);
 }
 
 /****************************************************************************
