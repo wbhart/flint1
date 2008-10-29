@@ -738,6 +738,77 @@ void fmpz_mod(fmpz_t res, const fmpz_t a, const fmpz_t b)
    }
 }     
 
+/*
+   If b divides a then return 1 and the quotient, else return 0
+*/
+
+int fmpz_divides(fmpz_t q, const fmpz_t a, const fmpz_t b) 
+{
+   long a0 = a[0];
+   long b0 = b[0];
+   unsigned long sizea = FLINT_ABS(a0);
+   unsigned long sizeb = FLINT_ABS(b0);   
+
+   mp_limb_t mslimb;
+   fmpz_t temp;
+      
+   if (sizeb == 0)
+   {
+      printf("Error: division by zero!\n");
+      abort();          
+   } else if (sizea == 0)
+	{
+		q[0] = 0;
+		return 1;
+	} else if (sizea < sizeb) 
+   {
+      return 0;
+   } else if (sizea == sizeb) 
+	{
+		int cmp = fmpz_cmpabs(a, b);
+		if (cmp < 0) return 0;
+      if (cmp == 0)
+		{
+			if ((long) (a0 ^ b0) < 0L) q[0] = -1L;
+			else q[0] = 1L;
+			q[1] = 1;
+		   return 1;
+		}
+   } 
+
+   if (fmpz_is_one(b)) 
+	{
+	   fmpz_set(q, a); 
+		return 1;
+	}
+
+	if (fmpz_is_m1(b))
+	{
+		fmpz_neg(q, a);
+		return 1;
+	}
+	  
+	temp = (fmpz_t) flint_stack_alloc(sizeb + 2);
+   mpn_tdiv_qr(q+1, temp+1, 0, a+1, sizea, b+1, sizeb);
+      
+	temp[0] = sizeb;
+   NORM(temp);
+      
+	if (temp[0] != 0) 
+	{
+		flint_stack_release();
+		return 0;
+	}
+
+	q[0] = sizea - sizeb + 1;
+	NORM(q);
+
+	if ((long) (a0 ^ b0) < 0L) q[0] = -q[0];
+   
+	flint_stack_release();
+	return 1;
+}     
+
 void fmpz_tdiv_ui(fmpz_t output, const fmpz_t input, const unsigned long x)
 {
    output[0] = input[0];

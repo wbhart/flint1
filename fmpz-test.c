@@ -2101,6 +2101,124 @@ int test_fmpz_get_d()
    return result;
 }
 
+int test_fmpz_divides()
+{
+   mpz_t num1, num2, num3;
+   fmpz_t fnum1, fnum2, fnum3, fnum4, fnum5;
+   unsigned long bits, bits2;
+   int result = 1;
+   
+   mpz_init(num1);
+   mpz_init(num2);
+   mpz_init(num3);
+      
+   for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+   {
+       bits = random_ulong(1000)+1;
+
+       do
+		 {
+			 mpz_rrandomb(num1, state, bits);
+		 } while (mpz_sgn(num1) == 0);
+#if SIGNS
+       if (random_ulong(2)) mpz_neg(num1, num1);
+#endif
+
+       bits2 = random_ulong(1000);
+
+       mpz_rrandomb(num2, state, bits2);
+#if SIGNS
+       if (random_ulong(2)) mpz_neg(num2, num2);
+#endif
+       
+       fnum1 = fmpz_init(FLINT_MAX((long)(bits-1)/FLINT_BITS, 0)+1);
+       fnum2 = fmpz_init(FLINT_MAX((long)(bits2-1)/FLINT_BITS, 0)+1);
+       mpz_to_fmpz(fnum1, num1);
+       mpz_to_fmpz(fnum2, num2);
+
+		 fnum3 = fmpz_init(FLINT_ABS(fnum1[0]) + FLINT_ABS(fnum2[0]));
+		 fnum4 = fmpz_init(FLINT_ABS(fnum2[0]) + 1);
+
+#if DEBUG
+       printf("%ld, %ld\n", fnum1[0], fnum2[0]);
+#endif
+       
+       fmpz_mul(fnum3, fnum1, fnum2);
+       
+       result &= (fmpz_divides(fnum4, fnum3, fnum1));
+		 result &= (fmpz_equal(fnum4, fnum2));
+
+       if (!result)
+		 {
+			 fmpz_print(fnum2); printf("\n");
+			 fmpz_print(fnum4); printf("\n");
+		 }
+       
+       fmpz_clear(fnum1);
+       fmpz_clear(fnum2);
+       fmpz_clear(fnum3);
+       fmpz_clear(fnum4);
+   }
+   
+   for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+   {
+       bits = random_ulong(1000)+2;
+
+       do
+		 {
+			 mpz_rrandomb(num1, state, bits);
+		 } while ((mpz_sgn(num1) == 0) || (mpz_cmp_ui(num1, 1L) == 0));
+       do mpz_urandomm(num3, state, num1);
+		 while (mpz_sgn(num3) == 0);
+#if SIGNS
+       if (random_ulong(2)) mpz_neg(num1, num1);
+#endif
+
+       bits2 = random_ulong(1000);
+
+       mpz_rrandomb(num2, state, bits2);
+#if SIGNS
+       if (random_ulong(2)) mpz_neg(num2, num2);
+#endif
+       
+       fnum1 = fmpz_init(FLINT_MAX((long)(bits-1)/FLINT_BITS, 0)+1);
+       fnum2 = fmpz_init(FLINT_MAX((long)(bits2-1)/FLINT_BITS, 0)+1);
+       fnum5 = fmpz_init(FLINT_MAX((long)(bits-1)/FLINT_BITS, 0)+1);
+       mpz_to_fmpz(fnum1, num1);
+       mpz_to_fmpz(fnum2, num2);
+       mpz_to_fmpz(fnum5, num3);
+
+		 fnum3 = fmpz_init(FLINT_ABS(fnum1[0]) + FLINT_ABS(fnum2[0]));
+		 fnum4 = fmpz_init(FLINT_ABS(fnum2[0]) + 1);
+
+#if DEBUG
+       printf("%ld, %ld\n", fnum1[0], fnum2[0]);
+#endif
+       
+       fmpz_mul(fnum3, fnum1, fnum2);
+		 fmpz_add(fnum3, fnum3, fnum5);
+       
+       result = (!fmpz_divides(fnum4, fnum3, fnum1));
+		 
+       if (!result)
+		 {
+			 printf("%ld, %ld\n", fnum1[0], fnum2[0]);
+		 }
+       
+       fmpz_clear(fnum1);
+       fmpz_clear(fnum2);
+       fmpz_clear(fnum3);
+       fmpz_clear(fnum4);
+       fmpz_clear(fnum5);
+   }
+
+	mpz_clear(num1);
+   mpz_clear(num2);
+   mpz_clear(num3);
+   
+   return result;
+}
+
 #include "fmpz_montgomery-test.c"
 
 void fmpz_poly_test_all()
@@ -2132,6 +2250,7 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_fdiv);
    RUN_TEST(fmpz_tdiv_ui);
    RUN_TEST(fmpz_mod_ui);
+	RUN_TEST(fmpz_divides);
    RUN_TEST(fmpz_mod);
    RUN_TEST(fmpz_pow_ui);
    RUN_TEST(fmpz_is_one);

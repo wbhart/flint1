@@ -253,6 +253,8 @@ void fmpz_fdiv(fmpz_t res, const fmpz_t a, const fmpz_t b);
 
 void fmpz_mod(fmpz_t res, const fmpz_t a, const fmpz_t b);
 
+int fmpz_divides(fmpz_t q, const fmpz_t a, const fmpz_t b);
+
 void fmpz_mul_trunc(fmpz_t res, fmpz_t a, fmpz_t b, unsigned long trunc);
 
 void fmpz_mulmod(fmpz_t res, fmpz_t a, fmpz_t b, fmpz_t m);
@@ -295,6 +297,13 @@ static inline
 int fmpz_is_one(const fmpz_t f)
 {
    if (f[0] == 1L) return (f[1] == 1L);
+   else return 0;
+}
+
+static inline
+int fmpz_is_m1(const fmpz_t f)
+{
+   if (f[0] == -1L) return (f[1] == 1L);
    else return 0;
 }
 
