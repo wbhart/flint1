@@ -277,7 +277,9 @@ void fmpz_poly_unsplit(ZmodF_poly_t poly_f, fmpz_poly_t poly_fmpz,
    zmod_poly zpol, and store the result in zpol.
 */
 
-void fmpz_poly_to_zmod_poly(zmod_poly_t zpol, fmpz_poly_t fpol);
+void fmpz_poly_to_zmod_poly(zmod_poly_t zpol, const fmpz_poly_t fpol);
+
+void fmpz_poly_to_zmod_poly_no_red(zmod_poly_t zpol, const fmpz_poly_t fpol);
 
 /*
    Store the unsigned long coefficients of the zmod_poly zpol in the given fmpz_poly fpol.
@@ -1227,7 +1229,7 @@ void fmpz_poly_divrem(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_poly_t A, const f
 */
 
 static inline
-int fmpz_poly_divides(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B)
+int fmpz_poly_divides(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t B)
 {
    fmpz_poly_t R;
    int divides = 0;
@@ -1240,6 +1242,23 @@ int fmpz_poly_divides(fmpz_poly_t Q, fmpz_poly_t A, fmpz_poly_t B)
 
    return divides;
 }
+
+static inline
+int fmpz_poly_divides_divconquer(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t B)
+{
+   fmpz_poly_t R;
+   int divides = 0;
+
+   fmpz_poly_init(R);
+
+   fmpz_poly_divrem(Q, R, A, B);
+   if (R->length == 0) divides = 1;
+   fmpz_poly_clear(R);
+   
+   return divides;
+}
+
+int fmpz_poly_divides_modular(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t B);
 
 void fmpz_poly_power(fmpz_poly_t output, const fmpz_poly_t poly, const unsigned long exp);
 

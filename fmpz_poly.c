@@ -1050,7 +1050,7 @@ void fmpz_poly_unsplit(ZmodF_poly_t poly_f, fmpz_poly_t poly_fmpz,
    abort();
 }
 
-void fmpz_poly_to_zmod_poly(zmod_poly_t zpol, fmpz_poly_t fpol)
+void fmpz_poly_to_zmod_poly(zmod_poly_t zpol, const fmpz_poly_t fpol)
 {
    unsigned long p = zpol->p;
 
@@ -1076,7 +1076,7 @@ void fmpz_poly_to_zmod_poly(zmod_poly_t zpol, fmpz_poly_t fpol)
    __zmod_poly_normalise(zpol);
 }
 
-void fmpz_poly_to_zmod_poly_no_red(zmod_poly_t zpol, fmpz_poly_t fpol)
+void fmpz_poly_to_zmod_poly_no_red(zmod_poly_t zpol, const fmpz_poly_t fpol)
 {
    unsigned long p = zpol->p;
 
@@ -1850,7 +1850,8 @@ void _fmpz_poly_left_shift(fmpz_poly_t output, const fmpz_poly_t input,
    part->coeffs = output->coeffs + n*(output->limbs+1);
       
    _fmpz_poly_set(part, input);
-   for (long i = 0; i < n; i++) output->coeffs[i*(output->limbs+1)] = 0;
+	for (long i = 0; i < n; i++) 
+	   output->coeffs[i*(output->limbs+1)] = 0;
    
    if (input->length > 0) output->length = input->length + n;
    else (output->length = 0);
@@ -4172,8 +4173,6 @@ void _fmpz_poly_mul_KS_trunc_bits(fmpz_poly_t output, const fmpz_poly_t in1,
    if (bits_per_coeff) bits = FLINT_ABS(bits_per_coeff);
    else bits = ABS(bits1) + ABS(bits2) + log_length + sign; 
 
-   printf("bits = %ld\n", bits);
-
    unsigned long limbs = (bits-1)/FLINT_BITS + 1;
    
    if ((bits < FLINT_BITS) && (input1->limbs == 1) && (input2->limbs == 1) && (output->limbs == 1)) bitpack = 1;
@@ -6074,7 +6073,7 @@ void fmpz_poly_div_divconquer_recursive(fmpz_poly_t Q, fmpz_poly_t BQ, const fmp
    */
    
    fmpz_poly_fit_length(Q, FLINT_MAX(q1->length+n2, q2->length));
-   fmpz_poly_fit_limbs(Q, FLINT_MAX(q1->limbs, q2->limbs));
+   fmpz_poly_fit_limbs(Q, FLINT_MAX(FLINT_MAX(q1->limbs, q2->limbs), 1));
    _fmpz_poly_left_shift(Q, q1, n2);
    fmpz_poly_clear(q1);
    _fmpz_poly_add(Q, Q, q2);
@@ -7128,6 +7127,180 @@ void fmpz_poly_div_mulders(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t
    _fmpz_poly_add(Q, Q, q2);
    fmpz_poly_clear(q2);
    
+}
+
+int fmpz_poly_divides_modular(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t B)
+{
+	if (B->length == 0)
+   {
+		printf("FLINT Exception: divide by zero!\n");
+		abort();
+   }
+
+	if (A->length == 0)
+	{
+      fmpz_poly_zero(Q);
+		return 1;
+	}
+
+	if (A->length < B->length)
+	   return 0;
+
+	ulong size_B = B->limbs + 1;
+	ulong size_A = A->limbs + 1;
+	fmpz_t coeff_B = B->coeffs;
+	fmpz_t coeff_A = A->coeffs;
+
+	// special case, check if B has trailing zeroes that A doesn't 
+	// or B has all terms zero except leading term
+	long i;
+	for (i = 0; i < B->length - 1; i++)
+	{
+		if (!fmpz_is_zero(coeff_B)) break;
+		if (!fmpz_is_zero(coeff_A)) return 0;
+		coeff_A += size_A;
+		coeff_B += size_B;
+	}
+
+	if (i == B->length - 1)
+	   return fmpz_poly_divides_divconquer(Q, A, B);
+   
+   int divides = 0;
+	
+	unsigned long bits1 = FLINT_ABS(fmpz_poly_max_bits(A));
+   unsigned long bits2 = FLINT_ABS(fmpz_poly_max_bits(B));
+   
+   fmpz_t lead_A = _fmpz_poly_lead(A);
+   fmpz_t lead_B = _fmpz_poly_lead(B);
+
+	fmpz_t q_lead = fmpz_init(FLINT_MAX((long)(FLINT_ABS(lead_A[0]) - FLINT_ABS(lead_B[0]) + 1), 0L));
+   if (!fmpz_divides(q_lead, lead_A, lead_B)) 
+	{
+		fmpz_clear(q_lead);
+		return 0;
+	}
+   
+	int q_one = fmpz_is_one(q_lead);
+
+	
+   unsigned long p;
+   unsigned long pbits;
+
+	long bits = bits1 - bits2;
+	if (bits < (long) (FLINT_D_BITS - 2)) bits = FLINT_D_BITS - 2;
+
+   if (bits == FLINT_D_BITS - 2) 
+   {
+      pbits = FLINT_D_BITS;
+      p = (1L<<(FLINT_D_BITS-1));
+   } else 
+   {
+      pbits = FLINT_BITS - 1;
+      p = (1L<<(FLINT_BITS-2));
+   }
+   
+   zmod_poly_t a, b, q, r;
+   
+   int first = 1;
+
+   unsigned long n = B->length;
+
+   unsigned long modsize = FLINT_MAX(A->limbs, B->limbs);
+   fmpz_t modulus = fmpz_init(modsize);
+   modulus[0] = 0L;
+   
+	fmpz_poly_t P;
+	fmpz_poly_init(P);
+
+   for (;;)
+   {
+      if (!first)
+      {
+         zmod_poly_clear(a);
+         zmod_poly_clear(b);
+         zmod_poly_clear(q); 
+         zmod_poly_clear(r); 
+      } else first = 0;
+      do { p = z_nextprime(p); }
+      while ((!fmpz_mod_ui(lead_A, p)) || (!fmpz_mod_ui(lead_B, p))); 
+
+      zmod_poly_init(a, p);
+      zmod_poly_init(b, p);
+      zmod_poly_init(q, p);
+      zmod_poly_init(r, p);
+      
+      if (bits1 + 1 < pbits) fmpz_poly_to_zmod_poly_no_red(a, A);
+      else fmpz_poly_to_zmod_poly(a, A);
+      if (bits2 + 1 < pbits) fmpz_poly_to_zmod_poly_no_red(b, B);
+      else fmpz_poly_to_zmod_poly(b, B);
+      
+      zmod_poly_divrem(q, r, a, b);
+
+		if (r->length != 0) // doesn't divide
+		   break;
+
+      if (q_one) zmod_poly_make_monic(q, q);
+      else
+      {
+         unsigned long q_inv = z_invert(q->coeffs[q->length-1], q->p);
+         unsigned long q_mod = fmpz_mod_ui(q_lead, q->p);
+         q_inv = z_mulmod2_precomp(q_inv, q_mod, q->p, q->p_inv);
+         zmod_poly_scalar_mul(q, q, q_inv);
+      }
+         
+		if (modulus[0] == 0) 
+		{
+			zmod_poly_to_fmpz_poly(Q, q);
+		
+		   if (bits < pbits)
+			{
+				fmpz_poly_mul(P, Q, B);
+				if (fmpz_poly_equal(P, A))
+				{
+					divides = 1;
+					break;
+				}
+			}
+				
+			fmpz_set_ui(modulus, p);
+         continue;
+      }
+      
+      fmpz_t newmod = fmpz_init(modulus[0] + 1);
+      
+      if (fmpz_poly_CRT(Q, Q, q, newmod, modulus)) 
+		{
+			fmpz_poly_mul(P, Q, B);
+			if (fmpz_poly_equal(P, A))
+			{
+				divides = 1;
+				fmpz_clear(newmod);
+				break;
+			}
+      } 
+      
+      if (newmod[0] >= modsize) 
+      {
+         modulus = fmpz_realloc(modulus, (modsize+8));
+         modsize += 8;
+      }
+      
+      fmpz_set(modulus, newmod);
+      fmpz_clear(newmod); // release newmod
+   }
+
+	
+   fmpz_clear(q_lead); // release g
+   
+	zmod_poly_clear(a);
+   zmod_poly_clear(b);
+   zmod_poly_clear(q); 
+   zmod_poly_clear(r); 
+        
+   fmpz_poly_clear(P);
+   fmpz_clear(modulus);
+   
+	return divides;
 }
 
 /*===================================================================================
@@ -8605,10 +8778,7 @@ void fmpz_poly_content(fmpz_t c, fmpz_poly_t poly)
 void fmpz_poly_gcd_subresultant(fmpz_poly_t D, const fmpz_poly_t poly1, const fmpz_poly_t poly2)
 {
    fmpz_poly_t Ain, Bin;
-   
-   //printf("Ain = "); fmpz_poly_print_pretty(poly1, "x"); printf("\n");
-   //printf("Bin = "); fmpz_poly_print_pretty(poly2, "x"); printf("\n");
-      
+     
    if (poly2->length > poly1->length)
    {
       _fmpz_poly_attach(Ain, poly2);
@@ -8629,9 +8799,8 @@ void fmpz_poly_gcd_subresultant(fmpz_poly_t D, const fmpz_poly_t poly1, const fm
    b = fmpz_init(Bin->limbs);
    fmpz_poly_content(a, Ain);
    fmpz_poly_content(b, Bin);
-   //printf("a = "); fmpz_print(a); printf("\n");
-   //printf("b = "); fmpz_print(b); printf("\n");
-   d = fmpz_init(FLINT_MIN(fmpz_size(a), fmpz_size(b)));
+   
+	d = fmpz_init(FLINT_MIN(fmpz_size(a), fmpz_size(b)));
    fmpz_gcd(d, a, b);
    
    fmpz_poly_t A, B, Q, R;
@@ -8658,14 +8827,12 @@ void fmpz_poly_gcd_subresultant(fmpz_poly_t D, const fmpz_poly_t poly1, const fm
         
    while (!done)
    {
-      //printf("A = "); fmpz_poly_print_pretty(A, "x"); printf("\n");
-      //printf("B = "); fmpz_poly_print_pretty(B, "x"); printf("\n");
-      unsigned long delta = A->length - B->length;
+      
+		unsigned long delta = A->length - B->length;
       fmpz_poly_pseudo_divrem(Q, R, &s, A, B);
-      //printf("R = "); fmpz_poly_print_pretty(R, "x"); printf("\n");
-      if (R->length > 1)
+      
+		if (R->length > 1)
       {
-         //printf("delta = %ld\n", delta);
          fmpz_poly_swap(A, B);
          fmpz_t r;
          if (olddelta == 1) 
@@ -8723,11 +8890,8 @@ void fmpz_poly_gcd_subresultant(fmpz_poly_t D, const fmpz_poly_t poly1, const fm
       }
    }
    
-   //printf("B = "); fmpz_poly_print_pretty(B, "x"); printf("\n");
    b = fmpz_init(B->limbs+1);
    fmpz_poly_content(b, B);
-   //printf("b = "); fmpz_print(b); printf("\n");
-   //printf("d = "); fmpz_print(d); printf("\n");
    fmpz_poly_scalar_div_fmpz(D, B, b);
    fmpz_poly_scalar_mul_fmpz(D, D, d);
    fmpz_clear(b); // release b
@@ -8753,9 +8917,6 @@ unsigned long fmpz_poly_max_norm_bits(fmpz_poly_t H)
 void fmpz_poly_gcd_modular(fmpz_poly_t H, const fmpz_poly_t poly1, const fmpz_poly_t poly2)
 {
    fmpz_poly_t Ain, Bin;
-   
-   //printf("Ain = "); fmpz_poly_print_pretty(poly1, "x"); printf("\n");
-   //printf("Bin = "); fmpz_poly_print_pretty(poly2, "x"); printf("\n");
       
    if (poly2->length > poly1->length)
    {
@@ -8777,9 +8938,8 @@ void fmpz_poly_gcd_modular(fmpz_poly_t H, const fmpz_poly_t poly1, const fmpz_po
    bc = fmpz_init(Bin->limbs);
    fmpz_poly_content(ac, Ain);
    fmpz_poly_content(bc, Bin);
-   //printf("a = "); fmpz_print(a); printf("\n");
-   //printf("b = "); fmpz_print(b); printf("\n");
-   d = fmpz_init(FLINT_MIN(fmpz_size(ac), fmpz_size(bc)));
+   
+	d = fmpz_init(FLINT_MIN(fmpz_size(ac), fmpz_size(bc)));
    fmpz_gcd(d, ac, bc);
 
    if (Bin->length == 1)
@@ -8862,7 +9022,7 @@ void fmpz_poly_gcd_modular(fmpz_poly_t H, const fmpz_poly_t poly1, const fmpz_po
       if (bits2 + 1 < pbits) fmpz_poly_to_zmod_poly_no_red(b, B);
       else fmpz_poly_to_zmod_poly(b, B);
       
-      zmod_poly_gcd(h, a, b);
+      zmod_poly_gcd_hgcd(h, a, b);
       
       if (h->length == 1) // gcd is 1
       {
@@ -8888,7 +9048,10 @@ void fmpz_poly_gcd_modular(fmpz_poly_t H, const fmpz_poly_t poly1, const fmpz_po
          
          if (g_pm1)
          {
-            if (fmpz_poly_divides(Q, A, H) && fmpz_poly_divides(Q, B, H)) break;
+            if (fmpz_poly_divides_modular(Q, A, H) && fmpz_poly_divides_modular(Q, B, H)) 
+				{
+				   break;
+				}
          } else
          {
             bound = h->length + FLINT_MIN(nb1, nb2) + gbits + 1;
@@ -8912,11 +9075,13 @@ void fmpz_poly_gcd_modular(fmpz_poly_t H, const fmpz_poly_t poly1, const fmpz_po
       if (g_pm1)
       {
          if ((fmpz_poly_CRT(H, H, h, newmod, modulus)) || (fmpz_bits(newmod) > FLINT_MIN(bits1, bits2)))
-            if (fmpz_poly_divides(Q, A, H) && fmpz_poly_divides(Q, B, H)) 
+			{
+				if (fmpz_poly_divides_modular(Q, A, H) && fmpz_poly_divides_modular(Q, B, H)) 
             {
                fmpz_clear(newmod); // release newmod
                break;
             }
+			}
       } else
       {
          if (fmpz_poly_CRT(H, H, h, newmod, modulus) || (fmpz_bits(newmod) > bound))
@@ -8925,7 +9090,7 @@ void fmpz_poly_gcd_modular(fmpz_poly_t H, const fmpz_poly_t poly1, const fmpz_po
             fmpz_poly_content(hc, H);
             fmpz_poly_scalar_div_fmpz(H, H, hc);
             fmpz_clear(hc); // release hc
-            if ((fmpz_bits(newmod) > bound) || (fmpz_poly_divides(Q, A, H) && fmpz_poly_divides(Q, B, H))) 
+            if ((fmpz_bits(newmod) > bound) || (fmpz_poly_divides_modular(Q, A, H) && fmpz_poly_divides_modular(Q, B, H))) 
             {
                fmpz_clear(newmod); // release newmod
                break;

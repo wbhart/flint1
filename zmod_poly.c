@@ -4162,7 +4162,6 @@ long zmod_poly_half_gcd(zmod_poly_2x2_mat_t res, zmod_poly_t a, zmod_poly_t b)
       zmod_poly_set_coeff_ui(res->d, 0, 1);
       return 1L;
 	}
-	//printf("hgcd: b->length = %ld\n", b->length);
 	
    zmod_poly_t a0, b0;
 	_zmod_poly_attach_shift(a0, a, m);
@@ -4182,8 +4181,6 @@ long zmod_poly_half_gcd(zmod_poly_2x2_mat_t res, zmod_poly_t a, zmod_poly_t b)
 	if (R_sign < 0L) zmod_poly_sub(b2, b2, temp);
 	else zmod_poly_sub(b2, temp, b2);
 
-	//printf("hgcd: b2->length = %ld\n", b2->length);
-	
 	if (b2->length < m + 1)
 	{
 	   zmod_poly_clear(temp);
@@ -4204,7 +4201,6 @@ long zmod_poly_half_gcd(zmod_poly_2x2_mat_t res, zmod_poly_t a, zmod_poly_t b)
 
 	zmod_poly_divrem(q, d, a2, b2);
 	long k = 2*m - b2->length + 1;
-	//printf("hgcd: d->length = %ld\n", d->length);
 	
 	zmod_poly_t c0, d0;
    _zmod_poly_attach_shift(c0, b2, k);
@@ -4313,7 +4309,6 @@ void zmod_poly_gcd_hgcd(zmod_poly_t res, zmod_poly_t f, zmod_poly_t g)
 	   zmod_poly_mul(j, R->c, j);
 	   zmod_poly_mul(temp, R->a, r);
 	   zmod_poly_sub(j, temp, j);
-		printf("j->length = %ld\n", j->length);
 	}
 
 	zmod_poly_set(res, h);
