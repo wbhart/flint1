@@ -11008,14 +11008,13 @@ int test_fmpz_poly_gcd_modular()
          fmpz_poly_check_normalisation(test_fmpz_poly5);         
          result = fmpz_poly_equal(test_fmpz_poly4, test_fmpz_poly5); 
 
-#if DEBUG
          if (!result)
          {
             printf("GCD = "); fmpz_poly_print(test_fmpz_poly4); printf("\n\n");
             printf("GCD2 = "); fmpz_poly_print(test_fmpz_poly5); printf("\n\n");
          }
-#endif         
-         fmpz_poly_clear(test_fmpz_poly4);
+
+			fmpz_poly_clear(test_fmpz_poly4);
          fmpz_poly_clear(test_fmpz_poly5);        
      }   
    

@@ -7187,17 +7187,24 @@ int fmpz_poly_divides_modular(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_pol
    unsigned long pbits;
 
 	long bits = bits1 - bits2;
-	if (bits < (long) (FLINT_D_BITS - 2)) bits = FLINT_D_BITS - 2;
+	
+	long bits_small = bits - ceil_log2(FLINT_MIN(B->length, A->length - B->length));
+	if (bits < 0L) bits = 2;
+	if (bits_small < 0L) bits_small = 2;
 
-   if (bits == FLINT_D_BITS - 2) 
+#if FLINT_BITS == 64
+	if (bits < FLINT_D_BITS) 
    {
       pbits = FLINT_D_BITS;
-      p = (1L<<(FLINT_D_BITS-1));
+      p = (1L<<FLINT_D_BITS)-200;
    } else 
    {
-      pbits = FLINT_BITS - 1;
+#endif
+		pbits = FLINT_BITS - 1;
       p = (1L<<(FLINT_BITS-2));
+#if FLINT_BITS == 64
    }
+#endif
    
    zmod_poly_t a, b, q, r;
    
@@ -7224,7 +7231,7 @@ int fmpz_poly_divides_modular(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_pol
       do { p = z_nextprime(p); }
       while ((!fmpz_mod_ui(lead_A, p)) || (!fmpz_mod_ui(lead_B, p))); 
 
-      zmod_poly_init(a, p);
+		zmod_poly_init(a, p);
       zmod_poly_init(b, p);
       zmod_poly_init(q, p);
       zmod_poly_init(r, p);
@@ -7252,7 +7259,7 @@ int fmpz_poly_divides_modular(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_pol
 		{
 			zmod_poly_to_fmpz_poly(Q, q);
 		
-		   if (bits < pbits)
+		   if (bits_small <= pbits)
 			{
 				fmpz_poly_mul(P, Q, B);
 				if (fmpz_poly_equal(P, A))
@@ -7268,7 +7275,7 @@ int fmpz_poly_divides_modular(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_pol
       
       fmpz_t newmod = fmpz_init(modulus[0] + 1);
       
-      if (fmpz_poly_CRT(Q, Q, q, newmod, modulus)) 
+      if ((fmpz_poly_CRT(Q, Q, q, newmod, modulus)) || (bits_small <= fmpz_bits(newmod)))
 		{
 			fmpz_poly_mul(P, Q, B);
 			if (fmpz_poly_equal(P, A))
@@ -8960,36 +8967,71 @@ void fmpz_poly_gcd_modular(fmpz_poly_t H, const fmpz_poly_t poly1, const fmpz_po
    fmpz_poly_scalar_div_fmpz(B, Bin, bc);
    fmpz_clear(bc); //release bc
    fmpz_clear(ac); //release ac
-   
-   unsigned long bits1 = FLINT_ABS(fmpz_poly_max_bits(A));
-   unsigned long bits2 = FLINT_ABS(fmpz_poly_max_bits(B));
-   unsigned long bits = FLINT_MAX(bits1, bits2);
-   unsigned long nb1 = fmpz_poly_max_norm_bits(A);
-   unsigned long nb2 = fmpz_poly_max_norm_bits(B);
-   unsigned long bound;
+	
+	ulong nb1 = fmpz_poly_max_norm_bits(A);
+   ulong nb2 = fmpz_poly_max_norm_bits(B);
+   ulong bound;
    
    fmpz_t lead_A = _fmpz_poly_lead(A);
    fmpz_t lead_B = _fmpz_poly_lead(B);
 
+	ulong bits1 = FLINT_ABS(fmpz_poly_max_bits(A));
+   ulong bits2 = FLINT_ABS(fmpz_poly_max_bits(B));
+
    fmpz_t g = fmpz_init(FLINT_MIN(FLINT_ABS(lead_A[0]), FLINT_ABS(lead_B[0])));
    fmpz_gcd(g, lead_A, lead_B);
-   unsigned long gbits = fmpz_bits(g);
+   ulong gbits = fmpz_bits(g);
    int g_pm1 = 0;
    if ((FLINT_ABS(g[0]) == 1L) && (g[1] == 1L)) g_pm1 = 1;
 
-   unsigned long p;
-   unsigned long pbits;
+   fmpz_t eval_A = fmpz_init(A->limbs + 1);
+   fmpz_t eval_B = fmpz_init(B->limbs + 1);
+	fmpz_t coeff_A = A->coeffs;
+   fmpz_t coeff_B = B->coeffs;
+   ulong size_A = A->limbs + 1;
+	ulong size_B = B->limbs + 1;
+   eval_A[0] = 0;
+	eval_B[0] = 0;
 
-   if (bits <= FLINT_D_BITS - 2) 
+	for (ulong i = 0; i < A->length; i++)
+	{
+      if (i&1) fmpz_add(eval_A, eval_A, coeff_A);
+		else fmpz_sub(eval_A, eval_A, coeff_A);
+		coeff_A += size_A;
+	}
+
+   for (ulong i = 0; i < B->length; i++)
+	{
+      if (i&1) fmpz_add(eval_B, eval_B, coeff_B);
+		else fmpz_sub(eval_B, eval_B, coeff_B);
+		coeff_B += size_B;
+	}
+
+   fmpz_t eval_GCD = fmpz_init(FLINT_MAX(FLINT_ABS(eval_A[0]), FLINT_ABS(eval_B[0])));
+	fmpz_gcd(eval_GCD, eval_A, eval_B);
+   long bits_small = FLINT_MAX(fmpz_bits(eval_GCD), fmpz_bits(g));
+	if (bits_small < 2L) bits_small = 2;
+	fmpz_clear(eval_GCD);
+	fmpz_clear(eval_A);
+	fmpz_clear(eval_B);
+
+	ulong p;
+   ulong pbits;
+   
+#if FLINT_BIT == 64
+   if (bits_small < FLINT_D_BITS) 
    {
-      pbits = bits+2;
-      p = (1L<<(bits+1));
+      pbits = FLINT_D_BITS;
+      p = (1L<<FLINT_D_BITS) - 200;
    } else 
    {
-      pbits = FLINT_BITS - 1;
+#endif
+		pbits = FLINT_BITS - 1;
       p = (1L<<(FLINT_BITS-2));
+#if FLINT_BIT == 64
    }
-   
+#endif
+
    zmod_poly_t a, b, h;
    
    int first = 1;
@@ -9063,6 +9105,20 @@ void fmpz_poly_gcd_modular(fmpz_poly_t H, const fmpz_poly_t poly1, const fmpz_po
                fmpz_clear(hc); // release hc
                break;
             }
+
+				if (pbits >= bits_small)
+				{
+               fmpz_t hc = fmpz_init(H->limbs);
+               fmpz_poly_content(hc, H);
+               fmpz_poly_scalar_div_fmpz(H, H, hc);
+               if (fmpz_poly_divides_modular(Q, A, H) && fmpz_poly_divides_modular(Q, B, H)) 
+					{
+						fmpz_clear(hc); // release hc
+						break;
+					}
+					fmpz_poly_scalar_mul_fmpz(H, H, hc);
+					fmpz_clear(hc); // release hc
+				}
          }
 
          fmpz_set_ui(modulus, p);
@@ -9074,7 +9130,7 @@ void fmpz_poly_gcd_modular(fmpz_poly_t H, const fmpz_poly_t poly1, const fmpz_po
       
       if (g_pm1)
       {
-         if ((fmpz_poly_CRT(H, H, h, newmod, modulus)) || (fmpz_bits(newmod) > FLINT_MIN(bits1, bits2)))
+         if ((fmpz_poly_CRT(H, H, h, newmod, modulus)) || (fmpz_bits(newmod) > bits_small))
 			{
 				if (fmpz_poly_divides_modular(Q, A, H) && fmpz_poly_divides_modular(Q, B, H)) 
             {
@@ -9084,17 +9140,19 @@ void fmpz_poly_gcd_modular(fmpz_poly_t H, const fmpz_poly_t poly1, const fmpz_po
 			}
       } else
       {
-         if (fmpz_poly_CRT(H, H, h, newmod, modulus) || (fmpz_bits(newmod) > bound))
+         if (fmpz_poly_CRT(H, H, h, newmod, modulus) || (fmpz_bits(newmod) > bound) || (fmpz_bits(newmod) >= bits_small))
          { 
             fmpz_t hc = fmpz_init(H->limbs);
             fmpz_poly_content(hc, H);
             fmpz_poly_scalar_div_fmpz(H, H, hc);
-            fmpz_clear(hc); // release hc
             if ((fmpz_bits(newmod) > bound) || (fmpz_poly_divides_modular(Q, A, H) && fmpz_poly_divides_modular(Q, B, H))) 
             {
                fmpz_clear(newmod); // release newmod
+               fmpz_clear(hc); // release hc
                break;
-            } 
+            }
+				fmpz_poly_scalar_mul_fmpz(H, H, hc);
+				fmpz_clear(hc);
          }
       }
       
@@ -9162,11 +9220,18 @@ void fmpz_poly_gcd(fmpz_poly_t res, const fmpz_poly_t poly1, const fmpz_poly_t p
       return;
    }
 
-   if (max_length*max_length*max_length*max_length*max_bits > 2000000UL)
+   mpz_t temp;
+	mpz_init(temp);
+	mpz_set_ui(temp, max_length);
+	mpz_pow_ui(temp, temp, 4);
+	mpz_mul_ui(temp, temp, max_bits);
+	if (mpz_cmp_ui(temp, 2000000UL) > 0)
    {
-      fmpz_poly_gcd_modular(res, poly1, poly2);
+      mpz_clear(temp);
+		fmpz_poly_gcd_modular(res, poly1, poly2);
       return;
    }
+	mpz_clear(temp);
 
    fmpz_poly_gcd_subresultant(res, poly1, poly2);
 }

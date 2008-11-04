@@ -53,7 +53,7 @@ void zmod_poly_init_precomp(zmod_poly_t poly, unsigned long p, double p_inv)
    poly->p = p;
    poly->p_inv = p_inv;
 #if FLINT_BITS == 64
-   if (FLINT_BIT_COUNT(p) <= 32) poly->p32_inv = z_precompute_inverse32(p);
+   //if (FLINT_BIT_COUNT(p) <= 32) poly->p32_inv = z_precompute_inverse32(p);
 #endif
    poly->alloc = 1;
    poly->length = 0;
@@ -73,7 +73,7 @@ void zmod_poly_init2_precomp(zmod_poly_t poly, unsigned long p, double p_inv, un
    poly->p = p;
    poly->p_inv = p_inv;
 #if FLINT_BITS == 64
-   if (FLINT_BIT_COUNT(p) <= 32) poly->p32_inv = z_precompute_inverse32(p);
+   //if (FLINT_BIT_COUNT(p) <= 32) poly->p32_inv = z_precompute_inverse32(p);
 #endif
    
    poly->alloc = alloc;
@@ -206,7 +206,7 @@ int zmod_poly_from_string(zmod_poly_t poly, char* s)
    poly->p = p;
    poly->p_inv = z_precompute_inverse(p);
 #if FLINT_BITS == 64
-   if (FLINT_BIT_COUNT(p) <= 32) poly->p32_inv = z_precompute_inverse32(p);
+   //if (FLINT_BIT_COUNT(p) <= 32) poly->p32_inv = z_precompute_inverse32(p);
 #endif
 
    // jump to next whitespace
@@ -306,7 +306,7 @@ int zmod_poly_fread(zmod_poly_t poly, FILE* f)
    poly->p = p;
    poly->p_inv = z_precompute_inverse(p);
 #if FLINT_BITS == 64
-   if (FLINT_BIT_COUNT(p) <= 32) poly->p32_inv = z_precompute_inverse32(p);
+   //if (FLINT_BIT_COUNT(p) <= 32) poly->p32_inv = z_precompute_inverse32(p);
 #endif
    
    zmod_poly_fit_length(poly, length);
@@ -387,7 +387,7 @@ void _zmod_poly_set(zmod_poly_t res, zmod_poly_t poly)
    res->p = poly->p;
    res->p_inv = poly->p_inv;
 #if FLINT_BITS == 64
-   res->p32_inv = poly->p32_inv;
+   //res->p32_inv = poly->p32_inv;
 #endif
 
 }
@@ -682,7 +682,7 @@ void zmod_poly_left_shift(zmod_poly_t res, zmod_poly_t poly, unsigned long k)
       res->p = poly->p;
       res->p_inv = poly->p_inv;
 #if FLINT_BITS == 64
-      res->p32_inv = poly->p32_inv;
+      //res->p32_inv = poly->p32_inv;
 #endif
 
    }
@@ -700,7 +700,7 @@ void zmod_poly_right_shift(zmod_poly_t res, zmod_poly_t poly, unsigned long k)
       res->p = poly->p;
       res->p_inv = poly->p_inv;
 #if FLINT_BITS == 64
-      res->p32_inv = poly->p32_inv;
+      //res->p32_inv = poly->p32_inv;
 #endif
 
       return;
@@ -724,7 +724,7 @@ void zmod_poly_right_shift(zmod_poly_t res, zmod_poly_t poly, unsigned long k)
       res->p = poly->p;
       res->p_inv = poly->p_inv;
 #if FLINT_BITS == 64
-      res->p32_inv = poly->p32_inv;
+      //res->p32_inv = poly->p32_inv;
 #endif
 
    }
@@ -809,7 +809,7 @@ void _zmod_poly_mul_classical(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t po
    res->p = poly1->p;
    res->p_inv = poly1->p_inv;
 #if FLINT_BITS == 64
-   res->p32_inv = poly1->p32_inv;
+   //res->p32_inv = poly1->p32_inv;
 #endif
    
    unsigned long length;
@@ -967,7 +967,7 @@ void _zmod_poly_sqr_classical(zmod_poly_t res, zmod_poly_t poly)
    res->p = poly->p;
    res->p_inv = poly->p_inv;
 #if FLINT_BITS == 64
-   res->p32_inv = poly->p32_inv;
+   //res->p32_inv = poly->p32_inv;
 #endif
    FLINT_ASSERT(res->alloc >= res->length);
    
@@ -1079,7 +1079,7 @@ void _zmod_poly_mul_classical_trunc(zmod_poly_t res, zmod_poly_t poly1, zmod_pol
    res->p = poly1->p;
    res->p_inv = poly1->p_inv;
 #if FLINT_BITS == 64
-   res->p32_inv = poly1->p32_inv;
+   //res->p32_inv = poly1->p32_inv;
 #endif
    
    unsigned long length;
@@ -1249,7 +1249,7 @@ void _zmod_poly_mul_classical_trunc_left(zmod_poly_t res, zmod_poly_t poly1, zmo
    res->p = poly1->p;
    res->p_inv = poly1->p_inv;
 #if FLINT_BITS == 64
-   res->p32_inv = poly1->p32_inv;
+   //res->p32_inv = poly1->p32_inv;
 #endif
    
    unsigned long length;
@@ -2246,7 +2246,7 @@ void _zmod_poly_bit_unpack_mpn(zmod_poly_t res, mp_limb_t * mpn, unsigned long l
    unsigned long i;
    
 #if FLINT_BITS == 64
-   if ((bits <= 32) && (FLINT_BIT_COUNT(res->p) <= 32))
+   /*if ((bits <= 32) && (FLINT_BIT_COUNT(res->p) <= 32))
    {
       unsigned long current_limb = 0;
       unsigned long current_bit = 0;
@@ -2322,7 +2322,7 @@ void _zmod_poly_bit_unpack_mpn(zmod_poly_t res, mp_limb_t * mpn, unsigned long l
           }
       }
    }
-   else 
+   else */
 #endif
    if (bits < FLINT_BITS)
    {
@@ -2499,7 +2499,7 @@ void _zmod_poly_bit_unpack_mpn(zmod_poly_t res, mp_limb_t * mpn, unsigned long l
             if(!current_bit) current_limb++;
          }
 
-         if(current_bit == FLINT_BITS)
+         if (current_bit == FLINT_BITS)
          {
             current_bit = 0; 
             // PRINT_VAR(current_bit);
