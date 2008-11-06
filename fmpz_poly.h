@@ -154,6 +154,15 @@ void fmpz_poly_limb_pack(ZmodF_poly_t poly_f, const fmpz_poly_t poly_fmpz,
                                            const unsigned long bundle, const long limbs);
 
 /* 
+   Packs poly_fmpz->length coefficients, each assumed to fit into a limb, into
+   the an array of limbs coeffs_f. Coefficients are stored in B-adic symmetric 
+	format.
+   
+   Assumes 0 < poly_fmpz->length
+*/
+void fmpz_poly_limb_pack_1(fmpz_t coeffs_f, const fmpz_poly_t poly_fmpz);
+
+/* 
    Unpacks bundle coefficients from the first coefficient of poly_f, each 
    assumed to be stored in a field of the given number of limbs.
    
@@ -161,6 +170,17 @@ void fmpz_poly_limb_pack(ZmodF_poly_t poly_f, const fmpz_poly_t poly_fmpz,
 */
 void fmpz_poly_limb_unpack(fmpz_poly_t poly_fmpz, const ZmodF_poly_t poly_f, 
                                   const unsigned long bundle, const unsigned long limbs);
+
+/* 
+   Unpacks length signed coefficients from the array of limbs coeffs_f, 
+	each assumed to be stored in a field of one limb, into the polynomial 
+	poly_fmpz. Coefficients are assumed to be stored in B-adic symmetric 
+	format.
+   
+   Assumes 0 < length
+*/
+void fmpz_poly_limb_unpack_1(fmpz_poly_t poly_fmpz, const fmpz_t coeffs_f, 
+                                  const unsigned long length);
 
 /* 
    Unpacks bundle coefficients from the first coefficient of poly_f, each 

@@ -10639,6 +10639,72 @@ int test_fmpz_poly_limb_pack()
    return result;
 }
 
+int test_fmpz_poly_limb_pack_1()
+{
+   mpz_poly_t test_poly, test_poly2;
+   fmpz_poly_t test_fmpz_poly, test_fmpz_poly2;
+   fmpz_t test_array;
+   int result = 1;
+   unsigned long bits, length, length2, depth, bundle, limbs;
+   
+   mpz_poly_init(test_poly); 
+   mpz_poly_init(test_poly2); 
+   for (unsigned long count1 = 1; (count1 < 1000) && (result == 1) ; count1++)
+   {
+      bits = random_ulong(FLINT_BITS-2) + 2;
+      fmpz_poly_init(test_fmpz_poly);
+      fmpz_poly_init(test_fmpz_poly2);
+
+      for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
+      { 
+          length = random_ulong(30)+1;
+      
+#if DEBUG
+          printf("%ld, %ld\n",length, bits);
+#endif
+          do randpoly(test_poly, length, bits-1);
+          while (mpz_poly_length(test_poly) < length);
+
+#if DEBUG
+          for (unsigned j = 0; j < test_poly->length; j++)
+             gmp_printf("%Zx, ",test_poly->coeffs[j]);
+          printf("\n\n");
+#endif
+          mpz_poly_to_fmpz_poly(test_fmpz_poly, test_poly);
+          test_array = fmpz_init(length);
+          
+          fmpz_poly_limb_pack_1(test_array, test_fmpz_poly);                 
+          fmpz_poly_limb_unpack_1(test_fmpz_poly2, test_array, length);  
+          fmpz_poly_check_normalisation(test_fmpz_poly2);
+          
+			 fmpz_poly_to_mpz_poly(test_poly2, test_fmpz_poly2);
+          
+          fmpz_clear(test_array);
+          
+#if DEBUG
+          for (unsigned j = 0; j < test_poly2->length; j++)
+             gmp_printf("%Zx, ",test_poly2->coeffs[j]);
+          printf("\n\n");
+#endif
+          
+          result = mpz_poly_equal(test_poly, test_poly2);
+			 if (!result)
+			 {
+				  mpz_poly_print(test_poly); printf("\n\n");
+              mpz_poly_print(test_poly2); printf("\n\n\n");
+			 }
+      }   
+
+      fmpz_poly_clear(test_fmpz_poly);
+      fmpz_poly_clear(test_fmpz_poly2);
+   }
+   
+   mpz_poly_clear(test_poly);
+   mpz_poly_clear(test_poly2);
+   
+   return result;
+}
+
 int test_fmpz_poly_byte_pack_unsigned()
 {
    mpz_poly_t test_poly, test_poly2;
@@ -12175,6 +12241,7 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_poly_byte_pack); 
    RUN_TEST(fmpz_poly_limb_pack_unsigned); 
    RUN_TEST(fmpz_poly_limb_pack); 
+   RUN_TEST(fmpz_poly_limb_pack_1); 
    RUN_TEST(_fmpz_poly_attach);
    RUN_TEST(_fmpz_poly_attach_shift);
    RUN_TEST(_fmpz_poly_attach_truncate);

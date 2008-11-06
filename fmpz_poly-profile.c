@@ -1071,7 +1071,7 @@ char* profDriverString_fmpz_poly_gcd_subresultant(char* params)
 
 char* profDriverDefaultParams_fmpz_poly_gcd_subresultant()
 {
-   return "100000 1.2";
+   return "200000 1.2";
 }
 
 void profDriver_fmpz_poly_gcd_subresultant(char* params)
@@ -1156,7 +1156,7 @@ char* profDriverString_fmpz_poly_gcd_modular(char* params)
 
 char* profDriverDefaultParams_fmpz_poly_gcd_modular()
 {
-   return "100000 1.2";
+   return "200000 1.2";
 }
 
 void profDriver_fmpz_poly_gcd_modular(char* params)
@@ -1241,7 +1241,7 @@ char* profDriverString_fmpz_poly_gcd(char* params)
 
 char* profDriverDefaultParams_fmpz_poly_gcd()
 {
-   return "100000 1.2";
+   return "500000 1.2";
 }
 
 void profDriver_fmpz_poly_gcd(char* params)

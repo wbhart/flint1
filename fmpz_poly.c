@@ -515,6 +515,42 @@ void fmpz_poly_limb_pack(ZmodF_poly_t poly_f, const fmpz_poly_t poly_fmpz,
    }
 }
 
+void fmpz_poly_limb_pack_1(fmpz_t coeffs_f, const fmpz_poly_t poly_fmpz)
+{
+   unsigned long size_m = poly_fmpz->limbs + 1;
+   long size_j;
+   fmpz_t coeffs_m = poly_fmpz->coeffs;
+	unsigned long bundle = poly_fmpz->length;
+   long carry = 0;
+   
+   for (unsigned long i = 0, j = 0, k = 0; i < bundle; i++, j += size_m, k++)
+   {
+      size_j = (long) coeffs_m[j];
+      if (size_j < 0)
+      {
+         if (carry) coeffs_f[k] = -coeffs_m[j + 1] - 1; 
+         else coeffs_f[k] = -coeffs_m[j + 1];
+			carry = 1L;
+      } else if (size_j > 0)
+      {
+         if (carry) coeffs_f[k] = coeffs_m[j + 1] - 1; 
+         else coeffs_f[k] = coeffs_m[j + 1];
+			carry = 0L;
+      } else
+      {
+         if (carry) 
+         {
+            coeffs_f[k] = -1L;
+				carry = 1L;
+         } else 
+         {
+            coeffs_f[k] = 0L;
+				carry = 0L;
+         }
+      }
+   }
+}
+
 void fmpz_poly_limb_unpack(fmpz_poly_t poly_fmpz, const ZmodF_poly_t poly_f, 
                                   const unsigned long bundle, const unsigned long limbs)
 {
@@ -542,6 +578,50 @@ void fmpz_poly_limb_unpack(fmpz_poly_t poly_fmpz, const ZmodF_poly_t poly_f,
       }
    }
    _fmpz_poly_normalise(poly_fmpz);
+}
+
+void fmpz_poly_limb_unpack_1(fmpz_poly_t poly_fmpz, const fmpz_t coeffs_f, 
+                                  const unsigned long length)
+{
+   fmpz_poly_fit_length(poly_fmpz, length);
+	fmpz_poly_fit_limbs(poly_fmpz, 1);
+	
+	unsigned long size_m = poly_fmpz->limbs + 1;
+   fmpz_t coeffs_m = poly_fmpz->coeffs;
+   unsigned long carry = 0L;
+   
+   for (unsigned long i = 0, j = 0, k = 0; i < length; i++, j += size_m, k++)
+   {
+      if ((long) coeffs_f[k] < 0L)
+      {
+         coeffs_m[j+1] = -coeffs_f[k] - carry;
+			if (coeffs_m[j+1] == 0L)
+			   coeffs_m[j] = 0L;
+		   else
+			   coeffs_m[j] = -1;
+			carry = 1L;
+      } else if (coeffs_f[k] == 0L)
+		{
+			if (carry)
+			{
+				coeffs_m[j+1] = 1L;
+				coeffs_m[j] = 1L;
+				carry = 0L;
+			} else
+			{
+				coeffs_m[j] = 0L;
+				carry = 0L;
+			}
+		} else
+      {
+         coeffs_m[j+1] = coeffs_f[k] + carry;
+			coeffs_m[j] = 1;
+         NORM(coeffs_m + j); 
+         carry = 0L;        
+      }
+   }
+   poly_fmpz->length = length;
+	_fmpz_poly_normalise(poly_fmpz);
 }
 
 void fmpz_poly_limb_unpack_unsigned(fmpz_poly_t poly_fmpz, const ZmodF_poly_t poly_f, 
