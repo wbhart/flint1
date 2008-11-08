@@ -1241,7 +1241,7 @@ char* profDriverString_fmpz_poly_gcd(char* params)
 
 char* profDriverDefaultParams_fmpz_poly_gcd()
 {
-   return "500000 1.2";
+   return "100000 1.2";
 }
 
 void profDriver_fmpz_poly_gcd(char* params)

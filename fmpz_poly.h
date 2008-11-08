@@ -156,11 +156,13 @@ void fmpz_poly_limb_pack(ZmodF_poly_t poly_f, const fmpz_poly_t poly_fmpz,
 /* 
    Packs poly_fmpz->length coefficients, each assumed to fit into a limb, into
    the an array of limbs coeffs_f. Coefficients are stored in B-adic symmetric 
-	format.
+	format. The m1 variant changes the sign of the coefficients before packing 
+	(the input polynomial is not modified).
    
    Assumes 0 < poly_fmpz->length
 */
 void fmpz_poly_limb_pack_1(fmpz_t coeffs_f, const fmpz_poly_t poly_fmpz);
+void fmpz_poly_limb_pack_m1(fmpz_t coeffs_f, const fmpz_poly_t poly_fmpz);
 
 /* 
    Unpacks bundle coefficients from the first coefficient of poly_f, each 
@@ -175,7 +177,7 @@ void fmpz_poly_limb_unpack(fmpz_poly_t poly_fmpz, const ZmodF_poly_t poly_f,
    Unpacks length signed coefficients from the array of limbs coeffs_f, 
 	each assumed to be stored in a field of one limb, into the polynomial 
 	poly_fmpz. Coefficients are assumed to be stored in B-adic symmetric 
-	format.
+	format. The m1 variant changes the signs of the output coefficients.
    
    Assumes 0 < length
 */
@@ -1371,7 +1373,7 @@ void fmpz_poly_pseudo_div(fmpz_poly_t Q, unsigned long * d,
    if (B == Q) _fmpz_poly_stack_clear(Bin);
 }
                                       
-void fmpz_poly_content(fmpz_t c, fmpz_poly_t poly);
+void fmpz_poly_content(fmpz_t c, const fmpz_poly_t poly);
 
 static inline
 void _fmpz_poly_primitive_part(fmpz_poly_t prim, fmpz_poly_t poly)
@@ -1406,6 +1408,8 @@ void fmpz_poly_primitive_part(fmpz_poly_t prim, fmpz_poly_t poly)
 void fmpz_poly_gcd_subresultant(fmpz_poly_t res, const fmpz_poly_t poly1, const fmpz_poly_t poly2);
 
 void fmpz_poly_gcd_modular(fmpz_poly_t res, const fmpz_poly_t poly1, const fmpz_poly_t poly2);
+
+int fmpz_poly_gcd_heuristic(fmpz_poly_t H, const fmpz_poly_t poly1, const fmpz_poly_t poly2);
 
 void fmpz_poly_gcd(fmpz_poly_t res, const fmpz_poly_t poly1, const fmpz_poly_t poly2);
 
