@@ -964,7 +964,7 @@ void fmpz_div_2exp(fmpz_t output, fmpz_t x, unsigned long exp)
    }
 }
 
-void fmpz_gcd(fmpz_t output, fmpz_t x1, fmpz_t x2)
+/*void fmpz_gcd(fmpz_t output, fmpz_t x1, fmpz_t x2)
 {
    if (x1[0] == 0)
    {
@@ -984,8 +984,8 @@ void fmpz_gcd(fmpz_t output, fmpz_t x1, fmpz_t x2)
    unsigned long twos2 = __fmpz_power_of_two(x2);
    unsigned long n1, n2;
    
-   fmpz_t a1 = fmpz_init(FLINT_ABS(x1[0]) - (twos1 >> FLINT_LG_BITS_PER_LIMB));
-   fmpz_t a2 = fmpz_init(FLINT_ABS(x2[0]) - (twos2 >> FLINT_LG_BITS_PER_LIMB));
+   fmpz_t a1 = fmpz_stack_init(FLINT_ABS(x1[0]) - (twos1 >> FLINT_LG_BITS_PER_LIMB));
+   fmpz_t a2 = fmpz_stack_init(FLINT_ABS(x2[0]) - (twos2 >> FLINT_LG_BITS_PER_LIMB));
    
    fmpz_div_2exp(a1, x1, twos1);
    if ((long) a1[0] < 0L) a1[0] = -a1[0];
@@ -1006,8 +1006,30 @@ void fmpz_gcd(fmpz_t output, fmpz_t x1, fmpz_t x2)
    unsigned long min = FLINT_MIN(twos1, twos2);
    fmpz_mul_2exp(output, output, min); 
    
-   fmpz_clear(a1);
-   fmpz_clear(a2);
+   fmpz_stack_release(); // release a2
+   fmpz_stack_release(); // release a1
+}*/
+
+void fmpz_gcd(fmpz_t output, fmpz_t x1, fmpz_t x2)
+{
+	ulong size1 = FLINT_ABS(x1[0]);
+	ulong size2 = FLINT_ABS(x2[0]);
+   mpz_t m1, m2, m0, m_out;
+	m1->_mp_d = x1 + 1;
+   m2->_mp_d = x2 + 1;
+	m1->_mp_alloc = size1;
+	m1->_mp_size = size1;
+	m2->_mp_alloc = size2;
+	m2->_mp_size = size2;
+	ulong size_out = FLINT_MAX(size1, size2)+1;
+	m0->_mp_d = flint_stack_alloc(size_out);
+   m0->_mp_alloc = size_out;
+   m0->_mp_size = 0;
+	mpz_gcd(m0, m1, m2);
+	size_out = m0->_mp_size;
+	F_mpn_copy(output + 1, m0->_mp_d, size_out);
+	output[0] = size_out;
+	flint_stack_release();
 }
 
 /*

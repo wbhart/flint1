@@ -66,6 +66,7 @@ void randpoly(mpz_poly_t pol, unsigned long length, unsigned long maxbits)
        else 
        {
           mpz_rrandomb(temp, randstate, bits);
+			 if (randint(2)) mpz_clrbit(temp, bits-1);
 #if SIGNS
           if (randint(2)) mpz_neg(temp,temp);
 #endif
@@ -1146,7 +1147,6 @@ void sample_fmpz_poly_gcd_modular(unsigned long length, unsigned long bits,
    fmpz_poly_clear(poly1);
    
 }
-
 
 char* profDriverString_fmpz_poly_gcd_modular(char* params)
 {

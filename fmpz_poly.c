@@ -319,6 +319,132 @@ void fmpz_poly_bit_pack(ZmodF_poly_t poly_f, const fmpz_poly_t poly_fmpz,
 
 }
 
+void fmpz_poly_bit_pack_1(fmpz_t array, const fmpz_poly_t poly_fmpz,
+                            const unsigned long length, const long bitwidth, 
+                            const long negate, ulong n)
+{   
+   ulong i, k, skip;
+   mp_limb_t * coeff_m = poly_fmpz->coeffs;
+   mp_limb_t * last_point;
+    
+   ulong temp;
+   half_ulong lower;
+   long coeff;
+   long borrow;
+   mp_limb_t extend;
+   
+   long bits = bitwidth;
+   int sign = (bits < 0);
+   if (sign) bits = ABS(bits);
+   
+   ulong coeffs_per_limb = FLINT_BITS/bits;
+
+   const ulong mask = (1UL<<bits)-1;
+      
+	k=0; skip=0;
+   coeff = 0; borrow = 0L; temp = 0;
+	ulong size = poly_fmpz->limbs + 1;
+      
+   last_point = coeff_m + size*length;
+         
+   while (coeff_m < last_point)
+   {
+      if ((ulong)coeff_m&7 == 0) FLINT_PREFETCH(coeff_m, 64);
+      // k is guaranteed to be less than FLINT_BITS at this point
+      while ((k < HALF_FLINT_BITS) && (coeff_m < last_point))
+      {
+         if (sign) temp+=(__get_next_coeff(coeff_m, &borrow, &coeff, mask, negate) << k);
+         else temp+=(__get_next_coeff_unsigned(coeff_m, &coeff) << k);
+         coeff_m+=size; k+=bits;
+      }
+      // k may exceed FLINT_BITS at this point but is less than 96
+
+      if (k > FLINT_BITS)
+      {
+         // if k > FLINT_BITS write out a whole limb and read in remaining bits of coeff
+			array[skip] = temp;
+         skip++;
+         temp = (coeff>>(bits+FLINT_BITS-k));
+         k = (k-FLINT_BITS);
+         // k < HALF_FLINT_BITS
+      } else
+      {
+         // k <= FLINT_BITS
+         if (k >= HALF_FLINT_BITS)
+         {
+            // if k >= HALF_FLINT_BITS store bottom HALF_FLINT_BITS bits
+            lower = (half_ulong)temp;
+            k-=HALF_FLINT_BITS;
+            temp>>=HALF_FLINT_BITS;
+            // k is now <= HALF_FLINT_BITS
+
+            while ((k<HALF_FLINT_BITS) && (coeff_m < last_point))
+            {
+               if (sign) temp+=(__get_next_coeff(coeff_m, &borrow, &coeff, mask, negate) << k);
+               else temp+=(__get_next_coeff_unsigned(coeff_m, &coeff) << k);
+               coeff_m+=size; k+=bits;
+            }
+            // k may again exceed FLINT_BITS bits but is less than 96
+            if (k>FLINT_BITS)
+            {
+               // if k > FLINT_BITS, write out bottom HALF_FLINT_BITS bits (along with HALF_FLINT_BITS bits from lower)
+               // read remaining bits from coeff and reduce k by HALF_FLINT_BITS
+               array[skip] = (temp<<HALF_FLINT_BITS)+(ulong)lower;
+               skip++;
+               temp>>=HALF_FLINT_BITS;
+               temp+=((coeff>>(bits+FLINT_BITS-k))<<HALF_FLINT_BITS);
+               k = (k-HALF_FLINT_BITS);
+               // k < FLINT_BITS and we are ready to read next coefficient if there is one
+            } else if (k >= HALF_FLINT_BITS) 
+            {
+               // k <= FLINT_BITS
+               // if k >= HALF_FLINT_BITS write out bottom HALF_FLINT_BITS bits (along with lower)
+               // and reduce k by HALF_FLINT_BITS
+               k-=HALF_FLINT_BITS;
+               array[skip] = (temp<<HALF_FLINT_BITS)+lower;
+               temp>>=HALF_FLINT_BITS;
+               skip++;
+               // k is now less than or equal to HALF_FLINT_BITS and we are now ready to read 
+               // the next coefficient if there is one
+            } else
+            {
+               // k < HALF_FLINT_BITS
+               // there isn't enough to write out a whole FLINT_BITS bits, so put it all 
+               // together in temp
+               temp = (temp<<HALF_FLINT_BITS)+lower;
+               k+=HALF_FLINT_BITS;
+               // k is now guaranteed to be less than FLINT_BITS and we are ready for the
+               // next coefficient if there is one
+            } // else
+         } // if
+      } // else
+	} // while
+       
+   // sign extend the last FLINT_BITS bits we write out
+   if (skip < n)
+   {
+     if (borrow) temp+= (-1UL<<k);
+     array[skip] = temp;
+     skip++;
+   } 
+   // sign extend the remainder of the array, reducing modulo p 
+   extend = 0;
+   if (borrow) extend = -1L;
+   while (skip < n) 
+   {
+      array[skip] = extend;
+      skip++;
+   }
+      
+#if DEBUG
+   for (ulong i = 0; i < n; i++)
+   {
+       printf("%lx ",array[i]);
+   }
+   printf("\n");
+#endif
+}
+
 void fmpz_poly_bit_unpack(fmpz_poly_t poly_fmpz, const ZmodF_poly_t poly_f, 
                               const unsigned long bundle, const unsigned long bits)
 {
@@ -409,6 +535,99 @@ void fmpz_poly_bit_unpack(fmpz_poly_t poly_fmpz, const ZmodF_poly_t poly_f,
       }
    }
    _fmpz_poly_normalise(poly_fmpz);
+}
+ 
+void fmpz_poly_bit_unpack_1(fmpz_poly_t poly_fmpz, const fmpz_t array, 
+                              const ulong length, const ulong bits, ulong n)
+{
+   ulong k, skip;
+
+   ulong temp2;
+   ulong temp;
+   ulong full_limb;
+   ulong carry;
+     
+   const ulong mask = (1UL<<bits)-1;
+   const ulong sign_mask = (1UL<<(bits-1));
+
+   ulong s;
+
+	fmpz_poly_fit_length(poly_fmpz, length + 1);
+	fmpz_poly_fit_limbs(poly_fmpz, 1);
+   mp_limb_t * coeff_m = poly_fmpz->coeffs;
+   mp_limb_t * last_point;
+   ulong size_m = poly_fmpz->limbs+1;
+   
+#if DEBUG
+   for (ulong i = 0; i < n; i++)
+   {
+       printf("%lx ",array[i]);
+   }
+   printf("\n");
+#endif
+    
+   k=0; skip=0; carry = 0UL; temp2 = 0;
+   last_point = coeff_m + size_m*length;
+      
+   while (coeff_m < last_point)
+   {
+      // read in a full limb
+      full_limb = array[skip];
+      temp2 += l_shift(full_limb,k);
+      s = FLINT_BITS-k;
+      k+=s;
+      while ((k >= bits)&&(coeff_m < last_point))
+      {
+         if (!(temp2 & sign_mask)) 
+         {
+            fmpz_add_ui_inplace(coeff_m, (temp2 & mask) + carry);
+            carry = 0UL;
+         }  
+         else
+         {
+            temp = ((-temp2) & mask) - carry;
+            fmpz_sub_ui_inplace(coeff_m, temp);
+            carry = 1UL;
+         }
+         coeff_m += size_m;
+         temp2>>=bits;
+         k-=bits;
+      }
+      // k is now less than bits
+      // read in remainder of full_limb
+      temp2 += l_shift(r_shift(full_limb, s), k);
+      k+=(FLINT_BITS - s);
+       
+      while ((k >= bits)&&(coeff_m < last_point))
+      {
+         if (!(temp2 & sign_mask)) 
+         {
+            fmpz_add_ui_inplace(coeff_m, (temp2 & mask) + carry);
+            carry = 0UL;
+         }
+         else
+         {
+            temp = ((-temp2) & mask) - carry;
+            fmpz_sub_ui_inplace(coeff_m, temp);
+            carry = 1UL;
+         }
+         coeff_m += size_m;
+         temp2>>=bits;
+         k-=bits;
+      }
+      // k is now less than bits
+      skip++;
+   }
+
+	if (carry) 
+	{
+		fmpz_add_ui_inplace(coeff_m, 1L);
+      poly_fmpz->length = length + 1;
+	} else
+	{
+	   poly_fmpz->length = length;
+		_fmpz_poly_normalise(poly_fmpz);
+	}
 }
  
 void fmpz_poly_bit_unpack_unsigned(fmpz_poly_t poly_fmpz, const ZmodF_poly_t poly_f, 
@@ -515,6 +734,257 @@ void fmpz_poly_limb_pack(ZmodF_poly_t poly_f, const fmpz_poly_t poly_fmpz,
    }
 }
 
+void fmpz_poly_limb_pack_new(fmpz_t coeffs_f, const fmpz_poly_t poly_fmpz,
+                                           const unsigned long bundle, const long limbs)
+{
+   unsigned long size_m = poly_fmpz->limbs + 1;
+   long size_j;
+   fmpz_t coeffs_m = poly_fmpz->coeffs;
+   long carry = 0;
+   
+   for (unsigned long i = 0, j = 0, k = 0; i < bundle; i++, j += size_m, k += limbs)
+   {
+      size_j = (long) coeffs_m[j];
+      if (size_j < 0)
+      {
+         F_mpn_negate(coeffs_f + k, coeffs_m + j + 1, ABS(size_j)); 
+         F_mpn_set(coeffs_f + k + ABS(size_j), limbs - ABS(size_j));
+         if (carry) mpn_sub_1(coeffs_f + k, coeffs_f + k, limbs, 1L);
+         carry = 1L;
+      } else if (size_j > 0)
+      {
+         F_mpn_copy(coeffs_f + k, coeffs_m + j + 1, ABS(size_j)); 
+         F_mpn_clear(coeffs_f + k + ABS(size_j), limbs - ABS(size_j)); 
+         if (carry) mpn_sub_1(coeffs_f + k, coeffs_f + k, limbs, 1L);
+         carry = 0L;
+      } else
+      {
+         if (carry) 
+         {
+            F_mpn_set(coeffs_f + k, limbs);
+            carry = 1L;
+         } else 
+         {
+            F_mpn_clear(coeffs_f + k, limbs);
+            carry = 0L;
+         }
+      }
+   }
+}
+
+void fmpz_poly_limb_pack_neg_new(fmpz_t coeffs_f, const fmpz_poly_t poly_fmpz,
+                                           const unsigned long bundle, const long limbs)
+{
+   unsigned long size_m = poly_fmpz->limbs + 1;
+   long size_j;
+   fmpz_t coeffs_m = poly_fmpz->coeffs;
+   long carry = 0;
+   
+   for (unsigned long i = 0, j = 0, k = 0; i < bundle; i++, j += size_m, k += limbs)
+   {
+      size_j = (long) coeffs_m[j];
+      if (size_j > 0)
+      {
+         F_mpn_negate(coeffs_f + k, coeffs_m + j + 1, ABS(size_j)); 
+         F_mpn_set(coeffs_f + k + ABS(size_j), limbs - ABS(size_j));
+         if (carry) mpn_sub_1(coeffs_f + k, coeffs_f + k, limbs, 1L);
+         carry = 1L;
+      } else if (size_j < 0)
+      {
+         F_mpn_copy(coeffs_f + k, coeffs_m + j + 1, ABS(size_j)); 
+         F_mpn_clear(coeffs_f + k + ABS(size_j), limbs - ABS(size_j)); 
+         if (carry) mpn_sub_1(coeffs_f + k, coeffs_f + k, limbs, 1L);
+         carry = 0L;
+      } else
+      {
+         if (carry) 
+         {
+            F_mpn_set(coeffs_f + k, limbs);
+            carry = 1L;
+         } else 
+         {
+            F_mpn_clear(coeffs_f + k, limbs);
+            carry = 0L;
+         }
+      }
+   }
+}
+
+void fmpz_poly_half_limb_pack(fmpz_t coeffs_f, const fmpz_poly_t poly_fmpz)
+{
+   unsigned long size_m = poly_fmpz->limbs + 1;
+   long size_j;
+   fmpz_t coeffs_m = poly_fmpz->coeffs;
+	unsigned long bundle = poly_fmpz->length;
+   long carry = 0;
+	ulong i, j, k;
+   int shift;
+	long mask = (1L << 32) - 1L;
+
+   for (i = 0, j = 0, k = 0; i < bundle; i++, j += size_m)
+   {
+      if ((i & 1) == 0) coeffs_f[k] = 0L;
+		if (i & 1) shift = 32;
+		else shift = 0;
+		size_j = (long) coeffs_m[j];
+      if (size_j < 0L)
+      {
+         if (carry) coeffs_f[k] += (((-coeffs_m[j + 1] - 1) & mask) << shift); 
+         else coeffs_f[k] += (((-coeffs_m[j + 1]) & mask) << shift);
+			carry = 1L;
+      } else if (size_j > 0L)
+      {
+         if (carry) coeffs_f[k] += (((coeffs_m[j + 1] - 1) & mask) << shift); 
+         else coeffs_f[k] += (((coeffs_m[j + 1]) & mask) << shift);
+			carry = 0L;
+      } else
+      {
+         if (carry) 
+         {
+            coeffs_f[k] += (((-1L) & mask)<<shift);
+				carry = 1L;
+         } else 
+            carry = 0L;
+	   }
+
+		if (i & 1) k++;
+   }
+}
+
+void fmpz_poly_limb_pack_16(fmpz_t coeffs_f, const fmpz_poly_t poly_fmpz)
+{
+   unsigned long size_m = poly_fmpz->limbs + 1;
+   long size_j;
+   fmpz_t coeffs_m = poly_fmpz->coeffs;
+	unsigned long bundle = poly_fmpz->length;
+   long carry = 0;
+	ulong i, j, k;
+   int shift;
+	long mask = (1L << 16) - 1L;
+
+	int16_t * arr16 = flint_stack_alloc_bytes(2*bundle);
+	F_mpn_clear((mp_limb_t *) arr16, (bundle*16-1)/FLINT_BITS + 1);
+
+   for (i = 0, j = 0, k = 0; i < bundle; i++, j += size_m, k++)
+   {
+      size_j = (long) coeffs_m[j];
+      if (size_j < 0L)
+      {
+         if (carry) arr16[k] += (int16_t) ((-coeffs_m[j + 1] - 1) & mask); 
+         else arr16[k] += (int16_t) ((-coeffs_m[j + 1]) & mask);
+			carry = 1L;
+      } else if (size_j > 0L)
+      {
+         if (carry) arr16[k] += (int16_t) ((coeffs_m[j + 1] - 1) & mask); 
+         else arr16[k] += (int16_t) ((coeffs_m[j + 1]) & mask);
+			carry = 0L;
+      } else
+      {
+         if (carry) 
+         {
+            arr16[k] += (int16_t) ((-1L) & mask);
+				carry = 1L;
+         } else 
+            carry = 0L;
+	   }
+   }
+
+	mpz_t t;
+	t->_mp_d = coeffs_f;
+	t->_mp_alloc = (bundle*16 - 1)/FLINT_BITS + 1;
+   t->_mp_size = 0L;
+	mpz_import(t, bundle, -1, 2, 0, 0, arr16); 
+	t->_mp_d = coeffs_f;
+	flint_stack_release();
+}
+
+void fmpz_poly_limb_pack_neg_16(fmpz_t coeffs_f, const fmpz_poly_t poly_fmpz)
+{
+   unsigned long size_m = poly_fmpz->limbs + 1;
+   long size_j;
+   fmpz_t coeffs_m = poly_fmpz->coeffs;
+	unsigned long bundle = poly_fmpz->length;
+   long carry = 0;
+	ulong i, j, k;
+   int shift;
+	long mask = (1L << 16) - 1L;
+
+	int16_t * arr16 = flint_stack_alloc_bytes(2*bundle);
+   F_mpn_clear((mp_limb_t *) arr16, (bundle*16-1)/FLINT_BITS + 1);
+
+   for (i = 0, j = 0, k = 0; i < bundle; i++, j += size_m, k++)
+   {
+      size_j = (long) coeffs_m[j];
+      if (size_j > 0L)
+      {
+         if (carry) arr16[k] += (int16_t) ((-coeffs_m[j + 1] - 1) & mask); 
+         else arr16[k] += (int16_t) ((-coeffs_m[j + 1]) & mask);
+			carry = 1L;
+      } else if (size_j < 0L)
+      {
+         if (carry) arr16[k] += (int16_t) ((coeffs_m[j + 1] - 1) & mask); 
+         else arr16[k] += (int16_t) ((coeffs_m[j + 1]) & mask);
+			carry = 0L;
+      } else
+      {
+         if (carry) 
+         {
+            arr16[k] += (int16_t) ((-1L) & mask);
+				carry = 1L;
+         } else 
+            carry = 0L;
+	   }
+   }
+
+	mpz_t t;
+	t->_mp_d = coeffs_f;
+	t->_mp_alloc = (bundle*16 - 1)/FLINT_BITS + 1;
+   t->_mp_size = 0L;
+	mpz_import(t, bundle, -1, 2, 0, 0, arr16); 
+	flint_stack_release();
+}
+
+void fmpz_poly_half_limb_pack_neg(fmpz_t coeffs_f, const fmpz_poly_t poly_fmpz)
+{
+   unsigned long size_m = poly_fmpz->limbs + 1;
+   long size_j;
+   fmpz_t coeffs_m = poly_fmpz->coeffs;
+	unsigned long bundle = poly_fmpz->length;
+   long carry = 0;
+	ulong i, j, k;
+   int shift;
+	long mask = (1L << 32) - 1L;
+
+   for (i = 0, j = 0, k = 0; i < bundle; i++, j += size_m)
+   {
+      if ((i & 1) == 0) coeffs_f[k] = 0L;
+		if (i & 1) shift = 32;
+		else shift = 0;
+		size_j = (long) coeffs_m[j];
+      if (size_j > 0L)
+      {
+         if (carry) coeffs_f[k] += (((-coeffs_m[j + 1] - 1) & mask) << shift); 
+         else coeffs_f[k] += (((-coeffs_m[j + 1]) & mask) << shift);
+			carry = 1L;
+      } else if (size_j < 0L)
+      {
+         if (carry) coeffs_f[k] += (((coeffs_m[j + 1] - 1) & mask) << shift); 
+         else coeffs_f[k] += (((coeffs_m[j + 1]) & mask) << shift);
+			carry = 0L;
+      } else
+      {
+         if (carry) 
+         {
+            coeffs_f[k] += (((-1L) & mask)<<shift);
+				carry = 1L;
+         } else 
+            carry = 0L;
+	   }
+
+		if (i & 1) k++;
+   }
+}
+
 void fmpz_poly_limb_pack_1(fmpz_t coeffs_f, const fmpz_poly_t poly_fmpz)
 {
    unsigned long size_m = poly_fmpz->limbs + 1;
@@ -551,7 +1021,7 @@ void fmpz_poly_limb_pack_1(fmpz_t coeffs_f, const fmpz_poly_t poly_fmpz)
    }
 }
 
-void fmpz_poly_limb_pack_m1(fmpz_t coeffs_f, const fmpz_poly_t poly_fmpz)
+void fmpz_poly_limb_pack_neg_1(fmpz_t coeffs_f, const fmpz_poly_t poly_fmpz)
 {
    unsigned long size_m = poly_fmpz->limbs + 1;
    long size_j;
@@ -616,6 +1086,47 @@ void fmpz_poly_limb_unpack(fmpz_poly_t poly_fmpz, const ZmodF_poly_t poly_f,
    _fmpz_poly_normalise(poly_fmpz);
 }
 
+void fmpz_poly_limb_unpack_new(fmpz_poly_t poly_fmpz, const fmpz_t coeffs_f, 
+                                  const unsigned long bundle, const unsigned long limbs)
+{
+   unsigned long n = limbs*bundle;
+   unsigned long carry = 0L;
+   fmpz_poly_fit_length(poly_fmpz, bundle + 1);
+	fmpz_poly_fit_limbs(poly_fmpz, limbs);
+	fmpz_t coeffs_m = poly_fmpz->coeffs;
+   unsigned long size_m = poly_fmpz->limbs + 1;
+   ulong i, j, k;
+
+   for (i = 0, j = 0, k = 0; i < bundle; i++, j += size_m, k += limbs)
+   {
+      if (carry) mpn_add_1(coeffs_f + k, coeffs_f + k, n - k, 1L);
+      if (coeffs_f[k+limbs-1]>>(FLINT_BITS-1))
+      {
+         F_mpn_negate(coeffs_m + j + 1, coeffs_f + k, limbs);
+         coeffs_m[j] = -limbs;
+         NORM(coeffs_m + j);
+         carry = 1L;
+      } else
+      {
+         F_mpn_copy(coeffs_m + j + 1, coeffs_f + k, limbs);
+         coeffs_m[j] = limbs;
+         NORM(coeffs_m + j); 
+         carry = 0L;        
+      }
+   }
+
+	if (carry) 
+	{
+		coeffs_m[j+1] = 1;
+      coeffs_m[j] = 1;
+		poly_fmpz->length = bundle + 1;
+	} else
+	{
+		poly_fmpz->length = bundle;
+	   _fmpz_poly_normalise(poly_fmpz);
+	}
+}
+
 void fmpz_poly_limb_unpack_1(fmpz_poly_t poly_fmpz, const fmpz_t coeffs_f, 
                                   const unsigned long length)
 {
@@ -656,6 +1167,131 @@ void fmpz_poly_limb_unpack_1(fmpz_poly_t poly_fmpz, const fmpz_t coeffs_f,
          NORM(coeffs_m + j); 
          carry = 0L;        
       }
+   }
+
+	if (carry) 
+	{
+		coeffs_m[j+1] = 1;
+      coeffs_m[j] = 1;
+		poly_fmpz->length = length + 1;
+	} else
+	{
+		poly_fmpz->length = length;
+	   _fmpz_poly_normalise(poly_fmpz);
+	}
+}
+
+void fmpz_poly_limb_unpack_16(fmpz_poly_t poly_fmpz, const fmpz_t coeffs_f, 
+                                  const unsigned long length)
+{
+   unsigned long size_m = poly_fmpz->limbs + 1;
+   fmpz_t coeffs_m = poly_fmpz->coeffs;
+   unsigned long carry = 0L;
+   ulong i, j, k;
+
+	unsigned int alloc = (16*length - 1)/FLINT_BITS + 1;
+	int16_t * arr16 = flint_stack_alloc(alloc);
+   ((mp_limb_t *) arr16)[alloc-1] = 0L;
+	//F_mpn_clear((mp_limb_t *) arr16, alloc);
+   mpz_t t;
+	t->_mp_d = coeffs_f;
+   t->_mp_alloc = alloc;
+	t->_mp_size = alloc;
+	
+	mpz_export(arr16, NULL, -1, 2, 0, 0, t);
+	
+   for (i = 0, j = 0, k = 0; i < length; i++, j += size_m, k++)
+   {
+      if (arr16[k] < 0)
+      {
+         coeffs_m[j+1] = (mp_limb_t) -arr16[k] - carry;
+			if (coeffs_m[j+1] == 0L)
+			   coeffs_m[j] = 0L;
+		   else
+			   coeffs_m[j] = -1;
+			carry = 1L;
+      } else if (arr16[k] == 0)
+		{
+			if (carry)
+			{
+				coeffs_m[j+1] = 1L;
+				coeffs_m[j] = 1L;
+				carry = 0L;
+			} else
+			{
+				coeffs_m[j] = 0L;
+				carry = 0L;
+			}
+		} else
+      {
+         coeffs_m[j+1] = (mp_limb_t) arr16[k] + carry;
+			coeffs_m[j] = 1;
+         NORM(coeffs_m + j); 
+         carry = 0L;        
+      }
+   }
+
+	flint_stack_release();
+
+	if (carry) 
+	{
+		coeffs_m[j+1] = 1;
+      coeffs_m[j] = 1;
+		poly_fmpz->length = length + 1;
+	} else
+	{
+		poly_fmpz->length = length;
+	   _fmpz_poly_normalise(poly_fmpz);
+	}
+}
+
+void fmpz_poly_half_limb_unpack(fmpz_poly_t poly_fmpz, const fmpz_t coeffs_f, 
+                                  const unsigned long length)
+{
+   fmpz_poly_fit_length(poly_fmpz, length + 1);
+	fmpz_poly_fit_limbs(poly_fmpz, 1);
+	
+	unsigned long size_m = poly_fmpz->limbs + 1;
+   fmpz_t coeffs_m = poly_fmpz->coeffs;
+	unsigned long carry = 0L;
+   ulong i, j, k;
+
+   for (i = 0, j = 0, k = 0; i < length; i++, j += size_m)
+   {
+      int coeff;
+		
+		if (i&1) coeff = (int) (coeffs_f[k] >> 32);
+		else coeff = (int) coeffs_f[k];
+
+		if (coeff < 0)
+      {
+         coeffs_m[j+1] = (long) -coeff - carry;
+			if (coeffs_m[j+1] == 0L)
+			   coeffs_m[j] = 0L;
+		   else
+			   coeffs_m[j] = -1;
+			carry = 1L;
+      } else if (coeff == 0)
+		{
+			if (carry)
+			{
+				coeffs_m[j+1] = 1L;
+				coeffs_m[j] = 1L;
+				carry = 0L;
+			} else
+			{
+				coeffs_m[j] = 0L;
+				carry = 0L;
+			}
+		} else
+      {
+         coeffs_m[j+1] = (long) coeff + carry;
+			coeffs_m[j] = 1;
+         NORM(coeffs_m + j); 
+         carry = 0L;        
+      }
+
+		if (i & 1) k++;
    }
 
 	if (carry) 
@@ -7307,22 +7943,25 @@ int fmpz_poly_divides_modular(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_pol
 	}
    
 	int q_one = fmpz_is_one(q_lead);
-
 	
    unsigned long p;
    unsigned long pbits;
 
 	long bits = bits1 - bits2;
+	if (bits < 2L) bits = 2;
 	
-	long bits_small = bits - ceil_log2(FLINT_MIN(B->length, A->length - B->length));
-	if (bits < 0L) bits = 2;
-	if (bits_small < 0L) bits_small = 2;
+	//long bits_small = bits - ceil_log2(FLINT_MIN(B->length, A->length - B->length));
+	//if (bits_small < 0L) bits_small = 2;
 
 #if FLINT_BITS == 64
-	if (bits < FLINT_D_BITS) 
+	if (bits == FLINT_D_BITS - 1) 
    {
       pbits = FLINT_D_BITS;
       p = (1L<<FLINT_D_BITS)-200;
+   } else if (bits < FLINT_D_BITS) 
+   {
+      pbits = bits;
+      p = (1L<<bits);
    } else 
    {
 #endif
@@ -7385,7 +8024,7 @@ int fmpz_poly_divides_modular(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_pol
 		{
 			zmod_poly_to_fmpz_poly(Q, q);
 		
-		   if (bits_small <= pbits)
+		   if (bits <= pbits)
 			{
 				fmpz_poly_mul(P, Q, B);
 				if (fmpz_poly_equal(P, A))
@@ -7401,7 +8040,7 @@ int fmpz_poly_divides_modular(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_pol
       
       fmpz_t newmod = fmpz_init(modulus[0] + 1);
       
-      if ((fmpz_poly_CRT(Q, Q, q, newmod, modulus)) || (bits_small <= fmpz_bits(newmod)))
+      if ((fmpz_poly_CRT(Q, Q, q, newmod, modulus)) || (bits <= fmpz_bits(newmod)))
 		{
 			fmpz_poly_mul(P, Q, B);
 			if (fmpz_poly_equal(P, A))
@@ -9320,6 +9959,29 @@ void fmpz_poly_gcd_modular(fmpz_poly_t H, const fmpz_poly_t poly1, const fmpz_po
    fmpz_clear(d); //release d
 }
 
+void fmpz_poly_limb_unpack_wrap(fmpz_poly_t H, fmpz_t arrayg, ulong pack_bits)
+{
+#if FLINT_BITS == 64
+	if (pack_bits <= 32)
+	{
+		ulong length = (arrayg[0]*FLINT_BITS)/pack_bits;
+		ulong rem = length*pack_bits % FLINT_BITS;
+		if ((rem) && (arrayg[arrayg[0]]>>rem)) length ++;
+		fmpz_poly_fit_length(H, length + 1);
+		fmpz_poly_fit_limbs(H, 1);
+		for (ulong i = 0; i < length + 1; i++) H->coeffs[i*(H->limbs+1)] = 0;
+		fmpz_poly_bit_unpack_1(H, arrayg + 1, length, pack_bits, arrayg[0]);
+	} else
+#endif
+ 	if (pack_bits == FLINT_BITS) 
+	   fmpz_poly_limb_unpack_1(H, arrayg + 1, arrayg[0]);
+   else
+	{
+	   ulong pack_limbs = (pack_bits >> FLINT_LG_BITS_PER_LIMB);
+		fmpz_poly_limb_unpack_new(H, arrayg + 1, (arrayg[0] - 1)/pack_limbs + 1, pack_limbs);	
+	}
+}
+
 int fmpz_poly_gcd_heuristic(fmpz_poly_t H, const fmpz_poly_t poly1, const fmpz_poly_t poly2)
 {
 	if (poly2->length == 0)
@@ -9335,11 +9997,12 @@ int fmpz_poly_gcd_heuristic(fmpz_poly_t H, const fmpz_poly_t poly1, const fmpz_p
 	}
 
 	fmpz_t ac, bc, d;
-   ac = fmpz_init(poly1->limbs);
-   bc = fmpz_init(poly2->limbs);
-   fmpz_poly_content(ac, poly1);
-   fmpz_poly_content(bc, poly2);
+   ac = fmpz_stack_init(poly1->limbs);
+   bc = fmpz_stack_init(poly2->limbs);
    
+	fmpz_poly_content(ac, poly1);
+   fmpz_poly_content(bc, poly2);
+
 	d = fmpz_init(FLINT_MIN(fmpz_size(ac), fmpz_size(bc)));
    fmpz_gcd(d, ac, bc);
 
@@ -9347,9 +10010,9 @@ int fmpz_poly_gcd_heuristic(fmpz_poly_t H, const fmpz_poly_t poly1, const fmpz_p
    {
       fmpz_poly_set_coeff_fmpz(H, 0, d);
       H->length = 1;
-      fmpz_clear(d);
-      fmpz_clear(ac); // release ac
-      fmpz_clear(bc); // release bc
+      fmpz_stack_release(); //release bc
+      fmpz_stack_release(); //release ac
+	   fmpz_clear(d);
       return 1;
    }
    
@@ -9359,64 +10022,188 @@ int fmpz_poly_gcd_heuristic(fmpz_poly_t H, const fmpz_poly_t poly1, const fmpz_p
    
    fmpz_poly_scalar_div_fmpz(A, poly1, ac);
    fmpz_poly_scalar_div_fmpz(B, poly2, bc);
-   fmpz_clear(bc); //release bc
-   fmpz_clear(ac); //release ac
+   fmpz_stack_release(); //release bc
+   fmpz_stack_release(); //release ac
+
+	if (A->length == 2) 
+	{
+		fmpz_poly_t Q;
+		fmpz_poly_init(Q);
+		if (fmpz_poly_divides_modular(Q, B, A))
+		   fmpz_poly_scalar_mul_fmpz(H, A, d);
+		else  
+		{
+			fmpz_poly_set_coeff_fmpz(H, 0, d);
+         H->length = 1;
+		}
+		fmpz_clear(d);
+		fmpz_poly_clear(Q);
+      return 1;
+	}
 	
-	fmpz_t array1 = fmpz_init(poly1->length);
-   fmpz_t array2 = fmpz_init(poly2->length);
-   fmpz_t arrayg = fmpz_init(FLINT_MAX(poly1->length, poly2->length));
+	if (B->length == 2) 
+	{
+		fmpz_poly_t Q;
+		fmpz_poly_init(Q);
+		if (fmpz_poly_divides_modular(Q, A, B))
+		   fmpz_poly_scalar_mul_fmpz(H, B, d);
+		else  
+		{
+			fmpz_poly_set_coeff_fmpz(H, 0, d);
+         H->length = 1;
+		}
+		fmpz_clear(d);
+		fmpz_poly_clear(Q);
+      return 1;
+	}
+	
+	ulong bits1 = FLINT_ABS(fmpz_poly_max_bits(A));
+	ulong bits2 = FLINT_ABS(fmpz_poly_max_bits(B));
+   ulong max_bits = FLINT_MAX(bits1, bits2);
+	ulong pack_limbs = (max_bits - 1)/FLINT_BITS + 1;
 
-	long sign1 = fmpz_poly_lead(A)[0];
-	long sign2 = fmpz_poly_lead(B)[0];
+	long sign1 = ((long) fmpz_poly_lead(A)[0] < 0L) ? -1L : 1L;
+	long sign2 = ((long) fmpz_poly_lead(B)[0] < 0L) ? -1L : 1L;
+   ulong pack_bits;
+
+	/*
+	   This bound ensures that if H | A and H | B with H primitive then H is the 
+		gcd of A and B. The bound is taken from 
+		http://arxiv.org/abs/cs/0206032v1
+	*/
+			
+	ulong bound_bits = FLINT_MIN(bits1, bits2) + 1;
+	
+	long bound_limbs = bound_bits/FLINT_BITS + 1;
+	if (bound_limbs > pack_limbs) pack_limbs = bound_limbs;
+
+	fmpz_t array1 = fmpz_stack_init(poly1->length*pack_limbs);
+   fmpz_t array2 = fmpz_stack_init(poly2->length*pack_limbs);
+   fmpz_t arrayg = fmpz_stack_init(pack_limbs*FLINT_MAX(poly1->length, poly2->length));
+
+	F_mpn_clear(array1, poly1->length*pack_limbs + 1);
+   F_mpn_clear(array2, poly2->length*pack_limbs + 1);
+   F_mpn_clear(arrayg, pack_limbs*FLINT_MAX(poly1->length, poly2->length) + 1);
+	
+#if FLINT_BITS == 64
+	if ((bits1 < 32) && (bits2 < 32) && (bound_bits < 32))
+	{
+	   pack_bits = FLINT_MAX(bits1, bits2) + 8;
+		if (pack_bits > 32) pack_bits = 32;
 		
-	if (sign1 < 0L)
-	   fmpz_poly_limb_pack_m1(array1 + 1, A);
-	else
-      fmpz_poly_limb_pack_1(array1 + 1, A);
-	array1[0] = poly1->length;
+		fmpz_poly_bit_pack_1(array1 + 1, A, A->length, -pack_bits, sign1, (pack_bits*A->length - 1)/FLINT_BITS + 1);
+	   array1[0] = (pack_bits*A->length - 1)/FLINT_BITS + 1;
 
-   if (sign2 < 0L)
-	   fmpz_poly_limb_pack_m1(array2 + 1, B);
-	else
-      fmpz_poly_limb_pack_1(array2 + 1, B);
-   array2[0] = poly2->length;
+      fmpz_poly_bit_pack_1(array2 + 1, B, B->length, -pack_bits, sign2, (pack_bits*B->length - 1)/FLINT_BITS + 1);
+	   array2[0] = (pack_bits*B->length - 1)/FLINT_BITS + 1;
+	} else 
+#endif
+	if ((bits1 < FLINT_BITS) && (bits2 < FLINT_BITS) && (bound_bits < FLINT_BITS))
+	{
+		pack_bits = FLINT_BITS;
+		if (sign1 < 0L) fmpz_poly_limb_pack_neg_1(array1 + 1, A);
+	   else fmpz_poly_limb_pack_1(array1 + 1, A);
+	   array1[0] = poly1->length;
+
+      if (sign2 < 0L) fmpz_poly_limb_pack_neg_1(array2 + 1, B);
+	   else fmpz_poly_limb_pack_1(array2 + 1, B);
+      array2[0] = poly2->length;
+   } else
+	{
+		pack_bits = FLINT_BITS*pack_limbs;
+		if (sign1 < 0L) fmpz_poly_limb_pack_neg_new(array1 + 1, A, A->length, pack_limbs);
+	   else fmpz_poly_limb_pack_new(array1 + 1, A, A->length, pack_limbs);
+	   array1[0] = poly1->length*pack_limbs;
+      
+      if (sign2 < 0L) fmpz_poly_limb_pack_neg_new(array2 + 1, B, B->length, pack_limbs);
+	   else fmpz_poly_limb_pack_new(array2 + 1, B, B->length, pack_limbs);
+	   array2[0] = poly2->length*pack_limbs;
+	}
 
    NORM(array1);
 	NORM(array2);
+		
 	fmpz_gcd(arrayg, array1, array2);
-	
-   fmpz_poly_limb_unpack_1(H, arrayg + 1, arrayg[0]);
+		
+   fmpz_poly_limb_unpack_wrap(H, arrayg, pack_bits);
 
-	fmpz_clear(array1);
-	fmpz_clear(array2);
-	fmpz_clear(arrayg);
-
-	fmpz_poly_t Q;
+	fmpz_poly_t Q, Q1;
 	fmpz_poly_init(Q);
+   fmpz_poly_init(Q1);
 
-	ulong nb1 = fmpz_poly_2norm_bits_normalised(A);
-   ulong nb2 = fmpz_poly_2norm_bits_normalised(B);
+	fmpz_t hc = fmpz_stack_init(H->limbs);
+	fmpz_t temp = fmpz_stack_init(FLINT_ABS(arrayg[0]) + 1);
+	fmpz_poly_content(hc, H);
 
-	/*
-		Bound is easily derived from Thm 5.3 and Cor 5.4 of 
-		http://compalg.inf.elte.hu/~tony/Informatikai-Konyvtar/03-Algorithms%20of%20Informatics%201,%202,%203/CompAlg29May.pdf
-	*/
-				
-	ulong bound_bits = FLINT_MIN(A->length, B->length) + fmpz_bits(d) + FLINT_MIN(nb1, nb2);
+	if (!fmpz_is_one(hc)) 
+	  if (hc[0] == 1) fmpz_tdiv_ui(temp, arrayg, hc[1]);
+	  else fmpz_tdiv(temp, arrayg, hc);
+	else fmpz_set(temp, arrayg);
 
-	if (bound_bits >= FLINT_BITS) fmpz_poly_primitive_part(H, H);
+	fmpz_t q = fmpz_stack_init(FLINT_MAX(FLINT_ABS(array1[0]), FLINT_ABS(array2[0]))+1);
 
-	if ((bound_bits < FLINT_BITS) || (fmpz_poly_divides_modular(Q, A, H) && fmpz_poly_divides_modular(Q, B, H)))
+	int divides = 0;
+
+	if (fmpz_divides(q, array1, temp))
+	{
+      fmpz_poly_limb_unpack_wrap(Q1, q, pack_bits);
+      ulong bits_H = FLINT_ABS(fmpz_poly_max_bits(H));
+		ulong bits_Q1 = FLINT_ABS(fmpz_poly_max_bits(Q1));
+		ulong log1 = ceil_log2(H->length);
+		ulong log_length = FLINT_MIN(log1, ceil_log2(Q1->length));
+		int ok = 0;
+		if (bits_H + bits_Q1 + log_length < pack_bits)
+		{
+			ok = 1;
+		} else
+		{
+			fmpz_poly_scalar_div_fmpz(H, H, hc);
+		   fmpz_poly_mul(Q1, Q1, H);
+		   if (sign1 < 0L) fmpz_poly_neg(Q1, Q1);
+		}
+		if (ok || fmpz_poly_equal(Q1, A))
+		{
+         if (fmpz_divides(q, array2, temp))
+	      {
+            if (ok) fmpz_poly_scalar_div_fmpz(H, H, hc);
+		      fmpz_poly_limb_unpack_wrap(Q1, q, pack_bits);
+            bits_Q1 = FLINT_ABS(fmpz_poly_max_bits(Q1));
+				log_length = FLINT_MIN(log1, ceil_log2(Q1->length));
+				ok = 0;
+				if (bits_H + bits_Q1 + log_length < pack_bits)
+		      {
+			      ok = 1;
+		      } else
+				{
+					fmpz_poly_mul(Q1, Q1, H);
+		         if (sign2 < 0L) fmpz_poly_neg(Q1, Q1);
+				}
+				if (ok || fmpz_poly_equal(Q1, B)) divides = 1;
+			} 
+		} 
+	}
+
+	fmpz_stack_release(); // release q
+	fmpz_stack_release(); // release temp
+	fmpz_stack_release(); // release hc
+	fmpz_stack_release(); // release arrayg
+	fmpz_stack_release(); // release array2
+	fmpz_stack_release(); // release array1
+	fmpz_poly_clear(Q1);
+   fmpz_poly_clear(Q);
+	fmpz_poly_clear(A);
+	fmpz_poly_clear(B);
+			
+	if (divides)
 	{
 	   fmpz_poly_scalar_mul_fmpz(H, H, d);
-		fmpz_poly_clear(Q);
 		fmpz_clear(d);
 		return 1;
-	} 
-	
-	fmpz_poly_clear(Q);
-   fmpz_clear(d);
-	return 0;
+	} else
+	{
+	   fmpz_clear(d);
+	   return 0;
+	}
 }
 
 void fmpz_poly_gcd(fmpz_poly_t res, const fmpz_poly_t poly1, const fmpz_poly_t poly2)
@@ -9428,16 +10215,7 @@ void fmpz_poly_gcd(fmpz_poly_t res, const fmpz_poly_t poly1, const fmpz_poly_t p
       return;
    }
 
-   if ((poly1->length == 1) || (poly2->length == 1)) 
-   {
-      fmpz_poly_gcd_modular(res, poly1, poly2);
-      return;
-   }
-   
-   ulong bits1 = FLINT_ABS(fmpz_poly_max_bits(poly1));
-   ulong bits2 = FLINT_ABS(fmpz_poly_max_bits(poly2));
-   
-	if ((FLINT_MIN(bits1, bits2) < FLINT_BITS) && (FLINT_MAX(bits1, bits2) <= FLINT_BITS))
+	if (FLINT_MAX(fmpz_poly_max_limbs(poly1), fmpz_poly_max_limbs(poly2)) <= 16)
 	{
 		if (fmpz_poly_gcd_heuristic(res, poly1, poly2));
 		return;
@@ -9457,7 +10235,10 @@ void fmpz_poly_gcd(fmpz_poly_t res, const fmpz_poly_t poly1, const fmpz_poly_t p
       return;
    }
    
-   unsigned long max_bits = FLINT_MAX(bits1, bits2);
+   ulong bits1 = FLINT_ABS(fmpz_poly_max_bits(poly1));
+   ulong bits2 = FLINT_ABS(fmpz_poly_max_bits(poly2));
+   
+	unsigned long max_bits = FLINT_MAX(bits1, bits2);
  
 	if (max_bits < FLINT_BITS)
    {

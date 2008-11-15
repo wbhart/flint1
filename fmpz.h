@@ -91,6 +91,12 @@ fmpz_t fmpz_init(const unsigned long limbs)
 }
 
 static inline
+fmpz_t fmpz_stack_init(const unsigned long limbs)
+{
+   return (fmpz_t) flint_stack_alloc(limbs + 1);
+}
+
+static inline
 fmpz_t fmpz_realloc(fmpz_t f, const unsigned long limbs)
 {
    return (fmpz_t) flint_heap_realloc(f, limbs + 1);
@@ -100,6 +106,12 @@ static inline
 void fmpz_clear(const fmpz_t f)
 {
    flint_heap_free(f);
+}
+
+static inline
+void fmpz_stack_release(void)
+{
+   flint_stack_release();
 }
 
 void fmpz_print(fmpz_t in);
