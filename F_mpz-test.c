@@ -1450,6 +1450,320 @@ int test_F_mpz_submul_ui()
 	return result; 
 }
 
+int test_F_mpz_addmul()
+{
+   F_mpz_t f, g, h;
+   int result = 1;
+   ulong bits, bits2, bits3;
+	mpz_t m1, m2, m3, m4;
+
+	mpz_init(m1);
+   mpz_init(m2);
+   mpz_init(m3);
+   mpz_init(m4);
+   
+   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
+   {
+
+		// Make f a random number of limbs in size to start with
+		F_mpz_init2(f, z_randint(10));
+      F_mpz_init2(g, z_randint(10));
+      F_mpz_init2(h, z_randint(10));
+          
+      for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
+		{
+			bits = z_randint(200)+ 1;
+         F_mpz_random(f, bits); 
+         bits2 = z_randint(200)+ 1;
+         F_mpz_random(g, bits2); 
+         bits3 = z_randint(200)+ 1;
+         F_mpz_random(h, bits3); 
+     
+	      F_mpz_get_mpz(m1, f);
+			F_mpz_get_mpz(m2, g);
+			F_mpz_get_mpz(m3, h);
+			
+			F_mpz_addmul(f, g, h);
+         
+			F_mpz_get_mpz(m4, f);
+
+			mpz_addmul(m1, m2, m3);
+
+		   result = (mpz_cmp(m1, m4) == 0);
+		   if (!result)
+	      {
+			   gmp_printf("Error: m1 = %Zd, m4 = %Zd\n", m1, m4);
+		   }
+		}
+
+      F_mpz_clear(f);
+      F_mpz_clear(g);
+      F_mpz_clear(h);
+   }
+   
+   // Check aliasing of arguments 1 and 2
+	for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
+   {
+
+		// Make f a random number of limbs in size to start with
+		F_mpz_init2(f, z_randint(10));
+      F_mpz_init2(g, z_randint(10));
+          
+      for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
+		{
+			bits = z_randint(200)+ 1;
+         F_mpz_random(f, bits); 
+         bits2 = z_randint(200)+ 1;
+         F_mpz_random(g, bits2); 
+         
+	      F_mpz_get_mpz(m1, f);
+			F_mpz_get_mpz(m2, g);
+			
+			F_mpz_addmul(f, f, g);
+         
+			F_mpz_get_mpz(m3, f);
+
+			mpz_addmul(m1, m1, m2);
+
+		   result = (mpz_cmp(m1, m3) == 0);
+		   if (!result)
+	      {
+			   gmp_printf("Error: m1 = %Zd, m3 = %Zd\n", m1, m3);
+		   }
+		}
+
+      F_mpz_clear(f);
+      F_mpz_clear(g);
+   }
+
+   // Check aliasing of arguments 1 and 3
+	for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
+   {
+
+		// Make f a random number of limbs in size to start with
+		F_mpz_init2(f, z_randint(10));
+      F_mpz_init2(g, z_randint(10));
+          
+      for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
+		{
+			bits = z_randint(200)+ 1;
+         F_mpz_random(f, bits); 
+         bits2 = z_randint(200)+ 1;
+         F_mpz_random(g, bits2); 
+         
+	      F_mpz_get_mpz(m1, f);
+			F_mpz_get_mpz(m2, g);
+			
+			F_mpz_addmul(g, f, g);
+         
+			F_mpz_get_mpz(m3, g);
+
+			mpz_addmul(m2, m1, m2);
+
+		   result = (mpz_cmp(m2, m3) == 0);
+		   if (!result)
+	      {
+			   gmp_printf("Error: m2 = %Zd, m3 = %Zd\n", m2, m3);
+		   }
+		}
+
+      F_mpz_clear(f);
+   }
+   // Check aliasing of all arguments
+	for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
+   {
+
+		// Make f a random number of limbs in size to start with
+		F_mpz_init2(f, z_randint(10));
+          
+      for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
+		{
+			bits = z_randint(200)+ 1;
+         F_mpz_random(f, bits); 
+         
+			F_mpz_get_mpz(m1, f);
+			
+			F_mpz_addmul(f, f, f);
+         
+			F_mpz_get_mpz(m2, g);
+
+			mpz_addmul(m1, m1, m1);
+
+		   result = (mpz_cmp(m1, m2) == 0);
+		   if (!result)
+	      {
+			   gmp_printf("Error: m1 = %Zd, m2 = %Zd\n", m1, m2);
+		   }
+		}
+
+      F_mpz_clear(f);
+   }
+   
+   mpz_clear(m1);
+	mpz_clear(m2);
+	mpz_clear(m3);
+	mpz_clear(m4);
+	
+	return result; 
+}
+
+int test_F_mpz_submul()
+{
+   F_mpz_t f, g, h;
+   int result = 1;
+   ulong bits, bits2, bits3;
+	mpz_t m1, m2, m3, m4;
+
+	mpz_init(m1);
+   mpz_init(m2);
+   mpz_init(m3);
+   mpz_init(m4);
+   
+   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
+   {
+
+		// Make f a random number of limbs in size to start with
+		F_mpz_init2(f, z_randint(10));
+      F_mpz_init2(g, z_randint(10));
+      F_mpz_init2(h, z_randint(10));
+          
+      for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
+		{
+			bits = z_randint(200)+ 1;
+         F_mpz_random(f, bits); 
+         bits2 = z_randint(200)+ 1;
+         F_mpz_random(g, bits2); 
+         bits3 = z_randint(200)+ 1;
+         F_mpz_random(h, bits3); 
+     
+	      F_mpz_get_mpz(m1, f);
+			F_mpz_get_mpz(m2, g);
+			F_mpz_get_mpz(m3, h);
+			
+			F_mpz_submul(f, g, h);
+         
+			F_mpz_get_mpz(m4, f);
+
+			mpz_submul(m1, m2, m3);
+
+		   result = (mpz_cmp(m1, m4) == 0);
+		   if (!result)
+	      {
+			   gmp_printf("Error: m1 = %Zd, m4 = %Zd\n", m1, m4);
+		   }
+		}
+
+      F_mpz_clear(f);
+      F_mpz_clear(g);
+      F_mpz_clear(h);
+   }
+   
+   // Check aliasing of arguments 1 and 2
+	for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
+   {
+
+		// Make f a random number of limbs in size to start with
+		F_mpz_init2(f, z_randint(10));
+      F_mpz_init2(g, z_randint(10));
+          
+      for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
+		{
+			bits = z_randint(200)+ 1;
+         F_mpz_random(f, bits); 
+         bits2 = z_randint(200)+ 1;
+         F_mpz_random(g, bits2); 
+         
+	      F_mpz_get_mpz(m1, f);
+			F_mpz_get_mpz(m2, g);
+			
+			F_mpz_submul(f, f, g);
+         
+			F_mpz_get_mpz(m3, f);
+
+			mpz_submul(m1, m1, m2);
+
+		   result = (mpz_cmp(m1, m3) == 0);
+		   if (!result)
+	      {
+			   gmp_printf("Error: m1 = %Zd, m3 = %Zd\n", m1, m3);
+		   }
+		}
+
+      F_mpz_clear(f);
+      F_mpz_clear(g);
+   }
+
+   // Check aliasing of arguments 1 and 3
+	for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
+   {
+
+		// Make f a random number of limbs in size to start with
+		F_mpz_init2(f, z_randint(10));
+      F_mpz_init2(g, z_randint(10));
+          
+      for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
+		{
+			bits = z_randint(200)+ 1;
+         F_mpz_random(f, bits); 
+         bits2 = z_randint(200)+ 1;
+         F_mpz_random(g, bits2); 
+         
+	      F_mpz_get_mpz(m1, f);
+			F_mpz_get_mpz(m2, g);
+			
+			F_mpz_submul(g, f, g);
+         
+			F_mpz_get_mpz(m3, g);
+
+			mpz_submul(m2, m1, m2);
+
+		   result = (mpz_cmp(m2, m3) == 0);
+		   if (!result)
+	      {
+			   gmp_printf("Error: m2 = %Zd, m3 = %Zd\n", m2, m3);
+		   }
+		}
+
+      F_mpz_clear(f);
+   }
+   // Check aliasing of all arguments
+	for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
+   {
+
+		// Make f a random number of limbs in size to start with
+		F_mpz_init2(f, z_randint(10));
+          
+      for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
+		{
+			bits = z_randint(200)+ 1;
+         F_mpz_random(f, bits); 
+         
+			F_mpz_get_mpz(m1, f);
+			
+			F_mpz_submul(f, f, f);
+         
+			F_mpz_get_mpz(m2, g);
+
+			mpz_submul(m1, m1, m1);
+
+		   result = (mpz_cmp(m1, m2) == 0);
+		   if (!result)
+	      {
+			   gmp_printf("Error: m1 = %Zd, m2 = %Zd\n", m1, m2);
+		   }
+		}
+
+      F_mpz_clear(f);
+   }
+   
+   mpz_clear(m1);
+	mpz_clear(m2);
+	mpz_clear(m3);
+	mpz_clear(m4);
+	
+	return result; 
+}
+
 /*
 int test_F_mpz_bits()
 {
@@ -1567,6 +1881,8 @@ void F_mpz_poly_test_all()
    RUN_TEST(F_mpz_sub_ui); 
    RUN_TEST(F_mpz_addmul_ui); 
    RUN_TEST(F_mpz_submul_ui); 
+   RUN_TEST(F_mpz_addmul); 
+   RUN_TEST(F_mpz_submul); 
    /*RUN_TEST(F_mpz_bits); 
    RUN_TEST(F_mpz_size);*/ 
 	

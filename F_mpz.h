@@ -313,22 +313,17 @@ void F_mpz_addmul_ui(F_mpz_t f, const F_mpz_t g, const ulong x);
 */
 void F_mpz_submul_ui(F_mpz_t f, const F_mpz_t g, const ulong x);
 
-
-
+/** 
+   \fn     void F_mpz_addmul(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
+   \brief  Multiply g by h and add the result to f, in place.
+*/
+void F_mpz_addmul(F_mpz_t f, const F_mpz_t g, const F_mpz_t h);
 
 /** 
-   \fn     _F_mpz_addmul(F_mpz_poly_t res, ulong coeff3, const F_mpz_poly_t poly1, const ulong coeff1, 
-						                                       const F_mpz_poly_t poly2, const ulong coeff2)
-   \brief  Multiply coeff1 of poly1 by coeff2 of poly2 and add the result to res, in place.
+   \fn     void F_mpz_submul(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
+   \brief  Multiply g by h and subtract the result from f, in place.
 */
-void _F_mpz_addmul(F_mpz_t * f, const F_mpz_t g, const F_mpz_t h);
-
-/** 
-   \fn     _F_mpz_submul(F_mpz_poly_t res, ulong coeff3, const F_mpz_poly_t poly1, const ulong coeff1, 
-						                                       const F_mpz_poly_t poly2, const ulong coeff2)
-   \brief  Multiply coeff1 of poly1 by coeff2 of poly2 and subtract the result from res, inplace.
-*/
-void _F_mpz_submul(F_mpz_t * f, const F_mpz_t g, const F_mpz_t h);
+void F_mpz_submul(F_mpz_t f, const F_mpz_t g, const F_mpz_t h);
 
 #ifdef __cplusplus
  }
