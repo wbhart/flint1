@@ -265,22 +265,20 @@ void F_mpz_add(F_mpz_t f, const F_mpz_t g, F_mpz_t h);
 */
 void F_mpz_sub(F_mpz_t f, const F_mpz_t g, F_mpz_t h);
 
-
-
+/** 
+   \fn     void F_mpz_mul_ui(F_mpz_t f, const F_mpz_t g, const ulong x)
+   \brief  Multiply g by the unsigned long x and set f to the result.
+*/
+void F_mpz_mul_ui(F_mpz_t f, const F_mpz_t g, const ulong x);
 
 /** 
-   \fn     void _F_mpz_mul_ui(F_mpz_poly_t poly1, ulong coeff1, const F_mpz_poly_t poly2, 
-						                                              const ulong coeff2, const ulong x)
-   \brief  Multiply coeff2 of poly2 by the unsigned long x and set coeff1 of poly1 to the result.
+   \fn     void F_mpz_mul_si(F_mpz_t f, const F_mpz_t g, const long x)
+   \brief  Multiply g by the signed long x and f to the result.
 */
-void _F_mpz_mul_ui(F_mpz_t * f, const F_mpz_t g, const ulong x);
+void F_mpz_mul_si(F_mpz_t f, const F_mpz_t g, const long x);
 
-/** 
-   \fn     void _F_mpz_mul_si(F_mpz_poly_t poly1, ulong coeff1, const F_mpz_poly_t poly2, 
-						                                   const ulong coeff2, const long x)
-   \brief  Multiply coeff2 of poly2 by the signed long x and set coeff1 of poly1 to the result.
-*/
-void _F_mpz_mul_si(F_mpz_t * f, const F_mpz_t g, const long x);
+
+
 
 /** 
    \fn     void _F_mpz_mul_mpz(F_mpz_poly_t poly1, ulong coeff1, F_mpz_poly_t poly2, ulong coeff2, mpz_t x)

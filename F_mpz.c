@@ -416,12 +416,10 @@ void F_mpz_sub(F_mpz_t f, const F_mpz_t g, F_mpz_t h)
 	}
 }
 
-/*
-void _F_mpz_mul_ui(F_mpz_poly_t poly1, ulong coeff1, const F_mpz_poly_t poly2, 
-						                                   const ulong coeff2, const ulong x)
+void F_mpz_mul_ui(F_mpz_t f, const F_mpz_t g, const ulong x)
 {
-	ulong c2 = poly2->coeffs[coeff2];
-
+	F_mpz c2 = *g;
+	
 	if (!COEFF_IS_MPZ(c2)) // coeff2 is small
 	{
 		mp_limb_t prod[2];
@@ -431,26 +429,25 @@ void _F_mpz_mul_ui(F_mpz_poly_t poly1, ulong coeff1, const F_mpz_poly_t poly2,
 		umul_ppmm(prod[1], prod[0], uc2, x); 
 		if (!prod[1]) // result fits in one limb
 		{
-			_F_mpz_set_ui(poly1, coeff1, prod[0]);
-			if ((long) c2 < 0L) _F_mpz_neg(poly1, coeff1, poly1, coeff1);
+			F_mpz_set_ui(f, prod[0]);
+			if (c2 < 0L) F_mpz_neg(f, f);
 		} else // result takes two limbs
 		{
-		   __mpz_struct * mpz_ptr = _F_mpz_promote(poly1, coeff1);
+		   __mpz_struct * mpz_ptr = _F_mpz_promote(f);
 			// two limbs, least significant first, native endian, no nails, stored in prod
          mpz_import(mpz_ptr, 2, -1, sizeof(mp_limb_t), 0, 0, prod);
-			if ((long) c2 < 0L) mpz_neg(mpz_ptr, mpz_ptr);
+			if (c2 < 0L) mpz_neg(mpz_ptr, mpz_ptr);
 		}
 	} else // coeff2 is large
 	{
-      __mpz_struct * mpz_ptr = _F_mpz_promote(poly1, coeff1);
-      mpz_mul_ui(mpz_ptr, poly2->mpz_coeffs + COEFF_TO_OFF(c2), x);
+      __mpz_struct * mpz_ptr = _F_mpz_promote(f); // promote without val as if aliased both are large
+      mpz_mul_ui(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(c2), x);
 	}
 }
 
-void _F_mpz_mul_si(F_mpz_poly_t poly1, ulong coeff1, const F_mpz_poly_t poly2, 
-						                                   const ulong coeff2, const long x)
+void F_mpz_mul_si(F_mpz_t f, const F_mpz_t g, const long x)
 {
-	ulong c2 = poly2->coeffs[coeff2];
+	F_mpz c2 = *g;
 
 	if (!COEFF_IS_MPZ(c2)) // coeff2 is small
 	{
@@ -462,22 +459,23 @@ void _F_mpz_mul_si(F_mpz_poly_t poly1, ulong coeff1, const F_mpz_poly_t poly2,
 		umul_ppmm(prod[1], prod[0], uc2, ux); 
 		if (!prod[1]) // result fits in one limb
 		{
-			_F_mpz_set_ui(poly1, coeff1, prod[0]);
-			if ((long) (c2 ^ x) < 0L) _F_mpz_neg(poly1, coeff1, poly1, coeff1);
+			F_mpz_set_ui(f, prod[0]);
+			if ((c2 ^ x) < 0L) F_mpz_neg(f, f);
 		} else // result takes two limbs
 		{
-		   __mpz_struct * mpz_ptr = _F_mpz_promote(poly1, coeff1);
+		   __mpz_struct * mpz_ptr = _F_mpz_promote(f);
          // two limbs, least significant first, native endian, no nails, stored in prod
 			mpz_import(mpz_ptr, 2, -1, sizeof(mp_limb_t), 0, 0, prod);
-			if ((long) (c2 ^ x) < 0L) mpz_neg(mpz_ptr, mpz_ptr);
+			if ((c2 ^ x) < 0L) mpz_neg(mpz_ptr, mpz_ptr);
 		}
 	} else // coeff2 is large
 	{
-      __mpz_struct * mpz_ptr = _F_mpz_promote(poly1, coeff1);
-      mpz_mul_si(mpz_ptr, poly2->mpz_coeffs + COEFF_TO_OFF(c2), x);
+      __mpz_struct * mpz_ptr = _F_mpz_promote(f); // ok without val as if aliased both are large
+      mpz_mul_si(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(c2), x);
 	}
 }
 
+/*
 void _F_mpz_mul_mpz(F_mpz_poly_t poly1, ulong coeff1, F_mpz_poly_t poly2, ulong coeff2, mpz_t x)
 {
 	ulong c2 = poly2->coeffs[coeff2];
