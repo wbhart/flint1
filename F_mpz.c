@@ -13,7 +13,7 @@
 
     FLINT is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
@@ -322,101 +322,101 @@ int F_mpz_equal(const F_mpz_t f, const F_mpz_t g)
 
 ================================================================================*/
 
-/*void _F_mpz_neg(F_mpz_poly_t poly1, ulong coeff1, const F_mpz_poly_t poly2, const ulong coeff2)
+void F_mpz_neg(F_mpz_t f1, const F_mpz_t f2)
 {
-   ulong c = poly2->coeffs[coeff2];
-
-	if (!COEFF_IS_MPZ(c)) // coeff is small
+   if (!COEFF_IS_MPZ(*f2)) // coeff is small
 	{
-		poly1->coeffs[coeff1] = -c;
+		F_mpz t = -*f2; // Need to save value in case of aliasing
+		_F_mpz_demote(f1);
+		*f1 = t;
 	} else // coeff is large
 	{
-	   __mpz_struct * mpz_ptr = _F_mpz_promote(poly1, coeff1);
-		mpz_neg(mpz_ptr, poly2->mpz_coeffs + COEFF_TO_OFF(c));
+	   // No need to retain value in promotion, as if aliased, both already large
+		__mpz_struct * mpz_ptr = _F_mpz_promote(f1);
+		mpz_neg(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(*f2));
 	}
 }
 
-void _F_mpz_add(F_mpz_poly_t res, ulong coeff3, const F_mpz_poly_t poly1, const ulong coeff1, 
-					                                 const F_mpz_poly_t poly2, const ulong coeff2) 
+void F_mpz_add(F_mpz_t f, const F_mpz_t g, F_mpz_t h)
 {
-	mp_limb_t c1 = poly1->coeffs[coeff1];
-	mp_limb_t c2 = poly2->coeffs[coeff2];
+	F_mpz c1 = *g;
+	F_mpz c2 = *h;
 	
-	if (!COEFF_IS_MPZ(c1))
+	if (!COEFF_IS_MPZ(c1)) // g is small
 	{
-	   if (!COEFF_IS_MPZ(c2)) // both coefficients are small
+	   if (!COEFF_IS_MPZ(c2)) // both inputs are small
 		{
-			_F_mpz_set_si(res, coeff3, c1 + c2);
-		} else // c1 is small, c2 is large
+			F_mpz_set_si(f, c1 + c2);
+		} else // g is small, h is large
 		{
-         __mpz_struct * mpz3 = _F_mpz_promote(res, coeff3);
-			__mpz_struct * mpz2 = poly2->mpz_coeffs + COEFF_TO_OFF(c2);
-			if ((long) c1 < 0L) mpz_sub_ui(mpz3, mpz2, -c1);	
+         __mpz_struct * mpz3 = _F_mpz_promote(f); // g is saved and h is large
+			__mpz_struct * mpz2 = F_mpz_arr + COEFF_TO_OFF(c2);
+			if (c1 < 0L) mpz_sub_ui(mpz3, mpz2, -c1);	
 		   else mpz_add_ui(mpz3, mpz2, c1);
-			_F_mpz_demote_val(res, coeff3); // coefficients may have cancelled
+			_F_mpz_demote_val(f); // may have cancelled
 		}
 	} else
 	{
-		if (!COEFF_IS_MPZ(c2)) // c1 is large, c2 is small
+		if (!COEFF_IS_MPZ(c2)) // g is large, h is small
 		{
-         __mpz_struct * mpz3 = _F_mpz_promote(res, coeff3);
-			__mpz_struct * mpz1 = poly1->mpz_coeffs + COEFF_TO_OFF(c1);
-			if ((long) c2 < 0L) mpz_sub_ui(mpz3, mpz1, -c2);	
+         __mpz_struct * mpz3 = _F_mpz_promote(f); // h is saved and g is large
+			__mpz_struct * mpz1 = F_mpz_arr + COEFF_TO_OFF(c1);
+			if (c2 < 0L) mpz_sub_ui(mpz3, mpz1, -c2);	
 			else mpz_add_ui(mpz3, mpz1, c2);
-			_F_mpz_demote_val(res, coeff3); // coefficients may have cancelled
-		} else // c1 and c2 are large
+			_F_mpz_demote_val(f); // may have cancelled
+		} else // g and h are large
 		{
-         __mpz_struct * mpz3 = _F_mpz_promote(res, coeff3);
-			__mpz_struct * mpz1 = poly1->mpz_coeffs + COEFF_TO_OFF(c1);
-			__mpz_struct * mpz2 = poly2->mpz_coeffs + COEFF_TO_OFF(c2);
+         __mpz_struct * mpz3 = _F_mpz_promote(f); // aliasing means f is already large
+			__mpz_struct * mpz1 = F_mpz_arr + COEFF_TO_OFF(c1);
+			__mpz_struct * mpz2 = F_mpz_arr + COEFF_TO_OFF(c2);
 			mpz_add(mpz3, mpz1, mpz2);
-			_F_mpz_demote_val(res, coeff3); // coefficients may have cancelled
+			_F_mpz_demote_val(f); // may have cancelled
 		}
 	}
 }
 
-void _F_mpz_sub(F_mpz_poly_t res, ulong coeff3, const F_mpz_poly_t poly1, const ulong coeff1, 
-					                                 const F_mpz_poly_t poly2, const ulong coeff2) 
+void F_mpz_sub(F_mpz_t f, const F_mpz_t g, F_mpz_t h)
 {
-	mp_limb_t c1 = poly1->coeffs[coeff1];
-	mp_limb_t c2 = poly2->coeffs[coeff2];
+	F_mpz c1 = *g;
+	F_mpz c2 = *h;
 	
-	if (!COEFF_IS_MPZ(c1))
+	if (!COEFF_IS_MPZ(c1)) // g is small
 	{
-	   if (!COEFF_IS_MPZ(c2)) // both coefficients are small
+	   if (!COEFF_IS_MPZ(c2)) // both inputs are small
 		{
-			_F_mpz_set_si(res, coeff3, c1 - c2);
-		} else // c1 is small, c2 is large
+			F_mpz_set_si(f, c1 - c2);
+		} else // g is small, h is large
 		{
-         __mpz_struct * mpz3 = _F_mpz_promote(res, coeff3);
-			__mpz_struct * mpz2 = poly2->mpz_coeffs + COEFF_TO_OFF(c2);
-			if ((long) c1 < 0L) 
+         __mpz_struct * mpz3 = _F_mpz_promote(f); // g is saved and h is large
+			__mpz_struct * mpz2 = F_mpz_arr + COEFF_TO_OFF(c2);
+			if (c1 < 0L) 
 			{
-				mpz_add_ui(mpz3, mpz2, -c1);	
+				mpz_add_ui(mpz3, mpz2, -c1);
 				mpz_neg(mpz3, mpz3);
 			} else mpz_ui_sub(mpz3, c1, mpz2);
-			_F_mpz_demote_val(res, coeff3); // coefficients may have cancelled
+			_F_mpz_demote_val(f); // may have cancelled
 		}
 	} else
 	{
-		if (!COEFF_IS_MPZ(c2)) // c1 is large, c2 is small
+		if (!COEFF_IS_MPZ(c2)) // g is large, h is small
 		{
-         __mpz_struct * mpz3 = _F_mpz_promote(res, coeff3);
-			__mpz_struct * mpz1 = poly1->mpz_coeffs + COEFF_TO_OFF(c1);
-			if ((long) c2 < 0L) mpz_add_ui(mpz3, mpz1, -c2);	
+         __mpz_struct * mpz3 = _F_mpz_promote(f); // h is saved and g is large
+			__mpz_struct * mpz1 = F_mpz_arr + COEFF_TO_OFF(c1);
+			if (c2 < 0L) mpz_add_ui(mpz3, mpz1, -c2);	
 			else mpz_sub_ui(mpz3, mpz1, c2);
-			_F_mpz_demote_val(res, coeff3); // coefficients may have cancelled
-		} else // c1 and c2 are large
+			_F_mpz_demote_val(f); // may have cancelled
+		} else // g and h are large
 		{
-         __mpz_struct * mpz3 = _F_mpz_promote(res, coeff3);
-			__mpz_struct * mpz1 = poly1->mpz_coeffs + COEFF_TO_OFF(c1);
-			__mpz_struct * mpz2 = poly2->mpz_coeffs + COEFF_TO_OFF(c2);
+         __mpz_struct * mpz3 = _F_mpz_promote(f); // aliasing means f is already large
+			__mpz_struct * mpz1 = F_mpz_arr + COEFF_TO_OFF(c1);
+			__mpz_struct * mpz2 = F_mpz_arr + COEFF_TO_OFF(c2);
 			mpz_sub(mpz3, mpz1, mpz2);
-			_F_mpz_demote_val(res, coeff3); // coefficients may have cancelled
+			_F_mpz_demote_val(f); // may have cancelled
 		}
 	}
 }
 
+/*
 void _F_mpz_mul_ui(F_mpz_poly_t poly1, ulong coeff1, const F_mpz_poly_t poly2, 
 						                                   const ulong coeff2, const ulong x)
 {

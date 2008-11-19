@@ -96,21 +96,21 @@ void _F_mpz_cleanup(void);
 ================================================================================*/
 
 /** 
-   \fn     __mpz_struct * _F_mpz_promote(F_mpz_t * f)
+   \fn     __mpz_struct * _F_mpz_promote(F_mpz_t f)
    \brief  Promote the F_mpz_t to an mpz_t. No assumption is made about f. The value of f 
 	is not preserved. A pointer to an __mpz_struct corresponding to f is returned.
 */
 __mpz_struct * _F_mpz_promote(F_mpz_t f);
 
 /** 
-   \fn     __mpz_struct * _F_mpz_promote_val(F_mpz_t * f)
+   \fn     __mpz_struct * _F_mpz_promote_val(F_mpz_t f)
    \brief  Promote the given F_mpz_t to an mpz_t. No assumption is made about f. The value
 	        of f is preserved. A pointer to an __mpz_struct corresponding to f is returned.
 */
 __mpz_struct * _F_mpz_promote_val(F_mpz_t f);
 
 /** 
-   \fn     void _F_mpz_demote(F_mpz_t * f)
+   \fn     void _F_mpz_demote(F_mpz_t f)
    \brief  If f represents an mpz_t then the mpz_t is released. Makes no assumptions about
 	        f. Note that f is not set to any value, i.e. it must be set to a small integer 
 			  immediately after calling this function!
@@ -122,7 +122,7 @@ void _F_mpz_demote(F_mpz_t f)
 }
 
 /** 
-   \fn     void _F_mpz_demote_val(F_mpz_t * f)
+   \fn     void _F_mpz_demote_val(F_mpz_t f)
    \brief  If the F_mpz_t (which is assumed to be an mpz_t) will fit into FLINT_BIT - 2 bits, 
 	        it is demoted to a limb instead of an mpz_t, preserving the value, otherwise 
 			  nothing happens.
@@ -136,7 +136,18 @@ void _F_mpz_demote_val(F_mpz_t f);
 ================================================================================*/
 
 /** 
-   \fn     F_mpz_t F_mpz_init(ulong limbs)
+   \fn     void F_mpz_init(F_mpz_t f)
+   \brief  Allocate an F_mpz_t. A small F_mpz_t is returned (i.e. not 
+	        representing an mpz_t).
+*/
+static inline
+void F_mpz_init(F_mpz_t f)
+{
+	*f = 0L;
+}
+
+/** 
+   \fn     void F_mpz_init2(F_mpz_t f, ulong limbs)
    \brief  Allocate an F_mpz_t with the given number of limbs. If limbs
 	        is zero then a small F_mpz_t is returned (i.e. not representing
 			  an mpz_t).
@@ -160,7 +171,7 @@ void F_mpz_clear(F_mpz_t f)
 ================================================================================*/
 
 /** 
-   \fn     void F_mpz_zero(F_mpz_t * f)
+   \fn     void F_mpz_zero(F_mpz_t f)
    \brief  Set the given F_mpz_t to zero.
 */
 static inline
@@ -171,13 +182,13 @@ void F_mpz_zero(F_mpz_t f)
 }
 
 /** 
-   \fn     void F_mpz_set_si(F_mpz_t * f, const long val)
+   \fn     void F_mpz_set_si(F_mpz_t f, const long val)
    \brief  Set f to a signed long value val
 */
 void F_mpz_set_si(F_mpz_t f, const long val);
 
 /** 
-   \fn     void F_mpz_set_ui(F_mpz_t * f, const ulong val)
+   \fn     void F_mpz_set_ui(F_mpz_t f, const ulong val)
    \brief  Set f to an unsigned long value val
 */
 void F_mpz_set_ui(F_mpz_t f, const ulong val);
@@ -201,19 +212,19 @@ long F_mpz_get_ui(const F_mpz_t f);
 void F_mpz_get_mpz(mpz_t x, const F_mpz_t f);
 
 /** 
-   \fn     void F_mpz_set_mpz(F_mpz_t * f, const mpz_t x)
+   \fn     void F_mpz_set_mpz(F_mpz_t f, const mpz_t x)
    \brief  Sets f to the given mpz_t
 */
 void F_mpz_set_mpz(F_mpz_t f, const mpz_t x);
 
 /** 
-   \fn     void F_mpz_set(F_mpz_t * f, F_mpz_t g)
-   \brief  Sets f to the value of g. Assumes the coefficients are distinct.
+   \fn     void F_mpz_set(F_mpz_t f, F_mpz_t g)
+   \brief  Sets f to the value of g. 
 */
 void F_mpz_set(F_mpz_t f, const F_mpz_t g);
 
 /** 
-   \fn     void _F_mpz_swap(F_mpz_poly_t poly1, ulong coeff1, F_mpz_poly_t poly2, ulong coeff2)
+   \fn     void F_mpz_swap(F_mpz_t f, F_mpz_t g)
    \brief  Efficiently swaps the two F_mpz_t's. 
 */
 void F_mpz_swap(F_mpz_t f, F_mpz_t g);
@@ -230,10 +241,6 @@ void F_mpz_swap(F_mpz_t f, F_mpz_t g);
 */
 int F_mpz_equal(const F_mpz_t f, const F_mpz_t g);
 
-
-
-
-
 /*===============================================================================
 
 	Arithmetic
@@ -241,28 +248,25 @@ int F_mpz_equal(const F_mpz_t f, const F_mpz_t g);
 ================================================================================*/
 
 /** 
-   \fn     void _F_mpz_negate(F_mpz_poly_t poly1, ulong coeff1, const F_mpz_poly_t poly2, const ulong coeff2)
-   \brief  Sets coeff1 of poly1 to minus coeff2 of poly2. Assumes the coefficients are distinct.
+   \fn     void F_mpz_neg(F_mpz_t f, F_mpz_t g)
+   \brief  Sets f to minus g. 
 */
-void _F_mpz_neg(F_mpz_t * f, F_mpz_t g);
+void F_mpz_neg(F_mpz_t f, const F_mpz_t g);
 
 /** 
-   \fn     _F_mpz_add(F_mpz_poly_t res, ulong coeff3, const F_mpz_poly_t poly1, const ulong coeff1, 
-					                                       const F_mpz_poly_t poly2, const ulong coeff2)
-   \brief  Add the given coefficients of poly1 and poly2 and set the given coefficient 
-	        of res to the result. Assumes the coefficient of res is distinct from the 
-			  other two coefficients. 
+   \fn     void F_mpz_add(F_mpz_t f, const F_mpz_t g, F_mpz_t h)
+   \brief  Set f to g plus h. 
 */
-void _F_mpz_add(F_mpz_t * f, const F_mpz_t g, F_mpz_t h);
+void F_mpz_add(F_mpz_t f, const F_mpz_t g, F_mpz_t h);
 
 /** 
-   \fn     _F_mpz_sub(F_mpz_poly_t res, ulong coeff3, const F_mpz_poly_t poly1, const ulong coeff1, 
-					                                       const F_mpz_poly_t poly2, const ulong coeff2)
-   \brief  Subtract the given coefficients of poly1 and poly2 and set the given coefficient 
-	        of res to the result. Assumes the coefficient of res is distinct from the 
-			  other two coefficients.
+   \fn     void F_mpz_sub(F_mpz_t f, const F_mpz_t g, F_mpz_t h)
+   \brief  Set f to g minus h. 
 */
-void _F_mpz_sub(F_mpz_t * f, const F_mpz_t g, F_mpz_t h);
+void F_mpz_sub(F_mpz_t f, const F_mpz_t g, F_mpz_t h);
+
+
+
 
 /** 
    \fn     void _F_mpz_mul_ui(F_mpz_poly_t poly1, ulong coeff1, const F_mpz_poly_t poly2, 
