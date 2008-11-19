@@ -277,48 +277,44 @@ void F_mpz_mul_ui(F_mpz_t f, const F_mpz_t g, const ulong x);
 */
 void F_mpz_mul_si(F_mpz_t f, const F_mpz_t g, const long x);
 
-
-
+/** 
+   \fn     void F_mpz_mul(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
+   \brief  Multiply g by h and set f to the result.
+*/
+void F_mpz_mul2(F_mpz_t f, const F_mpz_t g, const F_mpz_t h);
 
 /** 
-   \fn     void _F_mpz_mul_mpz(F_mpz_poly_t poly1, ulong coeff1, F_mpz_poly_t poly2, ulong coeff2, mpz_t x)
-   \brief  Multiply coeff2 of poly2 by the mpz_t x and set coeff1 of poly1 to the result.
+   \fn     void F_mpz_mul_2exp(F_mpz_t f, const F_mpz_t g, const ulong exp)
+   \brief  Multiply g by 2^exp and set f to the result.
 */
-void _F_mpz_mul_mpz(F_mpz_t * f, const F_mpz_t g, mpz_t x);
+void F_mpz_mul_2exp(F_mpz_t f, const F_mpz_t g, const ulong exp);
 
 /** 
-   \fn     void _F_mpz_mul(F_mpz_poly_t res, ulong coeff3, const F_mpz_poly_t poly1, const ulong coeff1, 
-					                                            const F_mpz_poly_t poly2, const ulong coeff2)
-
-   \brief  Multiply coeff1 of poly1 by coeff2 of poly2 and set coeff3 of res to the result.
+   \fn     void F_mpz_add_ui(F_mpz_t f, const F_mpz_t g, const ulong x)
+   \brief  Add the unsigned long x to g and set f to the result.
 */
-void _F_mpz_mul(F_mpz_t * f, const F_mpz_t g, const F_mpz_t h);
+void F_mpz_add_ui(F_mpz_t f, const F_mpz_t g, const ulong x);
 
 /** 
-   \fn     void _F_mpz_add_ui_inplace(F_mpz_poly_t res, ulong coeff, const ulong x)
-   \brief  Add the unsigned long x to the given coefficient of res, in place.
+   \fn     void F_mpz_sub_ui(F_mpz_t f, const F_mpz_t g, const ulong x)
+   \brief  Subtract the unsigned long x from g and set f to the result.
 */
-void _F_mpz_add_ui_inplace(F_mpz_t * f, const ulong x);
+void F_mpz_sub_ui(F_mpz_t f, const F_mpz_t g, const ulong x);
 
 /** 
-   \fn     void _F_mpz_sub_ui_inplace(F_mpz_poly_t res, ulong coeff, const ulong x)
-   \brief  Subtract the unsigned long x from the given coefficient of res, in place.
+   \fn     void F_mpz_addmul_ui(F_mpz_t f, const F_mpz_t g, const ulong x)
+   \brief  Multiply g by the unsigned long x and add the result to f, in place.
 */
-void _F_mpz_sub_ui_inplace(F_mpz_t * f, const ulong x);
+void F_mpz_addmul_ui(F_mpz_t f, const F_mpz_t g, const ulong x);
 
 /** 
-   \fn     void _F_mpz_addmul_ui(F_mpz_poly_t res, ulong coeff2, const F_mpz_poly_t poly1, 
-							                                            const ulong coeff1, const ulong x)
-   \brief  Multiply coeff1 of poly1 by the unsigned long x and add the result to res, in place.
+   \fn     void F_mpz_submul_ui(F_mpz_t f, const F_mpz_t g, const ulong x)
+   \brief  Multiply g by the unsigned long x and subtract the result from f, in place.
 */
-void _F_mpz_addmul_ui(F_mpz_t * f, const F_mpz_t g, const ulong x);
+void F_mpz_submul_ui(F_mpz_t f, const F_mpz_t g, const ulong x);
 
-/** 
-   \fn     void _F_mpz_submul_ui(F_mpz_poly_t res, ulong coeff2, const F_mpz_poly_t poly1, 
-							                                            const ulong coeff1, const ulong x)
-   \brief  Multiply coeff1 of poly1 by the unsigned long x and subtract the result from res, in place.
-*/
-void _F_mpz_submul_ui(F_mpz_t * f, const F_mpz_t g, const ulong x);
+
+
 
 /** 
    \fn     _F_mpz_addmul(F_mpz_poly_t res, ulong coeff3, const F_mpz_poly_t poly1, const ulong coeff1, 
