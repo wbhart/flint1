@@ -83,6 +83,12 @@ F_mpz _F_mpz_new_mpz(void);
 */
 void _F_mpz_clear_mpz(F_mpz f);
 
+/** 
+   \fn     void _F_mpz_cleanup(void)
+   \brief  Clear any mpz's still held onto by the F_mpz_t memory management.
+*/
+void _F_mpz_cleanup(void);
+
 /*===============================================================================
 
 	Promotion/Demotion

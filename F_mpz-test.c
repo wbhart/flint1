@@ -94,11 +94,8 @@ int test_F_mpz_getset_si()
          val = z_randbits(val_bits);
          if (z_randint(2)) val = -val;
               
-	      for (ulong i = 0; i < 100; i++) 
-			{
-				F_mpz_set_si(f, val);
-            val2 = F_mpz_get_si(f);
-			}
+	      F_mpz_set_si(f, val);
+         val2 = F_mpz_get_si(f);
 
 		   result = (val2 == val);
 		   if (!result)
@@ -134,11 +131,8 @@ int test_F_mpz_getset_ui()
          val_bits = z_randint(FLINT_BITS);
          val = z_randbits(val_bits);
               
-	      for (ulong i = 0; i < 100; i++) 
-			{
-				F_mpz_set_ui(f, val);
-            val2 = F_mpz_get_ui(f);
-			}
+	      F_mpz_set_ui(f, val);
+         val2 = F_mpz_get_ui(f);
 
 		   result = (val2 == val);
 		   if (!result)
@@ -179,11 +173,8 @@ int test_F_mpz_getset_mpz()
               
 			if (z_randint(2)) mpz_neg(val, val);
               
-			for (ulong i = 0; i < 100; i++) 
-			{
-				F_mpz_set_mpz(f, val);
-            F_mpz_get_mpz(val2, f);
-			}
+			F_mpz_set_mpz(f, val);
+         F_mpz_get_mpz(val2, f);
 				  
 			result = (mpz_cmp(val2, val) == 0);
 			if (!result)
@@ -205,7 +196,7 @@ int test_F_mpz_set()
    mpz_t m1, m2;
    F_mpz_t f1, f2;
    int result = 1;
-   ulong bits, length;
+   ulong bits;
    
    mpz_init(m1); 
    mpz_init(m2); 
@@ -219,7 +210,7 @@ int test_F_mpz_set()
       F_mpz_random(f1, bits);
            
       F_mpz_get_mpz(m1, f1);
-      for (ulong i = 0; i < 100; i++) F_mpz_set(f2, f1);
+      F_mpz_set(f2, f1);
 		F_mpz_get_mpz(m2, f2);
           
       result = (mpz_cmp(m1, m2) == 0); 
@@ -241,7 +232,7 @@ int test_F_mpz_set()
       F_mpz_random(f1, bits);
            
       F_mpz_get_mpz(m1, f1);
-      for (ulong i = 0; i < 100; i++) F_mpz_set(f1, f1);
+      F_mpz_set(f1, f1);
 		F_mpz_get_mpz(m2, f1);
           
       result = (mpz_cmp(m1, m2) == 0); 
@@ -255,6 +246,155 @@ int test_F_mpz_set()
 
    mpz_clear(m1);
    mpz_clear(m2);
+   
+   return result;
+}
+
+int test_F_mpz_equal()
+{
+   mpz_t m1, m2;
+   F_mpz_t f1, f2;
+   int result = 1;
+   ulong bits, bits2;
+   
+   mpz_init(m1); 
+   mpz_init(m2); 
+
+   // Check in case when operands are equal
+	for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   {
+      F_mpz_init2(f1, z_randint(10));
+      F_mpz_init2(f2, z_randint(10));
+
+      bits = z_randint(200) + 1;
+      F_mpz_random(f1, bits);
+      F_mpz_get_mpz(m1, f1);
+           
+      F_mpz_set(f2, f1);
+          
+      result = (F_mpz_equal(f1, f2)); 
+		if (!result) 
+		{
+			gmp_printf("Error: bits = %ld, m1 = %Zd\n", bits, m1);
+		}
+          
+      F_mpz_clear(f1);
+      F_mpz_clear(f2);
+   }
+   
+	// Check in case when operands are not likely equal
+	for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   {
+      F_mpz_init2(f1, z_randint(10));
+      F_mpz_init2(f2, z_randint(10));
+
+      bits = z_randint(200) + 1;
+      F_mpz_random(f1, bits);
+      bits2 = z_randint(200) + 1;
+      F_mpz_random(f2, bits2);
+           
+      F_mpz_get_mpz(m1, f1);
+      F_mpz_get_mpz(m2, f1);
+          
+      result = ((F_mpz_equal(f1, f2) && (mpz_cmp(m1, m2) == 0))
+			    || (!F_mpz_equal(f1, f2) && (mpz_cmp(m1, m2) != 0))); 
+		if (!result) 
+		{
+			gmp_printf("Error: bits = %ld, m1 = %Zd, m2 = %Zd\n", bits, m1, m2);
+		}
+          
+      F_mpz_clear(f1);
+      F_mpz_clear(f2);
+   }
+   
+	// check aliasing
+	for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   {
+      F_mpz_init2(f1, z_randint(10));
+      
+      bits = z_randint(200) + 1;
+      F_mpz_random(f1, bits);
+           
+      F_mpz_get_mpz(m1, f1);
+          
+      result = (F_mpz_equal(f1, f1)); 
+		if (!result) 
+		{
+			gmp_printf("Error: bits = %ld, m1 = %Zd\n", bits, m1);
+		}
+          
+      F_mpz_clear(f1);
+   }
+
+   mpz_clear(m1);
+   mpz_clear(m2);
+   
+   return result;
+}
+
+int test_F_mpz_swap()
+{
+   mpz_t m1, m2, m3, m4;
+   F_mpz_t f1, f2;
+   int result = 1;
+   ulong bits, bits2;
+   
+   mpz_init(m1); 
+   mpz_init(m2); 
+   mpz_init(m3); 
+   mpz_init(m4); 
+
+   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   {
+      F_mpz_init2(f1, z_randint(10));
+      F_mpz_init2(f2, z_randint(10));
+
+      bits = z_randint(200) + 1;
+      F_mpz_random(f1, bits);
+      bits2 = z_randint(200) + 1;
+      F_mpz_random(f2, bits2);
+           
+      F_mpz_get_mpz(m1, f1);
+      F_mpz_get_mpz(m2, f2);
+      F_mpz_swap(f2, f1);
+		F_mpz_get_mpz(m3, f1);
+      F_mpz_get_mpz(m4, f2);
+          
+      result = ((mpz_cmp(m1, m4) == 0) && (mpz_cmp(m2, m3) == 0)); 
+		if (!result) 
+		{
+			gmp_printf("Error: bits = %ld, m1 = %Zd, m2 = %Zd, m3 = %Zd, m4 = %Zd\n", bits, m1, m2, m2, m3, m4);
+		}
+          
+      F_mpz_clear(f1);
+      F_mpz_clear(f2);
+   }
+   
+	// check aliasing
+	for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   {
+      F_mpz_init2(f1, z_randint(10));
+      
+      bits = z_randint(200) + 1;
+      F_mpz_random(f1, bits);
+           
+      F_mpz_get_mpz(m1, f1);
+      F_mpz_swap(f1, f1);
+		F_mpz_get_mpz(m2, f1);
+          
+      result = (mpz_cmp(m1, m2) == 0); 
+		if (!result) 
+		{
+			gmp_printf("Error: bits = %ld, m1 = %Zd, m2 = %Zd\n", bits, m1, m2);
+		}
+          
+      F_mpz_clear(f1);
+   }
+
+   mpz_clear(m1);
+   mpz_clear(m2);
+   mpz_clear(m3);
+   mpz_clear(m4);
    
    return result;
 }
@@ -584,93 +724,6 @@ int test_F_mpz_size()
    return result;
 }
 
-int test_F_mpz_equal()
-{
-   mpz_poly_t m_poly1, m_poly2;
-   F_mpz_poly_t F_poly1, F_poly2;
-   int result = 1;
-   ulong bits1, bits2, length1, length2;
-   
-   mpz_poly_init(m_poly1); 
-   mpz_poly_init(m_poly2); 
-   
-   // random polys unlikely to be equal, test against mpz_poly_equal
-	for (ulong count1 = 0; (count1 < 20000*ITER) && (result == 1); count1++)
-   {
-      F_mpz_poly_init(F_poly1);
-      F_mpz_poly_init(F_poly2);
-      
-		bits1 = z_randint(200) + 1;
-      bits2 = z_randint(200) + 1;
-      length1 = z_randint(100);
-      length2 = z_randint(100);
-      mpz_randpoly(m_poly1, length1, bits1);
-      mpz_randpoly(m_poly2, length2, bits2);
-           
-      mpz_poly_to_F_mpz_poly(F_poly1, m_poly1);
-      mpz_poly_to_F_mpz_poly(F_poly2, m_poly2);
-          
-      result = (mpz_poly_equal(m_poly1, m_poly2) == F_mpz_poly_equal(F_poly1, F_poly2)); 
-		if (!result) 
-		{
-			printf("Error: length1 = %ld, bits1 = %ld, length2 = %ld, bits2 = %ld\n", length1, bits1, length2, bits2);
-         mpz_poly_print_pretty(m_poly1, "x"); printf("\n");
-         mpz_poly_print_pretty(m_poly2, "x"); printf("\n");
-		}
-          
-      F_mpz_poly_clear(F_poly1);
-		F_mpz_poly_clear(F_poly2);
-   }
-
-	// polys are equal
-	for (ulong count1 = 0; (count1 < 20000*ITER) && (result == 1); count1++)
-   {
-      F_mpz_poly_init(F_poly1);
-      F_mpz_poly_init(F_poly2);
-      
-		bits1 = z_randint(200) + 1;
-      length1 = z_randint(100);
-      mpz_randpoly(m_poly1, length1, bits1);
-           
-      mpz_poly_to_F_mpz_poly(F_poly1, m_poly1);
-      F_mpz_poly_set(F_poly2, F_poly1);
-          
-      result = (F_mpz_poly_equal(F_poly1, F_poly2)); 
-		if (!result) 
-		{
-			printf("Error: length1 = %ld, bits1 = %ld\n", length1, bits1);
-		}
-          
-      F_mpz_poly_clear(F_poly1);
-		F_mpz_poly_clear(F_poly2);
-   }
-
-	// polys are aliased
-	for (ulong count1 = 0; (count1 < 20000*ITER) && (result == 1); count1++)
-   {
-      F_mpz_poly_init(F_poly1);
-      
-		bits1 = z_randint(200) + 1;
-      length1 = z_randint(100);
-      mpz_randpoly(m_poly1, length1, bits1);
-           
-      mpz_poly_to_F_mpz_poly(F_poly1, m_poly1);
-          
-      result = (F_mpz_poly_equal(F_poly1, F_poly1)); 
-		if (!result) 
-		{
-			printf("Error: length1 = %ld, bits1 = %ld\n", length1, bits1);
-		}
-          
-      F_mpz_poly_clear(F_poly1);
-   }
-
-	mpz_poly_clear(m_poly1);
-   mpz_poly_clear(m_poly2);
-   
-   return result;
-}
-
 int test_F_mpz_neg()
 {
    F_mpz_poly_t F_poly1, F_poly2, F_poly3, F_poly4;
@@ -732,70 +785,6 @@ int test_F_mpz_neg()
    }
 
    return result;
-}
-
-int test_F_mpz_swap()
-{
-   F_mpz_poly_t F_poly, F_poly2;
-   int result = 1;
-   unsigned long bits, length, length2;
-   
-   // reverse and reverse back, second time aliased
-	for (unsigned long count1 = 0; (count1 < 20000) && (result == 1); count1++)
-   {
-      bits = z_randint(200)+ 1;
-      
-      F_mpz_poly_init(F_poly);
-      F_mpz_poly_init(F_poly2);   
-      
-      length = z_randint(100);
-      length2 = length + z_randint(200);
-      
-      F_mpz_randpoly(F_poly, length, bits); 
-                
-      F_mpz_poly_reverse(F_poly2, F_poly, length2);
-		F_mpz_poly_reverse(F_poly2, F_poly2, length2);
-           
-      result = F_mpz_poly_equal(F_poly2, F_poly);
-      if (!result)
-		{
-			printf("Error: length = %ld, length2 = %ld, bits = %ld\n", length, length2, bits);
-			printf("F_poly->length = %ld, F_poly2->length = %ld\n", F_poly->length, F_poly2->length);
-		}
-
-      F_mpz_poly_clear(F_poly);
-      F_mpz_poly_clear(F_poly2);
-   }
-   
-   // completely aliased reverse and reverse back
-	for (unsigned long count1 = 0; (count1 < 20000) && (result == 1); count1++)
-   {
-      bits = z_randint(200)+ 1;
-      
-      F_mpz_poly_init(F_poly);
-      F_mpz_poly_init(F_poly2);   
-      
-      length = z_randint(100);
-      length2 = length + z_randint(200);
-       
-      F_mpz_randpoly(F_poly, length, bits); 
-         
-      F_mpz_poly_set(F_poly2, F_poly);
-      F_mpz_poly_reverse(F_poly, F_poly, length2);
-      F_mpz_poly_reverse(F_poly, F_poly, length2);
-           
-      result = F_mpz_poly_equal(F_poly2, F_poly);
-		if (!result)
-		{
-			printf("Error: length = %ld, length2 = %ld, bits = %ld\n", length, length2, bits);
-			printf("F_poly->length = %ld, F_poly2->length = %ld\n", F_poly->length, F_poly2->length);
-		}
-      
-      F_mpz_poly_clear(F_poly);
-      F_mpz_poly_clear(F_poly2);
-   }
-
-   return result; 
 }
 
 int test_F_mpz_mul_2exp()
@@ -1378,10 +1367,10 @@ void F_mpz_poly_test_all()
    RUN_TEST(F_mpz_getset_si); 
    RUN_TEST(F_mpz_getset_mpz); 
    RUN_TEST(F_mpz_set); 
-   /*RUN_TEST(F_mpz_bits); 
-   RUN_TEST(F_mpz_size); 
    RUN_TEST(F_mpz_equal); 
    RUN_TEST(F_mpz_swap); 
+   /*RUN_TEST(F_mpz_bits); 
+   RUN_TEST(F_mpz_size); 
    RUN_TEST(F_mpz_neg); 
    RUN_TEST(F_mpz_add); 
    RUN_TEST(F_mpz_sub); 
@@ -1402,6 +1391,7 @@ int main()
    test_support_init();
    F_mpz_poly_test_all();
    test_support_cleanup();
+	_F_mpz_cleanup();
    
    flint_stack_cleanup();
 
