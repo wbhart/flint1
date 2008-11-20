@@ -1764,98 +1764,79 @@ int test_F_mpz_submul()
 	return result; 
 }
 
-/*
-int test_F_mpz_bits()
-{
-   mpz_poly_t m_poly1;
-   F_mpz_poly_t F_poly;
-   int result = 1;
-   ulong bits, length, next_bits;
-	long sign, mpz_bits, test_bits;
-   
-   mpz_poly_init(m_poly1); 
-   
-   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
-   {
-      F_mpz_poly_init(F_poly);
-
-      bits = z_randint(200) + 1;
-      length = z_randint(100);
-      mpz_randpoly(m_poly1, length, bits);
-           
-      mpz_poly_to_F_mpz_poly(F_poly, m_poly1);
-      
-		mpz_bits = 0;
-      sign = 1L;
-      for (ulong i = 0; i < m_poly1->length; i++)
-      {
-         next_bits = mpz_sizeinbase(m_poly1->coeffs[i], 2);
-         if (next_bits > mpz_bits) mpz_bits = next_bits;
-         if (mpz_sgn(m_poly1->coeffs[i]) < 0L) sign = -1L;
-      }
-      mpz_bits = sign*mpz_bits;
-
-		test_bits = F_mpz_poly_max_bits(F_poly);
-          
-      result = (mpz_bits == test_bits); 
-		if (!result) 
-		{
-			printf("Error: length = %ld, bits = %ld, m_poly1->length = %ld\n", length, bits, m_poly1->length);
-         printf("mpz_bits = %ld, test_bits = %ld\n", mpz_bits, test_bits);
-		}
-          
-      F_mpz_poly_clear(F_poly);
-   }
-   
-   mpz_poly_clear(m_poly1);
-   
-   return result;
-}
-
 int test_F_mpz_size()
 {
-   mpz_poly_t m_poly1;
-   F_mpz_poly_t F_poly;
+   mpz_t m1;
+   F_mpz_t f1;
    int result = 1;
-   ulong bits, length, next_limbs;
-	long sign, mpz_limbs, test_limbs;
+   ulong bits;
+	ulong m_limbs, f_limbs;
    
-   mpz_poly_init(m_poly1); 
+   mpz_init(m1); 
    
    for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
-      F_mpz_poly_init(F_poly);
+      F_mpz_init2(f1, z_randint(10));
 
       bits = z_randint(500) + 1;
-      length = z_randint(100);
-      mpz_randpoly(m_poly1, length, bits);
-           
-      mpz_poly_to_F_mpz_poly(F_poly, m_poly1);
+      F_mpz_random(f1, bits);
       
-		mpz_limbs = 0;
-      for (ulong i = 0; i < m_poly1->length; i++)
-      {
-         next_limbs = mpz_size(m_poly1->coeffs[i]);
-         if (next_limbs > mpz_limbs) mpz_limbs = next_limbs;
-      }
-      
-		test_limbs = F_mpz_poly_max_limbs(F_poly);
+		F_mpz_get_mpz(m1, f1);
+
+		m_limbs = mpz_size(m1);
+     
+		f_limbs = F_mpz_size(f1);
           
-      result = (mpz_limbs == test_limbs); 
+      result = (m_limbs == f_limbs); 
 		if (!result) 
 		{
-			printf("Error: length = %ld, bits = %ld, m_poly1->length = %ld\n", length, bits, m_poly1->length);
-         printf("mpz_limbs = %ld, test_limbs = %ld\n", mpz_limbs, test_limbs);
+			printf("Error: bits = %ld, m_limbs = %ld, f_limbs = %ld\n", bits, m_limbs, f_limbs);
 		}
           
-      F_mpz_poly_clear(F_poly);
+      F_mpz_clear(f1);
    }
    
-   mpz_poly_clear(m_poly1);
+   mpz_clear(m1);
    
    return result;
 }
-*/
+
+int test_F_mpz_bits()
+{
+   mpz_t m1;
+   F_mpz_t f1;
+   int result = 1;
+   ulong bits;
+	ulong m_bits, f_bits;
+   
+   mpz_init(m1); 
+   
+   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   {
+      F_mpz_init2(f1, z_randint(10));
+
+      bits = z_randint(500) + 1;
+      F_mpz_random(f1, bits);
+      
+		F_mpz_get_mpz(m1, f1);
+
+		m_bits = mpz_sizeinbase(m1, 2);
+     
+		f_bits = F_mpz_bits(f1);
+          
+      result = ((m_bits == f_bits) || ((m_bits == 1) && (f_bits == 0))); 
+		if (!result) 
+		{
+			printf("Error: bits = %ld, m_bits = %ld, f_bits = %ld\n", bits, m_bits, f_bits);
+		}
+          
+      F_mpz_clear(f1);
+   }
+   
+   mpz_clear(m1);
+   
+   return result;
+}
 
 void F_mpz_poly_test_all()
 {
@@ -1883,8 +1864,9 @@ void F_mpz_poly_test_all()
    RUN_TEST(F_mpz_submul_ui); 
    RUN_TEST(F_mpz_addmul); 
    RUN_TEST(F_mpz_submul); 
-   /*RUN_TEST(F_mpz_bits); 
-   RUN_TEST(F_mpz_size);*/ 
+   RUN_TEST(F_mpz_size);
+	RUN_TEST(F_mpz_bits); 
+    
 	
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");

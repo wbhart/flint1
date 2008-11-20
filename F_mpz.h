@@ -243,6 +243,26 @@ int F_mpz_equal(const F_mpz_t f, const F_mpz_t g);
 
 /*===============================================================================
 
+	Properties
+
+================================================================================*/
+
+/** 
+   \fn     ulong F_mpz_entry_size(F_mpz_t f)
+   \brief  Returns the number of limbs required to store the absolute value of f.
+	        Returns 0 if f is zero.
+*/
+ulong F_mpz_size(F_mpz_t f);
+
+/** 
+   \fn     ulong F_mpz_bits(F_mpz_t f)
+   \brief  Returns the number of bits required to store the absolute value of f.
+	        Returns 0 if f is zero.
+*/
+ulong F_mpz_bits(F_mpz_t f);
+
+/*===============================================================================
+
 	Arithmetic
 
 ================================================================================*/

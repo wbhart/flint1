@@ -318,6 +318,37 @@ int F_mpz_equal(const F_mpz_t f, const F_mpz_t g)
 
 /*===============================================================================
 
+	Properties
+
+================================================================================*/
+
+ulong F_mpz_size(F_mpz_t f)
+{
+	F_mpz d = *f;
+
+	if (d == 0) return 0;
+   if (!COEFF_IS_MPZ(d)) // c1 is small
+	{
+		return 1;
+	}
+
+	return mpz_size(F_mpz_arr + COEFF_TO_OFF(d));
+}
+
+ulong F_mpz_bits(F_mpz_t f)
+{
+	F_mpz d = *f;
+
+	if (!COEFF_IS_MPZ(d)) // c1 is small
+	{
+		return FLINT_BIT_COUNT(FLINT_ABS(d));
+	}
+
+	return mpz_sizeinbase(F_mpz_arr + COEFF_TO_OFF(d), 2);
+}
+
+/*===============================================================================
+
 	Arithmetic
 
 ================================================================================*/
