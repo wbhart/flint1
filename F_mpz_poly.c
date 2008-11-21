@@ -251,7 +251,7 @@ void F_mpz_poly_set(F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
 	}
 }
 
-/*void F_mpz_poly_swap(F_mpz_poly_t poly1, F_mpz_poly_t poly2)
+void F_mpz_poly_swap(F_mpz_poly_t poly1, F_mpz_poly_t poly2)
 {
 	if (poly1 == poly2) return;
 
@@ -263,24 +263,12 @@ void F_mpz_poly_set(F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
 	poly1->alloc = poly2->alloc;
 	poly2->alloc = temp;
 	
-	temp = poly1->mpz_alloc;
-	poly1->mpz_alloc = poly2->mpz_alloc;
-	poly2->mpz_alloc = temp;
-	
-	temp = poly1->mpz_length;
-	poly1->mpz_length = poly2->mpz_length;
-	poly2->mpz_length = temp;
-
 	ulong * temp_c = poly1->coeffs;
 	poly1->coeffs = poly2->coeffs;
 	poly2->coeffs = temp_c;
 
-   __mpz_struct * temp_m = poly1->mpz_coeffs;
-	poly1->mpz_coeffs = poly2->mpz_coeffs;
-	poly2->mpz_coeffs = temp_m;
-
    return;
-}*/
+}
 
 /*===============================================================================
 
@@ -288,16 +276,17 @@ void F_mpz_poly_set(F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
 
 ================================================================================*/
 
-/*int F_mpz_poly_equal(const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
+int F_mpz_poly_equal(const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
 {
    if (poly1 == poly2) return 1; // same polynomial
+
 	if (poly1->length != poly2->length) return 0; // check if lengths the same
 
 	for (ulong i = 0; i < poly1->length; i++) // check if coefficients the same
-		if (!_F_mpz_equal(poly1, i, poly2, i)) return 0;
+		if (!F_mpz_equal(poly1->coeffs + i, poly2->coeffs + i)) return 0;
 
 	return 1;
-}*/
+}
 
 /*===============================================================================
 

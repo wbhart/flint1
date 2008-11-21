@@ -38,6 +38,19 @@
 #include "flint.h"
 #include "F_mpz.h"
 
+/*
+   WARNING : 
+	=======
+
+	When implementing functions for F_mpz_poly, memory leaks can
+	occur if the length of a polynomial is shortened without using
+	_F_mpz_poly_set_length (which demotes thus releases any mpz_t's 
+	that were being used beyong the new length). 
+
+	In some cases it is desirable to use F_mpz_poly_truncate instead. 
+	It won't increase the length of a polynomial, but if it is made
+	shorter it also normalises it.
+*/
 
 /*==============================================================================
 
@@ -282,7 +295,7 @@ void F_mpz_poly_to_mpz_poly(mpz_poly_t m_poly, const F_mpz_poly_t F_poly);
 static inline 
 void F_mpz_poly_zero(F_mpz_poly_t poly)
 {
-   poly->length = 0;
+   _F_mpz_poly_set_length(poly, 0);
 }
 
 /** 
@@ -292,8 +305,10 @@ void F_mpz_poly_zero(F_mpz_poly_t poly)
 static inline
 void F_mpz_poly_zero_coeffs(F_mpz_poly_t poly, const ulong n)
 {
-	if (n >= poly->length) F_mpz_poly_zero(poly);
-	else F_mpn_clear(poly->coeffs, n);
+	if (n >= poly->length) _F_mpz_poly_set_length(poly, 0);
+	else 
+	   for (ulong i = 0; i < n; i++)
+		   _F_mpz_zero(poly->coeffs + i);
 }
 
 /** 
