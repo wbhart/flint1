@@ -64,11 +64,11 @@ HEADERS = \
 	zmod_poly.h \
 	theta.h \
 	zmod_mat.h \
-	F_mpz_poly.h \
 	F_mpz_mat.h \
 	mpz_mat.h \
 	d_mat.h \
 	F_mpz_LLL_fast_d.h \
+	F_mpz_poly.h \
 	F_mpz.h
 
 ####### library object files
@@ -89,12 +89,12 @@ FLINTOBJ = \
 	zmod_poly.o \
 	theta.o \
 	zmod_mat.o \
-	F_mpz_poly.c \
 	mpz_mat.o \
 	F_mpz_mat.o \
 	d_mat.o \
 	F_mpz_LLL_fast_d.o \
-	F_mpz.o
+	F_mpz.o \
+	F_mpz_poly.o
 
 QS: mpQS
 

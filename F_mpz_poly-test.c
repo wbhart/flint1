@@ -355,7 +355,7 @@ int test_F_mpz_poly_sub()
 		F_mpz_poly_clear(res);
    }
    
-   // test aliasing of res and poly1
+	// test aliasing of res and poly1
 	for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -427,7 +427,7 @@ int test_F_mpz_poly_sub()
    return result;
 }
 
-int test_F_mpz_poly_getset_si()
+/*int test_F_mpz_poly_getset_coeff_si()
 {
    F_mpz_poly_t F_poly;
    int result = 1;
@@ -473,7 +473,7 @@ int test_F_mpz_poly_getset_si()
    return result; 
 }
 
-int test_F_mpz_poly_getset_ui()
+int test_F_mpz_poly_getset_coeff_ui()
 {
    F_mpz_poly_t F_poly;
    int result = 1;
@@ -517,7 +517,7 @@ int test_F_mpz_poly_getset_ui()
    return result; 
 }
 
-int test_F_mpz_poly_getset_mpz()
+int test_F_mpz_poly_getset_coeff_mpz()
 {
    F_mpz_poly_t F_poly;
    int result = 1;
@@ -1979,9 +1979,9 @@ int test_F_mpz_poly_bit_pack_unsigned()
    mpz_poly_clear(m_poly2);
    
    return result;
-}*/
+}
 
-/*int test_F_mpz_poly_bit_pack2()
+int test_F_mpz_poly_bit_pack2()
 {
    mpz_poly_t m_poly, m_poly2, m_poly3;
    F_mpz_poly_t F_poly, F_poly2, F_poly3;
@@ -2062,7 +2062,7 @@ int test_F_mpz_poly_bit_pack_unsigned()
    mpz_poly_clear(m_poly3);
    
    return result;
-}*/
+}
 
 int test_F_mpz_poly_mul_KS()
 {
@@ -2422,7 +2422,7 @@ int test_F_mpz_poly_mul_KS2()
    mpz_poly_clear(m_poly2);
    
    return result;
-}
+}*/
 
 void F_mpz_poly_test_all()
 {
@@ -2431,20 +2431,19 @@ void F_mpz_poly_test_all()
 
 #if TESTFILE
 #endif
-   //RUN_TEST(F_mpz_poly_bit_pack2);
    RUN_TEST(F_mpz_poly_convert); 
-   RUN_TEST(F_mpz_poly_getset_si); 
-   RUN_TEST(F_mpz_poly_getset_ui); 
-   RUN_TEST(F_mpz_poly_getset_mpz); 
+   /*RUN_TEST(F_mpz_poly_getset_coeff_si); 
+   RUN_TEST(F_mpz_poly_getset_coeff_ui); 
+   RUN_TEST(F_mpz_poly_getset_coeff_mpz); 
    RUN_TEST(F_mpz_poly_set); 
    RUN_TEST(F_mpz_poly_max_bits); 
    RUN_TEST(F_mpz_poly_max_limbs); 
    RUN_TEST(F_mpz_poly_equal); 
    RUN_TEST(F_mpz_poly_reverse); 
-   RUN_TEST(F_mpz_poly_neg); 
+   RUN_TEST(F_mpz_poly_neg);*/
    RUN_TEST(F_mpz_poly_add); 
    RUN_TEST(F_mpz_poly_sub); 
-   RUN_TEST(F_mpz_poly_shift); 
+   /*RUN_TEST(F_mpz_poly_shift); 
    RUN_TEST(F_mpz_poly_scalar_mul_ui); 
    RUN_TEST(F_mpz_poly_scalar_mul_si); 
    RUN_TEST(F_mpz_poly_scalar_mul_mpz); 
@@ -2453,9 +2452,10 @@ void F_mpz_poly_test_all()
    RUN_TEST(F_mpz_poly_mul_classical); 
    RUN_TEST(F_mpz_poly_mul_karatsuba); 
 	//RUN_TEST(F_mpz_poly_bit_pack);
+   //RUN_TEST(F_mpz_poly_bit_pack2);
    //RUN_TEST(F_mpz_poly_bit_pack_unsigned);
    RUN_TEST(F_mpz_poly_mul_KS); 
-	RUN_TEST(F_mpz_poly_mul_KS2); 
+	RUN_TEST(F_mpz_poly_mul_KS2);*/ 
 	
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");
@@ -2468,8 +2468,7 @@ int main()
    test_support_cleanup();
    
    flint_stack_cleanup();
+	_F_mpz_cleanup();
 
    return 0;
 }
-
-
