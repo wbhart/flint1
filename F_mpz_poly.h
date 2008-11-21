@@ -214,6 +214,25 @@ unsigned long F_mpz_poly_length(const F_mpz_poly_t poly)
 ================================================================================*/
 
 /** 
+   \fn     void F_mpz_poly_set_length(F_mpz_poly_t poly, const ulong length)
+   \brief  Set the length of the polynomial to the given length. Assumes that
+	        all the coefficients are valid coefficients, and does not normalise.
+			  If the poly is made shorter, mpz_t's past the end are demoted.
+*/
+static inline
+void _F_mpz_poly_set_length(F_mpz_poly_t poly, const ulong length)
+{
+	if (poly->length > length) // demote coefficients beyond new length
+   {
+      for (ulong i = length; i < poly->length; i++)
+			_F_mpz_demote(poly->coeffs + i);
+		
+   } 
+
+	poly->length = length;
+}
+
+/** 
    \fn     void F_mpz_poly_truncate(F_mpz_poly_t poly, const ulong length)
    \brief  Truncate the polynomial to the given length. It is permissible for
 	        length to be greater than the current length of the polynomial, in 
@@ -224,7 +243,9 @@ void F_mpz_poly_truncate(F_mpz_poly_t poly, const ulong length)
 {
 	if (poly->length > length) // only truncate if necessary
    {
-      poly->length = length;
+      for (ulong i = length; i < poly->length; i++)
+			_F_mpz_demote(poly->coeffs + i);
+		poly->length = length;
       _F_mpz_poly_normalise(poly);
    }  
 }

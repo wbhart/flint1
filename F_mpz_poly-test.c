@@ -427,7 +427,7 @@ int test_F_mpz_poly_sub()
    return result;
 }
 
-/*int test_F_mpz_poly_getset_coeff_si()
+int test_F_mpz_poly_getset_coeff_si()
 {
    F_mpz_poly_t F_poly;
    int result = 1;
@@ -506,7 +506,7 @@ int test_F_mpz_poly_getset_coeff_ui()
 				  result = (coeff2 == coeff);
 				  if (!result)
 				  {
-					  printf("Error: length = %ld, coeff_num = %ld, coeff = %ld, coeff2 = %ld\n", length, coeff_num, coeff, coeff2);
+					  printf("Error: length = %ld, coeff_num = %ld, coeff = %u, coeff2 = %u\n", length, coeff_num, coeff, coeff2);
 				  }
           }
       }
@@ -610,7 +610,7 @@ int test_F_mpz_poly_set()
    return result;
 }
 
-int test_F_mpz_poly_max_bits()
+/*int test_F_mpz_poly_max_bits()
 {
    mpz_poly_t m_poly1;
    F_mpz_poly_t F_poly;
@@ -2432,11 +2432,11 @@ void F_mpz_poly_test_all()
 #if TESTFILE
 #endif
    RUN_TEST(F_mpz_poly_convert); 
-   /*RUN_TEST(F_mpz_poly_getset_coeff_si); 
+   RUN_TEST(F_mpz_poly_getset_coeff_si); 
    RUN_TEST(F_mpz_poly_getset_coeff_ui); 
    RUN_TEST(F_mpz_poly_getset_coeff_mpz); 
    RUN_TEST(F_mpz_poly_set); 
-   RUN_TEST(F_mpz_poly_max_bits); 
+   /*RUN_TEST(F_mpz_poly_max_bits); 
    RUN_TEST(F_mpz_poly_max_limbs); 
    RUN_TEST(F_mpz_poly_equal); 
    RUN_TEST(F_mpz_poly_reverse); 
