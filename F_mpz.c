@@ -138,15 +138,24 @@ void _F_mpz_demote_val(F_mpz_t f)
 	
 	if (size == 0L) // value is zero
 	{
+		_F_mpz_clear_mpz(*f);
 		*f = 0;
 	} else if (size == 1L) // value is positive and 1 limb
 	{
 	   ulong uval = mpz_get_ui(mpz_ptr);
-		if (uval <= COEFF_MAX) *f = (F_mpz) uval;
+		if (uval <= COEFF_MAX) 
+		{
+			_F_mpz_clear_mpz(*f);
+			*f = (F_mpz) uval;
+		}
 	} else if (size == -1L) // value is negative and 1 limb
    {
 	   ulong uval = mpz_get_ui(mpz_ptr);
-		if (uval <= COEFF_MAX) *f = (F_mpz) -uval;
+		if (uval <= COEFF_MAX) 
+		{
+			_F_mpz_clear_mpz(*f);
+			*f = (F_mpz) -uval;
+		}
 	}
 	// don't do anything if value has to be multi precision
 }
