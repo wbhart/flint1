@@ -475,9 +475,8 @@ void F_mpz_poly_mul_classical(F_mpz_poly_t res, const F_mpz_poly_t poly1, const 
            If len1*len2 <= crossover, we use the classical multiplication algorithm. 
            The crossover parameter is passed down recursively to subproducts.
 */
-void _F_mpz_poly_mul_kara_recursive(F_mpz_poly_t out, ulong ostart, F_mpz_poly_t in1, ulong istart1, 
-											ulong len1, F_mpz_poly_t in2, ulong istart2, ulong len2, 
-											F_mpz_poly_t scratch, ulong sstart, ulong skip, ulong crossover);
+void _F_mpz_poly_mul_kara_recursive(F_mpz * out, F_mpz * in1, ulong len1, 
+					F_mpz * in2, ulong len2, F_mpz * scratch, ulong skip, ulong crossover);
 
 /** 
    \fn     void F_mpz_poly_mul_karatsuba(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)

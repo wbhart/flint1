@@ -825,17 +825,17 @@ void F_mpz_poly_mul_classical(F_mpz_poly_t res, const F_mpz_poly_t poly1, const 
 
 ================================================================================*/
 
-/*void _F_mpz_poly_mul_kara_recursive(F_mpz_poly_t out, ulong ostart, F_mpz_poly_t in1, ulong istart1, 
-											ulong len1, F_mpz_poly_t in2, ulong istart2, ulong len2, 
-											F_mpz_poly_t scratch, ulong sstart, ulong skip, ulong crossover)
+void _F_mpz_poly_mul_kara_recursive(F_mpz * out, F_mpz * in1, 
+											ulong len1, F_mpz * in2, ulong len2, 
+											F_mpz * scratch, ulong skip, ulong crossover)
 {
-   // ==================== base cases
+   // Base cases:
    
    if (len1 == 1)
    {
       // special case, just scalar multiplication
       for (ulong i = 0; i < len2; i++)
-         _F_mpz_mul(out, ostart + i*skip, in1, istart1, in2, istart2 + i*skip);
+         F_mpz_mul2(out + i*skip, in1, in2 + i*skip);
       return;
    }
    
@@ -843,37 +843,37 @@ void F_mpz_poly_mul_classical(F_mpz_poly_t res, const F_mpz_poly_t poly1, const 
    {
       // switch to naive multiplication
 
-		if (in2->coeffs[istart2])
+		if (in2)
 			for (ulong i = 0; i < len1; i++)
-            _F_mpz_mul(out, ostart + i*skip, in1, istart1 + i*skip, in2, istart2);
+            F_mpz_mul2(out + i*skip, in1 + i*skip, in2);
 		else 
 			for (ulong i = 0; i < len1; i++)
-            _F_mpz_zero(out, ostart + i*skip);
+            F_mpz_zero(out + i*skip);
 
       // Set res[i+len1-1] = in1[len1-1]*in2[i]
-      const ulong term = istart1 + (len1 - 1)*skip;
-		if (in1->coeffs[istart1+(len1 - 1)*skip])
+      const ulong term = (len1 - 1)*skip;
+		if (in1[(len1 - 1)*skip])
 		   for (ulong i = 1; i < len2; i++)
-            _F_mpz_mul(out, ostart + (i + len1 - 1)*skip, in1, term, in2, istart2 + i*skip);  
+            F_mpz_mul2(out + (i + len1 - 1)*skip, in1 + term, in2 + i*skip);  
 	 	else 
          for (ulong i = 1; i < len2; i++)
-            _F_mpz_zero(out, ostart + (i + len1 - 1)*skip);
+            F_mpz_zero(out + (i + len1 - 1)*skip);
       
       for (ulong i = 0; i < len1 - 1; i++)
 		{
-			ulong c = in1->coeffs[istart1 + i*skip];
-			const ulong term = istart1 + i*skip;
+			F_mpz c = in1[i*skip];
+			const ulong term = i*skip;
 			if (!COEFF_IS_MPZ(c))
 			{
-				if ((long) c < 0L) 
+				if (c < 0L) 
 					for (ulong j = 1; j < len2; j++)
-                  _F_mpz_submul_ui(out, ostart + (i+j)*skip, in2, istart2 + j*skip, -c);
+                  F_mpz_submul_ui(out + (i+j)*skip, in2 + j*skip, -c);
 				else
                for (ulong j = 1; j < len2; j++)
-                  _F_mpz_addmul_ui(out, ostart + (i+j)*skip, in2, istart2 + j*skip, c);
+                  F_mpz_addmul_ui(out + (i+j)*skip, in2 + j*skip, c);
 			} else
 				for (ulong j = 1; j < len2; j++)
-               _F_mpz_addmul(out, ostart + (i+j)*skip, in1, term, in2, istart2 + j*skip);
+               F_mpz_addmul(out + (i+j)*skip, in1 + term, in2 + j*skip);
 		}    
 
 		return;
@@ -881,7 +881,7 @@ void F_mpz_poly_mul_classical(F_mpz_poly_t res, const F_mpz_poly_t poly1, const 
 
    ulong i, j;
 	
-	// ==================== recursive case
+	// Recursive case:
 
    // Let in1 = A1(x^2) + x*B1(x^2) + x^(2*floor(len1/2))*C1,
    // where A1, B1 have length floor(len1/2),
@@ -892,79 +892,79 @@ void F_mpz_poly_mul_classical(F_mpz_poly_t res, const F_mpz_poly_t poly1, const 
    // Put A1 + B1 into even slots of scratch space
    // (uses len1/2 scratch slots)
    for (i = 0; i < len1/2; i++)
-      _F_mpz_add(scratch, sstart + 2*i*skip, in1, istart1 + 2*i*skip, in1, istart1 + 2*i*skip + skip);
+      F_mpz_add(scratch + 2*i*skip, in1 + 2*i*skip, in1 + 2*i*skip + skip);
 
    // Put A2 + B2 into remaining even slots of scratch space
    // (uses len2/2 slots of scratch)
    for (j = 0; j < len2/2; j++)
-      _F_mpz_add(scratch, sstart + 2*(i+j)*skip, in2, istart2 + 2*j*skip, in2, istart2 + 2*j*skip + skip);
+      F_mpz_add(scratch + 2*(i+j)*skip, in2 + 2*j*skip, in2 + 2*j*skip + skip);
 
    // The following three recursive calls all use the odd slots of the current
    // scratch array as the next layer's scratch space
    
    // Put product (A1+B1)*(A2+B2) into odd slots of output array
-   _F_mpz_poly_mul_kara_recursive(out, ostart + skip, scratch, sstart, len1/2, scratch, sstart + 2*i*skip, len2/2,
-                                scratch, sstart + skip, 2*skip, crossover);
+   _F_mpz_poly_mul_kara_recursive(out + skip, scratch, len1/2, scratch + 2*i*skip, len2/2,
+                                scratch + skip, 2*skip, crossover);
 
    // Put product x^2*(B1*B2) into even slots of output array
    // (except first slot, which is an implied zero)
-   _F_mpz_poly_mul_kara_recursive(out, ostart + 2*skip, in1, istart1 + skip, len1/2, in2, istart2 + skip,
-                                len2/2, scratch, sstart + skip, 2*skip, crossover);
+   _F_mpz_poly_mul_kara_recursive(out + 2*skip, in1 + skip, len1/2, in2 + skip,
+                                len2/2, scratch + skip, 2*skip, crossover);
 
    // Put product A1*A2 into even slots of scratch space
-   _F_mpz_poly_mul_kara_recursive(scratch, sstart, in1, istart1, len1/2, in2, istart2, len2/2,
-                                scratch, sstart + skip, 2*skip, crossover);
+   _F_mpz_poly_mul_kara_recursive(scratch, in1, len1/2, in2, len2/2,
+                                scratch + skip, 2*skip, crossover);
                             
    // Subtract A1*A2 and B1*B2 from (A1+B1)*(A2+B2) to get (A1*B2 + A2*B1)
    // in odd slots of output
    for (ulong i = 0; i < len1/2 + len2/2 - 1; i++)
    {
-      _F_mpz_sub(out, ostart + 2*i*skip + skip, out, ostart + 2*i*skip + skip, out, ostart + 2*(i+1)*skip);
-      _F_mpz_sub(out, ostart + 2*i*skip + skip, out, ostart + 2*i*skip + skip, scratch, sstart + 2*i*skip);
+      F_mpz_sub(out + 2*i*skip + skip, out + 2*i*skip + skip, out + 2*(i+1)*skip);
+      F_mpz_sub(out + 2*i*skip + skip, out + 2*i*skip + skip, scratch + 2*i*skip);
    }
       
    // Add A1*A2 to x^2*(B1*B2) into even slots of output
-   _F_mpz_set(out, ostart, scratch, sstart);
+   F_mpz_set(out, scratch);
    for (ulong i = 1; i < len1/2 + len2/2 - 1; i++)
-      _F_mpz_add(out, ostart + 2*i*skip, out, ostart + 2*i*skip, scratch, sstart + 2*i*skip);
+      F_mpz_add(out + 2*i*skip, out + 2*i*skip, scratch + 2*i*skip);
    
    // Now we have the product (A1(x^2) + x*B1(x^2)) * (A2(x^2) + x*B2(x^2))
    // in the output array. Still need to handle C1 and C2 terms.
    
    if (len1 & 1)
    {
-      const ulong term1 = istart1 + skip*(len1-1);
-	   const ulong term2 = istart2 + skip*(len2-1);
+      const ulong term1 = skip*(len1-1);
+	   const ulong term2 = skip*(len2-1);
 	   if (len2 & 1)
       {
          // terms from x^(len1-1)*C1 * (A2(x^2) + x*B2(x^2))
          for (ulong i = 0; i < len2-2; i++)
-            _F_mpz_addmul(out, ostart + (i+len1-1)*skip, in1, term1, in2, istart2 + i*skip);
-         _F_mpz_mul(out, ostart + (len1+len2-3)*skip, in1, term1, in2, istart2 + (len2-2)*skip);
+            F_mpz_addmul(out + (i+len1-1)*skip, in1 + term1, in2 + i*skip);
+         F_mpz_mul2(out + (len1+len2-3)*skip, in1 + term1, in2 + (len2-2)*skip);
 
          // terms from x^(len2-1)*C2 * (A1(x^2) + x*B1(x^2))
          for (ulong i = 0; i < len1-1; i++)
-            _F_mpz_addmul(out, ostart + (i+len2-1)*skip, in2, term2, in1, istart1 + i*skip);
+            F_mpz_addmul(out + (i+len2-1)*skip, in2 + term2, in1 + i*skip);
             
          // final C1*C2 term
-         _F_mpz_mul(out, ostart + (len1+len2-2)*skip, in1, term1, in2,term2);
+         F_mpz_mul2(out + (len1+len2-2)*skip, in1 + term1, in2 + term2);
       }
       else
       {
          // terms from x^(len1-1)*C1 * (A2(x^2) + x*B2(x^2))
          for (ulong i = 0; i < len2-1; i++)
-            _F_mpz_addmul(out, ostart + (i+len1-1)*skip, in1, term1, in2, istart2 + i*skip);
-         _F_mpz_mul(out, ostart + (len1+len2-2)*skip, in1, term1, in2, term2);
+            F_mpz_addmul(out + (i+len1-1)*skip, in1 + term1, in2 + i*skip);
+         F_mpz_mul2(out + (len1+len2-2)*skip, in1 + term1, in2 + term2);
       }
    }
    else if (len2 & 1)
    {
-      const ulong term1 = istart1 + skip*(len1-1);
-	   const ulong term2 = istart2 + skip*(len2-1);
+      const ulong term1 = skip*(len1-1);
+	   const ulong term2 = skip*(len2-1);
 	   // terms from x^(len2-1)*C2 * (A1(x^2) + x*B1(x^2))
       for (ulong i = 0; i < len1-1; i++)
-         _F_mpz_addmul(out, ostart + (i+len2-1)*skip, in2, term2, in1, istart1 + i*skip);
-      _F_mpz_mul(out, ostart + (len1+len2-2)*skip, in2, term2, in1, term1);
+         F_mpz_addmul(out + (i+len2-1)*skip, in2 + term2, in1 + i*skip);
+      F_mpz_mul2(out + (len1+len2-2)*skip, in2 + term2, in1 + term1);
    }
 }
 
@@ -992,14 +992,13 @@ void _F_mpz_poly_mul_karatsuba(F_mpz_poly_t res, F_mpz_poly_t poly1,
    
    // allocate scratch space for lower-level karatsuba routine
    F_mpz_poly_t scratch;
-	F_mpz_poly_init(scratch);
-	F_mpz_poly_fit_length(scratch, length + 1);
+	F_mpz_poly_init2(scratch, length + 1);
 	scratch->length = length + 1;
 	
 	// look up crossover parameter (i.e. when to switch from classical to
    // karatsuba multiplication) based on coefficient size
-   ulong bits1 = FLINT_ABS(F_mpz_poly_max_bits(poly1));
-	ulong bits2 = FLINT_ABS(F_mpz_poly_max_bits(poly2));
+   ulong bits1 = 64;//FLINT_ABS(F_mpz_poly_max_bits(poly1));
+	ulong bits2 = 64;//FLINT_ABS(F_mpz_poly_max_bits(poly2));
 	ulong log_length = 0;
 	while ((1L<<log_length) < poly1->length) log_length++;
 	ulong limbs = (bits1 + bits2 + log_length - 1)/FLINT_BITS + 1;
@@ -1012,9 +1011,8 @@ void _F_mpz_poly_mul_karatsuba(F_mpz_poly_t res, F_mpz_poly_t poly1,
       F_mpz_poly_t temp;
       F_mpz_poly_init2(temp, length);
 		
-      _F_mpz_poly_mul_kara_recursive(
-            temp, 0, poly1, 0, poly1->length,
-            poly2, 0, poly2->length, scratch, 0, 1, crossover);
+      _F_mpz_poly_mul_kara_recursive(temp->coeffs, poly1->coeffs, poly1->length,
+            poly2->coeffs, poly2->length, scratch->coeffs, 1, crossover);
 
       temp->length = length;
 		
@@ -1025,18 +1023,17 @@ void _F_mpz_poly_mul_karatsuba(F_mpz_poly_t res, F_mpz_poly_t poly1,
    {
       // output not inplace
       
-      _F_mpz_poly_mul_kara_recursive(
-            res, 0, poly1, 0, poly1->length,
-            poly2, 0, poly2->length, scratch, 0, 1, crossover);
+      _F_mpz_poly_mul_kara_recursive(res->coeffs, poly1->coeffs, poly1->length,
+            poly2->coeffs, poly2->length, scratch->coeffs, 1, crossover);
 
-		res->length = length;
+		_F_mpz_poly_set_length(res, length);
    }
    
    F_mpz_poly_clear(scratch);
 }
 
 void F_mpz_poly_mul_karatsuba(F_mpz_poly_t res, F_mpz_poly_t poly1,
-                            F_mpz_poly_t poly2)
+                              F_mpz_poly_t poly2)
 {
    if (!poly1->length || !poly2->length)
    {
@@ -1045,12 +1042,12 @@ void F_mpz_poly_mul_karatsuba(F_mpz_poly_t res, F_mpz_poly_t poly1,
       return;
    }
    
-   if (poly1 == poly2)
+   /*if (poly1 == poly2)
    {
-      // polys are identical, so call specialised squaring routine
+      // polys are identical, call specialised squaring routine
       F_mpz_poly_sqr_karatsuba(res, poly1);
       return;
-   }
+   }*/
 
    F_mpz_poly_fit_length(res, poly1->length + poly2->length - 1);
 	
@@ -1059,7 +1056,7 @@ void F_mpz_poly_mul_karatsuba(F_mpz_poly_t res, F_mpz_poly_t poly1,
       _F_mpz_poly_mul_karatsuba(res, poly1, poly2);
 	else 
       _F_mpz_poly_mul_karatsuba(res, poly2, poly1);
-}*/
+}
 
 /*===============================================================================
 

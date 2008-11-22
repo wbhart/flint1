@@ -1491,7 +1491,7 @@ int test_F_mpz_poly_mul_classical()
    return result;
 }
 
-/*int test_F_mpz_poly_mul_karatsuba()
+int test_F_mpz_poly_mul_karatsuba()
 {
    mpz_poly_t m_poly1, m_poly2, res1, res2;
    F_mpz_poly_t F_poly1, F_poly2, res;
@@ -2311,7 +2311,7 @@ void F_mpz_poly_test_all()
    RUN_TEST(F_mpz_poly_scalar_mul_si); 
    RUN_TEST(F_mpz_poly_scalar_mul); 
    RUN_TEST(F_mpz_poly_mul_classical); 
-   //RUN_TEST(F_mpz_poly_mul_karatsuba); 
+   RUN_TEST(F_mpz_poly_mul_karatsuba); 
 	//RUN_TEST(F_mpz_poly_bit_pack);
    //RUN_TEST(F_mpz_poly_bit_pack2);
    //RUN_TEST(F_mpz_poly_bit_pack_unsigned);
