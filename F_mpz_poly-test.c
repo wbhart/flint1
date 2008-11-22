@@ -834,7 +834,7 @@ int test_F_mpz_poly_max_limbs()
    return result;
 }
 
-/*int test_F_mpz_poly_neg()
+int test_F_mpz_poly_neg()
 {
    F_mpz_poly_t F_poly1, F_poly2, F_poly3, F_poly4;
    int result = 1;
@@ -976,8 +976,8 @@ int test_F_mpz_poly_shift()
 	for (unsigned long count1 = 0; (count1 < 700) && (result == 1) ; count1++)
    {
       bits = z_randint(500)+ 1;
-      length = z_randint(500);        
-      shift = z_randint(100);
+      length = z_randint(20);        
+      shift = z_randint(20);
 		    
 		F_mpz_randpoly(F_poly, length, bits); 
       F_mpz_poly_set(F_poly3, F_poly);
@@ -986,7 +986,7 @@ int test_F_mpz_poly_shift()
       F_mpz_poly_right_shift(F_poly, F_poly2, shift);
       
       result = F_mpz_poly_equal(F_poly3, F_poly);
-		if (!result) printf("Error: bits = %ld, length = %ld, shift = %ld\n", bits, length, shift);
+		if (!result) printf("Error: bits = %ld, length = %ld, shift = %ld, F_poly->length = %ld, F_poly3->length = %ld\n", bits, length, shift, F_poly->length, F_poly3->length);
    }
 
 	// F_poly3 is used uninitialised after this point so clear it
@@ -1022,7 +1022,6 @@ int test_F_mpz_poly_shift()
 
        F_poly3->length = F_poly->length - shift;
        F_poly3->coeffs = F_poly->coeffs + shift;
-		 F_poly3->mpz_coeffs = F_poly->mpz_coeffs;
 		 
 		 F_mpz_poly_right_shift(F_poly2, F_poly, shift);      
           
@@ -1036,7 +1035,7 @@ int test_F_mpz_poly_shift()
    return result; 
 }
 
-int test_F_mpz_poly_scalar_mul_ui()
+/*int test_F_mpz_poly_scalar_mul_ui()
 {
    mpz_poly_t m_poly, m_poly2;
    F_mpz_poly_t F_poly, F_poly2;
@@ -2486,12 +2485,12 @@ void F_mpz_poly_test_all()
    RUN_TEST(F_mpz_poly_swap); 
 	RUN_TEST(F_mpz_poly_max_bits);
    RUN_TEST(F_mpz_poly_max_limbs); 
-   /*RUN_TEST(F_mpz_poly_reverse); 
-   RUN_TEST(F_mpz_poly_neg);*/
+   RUN_TEST(F_mpz_poly_neg);
+	RUN_TEST(F_mpz_poly_reverse); 
    RUN_TEST(F_mpz_poly_add); 
    RUN_TEST(F_mpz_poly_sub); 
-   /*RUN_TEST(F_mpz_poly_shift); 
-   RUN_TEST(F_mpz_poly_scalar_mul_ui); 
+   RUN_TEST(F_mpz_poly_shift); 
+   /*RUN_TEST(F_mpz_poly_scalar_mul_ui); 
    RUN_TEST(F_mpz_poly_scalar_mul_si); 
    RUN_TEST(F_mpz_poly_scalar_mul_mpz); 
    RUN_TEST(F_mpz_addmul_ui); 

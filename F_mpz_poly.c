@@ -361,7 +361,7 @@ ulong F_mpz_poly_max_limbs(const F_mpz_poly_t poly)
 
 ================================================================================*/
 
-/*void F_mpz_poly_reverse(F_mpz_poly_t res, const F_mpz_poly_t poly, const ulong length)
+void F_mpz_poly_reverse(F_mpz_poly_t res, const F_mpz_poly_t poly, const ulong length)
 {
    long i;
    
@@ -370,30 +370,30 @@ ulong F_mpz_poly_max_limbs(const F_mpz_poly_t poly)
 	if (poly != res) // not the same polynomial
    {
       for (i = 0; i < FLINT_MIN(length, poly->length); i++)
-         _F_mpz_set(res, length - i - 1, poly, i); // copy over extant coefficients in reverse
+         F_mpz_set(res->coeffs + length - i - 1, poly->coeffs + i); // copy over extant coefficients in reverse
 
       for ( ; i < length; i++) // set other coefficients to zero
-         _F_mpz_zero(res, length - i - 1);
+         F_mpz_zero(res->coeffs + length - i - 1);
 
    } else // same polynomial
    {
       for (i = 0; i < length/2; i++)
       {
          // swap extant coefficients
-			if (length - i - 1 < res->length) _F_mpz_swap(res, i, res, length - i - 1); 
+			if (length - i - 1 < res->length) F_mpz_swap(res->coeffs + i, res->coeffs + length - i - 1); 
 			else
 			{
-				_F_mpz_set(res, length - i - 1, res, i); // for other coefficients "swap" with zero
-			   _F_mpz_zero(res, i);
+				F_mpz_set(res->coeffs + length - i - 1, res->coeffs + i); // for other coefficients "swap" with zero
+			   F_mpz_zero(res->coeffs + i);
 		   }
 		}
       // if length is odd we missed a coefficient in swapping pairs, it may need to be set to zero
-		if ((length & 1) && (i >= poly->length)) _F_mpz_zero(res, i); 
+		if ((length & 1) && (i >= poly->length)) F_mpz_zero(res->coeffs + i); 
    }
 	
-	res->length = length;
+	_F_mpz_poly_set_length(res, length);
    _F_mpz_poly_normalise(res); // new leading coeff, which was trailing coeff, may now be zero
-}*/
+}
 
 /*===============================================================================
 
@@ -401,15 +401,15 @@ ulong F_mpz_poly_max_limbs(const F_mpz_poly_t poly)
 
 ================================================================================*/
 
-/*void F_mpz_poly_neg(F_mpz_poly_t res, const F_mpz_poly_t poly)
+void F_mpz_poly_neg(F_mpz_poly_t res, const F_mpz_poly_t poly)
 {
 	F_mpz_poly_fit_length(res, poly->length);
 	
 	for (ulong i = 0; i < poly->length; i++)
-		_F_mpz_neg(res, i, poly, i);
+		F_mpz_neg(res->coeffs + i, poly->coeffs + i);
 
-	res->length = poly->length;
-}*/
+	_F_mpz_poly_set_length(res, poly->length);
+}
 
 /*===============================================================================
 
@@ -475,7 +475,7 @@ void F_mpz_poly_sub(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly
 
 ================================================================================*/
 
-/*void F_mpz_poly_left_shift(F_mpz_poly_t res, const F_mpz_poly_t poly, const ulong n)
+void F_mpz_poly_left_shift(F_mpz_poly_t res, const F_mpz_poly_t poly, const ulong n)
 {
    if (n == 0) // special case, no shift
 	{
@@ -485,19 +485,20 @@ void F_mpz_poly_sub(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly
 	
 	if (poly->length == 0) // nothing to shift
 	{
-		res->length = 0;
+		_F_mpz_poly_set_length(res, 0);
 		return;
 	}
 	
 	F_mpz_poly_fit_length(res, poly->length + n);
 	
 	// copy in reverse order to avoid writing over unshifted coeffs
-	for (long i = poly->length - 1; i >= 0; i--) _F_mpz_set(res, i + n, poly, i);
+	for (long i = poly->length - 1; i >= 0; i--) 
+		F_mpz_set(res->coeffs + i + n, poly->coeffs + i);
 
    // insert n zeroes
-	for (ulong i = 0; i < n; i++) _F_mpz_zero(res, i);
+	for (ulong i = 0; i < n; i++) F_mpz_zero(res->coeffs + i);
    
-   res->length = poly->length + n;
+   _F_mpz_poly_set_length(res, poly->length + n);
 }
 
 void F_mpz_poly_right_shift(F_mpz_poly_t res, const F_mpz_poly_t poly, const ulong n)
@@ -511,10 +512,11 @@ void F_mpz_poly_right_shift(F_mpz_poly_t res, const F_mpz_poly_t poly, const ulo
    F_mpz_poly_fit_length(res, poly->length - n);
 	
 	// copy in forward order to avoid writing over unshifted coeffs
-	for (ulong i = 0; i < poly->length - n; i++) _F_mpz_set(res, i, poly, i + n);
+	for (ulong i = 0; i < poly->length - n; i++) 
+		F_mpz_set(res->coeffs + i, poly->coeffs + i + n);
 	
-	res->length = poly->length - n;
-}*/
+	_F_mpz_poly_set_length(res, poly->length - n);
+}
 
 /*===============================================================================
 

@@ -118,7 +118,11 @@ __mpz_struct * _F_mpz_promote_val(F_mpz_t f);
 static inline
 void _F_mpz_demote(F_mpz_t f)
 {
-	if (COEFF_IS_MPZ(*f)) _F_mpz_clear_mpz(*f);
+	if (COEFF_IS_MPZ(*f)) 
+	{
+		_F_mpz_clear_mpz(*f);
+		*f = 0L;
+	}
 }
 
 /** 
