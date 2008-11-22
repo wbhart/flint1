@@ -207,7 +207,7 @@ long F_mpz_get_si(const F_mpz_t f);
    \fn     long F_mpz_get_ui(const F_mpz_t f)
    \brief  Return the value of f as an unsigned long
 */
-long F_mpz_get_ui(const F_mpz_t f);
+ulong F_mpz_get_ui(const F_mpz_t f);
 
 /** 
    \fn     void F_mpz_get_mpz(mpz_t x, const F_mpz_t f)
@@ -271,6 +271,19 @@ ulong F_mpz_bits(F_mpz_t f);
 	        Assumes f is actually associated with an mpz_t.
 */
 __mpz_struct * F_mpz_ptr_mpz(F_mpz f);
+
+/*===============================================================================
+
+	Input/output
+
+================================================================================*/
+
+static inline 
+void F_mpz_print(F_mpz x)
+{
+	if (!COEFF_IS_MPZ(x)) printf("%ld s ", x);
+	else gmp_printf("%Zd l ", F_mpz_ptr_mpz(x));
+}
 
 /*===============================================================================
 

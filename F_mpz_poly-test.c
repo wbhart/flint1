@@ -1035,7 +1035,7 @@ int test_F_mpz_poly_shift()
    return result; 
 }
 
-/*int test_F_mpz_poly_scalar_mul_ui()
+int test_F_mpz_poly_scalar_mul_ui()
 {
    mpz_poly_t m_poly, m_poly2;
    F_mpz_poly_t F_poly, F_poly2;
@@ -1237,10 +1237,11 @@ int test_F_mpz_poly_scalar_mul_si()
    return result; 
 }
 
-int test_F_mpz_poly_scalar_mul_mpz()
+int test_F_mpz_poly_scalar_mul()
 {
    mpz_poly_t m_poly, m_poly2;
    F_mpz_poly_t F_poly, F_poly2;
+	F_mpz_t x;
    int result = 1;
    ulong bits, bits2, length;
    mpz_t temp, mult;
@@ -1257,6 +1258,7 @@ int test_F_mpz_poly_scalar_mul_mpz()
 
       F_mpz_poly_init(F_poly);
       F_mpz_poly_init(F_poly2);
+		F_mpz_init(x);
       
       mpz_randpoly(m_poly, length, bits); 
       mpz_poly_to_F_mpz_poly(F_poly, m_poly);
@@ -1264,8 +1266,10 @@ int test_F_mpz_poly_scalar_mul_mpz()
       bits2 = z_randint(200);
 		mpz_rrandomb(mult, randstate, bits2);
 		if (z_randint(2)) mpz_neg(mult, mult);
+
+		F_mpz_set_mpz(x, mult);
       
-		F_mpz_poly_scalar_mul_mpz(F_poly2, F_poly, mult);
+		F_mpz_poly_scalar_mul(F_poly2, F_poly, x);
           
       mpz_poly_init(m_poly2);
       F_mpz_poly_to_mpz_poly(m_poly2, F_poly2); 
@@ -1287,7 +1291,8 @@ int test_F_mpz_poly_scalar_mul_mpz()
          mpz_poly_print_pretty(m_poly2, "x"); printf("\n");
 		}
 
-      F_mpz_poly_clear(F_poly2);
+      F_mpz_clear(x);
+		F_mpz_poly_clear(F_poly2);
       F_mpz_poly_clear(F_poly);
    }
    
@@ -1298,6 +1303,7 @@ int test_F_mpz_poly_scalar_mul_mpz()
       length = z_randint(200);        
 
       F_mpz_poly_init(F_poly);
+      F_mpz_init(x);
       
 		mpz_randpoly(m_poly, length, bits); 
       mpz_poly_to_F_mpz_poly(F_poly, m_poly);
@@ -1306,7 +1312,9 @@ int test_F_mpz_poly_scalar_mul_mpz()
 		mpz_rrandomb(mult, randstate, bits2);
 		if (z_randint(2)) mpz_neg(mult, mult);
           
-		F_mpz_poly_scalar_mul_mpz(F_poly, F_poly, mult);
+		F_mpz_set_mpz(x, mult);
+      
+		F_mpz_poly_scalar_mul(F_poly, F_poly, x);
       F_mpz_poly_to_mpz_poly(m_poly2, F_poly); 
           
       if (mpz_sgn(mult) == 0) result = (F_poly->length == 0);
@@ -1326,6 +1334,7 @@ int test_F_mpz_poly_scalar_mul_mpz()
          mpz_poly_print_pretty(m_poly2, "x"); printf("\n");
 		}
 
+      F_mpz_clear(x);
       F_mpz_poly_clear(F_poly);
    }
    
@@ -1335,198 +1344,6 @@ int test_F_mpz_poly_scalar_mul_mpz()
    mpz_clear(mult);
    
    return result; 
-}
-
-int test_F_mpz_addmul_ui()
-{
-   mpz_poly_t m_poly1, m_poly2, m_poly3, m_poly4;
-   F_mpz_poly_t F_poly, F_poly2;
-   int result = 1;
-   ulong bits, bits2, bits3, length;
-   
-   mpz_poly_init(m_poly1); 
-   mpz_poly_init(m_poly2); 
-   mpz_poly_init(m_poly3); 
-   mpz_poly_init(m_poly4); 
-
-   for (ulong count1 = 0; (count1 < 4000*ITER) && (result == 1) ; count1++)
-   {
-      F_mpz_poly_init(F_poly);
-		F_mpz_poly_init(F_poly2);
-		
-		length = z_randint(100) + 1;
-
-      bits = z_randint(200) + 1;
-      do mpz_randpoly(m_poly1, length, bits);
-		while (m_poly1->length != length);
-      
-		bits2 = z_randint(200) + 1;
-      do mpz_randpoly_dense(m_poly2, length, bits2);
-		while (m_poly2->length != length);
-           
-      mpz_poly_to_F_mpz_poly(F_poly, m_poly1);
-      mpz_poly_to_F_mpz_poly(F_poly2, m_poly2);
-
-		bits3 = z_randint(FLINT_BITS+1);
-		ulong x = z_randbits(bits3);
-
-		for (ulong i = 0; i < length - 1; i++) // don't touch last coefficient for normalisation
-		{
-			_F_mpz_addmul_ui(F_poly, i, F_poly2, i, x);
-			mpz_addmul_ui(m_poly1->coeffs[i], m_poly2->coeffs[i], x);
-		}
-
-      F_mpz_poly_to_mpz_poly(m_poly2, F_poly);
-          
-      result = mpz_poly_equal(m_poly1, m_poly2); 
-		if (!result) 
-		{
-			printf("Error: length = %ld, bits = %ld, bits2 = %ld, bits3 = %ld\n", length, bits, bits2, bits3);
-         mpz_poly_print_pretty(m_poly1, "x"); printf("\n");
-         mpz_poly_print_pretty(m_poly2, "x"); printf("\n");
-		}
-          
-      F_mpz_poly_clear(F_poly);
-      F_mpz_poly_clear(F_poly2);
-   }
-   
-   // sparse polynomial and aliasing
-	for (ulong count1 = 0; (count1 < 4000*ITER) && (result == 1) ; count1++)
-   {
-      F_mpz_poly_init(F_poly);
-		
-		length = z_randint(100) + 1;
-
-      bits = z_randint(200) + 1;
-      do mpz_randpoly(m_poly1, length, bits);
-		while (m_poly1->length != length);
-           
-      mpz_poly_to_F_mpz_poly(F_poly, m_poly1);
-      
-		bits3 = z_randint(FLINT_BITS+1);
-		ulong x = z_randbits(bits3);
-
-		for (ulong i = 0; i < length - 1; i++) // don't touch last coefficient for normalisation
-		{
-			_F_mpz_addmul_ui(F_poly, i, F_poly, i, x);
-			mpz_addmul_ui(m_poly1->coeffs[i], m_poly1->coeffs[i], x);
-		}
-
-      F_mpz_poly_to_mpz_poly(m_poly2, F_poly);
-          
-      result = mpz_poly_equal(m_poly1, m_poly2); 
-		if (!result) 
-		{
-			printf("Error: length = %ld, bits = %ld, bits3 = %ld\n", length, bits, bits3);
-         mpz_poly_print_pretty(m_poly1, "x"); printf("\n");
-         mpz_poly_print_pretty(m_poly2, "x"); printf("\n");
-		}
-          
-      F_mpz_poly_clear(F_poly);
-   }
-   
-   mpz_poly_clear(m_poly1);
-   mpz_poly_clear(m_poly2);
-   mpz_poly_clear(m_poly3);
-   mpz_poly_clear(m_poly4);
-   
-   return result;
-}
-
-int test_F_mpz_submul_ui()
-{
-   mpz_poly_t m_poly1, m_poly2, m_poly3, m_poly4;
-   F_mpz_poly_t F_poly, F_poly2;
-   int result = 1;
-   ulong bits, bits2, bits3, length;
-   
-   mpz_poly_init(m_poly1); 
-   mpz_poly_init(m_poly2); 
-   mpz_poly_init(m_poly3); 
-   mpz_poly_init(m_poly4); 
-
-   for (ulong count1 = 0; (count1 < 4000*ITER) && (result == 1) ; count1++)
-   {
-      F_mpz_poly_init(F_poly);
-		F_mpz_poly_init(F_poly2);
-		
-		length = z_randint(100) + 1;
-
-      bits = z_randint(200) + 1;
-      do mpz_randpoly(m_poly1, length, bits);
-		while (m_poly1->length != length);
-      
-		bits2 = z_randint(200) + 1;
-      do mpz_randpoly_dense(m_poly2, length, bits2);
-		while (m_poly2->length != length);
-           
-      mpz_poly_to_F_mpz_poly(F_poly, m_poly1);
-      mpz_poly_to_F_mpz_poly(F_poly2, m_poly2);
-
-		bits3 = z_randint(FLINT_BITS+1);
-		ulong x = z_randbits(bits3);
-
-		for (ulong i = 0; i < length - 1; i++) // don't touch last coefficient for normalisation
-		{
-			_F_mpz_submul_ui(F_poly, i, F_poly2, i, x);
-			mpz_submul_ui(m_poly1->coeffs[i], m_poly2->coeffs[i], x);
-		}
-
-      F_mpz_poly_to_mpz_poly(m_poly2, F_poly);
-          
-      result = mpz_poly_equal(m_poly1, m_poly2); 
-		if (!result) 
-		{
-			printf("Error: length = %ld, bits = %ld, bits2 = %ld, bits3 = %ld\n", length, bits, bits2, bits3);
-         mpz_poly_print_pretty(m_poly1, "x"); printf("\n");
-         mpz_poly_print_pretty(m_poly2, "x"); printf("\n");
-		}
-          
-      F_mpz_poly_clear(F_poly);
-      F_mpz_poly_clear(F_poly2);
-   }
-   
-   // sparse polynomial and aliasing
-	for (ulong count1 = 0; (count1 < 4000*ITER) && (result == 1) ; count1++)
-   {
-      F_mpz_poly_init(F_poly);
-		
-		length = z_randint(100) + 1;
-
-      bits = z_randint(200) + 1;
-      do mpz_randpoly(m_poly1, length, bits);
-		while (m_poly1->length != length);
-           
-      mpz_poly_to_F_mpz_poly(F_poly, m_poly1);
-      
-		bits3 = z_randint(FLINT_BITS+1);
-		ulong x = z_randbits(bits3);
-
-		for (ulong i = 0; i < length - 1; i++) // don't touch last coefficient for normalisation
-		{
-			_F_mpz_submul_ui(F_poly, i, F_poly, i, x);
-			mpz_submul_ui(m_poly1->coeffs[i], m_poly1->coeffs[i], x);
-		}
-
-      F_mpz_poly_to_mpz_poly(m_poly2, F_poly);
-          
-      result = mpz_poly_equal(m_poly1, m_poly2); 
-		if (!result) 
-		{
-			printf("Error: length = %ld, bits = %ld, bits3 = %ld\n", length, bits, bits3);
-         mpz_poly_print_pretty(m_poly1, "x"); printf("\n");
-         mpz_poly_print_pretty(m_poly2, "x"); printf("\n");
-		}
-          
-      F_mpz_poly_clear(F_poly);
-   }
-   
-   mpz_poly_clear(m_poly1);
-   mpz_poly_clear(m_poly2);
-   mpz_poly_clear(m_poly3);
-   mpz_poly_clear(m_poly4);
-   
-   return result;
 }
 
 int test_F_mpz_poly_mul_classical()
@@ -1564,7 +1381,7 @@ int test_F_mpz_poly_mul_classical()
       result = mpz_poly_equal(res1, res2); 
 		if (!result) 
 		{
-			printf("Error: length1 = %ld, bits1 = %ld, length2 = %ld, bits2 = %ld\n", length1, bits1, length2, bits2);
+			printf("Error: m_poly1->length = %ld, bits1 = %ld, m_poly2->length = %ld, bits2 = %ld\n", m_poly1->length, bits1, m_poly2->length, bits2);
          mpz_poly_print_pretty(res1, "x"); printf("\n");
          mpz_poly_print_pretty(res2, "x"); printf("\n");
 		}
@@ -1674,7 +1491,7 @@ int test_F_mpz_poly_mul_classical()
    return result;
 }
 
-int test_F_mpz_poly_mul_karatsuba()
+/*int test_F_mpz_poly_mul_karatsuba()
 {
    mpz_poly_t m_poly1, m_poly2, res1, res2;
    F_mpz_poly_t F_poly1, F_poly2, res;
@@ -2490,18 +2307,16 @@ void F_mpz_poly_test_all()
    RUN_TEST(F_mpz_poly_add); 
    RUN_TEST(F_mpz_poly_sub); 
    RUN_TEST(F_mpz_poly_shift); 
-   /*RUN_TEST(F_mpz_poly_scalar_mul_ui); 
+   RUN_TEST(F_mpz_poly_scalar_mul_ui); 
    RUN_TEST(F_mpz_poly_scalar_mul_si); 
-   RUN_TEST(F_mpz_poly_scalar_mul_mpz); 
-   RUN_TEST(F_mpz_addmul_ui); 
-   RUN_TEST(F_mpz_submul_ui); 
+   RUN_TEST(F_mpz_poly_scalar_mul); 
    RUN_TEST(F_mpz_poly_mul_classical); 
-   RUN_TEST(F_mpz_poly_mul_karatsuba); 
+   //RUN_TEST(F_mpz_poly_mul_karatsuba); 
 	//RUN_TEST(F_mpz_poly_bit_pack);
    //RUN_TEST(F_mpz_poly_bit_pack2);
    //RUN_TEST(F_mpz_poly_bit_pack_unsigned);
-   RUN_TEST(F_mpz_poly_mul_KS); 
-	RUN_TEST(F_mpz_poly_mul_KS2);*/ 
+   //RUN_TEST(F_mpz_poly_mul_KS); 
+	//RUN_TEST(F_mpz_poly_mul_KS2);
 	
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");

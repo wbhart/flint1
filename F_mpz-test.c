@@ -1103,10 +1103,11 @@ int test_F_mpz_add_ui()
    F_mpz_t f, g;
    int result = 1;
    ulong bits, val_bits, val;
-	mpz_t m1, m2;
+	mpz_t m1, m2, m3;
 
 	mpz_init(m1);
    mpz_init(m2);
+   mpz_init(m3);
    
    for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
    {
@@ -1124,18 +1125,19 @@ int test_F_mpz_add_ui()
          val_bits = z_randint(FLINT_BITS + 1);
          val = z_randbits(val_bits);
               
-	      F_mpz_get_mpz(m1, g);
+	      F_mpz_get_mpz(m1, f);
+			F_mpz_get_mpz(m2, g);
 			
 			F_mpz_add_ui(f, g, val);
          
-			F_mpz_get_mpz(m2, f);
+			F_mpz_get_mpz(m3, f);
 
-			mpz_add_ui(m1, m1, val);
+			mpz_add_ui(m1, m2, val);
 
-		   result = (mpz_cmp(m1, m2) == 0);
+		   result = (mpz_cmp(m1, m3) == 0);
 		   if (!result)
 	      {
-			   gmp_printf("Error: m1 = %Zd, m2 = %Zd\n", m1, m2);
+			   gmp_printf("Error: m1 = %Zd, m2 = %Zd\n", m1, m3);
 		   }
 		}
 
@@ -1180,6 +1182,7 @@ int test_F_mpz_add_ui()
    
    mpz_clear(m1);
 	mpz_clear(m2);
+	mpz_clear(m3);
 	
 	return result; 
 }
@@ -1189,10 +1192,11 @@ int test_F_mpz_sub_ui()
    F_mpz_t f, g;
    int result = 1;
    ulong bits, val_bits, val;
-	mpz_t m1, m2;
+	mpz_t m1, m2, m3;
 
 	mpz_init(m1);
    mpz_init(m2);
+   mpz_init(m3);
    
    for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
    {
@@ -1210,18 +1214,19 @@ int test_F_mpz_sub_ui()
          val_bits = z_randint(FLINT_BITS + 1);
          val = z_randbits(val_bits);
               
-	      F_mpz_get_mpz(m1, g);
+	      F_mpz_get_mpz(m1, f);
+			F_mpz_get_mpz(m2, g);
 			
 			F_mpz_sub_ui(f, g, val);
          
-			F_mpz_get_mpz(m2, f);
+			F_mpz_get_mpz(m3, f);
 
-			mpz_sub_ui(m1, m1, val);
+			mpz_sub_ui(m1, m2, val);
 
-		   result = (mpz_cmp(m1, m2) == 0);
+		   result = (mpz_cmp(m1, m3) == 0);
 		   if (!result)
 	      {
-			   gmp_printf("Error: m1 = %Zd, m2 = %Zd\n", m1, m2);
+			   gmp_printf("Error: m1 = %Zd, m2 = %Zd\n", m1, m3);
 		   }
 		}
 
@@ -1266,6 +1271,7 @@ int test_F_mpz_sub_ui()
    
    mpz_clear(m1);
 	mpz_clear(m2);
+	mpz_clear(m3);
 	
 	return result; 
 }

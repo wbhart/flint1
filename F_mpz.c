@@ -143,7 +143,7 @@ void _F_mpz_demote_val(F_mpz_t f)
 	} else if (size == 1L) // value is positive and 1 limb
 	{
 	   ulong uval = mpz_get_ui(mpz_ptr);
-		if (uval <= COEFF_MAX) 
+		if (uval <= (ulong) COEFF_MAX) 
 		{
 			_F_mpz_clear_mpz(*f);
 			*f = (F_mpz) uval;
@@ -151,7 +151,7 @@ void _F_mpz_demote_val(F_mpz_t f)
 	} else if (size == -1L) // value is negative and 1 limb
    {
 	   ulong uval = mpz_get_ui(mpz_ptr);
-		if (uval <= COEFF_MAX) 
+		if (uval <= (ulong) COEFF_MAX) 
 		{
 			_F_mpz_clear_mpz(*f);
 			*f = (F_mpz) -uval;
@@ -218,7 +218,7 @@ long F_mpz_get_si(const F_mpz_t f)
 	return mpz_get_si(F_mpz_arr + COEFF_TO_OFF(*f)); // value is large
 }
 
-long F_mpz_get_ui(const F_mpz_t f)
+ulong F_mpz_get_ui(const F_mpz_t f)
 {
    if (!COEFF_IS_MPZ(*f)) return *f; // value is small
 	return mpz_get_ui(F_mpz_arr + COEFF_TO_OFF(*f)); // value is large
@@ -232,7 +232,7 @@ void F_mpz_get_mpz(mpz_t x, const F_mpz_t f)
 
 void F_mpz_set_mpz(F_mpz_t f, const mpz_t x)
 {
-   long size = x->_mp_size;
+   long size = (long) x->_mp_size;
 	
 	if (size == 0L) // x is zero
 	{
@@ -531,10 +531,17 @@ void F_mpz_mul2(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
 	}
 	
 	F_mpz c2 = *h; // save h in case it is aliased with f
+   
+	if (!c2) // special case, h = 0 
+	{
+		F_mpz_zero(f);
+		return;
+	}
+
    __mpz_struct * mpz_ptr = _F_mpz_promote(f); // h is saved, g is already large
 		
 	if (!COEFF_IS_MPZ(c2)) // g is large, h is small
-		mpz_mul_si(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(c1), c2);
+	   mpz_mul_si(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(c1), c2);
    else // c1 and c2 are large
 	   mpz_mul(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(c1), F_mpz_arr + COEFF_TO_OFF(c2));
 }
@@ -565,7 +572,7 @@ void F_mpz_mul_2exp(F_mpz_t f, const F_mpz_t g, const ulong exp)
 
 void F_mpz_add_ui(F_mpz_t f, const F_mpz_t g, const ulong x)
 {
-	ulong c = *g;
+	F_mpz c = *g;
 
 	if (!COEFF_IS_MPZ(c)) // g is small
 	{
@@ -598,12 +605,12 @@ void F_mpz_add_ui(F_mpz_t f, const F_mpz_t g, const ulong x)
 
 void F_mpz_sub_ui(F_mpz_t f, const F_mpz_t g, const ulong x)
 {
-	ulong c = *g;
+	F_mpz c = *g;
 
 	if (!COEFF_IS_MPZ(c)) // coeff is small
 	{
       mp_limb_t sum[2];
-		if (c < 0L) // coeff negative, x positive, so difference is negative
+		if (c < 0L) // g negative, x positive, so difference is negative
 		{
 			add_ssaaaa(sum[1], sum[0], 0, -c, 0, x);
 			if (sum[1] == 0) 
@@ -657,7 +664,8 @@ void F_mpz_addmul_ui(F_mpz_t f, const F_mpz_t g, const ulong x)
 
 		if (prod[1] == 0) // product fits in one limb
 		{
-			if (c1 < 0L) F_mpz_sub_ui(f, f, prod[0]);
+			if (c1 < 0L) 
+			   F_mpz_sub_ui(f, f, prod[0]);
 			else F_mpz_add_ui(f, f, prod[0]);
 			return;
 		} else if ((prod[1] == 1) && (!COEFF_IS_MPZ(r)) && ((r ^ c1) < 0L))
@@ -753,7 +761,7 @@ void F_mpz_addmul(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
 	
 	if (!COEFF_IS_MPZ(c1)) // g is small
 	{
-		if (c1 < 0) F_mpz_submul_ui(f, h, -c1);
+		if (c1 < 0L) F_mpz_submul_ui(f, h, -c1);
 		else F_mpz_addmul_ui(f, h, c1);
 		return;
 	} 
@@ -762,7 +770,7 @@ void F_mpz_addmul(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
    
 	if (!COEFF_IS_MPZ(c2)) // h is small
 	{
-		if (c2 < 0) F_mpz_submul_ui(f, g, -c2);
+		if (c2 < 0L) F_mpz_submul_ui(f, g, -c2);
 		else F_mpz_addmul_ui(f, g, c2);
 		return;
 	} 
@@ -780,7 +788,7 @@ void F_mpz_submul(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
 	
 	if (!COEFF_IS_MPZ(c1)) // g is small
 	{
-		if (c1 < 0) F_mpz_addmul_ui(f, h, -c1);
+		if (c1 < 0L) F_mpz_addmul_ui(f, h, -c1);
 		else F_mpz_submul_ui(f, h, c1);
 		return;
 	} 
@@ -789,7 +797,7 @@ void F_mpz_submul(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
    
 	if (!COEFF_IS_MPZ(c2)) // h is small
 	{
-		if (c2 < 0) F_mpz_addmul_ui(f, g, -c2);
+		if (c2 < 0L) F_mpz_addmul_ui(f, g, -c2);
 		else F_mpz_submul_ui(f, g, c2);
 		return;
 	} 

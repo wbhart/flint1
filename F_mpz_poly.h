@@ -437,10 +437,10 @@ void F_mpz_poly_scalar_mul_ui(F_mpz_poly_t poly1, F_mpz_poly_t poly2, ulong x);
 void F_mpz_poly_scalar_mul_si(F_mpz_poly_t poly1, F_mpz_poly_t poly2, long x);
 
 /** 
-   \fn     void F_mpz_poly_scalar_mul_mpz(F_mpz_poly_t poly1, F_mpz_poly_t poly2, mpz_t x)
-   \brief  Multiply poly2 by the mpz_t x and set poly1 to the result.
+   \fn     void F_mpz_poly_scalar_mul(F_mpz_poly_t poly1, F_mpz_poly_t poly2, F_mpz_t x)
+   \brief  Multiply poly2 by the F_mpz_t x and set poly1 to the result.
 */
-void F_mpz_poly_scalar_mul_mpz(F_mpz_poly_t poly1, F_mpz_poly_t poly2, mpz_t x);
+void F_mpz_poly_scalar_mul(F_mpz_poly_t poly1, F_mpz_poly_t poly2, F_mpz_t x);
 
 /*===============================================================================
 
@@ -450,7 +450,8 @@ void F_mpz_poly_scalar_mul_mpz(F_mpz_poly_t poly1, F_mpz_poly_t poly2, mpz_t x);
 
 /** 
    \fn     void F_mpz_poly_mul_classical(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
-   \brief  Multiply poly1 by poly2 and set res to the result.
+   \brief  Multiply poly1 by poly2 and set res to the result, using the classical 
+	        algorithm.
 */
 void F_mpz_poly_mul_classical(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2);
 
