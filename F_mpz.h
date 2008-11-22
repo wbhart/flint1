@@ -261,6 +261,13 @@ ulong F_mpz_size(F_mpz_t f);
 */
 ulong F_mpz_bits(F_mpz_t f);
 
+/** 
+   \fn     __mpz_struct * F_mpz_ptr_mpz(F_mpz f)
+   \brief  Returns a pointer to the mpz_t associated with the coefficient f.
+	        Assumes f is actually associated with an mpz_t.
+*/
+__mpz_struct * F_mpz_ptr_mpz(F_mpz f);
+
 /*===============================================================================
 
 	Arithmetic

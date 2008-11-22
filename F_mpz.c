@@ -356,6 +356,11 @@ ulong F_mpz_bits(F_mpz_t f)
 	return mpz_sizeinbase(F_mpz_arr + COEFF_TO_OFF(d), 2);
 }
 
+__mpz_struct * F_mpz_ptr_mpz(F_mpz f)
+{
+	return F_mpz_arr + COEFF_TO_OFF(f);
+}
+
 /*===============================================================================
 
 	Arithmetic

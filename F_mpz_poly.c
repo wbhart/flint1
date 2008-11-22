@@ -263,7 +263,7 @@ void F_mpz_poly_swap(F_mpz_poly_t poly1, F_mpz_poly_t poly2)
 	poly1->alloc = poly2->alloc;
 	poly2->alloc = temp;
 	
-	ulong * temp_c = poly1->coeffs;
+	F_mpz * temp_c = poly1->coeffs;
 	poly1->coeffs = poly2->coeffs;
 	poly2->coeffs = temp_c;
 
@@ -294,20 +294,20 @@ int F_mpz_poly_equal(const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
 
 ================================================================================*/
 
-/*long F_mpz_poly_max_bits(const F_mpz_poly_t poly)
+long F_mpz_poly_max_bits(const F_mpz_poly_t poly)
 {
 	int sign = 0;
 	ulong max = 0;
    ulong bits = 0;
    ulong i;
-	ulong c;
+	F_mpz c;
 
 	// search until we find an mpz_t coefficient or one of at least FLINT_BITS - 2 bits
 	for (i = 0; i < poly->length; i++) 
 	{
 		c = poly->coeffs[i];
 		if (COEFF_IS_MPZ(c)) break; // found an mpz_t coeff
-      if ((long) c < 0L) 
+      if (c < 0L) 
 		{
 			sign = 1;
          bits = FLINT_BIT_COUNT(-c);
@@ -322,7 +322,7 @@ int F_mpz_poly_equal(const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
 		c = poly->coeffs[i];
       if (COEFF_IS_MPZ(c))
 		{
-			__mpz_struct * mpz_ptr = poly->mpz_coeffs + COEFF_TO_OFF(c);
+			__mpz_struct * mpz_ptr = F_mpz_ptr_mpz(c);
 			if (mpz_sgn(mpz_ptr) < 0) sign = 1;
 			bits = mpz_sizeinbase(mpz_ptr, 2);
 			if (bits > max) max = bits;
@@ -337,7 +337,7 @@ ulong F_mpz_poly_max_limbs(const F_mpz_poly_t poly)
 {
 	if (poly->length == 0) return 0; // polynomial is zero
 
-	ulong max = 1; // all other coefficients have at least one limb
+	ulong max = 1; // all coefficients have at least one limb
    ulong limbs;
 	ulong c;
 
@@ -347,13 +347,13 @@ ulong F_mpz_poly_max_limbs(const F_mpz_poly_t poly)
 		c = poly->coeffs[i];
       if (COEFF_IS_MPZ(c))
 		{
-			limbs = mpz_size(poly->mpz_coeffs + COEFF_TO_OFF(c));
+			limbs = mpz_size(F_mpz_ptr_mpz(c));
 			if (limbs > max) max = limbs;
 		} 
 	}
 
 	return max;
-}*/
+}
 
 /*===============================================================================
 

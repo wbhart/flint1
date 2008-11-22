@@ -308,7 +308,7 @@ void F_mpz_poly_zero_coeffs(F_mpz_poly_t poly, const ulong n)
 	if (n >= poly->length) _F_mpz_poly_set_length(poly, 0);
 	else 
 	   for (ulong i = 0; i < n; i++)
-		   _F_mpz_zero(poly->coeffs + i);
+		   F_mpz_zero(poly->coeffs + i);
 }
 
 /** 
@@ -317,6 +317,12 @@ void F_mpz_poly_zero_coeffs(F_mpz_poly_t poly, const ulong n)
 */
 void F_mpz_poly_set(F_mpz_poly_t poly1, const F_mpz_poly_t poly2);
 
+/** 
+   \fn     void F_mpz_poly_swap(F_mpz_poly_t poly1, F_mpz_poly_t poly2)
+   \brief  Efficiently swap poly1 and poly2
+*/
+void F_mpz_poly_swap(F_mpz_poly_t poly1, F_mpz_poly_t poly2);
+
 /*===============================================================================
 
 	Comparison
@@ -324,7 +330,7 @@ void F_mpz_poly_set(F_mpz_poly_t poly1, const F_mpz_poly_t poly2);
 ================================================================================*/
 
 /** 
-   \fn     int F_mpz_poly_equal(const F_mpz_poly_t poly1, const F_mpz_poly_t poly2);
+   \fn     int F_mpz_poly_equal(const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
    \brief  Returns 1 if poly1 and poly2 are equal (arithmetically), otherwise
 	        returns 0.
 */
