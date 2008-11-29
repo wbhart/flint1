@@ -294,6 +294,39 @@ int F_mpz_poly_equal(const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
 
 ================================================================================*/
 
+long F_mpz_poly_max_bits1(const F_mpz_poly_t poly)
+{
+	int sign = 0;
+	F_mpz or = 0;
+   F_mpz c;
+	F_mpz mask = (1L<<(FLINT_BITS-3)); // see if the largest bit possible in a small is set
+   ulong i;
+
+	// search until we find an mpz_t coefficient or one of at least FLINT_BITS - 2 bits
+	for (i = 0; i < poly->length; i++) 
+	{
+		c = poly->coeffs[i];
+		if (c < 0L) 
+		{
+			sign = 1;
+			or = or | -c;
+		} else
+		{
+			if (COEFF_IS_MPZ(c)) return 0; // found an mpz_t coeff
+         or = or | c;
+		}
+		if (or & mask) break; // found a coeff with FLINT_BIT - 2 bits
+	}
+
+	if (!sign) // if no negative coefficient yet keep searching
+	   for ( ; i < poly->length; i++)  
+	      if (poly->coeffs[i] < 0L) return -(FLINT_BITS - 2); // only happens if we hit
+	                                                       // break in previous loop
+
+	if (sign) return -FLINT_BIT_COUNT(or); // return bits n or -n if negative found
+	else return FLINT_BIT_COUNT(or);
+}
+
 long F_mpz_poly_max_bits(const F_mpz_poly_t poly)
 {
 	int sign = 0;
@@ -551,36 +584,43 @@ void F_mpz_poly_right_shift(F_mpz_poly_t res, const F_mpz_poly_t poly, const ulo
 	}
 
 	res->length = length;
-}
+}*/
 
 void F_mpz_poly_interleave_small(F_mpz_poly_t res, F_mpz_poly_t poly1, F_mpz_poly_t poly2)
 {
 	ulong length = FLINT_MAX(2*poly1->length - 1, 2*poly2->length);
 	F_mpz_poly_fit_length(res, length + 1); // extra one in case length is odd
+	                                        // it will be set to zero
 
 	ulong shorter = FLINT_MIN(poly1->length, poly2->length);
    ulong i;
 
 	for (i = 0; i < shorter; i++)
 	{
+		_F_mpz_demote(res->coeffs + 2*i);
+		_F_mpz_demote(res->coeffs + 2*i + 1);
 		res->coeffs[2*i] =  poly1->coeffs[i];
 		res->coeffs[2*i+1] =  poly2->coeffs[i];
 	}
 
    for ( ; i < poly1->length; i++)
 	{
+		_F_mpz_demote(res->coeffs + 2*i);
+		_F_mpz_demote(res->coeffs + 2*i + 1);
 		res->coeffs[2*i] =  poly1->coeffs[i];
 		res->coeffs[2*i+1] = 0;
 	}
 
 	for ( ; i < poly2->length; i++)
 	{
+		_F_mpz_demote(res->coeffs + 2*i);
+		_F_mpz_demote(res->coeffs + 2*i + 1);
 		res->coeffs[2*i] = 0;
 		res->coeffs[2*i+1] =  poly2->coeffs[i];
 	}
 
-	res->length = length;
-}*/
+	_F_mpz_poly_set_length(res, length);
+}
 
 /*===============================================================================
 
@@ -968,8 +1008,8 @@ void _F_mpz_poly_mul_kara_recursive(F_mpz * out, F_mpz * in1,
    }
 }
 
-ulong F_mpz_poly_kara_table[] = {8, 27, 10, 10, 8, 6, 5, 5, 5, 4, 4, 2};
-ulong F_mpz_poly_kara_table_size = 12;
+ulong F_mpz_poly_kara_table[] = {20, 21, 20, 20, 16, 16, 14, 16, 14, 11, 10, 10, 10, 10};
+ulong F_mpz_poly_kara_table_size = 14;
 
 ulong _F_mpz_poly_mul_karatsuba_crossover(ulong limbs)
 {
@@ -997,8 +1037,8 @@ void _F_mpz_poly_mul_karatsuba(F_mpz_poly_t res, F_mpz_poly_t poly1,
 	
 	// look up crossover parameter (i.e. when to switch from classical to
    // karatsuba multiplication) based on coefficient size
-   ulong bits1 = 64;//FLINT_ABS(F_mpz_poly_max_bits(poly1));
-	ulong bits2 = 64;//FLINT_ABS(F_mpz_poly_max_bits(poly2));
+   ulong bits1 = FLINT_ABS(F_mpz_poly_max_bits(poly1));
+	ulong bits2 = FLINT_ABS(F_mpz_poly_max_bits(poly2));
 	ulong log_length = 0;
 	while ((1L<<log_length) < poly1->length) log_length++;
 	ulong limbs = (bits1 + bits2 + log_length - 1)/FLINT_BITS + 1;
@@ -1069,7 +1109,7 @@ void F_mpz_poly_mul_karatsuba(F_mpz_poly_t res, F_mpz_poly_t poly1,
 	subtract borrow. If the coefficient is negative, set borrow to be 1. Mask the coefficient
 	against xxxmask.
 */
-/*#define NEXT_COEFF(xxxarr, xxxborr, xxxcoeff, xxxmask, xxxneg) \
+#define NEXT_COEFF(xxxarr, xxxborr, xxxcoeff, xxxmask, xxxneg) \
 	do { \
 	   xxxcoeff = (xxxarr ^ xxxneg) - xxxneg - xxxborr; \
 		xxxborr = 0UL; \
@@ -1078,7 +1118,7 @@ void F_mpz_poly_mul_karatsuba(F_mpz_poly_t res, F_mpz_poly_t poly1,
 	} while (0)
 
 void F_mpz_poly_bit_pack(mp_limb_t * array, ulong n, const F_mpz_poly_t poly_F_mpz,
-                         const long bitwidth, const ulong length, const long negate)
+                         const ulong bits, const ulong length, const long negate)
 {   
    ulong i, k, skip;
    ulong * coeff_m = poly_F_mpz->coeffs;
@@ -1090,105 +1130,99 @@ void F_mpz_poly_bit_pack(mp_limb_t * array, ulong n, const F_mpz_poly_t poly_F_m
    long borrow;
    mp_limb_t extend;
    
-   long bits = bitwidth;
-   int sign = (bits < 0);
-   if (sign) bits = ABS(bits);
-   
    ulong coeffs_per_limb = FLINT_BITS/bits;
 
    const ulong mask = (1UL<<bits)-1;
       
-      k = 0; skip = 0;
-      coeff = 0; borrow = 0L; temp = 0;
+   k = 0; skip = 0;
+   coeff = 0; borrow = 0L; temp = 0;
       
-      end_point = poly_F_mpz->coeffs + length;
+   end_point = poly_F_mpz->coeffs + length;
          
-      while (coeff_m < end_point)
-      {
-         if ((ulong) coeff_m & 7 == 0) FLINT_PREFETCH(coeff_m, 64);
+   while (coeff_m < end_point)
+   {
+      if ((ulong) coeff_m & 7 == 0) FLINT_PREFETCH(coeff_m, 64);
 
-         // k is guaranteed to be less than FLINT_BITS at this point
-         while ((k < HALF_FLINT_BITS) && (coeff_m < end_point))
-         {
-            NEXT_COEFF(*coeff_m, borrow, coeff, mask, negate);
-				//if (sign) 
-			   temp += (coeff << k);
-            //else temp += (__get_next_coeff_unsigned(coeff_m, &coeff) << k);
-            coeff_m++; k += bits;
-         }
+      // k is guaranteed to be less than FLINT_BITS at this point
+      while ((k < HALF_FLINT_BITS) && (coeff_m < end_point))
+      {
+         NEXT_COEFF(*coeff_m, borrow, coeff, mask, negate);
+		   temp += (coeff << k);
+         coeff_m++; k += bits;
+      }
          
-			// k may exceed FLINT_BITS at this point but is less than 3*HALF_FLINT_BITS
-			if (k > FLINT_BITS)
+	   // k may exceed FLINT_BITS at this point but is less than 3*HALF_FLINT_BITS
+	   if (k > FLINT_BITS)
+      {
+         // if k > FLINT_BITS write out a whole limb and read in remaining bits of coeff
+         array[skip] = temp;
+         skip++;
+         temp = (coeff >> (bits+FLINT_BITS-k));
+         k = (k - FLINT_BITS);
+         // k < HALF_FLINT_BITS
+      } else
+      {
+         // k <= FLINT_BITS
+         if (k >= HALF_FLINT_BITS)
          {
-            // if k > FLINT_BITS write out a whole limb and read in remaining bits of coeff
-            array[skip] = temp;
-            skip++;
-            temp = (coeff >> (bits+FLINT_BITS-k));
-            k = (k - FLINT_BITS);
-            // k < HALF_FLINT_BITS
-         } else
-         {
-            // k <= FLINT_BITS
-            if (k >= HALF_FLINT_BITS)
-            {
-               // if k >= HALF_FLINT_BITS store bottom HALF_FLINT_BITS bits
-               lower = (half_ulong) temp;
-               k -= HALF_FLINT_BITS;
-               temp >>= HALF_FLINT_BITS;
+            // if k >= HALF_FLINT_BITS store bottom HALF_FLINT_BITS bits
+            lower = (half_ulong) temp;
+            k -= HALF_FLINT_BITS;
+            temp >>= HALF_FLINT_BITS;
                
-					// k is now <= HALF_FLINT_BITS
-               while ((k < HALF_FLINT_BITS) && (coeff_m < end_point))
-               {
-                  NEXT_COEFF(*coeff_m, borrow, coeff, mask, negate);
-				      //if (sign) 
-						temp+=(coeff << k);
-                  //else temp+=(__get_next_coeff_unsigned(coeff_m, &coeff) << k);
-                  coeff_m++; k += bits;
-               }
+			   // k is now <= HALF_FLINT_BITS
+            while ((k < HALF_FLINT_BITS) && (coeff_m < end_point))
+            {
+               NEXT_COEFF(*coeff_m, borrow, coeff, mask, negate);
+				   //if (sign) 
+				   temp+=(coeff << k);
+               //else temp+=(__get_next_coeff_unsigned(coeff_m, &coeff) << k);
+               coeff_m++; k += bits;
+            }
 
-               // k may again exceed FLINT_BITS bits but is less than 3*HALF_FLINT_BITS
-               if (k > FLINT_BITS)
-               {
-                  // if k > FLINT_BITS, write out bottom HALF_FLINT_BITS bits (along with HALF_FLINT_BITS bits from lower)
-                  // read remaining bits from coeff and reduce k by HALF_FLINT_BITS
-                  array[skip] = (temp << HALF_FLINT_BITS) + (ulong) lower;
-                  skip++;
-                  temp >>= HALF_FLINT_BITS;
-                  temp += ((coeff >> (bits+FLINT_BITS-k)) << HALF_FLINT_BITS);
-                  k = (k - HALF_FLINT_BITS);
-                  // k < FLINT_BITS and we are ready to read next coefficient if there is one
-               } else if (k >= HALF_FLINT_BITS) 
-               {
-                  // k <= FLINT_BITS
-                  // if k >= HALF_FLINT_BITS write out bottom HALF_FLINT_BITS bits (along with lower)
-                  // and reduce k by HALF_FLINT_BITS
-                  k -= HALF_FLINT_BITS;
-                  array[skip] = (temp << HALF_FLINT_BITS) + lower;
-                  temp >>= HALF_FLINT_BITS;
-                  skip++;
-                  // k is now less than or equal to HALF_FLINT_BITS and we are now ready to read 
-                  // the next coefficient if there is one
-               } else
-               {
-                  // k < HALF_FLINT_BITS
-                  // there isn't enough to write out a whole FLINT_BITS bits, so put it all 
-                  // together in temp
-                  temp = (temp << HALF_FLINT_BITS) + lower;
-                  k += HALF_FLINT_BITS;
-                  // k is now guaranteed to be less than FLINT_BITS and we are ready for the
-                  // next coefficient if there is one
-               }
-            } // if
-         } // else
-      } // while
+            // k may again exceed FLINT_BITS bits but is less than 3*HALF_FLINT_BITS
+            if (k > FLINT_BITS)
+            {
+               // if k > FLINT_BITS, write out bottom HALF_FLINT_BITS bits (along with HALF_FLINT_BITS bits from lower)
+               // read remaining bits from coeff and reduce k by HALF_FLINT_BITS
+               array[skip] = (temp << HALF_FLINT_BITS) + (ulong) lower;
+               skip++;
+               temp >>= HALF_FLINT_BITS;
+               temp += ((coeff >> (bits+FLINT_BITS-k)) << HALF_FLINT_BITS);
+               k = (k - HALF_FLINT_BITS);
+               // k < FLINT_BITS and we are ready to read next coefficient if there is one
+            } else if (k >= HALF_FLINT_BITS) 
+            {
+               // k <= FLINT_BITS
+               // if k >= HALF_FLINT_BITS write out bottom HALF_FLINT_BITS bits (along with lower)
+               // and reduce k by HALF_FLINT_BITS
+               k -= HALF_FLINT_BITS;
+               array[skip] = (temp << HALF_FLINT_BITS) + lower;
+               temp >>= HALF_FLINT_BITS;
+               skip++;
+               // k is now less than or equal to HALF_FLINT_BITS and we are now ready to read 
+               // the next coefficient if there is one
+            } else
+            {
+               // k < HALF_FLINT_BITS
+               // there isn't enough to write out a whole FLINT_BITS bits, so put it all 
+               // together in temp
+               temp = (temp << HALF_FLINT_BITS) + lower;
+               k += HALF_FLINT_BITS;
+               // k is now guaranteed to be less than FLINT_BITS and we are ready for the
+               // next coefficient if there is one
+            }
+         } // if
+      } // else
+   } // while
 
-      // sign extend the last FLINT_BITS bits we write out
-      if (skip < n)
-      {
-        if (borrow) temp += (-1UL << k);
-        array[skip] = temp;
-        skip++;
-      } 
+   // sign extend the last FLINT_BITS bits we write out
+   if (skip < n)
+   {
+      if (borrow) temp += (-1UL << k);
+      array[skip] = temp;
+      skip++;
+   } 
 }
 
 void F_mpz_poly_bit_pack_unsigned(mp_limb_t * array, ulong n, const F_mpz_poly_t poly_F_mpz,
@@ -1204,95 +1238,95 @@ void F_mpz_poly_bit_pack_unsigned(mp_limb_t * array, ulong n, const F_mpz_poly_t
    
    ulong coeffs_per_limb = FLINT_BITS/bits;
 
-      k = 0; skip = 0;
-      coeff = 0; temp = 0;
+   k = 0; skip = 0;
+   coeff = 0; temp = 0;
       
-      end_point = poly_F_mpz->coeffs + length;
+   end_point = poly_F_mpz->coeffs + length;
          
-      while (coeff_m < end_point)
-      {
-         if ((ulong) coeff_m & 7 == 0) FLINT_PREFETCH(coeff_m, 64);
+   while (coeff_m < end_point)
+   {
+      if ((ulong) coeff_m & 7 == 0) FLINT_PREFETCH(coeff_m, 64);
 
-         // k is guaranteed to be less than FLINT_BITS at this point
-         while ((k < HALF_FLINT_BITS) && (coeff_m < end_point))
-         {
-            coeff = *coeff_m;
-				temp += (coeff << k);
-            coeff_m++; k += bits;
-         }
+      // k is guaranteed to be less than FLINT_BITS at this point
+      while ((k < HALF_FLINT_BITS) && (coeff_m < end_point))
+      {
+         coeff = *coeff_m;
+		   temp += (coeff << k);
+         coeff_m++; k += bits;
+      }
          
-			// k may exceed FLINT_BITS at this point but is less than 3*HALF_FLINT_BITS
-			if (k > FLINT_BITS)
+	   // k may exceed FLINT_BITS at this point but is less than 3*HALF_FLINT_BITS
+	   if (k > FLINT_BITS)
+      {
+         // if k > FLINT_BITS write out a whole limb and read in remaining bits of coeff
+         array[skip] = temp;
+         skip++;
+         temp = (coeff >> (bits+FLINT_BITS-k));
+         k = (k - FLINT_BITS);
+         // k < HALF_FLINT_BITS
+      } else
+      {
+         // k <= FLINT_BITS
+         if (k >= HALF_FLINT_BITS)
          {
-            // if k > FLINT_BITS write out a whole limb and read in remaining bits of coeff
-            array[skip] = temp;
-            skip++;
-            temp = (coeff >> (bits+FLINT_BITS-k));
-            k = (k - FLINT_BITS);
-            // k < HALF_FLINT_BITS
-         } else
-         {
-            // k <= FLINT_BITS
-            if (k >= HALF_FLINT_BITS)
-            {
-               // if k >= HALF_FLINT_BITS store bottom HALF_FLINT_BITS bits
-               lower = (half_ulong) temp;
-               k -= HALF_FLINT_BITS;
-               temp >>= HALF_FLINT_BITS;
+            // if k >= HALF_FLINT_BITS store bottom HALF_FLINT_BITS bits
+            lower = (half_ulong) temp;
+            k -= HALF_FLINT_BITS;
+            temp >>= HALF_FLINT_BITS;
                
-					// k is now <= HALF_FLINT_BITS
-               while ((k < HALF_FLINT_BITS) && (coeff_m < end_point))
-               {
-                  coeff = *coeff_m;
-				      temp += (coeff << k);
-                  coeff_m++; k += bits;
-               }
+			   // k is now <= HALF_FLINT_BITS
+            while ((k < HALF_FLINT_BITS) && (coeff_m < end_point))
+            {
+               coeff = *coeff_m;
+				   temp += (coeff << k);
+               coeff_m++; k += bits;
+            }
 
-               // k may again exceed FLINT_BITS bits but is less than 3*HALF_FLINT_BITS
-               if (k > FLINT_BITS)
-               {
-                  // if k > FLINT_BITS, write out bottom HALF_FLINT_BITS bits (along with HALF_FLINT_BITS bits from lower)
-                  // read remaining bits from coeff and reduce k by HALF_FLINT_BITS
-                  array[skip] = (temp << HALF_FLINT_BITS) + (ulong) lower;
-                  skip++;
-                  temp >>= HALF_FLINT_BITS;
-                  temp += ((coeff >> (bits+FLINT_BITS-k)) << HALF_FLINT_BITS);
-                  k = (k - HALF_FLINT_BITS);
-                  // k < FLINT_BITS and we are ready to read next coefficient if there is one
-               } else if (k >= HALF_FLINT_BITS) 
-               {
-                  // k <= FLINT_BITS
-                  // if k >= HALF_FLINT_BITS write out bottom HALF_FLINT_BITS bits (along with lower)
-                  // and reduce k by HALF_FLINT_BITS
-                  k -= HALF_FLINT_BITS;
-                  array[skip] = (temp << HALF_FLINT_BITS) + lower;
-                  temp >>= HALF_FLINT_BITS;
-                  skip++;
-                  // k is now less than or equal to HALF_FLINT_BITS and we are now ready to read 
-                  // the next coefficient if there is one
-               } else
-               {
-                  // k < HALF_FLINT_BITS
-                  // there isn't enough to write out a whole FLINT_BITS bits, so put it all 
-                  // together in temp
-                  temp = (temp << HALF_FLINT_BITS) + lower;
-                  k += HALF_FLINT_BITS;
-                  // k is now guaranteed to be less than FLINT_BITS and we are ready for the
-                  // next coefficient if there is one
-               }
-            } // if
-         } // else
-      } // while
+            // k may again exceed FLINT_BITS bits but is less than 3*HALF_FLINT_BITS
+            if (k > FLINT_BITS)
+            {
+               // if k > FLINT_BITS, write out bottom HALF_FLINT_BITS bits (along with HALF_FLINT_BITS bits from lower)
+               // read remaining bits from coeff and reduce k by HALF_FLINT_BITS
+               array[skip] = (temp << HALF_FLINT_BITS) + (ulong) lower;
+               skip++;
+               temp >>= HALF_FLINT_BITS;
+               temp += ((coeff >> (bits+FLINT_BITS-k)) << HALF_FLINT_BITS);
+               k = (k - HALF_FLINT_BITS);
+               // k < FLINT_BITS and we are ready to read next coefficient if there is one
+            } else if (k >= HALF_FLINT_BITS) 
+            {
+               // k <= FLINT_BITS
+               // if k >= HALF_FLINT_BITS write out bottom HALF_FLINT_BITS bits (along with lower)
+               // and reduce k by HALF_FLINT_BITS
+               k -= HALF_FLINT_BITS;
+               array[skip] = (temp << HALF_FLINT_BITS) + lower;
+               temp >>= HALF_FLINT_BITS;
+               skip++;
+               // k is now less than or equal to HALF_FLINT_BITS and we are now ready to read 
+               // the next coefficient if there is one
+            } else
+            {
+               // k < HALF_FLINT_BITS
+               // there isn't enough to write out a whole FLINT_BITS bits, so put it all 
+               // together in temp
+               temp = (temp << HALF_FLINT_BITS) + lower;
+               k += HALF_FLINT_BITS;
+               // k is now guaranteed to be less than FLINT_BITS and we are ready for the
+               // next coefficient if there is one
+            }
+         } // if
+      } // else
+   } // while
 
-      // sign extend the last FLINT_BITS bits we write out
-      if (skip < n)
-      {
-        array[skip] = temp;
-        skip++;
-      } 
+   // sign extend the last FLINT_BITS bits we write out
+   if (skip < n)
+   {
+      array[skip] = temp;
+      skip++;
+   } 
 }
 
-void F_mpz_poly_bit_unpack(F_mpz_poly_t poly_F_mpz, const mp_limb_t * array, ulong n,
+void F_mpz_poly_bit_unpack(F_mpz_poly_t poly_F_mpz, const mp_limb_t * array,
                                                     const ulong length, const ulong bits)
 {
    ulong k, skip;
@@ -1308,64 +1342,77 @@ void F_mpz_poly_bit_unpack(F_mpz_poly_t poly_F_mpz, const mp_limb_t * array, ulo
    mp_limb_t * coeff_m = poly_F_mpz->coeffs;
    mp_limb_t * end_point;
 
-      k = 0; skip = 0; carry = 0UL; temp = 0L;
-      end_point = poly_F_mpz->coeffs + length;
+   k = 0; skip = 0; carry = 0UL; temp = 0L;
+   end_point = poly_F_mpz->coeffs + length;
       
-      while (coeff_m < end_point)
+   while (coeff_m < end_point)
+   {
+      // read in a full limb
+      full_limb = array[skip];
+      temp += l_shift(full_limb, k);
+      s = FLINT_BITS - k;
+      k += s;
+      while ((k >= bits) && (coeff_m < end_point))
       {
-         // read in a full limb
-         full_limb = array[skip];
-         temp += l_shift(full_limb, k);
-         s = FLINT_BITS - k;
-         k += s;
-         while ((k >= bits) && (coeff_m < end_point))
+         if (!(temp & sign_mask)) 
          {
-            if (!(temp & sign_mask)) 
-            {
-               *coeff_m += ((temp & mask) + carry);
-               carry = 0UL;
-            }  
-            else
-            {
-               *coeff_m -= (((-temp) & mask) - carry);
-               carry = 1UL;
-            }
-            coeff_m ++;
-            temp >>= bits;
-            k -= bits;
-         }
-
-         // k is now less than bits
-         // read in remainder of full_limb
-         temp += l_shift(r_shift(full_limb, s), k);
-         k += (FLINT_BITS - s);
-       
-         while ((k >= bits) && (coeff_m < end_point))
+            _F_mpz_demote(coeff_m);
+				*coeff_m = ((temp & mask) + carry);
+            carry = 0UL;
+         }  
+         else
          {
-            if (!(temp & sign_mask)) 
-            {
-               *coeff_m += ((temp & mask) + carry);
-               carry = 0UL;
-            }
-            else
-            {
-               *coeff_m -= (((-temp) & mask) - carry);
-					carry = 1UL;
-            }
-            
-				coeff_m ++;
-            temp >>= bits;
-            k -= bits;
+            _F_mpz_demote(coeff_m);
+				*coeff_m = -(((-temp) & mask) - carry);
+            carry = 1UL;
          }
-
-         // k is now less than bits
-         skip++;
+         coeff_m ++;
+         temp >>= bits;
+         k -= bits;
       }
 
-   _F_mpz_poly_normalise(poly_F_mpz);
+      // k is now less than bits
+      // read in remainder of full_limb
+      temp += l_shift(r_shift(full_limb, s), k);
+      k += (FLINT_BITS - s);
+       
+      while ((k >= bits) && (coeff_m < end_point))
+      {
+         if (!(temp & sign_mask)) 
+         {
+            _F_mpz_demote(coeff_m);
+				*coeff_m = ((temp & mask) + carry);
+            carry = 0UL;
+         }
+         else
+         {
+            _F_mpz_demote(coeff_m);
+				*coeff_m = -(((-temp) & mask) - carry);
+			   carry = 1UL;
+         }
+            
+		   coeff_m ++;
+         temp >>= bits;
+         k -= bits;
+      }
+
+      // k is now less than bits
+      skip++;
+   }
+
+   if ((carry) && (poly_F_mpz->coeffs[length - 1] == 0))
+	{
+		_F_mpz_demote(coeff_m);
+		*coeff_m = 1L;
+      poly_F_mpz->length = length + 1;
+	} else
+	{
+		poly_F_mpz->length = length;
+		_F_mpz_poly_normalise(poly_F_mpz);
+	}
 }
 
-void F_mpz_poly_bit_unpack_unsigned(F_mpz_poly_t poly_F_mpz, const mp_limb_t * array, ulong n, 
+void F_mpz_poly_bit_unpack_unsigned(F_mpz_poly_t poly_F_mpz, const mp_limb_t * array, 
                                                              const ulong length, const ulong bits)
 {
    ulong k, l, skip;
@@ -1379,52 +1426,55 @@ void F_mpz_poly_bit_unpack_unsigned(F_mpz_poly_t poly_F_mpz, const mp_limb_t * a
    ulong * coeff_m = poly_F_mpz->coeffs;
    ulong * end_point;
        
-      k = 0; skip = 0; temp = 0;
-      end_point = poly_F_mpz->coeffs + poly_F_mpz->length;
+   k = 0; skip = 0; temp = 0;
+   end_point = poly_F_mpz->coeffs + length;
       
-      while (coeff_m < end_point)
-      {
-         if (skip & 7 == 0) FLINT_PREFETCH(array + skip, 64);
-         // read in a full limb
-         full_limb = array[skip];
-         temp += l_shift(full_limb, k);
-         s = FLINT_BITS - k;
-         k += s;
+   while (coeff_m < end_point)
+   {
+      if (skip & 7 == 0) FLINT_PREFETCH(array + skip, 64);
+      // read in a full limb
+      full_limb = array[skip];
+      temp += l_shift(full_limb, k);
+      s = FLINT_BITS - k;
+      k += s;
          
-			while ((k >= bits) && (coeff_m < end_point))
-         {
-            *coeff_m += (temp & mask);
-            coeff_m++;
-            temp >>= bits;
-            k -= bits;
-         }
-
-         // k is now less than bits
-         // read in remainder of full_limb
-         temp += l_shift(r_shift(full_limb, s), k);
-         k += (FLINT_BITS - s);
-       
-         while ((k >= bits) && (coeff_m < end_point))
-         {
-            *coeff_m += (temp & mask);
-            coeff_m++;
-            temp >>= bits;
-            l++;
-            k -= bits;
-         }
-         // k is now less than bits
-         skip++;
+	   while ((k >= bits) && (coeff_m < end_point))
+      {
+         _F_mpz_demote(coeff_m);
+			*coeff_m = (temp & mask);
+         coeff_m++;
+         temp >>= bits;
+         k -= bits;
       }
 
-   _F_mpz_poly_normalise(poly_F_mpz);
-}*/
+      // k is now less than bits
+      // read in remainder of full_limb
+      temp += l_shift(r_shift(full_limb, s), k);
+      k += (FLINT_BITS - s);
+       
+      while ((k >= bits) && (coeff_m < end_point))
+      {
+         _F_mpz_demote(coeff_m);
+			*coeff_m = (temp & mask);
+         coeff_m++;
+         temp >>= bits;
+         l++;
+         k -= bits;
+      }
+      // k is now less than bits
+      skip++;
+   }
+
+   poly_F_mpz->length = length;
+	_F_mpz_poly_normalise(poly_F_mpz);
+}
  
 /*
   Bit packing used with David Harvey's KS2 algorithm
 
 */
-/*void F_mpz_poly_bit_pack2(mp_limb_t * array, mp_limb_t * array2, ulong n, const F_mpz_poly_t poly_F_mpz, 
-                              const long bitwidth, const ulong length, const long negate, long negate2)
+void F_mpz_poly_bit_pack2(mp_limb_t * array, mp_limb_t * array2, ulong n, const F_mpz_poly_t poly_F_mpz, 
+                              const ulong bits, const ulong length, const long negate, long negate2)
 
 {   
    ulong k, skip;
@@ -1435,124 +1485,114 @@ void F_mpz_poly_bit_unpack_unsigned(F_mpz_poly_t poly_F_mpz, const mp_limb_t * a
    long coeff, coeff2;
    long borrow, borrow2;
    
-   long bits = bitwidth;
-   int sign = (bits < 0);
-   if (sign) bits = ABS(bits);
-   
    ulong coeffs_per_limb = FLINT_BITS/bits;
 
    const ulong mask = (1UL<<bits) - 1;
       
-	   k = 0; skip = 0;
-      coeff = 0; coeff2 = 0; borrow = 0L; borrow2 = 0L, temp = 0, temp2 = 0;
+	k = 0; skip = 0;
+   coeff = 0; coeff2 = 0; borrow = 0L; borrow2 = 0L, temp = 0, temp2 = 0;
 		
-      mp_limb_t * end_point = poly_F_mpz->coeffs + length;
+   mp_limb_t * end_point = poly_F_mpz->coeffs + length;
          
-      while (coeff_m < end_point)
-      {
-         if ((ulong) coeff_m & 7 == 0) FLINT_PREFETCH(coeff_m, 64);
+   while (coeff_m < end_point)
+   {
+      if ((ulong) coeff_m & 7 == 0) FLINT_PREFETCH(coeff_m, 64);
 
-         // k is guaranteed to be less than FLINT_BITS at this point
-         while ((k < HALF_FLINT_BITS) && (coeff_m < end_point))
-         {
-            NEXT_COEFF(*coeff_m, borrow, coeff, mask, negate);
-				NEXT_COEFF(*coeff_m, borrow2, coeff2, mask, negate2);
-				negate2 = -negate2 - 1L;
-				//if (sign) 
-			   temp += (coeff << k);
-            temp2 += (coeff2 << k);
-            //else temp += (__get_next_coeff_unsigned(coeff_m, &coeff) << k);
-            coeff_m++; k += bits;
-         }
+      // k is guaranteed to be less than FLINT_BITS at this point
+      while ((k < HALF_FLINT_BITS) && (coeff_m < end_point))
+      {
+         NEXT_COEFF(*coeff_m, borrow, coeff, mask, negate);
+		   NEXT_COEFF(*coeff_m, borrow2, coeff2, mask, negate2);
+	      negate2 = -negate2 - 1L;
+		   temp += (coeff << k);
+         temp2 += (coeff2 << k);
+         coeff_m++; k += bits;
+      }
          
-			// k may exceed FLINT_BITS at this point but is less than 3*HALF_FLINT_BITS
-			if (k > FLINT_BITS)
+	   // k may exceed FLINT_BITS at this point but is less than 3*HALF_FLINT_BITS
+	   if (k > FLINT_BITS)
+      {
+         // if k > FLINT_BITS write out a whole limb and read in remaining bits of coeff
+         array[skip] = temp;
+         array2[skip] = temp2;
+         skip++;
+         temp = (coeff >> (bits+FLINT_BITS-k));
+         temp2 = (coeff2 >> (bits+FLINT_BITS-k));
+         k = (k - FLINT_BITS);
+         // k < HALF_FLINT_BITS
+      } else
+      {
+         // k <= FLINT_BITS
+         if (k >= HALF_FLINT_BITS)
          {
-            // if k > FLINT_BITS write out a whole limb and read in remaining bits of coeff
-            array[skip] = temp;
-            array2[skip] = temp2;
-            skip++;
-            temp = (coeff >> (bits+FLINT_BITS-k));
-            temp2 = (coeff2 >> (bits+FLINT_BITS-k));
-            k = (k - FLINT_BITS);
-            // k < HALF_FLINT_BITS
-         } else
-         {
-            // k <= FLINT_BITS
-            if (k >= HALF_FLINT_BITS)
+            // if k >= HALF_FLINT_BITS store bottom HALF_FLINT_BITS bits
+            lower = (half_ulong) temp;
+            lower2 = (half_ulong) temp2;
+            k -= HALF_FLINT_BITS;
+            temp >>= HALF_FLINT_BITS;
+            temp2 >>= HALF_FLINT_BITS;
+               
+		      // k is now <= HALF_FLINT_BITS
+            while ((k < HALF_FLINT_BITS) && (coeff_m < end_point))
             {
-               // if k >= HALF_FLINT_BITS store bottom HALF_FLINT_BITS bits
-               lower = (half_ulong) temp;
-               lower2 = (half_ulong) temp2;
-               k -= HALF_FLINT_BITS;
+               NEXT_COEFF(*coeff_m, borrow, coeff, mask, negate);
+				   NEXT_COEFF(*coeff_m, borrow2, coeff2, mask, negate2);
+				   negate2 = -negate2 - 1L;
+				   temp+=(coeff << k);
+               temp2+=(coeff2 << k);
+               coeff_m++; k += bits;
+            }
+
+            // k may again exceed FLINT_BITS bits but is less than 3*HALF_FLINT_BITS
+            if (k > FLINT_BITS)
+            {
+               // if k > FLINT_BITS, write out bottom HALF_FLINT_BITS bits (along with HALF_FLINT_BITS bits from lower)
+               // read remaining bits from coeff and reduce k by HALF_FLINT_BITS
+               array[skip] = (temp << HALF_FLINT_BITS) + (ulong) lower;
+               array2[skip] = (temp2 << HALF_FLINT_BITS) + (ulong) lower2;
+               skip++;
                temp >>= HALF_FLINT_BITS;
                temp2 >>= HALF_FLINT_BITS;
-               
-					// k is now <= HALF_FLINT_BITS
-               while ((k < HALF_FLINT_BITS) && (coeff_m < end_point))
-               {
-                  NEXT_COEFF(*coeff_m, borrow, coeff, mask, negate);
-				      NEXT_COEFF(*coeff_m, borrow2, coeff2, mask, negate2);
-						negate2 = -negate2 - 1L;
-				      //if (sign) 
-						temp+=(coeff << k);
-                  temp2+=(coeff2 << k);
-                  //else temp+=(__get_next_coeff_unsigned(coeff_m, &coeff) << k);
-                  coeff_m++; k += bits;
-               }
+               temp += ((coeff >> (bits+FLINT_BITS-k)) << HALF_FLINT_BITS);
+               temp2 += ((coeff2 >> (bits+FLINT_BITS-k)) << HALF_FLINT_BITS);
+               k = (k - HALF_FLINT_BITS);
+               // k < FLINT_BITS and we are ready to read next coefficient if there is one
+            } else if (k >= HALF_FLINT_BITS) 
+            {
+               // k <= FLINT_BITS
+               // if k >= HALF_FLINT_BITS write out bottom HALF_FLINT_BITS bits (along with lower)
+               // and reduce k by HALF_FLINT_BITS
+               k -= HALF_FLINT_BITS;
+               array[skip] = (temp << HALF_FLINT_BITS) + lower;
+               array2[skip] = (temp2 << HALF_FLINT_BITS) + lower2;
+               temp >>= HALF_FLINT_BITS;
+               temp2 >>= HALF_FLINT_BITS;
+               skip++;
+               // k is now less than or equal to HALF_FLINT_BITS and we are now ready to read 
+               // the next coefficient if there is one
+            } else
+            {
+               // k < HALF_FLINT_BITS
+               // there isn't enough to write out a whole FLINT_BITS bits, so put it all 
+               // together in temp
+               temp = (temp << HALF_FLINT_BITS) + lower;
+               temp2 = (temp2 << HALF_FLINT_BITS) + lower2;
+               k += HALF_FLINT_BITS;
+               // k is now guaranteed to be less than FLINT_BITS and we are ready for the
+               // next coefficient if there is one
+            }
+         } // if
+      } // else
+   } // while
 
-               // k may again exceed FLINT_BITS bits but is less than 3*HALF_FLINT_BITS
-               if (k > FLINT_BITS)
-               {
-                  // if k > FLINT_BITS, write out bottom HALF_FLINT_BITS bits (along with HALF_FLINT_BITS bits from lower)
-                  // read remaining bits from coeff and reduce k by HALF_FLINT_BITS
-                  array[skip] = (temp << HALF_FLINT_BITS) + (ulong) lower;
-                  array2[skip] = (temp2 << HALF_FLINT_BITS) + (ulong) lower2;
-                  skip++;
-                  temp >>= HALF_FLINT_BITS;
-                  temp2 >>= HALF_FLINT_BITS;
-                  temp += ((coeff >> (bits+FLINT_BITS-k)) << HALF_FLINT_BITS);
-                  temp2 += ((coeff2 >> (bits+FLINT_BITS-k)) << HALF_FLINT_BITS);
-                  k = (k - HALF_FLINT_BITS);
-                  // k < FLINT_BITS and we are ready to read next coefficient if there is one
-               } else if (k >= HALF_FLINT_BITS) 
-               {
-                  // k <= FLINT_BITS
-                  // if k >= HALF_FLINT_BITS write out bottom HALF_FLINT_BITS bits (along with lower)
-                  // and reduce k by HALF_FLINT_BITS
-                  k -= HALF_FLINT_BITS;
-                  array[skip] = (temp << HALF_FLINT_BITS) + lower;
-                  array2[skip] = (temp2 << HALF_FLINT_BITS) + lower2;
-                  temp >>= HALF_FLINT_BITS;
-                  temp2 >>= HALF_FLINT_BITS;
-                  skip++;
-                  // k is now less than or equal to HALF_FLINT_BITS and we are now ready to read 
-                  // the next coefficient if there is one
-               } else
-               {
-                  // k < HALF_FLINT_BITS
-                  // there isn't enough to write out a whole FLINT_BITS bits, so put it all 
-                  // together in temp
-                  temp = (temp << HALF_FLINT_BITS) + lower;
-                  temp2 = (temp2 << HALF_FLINT_BITS) + lower2;
-                  k += HALF_FLINT_BITS;
-                  // k is now guaranteed to be less than FLINT_BITS and we are ready for the
-                  // next coefficient if there is one
-               }
-            } // if
-         } // else
-      } // while
-
-      // sign extend the last FLINT_BITS bits we write out
-      if (skip < n)
-      {
-        //if (borrow) temp+= (-1UL << k);
-        array[skip] = temp;
-        array2[skip] = temp2;
-        skip++;
-      } 
-}*/
-
+   // sign extend the last FLINT_BITS bits we write out
+   if (skip < n)
+   {
+      array[skip] = temp;
+      array2[skip] = temp2;
+      skip++;
+   } 
+}
 
 /*===============================================================================
 
@@ -1560,7 +1600,7 @@ void F_mpz_poly_bit_unpack_unsigned(F_mpz_poly_t poly_F_mpz, const mp_limb_t * a
 
 ================================================================================*/
 
-/*void _F_mpz_poly_mul_KS(F_mpz_poly_t output, const F_mpz_poly_t input1, const F_mpz_poly_t input2)
+void _F_mpz_poly_mul_KS(F_mpz_poly_t output, const F_mpz_poly_t input1, const F_mpz_poly_t input2)
 {
    long sign1 = 0L;
    long sign2 = 0L;
@@ -1575,28 +1615,28 @@ void F_mpz_poly_bit_unpack_unsigned(F_mpz_poly_t poly_F_mpz, const mp_limb_t * a
    long bits1, bits2;
    int bitpack = 0;
    
-   bits1 = F_mpz_poly_max_bits(input1);
-   bits2 = (input1 == input2) ? bits1 : F_mpz_poly_max_bits(input2);
+   bits1 = F_mpz_poly_max_bits1(input1);
+   bits2 = (input1 == input2) ? bits1 : F_mpz_poly_max_bits1(input2);
       
    ulong sign = ((bits1 < 0) || (bits2 < 0));
    ulong length = length2;
    ulong log_length = 0L;
    while ((1<<log_length) < length) log_length++;
-   ulong bits = ABS(bits1) + ABS(bits2) + log_length + sign; 
-   if (bits - sign <= FLINT_BITS - 2) bitpack = 1;
-   
-   if ((long) input1->coeffs[length1 - 1] < 0L) sign1 = -1L;
-   
-   if (input1 != input2)
-   {
-      if ((long) input2->coeffs[length2 - 1] < 0L) sign2 = -1L;
-   } else sign2 = sign1;
+   ulong bits = FLINT_ABS(bits1) + FLINT_ABS(bits2) + log_length + sign; 
+   if ((bits - sign <= FLINT_BITS - 2) && (bits1) && (bits2)) bitpack = 1;
    
    mp_limb_t * int1, * int2, * int3;
 	ulong n1, n2;
 
    if (bitpack)
    {
+      if (input1->coeffs[length1 - 1] < 0L) sign1 = -1L;
+   
+      if (input1 != input2)
+      {
+         if (input2->coeffs[length2 - 1] < 0L) sign2 = -1L;
+      } else sign2 = sign1;
+   
       n1 = (bits*length1 - 1)/FLINT_BITS + 1;
 		n2 = (bits*length2 - 1)/FLINT_BITS + 1;
 
@@ -1606,11 +1646,9 @@ void F_mpz_poly_bit_unpack_unsigned(F_mpz_poly_t poly_F_mpz, const mp_limb_t * a
         
       if (sign) 
 		{
-			bits = -1L*bits;
-         if (input1 != input2)
+			if (input1 != input2)
             F_mpz_poly_bit_pack(int2, n2, input2, bits, length2, sign2);
          F_mpz_poly_bit_pack(int1, n1, input1, bits, length1, sign1);
-         bits=ABS(bits);
 		} else
 		{
          if (input1 != input2)
@@ -1628,15 +1666,10 @@ void F_mpz_poly_bit_unpack_unsigned(F_mpz_poly_t poly_F_mpz, const mp_limb_t * a
    
    int3[n1 + n2 - 1] = msl;
    
-   output->length = length1 + length2 - 1;
-  
-   for (unsigned long i = 0; i < output->length; i++)
-      _F_mpz_zero(output, i);
-      
    if (bitpack)
    {
-      if (sign) F_mpz_poly_bit_unpack(output, int3, n1 + n2, length1 + length2 - 1, bits);  
-      else F_mpz_poly_bit_unpack_unsigned(output, int3, n1 + n2, length1 + length2 - 1, bits);  
+      if (sign) F_mpz_poly_bit_unpack(output, int3, length1 + length2 - 1, bits);  
+      else F_mpz_poly_bit_unpack_unsigned(output, int3, length1 + length2 - 1, bits);  
    } 
 	
    flint_stack_release(); // release int3
@@ -1644,8 +1677,8 @@ void F_mpz_poly_bit_unpack_unsigned(F_mpz_poly_t poly_F_mpz, const mp_limb_t * a
       flint_stack_release(); // release int2
    flint_stack_release(); // release int1
      
-   if ((long) (sign1 ^ sign2) < 0L) F_mpz_poly_neg(output, output);
-}*/
+   if ((sign1 ^ sign2) < 0L) F_mpz_poly_neg(output, output);
+}
 
 /*
   David Harvey's KS2 algorithm.
@@ -1659,7 +1692,7 @@ void F_mpz_poly_bit_unpack_unsigned(F_mpz_poly_t poly_F_mpz, const mp_limb_t * a
   bracketed term has the odd coefficients. In both cases each of the output coefficients 
   of the multiplications can overflow right through the following (zero) coefficient.
 */
-/*void _F_mpz_poly_mul_KS2(F_mpz_poly_t output, const F_mpz_poly_t input1, const F_mpz_poly_t input2)
+void _F_mpz_poly_mul_KS2(F_mpz_poly_t output, const F_mpz_poly_t input1, const F_mpz_poly_t input2)
 {
    long sign1 = 0L;
 	long sign2 = 0L;
@@ -1672,13 +1705,13 @@ void F_mpz_poly_bit_unpack_unsigned(F_mpz_poly_t poly_F_mpz, const mp_limb_t * a
    
 	F_mpz_poly_fit_length(output, final_length);
 
-   if ((long) input1->coeffs[length1 - 1] < 0L) sign1 = -1L;
+   if (input1->coeffs[length1 - 1] < 0L) sign1 = -1L;
    if (length1 & 1) sign1a = sign1;
 	else sign1a = -sign1 - 1L;
 
    if (input1 != input2)
    {
-      if ((long) input2->coeffs[length2 - 1] < 0L) sign2 = -1L;
+      if (input2->coeffs[length2 - 1] < 0L) sign2 = -1L;
    } else sign2 = sign1;
    if (length2 & 1) sign2a = sign2;
 	else sign2a = -sign2 - 1L;
@@ -1693,8 +1726,8 @@ void F_mpz_poly_bit_unpack_unsigned(F_mpz_poly_t poly_F_mpz, const mp_limb_t * a
    ulong length = length2;
    ulong log_length = 0L;
    while ((1<<log_length) < length) log_length++;
-	ulong bits_max = FLINT_MAX(ABS(bits1), ABS(bits2));
-   ulong bits = FLINT_MAX(ABS(bits1) + ABS(bits2) + log_length + 1, 2*bits_max); 
+	ulong bits_max = FLINT_MAX(FLINT_ABS(bits1), FLINT_ABS(bits2));
+   ulong bits = FLINT_MAX(FLINT_ABS(bits1) + FLINT_ABS(bits2) + log_length + 1, 2*bits_max); 
 	if ((bits%2) == 1) bits++;
    
 	if (bits - sign <= FLINT_BITS - 2) bitpack = 1;
@@ -1715,12 +1748,10 @@ void F_mpz_poly_bit_unpack_unsigned(F_mpz_poly_t poly_F_mpz, const mp_limb_t * a
          int2b = (mp_limb_t*) flint_stack_alloc(n2);
 		}
 
-      bits = -1L*bits;
       if (input1 != input2)
          F_mpz_poly_bit_pack2(int2, int2b, n2, input2, bits, length2, sign2, sign2a);
       F_mpz_poly_bit_pack2(int1, int1b, n1, input1, bits, length1, sign1, sign1a);  
-      bits=ABS(bits);
-		bits *= 2;
+      bits *= 2;
    } 
 	
    if (input1 == input2)
@@ -1739,7 +1770,6 @@ void F_mpz_poly_bit_unpack_unsigned(F_mpz_poly_t poly_F_mpz, const mp_limb_t * a
 	msl = F_mpn_mul(int3b, int1b, n1, int2b, n2);	
 	int3b[n1 + n2 - 1] = msl;
    
-	F_mpn_clear(int4, n1 + n2);
 	if ((length1 ^ length2) & 1)
 	{
 	   mpn_add_n(int4, int3, int3b, n1 + n2);
@@ -1755,47 +1785,38 @@ void F_mpz_poly_bit_unpack_unsigned(F_mpz_poly_t poly_F_mpz, const mp_limb_t * a
 	}
    
    F_mpz_poly_t prod1, prod2;
-	F_mpz_poly_init2(prod1, (final_length + 1)/2);
-	F_mpz_poly_init2(prod2, (final_length + 1)/2);
+	F_mpz_poly_init2(prod1, (final_length + 1)/2 + 1);
+	F_mpz_poly_init2(prod2, final_length/2 + 1);
 
-	for (ulong i = 0; i < (final_length + 1)/2; i++)
-	{   
-		_F_mpz_zero(prod1, i);
-      _F_mpz_zero(prod2, i);
-	}
-
-	for (ulong i = 0; i < final_length; i++)
-	{   
-		_F_mpz_zero(output, i);
-	}
-
-   prod1->length = (final_length + 1)/2;
-	prod2->length = final_length/2;
-   
 	if (bitpack)
    {
-      F_mpz_poly_bit_unpack(prod1, int3, n1 + n2, (final_length + 1)/2, bits);  
-      F_mpz_poly_bit_unpack(prod2, int4, n1 + n2, final_length/2, bits);  
+      F_mpz_poly_bit_unpack(prod1, int3, (final_length + 1)/2, bits);  
+      F_mpz_poly_bit_unpack(prod2, int4, final_length/2, bits); 
+		_F_mpz_poly_set_length(prod1, (final_length + 1)/2); // Final coeffs may be
+		_F_mpz_poly_set_length(prod2, final_length/2); // zero followed by negative
    } 
    	
 	F_mpz_poly_interleave_small(output, prod1, prod2);
-   output->length = final_length;
-
+   
 	F_mpz_poly_clear(prod1);
    F_mpz_poly_clear(prod2);
 	
    flint_stack_release(); // release int4
    flint_stack_release(); // release int3b
    flint_stack_release(); // release int3
-   if (input1 != input2)
+
+   if (bitpack)
 	{
-		flint_stack_release(); // release int2b
-      flint_stack_release(); // release int2
+		if (input1 != input2)
+	   {
+		   flint_stack_release(); // release int2b
+         flint_stack_release(); // release int2
+	   }
+      flint_stack_release(); // release int1b
+      flint_stack_release(); // release int1
 	}
-   flint_stack_release(); // release int1b
-   flint_stack_release(); // release int1
-   
-	if ((long) (sign1 ^ sign2) < 0L) F_mpz_poly_neg(output, output);
+
+	if ((sign1 ^ sign2) < 0L) F_mpz_poly_neg(output, output);
 }
 
 void F_mpz_poly_mul_KS(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
@@ -1809,7 +1830,7 @@ void F_mpz_poly_mul_KS(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_p
 	if ((poly1 == res) || (poly2 == res)) // aliased inputs
 	{
 		F_mpz_poly_t output; // create temporary
-		F_mpz_poly_init(output);
+		F_mpz_poly_init2(output, poly1->length + poly2->length - 1);
 		if (poly1->length >= poly2->length) _F_mpz_poly_mul_KS(output, poly1, poly2);
 		else _F_mpz_poly_mul_KS(output, poly2, poly1);
 		F_mpz_poly_swap(output, res); // swap temporary with real output
@@ -1842,4 +1863,4 @@ void F_mpz_poly_mul_KS2(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_
 		if (poly1->length >= poly2->length) _F_mpz_poly_mul_KS2(res, poly1, poly2);
 		else _F_mpz_poly_mul_KS2(res, poly2, poly1);
 	}		
-}*/
+}

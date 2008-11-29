@@ -343,6 +343,15 @@ int F_mpz_poly_equal(const F_mpz_poly_t poly1, const F_mpz_poly_t poly2);
 ================================================================================*/
 
 /** 
+   \fn     long F_mpz_poly_max_bits1(const F_mpz_poly_t poly)
+   \brief  Returns zero if any of the coefficients of poly are mpz_t's. Otherwise,
+	        computes the largest number of bits n that any coefficient has and returns
+	        -n if a negative coefficient exists in poly, else it returns n. Zero is 
+			  returned for the zero polynomial.
+*/
+long F_mpz_poly_max_bits1(const F_mpz_poly_t poly);
+
+/** 
    \fn     long F_mpz_poly_max_bits(F_mpz_poly_t poly)
    \brief  Computes the largest number of bits n that any coefficient has and returns
 	        -n if a negative coefficient exists in poly, else it returns n. Zero is 
@@ -492,65 +501,66 @@ void F_mpz_poly_mul_karatsuba(F_mpz_poly_t res, F_mpz_poly_t poly1, F_mpz_poly_t
 
 /** 
    \fn     void F_mpz_poly_bit_pack(mp_limb_t * array, ulong n, const F_mpz_poly_t poly_F_mpz,
-                                           const long bitwidth, const ulong length, const long negate)
+                                           const ulong bits, const ulong length, const long negate)
 
    \brief  Pack length coefficients into the given array of limbs, with each coefficient 
-	        packed into a bitfield with the given bitwidth. If negate is -1L then each 
+	        packed into a bitfield with the given number of bits. If negate is -1L then each 
 			  coefficient will be negated before being packed. The array is sign extended to 
-			  the end of the array. If bitwidth is negative this means the coefficients 
-			  are expected to be signed. Each coefficient is stored in bit packed format in 
+			  the end of the array. Each coefficient is stored in bit packed format in 
 			  twos complement format and if negative, 1 is borrowed from the next coefficient
 			  before it is packed. The number of limbs in the array is n.
 */
 void F_mpz_poly_bit_pack(mp_limb_t * array, ulong n, const F_mpz_poly_t poly_F_mpz,
-                         const long bitwidth, const ulong length, const long negate);
+                         const ulong bits, const ulong length, const long negate);
 
 
 /** 
    \fn     void F_mpz_poly_bit_pack_unsigned(mp_limb_t * array, ulong n, const F_mpz_poly_t poly_F_mpz,
                                                                     const ulong bits, const ulong length)
 
-   \brief  Pack bundle coefficients at a time into the given array with each coefficient 
-	        packed into a bitfield with the given bitwidth. The number of limbs in the 
+   \brief  Pack length coefficients into the given array with each coefficient packed
+	        into a bitfield with the given number of bits. The number of limbs in the 
 			  array is n.
 */
 void F_mpz_poly_bit_pack_unsigned(mp_limb_t * array, ulong n, const F_mpz_poly_t poly_F_mpz,
                                                             const ulong bits, const ulong length);
 /** 
    \fn     void F_mpz_poly_bit_pack2(mp_limb_t * array, mp_limb_t * array2, ulong n, const F_mpz_poly_t poly_F_mpz, 
-                                            const long bitwidth, const ulong length, const long negate, long negate2)
+                                            const ulong bits, const ulong length, const long negate, long negate2)
 
    \brief  As for F_mpz_poly_bit_pack, except that two arrays are packed. The second
-	        is packed from the same data, except the signs are alternated before packing, starting
-			  with the sign given by negative2 for the constant coefficient.
+	        is packed from the same data, except the signs are alternated before packing, 
+			  starting with the sign given by negative2 for the constant coefficient.
 
 */
 void F_mpz_poly_bit_pack2(mp_limb_t * array, mp_limb_t * array2, ulong n, const F_mpz_poly_t poly_F_mpz, 
-                                 const long bitwidth, const ulong length, const long negate, long negate2);
+                                 const ulong bits, const ulong length, const long negate, long negate2);
 
 /** 
-   \fn     void F_mpz_poly_bit_unpack(F_mpz_poly_t poly_F_mpz, const mp_limb_t * array, ulong n,
+   \fn     void F_mpz_poly_bit_unpack(F_mpz_poly_t poly_F_mpz, const mp_limb_t * array, 
                                                     const ulong bundle, const ulong bits);
    \brief  Coefficients are unpacked from the array from fields of the given number
 	        of bits in width. The coefficients are assumed to be signed. If a negative 
 			  coefficient is unpacked, the next coefficient gets 1 added to it for the borrow
 			  that was effectively made by that previous coefficient. The output coefficients 
 			  are written to the coefficients of the F_mpz_poly_t poly_F_mpz, and a total of
-			  length coefficients will be written.
+			  length coefficients will be written unless there is a final zero coefficient with
+			  a borrow, in which case length + 1 coefficients will be written.
 */
-void F_mpz_poly_bit_unpack(F_mpz_poly_t poly_F_mpz, const mp_limb_t * array, ulong n,
+void F_mpz_poly_bit_unpack(F_mpz_poly_t poly_F_mpz, const mp_limb_t * array,
                                                     const ulong length, const ulong bits);
 
 /** 
-   \fn     void F_mpz_poly_bit_unpack_unsigned(F_mpz_poly_t poly_F_mpz, const mp_limb_t * array, ulong n, 
+   \fn     void F_mpz_poly_bit_unpack_unsigned(F_mpz_poly_t poly_F_mpz, const mp_limb_t * array,  
                                                                      const ulong length, const ulong bits)
 
    \brief  Coefficients are unpacked from the array from fields of the given number
 	        of bits in width. The coefficients are assumed to be unsigned. The output coefficients 
 			  are written to the coefficients of the F_mpz_poly_t poly_F_mpz. A total of length
-			  coefficients will be written.
+			  coefficients will be written unless the final coefficient is 0 and there is a borrow
+			  in which case length + 1 coefficients will be written.
 */
-void F_mpz_poly_bit_unpack_unsigned(F_mpz_poly_t poly_F_mpz, const mp_limb_t * array, ulong n, 
+void F_mpz_poly_bit_unpack_unsigned(F_mpz_poly_t poly_F_mpz, const mp_limb_t * array, 
                                                              const ulong length, const ulong bits);
 
 /** 

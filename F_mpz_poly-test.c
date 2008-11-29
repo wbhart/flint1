@@ -790,6 +790,53 @@ int test_F_mpz_poly_max_bits()
    return result;
 }
 
+int test_F_mpz_poly_max_bits1()
+{
+   mpz_poly_t m_poly1;
+   F_mpz_poly_t F_poly;
+   int result = 1;
+   ulong bits, length, next_bits;
+	long sign, mpz_bits, test_bits;
+   
+   mpz_poly_init(m_poly1); 
+   
+   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1) ; count1++)
+   {
+      F_mpz_poly_init(F_poly);
+
+      bits = z_randint(FLINT_BITS-2) + 1;
+      length = z_randint(100);
+      mpz_randpoly(m_poly1, length, bits);
+           
+      mpz_poly_to_F_mpz_poly(F_poly, m_poly1);
+      
+		mpz_bits = 0;
+      sign = 1L;
+      for (ulong i = 0; i < m_poly1->length; i++)
+      {
+         next_bits = mpz_sizeinbase(m_poly1->coeffs[i], 2);
+         if (next_bits > mpz_bits) mpz_bits = next_bits;
+         if (mpz_sgn(m_poly1->coeffs[i]) < 0L) sign = -1L;
+      }
+      mpz_bits = sign*mpz_bits;
+
+		test_bits = F_mpz_poly_max_bits1(F_poly);
+          
+      result = (mpz_bits == test_bits); 
+		if (!result) 
+		{
+			printf("Error: length = %ld, bits = %ld, m_poly1->length = %ld\n", length, bits, m_poly1->length);
+         printf("mpz_bits = %ld, test_bits = %ld\n", mpz_bits, test_bits);
+		}
+          
+      F_mpz_poly_clear(F_poly);
+   }
+   
+   mpz_poly_clear(m_poly1);
+   
+   return result;
+}
+
 int test_F_mpz_poly_max_limbs()
 {
    mpz_poly_t m_poly1;
@@ -1358,7 +1405,7 @@ int test_F_mpz_poly_mul_classical()
    mpz_poly_init(res1); 
    mpz_poly_init(res2); 
 
-   for (ulong count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
+   for (ulong count1 = 0; (count1 < 500*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -1367,7 +1414,7 @@ int test_F_mpz_poly_mul_classical()
 		bits1 = z_randint(200) + 1;
       bits2 = z_randint(200) + 1;
       length1 = z_randint(100);
-      length2 = z_randint(100);
+		length2 = z_randint(100);
       mpz_randpoly(m_poly1, length1, bits1);
       mpz_randpoly(m_poly2, length2, bits2);
            
@@ -1637,67 +1684,45 @@ int test_F_mpz_poly_mul_karatsuba()
    return result;
 }
 
-/*int test_F_mpz_poly_bit_pack()
+int test_F_mpz_poly_bit_pack()
 {
    mpz_poly_t m_poly, m_poly2;
    F_mpz_poly_t F_poly, F_poly2;
-   ZmodF_poly_t ZmF_poly;
-   int result = 1;
-   ulong bits, length, depth, bundle;
+   mp_limb_t * array;
+	int result = 1;
+   ulong bits, length, depth;
    
    mpz_poly_init(m_poly); 
    mpz_poly_init(m_poly2); 
 
    for (ulong count1 = 0; (count1 < 500) && (result == 1) ; count1++)
    {
-      bits = z_randint(FLINT_BITS-4)+ 2;
+      bits = z_randint(FLINT_BITS - 4) + 2;
       
-      F_mpz_poly_init(F_poly);
-      F_mpz_poly_init(F_poly2);
-
       length = z_randint(1000)+1;
-      bundle = length/5;
-      if (bundle == 0) bundle = length;
-      depth = 0;
-      while ((1<<depth) < (length-1)/bundle + 1) depth++;
-
-		F_mpz_poly_fit_length(F_poly, length);
-      F_mpz_poly_fit_length(F_poly2, length);
-         
+      
+		F_mpz_poly_init2(F_poly, length);
+      F_mpz_poly_init2(F_poly2, length);
+   
       do mpz_randpoly(m_poly, length, bits - 1);
       while (m_poly->length < length);
           
-      for (ulong i = bundle - 1; i < length; i += bundle)
-      {
-         if (mpz_sgn(m_poly->coeffs[i]) < 0) // Final coeff in each bundle must be positive
-            mpz_neg(m_poly->coeffs[i], m_poly->coeffs[i]);
-         if (mpz_sgn(m_poly->coeffs[i]) == 0) 
-            mpz_set_ui(m_poly->coeffs[i], 1);
-      }
-      
-		if (mpz_sgn(m_poly->coeffs[length - 1]) < 0) 
-         mpz_neg(m_poly->coeffs[length - 1], m_poly->coeffs[length - 1]);
-      if (mpz_sgn(m_poly->coeffs[length - 1]) == 0) 
-         mpz_set_ui(m_poly->coeffs[length-1], 1);
-
       mpz_poly_to_F_mpz_poly(F_poly, m_poly);
-      ZmodF_poly_init(ZmF_poly, depth, (bits*bundle - 1)/FLINT_BITS + 1, 0);
+      ulong n = (bits*length - 1)/FLINT_BITS + 1;
+		array = flint_heap_alloc(n);
           
-      F_mpz_poly_bit_pack(ZmF_poly, F_poly, bundle, -bits, length, 0L);
+      F_mpz_poly_bit_pack(array, n, F_poly, bits, length, 0L);
       F_poly2->length = length;
           
-      for (ulong i = 0; i < length; i++) // Must clear coeffs in advance
-         _F_mpz_zero(F_poly2, i); 
-             
-      F_mpz_poly_bit_unpack(F_poly2, ZmF_poly, bundle, bits); 
+      F_mpz_poly_bit_unpack(F_poly2, array, length, bits); 
       F_mpz_poly_to_mpz_poly(m_poly2, F_poly2);
           
-      ZmodF_poly_clear(ZmF_poly);          
+      flint_heap_free(array);          
           
 		result = mpz_poly_equal(m_poly, m_poly2);
       if (!result) 
 		{
-			printf("Error: length = %ld, bits = %ld, bundle = %ld\n", length, bits, bundle);
+			printf("Error: length = %ld, bits = %ld\n", length, bits);
          mpz_poly_print_pretty(m_poly, "x"); printf("\n");
          mpz_poly_print_pretty(m_poly2, "x"); printf("\n");
 		}
@@ -1709,55 +1734,32 @@ int test_F_mpz_poly_mul_karatsuba()
    // try negating the coefficients
 	for (ulong count1 = 0; (count1 < 500) && (result == 1) ; count1++)
    {
-      bits = z_randint(FLINT_BITS-4)+ 2;
-      
-      F_mpz_poly_init(F_poly);
-      F_mpz_poly_init(F_poly2);
-
+      bits = z_randint(FLINT_BITS - 4) + 2;
       length = z_randint(1000)+1;
-      bundle = length/5;
-      if (bundle == 0) bundle = length;
-      depth = 0;
-      while ((1<<depth) < (length-1)/bundle + 1) depth++;
-
-		F_mpz_poly_fit_length(F_poly, length);
-      F_mpz_poly_fit_length(F_poly2, length);
-         
+      
+      F_mpz_poly_init2(F_poly, length);
+      F_mpz_poly_init2(F_poly2, length);
+    
       do mpz_randpoly(m_poly, length, bits - 1);
       while (m_poly->length < length);
           
-      for (ulong i = bundle - 1; i < length; i += bundle)
-      {
-         if (mpz_sgn(m_poly->coeffs[i]) > 0) // Final coeff in each bundle must be negative
-            mpz_neg(m_poly->coeffs[i], m_poly->coeffs[i]);
-         if (mpz_sgn(m_poly->coeffs[i]) == 0) 
-            mpz_set_si(m_poly->coeffs[i], -1L);
-      }
-      
-		if (mpz_sgn(m_poly->coeffs[length - 1]) > 0) 
-         mpz_neg(m_poly->coeffs[length - 1], m_poly->coeffs[length - 1]);
-      if (mpz_sgn(m_poly->coeffs[length - 1]) == 0) 
-         mpz_set_si(m_poly->coeffs[length-1], -1);
-
       mpz_poly_to_F_mpz_poly(F_poly, m_poly);
-      ZmodF_poly_init(ZmF_poly, depth, (bits*bundle - 1)/FLINT_BITS + 1, 0);
+      ulong n = (bits*length - 1)/FLINT_BITS + 1;
+		array = flint_heap_alloc(n);
           
-      F_mpz_poly_bit_pack(ZmF_poly, F_poly, bundle, -bits, length, -1L);
+      F_mpz_poly_bit_pack(array, n, F_poly, bits, length, -1L);
       F_poly2->length = length;
           
-      for (ulong i = 0; i < length; i++) // Must clear coeffs in advance
-         _F_mpz_zero(F_poly2, i); 
-             
-      F_mpz_poly_bit_unpack(F_poly2, ZmF_poly, bundle, bits); 
-		F_mpz_poly_neg(F_poly2, F_poly2);
+      F_mpz_poly_bit_unpack(F_poly2, array, length, bits); 
+      F_mpz_poly_neg(F_poly2, F_poly2);
       F_mpz_poly_to_mpz_poly(m_poly2, F_poly2);
           
-      ZmodF_poly_clear(ZmF_poly);          
+      flint_heap_free(array);          
           
 		result = mpz_poly_equal(m_poly, m_poly2);
       if (!result) 
 		{
-			printf("Error: length = %ld, bits = %ld, bundle = %ld\n", length, bits, bundle);
+			printf("Error: length = %ld, bits = %ld\n", length, bits);
          mpz_poly_print_pretty(m_poly, "x"); printf("\n");
          mpz_poly_print_pretty(m_poly2, "x"); printf("\n");
 		}
@@ -1776,59 +1778,41 @@ int test_F_mpz_poly_bit_pack_unsigned()
 {
    mpz_poly_t m_poly, m_poly2;
    F_mpz_poly_t F_poly, F_poly2;
-   ZmodF_poly_t ZmF_poly;
-   int result = 1;
-   ulong bits, length, depth, bundle;
+   mp_limb_t * array;
+	int result = 1;
+   ulong bits, length, depth;
    
    mpz_poly_init(m_poly); 
    mpz_poly_init(m_poly2); 
 
-   for (ulong count1 = 0; (count1 < 1500) && (result == 1) ; count1++)
+   for (ulong count1 = 0; (count1 < 500) && (result == 1) ; count1++)
    {
-      bits = z_randint(FLINT_BITS-4)+ 2;
+      bits = z_randint(FLINT_BITS - 4) + 2;
       
-      F_mpz_poly_init(F_poly);
-      F_mpz_poly_init(F_poly2);
-
       length = z_randint(1000)+1;
-      bundle = length/5;
-      if (bundle == 0) bundle = length;
-      depth = 0;
-      while ((1<<depth) < (length-1)/bundle + 1) depth++;
-
-		F_mpz_poly_fit_length(F_poly, length);
-      F_mpz_poly_fit_length(F_poly2, length);
-         
+      
+		F_mpz_poly_init2(F_poly, length);
+      F_mpz_poly_init2(F_poly2, length);
+   
       do mpz_randpoly_unsigned(m_poly, length, bits - 1);
       while (m_poly->length < length);
           
-      for (ulong i = bundle - 1; i < length; i += bundle)
-      {
-         if (mpz_sgn(m_poly->coeffs[i]) == 0) 
-            mpz_set_ui(m_poly->coeffs[i], 1);
-      }
-      
-		if (mpz_sgn(m_poly->coeffs[length - 1]) == 0) 
-         mpz_set_ui(m_poly->coeffs[length-1], 1);
-
       mpz_poly_to_F_mpz_poly(F_poly, m_poly);
-      ZmodF_poly_init(ZmF_poly, depth, (bits*bundle - 1)/FLINT_BITS + 1, 0);
+      ulong n = (bits*length - 1)/FLINT_BITS + 1;
+		array = flint_heap_alloc(n);
           
-      F_mpz_poly_bit_pack_unsigned(ZmF_poly, F_poly, bundle, bits, length, 0L);
+      F_mpz_poly_bit_pack_unsigned(array, n, F_poly, bits, length);
       F_poly2->length = length;
-          
-      for (ulong i = 0; i < length; i++) // Must clear coeffs in advance
-         _F_mpz_zero(F_poly2, i); 
-             
-      F_mpz_poly_bit_unpack_unsigned(F_poly2, ZmF_poly, bundle, bits); 
+                
+      F_mpz_poly_bit_unpack_unsigned(F_poly2, array, length, bits); 
       F_mpz_poly_to_mpz_poly(m_poly2, F_poly2);
           
-      ZmodF_poly_clear(ZmF_poly);          
+      flint_heap_free(array);          
           
 		result = mpz_poly_equal(m_poly, m_poly2);
       if (!result) 
 		{
-			printf("Error: length = %ld, bits = %ld, bundle = %ld\n", length, bits, bundle);
+			printf("Error: length = %ld, bits = %ld\n", length, bits);
          mpz_poly_print_pretty(m_poly, "x"); printf("\n");
          mpz_poly_print_pretty(m_poly2, "x"); printf("\n");
 		}
@@ -1836,7 +1820,7 @@ int test_F_mpz_poly_bit_pack_unsigned()
       F_mpz_poly_clear(F_poly);
       F_mpz_poly_clear(F_poly2);
    }
-
+   
    mpz_poly_clear(m_poly);
    mpz_poly_clear(m_poly2);
    
@@ -1847,8 +1831,8 @@ int test_F_mpz_poly_bit_pack2()
 {
    mpz_poly_t m_poly, m_poly2, m_poly3;
    F_mpz_poly_t F_poly, F_poly2, F_poly3;
-   ZmodF_poly_t ZmF_poly, ZmF_poly2;
-   int result = 1;
+   mp_limb_t * array1, * array2;
+	int result = 1;
    ulong bits, length, depth, bundle;
    
    mpz_poly_init(m_poly); 
@@ -1863,12 +1847,8 @@ int test_F_mpz_poly_bit_pack2()
       F_mpz_poly_init(F_poly2);
       F_mpz_poly_init(F_poly3);
       
-      length = z_randint(100)+1;
-      bundle = length/5;
-      if (bundle == 0) bundle = length;
-      depth = 0;
-      while ((1<<depth) < (length-1)/bundle + 1) depth++;
-
+      length = z_randint(1000)+1;
+      
 		F_mpz_poly_fit_length(F_poly, length);
       F_mpz_poly_fit_length(F_poly2, length);
       F_mpz_poly_fit_length(F_poly3, length);
@@ -1878,37 +1858,30 @@ int test_F_mpz_poly_bit_pack2()
       
       mpz_poly_to_F_mpz_poly(F_poly, m_poly);
       
-      ZmodF_poly_init(ZmF_poly, depth, (bits*bundle - 1)/FLINT_BITS + 1, 0);
-      ZmodF_poly_init(ZmF_poly2, depth, (bits*bundle - 1)/FLINT_BITS + 1, 0);
+      ulong n = (bits*length - 1)/FLINT_BITS + 1;
+		array1 = flint_heap_alloc(n);
+      array2 = flint_heap_alloc(n);
           
-      F_mpz_poly_bit_pack2(ZmF_poly, ZmF_poly2, F_poly, bundle, -bits, length, 0L, 0L);
-      
-		F_poly2->length = length;
-      F_poly3->length = length;
-          
-      for (ulong i = 0; i < length; i++) // Must clear coeffs in advance
-		{
-			_F_mpz_zero(F_poly2, i); 
-         _F_mpz_zero(F_poly3, i); 
-		}
+      F_mpz_poly_bit_pack2(array1, array2, n, F_poly, bits, length, 0L, 0L);
              
-      F_mpz_poly_bit_unpack(F_poly2, ZmF_poly, bundle, bits); 
+      F_mpz_poly_bit_unpack(F_poly2, array1, length, bits); 
       F_mpz_poly_to_mpz_poly(m_poly2, F_poly2);
           
-      F_mpz_poly_bit_unpack(F_poly3, ZmF_poly2, bundle, bits); 
+      F_mpz_poly_bit_unpack(F_poly3, array2, length, bits); 
       F_mpz_poly_to_mpz_poly(m_poly3, F_poly3);
 
 		for (ulong i = 0; i < m_poly3->length; i++)
 			if (i%2 == 1) mpz_neg(m_poly3->coeffs[i], m_poly3->coeffs[i]);
           
-      ZmodF_poly_clear(ZmF_poly);          
+      flint_heap_free(array1);          
+      flint_heap_free(array2);          
           
 		result &= mpz_poly_equal(m_poly, m_poly2);
       result &= mpz_poly_equal(m_poly, m_poly3);
 
       if (!result) 
 		{
-			printf("Error: length = %ld, bits = %ld, bundle = %ld\n", length, bits, bundle);
+			printf("Error: length = %ld, bits = %ld\n", length, bits);
          mpz_poly_print_pretty(m_poly, "x"); printf("\n\n");
          mpz_poly_print_pretty(m_poly2, "x"); printf("\n\n");
          mpz_poly_print_pretty(m_poly3, "x"); printf("\n\n");
@@ -2284,7 +2257,7 @@ int test_F_mpz_poly_mul_KS2()
    mpz_poly_clear(m_poly2);
    
    return result;
-}*/
+}
 
 void F_mpz_poly_test_all()
 {
@@ -2300,7 +2273,8 @@ void F_mpz_poly_test_all()
    RUN_TEST(F_mpz_poly_set); 
    RUN_TEST(F_mpz_poly_equal); 
    RUN_TEST(F_mpz_poly_swap); 
-	RUN_TEST(F_mpz_poly_max_bits);
+	RUN_TEST(F_mpz_poly_max_bits1);
+   RUN_TEST(F_mpz_poly_max_bits);
    RUN_TEST(F_mpz_poly_max_limbs); 
    RUN_TEST(F_mpz_poly_neg);
 	RUN_TEST(F_mpz_poly_reverse); 
@@ -2312,11 +2286,11 @@ void F_mpz_poly_test_all()
    RUN_TEST(F_mpz_poly_scalar_mul); 
    RUN_TEST(F_mpz_poly_mul_classical); 
    RUN_TEST(F_mpz_poly_mul_karatsuba); 
-	//RUN_TEST(F_mpz_poly_bit_pack);
-   //RUN_TEST(F_mpz_poly_bit_pack2);
-   //RUN_TEST(F_mpz_poly_bit_pack_unsigned);
-   //RUN_TEST(F_mpz_poly_mul_KS); 
-	//RUN_TEST(F_mpz_poly_mul_KS2);
+	RUN_TEST(F_mpz_poly_bit_pack);
+   RUN_TEST(F_mpz_poly_bit_pack_unsigned);
+   RUN_TEST(F_mpz_poly_bit_pack2);
+   RUN_TEST(F_mpz_poly_mul_KS); 
+	RUN_TEST(F_mpz_poly_mul_KS2);
 	
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");
