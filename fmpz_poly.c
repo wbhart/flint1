@@ -6721,7 +6721,7 @@ void fmpz_poly_div_divconquer_recursive(fmpz_poly_t Q, fmpz_poly_t BQ, const fmp
       */
    
       fmpz_poly_fit_length(Q, FLINT_MAX(q1->length+shift, q2->length));
-      fmpz_poly_fit_limbs(Q, FLINT_MAX(q1->limbs, q2->limbs));
+      fmpz_poly_fit_limbs(Q, FLINT_MAX(FLINT_MAX(q1->limbs, q2->limbs), 1));
    
       _fmpz_poly_left_shift(Q, q1, shift);
       fmpz_poly_clear(q1);
@@ -7025,7 +7025,7 @@ void fmpz_poly_div_divconquer_recursive_low(fmpz_poly_t Q, fmpz_poly_t BQ, const
       */
    
       fmpz_poly_fit_length(Q, FLINT_MAX(q1->length+shift, q2->length));
-      fmpz_poly_fit_limbs(Q, FLINT_MAX(q1->limbs, q2->limbs));
+      fmpz_poly_fit_limbs(Q, FLINT_MAX(FLINT_MAX(q1->limbs, q2->limbs), 1));
    
       _fmpz_poly_left_shift(Q, q1, shift);
       fmpz_poly_clear(q1);
@@ -7140,7 +7140,7 @@ void fmpz_poly_div_divconquer_recursive_low(fmpz_poly_t Q, fmpz_poly_t BQ, const
    */
    
    fmpz_poly_fit_length(Q, FLINT_MAX(q1->length+n2, q2->length));
-   fmpz_poly_fit_limbs(Q, FLINT_MAX(q1->limbs, q2->limbs));
+   fmpz_poly_fit_limbs(Q, FLINT_MAX(FLINT_MAX(q1->limbs, q2->limbs), 1));
    _fmpz_poly_left_shift(Q, q1, n2);
    fmpz_poly_clear(q1);
    _fmpz_poly_add(Q, Q, q2);
@@ -7300,7 +7300,7 @@ void fmpz_poly_div_divconquer(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_pol
       */
    
       fmpz_poly_fit_length(Q, FLINT_MAX(q1->length+shift, q2->length));
-      fmpz_poly_fit_limbs(Q, FLINT_MAX(q1->limbs, q2->limbs));
+      fmpz_poly_fit_limbs(Q, FLINT_MAX(FLINT_MAX(q1->limbs, q2->limbs), 1));
    
       _fmpz_poly_left_shift(Q, q1, shift);
       fmpz_poly_clear(q1);
@@ -7395,7 +7395,7 @@ void fmpz_poly_div_divconquer(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_pol
    */
    
    fmpz_poly_fit_length(Q, q1->length+n2);
-   fmpz_poly_fit_limbs(Q, FLINT_MAX(q1->limbs, q2->limbs));
+   fmpz_poly_fit_limbs(Q, FLINT_MAX(FLINT_MAX(q1->limbs, q2->limbs), 1));
    _fmpz_poly_left_shift(Q, q1, n2);
    fmpz_poly_clear(q1);
    _fmpz_poly_add(Q, Q, q2);
@@ -7883,7 +7883,7 @@ void fmpz_poly_div_mulders(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t
    */
    
    fmpz_poly_fit_length(Q, FLINT_MAX(q1->length+n1, q2->length));
-   fmpz_poly_fit_limbs(Q, FLINT_MAX(q1->limbs, q2->limbs));
+   fmpz_poly_fit_limbs(Q, FLINT_MAX(FLINT_MAX(q1->limbs, q2->limbs), 1));
    _fmpz_poly_left_shift(Q, q1, n1);
    fmpz_poly_clear(q1);
    _fmpz_poly_add(Q, Q, q2);
@@ -8857,7 +8857,7 @@ void fmpz_poly_pseudo_divrem_recursive(fmpz_poly_t Q, fmpz_poly_t R, unsigned lo
       */
    
       fmpz_poly_fit_length(Q, q1->length+shift);
-      fmpz_poly_fit_limbs(Q, FLINT_MAX(q1->limbs + (s2*bits_B_lead)/FLINT_BITS+1, q2->limbs));
+      fmpz_poly_fit_limbs(Q, FLINT_MAX(FLINT_MAX(q1->limbs + (s2*bits_B_lead)/FLINT_BITS+1, q2->limbs), 1));
    
       pow = (fmpz_t) flint_stack_alloc((bits_B_lead*s2)/FLINT_BITS+2);
       fmpz_pow_ui(pow, B_lead, s2);
@@ -8955,7 +8955,7 @@ void fmpz_poly_pseudo_divrem_recursive(fmpz_poly_t Q, fmpz_poly_t R, unsigned lo
    */
    
    fmpz_poly_fit_length(Q, q1->length+n2);
-   fmpz_poly_fit_limbs(Q, FLINT_MAX(q1->limbs + (s2*bits_B_lead)/FLINT_BITS+1, q2->limbs));
+   fmpz_poly_fit_limbs(Q, FLINT_MAX(FLINT_MAX(q1->limbs + (s2*bits_B_lead)/FLINT_BITS+1, q2->limbs), 1));
    pow = (fmpz_t) flint_stack_alloc((bits_B_lead*s2)/FLINT_BITS+2);
    fmpz_pow_ui(pow, B_lead, s2);
    _fmpz_poly_scalar_mul_fmpz(Q, q1, pow);
@@ -9112,7 +9112,7 @@ void fmpz_poly_pseudo_div_recursive(fmpz_poly_t Q, unsigned long * d, const fmpz
       */
    
       fmpz_poly_fit_length(Q, q1->length+shift);
-      fmpz_poly_fit_limbs(Q, FLINT_MAX(q1->limbs + (s2*bits_B_lead)/FLINT_BITS+1, q2->limbs));
+      fmpz_poly_fit_limbs(Q, FLINT_MAX(FLINT_MAX(q1->limbs + (s2*bits_B_lead)/FLINT_BITS+1, q2->limbs), 1));
    
       pow = (fmpz_t) flint_stack_alloc((bits_B_lead*s2)/FLINT_BITS+2);
       fmpz_pow_ui(pow, B_lead, s2);
@@ -9210,7 +9210,7 @@ void fmpz_poly_pseudo_div_recursive(fmpz_poly_t Q, unsigned long * d, const fmpz
    */
    
    fmpz_poly_fit_length(Q, q1->length+n2);
-   fmpz_poly_fit_limbs(Q, FLINT_MAX(q1->limbs + (s2*bits_B_lead)/FLINT_BITS+1, q2->limbs));
+   fmpz_poly_fit_limbs(Q, FLINT_MAX(FLINT_MAX(q1->limbs + (s2*bits_B_lead)/FLINT_BITS+1, q2->limbs), 1));
    pow = (fmpz_t) flint_stack_alloc((bits_B_lead*s2)/FLINT_BITS+2);
    fmpz_pow_ui(pow, B_lead, s2);
    _fmpz_poly_scalar_mul_fmpz(Q, q1, pow);
