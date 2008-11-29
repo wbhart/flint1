@@ -396,3 +396,39 @@ to improve locality.
 * Speed up Lucas pseudoprime test for numbers less than 2^52 on 64 bit machine by using z_mod_precomp and z_mulmod_precomp instead of mod2 and mulmod2 versions.
 
 * Write z_isprobable_prime using unconditional test up to some tuned limit, followed by 2-SPRP and Lucas.
+
+FLINT 1.1
+=========
+
+put bound parameter into divides_modular
+rename bit/byte/limb_pack_1/16 functions correctly
+make proper tuned zmod_poly_gcd wrapper
+get rid of bit/byte/limb_pack into ZmodF_poly (careful, see ticket related to this)
+half_gcd for resultant and xgcd and gcd_invert
+propagate new division tricks, etc to other fmpz_poly_gcd functions
+check that bound is being used correctly in heuristic gcd to give proven result
+make new import/export word packing code work as byte packing code for various sized coefficients
+write proper heuristic style divides function and tune the various divides schemes
+write heuristic divrem and div function and tune wrappers to use it (also quasidiv?)
+tune fmpz_poly_gcd
+clean up interface for new functions
+do documentation for new functions
+write all necessary test functions
+check aliasing
+valgrind
+memory manager needs to be made thread safe
+F_mpz allocation of mpz's needs to be made threadsafe
+multimodular poly multn needs to be made thread safe
+powering bug as reported in trac
+make check should run all tests
+
+FLINT 2.0
+=========
+
+use FFT precaching in F_mpz_poly_scalar_mul
+F_mpz_mul2 rename
+test code for F_mpz_poly_interleave*
+test code for F_mpz_poly_bit_unpack2
+pass number of bits to F_mpz_poly_KS
+comment and developer document bit unpacking/packing code and KS2 and interleave*
+Cite David Harvey's paper on KS2 and KS4 on the website and in documentation
