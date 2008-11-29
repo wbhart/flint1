@@ -557,34 +557,35 @@ void F_mpz_poly_right_shift(F_mpz_poly_t res, const F_mpz_poly_t poly, const ulo
 
 ================================================================================*/
 
-/*void F_mpz_poly_interleave(F_mpz_poly_t res, F_mpz_poly_t poly1, F_mpz_poly_t poly2)
+void F_mpz_poly_interleave(F_mpz_poly_t res, F_mpz_poly_t poly1, F_mpz_poly_t poly2)
 {
 	ulong length = FLINT_MAX(2*poly1->length - 1, 2*poly2->length);
 	F_mpz_poly_fit_length(res, length + 1); // extra one in case length is odd
+	                                        // it will be set to zero
 
 	ulong shorter = FLINT_MIN(poly1->length, poly2->length);
    ulong i;
 
 	for (i = 0; i < shorter; i++)
 	{
-		_F_mpz_set(res, 2*i, poly1, i);
-		_F_mpz_set(res, 2*i+1, poly2, i);
+		F_mpz_set(res->coeffs + 2*i, poly1->coeffs + i);
+		F_mpz_set(res->coeffs + 2*i+1, poly2->coeffs + i);
 	}
 
    for ( ; i < poly1->length; i++)
 	{
-		_F_mpz_set(res, 2*i, poly1, i);
-		_F_mpz_zero(res, 2*i+1);
+		F_mpz_set(res->coeffs + 2*i, poly1->coeffs + i);
+		F_mpz_zero(res->coeffs + 2*i+1);
 	}
 
 	for ( ; i < poly2->length; i++)
 	{
-		_F_mpz_zero(res, 2*i);
-		_F_mpz_set(res, 2*i+1, poly2, i);
+		F_mpz_zero(res->coeffs + 2*i);
+		F_mpz_set(res->coeffs + 2*i+1, poly2->coeffs + i);
 	}
 
-	res->length = length;
-}*/
+	_F_mpz_poly_set_length(res, length);
+}
 
 void F_mpz_poly_interleave_small(F_mpz_poly_t res, F_mpz_poly_t poly1, F_mpz_poly_t poly2)
 {
@@ -1412,6 +1413,123 @@ void F_mpz_poly_bit_unpack(F_mpz_poly_t poly_F_mpz, const mp_limb_t * array,
 	}
 }
 
+void F_mpz_poly_bit_unpack2(F_mpz_poly_t poly_F_mpz, const mp_limb_t * array,
+                             const ulong length, const ulong bits, const ulong bits_off)
+{
+   ulong k, skip;
+
+   ulong temp;
+   ulong full_limb;
+   ulong carry;
+     
+   const ulong mask = (1UL << bits) - 1;
+   const ulong sign_mask = (1UL << (bits-1));
+
+   ulong s = bits_off;
+   mp_limb_t * coeff_m = poly_F_mpz->coeffs;
+   mp_limb_t * end_point;
+
+   k = 0; skip = 0; carry = 0UL; temp = 0L;
+   end_point = poly_F_mpz->coeffs + length;
+
+	if (bits_off)
+	{
+		// k is zero
+      // read in remainder of full_limb
+      full_limb = array[skip];
+      temp += r_shift(full_limb, s);
+      k = FLINT_BITS - s;
+
+      while ((k >= bits) && (coeff_m < end_point))
+      {
+         if (!(temp & sign_mask)) 
+         {
+            _F_mpz_demote(coeff_m);
+				*coeff_m = ((temp & mask) + carry);
+            carry = 0UL;
+         }
+         else
+         {
+            _F_mpz_demote(coeff_m);
+				*coeff_m = -(((-temp) & mask) - carry);
+			   carry = 1UL;
+         }
+            
+		   coeff_m ++;
+         temp >>= bits;
+         k -= bits;
+      }
+      
+		skip++;
+	}
+      
+   while (coeff_m < end_point)
+   {
+      // read in a full limb
+      full_limb = array[skip];
+      temp += l_shift(full_limb, k);
+      s = FLINT_BITS - k;
+      k += s;
+      while ((k >= bits) && (coeff_m < end_point))
+      {
+         if (!(temp & sign_mask)) 
+         {
+            _F_mpz_demote(coeff_m);
+				*coeff_m = ((temp & mask) + carry);
+            carry = 0UL;
+         }  
+         else
+         {
+            _F_mpz_demote(coeff_m);
+				*coeff_m = -(((-temp) & mask) - carry);
+            carry = 1UL;
+         }
+         coeff_m ++;
+         temp >>= bits;
+         k -= bits;
+      }
+
+      // k is now less than bits
+      // read in remainder of full_limb
+      temp += l_shift(r_shift(full_limb, s), k);
+      k += (FLINT_BITS - s);
+       
+      while ((k >= bits) && (coeff_m < end_point))
+      {
+         if (!(temp & sign_mask)) 
+         {
+            _F_mpz_demote(coeff_m);
+				*coeff_m = ((temp & mask) + carry);
+            carry = 0UL;
+         }
+         else
+         {
+            _F_mpz_demote(coeff_m);
+				*coeff_m = -(((-temp) & mask) - carry);
+			   carry = 1UL;
+         }
+            
+		   coeff_m ++;
+         temp >>= bits;
+         k -= bits;
+      }
+
+      // k is now less than bits
+      skip++;
+   }
+
+   if ((carry) && (poly_F_mpz->coeffs[length - 1] == 0))
+	{
+		_F_mpz_demote(coeff_m);
+		*coeff_m = 1L;
+      poly_F_mpz->length = length + 1;
+	} else
+	{
+		poly_F_mpz->length = length;
+		_F_mpz_poly_normalise(poly_F_mpz);
+	}
+}
+
 void F_mpz_poly_bit_unpack_unsigned(F_mpz_poly_t poly_F_mpz, const mp_limb_t * array, 
                                                              const ulong length, const ulong bits)
 {
@@ -1682,7 +1800,7 @@ void _F_mpz_poly_mul_KS(F_mpz_poly_t output, const F_mpz_poly_t input1, const F_
 
 /*
   David Harvey's KS2 algorithm.
-  This is faster than ordinary KS for about lengths 300-4000. (The overhead prevents it
+  This is faster than ordinary KS for about lengths 170-4000. (The overhead prevents it
   from being faster for smaller multiplications, the FFT's quasilinear run time prevents
   it from being faster for larger lengths).
   It uses the identity f(x)*g(x) = (f(x)*g(x) + f(-x)*g(-x))/2 + (f(x)*g(x) - f(-x)*g(-x))/2
@@ -1719,8 +1837,8 @@ void _F_mpz_poly_mul_KS2(F_mpz_poly_t output, const F_mpz_poly_t input1, const F
 	long bits1, bits2;
    int bitpack = 0;
    
-   bits1 = F_mpz_poly_max_bits(input1);
-   bits2 = (input1 == input2) ? bits1 : F_mpz_poly_max_bits(input2);
+   bits1 = F_mpz_poly_max_bits1(input1);
+   bits2 = (input1 == input2) ? bits1 : F_mpz_poly_max_bits1(input2);
       
    ulong sign = ((bits1 < 0) || (bits2 < 0));
    ulong length = length2;
@@ -1730,7 +1848,7 @@ void _F_mpz_poly_mul_KS2(F_mpz_poly_t output, const F_mpz_poly_t input1, const F
    ulong bits = FLINT_MAX(FLINT_ABS(bits1) + FLINT_ABS(bits2) + log_length + 1, 2*bits_max); 
 	if ((bits%2) == 1) bits++;
    
-	if (bits - sign <= FLINT_BITS - 2) bitpack = 1;
+	if ((bits - sign <= FLINT_BITS - 2) && (bits1) && (bits2)) bitpack = 1;
    
    mp_limb_t * int1, * int2, * int1b, * int2b, * int3, * int3b, * int4;
 	ulong n1, n2;
@@ -1760,9 +1878,12 @@ void _F_mpz_poly_mul_KS2(F_mpz_poly_t output, const F_mpz_poly_t input1, const F
 		int2b = int1b;
 	}
    
-   int3 = (mp_limb_t *) flint_stack_alloc(n1 + n2);
+   int3 = (mp_limb_t *) flint_stack_alloc(n1 + n2 + 1);
    int3b = (mp_limb_t *) flint_stack_alloc(n1 + n2);
-   int4 = (mp_limb_t *) flint_stack_alloc(n1 + n2);
+   int4 = (mp_limb_t *) flint_stack_alloc(n1 + n2 + 1);
+
+	int3[n1 + n2] = 0L; // unpacking code may read past the end
+   int4[n1 + n2] = 0L;
           
    mp_limb_t msl = F_mpn_mul(int3, int1, n1, int2, n2);   	
 	int3[n1 + n2 - 1] = msl;
@@ -1773,15 +1894,11 @@ void _F_mpz_poly_mul_KS2(F_mpz_poly_t output, const F_mpz_poly_t input1, const F
 	if ((length1 ^ length2) & 1)
 	{
 	   mpn_add_n(int4, int3, int3b, n1 + n2);
-      mpn_rshift(int4, int4, n1 + n2, 1 + bits/2);
-	   mpn_sub_n(int3, int3, int3b, n1 + n2);
-      mpn_rshift(int3, int3, n1 + n2, 1);
+      mpn_sub_n(int3, int3, int3b, n1 + n2);
 	} else
    {
 	   mpn_sub_n(int4, int3, int3b, n1 + n2);
-      mpn_rshift(int4, int4, n1 + n2, 1 + bits/2);
-	   mpn_add_n(int3, int3, int3b, n1 + n2);
-      mpn_rshift(int3, int3, n1 + n2, 1);
+      mpn_add_n(int3, int3, int3b, n1 + n2);
 	}
    
    F_mpz_poly_t prod1, prod2;
@@ -1790,8 +1907,8 @@ void _F_mpz_poly_mul_KS2(F_mpz_poly_t output, const F_mpz_poly_t input1, const F
 
 	if (bitpack)
    {
-      F_mpz_poly_bit_unpack(prod1, int3, (final_length + 1)/2, bits);  
-      F_mpz_poly_bit_unpack(prod2, int4, final_length/2, bits); 
+      F_mpz_poly_bit_unpack2(prod1, int3, (final_length + 1)/2, bits, 1);  
+      F_mpz_poly_bit_unpack2(prod2, int4, final_length/2, bits, 1 + bits/2); 
 		_F_mpz_poly_set_length(prod1, (final_length + 1)/2); // Final coeffs may be
 		_F_mpz_poly_set_length(prod2, final_length/2); // zero followed by negative
    } 
