@@ -58,7 +58,7 @@ ulong getShift(F_mpz_mat_t B)
    for (ulong i = 0; i < B->r; i++)
    {
       ulong j;
-      for (j = n - 1; j >= 0 && _F_mpz_entry_size(B, i, j) == 0L; j--);  
+      for (j = n - 1; j >= 0 && F_mpz_size(B->rows[i] + j) == 0L; j--);  
       
       if (shift < j - i) shift = j - i;
       
@@ -80,7 +80,7 @@ ulong getShift(F_mpz_mat_t B)
 
 void Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s, 
        double **appB, int *expo, double **appSP, 
-       int a, int zeros, int kappamax, int n, F_mpz_mat_t ztmp)
+       int a, int zeros, int kappamax, int n)
 {
    int i, j, k, test, aa, exponent;
    signed long xx;
@@ -225,10 +225,10 @@ void Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
 			         {
 			            if (xx > 0)
                      {
-                        F_mpz_mat_row_submul_2exp_ui(B, kappa, B, j, 0, n, (ulong) xx, exponent, ztmp);  
+                        F_mpz_mat_row_submul_2exp_ui(B, kappa, B, j, 0, n, (ulong) xx, exponent);  
                      } else
                      {
-                        F_mpz_mat_row_addmul_2exp_ui(B, kappa, B, j, 0, n, (ulong) -xx, exponent, ztmp);  
+                        F_mpz_mat_row_addmul_2exp_ui(B, kappa, B, j, 0, n, (ulong) -xx, exponent);  
                      }
 			            for (k = zeros + 1; k < j; k++)
 			            {
@@ -279,15 +279,12 @@ void LLL(F_mpz_mat_t B)
    double * s, * mutmp, * appBtmp, * appSPtmp;
    double tmp = 0.0;
    int * expo, * alpha;
-   F_mpz_mat_t ztmp;
    mp_limb_t * Btmp;
    
    n = B->c;
    d = B->r;
 	
-	F_mpz_mat_init(ztmp, 1, n);
-
-   ulong shift = getShift(B);
+	ulong shift = getShift(B);
 
    alpha = (int *) malloc(d * sizeof(int)); 
    expo = (int *) malloc(d * sizeof(int)); 
@@ -338,7 +335,7 @@ void LLL(F_mpz_mat_t B)
       /* ********************************** */   
 
       Babai(kappa, B, mu, r, s, appB, expo, appSP, alpha[kappa], zeros, 
-			                        kappamax, FLINT_MIN(kappamax + 1 + shift, n), ztmp); 
+			                        kappamax, FLINT_MIN(kappamax + 1 + shift, n)); 
       
       /* ************************************ */
       /* Step4: Success of Lovasz's condition */
@@ -450,7 +447,6 @@ void LLL(F_mpz_mat_t B)
   
    free(alpha);
    free(expo);
-   F_mpz_mat_clear(ztmp);
    d_mat_clear(mu);
    d_mat_clear(r);
    d_mat_clear(appB);

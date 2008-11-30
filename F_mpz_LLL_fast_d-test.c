@@ -29,6 +29,7 @@
 #include <limits.h>
 #include <gmp.h>
 
+#include "F_mpz.h"
 #include "F_mpz_mat.h"
 #include "F_mpz_LLL_fast_d.h"
 #include "test-support.h"
@@ -50,12 +51,12 @@ void intrel(F_mpz_mat_t B, int bits, int d)
    
    for (i = 0; i < d; i++)
    {
-      F_mpz_entry_random(B, i, 0, bits);
+      F_mpz_random(B->rows[i], bits);
       for (j = 1; j < i+1; j++)
-	     _F_mpz_entry_set_ui(B, i, j, 0L);
-      _F_mpz_entry_set_ui(B, i, i+1, 1L);
-      for (j = i+2; j < d+1; j++)
-	     _F_mpz_entry_set_ui(B, i, j, 0L);
+	     F_mpz_set_ui(B->rows[i] + j, 0L);
+      F_mpz_set_ui(B->rows[i] + i+1, 1L);
+      for (j = i + 2; j < d+1; j++)
+	     F_mpz_set_ui(B->rows[i] + j, 0L);
    }
 }
 
@@ -74,15 +75,15 @@ void simdioph(F_mpz_mat_t B, int bits, int bits2, int d)
 {
    int i, j;
 
-   _F_mpz_entry_set_ui(B, 0, 0, 1L);
-   _F_mpz_entry_mul_2exp(B, 0, 0, B, 0, 0, bits2);
-   for (i = 1; i < d+1; i++) F_mpz_entry_random(B, 0, i, bits);
+   F_mpz_set_ui(B->rows[0], 1L);
+   F_mpz_mul_2exp(B->rows[0], B->rows[0], bits2);
+   for (i = 1; i < d+1; i++) F_mpz_random(B->rows[0] + i, bits);
    for (i = 1; i < d+1; i++)
    {
-      for (j = 1; j < i; j++) _F_mpz_entry_set_ui(B, i, j, 0L);
-      _F_mpz_entry_set_ui(B, i, i, 1L);
-      _F_mpz_entry_mul_2exp(B, i, i, B, i, i, bits);
-      for (j = i + 1; j < d + 1; j++) _F_mpz_entry_set_ui(B, i, j, 0L);
+      for (j = 1; j < i; j++) F_mpz_set_ui(B->rows[i] + j, 0L);
+      F_mpz_set_ui(B->rows[i] + i, 1L);
+      F_mpz_mul_2exp(B->rows[i] + i, B->rows[i] + i, bits);
+      for (j = i + 1; j < d + 1; j++) F_mpz_set_ui(B->rows[i] + j, 0L);
    }
 }
 
@@ -101,19 +102,19 @@ void goldstein_mayer(F_mpz_mat_t B, int bits, int d)
 	do mpz_random(temp, bits);
    while ((mpz_probab_prime_p(temp, 10)) == 0);
 
-	_F_mpz_entry_set_mpz(B, 0, 0, temp);
+	F_mpz_set_mpz(B->rows[0] + 0, temp);
 
    for (i = 1; i < d; i++) 
-      _F_mpz_entry_set_ui(B, 0, i, 0L);
+      F_mpz_set_ui(B->rows[0] + i, 0L);
 
    for (i = 1; i < d; i++)
    {
-      F_mpz_entry_randomm(B, i, 0, temp);
+      F_mpz_randomm(B->rows[i], temp);
       for (j = 1; j < i; j++)
-	     _F_mpz_entry_set_ui(B, i, j, 0L);
-      _F_mpz_entry_set_ui(B, i, i, 1L);
+	     F_mpz_set_ui(B->rows[i] + j, 0L);
+      F_mpz_set_ui(B->rows[i] + i, 1L);
       for (j = i + 1; j < d; j++)
-	     _F_mpz_entry_set_ui(B, i, j, 0L);
+	     F_mpz_set_ui(B->rows[i] + j, 0L);
    }
 
 	mpz_clear(temp);
@@ -123,10 +124,10 @@ void uniform(F_mpz_mat_t B, int bits, int d)
 {
    int i, j;
 
-   for (i=0; i < d; i++)
+   for (i = 0; i < d; i++)
    {
      for (j = 0; j < d; j++)
-         F_mpz_entry_random(B, i, j, bits);
+         F_mpz_random(B->rows[i] + j, bits);
    }
 }
 
@@ -300,7 +301,7 @@ void uniform(F_mpz_mat_t B, int bits, int d)
 
 int main(int argc, char *argv[])
 {
-   gmp_randinit_default(state);
+   gmp_randinit_default(F_mpz_state);
    
    int d = 0, i, j, n, bits, bits2 = 0, decal;
    double alpha;
@@ -367,7 +368,7 @@ int main(int argc, char *argv[])
 	        fprintf (stderr, "Error at row %d: '[' expected instead of %c\n", i, c);
             abort();
 	     }
-	     for (j = 0; j < n; j++) F_mpz_entry_read(B, i, j);
+	     for (j = 0; j < n; j++) F_mpz_read(B->rows[i] + j);
 
 	     while (isspace(c = getchar ()) || c=='\n');
 	     if (c != ']')
@@ -444,7 +445,7 @@ int main(int argc, char *argv[])
    
    F_mpz_mat_clear(B);
    
-   gmp_randclear(state);
+   gmp_randclear(F_mpz_state);
 
    return 0;
 }

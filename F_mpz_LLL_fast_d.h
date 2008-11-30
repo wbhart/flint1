@@ -61,7 +61,7 @@ double halfplus, onedothalfplus, ctt;
 
 void Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s, 
                             double **appB, int *expo, double **appSP, 
-                         int a, int zeros, int kappamax, int n, F_mpz_mat_t ztmp);
+                         int a, int zeros, int kappamax, int n);
                          
 void LLL (F_mpz_mat_t B);
        

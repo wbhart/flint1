@@ -172,6 +172,24 @@ void F_mpz_clear(F_mpz_t f)
 
 /*===============================================================================
 
+	Random generation
+
+================================================================================*/
+
+/** 
+   \fn     void F_mpz_random(F_mpz_t f, const ulong bits)
+   \brief  Generate a random F_mpz_t with the given number of bits.
+*/
+void F_mpz_random(F_mpz_t f, const ulong bits);
+
+/** 
+   \fn     void F_mpz_random(F_mpz_t f, const ulong bits)
+   \brief  Generate a random F_mpz_t in [0, n) where n is an mpz_t.
+*/
+void F_mpz_randomm(F_mpz_t f, const mpz_t n);
+
+/*===============================================================================
+
 	Get/set
 
 ================================================================================*/
@@ -286,6 +304,10 @@ __mpz_struct * F_mpz_ptr_mpz(F_mpz f);
 
 ================================================================================*/
 
+/** 
+   \fn     void F_mpz_print(F_mpz_t x)
+   \brief  Print the given F_mpz_t to stdout.
+*/
 static inline 
 void F_mpz_print(F_mpz_t x)
 {
@@ -293,6 +315,11 @@ void F_mpz_print(F_mpz_t x)
 	else gmp_printf("%Zd", F_mpz_ptr_mpz(*x));
 }
 
+/** 
+   \fn     void F_mpz_print(F_mpz_t x)
+   \brief  Read an F_mpz_t from stdin. The integer can be a signed multiprecision
+	        integer in decimal format.
+*/
 void F_mpz_read(F_mpz_t f);
 
 
