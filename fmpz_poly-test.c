@@ -11211,7 +11211,9 @@ int test_fmpz_poly_gcd_modular()
          fmpz_poly_init(test_fmpz_poly5);
           
          fmpz_poly_gcd_subresultant(test_fmpz_poly4, test_fmpz_poly, test_fmpz_poly2);
+         if ((test_fmpz_poly4->length) && ((long) (_fmpz_poly_lead(test_fmpz_poly4)[0]) < 0L)) fmpz_poly_neg(test_fmpz_poly4, test_fmpz_poly4);
          fmpz_poly_gcd_modular(test_fmpz_poly5, test_fmpz_poly, test_fmpz_poly2);
+         if ((test_fmpz_poly5->length) && ((long) (_fmpz_poly_lead(test_fmpz_poly5)[0]) < 0L)) fmpz_poly_neg(test_fmpz_poly5, test_fmpz_poly5);
          fmpz_poly_check_normalisation(test_fmpz_poly5);         
          result = fmpz_poly_equal(test_fmpz_poly4, test_fmpz_poly5); 
 
@@ -11290,8 +11292,10 @@ int test_fmpz_poly_gcd_heuristic()
          fmpz_poly_init(test_fmpz_poly5);
  
 			fmpz_poly_gcd_subresultant(test_fmpz_poly4, test_fmpz_poly, test_fmpz_poly2);
+         if ((test_fmpz_poly4->length) && ((long) (_fmpz_poly_lead(test_fmpz_poly4)[0]) < 0L)) fmpz_poly_neg(test_fmpz_poly4, test_fmpz_poly4);
          int gcd_res = fmpz_poly_gcd_heuristic(test_fmpz_poly5, test_fmpz_poly, test_fmpz_poly2);
          fmpz_poly_check_normalisation(test_fmpz_poly5);         
+         if ((test_fmpz_poly5->length) && ((long) (_fmpz_poly_lead(test_fmpz_poly5)[0]) < 0L)) fmpz_poly_neg(test_fmpz_poly5, test_fmpz_poly5);
          result = (!gcd_res || fmpz_poly_equal(test_fmpz_poly4, test_fmpz_poly5)); 
 
          if (!result)
@@ -12392,7 +12396,7 @@ int test_fmpz_poly_divides_modular()
               
       fmpz_poly_mul(test_fmpz_poly3, test_fmpz_poly, test_fmpz_poly2);
             
-      result &= fmpz_poly_divides_modular(test_fmpz_poly4, test_fmpz_poly3, test_fmpz_poly);
+      result &= fmpz_poly_divides_modular(test_fmpz_poly4, test_fmpz_poly3, test_fmpz_poly, 0);
       result &= fmpz_poly_equal(test_fmpz_poly4, test_fmpz_poly2);
 
       fmpz_poly_clear(test_fmpz_poly);
@@ -12433,7 +12437,7 @@ int test_fmpz_poly_divides_modular()
 #endif          
                     
       int test2 = fmpz_poly_divides_divconquer(test_fmpz_poly3, test_fmpz_poly2, test_fmpz_poly);
-		int test1 = fmpz_poly_divides_modular(test_fmpz_poly3, test_fmpz_poly2, test_fmpz_poly);
+		int test1 = fmpz_poly_divides_modular(test_fmpz_poly3, test_fmpz_poly2, test_fmpz_poly, 0);
 		result = (test1 == test2);
       
       fmpz_poly_clear(test_fmpz_poly);

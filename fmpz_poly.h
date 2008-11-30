@@ -1017,7 +1017,7 @@ void fmpz_poly_right_shift(fmpz_poly_t output, const fmpz_poly_t input, const un
    _fmpz_poly_right_shift(output, input, n);
 }
 
-void fmpz_poly_2norm(fmpz_t norm, fmpz_poly_t pol);
+void fmpz_poly_2norm(fmpz_t norm, const fmpz_poly_t pol);
 
 void fmpz_poly_scalar_mul_fmpz(fmpz_poly_t output, 
                           const fmpz_poly_t input, const fmpz_t x);
@@ -1289,7 +1289,7 @@ int fmpz_poly_divides_divconquer(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_
    return divides;
 }
 
-int fmpz_poly_divides_modular(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t B);
+int fmpz_poly_divides_modular(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t B, const ulong bound);
 
 void fmpz_poly_power(fmpz_poly_t output, const fmpz_poly_t poly, const unsigned long exp);
 
