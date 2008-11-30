@@ -50,7 +50,7 @@ Copyright (C) 2008, William Hart
 	Warning : do not use this function to test F_mpz_set_mpz!!
 */
 
-void F_mpz_random(F_mpz_t f, ulong bits)
+void F_mpz_test_random(F_mpz_t f, ulong bits)
 {
 	if (bits = 0)
 	{
@@ -87,7 +87,7 @@ int test_F_mpz_getset_si()
       
 		for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
-			F_mpz_random(f, bits); 
+			F_mpz_test_random(f, bits); 
 
 		   // Generate a random long
          val_bits = z_randint(FLINT_BITS - 1);
@@ -125,7 +125,7 @@ int test_F_mpz_getset_ui()
           
       for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
-			F_mpz_random(f, bits); 
+			F_mpz_test_random(f, bits); 
 
 		   // Generate a random long
          val_bits = z_randint(FLINT_BITS);
@@ -163,7 +163,7 @@ int test_F_mpz_getset_mpz()
       
 		F_mpz_init2(f, z_randint(10));
 
-      F_mpz_random(f, bits); 
+      F_mpz_test_random(f, bits); 
 		    
       // set random coeffs in the poly
 		for (ulong count2 = 0; (count2 < 100) && result == 1; count2++)
@@ -191,6 +191,42 @@ int test_F_mpz_getset_mpz()
 	return result; 
 }
 
+int test_F_mpz_get_d_2exp()
+{
+   mpz_t m1;
+	double fd, md;
+   F_mpz_t f1;
+   int result = 1;
+   ulong bits, expf, expm;
+   
+   mpz_init(m1); 
+   
+   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   {
+      F_mpz_init2(f1, z_randint(10));
+      
+      bits = z_randint(200) + 1;
+      F_mpz_test_random(f1, bits);
+           
+      F_mpz_get_mpz(m1, f1);
+      
+		fd = F_mpz_get_d_2exp(&expf, f1);
+		md = mpz_get_d_2exp(&expm, m1);
+
+      result = ((fd == md) && (expf == expm)); 
+		if (!result) 
+		{
+			gmp_printf("Error: bits = %ld, m1 = %Zd, md = %f, fd = %f, expf = %ld, expm = %ld\n", bits, m1, md, fd, expf, expm);
+		}
+          
+      F_mpz_clear(f1);
+   }
+   
+   mpz_clear(m1);
+   
+   return result;
+}
+
 int test_F_mpz_set()
 {
    mpz_t m1, m2;
@@ -207,7 +243,7 @@ int test_F_mpz_set()
       F_mpz_init2(f2, z_randint(10));
 
       bits = z_randint(200) + 1;
-      F_mpz_random(f1, bits);
+      F_mpz_test_random(f1, bits);
            
       F_mpz_get_mpz(m1, f1);
       F_mpz_set(f2, f1);
@@ -229,7 +265,7 @@ int test_F_mpz_set()
       F_mpz_init2(f1, z_randint(10));
       
       bits = z_randint(200) + 1;
-      F_mpz_random(f1, bits);
+      F_mpz_test_random(f1, bits);
            
       F_mpz_get_mpz(m1, f1);
       F_mpz_set(f1, f1);
@@ -267,7 +303,7 @@ int test_F_mpz_equal()
       F_mpz_init2(f2, z_randint(10));
 
       bits = z_randint(200) + 1;
-      F_mpz_random(f1, bits);
+      F_mpz_test_random(f1, bits);
       F_mpz_get_mpz(m1, f1);
            
       F_mpz_set(f2, f1);
@@ -289,9 +325,9 @@ int test_F_mpz_equal()
       F_mpz_init2(f2, z_randint(10));
 
       bits = z_randint(200) + 1;
-      F_mpz_random(f1, bits);
+      F_mpz_test_random(f1, bits);
       bits2 = z_randint(200) + 1;
-      F_mpz_random(f2, bits2);
+      F_mpz_test_random(f2, bits2);
            
       F_mpz_get_mpz(m1, f1);
       F_mpz_get_mpz(m2, f1);
@@ -313,7 +349,7 @@ int test_F_mpz_equal()
       F_mpz_init2(f1, z_randint(10));
       
       bits = z_randint(200) + 1;
-      F_mpz_random(f1, bits);
+      F_mpz_test_random(f1, bits);
            
       F_mpz_get_mpz(m1, f1);
           
@@ -350,9 +386,9 @@ int test_F_mpz_swap()
       F_mpz_init2(f2, z_randint(10));
 
       bits = z_randint(200) + 1;
-      F_mpz_random(f1, bits);
+      F_mpz_test_random(f1, bits);
       bits2 = z_randint(200) + 1;
-      F_mpz_random(f2, bits2);
+      F_mpz_test_random(f2, bits2);
            
       F_mpz_get_mpz(m1, f1);
       F_mpz_get_mpz(m2, f2);
@@ -376,7 +412,7 @@ int test_F_mpz_swap()
       F_mpz_init2(f1, z_randint(10));
       
       bits = z_randint(200) + 1;
-      F_mpz_random(f1, bits);
+      F_mpz_test_random(f1, bits);
            
       F_mpz_get_mpz(m1, f1);
       F_mpz_swap(f1, f1);
@@ -415,7 +451,7 @@ int test_F_mpz_neg()
       F_mpz_init2(f2, z_randint(10));
 
       bits = z_randint(200) + 1;
-      F_mpz_random(f1, bits);
+      F_mpz_test_random(f1, bits);
            
       F_mpz_get_mpz(m1, f1);
       F_mpz_neg(f2, f1);
@@ -438,7 +474,7 @@ int test_F_mpz_neg()
       F_mpz_init2(f1, z_randint(10));
       
       bits = z_randint(200) + 1;
-      F_mpz_random(f1, bits);
+      F_mpz_test_random(f1, bits);
            
       F_mpz_get_mpz(m1, f1);
       F_mpz_neg(f1, f1);
@@ -479,9 +515,9 @@ int test_F_mpz_add()
       F_mpz_init(f3);
 
       bits = z_randint(200) + 1;
-      F_mpz_random(f1, bits);
+      F_mpz_test_random(f1, bits);
       bits2 = z_randint(200) + 1;
-      F_mpz_random(f2, bits2);
+      F_mpz_test_random(f2, bits2);
            
       F_mpz_get_mpz(m1, f1);
       F_mpz_get_mpz(m2, f2);
@@ -507,9 +543,9 @@ int test_F_mpz_add()
       F_mpz_init(f2);
       
 		bits = z_randint(200) + 1;
-      F_mpz_random(f1, bits);
+      F_mpz_test_random(f1, bits);
       bits2 = z_randint(200) + 1;
-      F_mpz_random(f2, bits2);
+      F_mpz_test_random(f2, bits2);
            
       F_mpz_get_mpz(m1, f1);
       F_mpz_get_mpz(m2, f2);
@@ -535,9 +571,9 @@ int test_F_mpz_add()
       F_mpz_init(f2);
       
 		bits = z_randint(200) + 1;
-      F_mpz_random(f1, bits);
+      F_mpz_test_random(f1, bits);
       bits2 = z_randint(200) + 1;
-      F_mpz_random(f2, bits2);
+      F_mpz_test_random(f2, bits2);
            
       F_mpz_get_mpz(m1, f1);
       F_mpz_get_mpz(m2, f2);
@@ -562,7 +598,7 @@ int test_F_mpz_add()
       F_mpz_init(f1);
       
 		bits = z_randint(200) + 1;
-      F_mpz_random(f1, bits);
+      F_mpz_test_random(f1, bits);
            
       F_mpz_get_mpz(m1, f1);
       
@@ -606,9 +642,9 @@ int test_F_mpz_sub()
       F_mpz_init(f3);
 
       bits = z_randint(200) + 1;
-      F_mpz_random(f1, bits);
+      F_mpz_test_random(f1, bits);
       bits2 = z_randint(200) + 1;
-      F_mpz_random(f2, bits2);
+      F_mpz_test_random(f2, bits2);
            
       F_mpz_get_mpz(m1, f1);
       F_mpz_get_mpz(m2, f2);
@@ -634,9 +670,9 @@ int test_F_mpz_sub()
       F_mpz_init(f2);
       
 		bits = z_randint(200) + 1;
-      F_mpz_random(f1, bits);
+      F_mpz_test_random(f1, bits);
       bits2 = z_randint(200) + 1;
-      F_mpz_random(f2, bits2);
+      F_mpz_test_random(f2, bits2);
            
       F_mpz_get_mpz(m1, f1);
       F_mpz_get_mpz(m2, f2);
@@ -662,9 +698,9 @@ int test_F_mpz_sub()
       F_mpz_init(f2);
       
 		bits = z_randint(200) + 1;
-      F_mpz_random(f1, bits);
+      F_mpz_test_random(f1, bits);
       bits2 = z_randint(200) + 1;
-      F_mpz_random(f2, bits2);
+      F_mpz_test_random(f2, bits2);
            
       F_mpz_get_mpz(m1, f1);
       F_mpz_get_mpz(m2, f2);
@@ -689,7 +725,7 @@ int test_F_mpz_sub()
       F_mpz_init(f1);
       
 		bits = z_randint(200) + 1;
-      F_mpz_random(f1, bits);
+      F_mpz_test_random(f1, bits);
            
       F_mpz_get_mpz(m1, f1);
       
@@ -734,7 +770,7 @@ int test_F_mpz_mul_ui()
           
       for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
-			F_mpz_random(g, bits); 
+			F_mpz_test_random(g, bits); 
 
 		   // Generate a random unsigned long
          val_bits = z_randint(FLINT_BITS + 1);
@@ -769,7 +805,7 @@ int test_F_mpz_mul_ui()
           
       for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
-			F_mpz_random(f, bits); 
+			F_mpz_test_random(f, bits); 
 
 		   // Generate a random unsigned long
          val_bits = z_randint(FLINT_BITS + 1);
@@ -820,7 +856,7 @@ int test_F_mpz_mul_si()
           
       for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
-			F_mpz_random(g, bits); 
+			F_mpz_test_random(g, bits); 
 
 		   // Generate a random unsigned long
          val_bits = z_randint(FLINT_BITS);
@@ -856,7 +892,7 @@ int test_F_mpz_mul_si()
           
       for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
-			F_mpz_random(f, bits); 
+			F_mpz_test_random(f, bits); 
 
 		   // Generate a random unsigned long
          val_bits = z_randint(FLINT_BITS);
@@ -906,9 +942,9 @@ int test_F_mpz_mul()
       F_mpz_init(f3);
 
       bits = z_randint(200) + 1;
-      F_mpz_random(f1, bits);
+      F_mpz_test_random(f1, bits);
       bits2 = z_randint(200) + 1;
-      F_mpz_random(f2, bits2);
+      F_mpz_test_random(f2, bits2);
            
       F_mpz_get_mpz(m1, f1);
       F_mpz_get_mpz(m2, f2);
@@ -934,9 +970,9 @@ int test_F_mpz_mul()
       F_mpz_init(f2);
       
 		bits = z_randint(200) + 1;
-      F_mpz_random(f1, bits);
+      F_mpz_test_random(f1, bits);
       bits2 = z_randint(200) + 1;
-      F_mpz_random(f2, bits2);
+      F_mpz_test_random(f2, bits2);
            
       F_mpz_get_mpz(m1, f1);
       F_mpz_get_mpz(m2, f2);
@@ -962,9 +998,9 @@ int test_F_mpz_mul()
       F_mpz_init(f2);
       
 		bits = z_randint(200) + 1;
-      F_mpz_random(f1, bits);
+      F_mpz_test_random(f1, bits);
       bits2 = z_randint(200) + 1;
-      F_mpz_random(f2, bits2);
+      F_mpz_test_random(f2, bits2);
            
       F_mpz_get_mpz(m1, f1);
       F_mpz_get_mpz(m2, f2);
@@ -989,7 +1025,7 @@ int test_F_mpz_mul()
       F_mpz_init(f1);
       
 		bits = z_randint(200) + 1;
-      F_mpz_random(f1, bits);
+      F_mpz_test_random(f1, bits);
            
       F_mpz_get_mpz(m1, f1);
       
@@ -1034,7 +1070,7 @@ int test_F_mpz_mul_2exp()
           
       for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
-			F_mpz_random(g, bits); 
+			F_mpz_test_random(g, bits); 
 
 		   // Generate a random unsigned long
          exp = z_randint(200);
@@ -1068,7 +1104,7 @@ int test_F_mpz_mul_2exp()
           
       for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
-			F_mpz_random(f, bits); 
+			F_mpz_test_random(f, bits); 
 
 		   // Generate a random unsigned long
          exp = z_randint(200);
@@ -1119,7 +1155,7 @@ int test_F_mpz_add_ui()
           
       for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
-			F_mpz_random(g, bits); 
+			F_mpz_test_random(g, bits); 
 
 		   // Generate a random unsigned long
          val_bits = z_randint(FLINT_BITS + 1);
@@ -1155,7 +1191,7 @@ int test_F_mpz_add_ui()
           
       for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
-			F_mpz_random(f, bits); 
+			F_mpz_test_random(f, bits); 
 
 		   // Generate a random unsigned long
          val_bits = z_randint(FLINT_BITS + 1);
@@ -1208,7 +1244,7 @@ int test_F_mpz_sub_ui()
           
       for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
-			F_mpz_random(g, bits); 
+			F_mpz_test_random(g, bits); 
 
 		   // Generate a random unsigned long
          val_bits = z_randint(FLINT_BITS + 1);
@@ -1244,7 +1280,7 @@ int test_F_mpz_sub_ui()
           
       for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
-			F_mpz_random(f, bits); 
+			F_mpz_test_random(f, bits); 
 
 		   // Generate a random unsigned long
          val_bits = z_randint(FLINT_BITS + 1);
@@ -1297,9 +1333,9 @@ int test_F_mpz_addmul_ui()
       for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
 			bits = z_randint(200)+ 1;
-         F_mpz_random(f, bits); 
+         F_mpz_test_random(f, bits); 
          bits2 = z_randint(200)+ 1;
-         F_mpz_random(g, bits2); 
+         F_mpz_test_random(g, bits2); 
 
 		   // Generate a random unsigned long
          val_bits = z_randint(FLINT_BITS + 1);
@@ -1335,7 +1371,7 @@ int test_F_mpz_addmul_ui()
           
       for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
-			F_mpz_random(f, bits); 
+			F_mpz_test_random(f, bits); 
 
 		   // Generate a random unsigned long
          val_bits = z_randint(FLINT_BITS + 1);
@@ -1387,9 +1423,9 @@ int test_F_mpz_submul_ui()
       for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
 			bits = z_randint(200)+ 1;
-         F_mpz_random(f, bits); 
+         F_mpz_test_random(f, bits); 
          bits2 = z_randint(200)+ 1;
-         F_mpz_random(g, bits2); 
+         F_mpz_test_random(g, bits2); 
 
 		   // Generate a random unsigned long
          val_bits = z_randint(FLINT_BITS + 1);
@@ -1425,7 +1461,7 @@ int test_F_mpz_submul_ui()
           
       for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
-			F_mpz_random(f, bits); 
+			F_mpz_test_random(f, bits); 
 
 		   // Generate a random unsigned long
          val_bits = z_randint(FLINT_BITS + 1);
@@ -1479,11 +1515,11 @@ int test_F_mpz_addmul()
       for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
 			bits = z_randint(200)+ 1;
-         F_mpz_random(f, bits); 
+         F_mpz_test_random(f, bits); 
          bits2 = z_randint(200)+ 1;
-         F_mpz_random(g, bits2); 
+         F_mpz_test_random(g, bits2); 
          bits3 = z_randint(200)+ 1;
-         F_mpz_random(h, bits3); 
+         F_mpz_test_random(h, bits3); 
      
 	      F_mpz_get_mpz(m1, f);
 			F_mpz_get_mpz(m2, g);
@@ -1518,9 +1554,9 @@ int test_F_mpz_addmul()
       for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
 			bits = z_randint(200)+ 1;
-         F_mpz_random(f, bits); 
+         F_mpz_test_random(f, bits); 
          bits2 = z_randint(200)+ 1;
-         F_mpz_random(g, bits2); 
+         F_mpz_test_random(g, bits2); 
          
 	      F_mpz_get_mpz(m1, f);
 			F_mpz_get_mpz(m2, g);
@@ -1553,9 +1589,9 @@ int test_F_mpz_addmul()
       for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
 			bits = z_randint(200)+ 1;
-         F_mpz_random(f, bits); 
+         F_mpz_test_random(f, bits); 
          bits2 = z_randint(200)+ 1;
-         F_mpz_random(g, bits2); 
+         F_mpz_test_random(g, bits2); 
          
 	      F_mpz_get_mpz(m1, f);
 			F_mpz_get_mpz(m2, g);
@@ -1585,7 +1621,7 @@ int test_F_mpz_addmul()
       for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
 			bits = z_randint(200)+ 1;
-         F_mpz_random(f, bits); 
+         F_mpz_test_random(f, bits); 
          
 			F_mpz_get_mpz(m1, f);
 			
@@ -1636,11 +1672,11 @@ int test_F_mpz_submul()
       for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
 			bits = z_randint(200)+ 1;
-         F_mpz_random(f, bits); 
+         F_mpz_test_random(f, bits); 
          bits2 = z_randint(200)+ 1;
-         F_mpz_random(g, bits2); 
+         F_mpz_test_random(g, bits2); 
          bits3 = z_randint(200)+ 1;
-         F_mpz_random(h, bits3); 
+         F_mpz_test_random(h, bits3); 
      
 	      F_mpz_get_mpz(m1, f);
 			F_mpz_get_mpz(m2, g);
@@ -1675,9 +1711,9 @@ int test_F_mpz_submul()
       for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
 			bits = z_randint(200)+ 1;
-         F_mpz_random(f, bits); 
+         F_mpz_test_random(f, bits); 
          bits2 = z_randint(200)+ 1;
-         F_mpz_random(g, bits2); 
+         F_mpz_test_random(g, bits2); 
          
 	      F_mpz_get_mpz(m1, f);
 			F_mpz_get_mpz(m2, g);
@@ -1710,9 +1746,9 @@ int test_F_mpz_submul()
       for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
 			bits = z_randint(200)+ 1;
-         F_mpz_random(f, bits); 
+         F_mpz_test_random(f, bits); 
          bits2 = z_randint(200)+ 1;
-         F_mpz_random(g, bits2); 
+         F_mpz_test_random(g, bits2); 
          
 	      F_mpz_get_mpz(m1, f);
 			F_mpz_get_mpz(m2, g);
@@ -1742,7 +1778,7 @@ int test_F_mpz_submul()
       for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
 			bits = z_randint(200)+ 1;
-         F_mpz_random(f, bits); 
+         F_mpz_test_random(f, bits); 
          
 			F_mpz_get_mpz(m1, f);
 			
@@ -1785,7 +1821,7 @@ int test_F_mpz_size()
       F_mpz_init2(f1, z_randint(10));
 
       bits = z_randint(500) + 1;
-      F_mpz_random(f1, bits);
+      F_mpz_test_random(f1, bits);
       
 		F_mpz_get_mpz(m1, f1);
 
@@ -1822,7 +1858,7 @@ int test_F_mpz_bits()
       F_mpz_init2(f1, z_randint(10));
 
       bits = z_randint(500) + 1;
-      F_mpz_random(f1, bits);
+      F_mpz_test_random(f1, bits);
       
 		F_mpz_get_mpz(m1, f1);
 
@@ -1854,6 +1890,7 @@ void F_mpz_poly_test_all()
    RUN_TEST(F_mpz_getset_ui); 
    RUN_TEST(F_mpz_getset_si); 
    RUN_TEST(F_mpz_getset_mpz); 
+   RUN_TEST(F_mpz_get_d_2exp); 
    RUN_TEST(F_mpz_set); 
    RUN_TEST(F_mpz_equal); 
    RUN_TEST(F_mpz_swap); 

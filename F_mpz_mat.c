@@ -70,121 +70,11 @@ void F_mpz_mat_clear(F_mpz_mat_t mat)
 	}
 }
 
-/*===============================================================================
-
-	Coefficient operations
-
-================================================================================*/
-
-/*
-extern double __gmpn_get_d(mp_limb_t *, size_t, size_t, long);
-
-double _F_mpz_entry_get_d_2exp(long * exp, const F_mpz_mat_t mat, const ulong r, const ulong c)
-{
-   mp_limb_t d = mat->rows[r][c];
-
-	if (!ENTRY_IS_MPZ(d))
-   {
-      if (d == 0L) 
-      {
-         (*exp) = 0L;
-         return 0.0;
-      }
-      ulong d_abs = FLINT_ABS(d);
-      (*exp) = FLINT_BIT_COUNT(d_abs);
-      if ((long) d < 0L) return __gmpn_get_d(&d_abs, 1L, -1L, -*exp);
-      else return __gmpn_get_d(&d, 1L, 1L, -*exp);
-   } else 
-	   return mpz_get_d_2exp(exp, mat->mpz_entries + ENTRY_TO_OFF(d));
-}
-*/
-
-/* ==============================================================================
-
-   Random generation
-
-===============================================================================*/
-
-/*
-  These are not serious random generators, they are just here for testing 
-  purposes at this stage
-
-  We require bits to be non-zero
-*/
-
-/*#define NORM(xxx, coeffxxx) \
-do { \
-   if ((long) xxx->_mp_size < 0L) \
-   { \
-      while ((xxx->_mp_size) && (!(coeffxxx)[-xxx->_mp_size - 1])) xxx->_mp_size++; \
-   } else if ((long) xxx->_mp_size > 0L) \
-   { \
-      while ((xxx->_mp_size) && (!(coeffxxx)[xxx->_mp_size - 1])) xxx->_mp_size--; \
-   } \
-} while (0);
-
-void F_mpz_entry_random(F_mpz_mat_t mat, const ulong r, const ulong c, const ulong bits)
-{
-   mp_limb_t d = mat->rows[r][c];
-   
-	if (bits <= FLINT_BITS - 2)
-   {
-      ulong temp;
-      mpn_random(&temp, 1L);
-      ulong mask = ((1L<<bits)-1L);
-      mat->rows[r][c] = temp & mask;
-      return;
-   }
-   
-	ulong limbs = ((bits-1)>>FLINT_LG_BITS_PER_LIMB)+1;
-   ulong rem = (bits & (FLINT_BITS - 1));
-   
-   __mpz_struct * mpz_ptr = _F_mpz_entry_promote(mat, r, c);
-   mpz_realloc2(mpz_ptr, bits);
-	
-	mp_limb_t * fp = mpz_ptr->_mp_d;
-   mpz_ptr->_mp_size = limbs;
-   mpn_random(fp, limbs);
-   if (rem)
-   {
-      ulong mask = ((1L<<rem)-1L);
-      fp[limbs-1] &= mask;
-   }
-   NORM(mpz_ptr, fp);
-	_F_mpz_entry_demote_val(mat, r, c);
-}
-
-void F_mpz_entry_randomm(F_mpz_mat_t mat, const ulong r, const ulong c, const mpz_t in)
-{
-   if (mpz_size(in) > 1) 
-   {
-      __mpz_struct * mpz_ptr = _F_mpz_entry_promote(mat, r, c);
-		mpz_urandomm(mpz_ptr, state, in);
-		_F_mpz_entry_demote_val(mat, r, c);
-   } else
-   {
-      ulong val = mpz_get_ui(in);
-		ulong rnd = (val == 0 ? 0L : z_randint(val));
-		_F_mpz_entry_set_ui(mat, r, c, rnd);
-   }
-}*/
-
 /* ==============================================================================
 
    Input/Output
 
 ===============================================================================*/
-
-/*void F_mpz_entry_read(F_mpz_mat_t mat, const ulong r, const ulong c)
-{
-	mpz_t temp;
-	mpz_init(temp);
-
-	mpz_inp_str(temp, stdin, 10);
-	F_mpz_set_mpz(mat->rows[r] + c, temp);
-
-	mpz_clear(temp);
-}
 
 void F_mpz_mat_print(F_mpz_mat_t mat) 
 {
@@ -198,13 +88,13 @@ void F_mpz_mat_print(F_mpz_mat_t mat)
       printf("[");
       for (j = 0; j < c; j++) 
 	   { 
-	      F_mpz_entry_print(mat->rows[i] + j); 
+	      F_mpz_print(mat->rows[i] + j); 
 	      if (j < c - 1) printf(" "); 
 	   }
       if (i != r - 1) printf("]\n"); 
    }  
    printf("]]\n"); 
-}*/
+}
 
 /*===============================================================================
 
@@ -232,14 +122,14 @@ void F_mpz_mat_to_mpz_mat(mpz_mat_t m_mat, const F_mpz_mat_t F_mat)
 	}
 }
 
-/*int F_mpz_mat_set_line_d(double * appv, const F_mpz_mat_t mat, const ulong r, const int n)
+long F_mpz_mat_set_line_d(double * appv, const F_mpz_mat_t mat, const ulong r, const int n)
 {
    long * exp, i, maxexp = 0L;
    exp = (long *) malloc(n * sizeof(long)); 
   
    for (i = 0; i < n; i++)
    {
-      appv[i] = _F_mpz_entry_get_d_2exp(&exp[i], mat, r, i);
+      appv[i] = F_mpz_get_d_2exp(&exp[i], mat->rows[r] + i);
       if (exp[i] > maxexp) maxexp = exp[i];
    }
 
@@ -247,7 +137,7 @@ void F_mpz_mat_to_mpz_mat(mpz_mat_t m_mat, const F_mpz_mat_t F_mat)
 
    free(exp);
    return maxexp;
-}*/
+}
 
 /*===============================================================================
 
@@ -310,7 +200,7 @@ void F_mpz_mat_neg(F_mpz_mat_t mat1, const F_mpz_mat_t mat2)
 
 ================================================================================*/
 
-/*void F_mpz_mat_row_add(F_mpz_mat_t res, const ulong r3, const F_mpz_mat_t mat1, 
+void F_mpz_mat_row_add(F_mpz_mat_t res, const ulong r3, const F_mpz_mat_t mat1, 
 							  const ulong r1, const F_mpz_mat_t mat2, const ulong r2, 
 							                         const ulong start, const ulong n)
 {
@@ -324,7 +214,7 @@ void F_mpz_mat_row_sub(F_mpz_mat_t res, const ulong r3, const F_mpz_mat_t mat1,
 {
    for (ulong i = start; i < start + n; i++) 
 		F_mpz_sub(res->rows[r3] + i, mat1->rows[r1] + i, mat2->rows[r2] + i);   
-}*/
+}
 
 void F_mpz_mat_add(F_mpz_mat_t res, const F_mpz_mat_t mat1, const F_mpz_mat_t mat2)
 {

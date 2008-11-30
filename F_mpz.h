@@ -63,6 +63,8 @@ typedef F_mpz F_mpz_t[1];
 
 #define COEFF_IS_MPZ(xxx) ((xxx>>(FLINT_BITS-2)) == 1L) // is xxx an index into F_mpz_arr?
 
+gmp_randstate_t F_mpz_state; // Used for random generation in F_mpz_randomm only
+
 /*===============================================================================
 
 	mpz_t memory management
@@ -216,6 +218,12 @@ ulong F_mpz_get_ui(const F_mpz_t f);
 void F_mpz_get_mpz(mpz_t x, const F_mpz_t f);
 
 /** 
+   \fn     double F_mpz_get_d_2exp(long * exp, const F_mpz_t f)
+   \brief  Return f as a signed normalised double and a long exponent.
+*/
+double F_mpz_get_d_2exp(long * exp, const F_mpz_t f);
+
+/** 
    \fn     void F_mpz_set_mpz(F_mpz_t f, const mpz_t x)
    \brief  Sets f to the given mpz_t
 */
@@ -284,6 +292,9 @@ void F_mpz_print(F_mpz_t x)
 	if (!COEFF_IS_MPZ(*x)) printf("%ld", *x);
 	else gmp_printf("%Zd", F_mpz_ptr_mpz(*x));
 }
+
+void F_mpz_read(F_mpz_t f);
+
 
 /*===============================================================================
 

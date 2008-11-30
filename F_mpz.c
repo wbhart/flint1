@@ -25,6 +25,8 @@
 #include <stdint.h>
 #include <string.h>
 #include <math.h>
+#include <stdio.h>
+#include <gmp.h>
 
 #include "flint.h"
 #include "mpn_extras.h"
@@ -180,6 +182,74 @@ void F_mpz_init2(F_mpz_t f, ulong limbs)
 	}
 }
 
+/* ==============================================================================
+
+   Random generation
+
+===============================================================================*/
+
+/*
+  These are not serious random generators, they are just here for testing 
+  purposes at this stage
+
+  We require bits to be non-zero
+*/
+
+#define NORM(xxx, coeffxxx) \
+do { \
+   if ((long) xxx->_mp_size < 0L) \
+   { \
+      while ((xxx->_mp_size) && (!(coeffxxx)[-xxx->_mp_size - 1])) xxx->_mp_size++; \
+   } else if ((long) xxx->_mp_size > 0L) \
+   { \
+      while ((xxx->_mp_size) && (!(coeffxxx)[xxx->_mp_size - 1])) xxx->_mp_size--; \
+   } \
+} while (0);
+
+void F_mpz_random(F_mpz_t f, const ulong bits)
+{
+	if (bits <= FLINT_BITS - 2)
+   {
+      ulong temp;
+      mpn_random(&temp, 1L);
+      ulong mask = ((1L<<bits)-1L);
+      *f = temp & mask;
+      return;
+   }
+   
+	ulong limbs = ((bits-1)>>FLINT_LG_BITS_PER_LIMB)+1;
+   ulong rem = (bits & (FLINT_BITS - 1));
+   
+   __mpz_struct * mpz_ptr = _F_mpz_promote(f);
+   mpz_realloc2(mpz_ptr, bits);
+	
+	mp_limb_t * fp = mpz_ptr->_mp_d;
+   mpz_ptr->_mp_size = limbs;
+   mpn_random(fp, limbs);
+   if (rem)
+   {
+      ulong mask = ((1L<<rem)-1L);
+      fp[limbs-1] &= mask;
+   }
+   NORM(mpz_ptr, fp);
+	_F_mpz_demote_val(f);
+}
+
+void F_mpz_randomm(F_mpz_t f, const mpz_t in)
+{
+   if (mpz_size(in) > 1) 
+   {
+      __mpz_struct * mpz_ptr = _F_mpz_promote(f);
+		mpz_urandomm(mpz_ptr, F_mpz_state, in);
+		_F_mpz_demote_val(f);
+   } else
+   {
+      ulong val = mpz_get_ui(in);
+		ulong rnd = (val == 0 ? 0L : z_randint(val));
+		F_mpz_set_ui(f, rnd);
+   }
+}
+
 /*===============================================================================
 
 	Get/set
@@ -228,6 +298,27 @@ void F_mpz_get_mpz(mpz_t x, const F_mpz_t f)
 {
 	if (!COEFF_IS_MPZ(*f)) mpz_set_si(x, *f); // set x to small value
 	else mpz_set(x, F_mpz_arr + COEFF_TO_OFF(*f)); // set x to large value
+}
+
+extern double __gmpn_get_d(mp_limb_t *, size_t, size_t, long);
+
+double F_mpz_get_d_2exp(long * exp, const F_mpz_t f)
+{
+   F_mpz d = *f;
+
+	if (!COEFF_IS_MPZ(d))
+   {
+      if (d == 0L) 
+      {
+         (*exp) = 0L;
+         return 0.0;
+      }
+      ulong d_abs = FLINT_ABS(d);
+      (*exp) = FLINT_BIT_COUNT(d_abs);
+      if (d < 0L) return __gmpn_get_d(&d_abs, 1L, -1L, -*exp);
+      else return __gmpn_get_d(&d, 1L, 1L, -*exp);
+   } else 
+	   return mpz_get_d_2exp(exp, F_mpz_arr + COEFF_TO_OFF(d));
 }
 
 void F_mpz_set_mpz(F_mpz_t f, const mpz_t x)
@@ -359,6 +450,23 @@ ulong F_mpz_bits(F_mpz_t f)
 __mpz_struct * F_mpz_ptr_mpz(F_mpz f)
 {
 	return F_mpz_arr + COEFF_TO_OFF(f);
+}
+
+/*===============================================================================
+
+	Input/output
+
+================================================================================*/
+
+void F_mpz_read(F_mpz_t f)
+{
+	mpz_t temp;
+	mpz_init(temp);
+
+	mpz_inp_str(temp, stdin, 10);
+	F_mpz_set_mpz(f, temp);
+
+	mpz_clear(temp);
 }
 
 /*===============================================================================

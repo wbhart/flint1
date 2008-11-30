@@ -64,8 +64,6 @@ entry is stored in twos complement format.
 
 ================================================================================*/
  
-gmp_randstate_t state; // Used for random generation in testing only
-
 typedef struct
 {
    mp_limb_t * entries;
@@ -126,10 +124,11 @@ void mpz_mat_to_F_mpz_mat(F_mpz_mat_t F_mat, const mpz_mat_t m_mat);
 void F_mpz_mat_to_mpz_mat(mpz_mat_t m_mat, const F_mpz_mat_t F_mat);
 
 /** 
-   \fn     int F_mpz_mat_set_line_d(double * appv, const F_mpz_mat_t mat, const ulong r, const int n)
+   \fn     long F_mpz_mat_set_line_d(double * appv, const F_mpz_mat_t mat, const ulong r, const int n)
    \brief  Sets the entries of appv to the double mantissa of the entries of the given row of mat
+	        with respect to a single maximum exponent which is returned.
 */
-int F_mpz_mat_set_line_d(double * appv, const F_mpz_mat_t mat, const ulong r, const int n);
+long F_mpz_mat_set_line_d(double * appv, const F_mpz_mat_t mat, const ulong r, const int n);
 
 /*===============================================================================
 
