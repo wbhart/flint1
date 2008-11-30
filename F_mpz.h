@@ -279,10 +279,10 @@ __mpz_struct * F_mpz_ptr_mpz(F_mpz f);
 ================================================================================*/
 
 static inline 
-void F_mpz_print(F_mpz x)
+void F_mpz_print(F_mpz_t x)
 {
-	if (!COEFF_IS_MPZ(x)) printf("%ld s ", x);
-	else gmp_printf("%Zd l ", F_mpz_ptr_mpz(x));
+	if (!COEFF_IS_MPZ(*x)) printf("%ld", *x);
+	else gmp_printf("%Zd", F_mpz_ptr_mpz(*x));
 }
 
 /*===============================================================================
