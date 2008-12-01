@@ -9335,6 +9335,7 @@ int fmpz_poly_gcd_heuristic(fmpz_poly_t H, const fmpz_poly_t poly1, const fmpz_p
 	{
 	   pack_bits = FLINT_MAX(bits1, bits2) + 8;
 		if (pack_bits > 32) pack_bits = 32;
+		if (pack_bits < bound_bits) pack_bits = bound_bits;
 		
 		fmpz_poly_bit_pack(array1 + 1, A, A->length, -pack_bits, sign1);
 	   array1[0] = (pack_bits*A->length - 1)/FLINT_BITS + 1;
