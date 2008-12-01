@@ -197,7 +197,7 @@ int main(void)
 
    fmpz_poly_init2(theta_prod, MIKE_LIMIT2, 1);
    
-   _fmpz_poly_mul_KS_trunc_bits(theta_prod, theta_1, theta_C, MIKE_LIMIT2, -24);
+   _fmpz_poly_mul_KS_trunc(theta_prod, theta_1, theta_C, MIKE_LIMIT2, -24);
    
    fmpz_poly_clear(theta_1);
    fmpz_poly_clear(theta_C);

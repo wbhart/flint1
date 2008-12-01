@@ -153,7 +153,7 @@ void sample_fmpz_poly_mul_KS(unsigned long length, unsigned long bits,
          mpz_poly_to_fmpz_poly(poly2, r_poly2);
       }
       prof_start();
-      _fmpz_poly_mul_KS(poly3, poly1, poly2);
+      _fmpz_poly_mul_KS(poly3, poly1, poly2, 0);
       prof_stop();
    }
    
@@ -231,7 +231,7 @@ void sample_fmpz_poly_mul_KS_trunc(unsigned long length, unsigned long bits,
          mpz_poly_to_fmpz_poly(poly2, r_poly2);
       }
       prof_start();
-      _fmpz_poly_mul_KS_trunc(poly3, poly1, poly2, length);
+      _fmpz_poly_mul_KS_trunc(poly3, poly1, poly2, length, 0);
       prof_stop();
    }
    

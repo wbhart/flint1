@@ -129,7 +129,6 @@ do { \
 long fmpz_poly_to_ZmodF_poly(ZmodF_poly_t poly_f, const fmpz_poly_t poly_fmpz, 
                                                          const unsigned long length);
 
-
 /* 
    Normalise and converts ZmodF_poly "poly_f" to a fmpz_poly_t. 
    
@@ -145,67 +144,63 @@ long fmpz_poly_to_ZmodF_poly(ZmodF_poly_t poly_f, const fmpz_poly_t poly_fmpz,
 void ZmodF_poly_to_fmpz_poly(fmpz_poly_t poly_fmpz, const ZmodF_poly_t poly_f, const long sign);
 
 /* 
-   Packs bundle coefficients, each padded out to the given number of limbs, into 
-   the first coefficient of poly_f.
-   
-   Assumes 0 < bundle <= poly_fmpz->length
-*/
-void fmpz_poly_limb_pack(ZmodF_poly_t poly_f, const fmpz_poly_t poly_fmpz,
-                                           const unsigned long bundle, const long limbs);
-
-/* 
    Packs poly_fmpz->length coefficients, each assumed to fit into a limb, into
-   the an array of limbs coeffs_f. Coefficients are stored in B-adic symmetric 
-	format. The m1 variant changes the sign of the coefficients before packing 
-	(the input polynomial is not modified). The half_limb variants pack into 
-	fields of the size of an unsigned int.
+   the array of limbs coeffs_f. Coefficients are stored in B-adic symmetric 
+	format. The neg variant changes the sign of the coefficients before packing 
+	(the input polynomial is not modified). 
    
    Assumes 0 < poly_fmpz->length
 */
-void fmpz_poly_limb_pack_1(fmpz_t coeffs_f, const fmpz_poly_t poly_fmpz);
-void fmpz_poly_limb_pack_neg_1(fmpz_t coeffs_f, const fmpz_poly_t poly_fmpz);
-void fmpz_poly_half_limb_pack(fmpz_t array_f, const fmpz_poly_t poly_fmpz);
-void fmpz_poly_half_limb_pack_neg(fmpz_t array_f, const fmpz_poly_t poly_fmpz);
+void fmpz_poly_limb_pack_1(mp_limb_t * array, const fmpz_poly_t poly_fmpz);
+void fmpz_poly_limb_pack_neg_1(mp_limb_t * array, const fmpz_poly_t poly_fmpz);
 
 /* 
-   Unpacks bundle coefficients from the first coefficient of poly_f, each 
-   assumed to be stored in a field of the given number of limbs.
+   Unpacks length signed coefficients from the array, each assumed to be 
+	stored in precisely one limb, into the polynomial poly_fmpz. 
+	Coefficients are assumed to be stored in B-adic symmetric format. 
    
-   Assumes 0 < bundle <= poly_f->length
+   Assumes 0 < length <= poly_f->length
 */
-void fmpz_poly_limb_unpack(fmpz_poly_t poly_fmpz, const ZmodF_poly_t poly_f, 
-                                  const unsigned long bundle, const unsigned long limbs);
+void fmpz_poly_limb_unpack_1(fmpz_poly_t poly_fmpz, const mp_limb_t * array, 
+                                  const unsigned long length);
 
 /* 
-   Unpacks length signed coefficients from the array of limbs coeffs_f, 
-	each assumed to be stored in a field of one limb, into the polynomial 
+   Packs length coefficients of poly_fmpz into the array into fields with the 
+	given number of limbs. The neg variant negates the coefficients.
+   
+   Assumes 0 < length.
+*/
+void fmpz_poly_limb_pack(mp_limb_t * array, const fmpz_poly_t poly_fmpz,
+                                           const unsigned long length, const long limbs);
+void fmpz_poly_limb_pack_neg(mp_limb_t * array, const fmpz_poly_t poly_fmpz,
+                                           const unsigned long length, const long limbs);
+
+/* 
+   Unpacks length signed coefficients from the array, each assumed to be 
+	stored in a field of the given number of limbs, into the polynomial 
 	poly_fmpz. Coefficients are assumed to be stored in B-adic symmetric 
-	format. The half_limb variant assumes the array is packed into fields of the
-	size of an unsigned int.
+	format. 
    
-   Assumes 0 < length
+   Assumes 0 < length <= poly_f->length
 */
-void fmpz_poly_limb_unpack_1(fmpz_poly_t poly_fmpz, const fmpz_t coeffs_f, 
-                                  const unsigned long length);
-void fmpz_poly_half_limb_unpack(fmpz_poly_t poly_fmpz, const fmpz_t array_f, 
-                                  const unsigned long length);
+void fmpz_poly_limb_unpack(fmpz_poly_t poly_fmpz, mp_limb_t * array, 
+                                  const unsigned long length, const unsigned long limbs);
 
 /* 
-   Unpacks bundle coefficients from the first coefficient of poly_f, each 
-   assumed to be stored in a field of the given number of limbs. Assumes the
-   coefficients are unsigned.
+   Unpacks bundle coefficients from the given array, each assumed to be 
+	stored in a field of the given number of limbs. Assumes the coefficients 
+	are unsigned.
 
    Assumes 0 < bundle <= poly_f->length
 */
-void fmpz_poly_limb_unpack_unsigned(fmpz_poly_t poly_fmpz, const ZmodF_poly_t poly_f, 
-                                  const unsigned long bundle, const unsigned long limbs);
+void fmpz_poly_limb_unpack_unsigned(fmpz_poly_t poly_fmpz, const mp_limb_t * array, 
+                                  const unsigned long length, const unsigned long limbs);
 
 
 /*
-   Packs poly_fmpz down to the bit into poly_f. Each coefficient of poly_f
-   will have "bundle" coefficients packed into it. Each of the original
-   coefficients is packed into a bitfield "bits" bits wide including one 
-   bit for a sign bit. 
+   Packs length coefficients of poly_fmpz down to the bit into the given 
+	array. Each coefficient is packed into a bitfield "bits" bits wide 
+	including one bit for a sign bit. 
    
    "bits" is assumed to be less than FLINT_BITS. If bits is 
    negative, the input poly is assumed to have signed coefficients.
@@ -213,95 +208,69 @@ void fmpz_poly_limb_unpack_unsigned(fmpz_poly_t poly_fmpz, const ZmodF_poly_t po
    Assumes 0 < bundle and 0 < poly_fmpz->length
 */ 
    
-void fmpz_poly_bit_pack(ZmodF_poly_t poly_f, const fmpz_poly_t poly_fmpz,
-     const unsigned long bundle, const long bits, const unsigned long length, const long negate);
+void fmpz_poly_bit_pack(mp_limb_t * array, const fmpz_poly_t poly_fmpz,
+     const unsigned long length, const long bits, const long negate);
 
-void fmpz_poly_bit_pack_1(fmpz_t array, const fmpz_poly_t poly_fmpz,
-                            const unsigned long length, const long bitwidth, 
-                            const long negate, ulong n);
 /*
-   Unpacks poly_f into poly_fmpz. This is the inverse of ZmodF_poly_bitpack_mpn, so
-   long as the final coefficient in the polynomial is positive.
-   Each coeff of poly_f is assumed to contain "bundle" coefficients, each stored 
-   in a bitfield "bits" bits wide with the most significant bit being reserved for
-   the sign. 
+   Unpacks the given array into poly_fmpz. This is the inverse of fmpz_poly_bit_pack, 
+	however array must have one more (zero) limb than is necessary to store all the
+	packed coefficients. 
    
-   The total number of coefficients to be unpacked is given by the length of 
-   poly_fmpz. One must ensure each of the coefficients of poly_fmpz are set to zero
-   before calling this function for the first time since it adds to existing 
-   coefficients of poly_fmpz, rather than overwriting them.
+   The total number of coefficients to be unpacked is given by length. One must 
+	ensure each of the coefficients of poly_fmpz are set to zero before calling 
+	this function for the first time since it adds to existing coefficients of 
+	poly_fmpz, rather than overwriting them.
    
+	The unsigned variant assumes the coefficients are unsigned, otherwise the bitfield
+	is assumed to be one bit wider to allow for a sign bit.
+
    "bits" is assumed to be less than FLINT_BITS. 
 
    Assumes 0 < bundle and 0 < poly_f->length
 */ 
    
-void fmpz_poly_bit_unpack(fmpz_poly_t poly_fmpz, const ZmodF_poly_t poly_f, 
-                              const unsigned long bundle, const unsigned long bits);
-void fmpz_poly_bit_unpack_unsigned(fmpz_poly_t poly_fmpz, const ZmodF_poly_t poly_f, 
-                              const unsigned long bundle, const unsigned long bits);
-
-void fmpz_poly_bit_unpack_1(fmpz_poly_t poly_fmpz, const fmpz_t array, 
-                              const ulong length, const ulong bits, ulong n);
+void fmpz_poly_bit_unpack(fmpz_poly_t poly_fmpz, const mp_limb_t * array, 
+                              const unsigned long length, const unsigned long bits);
+void fmpz_poly_bit_unpack_unsigned(fmpz_poly_t poly_fmpz, const mp_limb_t * array, 
+                              const unsigned long length, const unsigned long bits);
      
 /*
-   Packs poly_fmpz down to the byte into poly_f. Each coefficient of poly_f
-   will have "bundle" coefficients packed into it, each packed into a field
-   "bytes" bytes wide.
+   Packs coefficients of poly_fmpz down to the byte into array, each packed 
+	into a field "bytes" bytes wide.
    
    "coeff_bytes" is assumed to be at least FLINT_BITS/8, i.e. the
    coefficients are assumed to be at least a limb wide.
 
-   Assumes 0 < bundle and 0 < poly_fmpz->length
+   Assumes 0 < length and 0 < poly_fmpz->length
 */ 
    
-void fmpz_poly_byte_pack(ZmodF_poly_t poly_f, const fmpz_poly_t poly_fmpz,
-                   const unsigned long bundle, const unsigned long coeff_bytes,
-                                const unsigned long length, const long negate);
+void fmpz_poly_byte_pack(mp_limb_t * array, const fmpz_poly_t poly_fmpz,
+                   const unsigned long length, const unsigned long coeff_bytes,
+                                const long negate);
 
      
 /*
-   Unpacks array into poly_fmpz. Each coefficient stored in array will have "bundle" 
-   coefficients, each packed into a field "bytes" bytes wide.
+   Unpacks coefficients from array into poly_fmpz. Each coefficient stored is
+	assumed to be packed into a field "bytes" bytes wide, with one bit reserved
+	for a sign bit except for the unsigned variant of the function where the 
+	coefficients are assumed to be unsigned. 
+	
+	It is also assumed that array has one extra (zero) limb beyond what is 
+	required to store the packed coefficients.
    
-   The total number of coefficients to be unpacked is given by the length of 
-   poly_fmpz.
+   The total number of coefficients to be unpacked is given by length.
    
    "coeff_bytes" is assumed to be at least FLINT_BITS/8, i.e. the
    coefficients are assumed to be at least a limb wide.
 
-   Assumes 0 < bundle and poly->mpn->length > 0
+   Assumes 0 < length.
 */ 
    
-void fmpz_poly_byte_unpack_unsigned(fmpz_poly_t poly_m, const mp_limb_t* array,
-                               const unsigned long bundle, const unsigned long coeff_bytes);
+void fmpz_poly_byte_unpack_unsigned(fmpz_poly_t poly_m, const mp_limb_t * array,
+                               const unsigned long length, const unsigned long bytes);
 
-void fmpz_poly_byte_unpack(fmpz_poly_t poly_m, const mp_limb_t* array,
-                               const unsigned long bundle, const unsigned long coeff_bytes);
-
-
-     
-/*
-   Splits each coefficient of poly_fmpz into pieces "limbs" limbs long and 
-   stores each piece into bundle coefficients of poly_f.
-*/
- 
-void fmpz_poly_split(ZmodF_poly_t poly_f, fmpz_poly_t poly_fmpz,
-     unsigned long bundle, unsigned long limbs);
-
-     
-/*
-   Combines each "bundle" coefficients of poly_f, each taken to be "limbs" 
-   limbs long, into a coefficient of poly_fmpz. 
-   
-   This function is used for testing purposed only, and is the exact inverse
-   of ZmodF_poly_split_mpn.
-   
-   The number of coefficients extracted is given by the length of poly_fmpz.
-*/
- 
-void fmpz_poly_unsplit(ZmodF_poly_t poly_f, fmpz_poly_t poly_fmpz,
-     unsigned long bundle, unsigned long limbs);
+void fmpz_poly_byte_unpack(fmpz_poly_t poly_m, const mp_limb_t * array,
+                               const unsigned long length, const unsigned long bytes);
 
 /*
    Reduce coefficients of the given fmpz_poly fpol, modulo the modulus of the given 
@@ -635,13 +604,10 @@ void _fmpz_poly_mul_modular_trunc_left(fmpz_poly_t output, const fmpz_poly_t inp
 */
 
 void _fmpz_poly_mul_KS(fmpz_poly_t output, const fmpz_poly_t input1, 
-                                       const fmpz_poly_t input2);
+                                       const fmpz_poly_t input2, const long bits);
                                        
-void _fmpz_poly_mul_KS_trunc(fmpz_poly_t output, const fmpz_poly_t input1, 
-                                        const fmpz_poly_t input2, const unsigned long trunc);
-
-void _fmpz_poly_mul_KS_trunc_bits(fmpz_poly_t output, const fmpz_poly_t in1, 
-                                        const fmpz_poly_t in2, const unsigned long trunc, long bits_per_coeff);
+void _fmpz_poly_mul_KS_trunc(fmpz_poly_t output, const fmpz_poly_t in1, 
+                                        const fmpz_poly_t in2, const unsigned long trunc, long bits);
 
 void _fmpz_poly_mul_SS(fmpz_poly_t output, const fmpz_poly_t input1, 
                                                       const fmpz_poly_t input2);
