@@ -508,26 +508,24 @@ void fmpz_poly_limb_unpack(fmpz_poly_t poly_fmpz, mp_limb_t * array,
    
    for (i = 0, j = 0, k = 0; i < length; i++, j += size_m, k += limbs)
    {
-      if (carry) 
-		{
-			mpn_add_1(array + k, array + k, n - k, 1L);
-		}
       if (array[k+limbs-1]>>(FLINT_BITS-1))
       {
          F_mpn_negate(coeffs_m + j + 1, array + k, limbs);
          coeffs_m[j] = -limbs;
          NORM(coeffs_m + j);
-         carry = 1L;
+			if (carry) fmpz_add_ui(coeffs_m + j, coeffs_m + j, 1L);
+			carry = 1L;
       } else
       {
          F_mpn_copy(coeffs_m + j + 1, array + k, limbs);
          coeffs_m[j] = limbs;
          NORM(coeffs_m + j); 
+			if (carry) fmpz_add_ui(coeffs_m + j, coeffs_m + j, 1L);
 			carry = 0L;
       }
    }
 
-	if (array[k]) // check if there was a carried 1 from the final mpn_add_1
+	if (carry) // check if there was a carried 1 from the final mpn_add_1
 	{
 		coeffs_m[j+1] = 1;
       coeffs_m[j] = 1;
@@ -9242,11 +9240,7 @@ void fmpz_poly_limb_unpack_wrap(fmpz_poly_t H, fmpz_t arrayg, ulong pack_bits)
    else
 	{
 	   ulong pack_limbs = (pack_bits >> FLINT_LG_BITS_PER_LIMB);
-		fmpz_t temp = (fmpz_t) flint_stack_alloc(arrayg[0] + pack_limbs + 1);
-		F_mpn_clear(temp, arrayg[0] + pack_limbs + 1);
-		fmpz_set(temp, arrayg); // unfortunately limb_unpack destroys its input
-		fmpz_poly_limb_unpack(H, temp + 1, (arrayg[0] - 1)/pack_limbs + 1, pack_limbs);
-		flint_stack_release();
+		fmpz_poly_limb_unpack(H, arrayg + 1, (arrayg[0] - 1)/pack_limbs + 1, pack_limbs);
 	}
 }
 
