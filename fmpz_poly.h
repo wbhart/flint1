@@ -811,7 +811,7 @@ void fmpz_poly_set_coeff_fmpz(fmpz_poly_t poly, const unsigned long n, fmpz_t x)
    if (n+1 > poly->length) 
    {
       long i;
-		for (i = poly->length; i + 1 < n; i++)
+		for (i = poly->length; i < n; i++)
       {
          poly->coeffs[i*(poly->limbs+1)] = 0L;
       } 
@@ -861,7 +861,7 @@ void fmpz_poly_set_coeff_si(fmpz_poly_t poly, const unsigned long n, const long 
    if (n+1 > poly->length) 
    {
       long i;
-		for (i = poly->length; i + 1 < n; i++)
+		for (i = poly->length; i < n; i++)
       {
          poly->coeffs[i*(poly->limbs+1)] = 0L;
       } 
@@ -880,7 +880,7 @@ void fmpz_poly_set_coeff_ui(fmpz_poly_t poly, const unsigned long n, const unsig
    if (n+1 > poly->length) 
    {
       long i;
-		for (i = poly->length; i + 1 < n; i++)
+		for (i = poly->length; i < n; i++)
       {
          poly->coeffs[i*(poly->limbs+1)] = 0L;
       } 
@@ -896,6 +896,15 @@ void fmpz_poly_set_coeff_mpz(fmpz_poly_t poly, const unsigned long n, const mpz_
    if ((poly->length == 0) && (mpz_size(x) == 0)) return;
 	fmpz_poly_fit_length(poly, n+1);
    fmpz_poly_fit_limbs(poly, mpz_size(x));
+   if (n+1 > poly->length) 
+   {
+      long i;
+		for (i = poly->length; i < n; i++)
+      {
+         poly->coeffs[i*(poly->limbs+1)] = 0L;
+      } 
+      poly->length = n+1;
+   }
    
    _fmpz_poly_set_coeff_mpz(poly, n, x);
 }

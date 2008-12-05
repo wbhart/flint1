@@ -8944,7 +8944,7 @@ int test_fmpz_poly_power()
    fmpz_poly_init(test_fmpz_poly2);
    fmpz_poly_init(test_fmpz_poly3);
    
-   for (unsigned long count1 = 1; (count1 < 50) && (result == 1) ; count1++)
+   for (unsigned long count1 = 1; (count1 < 500) && (result == 1) ; count1++)
    {
       bits = random_ulong(100)+ 1;
       
@@ -8997,7 +8997,7 @@ int test_fmpz_poly_power()
       fmpz_poly_clear(test_fmpz_poly);
    }
    
-   for (unsigned long count1 = 1; (count1 < 50) && (result == 1) ; count1++)
+   for (unsigned long count1 = 1; (count1 < 500) && (result == 1) ; count1++)
    {
       bits = random_ulong(100)+ 1;
       
@@ -9071,7 +9071,7 @@ int test_fmpz_poly_power_trunc_n()
    fmpz_poly_init(test_fmpz_poly2);
    fmpz_poly_init(test_fmpz_poly3);
    
-   for (unsigned long count1 = 1; (count1 < 50) && (result == 1) ; count1++)
+   for (unsigned long count1 = 1; (count1 < 500) && (result == 1) ; count1++)
    {
       bits = random_ulong(100)+ 1;
       
@@ -9113,7 +9113,8 @@ int test_fmpz_poly_power_trunc_n()
 #if DEBUG2
           if (!result)
           {
-             fmpz_poly_print(test_fmpz_poly); printf("\n");
+             printf("n = %ld, exp = %ld\n", n, exp);
+				 fmpz_poly_print(test_fmpz_poly); printf("\n");
              fmpz_poly_print(test_fmpz_poly2); printf("\n");
              fmpz_poly_print(test_fmpz_poly3); printf("\n");
           }
@@ -9122,7 +9123,7 @@ int test_fmpz_poly_power_trunc_n()
       fmpz_poly_clear(test_fmpz_poly);
    }
    
-   for (unsigned long count1 = 1; (count1 < 50) && (result == 1) ; count1++)
+   for (unsigned long count1 = 1; (count1 < 500) && (result == 1) ; count1++)
    {
       bits = random_ulong(100)+ 1;
       
