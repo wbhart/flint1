@@ -498,7 +498,6 @@ void fmpz_poly_limb_pack_neg(mp_limb_t * array, const fmpz_poly_t poly_fmpz,
 void fmpz_poly_limb_unpack(fmpz_poly_t poly_fmpz, mp_limb_t * array, 
                                   const unsigned long length, const unsigned long limbs)
 {
-   unsigned long n = limbs*length+1; // 1 extra in case of a carried 1 when doing mpn_add_1
    unsigned long carry = 0L;
    fmpz_poly_fit_length(poly_fmpz, length + 1);
 	fmpz_poly_fit_limbs(poly_fmpz, limbs);
@@ -513,14 +512,25 @@ void fmpz_poly_limb_unpack(fmpz_poly_t poly_fmpz, mp_limb_t * array,
          F_mpn_negate(coeffs_m + j + 1, array + k, limbs);
          coeffs_m[j] = -limbs;
          NORM(coeffs_m + j);
-			if (carry) fmpz_add_ui(coeffs_m + j, coeffs_m + j, 1L);
+			if (carry) mpn_sub_1(coeffs_m + j + 1, coeffs_m + j + 1, -coeffs_m[j], 1L);
+			if (!coeffs_m[j - coeffs_m[j]]) coeffs_m[j]++;
 			carry = 1L;
       } else
       {
          F_mpn_copy(coeffs_m + j + 1, array + k, limbs);
          coeffs_m[j] = limbs;
          NORM(coeffs_m + j); 
-			if (carry) fmpz_add_ui(coeffs_m + j, coeffs_m + j, 1L);
+			mp_limb_t cry = 0L;
+			if (carry) 
+			{
+				if (coeffs_m[j]) cry = mpn_add_1(coeffs_m + j + 1, coeffs_m + j + 1, coeffs_m[j], 1L);
+				else cry = 1L;
+			}
+			if (cry) 
+			{
+				coeffs_m[j + coeffs_m[j] + 1] = cry;
+				coeffs_m[j]++;
+			}
 			carry = 0L;
       }
    }
@@ -9345,9 +9355,9 @@ int fmpz_poly_gcd_heuristic(fmpz_poly_t H, const fmpz_poly_t poly1,
 		http://arxiv.org/abs/cs/0206032v1
 	*/
 			
-	ulong bound_bits = FLINT_MIN(bits1, bits2) + 1;
+	ulong bound_bits = FLINT_MIN(bits1, bits2) + 6; // can use 
 	
-	long bound_limbs = bound_bits/FLINT_BITS + 1;
+	long bound_limbs = (bound_bits - 1)/FLINT_BITS + 1; 
 	if (bound_limbs > pack_limbs) pack_limbs = bound_limbs;
 
 	fmpz_t array1 = fmpz_stack_init(poly1->length*pack_limbs + 1);
@@ -9361,7 +9371,7 @@ int fmpz_poly_gcd_heuristic(fmpz_poly_t H, const fmpz_poly_t poly1,
 #if FLINT_BITS == 64
 	if ((bits1 < 32) && (bits2 < 32) && (bound_bits < 32))
 	{
-	   pack_bits = FLINT_MAX(bits1, bits2) + 8;
+	   pack_bits = FLINT_MAX(bits1, bits2) + 6;
 		if (pack_bits > 32) pack_bits = 32;
 		if (pack_bits < bound_bits) pack_bits = bound_bits;
 		
@@ -9416,13 +9426,13 @@ int fmpz_poly_gcd_heuristic(fmpz_poly_t H, const fmpz_poly_t poly1,
 
 	ulong qlimbs = FLINT_MAX(FLINT_ABS(array1[0]), FLINT_ABS(array2[0])) + pack_limbs + 1;
 	fmpz_t q = fmpz_stack_init(qlimbs);
-   F_mpn_clear(q, qlimbs);
-
+   
 	int divides = 0;
 
 	if (fmpz_divides(q, array1, temp))
 	{
-      fmpz_poly_limb_unpack_wrap(Q1, q, pack_bits);
+      F_mpn_clear(q + FLINT_ABS(q[0]) + 1, FLINT_MIN(qlimbs - FLINT_ABS(q[0]) - 1, pack_limbs + 1)); // clear additional limbs for limb_unpack
+		fmpz_poly_limb_unpack_wrap(Q1, q, pack_bits);
       ulong bits_H = FLINT_ABS(fmpz_poly_max_bits(H));
 		ulong bits_Q1 = FLINT_ABS(fmpz_poly_max_bits(Q1));
 		ulong log1 = ceil_log2(H->length);
@@ -9439,10 +9449,10 @@ int fmpz_poly_gcd_heuristic(fmpz_poly_t H, const fmpz_poly_t poly1,
 		}
 		if (ok || fmpz_poly_equal(Q1, A))
 		{
-         F_mpn_clear(q, qlimbs);
          if (fmpz_divides(q, array2, temp))
 	      {
-            if (ok) fmpz_poly_scalar_div_fmpz(H, H, hc);
+            F_mpn_clear(q + FLINT_ABS(q[0]) + 1, FLINT_MIN(qlimbs - FLINT_ABS(q[0]) - 1, pack_limbs)); // clear additional limbs for limb_unpack
+		      if (ok) fmpz_poly_scalar_div_fmpz(H, H, hc);
 		      fmpz_poly_limb_unpack_wrap(Q1, q, pack_bits);
             bits_Q1 = FLINT_ABS(fmpz_poly_max_bits(Q1));
 				log_length = FLINT_MIN(log1, ceil_log2(Q1->length));
