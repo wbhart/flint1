@@ -1382,9 +1382,11 @@ void fmpz_poly_primitive_part(fmpz_poly_t prim, fmpz_poly_t poly)
 
 void fmpz_poly_gcd_subresultant(fmpz_poly_t res, const fmpz_poly_t poly1, const fmpz_poly_t poly2);
 
-void fmpz_poly_gcd_modular(fmpz_poly_t res, const fmpz_poly_t poly1, const fmpz_poly_t poly2);
+void fmpz_poly_gcd_modular(fmpz_poly_t H, const fmpz_poly_t poly1, 
+					    const fmpz_poly_t poly2, const ulong bits1, const ulong bits2);
 
-int fmpz_poly_gcd_heuristic(fmpz_poly_t H, const fmpz_poly_t poly1, const fmpz_poly_t poly2);
+int fmpz_poly_gcd_heuristic(fmpz_poly_t H, const fmpz_poly_t poly1, 
+						 const fmpz_poly_t poly2, const ulong bits1, const ulong bits2);
 
 void fmpz_poly_gcd(fmpz_poly_t res, const fmpz_poly_t poly1, const fmpz_poly_t poly2);
 

@@ -1072,7 +1072,7 @@ char* profDriverString_fmpz_poly_gcd_subresultant(char* params)
 
 char* profDriverDefaultParams_fmpz_poly_gcd_subresultant()
 {
-   return "200000 1.2";
+   return "400000 1.2";
 }
 
 void profDriver_fmpz_poly_gcd_subresultant(char* params)
@@ -1133,7 +1133,7 @@ void sample_fmpz_poly_gcd_modular(unsigned long length, unsigned long bits,
          fmpz_poly_mul(poly2, poly2, poly3);
       }
        prof_start();
-       fmpz_poly_gcd_modular(poly4, poly1, poly2);
+       fmpz_poly_gcd_modular(poly4, poly1, poly2, 0, 0);
        prof_stop();
    }
    
@@ -1156,7 +1156,7 @@ char* profDriverString_fmpz_poly_gcd_modular(char* params)
 
 char* profDriverDefaultParams_fmpz_poly_gcd_modular()
 {
-   return "200000 1.2";
+   return "100000 1.2";
 }
 
 void profDriver_fmpz_poly_gcd_modular(char* params)
@@ -1168,6 +1168,91 @@ void profDriver_fmpz_poly_gcd_modular(char* params)
    
    test_support_init();
    prof2d_set_sampler(sample_fmpz_poly_gcd_modular);
+   run_triangle(max_bits, ratio);
+   test_support_cleanup();
+}
+
+//============================================================================
+
+void sample_fmpz_poly_gcd_heuristic(unsigned long length, unsigned long bits,
+                             void* arg, unsigned long count)
+{
+   unsigned long m = ceil_log2(length);
+   unsigned long output_bits = 2*bits+m;
+   
+   fmpz_poly_t poly1, poly2, poly3, poly4;
+   mpz_poly_t r_poly, r_poly2, r_poly3;  
+   
+   mpz_poly_init(r_poly); 
+   mpz_poly_init(r_poly2); 
+   mpz_poly_init(r_poly3); 
+   mpz_poly_realloc(r_poly, length);
+   mpz_poly_realloc(r_poly2, length);
+   mpz_poly_realloc(r_poly3, length);
+  
+   fmpz_poly_init(poly1);
+   fmpz_poly_init(poly2);
+   fmpz_poly_init(poly3);
+   fmpz_poly_init(poly4);
+    
+   unsigned long r_count;    // how often to generate new random data
+   
+   if (count >= 1000) r_count = 100;
+   else if (count >= 100) r_count = 10;
+   else if (count >= 20) r_count = 5;
+   else if (count >= 8) r_count = 2;
+   else r_count = 1;
+   
+   for (unsigned long i = 0; i < count; i++)
+   {
+      if (i%r_count == 0)
+      {
+         randpoly(r_poly, length, bits);
+         mpz_poly_to_fmpz_poly(poly1, r_poly);
+         randpoly(r_poly2, length, bits);
+         mpz_poly_to_fmpz_poly(poly2, r_poly2);
+         randpoly(r_poly3, length, bits);
+         mpz_poly_to_fmpz_poly(poly3, r_poly3);
+         fmpz_poly_mul(poly1, poly1, poly3);
+         fmpz_poly_mul(poly2, poly2, poly3);
+      }
+       prof_start();
+       if (!fmpz_poly_gcd_heuristic(poly4, poly1, poly2, 0, 0))
+          fmpz_poly_gcd_modular(poly4, poly1, poly2, 0, 0);
+       prof_stop();
+   }
+   
+   mpz_poly_clear(r_poly);
+   mpz_poly_clear(r_poly2);
+   mpz_poly_clear(r_poly3);
+   
+   fmpz_poly_clear(poly4);
+   fmpz_poly_clear(poly3);
+   fmpz_poly_clear(poly2);
+   fmpz_poly_clear(poly1);
+   
+}
+
+char* profDriverString_fmpz_poly_gcd_heuristic(char* params)
+{
+   return "fmpz_poly_gcd_heuristic over various lengths and various bit sizes.\n"
+   "Parameters are: max bitsize; ratio between consecutive lengths/bitsizes.";
+}
+
+char* profDriverDefaultParams_fmpz_poly_gcd_heuristic()
+{
+   return "100000 1.2";
+}
+
+void profDriver_fmpz_poly_gcd_heuristic(char* params)
+{
+   unsigned long max_bits;
+   double ratio;
+
+   sscanf(params, "%ld %lf", &max_bits, &ratio);
+   
+   test_support_init();
+   prof2d_set_sampler(sample_fmpz_poly_gcd_heuristic);
    run_triangle(max_bits, ratio);
    test_support_cleanup();
 }
