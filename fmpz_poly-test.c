@@ -12444,17 +12444,7 @@ void fmpz_poly_test_all()
 #if TESTFILE
    RUN_TEST(fmpz_poly_freadprint); 
 #endif
-	RUN_TEST(fmpz_poly_gcd); 
-   RUN_TEST(fmpz_poly_gcd); 
-   RUN_TEST(fmpz_poly_gcd); 
-   RUN_TEST(fmpz_poly_gcd); 
-   RUN_TEST(fmpz_poly_gcd); 
-   RUN_TEST(fmpz_poly_gcd); 
-   RUN_TEST(fmpz_poly_gcd); 
-   RUN_TEST(fmpz_poly_gcd); 
-   RUN_TEST(fmpz_poly_gcd); 
-   RUN_TEST(fmpz_poly_gcd); 
-   RUN_TEST(fmpz_poly_tofromstring); 
+	RUN_TEST(fmpz_poly_tofromstring); 
    RUN_TEST(fmpz_poly_to_ZmodF_poly); 
    RUN_TEST(fmpz_poly_bit_pack); 
    RUN_TEST(fmpz_poly_bit_pack_unsigned); 
