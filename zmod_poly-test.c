@@ -1464,7 +1464,7 @@ int test_zmod_poly_div_newton()
    return result;
 }
 
-int test_zmod_poly_gcd()
+int test_zmod_poly_gcd_euclidean()
 {
    int result = 1;
    zmod_poly_t pol1, pol2, pol3, res1, res2, res3;
@@ -1498,14 +1498,14 @@ int test_zmod_poly_gcd()
             {
                randpoly(pol1, length1, modulus);
                randpoly(pol2, length2, modulus);
-               zmod_poly_gcd(res1, pol1, pol2);          
+               zmod_poly_gcd_euclidean(res1, pol1, pol2);          
             } while (res1->length != 1);
 
             randpoly(pol3, length3, modulus);
             zmod_poly_mul(pol1, pol1, pol3);
             zmod_poly_mul(pol2, pol2, pol3);
          
-            zmod_poly_gcd(res1, pol1, pol2);
+            zmod_poly_gcd_euclidean(res1, pol1, pol2);
             if (pol3->length != 0) zmod_poly_divrem_newton(res2, res3, res1, pol3);
             else zmod_poly_zero(res3);
 
@@ -2761,6 +2761,231 @@ int test_zmod_poly_gcd_hgcd()
    return result;
 }
 
+int test_zmod_poly_gcd()
+{
+   int result = 1;
+   zmod_poly_t pol1, pol2, pol3, res1, res2, res3;
+   unsigned long bits;
+   
+   for (unsigned long count1 = 0; (count1 < 100) && (result == 1); count1++)
+   {
+      bits = randint(FLINT_BITS-2)+2;
+      unsigned long modulus;
+      
+      do {modulus = randprime(bits);} while (modulus < 2);
+      
+      zmod_poly_init(pol1, modulus);
+      zmod_poly_init(pol2, modulus);
+      zmod_poly_init(pol3, modulus);
+      zmod_poly_init(res1, modulus);
+      zmod_poly_init(res2, modulus);
+      zmod_poly_init(res3, modulus);
+      
+      for (unsigned long count2 = 0; (count2 < 30) && (result == 1); count2++)
+      {
+         unsigned long length1 = randint(100)+1;
+         unsigned long length2 = randint(100)+1;
+         unsigned long length3 = randint(100);
+         
+#if DEBUG
+         printf("length1 = %ld, length2 = %ld, bits = %ld, modulus = %ld\n", length1, length2, bits, modulus);
+#endif
+         
+            do 
+            {
+               randpoly(pol1, length1, modulus);
+               randpoly(pol2, length2, modulus);
+               zmod_poly_gcd_euclidean(res1, pol1, pol2);          
+            } while (res1->length != 1);
+
+            randpoly(pol3, length3, modulus);
+            zmod_poly_mul(pol1, pol1, pol3);
+            zmod_poly_mul(pol2, pol2, pol3);
+         
+            zmod_poly_gcd(res1, pol1, pol2);
+            if (pol3->length != 0) zmod_poly_divrem_newton(res2, res3, res1, pol3);
+            else zmod_poly_zero(res3);
+
+            result &= ((res3->length == 0) && (res1->length == pol3->length));
+         
+         if (!result)
+         {
+            zmod_poly_print(pol1); printf("\n\n");
+            zmod_poly_print(pol2); printf("\n\n");
+            zmod_poly_print(res1); printf("\n\n");
+         }
+      }
+      
+      zmod_poly_clear(pol1);
+      zmod_poly_clear(pol2);
+      zmod_poly_clear(pol3);
+      zmod_poly_clear(res1); 
+      zmod_poly_clear(res2); 
+      zmod_poly_clear(res3); 
+   }
+   
+   // alias both inputs
+	for (unsigned long count1 = 0; (count1 < 100) && (result == 1); count1++)
+   {
+      bits = randint(FLINT_BITS-2)+2;
+      unsigned long modulus;
+      
+      do {modulus = randprime(bits);} while (modulus < 2);
+      
+      zmod_poly_init(pol1, modulus);
+      zmod_poly_init(res1, modulus);
+      zmod_poly_init(res2, modulus);
+      zmod_poly_init(res3, modulus);
+      
+      for (unsigned long count2 = 0; (count2 < 30) && (result == 1); count2++)
+      {
+         unsigned long length1 = randint(100)+1;
+         unsigned long length2 = randint(100)+1;
+         unsigned long length3 = randint(100);
+         
+#if DEBUG
+         printf("length1 = %ld, length2 = %ld, bits = %ld, modulus = %ld\n", length1, length2, bits, modulus);
+#endif
+         
+            randpoly(pol1, length1, modulus);
+            
+            zmod_poly_gcd(res1, pol1, pol1);
+            if (pol1->length != 0) zmod_poly_divrem_newton(res2, res3, res1, pol1);
+            else zmod_poly_zero(res3);
+
+            result &= ((res3->length == 0) && (res1->length == pol1->length));
+         
+         if (!result)
+         {
+            zmod_poly_print(pol1); printf("\n\n");
+            zmod_poly_print(res1); printf("\n\n");
+         }
+      }
+      
+      zmod_poly_clear(pol1);
+      zmod_poly_clear(res1); 
+      zmod_poly_clear(res2); 
+      zmod_poly_clear(res3); 
+   }
+
+	// alias first input and output
+	for (unsigned long count1 = 0; (count1 < 100) && (result == 1); count1++)
+   {
+      bits = randint(FLINT_BITS-2)+2;
+      unsigned long modulus;
+      
+      do {modulus = randprime(bits);} while (modulus < 2);
+      
+      zmod_poly_init(pol1, modulus);
+      zmod_poly_init(pol2, modulus);
+      zmod_poly_init(pol3, modulus);
+      zmod_poly_init(res1, modulus);
+      zmod_poly_init(res2, modulus);
+      zmod_poly_init(res3, modulus);
+      
+      for (unsigned long count2 = 0; (count2 < 30) && (result == 1); count2++)
+      {
+         unsigned long length1 = randint(100)+1;
+         unsigned long length2 = randint(100)+1;
+         unsigned long length3 = randint(100);
+         
+#if DEBUG
+         printf("length1 = %ld, length2 = %ld, bits = %ld, modulus = %ld\n", length1, length2, bits, modulus);
+#endif
+         
+            do 
+            {
+               randpoly(pol1, length1, modulus);
+               randpoly(pol2, length2, modulus);
+               zmod_poly_gcd_euclidean(res1, pol1, pol2);          
+            } while (res1->length != 1);
+
+            randpoly(pol3, length3, modulus);
+            zmod_poly_mul(pol1, pol1, pol3);
+            zmod_poly_mul(pol2, pol2, pol3);
+         
+            zmod_poly_gcd(pol1, pol1, pol2);
+            if (pol3->length != 0) zmod_poly_divrem_newton(res2, res3, pol1, pol3);
+            else zmod_poly_zero(res3);
+
+            result &= ((res3->length == 0) && (pol1->length == pol3->length));
+         
+         if (!result)
+         {
+            zmod_poly_print(pol3); printf("\n\n");
+            zmod_poly_print(pol1); printf("\n\n");
+         }
+      }
+
+		zmod_poly_clear(pol1);
+      zmod_poly_clear(pol2);
+      zmod_poly_clear(pol3);
+      zmod_poly_clear(res1); 
+      zmod_poly_clear(res2); 
+      zmod_poly_clear(res3); 
+   }
+
+      
+	// alias second input and output
+	for (unsigned long count1 = 0; (count1 < 100) && (result == 1); count1++)
+   {
+      bits = randint(FLINT_BITS-2)+2;
+      unsigned long modulus;
+      
+      do {modulus = randprime(bits);} while (modulus < 2);
+      
+      zmod_poly_init(pol1, modulus);
+      zmod_poly_init(pol2, modulus);
+      zmod_poly_init(pol3, modulus);
+      zmod_poly_init(res1, modulus);
+      zmod_poly_init(res2, modulus);
+      zmod_poly_init(res3, modulus);
+      
+      for (unsigned long count2 = 0; (count2 < 30) && (result == 1); count2++)
+      {
+         unsigned long length1 = randint(100)+1;
+         unsigned long length2 = randint(100)+1;
+         unsigned long length3 = randint(100);
+         
+#if DEBUG
+         printf("length1 = %ld, length2 = %ld, bits = %ld, modulus = %ld\n", length1, length2, bits, modulus);
+#endif
+         
+            do 
+            {
+               randpoly(pol1, length1, modulus);
+               randpoly(pol2, length2, modulus);
+               zmod_poly_gcd_euclidean(res1, pol1, pol2);          
+            } while (res1->length != 1);
+
+            randpoly(pol3, length3, modulus);
+            zmod_poly_mul(pol1, pol1, pol3);
+            zmod_poly_mul(pol2, pol2, pol3);
+         
+            zmod_poly_gcd(pol2, pol1, pol2);
+            if (pol3->length != 0) zmod_poly_divrem_newton(res2, res3, pol2, pol3);
+            else zmod_poly_zero(res3);
+
+            result &= ((res3->length == 0) && (pol2->length == pol3->length));
+         
+         if (!result)
+         {
+            zmod_poly_print(pol3); printf("\n\n");
+            zmod_poly_print(pol2); printf("\n\n");
+         }
+      }
+      
+      zmod_poly_clear(pol1);
+      zmod_poly_clear(pol2);
+      zmod_poly_clear(pol3);
+      zmod_poly_clear(res1); 
+      zmod_poly_clear(res2); 
+      zmod_poly_clear(res3); 
+   }
+   
+   return result;
+}
+
 void zmod_poly_test_all()
 {
    int success, all_success = 1;
@@ -2794,11 +3019,12 @@ void zmod_poly_test_all()
    RUN_TEST(zmod_poly_newton_invert); 
    RUN_TEST(zmod_poly_div_series); 
    RUN_TEST(zmod_poly_div_newton); 
-   RUN_TEST(zmod_poly_gcd); 
+   RUN_TEST(zmod_poly_gcd_euclidean); 
 	RUN_TEST(zmod_poly_half_gcd_iter); 
    RUN_TEST(zmod_poly_half_gcd); 
-   RUN_TEST(zmod_poly_gcd_hgcd); 
-   RUN_TEST(zmod_poly_gcd_invert); 
+   RUN_TEST(zmod_poly_gcd); 
+   RUN_TEST(zmod_poly_gcd_euclidean); 
+	RUN_TEST(zmod_poly_gcd_invert); 
    RUN_TEST(zmod_poly_xgcd); 
 	RUN_TEST(zmod_poly_half_gcd); 
    RUN_TEST(zmod_poly_resultant_euclidean); 

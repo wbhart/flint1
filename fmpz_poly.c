@@ -9107,7 +9107,7 @@ void fmpz_poly_gcd_modular(fmpz_poly_t H, const fmpz_poly_t poly1,
       if (bits2 + 1 < pbits) fmpz_poly_to_zmod_poly_no_red(b, B);
       else fmpz_poly_to_zmod_poly(b, B);
       
-      zmod_poly_gcd_hgcd(h, a, b);
+      zmod_poly_gcd(h, a, b);
       
       if (h->length == 1) // gcd is 1
       {

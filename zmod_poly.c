@@ -3762,7 +3762,7 @@ void zmod_poly_divrem_newton(zmod_poly_t Q, zmod_poly_t R, zmod_poly_t A, zmod_p
 
 ****************************************************************************/
 
-void zmod_poly_gcd(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
+void zmod_poly_gcd_euclidean(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
 {
    zmod_poly_t Q, R, A, B;
    
@@ -4144,9 +4144,6 @@ long zmod_poly_half_gcd_iter(zmod_poly_2x2_mat_t res, zmod_poly_t a, zmod_poly_t
 	return sign;
 }
 
-#define FLINT_ZMOD_POLY_HGCD_CUTOFF 40
-#define FLINT_ZMOD_POLY_GCD_CUTOFF 75
-
 long zmod_poly_half_gcd(zmod_poly_2x2_mat_t res, zmod_poly_t a, zmod_poly_t b)
 {
    ulong m = a->length/2;
@@ -4240,6 +4237,12 @@ void zmod_poly_gcd_hgcd(zmod_poly_t res, zmod_poly_t f, zmod_poly_t g)
 		return;
 	}
 	
+   if (g->length == 0)
+	{
+		zmod_poly_set(res, f);
+		return;
+	}
+	
 	ulong p = f->p;
 	
 	zmod_poly_t h, j, q, r, temp;
@@ -4251,14 +4254,6 @@ void zmod_poly_gcd_hgcd(zmod_poly_t res, zmod_poly_t f, zmod_poly_t g)
 	{
 		zmod_poly_set(res, g);
 	   zmod_poly_clear(q);
-	   zmod_poly_clear(r);
-      return;
-	}
-
-	if (g->length < FLINT_ZMOD_POLY_GCD_CUTOFF)
-	{
-		zmod_poly_gcd(res, g, r);
-		zmod_poly_clear(q);
 	   zmod_poly_clear(r);
       return;
 	}
@@ -4328,6 +4323,7 @@ void zmod_poly_gcd_hgcd(zmod_poly_t res, zmod_poly_t f, zmod_poly_t g)
 	zmod_poly_clear(q);
 	zmod_poly_clear(r);
 }
+
 
 /****************************************************************************
 

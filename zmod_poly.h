@@ -520,12 +520,31 @@ unsigned long zmod_poly_resultant(zmod_poly_t a, zmod_poly_t b)
    GCD
 */
 
-void zmod_poly_gcd(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2);
+#define FLINT_ZMOD_POLY_GCD_CUTOFF 75 // cutoff between euclidean and half gcd
+#define FLINT_ZMOD_POLY_HGCD_CUTOFF 40 // cutoff between iterative basecase and recursive hgcd
+
+void zmod_poly_gcd_euclidean(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2);
 int zmod_poly_gcd_invert(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2);
 void zmod_poly_xgcd(zmod_poly_t res, zmod_poly_t s, zmod_poly_t t, zmod_poly_t poly1, zmod_poly_t poly2);
 long zmod_poly_half_gcd(zmod_poly_2x2_mat_t res, zmod_poly_t a, zmod_poly_t b);
 long zmod_poly_half_gcd_iter(zmod_poly_2x2_mat_t res, zmod_poly_t a, zmod_poly_t b);
 void zmod_poly_gcd_hgcd(zmod_poly_t res, zmod_poly_t f, zmod_poly_t g);
+
+static inline
+void zmod_poly_gcd(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
+{
+	if (poly1 == poly2) // aliased
+	{
+		zmod_poly_set(res, poly1);
+		return;
+	}
+	
+	if (poly2->length < FLINT_ZMOD_POLY_GCD_CUTOFF)
+	   zmod_poly_gcd_euclidean(res, poly1, poly2);
+	else
+		zmod_poly_gcd_hgcd(res, poly1, poly2);  
+}
+
 /*
    Derivative
 */

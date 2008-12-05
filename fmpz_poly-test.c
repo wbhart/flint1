@@ -10359,7 +10359,7 @@ int test_fmpz_poly_bit_pack()
       fmpz_poly_init2(test_fmpz_poly2, 1, 10);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
-          length = random_ulong(1000)+1;
+          length = random_ulong(300)+1;
 #if DEBUG
           printf("%ld, %ld\n",length, bits);
 #endif
@@ -10500,7 +10500,7 @@ int test_fmpz_poly_limb_pack_unsigned()
       fmpz_poly_init2(test_fmpz_poly2, 1, limbs);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
-          length = random_ulong(1000)+1;
+          length = random_ulong(300)+1;
       
 #if DEBUG
           printf("%ld, %ld\n",length, bits);
@@ -10564,7 +10564,7 @@ int test_fmpz_poly_limb_pack()
       fmpz_poly_init2(test_fmpz_poly2, 1, limbs);
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
-          length = random_ulong(1000)+1;
+          length = random_ulong(300)+1;
       
 #if DEBUG
           printf("%ld, %ld\n",length, bits);
