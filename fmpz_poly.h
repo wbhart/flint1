@@ -475,12 +475,6 @@ void _fmpz_poly_attach(fmpz_poly_t output, const fmpz_poly_t input)
    output->coeffs = input->coeffs;
 }
 
-static inline 
-void fmpz_poly_attach(fmpz_poly_t output, const fmpz_poly_t input)
-{
-   _fmpz_poly_attach(output, input);
-}
-
 /*
    Attach input shifted right by n to output
 */
@@ -493,13 +487,6 @@ void _fmpz_poly_attach_shift(fmpz_poly_t output,
    else output->length = 0;
    output->limbs = input->limbs;
    output->coeffs = input->coeffs + n*(input->limbs+1);
-}
-
-static inline 
-void fmpz_poly_attach_shift(fmpz_poly_t output, 
-             const fmpz_poly_t input, unsigned long n)
-{
-   _fmpz_poly_attach_shift(output, input, n);
 }
 
 /*
@@ -515,13 +502,6 @@ void _fmpz_poly_attach_truncate(fmpz_poly_t output,
    output->limbs = input->limbs;
    output->coeffs = input->coeffs;
    _fmpz_poly_normalise(output);
-}
-
-static inline 
-void fmpz_poly_attach_truncate(fmpz_poly_t output, 
-             const fmpz_poly_t input, unsigned long n)
-{
-   _fmpz_poly_attach_truncate(output, input, n);
 }
 
 long _fmpz_poly_max_bits1(const fmpz_poly_t poly);
@@ -597,12 +577,6 @@ void _fmpz_poly_mul_modular_trunc(fmpz_poly_t output, const fmpz_poly_t input1,
 void _fmpz_poly_mul_modular_trunc_left(fmpz_poly_t output, const fmpz_poly_t input1, 
                                        const fmpz_poly_t input2, const unsigned long trunc);
 
-/*
-   Multiply two polynomials together using the Kronecker segmentation method.
-   Currently assumes that the number of output bits per coefficient is <= 64 and
-   is supplied by the parameter "bits"
-*/
-
 void _fmpz_poly_mul_KS(fmpz_poly_t output, const fmpz_poly_t input1, 
                                        const fmpz_poly_t input2, const long bits);
                                        
@@ -622,12 +596,6 @@ void _fmpz_poly_mul_trunc_left_n(fmpz_poly_t output, const fmpz_poly_t input1,
                                 const fmpz_poly_t input2, const unsigned long trunc);
                                 
 void _fmpz_poly_mul(fmpz_poly_t output, const fmpz_poly_t input1, const fmpz_poly_t input2);
-
-void _fmpz_poly_sqr(fmpz_poly_t output, const fmpz_poly_t input);
-
-void _fmpz_poly_sqr_naive(fmpz_poly_t output, const fmpz_poly_t input);
-
-void _fmpz_poly_sqr_karatsuba(fmpz_poly_t output, const fmpz_poly_t input);
 
 void _fmpz_poly_content(fmpz_t content, const fmpz_poly_t a);
 
@@ -1235,21 +1203,6 @@ void fmpz_poly_divrem(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_poly_t A, const f
 */
 
 static inline
-int fmpz_poly_divides(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t B)
-{
-   fmpz_poly_t R;
-   int divides = 0;
-
-   fmpz_poly_init(R);
-
-   fmpz_poly_divrem(Q, R, A, B);
-   if (R->length == 0) divides = 1;
-   fmpz_poly_clear(R);
-
-   return divides;
-}
-
-static inline
 int fmpz_poly_divides_divconquer(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t B)
 {
    fmpz_poly_t R;
@@ -1265,6 +1218,13 @@ int fmpz_poly_divides_divconquer(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_
 }
 
 int fmpz_poly_divides_modular(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t B, const ulong bound);
+
+static inline
+int fmpz_poly_divides(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t B)
+{
+   return fmpz_poly_divides_modular(Q, A, B, 0);
+}
+
 
 void fmpz_poly_power(fmpz_poly_t output, const fmpz_poly_t poly, const unsigned long exp);
 
