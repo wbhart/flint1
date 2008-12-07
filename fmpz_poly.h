@@ -1214,7 +1214,23 @@ int fmpz_poly_divides_modular(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_pol
 static inline
 int fmpz_poly_divides(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t B)
 {
-   return fmpz_poly_divides_modular(Q, A, B, 0);
+   if (A == B)
+	{
+		fmpz_poly_set_coeff_ui(Q, 0, 1L);
+		Q->length = 1;
+		return 1;
+	}
+	
+	if ((Q == A) || (Q == B))
+	{
+		fmpz_poly_t Qa;
+		fmpz_poly_init(Qa);
+      int divides = fmpz_poly_divides_modular(Qa, A, B, 0);
+		fmpz_poly_swap(Q, Qa);
+		fmpz_poly_clear(Qa);
+		return divides;
+	} else
+	   return fmpz_poly_divides_modular(Q, A, B, 0);
 }
 
 
@@ -1358,7 +1374,15 @@ void fmpz_poly_invmod_modular(fmpz_t d, fmpz_poly_t H, fmpz_poly_t poly1, fmpz_p
 static inline
 void fmpz_poly_invmod(fmpz_t d, fmpz_poly_t H, fmpz_poly_t poly1, fmpz_poly_t poly2)
 {
-   fmpz_poly_invmod_modular(d, H, poly1, poly2);
+   if ((H == poly1) || (H == poly2))
+	{
+		fmpz_poly_t res;
+		fmpz_poly_init(res);
+      fmpz_poly_invmod_modular(d, res, poly1, poly2);
+		fmpz_poly_swap(H, res);
+		fmpz_poly_clear(res);
+	} else
+		fmpz_poly_invmod_modular(d, H, poly1, poly2);
 }
 
 unsigned long fmpz_poly_resultant_bound(fmpz_poly_t a, fmpz_poly_t b);
