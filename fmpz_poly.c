@@ -10511,7 +10511,7 @@ void fmpz_poly_array_compose_divconquer(fmpz_poly_t output, fmpz_poly_t * poly, 
 	flint_heap_free(half);
 }
 
-void fmpz_poly_compose(fmpz_poly_t output, fmpz_poly_t poly, fmpz_poly_t val)
+void fmpz_poly_compose_combined(fmpz_poly_t output, fmpz_poly_t poly, fmpz_poly_t val)
 {
 	if (poly->length == 0) 
 	{
@@ -10568,4 +10568,18 @@ void fmpz_poly_compose(fmpz_poly_t output, fmpz_poly_t poly, fmpz_poly_t val)
 	}
 	
 	for (ulong i = 0; i < short_length; i++) fmpz_poly_clear(temp[i]);
+}
+
+void fmpz_poly_compose(fmpz_poly_t output, fmpz_poly_t poly, fmpz_poly_t val)
+{
+	fmpz_poly_t out;
+
+	if ((output == poly) || (output == val))
+	{
+		fmpz_poly_init(out);
+		fmpz_poly_compose_combined(out, poly, val);
+		fmpz_poly_swap(out, output);
+		fmpz_poly_clear(out);
+	} else 
+      fmpz_poly_compose_combined(output, poly, val);
 }
