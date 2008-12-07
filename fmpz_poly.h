@@ -1394,7 +1394,28 @@ void fmpz_poly_xgcd_modular(fmpz_t r, fmpz_poly_t s, fmpz_poly_t t, fmpz_poly_t 
 static inline
 void fmpz_poly_xgcd(fmpz_t r, fmpz_poly_t s, fmpz_poly_t t, fmpz_poly_t a, fmpz_poly_t b)
 {
-   fmpz_poly_xgcd_modular(r, s, t, a, b);
+   fmpz_poly_t T, S;
+	
+	if ((t == a) || (t == b))
+	{
+		fmpz_poly_init(T);
+		if ((s == a) | (s == b))
+		{
+			fmpz_poly_init(S);
+         fmpz_poly_xgcd_modular(r, S, T, a, b);
+		   fmpz_poly_swap(S, s);
+		   fmpz_poly_clear(S);
+		} else fmpz_poly_xgcd_modular(r, s, T, a, b);
+      fmpz_poly_swap(T, t);
+		fmpz_poly_clear(T);
+	} else if ((s == a) | (s == b))
+	{
+		fmpz_poly_init(S);
+      fmpz_poly_xgcd_modular(r, S, t, a, b);
+		fmpz_poly_swap(S, s);
+		fmpz_poly_clear(S);
+	} else
+	   fmpz_poly_xgcd_modular(r, s, t, a, b);
 }
 
 void fmpz_poly_derivative(fmpz_poly_t der, fmpz_poly_t poly);
