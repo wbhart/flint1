@@ -2945,7 +2945,8 @@ void __fmpz_poly_mul_modular_comb(fmpz_poly_t output, const fmpz_poly_t poly1, c
    Multiply two polynomials using the multimodular technique.
    This function allows aliasing
 */
-void _fmpz_poly_mul_modular(fmpz_poly_t output, const fmpz_poly_t poly1, const fmpz_poly_t poly2)
+void _fmpz_poly_mul_modular(fmpz_poly_t output, const fmpz_poly_t poly1, 
+									 const fmpz_poly_t poly2, const ulong bits_in)
 {
 
 #if FLINT_BITS == 32
@@ -2965,21 +2966,27 @@ void _fmpz_poly_mul_modular(fmpz_poly_t output, const fmpz_poly_t poly1, const f
     // = 1.0000882353338675941356105657797766168
     double primes_per_limb = 1.0000882353339;
 #else
-#error Bill promised FLINT_BITS is either 32 or 64
+#error FLINT_BITS must be either 32 or 64
 #endif
 
     // estimated bound for the size of output coefficients
     unsigned long length = FLINT_MIN(poly1->length, poly2->length);
-	long bits1 = fmpz_poly_max_bits(poly1);
-	long bits2 = fmpz_poly_max_bits(poly2);
-	unsigned long log_length = 0;
-    while (length > (1L<<log_length)) log_length++;
-    unsigned long output_bits = FLINT_ABS(bits1) + FLINT_ABS(bits2) + log_length + 1;
+	 unsigned long output_bits;
+	 long bits1, bits2;
+	 if (bits_in) output_bits = bits_in;
+	 else
+	 {
+		 bits1= fmpz_poly_max_bits(poly1);
+	    bits2 = fmpz_poly_max_bits(poly2);
+	    unsigned long log_length = 0;
+       while (length > (1L<<log_length)) log_length++;
+       output_bits = FLINT_ABS(bits1) + FLINT_ABS(bits2) + log_length + 1;
+	 }
 
     // round up number of primes to a power of two;
     unsigned long numprimes = (output_bits * primes_per_limb)/FLINT_BITS + 1;
 	
-	unsigned long* primes = flint_heap_alloc(numprimes);
+	 unsigned long* primes = flint_heap_alloc(numprimes);
 
     unsigned long p = p0;
     for(unsigned long i = 0; i < numprimes; i++) {
@@ -10295,17 +10302,23 @@ void fmpz_poly_evaluate(fmpz_t output, fmpz_poly_t poly, fmpz_t val)
 
 void fmpz_poly_compose_horner_range(fmpz_poly_t output, fmpz_poly_t poly, fmpz_poly_t val, ulong start, ulong n)
 {
+	if (n == 0)
+	{
+		fmpz_poly_zero(output);
+		return;
+	}
+	
 	ulong size_p = poly->limbs + 1;
    fmpz_t coeff_p = poly->coeffs + (start + n - 1)* size_p;
    fmpz_poly_zero(output);
-	fmpz_poly_set_coeff_fmpz(output,0,coeff_p);
+	fmpz_poly_set_coeff_fmpz(output, 0, coeff_p);
    fmpz_poly_fit_length(output, 1);
 	fmpz_poly_fit_limbs(output, size_p);
 	for (long i = n - 2; i >= 0L; i--)
    {
       coeff_p -= size_p;
 		fmpz_poly_mul(output, output, val);
-		if (output->length) fmpz_poly_fit_limbs(output, FLINT_ABS(output->coeffs[0])+1);
+		if (output->length) fmpz_poly_fit_limbs(output, FLINT_ABS(output->coeffs[0]) + 1);
 	   else 
 		{
 			output->coeffs[0] = 0;

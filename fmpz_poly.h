@@ -569,13 +569,7 @@ void _fmpz_poly_mul_karatsuba_trunc(fmpz_poly_t output, const fmpz_poly_t input1
 void _fmpz_poly_mul_karatsuba_trunc_left(fmpz_poly_t output, const fmpz_poly_t input1, const fmpz_poly_t input2, const unsigned long trunc);
 
 void _fmpz_poly_mul_modular(fmpz_poly_t output, const fmpz_poly_t input1,
-                                                const fmpz_poly_t input2);
-
-void _fmpz_poly_mul_modular_trunc(fmpz_poly_t output, const fmpz_poly_t input1, 
-                                  const fmpz_poly_t input2, const unsigned long trunc);
-
-void _fmpz_poly_mul_modular_trunc_left(fmpz_poly_t output, const fmpz_poly_t input1, 
-                                       const fmpz_poly_t input2, const unsigned long trunc);
+                                                const fmpz_poly_t input2, const ulong bits);
 
 void _fmpz_poly_mul_KS(fmpz_poly_t output, const fmpz_poly_t input1, 
                                        const fmpz_poly_t input2, const long bits);
@@ -596,8 +590,6 @@ void _fmpz_poly_mul_trunc_left_n(fmpz_poly_t output, const fmpz_poly_t input1,
                                 const fmpz_poly_t input2, const unsigned long trunc);
                                 
 void _fmpz_poly_mul(fmpz_poly_t output, const fmpz_poly_t input1, const fmpz_poly_t input2);
-
-void _fmpz_poly_content(fmpz_t content, const fmpz_poly_t a);
 
 /*============================================================================
   
@@ -1329,7 +1321,7 @@ void _fmpz_poly_primitive_part(fmpz_poly_t prim, fmpz_poly_t poly)
    }
 
    fmpz_t c = fmpz_init(poly->limbs);
-   _fmpz_poly_content(c, poly);
+   fmpz_poly_content(c, poly);
    _fmpz_poly_scalar_div_fmpz(prim, poly, c);
    fmpz_clear(c);
 }
@@ -1343,9 +1335,11 @@ void fmpz_poly_primitive_part(fmpz_poly_t prim, fmpz_poly_t poly)
       return;
    }
 
-   fmpz_t c = fmpz_init(poly->limbs);
+   fmpz_poly_fit_length(prim, poly->length);
+	fmpz_t c = fmpz_init(poly->limbs);
    fmpz_poly_content(c, poly);
-   fmpz_poly_scalar_div_fmpz(prim, poly, c);
+   fmpz_poly_fit_limbs(prim, poly->limbs - FLINT_ABS(c[0]) + 1);
+	fmpz_poly_scalar_div_fmpz(prim, poly, c);
    fmpz_clear(c);
 }
 
