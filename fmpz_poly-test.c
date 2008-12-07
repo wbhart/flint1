@@ -13649,6 +13649,66 @@ int test_fmpz_poly_evaluate()
       
       for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
+         length = random_ulong(100);
+			bits2 = random_ulong(200) + 1;
+#if DEBUG
+         printf("%ld, %ld\n",length, bits);
+#endif
+         randpoly(test_poly, length, bits);
+           
+#if DEBUG
+         mpz_poly_print_pretty(test_poly, "x");
+         printf("\n\n");
+#endif
+         mpz_poly_to_fmpz_poly(test_fmpz_poly, test_poly);
+
+			mpz_rrandomb(val_m, randstate, bits2);
+			if (z_randint(2)) mpz_neg(val_m, val_m);
+			val = fmpz_init(mpz_size(val_m));
+			mpz_to_fmpz(val, val_m);
+			 
+			if (test_fmpz_poly->length)
+				eval = fmpz_init(test_fmpz_poly->limbs + (test_fmpz_poly->length - 1)*(bits2/FLINT_BITS + 1));
+			else eval = fmpz_init(test_fmpz_poly->limbs);
+
+			for (ulong j = 0; j < 10; j++) fmpz_poly_evaluate(eval, test_fmpz_poly, val);
+			fmpz_to_mpz(ev1, eval);
+          
+			if (test_poly->length == 0) result = (eval[0] == 0L);
+			else
+			{
+            mpz_set_ui(pow, 1);
+				mpz_set_ui(ev2, 0);
+				for (ulong i = 0; i < test_poly->length; i++)
+				{
+               mpz_mul(temp, test_poly->coeffs[i], pow);
+					mpz_mul(pow, pow, val_m);
+               mpz_add(ev2, ev2, temp);
+				}
+
+            result = (mpz_cmp(ev1, ev2) == 0);
+			}
+
+         if (!result) 
+			{
+				printf("length = %ld, bits = %ld, bits2 = %ld, val = ", length, bits, bits2);
+			   fmpz_print(val); printf("\n");
+			}
+
+			fmpz_clear(val);
+			fmpz_clear(eval);
+      }   
+          
+      fmpz_poly_clear(test_fmpz_poly);
+   }
+ 
+   for (unsigned long count1 = 0; (count1 < 300) && (result == 1) ; count1++)
+   {
+      bits = random_ulong(200) + 1;
+      
+      fmpz_poly_init(test_fmpz_poly);
+      for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
+      { 
           length = random_ulong(100);
 			 bits2 = random_ulong(200) + 1;
 #if DEBUG
@@ -13664,17 +13724,16 @@ int test_fmpz_poly_evaluate()
 
 			 mpz_rrandomb(val_m, randstate, bits2);
 			 if (z_randint(2)) mpz_neg(val_m, val_m);
-			 val = fmpz_init(mpz_size(val_m));
+			 if (test_fmpz_poly->length)
+			    val = fmpz_init(FLINT_MAX(mpz_size(val_m), test_fmpz_poly->limbs + (test_fmpz_poly->length - 1)*(bits2/FLINT_BITS + 1)));
+			 else
+			    val = fmpz_init(FLINT_MAX(mpz_size(val_m), test_fmpz_poly->limbs));
 			 mpz_to_fmpz(val, val_m);
 			 
-			 if (test_fmpz_poly->length)
-				 eval = fmpz_init(test_fmpz_poly->limbs + (test_fmpz_poly->length - 1)*(bits2/FLINT_BITS + 1));
-			 else eval = fmpz_init(test_fmpz_poly->limbs);
-
-			 for (ulong j = 0; j < 10; j++) fmpz_poly_evaluate(eval, test_fmpz_poly, val);
-			 fmpz_to_mpz(ev1, eval);
+			 fmpz_poly_evaluate(val, test_fmpz_poly, val);
+			 fmpz_to_mpz(ev1, val);
           
-			 if (test_poly->length == 0) result = (eval[0] == 0L);
+			 if (test_poly->length == 0) result = (val[0] == 0L);
 			 else
 			 {
               mpz_set_ui(pow, 1);
@@ -13696,12 +13755,11 @@ int test_fmpz_poly_evaluate()
 			 }
 
 			 fmpz_clear(val);
-			 fmpz_clear(eval);
       }   
           
       fmpz_poly_clear(test_fmpz_poly);
    }
-   
+ 
    mpz_clear(val_m);
 	mpz_clear(pow);
 	mpz_clear(temp);
@@ -14353,11 +14411,11 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_poly_evaluate_horner); 
    RUN_TEST(fmpz_poly_evaluate_horner_range); 
    RUN_TEST(fmpz_poly_evaluate_divconquer); 
+   RUN_TEST(fmpz_poly_evaluate); 
    RUN_TEST(fmpz_poly_compose_horner_divconquer);
 	RUN_TEST(fmpz_poly_compose_horner_range);
 	RUN_TEST(fmpz_poly_compose_divconquer);
-	RUN_TEST(fmpz_poly_evaluate); 
-   RUN_TEST(_fmpz_poly_add);
+	RUN_TEST(_fmpz_poly_add);
    RUN_TEST(fmpz_poly_add);
    RUN_TEST(_fmpz_poly_sub);
    RUN_TEST(fmpz_poly_sub);

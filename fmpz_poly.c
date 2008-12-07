@@ -10229,24 +10229,34 @@ void fmpz_poly_evaluate_divconquer(fmpz_t output, fmpz_poly_t poly, fmpz_t val)
 	fmpz_clear(val_pow);
 }
 
-void fmpz_poly_evaluate(fmpz_t output, fmpz_poly_t poly, fmpz_t val)
+void fmpz_poly_evaluate(fmpz_t output, fmpz_poly_t poly, fmpz_t value)
 {
-   if ((poly->length == 0) || (val[0] == 0)) 
+   fmpz_t val;
+	
+	if ((poly->length == 0) || (value[0] == 0)) 
 	{
       output[0] = 0L;
 		return;
 	}
 
+	if (output == value)
+	{
+		val = fmpz_init(FLINT_ABS(value[0]));
+		fmpz_set(val, value);
+	} else val = value;
+	
 	if (((FLINT_ABS(val[0]) == 1) && (val[1] == 1)) || (poly->length == 2))
 	{
 		fmpz_poly_evaluate_horner(output, poly, val);
-		return;
+		if (output == value) fmpz_clear(val);
+	   return;
 	}
 
 	if (poly->length == 1)
 	{
 		fmpz_set(output, poly->coeffs);
-		return;
+		if (output == value) fmpz_clear(val);
+	   return;
 	}
 
 	ulong eval_length;
@@ -10257,7 +10267,8 @@ void fmpz_poly_evaluate(fmpz_t output, fmpz_poly_t poly, fmpz_t val)
 	else 
 	{
 		fmpz_poly_evaluate_divconquer(output, poly, val);
-		return;
+		if (output == value) fmpz_clear(val);
+	   return;
 	}
 
 	ulong bits = FLINT_ABS(fmpz_poly_max_bits(poly)) + val_bits*eval_length;
@@ -10292,6 +10303,7 @@ void fmpz_poly_evaluate(fmpz_t output, fmpz_poly_t poly, fmpz_t val)
 	}
 	
 	fmpz_poly_clear(temp);
+	if (output == value) fmpz_clear(val);
 }
 
 /****************************************************************************
