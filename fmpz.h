@@ -135,11 +135,13 @@ unsigned long fmpz_bits(const fmpz_t x)
    return (((limbs-1)<<FLINT_LG_BITS_PER_LIMB) + bits);
 }
 
-// returns positive, negative or zero according to sign of x
+// returns +1L, -1L or 0L according to sign of x
 static inline
-long fmpz_sgn(const fmpz_t x)
+int fmpz_sgn(const fmpz_t x)
 {
-   return (long) x[0];
+   if (x[0] == 0L) return 0;
+	else if ((long) x[0] > 0L) return 1L;
+	else return -1L;
 }
 
 // res := x
@@ -263,7 +265,11 @@ void fmpz_tdiv(fmpz_t res, const fmpz_t a, const fmpz_t b);
 
 void fmpz_fdiv(fmpz_t res, const fmpz_t a, const fmpz_t b);
 
+void fmpz_tdiv_ui(fmpz_t output, const fmpz_t input, const unsigned long x);
+
 void fmpz_mod(fmpz_t res, const fmpz_t a, const fmpz_t b);
+
+unsigned long fmpz_mod_ui(const fmpz_t input, const unsigned long x);
 
 int fmpz_divides(fmpz_t q, const fmpz_t a, const fmpz_t b);
 
@@ -272,10 +278,6 @@ void fmpz_mul_trunc(fmpz_t res, fmpz_t a, fmpz_t b, unsigned long trunc);
 void fmpz_mulmod(fmpz_t res, fmpz_t a, fmpz_t b, fmpz_t m);
 
 void fmpz_divmod(fmpz_t res, fmpz_t a, fmpz_t b, fmpz_t m);
-
-void fmpz_tdiv_ui(fmpz_t output, const fmpz_t input, const unsigned long x);
-
-unsigned long fmpz_mod_ui(const fmpz_t input, const unsigned long x);
 
 void fmpz_pow_ui(fmpz_t output, const fmpz_t input, const unsigned long exp);
 

@@ -705,7 +705,7 @@ void fmpz_mod(fmpz_t res, const fmpz_t a, const fmpz_t b)
       return;
    } else if ((sizea == sizeb) && (fmpz_cmpabs(a, b) < 0L))
    {
-      if (fmpz_sgn(a) < 0L) fmpz_add(res, a, b);
+      if (fmpz_sgn(a) < 0) fmpz_add(res, a, b);
       else fmpz_set(res, a);
 	  return;
    } else

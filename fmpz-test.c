@@ -174,7 +174,7 @@ int test_fmpz_sgn()
 #if DEBUG2
        if (!result)
        {
-          printf("sign = %ld, sign2 = %ld\n", mpz_sgn(num1), fmpz_sgn(fnum1));
+          printf("sign = %d, sign2 = %d\n", mpz_sgn(num1), fmpz_sgn(fnum1));
           gmp_printf("%Zd\n", num1);
        }
 #endif
