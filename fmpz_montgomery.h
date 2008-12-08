@@ -11,11 +11,17 @@ typedef struct
 
 
 void fmpz_montgomery_init(fmpz_montgomery_t mont, fmpz_t m);
+
 void fmpz_montgomery_clear(fmpz_montgomery_t mont);
+
 void fmpz_montgomery_redc(fmpz_t res, fmpz_t x, fmpz_montgomery_t mont);
+
 void fmpz_montgomery_mulmod_init(fmpz_montgomery_t mont, fmpz_t b, fmpz_t m);
+
 void fmpz_montgomery_divmod_init(fmpz_montgomery_t mont, fmpz_t b, fmpz_t m);
+
 void fmpz_montgomery_mod_init(fmpz_montgomery_t mont, fmpz_t m);
+
 void fmpz_montgomery_mulmod(fmpz_t res, fmpz_t a, fmpz_montgomery_t mont);
 
 // montgomery precomputed divmod (same as mulmod)

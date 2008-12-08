@@ -1813,7 +1813,7 @@ int test_fmpz_comb_init_clear()
    return result;
 }
 
-int test_fmpz_multi_mod_crt_ui()
+int test_fmpz_multi_CRT_ui_unsigned()
 {
    int result = 1;
    fmpz_t input;
@@ -1854,7 +1854,7 @@ int test_fmpz_multi_mod_crt_ui()
       fmpz_t temp = flint_heap_alloc(limbs + 1);
       for(unsigned long j = 0; j < 1; j++)
       {
-         fmpz_multi_crt_ui(temp, output, comb);
+         fmpz_multi_CRT_ui_unsigned(temp, output, comb);
          if (!fmpz_equal(temp, input)) result = 0;
       }
       flint_heap_free(temp);
@@ -1878,7 +1878,7 @@ int test_fmpz_multi_mod_crt_ui()
    return result;
 }
 
-int test_fmpz_multi_mod_crt_ui_signed()
+int test_fmpz_multi_CRT_ui()
 {
    int result = 1;
    fmpz_t input;
@@ -1917,15 +1917,13 @@ int test_fmpz_multi_mod_crt_ui_signed()
       fmpz_comb_t comb;
       fmpz_comb_init(comb, primes, num_primes);
       for(unsigned long j = 0; j < 1; j++)
-		 fmpz_multi_mod_ui(output, input, comb);
+		fmpz_multi_mod_ui(output, input, comb);
       
       fmpz_t temp = flint_heap_alloc(limbs + 1);
-      for(unsigned long j = 0; j < 1; j++)
-      {
-         fmpz_multi_crt_ui(temp, output, comb);
-		 fmpz_multi_crt_sign(temp, temp, comb);
-         if (!fmpz_equal(temp, input)) result = 0;
-      }
+      
+		fmpz_multi_CRT_ui(temp, output, comb);
+		if (!fmpz_equal(temp, input)) result = 0;
+
       flint_heap_free(temp);
 
       for (unsigned long k = 0; k < num_primes; k++)
@@ -2431,8 +2429,8 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_CRT_ui2_precomp);
 #ifdef HAVE_ZNPOLY
    RUN_TEST(fmpz_comb_init_clear);
-   RUN_TEST(fmpz_multi_mod_crt_ui);
-   RUN_TEST(fmpz_multi_mod_crt_ui_signed);
+   RUN_TEST(fmpz_multi_CRT_ui_unsigned);
+   RUN_TEST(fmpz_multi_CRT_ui);
 #endif
    RUN_TEST(fmpz_sqrtrem);
       

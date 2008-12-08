@@ -2919,10 +2919,10 @@ void __fmpz_poly_mul_modular_comb(fmpz_poly_t output, const fmpz_poly_t poly1, c
     }
 
     // Reconstruct output from data in block_out
-    for(int i=0; i<len_out; i++) {
+    for(int i=0; i<len_out; i++) 
+	 {
         fmpz_t coeff = _fmpz_poly_get_coeff_ptr(output, i);
-        fmpz_multi_crt_ui(coeff, block_out + (i << comb->n), comb);
-		fmpz_multi_crt_sign(coeff, coeff, comb);
+        fmpz_multi_CRT_ui(coeff, block_out + (i << comb->n), comb);
     }
     
     output->length = len_out;
