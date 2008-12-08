@@ -342,8 +342,7 @@ int fmpz_cmpabs(const fmpz_t f1, const fmpz_t f2)
    if (size1 < size2) return -1;
    if (size1 > size2) return 1;
 
-   return mpn_cmp(f1 + 1, f2 + 1, size1);
-   
+   return mpn_cmp(f1 + 1, f2 + 1, size1);   
 }
 
 void fmpz_sqrtrem(fmpz_t sqrt, fmpz_t rem, fmpz_t n);

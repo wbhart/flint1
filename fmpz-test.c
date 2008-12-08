@@ -1243,6 +1243,41 @@ int test_fmpz_is_one()
    return result;
 }
 
+int test_fmpz_is_m1()
+{
+   mpz_t num1;
+   fmpz_t fnum1;
+   unsigned long bits;
+   int result = 1;
+   int test1, test2;
+   
+   mpz_init(num1);
+   
+   for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+   {
+       bits = random_ulong(random_ulong(1000)+1);
+       fnum1 = fmpz_init(FLINT_MAX((long)(bits-1), 0)/FLINT_BITS+1);
+       mpz_rrandomb(num1, state, bits);
+#if SIGNS
+       if (random_ulong(2)) mpz_neg(num1, num1);
+#endif
+       mpz_to_fmpz(fnum1, num1);
+       test1 = (mpz_cmp_si(num1, -1L) == 0);
+       test2 = fmpz_is_m1(fnum1);
+               
+       result = (test1 == test2);
+#if DEBUG
+       if (!result) gmp_printf("%Zd, %d\n", num1, test1);
+#endif
+       
+       fmpz_clear(fnum1);
+   }
+   
+   mpz_clear(num1);
+   
+   return result;
+}
+
 int test_fmpz_is_zero()
 {
    mpz_t num1;
@@ -1275,6 +1310,54 @@ int test_fmpz_is_zero()
    
    mpz_clear(num1);
    
+   return result;
+}
+
+int test_fmpz_cmpabs()
+{
+   mpz_t num1, num2;
+   fmpz_t fnum1, fnum2;
+   unsigned long bits, bits2;
+   int result = 1;
+   
+   mpz_init(num1);
+   mpz_init(num2);
+      
+   for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+   {
+       bits = random_ulong(1000);
+
+       mpz_rrandomb(num1, state, bits);
+#if SIGNS
+       if (random_ulong(2)) mpz_neg(num1, num1);
+#endif
+
+       bits2 = random_ulong(1000);
+
+       mpz_rrandomb(num2, state, bits2);
+#if SIGNS
+       if (random_ulong(2)) mpz_neg(num2, num2);
+#endif
+       
+       fnum1 = fmpz_init(FLINT_MAX((long)(bits-1)/FLINT_BITS,0)+1);
+       fnum2 = fmpz_init(FLINT_MAX((long)(bits2-1)/FLINT_BITS,0)+1);
+       
+       mpz_to_fmpz(fnum1, num1);
+       mpz_to_fmpz(fnum2, num2);
+       
+       int res1 = mpz_cmpabs(num1, num2);
+		 int res2 = fmpz_cmpabs(fnum1, fnum2);
+              
+       result = (((res1 < 0) && (res2 < 0)) || ((res1 > 0) && (res2 > 0)) 
+			 || ((res1 == 0) && (res2 == 0)));
+       
+       fmpz_clear(fnum1);
+       fmpz_clear(fnum2);
+   }
+   
+   mpz_clear(num1);
+   mpz_clear(num2);
+  
    return result;
 }
 
@@ -2254,7 +2337,9 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_mod);
    RUN_TEST(fmpz_pow_ui);
    RUN_TEST(fmpz_is_one);
+   RUN_TEST(fmpz_is_m1);
    RUN_TEST(fmpz_is_zero);
+   RUN_TEST(fmpz_cmpabs);
    RUN_TEST(__fmpz_normalise);
    RUN_TEST(__fmpz_binomial_next);
    RUN_TEST(fmpz_muldiv_2exp);
