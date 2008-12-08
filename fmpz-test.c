@@ -1593,7 +1593,82 @@ int test_fmpz_invert()
    return result;
 }
 
-int test_fmpz_CRT_ui()
+int test_fmpz_CRT_ui_precomp()
+{
+   mpz_t num1;
+   fmpz_t fnum1, fnum2;
+   unsigned long bits2;
+   int result = 1;
+   
+   mpz_init(num1);
+   
+   for (unsigned long i = 0; (i < 4000) && (result == 1); i++)
+   {
+       bits2 = random_ulong(1000);
+       fnum1 = fmpz_init((long) FLINT_MAX(bits2-1, 0)/FLINT_BITS+1);
+       fnum2 = fmpz_init((long) FLINT_MAX(bits2-1, 0)/FLINT_BITS+1);
+
+#if DEBUG
+       printf("bits = %ld\n", bits2);
+#endif
+       
+       mpz_rrandomb(num1, state, bits2);
+       mpz_to_fmpz(fnum1, num1);
+
+       unsigned long * primes = flint_stack_alloc((long) FLINT_MAX(bits2-1, 0)/(FLINT_D_BITS-2)+1);      
+       unsigned long num_primes = 0;
+       fmpz_t modulus = fmpz_init((long) FLINT_MAX(bits2-1, 0)/FLINT_BITS+2);
+       
+       primes[0] = z_nextprime(1L<<(FLINT_D_BITS-2));
+       fmpz_set_ui(modulus, primes[0]);
+       
+       while (fmpz_cmpabs(modulus, fnum1) <= 0)
+       {
+          primes[num_primes+1] = z_nextprime(primes[num_primes]);
+          fmpz_mul_ui(modulus, modulus, primes[num_primes+1]);
+          num_primes++;
+       }
+       num_primes++;
+
+       fmpz_set_ui(fnum2, fmpz_mod_ui(fnum1, primes[0]));
+       fmpz_set_ui(modulus, primes[0]);
+       
+       unsigned long c, r2;
+       double pre;
+
+       for (unsigned long i = 1; i < num_primes; i++)
+       {
+          c = fmpz_mod_ui(modulus, primes[i]);
+          c = z_invert(c, primes[i]);
+          pre = z_precompute_inverse(primes[i]);
+          r2 = fmpz_mod_ui(fnum1, primes[i]);
+
+          fmpz_CRT_ui_precomp(fnum2, fnum2, modulus, r2, primes[i], c, pre);
+          fmpz_mul_ui(modulus, modulus, primes[i]);
+       }
+
+       result = (fmpz_equal(fnum1, fnum2));
+
+#if DEBUG
+       if (!result)
+       {
+          fmpz_print(fnum1); printf("\n");
+          fmpz_print(fnum2); printf("\n");
+       }
+#endif
+       
+       fmpz_clear(modulus);
+       flint_stack_release();
+       fmpz_clear(fnum1);
+       fmpz_clear(fnum2);
+   }
+   
+   mpz_clear(num1);
+   
+   return result;
+}
+
+int test_fmpz_CRT_ui2_precomp()
 {
    mpz_t num1;
    fmpz_t fnum1, fnum2;
@@ -2352,7 +2427,8 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_montgomery_redc);
    RUN_TEST(fmpz_gcd);
    RUN_TEST(fmpz_invert);
-   RUN_TEST(fmpz_CRT_ui);
+   RUN_TEST(fmpz_CRT_ui_precomp);
+   RUN_TEST(fmpz_CRT_ui2_precomp);
 #ifdef HAVE_ZNPOLY
    RUN_TEST(fmpz_comb_init_clear);
    RUN_TEST(fmpz_multi_mod_crt_ui);
