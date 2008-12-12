@@ -191,6 +191,10 @@ int z_jacobi(long x, unsigned long y);
 
 int z_ispseudoprime_fermat(unsigned long const n, unsigned long const i);
 
+int z_isprobab_prime(unsigned long n);
+
+int z_isprobab_prime_precomp(unsigned long n, double ninv);
+
 int z_isprime(unsigned long n);
 
 int z_isprime_precomp(unsigned long n, double ninv);

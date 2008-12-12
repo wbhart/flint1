@@ -810,21 +810,29 @@ int z_miller_rabin_precomp(unsigned long n, double ninv, unsigned long reps)
    primes up to 257 say, but returns a correct result if n is odd and n > 2.
    Requires n is no more than FLINT_BITS-1 bits
 */
-int z_isprime_precomp(unsigned long n, double ninv)
+int z_isprobab_prime_precomp(unsigned long n, double ninv)
 {
-   unsigned long d = n-1;
+	unsigned long d = n-1;
    
    do {
       d>>=1; 
    } while ((d&1) == 0);
    
-   if (n < 2047)
+#if FLINT_BITS == 64
+   if (n >= 10000000000000000UL)
+	{
+		if (!SPRP_64(2UL, d, n, ninv)) return 0;
+      return z_ispseudoprime_lucas(n);
+	}
+#endif
+
+	if (n < 2047)
    {
       if (SPRP(2UL, d, n, ninv)) return 1;
       else return 0;
    }
    
-   if (n < 9080191UL) 
+	if (n < 9080191UL) 
    { 
       if (SPRP(31UL, d, n, ninv) && SPRP(73UL, d, n, ninv)) return 1;
       else return 0;
@@ -841,15 +849,72 @@ int z_isprime_precomp(unsigned long n, double ninv)
          if (n != 46856248255981UL) return 1;
       return 0;
    }
-   if (n < 10000000000000000UL)
+   
+	if (SPRP_64(2UL, d, n, ninv) && SPRP_64(3UL, d, n, ninv) && SPRP_64(7UL, d, n, ninv) && SPRP_64(61UL, d, n, ninv) && SPRP_64(24251UL, d, n, ninv)) 
+      if (n != 46856248255981UL) return 1;
+   return 0;
+   
+#else
+   if (SPRP(2UL, d, n, ninv) && SPRP(7UL, d, n, ninv) && SPRP(61UL, d, n, ninv)) return 1;
+      else return 0;
+#endif 
+}
+
+/* 
+   This is currently only a deterministic primality test if FLINT can factor n - 1.
+   Note that this is currently the case if n - 1 has less than FLINT_BITS - 10 bits
+	after removal of factors below 1000.
+	It is assumed that n is greater than 2 and odd.
+*/
+
+int z_isprime_precomp(unsigned long n, double ninv)
+{
+
+#if FLINT_BITS == 64
+   if (n >= 10000000000000000UL)
+	{
+		int prime = z_isprime_pocklington(n, -1L);
+		if (prime == -2) return z_isprobab_prime_precomp(n, ninv);
+		return prime;
+	}
+#endif
+
+	unsigned long d = n-1;
+   
+   do {
+      d>>=1; 
+   } while ((d&1) == 0);
+   
+   if (n < 2047)
    {
-      if (SPRP_64(2UL, d, n, ninv) && SPRP_64(3UL, d, n, ninv) && SPRP_64(7UL, d, n, ninv) && SPRP_64(61UL, d, n, ninv) && SPRP_64(24251UL, d, n, ninv)) 
+      if (SPRP(2UL, d, n, ninv)) return 1;
+      else return 0;
+   }
+   
+	if (n < 9080191UL) 
+   { 
+      if (SPRP(31UL, d, n, ninv) && SPRP(73UL, d, n, ninv)) return 1;
+      else return 0;
+   }
+#if FLINT_BITS == 64
+   if (n < 4759123141UL)
+   {
+      if (SPRP(2UL, d, n, ninv) && SPRP(7UL, d, n, ninv) && SPRP(61UL, d, n, ninv)) return 1;
+      else return 0;
+   }
+   if (n < 1122004669633UL)
+   {
+      if (SPRP(2UL, d, n, ninv) && SPRP(13UL, d, n, ninv) && SPRP(23UL, d, n, ninv) && SPRP(1662803UL, d, n, ninv)) 
          if (n != 46856248255981UL) return 1;
       return 0;
    }
-   return z_miller_rabin_precomp(n, ninv, 6); 
+   
+	if (SPRP_64(2UL, d, n, ninv) && SPRP_64(3UL, d, n, ninv) && SPRP_64(7UL, d, n, ninv) && SPRP_64(61UL, d, n, ninv) && SPRP_64(24251UL, d, n, ninv)) 
+      if (n != 46856248255981UL) return 1;
+   return 0;
+   
 #else
-      if (SPRP(2UL, d, n, ninv) && SPRP(7UL, d, n, ninv) && SPRP(61UL, d, n, ninv)) return 1;
+   if (SPRP(2UL, d, n, ninv) && SPRP(7UL, d, n, ninv) && SPRP(61UL, d, n, ninv)) return 1;
       else return 0;
 #endif 
 }
@@ -871,6 +936,28 @@ unsigned int primes[] =
 /* 
    This is a deterministic prime test up to 10^16. 
    Requires n to be at most FLINT_BITS-1 bits
+	For numbers greater than 10^16 there are no known
+	counterexamples to the conjecture that a composite 
+	will never be declared prime.
+*/
+
+int z_isprobab_prime(unsigned long n)
+{
+   if (n <= 1UL) return 0;
+   if (n == 2UL) return 1;
+   if ((n & 1UL) == 0) return 0;
+  
+   double ninv;
+
+   ninv = z_precompute_inverse(n);
+   
+   return z_isprobab_prime_precomp(n, ninv);
+}
+
+/* 
+   This is currently only a deterministic primality test if FLINT can factor n - 1.
+   Note that this is currently the case if n - 1 has less than FLINT_BITS - 10 bits
+	after removal of factors below 1000.
 */
 
 int z_isprime(unsigned long n)
@@ -904,6 +991,8 @@ unsigned int nextindex[] =
 /* 
     Returns the next prime after n 
     Assumes the result will fit in an unsigned long
+	 Note the prime returned is *NOT* proven prime.
+	 To prove it prime, use z_isprime_pocklington.
 */
 
 unsigned long z_nextprime(unsigned long n)
@@ -949,21 +1038,20 @@ unsigned long z_nextprime(unsigned long n)
       
       /* First check residues */
       for (unsigned int i = 3; i < NEXTPRIME_PRIMES; i++)
-	  {
-	     composite |= (moduli[i] == 0);
-	     acc = moduli[i] + diff;
-	     pr = primes[i];
-	     moduli[i] = acc >= pr ? acc - pr : acc;
+	   {
+	      composite |= (moduli[i] == 0);
+	      acc = moduli[i] + diff;
+	      pr = primes[i];
+	      moduli[i] = acc >= pr ? acc - pr : acc;
 	   }
-       if (composite)
-       {
+      if (composite)
+      {
 	      n += diff;
-          index = nextindex[index];
-          continue;
-       }
+         index = nextindex[index];
+         continue;
+      }
        
-       /* Miller-Rabin test */
-      if (z_isprime(n)) break;
+      if (z_isprobab_prime(n)) break;
       else
       {
          n += diff;
@@ -1051,7 +1139,7 @@ int z_isprime_pocklington(unsigned long const n, unsigned long const iterations)
 				b = z_submod(z_powmod2(j, exp, n), 1, n);
 				if (b != 0)
 				{
-					c = z_mulmod_precomp(c, b, n, inv);	
+					c = z_mulmod2_precomp(c, b, n, inv);	
 					pass = 1;
 				}
 			} else return 0;
@@ -1525,9 +1613,19 @@ int z_remove_precomp(unsigned long * n, unsigned long p, double pinv)
    unsigned long quot, rem;
    int exp = 0;
    
-   quot = z_div2_precomp(*n, p, pinv);
+   if (p == 2)
+   {
+      count_trail_zeros(exp, *n);
+      if (exp)
+      {
+         *n = ((*n)>>exp);
+      }
+      return exp;      
+   }
+
+	quot = z_div2_precomp(*n, p, pinv);
    rem = (*n) - quot*p;
-   while (rem == 0); 
+   while (rem == 0) 
    {
       exp++;
       (*n) = quot;
@@ -1691,7 +1789,7 @@ unsigned long z_factor_partial(factor_t * factors, unsigned long n, unsigned lon
 		{
 			factor = factor_arr[factors_left-1];
 			
-			if ((factor < cutoff) || z_isprime(factor))
+			if ((factor < cutoff) || z_isprobab_prime(factor))
 			{
 				insert_factor(factors, factor);
 				prod *= factor;
@@ -1850,7 +1948,7 @@ int z_factor(factor_t * factors, unsigned long n)
       while (factors_left > 0)
       {
          factor = factor_arr[factors_left-1]; 
-         if ((factor < cutoff) || z_isprime(factor))
+         if ((factor < cutoff) || z_isprobab_prime(factor))
          {
             insert_factor(factors, factor);
             factors_left--;
