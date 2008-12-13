@@ -1411,7 +1411,7 @@ long z_gcd_invert(long* a, long x, long y)
      returns gcd(x, y) = a*x + b*y.
 */
 
-long z_extgcd(long* a, long* b, long x, long y)
+long z_xgcd(long* a, long* b, long x, long y)
 {
    long u1=1, v1=0;
    long u2=0, v2=1;

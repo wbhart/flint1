@@ -188,11 +188,10 @@ void zmod_poly_set_coeff_ui(zmod_poly_t poly, unsigned long n, unsigned long c)
 
 ****************************************************************************/
 
-
 /*
    Create a zmod_poly_t object from a string.
    
-   Format: <Length> <Mod> <Coeffs>
+   Format: <Length> <Mod>  <Coeffs>
 */
 
 int zmod_poly_from_string(zmod_poly_t poly, char* s)
@@ -200,19 +199,19 @@ int zmod_poly_from_string(zmod_poly_t poly, char* s)
    const char* whitespace = " \t\n\r";
 
    unsigned long p, length;
-   if (!sscanf(s, "%lx %lx", &length, &p))
+   if (!sscanf(s, "%ld %ld  ", &length, &p))
       return 0;
       
    poly->p = p;
    poly->p_inv = z_precompute_inverse(p);
-#if FLINT_BITS == 64
-   //if (FLINT_BIT_COUNT(p) <= 32) poly->p32_inv = z_precompute_inverse32(p);
-#endif
 
    // jump to next whitespace
    s += strcspn(s, whitespace);
+   s += strspn(s, whitespace);
+   s += strcspn(s, whitespace);
+   s += strspn(s, whitespace);
    
-   poly->length = 0;
+	poly->length = 0;
    zmod_poly_fit_length(poly, length);
    
    for (unsigned long i = 0; i < length; i++)
@@ -237,10 +236,10 @@ int zmod_poly_from_string(zmod_poly_t poly, char* s)
 /*
    Convert a zmod_poly into a string.
    
-   Format: <Length> <Mod> <Coeffs>
+   Format: <Length> <Mod>  <Coeffs>
 */
 
-char* zmod_poly_to_string(zmod_poly_t poly)
+char * zmod_poly_to_string(zmod_poly_t poly)
 {
    // estimate the size of the string
    // 20 = enough room for null terminator and length info
@@ -255,7 +254,7 @@ char* zmod_poly_to_string(zmod_poly_t poly)
 
    // write the string
    char* buf = (char*) malloc(size);
-   char* ptr = buf + sprintf(buf, "%ld  %ld  ", poly->length, poly->p);
+   char* ptr = buf + sprintf(buf, "%ld %ld  ", poly->length, poly->p);
    for (unsigned long i = 0; i < poly->length; i++)
    {
       ptr += sprintf(ptr, "%ld ", poly->coeffs[i]);
@@ -305,25 +304,21 @@ int zmod_poly_fread(zmod_poly_t poly, FILE* f)
    poly->length = 0;
    poly->p = p;
    poly->p_inv = z_precompute_inverse(p);
-#if FLINT_BITS == 64
-   //if (FLINT_BIT_COUNT(p) <= 32) poly->p32_inv = z_precompute_inverse32(p);
-#endif
    
-   zmod_poly_fit_length(poly, length);
+	zmod_poly_fit_length(poly, length);
 
    // read coefficients
    for (unsigned long i = 0; i < length; i++)
    {
       if (!fscanf(f, "%ld", &poly->coeffs[i]))
          return 0;
-      poly->length++;
+		poly->length++;
    }
 
    __zmod_poly_normalise(poly);
    
    return 1;
 }
-
 
 /*
    Create a zmod_poly from stdin
@@ -547,7 +542,7 @@ void zmod_poly_add(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
    __zmod_poly_normalise(res);
 }
 
-void _zmod_poly_add_without_mod(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
+void _zmod_poly_add_no_red(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
 {
    // rearrange parameters to make poly1 no longer than poly2
    if (poly1->length > poly2->length)
@@ -565,6 +560,17 @@ void _zmod_poly_add_without_mod(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t 
 
    res->length = poly2->length;
    __zmod_poly_normalise(res);
+}
+
+void zmod_poly_add_no_red(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
+{
+   // rearrange parameters to make poly1 no longer than poly2
+   if (poly1->length > poly2->length)
+   {
+      zmod_poly_fit_length(res, poly1->length);
+   } else zmod_poly_fit_length(res, poly2->length);
+   
+   _zmod_poly_add_no_red(res, poly1, poly2);
 }
 
 void _zmod_poly_sub(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
@@ -2626,7 +2632,7 @@ void zmod_poly_mul_trunc_left_n(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t 
    Assumes the scalar is reduced modulo poly->p
 */
 
-void __zmod_poly_scalar_mul_without_mod(zmod_poly_t res, zmod_poly_t poly, unsigned long scalar)
+void __zmod_poly_scalar_mul_no_red(zmod_poly_t res, zmod_poly_t poly, unsigned long scalar)
 {
    if (poly != res)
       zmod_poly_fit_length(res, poly->length);
@@ -2860,13 +2866,13 @@ void __zmod_poly_divrem_classical_mod_last(zmod_poly_t Q, zmod_poly_t R, zmod_po
       {
          coeff_Q[coeff] = z_mulmod_precomp(R->coeffs[coeff], lead_inv, p, p_inv); 
          
-         __zmod_poly_scalar_mul_without_mod(qB, Bm1, z_negmod(coeff_Q[coeff], p));
+         __zmod_poly_scalar_mul_no_red(qB, Bm1, z_negmod(coeff_Q[coeff], p));
          
          zmod_poly_t R_sub;
          R_sub->p = p;
          R_sub->coeffs = R->coeffs + coeff - B->length + 1;
          R_sub->length = B->length - 1;
-         _zmod_poly_add_without_mod(R_sub, R_sub, qB);
+         _zmod_poly_add_no_red(R_sub, R_sub, qB);
          
          coeff--;
       }
@@ -3032,7 +3038,7 @@ void __zmod_poly_div_classical_mod_last(zmod_poly_t Q, zmod_poly_t A, zmod_poly_
             R_sub->p = p;
             R_sub->coeffs = R->coeffs + coeff - B->length + 1;
             R_sub->length = B->length - 1;
-            _zmod_poly_add_without_mod(R_sub, R_sub, qB);
+            _zmod_poly_add_no_red(R_sub, R_sub, qB);
          }
          
          coeff--;

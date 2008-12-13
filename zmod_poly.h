@@ -118,7 +118,6 @@ void zmod_poly_init2_precomp(zmod_poly_t poly, unsigned long p, double p_inv, un
 void zmod_poly_clear(zmod_poly_t poly);
 
 void zmod_poly_realloc(zmod_poly_t poly, unsigned long alloc);
-// _bits_ only applies to newly allocated coefficients, not existing ones...
 
 // this non-inlined version REQUIRES that alloc > poly->alloc
 void __zmod_poly_fit_length(zmod_poly_t poly, unsigned long alloc);
@@ -360,7 +359,7 @@ void zmod_poly_make_monic(zmod_poly_t output, zmod_poly_t pol);
 */
 
 void zmod_poly_add(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2);
-void zmod_poly_add_without_mod(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2);
+void zmod_poly_add_no_red(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2);
 void zmod_poly_sub(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2);
 void _zmod_poly_sub(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2);
 void zmod_poly_neg(zmod_poly_t res, zmod_poly_t poly);
@@ -440,7 +439,7 @@ void print_binary2(unsigned long n, unsigned long len, unsigned long space_bit);
 
 void _zmod_poly_scalar_mul(zmod_poly_t res, zmod_poly_t poly, unsigned long scalar);
 void zmod_poly_scalar_mul(zmod_poly_t res, zmod_poly_t poly, unsigned long scalar);
-void __zmod_poly_scalar_mul_without_mod(zmod_poly_t res, zmod_poly_t poly, unsigned long scalar);
+void __zmod_poly_scalar_mul_no_red(zmod_poly_t res, zmod_poly_t poly, unsigned long scalar);
 
 /* 
    Division
@@ -616,7 +615,8 @@ void zmod_poly_factor_pow(zmod_poly_factor_t fac, unsigned long exp);
  * The algorithm used is efficient when the multiplicities of factors is relatively low.
  * @param f         The polynomial to factorise.
  * @param fac        The factorisation into monic square free factors of <code>f</code>.
- */void zmod_poly_factor_square_free(zmod_poly_factor_t res, zmod_poly_t f);
+ */
+void zmod_poly_factor_square_free(zmod_poly_factor_t res, zmod_poly_t f);
 
 /**
  * Computes the factorisation of the given polynomial.

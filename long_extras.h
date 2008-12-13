@@ -218,7 +218,7 @@ unsigned long z_invert(unsigned long a, unsigned long p);
 
 long z_gcd_invert(long* a, long x, long y);
 
-long z_extgcd(long* a, long* b, long x, long y);
+long z_xgcd(long* a, long* b, long x, long y);
 
 unsigned long z_gcd(long x, long y);
 

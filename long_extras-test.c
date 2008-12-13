@@ -122,6 +122,208 @@ int test_z_intsqrt()
    return result;
 }
 
+int test_z_pow()
+{
+   unsigned long n, res, res2;
+   unsigned long bits;
+
+	mpz_t n_mpz;
+	mpz_init(n_mpz);
+   
+   int result = 1;
+   
+   for (unsigned long count = 0; (count < 1000000) && (result == 1); count++)
+   { 
+      bits = z_randint(FLINT_BITS - 1) + 1;
+      n = random_ulong((1UL<<bits) - 1) + 1;
+      
+      ulong max_exp = 0;
+		mpz_set_ui(n_mpz, n);
+		while (mpz_size(n_mpz) == 1)
+		{
+         max_exp++;
+			mpz_set_ui(n_mpz, n);
+		   mpz_pow_ui(n_mpz, n_mpz, max_exp + 1);
+			if (n == 1) break;
+		}
+      
+		ulong exp = z_randint(max_exp + 1);
+		res = z_pow(n, exp);
+		mpz_set_ui(n_mpz, n);
+		mpz_pow_ui(n_mpz, n_mpz, exp);
+		res2 = mpz_get_ui(n_mpz);
+
+		result = (res == res2);
+
+      if (!result)
+      {
+         printf("n, exp, res, res2\n", n, exp, res, res2);
+      }
+   }
+   
+	mpz_clear(n_mpz);
+
+   return result;
+}
+
+int test_z_gcd()
+{
+   long a, b, c, res;
+	
+	ulong bits1, bits2, bits3;
+   
+   int result = 1;
+   
+   for (unsigned long count = 0; (count < 100000) && (result == 1); count++)
+   { 
+      bits1 = z_randint(FLINT_BITS - 2) + 1;
+      bits2 = z_randint(FLINT_BITS - 2) + 1;
+      
+		do
+		{
+			a = z_randbits(bits1);
+			b = z_randbits(bits2);
+		} while (z_gcd(a, b) != 1);
+
+		if (z_randint(2)) a = -a;
+      if (z_randint(2)) b = -b;  
+
+		bits3 = FLINT_BITS - 1 - FLINT_MAX(bits1, bits2);
+		c = z_randbits(bits3) + 1; 
+
+      res = z_gcd(a*c, b*c);
+		result = (res == c);
+
+      if (!result)
+      {
+         printf("a = %ld, b = %ld, c = %ld, res = %ld\n", a, b, c, res);
+      }
+   }
+   
+   return result;
+}
+
+int test_z_invert()
+{
+   unsigned long a, b, res, res2, bits;
+   
+   int result = 1;
+
+	mpz_t prod;
+	mpz_init(prod);
+   
+   for (unsigned long count = 0; (count < 100000) && (result == 1); count++)
+   { 
+      bits = z_randint(FLINT_BITS - 2) + 2;
+      
+		do
+		{
+			a = z_randbits(bits);
+         b = z_randprime(bits);
+		} while (z_gcd(a, b) != 1);
+
+		a = a % b;
+
+      res = z_invert(a, b);
+		mpz_set_ui(prod, a);
+		mpz_mul_ui(prod, prod, res);
+      
+		res2 = mpz_mod_ui(prod, prod, b);
+		
+		result = (res2 == 1);
+
+      if (!result)
+      {
+         printf("a = %ld, b = %ld, res = %ld, res2 = %ld\n", a, b, res, res2);
+      }
+   }
+   
+	mpz_clear(prod);
+
+   return result;
+}
+
+int test_z_gcd_invert()
+{
+   unsigned long a, b, c, u, res, res2, bits, bits3;
+   
+   int result = 1;
+
+	mpz_t prod;
+	mpz_init(prod);
+   
+   for (unsigned long count = 0; (count < 100000) && (result == 1); count++)
+   { 
+      bits = z_randint(FLINT_BITS - 3) + 2;
+      
+		do
+		{
+			a = z_randbits(bits);
+         b = z_randprime(bits);
+		} while (z_gcd(a, b) != 1);
+
+		a = a % b;
+
+		bits3 = FLINT_BITS - 1 - bits;
+		c = z_randbits(bits3) + 1; 
+
+      res = z_gcd_invert(&u, a*c, b*c);
+
+		mpz_set_ui(prod, a);
+		mpz_mul_ui(prod, prod, u);
+      
+		res2 = mpz_mod_ui(prod, prod, b);
+		
+		result = ((res == c) && (res2 == 1));
+
+      if (!result)
+      {
+         printf("a = %ld, b = %ld, c = %ld, res = %ld\n", a, b, c, u, res, res2);
+      }
+   }
+
+	mpz_clear(prod);
+   
+   return result;
+}
+
+int test_z_xgcd()
+{
+   long a, b, c, s, t, res, res2;
+	ulong bits1, bits2, bits3;
+   
+   int result = 1;
+   
+   for (unsigned long count = 0; (count < 100000) && (result == 1); count++)
+   { 
+      bits1 = z_randint(FLINT_BITS - 2) + 1;
+      bits2 = z_randint(FLINT_BITS - 2) + 1;
+      
+		do
+		{
+			a = z_randbits(bits1);
+         b = z_randbits(bits2);
+		} while (z_gcd(a, b) != 1);
+      
+		if (z_randint(2)) a = -a;
+		if (z_randint(2)) b = -b;
+
+		bits3 = FLINT_BITS - 1 - FLINT_MAX(bits1, bits2);
+		c = z_randbits(bits3) + 1; 
+
+      res = z_xgcd(&s, &t, a*c, b*c);
+		res2 = s*a*c + t*b*c;
+		result = ((res == c) && (res2 == c));
+
+      if (!result)
+      {
+         printf("a = %ld, b = %ld, c = %ld, res = %ld\n", a, b, c, res, res2);
+      }
+   }
+   
+   return result;
+}
+
 int test_z_mod_precomp()
 {
    double ninv;
@@ -1837,6 +2039,11 @@ void fmpz_poly_test_all()
 	RUN_TEST(z_mulmod32_precomp); 
 #endif
 	RUN_TEST(z_intsqrt);
+   RUN_TEST(z_pow);
+   RUN_TEST(z_gcd);
+   RUN_TEST(z_invert);
+   RUN_TEST(z_gcd_invert);
+   RUN_TEST(z_xgcd);
    RUN_TEST(z_primitive_root);
    RUN_TEST(z_mod_precomp);
    RUN_TEST(z_div2_precomp);
