@@ -162,10 +162,10 @@ int test_F_mpn_splitcombine_bits()
     return result;
 }
 
-int test_F_mpn_mul_precomp()
+int test_F_mpn_mul_precache()
 {
    mp_limb_t * int1, * int2, * product, * product2;
-   F_mpn_precomp_t precomp;
+   F_mpn_precache_t precache;
    mp_limb_t msl;
    int result = 1;
    
@@ -178,7 +178,7 @@ int test_F_mpn_mul_precomp()
 
       mpn_random2(int1, limbs1);
    
-      F_mpn_mul_precomp_init(precomp, int1, limbs1, limbs2);   
+      F_mpn_mul_precache_init(precache, int1, limbs1, limbs2);   
            
       for (unsigned long count2 = 0; (count2 < 30) && (result == 1); count2++)
       {    
@@ -194,7 +194,7 @@ int test_F_mpn_mul_precomp()
          F_mpn_clear(int2, limbs3);
          mpn_random2(int2, limbs3);
       
-         F_mpn_mul_precomp(product, int2, limbs3, precomp);
+         F_mpn_mul_precache(product, int2, limbs3, precache);
          
          if (limbs1 > limbs3) msl = mpn_mul(product2, int1, limbs1, int2, limbs3);
          else msl = mpn_mul(product2, int2, limbs3, int1, limbs1);
@@ -209,7 +209,7 @@ int test_F_mpn_mul_precomp()
          free(int2);
       }
    
-      F_mpn_mul_precomp_clear(precomp);
+      F_mpn_mul_precache_clear(precache);
       
       free(int1);
    }   
@@ -217,10 +217,10 @@ int test_F_mpn_mul_precomp()
    return result;
 }
 
-int test_F_mpn_mul_precomp_trunc()
+int test_F_mpn_mul_precache_trunc()
 {
    mp_limb_t * int1, * int2, * product, * product2;
-   F_mpn_precomp_t precomp;
+   F_mpn_precache_t precache;
    mp_limb_t msl;
    int result = 1;
    
@@ -233,7 +233,7 @@ int test_F_mpn_mul_precomp_trunc()
 
       mpn_random2(int1, limbs1);
    
-      F_mpn_mul_precomp_init(precomp, int1, limbs1, limbs2);   
+      F_mpn_mul_precache_init(precache, int1, limbs1, limbs2);   
            
       for (unsigned long count2 = 0; (count2 < 30) && (result == 1); count2++)
       {    
@@ -252,7 +252,7 @@ int test_F_mpn_mul_precomp_trunc()
       
          if (limbs1 > limbs3) F_mpn_mul_trunc(product2, int1, limbs1, int2, limbs3, trunc);
          else F_mpn_mul_trunc(product2, int2, limbs3, int1, limbs1, trunc);
-         F_mpn_mul_precomp_trunc(product, int2, limbs3, precomp, trunc);
+         F_mpn_mul_precache_trunc(product, int2, limbs3, precache, trunc);
       
          for (unsigned long j = 0; j < FLINT_MIN(trunc, limbs1+limbs3); j++)
          {
@@ -268,7 +268,7 @@ int test_F_mpn_mul_precomp_trunc()
          free(int2);
       }
    
-      F_mpn_mul_precomp_clear(precomp);
+      F_mpn_mul_precache_clear(precache);
       
       free(int1);
    }   
@@ -388,8 +388,8 @@ void F_mpn_test_all()
    RUN_TEST(F_mpn_splitcombine_bits);
    RUN_TEST(F_mpn_mul);
    RUN_TEST(F_mpn_mul_trunc);
-   RUN_TEST(F_mpn_mul_precomp);
-   RUN_TEST(F_mpn_mul_precomp_trunc);
+   RUN_TEST(F_mpn_mul_precache);
+   RUN_TEST(F_mpn_mul_precache_trunc);
 
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");

@@ -150,11 +150,11 @@ void F_mpn_printx(mp_limb_t * mpn, unsigned long count)
    Large integer multiplication
 */
 
-typedef enum {FFT_PRE, KAR_PRE} precomp_type;
+typedef enum {FFT_PRE, KAR_PRE} precache_type;
  
 typedef struct
 {
-   precomp_type type;
+   precache_type type;
    ZmodF_poly_p poly;
    unsigned long length;
    unsigned long length2;
@@ -163,9 +163,9 @@ typedef struct
    unsigned long limbs2;
    unsigned long msl_bits;
    unsigned long bits;
-} F_mpn_precomp_s;
+} F_mpn_precache_s;
 
-typedef F_mpn_precomp_s F_mpn_precomp_t[1]; 
+typedef F_mpn_precache_s F_mpn_precache_t[1]; 
 
 void F_mpn_FFT_split_bits(ZmodF_poly_t poly, mp_limb_t * limbs, unsigned long total_limbs,
                                unsigned long bits, unsigned long output_limbs);
@@ -183,20 +183,20 @@ mp_limb_t F_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1,
 mp_limb_t F_mpn_mul_trunc(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1, 
                         mp_limb_t * data2, unsigned long limbs2, unsigned long trunc);
 
-void F_mpn_mul_precomp_init(F_mpn_precomp_t precomp, mp_limb_t * data1, unsigned long limbs1, unsigned long limbs2);
+void F_mpn_mul_precache_init(F_mpn_precache_t precache, mp_limb_t * data1, unsigned long limbs1, unsigned long limbs2);
 
-void F_mpn_mul_precomp_clear(F_mpn_precomp_t precomp);
+void F_mpn_mul_precache_clear(F_mpn_precache_t precache);
 
-mp_limb_t F_mpn_mul_precomp(mp_limb_t * res, mp_limb_t * data2, unsigned long limbs2, F_mpn_precomp_t precomp);
+mp_limb_t F_mpn_mul_precache(mp_limb_t * res, mp_limb_t * data2, unsigned long limbs2, F_mpn_precache_t precache);
       
-mp_limb_t F_mpn_mul_precomp_trunc(mp_limb_t * res, mp_limb_t * data2, unsigned long limbs2, F_mpn_precomp_t precomp, unsigned long trunc);
+mp_limb_t F_mpn_mul_precache_trunc(mp_limb_t * res, mp_limb_t * data2, unsigned long limbs2, F_mpn_precache_t precache, unsigned long trunc);
 
 mp_limb_t __F_mpn_mul_middle(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1, 
                                       mp_limb_t * data2, unsigned long limbs2, 
                                       unsigned long start, unsigned long trunc);
 
-mp_limb_t __F_mpn_mul_middle_precomp(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1, 
-                                      F_mpn_precomp_t pre, 
+mp_limb_t __F_mpn_mul_middle_precache(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1, 
+                                      F_mpn_precache_t pre, 
                                       unsigned long start, unsigned long trunc);
 #endif
 

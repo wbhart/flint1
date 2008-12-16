@@ -286,7 +286,7 @@ unsigned long FFT_SQR_TWK[FFT_SQR_COUNT][2] =
    in zero padded coefficients of length output_limbs, for use in FFT 
    convolution code. Assumes that the input is total_limbs in length. 
    Used by the large integer multiplication code 
-   (F_mpn_mul and F_mpn_mul_precomp and F_mpn_mul_trunc)
+   (F_mpn_mul and F_mpn_mul_precache and F_mpn_mul_trunc)
 */
 
 void F_mpn_FFT_split(ZmodF_poly_t poly, mp_limb_t * limbs, unsigned long total_limbs,
@@ -383,7 +383,7 @@ void F_mpn_FFT_split_bits(ZmodF_poly_t poly, mp_limb_t * limbs, unsigned long to
    of the coefficients is being shifted by a multiple of coeff_limbs and added
    to an mpn which is total_limbs long. It is assumed that the mpn has been 
    zeroed in advance.
-   Used by the large integer multiplication code (F_mpn_mul and F_mpn_mul_precomp
+   Used by the large integer multiplication code (F_mpn_mul and F_mpn_mul_precache
    and F_mpn_mul_trunc)
 */
 
@@ -796,11 +796,11 @@ mp_limb_t F_mpn_mul_trunc(mp_limb_t * res, mp_limb_t * data1, unsigned long limb
    Assumes neither of limbs1, limbs2 is zero. 
 */
 
-void F_mpn_mul_precomp_init(F_mpn_precomp_t precomp, mp_limb_t * data1, unsigned long limbs1, unsigned long limbs2)
+void F_mpn_mul_precache_init(F_mpn_precache_t precache, mp_limb_t * data1, unsigned long limbs1, unsigned long limbs2)
 {
    if (limbs1 == 0)
    {
-      precomp->poly = NULL;
+      precache->poly = NULL;
       return;
    }
 
@@ -877,25 +877,25 @@ void F_mpn_mul_precomp_init(F_mpn_precomp_t precomp, mp_limb_t * data1, unsigned
    
    unsigned long size = (1L<<poly1->depth);
    ZmodF_poly_FFT(poly1, size);
-   precomp->type = FFT_PRE;
-   precomp->bits = bits;
-   precomp->length = length1;
-   precomp->length2 = length2;
-   precomp->coeff_limbs = coeff_limbs;
-   precomp->limbs1 = limbs1;
-   precomp->limbs2 = limbs2;
-   precomp->poly = poly1; 
-   precomp->msl_bits = FLINT_BIT_COUNT(data1[limbs1-1]);
+   precache->type = FFT_PRE;
+   precache->bits = bits;
+   precache->length = length1;
+   precache->length2 = length2;
+   precache->coeff_limbs = coeff_limbs;
+   precache->limbs1 = limbs1;
+   precache->limbs2 = limbs2;
+   precache->poly = poly1; 
+   precache->msl_bits = FLINT_BIT_COUNT(data1[limbs1-1]);
 }
 
-void F_mpn_mul_precomp_clear(F_mpn_precomp_t precomp)
+void F_mpn_mul_precache_clear(F_mpn_precache_t precache)
 {
-   if (precomp->type == FFT_PRE) 
+   if (precache->type == FFT_PRE) 
    {
-      if (precomp->poly) 
+      if (precache->poly) 
       {
-         ZmodF_poly_clear(precomp->poly);
-         free(precomp->poly);
+         ZmodF_poly_clear(precache->poly);
+         free(precache->poly);
       }
    }   
 }
@@ -906,48 +906,48 @@ void F_mpn_mul_precomp_clear(F_mpn_precomp_t precomp)
    Assumes neither of limbs1, limbs2 is zero. 
 */
 
-mp_limb_t F_mpn_mul_precomp(mp_limb_t * res, mp_limb_t * data2, unsigned long limbs2, F_mpn_precomp_t precomp)
+mp_limb_t F_mpn_mul_precache(mp_limb_t * res, mp_limb_t * data2, unsigned long limbs2, F_mpn_precache_t precache)
 {
    ZmodF_poly_t poly2;
-   ZmodF_poly_stack_init(poly2, precomp->poly->depth, precomp->poly->n, 1);
-   int s1 = (FLINT_BIT_COUNT(data2[limbs2-1]) + precomp->msl_bits <= FLINT_BITS);
+   ZmodF_poly_stack_init(poly2, precache->poly->depth, precache->poly->n, 1);
+   int s1 = (FLINT_BIT_COUNT(data2[limbs2-1]) + precache->msl_bits <= FLINT_BITS);
    
-   F_mpn_FFT_split_bits(poly2, data2, limbs2, precomp->bits, precomp->poly->n);
+   F_mpn_FFT_split_bits(poly2, data2, limbs2, precache->bits, precache->poly->n);
    
-   ZmodF_poly_FFT(poly2, precomp->length+poly2->length-1);
-   ZmodF_poly_pointwise_mul(poly2, poly2, precomp->poly);
+   ZmodF_poly_FFT(poly2, precache->length+poly2->length-1);
+   ZmodF_poly_pointwise_mul(poly2, poly2, precache->poly);
    ZmodF_poly_IFFT(poly2);
    ZmodF_poly_rescale(poly2);
    
    ZmodF_poly_normalise(poly2);
-   F_mpn_clear(res, precomp->limbs1 + limbs2 - s1);
+   F_mpn_clear(res, precache->limbs1 + limbs2 - s1);
    
-   F_mpn_FFT_combine_bits(res, poly2, precomp->bits, precomp->poly->n, precomp->limbs1 + limbs2 - s1);
+   F_mpn_FFT_combine_bits(res, poly2, precache->bits, precache->poly->n, precache->limbs1 + limbs2 - s1);
    
    ZmodF_poly_stack_clear(poly2);
    
    if (s1) return 0;
-   else return res[precomp->limbs1+limbs2-1];
+   else return res[precache->limbs1+limbs2-1];
 }
 
-mp_limb_t F_mpn_mul_precomp_trunc(mp_limb_t * res, mp_limb_t * data2, unsigned long limbs2, F_mpn_precomp_t precomp, unsigned long trunc)
+mp_limb_t F_mpn_mul_precache_trunc(mp_limb_t * res, mp_limb_t * data2, unsigned long limbs2, F_mpn_precache_t precache, unsigned long trunc)
 {
    if (trunc == 0) return 0;
    ZmodF_poly_t poly2;
-   ZmodF_poly_stack_init(poly2, precomp->poly->depth, precomp->poly->n, 1);
-   int s1 = (FLINT_BIT_COUNT(data2[limbs2-1]) + precomp->msl_bits <= FLINT_BITS);
-   if (trunc > precomp->limbs1+limbs2 - s1) trunc = precomp->limbs1+limbs2 - s1;
-   F_mpn_FFT_split_bits(poly2, data2, limbs2, precomp->bits, precomp->poly->n);
+   ZmodF_poly_stack_init(poly2, precache->poly->depth, precache->poly->n, 1);
+   int s1 = (FLINT_BIT_COUNT(data2[limbs2-1]) + precache->msl_bits <= FLINT_BITS);
+   if (trunc > precache->limbs1+limbs2 - s1) trunc = precache->limbs1+limbs2 - s1;
+   F_mpn_FFT_split_bits(poly2, data2, limbs2, precache->bits, precache->poly->n);
    
-   ZmodF_poly_FFT(poly2, precomp->length+poly2->length-1);
-   ZmodF_poly_pointwise_mul(poly2, poly2, precomp->poly);
+   ZmodF_poly_FFT(poly2, precache->length+poly2->length-1);
+   ZmodF_poly_pointwise_mul(poly2, poly2, precache->poly);
    ZmodF_poly_IFFT(poly2);
-   ZmodF_poly_rescale_range(poly2, 0, (trunc*FLINT_BITS-1)/precomp->bits+1);
-   poly2->length = FLINT_MIN(poly2->length,(trunc*FLINT_BITS-1)/precomp->bits+1);
+   ZmodF_poly_rescale_range(poly2, 0, (trunc*FLINT_BITS-1)/precache->bits+1);
+   poly2->length = FLINT_MIN(poly2->length,(trunc*FLINT_BITS-1)/precache->bits+1);
    ZmodF_poly_normalise(poly2);
-   F_mpn_clear(res, precomp->limbs1 + limbs2);
+   F_mpn_clear(res, precache->limbs1 + limbs2);
    
-   F_mpn_FFT_combine_bits(res, poly2, precomp->bits, precomp->poly->n, trunc);
+   F_mpn_FFT_combine_bits(res, poly2, precache->bits, precache->poly->n, trunc);
    
    ZmodF_poly_stack_clear(poly2);
    
@@ -1098,38 +1098,38 @@ mp_limb_t __F_mpn_mul_middle(mp_limb_t * res, mp_limb_t * data1, unsigned long l
 }
 
 /*
-   This function is intended to be used with F_mpn_mul_precomp_init
+   This function is intended to be used with F_mpn_mul_precache_init
 	It computes the product as per __F_mpn_mul_middle, however there is no wrap around
-	of the FFT as F_mpn_mul_precomp_init precomputed the FFT for use with a full 
+	of the FFT as F_mpn_mul_precache_init precomputed the FFT for use with a full 
 	precomputed product
 	The saving here is that only the required coefficients are computed, and of course
 	the precomputed FFT can be reused
 */
 
-mp_limb_t __F_mpn_mul_middle_precomp(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1, 
-                                      F_mpn_precomp_t precomp, 
+mp_limb_t __F_mpn_mul_middle_precache(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1, 
+                                      F_mpn_precache_t precache, 
                                       unsigned long start, unsigned long trunc)
 {
    ZmodF_poly_t poly1;
-   ZmodF_poly_stack_init(poly1, precomp->poly->depth, precomp->poly->n, 1);
-   F_mpn_FFT_split_bits(poly1, data1, limbs1, precomp->bits, precomp->poly->n);
+   ZmodF_poly_stack_init(poly1, precache->poly->depth, precache->poly->n, 1);
+   F_mpn_FFT_split_bits(poly1, data1, limbs1, precache->bits, precache->poly->n);
    
-   unsigned long length = precomp->poly->length + poly1->length - 1;
+   unsigned long length = precache->poly->length + poly1->length - 1;
 	unsigned long log_length2 = ceil_log2(poly1->length);
-	unsigned long output_bits = 2*precomp->bits + log_length2;
-   unsigned long size = (1L<<precomp->poly->depth);
+	unsigned long output_bits = 2*precache->bits + log_length2;
+   unsigned long size = (1L<<precache->poly->depth);
    if (length > size) length = size;
    ZmodF_poly_FFT(poly1, length);
-   ZmodF_poly_pointwise_mul(poly1, poly1, precomp->poly);
+   ZmodF_poly_pointwise_mul(poly1, poly1, precache->poly);
    ZmodF_poly_IFFT(poly1);
-   ZmodF_poly_rescale_range(poly1, (start*FLINT_BITS - output_bits)/precomp->bits, (trunc*FLINT_BITS-1)/precomp->bits+1);
+   ZmodF_poly_rescale_range(poly1, (start*FLINT_BITS - output_bits)/precache->bits, (trunc*FLINT_BITS-1)/precache->bits+1);
    
-   poly1->length = FLINT_MIN(poly1->length, (trunc*FLINT_BITS-1)/precomp->bits+1);
+   poly1->length = FLINT_MIN(poly1->length, (trunc*FLINT_BITS-1)/precache->bits+1);
    ZmodF_poly_normalise(poly1);
    
    F_mpn_clear(res, trunc);
    
-   F_mpn_FFT_combine_bits(res, poly1, precomp->bits, precomp->poly->n, trunc);
+   F_mpn_FFT_combine_bits(res, poly1, precache->bits, precache->poly->n, trunc);
    ZmodF_poly_stack_clear(poly1);
    
    return res[trunc-1];

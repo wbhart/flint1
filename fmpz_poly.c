@@ -2283,21 +2283,21 @@ void _fmpz_poly_scalar_mul_fmpz(fmpz_poly_t output, const fmpz_poly_t poly, cons
       }
    } else if (limbs1 + limbs2 > 1000)
    {
-      F_mpn_precomp_t precomp;
+      F_mpn_precache_t precache;
    
-      F_mpn_mul_precomp_init(precomp, x+1, limbs1, limbs2);   
+      F_mpn_mul_precache_init(precache, x+1, limbs1, limbs2);   
              
       for (long i = 0; i < poly->length; i++)
       {
           total_limbs = limbs1 + ABS(coeffs2[i*(limbs2+1)]);
           if (total_limbs != limbs1)
           {
-             msl = F_mpn_mul_precomp(coeffs_out + i*limbs_out + 1, coeffs2 + i*(limbs2+1) + 1, ABS(coeffs2[i*(limbs2+1)]), precomp);
+             msl = F_mpn_mul_precache(coeffs_out + i*limbs_out + 1, coeffs2 + i*(limbs2+1) + 1, ABS(coeffs2[i*(limbs2+1)]), precache);
              if (((long) coeffs2[i*(limbs2+1)] ^ sign1) < 0) coeffs_out[i*limbs_out] = -total_limbs + (msl == 0L);
              else coeffs_out[i*limbs_out] = total_limbs - (msl == 0L);
           } else coeffs_out[i*limbs_out] = 0L;
       }
-      F_mpn_mul_precomp_clear(precomp);
+      F_mpn_mul_precache_clear(precache);
    } else
    {
       if (poly != output)

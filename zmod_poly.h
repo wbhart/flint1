@@ -55,9 +55,6 @@ typedef struct
    unsigned long length;
    unsigned long p;
    double p_inv;
-#if FLINT_BITS == 64
-   //uint32_t p32_inv;
-#endif
 } zmod_poly_struct;
 
 typedef zmod_poly_struct zmod_poly_t[1];
@@ -67,10 +64,10 @@ typedef struct
 {
    unsigned long length2;
    unsigned long limbs2;
-   F_mpn_precomp_t precomp;
-} zmod_poly_precomp_struct;
+   F_mpn_precache_t precache;
+} zmod_poly_precache_struct;
 
-typedef zmod_poly_precomp_struct zmod_poly_precomp_t[1];
+typedef zmod_poly_precache_struct zmod_poly_precache_t[1];
 
 typedef struct
 {
@@ -259,9 +256,6 @@ void _zmod_poly_attach(zmod_poly_t output, zmod_poly_t input)
    output->coeffs = input->coeffs;
    output->p = input->p;
    output->p_inv = input->p_inv;
-#if FLINT_BITS == 64
-	//output->p32_inv = input->p32_inv;
-#endif
 }
 
 static inline 
@@ -283,9 +277,6 @@ void _zmod_poly_attach_shift(zmod_poly_t output,
    output->coeffs = input->coeffs + n;
    output->p = input->p;
    output->p_inv = input->p_inv;
-#if FLINT_BITS == 64
-	//output->p32_inv = input->p32_inv;
-#endif
 }
 
 static inline 
@@ -308,9 +299,6 @@ void _zmod_poly_attach_truncate(zmod_poly_t output,
    output->coeffs = input->coeffs;
    output->p = input->p;
    output->p_inv = input->p_inv;
-#if FLINT_BITS == 64
-	//output->p32_inv = input->p32_inv;
-#endif
    __zmod_poly_normalise(output);
 }
 
@@ -388,7 +376,7 @@ void _zmod_poly_mul_KS(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, un
 
 void zmod_poly_mul_KS_trunc(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long bits_input, unsigned long trunc);
 void _zmod_poly_mul_KS_trunc(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long bits_input, unsigned long trunc);
-void _zmod_poly_mul_KS_trunc_precomp(zmod_poly_t output, zmod_poly_p input1, zmod_poly_precomp_t pre, unsigned long bits_input, unsigned long trunc);
+void _zmod_poly_mul_KS_trunc_precache(zmod_poly_t output, zmod_poly_p input1, zmod_poly_precache_t pre, unsigned long bits_input, unsigned long trunc);
 #if USE_MIDDLE_PRODUCT
 void _zmod_poly_mul_KS_middle(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p input2, unsigned long bits_input, unsigned long trunc);
 void zmod_poly_mul_KS_middle(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p input2, unsigned long bits_input, unsigned long trunc);
@@ -414,14 +402,14 @@ void zmod_poly_mul_classical_trunc_left(zmod_poly_t res, zmod_poly_t poly1, zmod
 void zmod_poly_mul_trunc_n(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long trunc);
 void zmod_poly_mul_trunc_left_n(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long trunc);
 
-void zmod_poly_mul_trunc_n_precomp_init(zmod_poly_precomp_t pre, zmod_poly_p input2, unsigned long bits_input, unsigned long length1);
-void zmod_poly_precomp_clear(zmod_poly_precomp_t pre);
-void zmod_poly_mul_trunc_n_precomp(zmod_poly_t output, zmod_poly_p input1, zmod_poly_precomp_t pre, unsigned long trunc);
+void zmod_poly_mul_trunc_n_precache_init(zmod_poly_precache_t pre, zmod_poly_p input2, unsigned long bits_input, unsigned long length1);
+void zmod_poly_precache_clear(zmod_poly_precache_t pre);
+void zmod_poly_mul_trunc_n_precache(zmod_poly_t output, zmod_poly_p input1, zmod_poly_precache_t pre, unsigned long trunc);
 #if USE_MIDDLE_PRODUCT
-void _zmod_poly_mul_KS_middle_precomp(zmod_poly_t output, zmod_poly_p input1, zmod_poly_precomp_t pre, unsigned long bits_input, unsigned long trunc);
+void _zmod_poly_mul_KS_middle_precache(zmod_poly_t output, zmod_poly_p input1, zmod_poly_precache_t pre, unsigned long bits_input, unsigned long trunc);
 #endif
-void _zmod_poly_mul_KS_precomp(zmod_poly_t output, zmod_poly_t input1, zmod_poly_precomp_t pre, unsigned long bits_input);
-void zmod_poly_mul_precomp_init(zmod_poly_precomp_t pre, zmod_poly_t input2, unsigned long bits_input, unsigned long length1);
+void _zmod_poly_mul_KS_precache(zmod_poly_t output, zmod_poly_t input1, zmod_poly_precache_t pre, unsigned long bits_input);
+void zmod_poly_mul_precache_init(zmod_poly_precache_t pre, zmod_poly_t input2, unsigned long bits_input, unsigned long length1);
 /*
 	Bit packing functions
 */
