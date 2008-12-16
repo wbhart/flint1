@@ -553,9 +553,37 @@ void zmod_poly_derivative(zmod_poly_t x_primed, zmod_poly_t x);
 /*
    Modular Arithmetic
 */
+void __zmod_poly_mulmod(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, zmod_poly_t f);
 
-void zmod_poly_mulmod(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, zmod_poly_t f);
-void zmod_poly_powmod(zmod_poly_t res, zmod_poly_t pol, long exp, zmod_poly_t f);
+static inline
+void zmod_poly_mulmod(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, zmod_poly_t f)
+{
+   if (res == f)
+	{
+		zmod_poly_t H;
+		zmod_poly_init(H,f->p);
+      __zmod_poly_mulmod(H, poly1, poly2, f);
+		zmod_poly_swap(res, H);
+		zmod_poly_clear(H);
+	} else
+		__zmod_poly_mulmod(res, poly1, poly2, f);
+}
+
+void __zmod_poly_powmod(zmod_poly_t res, zmod_poly_t pol, long exp, zmod_poly_t f);
+
+static inline
+void zmod_poly_powmod(zmod_poly_t res, zmod_poly_t pol, long exp, zmod_poly_t f)
+{
+   if (res == f)
+	{
+		zmod_poly_t H;
+		zmod_poly_init(H,f->p);
+      __zmod_poly_powmod(H, pol, exp, f);
+		zmod_poly_swap(res, H);
+		zmod_poly_clear(H);
+	} else
+		__zmod_poly_powmod(res, pol, exp, f);
+}
 
 /*
    Factorisation/Irreducibility

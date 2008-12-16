@@ -4384,7 +4384,7 @@ void zmod_poly_derivative(zmod_poly_t x_primed, zmod_poly_t x)
    Assumes poly1 and poly2 are reduced mod f
 */
 
-void zmod_poly_mulmod(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, zmod_poly_t f)
+void __zmod_poly_mulmod(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, zmod_poly_t f)
 {
    unsigned long p = f->p;
    
@@ -4415,7 +4415,7 @@ void zmod_poly_mulmod(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, zmo
    The leading coefficient of f must be invertible modulo the modulus
 */
 
-void zmod_poly_powmod(zmod_poly_t res, zmod_poly_t pol, long exp, zmod_poly_t f)
+void __zmod_poly_powmod(zmod_poly_t res, zmod_poly_t pol, long exp, zmod_poly_t f)
 {
    zmod_poly_t y;
    
