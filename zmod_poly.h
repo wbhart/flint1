@@ -258,12 +258,6 @@ void _zmod_poly_attach(zmod_poly_t output, zmod_poly_t input)
    output->p_inv = input->p_inv;
 }
 
-static inline 
-void zmod_poly_attach(zmod_poly_t output, zmod_poly_t input)
-{
-   _zmod_poly_attach(output, input);
-}
-
 /*
    Attach input shifted right by n to output
 */
@@ -277,13 +271,6 @@ void _zmod_poly_attach_shift(zmod_poly_t output,
    output->coeffs = input->coeffs + n;
    output->p = input->p;
    output->p_inv = input->p_inv;
-}
-
-static inline 
-void zmod_poly_attach_shift(zmod_poly_t output, 
-                   zmod_poly_t input, unsigned long n)
-{
-   _zmod_poly_attach_shift(output, input, n);
 }
 
 /*
@@ -301,14 +288,6 @@ void _zmod_poly_attach_truncate(zmod_poly_t output,
    output->p_inv = input->p_inv;
    __zmod_poly_normalise(output);
 }
-
-static inline 
-void zmod_poly_attach_truncate(zmod_poly_t output, 
-                     zmod_poly_t input, unsigned long n)
-{
-   _zmod_poly_attach_truncate(output, input, n);
-}
-
 
 /*
    Comparison functions

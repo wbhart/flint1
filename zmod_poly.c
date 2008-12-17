@@ -3570,11 +3570,11 @@ void zmod_poly_newton_invert(zmod_poly_t Q_inv, zmod_poly_t Q, unsigned long n)
       prod->coeffs[0] = z_submod(prod->coeffs[0], 1L, p);
       //zmod_poly_mul_trunc_n(prod2, prod, g0, n);
       zmod_poly_t prod_s;
-      zmod_poly_attach_shift(prod_s, prod, (n+1)/2);
+      _zmod_poly_attach_shift(prod_s, prod, (n+1)/2);
       
       zmod_poly_t prod2_s;
       zmod_poly_fit_length(prod2, n);
-      zmod_poly_attach_shift(prod2_s, prod2, (n+1)/2);
+      _zmod_poly_attach_shift(prod2_s, prod2, (n+1)/2);
       _zmod_poly_mul_KS_trunc(prod2_s, prod_s, g0, 0, n - (n+1)/2);
       
       prod2->length = (n+1)/2 + prod2_s->length;
@@ -3588,11 +3588,11 @@ void zmod_poly_newton_invert(zmod_poly_t Q_inv, zmod_poly_t Q, unsigned long n)
       zmod_poly_fit_length(prod, n);
       _zmod_poly_mul_KS_middle_precache(prod, Q, pre, 0, n);
       zmod_poly_t prod_s;
-      zmod_poly_attach_shift(prod_s, prod, (n+1)/2);
+      _zmod_poly_attach_shift(prod_s, prod, (n+1)/2);
       
       zmod_poly_t prod2_s;
       zmod_poly_fit_length(prod2, n);
-      zmod_poly_attach_shift(prod2_s, prod2, (n+1)/2);
+      _zmod_poly_attach_shift(prod2_s, prod2, (n+1)/2);
       _zmod_poly_mul_KS_trunc_precache(prod2_s, prod_s, pre, 0, n - (n+1)/2);
       zmod_poly_mul_precache_clear(pre);
       prod2->length = (n+1)/2 + prod2_s->length;
