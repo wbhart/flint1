@@ -1856,6 +1856,11 @@ void _zmod_poly_mul_KS_middle_precache(zmod_poly_t output, zmod_poly_p input1, z
    __F_mpn_mul_middle_precache(res, mpn1, limbs1, pre->precache, (start*bits)/FLINT_BITS, (output_length*bits-1)/FLINT_BITS+1);
         
    _zmod_poly_bit_unpack_mpn(output, res, output_length, bits); 
+
+	for (unsigned long i = 0; i < start; i++)
+      output->coeffs[i] = 0L;
+   output->length = output_length;
+   
    flint_stack_release(); //release res
    flint_stack_release(); //release mpn1
    
