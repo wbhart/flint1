@@ -1453,6 +1453,44 @@ int test_zmod_poly_sqr()
       zmod_poly_clear(res2);  
    }
    
+   for (unsigned long count1 = 0; (count1 < 50) && (result == 1); count1++)
+   {
+      bits = randint(FLINT_BITS-2)+2;
+      unsigned long modulus;
+      
+      do {modulus = randbits(bits);} while (modulus < 2);
+      
+      zmod_poly_init(pol1, modulus);
+      zmod_poly_init(res2, modulus);
+      
+      for (unsigned long count2 = 0; (count2 < 50) && (result == 1); count2++)
+      {
+         unsigned long length1 = randint(400);
+         
+#if DEBUG
+            printf("bits = %ld, length1 = %ld, length2 = %ld, modulus = %ld\n", bits, length1, length2, modulus);
+#endif
+
+            randpoly(pol1, length1, modulus);
+            
+            zmod_poly_sqr_classical(res2, pol1);
+            zmod_poly_sqr(pol1, pol1);
+            
+            result &= zmod_poly_equal(pol1, res2);
+         
+#if DEBUG
+            if (!result)
+            {
+               zmod_poly_print(pol1); printf("\n\n");
+               zmod_poly_print(res2); printf("\n\n");
+            }
+#endif
+      }
+      
+      zmod_poly_clear(pol1);
+      zmod_poly_clear(res2);  
+   }
+   
    return result;
 }
 
