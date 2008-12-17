@@ -1793,16 +1793,18 @@ void zmod_poly_mul_precache(zmod_poly_t output, zmod_poly_t input1, zmod_poly_pr
 	zmod_poly_t temp;
 
 	ulong length = input1->length + pre->length2 - 1;
-	zmod_poly_fit_length(output, length);
 	
 	if (input1 == output)
 	{
-		zmod_poly_init(temp, input1->p);
+		zmod_poly_init2(temp, input1->p, length);
       _zmod_poly_mul_KS_precache(temp, input1, pre, 0);
 		zmod_poly_swap(temp, output);
 		zmod_poly_clear(temp);
 	} else
-      _zmod_poly_mul_KS_precache(output, input1, pre, 0);	
+	{
+      zmod_poly_fit_length(output, length);
+	   _zmod_poly_mul_KS_precache(output, input1, pre, 0);
+	}
 }
 
 #if USE_MIDDLE_PRODUCT
@@ -1877,16 +1879,18 @@ void zmod_poly_mul_middle_precache(zmod_poly_t output, zmod_poly_t input1,
 	zmod_poly_t temp;
 
 	ulong length = FLINT_MIN(input1->length + pre->length2 - 1, trunc);
-	zmod_poly_fit_length(output, length);
 	
 	if (input1 == output)
 	{
-		zmod_poly_init(temp, input1->p);
-      _zmod_poly_mul_KS_middle_precache(temp, input1, pre, 0, trunc);
+		zmod_poly_init2(temp, input1->p, length);
+		_zmod_poly_mul_KS_middle_precache(temp, input1, pre, 0, trunc);
 		zmod_poly_swap(temp, output);
 		zmod_poly_clear(temp);
 	} else
-      _zmod_poly_mul_KS_middle_precache(output, input1, pre, 0, trunc);	
+	{
+		zmod_poly_fit_length(output, length);
+	   _zmod_poly_mul_KS_middle_precache(output, input1, pre, 0, trunc);
+	}
 }
 
 /*
