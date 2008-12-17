@@ -403,12 +403,15 @@ void zmod_poly_mul_trunc_n(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2
 void zmod_poly_mul_trunc_left_n(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long trunc);
 
 void zmod_poly_mul_trunc_n_precache_init(zmod_poly_precache_t pre, zmod_poly_p input2, unsigned long bits_input, unsigned long length1);
-void zmod_poly_precache_clear(zmod_poly_precache_t pre);
+void zmod_poly_mul_precache_clear(zmod_poly_precache_t pre);
 void zmod_poly_mul_trunc_n_precache(zmod_poly_t output, zmod_poly_p input1, zmod_poly_precache_t pre, unsigned long trunc);
 #if USE_MIDDLE_PRODUCT
 void _zmod_poly_mul_KS_middle_precache(zmod_poly_t output, zmod_poly_p input1, zmod_poly_precache_t pre, unsigned long bits_input, unsigned long trunc);
+void zmod_poly_mul_middle_precache(zmod_poly_t output, zmod_poly_t input1, 
+                                        zmod_poly_precache_t pre, unsigned long trunc); 
 #endif
 void _zmod_poly_mul_KS_precache(zmod_poly_t output, zmod_poly_t input1, zmod_poly_precache_t pre, unsigned long bits_input);
+void zmod_poly_mul_precache(zmod_poly_t output, zmod_poly_t input1, zmod_poly_precache_t pre);
 void zmod_poly_mul_precache_init(zmod_poly_precache_t pre, zmod_poly_t input2, unsigned long bits_input, unsigned long length1);
 /*
 	Bit packing functions

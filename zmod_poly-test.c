@@ -1539,7 +1539,7 @@ int test_zmod_poly_mul_KS_trunc_precache()
             zmod_poly_mul_trunc_n_precache(res1, pol1, pre, trunc);
             if (pol1->length > pol2->length) zmod_poly_mul_KS_trunc(res2, pol1, pol2, 0, trunc);
             else zmod_poly_mul_KS_trunc(res2, pol2, pol1, 0, trunc);
-            zmod_poly_precache_clear(pre);
+            zmod_poly_mul_precache_clear(pre);
 
             result &= zmod_poly_equal(res1, res2);
          
@@ -1564,7 +1564,7 @@ int test_zmod_poly_mul_KS_trunc_precache()
    return result;
 }
 
-int test_zmod_poly_mul_KS_precache()
+int test__zmod_poly_mul_KS_precache()
 {
    int result = 1;
    zmod_poly_t pol1, pol2, res1, res2;
@@ -1596,10 +1596,71 @@ int test_zmod_poly_mul_KS_precache()
          
             zmod_poly_precache_t pre;
             zmod_poly_mul_precache_init(pre, pol2, 0, length1);
+				zmod_poly_fit_length(res1, length1 + length2 - 1);
             _zmod_poly_mul_KS_precache(res1, pol1, pre, 0);
             if (pol1->length > pol2->length) zmod_poly_mul_KS(res2, pol1, pol2, 0);
             else zmod_poly_mul_KS(res2, pol2, pol1, 0);
-            zmod_poly_precache_clear(pre);
+            zmod_poly_mul_precache_clear(pre);
+
+            result &= zmod_poly_equal(res1, res2);
+         
+#if DEBUG
+            if (!result)
+            {
+               zmod_poly_print(pol1); printf("\n\n");
+               zmod_poly_print(pol2); printf("\n\n");
+               zmod_poly_print(res1); printf("\n\n");
+               zmod_poly_print(res2); printf("\n\n");
+            }
+#endif
+      
+      }
+      
+      zmod_poly_clear(pol1);
+      zmod_poly_clear(pol2);
+      zmod_poly_clear(res1);  
+      zmod_poly_clear(res2);  
+   }
+   
+   return result;
+}
+
+int test_zmod_poly_mul_precache()
+{
+   int result = 1;
+   zmod_poly_t pol1, pol2, res1, res2;
+   unsigned long bits;
+   
+   for (unsigned long count1 = 0; (count1 < 30) && (result == 1); count1++)
+   {
+      bits = randint(FLINT_BITS-2)+2;
+      unsigned long modulus;
+      
+      do {modulus = randbits(bits);} while (modulus < 2);
+      
+      zmod_poly_init(pol1, modulus);
+      zmod_poly_init(pol2, modulus);
+      zmod_poly_init(res1, modulus);
+      zmod_poly_init(res2, modulus);
+      
+      for (unsigned long count2 = 0; (count2 < 30) && (result == 1); count2++)
+      {
+         unsigned long length1 = randint(2000)+2000;
+         unsigned long length2 = randint(2000)+2000;
+                  
+#if DEBUG
+            printf("bits = %ld, length1 = %ld, length2 = %ld, modulus = %ld\n", bits, length1, length2, modulus, trunc);
+#endif
+
+            randpoly(pol1, length1, modulus);
+            randpoly(pol2, length2, modulus);
+         
+            zmod_poly_precache_t pre;
+            zmod_poly_mul_precache_init(pre, pol2, 0, length1);
+            zmod_poly_mul_precache(res1, pol1, pre);
+            if (pol1->length > pol2->length) zmod_poly_mul_KS(res2, pol1, pol2, 0);
+            else zmod_poly_mul_KS(res2, pol2, pol1, 0);
+            zmod_poly_mul_precache_clear(pre);
 
             result &= zmod_poly_equal(res1, res2);
          
@@ -1672,6 +1733,71 @@ int test_zmod_poly_mul_KS_middle()
                zmod_poly_print(res1); printf("\n\n");
                zmod_poly_print(res2); printf("\n\n");
             }
+#endif
+      
+      }
+      
+      zmod_poly_clear(pol1);
+      zmod_poly_clear(pol2);
+      zmod_poly_clear(res1);  
+      zmod_poly_clear(res2);  
+   }
+   
+   return result;
+}
+
+int test_zmod_poly_mul_middle_precache()
+{
+   int result = 1;
+   zmod_poly_t pol1, pol2, res1, res2;
+   unsigned long bits;
+   
+   for (unsigned long count1 = 0; (count1 < 30) && (result == 1); count1++)
+   {
+      bits = randint(FLINT_BITS-2)+2;
+      unsigned long modulus;
+      
+      do {modulus = randbits(bits);} while (modulus < 2);
+      
+      zmod_poly_init(pol1, modulus);
+      zmod_poly_init(pol2, modulus);
+      zmod_poly_init(res1, modulus);
+      zmod_poly_init(res2, modulus);
+      
+      for (unsigned long count2 = 0; (count2 < 30) && (result == 1); count2++)
+      {
+         unsigned long length1 = randint(1000)+1000;
+         unsigned long length2 = (length1+1)/2;
+         
+         unsigned long trunc = length1;
+			zmod_poly_precache_t pre;
+         
+#if DEBUG
+         printf("bits = %ld, length1 = %ld, length2 = %ld, modulus = %ld, trunc = %ld\n", bits, length1, length2, modulus, trunc);
+#endif
+
+         randpoly(pol1, length1, modulus);
+         randpoly(pol2, length2, modulus);
+         
+         zmod_poly_mul_KS_trunc(res1, pol1, pol2, 0, trunc);
+         for (unsigned long i = 0; i < trunc/2; i++)
+            res1->coeffs[i] = 0L;
+		   zmod_poly_mul_trunc_n_precache_init(pre, pol2, 0, length2);
+         zmod_poly_mul_middle_precache(res2, pol1, pre, trunc);
+         for (unsigned long i = 0; i < trunc/2; i++)
+            res2->coeffs[i] = 0L;
+		   zmod_poly_mul_precache_clear(pre);
+            
+         result &= zmod_poly_equal(res1, res2);
+         
+#if DEBUG
+         if (!result)
+         {
+            zmod_poly_print(pol1); printf("\n\n");
+            zmod_poly_print(pol2); printf("\n\n");
+            zmod_poly_print(res1); printf("\n\n");
+            zmod_poly_print(res2); printf("\n\n");
+         }
 #endif
       
       }
@@ -5035,8 +5161,10 @@ void zmod_poly_test_all()
    RUN_TEST(zmod_poly_mul_KS_trunc); 
 #if USE_MIDDLE_PRODUCT
    RUN_TEST(zmod_poly_mul_KS_middle); 
+   RUN_TEST(zmod_poly_mul_middle_precache); 
 #endif
-   RUN_TEST(zmod_poly_mul_KS_precache); 
+   RUN_TEST(_zmod_poly_mul_KS_precache); 
+   RUN_TEST(zmod_poly_mul_precache); 
    RUN_TEST(zmod_poly_mul_KS_trunc_precache); 
    RUN_TEST(zmod_poly_scalar_mul); 
    RUN_TEST(zmod_poly_make_monic); 

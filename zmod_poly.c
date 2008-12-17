@@ -1679,7 +1679,7 @@ void zmod_poly_mul_precache_init(zmod_poly_precache_t pre, zmod_poly_t input2, u
    flint_stack_release(); // release mpn2 
 }
 
-void zmod_poly_precache_clear(zmod_poly_precache_t pre)
+void zmod_poly_mul_precache_clear(zmod_poly_precache_t pre)
 {
    F_mpn_mul_precache_clear(pre->precache);
 }
@@ -1778,7 +1778,6 @@ void _zmod_poly_mul_KS_precache(zmod_poly_t output, zmod_poly_t input1, zmod_pol
    
    F_mpn_mul_precache(res, mpn1, limbs1, pre->precache);
         
-   zmod_poly_fit_length(output, length);
    _zmod_poly_bit_unpack_mpn(output, res, length, bits); 
    flint_stack_release(); //release res
    flint_stack_release(); //release mpn1
@@ -1787,6 +1786,23 @@ void _zmod_poly_mul_KS_precache(zmod_poly_t output, zmod_poly_t input1, zmod_pol
    /* The modulus may not be prime, so normalisation may be necessary */
    __zmod_poly_normalise(output);
     
+}
+
+void zmod_poly_mul_precache(zmod_poly_t output, zmod_poly_t input1, zmod_poly_precache_t pre)
+{
+	zmod_poly_t temp;
+
+	ulong length = input1->length + pre->length2 - 1;
+	zmod_poly_fit_length(output, length);
+	
+	if (input1 == output)
+	{
+		zmod_poly_init(temp, input1->p);
+      _zmod_poly_mul_KS_precache(temp, input1, pre, 0);
+		zmod_poly_swap(temp, output);
+		zmod_poly_clear(temp);
+	} else
+      _zmod_poly_mul_KS_precache(output, input1, pre, 0);	
 }
 
 #if USE_MIDDLE_PRODUCT
@@ -1848,6 +1864,24 @@ void _zmod_poly_mul_KS_middle_precache(zmod_poly_t output, zmod_poly_p input1, z
    /* The modulus may not be prime, so normalisation may be necessary */
    __zmod_poly_normalise(output);
     
+}
+
+void zmod_poly_mul_middle_precache(zmod_poly_t output, zmod_poly_t input1, 
+                                        zmod_poly_precache_t pre, unsigned long trunc) 
+{
+	zmod_poly_t temp;
+
+	ulong length = FLINT_MIN(input1->length + pre->length2 - 1, trunc);
+	zmod_poly_fit_length(output, length);
+	
+	if (input1 == output)
+	{
+		zmod_poly_init(temp, input1->p);
+      _zmod_poly_mul_KS_middle_precache(temp, input1, pre, 0, trunc);
+		zmod_poly_swap(temp, output);
+		zmod_poly_clear(temp);
+	} else
+      _zmod_poly_mul_KS_middle_precache(output, input1, pre, 0, trunc);	
 }
 
 /*
@@ -3551,7 +3585,7 @@ void zmod_poly_newton_invert(zmod_poly_t Q_inv, zmod_poly_t Q, unsigned long n)
       zmod_poly_fit_length(prod2, n);
       zmod_poly_attach_shift(prod2_s, prod2, (n+1)/2);
       _zmod_poly_mul_KS_trunc_precache(prod2_s, prod_s, pre, 0, n - (n+1)/2);
-      zmod_poly_precache_clear(pre);
+      zmod_poly_mul_precache_clear(pre);
       prod2->length = (n+1)/2 + prod2_s->length;
       for (unsigned long i = 0; i < (n+1)/2; i++)
          prod2->coeffs[i] = 0L;
