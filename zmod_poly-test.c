@@ -5158,7 +5158,7 @@ int test_zmod_poly_2x2_mat_mul_classical_strassen()
    
    for (unsigned long count1 = 0; (count1 < 100) && (result == 1); count1++)
    {
-      bits = randint(FLINT_BITS-1)+2;
+      bits = randint(FLINT_BITS-2)+2;
       unsigned long modulus;
       
       do {modulus = randbits(bits);} while (modulus < 2);
@@ -5214,7 +5214,7 @@ int test_zmod_poly_2x2_mat_mul()
    
    for (unsigned long count1 = 0; (count1 < 100) && (result == 1); count1++)
    {
-      bits = randint(FLINT_BITS-1)+2;
+      bits = randint(FLINT_BITS-2)+2;
       unsigned long modulus;
       
       do {modulus = randbits(bits);} while (modulus < 2);

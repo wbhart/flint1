@@ -42,6 +42,10 @@
 #include "flint.h"
 #include "F_mpz_mat.h"
 
+#ifndef NAN
+#define NAN (0.0/0.0)
+#endif 
+
 double halfplus, onedothalfplus, ctt;
 
 #if MPIR_BITS == 32
