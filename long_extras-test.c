@@ -1348,8 +1348,8 @@ int test_z_isprobab_prime()
    
    for (unsigned long count = 0; (count < 100000) && (result == 1); count++)
    { 
-	  unsigned long bits = z_randint(FLINT_BITS-1)+1;
-	  n = random_ulong((1UL<<bits)-1UL)+1; 
+	   unsigned long bits = z_randint(FLINT_BITS-2)+2;
+	   n = random_ulong((1UL<<bits)-2UL)+2; 
       mpz_set_ui(mpz_n, n);
 
 #if DEBUG
@@ -1393,7 +1393,7 @@ int test_z_isprobab_prime_precomp()
    
    for (unsigned long count = 0; (count < 100000) && (result == 1); count++)
    { 
-	  unsigned long bits = z_randint(FLINT_BITS-1)+1;
+	  unsigned long bits = z_randint(FLINT_BITS-2)+2;
 	  n = z_randint((1UL<<bits)-2UL)+2; 
      mpz_set_ui(mpz_n, n);
 
@@ -1406,12 +1406,13 @@ int test_z_isprobab_prime_precomp()
 
       ninv = z_precompute_inverse(res);
 		result = (z_isprobab_prime_precomp(res, ninv));
+		if (!result) printf("Error: %ld is reported composite!\n", n, res);
    }  
 
 #define PRIME_COUNT 100000
 	
 	ulong comp = 0;
-	for (ulong count = 0; count < PRIME_COUNT; count++)
+	for (ulong count = 0; (count < PRIME_COUNT) && (result == 1); count++)
    { 
 		ulong bits = z_randint(FLINT_BITS/2 - 2) + 2;
       n = z_randprime(bits); 
@@ -1457,8 +1458,8 @@ int test_z_isprime()
 
 	for (unsigned long count = 0; (count < 10000) && (result == 1); count++)
    { 
-	  unsigned long bits = z_randint(FLINT_BITS-1)+1;
-	  n = random_ulong((1UL<<bits)-1UL)+1; 
+	  unsigned long bits = z_randint(FLINT_BITS-2)+2;
+	  n = random_ulong((1UL<<bits)-2UL)+2; 
       mpz_set_ui(mpz_n, n);
 
 #if DEBUG
@@ -1502,7 +1503,7 @@ int test_z_isprime_precomp()
    
    for (unsigned long count = 0; (count < 100000) && (result == 1); count++)
    { 
-	  unsigned long bits = z_randint(FLINT_D_BITS-1)+1;
+	  unsigned long bits = z_randint(FLINT_D_BITS-2)+2;
 	  n = z_randint((1UL<<bits)-2UL)+2; 
      mpz_set_ui(mpz_n, n);
 
@@ -1515,11 +1516,12 @@ int test_z_isprime_precomp()
 
       ninv = z_precompute_inverse(res);
 		result = (z_isprime_precomp(res, ninv));
+	   if (!result) printf("Error: %ld is reported composite!\n", res);
    }
 
    for (unsigned long count = 0; (count < 10000) && (result == 1); count++)
    { 
-	  unsigned long bits = z_randint(FLINT_BITS-1)+1;
+	  unsigned long bits = z_randint(FLINT_BITS-2)+2;
 	  n = z_randint((1UL<<bits)-2UL)+2; 
      mpz_set_ui(mpz_n, n);
 
@@ -1532,18 +1534,19 @@ int test_z_isprime_precomp()
 
       ninv = z_precompute_inverse(res);
 		result = (z_isprime_precomp(res, ninv));
+	   if (!result) printf("Error: %ld is reported composite!\n", res);
    }  
 
 #define PRIME_COUNT 100000
 	
 	ulong comp = 0;
-	for (ulong count = 0; count < PRIME_COUNT; count++)
+	for (ulong count = 0; (count < PRIME_COUNT) && (result == 1); count++)
    { 
 		ulong bits = z_randint(FLINT_BITS/2 - 2) + 2;
       n = z_randprime(bits); 
 		if (n == 2) n++;
 		ulong n1 = z_randint(bits) + 2;
-		if ((n1 & 1L) == 0) n1++;
+		if ((n1 & 1L) == 0L) n1++;
 		n *= n1;
       ninv = z_precompute_inverse(n);
 	   if (z_isprime_precomp(n, ninv)) result = 0; 
@@ -1567,8 +1570,8 @@ int test_z_isprime_pocklington()
    
    for (unsigned long count = 0; (count < 100000L) && (result == 1); count++)
    { 
-	   unsigned long bits = z_randint(FLINT_D_BITS-1)+1;
-	   n = random_ulong((1UL<<bits)-1UL)+1; 
+	   unsigned long bits = z_randint(FLINT_D_BITS-2)+2;
+	   n = random_ulong((1UL<<bits)-2UL)+2; 
       mpz_set_ui(mpz_n, n);
 
 #if DEBUG
