@@ -9924,7 +9924,7 @@ unsigned long fmpz_poly_resultant_bound(fmpz_poly_t a, fmpz_poly_t b)
 
 void fmpz_poly_resultant(fmpz_t res, fmpz_poly_t a, fmpz_poly_t b)
 {
-   if ((a->length == 0) || (b->length == 0)) 
+   if ((a->length == 0) || (b->length == 0) || (a == b)) 
    {
       res[0] = 0L;
       return;
