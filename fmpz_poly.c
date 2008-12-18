@@ -2950,7 +2950,7 @@ void _fmpz_poly_mul_modular(fmpz_poly_t output, const fmpz_poly_t poly1,
 #elif FLINT_BITS == 64
     unsigned long p0 = z_nextprime(1L << 62);
     // primes_per_limb = 64/log2(p0)
-    double primes_per_limb = 1.032;
+    double primes_per_limb = 1.0323;
 #else
 #error FLINT_BITS must be either 32 or 64
 #endif
