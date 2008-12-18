@@ -258,6 +258,12 @@ void _zmod_poly_attach(zmod_poly_t output, zmod_poly_t input)
    output->p_inv = input->p_inv;
 }
 
+static inline 
+void zmod_poly_attach(zmod_poly_t output, zmod_poly_t input)
+{
+   _zmod_poly_attach(output, input);
+}
+
 /*
    Attach input shifted right by n to output
 */
@@ -271,6 +277,13 @@ void _zmod_poly_attach_shift(zmod_poly_t output,
    output->coeffs = input->coeffs + n;
    output->p = input->p;
    output->p_inv = input->p_inv;
+}
+
+static inline 
+void zmod_poly_attach_shift(zmod_poly_t output, 
+                   zmod_poly_t input, unsigned long n)
+{
+   _zmod_poly_attach_shift(output, input, n);
 }
 
 /*
@@ -288,6 +301,14 @@ void _zmod_poly_attach_truncate(zmod_poly_t output,
    output->p_inv = input->p_inv;
    __zmod_poly_normalise(output);
 }
+
+static inline 
+void zmod_poly_attach_truncate(zmod_poly_t output, 
+                     zmod_poly_t input, unsigned long n)
+{
+   _zmod_poly_attach_truncate(output, input, n);
+}
+
 
 /*
    Comparison functions
@@ -445,11 +466,67 @@ void zmod_poly_divrem(zmod_poly_t Q, zmod_poly_t R, zmod_poly_t A, zmod_poly_t B
 {
    if ((B->length < ZMOD_DIV_BASECASE_CUTOFF) && (A->length < 2*ZMOD_DIV_BASECASE_CUTOFF))
    {
-      zmod_poly_divrem_classical(Q, R, A, B);
+      if ((Q == A) || (Q == B))
+      {
+         if ((R == A) || (R == B))
+         {
+            zmod_poly_t temp1, temp2;
+            zmod_poly_init(temp1, A->p);
+            zmod_poly_init(temp2, A->p);
+            zmod_poly_divrem_classical(temp1, temp2, A, B);
+            zmod_poly_swap(temp1, Q);            zmod_poly_clear(temp1);
+            zmod_poly_swap(temp2, R);            zmod_poly_clear(temp2);         
+         }
+         else
+         {
+            zmod_poly_t temp;
+            zmod_poly_init(temp, A->p);
+            zmod_poly_divrem_classical(temp, R, A, B);
+            zmod_poly_swap(temp, Q);            zmod_poly_clear(temp);
+         }
+      }
+      else if ((R == A) || (R == B))
+         {
+            zmod_poly_t temp;
+            zmod_poly_init(temp, A->p);
+            zmod_poly_divrem_classical(Q, temp, A, B);
+            zmod_poly_swap(temp, R);            zmod_poly_clear(temp);         
+         }
+      else
+         zmod_poly_divrem_classical(Q, R, A, B);
+
       return;
    }
 
-   zmod_poly_divrem_newton(Q, R, A, B);
+   if ((Q == A) || (Q == B))
+   {
+      if ((R == A) || (R == B))
+      {
+         zmod_poly_t temp1, temp2;
+         zmod_poly_init(temp1, A->p);
+         zmod_poly_init(temp2, A->p);
+         zmod_poly_divrem_newton(temp1, temp2, A, B);
+         zmod_poly_swap(temp1, Q);         zmod_poly_clear(temp1);
+         zmod_poly_swap(temp2, R);         zmod_poly_clear(temp2);         
+      }
+      else
+      {
+         zmod_poly_t temp;
+         zmod_poly_init(temp, A->p);
+         zmod_poly_divrem_newton(temp, R, A, B);
+         zmod_poly_swap(temp, Q);         zmod_poly_clear(temp);
+      }
+   }
+   else if ((R == A) || (R == B))
+      {
+         zmod_poly_t temp;
+         zmod_poly_init(temp, A->p);
+         zmod_poly_divrem_newton(Q, temp, A, B);
+         zmod_poly_swap(temp, R);         zmod_poly_clear(temp);         
+      }
+   else
+      zmod_poly_divrem_newton(Q, R, A, B);
+
 }
 
 static inline
@@ -457,10 +534,15 @@ void zmod_poly_div(zmod_poly_t Q, zmod_poly_t A, zmod_poly_t B)
 {
    if ((B->length < ZMOD_DIV_BASECASE_CUTOFF) && (A->length < 2*ZMOD_DIV_BASECASE_CUTOFF))
    {
-      zmod_poly_div_classical(Q, A, B);
+      if ((Q == A) || (Q == B))
+      {         zmod_poly_t temp;
+         zmod_poly_init(temp, A->p);
+         zmod_poly_div_classical(temp, A, B);
+         zmod_poly_swap(temp, Q);         zmod_poly_clear(temp);      } else
+         zmod_poly_div_classical(Q, A, B);
       return;
    }
-   
+
    if ((Q == A) || (Q == B))
 	{
 		zmod_poly_t temp;
@@ -523,21 +605,7 @@ void zmod_poly_derivative(zmod_poly_t x_primed, zmod_poly_t x);
 /*
    Modular Arithmetic
 */
-void __zmod_poly_mulmod(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, zmod_poly_t f);
-
-static inline
-void zmod_poly_mulmod(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, zmod_poly_t f)
-{
-   if (res == f)
-	{
-		zmod_poly_t H;
-		zmod_poly_init(H,f->p);
-      __zmod_poly_mulmod(H, poly1, poly2, f);
-		zmod_poly_swap(res, H);
-		zmod_poly_clear(H);
-	} else
-		__zmod_poly_mulmod(res, poly1, poly2, f);
-}
+void zmod_poly_mulmod(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, zmod_poly_t f);
 
 void __zmod_poly_powmod(zmod_poly_t res, zmod_poly_t pol, long exp, zmod_poly_t f);
 
@@ -545,14 +613,15 @@ static inline
 void zmod_poly_powmod(zmod_poly_t res, zmod_poly_t pol, long exp, zmod_poly_t f)
 {
    if (res == f)
-	{
-		zmod_poly_t H;
-		zmod_poly_init(H,f->p);
+   {
+      zmod_poly_t H;
+      zmod_poly_init(H, f->p);
       __zmod_poly_powmod(H, pol, exp, f);
-		zmod_poly_swap(res, H);
-		zmod_poly_clear(H);
-	} else
-		__zmod_poly_powmod(res, pol, exp, f);
+      zmod_poly_swap(H, res);
+      zmod_poly_clear(H);
+   }
+   else
+      __zmod_poly_powmod(res, pol, exp, f);
 }
 
 /*

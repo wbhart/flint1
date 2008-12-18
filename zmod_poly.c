@@ -4318,7 +4318,7 @@ void zmod_poly_derivative(zmod_poly_t x_primed, zmod_poly_t x)
    Assumes poly1 and poly2 are reduced mod f
 */
 
-void __zmod_poly_mulmod(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, zmod_poly_t f)
+void zmod_poly_mulmod(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, zmod_poly_t f)
 {
    unsigned long p = f->p;
    
@@ -4340,6 +4340,7 @@ void __zmod_poly_mulmod(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, z
    zmod_poly_divrem(quot, res, prod, f);
    zmod_poly_clear(quot);
    zmod_poly_clear(prod);
+
 }
 
 /*
@@ -4359,12 +4360,12 @@ void __zmod_poly_powmod(zmod_poly_t res, zmod_poly_t pol, long exp, zmod_poly_t 
    if (pol->length == 0) 
    {
       if (exp <= 0L) 
-	  {
+	   {
          printf("FLINT Exception: Divide by zero\n");
          abort();   
-	  }
-	  zmod_poly_zero(res);
-	  return;
+	   }
+	   zmod_poly_zero(res);
+	   return;
    }
 
    if (exp < 0L)
@@ -4389,7 +4390,7 @@ void __zmod_poly_powmod(zmod_poly_t res, zmod_poly_t pol, long exp, zmod_poly_t 
    }
    
    if (exp < 0L) zmod_poly_gcd_invert(res, res, f);
-   if (exp) zmod_poly_clear(y);
+   if (exp) zmod_poly_clear(y);   
 } 
 
 void zmod_poly_powpowmod(zmod_poly_t res, zmod_poly_t pol, ulong exp, ulong exp2, zmod_poly_t f)
