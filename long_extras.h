@@ -199,6 +199,8 @@ int z_isprime(unsigned long n);
 
 int z_isprime_precomp(unsigned long n, double ninv);
 
+int z_miller_rabin_precomp(unsigned long n, double ninv, unsigned long reps);
+
 unsigned long z_nextprime(unsigned long n);
 
 int z_isprime_pocklington(unsigned long const n, unsigned long const iterations);

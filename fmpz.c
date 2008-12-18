@@ -1219,7 +1219,7 @@ void fmpz_multi_mod_ui(unsigned long * out, fmpz_t in, fmpz_comb_t comb)
    }
    log_comb = 1;
    num = (1L<<(n-1));
-   while (fmpz_cmpabs(in, comb->comb[log_comb-1][0]) >= 0L)
+   while (fmpz_cmpabs(in, comb->comb[log_comb-1][0]) >= 0)
    {
       if (log_comb >= comb->log_comb)
       {

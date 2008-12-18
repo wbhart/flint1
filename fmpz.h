@@ -389,6 +389,9 @@ void fmpz_CRT_ui2_precomp(fmpz_t out, fmpz_t r1, fmpz_t m1, unsigned long r2,
 }
 
 #ifdef HAVE_ZNPOLY
+unsigned long fmpz_multi_mod_ui_basecase(unsigned long * out, fmpz_t in, 
+                               unsigned long * primes, unsigned long num_primes);
+
 void fmpz_multi_mod_ui(unsigned long * out, fmpz_t in, fmpz_comb_t comb);
 
 void fmpz_multi_CRT_ui_unsigned(fmpz_t output, unsigned long * residues, fmpz_comb_t comb);

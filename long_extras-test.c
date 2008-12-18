@@ -1430,6 +1430,58 @@ int test_z_isprobab_prime_precomp()
    return result;
 }
 
+int test_z_miller_rabin_precomp()
+{
+   unsigned long n;
+   unsigned long res;
+   double ninv;
+	ulong pseudo = 0;
+
+   mpz_t mpz_n;
+   mpz_init(mpz_n);
+       
+   int result = 1;
+   
+   for (unsigned long count = 0; (count < 100000) && (result == 1); count++)
+   { 
+	  unsigned long bits = z_randint(FLINT_BITS-2)+2;
+	  n = z_randint((1UL<<bits)-2UL)+2; 
+     mpz_set_ui(mpz_n, n);
+
+#if DEBUG
+      printf("n = %ld\n", n);
+#endif
+
+      mpz_nextprime(mpz_n, mpz_n);
+      res = mpz_get_ui(mpz_n);
+
+      ninv = z_precompute_inverse(res);
+		result = (z_miller_rabin_precomp(res, ninv, 5));
+		if (!result) printf("Error: %ld is reported composite!\n", n, res);
+   }  
+
+#define PRIME_COUNT 100000
+	
+	ulong comp = 0;
+	for (ulong count = 0; (count < PRIME_COUNT) && (result == 1); count++)
+   { 
+		ulong bits = z_randint(FLINT_BITS/2 - 2) + 2;
+      n = z_randprime(bits); 
+		if (n == 2) n++;
+		ulong n1 = z_randint(bits) + 2;
+		if ((n1 & 1L) == 0) n1++;
+		n *= n1;
+      ninv = z_precompute_inverse(n);
+	   if (z_miller_rabin_precomp(n, ninv, 5)) pseudo++; 
+	}
+	result = (pseudo < 10);
+   if (!result) printf("Error: %ld composites declared prime!\n", pseudo);
+   
+   mpz_clear(mpz_n); 
+
+   return result;
+}
+
 int test_z_isprime()
 {
    unsigned long n;
@@ -2073,6 +2125,7 @@ void fmpz_poly_test_all()
    RUN_TEST(z_isprime);
    RUN_TEST(z_isprime_precomp);
    RUN_TEST(z_isprime_pocklington);
+   RUN_TEST(z_miller_rabin_precomp);
    RUN_TEST(z_nextprime);
 	RUN_TEST(z_remove);
    RUN_TEST(z_remove_precomp);
