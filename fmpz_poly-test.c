@@ -12651,20 +12651,18 @@ int test_fmpz_poly_resultant()
 {
    int result = 1;
    fmpz_poly_t pol1, pol2, lin;
-   unsigned long bits, limbs, size;
+   unsigned long bits;
    
    for (unsigned long count1 = 0; (count1 < 50) && (result == 1); count1++)
    {
-      bits = randint(16)+2;
-      limbs = bits/FLINT_BITS + 1;
-      size = limbs + 1;
+      bits = randint(7)+2;
       
       fmpz_poly_init(pol1);
       fmpz_poly_init(pol2);
       fmpz_poly_init(lin);
 
-      unsigned long r1 = randint(bits); 
-      unsigned long r2 = randint(bits); 
+      unsigned long r1 = z_randbits(bits - 2) + 1; 
+      unsigned long r2 = z_randbits(bits - 2); 
       mpz_t * roots1 = flint_stack_alloc(sizeof(mpz_t)*r1);
       mpz_t * roots2 = flint_stack_alloc(sizeof(mpz_t)*r2);
 
@@ -12677,7 +12675,7 @@ int test_fmpz_poly_resultant()
          mpz_init(roots2[i]);
       }
      
-      for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
+      for (unsigned long count2 = 0; (count2 < 20) && (result == 1); count2++)
       {
 #if DEBUG
             printf("r1 = %ld, r2 = %ld, bits = %ld\n", r1, r2, bits);
@@ -12752,7 +12750,6 @@ int test_fmpz_poly_resultant()
             
             result = (mpz_cmp(res1, res2) == 0);
          
-#if DEBUG
             if (!result)
             {
                gmp_printf("res1 = %Zd, res2 = %Zd\n", res1, res2);
@@ -12763,9 +12760,9 @@ int test_fmpz_poly_resultant()
                for (unsigned long i = 0; i < r2; i++) gmp_printf("%Zd, ", roots2[i]); 
                printf("\n");
             }
-#endif
-            fmpz_clear(res);
-			mpz_clear(diff);
+            
+				fmpz_clear(res);
+			   mpz_clear(diff);
             mpz_clear(res1);
             mpz_clear(res2);
       }
@@ -12786,109 +12783,7 @@ int test_fmpz_poly_resultant()
       fmpz_poly_clear(pol1);
       fmpz_poly_clear(pol2);
    }
-   
-   for (unsigned long count1 = 0; (count1 < 50) && (result == 1); count1++)
-   {
-      bits = randint(16)+2;
-      limbs = bits/FLINT_BITS + 1;
-      size = limbs + 1;
-      
-      fmpz_poly_init(pol1);
-      fmpz_poly_init(pol2);
-      fmpz_poly_init(lin);
 
-      unsigned long r1 = randint(bits); 
-      unsigned long r2 = randint(bits); 
-      mpz_t * roots1 = flint_stack_alloc(sizeof(mpz_t)*r1);
-      
-      for (unsigned long i = 0; i < r1; i++)
-      {
-         mpz_init(roots1[i]);
-      }
-      
-      for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
-      {
-#if DEBUG
-            printf("r1 = %ld, bits = %ld\n", r1, bits);
-#endif
-
-            int exists;
-
-            for (unsigned long i = 0; i < r1; )
-            {
-               exists = 0;
-               mpz_rrandomb(roots1[i], randstate, bits);
-               for (unsigned long j = 0; j < i; j++)
-                  if (mpz_cmp(roots1[j], roots1[i]) == 0) exists = 1;
-               if (!exists) i++;
-            }
-            
-            fmpz_poly_set_coeff_ui(pol1, 0, 1L);
-            pol1->length = 1;
-            
-            fmpz_poly_set_coeff_ui(lin, 1, 1L);
-            lin->length = 2;
-            
-            for (unsigned long i = 0; i < r1; i++)
-            {
-               mpz_neg(roots1[i], roots1[i]);
-               fmpz_poly_set_coeff_mpz(lin, 0, roots1[i]);
-               mpz_neg(roots1[i], roots1[i]);
-               fmpz_poly_mul(pol1, pol1, lin);
-            }
-
-            mpz_t diff;
-            mpz_t res1;
-            mpz_t res2;
-            mpz_init(diff);
-            mpz_init(res1);
-            mpz_init(res2);
-            mpz_set_ui(res1, 1L);
-
-            for (unsigned long i = 0; i < r1; i++)
-            {
-               for (unsigned long j = 0; j < r1; j++)
-               {
-                  mpz_sub(diff, roots1[i], roots1[j]);
-                  mpz_mul(res1, res1, diff);
-               }
-            }
- 
-            unsigned long bound = fmpz_poly_resultant_bound(pol1, pol1)+2;
-            
-            fmpz_t res = fmpz_init(bound/FLINT_BITS + 2);
-            fmpz_poly_resultant(res, pol1, pol1);
-            fmpz_to_mpz(res2, res);
-            
-            result = (mpz_cmp(res1, res2) == 0);
-         
-#if DEBUG
-            if (!result)
-            {
-               gmp_printf("res1 = %Zd, res2 = %Zd\n", res1, res2);
-               fmpz_poly_print(pol1); printf("\n\n");
-               for (unsigned long i = 0; i < r1; i++) gmp_printf("%Zd, ", roots1[i]); 
-               printf("\n");
-            }
-#endif
-            fmpz_clear(res);
-			   mpz_clear(diff);
-            mpz_clear(res1);
-            mpz_clear(res2);
-      }
-
-      for (unsigned long i = 0; i < r1; i++)
-      {
-         mpz_clear(roots1[i]);
-      }
-
-      
-      flint_stack_release();
-      fmpz_poly_clear(lin);
-      fmpz_poly_clear(pol1);
-      fmpz_poly_clear(pol2);
-   }
-   
    return result;
 }
 
