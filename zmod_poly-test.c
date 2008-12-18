@@ -5462,7 +5462,7 @@ int test_zmod_poly_factor_berlekamp()
       
       do {modulus = randprime(bits);} while (modulus < 2);
       
- 	   zmod_poly_init(pol1, modulus);
+		zmod_poly_init(pol1, modulus);
       zmod_poly_init(poly, modulus);
       zmod_poly_init(quot, modulus);
       zmod_poly_init(rem, modulus);
@@ -5493,6 +5493,10 @@ int test_zmod_poly_factor_berlekamp()
       zmod_poly_factor_berlekamp(res, pol1);
 
 	   result = (res->num_factors == num_factors);
+		if (!result) 
+		{
+			printf("Error : %ld, %ld, %ld\n", modulus, num_factors, res->num_factors);
+		}
       
 	   zmod_poly_clear(quot);
 	   zmod_poly_clear(rem);

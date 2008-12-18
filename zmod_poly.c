@@ -3969,15 +3969,11 @@ unsigned long zmod_poly_resultant_euclidean(zmod_poly_t a, zmod_poly_t b)
 {
    unsigned long res;
    
-   if ((a->length == 0) || (b->length == 0))
-   {
-      return 0;
-   }
+   if (a == b) return 0;
+	
+	if ((a->length == 0) || (b->length == 0)) return 0;
    
-   if ((a->length == 1) || (b->length == 1)) 
-   {
-      return 1;
-   }
+   if ((a->length == 1) || (b->length == 1)) return 1;
 
    unsigned long p = a->p;
    double p_inv = a->p_inv;
