@@ -1452,10 +1452,10 @@ void _zmod_poly_mul_KS(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p input
    mpn1 = (mp_limb_t*) flint_stack_alloc(limbs1);
    mpn2 = (input1 == input2) ? mpn1 : (mp_limb_t*) flint_stack_alloc(limbs2);
 
-   _zmod_poly_bit_pack_mpn(mpn1, input1, bits, length1);
+   _zmod_poly_bit_pack(mpn1, input1, bits, length1);
    
    if(input1 != input2)
-      _zmod_poly_bit_pack_mpn(mpn2, input2, bits, length2);
+      _zmod_poly_bit_pack(mpn2, input2, bits, length2);
    
    res = (mp_limb_t*) flint_stack_alloc(limbs1+limbs2);
    res[limbs1+limbs2-1] = 0L;
@@ -1463,7 +1463,7 @@ void _zmod_poly_mul_KS(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p input
    if (input1 != input2) F_mpn_mul(res, mpn1, limbs1, mpn2, limbs2);
    else F_mpn_mul(res, mpn1, limbs1, mpn1, limbs1);
    
-   _zmod_poly_bit_unpack_mpn(output, res, length1 + length2 - 1, bits); 
+   _zmod_poly_bit_unpack(output, res, length1 + length2 - 1, bits); 
    
    flint_stack_release();
    flint_stack_release();
@@ -1565,10 +1565,10 @@ void _zmod_poly_mul_KS_trunc(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p
    mpn1 = (mp_limb_t*) flint_stack_alloc(limbs1);
    mpn2 = (input1 == input2) ? mpn1 : (mp_limb_t*) flint_stack_alloc(limbs2);
          
-   _zmod_poly_bit_pack_mpn(mpn1, input1, bits, length1);
+   _zmod_poly_bit_pack(mpn1, input1, bits, length1);
    
    if(input1 != input2)
-      _zmod_poly_bit_pack_mpn(mpn2, input2, bits, length2);
+      _zmod_poly_bit_pack(mpn2, input2, bits, length2);
          
    res = (mp_limb_t*) flint_stack_alloc(limbs1+limbs2);
    res[limbs1+limbs2-1] = 0L;
@@ -1578,7 +1578,7 @@ void _zmod_poly_mul_KS_trunc(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p
    if (input1 != input2) F_mpn_mul_trunc(res, mpn1, limbs1, mpn2, limbs2, (output_length*bits-1)/FLINT_BITS+1);
    else F_mpn_mul_trunc(res, mpn1, limbs1, mpn1, limbs1, (output_length*bits-1)/FLINT_BITS+1);
          
-   _zmod_poly_bit_unpack_mpn(output, res, output_length, bits); 
+   _zmod_poly_bit_unpack(output, res, output_length, bits); 
    flint_stack_release(); //release res
    flint_stack_release(); //release mpn1 and mpn2
    if(input1 != input2)
@@ -1638,7 +1638,7 @@ void zmod_poly_mul_trunc_n_precache_init(zmod_poly_precache_t pre, zmod_poly_p i
 
    mp_limb_t* mpn2 = (mp_limb_t*) flint_stack_alloc(limbs2);
          
-   _zmod_poly_bit_pack_mpn(mpn2, input2, bits, length2);
+   _zmod_poly_bit_pack(mpn2, input2, bits, length2);
 
    F_mpn_mul_precache_init(pre->precache, mpn2, limbs2, limbs1);
 
@@ -1672,7 +1672,7 @@ void zmod_poly_mul_precache_init(zmod_poly_precache_t pre, zmod_poly_t input2, u
 
    mp_limb_t* mpn2 = (mp_limb_t*) flint_stack_alloc(limbs2);
          
-   _zmod_poly_bit_pack_mpn(mpn2, input2, bits, length2);
+   _zmod_poly_bit_pack(mpn2, input2, bits, length2);
 
    F_mpn_mul_precache_init(pre->precache, mpn2, limbs2, limbs1);
 
@@ -1719,7 +1719,7 @@ void _zmod_poly_mul_KS_trunc_precache(zmod_poly_t output, zmod_poly_t input1, zm
    
    mpn1 = (mp_limb_t*) flint_stack_alloc(limbs1);
          
-   _zmod_poly_bit_pack_mpn(mpn1, input1, bits, length1);
+   _zmod_poly_bit_pack(mpn1, input1, bits, length1);
          
    res = (mp_limb_t*) flint_stack_alloc(limbs1+limbs2);
    F_mpn_clear(res, limbs1+limbs2);
@@ -1727,7 +1727,7 @@ void _zmod_poly_mul_KS_trunc_precache(zmod_poly_t output, zmod_poly_t input1, zm
    unsigned long output_length = FLINT_MIN(trunc, length);
    F_mpn_mul_precache_trunc(res, mpn1, limbs1, pre->precache, (output_length*bits-1)/FLINT_BITS+1);
         
-   _zmod_poly_bit_unpack_mpn(output, res, output_length, bits); 
+   _zmod_poly_bit_unpack(output, res, output_length, bits); 
    flint_stack_release(); //release res
    flint_stack_release(); //release mpn1
    
@@ -1771,14 +1771,14 @@ void _zmod_poly_mul_KS_precache(zmod_poly_t output, zmod_poly_t input1, zmod_pol
    
    mpn1 = (mp_limb_t*) flint_stack_alloc(limbs1);
          
-   _zmod_poly_bit_pack_mpn(mpn1, input1, bits, length1);
+   _zmod_poly_bit_pack(mpn1, input1, bits, length1);
          
    res = (mp_limb_t*) flint_stack_alloc(limbs1+limbs2);
    res[limbs1+limbs2-1] = 0L;
    
    F_mpn_mul_precache(res, mpn1, limbs1, pre->precache);
         
-   _zmod_poly_bit_unpack_mpn(output, res, length, bits); 
+   _zmod_poly_bit_unpack(output, res, length, bits); 
    flint_stack_release(); //release res
    flint_stack_release(); //release mpn1
    
@@ -1847,7 +1847,7 @@ void _zmod_poly_mul_KS_middle_precache(zmod_poly_t output, zmod_poly_p input1, z
    
    mpn1 = (mp_limb_t*) flint_stack_alloc(limbs1);
          
-   _zmod_poly_bit_pack_mpn(mpn1, input1, bits, length1);
+   _zmod_poly_bit_pack(mpn1, input1, bits, length1);
          
    res = (mp_limb_t*) flint_stack_alloc(limbs1+limbs2);
    res[limbs1+limbs2-1] = 0L;
@@ -1857,7 +1857,7 @@ void _zmod_poly_mul_KS_middle_precache(zmod_poly_t output, zmod_poly_p input1, z
    
    __F_mpn_mul_middle_precache(res, mpn1, limbs1, pre->precache, (start*bits)/FLINT_BITS, (output_length*bits-1)/FLINT_BITS+1);
         
-   _zmod_poly_bit_unpack_mpn(output, res, output_length, bits); 
+   _zmod_poly_bit_unpack(output, res, output_length, bits); 
 
 	for (unsigned long i = 0; i < start; i++)
       output->coeffs[i] = 0L;
@@ -1950,9 +1950,9 @@ void _zmod_poly_mul_KS_middle(zmod_poly_t output, zmod_poly_p input1, zmod_poly_
    mpn1 = (mp_limb_t*) flint_stack_alloc(limbs1);
    mpn2 = (input1 == input2) ? mpn1 : (mp_limb_t*) flint_stack_alloc(limbs2);
          
-   _zmod_poly_bit_pack_mpn(mpn1, input1, bits, length1);
+   _zmod_poly_bit_pack(mpn1, input1, bits, length1);
    
-   _zmod_poly_bit_pack_mpn(mpn2, input2, bits, length2);
+   _zmod_poly_bit_pack(mpn2, input2, bits, length2);
          
    res = (mp_limb_t*) flint_stack_alloc(limbs1+limbs2);
    res[limbs1+limbs2-1] = 0L;
@@ -1962,7 +1962,7 @@ void _zmod_poly_mul_KS_middle(zmod_poly_t output, zmod_poly_p input1, zmod_poly_
    
    __F_mpn_mul_middle(res, mpn1, limbs1, mpn2, limbs2, (start*bits)/FLINT_BITS, (output_length*bits-1)/FLINT_BITS+1);
          
-   _zmod_poly_bit_unpack_mpn(output, res, output_length, bits); 
+   _zmod_poly_bit_unpack(output, res, output_length, bits); 
    flint_stack_release(); //release res
    flint_stack_release(); //release mpn1 and mpn2
    flint_stack_release();
@@ -2098,7 +2098,7 @@ void print_limb(char *name, unsigned long limb)
    Packs the zmod_poly into an mpn, using `bits` bits for each coefficient
 */
 
-void _zmod_poly_bit_pack_mpn(mp_limb_t * res, zmod_poly_t poly, unsigned long bits, unsigned long length)
+void _zmod_poly_bit_pack(mp_limb_t * res, zmod_poly_t poly, unsigned long bits, unsigned long length)
 {  
    unsigned long current_limb = 0;
    unsigned int current_bit = 0;
@@ -2260,7 +2260,7 @@ void _zmod_poly_bit_pack_mpn(mp_limb_t * res, zmod_poly_t poly, unsigned long bi
    Unpacks a zmod_poly of length `length` from an mpn `mpn` with coeffs packed in `bits` bits.
 */
 
-void _zmod_poly_bit_unpack_mpn(zmod_poly_t res, mp_limb_t * mpn, unsigned long length, unsigned long bits)
+void _zmod_poly_bit_unpack(zmod_poly_t res, mp_limb_t * mpn, unsigned long length, unsigned long bits)
 {
    unsigned long i;
 

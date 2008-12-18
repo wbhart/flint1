@@ -397,8 +397,8 @@ void zmod_poly_mul_precache_init(zmod_poly_precache_t pre, zmod_poly_t input2, u
 */
 
 unsigned long zmod_poly_bits(zmod_poly_t poly);
-void _zmod_poly_bit_pack_mpn(mp_limb_t * res, zmod_poly_t poly, unsigned long bits, unsigned long length);
-void _zmod_poly_bit_unpack_mpn(zmod_poly_t poly, mp_limb_t *mpn, unsigned long length, unsigned long bits);
+void _zmod_poly_bit_pack(mp_limb_t * res, zmod_poly_t poly, unsigned long bits, unsigned long length);
+void _zmod_poly_bit_unpack(zmod_poly_t poly, mp_limb_t *mpn, unsigned long length, unsigned long bits);
 
 void print_binary(unsigned long n, unsigned long len);
 void print_binary2(unsigned long n, unsigned long len, unsigned long space_bit);
