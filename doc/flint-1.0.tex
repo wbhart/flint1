@@ -1412,12 +1412,12 @@ Set the $n$-th coefficient to the \code{unsigned long c}. It is assumed that \co
 \end{quote}
 
 \subsection{String conversions and I/O}
-The functions in this section read/write a polynomial to/from a string representation. The representation starts with the length of the polynomial, a space and then the modulus of the polynomial. If the length is not zero, this is followed by a space and then a space separated list of the coefficients starting from the constant coefficient. Each coefficient is represented as an integer between zero and one less than the modulus.
+The functions in this section read/write a polynomial to/from a string representation. The representation starts with the length of the polynomial, a space and then the modulus of the polynomial. If the length is not zero, this is followed by two spaces ANDY and then a space separated list of the coefficients starting from the constant coefficient. Each coefficient is represented as an integer between zero and one less than the modulus.
 
 The polynomial $3*x^2+2$ in $\Z/7\Z[x]$ would be represented:
 
 \begin{lstlisting}
-3 7 2 0 3
+3 7  2 0 3
 \end{lstlisting}
 
 \begin{lstlisting}
@@ -1483,6 +1483,12 @@ unsigned long zmod_poly_modulus(zmod_poly_t poly)
 \begin{quote}
 Return the modulus of the polynomial, i.e. if $n$ is returned, the polynomial is an element of $\Z/n\Z$.\end{quote}
 
+\begin{lstlisting}
+unsigned long zmod_poly_bits(zmod_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Return the maximum number of bits used in the coefficients of \code{poly}, i.e. if $n$ is returned, then no coefficient of the polynomial uses more than $n$ bits.  ANDY\end{quote}
+
 \subsection{Assignment and basic manipulation}
 \begin{lstlisting}
 void zmod_poly_truncate(zmod_poly_t poly, unsigned long length)
@@ -1533,14 +1539,14 @@ These functions allow one to attach a \code{zmod_poly_t} object to an existing p
 Since FLINT cannot reallocate the attached polynomial object, these functions should only be used to construct polynomial objects to be used as inputs to other \code{zmod_poly} functions.
 
 \begin{lstlisting}
-void zmod_poly_attach(zmod_poly_t poly1, zmod_poly_t poly2)
+void _zmod_poly_attach(zmod_poly_t poly1, zmod_poly_t poly2)
 \end{lstlisting}
 \begin{quote}
 Attach \code{poly2} to the polynomial object \code{poly1}.
 \end{quote}
 
 \begin{lstlisting}
-void zmod_poly_attach_shift(zmod_poly_t poly1, 
+void _zmod_poly_attach_shift(zmod_poly_t poly1, 
                                zmod_poly_t poly2, unsigned long n)
 \end{lstlisting}
 \begin{quote}
@@ -1548,7 +1554,7 @@ This function notionally shifts \code{poly2} to the right by \code{n} coefficien
 \end{quote}
 
 \begin{lstlisting}
-void zmod_poly_attach_truncate(zmod_poly_t output, 
+void _zmod_poly_attach_truncate(zmod_poly_t output, 
                                zmod_poly_t input, unsigned long n)
 \end{lstlisting}
 \begin{quote}
@@ -1568,6 +1574,13 @@ int zmod_poly_is_one(zmod_poly_t poly1)
 \end{lstlisting}
 \begin{quote}
 Returns 1 if the polynomial is equal to the constant polynomial 1, otherwise returns 0.
+\end{quote}
+
+\begin{lstlisting}
+int zmod_poly_is_zero(zmod_poly_t poly1)
+\end{lstlisting}
+\begin{quote}
+Returns 1 if the polynomial is equal to the constant polynomial 0, otherwise returns 0.  ANDY
 \end{quote}
 
 \subsection{Scalar multiplication and division}
@@ -1630,6 +1643,13 @@ Set \code{res} to \code{poly1} multiplied by \code{poly2}. The length of \code{r
 \end{quote}
 
 \begin{lstlisting}
+void zmod_poly_sqr(zmod_poly_t res, zmod_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Set \code{res} to \code{poly} squared. The length of \code{res} will be at most one less than twice the lengths of \code{poly}.  ANDY
+\end{quote}
+
+\begin{lstlisting}
 void zmod_poly_mul_trunc_n(zmod_poly_t res, zmod_poly_t poly1, 
                                zmod_poly_t poly2, unsigned long n)
 \end{lstlisting}
@@ -1645,6 +1665,50 @@ void zmod_poly_mul_trunc_left_n(zmod_poly_t res,
 \end{lstlisting}
 \begin{quote}
 Set \code{res} to \code{poly1} multiplied by \code{poly2} ignoring the least significant \code{n} terms of the result which may be set to anything. This function is more efficient than doing the full multiplication if the operands are relatively short. It is tuned for \code{n} about half the length of a full product. This function is sometimes called an opposite short product. 
+\end{quote}
+
+\begin{lstlisting}
+void zmod_poly_mul_trunc_n_precache_init(zmod_poly_precache_t pre,
+                     zmod_poly_t input2, unsigned long bits_input,
+                                         unsigned long length1)
+
+void zmod_poly_mul_trunc_n_precache(zmod_poly_t output,
+                zmod_poly_t input1, zmod_poly_precache_t pre,
+                                    unsigned long trunc)
+
+\end{lstlisting}
+\begin{quote}
+The first function is for caching of FFT for a truncated multiplicaton of \code{input2}, with the given number of bits per output coefficient (0 if this is to be computed automatically) where the output will be truncated to the given length.  The second function performs the truncated multiplication.  ANDY
+\end{quote}
+
+\begin{lstlisting}
+void zmod_poly_mul_middle_precache(zmod_poly_t output,
+               zmod_poly_p input1, zmod_poly_precache_t pre,
+               unsigned long bits_input, unsigned long trunc)
+\end{lstlisting}
+\begin{quote}
+If (1.5)*\code{trunc} is larger than the degree of \code{input1} plus the degree of \code{input2}-1, then the top (\code{trunc}-$\lfloor$\code{trunc}/2$\rfloor$) coefficients will be the middle product of \code{input1} and the pre-cached FFT for \code{input2}, \code{pre}.  This is because the product of \code{input1} and \code{input2} will wrap around when writing to \code{output} which will have length \code{trunc}.  For example, when performing a Newton inversion the degree of \code{input1} is $\lfloor$(\code{trunc}+1)/2$\rfloor$, the degree of \code{input2} is \code{trunc} and the degree of their product is  \code{trunc}+$\lfloor$(\code{trunc}+1)/2$\rfloor$-1.  So $\lfloor$(\code{trunc}+1)/2$\rfloor$-1 terms wrap around leaving the top \code{trunc}-$\lfloor$ \code{trunc}/2 $\rfloor$ terms accurate and as the resulting middle product.
+
+\end{quote}
+
+\begin{lstlisting}
+void zmod_poly_mul_precache_init(zmod_poly_precache_t pre,
+               zmod_poly_t input2, unsigned long bits_input,
+                                   unsigned long length1)
+
+void zmod_poly_mul_precache(zmod_poly_t output,
+               zmod_poly_t input1, zmod_poly_precache_t pre,
+                                   unsigned long bits_input)
+\end{lstlisting}
+\begin{quote}
+The first function is for caching of FFT for a multiplicaton of \code{input2}, with the given number of bits per output coefficient (0 if this is to be computed automatically) where the output will be truncated to the given length.  The second function performs the multiplication.  ANDY
+\end{quote}
+
+\begin{lstlisting}
+void zmod_poly_mul_precache_clear(zmod_poly_precache_t pre)
+\end{lstlisting}
+\begin{quote}
+Function for clearing a \code{zmod_poly_mul_precache_t}.  ANDY
 \end{quote}
 
 \subsection{Polynomial division}
@@ -1722,6 +1786,98 @@ void zmod_poly_derivative(zmod_poly_t res, zmod_poly_t poly)
 \end{lstlisting}
 \begin{quote}
 Sets \code{res} equal to the derivative of \code{poly} and reduces all the coefficients $\pmod{p}$.
+\end{quote}
+
+\subsection{Arithmetic modulo a polynomial}
+
+\begin{lstlisting}
+void zmod_poly_mulmod(zmod_poly_t res, zmod_poly_t poly1,
+                          zmod_poly_t poly2, zmod_poly_t f)
+\end{lstlisting}
+\begin{quote}
+Sets \code{res} equal to the product of \code{poly1} and \code{poly2} modulo \code{f}.  Assumes that \code{poly1} and \code{poly2} are reduced modulo \code{f}.  ANDY
+\end{quote}
+
+\begin{lstlisting}
+void zmod_poly_powmod(zmod_poly_t res, zmod_poly_t pol,
+                                 long exp, zmod_poly_t f)
+\end{lstlisting}
+\begin{quote}
+Returns \code{pol} raised to the power \code{exp} modulo \code{f}.  Assumes \code{pol} is reduced modulo \code{f}.  There are no restrictions on \code{exp}, i.e. it can be zero or negative.  The leading coefficient of \code{f} must be invertible modulo the modulus.  ANDY
+\end{quote}
+
+\subsection{Polynomial Factorization}
+
+\begin{lstlisting}
+void zmod_poly_factor_init(zmod_poly_factor_t fac)
+
+void zmod_poly_factor_clear(zmod_poly_factor_t fac)
+\end{lstlisting}
+\begin{quote}
+The first function initializes an array of factors.  The second function clears an array of factors.
+ANDY
+\end{quote}
+
+\begin{lstlisting}
+void zmod_poly_factor_add(zmod_poly_factor_t fac,
+                          zmod_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Adds an extra element, \code{poly}, to the array of factors, \code{fac}.  
+ANDY
+\end{quote}
+
+\begin{lstlisting}
+void zmod_poly_factor_concat(zmod_poly_factor_t res,
+                             zmod_poly_factor_t fac)
+\end{lstlisting}
+\begin{quote}
+Concatenates the two arrays, \code{res} and \code{fac}, into a single array of factors, \code{res}.  
+ANDY
+\end{quote}
+
+\begin{lstlisting}
+void zmod_poly_factor_print(zmod_poly_factor_t fac)
+\end{lstlisting}
+\begin{quote}
+Prints to stdout each factor in the array \code{fac}.
+ANDY
+\end{quote}
+
+\begin{lstlisting}
+void zmod_poly_factor_pow(zmod_poly_factor_t fac, 
+                                 unsigned long exp)
+\end{lstlisting}
+\begin{quote}
+Raises each factor in the array \code{fac} to the power \code{exp}.
+ANDY
+\end{quote}
+
+\begin{lstlisting}
+void zmod_poly_factor_square_free(zmod_poly_factor_t res,
+                                             zmod_poly_t f)
+\end{lstlisting}
+\begin{quote}
+Sets \code{red} to a square-free factorization of \code{f}.
+ANDY
+\end{quote}
+
+\begin{lstlisting}
+void zmod_poly_factor_berlekamp(zmod_poly_factor_t factors,
+                                               zmod_poly_t f)
+\end{lstlisting}
+\begin{quote}
+Performs the Berlekamp factoring algorithm on \code{f}.  Sets \code{factors} to the factors of \code{f}.  Assumes \code{f} is squarefree.  
+ANDY
+\end{quote}
+
+\begin{lstlisting}
+unsigned long zmod_poly_factor(zmod_poly_factor_t result,
+                                         zmod_poly_t input)
+\end{lstlisting}
+\begin{quote}
+Sets \code{result} to be a complete factorization of \code{input}.  No restriction on \code{input}.
+ANDY
 \end{quote}
 
 \section{The long\_extras module}
@@ -1818,11 +1974,73 @@ Raise \code{a} to the power \code{exp} modulo \code{n}. All versions assume \cod
 \end{quote}                              
 
 \begin{lstlisting}
-int z_jacobi_precomp(unsigned long a, unsigned long p, 
+int z_legendre_precomp(unsigned long a, unsigned long p, 
                                                    pre_inv_t pinv)
 \end{lstlisting}
 \begin{quote}
-Computes the Jacobi symbol of \code{a} modulo \code{p} for a prime \code{p}. Assumes that \code{a} is reduced modulo \code{p}.
+Computes the Legendre symbol of \code{a} modulo \code{p} for a prime \code{p}. Assumes that \code{a} is reduced modulo \code{p}.
+\end{quote}
+
+\begin{lstlisting}
+int z_jacobi(long x, unsigned long y)
+\end{lstlisting}
+\begin{quote}
+Calculates the Jacobi symbol of (\code{x}/\code{y}). Assumes that gcd(\code{x},\code{y})=1 and \code{y} is odd.  ANDY
+\end{quote}
+
+\begin{lstlisting}
+int z_ispseudoprime_fermat(unsigned long const n,
+                             unsigned long const i)
+\end{lstlisting}
+\begin{quote}
+Checks to see if \code{n} is a Fermat pseudoprime with base \code{i}.  Assumes that \code{n} does not divide \code{i}.  ANDY
+\end{quote}
+
+\begin{lstlisting}
+int z_isprime(unsigned long n)
+
+int z_isprime_precomp(unsigned long n, pre_inv_t ninv)
+\end{lstlisting}
+\begin{quote}
+This is currently only a deterministic primality test if FLINT can factor \code{n} - 1.  Note that this is currently the case if \code{n} - 1 has less than \code{FLINT_BITS - 10} bits after removal of factors below 1000.  In the second function it is assumed that \code{n} is greater than 2 and odd.  ANDY
+\end{quote}
+
+\begin{lstlisting}
+int z_isprobab_prime(unsigned long n)
+
+int z_isprobab_prime_precomp(unsigned long n, pre_inv_t ninv)
+\end{lstlisting}
+\begin{quote}
+This is a deterministic prime test up to $10^16$. Requires \code{n} to be at most \code{FLINT_BITS-1} bits.  For numbers greater than $10^16$ there are no known counterexamples to the conjecture that a composite will never be declared prime.  ANDY
+\end{quote}
+
+\begin{lstlisting}
+unsigned long z_nextprime(unsigned long n)
+\end{lstlisting}
+\begin{quote}
+Returns the next prime after \code{n}.  Assumes the result will fit in an unsigned long.  Note the prime returned is *NOT* proven prime.  To prove it prime, use \code{z_isprime_pocklington}.  ANDY
+\end{quote}
+
+\begin{lstlisting}
+int z_isprime_pocklington(unsigned long const n,
+                   unsigned long const iterations)
+\end{lstlisting}
+\begin{quote}
+Proves that \code{n} is prime using a Pocklington-Lehmer test returns 0 if composite, 1 if prime, -2 if it failed to factor the number sufficiently and -1 if it failed to prove either way.  ANDY
+\end{quote}
+
+\begin{lstlisting}
+int z_ispseudoprime_lucas_ab(unsigned long n, int a, int b)
+\end{lstlisting}
+\begin{quote}
+Tests to see if \code{n} is a Lucas pseudoprime.  Returns 0 if \code{n} is composite or fails gcd(\code{n}, 2*\code{a}*\code{b}*(\code{a}*\code{a}-4*\code{b}))=1.  Returns -1 if delta is square.  Returns 1 if \code{n} is a Lucas pseudoprime with respect to $x^2-ax+b$.  Assumes \code{n} has been checked for primality using trial factoring up to 256.  The absolute values of \code{a} and \code{b} should be $<$ 128.  ANDY
+\end{quote}
+
+\begin{lstlisting}
+int z_ispseudoprime_lucas(unsigned long const n)
+\end{lstlisting}
+\begin{quote}
+A second version of the Lucas pseudoprime test.  Assumes \code{n} has been checked for primality using trial factoring up to 256.  ANDY
 \end{quote}
 
 \begin{lstlisting}
@@ -1869,10 +2087,24 @@ Returns the greatest common divisor \code{d} of \code{x} and \code{y} (which may
 \end{quote}
 
 \begin{lstlisting}
-long z_extgcd(long* a, long* b, long x, long y)
+long z_xgcd(long* a, long* b, long x, long y)
 \end{lstlisting}
 \begin{quote}
 Returns the greatest common divisor \code{d} of \code{x} and \code{y} (which may be signed) and sets \code{a} and \code{b} such that \code{d = a*x+b*y}. 
+\end{quote}
+
+\begin{lstlisting}
+unsigned long z_intsqrt(unsigned long r)
+\end{lstlisting}
+\begin{quote}
+Returns the integer part of the square root of \code{r}.  ANDY
+\end{quote}
+
+\begin{lstlisting}
+int z_issquare(long x)
+\end{lstlisting}
+\begin{quote}
+The function returns 0 if \code{x} is not a perfect square and 1 otherwise.  ANDY
 \end{quote}
 
 \begin{lstlisting}
@@ -1881,6 +2113,53 @@ unsigned long z_CRT(unsigned long x1, unsigned long n1,
 \end{lstlisting}
 \begin{quote}
 Returns the unique integer \code{d} reduced modulo \code{n1*n2} which is \code{x1} modulo \code{n1} and \code{x2} modulo \code{n2}. Assumes \code{x1} is reduced modulo \code{n1} and \code{x2} is reduced modulo \code{n2}. Also assumes \code{n1*n2} is no more than \code{FLINT_BITS - 1} bits and that \code{n1} and \code{n2} are coprime.
+\end{quote}
+
+\begin{lstlisting}
+int z_issquarefree(unsigned long n)
+\end{lstlisting}
+\begin{quote}
+Tests if \code{n} squarefree or not.  Currently only works for numbers up to 65535.  ANDY
+\end{quote}
+
+\begin{lstlisting}
+int z_remove(unsigned long * n, 
+                unsigned long p)
+
+int z_remove_precomp(unsigned long * n, 
+         unsigned long p, pre_inv_t pinv)
+\end{lstlisting}
+\begin{quote}
+Removes the highest power of \code{p} possible from \code{n} and returns the exponent to which it appeared in \code{n}.  In the second function \code{n} can only be up to \code{FLINT_BITS-1} bits.  ANDY
+\end{quote}
+
+\begin{lstlisting}
+unsigned long z_factor_trial(factor_t * factors, unsigned long n)
+\end{lstlisting}
+\begin{quote}
+Finds all of the factors of \code{n} by trial factoring up to some limit.  Returns the cofactor after removing these factors.  ANDY
+\end{quote}
+
+\begin{lstlisting}
+unsigned long  z_factor_SQUFOF(unsigned long n)
+\end{lstlisting}
+\begin{quote}
+Square forms factoring algorithm of Shanks.  Adapted from the (simplified) algorithm as described by Gower and Wagstaff Math of Comp. (Preprint May 2007) ANDY
+\end{quote}
+
+\begin{lstlisting}
+int z_factor(factor_t * factors, unsigned long n)
+\end{lstlisting}
+\begin{quote}
+Find the factors of \code{n}.  This function may fail if \code{n} is so large that SQUFOF multipliers (rarely up to 1000) times \code{n} push it over a limb in size.  If factoring fails (very rare), this function returns 0, else it returns 1.  ANDY
+\end{quote}
+
+\begin{lstlisting}
+unsigned long z_factor_partial(factor_t * factors,
+               unsigned long n, unsigned long limit)
+\end{lstlisting}
+\begin{quote}
+Factors \code{n} until the product of the factor found is $>$ \code{limit}. It puts the factors in \code{factors} and returns the cofactor.  If factorisation cannot be achieved as \code{n} is too large (for SQUFOF), 0 is returned.  ANDY
 \end{quote}
 
 \begin{lstlisting}
@@ -1895,6 +2174,13 @@ unsigned long z_randbits(unsigned long bits)
 \end{lstlisting}
 \begin{quote}
 Returns a random uniformly distributed integer with (up to) the given number of bits. If \code{bits} is set to 0, the function returns a full random limb.
+\end{quote}
+
+\begin{lstlisting}
+unsigned long z_randprime(unsigned long bits)
+\end{lstlisting}
+\begin{quote}
+Returns a random prime integer with the given number of bits.  Assumes \code{bits}>1.  ANDY
 \end{quote}
 
 \section{The mpn\_extras module}
