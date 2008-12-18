@@ -1384,13 +1384,13 @@ int __fmpz_poly_CRT(fmpz_poly_t out, fmpz_poly_t fpol, zmod_poly_t zpol, fmpz_t 
    fmpz_t newm;
 	
 	if (newmod == oldmod)
-	   newm = fmpz_init(FLINT_ABS(newm[0]) + 1);
+	   newm = fmpz_init(oldmod[0] + 1);
 	else 
 	   newm = newmod;
 		
 	fmpz_mul_ui(newm, oldmod, p);
 
-   unsigned limbs = FLINT_ABS(newm[0]);
+   unsigned limbs = newm[0];
 	
 	fmpz_poly_fit_length(out, FLINT_MAX(fpol->length, zpol->length));
    fmpz_poly_fit_limbs(out, limbs);
@@ -8756,8 +8756,8 @@ void fmpz_poly_power_trunc_n(fmpz_poly_t output, const fmpz_poly_t poly_i, const
          return;
       } 
 
-	   fmpz_poly_fit_length(output, 1 + trailing*exp);
-      fmpz_poly_fit_limbs(output, fmpz_size(poly->coeffs)*exp);
+	   fmpz_poly_fit_limbs(output, fmpz_size(poly->coeffs)*exp);
+      fmpz_poly_fit_length(output, 1 + trailing*exp);
       _fmpz_poly_attach_truncate(poly_in, poly_i, n);
       _fmpz_poly_attach_shift(poly, poly_in, trailing);
 		fmpz_pow_ui(output->coeffs + trailing*exp*(output->limbs + 1), poly->coeffs, exp);
