@@ -2943,23 +2943,14 @@ void __fmpz_poly_mul_modular_comb(fmpz_poly_t output, const fmpz_poly_t poly1, c
 void _fmpz_poly_mul_modular(fmpz_poly_t output, const fmpz_poly_t poly1, 
 									 const fmpz_poly_t poly2, const ulong bits_in)
 {
-
 #if FLINT_BITS == 32
-    // start from nextprime(2^31)
-    // WARNING: there are only about 2^26 primes between 2^31 and 2^32
-    // this limits the size of output coefficients to about 65M limbs
-    unsigned long p0 = z_nextprime(1UL << 31);
+    unsigned long p0 = z_nextprime(1UL << 30);
     // primes_per_limb = 32/log2(p0)
-    // = 1.0322580642700560413378333946892625831
-    double primes_per_limb = 1.0322580642701;
+    double primes_per_limb = 1.067;
 #elif FLINT_BITS == 64
-    // start from nextprime(2^64 - 2^56)
-    // There should be about 2^50 primes starting there, which should
-    // be enough to coefficients of almost 2^50 limbs.
-    unsigned long p0 = z_nextprime((unsigned long) -(1L << 56));
+    unsigned long p0 = z_nextprime(1L << 62);
     // primes_per_limb = 64/log2(p0)
-    // = 1.0000882353338675941356105657797766168
-    double primes_per_limb = 1.0000882353339;
+    double primes_per_limb = 1.032;
 #else
 #error FLINT_BITS must be either 32 or 64
 #endif

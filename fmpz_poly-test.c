@@ -189,7 +189,7 @@ int test_fmpz_poly_to_zmod_poly_no_red()
    mpz_poly_init(test_poly); 
    for (unsigned long count1 = 1; (count1 < 300) && (result == 1) ; count1++)
    {
-      bits = z_randint(FLINT_BITS-1);
+      bits = z_randint(FLINT_BITS-3) + 1;
       
       fmpz_poly_init(test_fmpz_poly);
       fmpz_poly_init(test_fmpz_poly2);
@@ -4782,10 +4782,10 @@ int test__fmpz_poly_mul_modular()
 #endif
 #if TIME
           length = SIZE;
-	      length2 = SIZE;
+	       length2 = SIZE;
 #endif
 #if DEBUG
-		  printf("length = %ld, length2 = %ld, bits = %ld, bits2 = %ld\n", length, length2, bits, bits2);
+		    printf("length = %ld, length2 = %ld, bits = %ld, bits2 = %ld\n", length, length2, bits, bits2);
 #endif
           do randpoly(test_poly, length, bits); 
           while (mpz_poly_length(test_poly) < length);
