@@ -830,7 +830,7 @@ Note that in the special cases where the leading coefficient of \code{B} is $\pm
 \end{quote}
 
 \begin{lstlisting}
-void fmpz_poly_newton_invert(fmpz_poly_t Q_inv, 
+void fmpz_poly_invert_series(fmpz_poly_t Q_inv, 
                        const fmpz_poly_t Q, const unsigned long n)  
 \end{lstlisting}
 \begin{quote}
@@ -1857,15 +1857,17 @@ Set \code{res} to \code{poly} squared. The length of \code{res} will be one less
 void zmod_poly_mul_precache_init(zmod_poly_precache_t pre,
                zmod_poly_t input2, unsigned long bits_input,
                                    unsigned long length1)
-
-void zmod_poly_mul_precache(zmod_poly_t output,
-               zmod_poly_t input1, zmod_poly_precache_t pre,
-                                   unsigned long bits_input)
 \end{lstlisting}
 \begin{quote}
-The first function is for caching of the FFT for a multiplicaton of \code{input2}, with the given number of bits per output coefficient (0 if this is to be computed automatically), by a polynomial of length at most \code{length1}.  
+This function precaches an FFT of the polynomial \code{input2} for (usually multiple) subsequent multiplicatons by the polynomial \code{input2}, with up to the given number of bits per output coefficient (0 if this is to be computed automatically). We set \code{length1} to the maximum length of polynomial \code{poly1} which \code{poly2} will be multiplied by.  
+\end{quote}
 
-The second function performs the multiplication, i.e. sets \code{output} to the product of \code{input1} by \code{input2}. 
+\begin{lstlisting}
+void zmod_poly_mul_precache(zmod_poly_t output,
+               zmod_poly_t input1, zmod_poly_precache_t pre)
+\end{lstlisting}
+\begin{quote}
+Multiply \code{input1} by the polynomial whose precached FFT has been stored in \code{pre} by \code{zmod_poly_mul_precache_init}, i.e. sets \code{output} to the product of \code{input1} by \code{input2}. 
 \end{quote}
 
 \begin{lstlisting}
@@ -1896,23 +1898,38 @@ Set \code{res} to \code{poly1} multiplied by \code{poly2} ignoring the least sig
 \begin{lstlisting}
 void zmod_poly_mul_trunc_n_precache_init(zmod_poly_precache_t pre,
       zmod_poly_t input2, unsigned long bits, unsigned long trunc)
-
-void zmod_poly_mul_trunc_n_precache(zmod_poly_t output,
-  zmod_poly_t input1, zmod_poly_precache_t pre, unsigned long trunc)
-
 \end{lstlisting}
 \begin{quote}
-The first function is for caching of the FFT of a polynomial for a truncated multiplicaton by \code{input2}, with up to the given number of bits per output coefficient (0 if this is to be computed automatically), where the output will be truncated to the given length.  
+This function precaches an FFT of a polynomial \code{input2} to be used (usually multiple times) for truncated multiplicatons by \code{input2}, with up to the given number of bits per output coefficient (0 if this is to be computed automatically), where the output will be truncated to the given length.  
 
-The second function performs the truncated multiplication, i.e. \code{output} is set to \code{input1} multiplied by \code{input2} and truncated to length \code{trunc} (and normalised). 
+This function is also used for initialising a precached middle product. 
+\end{quote}
 
-The first function is also used for initialising a precached middle product. 
+\begin{lstlisting}
+void zmod_poly_mul_trunc_n_precache(zmod_poly_t output,
+  zmod_poly_t input1, zmod_poly_precache_t pre, unsigned long trunc)
+\end{lstlisting}
+\begin{quote}
+Performs a truncated multiplication by a polynomial whose FFT has been precached using \code{zmod_poly_mul_trunc_n_precache_init}, i.e. \code{output} is set to \code{input1} multiplied by \code{input2} and truncated to length \code{trunc} (and normalised). 
+\end{quote}
+
+\begin{lstlisting}
+void zmod_poly_mul_middle(zmod_poly_t output,
+               zmod_poly_t input1, zmod_poly_t input2,
+                                    unsigned long trunc)
+\end{lstlisting}
+\begin{quote}
+Performs a middle product of the polynomial \code{input1} by the polynomial \code{input2}.
+
+The middle product is the product of \code{input1} by \code{input2} truncated to length \code{trunc} and with the first \code{trunc/2} coefficients set to zero. Note that for this function to return a correct result one must ensure that if the full product were wrapped around after the first \code{trunc} terms then no more than \code{trunc/2} terms would be affected by the wraparound. 
+
+The typical situation to apply this function is when multiplying a polynomial of length $2n$ by one of length $n$. Ordinarily the product would have $3n - 1$ terms, however if \code{trunc} is set to $2n$ the first $n$ terms will be set to zero and the product truncated at $2n$ terms, note that $n - 1$ terms would be wrapped around and $n-1$ is less than the $n$ terms that will be set to zero.  
 \end{quote}
 
 \begin{lstlisting}
 void zmod_poly_mul_middle_precache(zmod_poly_t output,
-               zmod_poly_p input1, zmod_poly_precache_t pre,
-               unsigned long bits_input, unsigned long trunc)
+               zmod_poly_t input1, zmod_poly_precache_t pre,
+                                          unsigned long trunc)
 \end{lstlisting}
 \begin{quote}
 Performs a middle product of the polynomial \code{input1} by the precached polynomial \code{input2} stored in \code{pre} by the function \code{zmod_poly_mul_trunc_n_precache_init}. 
@@ -2209,7 +2226,7 @@ int z_isprime(unsigned long n)
 int z_isprime_precomp(unsigned long n, pre_inv_t ninv)
 \end{lstlisting}
 \begin{quote}
-This is currently only a deterministic primality test if FLINT can factor \code{n} - 1.  Note that this is currently the case if \code{n} - 1 has less than 53 bits after removal of factors below 1000 from \code{n - 1}.  In the second function it is assumed that \code{n} is greater than 2 and odd. 
+This is currently only a deterministic primality test if FLINT can factor \code{n} - 1.  Note that this is currently the case if \code{n} - 1 has at most 53 bits after removal of factors below 1000 from \code{n - 1}.  In the precomp version of the function it is assumed that \code{n} is greater than 2 and odd. The function takes a precomputed inverse of $n$.
 \end{quote}
 
 \begin{lstlisting}
@@ -2218,14 +2235,14 @@ int z_isprobab_prime(unsigned long n)
 int z_isprobab_prime_precomp(unsigned long n, pre_inv_t ninv)
 \end{lstlisting}
 \begin{quote}
-This is a deterministic prime test up to $10^16$. Requires \code{n} to be at most \code{FLINT_BITS-1} bits.  For numbers greater than $10^16$ there are no known counterexamples to the conjecture that a composite will never be declared prime. 
+This is a deterministic prime test up to $10^16$. Requires \code{n} to be at most \code{FLINT_BITS-1} bits.  For numbers greater than $10^16$ there are no known counterexamples to the conjecture that a composite will never be declared prime. Primes are always declared prime by this test.
 \end{quote}
 
 \begin{lstlisting}
 unsigned long z_nextprime(unsigned long n)
 \end{lstlisting}
 \begin{quote}
-Returns the next prime after \code{n}.  Assumes the result will fit in an unsigned long.  Note the prime returned is *NOT* proven prime.  To prove it prime, use \code{z_isprime_pocklington}.  ANDY
+Returns the next prime after \code{n}.  Assumes the result will fit in an unsigned long.  Note the prime returned is NOT proven prime.  To prove it prime, use \code{z_isprime}. 
 \end{quote}
 
 \begin{lstlisting}
@@ -2233,21 +2250,21 @@ int z_isprime_pocklington(unsigned long const n,
                    unsigned long const iterations)
 \end{lstlisting}
 \begin{quote}
-Proves that \code{n} is prime using a Pocklington-Lehmer test returns 0 if composite, 1 if prime, -2 if it failed to factor the number sufficiently and -1 if it failed to prove either way.  ANDY
+Proves that \code{n} is prime using a Pocklington-Lehmer test returns 0 if composite, 1 if prime, -2 if it fails to factor \code{n-1} and -1 if it failed to prove either way. The number of iterations can be increased for a more thorough check but will take longer. Setting \code{iterations} to \code{-1L} will cause it to continue until the number is proven prime or composite. The \code{-2} return value occurs rarely and will be removed in a later version of FLINT, making this an unconditional primality proof.
 \end{quote}
 
 \begin{lstlisting}
 int z_ispseudoprime_lucas_ab(unsigned long n, int a, int b)
 \end{lstlisting}
 \begin{quote}
-Tests to see if \code{n} is a Lucas pseudoprime.  Returns 0 if \code{n} is composite or fails gcd(\code{n}, 2*\code{a}*\code{b}*(\code{a}*\code{a}-4*\code{b}))=1.  Returns -1 if delta is square.  Returns 1 if \code{n} is a Lucas pseudoprime with respect to $x^2-ax+b$.  Assumes \code{n} has been checked for primality using trial factoring up to 256.  The absolute values of \code{a} and \code{b} should be $<$ 128. 
+Tests to see if \code{n} is an \code{a,b-}Lucas pseudoprime.  Returns 0 if \code{n} is composite or fails gcd(\code{n}, 2*\code{a}*\code{b}*(\code{a}*\code{a} - 4*\code{b})) = 1.  Returns 1 if \code{n} is a Lucas pseudoprime with respect to $x^2 - ax + b$.  Returns -1 if the discriminant of the quadratic is square.  Assumes \code{n} has been checked for primality using trial factoring up to 256.  The absolute values of \code{a} and \code{b} should be $<$ 128. For details of this function see the book ``Primes : a computational perspective'' by Pomerance and Crandall.
 \end{quote}
 
 \begin{lstlisting}
 int z_ispseudoprime_lucas(unsigned long const n)
 \end{lstlisting}
 \begin{quote}
-Tests if $n$ is a Lucas pseudoprime.  Assumes \code{n} has been checked for primality using trial factoring up to 256. 
+Tests if $n$ is a Lucas pseudoprime as per the algorithm of Baillie and Wagstaff (see Math. Comp. vol 35, no. 152, 1980, pp. 1391--1417).  Assumes \code{n} has been checked for primality using trial factoring up to 256. 
 \end{quote}
 
 \begin{lstlisting}
@@ -2311,7 +2328,7 @@ Returns the integer part of the square root of \code{r}.
 int z_issquare(long x)
 \end{lstlisting}
 \begin{quote}
-The function returns 0 if \code{x} is not a perfect square and 1 otherwise.  ANDY
+The function returns 0 if \code{x} is not a perfect square and 1 otherwise. 
 \end{quote}
 
 \begin{lstlisting}

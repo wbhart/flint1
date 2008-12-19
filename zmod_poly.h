@@ -380,6 +380,12 @@ void _zmod_poly_mul_KS_trunc_precache(zmod_poly_t output, zmod_poly_p input1, zm
 #if USE_MIDDLE_PRODUCT
 void _zmod_poly_mul_KS_middle(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p input2, unsigned long bits_input, unsigned long trunc);
 void zmod_poly_mul_KS_middle(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p input2, unsigned long bits_input, unsigned long trunc);
+
+static inline
+void zmod_poly_mul_middle(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p input2, unsigned long trunc)
+{
+	zmod_poly_mul_KS_middle(output, input1, input2, 0, trunc);
+}
 #endif
 
 void _zmod_poly_mul_classical(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2);

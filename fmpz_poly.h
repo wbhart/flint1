@@ -1121,6 +1121,12 @@ void fmpz_poly_newton_invert_basecase(fmpz_poly_t Q_inv, const fmpz_poly_t Q, co
 
 void fmpz_poly_newton_invert(fmpz_poly_t Q_inv, const fmpz_poly_t Q, const unsigned long n);
 
+static inline
+void fmpz_poly_invert_series(fmpz_poly_t Q_inv, const fmpz_poly_t Q, const unsigned long n)
+{
+	fmpz_poly_newton_invert(Q_inv, Q, n);
+}
+
 void fmpz_poly_div_series(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t B, const unsigned long n);
 
 void fmpz_poly_div_newton(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t B);
