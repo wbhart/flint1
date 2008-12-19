@@ -35,7 +35,7 @@ double ** d_mat_init(int d, int n)
    double ** B;
 
    B = (double **) malloc (d*sizeof(double*) + n*d*sizeof(double));
-   B[0] = (double *) B + d;
+   B[0] = (double *) (B + d);
 	for (long i = 1; i < d; i++) B[i] = B[i-1] + n;
 
 	return B;
