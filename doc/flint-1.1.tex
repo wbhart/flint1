@@ -1737,6 +1737,13 @@ void zmod_poly_reverse(zmod_poly_t output, zmod_poly_t input,
 Notionally zero padding or truncating if necessary, this function considers \code{input} to be a polynomial of the given length and reverses it, storing the result in \code{output}.
 \end{quote}
 
+\begin{lstlisting}
+void __zmod_poly_normalise(zmod_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Normalises the given polynomial. The polynomial will then either be of length zero or its leading coefficient will be non-zero. As all functions in the \code{zmod_poly} module expect and return normalised polynomials, this function is only used when manipulating coefficients directly rather than through the functions provided.
+\end{quote}
+
 \subsection{Subpolynomials}
 These functions allow one to attach a \code{zmod_poly_t} object to an existing polynomial or subpolynomial thereof. The subpolynomial is normalised if necessary.
 
@@ -1941,7 +1948,7 @@ The typical situation to apply this function is when multiplying a polynomial of
 
 \subsection{Polynomial division}
 \begin{lstlisting}
-void zmod_poly_newton_invert(zmod_poly_t Q_inv, zmod_poly_t Q, 
+void zmod_poly_invert_series(zmod_poly_t Q_inv, zmod_poly_t Q, 
                                                   unsigned long n)
 \end{lstlisting}
 \begin{quote}
@@ -2102,6 +2109,13 @@ unsigned long zmod_poly_factor(zmod_poly_factor_t result,
 \end{lstlisting}
 \begin{quote}
 Sets \code{result} to be a complete factorization of \code{input}.  There are no restrictions on \code{input}.
+\end{quote}
+
+\begin{lstlisting}
+int zmod_poly_isirreducible(zmod_poly_t f) 
+\end{lstlisting}
+\begin{quote}
+Returns 1 if the polynomial $f$ is irreducible, otherwise it returns 0.
 \end{quote}
 
 \section{The long\_extras module}
