@@ -10,10 +10,159 @@ v 1.0.1 -- 7-Dec-07 :
    * Added FLINT macros to documentation
    * Corrected numerous typos in documentation   
 
-v 1.1 -- :
+v 1.0.2 -- 10-Dec-07
+
+   * Rewrote tuning code for integer multiplication functions, making it more robust and fixing a bug
+     which showed up on 32 bit machines (reported by Michael Abshoff and Jaap Spies). Factored the tuning
+     code out into a number of macros.
+
+v 1.0.3 -- 16-Dec-07
+
+   * Fixed a bug in the polynomial memory managment code which caused a segfault
+   * Fixed a bug in the pseudo division code which caused a block overrun
+    
+v 1.0.4 -- 04-Jan-08
+
+   * Fixed a bug in the bernoulli_zmod example program and associated polynomial zmod code which caused memory corruption.
+   * Fixed a bug in the fmpz-test code which manifested on 32 bit machines, reported by David Harvey.   
+   * Fixed some bugs in the pari profiling code.     
+
+v 1.0.5 -- 05-Jan-08
+
+   * Fixed some inline issues which cause problems because of the C99 inline rules (reported by David Harvey). 
+   * Fixed a makefile issue reported (and solved) by David Harvey when *not* linking against NTL.
+
+v 1.0.6 -- 17-Jan-08
+
+   * Fixed an issue with FLINT_BIT_COUNT on certain machines (probably due to arithmetic shift issues)
+
+v 1.0.7 -- 22-Jan-08
+
+   * Made F_mpn_mul binary compatible with the way mpn_mul *operates* in practice.
+
+v 1.0.8 -- 15-Feb-08
+
+   * Fixed a bug in fmpz_poly_right_shift (reported by Kiran Kedlaya)
+
+v 1.0.9 -- 11-Mar-08
+
+   * Fixed a memory allocation bug in fmpz_poly_power
+
+v 1.0.10 -- 16-Jun-08:
 
    * integer gcd (this just wraps the GMP gcd code)
    * polynomial content
    * convert to and from FLINT and NTL integers and polynomials
    * get a coefficient of a polynomial efficiently as a read only mpz_t
-   * print polynomials in a prettified format with a specified variable           
+   * print polynomials in a prettified format with a specified variable         
+
+v 1.0.11 -- 9-Jul-08
+
+   * Fixed a bug in z_ll_mod_precomp on ia64 (reported by Michael Abshoff and William Stein)
+
+v 1.0.12 -- 11-Jul-08
+   * Removed some Opteron tuning flags which cause illegal instruction errors on Pentium4
+   * Fixed numerous memory leaks in fmpz_poly test code
+   * Fixed memory leak in fmpz_poly_power_trunc_n
+   * Fixed major memory leaks in fmpz_poly_xgcd_modular
+   * Rewrote __fmpz_poly_mul_karatrunc_recursive and _fmpz_poly_mul_karatsuba_trunc to "prove code" and got rid of some dirty memory issues
+   * Fixed some potential illegal memory accesses to do with cache prefetching in fmpz_poly.c
+
+v 1.0.13 -- 13-Jul-08
+   * Fixed memory leaks and dirty memory issues in test code for numerous modules.
+   * Removed further issues with cache prefetching in mpn_extras.c
+
+v 1.0.14 -- 23-Sep-08
+   * Update long_extras and test code for the sake of new quadratic sieve (new functions in long_extras remain undocumented)
+   * Removed many bugs from tinyQS and mpQS and joined them into a single program for factoring integers
+
+v 1.0.15 -- 15-Oct-08
+   * Fixed a bug which causes a segfault when setting a coefficient of the zero polynomial to zero
+   * Fixed build bug in longlong.h on s390 platform
+
+v 1.0.16 -- 22-Oct-08
+   * Fixed a segfault when trying to truncate a polynomial to a longer length than it currently is, with the function fmpz_poly_truncate (reported by Craig Citro)
+
+v 1.0.17 -- 30-Nov-08
+   * Fixed a segfault caused by left shifting of polynomials with zero limbs allocated in division and pseudo division functions.
+   * Fixed a bound used in fmpz_gcd_modular to use a proven bound
+   * Fixed a bug in fmpz_poly-profile where the top bit of random coefficients of n bits was always set
+
+v 1.0.18 -- 05-Dec-08
+   * Fixed another bug in the fmpz_poly_set_coeff_* functions which resulted in dirty coefficients
+
+v 1.0.19 -- 12-Dec-08
+   * Fixed a bug in z_remove_precomp
+
+v 1.0.20 -- 13-Dec-08
+   * Fixed some bugs in conversion of zmod_poly's to and from srings
+
+
+v 1.1.0 (some of the following features were previewed in FLINT 1.0.11):
+
+   * integer gcd (this just wraps the GMP gcd code)
+   * polynomial content
+   * primitive part
+   * convert to and from FLINT and NTL integers and polynomials
+   * get a coefficient of a polynomial efficiently as a read only mpz_t
+   * print polynomials in a prettified format with a specified variable 
+   * Sped up integer multiplication
+   * Convert to and from zmod_polys from fmpz_polys
+   * Chinese remainder for fmpz_polys
+   * Leading coeff macro
+   * Euclidean norm of polynomials
+   * Exact division testing of polynomials
+   * Polynomial GCD (subresultant, heuristic, modular)
+   * Modular inversion of polynomials
+   * Resultant
+   * XGCD (Pohst-Zassenhaus)
+   * Multimodular polynomial multiplication
+   * Rewritten karatsuba_trunc function
+   * Rewritten division functions
+   * Polynomial derivative
+   * Polynomial evaluation
+   * Polynomial composition
+   * Addition and subtraction of zmod_polys
+   * Sped up multiplication of zmod_polys
+   * Extended multiplication of zmod_polys to allow up to 63 bit moduli
+   * zmod_poly subpolynomials
+   * zmod_poly reverse
+   * Truncated multiplication for zmod_polys (left, right, classical and KS)
+   * Scalar multiplication
+   * Division for zmod_polys (divrem and div, classical, divide and conquer and newton)
+   * Series inversion for zmod_polys
+   * Series division for zmod_polys
+   * Resultant for zmod_polys
+   * GCD for zmod_polys including half-gcd
+   * Inversion modulo a polynomial for zmod_polys
+   * XGCD for zmod_polys
+   * Squarefree factorisation for zmod_polys
+   * Berlekamp factorisation for zmod_polys
+   * Irreducibility testing for zmod_polys
+   * Derivative for zmod_polys
+   * Middle product for zmod_polys (sped up newton division)
+   * addmod, submod and divmod for ulongs
+   * Sped up limb sized integer square root
+   * Partial factoring of ulongs
+   * z_randbits
+   * Pocklington-Lehmer primality testing
+   * BSPW pseudo-primality testing
+   * Fermat pseudo-primality testing
+   * Fast Legendre symbol computation
+   * Chinese remainder for fmpzs
+   * Square root with remainder for fmpzs
+   * Left and right shift for fmpzs
+   * Reduction modulo a ulong for fmpzs
+   * Montgomery redc, mulmod, divmod and mod for fmpzs
+   * Multimodular reduction and CRT for fmpzs
+   * fmpz_mulmod and fmpz_divmod
+   * fmpz_invert for inversion modulo an fmpz
+   * Dramatically sped up gcd for small fmpzs
+   * Computation of 1D, 2D and some 3D theta functions
+   * Example program for multiplying theta functions
+   * Test code now times test functions
+   * Quick and dirty timing function for profiler
+   * Tiny quadratic sieve for small one and two limb integers
+   * Completely rewritten self initialising multiple polynomial quadratic sieve
+   
+
