@@ -283,7 +283,7 @@ void fmpz_poly_to_zmod_poly_no_red(zmod_poly_t zpol, const fmpz_poly_t fpol);
 
 /*
    Store the unsigned long coefficients of the zmod_poly zpol in the given fmpz_poly fpol.
-   The unsigned version normalised to [0, p) the other version to [-p/2, p/2]
+   The unsigned version normalised to [0, p) the other version to [-(p-1)/2, p/2]
 */
 
 void zmod_poly_to_fmpz_poly(fmpz_poly_t fpol, zmod_poly_t zpol);
@@ -1095,6 +1095,9 @@ void fmpz_poly_sub(fmpz_poly_t output, const fmpz_poly_t input1, const fmpz_poly
 }
 
 void fmpz_poly_mul(fmpz_poly_t output, const fmpz_poly_t input1, const fmpz_poly_t input2);
+
+void fmpz_poly_mul_modular(fmpz_poly_t output, const fmpz_poly_t input1,
+                                                const fmpz_poly_t input2, const ulong bits);
 
 void fmpz_poly_mul_trunc_n(fmpz_poly_t output, const fmpz_poly_t input1, 
                                           const fmpz_poly_t input2, const unsigned long trunc);

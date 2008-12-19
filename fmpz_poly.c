@@ -2962,7 +2962,7 @@ void _fmpz_poly_mul_modular(fmpz_poly_t output, const fmpz_poly_t poly1,
 	 if (bits_in) output_bits = bits_in;
 	 else
 	 {
-		 bits1= fmpz_poly_max_bits(poly1);
+		 bits1 = fmpz_poly_max_bits(poly1);
 	    bits2 = fmpz_poly_max_bits(poly2);
 	    unsigned long log_length = 0;
        while (length > (1L<<log_length)) log_length++;
@@ -2989,6 +2989,33 @@ void _fmpz_poly_mul_modular(fmpz_poly_t output, const fmpz_poly_t poly1,
 
     // Free allocated stuff
     flint_heap_free(primes);
+}
+
+void fmpz_poly_mul_modular(fmpz_poly_t output, const fmpz_poly_t poly1, 
+									 const fmpz_poly_t poly2, const ulong bits_in)
+{
+	if ((poly1->length == 0) || (poly2->length == 0))
+	{
+		fmpz_poly_zero(output);
+		return;
+	}
+
+	if (bits_in) fmpz_poly_fit_limbs(output, (bits_in - 1)/FLINT_BITS + 1);
+	else 
+	{
+		long bits1 = _fmpz_poly_max_bits(poly1);
+		long bits2 = _fmpz_poly_max_bits(poly2);
+		ulong sign = ((bits1 < 0L) || (bits2 < 0L));
+		ulong log_length1 = 0L;
+		ulong log_length = 0L;
+		while ((1L<<log_length1) < poly1->length) log_length1++;
+		while ((1L<<log_length) < poly2->length) log_length++;
+      log_length = FLINT_MIN(log_length, log_length1);
+		ulong bits = FLINT_ABS(bits1) + FLINT_ABS(bits2) + log_length + sign;
+		fmpz_poly_fit_limbs(output, (bits - 1)/FLINT_BITS + 1);
+	}
+	fmpz_poly_fit_length(output, poly1->length + poly2->length - 1);
+   _fmpz_poly_mul_modular(output, poly1, poly2, bits_in);
 }
 #endif
 
