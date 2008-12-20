@@ -122,6 +122,52 @@ int test_z_intsqrt()
    return result;
 }
 
+int test_z_intcuberoot()
+{
+   unsigned long n;
+   unsigned long a, res1, bits;
+   
+   int result = 1;
+   
+   for (unsigned long count = 0; (count < 5000000) && (result == 1); count++)
+   { 
+      bits = z_randint(FLINT_BITS/3-1)+1;
+      n = random_ulong((1UL<<bits)-1)+1;
+      
+      a = n*n*n;
+
+		res1 = z_intcuberoot(a);
+         
+      if (res1 != n)
+      {
+         printf("a = %ld, n = %ld, res1 = %ld\n", a, n, res1);
+      }
+         
+      result = (res1 == n);
+   } 
+     
+   for (unsigned long count = 0; (count < 5000000) && (result == 1); count++)
+   { 
+      bits = z_randint(FLINT_BITS/3-1)+1;
+      n = random_ulong((1UL<<bits)-1)+1;
+      
+      a = n*n*n;
+      ulong a1 = (n + 1)*(n + 1)*(n + 1);
+		a = a + z_randint(a1 - a);
+
+		res1 = z_intcuberoot(a);
+         
+      if (res1 != n)
+      {
+         printf("a = %ld, n = %ld, res1 = %ld\n", a, n, res1);
+      }
+         
+      result = (res1 == n);
+   } 
+     
+   return result;
+}
+
 int test_z_pow()
 {
    unsigned long n, res, res2;
@@ -1430,6 +1476,106 @@ int test_z_isprobab_prime_precomp()
    return result;
 }
 
+int test_z_ispseudoprime_fibonacci_precomp()
+{
+   unsigned long n;
+   unsigned long res;
+   double ninv;
+
+   mpz_t mpz_n;
+   mpz_init(mpz_n);
+       
+   int result = 1;
+   
+   for (unsigned long count = 0; (count < 100000) && (result == 1); count++)
+   { 
+	  unsigned long bits = z_randint(FLINT_BITS-2)+2;
+	  n = z_randint((1UL<<bits)-3UL)+3; 
+     mpz_set_ui(mpz_n, n);
+
+#if DEBUG
+      printf("n = %ld\n", n);
+#endif
+
+      mpz_nextprime(mpz_n, mpz_n);
+      res = mpz_get_ui(mpz_n);
+
+      ninv = z_precompute_inverse(res);
+		result = ((res == 5) || (z_ispseudoprime_fibonacci_precomp(res, ninv)));
+		if (!result) printf("Error: %ld is reported composite!\n", n, res);
+   }  
+
+#define PRIME_COUNT 100000
+	
+	ulong pseudo = 0;
+	for (ulong count = 0; (count < PRIME_COUNT) && (result == 1); count++)
+   { 
+		ulong bits = z_randint(FLINT_BITS/2 - 2) + 2;
+      n = z_randprime(bits); 
+		if (n == 2) n++;
+		ulong n1 = z_randint(bits) + 2;
+		if ((n1 & 1L) == 0) n1++;
+		n *= n1;
+		ninv = z_precompute_inverse(n);
+	   if ((n % 5) != 0) 
+			if (z_ispseudoprime_fibonacci_precomp(n, ninv)) pseudo++; 
+	}
+
+	result = (pseudo < 50);
+
+   if (!result) printf("Error: %ld pseudoprimes in PRIME_COUNT\n", pseudo);
+   
+   mpz_clear(mpz_n); 
+
+   return result;
+}
+
+int test_z_isprobab_prime_BPSW()
+{
+   unsigned long n;
+   unsigned long res;
+   
+   mpz_t mpz_n;
+   mpz_init(mpz_n);
+       
+   int result = 1;
+   
+   for (unsigned long count = 0; (count < 100000) && (result == 1); count++)
+   { 
+	   unsigned long bits = z_randint(FLINT_BITS-2)+2;
+	   n = random_ulong((1UL<<bits)-2UL)+2; 
+      mpz_set_ui(mpz_n, n);
+
+#if DEBUG
+      printf("n = %ld\n", n);
+#endif
+
+      mpz_nextprime(mpz_n, mpz_n);
+      res = mpz_get_ui(mpz_n);
+
+      result = ((res < 13) || (z_isprobab_prime_BPSW(res)));
+   }  
+	
+	if (!result) printf("Error : n = %ld\n", res);
+
+#define PRIME_COUNT2 100000
+	
+	ulong comp = 0;
+	for (ulong count = 0; (count < PRIME_COUNT2) && (result == 1); count++)
+   { 
+		ulong bits = z_randint(FLINT_BITS/2 - 2) + 2;
+      n = z_randprime(bits); 
+		n *= z_randint(bits) + 2;
+      if (z_isprobab_prime_BPSW(n)) result = 0; 
+	}
+   
+	if (!result) printf("Error : n = %ld\n", n);
+   
+   mpz_clear(mpz_n); 
+
+   return result;
+}
+
 int test_z_miller_rabin_precomp()
 {
    unsigned long n;
@@ -2001,7 +2147,7 @@ int test_z_factor_partial()
    
    for (unsigned long count = 0; (count < 100000) && (result == 1); )
    { 
-      orig_n = random_ulong(1000000)+1;
+      orig_n = random_ulong(1000000)+2;
       limit = z_intsqrt(orig_n);
 
       n = z_factor_partial(&factors, orig_n, limit);
@@ -2094,6 +2240,7 @@ void fmpz_poly_test_all()
 	RUN_TEST(z_mulmod32_precomp); 
 #endif
 	RUN_TEST(z_intsqrt);
+   RUN_TEST(z_intcuberoot);
    RUN_TEST(z_pow);
    RUN_TEST(z_gcd);
    RUN_TEST(z_invert);
@@ -2120,8 +2267,10 @@ void fmpz_poly_test_all()
    RUN_TEST(z_ispseudoprime_fermat);
    RUN_TEST(z_ispseudoprime_lucas);
    RUN_TEST(z_ispseudoprime_lucas_ab);
+	RUN_TEST(z_ispseudoprime_fibonacci_precomp);
    RUN_TEST(z_isprobab_prime);
    RUN_TEST(z_isprobab_prime_precomp);
+   RUN_TEST(z_isprobab_prime_BPSW);
    RUN_TEST(z_isprime);
    RUN_TEST(z_isprime_precomp);
    RUN_TEST(z_isprime_pocklington);

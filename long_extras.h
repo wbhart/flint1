@@ -209,6 +209,10 @@ int z_ispseudoprime_lucas_ab(ulong n, int a, int b);
 
 int z_ispseudoprime_lucas(ulong n);
 
+int z_ispseudoprime_fibonacci_precomp(unsigned long n, pre_inv2_t inv);
+
+int z_isprobab_prime_BPSW(unsigned long n);
+
 unsigned long z_pow(unsigned long a, unsigned long exp);
                                                     
 unsigned long z_sqrtmod(unsigned long a, unsigned long p); 
@@ -225,6 +229,8 @@ long z_xgcd(long* a, long* b, long x, long y);
 unsigned long z_gcd(long x, long y);
 
 unsigned long z_intsqrt(unsigned long r);
+
+unsigned long z_intcuberoot(unsigned long n);
 
 static inline int z_issquare(long x)
 {

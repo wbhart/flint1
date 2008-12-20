@@ -804,28 +804,22 @@ int z_miller_rabin_precomp(unsigned long n, double ninv, unsigned long reps)
 
 /* 
    This is a deterministic prime test up to 10^16. 
-   Todo: use the table here: http://oldweb.cecm.sfu.ca/pseudoprime/
-   to make this into an unconditional primality test for larger n 
    This test is intended to be run after checking for divisibility by
    primes up to 257 say, but returns a correct result if n is odd and n > 2.
    Requires n is no more than FLINT_BITS-1 bits
 */
 int z_isprobab_prime_precomp(unsigned long n, double ninv)
 {
+#if FLINT_BITS == 64
+   if (n >= 10000000000000000UL) return z_isprobab_prime_BPSW(n);
+#endif
+
 	unsigned long d = n-1;
    
    do {
       d>>=1; 
    } while ((d&1) == 0);
    
-#if FLINT_BITS == 64
-   if (n >= 10000000000000000UL)
-	{
-		if (!SPRP_64(2UL, d, n, ninv)) return 0;
-      return z_ispseudoprime_lucas(n);
-	}
-#endif
-
 	if (n < 2047)
    {
       if (SPRP(2UL, d, n, ninv)) return 1;
@@ -1287,6 +1281,89 @@ int z_ispseudoprime_lucas(ulong n)
 	if (left == right) return 1;
 	else return 0;
 }
+
+pair_t z_fchain_mod_precomp(ulong m, ulong n, pre_inv2_t ninv)
+{
+	pair_t current, old;
+	int length;
+	ulong power, xy, xx, yy;
+	
+	old.x = 2;
+	old.y = n - 3;
+	
+	length = FLINT_BIT_COUNT(m);
+	power = (1L<<(length-1));
+
+	for ( ; length > 0; length--)
+	{
+		xy = z_mulmod2_precomp(old.x, old.y, n, ninv);
+		
+		xy = xy + 3L;
+		if (xy >= n) xy = xy - n;
+		
+		if (m & power)
+		{
+			current.y = z_mulmod2_precomp(old.y, old.y, n, ninv) - 2L;
+			if ((long) current.y < 0L) current.y += n;
+			current.x = xy;
+		} else 
+		{
+			current.x = z_mulmod2_precomp(old.x, old.x, n, ninv);
+			if (current.x >= 2L) current.x -= 2;
+			else current.x = current.x - 2L + n;
+			current.y = xy;
+		}
+		power = (power>>1);
+		old = current;
+	}
+
+	return current;
+}
+
+/*
+	Checks to see if n is a fibonacci pseudoprime. Assumes that 
+	gcd(10, n) == 1
+*/
+
+int z_ispseudoprime_fibonacci_precomp(unsigned long n, pre_inv2_t inv)
+{
+	unsigned long m, left, right;
+	pair_t V;
+	m = (n - z_jacobi(5L, n))/2;
+	V = z_fchain_mod_precomp(m, n, inv);
+		
+	return (z_mulmod2_precomp(n - 3L, V.x, n, inv) == z_mulmod2_precomp(2L, V.y, n, inv));
+}
+
+#define INV10 ((double) 1 / (double) 10)
+
+/* 
+   There are no known exceptions to the conjecture that this is a primality test.
+*/
+
+int z_isprobab_prime_BPSW(unsigned long n)
+{
+	int nmod10;
+	pre_inv2_t inv = z_precompute_inverse(n);
+	nmod10 = z_mod2_precomp(n, 10, INV10);
+
+	if (nmod10 == 3 || nmod10 == 7)
+	{
+		if (z_ispseudoprime_fermat(n, 2) == 0) return 0;
+		return z_ispseudoprime_fibonacci_precomp(n, inv);
+		
+	} else
+	{
+		unsigned long d;
+		d = n - 1;
+		while ((d & 1) == 0) d >>= 1;
+
+		if (SPRP_64(2L, d, n, inv) == 0) return 0;
+		if (z_ispseudoprime_lucas(n) == 0) return 0;
+		return 1;
+	}
+}
+
 
 /* 
     returns the inverse of a modulo p
@@ -2090,4 +2167,22 @@ unsigned long z_intsqrt(unsigned long r)
 #endif
    unsigned long res =  is + ((is+1)*(is+1) <= r);
    return res - (res*res > r);
+}
+
+unsigned long z_intcuberoot(unsigned long n)
+{
+	unsigned long newg, g, oldg;
+	
+	g = (unsigned long) ceil(pow(n, 0.333333333));
+	
+	do 
+	{
+		newg = 2L*g + n/(g*g);
+		newg = newg/3L;
+		
+		oldg = g;
+		g = newg;
+	} while (g != newg && newg != oldg);
+
+	return g;
 }
