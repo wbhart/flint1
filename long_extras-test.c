@@ -1123,11 +1123,11 @@ int test_z_jacobi()
 	mpz_t a2, m2;
 	mpz_init(a2);
 	mpz_init(m2);
-    int result = 1;
+   int result = 1;
 
 	for (i = 0; (i < 1000000) && (result == 1); i++)
 	{
-	    ulong bits1 = z_randint(FLINT_BITS);
+	   ulong bits1 = z_randint(FLINT_BITS);
 		ulong bits2 = z_randint(FLINT_BITS-1);
 
 		a = z_randbits(bits1); 
@@ -1157,6 +1157,9 @@ int test_z_jacobi()
 		}
 #endif
 	}
+
+	mpz_clear(m2);
+	mpz_clear(a2);
 	
 	return result;
 }
@@ -1169,7 +1172,7 @@ int test_z_legendre_precomp()
 	mpz_t a2, m2;
 	mpz_init(a2);
 	mpz_init(m2);
-    int result = 1;
+   int result = 1;
 	double m_inv;
 
 	for (i = 0; (i < 100000) && (result == 1); i++)
@@ -1202,6 +1205,9 @@ int test_z_legendre_precomp()
 		}
 #endif
 	}
+	
+	mpz_clear(m2);
+	mpz_clear(a2);
 	
 	return result;
 }

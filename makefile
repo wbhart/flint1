@@ -137,6 +137,9 @@ mpn_extras.o: mpn_extras.c $(HEADERS)
 mpz_extras.o: mpz_extras.c $(HEADERS)
 	$(CC) $(CFLAGS) -c mpz_extras.c -o mpz_extras.o
 
+F_mpz_mul-timing.o: F_mpz_mul-timing.c
+	$(CC) $(CFLAGS) -c F_mpz_mul-timing.c -o F_mpz_mul-timing.o
+
 memory-manager.o: memory-manager.c $(HEADERS)
 	$(CC) $(CFLAGS) -c memory-manager.c -o memory-manager.o
 
