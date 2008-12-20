@@ -205,6 +205,8 @@ unsigned long z_nextprime(unsigned long n);
 
 int z_isprime_pocklington(unsigned long const n, unsigned long const iterations);
 
+int z_isprime_nm1(unsigned long const n, unsigned long const iterations);
+
 int z_ispseudoprime_lucas_ab(ulong n, int a, int b);
 
 int z_ispseudoprime_lucas(ulong n);

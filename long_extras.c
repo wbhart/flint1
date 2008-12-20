@@ -1062,8 +1062,6 @@ unsigned long z_nextprime(unsigned long n)
    Proves that n is prime using a Pocklington-Lehmer test
    returns 0 if composite, 1 if prime, -2 if it failed to factor
    the number sufficiently and -1 if it failed to prove either way
-   
-   Note: I think this could be optimised a lot more.
 */
 
 int z_isprime_pocklington(unsigned long const n, unsigned long const iterations)
@@ -1149,6 +1147,63 @@ int z_isprime_pocklington(unsigned long const n, unsigned long const iterations)
 
 	if (z_gcd(c, n) != 1) return 0;
 	return 1;
+}
+
+int z_isprime_nm1(unsigned long const n, unsigned long const iterations)
+{
+	int i, j, k, pass, test, exp;
+	unsigned long cuberoot, n1, f, factor, prod, temp, b, c1, c2, cofactor;
+	factor_t factors;
+	pre_inv_t inv;
+	
+	/* 2 is prime, all other even numbers are not */
+	
+	if (n % 2 == 0)
+	{
+		if (n == 2) return 1;
+		else return 0;
+	}
+	
+	n1 = n - 1;
+	f = 1;
+	factors.num = 0;
+	cuberoot = z_intcuberoot(n);
+	
+	cofactor = z_factor_partial(&factors, n1, cuberoot);
+
+	if(!cofactor) return -2; // factorisation failed
+	
+	inv = z_precompute_inverse(n);
+
+	for (i = 0; i < factors.num; i++)
+	{
+		pass = 0;
+		unsigned long exp = n1/factors.p[i];
+		
+		for (j = 2; j < iterations && pass == 0; j++)
+		{
+		
+			if (z_ispseudoprime_fermat(n, j))
+			{
+				if ((z_gcd(z_powmod2(j, exp, n) - 1, n) == 1)) pass = 1;
+			} else return 0;
+		}
+		
+		if (pass == 0)
+		{
+			if (j == iterations)
+			   return -2;
+			else 
+				return 0;
+		}
+	}
+
+	if (cofactor < z_intsqrt(n)) return 1;
+	
+	c2 = (n - 1)/(cofactor*cofactor);
+	c1 = n - 1 - c2*cofactor*cofactor;
+	if (z_issquare(c1*c1 - 4*c2)) return 0;
+	else return 1;
 }
 
 /*
@@ -1338,7 +1393,8 @@ int z_ispseudoprime_fibonacci_precomp(unsigned long n, pre_inv2_t inv)
 #define INV10 ((double) 1 / (double) 10)
 
 /* 
-   There are no known exceptions to the conjecture that this is a primality test.
+   There are no known exceptions to the conjecture that this is a primality test
+	if n > 13.
 */
 
 int z_isprobab_prime_BPSW(unsigned long n)

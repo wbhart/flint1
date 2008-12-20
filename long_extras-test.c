@@ -1829,6 +1829,79 @@ int test_z_isprime_pocklington()
    return result;
 }
 
+int test_z_isprime_nm1()
+{
+   unsigned long n;
+   unsigned long res, res2;
+   
+   mpz_t mpz_n;
+   mpz_init(mpz_n);
+       
+   int result = 1;
+   
+   for (unsigned long count = 0; (count < 100000L) && (result == 1); count++)
+   { 
+	   unsigned long bits = z_randint(FLINT_D_BITS-2)+2;
+	   n = random_ulong((1UL<<bits)-2UL)+2; 
+      mpz_set_ui(mpz_n, n);
+
+#if DEBUG
+      printf("n = %ld\n", n);
+#endif
+
+      mpz_nextprime(mpz_n, mpz_n);
+      res = mpz_get_ui(mpz_n);
+
+      result = (z_isprime_nm1(res, 100));
+		if (result != 1) 
+		{
+			printf("%d, %ld\n", result, res);
+			result = 0;
+		}
+   }  
+   
+	for (unsigned long count = 0; (count < 100000L) && (result == 1); count++)
+   { 
+	  unsigned long bits = z_randint((FLINT_D_BITS-1)/2 - 1)+1;
+	  n = random_ulong((1UL<<bits)-1UL)+1; 
+     mpz_set_ui(mpz_n, n);
+
+#if DEBUG
+      printf("n = %ld\n", n);
+#endif
+
+      mpz_nextprime(mpz_n, mpz_n);
+      res = mpz_get_ui(mpz_n);
+
+	   n = random_ulong((1UL<<bits)-1UL)+1; 
+      mpz_set_ui(mpz_n, n);
+
+#if DEBUG
+      printf("n = %ld\n", n);
+#endif
+
+      mpz_nextprime(mpz_n, mpz_n);
+      res2 = mpz_get_ui(mpz_n);
+
+      int resval = z_isprime_nm1(res*res2, 100);
+
+#if DEBUG2
+	  if (resval < 0L) printf("Failure %ld, %ld, %d\n", res, res2, resval);
+#endif
+
+	  result = (!resval);
+
+#if DEBUG2
+	  if (!result) printf("res = %ld, res2 = %ld\n", res, res2);
+#endif
+
+   }  
+   
+   mpz_clear(mpz_n); 
+
+   return result;
+}
+
 int test_z_remove()
 {
    unsigned long n;
@@ -2239,7 +2312,8 @@ void fmpz_poly_test_all()
 #if FLINT_BITS == 64
 	RUN_TEST(z_mulmod32_precomp); 
 #endif
-	RUN_TEST(z_intsqrt);
+	//RUN_TEST(z_isprime_nm1);
+   RUN_TEST(z_intsqrt);
    RUN_TEST(z_intcuberoot);
    RUN_TEST(z_pow);
    RUN_TEST(z_gcd);
