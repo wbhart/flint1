@@ -4430,7 +4430,12 @@ int zmod_poly_isirreducible(zmod_poly_t f)
         zmod_poly_make_monic(x_p, x_p);
 		  //now do the irreducibility test
         if (!zmod_poly_equal(x_p, x))
+		  {
+			  zmod_poly_init(a, p);
+           zmod_poly_init(x, p);
+           zmod_poly_init(x_p, p);
 		     return 0;
+		  }
         else
         {
             factor_t factors;
@@ -4443,7 +4448,12 @@ int zmod_poly_isirreducible(zmod_poly_t f)
 					zmod_poly_gcd(a, a, f);
                
 					if (a->length != 1)
+					{
+						zmod_poly_init(a, p);
+                  zmod_poly_init(x, p);
+                  zmod_poly_init(x_p, p);
                   return 0;
+					}
 				}
         }
 

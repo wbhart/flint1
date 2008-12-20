@@ -4798,8 +4798,6 @@ void simple_derivative(zmod_poly_t x_primed, zmod_poly_t x)
 	unsigned long length = zmod_poly_length(x);
 	unsigned long p = zmod_poly_modulus(x);
 	mpz_t num, index;
-	mpz_init(index);
-	mpz_init(num);
 	pre_inv_t p_inv = z_precompute_inverse(p);
 
 	//First of all, we make a fmpz_poly of the polynomial
@@ -5678,6 +5676,7 @@ int test_zmod_poly_factor()
 	   zmod_poly_clear(quot);
 	   zmod_poly_clear(rem);
 	   zmod_poly_clear(pol1);
+	   zmod_poly_clear(poly);
 	   zmod_poly_factor_clear(res);
    }
 }
