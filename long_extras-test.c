@@ -2312,8 +2312,7 @@ void fmpz_poly_test_all()
 #if FLINT_BITS == 64
 	RUN_TEST(z_mulmod32_precomp); 
 #endif
-	//RUN_TEST(z_isprime_nm1);
-   RUN_TEST(z_intsqrt);
+	RUN_TEST(z_intsqrt);
    RUN_TEST(z_intcuberoot);
    RUN_TEST(z_pow);
    RUN_TEST(z_gcd);
@@ -2348,6 +2347,7 @@ void fmpz_poly_test_all()
    RUN_TEST(z_isprime);
    RUN_TEST(z_isprime_precomp);
    RUN_TEST(z_isprime_pocklington);
+   RUN_TEST(z_isprime_nm1);
    RUN_TEST(z_miller_rabin_precomp);
    RUN_TEST(z_nextprime);
 	RUN_TEST(z_remove);

@@ -1149,8 +1149,15 @@ int z_isprime_pocklington(unsigned long const n, unsigned long const iterations)
 	return 1;
 }
 
+/*
+   The "n-1 primality test from Crandall and Pomerance, 
+	"Primes: a computational perspective 2nd Ed.", pp 178.
+*/
+
 int z_isprime_nm1(unsigned long const n, unsigned long const iterations)
 {
+	if (n < 214) return z_isprime(n);
+	
 	int i, j, k, pass, test, exp;
 	unsigned long cuberoot, n1, f, factor, prod, temp, b, c1, c2, cofactor;
 	factor_t factors;
@@ -1175,33 +1182,33 @@ int z_isprime_nm1(unsigned long const n, unsigned long const iterations)
 	
 	inv = z_precompute_inverse(n);
 
-	for (i = 0; i < factors.num; i++)
+	pass = 0;
+	
+	for (j = 2; (j < iterations) && (pass == 0); j++)
 	{
-		pass = 0;
-		unsigned long exp = n1/factors.p[i];
+		pass = 1;
+
+		if (!z_ispseudoprime_fermat(n, j)) return 0;
+			
+		for (i = 0; (i < factors.num) && (pass == 1); i++)
+	   {
+		   unsigned long exp = n1/factors.p[i];
 		
-		for (j = 2; j < iterations && pass == 0; j++)
-		{
-		
-			if (z_ispseudoprime_fermat(n, j))
-			{
-				if ((z_gcd(z_powmod2(j, exp, n) - 1, n) == 1)) pass = 1;
-			} else return 0;
-		}
-		
-		if (pass == 0)
-		{
-			if (j == iterations)
-			   return -2;
-			else 
-				return 0;
+			ulong g = z_gcd(z_powmod2(j, exp, n) - 1, n);
+			if ((g > 1) && (g < n)) return 0;	
+			if (g == n) pass = 0;
 		}
 	}
 
-	if (cofactor < z_intsqrt(n)) return 1;
+	if (j == iterations) return -1;
+
+	ulong F = (n-1)/cofactor;
 	
-	c2 = (n - 1)/(cofactor*cofactor);
-	c1 = n - 1 - c2*cofactor*cofactor;
+	if (F >= z_intsqrt(n)) return 1;
+	
+	c2 = (n - 1)/(F*F);
+	c1 = cofactor - c2*F;
+	if (2*c2 <= c1) return 1;
 	if (z_issquare(c1*c1 - 4*c2)) return 0;
 	else return 1;
 }
