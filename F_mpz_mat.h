@@ -66,10 +66,10 @@ entry is stored in twos complement format.
  
 typedef struct
 {
-   mp_limb_t * entries;
+   F_mpz * entries;
    ulong r;
 	ulong c;
-	mp_limb_t ** rows;
+	F_mpz ** rows;
 } F_mpz_mat_struct;
 
 // fmpz_mat_t allows reference-like semantics for F_mpz_mat_struct

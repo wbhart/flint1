@@ -30,18 +30,22 @@ Copyright (C) 2007, William Hart
 
 #include <NTL/ZZ.h>
 #include <NTL/ZZX.h>
+#include <NTL/mat_ZZ.h>
 #include <gmp.h>
 
 #include "NTL-interface.h"
 #include "fmpz.h"
+#include "F_mpz.h"
+#include "F_mpz_mat.h"
 #include "fmpz_poly.h"
 
 #include "flint.h"
 #include "mpz_poly.h"
+#include "long_extras.h"
 #include "memory-manager.h"
 #include "test-support.h"
 
-#define VARY_BITS 0
+#define VARY_BITS 1
 #define SIGNS 1
 #define SPARSE 1
 
@@ -115,7 +119,51 @@ void randpoly_unsigned(mpz_poly_t pol, long length, unsigned long maxbits)
    
    mpz_clear(temp);
 } 
+ 
+// generate a random mpz_mat_t with the given number of rows and columns and number of bits per entry
+void mpz_randmat(mpz_mat_t mat, ulong r, ulong c, ulong maxbits)
+{
+   ulong bits;
+   mpz_t temp;
+   mpz_init(temp);
    
+   for (long i = 0; i < r; i++)
+   {
+		for (long j = 0; j < c; j++)
+		{
+#if VARY_BITS
+         bits = z_randint(maxbits+1);
+#else
+         bits = maxbits;
+#endif
+         if (bits == 0) mpz_set_ui(temp, 0);
+         else 
+         {
+#if SPARSE
+            if (z_randint(10) == 1) mpz_rrandomb(temp, randstate, bits);
+            else mpz_set_ui(temp, 0);
+#else
+            mpz_rrandomb(temp, randstate, bits);
+#endif
+#if SIGNS
+            if (z_randint(2)) mpz_neg(temp, temp);
+#endif
+         }
+         mpz_set(mat->entries[i*c+j], temp);
+		}
+   }
+   mpz_clear(temp);
+} 
+
+void F_mpz_randmat(F_mpz_mat_t mat, ulong r, ulong c, ulong bits)
+{
+	mpz_mat_t m_mat;
+	mpz_mat_init(m_mat, r, c);
+	mpz_randmat(m_mat, r, c, bits);
+	mpz_mat_to_F_mpz_mat(mat, m_mat);
+	mpz_mat_clear(m_mat);
+}
+
 int test_ZZ_to_fmpz()
 {
    int result = 1;
@@ -125,15 +173,16 @@ int test_ZZ_to_fmpz()
    
    ZZ z;
    
-   for (unsigned long i = 0; (i < 1000) && (result == 1); i++)
+   for (unsigned long i = 0; (i < 1000000) && (result == 1); i++)
    {
-      limbs = randint(100)+1;
+      limbs = randint(100) + 1;
       randlimbs = randint(limbs);
       
       int1 = fmpz_init(limbs);
       
       fmpz_random_limbs2(int1, randlimbs);
-      
+      if (z_randint(2)) fmpz_neg(int1, int1);
+
       fmpz_to_ZZ(z, int1);
       limbs2 = ZZ_limbs(z);
       int2 = fmpz_init(limbs2);
@@ -144,6 +193,42 @@ int test_ZZ_to_fmpz()
       fmpz_clear(int1);
       fmpz_clear(int2);
    }
+
+	return result;
+}
+
+int test_ZZ_to_F_mpz()
+{
+   int result = 1;
+   unsigned long bits, limbs, limbs2, randbits;
+   
+   F_mpz_t int1, int2;
+   
+   ZZ z;
+   
+   for (unsigned long i = 0; (i < 1000000) && (result == 1); i++)
+   {
+      bits = randint(1000)+1;
+      randbits = randint(bits);
+		limbs = (bits - 1)/FLINT_BITS + 1;
+      
+      F_mpz_init2(int1, limbs);
+      
+      F_mpz_random(int1, randbits);
+      if (z_randint(2)) F_mpz_neg(int1, int1);
+
+      F_mpz_to_ZZ(z, int1);
+      limbs2 = ZZ_limbs(z);
+      F_mpz_init2(int2, limbs2);
+      ZZ_to_F_mpz(int2, z);
+      
+      result = F_mpz_equal(int1, int2);
+      
+      F_mpz_clear(int1);
+      F_mpz_clear(int2);
+   }
+
+	return result;
 }
 
 int test_ZZX_to_fmpz_poly()
@@ -154,7 +239,7 @@ int test_ZZX_to_fmpz_poly()
    unsigned long bits, length;
    
    mpz_poly_init(test_poly); 
-   for (unsigned long count1 = 1; (count1 < 300) && (result == 1) ; count1++)
+   for (unsigned long count1 = 1; (count1 < 3000) && (result == 1) ; count1++)
    {
       bits = random_ulong(1000) + 1;
       
@@ -193,12 +278,49 @@ int test_ZZX_to_fmpz_poly()
    return result;
 }
 
+int test_mat_ZZ_to_F_mpz_mat()
+{
+   int result = 1;
+   unsigned long bits, r, c;
+   
+   F_mpz_mat_t mat1, mat2;
+   
+   for (unsigned long i = 0; (i < 10000) && (result == 1); i++)
+   {
+      bits = z_randint(200)+1;
+
+		r = z_randint(50);
+		c = z_randint(50);
+      
+      F_mpz_mat_init(mat1, r, c);
+      F_mpz_mat_init(mat2, r, c);
+
+		mat_ZZ zmat;
+		zmat.SetDims(r, c);
+      
+      F_mpz_randmat(mat1, r, c, bits);
+      
+      F_mpz_mat_to_mat_ZZ(zmat, mat1);
+		mat_ZZ_to_F_mpz_mat(mat2, zmat);
+		
+      result = F_mpz_mat_equal(mat1, mat2);
+      
+      zmat.kill();
+		F_mpz_mat_clear(mat1);
+      F_mpz_mat_clear(mat2);
+   }
+
+	return result;
+}
+
 void fmpz_poly_test_all()
 {
    int success, all_success = 1;
 
    RUN_TEST(ZZ_to_fmpz); 
+   RUN_TEST(ZZ_to_F_mpz); 
    RUN_TEST(ZZX_to_fmpz_poly); 
+	RUN_TEST(mat_ZZ_to_F_mpz_mat);
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");

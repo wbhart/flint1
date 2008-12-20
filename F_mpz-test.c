@@ -165,8 +165,7 @@ int test_F_mpz_getset_mpz()
 
       F_mpz_test_random(f, bits); 
 		    
-      // set random coeffs in the poly
-		for (ulong count2 = 0; (count2 < 100) && result == 1; count2++)
+      for (ulong count2 = 0; (count2 < 100) && result == 1; count2++)
       {
          val_bits = z_randint(200);
          mpz_rrandomb(val, randstate, val_bits);
@@ -225,6 +224,45 @@ int test_F_mpz_get_d_2exp()
    mpz_clear(m1);
    
    return result;
+}
+
+int test_F_mpz_getset_limbs()
+{
+   F_mpz_t f1, f2;
+   int result = 1;
+   ulong bits, limbs, limbs2;
+	mp_limb_t * arr;
+   
+   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
+   {
+      bits = z_randint(1000)+ 1; 
+      limbs = (bits - 1)/FLINT_BITS + 1;
+		arr = flint_heap_alloc(limbs);
+
+		F_mpz_init2(f1, z_randint(10));
+      F_mpz_init2(f2, z_randint(10));
+
+      for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
+		{
+			F_mpz_test_random(f1, bits); 
+		    
+         limbs2 = F_mpz_get_limbs(arr, f1);
+         F_mpz_set_limbs(f2, arr, limbs2);
+				  
+		   result = (F_mpz_equal(f2, f1));
+		   if (!result)
+		   {
+		  	   printf("Error: f1 = "); F_mpz_print(f1); 
+			   printf(" f2 = "); F_mpz_print(f2); printf("\n");
+		   }
+		}
+
+      flint_heap_free(arr);
+		F_mpz_clear(f1);
+      F_mpz_clear(f2);
+   }
+   
+   return result; 
 }
 
 int test_F_mpz_set()
@@ -1843,6 +1881,43 @@ int test_F_mpz_size()
    return result;
 }
 
+int test_F_mpz_sgn()
+{
+   mpz_t m1;
+   F_mpz_t f1;
+   int result = 1;
+   ulong bits;
+	int m_sign, f_sign;
+   
+   mpz_init(m1); 
+   
+   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   {
+      F_mpz_init2(f1, z_randint(10));
+
+      bits = z_randint(500) + 1;
+      F_mpz_test_random(f1, bits);
+      
+		F_mpz_get_mpz(m1, f1);
+
+		m_sign = mpz_sgn(m1);
+     
+		f_sign = F_mpz_sgn(f1);
+          
+      result = (m_sign == f_sign); 
+		if (!result) 
+		{
+			printf("Error: bits = %ld, m_sign = %d, f_sign = %d\n", bits, m_sign, f_sign);
+		}
+          
+      F_mpz_clear(f1);
+   }
+   
+   mpz_clear(m1);
+   
+   return result;
+}
+
 int test_F_mpz_bits()
 {
    mpz_t m1;
@@ -1890,6 +1965,7 @@ void F_mpz_poly_test_all()
    RUN_TEST(F_mpz_getset_ui); 
    RUN_TEST(F_mpz_getset_si); 
    RUN_TEST(F_mpz_getset_mpz); 
+   RUN_TEST(F_mpz_getset_limbs); 
    RUN_TEST(F_mpz_get_d_2exp); 
    RUN_TEST(F_mpz_set); 
    RUN_TEST(F_mpz_equal); 
@@ -1908,6 +1984,7 @@ void F_mpz_poly_test_all()
    RUN_TEST(F_mpz_addmul); 
    RUN_TEST(F_mpz_submul); 
    RUN_TEST(F_mpz_size);
+	RUN_TEST(F_mpz_sgn);
 	RUN_TEST(F_mpz_bits); 
     
 	

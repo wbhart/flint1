@@ -29,6 +29,7 @@ Copyright (C) 2007, William Hart
 
 #include <NTL/ZZ.h>
 #include <NTL/ZZX.h>
+#include <NTL/mat_ZZ.h>
 #include <NTL/lip.h>
 #include <NTL/ctools.h>
 #include <NTL/g_lip.h>
@@ -36,6 +37,8 @@ Copyright (C) 2007, William Hart
 
 #include "flint.h"
 #include "fmpz.h"
+#include "F_mpz.h"
+#include "F_mpz_mat.h"
 #include "fmpz_poly.h"
 #include "NTL-interface.h"
 
@@ -86,13 +89,32 @@ void ZZ_to_fmpz(fmpz_t output, const ZZ& z)
    else output[0] = lw;
 }
 
+void ZZ_to_F_mpz(F_mpz_t output, const ZZ& z)
+{
+   _ntl_gbigint x = z.rep;
+   
+   if (!x) 
+   {
+      F_mpz_zero(output);
+      return;
+   }
+   
+   unsigned long lw = ZZ_limbs(z);
+   mp_limb_t * xp = DATA(x);
+
+   F_mpz_set_limbs(output, xp, lw);
+   
+   if (z < 0L) F_mpz_neg(output, output);
+}
+
 void fmpz_to_ZZ(ZZ& output, const fmpz_t z)
 {
    mp_limb_t *xp;
    _ntl_gbigint *x = &output.rep;
    long lw = FLINT_ABS(z[0]);;
    
-   if (lw == 0) {
+   if (lw == 0) 
+	{
       if (*x) SIZE(*x) = 0;
       return;
    }
@@ -103,6 +125,27 @@ void fmpz_to_ZZ(ZZ& output, const fmpz_t z)
    F_mpn_copy(xp, z + 1, lw);
    
    if ((long) z[0] < 0L) SIZE(*x) = -lw;
+   else SIZE(*x) = lw;
+}
+
+void F_mpz_to_ZZ(ZZ& output, const F_mpz_t z)
+{
+   mp_limb_t *xp;
+   _ntl_gbigint *x = &output.rep;
+   long lw = F_mpz_size(z);
+   
+   if (lw == 0) 
+	{
+      if (*x) SIZE(*x) = 0;
+      return;
+   }
+
+   _ntl_gsetlength(x, lw); 
+   xp = DATA(*x);
+
+	F_mpz_get_limbs(xp, z);
+	
+   if (F_mpz_sgn(z) < 0) SIZE(*x) = -lw;
    else SIZE(*x) = lw;
 }
 
@@ -153,6 +196,30 @@ void ZZX_to_fmpz_poly(fmpz_poly_t output, const ZZX& poly)
       coeff_f = fmpz_poly_get_coeff_ptr(output, i);
       ZZ_to_fmpz(coeff_f, *ap);
    }
+}
+
+void mat_ZZ_to_F_mpz_mat(F_mpz_mat_t output, const mat_ZZ& mat)
+{
+	ulong r = mat.NumRows();
+	ulong c = mat.NumCols();
+
+	for (ulong i = 0; i < r; i++)
+		for (ulong j = 0; j < c; j++)
+		{
+			ZZ_to_F_mpz(output->rows[i] + j, mat[i][j]);
+		}
+}
+
+void F_mpz_mat_to_mat_ZZ(mat_ZZ& output, const F_mpz_mat_t mat)
+{
+	ulong r = mat->r;
+	ulong c = mat->c;
+
+	for (ulong i = 0; i < r; i++)
+		for (ulong j = 0; j < c; j++)
+		{
+			F_mpz_to_ZZ(output[i][j], mat->rows[i] + j);
+		}
 }
 
  

@@ -63,7 +63,7 @@ typedef F_mpz F_mpz_t[1];
 
 #define COEFF_IS_MPZ(xxx) ((xxx>>(FLINT_BITS-2)) == 1L) // is xxx an index into F_mpz_arr?
 
-gmp_randstate_t F_mpz_state; // Used for random generation in F_mpz_randomm only
+static gmp_randstate_t F_mpz_state; // Used for random generation in F_mpz_randomm only
 
 /*===============================================================================
 
@@ -248,6 +248,22 @@ double F_mpz_get_d_2exp(long * exp, const F_mpz_t f);
 void F_mpz_set_mpz(F_mpz_t f, const mpz_t x);
 
 /** 
+   \fn     void F_mpz_set_limbs(F_mpz_t f, const mp_limb_t * x, const ulong limbs)
+   \brief  Sets f to the array of limbs x which is the given number of 
+	        limbs in length and where the least significant limb is 
+			  stored first in x.
+*/
+void F_mpz_set_limbs(F_mpz_t f, const mp_limb_t * x, const ulong limbs);
+
+/** 
+   \fn     ulong F_mpz_set_limbs(const mp_limb_t * x, F_mpz_t f)
+   \brief  Sets the array of limbs x to the absolute value of f. The 
+	        array is assumed to be stored with least significant limb 
+			  first. The number of limbs written is returned.
+*/
+ulong F_mpz_get_limbs(mp_limb_t * x, const F_mpz_t f);
+
+/** 
    \fn     void F_mpz_set(F_mpz_t f, F_mpz_t g)
    \brief  Sets f to the value of g. 
 */
@@ -282,21 +298,27 @@ int F_mpz_equal(const F_mpz_t f, const F_mpz_t g);
    \brief  Returns the number of limbs required to store the absolute value of f.
 	        Returns 0 if f is zero.
 */
-ulong F_mpz_size(F_mpz_t f);
+ulong F_mpz_size(const F_mpz_t f);
+
+/** 
+   \fn     int F_mpz_sgn(const F_mpz_t f)
+   \brief  Returns 1 if f is positive, -1 if it is negative and 0 if f is zero.
+*/
+int F_mpz_sgn(const F_mpz_t f);
 
 /** 
    \fn     ulong F_mpz_bits(F_mpz_t f)
    \brief  Returns the number of bits required to store the absolute value of f.
 	        Returns 0 if f is zero.
 */
-ulong F_mpz_bits(F_mpz_t f);
+ulong F_mpz_bits(const F_mpz_t f);
 
 /** 
    \fn     __mpz_struct * F_mpz_ptr_mpz(F_mpz f)
    \brief  Returns a pointer to the mpz_t associated with the coefficient f.
 	        Assumes f is actually associated with an mpz_t.
 */
-__mpz_struct * F_mpz_ptr_mpz(F_mpz f);
+__mpz_struct * F_mpz_ptr_mpz(const F_mpz f);
 
 /*===============================================================================
 

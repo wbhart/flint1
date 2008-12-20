@@ -50,7 +50,7 @@ void F_mpz_mat_init(F_mpz_mat_t mat, const ulong r, const ulong c)
    {
       mat->entries = (mp_limb_t *) flint_heap_alloc(r*c);
 		F_mpn_clear(mat->entries, r*c); // zero all entries
-		mat->rows = (mp_limb_t **) flint_heap_alloc(r); // initialise rows
+		mat->rows = (F_mpz **) flint_heap_alloc(r); // initialise rows
 		for (ulong i = 0; i < r; i++)
 		   mat->rows[i] = mat->entries + i*c;
    } else mat->entries = NULL;
@@ -173,7 +173,8 @@ int F_mpz_mat_equal(const F_mpz_mat_t mat1, const F_mpz_mat_t mat2)
 
 	for (ulong i = 0; i < r; i++) // check if entries the same
 		for (ulong j = 0; j < c; j++)
-			if (!F_mpz_equal(mat1->rows[i] + j, mat2->rows[i] + j)) return 0;
+			if (!F_mpz_equal(mat1->rows[i] + j, mat2->rows[i] + j)) 
+			   return 0;
 
 	return 1;
 }

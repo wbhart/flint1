@@ -290,7 +290,11 @@ long F_mpz_get_si(const F_mpz_t f)
 
 ulong F_mpz_get_ui(const F_mpz_t f)
 {
-   if (!COEFF_IS_MPZ(*f)) return *f; // value is small
+   if (!COEFF_IS_MPZ(*f)) 
+	{ 
+		if (*f < 0L) return -*f; // value is small
+		else return *f;
+	}
 	return mpz_get_ui(F_mpz_arr + COEFF_TO_OFF(*f)); // value is large
 }
 
@@ -349,6 +353,41 @@ void F_mpz_set_mpz(F_mpz_t f, const mpz_t x)
 		__mpz_struct * mpz_ptr = _F_mpz_promote(f);
 		mpz_set(mpz_ptr, x);
 	}			
+}
+
+void F_mpz_set_limbs(F_mpz_t f, const mp_limb_t * x, const ulong limbs)
+{
+	if (limbs == 0L) // x is zero
+	{
+		F_mpz_zero(f);
+	} else if (limbs == 1L) // x is 1 limb
+	{
+	   F_mpz_set_ui(f, x[0]);
+	} else // x is more than one limb
+	{
+		__mpz_struct * mpz_ptr = _F_mpz_promote(f);
+		// read limbs, least significant first, native endianness, no nails
+		mpz_import(mpz_ptr, limbs, -1, sizeof(mp_limb_t), 0, 0, x);
+	}			
+}
+
+ulong F_mpz_get_limbs(mp_limb_t * x, const F_mpz_t f)
+{
+	ulong limbs = F_mpz_size(f);
+	
+	if (limbs == 0L) return 0; // f is zero, no limbs to get
+
+	if (limbs == 1L) // f is 1 limb
+	{
+	   x[0] = F_mpz_get_ui(f);
+	} else // f is more than one limb
+	{
+		__mpz_struct * mpz_ptr = F_mpz_ptr_mpz(*f);
+		// discard count, read least significant first, native endianness, no nails
+		mpz_export(x, NULL, -1, sizeof(mp_limb_t), 0, 0, mpz_ptr);
+	}	
+
+	return limbs;
 }
 
 void F_mpz_set(F_mpz_t f, const F_mpz_t g)
@@ -422,7 +461,7 @@ int F_mpz_equal(const F_mpz_t f, const F_mpz_t g)
 
 ================================================================================*/
 
-ulong F_mpz_size(F_mpz_t f)
+ulong F_mpz_size(const F_mpz_t f)
 {
 	F_mpz d = *f;
 
@@ -435,7 +474,21 @@ ulong F_mpz_size(F_mpz_t f)
 	return mpz_size(F_mpz_arr + COEFF_TO_OFF(d));
 }
 
-ulong F_mpz_bits(F_mpz_t f)
+int F_mpz_sgn(const F_mpz_t f)
+{
+	F_mpz d = *f;
+
+	if (d == 0) return 0;
+   if (!COEFF_IS_MPZ(d)) // c1 is small
+	{
+		if (d > 0L) return 1;
+		else return -1;
+	}
+
+	return mpz_sgn(F_mpz_arr + COEFF_TO_OFF(d));
+}
+
+ulong F_mpz_bits(const F_mpz_t f)
 {
 	F_mpz d = *f;
 

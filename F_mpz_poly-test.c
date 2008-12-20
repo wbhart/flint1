@@ -1917,8 +1917,8 @@ int test_F_mpz_poly_mul_KS()
       F_mpz_poly_init(F_poly2);
       F_mpz_poly_init(res);
 
-		bits1 = z_randint(27) + 1;
-      bits2 = z_randint(27) + 1;
+		bits1 = z_randint((FLINT_BITS - 9)/2) + 1;
+      bits2 = z_randint((FLINT_BITS - 9)/2) + 1;
       length1 = z_randint(100);
       length2 = z_randint(100);
       mpz_randpoly(m_poly1, length1, bits1);
@@ -1951,8 +1951,8 @@ int test_F_mpz_poly_mul_KS()
       F_mpz_poly_init(F_poly2);
       F_mpz_poly_init(res);
 
-		bits1 = z_randint(27) + 1;
-      bits2 = z_randint(27) + 1;
+		bits1 = z_randint((FLINT_BITS - 9)/2) + 1;
+      bits2 = z_randint((FLINT_BITS - 9)/2) + 1;
       length1 = z_randint(100);
       length2 = z_randint(100);
       mpz_randpoly_unsigned(m_poly1, length1, bits1);
@@ -1984,8 +1984,8 @@ int test_F_mpz_poly_mul_KS()
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(res);
 
-		bits1 = z_randint(27) + 1;
-      bits2 = z_randint(27) + 1;
+		bits1 = z_randint((FLINT_BITS - 9)/2) + 1;
+      bits2 = z_randint((FLINT_BITS - 9)/2) + 1;
       length1 = z_randint(100);
       length2 = z_randint(100);
       mpz_randpoly(m_poly1, length1, bits1);
@@ -2016,8 +2016,8 @@ int test_F_mpz_poly_mul_KS()
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(res);
 
-		bits1 = z_randint(27) + 1;
-      bits2 = z_randint(27) + 1;
+		bits1 = z_randint((FLINT_BITS - 9)/2) + 1;
+      bits2 = z_randint((FLINT_BITS - 9)/2) + 1;
       length1 = z_randint(100);
       length2 = z_randint(100);
       mpz_randpoly(m_poly1, length1, bits1);
@@ -2048,7 +2048,7 @@ int test_F_mpz_poly_mul_KS()
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(res);
 
-		bits1 = z_randint(27) + 1;
+		bits1 = z_randint((FLINT_BITS - 9)/2) + 1;
       length1 = z_randint(100);
       mpz_randpoly(m_poly1, length1, bits1);
            
@@ -2097,8 +2097,8 @@ int test_F_mpz_poly_mul_KS2()
       F_mpz_poly_init(F_poly2);
       F_mpz_poly_init(res);
 
-		bits1 = z_randint(25) + 1;
-      bits2 = z_randint(25) + 1;
+		bits1 = z_randint((FLINT_BITS - 9)/2) + 1;
+      bits2 = z_randint((FLINT_BITS - 9)/2) + 1;
       length1 = z_randint(100);
       length2 = z_randint(100);
 		mpz_randpoly(m_poly1, length1, bits1);
@@ -2131,8 +2131,8 @@ int test_F_mpz_poly_mul_KS2()
       F_mpz_poly_init(F_poly2);
       F_mpz_poly_init(res);
 
-		bits1 = z_randint(27) + 1;
-      bits2 = z_randint(27) + 1;
+		bits1 = z_randint((FLINT_BITS - 9)/2) + 1;
+      bits2 = z_randint((FLINT_BITS - 9)/2) + 1;
       length1 = z_randint(100);
       length2 = z_randint(100);
       mpz_randpoly_unsigned(m_poly1, length1, bits1);
@@ -2164,8 +2164,8 @@ int test_F_mpz_poly_mul_KS2()
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(res);
 
-		bits1 = z_randint(27) + 1;
-      bits2 = z_randint(27) + 1;
+		bits1 = z_randint((FLINT_BITS - 9)/2) + 1;
+      bits2 = z_randint((FLINT_BITS - 9)/2) + 1;
       length1 = z_randint(100);
       length2 = z_randint(100);
       mpz_randpoly(m_poly1, length1, bits1);
@@ -2196,8 +2196,8 @@ int test_F_mpz_poly_mul_KS2()
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(res);
 
-		bits1 = z_randint(26) + 1;
-      bits2 = z_randint(26) + 1;
+		bits1 = z_randint((FLINT_BITS - 9)/2) + 1;
+      bits2 = z_randint((FLINT_BITS - 9)/2) + 1;
       length1 = z_randint(100);
       length2 = z_randint(100);
       mpz_randpoly(m_poly1, length1, bits1);
@@ -2228,7 +2228,7 @@ int test_F_mpz_poly_mul_KS2()
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(res);
 
-		bits1 = z_randint(26) + 1;
+		bits1 = z_randint((FLINT_BITS - 9)/2) + 1;
       length1 = z_randint(100);
       mpz_randpoly(m_poly1, length1, bits1);
            

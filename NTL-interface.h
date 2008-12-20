@@ -28,10 +28,16 @@ Copyright (C) 2007, William Hart
 #ifndef FLINT_NTL_INT_H
 #define FLINT_NTL_INT_H
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 #include <NTL/ZZ.h>
 #include <NTL/ZZX.h>
 
 #include "flint.h"
+#include "F_mpz.h"
+#include "F_mpz_mat.h"
 #include "fmpz.h"
 #include "fmpz_poly.h"
 
@@ -50,11 +56,23 @@ unsigned long ZZ_limbs(const ZZ& z);
 
 void ZZ_to_fmpz(fmpz_t output, const ZZ& z);
 
+/* 
+   Convert an NTL ZZ to an F_mpz_t
+*/
+
+void ZZ_to_F_mpz(F_mpz_t output, const ZZ& z);
+
 /*
    Convert an fmpz_t to an NTL ZZ
 */
 
 void fmpz_to_ZZ(ZZ& output, const fmpz_t z);
+
+/*
+   Convert an F_mpz_t to an NTL ZZ
+*/
+
+void F_mpz_to_ZZ(ZZ& output, const F_mpz_t z);
 
 /*
    Convert an fmpz_poly_t to an NTL ZZX
@@ -68,5 +86,20 @@ void fmpz_poly_to_ZZX(ZZX& output, const fmpz_poly_t poly);
 
 void ZZX_to_fmpz_poly(fmpz_poly_t output, const ZZX& poly);
 
+/*
+   Convert an NTL mat_ZZ to an F_mpz_mat_t
+*/
+
+void mat_ZZ_to_F_mpz_mat(F_mpz_mat_t output, const mat_ZZ& mat);
+
+/*
+   Convert an F_mpz_mat_t to an NTL mat_ZZ
+*/
+
+void F_mpz_mat_to_mat_ZZ(mat_ZZ& output, const F_mpz_mat_t mat);
+
+#ifdef __cplusplus
+ }
+#endif
 
 #endif
