@@ -99,7 +99,7 @@ void goldstein_mayer(F_mpz_mat_t B, int bits, int d)
    mpz_t temp;
 	mpz_init(temp);
    
-	do mpz_random(temp, bits);
+	do mpz_urandomb(temp, F_mpz_state, bits);
    while ((mpz_probab_prime_p(temp, 10)) == 0);
 
 	F_mpz_set_mpz(B->rows[0] + 0, temp);

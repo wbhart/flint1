@@ -48,7 +48,7 @@
 
 double halfplus, onedothalfplus, ctt;
 
-#if MPIR_BITS == 32
+#if FLINT_BITS == 32
 #define CPU_SIZE_1 31
 #define MAX_LONG 0x1p31
 #else
