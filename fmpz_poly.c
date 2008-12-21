@@ -7325,9 +7325,10 @@ int fmpz_poly_divides_modular(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_pol
       
       fmpz_t newmod = fmpz_init(modulus[0] + 1);
       
-      ulong n_bits;
+      ulong n_bits = 0;
 		if ((fmpz_poly_CRT(Q, Q, q, newmod, modulus)) || (bits <= (n_bits = fmpz_bits(newmod))) || (bound < n_bits))
 		{
+			if (!n_bits) n_bits = fmpz_bits(newmod);
 			fmpz_poly_mul(P, Q, B);
 			if (fmpz_poly_equal(P, A))
 			{
@@ -8550,10 +8551,11 @@ void fmpz_poly_power(fmpz_poly_t output, const fmpz_poly_t poly_in, const unsign
 	
 	if ((poly->length == 1) && ((poly->coeffs[0] == 1L) || (poly->coeffs[0] == -1L)) && (poly->coeffs[1] == 1L))
    {
-      fmpz_poly_fit_limbs(output, 1);
+      ulong sign = poly->coeffs[0];
+		fmpz_poly_fit_limbs(output, 1);
       fmpz_poly_fit_length(output, 1 + trailing*exp);
       output->length = 0;
-		if ((exp & 1) && (poly->coeffs[0] == -1L))
+		if ((exp & 1) && (sign == -1L))
 			   fmpz_poly_set_coeff_si(output, trailing*exp, -1L);
 		else fmpz_poly_set_coeff_ui(output, trailing*exp, 1L);
       output->length = 1 + trailing*exp;
@@ -8561,8 +8563,9 @@ void fmpz_poly_power(fmpz_poly_t output, const fmpz_poly_t poly_in, const unsign
    } 
    if (poly->length == 1)
    {
-      fmpz_poly_fit_length(output, 1 + trailing*exp);
-      fmpz_poly_fit_limbs(output, fmpz_size(poly->coeffs)*exp);
+      ulong size = fmpz_size(poly->coeffs);
+		fmpz_poly_fit_length(output, 1 + trailing*exp);
+      fmpz_poly_fit_limbs(output, size*exp);
       _fmpz_poly_attach_shift(poly, poly_in, trailing);
 		fmpz_pow_ui(output->coeffs + trailing*exp*(output->limbs + 1), poly->coeffs, exp);
       for (ulong j = 0; j < trailing*exp; j++)
@@ -8764,10 +8767,11 @@ void fmpz_poly_power_trunc_n(fmpz_poly_t output, const fmpz_poly_t poly_i, const
 	{    
 	   if (((poly->coeffs[0] == 1L) || (poly->coeffs[0] == -1L)) && (poly->coeffs[1] == 1L))
       {		
-         fmpz_poly_fit_limbs(output, 1);
+         ulong sign = poly->coeffs[0];
+			fmpz_poly_fit_limbs(output, 1);
          fmpz_poly_fit_length(output, 1 + trailing*exp);
          output->length = 0;
-		   if ((exp & 1) && (poly->coeffs[0] == -1L))
+		   if ((exp & 1) && (sign == -1L))
 			   fmpz_poly_set_coeff_si(output, trailing*exp, -1L);
 			else fmpz_poly_set_coeff_ui(output, trailing*exp, 1L);
          output->length = 1 + trailing*exp;
@@ -10581,6 +10585,7 @@ void fmpz_poly_compose_combined(fmpz_poly_t output, fmpz_poly_t poly, fmpz_poly_
 	}
 	
 	for (ulong i = 0; i < short_length; i++) fmpz_poly_clear(temp[i]);
+	fmpz_heap_clear(temp);
 }
 
 void fmpz_poly_compose(fmpz_poly_t output, fmpz_poly_t poly, fmpz_poly_t val)
