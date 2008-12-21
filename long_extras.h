@@ -261,7 +261,7 @@ unsigned long z_factor_trial(factor_t * factors, unsigned long n);
 
 unsigned long z_factor_SQUFOF(unsigned long n);
 
-int z_factor(factor_t * factors, unsigned long n, int proved);
+void z_factor(factor_t * factors, unsigned long n, int proved);
 
 unsigned long z_factor_partial(factor_t * factors, unsigned long n, unsigned long limit, int proved);
 

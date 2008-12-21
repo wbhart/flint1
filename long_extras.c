@@ -868,9 +868,7 @@ int z_isprime_precomp(unsigned long n, double ninv)
 #if FLINT_BITS == 64
    if (n >= 10000000000000000UL)
 	{
-		int prime = z_isprime_pocklington(n, -1L);
-		if (prime == -2) return z_isprobab_prime_precomp(n, ninv);
-		return prime;
+		return z_isprime_pocklington(n, -1L);
 	}
 #endif
 
@@ -1060,9 +1058,9 @@ unsigned long z_nextprime(unsigned long n, int proved)
 }
 
 /*
-   Proves that n is prime using a Pocklington-Lehmer test
-   returns 0 if composite, 1 if prime, -2 if it failed to factor
-   the number sufficiently and -1 if it failed to prove either way
+   Proves that n is prime using a Pocklington-Lehmer test.
+   Returns 0 if composite, 1 if prime and -1 if it failed 
+	to prove either way.
 */
 
 int z_isprime_pocklington(unsigned long const n, unsigned long const iterations)
@@ -1084,10 +1082,7 @@ int z_isprime_pocklington(unsigned long const n, unsigned long const iterations)
 	factors.num = 0;
 	sqrt = z_intsqrt(n1);
 
-	if(!z_factor_partial(&factors, n1, sqrt, 1))
-	{
-		return -2;
-	}
+	z_factor_partial(&factors, n1, sqrt, 1);
 	
 	inv = z_precompute_inverse(n);
 
@@ -1177,10 +1172,8 @@ int z_isprime_nm1(unsigned long const n, unsigned long const iterations)
 	factors.num = 0;
 	cuberoot = z_intcuberoot(n);
 	
-	cofactor = z_factor_partial(&factors, n1, cuberoot, 1);
+	z_factor_partial(&factors, n1, cuberoot, 1);
 
-	if(!cofactor) return -2; // factorisation failed
-	
 	inv = z_precompute_inverse(n);
 
 	pass = 0;
@@ -1910,7 +1903,6 @@ unsigned long z_factor_partial_trial(factor_t * factors, unsigned long * prod, u
 /*
    Factors _n_ until the product of the factor found is > _limit_. It puts the factors
    in _factors_ and returns the cofactor.
-   If factorisation cannot be achieved as n is too large (for SQUFOF), 0 is returned.
 	If proved is 0 (false) the factors are not proved prime, otherwise the result is
 	proved.
 */
@@ -1940,7 +1932,6 @@ unsigned long z_factor_partial(factor_t * factors, unsigned long n, unsigned lon
 			} else
 			{
 				factor = factor_arr[factors_left] = z_factor_SQUFOF(factor);
-				if (!factor_arr[factors_left]) return 0;
 				factor_arr[factors_left-1] /= factor;
 				factors_left++;
 			}
@@ -2031,6 +2022,100 @@ unsigned long _z_factor_SQUFOF(unsigned long n)
    return q;
 }
 
+unsigned long _z_ll_factor_SQUFOF(ulong n_hi, ulong n_lo)
+{
+   mp_limb_t n[2];
+	mp_limb_t sqrt[2];
+	mp_limb_t rem[2];
+	
+	n[0] = n_lo;
+	n[1] = n_hi;
+	
+	int num = mpn_sqrtrem(sqrt, rem, n, 2);
+	
+	unsigned long sqroot = sqrt[0];
+   unsigned long p = sqroot;
+   unsigned long q = rem[0];
+   
+   if ((q == 0) || (num == 0))
+   {
+      return sqroot;
+   }
+   
+   unsigned long l = 1 + 2*z_intsqrt(2*p);
+   unsigned long l2 = l/2;
+   unsigned long iq, pnext;
+   unsigned long qarr[50];
+   unsigned long qupto = 0;
+   unsigned long qlast = 1;
+   unsigned long i, j, t, r;
+   
+   for (i = 0; i < SQUFOF_ITERS; i++)
+   {
+      iq = (sqroot + p)/q;
+      pnext = iq*q - p;
+      if (q <= l) 
+      {
+         if ((q & 1) == 0) 
+         {
+            qarr[qupto] = q/2;
+            qupto++;
+            if (qupto >= 50) return 0;
+         } else if (q <= l2)
+         {
+            qarr[qupto] = q;
+            qupto++;
+            if (qupto >= 50) return 0;
+         }
+      }
+      t = qlast + iq*(p - pnext);
+	   qlast = q;
+	   q = t;
+	   p = pnext;
+	   if ((i&1) == 1) continue;
+	   if (!z_issquare(q)) continue;
+	   r = z_intsqrt(q);
+	   if (qupto == 0) break;
+	   for (j = 0; j < qupto; j++)	
+         if (r == qarr[j]) goto cont;
+      break;
+      cont: ; if (r == 1) return 0;
+   }
+   
+   if (i == SQUFOF_ITERS) return 0; // taken too long, give up
+   
+   qlast = r;
+   p = p + r*((sqroot - p)/r);
+
+	umul_ppmm(rem[1], rem[0], p, p);
+   sub_ddmmss(sqrt[1], sqrt[0], n[1], n[0], rem[1], rem[0]);
+	if (sqrt[1])
+	{
+		int norm;
+	   count_lead_zeros(norm, sqrt[1]);
+	   udiv_qrnnd(q, rem[0], sqrt[1]<<norm + r_shift(sqrt[0], FLINT_BITS-norm), sqrt[0]<<norm, qlast); 
+      q >>= norm;
+	} else
+	{
+		q = sqrt[0]/qlast;
+	}
+
+   for (j = 0; j < SQUFOF_ITERS; j++)
+   {	
+	  iq = (sqroot + p)/q;
+	  pnext = iq*q - p;
+	  if (p == pnext) break;
+	  t = qlast + iq*(p - pnext);
+	  qlast = q;
+	  q = t;
+	  p = pnext;
+   }
+   
+   if ((q & 1) == 0) q /= 2;
+   
+   return q;
+}
+
 /* 
    Factor n using as many rounds of SQUFOF as it takes
    Assumes trial factoring of n has already been done and that
@@ -2042,20 +2127,35 @@ unsigned long z_factor_SQUFOF(unsigned long n)
    unsigned long factor = _z_factor_SQUFOF(n);
    unsigned long multiplier;
    unsigned long quot, rem, kn;
-   unsigned long s1, s2;
+   unsigned long s1, s2, i;
    
    if (factor) return factor;
    
-   for (unsigned long i = 1; (i < NUMBER_OF_PRIMES) && !factor; i++)
+   for (i = 1; (i < NUMBER_OF_PRIMES) && !factor; i++)
    {
       multiplier = primes[i];
-      count_lead_zeros(s1, multiplier);
-      s1 = FLINT_BITS - s1;
+      s1 = FLINT_BIT_COUNT(multiplier);
       count_lead_zeros(s2, n);
-      if (s1 > s2) return 0; // kn is more than one limb 
-      kn = multiplier*n;
-      factor = _z_factor_SQUFOF(kn);
-      if (factor) 
+      
+		if (s1 > s2) // kn is possibly more than one limb 
+		{
+         mp_limb_t multn[2];
+			umul_ppmm(multn[1], multn[0], multiplier, n);
+			if (multn[1] == 0)
+			{
+		      kn = multiplier*n;
+            factor = _z_factor_SQUFOF(kn);
+			} else
+			{
+				factor = _z_ll_factor_SQUFOF(multn[1], multn[0]);
+			}
+		} else
+		{
+		   kn = multiplier*n;
+         factor = _z_factor_SQUFOF(kn);
+		}
+		
+		if (factor) 
       {
          quot = factor/multiplier;
          rem = factor - quot*multiplier;
@@ -2063,20 +2163,23 @@ unsigned long z_factor_SQUFOF(unsigned long n)
          if ((factor == 1) || (factor == n)) factor = 0;
       }
    }
-   return factor; 
+   
+	if (i == NUMBER_OF_PRIMES)
+	{
+		printf("Error : SQUFOF failed to factor %ld, after %ld rounds!\n", n, NUMBER_OF_PRIMES);
+		abort();
+	}
+	
+	return factor; 
 }
 
 /*
    Find the factors of n.
-   This function may fail if n is so large that SQUFOF multipliers
-   (rarely up to 1000) times n push it over a limb in size.
-   If factoring fails (very rare), this function returns 0, 
-   else it returns 1.
-	If proved is 0 the factors are not proved prime, otherwise the
+   If proved is 0 the factors are not proved prime, otherwise the
 	result is proved.
 */
 
-int z_factor(factor_t * factors, unsigned long n, int proved)
+void z_factor(factor_t * factors, unsigned long n, int proved)
 {
    unsigned long cofactor;
    unsigned long factor_arr[TF_FACTORS_IN_LIMB];
@@ -2100,14 +2203,11 @@ int z_factor(factor_t * factors, unsigned long n, int proved)
          } else
          {
             factor = factor_arr[factors_left] = z_factor_SQUFOF(factor);
-            if (!factor_arr[factors_left]) return 0;
             factor_arr[factors_left-1] /= factor;
             factors_left++;
          }
       }
-      return 1;
    } 
-   return 1;
 } 
 
 /*
@@ -2124,10 +2224,7 @@ unsigned long z_primitive_root(unsigned long p)
    unsigned long res;
    factor_t factors;
    
-   if(z_factor(&factors, (p - 1), 1) == 0)
-   {
-      return 0;
-   }
+   z_factor(&factors, (p - 1), 1);
    
    res = 2;
    
@@ -2152,10 +2249,7 @@ unsigned long z_primitive_root_precomp(unsigned long p, double p_inv)
    unsigned long res;
    factor_t factors;
    
-   if(z_factor(&factors, (p - 1), 1) == 0)
-   {
-      return 0;
-   }
+   z_factor(&factors, (p - 1), 1);
    
    res = 2;
    

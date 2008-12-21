@@ -2250,7 +2250,7 @@ int z_isprime(unsigned long n)
 int z_isprime_precomp(unsigned long n, pre_inv_t ninv)
 \end{lstlisting}
 \begin{quote}
-This is currently only a deterministic primality test if FLINT can factor \code{n} - 1.  Note that this is currently the case if \code{n} - 1 has at most 53 bits after removal of factors below 1000 from \code{n - 1}.  In the precomp version of the function it is assumed that \code{n} is greater than 2 and odd. The function takes a precomputed inverse of $n$.
+Returns 1 if $n$ is proved prime, otherwise it returns 0 in which case $n$ is composite. In the precomp version of the function it is assumed that \code{n} is greater than 2 and odd. The function takes a precomputed inverse of $n$.
 \end{quote}
 
 \begin{lstlisting}
@@ -2274,7 +2274,7 @@ int z_isprime_pocklington(unsigned long const n,
                    unsigned long const iterations)
 \end{lstlisting}
 \begin{quote}
-Proves that \code{n} is prime using a Pocklington-Lehmer test returns 0 if composite, 1 if prime, -2 if it fails to factor \code{n-1} and -1 if it failed to prove either way. The number of iterations can be increased for a more thorough check but will take longer. Setting \code{iterations} to \code{-1L} will cause it to continue until the number is proven prime or composite. The \code{-2} return value occurs rarely and will be removed in a later version of FLINT, making this an unconditional primality proof.
+Proves that \code{n} is prime using a Pocklington-Lehmer test returns 0 if composite, 1 if prime and -1 if it failed to prove either way. The number of iterations can be increased for a more thorough check but will take longer. Setting \code{iterations} to \code{-1L} will cause it to continue until the number is proven prime or composite.
 \end{quote}
 
 \begin{lstlisting}
@@ -2375,10 +2375,10 @@ Removes the highest power of \code{p} possible from \code{n} and returns the exp
 \end{quote}
 
 \begin{lstlisting}
-int z_factor(factor_t * factors, unsigned long n, int proved)
+void z_factor(factor_t * factors, unsigned long n, int proved)
 \end{lstlisting}
 \begin{quote}
-Find the factors of \code{n}.  This function may fail if \code{n} is so large that SQUFOF multipliers (rarely up to 1000) times \code{n} push it over a limb in size.  If factoring fails (very rare), this function returns 0, else it returns 1. If \code{proved} is set to 0 then the factors are not proved prime, otherwise the result is proved.
+Find the factors of \code{n}.  If \code{proved} is set to 0 then the factors are not proved prime, otherwise the result is proved.
 \end{quote}
 
 \begin{lstlisting}
@@ -2386,7 +2386,7 @@ unsigned long z_factor_partial(factor_t * factors,
                unsigned long n, unsigned long limit, int proved)
 \end{lstlisting}
 \begin{quote}
-Factors \code{n} until the product of the factor found is $>$ \code{limit}. It puts the factors in \code{factors} and returns the cofactor.  If factorisation cannot be achieved as \code{n} is too large (for SQUFOF), 0 is returned.  If \code{proved} is set to 0 then the factors are not proved prime, otherwise the result is proved.
+Factors \code{n} until the product of the factor found is $>$ \code{limit}. It puts the factors in \code{factors} and returns the cofactor.  If \code{proved} is set to 0 then the factors are not proved prime, otherwise the result is proved.
 \end{quote}
 
 \begin{lstlisting}

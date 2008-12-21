@@ -1644,9 +1644,9 @@ int test_z_isprime()
        
    int result = 1;
    
-   for (unsigned long count = 0; (count < 100000) && (result == 1); count++)
+   for (unsigned long count = 0; (count < 10000) && (result == 1); count++)
    { 
-	  unsigned long bits = z_randint(FLINT_D_BITS-1)+1;
+	  unsigned long bits = z_randint(FLINT_BITS-1)+1;
 	  n = random_ulong((1UL<<bits)-1UL)+1; 
       mpz_set_ui(mpz_n, n);
 
@@ -1705,9 +1705,9 @@ int test_z_isprime_precomp()
        
    int result = 1;
    
-   for (unsigned long count = 0; (count < 100000) && (result == 1); count++)
+   for (unsigned long count = 0; (count < 10000) && (result == 1); count++)
    { 
-	  unsigned long bits = z_randint(FLINT_D_BITS-2)+2;
+	  unsigned long bits = z_randint(FLINT_BITS-2)+2;
 	  n = z_randint((1UL<<bits)-2UL)+2; 
      mpz_set_ui(mpz_n, n);
 
@@ -1772,9 +1772,9 @@ int test_z_isprime_pocklington()
        
    int result = 1;
    
-   for (unsigned long count = 0; (count < 100000L) && (result == 1); count++)
+   for (unsigned long count = 0; (count < 10000L) && (result == 1); count++)
    { 
-	   unsigned long bits = z_randint(FLINT_D_BITS-2)+2;
+	   unsigned long bits = z_randint(FLINT_BITS-2)+2;
 	   n = random_ulong((1UL<<bits)-2UL)+2; 
       mpz_set_ui(mpz_n, n);
 
@@ -1795,7 +1795,7 @@ int test_z_isprime_pocklington()
    
 	for (unsigned long count = 0; (count < 100000L) && (result == 1); count++)
    { 
-	  unsigned long bits = z_randint((FLINT_D_BITS-1)/2 - 1)+1;
+	  unsigned long bits = z_randint((FLINT_BITS-1)/2 - 1)+1;
 	  n = random_ulong((1UL<<bits)-1UL)+1; 
      mpz_set_ui(mpz_n, n);
 
@@ -1845,9 +1845,9 @@ int test_z_isprime_nm1()
        
    int result = 1;
    
-   for (unsigned long count = 0; (count < 100000L) && (result == 1); count++)
+   for (unsigned long count = 0; (count < 10000L) && (result == 1); count++)
    { 
-	   unsigned long bits = z_randint(FLINT_D_BITS-2)+2;
+	   unsigned long bits = z_randint(FLINT_BITS-2)+2;
 	   n = random_ulong((1UL<<bits)-2UL)+2; 
       mpz_set_ui(mpz_n, n);
 
@@ -1868,7 +1868,7 @@ int test_z_isprime_nm1()
    
 	for (unsigned long count = 0; (count < 100000L) && (result == 1); count++)
    { 
-	  unsigned long bits = z_randint((FLINT_D_BITS-1)/2 - 1)+1;
+	  unsigned long bits = z_randint((FLINT_BITS-1)/2 - 1)+1;
 	  n = random_ulong((1UL<<bits)-1UL)+1; 
      mpz_set_ui(mpz_n, n);
 
@@ -2093,8 +2093,7 @@ int test_z_factor_trial()
    { 
       orig_n = random_ulong(1000000)+1;
            
-      for (unsigned long j = 0; j < 10; j++)
-         n = z_factor_trial(&factors, orig_n);
+      n = z_factor_trial(&factors, orig_n);
       
       prod = n;
       for (i = 0; i < factors.num; i++)
@@ -2142,23 +2141,15 @@ int test_z_factor_SQUFOF()
       printf("n = %ld\n");
 #endif
 
-      for (unsigned long j = 0; j < 10; j++)
-      {
-         factor = z_factor_SQUFOF(n);
-      }
+      factor = z_factor_SQUFOF(n);
       
-      if (factor) result = (n == factor*(n/factor));
+      result = (n == factor*(n/factor));
 
-#if DEBUG
-      if (!factor) printf("%ld failed to factor\n", n);
-      if (factor) printf("%ld factored\n", n);
       if (!result)
       {
          printf("n = %ld\n", n);
          printf("factors = %ld, %ld\n", factor, n/factor);
       }
-#endif
-
    }  
    
    return result;
@@ -2182,24 +2173,16 @@ int test_z_factor()
       printf("Factoring n = %ld....\n", orig_n);
 #endif
            
-      for (unsigned long j = 0; j < 1; j++)
-         factored = z_factor(&factors, orig_n, 1);
+      z_factor(&factors, orig_n, 1);
       
-      if (factored)
+      prod = 1;
+      for (i = 0; i < factors.num; i++)
       {
-         prod = 1;
-         for (i = 0; i < factors.num; i++)
-         {
-            prod *= z_pow(factors.p[i], factors.exp[i]);
-         }
+         prod *= z_pow(factors.p[i], factors.exp[i]);
+      }
       
-         result = (prod == orig_n);
-      } 
-#if DEBUG
-      else printf("%ld didn't factor\n", orig_n);
-#endif
-
-#if DEBUG      
+      result = (prod == orig_n);
+ 
       if (!result)
       {
          printf("n = %ld: [", orig_n);
@@ -2209,8 +2192,6 @@ int test_z_factor()
          }
          printf("%ld, %ld]\n", factors.p[i], factors.exp[i]);
       }
-#endif
-
    }  
    
    return result;
@@ -2275,7 +2256,7 @@ int test_z_factor_partial()
 		 out*=z_pow(factors.p[j], factors.exp[j]);
 	  }
 
-	  if ((cofactor) && (out*cofactor != n || out <= limit))
+	  if (out*cofactor != n || out <= limit)
 	  {
 		 result = 0;
 #if DEBUG2
