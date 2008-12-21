@@ -7328,17 +7328,21 @@ int fmpz_poly_divides_modular(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_pol
       ulong n_bits = 0;
 		if ((fmpz_poly_CRT(Q, Q, q, newmod, modulus)) || (bits <= (n_bits = fmpz_bits(newmod))) || (bound < n_bits))
 		{
-			if (!n_bits) n_bits = fmpz_bits(newmod);
 			fmpz_poly_mul(P, Q, B);
 			if (fmpz_poly_equal(P, A))
 			{
 				divides = 1;
 				fmpz_clear(newmod);
 				break;
-			} else if (bound < n_bits)
-			{  
-				divides = 0;
-			   break;
+			} else 
+			{
+				if (!n_bits) n_bits = fmpz_bits(newmod);
+			   if (bound < n_bits)
+			   {  
+				   divides = 0;
+			      fmpz_clear(newmod);
+					break;
+				}
 			}
       } 
       
