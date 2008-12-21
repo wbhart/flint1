@@ -5538,6 +5538,7 @@ int test_zmod_poly_factor_square_free()
 	   zmod_poly_clear(quot);
 	   zmod_poly_clear(rem);
 	   zmod_poly_clear(pol1);
+	   zmod_poly_clear(poly);
 	   zmod_poly_factor_clear(res);
    }
 }
@@ -5595,6 +5596,7 @@ int test_zmod_poly_factor_berlekamp()
 	   zmod_poly_clear(quot);
 	   zmod_poly_clear(rem);
 	   zmod_poly_clear(pol1);
+	   zmod_poly_clear(poly);
 	   zmod_poly_factor_clear(res);
    }
 }
