@@ -100,7 +100,7 @@ unsigned long z_randint(unsigned long limit);
 
 unsigned long z_randbits(unsigned long bits);
 
-unsigned long z_randprime(unsigned long bits);
+unsigned long z_randprime(unsigned long bits, int proved);
 
 double z_precompute_inverse(unsigned long n);
 
@@ -201,7 +201,7 @@ int z_isprime_precomp(unsigned long n, double ninv);
 
 int z_miller_rabin_precomp(unsigned long n, double ninv, unsigned long reps);
 
-unsigned long z_nextprime(unsigned long n);
+unsigned long z_nextprime(unsigned long n, int proved);
 
 int z_isprime_pocklington(unsigned long const n, unsigned long const iterations);
 
@@ -261,9 +261,9 @@ unsigned long z_factor_trial(factor_t * factors, unsigned long n);
 
 unsigned long z_factor_SQUFOF(unsigned long n);
 
-int z_factor(factor_t * factors, unsigned long n);
+int z_factor(factor_t * factors, unsigned long n, int proved);
 
-unsigned long z_factor_partial(factor_t * factors, unsigned long n, unsigned long limit);
+unsigned long z_factor_partial(factor_t * factors, unsigned long n, unsigned long limit, int proved);
 
 unsigned long z_primitive_root(unsigned long p);
 

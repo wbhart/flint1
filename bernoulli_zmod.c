@@ -256,7 +256,7 @@ int main (int argc, char const *argv[])
    if (argc == 2)
    {
       unsigned long n = atoi(argv[1]);
-      n = z_nextprime(n);
+      n = z_nextprime(n, 0);
       printf("Computing bernoulli_mod_p(%ld)... ", n);
       if (!test_bernoulli_mod_p(n))
       {
@@ -275,7 +275,7 @@ int main (int argc, char const *argv[])
    
    for(unsigned long i = 0; i < tests; i++)
    {
-      p = z_nextprime(p);
+      p = z_nextprime(p, 0);
       if(!test_bernoulli_mod_p(p))
       {
          printf("Fails on p = %d\n", p);

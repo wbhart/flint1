@@ -104,14 +104,14 @@ unsigned long randprime(unsigned long bits)
 #else
       }  while (rand > 18446744073709551556UL);
 #endif
-      rand = z_nextprime(rand);
+      rand = z_nextprime(rand, 0);
 
    } else
    {
       do
       {
          rand = randbits(bits);
-         rand = z_nextprime(rand);
+         rand = z_nextprime(rand, 0);
       } while ((rand >> bits) > 0L);
    }
    
@@ -5494,7 +5494,7 @@ int test_zmod_poly_factor_square_free()
 		   zmod_poly_make_monic(poly, poly);
 	   }
       while ((!zmod_poly_isirreducible(poly)) || (poly->length < 2));
-      exponents[0] = z_randprime(5);
+      exponents[0] = z_randprime(5, 0);
 		ulong prod1 = exponents[0];
 		for (ulong i = 0; i < exponents[0]; i++) zmod_poly_mul(pol1, pol1, poly);
 		
@@ -5509,7 +5509,7 @@ int test_zmod_poly_factor_square_free()
 			   if (poly->length) zmod_poly_divrem(quot, rem, pol1, poly);
 	      }
          while ((!zmod_poly_isirreducible(poly)) || (poly->length < 2) || (rem->length == 0));
-		   do exponents[i] = z_randprime(5);
+		   do exponents[i] = z_randprime(5, 0);
 			while (prod1 % exponents[i] == 0);
          prod1 *= exponents[i];
 		   for (ulong j = 0; j < exponents[i]; j++) zmod_poly_mul(pol1, pol1, poly);

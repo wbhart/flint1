@@ -265,7 +265,7 @@ int test_z_invert()
 		do
 		{
 			a = z_randbits(bits);
-         b = z_randprime(bits);
+         b = z_randprime(bits, 0);
 		} while (z_gcd(a, b) != 1);
 
 		a = a % b;
@@ -305,7 +305,7 @@ int test_z_gcd_invert()
 		do
 		{
 			a = z_randbits(bits);
-         b = z_randprime(bits);
+         b = z_randprime(bits, 0);
 		} while (z_gcd(a, b) != 1);
 
 		a = a % b;
@@ -1018,7 +1018,7 @@ int test_z_sqrtmod()
    { 
       bits = z_randint(FLINT_D_BITS-1)+1;
       p = random_ulong((1UL<<bits)-1UL)+1; 
-      p = z_nextprime(p);
+      p = z_nextprime(p, 0);
       
       for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
       {
@@ -1072,7 +1072,7 @@ int test_z_cuberootmod()
       bits = z_randint(29)+2;
 #endif
       p = random_ulong((1UL<<bits)-1)+3;
-      p = z_nextprime(p);
+      p = z_nextprime(p, 0);
       
       for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
       {
@@ -1181,7 +1181,7 @@ int test_z_legendre_precomp()
 		ulong bits2 = z_randint(FLINT_BITS-2)+2;
 
 		a = z_randbits(bits1); 
-		m = z_randprime(bits2);
+		m = z_randprime(bits2, 0);
 	   if (m == 2) m++;
 		a = a % m;
 
@@ -1235,7 +1235,7 @@ int test_z_nextprime()
       for (unsigned long i = 0; i < 1; i++)
       {
          mpz_nextprime(mpz_n, mpz_n);
-         n = z_nextprime(n);
+         n = z_nextprime(n, 0);
       }
       res1 = n;
       res2 = mpz_get_ui(mpz_n);
@@ -1285,7 +1285,7 @@ int test_z_ispseudoprime_fermat()
 	for (ulong count = 0; count < FERMAT_COUNT; count++)
    { 
 		ulong bits = z_randint(FLINT_BITS/2 - 2) + 2;
-      n = z_randprime(bits); 
+      n = z_randprime(bits, 0); 
 		n *= z_randint(bits) + 2;
       ulong i = z_randint(1000000)+2;
 	   if ((i % n) == 0) i++;
@@ -1329,7 +1329,7 @@ int test_z_ispseudoprime_lucas()
 	for (ulong count = 0; count < LUCAS_COUNT; count++)
    { 
 		ulong bits = z_randint(FLINT_BITS/2 - 2) + 2;
-      n = z_randprime(bits); 
+      n = z_randprime(bits, 0); 
 		n *= z_randint(bits) + 2;
       if (z_ispseudoprime_lucas(n) != 1) comp++; 
 	}
@@ -1373,7 +1373,7 @@ int test_z_ispseudoprime_lucas_ab()
 	for (ulong count = 0; count < LUCAS2_COUNT; count++)
    { 
 		ulong bits = z_randint(FLINT_BITS/2 - 2) + 2;
-      n = z_randprime(bits); 
+      n = z_randprime(bits, 0); 
 		n *= z_randint(bits) + 2;
       int a = 1;
       int b = 1;
@@ -1420,7 +1420,7 @@ int test_z_isprobab_prime()
 	for (ulong count = 0; (count < PRIME_COUNT) && (result == 1); count++)
    { 
 		ulong bits = z_randint(FLINT_BITS/2 - 2) + 2;
-      n = z_randprime(bits); 
+      n = z_randprime(bits, 0); 
 		n *= z_randint(bits) + 2;
       if (z_isprobab_prime(n)) result = 0; 
 	}
@@ -1467,7 +1467,7 @@ int test_z_isprobab_prime_precomp()
 	for (ulong count = 0; (count < PRIME_COUNT) && (result == 1); count++)
    { 
 		ulong bits = z_randint(FLINT_BITS/2 - 2) + 2;
-      n = z_randprime(bits); 
+      n = z_randprime(bits, 0); 
 		if (n == 2) n++;
 		ulong n1 = z_randint(bits) + 2;
 		if ((n1 & 1L) == 0) n1++;
@@ -1517,7 +1517,7 @@ int test_z_ispseudoprime_fibonacci_precomp()
 	for (ulong count = 0; (count < PRIME_COUNT) && (result == 1); count++)
    { 
 		ulong bits = z_randint(FLINT_BITS/2 - 2) + 2;
-      n = z_randprime(bits); 
+      n = z_randprime(bits, 0); 
 		if (n == 2) n++;
 		ulong n1 = z_randint(bits) + 2;
 		if ((n1 & 1L) == 0) n1++;
@@ -1570,7 +1570,7 @@ int test_z_isprobab_prime_BPSW()
 	for (ulong count = 0; (count < PRIME_COUNT2) && (result == 1); count++)
    { 
 		ulong bits = z_randint(FLINT_BITS/2 - 2) + 2;
-      n = z_randprime(bits); 
+      n = z_randprime(bits, 0); 
 		n *= z_randint(bits) + 2;
       if (z_isprobab_prime_BPSW(n)) result = 0; 
 	}
@@ -1618,7 +1618,7 @@ int test_z_miller_rabin_precomp()
 	for (ulong count = 0; (count < PRIME_COUNT) && (result == 1); count++)
    { 
 		ulong bits = z_randint(FLINT_BITS/2 - 2) + 2;
-      n = z_randprime(bits); 
+      n = z_randprime(bits, 0); 
 		if (n == 2) n++;
 		ulong n1 = z_randint(bits) + 2;
 		if ((n1 & 1L) == 0) n1++;
@@ -1682,7 +1682,7 @@ int test_z_isprime()
 	for (ulong count = 0; (count < PRIME_COUNT) && (result == 1); count++)
    { 
 		ulong bits = z_randint(FLINT_BITS/2 - 2) + 2;
-      n = z_randprime(bits); 
+      n = z_randprime(bits, 0); 
 		n *= z_randint(bits) + 2;
       if (z_isprime(n)) result = 0; 
 	}
@@ -1747,7 +1747,7 @@ int test_z_isprime_precomp()
 	for (ulong count = 0; (count < PRIME_COUNT) && (result == 1); count++)
    { 
 		ulong bits = z_randint(FLINT_BITS/2 - 2) + 2;
-      n = z_randprime(bits); 
+      n = z_randprime(bits, 0); 
 		if (n == 2) n++;
 		ulong n1 = z_randint(bits) + 2;
 		if ((n1 & 1L) == 0L) n1++;
@@ -1858,7 +1858,7 @@ int test_z_isprime_nm1()
       mpz_nextprime(mpz_n, mpz_n);
       res = mpz_get_ui(mpz_n);
 
-      result = (z_isprime_nm1(res, 100));
+      result = (z_isprime_nm1(res, 200));
 		if (result != 1) 
 		{
 			printf("%d, %ld\n", result, res);
@@ -1889,7 +1889,7 @@ int test_z_isprime_nm1()
       mpz_nextprime(mpz_n, mpz_n);
       res2 = mpz_get_ui(mpz_n);
 
-      int resval = z_isprime_nm1(res*res2, 100);
+      int resval = z_isprime_nm1(res*res2, 200);
 
 #if DEBUG2
 	  if (resval < 0L) printf("Failure %ld, %ld, %d\n", res, res2, resval);
@@ -1926,7 +1926,7 @@ int test_z_remove()
          ulong oldn = n;
 		   int exp = z_remove(&n, p);
 			result &= (oldn == n*z_pow(p, exp));
-			p = z_nextprime(p);
+			p = z_nextprime(p, 0);
 		}
                   
       if (!result)
@@ -1938,7 +1938,7 @@ int test_z_remove()
 	   for (unsigned long count = 0; (count < 200) && (result == 1); count++)
 		{
          result &= ((n % p) != 0);
-		   p = z_nextprime(p);
+		   p = z_nextprime(p, 0);
 		}
                                          
       if (!result)
@@ -1970,7 +1970,7 @@ int test_z_remove_precomp()
 			pinv = z_precompute_inverse(p);
 			int exp = z_remove_precomp(&n, p, pinv);
 			result &= (oldn == n*z_pow(p, exp));
-			p = z_nextprime(p);
+			p = z_nextprime(p, 0);
 		}
                   
       if (!result)
@@ -1982,7 +1982,7 @@ int test_z_remove_precomp()
 	   for (unsigned long count = 0; (count < 200) && (result == 1); count++)
 		{
          result &= ((n % p) != 0);
-			p = z_nextprime(p);
+			p = z_nextprime(p, 0);
 		}
                                          
       if (!result)
@@ -2067,7 +2067,7 @@ int test_z_issquarefree()
          n = n*n1;
          for (unsigned long i = 0; i < random_ulong(3)+1; i++)
          {
-            n1 = z_nextprime(n1);
+            n1 = z_nextprime(n1, 0);
          } 
       } while (n*n1 < n2);
       
@@ -2183,7 +2183,7 @@ int test_z_factor()
 #endif
            
       for (unsigned long j = 0; j < 1; j++)
-         factored = z_factor(&factors, orig_n);
+         factored = z_factor(&factors, orig_n, 1);
       
       if (factored)
       {
@@ -2229,7 +2229,7 @@ int test_z_factor_partial()
       orig_n = random_ulong(1000000)+2;
       limit = z_intsqrt(orig_n);
 
-      n = z_factor_partial(&factors, orig_n, limit);
+      n = z_factor_partial(&factors, orig_n, limit, 1);
       
       prod = 1;
       for (i = 0; i < factors.num; i++)
@@ -2267,7 +2267,7 @@ int test_z_factor_partial()
 	  } while (z_isprobab_prime(n));
 
 	  limit = z_randint(n);
-	  cofactor = z_factor_partial(&factors, n, limit);
+	  cofactor = z_factor_partial(&factors, n, limit, 1);
 	  out = 1;
 
 	  for (int j = 0; j < factors.num; j++)
@@ -2297,7 +2297,7 @@ int test_z_primitive_root()
    unsigned long r;
    
    for(int i = 0; i < 100000; i++) {
-      p = z_nextprime(p);
+      p = z_nextprime(p, 0);
       r = z_primitive_root(p);
       if(r == 0) {
          printf("Fails on p=%d\n", p);

@@ -96,7 +96,7 @@ int main()
    
    FILE * file1 = fopen("output.log","w");
    
-   unsigned long T = z_nextprime(START);
+   unsigned long T = z_nextprime(START, 0);
    double Tinv;
    unsigned long cuberoot1;
    unsigned long root1, root2, root3;
@@ -111,7 +111,7 @@ int main()
    for (unsigned long i = 0; i < NUMPRIMES; i++)
    {
       prime[i] = s;
-      s = z_nextprime(s);
+      s = z_nextprime(s, 0);
    }
    for (unsigned long i = 0; i < NUMPRIMES; i++)
    {

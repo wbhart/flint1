@@ -4439,7 +4439,7 @@ int zmod_poly_isirreducible(zmod_poly_t f)
         else
         {
             factor_t factors;
-            z_factor(&factors, n);
+            z_factor(&factors, n, 1);
             for (unsigned long i = 0; i < factors.num; i++)
             {
                zmod_poly_powpowmod(a, x, p, n/factors.p[i], f);

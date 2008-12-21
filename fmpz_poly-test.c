@@ -197,7 +197,7 @@ int test_fmpz_poly_to_zmod_poly_no_red()
       for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
       { 
           length = random_ulong(20);
-			 ulong p = z_nextprime(1L<<(bits+1));
+			 ulong p = z_nextprime(1L<<(bits+1), 0);
 			 zmod_poly_init(test_zmod_poly, p);
 #if DEBUG
           printf("%ld, %ld\n",length, bits);
@@ -12280,12 +12280,12 @@ int test_fmpz_poly_CRT_unsigned()
        fmpz_t modulus = fmpz_init((long) FLINT_MAX(bits-1, 0)/FLINT_BITS+2);
        fmpz_t new_modulus = fmpz_init((long) FLINT_MAX(bits-1, 0)/FLINT_BITS+2);
        
-       primes[0] = z_nextprime(1L<<(FLINT_BITS-2));
+       primes[0] = z_nextprime(1L<<(FLINT_BITS-2), 0);
        fmpz_set_ui(modulus, primes[0]);
        
        while (fmpz_bits(modulus) <= bits)
        {
-          primes[num_primes+1] = z_nextprime(primes[num_primes]);
+          primes[num_primes+1] = z_nextprime(primes[num_primes], 0);
           fmpz_mul_ui(modulus, modulus, primes[num_primes+1]);
           num_primes++;
        }
@@ -12340,12 +12340,12 @@ int test_fmpz_poly_CRT_unsigned()
        unsigned long num_primes = 0;
        fmpz_t modulus = fmpz_init((long) FLINT_MAX(bits-1, 0)/FLINT_BITS+2);
        
-       primes[0] = z_nextprime(1L<<(FLINT_BITS-2));
+       primes[0] = z_nextprime(1L<<(FLINT_BITS-2), 0);
        fmpz_set_ui(modulus, primes[0]);
        
        while (fmpz_bits(modulus) <= bits)
        {
-          primes[num_primes+1] = z_nextprime(primes[num_primes]);
+          primes[num_primes+1] = z_nextprime(primes[num_primes], 0);
           fmpz_mul_ui(modulus, modulus, primes[num_primes+1]);
           num_primes++;
        }
@@ -12419,12 +12419,12 @@ int test_fmpz_poly_CRT()
        fmpz_t modulus = fmpz_init((long) bits/FLINT_BITS+2);
        fmpz_t new_modulus = fmpz_init((long) bits/FLINT_BITS+2);
        
-       primes[0] = z_nextprime(1L<<(FLINT_BITS-2));
+       primes[0] = z_nextprime(1L<<(FLINT_BITS-2), 0);
        fmpz_set_ui(modulus, primes[0]);
        
        while (fmpz_bits(modulus) <= bits + 1)
        {
-          primes[num_primes+1] = z_nextprime(primes[num_primes]);
+          primes[num_primes+1] = z_nextprime(primes[num_primes], 0);
           fmpz_mul_ui(modulus, modulus, primes[num_primes+1]);
           num_primes++;
        }
@@ -12480,12 +12480,12 @@ int test_fmpz_poly_CRT()
        fmpz_t modulus = fmpz_init((long) bits/FLINT_BITS+2);
        fmpz_t modulus2 = fmpz_init((long) bits/FLINT_BITS+2);
        
-       primes[0] = z_nextprime(1L<<(FLINT_BITS-2));
+       primes[0] = z_nextprime(1L<<(FLINT_BITS-2), 0);
        fmpz_set_ui(modulus, primes[0]);
        
        while (fmpz_bits(modulus) <= bits + 1)
        {
-          primes[num_primes+1] = z_nextprime(primes[num_primes]);
+          primes[num_primes+1] = z_nextprime(primes[num_primes], 0);
           fmpz_mul_ui(modulus, modulus, primes[num_primes+1]);
           num_primes++;
        }

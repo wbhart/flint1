@@ -2263,10 +2263,10 @@ This is a deterministic prime test up to $10^16$. Requires \code{n} to be at mos
 \end{quote}
 
 \begin{lstlisting}
-unsigned long z_nextprime(unsigned long n)
+unsigned long z_nextprime(unsigned long n, int proved)
 \end{lstlisting}
 \begin{quote}
-Returns the next prime after \code{n}.  Assumes the result will fit in an unsigned long.  Note the prime returned is NOT proven prime.  To prove it prime, use \code{z_isprime}. 
+Returns the next prime after \code{n}.  Assumes the result will fit in an unsigned long.  If \code{proved} is 0 the prime is not proven prime, otherwise it is.
 \end{quote}
 
 \begin{lstlisting}
@@ -2375,18 +2375,18 @@ Removes the highest power of \code{p} possible from \code{n} and returns the exp
 \end{quote}
 
 \begin{lstlisting}
-int z_factor(factor_t * factors, unsigned long n)
+int z_factor(factor_t * factors, unsigned long n, int proved)
 \end{lstlisting}
 \begin{quote}
-Find the factors of \code{n}.  This function may fail if \code{n} is so large that SQUFOF multipliers (rarely up to 1000) times \code{n} push it over a limb in size.  If factoring fails (very rare), this function returns 0, else it returns 1.  
+Find the factors of \code{n}.  This function may fail if \code{n} is so large that SQUFOF multipliers (rarely up to 1000) times \code{n} push it over a limb in size.  If factoring fails (very rare), this function returns 0, else it returns 1. If \code{proved} is set to 0 then the factors are not proved prime, otherwise the result is proved.
 \end{quote}
 
 \begin{lstlisting}
 unsigned long z_factor_partial(factor_t * factors,
-               unsigned long n, unsigned long limit)
+               unsigned long n, unsigned long limit, int proved)
 \end{lstlisting}
 \begin{quote}
-Factors \code{n} until the product of the factor found is $>$ \code{limit}. It puts the factors in \code{factors} and returns the cofactor.  If factorisation cannot be achieved as \code{n} is too large (for SQUFOF), 0 is returned.  
+Factors \code{n} until the product of the factor found is $>$ \code{limit}. It puts the factors in \code{factors} and returns the cofactor.  If factorisation cannot be achieved as \code{n} is too large (for SQUFOF), 0 is returned.  If \code{proved} is set to 0 then the factors are not proved prime, otherwise the result is proved.
 \end{quote}
 
 \begin{lstlisting}
@@ -2404,10 +2404,10 @@ Returns a random uniformly distributed integer with up to the given number of bi
 \end{quote}
 
 \begin{lstlisting}
-unsigned long z_randprime(unsigned long bits)
+unsigned long z_randprime(unsigned long bits, int proved)
 \end{lstlisting}
 \begin{quote}
-Returns a random prime integer with up to the given number of bits.  Assumes \code{bits}>1. Note the prime returned is not proved prime.
+Returns a random prime integer with up to the given number of bits.  Assumes \code{bits}>1. If \code{proved} is 0 then the prime is not proven prime, otherwise it is.
 \end{quote}
 
 \section{The mpn\_extras module}

@@ -1619,12 +1619,12 @@ int test_fmpz_CRT_ui_precomp()
        unsigned long num_primes = 0;
        fmpz_t modulus = fmpz_init((long) FLINT_MAX(bits2-1, 0)/FLINT_BITS+2);
        
-       primes[0] = z_nextprime(1L<<(FLINT_D_BITS-2));
+       primes[0] = z_nextprime(1L<<(FLINT_D_BITS-2), 0);
        fmpz_set_ui(modulus, primes[0]);
        
        while (fmpz_cmpabs(modulus, fnum1) <= 0)
        {
-          primes[num_primes+1] = z_nextprime(primes[num_primes]);
+          primes[num_primes+1] = z_nextprime(primes[num_primes], 0);
           fmpz_mul_ui(modulus, modulus, primes[num_primes+1]);
           num_primes++;
        }
@@ -1694,12 +1694,12 @@ int test_fmpz_CRT_ui2_precomp()
        unsigned long num_primes = 0;
        fmpz_t modulus = fmpz_init((long) FLINT_MAX(bits2-1, 0)/FLINT_BITS+2);
        
-       primes[0] = z_nextprime(1L<<(FLINT_BITS-2));
+       primes[0] = z_nextprime(1L<<(FLINT_BITS-2), 0);
        fmpz_set_ui(modulus, primes[0]);
        
        while (fmpz_cmpabs(modulus, fnum1) <= 0)
        {
-          primes[num_primes+1] = z_nextprime(primes[num_primes]);
+          primes[num_primes+1] = z_nextprime(primes[num_primes], 0);
           fmpz_mul_ui(modulus, modulus, primes[num_primes+1]);
           num_primes++;
        }
@@ -1795,11 +1795,11 @@ int test_fmpz_comb_init_clear()
       unsigned long n = random_ulong(10);
       unsigned long num_primes = (1L<<n);
       unsigned long * primes = (unsigned long *) flint_heap_alloc(num_primes);
-      unsigned long p = z_nextprime((1UL<<(FLINT_BITS-1))-10000000L);
+      unsigned long p = z_nextprime((1UL<<(FLINT_BITS-1))-10000000L, 0);
       for (unsigned long i = 0; i < num_primes; i++)
       {
 	      primes[i] = p;
-	      p = z_nextprime(p);
+	      p = z_nextprime(p, 0);
       }
 #if DEBUG
       printf("n = %ld, num_primes = %ld\n", n, num_primes);
@@ -1834,11 +1834,11 @@ int test_fmpz_multi_CRT_ui_unsigned()
       printf("bits = %ld, num_primes = %ld\n", bits, num_primes);
 #endif
       unsigned long * primes = (unsigned long *) flint_heap_alloc(num_primes);
-      unsigned long prime = z_nextprime((1UL<<(FLINT_BITS-1))-10000000L);
+      unsigned long prime = z_nextprime((1UL<<(FLINT_BITS-1))-10000000L, 0);
       for (unsigned long j = 0; j < num_primes; j++)
       {
          primes[j] = prime;
-         prime = z_nextprime(prime);
+         prime = z_nextprime(prime, 0);
       }
 		unsigned long limbs = (bits-1)/FLINT_BITS + 1;
 	   input = fmpz_init(limbs);
@@ -1898,11 +1898,11 @@ int test_fmpz_multi_CRT_ui()
       printf("bits = %ld, num_primes = %ld\n", bits, num_primes);
 #endif
       unsigned long * primes = (unsigned long *) flint_heap_alloc(num_primes);
-      unsigned long prime = z_nextprime((1UL<<(FLINT_BITS-1))-10000000L);
+      unsigned long prime = z_nextprime((1UL<<(FLINT_BITS-1))-10000000L, 0);
       for (unsigned long j = 0; j < num_primes; j++)
       {
          primes[j] = prime;
-         prime = z_nextprime(prime);
+         prime = z_nextprime(prime, 0);
       }
       unsigned long limbs = num_primes;
 	   input = fmpz_init(limbs);

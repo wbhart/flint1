@@ -190,7 +190,7 @@ unsigned long knuth_schroeppel(QS_t * qs_inf)
                  factors[multindex] += 2.0*logpdivp;
           }
           
-          prime = z_nextprime(prime);
+          prime = z_nextprime(prime, 0);
     }
     
     for (multindex=0; multindex<NUMMULTS; multindex++)
@@ -234,7 +234,7 @@ unsigned long compute_factor_base(QS_t * qs_inf)
    
    while (fb_prime < num_primes)
    {
-      prime = z_nextprime(prime);
+      prime = z_nextprime(prime, 0);
       pinv = z_precompute_inverse(prime);
       nmod = mpn_mod_1(n + 1, n[0], prime);
       if (nmod == 0) 

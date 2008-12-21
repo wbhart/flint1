@@ -2944,11 +2944,11 @@ void _fmpz_poly_mul_modular(fmpz_poly_t output, const fmpz_poly_t poly1,
 									 const fmpz_poly_t poly2, const ulong bits_in)
 {
 #if FLINT_BITS == 32
-    unsigned long p0 = z_nextprime(1UL << 30);
+    unsigned long p0 = z_nextprime(1UL << 30, 0);
     // primes_per_limb = 32/log2(p0)
     double primes_per_limb = 1.067;
 #elif FLINT_BITS == 64
-    unsigned long p0 = z_nextprime(1L << 62);
+    unsigned long p0 = z_nextprime(1L << 62, 0);
     // primes_per_limb = 64/log2(p0)
     double primes_per_limb = 1.0323;
 #else
@@ -2977,7 +2977,7 @@ void _fmpz_poly_mul_modular(fmpz_poly_t output, const fmpz_poly_t poly1,
     unsigned long p = p0;
     for(unsigned long i = 0; i < numprimes; i++) {
         primes[i] = p;
-        p = z_nextprime(p);
+        p = z_nextprime(p, 0);
     }
 
     // precomputation space
@@ -7274,7 +7274,7 @@ int fmpz_poly_divides_modular(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_pol
          zmod_poly_clear(q); 
          zmod_poly_clear(r); 
       } else first = 0;
-      do { p = z_nextprime(p); }
+      do { p = z_nextprime(p, 0); }
       while ((!fmpz_mod_ui(lead_A, p)) || (!fmpz_mod_ui(lead_B, p))); 
 
 		zmod_poly_init(a, p);
@@ -9152,7 +9152,7 @@ void fmpz_poly_gcd_modular(fmpz_poly_t H, const fmpz_poly_t poly1,
          zmod_poly_clear(b);
          zmod_poly_clear(h); 
       } else first = 0;
-      do { p = z_nextprime(p); }
+      do { p = z_nextprime(p, 0); }
       while (!fmpz_mod_ui(g, p)); 
       zmod_poly_init(a, p);
       zmod_poly_init(b, p);
@@ -9689,7 +9689,7 @@ void fmpz_poly_invmod_modular(fmpz_t d, fmpz_poly_t H, fmpz_poly_t poly1, fmpz_p
          zmod_poly_clear(b);
          zmod_poly_clear(h); 
       } 
-      p = z_nextprime(p);  
+      p = z_nextprime(p, 0);  
       zmod_poly_init(a, p);
       zmod_poly_init(b, p);
       zmod_poly_init(h, p);
@@ -9784,7 +9784,7 @@ void fmpz_poly_xgcd_modular(fmpz_t r, fmpz_poly_t s, fmpz_poly_t t, fmpz_poly_t 
    int first = 1;
    
    for (;;) {
-      p = z_nextprime(p);
+      p = z_nextprime(p, 0);
 
       unsigned long R = fmpz_mod_ui(r, p);
 
@@ -9973,7 +9973,7 @@ void fmpz_poly_resultant(fmpz_t res, fmpz_poly_t a, fmpz_poly_t b)
       if (fmpz_bits(prod) > bound)
          break;
 
-      p = z_nextprime(p);
+      p = z_nextprime(p, 0);
 
       if ((fmpz_mod_ui(_fmpz_poly_lead(a), p) == 0L) || (fmpz_mod_ui(_fmpz_poly_lead(b), p) == 0L))
          continue;

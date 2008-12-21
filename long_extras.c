@@ -75,10 +75,11 @@ unsigned long z_randbits(unsigned long bits)
 }
 
 /*
-   Generates a random prime of _bits_ bits
+   Generates a random prime of _bits_ bits.
+	If proved is o (false) the prime is not proven prime, otherwise it is.
 */
 
-unsigned long z_randprime(unsigned long bits)
+unsigned long z_randprime(unsigned long bits, int proved)
 {
 	unsigned long limit, rand;
    
@@ -99,14 +100,14 @@ unsigned long z_randprime(unsigned long bits)
 #else
 	    }  while (rand > 18446744073709551556UL);
 #endif
-	    rand = z_nextprime(rand);
+	    rand = z_nextprime(rand, proved);
 
     } else
     {
 	   do
 	   {
 	      rand = z_randbits(bits);
-		  rand = z_nextprime(rand);
+		  rand = z_nextprime(rand, proved);
 	   } while ((rand >> bits) > 0L);
    }
    
@@ -985,11 +986,11 @@ unsigned int nextindex[] =
 /* 
     Returns the next prime after n 
     Assumes the result will fit in an unsigned long
-	 Note the prime returned is *NOT* proven prime.
-	 To prove it prime, use z_isprime_pocklington.
+	 If proved is o (false) the prime is not proven prime, 
+	 otherwise it is.
 */
 
-unsigned long z_nextprime(unsigned long n)
+unsigned long z_nextprime(unsigned long n, int proved)
 {
    if (n < 7) 
    {
@@ -1045,7 +1046,7 @@ unsigned long z_nextprime(unsigned long n)
          continue;
       }
        
-      if (z_isprobab_prime(n)) break;
+      if ((!proved && z_isprobab_prime(n)) || (proved && z_isprime(n))) break;
       else
       {
          n += diff;
@@ -1083,7 +1084,7 @@ int z_isprime_pocklington(unsigned long const n, unsigned long const iterations)
 	factors.num = 0;
 	sqrt = z_intsqrt(n1);
 
-	if(!z_factor_partial(&factors, n1, sqrt))
+	if(!z_factor_partial(&factors, n1, sqrt, 1))
 	{
 		return -2;
 	}
@@ -1176,7 +1177,7 @@ int z_isprime_nm1(unsigned long const n, unsigned long const iterations)
 	factors.num = 0;
 	cuberoot = z_intcuberoot(n);
 	
-	cofactor = z_factor_partial(&factors, n1, cuberoot);
+	cofactor = z_factor_partial(&factors, n1, cuberoot, 1);
 
 	if(!cofactor) return -2; // factorisation failed
 	
@@ -1909,10 +1910,12 @@ unsigned long z_factor_partial_trial(factor_t * factors, unsigned long * prod, u
 /*
    Factors _n_ until the product of the factor found is > _limit_. It puts the factors
    in _factors_ and returns the cofactor.
-   If factorisation cannot be achieved as n is too large (for SQUFOF), 0 is returned
+   If factorisation cannot be achieved as n is too large (for SQUFOF), 0 is returned.
+	If proved is 0 (false) the factors are not proved prime, otherwise the result is
+	proved.
 */
 
-unsigned long z_factor_partial(factor_t * factors, unsigned long n, unsigned long limit)
+unsigned long z_factor_partial(factor_t * factors, unsigned long n, unsigned long limit, int proved)
 {
 	unsigned long prod, cofactor;
 	unsigned long factor_arr[TF_FACTORS_IN_LIMB];
@@ -1929,7 +1932,7 @@ unsigned long z_factor_partial(factor_t * factors, unsigned long n, unsigned lon
 		{
 			factor = factor_arr[factors_left-1];
 			
-			if ((factor < cutoff) || z_isprobab_prime(factor))
+			if ((factor < cutoff) || (proved && z_isprime(factor)) || (!proved && z_isprobab_prime(factor)))
 			{
 				insert_factor(factors, factor);
 				prod *= factor;
@@ -2064,14 +2067,16 @@ unsigned long z_factor_SQUFOF(unsigned long n)
 }
 
 /*
-   Find the factors of n
+   Find the factors of n.
    This function may fail if n is so large that SQUFOF multipliers
-   (rarely up to 1000) times n push it over a limb in size
+   (rarely up to 1000) times n push it over a limb in size.
    If factoring fails (very rare), this function returns 0, 
-   else it returns 1
+   else it returns 1.
+	If proved is 0 the factors are not proved prime, otherwise the
+	result is proved.
 */
 
-int z_factor(factor_t * factors, unsigned long n)
+int z_factor(factor_t * factors, unsigned long n, int proved)
 {
    unsigned long cofactor;
    unsigned long factor_arr[TF_FACTORS_IN_LIMB];
@@ -2088,7 +2093,7 @@ int z_factor(factor_t * factors, unsigned long n)
       while (factors_left > 0)
       {
          factor = factor_arr[factors_left-1]; 
-         if ((factor < cutoff) || z_isprobab_prime(factor))
+         if ((factor < cutoff) ||  (proved && z_isprime(factor)) || (!proved && z_isprobab_prime(factor)))
          {
             insert_factor(factors, factor);
             factors_left--;
@@ -2119,7 +2124,7 @@ unsigned long z_primitive_root(unsigned long p)
    unsigned long res;
    factor_t factors;
    
-   if(z_factor(&factors, (p - 1)) == 0)
+   if(z_factor(&factors, (p - 1), 1) == 0)
    {
       return 0;
    }
@@ -2147,7 +2152,7 @@ unsigned long z_primitive_root_precomp(unsigned long p, double p_inv)
    unsigned long res;
    factor_t factors;
    
-   if(z_factor(&factors, (p - 1)) == 0)
+   if(z_factor(&factors, (p - 1), 1) == 0)
    {
       return 0;
    }

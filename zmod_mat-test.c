@@ -75,7 +75,7 @@ int test_zmod_mat_row_reduce_gauss()
    {
       bits = z_randint(FLINT_BITS-2)+2;
       
-      do {modulus = z_randprime(bits);} while (modulus < 2);
+      do {modulus = z_randprime(bits, 0);} while (modulus < 2);
       
 	  ulong rows = z_randint(200);
 	  ulong cols = z_randint(200);
