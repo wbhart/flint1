@@ -10589,7 +10589,7 @@ void fmpz_poly_compose_combined(fmpz_poly_t output, fmpz_poly_t poly, fmpz_poly_
 	}
 	
 	for (ulong i = 0; i < short_length; i++) fmpz_poly_clear(temp[i]);
-	flint_heap_clear(temp);
+	flint_heap_free(temp);
 }
 
 void fmpz_poly_compose(fmpz_poly_t output, fmpz_poly_t poly, fmpz_poly_t val)

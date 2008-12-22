@@ -670,7 +670,7 @@ char* profDriverString_fmpz_poly_mul(char* params)
  
 char* profDriverDefaultParams_fmpz_poly_mul()
 {
-   return "16000000 1.2";
+   return "8000000 1.2";
 }
  
 void profDriver_fmpz_poly_mul(char* params)
