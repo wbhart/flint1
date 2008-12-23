@@ -454,8 +454,13 @@ void fmpz_mul(fmpz_t res, const fmpz_t a, const fmpz_t b)
       } else if (sizea + sizeb < 100)
       {
          temp = (fmpz_t) flint_stack_alloc_small(sizea + sizeb + 1);
-         if (sizea >= sizeb) mslimb = mpn_mul(temp+1, a+1, sizea, b+1, sizeb);
-         else mslimb = mpn_mul(temp+1, b+1, sizeb, a+1, sizea);
+         if (sizea > sizeb) mslimb = mpn_mul(temp+1, a+1, sizea, b+1, sizeb);
+         else if (sizea == sizeb) 
+			{
+				mpn_mul_n(temp+1, a+1, b+1, sizeb);
+				mslimb = temp[2*sizeb];
+			}
+			else mslimb = mpn_mul(temp+1, b+1, sizeb, a+1, sizea);
          temp[0] = sizea + sizeb - (mslimb == 0);
          F_mpn_copy(res, temp, temp[0]+1);
          if ((long) (a0 ^ b0) < 0) res[0] = -res[0];
@@ -463,8 +468,13 @@ void fmpz_mul(fmpz_t res, const fmpz_t a, const fmpz_t b)
       } else if (sizea + sizeb < 2*FLINT_FFT_LIMBS_CROSSOVER)
       {
          temp = (fmpz_t) flint_stack_alloc(sizea + sizeb + 1);
-         if (sizea >= sizeb) mslimb = mpn_mul(temp+1, a+1, sizea, b+1, sizeb);
-         else mslimb = mpn_mul(temp+1, b+1, sizeb, a+1, sizea);
+         if (sizea > sizeb) mslimb = mpn_mul(temp+1, a+1, sizea, b+1, sizeb);
+			else if (sizea == sizeb) 
+			{
+				mpn_mul_n(temp+1, a+1, b+1, sizeb);
+				mslimb = temp[2*sizeb];
+			}
+			else mslimb = mpn_mul(temp+1, b+1, sizeb, a+1, sizea);
          temp[0] = sizea + sizeb - (mslimb == 0);
          F_mpn_copy(res, temp, temp[0]+1);
          if ((long) (a0 ^ b0) < 0) res[0] = -res[0];

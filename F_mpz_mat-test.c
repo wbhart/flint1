@@ -557,6 +557,48 @@ int test_F_mpz_mat_equal()
    return result;
 }
 
+int test_F_mpz_mat_resize()
+{
+   mpz_mat_t m_mat1, m_mat2;
+   F_mpz_mat_t F_mat1, F_mat2;
+   int result = 1;
+   ulong bits, r, c, r_add, c_add;
+   
+   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
+   {
+      bits = z_randint(200) + 1;
+      r = z_randint(30);
+      c = z_randint(30);
+      
+		F_mpz_mat_init(F_mat1, r, c);
+      F_mpz_mat_init(F_mat2, r, c);
+      mpz_mat_init(m_mat1, r, c); 
+      
+      mpz_randmat(m_mat1, r, c, bits);
+           
+      mpz_mat_to_F_mpz_mat(F_mat1, m_mat1);
+      F_mpz_mat_set(F_mat2, F_mat1);
+		
+		r_add = z_randint(30);
+      c_add = z_randint(30);
+		
+		F_mpz_mat_resize(F_mat1, r + r_add, c + c_add);
+      F_mpz_mat_resize(F_mat1, r, c);
+      
+      result = F_mpz_mat_equal(F_mat1, F_mat2); 
+		if (!result) 
+		{
+			printf("Error: r = %ld, c = %ld, bits = %ld, r_add = %ld, c_add = %ld\n", r, c, bits, r_add, c_add);
+		}
+          
+      F_mpz_mat_clear(F_mat1);
+      F_mpz_mat_clear(F_mat2);
+		mpz_mat_clear(m_mat1);
+   }
+   
+   return result;
+}
+
 int test_F_mpz_mat_neg()
 {
    F_mpz_mat_t F_mat1, F_mat2, F_mat3, F_mat4;
@@ -1373,6 +1415,7 @@ void F_mpz_mat_test_all()
    RUN_TEST(F_mpz_mat_convert); 
    RUN_TEST(F_mpz_mat_set); 
    RUN_TEST(F_mpz_mat_equal);  
+   RUN_TEST(F_mpz_mat_resize);  
    RUN_TEST(F_mpz_mat_neg); 
    RUN_TEST(F_mpz_mat_add); 
    RUN_TEST(F_mpz_mat_sub); 

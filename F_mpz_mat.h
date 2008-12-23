@@ -60,6 +60,10 @@ entry is stored in twos complement format.
 
 "c" is the number of columns
 
+"r_alloc" is the number of rows allocated
+
+"c_alloc" is the number of columns allocated
+
 "rows" is an array of pointers to the starts of rows of mat
 
 ================================================================================*/
@@ -69,6 +73,8 @@ typedef struct
    F_mpz * entries;
    ulong r;
 	ulong c;
+	ulong r_alloc; 
+	ulong c_alloc;
 	F_mpz ** rows;
 } F_mpz_mat_struct;
 
@@ -92,6 +98,14 @@ void F_mpz_mat_init(F_mpz_mat_t mat, ulong r, ulong c);
    \brief  Clear the matrix, releasing any memory it was using.
 */
 void F_mpz_mat_clear(F_mpz_mat_t mat);
+
+/** 
+   \fn     void F_mpz_mat_resize(F_mpz_mat_t mat, const ulong r, const ulong c)
+   \brief  Resize the matrix to have r rows and c columns. Existing data is preserved
+	        where possible (i.e. for old rows and columns upto the new r and c) and
+			  zeroes are added elsewhere (if c or r grows).
+*/
+void F_mpz_mat_resize(F_mpz_mat_t mat, const ulong r, const ulong c);
 
 /*===============================================================================
 

@@ -57,6 +57,8 @@ void F_mpz_mat_init(F_mpz_mat_t mat, const ulong r, const ulong c)
    
 	mat->r = r;
 	mat->c = c;
+	mat->r_alloc = r;
+	mat->c_alloc = c;
 }
 
 void F_mpz_mat_clear(F_mpz_mat_t mat)
@@ -67,6 +69,171 @@ void F_mpz_mat_clear(F_mpz_mat_t mat)
 			F_mpz_clear(mat->entries + i); // Clear all coefficients
 		flint_heap_free(mat->entries); // clean up array of entries
 		flint_heap_free(mat->rows); // clean up row array
+	}
+}
+
+// Todo : add r_alloc_new which should be 8 more than r if new rows need to be allocated
+// allocate that many rows instead of r rows
+
+void F_mpz_mat_resize(F_mpz_mat_t mat, const ulong r, const ulong c)
+{
+	if (!mat->entries) // matrix has zero rows or columns, so we can just init
+	{
+		F_mpz_mat_init(mat, r, c);
+		return;
+	}
+	
+	if ((r == 0) || (c == 0)) // clear everything
+	{
+		for (ulong i = 0; i < mat->r; i++)
+			for (ulong j = 0; j < mat->c; j++)
+				F_mpz_zero(mat->rows[i] + j);
+
+		mat->r = 0;
+		mat->c = 0;
+
+		return;
+	}
+
+	if (c <= mat->c_alloc) // don't need to alloc new columns
+	{
+		if (c < mat->c) // need to clear some columns
+		{
+			for (ulong i = 0; i < mat->r; i++)
+            for (ulong j = c; j < mat->c; j++)
+				   F_mpz_zero(mat->rows[i] + j);
+		} 
+
+		mat->c = c;
+		
+		if (r <= mat->r_alloc) // don't need to realloc rows
+	   {
+	      if (r < mat->r) // need to clear rows, but not realloc
+		   {
+			   for (long i = mat->r - 1; i >= r; i--)
+				{
+               F_mpz * start = mat->entries + i*mat->c_alloc; // Start of physically last row in memory
+					
+					if (mat->rows[i] == start) // row to be removed is physically last in memory
+					{
+					   for (ulong j = 0; j < mat->c; j++) // zero row to be removed
+						   F_mpz_zero(mat->rows[i] + j);
+					} else
+					{
+						ulong k;
+						for (k = 0; k < mat->r - 1; k++) // find which row is physically last in memory
+							if (mat->rows[k] == start) break;
+
+                  for (ulong j = 0; j < mat->c; j++) // move row which is physically last with row i
+						   F_mpz_swap(mat->rows[k] + j, mat->rows[i] + j);
+						
+						F_mpz * temp = mat->rows[k]; // swap pointers in row array
+						mat->rows[k] = mat->rows[i];
+						mat->rows[i] = temp;
+
+                  for (ulong j = 0; j < mat->c; j++) // zero row to be removed which is now physically last
+						   F_mpz_zero(start + j);
+					}
+				}
+		   } 			
+		} else // need to alloc new rows
+		{
+         F_mpz * old_entries = mat->entries; // save pointer to old entries
+
+			mat->entries = (mp_limb_t *) flint_heap_realloc(mat->entries, r*mat->c_alloc);
+			if (r > mat->r_alloc) mat->rows = (F_mpz **) flint_heap_realloc(mat->rows, r);
+			mat->r_alloc = r;
+
+			long diff = mat->entries - old_entries;
+			for (ulong i = 0; i < mat->r; i++) // update row pointers
+			   mat->rows[i] += diff;
+ 
+			for (ulong i = mat->r; i < r; i++) // clear new rows
+			{
+				mat->rows[i] = mat->entries + mat->c_alloc*i; // add pointers to new rows
+				for (ulong j = 0; j < mat->c_alloc; j++)
+		         mat->rows[i][j] = 0L;
+			}
+		} 
+	   
+		mat->r = r;
+	} else // need to alloc new columns
+	{
+		if (r*c > mat->r_alloc*mat->c_alloc) // need to realloc
+		{
+         F_mpz * old_entries = mat->entries; // save pointer to old entries
+
+			mat->entries = (mp_limb_t *) flint_heap_realloc(mat->entries, r*c);
+			if (r > mat->r_alloc) 
+			   mat->rows = (F_mpz **) flint_heap_realloc(mat->rows, r);
+
+			for (ulong i = mat->r_alloc*mat->c_alloc; i < r*c; i++) // clear new entries
+			   mat->entries[i] = 0L;
+
+			long diff = mat->entries - old_entries;
+			for (ulong i = 0; i < mat->r; i++) // update row pointers
+			   mat->rows[i] += diff;
+		}
+
+	   if (r < mat->r) // need to clear some existing rows
+		{
+			for (ulong i = mat->r - 1; i >= r; i--)
+		   {
+            F_mpz * start = mat->entries + i*mat->c_alloc; // Start of physically last row in memory
+					
+			   if (mat->rows[i] == start) // row to be removed is physically last in memory
+				{
+					for (ulong j = 0; j < mat->c; j++) // zero row to be removed
+						F_mpz_zero(mat->rows[i] + j);
+				} else
+				{
+					ulong k;
+					for (k = 0; k < mat->r - 1; k++) // find which row is physically last in memory
+						if (mat->rows[k] == start) break;
+
+               for (ulong j = 0; j < mat->c; j++) // move row which is physically last with row i
+						F_mpz_swap(mat->rows[k] + j, mat->rows[i] + j);
+						
+					F_mpz * temp = mat->rows[k]; // swap pointers in row array
+					mat->rows[k] = mat->rows[i];
+					mat->rows[i] = temp;
+
+               for (ulong j = 0; j < mat->c; j++) // zero row to be removed which is now physically last
+						F_mpz_zero(start + j);
+				}
+			}
+
+			mat->r = r; // need to set mat->r so we know how many rows to move below
+		}
+
+		for (long i = mat->r - 1; i > 0L; i--) // move rows into new positions, 
+			                                    // starting from physically last in memory 
+															// first row stays where it is
+		{
+         F_mpz * start_old = mat->entries + i*mat->c_alloc;
+			F_mpz * start_new = mat->entries + i*c;
+			for (long j = mat->c - 1; j >= 0L; j--)
+			{
+				start_new[j] = start_old[j]; // copy entry data forwards
+				start_old[j] = 0L; // zero old entry data
+			}
+		}
+
+		// update old row pointers
+		for (ulong i = 0; i < mat->r; i++)
+		{ 
+			ulong phys_row = (mat->rows[i] - mat->entries)/mat->c_alloc;
+         mat->rows[i] = mat->entries + phys_row*c;
+		}
+
+		// put in new row pointers (if any)
+		for (ulong i = mat->r; i < r; i++)
+		   mat->rows[i] = mat->entries + c*i;
+
+		mat->c_alloc = c;
+		mat->r_alloc = r;
+		mat->r = r;
+		mat->c = c;
 	}
 }
 

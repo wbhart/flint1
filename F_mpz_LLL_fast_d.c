@@ -48,8 +48,7 @@
 
 #define LOOPS_BABAI 10
 
-/* computes the prec MSBs of the inner product of the approximate 
-   vec1 and vec2. */
+/* Computes the largest number of non-zero entries after the diagonal. */
 
 ulong getShift(F_mpz_mat_t B)
 {
@@ -58,7 +57,7 @@ ulong getShift(F_mpz_mat_t B)
    for (ulong i = 0; i < B->r; i++)
    {
       ulong j;
-      for (j = n - 1; j >= 0 && F_mpz_size(B->rows[i] + j) == 0L; j--);  
+      for (j = n - 1; j >= i + shift + 1 && F_mpz_size(B->rows[i] + j) == 0L; j--);  
       
       if (shift < j - i) shift = j - i;
       
@@ -72,10 +71,16 @@ ulong getShift(F_mpz_mat_t B)
 /***********************************/
 
 /* 
-   Size-reduces b_kappa using mu_ij and r_ij for j <= i < kappa
-   updates B(kappa)
-   computes mu_kappaj, r_kappaj for j <= kappa, and s(kappa) 
-   The algorithm is the iterative Babai algorithm of the paper
+   Computes mu[kappa][j] and r[kappa][j] for j < kappa.
+	
+	Size-reduces b_kappa using r[i][j] for j <= i < kappa
+   and mu[i][j] for j < i < kappa.
+	
+	Compute s(kappa).
+   
+	Updates B(kappa).
+   
+	The algorithm is the iterative Babai algorithm of the paper.
 */
 
 void Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s, 
@@ -106,7 +111,7 @@ void Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
       
       for (j = aa; j < kappa; j++)
 	   {	  
-	      if (appSP[kappa][j] != appSP[kappa][j])
+	      if (appSP[kappa][j] != appSP[kappa][j]) // if appSP[kappa][j] == NAN
 	      {
 	         appSP[kappa][j] = d_vec_scalar_product(appB[kappa], appB[j], n);
 	      }
@@ -176,7 +181,7 @@ void Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
 
 	            if ((tmp < (double) MAX_LONG) &&(tmp > (double) -MAX_LONG))  
 		         {
-		            tmp = rint (tmp);
+		            tmp = rint (tmp); 
 		      
 		            for (k = zeros + 1; k < j; k++)
 			         {
@@ -317,7 +322,8 @@ void LLL(F_mpz_mat_t B)
   
    do
       appSP[i][i] = d_vec_norm(appB[i], n); 
-   while ((appSP[i][i] <= 0.0) && (++i < d));
+   while ((appSP[i][i] <= 0.0) && (++i < d)); // Fixme : should this be EPS not 0.0
+
    zeros = i - 1; /* all vectors B[i] with i <= zeros are zero vectors */
    kappa = i + 1;
   
@@ -328,7 +334,7 @@ void LLL(F_mpz_mat_t B)
     
    while (kappa < d)
    {      
-      if (kappa > kappamax) kappamax++;
+      if (kappa > kappamax) kappamax++; // Fixme : should this be kappamax = kappa instead of kappamax++
 
       /* ********************************** */
       /* Step3: Call to the Babai algorithm */

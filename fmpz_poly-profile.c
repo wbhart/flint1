@@ -65,7 +65,7 @@ void randpoly(mpz_poly_t pol, unsigned long length, unsigned long maxbits)
        if (bits == 0) mpz_set_ui(temp,0);
        else 
        {
-          mpz_rrandomb(temp, randstate, bits);
+          mpz_urandomb(temp, randstate, bits);
 			 if (randint(2)) mpz_clrbit(temp, bits-1);
 #if SIGNS
           if (randint(2)) mpz_neg(temp,temp);
