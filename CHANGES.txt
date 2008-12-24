@@ -164,5 +164,6 @@ v 1.1.0 (some of the following features were previewed in FLINT 1.0.11):
    * Quick and dirty timing function for profiler
    * Tiny quadratic sieve for small one and two limb integers
    * Completely rewritten self initialising multiple polynomial quadratic sieve
-   
+   * Build fix for 64 bit OSX dylibs (reported by Michael Abshoff)
+  
 
