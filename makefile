@@ -61,6 +61,7 @@ HEADERS = \
 	profiler.h \
 	test-support.h \
 	long_extras.h \
+	packed_vec.h \
 	zmod_poly.h \
 	theta.h \
 	zmod_mat.h \
@@ -86,6 +87,7 @@ FLINTOBJ = \
 	mpz_poly.o \
 	ZmodF_poly.o \
 	long_extras.o \
+	packed_vec.o \
 	zmod_poly.o \
 	theta.o \
 	zmod_mat.o \
@@ -188,6 +190,9 @@ ZmodF_poly.o: ZmodF_poly.c $(HEADERS)
 long_extras.o: long_extras.c long_extras.h
 	$(CC) $(CFLAGS) -c long_extras.c -o long_extras.o
 	
+packed_vec.o: packed_vec.c $(HEADERS) 
+	$(CC) $(CFLAGS) -c packed_vec.c -o packed_vec.o
+
 zmod_poly.o: zmod_poly.c $(HEADERS)
 	$(CC) $(CFLAGS) -c zmod_poly.c -o zmod_poly.o
 
@@ -241,6 +246,9 @@ ZmodF_mul-test.o: ZmodF_mul-test.c $(HEADERS)
 long_extras-test.o: long_extras-test.c 
 	$(CC) $(CFLAGS) -c long_extras-test.c -o long_extras-test.o
 
+packed_vec-test.o: packed_vec-test.c
+	$(CC) $(CFLAGS) -c packed_vec-test.c -o packed_vec-test.o
+
 zmod_poly-test.o: zmod_poly-test.c
 	$(CC) $(CFLAGS) -c zmod_poly-test.c -o zmod_poly-test.o
 
@@ -288,7 +296,10 @@ ZmodF_mul-test: ZmodF_mul-test.o test-support.o $(FLINTOBJ) $(HEADERS)
 long_extras-test: long_extras.o long_extras-test.o test-support.o memory-manager.o
 	$(CC) $(CFLAGS) long_extras.o long_extras-test.o test-support.o memory-manager.o -o long_extras-test $(LIBS)
 
-zmod_poly-test: zmod_poly-test.o test-support.o $(FLINTOBJ) $(HEADERS)
+packed_vec-test: packed_vec-test.o test-support.o $(FLINTOBJ) $(HEADERS) 
+	$(CC) $(CFLAGS) packed_vec-test.o test-support.o -o packed_vec-test $(FLINTOBJ) $(LIBS)
+
+Zmod_poly-test: zmod_poly-test.o test-support.o $(FLINTOBJ) $(HEADERS)
 	$(CC) $(CFLAGS) zmod_poly-test.o test-support.o -o zmod_poly-test $(FLINTOBJ) $(LIBS)
 
 zmod_mat-test: zmod_mat-test.o test-support.o $(FLINTOBJ) $(HEADERS)
