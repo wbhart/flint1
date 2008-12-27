@@ -396,7 +396,7 @@ int pv_bit_fit(int bits)
 	given number of entries and with the given number of bits per entry.
 */
 
-void pv_init(pv_s * vec, ulong entries, ulong bits);
+void pv_init(pv_s * vec, ulong entries, int bits);
 
 /*
    Reallocate the packed vector pointed to by vec to have space for at least the
@@ -404,6 +404,24 @@ void pv_init(pv_s * vec, ulong entries, ulong bits);
 */
 
 void pv_realloc(pv_s * vec, ulong entries);
+
+/*
+   If entries is greater than the number of allocated entries this function will
+	realloc the given vector, at least doubling the amount of allocated entries
+	if reallocation occurs and allowing space for the given number of entries.
+*/
+
+static inline
+void pv_fit_length(pv_s * vec, ulong entries)
+{
+	if (entries == 0) return;
+
+	if (entries > vec->alloc)
+	{
+		if (entries < 2*vec->alloc) pv_realloc(vec, 2*vec->alloc);
+		else pv_realloc(vec, entries);
+	}
+}
 
 /* 
    Clear the given packed vector, free'ing any memory used by it.
@@ -413,6 +431,9 @@ static inline
 void pv_clear(pv_s * vec)
 {
 	if (vec->entries) flint_heap_free(vec->entries);
+	vec->entries = NULL;
+	vec->alloc = 0;
+   vec->length = 0;
 }
 
 /* 

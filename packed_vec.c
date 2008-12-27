@@ -34,12 +34,13 @@
 #include "flint.h"
 #include "memory-manager.h"
 
-void pv_init(pv_s * vec, ulong entries, ulong bits)
+void pv_init(pv_s * vec, ulong entries, int bits)
 {
-   if (entries) 
+   if (entries && bits)
 	{
-		vec->alloc = (entries*bits - 1)/FLINT_BITS + 1;
-		vec->entries = (mp_limb_t *) flint_heap_alloc(vec->alloc);
+		ulong limbs = (entries*bits - 1)/FLINT_BITS + 1;
+		vec->alloc = (limbs*FLINT_BITS)/bits;
+		vec->entries = (mp_limb_t *) flint_heap_alloc(limbs);
 		vec->bits = bits;
 #if BIT_FIDDLE
 		vec->log_bits = FLINT_BIT_COUNT(bits) - 1;
@@ -50,7 +51,9 @@ void pv_init(pv_s * vec, ulong entries, ulong bits)
 	} else
 	{
 		vec->entries = NULL;
-		vec->alloc = 0;
+		vec->alloc = entries;
+		vec->bits = bits;
+		vec->length = 0;
 	}
 }
 
@@ -62,19 +65,16 @@ void pv_realloc(pv_s * vec, ulong entries)
 		   
 		if (vec->entries)
 		{
-			if (limbs == vec->alloc) return;
+			if (entries == vec->alloc) return;
 			
 			vec->entries = (mp_limb_t *) flint_heap_realloc(vec->entries, limbs);
 		} else
-		{
          vec->entries = (mp_limb_t *) flint_heap_alloc(limbs);
-         vec->alloc = limbs;
-		}
 
-		vec->alloc = limbs;
+		vec->alloc = (limbs*FLINT_BITS)/vec->bits;
 	} else
 	{
-		flint_heap_free(vec->entries);
+		if (vec->entries) flint_heap_free(vec->entries);
 		vec->entries = NULL;
 		vec->alloc = 0;
 	}
@@ -89,14 +89,14 @@ void pv_set_bits(pv_s * vec, int bits)
 		pv_iter_s iter;
       PV_ITER_INIT(*vec, iter, 0);
 
-		mp_limb_t * temp = (mp_limb_t *) flint_heap_alloc(vec->length);
+		mp_limb_t * temp = (mp_limb_t *) flint_heap_alloc(vec->alloc);
 
 		for (ulong i = 0; i < vec->length; i++)
 		   PV_GET_NEXT(temp[i], iter);
 
-		flint_heap_free(vec->entries);
+		if (vec->entries) flint_heap_free(vec->entries);
 		vec->entries = temp;
-		vec->alloc = vec->length;
+		vec->alloc = vec->alloc;
 
 		vec->bits = bits;
 #if BIT_FIDDLE
@@ -108,9 +108,9 @@ void pv_set_bits(pv_s * vec, int bits)
 	{ 
 		mp_limb_t * temp = vec->entries;
 			
-		ulong limbs = (vec->length*bits - 1)/FLINT_BITS + 1;
+		ulong limbs = (vec->alloc*bits - 1)/FLINT_BITS + 1;
 		vec->entries = (mp_limb_t *) flint_heap_alloc(limbs);
-      vec->alloc = limbs;
+      vec->alloc = (limbs*FLINT_BITS)/bits;
 
 		vec->bits = bits;
 #if BIT_FIDDLE
@@ -133,9 +133,9 @@ void pv_set_bits(pv_s * vec, int bits)
 		pv_iter_s iter1, iter2;
 		PV_ITER_INIT(*vec, iter1, 0);
 
-		ulong limbs = (vec->length*bits - 1)/FLINT_BITS + 1;
+		ulong limbs = (vec->alloc*bits - 1)/FLINT_BITS + 1;
 		vec->entries = (mp_limb_t *) flint_heap_alloc(limbs);
-      vec->alloc = limbs;
+      vec->alloc = (limbs*FLINT_BITS)/bits;
 
 		vec->bits = bits;
 #if BIT_FIDDLE
@@ -153,7 +153,7 @@ void pv_set_bits(pv_s * vec, int bits)
 			PV_SET_NEXT(iter2, temp);
 		}
       
-		flint_heap_free(iter1.entries);
+		if (vec->entries) flint_heap_free(iter1.entries);
 	}
 }
 
