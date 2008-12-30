@@ -1172,7 +1172,7 @@ int z_isprime_nm1(unsigned long const n, unsigned long const iterations)
 	factors.num = 0;
 	cuberoot = z_intcuberoot(n);
 	
-	z_factor_partial(&factors, n1, cuberoot, 1);
+	cofactor = z_factor_partial(&factors, n1, cuberoot, 1);
 
 	inv = z_precompute_inverse(n);
 
