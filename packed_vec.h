@@ -92,7 +92,7 @@ typedef struct
 	correspond to entry "entry_xxx"
 */
 
-#define PV_ITER_INIT(pv_xxx, iter_xxx, entry_xxx) \
+#define PV_ITER_INIT(iter_xxx, pv_xxx, entry_xxx) \
 do { \
   iter_xxx.limb = (entry_xxx >> (pv_xxx).log_pack); \
   iter_xxx.shift = ((entry_xxx & ((pv_xxx).pack - 1)) << (pv_xxx).log_bits); \
@@ -281,7 +281,7 @@ typedef struct
 	correspond to entry "entry_xxx"
 */
 
-#define PV_ITER_INIT(pv_xxx, iter_xxx, entry_xxx) \
+#define PV_ITER_INIT(iter_xxx, pv_xxx, entry_xxx) \
 do { \
   iter_xxx.entries = (pv_xxx).entries; \
   iter_xxx.bits = (pv_xxx).bits; \

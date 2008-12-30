@@ -66,6 +66,7 @@ HEADERS = \
 	theta.h \
 	zmod_mat.h \
 	F_mpz_mat.h \
+	F_zmod_mat.h \
 	mpz_mat.h \
 	d_mat.h \
 	F_mpz_LLL_fast_d.h \
@@ -91,6 +92,7 @@ FLINTOBJ = \
 	zmod_poly.o \
 	theta.o \
 	zmod_mat.o \
+	F_zmod_mat.o \
 	mpz_mat.o \
 	F_mpz_mat.o \
 	d_mat.o \
@@ -205,6 +207,9 @@ theta.o: theta.c $(HEADERS)
 zmod_mat.o: zmod_mat.c $(HEADERS)
 	$(CC) $(CFLAGS) -c zmod_mat.c -o zmod_mat.o
 
+F_zmod_mat.o: F_zmod_mat.c $(HEADERS)
+	$(CC) $(CFLAGS) -c F_zmod_mat.c -o F_zmod_mat.o
+
 F_mpz_poly.o: F_mpz_poly.c $(HEADERS)
 	$(CC) $(CFLAGS) -c F_mpz_poly.c -o F_mpz_poly.o
 
@@ -255,7 +260,10 @@ zmod_poly-test.o: zmod_poly-test.c
 zmod_mat-test.o: zmod_mat-test.c
 	$(CC) $(CFLAGS) -c zmod_mat-test.c -o zmod_mat-test.o
 
-F_mpz_poly-test.o: F_mpz_poly-test.c
+F_zmod_mat-test.o: F_zmod_mat-test.c
+	$(CC) $(CFLAGS) -c F_zmod_mat-test.c -o F_zmod_mat-test.o
+
+f_mpz_poly-test.o: F_mpz_poly-test.c
 	$(CC) $(CFLAGS) -c F_mpz_poly-test.c -o F_mpz_poly-test.o
 
 NTL-interface-test.o: NTL-interface-test.cpp
@@ -304,6 +312,9 @@ Zmod_poly-test: zmod_poly-test.o test-support.o $(FLINTOBJ) $(HEADERS)
 
 zmod_mat-test: zmod_mat-test.o test-support.o $(FLINTOBJ) $(HEADERS)
 	$(CC) $(CFLAGS) zmod_mat-test.o test-support.o -o zmod_mat-test $(FLINTOBJ) $(LIBS)
+
+F_zmod_mat-test: F_zmod_mat-test.o test-support.o $(FLINTOBJ) $(HEADERS)
+	$(CC) $(CFLAGS) F_zmod_mat-test.o test-support.o -o F_zmod_mat-test $(FLINTOBJ) $(LIBS)
 
 F_mpz_poly-test: F_mpz_poly-test.o test-support.o $(FLINTOBJ) $(HEADERS)
 	$(CC) $(CFLAGS) F_mpz_poly-test.o test-support.o -o F_mpz_poly-test $(FLINTOBJ) $(LIBS)

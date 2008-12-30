@@ -305,7 +305,7 @@ void fmpz_poly_bit_unpack(fmpz_poly_t poly_fmpz, const mp_limb_t * array,
 	fmpz_poly_fit_limbs(poly_fmpz, 1);
    mp_limb_t * coeff_m = poly_fmpz->coeffs;
    mp_limb_t * last_point;
-   ulong size_m = poly_fmpz->limbs+1;
+   ulong size_m = poly_fmpz->limbs + 1;
     
    k=0; skip=0; carry = 0UL; temp2 = 0;
    last_point = coeff_m + size_m*length;
@@ -317,7 +317,7 @@ void fmpz_poly_bit_unpack(fmpz_poly_t poly_fmpz, const mp_limb_t * array,
       temp2 += l_shift(full_limb,k);
       s = FLINT_BITS-k;
       k+=s;
-      while ((k >= bits)&&(coeff_m < last_point))
+      while ((k >= bits) && (coeff_m < last_point))
       {
          if (!(temp2 & sign_mask)) 
          {

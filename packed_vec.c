@@ -87,7 +87,7 @@ void pv_set_bits(pv_s * vec, int bits)
 	if (bits == FLINT_BITS)
 	{
 		pv_iter_s iter;
-      PV_ITER_INIT(*vec, iter, 0);
+      PV_ITER_INIT(iter, *vec, 0);
 
 		mp_limb_t * temp = (mp_limb_t *) flint_heap_alloc(vec->alloc);
 
@@ -120,7 +120,7 @@ void pv_set_bits(pv_s * vec, int bits)
 #endif
       
 		pv_iter_s iter;
-      PV_ITER_INIT(*vec, iter, 0);
+      PV_ITER_INIT(iter, *vec, 0);
 
 		for (ulong i = 0; i < vec->length; i++)
 		{
@@ -131,7 +131,7 @@ void pv_set_bits(pv_s * vec, int bits)
 	} else
 	{
 		pv_iter_s iter1, iter2;
-		PV_ITER_INIT(*vec, iter1, 0);
+		PV_ITER_INIT(iter1, *vec, 0);
 
 		ulong limbs = (vec->alloc*bits - 1)/FLINT_BITS + 1;
 		vec->entries = (mp_limb_t *) flint_heap_alloc(limbs);
@@ -143,7 +143,7 @@ void pv_set_bits(pv_s * vec, int bits)
 		vec->pack = FLINT_BITS/bits;
 		vec->log_pack = FLINT_BIT_COUNT(vec->pack) - 1;
 #endif
-		PV_ITER_INIT(*vec, iter2, 0);
+		PV_ITER_INIT(iter2, *vec, 0);
      
       ulong temp;
 		

@@ -71,14 +71,14 @@ int test_PV_GET_SET_NEXT()
       pv_init(&pv, length, pv_bit_fit(bits));
 
 		pv_iter_s iter;
-		PV_ITER_INIT(pv, iter, 0);
+		PV_ITER_INIT(iter, pv, 0);
 
 		for (i = 0; i < length; i++)
 		{
 			PV_SET_NEXT(iter, vec[i]);
 		}
 
-		PV_ITER_INIT(pv, iter, 0);
+		PV_ITER_INIT(iter, pv, 0);
 
 		for (i = 0; (i < length) && (result == 1); i++)
 		{
@@ -115,14 +115,14 @@ int test_PV_GET_SET_PREV()
       pv_init(&pv, length, pv_bit_fit(bits));
 
 		pv_iter_s iter;
-		PV_ITER_INIT(pv, iter, length - 1);
+		PV_ITER_INIT(iter, pv, length - 1);
 
 		for (i = length - 1; i >= 0; i--)
 		{
 			PV_SET_PREV(iter, vec[i]);
 		}
 
-		PV_ITER_INIT(pv, iter, length - 1);
+		PV_ITER_INIT(iter, pv, length - 1);
 
 		for (i = length - 1; (i >= 0) && (result == 1); i--)
 		{
@@ -159,7 +159,7 @@ int test_PV_GET_SET_ENTRY()
       pv_init(&pv, length, pv_bit_fit(bits));
 
 		pv_iter_s iter;
-		PV_ITER_INIT(pv, iter, length - 1);
+		PV_ITER_INIT(iter, pv, length - 1);
 
 		for (i = length - 1; i >= 0; i--)
 		{
@@ -201,7 +201,7 @@ int test_pv_set_bits()
       pv_init(&pv, length, FLINT_BITS);
 
 		pv_iter_s iter;
-		PV_ITER_INIT(pv, iter, 0);
+		PV_ITER_INIT(iter, pv, 0);
 
 		for (i = 0; i < length; i++)
 		{
@@ -214,7 +214,7 @@ int test_pv_set_bits()
 		pv_set_bits(&pv, pv_bit_fit(bits + z_randint(FLINT_BITS - bits + 1)));
 		pv_set_bits(&pv, pv_bit_fit(bits));
 			
-		PV_ITER_INIT(pv, iter, 0);
+		PV_ITER_INIT(iter, pv, 0);
 
 		for (i = 0; (i < length) && (result == 1); i++)
 		{
