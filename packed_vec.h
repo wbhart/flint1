@@ -38,7 +38,7 @@
 #include "flint.h"
 #include "mpn_extras.h"
 
-#define BIT_FIDDLE 1
+#define BIT_FIDDLE 0
 
 #if BIT_FIDDLE
 	 

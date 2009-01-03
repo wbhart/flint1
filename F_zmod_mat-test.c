@@ -232,16 +232,16 @@ int test_F_zmod_mat_mul_classical()
    unsigned long bits;
    unsigned long modulus;
 
-   for (unsigned long count1 = 0; (count1 < 1000) && (result == 1); count1++)
+   for (unsigned long count1 = 0; (count1 < 1) && (result == 1); count1++)
    {
-      bits = z_randint(FLINT_BITS - 2) + 2;
+      bits = 15;//z_randint(FLINT_BITS - 2) + 2;
       
       do {modulus = z_randbits(bits);} while (modulus < 2);
       
-	   ulong r1 = z_randint(200);
-	   ulong c1 = z_randint(200) + 1;
+	   ulong r1 = 50;//z_randint(200);
+	   ulong c1 = 50;//z_randint(200) + 1;
 		ulong r2 = c1;
-		ulong c2 = z_randint(200);
+		ulong c2 = 50;//z_randint(200);
  
 #if DEBUG
       printf("r1 = %ld, c1 = %ld, r2 = %ld, c2 = %ld, bits = %ld, modulus = %ld\n", r1, c1, r2, c2, bits, modulus);
@@ -254,7 +254,7 @@ int test_F_zmod_mat_mul_classical()
 	   randmat(mat1);
 	   randmat(mat2);
 
-		F_zmod_mat_mul_classical(res, mat1, mat2);
+		for (ulong i = 0; i < 1000; i++) F_zmod_mat_mul_classical(res, mat1, mat2);
 
 		F_zmod_mat_clear(mat1);
  		F_zmod_mat_clear(mat2);
