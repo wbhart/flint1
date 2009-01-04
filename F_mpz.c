@@ -455,6 +455,23 @@ int F_mpz_equal(const F_mpz_t f, const F_mpz_t g)
 	else return (mpz_cmp(F_mpz_arr + COEFF_TO_OFF(*f), F_mpz_arr + COEFF_TO_OFF(*g)) == 0); 
 }
 
+int F_mpz_cmpabs(const F_mpz_t f, const F_mpz_t g)
+{
+	if (f == g) return 0; // aliased inputs
+	
+	if (!COEFF_IS_MPZ(*f)) 
+	{
+		if (!COEFF_IS_MPZ(*g)) 
+		{
+         ulong uf = FLINT_ABS(*f);
+         ulong ug = FLINT_ABS(*g);
+         if (uf < ug) return -1;
+			else return (uf > ug);
+		} else return -1;
+	} else if (!COEFF_IS_MPZ(*g)) return 1; // f is large, so if g isn't....
+	else return mpz_cmpabs(F_mpz_arr + COEFF_TO_OFF(*f), F_mpz_arr + COEFF_TO_OFF(*g)); 
+}
+
 /*===============================================================================
 
 	Properties
@@ -968,4 +985,28 @@ void F_mpz_submul(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
 	
    mpz_submul(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(c1), F_mpz_arr + COEFF_TO_OFF(c2));
 	_F_mpz_demote_val(f); // cancellation may have occurred
+}
+
+void F_mpz_mod(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
+{
+	F_mpz c1 = *g;
+	F_mpz c2 = *h;
+	
+   if (!COEFF_IS_MPZ(c1)) // g is small
+	{
+	   if (!COEFF_IS_MPZ(c2)) // h is also small
+		   F_mpz_set_si(f, c1 % c2);
+		else // h is large and g is small
+			F_mpz_set_si(f, c1);
+	} else // g is large
+	{
+      if (!COEFF_IS_MPZ(c2)) // h is small
+		   F_mpz_set_ui(f, mpz_fdiv_ui(F_mpz_arr + COEFF_TO_OFF(c1), c2));
+		else // both are large
+		{
+			__mpz_struct * mpz_ptr = _F_mpz_promote(f);
+			mpz_mod(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(c1), F_mpz_arr + COEFF_TO_OFF(c2));
+			_F_mpz_demote_val(f); // reduction mod h may result in small value
+		}	
+	}
 }

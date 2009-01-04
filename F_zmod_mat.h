@@ -19,8 +19,8 @@
 ===============================================================================*/
 /*****************************************************************************
 
-   zmod_mat.h: Matrices over (unsigned) long mod p, for p prime with packed
-	            representation (using packed_vec) (FLINT 2.0).
+   F_zmod_mat.h: Matrices over (unsigned) long mod p, for p prime with packed
+	              representation (using packed_vec) (FLINT 2.0).
    
    Copyright (C) 2008, William Hart
    Copyright (C) 2008, Richard Howell-Peak
@@ -35,7 +35,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 
 #include "flint.h"
 #include "memory-manager.h"
@@ -43,7 +42,7 @@
 #include "long_extras.h"
 #include "zmod_poly.h"
 #include "packed_vec.h"
-
+#include "F_mpzmod_mat.h"
 
 #ifdef __cplusplus
  extern "C" {
@@ -72,6 +71,16 @@ void F_zmod_mat_init(F_zmod_mat_t mat, ulong p, ulong rows, ulong cols);
 void F_zmod_mat_init_precomp(F_zmod_mat_t mat, ulong p, double p_inv, 
 						                              ulong rows, ulong cols);
 void F_zmod_mat_clear(F_zmod_mat_t mat);
+
+/*******************************************************************************************
+
+   Conversions
+
+*******************************************************************************************/
+
+void F_zmod_mat_to_F_mpzmod_mat(F_mpzmod_mat_t res, F_zmod_mat_t mat);
+
+void F_mpzmod_mat_to_F_zmod_mat(F_zmod_mat_t res, F_mpzmod_mat_t mat);
 
 /*******************************************************************************************
 

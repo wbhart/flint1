@@ -287,6 +287,13 @@ void F_mpz_swap(F_mpz_t f, F_mpz_t g);
 */
 int F_mpz_equal(const F_mpz_t f, const F_mpz_t g);
 
+/** 
+   \fn     int F_mpz_cmpabs(const F_mpz_t f, const F_mpz_t g)
+   \brief  Returns a negative int if abs(f) < abs(g), positive if 
+	        abs(f) > abs(g) and returns 0 if the two values are equal.
+*/
+int F_mpz_cmpabs(const F_mpz_t f, const F_mpz_t g);
+
 /*===============================================================================
 
 	Properties
@@ -428,6 +435,12 @@ void F_mpz_addmul(F_mpz_t f, const F_mpz_t g, const F_mpz_t h);
    \brief  Multiply g by h and subtract the result from f, in place.
 */
 void F_mpz_submul(F_mpz_t f, const F_mpz_t g, const F_mpz_t h);
+
+/** 
+   \fn     void F_mpz_mod(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
+   \brief  Set f to g modulo h.
+*/
+void F_mpz_mod(F_mpz_t f, const F_mpz_t g, const F_mpz_t h);
 
 #ifdef __cplusplus
  }

@@ -107,6 +107,22 @@ do { \
 
 /*
    Given an iterator iter_xxx, set xxx to the current entry 
+	of the vector without iterating to the next entry.
+*/
+
+#define PV_GET(xxx, iter_xxx) \
+do { \
+   if (iter_xxx.bits == FLINT_BITS) \
+   { \
+	   xxx = iter_xxx.entries[iter_xxx.limb]; \
+   } else \
+	{ \
+		xxx = ((iter_xxx.entries[iter_xxx.limb] & iter_xxx.mask) >> iter_xxx.shift); \
+	} \
+} while (0)
+
+/*
+   Given an iterator iter_xxx, set xxx to the current entry 
 	of the vector and iterate to the next entry.
 */
 
@@ -286,6 +302,20 @@ do { \
   iter_xxx.entries = (pv_xxx).entries; \
   iter_xxx.bits = (pv_xxx).bits; \
   iter_xxx.i = entry_xxx; \
+} while (0)
+
+/*
+   Given an iterator iter_xxx, set xxx to the current entry 
+	of the vector without iterating to the next entry.
+*/
+
+#define PV_GET(xxx, iter_xxx) \
+do { \
+   int bits = iter_xxx.bits; \
+	if (bits == 8) (xxx) = (ulong) ((uint8_t *) iter_xxx.entries)[iter_xxx.i]; \
+	else if (bits == 16) (xxx) = (ulong) ((uint16_t *) iter_xxx.entries)[iter_xxx.i]; \
+	else if (bits == 32) (xxx) = (ulong) ((uint32_t *) iter_xxx.entries)[iter_xxx.i]; \
+   else if (bits == 64) (xxx) = (ulong) ((uint64_t *) iter_xxx.entries)[iter_xxx.i]; \
 } while (0)
 
 /*
