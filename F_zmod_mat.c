@@ -245,11 +245,9 @@ void F_zmod_mat_mul_classical(F_zmod_mat_t res, F_zmod_mat_t mat1, F_zmod_mat_t 
 
    if (bits >= FLINT_BITS/2)
 	{
-	   mp_limb_t * temp = (mp_limb_t *) flint_stack_alloc(2*c2);
-      mp_limb_t * temp2 = (mp_limb_t *) flint_stack_alloc(2*c2);
-
-		mp_limb_t * m2 = (mp_limb_t *) flint_stack_alloc(2*c2*r2);
-		F_mpn_clear(m2, 2*c2*r2);
+	   mp_limb_t * m2 = (mp_limb_t *) flint_stack_alloc(2*c2*r2);
+		
+		mp_limb_t * temp = (mp_limb_t *) flint_stack_alloc(2*c2);
 
 		for (ulong i = 0; i < r2; i++) // make copy of mat2
 		{
@@ -261,6 +259,7 @@ void F_zmod_mat_mul_classical(F_zmod_mat_t res, F_zmod_mat_t mat1, F_zmod_mat_t 
 			{
             PV_GET_NEXT(d, iter2);
 				ptr[2*j] = d;
+				ptr[2*j + 1] = 0;
 			}
 		}
 
@@ -300,6 +299,15 @@ void F_zmod_mat_mul_classical(F_zmod_mat_t res, F_zmod_mat_t mat1, F_zmod_mat_t 
 				}
 		   }
 
+			if (j == 1) // reduction would get missed in this case
+			{
+				for (ulong k = 0; k < 2*c2; k+=2) // do a reduction
+			   {
+				   temp[k] = z_ll_mod_precomp(temp[k+1], temp[k], p, pinv); // reduce mod p
+				   temp[k+1] = 0L;
+			   }
+			}
+
 		   pv_iter_s iter3;
 		   PV_ITER_INIT(iter3, res->arr, res->rows[i]); // iterate along row i of res
          ulong r;
@@ -311,7 +319,6 @@ void F_zmod_mat_mul_classical(F_zmod_mat_t res, F_zmod_mat_t mat1, F_zmod_mat_t 
 	   }
 		
 	   flint_stack_release(); // m2
-      flint_stack_release(); // temp2
       flint_stack_release(); // temp
 	} else
 	{
