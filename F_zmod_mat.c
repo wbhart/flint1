@@ -233,9 +233,12 @@ void F_zmod_mat_mul_classical(F_zmod_mat_t res, F_zmod_mat_t mat1, F_zmod_mat_t 
 		abort();
 	}
 
-	ulong p = mat1->p;
 	ulong r1 = mat1->r;
    ulong c2 = mat2->c;
+	
+	if ((r1 == 0) || (c2 == 0)) return; // no work to do
+
+	ulong p = mat1->p;
 	double pinv = mat1->p_inv;
 
 	ulong bits = FLINT_BIT_COUNT(p);
@@ -248,13 +251,13 @@ void F_zmod_mat_mul_classical(F_zmod_mat_t res, F_zmod_mat_t mat1, F_zmod_mat_t 
 		mp_limb_t * m2 = (mp_limb_t *) flint_stack_alloc(2*c2*r2);
 		F_mpn_clear(m2, 2*c2*r2);
 
-		for (ulong i = 0; i < c2; i++) // make copy of mat2
+		for (ulong i = 0; i < r2; i++) // make copy of mat2
 		{
 			pv_iter_s iter2;
 		   PV_ITER_INIT(iter2, mat2->arr, mat2->rows[i]);
 			ulong d;
 			mp_limb_t * ptr = m2 + 2*i*c2;
-			for (ulong j = 0; j < r2; j++)
+			for (ulong j = 0; j < c2; j++)
 			{
             PV_GET_NEXT(d, iter2);
 				ptr[2*j] = d;
@@ -275,7 +278,7 @@ void F_zmod_mat_mul_classical(F_zmod_mat_t res, F_zmod_mat_t mat1, F_zmod_mat_t 
 
 		   ulong j = 0;
 		   mpn_mul_1(temp, m2, 2*c2, c);
-        
+			
 		   for (j = 1; j < c1; j+= (red_max - 1)) // add up to red_max - 1 
 			                                         // scalar products at a time
 		   {
@@ -404,6 +407,21 @@ void F_zmod_mat_mul_classical(F_zmod_mat_t res, F_zmod_mat_t mat1, F_zmod_mat_t 
 				   temp8[k] = z_mod2_precomp(temp8[k], p, pinv); 
 			   }
 		   }
+
+			if (c1 == 1) // reduction would be missed if c1 is 1
+			{
+				for (ulong k = 0; k < c2; k++) // do a reduction
+			   {
+				   temp[k] = z_mod2_precomp(temp[k], p, pinv); // reduce mod p
+				   temp2[k] = z_mod2_precomp(temp2[k], p, pinv); 
+				   temp3[k] = z_mod2_precomp(temp3[k], p, pinv); 
+				   temp4[k] = z_mod2_precomp(temp4[k], p, pinv); 
+				   temp5[k] = z_mod2_precomp(temp5[k], p, pinv); 
+				   temp6[k] = z_mod2_precomp(temp6[k], p, pinv); 
+				   temp7[k] = z_mod2_precomp(temp7[k], p, pinv); 
+				   temp8[k] = z_mod2_precomp(temp8[k], p, pinv); 
+			   }
+			}
 		   
 			pv_iter_s iter3a, iter3b, iter3c, iter3d, iter3e, iter3f, iter3g, iter3h;
 		   PV_ITER_INIT(iter3a, res->arr, res->rows[i]); // iterate along row i of res
@@ -473,6 +491,14 @@ void F_zmod_mat_mul_classical(F_zmod_mat_t res, F_zmod_mat_t mat1, F_zmod_mat_t 
 				   temp[k] = z_mod2_precomp(temp[k], p, pinv); // reduce mod p
 			   }
 		   }
+
+			if (c1 == 1) // reduction would be missed if c1 is 1
+			{
+				for (ulong k = 0; k < c2; k++) // do a reduction
+			   {
+				   temp[k] = z_mod2_precomp(temp[k], p, pinv); // reduce mod p
+			   }
+			}
 		   
 			pv_iter_s iter3;
 		   PV_ITER_INIT(iter3, res->arr, res->rows[i]); // iterate along row i of res
