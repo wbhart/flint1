@@ -222,7 +222,7 @@ void F_zmod_mat_set(F_zmod_mat_t res, F_zmod_mat_t mat)
 	}
 }
 
-/*void F_zmod_mat_mul_classical(F_zmod_mat_t res, F_zmod_mat_t mat1, F_zmod_mat_t mat2)
+void F_zmod_mat_mul_classical(F_zmod_mat_t res, F_zmod_mat_t mat1, F_zmod_mat_t mat2)
 {
    ulong c1 = mat1->c;
 	ulong r2 = mat2->r;
@@ -245,6 +245,22 @@ void F_zmod_mat_set(F_zmod_mat_t res, F_zmod_mat_t mat)
 	   mp_limb_t * temp = (mp_limb_t *) flint_stack_alloc(2*c2);
       mp_limb_t * temp2 = (mp_limb_t *) flint_stack_alloc(2*c2);
 
+		mp_limb_t * m2 = (mp_limb_t *) flint_stack_alloc(2*c2*r2);
+		F_mpn_clear(m2, 2*c2*r2);
+
+		for (ulong i = 0; i < c2; i++) // make copy of mat2
+		{
+			pv_iter_s iter2;
+		   PV_ITER_INIT(iter2, mat2->arr, mat2->rows[i]);
+			ulong d;
+			mp_limb_t * ptr = m2 + 2*i*c2;
+			for (ulong j = 0; j < r2; j++)
+			{
+            PV_GET_NEXT(d, iter2);
+				ptr[2*j] = d;
+			}
+		}
+
       ulong spare_bits = 2*FLINT_BITS - 2*(bits);
 	   if (spare_bits >= FLINT_BITS) spare_bits = FLINT_BITS - 1; 
 	   ulong red_max = (1L << spare_bits); // number of loops before reduction must be done
@@ -257,15 +273,9 @@ void F_zmod_mat_set(F_zmod_mat_t res, F_zmod_mat_t mat)
 		   ulong c;
 		   PV_GET_NEXT(c, iter1); // get first coefficient of row i of mat1
 
-		   pv_iter_s iter2;
-		   PV_ITER_INIT(iter2, mat2->arr, mat2->rows[0]); 
-		   ulong j = 0, d;
-		   for (ulong k = 0; k < 2*c2; k+=2) // do initial scalar product of row 1 of mat2 by c
-		   {
-            PV_GET_NEXT(d, iter2);
-			   umul_ppmm(temp[k+1], temp[k], d, c);
-		   }
-
+		   ulong j = 0;
+		   mpn_mul_1(temp, m2, 2*c2, c);
+        
 		   for (j = 1; j < c1; j+= (red_max - 1)) // add up to red_max - 1 
 			                                         // scalar products at a time
 		   {
@@ -273,30 +283,32 @@ void F_zmod_mat_set(F_zmod_mat_t res, F_zmod_mat_t mat)
 			   {
 				   PV_GET_NEXT(c, iter1); // get next coefficient of row i of mat1
 
-			      PV_ITER_INIT(iter2, mat2->arr, mat2->rows[j+s]); // iterate along row j+s of mat2
-               for (ulong k = 0; k < 2*c2; k+=2) // do scalar product of row j+s of mat2 by c
-		         {
-                  PV_GET_NEXT(d, iter2);
-			         umul_ppmm(temp2[k+1], temp2[k], d, c);
-				      add_ssaaaa(temp[k+1], temp[k], temp[k+1], temp[k], temp2[k+1], temp2[k]); //add
-				                                                                 // to existing sum
-		         }
+			      mp_limb_t * ptr = m2 + 2*(j+s)*c2;
+			      mpn_addmul_1(temp, ptr, 2*c2, c);
 			   }
 
-			   for (ulong k = 0; k < 2*c2; k+=2) // do a reduction
-			   {
-				   temp[k] = z_ll_mod_precomp(temp[k+1], temp[k], p, pinv); // reduce mod p
-				   temp[k+1] = 0L;
-			   }
+			   if (j + red_max - 1 < c1) // if this isn't the last column of mat1
+				{
+				   for (ulong k = 0; k < 2*c2; k+=2) // do a reduction
+			      {
+				      temp[k] = z_ll_mod_precomp(temp[k+1], temp[k], p, pinv); // reduce mod p
+				      temp[k+1] = 0L;
+			      }
+				}
 		   }
 
 		   pv_iter_s iter3;
 		   PV_ITER_INIT(iter3, res->arr, res->rows[i]); // iterate along row i of res
-         for (ulong k = 0; k < 2*c2; k+=2) // store row i of res
-			   PV_SET_NEXT(iter3, temp[k]);
+         ulong r;
+			for (ulong k = 0; k < 2*c2; k+=2) // store row i of res
+			{
+				r = z_ll_mod_precomp(temp[k+1], temp[k], p, pinv); // reduce mod p
+			   PV_SET_NEXT(iter3, r);
+			}
 	   }
 		
-	   flint_stack_release(); // temp2
+	   flint_stack_release(); // m2
+      flint_stack_release(); // temp2
       flint_stack_release(); // temp
 	} else
 	{
@@ -304,24 +316,36 @@ void F_zmod_mat_set(F_zmod_mat_t res, F_zmod_mat_t mat)
       mp_limb_t * temp2 = (mp_limb_t *) flint_stack_alloc(c2);
       mp_limb_t * temp3 = (mp_limb_t *) flint_stack_alloc(c2);
       mp_limb_t * temp4 = (mp_limb_t *) flint_stack_alloc(c2);
+      mp_limb_t * temp5 = (mp_limb_t *) flint_stack_alloc(c2);
+      mp_limb_t * temp6 = (mp_limb_t *) flint_stack_alloc(c2);
+      mp_limb_t * temp7 = (mp_limb_t *) flint_stack_alloc(c2);
+      mp_limb_t * temp8 = (mp_limb_t *) flint_stack_alloc(c2);
 
       ulong spare_bits = FLINT_BITS - 2*(bits);
 	   ulong red_max = (1L << spare_bits); // number of loops before reduction must be done
 
       ulong i;
-		for (i = 0; i + 3 < r1; i += 4) // for each row of mat1, taken 4 at a time
+		for (i = 0; i + 7 < r1; i += 8) // for each row of mat1, taken 8 at a time
 	   {
-		   pv_iter_s iter1a, iter1b, iter1c, iter1d;
+		   pv_iter_s iter1a, iter1b, iter1c, iter1d, iter1e, iter1f, iter1g, iter1h;
 		   PV_ITER_INIT(iter1a, mat1->arr, mat1->rows[i]); // iterate along row i of mat1
 		   PV_ITER_INIT(iter1b, mat1->arr, mat1->rows[i+1]); // iterate along row i + 1 of mat1
 		   PV_ITER_INIT(iter1c, mat1->arr, mat1->rows[i+2]); // iterate along row i + 2 of mat1
 		   PV_ITER_INIT(iter1d, mat1->arr, mat1->rows[i+3]); // iterate along row i + 3 of mat1
+		   PV_ITER_INIT(iter1e, mat1->arr, mat1->rows[i+4]); // iterate along row i + 4 of mat1
+		   PV_ITER_INIT(iter1f, mat1->arr, mat1->rows[i+5]); // iterate along row i + 5 of mat1
+		   PV_ITER_INIT(iter1g, mat1->arr, mat1->rows[i+6]); // iterate along row i + 6 of mat1
+		   PV_ITER_INIT(iter1h, mat1->arr, mat1->rows[i+7]); // iterate along row i + 7 of mat1
 		   
-			ulong ca, cb, cc, cd;
+			ulong ca, cb, cc, cd, ce, cf, cg, ch;
 		   PV_GET_NEXT(ca, iter1a); // get first coefficient of row i of mat1
          PV_GET_NEXT(cb, iter1b); // get first coefficient of row i + 1 of mat1
          PV_GET_NEXT(cc, iter1c); // get first coefficient of row i + 2 of mat1
          PV_GET_NEXT(cd, iter1d); // get first coefficient of row i + 3 of mat1
+         PV_GET_NEXT(ce, iter1e); // get first coefficient of row i + 4 of mat1
+         PV_GET_NEXT(cf, iter1f); // get first coefficient of row i + 5 of mat1
+         PV_GET_NEXT(cg, iter1g); // get first coefficient of row i + 6 of mat1
+         PV_GET_NEXT(ch, iter1h); // get first coefficient of row i + 7 of mat1
          
 			pv_iter_s iter2;
 		   PV_ITER_INIT(iter2, mat2->arr, mat2->rows[0]); 
@@ -333,6 +357,10 @@ void F_zmod_mat_set(F_zmod_mat_t res, F_zmod_mat_t mat)
 			   temp2[k] = d*cb;
 			   temp3[k] = d*cc;
 			   temp4[k] = d*cd;
+			   temp5[k] = d*ce;
+			   temp6[k] = d*cf;
+			   temp7[k] = d*cg;
+			   temp8[k] = d*ch;
 		   }
 
 		   for (j = 1; j < c1; j+= (red_max - 1)) // add up to red_max - 1 
@@ -344,7 +372,11 @@ void F_zmod_mat_set(F_zmod_mat_t res, F_zmod_mat_t mat)
                PV_GET_NEXT(cb, iter1b); // get next coefficient of row i + 1 of mat1
                PV_GET_NEXT(cc, iter1c); // get next coefficient of row i + 2 of mat1
                PV_GET_NEXT(cd, iter1d); // get next coefficient of row i + 3 of mat1
-
+               PV_GET_NEXT(ce, iter1e); // get next coefficient of row i + 4 of mat1
+               PV_GET_NEXT(cf, iter1f); // get next coefficient of row i + 5 of mat1
+               PV_GET_NEXT(cg, iter1g); // get next coefficient of row i + 6 of mat1
+               PV_GET_NEXT(ch, iter1h); // get next coefficient of row i + 7 of mat1
+               
 			      PV_ITER_INIT(iter2, mat2->arr, mat2->rows[j+s]); // iterate along row j+s of mat2
                for (ulong k = 0; k < c2; k++) // do scalar product of row j+s of mat2 by c
 		         {
@@ -353,6 +385,10 @@ void F_zmod_mat_set(F_zmod_mat_t res, F_zmod_mat_t mat)
 			         temp2[k] += d*cb;
 			         temp3[k] += d*cc;
 			         temp4[k] += d*cd;
+			         temp5[k] += d*ce;
+			         temp6[k] += d*cf;
+			         temp7[k] += d*cg;
+			         temp8[k] += d*ch;
 		         }
 			   }
 
@@ -362,25 +398,41 @@ void F_zmod_mat_set(F_zmod_mat_t res, F_zmod_mat_t mat)
 				   temp2[k] = z_mod2_precomp(temp2[k], p, pinv); 
 				   temp3[k] = z_mod2_precomp(temp3[k], p, pinv); 
 				   temp4[k] = z_mod2_precomp(temp4[k], p, pinv); 
+				   temp5[k] = z_mod2_precomp(temp5[k], p, pinv); 
+				   temp6[k] = z_mod2_precomp(temp6[k], p, pinv); 
+				   temp7[k] = z_mod2_precomp(temp7[k], p, pinv); 
+				   temp8[k] = z_mod2_precomp(temp8[k], p, pinv); 
 			   }
 		   }
 		   
-			pv_iter_s iter3a, iter3b, iter3c, iter3d;
+			pv_iter_s iter3a, iter3b, iter3c, iter3d, iter3e, iter3f, iter3g, iter3h;
 		   PV_ITER_INIT(iter3a, res->arr, res->rows[i]); // iterate along row i of res
          PV_ITER_INIT(iter3b, res->arr, res->rows[i+1]); // iterate along row i + 1 of res
          PV_ITER_INIT(iter3c, res->arr, res->rows[i+2]); // iterate along row i + 2 of res
          PV_ITER_INIT(iter3d, res->arr, res->rows[i+3]); // iterate along row i + 3 of res
+         PV_ITER_INIT(iter3e, res->arr, res->rows[i+4]); // iterate along row i + 4 of res
+         PV_ITER_INIT(iter3f, res->arr, res->rows[i+5]); // iterate along row i + 5 of res
+         PV_ITER_INIT(iter3g, res->arr, res->rows[i+6]); // iterate along row i + 6 of res
+         PV_ITER_INIT(iter3h, res->arr, res->rows[i+7]); // iterate along row i + 7 of res
          for (ulong k = 0; k < c2; k++) // store row i of res
 			{
 				PV_SET_NEXT(iter3a, temp[k]);
 				PV_SET_NEXT(iter3b, temp2[k]);
 				PV_SET_NEXT(iter3c, temp3[k]);
 				PV_SET_NEXT(iter3d, temp4[k]);
+				PV_SET_NEXT(iter3e, temp5[k]);
+				PV_SET_NEXT(iter3f, temp6[k]);
+				PV_SET_NEXT(iter3g, temp7[k]);
+				PV_SET_NEXT(iter3h, temp8[k]);
 			}
 
 	   }
 
-	   flint_stack_release(); // temp4
+	   flint_stack_release(); // temp8
+		flint_stack_release(); // temp7
+		flint_stack_release(); // temp6
+		flint_stack_release(); // temp5
+		flint_stack_release(); // temp4
 		flint_stack_release(); // temp3
 		flint_stack_release(); // temp2
 		
@@ -429,265 +481,6 @@ void F_zmod_mat_set(F_zmod_mat_t res, F_zmod_mat_t mat)
 	   }
 		
 	   flint_stack_release(); // temp
-	}
-}*/
-
-void F_zmod_mat_mul_classical(F_zmod_mat_t res, F_zmod_mat_t mat1, F_zmod_mat_t mat2)
-{
-   ulong c1 = mat1->c;
-	ulong r2 = mat2->r;
-   
-	if ((c1 != r2) || (c1 == 0))
-	{
-		printf("FLINT exception : invalid matrix multiplication!\n");
-		abort();
-	}
-
-	ulong r1 = mat1->r;
-   ulong c2 = mat2->c;
-
-	if ((r1 == 0) || (c2 == 0)) return; // no work to do
-
-	ulong p = mat1->p;
-	double pinv = mat1->p_inv;
-
-	ulong bits = FLINT_BIT_COUNT(p);
-
-   if (bits >= FLINT_BITS/2)
-	{
-	   mp_limb_t * temp = (mp_limb_t *) flint_stack_alloc(2*c2);
-      mp_limb_t * temp2 = (mp_limb_t *) flint_stack_alloc(2*c2);
-
-      ulong spare_bits = 2*FLINT_BITS - 2*(bits);
-	   if (spare_bits >= FLINT_BITS) spare_bits = FLINT_BITS - 1; 
-	   ulong red_max = (1L << spare_bits); // number of loops before reduction must be done
-
-	   for (ulong i = 0; i < r1; i++) // for each row of mat1
-	   {
-		   pv_iter_s iter1;
-		   PV_ITER_INIT(iter1, mat1->arr, mat1->rows[i]); // iterate along row i of mat1
-		
-		   ulong c;
-		   PV_GET_NEXT(c, iter1); // get first coefficient of row i of mat1
-
-		   pv_iter_s iter2;
-		   PV_ITER_INIT(iter2, mat2->arr, mat2->rows[0]); 
-		   ulong j = 0, d;
-		   for (ulong k = 0; k < 2*c2; k+=2) // do initial scalar product of row 1 of mat2 by c
-		   {
-            PV_GET_NEXT(d, iter2);
-			   umul_ppmm(temp[k+1], temp[k], d, c);
-		   }
-
-		   for (j = 1; j < c1; j+= (red_max - 1)) // add up to red_max - 1 
-			                                         // scalar products at a time
-		   {
-            for (ulong s = 0; s < FLINT_MIN(red_max - 1, c1 - j); s++) // don't exceed c1 rows
-			   {
-				   PV_GET_NEXT(c, iter1); // get next coefficient of row i of mat1
-
-			      PV_ITER_INIT(iter2, mat2->arr, mat2->rows[j+s]); // iterate along row j+s of mat2
-               for (ulong k = 0; k < 2*c2; k+=2) // do scalar product of row j+s of mat2 by c
-		         {
-                  PV_GET_NEXT(d, iter2);
-			         umul_ppmm(temp2[k+1], temp2[k], d, c);
-				      add_ssaaaa(temp[k+1], temp[k], temp[k+1], temp[k], temp2[k+1], temp2[k]); //add
-				                                                                 // to existing sum
-		         }
-			   }
-
-			   if (j + red_max - 1 < c1) // if this isn't the last column of mat1
-				{
-				   for (ulong k = 0; k < 2*c2; k+=2) // do a reduction
-			      {
-				      temp[k] = z_ll_mod_precomp(temp[k+1], temp[k], p, pinv); // reduce mod p
-				      temp[k+1] = 0L;
-			      }
-				}
-		   }
-
-		   pv_iter_s iter3;
-		   PV_ITER_INIT(iter3, res->arr, res->rows[i]); // iterate along row i of res
-         ulong r;
-			for (ulong k = 0; k < 2*c2; k+=2) // store row i of res
-			{
-				r = z_ll_mod_precomp(temp[k+1], temp[k], p, pinv); // reduce mod p
-			   PV_SET_NEXT(iter3, r);
-			}
-	   }
-		
-	   flint_stack_release(); // temp2
-      flint_stack_release(); // temp
-	} else
-	{
-      // Make copy of mat2 with bitfields twice the size
-		F_zmod_mat_t mat2c;
-		ulong new_bits = 2*mat2->arr.bits;
-		if (new_bits == 2*bits) new_bits = 4*mat2->arr.bits;
-
-		ulong limbs = F_zmod_mat_init_bits(mat2c, new_bits, mat2->p, mat2->p_inv, mat2->r, mat2->c);		
-		F_zmod_mat_set(mat2c, mat2);
-
-		// temporary arrays to store scalar products
-		F_zmod_mat_t t, t2, t3, t4; 
-		F_zmod_mat_init_bits(t, new_bits, mat2->p, mat2->p_inv, 1, mat2->c);
-      F_zmod_mat_init_bits(t2, new_bits, mat2->p, mat2->p_inv, 1, mat2->c);
-      F_zmod_mat_init_bits(t3, new_bits, mat2->p, mat2->p_inv, 1, mat2->c);
-      F_zmod_mat_init_bits(t4, new_bits, mat2->p, mat2->p_inv, 1, mat2->c);
-
-		mp_limb_t * temp = t->arr.entries;
-      mp_limb_t * temp2 = t2->arr.entries;
-      mp_limb_t * temp3 = t3->arr.entries;
-      mp_limb_t * temp4 = t4->arr.entries;
-
-		pv_iter_s t_iter, t2_iter, t3_iter, t4_iter; 
-      
-		ulong spare_bits = new_bits - 2*(bits);
-	   
-		ulong red_max = (1L << spare_bits); // number of loops before reduction must be done
-      
-      ulong i;
-		for (i = 0; i + 3 < r1; i += 4) // for each row of mat1, taken 4 at a time
-	   {
-		   pv_iter_s iter1a, iter1b, iter1c, iter1d;
-		   PV_ITER_INIT(iter1a, mat1->arr, mat1->rows[i]); // iterate along row i of mat1
-		   PV_ITER_INIT(iter1b, mat1->arr, mat1->rows[i+1]); // iterate along row i + 1 of mat1
-		   PV_ITER_INIT(iter1c, mat1->arr, mat1->rows[i+2]); // iterate along row i + 2 of mat1
-		   PV_ITER_INIT(iter1d, mat1->arr, mat1->rows[i+3]); // iterate along row i + 3 of mat1
-		   
-			ulong ca, cb, cc, cd;
-		   PV_GET_NEXT(ca, iter1a); // get first coefficient of row i of mat1
-         PV_GET_NEXT(cb, iter1b); // get first coefficient of row i + 1 of mat1
-         PV_GET_NEXT(cc, iter1c); // get first coefficient of row i + 2 of mat1
-         PV_GET_NEXT(cd, iter1d); // get first coefficient of row i + 3 of mat1
-         
-			mp_limb_t * ptr = mat2c->arr.entries;
-				
-			ulong j, d1, d2, d3, d4;
-		   mpn_mul_1(temp, ptr, limbs, ca); // initial scalar product by row 0 of mat2
-         mpn_mul_1(temp2, ptr, limbs, cb);
-         mpn_mul_1(temp3, ptr, limbs, cc);
-         mpn_mul_1(temp4, ptr, limbs, cd);
-
-		   for (j = 1; j < c1; j+= (red_max - 1)) // add up to red_max - 1 
-			                                       // scalar products at a time
-		   {
-            for (ulong s = 0; s < FLINT_MIN(red_max - 1, c1 - j); s++) // don't exceed c1 rows
-			   {
-				   PV_GET_NEXT(ca, iter1a); // get next coefficient of row i of mat1
-               PV_GET_NEXT(cb, iter1b); // get next coefficient of row i + 1 of mat1
-               PV_GET_NEXT(cc, iter1c); // get next coefficient of row i + 2 of mat1
-               PV_GET_NEXT(cd, iter1d); // get next coefficient of row i + 3 of mat1
-
-			      ptr += limbs; // increment to next row of mat2
-
-					mpn_addmul_1(temp, ptr, limbs, ca); // scalar product by row j + s of mat2
-               mpn_addmul_1(temp2, ptr, limbs, cb);
-               mpn_addmul_1(temp3, ptr, limbs, cc);
-               mpn_addmul_1(temp4, ptr, limbs, cd);
-			   }
-
-			   PV_ITER_INIT(t_iter, t->arr, 0); // iterate through the t vectors
-            PV_ITER_INIT(t2_iter, t2->arr, 0);
-            PV_ITER_INIT(t3_iter, t3->arr, 0);
-            PV_ITER_INIT(t4_iter, t4->arr, 0);
-
-				if (j + red_max - 1 < c1) // if this isn't the last column of mat1
-				{
-					for (ulong k = 0; k < c2; k++) // do a reduction
-			      {
-				      PV_GET(d1, t_iter);
-                  PV_GET(d2, t2_iter);
-                  PV_GET(d3, t3_iter);
-                  PV_GET(d4, t4_iter);
-               
-					   PV_SET_NEXT(t_iter, z_mod2_precomp(d1, p, pinv)); // reduce mod p
-				      PV_SET_NEXT(t2_iter, z_mod2_precomp(d2, p, pinv)); 
-				      PV_SET_NEXT(t3_iter, z_mod2_precomp(d3, p, pinv)); 
-				      PV_SET_NEXT(t4_iter, z_mod2_precomp(d4, p, pinv)); 
-			      }
-				}
-		   }
-		   
-			pv_iter_s iter3a, iter3b, iter3c, iter3d;
-		   PV_ITER_INIT(iter3a, res->arr, res->rows[i]); // iterate along row i of res
-         PV_ITER_INIT(iter3b, res->arr, res->rows[i+1]); // iterate along row i + 1 of res
-         PV_ITER_INIT(iter3c, res->arr, res->rows[i+2]); // iterate along row i + 2 of res
-         PV_ITER_INIT(iter3d, res->arr, res->rows[i+3]); // iterate along row i + 3 of res
-         
-			PV_ITER_INIT(t_iter, t->arr, 0);
-         PV_ITER_INIT(t2_iter, t2->arr, 0);
-         PV_ITER_INIT(t3_iter, t3->arr, 0);
-         PV_ITER_INIT(t4_iter, t4->arr, 0);
-
-			for (ulong k = 0; k < c2; k++) // store row i of res reducing as we go
-			{
-				PV_GET_NEXT(d1, t_iter);
-				PV_GET_NEXT(d2, t2_iter);
-				PV_GET_NEXT(d3, t3_iter);
-				PV_GET_NEXT(d4, t4_iter);
-				PV_SET_NEXT(iter3a, z_mod2_precomp(d1, p, pinv));
-				PV_SET_NEXT(iter3b, z_mod2_precomp(d2, p, pinv));
-				PV_SET_NEXT(iter3c, z_mod2_precomp(d3, p, pinv));
-				PV_SET_NEXT(iter3d, z_mod2_precomp(d4, p, pinv));
-			}
-	   }
-
-	   F_zmod_mat_clear(t4);
-		F_zmod_mat_clear(t3);
-		F_zmod_mat_clear(t2);
-		
-	   for ( ; i < r1; i++) // for each remaining row of mat1
-	   {
-		   pv_iter_s iter1;
-		   PV_ITER_INIT(iter1, mat1->arr, mat1->rows[i]); // iterate along row i of mat1
-		
-			ulong c;
-		   PV_GET_NEXT(c, iter1); // get first coefficient of row i of mat1
-
-			mp_limb_t * ptr = mat2c->arr.entries;
-				
-			ulong j = 0, d;
-		   mpn_mul_1(temp, ptr, limbs, c); // initial scalar product by row 0 of mat2
-         
-		   for (j = 1; j < c1; j+= (red_max - 1)) // add up to red_max - 1 
-			                                       // scalar products at a time
-		   {
-            for (ulong s = 0; s < FLINT_MIN(red_max - 1, c1 - j); s++) // don't exceed c1 rows
-			   {
-				   PV_GET_NEXT(c, iter1); // get next coefficient of row i of mat1
-
-			      ptr += limbs; // increment to next row of mat2
-
-					mpn_addmul_1(temp, ptr, limbs, c); // scalar product by row j + s of mat2
-			   }
-
-			   PV_ITER_INIT(t_iter, t->arr, 0); // iterate through the t vector
-            
-				if (j + red_max - 1 < c1) // if this isn't the last column of mat1
-				{
-					for (ulong k = 0; k < c2; k++) // do a reduction
-			      {
-				      PV_GET(d, t_iter);
-               
-					   PV_SET_NEXT(t_iter, z_mod2_precomp(d, p, pinv)); // reduce mod p
-				   }
-				}
-		   }
-		   
-			pv_iter_s iter3;
-		   PV_ITER_INIT(iter3, res->arr, res->rows[i]); // iterate along row i of res
-         PV_ITER_INIT(t_iter, t->arr, 0);
-         
-			for (ulong k = 0; k < c2; k++) // store row i of res reducing as we go
-			{
-				PV_GET_NEXT(d, t_iter);
-				PV_SET_NEXT(iter3, z_mod2_precomp(d, p, pinv));
-			}
-	   }
-		
-	   F_zmod_mat_clear(t);
-		F_zmod_mat_clear(mat2c);
 	}
 }
 
