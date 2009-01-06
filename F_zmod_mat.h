@@ -96,6 +96,8 @@ void F_zmod_mat_neg(F_zmod_mat_t res, F_zmod_mat_t mat);
 
 void F_zmod_mat_mul_classical(F_zmod_mat_t res, F_zmod_mat_t mat1, F_zmod_mat_t mat2);
 
+void F_zmod_mat_mul_strassen(F_zmod_mat_t res, F_zmod_mat_t mat1, F_zmod_mat_t mat2);
+
 /*******************************************************************************************
 
    Conversions

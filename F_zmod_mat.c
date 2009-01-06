@@ -517,6 +517,122 @@ void F_zmod_mat_mul_classical(F_zmod_mat_t res, F_zmod_mat_t mat1, F_zmod_mat_t 
 	}
 }
 
+/*
+   Attach mat to res.
+	Note that res may not be reallocated and rows should not be swapped
+	as this will not be reflected in the original.
+*/
+
+void _F_zmod_mat_attach(F_zmod_mat_t res, F_zmod_mat_t mat, ulong r, ulong c, ulong rows, ulong cols)
+{
+#if BIT_FIDDLE
+   res->arr.log_bits = mat->arr.log_bits;
+   res->arr.pack = mat->arr.pack;
+   res->arr.log_pack = mat->arr.log_pack;
+#endif
+	res->arr.entries = mat->arr.entries;
+   res->arr.alloc = mat->arr.alloc;
+   res->arr.length = mat->arr.length;
+   res->arr.bits = mat->arr.bits;
+
+	res->r = rows;
+	res->c = cols;
+	res->p = mat->p;
+	res->p_inv = mat->p_inv;
+
+	res->rows = (ulong *) flint_heap_alloc(rows);
+	for (ulong i = 0; i < rows; i++)
+	{
+		res->rows[i] = mat->rows[i + r] + c;
+	}
+}
+
+void _F_zmod_mat_detach(F_zmod_mat_t mat)
+{
+	flint_heap_free(mat->rows);
+}
+
+void F_zmod_mat_mul_strassen(F_zmod_mat_t res, F_zmod_mat_t mat1, F_zmod_mat_t mat2)
+{
+	ulong m = mat1->r/2;
+
+	if (m <= 256) 
+	{
+		F_zmod_mat_mul_classical(res, mat1, mat2);
+		return;
+	}
+
+	F_zmod_mat_t x0, x1;
+
+	F_zmod_mat_init_precomp(x0, mat1->p, mat1->p_inv, m, m);
+	F_zmod_mat_init_precomp(x1, mat1->p, mat1->p_inv, m, m);
+
+	F_zmod_mat_t a00, a01, a10, a11, b00, b01, b10, b11, c00, c01, c10, c11;
+
+	_F_zmod_mat_attach(a00, mat1, 0, 0, m, m);
+   _F_zmod_mat_attach(a01, mat1, 0, m, m, m);
+   _F_zmod_mat_attach(a10, mat1, m, 0, m, m);
+   _F_zmod_mat_attach(a11, mat1, m, m, m, m);
+   
+	_F_zmod_mat_attach(b00, mat2, 0, 0, m, m);
+   _F_zmod_mat_attach(b01, mat2, 0, m, m, m);
+   _F_zmod_mat_attach(b10, mat2, m, 0, m, m);
+   _F_zmod_mat_attach(b11, mat2, m, m, m, m);
+   
+   _F_zmod_mat_attach(c00, res, 0, 0, m, m);
+   _F_zmod_mat_attach(c01, res, 0, m, m, m);
+   _F_zmod_mat_attach(c10, res, m, 0, m, m);
+   _F_zmod_mat_attach(c11, res, m, m, m, m);
+   
+   F_zmod_mat_sub(x0, a00, a10);
+	F_zmod_mat_sub(x1, b11, b01);
+	F_zmod_mat_mul_strassen(c10, x0, x1);
+
+	F_zmod_mat_add(x0, a10, a11);
+	F_zmod_mat_sub(x1, b01, b00);
+	F_zmod_mat_mul_strassen(c11, x0, x1);
+
+   F_zmod_mat_sub(x0, x0, a00);
+	F_zmod_mat_sub(x1, b11, x1);
+	F_zmod_mat_mul_strassen(c01, x0, x1);
+
+	F_zmod_mat_sub(x0, a01, x0);
+	F_zmod_mat_mul_strassen(c00, x0, b11);
+
+	F_zmod_mat_mul_strassen(x0, a00, b00);
+
+	F_zmod_mat_add(c01, x0, c01);
+	F_zmod_mat_add(c10, c01, c10);
+	F_zmod_mat_add(c01, c01, c11);
+	F_zmod_mat_add(c11, c10, c11);
+	F_zmod_mat_add(c01, c01, c00);
+	F_zmod_mat_sub(x1, x1, b10);
+	F_zmod_mat_mul_strassen(c00, a11, x1);
+
+	F_zmod_mat_sub(c10, c10, c00);
+	F_zmod_mat_mul_strassen(c00, a01, b10);
+
+	F_zmod_mat_add(c00, c00, x0);
+	
+	_F_zmod_mat_detach(c11);
+   _F_zmod_mat_detach(c10);
+   _F_zmod_mat_detach(c01);
+   _F_zmod_mat_detach(c00);
+   
+	_F_zmod_mat_detach(b11);
+   _F_zmod_mat_detach(b10);
+   _F_zmod_mat_detach(b01);
+   _F_zmod_mat_detach(b00);
+   
+   _F_zmod_mat_detach(a11);
+   _F_zmod_mat_detach(a10);
+   _F_zmod_mat_detach(a01);
+   _F_zmod_mat_detach(a00);
+   
+	F_zmod_mat_clear(x0);
+	F_zmod_mat_clear(x1);
+}
+
 /*******************************************************************************************
 
    Conversions
