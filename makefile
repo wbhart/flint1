@@ -312,7 +312,7 @@ long_extras-test: long_extras.o long_extras-test.o test-support.o memory-manager
 packed_vec-test: packed_vec-test.o test-support.o $(FLINTOBJ) $(HEADERS) 
 	$(CC) $(CFLAGS) packed_vec-test.o test-support.o -o packed_vec-test $(FLINTOBJ) $(LIBS)
 
-Zmod_poly-test: zmod_poly-test.o test-support.o $(FLINTOBJ) $(HEADERS)
+zmod_poly-test: zmod_poly-test.o test-support.o $(FLINTOBJ) $(HEADERS)
 	$(CC) $(CFLAGS) zmod_poly-test.o test-support.o -o zmod_poly-test $(FLINTOBJ) $(LIBS)
 
 zmod_mat-test: zmod_mat-test.o test-support.o $(FLINTOBJ) $(HEADERS)
