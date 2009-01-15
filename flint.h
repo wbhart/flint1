@@ -90,9 +90,9 @@ Cache/branch hints to speed up reads from data in memory/branches
 #define LIKELY(cond)
 #define UNLIKELY(cond)
 #else
-#define FLINT_PREFETCH(addr,n) /* nothing */
-#define LIKELY(cond)
-#define UNLIKELY(cond)
+#define FLINT_PREFETCH(addr,n)
+#define LIKELY(cond) (cond)
+#define UNLIKELY(cond) (cond)
 #endif
 
 /*
