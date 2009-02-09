@@ -139,13 +139,13 @@ void theta_mod6_char(long * out, long * character, ulong start, ulong len)
 }
 
 /*
-   Compute Sum q^{ax^2+bx+c} with a quadratic character mod 4
+   Compute Sum q^{ax^2+bx+c} 
    i.e. theta series Sum q^{ax^2+bx+c}
-   Assumes that start is either 0 or quite large compared to a an b
+   Assumes that start is either 0 or quite large compared to a and b
    Also assumes a, b and c are positive
 */
 
-void theta_1d_quad(unsigned long a, unsigned long b, unsigned long c,
+void theta_1d(unsigned long a, unsigned long b, unsigned long c,
 				                                          long * out, ulong start, ulong len)
 {
    // zero all the coefficients
