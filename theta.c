@@ -101,7 +101,7 @@ void theta(long * out, ulong start, ulong len)
     while(i < len) {
         out[i] = 2;
 
-        // iterate x++ and update i = 8x^2 - start
+        // iterate x++ and update i = x^2 - start
         i += x;
         x += 1;
         i += x;
@@ -109,6 +109,33 @@ void theta(long * out, ulong start, ulong len)
 
     if(start == 0)
         out[0] = 1; // the constant term is 1 not 2
+}
+
+/*
+   Compute theta with a quasi-character modulo 6
+   i.e. theta series of  x^2, summed only over non-negative exponents
+	note the character starts from the starting position (start), not from
+	zero.
+*/
+
+void theta_mod6_char(long * out, long * character, ulong start, ulong len)
+{
+
+    // zero all the coefficients
+    for(ulong i = 0; i < len; i++)
+        out[i] = 0;
+
+	ulong x = (start == 0 ? 0 : z_intsqrt(start-1)+1); // start <= x^2
+   ulong i = x * x - start; // x^2 - start
+
+    while(i < len) {
+        out[i] = character[i%6];
+
+        // iterate x++ and update i = x^2 - start
+        i += x;
+        x += 1;
+        i += x;
+    }
 }
 
 /*
