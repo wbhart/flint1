@@ -410,7 +410,7 @@ void theta_1d_quadchar(long * character, unsigned long a, unsigned long b, unsig
 }
 
 /*
-   Compute Sum_{i=0,infty} (2*a*x+b)/m * q^{ax^2+bx+c} with a quadratic character mod 4
+   Compute Sum_{x=0,infty} (2*a*x+b)/m * q^{ax^2+bx+c} with a quadratic character mod 4
    i.e. theta series Sum_{i=0, infty} a_{x mod 4} * (2*a*x+b)/m * q^{ax^2+bx+c} where a_i = quad[i], i = 0..3 
    are in -1, 0, 1
    Assumes that start is either 0 or quite large compared to a an b
