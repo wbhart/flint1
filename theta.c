@@ -113,9 +113,7 @@ void theta(long * out, ulong start, ulong len)
 
 /*
    Compute theta with a quasi-character modulo 6
-   i.e. theta series of  x^2, summed only over non-negative exponents
-	note the character starts from the starting position (start), not from
-	zero.
+   i.e. theta series of  x^2, summed only over non-negative exponents.
 */
 
 void theta_mod6_char(long * out, long * character, ulong start, ulong len)
@@ -129,7 +127,7 @@ void theta_mod6_char(long * out, long * character, ulong start, ulong len)
    ulong i = x * x - start; // x^2 - start
 
     while(i < len) {
-        out[i] = character[i%6];
+        out[i] = character[x%6];
 
         // iterate x++ and update i = x^2 - start
         i += x;
