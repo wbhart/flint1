@@ -9562,10 +9562,9 @@ int fmpz_poly_gcd_heuristic(fmpz_poly_t H, const fmpz_poly_t poly1,
 			
 	if (divides)
 	{
-		fmpz_poly_scalar_mul_fmpz(R, R, d);
+		fmpz_poly_scalar_mul_fmpz(H, R, d);
 		fmpz_clear(d);
-      fmpz_poly_swap(R, H);
-		fmpz_poly_clear(R);
+      fmpz_poly_clear(R);
 		return 1;
 	} else
 	{
