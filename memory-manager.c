@@ -162,22 +162,22 @@ typedef struct limb_memp_t //record for managing a particular allocation of memo
    unsigned long length; //how many limbs allocated
 } limb_memp_t;
 
-limb_mem_t* head_mpn = NULL; //start of doubly linked list of records
-limb_mem_t* last_mpn = NULL; //last record in linked list 
-limb_memp_t* top_mpn = NULL; //top of stack of limb_memp_t's
-limb_memp_t* reservoir_mpn; //array of preallocated limb_memp_t's
-unsigned int rescount_mpn=0; //counter for which limb_memp_t we are upto in the reservoir_mpn
-
+__thread limb_mem_t* head_mpn = NULL; //start of doubly linked list of records
+__thread limb_mem_t* last_mpn = NULL; //last record in linked list 
+__thread limb_memp_t* top_mpn = NULL; //top of stack of limb_memp_t's
+__thread limb_memp_t* reservoir_mpn; //array of preallocated limb_memp_t's
+__thread unsigned int rescount_mpn = 0; //counter for which limb_memp_t we are upto in the reservoir_mpn
+   
 // todo: deal with possible out of memory situation when allocating
 
 void* flint_stack_alloc(unsigned long length)
 {
-   static limb_mem_t* curr;
-   static limb_mem_t* temp;
-   static int initialised = 0; //has limb_alloc been initialised
-   static unsigned int currentalloc = 0; //total number of limb_memp_t's in reservoir_mpn
-   static limb_memp_t* tempres;
-   static int check=0;
+   static __thread limb_mem_t* curr;
+   static __thread limb_mem_t* temp;
+   static __thread int initialised = 0; //has limb_alloc been initialised
+   static __thread unsigned int currentalloc = 0; //total number of limb_memp_t's in reservoir_mpn
+   static __thread limb_memp_t* tempres;
+   static __thread int check=0;
    void* alloc_d;
    
    check++;
@@ -326,8 +326,8 @@ void flint_stack_release()
 
 #define FLINT_SMALL_BLOCK_SIZE 10000L
 
-mp_limb_t * block_ptr = NULL;
-unsigned long block_left = 0;
+__thread mp_limb_t * block_ptr = NULL;
+__thread unsigned long block_left = 0;
    
 void * flint_stack_alloc_small(unsigned long length)
 {

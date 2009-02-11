@@ -112,42 +112,17 @@ void theta(long * out, ulong start, ulong len)
 }
 
 /*
-   Compute theta with a quasi-character modulo 6
-   i.e. theta series of  x^2, summed only over non-negative exponents.
-*/
-
-void theta_mod6_char(long * out, long * character, ulong start, ulong len)
-{
-
-    // zero all the coefficients
-    for(ulong i = 0; i < len; i++)
-        out[i] = 0;
-
-	ulong x = (start == 0 ? 0 : z_intsqrt(start-1)+1); // start <= x^2
-   ulong i = x * x - start; // x^2 - start
-
-    while(i < len) {
-        out[i] = character[x%6];
-
-        // iterate x++ and update i = x^2 - start
-        i += x;
-        x += 1;
-        i += x;
-    }
-}
-
-/*
    Compute Sum q^{ax^2+bx+c} 
    i.e. theta series Sum q^{ax^2+bx+c}
    Assumes that start is either 0 or quite large compared to a and b
-   Also assumes a, b and c are positive
+   Also assumes a, b and c are non-negative
 */
 
 void theta_1d(unsigned long a, unsigned long b, unsigned long c,
 				                                          long * out, ulong start, ulong len)
 {
    // zero all the coefficients
-   for(ulong i=0; i<len; i++)
+   for(ulong i = 0; i < len; i++)
       out[i] = 0;
 
    ulong i, x;
@@ -168,7 +143,7 @@ void theta_1d(unsigned long a, unsigned long b, unsigned long c,
 	  
 	        i += (a*x - b);
 	        x += 1;
-			i += (a*x);
+			  i += (a*x);
          }
          
 		 x = (b/a);
@@ -255,6 +230,75 @@ void theta_1d(unsigned long a, unsigned long b, unsigned long c,
 		 i += (a*x);
       }
 
+      x = z_intsqrt(start/a-1)+1; // start <= ax^2
+   
+      while (a*x*x - b*x + c < start) x++; // start <= ax^2-bx+c (deals with negative x)
+
+      i = a*x*x - b*x + c - start;
+
+      while (i < len)
+      {
+         out[i] += 1;
+	  
+	     i += (a*x - b);
+	     x += 1;
+		 i += (a*x);
+      }
+   }
+}
+
+
+/*
+   Compute Sum q^{ax^2+bx+c} 
+   i.e. theta series Sum q^{ax^2+bx+c} non-negative coefficients only
+   Assumes that start is either 0 or quite large compared to a and b
+   Also assumes a, b and c are non-negative
+*/
+
+void theta_1d_0(unsigned long a, unsigned long b, unsigned long c,
+				                                          long * out, ulong start, ulong len)
+{
+   // zero all the coefficients
+   for(ulong i = 0; i < len; i++)
+      out[i] = 0;
+
+   ulong i, j, x;
+   
+   if (start == 0)
+   {
+      long disc = b*b - 4*a*c;
+
+	   if (disc < 0L) // no intersection with x-axis
+	   {
+		  x = 0;
+
+		  i = a*x*x + b*x + c;
+
+		  while (i < len)
+        {
+           out[i] += 1;
+	  
+	        i += (a*x + b);
+	        x += 1;
+		     i += (a*x);
+        }  
+	  } else // discriminant >= 0
+	  {
+		  x = 0;
+
+		  j = a*x*x + b*x + c;
+
+		  while (j < (long) len)
+        {
+           if (j >= 0L) out[j] += 1;
+	  
+	        j += (a*x + b);
+	        x += 1;
+		     j += (a*x);
+        }
+	  }
+   } else
+   {
       x = z_intsqrt(start/a-1)+1; // start <= ax^2
    
       while (a*x*x - b*x + c < start) x++; // start <= ax^2-bx+c (deals with negative x)

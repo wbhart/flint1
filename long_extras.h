@@ -251,7 +251,7 @@ static inline int z_issquare(long x)
 unsigned long z_CRT(unsigned long x1, unsigned long n1, 
                         unsigned long x2, unsigned long n2);
                        
-int z_issquarefree(unsigned long n);
+int z_issquarefree(unsigned long n, int proved);
 
 int z_remove_precomp(unsigned long * n, unsigned long p, double pinv);
 

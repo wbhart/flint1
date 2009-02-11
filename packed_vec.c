@@ -57,21 +57,47 @@ void pv_init(pv_s * vec, ulong entries, int bits)
 	}
 }
 
+void pv_stack_init(pv_s * vec, ulong entries, int bits)
+{
+   if (entries && bits)
+	{
+		ulong limbs = (entries*bits - 1)/FLINT_BITS + 1;
+		vec->alloc = (limbs*FLINT_BITS)/bits;
+		vec->entries = (mp_limb_t *) flint_stack_alloc(limbs);
+		vec->bits = bits;
+#if BIT_FIDDLE
+		vec->log_bits = FLINT_BIT_COUNT(bits) - 1;
+		vec->pack = FLINT_BITS/bits;
+		vec->log_pack = FLINT_BIT_COUNT(vec->pack) - 1;
+		vec->length = 0;
+#endif
+	} else
+	{
+		vec->entries = NULL;
+		vec->alloc = entries;
+		vec->bits = bits;
+		vec->length = 0;
+	}
+}
+
 void pv_realloc(pv_s * vec, ulong entries)
 {
 	if (entries)
 	{
 		ulong limbs = (entries*vec->bits - 1)/FLINT_BITS + 1;
 		   
-		if (vec->entries)
+		if (vec->bits)
 		{
-			if (entries == vec->alloc) return;
+			if (vec->entries)
+		   {
+			   if (entries == vec->alloc) return;
 			
-			vec->entries = (mp_limb_t *) flint_heap_realloc(vec->entries, limbs);
-		} else
-         vec->entries = (mp_limb_t *) flint_heap_alloc(limbs);
+			   vec->entries = (mp_limb_t *) flint_heap_realloc(vec->entries, limbs);
+		   } else
+            vec->entries = (mp_limb_t *) flint_heap_alloc(limbs);
 
-		vec->alloc = (limbs*FLINT_BITS)/vec->bits;
+		   vec->alloc = (limbs*FLINT_BITS)/vec->bits;
+		}
 	} else
 	{
 		if (vec->entries) flint_heap_free(vec->entries);

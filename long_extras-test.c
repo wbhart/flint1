@@ -2034,18 +2034,18 @@ int test_z_CRT()
 
 int test_z_issquarefree()
 {
-   unsigned long n, n1, n2;
+   unsigned long n, n1, n2, n3;
 
    int result = 1;
    
-   for (unsigned long count = 0; (count < 5000000) && (result == 1); count++)
+   for (unsigned long count = 0; (count < 1000) && (result == 1); count++)
    { 
       do
       {
-         n1 = random_ulong(100);
-         n2 = random_ulong(100);
+         n1 = random_ulong(1L<<(FLINT_BITS/3));
+         n2 = random_ulong(1L<<(FLINT_BITS/3));
          n2 = n2*n2;
-      } while ((n1*n2 > 65535) || (n2 == 1));
+      } while (n2 == 1);
       
       n = n1*n2;
       
@@ -2053,10 +2053,10 @@ int test_z_issquarefree()
       printf("n1 = %ld, n2 = %ld\n", n1, n2);
 #endif
 
-      result = !z_issquarefree(n);
+      result = !z_issquarefree(n, 1);
    }  
 
-   for (unsigned long count = 0; (count < 500000) && (result == 1); count++)
+   for (unsigned long count = 0; (count < 100000) && (result == 1); count++)
    { 
       n = 1;
       n1 = 1;
@@ -2075,7 +2075,22 @@ int test_z_issquarefree()
       printf("%ld\n", n);
 #endif
 
-      result = z_issquarefree(n);
+      result = z_issquarefree(n, 1);
+   }  
+   
+   for (unsigned long count = 0; (count < 1000) && (result == 1); count++)
+   { 
+      n1 = z_randprime(FLINT_BITS/3, 0);
+		do {n2 = z_randprime(FLINT_BITS/3, 0);} while (n2 == n1);
+      do {n3 = z_randprime(FLINT_BITS/3, 0);} while ((n3 == n1) || (n3 == n2));
+      
+      n = n1*n2*n3;
+      
+#if DEBUG
+      printf("%ld\n", n);
+#endif
+
+      result = z_issquarefree(n, 1);
    }  
    
    return result;

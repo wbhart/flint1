@@ -248,12 +248,12 @@ do { \
 
 #define PV_SET_ENTRY(pv_xxx, entry_xxx, xxx) \
 do { \
-  int xxx_limb = (entry_xxx >> pv_xxx.log_pack); \
-  int xxx_shift = ((entry_xxx & (pv_xxx.pack - 1)) << pv_xxx.log_bits); \
+  int xxx_limb = (entry_xxx >> (pv_xxx).log_pack); \
+  int xxx_shift = ((entry_xxx & ((pv_xxx).pack - 1)) << (pv_xxx).log_bits); \
   ulong xxx_mask; \
-  if (pv_xxx.bits == FLINT_BITS) xxx_mask = -1L; \
-  else xxx_mask = ((1UL << pv_xxx.bits) - 1UL) << xxx_shift); \
-  pv_xxx.entries[xxx_limb] = (pv_xxx.entries[xxx_limb] & ~xxx_mask) + (xxx << xxx_shift); \
+  if ((pv_xxx).bits == FLINT_BITS) xxx_mask = -1L; \
+  else xxx_mask = ((1UL << (pv_xxx).bits) - 1UL) << xxx_shift); \
+  (pv_xxx).entries[xxx_limb] = ((pv_xxx).entries[xxx_limb] & ~xxx_mask) + (xxx << xxx_shift); \
 } while (0)
 
 #else
@@ -386,11 +386,11 @@ do { \
 
 #define PV_GET_ENTRY(xxx, pv_xxx, entry_xxx) \
 do { \
-   int bits = pv_xxx.bits; \
-	if (bits == 8) (xxx) = (ulong) ((uint8_t *) pv_xxx.entries)[entry_xxx]; \
-	else if (bits == 16) (xxx) = (ulong) ((uint16_t *) pv_xxx.entries)[entry_xxx]; \
-	else if (bits == 32) (xxx) = (ulong) ((uint32_t *) pv_xxx.entries)[entry_xxx]; \
-	else if (bits == 64) (xxx) = (ulong) ((uint64_t *) pv_xxx.entries)[entry_xxx]; \
+   int bits = (pv_xxx).bits; \
+	if (bits == 8) (xxx) = (ulong) ((uint8_t *) (pv_xxx).entries)[entry_xxx]; \
+	else if (bits == 16) (xxx) = (ulong) ((uint16_t *) (pv_xxx).entries)[entry_xxx]; \
+	else if (bits == 32) (xxx) = (ulong) ((uint32_t *) (pv_xxx).entries)[entry_xxx]; \
+	else if (bits == 64) (xxx) = (ulong) ((uint64_t *) (pv_xxx).entries)[entry_xxx]; \
 } while (0)
 
 /*
@@ -400,11 +400,11 @@ do { \
 
 #define PV_SET_ENTRY(pv_xxx, entry_xxx, xxx) \
 do { \
-   int bits = pv_xxx.bits; \
-	if (bits == 8) ((uint8_t *) pv_xxx.entries)[entry_xxx] = (uint8_t) (xxx); \
-	else if (bits == 16) ((uint16_t *) pv_xxx.entries)[entry_xxx] = (uint16_t) (xxx); \
-	else if (bits == 32) ((uint32_t *) pv_xxx.entries)[entry_xxx] = (uint32_t) (xxx); \
-	else if (bits == 64) ((uint64_t *) pv_xxx.entries)[entry_xxx] = (uint64_t) (xxx); \
+   int bits = (pv_xxx).bits; \
+	if (bits == 8) ((uint8_t *) (pv_xxx).entries)[entry_xxx] = (uint8_t) (xxx); \
+	else if (bits == 16) ((uint16_t *) (pv_xxx).entries)[entry_xxx] = (uint16_t) (xxx); \
+	else if (bits == 32) ((uint32_t *) (pv_xxx).entries)[entry_xxx] = (uint32_t) (xxx); \
+	else if (bits == 64) ((uint64_t *) (pv_xxx).entries)[entry_xxx] = (uint64_t) (xxx); \
 } while (0)
 
 #endif
@@ -427,6 +427,8 @@ int pv_bit_fit(int bits)
 */
 
 void pv_init(pv_s * vec, ulong entries, int bits);
+
+void pv_stack_init(pv_s * vec, ulong entries, int bits);
 
 /*
    Reallocate the packed vector pointed to by vec to have space for at least the
@@ -461,6 +463,15 @@ static inline
 void pv_clear(pv_s * vec)
 {
 	if (vec->entries) flint_heap_free(vec->entries);
+	vec->entries = NULL;
+	vec->alloc = 0;
+   vec->length = 0;
+}
+
+static inline
+void pv_stack_clear(pv_s * vec)
+{
+	if (vec->entries) flint_stack_release(); // vec->entries
 	vec->entries = NULL;
 	vec->alloc = 0;
    vec->length = 0;

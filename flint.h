@@ -96,6 +96,28 @@ Cache/branch hints to speed up reads from data in memory/branches
 #endif
 
 /*
+Thread stuff
+*/
+#ifdef FLINT_TEST_SUPPORT_H 
+#define FLINT_THREAD_CLEANUP \
+	do { \
+      if (omp_get_thread_num() != 0) \
+	   { \
+		   flint_stack_cleanup(); \
+	      flint_test_support_cleanup(); \
+		} \
+	} while (0);
+#else
+#define FLINT_THREAD_CLEANUP \
+	do { \
+      if (omp_get_thread_num() != 0) \
+	   { \
+		   flint_stack_cleanup(); \
+      } \
+	} while (0);
+#endif 
+
+/*
 Cache size in bytes.
 */
 #define FLINT_CACHE_SIZE 65536

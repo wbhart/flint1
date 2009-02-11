@@ -36,190 +36,177 @@
 #include "zn_poly.h"
 #endif
 
-#define MIKE_LIMIT 100000000L
-#define MIKE_LIMIT2 MIKE_LIMIT/4
-#define BLOCK 100000
-#define COUNT MIKE_LIMIT/BLOCK
-#define K 1
-
-/*int main(void)
-{
-	long * array1 = (long *) flint_heap_alloc(1000);
-	long quad[4] = {1, -1, 1, -1};
-	
-	theta_1d_quadchar(quad, 3, 1, 0, array1, 1000, 1000);
-
-	theta_print(array1, 1000, 1000);
-
-	return 0;
-}*/
-
-/*int main(void)
-{
-   unsigned long p = 65521;
-
-   zn_mod_t mod;
-   zn_mod_init(mod, p);
-   
-   //------------------------------------------------------------
-	
-   unsigned long * theta_A1 = (unsigned long *) flint_heap_alloc(MIKE_LIMIT2);
-   
-   long * array1 = (long *) flint_heap_alloc(BLOCK);
-   
-   for (unsigned long start = 0; start < MIKE_LIMIT; start += BLOCK)
-   {   
-	  theta_2d_A1(array1, start, BLOCK);
-   
-      unsigned long start2 = start/8;
-	  
-	  for (unsigned long i = 0; i < BLOCK/8; i++)
-      {
-         theta_A1[start2 + i] = array1[8*i+K];
-      }
-   }
-   
-   flint_heap_free(array1);
-
-   //-------------------------------------------------------------
-   
-   unsigned long * theta_B = (unsigned long *) flint_heap_alloc(MIKE_LIMIT2);
-   
-   long * array2 = (long *) flint_heap_alloc(BLOCK);
-   
-   for (unsigned long start = 0; start < MIKE_LIMIT; start += BLOCK)
-   {   
-	  theta_1d_B(array2, start, BLOCK);
-   
-      unsigned long start2 = start/8;
-	  
-	  long coeff;
-	  
-	  for (unsigned long i = 0; i < BLOCK/8; i++)
-      {
-         coeff = array2[8*i];
-		 
-		 if (coeff < 0L) theta_B[start2 + i] = p + coeff;
-		 else theta_B[start2 + i] = coeff;
-      }
-   }
-   
-   flint_heap_free(array2);
-   
-   //----------------------------------------------------------------------
-   unsigned long * theta_prod = flint_heap_alloc(2*MIKE_LIMIT2-1);
-
-   printf("here1\n");
-   zn_array_mul_fft_dft(theta_prod, theta_A1, MIKE_LIMIT2, theta_B, MIKE_LIMIT2, 4, mod);
-
-   flint_heap_free(theta_A1);
-   flint_heap_free(theta_B);
-  
-   printf("here2\n");
-   
-   unsigned long s = 0;
-   
-   long coeff;
-   for(unsigned long j = 0; j < MIKE_LIMIT2; j++)
-   {
-       coeff = theta_prod[j];
-	   if (!coeff) 
-	   {
-		  //printf("%ld ", 8*j+K);
-		  s++;
-	   }
-   }
-   printf("\n%ld zeroes\n", s);
-   
-   flint_heap_free(theta_prod);
-   
-   
-   return 0;
-}*/
+#define LIMIT 416700000L
+#define BLOCK    100000
+#define COUNT (LIMIT/BLOCK)
 
 int main(void)
 {
-   fmpz_poly_t theta_1, theta_C, theta_prod;
+   fmpz_poly_t theta_1, theta_2, theta_3, theta_prod;
    
    //--------------------------------------------------------------
    
    long * array1 = (long *) flint_heap_alloc(BLOCK);
    
-   long character[4] = {1, -1, 1, -1};
-	
-   fmpz_poly_init2(theta_1, MIKE_LIMIT2, 1); 
+   fmpz_poly_init2(theta_1, LIMIT, 1); 
    
-   for (unsigned long start = 0; start < MIKE_LIMIT; start += BLOCK)
+   for (unsigned long start = 0; start < LIMIT*2; start += BLOCK)
    {   
-	  theta_1d_quadchar_0(character, 4, 4, 1, 4, array1, start, BLOCK);
+	  theta_1d_0(1, 1, 0, array1, start, BLOCK);
    
-      unsigned long start2 = start/4;
+     unsigned long start2 = start/2;
 	  
-	  for (unsigned long i = 0; i < BLOCK/4; i++)
+	  for (unsigned long i = 0; i < BLOCK/2; i++)
       {
-         _fmpz_poly_set_coeff_si(theta_1, start2 + i, array1[4*i+K]);
+         _fmpz_poly_set_coeff_si(theta_1, start2 + i, array1[2*i]);
       }
    }
    
-   theta_1->length = MIKE_LIMIT2;
+   theta_1->length = LIMIT;
    
    flint_heap_free(array1);
 
    printf("Computed first theta function.\n");
 
+	//fmpz_poly_print_pretty(theta_1, "x"); printf("\n");
+
    //-------------------------------------------------------------
    
-   long * array2 = (long *) flint_heap_alloc(BLOCK);
-  
-   fmpz_poly_init2(theta_C, MIKE_LIMIT2, 1); 
-   
-   long character2[4] = {1, -1, 1, -1};
+   array1 = (long *) flint_heap_alloc(BLOCK);
 	
-   for (unsigned long start = 0; start < MIKE_LIMIT; start += BLOCK)
-   {   
-	  unsigned long start2 = start/4;
-	  
-	  theta_2d_C(array2, start2, BLOCK/4);
+	long character[4] = {1, -1, 1, -1};
+	
+   fmpz_poly_init2(theta_2, LIMIT, 1); 
    
-	  for (unsigned long i = 0; i < BLOCK/4; i++)
+   for (unsigned long start = 0; start < LIMIT; start += BLOCK)
+   {   
+	  theta_1d_quadchar(character, 3, 1, 0, array1, start, BLOCK);
+   
+     unsigned long start2 = start;
+	  
+	  for (unsigned long i = 0; i < BLOCK/2; i++)
       {
-         _fmpz_poly_set_coeff_si(theta_C, start2 + i, array2[i]);
+         _fmpz_poly_set_coeff_si(theta_2, start2 + 2*i, array1[2*i]);
       }
    }
    
-   theta_C->length = MIKE_LIMIT2;
+   theta_2->length = LIMIT;
    
-   flint_heap_free(array2);
-   
+   flint_heap_free(array1);
+
    printf("Computed second theta function.\n");
+
+	//fmpz_poly_print_pretty(theta_2, "x"); printf("\n");
 
    //----------------------------------------------------------------------
 
-   fmpz_poly_init2(theta_prod, MIKE_LIMIT2, 1);
+	array1 = (long *) flint_heap_alloc(BLOCK);
+	
+	long character2[4] = {1, -1, 1, -1};
+	
+   fmpz_poly_init2(theta_3, LIMIT+BLOCK, 1); 
    
-   _fmpz_poly_mul_KS_trunc(theta_prod, theta_1, theta_C, MIKE_LIMIT2, -24);
+   for (unsigned long start=0; start < 1+(LIMIT-1)/3; start += BLOCK)
+   {   
+	  theta_1d_quadchar(character2, 1, 0, 0, array1, start, BLOCK);
    
-   fmpz_poly_clear(theta_1);
-   fmpz_poly_clear(theta_C);
+     unsigned long start2 = start*3;
+	  
+	  for (unsigned long i = 0; i < BLOCK; i++)
+      {
+         _fmpz_poly_set_coeff_si(theta_3, start2 + 3*i, array1[i]);
+      }
+   }
+   
+   theta_3->length = LIMIT;
+   
+   flint_heap_free(array1);
+
+   printf("Computed third theta function.\n");
+
+	//fmpz_poly_print_pretty(theta_3, "x"); printf("\n");
+
+	//----------------------------------------------------------------------
+
+   fmpz_poly_init2(theta_prod, LIMIT, 1);
+   
+   _fmpz_poly_mul_KS_trunc(theta_prod, theta_1, theta_2, LIMIT, -24);
+   
+	fmpz_poly_clear(theta_1);
+   fmpz_poly_clear(theta_2);
+   
+	_fmpz_poly_mul_KS_trunc(theta_prod, theta_prod, theta_3, LIMIT, -24);
+   
+   fmpz_poly_clear(theta_3);
   
    printf("Completed multiplication\n");
 
-   unsigned long s = 0;
-   long max = 0;
-   long coeff;
-   for(unsigned long j = 0; j < MIKE_LIMIT2; j++)
-   {
-       coeff = fmpz_poly_get_coeff_si(theta_prod, j);
-	   if (coeff > max) max = coeff;
-	   if (-coeff > max) max = -coeff;
-	   if (!coeff) 
-	   {
-		  s++;
-	   }
+   #define OFFSET (1L<<17)
+   #define LEN (1L<<18)
+
+   // sieve out non-squarefree coefficients
+   timeit_start(t0);
+
+   for(long a = 1; a < limit ; a++) {
+      long ab = a*2; // a*b
+      long ab2 = ab*2; // a*b*b
+      while (ab2 < limit) {
+          // check the coefficient is in our series
+          if ( (ab2-k) % mod == 0 )
+                  // flag non-squarefree coefficients as -OFFSET
+                  fmpz_poly_set_coeff_si(theta_prod, (ab2-k)/mod, -OFFSET);
+
+          // iterate b++, ab = a*b, ab2 = a*b^2
+          ab2 += ab;
+          ab += a;
+          ab2 += ab;
+      }
    }
-   printf("max = %ld\n", max);
-   printf("\n%ld zeroes\n", s);
+
+   timeit_stop(t0);
+   fprintf(stderr, "Sieve out non-squarefree coefficients: cpu = %ld ms  wall = %ld ms\n", t0->cpu, t0->wall);
+
+   timeit_start(t0);
+   unsigned long arr[LEN];
+   for(long i = 0; i < LEN; i++)
+      arr[i] = 0;
+
+   unsigned long s = 0;
+   long maxneg = 0;
+   long maxpos = 0;
+   long coeff;
+   for(unsigned long j = k; j < limit; j += mod)
+   {
+      coeff = fmpz_poly_get_coeff_si(theta_prod, j/mod);
+
+      // skip non-squarefree coefficients
+      if(coeff == -OFFSET) {
+          //printf("arr[%ld] : non-squarefree\n", j);
+          continue;
+      }
+
+      //printf("arr[%ld] = %ld\n", j, coeff);
+
+      arr[OFFSET+coeff]++;
+      if (coeff > maxpos) maxpos = coeff;
+      if (coeff < maxneg) maxneg = coeff;
+      if (!coeff)
+      {
+         printf("%ld\n", j);
+         s++;
+      }
+   }
+   printf("\n\nmaxneg = %ld, maxpos = %ld\nnumzeros = %ld\n\n", maxneg, maxpos, s);
+   for(long i = maxneg; i <= maxpos; i++) {
+      printf("VALUE = %ld, count = %ld\n", i, arr[i+OFFSET]);
+   }
+   timeit_stop(t0);
+   fprintf(stderr, "Counting zeroes: cpu = %ld ms  wall = %ld ms\n", t0->cpu, t0->wall);
+   fprintf(stderr, "\n%ld zeroes\n", s);
    
+	theta_prod->length = 30000;
+	//	fmpz_poly_print_pretty(theta_prod, "x");
+
    fmpz_poly_clear(theta_prod);
    
    

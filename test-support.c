@@ -30,11 +30,12 @@ Copyright (C) 2007, William Hart and David Harvey
 #include "test-support.h"
 
 
-gmp_randstate_t randstate;
+__thread gmp_randstate_t randstate;
+__thread int rand_initialised = 0;
 
 
 // a bunch of global mpz's, guaranteed to be init'd
-mpz_t test_mpz[TEST_MPZ_COUNT];
+__thread mpz_t test_mpz[TEST_MPZ_COUNT];
 
 
 void test_support_init()
@@ -57,12 +58,22 @@ void test_support_cleanup()
 
 unsigned long random_ulong(unsigned long max)
 {
-   return gmp_urandomm_ui(randstate, max);
+   if (!rand_initialised) 
+	{
+		test_support_init();
+		rand_initialised = 1;
+	}
+	return gmp_urandomm_ui(randstate, max);
 }
 
 unsigned long random_ulong2(unsigned long max)
 {
-   unsigned long bits = FLINT_BIT_COUNT(max);
+   if (!rand_initialised) 
+	{
+		test_support_init();
+		rand_initialised = 1;
+	}
+	unsigned long bits = FLINT_BIT_COUNT(max);
    mpz_t rand;
    mpz_init(rand);
    mpz_rrandomb(rand, randstate, bits);
@@ -73,20 +84,35 @@ unsigned long random_ulong2(unsigned long max)
 
 mp_limb_t random_limb()
 {
-   return gmp_urandomb_ui(randstate, FLINT_BITS);
+   if (!rand_initialised) 
+	{
+		test_support_init();
+		rand_initialised = 1;
+	}
+	return gmp_urandomb_ui(randstate, FLINT_BITS);
 }
 
 
 void urandom_limbs(mp_limb_t* dest, unsigned long limbs)
 {
-   for (unsigned long i = 0; i < limbs; i++)
+   if (!rand_initialised) 
+	{
+		test_support_init();
+		rand_initialised = 1;
+	}
+	for (unsigned long i = 0; i < limbs; i++)
       dest[i] = gmp_urandomb_ui(randstate, FLINT_BITS);
 }
 
 
 void random_limbs(mp_limb_t* dest, unsigned long limbs)
 {
-   mpz_rrandomb(test_mpz[0], randstate, limbs*FLINT_BITS);
+   if (!rand_initialised) 
+	{
+		test_support_init();
+		rand_initialised = 1;
+	}
+	mpz_rrandomb(test_mpz[0], randstate, limbs*FLINT_BITS);
 
    if (random_ulong(2))
    {

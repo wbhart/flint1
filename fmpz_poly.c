@@ -2289,13 +2289,16 @@ void _fmpz_poly_scalar_mul_fmpz(fmpz_poly_t output, const fmpz_poly_t poly, cons
              
       for (long i = 0; i < poly->length; i++)
       {
-          total_limbs = limbs1 + ABS(coeffs2[i*(limbs2+1)]);
+          mp_limb_t * temp = flint_stack_alloc(limbs1 + limbs2);
+			 total_limbs = limbs1 + ABS(coeffs2[i*(limbs2+1)]);
           if (total_limbs != limbs1)
           {
-             msl = F_mpn_mul_precache(coeffs_out + i*limbs_out + 1, coeffs2 + i*(limbs2+1) + 1, ABS(coeffs2[i*(limbs2+1)]), precache);
+             msl = F_mpn_mul_precache(temp, coeffs2 + i*(limbs2+1) + 1, ABS(coeffs2[i*(limbs2+1)]), precache);
              if (((long) coeffs2[i*(limbs2+1)] ^ sign1) < 0) coeffs_out[i*limbs_out] = -total_limbs + (msl == 0L);
              else coeffs_out[i*limbs_out] = total_limbs - (msl == 0L);
+				 F_mpn_copy(coeffs_out + i*limbs_out + 1, temp, total_limbs - (msl == 0L));
           } else coeffs_out[i*limbs_out] = 0L;
+			 flint_stack_release(); // temp
       }
       F_mpn_mul_precache_clear(precache);
    } else
@@ -8908,6 +8911,16 @@ void fmpz_poly_gcd_subresultant(fmpz_poly_t D, const fmpz_poly_t poly1, const fm
    
 	d = fmpz_init(FLINT_MIN(fmpz_size(a), fmpz_size(b)));
    fmpz_gcd(d, a, b);
+
+	if (Bin->length == 1)
+   {
+      fmpz_poly_set_coeff_fmpz(D, 0, d);
+      D->length = 1;
+      fmpz_clear(d);
+      fmpz_clear(a); // release ac
+      fmpz_clear(b); // release bc
+      return;
+   }
    
    fmpz_poly_t A, B, Q, R;
    fmpz_poly_init(A);
@@ -9353,10 +9366,10 @@ int fmpz_poly_gcd_heuristic(fmpz_poly_t H, const fmpz_poly_t poly1,
       return 1;
    }
    
-   fmpz_poly_t A, B;
+   fmpz_poly_t A, B, R;
    fmpz_poly_init(A);
    fmpz_poly_init(B);
-   
+	
    fmpz_poly_scalar_div_fmpz(A, poly1, ac);
    fmpz_poly_scalar_div_fmpz(B, poly2, bc);
    fmpz_stack_release(); //release bc
@@ -9400,6 +9413,8 @@ int fmpz_poly_gcd_heuristic(fmpz_poly_t H, const fmpz_poly_t poly1,
       return 1;
 	}
 	
+	fmpz_poly_init(R);
+   
 	ulong bits1, bits2;
 	if (bits1_in) bits1 = bits1_in;
 	else bits1 = FLINT_ABS(fmpz_poly_max_bits(A));
@@ -9473,15 +9488,15 @@ int fmpz_poly_gcd_heuristic(fmpz_poly_t H, const fmpz_poly_t poly1,
 		
 	fmpz_gcd(arrayg, array1, array2);
 	
-   fmpz_poly_limb_unpack_wrap(H, arrayg, pack_bits);
+   fmpz_poly_limb_unpack_wrap(R, arrayg, pack_bits);
    
 	fmpz_poly_t Q, Q1;
 	fmpz_poly_init(Q);
    fmpz_poly_init(Q1);
 
-	fmpz_t hc = fmpz_stack_init(H->limbs);
+	fmpz_t hc = fmpz_stack_init(R->limbs);
 	fmpz_t temp = fmpz_stack_init(FLINT_ABS(arrayg[0]) + 1);
-	fmpz_poly_content(hc, H);
+	fmpz_poly_content(hc, R);
 
 	if (!fmpz_is_one(hc)) 
 	  if (hc[0] == 1) fmpz_tdiv_ui(temp, arrayg, hc[1]);
@@ -9497,9 +9512,9 @@ int fmpz_poly_gcd_heuristic(fmpz_poly_t H, const fmpz_poly_t poly1,
 	{
       F_mpn_clear(q + FLINT_ABS(q[0]) + 1, FLINT_MIN(qlimbs - FLINT_ABS(q[0]) - 1, pack_limbs + 1)); // clear additional limbs for limb_unpack
 		fmpz_poly_limb_unpack_wrap(Q1, q, pack_bits);
-      ulong bits_H = FLINT_ABS(fmpz_poly_max_bits(H));
+      ulong bits_H = FLINT_ABS(fmpz_poly_max_bits(R));
 		ulong bits_Q1 = FLINT_ABS(fmpz_poly_max_bits(Q1));
-		ulong log1 = ceil_log2(H->length);
+		ulong log1 = ceil_log2(R->length);
 		ulong log_length = FLINT_MIN(log1, ceil_log2(Q1->length));
 		int ok = 0;
 		if (bits_H + bits_Q1 + log_length < pack_bits)
@@ -9507,8 +9522,8 @@ int fmpz_poly_gcd_heuristic(fmpz_poly_t H, const fmpz_poly_t poly1,
 			ok = 1;
 		} else
 		{
-			fmpz_poly_scalar_div_fmpz(H, H, hc);
-		   fmpz_poly_mul(Q1, Q1, H);
+			fmpz_poly_scalar_div_fmpz(R, R, hc);
+		   fmpz_poly_mul(Q1, Q1, R);
 		   if (sign1 < 0L) fmpz_poly_neg(Q1, Q1);
 		}
 		if (ok || fmpz_poly_equal(Q1, A))
@@ -9516,7 +9531,7 @@ int fmpz_poly_gcd_heuristic(fmpz_poly_t H, const fmpz_poly_t poly1,
          if (fmpz_divides(q, array2, temp))
 	      {
             F_mpn_clear(q + FLINT_ABS(q[0]) + 1, FLINT_MIN(qlimbs - FLINT_ABS(q[0]) - 1, pack_limbs)); // clear additional limbs for limb_unpack
-		      if (ok) fmpz_poly_scalar_div_fmpz(H, H, hc);
+		      if (ok) fmpz_poly_scalar_div_fmpz(R, R, hc);
 		      fmpz_poly_limb_unpack_wrap(Q1, q, pack_bits);
             bits_Q1 = FLINT_ABS(fmpz_poly_max_bits(Q1));
 				log_length = FLINT_MIN(log1, ceil_log2(Q1->length));
@@ -9526,7 +9541,7 @@ int fmpz_poly_gcd_heuristic(fmpz_poly_t H, const fmpz_poly_t poly1,
 			      ok = 1;
 		      } else
 				{
-					fmpz_poly_mul(Q1, Q1, H);
+					fmpz_poly_mul(Q1, Q1, R);
 		         if (sign2 < 0L) fmpz_poly_neg(Q1, Q1);
 				}
 				if (ok || fmpz_poly_equal(Q1, B)) divides = 1;
@@ -9547,13 +9562,16 @@ int fmpz_poly_gcd_heuristic(fmpz_poly_t H, const fmpz_poly_t poly1,
 			
 	if (divides)
 	{
-	   fmpz_poly_scalar_mul_fmpz(H, H, d);
+		fmpz_poly_scalar_mul_fmpz(R, R, d);
 		fmpz_clear(d);
+      fmpz_poly_swap(R, H);
+		fmpz_poly_clear(R);
 		return 1;
 	} else
 	{
 	   fmpz_clear(d);
-	   return 0;
+	   fmpz_poly_clear(R);
+		return 0;
 	}
 }
 

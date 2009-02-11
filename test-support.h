@@ -54,8 +54,8 @@ void test_support_cleanup();
 
 
 // a single GMP random state object that test modules may use
-extern gmp_randstate_t randstate;
-
+extern __thread gmp_randstate_t randstate;
+extern __thread int rand_initialised;
 
 // returns random unsigned long in [0, max)
 unsigned long random_ulong(unsigned long max);

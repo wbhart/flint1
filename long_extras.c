@@ -1726,13 +1726,22 @@ int z_issquarefree_trial(unsigned long n)
    Currently only works for numbers up to 65535
 */
 
-int z_issquarefree(unsigned long n)
+int z_issquarefree(unsigned long n, int proved)
 {
    if (n < SQFREE_TF_CUTOFF) return z_issquarefree_trial(n);
    else 
    {
-      printf("Not implemented yet!\n");
-      abort();
+		if (!z_issquarefree_trial(n)) return 0;
+			
+		factor_t factors;
+		
+		z_factor(&factors, n, proved);
+		for (ulong i = 0; i < factors.num; i++)
+		{
+			if ((factors.exp[i] & 1) == 0) return 0;
+		}
+
+		return 1;
    }
 }
 

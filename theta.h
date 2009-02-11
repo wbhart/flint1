@@ -42,9 +42,10 @@ void theta_fprint(long *coeff, ulong start, ulong len, FILE * f);
 
 void theta(long * out, ulong start, ulong len);
 
-void theta_mod6_char(long * out, long * character, ulong start, ulong len);
-
 void theta_1d(unsigned long a, unsigned long b, unsigned long c,
+				                                          long * out, ulong start, ulong len);
+
+void theta_1d_0(unsigned long a, unsigned long b, unsigned long c,
 				                                          long * out, ulong start, ulong len);
 
 void theta_1d_quadchar(long * character, unsigned long a, unsigned long b, unsigned long c,
