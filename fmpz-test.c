@@ -2076,7 +2076,7 @@ int test_fmpz_mul_trunc()
     int result = 1;
 
     mpz_init(num1);
-	mpz_init(num2);
+	 mpz_init(num2);
     mpz_init(num3);
     mpz_init(num4);
     mpz_init(num5);

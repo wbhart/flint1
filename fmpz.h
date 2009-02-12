@@ -46,14 +46,11 @@ typedef mp_limb_t * fmpz_t;
 #ifdef HAVE_ZNPOLY
 typedef struct
 {
-   unsigned long* primes;
-   unsigned long num_primes;
-   unsigned long n; // we have 2^n primes
-   unsigned long log_comb; // the number of levels of products we have computed already
-   unsigned long log_res; // the number of levels of relative residues computed already
+   ulong * primes;
+   ulong num_primes;
+   ulong n; // we have 2^n >= num_primes > 2^(n-1)
    fmpz_t ** comb; // array of arrays of products
    fmpz_t ** res;  // successive residues r_i^-1 mod r_{i+1} for pairs r_i, r_{i+1}
-   fmpz_t ** temp; // temporary space for reductions
    zn_mod_t * mod;
 } fmpz_comb_struct;
 
