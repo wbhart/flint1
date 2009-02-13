@@ -272,6 +272,10 @@ void fmpz_poly_byte_unpack_unsigned(fmpz_poly_t poly_m, const mp_limb_t * array,
 void fmpz_poly_byte_unpack(fmpz_poly_t poly_m, const mp_limb_t * array,
                                const unsigned long length, const unsigned long bytes);
 
+void fmpz_poly_pack_bytes(fmpz_poly_t res, fmpz_poly_t poly, ulong n, ulong bytes);
+
+void fmpz_poly_unpack_bytes(fmpz_poly_t res, fmpz_poly_t poly, ulong n, ulong bytes);
+
 /*
    Reduce coefficients of the given fmpz_poly fpol, modulo the modulus of the given 
    zmod_poly zpol, and store the result in zpol.

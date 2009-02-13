@@ -710,7 +710,7 @@ void fmpz_poly_byte_pack(mp_limb_t * array, const fmpz_poly_t poly_fmpz,
                    const unsigned long length, const unsigned long coeff_bytes, 
                                                                 const long negate)
 {
-   unsigned long size_m = poly_fmpz->limbs+1;
+   unsigned long size_m = poly_fmpz->limbs + 1;
    fmpz_t coeff_m = poly_fmpz->coeffs;
     
    const unsigned long limbs_per_coeff = (coeff_bytes>>FLINT_LG_BYTES_PER_LIMB);
@@ -867,14 +867,14 @@ void fmpz_poly_byte_pack(mp_limb_t * array, const fmpz_poly_t poly_fmpz,
           /* Coefficient is zero after borrow */
           else 
           {
-             array[offset_limb] = ((l_shift(1UL,shift_1)-1)&array[offset_limb]);
+             array[offset_limb] = ((l_shift(1UL,shift_1) - 1) & array[offset_limb]);
              offset_limb++;
              for ( ; offset_limb < coeff_limb + limbs_per_coeff; offset_limb++)
              {
                 array[offset_limb] = 0UL;
              }
              while ((offset_limb<<FLINT_LG_BYTES_PER_LIMB) < ((coeff_limb +
-                 limbs_per_coeff)<<FLINT_LG_BYTES_PER_LIMB)+extra_bytes_per_coeff + coeff_byte)
+                 limbs_per_coeff)<<FLINT_LG_BYTES_PER_LIMB) + extra_bytes_per_coeff + coeff_byte)
              {
                 array[offset_limb] = 0UL;
                 offset_limb++;
@@ -2870,7 +2870,7 @@ void __fmpz_poly_mul_modular_comb(fmpz_poly_t output, const fmpz_poly_t poly1, c
     // Multi-reduce poly1, place result into block1
     unsigned long len1 = poly1->length;
     unsigned long * block1 = flint_heap_alloc(len1 << comb->n);
-    for(int i=0; i<len1; i++) {
+    for(ulong i = 0; i < len1; i++) {
         fmpz_multi_mod_ui(block1 + (i << comb->n),
                 _fmpz_poly_get_coeff_ptr(poly1, i), comb);
     }
@@ -2878,7 +2878,7 @@ void __fmpz_poly_mul_modular_comb(fmpz_poly_t output, const fmpz_poly_t poly1, c
     // Multi-reduce poly2, place result into block2
     unsigned long len2 = poly2->length;
     unsigned long * block2 = flint_heap_alloc(len2 << comb->n);
-    for(int i=0; i<len2; i++) {
+    for(ulong i = 0; i < len2; i++) {
         fmpz_multi_mod_ui(block2 + (i << comb->n),
                 _fmpz_poly_get_coeff_ptr(poly2, i), comb);
     }
@@ -2897,32 +2897,32 @@ void __fmpz_poly_mul_modular_comb(fmpz_poly_t output, const fmpz_poly_t poly1, c
 
     // FIXME: reorganize this loop to optimize cache line usage
     
-    for(int i=0; i<numprimes; i++) {
+    for(ulong i = 0; i < numprimes; i++) {
 
         // in1 := poly1 % comb->primes[i]
-        for(int j=0; j<len1; j++) {
+        for(ulong j=0; j<len1; j++) {
             in1[j] = block1[i + (j << comb->n)];
         }
 
         // in2 := poly2 % comb->primes[i]
-        for(int j=0; j<len2; j++) {
+        for(ulong j=0; j<len2; j++) {
             in2[j] = block2[i + (j << comb->n)];
         }
 
         // multiply using zn_poly (requires len1>=len2>=1)
-        if(len1>=len2)
+        if(len1 >= len2)
             zn_array_mul(out, in1, len1, in2, len2, comb->mod[i]);
         else
             zn_array_mul(out, in2, len2, in1, len1, comb->mod[i]);
         // place result in block_out with proper spacing
-        for(int j=0; j<len_out; j++) {
+        for(ulong j = 0; j < len_out; j++) {
             block_out[i + (j << comb->n)] = out[j];
         }
         
     }
 
     // Reconstruct output from data in block_out
-    for(int i=0; i<len_out; i++) 
+    for(int i = 0; i < len_out; i++) 
 	 {
         fmpz_t coeff = _fmpz_poly_get_coeff_ptr(output, i);
         fmpz_multi_CRT_ui(coeff, block_out + (i << comb->n), comb);
@@ -3021,6 +3021,104 @@ void fmpz_poly_mul_modular(fmpz_poly_t output, const fmpz_poly_t poly1,
    _fmpz_poly_mul_modular(output, poly1, poly2, bits_in);
 }
 #endif
+
+/*
+   Pack coefficients of poly into fields with the given number of bytes, in bundles of n, into coefficients of res 
+*/
+void fmpz_poly_pack_bytes(fmpz_poly_t res, fmpz_poly_t poly, ulong n, ulong bytes)
+{
+   if (poly->length == 0)
+	{
+		fmpz_poly_zero(res);
+		return;
+	}
+	
+	ulong i, j;
+	
+	ulong max_bits = FLINT_ABS(fmpz_poly_max_bits(poly));
+	ulong limbs = ((((max_bits - 1)>>3) + (n - 1)*bytes)>>FLINT_LG_BYTES_PER_LIMB) + 1;
+	ulong short_length = (poly->length - 1)/n + 1;
+	
+	fmpz_poly_fit_length(res, short_length);
+	fmpz_poly_fit_limbs(res, limbs);
+
+	fmpz_poly_t poly_p;
+
+	mp_limb_t * coeff_r = res->coeffs;
+   ulong size_p = poly->limbs + 1;
+	ulong size_r = res->limbs + 1;
+
+	// clear output coefficients
+	F_mpn_clear(coeff_r, size_r*short_length);
+
+	// pack coefficients
+	for (i = 0, j = 0; i < short_length - 1; i++, j += n, coeff_r += size_r)
+	{
+      _fmpz_poly_attach_shift(poly_p, poly, j);
+		poly_p->length = FLINT_MIN(poly_p->length, n);
+		_fmpz_poly_normalise(poly_p);
+	   long negate = 1L;
+		if (poly_p->length)
+			if ((long) poly_p->coeffs[(poly_p->length - 1)*size_p] < 0L) negate = -1L;
+		fmpz_poly_byte_pack(coeff_r + 1, poly_p, n, bytes, negate);
+	   if (negate < 0L) coeff_r[0] = 1 - size_r;
+	   else coeff_r[0] = size_r - 1;
+	   NORM(coeff_r);
+	}
+
+	_fmpz_poly_attach_shift(poly_p, poly, j);
+	long negate = 1L;
+	if ((long) poly_p->coeffs[(poly_p->length - 1)*size_p] < 0L) negate = -1L;
+   fmpz_poly_byte_pack(coeff_r + 1, poly_p, poly_p->length, bytes, negate);
+	if (negate < 0L) coeff_r[0] = 1 - size_r;
+	else coeff_r[0] = size_r - 1;	 
+
+	res->length = short_length;
+}
+
+/* 
+   Unpack packed coefficients of poly (packed into fields of the given number of bytes width) into res
+   staggering the output by n coefficients for each large input coefficient (and assuming each large
+	coefficient stores (2*n - 1) coefficients.
+	Makes the assumption that limbs beyond the top of each coefficient are clean
+*/
+void fmpz_poly_unpack_bytes(fmpz_poly_t res, fmpz_poly_t poly, ulong n, ulong bytes)
+{
+   if (poly->length == 0)
+	{
+		fmpz_poly_zero(res);
+		return;
+	}
+	
+	ulong i, j;
+	fmpz_poly_t poly_r;
+
+	ulong limbs = (bytes*8)/FLINT_BITS + 1; // we need an extra bit because we add coefficients in unpacking
+	ulong length_max = n*poly->length + n - 1;
+	fmpz_poly_fit_length(res, length_max);
+	fmpz_poly_fit_limbs(res, limbs);
+	_fmpz_poly_zero_coeffs(res, length_max);
+
+	mp_limb_t * coeff_p = poly->coeffs;
+	ulong size_p = poly->limbs + 1;
+   ulong size_r = res->limbs + 1;
+
+	for (i = 0; i < poly->length; i++, coeff_p += size_p)
+	{
+		int negate = 0;
+		if ((long) coeff_p[0] < 0L) negate = 1; 
+	   _fmpz_poly_attach_shift(poly_r, res, i*n);
+		mp_limb_t * coeff_r = poly_r->coeffs;
+		if (negate) // we add to negated coefficients
+			for (j = 0; j < n - 1; j++) coeff_r[j*size_r] = -coeff_r[j*size_r];
+	   fmpz_poly_byte_unpack(poly_r, coeff_p + 1, 2*n - 1, bytes);
+		if (negate) // then negate back
+		   for (j = 0; j < 2*n - 1; j++) coeff_r[j*size_r] = -coeff_r[j*size_r];
+	}
+
+	res->length = length_max;
+	_fmpz_poly_normalise(res);
+}
 
 /*
    Multiply two polynomials using the classical technique truncating the result to trunc terms.
