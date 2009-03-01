@@ -31,24 +31,12 @@ then
 fi
 export FLINT_GMP_INCLUDE_DIR
 
-if [ -z "$FLINT_ZNPOLY_INCLUDE_DIR" ]
-then
-    FLINT_ZNPOLY_INCLUDE_DIR="/home/wbhart/zn_poly-0.8"
-fi
-export FLINT_ZNPOLY_INCLUDE_DIR
-    
 if [ -z "$FLINT_GMP_LIB_DIR" ]
 then
     FLINT_GMP_LIB_DIR="/home/wbhart/mpir-0.9.0/.libs"
 fi
 export FLINT_GMP_LIB_DIR
 
-if [ -z "$FLINT_ZNPOLY_LIB_DIR" ]
-then
-    FLINT_ZNPOLY_LIB_DIR="/home/wbhart/zn_poly-0.8"
-fi
-export FLINT_ZNPOLY_LIB_DIR
-    
 if [ -z "$FLINT_LINK_OPTIONS" ]
 then
 	FLINT_LINK_OPTIONS=""
@@ -57,7 +45,7 @@ export FLINT_LINK_OPTION
 
 if [ -z "${LD_LIBRARY_PATH}" ]
 then
-	LD_LIBRARY_PATH=$FLINT_GMP_LIB_DIR:$FLINT_ZNPOLY_LIB_DIR
+	LD_LIBRARY_PATH=$FLINT_GMP_LIB_DIR
 fi
 export LD_LIBRARY_PATH
 
