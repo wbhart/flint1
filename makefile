@@ -22,14 +22,14 @@ endif
 
 CPP = $(FLINT_CPP) 
 
-LIBS = -L$(FLINT_GMP_LIB_DIR) $(FLINT_LINK_OPTIONS) -lgmp -lpthread -lm 
+LIBS = -L$(FLINT_GMP_LIB_DIR) $(FLINT_LINK_OPTIONS) -fopenmp -lgmp -lpthread -lm
 
-LIBS2 = -L$(FLINT_GMP_LIB_DIR) -L$(FLINT_NTL_LIB_DIR) $(FLINT_LINK_OPTIONS) -lgmp -lpthread -lntl -lm 
+LIBS2 = -L$(FLINT_GMP_LIB_DIR) -L$(FLINT_NTL_LIB_DIR) $(FLINT_LINK_OPTIONS) -fopenmp -lgmp -lpthread -lntl -lm 
 
 ifndef FLINT_NTL_INCLUDE_DIR
-	INCS = -I$(FLINT_GMP_INCLUDE_DIR) -I$(FLINT_ZNPOLY_INCLUDE_DIR)
+	INCS = -I$(FLINT_GMP_INCLUDE_DIR) 
 else
-	INCS = -I$(FLINT_GMP_INCLUDE_DIR) -I$(FLINT_NTL_INCLUDE_DIR) -I$(FLINT_ZNPOLY_INCLUDE_DIR)
+	INCS = -I$(FLINT_GMP_INCLUDE_DIR) -I$(FLINT_NTL_INCLUDE_DIR)
 endif
 
 CFLAGS = $(INCS) $(FLINT_TUNE) -O3
@@ -222,13 +222,13 @@ ZmodF_mul-tuning.o: ZmodF_mul-tuning.c $(HEADERS)
 	$(CC) $(CFLAGS) -c ZmodF_mul-tuning.c -o ZmodF_mul-tuning.o
 
 fmpz.o: fmpz.c $(HEADERS)
-	$(CC) $(CFLAGS) $(WITH_ZNPOLY) -c fmpz.c -o fmpz.o
+	$(CC) $(CFLAGS) -c fmpz.c -o fmpz.o
 
 fmpz_poly.o: fmpz_poly.c $(HEADERS)
-	$(CC) $(CFLAGS) $(WITH_ZNPOLY) -c fmpz_poly.c -o fmpz_poly.o
+	$(CC) $(CFLAGS) -c fmpz_poly.c -o fmpz_poly.o
 
 F_mpz.o: F_mpz.c $(HEADERS)
-	$(CC) $(CFLAGS) $(WITH_ZNPOLY) -c F_mpz.c -o F_mpz.o
+	$(CC) $(CFLAGS) -c F_mpz.c -o F_mpz.o
 
 F_mpz_mat.o: F_mpz_mat.c $(HEADERS)
 	$(CC) $(CFLAGS) -c F_mpz_mat.c -o F_mpz_mat.o
@@ -284,19 +284,19 @@ test-support.o: test-support.c $(HEADERS)
 	$(CC) $(CFLAGS) -c test-support.c -o test-support.o
 
 fmpz_poly-test.o: fmpz_poly-test.c $(HEADERS)
-	$(CC) $(CFLAGS) $(WITH_ZNPOLY) -c fmpz_poly-test.c -o fmpz_poly-test.o
+	$(CC) $(CFLAGS) -c fmpz_poly-test.c -o fmpz_poly-test.o
 
 F_mpz-test.o: F_mpz-test.c $(HEADERS)
 	$(CC) $(CFLAGS) -c F_mpz-test.c -o F_mpz-test.o
 
 F_mpz_mat-test.o: F_mpz_mat-test.c $(HEADERS)
-	$(CC) $(CFLAGS) $(WITH_ZNPOLY) -c F_mpz_mat-test.c -o F_mpz_mat-test.o
+	$(CC) $(CFLAGS) -c F_mpz_mat-test.c -o F_mpz_mat-test.o
 
 F_mpz_LLL_fast_d-test.o: F_mpz_LLL_fast_d.c $(HEADERS)
 	$(CC) $(CFLAGS) -c F_mpz_LLL_fast_d-test.c -o F_mpz_LLL_fast_d-test.o
 	
 fmpz-test.o: fmpz-test.c $(HEADERS)
-	$(CC) $(CFLAGS) $(WITH_ZNPOLY) -c fmpz-test.c -o fmpz-test.o
+	$(CC) $(CFLAGS) -c fmpz-test.c -o fmpz-test.o
 
 ZmodF-test.o: ZmodF-test.c $(HEADERS)
 	$(CC) $(CFLAGS) -c ZmodF-test.c -o ZmodF-test.o
@@ -586,7 +586,7 @@ mpQS: QS/mpQS.c QS/mpQS.h QS/tinyQS.h factor_base.o poly.o sieve.o linear_algebr
 
 ####### Integer multiplication timing
 
-ZMULOBJ = zmod_mat.o zmod_poly.o memory-manager.o fmpz.o ZmodF_mul-tuning.o mpz_poly.o mpz_poly-tuning.o fmpz_poly.o ZmodF_poly.o mpz_extras.o profiler.o ZmodF_mul.o ZmodF.o mpn_extras.o F_mpz_mul-timing.o long_extras.o
+ZMULOBJ = zn_mod.o misc.o mul_ks.o pack.o mul.o midmul.o tuning.o pmf.o mul_fft.o mul_fft_dft.o midmul_fft.o nussbaumer.o array.o invert.o zmod_mat.o zmod_poly.o memory-manager.o fmpz.o ZmodF_mul-tuning.o mpz_poly.o mpz_poly-tuning.o fmpz_poly.o ZmodF_poly.o mpz_extras.o profiler.o ZmodF_mul.o ZmodF.o mpn_extras.o F_mpz_mul-timing.o long_extras.o
 
 F_mpz_mul-timing: $(ZMULOBJ)
 	$(CC) $(ZMULOBJ) -o Zmul $(LIBS)
