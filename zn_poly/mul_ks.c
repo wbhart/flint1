@@ -23,19 +23,9 @@
 #include "zn_poly_internal.h"
 
 
-#ifdef ZNP_USE_FLINT
-
 // use FLINT integer multiplication
-#include <FLINT/mpn_extras.h>
+#include "../mpn_extras.h"
 #define ZNP_mpn_mul F_mpn_mul
-
-#else
-
-// use GMP integer multiplication
-#define ZNP_mpn_mul mpn_mul
-
-#endif
-
 
 
 /*
