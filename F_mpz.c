@@ -35,6 +35,7 @@
 #include "memory-manager.h"
 #include "long_extras.h"
 #include "F_mpz.h"
+#include "mpz_extras.h"
 
 /*===============================================================================
 
@@ -598,6 +599,25 @@ void F_mpz_add(F_mpz_t f, const F_mpz_t g, F_mpz_t h)
 	}
 }
 
+void F_mpz_add_mpz(F_mpz_t f, const F_mpz_t g, mpz_t h)
+{
+	F_mpz c1 = *g;
+	
+	if (!COEFF_IS_MPZ(c1)) // g is small
+	{
+	   __mpz_struct * mpz3 = _F_mpz_promote(f); // g is saved and h is large
+		if (c1 < 0L) mpz_sub_ui(mpz3, h, -c1);	
+		else mpz_add_ui(mpz3, h, c1);
+		_F_mpz_demote_val(f); // may have cancelled
+	} else // g is large
+	{
+		__mpz_struct * mpz3 = _F_mpz_promote(f); // aliasing means f is already large
+		__mpz_struct * mpz1 = F_mpz_arr + COEFF_TO_OFF(c1);
+		mpz_add(mpz3, mpz1, h);
+		_F_mpz_demote_val(f); // may have cancelled
+	}
+}
+
 void F_mpz_sub(F_mpz_t f, const F_mpz_t g, F_mpz_t h)
 {
 	F_mpz c1 = *g;
@@ -643,7 +663,11 @@ void F_mpz_mul_ui(F_mpz_t f, const F_mpz_t g, const ulong x)
 {
 	F_mpz c2 = *g;
 	
-	if (!COEFF_IS_MPZ(c2)) // coeff2 is small
+	if (x == 0)
+	{
+		F_mpz_zero(f);
+		return;
+	} else if (!COEFF_IS_MPZ(c2)) // coeff2 is small
 	{
 		mp_limb_t prod[2];
 		ulong uc2 = FLINT_ABS(c2);
@@ -672,7 +696,11 @@ void F_mpz_mul_si(F_mpz_t f, const F_mpz_t g, const long x)
 {
 	F_mpz c2 = *g;
 
-	if (!COEFF_IS_MPZ(c2)) // coeff2 is small
+	if (x == 0)
+	{
+		F_mpz_zero(f);
+		return;
+	} else if (!COEFF_IS_MPZ(c2)) // coeff2 is small
 	{
 		mp_limb_t prod[2];
 		ulong uc2 = FLINT_ABS(c2);
@@ -721,7 +749,7 @@ void F_mpz_mul2(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
 	if (!COEFF_IS_MPZ(c2)) // g is large, h is small
 	   mpz_mul_si(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(c1), c2);
    else // c1 and c2 are large
-	   mpz_mul(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(c1), F_mpz_arr + COEFF_TO_OFF(c2));
+	   F_mpz_mul(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(c1), F_mpz_arr + COEFF_TO_OFF(c2));
 }
 
 void F_mpz_mul_2exp(F_mpz_t f, const F_mpz_t g, const ulong exp)

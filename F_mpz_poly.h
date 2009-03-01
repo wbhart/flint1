@@ -133,6 +133,64 @@ void F_mpz_poly_clear(F_mpz_poly_t poly);
 
 /*===============================================================================
 
+	Subpolynomials
+
+================================================================================*/
+
+/** 
+   \fn     void _F_mpz_poly_attach(F_mpz_poly_t poly1, F_mpz_poly_t poly2)
+   \brief  Make poly1 an alias for poly2. Note poly1 must not be reallocated whilst poly2 
+	        is attached to it.
+*/
+static inline
+void _F_mpz_poly_attach(F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
+{
+	poly1->coeffs = poly2->coeffs;
+	poly1->length = poly2->length;
+}
+
+/** 
+   \fn     void _F_mpz_poly_attach_shift(F_mpz_poly_t poly1, F_mpz_poly_t poly2)
+   \brief  Make poly1 an alias for poly2, but starting at the given coefficient, i.e.
+	        as though poly2 had been shifted right by n. 
+	        Note poly1 must not be reallocated whilst poly2 is attached to it. If 
+			  n > poly2->length then poly1 will have length 0.
+*/
+static inline
+void _F_mpz_poly_attach_shift(F_mpz_poly_t poly1, const F_mpz_poly_t poly2, const ulong n)
+{
+	poly1->coeffs = poly2->coeffs + n; // set coeffs to start at coeff n
+
+	if (poly2->length >= n) poly1->length = poly2->length - n; // check n is not too large
+   else poly1->length = 0;
+}
+
+/** 
+   \fn     void _F_mpz_poly_attach_truncate(F_mpz_poly_t poly1, F_mpz_poly_t poly2)
+   \brief  Make poly1 an alias for poly2, but as though poly2 had been truncated to the 
+	        given number of coefficients. 
+	        Note poly1 must not be reallocated whilst poly2 is attached to it. 
+			  If n > poly2->length then poly1->length is set to poly2->length.
+			  The polynomial poly1 is normalised after truncation.
+
+*/
+static inline
+void _F_mpz_poly_attach_truncate(F_mpz_poly_t poly1, const F_mpz_poly_t poly2, const ulong n)
+{
+	ulong length;
+	
+	poly1->coeffs = poly2->coeffs; // set coeffs
+
+	if (poly2->length < n) length = poly2->length; // check that n is not too large
+	else length = n;
+
+	while (length && (poly1->coeffs[length - 1] == 0)) length--; // normalise
+
+	poly1->length = length;
+}
+
+/*===============================================================================
+
 	Normalisation
 
 ================================================================================*/
@@ -238,8 +296,7 @@ void _F_mpz_poly_set_length(F_mpz_poly_t poly, const ulong length)
 	if (poly->length > length) // demote coefficients beyond new length
    {
       for (ulong i = length; i < poly->length; i++)
-			_F_mpz_demote(poly->coeffs + i);
-		
+			_F_mpz_demote(poly->coeffs + i);	
    } 
 
 	poly->length = length;
@@ -398,10 +455,24 @@ void F_mpz_poly_neg(F_mpz_poly_t res, const F_mpz_poly_t poly);
 ================================================================================*/
 
 /** 
+   \fn     void _F_mpz_poly_add(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
+   \brief  Sets res to the sum of poly1 and poly2. No reallocation is done, i.e. res is assumed to 
+	        have enough allocated coefficients for the result.
+*/
+void _F_mpz_poly_add(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2);
+
+/** 
    \fn     void F_mpz_poly_add(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
    \brief  Sets res to the sum of poly1 and poly2.
 */
 void F_mpz_poly_add(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2);
+
+/** 
+   \fn     void _F_mpz_poly_sub(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
+   \brief  Sets res to the difference of poly1 and poly2. No reallocation is done, i.e. res is assumed to 
+	        have enough allocated coefficients for the result.
+*/
+void _F_mpz_poly_sub(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2);
 
 /** 
    \fn     void F_mpz_poly_sub(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
@@ -453,49 +524,7 @@ void F_mpz_poly_scalar_mul(F_mpz_poly_t poly1, F_mpz_poly_t poly2, F_mpz_t x);
 
 /*===============================================================================
 
-	Multiplication
-
-================================================================================*/
-
-/** 
-   \fn     void F_mpz_poly_mul_classical(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
-   \brief  Multiply poly1 by poly2 and set res to the result, using the classical 
-	        algorithm.
-*/
-void F_mpz_poly_mul_classical(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2);
-
-/** 
-   \fn     void _F_mpz_poly_mul_kara_recursive(F_mpz_poly_t out, ulong ostart, F_mpz_poly_t in1, ulong istart1, 
-											              ulong len1, F_mpz_poly_t in2, ulong istart2, ulong len2, 
-											              F_mpz_poly_t scratch, ulong sstart, ulong skip, ulong crossover)
-   \brief  Recursive portion of karatsuba multiplication.
-
-           Input polys are in1 and in2, each staggered by skip. We specify a starting point 
-           in the coefficients for the output and inputs and scratch space and a length, 
-           len1 and len2 for each of the intputs. Then out will be of length len1 + len2 - 1, 
-           also staggered by skip.
-
-           The scratch buffer should be length len1 + len2, also staggered by skip.
-
-           All input/output/scratch polys should be initialised, and shouldn't overlap.
-
-           Must have 1 <= len1 <= len2.
-
-           If len1*len2 <= crossover, we use the classical multiplication algorithm. 
-           The crossover parameter is passed down recursively to subproducts.
-*/
-void _F_mpz_poly_mul_kara_recursive(F_mpz * out, F_mpz * in1, ulong len1, 
-					F_mpz * in2, ulong len2, F_mpz * scratch, ulong skip, ulong crossover);
-
-/** 
-   \fn     void F_mpz_poly_mul_karatsuba(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
-   \brief  Multiply poly1 by poly2 and set res to the result, using the karatsuba method.
-*/
-void F_mpz_poly_mul_karatsuba(F_mpz_poly_t res, F_mpz_poly_t poly1, F_mpz_poly_t poly2);
-
-/*===============================================================================
-
-	Bit/byte/limb packing
+	Bit packing
 
 ================================================================================*/
 
@@ -563,13 +592,161 @@ void F_mpz_poly_bit_unpack(F_mpz_poly_t poly_F_mpz, const mp_limb_t * array,
 void F_mpz_poly_bit_unpack_unsigned(F_mpz_poly_t poly_F_mpz, const mp_limb_t * array, 
                                                              const ulong length, const ulong bits);
 
+/*===============================================================================
+
+	Byte packing
+
+================================================================================*/
+
+/** 
+   \fn     void F_mpz_poly_byte_pack(mp_limb_t * array, const F_mpz_poly_t poly_fmpz,
+                   const unsigned long length, const unsigned long coeff_bytes, const long negate)
+
+   \brief  Packs length coefficients of poly_fmpz down to the byte into array, each packed 
+	        into a field "bytes" bytes wide.
+   
+           "coeff_bytes" is assumed to be at least FLINT_BITS/8, i.e. the
+           coefficients are assumed to be at least a limb wide.
+
+           Assumes 0 < length and 0 < poly_fmpz->length
+*/ 
+void F_mpz_poly_byte_pack(mp_limb_t * array, const F_mpz_poly_t poly_fmpz,
+                   const unsigned long length, const unsigned long coeff_bytes, const long negate);
+
+/** 
+   \fn     void F_mpz_poly_byte_pack_unsigned(mp_limb_t * array, const F_mpz_poly_t poly_fmpz,
+                                       const unsigned long length, const unsigned long coeff_bytes)
+
+   \brief  Packs length coefficients of poly_fmpz down to the byte into array, each packed 
+	        into a field "bytes" bytes wide.
+   
+           "coeff_bytes" is assumed to be at least FLINT_BITS/8, i.e. the
+           coefficients are assumed to be at least a limb wide.
+
+           Assumes 0 < length and 0 < poly_fmpz->length and that the coefficients are unsigned
+*/ 
+void F_mpz_poly_byte_pack_unsigned(mp_limb_t * array, const F_mpz_poly_t poly_fmpz,
+                                                       const ulong length, const ulong coeff_bytes);
+
+/** 
+   \fn     void F_mpz_poly_byte_unpack_unsigned(F_mpz_poly_t poly_m, const mp_limb_t * array,
+                               const unsigned long length, const unsigned long coeff_bytes)
+
+   \brief  Unpacks coefficients from array into poly_fmpz. Each coefficient stored is
+	        assumed to be packed into a field "bytes" bytes wide. The coefficients are 
+			  assumed to be unsigned. 
+	
+	        It is also assumed that array has one extra (zero) limb beyond what is 
+	        required to store the packed coefficients.
+   
+           The total number of coefficients to be unpacked is given by length.
+   
+           "coeff_bytes" is assumed to be at least FLINT_BITS/8, i.e. the
+           coefficients are assumed to be at least a limb wide.
+
+           Assumes 0 < length.
+*/ 
+void F_mpz_poly_byte_unpack(F_mpz_poly_t poly_m, const mp_limb_t * array,
+                               const unsigned long length, const unsigned long coeff_bytes);
+
+/** 
+   \fn     void F_mpz_poly_byte_unpack(F_mpz_poly_t poly_m, const mp_limb_t * array,
+                               const unsigned long length, const unsigned long coeff_bytes)
+
+   \brief  Unpacks coefficients from array into poly_fmpz. Each coefficient stored is
+	        assumed to be packed into a field "bytes" bytes wide with one bit reserved
+	        for a sign bit.
+	
+	        It is also assumed that array has one extra (zero) limb beyond what is 
+	        required to store the packed coefficients.
+   
+           The total number of coefficients to be unpacked is given by length.
+   
+           "coeff_bytes" is assumed to be at least FLINT_BITS/8, i.e. the
+           coefficients are assumed to be at least a limb wide.
+
+           Assumes 0 < length.
+*/ 
+void F_mpz_poly_byte_unpack_unsigned(F_mpz_poly_t poly_m, const mp_limb_t * array,
+                               const unsigned long length, const unsigned long coeff_bytes);
+
+/*===============================================================================
+
+	Multiplication
+
+================================================================================*/
+
+/** 
+   \fn     void F_mpz_poly_mul_classical(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
+   \brief  Multiply poly1 by poly2 and set res to the result, using the classical 
+	        algorithm.
+*/
+void F_mpz_poly_mul_classical(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2);
+
+/** 
+   \fn     void _F_mpz_poly_mul_kara_odd_even_recursive(F_mpz * out, F_mpz * in1, ulong len1, 
+					               F_mpz * in2, ulong len2, F_mpz * scratch, ulong skip, ulong crossover)
+   \brief  Recursive portion of odd/even karatsuba multiplication.
+
+           Input polys are in1 and in2 staggered by skip. We specify a length, 
+           len1 and len2 for each of the intputs. Then out will be of length len1 + len2 - 1
+			  staggered by skip.
+
+           The scratch buffer should be length len1 + len2 staggered by skip.
+
+           All input/output/scratch polys should be initialised, and shouldn't overlap.
+
+           Must have 1 <= len1 <= len2.
+
+           If len1 * len2 <= crossover, we use the classical multiplication algorithm. 
+           The crossover parameter is passed down recursively to subproducts.
+*/
+void _F_mpz_poly_mul_kara_odd_even_recursive(F_mpz * out, F_mpz * in1, ulong len1, 
+					F_mpz * in2, ulong len2, F_mpz * scratch, ulong skip, ulong crossover);
+
+/** 
+   \fn     void _F_mpz_poly_mul_kara_recursive(F_mpz_poly_t out, const F_mpz_poly_t in1, const F_mpz_poly_t in2, 
+	                                                          F_mpz_poly_t scratch, const ulong crossover)
+   \brief  Recursive portion of ordinary karatsuba multiplication. Input lengths are assumed to be 
+	        the same. Scratch is assumed to have five times the coefficients of in1 available for scratch
+			  space.
+*/
+void _F_mpz_poly_mul_kara_recursive(F_mpz_poly_t out, const F_mpz_poly_t in1, const F_mpz_poly_t in2, 
+	                                                          F_mpz_poly_t scratch, const ulong crossover);
+
+/** 
+   \fn     void F_mpz_poly_mul_karatsuba(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
+   \brief  Multiply poly1 by poly2 and set res to the result, using the karatsuba method.
+*/
+void F_mpz_poly_mul_karatsuba(F_mpz_poly_t res, F_mpz_poly_t poly1, F_mpz_poly_t poly2);
+
 /** 
    \fn     F_mpz_poly_mul_KS(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
-   \brief  Multiply poly1 by poly2 and set res to the result, using the Kronecker method.
+
+   \brief  Multiply poly1 by poly2 using Kronecker segmentation and store the result in res.
 */
 void F_mpz_poly_mul_KS(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2);
 
+/** 
+   \fn     F_mpz_poly_mul_KS2(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
+
+   \brief  Multiply poly1 by poly2 using David Harvey's KS2 algorithm and store the result in res.
+*/
 void F_mpz_poly_mul_KS2(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2);
+
+/** 
+   \fn     F_mpz_poly_mul_SS(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
+   \brief  Multiply poly1 by poly2 and set res to the result, using the Schoenhage-Strassen 
+	        algorithm.
+*/
+void F_mpz_poly_mul_SS(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2);
+
+/** 
+   \fn     F_mpz_poly_mul(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
+   \brief  Multiply poly1 by poly2 and set res to the result. An attempt is made to choose the 
+	        optimal algorithm.
+*/
+void F_mpz_poly_mul(F_mpz_poly_t res, F_mpz_poly_t poly1, F_mpz_poly_t poly2);
 
 #ifdef __cplusplus
  }

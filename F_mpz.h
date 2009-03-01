@@ -365,6 +365,12 @@ void F_mpz_read(F_mpz_t f);
 void F_mpz_neg(F_mpz_t f, const F_mpz_t g);
 
 /** 
+   \fn     void F_mpz_add(F_mpz_t f, const F_mpz_t g, mpz_t h)
+   \brief  Set f to g plus h, where h is an mpz_t. 
+*/
+void F_mpz_add_mpz(F_mpz_t f, const F_mpz_t g, mpz_t h);
+
+/** 
    \fn     void F_mpz_add(F_mpz_t f, const F_mpz_t g, F_mpz_t h)
    \brief  Set f to g plus h. 
 */

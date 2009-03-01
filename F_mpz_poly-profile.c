@@ -213,7 +213,85 @@ void profDriver_F_mpz_poly_mul_KS(char* params)
 
    test_support_init();
    prof2d_set_sampler(sample_F_mpz_poly_mul_KS);
-   run_block(max_length, ratio);
+   run_triangle(max_length, ratio);
+   test_support_cleanup();
+}
+
+// ============================================================================
+
+
+void sample_F_mpz_poly_mul(ulong length, ulong bits,
+                             void* arg, ulong count)
+{
+   ulong m = ceil_log2(length);
+   ulong output_bits = 2*bits+m;
+   
+   F_mpz_poly_t poly1, poly2, poly3;
+   mpz_poly_t r_poly, r_poly2;  
+   
+   mpz_poly_init(r_poly); 
+   mpz_poly_init(r_poly2); 
+   mpz_poly_realloc(r_poly, length);
+   mpz_poly_realloc(r_poly2, length);
+  
+   F_mpz_poly_init2(poly1, length);
+   F_mpz_poly_init2(poly2, length);
+   F_mpz_poly_init2(poly3, 2*length-1);
+   
+   ulong r_count;    // how often to generate new random data
+   
+   if (count >= 1000) r_count = 100;
+   else if (count >= 100) r_count = 10;
+   else if (count >= 20) r_count = 5;
+   else if (count >= 8) r_count = 2;
+   else r_count = 1;
+   
+   for (ulong i = 0; i < count; i++)
+   {
+      if (i%r_count == 0)
+      {
+         randpoly(r_poly, length, bits);
+         mpz_poly_to_F_mpz_poly(poly1, r_poly);
+         randpoly(r_poly2, length, bits);
+         mpz_poly_to_F_mpz_poly(poly2, r_poly2);
+      }
+      prof_start();
+      F_mpz_poly_mul(poly3, poly1, poly2);
+      prof_stop();
+   }
+   
+   mpz_poly_clear(r_poly);
+   mpz_poly_clear(r_poly2);
+   
+   F_mpz_poly_clear(poly3);
+   F_mpz_poly_clear(poly2);
+   F_mpz_poly_clear(poly1);
+   
+}
+
+
+char* profDriverString_F_mpz_poly_mul(char* params)
+{
+   return "F_mpz_poly_mul over various lengths and various bit sizes.\n"
+   "Parameters are: max length; ratio between consecutive lengths.";
+}
+
+char* profDriverDefaultParams_F_mpz_poly_mul()
+{
+   return "4000000 1.2";
+}
+
+
+void profDriver_F_mpz_poly_mul(char* params)
+{
+   ulong max_length;
+   double ratio;
+
+   sscanf(params, "%ld %lf", &max_length, &ratio);
+
+   test_support_init();
+   prof2d_set_sampler(sample_F_mpz_poly_mul);
+   run_triangle(max_length, ratio);
    test_support_cleanup();
 }
 
