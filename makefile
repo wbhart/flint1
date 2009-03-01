@@ -22,14 +22,9 @@ endif
 
 CPP = $(FLINT_CPP) 
 
-ifdef HAVE_ZNPOLY
-	ZNPOLY_LIB=-lzn_poly
-	WITH_ZNPOLY=-DHAVE_ZNPOLY
-endif
+LIBS = -L$(FLINT_GMP_LIB_DIR) $(FLINT_LINK_OPTIONS) -lgmp -lpthread -lm 
 
-LIBS = -L$(FLINT_GMP_LIB_DIR) -L$(FLINT_ZNPOLY_LIB_DIR) $(FLINT_LINK_OPTIONS) -lgmp -lpthread -lm $(ZNPOLY_LIB)
-
-LIBS2 = -L$(FLINT_GMP_LIB_DIR) -L$(FLINT_NTL_LIB_DIR) $(FLINT_LINK_OPTIONS) -lgmp -lpthread -lntl -lm $(ZNPOLY_LIB)
+LIBS2 = -L$(FLINT_GMP_LIB_DIR) -L$(FLINT_NTL_LIB_DIR) $(FLINT_LINK_OPTIONS) -lgmp -lpthread -lntl -lm 
 
 ifndef FLINT_NTL_INCLUDE_DIR
 	INCS = -I$(FLINT_GMP_INCLUDE_DIR) -I$(FLINT_ZNPOLY_INCLUDE_DIR)
@@ -42,6 +37,11 @@ CFLAGS = $(INCS) $(FLINT_TUNE) -O3
 RM = rm -f
 
 HEADERS = \
+	zn_poly/zn_poly.h \
+	zn_poly/wide_arith.h \
+	zn_poly/support.h \
+	zn_poly/profiler.h \
+	zn_poly/zn_poly_internal.h \
 	mpz_extras.h \
 	F_mpn_mul-tuning.h \
 	ZmodF.h \
@@ -77,6 +77,20 @@ HEADERS = \
 ####### library object files
 
 FLINTOBJ = \
+	zn_mod.o \
+	misc.o \
+	mul_ks.o \
+	pack.o \
+	mul.o \
+	midmul.o \
+	tuning.o \
+	pmf.o \
+	mul_fft.o \
+	mul_fft_dft.o \
+	midmul_fft.o \
+	nussbaumer.o \
+	array.o \
+	invert.o \
 	mpn_extras.o \
 	mpz_extras.o \
 	memory-manager.o \
@@ -139,6 +153,52 @@ libflint.dll: $(FLINTOBJ)
 
 libflint.so: $(FLINTOBJ)
 	$(CC) -fPIC -shared -o libflint.so $(FLINTOBJ) $(LIBS)
+
+##### zn_poly object files
+
+zn_mod.o: zn_poly/zn_mod.c $(HEADERS)
+	$(CC) $(CFLAGS) -DNDEBUG -o zn_mod.o -c zn_poly/zn_mod.c
+
+misc.o: zn_poly/misc.c $(HEADERS)
+	$(CC) $(CFLAGS) -DNDEBUG -o misc.o -c zn_poly/misc.c
+
+mul_ks.o: zn_poly/mul_ks.c $(HEADERS)
+	$(CC) $(CFLAGS) -DNDEBUG -o mul_ks.o -c zn_poly/mul_ks.c
+
+pack.o: zn_poly/pack.c $(HEADERS)
+	$(CC) $(CFLAGS) -DNDEBUG -o pack.o -c zn_poly/pack.c
+
+mul.o: zn_poly/mul.c $(HEADERS)
+	$(CC) $(CFLAGS) -DNDEBUG -o mul.o -c zn_poly/mul.c
+
+midmul.o: zn_poly/midmul.c $(HEADERS)
+	$(CC) $(CFLAGS) -DNDEBUG -o midmul.o -c zn_poly/midmul.c
+
+tuning.o: zn_poly/tuning.c $(HEADERS)
+	$(CC) $(CFLAGS) -DNDEBUG -o tuning.o -c zn_poly/tuning.c
+
+pmf.o: zn_poly/pmf.c $(HEADERS)
+	$(CC) $(CFLAGS) -DNDEBUG -o pmf.o -c zn_poly/pmf.c
+
+mul_fft.o: zn_poly/mul_fft.c $(HEADERS)
+	$(CC) $(CFLAGS) -DNDEBUG -o mul_fft.o -c zn_poly/mul_fft.c
+
+mul_fft_dft.o: zn_poly/mul_fft_dft.c $(HEADERS)
+	$(CC) $(CFLAGS) -DNDEBUG -o mul_fft_dft.o -c zn_poly/mul_fft_dft.c
+
+midmul_fft.o: zn_poly/midmul_fft.c $(HEADERS)
+	$(CC) $(CFLAGS) -DNDEBUG -o midmul_fft.o -c zn_poly/midmul_fft.c
+
+nussbaumer.o: zn_poly/nussbaumer.c $(HEADERS)
+	$(CC) $(CFLAGS) -DNDEBUG -o nussbaumer.o -c zn_poly/nussbaumer.c
+
+array.o: zn_poly/array.c $(HEADERS)
+	$(CC) $(CFLAGS) -DNDEBUG -o array.o -c zn_poly/array.c
+
+invert.o: zn_poly/invert.c $(HEADERS)
+	$(CC) $(CFLAGS) -DNDEBUG -o invert.o -c zn_poly/invert.c
+
+##### Object files
 
 mpn_extras.o: mpn_extras.c $(HEADERS)
 	$(CC) $(CFLAGS) -c mpn_extras.c -o mpn_extras.o
