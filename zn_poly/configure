@@ -1,0 +1,13 @@
+#!/bin/sh
+
+#
+# This script just calls makemakefile.py.
+# See that file for the real configure script.
+#
+
+if test $# -ne 0
+then
+   python makemakefile.py "$@" > makefile
+else
+   python makemakefile.py > makefile
+fi
