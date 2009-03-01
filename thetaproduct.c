@@ -32,10 +32,6 @@
 #include "fmpz_poly.h"
 #include "theta.h"
 
-#ifdef HAVE_ZNPOLY
-#include "zn_poly.h"
-#endif
-
 #define LIMIT 416700000L
 #define BLOCK    100000
 #define COUNT (LIMIT/BLOCK)

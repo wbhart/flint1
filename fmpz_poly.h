@@ -1103,6 +1103,9 @@ void fmpz_poly_mul(fmpz_poly_t output, const fmpz_poly_t input1, const fmpz_poly
 void fmpz_poly_mul_modular(fmpz_poly_t output, const fmpz_poly_t input1,
                                                 const fmpz_poly_t input2, const ulong bits);
 
+void fmpz_poly_mul_modular_packed(fmpz_poly_t output, fmpz_poly_t poly1, 
+                                               fmpz_poly_t poly2, ulong n, ulong bytes);
+
 void fmpz_poly_mul_trunc_n(fmpz_poly_t output, const fmpz_poly_t input1, 
                                           const fmpz_poly_t input2, const unsigned long trunc);
                                           
@@ -1477,6 +1480,8 @@ void fmpz_poly_compose_horner(fmpz_poly_t output, fmpz_poly_t poly, fmpz_poly_t 
 
 	fmpz_poly_compose_horner_range(output, poly, val, 0, poly->length);
 }
+
+int fmpz_poly_signature(ulong * r1, ulong * r2, fmpz_poly_t poly);
 
 // *************** end of file
 
