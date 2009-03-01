@@ -5541,6 +5541,8 @@ int test_zmod_poly_factor_square_free()
 	   zmod_poly_clear(poly);
 	   zmod_poly_factor_clear(res);
    }
+
+	return result;
 }
 
 int test_zmod_poly_factor_berlekamp()
@@ -5599,6 +5601,8 @@ int test_zmod_poly_factor_berlekamp()
 	   zmod_poly_clear(poly);
 	   zmod_poly_factor_clear(res);
    }
+
+	return result;
 }
 
 int test_zmod_poly_factor()
@@ -5681,6 +5685,8 @@ int test_zmod_poly_factor()
 	   zmod_poly_clear(poly);
 	   zmod_poly_factor_clear(res);
    }
+
+	return result;
 }
 
 int test_zmod_poly_2x2_mat_mul_classical_strassen()

@@ -54,6 +54,10 @@ void zmod_poly_init_precomp(zmod_poly_t poly, unsigned long p, double p_inv)
    poly->p_inv = p_inv;
    poly->alloc = 1;
    poly->length = 0;
+
+#if USE_ZN_POLY
+	zn_mod_init(poly->mod, p);
+#endif
 }
 
 void zmod_poly_init2(zmod_poly_t poly, unsigned long p, unsigned long alloc)
@@ -72,12 +76,19 @@ void zmod_poly_init2_precomp(zmod_poly_t poly, unsigned long p, double p_inv, un
    
    poly->alloc = alloc;
    poly->length = 0;
+
+#if USE_ZN_POLY
+   zn_mod_init(poly->mod, p);
+#endif
 }
 
 
 void zmod_poly_clear(zmod_poly_t poly)
 {
    flint_heap_free(poly->coeffs);
+#if USE_ZN_POLY
+	zn_mod_clear(poly->mod);
+#endif
 }
 
 
@@ -730,7 +741,10 @@ void zmod_poly_right_shift(zmod_poly_t res, zmod_poly_t poly, unsigned long k)
 
 void zmod_poly_mul(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
 {
-   if (poly1 == poly2)
+#if USE_ZN_POLY // let zn_poly make all the decisions
+   zmod_poly_mul_zn_poly(res, poly1, poly2);
+#else
+	if (poly1 == poly2)
    {
       zmod_poly_sqr(res, poly1);
       return;
@@ -749,7 +763,8 @@ void zmod_poly_mul(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
       return;
    }
 
-   zmod_poly_mul_KS(res, poly1, poly2, 0); 
+   zmod_poly_mul_KS(res, poly1, poly2, 0);
+#endif
 }
 
 
@@ -768,7 +783,11 @@ void zmod_poly_sqr(zmod_poly_t res, zmod_poly_t poly)
       return;
    }
 
-   zmod_poly_mul_KS(res, poly, poly, 0); 
+#if USE_ZN_POLY
+	zmod_poly_mul_zn_poly(res, poly, poly); 
+#else
+	zmod_poly_mul_KS(res, poly, poly, 0); 
+#endif
 }
 
 
@@ -1373,6 +1392,46 @@ void print_var(char *name, unsigned long value)
 {
    printf("%s = %d\n", name, value);
 }
+
+#if USE_ZN_POLY
+void zmod_poly_mul_zn_poly(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p input2)
+{ 
+   unsigned long length1 = input1->length;
+   unsigned long length2 = input2->length;
+   
+   if ((length1 == 0) || (length2 == 0)) 
+   {
+      zmod_poly_zero(output);
+      return;
+   }
+   
+   unsigned long length = length1 + length2 - 1;
+   
+   zmod_poly_fit_length(output, length);
+   
+   if (output == input1 || output == input2)
+   {
+      // output is inplace, so need a temporary
+      zmod_poly_t temp;
+      zmod_poly_init2(temp, input1->p, length);
+		if (input1->length > input2->length) zn_array_mul(temp->coeffs, input1->coeffs, input1->length, input2->coeffs, input2->length, input1->mod);
+		else zn_array_mul(temp->coeffs, input2->coeffs, input2->length, input1->coeffs, input1->length, input1->mod);
+		temp->length = input1->length + input2->length - 1;
+		__zmod_poly_normalise(temp);
+		zmod_poly_swap(temp, output);
+      zmod_poly_clear(temp);
+   }
+   else
+   {
+      // output not inplace
+      zmod_poly_fit_length(output, length);
+      if (input1->length > input2->length) zn_array_mul(output->coeffs, input1->coeffs, input1->length, input2->coeffs, input2->length, input1->mod);
+		else zn_array_mul(output->coeffs, input2->coeffs, input2->length, input1->coeffs, input1->length, input1->mod);
+		output->length = input1->length + input2->length - 1;
+		__zmod_poly_normalise(output);
+   }
+} 
+#endif
 
 void zmod_poly_mul_KS(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p input2, unsigned long bits_input)
 { 
@@ -2551,7 +2610,11 @@ void zmod_poly_mul_trunc_left_n(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t 
       return;
    }
    
-   zmod_poly_mul_KS(res, poly1, poly2, 0);
+#if USE_ZN_POLY
+	zmod_poly_mul_zn_poly(res, poly1, poly2);
+#else
+	zmod_poly_mul_KS(res, poly1, poly2, 0);
+#endif
 }
 
 /*******************************************************************************

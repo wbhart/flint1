@@ -38,6 +38,7 @@
 #include "memory-manager.h"
 #include "mpn_extras.h"
 #include "long_extras.h"
+#include "zn_poly/zn_poly.h"
 
 #ifndef _ZMOD_POLY_H_
 #define _ZMOD_POLY_H_
@@ -47,6 +48,7 @@
 #endif
 
 #define USE_MIDDLE_PRODUCT 1 
+#define USE_ZN_POLY 1 // whether to use zn_poly for poly multiplication
 
 typedef struct
 {
@@ -55,6 +57,9 @@ typedef struct
    unsigned long length;
    unsigned long p;
    double p_inv;
+#if USE_ZN_POLY
+	zn_mod_t mod;
+#endif
 } zmod_poly_struct;
 
 typedef zmod_poly_struct zmod_poly_t[1];
@@ -249,6 +254,19 @@ void _zmod_poly_attach(zmod_poly_t output, zmod_poly_t input)
    output->coeffs = input->coeffs;
    output->p = input->p;
    output->p_inv = input->p_inv;
+#if USE_ZN_POLY
+	output->mod->n = input->mod->n;
+	output->mod->bits = input->mod->bits;
+   output->mod->B = input->mod->B;
+	output->mod->B2 = input->mod->B2;
+	output->mod->sh1 = input->mod->sh1;
+	output->mod->inv1 = input->mod->inv1;
+	output->mod->sh2 = input->mod->sh2;
+	output->mod->sh3 = input->mod->sh3;
+	output->mod->inv2 = input->mod->inv2;
+	output->mod->n_norm = input->mod->n_norm;
+	output->mod->inv3 = input->mod->inv3;
+#endif
 }
 
 static inline 
@@ -270,6 +288,19 @@ void _zmod_poly_attach_shift(zmod_poly_t output,
    output->coeffs = input->coeffs + n;
    output->p = input->p;
    output->p_inv = input->p_inv;
+#if USE_ZN_POLY
+	output->mod->n = input->mod->n;
+	output->mod->bits = input->mod->bits;
+   output->mod->B = input->mod->B;
+	output->mod->B2 = input->mod->B2;
+	output->mod->sh1 = input->mod->sh1;
+	output->mod->inv1 = input->mod->inv1;
+	output->mod->sh2 = input->mod->sh2;
+	output->mod->sh3 = input->mod->sh3;
+	output->mod->inv2 = input->mod->inv2;
+	output->mod->n_norm = input->mod->n_norm;
+	output->mod->inv3 = input->mod->inv3;
+#endif
 }
 
 static inline 
@@ -292,6 +323,19 @@ void _zmod_poly_attach_truncate(zmod_poly_t output,
    output->coeffs = input->coeffs;
    output->p = input->p;
    output->p_inv = input->p_inv;
+#if USE_ZN_POLY
+	output->mod->n = input->mod->n;
+	output->mod->bits = input->mod->bits;
+   output->mod->B = input->mod->B;
+	output->mod->B2 = input->mod->B2;
+	output->mod->sh1 = input->mod->sh1;
+	output->mod->inv1 = input->mod->inv1;
+	output->mod->sh2 = input->mod->sh2;
+	output->mod->sh3 = input->mod->sh3;
+	output->mod->inv2 = input->mod->inv2;
+	output->mod->n_norm = input->mod->n_norm;
+	output->mod->inv3 = input->mod->inv3;
+#endif
    __zmod_poly_normalise(output);
 }
 
@@ -362,10 +406,12 @@ void zmod_poly_right_shift(zmod_poly_t res, zmod_poly_t poly, unsigned long k);
 void zmod_poly_mul(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2);
 void zmod_poly_sqr(zmod_poly_t res, zmod_poly_t poly);
 
-/* Requires that poly1 bits + poly2 bits + log_length is not greater than 2*FLINT_BITS */
-
 void zmod_poly_mul_KS(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long bits_input);
 void _zmod_poly_mul_KS(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long bits_input);
+
+#if USE_ZN_POLY
+void zmod_poly_mul_zn_poly(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2);
+#endif
 
 void zmod_poly_mul_KS_trunc(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long bits_input, unsigned long trunc);
 void _zmod_poly_mul_KS_trunc(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long bits_input, unsigned long trunc);
