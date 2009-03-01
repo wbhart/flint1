@@ -71,14 +71,9 @@ extern const char* zn_poly_version_string();
 #error zn_poly requires that unsigned long is either 32 bits or 64 bits
 #endif
 
-
-/*
-   I get really sick of typing unsigned long.
-*/
-typedef unsigned long ulong;
-
-
 #include "wide_arith.h"
+
+#include "../flint.h"
 
 
 /* ============================================================================
