@@ -420,9 +420,19 @@ void _zmod_poly_mul_KS_trunc_precache(zmod_poly_t output, zmod_poly_p input1, zm
 void _zmod_poly_mul_KS_middle(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p input2, unsigned long bits_input, unsigned long trunc);
 void zmod_poly_mul_KS_middle(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p input2, unsigned long bits_input, unsigned long trunc);
 
+#if USE_ZN_POLY
+void zmod_poly_mul_zn_poly_middle(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p input2);
+#endif
+
 static inline
 void zmod_poly_mul_middle(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p input2, unsigned long trunc)
 {
+#if USE_ZN_POLY
+   if (trunc == FLINT_MAX(input1->length, input2->length))
+	{
+		zmod_poly_mul_zn_poly_middle(output, input1, input2);
+	} else
+#endif
 	zmod_poly_mul_KS_middle(output, input1, input2, 0, trunc);
 }
 #endif

@@ -2064,6 +2064,62 @@ void zmod_poly_mul_KS_middle(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p
       _zmod_poly_mul_KS_middle(output, input1, input2, bits_input, trunc);
    }
 } 
+
+#if USE_ZN_POLY
+void zmod_poly_mul_zn_poly_middle(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p input2)
+{ 
+   unsigned long length1 = input1->length;
+   unsigned long length2 = input2->length;
+   
+   if ((length1 == 0) || (length2 == 0)) 
+   {
+      zmod_poly_zero(output);
+      return;
+   }
+   
+   unsigned long length = length1 + length2 - 1;
+   
+   if (output == input1 || output == input2)
+   {
+      // output is inplace, so need a temporary
+      zmod_poly_t temp;
+      zmod_poly_init2(temp, input1->p, FLINT_MAX(length1, length2));
+      if (length1 > length2) 
+		{
+			zn_array_midmul(temp->coeffs + length2 - 1, input1->coeffs, length1, input2->coeffs, length2, input1->mod);
+			for (ulong i = 0; i < length1/2; i++)
+			   temp->coeffs[i] = 0L;
+		} else 
+		{
+			zn_array_midmul(temp->coeffs + length1 - 1, input2->coeffs, length2, input1->coeffs, length1, input1->mod);
+			for (ulong i = 0; i < length2/2; i++)
+			   temp->coeffs[i] = 0L;
+		}
+		temp->length = FLINT_MAX(length1, length2);
+		__zmod_poly_normalise(temp);
+		zmod_poly_swap(temp, output);
+      zmod_poly_clear(temp);
+   }
+   else
+   {
+      // output not inplace
+      zmod_poly_fit_length(output, FLINT_MAX(length1, length2));
+      if (length1 > length2) 
+		{
+			zn_array_midmul(output->coeffs + length2 - 1, input1->coeffs, length1, input2->coeffs, length2, input1->mod);
+			for (ulong i = 0; i < length1/2; i++)
+			   output->coeffs[i] = 0L;
+		} else 
+		{
+			zn_array_midmul(output->coeffs + length1 - 1, input2->coeffs, length2, input1->coeffs, length1, input1->mod);
+			for (ulong i = 0; i < length2/2; i++)
+			   output->coeffs[i] = 0L;
+		}
+		output->length = FLINT_MAX(length1, length2);
+		__zmod_poly_normalise(output);
+	}
+} 
+#endif
 #endif
 
 /*******************************************************************************
