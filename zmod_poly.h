@@ -110,6 +110,21 @@ do {                                \
    (y) = zzz_ptr;                   \
 } while (0);
 
+#define zmod_poly_copy_mod(resxxx, polyxxx) \
+	do { \
+      (resxxx)->mod->n = (polyxxx)->mod->n; \
+	   (resxxx)->mod->bits = (polyxxx)->mod->bits; \
+	   (resxxx)->mod->B = (polyxxx)->mod->B; \
+	   (resxxx)->mod->B2 = (polyxxx)->mod->B2; \
+	   (resxxx)->mod->sh1 = (polyxxx)->mod->sh1; \
+	   (resxxx)->mod->inv1 = (polyxxx)->mod->inv1; \
+	   (resxxx)->mod->sh2 = (polyxxx)->mod->sh2; \
+	   (resxxx)->mod->sh3 = (polyxxx)->mod->sh3; \
+	   (resxxx)->mod->inv2 = (polyxxx)->mod->inv2; \
+	   (resxxx)->mod->n_norm = (polyxxx)->mod->n_norm; \
+	   (resxxx)->mod->inv3 = (polyxxx)->mod->inv3; \
+	} while (0)
+
 // ------------------------------------------------------
 // Initialisation and memory management
 
@@ -220,8 +235,7 @@ void zmod_poly_swap(zmod_poly_t poly1, zmod_poly_t poly2)
 {
     unsigned long* temp_coeffs;
     unsigned long temp;
-    double temp_p_inv;
-
+    
     temp_coeffs = poly2->coeffs;
     poly2->coeffs = poly1->coeffs;
     poly1->coeffs = temp_coeffs;
@@ -233,14 +247,6 @@ void zmod_poly_swap(zmod_poly_t poly1, zmod_poly_t poly2)
     temp = poly1->length;
     poly1->length = poly2->length;
     poly2->length = temp;
-    
-    temp = poly1->p;
-    poly1->p = poly2->p;
-    poly2->p = temp;
-    
-    temp_p_inv = poly1->p_inv;
-    poly1->p_inv = poly2->p_inv;
-    poly2->p_inv = temp_p_inv;
 }
 
 /*
@@ -255,17 +261,7 @@ void _zmod_poly_attach(zmod_poly_t output, zmod_poly_t input)
    output->p = input->p;
    output->p_inv = input->p_inv;
 #if USE_ZN_POLY
-	output->mod->n = input->mod->n;
-	output->mod->bits = input->mod->bits;
-   output->mod->B = input->mod->B;
-	output->mod->B2 = input->mod->B2;
-	output->mod->sh1 = input->mod->sh1;
-	output->mod->inv1 = input->mod->inv1;
-	output->mod->sh2 = input->mod->sh2;
-	output->mod->sh3 = input->mod->sh3;
-	output->mod->inv2 = input->mod->inv2;
-	output->mod->n_norm = input->mod->n_norm;
-	output->mod->inv3 = input->mod->inv3;
+	zmod_poly_copy_mod(output, input);
 #endif
 }
 
@@ -289,17 +285,7 @@ void _zmod_poly_attach_shift(zmod_poly_t output,
    output->p = input->p;
    output->p_inv = input->p_inv;
 #if USE_ZN_POLY
-	output->mod->n = input->mod->n;
-	output->mod->bits = input->mod->bits;
-   output->mod->B = input->mod->B;
-	output->mod->B2 = input->mod->B2;
-	output->mod->sh1 = input->mod->sh1;
-	output->mod->inv1 = input->mod->inv1;
-	output->mod->sh2 = input->mod->sh2;
-	output->mod->sh3 = input->mod->sh3;
-	output->mod->inv2 = input->mod->inv2;
-	output->mod->n_norm = input->mod->n_norm;
-	output->mod->inv3 = input->mod->inv3;
+	zmod_poly_copy_mod(output, input);
 #endif
 }
 
@@ -324,17 +310,7 @@ void _zmod_poly_attach_truncate(zmod_poly_t output,
    output->p = input->p;
    output->p_inv = input->p_inv;
 #if USE_ZN_POLY
-	output->mod->n = input->mod->n;
-	output->mod->bits = input->mod->bits;
-   output->mod->B = input->mod->B;
-	output->mod->B2 = input->mod->B2;
-	output->mod->sh1 = input->mod->sh1;
-	output->mod->inv1 = input->mod->inv1;
-	output->mod->sh2 = input->mod->sh2;
-	output->mod->sh3 = input->mod->sh3;
-	output->mod->inv2 = input->mod->inv2;
-	output->mod->n_norm = input->mod->n_norm;
-	output->mod->inv3 = input->mod->inv3;
+	zmod_poly_copy_mod(output, input);
 #endif
    __zmod_poly_normalise(output);
 }

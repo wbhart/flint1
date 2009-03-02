@@ -207,9 +207,8 @@ int zmod_poly_from_string(zmod_poly_t poly, char* s)
    if (!sscanf(s, "%ld %ld  ", &length, &p))
       return 0;
       
-   poly->p = p;
-   poly->p_inv = z_precompute_inverse(p);
-
+   zmod_poly_init(poly, p);
+	
    // jump to next whitespace
    s += strcspn(s, whitespace);
    s += strspn(s, whitespace);
@@ -306,9 +305,7 @@ int zmod_poly_fread(zmod_poly_t poly, FILE* f)
    if (!fscanf(f, "%ld %ld", &length, &p))
       return 0;
 
-   poly->length = 0;
-   poly->p = p;
-   poly->p_inv = z_precompute_inverse(p);
+   zmod_poly_init(poly, p);
    
 	zmod_poly_fit_length(poly, length);
 
@@ -383,10 +380,6 @@ void _zmod_poly_set(zmod_poly_t res, zmod_poly_t poly)
       res->coeffs[i] = poly->coeffs[i];
       
    res->length = poly->length;
-   
-   res->p = poly->p;
-   res->p_inv = poly->p_inv;
-
 }
 
 void zmod_poly_set(zmod_poly_t res, zmod_poly_t poly)
@@ -686,9 +679,6 @@ void zmod_poly_left_shift(zmod_poly_t res, zmod_poly_t poly, unsigned long k)
       
       for (unsigned long i = 0; i < poly->length; i++)
          res->coeffs[i + k] = poly->coeffs[i];
-         
-      res->p = poly->p;
-      res->p_inv = poly->p_inv;
    }
    
    res->length = poly->length + k;
@@ -701,8 +691,6 @@ void zmod_poly_right_shift(zmod_poly_t res, zmod_poly_t poly, unsigned long k)
    {
       // shift all coefficients off the end
       res->length = 0;
-      res->p = poly->p;
-      res->p_inv = poly->p_inv;
 
       return;
    }
@@ -721,10 +709,6 @@ void zmod_poly_right_shift(zmod_poly_t res, zmod_poly_t poly, unsigned long k)
 
       for (unsigned long i = k; i < poly->length; i++)
          res->coeffs[i - k] = poly->coeffs[i];
-         
-      res->p = poly->p;
-      res->p_inv = poly->p_inv;
-
    }
    
    res->length = poly->length - k;
@@ -812,8 +796,6 @@ void _zmod_poly_mul_classical(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t po
    }
 
    res->length = poly1->length + poly2->length - 1;
-   res->p = poly1->p;
-   res->p_inv = poly1->p_inv;
    
    unsigned long length;
    
@@ -967,8 +949,6 @@ void _zmod_poly_sqr_classical(zmod_poly_t res, zmod_poly_t poly)
    }
 
    res->length = 2*poly->length - 1;
-   res->p = poly->p;
-   res->p_inv = poly->p_inv;
 
 	FLINT_ASSERT(res->alloc >= res->length);
    
@@ -1077,8 +1057,6 @@ void _zmod_poly_mul_classical_trunc(zmod_poly_t res, zmod_poly_t poly1, zmod_pol
    }
 
    res->length = trunc;
-   res->p = poly1->p;
-   res->p_inv = poly1->p_inv;
    
    unsigned long length;
    
@@ -1244,8 +1222,6 @@ void _zmod_poly_mul_classical_trunc_left(zmod_poly_t res, zmod_poly_t poly1, zmo
    }
 
    res->length = poly1->length + poly2->length - 1;
-   res->p = poly1->p;
-   res->p_inv = poly1->p_inv;
    
    unsigned long length;
    
@@ -2683,6 +2659,7 @@ void zmod_poly_mul_trunc_left_n(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t 
    Scalar multiplication
    
    Assumes the scalar is reduced modulo poly->p
+	Does not reduce the products modulo p
 */
 
 void __zmod_poly_scalar_mul_no_red(zmod_poly_t res, zmod_poly_t poly, unsigned long scalar)
@@ -2711,6 +2688,12 @@ void __zmod_poly_scalar_mul_no_red(zmod_poly_t res, zmod_poly_t poly, unsigned l
    __zmod_poly_normalise(res);
 }
 
+/* 
+   Scalar multiplication
+   
+   Assumes the scalar is reduced modulo poly->p
+*/
+
 void _zmod_poly_scalar_mul(zmod_poly_t res, zmod_poly_t poly, unsigned long scalar)
 {
    if (scalar == 0) 
@@ -2725,7 +2708,10 @@ void _zmod_poly_scalar_mul(zmod_poly_t res, zmod_poly_t poly, unsigned long scal
       return;
    }
    
-   unsigned long bits = FLINT_BIT_COUNT(poly->p);
+#if USE_ZN_POLY
+	zn_array_scalar_mul(res->coeffs, poly->coeffs, poly->length, scalar, poly->mod);
+#else
+	unsigned long bits = FLINT_BIT_COUNT(poly->p);
    
 #if FLINT_BITS == 64
    if (bits <= FLINT_D_BITS)
@@ -2744,7 +2730,8 @@ void _zmod_poly_scalar_mul(zmod_poly_t res, zmod_poly_t poly, unsigned long scal
 #if FLINT_BITS == 64
    }
 #endif
-   
+#endif
+
    res->length = poly->length;
    __zmod_poly_normalise(res);
 }
@@ -4595,8 +4582,8 @@ void zmod_poly_factor_init(zmod_poly_factor_t fac)
    fac->exponents = (unsigned long *) flint_heap_alloc(5);
    for (unsigned long i = 0; i < 5; i++)
    {
-	  fac->factors[i]->coeffs = (unsigned long*) flint_heap_alloc(1);
-	  fac->factors[i]->alloc = 1;
+	   fac->factors[i]->coeffs = (unsigned long*) flint_heap_alloc(1);
+	   fac->factors[i]->alloc = 1;
       fac->factors[i]->length = 0;
    }
 }
@@ -4624,18 +4611,23 @@ void zmod_poly_factor_add(zmod_poly_factor_t fac, zmod_poly_t poly)
    if(fac->alloc == fac->num_factors)
    {
       fac->factors = (zmod_poly_t *) flint_heap_realloc_bytes(fac->factors, sizeof(zmod_poly_t)*2*fac->alloc);
-	  fac->exponents = (unsigned long *) flint_heap_realloc(fac->exponents, 2*fac->alloc);
-	  for (unsigned long i = fac->alloc; i < 2*fac->alloc; i++)
+	   fac->exponents = (unsigned long *) flint_heap_realloc(fac->exponents, 2*fac->alloc);
+	   for (unsigned long i = fac->alloc; i < 2*fac->alloc; i++)
       {
-	     fac->factors[i]->coeffs = (unsigned long*) flint_heap_alloc(1);
-	     fac->factors[i]->alloc = 1;
+	      fac->factors[i]->coeffs = (unsigned long*) flint_heap_alloc(1);
+	      fac->factors[i]->alloc = 1;
          fac->factors[i]->length = 0;
-	  }
+	   }
       fac->alloc = 2*fac->alloc;
    } 
 	
    zmod_poly_set(fac->factors[fac->num_factors], poly);
-   fac->exponents[fac->num_factors] = 1;
+   fac->factors[fac->num_factors]->p = poly->p;
+   fac->factors[fac->num_factors]->p_inv = poly->p_inv;
+#if USE_ZN_POLY
+	zmod_poly_copy_mod(fac->factors[fac->num_factors], poly);
+#endif
+	fac->exponents[fac->num_factors] = 1;
    fac->num_factors++;
 }
 
@@ -4891,7 +4883,7 @@ void zmod_poly_factor_berlekamp(zmod_poly_factor_t factors, zmod_poly_t f)
 		   zmod_poly_gcd(g, power, f);
 		   if (zmod_poly_length(g) != 1) break;
 		}
-
+      
 		for (ulong i = 1; i < nullity; i++)
 		{
 		   zmod_poly_clear(basis[i]);
@@ -4964,7 +4956,7 @@ unsigned long zmod_poly_factor(zmod_poly_factor_t result, zmod_poly_t input)
       //clean up the memory being used
       zmod_poly_factor_clear(factors);
    }
-
+   
    //clean up memory
    zmod_poly_factor_clear(sqfree_factors);
    	

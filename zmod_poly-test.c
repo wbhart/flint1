@@ -5782,7 +5782,7 @@ int test_zmod_poly_factor()
 		   zmod_poly_make_monic(poly, poly);
 	   }
       while ((!zmod_poly_isirreducible(poly)) || (poly->length < 2));
-      exponents[0] = z_randint(30)+1;
+		exponents[0] = z_randint(30)+1;
 		ulong prod1 = exponents[0];
 		for (ulong i = 0; i < exponents[0]; i++) zmod_poly_mul(pol1, pol1, poly);
 		
@@ -5801,11 +5801,9 @@ int test_zmod_poly_factor()
 			prod1 *= exponents[i];
 		   for (ulong j = 0; j < exponents[i]; j++) zmod_poly_mul(pol1, pol1, poly);
 	   }
-     
 		zmod_poly_factor_init(res);
       ulong lead = zmod_poly_factor(res, pol1);
-      
-	   result &= (res->num_factors == num_factors);
+      result &= (res->num_factors == num_factors);
 		if (!result)
 		   printf("Error: number of factors incorrect, %ld, %ld\n", res->num_factors, num_factors);
 		
