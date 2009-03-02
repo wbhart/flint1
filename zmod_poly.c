@@ -3659,7 +3659,25 @@ void zmod_poly_newton_invert(zmod_poly_t Q_inv, zmod_poly_t Q, unsigned long n)
       
       return;
    }
-   
+
+#if USE_ZN_POLY
+	zmod_poly_fit_length(Q_inv, n + 1);
+	ulong lead = Q->coeffs[0];
+   ulong inv = z_invert(lead, Q->p);
+
+	zmod_poly_t temp; 
+	zmod_poly_init2(temp, Q->p, n + 1);
+	
+	zmod_poly_scalar_mul(temp, Q, inv);
+	zmod_poly_set_coeff_ui(temp, n, 1);
+	zn_array_invert(Q_inv->coeffs, temp->coeffs, n + 1, Q->mod); 
+	zmod_poly_clear(temp);
+	
+	Q_inv->length = n;
+	__zmod_poly_normalise(Q_inv);
+	
+	zmod_poly_scalar_mul(Q_inv, Q_inv, inv);
+#else
    unsigned long m = (n+1)/2;
    unsigned long p = Q->p;
    
@@ -3711,6 +3729,7 @@ void zmod_poly_newton_invert(zmod_poly_t Q_inv, zmod_poly_t Q, unsigned long n)
    zmod_poly_clear(prod2);
    zmod_poly_clear(prod);
    zmod_poly_clear(g0);
+#endif
 }
 
 /****************************************************************************
