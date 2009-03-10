@@ -22,9 +22,9 @@ endif
 
 CPP = $(FLINT_CPP) 
 
-LIBS = -L$(FLINT_GMP_LIB_DIR) $(FLINT_LINK_OPTIONS) -fopenmp -lgmp -lpthread -lm
+LIBS = -L$(FLINT_GMP_LIB_DIR) $(FLINT_LINK_OPTIONS) -lgmp -lpthread -lm
 
-LIBS2 = -L$(FLINT_GMP_LIB_DIR) -L$(FLINT_NTL_LIB_DIR) $(FLINT_LINK_OPTIONS) -fopenmp -lgmp -lpthread -lntl -lm 
+LIBS2 = -L$(FLINT_GMP_LIB_DIR) -L$(FLINT_NTL_LIB_DIR) $(FLINT_LINK_OPTIONS) -lgmp -lpthread -lntl -lm 
 
 ifndef FLINT_NTL_INCLUDE_DIR
 	INCS = -I$(FLINT_GMP_INCLUDE_DIR) 
