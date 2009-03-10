@@ -1543,7 +1543,7 @@ int fmpz_poly_is_squarefree(fmpz_poly_t pol)
 	return sqfree;        
 }
 
-int fmpz_poly_signature(ulong * r1, ulong * r2, fmpz_poly_t poly);
+void fmpz_poly_signature(ulong * r1, ulong * r2, fmpz_poly_t poly);
 
 // *************** end of file
 

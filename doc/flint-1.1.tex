@@ -885,6 +885,16 @@ Performs division without remainder of two polynomials in $\Z[x]$, notionally re
 Notionally computes polynomials \code{Q} and \code{R} such that \code{lead(B)^d*A = B*Q + R} where \code{R} has degree less than that of \code{B}, but returns only \code{Q}. This is slightly more efficient than computing the quotient and remainder.
 \end{quote}
 
+\begin{lstlisting}
+void fmpz_poly_pseudo_rem(fmpz_poly_t R, unsigned long * d, 
+                         const fmpz_poly_t A, const fmpz_poly_t B)
+\end{lstlisting}
+\begin{quote}
+Performs division with remainder of two polynomials in $\Z[x]$, without returning the quotient, notionally returning the results in $\Q[x]$ (actually in $\Z[x]$ with a single common denominator).
+
+Notionally computes polynomials \code{Q} and \code{R} such that \code{lead(B)^d*A = B*Q + R} where \code{R} has degree less than that of \code{B}, but returns only \code{R}. This is more efficient than computing the quotient and remainder.
+\end{quote}
+
 \subsection{Powering}
 
 \begin{lstlisting}
@@ -990,6 +1000,24 @@ void fmpz_poly_compose(fmpz_poly_t output,
 \end{lstlisting}
 \begin{quote}
 Sets \code{output} to the polynomial composition of $f$ with $g$, i.e. computes $f(g(x))$.
+\end{quote}
+
+\subsection{Polynomial signature}
+
+\begin{lstlisting}
+void fmpz_poly_signature(ulong * r1, ulong * r2, fmpz_poly_t poly)
+\end{lstlistin}
+\begin{quote}
+Determines the signature r1, r2 (where r1 + 2*r2 = degree(poly) and r1 is the number of real roots of poly). The input polynomial must be squarefree, otherwise the result is undefined and an exception may be raised. The zero polynomial is allowed, for convenience, and the number of real and complex roots are both set to 0 in that case.
+\end{quote}
+
+\subsection{Squarefree}
+
+\begin{lstlisting}
+void fmpz_poly_signature(ulong * r1, ulong * r2, fmpz_poly_t poly)
+\end{lstlistin}
+\begin{quote}
+Determines the signature r1, r2 (where r1 + 2*r2 = degree(poly) and r1 is the number of real roots of poly). The input polynomial must be squarefree, otherwise the result is undefined and an exception may be raised. The zero polynomial is allowed, for convenience, and the number of real and complex roots are both set to 0 in that case.
 \end{quote}
 
 \subsection{Subpolynomials}
@@ -2390,6 +2418,20 @@ Factors \code{n} until the product of the factor found is $>$ \code{limit}. It p
 \end{quote}
 
 \begin{lstlisting}
+int z_issquarefree(unsigned long n, int proved)
+\end{lstlisting}
+\begin{quote}
+Returns 1 if n is squarefree, otherwise returns 0. If \code{proved} is set to 1 then the result is guaranteed, and if set to 0 then internal factoring may declare some composites prime. Note that n must be at most FLINT_BITS - 1 bits.
+\end{quote}
+
+\begin{lstlisting}
+int z_issquare(long n)
+\end{lstlisting}
+\begin{quote}
+Returns 1 if n is a square, otherwise returns 0. There are no restrictions on n, which may be signed and negative numbers will not be declared square. 
+\end{quote}
+
+\begin{lstlisting}
 unsigned long z_randint(unsigned long limit)
 \end{lstlisting}
 \begin{quote}
@@ -2404,10 +2446,10 @@ Returns a random uniformly distributed integer with up to the given number of bi
 \end{quote}
 
 \begin{lstlisting}
-unsigned long z_randprime(unsigned long bits, int proved)
+unsigned long  (unsigned long bits, int proved)
 \end{lstlisting}
 \begin{quote}
-Returns a random prime integer with up to the given number of bits.  Assumes \code{bits}>1. If \code{proved} is 0 then the prime is not proven prime, otherwise it is.
+Returns a random prime integer with up to the given number of bits.  Assumes \code{bits} $> 1$. If \code{proved} is 0 then the prime is not proven prime, otherwise it is.
 \end{quote}
 
 \section{The mpn\_extras module}

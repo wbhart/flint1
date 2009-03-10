@@ -11121,26 +11121,25 @@ void fmpz_poly_compose(fmpz_poly_t output, fmpz_poly_t poly, fmpz_poly_t val)
 
 ****************************************************************************/
 
-/* 
+/*
    Determines the signature r1, r2 (where r1 + 2*r2 = degree(poly) and r1 is
    the number of real roots of poly) and returns 0, unless poly is not squarefree
 	in which case it returns 1
 */
-int fmpz_poly_signature(ulong * r1, ulong * r2, fmpz_poly_t poly)
+void fmpz_poly_signature(ulong * r1, ulong * r2, fmpz_poly_t poly)
 {
 	if (poly->length <= 1)
 	{
 		*r1 = 0;
 		*r2 = 0;
-		if (poly->length == 0) return 0;
-		else return 1;
+		return;
 	}
 
 	if (poly->length == 2)
 	{
 		*r1 = 1;
 		*r2 = 0;
-		return 1;
+		return;
 	}
 
 	fmpz_poly_t A, B, Tp;
@@ -11184,7 +11183,8 @@ int fmpz_poly_signature(ulong * r1, ulong * r2, fmpz_poly_t poly)
 
 		if (A->length == 0)
 		{
-			return 0;
+			printf("Error: non-squarefree polynomial detected in signature computation\n");
+			abort();
 		}
       
 		if ((fmpz_sgn(fmpz_poly_lead(B)) > 0) || (delta & 1)) 
