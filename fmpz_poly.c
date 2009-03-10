@@ -3221,9 +3221,7 @@ void fmpz_poly_mul_modular_packed(fmpz_poly_t output, fmpz_poly_t poly1,
    fmpz_poly_init(out);
    
 	fmpz_poly_pack_bytes(p1, poly1, n, bytes);
-   fmpz_poly_check_normalisation(p1);
    fmpz_poly_pack_bytes(p2, poly2, n, bytes);
-   fmpz_poly_check_normalisation(p2);
           
 	fmpz_poly_fit_length(out, p1->length + p2->length + 1);
 	fmpz_poly_fit_limbs(out, p1->limbs + p2->limbs + 1);

@@ -95,10 +95,12 @@ v 1.0.19 -- 12-Dec-08
    * Fixed a bug in z_remove_precomp
 
 v 1.0.20 -- 13-Dec-08
-   * Fixed some bugs in conversion of zmod_poly's to and from srings
+   * Fixed some bugs in conversion of zmod_poly's to and from strings
 
+v 1.0.21 -- 25-Dec-08
+   * Fixed the Christmas bug reported by Michael Abshoff which causes a test failure in fmpz_poly_gcd_modular and a hang in fmpz_poly_invmod_modular on 32 bit machines 
 
-v 1.1.0 (some of the following features were previewed in FLINT 1.0.11):
+v 1.1.0 -- 21-Dec-08 (some of the following features were previewed in FLINT 1.0.11):
 
    * integer gcd (this just wraps the GMP gcd code)
    * polynomial content
@@ -165,5 +167,40 @@ v 1.1.0 (some of the following features were previewed in FLINT 1.0.11):
    * Tiny quadratic sieve for small one and two limb integers
    * Completely rewritten self initialising multiple polynomial quadratic sieve
    * Build fix for 64 bit OSX dylibs (reported by Michael Abshoff)
+   
+v 1.1.1 -- 11-Feb-09
+
+   * Fixed bugs in _fmpz_poly_scalar_mul_fmpz, fmpz_poly_gcd_heuristic and fmpz_poly_gcd_subresultant and fixed bugs in test__fmpz_poly_scalar_div_fmpz, test_fmpz_poly_scalar_div_fmpz and test_fmpz_poly_scalar_div_mpz.
+
+v 1.1.2 -- 1-Mar-09
+
+   * Fixed some memory allocation slowdowns and bugs in fmpz_poly division and pseudo division functions (reported by William Stein).
+   
+v 1.1.3 -- 1-Mar-09
+
+   * Inserted some missing return values in zmod_poly test code.
   
+v 1.2.0 -- 10-Mar-09
+
+   * made memory manager, fmpz and fmpz_poly threadsafe
+   * Code for running tests in parallel (not activated)
+   * Sped up fmpz_poly_scalar_div_ui/si when scalar is 1/-1
+   * Parallelise _fmpz_poly_mul_modular 
+   * fmpz_mul_modular_packed to pack coefficients to the byte before running _fmpz_poly_mul_modular 
+   * fmpz_poly_pseudo_rem_cohen (not documented)
+   * special case for leading coeff 1/-1 in fmpz_poly_pseudo_divrem_basecase
+   * removed a memory allocation bug which caused a massive slowdown in fmpz_poly_pseudo_divrem_basecase
+   * fmpz_poly_pseudo_rem_basecase (not documented)
+   * fmpz_poly_pseudo_rem (not asymptotically fast)
+   * fmpz_poly_signature (not asymptotically fast)
+   * basic fmpz_poly_is_squarefree function
+   * included zn_poly in trunk and made FLINT build zn_poly as part of its build process
+   * switched to using zn_poly for polynomial multiplication, newton inversion, scalar multiplication in zmod_poly
+   * Fixed bug in fmpz_poly_byte_pack which is triggered when trying to pack into fields a multiple of 8 bytes (could cause a segfault)
+   * Fixed a bug in fmpz_poly_pseudo_divrem (relied on an uninitialised poly to have length 0)
+   * Fixed bug in fmpz_multi_CRT_ui (could segfault)
+   * Fixed bug in fmpz_multi_mod_ui (could segfault)
+   * Fixed memory leak in zmod_poly_factor_squarefree 
+   * Fixed memory leak in zmod_poly_from_string
+
 
