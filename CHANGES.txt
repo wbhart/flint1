@@ -196,6 +196,13 @@ v 1.2.0 -- 10-Mar-09
    * basic fmpz_poly_is_squarefree function
    * included zn_poly in trunk and made FLINT build zn_poly as part of its build process
    * switched to using zn_poly for polynomial multiplication, newton inversion, scalar multiplication in zmod_poly
+   * Integer cube root of word sized integers
+   * Fibonacci pseudoprime test
+   * BSPW probable prime test
+   * n - 1 primality test
+   * Complete implementation of z_issquarefree
+   * Significantly improved the thetaproduct example program. 
+   * 
    * Fixed bug in fmpz_poly_byte_pack which is triggered when trying to pack into fields a multiple of 8 bytes (could cause a segfault)
    * Fixed a bug in fmpz_poly_pseudo_divrem (relied on an uninitialised poly to have length 0)
    * Fixed bug in fmpz_multi_CRT_ui (could segfault)
