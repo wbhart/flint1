@@ -11214,7 +11214,7 @@ void fmpz_poly_signature(ulong * r1, ulong * r2, fmpz_poly_t poly)
 
 	      fmpz_poly_clear(A);
 	      fmpz_poly_clear(B);
-	      return 1;
+	      return;
 		} else
 		{
 			fmpz_poly_swap(A, B);
