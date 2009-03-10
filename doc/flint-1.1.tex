@@ -2421,7 +2421,7 @@ Factors \code{n} until the product of the factor found is $>$ \code{limit}. It p
 int z_issquarefree(unsigned long n, int proved)
 \end{lstlisting}
 \begin{quote}
-Returns 1 if n is squarefree, otherwise returns 0. If \code{proved} is set to 1 then the result is guaranteed, and if set to 0 then internal factoring may declare some composites prime. Note that n must be at most FLINT_BITS - 1 bits.
+Returns 1 if n is squarefree, otherwise returns 0. If \code{proved} is set to 1 then the result is guaranteed, and if set to 0 then internal factoring may declare some composites prime. Note that \code{n} must be at most \code{FLINT_BITS - 1} bits.
 \end{quote}
 
 \begin{lstlisting}
