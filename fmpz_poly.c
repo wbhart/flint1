@@ -867,16 +867,17 @@ void fmpz_poly_byte_pack(mp_limb_t * array, const fmpz_poly_t poly_fmpz,
           /* Coefficient is zero after borrow */
           else 
           {
-             array[offset_limb] = ((l_shift(1UL,shift_1) - 1) & array[offset_limb]);
-             offset_limb++;
+             temp = ((l_shift(1UL,shift_1) - 1) & array[offset_limb]);
              for ( ; offset_limb < coeff_limb + limbs_per_coeff; offset_limb++)
              {
-                array[offset_limb] = 0UL;
+                array[offset_limb] = temp;
+					 temp = 0UL;
              }
              while ((offset_limb<<FLINT_LG_BYTES_PER_LIMB) < ((coeff_limb +
                  limbs_per_coeff)<<FLINT_LG_BYTES_PER_LIMB) + extra_bytes_per_coeff + coeff_byte)
              {
-                array[offset_limb] = 0UL;
+                array[offset_limb] = temp;
+					 temp = 0UL;
                 offset_limb++;
              }
 
@@ -885,15 +886,7 @@ void fmpz_poly_byte_pack(mp_limb_t * array, const fmpz_poly_t poly_fmpz,
              borrow = 0;
           }
        }
-       // Extend sign of final input coefficient to end of output coefficient 
-       /*if (coeff_m == next_point-size_m)
-       {
-          while (offset_limb < total_limbs)
-          {
-             array[offset_limb] = extend;
-             offset_limb++;
-          } 
-       }*/
+       
        // update information for next coefficient
        coeff_limb += limbs_per_coeff;
        coeff_byte += extra_bytes_per_coeff;

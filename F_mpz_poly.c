@@ -2243,16 +2243,16 @@ void F_mpz_poly_byte_pack(mp_limb_t * array, const F_mpz_poly_t poly_fmpz,
                 __F_mpz_poly_write_whole_limb(array, &temp, &offset_limb, next_limb, shift_1, shift_2);
              }
              // write remaining part of coefficient and extend with binary zeros
-             array[offset_limb] = temp;
-             offset_limb++;
              for (; offset_limb < coeff_limb + limbs_per_coeff; offset_limb++)
              {
-                array[offset_limb] = 0UL;
+                array[offset_limb] = temp;
+					 temp = 0;
              }
              while ((offset_limb<<FLINT_LG_BYTES_PER_LIMB) < ((coeff_limb +
                  limbs_per_coeff)<<FLINT_LG_BYTES_PER_LIMB) + extra_bytes_per_coeff + coeff_byte)
              {
-                array[offset_limb] = 0UL;
+                array[offset_limb] = temp;
+					 temp = 0;
                 offset_limb++;
              }
              temp = 0;
@@ -2261,16 +2261,17 @@ void F_mpz_poly_byte_pack(mp_limb_t * array, const F_mpz_poly_t poly_fmpz,
           /* Coefficient is zero after borrow */
           else 
           {
-             array[offset_limb] = ((l_shift(1UL, shift_1) - 1) & array[offset_limb]); // write any bits still hanging around
-             offset_limb++;
+             temp = ((l_shift(1UL, shift_1) - 1) & array[offset_limb]); // write any bits still hanging around
              for ( ; offset_limb < coeff_limb + limbs_per_coeff; offset_limb++) // write out zeroes for this coefficient
              {
-                array[offset_limb] = 0UL;
+                array[offset_limb] = temp;
+					 temp = 0;
              }
              while ((offset_limb<<FLINT_LG_BYTES_PER_LIMB) < ((coeff_limb +
                  limbs_per_coeff)<<FLINT_LG_BYTES_PER_LIMB) + extra_bytes_per_coeff + coeff_byte)
              {
-                array[offset_limb] = 0UL;
+                array[offset_limb] = temp;
+					 temp = 0;
                 offset_limb++;
              }
 
@@ -2364,33 +2365,34 @@ void F_mpz_poly_byte_pack(mp_limb_t * array, const F_mpz_poly_t poly_fmpz,
              __F_mpz_poly_write_whole_limb(array, &temp, &offset_limb, next_limb, shift_1, shift_2);
           }
           // write remaining part of coefficient and extend with binary zeros
-          array[offset_limb] = temp;
-          offset_limb++;
           for ( ; offset_limb < coeff_limb + limbs_per_coeff; offset_limb++)
           {
-             array[offset_limb] = 0UL;
+             array[offset_limb] = temp; // may have something left over to write out
+             temp = 0;
           }
           while ((offset_limb<<FLINT_LG_BYTES_PER_LIMB) < ((coeff_limb +
               limbs_per_coeff)<<FLINT_LG_BYTES_PER_LIMB) + extra_bytes_per_coeff + coeff_byte)
           {
-             array[offset_limb] = 0UL;
-             offset_limb++;
+             array[offset_limb] = temp; // may have something left over to write out
+             temp = 0;
+				 offset_limb++;
           }
-          temp = 0;
+          temp = 0UL;
 		 }
        /* Coefficient is zero */
        else 
        {
-          array[offset_limb] = ((l_shift(1UL, shift_1) - 1) & array[offset_limb]); // write any bits still hanging around
-          offset_limb++;
+          temp = ((l_shift(1UL, shift_1) - 1) & array[offset_limb]); // write any bits still hanging around
           for ( ; offset_limb < coeff_limb + limbs_per_coeff; offset_limb++) // write out zeroes for this coefficient
           {
-             array[offset_limb] = 0UL;
+             array[offset_limb] = temp; // may have something left over to write out
+				 temp = 0;
           }
           while ((offset_limb<<FLINT_LG_BYTES_PER_LIMB) < ((coeff_limb +
               limbs_per_coeff)<<FLINT_LG_BYTES_PER_LIMB) + extra_bytes_per_coeff + coeff_byte)
           {
-             array[offset_limb] = 0UL;
+             array[offset_limb] = temp; // may have something left over to write out
+				 temp = 0;
              offset_limb++;
           }
 
