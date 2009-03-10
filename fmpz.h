@@ -387,13 +387,8 @@ void fmpz_multi_CRT_ui_unsigned(fmpz_t output, unsigned long * residues, fmpz_co
 
 void __fmpz_multi_CRT_sign(fmpz_t output, fmpz_t input, fmpz_comb_t comb);
 
-static inline
-void fmpz_multi_CRT_ui(fmpz_t output, unsigned long * residues, fmpz_comb_t comb)
-{
-	fmpz_multi_CRT_ui_unsigned(output, residues, comb);
-   __fmpz_multi_CRT_sign(output, output, comb);
-}
-         
+void fmpz_multi_CRT_ui(fmpz_t output, unsigned long * residues, fmpz_comb_t comb);
+        
 #include "fmpz_montgomery.h"
 
 #ifdef __cplusplus

@@ -1723,7 +1723,6 @@ int z_issquarefree_trial(unsigned long n)
 
 /*
    Tests if n is squarefree or not
-   Currently only works for numbers up to 65535
 */
 
 int z_issquarefree(unsigned long n, int proved)

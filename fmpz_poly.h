@@ -1256,11 +1256,16 @@ void fmpz_poly_power_trunc_n(fmpz_poly_t output, const fmpz_poly_t poly, const u
 
 void fmpz_poly_pseudo_divrem_cohen(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_poly_t A, const fmpz_poly_t B);
 
+void fmpz_poly_pseudo_rem_cohen(fmpz_poly_t R, const fmpz_poly_t A, const fmpz_poly_t B);
+
 void fmpz_poly_pseudo_divrem_shoup(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_poly_t A, const fmpz_poly_t B);
 
 void fmpz_poly_pseudo_divrem_basecase(fmpz_poly_t Q, fmpz_poly_t R, 
                                unsigned long * d, const fmpz_poly_t A, const fmpz_poly_t B);
                                
+void fmpz_poly_pseudo_rem_basecase(fmpz_poly_t R, 
+                               unsigned long * d, const fmpz_poly_t A, const fmpz_poly_t B);
+
 void fmpz_poly_pseudo_div_basecase(fmpz_poly_t Q, unsigned long * d, 
                                                const fmpz_poly_t A, const fmpz_poly_t B);
 
@@ -1301,6 +1306,38 @@ void fmpz_poly_pseudo_divrem(fmpz_poly_t Q, fmpz_poly_t R, unsigned long * d,
    
    if ((A == R) || (A == Q)) _fmpz_poly_stack_clear(Ain);
    if ((B == R) || (B == Q)) _fmpz_poly_stack_clear(Bin);
+}
+
+static inline
+void fmpz_poly_pseudo_rem(fmpz_poly_t R, unsigned long * d, 
+                                               const fmpz_poly_t A, const fmpz_poly_t B)
+{
+   if (A == B)
+   {
+      fmpz_poly_zero(R);
+      d = 0;
+      
+      return;
+   }
+
+   fmpz_poly_t Ain, Bin;
+   
+   if (A == R)
+   {
+      _fmpz_poly_stack_init(Ain, A->length, A->limbs);
+      _fmpz_poly_set(Ain, A);
+   } else _fmpz_poly_attach(Ain, A);
+   
+   if (B == R)
+   {
+      _fmpz_poly_stack_init(Bin, B->length, B->limbs);
+      _fmpz_poly_set(Bin, B);
+   } else _fmpz_poly_attach(Bin, B);
+
+   fmpz_poly_pseudo_rem_basecase(R, d, Ain, Bin);
+   
+   if (A == R) _fmpz_poly_stack_clear(Ain);
+   if (B == R) _fmpz_poly_stack_clear(Bin);
 }
 
 void fmpz_poly_pseudo_div_recursive(fmpz_poly_t Q, unsigned long * d, 
@@ -1479,6 +1516,31 @@ void fmpz_poly_compose_horner(fmpz_poly_t output, fmpz_poly_t poly, fmpz_poly_t 
 	}
 
 	fmpz_poly_compose_horner_range(output, poly, val, 0, poly->length);
+}
+
+static inline 
+int fmpz_poly_is_squarefree(fmpz_poly_t pol)
+{
+	if (pol->length == 0) return 0;
+	if (pol->length <= 2) return 1;
+	
+	fmpz_poly_t deriv;
+	fmpz_poly_init(deriv);
+	
+	fmpz_poly_derivative(deriv, pol);
+	
+	ulong bound = fmpz_poly_resultant_bound(pol, deriv)+2;
+            
+   fmpz_t res = fmpz_init(bound/FLINT_BITS + 2);
+   fmpz_poly_resultant(res, pol, deriv);
+
+	fmpz_poly_clear(deriv);
+
+	int sqfree = (res[0] != 0L);
+
+	fmpz_clear(res);
+
+	return sqfree;        
 }
 
 int fmpz_poly_signature(ulong * r1, ulong * r2, fmpz_poly_t poly);

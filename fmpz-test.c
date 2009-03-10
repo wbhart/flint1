@@ -1885,11 +1885,11 @@ int test_fmpz_multi_CRT_ui()
    mpz_init(num1);
    for (unsigned long i = 0; (i < 1000) && (result == 1); i++)
    {
-      unsigned long bits = random_ulong(300)+1;
+      unsigned long bits = random_ulong(3000)+1;
 #if FLINT_BITS == 32
-      double primes_per_limb = 1.0325;
+      double primes_per_limb = 1.067;
 #elif FLINT_BITS == 64
-      double primes_per_limb = 1.016;
+      double primes_per_limb = 1.0323;
 #endif
 	  unsigned long num_primes = ((bits+1)*primes_per_limb)/FLINT_BITS + 1;
 #if DEBUG
@@ -1920,6 +1920,11 @@ int test_fmpz_multi_CRT_ui()
       
 		fmpz_multi_CRT_ui(temp, output, comb);
 		if (!fmpz_equal(temp, input)) result = 0;
+		if (!result) 
+		{
+			fmpz_print(temp); printf("\n");
+			fmpz_print(input); printf("\n");
+		}
 
       flint_heap_free(temp);
 
@@ -1927,10 +1932,26 @@ int test_fmpz_multi_CRT_ui()
       {
          output2[k] = fmpz_mod_ui(input, primes[k]);
       }
-      for (unsigned long k = 0; k < num_primes; k++)
+      unsigned long k;
+		for (k = 0; k < num_primes; k++)
       {
-         if (output[k] != output2[k]) result = 0;
+         if (output[k] != output2[k]) 
+			{
+				result = 0;
+				break;
+			}
       }
+
+		if (!result) 
+		{
+			if (k != num_primes)
+			{
+				printf("%ld\n", output[k]); printf("\n");
+			   printf("%ld\n", output2[k]); printf("\n");
+			   printf("k = %ld\n", k);
+			}
+		}
+
       fmpz_comb_clear(comb);
       fmpz_clear(input);
       flint_heap_free(output);

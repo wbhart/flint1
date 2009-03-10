@@ -207,8 +207,6 @@ int zmod_poly_from_string(zmod_poly_t poly, char* s)
    if (!sscanf(s, "%ld %ld  ", &length, &p))
       return 0;
       
-   zmod_poly_init(poly, p);
-	
    // jump to next whitespace
    s += strcspn(s, whitespace);
    s += strspn(s, whitespace);
@@ -4556,9 +4554,9 @@ int zmod_poly_isirreducible(zmod_poly_t f)
 		  //now do the irreducibility test
         if (!zmod_poly_equal(x_p, x))
 		  {
-			  zmod_poly_init(a, p);
-           zmod_poly_init(x, p);
-           zmod_poly_init(x_p, p);
+			  zmod_poly_clear(a);
+           zmod_poly_clear(x);
+           zmod_poly_clear(x_p);
 		     return 0;
 		  }
         else
@@ -4574,9 +4572,9 @@ int zmod_poly_isirreducible(zmod_poly_t f)
                
 					if (a->length != 1)
 					{
-						zmod_poly_init(a, p);
-                  zmod_poly_init(x, p);
-                  zmod_poly_init(x_p, p);
+						zmod_poly_clear(a);
+                  zmod_poly_clear(x);
+                  zmod_poly_clear(x_p);
                   return 0;
 					}
 				}
