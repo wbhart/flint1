@@ -4912,7 +4912,7 @@ void zmod_poly_factor_berlekamp(zmod_poly_factor_t factors, zmod_poly_t f)
 
 		zmod_poly_make_monic(g, g);
 		zmod_poly_factor_t fac1, fac2;
-	    zmod_poly_factor_init(fac1); zmod_poly_factor_init(fac2);
+	   zmod_poly_factor_init(fac1); zmod_poly_factor_init(fac2);
 		zmod_poly_factor_berlekamp(fac1, g);
 		zmod_poly_t Q;
 		zmod_poly_init(Q, p);
@@ -4944,7 +4944,11 @@ unsigned long zmod_poly_factor(zmod_poly_factor_t result, zmod_poly_t input)
    
 	//Now we must make sure the input polynomial is monic. Get the highest coeff and store it then call make monic
    unsigned long leading_coeff = zmod_poly_get_coeff_ui(input, zmod_poly_degree(input));
-   if (input->length == 1) return leading_coeff;
+   if (input->length == 1) 
+	{
+		zmod_poly_clear(monic_input);
+	   return leading_coeff;
+	}
 
 	zmod_poly_make_monic(monic_input, input);
 	

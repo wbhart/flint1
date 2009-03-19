@@ -503,7 +503,7 @@ NTL-profile: NTL-profile.c test-support.o NTL-profile-tables.o $(PROFOBJ)
 	$(CPP) $(CFLAGS) -o NTL-profile NTL-profile.c NTL-profile-tables.o test-support.o $(PROFOBJ) $(LIB) -lntl
 
 zmod_poly-profile: zmod_poly-profile.o zmod_poly-profile-tables.o $(PROFOBJ)
-	$(CC) $(CFLAGS) -o zmod_poly-profile zmod_poly.o zmod_poly-profile.o zmod_poly-profile-tables.o $(PROFOBJ) $(LIBS)
+	$(CC) $(CFLAGS) -o zmod_poly-profile zmod_poly-profile.o zmod_poly-profile-tables.o $(PROFOBJ) $(LIBS)
 
 bernoulli-profile: bernoulli-profile.o bernoulli-profile-tables.o $(PROFOBJ)
 	$(CC) $(CFLAGS) -o bernoulli-profile zmod_poly.o bernoulli-profile.o bernoulli-profile-tables.o $(PROFOBJ) $(LIBS)
