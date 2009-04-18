@@ -1,0 +1,42 @@
+
+===============================================================================
+
+[Bai89]: Bailey, "FFTs in External or Hierarchical Memory", Journal of
+         Supercomputing, vol. 4, no. 1 (Mar 1990), 23--35
+
+[BLS03]: Bostan, Lecerf, Schost, "Tellegen's principle into practice",
+         Symbolic and Algebraic Computation (2003), 37--44 (Proceedings
+         of ISSAC 2003)
+
+[GM94]:  Granlund, Montgomery, "Division by Invariant Integers using
+         Multiplication", ACM SIG-PLAN Notices (1994), vol 29 no 6, 61--72
+
+[Har07]: Harvey, "Faster polynomial multiplication via multipoint Kronecker
+         substitution", preprint at http://arxiv.org/abs/0712.4046 (2007)
+         
+[Har08]: Harvey, "A cache-friendly truncated FFT", preprint at
+         http://arxiv.org/abs/0810.3203 (2008)
+         
+[HQZ04]: Hanrot, Quercia, Zimmermann, "The Middle Product Algorithm,
+         I. Speeding up the division and square root of power series",
+         AAECC (2004), vol 14 no 6, 415--438
+
+[HZ04]:  Hanrot, Zimmermann, "Newton iteration revisited", 2004
+
+[Mon85]: Montgomery, "Modular multiplication without trial division",
+         Math. Comp. 44 (1985) no. 170, 519--521
+         
+[Nus80]: Nussbaumer, "Fast polynomial transform algorithms for digital
+         convolution", IEEE Transactions on Acoustics, Speech, and Signal
+         Processing 28 (1980), 205--215.
+
+[Sch77]: Schonhage, "Schnelle Multiplikation von Polynomen uber Korpern der
+         Charakteristik 2", Acta Informatica, vol 7 (1977), 395--398
+
+[vdH04]: van der Hoeven, "The Truncated Fourier Transform and Applications",
+         ISSAC 2004
+
+[vdH05]: van der Hoeven, "Notes on the Truncated Fourier Transform"
+
+
+===============================================================================

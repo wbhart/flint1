@@ -1,0 +1,143 @@
+
+===============================================================================
+
+zn_poly: a library for polynomial arithmetic (version 0.9)
+
+Copyright (C) 2007, 2008, David Harvey
+
+See the file COPYING for copyright and licensing information.
+
+===============================================================================
+
+Installation instructions
+-------------------------
+
+(1) Unpack the tarball somewhere.
+
+
+(2) From the tarball directory, run the configure script, i.e.
+
+   ./configure <options>
+
+This creates a makefile. Python must be available for this to work. The
+configure script doesn't do anything intelligent (like examine your system);
+it just writes the makefile based on the supplied options.
+
+Available options are the following:
+
+--cflags=<flags>
+
+   Flags passed to gcc. Default is "-O2". You might need "-O2 -m64".
+
+--ldflags=<flags>
+
+   Flags passed to linker. You might need "-m64", especially on some macs.
+
+--prefix=<path>
+
+   Where to put zn_poly header and library files. Default is "/usr/local".
+   The header file is stored at <path>/include. The library is stored at
+   <path>/lib.
+
+--gmp-prefix=<path>
+
+   Location of GMP include/library files (assumed to be under
+   <path>/include and <path>/lib). Default is "/usr/local".
+
+--ntl-prefix=<path>
+
+   Location of NTL include/library files (assumed to be under
+   <path>/include and <path>/lib). This is only necessary if
+   you want to build the profiling targets with NTL profiling support.
+   Default is "/usr/local".
+
+--use-flint
+
+   Use the FLINT library instead of GMP for large integer multiplication.
+
+--flint-prefix=<path>
+
+   Location of FLINT include/library files (assumed to be under
+   <path>/include and <path>/lib). Default is "/usr/local".
+
+
+(3) (optional) Run "make tune" and then "tune/tune > src/tuning.c". This
+    determines optimal tuning values on your platform and overwrites the
+    tuning.c source file with the new values.
+    
+    This only works on platforms where cycle counter code is available
+    (currently x86, x86_64 and powerpc). If you don't run "make tune", you'll
+    just get some default tuning values that work well on my development
+    machine.
+
+
+(4) Run "make" to build the library.
+
+
+(5) Run "make install". This copies the library and include files to
+    the requested destination directory.
+
+
+(6) (optional) Step (5) only installs the static version of the library.
+    The makefile also has targets for shared libraries (you might need to add
+    -fPIC to --cflags):
+    
+    * libzn_poly.dylib: for darwin
+    * libzn_poly.dylib64: darwin, 64 bit
+    * libzn_poly.so: linux
+    * libzn_poly-0.9.so: linux, with sonames
+
+
+
+===============================================================================
+
+Other makefile targets
+----------------------
+
+make demo/bernoulli/bernoulli
+
+   An example program for computing bernoulli numbers mod p.
+
+make clean
+
+   Remove all temporary files.
+
+make check
+
+   Runs some quick tests to make sure that everything appears to be working.
+
+make test
+
+   Builds a test program. Running "test/test all" runs the whole zn_poly test
+   suite, which tests zn_poly much more thoroughly than "make check".
+
+make profile/mul-profile
+
+   A program for profiling various polynomial multiplication algorithms over
+   various modulus sizes and polynomial lengths.
+
+make profile/mul-profile-ntl
+
+   As above, but also includes support for profiling NTL's multiplication.
+
+make profile/invert-profile
+make profile/invert-profile-ntl
+
+   A program for profiling series inversion.
+
+make profile/negamul-profile
+
+   A program for profiling various negacyclic multiplication algorithms.
+   
+make profile/mulmid-profile
+
+   A program for profiling various middle product algorithms.
+
+make profile/array-profile
+
+   A program for profiling linear-time array functions, including butterfly
+   routines used in the FFT multiplication routines, GMP's mpn_add and mpn_sub,
+   and others.
+
+
+===============================================================================
