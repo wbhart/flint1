@@ -1,9 +1,0 @@
-zn_poly.h #include flint.h and remove #define ulong...
-mul_ks.c remove ZNP_USE_FLINT and change to mpn_extras.h
-copy makemakefile.py to flintmakefile.py
-flintmakefile.py remove --use-flint option and always use -std=c99
-flintmakefile.py add zn_poly/ in front of install_headers and other_headers
-flintmakefile.py %s.c to zn_poly/%s.c twice and remove $(INCLUDES) under object files (no debug code)
-python flintmakefile.py
-add HEADERS to flint makefile HEADERS
-copy object files down to invert.o to FLINT_OBJ and ZMUL_OBJ (near end of makefile) and copy make lines for these object files into the section for zn_poly object files in FLINT makefile
