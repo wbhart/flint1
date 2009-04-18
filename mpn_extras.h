@@ -167,18 +167,18 @@ typedef struct
 
 typedef F_mpn_precache_s F_mpn_precache_t[1]; 
 
-void F_mpn_FFT_split_bits(ZmodF_poly_t poly, mp_limb_t * limbs, unsigned long total_limbs,
+void F_mpn_FFT_split_bits(ZmodF_poly_t poly, const mp_limb_t * limbs, const unsigned long total_limbs,
                                unsigned long bits, unsigned long output_limbs);
                                
 void F_mpn_FFT_combine_bits(mp_limb_t * res, ZmodF_poly_t poly, unsigned long bits, 
                              unsigned long output_limbs, unsigned long total_limbs);
 
-mp_limb_t __F_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1, 
-                                      mp_limb_t * data2, unsigned long limbs2, 
+mp_limb_t __F_mpn_mul(mp_limb_t * res, const mp_limb_t * data1, const unsigned long limbs1, 
+                                      const mp_limb_t * data2, const unsigned long limbs2, 
                                       unsigned long twk);
 
-mp_limb_t F_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1, 
-                                      mp_limb_t * data2, unsigned long limbs2);
+mp_limb_t F_mpn_mul(mp_limb_t * res, const mp_limb_t * data1, const unsigned long limbs1, 
+                                      const mp_limb_t * data2, const unsigned long limbs2);
                                       
 mp_limb_t F_mpn_mul_trunc(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1, 
                         mp_limb_t * data2, unsigned long limbs2, unsigned long trunc);

@@ -282,7 +282,7 @@ unsigned long FFT_SQR_TWK[FFT_SQR_COUNT][2] =
    (F_mpn_mul and F_mpn_mul_precache and F_mpn_mul_trunc)
 */
 
-void F_mpn_FFT_split(ZmodF_poly_t poly, mp_limb_t * limbs, unsigned long total_limbs,
+void F_mpn_FFT_split(ZmodF_poly_t poly, const mp_limb_t * limbs, const unsigned long total_limbs,
                                unsigned long coeff_limbs, unsigned long output_limbs)
 {
    unsigned long length = (total_limbs-1)/coeff_limbs + 1;
@@ -313,7 +313,7 @@ void F_mpn_FFT_split(ZmodF_poly_t poly, mp_limb_t * limbs, unsigned long total_l
    It is assumed that bits is not divisible by FLINT_BITS
 */
 
-void F_mpn_FFT_split_bits(ZmodF_poly_t poly, mp_limb_t * limbs, unsigned long total_limbs,
+void F_mpn_FFT_split_bits(ZmodF_poly_t poly, const mp_limb_t * limbs, const unsigned long total_limbs,
                                unsigned long bits, unsigned long output_limbs)
 {
    unsigned long length = (FLINT_BITS*total_limbs-1)/bits + 1;
@@ -328,7 +328,7 @@ void F_mpn_FFT_split_bits(ZmodF_poly_t poly, mp_limb_t * limbs, unsigned long to
    unsigned long coeff_limbs = (bits>>FLINT_LG_BITS_PER_LIMB) + 1;
    unsigned long mask = (1L<<top_bits)-1L;
    unsigned long shift_bits = 0L;
-   unsigned long * limb_ptr = limbs;                      
+   unsigned long const * limb_ptr = limbs;                      
     
    for (i = 0; i < length - 1; i++)
    {
@@ -544,8 +544,8 @@ do { \
    } \
 } while (0)
 
-mp_limb_t __F_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1, 
-                                      mp_limb_t * data2, unsigned long limbs2, unsigned long log_length)
+mp_limb_t __F_mpn_mul(mp_limb_t * res, const mp_limb_t * data1, const unsigned long limbs1, 
+                                      const mp_limb_t * data2, const unsigned long limbs2, unsigned long log_length)
 {
    unsigned long coeff_limbs = limbs1 + limbs2;
    unsigned long s1 = (FLINT_BIT_COUNT(data1[limbs1-1]) + FLINT_BIT_COUNT(data2[limbs2-1]) <= FLINT_BITS);
@@ -693,8 +693,8 @@ mp_limb_t __F_mpn_mul_trunc(mp_limb_t * res, mp_limb_t * data1, unsigned long li
    Assumes neither of limbs1, limbs2 is zero. 
 */
 
-mp_limb_t F_mpn_mul(mp_limb_t * res, mp_limb_t * data1, unsigned long limbs1, 
-                                      mp_limb_t * data2, unsigned long limbs2)
+mp_limb_t F_mpn_mul(mp_limb_t * res, const mp_limb_t * data1, const unsigned long limbs1, 
+                                      const mp_limb_t * data2, const unsigned long limbs2)
 {
    unsigned long coeff_limbs = limbs1 + limbs2;
    unsigned long twk;

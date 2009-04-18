@@ -61,7 +61,7 @@ Copyright (C) 2007, William Hart and David Harvey
 unsigned long randint(unsigned long randsup) 
 {
     if (randsup == 0) return 0;
-    static __thread unsigned long randval = 4035456057U;
+    static THREAD unsigned long randval = 4035456057U;
     randval = ((unsigned long)randval*1025416097U+286824428U)%(unsigned long)4294967291U;
     
     return (unsigned long)randval%randsup;

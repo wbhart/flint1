@@ -1249,6 +1249,14 @@ int fmpz_poly_divides(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t B)
 	   return fmpz_poly_divides_modular(Q, A, B, 0);
 }
 
+static inline
+void fmpz_poly_divexact(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t B)
+{
+	if ((fmpz_poly_max_limbs(A) <= 1) && (fmpz_poly_max_limbs(B) <= 1) && (A->length >= 54))
+	   fmpz_poly_divides(Q, A, B);
+	else
+	   fmpz_poly_div(Q, A, B);
+}
 
 void fmpz_poly_power(fmpz_poly_t output, const fmpz_poly_t poly, const unsigned long exp);
 

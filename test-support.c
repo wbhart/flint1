@@ -30,12 +30,12 @@ Copyright (C) 2007, William Hart and David Harvey
 #include "test-support.h"
 
 
-__thread gmp_randstate_t randstate;
-__thread int rand_initialised = 0;
+THREAD gmp_randstate_t randstate;
+THREAD int rand_initialised = 0;
 
 
 // a bunch of global mpz's, guaranteed to be init'd
-__thread mpz_t test_mpz[TEST_MPZ_COUNT];
+THREAD mpz_t test_mpz[TEST_MPZ_COUNT];
 
 
 void test_support_init()

@@ -42,7 +42,7 @@ Copyright (C) 2007, William Hart and David Harvey
 #include "ZmodF_poly.h"
 #include "long_extras.h"
 #include "zmod_poly.h"
-#include "zn_poly/zn_poly.h"
+#include "zn_poly/src/zn_poly.h"
 
 /****************************************************************************
 
@@ -10110,33 +10110,9 @@ void fmpz_poly_gcd(fmpz_poly_t res, const fmpz_poly_t poly1, const fmpz_poly_t p
 	ulong bits2 = FLINT_ABS(fmpz_poly_max_bits(poly2));
    ulong max_bits = FLINT_MAX(bits1, bits2);
 
-	if (max_limbs <= 2)
-	{
-		if (max_bits <= 32)
-		{
-			if (max_length*max_bits < 1650000)
-			{
-				if (fmpz_poly_gcd_heuristic(res, poly1, poly2, bits1, bits2))
-		         return;
-			}
-		} else if (max_limbs <= 1)
-		{
-			if (max_length < 9500)
-		   {
-			   if (fmpz_poly_gcd_heuristic(res, poly1, poly2, bits1, bits2))
-		         return;
-		   }
-	   } else if (max_length < 3000)
-		{
-			if (fmpz_poly_gcd_heuristic(res, poly1, poly2, bits1, bits2))
-		      return;
-		}
-	} else if (max_length * max_limbs < 4000)
-	{
-		if (fmpz_poly_gcd_heuristic(res, poly1, poly2, bits1, bits2))
+	if (fmpz_poly_gcd_heuristic(res, poly1, poly2, bits1, bits2))
 		   return;
-	}
-
+	
    fmpz_poly_gcd_modular(res, poly1, poly2, bits1, bits2);
 }
 
@@ -10570,13 +10546,13 @@ void fmpz_poly_derivative(fmpz_poly_t der, fmpz_poly_t poly)
 
 void fmpz_poly_evaluate_horner_range(fmpz_t output, fmpz_poly_t poly, fmpz_t val, ulong start, ulong n)
 {
-    if ((n == 0) || (val[0] == 0L))
+    if (n == 0) 
 	 {
 		 output[0] = 0L;
 		 return;
 	 }
 
-	 if (n == 1)
+	 if ((n == 1) || (val[0] == 0L))
 	 {
 		 fmpz_set(output, poly->coeffs + start*(poly->limbs+1));
 		 return;
@@ -10672,7 +10648,7 @@ void fmpz_poly_evaluate_horner_range(fmpz_t output, fmpz_poly_t poly, fmpz_t val
 
 void fmpz_poly_evaluate_divconquer(fmpz_t output, fmpz_poly_t poly, fmpz_t val)
 {
-	if ((poly->length == 0) || (val[0] == 0))
+	if (poly->length == 0)
 	{
 		fmpz_set_ui(output, 0L);
 		return;
@@ -10684,7 +10660,7 @@ void fmpz_poly_evaluate_divconquer(fmpz_t output, fmpz_poly_t poly, fmpz_t val)
 		return;
 	}
 
-	if (poly->length == 1)
+	if ((poly->length == 1) || (val[0] == 0))
 	{
 		fmpz_set(output, poly->coeffs);
 		return;
@@ -10756,7 +10732,7 @@ void fmpz_poly_evaluate(fmpz_t output, fmpz_poly_t poly, fmpz_t value)
 {
    fmpz_t val;
 	
-	if ((poly->length == 0) || (value[0] == 0)) 
+	if (poly->length == 0) 
 	{
       output[0] = 0L;
 		return;
@@ -10775,7 +10751,7 @@ void fmpz_poly_evaluate(fmpz_t output, fmpz_poly_t poly, fmpz_t value)
 	   return;
 	}
 
-	if (poly->length == 1)
+	if ((poly->length == 1) || (value[0] == 0)) 
 	{
 		fmpz_set(output, poly->coeffs);
 		if (output == value) fmpz_clear(val);

@@ -36,7 +36,7 @@
 #include "memory-manager.h"
 #include "flint.h"
 #include "long_extras.h"
-#include "zn_poly/zn_poly.h"
+#include "zn_poly/src/zn_poly.h"
 
 typedef mp_limb_t * fmpz_t;
 

@@ -26,10 +26,12 @@
 ******************************************************************************/
 
 
+#undef ulong // namespace pollution
 #include <time.h>
 #include <sys/time.h>
 #include <sys/resource.h>
-
+#undef ulong 
+#define ulong unsigned long
 
 #ifndef FLINT_PROFILER_H
 #define FLINT_PROFILER_H

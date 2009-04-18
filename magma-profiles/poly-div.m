@@ -65,7 +65,7 @@ function sampler(length, bits, count)
          c:=R!c;
          a:=R!a;
       end if;
-         d:=c div a;
+         d:=ExactQuotient(c, a);
     end for;
 
     time2 := Cputime();

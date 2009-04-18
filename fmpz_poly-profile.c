@@ -1003,6 +1003,174 @@ void profDriver_fmpz_poly_div_mulders(char* params)
    test_support_cleanup();
 }
 
+// ============================================================================
+
+void sample_fmpz_poly_div(unsigned long length, unsigned long bits,
+                                    void* arg, unsigned long count)
+{
+                                    
+   mpz_poly_t test_poly, test_poly2;
+   fmpz_poly_t test_mpn_poly, test_mpn_poly2, test_mpn_poly3, test_mpn_poly4;
+   unsigned long bits2, length2, r_count;
+   
+   mpz_poly_init(test_poly); 
+   mpz_poly_init(test_poly2); 
+   
+   if (count >= 10000) r_count = 100;
+   else if (count >= 100) r_count = 10;
+   else if (count >= 20) r_count = 4;
+   else if (count >= 8) r_count = 2;
+   else r_count = 1;
+   
+   fmpz_poly_init(test_mpn_poly);
+   fmpz_poly_init(test_mpn_poly2);
+   fmpz_poly_init(test_mpn_poly3);    
+   fmpz_poly_init(test_mpn_poly4);
+           
+   length2 = length;
+   bits2 = bits;
+      
+   for (unsigned long count1 = 0; count1 < count ; count1++)
+   {            
+      if (count1 % r_count == 0)
+      {
+         do {
+            randpoly(test_poly, length, bits); 
+            fmpz_poly_realloc(test_mpn_poly, length);
+            mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
+            _fmpz_poly_normalise(test_mpn_poly);
+         } while (test_mpn_poly->length == 0);
+      
+         randpoly(test_poly2, length2, bits2);     
+         fmpz_poly_realloc(test_mpn_poly2, length2);
+         mpz_poly_to_fmpz_poly(test_mpn_poly2, test_poly2);
+
+			fmpz_poly_mul(test_mpn_poly3, test_mpn_poly, test_mpn_poly2);
+      }
+                
+      prof_start();
+         fmpz_poly_div(test_mpn_poly4, test_mpn_poly3, test_mpn_poly);
+      prof_stop();     
+   }
+   
+   fmpz_poly_clear(test_mpn_poly3);
+   fmpz_poly_clear(test_mpn_poly4);
+   fmpz_poly_clear(test_mpn_poly);
+   fmpz_poly_clear(test_mpn_poly2);
+
+   mpz_poly_clear(test_poly);
+   mpz_poly_clear(test_poly2);
+}
+
+
+char* profDriverString_fmpz_poly_div(char* params)
+{
+   return "fmpz_poly_div over various lengths and various bit sizes.\n"
+   "Parameters are: max bitsize; ratio between consecutive lengths/bitsizes.";
+}
+
+char* profDriverDefaultParams_fmpz_poly_div()
+{
+   return "1000000 1.2";
+}
+
+void profDriver_fmpz_poly_div(char* params)
+{
+   unsigned long max_bits;
+   double ratio;
+
+   sscanf(params, "%ld %lf", &max_bits, &ratio);
+
+   test_support_init();
+   prof2d_set_sampler(sample_fmpz_poly_div);
+   run_triangle(max_bits, ratio);
+   test_support_cleanup();
+}
+
+//============================================================================
+
+void sample_fmpz_poly_divexact(unsigned long length, unsigned long bits,
+                                    void* arg, unsigned long count)
+{
+                                    
+   mpz_poly_t test_poly, test_poly2;
+   fmpz_poly_t test_mpn_poly, test_mpn_poly2, test_mpn_poly3, test_mpn_poly4;
+   unsigned long bits2, length2, r_count;
+   
+   mpz_poly_init(test_poly); 
+   mpz_poly_init(test_poly2); 
+   
+   if (count >= 10000) r_count = 100;
+   else if (count >= 100) r_count = 10;
+   else if (count >= 20) r_count = 4;
+   else if (count >= 8) r_count = 2;
+   else r_count = 1;
+   
+   fmpz_poly_init(test_mpn_poly);
+   fmpz_poly_init(test_mpn_poly2);
+   fmpz_poly_init(test_mpn_poly3);    
+   fmpz_poly_init(test_mpn_poly4);
+           
+   length2 = length;
+   bits2 = bits;
+      
+   for (unsigned long count1 = 0; count1 < count ; count1++)
+   {            
+      if (count1 % r_count == 0)
+      {
+         do {
+            randpoly(test_poly, length, bits); 
+            fmpz_poly_realloc(test_mpn_poly, length);
+            mpz_poly_to_fmpz_poly(test_mpn_poly, test_poly);
+            _fmpz_poly_normalise(test_mpn_poly);
+         } while (test_mpn_poly->length == 0);
+      
+         randpoly(test_poly2, length2, bits2);     
+         fmpz_poly_realloc(test_mpn_poly2, length2);
+         mpz_poly_to_fmpz_poly(test_mpn_poly2, test_poly2);
+
+			fmpz_poly_mul(test_mpn_poly3, test_mpn_poly, test_mpn_poly2);
+      }
+                
+      prof_start();
+         fmpz_poly_divexact(test_mpn_poly4, test_mpn_poly3, test_mpn_poly);
+      prof_stop();     
+   }
+   
+   fmpz_poly_clear(test_mpn_poly3);
+   fmpz_poly_clear(test_mpn_poly4);
+   fmpz_poly_clear(test_mpn_poly);
+   fmpz_poly_clear(test_mpn_poly2);
+
+   mpz_poly_clear(test_poly);
+   mpz_poly_clear(test_poly2);
+}
+
+
+char* profDriverString_fmpz_poly_divexact(char* params)
+{
+   return "fmpz_poly_divexact over various lengths and various bit sizes.\n"
+   "Parameters are: max bitsize; ratio between consecutive lengths/bitsizes.";
+}
+
+char* profDriverDefaultParams_fmpz_poly_divexact()
+{
+   return "1000000 1.2";
+}
+
+void profDriver_fmpz_poly_divexact(char* params)
+{
+   unsigned long max_bits;
+   double ratio;
+
+   sscanf(params, "%ld %lf", &max_bits, &ratio);
+
+   test_support_init();
+   prof2d_set_sampler(sample_fmpz_poly_divexact);
+   run_triangle(max_bits, ratio);
+   test_support_cleanup();
+}
+
 //============================================================================
 
 void sample_fmpz_poly_gcd_subresultant(unsigned long length, unsigned long bits,

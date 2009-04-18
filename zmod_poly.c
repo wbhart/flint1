@@ -2060,12 +2060,12 @@ void zmod_poly_mul_zn_poly_middle(zmod_poly_t output, zmod_poly_p input1, zmod_p
       zmod_poly_init2(temp, input1->p, FLINT_MAX(length1, length2));
       if (length1 > length2) 
 		{
-			zn_array_midmul(temp->coeffs + length2 - 1, input1->coeffs, length1, input2->coeffs, length2, input1->mod);
+			zn_array_mulmid(temp->coeffs + length2 - 1, input1->coeffs, length1, input2->coeffs, length2, input1->mod);
 			for (ulong i = 0; i < length1/2; i++)
 			   temp->coeffs[i] = 0L;
 		} else 
 		{
-			zn_array_midmul(temp->coeffs + length1 - 1, input2->coeffs, length2, input1->coeffs, length1, input1->mod);
+			zn_array_mulmid(temp->coeffs + length1 - 1, input2->coeffs, length2, input1->coeffs, length1, input1->mod);
 			for (ulong i = 0; i < length2/2; i++)
 			   temp->coeffs[i] = 0L;
 		}
@@ -2080,12 +2080,12 @@ void zmod_poly_mul_zn_poly_middle(zmod_poly_t output, zmod_poly_p input1, zmod_p
       zmod_poly_fit_length(output, FLINT_MAX(length1, length2));
       if (length1 > length2) 
 		{
-			zn_array_midmul(output->coeffs + length2 - 1, input1->coeffs, length1, input2->coeffs, length2, input1->mod);
+			zn_array_mulmid(output->coeffs + length2 - 1, input1->coeffs, length1, input2->coeffs, length2, input1->mod);
 			for (ulong i = 0; i < length1/2; i++)
 			   output->coeffs[i] = 0L;
 		} else 
 		{
-			zn_array_midmul(output->coeffs + length1 - 1, input2->coeffs, length2, input1->coeffs, length1, input1->mod);
+			zn_array_mulmid(output->coeffs + length1 - 1, input2->coeffs, length2, input1->coeffs, length1, input1->mod);
 			for (ulong i = 0; i < length2/2; i++)
 			   output->coeffs[i] = 0L;
 		}

@@ -38,7 +38,7 @@
 #include "memory-manager.h"
 #include "mpn_extras.h"
 #include "long_extras.h"
-#include "zn_poly/zn_poly.h"
+#include "zn_poly/src/zn_poly.h"
 
 #ifndef _ZMOD_POLY_H_
 #define _ZMOD_POLY_H_
@@ -112,7 +112,7 @@ do {                                \
 
 #define zmod_poly_copy_mod(resxxx, polyxxx) \
 	do { \
-      (resxxx)->mod->n = (polyxxx)->mod->n; \
+      (resxxx)->mod->m = (polyxxx)->mod->m; \
 	   (resxxx)->mod->bits = (polyxxx)->mod->bits; \
 	   (resxxx)->mod->B = (polyxxx)->mod->B; \
 	   (resxxx)->mod->B2 = (polyxxx)->mod->B2; \
@@ -121,7 +121,7 @@ do {                                \
 	   (resxxx)->mod->sh2 = (polyxxx)->mod->sh2; \
 	   (resxxx)->mod->sh3 = (polyxxx)->mod->sh3; \
 	   (resxxx)->mod->inv2 = (polyxxx)->mod->inv2; \
-	   (resxxx)->mod->n_norm = (polyxxx)->mod->n_norm; \
+	   (resxxx)->mod->m_norm = (polyxxx)->mod->m_norm; \
 	   (resxxx)->mod->inv3 = (polyxxx)->mod->inv3; \
 	} while (0)
 
