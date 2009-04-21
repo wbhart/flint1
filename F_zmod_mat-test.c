@@ -299,17 +299,17 @@ int test_F_zmod_mat_mul_classical()
 
    for (unsigned long count1 = 0; (count1 < 1) && (result == 1); count1++)
    {
-      bits = z_randint(FLINT_BITS - 2) + 2;
+      bits = 8;//z_randint(FLINT_BITS - 2) + 2;
       
       do {modulus = z_randbits(bits);} while (modulus < 2);
-      modulus = 245;
+      modulus = 251;
 
 		F_mpz_set_ui(mod, modulus);
 		
-		ulong dim = 64;
+		ulong dim = 256;
 		ulong r1 = dim;//z_randint(100);
 	   ulong c1 = dim;//z_randint(100) + 1;
-		ulong r2 = dim;
+		ulong r2 = c1;
 		ulong c2 = dim;//z_randint(100);
  
 #if DEBUG
@@ -328,7 +328,7 @@ int test_F_zmod_mat_mul_classical()
 	   randmat(mat1);
 	   randmat(mat2);
 
-		for (ulong i = 0; i < 10000; i++) F_zmod_mat_mul_classical(res, mat1, mat2);
+		for (ulong i = 0; i < 100; i++) F_zmod_mat_mul_classical(res, mat1, mat2);
 
 		/*F_zmod_mat_to_F_mpzmod_mat(mmat1, mat1);
       F_zmod_mat_to_F_mpzmod_mat(mmat2, mat2);
@@ -386,14 +386,14 @@ int test_F_zmod_mat_mul_strassen()
       bits = 8;//z_randint(FLINT_BITS - 2) + 2;
       
       do {modulus = z_randbits(bits);} while (modulus < 2);
-      modulus = 245;
+      modulus = 251;
 
 		F_mpz_set_ui(mod, modulus);
 		
-		ulong r1 = 512;
-	   ulong c1 = 512;
+		ulong r1 = 1024;
+	   ulong c1 = 1024;
 		ulong r2 = c1;
-		ulong c2 = 512;
+		ulong c2 = 1024;
  
 #if DEBUG
       printf("r1 = %ld, c1 = %ld, r2 = %ld, c2 = %ld, bits = %ld, modulus = %ld\n", r1, c1, r2, c2, bits, modulus);
@@ -460,12 +460,12 @@ void zmod_poly_test_all()
 
 #if TESTFILE
 #endif
-   RUN_TEST(F_zmod_mat_convert); 
+   /*RUN_TEST(F_zmod_mat_convert); 
    RUN_TEST(F_zmod_mat_add); 
    RUN_TEST(F_zmod_mat_sub); 
-   RUN_TEST(F_zmod_mat_neg); 
+   RUN_TEST(F_zmod_mat_neg); */
    RUN_TEST(F_zmod_mat_mul_classical); 
-   RUN_TEST(F_zmod_mat_mul_strassen); 
+   //RUN_TEST(F_zmod_mat_mul_strassen); 
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");

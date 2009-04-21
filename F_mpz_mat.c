@@ -61,6 +61,26 @@ void F_mpz_mat_init(F_mpz_mat_t mat, const ulong r, const ulong c)
 	mat->c_alloc = c;
 }
 
+void F_mpz_mat_init_identity(F_mpz_mat_t mat, const ulong n)
+{
+   if (n) // allocate space for n*n small entries
+   {
+      mat->entries = (mp_limb_t *) flint_heap_alloc(n*n);
+		F_mpn_clear(mat->entries, n*n); // zero all entries
+		mat->rows = (F_mpz **) flint_heap_alloc(n); // initialise rows
+		for (ulong i = 0; i < n; i++)
+		{
+			mat->rows[i] = mat->entries + i*n;
+			F_mpz_set_ui(mat->rows[i] + i, 1); // set diagonal entries to 1
+	   }
+   } else mat->entries = NULL;
+   
+	mat->r = n;
+	mat->c = n;
+	mat->r_alloc = n;
+	mat->c_alloc = n;
+}
+
 void F_mpz_mat_clear(F_mpz_mat_t mat)
 {
    if (mat->entries) 
@@ -527,6 +547,35 @@ void F_mpz_mat_row_addmul_ui(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong
 		F_mpz_addmul_ui(mat1->rows[r1] + i, mat2->rows[r2] + i, x);
 }
 
+void F_mpz_mat_row_addmul(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong r2, 
+								                             ulong start, ulong n, F_mpz_t x)
+{
+	// scalar is zero
+	if ((*x) == 0L)
+		return;
+	
+	// special case, multiply by 1
+	if ((*x) == 1L) 
+	{
+	   for (ulong i = start; i < start + n; i++)
+			F_mpz_add(mat1->rows[r1] + i, mat1->rows[r1] + i, mat2->rows[r2] + i);
+
+		return;
+	}
+	
+	// special case, multiply by -1
+	if ((*x) == -1L) 
+	{
+	   for (ulong i = start; i < start + n; i++)
+			F_mpz_sub(mat1->rows[r1] + i, mat1->rows[r1] + i, mat2->rows[r2] + i);
+
+		return;
+	}
+	
+	for (ulong i = start; i < start + n; i++)
+		F_mpz_addmul(mat1->rows[r1] + i, mat2->rows[r2] + i, x);
+}
+
 void F_mpz_mat_row_submul_ui(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong r2, 
 								                               ulong start, ulong n, ulong x)
 {
@@ -545,6 +594,35 @@ void F_mpz_mat_row_submul_ui(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong
 	
 	for (ulong i = start; i < start + n; i++)
 		F_mpz_submul_ui(mat1->rows[r1] + i, mat2->rows[r2] + i, x);
+}
+
+void F_mpz_mat_row_submul(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong r2, 
+								                             ulong start, ulong n, F_mpz_t x)
+{
+	// scalar is zero
+	if ((*x) == 0L)
+		return;
+	
+	// special case, multiply by 1
+	if ((*x) == 1L) 
+	{
+	   for (ulong i = start; i < start + n; i++)
+			F_mpz_sub(mat1->rows[r1] + i, mat1->rows[r1] + i, mat2->rows[r2] + i);
+
+		return;
+	}
+	
+	// special case, multiply by -1
+	if ((*x) == -1L) 
+	{
+	   for (ulong i = start; i < start + n; i++)
+			F_mpz_add(mat1->rows[r1] + i, mat1->rows[r1] + i, mat2->rows[r2] + i);
+
+		return;
+	}
+	
+	for (ulong i = start; i < start + n; i++)
+		F_mpz_submul(mat1->rows[r1] + i, mat2->rows[r2] + i, x);
 }
 
 void F_mpz_mat_row_addmul_2exp_ui(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong r2, 
@@ -639,4 +717,29 @@ void F_mpz_mat_row_submul_2exp_ui(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, 
 	}
 
 	F_mpz_clear(temp);
+}
+
+void F_mpz_mat_row_swap(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, 
+								                 ulong r2, ulong start, ulong n)
+{
+	if ((mat1 == mat2) && (n == mat1->c)) // matrices are the same, 
+		                                   // just swap row pointers
+	{
+		if (r1 == r2) return; // rows are the same, nothing to do
+
+		F_mpz * temp = mat1->rows[r1]; // swap rows via temporary
+		mat1->rows[r1] = mat1->rows[r2];
+		mat2->rows[r2] = temp;
+	} else // swap entries in rows
+	{
+		for (ulong i = start; i < start + n; i++)
+			F_mpz_swap(mat1->rows[r1] + i, mat2->rows[r2] + i);
+	}
+}
+
+void F_mpz_mat_row_neg(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, 
+								                 ulong r2, ulong start, ulong n)
+{
+	for (ulong i = start; i < start + n; i++)
+		F_mpz_neg(mat1->rows[r1] + i, mat2->rows[r2] + i);
 }

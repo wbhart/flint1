@@ -94,6 +94,12 @@ typedef F_mpz_mat_struct F_mpz_mat_t[1];
 void F_mpz_mat_init(F_mpz_mat_t mat, ulong r, ulong c);
 
 /** 
+   \fn     void F_mpz_mat_init_identity(F_mpz_mat_t mat, ulong n)
+   \brief  Initialise a matrix to the n x n identity matrix.
+*/
+void F_mpz_mat_init_identity(F_mpz_mat_t mat, ulong n);
+
+/** 
    \fn     void F_mpz_mat_clear(F_mpz_mat_t mat)
    \brief  Clear the matrix, releasing any memory it was using.
 */
@@ -259,24 +265,43 @@ void F_mpz_mat_row_mul_F_mpz(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong
    \fn     void F_mpz_mat_row_addmul_ui(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong r2, 
 								                               ulong start, ulong n, ulong x)
 
-   \brief  Multiply mat2 by the unsigned long x and add the result to mat1.
+   \brief  Multiply row r2 of mat2 by the unsigned long x and add the result to row r1 of mat1.
 */
 void F_mpz_mat_row_addmul_ui(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong r2, 
 								                               ulong start, ulong n, ulong x);
 
 /** 
+   \fn     void F_mpz_mat_row_addmul(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong r2, 
+								                               ulong start, ulong n, F_mpz_t x)
+
+   \brief  Multiply row r2 of mat2 by the F_mpz_t x and add the result to row r1 of mat1.
+*/
+void F_mpz_mat_row_addmul(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong r2, 
+								                               ulong start, ulong n, F_mpz_t x);
+
+/** 
    \fn     void F_mpz_mat_row_submul_ui(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong r2, 
 								                               ulong start, ulong n, ulong x)
 
-   \brief  Multiply mat2 by the unsigned long x and subtract the result from mat1.
+   \brief  Multiply row r2 of mat2 by the unsigned long x and subtract the result from row r1 of mat1.
 */
 void F_mpz_mat_row_submul_ui(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong r2, 
 								                               ulong start, ulong n, ulong x);
 
 /** 
+   \fn     void F_mpz_mat_row_submul(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong r2, 
+								                               ulong start, ulong n, F_mpz_t x)
+
+   \brief  Multiply row r2 of mat2 by the F_mpz_t x and subtract the result from row r1 of mat1.
+*/
+void F_mpz_mat_row_submul(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong r2, 
+								                               ulong start, ulong n, F_mpz_t x);
+
+/** 
    \fn     void F_mpz_mat_row_addmul_2exp_ui(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong r2, 
 								               ulong start, ulong n, ulong c, ulong exp)
-   \brief  Multiply entry from row r2 of mat2 by c*2^exp and add to entry from row r1 of mat1.
+
+	\brief  Multiply entry from row r2 of mat2 by c*2^exp and add to entry from row r1 of mat1.
 	        
 */
 
@@ -286,12 +311,33 @@ void F_mpz_mat_row_addmul_2exp_ui(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, 
 /** 
    \fn     void F_mpz_mat_row_submul_2exp_ui(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong r2, 
 								               ulong start, ulong n, ulong c, ulong exp)
-   \brief  Multiply entry from row r2 of mat2 by c*2^exp and subtract from entry from row r1 of mat1.
+
+	\brief  Multiply entry from row r2 of mat2 by c*2^exp and subtract from entry from row r1 of mat1.
 	        
 */
 
 void F_mpz_mat_row_submul_2exp_ui(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong r2, 
 								               ulong start, ulong n, ulong c, ulong exp);
+
+
+/** 
+   \fn     void F_mpz_mat_row_swap(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, 
+	                                                ulong r2, ulong start, ulong n)
+
+	\brief  Swap row r1 of mat1 with row r2 of mat2. If mat1 aliases mat2 this is 
+	        done efficiently by swapping row pointers.	        
+*/
+void F_mpz_mat_row_swap(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, 
+								                          ulong r2, ulong start, ulong n);
+
+/** 
+   \fn     void F_mpz_mat_row_neg(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, 
+	                                                ulong r2, ulong start, ulong n)
+
+	\brief  Set row r1 of mat1 to minus row r2 of mat2.
+*/
+void F_mpz_mat_row_neg(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, 
+								                          ulong r2, ulong start, ulong n);
 
 
 #ifdef __cplusplus

@@ -71,6 +71,7 @@ HEADERS = \
 	mpz_mat.h \
 	d_mat.h \
 	F_mpz_LLL_fast_d.h \
+	F_mpz_LLL_HNF.h \
 	F_mpz_poly.h \
 	F_mpz.h
 
@@ -116,6 +117,7 @@ FLINTOBJ = \
 	F_mpz_mat.o \
 	d_mat.o \
 	F_mpz_LLL_fast_d.o \
+	F_mpz_LLL_HNF.o \
 	F_mpz.o \
 	F_mpz_poly.o
 
@@ -248,6 +250,9 @@ F_mpz_mat.o: F_mpz_mat.c $(HEADERS)
 F_mpz_LLL_fast_d.o: F_mpz_LLL_fast_d.c $(HEADERS)
 	$(CC) $(CFLAGS) -c F_mpz_LLL_fast_d.c -o F_mpz_LLL_fast_d.o
 
+F_mpz_LLL_HNF.o: F_mpz_LLL_HNF.c $(HEADERS)
+	$(CC) $(CFLAGS) -c F_mpz_LLL_HNF.c -o F_mpz_LLL_HNF.o
+	
 d_mat.o: d_mat.c $(HEADERS)
 	$(CC) $(CFLAGS) -c d_mat.c -o d_mat.o
 

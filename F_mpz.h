@@ -314,6 +314,16 @@ ulong F_mpz_size(const F_mpz_t f);
 int F_mpz_sgn(const F_mpz_t f);
 
 /** 
+   \fn     int F_mpz_is_zero(const F_mpz_t f)
+   \brief  Returns 1 if f is zero, 0 otherwise.
+*/
+static inline
+int F_mpz_is_zero(const F_mpz_t f)
+{
+	return ((*f) == 0L);
+}
+
+/** 
    \fn     ulong F_mpz_bits(F_mpz_t f)
    \brief  Returns the number of bits required to store the absolute value of f.
 	        Returns 0 if f is zero.
@@ -374,7 +384,7 @@ void F_mpz_add_mpz(F_mpz_t f, const F_mpz_t g, mpz_t h);
    \fn     void F_mpz_add(F_mpz_t f, const F_mpz_t g, F_mpz_t h)
    \brief  Set f to g plus h. 
 */
-void F_mpz_add(F_mpz_t f, const F_mpz_t g, F_mpz_t h);
+void F_mpz_add(F_mpz_t f, const F_mpz_t g, const F_mpz_t h);
 
 /** 
    \fn     void F_mpz_sub(F_mpz_t f, const F_mpz_t g, F_mpz_t h)
@@ -405,6 +415,12 @@ void F_mpz_mul2(F_mpz_t f, const F_mpz_t g, const F_mpz_t h);
    \brief  Multiply g by 2^exp and set f to the result.
 */
 void F_mpz_mul_2exp(F_mpz_t f, const F_mpz_t g, const ulong exp);
+
+/** 
+   \fn     void F_mpz_div_2exp(F_mpz_t f, const F_mpz_t g, const ulong exp)
+   \brief  Divide g by 2^exp and set f to the result. Rounding is towards zero.
+*/
+void F_mpz_div_2exp(F_mpz_t f, const F_mpz_t g, const ulong exp);
 
 /** 
    \fn     void F_mpz_add_ui(F_mpz_t f, const F_mpz_t g, const ulong x)
@@ -447,6 +463,31 @@ void F_mpz_submul(F_mpz_t f, const F_mpz_t g, const F_mpz_t h);
    \brief  Set f to g modulo h.
 */
 void F_mpz_mod(F_mpz_t f, const F_mpz_t g, const F_mpz_t h);
+
+/** 
+   \fn     void F_mpz_divexact(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
+   \brief  Set f to g divided by h, assuming the division is exact.
+*/
+void F_mpz_divexact(F_mpz_t f, const F_mpz_t g, const F_mpz_t h);
+
+/** 
+   \fn     void F_mpz_fdiv_q(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
+   \brief  Set f to g divided by h, rounded down towards minus infinity.
+*/
+void F_mpz_fdiv_q(F_mpz_t f, const F_mpz_t g, const F_mpz_t h);
+
+/** 
+   \fn     void F_mpz_cdiv_q(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
+   \brief  Set f to g divided by h, rounded up towards infinity.
+*/
+void F_mpz_cdiv_q(F_mpz_t f, const F_mpz_t g, const F_mpz_t h);
+
+/** 
+   \fn     void F_mpz_rdiv_q(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
+   \brief  Set f to g divided by h, rounded to nearest, ties rounded towards
+	        positive infinity.
+*/
+void F_mpz_rdiv_q(F_mpz_t f, const F_mpz_t g, const F_mpz_t h);
 
 #ifdef __cplusplus
  }
