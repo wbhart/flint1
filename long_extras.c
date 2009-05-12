@@ -38,11 +38,36 @@
 #include "longlong_wrapper.h"
 #include "longlong.h"
 #include "memory-manager.h"
+#include "QS/tinyQS.h"
+
+
+#define MIN_HOLF 0xFFFFFUL
+#define MAX_HOLF 0x1FFFFFFFFFUL
+#define HOLF_MULTIPLIER 480
+#define HOLF_ITERS 50000
+
+
 
 /* 
    Generate a random integer in the range [0, limit) 
    If limit == 0, return a random limb
 */
+
+const unsigned int z_primes[] =
+{
+   2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97,
+   101,103,107,109,113,127,131,137,139,149,151,157,163,167,173,179,181,
+   191,193,197,199,211,223,227,229,233,239,241,251,257,263,269,271,277,
+   281,283,293,307,311,313,317,331,337,347,349,353,359,367,373,379,383,
+   389,397,401,409,419,421,431,433,439,443,449,457,461,463,467,479,487,
+   491,499,503,509,521,523,541,547,557,563,569,571,577,587,593,599,601,
+   607,613,617,619,631,641,643,647,653,659,661,673,677,683,691,701,709,
+   719,727,733,739,743,751,757,761,769,773,787,797,809,811,821,823,827,
+   829,839,853,857,859,863,877,881,883,887,907,911,919,929,937,941,947,
+   953,967,971,977,983,991,997
+};
+
+
 
 unsigned long z_randint(unsigned long limit) 
 {
@@ -821,11 +846,12 @@ int z_isprobab_prime_precomp(unsigned long n, double ninv)
       d>>=1; 
    } while ((d&1) == 0);
    
+/* We handle up to 4096 by lookup table
 	if (n < 2047)
    {
       if (SPRP(2UL, d, n, ninv)) return 1;
       else return 0;
-   }
+   } */
    
 	if (n < 9080191UL) 
    { 
@@ -878,11 +904,11 @@ int z_isprime_precomp(unsigned long n, double ninv)
       d>>=1; 
    } while ((d&1) == 0);
    
-   if (n < 2047)
+/*   if (n < 2047)
    {
       if (SPRP(2UL, d, n, ninv)) return 1;
       else return 0;
-   }
+   } */
    
 	if (n < 9080191UL) 
    { 
@@ -912,20 +938,6 @@ int z_isprime_precomp(unsigned long n, double ninv)
 #endif 
 }
 
-unsigned int primes[] =
-{
-   2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97,
-   101,103,107,109,113,127,131,137,139,149,151,157,163,167,173,179,181,
-   191,193,197,199,211,223,227,229,233,239,241,251,257,263,269,271,277,
-   281,283,293,307,311,313,317,331,337,347,349,353,359,367,373,379,383,
-   389,397,401,409,419,421,431,433,439,443,449,457,461,463,467,479,487,
-   491,499,503,509,521,523,541,547,557,563,569,571,577,587,593,599,601,
-   607,613,617,619,631,641,643,647,653,659,661,673,677,683,691,701,709,
-   719,727,733,739,743,751,757,761,769,773,787,797,809,811,821,823,827,
-   829,839,853,857,859,863,877,881,883,887,907,911,919,929,937,941,947,
-   953,967,971,977,983,991,997
-};
-
 /* 
    This is a deterministic prime test up to 10^16. 
    Requires n to be at most FLINT_BITS-1 bits
@@ -939,6 +951,7 @@ int z_isprobab_prime(unsigned long n)
    if (n <= 1UL) return 0;
    if (n == 2UL) return 1;
    if ((n & 1UL) == 0) return 0;
+   if (n < 4096UL) return z_oddprime_lt_4096(n);
   
    double ninv;
 
@@ -958,7 +971,8 @@ int z_isprime(unsigned long n)
    if (n <= 1UL) return 0;
    if (n == 2UL) return 1;
    if ((n & 1UL) == 0) return 0;
-  
+   if (n < 4096UL) return z_oddprime_lt_4096(n);
+
    double ninv;
 
    ninv = z_precompute_inverse(n);
@@ -1002,7 +1016,7 @@ unsigned long z_nextprime(unsigned long n, int proved)
    n+=nextmod30[index];
    index = nextindex[index];
          
-   if (n <= primes[NEXTPRIME_PRIMES-1])
+   if (n <= z_primes[NEXTPRIME_PRIMES-1])
    {
       if (n == 7) return 7;
       if (n == 11) return 11;
@@ -1019,7 +1033,7 @@ unsigned long z_nextprime(unsigned long n, int proved)
    unsigned int * moduli = (unsigned int *) flint_stack_alloc_bytes(NEXTPRIME_PRIMES * sizeof(unsigned int));
 
    for (unsigned int i = 3; i < NEXTPRIME_PRIMES; i++)
-      moduli[i] = (n % primes[i]);
+      moduli[i] = (n % z_primes[i]);
       
    while (1) 
    {
@@ -1034,7 +1048,7 @@ unsigned long z_nextprime(unsigned long n, int proved)
 	   {
 	      composite |= (moduli[i] == 0);
 	      acc = moduli[i] + diff;
-	      pr = primes[i];
+	      pr = z_primes[i];
 	      moduli[i] = acc >= pr ? acc - pr : acc;
 	   }
       if (composite)
@@ -1205,6 +1219,7 @@ int z_isprime_nm1(unsigned long const n, unsigned long const iterations)
 	if (2*c2 <= c1) return 1;
 	if (z_issquare(c1*c1 - 4*c2)) return 0;
 	else return 1;
+
 }
 
 /*
@@ -1708,13 +1723,13 @@ int z_issquarefree_trial(unsigned long n)
       if ((n&3) == 0) return 0;
       else n = (n>>1);
    }
-   for (unsigned long i = 1; (i < SQFREE_TF_PRIMES_LIMIT) && (primes[i]*primes[i] <= n); i++)
+   for (unsigned long i = 1; (i < SQFREE_TF_PRIMES_LIMIT) && (z_primes[i]*z_primes[i] <= n); i++)
    {
-      quot = n/primes[i];
-      rem = n - quot*primes[i];
+      quot = n/z_primes[i];
+      rem = n - quot*z_primes[i];
       if (rem == 0) 
       { 
-         if ((quot % primes[i]) == 0) return 0;
+         if ((quot % z_primes[i]) == 0) return 0;
          else n = quot;
       }
    }
@@ -1743,6 +1758,7 @@ int z_issquarefree(unsigned long n, int proved)
 		return 1;
    }
 }
+
 
 /*
    Removes the highest power of p possible from n and 
@@ -1851,31 +1867,186 @@ void insert_factor(factor_t * factors, unsigned long p)
    }
 }
 
+void insert_factorpower(factor_t * factors, unsigned long p, unsigned long e)
+{
+   int i = 0;
+   
+   for (i = 0; i < factors->num; i++)
+   {
+      if (factors->p[i] == p)
+      {
+         factors->exp[i]+= e;
+         break;
+      }
+   }
+   if (i == factors->num)
+   {
+      factors->p[i] = p;
+      factors->exp[i] = e;
+      factors->num++;
+   }
+}
+
 /*
    Finds all the factors of n by trial factoring up to some limit
    Returns the cofactor after removing these factors
 */
 
-unsigned long z_factor_trial(factor_t * factors, unsigned long n)
+unsigned long _z_factor_trial(factor_t * factors, unsigned long n, unsigned long cutoff)
 {
-   int num_factors = 0;
-   int exp;
-   
-   for (unsigned long i = 0; (i < TF_CUTOFF) && (primes[i]*primes[i] <= n); i++)
-   {
-      exp = z_remove(&n, primes[i]);
-      if (exp)
-      {
-         factors->p[num_factors] = primes[i];
-         factors->exp[num_factors] = exp;
-         num_factors++;
-      }      
-   }
+    int num_factors = 0;
+    int exp;
+
+    for (unsigned long i = 0; (i < cutoff) && (z_primes[i]*z_primes[i] <= n); i++)
+    {
+        exp = z_remove(&n, z_primes[i]);
+        if (exp)
+        {
+/*            printf("found factor by trial division, %ld^%ld\n",z_primes[i],exp);*/
+            factors->p[num_factors] = z_primes[i];
+            factors->exp[num_factors] = exp;
+            num_factors++;
+        }
+
+    }
        
-   factors->num = num_factors;
-   
-   return n;
+    factors->num = num_factors;
+
+    return n;
 }
+
+unsigned long z_factor_trial(factor_t * factors, unsigned long n) {
+    return _z_factor_trial(factors, n, TF_CUTOFF);
+}
+
+
+#define ETF_CUTOFF 1000000
+#define ETF_NUM_PRIMES 78330
+#define ETF_SIEVE_SIZE 499500
+
+unsigned long z_extended_primes[ETF_NUM_PRIMES];
+
+/*
+    Computes primes up to 1 million.  Primes up to 1000 are stored in _primes_, and
+    primes between 1000 and 1 million are stored in extended_primes.
+*/
+static inline void z_initialize_extended_primes()
+{
+    static int already_computed = 0;
+    if (!already_computed) { 
+        already_computed = 1;
+        z_compute_extended_primes();
+/*        printf("have sieved\n");*/
+    }
+}
+
+/*
+    DO NOT call this, except for benchmarking purposes.  This should only ever get
+    called once during a running process, and z_initialize_extended_primes does
+    exactly that.
+*/
+void z_compute_extended_primes()
+{
+    unsigned int sieve[ETF_SIEVE_SIZE];
+    unsigned int p,q,oldq = 0,n_found=0;
+    unsigned int i;
+/*    printf("sieving\n"); */
+
+    memset(sieve,1,ETF_SIEVE_SIZE);
+    for (i = 1; z_primes[i]*z_primes[i] < 1000; i++) /* skip 2 */
+    {
+        p = z_primes[i];
+        q = 1000-1000%p;
+        q = q+(1+q%2)*p;
+        q = q/2 - 500;   /* index of first multiple of p left in the sieve: first odd multiple after 1000 */
+        while (q < ETF_SIEVE_SIZE)
+        {
+            sieve[q] = 0;
+            q+=p;
+        }
+    }
+/*    printf("small primes done\n");*/
+    for (; i < TF_CUTOFF; i++)
+    {
+        p = z_primes[i];
+        q = (p*p)/2 - 500;   /* index of first multiple of p left in the sieve: p^2 */
+        for (unsigned int j = oldq; j < q; j++) 
+        {
+            if (sieve[j]) 
+            {
+                z_extended_primes[n_found] = 2*(j+500)+1;
+/*                printf("prime: %d\n", 2*(j+500)+1); */
+                n_found++;
+            }
+        }
+        oldq = q;
+        while (q < ETF_SIEVE_SIZE)
+        {
+            sieve[q] = 0;
+            q+=p;
+        }
+    }
+    for (unsigned int j = oldq; j < ETF_NUM_PRIMES; j++) 
+    {
+        if (sieve[j]) 
+        {
+            z_extended_primes[n_found] = 2*(j+500)+1;
+/*            printf("prime: %d\n", 2*(j+500)+1); */
+            n_found++;
+        }
+    }
+}
+
+
+/*
+    Perform trial division on primes 1000 < p < 10^6.  Called in the middle of z_factor, so
+    we need to make sure that we don't duplicate primes in the factor list.  This is really
+    slow, and we typically expect other factor methods to work -- so dump out the first
+    factor we find.
+*/
+
+unsigned long z_factor_trial_extended3(factor_t *factors, unsigned long n)
+{
+    int exp;
+    unsigned long i = 0;
+    unsigned long p = z_extended_primes[i];
+    
+    for (; (i < TF_CUTOFF) && (p*p*p <= 8*n); p = z_extended_primes[++i])
+    {
+        exp = z_remove(&n, z_primes[i]);
+        if (exp)
+        {
+/*            printf("found factor by trial division, %ld^%ld\n",z_primes[i],exp);*/
+            insert_factorpower(factors,p,exp);
+        }
+        p = z_extended_primes[i];
+    }
+
+    return n;
+}
+
+
+
+unsigned long z_factor_trial_extended(unsigned long n)
+{
+/*    printf("have sieved?\n");*/
+    z_initialize_extended_primes();
+    printf("trial division on %ld\n", n);
+
+    for (unsigned long i = 0; (i < ETF_NUM_PRIMES) && (z_extended_primes[i]*z_extended_primes[i] <= n); i++)
+    {
+        if (n%z_extended_primes[i] == 0UL)
+            return z_extended_primes[i];
+/*        printf("prime %d\n", z_extended_primes[i]); */
+    }
+
+/*    printf("returning %ld",n); */
+
+    return n;
+}
+
+
+
 
 /*
    Finds prime factors of n by trial factoring wrt some list of precomputed primes
@@ -1891,15 +2062,15 @@ unsigned long z_factor_partial_trial(factor_t * factors, unsigned long * prod, u
    int exp;
    *prod = 1;
    
-   for (unsigned long i = 0; (i < TF_CUTOFF) && ((primes[i]-1)*(primes[i]-1) <= n); i++)
+   for (unsigned long i = 0; (i < TF_CUTOFF) && ((z_primes[i]-1)*(z_primes[i]-1) <= n); i++)
    {
-      exp = z_remove(&n, primes[i]);
+      exp = z_remove(&n, z_primes[i]);
       if (exp)
       {
-         factors->p[num_factors] = primes[i];
+         factors->p[num_factors] = z_primes[i];
          factors->exp[num_factors] = exp;
          num_factors++;
-		   *prod *= z_pow(primes[i], exp);
+		   *prod *= z_pow(z_primes[i], exp);
 		 if (*prod > limit) break;
       }  
    }
@@ -1919,30 +2090,69 @@ unsigned long z_factor_partial(factor_t * factors, unsigned long n, unsigned lon
 {
 	unsigned long prod, cofactor;
 	unsigned long factor_arr[TF_FACTORS_IN_LIMB];
-	unsigned long cutoff = primes[TF_CUTOFF-1]*primes[TF_CUTOFF-1];
+	unsigned long exp_arr[TF_FACTORS_IN_LIMB];
+	unsigned long cutoff = z_primes[TF_CUTOFF-1]*z_primes[TF_CUTOFF-1];
 	unsigned long factors_left = 1;
 	unsigned long factor;
-   
+    unsigned long exp;
+
 	cofactor = z_factor_partial_trial(factors, &prod, n, limit);
 	if (prod != n && prod <= limit)
 	{
 		factor = factor_arr[0] = cofactor;
+        exp_arr[0] = 1;
       		
 		while (factors_left > 0 && prod <= limit)
 		{
-			factor = factor_arr[factors_left-1];
-			
-			if ((factor < cutoff) || (proved && z_isprime(factor)) || (!proved && z_isprobab_prime(factor)))
-			{
-				insert_factor(factors, factor);
-				prod *= factor;
-				factors_left--;
-			} else
-			{
-				factor = factor_arr[factors_left] = z_factor_SQUFOF(factor);
-				factor_arr[factors_left-1] /= factor;
-				factors_left++;
-			}
+            factor = factor_arr[factors_left-1];
+
+            if (factor < cutoff)
+                goto factored_prime;
+            if( cofactor = z_factor_235power(factor, &exp) )
+            {
+                exp_arr[factors_left-1] *= exp;
+                factor_arr[factors_left-1] = factor = cofactor;
+            }
+            if (
+                (factor < cutoff) ||
+                (proved && z_isprime(factor)) || 
+                (!proved && z_isprobab_prime(factor))
+               )
+                goto factored_prime;
+            if (
+                (
+                    (factor < MAX_HOLF) && 
+                    (factor > MIN_HOLF) &&
+                    (cofactor = z_factor_HOLF(factor,HOLF_ITERS))
+                ) ||
+                (
+                    (factor > MAX_HOLF) &&
+                    (cofactor = z_factor_HOLF(factor,100))
+                )
+               )
+                goto factored_split;
+            if ( cofactor = z_factor_SQUFOF(factor) )
+                goto factored_split;
+            if ( cofactor = z_factor_trial_extended(factor) )
+                goto factored_split;
+
+            printf("Error : failed to factor %ld\n", n);
+            abort();
+
+        factored_prime:
+            insert_factorpower(factors, factor, exp_arr[factors_left-1]);
+            prod *= z_pow(factor, exp_arr[factors_left-1]);
+            factors_left--;
+            goto factored_done;
+
+
+        factored_split:
+            exp_arr[factors_left] = exp_arr[factors_left-1];
+            factor_arr[factors_left] = cofactor;
+            factor_arr[factors_left-1] /= cofactor;
+            factors_left++;
+
+        factored_done: ;
 		}
 		return n/prod;
 	} 
@@ -2009,6 +2219,8 @@ unsigned long _z_factor_SQUFOF(unsigned long n)
    }
    
    if (i == SQUFOF_ITERS) return 0; // taken too long, give up
+
+/*   printf("%ld+",i); */
    
    qlast = r;
    p = p + r*((sqroot - p)/r);
@@ -2092,6 +2304,8 @@ unsigned long _z_ll_factor_SQUFOF(ulong n_hi, ulong n_lo)
    
    if (i == SQUFOF_ITERS) return 0; // taken too long, give up
    
+/*   printf("%ld+",i); */
+
    qlast = r;
    p = p + r*((sqroot - p)/r);
 
@@ -2132,54 +2346,151 @@ unsigned long _z_ll_factor_SQUFOF(ulong n_hi, ulong n_lo)
 
 unsigned long z_factor_SQUFOF(unsigned long n)
 {
-   unsigned long factor = _z_factor_SQUFOF(n);
-   unsigned long multiplier;
-   unsigned long quot, rem, kn;
-   unsigned long s1, s2, i;
+/*    printf("('S',%ld,",  ceil_log2(n)); */
+    unsigned long factor = _z_factor_SQUFOF(n);
+    unsigned long multiplier;
+    unsigned long quot, rem, kn;
+    unsigned long s1, s2, i;
+
+/*    if (factor) printf("0,1),\n");
+    if (factor) return factor; */
    
-   if (factor) return factor;
-   
-   for (i = 1; (i < NUMBER_OF_PRIMES) && !factor; i++)
-   {
-      multiplier = primes[i];
-      s1 = FLINT_BIT_COUNT(multiplier);
-      count_lead_zeros(s2, n);
-      
-		if (s1 > s2) // kn is possibly more than one limb 
-		{
-         mp_limb_t multn[2];
-			umul_ppmm(multn[1], multn[0], multiplier, n);
-			if (multn[1] == 0)
-			{
-		      kn = multiplier*n;
+    for (i = 1; (i < NUMBER_OF_PRIMES) && !factor; i++)
+    {
+        multiplier = z_primes[i];
+        s1 = FLINT_BIT_COUNT(multiplier);
+        count_lead_zeros(s2, n);
+
+        if (s1 > s2) // kn is possibly more than one limb 
+        {
+            mp_limb_t multn[2];
+            umul_ppmm(multn[1], multn[0], multiplier, n);
+            if (multn[1] == 0)
+            {
+                kn = multiplier*n;
+                factor = _z_factor_SQUFOF(kn);
+            } else
+            {
+                factor = _z_ll_factor_SQUFOF(multn[1], multn[0]);
+            }
+        } else
+        {
+            kn = multiplier*n;
             factor = _z_factor_SQUFOF(kn);
-			} else
-			{
-				factor = _z_ll_factor_SQUFOF(multn[1], multn[0]);
-			}
-		} else
-		{
-		   kn = multiplier*n;
-         factor = _z_factor_SQUFOF(kn);
-		}
-		
-		if (factor) 
-      {
-         quot = factor/multiplier;
-         rem = factor - quot*multiplier;
-         if (!rem) factor = quot;
-         if ((factor == 1) || (factor == n)) factor = 0;
-      }
-   }
-   
-	if (i == NUMBER_OF_PRIMES)
-	{
-		printf("Error : SQUFOF failed to factor %ld, after %ld rounds!\n", n, NUMBER_OF_PRIMES);
-		abort();
-	}
-	
-	return factor; 
+        }
+
+        if (factor) 
+        {
+            quot = factor/multiplier;
+            rem = factor - quot*multiplier;
+            if (!rem) factor = quot;
+            if ((factor == 1) || (factor == n)) factor = 0;
+        }
+    }
+/*    if (factor) printf("0,1),\n");
+    else printf("0,0),\n"); */
+
+    if (i == NUMBER_OF_PRIMES) return 0;
+    /*	{
+    printf("Error : SQUFOF failed to factor %ld, after %ld rounds!\n", n, NUMBER_OF_PRIMES);
+    abort();
+    } */
+
+    return factor; 
 }
+
+/*
+   This is a reasonable implementation of Bill Hart's "one line" factor algorithm. (HOLF)
+   WARNING: this is more than one line.
+*/
+
+unsigned long z_factor_HOLF2(unsigned long n, unsigned long i)
+{
+    unsigned long orig_n=n, in=0, square, sqrti, mod, factor;
+    long double x, d;
+    n*=HOLF_MULTIPLIER;
+/*    printf("('H',%ld",  ceil_log2(orig_n)); */
+
+    while (i < HOLF_ITERS)
+    {
+        x = sqrtl(((long double) i)*((long double) n));
+        sqrti = (unsigned long) ceill(x);
+        d = ceill(x)-x;
+        mod = (unsigned long) roundl((x+x+d)*d);
+        if (z_issquare(mod)) 
+        {
+            mod = z_intsqrt(mod);
+            sqrti -= mod;
+            factor = z_gcd(orig_n,sqrti);  
+            if (factor != 1) 
+            { 
+/*                printf(",%ld,%d),\n", i, factor != 0); */
+                return factor;
+            }
+        }     
+        i++;   
+    }
+/*    printf(",%ld,0),\n", i); */
+    return 0;
+}
+
+unsigned long z_factor_HOLF(unsigned long n,unsigned long iters)
+{
+    unsigned long orig_n=n, in, square, sqrti, mod, factor, factoring = iters, iin;
+    n*=HOLF_MULTIPLIER;
+/*    printf("('H',%ld",  ceil_log2(orig_n)); */
+
+    iin = 0;
+    in = n;
+    while (factoring && (iin < in))
+    {
+        sqrti = z_intsqrt(in);
+        sqrti++;
+        square = sqrti*sqrti;
+        mod = square-in;
+        if (z_issquare(mod)) 
+        {
+            mod = z_intsqrt(mod);
+            sqrti -= mod;
+            factor = z_gcd(orig_n,sqrti);  
+            if (factor != 1) 
+            { 
+/*                printf(",%ld,%d),\n", HOLF_ITERS-factoring, factor != 0); */
+                return factor;
+            }
+        }     
+        factoring--;    
+        iin = in;
+        in += n;
+    }
+/*
+    if (factoring)
+        return z_factor_HOLF2(orig_n,iters-factoring);
+*/
+
+/*    printf(",%ld,0),\n", HOLF_ITERS-factoring); */
+    return 0;
+}
+
+/*
+unsigned long z_factor_tinyQS(unsigned long n) {
+    F_mpz_factor_t factors;
+    mpz_t N;
+    unsigned long factor;
+    mpz_set_ui(N,n);
+    factors.fact = malloc(64*sizeof(mpz_t *));
+    factor = (unsigned long) F_mpz_factor_tinyQS(&factors,N);
+    if (factor > 1UL)
+        factor = mpz_get_ui(factors.fact[0]);
+
+    for(int i=0;i<factors.num;i++)
+        mpz_clear(factors.fact[i]);
+    free(factors.fact);
+
+    return factor;
+}*/
+
+
 
 /*
    Find the factors of n.
@@ -2187,36 +2498,84 @@ unsigned long z_factor_SQUFOF(unsigned long n)
 	result is proved.
 */
 
+#define MAX_SQUFOF 0xFFFFFFFFFFFFF
+
 void z_factor(factor_t * factors, unsigned long n, int proved)
 {
-   unsigned long cofactor;
-   unsigned long factor_arr[TF_FACTORS_IN_LIMB];
-   unsigned long cutoff = primes[TF_CUTOFF-1]*primes[TF_CUTOFF-1];
-   unsigned long factors_left = 1;
-   unsigned long factor;
-   
-   cofactor = z_factor_trial(factors, n);
-      
-   if (cofactor != 1)
-   {
-      factor = factor_arr[0] = cofactor;
-      
-      while (factors_left > 0)
-      {
-         factor = factor_arr[factors_left-1]; 
-         if ((factor < cutoff) ||  (proved && z_isprime(factor)) || (!proved && z_isprobab_prime(factor)))
-         {
-            insert_factor(factors, factor);
-            factors_left--;
-         } else
-         {
-            factor = factor_arr[factors_left] = z_factor_SQUFOF(factor);
-            factor_arr[factors_left-1] /= factor;
-            factors_left++;
-         }
-      }
-   } 
-} 
+    unsigned long cofactor;
+    unsigned long factor_arr[TF_FACTORS_IN_LIMB];
+    unsigned long exp_arr[TF_FACTORS_IN_LIMB];
+    unsigned long cutoff;
+    unsigned long factors_left = 1, k;
+    unsigned long factor;
+    unsigned long exp;
+
+    if  (n < 0x7FFFFFFFUL)
+        if (n < 0xFFFFFUL) cutoff = TF_CUTOFF;     /* can't beat trial division under 20 bits */
+        else cutoff = 31;                          /* 7-bit primes for 31-bit n */
+    else 
+        if (n < 0x3FFFFFFFFUL) cutoff = 97;       /* 9-bit primes for 35-bit n */
+        else cutoff = TF_CUTOFF;                       /* 10-bit primes for the rest*/
+
+    cofactor = _z_factor_trial(factors, n, cutoff);
+    if (cofactor == 1UL) return;
+    factor = factor_arr[0] = cofactor;
+    exp_arr[0] = 1;
+    cutoff = z_primes[cutoff-1]*z_primes[cutoff-1];
+
+    while (factors_left > 0)
+    {
+        factor = factor_arr[factors_left-1];
+
+        if (factor < cutoff)
+            goto factored_prime;
+        if( cofactor = z_factor_235power(factor, &exp) ) 
+        {
+            exp_arr[factors_left-1] *= exp;
+            factor_arr[factors_left-1] = factor = cofactor;
+        }
+        if (
+            (factor < cutoff) ||
+            (proved && z_isprime(factor)) || 
+            (!proved && z_isprobab_prime(factor))
+           )
+            goto factored_prime;
+        if (
+            (
+                (factor < MAX_HOLF) && 
+                (factor > MIN_HOLF) &&
+                (cofactor = z_factor_HOLF(factor,HOLF_ITERS))
+            )
+           )
+            goto factored_split;
+        if (
+            (cofactor = z_factor_SQUFOF(factor))
+           )
+            goto factored_split;
+        if ( cofactor = z_factor_trial_extended(factor) )
+            goto factored_split;
+/*TODO: make this work
+        if ( cofactor = z_factor_tinyQS(factor) ) 
+            goto factored_split;
+*/
+        printf("Error : failed to factor %ld\n", n);
+        abort();
+
+    factored_prime:
+        insert_factorpower(factors, factor, exp_arr[factors_left-1]);
+        factors_left--;
+        goto factored_done;
+
+    factored_split:
+        exp_arr[factors_left] = exp_arr[factors_left-1];
+        factor_arr[factors_left] = cofactor;
+        factor_arr[factors_left-1] /= cofactor;
+        factors_left++;
+
+    factored_done: ;
+    }
+}
+
 
 /*
    Finds the smallest primitive root of the prime p
@@ -2343,7 +2702,7 @@ unsigned long z_intcuberoot(unsigned long n)
 {
 	unsigned long newg, g, oldg;
 	
-	g = (unsigned long) ceil(pow(n, 0.333333333));
+	g = (unsigned long) floor(sqrt((double) n));
 	
 	do 
 	{
@@ -2355,4 +2714,79 @@ unsigned long z_intcuberoot(unsigned long n)
 	} while (g != newg && newg != oldg);
 
 	return g;
+}
+
+unsigned long z_intfifthroot(unsigned long n)
+{
+	unsigned long newg, g, oldg;
+
+	g = (unsigned long) floor(sqrt(sqrt(n)*sqrt(sqrt(n))));
+	
+	do 
+	{
+        newg = g*g;
+		newg = 4L*g + n/(newg*newg);
+		newg = newg/5L;
+		
+		oldg = g;
+		g = newg;
+	} while (g != newg && newg != oldg);
+
+	return g;
+}
+
+/*
+    Factors perfect squares, cubes, and fifth-powers.
+
+    We do trial division up to 2^10 > (2^64)^(1/7).  Hence, if an unsigned word is a perfect
+    power, it must be a square, cube, or fifth power.  If a number if a number is *not* a power
+    modulo some n, it cannot be a power (of course, the converse does not hold).  We have found
+    four moduli such that this test rejects 98.7% of non-powers.
+
+    By keeping track of which possible powers (of 2,3,5) a power may be, we can now make a very 
+    small number of tests to determine if the number is indeed a perfect power.
+
+    We have not optimized the order the tests come in.  That will require some thought (or, brute
+    force).
+*/
+unsigned long z_factor_235power(unsigned long n, unsigned long *exp)
+{
+    static char mod63[63] = {7,7,4,0,5,4,0,5,6,5,4,4,0,4,4,0,5,4,5,4,4,0,5,4,0,5,4,6,7,4,0,4,4,0,4,6,7,5,4,0,4,4,0,5,4,4,5,4,0,5,4,0,4,4,4,6,4,0,5,4,0,4,6};
+    static char mod61[61] = {7,7,0,3,1,1,0,0,2,3,0,6,1,5,5,1,1,0,0,1,3,4,1,2,2,1,0,3,2,4,0,0,4,2,3,0,1,2,2,1,4,3,1,0,0,1,1,5,5,1,6,0,3,2,0,0,1,1,3,0,7};
+    static char mod44[44] = {7,7,0,2,3,3,0,2,2,3,0,6,7,2,0,2,3,2,0,2,3,6,0,6,2,3,0,2,2,2,0,2,6,7,0,2,3,3,0,2,2,2,0,6};
+    static char mod31[31] = {7,7,3,0,3,5,4,1,3,1,1,0,0,0,1,2,3,0,1,1,1,0,0,2,0,5,4,2,1,2,6};
+    char t;
+    
+    t = mod31[n%31];
+    if (!t) return 0;
+    t&= mod44[n%44];
+    if (!t) return 0;
+    t&= mod61[n%61];
+    if (!t) return 0;
+    t&= mod63[n%63];
+    if (t&1) {
+        unsigned long y = (unsigned long) sqrt((double)n);
+        if (n == y*y)
+        {
+            *exp = 2;
+            return y;
+        }
+    }
+    if (t&2) {
+        unsigned long y = (unsigned long) round(pow((double)n,1/3.));
+        if (n == y*y*y)
+        {
+            *exp = 3;
+            return y;
+        }
+    }
+    if (t&4) {
+        unsigned long y = (unsigned long) round(pow((double)n,1/5.));
+        if (n == y*y*y*y*y)
+        {
+            *exp = 5;
+            return y;
+        }
+    }
+    return 0;
 }

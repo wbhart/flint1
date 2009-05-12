@@ -248,6 +248,38 @@ static inline int z_issquare(long x)
    return (x == sqroot*sqroot);
 }
 
+/*
+    This is a very dense representation of the prime indicator
+    function for odd primes < 4096.  In that range,
+    oddprime_lt_4096 is probably about the fastest primality
+    test we can get.
+
+    One might be tempted to do something clever, like pack everything
+    according to its value mod 30.  In practice, that either requires
+    branching, or some very dirty tricks.  In the end, this is 2-5
+    times faster than everything I tried.
+*/
+
+static inline int z_oddprime_lt_4096(unsigned long n) {
+    static unsigned long oddprime_indicator[] =
+    {
+        0x816d129a64b4cb6eUL,0x2196820d864a4c32UL,0xa48961205a0434c9UL,
+        0x4a2882d129861144UL,0x834992132424030UL, 0x148a48844225064bUL,
+        0xb40b4086c304205UL, 0x65048928125108a0UL,0x80124496804c3098UL,
+        0xc02104c941124221UL,0x804490000982d32UL, 0x220825b082689681UL,
+        0x9004265940a28948UL,0x6900924430434006UL,0x12410da408088210UL,
+        0x86122d22400c060UL, 0x110d301821b0484UL, 0x14916022c044a002UL,
+        0x92094d204a6400cUL, 0x4ca2100800522094UL,0xa48b081051018200UL,
+        0x34c108144309a25UL, 0x2084490880522502UL,0x241140a218003250UL,
+        0xa41a00101840128UL, 0x2926000836004512UL,0x10100480c0618283UL,
+        0xc20c26584822006dUL,0x4520582024894810UL,0x10c0250219002488UL,
+        0x802832ca01140868UL,0x60901300264b0400UL
+    };
+    unsigned long q = n/2;
+    unsigned long x = (q&63);
+    return (oddprime_indicator[q/64]&(1UL<<x))>>x;
+}
+
 unsigned long z_CRT(unsigned long x1, unsigned long n1, 
                         unsigned long x2, unsigned long n2);
                        
@@ -268,6 +300,19 @@ unsigned long z_factor_partial(factor_t * factors, unsigned long n, unsigned lon
 unsigned long z_primitive_root(unsigned long p);
 
 unsigned long z_primitive_root_precomp(unsigned long p, double p_inv);
+
+void z_remove_power(factor_t *factors, unsigned long n, unsigned int power, int proved);
+unsigned long z_factor_235power(unsigned long n, unsigned long *exp);
+unsigned long z_intcuberoot(unsigned long n);
+unsigned long z_intfifthroot(unsigned long n);
+unsigned long z_factor_HOLF(unsigned long n, unsigned long iters);
+unsigned long z_factor_trial_extended(unsigned long n);
+void z_compute_extended_primes();
+static inline void z_initialize_extended_primes();
+void insert_factorpower(factor_t * factors, unsigned long p, unsigned long e);
+inline int z_oddprime_lt_4096(unsigned long n);
+
+
 
 #ifdef __cplusplus
  }
