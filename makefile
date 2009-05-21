@@ -73,7 +73,8 @@ HEADERS = \
 	F_mpz_LLL_fast_d.h \
 	F_mpz_LLL_HNF.h \
 	F_mpz_poly.h \
-	F_mpz.h
+	F_mpz.h \
+	QS/tinyQS.h
 
 ####### library object files
 
@@ -119,7 +120,13 @@ FLINTOBJ = \
 	F_mpz_LLL_fast_d.o \
 	F_mpz_LLL_HNF.o \
 	F_mpz.o \
-	F_mpz_poly.o
+	F_mpz_poly.o \
+	tinyQS.o \
+	factor_base.o \
+	poly.o \
+	sieve.o \
+	linear_algebra.o \
+	block_lanczos.o
 
 QS: mpQS
 
@@ -383,8 +390,8 @@ F_mpz_LLL_fast_d-test: F_mpz_LLL_fast_d-test.o test-support.o $(FLINTOBJ) $(HEAD
 ZmodF_mul-test: ZmodF_mul-test.o test-support.o $(FLINTOBJ) $(HEADERS)
 	$(CC) $(CFLAGS) ZmodF_mul-test.o test-support.o -o ZmodF_mul-test $(FLINTOBJ) $(LIBS)
 
-long_extras-test: long_extras.o long_extras-test.o test-support.o memory-manager.o
-	$(CC) $(CFLAGS) long_extras.o long_extras-test.o test-support.o memory-manager.o -o long_extras-test $(LIBS)
+long_extras-test: long_extras-test.o test-support.o $(FLINTOBJ)
+	$(CC) $(CFLAGS) long_extras-test.o test-support.o -o long_extras-test $(FLINTOBJ) $(LIBS)
 
 packed_vec-test: packed_vec-test.o test-support.o $(FLINTOBJ) $(HEADERS) 
 	$(CC) $(CFLAGS) packed_vec-test.o test-support.o -o packed_vec-test $(FLINTOBJ) $(LIBS)
@@ -536,13 +543,13 @@ delta_qexp: delta_qexp.o $(FLINTOBJ)
 expmod: expmod.c $(FLINTOBJ)
 	$(CC) $(CFLAGS) -o expmod expmod.c $(FLINTOBJ) $(LIBS)
 
-BPTJCubes: long_extras.o memory-manager.o
-	$(CC) $(CFLAGS) -o BPTJCubes BPTJCubes.c memory-manager.o long_extras.o $(LIBS)
+BPTJCubes: BPTJCubes.c $(FLINTOBJ)
+	$(CC) $(CFLAGS) -o BPTJCubes BPTJCubes.c $(LIBS) $(FLINTOBJ)
 
 bernoulli.o: bernoulli.c $(HEADERS)
 	$(CC) $(CFLAGS) -c bernoulli.c -o bernoulli.o
 
-bernoulli: bernoulli.o long_extras.o $(FLINTOBJ)
+bernoulli: bernoulli.o $(FLINTOBJ)
 	$(CC) $(CFLAGS) -o bernoulli bernoulli.o $(FLINTOBJ) $(LIBS)
 
 bernoulli_fmpz.o: bernoulli_fmpz.c $(HEADERS)
@@ -598,13 +605,13 @@ mp_lprels.o: QS/mp_lprels.c QS/mp_lprels.h
 mp_factor_base.o: QS/mp_factor_base.c QS/mp_factor_base.h
 	$(CC) $(CFLAGS) -c QS/mp_factor_base.c -o mp_factor_base.o
 
-mpQS: QS/mpQS.c QS/mpQS.h QS/tinyQS.h factor_base.o poly.o sieve.o linear_algebra.o tinyQS.o mp_factor_base.o mp_poly.o mp_sieve.o mp_linear_algebra.o block_lanczos.o mp_lprels.o $(FLINTOBJ)
-	$(CC) $(CFLAGS) -o mpQS QS/mpQS.c factor_base.o poly.o sieve.o linear_algebra.o tinyQS.o mp_factor_base.o mp_poly.o mp_sieve.o mp_linear_algebra.o block_lanczos.o mp_lprels.o $(FLINTOBJ) $(LIBS)
+mpQS: QS/mpQS.c QS/mpQS.h QS/tinyQS.h mp_factor_base.o mp_poly.o mp_sieve.o mp_linear_algebra.o mp_lprels.o $(FLINTOBJ)
+	$(CC) $(CFLAGS) -o mpQS QS/mpQS.c mp_factor_base.o mp_poly.o mp_sieve.o mp_linear_algebra.o mp_lprels.o $(FLINTOBJ) $(LIBS)
 
 ####### Integer multiplication timing
 
-ZMULOBJ = zn_mod.o misc.o mul_ks.o pack.o mul.o mulmid.o mulmid_ks.o ks_support.o mpn_mulmid.o nuss.o pmf.o pmfvec_fft.o tuning.o mul_fft.o mul_fft_dft.o array.o invert.o zmod_mat.o zmod_poly.o memory-manager.o fmpz.o ZmodF_mul-tuning.o mpz_poly.o mpz_poly-tuning.o fmpz_poly.o ZmodF_poly.o mpz_extras.o profiler.o ZmodF_mul.o ZmodF.o mpn_extras.o F_mpz_mul-timing.o long_extras.o
+ZMULOBJ = zn_mod.o misc.o mul_ks.o pack.o mul.o mulmid.o mulmid_ks.o ks_support.o mpn_mulmid.o nuss.o pmf.o pmfvec_fft.o tuning.o mul_fft.o mul_fft_dft.o array.o invert.o zmod_mat.o zmod_poly.o memory-manager.o fmpz.o ZmodF_mul-tuning.o mpz_poly.o mpz_poly-tuning.o fmpz_poly.o ZmodF_poly.o mpz_extras.o profiler.o ZmodF_mul.o ZmodF.o mpn_extras.o F_mpz_mul-timing.o long_extras.o factor_base.o poly.o sieve.o linear_algebra.o block_lanczos.o
 
-F_mpz_mul-timing: $(ZMULOBJ)
-	$(CC) $(ZMULOBJ) -o Zmul $(LIBS)
+F_mpz_mul-timing: $(FLINTOBJ) 
+	$(CC) $(CFLAGS) F_mpz_mul-timing.c profiler.o -o Zmul $(LIBS) $(FLINTOBJ)
 

@@ -175,6 +175,40 @@ unsigned long tiny_collect_relations(linalg_t * la_inf, QS_t * qs_inf, poly_t * 
 
 int F_mpz_factor_tinyQS(F_mpz_factor_t factors, mpz_t N)
 {
+    int small_factor, i;
+
+
+    small_factor = F_mpz_factor_tinyQS_silent(factors, N);
+
+#if PRINT_FACTORS
+    printf("FACTORS:\n");
+
+    if (small_factor != 1) 
+	{
+		printf("FACTORS:\n");
+		printf("%ld\n", small_factor);
+		mpz_t temp;
+		mpz_init(temp);
+		mpz_div_ui(temp, N, small_factor);
+		gmp_printf("%Zd\n", temp); 
+		mpz_clear(temp);
+	}
+
+    if (small_factor)
+    {
+        for(i=0;i<factors.num;i++) 
+        {
+            gmp_printf("%Zd\n", factors.fact[i]);
+        }
+    }
+#endif
+
+    return small_factor;   
+    
+}
+
+int F_mpz_factor_tinyQS_silent(F_mpz_factor_t factors, mpz_t N)
+{
    unsigned long small_factor;
    unsigned long rels_found = 0;
    
@@ -196,10 +230,6 @@ int F_mpz_factor_tinyQS(F_mpz_factor_t factors, mpz_t N)
 	small_factor = tiny_knuth_schroeppel(&qs_inf); // Compute multiplier and some FB primes
    if (small_factor) 
 	{
-		printf("FACTORS:\n");
-		printf("%ld\n", small_factor);
-		mpz_div_ui(qs_inf.mpz_n, N, small_factor);
-		gmp_printf("%Zd\n", qs_inf.mpz_n); 
 		goto cleanup_2;
 	}
 
@@ -235,13 +265,6 @@ int F_mpz_factor_tinyQS(F_mpz_factor_t factors, mpz_t N)
 	small_factor = tiny_compute_factor_base(&qs_inf); // Computes the factor base primes and modular square roots
    if (small_factor) 
 	{
-		printf("FACTORS:\n");
-		printf("%ld\n", small_factor);
-		mpz_t temp;
-		mpz_init(temp);
-		mpz_div_ui(temp, N, small_factor);
-		gmp_printf("%Zd\n", temp); 
-		mpz_clear(temp);
 		goto cleanup_1;
 	}
 
@@ -307,10 +330,6 @@ int F_mpz_factor_tinyQS(F_mpz_factor_t factors, mpz_t N)
    mpz_init(R);
    
    mpz_set(F, N);
-    
-#if PRINT_FACTORS
-   printf("FACTORS:\n");
-#endif
 
 #if DEBUG
    printf("Square root\n");
@@ -324,9 +343,9 @@ int F_mpz_factor_tinyQS(F_mpz_factor_t factors, mpz_t N)
          mpz_gcd(X, X, N);
          if ((mpz_cmp(X, N) != 0) && (mpz_cmp_ui(X, 1) != 0))
          {
-#if PRINT_FACTORS
-            gmp_printf("%Zd\n", X);
-#endif
+            mpz_set(factors.fact[factors.num],X);
+            factors.num++;
+
             if (mpz_probab_prime_p(X, 10)) 
             {
                mpz_fdiv_qr(Q, R, F, X);
