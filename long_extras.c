@@ -894,7 +894,7 @@ int z_isprime_precomp(unsigned long n, double ninv)
 #if FLINT_BITS == 64
    if (n >= 10000000000000000UL)
 	{
-		return z_isprime_pocklington(n, -1L);
+        return z_isprime_pocklington(n, -1L);
 	}
 #endif
 
@@ -1129,11 +1129,10 @@ int z_isprime_pocklington(unsigned long const n, unsigned long const iterations)
 	n1 = n - 1;
 	f = 1;
 	factors.num = 0;
-	sqrt = z_intsqrt(n1);
+   sqrt = z_intsqrt(n1);
 
-	z_factor_partial(&factors, n1, sqrt, 1);
-	
-	inv = z_precompute_inverse(n);
+   z_factor_partial(&factors, n1, sqrt, 1);
+   inv = z_precompute_inverse(n);
 
 	//for (i = factors.num-1; i >= 0 ; i--)		//Quicker?? keeps exponents down so maybe.
 	for (i = 0; i < factors.num; i++)
@@ -2120,65 +2119,62 @@ unsigned long z_factor_partial(factor_t * factors, unsigned long n, unsigned lon
 	unsigned long cutoff = z_primes[TF_CUTOFF-1]*z_primes[TF_CUTOFF-1];
 	unsigned long factors_left = 1;
 	unsigned long factor;
-    unsigned long exp;
+   unsigned long exp;
 
-	cofactor = z_factor_partial_trial(factors, &prod, n, limit);
-	if (prod != n && prod <= limit)
+   cofactor = z_factor_partial_trial(factors, &prod, n, limit);
+   if (prod != n && prod <= limit)
 	{
-		factor = factor_arr[0] = cofactor;
-        exp_arr[0] = 1;
+	   factor = factor_arr[0] = cofactor;
+      exp_arr[0] = 1;
       		
 		while (factors_left > 0 && prod <= limit)
 		{
-            factor = factor_arr[factors_left-1];
+         factor = factor_arr[factors_left-1];
 
-            if (factor < cutoff)
-                goto factored_prime;
-            if( cofactor = z_factor_235power(factor, &exp) )
+         if (factor >= cutoff)
+         {
+            if (cofactor = z_factor_235power(factor, &exp) )
             {
-                exp_arr[factors_left-1] *= exp;
-                factor_arr[factors_left-1] = factor = cofactor;
-            }
-            if (
-                (factor < cutoff) ||
-                (proved && z_isprime(factor)) || 
-                (!proved && z_isprobab_prime(factor))
-               )
-                goto factored_prime;
-            if (
-                (
+               exp_arr[factors_left-1] *= exp;
+               factor_arr[factors_left-1] = factor = cofactor;
+            } 
+				if ((factor >= cutoff) && !(proved && z_isprime(factor)) && !(!proved && z_isprobab_prime(factor)))
+            {
+               if (
+                  (
                     (factor < MAX_HOLF) && 
                     (factor > MIN_HOLF) &&
                     (cofactor = z_factor_HOLF(factor,HOLF_ITERS))
-                ) ||
-                (
+                  ) ||
+                  (
                     (factor > MAX_HOLF) &&
                     (cofactor = z_factor_HOLF(factor,100))
-                )
+                  ) ||
+                  ( cofactor = z_factor_SQUFOF(factor) ) ||
+                  ( cofactor = z_factor_trial_extended(factor) )
                )
-                goto factored_split;
-            if ( cofactor = z_factor_SQUFOF(factor) )
-                goto factored_split;
-            if ( cofactor = z_factor_trial_extended(factor) )
-                goto factored_split;
-
-            printf("Error : failed to factor %ld\n", n);
-            abort();
-
-        factored_prime:
+               {
+                  exp_arr[factors_left] = exp_arr[factors_left-1];
+                  factor_arr[factors_left] = cofactor;
+                  factor_arr[factors_left-1] /= cofactor;
+                  factors_left++;
+               } else
+               {
+                  printf("Error : failed to factor %ld\n", n);
+                  abort();
+               }
+            } else
+            {
+               insert_factorpower(factors, factor, exp_arr[factors_left-1]);
+               prod *= z_pow(factor, exp_arr[factors_left-1]);
+               factors_left--;
+            }
+			} else
+         {
             insert_factorpower(factors, factor, exp_arr[factors_left-1]);
             prod *= z_pow(factor, exp_arr[factors_left-1]);
             factors_left--;
-            goto factored_done;
-
-
-        factored_split:
-            exp_arr[factors_left] = exp_arr[factors_left-1];
-            factor_arr[factors_left] = cofactor;
-            factor_arr[factors_left-1] /= cofactor;
-            factors_left++;
-
-        factored_done: ;
+			}
 		}
 		return n/prod;
 	} 
@@ -2501,52 +2497,49 @@ void z_factor(factor_t * factors, unsigned long n, int proved)
     {
         factor = factor_arr[factors_left-1];
 
-        if (factor < cutoff)
-            goto factored_prime;
-        if( cofactor = z_factor_235power(factor, &exp) ) 
-        {
-            exp_arr[factors_left-1] *= exp;
-            factor_arr[factors_left-1] = factor = cofactor;
-        }
-        if (
-            (factor < cutoff) ||
-            (proved && z_isprime(factor)) || 
-            (!proved && z_isprobab_prime(factor))
+        if (factor >= cutoff)
+		  {
+			  if( cofactor = z_factor_235power(factor, &exp) ) 
+           {
+              exp_arr[factors_left-1] *= exp;
+              factor_arr[factors_left-1] = factor = cofactor;
+           }
+           if (
+              (factor >= cutoff) &&
+              !(proved && z_isprime(factor)) && 
+              !(!proved && z_isprobab_prime(factor))
            )
-            goto factored_prime;
-        if (
-            (
-                (factor < MAX_HOLF) && 
-                (factor > MIN_HOLF) &&
-                (cofactor = z_factor_HOLF(factor,HOLF_ITERS))
-            )
-           )
-            goto factored_split;
-        if (
-            (cofactor = z_factor_SQUFOF(factor))
-           )
-            goto factored_split;
-        if ( cofactor = z_factor_trial_extended(factor) )
-            goto factored_split;
-
-        if ( cofactor = z_factor_tinyQS(factor) ) 
-            goto factored_split;
-
-        printf("Error : failed to factor %ld\n", n);
-        abort();
-
-    factored_prime:
-        insert_factorpower(factors, factor, exp_arr[factors_left-1]);
-        factors_left--;
-        goto factored_done;
-
-    factored_split:
-        exp_arr[factors_left] = exp_arr[factors_left-1];
-        factor_arr[factors_left] = cofactor;
-        factor_arr[factors_left-1] /= cofactor;
-        factors_left++;
-
-    factored_done: ;
+			  {
+				  if (
+                 (
+                    (factor < MAX_HOLF) && 
+                    (factor > MIN_HOLF) &&
+                    (cofactor = z_factor_HOLF(factor,HOLF_ITERS))
+                 ) ||
+                 (cofactor = z_factor_SQUFOF(factor)) ||
+                 ( cofactor = z_factor_trial_extended(factor) ) ||
+                 ( cofactor = z_factor_tinyQS(factor) ) 
+              )
+				  {
+					   exp_arr[factors_left] = exp_arr[factors_left-1];
+                  factor_arr[factors_left] = cofactor;
+                  factor_arr[factors_left-1] /= cofactor;
+                  factors_left++;
+				  } else
+				  {
+                 printf("Error : failed to factor %ld\n", n);
+                 abort();
+				  }
+			  } else
+			  {
+				  insert_factorpower(factors, factor, exp_arr[factors_left-1]);
+              factors_left--;
+			  }
+		  } else
+		  {
+			  insert_factorpower(factors, factor, exp_arr[factors_left-1]);
+           factors_left--;
+		  }
     }
 }
 
@@ -2674,39 +2667,59 @@ unsigned long z_intsqrt(unsigned long r)
 
 unsigned long z_intcuberoot(unsigned long n)
 {
-	unsigned long newg, g, oldg;
+    unsigned long newg, g;
+    unsigned long oldg = n;
+
+    if (n < 8) // avoid infinite loops
+    {
+       if (n == 0) return 0;
+       return 1;
+    }
+
+	g = (unsigned long) ceil(pow(n, 0.333333333));
 	
-	g = (unsigned long) floor(sqrt((double) n));
-	
-	do 
+    do 
 	{
 		newg = 2L*g + n/(g*g);
 		newg = newg/3L;
-		
-		oldg = g;
+	
+        if (g == newg || newg == oldg) break;
+        
+        oldg = g;
 		g = newg;
-	} while (g != newg && newg != oldg);
+	} while (1);
 
-	return g;
+    if (newg*newg*newg > n) return newg - 1;
+    else return newg;
 }
 
 unsigned long z_intfifthroot(unsigned long n)
 {
-	unsigned long newg, g, oldg;
+	unsigned long newg, g;
+    unsigned long oldg = n;
+    
+    if (n < 243) // special cases can lead to infinite loops
+    {
+       if (n == 0) return 0;
+       if (n < 32) return 1;
+       return 2;
+    }
 
-	g = (unsigned long) floor(sqrt(sqrt(n)*sqrt(sqrt(n))));
+	g = (unsigned long)ceil(pow(n, 0.2)); 
 	
 	do 
 	{
         newg = g*g;
 		newg = 4L*g + n/(newg*newg);
 		newg = newg/5L;
-		
+	
+        if (newg == g || newg == oldg) break;
 		oldg = g;
 		g = newg;
-	} while (g != newg && newg != oldg);
+	} while (1);
 
-	return g;
+	if (newg*newg*newg*newg*newg > n) return newg - 1;
+    else return newg;
 }
 
 /*

@@ -37,7 +37,7 @@
 #include "mpn_extras.h"
 #include "F_mpn_mul-tuning.h"
 #include "long_extras.h"
-#include "zn_poly/zn_poly.h"
+#include "zn_poly/src/zn_poly.h"
 
 #define SWAP_PTRS(x_dummy_p, y_dummy_p) \
 do { \

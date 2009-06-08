@@ -32,7 +32,7 @@ else
 	INCS = -I$(FLINT_GMP_INCLUDE_DIR) -I$(FLINT_NTL_INCLUDE_DIR)
 endif
 
-CFLAGS = $(INCS) $(FLINT_TUNE) -O3
+CFLAGS = $(INCS) $(FLINT_TUNE) -O2 
 
 RM = rm -f
 
@@ -199,10 +199,10 @@ mulmid_ks.o: zn_poly/src/mulmid_ks.c $(HEADERS)
 	$(CC) $(CFLAGS) -DNDEBUG -o mulmid_ks.o -c zn_poly/src/mulmid_ks.c
 
 pmf.o: zn_poly/src/pmf.c $(HEADERS)
-	$(CC) $(CFLAGS) -DNEBUG -o pmf.o -c zn_poly/src/pmf.c
+	$(CC) $(CFLAGS) -DNDEBUG -o pmf.o -c zn_poly/src/pmf.c
 
 pmfvec_fft.o: zn_poly/src/pmfvec_fft.c $(HEADERS)
-	$(CC) $(CFLAGS) -DNEBUG -o pmfvec_fft.o -c zn_poly/src/pmfvec_fft.c
+	$(CC) $(CFLAGS) -DNDEBUG -o pmfvec_fft.o -c zn_poly/src/pmfvec_fft.c
 
 tuning.o: zn_poly/src/tuning.c $(HEADERS)
 	$(CC) $(CFLAGS) -DNDEBUG -o tuning.o -c zn_poly/src/tuning.c
