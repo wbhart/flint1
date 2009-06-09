@@ -952,7 +952,7 @@ int z_isprime_precomp(unsigned long n, double ninv)
 */
 
 static inline int z_oddprime_lt_4096(unsigned long n) {
-    static unsigned long oddprime_indicator[] =
+    static uint64_t oddprime_indicator[] =
     {
         0x816d129a64b4cb6eUL,0x2196820d864a4c32UL,0xa48961205a0434c9UL,
         0x4a2882d129861144UL,0x834992132424030UL, 0x148a48844225064bUL,
@@ -2142,12 +2142,16 @@ unsigned long z_factor_partial(factor_t * factors, unsigned long n, unsigned lon
             {
                if (
                   (
-                    (factor < MAX_HOLF) && 
-                    (factor > MIN_HOLF) &&
+#if FLINT_BITS == 64
+						(factor < MAX_HOLF) && 
+#endif
+						(factor > MIN_HOLF) &&
                     (cofactor = z_factor_HOLF(factor,HOLF_ITERS))
                   ) ||
                   (
-                    (factor > MAX_HOLF) &&
+#if FLINT_BITS == 64
+						(factor < MAX_HOLF) && 
+#endif
                     (cofactor = z_factor_HOLF(factor,100))
                   ) ||
                   ( cofactor = z_factor_SQUFOF(factor) ) ||
@@ -2468,7 +2472,11 @@ unsigned long z_factor_tinyQS(unsigned long n) {
 	result is proved.
 */
 
+#if FLINT_BITS == 64
 #define MAX_SQUFOF 0xFFFFFFFFFFFFF
+#else
+#define MAX_SQUFOF -1L
+#endif
 
 void z_factor(factor_t * factors, unsigned long n, int proved)
 {
@@ -2484,8 +2492,14 @@ void z_factor(factor_t * factors, unsigned long n, int proved)
         if (n < 0xFFFFFUL) cutoff = TF_CUTOFF;     /* can't beat trial division under 20 bits */
         else cutoff = 31;                          /* 7-bit primes for 31-bit n */
     else 
-        if (n < 0x3FFFFFFFFUL) cutoff = 97;        /* 9-bit primes for 35-bit n */
-        else cutoff = TF_CUTOFF;                   /* 10-bit primes for the rest*/
+#if FLINT_BITS == 64
+		 if (n < 0x3FFFFFFFFUL)
+#endif
+			  cutoff = 97;                            /* 9-bit primes for 35-bit n */
+#if FLINT_BITS == 64
+		 else 
+			  cutoff = TF_CUTOFF;                     /* 10-bit primes for the rest*/
+#endif
 
     cofactor = _z_factor_trial(factors, n, cutoff);
     if (cofactor == 1UL) return;
@@ -2512,7 +2526,9 @@ void z_factor(factor_t * factors, unsigned long n, int proved)
 			  {
 				  if (
                  (
-                    (factor < MAX_HOLF) && 
+#if FLINT_BITS == 64
+						(factor < MAX_HOLF) && 
+#endif
                     (factor > MIN_HOLF) &&
                     (cofactor = z_factor_HOLF(factor,HOLF_ITERS))
                  ) ||

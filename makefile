@@ -65,14 +65,8 @@ HEADERS = \
 	zmod_poly.h \
 	theta.h \
 	zmod_mat.h \
-	F_mpz_mat.h \
-	F_zmod_mat.h \
-	F_mpzmod_mat.h \
 	mpz_mat.h \
 	d_mat.h \
-	F_mpz_LLL_fast_d.h \
-	F_mpz_LLL_HNF.h \
-	F_mpz_poly.h \
 	F_mpz.h \
 	QS/tinyQS.h
 
@@ -112,15 +106,9 @@ FLINTOBJ = \
 	zmod_poly.o \
 	theta.o \
 	zmod_mat.o \
-	F_zmod_mat.o \
-	F_mpzmod_mat.o \
 	mpz_mat.o \
-	F_mpz_mat.o \
 	d_mat.o \
-	F_mpz_LLL_fast_d.o \
-	F_mpz_LLL_HNF.o \
 	F_mpz.o \
-	F_mpz_poly.o \
 	tinyQS.o \
 	factor_base.o \
 	poly.o \
@@ -544,7 +532,7 @@ expmod: expmod.c $(FLINTOBJ)
 	$(CC) $(CFLAGS) -o expmod expmod.c $(FLINTOBJ) $(LIBS)
 
 BPTJCubes: BPTJCubes.c $(FLINTOBJ)
-	$(CC) $(CFLAGS) -o BPTJCubes BPTJCubes.c $(LIBS) $(FLINTOBJ)
+	$(CC) $(CFLAGS) -o BPTJCubes BPTJCubes.c $(FLINTOBJ) $(LIBS)
 
 bernoulli.o: bernoulli.c $(HEADERS)
 	$(CC) $(CFLAGS) -c bernoulli.c -o bernoulli.o
@@ -613,5 +601,5 @@ mpQS: QS/mpQS.c QS/mpQS.h QS/tinyQS.h mp_factor_base.o mp_poly.o mp_sieve.o mp_l
 ZMULOBJ = zn_mod.o misc.o mul_ks.o pack.o mul.o mulmid.o mulmid_ks.o ks_support.o mpn_mulmid.o nuss.o pmf.o pmfvec_fft.o tuning.o mul_fft.o mul_fft_dft.o array.o invert.o zmod_mat.o zmod_poly.o memory-manager.o fmpz.o ZmodF_mul-tuning.o mpz_poly.o mpz_poly-tuning.o fmpz_poly.o ZmodF_poly.o mpz_extras.o profiler.o ZmodF_mul.o ZmodF.o mpn_extras.o F_mpz_mul-timing.o long_extras.o factor_base.o poly.o sieve.o linear_algebra.o block_lanczos.o
 
 F_mpz_mul-timing: $(FLINTOBJ) 
-	$(CC) $(CFLAGS) F_mpz_mul-timing.c profiler.o -o Zmul $(LIBS) $(FLINTOBJ)
+	$(CC) $(CFLAGS) F_mpz_mul-timing.c profiler.o -o Zmul $(FLINTOBJ) $(LIBS)
 

@@ -100,7 +100,7 @@ Thread stuff
 */
 
 // Apple CC doesn't support thread local storage in certain versions
-#if defined(__APPLE_CC__) && (__APPLE_CC__ != 1)
+#if defined(__CYGWIN__) || (defined(__APPLE_CC__) && (__APPLE_CC__ != 1))
 #define THREAD
 #else
 #define THREAD __thread

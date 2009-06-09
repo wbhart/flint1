@@ -29,7 +29,9 @@ Copyright (C) 2007, William Hart and David Harvey
 #include <string.h>
 #include <math.h>
 #include <time.h>
+#if !defined(__CYGWIN__)
 #include <omp.h>
+#endif
 
 #include "mpz_poly.h"
 #include "flint.h"
