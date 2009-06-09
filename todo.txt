@@ -421,6 +421,7 @@ F_mpz allocation of mpz's needs to be made threadsafe
 multimodular poly multn needs to be made thread safe
 powering bug as reported in trac
 make check should run all tests
+add test code for HOLF factoring function and tinyQS factoring function in long_extras.c
 
 FLINT 2.0
 =========
