@@ -968,7 +968,7 @@ static inline int z_oddprime_lt_4096(unsigned long n) {
     };
     unsigned long q = n/2;
     unsigned long x = (q&63);
-    return (oddprime_indicator[q/64]&(1UL<<x))>>x;
+    return (oddprime_indicator[q/64]&(((uint64_t)1)<<x))>>x;
 }
 
 
@@ -2408,7 +2408,7 @@ unsigned long z_factor_SQUFOF(unsigned long n)
 
     if (i == NUMBER_OF_PRIMES) return 0;
 
-    return factor; 
+	 return factor; 
 }
 
 /*
