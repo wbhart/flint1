@@ -202,7 +202,6 @@ v 1.2.0 -- 10-Mar-09
    * n - 1 primality test
    * Complete implementation of z_issquarefree
    * Significantly improved the thetaproduct example program. 
-   * 
    * Fixed bug in fmpz_poly_byte_pack which is triggered when trying to pack into fields a multiple of 8 bytes (could cause a segfault)
    * Fixed a bug in fmpz_poly_pseudo_divrem (relied on an uninitialised poly to have length 0)
    * Fixed bug in fmpz_multi_CRT_ui (could segfault)
@@ -210,4 +209,50 @@ v 1.2.0 -- 10-Mar-09
    * Fixed memory leak in zmod_poly_factor_squarefree 
    * Fixed memory leak in zmod_poly_from_string
 
+v 1.2.1 -- 14-Mar-09
 
+   * Removed some FLINT 2.0 code which was interfering with the build of the NTL-interface
+   * Removed an omp.h from fmpz_poly.c.
+
+v 1.2.2 -- 20-Mar-09
+
+   * Fixed a memory leak in zmod_poly_factor
+   * Fixed zmod_poly-profile build
+
+v 1.2.3 -- 31-Mar-09
+
+   * Fixed bugs in all fmpz_poly evaluation functions, identified by Burcin Erocal. 
+
+v 1.2.4 -- 4-Apr-09
+
+   * Defined THREAD to be blank on Apple CC and __thread for thread local storage on other gcc's (where it's defined)
+   * #undef ulong in profiler.h where time.h and other system time headers are included (both reported by M. Abshoff)
+
+v 1.2.5 -- 18-Apr-09
+
+   * Upgraded to zn_poly-0.9 to avoid a serious error in squaring of large polynomials over Z/nZ
+
+v 1.3.0 -- 09-Jun-09
+
+   * Added new code for checking 2nd, 3rd and 5th roots
+   * Fixed a bug in z_factor
+   * Connected quadratic sieve for factoring large unsigned longs
+   * Added one line factor algorithm
+   * constructed best of breed factor algorithm
+   * Fixed termination conditions for z_intcuberoot and z_intfifthroot which were broken
+   * Added some code for special cases which cause infinite loops in cuberoot and fifthroot
+   * Went back to ceil(pow(n, 0.33333333)) and ceil(pow(n, 0.2)) for initial guesses in cube and fifth root functions as these were about 50% faster than sqrt(n) and sqrt(sqrt(n)) respectively.
+   * Added test code for z_intfifthroot
+   * Added test code for z_factor_235power
+   * Fixed some uninitialised data found by valgrind in intcuberoot and intfifthroot
+   * Fixed multiply defined PRIME_COUNT in long_extras-test
+   * Got rid of gotos in some functions in long_extras
+   * Knocked optimisation level back to -O2 because it miscompiles on sage.math
+   * Changed tables to use uint64_t's instead of unsigned longs which are not 64 bits on a 32 bit machine
+   * Only checked MAX_HOLF on 64 bit machine
+   * Changed MAX_SQUFOF to -1L
+   * Check constant 0x3FFFFFFFFUL only on a 64 bit machine
+   * Fixed a bug in z_oddprime_lt_4096 on 32 bit machines
+   * Fixed some TLS issues with Cygwin
+   * Fixed some typos in makefile
+   * Fixed a wrong path in fmpz.c
