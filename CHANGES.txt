@@ -256,3 +256,20 @@ v 1.3.0 -- 09-Jun-09
    * Fixed some TLS issues with Cygwin
    * Fixed some typos in makefile
    * Fixed a wrong path in fmpz.c
+
+v 1.4.0 -- 06-Jul-09
+
+   * Sped up zmod_poly division in case where operands are the same length
+   * Sped up zmod_poly division in case where operands have lengths differing by 1
+   * Fixed a bug in zmod_poly_gcd for polynomials of zero length
+   * Sped up zmod_poly_gcd considerably (both euclidean and half gcd)
+   * Sped up zmod_poly_gcd_invert and zmod_poly_xgcd considerably
+   * Made zmod_poly_gcd_invert and zmod_poly_xgcd asymptotically fast
+   * Made zmod_poly_resultant asymptotically fast
+   * Added optimised zmod_poly_rem function
+   * Fixed a divide by zero bug in zmod_poly_factor_berlekamp 
+   * Added test code for z_factor_tinyQS and z_factor_HOLF
+   * Fixed many bugs in the z_factor code, tinyQS and mpQS
+   * Corrected numerous typos in the documentation and added missing descriptions
+   * Added F_mpz_cmp function
+   * Added documentation to the manual for the new F_mpz module
