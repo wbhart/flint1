@@ -173,7 +173,7 @@ unsigned long tiny_collect_relations(linalg_t * la_inf, QS_t * qs_inf, poly_t * 
 
 ===========================================================================*/
 
-int F_mpz_factor_tinyQS(F_mpz_factor_t factors, mpz_t N)
+int F_mpz_factor_tinyQS(F_mpz_factor_t * factors, mpz_t N)
 {
     int small_factor, i;
 
@@ -196,9 +196,9 @@ int F_mpz_factor_tinyQS(F_mpz_factor_t factors, mpz_t N)
 
     if (small_factor)
     {
-        for(i=0;i<factors.num;i++) 
+        for(i=0;i<factors->num;i++) 
         {
-            gmp_printf("%Zd\n", factors.fact[i]);
+            gmp_printf("%Zd\n", factors->fact[i]);
         }
     }
 #endif
@@ -207,7 +207,7 @@ int F_mpz_factor_tinyQS(F_mpz_factor_t factors, mpz_t N)
     
 }
 
-int F_mpz_factor_tinyQS_silent(F_mpz_factor_t factors, mpz_t N)
+int F_mpz_factor_tinyQS_silent(F_mpz_factor_t * factors, mpz_t N)
 {
    unsigned long small_factor;
    unsigned long rels_found = 0;
@@ -218,12 +218,14 @@ int F_mpz_factor_tinyQS_silent(F_mpz_factor_t factors, mpz_t N)
    
    qs_inf.bits = mpz_sizeinbase(N,2);
    if (qs_inf.bits > MAXBITS) return 0; // Number too big for tinyQS 
+   if (qs_inf.bits < 27) return 0; // Number too small for tinyQS 
    
    mpz_init(qs_inf.mpz_n);
    qs_inf.n = (fmpz_t) flint_stack_alloc(3);
    qs_inf.n[2] = 0;
    mpz_to_fmpz(qs_inf.n, N); // set n to the number to be factored
-   
+   qs_inf.num_primes = 0;
+
 #if DEBUG
 	printf("Knuth Schroepel\n");
 #endif
@@ -282,7 +284,7 @@ int F_mpz_factor_tinyQS_silent(F_mpz_factor_t factors, mpz_t N)
 #if DEBUG
    printf("Collect relations\n");
 #endif
-	unsigned char * sieve = (unsigned char *) flint_stack_alloc_bytes(SIEVE_SIZE+1);
+	unsigned char * sieve = (unsigned char *) flint_stack_alloc_bytes(SIEVE_SIZE+8);
    while (rels_found < qs_inf.num_primes + EXTRA_RELS)
    {
       rels_found += tiny_collect_relations(&la_inf, &qs_inf, &poly_inf, sieve);
@@ -343,8 +345,8 @@ int F_mpz_factor_tinyQS_silent(F_mpz_factor_t factors, mpz_t N)
          mpz_gcd(X, X, N);
          if ((mpz_cmp(X, N) != 0) && (mpz_cmp_ui(X, 1) != 0))
          {
-            mpz_set(factors.fact[factors.num],X);
-            factors.num++;
+            mpz_set(factors->fact[factors->num],X);
+            (factors->num)++;
 
             if (mpz_probab_prime_p(X, 10)) 
             {

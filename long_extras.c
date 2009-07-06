@@ -2451,16 +2451,21 @@ unsigned long z_factor_tinyQS(unsigned long n) {
     F_mpz_factor_t factors;
     mpz_t N;
     unsigned long factor;
-    mpz_set_ui(N,n);
-    factors.fact = malloc(64*sizeof(mpz_t *));
-    factor = (unsigned long) F_mpz_factor_tinyQS_silent(factors,N);
-    if (factor > 1UL)
+    mpz_init(N);
+	 mpz_set_ui(N,n);
+    factors.fact = malloc(64*sizeof(mpz_t));
+	 factors.num = 0;
+    for(int i=0;i<64;i++)
+        mpz_init(factors.fact[i]);
+    factor = (unsigned long) F_mpz_factor_tinyQS_silent(&factors, N);
+    if (factor == 1L)
         factor = mpz_get_ui(factors.fact[0]);
-
-    for(int i=0;i<factors.num;i++)
+    
+    for(int i=0;i<64;i++)
         mpz_clear(factors.fact[i]);
     free(factors.fact);
-
+    mpz_clear(N);
+	 
     return factor;
 }
 
@@ -2533,8 +2538,10 @@ void z_factor(factor_t * factors, unsigned long n, int proved)
                     (cofactor = z_factor_HOLF(factor,HOLF_ITERS))
                  ) ||
                  (cofactor = z_factor_SQUFOF(factor)) ||
-                 ( cofactor = z_factor_trial_extended(factor) ) ||
-                 ( cofactor = z_factor_tinyQS(factor) ) 
+#if FLINT_BITS == 64
+                 ( cofactor = z_factor_tinyQS(factor) ) ||
+#endif
+                 ( cofactor = z_factor_trial_extended(factor) ) 
               )
 				  {
 					   exp_arr[factors_left] = exp_arr[factors_left-1];

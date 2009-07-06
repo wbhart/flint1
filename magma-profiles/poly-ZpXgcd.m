@@ -56,15 +56,16 @@ function sampler(length, bits, count)
     countmod := 4;
     if count gt 1000 then countmod := 100; end if;
     if count gt 100 then countmod := 10; end if;
-    p:=NextPrime(Random(2^bits-1));
-    if p lt 2 then
-       p:= 2;
-    end if;
-    S:=Integers(p);
-    R<x>:=PolynomialRing(S);
     time1 := Cputime();
     for i := 1 to count do
       if (i-1) mod countmod eq 0 then
+         p:=Random(2^bits);
+         if p lt 2^(bits-1) then
+            p := p + 2^(bits-1);
+         end if;
+         p:=NextPrime(p);
+         S:=Integers(p);
+         R<x>:=PolynomialRing(S);
          a:=Polynomial([Random(S): x in [1..length]]);
          b:=Polynomial([Random(S): x in [1..length]]);
          c:=Polynomial([Random(S): x in [1..length]]);
@@ -78,10 +79,16 @@ function sampler(length, bits, count)
 
     // now time just the random poly generation
 
-    S:=Integers(p);
     for i := 1 to count do
       if (i-1) mod countmod eq 0 then
-       a:=Polynomial([Random(S): x in [1..length]]);
+         p:=Random(2^bits);
+         if p lt 2^(bits-1) then
+            p := p + 2^(bits-1);
+         end if;
+         p:=NextPrime(p);
+         S:=Integers(p);
+         R<x>:=PolynomialRing(S);
+         a:=Polynomial([Random(S): x in [1..length]]);
        b:=Polynomial([Random(S): x in [1..length]]);
        c:=Polynomial([Random(S): x in [1..length]]);
        d1:=a*b;

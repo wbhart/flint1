@@ -29,9 +29,9 @@ Copyright (C) 2007, William Hart and David Harvey
 #include <string.h>
 #include <math.h>
 #include <time.h>
-#if !defined(__CYGWIN__)
+/*#if !defined(__CYGWIN__)
 #include <omp.h>
-#endif
+#endif*/
 
 #include "mpz_poly.h"
 #include "flint.h"
@@ -5594,7 +5594,7 @@ void fmpz_poly_mul_trunc_left_n(fmpz_poly_t output, const fmpz_poly_t input1,
 
 ****************************************************************************/
 
-void fmpz_poly_divrem_classical(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_poly_t A, const fmpz_poly_t B)
+void fmpz_poly_divrem_basecase(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_poly_t A, const fmpz_poly_t B)
 {
    fmpz_poly_t qB;
    
@@ -5733,7 +5733,7 @@ void fmpz_poly_divrem_classical(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_poly_t 
    Divides A by B and returns the quotient Q, but only the low half of the remainder R
 */
 
-void fmpz_poly_divrem_classical_low(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_poly_t A, const fmpz_poly_t B)
+void fmpz_poly_divrem_basecase_low(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_poly_t A, const fmpz_poly_t B)
 {
    fmpz_poly_t qB;
    
@@ -5877,7 +5877,7 @@ void fmpz_poly_divrem_classical_low(fmpz_poly_t Q, fmpz_poly_t R, const fmpz_pol
    Divide the polynomial A by the polynomial B but do not compute the remainder
 */
 
-void fmpz_poly_div_classical(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t B)
+void fmpz_poly_div_basecase(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t B)
 {
    fmpz_poly_t qB, R;
    
@@ -6060,7 +6060,7 @@ void fmpz_poly_div_divconquer_recursive(fmpz_poly_t Q, fmpz_poly_t BQ, const fmp
       
       fmpz_poly_t Rb;
       fmpz_poly_init(Rb);
-      fmpz_poly_divrem_classical(Q, Rb, A, B);
+      fmpz_poly_divrem_basecase(Q, Rb, A, B);
       fmpz_poly_fit_length(BQ, A->length);
       fmpz_poly_fit_limbs(BQ, FLINT_MAX(A->limbs, fmpz_poly_max_limbs(Rb))+1);
       _fmpz_poly_sub(BQ, A, Rb);
@@ -6363,7 +6363,7 @@ void fmpz_poly_div_divconquer_recursive_low(fmpz_poly_t Q, fmpz_poly_t BQ, const
       
       fmpz_poly_t Rb;
       fmpz_poly_init(Rb);
-      fmpz_poly_divrem_classical_low(Q, Rb, A, B);
+      fmpz_poly_divrem_basecase_low(Q, Rb, A, B);
       fmpz_poly_fit_length(BQ, A->length);
       fmpz_poly_fit_limbs(BQ, FLINT_MAX(A->limbs, fmpz_poly_max_limbs(Rb))+1);
       _fmpz_poly_sub(BQ, A, Rb);
@@ -6657,7 +6657,7 @@ void fmpz_poly_div_divconquer(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_pol
    if ((B->length <= crossover) 
    || ((A->length > 2*B->length - 1) && (A->length < crossover2)))
    {
-      fmpz_poly_div_classical(Q, A, B);
+      fmpz_poly_div_basecase(Q, A, B);
       
       return;
    }
@@ -7047,7 +7047,7 @@ void fmpz_poly_div_newton(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t 
    
    if ((B->length <= crossover) || (A->length > 2*B->length - 1))
    {
-      fmpz_poly_div_classical(Q, A, B);
+      fmpz_poly_div_basecase(Q, A, B);
       return;
    }
    
@@ -7226,7 +7226,7 @@ void fmpz_poly_div_mulders(fmpz_poly_t Q, const fmpz_poly_t A, const fmpz_poly_t
    if ((B->length <= crossover) 
    || ((A->length > 2*B->length - 1) && (A->length < crossover2)))
    {
-      fmpz_poly_div_classical(Q, A, B);
+      fmpz_poly_div_basecase(Q, A, B);
       return;
    }
    
@@ -10075,7 +10075,7 @@ void fmpz_poly_gcd(fmpz_poly_t res, const fmpz_poly_t poly1, const fmpz_poly_t p
 	ulong limbs2 = fmpz_poly_max_limbs(poly2);
    ulong max_limbs = FLINT_MAX(limbs1, limbs2);
    
-	if ((max_length <= 80) && (max_limbs <= 16))
+	if (max_length < 20)
 	{
 		if (fmpz_poly_gcd_heuristic(res, poly1, poly2, 0, 0))
 		   return;
@@ -10092,17 +10092,17 @@ void fmpz_poly_gcd(fmpz_poly_t res, const fmpz_poly_t poly1, const fmpz_poly_t p
          return;
       }
 
+		if ((max_length <= 6) && (max_limbs <= 16)) 
+      {
+         fmpz_poly_gcd_subresultant(res, poly1, poly2);
+         return;
+      }
+
       fmpz_poly_gcd_modular(res, poly1, poly2, 0, 0);
          return;  
 	}
-
-   if (max_length <= 6) 
-   {
-      fmpz_poly_gcd_subresultant(res, poly1, poly2);
-      return;
-   }
    
-   if (max_limbs > 16)
+   if (max_limbs > 6)
    {
       fmpz_poly_gcd_modular(res, poly1, poly2, 0, 0);
       return;

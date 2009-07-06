@@ -2269,6 +2269,72 @@ int test_z_factor_trial()
    return result;
 }
 
+int test_z_factor_tinyQS()
+{
+   unsigned long n, factor, bits;
+
+   int result = 1;
+   
+   for (unsigned long count = 0; (count < 1000) && (result == 1); count++)
+   { 
+      do 
+      {
+         bits = z_randint(FLINT_BITS - 1)+1;
+         n = random_ulong((1UL<<bits)-1)+3;
+         n|=1;
+      } while (z_isprobab_prime(n));     
+      
+#if DEBUG
+      printf("n = %ld\n");
+#endif
+
+      factor = z_factor_tinyQS(n);
+      
+      result = ((factor == 0L) || (n == factor*(n/factor)));
+
+      if (!result)
+      {
+         printf("n = %ld\n", n);
+         printf("factors = %ld, %ld\n", factor, n/factor);
+      }
+   }  
+   
+   return result;
+}
+
+int test_z_factor_HOLF()
+{
+   unsigned long n, factor, bits;
+
+   int result = 1;
+   
+   for (unsigned long count = 0; (count < 1000) && (result == 1); count++)
+   { 
+      do 
+      {
+         bits = z_randint(FLINT_BITS - 1)+1;
+         n = random_ulong((1UL<<bits)-1)+3;
+         n|=1;
+      } while (z_isprobab_prime(n));     
+      
+#if DEBUG
+      printf("n = %ld\n");
+#endif
+
+      factor = z_factor_HOLF(n, 10000);
+      
+      result = ((factor == 0L) || (n == factor*(n/factor)));
+
+      if (!result)
+      {
+         printf("n = %ld\n", n);
+         printf("factors = %ld, %ld\n", factor, n/factor);
+      }
+   }  
+   
+   return result;
+}
+
 int test_z_factor_SQUFOF()
 {
    unsigned long n, factor, bits;
@@ -2442,7 +2508,6 @@ void fmpz_poly_test_all()
 {
    int success, all_success = 1;
 
-
 #if FLINT_BITS == 64
 	RUN_TEST(z_mulmod32_precomp); 
 #endif
@@ -2492,6 +2557,10 @@ void fmpz_poly_test_all()
    RUN_TEST(z_issquarefree);
    RUN_TEST(z_factor_trial);
    RUN_TEST(z_factor_SQUFOF);
+#if FLINT_BITS == 64
+	RUN_TEST(z_factor_tinyQS);
+#endif
+	RUN_TEST(z_factor_HOLF);
    RUN_TEST(z_factor);
    RUN_TEST(z_factor_partial);
    

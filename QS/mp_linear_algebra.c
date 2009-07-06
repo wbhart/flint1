@@ -133,7 +133,7 @@ int relations_cmp(const void *a, const void *b)
   if (ra->weight > rb->weight) return 1;
   else if (ra->weight < rb->weight) return -1;
   
-  for (point = ra->weight-1; (ra->data[point] == rb->data[point]) && (point >= 0); point--)
+  for (point = ra->weight-1; (point >= 0L) && (ra->data[point] == rb->data[point]); point--)
   {
       ;
   }
@@ -152,7 +152,7 @@ int relations_cmp2(const void *a, const void *b)
   if (ra->weight > rb->weight) return 1;
   else if (ra->weight < rb->weight) return -1;
   
-  for (point = ra->weight-1; (point >= 0) && (ra->data[point] == rb->data[point]); point--)
+  for (point = ra->weight-1; (point >= 0L) && (ra->data[point] == rb->data[point]); point--)
   {
       ;
   }

@@ -717,7 +717,7 @@ int test_mpz_poly_mul()
 }
 
 
-int test_mpz_poly_mul_naive()
+int test_mpz_poly_mul_classical()
 {
    int success = 1;
    mpz_poly_t poly1, poly2, poly3;
@@ -729,73 +729,73 @@ int test_mpz_poly_mul_naive()
 
    mpz_poly_from_string(poly1, "0");
    mpz_poly_from_string(poly2, "0");
-   mpz_poly_mul_naive(poly3, poly1, poly2);
+   mpz_poly_mul_classical(poly3, poly1, poly2);
    success = success && mpz_poly_equal_str(poly3, "0");
    
    mpz_poly_from_string(poly1, "0");
-   mpz_poly_mul_naive(poly3, poly1, poly1);
+   mpz_poly_mul_classical(poly3, poly1, poly1);
    success = success && mpz_poly_equal_str(poly3, "0");
    
    mpz_poly_from_string(poly1, "3  1 2 3");
    mpz_poly_from_string(poly2, "0 ");
-   mpz_poly_mul_naive(poly3, poly1, poly2);
+   mpz_poly_mul_classical(poly3, poly1, poly2);
    success = success && mpz_poly_equal_str(poly3, "0");
    
    mpz_poly_from_string(poly1, "0 ");
    mpz_poly_from_string(poly2, "3  1 2 3");
-   mpz_poly_mul_naive(poly3, poly1, poly2);
+   mpz_poly_mul_classical(poly3, poly1, poly2);
    success = success && mpz_poly_equal_str(poly3, "0");
 
    mpz_poly_from_string(poly1, "0 ");
    mpz_poly_from_string(poly2, "3  1 2 3");
-   mpz_poly_mul_naive(poly2, poly1, poly2);   // inplace
+   mpz_poly_mul_classical(poly2, poly1, poly2);   // inplace
    success = success && mpz_poly_equal_str(poly2, "0");
 
    // special cases for length 1 input
 
    mpz_poly_from_string(poly1, "1  5");
    mpz_poly_from_string(poly2, "1  2");
-   mpz_poly_mul_naive(poly3, poly1, poly2);
+   mpz_poly_mul_classical(poly3, poly1, poly2);
    success = success && mpz_poly_equal_str(poly3, "1  10");
 
    mpz_poly_from_string(poly1, "1  5");
    mpz_poly_from_string(poly2, "1  2");
-   mpz_poly_mul_naive(poly2, poly1, poly2);   // inplace
+   mpz_poly_mul_classical(poly2, poly1, poly2);   // inplace
    success = success && mpz_poly_equal_str(poly2, "1  10");
 
    mpz_poly_from_string(poly1, "3  1 2 3");
    mpz_poly_from_string(poly2, "1  2");
-   mpz_poly_mul_naive(poly3, poly1, poly2);
+   mpz_poly_mul_classical(poly3, poly1, poly2);
    success = success && mpz_poly_equal_str(poly3, "3  2 4 6");
    
    mpz_poly_from_string(poly1, "1  2");
    mpz_poly_from_string(poly2, "3  1 2 3");
-   mpz_poly_mul_naive(poly3, poly1, poly2);
+   mpz_poly_mul_classical(poly3, poly1, poly2);
    success = success && mpz_poly_equal_str(poly3, "3  2 4 6");
 
    // random multiplications
    
    mpz_poly_from_string(poly1, "5  -3 4 0 2 56");
    mpz_poly_from_string(poly2, "3  48 -2 3");
-   mpz_poly_mul_naive(poly3, poly1, poly2);
+   mpz_poly_mul_classical(poly3, poly1, poly2);
    success = success &&
               mpz_poly_equal_str(poly3, "7  -144 198 -17 108 2684 -106 168");
 
    mpz_poly_from_string(poly1, "5  -3 4 0 2 56");
    mpz_poly_from_string(poly2, "3  48 -2 3");
-   mpz_poly_mul_naive(poly1, poly1, poly2);   // inplace
+   mpz_poly_mul_classical(poly1, poly1, poly2);   // inplace
    success = success &&
               mpz_poly_equal_str(poly1, "7  -144 198 -17 108 2684 -106 168");
 
    // squaring
 
    mpz_poly_from_string(poly1, "5  -3 4 0 2 56");
-   mpz_poly_mul_naive(poly3, poly1, poly1);
+   mpz_poly_mul_classical(poly3, poly1, poly1);
    success = success &&
               mpz_poly_equal_str(poly3, "9  9 -24 16 -12 -320 448 4 224 3136");
 
    mpz_poly_from_string(poly1, "5  -3 4 0 2 56");
-   mpz_poly_mul_naive(poly1, poly1, poly1);   // inplace
+   mpz_poly_mul_classical(poly1, poly1, poly1);   // inplace
    success = success &&
               mpz_poly_equal_str(poly1, "9  9 -24 16 -12 -320 448 4 224 3136");
 
@@ -843,7 +843,7 @@ int test__mpz_poly_mul_kara_recursive()
                                    crossover);
       out->length = len1 + len2 - 1;
       
-      mpz_poly_mul_naive(correct, in1, in2);
+      mpz_poly_mul_classical(correct, in1, in2);
       success = success && mpz_poly_equal(correct, out);
    }
 
@@ -892,7 +892,7 @@ int test_mpz_poly_mul_karatsuba()
       }
 
       mpz_poly_mul_karatsuba(out, in1, in2);
-      mpz_poly_mul_naive(correct, in1, in2);
+      mpz_poly_mul_classical(correct, in1, in2);
       
       success = success && mpz_poly_equal(out, correct);
    }
@@ -955,9 +955,9 @@ int test_mpz_poly_mul_naive_KS()
                      }
                   }
                   
-                  // compute product using naive multiplication and by
+                  // compute product using classical multiplication and by
                   // naive KS, and compare answers
-                  mpz_poly_mul_naive(poly[2], poly[0], poly[1]);
+                  mpz_poly_mul_classical(poly[2], poly[0], poly[1]);
                   mpz_poly_mul_naive_KS(poly[3], poly[0], poly[1]);
                   success = success && mpz_poly_equal(poly[2], poly[3]);
                }
@@ -1070,49 +1070,49 @@ int test_mpz_poly_pseudo_div_rem()
 }
 
 
-int test_mpz_poly_monic_inverse_naive()
+int test_mpz_poly_monic_inverse_basecase()
 {
    return 0;
 }
 
 
-int test_mpz_poly_pseudo_inverse_naive()
+int test_mpz_poly_pseudo_inverse_basecase()
 {
    return 0;
 }
 
 
-int test_mpz_poly_monic_div_naive()
+int test_mpz_poly_monic_div_basecase()
 {
    return 0;
 }
 
 
-int test_mpz_poly_pseudo_div_naive()
+int test_mpz_poly_pseudo_div_basecase()
 {
    return 0;
 }
 
 
-int test_mpz_poly_monic_rem_naive()
+int test_mpz_poly_monic_rem_basecase()
 {
    return 0;
 }
 
 
-int test_mpz_poly_pseudo_rem_naive()
+int test_mpz_poly_pseudo_rem_basecase()
 {
    return 0;
 }
 
 
-int test_mpz_poly_monic_div_rem_naive()
+int test_mpz_poly_monic_div_rem_basecase()
 {
    return 0;
 }
 
 
-int test_mpz_poly_pseudo_div_rem_naive()
+int test_mpz_poly_pseudo_div_rem_basecase()
 {
    return 0;
 }
@@ -1216,7 +1216,7 @@ void mpz_poly_test_all()
 //   RUN_TEST(mpz_poly_mod);
 //   RUN_TEST(mpz_poly_mod_ui);
 //   RUN_TEST(mpz_poly_mul);
-   RUN_TEST(mpz_poly_mul_naive);
+   RUN_TEST(mpz_poly_mul_classical);
    RUN_TEST(_mpz_poly_mul_kara_recursive);
    RUN_TEST(mpz_poly_mul_karatsuba);
 //   RUN_TEST(mpz_poly_mul_SS);
@@ -1230,14 +1230,14 @@ void mpz_poly_test_all()
 //   RUN_TEST(mpz_poly_pseudo_rem);
 //   RUN_TEST(mpz_poly_monic_div_rem);
 //   RUN_TEST(mpz_poly_pseudo_div_rem);
-//   RUN_TEST(mpz_poly_monic_inverse_naive);
-//   RUN_TEST(mpz_poly_pseudo_inverse_naive);
-//   RUN_TEST(mpz_poly_monic_div_naive);
-//   RUN_TEST(mpz_poly_pseudo_div_naive);
-//   RUN_TEST(mpz_poly_monic_rem_naive);
-//   RUN_TEST(mpz_poly_pseudo_rem_naive);
-//   RUN_TEST(mpz_poly_monic_div_rem_naive);
-//   RUN_TEST(mpz_poly_pseudo_div_rem_naive);
+//   RUN_TEST(mpz_poly_monic_inverse_basecase);
+//   RUN_TEST(mpz_poly_pseudo_inverse_basecase);
+//   RUN_TEST(mpz_poly_monic_div_basecase);
+//   RUN_TEST(mpz_poly_pseudo_div_basecase);
+//   RUN_TEST(mpz_poly_monic_rem_basecase);
+//   RUN_TEST(mpz_poly_pseudo_rem_basecase);
+//   RUN_TEST(mpz_poly_monic_div_rem_basecase);
+//   RUN_TEST(mpz_poly_pseudo_div_rem_basecase);
 //   RUN_TEST(mpz_poly_content);
 //   RUN_TEST(mpz_poly_content_ui);
 //   RUN_TEST(mpz_poly_gcd);

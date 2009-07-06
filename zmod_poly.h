@@ -467,10 +467,12 @@ void __zmod_poly_scalar_mul_no_red(zmod_poly_t res, zmod_poly_t poly, unsigned l
    Division
 */
 
-void zmod_poly_divrem_classical(zmod_poly_t Q, zmod_poly_t R, zmod_poly_t A, zmod_poly_t B);
-void __zmod_poly_divrem_classical_mod_last(zmod_poly_t Q, zmod_poly_t R, zmod_poly_t A, zmod_poly_t B);
-void zmod_poly_div_classical(zmod_poly_t Q, zmod_poly_t A, zmod_poly_t B);
-void __zmod_poly_div_classical_mod_last(zmod_poly_t Q, zmod_poly_t A, zmod_poly_t B);
+void zmod_poly_divrem_basecase(zmod_poly_t Q, zmod_poly_t R, zmod_poly_t A, zmod_poly_t B);
+void __zmod_poly_divrem_basecase_mod_last(zmod_poly_t Q, zmod_poly_t R, zmod_poly_t A, zmod_poly_t B);
+void zmod_poly_rem_basecase(zmod_poly_t R, zmod_poly_t A, zmod_poly_t B);
+void __zmod_poly_rem_basecase_mod_last(zmod_poly_t R, zmod_poly_t A, zmod_poly_t B);
+void zmod_poly_div_basecase(zmod_poly_t Q, zmod_poly_t A, zmod_poly_t B);
+void __zmod_poly_div_basecase_mod_last(zmod_poly_t Q, zmod_poly_t A, zmod_poly_t B);
 void zmod_poly_div_divconquer_recursive(zmod_poly_t Q, zmod_poly_t BQ, zmod_poly_t A, zmod_poly_t B);
 void zmod_poly_divrem_divconquer(zmod_poly_t Q, zmod_poly_t R, zmod_poly_t A, zmod_poly_t B);
 void zmod_poly_div_divconquer(zmod_poly_t Q, zmod_poly_t A, zmod_poly_t B);
@@ -495,83 +497,85 @@ void zmod_poly_invert_series(zmod_poly_t Q_inv, zmod_poly_t Q, unsigned long n)
 void zmod_poly_div_series(zmod_poly_t Q, zmod_poly_t A, zmod_poly_t B, unsigned long n);
 void zmod_poly_div_newton(zmod_poly_t Q, zmod_poly_t A, zmod_poly_t B);
 void zmod_poly_divrem_newton(zmod_poly_t Q, zmod_poly_t R, zmod_poly_t A, zmod_poly_t B);
+void zmod_poly_rem_q0(zmod_poly_t R, zmod_poly_t A, zmod_poly_t B);
+void zmod_poly_divrem_q0(zmod_poly_t Q, zmod_poly_t R, zmod_poly_t A, zmod_poly_t B);
+void zmod_poly_divrem_q1(zmod_poly_t Q, zmod_poly_t R, zmod_poly_t A, zmod_poly_t B);
+void zmod_poly_rem_q1(zmod_poly_t R, zmod_poly_t A, zmod_poly_t B);
 
-#define ZMOD_DIV_BASECASE_CUTOFF 64
+#define ZMOD_DIV_BASECASE_CUTOFF 170
 
 static inline
 void zmod_poly_divrem(zmod_poly_t Q, zmod_poly_t R, zmod_poly_t A, zmod_poly_t B)
 {
    if ((B->length < ZMOD_DIV_BASECASE_CUTOFF) && (A->length < 2*ZMOD_DIV_BASECASE_CUTOFF))
    {
-      if ((Q == A) || (Q == B))
+      if (Q == B)
       {
-         if ((R == A) || (R == B))
-         {
-            zmod_poly_t temp1, temp2;
-            zmod_poly_init(temp1, A->p);
-            zmod_poly_init(temp2, A->p);
-            zmod_poly_divrem_classical(temp1, temp2, A, B);
-            zmod_poly_swap(temp1, Q);
-            zmod_poly_clear(temp1);
-            zmod_poly_swap(temp2, R);
-            zmod_poly_clear(temp2);         
-         }
-         else
-         {
-            zmod_poly_t temp;
-            zmod_poly_init(temp, A->p);
-            zmod_poly_divrem_classical(temp, R, A, B);
-            zmod_poly_swap(temp, Q);
-            zmod_poly_clear(temp);
-         }
-      }
-      else if ((R == A) || (R == B))
-         {
-            zmod_poly_t temp;
-            zmod_poly_init(temp, A->p);
-            zmod_poly_divrem_classical(Q, temp, A, B);
-            zmod_poly_swap(temp, R);
-            zmod_poly_clear(temp);         
-         }
-      else
-         zmod_poly_divrem_classical(Q, R, A, B);
+         zmod_poly_t temp;
+         zmod_poly_init(temp, A->p);
+         zmod_poly_divrem_basecase(temp, R, A, B);
+         zmod_poly_swap(temp, Q);
+         zmod_poly_clear(temp);
+      } else if (R == B)
+      {
+         zmod_poly_t temp;
+         zmod_poly_init(temp, A->p);
+         zmod_poly_divrem_basecase(Q, temp, A, B);
+         zmod_poly_swap(temp, R);
+         zmod_poly_clear(temp);         
+      } else
+         zmod_poly_divrem_basecase(Q, R, A, B);
 
       return;
    }
 
-   if ((Q == A) || (Q == B))
+   if (Q == B)
    {
-      if ((R == A) || (R == B))
-      {
-         zmod_poly_t temp1, temp2;
-         zmod_poly_init(temp1, A->p);
-         zmod_poly_init(temp2, A->p);
-         zmod_poly_divrem_newton(temp1, temp2, A, B);
-         zmod_poly_swap(temp1, Q);
-         zmod_poly_clear(temp1);
-         zmod_poly_swap(temp2, R);
-         zmod_poly_clear(temp2);         
-      }
-      else
+      zmod_poly_t temp;
+      zmod_poly_init(temp, A->p);
+      zmod_poly_divrem_newton(temp, R, A, B);
+      zmod_poly_swap(temp, Q);
+      zmod_poly_clear(temp);
+   } else if (R == B)
+   {
+      zmod_poly_t temp;
+      zmod_poly_init(temp, A->p);
+      zmod_poly_divrem_newton(Q, temp, A, B);
+      zmod_poly_swap(temp, R);
+      zmod_poly_clear(temp);         
+   } else
+      zmod_poly_divrem_newton(Q, R, A, B);
+}
+
+void zmod_poly_rem_newton(zmod_poly_t R, zmod_poly_t A, zmod_poly_t B);
+
+static inline
+void zmod_poly_rem(zmod_poly_t R, zmod_poly_t A, zmod_poly_t B)
+{
+   if ((B->length < ZMOD_DIV_BASECASE_CUTOFF) && (A->length < 2*ZMOD_DIV_BASECASE_CUTOFF))
+   {
+      if (R == B)
       {
          zmod_poly_t temp;
          zmod_poly_init(temp, A->p);
-         zmod_poly_divrem_newton(temp, R, A, B);
-         zmod_poly_swap(temp, Q);
-         zmod_poly_clear(temp);
-      }
-   }
-   else if ((R == A) || (R == B))
-      {
-         zmod_poly_t temp;
-         zmod_poly_init(temp, A->p);
-         zmod_poly_divrem_newton(Q, temp, A, B);
+         zmod_poly_rem_basecase(temp, A, B);
          zmod_poly_swap(temp, R);
          zmod_poly_clear(temp);         
-      }
-   else
-      zmod_poly_divrem_newton(Q, R, A, B);
+      } else
+         zmod_poly_rem_basecase(R, A, B);
 
+      return;
+   }
+
+   if (R == B)
+   {
+      zmod_poly_t temp;
+      zmod_poly_init(temp, A->p);
+      zmod_poly_rem_newton(temp, A, B);
+      zmod_poly_swap(temp, R);
+      zmod_poly_clear(temp);         
+   } else
+      zmod_poly_rem_newton(R, A, B);
 }
 
 static inline
@@ -579,19 +583,19 @@ void zmod_poly_div(zmod_poly_t Q, zmod_poly_t A, zmod_poly_t B)
 {
    if ((B->length < ZMOD_DIV_BASECASE_CUTOFF) && (A->length < 2*ZMOD_DIV_BASECASE_CUTOFF))
    {
-      if ((Q == A) || (Q == B))
+      if (Q == B)
       {
          zmod_poly_t temp;
          zmod_poly_init(temp, A->p);
-         zmod_poly_div_classical(temp, A, B);
+         zmod_poly_div_basecase(temp, A, B);
          zmod_poly_swap(temp, Q);
          zmod_poly_clear(temp);
       } else
-         zmod_poly_div_classical(Q, A, B);
+         zmod_poly_div_basecase(Q, A, B);
       return;
    }
 
-   if ((Q == A) || (Q == B))
+   if (Q == B)
 	{
 		zmod_poly_t temp;
 		zmod_poly_init(temp, A->p);
@@ -607,26 +611,56 @@ void zmod_poly_div(zmod_poly_t Q, zmod_poly_t A, zmod_poly_t B)
    Resultant
 */
 
+long zmod_poly_resultant_half_gcd_iter(zmod_poly_2x2_mat_t res, zmod_poly_t a2, zmod_poly_t b2,
+                    zmod_poly_t a, zmod_poly_t b, ulong * cvec, ulong * i, ulong * dvec, long * j);
+long zmod_poly_resultant_half_gcd(zmod_poly_2x2_mat_t res, zmod_poly_t a_out, zmod_poly_t b_out,
+                    zmod_poly_t a, zmod_poly_t b, ulong * cvec, ulong * i, ulong * dvec, long * j);
+void zmod_poly_resultant_half_gcd_no_matrix(zmod_poly_t a_out, zmod_poly_t b_out,
+                    zmod_poly_t a, zmod_poly_t b, ulong * cvec, ulong * i, ulong * dvec, long * j);
 unsigned long zmod_poly_resultant_euclidean(zmod_poly_t a, zmod_poly_t b);
 
-static inline
-unsigned long zmod_poly_resultant(zmod_poly_t a, zmod_poly_t b)
-{
-   return zmod_poly_resultant_euclidean(a, b);
-}
+ulong zmod_poly_resultant(zmod_poly_t u, zmod_poly_t v);
 
 /*
    GCD
 */
 
-#define FLINT_ZMOD_POLY_GCD_CUTOFF 75 // cutoff between euclidean and half gcd
-#define FLINT_ZMOD_POLY_HGCD_CUTOFF 40 // cutoff between iterative basecase and recursive hgcd
+#define FLINT_ZMOD_POLY_HGCD_CUTOFF 60 // cutoff between iterative basecase and recursive hgcd
+#define FLINT_ZMOD_POLY_GCD_CUTOFF 184 // cutoff between hgcd and euclidean
+#define FLINT_ZMOD_POLY_SMALL_GCD_CUTOFF 174 // cutoff between hgcd and euclidean for small moduli
 
 void zmod_poly_gcd_euclidean(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2);
-int zmod_poly_gcd_invert(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2);
-void zmod_poly_xgcd(zmod_poly_t res, zmod_poly_t s, zmod_poly_t t, zmod_poly_t poly1, zmod_poly_t poly2);
-long zmod_poly_half_gcd(zmod_poly_2x2_mat_t res, zmod_poly_t a, zmod_poly_t b);
-long zmod_poly_half_gcd_iter(zmod_poly_2x2_mat_t res, zmod_poly_t a, zmod_poly_t b);
+
+int zmod_poly_gcd_invert_euclidean(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2);
+int zmod_poly_gcd_invert_hgcd(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2);
+
+static inline
+int zmod_poly_gcd_invert(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
+{
+	ulong CUTOFF = FLINT_ZMOD_POLY_GCD_CUTOFF;
+	if (FLINT_BIT_COUNT(poly1->p) <= 8) CUTOFF = FLINT_ZMOD_POLY_SMALL_GCD_CUTOFF;
+
+	if (poly2->length < CUTOFF)
+	   return zmod_poly_gcd_invert_euclidean(res, poly1, poly2);
+	else
+	{
+		if ((res == poly1) || (res == poly2))
+		{
+			zmod_poly_t temp;
+			zmod_poly_init(temp, poly1->p);
+			int coprime = zmod_poly_gcd_invert_hgcd(temp, poly1, poly2); 
+			zmod_poly_swap(temp, res);
+			zmod_poly_clear(temp);
+			return coprime;
+		} else
+         return zmod_poly_gcd_invert_hgcd(res, poly1, poly2); 
+	}
+}
+
+void zmod_poly_xgcd_euclidean(zmod_poly_t res, zmod_poly_t s, zmod_poly_t t, zmod_poly_t poly1, zmod_poly_t poly2);
+void zmod_poly_xgcd_hgcd(zmod_poly_t res, zmod_poly_t s, zmod_poly_t t, zmod_poly_t f, zmod_poly_t g);
+long zmod_poly_half_gcd(zmod_poly_2x2_mat_t res, zmod_poly_t a_out, zmod_poly_t b_out, zmod_poly_t a, zmod_poly_t b);
+long zmod_poly_half_gcd_iter(zmod_poly_2x2_mat_t res, zmod_poly_t a2, zmod_poly_t b2, zmod_poly_t a, zmod_poly_t b);
 void zmod_poly_gcd_hgcd(zmod_poly_t res, zmod_poly_t f, zmod_poly_t g);
 
 static inline
@@ -634,14 +668,65 @@ void zmod_poly_gcd(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
 {
 	if (poly1 == poly2) // aliased
 	{
-		zmod_poly_set(res, poly1);
+		zmod_poly_make_monic(res, poly1);
 		return;
 	}
 	
-	if (poly2->length < FLINT_ZMOD_POLY_GCD_CUTOFF)
+	ulong CUTOFF = FLINT_ZMOD_POLY_GCD_CUTOFF;
+	if (FLINT_BIT_COUNT(poly1->p) <= 8) CUTOFF = FLINT_ZMOD_POLY_SMALL_GCD_CUTOFF;
+
+	if (poly2->length < CUTOFF)
 	   zmod_poly_gcd_euclidean(res, poly1, poly2);
 	else
 		zmod_poly_gcd_hgcd(res, poly1, poly2);  
+}
+
+static inline
+void zmod_poly_xgcd(zmod_poly_t res, zmod_poly_t s, zmod_poly_t t, zmod_poly_t poly1, zmod_poly_t poly2)
+{
+	if (poly1 == poly2) // aliased
+	{
+		ulong Z = z_invert(poly1->coeffs[poly1->length - 1], poly1->p);
+		zmod_poly_zero(s);
+		zmod_poly_fit_length(t, 1);
+		t->coeffs[0] = Z;
+		t->length = 1;
+		zmod_poly_scalar_mul(res, poly1, Z);
+		return;
+	}
+
+	ulong CUTOFF = FLINT_ZMOD_POLY_GCD_CUTOFF;
+	if (FLINT_BIT_COUNT(poly1->p) <= 8) CUTOFF = FLINT_ZMOD_POLY_SMALL_GCD_CUTOFF;
+
+	if (poly2->length < CUTOFF)
+	   zmod_poly_xgcd_euclidean(res, s, t, poly1, poly2);
+	else
+	{
+		if ((s == poly1) || (s == poly2))
+		{
+			zmod_poly_t temp1;
+			zmod_poly_init(temp1, poly1->p);
+         if ((t == poly1) || (t == poly2))
+			{
+				zmod_poly_t temp2;
+			   zmod_poly_init(temp2, poly1->p);
+            zmod_poly_xgcd_hgcd(res, temp1, temp2, poly1, poly2);
+				zmod_poly_swap(t, temp2);
+			   zmod_poly_clear(temp2);
+			} else
+				zmod_poly_xgcd_hgcd(res, temp1, t, poly1, poly2);
+			zmod_poly_swap(s, temp1);
+			zmod_poly_clear(temp1);
+		} else if ((t == poly1) || (t == poly2))
+		{
+			zmod_poly_t temp2;
+			zmod_poly_init(temp2, poly1->p);
+         zmod_poly_xgcd_hgcd(res, s, temp2, poly1, poly2);
+		   zmod_poly_swap(t, temp2);
+			zmod_poly_clear(temp2);
+		} else
+			zmod_poly_xgcd_hgcd(res, s, t, poly1, poly2);
+	}
 }
 
 /*

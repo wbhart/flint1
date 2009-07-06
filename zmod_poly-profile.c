@@ -88,7 +88,7 @@ void randpoly(zmod_poly_t poly, long length, unsigned long n)
 void sample_zmod_poly_mul(unsigned long length, unsigned long bits, void* arg, unsigned long count)
 {
    zmod_poly_t pol1, pol2, res1;
-   unsigned long modulus;
+   unsigned long modulus = 2;
       
    zmod_poly_init(pol1, modulus);
    zmod_poly_init(pol2, modulus);
@@ -185,7 +185,7 @@ void profDriver_zmod_poly_mul(char* params)
 void sample_zmod_poly_mul_KS(unsigned long length, unsigned long bits, void* arg, unsigned long count)
 {
    zmod_poly_t pol1, pol2, res1;
-   unsigned long modulus;
+   unsigned long modulus = 2;
       
    zmod_poly_init(pol1, modulus);
    zmod_poly_init(pol2, modulus);
@@ -282,7 +282,7 @@ void profDriver_zmod_poly_mul_KS(char* params)
 void sample_zmod_poly_mul_KS_trunc(unsigned long length, unsigned long bits, void* arg, unsigned long count)
 {
    zmod_poly_t pol1, pol2, res1;
-   unsigned long modulus;
+   unsigned long modulus = 2;
       
    zmod_poly_init(pol1, modulus);
    zmod_poly_init(pol2, modulus);
@@ -379,7 +379,7 @@ void profDriver_zmod_poly_mul_KS_trunc(char* params)
 void sample_zmod_poly_mul_classical(unsigned long length, unsigned long bits, void* arg, unsigned long count)
 {
    zmod_poly_t pol1, pol2, res1;
-   unsigned long modulus;
+   unsigned long modulus = 2;
       
    zmod_poly_init(pol1, modulus);
    zmod_poly_init(pol2, modulus);
@@ -476,7 +476,7 @@ void profDriver_zmod_poly_mul_classical(char* params)
 void sample_zmod_poly_mul_classical_trunc(unsigned long length, unsigned long bits, void* arg, unsigned long count)
 {
    zmod_poly_t pol1, pol2, res1;
-   unsigned long modulus;
+   unsigned long modulus = 2;
       
    zmod_poly_init(pol1, modulus);
    zmod_poly_init(pol2, modulus);
@@ -573,7 +573,7 @@ void profDriver_zmod_poly_mul_classical_trunc(char* params)
 void sample_zmod_poly_mul_classical_trunc_left(unsigned long length, unsigned long bits, void* arg, unsigned long count)
 {
    zmod_poly_t pol1, pol2, res1;
-   unsigned long modulus;
+   unsigned long modulus = 2;
       
    zmod_poly_init(pol1, modulus);
    zmod_poly_init(pol2, modulus);
@@ -670,7 +670,7 @@ void profDriver_zmod_poly_mul_classical_trunc_left(char* params)
 void sample_zmod_poly_sqr_KS(unsigned long length, unsigned long bits, void* arg, unsigned long count)
 {
    zmod_poly_t pol1, res1;
-   unsigned long modulus;
+   unsigned long modulus = 2;
       
    zmod_poly_init(pol1, modulus);
    zmod_poly_init(res1, modulus);
@@ -762,7 +762,7 @@ void profDriver_zmod_poly_sqr_KS(char* params)
 void sample_zmod_poly_sqr_classical(unsigned long length, unsigned long bits, void* arg, unsigned long count)
 {
    zmod_poly_t pol1, res1;
-   unsigned long modulus;
+   unsigned long modulus = 2;
       
    zmod_poly_init(pol1, modulus);
    zmod_poly_init(res1, modulus);
@@ -885,8 +885,8 @@ void sample_zmod_poly_factor(unsigned long length, unsigned long bits, void* arg
          zmod_poly_init(pol2, modulus);
          zmod_poly_init(res1, modulus);
 
-         randpoly(pol1, length, modulus);
-         randpoly(pol2, length, modulus);
+			do {randpoly(pol1, length, modulus); } while (pol1->length == 0);
+			do {randpoly(pol2, length, modulus); } while (pol2->length == 0);
 
 			zmod_poly_mul(res1, pol1, pol2);
       }
@@ -896,7 +896,7 @@ void sample_zmod_poly_factor(unsigned long length, unsigned long bits, void* arg
 #endif
    
       prof_start();
-      zmod_poly_factor_berlekamp(factors, res1);
+      zmod_poly_factor(factors, res1);
       prof_stop();
       zmod_poly_factor_clear(factors);
 	
@@ -958,7 +958,7 @@ void profDriver_zmod_poly_factor(char* params)
 void sample_zmod_poly_div(unsigned long length, unsigned long bits, void* arg, unsigned long count)
 {
    zmod_poly_t pol1, pol2, res1, res2;
-   unsigned long modulus;
+   unsigned long modulus = 2;
       
    zmod_poly_init(pol1, modulus);
    zmod_poly_init(pol2, modulus);
@@ -1054,10 +1054,450 @@ void profDriver_zmod_poly_div(char* params)
 
 //==================================================================================
 
+void sample_zmod_poly_divrem(unsigned long length, unsigned long bits, void* arg, unsigned long count)
+{
+   zmod_poly_t pol1, pol2, res1, res2, res3;
+   unsigned long modulus = 2;
+      
+   zmod_poly_init(pol1, modulus);
+   zmod_poly_init(pol2, modulus);
+   zmod_poly_init(res1, modulus);
+   zmod_poly_init(res2, modulus);
+   zmod_poly_init(res3, modulus);
+    
+   unsigned long r_count;    // how often to generate new random data
+   
+   if (count >= 1000) r_count = 100;
+   else if (count >= 100) r_count = 10;
+   else if (count >= 20) r_count = 5;
+   else if (count >= 8) r_count = 2;
+   else r_count = 1;
+     
+   for (unsigned long count2 = 0; count2 < count; count2++)
+   {     
+                
+      if (count2 % r_count == 0)
+      {
+         modulus = z_nextprime(z_randbits(bits), 0);
+			
+         zmod_poly_clear(pol1);
+         zmod_poly_clear(pol2);
+         zmod_poly_clear(res1);  
+         
+         zmod_poly_init(pol1, modulus);
+         zmod_poly_init(pol2, modulus);
+         zmod_poly_init(res1, modulus);
+
+         randpoly(pol1, length, modulus);
+			do {randpoly(pol2, length, modulus);} while (pol2->length == 0);
+			zmod_poly_mul(res1, pol1, pol2);
+      }
+        
+#if DEBUG
+      printf("bits = %ld, length = %ld, modulus = %ld\n", bits, length, modulus);
+#endif
+   
+      prof_start();
+		zmod_poly_divrem(res3, res2, res1, pol2);
+      prof_stop();
+      
+   }
+      
+   zmod_poly_clear(pol1);
+   zmod_poly_clear(pol2);
+   zmod_poly_clear(res1);  
+   zmod_poly_clear(res2);  
+   zmod_poly_clear(res3);  
+}
+
+
+char* profDriverString_zmod_poly_divrem(char* params)
+{
+   return
+   "zmod_poly_divrem over various lengths and various bit sizes.\n"
+   "Parameters: n_max, n_ratio.\n";
+}
+
+
+char* profDriverDefaultParams_zmod_poly_divrem()
+{
+   return "4000000 1.2";
+}
+
+
+void profDriver_zmod_poly_divrem(char* params)
+{
+   unsigned long n, n_max, j, old_bits;
+   double n_ratio;
+   sscanf(params, "%ld %lf", &n_max, &n_ratio);
+   unsigned long last_n = 0;
+   
+   prof2d_set_sampler(sample_zmod_poly_divrem);
+   
+   int max_iter = (int) ceil(log((double) n_max) / log(n_ratio));
+      
+   for (unsigned long i = 0; i < max_iter; i++)
+   {
+      n = (unsigned long) floor(pow(n_ratio, i));
+      if (n != last_n)
+      {
+         last_n = n;
+         for (ulong bits = 1, j = 0; bits < FLINT_BITS; j++)
+         {      
+				 prof2d_sample(n, bits, NULL);
+				 old_bits = bits;
+				 while (old_bits == bits) {bits = (ulong) floor(pow(n_ratio, j)); j++;}
+				 j--;
+         }
+      }
+   }
+}
+
+void profDriver_zmod_poly_divrem_single(char* params)
+{
+   unsigned long n, bits;
+   sscanf(params, "%ld %ld", &bits, &n);
+   prof2d_set_sampler(sample_zmod_poly_divrem);
+   
+   prof2d_sample(n, bits, NULL);
+}
+
+//==================================================================================
+
+void sample_zmod_poly_divrem_basecase(unsigned long length, unsigned long bits, void* arg, unsigned long count)
+{
+   zmod_poly_t pol1, pol2, res1, res2, res3;
+   unsigned long modulus = 2;
+      
+   zmod_poly_init(pol1, modulus);
+   zmod_poly_init(pol2, modulus);
+   zmod_poly_init(res1, modulus);
+   zmod_poly_init(res2, modulus);
+   zmod_poly_init(res3, modulus);
+    
+   unsigned long r_count;    // how often to generate new random data
+   
+   if (count >= 1000) r_count = 100;
+   else if (count >= 100) r_count = 10;
+   else if (count >= 20) r_count = 5;
+   else if (count >= 8) r_count = 2;
+   else r_count = 1;
+     
+   for (unsigned long count2 = 0; count2 < count; count2++)
+   {     
+                
+      if (count2 % r_count == 0)
+      {
+         modulus = z_nextprime(z_randbits(bits), 0);
+			
+         zmod_poly_clear(pol1);
+         zmod_poly_clear(pol2);
+         zmod_poly_clear(res1);  
+         
+         zmod_poly_init(pol1, modulus);
+         zmod_poly_init(pol2, modulus);
+         zmod_poly_init(res1, modulus);
+
+         randpoly(pol1, length, modulus);
+			do {randpoly(pol2, length, modulus);} while (pol2->length == 0);
+			zmod_poly_mul(res1, pol1, pol2);
+      }
+        
+#if DEBUG
+      printf("bits = %ld, length = %ld, modulus = %ld\n", bits, length, modulus);
+#endif
+   
+      prof_start();
+		zmod_poly_divrem_basecase(res3, res2, res1, pol2);
+      prof_stop();
+      
+   }
+      
+   zmod_poly_clear(pol1);
+   zmod_poly_clear(pol2);
+   zmod_poly_clear(res1);  
+   zmod_poly_clear(res2);  
+   zmod_poly_clear(res3);  
+}
+
+
+char* profDriverString_zmod_poly_divrem_basecase(char* params)
+{
+   return
+   "zmod_poly_divrem_basecase over various lengths and various bit sizes.\n"
+   "Parameters: n_max, n_ratio.\n";
+}
+
+
+char* profDriverDefaultParams_zmod_poly_divrem_basecase()
+{
+   return "4000000 1.2";
+}
+
+
+void profDriver_zmod_poly_divrem_basecase(char* params)
+{
+   unsigned long n, n_max, j, old_bits;
+   double n_ratio;
+   sscanf(params, "%ld %lf", &n_max, &n_ratio);
+   unsigned long last_n = 0;
+   
+   prof2d_set_sampler(sample_zmod_poly_divrem_basecase);
+   
+   int max_iter = (int) ceil(log((double) n_max) / log(n_ratio));
+      
+   for (unsigned long i = 0; i < max_iter; i++)
+   {
+      n = (unsigned long) floor(pow(n_ratio, i));
+      if (n != last_n)
+      {
+         last_n = n;
+         for (ulong bits = 1, j = 0; bits < FLINT_BITS; j++)
+         {      
+				 prof2d_sample(n, bits, NULL);
+				 old_bits = bits;
+				 while (old_bits == bits) {bits = (ulong) floor(pow(n_ratio, j)); j++;}
+				 j--;
+         }
+      }
+   }
+}
+
+void profDriver_zmod_poly_divrem_basecase_single(char* params)
+{
+   unsigned long n, bits;
+   sscanf(params, "%ld %ld", &bits, &n);
+   prof2d_set_sampler(sample_zmod_poly_divrem_basecase);
+   
+   prof2d_sample(n, bits, NULL);
+}
+
+//==================================================================================
+
+void sample_zmod_poly_divrem_divconquer(unsigned long length, unsigned long bits, void* arg, unsigned long count)
+{
+   zmod_poly_t pol1, pol2, res1, res2, res3;
+   unsigned long modulus = 2;
+      
+   zmod_poly_init(pol1, modulus);
+   zmod_poly_init(pol2, modulus);
+   zmod_poly_init(res1, modulus);
+   zmod_poly_init(res2, modulus);
+   zmod_poly_init(res3, modulus);
+    
+   unsigned long r_count;    // how often to generate new random data
+   
+   if (count >= 1000) r_count = 100;
+   else if (count >= 100) r_count = 10;
+   else if (count >= 20) r_count = 5;
+   else if (count >= 8) r_count = 2;
+   else r_count = 1;
+     
+   for (unsigned long count2 = 0; count2 < count; count2++)
+   {     
+                
+      if (count2 % r_count == 0)
+      {
+         modulus = z_nextprime(z_randbits(bits), 0);
+			
+         zmod_poly_clear(pol1);
+         zmod_poly_clear(pol2);
+         zmod_poly_clear(res1);  
+         
+         zmod_poly_init(pol1, modulus);
+         zmod_poly_init(pol2, modulus);
+         zmod_poly_init(res1, modulus);
+
+         randpoly(pol1, length, modulus);
+			do {randpoly(pol2, length, modulus);} while (pol2->length == 0);
+			zmod_poly_mul(res1, pol1, pol2);
+      }
+        
+#if DEBUG
+      printf("bits = %ld, length = %ld, modulus = %ld\n", bits, length, modulus);
+#endif
+   
+      prof_start();
+		zmod_poly_divrem_divconquer(res3, res2, res1, pol2);
+      prof_stop();
+      
+   }
+      
+   zmod_poly_clear(pol1);
+   zmod_poly_clear(pol2);
+   zmod_poly_clear(res1);  
+   zmod_poly_clear(res2);  
+   zmod_poly_clear(res3);  
+}
+
+
+char* profDriverString_zmod_poly_divrem_divconquer(char* params)
+{
+   return
+   "zmod_poly_divrem_divconquer over various lengths and various bit sizes.\n"
+   "Parameters: n_max, n_ratio.\n";
+}
+
+
+char* profDriverDefaultParams_zmod_poly_divrem_divconquer()
+{
+   return "4000000 1.2";
+}
+
+
+void profDriver_zmod_poly_divrem_divconquer(char* params)
+{
+   unsigned long n, n_max, j, old_bits;
+   double n_ratio;
+   sscanf(params, "%ld %lf", &n_max, &n_ratio);
+   unsigned long last_n = 0;
+   
+   prof2d_set_sampler(sample_zmod_poly_divrem_divconquer);
+   
+   int max_iter = (int) ceil(log((double) n_max) / log(n_ratio));
+      
+   for (unsigned long i = 0; i < max_iter; i++)
+   {
+      n = (unsigned long) floor(pow(n_ratio, i));
+      if (n != last_n)
+      {
+         last_n = n;
+         for (ulong bits = 1, j = 0; bits < FLINT_BITS; j++)
+         {      
+				 prof2d_sample(n, bits, NULL);
+				 old_bits = bits;
+				 while (old_bits == bits) {bits = (ulong) floor(pow(n_ratio, j)); j++;}
+				 j--;
+         }
+      }
+   }
+}
+
+void profDriver_zmod_poly_divrem_divconquer_single(char* params)
+{
+   unsigned long n, bits;
+   sscanf(params, "%ld %ld", &bits, &n);
+   prof2d_set_sampler(sample_zmod_poly_divrem_divconquer);
+   
+   prof2d_sample(n, bits, NULL);
+}
+
+//==================================================================================
+
+void sample_zmod_poly_divrem_newton(unsigned long length, unsigned long bits, void* arg, unsigned long count)
+{
+   zmod_poly_t pol1, pol2, res1, res2, res3;
+   unsigned long modulus = 2;
+      
+   zmod_poly_init(pol1, modulus);
+   zmod_poly_init(pol2, modulus);
+   zmod_poly_init(res1, modulus);
+   zmod_poly_init(res2, modulus);
+   zmod_poly_init(res3, modulus);
+    
+   unsigned long r_count;    // how often to generate new random data
+   
+   if (count >= 1000) r_count = 100;
+   else if (count >= 100) r_count = 10;
+   else if (count >= 20) r_count = 5;
+   else if (count >= 8) r_count = 2;
+   else r_count = 1;
+     
+   for (unsigned long count2 = 0; count2 < count; count2++)
+   {     
+                
+      if (count2 % r_count == 0)
+      {
+         modulus = z_nextprime(z_randbits(bits), 0);
+			
+         zmod_poly_clear(pol1);
+         zmod_poly_clear(pol2);
+         zmod_poly_clear(res1);  
+         
+         zmod_poly_init(pol1, modulus);
+         zmod_poly_init(pol2, modulus);
+         zmod_poly_init(res1, modulus);
+
+         randpoly(pol1, length, modulus);
+			do {randpoly(pol2, length, modulus);} while (pol2->length == 0);
+			zmod_poly_mul(res1, pol1, pol2);
+      }
+        
+#if DEBUG
+      printf("bits = %ld, length = %ld, modulus = %ld\n", bits, length, modulus);
+#endif
+   
+      prof_start();
+		zmod_poly_divrem_newton(res3, res2, res1, pol2);
+      prof_stop();
+      
+   }
+      
+   zmod_poly_clear(pol1);
+   zmod_poly_clear(pol2);
+   zmod_poly_clear(res1);  
+   zmod_poly_clear(res2);  
+   zmod_poly_clear(res3);  
+}
+
+
+char* profDriverString_zmod_poly_divrem_newton(char* params)
+{
+   return
+   "zmod_poly_divrem_newton over various lengths and various bit sizes.\n"
+   "Parameters: n_max, n_ratio.\n";
+}
+
+
+char* profDriverDefaultParams_zmod_poly_divrem_newton()
+{
+   return "4000000 1.2";
+}
+
+
+void profDriver_zmod_poly_divrem_newton(char* params)
+{
+   unsigned long n, n_max, j, old_bits;
+   double n_ratio;
+   sscanf(params, "%ld %lf", &n_max, &n_ratio);
+   unsigned long last_n = 0;
+   
+   prof2d_set_sampler(sample_zmod_poly_divrem_newton);
+   
+   int max_iter = (int) ceil(log((double) n_max) / log(n_ratio));
+      
+   for (unsigned long i = 0; i < max_iter; i++)
+   {
+      n = (unsigned long) floor(pow(n_ratio, i));
+      if (n != last_n)
+      {
+         last_n = n;
+         for (ulong bits = 1, j = 0; bits < FLINT_BITS; j++)
+         {      
+				 prof2d_sample(n, bits, NULL);
+				 old_bits = bits;
+				 while (old_bits == bits) {bits = (ulong) floor(pow(n_ratio, j)); j++;}
+				 j--;
+         }
+      }
+   }
+}
+
+void profDriver_zmod_poly_divrem_newton_single(char* params)
+{
+   unsigned long n, bits;
+   sscanf(params, "%ld %ld", &bits, &n);
+   prof2d_set_sampler(sample_zmod_poly_divrem_newton);
+   
+   prof2d_sample(n, bits, NULL);
+}
+
+//==================================================================================
+
 void sample_zmod_poly_gcd(unsigned long length, unsigned long bits, void* arg, unsigned long count)
 {
    zmod_poly_t pol1, pol2, pol3, res1;
-   unsigned long modulus;
+   unsigned long modulus = 2;
       
    zmod_poly_init(pol1, modulus);
    zmod_poly_init(pol2, modulus);
@@ -1077,7 +1517,7 @@ void sample_zmod_poly_gcd(unsigned long length, unsigned long bits, void* arg, u
                 
       if (count2 % r_count == 0)
       {
-         modulus = z_nextprime(z_randbits(bits), 0);
+         modulus = z_nextprime(z_randbits(bits) | (1L<<(bits-1)), 0);
 			
          zmod_poly_clear(pol1);
          zmod_poly_clear(pol2);
@@ -1126,7 +1566,6 @@ char* profDriverDefaultParams_zmod_poly_gcd()
    return "1000000 1.2";
 }
 
-
 void profDriver_zmod_poly_gcd(char* params)
 {
    unsigned long n, n_max, j, old_bits;
@@ -1153,6 +1592,242 @@ void profDriver_zmod_poly_gcd(char* params)
          }
       }
    }
+}
+
+void profDriver_zmod_poly_gcd_single(char* params)
+{
+   unsigned long bits, n;
+   sscanf(params, "%ld %ld", &n, &bits);
+   
+   prof2d_set_sampler(sample_zmod_poly_gcd);
+   
+   prof2d_sample(n, bits, NULL);
+}
+
+//==================================================================================
+
+void sample_zmod_poly_gcd_euclidean(unsigned long length, unsigned long bits, void* arg, unsigned long count)
+{
+   zmod_poly_t pol1, pol2, pol3, res1;
+   unsigned long modulus = 2;
+      
+   zmod_poly_init(pol1, modulus);
+   zmod_poly_init(pol2, modulus);
+   zmod_poly_init(pol3, modulus);
+   zmod_poly_init(res1, modulus);
+    
+   unsigned long r_count;    // how often to generate new random data
+   
+   if (count >= 1000) r_count = 100;
+   else if (count >= 100) r_count = 10;
+   else if (count >= 20) r_count = 5;
+   else if (count >= 8) r_count = 2;
+   else r_count = 1;
+     
+   for (unsigned long count2 = 0; count2 < count; count2++)
+   {     
+                
+      if (count2 % r_count == 0)
+      {
+         modulus = z_nextprime(z_randbits(bits), 0);
+			
+         zmod_poly_clear(pol1);
+         zmod_poly_clear(pol2);
+         zmod_poly_clear(pol3);
+         zmod_poly_clear(res1);  
+         
+         zmod_poly_init(pol1, modulus);
+         zmod_poly_init(pol2, modulus);
+         zmod_poly_init(pol3, modulus);
+         zmod_poly_init(res1, modulus);
+         
+         randpoly(pol1, length, modulus);
+			randpoly(pol2, length, modulus);
+			randpoly(pol3, length, modulus);
+			zmod_poly_mul(pol1, pol1, pol3);
+			zmod_poly_mul(pol2, pol2, pol3);
+      }
+        
+#if DEBUG
+      printf("bits = %ld, length = %ld, modulus = %ld\n", bits, length, modulus);
+#endif
+   
+      prof_start();
+		zmod_poly_gcd_euclidean(res1, pol1, pol2);
+      prof_stop();
+      
+   }
+      
+   zmod_poly_clear(pol1);
+   zmod_poly_clear(pol2);
+   zmod_poly_clear(pol3);
+   zmod_poly_clear(res1);  
+}
+
+
+char* profDriverString_zmod_poly_gcd_euclidean(char* params)
+{
+   return
+   "zmod_poly_gcd_euclidean over various lengths and various bit sizes.\n"
+   "Parameters: n_max, n_ratio.\n";
+}
+
+
+char* profDriverDefaultParams_zmod_poly_gcd_euclidean()
+{
+   return "1000000 1.2";
+}
+
+
+void profDriver_zmod_poly_gcd_euclidean(char* params)
+{
+   unsigned long n, n_max, j, old_bits;
+   double n_ratio;
+   sscanf(params, "%ld %lf", &n_max, &n_ratio);
+   unsigned long last_n = 0;
+   
+   prof2d_set_sampler(sample_zmod_poly_gcd);
+   
+   int max_iter = (int) ceil(log((double) n_max) / log(n_ratio));
+      
+   for (unsigned long i = 0; i < max_iter; i++)
+   {
+      n = (unsigned long) floor(pow(n_ratio, i));
+      if (n != last_n)
+      {
+         last_n = n;
+         for (ulong bits = 1, j = 0; bits < FLINT_BITS; j++)
+         {      
+				 prof2d_sample(n, bits, NULL);
+				 old_bits = bits;
+				 while (old_bits == bits) {bits = (ulong) floor(pow(n_ratio, j)); j++;}
+				 j--;
+         }
+      }
+   }
+}
+
+void profDriver_zmod_poly_gcd_euclidean_single(char* params)
+{
+   unsigned long bits, n;
+   sscanf(params, "%ld %ld", &n, &bits);
+   
+   prof2d_set_sampler(sample_zmod_poly_gcd_euclidean);
+   
+   prof2d_sample(n, bits, NULL);
+}
+
+//==================================================================================
+
+void sample_zmod_poly_gcd_hgcd(unsigned long length, unsigned long bits, void* arg, unsigned long count)
+{
+   zmod_poly_t pol1, pol2, pol3, res1;
+   unsigned long modulus = 2;
+      
+   zmod_poly_init(pol1, modulus);
+   zmod_poly_init(pol2, modulus);
+   zmod_poly_init(pol3, modulus);
+   zmod_poly_init(res1, modulus);
+    
+   unsigned long r_count;    // how often to generate new random data
+   
+   if (count >= 1000) r_count = 100;
+   else if (count >= 100) r_count = 10;
+   else if (count >= 20) r_count = 5;
+   else if (count >= 8) r_count = 2;
+   else r_count = 1;
+     
+   for (unsigned long count2 = 0; count2 < count; count2++)
+   {     
+                
+      if (count2 % r_count == 0)
+      {
+         modulus = z_nextprime(z_randbits(bits), 0);
+			
+         zmod_poly_clear(pol1);
+         zmod_poly_clear(pol2);
+         zmod_poly_clear(pol3);
+         zmod_poly_clear(res1);  
+         
+         zmod_poly_init(pol1, modulus);
+         zmod_poly_init(pol2, modulus);
+         zmod_poly_init(pol3, modulus);
+         zmod_poly_init(res1, modulus);
+         
+         randpoly(pol1, length, modulus);
+			randpoly(pol2, length, modulus);
+			randpoly(pol3, length, modulus);
+			zmod_poly_mul(pol1, pol1, pol3);
+			zmod_poly_mul(pol2, pol2, pol3);
+      }
+        
+#if DEBUG
+      printf("bits = %ld, length = %ld, modulus = %ld\n", bits, length, modulus);
+#endif
+   
+      prof_start();
+		zmod_poly_gcd_hgcd(res1, pol1, pol2);
+      prof_stop();
+      
+   }
+      
+   zmod_poly_clear(pol1);
+   zmod_poly_clear(pol2);
+   zmod_poly_clear(pol3);
+   zmod_poly_clear(res1);  
+}
+
+
+char* profDriverString_zmod_poly_gcd_hgcd(char* params)
+{
+   return
+   "zmod_poly_gcd_hgcd over various lengths and various bit sizes.\n"
+   "Parameters: n_max, n_ratio.\n";
+}
+
+
+char* profDriverDefaultParams_zmod_poly_gcd_hgcd()
+{
+   return "1000000 1.2";
+}
+
+
+void profDriver_zmod_poly_gcd_hgcd(char* params)
+{
+   unsigned long n, n_max, j, old_bits;
+   double n_ratio;
+   sscanf(params, "%ld %lf", &n_max, &n_ratio);
+   unsigned long last_n = 0;
+   
+   prof2d_set_sampler(sample_zmod_poly_gcd);
+   
+   int max_iter = (int) ceil(log((double) n_max) / log(n_ratio));
+      
+   for (unsigned long i = 0; i < max_iter; i++)
+   {
+      n = (unsigned long) floor(pow(n_ratio, i));
+      if (n != last_n)
+      {
+         last_n = n;
+         for (ulong bits = 1, j = 0; bits < FLINT_BITS; j++)
+         {      
+				 prof2d_sample(n, bits, NULL);
+				 old_bits = bits;
+				 while (old_bits == bits) {bits = (ulong) floor(pow(n_ratio, j)); j++;}
+				 j--;
+         }
+      }
+   }
+}
+
+void profDriver_zmod_poly_gcd_hgcd_single(char* params)
+{
+   unsigned long bits, n;
+   sscanf(params, "%ld %ld", &n, &bits);
+   
+   prof2d_set_sampler(sample_zmod_poly_gcd_hgcd);
+   
+   prof2d_sample(n, bits, NULL);
 }
 
 //==================================================================================

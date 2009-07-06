@@ -161,7 +161,7 @@ ratios.sort()
 
 pylab.scatter([x for (x, y, z) in ratios], [y for (x, y, z) in ratios],
               c = [z for (x, y, z) in ratios], vmin=-1.0, vmax=1.0,
-              s = CONFIG_dotsize, faceted=False, cmap = cmap)
+              s = CONFIG_dotsize, edgecolors='none', cmap = cmap)
 
 
 

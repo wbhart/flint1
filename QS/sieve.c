@@ -283,13 +283,13 @@ cleanup:
 unsigned long tiny_evaluate_sieve(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve)
 {
    unsigned long i = 0;
-   unsigned long j=0;
+   unsigned long j = 0;
    unsigned long * sieve2 = (unsigned long *) sieve;
    unsigned long rels = 0;
      
    while (j < SIEVE_SIZE/sizeof(unsigned long))
    {
-      while (!(sieve2[j] & 0xE0E0E0E0E0E0E0E0U)) j++;
+      while (!(sieve2[j] & 0xE0E0E0E0E0E0E0E0UL)) j++;
       i = j*sizeof(unsigned long);
       while ((i < (j+1)*sizeof(unsigned long)) && (i < SIEVE_SIZE))
       {

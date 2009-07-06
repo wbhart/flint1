@@ -1918,6 +1918,94 @@ int test_F_mpz_sgn()
    return result;
 }
 
+int test_F_mpz_cmp()
+{
+   mpz_t m1, m2;
+   F_mpz_t f1, f2;
+   int result = 1;
+   ulong bits1, bits2;
+	int m_cmp, f_cmp;
+   
+   mpz_init(m1); 
+   mpz_init(m2); 
+   
+   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   {
+      F_mpz_init2(f1, z_randint(10));
+      F_mpz_init2(f2, z_randint(10));
+
+      bits1 = z_randint(500) + 1;
+      bits2 = z_randint(500) + 1;
+      F_mpz_test_random(f1, bits1);
+      F_mpz_test_random(f2, bits2);
+      
+		F_mpz_get_mpz(m1, f1);
+      F_mpz_get_mpz(m2, f2);
+
+		m_cmp = mpz_cmp(m1, m2);
+     
+		f_cmp = F_mpz_cmp(f1, f2);
+          
+      result = (((m_cmp == 0) && (f_cmp == 0)) || ((m_cmp > 0) && (f_cmp > 0)) || ((m_cmp < 0) && (f_cmp < 0))); 
+		if (!result) 
+		{
+			printf("Error: bits1 = %ld, bits2 = %ld, m_cmp = %d, f_cmp = %d\n", bits1, bits2, m_cmp, f_cmp);
+		}
+          
+      F_mpz_clear(f1);
+      F_mpz_clear(f2);
+   }
+   
+   mpz_clear(m1);
+   mpz_clear(m2);
+   
+   return result;
+}
+
+int test_F_mpz_cmpabs()
+{
+   mpz_t m1, m2;
+   F_mpz_t f1, f2;
+   int result = 1;
+   ulong bits1, bits2;
+	int m_cmp, f_cmp;
+   
+   mpz_init(m1); 
+   mpz_init(m2); 
+   
+   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   {
+      F_mpz_init2(f1, z_randint(10));
+      F_mpz_init2(f2, z_randint(10));
+
+      bits1 = z_randint(500) + 1;
+      bits2 = z_randint(500) + 1;
+      F_mpz_test_random(f1, bits1);
+      F_mpz_test_random(f2, bits2);
+      
+		F_mpz_get_mpz(m1, f1);
+      F_mpz_get_mpz(m2, f2);
+
+		m_cmp = mpz_cmpabs(m1, m2);
+     
+		f_cmp = F_mpz_cmpabs(f1, f2);
+          
+      result = (((m_cmp == 0) && (f_cmp == 0)) || ((m_cmp > 0) && (f_cmp > 0)) || ((m_cmp < 0) && (f_cmp < 0))); 
+		if (!result) 
+		{
+			printf("Error: bits1 = %ld, bits2 = %ld, m_cmp = %d, f_cmp = %d\n", bits1, bits2, m_cmp, f_cmp);
+		}
+          
+      F_mpz_clear(f1);
+      F_mpz_clear(f2);
+   }
+   
+   mpz_clear(m1);
+   mpz_clear(m2);
+   
+   return result;
+}
+
 int test_F_mpz_bits()
 {
    mpz_t m1;
@@ -1985,6 +2073,8 @@ void F_mpz_poly_test_all()
    RUN_TEST(F_mpz_submul); 
    RUN_TEST(F_mpz_size);
 	RUN_TEST(F_mpz_sgn);
+	RUN_TEST(F_mpz_cmp);
+	RUN_TEST(F_mpz_cmpabs);
 	RUN_TEST(F_mpz_bits); 
     
 	

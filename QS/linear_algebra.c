@@ -121,7 +121,7 @@ int tiny_relations_cmp(const void *a, const void *b)
   if (ra->weight > rb->weight) return 1;
   else if (ra->weight < rb->weight) return -1;
   
-  for (point = ra->weight-1; (ra->data[point] == rb->data[point]) && (point >= 0); point--)
+  for (point = ra->weight-1; (point >= 0L) && (ra->data[point] == rb->data[point]); point--)
   {
       ;
   }
@@ -136,12 +136,11 @@ int tiny_relations_cmp2(const void *a, const void *b)
 {
   la_col_t * ra = (la_col_t *) a;
   la_col_t * rb = (la_col_t *) b;
-  if (!ra->weight) printf("ra error\n");
   long point;
   if (ra->weight > rb->weight) return 1;
   else if (ra->weight < rb->weight) return -1;
   
-  for (point = ra->weight-1; (ra->data[point] == rb->data[point]) && (point >= 0); point--)
+  for (point = ra->weight-1; (point >= 0L) && (ra->data[point] == rb->data[point]); point--)
   {
       ;
   }

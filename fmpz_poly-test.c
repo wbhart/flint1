@@ -30,9 +30,9 @@ Copyright (C) 2007, William Hart and David Harvey
 #include <gmp.h>
 #include <time.h>
 
-#if !defined(__CYGWIN__)
+/*#if !defined(__CYGWIN__)
 #include <omp.h>
-#endif
+#endif*/
 
 #include "flint.h"
 #include "mpz_poly.h"
@@ -3702,7 +3702,7 @@ int test__fmpz_poly_mul_classical()
           mpz_poly_to_fmpz_poly(test_fmpz_poly, test_poly);
           mpz_poly_to_fmpz_poly(test_fmpz_poly2, test_poly2);
           
-          mpz_poly_mul_naive(test_poly3, test_poly, test_poly2);
+          mpz_poly_mul_classical(test_poly3, test_poly, test_poly2);
           
           mpz_poly_init(test_poly4);
           fmpz_poly_init2(test_fmpz_poly3, length+length2-1, (bits+bits2-1)/FLINT_BITS+2);
@@ -3742,7 +3742,7 @@ int test__fmpz_poly_mul_classical()
 #if DEBUG
       mpz_poly_print(test_poly);printf("\n");
 #endif          
-      mpz_poly_mul_naive(test_poly3, test_poly, test_poly);
+      mpz_poly_mul_classical(test_poly3, test_poly, test_poly);
           
       mpz_poly_init(test_poly4);
       if (length) fmpz_poly_init2(test_fmpz_poly3, 2*length-1, 2*test_fmpz_poly->limbs+1); //(output_bits-1)/FLINT_BITS+1);
@@ -3791,7 +3791,7 @@ int test__fmpz_poly_mul_classical()
           mpz_poly_to_fmpz_poly(test_fmpz_poly, test_poly);
           mpz_poly_to_fmpz_poly(test_fmpz_poly2, test_poly2);
           
-          mpz_poly_mul_naive(test_poly3, test_poly, test_poly2);
+          mpz_poly_mul_classical(test_poly3, test_poly, test_poly2);
           
           mpz_poly_init(test_poly4);
           fmpz_poly_fit_length(test_fmpz_poly, length+length2-1);
@@ -3834,7 +3834,7 @@ int test__fmpz_poly_mul_classical()
           mpz_poly_to_fmpz_poly(test_fmpz_poly, test_poly);
           mpz_poly_to_fmpz_poly(test_fmpz_poly2, test_poly2);
           
-          mpz_poly_mul_naive(test_poly3, test_poly, test_poly2);
+          mpz_poly_mul_classical(test_poly3, test_poly, test_poly2);
           
           mpz_poly_init(test_poly4);
           fmpz_poly_fit_length(test_fmpz_poly2, length+length2-1);
@@ -4236,7 +4236,7 @@ int test__fmpz_poly_mul_karatsuba()
       mpz_poly_print(test_poly);printf("\n");
       mpz_poly_print(test_poly2);printf("\n");
 #endif          
-      mpz_poly_mul_naive(test_poly3, test_poly, test_poly2);
+      mpz_poly_mul_classical(test_poly3, test_poly, test_poly2);
           
       mpz_poly_init(test_poly4);
       if (length + length2) fmpz_poly_init2(test_fmpz_poly3, length+length2-1, test_fmpz_poly->limbs+test_fmpz_poly2->limbs+1); //(output_bits-1)/FLINT_BITS+1);
@@ -4283,7 +4283,7 @@ int test__fmpz_poly_mul_karatsuba()
 #if DEBUG
       mpz_poly_print(test_poly);printf("\n");
 #endif          
-      mpz_poly_mul_naive(test_poly3, test_poly, test_poly);
+      mpz_poly_mul_classical(test_poly3, test_poly, test_poly);
           
       mpz_poly_init(test_poly4);
       if (length) fmpz_poly_init2(test_fmpz_poly3, 2*length-1, 2*test_fmpz_poly->limbs+1); //(output_bits-1)/FLINT_BITS+1);
@@ -4339,7 +4339,7 @@ int test__fmpz_poly_mul_karatsuba()
       mpz_poly_print(test_poly);printf("\n");
       mpz_poly_print(test_poly2);printf("\n");
 #endif          
-      mpz_poly_mul_naive(test_poly3, test_poly, test_poly2);
+      mpz_poly_mul_classical(test_poly3, test_poly, test_poly2);
           
       mpz_poly_init(test_poly4);
       if (length + length2) 
@@ -4395,7 +4395,7 @@ int test__fmpz_poly_mul_karatsuba()
       mpz_poly_print(test_poly);printf("\n");
       mpz_poly_print(test_poly2);printf("\n");
 #endif          
-      mpz_poly_mul_naive(test_poly3, test_poly, test_poly2);
+      mpz_poly_mul_classical(test_poly3, test_poly, test_poly2);
           
       mpz_poly_init(test_poly4);
       if (length + length2) 
@@ -7848,7 +7848,7 @@ int test_fmpz_poly_scalar_mul_mpz()
    return result; 
 }
 
-int test_fmpz_poly_div_classical()
+int test_fmpz_poly_div_basecase()
 {
    mpz_poly_t test_poly, test_poly2, test_poly3, test_poly4;
    fmpz_poly_t test_fmpz_poly, test_fmpz_poly2, test_fmpz_poly3, test_fmpz_poly4;
@@ -7905,12 +7905,12 @@ int test_fmpz_poly_div_classical()
       
       for (unsigned long i = 1; i < 5; i++)
       {
-         fmpz_poly_div_classical(test_fmpz_poly4, test_fmpz_poly3, test_fmpz_poly);
+         fmpz_poly_div_basecase(test_fmpz_poly4, test_fmpz_poly3, test_fmpz_poly);
          fmpz_poly_check_normalisation(test_fmpz_poly4);
          fmpz_poly_clear(test_fmpz_poly4);
          fmpz_poly_init(test_fmpz_poly4);
       }
-      fmpz_poly_div_classical(test_fmpz_poly4, test_fmpz_poly3, test_fmpz_poly);
+      fmpz_poly_div_basecase(test_fmpz_poly4, test_fmpz_poly3, test_fmpz_poly);
       _fmpz_poly_normalise(test_fmpz_poly4);
       
       fmpz_poly_to_mpz_poly(test_poly4, test_fmpz_poly4);
@@ -7934,7 +7934,7 @@ int test_fmpz_poly_div_classical()
    return result; 
 }
 
-int test_fmpz_poly_divrem_classical()
+int test_fmpz_poly_divrem_basecase()
 {
    mpz_poly_t test_poly, test_poly2, test_poly3, test_poly4;
    fmpz_poly_t test_fmpz_poly, test_fmpz_poly2, test_fmpz_poly3, test_fmpz_poly4, test_fmpz_poly5;
@@ -7994,14 +7994,14 @@ int test_fmpz_poly_divrem_classical()
       
       for (unsigned long i = 1; i < 5; i++)
       {
-         fmpz_poly_divrem_classical(test_fmpz_poly4, test_fmpz_poly5, test_fmpz_poly3, test_fmpz_poly);
+         fmpz_poly_divrem_basecase(test_fmpz_poly4, test_fmpz_poly5, test_fmpz_poly3, test_fmpz_poly);
          fmpz_poly_check_normalisation(test_fmpz_poly4);
          fmpz_poly_clear(test_fmpz_poly4);
          fmpz_poly_clear(test_fmpz_poly5);
          fmpz_poly_init(test_fmpz_poly4);
          fmpz_poly_init(test_fmpz_poly5);
       }
-      fmpz_poly_divrem_classical(test_fmpz_poly4, test_fmpz_poly5, test_fmpz_poly3, test_fmpz_poly);
+      fmpz_poly_divrem_basecase(test_fmpz_poly4, test_fmpz_poly5, test_fmpz_poly3, test_fmpz_poly);
       
       fmpz_poly_to_mpz_poly(test_poly4, test_fmpz_poly4);
            
@@ -15562,8 +15562,8 @@ void fmpz_poly_test_all()
 	RUN_TEST(fmpz_poly_mul_modular_packed);
    RUN_TEST(_fmpz_poly_mul_modular);
    RUN_TEST(fmpz_poly_mul_modular);
-   RUN_TEST(fmpz_poly_div_classical);
-   RUN_TEST(fmpz_poly_divrem_classical);
+   RUN_TEST(fmpz_poly_div_basecase);
+   RUN_TEST(fmpz_poly_divrem_basecase);
    RUN_TEST(fmpz_poly_div_divconquer_recursive);
    RUN_TEST(fmpz_poly_divrem_divconquer);
    RUN_TEST(fmpz_poly_div_divconquer);

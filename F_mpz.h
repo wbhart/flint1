@@ -143,7 +143,7 @@ void _F_mpz_demote_val(F_mpz_t f);
 
 /** 
    \fn     void F_mpz_init(F_mpz_t f)
-   \brief  Allocate an F_mpz_t. A small F_mpz_t is returned (i.e. not 
+   \brief  Initialise an F_mpz_t. A small F_mpz_t is supplied (i.e. one not 
 	        representing an mpz_t).
 */
 static inline
@@ -183,7 +183,7 @@ void F_mpz_clear(F_mpz_t f)
 void F_mpz_random(F_mpz_t f, const ulong bits);
 
 /** 
-   \fn     void F_mpz_random(F_mpz_t f, const ulong bits)
+   \fn     void F_mpz_randomm(F_mpz_t f, const mpz_t n)
    \brief  Generate a random F_mpz_t in [0, n) where n is an mpz_t.
 */
 void F_mpz_randomm(F_mpz_t f, const mpz_t n);
@@ -207,31 +207,31 @@ void F_mpz_zero(F_mpz_t f)
 
 /** 
    \fn     void F_mpz_set_si(F_mpz_t f, const long val)
-   \brief  Set f to a signed long value val
+   \brief  Set f to a signed long value val.
 */
 void F_mpz_set_si(F_mpz_t f, const long val);
 
 /** 
    \fn     void F_mpz_set_ui(F_mpz_t f, const ulong val)
-   \brief  Set f to an unsigned long value val
+   \brief  Set f to an unsigned long value val.
 */
 void F_mpz_set_ui(F_mpz_t f, const ulong val);
 
 /** 
    \fn     long F_mpz_get_si(const F_mpz_t f)
-   \brief  Return the value of f as a long
+   \brief  Return the value of f as a long.
 */
 long F_mpz_get_si(const F_mpz_t f);
 
 /** 
    \fn     long F_mpz_get_ui(const F_mpz_t f)
-   \brief  Return the value of f as an unsigned long
+   \brief  Return the value of f as an unsigned long.
 */
 ulong F_mpz_get_ui(const F_mpz_t f);
 
 /** 
    \fn     void F_mpz_get_mpz(mpz_t x, const F_mpz_t f)
-   \brief  Returns f as an mpz_t
+   \brief  Returns f as an mpz_t.
 */
 void F_mpz_get_mpz(mpz_t x, const F_mpz_t f);
 
@@ -243,7 +243,7 @@ double F_mpz_get_d_2exp(long * exp, const F_mpz_t f);
 
 /** 
    \fn     void F_mpz_set_mpz(F_mpz_t f, const mpz_t x)
-   \brief  Sets f to the given mpz_t
+   \brief  Sets f to the given mpz_t.
 */
 void F_mpz_set_mpz(F_mpz_t f, const mpz_t x);
 
@@ -294,6 +294,13 @@ int F_mpz_equal(const F_mpz_t f, const F_mpz_t g);
 */
 int F_mpz_cmpabs(const F_mpz_t f, const F_mpz_t g);
 
+/** 
+   \fn     int F_mpz_cmp(const F_mpz_t f, const F_mpz_t g)
+   \brief  Returns a negative int if f < g, positive if 
+	        f > g and returns 0 if the two values are equal.
+*/
+int F_mpz_cmp(const F_mpz_t f, const F_mpz_t g);
+
 /*===============================================================================
 
 	Properties
@@ -301,7 +308,7 @@ int F_mpz_cmpabs(const F_mpz_t f, const F_mpz_t g);
 ================================================================================*/
 
 /** 
-   \fn     ulong F_mpz_entry_size(F_mpz_t f)
+   \fn     ulong F_mpz_size(F_mpz_t f)
    \brief  Returns the number of limbs required to store the absolute value of f.
 	        Returns 0 if f is zero.
 */
@@ -355,7 +362,7 @@ void F_mpz_print(F_mpz_t x)
 }
 
 /** 
-   \fn     void F_mpz_print(F_mpz_t x)
+   \fn     void F_mpz_read(F_mpz_t x)
    \brief  Read an F_mpz_t from stdin. The integer can be a signed multiprecision
 	        integer in decimal format.
 */
@@ -375,7 +382,7 @@ void F_mpz_read(F_mpz_t f);
 void F_mpz_neg(F_mpz_t f, const F_mpz_t g);
 
 /** 
-   \fn     void F_mpz_add(F_mpz_t f, const F_mpz_t g, mpz_t h)
+   \fn     void F_mpz_add_mpz(F_mpz_t f, const F_mpz_t g, mpz_t h)
    \brief  Set f to g plus h, where h is an mpz_t. 
 */
 void F_mpz_add_mpz(F_mpz_t f, const F_mpz_t g, mpz_t h);
@@ -400,12 +407,12 @@ void F_mpz_mul_ui(F_mpz_t f, const F_mpz_t g, const ulong x);
 
 /** 
    \fn     void F_mpz_mul_si(F_mpz_t f, const F_mpz_t g, const long x)
-   \brief  Multiply g by the signed long x and f to the result.
+   \brief  Multiply g by the signed long x and set f to the result.
 */
 void F_mpz_mul_si(F_mpz_t f, const F_mpz_t g, const long x);
 
 /** 
-   \fn     void F_mpz_mul(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
+   \fn     void F_mpz_mul2(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
    \brief  Multiply g by h and set f to the result.
 */
 void F_mpz_mul2(F_mpz_t f, const F_mpz_t g, const F_mpz_t h);

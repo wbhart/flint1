@@ -473,6 +473,29 @@ int F_mpz_cmpabs(const F_mpz_t f, const F_mpz_t g)
 	else return mpz_cmpabs(F_mpz_arr + COEFF_TO_OFF(*f), F_mpz_arr + COEFF_TO_OFF(*g)); 
 }
 
+int F_mpz_cmp(const F_mpz_t f, const F_mpz_t g)
+{
+	if (f == g) return 0; // aliased inputs
+	
+	if (!COEFF_IS_MPZ(*f)) 
+	{
+		if (!COEFF_IS_MPZ(*g)) // both coeffs small
+		{
+         if (*f < *g) return -1;
+			else return (*f > *g);
+		} else // f is small, g is large 
+		{
+			if (mpz_sgn(F_mpz_arr + COEFF_TO_OFF(*g)) < 0) return 1; // g is a large negative 
+			else return -1; // g is a large positive
+		}
+	} else if (!COEFF_IS_MPZ(*g)) 
+	{
+		if (mpz_sgn(F_mpz_arr + COEFF_TO_OFF(*f)) < 0) return -1; // f is large negative
+		else return 1; // f is large positive
+	} else // both f and g are large 
+		return mpz_cmp(F_mpz_arr + COEFF_TO_OFF(*f), F_mpz_arr + COEFF_TO_OFF(*g)); 
+}
+
 /*===============================================================================
 
 	Properties
@@ -1186,6 +1209,6 @@ void F_mpz_rdiv_q(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
 	F_mpz_div_2exp(h2, h, 1); // h2 = h >> 1
 	F_mpz_add(h2, h2, g); // h2 = g + (h >> 1) 
    F_mpz_fdiv_q(f, h2, h); // f = floor((g + (h >> 1) / h)
-
+   
 	F_mpz_clear(h2);
 }

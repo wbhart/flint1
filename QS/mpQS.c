@@ -254,7 +254,7 @@ unsigned long collect_relations(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly_
 
 ===========================================================================*/
 
-int F_mpz_factor_mpQS(F_mpz_factor_t factors, mpz_t N)
+int F_mpz_factor_mpQS(F_mpz_factor_t * factors, mpz_t N)
 {
    unsigned long small_factor;
    unsigned long rels_found = 0;
@@ -436,11 +436,19 @@ int main(int argc, char *argv[])
     mpz_init(N); 
     
     F_mpz_factor_t factors;
-    
-    printf("Input number to factor [ > 24 bits ] : "); 
+    factors.fact = malloc(64*sizeof(mpz_t));
+    for(int i=0;i<64;i++)
+        mpz_init(factors.fact[i]);
+    factors.num = 0;
+
+    printf("Input number to factor [ >= 27 bits ] : "); 
     gmp_scanf("%Zd", N); getchar();
     
-    F_mpz_factor_mpQS(factors, N);
+    F_mpz_factor_mpQS(&factors, N);
+    
+	 for(int i=0;i<64;i++)
+        mpz_clear(factors.fact[i]);
+    free(factors.fact);
     
     mpz_clear(N);
 }

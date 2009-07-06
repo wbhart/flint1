@@ -37,42 +37,42 @@ CONFIG_dpi = 96
 #------------------------------------------------------------------------------
 # radius of each dot (don't ask me what the units are, I have no idea)
 
-CONFIG_dotsize = 3
+CONFIG_dotsize = 48 
 
 
 #------------------------------------------------------------------------------
 # title at the top of the image
 
-CONFIG_title = None
+CONFIG_title = "FLINT vs Magma Z[x] GCD (Scale = 20)"
 
 
 #------------------------------------------------------------------------------
 # ignore all data points whose minimum and maximum times differ by a factor
 # of more than CONFIG_tolerance
 
-CONFIG_tolerance = 1.05
+CONFIG_tolerance = 1000.0
 
 
 #------------------------------------------------------------------------------
 # xscale and yscale determine the scaling used on each axis.
 # Possible values are None, "log10", "log2"
 
-CONFIG_xscale = None
-CONFIG_yscale = None
+CONFIG_xscale = "log2" 
+CONFIG_yscale = "log2"
 
 
 #------------------------------------------------------------------------------
 # text labels for each axis (None to leave blank)
 
-CONFIG_xlabel = None
-CONFIG_ylabel = None
+CONFIG_xlabel = "Length" 
+CONFIG_ylabel = "Bits" 
 
 
 #------------------------------------------------------------------------------
 # if the values from the two data sets differ by a factor of more than
 # CONFIG_truncate, the maximum colour intensity is assigned
 
-CONFIG_truncate = 2.0
+CONFIG_truncate = 20.0
 
 
 #------------------------------------------------------------------------------
@@ -83,7 +83,7 @@ CONFIG_truncate = 2.0
 # already somewhat blue. If this is 1.0, you get all flat blue and all flat
 # red.
 
-CONFIG_min_intensity = 0.5
+CONFIG_min_intensity = 0.2
 
 
 ################# end of config file

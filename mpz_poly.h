@@ -314,13 +314,13 @@ void mpz_poly_scalar_mod_ui(mpz_poly_t res, mpz_poly_t poly, unsigned long c);
 // Polynomial multiplication
 
 void mpz_poly_mul(mpz_poly_t res, mpz_poly_t poly1, mpz_poly_t poly2);
-void mpz_poly_mul_naive(mpz_poly_t res, mpz_poly_t poly1, mpz_poly_t poly2);
+void mpz_poly_mul_classical(mpz_poly_t res, mpz_poly_t poly1, mpz_poly_t poly2);
 void mpz_poly_mul_karatsuba(mpz_poly_t res, mpz_poly_t poly1,
                             mpz_poly_t poly2);
 void mpz_poly_mul_SS(mpz_poly_t res, mpz_poly_t poly1, mpz_poly_t poly2);
 void mpz_poly_mul_naive_KS(mpz_poly_t res, mpz_poly_t poly1, mpz_poly_t poly2);
 void mpz_poly_sqr(mpz_poly_t res, mpz_poly_t poly);
-void mpz_poly_sqr_naive(mpz_poly_t res, mpz_poly_t poly);
+void mpz_poly_sqr_classical(mpz_poly_t res, mpz_poly_t poly);
 void mpz_poly_sqr_SS(mpz_poly_t res, mpz_poly_t poly);
 void mpz_poly_sqr_karatsuba(mpz_poly_t res, mpz_poly_t poly);
 void mpz_poly_sqr_naive_KS(mpz_poly_t res, mpz_poly_t poly);
@@ -343,21 +343,21 @@ void mpz_poly_monic_div_rem(mpz_poly_t quot, mpz_poly_t rem,
                             mpz_poly_t poly1, mpz_poly_t poly2);
 void mpz_poly_pseudo_div_rem(mpz_poly_t quot, mpz_poly_t rem, 
                              mpz_poly_t poly1, mpz_poly_t poly2);
-void mpz_poly_monic_inverse_naive(mpz_poly_t res, mpz_poly_t poly,
+void mpz_poly_monic_inverse_basecase(mpz_poly_t res, mpz_poly_t poly,
                                   unsigned long k);
-void mpz_poly_pseudo_inverse_naive(mpz_poly_t res, mpz_poly_t poly,
+void mpz_poly_pseudo_inverse_basecase(mpz_poly_t res, mpz_poly_t poly,
                                    unsigned long k);
-void mpz_poly_monic_div_naive(mpz_poly_t quot, mpz_poly_t poly1,
+void mpz_poly_monic_div_basecase(mpz_poly_t quot, mpz_poly_t poly1,
                               mpz_poly_t poly2);
-void mpz_poly_pseudo_div_naive(mpz_poly_t quot, mpz_poly_t poly1,
+void mpz_poly_pseudo_div_basecase(mpz_poly_t quot, mpz_poly_t poly1,
                                mpz_poly_t poly2);
-void mpz_poly_monic_rem_naive(mpz_poly_t rem, mpz_poly_t poly1,
+void mpz_poly_monic_rem_basecase(mpz_poly_t rem, mpz_poly_t poly1,
                               mpz_poly_t poly2);
-void mpz_poly_pseudo_rem_naive(mpz_poly_t rem, mpz_poly_t poly1,
+void mpz_poly_pseudo_rem_basecase(mpz_poly_t rem, mpz_poly_t poly1,
                                mpz_poly_t poly2);
-void mpz_poly_monic_div_rem_naive(mpz_poly_t quot, mpz_poly_t rem,
+void mpz_poly_monic_div_rem_basecase(mpz_poly_t quot, mpz_poly_t rem,
                                   mpz_poly_t poly1, mpz_poly_t poly2);
-void mpz_poly_pseudo_div_rem_naive(mpz_poly_t quot, mpz_poly_t rem, 
+void mpz_poly_pseudo_div_rem_basecase(mpz_poly_t quot, mpz_poly_t rem, 
                                    mpz_poly_t poly1, mpz_poly_t poly2);
 
 

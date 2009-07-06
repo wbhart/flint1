@@ -94,7 +94,7 @@ void timeit_stop(timeit_t t)
 #define FLINT_USE_CYCLE_COUNTER 1
 
 // cycles/second
-#define FLINT_CLOCKSPEED 1804121000.0
+#define FLINT_CLOCKSPEED 2800121000.0
 
 
 extern double clock_last[FLINT_NUM_CLOCKS];

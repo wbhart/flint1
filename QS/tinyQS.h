@@ -35,7 +35,7 @@
 
 #define MAXBITS 81 // Largest bits including multiplier that can be factored
 
-int F_mpz_factor_tinyQS(F_mpz_factor_t factors, mpz_t N);
-int F_mpz_factor_tinyQS_silent(F_mpz_factor_t factors, mpz_t N);
+int F_mpz_factor_tinyQS(F_mpz_factor_t * factors, mpz_t N);
+int F_mpz_factor_tinyQS_silent(F_mpz_factor_t * factors, mpz_t N);
 
 #endif

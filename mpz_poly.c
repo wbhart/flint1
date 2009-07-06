@@ -985,14 +985,14 @@ void mpz_poly_sqr(mpz_poly_t res, mpz_poly_t poly)
 
 
 /*
- This is just like mpz_poly_mul_naive(), with the following restrictions:
+ This is just like mpz_poly_mul_classical(), with the following restrictions:
  
   * assumes res does not alias poly1 and poly2
   * neither polynomial is zero
   * res->alloc >= poly1->length + poly2->length - 1
      (i.e. output has enough room for product)
 */
-void _mpz_poly_mul_naive(mpz_poly_t res, mpz_poly_t poly1, mpz_poly_t poly2)
+void _mpz_poly_mul_classical(mpz_poly_t res, mpz_poly_t poly1, mpz_poly_t poly2)
 {
    FLINT_ASSERT(res != poly1);
    FLINT_ASSERT(res != poly2);
@@ -1010,7 +1010,7 @@ void _mpz_poly_mul_naive(mpz_poly_t res, mpz_poly_t poly1, mpz_poly_t poly2)
 }
 
 
-void mpz_poly_mul_naive(mpz_poly_t res, mpz_poly_t poly1, mpz_poly_t poly2)
+void mpz_poly_mul_classical(mpz_poly_t res, mpz_poly_t poly1, mpz_poly_t poly2)
 {
    if (!poly1->length || !poly2->length)
    {
@@ -1022,7 +1022,7 @@ void mpz_poly_mul_naive(mpz_poly_t res, mpz_poly_t poly1, mpz_poly_t poly2)
    if (poly1 == poly2)
    {
       // polys are identical, so call specialised squaring routine
-      mpz_poly_sqr_naive(res, poly1);
+      mpz_poly_sqr_classical(res, poly1);
       return;
    }
    
@@ -1034,7 +1034,7 @@ void mpz_poly_mul_naive(mpz_poly_t res, mpz_poly_t poly1, mpz_poly_t poly2)
       // output is inplace, so need a temporary
       mpz_poly_t temp;
       mpz_poly_init3(temp, length, FLINT_BITS * limbs);
-      _mpz_poly_mul_naive(temp, poly1, poly2);
+      _mpz_poly_mul_classical(temp, poly1, poly2);
       mpz_poly_swap(temp, res);
       mpz_poly_clear(temp);
    }
@@ -1042,19 +1042,19 @@ void mpz_poly_mul_naive(mpz_poly_t res, mpz_poly_t poly1, mpz_poly_t poly2)
    {
       // output not inplace
       mpz_poly_ensure_alloc(res, length);
-      _mpz_poly_mul_naive(res, poly1, poly2);
+      _mpz_poly_mul_classical(res, poly1, poly2);
    }
 }
 
 
 /*
- This is just like mpz_poly_sqr_naive(), with the following restrictions:
+ This is just like mpz_poly_sqr_classical(), with the following restrictions:
  
   * assumes res does not alias poly
   * poly is nonzero
   * res->alloc >= 2*poly->length - 1  (i.e. output has enough room for product)
 */
-void _mpz_poly_sqr_naive(mpz_poly_t res, mpz_poly_t poly)
+void _mpz_poly_sqr_classical(mpz_poly_t res, mpz_poly_t poly)
 {
    FLINT_ASSERT(res != poly);
    FLINT_ASSERT(poly->length);
@@ -1080,7 +1080,7 @@ void _mpz_poly_sqr_naive(mpz_poly_t res, mpz_poly_t poly)
 }
 
 
-void mpz_poly_sqr_naive(mpz_poly_t res, mpz_poly_t poly)
+void mpz_poly_sqr_classical(mpz_poly_t res, mpz_poly_t poly)
 {
    if (!poly->length)
    {
@@ -1097,7 +1097,7 @@ void mpz_poly_sqr_naive(mpz_poly_t res, mpz_poly_t poly)
       // output is inplace, so need a temporary
       mpz_poly_t temp;
       mpz_poly_init3(temp, length, FLINT_BITS * limbs);
-      _mpz_poly_sqr_naive(temp, poly);
+      _mpz_poly_sqr_classical(temp, poly);
       mpz_poly_swap(temp, res);
       mpz_poly_clear(temp);
    }
@@ -1107,7 +1107,7 @@ void mpz_poly_sqr_naive(mpz_poly_t res, mpz_poly_t poly)
       
       // allocate more coefficients if necessary
       mpz_poly_ensure_alloc(res, length);
-      _mpz_poly_sqr_naive(res, poly);
+      _mpz_poly_sqr_classical(res, poly);
    }
 }
 
@@ -1124,7 +1124,7 @@ All input/output/scratch space should be mpz_init'd, and shouldn't overlap.
 
 Must have 1 <= len1 <= len2.
 
-If len1*len2 <= crossover, it uses a naive multiplication algorithm. The
+If len1*len2 <= crossover, it uses a classical multiplication algorithm. The
 crossover parameter is passed down recursively to subproducts.
 */
 void _mpz_poly_mul_kara_recursive(mpz_t* out,
@@ -1148,7 +1148,7 @@ void _mpz_poly_mul_kara_recursive(mpz_t* out,
    
    if (len1 * len2 < crossover)
    {
-      // switch to naive multiplication
+      // switch to classical multiplication
       for (unsigned long i = 0; i < len1 + len2 - 1; i++)
          mpz_set_ui(out[i*skip], 0);
    
@@ -1652,49 +1652,49 @@ void mpz_poly_pseudo_div_rem(mpz_poly_t quot, mpz_poly_t rem,
    abort();
 }
 
-void mpz_poly_monic_inverse_naive(mpz_poly_t res, mpz_poly_t poly,
+void mpz_poly_monic_inverse_basecase(mpz_poly_t res, mpz_poly_t poly,
                                   unsigned long k)
 {
    abort();
 }
 
-void mpz_poly_pseudo_inverse_naive(mpz_poly_t res, mpz_poly_t poly,
+void mpz_poly_pseudo_inverse_basecase(mpz_poly_t res, mpz_poly_t poly,
                                    unsigned long k)
 {
    abort();
 }
 
-void mpz_poly_monic_div_naive(mpz_poly_t quot, mpz_poly_t poly1,
+void mpz_poly_monic_div_basecase(mpz_poly_t quot, mpz_poly_t poly1,
                               mpz_poly_t poly2)
 {
    abort();
 }
 
-void mpz_poly_pseudo_div_naive(mpz_poly_t quot, mpz_poly_t poly1,
+void mpz_poly_pseudo_div_basecase(mpz_poly_t quot, mpz_poly_t poly1,
                                mpz_poly_t poly2)
 {
    abort();
 }
 
-void mpz_poly_monic_rem_naive(mpz_poly_t rem, mpz_poly_t poly1,
+void mpz_poly_monic_rem_basecase(mpz_poly_t rem, mpz_poly_t poly1,
                               mpz_poly_t poly2)
 {
    abort();
 }
 
-void mpz_poly_pseudo_rem_naive(mpz_poly_t rem, mpz_poly_t poly1,
+void mpz_poly_pseudo_rem_basecase(mpz_poly_t rem, mpz_poly_t poly1,
                                mpz_poly_t poly2)
 {
    abort();
 }
 
-void mpz_poly_monic_div_rem_naive(mpz_poly_t quot, mpz_poly_t rem,
+void mpz_poly_monic_div_rem_basecase(mpz_poly_t quot, mpz_poly_t rem,
                                   mpz_poly_t poly1, mpz_poly_t poly2)
 {
    abort();
 }
 
-void mpz_poly_pseudo_div_rem_naive(mpz_poly_t quot, mpz_poly_t rem, 
+void mpz_poly_pseudo_div_rem_basecase(mpz_poly_t quot, mpz_poly_t rem, 
                                    mpz_poly_t poly1, mpz_poly_t poly2)
 {
    abort();

@@ -58,7 +58,7 @@
 
 %\email{w.b.hart@maths.warwick.ac.uk}
 
-\title{FLINT 1.4: Fast Library for Number Theory}
+\title{FLINT 1.3: Fast Library for Number Theory}
 \author{William B. Hart and David Harvey}
 
 \begin{document}
@@ -86,11 +86,9 @@ All of the functions in FLINT have a corresponding test function provided in an 
 
 The easiest way to use FLINT is to build a shared library. Simply download the FLINT tarball and untar it on your system.
 
-FLINT requires GMP version 4.2.1 or later or MPIR version 0.9.0 or later. Set the environment variables \code{FLINT_GMP_LIB_DIR} and \code{FLINT_GMP_INCLUDE_DIR} to point to your GMP or MPIR library and include directories respectively. Alternatively you can set default values for these environment variables in the \code{flint_env} file.
+FLINT requires GMP version 4.2.1 or later or MPIR version 0.9.0 or later (in GMP compatibility mode). Set the environment variables \code{FLINT_GMP_LIB_DIR} and \code{FLINT_GMP_INCLUDE_DIR} to point to your GMP or MPIR library and include directories respectively. Alternatively you can set default values for these environment variables in the \code{flint_env} file.
 
 The \code{NTL-interface} module of FLINT requires NTL version 5.4.1 or later. However NTL is not required to build FLINT if this interface module is not required. To build with NTL set the environment variables \code{FLINT_NTL_LIB_DIR} and \code{FLINT_NTL_INCLUDE_DIR} to point to your NTL library and include directories respectively.
-
-By default \code{zn_poly} 0.8 or later is required to build FLINT. In order to use \code{zn_poly} one must set the environment variables \code{FLINT_ZNPOLY_LIB_DIR} and \code{FLINT_ZNPOLY_INCLUDE_DIR} to point to your \code{zn_poly} library and include directories respectively. You must build \code{zn_poly} with the \code{-fPIC} option if you wish to build FLINT as a library. FLINT can be built without \code{zn_poly} by setting \code{HAVE_ZNPOLY=0} in the file \code{flint_env}.
 
 Once the environment variables are set or defaults are set in \code{flint_env} simply type:
 
@@ -104,7 +102,7 @@ Finally type:
 
 Move the library file \code{libflint.so}, \code{libflint.dll} or \code{libflint.dylib} (depending on your platform) into your library path and move all the .h files in the main directory of FLINT into your include path.
 
-Now to use FLINT, simply include the appropriate header files for the FLINT modules you wish to use in your C program. Then compile your program, linking against the FLINT library, \code{zn_poly} and GMP with the options \code{-lflint -lgmp -lzn_poly}.
+Now to use FLINT, simply include the appropriate header files for the FLINT modules you wish to use in your C program. Then compile your program, linking against the FLINT library and GMP/MPIR with the options \code{-lflint -lgmp}.
 
 If you are using the \code{NTL-interface}, you will also need to link against NTL with the \code{-lntl} linker option.
 
@@ -126,9 +124,9 @@ To test the \code{NTL-interface} module simply:
 \section{Reporting bugs}
 The maintainer wishes to be made aware of any and all bugs. Please send an email with your bug report to hart\_wb@yahoo.com.
 
-If possible please include details of your system, version of gcc, version of GMP and precise details of how to replicate the bug.
+If possible please include details of your system, version of gcc, version of GMP/MPIR and precise details of how to replicate the bug.
 
-Note that FLINT needs to be linked against version 4.2.1 or later of GMP or version 0.9.0 or later of MPIR and must be compiled with gcc version 3.4 or later. In particular the compiler must be c99 compatible.
+Note that FLINT needs to be linked against version 4.2.1 or later of GMP or version 0.9.0 or later of MPIR (in GMP compatibility mode) and must be compiled with gcc version 3.4 or later. In particular the compiler must be fully C99 compatible.
 
 \section{Example programs}
 
@@ -140,20 +138,20 @@ The current example programs are:
 
 \code{delta_qexp} Compute the first $n$ terms of the delta function, e.g. \code{delta_qexp 1000000} will compute the first one million terms of the $q$-expansion of delta.
 
-\code{BPTJCubes} Implements the algorithm of Beck, Pine, Tarrant and Jensen for finding solutions to the equation $x^3+y^3+z^3 = k$.
+\code{BPTJCubes} Implements the algorithm of Beck, Pine, Tarrant and Jensen for finding solutions to the equation $x^3+y^3+z^3 = k$. This program outputs a file output.log containing parameters for reconstructing the first solution it finds, and then aborts.
 
-\code{bernoulli_zmod} Compute bernoulli numbers modulo a large number of primes.
+\code{bernoulli_zmod} Compute many bernoulli numbers modulo a prime. If no command line input is supplied it merely checks that the bernoulli\_zmod function works for the first 2000 primes. If you specify an integer argument \code{n} on the command line, it computes the Bernoulli numbers $B_0, B_2, ..., B_{p-1}$ modulo \code{p}, where \code{p} is the next prime from \code{n}.
 
-\code{expmod} Computes a very large modular exponentiation.
+\code{expmod} Computes a very large modular exponentiation. This is actually a basic pseudo primality test.
 
-\code{thetaproduct} Computes the product of two very large theta functions and determines the number of zero coefficients.
+\code{Zmul} Compares the output of the FLINT FFT with that of GMP for ever larger operands.
 
 \section{FLINT macros}
 In the file flint.h are various useful macros.
 
 The macro constant \code{FLINT_BITS} is set at compile time to be the number of bits per limb on the machine. FLINT requires it to be either 32 or 64 bits. Other architectures are not currently supported.
 
-The macro constant \code{FLINT_D_BITS} is set at compile time to be the number of bits per double on the machine or the number of bits per limb, whichever is smaller. This will have the value 53 or 32 on currently supported architectures. Numerous functions using precomputed inverses only support operands up to \code{FLINT_D_BITS - 1} bits, hence the macro.
+The macro constant \code{FLINT_D_BITS} is set at compile time to be the number of bits per double on the machine or the number of bits per limb, whichever is smaller. This will have the value 53 or 32 on currently supported architectures. Numerous functions using precomputed inverses only support operands up to \code{FLINT_D_BITS} bits, hence the macro.
 
 \code{FLINT_ABS(x)} returns the absolute value of a \code{long x}.
 
@@ -203,7 +201,7 @@ The \code{fmpz_poly_t} type is a typedef for an array of length 1 of \code{fmpz_
 
 In reality one never deals directly with the struct and simply deals with objects of type \code{fmpz_poly_t}. For simplicity we will think of an \code{fmpz_poly_t} as a struct, though in practice to access fields of this struct, one needs to dereference first, e.g. to access the \code{length} field of an \code{fmpz_poly_t} called \code{poly1} one writes \code{poly1->length}. 
 
-An \code{fmpz_poly_t} is said to be \emph{normalised} if either \code{length == 0}, or if the final coefficient is nonzero. All \code{fmpz_poly} functions expect their inputs to be normalised, and unless otherwise specified they produce output that is normalised. 
+An \code{fmpz_poly_t} is said to be \emph{normalised} if either \code{length == 0}, or if the leading coefficient of the polynomial is nonzero. All \code{fmpz_poly} functions expect their inputs to be normalised, and unless otherwise specified they produce output that is normalised. 
 
 It is recommended that users do not access the fields of an \code{fmpz_poly_t} or its coefficient data directly, but make use of the functions designed for this purpose (detailed below).
 
@@ -381,7 +379,7 @@ The functions in this section are not intended to be particularly fast. They are
 
 For the string output functions there are two variants. The first uses a simple string representation of polynomials which prints only the length of the polynomial and the integer coefficients, whilst the latter variant (appended with \code{_pretty}) uses a more traditional string representation of polynomials which prints a variable name as part of the representation. 
 
-The first string representation is given by a sequence of integers, in decimal notation, separated by whitespace. The first integer gives the length of the polynomial; the remaining \code{length} integers are the coefficients. For example $5x^3 - x + 1$ is represented by the string ``\code{4 1 -1 0 5}'', and the zero polynomial is represented by ``\code{0}''. The coefficients may be signed and arbitrary precision.
+The first string representation is given by a sequence of integers, in decimal notation, separated by white space. The first integer gives the length of the polynomial; the remaining \code{length} integers are the coefficients. For example $5x^3 - x + 1$ is represented by the string ``\code{4 1 -1 0 5}'', and the zero polynomial is represented by ``\code{0}''. The coefficients may be signed and arbitrary precision.
 
 The string representation of the functions appended by \code{_pretty} includes only the non-zero terms of the polynomial, starting with the one of highest degree. Each term starts with a coefficient, prepended with a sign (positive or negative), followed by the character \code{*}, followed by a variable name, which must be passed as a string parameter to the function, followed by a carot \code{^} followed by a non-negative exponent.
 
@@ -528,7 +526,7 @@ Negate the polynomial \code{poly}, i.e. set \code{output} to \code{-poly}.
 void fmpz_poly_truncate(fmpz_poly_t poly, const unsigned long trunc)
 \end{lstlisting}
 \begin{quote}
-If \code{trunc} is less than the current length of the polynomial, truncate the polynomial to that length. Note that as the function normalises its output, the eventual length of the polynomial may be less than \code{trunc}.
+If \code{trunc} is less than the current length of the polynomial, truncate the polynomial to that length. Note that as the function normalises its output, the eventual length of the polynomial may be less than \code{trunc}. If \code{trunc} is not less than the current length of the polynomial, this function does nothing.
 \end{quote}
 
 \begin{lstlisting}
@@ -536,7 +534,7 @@ void fmpz_poly_reverse(fmpz_poly_t output,
                      const fmpz_poly_t poly, unsigned long length) 
 \end{lstlisting}
 \begin{quote}
-This function considers the polynomial \code{poly} to be of length $n$, notionally truncating and zero padding if required, and reverses the result. Since this function normalises its result the eventual length of \code{output} may be less than \code{length}.
+This function considers the polynomial \code{poly} to be of length $n$, notionally truncating and zero padding if required, and reverses the result. Since this function normalises its result the eventual length of \code{output} may be less than \code{length}. Note that the supplied \code{length} may be smaller or larger than the current length of \code{poly} if required.
 \end{quote}
 
 \begin{lstlisting}
@@ -779,8 +777,6 @@ Multiply the two given polynomials and return the result in \code{output}. If on
 
 This function is optimised for very long polynomials and makes efficient use of memory, often not thrashing the disk when the ordinary multiplication function would do so. 
 
-Note that this function requires \code{zn_poly} to be linked with FLINT.
-
 The length of the output polynomial will be \code{poly1->length + poly2->length - 1}.
 \end{quote}
 
@@ -843,7 +839,7 @@ void fmpz_poly_div_series(fmpz_poly_t Q, const fmpz_poly_t A,
                              const fmpz_poly_t B, unsigned long n) 
 \end{lstlisting}
 \begin{quote}
-Performs power series division in $\Z[[x]]$. The function considers the polynomials \code{A} and \code{B} to be power series of length $n$ starting with the constant terms. The function assumes that \code{B} is normalised, i.e. that the constant coefficient is $\pm 1$. The result is truncated to length $n$ regardless of the inputs.
+Performs power series division in $\Z[[x]]$. The function considers the polynomials \code{A} and \code{B} to be power series of length $n$ starting with the constant terms. The function assumes that \code{B} is normalised, i.e. that the constant coefficient is 1. The result is truncated to length $n$ regardless of the inputs.
 \end{quote}
 
 \begin{lstlisting}
@@ -893,6 +889,28 @@ void fmpz_poly_pseudo_rem(fmpz_poly_t R, unsigned long * d,
 Performs division with remainder of two polynomials in $\Z[x]$, without returning the quotient, notionally returning the results in $\Q[x]$ (actually in $\Z[x]$ with a single common denominator).
 
 Notionally computes polynomials \code{Q} and \code{R} such that \code{lead(B)^d*A = B*Q + R} where \code{R} has degree less than that of \code{B}, but returns only \code{R}. This is more efficient than computing the quotient and remainder.
+
+Note that at present this function is not asymptotically fast. Use \code{fmpz_poly_pseudo_divrem} if large operands will be supplied (e.g. of length greater than 32).
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_poly_pseudo_divrem_cohen(fmpz_poly_t Q, fmpz_poly_t R, 
+                         const fmpz_poly_t A, const fmpz_poly_t B)
+\end{lstlisting}
+\begin{quote}
+This is a variant of \code{fmpz_poly_pseudo_divrem} which computes polynomials \code{Q} and \code{R} such that \code{lead(B)^d*A = B*Q + R}. However the value \code{d} is fixed at \code{A->length - B->length + 1}.
+
+This function is faster when the remainder is not well behaved, i.e. where it is not expected to be zero or close to it. Note that this function is not asymptotically fast. It is efficient only for short polynomials (e.g. \code{B->length < 32}).
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_poly_pseudo_rem_cohen(fmpz_poly_t R, const fmpz_poly_t A,
+                                                 const fmpz_poly_t B)
+\end{lstlisting}
+\begin{quote}
+This is a variant of \code{fmpz_poly_pseudo_rem} which also notionally computes polynomials \code{Q} and \code{R} such that \code{lead(B)^d*A = B*Q + R}, but returns only \code{R}. However the value \code{d} is fixed at \code{A->length - B->length + 1}.
+
+This function is faster when the remainder is not well behaved, i.e. where it is not expected to be zero or close to it. Note that this function is not asymptotically fast. It is efficient only for short polynomials (e.g. \code{B->length < 32}).
 \end{quote}
 
 \subsection{Powering}
@@ -910,7 +928,9 @@ void fmpz_poly_power_trunc_n(fmpz_poly_t output,
        const fmpz_poly_t poly, unsigned long exp, unsigned long n) 
 \end{lstlisting}
 \begin{quote}
-Notionally raises \code{poly} to the power \code{exp}, truncates the result to length $n$ and writes the result in \code{output}. This is computed much more efficiently than simply powering the polynomial and truncating. If \code{exp} is zero then the result will be the constant polynomial equal to 1, unless \code{poly} is zero, in which case the output will be zero.
+Notionally raises \code{poly} to the power \code{exp}, truncates the result to length $n$ and writes the result in \code{output}. This is computed much more efficiently than simply powering the polynomial and truncating. 
+
+If \code{exp} is zero then the result will be the constant polynomial equal to 1, unless \code{poly} is zero, in which case the output will be zero.
 
 This function can be used to raise power series to a power in an efficient way.
 \end{quote}
@@ -974,6 +994,8 @@ void fmpz_poly_invmod(fmpz_t d, fmpz_poly_t H, fmpz_poly_t poly1,
 Computes a polynomial \code{H} and a denominator \code{d} such that \code{poly1*H} is \code{d} modulo \code{poly2}. 
 
 Assumes that \code{poly1} and \code{poly2} are coprime and that \code{poly2} is monic.
+
+This function is useful for computing inverses in number field arithmetic.
 \end{quote}
 
 \subsection{Derivative}
@@ -1006,7 +1028,7 @@ Sets \code{output} to the polynomial composition of $f$ with $g$, i.e. computes 
 
 \begin{lstlisting}
 void fmpz_poly_signature(ulong * r1, ulong * r2, fmpz_poly_t poly)
-\end{lstlistin}
+\end{lstlisting}
 \begin{quote}
 Determines the signature r1, r2 (where r1 + 2*r2 = degree(poly) and r1 is the number of real roots of poly). The input polynomial must be squarefree, otherwise the result is undefined and an exception may be raised. The zero polynomial is allowed, for convenience, and the number of real and complex roots are both set to 0 in that case.
 \end{quote}
@@ -1014,10 +1036,10 @@ Determines the signature r1, r2 (where r1 + 2*r2 = degree(poly) and r1 is the nu
 \subsection{Squarefree}
 
 \begin{lstlisting}
-void fmpz_poly_signature(ulong * r1, ulong * r2, fmpz_poly_t poly)
-\end{lstlistin}
+void fmpz_poly_is_squarefree(ulong * r1, ulong * r2, fmpz_poly_t poly)
+\end{lstlisting}
 \begin{quote}
-Determines the signature r1, r2 (where r1 + 2*r2 = degree(poly) and r1 is the number of real roots of poly). The input polynomial must be squarefree, otherwise the result is undefined and an exception may be raised. The zero polynomial is allowed, for convenience, and the number of real and complex roots are both set to 0 in that case.
+Returns 1 if \code{poly} is squarefree, otherwise returns 0.
 \end{quote}
 
 \subsection{Subpolynomials}
@@ -1157,7 +1179,7 @@ Set the multiprecision integer \code{res} to the \code{long x}.
 double fmpz_get_d(fmpz_t x) 
 \end{lstlisting}
 \begin{quote}
-Returns a \code{double} floating point approximation to the multiprecision integer $x$. Note that the exponent of a double is limited to strictly less that 1024, thus the absolute value of the integer $x$ must be less than $2^1024$.
+Returns a \code{double} floating point approximation to the multiprecision integer $x$. Note that the exponent of a double is limited to strictly less that 1024, thus the absolute value of the integer $x$ must be less than $2^{1024}$.
 \end{quote}
 
 \begin{lstlisting}
@@ -1292,7 +1314,7 @@ void fmpz_mul_trunc(fmpz_t res, fmpz_t a,
                                 fmpz_t b, unsigned long trunc) 
 \end{lstlisting}
 \begin{quote}
-Set \code{res} to \code{f1} times \code{f2} truncated to $trunc$ limbs. This is in general faster than doing a full multiplication then truncating.
+Set \code{res} to \code{f1} times \code{f2} truncated to \code{trunc} limbs. This is in general faster than doing a full multiplication then truncating.
 \end{quote}
 
 \begin{lstlisting}
@@ -1437,8 +1459,6 @@ The first version of the function requires that \code{m2} be no more than \code{
 
 Multiple modular reductions or Chinese remainders can be done at once with the following functions. An \code{fmpz_comb_t} type holds information which is used to speed up the modular reductions and modular recombinations. The first two functions are for initialising and clearing such a structure.
 
-Note all of the functions below require \code{zn_poly} to be linked with FLINT.
-
 \begin{lstlisting}
 void fmpz_comb_init(fmpz_comb_t comb, ulong * primes, ulong num_primes)
 \end{lstlisting}
@@ -1549,13 +1569,420 @@ void fmpz_montgomery_mod(fmpz_t res, fmpz_t a,
 Compute \code{a} modulo \code{m} where the precomputed data \code{m} is stored in the Montgomery structure \code{mont} by the previous function. Set \code{res} to the result, which is in ordinary integer format, not Montgomery format.
 \end{quote}
 
+\section{The F\_mpz module}
+
+The \code{F_mpz} module introduces a new FLINT integer format, the \code{F_mpz_t}. By default an \code{F_mpz_t} is implemented as an array of \code{F_mpz}'s of length one to allow passing by reference as one can do with GMP/MPIR's \code{mpz_t} type. The \code{F_mpz} type is simply a single limb, though the user does not need to be aware of this except in one specific case outlined below.
+
+In all respects, \code{F_mpz_t}'s act precisely like GMP/MPIR \code{mpz_t}'s, with automatic memory management, however in the first place only one limb is used to implement them. Once an \code{F_mpz_t} overflows a limb then a multiprecision integer is automatically allocated and instead of storing the actual integer data the long which implements the type becomes an index into a FLINT wide array of \code{mpz_t}'s.
+
+These internal implementation details are not important for the user to understand, except for three important things.
+
+Firstly, \code{F_mpz_t}'s will be more efficient than \code{mpz_t}'s for single limb operations (strictly speaking for signed quantities whose absolute value does not exceed FLINT\_BITS - 2 bits).
+
+Secondly, for small integers that fit into FLINT\_BITS - 2 bits much less memory will be used than for an \code{mpz_t}. When very many \code{F_mpz_t}'s are used, there can be important cache benefits on account of this.
+
+Thirdly, it is important to understand how to deal with arrays of \code{F_mpz_t}'s. As for \code{mpz_t}'s there is an underlying type (an \code{F_mpz}) which can be used to create the array, e.g.:
+
+\code{F_mpz myarr[100];}
+
+Now recall that an \code{F_mpz_t} is an array of length one of \code{F_mpz}'s. Thus a pointer to an \code{F_mpz} can be used in place of an \code{F_mpz_t}. For example to find the sign of the third integer in our array we would write:
+
+\code{int sign = F_mpz_sgn(myarr + 2);}
+
+The \code{F_mpz} module provides routines for memory management, basic manipulation and basic arithmetic.
+
+Unless otherwise specified, all functions in this section permit aliasing between their input arguments and between their input and output arguments. 
+
+\subsection{Simple example}
+
+The following example computes the square of the integer 7 and prints the result.
+
+\begin{lstlisting}
+#include "F_mpz.h"
+ ....
+F_mpz_t x, y;
+F_mpz_init(x);
+F_mpz_init(y);
+F_mpz_set_ui(x, 7);
+F_mpz_mul(y, x, x);
+F_mpz_print(x);
+printf("^2 = ");
+F_mpz_print(y);
+printf("\n");
+F_mpz_clear(x);
+F_mpz_clear(y);
+\end{lstlisting}
+
+The output is:
+
+\begin{lstlisting}
+7^2 = 49
+\end{lstlisting}
+
+We now describe the functions available in the \code{F_mpz} module.
+
+\subsection{Memory Management}
+
+\begin{lstlisting}
+void F_mpz_init(F_mpz_t f)
+\end{lstlisting}
+\begin{quote}
+Initialise an \code{F_mpz_t} for use. It starts as a small \code{F_mpz_t} (i.e. one not representing an \code{mpz_t}).
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_init2(F_mpz_t f, ulong limbs)
+\end{lstlisting}
+\begin{quote}
+Allocate an \code{F_mpz_t} with the given number of limbs. If limbs is zero then a small \code{F_mpz_t} results (i.e. not representing an \code{mpz_t}).
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_clear(F_mpz_t f)
+\end{lstlisting}
+\begin{quote}
+Clear the given \code{F_mpz_t}.
+\end{quote}
+
+\subsection{Random generation}
+
+At the present moment the following random generation functions are provided for convenience only. They are not intended to be efficient and their prototypes may change in a later version of FLINT.
+
+\begin{lstlisting}
+void F_mpz_random(F_mpz_t f, const ulong bits)
+\end{lstlisting}
+\begin{quote}
+Generate a random \code{F_mpz_t} with the given number of bits.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_randomm(F_mpz_t f, const mpz_t n)
+\end{lstlisting}
+\begin{quote}
+Generate a random \code{F_mpz_t} in $[0, n)$ where $n$ is an \code{mpz_t}.
+\end{quote}
+
+\subsection{Assignment and basic manipulation}
+
+\begin{lstlisting}
+void F_mpz_zero(F_mpz_t f)
+\end{lstlisting}
+\begin{quote}
+Set the given \code{F_mpz_t} to zero.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_neg(F_mpz_t f, F_mpz_t g)
+\end{lstlisting}
+\begin{quote}
+Set \code{f} to minus \code{g}. 
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_set_si(F_mpz_t f, const long val)
+\end{lstlisting}
+\begin{quote}
+Set \code{f} to a signed long value \code{val}.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_set_ui(F_mpz_t f, const ulong val)
+\end{lstlisting}
+\begin{quote}
+Set \code{f} to an unsigned long value \code{val}.
+\end{quote}
+
+\begin{lstlisting}
+long F_mpz_get_si(const F_mpz_t f)
+\end{lstlisting}
+\begin{quote}
+Return the value of \code{f} as a long.
+\end{quote}
+
+\begin{lstlisting}
+long F_mpz_get_ui(const F_mpz_t f)
+\end{lstlisting}
+\begin{quote}
+Return the value of \code{f} as an unsigned long.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_get_mpz(mpz_t x, const F_mpz_t f)
+\end{lstlisting}
+\begin{quote}
+Returns \code{f} as an \code{mpz_t}.
+\end{quote}
+
+\begin{lstlisting}
+double F_mpz_get_d_2exp(long * exp, const F_mpz_t f)
+\end{lstlisting}
+\begin{quote}
+Return \code{f} as a signed normalised double and a long exponent.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_set_mpz(F_mpz_t f, const mpz_t x)
+\end{lstlisting}
+\begin{quote}
+Sets \code{f} to the given \code{mpz_t}.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_set_limbs(F_mpz_t f, const mp_limb_t * x, const ulong limbs)
+\end{lstlisting}
+\begin{quote}
+Sets \code{f} to the array of limbs \code{x} which is the given number of limbs in length and where the least significant limb is stored first in \code{x}.
+\end{quote}
+
+\begin{lstlisting}
+ulong F_mpz_set_limbs(const mp_limb_t * x, F_mpz_t f)
+\end{lstlisting}
+\begin{quote}
+Sets the array of limbs \code{x} to the absolute value of \code{f}. The array is assumed to be stored with least significant limb first. The number of limbs written is returned.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_set(F_mpz_t f, F_mpz_t g)
+\end{lstlisting}
+\begin{quote}
+Sets \code{f} to the value of \code{g}.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_swap(F_mpz_t f, F_mpz_t g)
+\end{lstlisting}
+\begin{quote}
+Efficiently swaps the two \code{F_mpz_t}'s \code{f} and \code{g}. 
+\end{quote}
+
+\subsection{Comparison}
+
+\begin{lstlisting}
+int F_mpz_equal(const F_mpz_t f, const F_mpz_t g)
+\end{lstlisting}
+\begin{quote}
+Returns 1 if the values \code{f} and \code{g} are equal, otherwise returns 0.
+\end{quote}
+
+\begin{lstlisting}
+int F_mpz_cmpabs(const F_mpz_t f, const F_mpz_t g)
+\end{lstlisting}
+\begin{quote}
+Returns a negative value if \code{abs(f) < abs(g)}, positive if \code{abs(f) > abs(g)} and returns 0 if the two values are equal.
+\end{quote}
+
+\begin{lstlisting}
+int F_mpz_cmp(const F_mpz_t f, const F_mpz_t g)
+\end{lstlisting}
+\begin{quote}
+Returns a negative value if \code{f < g}, positive if \code{f > g} and returns 0 if the two values are equal.
+\end{quote}
+
+\subsection{Properties of integers}
+
+\begin{lstlisting}
+ulong F_mpz_size(F_mpz_t f)
+\end{lstlisting}
+\begin{quote}
+Returns the number of limbs required to store the absolute value of \code{f}. Returns 0 if \code{f} is zero.
+\end{quote}
+
+\begin{lstlisting}
+int F_mpz_sgn(const F_mpz_t f)
+\end{lstlisting}
+\begin{quote}
+Returns 1 if \code{f} is positive, -1 if it is negative and 0 if \code{f} is zero.
+\end{quote}
+
+\begin{lstlisting}
+int F_mpz_is_zero(const F_mpz_t f)
+\end{lstlisting}
+\begin{quote}
+Returns 1 if \code{f} is zero, 0 otherwise.
+\end{quote}
+
+\begin{lstlisting}
+ulong F_mpz_bits(F_mpz_t f)
+\end{lstlisting}
+\begin{quote}
+Returns the number of bits required to store the absolute value of \code{f}. Returns 0 if \code{f} is zero.
+\end{quote}
+
+\begin{lstlisting}
+__mpz_struct * F_mpz_ptr_mpz(F_mpz f)
+\end{lstlisting}
+\begin{quote}
+Returns a pointer to the \code{mpz_t} associated with the coefficient \code{f}. Assumes \code{f} is actually associated with an \code{mpz_t} and not a long. To determine if \code{g} is actually an \code{mpz_t} one can use the macro \code{COEFF_IS_MPZ(*g)}.
+
+Users generally do not need to use this function and it is mainly used internally by FLINT. However it can be useful when one wishes to read an \code{F_mpz_t} as an \code{mpz_t} without making a copy of the data. 
+
+If \code{g} is an \code{F_mpz_t} one must first dereference it before passing it to this function. 
+
+To get the value of \code{g} as a long when it is not associated with an \code{mpz_t} simply dereference \code{g}, i.e. the value is given by \code{*g}.
+\end{quote}
+
+\subsection{Input/output}
+
+\begin{lstlisting}
+void F_mpz_print(F_mpz_t x)
+\end{lstlisting}
+\begin{quote}
+Print the given \code{F_mpz_t} to stdout.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_read(F_mpz_t x)
+\end{lstlisting}
+\begin{quote}
+Read an \code{F_mpz_t} from stdin. The integer can be a signed multiprecision integer in decimal format.
+\end{quote}
+
+\subsection{Addition/subtraction}
+
+\begin{lstlisting}
+void F_mpz_add_ui(F_mpz_t f, const F_mpz_t g, const ulong x)
+\end{lstlisting}
+\begin{quote}
+Add the unsigned long \code{x} to \code{g} and set \code{f} to the result.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_sub_ui(F_mpz_t f, const F_mpz_t g, const ulong x)
+\end{lstlisting}
+\begin{quote}
+Subtract the unsigned long \code{x} from \code{g} and set \code{f} to the result.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_add_mpz(F_mpz_t f, const F_mpz_t g, mpz_t h)
+\end{lstlisting}
+\begin{quote}
+Set \code{f} to \code{g} plus \code{h}, where \code{h} is an \code{mpz_t}. 
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_add(F_mpz_t f, const F_mpz_t g, F_mpz_t h)
+\end{lstlisting}
+\begin{quote}
+Set \code{f} to \code{g} plus \code{h}. 
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_sub(F_mpz_t f, const F_mpz_t g, F_mpz_t h)
+\end{lstlisting}
+\begin{quote}
+Set \code{f} to \code{g} minus \code{h}. 
+\end{quote}
+
+\subsection{Multiplication}
+
+\begin{lstlisting}
+void F_mpz_mul_ui(F_mpz_t f, const F_mpz_t g, const ulong x)
+\end{lstlisting}
+\begin{quote}
+Multiply \code{g} by the unsigned long \code{x} and set \code{f} to the result.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_mul_si(F_mpz_t f, const F_mpz_t g, const long x)
+\end{lstlisting}
+\begin{quote}
+Multiply \code{g} by the signed long \code{x} and set \code{f} to the result.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_mul2(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
+\end{lstlisting}
+\begin{quote}
+Multiply \code{g} by \code{h} and set \code{f} to the result. The function is called \code{mul2} rather than \code{mul} due to a conflict in naming with the \code{mpn_extras} module in FLINT. This conflict will be removed in a later version of FLINT.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_mul_2exp(F_mpz_t f, const F_mpz_t g, const ulong exp)
+\end{lstlisting}
+\begin{quote}
+Multiply \code{g} by \code{2^exp} and set \code{f} to the result.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_addmul_ui(F_mpz_t f, const F_mpz_t g, const ulong x)
+\end{lstlisting}
+\begin{quote}
+Multiply \code{g} by the unsigned long \code{x} and add the result to \code{f}, in place.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_submul_ui(F_mpz_t f, const F_mpz_t g, const ulong x)
+\end{lstlisting}
+\begin{quote}
+Multiply \code{g} by the unsigned long \code{x} and subtract the result from \code{f}, in place.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_addmul(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
+\end{lstlisting}
+\begin{quote}
+Multiply \code{g} by \code{h} and add the result to \code{f}, in place.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_submul(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
+\end{lstlisting}
+\begin{quote}
+Multiply \code{g} by \code{h} and subtract the result from \code{f}, in place.
+\end{quote}
+
+\subsection{Division and remainder}
+
+\begin{lstlisting}
+void F_mpz_div_2exp(F_mpz_t f, const F_mpz_t g, const ulong exp)
+\end{lstlisting}
+\begin{quote}
+Divide \code{g} by \code{2^exp} and set \code{f} to the result. Rounding is towards zero.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_mod(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
+\end{lstlisting}
+\begin{quote}
+Set \code{f} to \code{g} modulo \code{h}.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_divexact(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
+\end{lstlisting}
+\begin{quote}
+Set \code{f} to \code{g} divided by \code{h}, assuming the division is exact.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_fdiv_q(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
+\end{lstlisting}
+\begin{quote}
+Set \code{f} to \code{g} divided by \code{h}, rounded down towards minus infinity.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_cdiv_q(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
+\end{lstlisting}
+\begin{quote}
+Set \code{f} to \code{g} divided by \code{h}, rounded up towards infinity.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_rdiv_q(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
+\end{lstlisting}
+\begin{quote}
+Set \code{f} to \code{g} divided by \code{h}, rounded to nearest, ties rounded towards positive infinity.
+\end{quote}
+
 \section{The zmod\_poly module}
 
-The \code{zmod_poly_t} data type represents elements of $\Z/n\Z[x]$ for some word sized integer $n$. Most of the functions work for an arbitrary $n$, however the division functions require the leading coefficient of the divisor polynomial to be invertible modulo $n$ and the gcd and resultant functions require $n$ to be prime.
+The \code{zmod_poly_t} data type represents elements of $\Z/n\Z[x]$ for some word sized integer $n$. Most of the functions work for an arbitrary $n$, however the division functions require the leading coefficient of the divisor polynomial to be invertible modulo $n$ and the factoring, gcd and resultant functions require $n$ to be prime.
 
 The \code{zmod_poly} module provides routines for memory management, basic manipulation and basic arithmetic.
 
-Each coefficient of a \code{zmod_poly_t} is stored as an \code{unsigned long} and is assumed to be reduced modulo the modulus $n$.
+Each coefficient of a \code{zmod_poly_t} is stored as an \code{unsigned long} and is assumed to be reduced modulo the modulus $n$. Unless otherwise specified all functions return polynomials whose coefficients are reduced modulo $n$.
 
 Unless otherwise specified, all functions in this section permit aliasing between their input arguments and between their input and output arguments. 
 
@@ -1591,7 +2018,7 @@ The \code{zmod_poly_t} type is a typedef for an array of length 1 of \code{zmod_
 
 All \code{zmod_poly} functions expect their inputs to be normalised, and unless otherwise specified they produce output that is normalised. 
 
-It is recommended that users do not access the fields of a \code{zmod_poly_t} or its coefficient data directly, but make use of the functions designed for this purpose (detailed below). The type has fields for the length of the polynomial, the number of coefficients allocated (the length is always less than or equal to this), a modulus $n$ and possibly a precomputed inverse of $n$.
+It is recommended that users do not access the fields of a \code{zmod_poly_t} or its coefficient data directly, but make use of the functions designed for this purpose (detailed below). The type has fields for the length of the polynomial, the number of coefficients allocated (the length is always less than or equal to this), a modulus $n$ and possibly a precomputed inverse of $n$. Data is also stored for manipulation of the polynomials by \code{zn_poly} which is included in FLINT for efficient computation with polynomials in this module.
 
 Functions in \code{zmod_poly} do all the memory management for the user. One does not need to specify the maximum length in advance before using a \code{zmod_poly_t} polynomial object, but it may be more efficient to do so. FLINT reallocates space automatically as the computation proceeds, if more space is required. 
 
@@ -1625,7 +2052,7 @@ Release the memory used by \code{poly}, which cannot then be used until it is in
 void zmod_poly_realloc(zmod_poly_t poly, unsigned long alloc)
 \end{lstlisting}
 \begin{quote}
-Reallocate \code{poly} so that it has space for \code{alloc} coefficients. If alloc is greater than the current length of the polynomial, the existing coefficients are retained.
+Reallocate \code{poly} so that it has space for \code{alloc} coefficients. If alloc is greater than the current length of the polynomial, the existing coefficients are retained, otherwise the polynomial is truncated and normalised.
 \end{quote}
 
 \begin{lstlisting}
@@ -1650,7 +2077,7 @@ void zmod_poly_set_coeff_ui(zmod_poly_t poly, unsigned long n,
                                                   unsigned long c)
 \end{lstlisting}
 \begin{quote}
-Set the $n$-th coefficient to the \code{unsigned long c}. It is assumed that \code{c} is already reduced modulo the modulus of the polynomial. Coefficients are number from zero, starting with the constant coefficient. If $n$ is greater than the current length of the polynomial, zeroes are inserted between the new coefficient and the existing coefficients if required.
+Set the $n$-th coefficient to the \code{unsigned long c}. It is assumed that \code{c} is already reduced modulo the modulus of the polynomial. Coefficients are numbered from zero, starting with the constant coefficient. If $n$ is greater than the current length of the polynomial, zeroes are inserted between the new coefficient and the existing coefficients if required.
 \end{quote}
 
 \subsection{String conversions and I/O}
@@ -1723,7 +2150,7 @@ Return the degree of the polynomial. The zero polynomial is defined to have leng
 unsigned long zmod_poly_modulus(zmod_poly_t poly)
 \end{lstlisting}
 \begin{quote}
-Return the modulus of the polynomial, i.e. if $n$ is returned, the polynomial is an element of $\Z/n\Z$.\end{quote}
+Return the modulus of the polynomial, i.e. if $n$ is returned, the polynomial is an element of $\Z/n\Z[x]$.\end{quote}
 
 \begin{lstlisting}
 unsigned long zmod_poly_bits(zmod_poly_t poly)
@@ -1791,7 +2218,7 @@ Since FLINT cannot reallocate the attached polynomial object, these functions sh
 void _zmod_poly_attach(zmod_poly_t poly1, zmod_poly_t poly2)
 \end{lstlisting}
 \begin{quote}
-Attach \code{poly2} to the polynomial object \code{poly1}.
+Attach \code{poly1} to the polynomial object \code{poly2}.
 \end{quote}
 
 \begin{lstlisting}
@@ -1803,8 +2230,8 @@ This function notionally shifts \code{poly2} to the right by \code{n} coefficien
 \end{quote}
 
 \begin{lstlisting}
-void _zmod_poly_attach_truncate(zmod_poly_t output, 
-                               zmod_poly_t input, unsigned long n)
+void _zmod_poly_attach_truncate(zmod_poly_t poly1, 
+                               zmod_poly_t poly2, unsigned long n)
 \end{lstlisting}
 \begin{quote}
 This function notionally truncates \code{poly2} to length \code{n} and then attaches the polynomial object \code{poly1} to the result.
@@ -1845,7 +2272,7 @@ Multiply the polynomial through by the given scalar. It is assumed that \code{sc
 void zmod_poly_make_monic(zmod_poly_t output, zmod_poly_t pol)
 \end{lstlisting}
 \begin{quote}
-Divide the polynomial through by the inverse of the leading coefficient of the polynomial. It is assumed that the leading coefficient is invertible modulo the modulus of the polynomial. This function results in a monic polynomial if this condition is met, otherwise the results are undefined.
+Divide the polynomial through by the inverse of the leading coefficient of the polynomial. It is assumed that the leading coefficient is invertible modulo the modulus of the polynomial. This function results in a monic polynomial if this condition is met, otherwise the result is undefined.
 \end{quote}
 
 \subsection{Addition/subtraction}
@@ -1888,38 +2315,39 @@ void zmod_poly_mul(zmod_poly_t res, zmod_poly_t poly1,
                                                 zmod_poly_t poly2)
 \end{lstlisting}
 \begin{quote}
-Set \code{res} to \code{poly1} multiplied by \code{poly2}. The length of \code{res} will be one less than the sum of the lengths of \code{poly1} and \code{poly2}.
+Set \code{res} to \code{poly1} multiplied by \code{poly2}. The length of \code{res} will be \code{poly1->length + poly2->length - 1}.
 \end{quote}
 
 \begin{lstlisting}
 void zmod_poly_sqr(zmod_poly_t res, zmod_poly_t poly)
 \end{lstlisting}
 \begin{quote}
-Set \code{res} to \code{poly} squared. The length of \code{res} will be one less than twice the length of \code{poly}. 
+Set \code{res} to \code{poly} squared. The length of \code{res} will be \code{2*poly->length - 1}.
+
 \end{quote}
 
 \begin{lstlisting}
 void zmod_poly_mul_precache_init(zmod_poly_precache_t pre,
-               zmod_poly_t input2, unsigned long bits_input,
+               zmod_poly_t poly2, unsigned long bits_input,
                                    unsigned long length1)
 \end{lstlisting}
 \begin{quote}
-This function precaches an FFT of the polynomial \code{input2} for (usually multiple) subsequent multiplicatons by the polynomial \code{input2}, with up to the given number of bits per output coefficient (0 if this is to be computed automatically). We set \code{length1} to the maximum length of polynomial \code{poly1} which \code{poly2} will be multiplied by.  
+This function precaches an FFT of the polynomial \code{input2} for (usually multiple) subsequent multiplications by the polynomial \code{input2}, with up to the given number of bits per output coefficient (0 if this is to be computed automatically). One must set \code{length1} to the maximum length of any polynomials \code{poly1} that \code{poly2} will be multiplied by.  
 \end{quote}
 
 \begin{lstlisting}
 void zmod_poly_mul_precache(zmod_poly_t output,
-               zmod_poly_t input1, zmod_poly_precache_t pre)
+               zmod_poly_t poly1, zmod_poly_precache_t pre)
 \end{lstlisting}
 \begin{quote}
-Multiply the polynomial \code{input1} by the polynomial whose precached FFT has been stored in \code{pre} by \code{zmod_poly_mul_precache_init}, i.e. sets \code{output} to the product of \code{input1} by \code{input2}. 
+Multiply the polynomial \code{poly1} by the polynomial whose precached FFT has been stored in \code{pre} by \code{zmod_poly_mul_precache_init}, i.e. sets \code{output} to the product of \code{poly1} by \code{poly2}. 
 \end{quote}
 
 \begin{lstlisting}
 void zmod_poly_mul_precache_clear(zmod_poly_precache_t pre)
 \end{lstlisting}
 \begin{quote}
-Function for clearing a \code{zmod_poly_mul_precache_t}.
+Free any memory used by the \code{zmod_poly_mul_precache_t pre}.
 \end{quote}
 
 \begin{lstlisting}
@@ -1942,44 +2370,44 @@ Set \code{res} to \code{poly1} multiplied by \code{poly2} ignoring the least sig
 
 \begin{lstlisting}
 void zmod_poly_mul_trunc_n_precache_init(zmod_poly_precache_t pre,
-      zmod_poly_t input2, unsigned long bits, unsigned long trunc)
+      zmod_poly_t poly2, unsigned long bits, unsigned long trunc)
 \end{lstlisting}
 \begin{quote}
-This function precaches an FFT of a polynomial \code{input2} to be used (usually multiple times) for truncated multiplicatons by \code{input2}, with up to the given number of bits per output coefficient (0 if this is to be computed automatically), where the output will be truncated to the given length.  
+This function precaches an FFT of a polynomial \code{poly2} to be used (usually multiple times) for truncated multiplications by \code{input2}, with up to the given number of bits per output coefficient (0 if this is to be computed automatically), where the output will be truncated to the given length.  
 
 This function is also used for initialising a precached middle product. 
 \end{quote}
 
 \begin{lstlisting}
 void zmod_poly_mul_trunc_n_precache(zmod_poly_t output,
-  zmod_poly_t input1, zmod_poly_precache_t pre, unsigned long trunc)
+  zmod_poly_t poly1, zmod_poly_precache_t pre, unsigned long trunc)
 \end{lstlisting}
 \begin{quote}
-Performs a truncated multiplication by a polynomial whose FFT has been precached using \code{zmod_poly_mul_trunc_n_precache_init}, i.e. \code{output} is set to \code{input1} multiplied by \code{input2} and truncated to length \code{trunc} (and normalised). 
+Performs a truncated multiplication by a polynomial whose FFT has been precached using \code{zmod_poly_mul_trunc_n_precache_init}, i.e. \code{output} is set to \code{poly1} multiplied by \code{poly2} and truncated to length \code{trunc} (and normalised). 
 \end{quote}
 
 \begin{lstlisting}
 void zmod_poly_mul_middle(zmod_poly_t output,
-               zmod_poly_t input1, zmod_poly_t input2,
+               zmod_poly_t poly1, zmod_poly_t poly22,
                                     unsigned long trunc)
 \end{lstlisting}
 \begin{quote}
-Performs a middle product of the polynomial \code{input1} by the polynomial \code{input2}.
+Performs a middle product of the polynomial \code{poly1} by the polynomial \code{poly2}.
 
-The middle product is the product of \code{input1} by \code{input2} truncated to length \code{trunc} and with the first \code{trunc/2} coefficients set to zero. Note that for this function to return a correct result one must ensure that if the full product were wrapped around after the first \code{trunc} terms then no more than \code{trunc/2} terms would be affected by the wraparound. 
+The middle product is the product of \code{poly1} by \code{poly2} truncated to length \code{trunc} and with the first \code{trunc/2} coefficients set to zero. Note that for this function to return a correct result one must ensure that if the full product were wrapped around after the first \code{trunc} terms then no more than \code{trunc/2} terms would be affected by the wraparound. 
 
-The typical situation to apply this function is when multiplying a polynomial of length $2n$ by one of length $n$. Ordinarily the product would have $3n - 1$ terms, however if \code{trunc} is set to $2n$ the first $n$ terms will be set to zero and the product truncated at $2n$ terms, note that $n - 1$ terms would be wrapped around and $n-1$ is less than the $n$ terms that will be set to zero.  
+The typical situation to apply this function is when multiplying a polynomial of length $2n$ by one of length $n$. Ordinarily the product would have $3n - 1$ terms, however if \code{trunc} is set to $2n$ the first $n$ terms will be set to zero and the product truncated at $2n$ terms. Note that $n - 1$ terms would be wrapped around and $n-1$ is less than the $n$ terms that will be set to zero.  
 \end{quote}
 
 \begin{lstlisting}
 void zmod_poly_mul_middle_precache(zmod_poly_t output,
-               zmod_poly_t input1, zmod_poly_precache_t pre,
+               zmod_poly_t poly1, zmod_poly_precache_t pre,
                                           unsigned long trunc)
 \end{lstlisting}
 \begin{quote}
-Performs a middle product of the polynomial \code{input1} by the precached polynomial \code{input2} stored in \code{pre} by the function \code{zmod_poly_mul_trunc_n_precache_init}. 
+Performs a middle product of the polynomial \code{poly1} by the precached polynomial \code{poly2} stored in \code{pre} by the function \code{zmod_poly_mul_trunc_n_precache_init}. 
 
-The middle product is the product of \code{input1} by \code{input2} truncated to length \code{trunc} with the first \code{trunc/2} coefficients set to zero. Note that for this function to return a correct result one must ensure that if the full product were wrapped around after the first \code{trunc} terms then no more than \code{trunc/2} terms would be affected by the wraparound. 
+The middle product is the product of \code{poly1} by \code{poly2} truncated to length \code{trunc} with the first \code{trunc/2} coefficients set to zero. Note that for this function to return a correct result one must ensure that if the full product were wrapped around after the first \code{trunc} terms then no more than \code{trunc/2} terms would be affected by the wraparound. 
 
 The typical situation to apply this function is when multiplying a polynomial of length $2n$ by one of length $n$. Ordinarily the product would have $3n - 1$ terms, however if \code{trunc} is set to $2n$ the first $n$ terms will be set to zero and the product truncated at $2n$ terms.  
 \end{quote}
@@ -2002,18 +2430,25 @@ Treat the polynomials \code{A} and \code{B} as series of length \code{n} and com
 \end{quote}
 
 \begin{lstlisting}
-void zmod_poly_div(zmod_poly_t Q, zmod_poly_t A, zmod_poly_t B)
-\end{lstlisting}
-\begin{quote}
-Divide the polynomial \code{A} by the polynomial \code{B} and set \code{Q} to the quotient. The leading coefficient of \code{B} must be invertible modulo the modulus of \code{B}.
-\end{quote}
-
-\begin{lstlisting}
 void zmod_poly_divrem(zmod_poly_t Q, zmod_poly_t R, 
                                      zmod_poly_t A, zmod_poly_t B)
 \end{lstlisting}
 \begin{quote}
 Divide the polynomial \code{A} by \code{B} and set \code{Q} to the quotient and \code{R} to the remainder. The leading coefficient of \code{B} must be invertible modulo the modulus of \code{B}.
+\end{quote}
+
+\begin{lstlisting}
+void zmod_poly_div(zmod_poly_t Q, zmod_poly_t A, zmod_poly_t B)
+\end{lstlisting}
+\begin{quote}
+Divide the polynomial \code{A} by the polynomial \code{B} and set \code{Q} to the quotient. The leading coefficient of \code{B} must be invertible modulo the modulus of \code{B}. This function is slightly faster than computing the quotient and remainder as per \code{zmod_poly_divrem}.
+\end{quote}
+
+\begin{lstlisting}
+void zmod_poly_rem(zmod_poly_t R, zmod_poly_t A, zmod_poly_t B)
+\end{lstlisting}
+\begin{quote}
+Divide the polynomial \code{A} by \code{B} and set \code{R} to the remainder. The leading coefficient of \code{B} must be invertible modulo the modulus of \code{B}. This function is more efficient than computing the quotient and remainder as per \code{zmod_poly_divrem}.
 \end{quote}
 
 \subsection{Greatest common divisor and resultant}
@@ -2034,7 +2469,7 @@ void zmod_poly_gcd(zmod_poly_t res, zmod_poly_t poly1,
                                                 zmod_poly_t poly2)
 \end{lstlisting}
 \begin{quote}
-Conmpute the greatest common divisor of the polynomials \code{poly1} and \code{poly2}.
+Compute the greatest common divisor of the polynomials \code{poly1} and \code{poly2}. The result that is returned will be monic.
 \end{quote}
 
 \begin{lstlisting}
@@ -2042,7 +2477,7 @@ int zmod_poly_gcd_invert(zmod_poly_t res, zmod_poly_t poly1,
                                                 zmod_poly_t poly2)
 \end{lstlisting}
 \begin{quote}
-Compute a polynomial \code{res} such that \code{res*poly1} is a constant modulo \code{poly2}. The two polynomials \code{poly1} and \code{poly2} are assumed to be coprime. If this is not the case, the function returns 0, otherwise it returns 1.
+Compute a polynomial \code{res} such that \code{res*poly1} is 1 modulo \code{poly2}. The two polynomials \code{poly1} and \code{poly2} are assumed to be coprime. If this is not the case, the function returns 0 and the result is undefined, otherwise it returns 1.
 \end{quote}
 
 \begin{lstlisting}
@@ -2050,7 +2485,7 @@ void zmod_poly_xgcd(zmod_poly_t res, zmod_poly_t s, zmod_poly_t t,
                               zmod_poly_t poly1, zmod_poly_t poly)
 \end{lstlisting}
 \begin{quote}
-Compute polynomials \code{s} and \code{t} such that \code{s*poly1+t*poly2} is the resultant of the polynomials \code{poly1} and \code{poly2}. The polynomials \code{poly1} and \code{poly2} are assumed to be coprime.
+Compute polynomials \code{s} and \code{t} such that \code{s*poly1+t*poly2} is the resultant of the polynomials \code{poly1} and \code{poly2}. The polynomials \code{poly1} and \code{poly2} are assumed to be coprime. The resultant that is returned will be monic.
 \end{quote}
 
 \subsection{Differentiation}
@@ -2220,7 +2655,7 @@ unsigned long z_ll_mod_precomp(unsigned long a_hi,
            unsigned long a_lo, unsigned long n, pre_inv_ll_t ninv)
 \end{lstlisting}
 \begin{quote}
-Return \code{a} modulo \code{n}. The first version assumes that \code{a} is less than \code{n^2}. The second and third versions replaces no restrictions on \code{a}.
+Return \code{a} modulo \code{n}. The first version assumes that \code{a} is less than \code{n^2}. The second and third versions place no restrictions on \code{a}.
 \end{quote}
 
 \begin{lstlisting}
@@ -2261,15 +2696,15 @@ Computes the Legendre symbol of \code{a} modulo \code{p} for a prime \code{p}. A
 int z_jacobi(long x, unsigned long y)
 \end{lstlisting}
 \begin{quote}
-Calculates the Jacobi symbol of (\code{x}/\code{y}). Assumes that gcd(\code{x},\code{y})=1 and \code{y} is odd.  
+Calculates the Jacobi symbol of \code{x} mod \code{y}. Assumes that gcd(\code{x},\code{y}) = 1 and \code{y} is odd.  
 \end{quote}
 
 \begin{lstlisting}
 int z_ispseudoprime_fermat(unsigned long const n,
-                             unsigned long const i)
+                             unsigned long const b)
 \end{lstlisting}
 \begin{quote}
-Checks to see if \code{n} is a Fermat pseudoprime with base \code{i}.  Assumes that \code{n} does not divide \code{i}. 
+Checks to see if \code{n} is a Fermat pseudoprime with base \code{b}.  Assumes that \code{n} does not divide \code{b}. 
 \end{quote}
 
 \begin{lstlisting}
@@ -2287,7 +2722,7 @@ int z_isprobab_prime(unsigned long n)
 int z_isprobab_prime_precomp(unsigned long n, pre_inv_t ninv)
 \end{lstlisting}
 \begin{quote}
-This is a deterministic prime test up to $10^16$. Requires \code{n} to be at most \code{FLINT_BITS-1} bits.  For numbers greater than $10^16$ there are no known counterexamples to the conjecture that a composite will never be declared prime. Primes are always declared prime by this test.
+This is a deterministic prime test up to $10^{16}$. Requires \code{n} to be at most \code{FLINT_BITS-1} bits.  For numbers greater than $10^{16}$ there are no known counterexamples to the conjecture that a composite will never be declared prime. Primes are always declared prime by this test.
 \end{quote}
 
 \begin{lstlisting}
@@ -2302,7 +2737,7 @@ int z_isprime_pocklington(unsigned long const n,
                    unsigned long const iterations)
 \end{lstlisting}
 \begin{quote}
-Proves that \code{n} is prime using a Pocklington-Lehmer test returns 0 if composite, 1 if prime and -1 if it failed to prove either way. The number of iterations can be increased for a more thorough check but will take longer. Setting \code{iterations} to \code{-1L} will cause it to continue until the number is proven prime or composite.
+Proves that \code{n} is prime using a Pocklington-Lehmer test. Returns 0 if composite, 1 if prime and -1 if it failed to prove either way. The number of iterations can be increased for a more thorough check but will take longer. Setting \code{iterations} to \code{-1L} will cause it to continue until the number is proven prime or composite.
 \end{quote}
 
 \begin{lstlisting}
@@ -2352,21 +2787,21 @@ Returns the greatest common divisor of \code{x} and \code{y}, which may be signe
 unsigned long z_invert(unsigned long a, unsigned long n)
 \end{lstlisting}
 \begin{quote}
-Returns a multiplicative inverse of \code{a} modulo \code{n}. Assumes \code{a} is reduced modulo \code{p}.
+Returns a multiplicative inverse of \code{a} modulo \code{n}. Assumes \code{a} is reduced modulo \code{n}.
 \end{quote}
 
 \begin{lstlisting}
-long z_gcd_invert(long* a, long x, long y)
+long z_gcd_invert(long * a, long x, long y)
 \end{lstlisting}
 \begin{quote}
 Returns the greatest common divisor \code{d} of \code{x} and \code{y} (which may be signed) and sets \code{a} such that \code{a*x} is \code{d} modulo \code{y}. We ensure \code{a} is reduced modulo \code{y}.
 \end{quote}
 
 \begin{lstlisting}
-long z_xgcd(long* a, long* b, long x, long y)
+long z_xgcd(long * a, long * b, long x, long y)
 \end{lstlisting}
 \begin{quote}
-Returns the greatest common divisor \code{d} of \code{x} and \code{y} (which may be signed) and sets \code{a} and \code{b} such that \code{d = a*x+b*y}. 
+Returns the greatest common divisor \code{d} of \code{x} and \code{y} (which may be signed) and sets \code{a} and \code{b} such that \code{d = a*x + b*y}. 
 \end{quote}
 
 \begin{lstlisting}
@@ -2407,6 +2842,8 @@ void z_factor(factor_t * factors, unsigned long n, int proved)
 \end{lstlisting}
 \begin{quote}
 Find the factors of \code{n}.  If \code{proved} is set to 0 then the factors are not proved prime, otherwise the result is proved.
+
+The \code{factor_t} struct contains three fields. The first is the \code{num} field, which is an int containing the number of factors. Then \code{p} is an array of unsigned long's containing the actual factors, and the respective exponents are given by the array of unsigned long's comprising the \code{exp} field of the struct.
 \end{quote}
 
 \begin{lstlisting}
@@ -2454,10 +2891,10 @@ Returns a random prime integer with up to the given number of bits.  Assumes \co
 
 \section{The mpn\_extras module}
 
-The \code{mpn\_extras} module is designed to supplement the low level \code{mpn} functions provided in GMP. These functions are designed to operate on raw limbs of multiprecision integer data. Each such integer consists of a string of limbs representing an integer, with the least significant limb first. The integers may either be unsigned or signed in twos complement format.
+The \code{mpn_extras} module is designed to supplement the low level \code{mpn} functions provided in GMP/MPIR. These functions are designed to operate on raw limbs of multiprecision integer data. Each such integer consists of a string of limbs representing an integer, with the least significant limb first. The integers may either be unsigned or signed in twos complement format.
 
 \begin{lstlisting}
-void F_mpn_negate(mp_limb_t* dest, mp_limb_t* src, 
+void F_mpn_negate(mp_limb_t * dest, mp_limb_t * src, 
                                               unsigned long count)
 \end{lstlisting}
 \begin{quote}
@@ -2465,7 +2902,7 @@ Considering the data at the location \code{src} to be an integer of \code{count}
 \end{quote}
 
 \begin{lstlisting}
-void F_mpn_copy(mp_limb_t* dest, const mp_limb_t* src, 
+void F_mpn_copy(mp_limb_t * dest, const mp_limb_t * src, 
                                               unsigned long count)
 \end{lstlisting}
 \begin{quote}
@@ -2473,7 +2910,7 @@ Copy \code{count} raw limbs at \code{src} to the location \code{dest}. Copying b
 \end{quote}
 
 \begin{lstlisting}
-void F_mpn_copy_forward(mp_limb_t* dest, const mp_limb_t* src,  
+void F_mpn_copy_forward(mp_limb_t * dest, const mp_limb_t * src,  
                                               unsigned long count)
 \end{lstlisting}
 \begin{quote}
@@ -2481,14 +2918,14 @@ Copy \code{count} raw limbs at \code{src} to the location \code{dest}. Copying b
 \end{quote}
 
 \begin{lstlisting}
-void F_mpn_clear(mp_limb_t* dest, unsigned long count)
+void F_mpn_clear(mp_limb_t * dest, unsigned long count)
 \end{lstlisting}
 \begin{quote}
 Set all bits of the \code{count} limbs starting at \code{dest} to binary zeros.
 \end{quote}
 
 \begin{lstlisting}
-void F_mpn_set(mp_limb_t* dest, unsigned long count)
+void F_mpn_set(mp_limb_t * dest, unsigned long count)
 \end{lstlisting}
 \begin{quote}
 Set all bits of the \code{count} limbs starting at \code{dest} to binary ones.
@@ -2500,7 +2937,7 @@ pre_limb_t F_mpn_precompute_inverse(mp_limb_t d)
 \begin{quote}
 Returns a precomputed inverse of \code{d} for use in \code{F_mpn} functions which take a \code{pre_limb_t} precomputed inverse \code{dinv} of \code{d}. 
 
-One needs to normalise \code{d} before computing the precomputed inverse, however the original value of \code{d} itself is passed to the functions. This computation can be done as follows:
+One needs to normalise \code{d} before computing the precomputed inverse. This computation can be done as follows:
 \end{quote}
 
 \begin{lstlisting}
@@ -2508,15 +2945,17 @@ One needs to normalise \code{d} before computing the precomputed inverse, howeve
 
 unsigned long norm;
 count_lead_zeros(norm, d);
-pre_limb_t xinv = F_mpn_precompute_inverse(x<<norm);
+pre_limb_t xinv = F_mpn_precompute_inverse(d<<norm);
 \end{lstlisting}
+
+Note that although one must normalise \code{d} before precomputing its inverse, the actual value of \code{d}, not its normalisation, is passed to the functions below.
 
 \begin{lstlisting}
 mp_limb_t F_mpn_divrem_ui_precomp(mp_limb_t * quot, 
     mp_limb_t * x, unsigned long xn, mp_limb_t d, pre_limb_t dinv)
 \end{lstlisting}
 \begin{quote}
-Compute the quotient of the unsigned multiprecision integer of \code{xn} limbs at \code{x} by the limb \code{d}, placing the quotient at \code{quot} and returning the remainder. The location \code{quot} needs space for \code{count} limbs. The function takes a precomputed inverse of \code{d}.
+Compute the quotient of the unsigned multiprecision integer of \code{xn} limbs at \code{x} by the limb \code{d}, placing the quotient at \code{quot} and returning the remainder. The location \code{quot} needs space for \code{xn} limbs. The function takes a precomputed inverse of \code{d}.
 \end{quote}
              
 \begin{lstlisting}
@@ -2524,7 +2963,7 @@ mp_limb_t F_mpn_mul(mp_limb_t * rn, mp_limb_t * s1p,
             unsigned long s1n, mp_limb_t * s2p, unsigned long s2n)
 \end{lstlisting}
 \begin{quote}
-Set \code{rn} to \code{s1p*s2p) where \code{s1p} has \code{s1n} limbs and \code{s2p} has \code{s2n} limbs. The number of limbs written is \code{s1n + s2n}. The most significant limb of the result (which may be zero) is returned by the function.
+Set \code{rn} to \code{s1p*s2p} where \code{s1p} has \code{s1n} limbs and \code{s2p} has \code{s2n} limbs. The number of limbs written is \code{s1n + s2n}. The most significant limb of the result (which may be zero) is returned by the function.
 
 This function simply calls the GMP \code{mpn_mul} function for small operands, however for integers of FFT size (larger than about 1300 limbs for multiplication and 1000 limbs for squares) the function is significantly faster than GMP 4.2.2.
 \end{quote}
@@ -2554,7 +2993,7 @@ When multiplying a single large integer \code{s1p} of \code{s1n} limbs (usually 
 void F_mpn_mul_precomp_clear(F_mpn_precomp_t precomp)
 \end{lstlisting}
 \begin{quote}
-Release the memory allocated for the data attached to the \code{F_mpn_precomp_t precomp} once it is finished with.
+Release the memory allocated for the data attached to the \code{F_mpn_precomp_t precomp}.
 \end{quote}
 
 \begin{lstlisting}
@@ -2571,6 +3010,19 @@ The total number of limbs written is \code{s1n + s2n} (even if the final limb is
 Various functions are provided for converting between FLINT objects and NTL objects. To make use of these functions one must type:
 
 \code{#include "NTL-interface.h"}
+
+If one is linking against \code{libflint} then one must also build \code{NTL-interface.o} in the top level FLINT source tree as follows:
+\begin{lstlisting}
+g++ -c NTL-interface -o NTL-interface.o -O2 -fPIC
+\end{lstlisting}
+
+One must then include \code{NTL-interface.o} in the list of files to link when compiling your program and linking against \code{libflint}, e.g.
+
+\begin{lstlisting}
+g++ myprog.cpp NTL-interface.o -o myprog -O2 -I$FLINT_GMP_INCLUDE_DIR \
+-I$FLINT_NTL_INCLUDE_DIR -L$FLINT_GMP_LIB_DIR -L$FLINT_NTL_LIB_FIR \
+-lflint -lntl -lgmp
+\end{lstlisting}
 
 In each case the functions provided for conversion expect the output objects, whether NTL or FLINT objects, to be initialised. The first function is unmanaged in that the 
 user must ensure that sufficient space is allocated in the \code{fmpz_t} to hold the integer contained in the \code{ZZ}.
@@ -2608,18 +3060,18 @@ Convert an NTL \code{ZZX} polynomial object to a FLINT \code{fmpz_poly_t} polyno
 \section{The quadratic sieve}
 Currently the quadratic sieve is a standalone program which can be built by typing:
 
-\code{make QS}
+\code{make mpQS}
 
 in the main FLINT directory.
 
 The program is called \code{mpQS}. Upon running it, one enters the number to be factored at the prompt. 
 
-The quadratic sieve requires that the number entered not be a prime, not be a perfect power and it must not have very small factors. Trial division and the elliptic curve method should be run before making a call to the quadratic sieve, to remove small factors. The sieve may fail silently if the conditions are not met or if the number is too small to be factored by the quadratic sieve (currently about 20 decimal digits or below).
+The quadratic sieve requires that the number entered not be a prime and not be a perfect power. Trial division and the elliptic curve method should be run before making a call to the quadratic sieve, to remove small factors. The sieve may fail silently if the conditions are not met or if the number is too small to be factored by the quadratic sieve (currently about 26 binary bits or below).
 
 \section{Large integer multiplication}
-In the module \code{mpn_extras} and \code{mpz_extras} are functions \code{F_mpn_mul} and \code{F_mpz_mul} respectively which are drop in replacements for GMP's \code{mpn_mul} and \code{mpz_mul} respectively. 
+In the module \code{mpn_extras} and \code{mpz_extras} are functions \code{F_mpn_mul} and \code{F_mpz_mul} respectively which are drop in replacements for GMP/MPIR's \code{mpn_mul} and \code{mpz_mul} respectively. 
 
-These replacement functions are substantially faster than GMP 4.2.1 when multiplying integers which are thousands of limbs in size. For smaller multiplications these functions call their respective GMP counterparts.
+These replacement functions are substantially faster than GMP 4.3.1 and somewhat faster than MPIR 1.2.0 when multiplying integers which are thousands of limbs in size. For smaller multiplications these functions call their respective GMP/MPIR counterparts.
 
 \bibliographystyle{amsalpha}
 \bibliography{flint}
