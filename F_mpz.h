@@ -34,6 +34,7 @@
 #include <gmp.h>
 #include "flint.h"
 #include "mpn_extras.h"
+#include "zn_poly/src/zn_poly.h"
 
 /* 
    F_mpz_t type
@@ -64,6 +65,20 @@ typedef F_mpz F_mpz_t[1];
 #define COEFF_IS_MPZ(xxx) ((xxx>>(FLINT_BITS-2)) == 1L) // is xxx an index into F_mpz_arr?
 
 static gmp_randstate_t F_mpz_state; // Used for random generation in F_mpz_randomm only
+
+typedef struct
+{
+   ulong * primes;
+   ulong num_primes;
+   ulong n; // we have 2^n >= num_primes > 2^(n-1)
+   F_mpz ** comb; // array of arrays of products
+   F_mpz ** res;  // successive residues r_i^-1 mod r_{i+1} for pairs r_i, r_{i+1}
+   zn_mod_t * mod;
+} F_mpz_comb_struct;
+
+typedef F_mpz_comb_struct F_mpz_comb_t[1];
+
+#define FLINT_F_MPZ_LOG_MULTI_MOD_CUTOFF 2
 
 /*===============================================================================
 
@@ -301,6 +316,26 @@ int F_mpz_cmpabs(const F_mpz_t f, const F_mpz_t g);
 */
 int F_mpz_cmp(const F_mpz_t f, const F_mpz_t g);
 
+/** 
+   \fn     int F_mpz_is_one(const F_mpz_t f)
+   \brief  Returns 1 if f equals 1, otherwise returns 0.
+*/
+static inline 
+int F_mpz_is_one(const F_mpz_t f)
+{
+	return ((*f) == 1L);
+}
+
+/** 
+   \fn     int F_mpz_is_one(const F_mpz_t f)
+   \brief  Returns 1 if f equals -1, otherwise returns 0.
+*/
+static inline 
+int F_mpz_is_m1(const F_mpz_t f)
+{
+	return ((*f) == -1L);
+}
+
 /*===============================================================================
 
 	Properties
@@ -368,7 +403,6 @@ void F_mpz_print(F_mpz_t x)
 */
 void F_mpz_read(F_mpz_t f);
 
-
 /*===============================================================================
 
 	Arithmetic
@@ -380,6 +414,12 @@ void F_mpz_read(F_mpz_t f);
    \brief  Sets f to minus g. 
 */
 void F_mpz_neg(F_mpz_t f, const F_mpz_t g);
+
+/** 
+   \fn     void F_mpz_abs(F_mpz_t f, F_mpz_t g)
+   \brief  Sets f to the absolute value of g. 
+*/
+void F_mpz_abs(F_mpz_t f, const F_mpz_t g);
 
 /** 
    \fn     void F_mpz_add_mpz(F_mpz_t f, const F_mpz_t g, mpz_t h)
@@ -466,10 +506,24 @@ void F_mpz_addmul(F_mpz_t f, const F_mpz_t g, const F_mpz_t h);
 void F_mpz_submul(F_mpz_t f, const F_mpz_t g, const F_mpz_t h);
 
 /** 
+   \fn     ulong F_mpz_mod_ui(F_mpz_t f, const F_mpz_t g, const ulong h)
+   \brief  Set f to g modulo h, where h is an unsigned long also returning
+	        f as an unsigned long.
+*/
+ulong F_mpz_mod_ui(F_mpz_t f, const F_mpz_t g, const ulong h);
+
+/** 
    \fn     void F_mpz_mod(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
    \brief  Set f to g modulo h.
 */
 void F_mpz_mod(F_mpz_t f, const F_mpz_t g, const F_mpz_t h);
+
+/** 
+   \fn     int F_mpz_invert(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
+   \brief  Set f to the inverse of g modulo |h|, if it exists and return 1, 
+	        otherwise return 0. We normalise with 0 <= f < |h|.
+*/
+int F_mpz_invert(F_mpz_t f, const F_mpz_t g, const F_mpz_t h);
 
 /** 
    \fn     void F_mpz_divexact(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
@@ -495,6 +549,63 @@ void F_mpz_cdiv_q(F_mpz_t f, const F_mpz_t g, const F_mpz_t h);
 	        positive infinity.
 */
 void F_mpz_rdiv_q(F_mpz_t f, const F_mpz_t g, const F_mpz_t h);
+
+/*===============================================================================
+
+	Multimodular routines
+
+================================================================================*/
+
+/** 
+   \fn     void F_mpz_comb_init(F_mpz_comb_t comb, ulong * primes, ulong num_primes)
+   \brief  Initialise a comb for multimodular reduction and recombination. This 
+	        consists of arrays of products of pairs of elements from the array below
+			  starting with the given array of primes, and arrays of successive residues 
+			  r_i^-1 mod r_{i+1} for pairs r_i, r_{i+1}
+*/
+void F_mpz_comb_init(F_mpz_comb_t comb, ulong * primes, ulong num_primes);
+
+/** 
+   \fn     void F_mpz_comb_clear(F_mpz_comb_t comb)
+   \brief  Release any memory used by the comb.
+*/
+void F_mpz_comb_clear(F_mpz_comb_t comb);
+
+/** 
+   \fn     void F_mpz_multi_mod_ui_basecase(ulong * out, F_mpz_t in, 
+                                      ulong * primes, ulong num_primes)
+   \brief  Reduce the F_mpz_t in modulo each of the num_primes primes in
+	        the given array and output the residues in the array out.
+*/
+void F_mpz_multi_mod_ui_basecase(ulong * out, F_mpz_t in, 
+                               ulong * primes, ulong num_primes);
+
+/** 
+   \fn     void F_mpz_multi_mod_ui(ulong * out, F_mpz_t in, 
+                                      ulong * primes, ulong num_primes)
+   \brief  Reduce the F_mpz_t in modulo each of the num_primes primes in
+	        the comb and output the residues in the array out.
+*/
+void F_mpz_multi_mod_ui(ulong * out, F_mpz_t in, F_mpz_comb_t comb);
+
+/** 
+   \fn     void F_mpz_multi_CRT_ui_unsigned(F_mpz_t output, 
+	                                    ulong * residues, F_mpz_comb_t comb)
+   \brief  Chinese remainder recomposition from a list of residues modulo the
+	        num_primes primes given in the comb. The result is assumed to be
+			  non-negative and placed in output.
+*/
+void F_mpz_multi_CRT_ui_unsigned(F_mpz_t output, 
+											      ulong * residues, F_mpz_comb_t comb);
+
+/** 
+   \fn     void F_mpz_multi_CRT_ui(F_mpz_t output, 
+	                                    ulong * residues, F_mpz_comb_t comb)
+   \brief  Chinese remainder recomposition from a list of residues modulo the
+	        num_primes primes given in the comb. The result is assumed to be
+			  signed and placed in output.
+*/
+void F_mpz_multi_CRT_ui(F_mpz_t output, ulong * residues, F_mpz_comb_t comb);
 
 #ifdef __cplusplus
  }

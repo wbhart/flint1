@@ -36,6 +36,7 @@
 #include "long_extras.h"
 #include "F_mpz.h"
 #include "mpz_extras.h"
+#include "zn_poly/src/zn_poly.h"
 
 /*===============================================================================
 
@@ -584,6 +585,21 @@ void F_mpz_neg(F_mpz_t f1, const F_mpz_t f2)
 	}
 }
 
+void F_mpz_abs(F_mpz_t f1, const F_mpz_t f2)
+{
+   if (!COEFF_IS_MPZ(*f2)) // coeff is small
+	{
+		F_mpz t = FLINT_ABS(*f2); // Need to save value in case of aliasing
+		_F_mpz_demote(f1);
+		*f1 = t;
+	} else // coeff is large
+	{
+	   // No need to retain value in promotion, as if aliased, both already large
+		__mpz_struct * mpz_ptr = _F_mpz_promote(f1);
+		mpz_abs(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(*f2));
+	}
+}
+
 void F_mpz_add(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
 {
 	F_mpz c1 = *g;
@@ -1053,26 +1069,129 @@ void F_mpz_submul(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
 	_F_mpz_demote_val(f); // cancellation may have occurred
 }
 
+ulong F_mpz_mod_ui(F_mpz_t f, const F_mpz_t g, const ulong h)
+{
+	F_mpz c1 = *g;
+	ulong r;
+	
+   if (!COEFF_IS_MPZ(c1)) // g is small
+	{
+		if (c1 < 0L) 
+		{
+			r = h - (-c1 % h); // C doesn't correctly handle negative mods
+			if (r == h) r = 0;
+		} else r = c1 % h;
+		
+		F_mpz_set_ui(f, r);
+		return r;
+	} else // g is large
+	{
+		r = mpz_fdiv_ui(F_mpz_arr + COEFF_TO_OFF(c1), h);
+		F_mpz_set_ui(f, r);
+		return r;
+	}
+}
+
 void F_mpz_mod(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
 {
 	F_mpz c1 = *g;
 	F_mpz c2 = *h;
+	ulong r;
 	
    if (!COEFF_IS_MPZ(c1)) // g is small
 	{
 	   if (!COEFF_IS_MPZ(c2)) // h is also small
-		   F_mpz_set_si(f, c1 % c2);
+		{
+			if (c2 < 0L) c2 = -c2;
+			if (c1 < 0L) 
+		   {
+			   r = c2 - (-c1 % c2); // C doesn't correctly handle negative mods
+			   if (r == c2) r = 0;
+		   } else r = c1 % c2;
+			
+		   F_mpz_set_si(f, r);
+		}
 		else // h is large and g is small
-			F_mpz_set_si(f, c1);
+		{
+			if (c1 < 0L) 
+			{
+				F_mpz_abs(f, h);
+			   F_mpz_sub_ui(f, f, -c1);			
+			} else F_mpz_set_ui(f, c1);
+		}
 	} else // g is large
 	{
       if (!COEFF_IS_MPZ(c2)) // h is small
-		   F_mpz_set_ui(f, mpz_fdiv_ui(F_mpz_arr + COEFF_TO_OFF(c1), c2));
-		else // both are large
+		{
+			if (c2 < 0L) F_mpz_set_si(f, mpz_fdiv_ui(F_mpz_arr + COEFF_TO_OFF(c1), -c2));
+			else F_mpz_set_ui(f, mpz_fdiv_ui(F_mpz_arr + COEFF_TO_OFF(c1), c2));
+		} else // both are large
 		{
 			__mpz_struct * mpz_ptr = _F_mpz_promote(f);
 			mpz_mod(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(c1), F_mpz_arr + COEFF_TO_OFF(c2));
 			_F_mpz_demote_val(f); // reduction mod h may result in small value
+		}	
+	}
+}
+
+int F_mpz_invert(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
+{
+	F_mpz c1 = *g;
+	F_mpz c2 = *h;
+	int val;
+
+   if (!COEFF_IS_MPZ(c1)) // g is small
+	{
+	   if (!COEFF_IS_MPZ(c2)) // h is also small
+		{
+			long inv;
+			if (c2 < 0L) c2 = -c2;
+			if (c2 == 1L)  return 0; // special case not handled by z_gcd_invert
+			long gcd = z_gcd_invert(&inv, c1, c2);
+			if (gcd == 1L) 
+			{
+				F_mpz_set_si(f, inv); // check gcd is 1
+				return 1;
+			} else return 0;
+		} else // h is large and g is small
+		{
+			__mpz_struct temp; // put g into a temporary mpz_t
+			if (c1 < 0L) 
+			{
+				c1 = -c1;
+				temp._mp_d = &c1;
+			   temp._mp_size = -1;
+			} else if (c1 == 0L) temp._mp_size = 0;
+			else 
+			{
+				temp._mp_d = &c1;
+				temp._mp_size = 1;
+			}
+			__mpz_struct * mpz_ptr = _F_mpz_promote(f);
+			val = mpz_invert(mpz_ptr, &temp, F_mpz_arr + COEFF_TO_OFF(c2));
+			_F_mpz_demote_val(f); // inverse mod h may result in small value
+			return val;
+		}
+	} else // g is large
+	{
+      if (!COEFF_IS_MPZ(c2)) // h is small
+		{
+			long inv;
+			if (c2 < 0L) c2 = -c2;
+			if (c2 == 1L) return 0; // special case not handled by z_gcd_invert
+			// reduce g mod h first
+			long gcd = z_gcd_invert(&inv, mpz_fdiv_ui(F_mpz_arr + COEFF_TO_OFF(c1), c2), c2);
+			if (gcd == 1L) 
+			{
+				F_mpz_set_si(f, inv); // check gcd is 1
+				return 1;
+			} else return 0;
+		} else // both are large
+		{
+			__mpz_struct * mpz_ptr = _F_mpz_promote(f);
+			val = mpz_invert(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(c1), F_mpz_arr + COEFF_TO_OFF(c2));
+			_F_mpz_demote_val(f); // reduction mod h may result in small value
+			return val;
 		}	
 	}
 }
@@ -1211,4 +1330,382 @@ void F_mpz_rdiv_q(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
    F_mpz_fdiv_q(f, h2, h); // f = floor((g + (h >> 1) / h)
    
 	F_mpz_clear(h2);
+}
+
+void F_mpz_comb_init(F_mpz_comb_t comb, ulong * primes, ulong num_primes)
+{
+   ulong i, j, k;
+	
+	comb->primes = primes;
+   comb->num_primes = num_primes;
+
+   ulong n = ceil_log2(num_primes);
+   comb->n = n;
+	ulong num;
+
+   // create zn_poly modulus information
+	comb->mod = (zn_mod_t *) flint_heap_alloc_bytes(sizeof(zn_mod_t)*num_primes);
+   for (ulong i = 0; i < num_primes; i++) 
+      zn_mod_init(comb->mod[i], primes[i]);
+
+	if (n == 0) return; // nothing to do
+
+	// allocate space for comb and res
+   comb->comb = (F_mpz **) flint_heap_alloc(n);
+   comb->res = (F_mpz **) flint_heap_alloc(n);
+   
+   j = (1L << (n - 1)); // size of top level
+   
+	for (i = 0; i < n; i++) // initialise arrays at each level
+   {
+      comb->comb[i] = (F_mpz *) flint_heap_alloc(j);
+      comb->res[i] = (F_mpz *) flint_heap_alloc(j);
+		
+		for (ulong k = 0; k < j; k++)
+		{
+			F_mpz_init(comb->comb[i] + k);
+		   F_mpz_init(comb->res[i] + k);
+		}
+
+      j/=2;
+   }
+
+	// compute products of pairs of primes and place in comb
+	for (i = 0, j = 0; i + 2 <= num_primes; i += 2, j++)
+   {
+      F_mpz_set_ui(comb->comb[0] + j, primes[i]);
+      F_mpz_mul_ui(comb->comb[0] + j, comb->comb[0] + j, primes[i+1]);
+   }
+   if (i < num_primes) // in case number of primes is odd
+   {
+      F_mpz_set_ui(comb->comb[0] + j, primes[i]);
+	   i+=2;
+	   j++;
+	}
+   num = (1L<<n); // set the rest of the entries on that row of the comb to 1
+	for (; i < num; i += 2, j++)
+   {
+      F_mpz_set_ui(comb->comb[0] + j, 1L);
+	}
+
+	// compute rest of comb by multiplying in pairs
+	ulong log_comb = 1;
+	num /= 2;
+   while (num >= 2)
+   {
+      for (i = 0, j = 0; i < num; i += 2, j++)
+      {
+         F_mpz_mul2(comb->comb[log_comb] + j, comb->comb[log_comb-1] + i, comb->comb[log_comb-1] + i + 1);
+      }
+      log_comb++;
+      num /= 2;
+   }
+
+	// compute inverses from pairs of primes
+	F_mpz_t temp, temp2;
+	F_mpz_init(temp);
+	F_mpz_init(temp2);
+	
+	for (i = 0, j = 0; i + 2 <= num_primes; i += 2, j++)
+   {
+       F_mpz_set_ui(temp, primes[i]);
+       F_mpz_set_ui(temp2, primes[i+1]);
+       F_mpz_invert(comb->res[0] + j, temp, temp2);
+	}
+   
+	F_mpz_clear(temp);
+	F_mpz_clear(temp2);
+   
+   // compute remaining inverses, each level combining pairs from the level below
+	ulong log_res = 1;
+   num = (1L << (n - 1));
+
+   while (log_res < n)
+   {
+      for (i = 0, j = 0; i < num; i += 2, j++)
+      {
+         F_mpz_invert(comb->res[log_res] + j, comb->comb[log_res-1] + i, comb->comb[log_res-1] + i + 1);
+      }
+      log_res++;
+      num /= 2;
+   }  
+}
+
+void F_mpz_comb_clear(F_mpz_comb_t comb)
+{
+   unsigned long n = comb->n;
+
+   ulong j = (1L << (n - 1)); // size of top level
+   
+	for (ulong i = 0; i < n; i++) // initialise arrays at each level
+   {
+      for (ulong k = 0; k < j; k++)
+		{
+			F_mpz_clear(comb->comb[i] + k);
+		   F_mpz_clear(comb->res[i] + k);
+		}
+      
+		flint_heap_free(comb->comb[i]);
+      flint_heap_free(comb->res[i]);
+
+      j/=2;
+   }
+	
+	if (n)
+	{
+		flint_heap_free(comb->res);
+      flint_heap_free(comb->comb);
+	}
+
+   flint_heap_free(comb->mod);
+}
+
+void F_mpz_multi_mod_ui_basecase(ulong * out, F_mpz_t in, 
+                               ulong * primes, ulong num_primes)
+{
+   F_mpz_t temp;
+	F_mpz_init(temp);
+	
+	for (ulong i = 0; i < num_primes; i++)
+   {
+      out[i] = F_mpz_mod_ui(temp, in, primes[i]);
+   }
+
+	F_mpz_clear(temp);
+}
+
+void F_mpz_multi_mod_ui(ulong * out, F_mpz_t in, F_mpz_comb_t comb)
+{
+   ulong i, j, k;
+   ulong n = comb->n;
+   long log_comb;
+	ulong num;
+	ulong num_primes = comb->num_primes;
+
+   if (num_primes == 1) // we are reducing modulo a single prime which is assumed to be big enough
+   {
+	  if ((*in) > 0L) out[0] = (*in);
+	  else if ((*in) < 0L) out[0] = comb->primes[0] + (*in);
+	  else out[0] = 0L;
+	  return;
+   }
+
+   log_comb = n - 1;
+   
+	// allocate space for temp
+	F_mpz ** temp = (F_mpz **) flint_heap_alloc(n);
+   j = (1L << (n - 1));
+   
+   for (i = 0; i < n; i++)
+   {
+      temp[i] = (F_mpz *) flint_heap_alloc(j);
+
+      for (k = 0; k < j; k++)
+      {
+         F_mpz_init(temp[i] + k);
+      }
+
+      j/=2;
+   }
+
+   // find level in comb with entries bigger than the input integer
+	log_comb = 0;
+	if ((*in) < 0L)
+	  while ((F_mpz_bits(in) >= F_mpz_bits(comb->comb[log_comb]) - 1) && (log_comb < comb->n - 1)) log_comb++;
+   else
+		while (F_mpz_cmpabs(in, comb->comb[log_comb]) >= 0) log_comb++;
+   num = (1L << (n - log_comb - 1));
+
+	// set each entry of this level of temp to the input integer
+	for (i = 0; i < num; i++)
+   {
+      F_mpz_set(temp[log_comb] + i, in);
+   }
+   log_comb--;
+   num *= 2;
+   
+   // fill in other entries of temp by taking entries of temp at higher level mod pairs from comb
+	while (log_comb > FLINT_F_MPZ_LOG_MULTI_MOD_CUTOFF) // keep going until we reach the basecase
+   {
+      for (i = 0, j = 0; i < num; i += 2, j++)
+      {
+         F_mpz_mod(temp[log_comb] + i, temp[log_comb + 1] + j, comb->comb[log_comb] + i);
+         F_mpz_mod(temp[log_comb] + i + 1, temp[log_comb + 1] + j, comb->comb[log_comb] + i + 1);
+      }
+      num *= 2;
+      log_comb--;
+   }
+   
+   // do basecase
+	num /= 2;
+   log_comb++;
+   ulong stride = (1L << (log_comb + 1));
+   for (i = 0, j = 0; j < num_primes; i++, j += stride)
+   {
+	   F_mpz_multi_mod_ui_basecase(out + j, temp[log_comb] + i, comb->primes + j, FLINT_MIN(stride, num_primes - j));
+   }
+
+	// free temp
+	j = (1L << (n - 1));
+   
+   for (i = 0; i < n; i++)
+   {
+      for (k = 0; k < j; k++)
+      {
+         F_mpz_clear(temp[i] + k);
+      }
+      
+		flint_heap_free(temp[i]);
+      
+		j/=2;
+   }
+	
+	flint_heap_free(temp);
+}
+
+void __F_mpz_multi_CRT_ui_sign(F_mpz_t output, F_mpz_t input, F_mpz_comb_t comb)
+{
+   ulong n = comb->n;
+   if (n == 0L) 
+   {
+      if (F_mpz_is_zero(input)) 
+	   {
+	      F_mpz_set_ui(output, 0L);
+	      return;
+	   }
+
+	   long p = comb->primes[0];
+		if ((p - (*input)) < (*input)) F_mpz_set_si(output, (long) ((*input) - p));
+	   else F_mpz_set_ui(output, (*input));
+	   return;
+   }
+
+   F_mpz_t temp;
+	F_mpz_init(temp);
+	
+   F_mpz_sub(temp, input, comb->comb[comb->n - 1]);
+	
+   if (F_mpz_cmpabs(temp, input) <= 0) F_mpz_set(output, temp);
+   else F_mpz_set(output, input);
+
+   F_mpz_clear(temp);
+   return;
+}
+
+void __F_mpz_multi_CRT_ui(F_mpz_t output, ulong * residues, F_mpz_comb_t comb, int sign)
+{
+   ulong i, j, k;
+
+   ulong n = comb->n;
+   ulong num;
+   ulong log_res;
+	ulong num_primes = comb->num_primes;
+
+   if (num_primes == 1) // the output is less than a single prime, so just output the result
+   {
+      if (sign)
+		{
+		   ulong p = comb->primes[0];
+	      if ((p - residues[0]) < residues[0]) F_mpz_set_si(output, residues[0] - p);
+	      else F_mpz_set_ui(output, residues[0]);
+	   } else F_mpz_set_ui(output, residues[0]);
+	   
+		return;
+	}
+
+   // allocate space for comb_temp
+	F_mpz ** comb_temp = (F_mpz **) flint_heap_alloc(n);
+   j = (1L << (n - 1));
+   
+	for (i = 0; i < n; i++)
+   {
+      comb_temp[i] = (F_mpz *) flint_heap_alloc(j);
+
+      for (k = 0; k < j; k++)
+      {
+         F_mpz_init(comb_temp[i] + k);
+      }
+
+      j/=2;
+   }
+
+	// first layer of reconstruction
+	num = (1L << n);
+   F_mpz_t temp, temp2;
+	F_mpz_init(temp);
+	F_mpz_init(temp2);
+	
+	for (i = 0, j = 0; i + 2 <= num_primes; i += 2, j++)
+   {
+      F_mpz_set_ui(temp, residues[i]);
+      F_mpz_mod_ui(temp2, temp, comb->primes[i+1]);
+      F_mpz_sub_ui(temp2, temp2, residues[i + 1]);
+      F_mpz_neg(temp2, temp2);
+		F_mpz_mul2(temp, temp2, comb->res[0] + j);
+      F_mpz_mod_ui(temp2, temp, comb->primes[i+1]);
+      F_mpz_mul_ui(temp, temp2, comb->primes[i]); 
+		F_mpz_add_ui(comb_temp[0] + j, temp, residues[i]);
+   }
+
+   if (i < num_primes) F_mpz_set_ui(comb_temp[0] + j, residues[i]);
+    
+   // compute other layers of reconstruction
+	num /= 2;
+   log_res = 1;
+   
+	while (log_res < n)
+   {
+      for (i = 0, j = 0; i < num; i += 2, j++)
+      {
+         if (F_mpz_is_one(comb->comb[log_res-1] + i + 1))
+		   {
+		      if (!F_mpz_is_one(comb->comb[log_res-1] + i)) 
+					F_mpz_set(comb_temp[log_res] + j, comb_temp[log_res-1] + i);
+		   } else
+		   {
+			   F_mpz_mod(temp2, comb_temp[log_res-1] + i, comb->comb[log_res-1] + i + 1);
+            F_mpz_sub(temp, comb_temp[log_res-1] + i + 1, temp2);
+            F_mpz_mul2(temp2, temp, comb->res[log_res] + j);
+            F_mpz_mod(temp, temp2, comb->comb[log_res-1] + i + 1);
+            F_mpz_mul2(temp2, temp, comb->comb[log_res-1] + i);
+            F_mpz_add(comb_temp[log_res] + j, temp2, comb_temp[log_res-1] + i);
+		   }
+      }     
+      log_res++;
+      num /= 2; 
+   }
+
+	F_mpz_clear(temp);
+   F_mpz_clear(temp2);
+
+   // write out the output
+	if (sign) __F_mpz_multi_CRT_ui_sign(output, comb_temp[log_res - 1], comb);
+	else F_mpz_set(output, comb_temp[log_res - 1]);
+
+	// free comb_temp
+	j = (1L << (n - 1));
+   
+	for (i = 0; i < n; i++)
+   {
+      for (k = 0; k < j; k++)
+      {
+         F_mpz_clear(comb_temp[i] + k);
+      }
+      
+		flint_heap_free(comb_temp[i]);
+
+      j/=2;
+   }
+   
+	flint_heap_free(comb_temp);
+}
+
+void F_mpz_multi_CRT_ui_unsigned(F_mpz_t output, ulong * residues, F_mpz_comb_t comb)
+{
+	__F_mpz_multi_CRT_ui(output, residues, comb, 0);
+}
+
+void F_mpz_multi_CRT_ui(F_mpz_t output, ulong * residues, F_mpz_comb_t comb)
+{
+	__F_mpz_multi_CRT_ui(output, residues, comb, 1);
 }
