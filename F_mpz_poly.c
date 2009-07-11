@@ -2343,7 +2343,7 @@ void F_mpz_poly_byte_pack(mp_limb_t * array, const F_mpz_poly_t poly_fmpz,
        // determine size of next coefficient
 		 if (!COEFF_IS_MPZ(*coeff_m)) // coeff is small
 		 {
-			 ssize = (long) (*coeff_m != 0L);
+			 ssize = (long) ((*coeff_m) != 0L);
 			 coeff = coeff_m;
 		 } else // coeff is an mpz_t
 		 {
@@ -2724,6 +2724,129 @@ void F_mpz_poly_byte_unpack(F_mpz_poly_t poly_m, const mp_limb_t * array,
 
    flint_stack_release();
    _F_mpz_poly_normalise(poly_m);
+}
+
+void F_mpz_poly_pack_bytes(F_mpz_poly_t res, F_mpz_poly_t poly, ulong n, ulong bytes)
+{
+    // special case, poly is zero
+	if (poly->length == 0)
+	{
+		F_mpz_poly_zero(res);
+		return;
+	}
+	
+	long i, j;
+	
+	ulong max_bits = FLINT_ABS(F_mpz_poly_max_bits(poly));
+	
+	// length after packing
+	ulong short_length = (poly->length - 1)/n + 1;
+	ulong limbs = ((n*bytes - 1) >> FLINT_LG_BYTES_PER_LIMB) + 1;
+	
+	F_mpz_poly_fit_length(res, short_length);
+	
+	F_mpz_poly_t poly_p;
+	__mpz_struct * coeff;
+    mp_limb_t * coeff_r;
+
+	// pack coefficients
+	for (i = 0, j = 0; i < short_length - 1; i++, j += n)
+	{
+       coeff = _F_mpz_promote(res->coeffs + i);
+	   // one extra limb for byte pack
+	   mpz_realloc(coeff, limbs);
+	   coeff_r = coeff->_mp_d;
+	   F_mpn_clear(coeff_r, limbs);
+
+	   _F_mpz_poly_attach_shift(poly_p, poly, j);
+	   poly_p->length = FLINT_MIN(poly_p->length, n);
+	   _F_mpz_poly_normalise(poly_p);
+	   
+	   long negate = 1L;
+	   if ((poly_p->length) && (F_mpz_sgn(poly_p->coeffs + poly_p->length - 1) < 0)) 
+		   negate = -1L;
+
+	   if (poly_p->length) F_mpz_poly_byte_pack(coeff_r, poly_p, n, bytes, negate);
+
+	   // normalise number of limbs
+	   coeff->_mp_size = limbs;
+	   while ((coeff->_mp_size) && !(coeff_r[coeff->_mp_size - 1])) coeff->_mp_size--;
+	   if (negate < 0L) coeff->_mp_size = -coeff->_mp_size;	
+	   _F_mpz_demote_val(res->coeffs + i); // coeff may end up small
+	}
+
+	coeff = _F_mpz_promote(res->coeffs + i);
+	mpz_realloc(coeff, limbs);
+	coeff_r = coeff->_mp_d;
+    F_mpn_clear(coeff_r, limbs);
+
+	_F_mpz_poly_attach_shift(poly_p, poly, j);
+	
+	long negate = 1L;
+	if (poly_p->length)
+	{	
+	   if (F_mpz_sgn(poly_p->coeffs + poly_p->length - 1) < 0) negate = -1L;
+       F_mpz_poly_byte_pack(coeff_r, poly_p, poly_p->length, bytes, negate);
+	}
+	
+	// normalise number of limbs
+	coeff->_mp_size = limbs;
+	while ((coeff->_mp_size) && !(coeff_r[coeff->_mp_size - 1])) coeff->_mp_size--;
+	if (negate < 0L) coeff->_mp_size = -coeff->_mp_size;	
+	_F_mpz_demote_val(res->coeffs + i); // coeff may end up small
+	
+	res->length = short_length;
+}
+
+void F_mpz_poly_unpack_bytes(F_mpz_poly_t res, F_mpz_poly_t poly, ulong n, ulong bytes)
+{
+    // Special case, length zero
+	if (poly->length == 0)
+	{
+		F_mpz_poly_zero(res);
+		return;
+	}
+	
+	ulong i, j;
+	F_mpz_poly_t poly_r;
+
+	// one extra limb for byte_unpack
+	ulong limbs = ((2*n-1)*bytes*8 - 1)/FLINT_BITS + 2; // number of limbs of each large coeff
+	ulong length_max = n*poly->length + n - 1;
+
+	F_mpz_poly_fit_length(res, length_max);
+	
+	// zero coeffs, as we will be adding to them
+	res->length = length_max;
+    for (i = 0; i < length_max; i++)
+		F_mpz_zero(res->coeffs + i);
+
+	mp_limb_t * arr = flint_heap_alloc(limbs);
+	
+	for (i = 0; i < poly->length; i++)
+	{
+		int negate = 0;
+		if (F_mpz_sgn(poly->coeffs + i) < 0) negate = 1; 
+	    
+		_F_mpz_poly_attach_shift(poly_r, res, i*n);
+		poly_r->alloc = 2*n - 1;
+		
+		if (negate) // negate existing coefficients then add to them
+			for (j = 0; j < n - 1; j++) F_mpz_neg(poly_r->coeffs + j, poly_r->coeffs + j);
+	    
+		F_mpn_clear(arr, limbs);
+		
+		F_mpz_get_limbs(arr, poly->coeffs + i);
+		
+		F_mpz_poly_byte_unpack(poly_r, arr, 2*n - 1, bytes);
+		
+		if (negate) // then negate back if necessary
+		   for (j = 0; j < 2*n - 1; j++) F_mpz_neg(poly_r->coeffs + j, poly_r->coeffs + j);
+	}
+
+	flint_heap_free(arr);
+
+	_F_mpz_poly_normalise(res);
 }
 
 /*===============================================================================
@@ -3420,3 +3543,225 @@ void F_mpz_poly_mul(F_mpz_poly_t res, F_mpz_poly_t poly1, F_mpz_poly_t poly2)
 		else _F_mpz_poly_mul(res, poly2, poly1);
 	}		
 }
+
+/*===============================================================================
+
+	Multimodular multiplication
+
+================================================================================*/
+
+/*
+   Multiply two polynomials using the multimodular technique.
+   This version requires an appropriate F_mpz_comb_t struct, already initialized with primes
+   This function allows aliasing
+*/
+void __F_mpz_poly_mul_modular_comb(F_mpz_poly_t output, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2,
+        F_mpz_comb_t comb)
+{
+    if ((poly1->length == 0) || (poly2->length == 0)) // Special case, length zero polys
+    {
+        F_mpz_poly_zero(output);
+        return;
+    }
+
+    // Multimodular reduction of poly1, place result into block1
+    ulong len1 = poly1->length;
+    ulong * block1 = flint_heap_alloc(len1 << comb->n);
+
+#pragma omp parallel
+	{		  
+#pragma omp for
+       for(long i = 0; i < len1; i++) 
+	   {
+          F_mpz_multi_mod_ui(block1 + (i << comb->n), poly1->coeffs + i, comb);
+       }
+	}
+
+    // Multimodular reduction of poly2, place result into block2
+    ulong len2 = poly2->length;
+    ulong * block2 = flint_heap_alloc(len2 << comb->n);
+
+#pragma omp parallel
+	{		  
+#pragma omp for
+       for(long i = 0; i < len2; i++)
+	   {
+          F_mpz_multi_mod_ui(block2 + (i << comb->n), poly2->coeffs + i, comb);
+       }
+	}
+    
+    // initialise space for transposed output coefficients
+	ulong len_out = len1 + len2 - 1;
+    ulong * block_out = flint_heap_alloc(len_out << comb->n);
+
+    // Inputs for zn_array_mul (we deal with 16 primes at a time)
+    ulong * in1 = flint_heap_alloc(len1*16);
+    ulong * in2 = flint_heap_alloc(len2*16);
+
+    // Output for zn_array_mul
+    ulong * out = flint_heap_alloc(len_out*16);
+
+    ulong numprimes = comb->num_primes;
+
+    ulong i = 0;
+	for(i = 0; i + 16 <= numprimes; i+= 16) 
+	{
+       // in1 := poly1 % comb->primes[i]
+#pragma omp parallel
+	   {		  
+#pragma omp for
+          for(long j = 0; j < len1; j++) 
+	      {
+             for (ulong s = 0; s < 16; s++)
+		        in1[j + s*len1] = block1[i + s + (j << comb->n)];
+          }
+	   }
+        
+	   // in2 := poly2 % comb->primes[i]
+#pragma omp parallel
+	   {		  
+#pragma omp for
+          for(long j = 0; j < len2; j++) 
+		  {
+             for (ulong s = 0; s < 16; s++)
+			    in2[j + s*len2] = block2[i + s + (j << comb->n)];
+          }
+	   }
+
+       // multiply using zn_poly (requires len1>=len2>=1)
+#pragma omp parallel
+	   {		  
+#pragma omp for
+	      for (long s = 0; s < 16; s++)
+		  {
+		     if(len1 >= len2)
+                zn_array_mul(out + s*len_out, in1 + s*len1, len1, in2 + s*len2, len2, comb->mod[i + s]);
+             else
+                zn_array_mul(out + s*len_out, in2 + s*len2, len2, in1 + s*len1, len1, comb->mod[i + s]);
+		  }
+	   }
+		  
+	   // place result in block_out transposing
+#pragma omp parallel
+	   {		  
+#pragma omp for
+          for (long j = 0; j < len_out; j++) 
+		  {
+             for (ulong s = 0; s < 16; s++)
+			    block_out[i + s + (j << comb->n)] = out[j + s*len_out];
+          }
+	   }     
+    }
+	
+	// deal with final iterations
+	for( ; i < numprimes; i++) 
+	{
+       // in1 := poly1 % comb->primes[i]
+       for(ulong j = 0; j < len1; j++) 
+	      in1[j] = block1[i + (j << comb->n)];
+
+       // in2 := poly2 % comb->primes[i]
+       for(ulong j = 0; j < len2; j++) 
+	      in2[j] = block2[i + (j << comb->n)];
+
+       // multiply using zn_poly (requires len1>=len2>=1)
+       if(len1 >= len2)
+          zn_array_mul(out, in1, len1, in2, len2, comb->mod[i]);
+       else
+          zn_array_mul(out, in2, len2, in1, len1, comb->mod[i]);
+        
+	   // place result in block_out transposing
+       for(ulong j = 0; j < len_out; j++) 
+		  block_out[i + (j << comb->n)] = out[j];
+    }
+     
+    // Reconstruct output from data in block_out
+#pragma omp parallel
+	{		  
+#pragma omp for
+       for(int i = 0; i < len_out; i++) 
+          F_mpz_multi_CRT_ui(output->coeffs + i, block_out + (i << comb->n), comb);
+    }
+    
+    output->length = len_out;
+    _F_mpz_poly_normalise(output);
+    
+	// Free all stuff
+    flint_heap_free(block1);
+    flint_heap_free(block2);
+    flint_heap_free(block_out);
+    flint_heap_free(in1);
+    flint_heap_free(in2);
+    flint_heap_free(out);
+}
+
+void _F_mpz_poly_mul_modular(F_mpz_poly_t output, const F_mpz_poly_t poly1, 
+									 const F_mpz_poly_t poly2, const ulong bits_in)
+{
+#if FLINT_BITS == 32
+    ulong p0 = z_nextprime(1UL << 30, 0);
+    
+	// primes_per_limb = 32/log2(p0)
+    double primes_per_limb = 1.067;
+#else 
+    ulong p0 = z_nextprime(1L << 62, 0);
+    
+	// primes_per_limb = 64/log2(p0)
+    double primes_per_limb = 1.0323;
+#endif
+
+    // estimated bound for the size of output coefficients
+    ulong length = FLINT_MIN(poly1->length, poly2->length);
+	ulong output_bits;
+	long bits1, bits2;
+	if (bits_in) output_bits = bits_in;
+	else
+	{
+       bits1 = F_mpz_poly_max_bits(poly1);
+	   bits2 = F_mpz_poly_max_bits(poly2);
+	   ulong log_length = ceil_log2(length);
+       output_bits = FLINT_ABS(bits1) + FLINT_ABS(bits2) + log_length + 1;
+	}
+
+    // compute number of primes
+	ulong numprimes = (output_bits * primes_per_limb)/FLINT_BITS + 1;
+	
+	// allocate space for primes
+	ulong * primes = flint_heap_alloc(numprimes);
+
+    // compute primes
+	ulong p = p0;
+    for (ulong i = 0; i < numprimes; i++) 
+	{
+       primes[i] = p;
+       p = z_nextprime(p, 0);
+    }
+
+    // precompute comb
+    F_mpz_comb_t comb;
+    F_mpz_comb_init(comb, primes, numprimes);
+
+    // do the multimodular multiplication
+	__F_mpz_poly_mul_modular_comb(output, poly1, poly2, comb);
+    F_mpz_comb_clear(comb);
+
+    // free allocated space
+    flint_heap_free(primes);
+}
+
+void F_mpz_poly_mul_modular(F_mpz_poly_t output, const F_mpz_poly_t poly1, 
+									 const F_mpz_poly_t poly2, const ulong bits_in)
+{
+	// special cases for polys of length zero
+	if ((poly1->length == 0) || (poly2->length == 0))
+	{
+		F_mpz_poly_zero(output);
+		return;
+	}
+
+	// create space for output
+	F_mpz_poly_fit_length(output, poly1->length + poly2->length - 1);
+   
+	_F_mpz_poly_mul_modular(output, poly1, poly2, bits_in);
+}
+

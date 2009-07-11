@@ -670,6 +670,26 @@ void F_mpz_poly_byte_unpack(F_mpz_poly_t poly_m, const mp_limb_t * array,
 void F_mpz_poly_byte_unpack_unsigned(F_mpz_poly_t poly_m, const mp_limb_t * array,
                                const unsigned long length, const unsigned long coeff_bytes);
 
+/** 
+   \fn     void F_mpz_poly_pack_bytes(F_mpz_poly_t res, 
+                                             F_mpz_poly_t poly, ulong n, ulong bytes)
+   \brief  Pack coefficients of poly into fields with the given number of bytes, in 
+           bundles of n, into coefficients of res. It is required that bytes be at 
+		   least one limb worth.
+*/ 
+void F_mpz_poly_pack_bytes(F_mpz_poly_t res, F_mpz_poly_t poly, ulong n, ulong bytes);
+
+/** 
+   \fn     void F_mpz_poly_unpack_bytes(F_mpz_poly_t res, 
+                                            F_mpz_poly_t poly, ulong n, ulong bytes)
+   \brief  Unpack packed coefficients of poly (packed into fields of the given number 
+           of bytes width) into res staggering the output by n coefficients for each 
+		   large input coefficient (and assuming each large coefficient stores 
+		   (2*n - 1) coefficients. It is required that bytes be at least one limb 
+		   worth.
+*/ 
+void F_mpz_poly_unpack_bytes(F_mpz_poly_t res, F_mpz_poly_t poly, ulong n, ulong bytes);
+
 /*===============================================================================
 
 	Multiplication
@@ -747,6 +767,26 @@ void F_mpz_poly_mul_SS(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_p
 	        optimal algorithm.
 */
 void F_mpz_poly_mul(F_mpz_poly_t res, F_mpz_poly_t poly1, F_mpz_poly_t poly2);
+
+/*===============================================================================
+
+	Multimodular multiplication
+
+================================================================================*/
+
+/** 
+   \fn     _F_mpz_poly_mul_SS(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
+   \brief  Multiply poly1 by poly2 and set res to the result, using the modular algorithm.
+*/
+void _F_mpz_poly_mul_modular(F_mpz_poly_t output, const F_mpz_poly_t poly1, 
+									 const F_mpz_poly_t poly2, const ulong bits_in);
+
+/** 
+   \fn     F_mpz_poly_mul_SS(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
+   \brief  Multiply poly1 by poly2 and set res to the result, using the modular algorithm.
+*/
+void F_mpz_poly_mul_modular(F_mpz_poly_t output, const F_mpz_poly_t poly1, 
+									 const F_mpz_poly_t poly2, const ulong bits_in);
 
 #ifdef __cplusplus
  }

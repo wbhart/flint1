@@ -3027,12 +3027,10 @@ void _fmpz_poly_mul_modular(fmpz_poly_t output, const fmpz_poly_t poly1,
     unsigned long p0 = z_nextprime(1UL << 30, 0);
     // primes_per_limb = 32/log2(p0)
     double primes_per_limb = 1.067;
-#elif FLINT_BITS == 64
+#else 
     unsigned long p0 = z_nextprime(1L << 62, 0);
     // primes_per_limb = 64/log2(p0)
     double primes_per_limb = 1.0323;
-#else
-#error FLINT_BITS must be either 32 or 64
 #endif
 
     // estimated bound for the size of output coefficients
