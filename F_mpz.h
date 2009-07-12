@@ -102,9 +102,19 @@ void _F_mpz_clear_mpz(F_mpz f);
 
 /** 
    \fn     void _F_mpz_cleanup(void)
-   \brief  Clear any mpz's still held onto by the F_mpz_t memory management.
+   \brief  Clear any mpz's still held onto by the F_mpz_t memory management
+           and free all structures used to manage F_mpz allocations. Should 
+		   only be called at the end of a program.
 */
 void _F_mpz_cleanup(void);
+
+/** 
+   \fn     void _F_mpz_cleanup2(void)
+   \brief  Clear any mpz's still held onto by the F_mpz_t memory management.
+*/
+void _F_mpz_cleanup2(void);
+
+
 
 /*===============================================================================
 

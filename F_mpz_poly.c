@@ -2754,7 +2754,7 @@ void F_mpz_poly_pack_bytes(F_mpz_poly_t res, F_mpz_poly_t poly, ulong n, ulong b
 	{
        coeff = _F_mpz_promote(res->coeffs + i);
 	   // one extra limb for byte pack
-	   mpz_realloc(coeff, limbs);
+	   _mpz_realloc(coeff, limbs);
 	   coeff_r = coeff->_mp_d;
 	   F_mpn_clear(coeff_r, limbs);
 
@@ -2776,7 +2776,7 @@ void F_mpz_poly_pack_bytes(F_mpz_poly_t res, F_mpz_poly_t poly, ulong n, ulong b
 	}
 
 	coeff = _F_mpz_promote(res->coeffs + i);
-	mpz_realloc(coeff, limbs);
+	_mpz_realloc(coeff, limbs);
 	coeff_r = coeff->_mp_d;
     F_mpn_clear(coeff_r, limbs);
 
@@ -2830,6 +2830,7 @@ void F_mpz_poly_unpack_bytes(F_mpz_poly_t res, F_mpz_poly_t poly, ulong n, ulong
 	    
 		_F_mpz_poly_attach_shift(poly_r, res, i*n);
 		poly_r->alloc = 2*n - 1;
+		poly_r->length = 2*n - 1;
 		
 		if (negate) // negate existing coefficients then add to them
 			for (j = 0; j < n - 1; j++) F_mpz_neg(poly_r->coeffs + j, poly_r->coeffs + j);
@@ -3556,9 +3557,9 @@ void F_mpz_poly_mul(F_mpz_poly_t res, F_mpz_poly_t poly1, F_mpz_poly_t poly2)
    This function allows aliasing
 */
 void __F_mpz_poly_mul_modular_comb(F_mpz_poly_t output, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2,
-        F_mpz_comb_t comb)
+        F_mpz_comb_t comb, const ulong trunc)
 {
-    if ((poly1->length == 0) || (poly2->length == 0)) // Special case, length zero polys
+    if ((poly1->length == 0) || (poly2->length == 0) || (trunc == 0)) // Special case, length zero polys
     {
         F_mpz_poly_zero(output);
         return;
@@ -3577,6 +3578,9 @@ void __F_mpz_poly_mul_modular_comb(F_mpz_poly_t output, const F_mpz_poly_t poly1
        }
 	}
 
+	if (poly1 != output) F_mpz_poly_clear(poly1);
+
+	printf("Multimodular reduction of poly1 done\n");
     // Multimodular reduction of poly2, place result into block2
     ulong len2 = poly2->length;
     ulong * block2 = flint_heap_alloc(len2 << comb->n);
@@ -3589,6 +3593,11 @@ void __F_mpz_poly_mul_modular_comb(F_mpz_poly_t output, const F_mpz_poly_t poly1
           F_mpz_multi_mod_ui(block2 + (i << comb->n), poly2->coeffs + i, comb);
        }
 	}
+    
+	if (poly2 != output) F_mpz_poly_clear(poly2);
+	_F_mpz_cleanup2();
+
+	printf("Multimodular reduction of poly2 done\n");
     
     // initialise space for transposed output coefficients
 	ulong len_out = len1 + len2 - 1;
@@ -3645,7 +3654,7 @@ void __F_mpz_poly_mul_modular_comb(F_mpz_poly_t output, const F_mpz_poly_t poly1
 #pragma omp parallel
 	   {		  
 #pragma omp for
-          for (long j = 0; j < len_out; j++) 
+          for (long j = 0; j < trunc; j++) 
 		  {
              for (ulong s = 0; s < 16; s++)
 			    block_out[i + s + (j << comb->n)] = out[j + s*len_out];
@@ -3671,32 +3680,37 @@ void __F_mpz_poly_mul_modular_comb(F_mpz_poly_t output, const F_mpz_poly_t poly1
           zn_array_mul(out, in2, len2, in1, len1, comb->mod[i]);
         
 	   // place result in block_out transposing
-       for(ulong j = 0; j < len_out; j++) 
+       for(ulong j = 0; j < trunc; j++) 
 		  block_out[i + (j << comb->n)] = out[j];
     }
-     
+  
+	flint_heap_free(block1);
+    flint_heap_free(block2);
+    flint_heap_free(in1);
+    flint_heap_free(in2);
+    flint_heap_free(out);
+
+	printf("Multimodular multiplications done\n");
+    
     // Reconstruct output from data in block_out
 #pragma omp parallel
 	{		  
 #pragma omp for
-       for(int i = 0; i < len_out; i++) 
+       for(int i = 0; i < trunc; i++) 
           F_mpz_multi_CRT_ui(output->coeffs + i, block_out + (i << comb->n), comb);
     }
     
-    output->length = len_out;
+	printf("Multimodular reconstruction done\n");
+
+    output->length = trunc;
     _F_mpz_poly_normalise(output);
     
 	// Free all stuff
-    flint_heap_free(block1);
-    flint_heap_free(block2);
     flint_heap_free(block_out);
-    flint_heap_free(in1);
-    flint_heap_free(in2);
-    flint_heap_free(out);
 }
 
 void _F_mpz_poly_mul_modular(F_mpz_poly_t output, const F_mpz_poly_t poly1, 
-									 const F_mpz_poly_t poly2, const ulong bits_in)
+									 const F_mpz_poly_t poly2, const ulong bits_in, const ulong trunc)
 {
 #if FLINT_BITS == 32
     ulong p0 = z_nextprime(1UL << 30, 0);
@@ -3741,8 +3755,9 @@ void _F_mpz_poly_mul_modular(F_mpz_poly_t output, const F_mpz_poly_t poly1,
     F_mpz_comb_t comb;
     F_mpz_comb_init(comb, primes, numprimes);
 
-    // do the multimodular multiplication
-	__F_mpz_poly_mul_modular_comb(output, poly1, poly2, comb);
+    printf("comb initialised\n");
+	// do the multimodular multiplication
+	__F_mpz_poly_mul_modular_comb(output, poly1, poly2, comb, trunc);
     F_mpz_comb_clear(comb);
 
     // free allocated space
@@ -3762,6 +3777,52 @@ void F_mpz_poly_mul_modular(F_mpz_poly_t output, const F_mpz_poly_t poly1,
 	// create space for output
 	F_mpz_poly_fit_length(output, poly1->length + poly2->length - 1);
    
-	_F_mpz_poly_mul_modular(output, poly1, poly2, bits_in);
+	_F_mpz_poly_mul_modular(output, poly1, poly2, bits_in, poly1->length + poly2->length - 1);
 }
+
+void F_mpz_poly_mul_modular_trunc(F_mpz_poly_t output, const F_mpz_poly_t poly1, 
+						const F_mpz_poly_t poly2, const ulong bits_in, const ulong trunc)
+{
+	// special cases for polys of length zero
+	if ((poly1->length == 0) || (poly2->length == 0))
+	{
+		F_mpz_poly_zero(output);
+		return;
+	}
+
+	// create space for output
+	ulong len_out = FLINT_MIN(trunc, poly1->length + poly2->length - 1);
+	F_mpz_poly_fit_length(output, len_out);
+   
+	_F_mpz_poly_mul_modular(output, poly1, poly2, bits_in, len_out);
+}
+
+void F_mpz_poly_mul_modular_packed(F_mpz_poly_t output, F_mpz_poly_t poly1, 
+                                               F_mpz_poly_t poly2, ulong n, ulong bits)
+{
+	F_mpz_poly_t p1, p2, out;
+	ulong bytes = (bits - 1)/8 + 1;
+    ulong limbs = (bytes*(2*n-1)*8 - 1)/FLINT_BITS + 1;
+
+	F_mpz_poly_init(p1);
+    F_mpz_poly_init(p2);
+    F_mpz_poly_init(out);
+   
+	F_mpz_poly_pack_bytes(p1, poly1, n, bytes);
+    printf("Poly1 packed\n");
+	F_mpz_poly_pack_bytes(p2, poly2, n, bytes);
+    printf("Poly2 packed\n");
+	     
+	F_mpz_poly_mul_modular(out, p1, p2, 0);
+	
+	F_mpz_poly_clear(p1);
+    F_mpz_poly_clear(p2);
+    
+	printf("start unpacking\n");
+	F_mpz_poly_unpack_bytes(output, out, n, bytes);
+    printf("Output unpacked\n");
+	
+	F_mpz_poly_clear(out);
+}
+
 

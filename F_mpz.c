@@ -107,6 +107,16 @@ void _F_mpz_cleanup(void)
 	if (F_mpz_allocated) free(F_mpz_arr);
 }
 
+void _F_mpz_cleanup2(void)
+{
+	for (ulong i = 0; i < F_mpz_num_unused; i++)
+	{
+		mpz_clear(F_mpz_arr + COEFF_TO_OFF(F_mpz_unused_arr[i]));
+	}
+	
+	F_mpz_num_unused = 0;
+}
+
 /*===============================================================================
 
 	Promotion/Demotion

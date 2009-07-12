@@ -29,120 +29,171 @@
 #include <math.h>
 #include <gmp.h>
 #include "flint.h"
-#include "fmpz_poly.h"
+#include "F_mpz.h"
+#include "F_mpz_poly.h"
 #include "theta.h"
+#include "profiler.h"
 
-#define LIMIT 416700000L
-#define BLOCK    100000
+#define LIMIT 100000000L
+#define BLOCK  100000
 #define COUNT (LIMIT/BLOCK)
 
 int main(void)
 {
-   fmpz_poly_t theta_1, theta_2, theta_3, theta_prod;
+   F_mpz_poly_t theta_1, theta_2, theta_3, theta_prod, p1, p2, out;
    
    //--------------------------------------------------------------
    
    long * array1 = (long *) flint_heap_alloc(BLOCK);
    
-   fmpz_poly_init2(theta_1, LIMIT, 1); 
+   F_mpz_poly_init(theta_1);
+   F_mpz_poly_fit_length(theta_1, LIMIT);
+   theta_1->length = LIMIT;
    
-   for (unsigned long start = 0; start < LIMIT*2; start += BLOCK)
+   for (ulong start = 0; start < LIMIT*2; start += BLOCK)
    {   
 	  theta_1d_0(1, 1, 0, array1, start, BLOCK);
    
-     unsigned long start2 = start/2;
+      ulong start2 = start/2;
 	  
-	  for (unsigned long i = 0; i < BLOCK/2; i++)
+	  for (ulong i = 0; i < BLOCK/2; i++)
       {
-         _fmpz_poly_set_coeff_si(theta_1, start2 + i, array1[2*i]);
+         F_mpz_set_si(theta_1->coeffs + start2 + i, array1[2*i]);
       }
    }
    
-   theta_1->length = LIMIT;
-   
+   _F_mpz_poly_normalise(theta_1);
+
    flint_heap_free(array1);
 
-   printf("Computed first theta function.\n");
+   F_mpz_poly_init(p1);
 
-	//fmpz_poly_print_pretty(theta_1, "x"); printf("\n");
+   F_mpz_poly_pack_bytes(p1, theta_1, 100, 3);
+
+   F_mpz_poly_clear(theta_1);
+    
+
+   printf("Computed and packed first theta function.\n");
 
    //-------------------------------------------------------------
    
    array1 = (long *) flint_heap_alloc(BLOCK);
 	
-	long character[4] = {1, -1, 1, -1};
+   long character[4] = {1, -1, 1, -1};
 	
-   fmpz_poly_init2(theta_2, LIMIT, 1); 
-   
-   for (unsigned long start = 0; start < LIMIT; start += BLOCK)
-   {   
-	  theta_1d_quadchar(character, 3, 1, 0, array1, start, BLOCK);
-   
-     unsigned long start2 = start;
-	  
-	  for (unsigned long i = 0; i < BLOCK/2; i++)
-      {
-         _fmpz_poly_set_coeff_si(theta_2, start2 + 2*i, array1[2*i]);
-      }
-   }
+   F_mpz_poly_init(theta_2);
+   F_mpz_poly_fit_length(theta_2, LIMIT); 
    
    theta_2->length = LIMIT;
    
-   flint_heap_free(array1);
-
-   printf("Computed second theta function.\n");
-
-	//fmpz_poly_print_pretty(theta_2, "x"); printf("\n");
-
-   //----------------------------------------------------------------------
-
-	array1 = (long *) flint_heap_alloc(BLOCK);
-	
-	long character2[4] = {1, -1, 1, -1};
-	
-   fmpz_poly_init2(theta_3, LIMIT+BLOCK, 1); 
-   
-   for (unsigned long start=0; start < 1+(LIMIT-1)/3; start += BLOCK)
+   for (ulong start = 0; start < LIMIT; start += BLOCK)
    {   
-	  theta_1d_quadchar(character2, 1, 0, 0, array1, start, BLOCK);
+	  theta_1d_quadchar(character, 3, 1, 0, array1, start, BLOCK);
    
-     unsigned long start2 = start*3;
+      ulong start2 = start;
 	  
-	  for (unsigned long i = 0; i < BLOCK; i++)
+	  for (ulong i = 0; i < BLOCK/2; i++)
       {
-         _fmpz_poly_set_coeff_si(theta_3, start2 + 3*i, array1[i]);
+         F_mpz_set_si(theta_2->coeffs + start2 + 2*i, array1[2*i]);
       }
    }
    
-   theta_3->length = LIMIT;
-   
+   _F_mpz_poly_normalise(theta_2);
+
    flint_heap_free(array1);
 
-   printf("Computed third theta function.\n");
+   F_mpz_poly_init(p2);
 
-	//fmpz_poly_print_pretty(theta_3, "x"); printf("\n");
+   F_mpz_poly_pack_bytes(p2, theta_2, 100, 3);
 
-	//----------------------------------------------------------------------
+   F_mpz_poly_clear(theta_2);
 
-   fmpz_poly_init2(theta_prod, LIMIT, 1);
+   printf("Computed and packed second theta function.\n");
+
+   //----------------------------------------------------------------------
+
+   F_mpz_poly_init(out);
    
-   _fmpz_poly_mul_KS_trunc(theta_prod, theta_1, theta_2, LIMIT, -24);
+   F_mpz_poly_mul_modular_trunc(out, p1, p2, 0, (LIMIT - 1)/100 + 1);
+	
+   F_mpz_poly_init(theta_prod);
+   F_mpz_poly_fit_length(theta_prod, LIMIT + 100);
    
-	fmpz_poly_clear(theta_1);
-   fmpz_poly_clear(theta_2);
+   F_mpz_poly_unpack_bytes(theta_prod, out, 100, 3);
+
+   F_mpz_poly_clear(out);
+   _F_mpz_cleanup2();
+    
+   F_mpz_poly_truncate(theta_prod, LIMIT);
+
+   printf("First product computed\n");
+
+   F_mpz_poly_init(p1);
+
+   F_mpz_poly_pack_bytes(p1, theta_prod, 100, 3);
+
+   F_mpz_poly_clear(theta_prod);
+
+   //----------------------------------------------------------------------
+
+   array1 = (long *) flint_heap_alloc(BLOCK);
+	
+   long character2[4] = {1, -1, 1, -1};
+	
+   F_mpz_poly_init(theta_3);
+   F_mpz_poly_fit_length(theta_3, LIMIT + 3*BLOCK);
    
-	_fmpz_poly_mul_KS_trunc(theta_prod, theta_prod, theta_3, LIMIT, -24);
+   theta_3->length = LIMIT;
    
-   fmpz_poly_clear(theta_3);
-  
+   for (ulong start = 0; start < LIMIT/3; start += BLOCK)
+   {   
+	  theta_1d_quadchar(character2, 1, 0, 0, array1, start, BLOCK);
+    
+      ulong start2 = start*3;
+	  
+	  for (ulong i = 0; i < BLOCK; i++)
+      {
+         F_mpz_set_si(theta_3->coeffs + start2 + 3*i, array1[i]);
+      }
+   }
+   
+   _F_mpz_poly_normalise(theta_3);
+
+   flint_heap_free(array1);
+
+   F_mpz_poly_init(p2);
+
+   F_mpz_poly_pack_bytes(p2, theta_3, 100, 3);
+
+   F_mpz_poly_clear(theta_3);
+
+   printf("Computed and packed third theta function.\n");
+
+   //----------------------------------------------------------------------
+
+   
+   F_mpz_poly_init(out);
+   
+   F_mpz_poly_mul_modular_trunc(out, p1, p2, 0, (LIMIT - 1)/100 + 1);
+	
+   F_mpz_poly_init(theta_prod);
+   F_mpz_poly_fit_length(theta_prod, LIMIT + 100);
+   
+   F_mpz_poly_unpack_bytes(theta_prod, out, 100, 3);
+
+   F_mpz_poly_clear(out);
+   _F_mpz_cleanup2();
+   
+   F_mpz_poly_truncate(theta_prod, LIMIT);
+
    printf("Completed multiplication\n");
 
+   /*timeit_start(t0);
    #define OFFSET (1L<<17)
    #define LEN (1L<<18)
 
    // sieve out non-squarefree coefficients
-   timeit_start(t0);
-
+   
    for(long a = 1; a < limit ; a++) {
       long ab = a*2; // a*b
       long ab2 = ab*2; // a*b*b
@@ -162,6 +213,8 @@ int main(void)
    timeit_stop(t0);
    fprintf(stderr, "Sieve out non-squarefree coefficients: cpu = %ld ms  wall = %ld ms\n", t0->cpu, t0->wall);
 
+   timeit_t t0;
+   
    timeit_start(t0);
    unsigned long arr[LEN];
    for(long i = 0; i < LEN; i++)
@@ -200,10 +253,10 @@ int main(void)
    fprintf(stderr, "Counting zeroes: cpu = %ld ms  wall = %ld ms\n", t0->cpu, t0->wall);
    fprintf(stderr, "\n%ld zeroes\n", s);
    
-	theta_prod->length = 30000;
-	//	fmpz_poly_print_pretty(theta_prod, "x");
+   theta_prod->length = 30000;
+   //	fmpz_poly_print_pretty(theta_prod, "x"); */
 
-   fmpz_poly_clear(theta_prod);
+   F_mpz_poly_clear(theta_prod);
    
    
    return 0;
