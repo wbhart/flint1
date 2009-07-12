@@ -782,8 +782,8 @@ void F_mpz_poly_mul(F_mpz_poly_t res, F_mpz_poly_t poly1, F_mpz_poly_t poly2);
 		   coefficient, plus one for signs, or to zero, in which case a bound will be 
 		   automatically computed.
 */
-void _F_mpz_poly_mul_modular(F_mpz_poly_t res, const F_mpz_poly_t poly1, 
-						const F_mpz_poly_t poly2, const ulong bits_in, const ulong trunc);
+void _F_mpz_poly_mul_modular(F_mpz_poly_t res, F_mpz_poly_t poly1, 
+						F_mpz_poly_t poly2, const ulong bits_in, const ulong trunc);
 
 /** 
    \fn     F_mpz_poly_mul_modular(F_mpz_poly_t res, 
@@ -793,8 +793,8 @@ void _F_mpz_poly_mul_modular(F_mpz_poly_t res, const F_mpz_poly_t poly1,
 		   coefficient, plus one for signs, or to zero, in which case a bound will be 
 		   automatically computed.
 */
-void F_mpz_poly_mul_modular(F_mpz_poly_t res, const F_mpz_poly_t poly1, 
-									 const F_mpz_poly_t poly2, const ulong bits_in);
+void F_mpz_poly_mul_modular(F_mpz_poly_t res, F_mpz_poly_t poly1, 
+									 F_mpz_poly_t poly2, const ulong bits_in);
 
 /** 
    \fn     F_mpz_poly_mul_modular_trunc(F_mpz_poly_t res, 
@@ -804,8 +804,8 @@ void F_mpz_poly_mul_modular(F_mpz_poly_t res, const F_mpz_poly_t poly1,
 		   coefficient, plus one for signs, or to zero, in which case a bound will be 
 		   automatically computed. Output is trucated to the given length.
 */
-void F_mpz_poly_mul_modular_trunc(F_mpz_poly_t res, const F_mpz_poly_t poly1, 
-						const F_mpz_poly_t poly2, const ulong bits_in, const ulong trunc);
+void F_mpz_poly_mul_modular_trunc(F_mpz_poly_t res, F_mpz_poly_t poly1, 
+						F_mpz_poly_t poly2, const ulong bits_in, const ulong trunc);
 
 /** 
    \fn     void F_mpz_poly_mul_modular_packed(F_mpz_poly_t output, F_mpz_poly_t poly1, 

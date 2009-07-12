@@ -32,7 +32,7 @@ else
 	INCS = -I$(FLINT_GMP_INCLUDE_DIR) -I$(FLINT_NTL_INCLUDE_DIR)
 endif
 
-CFLAGS = $(INCS) $(FLINT_TUNE) -O2 
+CFLAGS = $(INCS) $(FLINT_TUNE) -fopenmp -O2
 
 RM = rm -f
 
@@ -68,6 +68,7 @@ HEADERS = \
 	mpz_mat.h \
 	d_mat.h \
 	F_mpz.h \
+	F_mpz_poly.h \
 	QS/tinyQS.h
 
 ####### library object files
@@ -109,6 +110,7 @@ FLINTOBJ = \
 	mpz_mat.o \
 	d_mat.o \
 	F_mpz.o \
+	F_mpz_poly.o \
 	tinyQS.o \
 	factor_base.o \
 	poly.o \

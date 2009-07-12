@@ -34,8 +34,10 @@
 #include "theta.h"
 #include "profiler.h"
 
-#define LIMIT 100000000L
+#define LIMIT 2000000000L
 #define BLOCK  100000
+#define BUNDLE 100
+
 #define COUNT (LIMIT/BLOCK)
 
 int main(void)
@@ -68,7 +70,7 @@ int main(void)
 
    F_mpz_poly_init(p1);
 
-   F_mpz_poly_pack_bytes(p1, theta_1, 100, 3);
+   F_mpz_poly_pack_bytes(p1, theta_1, BUNDLE, 3);
 
    F_mpz_poly_clear(theta_1);
     
@@ -104,7 +106,7 @@ int main(void)
 
    F_mpz_poly_init(p2);
 
-   F_mpz_poly_pack_bytes(p2, theta_2, 100, 3);
+   F_mpz_poly_pack_bytes(p2, theta_2, BUNDLE, 3);
 
    F_mpz_poly_clear(theta_2);
 
@@ -114,25 +116,29 @@ int main(void)
 
    F_mpz_poly_init(out);
    
-   F_mpz_poly_mul_modular_trunc(out, p1, p2, 0, (LIMIT - 1)/100 + 1);
+   F_mpz_poly_mul_modular_trunc(out, p1, p2, 0, (LIMIT - 1)/BUNDLE + 1);
 	
+   printf("First product computed\n");
+
    F_mpz_poly_init(theta_prod);
-   F_mpz_poly_fit_length(theta_prod, LIMIT + 100);
+   F_mpz_poly_fit_length(theta_prod, LIMIT + BUNDLE);
    
-   F_mpz_poly_unpack_bytes(theta_prod, out, 100, 3);
+   F_mpz_poly_unpack_bytes(theta_prod, out, BUNDLE, 3);
 
    F_mpz_poly_clear(out);
    _F_mpz_cleanup2();
     
    F_mpz_poly_truncate(theta_prod, LIMIT);
 
-   printf("First product computed\n");
+   printf("First unpacking computed\n");
 
    F_mpz_poly_init(p1);
 
-   F_mpz_poly_pack_bytes(p1, theta_prod, 100, 3);
+   F_mpz_poly_pack_bytes(p1, theta_prod, BUNDLE, 3);
 
    F_mpz_poly_clear(theta_prod);
+
+   printf("Repacking completed\n");
 
    //----------------------------------------------------------------------
 
@@ -163,7 +169,7 @@ int main(void)
 
    F_mpz_poly_init(p2);
 
-   F_mpz_poly_pack_bytes(p2, theta_3, 100, 3);
+   F_mpz_poly_pack_bytes(p2, theta_3, BUNDLE, 3);
 
    F_mpz_poly_clear(theta_3);
 
@@ -174,19 +180,21 @@ int main(void)
    
    F_mpz_poly_init(out);
    
-   F_mpz_poly_mul_modular_trunc(out, p1, p2, 0, (LIMIT - 1)/100 + 1);
+   F_mpz_poly_mul_modular_trunc(out, p1, p2, 0, (LIMIT - 1)/BUNDLE + 1);
 	
+   printf("Completed multiplication\n");
+
    F_mpz_poly_init(theta_prod);
-   F_mpz_poly_fit_length(theta_prod, LIMIT + 100);
+   F_mpz_poly_fit_length(theta_prod, LIMIT + BUNDLE);
    
-   F_mpz_poly_unpack_bytes(theta_prod, out, 100, 3);
+   F_mpz_poly_unpack_bytes(theta_prod, out, BUNDLE, 3);
 
    F_mpz_poly_clear(out);
    _F_mpz_cleanup2();
    
    F_mpz_poly_truncate(theta_prod, LIMIT);
 
-   printf("Completed multiplication\n");
+   printf("Unpacking complete\n");
 
    /*timeit_start(t0);
    #define OFFSET (1L<<17)

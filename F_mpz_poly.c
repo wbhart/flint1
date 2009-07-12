@@ -26,6 +26,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <math.h>
+#include <omp.h>
 
 #include "mpz_poly.h"
 #include "flint.h"
@@ -2796,6 +2797,7 @@ void F_mpz_poly_pack_bytes(F_mpz_poly_t res, F_mpz_poly_t poly, ulong n, ulong b
 	_F_mpz_demote_val(res->coeffs + i); // coeff may end up small
 	
 	res->length = short_length;
+	_F_mpz_poly_normalise(res);
 }
 
 void F_mpz_poly_unpack_bytes(F_mpz_poly_t res, F_mpz_poly_t poly, ulong n, ulong bytes)
@@ -3556,7 +3558,7 @@ void F_mpz_poly_mul(F_mpz_poly_t res, F_mpz_poly_t poly1, F_mpz_poly_t poly2)
    This version requires an appropriate F_mpz_comb_t struct, already initialized with primes
    This function allows aliasing
 */
-void __F_mpz_poly_mul_modular_comb(F_mpz_poly_t output, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2,
+void __F_mpz_poly_mul_modular_comb(F_mpz_poly_t output, F_mpz_poly_t poly1, F_mpz_poly_t poly2,
         F_mpz_comb_t comb, const ulong trunc)
 {
     if ((poly1->length == 0) || (poly2->length == 0) || (trunc == 0)) // Special case, length zero polys
@@ -3569,9 +3571,9 @@ void __F_mpz_poly_mul_modular_comb(F_mpz_poly_t output, const F_mpz_poly_t poly1
     ulong len1 = poly1->length;
     ulong * block1 = flint_heap_alloc(len1 << comb->n);
 
-#pragma omp parallel
+//#pragma omp parallel
 	{		  
-#pragma omp for
+//#pragma omp for
        for(long i = 0; i < len1; i++) 
 	   {
           F_mpz_multi_mod_ui(block1 + (i << comb->n), poly1->coeffs + i, comb);
@@ -3585,9 +3587,9 @@ void __F_mpz_poly_mul_modular_comb(F_mpz_poly_t output, const F_mpz_poly_t poly1
     ulong len2 = poly2->length;
     ulong * block2 = flint_heap_alloc(len2 << comb->n);
 
-#pragma omp parallel
+//#pragma omp parallel
 	{		  
-#pragma omp for
+//#pragma omp for
        for(long i = 0; i < len2; i++)
 	   {
           F_mpz_multi_mod_ui(block2 + (i << comb->n), poly2->coeffs + i, comb);
@@ -3601,7 +3603,7 @@ void __F_mpz_poly_mul_modular_comb(F_mpz_poly_t output, const F_mpz_poly_t poly1
     
     // initialise space for transposed output coefficients
 	ulong len_out = len1 + len2 - 1;
-    ulong * block_out = flint_heap_alloc(len_out << comb->n);
+    ulong * block_out = flint_heap_alloc(trunc << comb->n);
 
     // Inputs for zn_array_mul (we deal with 16 primes at a time)
     ulong * in1 = flint_heap_alloc(len1*16);
@@ -3662,16 +3664,24 @@ void __F_mpz_poly_mul_modular_comb(F_mpz_poly_t output, const F_mpz_poly_t poly1
 	   }     
     }
 	
-	// deal with final iterations
+	/*// deal with final iterations
 	for( ; i < numprimes; i++) 
 	{
        // in1 := poly1 % comb->primes[i]
-       for(ulong j = 0; j < len1; j++) 
+#pragma omp parallel
+	   {		  
+#pragma omp for
+       for(long j = 0; j < len1; j++) 
 	      in1[j] = block1[i + (j << comb->n)];
+	   }
 
        // in2 := poly2 % comb->primes[i]
+#pragma omp parallel
+	   {		  
+#pragma omp for
        for(ulong j = 0; j < len2; j++) 
-	      in2[j] = block2[i + (j << comb->n)];
+		   in2[j] = block2[i + (j << comb->n)];
+	   }
 
        // multiply using zn_poly (requires len1>=len2>=1)
        if(len1 >= len2)
@@ -3680,9 +3690,13 @@ void __F_mpz_poly_mul_modular_comb(F_mpz_poly_t output, const F_mpz_poly_t poly1
           zn_array_mul(out, in2, len2, in1, len1, comb->mod[i]);
         
 	   // place result in block_out transposing
-       for(ulong j = 0; j < trunc; j++) 
+ #pragma omp parallel
+	   {		  
+#pragma omp for
+      for(ulong j = 0; j < trunc; j++) 
 		  block_out[i + (j << comb->n)] = out[j];
-    }
+	   }
+    }*/
   
 	flint_heap_free(block1);
     flint_heap_free(block2);
@@ -3693,11 +3707,13 @@ void __F_mpz_poly_mul_modular_comb(F_mpz_poly_t output, const F_mpz_poly_t poly1
 	printf("Multimodular multiplications done\n");
     
     // Reconstruct output from data in block_out
-#pragma omp parallel
+//#pragma omp parallel
 	{		  
-#pragma omp for
-       for(int i = 0; i < trunc; i++) 
-          F_mpz_multi_CRT_ui(output->coeffs + i, block_out + (i << comb->n), comb);
+//#pragma omp for
+       for(long i = 0; i < trunc; i++) 
+	   {
+	      F_mpz_multi_CRT_ui(output->coeffs + i, block_out + (i << comb->n), comb);
+	   }
     }
     
 	printf("Multimodular reconstruction done\n");
@@ -3709,8 +3725,8 @@ void __F_mpz_poly_mul_modular_comb(F_mpz_poly_t output, const F_mpz_poly_t poly1
     flint_heap_free(block_out);
 }
 
-void _F_mpz_poly_mul_modular(F_mpz_poly_t output, const F_mpz_poly_t poly1, 
-									 const F_mpz_poly_t poly2, const ulong bits_in, const ulong trunc)
+void _F_mpz_poly_mul_modular(F_mpz_poly_t output, F_mpz_poly_t poly1, 
+									 F_mpz_poly_t poly2, const ulong bits_in, const ulong trunc)
 {
 #if FLINT_BITS == 32
     ulong p0 = z_nextprime(1UL << 30, 0);
@@ -3739,6 +3755,7 @@ void _F_mpz_poly_mul_modular(F_mpz_poly_t output, const F_mpz_poly_t poly1,
 
     // compute number of primes
 	ulong numprimes = (output_bits * primes_per_limb)/FLINT_BITS + 1;
+	numprimes = (((numprimes + 15)>>4)<<4);
 	
 	// allocate space for primes
 	ulong * primes = flint_heap_alloc(numprimes);
@@ -3764,8 +3781,8 @@ void _F_mpz_poly_mul_modular(F_mpz_poly_t output, const F_mpz_poly_t poly1,
     flint_heap_free(primes);
 }
 
-void F_mpz_poly_mul_modular(F_mpz_poly_t output, const F_mpz_poly_t poly1, 
-									 const F_mpz_poly_t poly2, const ulong bits_in)
+void F_mpz_poly_mul_modular(F_mpz_poly_t output, F_mpz_poly_t poly1, 
+									 F_mpz_poly_t poly2, const ulong bits_in)
 {
 	// special cases for polys of length zero
 	if ((poly1->length == 0) || (poly2->length == 0))
@@ -3780,8 +3797,8 @@ void F_mpz_poly_mul_modular(F_mpz_poly_t output, const F_mpz_poly_t poly1,
 	_F_mpz_poly_mul_modular(output, poly1, poly2, bits_in, poly1->length + poly2->length - 1);
 }
 
-void F_mpz_poly_mul_modular_trunc(F_mpz_poly_t output, const F_mpz_poly_t poly1, 
-						const F_mpz_poly_t poly2, const ulong bits_in, const ulong trunc)
+void F_mpz_poly_mul_modular_trunc(F_mpz_poly_t output, F_mpz_poly_t poly1, 
+						F_mpz_poly_t poly2, const ulong bits_in, const ulong trunc)
 {
 	// special cases for polys of length zero
 	if ((poly1->length == 0) || (poly2->length == 0))

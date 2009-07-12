@@ -27,6 +27,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <gmp.h>
+#include <pthread.h>
 
 #include "flint.h"
 #include "mpn_extras.h"
@@ -57,8 +58,11 @@ F_mpz * F_mpz_unused_arr;
 // The number of mpz's not being used presently
 ulong F_mpz_num_unused = 0;
 
+pthread_mutex_t new_mpz_mutex;
+
 F_mpz _F_mpz_new_mpz(void)
 {
+	pthread_mutex_lock(&new_mpz_mutex);
 	if (!F_mpz_num_unused) // time to allocate MPZ_BLOCK more mpz_t's
 	{
 	   if (F_mpz_allocated) // realloc mpz_t's and unused array
@@ -82,18 +86,21 @@ F_mpz _F_mpz_new_mpz(void)
 		F_mpz_num_unused--;
 		F_mpz_allocated += MPZ_BLOCK;
 
-		return F_mpz_unused_arr[F_mpz_num_unused];
 	} else // unused mpz's are available
 	{
 		F_mpz_num_unused--;
-		return F_mpz_unused_arr[F_mpz_num_unused];
 	}
+	F_mpz ret = F_mpz_unused_arr[F_mpz_num_unused];
+	pthread_mutex_unlock(&new_mpz_mutex);
+	return ret;
 }
 
 void _F_mpz_clear_mpz(F_mpz f)
 {
+   pthread_mutex_lock(&new_mpz_mutex);
    F_mpz_unused_arr[F_mpz_num_unused] = f;
    F_mpz_num_unused++;	
+   pthread_mutex_unlock(&new_mpz_mutex);
 }
 
 void _F_mpz_cleanup(void)
@@ -866,8 +873,8 @@ void F_mpz_add_ui(F_mpz_t f, const F_mpz_t g, const ulong x)
 		}
 	} else
 	{
-		__mpz_struct * mpz_ptr = F_mpz_arr + COEFF_TO_OFF(c);
 		__mpz_struct * mpz_ptr2 = _F_mpz_promote(f); // g is already large
+		__mpz_struct * mpz_ptr = F_mpz_arr + COEFF_TO_OFF(c);
 		mpz_add_ui(mpz_ptr2, mpz_ptr, x);
 		_F_mpz_demote_val(f); // cancellation may have occurred
 	}
@@ -906,8 +913,8 @@ void F_mpz_sub_ui(F_mpz_t f, const F_mpz_t g, const ulong x)
 		}
 	} else
 	{
-		__mpz_struct * mpz_ptr = F_mpz_arr + COEFF_TO_OFF(c);
 		__mpz_struct * mpz_ptr2 = _F_mpz_promote(f); // g is already large
+		__mpz_struct * mpz_ptr = F_mpz_arr + COEFF_TO_OFF(c);
 		mpz_sub_ui(mpz_ptr2, mpz_ptr, x);
 		_F_mpz_demote_val(f); // cancellation may have occurred
 	}
