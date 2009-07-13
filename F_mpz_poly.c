@@ -40,6 +40,8 @@
 #include "long_extras.h"
 #include "zmod_poly.h"
 
+#define MUL_MOD_TRACE 0 // prints some trace info for multimodular multiplications
+
 /*===============================================================================
 
 	Memory management
@@ -3580,9 +3582,9 @@ void __F_mpz_poly_mul_modular_comb(F_mpz_poly_t output, F_mpz_poly_t poly1, F_mp
        }
 	}
 
-	if (poly1 != output) F_mpz_poly_clear(poly1);
+	if ((poly1 != output) && (poly2 != poly1)) F_mpz_poly_clear(poly1);
 
-	printf("Multimodular reduction of poly1 done\n");
+	if (MUL_MOD_TRACE) printf("Multimodular reduction of poly1 done\n");
     // Multimodular reduction of poly2, place result into block2
     ulong len2 = poly2->length;
     ulong * block2 = flint_heap_alloc(len2 << comb->n);
@@ -3599,7 +3601,7 @@ void __F_mpz_poly_mul_modular_comb(F_mpz_poly_t output, F_mpz_poly_t poly1, F_mp
 	if (poly2 != output) F_mpz_poly_clear(poly2);
 	_F_mpz_cleanup2();
 
-	printf("Multimodular reduction of poly2 done\n");
+	if (MUL_MOD_TRACE) printf("Multimodular reduction of poly2 done\n");
     
     // initialise space for transposed output coefficients
 	ulong len_out = len1 + len2 - 1;
@@ -3704,7 +3706,7 @@ void __F_mpz_poly_mul_modular_comb(F_mpz_poly_t output, F_mpz_poly_t poly1, F_mp
     flint_heap_free(in2);
     flint_heap_free(out);
 
-	printf("Multimodular multiplications done\n");
+	if (MUL_MOD_TRACE) printf("Multimodular multiplications done\n");
     
     // Reconstruct output from data in block_out
 //#pragma omp parallel
@@ -3716,7 +3718,7 @@ void __F_mpz_poly_mul_modular_comb(F_mpz_poly_t output, F_mpz_poly_t poly1, F_mp
 	   }
     }
     
-	printf("Multimodular reconstruction done\n");
+	if (MUL_MOD_TRACE) printf("Multimodular reconstruction done\n");
 
     output->length = trunc;
     _F_mpz_poly_normalise(output);
@@ -3772,7 +3774,7 @@ void _F_mpz_poly_mul_modular(F_mpz_poly_t output, F_mpz_poly_t poly1,
     F_mpz_comb_t comb;
     F_mpz_comb_init(comb, primes, numprimes);
 
-    printf("comb initialised\n");
+    if (MUL_MOD_TRACE) printf("comb initialised\n");
 	// do the multimodular multiplication
 	__F_mpz_poly_mul_modular_comb(output, poly1, poly2, comb, trunc);
     F_mpz_comb_clear(comb);
@@ -3826,19 +3828,12 @@ void F_mpz_poly_mul_modular_packed(F_mpz_poly_t output, F_mpz_poly_t poly1,
     F_mpz_poly_init(out);
    
 	F_mpz_poly_pack_bytes(p1, poly1, n, bytes);
-    printf("Poly1 packed\n");
-	F_mpz_poly_pack_bytes(p2, poly2, n, bytes);
-    printf("Poly2 packed\n");
-	     
+    F_mpz_poly_pack_bytes(p2, poly2, n, bytes);
+         
 	F_mpz_poly_mul_modular(out, p1, p2, 0);
 	
-	F_mpz_poly_clear(p1);
-    F_mpz_poly_clear(p2);
-    
-	printf("start unpacking\n");
 	F_mpz_poly_unpack_bytes(output, out, n, bytes);
-    printf("Output unpacked\n");
-	
+    
 	F_mpz_poly_clear(out);
 }
 
