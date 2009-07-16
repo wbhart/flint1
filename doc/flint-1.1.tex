@@ -58,7 +58,7 @@
 
 %\email{w.b.hart@maths.warwick.ac.uk}
 
-\title{FLINT 1.5: Fast Library for Number Theory}
+\title{FLINT 1.4.1: Fast Library for Number Theory}
 \author{William B. Hart and David Harvey}
 
 \begin{document}
@@ -2512,6 +2512,23 @@ void zmod_poly_powmod(zmod_poly_t res, zmod_poly_t pol,
 \end{lstlisting}
 \begin{quote}
 Sets \code{res} equal to \code{pol} raised to the power \code{exp} modulo \code{f}.  Assumes \code{pol} is reduced modulo \code{f}.  There are no restrictions on \code{exp}, i.e. it can be zero, positive or negative.  The leading coefficient of \code{f} must be invertible modulo the modulus. 
+\end{quote}
+
+\subsection{Composition and evaluation}
+
+\begin{lstlisting}
+ulong zmod_poly_evaluate(zmod_poly_t poly, ulong c)
+\end{lstlisting}
+\begin{quote}
+Evaluate the polynomial \code{poly} at the value \code{c} and return the result. It is assumed that \code{c} is already reduced modulo the modulus of \code{poly}.
+\end{quote}
+
+\begin{lstlisting}
+void zmod_poly_compose_horner(zmod_poly_t res, 
+               zmod_poly_t poly1, zmod_poly_t poly2)
+\end{lstlisting}
+\begin{quote}
+Compute the composition \code{poly1(poly2(x))} and set \code{res} to the result.
 \end{quote}
 
 \subsection{Polynomial Factorization}

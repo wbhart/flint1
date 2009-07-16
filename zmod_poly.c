@@ -6842,6 +6842,137 @@ unsigned long zmod_poly_factor(zmod_poly_factor_t result, zmod_poly_t input)
 
 /**************************************************************************************************
 
+   Evalulation
+
+**************************************************************************************************/
+
+ulong zmod_poly_evaluate(zmod_poly_t poly, ulong c)
+{
+	if (poly->length == 0) return 0L;
+
+	if ((poly->length == 1) || (c == 0)) return poly->coeffs[0];
+
+	long n = poly->length - 1;
+	ulong p = poly->p;
+	double p_inv = poly->p_inv;
+
+    ulong val = poly->coeffs[n];
+
+#if FLINT_BITS == 64
+	ulong bits = FLINT_BIT_COUNT(p);
+
+    if (bits > FLINT_D_BITS)
+	{
+	   for ( ; n > 0L; n--)
+	   {
+          val = z_mulmod2_precomp(val, c, p, p_inv);
+	      val = z_addmod(val, poly->coeffs[n - 1], p);
+	   }
+	} else
+	{
+#endif
+	   for ( ; n > 0L; n--)
+	   {
+          val = z_mulmod_precomp(val, c, p, p_inv);
+	      val = z_addmod(val, poly->coeffs[n - 1], p);
+	   }
+#if FLINT_BITS == 64
+	}
+#endif
+
+	return val;
+}
+
+/**************************************************************************************************
+
+   Composition
+
+**************************************************************************************************/
+
+void zmod_poly_compose_horner(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
+{
+	if (poly1->length == 0) 
+	{
+	   zmod_poly_zero(res);
+	   return;
+	}
+
+	if ((poly1->length == 1) || (poly2->length == 0))
+	{
+	   zmod_poly_fit_length(res, 1);
+	   res->coeffs[0] = poly1->coeffs[0];
+       res->length = 1;
+	   __zmod_poly_normalise(res);
+	   return;
+	}
+
+	ulong p = poly1->p;
+	
+	if (poly1->length == 2)
+	{
+		ulong t = poly1->coeffs[0];
+		zmod_poly_scalar_mul(res, poly2, poly1->coeffs[1]);
+	    if (res->length)
+	    {
+		   res->coeffs[0] = z_addmod(res->coeffs[0], t, p);
+	       if (res->length == 1) res->length = (res->coeffs[0] != 0L);
+	    } else 
+	    {
+		   res->coeffs[0] = t;
+		   res->length = (t != 0L);
+	    }
+
+		return;
+	}
+
+	long n = poly1->length - 1;
+	
+    zmod_poly_t val;
+	zmod_poly_init(val, p);
+	zmod_poly_scalar_mul(val, poly2, poly1->coeffs[n]);
+	if (val->length)
+	{
+		val->coeffs[0] = z_addmod(val->coeffs[0], poly1->coeffs[n-1], p);
+	    if (val->length == 1) val->length = (val->coeffs[0] != 0L);
+	} else 
+	{
+		val->coeffs[0] = poly1->coeffs[n-1];
+		val->length = (val->coeffs[0] != 0L);
+	}
+
+	n--;
+
+	for ( ; n > 1L; n--)
+	{
+       zmod_poly_mul(val, val, poly2);
+       if (val->length)
+	   {
+	      val->coeffs[0] = z_addmod(val->coeffs[0], poly1->coeffs[n-1], p);
+	      if (val->length == 1) val->length = (val->coeffs[0] != 0L);
+	   } else 
+	   {
+		  val->coeffs[0] = poly1->coeffs[n-1];
+		  val->length = (val->coeffs[0] != 0L);
+	   }
+	}
+
+    ulong t = poly1->coeffs[0];
+    zmod_poly_mul(res, val, poly2);
+	if (res->length)
+	{
+		res->coeffs[0] = z_addmod(res->coeffs[0], t, p);
+	    if (res->length == 1) res->length = (res->coeffs[0] != 0L);
+	} else 
+	{
+		res->coeffs[0] = t;
+		res->length = (t != 0L);
+	}
+
+	return;
+}
+
+/**************************************************************************************************
+
    zmod_poly matrix routines
 
 **************************************************************************************************/

@@ -956,88 +956,38 @@ void theta_2d_A2(long *out, ulong start, ulong len)
     }
 }
 
-/*
-   Compute Sum  s * y * q ^(x^2 + y^2)
-   for x even, y odd, s = +1 for x+y = 1 mod 4, s = -1 for x+y = 3 mod 4
+/* 
+   Fast implementation of Theta(8z) - 2*Theta(32z)
+   i.e. theta series of  8x^2 with
+   coefficient +2 for odd x, -2 for even x
 */
+void
+theta_2d_B(long * out, ulong start, ulong len)
+{ /// for now I assume start = 0 ; shift = 1
 
-void theta_2d_B(long *out, ulong start, ulong len)
-{
+    // zero all the coefficients
     for(ulong i=0; i<len; i++)
         out[i] = 0;
 
-    long A = start;
-    long B = start+len-1;
+    ulong x = z_intsqrt(start/8); // start <= 8x^2
+	if (8*x*x < start) x++;
 
-    long y = 1;
-    long y_2 = 2 * y; // 2 * y
-    long N0 = 1; // N0 = y^2
+    ulong x_8 = 8 * x; // 8x
+    ulong i = x_8 * x - start; // 8x^2 - start
+    long val = (start+i) & 8 ? 2 : -2;
 
-    long x = z_intsqrt((B-1))/2 * 2; // largest even x such that x^2 + y^2 <= B
+    while(i < len) {
+        out[i] = val;
+        // iterate x++ and update i = 8x^2 - start
+        i += x_8;
+        x_8 += 8;
+        i += x_8;
 
-    // First loop, where x won't reach 0
-    while(N0 < A) {
-
-        long x_2 = 2 * x;  // 2x
-        long N = N0 + x * x; // x^2 + y^2
-
-        while(N > B) {
-            // iterate x-=2 and update N = x^2 + y^2
-            N -= x_2;
-            x_2 -= 4;
-            N -= x_2;
-        }
-
-        // remember x for next iteration of y
-        x = x_2 / 2;
-
-        long val = (x+y)%4 == 1 ? y : -y;
-        while(N >= A) {
-            out[N-A] += 2*val;
-
-            // iterate x-=2 and update N = x^2 + y^2
-            N -= x_2;
-            x_2 -= 4;
-            N -= x_2;
-
-            val = -val;
-        }
-
-        // iterate y+=2 and update N0 = y^2
-        y += 2;
-        N0 += y_2;
-        y_2 += 4;
-        N0 += y_2;
+        val = -val;
     }
 
-    // Second loop, where x starts from 0
-    while(N0 <= B) {
-
-        long val = y%4 == 1 ? y : -y;
-
-        // count x = 0
-        out[N0-A] += val;
-        
-        // start from x=2
-        long x_2 = 4;  // 2x
-        long N = N0 + 4; // x^2 + y^2
-
-        while(N <= B) {
-            val = -val;
-            out[N-A] += 2*val;
-
-            // iterate x+=2 and update N = x^2 + y^2
-            N += x_2;
-            x_2 += 4;
-            N += x_2;
-        }
-
-        // iterate y+=2 and update N0 = y^2
-        y += 2;
-        N0 += y_2;
-        y_2 += 4;
-        N0 += y_2;
-    }
+    if(start == 0)
+        out[0] = -1; // the constant term is -1 not -2
 }
 
 /*

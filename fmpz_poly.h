@@ -1553,6 +1553,21 @@ int fmpz_poly_is_squarefree(fmpz_poly_t pol)
 
 void fmpz_poly_signature(ulong * r1, ulong * r2, fmpz_poly_t poly);
 
+/****************************************************************************
+
+   Code without FLINT test code or documentation
+
+****************************************************************************/
+
+ulong fmpz_poly_evaluate_mod(fmpz_poly_t poly, ulong p,
+		                              ulong e, pre_inv_t pinv);
+
+void zmod_poly_translate_horner(zmod_poly_t res, 
+								zmod_poly_t f, zmod_poly_t g);
+
+void fmpz_poly_translate_mod_horner(zmod_poly_t res, 
+							    fmpz_poly_t f, zmod_poly_t g);
+
 // *************** end of file
 
 #ifdef __cplusplus

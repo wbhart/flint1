@@ -22,6 +22,8 @@
 fmpz_poly.c: Polynomials over Z, implemented as contiguous block of fmpz_t's
 
 Copyright (C) 2007, William Hart and David Harvey
+Copyright (C) 2008, William Hart
+Copyright (C) 2009, William Hart and Burcin Erocal
 
 *****************************************************************************/
 
@@ -11234,5 +11236,114 @@ void fmpz_poly_signature(ulong * r1, ulong * r2, fmpz_poly_t poly)
 				}
 			}
 		}
+	}
+}
+
+/****************************************************************************
+
+   Code without FLINT test code or documentation
+
+****************************************************************************/
+
+ulong fmpz_poly_evaluate_mod(fmpz_poly_t poly, ulong p,
+		                               ulong e, pre_inv_t pinv)
+{
+    if (poly->length == 0)
+	    return 0;
+
+    if (e == 0)
+        return fmpz_mod_ui(poly->coeffs, p);
+
+    unsigned long sizef = poly->limbs+1;
+    fmpz_t ccoeff = poly->coeffs + (poly->length - 1)*sizef;
+    unsigned long cmod_coeff;
+    unsigned long res = 0;
+    
+#if FLINT_BITS == 64
+	if (FLINT_BIT_COUNT(p) > FLINT_D_BITS)
+	{
+	   for (long i = 0;  i < poly->length; i++)
+       {
+          cmod_coeff = fmpz_mod_ui(ccoeff, p);
+          res = z_addmod(z_mulmod2_precomp(res, e, p, pinv), cmod_coeff, p);
+          ccoeff -= sizef;
+       }
+	} else
+	{
+#endif
+	   for (long i = 0; i < poly->length; i++)
+       {
+          cmod_coeff = fmpz_mod_ui(ccoeff, p);
+          res = z_addmod(z_mulmod_precomp(res, e, p, pinv), cmod_coeff, p);
+          ccoeff -= sizef;
+       }
+#if FLINT_BITS == 64
+   }
+#endif
+
+    return res;
+}
+
+void zmod_poly_translate_horner(zmod_poly_t res, 
+								zmod_poly_t f, zmod_poly_t g)
+{
+    //TODO: implement divide & conquer algorithm
+    //printf("f->length: %ld\n", f.length);
+    if (f->length == 0)
+	{
+        zmod_poly_zero(res);
+        return;
+	}
+
+    ulong p = zmod_poly_modulus(g);
+	ulong * ccoeff = f->coeffs + (f->length - 1);
+    
+	zmod_poly_t t;
+    zmod_poly_init(t, p);
+
+    zmod_poly_zero(res);
+    zmod_poly_set_coeff_ui(res, 0, ccoeff[0]);
+    ccoeff -= 1;
+            
+
+    for (long i = 0; i < f->length - 1; i++)
+	{
+        // res = res*g + cmod_coeff;
+        zmod_poly_mul(res, res, g);
+        zmod_poly_set_coeff_ui(t, 0, ccoeff[0]);
+        zmod_poly_add(res, res, t);
+        ccoeff -= 1;
+	}
+}
+
+void fmpz_poly_translate_mod_horner(zmod_poly_t res, 
+							 fmpz_poly_t f, zmod_poly_t g)
+{
+    //TODO: implement the divide & conquer algorithm
+    //printf("f->length: %ld\n", f.length);
+    if (f->length == 0)
+	{
+        zmod_poly_zero(res);
+        return;
+	}
+	
+	ulong p = zmod_poly_modulus(g);
+    ulong sizef = f->limbs + 1;
+    fmpz_t ccoeff = f->coeffs + (f->length - 1)*sizef;
+    
+	zmod_poly_t t;
+    zmod_poly_init(t, p);
+
+    zmod_poly_zero(res);
+    zmod_poly_set_coeff_ui(res, 0, fmpz_mod_ui(ccoeff, p));
+    ccoeff -= sizef;
+
+    for (long i = 0; i < f->length - 1; i++)
+	{
+        // res = res*g + cmod_coeff;
+        zmod_poly_mul(res, res, g);
+        zmod_poly_set_coeff_ui(t, 0, fmpz_mod_ui(ccoeff, p));
+        zmod_poly_add(res, res, t);
+        ccoeff -= sizef;
 	}
 }

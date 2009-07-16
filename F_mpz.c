@@ -58,11 +58,11 @@ F_mpz * F_mpz_unused_arr;
 // The number of mpz's not being used presently
 ulong F_mpz_num_unused = 0;
 
-pthread_mutex_t new_mpz_mutex;
+//pthread_mutex_t new_mpz_mutex;
 
 F_mpz _F_mpz_new_mpz(void)
 {
-	pthread_mutex_lock(&new_mpz_mutex);
+	//pthread_mutex_lock(&new_mpz_mutex);
 	if (!F_mpz_num_unused) // time to allocate MPZ_BLOCK more mpz_t's
 	{
 	   if (F_mpz_allocated) // realloc mpz_t's and unused array
@@ -91,16 +91,16 @@ F_mpz _F_mpz_new_mpz(void)
 		F_mpz_num_unused--;
 	}
 	F_mpz ret = F_mpz_unused_arr[F_mpz_num_unused];
-	pthread_mutex_unlock(&new_mpz_mutex);
+	//pthread_mutex_unlock(&new_mpz_mutex);
 	return ret;
 }
 
 void _F_mpz_clear_mpz(F_mpz f)
 {
-   pthread_mutex_lock(&new_mpz_mutex);
+   //pthread_mutex_lock(&new_mpz_mutex);
    F_mpz_unused_arr[F_mpz_num_unused] = f;
    F_mpz_num_unused++;	
-   pthread_mutex_unlock(&new_mpz_mutex);
+   //pthread_mutex_unlock(&new_mpz_mutex);
 }
 
 void _F_mpz_cleanup(void)

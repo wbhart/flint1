@@ -757,9 +757,33 @@ void zmod_poly_powmod(zmod_poly_t res, zmod_poly_t pol, long exp, zmod_poly_t f)
       __zmod_poly_powmod(res, pol, exp, f);
 }
 
-/*
+/**************************************************************************************************
+
+   Evalulation
+
+**************************************************************************************************/
+
+ulong zmod_poly_evaluate(zmod_poly_t poly, ulong c);
+
+/**************************************************************************************************
+
+   Composition
+
+**************************************************************************************************/
+
+void zmod_poly_compose_horner(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2);
+
+static inline
+void zmod_poly_compose(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
+{
+	zmod_poly_compose_horner(res, poly1, poly2);
+}
+
+/**************************************************************************************************
+
    Factorisation/Irreducibility
-*/
+
+**************************************************************************************************/
 
 /**
  * Irreducibility test for polynomials over Z/pZ

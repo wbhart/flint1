@@ -8801,6 +8801,329 @@ int test_zmod_poly_gcd()
    return result;
 }
 
+int test_zmod_poly_evaluate()
+{
+   int result = 1;
+   zmod_poly_t pol1;
+   unsigned long bits, c, val1, val2;
+   
+   for (unsigned long count1 = 0; (count1 < 1000) && (result == 1); count1++)
+   {
+      bits = randint(FLINT_BITS-2)+2;
+      unsigned long modulus;
+      
+      do {modulus = randprime(bits);} while (modulus < 2);
+      
+      zmod_poly_init(pol1, modulus);
+      
+      for (unsigned long count2 = 0; (count2 < 20) && (result == 1); count2++)
+      {
+         unsigned long length1 = randint(300);
+         
+#if DEBUG
+         printf("length1 = %ld, bits = %ld, modulus = %ld\n", length1, bits, modulus);
+#endif
+         
+         randpoly(pol1, length1, modulus);
+            
+         if (pol1->length == 0) val1 = 0;
+		 else
+		 {
+			 val1 = pol1->coeffs[pol1->length - 1];
+			 for (long i = pol1->length - 1; i > 0; i--)
+			 {
+				 val1 = z_mulmod2_precomp(val1, c, pol1->p, pol1->p_inv);
+				 val1 = z_addmod(val1, pol1->coeffs[i - 1], pol1->p);
+			 }
+		 }
+
+		 val2 = zmod_poly_evaluate(pol1, c);
+
+         result = (val1 == val2);
+         
+         if (!result)
+         {
+            zmod_poly_print(pol1); printf("\n");
+            printf("val1 = %ld, val2 = %ld\n", val1, val2);
+         }
+      }
+      
+      zmod_poly_clear(pol1);
+   }
+   
+   return result;
+}
+
+int test_zmod_poly_compose_horner()
+{
+   int result = 1;
+   zmod_poly_t pol1, pol2, res1, res2;
+   unsigned long bits;
+   
+   for (unsigned long count1 = 0; (count1 < 50) && (result == 1); count1++)
+   {
+      bits = randint(FLINT_BITS-2)+2;
+      unsigned long modulus;
+      
+      do {modulus = randprime(bits);} while (modulus < 2);
+      
+      zmod_poly_init(pol1, modulus);
+      zmod_poly_init(pol2, modulus);
+      zmod_poly_init(res1, modulus);
+      zmod_poly_init(res2, modulus);
+      
+      for (unsigned long count2 = 0; (count2 < 30) && (result == 1); count2++)
+      {
+         unsigned long length1 = randint(30);
+         unsigned long length2 = randint(30);
+         
+#if DEBUG
+         printf("length1 = %ld, length2 = %ld, bits = %ld, modulus = %ld\n", length1, length2, bits, modulus);
+#endif
+         
+         randpoly(pol1, length1, modulus);
+         randpoly(pol2, length2, modulus);
+
+		 zmod_poly_fit_length(res1, 1);
+		 
+		 if (pol1->length == 0) zmod_poly_zero(res1);
+		 else
+		 {
+			 zmod_poly_set_coeff_ui(res1, 0, pol1->coeffs[pol1->length - 1]);
+			 res1->length = 1;
+			 for (long n = pol1->length - 1; n > 0L; n--)
+			 {
+				 zmod_poly_mul(res1, res1, pol2);
+                 if (res1->length == 0) 
+				 {
+					 res1->length = 1;
+				     res1->coeffs[0] = pol1->coeffs[n - 1];
+				 } else
+				 {
+					 res1->coeffs[0] = z_addmod(res1->coeffs[0], pol1->coeffs[n - 1], pol1->p);
+					 if (res1->length == 0) res1->length = 1;
+				 }
+				 __zmod_poly_normalise(res1);
+			 }
+		 }
+
+         zmod_poly_compose_horner(res2, pol1, pol2);
+
+         result = (zmod_poly_equal(res1, res2));
+         
+         if (!result)
+         {
+            zmod_poly_print(pol1); printf("\n\n");
+            zmod_poly_print(pol2); printf("\n\n");
+            zmod_poly_print(res1); printf("\n\n");
+            zmod_poly_print(res2); printf("\n\n");
+         }
+      }
+      
+      zmod_poly_clear(pol1);
+      zmod_poly_clear(pol2);
+      zmod_poly_clear(res1); 
+      zmod_poly_clear(res2);  
+   }
+   
+   // alias input polys
+   for (unsigned long count1 = 0; (count1 < 50) && (result == 1); count1++)
+   {
+      bits = randint(FLINT_BITS-2)+2;
+      unsigned long modulus;
+      
+      do {modulus = randprime(bits);} while (modulus < 2);
+      
+      zmod_poly_init(pol1, modulus);
+      zmod_poly_init(pol2, modulus);
+      zmod_poly_init(res1, modulus);
+      zmod_poly_init(res2, modulus);
+      
+      for (unsigned long count2 = 0; (count2 < 30) && (result == 1); count2++)
+      {
+         unsigned long length1 = randint(30);
+         unsigned long length2 = randint(30);
+         
+#if DEBUG
+         printf("length1 = %ld, length2 = %ld, bits = %ld, modulus = %ld\n", length1, length2, bits, modulus);
+#endif
+         
+         randpoly(pol1, length1, modulus);
+         
+		 zmod_poly_fit_length(res1, 1);
+		 
+		 zmod_poly_set(pol2, pol1);
+		 if (pol1->length == 0) zmod_poly_zero(res1);
+		 else
+		 {
+			 zmod_poly_set_coeff_ui(res1, 0, pol1->coeffs[pol1->length - 1]);
+			 res1->length = 1;
+			 for (long n = pol1->length - 1; n > 0L; n--)
+			 {
+				 zmod_poly_mul(res1, res1, pol2);
+                 if (res1->length == 0) 
+				 {
+					 res1->length = 1;
+				     res1->coeffs[0] = pol1->coeffs[n - 1];
+				 } else
+				 {
+					 res1->coeffs[0] = z_addmod(res1->coeffs[0], pol1->coeffs[n - 1], pol1->p);
+					 if (res1->length == 0) res1->length = 1;
+				 }
+				 __zmod_poly_normalise(res1);
+			 }
+		 }
+
+         zmod_poly_compose_horner(res2, pol1, pol1);
+
+         result = (zmod_poly_equal(res1, res2));
+         
+         if (!result)
+         {
+            zmod_poly_print(pol1); printf("\n\n");
+            zmod_poly_print(pol2); printf("\n\n");
+            zmod_poly_print(res1); printf("\n\n");
+            zmod_poly_print(res2); printf("\n\n");
+         }
+      }
+      
+      zmod_poly_clear(pol1);
+      zmod_poly_clear(pol2);
+      zmod_poly_clear(res1); 
+      zmod_poly_clear(res2);  
+   }
+   
+   // alias first input and output
+   for (unsigned long count1 = 0; (count1 < 50) && (result == 1); count1++)
+   {
+      bits = randint(FLINT_BITS-2)+2;
+      unsigned long modulus;
+      
+      do {modulus = randprime(bits);} while (modulus < 2);
+      
+      zmod_poly_init(pol1, modulus);
+      zmod_poly_init(pol2, modulus);
+      zmod_poly_init(res1, modulus);
+      
+      for (unsigned long count2 = 0; (count2 < 30) && (result == 1); count2++)
+      {
+         unsigned long length1 = randint(30);
+         unsigned long length2 = randint(30);
+         
+#if DEBUG
+         printf("length1 = %ld, length2 = %ld, bits = %ld, modulus = %ld\n", length1, length2, bits, modulus);
+#endif
+         
+         randpoly(pol1, length1, modulus);
+         randpoly(pol2, length2, modulus);
+
+		 zmod_poly_fit_length(res1, 1);
+		 
+		 if (pol1->length == 0) zmod_poly_zero(res1);
+		 else
+		 {
+			 zmod_poly_set_coeff_ui(res1, 0, pol1->coeffs[pol1->length - 1]);
+			 res1->length = 1;
+			 for (long n = pol1->length - 1; n > 0L; n--)
+			 {
+				 zmod_poly_mul(res1, res1, pol2);
+                 if (res1->length == 0) 
+				 {
+					 res1->length = 1;
+				     res1->coeffs[0] = pol1->coeffs[n - 1];
+				 } else
+				 {
+					 res1->coeffs[0] = z_addmod(res1->coeffs[0], pol1->coeffs[n - 1], pol1->p);
+					 if (res1->length == 0) res1->length = 1;
+				 }
+				 __zmod_poly_normalise(res1);
+			 }
+		 }
+
+         zmod_poly_compose_horner(pol1, pol1, pol2);
+
+         result = (zmod_poly_equal(res1, pol1));
+         
+         if (!result)
+         {
+            zmod_poly_print(pol1); printf("\n\n");
+            zmod_poly_print(pol2); printf("\n\n");
+            zmod_poly_print(res1); printf("\n\n");
+          }
+      }
+      
+      zmod_poly_clear(pol1);
+      zmod_poly_clear(pol2);
+      zmod_poly_clear(res1); 
+   }
+   
+   // alias second input and output
+   for (unsigned long count1 = 0; (count1 < 50) && (result == 1); count1++)
+   {
+      bits = randint(FLINT_BITS-2)+2;
+      unsigned long modulus;
+      
+      do {modulus = randprime(bits);} while (modulus < 2);
+      
+      zmod_poly_init(pol1, modulus);
+      zmod_poly_init(pol2, modulus);
+      zmod_poly_init(res1, modulus);
+      
+      for (unsigned long count2 = 0; (count2 < 30) && (result == 1); count2++)
+      {
+         unsigned long length1 = randint(30);
+         unsigned long length2 = randint(30);
+         
+#if DEBUG
+         printf("length1 = %ld, length2 = %ld, bits = %ld, modulus = %ld\n", length1, length2, bits, modulus);
+#endif
+         
+         randpoly(pol1, length1, modulus);
+         randpoly(pol2, length2, modulus);
+
+		 zmod_poly_fit_length(res1, 1);
+		 
+		 if (pol1->length == 0) zmod_poly_zero(res1);
+		 else
+		 {
+			 zmod_poly_set_coeff_ui(res1, 0, pol1->coeffs[pol1->length - 1]);
+			 res1->length = 1;
+			 for (long n = pol1->length - 1; n > 0L; n--)
+			 {
+				 zmod_poly_mul(res1, res1, pol2);
+                 if (res1->length == 0) 
+				 {
+					 res1->length = 1;
+				     res1->coeffs[0] = pol1->coeffs[n - 1];
+				 } else
+				 {
+					 res1->coeffs[0] = z_addmod(res1->coeffs[0], pol1->coeffs[n - 1], pol1->p);
+					 if (res1->length == 0) res1->length = 1;
+				 }
+				 __zmod_poly_normalise(res1);
+			 }
+		 }
+
+         zmod_poly_compose_horner(pol2, pol1, pol2);
+
+         result = (zmod_poly_equal(res1, pol2));
+         
+         if (!result)
+         {
+            zmod_poly_print(pol1); printf("\n\n");
+            zmod_poly_print(pol2); printf("\n\n");
+            zmod_poly_print(res1); printf("\n\n");
+         }
+      }
+      
+      zmod_poly_clear(pol1);
+      zmod_poly_clear(pol2);
+      zmod_poly_clear(res1); 
+   }
+   
+   return result;
+}
+
 void zmod_poly_test_all()
 {
    int success, all_success = 1;
@@ -8877,6 +9200,8 @@ void zmod_poly_test_all()
    RUN_TEST(zmod_poly_resultant);
    RUN_TEST(zmod_poly_mulmod); 
    RUN_TEST(zmod_poly_powmod); 
+   RUN_TEST(zmod_poly_evaluate); 
+   RUN_TEST(zmod_poly_compose_horner); 
    RUN_TEST(zmod_poly_isirreducible); 
    RUN_TEST(zmod_poly_factor_berlekamp); 
    RUN_TEST(zmod_poly_factor_square_free); 
