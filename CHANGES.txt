@@ -273,3 +273,12 @@ v 1.4.0 -- 06-Jul-09
    * Corrected numerous typos in the documentation and added missing descriptions
    * Added F_mpz_cmp function
    * Added documentation to the manual for the new F_mpz module
+
+v 1.4.1 -- 16-Jul-09
+
+   * Added multimodular reduction to F_mpz module.
+   * Added new cleanup function for F_mpz mpz_t stack.
+   * Fixed some bugs in F_mpz module and numerous bugs in test code.
+   * Added zmod_poly_compose
+   * Added zmod_poly_evaluate.
+   * Added functions for reduced evaluation and composition to fmpz_poly module contributed by Burcin Erocal.
