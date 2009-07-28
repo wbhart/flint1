@@ -58,11 +58,59 @@ F_mpz * F_mpz_unused_arr;
 // The number of mpz's not being used presently
 ulong F_mpz_num_unused = 0;
 
-//pthread_mutex_t new_mpz_mutex;
+#define MAX_SEM 16 
+
+int sem;
+pthread_mutex_t sem_mutex;
+pthread_mutex_t sem_acquire_mutex;
+
+void semaphore_init(void)
+{
+   sem = 0;
+}
+
+void semaphore_up(void)
+{
+	int done = 0;
+	while (!done)
+	{
+      pthread_mutex_lock(&sem_mutex);
+	   if (sem < MAX_SEM) 
+		{
+			sem++;
+			done = 1;
+		}
+		pthread_mutex_unlock(&sem_mutex);   
+	}
+}
+
+void semaphore_down(void)
+{
+	pthread_mutex_lock(&sem_mutex);
+	sem--;
+	pthread_mutex_unlock(&sem_mutex);   
+}
+
+void semaphore_acquire(void)
+{
+	pthread_mutex_lock(&sem_acquire_mutex);
+	for (int i = 0; i < MAX_SEM - 1; i++)
+	{
+		semaphore_up();
+	}
+	pthread_mutex_unlock(&sem_acquire_mutex);
+}
+
+void semaphore_release(void)
+{
+	pthread_mutex_lock(&sem_mutex);
+	sem = 1; // our thread still has one semaphore unit to release
+	pthread_mutex_unlock(&sem_mutex);  
+}
 
 F_mpz _F_mpz_new_mpz(void)
 {
-	//pthread_mutex_lock(&new_mpz_mutex);
+	semaphore_acquire();
 	if (!F_mpz_num_unused) // time to allocate MPZ_BLOCK more mpz_t's
 	{
 	   if (F_mpz_allocated) // realloc mpz_t's and unused array
@@ -71,6 +119,7 @@ F_mpz _F_mpz_new_mpz(void)
 			F_mpz_unused_arr = (F_mpz *) flint_heap_realloc_bytes(F_mpz_unused_arr, (F_mpz_allocated + MPZ_BLOCK)*sizeof(F_mpz));
 		} else // first time alloc of mpz_t's and unused array
 		{
+			semaphore_init();
 			F_mpz_arr = (__mpz_struct*) flint_heap_alloc_bytes(MPZ_BLOCK*sizeof(__mpz_struct));	
 			F_mpz_unused_arr = (F_mpz *) flint_heap_alloc_bytes(MPZ_BLOCK*sizeof(F_mpz));
 		}
@@ -91,20 +140,22 @@ F_mpz _F_mpz_new_mpz(void)
 		F_mpz_num_unused--;
 	}
 	F_mpz ret = F_mpz_unused_arr[F_mpz_num_unused];
-	//pthread_mutex_unlock(&new_mpz_mutex);
+	semaphore_release();
+
 	return ret;
 }
 
 void _F_mpz_clear_mpz(F_mpz f)
 {
-   //pthread_mutex_lock(&new_mpz_mutex);
-   F_mpz_unused_arr[F_mpz_num_unused] = f;
+   semaphore_acquire();
+	F_mpz_unused_arr[F_mpz_num_unused] = f;
    F_mpz_num_unused++;	
-   //pthread_mutex_unlock(&new_mpz_mutex);
+   semaphore_release();
 }
 
 void _F_mpz_cleanup(void)
 {
+	if (sem != 0) printf("Warning: unbalanced semaphores, sem = %d\n", sem);
 	for (ulong i = 0; i < F_mpz_num_unused; i++)
 	{
 		mpz_clear(F_mpz_arr + COEFF_TO_OFF(F_mpz_unused_arr[i]));
@@ -191,8 +242,10 @@ void F_mpz_init2(F_mpz_t f, ulong limbs)
 {
 	if (limbs) 
 	{
+		semaphore_up();
 		*f = _F_mpz_new_mpz();
 		_mpz_realloc(F_mpz_arr + COEFF_TO_OFF(*f), limbs);
+		semaphore_down();
 		return;
 	} else 
 	{
@@ -239,7 +292,8 @@ void F_mpz_random(F_mpz_t f, const ulong bits)
 	ulong limbs = ((bits-1)>>FLINT_LG_BITS_PER_LIMB)+1;
    ulong rem = (bits & (FLINT_BITS - 1));
    
-   __mpz_struct * mpz_ptr = _F_mpz_promote(f);
+   semaphore_up();
+	__mpz_struct * mpz_ptr = _F_mpz_promote(f);
    mpz_realloc2(mpz_ptr, bits);
 	
 	mp_limb_t * fp = mpz_ptr->_mp_d;
@@ -252,15 +306,18 @@ void F_mpz_random(F_mpz_t f, const ulong bits)
    }
    NORM(mpz_ptr, fp);
 	_F_mpz_demote_val(f);
+	semaphore_down();
 }
 
 void F_mpz_randomm(F_mpz_t f, const mpz_t in)
 {
    if (mpz_size(in) > 1) 
    {
-      __mpz_struct * mpz_ptr = _F_mpz_promote(f);
+      semaphore_up();
+		__mpz_struct * mpz_ptr = _F_mpz_promote(f);
 		mpz_urandomm(mpz_ptr, F_mpz_state, in);
 		_F_mpz_demote_val(f);
+		semaphore_down();
    } else
    {
       ulong val = mpz_get_ui(in);
@@ -279,11 +336,15 @@ void F_mpz_set_si(F_mpz_t f, const long val)
 {
    if (FLINT_ABS(val) > COEFF_MAX) // val is large
 	{
+		semaphore_up();
 		__mpz_struct * mpz_coeff = _F_mpz_promote(f);
 		mpz_set_si(mpz_coeff, val);
+		semaphore_down();
 	} else 
 	{
+		semaphore_up();
 		_F_mpz_demote(f);
+		semaphore_down();
 		*f = val; // val is small
 	}
 }
@@ -292,11 +353,15 @@ void F_mpz_set_ui(F_mpz_t f, const ulong val)
 {
    if (val > COEFF_MAX) // val is large
 	{
+		semaphore_up();
 		__mpz_struct * mpz_coeff = _F_mpz_promote(f);
 		mpz_set_ui(mpz_coeff, val);
+		semaphore_down();
 	} else 
 	{
+		semaphore_up();
 		_F_mpz_demote(f);
+		semaphore_down();
 		*f = val; // val is small
 	}
 }
@@ -304,7 +369,10 @@ void F_mpz_set_ui(F_mpz_t f, const ulong val)
 long F_mpz_get_si(const F_mpz_t f)
 {
    if (!COEFF_IS_MPZ(*f)) return *f; // value is small
-	return mpz_get_si(F_mpz_arr + COEFF_TO_OFF(*f)); // value is large
+	semaphore_up();
+	long ret = mpz_get_si(F_mpz_arr + COEFF_TO_OFF(*f)); // value is large
+	semaphore_down();
+	return ret;
 }
 
 ulong F_mpz_get_ui(const F_mpz_t f)
@@ -314,13 +382,21 @@ ulong F_mpz_get_ui(const F_mpz_t f)
 		if (*f < 0L) return -*f; // value is small
 		else return *f;
 	}
-	return mpz_get_ui(F_mpz_arr + COEFF_TO_OFF(*f)); // value is large
+	semaphore_up();
+	ulong ret = mpz_get_ui(F_mpz_arr + COEFF_TO_OFF(*f)); // value is large
+	semaphore_down();
+	return ret;
 }
 
 void F_mpz_get_mpz(mpz_t x, const F_mpz_t f)
 {
 	if (!COEFF_IS_MPZ(*f)) mpz_set_si(x, *f); // set x to small value
-	else mpz_set(x, F_mpz_arr + COEFF_TO_OFF(*f)); // set x to large value
+	else 
+	{
+		semaphore_up();
+		mpz_set(x, F_mpz_arr + COEFF_TO_OFF(*f)); // set x to large value
+		semaphore_down();
+	}	
 }
 
 extern double __gmpn_get_d(mp_limb_t *, size_t, size_t, long);
@@ -341,7 +417,12 @@ double F_mpz_get_d_2exp(long * exp, const F_mpz_t f)
       if (d < 0L) return __gmpn_get_d(&d_abs, 1L, -1L, -*exp);
       else return __gmpn_get_d(&d, 1L, 1L, -*exp);
    } else 
-	   return mpz_get_d_2exp(exp, F_mpz_arr + COEFF_TO_OFF(d));
+	{
+		semaphore_up();
+		double ret = mpz_get_d_2exp(exp, F_mpz_arr + COEFF_TO_OFF(d));
+		semaphore_down();
+		return ret;
+	}
 }
 
 void F_mpz_set_mpz(F_mpz_t f, const mpz_t x)
@@ -359,18 +440,24 @@ void F_mpz_set_mpz(F_mpz_t f, const mpz_t x)
 	   ulong uval = mpz_get_ui(x);
 		if (uval <= COEFF_MAX) // x is small
 		{
+		   semaphore_up();
 		   _F_mpz_demote(f);
+			semaphore_down();
 		   *f = -uval;
 		} else // x is large but one limb
 		{
-			__mpz_struct * mpz_ptr = _F_mpz_promote(f);
+			semaphore_up();
+		   __mpz_struct * mpz_ptr = _F_mpz_promote(f);
 			mpz_set_ui(mpz_ptr, uval);
 			mpz_neg(mpz_ptr, mpz_ptr);
+			semaphore_down();
 		}
 	} else // x is more than one limb
 	{
+		semaphore_up();
 		__mpz_struct * mpz_ptr = _F_mpz_promote(f);
 		mpz_set(mpz_ptr, x);
+		semaphore_down();
 	}			
 }
 
@@ -384,9 +471,11 @@ void F_mpz_set_limbs(F_mpz_t f, const mp_limb_t * x, const ulong limbs)
 	   F_mpz_set_ui(f, x[0]);
 	} else // x is more than one limb
 	{
+		semaphore_up();
 		__mpz_struct * mpz_ptr = _F_mpz_promote(f);
 		// read limbs, least significant first, native endianness, no nails
 		mpz_import(mpz_ptr, limbs, -1, sizeof(mp_limb_t), 0, 0, x);
+		semaphore_down();
 	}			
 }
 
@@ -401,9 +490,11 @@ ulong F_mpz_get_limbs(mp_limb_t * x, const F_mpz_t f)
 	   x[0] = F_mpz_get_ui(f);
 	} else // f is more than one limb
 	{
+		semaphore_up();
 		__mpz_struct * mpz_ptr = F_mpz_ptr_mpz(*f);
 		// discard count, read least significant first, native endianness, no nails
 		mpz_export(x, NULL, -1, sizeof(mp_limb_t), 0, 0, mpz_ptr);
+		semaphore_down();
 	}	
 
 	return limbs;
@@ -415,12 +506,16 @@ void F_mpz_set(F_mpz_t f, const F_mpz_t g)
 	
 	if (!COEFF_IS_MPZ(*g)) // g is small
 	{
+		semaphore_up();
 		_F_mpz_demote(f);
+		semaphore_down();
 		*f = *g;
 	} else // g is large
 	{
-	   __mpz_struct * mpz_ptr = _F_mpz_promote(f);
+	   semaphore_up();
+		__mpz_struct * mpz_ptr = _F_mpz_promote(f);
 		mpz_set(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(*g));
+		semaphore_down();
 	}
 }
 
@@ -438,9 +533,11 @@ void F_mpz_swap(F_mpz_t f, F_mpz_t g)
 		} else // f is small, g is large
 		{
 			F_mpz t = *f;
-			__mpz_struct * mpz_ptr = _F_mpz_promote(f);
+			semaphore_up();
+		   __mpz_struct * mpz_ptr = _F_mpz_promote(f);
 			mpz_set(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(*g));
 			_F_mpz_demote(g);
+			semaphore_down();
          *g = t;
 		}
 	} else
@@ -448,13 +545,17 @@ void F_mpz_swap(F_mpz_t f, F_mpz_t g)
       if (!COEFF_IS_MPZ(*g)) // g is small, f is large
 		{
          F_mpz t = *g;
-			__mpz_struct * mpz_ptr = _F_mpz_promote(g);
+			semaphore_up();
+		   __mpz_struct * mpz_ptr = _F_mpz_promote(g);
 			mpz_set(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(*f));
 			_F_mpz_demote(f);
+			semaphore_down();
          *f = t;
 		} else // both values are large
 		{
-			mpz_swap(F_mpz_arr + COEFF_TO_OFF(*f), F_mpz_arr + COEFF_TO_OFF(*g));
+			semaphore_up();
+		   mpz_swap(F_mpz_arr + COEFF_TO_OFF(*f), F_mpz_arr + COEFF_TO_OFF(*g));
+			semaphore_down();
 		}
 	}
 }
@@ -471,7 +572,13 @@ int F_mpz_equal(const F_mpz_t f, const F_mpz_t g)
 	
 	if (!COEFF_IS_MPZ(*f)) return (*f == *g); // if f is large it can't be equal to g
 	else if (!COEFF_IS_MPZ(*g)) return 0; // f is large, so if g isn't....
-	else return (mpz_cmp(F_mpz_arr + COEFF_TO_OFF(*f), F_mpz_arr + COEFF_TO_OFF(*g)) == 0); 
+	else 
+	{
+		semaphore_up();
+		int ret = (mpz_cmp(F_mpz_arr + COEFF_TO_OFF(*f), F_mpz_arr + COEFF_TO_OFF(*g)) == 0); 
+		semaphore_down();
+		return ret;
+	}
 }
 
 int F_mpz_cmpabs(const F_mpz_t f, const F_mpz_t g)
@@ -488,7 +595,13 @@ int F_mpz_cmpabs(const F_mpz_t f, const F_mpz_t g)
 			else return (uf > ug);
 		} else return -1;
 	} else if (!COEFF_IS_MPZ(*g)) return 1; // f is large, so if g isn't....
-	else return mpz_cmpabs(F_mpz_arr + COEFF_TO_OFF(*f), F_mpz_arr + COEFF_TO_OFF(*g)); 
+	else 
+	{
+		semaphore_up();
+		int ret = mpz_cmpabs(F_mpz_arr + COEFF_TO_OFF(*f), F_mpz_arr + COEFF_TO_OFF(*g)); 
+		semaphore_down();
+		return ret;
+	}
 }
 
 int F_mpz_cmp(const F_mpz_t f, const F_mpz_t g)
@@ -503,15 +616,26 @@ int F_mpz_cmp(const F_mpz_t f, const F_mpz_t g)
 			else return (*f > *g);
 		} else // f is small, g is large 
 		{
-			if (mpz_sgn(F_mpz_arr + COEFF_TO_OFF(*g)) < 0) return 1; // g is a large negative 
-			else return -1; // g is a large positive
+			int ret = -1;
+			semaphore_up();
+		   if (mpz_sgn(F_mpz_arr + COEFF_TO_OFF(*g)) < 0) ret = 1; // g is a large negative 
+			semaphore_down();
+			return ret; // g is a large positive
 		}
 	} else if (!COEFF_IS_MPZ(*g)) 
 	{
-		if (mpz_sgn(F_mpz_arr + COEFF_TO_OFF(*f)) < 0) return -1; // f is large negative
-		else return 1; // f is large positive
+		int ret = 1;
+		semaphore_up();
+		if (mpz_sgn(F_mpz_arr + COEFF_TO_OFF(*f)) < 0) ret = -1; // f is large negative
+		semaphore_down();
+		return ret; // f is large positive
 	} else // both f and g are large 
-		return mpz_cmp(F_mpz_arr + COEFF_TO_OFF(*f), F_mpz_arr + COEFF_TO_OFF(*g)); 
+	{
+		semaphore_up();
+		int ret = mpz_cmp(F_mpz_arr + COEFF_TO_OFF(*f), F_mpz_arr + COEFF_TO_OFF(*g)); 
+		semaphore_down();
+		return ret;
+	}
 }
 
 /*===============================================================================
@@ -530,7 +654,10 @@ ulong F_mpz_size(const F_mpz_t f)
 		return 1;
 	}
 
-	return mpz_size(F_mpz_arr + COEFF_TO_OFF(d));
+	semaphore_up();
+   ulong ret = mpz_size(F_mpz_arr + COEFF_TO_OFF(d));
+	semaphore_down();
+	return ret;
 }
 
 int F_mpz_sgn(const F_mpz_t f)
@@ -544,7 +671,10 @@ int F_mpz_sgn(const F_mpz_t f)
 		else return -1;
 	}
 
-	return mpz_sgn(F_mpz_arr + COEFF_TO_OFF(d));
+	semaphore_up();
+   int ret = mpz_sgn(F_mpz_arr + COEFF_TO_OFF(d));
+	semaphore_down();
+	return ret;
 }
 
 ulong F_mpz_bits(const F_mpz_t f)
@@ -556,7 +686,10 @@ ulong F_mpz_bits(const F_mpz_t f)
 		return FLINT_BIT_COUNT(FLINT_ABS(d));
 	}
 
-	return mpz_sizeinbase(F_mpz_arr + COEFF_TO_OFF(d), 2);
+	semaphore_up();
+   ulong ret = mpz_sizeinbase(F_mpz_arr + COEFF_TO_OFF(d), 2);
+	semaphore_down();
+	return ret;
 }
 
 __mpz_struct * F_mpz_ptr_mpz(F_mpz f)
@@ -592,13 +725,17 @@ void F_mpz_neg(F_mpz_t f1, const F_mpz_t f2)
    if (!COEFF_IS_MPZ(*f2)) // coeff is small
 	{
 		F_mpz t = -*f2; // Need to save value in case of aliasing
+		semaphore_up();
 		_F_mpz_demote(f1);
+		semaphore_down();
 		*f1 = t;
 	} else // coeff is large
 	{
 	   // No need to retain value in promotion, as if aliased, both already large
+		semaphore_up();
 		__mpz_struct * mpz_ptr = _F_mpz_promote(f1);
 		mpz_neg(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(*f2));
+		semaphore_down();
 	}
 }
 
@@ -607,13 +744,17 @@ void F_mpz_abs(F_mpz_t f1, const F_mpz_t f2)
    if (!COEFF_IS_MPZ(*f2)) // coeff is small
 	{
 		F_mpz t = FLINT_ABS(*f2); // Need to save value in case of aliasing
+		semaphore_up();
 		_F_mpz_demote(f1);
+		semaphore_down();
 		*f1 = t;
 	} else // coeff is large
 	{
 	   // No need to retain value in promotion, as if aliased, both already large
+		semaphore_up();
 		__mpz_struct * mpz_ptr = _F_mpz_promote(f1);
 		mpz_abs(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(*f2));
+		semaphore_down();
 	}
 }
 
@@ -629,28 +770,34 @@ void F_mpz_add(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
 			F_mpz_set_si(f, c1 + c2);
 		} else // g is small, h is large
 		{
-         __mpz_struct * mpz3 = _F_mpz_promote(f); // g is saved and h is large
+         semaphore_up();
+		   __mpz_struct * mpz3 = _F_mpz_promote(f); // g is saved and h is large
 			__mpz_struct * mpz2 = F_mpz_arr + COEFF_TO_OFF(c2);
 			if (c1 < 0L) mpz_sub_ui(mpz3, mpz2, -c1);	
 		   else mpz_add_ui(mpz3, mpz2, c1);
 			_F_mpz_demote_val(f); // may have cancelled
+			semaphore_down();
 		}
 	} else
 	{
 		if (!COEFF_IS_MPZ(c2)) // g is large, h is small
 		{
-         __mpz_struct * mpz3 = _F_mpz_promote(f); // h is saved and g is large
+         semaphore_up();
+		   __mpz_struct * mpz3 = _F_mpz_promote(f); // h is saved and g is large
 			__mpz_struct * mpz1 = F_mpz_arr + COEFF_TO_OFF(c1);
 			if (c2 < 0L) mpz_sub_ui(mpz3, mpz1, -c2);	
 			else mpz_add_ui(mpz3, mpz1, c2);
 			_F_mpz_demote_val(f); // may have cancelled
+			semaphore_down();
 		} else // g and h are large
 		{
-         __mpz_struct * mpz3 = _F_mpz_promote(f); // aliasing means f is already large
+         semaphore_up();
+		   __mpz_struct * mpz3 = _F_mpz_promote(f); // aliasing means f is already large
 			__mpz_struct * mpz1 = F_mpz_arr + COEFF_TO_OFF(c1);
 			__mpz_struct * mpz2 = F_mpz_arr + COEFF_TO_OFF(c2);
 			mpz_add(mpz3, mpz1, mpz2);
 			_F_mpz_demote_val(f); // may have cancelled
+			semaphore_down();
 		}
 	}
 }
@@ -661,16 +808,20 @@ void F_mpz_add_mpz(F_mpz_t f, const F_mpz_t g, mpz_t h)
 	
 	if (!COEFF_IS_MPZ(c1)) // g is small
 	{
-	   __mpz_struct * mpz3 = _F_mpz_promote(f); // g is saved and h is large
+	   semaphore_up();
+		__mpz_struct * mpz3 = _F_mpz_promote(f); // g is saved and h is large
 		if (c1 < 0L) mpz_sub_ui(mpz3, h, -c1);	
 		else mpz_add_ui(mpz3, h, c1);
 		_F_mpz_demote_val(f); // may have cancelled
+		semaphore_down();
 	} else // g is large
 	{
+		semaphore_up();
 		__mpz_struct * mpz3 = _F_mpz_promote(f); // aliasing means f is already large
 		__mpz_struct * mpz1 = F_mpz_arr + COEFF_TO_OFF(c1);
 		mpz_add(mpz3, mpz1, h);
 		_F_mpz_demote_val(f); // may have cancelled
+		semaphore_down();
 	}
 }
 
@@ -686,7 +837,8 @@ void F_mpz_sub(F_mpz_t f, const F_mpz_t g, F_mpz_t h)
 			F_mpz_set_si(f, c1 - c2);
 		} else // g is small, h is large
 		{
-         __mpz_struct * mpz3 = _F_mpz_promote(f); // g is saved and h is large
+         semaphore_up();
+		   __mpz_struct * mpz3 = _F_mpz_promote(f); // g is saved and h is large
 			__mpz_struct * mpz2 = F_mpz_arr + COEFF_TO_OFF(c2);
 			if (c1 < 0L) 
 			{
@@ -694,23 +846,28 @@ void F_mpz_sub(F_mpz_t f, const F_mpz_t g, F_mpz_t h)
 				mpz_neg(mpz3, mpz3);
 			} else mpz_ui_sub(mpz3, c1, mpz2);
 			_F_mpz_demote_val(f); // may have cancelled
+			semaphore_down();
 		}
 	} else
 	{
 		if (!COEFF_IS_MPZ(c2)) // g is large, h is small
 		{
-         __mpz_struct * mpz3 = _F_mpz_promote(f); // h is saved and g is large
+         semaphore_up();
+		   __mpz_struct * mpz3 = _F_mpz_promote(f); // h is saved and g is large
 			__mpz_struct * mpz1 = F_mpz_arr + COEFF_TO_OFF(c1);
 			if (c2 < 0L) mpz_add_ui(mpz3, mpz1, -c2);	
 			else mpz_sub_ui(mpz3, mpz1, c2);
 			_F_mpz_demote_val(f); // may have cancelled
+			semaphore_down();
 		} else // g and h are large
 		{
-         __mpz_struct * mpz3 = _F_mpz_promote(f); // aliasing means f is already large
+         semaphore_up();
+		   __mpz_struct * mpz3 = _F_mpz_promote(f); // aliasing means f is already large
 			__mpz_struct * mpz1 = F_mpz_arr + COEFF_TO_OFF(c1);
 			__mpz_struct * mpz2 = F_mpz_arr + COEFF_TO_OFF(c2);
 			mpz_sub(mpz3, mpz1, mpz2);
 			_F_mpz_demote_val(f); // may have cancelled
+			semaphore_down();
 		}
 	}
 }
@@ -736,15 +893,19 @@ void F_mpz_mul_ui(F_mpz_t f, const F_mpz_t g, const ulong x)
 			if (c2 < 0L) F_mpz_neg(f, f);
 		} else // result takes two limbs
 		{
+		   semaphore_up();
 		   __mpz_struct * mpz_ptr = _F_mpz_promote(f);
 			// two limbs, least significant first, native endian, no nails, stored in prod
          mpz_import(mpz_ptr, 2, -1, sizeof(mp_limb_t), 0, 0, prod);
 			if (c2 < 0L) mpz_neg(mpz_ptr, mpz_ptr);
+			semaphore_down();
 		}
 	} else // coeff2 is large
 	{
-      __mpz_struct * mpz_ptr = _F_mpz_promote(f); // promote without val as if aliased both are large
+      semaphore_up();
+		__mpz_struct * mpz_ptr = _F_mpz_promote(f); // promote without val as if aliased both are large
       mpz_mul_ui(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(c2), x);
+		semaphore_down();
 	}
 }
 
@@ -770,15 +931,19 @@ void F_mpz_mul_si(F_mpz_t f, const F_mpz_t g, const long x)
 			if ((c2 ^ x) < 0L) F_mpz_neg(f, f);
 		} else // result takes two limbs
 		{
+		   semaphore_up();
 		   __mpz_struct * mpz_ptr = _F_mpz_promote(f);
          // two limbs, least significant first, native endian, no nails, stored in prod
 			mpz_import(mpz_ptr, 2, -1, sizeof(mp_limb_t), 0, 0, prod);
 			if ((c2 ^ x) < 0L) mpz_neg(mpz_ptr, mpz_ptr);
+			semaphore_down();
 		}
 	} else // coeff2 is large
 	{
-      __mpz_struct * mpz_ptr = _F_mpz_promote(f); // ok without val as if aliased both are large
+      semaphore_up();
+		__mpz_struct * mpz_ptr = _F_mpz_promote(f); // ok without val as if aliased both are large
       mpz_mul_si(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(c2), x);
+		semaphore_down();
 	}
 }
 
@@ -800,12 +965,14 @@ void F_mpz_mul2(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
 		return;
 	}
 
+   semaphore_up();
    __mpz_struct * mpz_ptr = _F_mpz_promote(f); // h is saved, g is already large
 		
 	if (!COEFF_IS_MPZ(c2)) // g is large, h is small
 	   mpz_mul_si(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(c1), c2);
    else // c1 and c2 are large
 	   F_mpz_mul(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(c1), F_mpz_arr + COEFF_TO_OFF(c2));
+	semaphore_down();
 }
 
 void F_mpz_mul_2exp(F_mpz_t f, const F_mpz_t g, const ulong exp)
@@ -821,14 +988,18 @@ void F_mpz_mul_2exp(F_mpz_t f, const F_mpz_t g, const ulong exp)
 			F_mpz_set_si(f, d<<exp);
 		} else // result is large
 		{
-			__mpz_struct * mpz_ptr = _F_mpz_promote(f); // g is saved
+			semaphore_up();
+		   __mpz_struct * mpz_ptr = _F_mpz_promote(f); // g is saved
          mpz_set_si(mpz_ptr, d); 
 	      mpz_mul_2exp(mpz_ptr, mpz_ptr, exp);
+			semaphore_down();
 		}
 	} else // g is large
 	{
-      __mpz_struct * mpz_ptr = _F_mpz_promote(f); // g is already large
+      semaphore_up();
+		__mpz_struct * mpz_ptr = _F_mpz_promote(f); // g is already large
       mpz_mul_2exp(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(d), exp);   
+		semaphore_down();
 	}
 }
 
@@ -841,9 +1012,11 @@ void F_mpz_div_2exp(F_mpz_t f, const F_mpz_t g, const ulong exp)
 		F_mpz_set_si(f, d>>exp);
 	} else // g is large
 	{
-      __mpz_struct * mpz_ptr = _F_mpz_promote(f); // g is already large
+      semaphore_up();
+		__mpz_struct * mpz_ptr = _F_mpz_promote(f); // g is already large
 		mpz_div_2exp(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(d), exp);   
 		_F_mpz_demote_val(f); // division may make value small
+		semaphore_down();
 	}
 }
 
@@ -863,8 +1036,10 @@ void F_mpz_add_ui(F_mpz_t f, const F_mpz_t g, const ulong x)
 				mpz_t temp;
 				temp->_mp_d = sum;
 				temp->_mp_size = 2; // result is sum of two non-negative numbers and is hence non-negative
-				__mpz_struct * mpz_ptr = _F_mpz_promote(f); // g has already been read
+				semaphore_up();
+		      __mpz_struct * mpz_ptr = _F_mpz_promote(f); // g has already been read
 				mpz_set(mpz_ptr, temp);
+				semaphore_down();
 			}
 		} else // coeff is negative, x positive
 		{
@@ -873,10 +1048,12 @@ void F_mpz_add_ui(F_mpz_t f, const F_mpz_t g, const ulong x)
 		}
 	} else
 	{
+		semaphore_up();
 		__mpz_struct * mpz_ptr2 = _F_mpz_promote(f); // g is already large
 		__mpz_struct * mpz_ptr = F_mpz_arr + COEFF_TO_OFF(c);
 		mpz_add_ui(mpz_ptr2, mpz_ptr, x);
 		_F_mpz_demote_val(f); // cancellation may have occurred
+		semaphore_down();
 	}
 }
 
@@ -899,8 +1076,10 @@ void F_mpz_sub_ui(F_mpz_t f, const F_mpz_t g, const ulong x)
 				mpz_t temp;
 				temp->_mp_d = sum;
 				temp->_mp_size = -2; // result is negative number minus negative number, hence negative
-				__mpz_struct * mpz_ptr = _F_mpz_promote(f); // g has already been read
+				semaphore_up();
+		      __mpz_struct * mpz_ptr = _F_mpz_promote(f); // g has already been read
 				mpz_set(mpz_ptr, temp);
+				semaphore_down();
 			}
 		} else // coeff is non-negative, x non-negative
 		{
@@ -913,10 +1092,12 @@ void F_mpz_sub_ui(F_mpz_t f, const F_mpz_t g, const ulong x)
 		}
 	} else
 	{
+		semaphore_up();
 		__mpz_struct * mpz_ptr2 = _F_mpz_promote(f); // g is already large
 		__mpz_struct * mpz_ptr = F_mpz_arr + COEFF_TO_OFF(c);
 		mpz_sub_ui(mpz_ptr2, mpz_ptr, x);
 		_F_mpz_demote_val(f); // cancellation may have occurred
+		semaphore_down();
 	}
 }
 
@@ -960,19 +1141,23 @@ void F_mpz_addmul_ui(F_mpz_t f, const F_mpz_t g, const ulong x)
 		}
 		
 		// in all remaining cases res is either big already, or will be big in the end
-	   __mpz_struct * mpz_ptr = _F_mpz_promote_val(f); 
+	   semaphore_up();
+		__mpz_struct * mpz_ptr = _F_mpz_promote_val(f); 
 		
 		mpz_t temp; // set up a temporary, cheap mpz_t to contain prod
 	   temp->_mp_d = prod;
 	   temp->_mp_size = (c1 < 0L ? -2 : 2);
 	   mpz_add(mpz_ptr, mpz_ptr, temp);
 		_F_mpz_demote_val(f); // cancellation may have occurred
+		semaphore_down();
 	} else // c1 is large
 	{
-      __mpz_struct * mpz_ptr = _F_mpz_promote_val(f);
+      semaphore_up();
+		__mpz_struct * mpz_ptr = _F_mpz_promote_val(f);
 		
       mpz_addmul_ui(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(c1), x);
 		_F_mpz_demote_val(f); // cancellation may have occurred
+		semaphore_down();
 	}
 }
 
@@ -1016,19 +1201,23 @@ void F_mpz_submul_ui(F_mpz_t f, const F_mpz_t g, const ulong x)
 		}
 		
 		// in all remaining cases res is either big already, or will be big in the end
-	   __mpz_struct * mpz_ptr = _F_mpz_promote_val(f); 
+	   semaphore_up();
+		__mpz_struct * mpz_ptr = _F_mpz_promote_val(f); 
 		
 		mpz_t temp; // set up a temporary, cheap mpz_t to contain prod
 	   temp->_mp_d = prod;
 	   temp->_mp_size = (c1 < 0L ? -2 : 2);
 	   mpz_sub(mpz_ptr, mpz_ptr, temp);
 		_F_mpz_demote_val(f); // cancellation may have occurred
+		semaphore_down();
 	} else // c1 is large
 	{
-      __mpz_struct * mpz_ptr = _F_mpz_promote_val(f);
+      semaphore_up();
+		__mpz_struct * mpz_ptr = _F_mpz_promote_val(f);
 		
       mpz_submul_ui(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(c1), x);
 		_F_mpz_demote_val(f); // cancellation may have occurred
+		semaphore_down();
 	}
 }
 
@@ -1053,10 +1242,12 @@ void F_mpz_addmul(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
 	} 
 
 	// both g and h are large
+   semaphore_up();
    __mpz_struct * mpz_ptr = _F_mpz_promote_val(f);
 	
    mpz_addmul(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(c1), F_mpz_arr + COEFF_TO_OFF(c2));
 	_F_mpz_demote_val(f); // cancellation may have occurred
+	semaphore_down();
 }
 
 void F_mpz_submul(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
@@ -1080,10 +1271,12 @@ void F_mpz_submul(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
 	} 
 
 	// both g and h are large
-   __mpz_struct * mpz_ptr = _F_mpz_promote_val(f);
+   semaphore_up();
+	__mpz_struct * mpz_ptr = _F_mpz_promote_val(f);
 	
    mpz_submul(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(c1), F_mpz_arr + COEFF_TO_OFF(c2));
 	_F_mpz_demote_val(f); // cancellation may have occurred
+	semaphore_down();
 }
 
 ulong F_mpz_mod_ui(F_mpz_t f, const F_mpz_t g, const ulong h)
@@ -1103,7 +1296,9 @@ ulong F_mpz_mod_ui(F_mpz_t f, const F_mpz_t g, const ulong h)
 		return r;
 	} else // g is large
 	{
+		semaphore_up();
 		r = mpz_fdiv_ui(F_mpz_arr + COEFF_TO_OFF(c1), h);
+		semaphore_down();
 		F_mpz_set_ui(f, r);
 		return r;
 	}
@@ -1141,12 +1336,20 @@ void F_mpz_mod(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
       if (!COEFF_IS_MPZ(c2)) // h is small
 		{
 			if (c2 < 0L) F_mpz_set_si(f, mpz_fdiv_ui(F_mpz_arr + COEFF_TO_OFF(c1), -c2));
-			else F_mpz_set_ui(f, mpz_fdiv_ui(F_mpz_arr + COEFF_TO_OFF(c1), c2));
+			else 
+			{
+				semaphore_up();
+				ulong r = mpz_fdiv_ui(F_mpz_arr + COEFF_TO_OFF(c1), c2);
+				semaphore_down();
+				F_mpz_set_ui(f, r);
+			}
 		} else // both are large
 		{
+			semaphore_up();
 			__mpz_struct * mpz_ptr = _F_mpz_promote(f);
 			mpz_mod(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(c1), F_mpz_arr + COEFF_TO_OFF(c2));
 			_F_mpz_demote_val(f); // reduction mod h may result in small value
+			semaphore_down();
 		}	
 	}
 }
@@ -1184,9 +1387,11 @@ int F_mpz_invert(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
 				temp._mp_d = &c1;
 				temp._mp_size = 1;
 			}
+			semaphore_up();
 			__mpz_struct * mpz_ptr = _F_mpz_promote(f);
 			val = mpz_invert(mpz_ptr, &temp, F_mpz_arr + COEFF_TO_OFF(c2));
 			_F_mpz_demote_val(f); // inverse mod h may result in small value
+			semaphore_down();
 			return val;
 		}
 	} else // g is large
@@ -1197,7 +1402,10 @@ int F_mpz_invert(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
 			if (c2 < 0L) c2 = -c2;
 			if (c2 == 1L) return 0; // special case not handled by z_gcd_invert
 			// reduce g mod h first
-			long gcd = z_gcd_invert(&inv, mpz_fdiv_ui(F_mpz_arr + COEFF_TO_OFF(c1), c2), c2);
+			semaphore_up();
+			ulong r = mpz_fdiv_ui(F_mpz_arr + COEFF_TO_OFF(c1), c2);
+			semaphore_down();
+			long gcd = z_gcd_invert(&inv, r, c2);
 			if (gcd == 1L) 
 			{
 				F_mpz_set_si(f, inv); // check gcd is 1
@@ -1205,9 +1413,11 @@ int F_mpz_invert(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
 			} else return 0;
 		} else // both are large
 		{
+			semaphore_up();
 			__mpz_struct * mpz_ptr = _F_mpz_promote(f);
 			val = mpz_invert(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(c1), F_mpz_arr + COEFF_TO_OFF(c2));
 			_F_mpz_demote_val(f); // reduction mod h may result in small value
+			semaphore_down();
 			return val;
 		}	
 	}
@@ -1223,7 +1433,8 @@ void F_mpz_divexact(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
 	   F_mpz_set_si(f, c1 / c2);
 	} else // g is large
 	{
-      __mpz_struct * mpz_ptr = _F_mpz_promote(f);
+      semaphore_up();
+		__mpz_struct * mpz_ptr = _F_mpz_promote(f);
 		
 		if (!COEFF_IS_MPZ(c2)) // h is small
 		{
@@ -1231,16 +1442,19 @@ void F_mpz_divexact(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
 			{
             mpz_divexact_ui(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(c1), c2);
 			   _F_mpz_demote_val(f); // division by h may result in small value
+				semaphore_down();
 			} else
 			{
             mpz_divexact_ui(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(c1), -c2);
 			   _F_mpz_demote_val(f); // division by h may result in small value
+				semaphore_down();
 				F_mpz_neg(f, f);
 			}
 		} else // both are large
 		{
 			mpz_divexact(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(c1), F_mpz_arr + COEFF_TO_OFF(c2));
 			_F_mpz_demote_val(f); // division by h may result in small value
+			semaphore_down();
 		}	
 	}
 }
@@ -1269,7 +1483,8 @@ void F_mpz_cdiv_q(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
 		}
 	} else // g is large
 	{
-      __mpz_struct * mpz_ptr = _F_mpz_promote(f);
+      semaphore_up();
+	   __mpz_struct * mpz_ptr = _F_mpz_promote(f);
 		
 		if (!COEFF_IS_MPZ(c2)) // h is small
 		{
@@ -1277,16 +1492,19 @@ void F_mpz_cdiv_q(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
 			{
             mpz_cdiv_q_ui(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(c1), c2);
 			   _F_mpz_demote_val(f); // division by h may result in small value
+				semaphore_down();
 			} else
 			{
             mpz_fdiv_q_ui(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(c1), -c2);
 			   _F_mpz_demote_val(f); // division by h may result in small value
+				semaphore_down();
 				F_mpz_neg(f, f);
 			}
 		} else // both are large
 		{
 			mpz_cdiv_q(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(c1), F_mpz_arr + COEFF_TO_OFF(c2));
 			_F_mpz_demote_val(f); // division by h may result in small value
+			semaphore_down();
 		}	
 	}
 }
@@ -1315,7 +1533,8 @@ void F_mpz_fdiv_q(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
 		}
 	} else // g is large
 	{
-      __mpz_struct * mpz_ptr = _F_mpz_promote(f);
+      semaphore_up();
+		__mpz_struct * mpz_ptr = _F_mpz_promote(f);
 		
 		if (!COEFF_IS_MPZ(c2)) // h is small
 		{
@@ -1323,16 +1542,19 @@ void F_mpz_fdiv_q(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
 			{
             mpz_fdiv_q_ui(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(c1), c2);
 			   _F_mpz_demote_val(f); // division by h may result in small value
+				semaphore_down();
 			} else
 			{
             mpz_cdiv_q_ui(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(c1), -c2);
 			   _F_mpz_demote_val(f); // division by h may result in small value
+				semaphore_down();
 				F_mpz_neg(f, f);
 			}
 		} else // both are large
 		{
 			mpz_fdiv_q(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(c1), F_mpz_arr + COEFF_TO_OFF(c2));
 			_F_mpz_demote_val(f); // division by h may result in small value
+			semaphore_down();
 		}	
 	}
 }

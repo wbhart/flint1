@@ -86,6 +86,12 @@ typedef F_mpz_comb_struct F_mpz_comb_t[1];
 
 ================================================================================*/
  
+void semaphore_init(void);
+
+void semaphore_up(void);
+
+void semaphore_down(void);
+
 /** 
    \fn     F_mpz_t _F_mpz_new_mpz(void)
    \brief  Return a new mpz F_mpz_t. The mpz_t's are allocated and initialised
@@ -192,7 +198,9 @@ void F_mpz_init2(F_mpz_t f, ulong limbs);
 static inline
 void F_mpz_clear(F_mpz_t f)
 {
-   _F_mpz_demote(f);
+   semaphore_up();
+	_F_mpz_demote(f);
+	semaphore_down();
 }
 
 /*===============================================================================
@@ -226,7 +234,9 @@ void F_mpz_randomm(F_mpz_t f, const mpz_t n);
 static inline
 void F_mpz_zero(F_mpz_t f)
 {
+	semaphore_up();
 	_F_mpz_demote(f);
+	semaphore_down();
    *f = 0L;
 }
 
@@ -403,7 +413,12 @@ static inline
 void F_mpz_print(F_mpz_t x)
 {
 	if (!COEFF_IS_MPZ(*x)) printf("%ld", *x);
-	else gmp_printf("%Zd", F_mpz_ptr_mpz(*x));
+	else 
+	{
+		semaphore_up();
+		gmp_printf("%Zd", F_mpz_ptr_mpz(*x));
+		semaphore_down();
+	}
 }
 
 /** 

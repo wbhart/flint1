@@ -2764,6 +2764,7 @@ void F_mpz_poly_test_all()
 {
    int success, all_success = 1;
    printf("FLINT_BITS = %ld\n", FLINT_BITS);
+   semaphore_init();
 
 #if TESTFILE
 #endif
