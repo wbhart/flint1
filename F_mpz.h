@@ -32,6 +32,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <gmp.h>
+#include <pthread.h>
 #include "flint.h"
 #include "mpn_extras.h"
 #include "zn_poly/src/zn_poly.h"
@@ -48,7 +49,7 @@
 typedef long F_mpz;
 typedef F_mpz F_mpz_t[1];
 
-#define MPZ_BLOCK 16 // number of additional mpz_t's to initialise at a time
+#define MPZ_BLOCK 1024 // number of additional mpz_t's to initialise at a time
 
 // maximum positive value a small coefficient can have
 #define COEFF_MAX ((1L<<(FLINT_BITS-2))-1L)
@@ -79,6 +80,8 @@ typedef struct
 typedef F_mpz_comb_struct F_mpz_comb_t[1];
 
 #define FLINT_F_MPZ_LOG_MULTI_MOD_CUTOFF 2
+
+pthread_mutex_t F_mpz_random_mutex;
 
 /*===============================================================================
 
@@ -198,9 +201,9 @@ void F_mpz_init2(F_mpz_t f, ulong limbs);
 static inline
 void F_mpz_clear(F_mpz_t f)
 {
-   semaphore_up();
+   
 	_F_mpz_demote(f);
-	semaphore_down();
+	
 }
 
 /*===============================================================================
@@ -234,9 +237,9 @@ void F_mpz_randomm(F_mpz_t f, const mpz_t n);
 static inline
 void F_mpz_zero(F_mpz_t f)
 {
-	semaphore_up();
+	
 	_F_mpz_demote(f);
-	semaphore_down();
+	
    *f = 0L;
 }
 
@@ -415,9 +418,9 @@ void F_mpz_print(F_mpz_t x)
 	if (!COEFF_IS_MPZ(*x)) printf("%ld", *x);
 	else 
 	{
-		semaphore_up();
+		
 		gmp_printf("%Zd", F_mpz_ptr_mpz(*x));
-		semaphore_down();
+		
 	}
 }
 

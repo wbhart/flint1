@@ -99,12 +99,7 @@ Cache/branch hints to speed up reads from data in memory/branches
 Thread stuff
 */
 
-// Apple CC doesn't support thread local storage in certain versions
-#if defined(__CYGWIN__) || (defined(__APPLE_CC__) && (__APPLE_CC__ != 1))
 #define THREAD
-#else
-#define THREAD __thread
-#endif
 
 #ifdef FLINT_TEST_SUPPORT_H 
 #define FLINT_THREAD_CLEANUP \

@@ -40,7 +40,7 @@
 #include "long_extras.h"
 #include "zmod_poly.h"
 
-#define MUL_MOD_TRACE 0 // prints some trace info for multimodular multiplications
+#define MUL_MOD_TRACE 1 // prints some trace info for multimodular multiplications
 
 /*===============================================================================
 
@@ -359,6 +359,7 @@ long F_mpz_poly_max_bits(const F_mpz_poly_t poly)
 	}
 
    // search through mpz coefficients for largest size in bits
+	
 	for ( ; i < poly->length; i++)
 	{
 		c = poly->coeffs[i];
@@ -381,6 +382,7 @@ long F_mpz_poly_max_bits(const F_mpz_poly_t poly)
 			}
 		} else if ((long) c < 0L) sign = 1; // still need to check the sign of small coefficients
 	}
+	
 
 	if (sign) return -(max + FLINT_BITS*(max_limbs - 1));
 	else return max + FLINT_BITS*(max_limbs - 1);
@@ -2755,12 +2757,6 @@ void F_mpz_poly_pack_bytes(F_mpz_poly_t res, F_mpz_poly_t poly, ulong n, ulong b
 	// pack coefficients
 	for (i = 0, j = 0; i < short_length - 1; i++, j += n)
 	{
-       coeff = _F_mpz_promote(res->coeffs + i);
-	   // one extra limb for byte pack
-	   _mpz_realloc(coeff, limbs);
-	   coeff_r = coeff->_mp_d;
-	   F_mpn_clear(coeff_r, limbs);
-
 	   _F_mpz_poly_attach_shift(poly_p, poly, j);
 	   poly_p->length = FLINT_MIN(poly_p->length, n);
 	   _F_mpz_poly_normalise(poly_p);
@@ -2769,27 +2765,40 @@ void F_mpz_poly_pack_bytes(F_mpz_poly_t res, F_mpz_poly_t poly, ulong n, ulong b
 	   if ((poly_p->length) && (F_mpz_sgn(poly_p->coeffs + poly_p->length - 1) < 0)) 
 		   negate = -1L;
 
-	   if (poly_p->length) F_mpz_poly_byte_pack(coeff_r, poly_p, n, bytes, negate);
+	   
+	   coeff = _F_mpz_promote(res->coeffs + i);
+	   // one extra limb for byte pack
+	   _mpz_realloc(coeff, limbs);
+	   coeff_r = coeff->_mp_d;
+	   F_mpn_clear(coeff_r, limbs);
+
+		if (poly_p->length) F_mpz_poly_byte_pack(coeff_r, poly_p, n, bytes, negate);
 
 	   // normalise number of limbs
 	   coeff->_mp_size = limbs;
 	   while ((coeff->_mp_size) && !(coeff_r[coeff->_mp_size - 1])) coeff->_mp_size--;
 	   if (negate < 0L) coeff->_mp_size = -coeff->_mp_size;	
 	   _F_mpz_demote_val(res->coeffs + i); // coeff may end up small
+		
 	}
-
-	coeff = _F_mpz_promote(res->coeffs + i);
-	_mpz_realloc(coeff, limbs);
-	coeff_r = coeff->_mp_d;
-    F_mpn_clear(coeff_r, limbs);
-
+	
 	_F_mpz_poly_attach_shift(poly_p, poly, j);
 	
 	long negate = 1L;
 	if (poly_p->length)
 	{	
 	   if (F_mpz_sgn(poly_p->coeffs + poly_p->length - 1) < 0) negate = -1L;
-       F_mpz_poly_byte_pack(coeff_r, poly_p, poly_p->length, bytes, negate);
+	}
+	
+	
+	coeff = _F_mpz_promote(res->coeffs + i);
+	_mpz_realloc(coeff, limbs);
+	coeff_r = coeff->_mp_d;
+   F_mpn_clear(coeff_r, limbs);
+	
+	if (poly_p->length)
+	{	
+	     F_mpz_poly_byte_pack(coeff_r, poly_p, poly_p->length, bytes, negate);
 	}
 	
 	// normalise number of limbs
@@ -2798,6 +2807,7 @@ void F_mpz_poly_pack_bytes(F_mpz_poly_t res, F_mpz_poly_t poly, ulong n, ulong b
 	if (negate < 0L) coeff->_mp_size = -coeff->_mp_size;	
 	_F_mpz_demote_val(res->coeffs + i); // coeff may end up small
 	
+
 	res->length = short_length;
 	_F_mpz_poly_normalise(res);
 }
@@ -2843,8 +2853,10 @@ void F_mpz_poly_unpack_bytes(F_mpz_poly_t res, F_mpz_poly_t poly, ulong n, ulong
 		
 		F_mpz_get_limbs(arr, poly->coeffs + i);
 		
+		
 		F_mpz_poly_byte_unpack(poly_r, arr, 2*n - 1, bytes);
 		
+
 		if (negate) // then negate back if necessary
 		   for (j = 0; j < 2*n - 1; j++) F_mpz_neg(poly_r->coeffs + j, poly_r->coeffs + j);
 	}
@@ -2952,16 +2964,20 @@ void _F_mpz_poly_mul_KS(F_mpz_poly_t output, const F_mpz_poly_t input1, const F_
 
 		if (sign) // coefficients are signed
 		{
+			
 			F_mpz_poly_byte_pack(int1, input1, length1, bytes, sign1);
-
+         
          if (input1 != input2)
             F_mpz_poly_byte_pack(int2, input2, length2, bytes, sign2);
+			
 		} else
 		{
+			
 			F_mpz_poly_byte_pack_unsigned(int1, input1, length1, bytes);
 
          if (input1 != input2)
             F_mpz_poly_byte_pack_unsigned(int2, input2, length2, bytes);
+			
 		}
 	}
 	
@@ -2980,9 +2996,11 @@ void _F_mpz_poly_mul_KS(F_mpz_poly_t output, const F_mpz_poly_t input1, const F_
       else F_mpz_poly_bit_unpack_unsigned(output, int3, length1 + length2 - 1, bits);  // unsigned coeffs
    } else
    {
-      if (sign) 
+		
+		if (sign) 
 			F_mpz_poly_byte_unpack(output, int3, length1 + length2 - 1, bytes); // signed coeffs 
       else F_mpz_poly_byte_unpack_unsigned(output, int3, length1 + length2 - 1, bytes); // unsigned coeffs
+		
    }
 	
    flint_stack_release(); // release int3
@@ -3205,6 +3223,7 @@ long F_mpz_poly_to_ZmodF_poly(ZmodF_poly_t poly_f, const F_mpz_poly_t poly_fmpz,
    {
       signed_c = 0;
 		long c = *coeffs_m;
+		
 		if (!COEFF_IS_MPZ(c)) // coeff is small
 		{
 			size_j = 1L;
@@ -3257,6 +3276,7 @@ long F_mpz_poly_to_ZmodF_poly(ZmodF_poly_t poly_f, const F_mpz_poly_t poly_fmpz,
          F_mpn_copy(coeffs_f[i], coeff, size_j); 
          F_mpn_clear(coeffs_f[i] + size_j, size_f - size_j); 
       }
+      
 
 		coeffs_m++;
    }
@@ -3283,7 +3303,8 @@ void ZmodF_poly_to_F_mpz_poly(F_mpz_poly_t poly_fmpz, const ZmodF_poly_t poly_f,
    
 	if (sign)
    {
-      for (ulong i = 0; i < poly_f->length; i++)
+      
+		for (ulong i = 0; i < poly_f->length; i++)
       {
          ZmodF_normalise(coeffs_f[i], n);
          
@@ -3307,12 +3328,14 @@ void ZmodF_poly_to_F_mpz_poly(F_mpz_poly_t poly_fmpz, const ZmodF_poly_t poly_f,
 			   mpz_ptr->_mp_size = size;
 			   if (size <= 1) _F_mpz_demote_val(coeffs_m); // coefficient may be less than FLINT_BITS - 2 bits
          }
-
+         
 			coeffs_m++;
       }
+		
    } else 
    {
-      for (ulong i = 0; i < poly_f->length; i++)
+      
+		for (ulong i = 0; i < poly_f->length; i++)
       {
          ZmodF_normalise(coeffs_f[i], n);
          
@@ -3327,6 +3350,7 @@ void ZmodF_poly_to_F_mpz_poly(F_mpz_poly_t poly_fmpz, const ZmodF_poly_t poly_f,
 
 			coeffs_m++;
       }
+		
    }
    
    _F_mpz_poly_normalise(poly_fmpz);   
@@ -3572,14 +3596,19 @@ void __F_mpz_poly_mul_modular_comb(F_mpz_poly_t output, F_mpz_poly_t poly1, F_mp
     // Multimodular reduction of poly1, place result into block1
     ulong len1 = poly1->length;
     ulong * block1 = flint_heap_alloc(len1 << comb->n);
-
-//#pragma omp parallel
+	 
+	 semaphore_init();
+	 printf("len1 = %ld\n", len1);
+#pragma omp parallel
 	{		  
-//#pragma omp for
+#pragma omp for
        for(long i = 0; i < len1; i++) 
-	   {
-          F_mpz_multi_mod_ui(block1 + (i << comb->n), poly1->coeffs + i, comb);
-       }
+	    {
+          
+			 semaphore_up();
+			 F_mpz_multi_mod_ui(block1 + (i << comb->n), poly1->coeffs + i, comb);
+          semaphore_down();
+		 }
 	}
 
 	if ((poly1 != output) && (poly2 != poly1)) F_mpz_poly_clear(poly1);
@@ -3589,17 +3618,24 @@ void __F_mpz_poly_mul_modular_comb(F_mpz_poly_t output, F_mpz_poly_t poly1, F_mp
     ulong len2 = poly2->length;
     ulong * block2 = flint_heap_alloc(len2 << comb->n);
 
-//#pragma omp parallel
+#pragma omp parallel
 	{		  
-//#pragma omp for
+#pragma omp for
        for(long i = 0; i < len2; i++)
 	   {
-          F_mpz_multi_mod_ui(block2 + (i << comb->n), poly2->coeffs + i, comb);
-       }
+          semaphore_up();
+			 F_mpz_multi_mod_ui(block2 + (i << comb->n), poly2->coeffs + i, comb);
+          semaphore_down();
+	   }
 	}
     
 	if (poly2 != output) F_mpz_poly_clear(poly2);
-	_F_mpz_cleanup2();
+#pragma omp parallel
+	{		  
+#pragma omp for
+       for(long i = 0; i < 16; i++)
+      	_F_mpz_cleanup2();
+	}
 
 	if (MUL_MOD_TRACE) printf("Multimodular reduction of poly2 done\n");
     
@@ -3706,15 +3742,18 @@ void __F_mpz_poly_mul_modular_comb(F_mpz_poly_t output, F_mpz_poly_t poly1, F_mp
     flint_heap_free(in2);
     flint_heap_free(out);
 
-	if (MUL_MOD_TRACE) printf("Multimodular multiplications done\n");
-    
+	if (MUL_MOD_TRACE) printf("Multimodular multiplications done, trunc = %ld\n", trunc);
+   
+	semaphore_init();
     // Reconstruct output from data in block_out
-//#pragma omp parallel
+#pragma omp parallel
 	{		  
-//#pragma omp for
-       for(long i = 0; i < trunc; i++) 
+#pragma omp for
+      for(long i = 0; i < trunc; i++) 
 	   {
-	      F_mpz_multi_CRT_ui(output->coeffs + i, block_out + (i << comb->n), comb);
+	      semaphore_up();
+			F_mpz_multi_CRT_ui(output->coeffs + i, block_out + (i << comb->n), comb);
+			semaphore_down();
 	   }
     }
     
@@ -3831,10 +3870,12 @@ void F_mpz_poly_mul_modular_packed(F_mpz_poly_t output, F_mpz_poly_t poly1,
     F_mpz_poly_pack_bytes(p2, poly2, n, bytes);
          
 	F_mpz_poly_mul_modular(out, p1, p2, 0);
+	printf("Done mul_modular\n");
 	
 	F_mpz_poly_unpack_bytes(output, out, n, bytes);
-    
-	F_mpz_poly_clear(out);
+   F_mpz_poly_clear(out);
+	printf("Done unpack bytes\n");
+	
 }
 
 

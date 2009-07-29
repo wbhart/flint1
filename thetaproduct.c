@@ -34,7 +34,7 @@
 #include "theta.h"
 #include "profiler.h"
 
-#define LIMIT 2500000000L
+#define LIMIT 400000000L
 #define BLOCK  100000L
 #define BUNDLE 100L
 

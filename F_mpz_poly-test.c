@@ -2615,7 +2615,8 @@ int test_F_mpz_poly_mul_modular()
 
    for (ulong count1 = 0; (count1 < 1000*ITER) && (result == 1) ; count1++)
    {
-      F_mpz_poly_init(F_poly1);
+      printf("count1 = %ld\n", count1);
+		F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
       F_mpz_poly_init(res);
 
@@ -3043,16 +3044,16 @@ int test_F_mpz_poly_mul_modular_packed()
    mpz_poly_init(res1); 
    mpz_poly_init(res2); 
 
-   for (ulong count1 = 0; (count1 < 100*ITER) && (result == 1) ; count1++)
+   for (ulong count1 = 0; (count1 < 1*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
       F_mpz_poly_init(res);
 
-	  bits1 = z_randint(100) + 1;
-      bits2 = z_randint(100) + 1;
-      length1 = z_randint(100) + 5;
-      length2 = z_randint(100) + 5;
+	  bits1 = 5;//z_randint(5) + 1;
+      bits2 = 5;//z_randint(5) + 1;
+      length1 = 10000000;//z_randint(1000000) + 5;
+      length2 = 10000000;//z_randint(1000000) + 5;
       
 	  do { mpz_randpoly(m_poly1, length1, bits1); } while (m_poly1->length < length1);
 	  do { mpz_randpoly(m_poly2, length2, bits2); } while (m_poly2->length < length2);
@@ -3060,7 +3061,9 @@ int test_F_mpz_poly_mul_modular_packed()
       mpz_poly_to_F_mpz_poly(F_poly2, m_poly2);
       mpz_poly_to_F_mpz_poly(F_poly1, m_poly1);
       
-	  F_mpz_poly_mul_modular_packed(res, F_poly1, F_poly2, 30, bits1 + bits2 + 12);			
+	  printf("start1\n");
+	  F_mpz_poly_mul_modular_packed(res, F_poly1, F_poly2, 30, bits1 + bits2 + 20);			
+	  printf("done1\n");
 	  F_mpz_poly_to_mpz_poly(res2, res);
       mpz_poly_mul_naive_KS(res1, m_poly1, m_poly2);		
 		    
@@ -3076,7 +3079,7 @@ int test_F_mpz_poly_mul_modular_packed()
 	  F_mpz_poly_clear(F_poly2);
 	  F_mpz_poly_clear(res);
    }
-   
+   printf("done\n");
    // try unsigned coefficients
    for (ulong count1 = 0; (count1 < 100*ITER) && (result == 1) ; count1++)
    {
@@ -3224,7 +3227,9 @@ void F_mpz_poly_test_all()
 #if TESTFILE
 #endif
 	
-   RUN_TEST(F_mpz_poly_convert); 
+   RUN_TEST(F_mpz_poly_mul_modular_packed); 
+	
+	RUN_TEST(F_mpz_poly_convert); 
    RUN_TEST(F_mpz_poly_getset_coeff_si); 
    RUN_TEST(F_mpz_poly_getset_coeff_ui); 
    RUN_TEST(F_mpz_poly_getset_coeff_mpz); 

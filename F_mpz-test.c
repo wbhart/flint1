@@ -29,6 +29,7 @@ Copyright (C) 2008, William Hart
 #include <string.h>
 #include <gmp.h>
 #include <time.h>
+#include <pthread.h>
 #include "flint.h"
 #include "memory-manager.h"
 #include "long_extras.h"
@@ -61,7 +62,9 @@ void F_mpz_test_random(F_mpz_t f, ulong bits)
 	mpz_t temp;
 	mpz_init(temp);
 	
+	pthread_mutex_lock(&F_mpz_random_mutex);
 	mpz_rrandomb(temp, randstate, bits);
+	pthread_mutex_unlock(&F_mpz_random_mutex);
 #if SIGNS
 	if (z_randint(2)) mpz_neg(temp, temp);
 #endif
@@ -168,8 +171,10 @@ int test_F_mpz_getset_mpz()
       for (ulong count2 = 0; (count2 < 100) && result == 1; count2++)
       {
          val_bits = z_randint(200);
-         mpz_rrandomb(val, randstate, val_bits);
-              
+         pthread_mutex_lock(&F_mpz_random_mutex);
+	      mpz_rrandomb(val, randstate, val_bits);
+         pthread_mutex_unlock(&F_mpz_random_mutex);
+	     
 			if (z_randint(2)) mpz_neg(val, val);
               
 			F_mpz_set_mpz(f, val);
@@ -2768,15 +2773,46 @@ void F_mpz_poly_test_all()
 
 #if TESTFILE
 #endif
-   RUN_TEST(F_mpz_getset_ui); 
+#pragma omp parallel sections
+	{
+#pragma omp section
+	{
+	RUN_TEST(F_mpz_getset_ui); 
+	}
+#pragma omp section
+	{
    RUN_TEST(F_mpz_getset_si); 
-   RUN_TEST(F_mpz_getset_mpz); 
+	}
+#pragma omp section
+	{
+	RUN_TEST(F_mpz_getset_mpz); 
+	}
+#pragma omp section
+	{
    RUN_TEST(F_mpz_getset_limbs); 
+	}
+#pragma omp section
+	{
    RUN_TEST(F_mpz_get_d_2exp); 
+	}
+#pragma omp section
+	{
    RUN_TEST(F_mpz_set); 
+	}
+#pragma omp section
+	{
    RUN_TEST(F_mpz_equal); 
+	}
+#pragma omp section
+	{
    RUN_TEST(F_mpz_swap); 
+	}
+#pragma omp section
+	{
    RUN_TEST(F_mpz_neg); 
+	}
+#pragma omp section
+	{
    RUN_TEST(F_mpz_abs); 
    RUN_TEST(F_mpz_add); 
    RUN_TEST(F_mpz_sub); 
@@ -2803,6 +2839,8 @@ void F_mpz_poly_test_all()
    RUN_TEST(F_mpz_comb_init_clear); 
 	RUN_TEST(F_mpz_multi_CRT_ui_unsigned);
 	RUN_TEST(F_mpz_multi_CRT_ui);
+	}
+	}
 	
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");
