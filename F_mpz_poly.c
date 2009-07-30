@@ -2014,7 +2014,37 @@ void __F_mpz_poly_write_whole_limb(mp_limb_t * array, unsigned long * temp, unsi
 void F_mpz_poly_byte_pack(mp_limb_t * array, const F_mpz_poly_t poly_fmpz,
                    const ulong length, const ulong coeff_bytes, const long negate)
 {
-   F_mpz * coeff_m = poly_fmpz->coeffs;
+   if (coeff_bytes == 2L)
+	{
+		F_mpz * coeffs = poly_fmpz->coeffs;
+		short int borrow = 0;
+		short int * array2 = (short int *) array;
+		ulong i;
+		short int temp = 0;
+		if (negate > 0L)
+		{
+			for (i = 0; i < length; i++)
+		   {
+            temp = ((short int) coeffs[i]) - borrow;
+				array2[i] = temp;
+				if (temp < 0) borrow = 1;
+				else borrow = 0;
+		   }
+		} else
+		{
+			for (i = 0; i < length; i++)
+		   {
+            temp = ((short int) -coeffs[i]) - borrow;
+				array2[i] = temp;
+				if (temp < 0) borrow = 1;
+				else borrow = 0;
+		   }
+		}
+
+		return;
+	}
+	
+	F_mpz * coeff_m = poly_fmpz->coeffs;
     
    const ulong limbs_per_coeff = (coeff_bytes>>FLINT_LG_BYTES_PER_LIMB);
    const ulong extra_bytes_per_coeff = coeff_bytes 
@@ -2635,7 +2665,30 @@ void F_mpz_poly_byte_unpack_unsigned(F_mpz_poly_t poly_m, const mp_limb_t * arra
 void F_mpz_poly_byte_unpack(F_mpz_poly_t poly_m, const mp_limb_t * array,
                                const ulong length, const ulong coeff_bytes)
 {
-   const ulong limbs_per_coeff = (coeff_bytes>>FLINT_LG_BYTES_PER_LIMB);
+   if (coeff_bytes == 2L)
+	{
+		ulong old_length = poly_m->length; // ensure output poly is big enough for result
+	   F_mpz_poly_fit_length(poly_m, length);
+	   _F_mpz_poly_set_length(poly_m, length);
+	   F_mpz * coeff_m = poly_m->coeffs;
+	   if (length > old_length) F_mpn_clear(coeff_m + old_length, length - old_length); // clear any new coeffs
+      short int * array2 = (short int *) array;
+		long temp = 0L;
+		long borrow = 0L;
+		for (ulong i = 0; i < length; i++)
+		{
+			temp = (long) array2[i];
+			coeff_m[i] += (temp + borrow);
+			if (temp < 0L) borrow = 1L;
+			else borrow = 0L;
+		}
+		   
+		_F_mpz_poly_normalise(poly_m);
+
+		return;
+	}
+	
+	const ulong limbs_per_coeff = (coeff_bytes>>FLINT_LG_BYTES_PER_LIMB);
    const ulong extra_bytes_per_coeff = coeff_bytes 
                                     - (limbs_per_coeff<<FLINT_LG_BYTES_PER_LIMB);
                                     
@@ -2750,13 +2803,22 @@ void F_mpz_poly_pack_bytes(F_mpz_poly_t res, F_mpz_poly_t poly, ulong n, ulong b
 	
 	F_mpz_poly_fit_length(res, short_length);
 	
-	F_mpz_poly_t poly_p;
-	__mpz_struct * coeff;
-    mp_limb_t * coeff_r;
-
 	// pack coefficients
-	for (i = 0, j = 0; i < short_length - 1; i++, j += n)
+
+	semaphore_init();
+
+#pragma omp parallel
 	{
+#pragma omp for
+	for (long i = 0; i < short_length - 1; i++)
+	{
+	   semaphore_up();
+		long j = i*n;
+		
+		F_mpz_poly_t poly_p;
+	   __mpz_struct * coeff;
+      mp_limb_t * coeff_r;
+
 	   _F_mpz_poly_attach_shift(poly_p, poly, j);
 	   poly_p->length = FLINT_MIN(poly_p->length, n);
 	   _F_mpz_poly_normalise(poly_p);
@@ -2779,9 +2841,17 @@ void F_mpz_poly_pack_bytes(F_mpz_poly_t res, F_mpz_poly_t poly, ulong n, ulong b
 	   while ((coeff->_mp_size) && !(coeff_r[coeff->_mp_size - 1])) coeff->_mp_size--;
 	   if (negate < 0L) coeff->_mp_size = -coeff->_mp_size;	
 	   _F_mpz_demote_val(res->coeffs + i); // coeff may end up small
-		
+		semaphore_down();
+	}
 	}
 	
+	i = short_length - 1;
+	j = i*n;
+
+	F_mpz_poly_t poly_p;
+	__mpz_struct * coeff;
+   mp_limb_t * coeff_r;
+
 	_F_mpz_poly_attach_shift(poly_p, poly, j);
 	
 	long negate = 1L;
@@ -2821,7 +2891,7 @@ void F_mpz_poly_unpack_bytes(F_mpz_poly_t res, F_mpz_poly_t poly, ulong n, ulong
 		return;
 	}
 	
-	ulong i, j;
+	long i, j;
 	F_mpz_poly_t poly_r;
 
 	// one extra limb for byte_unpack
@@ -2835,11 +2905,50 @@ void F_mpz_poly_unpack_bytes(F_mpz_poly_t res, F_mpz_poly_t poly, ulong n, ulong
     for (i = 0; i < length_max; i++)
 		F_mpz_zero(res->coeffs + i);
 
-	mp_limb_t * arr = flint_heap_alloc(limbs);
+	mp_limb_t * arr = flint_heap_alloc(16*limbs);
 	
-	for (i = 0; i < poly->length; i++)
+	semaphore_init();
+#pragma omp parallel
 	{
-		int negate = 0;
+#pragma omp for
+	for (long i = 0; i < poly->length; i+=2)
+	{
+		long j;
+		semaphore_up();
+		ulong k = omp_get_thread_num();
+		F_mpz_poly_t poly_r;
+      int negate = 0;
+		if (F_mpz_sgn(poly->coeffs + i) < 0) negate = 1; 
+	    
+		_F_mpz_poly_attach_shift(poly_r, res, i*n);
+		poly_r->alloc = 2*n - 1;
+		poly_r->length = 2*n - 1;
+		 
+		F_mpn_clear(arr + k*limbs, limbs);
+		
+		F_mpz_get_limbs(arr + k*limbs, poly->coeffs + i);
+		
+		
+		F_mpz_poly_byte_unpack(poly_r, arr + k*limbs, 2*n - 1, bytes);
+		
+
+		if (negate) // negate if necessary
+		   for (j = 0; j < 2*n - 1; j++) F_mpz_neg(poly_r->coeffs + j, poly_r->coeffs + j);
+		semaphore_down();
+	}
+	}
+
+	semaphore_init();
+#pragma omp parallel
+	{
+#pragma omp for
+	for (long i = 1; i < poly->length; i+=2)
+	{
+		semaphore_up();
+		long j;
+		ulong k = omp_get_thread_num();
+		F_mpz_poly_t poly_r;
+      int negate = 0;
 		if (F_mpz_sgn(poly->coeffs + i) < 0) negate = 1; 
 	    
 		_F_mpz_poly_attach_shift(poly_r, res, i*n);
@@ -2847,18 +2956,20 @@ void F_mpz_poly_unpack_bytes(F_mpz_poly_t res, F_mpz_poly_t poly, ulong n, ulong
 		poly_r->length = 2*n - 1;
 		
 		if (negate) // negate existing coefficients then add to them
-			for (j = 0; j < n - 1; j++) F_mpz_neg(poly_r->coeffs + j, poly_r->coeffs + j);
+			for (j = 0; j < 2*n - 1; j++) F_mpz_neg(poly_r->coeffs + j, poly_r->coeffs + j);
 	    
-		F_mpn_clear(arr, limbs);
+		F_mpn_clear(arr + k*limbs, limbs);
 		
-		F_mpz_get_limbs(arr, poly->coeffs + i);
+		F_mpz_get_limbs(arr + k*limbs, poly->coeffs + i);
 		
 		
-		F_mpz_poly_byte_unpack(poly_r, arr, 2*n - 1, bytes);
+		F_mpz_poly_byte_unpack(poly_r, arr + k*limbs, 2*n - 1, bytes);
 		
 
 		if (negate) // then negate back if necessary
 		   for (j = 0; j < 2*n - 1; j++) F_mpz_neg(poly_r->coeffs + j, poly_r->coeffs + j);
+		semaphore_down();
+	}
 	}
 
 	flint_heap_free(arr);

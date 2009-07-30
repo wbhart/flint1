@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <gmp.h>
+#include <omp.h>
 #include "flint.h"
 #include "F_mpz.h"
 #include "F_mpz_poly.h"
@@ -36,7 +37,7 @@
 
 #define LIMIT 400000000L
 #define BLOCK  100000L
-#define BUNDLE 100L
+#define BUNDLE 200L
 
 #define MOD 8L
 #define K 1L
@@ -53,23 +54,28 @@ int main(void)
    
    //--------------------------------------------------------------
    
-   long * array1 = (long *) flint_heap_alloc(BLOCK);
+   long * array1 = (long *) flint_heap_alloc(16*BLOCK);
    
    F_mpz_poly_init(theta_1);
    F_mpz_poly_fit_length(theta_1, LIMIT);
    theta_1->length = LIMIT;
    
-   for (ulong start = 0; start < LIMIT*MOD; start += BLOCK)
+#pragma omp parallel
+	{
+#pragma omp for
+	for (long start = 0; start < LIMIT*MOD; start += BLOCK)
    {   
-	  theta_2d_A1(array1, start, BLOCK);
+	  ulong j = omp_get_thread_num();
+	  theta_2d_A1(array1 + j*BLOCK, start, BLOCK);
    
       ulong start2 = start/MOD;
 	  
 	  for (ulong i = 0; i < BLOCK/MOD; i++)
       {
-         F_mpz_set_si(theta_1->coeffs + start2 + i, array1[MOD*i+K]);
+         F_mpz_set_si(theta_1->coeffs + start2 + i, array1[j*BLOCK + MOD*i+K]);
       }
    }
+	}
    
    _F_mpz_poly_normalise(theta_1);
 
@@ -77,7 +83,7 @@ int main(void)
 
    F_mpz_poly_init(p1);
 
-   F_mpz_poly_pack_bytes(p1, theta_1, BUNDLE, 3);
+   F_mpz_poly_pack_bytes(p1, theta_1, BUNDLE, 2);
 
    F_mpz_poly_clear(theta_1);
     
@@ -86,24 +92,29 @@ int main(void)
 
    //-------------------------------------------------------------
    
-   array1 = (long *) flint_heap_alloc(BLOCK);
+   array1 = (long *) flint_heap_alloc(16*BLOCK);
 	
    F_mpz_poly_init(theta_2);
    F_mpz_poly_fit_length(theta_2, LIMIT); 
    
    theta_2->length = LIMIT;
    
-   for (ulong start = 0; start < MOD*LIMIT; start += BLOCK)
+#pragma omp parallel
+	{
+#pragma omp for
+	for (long start = 0; start < LIMIT*MOD; start += BLOCK)
    {   
-	  theta_2d_B(array1, start, BLOCK);
+	  ulong j = omp_get_thread_num();
+	  theta_2d_B(array1 + j*BLOCK, start, BLOCK);
    
       ulong start2 = start/MOD;
 	  
 	  for (ulong i = 0; i < BLOCK/MOD; i++)
       {
-         F_mpz_set_si(theta_2->coeffs + start2 + i, array1[MOD*i]);
+         F_mpz_set_si(theta_2->coeffs + start2 + i, array1[j*BLOCK + MOD*i]);
       }
    }
+	}
    
    _F_mpz_poly_normalise(theta_2);
 
@@ -111,7 +122,7 @@ int main(void)
 
    F_mpz_poly_init(p2);
 
-   F_mpz_poly_pack_bytes(p2, theta_2, BUNDLE, 3);
+   F_mpz_poly_pack_bytes(p2, theta_2, BUNDLE, 2);
 
    F_mpz_poly_clear(theta_2);
 
@@ -128,7 +139,7 @@ int main(void)
    F_mpz_poly_init(theta_prod);
    F_mpz_poly_fit_length(theta_prod, LIMIT + BUNDLE);
    
-   F_mpz_poly_unpack_bytes(theta_prod, out, BUNDLE, 3);
+   F_mpz_poly_unpack_bytes(theta_prod, out, BUNDLE, 2);
 
    F_mpz_poly_clear(out);
    _F_mpz_cleanup2();

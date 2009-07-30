@@ -2355,7 +2355,7 @@ int test_F_mpz_poly_byte_pack()
    mpz_poly_init(m_poly1); 
    mpz_poly_init(m_poly2); 
 
-   for (ulong count1 = 1; (count1 < 200*ITER) && (result == 1) ; count1++)
+   for (ulong count1 = 1; (count1 < 2000*ITER) && (result == 1) ; count1++)
    {
       bits = random_ulong(1000) + 2;
       bytes = ((bits - 1)>>3) + 1;
@@ -3227,8 +3227,9 @@ void F_mpz_poly_test_all()
 #if TESTFILE
 #endif
 	
-   RUN_TEST(F_mpz_poly_mul_modular_packed); 
-	
+   RUN_TEST(F_mpz_poly_byte_pack); 
+   RUN_TEST(F_mpz_poly_pack_bytes); 
+   
 	RUN_TEST(F_mpz_poly_convert); 
    RUN_TEST(F_mpz_poly_getset_coeff_si); 
    RUN_TEST(F_mpz_poly_getset_coeff_ui); 
