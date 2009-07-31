@@ -2664,30 +2664,7 @@ void F_mpz_poly_byte_unpack_unsigned(F_mpz_poly_t poly_m, const mp_limb_t * arra
 
 void F_mpz_poly_byte_unpack(F_mpz_poly_t poly_m, const mp_limb_t * array,
                                const ulong length, const ulong coeff_bytes)
-{
-   if (coeff_bytes == 2L)
-	{
-		ulong old_length = poly_m->length; // ensure output poly is big enough for result
-	   F_mpz_poly_fit_length(poly_m, length);
-	   _F_mpz_poly_set_length(poly_m, length);
-	   F_mpz * coeff_m = poly_m->coeffs;
-	   if (length > old_length) F_mpn_clear(coeff_m + old_length, length - old_length); // clear any new coeffs
-      short int * array2 = (short int *) array;
-		long temp = 0L;
-		long borrow = 0L;
-		for (ulong i = 0; i < length; i++)
-		{
-			temp = (long) array2[i];
-			coeff_m[i] += (temp + borrow);
-			if (temp < 0L) borrow = 1L;
-			else borrow = 0L;
-		}
-		   
-		_F_mpz_poly_normalise(poly_m);
-
-		return;
-	}
-	
+{	
 	const ulong limbs_per_coeff = (coeff_bytes>>FLINT_LG_BYTES_PER_LIMB);
    const ulong extra_bytes_per_coeff = coeff_bytes 
                                     - (limbs_per_coeff<<FLINT_LG_BYTES_PER_LIMB);
@@ -2895,7 +2872,7 @@ void F_mpz_poly_unpack_bytes(F_mpz_poly_t res, F_mpz_poly_t poly, ulong n, ulong
 	F_mpz_poly_t poly_r;
 
 	// one extra limb for byte_unpack
-	ulong limbs = ((2*n-1)*bytes*8 - 1)/FLINT_BITS + 2; // number of limbs of each large coeff
+	ulong limbs = ((2*n)*bytes*8 - 1)/FLINT_BITS + 2; // number of limbs of each large coeff
 	ulong length_max = n*poly->length + n - 1;
 
 	F_mpz_poly_fit_length(res, length_max);
@@ -2908,9 +2885,9 @@ void F_mpz_poly_unpack_bytes(F_mpz_poly_t res, F_mpz_poly_t poly, ulong n, ulong
 	mp_limb_t * arr = flint_heap_alloc(16*limbs);
 	
 	semaphore_init();
-#pragma omp parallel
+//#pragma omp parallel
 	{
-#pragma omp for
+//#pragma omp for
 	for (long i = 0; i < poly->length; i+=2)
 	{
 		long j;
@@ -2921,27 +2898,30 @@ void F_mpz_poly_unpack_bytes(F_mpz_poly_t res, F_mpz_poly_t poly, ulong n, ulong
 		if (F_mpz_sgn(poly->coeffs + i) < 0) negate = 1; 
 	    
 		_F_mpz_poly_attach_shift(poly_r, res, i*n);
-		poly_r->alloc = 2*n - 1;
-		poly_r->length = 2*n - 1;
+		poly_r->alloc = 2*n;
+		poly_r->length = 2*n;
+
+		if (negate) // negate if necessary
+		   for (j = 0; j < 2*n; j++) F_mpz_neg(poly_r->coeffs + j, poly_r->coeffs + j);
 		 
 		F_mpn_clear(arr + k*limbs, limbs);
 		
 		F_mpz_get_limbs(arr + k*limbs, poly->coeffs + i);
 		
 		
-		F_mpz_poly_byte_unpack(poly_r, arr + k*limbs, 2*n - 1, bytes);
+		F_mpz_poly_byte_unpack(poly_r, arr + k*limbs, 2*n, bytes);
 		
 
 		if (negate) // negate if necessary
-		   for (j = 0; j < 2*n - 1; j++) F_mpz_neg(poly_r->coeffs + j, poly_r->coeffs + j);
+		   for (j = 0; j < 2*n; j++) F_mpz_neg(poly_r->coeffs + j, poly_r->coeffs + j);
 		semaphore_down();
 	}
 	}
 
 	semaphore_init();
-#pragma omp parallel
+//#pragma omp parallel
 	{
-#pragma omp for
+//#pragma omp for
 	for (long i = 1; i < poly->length; i+=2)
 	{
 		semaphore_up();
@@ -2952,22 +2932,22 @@ void F_mpz_poly_unpack_bytes(F_mpz_poly_t res, F_mpz_poly_t poly, ulong n, ulong
 		if (F_mpz_sgn(poly->coeffs + i) < 0) negate = 1; 
 	    
 		_F_mpz_poly_attach_shift(poly_r, res, i*n);
-		poly_r->alloc = 2*n - 1;
-		poly_r->length = 2*n - 1;
+		poly_r->alloc = 2*n;
+		poly_r->length = 2*n;
 		
 		if (negate) // negate existing coefficients then add to them
-			for (j = 0; j < 2*n - 1; j++) F_mpz_neg(poly_r->coeffs + j, poly_r->coeffs + j);
+			for (j = 0; j < 2*n; j++) F_mpz_neg(poly_r->coeffs + j, poly_r->coeffs + j);
 	    
 		F_mpn_clear(arr + k*limbs, limbs);
 		
 		F_mpz_get_limbs(arr + k*limbs, poly->coeffs + i);
 		
 		
-		F_mpz_poly_byte_unpack(poly_r, arr + k*limbs, 2*n - 1, bytes);
+		F_mpz_poly_byte_unpack(poly_r, arr + k*limbs, 2*n, bytes);
 		
 
 		if (negate) // then negate back if necessary
-		   for (j = 0; j < 2*n - 1; j++) F_mpz_neg(poly_r->coeffs + j, poly_r->coeffs + j);
+		   for (j = 0; j < 2*n; j++) F_mpz_neg(poly_r->coeffs + j, poly_r->coeffs + j);
 		semaphore_down();
 	}
 	}

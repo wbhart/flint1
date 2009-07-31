@@ -817,35 +817,35 @@ void theta_2d(long *out, ulong start, ulong len)
 
 void theta_2d_A1(long *out, ulong start, ulong len)
 {
-    for(ulong i=0; i<len; i++)
-        out[i] = 0;
+    for(ulong i=0L; i<len; i++)
+        out[i] = 0L;
 
     long A = start;
-    long B = start+len-1;
+    long B = start+len-1L;
 
-    long y_2 = 2; // 2 * y
-    long N0 = 1; // N0 = y^2
+    long y_2 = 2L; // 2 * y
+    long N0 = 1L; // N0 = y^2
 
-    long x = z_intsqrt((B-1)/2); // largest x such that 2x^2 + y^2 <= B
+    long x = z_intsqrt((B-1L)/2L); // largest x such that 2x^2 + y^2 <= B
 
     // First loop, where x won't reach 0
     while(N0 < A) {
 
-        long x_2 = 2 * x;  // 2x
+        long x_2 = 2L * x;  // 2x
         long N = N0 + x_2 * x; // 2x^2 + y^2
 
         while(N > B) {
             // iterate x-- and update N = 2x^2 + y^2
             N -= x_2;
-            x_2 -= 2;
+            x_2 -= 2L;
             N -= x_2;
         }
 
         // remember x for next iteration of y
-        x = x_2 / 2;
+        x = x_2 / 2L;
 
         while(N >= A) {
-            out[N-A] += 2;
+            out[N-A] += 2L;
 
             // iterate x-- and update N = 2x^2 + y^2
             N -= x_2;
@@ -862,13 +862,13 @@ void theta_2d_A1(long *out, ulong start, ulong len)
     // Second loop, where x starts from 0
     while(N0 <= B) {
 
-        out[N0-A] += 1;
+        out[N0-A] += 1L;
         
-        long x_2 = 2;  // 2x
-        long N = N0 + 2; // 2x^2 + y^2
+        long x_2 = 2L;  // 2x
+        long N = N0 + 2L; // 2x^2 + y^2
 
         while(N <= B) {
-            out[N-A] += 2;
+            out[N-A] += 2L;
 
             // iterate x++ and update N = 2x^2 + y^2
             N += x_2;
@@ -967,14 +967,14 @@ theta_2d_B(long * out, ulong start, ulong len)
 
     // zero all the coefficients
     for(ulong i=0; i<len; i++)
-        out[i] = 0;
+        out[i] = 0L;
 
-    ulong x = z_intsqrt(start/8); // start <= 8x^2
-	if (8*x*x < start) x++;
+    ulong x = z_intsqrt(start/8L); // start <= 8x^2
+	if (8L*x*x < start) x++;
 
-    ulong x_8 = 8 * x; // 8x
+    ulong x_8 = 8L * x; // 8x
     ulong i = x_8 * x - start; // 8x^2 - start
-    long val = (start+i) & 8 ? 2 : -2;
+    long val = (start+i) & 8L ? 2L : -2L;
 
     while(i < len) {
         out[i] = val;
@@ -986,8 +986,8 @@ theta_2d_B(long * out, ulong start, ulong len)
         val = -val;
     }
 
-    if(start == 0)
-        out[0] = -1; // the constant term is -1 not -2
+    if(start == 0L)
+        out[0] = -1L; // the constant term is -1 not -2
 }
 
 /*

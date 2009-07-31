@@ -35,9 +35,10 @@
 #include "theta.h"
 #include "profiler.h"
 
-#define LIMIT 400000000L
+#define LIMIT 3000000000L
 #define BLOCK  100000L
 #define BUNDLE 200L
+#define BYTES 2L
 
 #define MOD 8L
 #define K 1L
@@ -79,17 +80,16 @@ int main(void)
    
    _F_mpz_poly_normalise(theta_1);
 
-   flint_heap_free(array1);
+	flint_heap_free(array1);
 
    F_mpz_poly_init(p1);
 
-   F_mpz_poly_pack_bytes(p1, theta_1, BUNDLE, 2);
+   F_mpz_poly_pack_bytes(p1, theta_1, BUNDLE, BYTES);
 
    F_mpz_poly_clear(theta_1);
     
-
    printf("Computed and packed first theta function.\n");
-
+  
    //-------------------------------------------------------------
    
    array1 = (long *) flint_heap_alloc(16*BLOCK);
@@ -122,7 +122,7 @@ int main(void)
 
    F_mpz_poly_init(p2);
 
-   F_mpz_poly_pack_bytes(p2, theta_2, BUNDLE, 2);
+   F_mpz_poly_pack_bytes(p2, theta_2, BUNDLE, BYTES);
 
    F_mpz_poly_clear(theta_2);
 
@@ -137,25 +137,165 @@ int main(void)
    printf("First product computed\n");
 
    F_mpz_poly_init(theta_prod);
-   F_mpz_poly_fit_length(theta_prod, LIMIT + BUNDLE);
    
-   F_mpz_poly_unpack_bytes(theta_prod, out, BUNDLE, 2);
+   //F_mpz_poly_unpack_bytes(theta_prod, out, BUNDLE, 2);
+
+	ulong limbs = ((2*BUNDLE)*BYTES*8 - 1)/FLINT_BITS + 2; // max number of limbs of each large coeff
+	ulong extras = (FLINT_BYTES_PER_LIMB - 1)/BYTES + 1;
+
+	ulong length_max = BUNDLE*out->length + BUNDLE + extras;
+
+	F_mpz_poly_fit_length(theta_prod, length_max);
+	
+	// zero coeffs, as we will be adding to them
+	theta_prod->length = length_max;
+   for (ulong i = 0; i < length_max; i++)
+		F_mpz_zero(theta_prod->coeffs + i);
+
+	mp_limb_t * arr1 = flint_heap_alloc(limbs);
+	mp_limb_t * arr2 = flint_heap_alloc(limbs);
+	mp_limb_t * arr3 = flint_heap_alloc(limbs);
+
+	int neg1 = 0;
+	int neg2 = 0;
+	int neg3 = 0;
+
+   mp_limb_t * temp;
+	int temp_n;
+	long limb;
+	long carry = 0L;
+	int borrow = 0;
+   int borrow2 = 0;
+
+	F_mpn_clear(arr1, limbs);
+	F_mpn_clear(arr2, limbs);
+	F_mpn_clear(arr3, limbs);
+
+	short int * s1 = (short int *) arr1;
+	short int * s2 = (short int *) arr2;
+	short int * s3 = (short int *) arr3;
+		
+   F_mpz_get_limbs(arr1, out->coeffs); // initialise with first big coefficient
+	if (F_mpz_sgn(out->coeffs) < 0) neg1 = 1;
+
+	for (ulong i = 0; i < length_max; i+=BUNDLE)
+	{
+		ulong j;
+
+	   for (j = 0; (j < extras) && (i + j < length_max); j++)
+	   {
+         if (neg1) 
+			{
+				borrow2 = -(s1[j] < 0);
+			   carry -= (long) s1[j];
+			} else 
+			{
+				borrow2 = (s1[j] < 0);
+			   carry += (long) s1[j];
+			}
+
+			if (neg2) 
+			{
+				borrow2 -= (s2[BUNDLE + j] < 0);
+			   carry -= (long) s2[BUNDLE + j];
+			} else 
+			{
+				borrow2 += (s2[BUNDLE + j] < 0);
+			   carry += (long) s2[BUNDLE + j];
+			}
+
+			if (neg3) 
+			{
+				borrow2 -= (s3[2*BUNDLE + j] < 0);
+			   carry -= (long) s3[2*BUNDLE + j];
+			} else 
+			{
+				borrow2 += (s3[2*BUNDLE + j] < 0);
+			   carry += (long) s3[2*BUNDLE + j];
+			}
+
+			carry += borrow;
+
+			theta_prod->coeffs[i + j] = (long) ((short int) carry);
+			carry -= theta_prod->coeffs[i + j];
+			carry >>= (BYTES*8);
+
+			borrow = borrow2;
+		}
+
+		for ( ; (j < BUNDLE) && (i + j < length_max); j++)
+		{
+         if (neg1) 
+			{
+				borrow2 = -(s1[j] < 0);
+			   carry -= (long) s1[j];
+			} else 
+			{
+				borrow2 = (s1[j] < 0);
+			   carry += (long) s1[j];
+			}
+
+			if (neg2) 
+			{
+				borrow2 -= (s2[BUNDLE + j] < 0);
+			   carry -= (long) s2[BUNDLE + j];
+			} else 
+			{
+				borrow2 += (s2[BUNDLE + j] < 0);
+			   carry += (long) s2[BUNDLE + j];
+			}
+
+			carry += borrow;
+
+			theta_prod->coeffs[i + j] = (long) ((short int) carry);
+			carry -= theta_prod->coeffs[i + j];
+			carry >>= (BYTES*8);
+
+			borrow = borrow2;
+		}
+
+		temp = arr3;
+		arr3 = arr2;
+		arr2 = arr1;
+		arr1 = temp;
+
+		s1 = (short int *) arr1;
+	   s2 = (short int *) arr2;
+	   s3 = (short int *) arr3;
+		
+		neg3 = neg2;
+		neg2 = neg1;
+
+		F_mpn_clear(arr1, limbs);
+	   ulong k = i/BUNDLE + 1;
+		if (k < out->length)
+		{
+			F_mpz_get_limbs(arr1, out->coeffs + k); // initialise with first big coefficient
+		   
+			if (F_mpz_sgn(out->coeffs + k) < 0) neg1 = 1;
+		   else neg1 = 0;
+	   }
+	}
+
+   flint_heap_free(arr1);
+	flint_heap_free(arr2);
+	flint_heap_free(arr3);
 
    F_mpz_poly_clear(out);
    _F_mpz_cleanup2();
-    
+
    F_mpz_poly_truncate(theta_prod, LIMIT);
 
-   printf("First unpacking computed, theta_prod has length %ld\n", theta_prod->length);
+	printf("First unpacking computed, theta_prod has length %ld\n", theta_prod->length);
 
    #define OFFSET (1L<<17)
    #define LEN (1L<<18)
 
    // sieve out non-squarefree coefficients
-   
+
    for(long a = 1; a < LIMIT*MOD + K ; a++) {
-      long ab = a*2; // a*b
-      long ab2 = ab*2; // a*b*b
+      long ab = a*2L; // a*b
+      long ab2 = ab*2L; // a*b*b
       while (ab2 < LIMIT*MOD + K) {
           // check the coefficient is in our series
           if ( (ab2-K) % MOD == 0L )
