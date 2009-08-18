@@ -175,7 +175,7 @@ unsigned long tiny_collect_relations(linalg_t * la_inf, QS_t * qs_inf, poly_t * 
 
 int F_mpz_factor_tinyQS(F_mpz_factor_t * factors, mpz_t N)
 {
-    int small_factor, i;
+    ulong small_factor, i;
 
 
     small_factor = F_mpz_factor_tinyQS_silent(factors, N);

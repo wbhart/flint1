@@ -188,7 +188,7 @@ void ZmodF_mul_info_init_plain(ZmodF_mul_info_t info, unsigned long n,
    info->n = n;
    info->squaring = squaring;
    info->algo = ZMODF_MUL_ALGO_PLAIN;
-   info->scratch = (mp_limb_t*) flint_stack_alloc(2*n);
+   info->scratch = (mp_limb_t*) flint_heap_alloc(2*n);
 }
 
 
@@ -208,7 +208,7 @@ void ZmodF_mul_info_init_threeway(ZmodF_mul_info_t info, unsigned long n,
    info->m = n/3;
    info->algo = ZMODF_MUL_ALGO_THREEWAY;
    // todo: maybe can use less memory here when squaring:
-   info->scratch = (mp_limb_t*) flint_stack_alloc(3*n + 1);
+   info->scratch = (mp_limb_t*) flint_heap_alloc(3*n + 1);
 }
 
 
@@ -316,7 +316,7 @@ void ZmodF_mul_info_init_fft(ZmodF_mul_info_t info, unsigned long n,
 
    // todo: maybe can use less memory here when squaring:
    if (k)
-      info->scratch = (mp_limb_t*) flint_stack_alloc((3*k) << depth);
+      info->scratch = (mp_limb_t*) flint_heap_alloc((3*k) << depth);
    else
       info->scratch = NULL;
 }
@@ -411,7 +411,7 @@ void ZmodF_mul_info_init(ZmodF_mul_info_t info, unsigned long n, int squaring)
 void ZmodF_mul_info_clear(ZmodF_mul_info_t info)
 {
    if (info->scratch)
-      flint_stack_release();
+      flint_heap_free(info->scratch);
 
    if (info->algo == ZMODF_MUL_ALGO_FFT)
    {

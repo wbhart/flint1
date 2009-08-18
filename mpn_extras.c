@@ -424,7 +424,7 @@ void F_mpn_FFT_combine_bits(mp_limb_t * res, ZmodF_poly_t poly, unsigned long bi
    unsigned long coeff_limbs = (bits>>FLINT_LG_BITS_PER_LIMB) + 1;
    unsigned long i, j;
    unsigned long length = poly->length;
-   unsigned long * temp = (unsigned long *) flint_stack_alloc(output_limbs+1);
+   unsigned long * temp = (unsigned long *) flint_heap_alloc(output_limbs+1);
    unsigned long shift_bits = 0;
    unsigned long * limb_ptr = res;
    unsigned long * end = res + total_limbs;
@@ -468,7 +468,7 @@ void F_mpn_FFT_combine_bits(mp_limb_t * res, ZmodF_poly_t poly, unsigned long bi
       i++;    
    }
    
-   flint_stack_release();      
+   flint_heap_free(temp);      
 }
 
 /*
@@ -577,7 +577,7 @@ mp_limb_t __F_mpn_mul(mp_limb_t * res, const mp_limb_t * data1, const unsigned l
    printf("%ld, %ld, %ld, %ld, %ld, %ld, %ld\n", bits, length1, length2, output_bits, coeff_limbs, n, log_length);
 #endif   
    ZmodF_poly_t poly1;
-   ZmodF_poly_stack_init(poly1, log_length, n, 1);
+   ZmodF_poly_init(poly1, log_length, n, 1);
    F_mpn_FFT_split_bits(poly1, data1, limbs1, bits, n);
    
    ulong length = length1 + length2 - 1;
@@ -593,13 +593,13 @@ mp_limb_t __F_mpn_mul(mp_limb_t * res, const mp_limb_t * data1, const unsigned l
 	} else
 	{
 		ZmodF_poly_t poly2;
-      ZmodF_poly_stack_init(poly2, log_length, n, 1);
+      ZmodF_poly_init(poly2, log_length, n, 1);
       F_mpn_FFT_split_bits(poly2, data2, limbs2, bits, n);
 
       ZmodF_poly_FFT(poly2, length);
       
       ZmodF_poly_pointwise_mul(poly1, poly1, poly2);
-	   ZmodF_poly_stack_clear(poly2);
+	   ZmodF_poly_clear(poly2);
 	}	
 		
    ZmodF_poly_IFFT(poly1);
@@ -610,7 +610,7 @@ mp_limb_t __F_mpn_mul(mp_limb_t * res, const mp_limb_t * data1, const unsigned l
    F_mpn_clear(res, limbs1+limbs2);
    
    F_mpn_FFT_combine_bits(res, poly1, bits, n, total_limbs);
-   ZmodF_poly_stack_clear(poly1);
+   ZmodF_poly_clear(poly1);
    
    return res[limbs1+limbs2-1];
 }

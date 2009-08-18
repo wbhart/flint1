@@ -84,7 +84,7 @@ unsigned long z_randint(unsigned long limit)
     randval = ((unsigned long)randval*(unsigned long)1025416097U+(unsigned long)286824428U)%(unsigned long)4294967311U;
     randval2 = ((unsigned long)randval2*(unsigned long)1647637699U+(unsigned long)286824428U)%(unsigned long)4294967357U;
     
-    if (limit == 0L) return (unsigned long) randval;
+    if (limit == 0L) return (unsigned long) (randval+(randval2<<32));
     
     return (unsigned long)(randval+(randval2<<32))%limit;
 #endif
@@ -1465,8 +1465,7 @@ int z_isprobab_prime_BPSW(unsigned long n)
 		while ((d & 1) == 0) d >>= 1;
 
 		if (SPRP_64(2L, d, n, inv) == 0) return 0;
-		if (z_ispseudoprime_lucas(n) == 0) return 0;
-		return 1;
+		return (z_ispseudoprime_lucas(n) == 1) 
 	}
 }
 
@@ -1983,9 +1982,11 @@ void z_compute_extended_primes()
 {
     unsigned int sieve[ETF_SIEVE_SIZE];
     unsigned int p,q,oldq = 0,n_found=0;
-    unsigned int i;
+    unsigned int i, j;
 
-    memset(sieve,1,ETF_SIEVE_SIZE);
+    for (ulong j = 0; j < ETF_SIEVE_SIZE; j++)
+       sieve[j] = 1;
+
     for (i = 1; z_primes[i]*z_primes[i] < 1000; i++) /* skip 2 */
     {
         p = z_primes[i];

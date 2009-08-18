@@ -1885,7 +1885,7 @@ int test_fmpz_multi_CRT_ui()
    mpz_init(num1);
    for (unsigned long i = 0; (i < 1000) && (result == 1); i++)
    {
-      unsigned long bits = random_ulong(3000)+1;
+      unsigned long bits = random_ulong(300)+1;
 #if FLINT_BITS == 32
       double primes_per_limb = 1.0325;
 #elif FLINT_BITS == 64

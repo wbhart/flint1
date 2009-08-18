@@ -49,7 +49,9 @@
 typedef long F_mpz;
 typedef F_mpz F_mpz_t[1];
 
-#define MPZ_BLOCK 1024 // number of additional mpz_t's to initialise at a time
+#define MAX_SEM 16 
+
+#define MPZ_BLOCK 102400 // number of additional mpz_t's to initialise at a time
 
 // maximum positive value a small coefficient can have
 #define COEFF_MAX ((1L<<(FLINT_BITS-2))-1L)
@@ -183,7 +185,7 @@ void _F_mpz_demote_val(F_mpz_t f);
 static inline
 void F_mpz_init(F_mpz_t f)
 {
-	*f = 0L;
+	(*f) = 0L;
 }
 
 /** 
@@ -600,43 +602,57 @@ void F_mpz_comb_init(F_mpz_comb_t comb, ulong * primes, ulong num_primes);
 void F_mpz_comb_clear(F_mpz_comb_t comb);
 
 /** 
+   \fn     F_mpz ** F_mpz_comb_temp_init(F_mpz_comb_t comb)
+   \brief  Initialise temporary space used my multimodular reduction and CRT.
+*/
+F_mpz ** F_mpz_comb_temp_init(F_mpz_comb_t comb);
+
+/** 
+   \fn     void F_mpz_comb_temp_free(F_mpz_comb_t comb, F_mpz ** comb_temp)
+   \brief  Free temporary space used my multimodular reduction and CRT.
+*/
+void F_mpz_comb_temp_free(F_mpz_comb_t comb, F_mpz ** comb_temp);
+
+/** 
    \fn     void F_mpz_multi_mod_ui_basecase(ulong * out, F_mpz_t in, 
-                                      ulong * primes, ulong num_primes)
+                            ulong * primes, ulong num_primes, F_mpz_t temp)
    \brief  Reduce the F_mpz_t in modulo each of the num_primes primes in
 	        the given array and output the residues in the array out.
 */
 void F_mpz_multi_mod_ui_basecase(ulong * out, F_mpz_t in, 
-                               ulong * primes, ulong num_primes);
+                           ulong * primes, ulong num_primes, F_mpz_t temp);
 
 /** 
    \fn     void F_mpz_multi_mod_ui(ulong * out, F_mpz_t in, 
-                                      ulong * primes, ulong num_primes)
+           ulong * primes, ulong num_primes, F_mpz ** comb_temp, F_mpz_t temp)
    \brief  Reduce the F_mpz_t in modulo each of the num_primes primes in
 	        the comb and output the residues in the array out.
 */
-void F_mpz_multi_mod_ui(ulong * out, F_mpz_t in, F_mpz_comb_t comb);
+void F_mpz_multi_mod_ui(ulong * out, F_mpz_t in, 
+           F_mpz_comb_t comb, F_mpz ** comb_temp, F_mpz_t temp);
 
 /** 
-   \fn     void F_mpz_multi_CRT_ui_unsigned(F_mpz_t output, 
-	                                    ulong * residues, F_mpz_comb_t comb)
+   \fn     void F_mpz_multi_CRT_ui_unsigned(F_mpz_t output, ulong * residues, 
+            F_mpz_comb_t comb, F_mpz ** comb_temp, F_mpz_t temp, F_mpz_t temp2)
    \brief  Chinese remainder recomposition from a list of residues modulo the
 	        num_primes primes given in the comb. The result is assumed to be
 			  non-negative and placed in output.
 */
-void F_mpz_multi_CRT_ui_unsigned(F_mpz_t output, 
-											      ulong * residues, F_mpz_comb_t comb);
+void F_mpz_multi_CRT_ui_unsigned(F_mpz_t output, ulong * residues, 
+            F_mpz_comb_t comb, F_mpz ** comb_temp, F_mpz_t temp, F_mpz_t temp2);
 
 /** 
-   \fn     void F_mpz_multi_CRT_ui(F_mpz_t output, 
-	                                    ulong * residues, F_mpz_comb_t comb)
+   \fn     void F_mpz_multi_CRT_ui(F_mpz_t output, ulong * residues, 
+           F_mpz_comb_t comb, F_mpz ** comb_temp, F_mpz_t temp, F_mpz_t temp2)
    \brief  Chinese remainder recomposition from a list of residues modulo the
 	        num_primes primes given in the comb. The result is assumed to be
 			  signed and placed in output.
 */
-void F_mpz_multi_CRT_ui(F_mpz_t output, ulong * residues, F_mpz_comb_t comb);
+void F_mpz_multi_CRT_ui(F_mpz_t output, ulong * residues, 
+           F_mpz_comb_t comb, F_mpz ** comb_temp, F_mpz_t temp, F_mpz_t temp2);
 
 #ifdef __cplusplus
- }
+ 
 #endif
  
 #endif

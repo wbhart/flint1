@@ -37,6 +37,8 @@ Copyright (C) 2008, William Hart
 #include "test-support.h"
 #include "zmod_poly.h"
 
+#define WANT_MODULAR_MUL_TEST 0 // whether or not to run the modular multiplication tests
+
 #define VARY_BITS 1 // random coefficients have random number of bits up to the limit given
 #define SIGNS 1 // random coefficients will be randomly signed
 #define SPARSE 1 // polynomials are spares (triggers more corner cases)
@@ -2355,7 +2357,7 @@ int test_F_mpz_poly_byte_pack()
    mpz_poly_init(m_poly1); 
    mpz_poly_init(m_poly2); 
 
-   for (ulong count1 = 1; (count1 < 2000*ITER) && (result == 1) ; count1++)
+   for (ulong count1 = 1; (count1 < 200*ITER) && (result == 1) ; count1++)
    {
       bits = random_ulong(1000) + 2;
       bytes = ((bits - 1)>>3) + 1;
@@ -2613,25 +2615,24 @@ int test_F_mpz_poly_mul_modular()
    mpz_poly_init(res1); 
    mpz_poly_init(res2); 
 
-   for (ulong count1 = 0; (count1 < 1000*ITER) && (result == 1) ; count1++)
+   for (ulong count1 = 0; (count1 < 10*ITER) && (result == 1) ; count1++)
    {
-      printf("count1 = %ld\n", count1);
-		F_mpz_poly_init(F_poly1);
+      F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
       F_mpz_poly_init(res);
 
-	  bits1 = z_randint(500) + 4;
-      bits2 = z_randint(500) + 4;
-      length1 = z_randint(100);
-      length2 = z_randint(100);
+	  bits1 = z_randint(500) + 1024;
+      bits2 = z_randint(500) + 1024;
+      length1 = z_randint(100)+16;
+      length2 = z_randint(100)+16;
       
-	  mpz_randpoly(m_poly1, length1, bits1);
-	  mpz_randpoly(m_poly2, length2, bits2);
+      do {mpz_randpoly(m_poly1, length1, bits1); } while (m_poly1->length != length1);
+	  do {mpz_randpoly(m_poly2, length2, bits2); } while (m_poly2->length != length2);
            
       mpz_poly_to_F_mpz_poly(F_poly2, m_poly2);
       mpz_poly_to_F_mpz_poly(F_poly1, m_poly1);
       
-	  F_mpz_poly_mul_modular(res, F_poly1, F_poly2, 0);			
+	    F_mpz_poly_mul_modular(res, F_poly1, F_poly2, 0);			
 	  F_mpz_poly_to_mpz_poly(res2, res);
       mpz_poly_mul_naive_KS(res1, m_poly1, m_poly2);		
 		    
@@ -2642,23 +2643,23 @@ int test_F_mpz_poly_mul_modular()
          mpz_poly_print_pretty(res1, "x"); printf("\n");
          mpz_poly_print_pretty(res2, "x"); printf("\n");
 	  }
-          
-      F_mpz_poly_clear(res);
+     
+     F_mpz_poly_clear(res);
    }
    
    // try unsigned coefficients
-   for (ulong count1 = 0; (count1 < 1000*ITER) && (result == 1) ; count1++)
+   for (ulong count1 = 0; (count1 < 10*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
       F_mpz_poly_init(res);
 
-	  bits1 = z_randint((FLINT_BITS - 9)/2) + 1;
-      bits2 = z_randint((FLINT_BITS - 9)/2) + 1;
-      length1 = z_randint(100);
-      length2 = z_randint(100);
-      mpz_randpoly_unsigned(m_poly1, length1, bits1);
-	  mpz_randpoly_unsigned(m_poly2, length2, bits2);
+	  bits1 = z_randint(300) + 1024;
+      bits2 = z_randint(300) + 1024;
+      length1 = z_randint(100)+16;
+      length2 = z_randint(100)+16;
+      do {mpz_randpoly_unsigned(m_poly1, length1, bits1); } while (m_poly1->length != length1);
+	  do {mpz_randpoly_unsigned(m_poly2, length2, bits2); } while (m_poly2->length != length2);
            
       mpz_poly_to_F_mpz_poly(F_poly1, m_poly1);
       mpz_poly_to_F_mpz_poly(F_poly2, m_poly2);
@@ -2677,97 +2678,7 @@ int test_F_mpz_poly_mul_modular()
           
       F_mpz_poly_clear(res);
    }
-   
-   // test aliasing of res and poly1
-   for (ulong count1 = 0; (count1 < 1000*ITER) && (result == 1) ; count1++)
-   {
-      F_mpz_poly_init(F_poly1);
-      F_mpz_poly_init(res);
 
-	  bits1 = z_randint((FLINT_BITS - 9)/2) + 1;
-      bits2 = z_randint((FLINT_BITS - 9)/2) + 1;
-      length1 = z_randint(100);
-      length2 = z_randint(100);
-      mpz_randpoly(m_poly1, length1, bits1);
-      mpz_randpoly(m_poly2, length2, bits2);
-           
-      mpz_poly_to_F_mpz_poly(F_poly1, m_poly1);
-      mpz_poly_to_F_mpz_poly(res, m_poly2);
-      
-	  F_mpz_poly_mul_modular(res, res, F_poly1, 0);
-	  F_mpz_poly_to_mpz_poly(res2, res);
-      mpz_poly_mul_karatsuba(res1, m_poly1, m_poly2);		
-		    
-      result = mpz_poly_equal(res1, res2); 
-	  if (!result) 
-	  {
-		 printf("Error: length1 = %ld, bits1 = %ld, length2 = %ld, bits2 = %ld\n", length1, bits1, length2, bits2);
-         mpz_poly_print_pretty(res1, "x"); printf("\n");
-         mpz_poly_print_pretty(res2, "x"); printf("\n");
-	  }
-          
-      F_mpz_poly_clear(res);
-   }
-   
-   // test aliasing of res and poly2
-   for (ulong count1 = 0; (count1 < 1000*ITER) && (result == 1) ; count1++)
-   {
-      F_mpz_poly_init(F_poly1);
-      F_mpz_poly_init(res);
-
-	  bits1 = z_randint((FLINT_BITS - 9)/2) + 1;
-      bits2 = z_randint((FLINT_BITS - 9)/2) + 1;
-      length1 = z_randint(100);
-      length2 = z_randint(100);
-      mpz_randpoly(m_poly1, length1, bits1);
-      mpz_randpoly(m_poly2, length2, bits2);
-           
-      mpz_poly_to_F_mpz_poly(F_poly1, m_poly1);
-      mpz_poly_to_F_mpz_poly(res, m_poly2);
-      
-	  F_mpz_poly_mul_modular(res, F_poly1, res, 0);
-	  F_mpz_poly_to_mpz_poly(res2, res);
-      mpz_poly_mul_naive_KS(res1, m_poly1, m_poly2);		
-		    
-      result = mpz_poly_equal(res1, res2); 
-	  if (!result) 
-	  {
-		 printf("Error: length1 = %ld, bits1 = %ld, length2 = %ld, bits2 = %ld\n", length1, bits1, length2, bits2);
-         mpz_poly_print_pretty(res1, "x"); printf("\n");
-         mpz_poly_print_pretty(res2, "x"); printf("\n");
-	  }
-          
-      F_mpz_poly_clear(res);
-   }
-   
-   // test aliasing of poly1 and poly2
-   for (ulong count1 = 0; (count1 < 1000*ITER) && (result == 1) ; count1++)
-   {
-      F_mpz_poly_init(F_poly1);
-      F_mpz_poly_init(res);
-
-	  bits1 = z_randint((FLINT_BITS - 9)/2) + 1;
-      length1 = z_randint(100);
-      mpz_randpoly(m_poly1, length1, bits1);
-           
-      mpz_poly_to_F_mpz_poly(F_poly1, m_poly1);
-      
-	  F_mpz_poly_mul_modular(res, F_poly1, F_poly1, 0);
-	  F_mpz_poly_to_mpz_poly(res2, res);
-	  mpz_poly_set(m_poly2, m_poly1);
-      mpz_poly_mul_naive_KS(res1, m_poly2, m_poly1);		
-		    
-      result = mpz_poly_equal(res1, res2); 
-	  if (!result) 
-	  {
-		 printf("Error: length1 = %ld, bits1 = %ld, length2 = %ld, bits2 = %ld\n", length1, bits1, length2, bits2);
-         mpz_poly_print_pretty(res1, "x"); printf("\n");
-         mpz_poly_print_pretty(res2, "x"); printf("\n");
-	  }
-          
-      F_mpz_poly_clear(res);
-   }
-   
    mpz_poly_clear(res1);
    mpz_poly_clear(res2);
    mpz_poly_clear(m_poly1);
@@ -2788,20 +2699,20 @@ int test_F_mpz_poly_mul_modular_trunc()
    mpz_poly_init(res1); 
    mpz_poly_init(res2); 
 
-   for (ulong count1 = 0; (count1 < 1000*ITER) && (result == 1) ; count1++)
+   for (ulong count1 = 0; (count1 < 10*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
       F_mpz_poly_init(res);
 
-	  bits1 = z_randint(500) + 4;
-      bits2 = z_randint(500) + 4;
-      length1 = z_randint(100);
-      length2 = z_randint(100);
+	  bits1 = z_randint(500) + 1024;
+      bits2 = z_randint(500) + 1024;
+      length1 = z_randint(100)+16;
+      length2 = z_randint(100)+16;
       trunc = (length1 + length2)/2;
 
-	  mpz_randpoly(m_poly1, length1, bits1);
-	  mpz_randpoly(m_poly2, length2, bits2);
+	  do {mpz_randpoly(m_poly1, length1, bits1); } while (m_poly1->length != length1);
+	  do {mpz_randpoly(m_poly2, length2, bits2); } while (m_poly2->length != length2);
            
       mpz_poly_to_F_mpz_poly(F_poly2, m_poly2);
       mpz_poly_to_F_mpz_poly(F_poly1, m_poly1);
@@ -2824,19 +2735,19 @@ int test_F_mpz_poly_mul_modular_trunc()
    }
    
    // try unsigned coefficients
-   for (ulong count1 = 0; (count1 < 1000*ITER) && (result == 1) ; count1++)
+   for (ulong count1 = 0; (count1 < 10*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
       F_mpz_poly_init(res);
 
-	  bits1 = z_randint((FLINT_BITS - 9)/2) + 1;
-      bits2 = z_randint((FLINT_BITS - 9)/2) + 1;
-      length1 = z_randint(100);
-      length2 = z_randint(100);
+	  bits1 = z_randint(300) + 1;
+      bits2 = z_randint(300) + 1;
+      length1 = z_randint(100)+16;
+      length2 = z_randint(100)+16;
       trunc = (length1 + length2)/2;
-      mpz_randpoly_unsigned(m_poly1, length1, bits1);
-	  mpz_randpoly_unsigned(m_poly2, length2, bits2);
+      do {mpz_randpoly_unsigned(m_poly1, length1, bits1); } while (m_poly1->length != length1);
+	  do {mpz_randpoly_unsigned(m_poly2, length2, bits2); } while (m_poly2->length != length2);
            
       mpz_poly_to_F_mpz_poly(F_poly1, m_poly1);
       mpz_poly_to_F_mpz_poly(F_poly2, m_poly2);
@@ -2857,106 +2768,7 @@ int test_F_mpz_poly_mul_modular_trunc()
           
       F_mpz_poly_clear(res);
    }
-   
-   // test aliasing of res and poly1
-   for (ulong count1 = 0; (count1 < 1000*ITER) && (result == 1) ; count1++)
-   {
-      F_mpz_poly_init(F_poly1);
-      F_mpz_poly_init(res);
 
-	  bits1 = z_randint((FLINT_BITS - 9)/2) + 1;
-      bits2 = z_randint((FLINT_BITS - 9)/2) + 1;
-      length1 = z_randint(100);
-      length2 = z_randint(100);
-      trunc = (length1 + length2)/2;
-      mpz_randpoly(m_poly1, length1, bits1);
-      mpz_randpoly(m_poly2, length2, bits2);
-           
-      mpz_poly_to_F_mpz_poly(F_poly1, m_poly1);
-      mpz_poly_to_F_mpz_poly(res, m_poly2);
-      
-	  F_mpz_poly_mul_modular_trunc(res, res, F_poly1, 0, trunc);
-	  F_mpz_poly_to_mpz_poly(res2, res);
-      mpz_poly_mul_karatsuba(res1, m_poly1, m_poly2);		
-	  res1->length = FLINT_MIN(res1->length, trunc);
-      mpz_poly_normalise(res1);
-
-      result = mpz_poly_equal(res1, res2); 
-	  if (!result) 
-	  {
-		 printf("Error: length1 = %ld, bits1 = %ld, length2 = %ld, bits2 = %ld\n", length1, bits1, length2, bits2);
-         mpz_poly_print_pretty(res1, "x"); printf("\n");
-         mpz_poly_print_pretty(res2, "x"); printf("\n");
-	  }
-          
-      F_mpz_poly_clear(res);
-   }
-   
-   // test aliasing of res and poly2
-   for (ulong count1 = 0; (count1 < 1000*ITER) && (result == 1) ; count1++)
-   {
-      F_mpz_poly_init(F_poly1);
-      F_mpz_poly_init(res);
-
-	  bits1 = z_randint((FLINT_BITS - 9)/2) + 1;
-      bits2 = z_randint((FLINT_BITS - 9)/2) + 1;
-      length1 = z_randint(100);
-      length2 = z_randint(100);
-      trunc = (length1 + length2)/2;
-      mpz_randpoly(m_poly1, length1, bits1);
-      mpz_randpoly(m_poly2, length2, bits2);
-           
-      mpz_poly_to_F_mpz_poly(F_poly1, m_poly1);
-      mpz_poly_to_F_mpz_poly(res, m_poly2);
-      
-	  F_mpz_poly_mul_modular_trunc(res, F_poly1, res, 0, trunc);
-	  F_mpz_poly_to_mpz_poly(res2, res);
-      mpz_poly_mul_naive_KS(res1, m_poly1, m_poly2);		
-	  res1->length = FLINT_MIN(res1->length, trunc);
-      mpz_poly_normalise(res1);
-
-      result = mpz_poly_equal(res1, res2); 
-	  if (!result) 
-	  {
-		 printf("Error: length1 = %ld, bits1 = %ld, length2 = %ld, bits2 = %ld\n", length1, bits1, length2, bits2);
-         mpz_poly_print_pretty(res1, "x"); printf("\n");
-         mpz_poly_print_pretty(res2, "x"); printf("\n");
-	  }
-          
-      F_mpz_poly_clear(res);
-   }
-   
-   // test aliasing of poly1 and poly2
-   for (ulong count1 = 0; (count1 < 1000*ITER) && (result == 1) ; count1++)
-   {
-      F_mpz_poly_init(F_poly1);
-      F_mpz_poly_init(res);
-
-	  bits1 = z_randint((FLINT_BITS - 9)/2) + 1;
-      length1 = z_randint(100);
-      trunc = length1;
-      mpz_randpoly(m_poly1, length1, bits1);
-           
-      mpz_poly_to_F_mpz_poly(F_poly1, m_poly1);
-      
-	  F_mpz_poly_mul_modular_trunc(res, F_poly1, F_poly1, 0, trunc);
-	  F_mpz_poly_to_mpz_poly(res2, res);
-	  mpz_poly_set(m_poly2, m_poly1);
-      mpz_poly_mul_naive_KS(res1, m_poly2, m_poly1);		
-	  res1->length = FLINT_MIN(res1->length, trunc);
-      mpz_poly_normalise(res1);
-
-      result = mpz_poly_equal(res1, res2); 
-	  if (!result) 
-	  {
-		 printf("Error: length1 = %ld, bits1 = %ld, length2 = %ld, bits2 = %ld\n", length1, bits1, length2, bits2);
-         mpz_poly_print_pretty(res1, "x"); printf("\n");
-         mpz_poly_print_pretty(res2, "x"); printf("\n");
-	  }
-          
-      F_mpz_poly_clear(res);
-   }
-   
    mpz_poly_clear(res1);
    mpz_poly_clear(res2);
    mpz_poly_clear(m_poly1);
@@ -2975,7 +2787,7 @@ int test_F_mpz_poly_pack_bytes()
    mpz_poly_init(m_poly); 
    mpz_poly_init(m_poly2); 
 
-   for (ulong count1 = 1; (count1 < 1000*ITER) && (result == 1) ; count1++)
+   for (ulong count1 = 1; (count1 < 10*ITER) && (result == 1) ; count1++)
    {
       bits = z_randint(300)+ FLINT_BITS;
       bytes = ((bits-1)>>3)+1;
@@ -2984,7 +2796,7 @@ int test_F_mpz_poly_pack_bytes()
       F_mpz_poly_init(F_poly2);
       F_mpz_poly_init(F_poly3);
       
-	  length = z_randint(1000) + 1;
+	  length = z_randint(1000) + 80;
 	  ulong n = z_randint(length/5 + 1) + 1;
 	  ulong limbs = ((2*n - 1)*bytes*8 - 1)/FLINT_BITS + 1;
 			 
@@ -3044,16 +2856,16 @@ int test_F_mpz_poly_mul_modular_packed()
    mpz_poly_init(res1); 
    mpz_poly_init(res2); 
 
-   for (ulong count1 = 0; (count1 < 1*ITER) && (result == 1) ; count1++)
+   for (ulong count1 = 0; (count1 < 10*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
       F_mpz_poly_init(res);
 
-	  bits1 = 5;//z_randint(5) + 1;
-      bits2 = 5;//z_randint(5) + 1;
-      length1 = 10000000;//z_randint(1000000) + 5;
-      length2 = 10000000;//z_randint(1000000) + 5;
+	  bits1 = z_randint(5) + 1;
+      bits2 = z_randint(5) + 1;
+      length1 = z_randint(1000) + 500;
+      length2 = z_randint(1000) + 500;
       
 	  do { mpz_randpoly(m_poly1, length1, bits1); } while (m_poly1->length < length1);
 	  do { mpz_randpoly(m_poly2, length2, bits2); } while (m_poly2->length < length2);
@@ -3061,10 +2873,9 @@ int test_F_mpz_poly_mul_modular_packed()
       mpz_poly_to_F_mpz_poly(F_poly2, m_poly2);
       mpz_poly_to_F_mpz_poly(F_poly1, m_poly1);
       
-	  printf("start1\n");
 	  F_mpz_poly_mul_modular_packed(res, F_poly1, F_poly2, 30, bits1 + bits2 + 20);			
-	  printf("done1\n");
-	  F_mpz_poly_to_mpz_poly(res2, res);
+	  
+     F_mpz_poly_to_mpz_poly(res2, res);
       mpz_poly_mul_naive_KS(res1, m_poly1, m_poly2);		
 		    
       result = mpz_poly_equal(res1, res2); 
@@ -3079,9 +2890,9 @@ int test_F_mpz_poly_mul_modular_packed()
 	  F_mpz_poly_clear(F_poly2);
 	  F_mpz_poly_clear(res);
    }
-   printf("done\n");
+   
    // try unsigned coefficients
-   for (ulong count1 = 0; (count1 < 100*ITER) && (result == 1) ; count1++)
+   for (ulong count1 = 0; (count1 < 10*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -3089,8 +2900,8 @@ int test_F_mpz_poly_mul_modular_packed()
 
 	  bits1 = z_randint(100) + 1;
       bits2 = z_randint(100) + 1;
-      length1 = z_randint(100) + 5;
-      length2 = z_randint(100) + 5;
+      length1 = z_randint(100) + 500;
+      length2 = z_randint(100) + 500;
       
 	  do { mpz_randpoly_unsigned(m_poly1, length1, bits1); } while (m_poly1->length < length1);
 	  do { mpz_randpoly_unsigned(m_poly2, length2, bits2); } while (m_poly2->length < length2);
@@ -3116,15 +2927,15 @@ int test_F_mpz_poly_mul_modular_packed()
    }
    
    // test aliasing of res and poly1
-   for (ulong count1 = 0; (count1 < 100*ITER) && (result == 1) ; count1++)
+   for (ulong count1 = 0; (count1 < 10*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(res);
 
 	  bits1 = z_randint(100) + 1;
       bits2 = z_randint(100) + 1;
-      length1 = z_randint(100) + 5;
-      length2 = z_randint(100) + 5;
+      length1 = z_randint(100) + 500;
+      length2 = z_randint(100) + 500;
       
 	  do { mpz_randpoly(m_poly1, length1, bits1); } while (m_poly1->length < length1);
 	  do { mpz_randpoly(m_poly2, length2, bits2); } while (m_poly2->length < length2);
@@ -3149,15 +2960,15 @@ int test_F_mpz_poly_mul_modular_packed()
    }
    
    // test aliasing of res and poly2
-   for (ulong count1 = 0; (count1 < 100*ITER) && (result == 1) ; count1++)
+   for (ulong count1 = 0; (count1 < 10*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(res);
 
 	  bits1 = z_randint(100) + 1;
       bits2 = z_randint(100) + 1;
-      length1 = z_randint(100) + 5;
-      length2 = z_randint(100) + 5;
+      length1 = z_randint(100) + 500;
+      length2 = z_randint(100) + 500;
       
 	  do { mpz_randpoly(m_poly1, length1, bits1); } while (m_poly1->length < length1);
 	  do { mpz_randpoly(m_poly2, length2, bits2); } while (m_poly2->length < length2);
@@ -3182,13 +2993,13 @@ int test_F_mpz_poly_mul_modular_packed()
    }
    
    // test aliasing of poly1 and poly2
-   for (ulong count1 = 0; (count1 < 100*ITER) && (result == 1) ; count1++)
+   for (ulong count1 = 0; (count1 < 10*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(res);
 
 	  bits1 = z_randint(100) + 1;
-      length1 = z_randint(100) + 5;
+      length1 = z_randint(100) + 500;
       
 	  do { mpz_randpoly(m_poly1, length1, bits1); } while (m_poly1->length < length1);
 	       
@@ -3227,10 +3038,7 @@ void F_mpz_poly_test_all()
 #if TESTFILE
 #endif
 	
-   RUN_TEST(F_mpz_poly_byte_pack); 
-   RUN_TEST(F_mpz_poly_pack_bytes); 
-   
-	RUN_TEST(F_mpz_poly_convert); 
+   RUN_TEST(F_mpz_poly_convert); 
    RUN_TEST(F_mpz_poly_getset_coeff_si); 
    RUN_TEST(F_mpz_poly_getset_coeff_ui); 
    RUN_TEST(F_mpz_poly_getset_coeff_mpz); 
@@ -3259,9 +3067,17 @@ void F_mpz_poly_test_all()
    RUN_TEST(F_mpz_poly_mul_KS2);
    RUN_TEST(F_mpz_poly_mul_SS); 
    RUN_TEST(F_mpz_poly_pack_bytes); 
+
+   /* 
+      These tests expect FILES1 and FILES2 in F_mpz_poly.c
+      to be no more than about 5, OMP_NUM_THREADS to be 16
+      and a writeable directory /storage to exist
+   */
+#if WANT_MODULAR_MUL_TEST
    RUN_TEST(F_mpz_poly_mul_modular); 
    RUN_TEST(F_mpz_poly_mul_modular_trunc); 
    RUN_TEST(F_mpz_poly_mul_modular_packed); 
+#endif
 	
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");

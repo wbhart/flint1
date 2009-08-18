@@ -1366,7 +1366,7 @@ void zmod_poly_mul_classical_trunc_left(zmod_poly_t res, zmod_poly_t poly1, zmod
 
 void print_var(char *name, unsigned long value)
 {
-   printf("%s = %d\n", name, value);
+   printf("%s = %ld\n", name, value);
 }
 
 #if USE_ZN_POLY
@@ -1484,15 +1484,15 @@ void _zmod_poly_mul_KS(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p input
    limbs1 = FLINT_MAX((long)((length1 * bits-1) / FLINT_BITS + 1), 0L);
    limbs2 = FLINT_MAX((long)((length2 * bits-1) / FLINT_BITS + 1), 0L);
       
-   mpn1 = (mp_limb_t*) flint_stack_alloc(limbs1);
-   mpn2 = (input1 == input2) ? mpn1 : (mp_limb_t*) flint_stack_alloc(limbs2);
+   mpn1 = (mp_limb_t*) flint_heap_alloc(limbs1);
+   mpn2 = (input1 == input2) ? mpn1 : (mp_limb_t*) flint_heap_alloc(limbs2);
 
    _zmod_poly_bit_pack(mpn1, input1, bits, length1);
    
    if(input1 != input2)
       _zmod_poly_bit_pack(mpn2, input2, bits, length2);
    
-   res = (mp_limb_t*) flint_stack_alloc(limbs1+limbs2);
+   res = (mp_limb_t*) flint_heap_alloc(limbs1+limbs2);
    res[limbs1+limbs2-1] = 0L;
    
    if (input1 != input2) F_mpn_mul(res, mpn1, limbs1, mpn2, limbs2);
@@ -1500,10 +1500,10 @@ void _zmod_poly_mul_KS(zmod_poly_t output, zmod_poly_p input1, zmod_poly_p input
    
    _zmod_poly_bit_unpack(output, res, length1 + length2 - 1, bits); 
    
-   flint_stack_release();
-   flint_stack_release();
+   flint_heap_free(res);
+   flint_heap_free(mpn2);
    if(input1 != input2)
-      flint_stack_release();
+      flint_heap_free(mpn1);
   
    output->length = final_length;
 

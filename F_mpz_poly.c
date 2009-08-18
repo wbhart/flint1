@@ -24,9 +24,16 @@
 ===============================================================================*/
 
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <math.h>
 #include <omp.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/mman.h>
 
 #include "mpz_poly.h"
 #include "flint.h"
@@ -40,7 +47,7 @@
 #include "long_extras.h"
 #include "zmod_poly.h"
 
-#define MUL_MOD_TRACE 1 // prints some trace info for multimodular multiplications
+#define MUL_MOD_TRACE 0 // prints some trace info for multimodular multiplications
 
 /*===============================================================================
 
@@ -2782,14 +2789,8 @@ void F_mpz_poly_pack_bytes(F_mpz_poly_t res, F_mpz_poly_t poly, ulong n, ulong b
 	
 	// pack coefficients
 
-	semaphore_init();
-
-#pragma omp parallel
-	{
-#pragma omp for
 	for (long i = 0; i < short_length - 1; i++)
 	{
-	   semaphore_up();
 		long j = i*n;
 		
 		F_mpz_poly_t poly_p;
@@ -2818,8 +2819,6 @@ void F_mpz_poly_pack_bytes(F_mpz_poly_t res, F_mpz_poly_t poly, ulong n, ulong b
 	   while ((coeff->_mp_size) && !(coeff_r[coeff->_mp_size - 1])) coeff->_mp_size--;
 	   if (negate < 0L) coeff->_mp_size = -coeff->_mp_size;	
 	   _F_mpz_demote_val(res->coeffs + i); // coeff may end up small
-		semaphore_down();
-	}
 	}
 	
 	i = short_length - 1;
@@ -2882,17 +2881,11 @@ void F_mpz_poly_unpack_bytes(F_mpz_poly_t res, F_mpz_poly_t poly, ulong n, ulong
     for (i = 0; i < length_max; i++)
 		F_mpz_zero(res->coeffs + i);
 
-	mp_limb_t * arr = flint_heap_alloc(16*limbs);
+	mp_limb_t * arr = flint_heap_alloc(limbs);
 	
-	semaphore_init();
-//#pragma omp parallel
-	{
-//#pragma omp for
 	for (long i = 0; i < poly->length; i+=2)
 	{
 		long j;
-		semaphore_up();
-		ulong k = omp_get_thread_num();
 		F_mpz_poly_t poly_r;
       int negate = 0;
 		if (F_mpz_sgn(poly->coeffs + i) < 0) negate = 1; 
@@ -2904,29 +2897,21 @@ void F_mpz_poly_unpack_bytes(F_mpz_poly_t res, F_mpz_poly_t poly, ulong n, ulong
 		if (negate) // negate if necessary
 		   for (j = 0; j < 2*n; j++) F_mpz_neg(poly_r->coeffs + j, poly_r->coeffs + j);
 		 
-		F_mpn_clear(arr + k*limbs, limbs);
+		F_mpn_clear(arr, limbs);
 		
-		F_mpz_get_limbs(arr + k*limbs, poly->coeffs + i);
+		F_mpz_get_limbs(arr, poly->coeffs + i);
 		
 		
-		F_mpz_poly_byte_unpack(poly_r, arr + k*limbs, 2*n, bytes);
+		F_mpz_poly_byte_unpack(poly_r, arr, 2*n, bytes);
 		
 
 		if (negate) // negate if necessary
 		   for (j = 0; j < 2*n; j++) F_mpz_neg(poly_r->coeffs + j, poly_r->coeffs + j);
-		semaphore_down();
-	}
 	}
 
-	semaphore_init();
-//#pragma omp parallel
-	{
-//#pragma omp for
 	for (long i = 1; i < poly->length; i+=2)
 	{
-		semaphore_up();
 		long j;
-		ulong k = omp_get_thread_num();
 		F_mpz_poly_t poly_r;
       int negate = 0;
 		if (F_mpz_sgn(poly->coeffs + i) < 0) negate = 1; 
@@ -2938,18 +2923,16 @@ void F_mpz_poly_unpack_bytes(F_mpz_poly_t res, F_mpz_poly_t poly, ulong n, ulong
 		if (negate) // negate existing coefficients then add to them
 			for (j = 0; j < 2*n; j++) F_mpz_neg(poly_r->coeffs + j, poly_r->coeffs + j);
 	    
-		F_mpn_clear(arr + k*limbs, limbs);
+		F_mpn_clear(arr, limbs);
 		
-		F_mpz_get_limbs(arr + k*limbs, poly->coeffs + i);
+		F_mpz_get_limbs(arr, poly->coeffs + i);
 		
 		
-		F_mpz_poly_byte_unpack(poly_r, arr + k*limbs, 2*n, bytes);
+		F_mpz_poly_byte_unpack(poly_r, arr, 2*n, bytes);
 		
 
 		if (negate) // then negate back if necessary
 		   for (j = 0; j < 2*n; j++) F_mpz_neg(poly_r->coeffs + j, poly_r->coeffs + j);
-		semaphore_down();
-	}
 	}
 
 	flint_heap_free(arr);
@@ -3670,6 +3653,9 @@ void F_mpz_poly_mul(F_mpz_poly_t res, F_mpz_poly_t poly1, F_mpz_poly_t poly2)
 
 ================================================================================*/
 
+#define FILES1 5
+#define FILES2 5
+
 /*
    Multiply two polynomials using the multimodular technique.
    This version requires an appropriate F_mpz_comb_t struct, already initialized with primes
@@ -3684,55 +3670,209 @@ void __F_mpz_poly_mul_modular_comb(F_mpz_poly_t output, F_mpz_poly_t poly1, F_mp
         return;
     }
 
-    // Multimodular reduction of poly1, place result into block1
+    ulong numprimes = comb->num_primes;
+	 ulong page_size = (ulong) sysconf (_SC_PAGESIZE);
+
+	 // Multimodular reduction of poly1, place result into block1
     ulong len1 = poly1->length;
-    ulong * block1 = flint_heap_alloc(len1 << comb->n);
-	 
-	 semaphore_init();
-	 printf("len1 = %ld\n", len1);
+	 ulong block1block = (len1+FILES1-1)/FILES1;
+	 ulong block1tail = len1 - block1block*(FILES1-1);
+    ulong filesize1 = (block1block << comb->n)*sizeof(ulong);
+	 filesize1 = ((filesize1+page_size-1)/page_size)*page_size;
+    ulong * block1map;
+	 char suff[30];
+
+	 int filer;
+	 int filer2;
+	 char filename[30];
+
+	 if (MUL_MOD_TRACE) printf("len1 = %ld\n", len1);
+
+	 ulong blocklen;
+
+	 for (ulong j = 0; j < FILES1; j++)
+	 {
+		 snprintf(suff, 20, "%ld", j);
+		 strcpy(filename, "/storage/block01file");
+		 filer = open(strcat(filename, suff), O_RDWR | O_CREAT | O_TRUNC, (mode_t)0600);
+		 lseek(filer, filesize1-1, SEEK_SET);
+		 int res = write(filer, "", 1);
+		 block1map = mmap(0, filesize1, PROT_READ | PROT_WRITE, MAP_SHARED, filer, 0);
+
+		 if (j == FILES1 - 1) blocklen = block1tail;
+		 else blocklen = block1block;
+
+       F_mpz ** comb_temp[MAX_SEM];
+       F_mpz_t temp[MAX_SEM];
+
+       for (ulong i = 0; i < MAX_SEM; i++) 
+       {
+          comb_temp[i] = F_mpz_comb_temp_init(comb);
+          F_mpz_init(temp[i]);
+       }
+       
+       semaphore_init();
 #pragma omp parallel
 	{		  
 #pragma omp for
-       for(long i = 0; i < len1; i++) 
+       for(long i = 0; i < blocklen; i++) 
 	    {
-          
-			 semaphore_up();
-			 F_mpz_multi_mod_ui(block1 + (i << comb->n), poly1->coeffs + i, comb);
+          semaphore_up();
+			 ulong v = omp_get_thread_num();
+			 ulong k = j*block1block;
+			 F_mpz_multi_mod_ui(block1map + (i << comb->n), poly1->coeffs + i+k, comb, comb_temp[v], temp[v]);
           semaphore_down();
 		 }
 	}
 
-	if ((poly1 != output) && (poly2 != poly1)) F_mpz_poly_clear(poly1);
+       for (ulong i = 0; i < MAX_SEM; i++) 
+       {
+          F_mpz_comb_temp_free(comb, comb_temp[i]);
+          F_mpz_clear(temp[i]);
+       }
+       
+	    munmap(block1map, filesize1);
+	    close(filer);
+	 }
 
 	if (MUL_MOD_TRACE) printf("Multimodular reduction of poly1 done\n");
-    // Multimodular reduction of poly2, place result into block2
+   
+   _F_mpz_cleanup2();
+
+	if ((poly1 != output) && (poly2 != poly1)) F_mpz_poly_clear(poly1);
+
+	ulong * block0map;
+
+	for (ulong k = 0; k < FILES1; k++)
+	{
+		 if (k == FILES1 - 1) blocklen = block1tail;
+		 else blocklen = block1block;
+
+		 snprintf(suff, 20, "%ld", k);
+		 strcpy(filename, "/storage/block01file");
+		 filer = open(strcat(filename, suff), O_RDONLY);
+       block0map = mmap(0, filesize1, PROT_READ, MAP_SHARED, filer, 0);
+
+       strcpy(filename, "/storage/block1file");
+		 filer2 = open(strcat(filename, suff), O_RDWR | O_CREAT | O_TRUNC, (mode_t)0600);
+		 lseek(filer2, filesize1-1, SEEK_SET);
+		 int res = write(filer2, "", 1);
+		 block1map = mmap(0, filesize1, PROT_READ | PROT_WRITE, MAP_SHARED, filer2, 0);
+
+#pragma omp parallel
+	   {		  
+#pragma omp for
+       for (long i = 0; i < blocklen; i++)
+		 {
+			 for (ulong j = 0; j < numprimes; j++)
+				 block1map[i + j*block1block] = block0map[j + (i<<comb->n)];
+		 }
+		}
+
+		 munmap(block0map, filesize1);
+       close(filer);
+		 munmap(block1map, filesize1);
+		 close(filer2);
+	}
+ 
+	if (MUL_MOD_TRACE) printf("Transpose of poly1 done\n");
+    
+	 // Multimodular reduction of poly2, place result into block2
     ulong len2 = poly2->length;
-    ulong * block2 = flint_heap_alloc(len2 << comb->n);
+    ulong block2block = (len2+FILES1-1)/FILES1;
+	 ulong block2tail = len2 - block2block*(FILES1-1);
+    ulong filesize2 = (block2block << comb->n)*sizeof(ulong);
+	 filesize2 = ((filesize2+page_size-1)/page_size)*page_size;
+    ulong * block2map;
+	 
+	 for (ulong j = 0; j < FILES1; j++)
+	 {
+		 snprintf(suff, 20, "%ld", j);
+		 strcpy(filename, "/storage/block02file");
+		 filer = open(strcat(filename, suff), O_RDWR | O_CREAT | O_TRUNC, (mode_t)0600);
+		 lseek(filer, filesize2-1, SEEK_SET);
+		 int res = write(filer, "", 1);
+		 block2map = mmap(0, filesize2, PROT_READ | PROT_WRITE, MAP_SHARED, filer, 0);
+
+		 if (j == FILES1 - 1) blocklen = block2tail;
+		 else blocklen = block2block;
+
+       semaphore_init();
+	
+       F_mpz ** comb_temp[MAX_SEM];
+       F_mpz_t temp[MAX_SEM];
+
+       for (ulong i = 0; i < MAX_SEM; i++) 
+       {
+          comb_temp[i] = F_mpz_comb_temp_init(comb);
+          F_mpz_init(temp[i]);
+       }
 
 #pragma omp parallel
 	{		  
 #pragma omp for
-       for(long i = 0; i < len2; i++)
-	   {
+       for(long i = 0; i < blocklen; i++) 
+	    {
           semaphore_up();
-			 F_mpz_multi_mod_ui(block2 + (i << comb->n), poly2->coeffs + i, comb);
+			 ulong v = omp_get_thread_num();
+			 ulong k = j*block2block;
+			 F_mpz_multi_mod_ui(block2map + (i << comb->n), poly2->coeffs + i+k, comb, comb_temp[v], temp[v]);
           semaphore_down();
-	   }
+		 }
 	}
+
+       for (ulong i = 0; i < MAX_SEM; i++) 
+       {
+          F_mpz_comb_temp_free(comb, comb_temp[i]);
+          F_mpz_clear(temp[i]);
+       }
+       
+	    munmap(block2map, filesize2);
+	    close(filer);
+	 }
     
-	if (poly2 != output) F_mpz_poly_clear(poly2);
-#pragma omp parallel
-	{		  
-#pragma omp for
-       for(long i = 0; i < 16; i++)
-      	_F_mpz_cleanup2();
-	}
+   if (poly2 != output) F_mpz_poly_clear(poly2);
+   
+	_F_mpz_cleanup2();
 
 	if (MUL_MOD_TRACE) printf("Multimodular reduction of poly2 done\n");
+
+	for (ulong k = 0; k < FILES1; k++)
+	{
+		 if (k == FILES1 - 1) blocklen = block2tail;
+		 else blocklen = block2block;
+
+		 snprintf(suff, 20, "%ld", k);
+		 strcpy(filename, "/storage/block02file");
+		 filer = open(strcat(filename, suff), O_RDONLY);
+       block0map = mmap(0, filesize2, PROT_READ, MAP_SHARED, filer, 0);
+
+       strcpy(filename, "/storage/block2file");
+		 filer2 = open(strcat(filename, suff), O_RDWR | O_CREAT | O_TRUNC, (mode_t)0600);
+		 lseek(filer2, filesize2-1, SEEK_SET);
+		 int res = write(filer2, "", 1);
+		 block2map = mmap(0, filesize2, PROT_READ | PROT_WRITE, MAP_SHARED, filer2, 0);
+
+#pragma omp parallel
+	   {		  
+#pragma omp for
+       for (long i = 0; i < blocklen; i++)
+		 {
+			 for (ulong j = 0; j < numprimes; j++)
+				 block2map[i + j*block2block] = block0map[j + (i<<comb->n)];
+		 }
+		}
+
+		 munmap(block0map, filesize2);
+       close(filer);
+		 munmap(block2map, filesize2);
+		 close(filer2);
+	}
+ 
+	if (MUL_MOD_TRACE) printf("Transpose of poly2 done\n");
     
     // initialise space for transposed output coefficients
-	ulong len_out = len1 + len2 - 1;
-    ulong * block_out = flint_heap_alloc(trunc << comb->n);
+	 ulong len_out = len1 + len2 - 1;
 
     // Inputs for zn_array_mul (we deal with 16 primes at a time)
     ulong * in1 = flint_heap_alloc(len1*16);
@@ -3741,33 +3881,93 @@ void __F_mpz_poly_mul_modular_comb(F_mpz_poly_t output, F_mpz_poly_t poly1, F_mp
     // Output for zn_array_mul
     ulong * out = flint_heap_alloc(len_out*16);
 
-    ulong numprimes = comb->num_primes;
+	 ulong block3block;
+	 ulong block3tail;
+    ulong filesize3;
+    ulong * block3map;
 
     ulong i = 0;
+	
 	for(i = 0; i + 16 <= numprimes; i+= 16) 
 	{
-       // in1 := poly1 % comb->primes[i]
+ 
+	 if (MUL_MOD_TRACE) printf("%ld/%ld primes...\n", i, numprimes);
+	 // in1 := poly1 % comb->primes[i]
+		
+	 for (ulong k = 0; k < FILES1; k++)
+	 {
+		 if (k == FILES1 - 1) blocklen = block1tail;
+		 else blocklen = block1block;
+
+		 snprintf(suff, 20, "%ld", k);
+		 strcpy(filename, "/storage/block1file");
+		 filer = open(strcat(filename, suff), O_RDONLY);
+		 ulong size = 16*block1block*sizeof(ulong);
+		 ulong wanted_offset = i*block1block*sizeof(ulong);
+		 ulong offset = (wanted_offset/page_size)*page_size;
+       ulong diff = wanted_offset - offset;
+		 block1map = mmap(0, size + diff, PROT_READ, MAP_SHARED, filer, offset);
+		 diff = diff/sizeof(ulong);
+		 block1map += diff;
+
 #pragma omp parallel
 	   {		  
 #pragma omp for
-          for(long j = 0; j < len1; j++) 
+          for(long j = 0; j < blocklen; j++) 
 	      {
              for (ulong s = 0; s < 16; s++)
-		        in1[j + s*len1] = block1[i + s + (j << comb->n)];
+				 {
+		          ulong l = k*block1block;
+					 in1[(j + l) + s*len1] = block1map[j + s*block1block];
+				 }
           }
 	   }
-        
+      
+		block1map -= diff;
+		diff = diff*sizeof(ulong);
+		munmap(block1map, size + diff);
+	   close(filer);
+
+	 }
+	   
 	   // in2 := poly2 % comb->primes[i]
+
+	 for (ulong k = 0; k < FILES1; k++)
+	 {
+		 if (k == FILES1 - 1) blocklen = block2tail;
+		 else blocklen = block2block;
+
+		 snprintf(suff, 20, "%ld", k);
+		 strcpy(filename, "/storage/block2file");
+		 filer = open(strcat(filename, suff), O_RDONLY);
+       ulong size = 16*block2block*sizeof(ulong);
+		 ulong wanted_offset = i*block2block*sizeof(ulong);
+		 ulong offset = (wanted_offset/page_size)*page_size;
+       ulong diff = wanted_offset - offset;
+		 block2map = mmap(0, size + diff, PROT_READ, MAP_SHARED, filer, offset);
+       diff = diff/sizeof(ulong);
+		 block2map += diff;
+
 #pragma omp parallel
 	   {		  
 #pragma omp for
-          for(long j = 0; j < len2; j++) 
-		  {
+          for(long j = 0; j < blocklen; j++) 
+	      {
              for (ulong s = 0; s < 16; s++)
-			    in2[j + s*len2] = block2[i + s + (j << comb->n)];
+				 {
+		          ulong l = k*block2block;
+					 in2[(j + l) + s*len2] = block2map[j + s*block2block];
+				 }
           }
 	   }
 
+		block2map -= diff;
+		diff = diff*sizeof(ulong);
+		munmap(block2map, size + diff);
+	   close(filer);
+
+	 }
+    
        // multiply using zn_poly (requires len1>=len2>=1)
 #pragma omp parallel
 	   {		  
@@ -3780,81 +3980,154 @@ void __F_mpz_poly_mul_modular_comb(F_mpz_poly_t output, F_mpz_poly_t poly1, F_mp
                 zn_array_mul(out + s*len_out, in2 + s*len2, len2, in1 + s*len1, len1, comb->mod[i + s]);
 		  }
 	   }
-		  
-	   // place result in block_out transposing
-#pragma omp parallel
-	   {		  
-#pragma omp for
-          for (long j = 0; j < trunc; j++) 
-		  {
-             for (ulong s = 0; s < 16; s++)
-			    block_out[i + s + (j << comb->n)] = out[j + s*len_out];
-          }
-	   }     
-    }
-	
-	/*// deal with final iterations
-	for( ; i < numprimes; i++) 
-	{
-       // in1 := poly1 % comb->primes[i]
-#pragma omp parallel
-	   {		  
-#pragma omp for
-       for(long j = 0; j < len1; j++) 
-	      in1[j] = block1[i + (j << comb->n)];
-	   }
+		 
+		block3block = (trunc+FILES2-1)/FILES2;
+	   block3tail = trunc - block3block*(FILES2-1);
+      filesize3 = (block3block << comb->n)*sizeof(ulong);
+		filesize3 = ((filesize3+page_size-1)/page_size)*page_size;
+      
+	   for (ulong k = 0; k < FILES2; k++)
+	   {
+		   if (k == FILES2 - 1) blocklen = block3tail;
+		   else blocklen = block3block;
+			
+			snprintf(suff, 20, "%ld", k);
+		   strcpy(filename, "/storage/block3file");
+		   if (i == 0) 
+			{
+				filer = open(strcat(filename, suff), O_RDWR | O_CREAT | O_TRUNC, (mode_t)0600);
+		      lseek(filer, filesize3-1, SEEK_SET);
+		      int res = write(filer, "", 1);
+			} else
+				filer = open(strcat(filename, suff), O_RDWR, (mode_t)0600);
+			ulong size = 16*sizeof(ulong)*block3block;
+			ulong wanted_offset = i*sizeof(ulong)*block3block;
+		   ulong offset = (wanted_offset/page_size)*page_size;
+         ulong diff = wanted_offset - offset;
+		   block3map = mmap(0, size + diff, PROT_READ | PROT_WRITE, MAP_SHARED, filer, offset);
+         diff = diff/sizeof(ulong);
+			block3map += diff;
 
-       // in2 := poly2 % comb->primes[i]
+			ulong l = k*block3block;
+			   
+	   // place result in block_out
 #pragma omp parallel
 	   {		  
 #pragma omp for
-       for(ulong j = 0; j < len2; j++) 
-		   in2[j] = block2[i + (j << comb->n)];
-	   }
+         for (long j = 0; j < blocklen; j++) 
+		   {
+            for (ulong s = 0; s < 16; s++)
+			   block3map[j + s*block3block] = out[l + j + s*len_out];
+         }
+	   }   
 
-       // multiply using zn_poly (requires len1>=len2>=1)
-       if(len1 >= len2)
-          zn_array_mul(out, in1, len1, in2, len2, comb->mod[i]);
-       else
-          zn_array_mul(out, in2, len2, in1, len1, comb->mod[i]);
-        
-	   // place result in block_out transposing
- #pragma omp parallel
-	   {		  
-#pragma omp for
-      for(ulong j = 0; j < trunc; j++) 
-		  block_out[i + (j << comb->n)] = out[j];
-	   }
-    }*/
-  
-	flint_heap_free(block1);
-    flint_heap_free(block2);
-    flint_heap_free(in1);
-    flint_heap_free(in2);
-    flint_heap_free(out);
+		   block3map -= diff;
+			diff = diff*sizeof(ulong);
+		   munmap(block3map, size+diff);
+	      close(filer);
+		}
+
+   }
+
+	flint_heap_free(in1);
+   flint_heap_free(in2);
+   flint_heap_free(out);
+
+	// transpose disk files (currently each file has block3block across and 2^ceil_log2(num_primes) down)
 
 	if (MUL_MOD_TRACE) printf("Multimodular multiplications done, trunc = %ld\n", trunc);
    
-	semaphore_init();
-    // Reconstruct output from data in block_out
+	ulong * block4map;
+
+	for (ulong k = 0; k < FILES2; k++)
+	{
+		 if (k == FILES2 - 1) blocklen = block3tail;
+		 else blocklen = block3block;
+
+		 snprintf(suff, 20, "%ld", k);
+		 strcpy(filename, "/storage/block3file");
+		 filer = open(strcat(filename, suff), O_RDONLY);
+       block3map = mmap(0, filesize3, PROT_READ, MAP_SHARED, filer, 0);
+
+       strcpy(filename, "/storage/block4file");
+		 filer2 = open(strcat(filename, suff), O_RDWR | O_CREAT | O_TRUNC, (mode_t)0600);
+		 lseek(filer2, filesize3-1, SEEK_SET);
+		 int res = write(filer2, "", 1);
+		 block4map = mmap(0, filesize3, PROT_READ | PROT_WRITE, MAP_SHARED, filer2, 0);
+
+#pragma omp parallel
+	   {		  
+#pragma omp for
+       for (long i = 0; i < blocklen; i++)
+		 {
+			 for (ulong j = 0; j < numprimes; j++)
+				 block4map[j + (i<<comb->n)] = block3map[i + j*block3block];
+		 }
+		}
+
+		 munmap(block3map, filesize3);
+       close(filer);
+		 munmap(block4map, filesize3);
+		 close(filer2);
+	}
+
+	if (MUL_MOD_TRACE) printf("Final transpose done, trunc = %ld\n", trunc);
+   
+	// Reconstruct output from data in block_out
+
+	for (ulong k = 0; k < FILES2; k++)
+	{
+		 if (k == FILES2 - 1) blocklen = block3tail;
+		 else blocklen = block3block;
+
+		 snprintf(suff, 20, "%ld", k);
+		 strcpy(filename, "/storage/block4file");
+		 filer = open(strcat(filename, suff), O_RDONLY);
+       block3map = mmap(0, filesize3, PROT_READ, MAP_SHARED, filer, 0);
+		 ulong l = k*block3block;
+
+       F_mpz ** comb_temp[MAX_SEM];
+       F_mpz_t temp[MAX_SEM];
+       F_mpz_t temp2[MAX_SEM];
+
+       for (ulong i = 0; i < MAX_SEM; i++) 
+       {
+          comb_temp[i] = F_mpz_comb_temp_init(comb);
+          F_mpz_init(temp[i]);
+          F_mpz_init(temp2[i]);
+       }
+       
+       semaphore_init();
+   
 #pragma omp parallel
 	{		  
 #pragma omp for
-      for(long i = 0; i < trunc; i++) 
+      for(long i = 0; i < blocklen; i++) 
 	   {
 	      semaphore_up();
-			F_mpz_multi_CRT_ui(output->coeffs + i, block_out + (i << comb->n), comb);
+			ulong v = omp_get_thread_num();
+         F_mpz_multi_CRT_ui(output->coeffs + l + i, block3map + (i << comb->n), comb, comb_temp[v], temp[v], temp2[v]);
 			semaphore_down();
 	   }
     }
-    
+	   
+       for (ulong i = 0; i < MAX_SEM; i++) 
+       {
+          F_mpz_comb_temp_free(comb, comb_temp[i]);
+          F_mpz_clear(temp[i]);
+          F_mpz_clear(temp2[i]);
+       }
+       
+	   munmap(block3map, filesize3);
+	   close(filer);
+	}
+   
 	if (MUL_MOD_TRACE) printf("Multimodular reconstruction done\n");
+	 
+   _F_mpz_cleanup2();
 
-    output->length = trunc;
-    _F_mpz_poly_normalise(output);
-    
-	// Free all stuff
-    flint_heap_free(block_out);
+   output->length = trunc;
+   _F_mpz_poly_normalise(output);
 }
 
 void _F_mpz_poly_mul_modular(F_mpz_poly_t output, F_mpz_poly_t poly1, 
@@ -3961,11 +4234,11 @@ void F_mpz_poly_mul_modular_packed(F_mpz_poly_t output, F_mpz_poly_t poly1,
     F_mpz_poly_pack_bytes(p2, poly2, n, bytes);
          
 	F_mpz_poly_mul_modular(out, p1, p2, 0);
-	printf("Done mul_modular\n");
+	if (MUL_MOD_TRACE) printf("Done mul_modular\n");
 	
 	F_mpz_poly_unpack_bytes(output, out, n, bytes);
    F_mpz_poly_clear(out);
-	printf("Done unpack bytes\n");
+	if (MUL_MOD_TRACE) printf("Done unpack bytes\n");
 	
 }
 

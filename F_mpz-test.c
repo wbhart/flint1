@@ -2649,14 +2649,24 @@ int test_F_mpz_multi_CRT_ui_unsigned()
 
      F_mpz_comb_t comb;
      F_mpz_comb_init(comb, primes, num_primes);
-     F_mpz_multi_mod_ui(output, input, comb);
-      
+     
+     F_mpz ** comb_temp = F_mpz_comb_temp_init(comb);
+     F_mpz_t temp1, temp2;
+     F_mpz_init(temp1);
+     F_mpz_init(temp2);
+
+     F_mpz_multi_mod_ui(output, input, comb, comb_temp, temp1);
+     
      F_mpz_t temp;
 	  F_mpz_init(temp);
 
-     F_mpz_multi_CRT_ui_unsigned(temp, output, comb);
+     F_mpz_multi_CRT_ui_unsigned(temp, output, comb, comb_temp, temp1, temp2);
      result &= F_mpz_equal(temp, input);
-      
+     
+     F_mpz_comb_temp_free(comb, comb_temp);
+     F_mpz_clear(temp1);
+     F_mpz_clear(temp2);
+
      for (ulong k = 0; k < num_primes; k++)
      {
         output2[k] = F_mpz_mod_ui(temp, input, primes[k]);
@@ -2722,16 +2732,27 @@ int test_F_mpz_multi_CRT_ui()
      output = (ulong *) flint_heap_alloc(num_primes);
      output2 = (ulong *) flint_heap_alloc(num_primes);
 
+     
      F_mpz_comb_t comb;
      F_mpz_comb_init(comb, primes, num_primes);
-     F_mpz_multi_mod_ui(output, input, comb);
+     
+     F_mpz ** comb_temp = F_mpz_comb_temp_init(comb);
+     F_mpz_t temp1, temp2;
+     F_mpz_init(temp1);
+     F_mpz_init(temp2);
+
+     F_mpz_multi_mod_ui(output, input, comb, comb_temp, temp1);
       
      F_mpz_t temp;
 	  F_mpz_init(temp);
 
-     F_mpz_multi_CRT_ui(temp, output, comb);
+     F_mpz_multi_CRT_ui(temp, output, comb, comb_temp, temp1, temp2);
      result &= F_mpz_equal(temp, input);
       
+     F_mpz_comb_temp_free(comb, comb_temp);
+     F_mpz_clear(temp1);
+     F_mpz_clear(temp2);
+
 	  if (!result)
 	  {
 		  printf("Error: bits = %ld, num_primes = %ld\n", bits, num_primes);
@@ -2773,46 +2794,15 @@ void F_mpz_poly_test_all()
 
 #if TESTFILE
 #endif
-#pragma omp parallel sections
-	{
-#pragma omp section
-	{
 	RUN_TEST(F_mpz_getset_ui); 
-	}
-#pragma omp section
-	{
    RUN_TEST(F_mpz_getset_si); 
-	}
-#pragma omp section
-	{
 	RUN_TEST(F_mpz_getset_mpz); 
-	}
-#pragma omp section
-	{
    RUN_TEST(F_mpz_getset_limbs); 
-	}
-#pragma omp section
-	{
    RUN_TEST(F_mpz_get_d_2exp); 
-	}
-#pragma omp section
-	{
    RUN_TEST(F_mpz_set); 
-	}
-#pragma omp section
-	{
    RUN_TEST(F_mpz_equal); 
-	}
-#pragma omp section
-	{
    RUN_TEST(F_mpz_swap); 
-	}
-#pragma omp section
-	{
    RUN_TEST(F_mpz_neg); 
-	}
-#pragma omp section
-	{
    RUN_TEST(F_mpz_abs); 
    RUN_TEST(F_mpz_add); 
    RUN_TEST(F_mpz_sub); 
@@ -2839,8 +2829,6 @@ void F_mpz_poly_test_all()
    RUN_TEST(F_mpz_comb_init_clear); 
 	RUN_TEST(F_mpz_multi_CRT_ui_unsigned);
 	RUN_TEST(F_mpz_multi_CRT_ui);
-	}
-	}
 	
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");

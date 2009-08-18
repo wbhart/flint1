@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <gmp.h>
 #include <pthread.h>
+#include <omp.h>
 
 #include "flint.h"
 #include "mpn_extras.h"
@@ -53,14 +54,12 @@ ulong F_mpz_allocated;
 
 // An array of indices of mpz's which are not being used presently. These are stored with the second
 // most significant bit set so that they are a valid index as per the F_mpz_t type below.
-__thread F_mpz * F_mpz_unused_arr;
+F_mpz * F_mpz_unused_arr[MAX_SEM];
 
 // The number of mpz's not being used presently
-__thread ulong F_mpz_num_unused = 0;
+ulong F_mpz_num_unused[MAX_SEM];
 
-#define MAX_SEM 16 
-
-int sem;
+int sem = 1;
 pthread_mutex_t sem_mutex;
 pthread_mutex_t sem_acquire_mutex;
 
@@ -113,65 +112,80 @@ void semaphore_release(void)
 
 F_mpz _F_mpz_new_mpz(void)
 {
-	if (!F_mpz_num_unused) // time to allocate MPZ_BLOCK more mpz_t's
+	ulong k = omp_get_thread_num();
+	if (!F_mpz_num_unused[k]) // time to allocate MPZ_BLOCK more mpz_t's
 	{
 	   semaphore_down();
 	   semaphore_acquire();
 	   if (F_mpz_allocated) // realloc mpz_t's and unused array
 		{
 			F_mpz_arr = (__mpz_struct *) flint_heap_realloc_bytes(F_mpz_arr, (F_mpz_allocated + MPZ_BLOCK)*sizeof(__mpz_struct));
-			F_mpz_unused_arr = (F_mpz *) flint_heap_realloc_bytes(F_mpz_unused_arr, (F_mpz_allocated + MPZ_BLOCK)*sizeof(F_mpz));
+			for (ulong i = 0; i < MAX_SEM; i++) 
+			{
+			   F_mpz_unused_arr[i] = (F_mpz *) flint_heap_realloc_bytes(F_mpz_unused_arr[i], (F_mpz_allocated + MPZ_BLOCK)*sizeof(F_mpz));
+			}
 		} else // first time alloc of mpz_t's and unused array
 		{
 			F_mpz_arr = (__mpz_struct*) flint_heap_alloc_bytes(MPZ_BLOCK*sizeof(__mpz_struct));	
-			F_mpz_unused_arr = (F_mpz *) flint_heap_alloc_bytes(MPZ_BLOCK*sizeof(F_mpz));
+			for (ulong i = 0; i < MAX_SEM; i++) 
+			{
+				F_mpz_unused_arr[i] = (F_mpz *) flint_heap_alloc_bytes(MPZ_BLOCK*sizeof(F_mpz));
+			   F_mpz_num_unused[i] = 0;
+			}
 		}
 		
 		// initialise the new mpz_t's and unused array
 		for (ulong i = 0; i < MPZ_BLOCK; i++)
 		{
 			mpz_init(F_mpz_arr + F_mpz_allocated + i);
-			F_mpz_unused_arr[F_mpz_num_unused] = OFF_TO_COEFF(F_mpz_allocated + i);
-         F_mpz_num_unused++;
+			F_mpz_unused_arr[k][F_mpz_num_unused[k]] = OFF_TO_COEFF(F_mpz_allocated + i);
+         F_mpz_num_unused[k]++;
 		}
+		F_mpz_allocated += MPZ_BLOCK;
 	   semaphore_release();
       
-		F_mpz_num_unused--;
-		F_mpz_allocated += MPZ_BLOCK;
+		F_mpz_num_unused[k]--;
 	} else // unused mpz's are available
 	{
-		F_mpz_num_unused--;
+		F_mpz_num_unused[k]--;
 	}
-	F_mpz ret = F_mpz_unused_arr[F_mpz_num_unused];
+	F_mpz ret = F_mpz_unused_arr[k][F_mpz_num_unused[k]];
 	
 	return ret;
 }
 
 void _F_mpz_clear_mpz(F_mpz f)
 {
-   F_mpz_unused_arr[F_mpz_num_unused] = f;
-   F_mpz_num_unused++;	
+   ulong k = omp_get_thread_num();
+	F_mpz_unused_arr[k][F_mpz_num_unused[k]] = f;
+   F_mpz_num_unused[k]++;	
 }
 
 void _F_mpz_cleanup(void)
 {
-	if (sem != 0) printf("Warning: unbalanced semaphores, sem = %d\n", sem);
-	for (ulong i = 0; i < F_mpz_num_unused; i++)
+	for (ulong k = 0; k < MAX_SEM; k++)
 	{
-		mpz_clear(F_mpz_arr + COEFF_TO_OFF(F_mpz_unused_arr[i]));
+		for (long i = 0; i < F_mpz_num_unused[k]; i++)
+	   {
+		   mpz_clear(F_mpz_arr + COEFF_TO_OFF(F_mpz_unused_arr[k][i]));
+	   }
 	}
 	
-	if (F_mpz_num_unused) free(F_mpz_unused_arr);
+   for(long k = 0; k < MAX_SEM; k++)
+      if (F_mpz_num_unused[k]) free(F_mpz_unused_arr[k]);
 	if (F_mpz_allocated) free(F_mpz_arr);
 }
 
 void _F_mpz_cleanup2(void)
 {
-	for (ulong i = 0; i < F_mpz_num_unused; i++)
+	for (ulong k = 0; k < MAX_SEM; k++)
 	{
-		mpz_clear(F_mpz_arr + COEFF_TO_OFF(F_mpz_unused_arr[i]));
+		for (long i = 0; i < F_mpz_num_unused[k]; i++)
+	   {
+		   mpz_clear(F_mpz_arr + COEFF_TO_OFF(F_mpz_unused_arr[k][i]));
+	   }
+	   F_mpz_num_unused[k] = 0;
 	}
-	F_mpz_num_unused = 0;
 }
 
 /*===============================================================================
@@ -248,7 +262,7 @@ void F_mpz_init2(F_mpz_t f, ulong limbs)
 		return;
 	} else 
 	{
-		*f = 0;
+		(*f) = 0L;
 		return;
 	}
 }
@@ -1705,20 +1719,15 @@ void F_mpz_comb_clear(F_mpz_comb_t comb)
 }
 
 void F_mpz_multi_mod_ui_basecase(ulong * out, F_mpz_t in, 
-                               ulong * primes, ulong num_primes)
+                               ulong * primes, ulong num_primes, F_mpz_t temp)
 {
-   F_mpz_t temp;
-	F_mpz_init(temp);
-	
-	for (ulong i = 0; i < num_primes; i++)
+   for (ulong i = 0; i < num_primes; i++)
    {
       out[i] = F_mpz_mod_ui(temp, in, primes[i]);
    }
-
-	F_mpz_clear(temp);
 }
 
-void F_mpz_multi_mod_ui(ulong * out, F_mpz_t in, F_mpz_comb_t comb)
+void F_mpz_multi_mod_ui(ulong * out, F_mpz_t in, F_mpz_comb_t comb, F_mpz ** comb_temp, F_mpz_t temp)
 {
    ulong i, j, k;
    ulong n = comb->n;
@@ -1736,22 +1745,6 @@ void F_mpz_multi_mod_ui(ulong * out, F_mpz_t in, F_mpz_comb_t comb)
 
    log_comb = n - 1;
    
-	// allocate space for temp
-	F_mpz ** temp = (F_mpz **) flint_heap_alloc(n);
-   j = (1L << (n - 1));
-   
-   for (i = 0; i < n; i++)
-   {
-      temp[i] = (F_mpz *) flint_heap_alloc(j);
-
-      for (k = 0; k < j; k++)
-      {
-         F_mpz_init(temp[i] + k);
-      }
-
-      j/=2;
-   }
-
    // find level in comb with entries bigger than the input integer
 	log_comb = 0;
 	if ((*in) < 0L)
@@ -1763,7 +1756,7 @@ void F_mpz_multi_mod_ui(ulong * out, F_mpz_t in, F_mpz_comb_t comb)
 	// set each entry of this level of temp to the input integer
 	for (i = 0; i < num; i++)
    {
-      F_mpz_set(temp[log_comb] + i, in);
+      F_mpz_set(comb_temp[log_comb] + i, in);
    }
    log_comb--;
    num *= 2;
@@ -1773,8 +1766,8 @@ void F_mpz_multi_mod_ui(ulong * out, F_mpz_t in, F_mpz_comb_t comb)
    {
       for (i = 0, j = 0; i < num; i += 2, j++)
       {
-         F_mpz_mod(temp[log_comb] + i, temp[log_comb + 1] + j, comb->comb[log_comb] + i);
-         F_mpz_mod(temp[log_comb] + i + 1, temp[log_comb + 1] + j, comb->comb[log_comb] + i + 1);
+         F_mpz_mod(comb_temp[log_comb] + i, comb_temp[log_comb + 1] + j, comb->comb[log_comb] + i);
+         F_mpz_mod(comb_temp[log_comb] + i + 1, comb_temp[log_comb + 1] + j, comb->comb[log_comb] + i + 1);
       }
       num *= 2;
       log_comb--;
@@ -1786,28 +1779,11 @@ void F_mpz_multi_mod_ui(ulong * out, F_mpz_t in, F_mpz_comb_t comb)
    ulong stride = (1L << (log_comb + 1));
    for (i = 0, j = 0; j < num_primes; i++, j += stride)
    {
-	   F_mpz_multi_mod_ui_basecase(out + j, temp[log_comb] + i, comb->primes + j, FLINT_MIN(stride, num_primes - j));
+	   F_mpz_multi_mod_ui_basecase(out + j, comb_temp[log_comb] + i, comb->primes + j, FLINT_MIN(stride, num_primes - j), temp);
    }
-
-	// free temp
-	j = (1L << (n - 1));
-   
-   for (i = 0; i < n; i++)
-   {
-      for (k = 0; k < j; k++)
-      {
-         F_mpz_clear(temp[i] + k);
-      }
-      
-		flint_heap_free(temp[i]);
-      
-		j/=2;
-   }
-	
-	flint_heap_free(temp);
 }
 
-void __F_mpz_multi_CRT_ui_sign(F_mpz_t output, F_mpz_t input, F_mpz_comb_t comb)
+void __F_mpz_multi_CRT_ui_sign(F_mpz_t output, F_mpz_t input, F_mpz_comb_t comb, F_mpz_t temp)
 {
    ulong n = comb->n;
    if (n == 0L) 
@@ -1824,19 +1800,59 @@ void __F_mpz_multi_CRT_ui_sign(F_mpz_t output, F_mpz_t input, F_mpz_comb_t comb)
 	   return;
    }
 
-   F_mpz_t temp;
-	F_mpz_init(temp);
-	
    F_mpz_sub(temp, input, comb->comb[comb->n - 1]);
 	
    if (F_mpz_cmpabs(temp, input) <= 0) F_mpz_set(output, temp);
    else F_mpz_set(output, input);
 
-   F_mpz_clear(temp);
    return;
 }
 
-void __F_mpz_multi_CRT_ui(F_mpz_t output, ulong * residues, F_mpz_comb_t comb, int sign)
+F_mpz ** F_mpz_comb_temp_init(F_mpz_comb_t comb)
+{
+   // allocate space for comb_temp
+	ulong n = comb->n;
+   F_mpz ** comb_temp = (F_mpz **) flint_heap_alloc(n);
+   ulong j = (1L << (n - 1));
+   
+	for (ulong i = 0; i < n; i++)
+   {
+      comb_temp[i] = (F_mpz *) flint_heap_alloc(j);
+
+      for (ulong k = 0; k < j; k++)
+      {
+         F_mpz_init(comb_temp[i] + k);
+      }
+
+      j/=2;
+   }
+
+	return comb_temp;
+}
+
+void F_mpz_comb_temp_free(F_mpz_comb_t comb, F_mpz ** comb_temp)
+{
+	// free comb_temp
+	ulong n = comb->n;
+   ulong j = (1L << (n - 1));
+   
+	for (ulong i = 0; i < n; i++)
+   {
+      for (ulong k = 0; k < j; k++)
+      {
+         F_mpz_clear(comb_temp[i] + k);
+      }
+      
+		flint_heap_free(comb_temp[i]);
+
+      j/=2;
+   }
+   
+	flint_heap_free(comb_temp);
+}
+
+void __F_mpz_multi_CRT_ui(F_mpz_t output, ulong * residues, F_mpz_comb_t comb, 
+                          int sign, F_mpz ** comb_temp, F_mpz_t temp, F_mpz_t temp2)
 {
    ulong i, j, k;
 
@@ -1857,28 +1873,9 @@ void __F_mpz_multi_CRT_ui(F_mpz_t output, ulong * residues, F_mpz_comb_t comb, i
 		return;
 	}
 
-   // allocate space for comb_temp
-	F_mpz ** comb_temp = (F_mpz **) flint_heap_alloc(n);
-   j = (1L << (n - 1));
-   
-	for (i = 0; i < n; i++)
-   {
-      comb_temp[i] = (F_mpz *) flint_heap_alloc(j);
-
-      for (k = 0; k < j; k++)
-      {
-         F_mpz_init(comb_temp[i] + k);
-      }
-
-      j/=2;
-   }
-
-	// first layer of reconstruction
+   // first layer of reconstruction
 	num = (1L << n);
-   F_mpz_t temp, temp2;
-	F_mpz_init(temp);
-	F_mpz_init(temp2);
-	
+   
 	for (i = 0, j = 0; i + 2 <= num_primes; i += 2, j++)
    {
       F_mpz_set_ui(temp, residues[i]);
@@ -1919,37 +1916,19 @@ void __F_mpz_multi_CRT_ui(F_mpz_t output, ulong * residues, F_mpz_comb_t comb, i
       num /= 2; 
    }
 
-	F_mpz_clear(temp);
-   F_mpz_clear(temp2);
-
    // write out the output
-	if (sign) __F_mpz_multi_CRT_ui_sign(output, comb_temp[log_res - 1], comb);
+	if (sign) __F_mpz_multi_CRT_ui_sign(output, comb_temp[log_res - 1], comb, temp);
 	else F_mpz_set(output, comb_temp[log_res - 1]);
-
-	// free comb_temp
-	j = (1L << (n - 1));
-   
-	for (i = 0; i < n; i++)
-   {
-      for (k = 0; k < j; k++)
-      {
-         F_mpz_clear(comb_temp[i] + k);
-      }
-      
-		flint_heap_free(comb_temp[i]);
-
-      j/=2;
-   }
-   
-	flint_heap_free(comb_temp);
 }
 
-void F_mpz_multi_CRT_ui_unsigned(F_mpz_t output, ulong * residues, F_mpz_comb_t comb)
+void F_mpz_multi_CRT_ui_unsigned(F_mpz_t output, ulong * residues, 
+           F_mpz_comb_t comb, F_mpz ** comb_temp, F_mpz_t temp, F_mpz_t temp2)
 {
-	__F_mpz_multi_CRT_ui(output, residues, comb, 0);
+	__F_mpz_multi_CRT_ui(output, residues, comb, 0, comb_temp, temp, temp2);
 }
 
-void F_mpz_multi_CRT_ui(F_mpz_t output, ulong * residues, F_mpz_comb_t comb)
+void F_mpz_multi_CRT_ui(F_mpz_t output, ulong * residues, 
+            F_mpz_comb_t comb, F_mpz ** comb_temp, F_mpz_t temp, F_mpz_t temp2)
 {
-	__F_mpz_multi_CRT_ui(output, residues, comb, 1);
+	__F_mpz_multi_CRT_ui(output, residues, comb, 1, comb_temp, temp, temp2);
 }
