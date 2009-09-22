@@ -32,7 +32,8 @@ else
 	INCS = -I$(FLINT_GMP_INCLUDE_DIR) -I$(FLINT_NTL_INCLUDE_DIR)
 endif
 
-CFLAGS = $(INCS) $(FLINT_TUNE) -fopenmp -O2
+CFLAGS = $(INCS) $(FLINT_TUNE) -O2
+CFLAGS2 = $(INCS) $(FLINT_TUNE) -fopenmp -O2
 
 RM = rm -f
 
@@ -556,10 +557,10 @@ bernoulli_zmod: bernoulli_zmod.o $(FLINTOBJ)
 	$(CC) $(CFLAGS) -o bernoulli_zmod bernoulli_zmod.o $(FLINTOBJ) $(LIBS)
 
 thetaproduct.o: thetaproduct.c $(HEADERS)
-	$(CC) $(CFLAGS) $(WITH_ZNPOLY) -c thetaproduct.c -o thetaproduct.o
+	$(CC) $(CFLAGS2) $(WITH_ZNPOLY) -c thetaproduct.c -o thetaproduct.o
 
 thetaproduct: thetaproduct.o $(FLINTOBJ)
-	$(CC) $(CFLAGS) -o thetaproduct thetaproduct.o $(FLINTOBJ) $(LIBS)
+	$(CC) $(CFLAGS2) -o thetaproduct thetaproduct.o $(FLINTOBJ) $(LIBS)
 
 ####### Quadratic sieve
 
