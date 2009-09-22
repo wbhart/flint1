@@ -1995,6 +1995,15 @@ void F_mpz_rdiv_q(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
 Set \code{f} to \code{g} divided by \code{h}, rounded to nearest, ties rounded towards positive infinity.
 \end{quote}
 
+\subsection{Powering}
+
+\begin{lstlisting}
+void F_mpz_pow_ui(F_mpz_t f, const F_mpz_t g, const ulong exp)
+\end{lstlisting}
+\begin{quote}
+Set \code{f} to \code{g} to the power \code{exp}. If 0 is raised to the power 0, the result will be 1.
+\end{quote}
+
 \section{The zmod\_poly module}
 
 The \code{zmod_poly_t} data type represents elements of $\Z/n\Z[x]$ for some word sized integer $n$. Most of the functions work for an arbitrary $n$, however the division functions require the leading coefficient of the divisor polynomial to be invertible modulo $n$ and the factoring, gcd and resultant functions require $n$ to be prime.
