@@ -2882,25 +2882,22 @@ void __fmpz_poly_mul_modular_comb(fmpz_poly_t output, const fmpz_poly_t poly1, c
     // Multi-reduce poly1, place result into block1
     unsigned long len1 = poly1->length;
     unsigned long * block1 = flint_heap_alloc(len1 << comb->n);
-#pragma omp parallel
-	{		  
-#pragma omp for
+
+    fmpz_t ** comb_temp = fmpz_comb_temp_init(comb);
+
     for(long i = 0; i < len1; i++) {
         fmpz_multi_mod_ui(block1 + (i << comb->n),
-                _fmpz_poly_get_coeff_ptr(poly1, i), comb);
+                _fmpz_poly_get_coeff_ptr(poly1, i), comb, comb_temp);
     }
-	}
+
     // Multi-reduce poly2, place result into block2
     unsigned long len2 = poly2->length;
     unsigned long * block2 = flint_heap_alloc(len2 << comb->n);
-#pragma omp parallel
-	{		  
-#pragma omp for
+
     for(long i = 0; i < len2; i++) {
         fmpz_multi_mod_ui(block2 + (i << comb->n),
-                _fmpz_poly_get_coeff_ptr(poly2, i), comb);
+                _fmpz_poly_get_coeff_ptr(poly2, i), comb, comb_temp);
     }
-	}
     
     unsigned long len_out = len1 + len2 - 1;
     unsigned long * block_out = flint_heap_alloc(len_out << comb->n);
@@ -2997,16 +2994,14 @@ void __fmpz_poly_mul_modular_comb(fmpz_poly_t output, const fmpz_poly_t poly1, c
     //printf("reconstruct\n");
 	 
     // Reconstruct output from data in block_out
-#pragma omp parallel
-	{		  
-#pragma omp for
     for(int i = 0; i < len_out; i++) 
 	 {
         fmpz_t coeff = _fmpz_poly_get_coeff_ptr(output, i);
-        fmpz_multi_CRT_ui(coeff, block_out + (i << comb->n), comb);
+        fmpz_multi_CRT_ui(coeff, block_out + (i << comb->n), comb, comb_temp);
     }
-	}
     
+    fmpz_comb_temp_clear(comb_temp, comb);
+
     output->length = len_out;
     _fmpz_poly_normalise(output);
     // Free all stuff
@@ -3147,6 +3142,7 @@ void fmpz_poly_pack_bytes(fmpz_poly_t res, fmpz_poly_t poly, ulong n, ulong byte
 	}
 
 	_fmpz_poly_attach_shift(poly_p, poly, j);
+	_fmpz_poly_normalise(poly_p);
 	long negate = 1L;
 	if (poly_p->length)
 	{	
@@ -8403,7 +8399,10 @@ void fmpz_poly_pseudo_div_basecase(fmpz_poly_t Q, unsigned long * d,
          scale = 0; 
       } else 
       {   
-         _fmpz_poly_scalar_mul_fmpz(Q, Q, B_lead);
+         fmpz_poly_fit_limbs(Q, fmpz_poly_max_limbs(Q) + size_B_lead);
+		   _fmpz_poly_scalar_mul_fmpz(Q, Q, B_lead);
+         size_Q = Q->limbs+1;
+			coeff_Q = Q->coeffs+(R->length - B->length)*size_Q;
          fmpz_set(coeff_Q, coeff_R);
          scale = 1;
          (*d)++;

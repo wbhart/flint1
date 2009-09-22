@@ -378,17 +378,21 @@ void fmpz_CRT_ui2_precomp(fmpz_t out, fmpz_t r1, fmpz_t m1, unsigned long r2,
    fmpz_clear(sm1);
 }
 
+fmpz_t ** fmpz_comb_temp_init(fmpz_comb_t comb);
+
+fmpz_t ** fmpz_comb_temp_clear(fmpz_t ** temp, fmpz_comb_t comb);
+
 unsigned long fmpz_multi_mod_ui_basecase(unsigned long * out, fmpz_t in, 
                                unsigned long * primes, unsigned long num_primes);
 
-void fmpz_multi_mod_ui(unsigned long * out, fmpz_t in, fmpz_comb_t comb);
+void fmpz_multi_mod_ui(unsigned long * out, fmpz_t in, fmpz_comb_t comb, fmpz_t ** temp);
 
 void fmpz_multi_CRT_ui_unsigned(fmpz_t output, unsigned long * residues, fmpz_comb_t comb);
 
 void __fmpz_multi_CRT_sign(fmpz_t output, fmpz_t input, fmpz_comb_t comb);
 
-void fmpz_multi_CRT_ui(fmpz_t output, unsigned long * residues, fmpz_comb_t comb);
-        
+void fmpz_multi_CRT_ui(fmpz_t output, unsigned long * residues, fmpz_comb_t comb, fmpz_t ** comb_temp);
+
 #include "fmpz_montgomery.h"
 
 #ifdef __cplusplus
