@@ -14961,6 +14961,185 @@ int test_fmpz_poly_signature()
    return result;
 }
 
+int test_fmpz_poly_evaluate_mod()
+{
+	mpz_poly_t test_poly;
+	fmpz_poly_t test_fmpz_poly;
+	fmpz_t eval, val_fmpz;
+	ulong val_ulong, modulus;
+	ulong ev1, ev2;
+	double modinv;
+	unsigned long bits, modulus_bits, length;
+
+	mpz_poly_init(test_poly); 
+
+	for (unsigned long count1 = 0; (count1 < 300); count1++)
+	{
+		bits = random_ulong(200) + 1;
+
+		fmpz_poly_init(test_fmpz_poly);
+
+		for (unsigned long count2 = 0; (count2 < 10); count2++)
+		{ 
+			length = random_ulong(100);
+#if DEBUG
+			printf("%ld, %ld\n",length, bits);
+#endif
+			randpoly(test_poly, length, bits);
+
+#if DEBUG
+			mpz_poly_print_pretty(test_poly, "x");
+			printf("\n\n");
+#endif
+			mpz_poly_to_fmpz_poly(test_fmpz_poly, test_poly);
+
+
+			for (unsigned int j = 0; j < 10; ++j)
+			{ 
+				modulus_bits = randint(FLINT_BITS - 2) +2;
+
+				do {modulus = randint(l_shift(1L, modulus_bits));} while (modulus < 2);
+				val_ulong = random_ulong(modulus);
+
+				val_fmpz = fmpz_init(modulus_bits);
+				fmpz_set_ui(val_fmpz, val_ulong);
+
+				if (test_fmpz_poly->length)
+					eval = fmpz_init(test_fmpz_poly->limbs + (test_fmpz_poly->length - 1)*(modulus_bits/FLINT_BITS + 1));
+				else eval = fmpz_init(test_fmpz_poly->limbs);
+
+				fmpz_poly_evaluate(eval, test_fmpz_poly, val_fmpz);
+				ev1 = fmpz_mod_ui(eval, modulus);
+				modinv =  z_precompute_inverse(modulus);
+				ev2 = fmpz_poly_evaluate_mod(test_fmpz_poly, modulus, val_ulong, modinv);
+
+				if (ev1 != ev2) 
+				{
+					printf("length = %lu, bits = %lu, modulus_bits = %lu, val = %lu\n", length, bits, modulus_bits, val_ulong);
+					return 0;
+				}
+
+				fmpz_clear(eval);
+			}
+		}   
+
+		fmpz_poly_clear(test_fmpz_poly);
+	}
+
+	mpz_poly_clear(test_poly);
+
+	return 1;
+}
+
+// Tests both fmpz_poly_translate_mod_horner and zmod_poly_translate_horner
+int test_fmpz_poly_translate_mod_horner()
+{
+	mpz_poly_t test_poly;
+	fmpz_poly_t test_fmpz_poly, compose_fmpz_poly, eval_fmpz;
+	zmod_poly_t test_zmod_poly, compose_zmod_poly, eval, eval_mod;
+	ulong val_ulong, modulus;
+	ulong ev1, ev2;
+	double modinv;
+	unsigned long bits, modulus_bits, length;
+
+	mpz_poly_init(test_poly); 
+
+	for (unsigned long count1 = 0; (count1 < 300); count1++)
+	{
+		bits = random_ulong(200) + 1;
+
+		fmpz_poly_init(test_fmpz_poly);
+		fmpz_poly_init(compose_fmpz_poly);
+		fmpz_poly_init(eval_fmpz);
+		fmpz_poly_set_coeff_ui(compose_fmpz_poly, 1, 1);
+
+		for (unsigned long count2 = 0; (count2 < 10); count2++)
+		{ 
+			length = random_ulong(100);
+#if DEBUG
+			printf("%ld, %ld\n",length, bits);
+#endif
+			randpoly(test_poly, length, bits);
+
+#if DEBUG
+			mpz_poly_print_pretty(test_poly, "x");
+			printf("\n\n");
+#endif
+			mpz_poly_to_fmpz_poly(test_fmpz_poly, test_poly);
+
+
+			for (unsigned int j = 0; j < 10; ++j)
+			{ 
+				modulus_bits = randint(FLINT_BITS - 2) +2;
+				do {
+					modulus = randint(l_shift(1L,
+								modulus_bits));
+				} while (modulus < 2);
+				val_ulong = random_ulong(modulus);
+
+				zmod_poly_init2(compose_zmod_poly, modulus, 2);
+				zmod_poly_set_coeff_ui(compose_zmod_poly, 0,
+						val_ulong);
+				zmod_poly_set_coeff_ui(compose_zmod_poly, 1, 1);
+				fmpz_poly_set_coeff_ui(compose_fmpz_poly, 0,
+						val_ulong);
+
+				zmod_poly_init2(eval, modulus,
+						test_fmpz_poly->length +1);
+
+				fmpz_poly_compose(eval_fmpz, test_fmpz_poly,
+						compose_fmpz_poly);
+				zmod_poly_init2(eval_mod, modulus,
+						eval_fmpz->length);
+				fmpz_poly_to_zmod_poly(eval_mod, eval_fmpz);
+
+				fmpz_poly_translate_mod_horner(eval, 
+						 test_fmpz_poly,
+						 compose_zmod_poly);
+				if (!zmod_poly_equal(eval_mod, eval))
+				{
+					printf("result doesn't match fmpz compose!\n");
+					printf("length = %lu, bits = %lu, modulus_bits = %lu, val = %lu\n", length, bits, modulus_bits, val_ulong);
+					return 0;
+				}
+				zmod_poly_init2(test_zmod_poly, modulus,
+						test_fmpz_poly->length);
+				fmpz_poly_to_zmod_poly(test_zmod_poly,
+						test_fmpz_poly);
+				zmod_poly_compose(eval_mod, test_zmod_poly,
+ 						compose_zmod_poly);
+				if (!zmod_poly_equal(eval_mod, eval))
+				{
+					printf("result doesn't match zmod compose!\n");
+					printf("length = %lu, bits = %lu, modulus_bits = %lu, val = %lu\n", length, bits, modulus_bits, val_ulong);
+					return 0;
+				}
+
+				zmod_poly_translate_horner(eval_mod,
+						test_zmod_poly,
+						compose_zmod_poly);
+				if (!zmod_poly_equal(eval_mod, eval))
+				{
+					printf("result doesn't match zmod translate horner!\n");
+					printf("length = %lu, bits = %lu, modulus_bits = %lu, val = %lu\n", length, bits, modulus_bits, val_ulong);
+					return 0;
+				}
+				zmod_poly_clear(eval);
+				zmod_poly_clear(eval_mod);
+				zmod_poly_clear(test_zmod_poly);
+				zmod_poly_clear(compose_zmod_poly);
+			}
+		}   
+
+		fmpz_poly_clear(test_fmpz_poly);
+		fmpz_poly_clear(compose_fmpz_poly);
+	}
+
+	mpz_poly_clear(test_poly);
+
+	return 1;
+}
+
 void fmpz_poly_test_all()
 {
    int success, all_success = 1;
@@ -14970,18 +15149,6 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_poly_freadprint); 
 #endif
 		
-/*	omp_set_num_threads(10);
-
-#pragma omp parallel
-	{
-#pragma omp for
-		for (long i = 0; i < 10; i++)
-		{
-			RUN_TEST(fmpz_poly_xgcd);
-		}
-		FLINT_THREAD_CLEANUP
-	}*/
-
 	RUN_TEST(fmpz_poly_tofromstring); 
    RUN_TEST(fmpz_poly_to_ZmodF_poly); 
    RUN_TEST(fmpz_poly_to_zmod_poly_no_red);   
@@ -15030,6 +15197,8 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_poly_evaluate_horner_range);
    RUN_TEST(fmpz_poly_evaluate_divconquer); 
    RUN_TEST(fmpz_poly_evaluate); 
+   RUN_TEST(fmpz_poly_evaluate_mod);
+   RUN_TEST(fmpz_poly_translate_mod_horner);
    RUN_TEST(fmpz_poly_compose_horner_divconquer);
 	RUN_TEST(fmpz_poly_compose_horner_range);
 	RUN_TEST(fmpz_poly_compose_divconquer);
