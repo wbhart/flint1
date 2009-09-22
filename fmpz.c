@@ -1348,7 +1348,7 @@ void fmpz_multi_mod_ui(unsigned long * out, fmpz_t in, fmpz_comb_t comb, fmpz_t 
    }
 }
 
-void fmpz_multi_CRT_ui_unsigned(fmpz_t output, unsigned long * residues, fmpz_comb_t comb)
+void fmpz_multi_CRT_ui_unsigned(fmpz_t output, unsigned long * residues, fmpz_comb_t comb, fmpz_t ** comb_temp)
 {
    ulong i, j, k;
 
@@ -1364,24 +1364,6 @@ void fmpz_multi_CRT_ui_unsigned(fmpz_t output, unsigned long * residues, fmpz_co
       fmpz_set_ui(output, residues[0]);
 	  return;
 	}
-
-   // allocate space for comb_temp
-	fmpz_t ** comb_temp = (fmpz_t **) flint_heap_alloc(n);
-   j = (1L<<(n - 1));
-   size = 2;
-   for (i = 0; i < n; i++)
-   {
-      comb_temp[i] = (fmpz_t *) flint_heap_alloc(j);
-
-      ptr = (mp_limb_t *) flint_heap_alloc((1L<<n)+j);
-      for (k = 0; k < j; k++, ptr += (size + 1))
-      {
-         comb_temp[i][k] = ptr;
-      }
-
-      j/=2;
-      size*=2;
-   }
 
 	// first layer of reconstruction
 	num = (1L<<n);
@@ -1429,14 +1411,6 @@ void fmpz_multi_CRT_ui_unsigned(fmpz_t output, unsigned long * residues, fmpz_co
 
    // write out the output
 	fmpz_set(output, comb_temp[log_res - 1][0]);
-
-	// free comb_temp
-	for (i = 0; i < n; i++)
-   {
-      flint_heap_free(comb_temp[i][0]);
-      flint_heap_free(comb_temp[i]);
-	}
-	flint_heap_free(comb_temp);
 
    flint_heap_free(temp2); //temp2
    flint_heap_free(temp); //temp 

@@ -387,7 +387,7 @@ unsigned long fmpz_multi_mod_ui_basecase(unsigned long * out, fmpz_t in,
 
 void fmpz_multi_mod_ui(unsigned long * out, fmpz_t in, fmpz_comb_t comb, fmpz_t ** temp);
 
-void fmpz_multi_CRT_ui_unsigned(fmpz_t output, unsigned long * residues, fmpz_comb_t comb);
+void fmpz_multi_CRT_ui_unsigned(fmpz_t output, unsigned long * residues, fmpz_comb_t comb, fmpz_t ** comb_temp);
 
 void __fmpz_multi_CRT_sign(fmpz_t output, fmpz_t input, fmpz_comb_t comb);
 
