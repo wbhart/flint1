@@ -768,56 +768,6 @@ void F_mpz_poly_mul_SS(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_p
 */
 void F_mpz_poly_mul(F_mpz_poly_t res, F_mpz_poly_t poly1, F_mpz_poly_t poly2);
 
-/*===============================================================================
-
-	Multimodular multiplication
-
-================================================================================*/
-
-/** 
-   \fn     _F_mpz_poly_mul_modular(F_mpz_poly_t res, const F_mpz_poly_t poly1, 
-                        const F_mpz_poly_t poly2, const ulong bits_in, const ulong trunc)
-   \brief  Multiply poly1 by poly2 and set res to the result, using the modular algorithm.
-           We require bits_in to be set to a bound on the number of bits per output 
-		   coefficient, plus one for signs, or to zero, in which case a bound will be 
-		   automatically computed.
-*/
-void _F_mpz_poly_mul_modular(F_mpz_poly_t res, F_mpz_poly_t poly1, 
-						F_mpz_poly_t poly2, const ulong bits_in, const ulong trunc);
-
-/** 
-   \fn     F_mpz_poly_mul_modular(F_mpz_poly_t res, 
-                                     const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
-   \brief  Multiply poly1 by poly2 and set res to the result, using the modular algorithm.
-           We require bits_in to be set to a bound on the number of bits per output 
-		   coefficient, plus one for signs, or to zero, in which case a bound will be 
-		   automatically computed.
-*/
-void F_mpz_poly_mul_modular(F_mpz_poly_t res, F_mpz_poly_t poly1, 
-									 F_mpz_poly_t poly2, const ulong bits_in);
-
-/** 
-   \fn     F_mpz_poly_mul_modular_trunc(F_mpz_poly_t res, 
-                    const F_mpz_poly_t poly1, const F_mpz_poly_t poly2, const ulong trunc)
-   \brief  Multiply poly1 by poly2 and set res to the result, using the modular algorithm.
-           We require bits_in to be set to a bound on the number of bits per output 
-		   coefficient, plus one for signs, or to zero, in which case a bound will be 
-		   automatically computed. Output is trucated to the given length.
-*/
-void F_mpz_poly_mul_modular_trunc(F_mpz_poly_t res, F_mpz_poly_t poly1, 
-						F_mpz_poly_t poly2, const ulong bits_in, const ulong trunc);
-
-/** 
-   \fn     void F_mpz_poly_mul_modular_packed(F_mpz_poly_t output, F_mpz_poly_t poly1, 
-                                               F_mpz_poly_t poly2, ulong n, ulong bits)
-   \brief  Multiply poly1 by poly2 and set res to the result, using the modular algorithm,
-           but first packing bundles of n coefficients together. 
-		   We require bits_in to be set to a bound on the number of bits per output 
-		   coefficient, plus one for signs. Note that n*bits_in must be at least FLINT_BITS.
-*/
-void F_mpz_poly_mul_modular_packed(F_mpz_poly_t res, F_mpz_poly_t poly1, 
-                                               F_mpz_poly_t poly2, ulong n, ulong bits_in);
-
 #ifdef __cplusplus
  }
 #endif
