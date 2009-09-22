@@ -1465,7 +1465,7 @@ int z_isprobab_prime_BPSW(unsigned long n)
 		while ((d & 1) == 0) d >>= 1;
 
 		if (SPRP_64(2L, d, n, inv) == 0) return 0;
-		return (z_ispseudoprime_lucas(n) == 1) 
+		return (z_ispseudoprime_lucas(n) == 1); 
 	}
 }
 
