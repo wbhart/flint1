@@ -572,9 +572,6 @@ void _fmpz_poly_mul_karatsuba_trunc(fmpz_poly_t output, const fmpz_poly_t input1
                                                  
 void _fmpz_poly_mul_karatsuba_trunc_left(fmpz_poly_t output, const fmpz_poly_t input1, const fmpz_poly_t input2, const unsigned long trunc);
 
-void _fmpz_poly_mul_modular(fmpz_poly_t output, const fmpz_poly_t input1,
-                                                const fmpz_poly_t input2, const ulong bits);
-
 void _fmpz_poly_mul_KS(fmpz_poly_t output, const fmpz_poly_t input1, 
                                        const fmpz_poly_t input2, const long bits);
                                        
@@ -1099,12 +1096,6 @@ void fmpz_poly_sub(fmpz_poly_t output, const fmpz_poly_t input1, const fmpz_poly
 }
 
 void fmpz_poly_mul(fmpz_poly_t output, const fmpz_poly_t input1, const fmpz_poly_t input2);
-
-void fmpz_poly_mul_modular(fmpz_poly_t output, const fmpz_poly_t input1,
-                                                const fmpz_poly_t input2, const ulong bits);
-
-void fmpz_poly_mul_modular_packed(fmpz_poly_t output, fmpz_poly_t poly1, 
-                                               fmpz_poly_t poly2, ulong n, ulong bytes);
 
 void fmpz_poly_mul_trunc_n(fmpz_poly_t output, const fmpz_poly_t input1, 
                                           const fmpz_poly_t input2, const unsigned long trunc);
