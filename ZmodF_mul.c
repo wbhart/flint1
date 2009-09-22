@@ -21,7 +21,8 @@
 
  ZmodF_mul.c
 
- Copyright (C) 2007, David Harvey and William Hart
+ Copyright (C) 2007, 2009 David Harvey 
+ Copyright (C) 2007 William Hart
  
  Routines for multiplication of elements of Z/pZ where p = B^n + 1,
  B = 2^FLINT_BITS.
