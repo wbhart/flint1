@@ -2,7 +2,8 @@
 
     F_mpz.h: The FLINT integer format (FLINT 2.0)
 
-    Copyright (C) 2008, William Hart 
+    Copyright (C) 2008, 2009, William Hart 
+    Copyright (C) 2009, Andy Novocin
 
     This file is part of FLINT.
 
@@ -32,7 +33,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <gmp.h>
-#include <pthread.h>
 #include "flint.h"
 #include "mpn_extras.h"
 #include "zn_poly/src/zn_poly.h"
@@ -49,9 +49,7 @@
 typedef long F_mpz;
 typedef F_mpz F_mpz_t[1];
 
-#define MAX_SEM 16 
-
-#define MPZ_BLOCK 102400 // number of additional mpz_t's to initialise at a time
+#define MPZ_BLOCK 10 // number of additional mpz_t's to initialise at a time
 
 // maximum positive value a small coefficient can have
 #define COEFF_MAX ((1L<<(FLINT_BITS-2))-1L)
@@ -83,20 +81,12 @@ typedef F_mpz_comb_struct F_mpz_comb_t[1];
 
 #define FLINT_F_MPZ_LOG_MULTI_MOD_CUTOFF 2
 
-pthread_mutex_t F_mpz_random_mutex;
-
 /*===============================================================================
 
 	mpz_t memory management
 
 ================================================================================*/
  
-void semaphore_init(void);
-
-void semaphore_up(void);
-
-void semaphore_down(void);
-
 /** 
    \fn     F_mpz_t _F_mpz_new_mpz(void)
    \brief  Return a new mpz F_mpz_t. The mpz_t's are allocated and initialised
@@ -118,14 +108,6 @@ void _F_mpz_clear_mpz(F_mpz f);
 		   only be called at the end of a program.
 */
 void _F_mpz_cleanup(void);
-
-/** 
-   \fn     void _F_mpz_cleanup2(void)
-   \brief  Clear any mpz's still held onto by the F_mpz_t memory management.
-*/
-void _F_mpz_cleanup2(void);
-
-
 
 /*===============================================================================
 
@@ -159,7 +141,7 @@ void _F_mpz_demote(F_mpz_t f)
 	if (COEFF_IS_MPZ(*f)) 
 	{
 		_F_mpz_clear_mpz(*f);
-		*f = 0L;
+		(*f) = 0L;
 	}
 }
 
@@ -242,7 +224,7 @@ void F_mpz_zero(F_mpz_t f)
 	
 	_F_mpz_demote(f);
 	
-   *f = 0L;
+   (*f) = 0L;
 }
 
 /** 
@@ -579,6 +561,12 @@ void F_mpz_cdiv_q(F_mpz_t f, const F_mpz_t g, const F_mpz_t h);
 	        positive infinity.
 */
 void F_mpz_rdiv_q(F_mpz_t f, const F_mpz_t g, const F_mpz_t h);
+
+/** 
+   \fn     void F_mpz_pow_ui(F_mpz_t f, const F_mpz_t g, const ulong exp)
+   \brief  Set f to g^h where h is an unsigned long.
+*/
+void F_mpz_pow_ui(F_mpz_t f, const F_mpz_t g, const ulong exp);
 
 /*===============================================================================
 

@@ -21,7 +21,9 @@
 
 F_mpz-test.c: Test code for F_mpz.c and F_mpz.h
 
-Copyright (C) 2008, William Hart
+Copyright (C) 2008, 2009, William Hart
+Copyright (C) 2009, Andy Novocin
+
 
 *****************************************************************************/
 
@@ -29,7 +31,6 @@ Copyright (C) 2008, William Hart
 #include <string.h>
 #include <gmp.h>
 #include <time.h>
-#include <pthread.h>
 #include "flint.h"
 #include "memory-manager.h"
 #include "long_extras.h"
@@ -62,9 +63,7 @@ void F_mpz_test_random(F_mpz_t f, ulong bits)
 	mpz_t temp;
 	mpz_init(temp);
 	
-	pthread_mutex_lock(&F_mpz_random_mutex);
 	mpz_rrandomb(temp, randstate, bits);
-	pthread_mutex_unlock(&F_mpz_random_mutex);
 #if SIGNS
 	if (z_randint(2)) mpz_neg(temp, temp);
 #endif
@@ -171,10 +170,8 @@ int test_F_mpz_getset_mpz()
       for (ulong count2 = 0; (count2 < 100) && result == 1; count2++)
       {
          val_bits = z_randint(200);
-         pthread_mutex_lock(&F_mpz_random_mutex);
-	      mpz_rrandomb(val, randstate, val_bits);
-         pthread_mutex_unlock(&F_mpz_random_mutex);
-	     
+         mpz_rrandomb(val, randstate, val_bits);
+         
 			if (z_randint(2)) mpz_neg(val, val);
               
 			F_mpz_set_mpz(f, val);
@@ -2786,12 +2783,96 @@ int test_F_mpz_multi_CRT_ui()
   return result;
 }
 
+int test_F_mpz_pow_ui()
+{
+   F_mpz_t f, g;
+   int result = 1;
+   ulong bits, val_bits, val;
+	mpz_t m1, m2;
+
+	mpz_init(m1);
+   mpz_init(m2);
+   
+   for (ulong count1 = 0; (count1 < 2500*ITER) && (result == 1); count1++)
+   {
+      bits = z_randint(200)+ 1;
+      
+		// Make f a random number of limbs in size to start with
+		F_mpz_init2(f, z_randint(10));
+      F_mpz_init2(g, z_randint(3));
+          
+      for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
+		{
+			F_mpz_test_random(g, bits); 
+
+		   // Generate a random unsigned long
+         val_bits = z_randint(6 + 1);
+         val = z_randbits(val_bits);
+              
+	      F_mpz_get_mpz(m1, g);
+			
+			F_mpz_pow_ui(f, g, val);
+         
+			F_mpz_get_mpz(m2, f);
+
+			mpz_pow_ui(m1, m1, val);
+
+		   result = (mpz_cmp(m1, m2) == 0);
+		   if (!result)
+	      {
+			   gmp_printf("Error: m1 = %Zd, m2 = %Zd\n", m1, m2);
+		   }
+		}
+
+      F_mpz_clear(f);
+      F_mpz_clear(g);
+   }
+   
+   // Check aliasing
+	for (ulong count1 = 0; (count1 < 2500*ITER) && (result == 1); count1++)
+   {
+      bits = z_randint(200)+ 1;
+      
+		// Make f a random number of limbs in size to start with
+		F_mpz_init2(f, z_randint(3));
+          
+      for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
+		{
+			F_mpz_test_random(f, bits); 
+
+		   // Generate a random unsigned long
+         val_bits = z_randint(6 + 1);
+         val = z_randbits(val_bits);
+              
+	      F_mpz_get_mpz(m1, f);
+			
+			F_mpz_pow_ui(f, f, val);
+         
+			F_mpz_get_mpz(m2, f);
+
+			mpz_pow_ui(m1, m1, val);
+
+		   result = (mpz_cmp(m1, m2) == 0);
+		   if (!result)
+	      {
+			   gmp_printf("Error: m1 = %Zd, m2 = %Zd\n", m1, m2);
+		   }
+		}
+
+      F_mpz_clear(f);
+   }
+   
+   mpz_clear(m1);
+	mpz_clear(m2);
+	
+	return result; 
+}
+
 void F_mpz_poly_test_all()
 {
    int success, all_success = 1;
    printf("FLINT_BITS = %ld\n", FLINT_BITS);
-   semaphore_init();
-
+   
 #if TESTFILE
 #endif
 	RUN_TEST(F_mpz_getset_ui); 
@@ -2818,6 +2899,7 @@ void F_mpz_poly_test_all()
    RUN_TEST(F_mpz_submul); 
    RUN_TEST(F_mpz_mod_ui); 
    RUN_TEST(F_mpz_mod); 
+   RUN_TEST(F_mpz_pow_ui); 
    RUN_TEST(F_mpz_invert); 
    RUN_TEST(F_mpz_size);
 	RUN_TEST(F_mpz_sgn);

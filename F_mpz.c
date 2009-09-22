@@ -2,7 +2,8 @@
 
     F_mpz.c: The FLINT integer format (FLINT 2.0)
 
-    Copyright (C) 2008, William Hart 
+    Copyright (C) 2008, 2009, William Hart 
+    Copyright (C) 2009, Andy Novocin
 
 	 This file is part of FLINT.
 
@@ -27,8 +28,6 @@
 #include <math.h>
 #include <stdio.h>
 #include <gmp.h>
-#include <pthread.h>
-#include <omp.h>
 
 #include "flint.h"
 #include "mpn_extras.h"
@@ -54,138 +53,60 @@ ulong F_mpz_allocated;
 
 // An array of indices of mpz's which are not being used presently. These are stored with the second
 // most significant bit set so that they are a valid index as per the F_mpz_t type below.
-F_mpz * F_mpz_unused_arr[MAX_SEM];
+F_mpz * F_mpz_unused_arr;
 
 // The number of mpz's not being used presently
-ulong F_mpz_num_unused[MAX_SEM];
-
-int sem = 1;
-pthread_mutex_t sem_mutex;
-pthread_mutex_t sem_acquire_mutex;
-
-void semaphore_init(void)
-{
-   pthread_mutex_init(&sem_mutex, NULL);
-   pthread_mutex_init(&sem_acquire_mutex, NULL);
-   pthread_mutex_init(&F_mpz_random_mutex, NULL);
-	sem = 0;
-}
-
-void semaphore_up(void)
-{
-	int done = 0;
-	while (!done)
-	{
-      pthread_mutex_lock(&sem_mutex);
-	   if (sem < MAX_SEM) 
-		{
-			sem++;
-			done = 1;
-		}
-		pthread_mutex_unlock(&sem_mutex);   
-	}
-}
-
-void semaphore_down(void)
-{
-	pthread_mutex_lock(&sem_mutex);
-	sem--;
-	pthread_mutex_unlock(&sem_mutex);   
-}
-
-void semaphore_acquire(void)
-{
-	pthread_mutex_lock(&sem_acquire_mutex);
-	for (int i = 0; i < MAX_SEM; i++)
-	{
-		semaphore_up();
-	}
-}
-
-void semaphore_release(void)
-{
-	pthread_mutex_lock(&sem_mutex);
-	sem = 1; // our thread still has one semaphore unit to release
-	pthread_mutex_unlock(&sem_mutex);  
-	pthread_mutex_unlock(&sem_acquire_mutex);
-}
+ulong F_mpz_num_unused;
 
 F_mpz _F_mpz_new_mpz(void)
 {
-	ulong k = omp_get_thread_num();
-	if (!F_mpz_num_unused[k]) // time to allocate MPZ_BLOCK more mpz_t's
+	if (!F_mpz_num_unused) // time to allocate MPZ_BLOCK more mpz_t's
 	{
-	   semaphore_down();
-	   semaphore_acquire();
 	   if (F_mpz_allocated) // realloc mpz_t's and unused array
 		{
 			F_mpz_arr = (__mpz_struct *) flint_heap_realloc_bytes(F_mpz_arr, (F_mpz_allocated + MPZ_BLOCK)*sizeof(__mpz_struct));
-			for (ulong i = 0; i < MAX_SEM; i++) 
-			{
-			   F_mpz_unused_arr[i] = (F_mpz *) flint_heap_realloc_bytes(F_mpz_unused_arr[i], (F_mpz_allocated + MPZ_BLOCK)*sizeof(F_mpz));
-			}
+			F_mpz_unused_arr = (F_mpz *) flint_heap_realloc_bytes(F_mpz_unused_arr, (F_mpz_allocated + MPZ_BLOCK)*sizeof(F_mpz));
 		} else // first time alloc of mpz_t's and unused array
 		{
 			F_mpz_arr = (__mpz_struct*) flint_heap_alloc_bytes(MPZ_BLOCK*sizeof(__mpz_struct));	
-			for (ulong i = 0; i < MAX_SEM; i++) 
-			{
-				F_mpz_unused_arr[i] = (F_mpz *) flint_heap_alloc_bytes(MPZ_BLOCK*sizeof(F_mpz));
-			   F_mpz_num_unused[i] = 0;
-			}
+			F_mpz_unused_arr = (F_mpz *) flint_heap_alloc_bytes(MPZ_BLOCK*sizeof(F_mpz));
+		   F_mpz_num_unused = 0;
 		}
 		
 		// initialise the new mpz_t's and unused array
 		for (ulong i = 0; i < MPZ_BLOCK; i++)
 		{
 			mpz_init(F_mpz_arr + F_mpz_allocated + i);
-			F_mpz_unused_arr[k][F_mpz_num_unused[k]] = OFF_TO_COEFF(F_mpz_allocated + i);
-         F_mpz_num_unused[k]++;
+			F_mpz_unused_arr[F_mpz_num_unused] = OFF_TO_COEFF(F_mpz_allocated + i);
+         F_mpz_num_unused++;
 		}
 		F_mpz_allocated += MPZ_BLOCK;
-	   semaphore_release();
-      
-		F_mpz_num_unused[k]--;
+	   
+		F_mpz_num_unused--;
 	} else // unused mpz's are available
 	{
-		F_mpz_num_unused[k]--;
+		F_mpz_num_unused--;
 	}
-	F_mpz ret = F_mpz_unused_arr[k][F_mpz_num_unused[k]];
+	F_mpz ret = F_mpz_unused_arr[F_mpz_num_unused];
 	
 	return ret;
 }
 
 void _F_mpz_clear_mpz(F_mpz f)
 {
-   ulong k = omp_get_thread_num();
-	F_mpz_unused_arr[k][F_mpz_num_unused[k]] = f;
-   F_mpz_num_unused[k]++;	
+   F_mpz_unused_arr[F_mpz_num_unused] = f;
+   F_mpz_num_unused++;	
 }
 
 void _F_mpz_cleanup(void)
 {
-	for (ulong k = 0; k < MAX_SEM; k++)
+	for (long i = 0; i < F_mpz_num_unused; i++)
 	{
-		for (long i = 0; i < F_mpz_num_unused[k]; i++)
-	   {
-		   mpz_clear(F_mpz_arr + COEFF_TO_OFF(F_mpz_unused_arr[k][i]));
-	   }
-	}
+		mpz_clear(F_mpz_arr + COEFF_TO_OFF(F_mpz_unused_arr[i]));
+   }
 	
-   for(long k = 0; k < MAX_SEM; k++)
-      if (F_mpz_num_unused[k]) free(F_mpz_unused_arr[k]);
+   if (F_mpz_num_unused) free(F_mpz_unused_arr);
 	if (F_mpz_allocated) free(F_mpz_arr);
-}
-
-void _F_mpz_cleanup2(void)
-{
-	for (ulong k = 0; k < MAX_SEM; k++)
-	{
-		for (long i = 0; i < F_mpz_num_unused[k]; i++)
-	   {
-		   mpz_clear(F_mpz_arr + COEFF_TO_OFF(F_mpz_unused_arr[k][i]));
-	   }
-	   F_mpz_num_unused[k] = 0;
-	}
 }
 
 /*===============================================================================
@@ -311,10 +232,8 @@ void F_mpz_random(F_mpz_t f, const ulong bits)
 	
 	mp_limb_t * fp = mpz_ptr->_mp_d;
    mpz_ptr->_mp_size = limbs;
-   pthread_mutex_lock(&F_mpz_random_mutex);
-	mpn_random(fp, limbs);
-   pthread_mutex_unlock(&F_mpz_random_mutex);
-	if (rem)
+   mpn_random(fp, limbs);
+   if (rem)
    {
       ulong mask = ((1L<<rem)-1L);
       fp[limbs-1] &= mask;
@@ -330,18 +249,14 @@ void F_mpz_randomm(F_mpz_t f, const mpz_t in)
    {
       
 		__mpz_struct * mpz_ptr = _F_mpz_promote(f);
-		pthread_mutex_lock(&F_mpz_random_mutex);
-	   mpz_urandomm(mpz_ptr, F_mpz_state, in);
-		pthread_mutex_unlock(&F_mpz_random_mutex);
-	   _F_mpz_demote_val(f);
+		mpz_urandomm(mpz_ptr, F_mpz_state, in);
+		_F_mpz_demote_val(f);
 		
    } else
    {
       ulong val = mpz_get_ui(in);
-		pthread_mutex_lock(&F_mpz_random_mutex);
-	   ulong rnd = (val == 0 ? 0L : z_randint(val));
-		pthread_mutex_unlock(&F_mpz_random_mutex);
-	   F_mpz_set_ui(f, rnd);
+		ulong rnd = (val == 0 ? 0L : z_randint(val));
+		F_mpz_set_ui(f, rnd);
    }
 }
 
@@ -1296,6 +1211,42 @@ void F_mpz_submul(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
    mpz_submul(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(c1), F_mpz_arr + COEFF_TO_OFF(c2));
 	_F_mpz_demote_val(f); // cancellation may have occurred
 	
+}
+
+void F_mpz_pow_ui(F_mpz_t f, const F_mpz_t g, const ulong exp)
+{
+   if (exp == 0L)
+   {
+      F_mpz_set_ui(f, 1);
+      return;
+   }
+
+   F_mpz c1 = *g;
+
+   if (!COEFF_IS_MPZ(c1)) // g is small
+   {
+      ulong u1 = (long) FLINT_ABS(c1);
+      ulong bits = (long) FLINT_BITS;
+      if (exp*bits <= FLINT_BITS - 2)
+      {
+         F_mpz_set_ui(f, z_pow(u1, exp));
+      } else
+      {
+	      __mpz_struct * mpz_ptr = _F_mpz_promote_val(f);
+
+         mpz_set_ui(mpz_ptr, u1);
+         mpz_pow_ui(mpz_ptr, mpz_ptr, exp); 
+         _F_mpz_demote_val(f); // may actually fit into a small after all
+      }
+
+      if ((c1 < 0L) && (exp & 1)) F_mpz_neg(f, f); // sign is -ve if exp odd and g -ve 
+   } else
+   {
+	   __mpz_struct * mpz_ptr = _F_mpz_promote_val(f);
+      
+      mpz_pow_ui(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(c1), exp);
+      // no need to demote as it can't get smaller
+   }
 }
 
 ulong F_mpz_mod_ui(F_mpz_t f, const F_mpz_t g, const ulong h)
