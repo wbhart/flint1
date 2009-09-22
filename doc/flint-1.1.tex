@@ -1015,6 +1015,14 @@ void fmpz_poly_evaluate(fmpz_t output,
 Evaluates \code{poly} at the value \code{val} and sets \code{output} to the result. 
 \end{quote}
 
+\begin{lstlisting}
+unsigned long fmpz_poly_evaluate_mod(const fmpz_poly_t poly,
+	      unsigned long p, unsigned long val, pre_inv_t pinv) 
+\end{lstlisting}
+\begin{quote}
+Evaluates \code{poly} at the value \code{val} modulo \code{p} and returns the result. The last argument \code{pinv} must be set to the precomputed inverse of \code{p}, which can be obtained using the function \code{z_precompute_inverse}.
+\end{quote}
+
 \subsection{Polynomial composition}
 \begin{lstlisting}
 void fmpz_poly_compose(fmpz_poly_t output, 
@@ -1022,6 +1030,14 @@ void fmpz_poly_compose(fmpz_poly_t output,
 \end{lstlisting}
 \begin{quote}
 Sets \code{output} to the polynomial composition of $f$ with $g$, i.e. computes $f(g(x))$.
+\end{quote}
+ 
+\begin{lstlisting}
+void fmpz_poly_translate_mod_horner(zmod_poly_t output, 
+                      const fmpz_poly_t f, const zmod_poly_t g) 
+\end{lstlisting}
+\begin{quote}
+Sets \code{output} to the polynomial composition of $f$ with $g$ where $g$ is of the form $x+c$ for some $c\in\Z_p$ with p the modulus of $g$, i.e. computes $f(x+c) \mod p$.
 \end{quote}
 
 \subsection{Polynomial signature}
