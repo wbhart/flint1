@@ -274,11 +274,19 @@ v 1.4.0 -- 06-Jul-09
    * Added F_mpz_cmp function
    * Added documentation to the manual for the new F_mpz module
 
-v 1.4.1 -- 16-Jul-09
+v 1.5.0 -- 22-Sep-09
 
-   * Added multimodular reduction to F_mpz module.
-   * Added new cleanup function for F_mpz mpz_t stack.
-   * Fixed some bugs in F_mpz module and numerous bugs in test code.
+   * Added multimodular reduction and CRT to F_mpz module
+   * Fixed some bugs in F_mpz module and numerous bugs in test code
    * Added zmod_poly_compose
-   * Added zmod_poly_evaluate.
-   * Added functions for reduced evaluation and composition to fmpz_poly module contributed by Burcin Erocal.
+   * Added zmod_poly_evaluate
+   * Added functions for reduced evaluation and composition to fmpz_poly module (contributed by Burcin Erocal)
+   * Fixed bugs in the primality tests in long_extras
+   * Removed all polynomial multimodular multiplication functions
+   * Added new thetaproduct code used in the 1 trillion triangles computation
+   * Fixed a severe bug in the fmpz_poly_pseudo_div function reported by Sebastian Pancratz
+   * Added fmpz_comb_temp_init/clear functions
+   * Fixed a normalisation buglet in fmpz_poly_pack_bytes
+   * Added F_mpz_pow_ui function (contributed by Andy Novocin)
+   * Fixed a severe bug in the FFT reported by William Stein and Mariah Lennox (fix contributed by David Harvey)
+   
