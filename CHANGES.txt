@@ -289,4 +289,5 @@ v 1.5.0 -- 22-Sep-09
    * Fixed a normalisation buglet in fmpz_poly_pack_bytes
    * Added F_mpz_pow_ui function (contributed by Andy Novocin)
    * Fixed a severe bug in the FFT reported by William Stein and Mariah Lennox (fix contributed by David Harvey)
+   * Removed some memory leaks from F_mpz test code
    
