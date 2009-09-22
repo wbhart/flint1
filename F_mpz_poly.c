@@ -47,8 +47,6 @@
 #include "long_extras.h"
 #include "zmod_poly.h"
 
-#define MUL_MOD_TRACE 1 // prints some trace info for multimodular multiplications
-
 /*===============================================================================
 
 	Memory management
