@@ -1180,8 +1180,7 @@ void F_mpz_addmul(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
    __mpz_struct * mpz_ptr = _F_mpz_promote_val(f);
 	
    mpz_addmul(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(c1), F_mpz_arr + COEFF_TO_OFF(c2));
-	_F_mpz_demote_val(f); // cancellation may have occurred
-	
+	_F_mpz_demote_val(f); // cancellation may have occurred	
 }
 
 void F_mpz_submul(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)

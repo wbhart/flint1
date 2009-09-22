@@ -1712,6 +1712,7 @@ int test_F_mpz_addmul()
 		}
 
       F_mpz_clear(f);
+      F_mpz_clear(g);
    }
    
 	// Check aliasing of all arguments
@@ -1870,6 +1871,7 @@ int test_F_mpz_submul()
 		}
 
       F_mpz_clear(f);
+      F_mpz_clear(g);
    }
 
    // Check aliasing of all arguments
