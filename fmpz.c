@@ -1276,7 +1276,7 @@ fmpz_t ** fmpz_comb_temp_init(fmpz_comb_t comb)
    return temp;
 }
 
-fmpz_t ** fmpz_comb_temp_clear(fmpz_t ** temp, fmpz_comb_t comb)
+void fmpz_comb_temp_clear(fmpz_t ** temp, fmpz_comb_t comb)
 {
    ulong i;
    ulong n = comb->n;

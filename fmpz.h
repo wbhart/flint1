@@ -380,7 +380,7 @@ void fmpz_CRT_ui2_precomp(fmpz_t out, fmpz_t r1, fmpz_t m1, unsigned long r2,
 
 fmpz_t ** fmpz_comb_temp_init(fmpz_comb_t comb);
 
-fmpz_t ** fmpz_comb_temp_clear(fmpz_t ** temp, fmpz_comb_t comb);
+void fmpz_comb_temp_clear(fmpz_t ** temp, fmpz_comb_t comb);
 
 unsigned long fmpz_multi_mod_ui_basecase(unsigned long * out, fmpz_t in, 
                                unsigned long * primes, unsigned long num_primes);
