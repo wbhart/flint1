@@ -58,7 +58,7 @@
 
 %\email{w.b.hart@maths.warwick.ac.uk}
 
-\title{FLINT 1.4.1: Fast Library for Number Theory}
+\title{FLINT 1.5: Fast Library for Number Theory}
 \author{William B. Hart and David Harvey}
 
 \begin{document}
@@ -145,6 +145,8 @@ The current example programs are:
 \code{expmod} Computes a very large modular exponentiation. This is actually a basic pseudo primality test.
 
 \code{Zmul} Compares the output of the FLINT FFT with that of GMP for ever larger operands.
+
+\code{thetaproduct} Computes the congruent number theta function. To run this you need to have openmp on your machine, you need a recent version of gcc (e.g. 4.3.x or 4.4.x) and you need to export OMP\_NUM\_THREADS=16 or some factor of 16, depending on how many cores your machine has. The code also expects a directory /storage with PLENTY of space where temporary files will be created. Be warned that this code multiplies HUGE integers which do not fit into memory and much disk space is used. You also need a significant amount of memory on your machine, which must also be a 64 bit linux platform. Parameters can be changed at the top of the file thetaproduct.c. Primitive (squarefree) zeroes of the congruent number theta function curve will be computed up to MOD$$*$LIMIT in the class K $\pmod{\mbcx{MOD}}$. At present FILES1 and FILES2 must be equal. LIMIT must also be divisible by BLOCK and by BUNDLE$*$FILES1. The code is not currently designed to correctly handle small problems.  
 
 \section{FLINT macros}
 In the file flint.h are various useful macros.
@@ -764,18 +766,6 @@ void fmpz_poly_mul(fmpz_poly_t output, const fmpz_poly_t poly1,
 \end{lstlisting}
 \begin{quote}
 Multiply the two given polynomials and return the result in \code{output}.
-
-The length of the output polynomial will be \code{poly1->length + poly2->length - 1}.
-\end{quote}
-
-\begin{lstlisting}
-void fmpz_poly_mul_modular(fmpz_poly_t output, const fmpz_poly_t poly1, 
-                              const fmpz_poly_t poly2, const ulong bits) 
-\end{lstlisting}
-\begin{quote}
-Multiply the two given polynomials and return the result in \code{output}. If one has a bound on the number of bits of the output coefficients one can set \code{bits} to this bound (plus one if the coefficients are signed). If \code{bits} is set to zero an automatic bound is computed by the function.
-
-This function is optimised for very long polynomials and makes efficient use of memory, often not thrashing the disk when the ordinary multiplication function would do so. 
 
 The length of the output polynomial will be \code{poly1->length + poly2->length - 1}.
 \end{quote}
@@ -1490,26 +1480,39 @@ Clear the given comb structure, releasing any memory it uses.
 \end{quote}
 
 \begin{lstlisting}
-void fmpz_multi_mod_ui(unsigned long * out, fmpz_t in, fmpz_comb_t comb) 
+fmpz_t ** fmpz_comb_temp_init(fmpz_comb_t comb)
 \end{lstlisting}
 \begin{quote}
-Reduces the multiprecision integer \code{in} modulo each of the primes stored in the comb structure. The array \code{out} will be filled with the residues modulo these primes. 
+Creates temporary space to be used by multimodular and CRT functions based on an initialised comb structure.
 \end{quote}
 
 \begin{lstlisting}
-void fmpz_multi_CRT_ui_unsigned(fmpz_t output, 
-                             unsigned long * residues, fmpz_comb_t comb) 
+void fmpz_comb_temp_clear(fmpz_t ** temp, fmpz_comb_t comb);
 \end{lstlisting}
 \begin{quote}
-This function takes a set of residues modulo the list of primes contained in the comb structure and reconstructs the unique unsigned multiprecision integer modulo the product of the primes which has these residues modulo the corresponding primes. 
+Clears temporary space \code{temp} used by multimodular and CRT functions using the given comb.
 \end{quote}
 
 \begin{lstlisting}
-void fmpz_multi_CRT_ui(fmpz_t output, 
-                             unsigned long * residues, fmpz_comb_t comb) 
+void fmpz_multi_mod_ui(unsigned long * out, fmpz_t in, fmpz_comb_t comb, fmpz_t ** temp)
 \end{lstlisting}
 \begin{quote}
-This function takes a set of residues modulo the list of primes contained in the comb structure and reconstructs a signed multiprecision integer modulo the product of the primes which has these residues modulo the corresponding primes. If $N$ is the product of all the primes then \code{output} is normalised to be in the range $[-(N-1)/2, N/2]$.
+Reduces the multiprecision integer \code{in} modulo each of the primes stored in the comb structure. The array \code{out} will be filled with the residues modulo these primes. The array temp is temporary space which must be provided by \code{fmpz\_comb\_temp\_init} and cleared by \code{fmpz\_comb\_temp\_clear}.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_multi_CRT_ui_unsigned(fmpz_t output, unsigned long * residues, 
+                             fmpz_comb_t comb, fmpz_t ** comb_temp)
+\end{lstlisting}
+\begin{quote}
+This function takes a set of residues modulo the list of primes contained in the comb structure and reconstructs the unique unsigned multiprecision integer modulo the product of the primes which has these residues modulo the corresponding primes. The array temp is temporary space which must be provided by \code{fmpz\_comb\_temp\_init} and cleared by \code{fmpz\_comb\_temp\_clear}. 
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_multi_CRT_ui(fmpz_t output, unsigned long * residues, fmpz_comb_t comb, fmpz_t ** comb_temp)
+\end{lstlisting}
+\begin{quote}
+This function takes a set of residues modulo the list of primes contained in the comb structure and reconstructs a signed multiprecision integer modulo the product of the primes which has these residues modulo the corresponding primes. If $N$ is the product of all the primes then \code{output} is normalised to be in the range $[-(N-1)/2, N/2]$. The array temp is temporary space which must be provided by \code{fmpz\_comb\_temp\_init} and cleared by \code{fmpz\_comb\_temp\_clear}.
 \end{quote}
 
 \subsection{Montgomery format}
