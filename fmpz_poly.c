@@ -11029,7 +11029,7 @@ void zmod_poly_translate_horner(zmod_poly_t res,
     ulong p = zmod_poly_modulus(g);
 	ulong * ccoeff = f->coeffs + (f->length - 1);
     
-	zmod_poly_t t;
+	 zmod_poly_t t;
     zmod_poly_init(t, p);
 
     zmod_poly_zero(res);
@@ -11038,13 +11038,14 @@ void zmod_poly_translate_horner(zmod_poly_t res,
             
 
     for (long i = 0; i < f->length - 1; i++)
-	{
+	 {
         // res = res*g + cmod_coeff;
         zmod_poly_mul(res, res, g);
         zmod_poly_set_coeff_ui(t, 0, ccoeff[0]);
         zmod_poly_add(res, res, t);
         ccoeff -= 1;
-	}
+	 }
+    zmod_poly_clear(t);
 }
 
 void fmpz_poly_translate_mod_horner(zmod_poly_t res, 
@@ -11053,16 +11054,16 @@ void fmpz_poly_translate_mod_horner(zmod_poly_t res,
     //TODO: implement the divide & conquer algorithm
     //printf("f->length: %ld\n", f.length);
     if (f->length == 0)
-	{
+	 {
         zmod_poly_zero(res);
         return;
-	}
+	 }
 	
-	ulong p = zmod_poly_modulus(g);
+	 ulong p = zmod_poly_modulus(g);
     ulong sizef = f->limbs + 1;
     fmpz_t ccoeff = f->coeffs + (f->length - 1)*sizef;
     
-	zmod_poly_t t;
+	 zmod_poly_t t;
     zmod_poly_init(t, p);
 
     zmod_poly_zero(res);
@@ -11070,11 +11071,13 @@ void fmpz_poly_translate_mod_horner(zmod_poly_t res,
     ccoeff -= sizef;
 
     for (long i = 0; i < f->length - 1; i++)
-	{
+	 {
         // res = res*g + cmod_coeff;
         zmod_poly_mul(res, res, g);
         zmod_poly_set_coeff_ui(t, 0, fmpz_mod_ui(ccoeff, p));
         zmod_poly_add(res, res, t);
         ccoeff -= sizef;
-	}
+	 }
+
+    zmod_poly_clear(t);
 }

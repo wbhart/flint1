@@ -6968,6 +6968,8 @@ void zmod_poly_compose_horner(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t po
 		res->length = (t != 0L);
 	}
 
+   zmod_poly_clear(val);
+
 	return;
 }
 

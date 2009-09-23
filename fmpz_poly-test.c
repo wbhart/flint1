@@ -15020,6 +15020,7 @@ int test_fmpz_poly_evaluate_mod()
 				}
 
 				fmpz_clear(eval);
+            fmpz_clear(val_fmpz);
 			}
 		}   
 
@@ -15131,6 +15132,7 @@ int test_fmpz_poly_translate_mod_horner()
 			}
 		}   
 
+		fmpz_poly_clear(eval_fmpz);
 		fmpz_poly_clear(test_fmpz_poly);
 		fmpz_poly_clear(compose_fmpz_poly);
 	}
