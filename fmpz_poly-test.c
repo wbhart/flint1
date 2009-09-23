@@ -30,10 +30,6 @@ Copyright (C) 2007, William Hart and David Harvey
 #include <gmp.h>
 #include <time.h>
 
-/*#if !defined(__CYGWIN__)
-#include <omp.h>
-#endif*/
-
 #include "flint.h"
 #include "mpz_poly.h"
 #include "fmpz_poly.h"
