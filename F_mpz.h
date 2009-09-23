@@ -531,6 +531,12 @@ ulong F_mpz_mod_ui(F_mpz_t f, const F_mpz_t g, const ulong h);
 void F_mpz_mod(F_mpz_t f, const F_mpz_t g, const F_mpz_t h);
 
 /** 
+   \fn     void F_mpz_gcd(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
+   \brief  Set f to the greatest common divisor of g and h.
+*/
+void F_mpz_gcd(F_mpz_t f, const F_mpz_t g, const F_mpz_t h);
+
+/** 
    \fn     int F_mpz_invert(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
    \brief  Set f to the inverse of g modulo |h|, if it exists and return 1, 
 	        otherwise return 0. We normalise with 0 <= f < |h|.

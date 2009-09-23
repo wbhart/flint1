@@ -1323,6 +1323,38 @@ void F_mpz_mod(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
 	}
 }
 
+void F_mpz_gcd(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
+{
+   F_mpz c1 = *g;
+	F_mpz c2 = *h;
+   F_mpz temp;
+
+   if (!COEFF_IS_MPZ(c1)) // g is small
+	{
+	   if (!COEFF_IS_MPZ(c2)) // h is also small
+		{
+         F_mpz_set_si(f, z_gcd(c1, c2));
+      } else // h is large, but g is small
+      {
+         F_mpz c2d = F_mpz_mod_ui(&temp, h, FLINT_ABS(c1));
+         F_mpz_set_si(f, z_gcd(c1, c2d));
+      }
+   } else
+   {
+	   if (!COEFF_IS_MPZ(c2)) // h is small, but g is large
+		{
+         F_mpz c1d = F_mpz_mod_ui(&temp, g, FLINT_ABS(c2));
+         F_mpz_set_si(f, z_gcd(c2, c1d));
+      } else // g and h are both large
+      {
+         __mpz_struct * mpz_ptr = _F_mpz_promote(f); // aliasing fine as g, h already large
+
+         mpz_gcd(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(c1), F_mpz_arr + COEFF_TO_OFF(c2));
+         _F_mpz_demote_val(f); // gcd may be small
+      }
+   }
+}
+
 int F_mpz_invert(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
 {
 	F_mpz c1 = *g;

@@ -2138,6 +2138,148 @@ int test_F_mpz_mod()
    return result;
 }
 
+int test_F_mpz_gcd()
+{
+   mpz_t m1, m2, m3, m4;
+   F_mpz_t f1, f2, f3;
+   int result = 1;
+   ulong bits, bits2, bits3;
+   
+   mpz_init(m1); 
+   mpz_init(m2); 
+   mpz_init(m3); 
+   mpz_init(m4); 
+
+   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   {
+      F_mpz_init(f1);
+      F_mpz_init(f2);
+      F_mpz_init(f3);
+
+      bits = z_randint(200) + 1;
+      F_mpz_test_random(f1, bits);
+      bits2 = z_randint(200) + 1;
+      F_mpz_test_random(f2, bits2);
+      bits3 = z_randint(200) + 1;
+      F_mpz_test_random(f3, bits3);
+      
+      F_mpz_mul2(f1, f1, f3);
+      F_mpz_mul2(f2, f2, f3);
+
+      F_mpz_get_mpz(m1, f1);
+      F_mpz_get_mpz(m2, f2);
+      F_mpz_gcd(f3, f2, f1);
+		F_mpz_get_mpz(m3, f3);
+      mpz_gcd(m4, m1, m2);
+          
+      result = (mpz_cmp(m4, m3) == 0); 
+		if (!result) 
+		{
+			gmp_printf("Error: bits = %ld, bits2 = %ld, bits3 = %ld, m1 = %Zd, m2 = %Zd, m3 = %Zd, m4 = %Zd\n", bits, bits2, bits3, m1, m2, m2, m3, m4);
+		}
+          
+      F_mpz_clear(f1);
+      F_mpz_clear(f2);
+      F_mpz_clear(f3);
+   }
+   
+	// check aliasing of operands 1 and 2
+	for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   {
+      F_mpz_init(f1);
+      F_mpz_init(f2);
+      
+		bits = z_randint(200) + 1;
+      F_mpz_test_random(f1, bits);
+      bits2 = z_randint(200) + 1;
+      F_mpz_test_random(f2, bits2);
+      bits3 = z_randint(200) + 1;
+      F_mpz_test_random(f3, bits3);
+          
+      F_mpz_mul2(f1, f1, f3);
+      F_mpz_mul2(f2, f2, f3);
+
+      F_mpz_get_mpz(m1, f1);
+      F_mpz_get_mpz(m2, f2);
+      
+		F_mpz_gcd(f1, f1, f2);
+		F_mpz_get_mpz(m3, f1);
+      mpz_gcd(m4, m1, m2);
+
+      result = (mpz_cmp(m3, m4) == 0); 
+		if (!result) 
+		{
+			gmp_printf("Error: bits = %ld, bits2 = %ld, bits3 = %ld, m1 = %Zd, m2 = %Zd, m3 = %Zd, m4 = %Zd\n", bits, bits2, bits3, m1, m2, m3, m4);
+		}
+          
+      F_mpz_clear(f1);
+      F_mpz_clear(f2);
+   }
+
+   // check aliasing of operands 1 and 3
+	for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   {
+      F_mpz_init(f1);
+      F_mpz_init(f2);
+      
+		bits = z_randint(200) + 1;
+      F_mpz_test_random(f1, bits);
+      bits2 = z_randint(200) + 1;
+      F_mpz_test_random(f2, bits2);
+      bits3 = z_randint(200) + 1;
+      F_mpz_test_random(f3, bits3);
+          
+      F_mpz_mul2(f1, f1, f3);
+      F_mpz_mul2(f2, f2, f3);
+     
+      F_mpz_get_mpz(m1, f1);
+      F_mpz_get_mpz(m2, f2);
+      
+		F_mpz_gcd(f2, f1, f2);
+		F_mpz_get_mpz(m3, f2);
+      mpz_gcd(m4, m1, m2);
+
+      result = (mpz_cmp(m3, m4) == 0); 
+		if (!result) 
+		{
+			gmp_printf("Error: bits = %ld, bits2 = %ld, bits3 = %ld, m1 = %Zd, m2 = %Zd, m3 = %Zd, m4 = %Zd\n", bits, bits2, bits3, m1, m2, m3, m4);
+		}
+          
+      F_mpz_clear(f1);
+      F_mpz_clear(f2);
+   }
+
+   // check aliasing of all operands
+	for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   {
+      F_mpz_init(f1);
+      
+		bits = z_randint(200) + 1;
+      F_mpz_test_random(f1, bits);
+           
+      F_mpz_get_mpz(m1, f1);
+      
+		F_mpz_gcd(f1, f1, f1);
+		F_mpz_get_mpz(m2, f1);
+      mpz_gcd(m3, m1, m1);
+
+      result = (mpz_cmp(m3, m2) == 0); 
+		if (!result) 
+		{
+			gmp_printf("Error: bits = %ld, m1 = %Zd, m2 = %Zd, m3 = %Zd\n", bits, m1, m2, m3);
+		}
+          
+      F_mpz_clear(f1);
+   }
+
+   mpz_clear(m1);
+   mpz_clear(m2);
+   mpz_clear(m3);
+   mpz_clear(m4);
+   
+   return result;
+}
+
 int test_F_mpz_invert()
 {
    mpz_t m1, m2, m3, m4;
@@ -2902,6 +3044,7 @@ void F_mpz_poly_test_all()
    RUN_TEST(F_mpz_mod_ui); 
    RUN_TEST(F_mpz_mod); 
    RUN_TEST(F_mpz_pow_ui); 
+   RUN_TEST(F_mpz_gcd); 
    RUN_TEST(F_mpz_invert); 
    RUN_TEST(F_mpz_size);
 	RUN_TEST(F_mpz_sgn);
