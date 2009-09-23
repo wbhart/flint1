@@ -8825,6 +8825,7 @@ int test_zmod_poly_evaluate()
 #endif
          
          randpoly(pol1, length1, modulus);
+         c = z_randint(modulus);
             
          if (pol1->length == 0) val1 = 0;
 		 else
