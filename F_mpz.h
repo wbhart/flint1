@@ -640,7 +640,7 @@ void F_mpz_multi_CRT_ui(F_mpz_t output, ulong * residues,
            F_mpz_comb_t comb, F_mpz ** comb_temp, F_mpz_t temp, F_mpz_t temp2);
 
 #ifdef __cplusplus
- 
+  }
 #endif
  
 #endif

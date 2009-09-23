@@ -111,7 +111,7 @@ void fmpz_to_ZZ(ZZ& output, const fmpz_t z)
 {
    mp_limb_t *xp;
    _ntl_gbigint *x = &output.rep;
-   long lw = FLINT_ABS(z[0]);;
+   long lw = FLINT_ABS(z[0]);
    
    if (lw == 0) 
 	{
@@ -221,6 +221,5 @@ void F_mpz_mat_to_mat_ZZ(mat_ZZ& output, const F_mpz_mat_t mat)
 			F_mpz_to_ZZ(output[i][j], mat->rows[i] + j);
 		}
 }
-
  
      
