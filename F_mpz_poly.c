@@ -239,6 +239,28 @@ void F_mpz_poly_to_mpz_poly(mpz_poly_t m_poly, const F_mpz_poly_t F_poly)
 
 /*===============================================================================
 
+       Input/output 
+
+================================================================================*/
+
+int F_mpz_poly_from_string(F_mpz_poly_t poly, const char* s)
+{
+   int ok;
+   
+   mpz_poly_t p;
+   mpz_poly_init(p);
+   ok = mpz_poly_from_string(p, s);
+   if (ok)
+   {
+      mpz_poly_to_F_mpz_poly(poly, p);
+   }
+   mpz_poly_clear(p);
+   
+   return ok;
+}
+
+/*===============================================================================
+
 	Assignment/swap
 
 ================================================================================*/
@@ -1096,7 +1118,7 @@ void _F_mpz_poly_mul_kara_recursive(F_mpz_poly_t res, const F_mpz_poly_t a,
 	ulong start = a1->length + b1->length - 1;
 	if (!a1->length || !b1->length) start = 0;
 	for (ulong i = start; i < 2*n1; i++)
-		F_mpz_zero(res->coeffs + i);
+      F_mpz_zero(res->coeffs + i);
 		
    F_mpz_poly_t asum, bsum, prodsum, scratch2;
      
@@ -1271,7 +1293,6 @@ void _F_mpz_poly_mul_karatsuba(F_mpz_poly_t output, const F_mpz_poly_t poly1, co
       // output is inplace, so need a temporary
       F_mpz_poly_t temp;
       F_mpz_poly_init2(temp, poly1->length + poly2->length - 1);
-		
       _F_mpz_poly_mul_kara_recursive(temp, poly1, poly2, scratch, crossover);
 
       F_mpz_poly_swap(temp, output);
@@ -1305,7 +1326,6 @@ void F_mpz_poly_mul_karatsuba(F_mpz_poly_t res, F_mpz_poly_t poly1,
    }*/
 
    F_mpz_poly_fit_length(res, poly1->length + poly2->length - 1);
-	
 	// rearrange parameters to make poly1 no longer than poly2
    if (poly1->length < poly2->length)
       _F_mpz_poly_mul_karatsuba_odd_even(res, poly1, poly2);
@@ -3639,7 +3659,8 @@ void F_mpz_poly_mul(F_mpz_poly_t res, F_mpz_poly_t poly1, F_mpz_poly_t poly2)
 		F_mpz_poly_clear(output);
 	} else // ordinary case
 	{
-		if (poly1->length >= poly2->length) _F_mpz_poly_mul(res, poly1, poly2);
+		F_mpz_poly_fit_length(res, poly1->length + poly2->length - 1);
+      if (poly1->length >= poly2->length) _F_mpz_poly_mul(res, poly1, poly2);
 		else _F_mpz_poly_mul(res, poly2, poly1);
 	}		
 }

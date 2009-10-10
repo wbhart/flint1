@@ -338,6 +338,13 @@ void mpz_poly_to_F_mpz_poly(F_mpz_poly_t F_poly, const mpz_poly_t m_poly);
 */
 void F_mpz_poly_to_mpz_poly(mpz_poly_t m_poly, const F_mpz_poly_t F_poly);
 
+/*===============================================================================
+
+        Input/output 
+
+================================================================================*/
+
+int F_mpz_poly_from_string(F_mpz_poly_t poly, const char* s);
 
 /*===============================================================================
 
