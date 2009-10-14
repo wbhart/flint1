@@ -582,18 +582,17 @@ void F_mpz_mat_print(F_mpz_mat_t mat)
    ulong r = mat->r;
    ulong c = mat->c;
 	
-   printf("[");
+   printf("%ld %ld  ", r, c);
    for (i = 0; i < r; i++) 
    {
-      printf("[");
       for (j = 0; j < c; j++) 
 	   { 
 	      F_mpz_print(mat->rows[i] + j); 
 	      if (j < c - 1) printf(" "); 
 	   }
-      if (i != r - 1) printf("]\n"); 
+      if (i != r - 1) printf(" "); 
    }  
-   printf("]]\n"); 
+   printf("\n"); 
 }
 
 /*===============================================================================
