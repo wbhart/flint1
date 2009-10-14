@@ -881,6 +881,52 @@ int test_F_mpz_poly_max_limbs()
    return result;
 }
 
+int test_F_mpz_poly_tofromstring()
+{
+   mpz_poly_t test_poly;
+   F_mpz_poly_t test_F_mpz_poly, test_F_mpz_poly2;
+   int result = 1;
+   unsigned long bits, length;
+   
+   mpz_poly_init(test_poly); 
+   
+   for (unsigned long count1 = 1; (count1 < 200) && (result == 1) ; count1++)
+   {
+      bits = z_randint(100)+ 1;
+      
+      F_mpz_poly_init2(test_F_mpz_poly, (bits-1)/FLINT_BITS+1);
+      F_mpz_poly_init2(test_F_mpz_poly2, (bits-1)/FLINT_BITS+1+z_randint(30));
+      FILE * testfile; 
+      
+      for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
+      { 
+          length = z_randint(100);        
+#if DEBUG
+          printf("length = %ld, bits = %ld\n",length, bits);
+#endif
+          F_mpz_poly_fit_length(test_F_mpz_poly, length);
+          F_mpz_poly_fit_length(test_F_mpz_poly2, length);
+          mpz_randpoly(test_poly, length, bits); 
+
+          mpz_poly_to_F_mpz_poly(test_F_mpz_poly, test_poly);
+          
+          char * strbuf = F_mpz_poly_to_string(test_F_mpz_poly);
+          int OK = F_mpz_poly_from_string(test_F_mpz_poly2, strbuf);
+          free(strbuf);
+//          F_mpz_poly_check_normalisation(test_F_mpz_poly2);
+          result = F_mpz_poly_equal(test_F_mpz_poly2, test_F_mpz_poly) && OK;
+           
+      }
+            
+      F_mpz_poly_clear(test_F_mpz_poly);
+      F_mpz_poly_clear(test_F_mpz_poly2);         
+   }
+   
+   mpz_poly_clear(test_poly);
+   
+   return result; 
+}
+
 int test_F_mpz_poly_neg()
 {
    F_mpz_poly_t F_poly1, F_poly2, F_poly3, F_poly4;
@@ -2685,7 +2731,8 @@ void F_mpz_poly_test_all()
    RUN_TEST(F_mpz_poly_swap); 
    RUN_TEST(F_mpz_poly_max_bits1);
    RUN_TEST(F_mpz_poly_max_bits);
-   RUN_TEST(F_mpz_poly_max_limbs); 
+   RUN_TEST(F_mpz_poly_max_limbs);
+   RUN_TEST(F_mpz_poly_tofromstring);
    RUN_TEST(F_mpz_poly_neg);
    RUN_TEST(F_mpz_poly_reverse); 
    RUN_TEST(F_mpz_poly_add); 
