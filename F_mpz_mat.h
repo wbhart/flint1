@@ -163,6 +163,12 @@ void mpz_mat_fprint_pretty(mpz_mat_t mat, FILE* f);
 int mpz_mat_fread(mpz_mat_t mat, FILE* f);
 
 /** 
+   \fn     int mpz_mat_fread_pretty(mpz_mat_t mat, FILE* f)
+	\brief  Read a an mpz_mat_t from a file stream with pretty formatting
+*/
+int mpz_mat_fread_pretty(mpz_mat_t mat, FILE* f);
+
+/** 
    \fn     void F_mpz_mat_print(F_mpz_mat_t mat)
    \brief  Print an F_mpz_mat to stdout.
 */

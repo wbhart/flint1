@@ -486,6 +486,36 @@ int mpz_mat_fread(mpz_mat_t mat, FILE* f)
    return 1;
 }
 
+int mpz_mat_fread_pretty(mpz_mat_t mat, FILE* f)
+{
+
+   unsigned long f_size;
+   unsigned long lof=0;
+   int ok;
+   char* s;
+   char c = ' ';
+
+   fseek(f,0,SEEK_END);
+   f_size = ftell(f);
+   rewind(f);
+   s = (char *)malloc(sizeof(char)*f_size+5);   
+
+
+   c = fgetc(f);
+   while(!feof(f))
+   {
+      s[lof] = c;
+      c = fgetc(f);
+      lof++;
+   }
+   s[lof] = 0;
+
+   ok = mpz_mat_from_string_pretty(mat, s);
+
+   return ok;
+
+}
+
 void F_mpz_mat_print(F_mpz_mat_t mat) 
 {
    ulong i, j; 
