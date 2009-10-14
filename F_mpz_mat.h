@@ -151,6 +151,12 @@ char* mpz_mat_to_string_pretty(mpz_mat_t mat);
 void mpz_mat_fprint(mpz_mat_t mat, FILE* f);
 
 /** 
+   \fn     void mpz_mat_fprint_pretty(mpz_mat_t mat, FILE* f)
+	\brief  Print a pretty format mpz_mat_t to a file stream 
+*/
+void mpz_mat_fprint_pretty(mpz_mat_t mat, FILE* f);
+
+/** 
    \fn     void F_mpz_mat_print(F_mpz_mat_t mat)
    \brief  Print an F_mpz_mat to stdout.
 */

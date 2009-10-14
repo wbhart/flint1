@@ -458,6 +458,13 @@ void mpz_mat_fprint(mpz_mat_t mat, FILE* f)
    free(s);
 }
 
+void mpz_mat_fprint_pretty(mpz_mat_t mat, FILE* f)
+{
+   char* s = mpz_mat_to_string_pretty(mat);
+   fputs(s, f);
+   free(s);
+}
+
 void F_mpz_mat_print(F_mpz_mat_t mat) 
 {
    ulong i, j; 
