@@ -595,6 +595,26 @@ void F_mpz_mat_print(F_mpz_mat_t mat)
    printf("\n"); 
 }
 
+void F_mpz_mat_print_pretty(F_mpz_mat_t mat) 
+{
+   ulong i, j; 
+   ulong r = mat->r;
+   ulong c = mat->c;
+	
+   printf("[");
+   for (i = 0; i < r; i++) 
+   {
+      printf("[");
+      for (j = 0; j < c; j++) 
+	   { 
+	      F_mpz_print(mat->rows[i] + j); 
+	      if (j < c - 1) printf(" "); 
+	   }
+      if (i != r - 1) printf("]\n"); 
+   }  
+   printf("]]\n"); 
+}
+
 /*===============================================================================
 
 	Conversions

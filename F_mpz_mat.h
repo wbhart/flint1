@@ -198,6 +198,12 @@ char* F_mpz_mat_to_string_pretty(F_mpz_mat_t mat);
 */
 void F_mpz_mat_print(F_mpz_mat_t mat);
 
+/** 
+   \fn     void F_mpz_mat_print_pretty(F_mpz_mat_t mat)
+	\brief  Prints an F_mpz_mat_t to the screen in pretty format
+*/
+void F_mpz_mat_print_pretty(F_mpz_mat_t mat);
+
 /*===============================================================================
 
 	Conversions
