@@ -487,6 +487,8 @@ char* mpz_poly_to_string_pretty(mpz_poly_t poly, const char * x)
 
    *ptr = 0;
    
+   free(exp);
+
    return buf;
 }
 
