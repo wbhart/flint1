@@ -344,7 +344,17 @@ void F_mpz_poly_to_mpz_poly(mpz_poly_t m_poly, const F_mpz_poly_t F_poly);
 
 ================================================================================*/
 
+/** 
+   \fn     int F_mpz_poly_from_string(F_mpz_poly_t poly, const char* s)
+   \brief  Read F_mpz_poly_t from a char *
+*/
 int F_mpz_poly_from_string(F_mpz_poly_t poly, const char* s);
+
+/** 
+   \fn     char* F_mpz_poly_to_string(const F_mpz_poly_t poly)
+   \brief  Return a char * in standard FLINT format from F_mpz_poly_t
+*/
+char* F_mpz_poly_to_string(const F_mpz_poly_t poly);
 
 /*===============================================================================
 
