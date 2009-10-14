@@ -368,6 +368,12 @@ char* F_mpz_poly_to_string_pretty(const F_mpz_poly_t poly, const char * x);
 */
 void F_mpz_poly_fprint(const F_mpz_poly_t poly, FILE* f);
 
+/** 
+   \fn     void F_mpz_poly_fprint_pretty(const F_mpz_poly_t poly, FILE* f, const char * x)
+   \brief  Prints F_mpz_poly_t to a file stream f in pretty format with variable names at x
+*/
+void F_mpz_poly_fprint_pretty(const F_mpz_poly_t poly, FILE* f, const char * x);
+
 /*===============================================================================
 
 	Assignment
