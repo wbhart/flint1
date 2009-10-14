@@ -13,7 +13,7 @@ elif [ "`uname -m`" = "ia64" ]; then
    # Kate Minola.
    FLINT_TUNE=" "
 else
-   FLINT_TUNE="-funroll-loops "
+   FLINT_TUNE="-g -funroll-loops "
 fi
 
 if [ "`uname`" = "Darwin" ]; then
@@ -27,13 +27,13 @@ export FLINT_LIB
 
 if [ -z "$FLINT_GMP_INCLUDE_DIR" ]
 then
-	FLINT_GMP_INCLUDE_DIR="/home/wbhart/mpir-trunk"
+	FLINT_GMP_INCLUDE_DIR="/usr/local/include"
 fi
 export FLINT_GMP_INCLUDE_DIR
 
 if [ -z "$FLINT_GMP_LIB_DIR" ]
 then
-    FLINT_GMP_LIB_DIR="/home/wbhart/mpir-trunk/.libs"
+    FLINT_GMP_LIB_DIR="/usr/local/lib"
 fi
 export FLINT_GMP_LIB_DIR
 
@@ -51,12 +51,12 @@ export LD_LIBRARY_PATH
 
 if [ -z "$FLINT_NTL_INCLUDE_DIR" ]
 then
-        FLINT_NTL_INCLUDE_DIR="/home/was/sage/local/include"
+        FLINT_NTL_INCLUDE_DIR="/usr/local/include"
 fi
 export FLINT_NTL_INCLUDE_DIR
 
 if [ -z "$FLINT_NTL_LIB_DIR" ]
 then
-        FLINT_NTL_LIB_DIR="/home/was/sage/local/include"
+        FLINT_NTL_LIB_DIR="/usr/local/lib"
 fi
 export FLINT_NTL_LIB_DIR

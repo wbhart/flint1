@@ -120,10 +120,114 @@ void F_mpz_mat_resize(F_mpz_mat_t mat, const ulong r, const ulong c);
 ================================================================================*/
 
 /** 
+   \fn     int mpz_mat_from_string(mpz_mat_t mat, const char *s)
+	\brief  Read an mpz_mat_t from a string at s
+*/
+int mpz_mat_from_string(mpz_mat_t mat, const char *s);
+
+/** 
+   \fn     char* mpz_mat_to_string(mpz_mat_t mat)
+	\brief  Read a string from an mpz_mat_t
+*/
+char* mpz_mat_to_string(mpz_mat_t mat);
+
+/** 
+   \fn     int mpz_mat_from_string_pretty(mpz_mat_t mat, char *s)
+	\brief  Read an mpz_mat_t from a pretty string at s.  A pretty string
+                                             starts with [[
+*/
+int mpz_mat_from_string_pretty(mpz_mat_t mat, char *s);
+
+/** 
+   \fn     char* mpz_mat_to_string_pretty(mpz_mat_t mat)
+	\brief  Read a pretty string from an mpz_mat_t
+*/
+char* mpz_mat_to_string_pretty(mpz_mat_t mat);
+
+/** 
+   \fn     void mpz_mat_fprint(mpz_mat_t mat, FILE* f)
+	\brief  Print an mpz_mat_t to a file stream
+*/
+void mpz_mat_fprint(mpz_mat_t mat, FILE* f);
+
+/** 
+   \fn     void mpz_mat_fprint_pretty(mpz_mat_t mat, FILE* f)
+	\brief  Print a pretty format mpz_mat_t to a file stream 
+*/
+void mpz_mat_fprint_pretty(mpz_mat_t mat, FILE* f);
+
+/** 
+   \fn     int mpz_mat_fread(mpz_mat_t mat, FILE* f)
+	\brief  Read an mpz_mat_t from a file stream
+*/
+int mpz_mat_fread(mpz_mat_t mat, FILE* f);
+
+/** 
+   \fn     int mpz_mat_fread_pretty(mpz_mat_t mat, FILE* f)
+	\brief  Read a an mpz_mat_t from a file stream with pretty formatting
+*/
+int mpz_mat_fread_pretty(mpz_mat_t mat, FILE* f);
+
+/** 
+   \fn     int F_mpz_mat_from_string(F_mpz_mat_t mat, const char *s)
+	\brief  Read an F_mpz_mat_t from a string
+*/
+int F_mpz_mat_from_string(F_mpz_mat_t mat, const char *s);
+
+/** 
+   \fn     char* F_mpz_mat_to_string(F_mpz_mat_t mat)
+	\brief  Write an F_mpz_mat_t to a string
+*/
+char* F_mpz_mat_to_string(F_mpz_mat_t mat);
+
+/** 
+   \fn     int F_mpz_mat_from_string_pretty(F_mpz_mat_t mat, char *s)
+	\brief  Read an F_mpz_mat_t from a string in pretty format
+*/
+int F_mpz_mat_from_string_pretty(F_mpz_mat_t mat, char *s);
+
+/** 
+   \fn     char* F_mpz_mat_to_string_pretty(F_mpz_mat_t mat)
+	\brief  Write an F_mpz_mat_t to a string in pretty format
+*/
+char* F_mpz_mat_to_string_pretty(F_mpz_mat_t mat);
+
+/** 
    \fn     void F_mpz_mat_print(F_mpz_mat_t mat)
    \brief  Print an F_mpz_mat to stdout.
 */
 void F_mpz_mat_print(F_mpz_mat_t mat);
+
+/** 
+   \fn     void F_mpz_mat_print_pretty(F_mpz_mat_t mat)
+	\brief  Prints an F_mpz_mat_t to the screen in pretty format
+*/
+void F_mpz_mat_print_pretty(F_mpz_mat_t mat);
+
+/** 
+   \fn     void F_mpz_mat_fprint(F_mpz_mat_t mat, FILE* f)
+	\brief  Prints an F_mpz_mat_t to a file stream
+*/
+void F_mpz_mat_fprint(F_mpz_mat_t mat, FILE* f);
+
+/** 
+   \fn     void F_mpz_mat_fprint_pretty(F_mpz_mat_t mat, FILE* f)
+	\brief  Prints an F_mpz_mat_t to a file stream in pretty format
+*/
+void F_mpz_mat_fprint_pretty(F_mpz_mat_t mat, FILE* f);
+
+/** 
+   \fn     int F_mpz_mat_fread(F_mpz_mat_t mat, FILE* f)
+	\brief  Read an F_mpz_mat_t from a file stream
+*/
+int F_mpz_mat_fread(F_mpz_mat_t mat, FILE* f);
+
+/** 
+   \fn     int F_mpz_mat_fread_pretty(F_mpz_mat_t mat, FILE* f)
+	\brief  Read a F_mpz_mat_t from a file stream in pretty format
+                                       useful with fpLLL's generate function
+*/
+int F_mpz_mat_fread_pretty(F_mpz_mat_t mat, FILE* f);
 
 /*===============================================================================
 
@@ -339,6 +443,44 @@ void F_mpz_mat_row_swap(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2,
 void F_mpz_mat_row_neg(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, 
 								                          ulong r2, ulong start, ulong n);
 
+/* ======================================================================================================
+  Classical Multiplication for F_mpz_mat.h
+
+=========================================================================================================*/
+
+/** 
+   \fn     void _F_mpz_mat_mul_classical(F_mpz_mat_t res, const F_mpz_mat_t mat1,
+                                                  const F_mpz_mat_t mat2)
+
+	\brief  Classical multiplication of F_mpz_mat_t's mat1 and mat2 set result to res
+                                                  not alias safe	        
+*/
+void _F_mpz_mat_mul_classical(F_mpz_mat_t res, const F_mpz_mat_t mat1,
+                                                  const F_mpz_mat_t mat2);
+
+/** 
+   \fn     static inline
+           void F_mpz_mat_mul_classical(F_mpz_mat_t P, const F_mpz_mat_t A,
+                                                  const F_mpz_mat_t B)
+
+	\brief  Classical multiplication of F_mpz_mat_t's mat1 and mat2 set result to res	        
+                                                  alias safe
+*/
+static inline
+void F_mpz_mat_mul_classical(F_mpz_mat_t P, const F_mpz_mat_t A,const F_mpz_mat_t B)
+{
+
+	if ((P == A) || (P == B))
+	{
+		F_mpz_mat_t Pa;
+		F_mpz_mat_init(Pa,P->r,P->c);
+      _F_mpz_mat_mul_classical(Pa, A, B);
+		F_mpz_mat_set(P, Pa);
+		F_mpz_mat_clear(Pa);
+		return;
+	} else
+	   return _F_mpz_mat_mul_classical(P, A, B);
+}
 
 #ifdef __cplusplus
  }

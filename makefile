@@ -69,6 +69,8 @@ HEADERS = \
 	mpz_mat.h \
 	d_mat.h \
 	F_mpz.h \
+   F_mpz_mat.h \
+   F_mpz_LLL_fast_d.h \
 	F_mpz_poly.h \
 	QS/tinyQS.h
 
@@ -111,6 +113,8 @@ FLINTOBJ = \
 	mpz_mat.o \
 	d_mat.o \
 	F_mpz.o \
+   F_mpz_mat.o \
+   F_mpz_LLL_fast_d.o \
 	F_mpz_poly.o \
 	tinyQS.o \
 	factor_base.o \
