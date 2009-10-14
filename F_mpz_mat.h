@@ -222,6 +222,13 @@ void F_mpz_mat_fprint_pretty(F_mpz_mat_t mat, FILE* f);
 */
 int F_mpz_mat_fread(F_mpz_mat_t mat, FILE* f);
 
+/** 
+   \fn     int F_mpz_mat_fread_pretty(F_mpz_mat_t mat, FILE* f)
+	\brief  Read a F_mpz_mat_t from a file stream in pretty format
+                                       useful with fpLLL's generate function
+*/
+int F_mpz_mat_fread_pretty(F_mpz_mat_t mat, FILE* f);
+
 /*===============================================================================
 
 	Conversions

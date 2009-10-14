@@ -649,6 +649,25 @@ int F_mpz_mat_fread(F_mpz_mat_t mat, FILE* f)
 
 }
 
+int F_mpz_mat_fread_pretty(F_mpz_mat_t mat, FILE* f)
+{
+
+   int ok;
+
+   mpz_mat_t m;
+   mpz_mat_init(m,0,0);
+   
+   ok = mpz_mat_fread_pretty(m, f);
+
+   F_mpz_mat_clear(mat);
+   F_mpz_mat_init(mat,m->r,m->c);
+
+   mpz_mat_to_F_mpz_mat(mat,m);
+   mpz_mat_clear(m);
+
+   return ok;
+}
+
 /*===============================================================================
 
 	Conversions
