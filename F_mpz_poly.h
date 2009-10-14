@@ -374,6 +374,12 @@ void F_mpz_poly_fprint(const F_mpz_poly_t poly, FILE* f);
 */
 void F_mpz_poly_fprint_pretty(const F_mpz_poly_t poly, FILE* f, const char * x);
 
+/** 
+   \fn     void F_mpz_poly_print(const F_mpz_poly_t poly)
+   \brief  Prints F_mpz_poly_t to screen in standard FLINT format
+*/
+void F_mpz_poly_print(const F_mpz_poly_t poly);
+
 /*===============================================================================
 
 	Assignment

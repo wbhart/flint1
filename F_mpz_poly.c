@@ -295,6 +295,11 @@ void F_mpz_poly_fprint_pretty(const F_mpz_poly_t poly, FILE* f, const char * x)
    free(s);
 }
 
+void F_mpz_poly_print(const F_mpz_poly_t poly)
+{
+   F_mpz_poly_fprint(poly, stdout);
+}
+
 /*===============================================================================
 
 	Assignment/swap
