@@ -300,6 +300,11 @@ void F_mpz_poly_print(const F_mpz_poly_t poly)
    F_mpz_poly_fprint(poly, stdout);
 }
 
+void F_mpz_poly_print_pretty(const F_mpz_poly_t poly, const char * x)
+{
+   F_mpz_poly_fprint_pretty(poly, stdout, x);
+}
+
 /*===============================================================================
 
 	Assignment/swap

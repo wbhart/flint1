@@ -380,6 +380,12 @@ void F_mpz_poly_fprint_pretty(const F_mpz_poly_t poly, FILE* f, const char * x);
 */
 void F_mpz_poly_print(const F_mpz_poly_t poly);
 
+/** 
+   \fn     void F_mpz_poly_print_pretty(const F_mpz_poly_t poly, const char * x)
+   \brief  Prints F_mpz_poly_t to screen in pretty format with variable named at x
+*/
+void F_mpz_poly_print_pretty(const F_mpz_poly_t poly, const char * x);
+
 /*===============================================================================
 
 	Assignment
