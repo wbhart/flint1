@@ -210,6 +210,12 @@ void F_mpz_mat_print_pretty(F_mpz_mat_t mat);
 */
 void F_mpz_mat_fprint(F_mpz_mat_t mat, FILE* f);
 
+/** 
+   \fn     void F_mpz_mat_fprint_pretty(F_mpz_mat_t mat, FILE* f)
+	\brief  Prints an F_mpz_mat_t to a file stream in pretty format
+*/
+void F_mpz_mat_fprint_pretty(F_mpz_mat_t mat, FILE* f);
+
 /*===============================================================================
 
 	Conversions
