@@ -187,6 +187,12 @@ char* F_mpz_mat_to_string(F_mpz_mat_t mat);
 int F_mpz_mat_from_string_pretty(F_mpz_mat_t mat, char *s);
 
 /** 
+   \fn     char* F_mpz_mat_to_string_pretty(F_mpz_mat_t mat)
+	\brief  Write an F_mpz_mat_t to a string in pretty format
+*/
+char* F_mpz_mat_to_string_pretty(F_mpz_mat_t mat);
+
+/** 
    \fn     void F_mpz_mat_print(F_mpz_mat_t mat)
    \brief  Print an F_mpz_mat to stdout.
 */
