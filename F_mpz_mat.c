@@ -535,6 +535,17 @@ int F_mpz_mat_from_string(F_mpz_mat_t mat, const char *s)
    return ok;
 }
 
+char* F_mpz_mat_to_string(F_mpz_mat_t mat)
+{
+   char* buf;
+   mpz_mat_t m;
+   mpz_mat_init(m,mat->r,mat->c);
+   F_mpz_mat_to_mpz_mat(m, mat);
+   buf = mpz_mat_to_string(m);
+   mpz_mat_clear(m);
+   return buf;
+}
+
 void F_mpz_mat_print(F_mpz_mat_t mat) 
 {
    ulong i, j; 
