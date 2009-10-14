@@ -338,6 +338,69 @@ char* mpz_mat_to_string(mpz_mat_t mat)
    return buf;
 }
 
+int mpz_mat_from_string_pretty(mpz_mat_t mat, char *s)
+{
+
+   char* pnt;
+
+   unsigned long r = 0;
+   unsigned long c = 0;
+
+   pnt = s;
+//calculates the number of rows by counting the ']'s
+   while (pnt != NULL)
+   {
+      pnt++;
+      pnt = strchr(pnt, ']');
+      r++;
+   }
+
+   r = r - 2;
+//reset the pointer and count the number of columns by the number of numbers then later divides by r (not optimal)
+   pnt = s;
+
+   while ( pnt != NULL)
+   {
+      pnt += strspn(pnt,"-0123456789");
+      pnt = strpbrk(pnt, "-0123456789");
+      if ( pnt != NULL)
+         c++;
+   }
+
+   pnt = s + strcspn(s, "[")+1;
+
+
+   if (r == 0){
+      mpz_mat_clear(mat);
+      mpz_mat_init(mat,0,0);
+      return 1;
+   }
+
+   if (c == 0){
+      mpz_mat_clear(mat);
+      mpz_mat_init(mat,r,c);
+      return 1;
+   }
+
+   c = c/r;
+
+   mpz_mat_clear(mat);
+   mpz_mat_init(mat,r,c);
+
+
+   for(ulong i = 0; i < r*c; i++){
+//searches for the next digit of - then calls gmp's mpz scanner
+         pnt = strpbrk(pnt,"-0123456789");
+         if (!gmp_sscanf(pnt, "%Zd", mat->entries[i]))
+            return 0;
+//skips the big number
+         pnt += strspn(pnt,"-0123456789");
+   }
+   
+   return 1;
+
+}
+
 void F_mpz_mat_print(F_mpz_mat_t mat) 
 {
    ulong i, j; 

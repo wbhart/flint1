@@ -132,6 +132,13 @@ int mpz_mat_from_string(mpz_mat_t mat, const char *s);
 char* mpz_mat_to_string(mpz_mat_t mat);
 
 /** 
+   \fn     int mpz_mat_from_string_pretty(mpz_mat_t mat, char *s)
+	\brief  Read an mpz_mat_t from a pretty string at s.  A pretty string
+                                             starts with [[
+*/
+int mpz_mat_from_string_pretty(mpz_mat_t mat, char *s);
+
+/** 
    \fn     void F_mpz_mat_print(F_mpz_mat_t mat)
    \brief  Print an F_mpz_mat to stdout.
 */
