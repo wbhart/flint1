@@ -1128,6 +1128,73 @@ int test_F_mpz_poly_shift()
    return result; 
 }
 
+int test_F_mpz_poly_to_zmod_poly()
+{
+   mpz_poly_t test_poly;
+   F_mpz_t temp;
+   F_mpz_poly_t test_F_mpz_poly, test_F_mpz_poly2;
+	zmod_poly_t test_zmod_poly;
+   int result = 1;
+   unsigned long bits, length;
+   
+   mpz_poly_init(test_poly);
+   F_mpz_init(temp); 
+   for (unsigned long count1 = 1; (count1 < 300) && (result == 1) ; count1++)
+   {
+      bits = z_randint(FLINT_BITS-3) + 1;
+      
+      F_mpz_poly_init(test_F_mpz_poly);
+      F_mpz_poly_init(test_F_mpz_poly2);
+
+      for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
+      { 
+          length = z_randint(20);
+			 ulong p = z_nextprime(1L<<(bits+1), 0);
+			 zmod_poly_init(test_zmod_poly, p);
+#if DEBUG
+          printf("%ld, %ld\n",length, bits);
+#endif
+          F_mpz_poly_fit_length(test_F_mpz_poly, length);
+          mpz_randpoly(test_poly, length, bits);
+           
+#if DEBUG
+          mpz_poly_print_pretty(test_poly, "x");
+          printf("\n\n");
+#endif
+          mpz_poly_to_F_mpz_poly(test_F_mpz_poly, test_poly);
+//          F_mpz_poly_check_normalisation(test_F_mpz_poly);
+          
+			 F_mpz_poly_to_zmod_poly(test_zmod_poly, test_F_mpz_poly);
+			 zmod_poly_to_F_mpz_poly(test_F_mpz_poly2, test_zmod_poly);
+
+// Now reduce poly mod p
+          for (unsigned long c = 0; c < test_F_mpz_poly->length; c++){
+             F_mpz_sub(temp, test_F_mpz_poly->coeff+c, test_F_mpz_poly2->coeff+c);
+             result = (F_mpz_mod_ui(temp, temp, p) == 0L);
+             if (!result)
+               break;
+          }
+
+			 if (!result)
+			 {
+				 F_mpz_poly_print(test_F_mpz_poly); printf("\n\n");
+				 F_mpz_poly_print(test_F_mpz_poly2); printf("\n\n");
+				 printf("p = %ld\n", p);
+			 }
+
+			 zmod_poly_clear(test_zmod_poly);
+      }   
+          
+      F_mpz_poly_clear(test_F_mpz_poly);
+      F_mpz_poly_clear(test_F_mpz_poly2);
+   }
+
+   F_mpz_clear(temp);  
+   mpz_poly_clear(test_poly);
+   
+   return result;
+}
+
 int test_F_mpz_poly_scalar_mul_ui()
 {
    mpz_poly_t m_poly, m_poly2;
@@ -2737,7 +2804,8 @@ void F_mpz_poly_test_all()
    RUN_TEST(F_mpz_poly_reverse); 
    RUN_TEST(F_mpz_poly_add); 
    RUN_TEST(F_mpz_poly_sub); 
-   RUN_TEST(F_mpz_poly_shift); 
+   RUN_TEST(F_mpz_poly_shift);
+   RUN_TEST(F_mpz_poly_to_zmod_poly);
    RUN_TEST(F_mpz_poly_scalar_mul_ui); 
    RUN_TEST(F_mpz_poly_scalar_mul_si); 
    RUN_TEST(F_mpz_poly_scalar_mul); 
