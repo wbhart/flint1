@@ -338,6 +338,12 @@ void mpz_poly_to_F_mpz_poly(F_mpz_poly_t F_poly, const mpz_poly_t m_poly);
 */
 void F_mpz_poly_to_mpz_poly(mpz_poly_t m_poly, const F_mpz_poly_t F_poly);
 
+/** 
+   \fn     void F_mpz_poly_to_zmod_poly(zmod_poly_t zpol, const F_mpz_poly_t fpol)
+   \brief  Convert an F_mpz_poly_t to a reduced zmod_poly_t
+*/
+void F_mpz_poly_to_zmod_poly(zmod_poly_t zpol, const F_mpz_poly_t fpol);
+
 /*===============================================================================
 
         Input/output 
