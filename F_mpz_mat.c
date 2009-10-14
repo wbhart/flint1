@@ -401,6 +401,56 @@ int mpz_mat_from_string_pretty(mpz_mat_t mat, char *s)
 
 }
 
+char* mpz_mat_to_string_pretty(mpz_mat_t mat)
+{
+
+   // estimate the size of the string
+   // 4 + 3*r = enough room for null terminator, [,],\n and []\n per row
+   unsigned long size = 4 + 3*mat->r;
+   for (unsigned long i = 0; i < mat->r * mat->c; i++)
+      // +2 is for the sign and a space
+      size += mpz_sizeinbase(mat->entries[i], 10) + 2;
+
+   // write the string
+   char* buf = (char*) malloc(size);
+   char* ptr = buf + sprintf(buf, "[");
+   for (unsigned long i = 0; i < mat->r; i++)
+   {
+      *ptr = '[';
+      ptr++;
+      for (unsigned long j = 0; j < mat->c; j++)
+      {
+         mpz_get_str(ptr, 10, mat->entries[i*mat->c + j]);
+         ptr += strlen(ptr);
+	      if (j < mat->c - 1)
+            {
+            *ptr = ' ';
+            ptr++;
+            }
+      }
+      if (i != mat->r - 1)
+         {
+            *ptr = ']';
+            ptr++;
+            *ptr = '\n';
+            ptr++;
+         }
+   }
+   *ptr = ']';
+   ptr++;
+   *ptr = ']';
+   ptr++;
+   *ptr = '\n';
+   ptr++;
+
+   
+   ptr--;
+   *ptr = 0;
+   
+   return buf;
+
+}
+
 void F_mpz_mat_print(F_mpz_mat_t mat) 
 {
    ulong i, j; 
