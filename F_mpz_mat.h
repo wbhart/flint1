@@ -126,6 +126,12 @@ void F_mpz_mat_resize(F_mpz_mat_t mat, const ulong r, const ulong c);
 int mpz_mat_from_string(mpz_mat_t mat, const char *s);
 
 /** 
+   \fn     char* mpz_mat_to_string(mpz_mat_t mat)
+	\brief  Read a string from an mpz_mat_t
+*/
+char* mpz_mat_to_string(mpz_mat_t mat);
+
+/** 
    \fn     void F_mpz_mat_print(F_mpz_mat_t mat)
    \brief  Print an F_mpz_mat to stdout.
 */

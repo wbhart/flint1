@@ -312,6 +312,31 @@ int mpz_mat_from_string(mpz_mat_t mat, const char *s)
    return 1;
 }
 
+char* mpz_mat_to_string(mpz_mat_t mat)
+{
+   // estimate the size of the string
+   // 41 = enough room for null terminator and space and row and column info
+   unsigned long size = 41;
+   for (unsigned long i = 0; i < mat->r * mat->c; i++)
+      // +2 is for the sign and a space
+      size += mpz_sizeinbase(mat->entries[i], 10) + 2;
+
+   // write the string
+   char* buf = (char*) malloc(size);
+   char* ptr = buf + sprintf(buf, "%ld %ld  ", mat->r, mat->c);
+   for (unsigned long i = 0; i < mat->r * mat->c; i++)
+   {
+      mpz_get_str(ptr, 10, mat->entries[i]);
+      ptr += strlen(ptr);
+      *ptr = ' ';
+      ptr++;
+   }
+   
+   ptr--;
+   *ptr = 0;
+   
+   return buf;
+}
 
 void F_mpz_mat_print(F_mpz_mat_t mat) 
 {
