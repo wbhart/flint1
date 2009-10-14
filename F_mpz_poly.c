@@ -852,6 +852,12 @@ void _F_mpz_poly_mul_classical(F_mpz_poly_t res, const F_mpz_poly_t poly1, const
 {
    ulong len1 = poly1->length;
    ulong len2 = poly2->length;
+
+   if ((len1 == 0) || (len2 == 0))
+   {
+      res->length = 0;
+      return;
+   }
    
    if ((len1 == 1) && (len2 == 1)) // Special case if the length of both inputs is 1
    {
