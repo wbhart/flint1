@@ -516,6 +516,25 @@ int mpz_mat_fread_pretty(mpz_mat_t mat, FILE* f)
 
 }
 
+int F_mpz_mat_from_string(F_mpz_mat_t mat, const char *s)
+{
+
+   int ok;
+   
+   mpz_mat_t m;
+   mpz_mat_init(m,0,0);
+   ok = mpz_mat_from_string(m, s);
+   if (ok)
+   {
+      F_mpz_mat_clear(mat);
+      F_mpz_mat_init(mat,m->r,m->c);
+      mpz_mat_to_F_mpz_mat(mat, m);
+   }
+   mpz_mat_clear(m);
+   
+   return ok;
+}
+
 void F_mpz_mat_print(F_mpz_mat_t mat) 
 {
    ulong i, j; 
