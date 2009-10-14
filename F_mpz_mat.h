@@ -145,6 +145,12 @@ int mpz_mat_from_string_pretty(mpz_mat_t mat, char *s);
 char* mpz_mat_to_string_pretty(mpz_mat_t mat);
 
 /** 
+   \fn     void mpz_mat_fprint(mpz_mat_t mat, FILE* f)
+	\brief  Print an mpz_mat_t to a file stream
+*/
+void mpz_mat_fprint(mpz_mat_t mat, FILE* f);
+
+/** 
    \fn     void F_mpz_mat_print(F_mpz_mat_t mat)
    \brief  Print an F_mpz_mat to stdout.
 */
