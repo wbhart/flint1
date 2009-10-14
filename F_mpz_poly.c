@@ -270,6 +270,17 @@ char* F_mpz_poly_to_string(const F_mpz_poly_t poly)
    return buf;
 }
 
+char* F_mpz_poly_to_string_pretty(const F_mpz_poly_t poly, const char * x)
+{
+   char* buf;
+   mpz_poly_t m_poly;
+   mpz_poly_init(m_poly);
+   F_mpz_poly_to_mpz_poly(m_poly, poly);
+   buf = mpz_poly_to_string_pretty(m_poly, x);
+   mpz_poly_clear(m_poly);
+   return buf;
+}
+
 /*===============================================================================
 
 	Assignment/swap

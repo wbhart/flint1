@@ -356,6 +356,12 @@ int F_mpz_poly_from_string(F_mpz_poly_t poly, const char* s);
 */
 char* F_mpz_poly_to_string(const F_mpz_poly_t poly);
 
+/** 
+   \fn     char* F_mpz_poly_to_string_pretty(const F_mpz_poly_t poly, const char * x)
+   \brief  Return a formated char * from F_mpz_poly_t with variable named at x
+*/
+char* F_mpz_poly_to_string_pretty(const F_mpz_poly_t poly, const char * x);
+
 /*===============================================================================
 
 	Assignment
