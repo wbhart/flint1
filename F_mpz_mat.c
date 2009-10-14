@@ -615,6 +615,13 @@ void F_mpz_mat_print_pretty(F_mpz_mat_t mat)
    printf("]]\n"); 
 }
 
+void F_mpz_mat_fprint(F_mpz_mat_t mat, FILE* f)
+{
+   char* s = F_mpz_mat_to_string(mat);
+   fputs(s, f);
+   free(s);
+}
+
 /*===============================================================================
 
 	Conversions
