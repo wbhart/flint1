@@ -443,6 +443,44 @@ void F_mpz_mat_row_swap(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2,
 void F_mpz_mat_row_neg(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, 
 								                          ulong r2, ulong start, ulong n);
 
+/* ======================================================================================================
+  Classical Multiplication for F_mpz_mat.h
+
+=========================================================================================================*/
+
+/** 
+   \fn     void _F_mpz_mat_mul_classical(F_mpz_mat_t res, const F_mpz_mat_t mat1,
+                                                  const F_mpz_mat_t mat2)
+
+	\brief  Classical multiplication of F_mpz_mat_t's mat1 and mat2 set result to res
+                                                  not alias safe	        
+*/
+void _F_mpz_mat_mul_classical(F_mpz_mat_t res, const F_mpz_mat_t mat1,
+                                                  const F_mpz_mat_t mat2);
+
+/** 
+   \fn     static inline
+           void F_mpz_mat_mul_classical(F_mpz_mat_t P, const F_mpz_mat_t A,
+                                                  const F_mpz_mat_t B)
+
+	\brief  Classical multiplication of F_mpz_mat_t's mat1 and mat2 set result to res	        
+                                                  alias safe
+*/
+static inline
+void F_mpz_mat_mul_classical(F_mpz_mat_t P, const F_mpz_mat_t A,const F_mpz_mat_t B)
+{
+
+	if ((P == A) || (P == B))
+	{
+		F_mpz_mat_t Pa;
+		F_mpz_mat_init(Pa,P->r,P->c);
+      _F_mpz_mat_mul_classical(Pa, A, B);
+		F_mpz_mat_set(P, Pa);
+		F_mpz_mat_clear(Pa);
+		return;
+	} else
+	   return _F_mpz_mat_mul_classical(P, A, B);
+}
 
 #ifdef __cplusplus
  }

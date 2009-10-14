@@ -646,7 +646,6 @@ int F_mpz_mat_fread(F_mpz_mat_t mat, FILE* f)
    mpz_mat_clear(m);
 
    return ok;
-
 }
 
 int F_mpz_mat_fread_pretty(F_mpz_mat_t mat, FILE* f)
@@ -1128,3 +1127,30 @@ void F_mpz_mat_row_neg(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2,
 	for (ulong i = start; i < start + n; i++)
 		F_mpz_neg(mat1->rows[r1] + i, mat2->rows[r2] + i);
 }
+/* ======================================================================================================
+
+ Classical Multiplication
+
+=========================================================================================================*/
+
+void _F_mpz_mat_mul_classical(F_mpz_mat_t res, const F_mpz_mat_t mat1, const F_mpz_mat_t mat2)
+{
+   //res=mat1*mat2
+
+   ulong r1 = mat1->r;
+   ulong c1 = mat1->c;
+   ulong r2 = mat2->r;
+   ulong c2 = mat2->c;
+
+   if (c1!=r2)
+      return; //dimensions don't match up
+
+   F_mpz_mat_init(res,r1,c2);
+
+   for (ulong i = 0; i < r1; i++) // add up to the length of the shorter mat
+      for (ulong j = 0; j < c2; j++)
+         for (ulong c=0; c<c1;c++)
+            F_mpz_addmul(res->rows[i] + j, mat1->rows[i]+c, mat2->rows[c]+j);   
+
+}
+
