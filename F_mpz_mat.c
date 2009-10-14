@@ -263,6 +263,56 @@ void F_mpz_mat_resize(F_mpz_mat_t mat, const ulong r, const ulong c)
 
 ===============================================================================*/
 
+
+int mpz_mat_from_string(mpz_mat_t mat, const char *s)
+{
+
+   const char* whitespace = " \t\n\r";
+
+   //read mat->rows
+   unsigned long r;
+   if (!sscanf(s, "%ld", &r))
+      return 0;
+
+   // jump to next whitespace
+   s += strcspn(s, whitespace);
+
+   // skip whitespace
+   s += strspn(s, whitespace);
+
+   //read mat->columns
+   unsigned long c;
+   if (!sscanf(s, "%ld", &c))
+      return 0;
+
+   // jump to next whitespace
+   s += strcspn(s, whitespace);
+
+   // skip 1 whitespace
+   s += strspn(s, whitespace);
+
+
+   mpz_mat_clear(mat);
+   mpz_mat_init(mat,r,c);
+
+   for (unsigned long i = 0; i < r*c; i++)
+   {
+
+      // skip whitespace
+      s += strspn(s, whitespace);
+
+      if (!gmp_sscanf(s, "%Zd", mat->entries[i]))
+         return 0;
+
+      // jump to next whitespace
+      s += strcspn(s, whitespace);
+
+   }
+
+   return 1;
+}
+
+
 void F_mpz_mat_print(F_mpz_mat_t mat) 
 {
    ulong i, j; 

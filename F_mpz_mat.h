@@ -120,6 +120,12 @@ void F_mpz_mat_resize(F_mpz_mat_t mat, const ulong r, const ulong c);
 ================================================================================*/
 
 /** 
+   \fn     int mpz_mat_from_string(mpz_mat_t mat, const char *s)
+	\brief  Read an mpz_mat_t from a string at s
+*/
+int mpz_mat_from_string(mpz_mat_t mat, const char *s);
+
+/** 
    \fn     void F_mpz_mat_print(F_mpz_mat_t mat)
    \brief  Print an F_mpz_mat to stdout.
 */
