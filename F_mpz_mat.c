@@ -465,6 +465,27 @@ void mpz_mat_fprint_pretty(mpz_mat_t mat, FILE* f)
    free(s);
 }
 
+int mpz_mat_fread(mpz_mat_t mat, FILE* f)
+{
+
+   //read mat->rows
+   unsigned long r;
+   unsigned long c;
+
+   if (!fscanf(f, "%ld %ld  ", &r, &c))
+      return 0;
+
+   mpz_mat_clear(mat);
+   mpz_mat_init(mat,r,c);
+
+   for (unsigned long i = 0; i < r*c; i++)
+   {
+      if (!mpz_inp_str(mat->entries[i], f, 10))
+         return 0;
+   }
+   return 1;
+}
+
 void F_mpz_mat_print(F_mpz_mat_t mat) 
 {
    ulong i, j; 
