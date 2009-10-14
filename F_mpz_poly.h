@@ -386,6 +386,12 @@ void F_mpz_poly_print(const F_mpz_poly_t poly);
 */
 void F_mpz_poly_print_pretty(const F_mpz_poly_t poly, const char * x);
 
+/** 
+   \fn     int F_mpz_poly_fread(F_mpz_poly_t poly, FILE* f)
+   \brief  Reads F_mpz_poly_t from file stream f
+*/
+int F_mpz_poly_fread(F_mpz_poly_t poly, FILE* f);
+
 /*===============================================================================
 
 	Assignment

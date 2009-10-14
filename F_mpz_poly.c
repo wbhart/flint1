@@ -305,6 +305,22 @@ void F_mpz_poly_print_pretty(const F_mpz_poly_t poly, const char * x)
    F_mpz_poly_fprint_pretty(poly, stdout, x);
 }
 
+int F_mpz_poly_fread(F_mpz_poly_t poly, FILE* f)
+{
+   int ok;
+   
+   mpz_poly_t p;
+   mpz_poly_init(p);
+   ok = mpz_poly_fread(p, f);
+   if (ok)
+   {
+      mpz_poly_to_F_mpz_poly(poly, p);
+   }
+   mpz_poly_clear(p);
+   
+   return ok;
+}
+
 /*===============================================================================
 
 	Assignment/swap
