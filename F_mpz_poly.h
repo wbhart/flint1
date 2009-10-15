@@ -188,6 +188,12 @@ void F_mpz_poly_factor_insert(F_mpz_poly_factor_t fac, F_mpz_poly_t poly, unsign
  */
 void F_mpz_poly_factor_concat(F_mpz_poly_factor_t res, F_mpz_poly_factor_t fac);
 
+/**
+   \fn     void F_mpz_poly_factor_print(F_mpz_poly_factor_t fac)
+   \brief  Dumps the array to stdout
+ */
+void F_mpz_poly_factor_print(F_mpz_poly_factor_t fac);
+
 /*===============================================================================
 
 	Subpolynomials

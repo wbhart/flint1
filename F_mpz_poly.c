@@ -167,6 +167,15 @@ void F_mpz_poly_factor_concat(F_mpz_poly_factor_t res, F_mpz_poly_factor_t fac)
       F_mpz_poly_factor_insert(res, fac->factors[i], fac->exponents[i]);
 }
 
+void F_mpz_poly_factor_print(F_mpz_poly_factor_t fac)
+{
+   for(unsigned long i = 0; i < fac->num_factors; i++)
+   {
+      F_mpz_poly_print(fac->factors[i]); 
+      printf(" ^ %ld\n", fac->exponents[i]);
+   }	
+}
+
 /*===============================================================================
 
 	Normalisation
