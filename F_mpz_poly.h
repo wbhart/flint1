@@ -907,6 +907,12 @@ void F_mpz_poly_mul(F_mpz_poly_t res, F_mpz_poly_t poly1, F_mpz_poly_t poly2);
 */
 void F_mpz_poly_scalar_div_exact(F_mpz_poly_t res, F_mpz_poly_t f, F_mpz_t d);
 
+/**
+   Might not be what we want in the end, it calls F_mpz_mod on each coeff then 
+      compares to p/2 and subtracts if needed, might be faster to expect pre-mod
+*/
+void F_mpz_poly_smod(F_mpz_poly_t res, F_mpz_poly_t f, F_mpz_t p);
+
 #ifdef __cplusplus
  }
 #endif

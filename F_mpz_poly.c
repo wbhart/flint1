@@ -3874,3 +3874,41 @@ void F_mpz_poly_scalar_div_exact(F_mpz_poly_t res, F_mpz_poly_t f, F_mpz_t d){
    }
 }
 
+void F_mpz_poly_smod(F_mpz_poly_t res, F_mpz_poly_t f, F_mpz_t p){
+
+   if (F_mpz_is_zero(p)){
+      printf("FLINT Exception: Division by zero\n");
+      abort();
+   }
+
+   if (F_mpz_is_one(p)){
+      F_mpz_poly_zero(res);
+      return;
+   }
+
+   F_mpz_t pdiv2;
+   F_mpz_init(pdiv2);
+
+   F_mpz_div_2exp(pdiv2, p, 1);
+
+   F_mpz_poly_fit_length(res, f->length);
+
+   res->length = f->length;
+
+   for (long i = 0; i < f->length; i++){
+      F_mpz_mod(f->coeffs + i, f->coeffs + i, p);
+
+      if ( F_mpz_cmp( f->coeffs + i, pdiv2) > 0){
+         F_mpz_sub(res->coeffs+i, f->coeffs + i, p);
+      }
+      else{
+         F_mpz_set(res->coeffs + i, f->coeffs + i);
+      }
+
+   }
+
+   _F_mpz_poly_normalise(res);
+
+   F_mpz_clear(pdiv2);
+
+}
