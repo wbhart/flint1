@@ -645,6 +645,19 @@ void F_mpz_multi_CRT_ui_unsigned(F_mpz_t output, ulong * residues,
 void F_mpz_multi_CRT_ui(F_mpz_t output, ulong * residues, 
            F_mpz_comb_t comb, F_mpz ** comb_temp, F_mpz_t temp, F_mpz_t temp2);
 
+/*============================================================================
+
+   New and potentially Naive F_mpz functions (no tests)
+
+============================================================================*/
+
+/**
+   A function for finding the integer closest to mant*2^exp, might not be 
+      optimized... not sure in fact... needs testing, but will do for my rough
+      bounds.
+*/
+void F_mpz_set_d_2exp(F_mpz_t output, double mant, long exp);
+
 #ifdef __cplusplus
   }
 #endif

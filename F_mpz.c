@@ -1914,3 +1914,35 @@ void F_mpz_multi_CRT_ui(F_mpz_t output, ulong * residues,
 {
 	__F_mpz_multi_CRT_ui(output, residues, comb, 1, comb_temp, temp, temp2);
 }
+
+/*============================================================================
+
+   New and potentially Naive F_mpz functions (no test)
+
+============================================================================*/
+
+void F_mpz_set_d_2exp(F_mpz_t output, double mant, long exp){
+
+//This function sets F_mpz to an integer closest to mant*2^exp
+   printf("mant %f, exp %ld\n",mant, exp);
+
+   if (exp >= 53){
+      mpz_t temp;
+      mpz_init(temp);
+      mpz_set_d(temp, mant * pow(2, 53));
+      F_mpz_set_mpz(output, temp);
+      mpz_clear(temp);
+      F_mpz_mul_2exp(output, output, (ulong)exp - 53UL);
+      return;
+   }
+   else{
+      mpz_t temp;
+      mpz_init(temp);
+      mpz_set_d(temp, mant * pow(2, (double) exp));
+      F_mpz_set_mpz(output, temp);
+      mpz_clear(temp);
+      return;
+   }
+
+}
+
