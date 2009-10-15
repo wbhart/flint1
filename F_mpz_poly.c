@@ -4048,3 +4048,20 @@ double F_mpz_poly_eval_horner_d_2exp(long * exp, F_mpz_poly_t poly, double val){
 
    return res;
 }
+
+void F_mpz_poly_scalar_abs(F_mpz_poly_t output, F_mpz_poly_t input){
+
+   if (input == output){
+      for( long i = 0; i < input->length; i++){
+         F_mpz_abs(output->coeffs + i, input->coeffs + i);
+      }
+   }
+   else{
+      F_mpz_poly_fit_length(output, input->length);
+      for( long i = 0; i < input->length; i++){
+         F_mpz_abs(output->coeffs + i, input->coeffs + i);
+      }
+      output-> length = input-> length;      
+   }
+   return;
+}

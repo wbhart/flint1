@@ -937,6 +937,12 @@ double F_mpz_poly_eval_horner_d(F_mpz_poly_t poly, double val);
 */
 double F_mpz_poly_eval_horner_d_2exp(long * exp, F_mpz_poly_t poly, double val);
 
+/**
+   Needs a test function, it should be fine, but if the input weren't normalized
+      or something like that... maybe...
+*/
+void F_mpz_poly_scalar_abs(F_mpz_poly_t output, F_mpz_poly_t input)
+
 #ifdef __cplusplus
  }
 #endif
