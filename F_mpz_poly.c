@@ -3847,7 +3847,8 @@ void F_mpz_poly_mul(F_mpz_poly_t res, F_mpz_poly_t poly1, F_mpz_poly_t poly2)
 
 ================================================================================*/
 
-void F_mpz_poly_scalar_div_exact(F_mpz_poly_t res, F_mpz_poly_t f, F_mpz_t d){
+void F_mpz_poly_scalar_div_exact(F_mpz_poly_t res, F_mpz_poly_t f, F_mpz_t d)
+{
 
 //check for d=+/-1?
    if (F_mpz_is_zero(d)){
@@ -3874,7 +3875,8 @@ void F_mpz_poly_scalar_div_exact(F_mpz_poly_t res, F_mpz_poly_t f, F_mpz_t d){
    }
 }
 
-void F_mpz_poly_smod(F_mpz_poly_t res, F_mpz_poly_t f, F_mpz_t p){
+void F_mpz_poly_smod(F_mpz_poly_t res, F_mpz_poly_t f, F_mpz_t p)
+{
 
    if (F_mpz_is_zero(p)){
       printf("FLINT Exception: Division by zero\n");
@@ -3912,3 +3914,24 @@ void F_mpz_poly_smod(F_mpz_poly_t res, F_mpz_poly_t f, F_mpz_t p){
    F_mpz_clear(pdiv2);
 
 }
+
+void F_mpz_poly_derivative(F_mpz_poly_t der, F_mpz_poly_t poly)
+{
+	if (poly->length <= 1)
+	{
+		F_mpz_poly_zero(der);
+		return;
+	}
+	
+
+   F_mpz_poly_fit_length(der, poly->length - 1);
+
+	der->length = poly->length - 1;
+
+   for (ulong i = 0; i < poly->length - 1; i++)
+	{
+		F_mpz_mul_ui(der->coeffs + i, poly->coeffs + i + 1, i + 1);
+	}
+
+}
+
