@@ -3971,3 +3971,30 @@ void F_mpz_poly_content(F_mpz_t c, const F_mpz_poly_t poly)
    F_mpz_clear(coeff);
 
 }
+
+double F_mpz_poly_eval_horner_d(F_mpz_poly_t poly, double val){
+
+   ulong n = poly->length;
+
+   long exp;
+   double temp;
+
+   temp = F_mpz_get_d_2exp(&exp, poly->coeffs + n - 1);
+   temp = temp*pow(2, exp);
+
+   double ans = temp;
+
+   for (long i = n - 2; i >= 0L; i--)
+   {
+      ans = ans * val;
+
+      temp = F_mpz_get_d_2exp(&exp, poly->coeffs + i);
+      temp = temp*pow(2, exp);
+
+      ans = ans + temp;
+   }
+
+   return ans;
+
+}
+

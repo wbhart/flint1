@@ -924,6 +924,11 @@ void F_mpz_poly_derivative(F_mpz_poly_t der, F_mpz_poly_t poly);
 */
 void F_mpz_poly_content(F_mpz_t c, const F_mpz_poly_t poly);
 
+/**
+   No overflow checks, just does horners method with doubles
+*/
+double F_mpz_poly_eval_horner_d(F_mpz_poly_t poly, double val);
+
 #ifdef __cplusplus
  }
 #endif
