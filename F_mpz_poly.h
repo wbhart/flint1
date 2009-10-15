@@ -89,6 +89,32 @@ typedef struct
 // F_mpz_poly_t allows reference-like semantics for F_mpz_poly_struct
 typedef F_mpz_poly_struct F_mpz_poly_t[1];
 
+/*****************************************************************************
+
+   F_mpz_poly_factor_t
+
+*****************************************************************************/
+
+/**
+ * This is the data type for storing factors for a polynomial
+ * It contains an array of polynomials <code>factors</code> that contains the factors of the polynomial.
+ * The variable <code>alloc<code> is the number of factors that can be stored in total.
+ * <code>num_factors</code> is the number of factors currently stored.
+ */
+typedef struct
+{
+	F_mpz_poly_t* factors;
+	unsigned long * exponents;
+	unsigned long alloc;
+	unsigned long num_factors;
+} F_mpz_poly_factor_struct;
+
+/**
+ * This is the data type actually used allowing us to pass the factor array by reference
+ */
+typedef F_mpz_poly_factor_struct F_mpz_poly_factor_t[1];
+
+
 /*===============================================================================
 
 	Memory management
@@ -130,6 +156,18 @@ void F_mpz_poly_fit_length(F_mpz_poly_t poly, const ulong length);
    \brief  Clear the polynomial, releasing any memory it was using.
 */
 void F_mpz_poly_clear(F_mpz_poly_t poly);
+
+/**
+   \fn     void F_mpz_poly_factor_init(F_mpz_poly_factor_t fac)
+   \brief  Initialises an array of F_mpz_poly's
+*/
+void F_mpz_poly_factor_init(F_mpz_poly_factor_t fac);
+
+/** 
+   \fn     void F_mpz_poly_factor_clear(F_mpz_poly_factor_t fac)
+   \brief  Clear the polynomial array, frees any memory being used
+*/
+void F_mpz_poly_factor_clear(F_mpz_poly_factor_t fac);
 
 /*===============================================================================
 

@@ -116,6 +116,26 @@ void F_mpz_poly_clear(F_mpz_poly_t poly)
 	if (poly->coeffs) flint_heap_free(poly->coeffs); // clean up ordinary coeffs
 }
 
+void F_mpz_poly_factor_init(F_mpz_poly_factor_t fac)
+{
+
+   fac->alloc = 5;
+   fac->num_factors = 0;
+   fac->factors = (F_mpz_poly_t *) flint_heap_alloc_bytes(sizeof(F_mpz_poly_t)*5);
+   fac->exponents = (unsigned long *) flint_heap_alloc(5);
+   for (unsigned long i = 0; i < 5; i++)
+	   F_mpz_poly_init(fac->factors[i]);
+
+}
+
+void F_mpz_poly_factor_clear(F_mpz_poly_factor_t fac)
+{
+	for (unsigned long i = 0; i < fac->alloc; i++)
+	   F_mpz_poly_clear(fac->factors[i]);
+	free(fac->factors);
+	free(fac->exponents);
+}
+
 /*===============================================================================
 
 	Normalisation
