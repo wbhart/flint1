@@ -3841,3 +3841,227 @@ void F_mpz_poly_mul(F_mpz_poly_t res, F_mpz_poly_t poly1, F_mpz_poly_t poly2)
 	}		
 }
 
+/*===============================================================================
+
+   New Naive Standard Functions (without test code and written by Andy)
+
+================================================================================*/
+
+void F_mpz_poly_scalar_div_exact(F_mpz_poly_t res, F_mpz_poly_t f, F_mpz_t d)
+{
+
+//check for d=+/-1?
+   if (F_mpz_is_zero(d)){
+      printf("FLINT Exception: Division by zero\n");
+      abort();
+   }
+
+   if (F_mpz_is_one(d)){
+      F_mpz_poly_set(res, f);
+      return;
+   }
+
+   if (F_mpz_is_m1(d)){
+      F_mpz_poly_neg(res, f);
+      return;
+   }
+
+   F_mpz_poly_fit_length(res, f->length);
+
+   res->length = f->length;
+
+   for (long i = 0; i < f->length; i++){
+      F_mpz_divexact(res->coeffs + i, f->coeffs + i, d);
+   }
+}
+
+void F_mpz_poly_smod(F_mpz_poly_t res, F_mpz_poly_t f, F_mpz_t p)
+{
+
+   if (F_mpz_is_zero(p)){
+      printf("FLINT Exception: Division by zero\n");
+      abort();
+   }
+
+   if (F_mpz_is_one(p)){
+      F_mpz_poly_zero(res);
+      return;
+   }
+
+   F_mpz_t pdiv2;
+   F_mpz_init(pdiv2);
+
+   F_mpz_div_2exp(pdiv2, p, 1);
+
+   F_mpz_poly_fit_length(res, f->length);
+
+   res->length = f->length;
+
+   for (long i = 0; i < f->length; i++){
+      F_mpz_mod(f->coeffs + i, f->coeffs + i, p);
+
+      if ( F_mpz_cmp( f->coeffs + i, pdiv2) > 0){
+         F_mpz_sub(res->coeffs+i, f->coeffs + i, p);
+      }
+      else{
+         F_mpz_set(res->coeffs + i, f->coeffs + i);
+      }
+
+   }
+
+   _F_mpz_poly_normalise(res);
+
+   F_mpz_clear(pdiv2);
+
+}
+
+void F_mpz_poly_derivative(F_mpz_poly_t der, F_mpz_poly_t poly)
+{
+	if (poly->length <= 1)
+	{
+		F_mpz_poly_zero(der);
+		return;
+	}
+	
+
+   F_mpz_poly_fit_length(der, poly->length - 1);
+
+	der->length = poly->length - 1;
+
+   for (ulong i = 0; i < poly->length - 1; i++)
+	{
+		F_mpz_mul_ui(der->coeffs + i, poly->coeffs + i + 1, i + 1);
+	}
+
+}
+
+void F_mpz_poly_content(F_mpz_t c, const F_mpz_poly_t poly)
+{
+   unsigned long length = poly->length;
+
+   if (length == 0) 
+   {
+      F_mpz_set_ui(c, 0L);
+      return;
+   }
+   
+   if (length == 1)
+   {
+      F_mpz_set(c, poly->coeffs);
+//      if ((long) c[0] < 0L) c[0] = -c[0];
+      return;
+   }
+   
+   F_mpz_t coeff;
+   F_mpz_init(coeff);
+
+   F_mpz_set(coeff, poly->coeffs + length - 1);
+   F_mpz_set(c, coeff);
+   
+   for (long i = length - 2; (i >= 0L) && !F_mpz_is_one(c); i--)
+   {
+      F_mpz_set(coeff, poly->coeffs + i);
+      if (!F_mpz_is_zero(coeff))
+         F_mpz_gcd(c, c, coeff);
+   }
+
+//   if (F_mpz_sgn(poly->coeffs + length -1) == -1)
+//      F_mpz_neg(c, c);
+
+   F_mpz_clear(coeff);
+
+}
+
+double F_mpz_poly_eval_horner_d(F_mpz_poly_t poly, double val){
+
+   ulong n = poly->length;
+
+   long exp;
+   double temp;
+
+   temp = F_mpz_get_d_2exp(&exp, poly->coeffs + n - 1);
+   temp = temp*pow(2, exp);
+
+   double ans = temp;
+
+   for (long i = n - 2; i >= 0L; i--)
+   {
+      ans = ans * val;
+
+      temp = F_mpz_get_d_2exp(&exp, poly->coeffs + i);
+      temp = temp*pow(2, exp);
+
+      ans = ans + temp;
+   }
+   return ans;
+}
+
+double F_mpz_poly_eval_horner_d_2exp(long * exp, F_mpz_poly_t poly, double val){
+
+   ulong vbits = round( abs( log(val) / log(2.0) ) );
+   long size_p = F_mpz_poly_max_bits(poly);
+   ulong n = poly->length;
+   ulong prec=(vbits*n) + FLINT_ABS(size_p) + 1;  
+   mpf_set_default_prec(prec);
+
+   mpz_t z_coeff_p;
+   mpf_t f_coeff_p;
+   mpf_t fval, output;
+
+   mpf_init(output); 
+   mpz_init(z_coeff_p);
+
+   F_mpz_t coeff_p;
+   F_mpz_init(coeff_p);
+   F_mpz_set(coeff_p, poly->coeffs + n - 1);
+   F_mpz_get_mpz(z_coeff_p,coeff_p);
+   mpf_set_z(output,z_coeff_p); //Set output to top coeff
+
+   mpz_clear(z_coeff_p);
+
+   mpf_init(fval);
+
+   mpf_set_d(fval,val);//set fval to mpf from the double val
+
+   for (long i = n - 2; i >= 0L; i--)
+   {
+
+      mpf_mul(output,output,fval);
+
+      F_mpz_set(coeff_p, poly->coeffs + i);
+
+      mpz_init(z_coeff_p);
+      mpf_init(f_coeff_p);
+
+      F_mpz_get_mpz(z_coeff_p,coeff_p);//convert coeff from fmpz to mpz to mpf
+      mpf_set_z(f_coeff_p,z_coeff_p);
+
+      mpf_add(output,output,f_coeff_p);//add coeff to output then repeat
+
+      mpf_clear(f_coeff_p);
+      mpz_clear(z_coeff_p);
+   }
+   double res = mpf_get_d_2exp( exp, output);
+
+   mpf_clear(output);
+   mpf_clear(fval);
+
+   return res;
+}
+
+void F_mpz_poly_scalar_abs(F_mpz_poly_t output, F_mpz_poly_t input){
+
+   if (input == output){
+      for( long i = 0; i < input->length; i++){
+         F_mpz_abs(output->coeffs + i, input->coeffs + i);
+      }
+   }
+   else{
+      F_mpz_poly_fit_length(output, input->length);
+      for( long i = 0; i < input->length; i++){
+         F_mpz_abs(output->coeffs + i, input->coeffs + i);
+      }
+      output-> length = input-> length;      
+   }
+   return;
+}

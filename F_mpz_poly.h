@@ -896,6 +896,53 @@ void F_mpz_poly_mul_SS(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_p
 */
 void F_mpz_poly_mul(F_mpz_poly_t res, F_mpz_poly_t poly1, F_mpz_poly_t poly2);
 
+/*===============================================================================
+
+   New Naive Standard Functions
+
+================================================================================*/
+
+/**
+   Should be decently fast, but I'ld like someone else to confirm.
+*/
+void F_mpz_poly_scalar_div_exact(F_mpz_poly_t res, F_mpz_poly_t f, F_mpz_t d);
+
+/**
+   Might not be what we want in the end, it calls F_mpz_mod on each coeff then 
+      compares to p/2 and subtracts if needed, might be faster to expect pre-mod
+*/
+void F_mpz_poly_smod(F_mpz_poly_t res, F_mpz_poly_t f, F_mpz_t p);
+
+/**
+   Probably fine as is, it's a derivative I mean come on...
+*/
+void F_mpz_poly_derivative(F_mpz_poly_t der, F_mpz_poly_t poly);
+
+/**
+   Copied from fmpz_poly_content, but allows negative contents which might 
+      not be math-correct, but I wanted the factors of a poly * content = poly
+*/
+void F_mpz_poly_content(F_mpz_t c, const F_mpz_poly_t poly);
+
+/**
+   No overflow checks, just does horners method with doubles
+*/
+double F_mpz_poly_eval_horner_d(F_mpz_poly_t poly, double val);
+
+/**
+   Uses mpfs in the middle so theres not saved time by the double exp format
+      could use dpe's in the middle for arithmetic or mpfr or something, but 
+      this should always work for polynomials no matter how large assuming you 
+      don't need the exact output...
+*/
+double F_mpz_poly_eval_horner_d_2exp(long * exp, F_mpz_poly_t poly, double val);
+
+/**
+   Needs a test function, it should be fine, but if the input weren't normalized
+      or something like that... maybe...
+*/
+void F_mpz_poly_scalar_abs(F_mpz_poly_t output, F_mpz_poly_t input);
+
 #ifdef __cplusplus
  }
 #endif
