@@ -1169,7 +1169,7 @@ int test_F_mpz_poly_to_zmod_poly()
 
 // Now reduce poly mod p
           for (unsigned long c = 0; c < test_F_mpz_poly->length; c++){
-             F_mpz_sub(temp, test_F_mpz_poly->coeff+c, test_F_mpz_poly2->coeff+c);
+             F_mpz_sub(temp, test_F_mpz_poly->coeffs + c, test_F_mpz_poly2->coeffs + c);
              result = (F_mpz_mod_ui(temp, temp, p) == 0L);
              if (!result)
                break;
