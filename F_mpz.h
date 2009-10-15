@@ -658,6 +658,13 @@ void F_mpz_multi_CRT_ui(F_mpz_t output, ulong * residues,
 */
 void F_mpz_set_d_2exp(F_mpz_t output, double mant, long exp);
 
+/**
+   Computes the number in (p/2, p/2] which is equivalent to f mod p.  
+      Calls F_mpz_mod then checks to see if it needs to subtract.  Might be sped up
+      by assuming already reduced mod p...
+*/
+void F_mpz_smod(F_mpz_t res, F_mpz_t f, F_mpz_t p);
+
 #ifdef __cplusplus
   }
 #endif

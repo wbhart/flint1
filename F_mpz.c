@@ -1946,3 +1946,30 @@ void F_mpz_set_d_2exp(F_mpz_t output, double mant, long exp){
 
 }
 
+void F_mpz_smod(F_mpz_t res, F_mpz_t f, F_mpz_t p){
+
+   if (F_mpz_is_zero(p)){
+      printf("FLINT Exception: Division by zero\n");
+      abort();
+   }
+
+   if (F_mpz_is_one(p)){
+      F_mpz_zero(res);
+      return;
+   }
+
+   F_mpz_mod(f, f, p);
+
+   F_mpz_t pdiv2;
+   F_mpz_init(pdiv2);
+
+   F_mpz_div_2exp(pdiv2, p, 1);
+
+   if ( F_mpz_cmp(f, pdiv2) > 0){
+      F_mpz_sub(res, f, p);
+   }
+   else{
+      F_mpz_set(res, f);
+   }
+   F_mpz_clear(pdiv2);
+}
