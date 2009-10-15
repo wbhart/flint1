@@ -3993,8 +3993,58 @@ double F_mpz_poly_eval_horner_d(F_mpz_poly_t poly, double val){
 
       ans = ans + temp;
    }
-
    return ans;
-
 }
 
+double F_mpz_poly_eval_horner_d_2exp(long * exp, F_mpz_poly_t poly, double val){
+
+   ulong vbits = round( abs( log(val) / log(2.0) ) );
+   long size_p = F_mpz_poly_max_bits(poly);
+   ulong n = poly->length;
+   ulong prec=(vbits*n) + FLINT_ABS(size_p) + 1;  
+   mpf_set_default_prec(prec);
+
+   mpz_t z_coeff_p;
+   mpf_t f_coeff_p;
+   mpf_t fval, output;
+
+   mpf_init(output); 
+   mpz_init(z_coeff_p);
+
+   F_mpz_t coeff_p;
+   F_mpz_init(coeff_p);
+   F_mpz_set(coeff_p, poly->coeffs + n - 1);
+   F_mpz_get_mpz(z_coeff_p,coeff_p);
+   mpf_set_z(output,z_coeff_p); //Set output to top coeff
+
+   mpz_clear(z_coeff_p);
+
+   mpf_init(fval);
+
+   mpf_set_d(fval,val);//set fval to mpf from the double val
+
+   for (long i = n - 2; i >= 0L; i--)
+   {
+
+      mpf_mul(output,output,fval);
+
+      F_mpz_set(coeff_p, poly->coeffs + i);
+
+      mpz_init(z_coeff_p);
+      mpf_init(f_coeff_p);
+
+      F_mpz_get_mpz(z_coeff_p,coeff_p);//convert coeff from fmpz to mpz to mpf
+      mpf_set_z(f_coeff_p,z_coeff_p);
+
+      mpf_add(output,output,f_coeff_p);//add coeff to output then repeat
+
+      mpf_clear(f_coeff_p);
+      mpz_clear(z_coeff_p);
+   }
+   double res = mpf_get_d_2exp( exp, output);
+
+   mpf_clear(output);
+   mpf_clear(fval);
+
+   return res;
+}

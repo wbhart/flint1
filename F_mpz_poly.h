@@ -929,6 +929,14 @@ void F_mpz_poly_content(F_mpz_t c, const F_mpz_poly_t poly);
 */
 double F_mpz_poly_eval_horner_d(F_mpz_poly_t poly, double val);
 
+/**
+   Uses mpfs in the middle so theres not saved time by the double exp format
+      could use dpe's in the middle for arithmetic or mpfr or something, but 
+      this should always work for polynomials no matter how large assuming you 
+      don't need the exact output...
+*/
+double F_mpz_poly_eval_horner_d_2exp(long * exp, F_mpz_poly_t poly, double val);
+
 #ifdef __cplusplus
  }
 #endif
