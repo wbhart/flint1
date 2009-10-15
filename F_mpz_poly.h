@@ -182,6 +182,12 @@ void F_mpz_poly_factor_clear(F_mpz_poly_factor_t fac);
  */
 void F_mpz_poly_factor_insert(F_mpz_poly_factor_t fac, F_mpz_poly_t poly, unsigned long exp);
 
+/**
+   \fn     void F_mpz_poly_factor_concat(F_mpz_poly_factor_t res, F_mpz_poly_factor_t fac)
+   \brief  Concatenates array res and array fac and stores in array res
+ */
+void F_mpz_poly_factor_concat(F_mpz_poly_factor_t res, F_mpz_poly_factor_t fac);
+
 /*===============================================================================
 
 	Subpolynomials

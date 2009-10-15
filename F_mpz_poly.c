@@ -125,7 +125,6 @@ void F_mpz_poly_factor_init(F_mpz_poly_factor_t fac)
    fac->exponents = (unsigned long *) flint_heap_alloc(5);
    for (unsigned long i = 0; i < 5; i++)
 	   F_mpz_poly_init(fac->factors[i]);
-
 }
 
 void F_mpz_poly_factor_clear(F_mpz_poly_factor_t fac)
@@ -160,6 +159,12 @@ void F_mpz_poly_factor_insert(F_mpz_poly_factor_t fac, F_mpz_poly_t poly, unsign
    fac->exponents[fac->num_factors] = exp;
    fac->num_factors++;
 
+}
+
+void F_mpz_poly_factor_concat(F_mpz_poly_factor_t res, F_mpz_poly_factor_t fac)
+{
+   for(unsigned long i = 0; i < fac->num_factors; i++)
+      F_mpz_poly_factor_insert(res, fac->factors[i], fac->exponents[i]);
 }
 
 /*===============================================================================
