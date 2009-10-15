@@ -89,6 +89,32 @@ typedef struct
 // F_mpz_poly_t allows reference-like semantics for F_mpz_poly_struct
 typedef F_mpz_poly_struct F_mpz_poly_t[1];
 
+/*****************************************************************************
+
+   F_mpz_poly_factor_t
+
+*****************************************************************************/
+
+/**
+ * This is the data type for storing factors for a polynomial
+ * It contains an array of polynomials <code>factors</code> that contains the factors of the polynomial.
+ * The variable <code>alloc<code> is the number of factors that can be stored in total.
+ * <code>num_factors</code> is the number of factors currently stored.
+ */
+typedef struct
+{
+	F_mpz_poly_t* factors;
+	unsigned long * exponents;
+	unsigned long alloc;
+	unsigned long num_factors;
+} F_mpz_poly_factor_struct;
+
+/**
+ * This is the data type actually used allowing us to pass the factor array by reference
+ */
+typedef F_mpz_poly_factor_struct F_mpz_poly_factor_t[1];
+
+
 /*===============================================================================
 
 	Memory management
@@ -131,6 +157,43 @@ void F_mpz_poly_fit_length(F_mpz_poly_t poly, const ulong length);
 */
 void F_mpz_poly_clear(F_mpz_poly_t poly);
 
+/**
+   \fn     void F_mpz_poly_factor_init(F_mpz_poly_factor_t fac)
+   \brief  Initialises an array of F_mpz_poly's
+*/
+void F_mpz_poly_factor_init(F_mpz_poly_factor_t fac);
+
+/** 
+   \fn     void F_mpz_poly_factor_clear(F_mpz_poly_factor_t fac)
+   \brief  Clear the polynomial array, frees any memory being used
+*/
+void F_mpz_poly_factor_clear(F_mpz_poly_factor_t fac);
+
+/*===============================================================================
+
+   F_mpz_poly_factor_t
+
+================================================================================*/
+
+/**
+   \fn     void F_mpz_poly_factor_insert(F_mpz_poly_factor_t fac, 
+               F_mpz_poly_t poly, unsigned long exp)
+   \brief  Adds an extra element to the array with power exp
+ */
+void F_mpz_poly_factor_insert(F_mpz_poly_factor_t fac, F_mpz_poly_t poly, unsigned long exp);
+
+/**
+   \fn     void F_mpz_poly_factor_concat(F_mpz_poly_factor_t res, F_mpz_poly_factor_t fac)
+   \brief  Concatenates array res and array fac and stores in array res
+ */
+void F_mpz_poly_factor_concat(F_mpz_poly_factor_t res, F_mpz_poly_factor_t fac);
+
+/**
+   \fn     void F_mpz_poly_factor_print(F_mpz_poly_factor_t fac)
+   \brief  Dumps the array to stdout
+ */
+void F_mpz_poly_factor_print(F_mpz_poly_factor_t fac);
+
 /*===============================================================================
 
 	Subpolynomials
@@ -140,7 +203,7 @@ void F_mpz_poly_clear(F_mpz_poly_t poly);
 /** 
    \fn     void _F_mpz_poly_attach(F_mpz_poly_t poly1, F_mpz_poly_t poly2)
    \brief  Make poly1 an alias for poly2. Note poly1 must not be reallocated whilst poly2 
-	        is attached to it.
+           is attached to it.
 */
 static inline
 void _F_mpz_poly_attach(F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
