@@ -3935,3 +3935,39 @@ void F_mpz_poly_derivative(F_mpz_poly_t der, F_mpz_poly_t poly)
 
 }
 
+void F_mpz_poly_content(F_mpz_t c, const F_mpz_poly_t poly)
+{
+   unsigned long length = poly->length;
+
+   if (length == 0) 
+   {
+      F_mpz_set_ui(c, 0L);
+      return;
+   }
+   
+   if (length == 1)
+   {
+      F_mpz_set(c, poly->coeffs);
+//      if ((long) c[0] < 0L) c[0] = -c[0];
+      return;
+   }
+   
+   F_mpz_t coeff;
+   F_mpz_init(coeff);
+
+   F_mpz_set(coeff, poly->coeffs + length - 1);
+   F_mpz_set(c, coeff);
+   
+   for (long i = length - 2; (i >= 0L) && !F_mpz_is_one(c); i--)
+   {
+      F_mpz_set(coeff, poly->coeffs + i);
+      if (!F_mpz_is_zero(coeff))
+         F_mpz_gcd(c, c, coeff);
+   }
+
+//   if (F_mpz_sgn(poly->coeffs + length -1) == -1)
+//      F_mpz_neg(c, c);
+
+   F_mpz_clear(coeff);
+
+}

@@ -916,7 +916,13 @@ void F_mpz_poly_smod(F_mpz_poly_t res, F_mpz_poly_t f, F_mpz_t p);
 /**
    Probably fine as is, it's a derivative I mean come on...
 */
-void F_mpz_poly_derivative(F_mpz_poly_t der, F_mpz_poly_t poly)
+void F_mpz_poly_derivative(F_mpz_poly_t der, F_mpz_poly_t poly);
+
+/**
+   Copied from fmpz_poly_content, but allows negative contents which might 
+      not be math-correct, but I wanted the factors of a poly * content = poly
+*/
+void F_mpz_poly_content(F_mpz_t c, const F_mpz_poly_t poly);
 
 #ifdef __cplusplus
  }
