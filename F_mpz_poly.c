@@ -138,6 +138,32 @@ void F_mpz_poly_factor_clear(F_mpz_poly_factor_t fac)
 
 /*===============================================================================
 
+   F_mpz_poly_factor_t
+
+================================================================================*/
+
+void F_mpz_poly_factor_insert(F_mpz_poly_factor_t fac, F_mpz_poly_t poly, unsigned long exp)
+{
+   if (poly->length <= 1) return;   
+// how much space left in the array?, 
+// if none make a new one twice as big (for efficiency) and copy contents across
+   if(fac->alloc == fac->num_factors)
+   {
+      fac->factors = (F_mpz_poly_t *) flint_heap_realloc_bytes(fac->factors, sizeof(F_mpz_poly_t)*2*fac->alloc);
+      fac->exponents = (unsigned long *) flint_heap_realloc(fac->exponents, 2*fac->alloc);
+      for (unsigned long i = fac->alloc; i < 2*fac->alloc; i++)
+         F_mpz_poly_init(fac->factors[i]);
+      fac->alloc = 2*fac->alloc;
+   } 
+
+   F_mpz_poly_set(fac->factors[fac->num_factors], poly);
+   fac->exponents[fac->num_factors] = exp;
+   fac->num_factors++;
+
+}
+
+/*===============================================================================
+
 	Normalisation
 
 ================================================================================*/

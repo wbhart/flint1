@@ -171,6 +171,19 @@ void F_mpz_poly_factor_clear(F_mpz_poly_factor_t fac);
 
 /*===============================================================================
 
+   F_mpz_poly_factor_t
+
+================================================================================*/
+
+/**
+   \fn     void F_mpz_poly_factor_insert(F_mpz_poly_factor_t fac, 
+               F_mpz_poly_t poly, unsigned long exp)
+   \brief  Adds an extra element to the array with power exp
+ */
+void F_mpz_poly_factor_insert(F_mpz_poly_factor_t fac, F_mpz_poly_t poly, unsigned long exp);
+
+/*===============================================================================
+
 	Subpolynomials
 
 ================================================================================*/
@@ -178,7 +191,7 @@ void F_mpz_poly_factor_clear(F_mpz_poly_factor_t fac);
 /** 
    \fn     void _F_mpz_poly_attach(F_mpz_poly_t poly1, F_mpz_poly_t poly2)
    \brief  Make poly1 an alias for poly2. Note poly1 must not be reallocated whilst poly2 
-	        is attached to it.
+           is attached to it.
 */
 static inline
 void _F_mpz_poly_attach(F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
