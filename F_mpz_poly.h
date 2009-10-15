@@ -896,6 +896,17 @@ void F_mpz_poly_mul_SS(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_p
 */
 void F_mpz_poly_mul(F_mpz_poly_t res, F_mpz_poly_t poly1, F_mpz_poly_t poly2);
 
+/*===============================================================================
+
+   New Naive Standard Functions
+
+================================================================================*/
+
+/**
+   Should be decently fast, but I'ld like someone else to confirm.
+*/
+void F_mpz_poly_scalar_div_exact(F_mpz_poly_t res, F_mpz_poly_t f, F_mpz_t d);
+
 #ifdef __cplusplus
  }
 #endif

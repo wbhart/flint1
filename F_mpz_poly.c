@@ -3841,3 +3841,36 @@ void F_mpz_poly_mul(F_mpz_poly_t res, F_mpz_poly_t poly1, F_mpz_poly_t poly2)
 	}		
 }
 
+/*===============================================================================
+
+   New Naive Standard Functions (without test code and written by Andy)
+
+================================================================================*/
+
+void F_mpz_poly_scalar_div_exact(F_mpz_poly_t res, F_mpz_poly_t f, F_mpz_t d){
+
+//check for d=+/-1?
+   if (F_mpz_is_zero(d)){
+      printf("FLINT Exception: Division by zero\n");
+      abort();
+   }
+
+   if (F_mpz_is_one(d)){
+      F_mpz_poly_set(res, f);
+      return;
+   }
+
+   if (F_mpz_is_m1(d)){
+      F_mpz_poly_neg(res, f);
+      return;
+   }
+
+   F_mpz_poly_fit_length(res, f->length);
+
+   res->length = f->length;
+
+   for (long i = 0; i < f->length; i++){
+      F_mpz_divexact(res->coeffs + i, f->coeffs + i, d);
+   }
+}
+
