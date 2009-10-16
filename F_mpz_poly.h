@@ -943,6 +943,18 @@ double F_mpz_poly_eval_horner_d_2exp(long * exp, F_mpz_poly_t poly, double val);
 */
 void F_mpz_poly_scalar_abs(F_mpz_poly_t output, F_mpz_poly_t input);
 
+/*===========================================================================
+
+   stupid F_mpz_poly functions which just wrap fmpz_poly functions
+
+============================================================================*/
+
+/**
+   \fn     void F_mpz_poly_gcd(F_mpz_poly_t d, F_mpz_poly_t f, F_mpz_poly_t g)
+   \brief  Takes the polynomial gcd of f and g and writes to d
+*/
+void F_mpz_poly_gcd(F_mpz_poly_t d, F_mpz_poly_t f, F_mpz_poly_t g);
+
 #ifdef __cplusplus
  }
 #endif
