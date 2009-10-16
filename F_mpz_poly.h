@@ -1077,10 +1077,23 @@ void _Tree_Hensel_Lift(long *link, F_mpz_poly_t *v, F_mpz_poly_t *w, long e0, lo
 ***************************/
 
 /**
-   This guy is unoptimized.  Takes Hensel lifted factors to power P, the original polynomial F, and for some reason an exponent and leading coeff
-      Those might not be needed... I'll check later, this is devel stuff here.
+   This guy is unoptimized.  Takes Hensel lifted factors to power P, the original polynomial F (and it's squarefree exponent),
+    and for some reason a leading coeff which might not be needed... I'll check later, this is devel stuff here.
 */
 void F_mpz_poly_zassenhaus_naive(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, F_mpz_t P, ulong exp, F_mpz_t lc);
+
+/*********
+
+   Factoring wrapper after square free part
+
+*********/
+
+/*
+   This is a wrapper which makes some choices about primes, Hensel lifting, Zassenhaus, this is the wrapper which does the real
+   stuff.  Call it after squarefree factoring with your square free f and it's eventual exponent.
+*/
+
+void F_mpz_poly_factor_sq_fr_prim( F_mpz_poly_factor_t final_fac, ulong exp, F_mpz_poly_t f );
 
 #ifdef __cplusplus
  }
