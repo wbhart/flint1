@@ -4244,3 +4244,136 @@ int _d_2exp_comp(double a, long ap, double b, long bp){
    }
 }
 
+void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong N){
+   if ((N < 0) || (N >= f->length - 1)){
+      printf("bad input\n");
+      return;
+   }
+//Coded with n = c+1 and decided that the user would rather give 0,1,2,3 instead of 1,2,3,4
+   ulong n = N + 1;
+   F_mpz_poly_t low_f, up_f;
+   F_mpz_poly_init(low_f);
+   F_mpz_poly_init(up_f);
+   F_mpz_poly_set(low_f, f);
+   F_mpz_poly_truncate(low_f, n);
+   F_mpz_poly_scalar_abs(low_f, low_f);
+
+   F_mpz_poly_right_shift(up_f, f, n);
+   F_mpz_poly_left_shift(up_f, up_f, n);
+   F_mpz_poly_scalar_abs(up_f, up_f);
+//Need to take scalar_abs of F_mpz_poly's here.
+   double rpower = 0;
+   double rshift = 1;
+   double r = pow(2,rpower);
+   double top_eval;
+   double bottom_eval;
+//OK right now we have a fast and loose double version, which suffices for the moment.  It is completely forseeable that a large polynomial input will require an F_mpz_t bound... I don't need a super precise output so I want to do the exponent trick to allow large numbers with only double bits of precision.  So need to make an F_mpz_poly_eval_horner_fast_d_2exp and some kind of an exponent size check on the flip side.  The eval program can use doubles and just track the exponents... in the meantime for small input polys this function works.
+   long top_exp;
+   long bot_exp;
+   int dir = 1;
+   double ans;
+   int good_enough = 0;
+   long size_p = F_mpz_poly_max_bits(f);
+   ulong hn;// = poly->length;
+   ulong vbits;// = round( abs( log(val) / log(2.0) ) );
+   ulong prec;// =(vbits*n) + FLINT_ABS(size_p) + 1; 
+   while (!good_enough){
+      hn = up_f->length;
+      vbits = round( abs( log(r) / log(2.0) ) );
+      prec = (vbits*hn) + FLINT_ABS(size_p) + 1;
+      //this is a rough bound for the number of bits of the answer...
+      if (prec > 1021){
+         top_eval = F_mpz_poly_eval_horner_d_2exp( &top_exp, up_f, r);
+         // maybe I'll deal with this on it's own.  top_eval = top_eval*pow(2, top_exp);
+      }      
+      else{
+         //Here we knew all along that doubles were good enough
+         top_eval = F_mpz_poly_eval_horner_d( up_f, r);
+         top_exp = 0;
+      }
+      hn = low_f->length;
+      prec = (vbits*hn) + FLINT_ABS(size_p) + 1;
+      if (prec > 1021){
+         bottom_eval = F_mpz_poly_eval_horner_d_2exp( &bot_exp, low_f, r);
+//         bottom_eval = bottom_eval*pow(2, bot_exp);
+      }      
+      else{
+         bottom_eval = F_mpz_poly_eval_horner_d(low_f, r);
+         bot_exp = 0;
+      }
+      if ((top_exp == 0) && (bot_exp == 0)){
+         if ( 2*(bottom_eval) < (top_eval) ){
+            if (dir == 1)
+               rshift = rshift/2;
+            dir = -1;
+            rpower = rpower - rshift;
+            r = pow(2, rpower);
+         }
+         else if (  (bottom_eval) > 2*(top_eval) ){
+            if (dir == -1)
+               rshift = rshift/2;
+            dir = 1;
+            rpower = rpower + rshift;
+            r = pow(2, rpower);
+         }
+         else{
+            good_enough = 1;
+
+            if (top_eval > bottom_eval)
+               ans = top_eval;
+            else
+               ans = bottom_eval;
+
+            ans = ans / pow(r, n);
+            ans = ans*(f->length - 1);
+            mpz_t temp;
+            mpz_init(temp);
+            mpz_set_d(temp, ans);
+            F_mpz_set_mpz(res, temp);
+            mpz_clear(temp);
+         }
+
+      }
+      else{
+//here is trouble land, coeffs too big for doubles to handle.
+// _d_2exp_comp should give 2 when 2*bottom < top and -2 when 2*top < bottom and 1 when bottom <= top and -1 when bottom > top
+         int test_me = _d_2exp_comp(top_eval, top_exp, bottom_eval, bot_exp);
+
+         if ( test_me == 2 ){
+            if (dir == 1)
+               rshift = rshift/2;
+            dir = -1;
+            rpower = rpower - rshift;
+            r = pow(2, rpower);
+         }
+         else if ( test_me == -2 ){
+            if (dir == -1)
+               rshift = rshift/2;
+            dir = 1;
+            rpower = rpower + rshift;
+            r = pow(2, rpower);
+         }
+         else{
+            good_enough = 1;
+            if (test_me == 1){
+// F_mpz_set_d_2exp and adjust and stuff using top_eval, top_exp 
+               ans = top_eval;
+               ans = ans / pow(r, n);
+               ans = ans * f->length - 1;
+               F_mpz_set_d_2exp(res, ans, top_exp);
+            }
+            else{
+// F_mpz_set_d_2exp and adjust and junk using bottom_eval, bot_exp
+               ans = bottom_eval;
+               ans = ans / pow(r, n);
+               ans = ans * f->length - 1;
+               F_mpz_set_d_2exp(res, ans, bot_exp);
+            }
+         }
+      }
+   }
+   F_mpz_poly_clear(low_f);
+   F_mpz_poly_clear(up_f);
+   return;
+}
+

@@ -970,6 +970,7 @@ void F_mpz_poly_divrem(F_mpz_poly_t q, F_mpz_poly_t r, F_mpz_poly_t f, F_mpz_pol
 /*===========================================================================
 
    New Material for FLINT, computing fast/tight bounds for CLDs
+      CLDs:= Coefficients of Logarithmic Derivatives.  f*g'/g
 
 ============================================================================*/
 
@@ -980,6 +981,14 @@ void F_mpz_poly_divrem(F_mpz_poly_t q, F_mpz_poly_t r, F_mpz_poly_t f, F_mpz_pol
                larger, smaller or =, two times smaller than the a pair
 */
 int _d_2exp_comp(double a, long ap, double b, long bp);
+
+/**
+   \fn      void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong N)
+   \brief   A new approach for quickly, tightly, finding a bound on the size of
+               the Nth coefficient of f*g'/g for any integer factor of f.  
+               A good benchmark for comparison is just f'.
+*/
+void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong N);
 
 #ifdef __cplusplus
  }
