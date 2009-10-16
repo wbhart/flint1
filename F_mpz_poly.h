@@ -1006,6 +1006,18 @@ void F_mpz_poly_mulmod_modp_naive(F_mpz_poly_t R, F_mpz_poly_t f,
 void F_mpz_poly_div_trunc_modp( F_mpz_t *res, F_mpz_poly_t f, 
                 F_mpz_poly_t g, F_mpz_t P, ulong n);
 
+/**
+   \fn      void F_mpz_poly_div_upper_trunc_modp( F_mpz_t *res, F_mpz_poly_t f,
+                F_mpz_poly_t g, F_mpz_t P, ulong n)
+   \brief   Reversed power series division modp.  Using only the top n coeffs of 
+               f and g finds the top n coeffs of f/g mod p, assuming that the 
+               remainder of f/g is zero mod p.  (Designed for padic CLDS) Right 
+               now, if the leading coeff of g is not invertible mod p then 
+               does full division.  In the intended factoring uses g is monic.
+*/
+void F_mpz_poly_div_upper_trunc_modp( F_mpz_t *res, F_mpz_poly_t f, 
+               F_mpz_poly_t g, F_mpz_t P, ulong n);
+
 #ifdef __cplusplus
  }
 #endif
