@@ -4724,3 +4724,209 @@ void F_mpz_poly_squarefree(F_mpz_poly_factor_t fac, F_mpz_t content, F_mpz_poly_
    return;
 }
 
+/*****************************************************************************
+
+   NTL Hensel Lifting procedures
+
+*****************************************************************************/
+
+void _Build_Hensel_Tree(long *link, F_mpz_poly_t *v, F_mpz_poly_t *w, zmod_poly_factor_t fac){
+
+   long r;
+   unsigned long p;
+
+   r = fac->num_factors;
+   p = (fac->factors[0])->p;
+
+   long i, j, s;
+   long minp, mind;
+   long tmp;
+
+   zmod_poly_t V[2*r-2];
+   zmod_poly_t W[2*r-2];
+
+   for (i = 0; i < 2*r-2; i++)
+      zmod_poly_init(V[i],p);
+
+   for (i = 0; i < 2*r-2; i++)
+      zmod_poly_init(W[i],p);
+
+/* We will have five arrays: a v of fmpz_polys and a V of zmod_polys also a w and a W and link.  Here's the idea, we will sort each leaf and node of a factor tree by degree, in fact choosing to multiply the two smallest factors, then the next two smallest (factors or products) until a tree is made.  The tree will be stored in the v's.  The first two elements of v will be the smallest modular factors, the last two elements of v will multiply to form F itself.  Since v will be rearranging the original factors we will need to be able to recover the original order.  For this we use link which has nonnegative even numbers and negative numbers.  Link is an array of longs which aligns with V/v  if link has a negative number in spot j that means V[j] is an original modular factor which has been lifted, if link[j] is a nonnegative even number then V[j] stores a product of the two entries at V[ link[j] ] and V[ link[j]+1 ].  W/w plays the role of the extended GCD, at V[0], V[2], V[4], etc we have a new product, W[0], W[2], W[4], etc are the XGCD compliments of the V's.  So V[0]*W[0]+V[1]*W[1] = 1 mod p^(something)  these will be lifted along with the entries in V.  It's not enough to just lift each factor we have to lift the entire tree and the tree of XGCD inverses.*/
+
+   for (i = 0; i < r; i++){
+      zmod_poly_set(V[i], fac->factors[i]);
+      link[i] = -(i+1);
+   }
+
+   for (j = 0; j < 2*r - 4; j += 2){
+      minp = j;
+      mind = zmod_poly_degree(V[j]);
+      for (s = j+1; s < i; s++){
+         if (zmod_poly_degree(V[s]) < mind){
+            minp = s;
+            mind = zmod_poly_degree(V[s]);
+         }
+      }
+      zmod_poly_swap(V[j],V[minp]);
+
+      tmp = link[j];
+      link[j] = link[minp];
+      link[minp] = tmp; 
+      //swap link[j] and V[minp]
+
+      minp = j+1;
+      mind = zmod_poly_degree(V[j+1]);
+
+      for ( s = j+2; s < i; s++){
+         if (zmod_poly_degree(V[s]) < mind ){
+            minp = s;
+            mind = zmod_poly_degree(V[s]);
+         }
+      }
+
+      zmod_poly_swap(V[j+1],V[minp]);
+
+      tmp = link[j+1];
+      link[j+1] = link[minp];
+      link[minp] = tmp; 
+      //swap link[j+1] and V[minp]
+
+      zmod_poly_mul(V[i], V[j], V[j+1]);
+      link[i] = j;
+      i++;
+   }
+   zmod_poly_t d;
+   zmod_poly_init(d, p);
+   for (j = 0; j < 2*r - 2; j += 2){
+      zmod_poly_xgcd_euclidean(d, W[j], W[j+1], V[j], V[j+1]);
+      //Make a check for d!=1
+   }
+   for (j = 0; j < 2*r-2; j++){
+      zmod_poly_to_F_mpz_poly(v[j], V[j]);
+      zmod_poly_to_F_mpz_poly(w[j], W[j]);
+   }
+   for (i = 0; i < 2*r-2; i++)
+      zmod_poly_clear(V[i]);
+   for (i = 0; i < 2*r-2; i++)
+      zmod_poly_clear(W[i]);
+   zmod_poly_clear(d);
+}
+
+void _Hensel_Lift(F_mpz_poly_t Gout, F_mpz_poly_t Hout, F_mpz_poly_t Aout, F_mpz_poly_t Bout, F_mpz_poly_t f, F_mpz_poly_t g, F_mpz_poly_t h, F_mpz_poly_t a, F_mpz_poly_t b, F_mpz_t p, F_mpz_t p1){
+
+   F_mpz_poly_t c, g1, h1, G, H, A, B;
+   F_mpz_poly_init(c);
+   F_mpz_poly_init(g1);
+   F_mpz_poly_init(h1);
+   F_mpz_poly_init(G);
+   F_mpz_poly_init(H);
+   F_mpz_poly_init(A);
+   F_mpz_poly_init(B);
+
+   F_mpz_poly_mul(c, g, h);
+
+   F_mpz_poly_sub(c, f, c);
+
+   F_mpz_poly_scalar_div_exact(c, c, p);
+   //Make a check that c is divisible by p
+
+//When I make a precomputing function use GG, HH instead
+
+   F_mpz_poly_mulmod_modp_naive(h1, c, a, h, p1);
+   F_mpz_poly_mulmod_modp_naive(g1, c, b, g, p1);
+//   F_mpz_poly_smod(g1, g1, p1);
+//   F_mpz_poly_smod(h1, h1, p1);
+
+   F_mpz_poly_scalar_mul(g1, g1, p);
+   F_mpz_poly_scalar_mul(h1, h1, p);
+
+   F_mpz_poly_add(G, g, g1);
+   F_mpz_poly_add(H, h, h1);
+   
+//Lifting the inverses now
+
+   F_mpz_poly_t a1, b1, t1, t2, unity;
+   F_mpz_poly_init(a1);
+   F_mpz_poly_init(b1);
+   F_mpz_poly_init(t1);
+   F_mpz_poly_init(t2);
+   F_mpz_poly_init(unity);
+
+   F_mpz_poly_set_coeff_si(unity, 0, -1);
+
+   F_mpz_poly_mul(t1, a, G);
+   F_mpz_poly_mul(t2, b, H);
+
+   F_mpz_poly_add(t1, t1, t2);
+   F_mpz_poly_add(t1, t1, unity);
+   F_mpz_poly_neg(t1, t1);
+
+   F_mpz_poly_scalar_div_exact(t1, t1, p);
+//Make a check that t1 is divisible by p
+
+   F_mpz_poly_mulmod_modp_naive(a1, t1, a, h, p1);
+   F_mpz_poly_mulmod_modp_naive(b1, t1, b, g, p1);
+//   F_mpz_poly_smod(b1, b1, p1);
+//   F_mpz_poly_smod(a1, a1, p1);
+
+   F_mpz_poly_scalar_mul(a1, a1, p);
+   F_mpz_poly_add(A, a, a1);
+
+   F_mpz_poly_scalar_mul(b1, b1, p);
+   F_mpz_poly_add(B, b, b1);
+
+   F_mpz_poly_set(Gout, G);
+   F_mpz_poly_set(Hout, H);
+   F_mpz_poly_set(Aout, A);
+   F_mpz_poly_set(Bout, B);
+
+   F_mpz_poly_clear(a1);
+   F_mpz_poly_clear(b1);
+   F_mpz_poly_clear(t1);
+   F_mpz_poly_clear(t2);
+   F_mpz_poly_clear(unity);
+
+   F_mpz_poly_clear(c);
+   F_mpz_poly_clear(g1);
+   F_mpz_poly_clear(h1);
+   F_mpz_poly_clear(G);
+   F_mpz_poly_clear(H);
+   F_mpz_poly_clear(A);
+   F_mpz_poly_clear(B);
+}
+
+void _Rec_Tree_Hensel_Lift(long *link, F_mpz_poly_t *v, F_mpz_poly_t *w, F_mpz_t p, F_mpz_poly_t f, long j, long inv, F_mpz_t p1){
+
+   if (j < 0) return;
+
+   if (inv)
+      _Hensel_Lift(v[j], v[j+1], w[j], w[j+1], f, v[j], v[j+1], w[j], w[j+1], p, p1);
+//   else
+//      _Hensel_Lift1(v[j], v[j+1], f, v[j], v[j+1], w[j], w[j+1], p, p1);
+//altered to check a bug, should be Hensel_Lift1
+   _Rec_Tree_Hensel_Lift(link, v, w, p, v[j],   link[j],   inv, p1);
+   _Rec_Tree_Hensel_Lift(link, v, w, p, v[j+1], link[j+1], inv, p1);
+}
+
+void _Tree_Hensel_Lift(long *link, F_mpz_poly_t *v, F_mpz_poly_t *w, long e0, long e1, F_mpz_poly_t f, long inv, long p, long r, F_mpz_t P){
+
+   F_mpz_t temp, p0, p1;
+   F_mpz_init(p0);
+   F_mpz_init(p1);
+   F_mpz_init(temp);
+
+   F_mpz_set_ui(temp, p);
+
+   F_mpz_pow_ui(p0, temp, e0);
+   F_mpz_pow_ui(p1, temp, e1 - e0);
+
+   _Rec_Tree_Hensel_Lift(link, v, w, p0, f, 2*r-4, inv, p1);
+
+   F_mpz_mul2(P, p0, p1);
+
+   F_mpz_clear(temp);
+   F_mpz_clear(p0);
+   F_mpz_clear(p1);
+
+}
+
