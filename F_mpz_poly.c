@@ -4261,3 +4261,20 @@ void F_mpz_poly_rem_modp_naive(F_mpz_poly_t R, F_mpz_poly_t A, F_mpz_poly_t B, F
    F_mpz_clear(temp);
 }
 
+void F_mpz_poly_mulmod_modp_naive(F_mpz_poly_t R, F_mpz_poly_t f, F_mpz_poly_t g, F_mpz_poly_t B, F_mpz_t p){
+//Want to compute f*g mod B where all polynomials are considered modulo an F_mpz modulus p.  Need that the leading coeff of B is invertible mod p.
+   if (B->length == 0){
+      printf("FLINT Exception: Divide by zero\n");
+      abort();
+   }
+   if ( (B->length ==1) || (f->length == 0) || (g->length == 0) ){
+      F_mpz_poly_zero(R);
+      return;
+   }
+   F_mpz_poly_t prod;
+   F_mpz_poly_init(prod);
+   F_mpz_poly_mul(prod, f, g);
+   F_mpz_poly_rem_modp_naive(R, prod, B, p);
+   F_mpz_poly_clear(prod);
+}
+
