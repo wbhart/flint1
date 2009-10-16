@@ -4179,3 +4179,85 @@ void F_mpz_poly_divrem(F_mpz_poly_t q, F_mpz_poly_t r, F_mpz_poly_t f, F_mpz_pol
 
 }
 
+/*============================================================================
+
+   Naive '_modp' ( := Large moduli ) F_mpz_poly functions
+
+============================================================================*/
+
+void F_mpz_poly_rem_modp_naive(F_mpz_poly_t R, F_mpz_poly_t A, F_mpz_poly_t B, F_mpz_t p){
+
+   if (B->length == 0)
+   {
+      printf("Error: Divide by zero\n");
+      abort();      
+   }
+   
+   if (A->length < B->length)
+   {
+      F_mpz_poly_set(R, A);      
+      return;
+   }
+
+   F_mpz_poly_set(R,A);
+   long coeff = A->length - 1;
+
+   F_mpz_poly_t pre_inv_B, Bm1, qB;
+   F_mpz_poly_init2(Bm1, B->length);
+
+   F_mpz_poly_set(Bm1, B);
+
+   F_mpz_t B_lead_inv;
+   F_mpz_init(B_lead_inv);
+   F_mpz_t coeff_Q;
+   F_mpz_init( coeff_Q);
+
+   F_mpz_invert(B_lead_inv, B->coeffs + (B->length - 1), p);
+
+   long R_length;
+
+   F_mpz_t temp;
+   F_mpz_init( temp );
+
+   while (coeff >= (long) Bm1->length - 1){
+      while( (coeff >= (long) Bm1->length - 1) && F_mpz_is_zero( R->coeffs + coeff ) ){
+         coeff--;
+      }
+      if (coeff >= (long) B->length - 1){
+         F_mpz_mul2(temp, R->coeffs + coeff, B_lead_inv);
+         F_mpz_mod(coeff_Q, temp, p);
+
+         F_mpz_poly_init(qB);
+         F_mpz_poly_fit_length(qB, Bm1->length);
+
+         qB->length = Bm1->length;
+         for (long i = 0; i < Bm1->length; i++){
+            F_mpz_mul2(temp, Bm1->coeffs + i , coeff_Q );
+            F_mpz_mod(qB->coeffs + i, temp, p);
+         }
+//for each coeff do mulmod by coeff_Q and write to temp_B
+         F_mpz_poly_left_shift(qB, qB, coeff - B->length + 1);
+
+         R_length = coeff;
+         F_mpz_poly_sub(R, R, qB);
+         R->length = R_length;
+
+         F_mpz_poly_clear(qB);
+
+         for (long i = 0; i < R->length; i++){
+            F_mpz_mod(R->coeffs + i, R->coeffs + i, p);
+         }
+         //subtract a shifted temp_B from R
+         coeff--;
+      }
+   }
+   R->length = B->length - 1;
+   _F_mpz_poly_normalise(R);
+
+   F_mpz_clear(B_lead_inv);
+
+   F_mpz_poly_clear(Bm1);
+   F_mpz_clear(coeff_Q);
+   F_mpz_clear(temp);
+}
+

@@ -962,10 +962,30 @@ void F_mpz_poly_gcd(F_mpz_poly_t d, F_mpz_poly_t f, F_mpz_poly_t g);
 void F_mpz_poly_div(F_mpz_poly_t d, F_mpz_poly_t f, F_mpz_poly_t g);
 
 /**
-   \fn     void F_mpz_poly_divrem(F_mpz_poly_t q, F_mpz_poly_t r, F_mpz_poly_t f, F_mpz_poly_t g)
+   \fn     void F_mpz_poly_divrem(F_mpz_poly_t q, F_mpz_poly_t r, 
+               F_mpz_poly_t f, F_mpz_poly_t g)
    \brief  Finds polys r,q such that f = qg+r and deg(r) < deg(g)
 */
-void F_mpz_poly_divrem(F_mpz_poly_t q, F_mpz_poly_t r, F_mpz_poly_t f, F_mpz_poly_t g);
+void F_mpz_poly_divrem(F_mpz_poly_t q, F_mpz_poly_t r,
+               F_mpz_poly_t f, F_mpz_poly_t g);
+
+/*============================================================================
+
+   Naive '_modp' ( := Large moduli ) F_mpz_poly functions
+
+============================================================================*/
+
+/**
+   \fn     void F_mpz_poly_rem_modp_naive(F_mpz_poly_t R, F_mpz_poly_t A,
+               F_mpz_poly_t B, F_mpz_t p)
+   \brief  Finds (A modulo B) modulo p and sets this to R.  Uses mod not smod.
+               I call it Naive because it doesn't have special code for the fast
+               cases, namely deg(A) == deg(B) or deg(B) + 1
+*/
+void F_mpz_poly_rem_modp_naive(F_mpz_poly_t R, F_mpz_poly_t A, F_mpz_poly_t B,
+               F_mpz_t p);
+
+
 
 #ifdef __cplusplus
  }
