@@ -962,10 +962,61 @@ void F_mpz_poly_gcd(F_mpz_poly_t d, F_mpz_poly_t f, F_mpz_poly_t g);
 void F_mpz_poly_div(F_mpz_poly_t d, F_mpz_poly_t f, F_mpz_poly_t g);
 
 /**
-   \fn     void F_mpz_poly_divrem(F_mpz_poly_t q, F_mpz_poly_t r, F_mpz_poly_t f, F_mpz_poly_t g)
+   \fn     void F_mpz_poly_divrem(F_mpz_poly_t q, F_mpz_poly_t r, 
+               F_mpz_poly_t f, F_mpz_poly_t g)
    \brief  Finds polys r,q such that f = qg+r and deg(r) < deg(g)
 */
-void F_mpz_poly_divrem(F_mpz_poly_t q, F_mpz_poly_t r, F_mpz_poly_t f, F_mpz_poly_t g);
+void F_mpz_poly_divrem(F_mpz_poly_t q, F_mpz_poly_t r,
+               F_mpz_poly_t f, F_mpz_poly_t g);
+
+/*============================================================================
+
+   Naive '_modp' ( := Large moduli ) F_mpz_poly functions
+
+============================================================================*/
+
+/**
+   \fn     void F_mpz_poly_rem_modp_naive(F_mpz_poly_t R, F_mpz_poly_t A,
+               F_mpz_poly_t B, F_mpz_t p)
+   \brief  Finds (A modulo B) modulo p and sets this to R.  Uses mod not smod.
+               I call it Naive because it doesn't have special code for the 
+               fast cases, namely deg(A) == deg(B) or deg(B) + 1 
+               lead coeff of B should be invertible mod p
+*/
+void F_mpz_poly_rem_modp_naive(F_mpz_poly_t R, F_mpz_poly_t A, F_mpz_poly_t B,
+               F_mpz_t p);
+
+/**
+   \fn      void F_mpz_poly_mulmod_modp_naive(F_mpz_poly_t R, F_mpz_poly_t f,
+                F_mpz_poly_t g, F_mpz_poly_t B, F_mpz_t p)
+   \brief   Finds (f*g modulo B) modulo p, just does f*g then rem_modp.
+*/
+void F_mpz_poly_mulmod_modp_naive(F_mpz_poly_t R, F_mpz_poly_t f, 
+                F_mpz_poly_t g, F_mpz_poly_t B, F_mpz_t p);
+
+/**
+   \fn      void F_mpz_poly_div_trunc_modp( F_mpz_t *res, F_mpz_poly_t f, 
+                F_mpz_poly_t g, F_mpz_t P, ulong n)
+   \brief   A power series modp division.  Using only n coeffs of f and g
+               finds the lowest n coeffs of f/g assuming the remainder of f/g
+               is 0 mod p. (Designed for padic CLDs) Right now if the trailing
+               coeff of g is not invertible mod p then it resorts to a full
+                division.  Want to find a way around that.
+*/
+void F_mpz_poly_div_trunc_modp( F_mpz_t *res, F_mpz_poly_t f, 
+                F_mpz_poly_t g, F_mpz_t P, ulong n);
+
+/**
+   \fn      void F_mpz_poly_div_upper_trunc_modp( F_mpz_t *res, F_mpz_poly_t f,
+                F_mpz_poly_t g, F_mpz_t P, ulong n)
+   \brief   Reversed power series division modp.  Using only the top n coeffs of 
+               f and g finds the top n coeffs of f/g mod p, assuming that the 
+               remainder of f/g is zero mod p.  (Designed for padic CLDS) Right 
+               now, if the leading coeff of g is not invertible mod p then 
+               does full division.  In the intended factoring uses g is monic.
+*/
+void F_mpz_poly_div_upper_trunc_modp( F_mpz_t *res, F_mpz_poly_t f, 
+               F_mpz_poly_t g, F_mpz_t P, ulong n);
 
 /*===========================================================================
 
