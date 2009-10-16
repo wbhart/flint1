@@ -5205,4 +5205,47 @@ void F_mpz_poly_factor_sq_fr_prim( F_mpz_poly_factor_t final_fac, ulong exp, F_m
    return;
 }
 
+void F_mpz_poly_factor(F_mpz_poly_factor_t final_fac, F_mpz_t cong, F_mpz_poly_t G){
+   if (G->length == 0){
+      F_mpz_set_ui(cong, 0UL);
+      return;
+   }
+   if (G->length == 1){
+      F_mpz_set(cong, G->coeffs);
+      return;
+   }
+   F_mpz_poly_t g;
+   F_mpz_poly_init(g);
+
+   if (G->length == 2){
+      F_mpz_poly_content(cong, G);
+      F_mpz_poly_scalar_div_exact(g, G, cong);
+      F_mpz_poly_factor_insert( final_fac, g, 1UL);
+      return;
+   }
+//Does a presearch for a factor of form x^(x_pow)
+   ulong x_pow = 0;
+   while (F_mpz_is_zero(G->coeffs + x_pow)){
+      x_pow++; 
+   }
+   if (x_pow != 0){
+      F_mpz_poly_t temp_x;
+      F_mpz_poly_init(temp_x);
+      F_mpz_poly_set_coeff_ui(temp_x, 1, 1);
+      F_mpz_poly_factor_insert(final_fac, temp_x, x_pow);
+      F_mpz_poly_clear(temp_x);
+   }
+   F_mpz_poly_right_shift(g, G, x_pow);
+   F_mpz_poly_factor_t sq_fr_fac;
+//Could make other tests for x-1 or simple things 
+// maybe take advantage of the composition algorithm
+   F_mpz_poly_factor_init( sq_fr_fac );
+   F_mpz_poly_squarefree(sq_fr_fac, cong, g);
+//Now we can go through and factor each square free guy and add it to final factors.
+   for(ulong j = 0; j < sq_fr_fac->num_factors; j++){
+      F_mpz_poly_factor_sq_fr_prim(final_fac, sq_fr_fac->exponents[j], sq_fr_fac->factors[j]);
+   }
+   F_mpz_poly_factor_clear( sq_fr_fac );
+   F_mpz_poly_clear(g);
+}
 

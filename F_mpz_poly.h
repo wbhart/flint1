@@ -1095,6 +1095,15 @@ void F_mpz_poly_zassenhaus_naive(F_mpz_poly_factor_t final_fac, F_mpz_poly_facto
 
 void F_mpz_poly_factor_sq_fr_prim( F_mpz_poly_factor_t final_fac, ulong exp, F_mpz_poly_t f );
 
+/*==================================
+   Finally the real F_mpz_poly_factor
+==================================*/
+
+/**
+   Doesn't do much, just does some simple pretests squarefree factors and calls the wrapper.
+*/
+void F_mpz_poly_factor(F_mpz_poly_factor_t final_fac, F_mpz_t cong, F_mpz_poly_t G);
+
 #ifdef __cplusplus
  }
 #endif
