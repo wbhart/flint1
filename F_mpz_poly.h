@@ -1041,6 +1041,21 @@ int _d_2exp_comp(double a, long ap, double b, long bp);
 */
 void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong N);
 
+/*============================================================================
+
+   Square-Free Factorization
+
+============================================================================*/
+
+/**
+   \fn      void F_mpz_poly_squarefree(F_mpz_poly_factor_t fac, 
+               F_mpz_t content, F_mpz_poly_t F)
+   \brief   Given poly F, finds the content of F which is stores at content,
+               then finds a squarefree factorization stored at fac with exponents
+*/
+void F_mpz_poly_squarefree(F_mpz_poly_factor_t fac, 
+               F_mpz_t content, F_mpz_poly_t F);
+
 #ifdef __cplusplus
  }
 #endif

@@ -4644,3 +4644,83 @@ void F_mpz_poly_div_upper_trunc_modp( F_mpz_t *res, F_mpz_poly_t f, F_mpz_poly_t
    return;
 }
 
+/*============================================================================
+
+   Square-Free Factorization
+
+============================================================================*/
+
+void F_mpz_poly_squarefree(F_mpz_poly_factor_t fac, F_mpz_t content, F_mpz_poly_t F)
+{
+
+   F_mpz_poly_content(content, F);
+
+   F_mpz_poly_t f;
+   F_mpz_poly_init(f);
+
+   F_mpz_poly_scalar_div_exact(f, F, content);
+
+   F_mpz_poly_factor_clear(fac);
+   F_mpz_poly_factor_init(fac);
+
+   if (f->length == 1)
+      return;
+
+   F_mpz_poly_t d, v, w, s, t1;
+   F_mpz_poly_init(d);
+   F_mpz_poly_init(v);
+   F_mpz_poly_init(w);
+   F_mpz_poly_init(s);
+   F_mpz_poly_init(t1);
+
+   F_mpz_poly_derivative(t1, f);
+   F_mpz_poly_gcd(d, f, t1);
+
+   if (d->length == 1){
+      F_mpz_poly_factor_insert(fac, f, 1);
+
+      F_mpz_poly_clear(d);
+      F_mpz_poly_clear(v);
+      F_mpz_poly_clear(w);
+      F_mpz_poly_clear(s);
+      F_mpz_poly_clear(t1);
+      F_mpz_poly_clear(f);
+      return;
+   }
+
+   F_mpz_poly_div(v, f, d);
+   F_mpz_poly_div(w, t1, d);
+   long i = 0;
+
+   for ( ; ;){
+
+      i = i + 1;
+      F_mpz_poly_derivative(t1, v);
+      F_mpz_poly_sub(s, w, t1);
+      if (s->length == 0){
+         if (v->length > 1)
+            F_mpz_poly_factor_insert(fac, v, i);
+         F_mpz_poly_clear(d);
+         F_mpz_poly_clear(v);
+         F_mpz_poly_clear(w);
+         F_mpz_poly_clear(s);
+         F_mpz_poly_clear(t1);
+         F_mpz_poly_clear(f);
+         return;
+      }
+      F_mpz_poly_gcd(d, v, s);
+      F_mpz_poly_div(v, v, d);
+      F_mpz_poly_div(w, s, d);
+
+      if (d->length > 1)
+         F_mpz_poly_factor_insert(fac, d, i);
+   } 
+   F_mpz_poly_clear(f);
+   F_mpz_poly_clear(d);
+   F_mpz_poly_clear(v);
+   F_mpz_poly_clear(w);
+   F_mpz_poly_clear(s);
+   F_mpz_poly_clear(t1);
+   return;
+}
+
