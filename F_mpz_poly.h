@@ -967,6 +967,20 @@ void F_mpz_poly_div(F_mpz_poly_t d, F_mpz_poly_t f, F_mpz_poly_t g);
 */
 void F_mpz_poly_divrem(F_mpz_poly_t q, F_mpz_poly_t r, F_mpz_poly_t f, F_mpz_poly_t g);
 
+/*===========================================================================
+
+   New Material for FLINT, computing fast/tight bounds for CLDs
+
+============================================================================*/
+
+/**
+   \fn      int _d_2exp_comp(double a, long ap, double b, long bp)
+   \brief   A customized comparison function for a*2^ap vs. b*2^bp, outputs
+               -2,-1,1, or 2 for the b pair being two times larger, 
+               larger, smaller or =, two times smaller than the a pair
+*/
+int _d_2exp_comp(double a, long ap, double b, long bp);
+
 #ifdef __cplusplus
  }
 #endif

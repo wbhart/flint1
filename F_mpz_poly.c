@@ -4179,3 +4179,68 @@ void F_mpz_poly_divrem(F_mpz_poly_t q, F_mpz_poly_t r, F_mpz_poly_t f, F_mpz_pol
 
 }
 
+int _d_2exp_comp(double a, long ap, double b, long bp){
+//assumes that if ap != 0 (or bp != 0) then a (or b) is in [1/2,1)
+   if (ap == 0){
+      if (bp == 0){
+         if (a > 2*b)
+            return 2;
+         else if (b > 2*a)
+            return -2;
+         else if (a >= b)
+            return 1;
+         else
+            return -1;
+      }
+// now we know that a is the number but b is in 1/2,1 with power bp
+      long temp_ap = 1L + (long)log2(a);
+      if (temp_ap >= bp + 2)
+         return 2;
+      else if (bp >= temp_ap + 2)
+         return -2;
+      else{
+         double ta,tb;
+         ta = a/4;
+         tb = b*pow(2, (double)bp - 2);
+         return _d_2exp_comp(ta, 0, tb, 0);
+      }
+   }
+   else if (bp == 0){
+      if (ap == 0){
+         if (a > 2*b)
+            return 2;
+         else if (b > 2*a)
+            return -2;
+         else if (a >= b)
+            return 1;
+         else
+            return -1;
+      }
+// now we know that b is the number but a is in 1/2,1 with power ap
+      long temp_bp = 1L + (long)log2(b);
+      if (ap >= temp_bp + 2)
+         return 2;
+      else if (temp_bp >= ap + 2)
+         return -2;
+      else{
+         double ta,tb;
+         ta = a*pow(2, (double)ap - 2);
+         tb = b/4;
+         return _d_2exp_comp(ta, 0, tb, 0);
+      }
+   }
+   else{
+// now we know that both are in 1/2, 1 with powers
+      if (ap >= bp + 2)
+         return 2;
+      else if (bp >= ap + 2)
+         return -2;
+      else{
+         double ta,tb;
+         ta = a*pow(2, (double)ap - (double)bp);
+         tb = b;
+         return _d_2exp_comp(ta, 0, tb, 0);
+      }
+   }
+}
+
