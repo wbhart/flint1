@@ -994,6 +994,18 @@ void F_mpz_poly_rem_modp_naive(F_mpz_poly_t R, F_mpz_poly_t A, F_mpz_poly_t B,
 void F_mpz_poly_mulmod_modp_naive(F_mpz_poly_t R, F_mpz_poly_t f, 
                 F_mpz_poly_t g, F_mpz_poly_t B, F_mpz_t p);
 
+/**
+   \fn      void F_mpz_poly_div_trunc_modp( F_mpz_t *res, F_mpz_poly_t f, 
+                F_mpz_poly_t g, F_mpz_t P, ulong n)
+   \brief   A power series modp division.  Using only n coeffs of f and g
+               finds the lowest n coeffs of f/g assuming the remainder of f/g
+               is 0 mod p. (Designed for padic CLDs) Right now if the trailing
+               coeff of g is not invertible mod p then it resorts to a full
+                division.  Want to find a way around that.
+*/
+void F_mpz_poly_div_trunc_modp( F_mpz_t *res, F_mpz_poly_t f, 
+                F_mpz_poly_t g, F_mpz_t P, ulong n);
+
 #ifdef __cplusplus
  }
 #endif

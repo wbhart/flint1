@@ -4278,3 +4278,85 @@ void F_mpz_poly_mulmod_modp_naive(F_mpz_poly_t R, F_mpz_poly_t f, F_mpz_poly_t g
    F_mpz_poly_clear(prod);
 }
 
+void F_mpz_poly_div_trunc_modp( F_mpz_t *res, F_mpz_poly_t f, F_mpz_poly_t g, F_mpz_t P, ulong n){
+//assuming that g divides f mod P find the bottom n coeffs of f/g mod P.  (truncate now or no?) 
+   if (g->length > f->length){
+      if (n < f->length){
+         for(ulong i = 0; i < n; i++)
+            F_mpz_smod(res[i], f->coeffs + i, P);
+         return;
+      }
+      else{
+         for(ulong i = 0; i < f->length; i++)
+            F_mpz_smod(res[i], f->coeffs + i, P);
+         return;
+      }
+   }
+   F_mpz_t temp, tc_inv;
+   F_mpz_init(temp);
+   F_mpz_init(tc_inv);
+
+   F_mpz_poly_t t_f, t_g;
+   F_mpz_poly_init(t_f);
+   F_mpz_poly_init(t_g);
+
+   F_mpz_poly_set(t_f, f);
+   F_mpz_poly_set(t_g, g);
+   F_mpz_poly_truncate(t_f, n);
+   F_mpz_poly_truncate(t_g, n);
+//now we have t_f, t_g truncated to the bottom n terms for speed reasons.
+   F_mpz_set(temp, t_g->coeffs);
+   F_mpz_invert(tc_inv, temp, P);
+
+   if (F_mpz_is_zero(tc_inv)){
+//Potential math problem here so we'll just get the answers the old fashioned way, hope this is rare, I should talk to somebody...
+      F_mpz_poly_div(t_f, f, g);
+      F_mpz_poly_smod(t_f, t_f, P);      
+
+      if (n < t_f->length)
+         for(ulong i = 0; i < n; i++){
+            F_mpz_set(res[i], t_f->coeffs + i);
+         }
+      else
+         for(ulong i = 0; i < t_f->length; i++){
+            F_mpz_set(res[i], t_f->coeffs + i);
+         }
+      F_mpz_poly_clear(t_f);
+      F_mpz_poly_clear(t_g);
+   
+      F_mpz_clear(tc_inv);
+      F_mpz_clear(temp);
+      return;
+   }
+   F_mpz_poly_t tempg;
+   F_mpz_poly_init(tempg);
+
+   ulong quo_length = n;
+
+   if (n > f->length)
+      quo_length = f->length - g->length + 1;
+
+   for(ulong i = 0; (i < n) && (i < quo_length) ; i++){
+//  This is a number which would cancel out the lowest term of f mod P
+      F_mpz_mul2(temp, t_f->coeffs, tc_inv);
+      F_mpz_smod(res[i], temp, P);
+
+      F_mpz_poly_right_shift(tempg, t_g, 1UL);
+      F_mpz_poly_right_shift(t_f, t_f, 1UL);
+
+      F_mpz_poly_scalar_mul(tempg, tempg, temp);
+      F_mpz_poly_sub(t_f, t_f, tempg);
+
+      F_mpz_poly_smod(t_f, t_f, P);
+
+      F_mpz_poly_truncate(t_f, n - i -1);
+   }
+   F_mpz_poly_clear(tempg);
+   F_mpz_poly_clear(t_f);
+   F_mpz_poly_clear(t_g);
+
+   F_mpz_clear(tc_inv);
+   F_mpz_clear(temp);
+   return;
+}
+
