@@ -1070,6 +1070,18 @@ void _Rec_Tree_Hensel_Lift(long *link, F_mpz_poly_t *v, F_mpz_poly_t *w, F_mpz_t
 
 void _Tree_Hensel_Lift(long *link, F_mpz_poly_t *v, F_mpz_poly_t *w, long e0, long e1, F_mpz_poly_t f, long inv, long p, long r, F_mpz_t P);
 
+/***************************************************
+
+   Naive Zassenhaus
+
+***************************/
+
+/**
+   This guy is unoptimized.  Takes Hensel lifted factors to power P, the original polynomial F, and for some reason an exponent and leading coeff
+      Those might not be needed... I'll check later, this is devel stuff here.
+*/
+void F_mpz_poly_zassenhaus_naive(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, F_mpz_t P, ulong exp, F_mpz_t lc);
+
 #ifdef __cplusplus
  }
 #endif

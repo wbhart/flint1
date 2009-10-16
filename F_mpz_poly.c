@@ -4930,3 +4930,99 @@ void _Tree_Hensel_Lift(long *link, F_mpz_poly_t *v, F_mpz_poly_t *w, long e0, lo
 
 }
 
+/***************************************************
+
+Naive Zassenhaus
+
+***************************/
+
+void F_mpz_poly_zassenhaus_naive(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, F_mpz_t P, ulong exp, F_mpz_t lc){
+
+   ulong r = lifted_fac->num_factors;
+   F_mpz_poly_t f;
+   F_mpz_poly_init(f);
+
+   F_mpz_poly_set(f, F);
+
+   F_mpz_poly_t Q,R;
+   F_mpz_poly_init(Q);
+   F_mpz_poly_init(R);
+   F_mpz_poly_t tryme;
+   F_mpz_poly_init(tryme);
+   F_mpz_t temp_lc;
+
+   int k;
+   int l;
+   int indx;
+   int used_arr[r];
+   for(l = 0; l < r; l++){
+      used_arr[l] = 0;
+   }
+
+   for (k = 1; k < r; k++){
+      ulong count = 0;
+      ulong sub_arr[k];
+      for(l = 0; l < k; l++){
+         sub_arr[l] = l;
+      }
+      indx = k-1;
+      sub_arr[indx]--;
+      while ((indx >= 0)){
+         sub_arr[indx] = sub_arr[indx] + 1;
+         for (l = indx + 1; l < k; l++){
+            sub_arr[l] = sub_arr[l-1] + 1UL;
+         }
+         if (sub_arr[k-1] > r-1UL ){
+            indx--;
+         }
+         else{
+            for(l = 0; l < k; l++){
+               if (used_arr[sub_arr[l]] == 1)
+                  break;
+            }
+//Need to involve lc, perhaps set coeff 0 to lc and do lc * rest and check if under M_bits... here I'm using a trial division... hmm
+            F_mpz_poly_fit_length(tryme, 1UL);
+            tryme->length = 1UL;
+            F_mpz_set(tryme->coeffs + 0, lc);
+            for(l = 0; l < k; l++){
+               F_mpz_poly_mul(tryme, tryme, lifted_fac->factors[sub_arr[l]]);
+            }
+            F_mpz_poly_smod(tryme, tryme, P);
+            F_mpz_init(temp_lc);
+            F_mpz_poly_content(temp_lc, tryme);
+            F_mpz_poly_scalar_div_exact(tryme, tryme, temp_lc);
+            F_mpz_poly_divrem(Q, R, f, tryme);
+            if (R->length == 0){
+//        FOUND ONE!!!!!
+               F_mpz_poly_factor_insert(final_fac, tryme, exp);
+               for(l = 0; l < k; l++){
+                  used_arr[sub_arr[l]] = 1;
+                  count++;
+               }
+               F_mpz_poly_set(f, Q);
+               F_mpz_set(lc, Q->coeffs + Q->length - 1 );
+//If r-count = k then the rest are irreducible.  But haven't added that
+            }
+            F_mpz_clear(temp_lc);
+            indx = k-1;
+         }
+      }
+//This is where we switch to the next loop for k.
+//So we will have found all factors using <= k local factors
+//We should/could update f to be the rest divided away (or multiply the remaining)
+// could also adjust r.  It is the number of remaining factors  
+//so if you update then test if r = k or k+1 in which case the remaining f is irreducible.
+   }
+   ulong test = 0;
+   for (l = 0; l < r; l++){
+      test = test + used_arr[l];
+   }
+   if (test == 0)
+      F_mpz_poly_factor_insert(final_fac, f, exp);
+   F_mpz_poly_clear(f);
+   F_mpz_poly_clear(tryme);
+   F_mpz_poly_clear(Q);
+   F_mpz_poly_clear(R);
+   return;
+}
+
