@@ -4123,7 +4123,7 @@ void F_mpz_poly_div(F_mpz_poly_t d, F_mpz_poly_t f, F_mpz_poly_t g){
 
    mpz_poly_to_fmpz_poly(fmpz_f, mpz_f);
    mpz_poly_to_fmpz_poly(fmpz_g, mpz_g);
-//Possibly something wrong here....
+
    fmpz_poly_div(fmpz_d, fmpz_f, fmpz_g);
 
    fmpz_poly_to_mpz_poly(mpz_d, fmpz_d);
@@ -4137,5 +4137,45 @@ void F_mpz_poly_div(F_mpz_poly_t d, F_mpz_poly_t f, F_mpz_poly_t g){
    mpz_poly_clear(mpz_d);
    mpz_poly_clear(mpz_f);
    mpz_poly_clear(mpz_g);
+}
+
+void F_mpz_poly_divrem(F_mpz_poly_t q, F_mpz_poly_t r, F_mpz_poly_t f, F_mpz_poly_t g){
+
+   mpz_poly_t mpz_q, mpz_r, mpz_f, mpz_g;
+   mpz_poly_init(mpz_q);
+   mpz_poly_init(mpz_r);
+   mpz_poly_init(mpz_f);
+   mpz_poly_init(mpz_g);
+
+   fmpz_poly_t fmpz_q, fmpz_r, fmpz_f, fmpz_g;
+   fmpz_poly_init(fmpz_q);
+   fmpz_poly_init(fmpz_r);
+   fmpz_poly_init(fmpz_f);
+   fmpz_poly_init(fmpz_g);
+
+   F_mpz_poly_to_mpz_poly(mpz_f, f);
+   F_mpz_poly_to_mpz_poly(mpz_g, g);
+
+   mpz_poly_to_fmpz_poly(fmpz_f, mpz_f);
+   mpz_poly_to_fmpz_poly(fmpz_g, mpz_g);
+
+   fmpz_poly_divrem(fmpz_q, fmpz_r, fmpz_f, fmpz_g);
+
+   fmpz_poly_to_mpz_poly(mpz_q, fmpz_q);
+   mpz_poly_to_F_mpz_poly(q, mpz_q);
+
+   fmpz_poly_to_mpz_poly(mpz_r, fmpz_r);
+   mpz_poly_to_F_mpz_poly(r, mpz_r);
+
+   fmpz_poly_clear(fmpz_r);        
+   fmpz_poly_clear(fmpz_q);
+   fmpz_poly_clear(fmpz_f);
+   fmpz_poly_clear(fmpz_g);
+
+   mpz_poly_clear(mpz_q);
+   mpz_poly_clear(mpz_r);
+   mpz_poly_clear(mpz_f);
+   mpz_poly_clear(mpz_g);
 
 }
+

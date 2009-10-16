@@ -961,6 +961,12 @@ void F_mpz_poly_gcd(F_mpz_poly_t d, F_mpz_poly_t f, F_mpz_poly_t g);
 */
 void F_mpz_poly_div(F_mpz_poly_t d, F_mpz_poly_t f, F_mpz_poly_t g);
 
+/**
+   \fn     void F_mpz_poly_divrem(F_mpz_poly_t q, F_mpz_poly_t r, F_mpz_poly_t f, F_mpz_poly_t g)
+   \brief  Finds polys r,q such that f = qg+r and deg(r) < deg(g)
+*/
+void F_mpz_poly_divrem(F_mpz_poly_t q, F_mpz_poly_t r, F_mpz_poly_t f, F_mpz_poly_t g);
+
 #ifdef __cplusplus
  }
 #endif
