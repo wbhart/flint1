@@ -75,6 +75,17 @@ double d_vec_scalar_product(double * vec1, double * vec2, int n)
   return sum;
 } 
 
+double d_2exp_vec_scalar_product(double * vec1, double * vec2, int n, int *cexpo)
+{
+  double sum;
+
+  sum = ldexp(vec1[0] * vec2[0], 2*cexpo[0]);
+  for (long i = 1; i < n; i++)
+     sum += ldexp(vec1[i] * vec2[i], 2*cexpo[i]);
+
+  return sum;
+} 
+
 double d_vec_norm(double * vec, int n)
 {
   double sum;
@@ -85,5 +96,16 @@ double d_vec_norm(double * vec, int n)
 
   return sum;
 
+} 
+
+double d_2exp_vec_norm(double * vec, int n, int *cexpo)
+{
+  double sum;
+
+  sum = ldexp(vec[0] * vec[0], 2*cexpo[0]);
+  for (long i = 1 ; i < n ; i++)
+     sum += ldexp(vec[i] * vec[i], 2*cexpo[i]);
+
+  return sum;
 } 
 

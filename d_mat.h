@@ -27,5 +27,9 @@ double d_vec_scalar_product(double * vec1, double * vec2, int n);
 
 double d_vec_norm(double * vec, int n);
 
+double d_2exp_vec_scalar_product(double * vec1, double * vec2, int n, int *cexpo);
+
+double d_2exp_vec_norm(double * vec, int n, int *cexpo);
+
 
 
