@@ -37,6 +37,7 @@
 #include "zmod_poly.h"
 #include "flint.h"
 #include "F_mpz.h"
+#include "F_mpz_mat.h"
 
 /*
    WARNING : 

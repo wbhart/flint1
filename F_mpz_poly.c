@@ -5292,6 +5292,9 @@ void _F_mpz_poly_factor_CLD_mat(F_mpz_mat_t res, F_mpz_poly_t F, F_mpz_poly_fact
       F_mpz_poly_CLD_bound(res->rows[d] + 2*n - 1 - i, F, F->length - 2 -i);
    }
    F_mpz_t temp[n];
+   for (long i = 0; i < n; i++)
+      F_mpz_init(temp[i]);
+
    for (long i = 0; i < d; i++){
       F_mpz_poly_init(gd);
       F_mpz_poly_init(gcld);
@@ -5309,4 +5312,8 @@ void _F_mpz_poly_factor_CLD_mat(F_mpz_mat_t res, F_mpz_poly_t F, F_mpz_poly_fact
       F_mpz_poly_clear(gd);
       F_mpz_poly_clear(gcld);
    }
+
+   for (long i = 0; i < n; i++)
+      F_mpz_clear(temp[i]);
+
 }
