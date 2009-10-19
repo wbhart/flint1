@@ -1104,6 +1104,20 @@ void F_mpz_poly_factor_sq_fr_prim( F_mpz_poly_factor_t final_fac, ulong exp, F_m
 */
 void F_mpz_poly_factor(F_mpz_poly_factor_t final_fac, F_mpz_t cong, F_mpz_poly_t G);
 
+/*===========
+
+   Hoeij/Novocin approach
+
+=========*/
+
+/*
+   Has one sub-optimal part, namely we need F_mpz_poly_mul_trunc and left_trunc.  This computes bounds for and the CLDs themselves.
+   Stores them in a matrix res which comes out with r + 1 rows and 2*N or length-1 columns
+   (if 2N is smaller then length -1 then just top N and bottom N).  Takes F, Hensel Lifted factors, P and N, in the case we don't choose N large enough 
+   we 'could' adapt for restarting... maybe...
+*/
+void _F_mpz_poly_factor_CLD_mat(F_mpz_mat_t res, F_mpz_poly_t F, F_mpz_poly_factor_t lifted_fac, F_mpz_t P, ulong N);
+
 #ifdef __cplusplus
  }
 #endif

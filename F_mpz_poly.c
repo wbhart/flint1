@@ -5249,3 +5249,64 @@ void F_mpz_poly_factor(F_mpz_poly_factor_t final_fac, F_mpz_t cong, F_mpz_poly_t
    F_mpz_poly_clear(g);
 }
 
+/*============================================================================
+
+   Hoeij/Novocin approach
+
+============================================================================*/
+
+void _F_mpz_poly_factor_CLD_mat(F_mpz_mat_t res, F_mpz_poly_t F, F_mpz_poly_factor_t lifted_fac, F_mpz_t P, ulong N)
+{
+//Here we want to take F such that the product of the monic lifted_facs is equiv to F mod P and find top N and 
+//bottom N coeffs of each local Log Derivative.  Store the results in res with an extra row at the bottom for the bounds for that column
+   ulong n;
+   ulong d = lifted_fac->num_factors;
+   F_mpz_poly_t gd,gcld;
+
+   if (2*N >= F->length - 1){
+      F_mpz_mat_clear(res);
+      F_mpz_mat_init(res, d+1, F->length - 1);
+      for (long i = 0; i < F->length - 1; i++)
+         F_mpz_poly_CLD_bound(res->rows[d] + i, F, i);
+
+      for (long i = 0; i < d; i++){
+         F_mpz_poly_init(gd);
+         F_mpz_poly_init(gcld);
+         F_mpz_poly_derivative(gd, lifted_fac->factors[i]);
+         F_mpz_poly_mul(gcld, F, gd);
+         F_mpz_poly_div(gcld, gcld, lifted_fac->factors[i]);
+         F_mpz_poly_smod(gcld, gcld, P);
+         for (long j = 0; j < F->length - 1; j++)
+            F_mpz_set(res->rows[i] + j, gcld->coeffs + j);
+         F_mpz_poly_clear(gd);
+         F_mpz_poly_clear(gcld);
+      }
+      return;
+   }
+   n = N;
+   F_mpz_mat_clear(res);
+   F_mpz_mat_init(res, d+1, 2*n);
+
+   for (long i = 0; i < n; i++){
+      F_mpz_poly_CLD_bound(res->rows[d] + i, F, i);
+      F_mpz_poly_CLD_bound(res->rows[d] + 2*n - 1 - i, F, F->length - 2 -i);
+   }
+   F_mpz_t temp[n];
+   for (long i = 0; i < d; i++){
+      F_mpz_poly_init(gd);
+      F_mpz_poly_init(gcld);
+
+      F_mpz_poly_derivative(gd, lifted_fac->factors[i]);
+//Should do upper and lower trunc multiplication soon, for speed sake
+      F_mpz_poly_mul(gcld, F, gd);
+      F_mpz_poly_div_trunc_modp(temp, gcld, lifted_fac->factors[i], P, n);
+
+      for (long j = 0; j < n; j++)
+         F_mpz_set(res->rows[i] + j, temp[j]);
+      F_mpz_poly_div_upper_trunc_modp(temp, gcld, lifted_fac->factors[i], P, n);
+      for (long j = 0; j < n; j++)
+         F_mpz_set(res->rows[i] + 2*n -1 - j, temp[j]);
+      F_mpz_poly_clear(gd);
+      F_mpz_poly_clear(gcld);
+   }
+}
