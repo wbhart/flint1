@@ -482,6 +482,17 @@ void F_mpz_mat_mul_classical(F_mpz_mat_t P, const F_mpz_mat_t A,const F_mpz_mat_
 	   return _F_mpz_mat_mul_classical(P, A, B);
 }
 
+/*===========================================================
+
+   assorted new functions
+
+===========================================================*/
+
+/*
+   A duplicate of the F_mpz_poly version but uses ghetto math in the middle 
+*/
+long F_mpz_mat_max_bits(const F_mpz_mat_t M);
+
 #ifdef __cplusplus
  }
 #endif
