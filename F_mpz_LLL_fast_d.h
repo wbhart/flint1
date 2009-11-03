@@ -74,6 +74,8 @@ void Babai_2exp(int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
 void LLL (F_mpz_mat_t B);
 
 void LLL_2exp (F_mpz_mat_t B, int *cexpo);
+
+int LLL_2exp_with_removal(F_mpz_mat_t B, int *cexpo, F_mpz_t gs_B);
        
 #ifdef __cplusplus
  }

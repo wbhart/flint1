@@ -681,11 +681,11 @@ void LLL(F_mpz_mat_t B)
    free(appSPtmp);
 }
 
-/* ****************** */
-/* The LLL Algorithm  */
-/* ****************** */
-
-/* LLL-reduces the integer matrix B "in place" */
+/* LLL-reduces the integer matrix B "in place" 
+   uses an array of virtual weights for each column (cexpo), allows powers of 2
+   so cexpo = [0,...,0] is normal LLL 
+   and cexpo = [2,0,...,0] will weigh the first column as 4 times the importance of the others
+*/
 
 void LLL_2exp(F_mpz_mat_t B, int *cexpo)
 {
@@ -874,4 +874,213 @@ void LLL_2exp(F_mpz_mat_t B, int *cexpo)
    free(s);
    free(appSPtmp);
 }
+
+/* 
+   LLL-reduces the integer matrix B "in place"
+   uses a virtual weight for each column stored as a power of 2 in the array cexpo (0,...,0) would be normal LLL
+   also returns the number of rows who's G-S lengths are guaranteed to be <= gs_B 
+*/
+
+int LLL_2exp_with_removal(F_mpz_mat_t B, int *cexpo, F_mpz_t gs_B)
+{
+   int kappa, kappa2, d, n, i, j, zeros, kappamax;
+   double ** mu, ** r, ** appB, ** appSP;
+   double * s, * mutmp, * appBtmp, * appSPtmp;
+   double tmp = 0.0;
+   int * expo, * alpha;
+   mp_limb_t * Btmp;
+   
+   n = B->c;
+   d = B->r;
+
+   ctt = DELTA;
+   halfplus = ETA;
+   onedothalfplus = 1.0+halfplus;
+	
+	ulong shift = getShift(B);
+
+   alpha = (int *) malloc(d * sizeof(int)); 
+   expo = (int *) malloc(d * sizeof(int)); 
+
+   mu = d_mat_init(d, d);
+   r = d_mat_init(d, d);
+   appB = d_mat_init(d, n);
+   appSP = d_mat_init(d, d);
+
+   s = (double *) malloc (d * sizeof(double));
+   appSPtmp = (double *) malloc (d * sizeof(double));
+
+   for (i = 0; i < d; i++)
+      for (j = 0; j < d; j++)
+         appSP[i][j] = NAN;//0.0/0.0;
+  
+   /* ************************** */
+   /* Step1: Initialization Step */
+   /* ************************** */     
+    
+   for (i = 0; i < d; i++)
+      expo[i] = F_mpz_mat_set_line_d(appB[i], B, i, n);  
+  
+   /* ********************************* */
+   /* Step2: Initializing the main loop */
+   /* ********************************* */   
+  
+   kappamax = 0;
+   i = 0; 
+  
+   do
+      appSP[i][i] = d_2exp_vec_norm(appB[i], n, cexpo); 
+   while ((appSP[i][i] <= 0.0) && (++i < d)); // Fixme : should this be EPS not 0.0
+
+   zeros = i - 1; /* all vectors B[i] with i <= zeros are zero vectors */
+   kappa = i + 1;
+  
+   if (zeros < d - 1) r[i][i] = appSP[i][i];
+
+   for (i = zeros + 1; i < d; i++)
+      alpha[i] = 0;
+    
+   while (kappa < d)
+   {      
+      if (kappa > kappamax) kappamax++; // Fixme : should this be kappamax = kappa instead of kappamax++
+
+      /* ********************************** */
+      /* Step3: Call to the Babai algorithm */
+      /* ********************************** */   
+
+      Babai_2exp(kappa, B, mu, r, s, appB, expo, appSP, alpha[kappa], zeros, 
+			                        kappamax, FLINT_MIN(kappamax + 1 + shift, n), cexpo); 
+      
+      /* ************************************ */
+      /* Step4: Success of Lovasz's condition */
+      /* ************************************ */  
+      /* ctt * r.coeff[kappa-1][kappa-1] <= s[kappa-2] ?? */
+      
+      tmp = r[kappa-1][kappa-1] * ctt;
+      tmp = ldexp (tmp, 2*(expo[kappa-1] - expo[kappa]));
+
+      if (tmp <= s[kappa-1]) 
+	   {
+	      alpha[kappa] = kappa;
+	      tmp = mu[kappa][kappa-1] * r[kappa][kappa-1];
+	      r[kappa][kappa] = s[kappa-1] - tmp;
+	      kappa++;
+	   } else
+	   {
+
+	      /* ******************************************* */
+	      /* Step5: Find the right insertion index kappa */
+         /* kappa2 remains the initial kappa            */
+	      /* ******************************************* */  
+
+	      kappa2 = kappa;
+	      do
+	      {
+	         kappa--;
+	         if (kappa > zeros + 1) 
+		      {
+		         tmp = r[kappa-1][kappa-1] * ctt;
+	            tmp = ldexp(tmp, 2*(expo[kappa-1] - expo[kappa2]));
+	         }
+         } while ((kappa >= zeros + 2) && (s[kappa-1] <= tmp));
+
+         for (i = kappa; i < kappa2; i++)
+	         if (kappa <= alpha[i]) alpha[i] = kappa;
+
+	      for (i = kappa2; i > kappa; i--) alpha[i] = alpha[i-1];
+
+	      for (i = kappa2 + 1; i <= kappamax; i++)
+	         if (kappa < alpha[i]) alpha[i] = kappa;
+	  
+	      alpha[kappa] = kappa;
+
+	      /* ****************************** */
+	      /* Step6: Update the mu's and r's */
+	      /* ****************************** */  
+	  
+	      mutmp = mu[kappa2];
+	      for (i = kappa2; i > kappa; i--) mu[i] = mu[i-1];
+	      mu[kappa] = mutmp;
+	  
+	      mutmp = r[kappa2];
+	      for (i = kappa2; i > kappa; i--) r[i] = r[i-1];
+	      r[kappa] = mutmp;
+
+	      r[kappa][kappa] = s[kappa];
+	  
+	      /* ************************ */
+	      /* Step7: Update B and appB */
+	      /* ************************ */  	  
+	  
+	      Btmp = B->rows[kappa2];
+         for (i = kappa2; i > kappa; i--) B->rows[i] = B->rows[i-1];
+         B->rows[kappa] = Btmp;
+      
+	      appBtmp = appB[kappa2];
+	      for (i = kappa2; i > kappa; i--) appB[i] = appB[i-1];
+	      appB[kappa] = appBtmp;
+
+	      j = expo[kappa2];
+	      for (i = kappa2; i > kappa; i--) expo[i] = expo[i-1];
+	      expo[kappa] = j;
+
+	      /* *************************** */
+	      /* Step8: Update appSP: tricky */
+	      /* *************************** */  	 
+	  
+	      for (i = 0; i <= kappa2; i++) appSPtmp[i] = appSP[kappa2][i];
+
+	      for (i = kappa2 + 1; i <= kappamax; i++) appSPtmp[i] = appSP[i][kappa2];
+	  
+	      for (i = kappa2; i > kappa; i--)
+	      {
+	         for (j = 0; j < kappa; j++) appSP[i][j] = appSP[i-1][j];	      
+	         appSP[i][kappa] = appSPtmp[i-1];
+	      
+	         for (j = kappa + 1; j <= i; j++) appSP[i][j] = appSP[i-1][j-1];
+
+	         for (j = kappa2 + 1; j <= kappamax; j++) appSP[j][i] = appSP[j][i-1];     
+	      }
+	  
+	      for (i = 0; i < kappa; i++) appSP[kappa][i] = appSPtmp[i];
+	      appSP[kappa][kappa] = appSPtmp[kappa2];
+
+	      for (i = kappa2 + 1; i <= kappamax; i++) appSP[i][kappa] = appSPtmp[i];
+	  
+	      if (r[kappa][kappa] <= 0.0)//fixme should be EPS
+	      {
+	         zeros++;
+	         kappa++;
+	         appSP[kappa][kappa] = d_2exp_vec_norm(appB[kappa], n, cexpo);
+	         r[kappa][kappa] = appSP[kappa][kappa];
+	      }
+	  
+	      kappa++;
+	   }
+   }
+   F_mpz_t tmp_gs;
+   F_mpz_init(tmp_gs);
+ 
+   int ok = 1;
+   int newd = d;
+   for (i = d-1; (i >= 0) && (ok > 0); i--){
+//tmp_gs is the G-S length of ith vector divided by 2 (we shouldn't make a mistake and remove something valuable)
+      F_mpz_set_d_2exp(tmp_gs, sqrt(r[i][i]), expo[i] - 1);
+      ok = F_mpz_cmpabs(tmp_gs, gs_B);
+      if (ok > 0) newd--;
+   }
+
+   F_mpz_clear(tmp_gs);
+   
+   free(alpha);
+   free(expo);
+   d_mat_clear(mu);
+   d_mat_clear(r);
+   d_mat_clear(appB);
+   d_mat_clear(appSP);
+   free(s);
+   free(appSPtmp);
+   return newd;
+}
+
 
