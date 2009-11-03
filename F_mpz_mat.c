@@ -1217,12 +1217,29 @@ long F_mpz_mat_max_bits(const F_mpz_mat_t M)
 	   else return max + FLINT_BITS*(max_limbs - 1);
 }
 
+void F_mpz_mat_scalar_mul_2exp(F_mpz_mat_t res, F_mpz_mat_t M, ulong n)
+{
+   if (res != M){
+      F_mpz_mat_resize(res, M->r, M->c);
+   }
+   if (n == 0){
+      F_mpz_mat_set(res, M);
+      return;
+   }
+   if (n == 1){
+      F_mpz_mat_add(res, M, M);
+      return;
+   }
+   for (ulong i = 0; i < M->r; i++)
+      for (ulong j = 0; j < M->c; j++)
+         F_mpz_mul_2exp(res->rows[i] + j, M->rows[i] + j, n);   
+}
+
 void F_mpz_mat_scalar_div_2exp(F_mpz_mat_t res, F_mpz_mat_t M, ulong n)
 {
    if (res != M){
       F_mpz_mat_resize(res, M->r, M->c);
    }
-
    F_mpz_t temp;
    F_mpz_init(temp);
 
@@ -1235,9 +1252,7 @@ void F_mpz_mat_scalar_div_2exp(F_mpz_mat_t res, F_mpz_mat_t M, ulong n)
             F_mpz_div_2exp(res->rows[i] + j, temp, n);
             F_mpz_neg(res->rows[i] + j, res->rows[i] + j);
          }
-
    F_mpz_clear(temp);
-
    return;
 }
 

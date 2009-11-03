@@ -499,6 +499,11 @@ long F_mpz_mat_max_bits(const F_mpz_mat_t M);
 void F_mpz_mat_scalar_div_2exp(F_mpz_mat_t res, F_mpz_mat_t M, ulong n);
 
 /*
+   Scalar multiplication by a power of 2.  res = M * 2^n.
+*/
+void F_mpz_mat_scalar_mul_2exp(F_mpz_mat_t res, F_mpz_mat_t M, ulong n)
+
+/*
    Sets res to the top n bits of each entry of M.  Returns a ulong exp such that
    res = round_to_zero(M/2^exp)
 */
