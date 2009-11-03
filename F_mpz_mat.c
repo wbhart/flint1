@@ -1272,3 +1272,23 @@ ulong F_mpz_mat_upper_trunc_n(F_mpz_mat_t res, F_mpz_mat_t M, ulong n)
 
    return exp;
 }
+
+void F_mpz_mat_lower_trunc_n(F_mpz_mat_t res, F_mpz_mat_t M, ulong n)
+{
+   if (res != M){
+      F_mpz_mat_resize(res, M->r, M->c);
+   }
+
+   mpz_t temp;
+   mpz_init(temp);
+
+   for (ulong i = 0; i < M->r; i++)
+      for (ulong j = 0; j < M->c; j++){
+         F_mpz_get_mpz(temp, M->rows[i] + j);
+         mpz_tdiv_r_2exp(temp, temp, n);
+         F_mpz_set_mpz(res->rows[i] + j, temp);
+      }
+   mpz_clear(temp);
+   return;
+}
+

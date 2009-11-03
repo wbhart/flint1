@@ -504,6 +504,12 @@ void F_mpz_mat_scalar_div_2exp(F_mpz_mat_t res, F_mpz_mat_t M, ulong n);
 */
 ulong F_mpz_mat_upper_trunc_n(F_mpz_mat_t res, F_mpz_mat_t M, ulong n);
 
+/*
+   Sets res to the bottom n bits of each entry of M.  Designed to work with F_mpz_mat_upper_trunc_n
+   so that one can split a matrix M into two halfs so M = upper_M*2^exp + lower_M
+*/
+void F_mpz_mat_lower_trunc_n(F_mpz_mat_t res, F_mpz_mat_t M, ulong n);
+
 #ifdef __cplusplus
  }
 #endif
