@@ -1307,3 +1307,54 @@ void F_mpz_mat_lower_trunc_n(F_mpz_mat_t res, F_mpz_mat_t M, ulong n)
    return;
 }
 
+int F_mpz_mat_column_compare(F_mpz_mat_t M, ulong a, ulong b)
+{
+// want to look at column a and column b, give 0 if they are different and 1 if they are the same
+// stop as soon as you can
+   int ok;
+   for (ulong i = 0; i < M->r; i++){
+      ok = F_mpz_equal(M->rows[i] + a, M->rows[i] + b);
+      if (ok == 0)
+         return 0;
+   }
+   return 1;
+}
+
+int F_mpz_mat_check_0_1(ulong *part, F_mpz_mat_t M)
+{
+//OK goal here is to make a partition of the columns which will be stored in an array part
+//The number of equivalence classes in M will be largest number in the array part
+//If the problem might be solved then part will be filled with the numbers 1 through M->r
+// and the number of partitions will be returned otherwise part should be ignored and 0 will be returned
+// problem stops once the number of distinct columns is larger than the number of rows in M
+   ulong np = 1;
+   ulong r,c;
+   long strt;
+   int ok;
+//set strt to first 0
+   for(np = 1; np <= M->c; np++){
+      strt = -1;
+      for(c = 0; (c < M->c) && (strt == -1); c++){
+         if(part[c] == 0){
+            strt = c;
+         }
+      }
+      if (strt == -1){
+         if (np > M->r + 1)
+            return 0;
+         else
+            return np-1;
+      }
+      if (np >= M->r + 1)
+         return 0;
+      part[strt] = np;
+      for( ;(c < M->c); c++){
+         if (part[c] == 0){
+            ok = F_mpz_mat_column_compare(M, strt, c);
+            if (ok)
+               part[c] = np;
+         }
+      }
+   }
+   return 0;
+}

@@ -515,6 +515,19 @@ ulong F_mpz_mat_upper_trunc_n(F_mpz_mat_t res, F_mpz_mat_t M, ulong n);
 */
 void F_mpz_mat_lower_trunc_n(F_mpz_mat_t res, F_mpz_mat_t M, ulong n);
 
+/*
+   Compares column a and column b of M returns 1 if they are the same and 0 otherwise
+*/
+int F_mpz_mat_column_compare(F_mpz_mat_t M, ulong a, ulong b);
+
+/*
+   A fast test for a basis of M using only 0's and a single 1 per column, if it's possible the function returns np
+   the number of needed rows (in the case of factoring this is a proven bound on the number of factors) and part
+   will be filled with the numbers 1 through np and all numbers of value i will be one's in row i of the special basis.
+   If it is not possible then the function returns 0.
+*/
+int F_mpz_mat_check_0_1(ulong *part, F_mpz_mat_t M);
+
 #ifdef __cplusplus
  }
 #endif
