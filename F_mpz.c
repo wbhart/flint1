@@ -1924,8 +1924,6 @@ void F_mpz_multi_CRT_ui(F_mpz_t output, ulong * residues,
 void F_mpz_set_d_2exp(F_mpz_t output, double mant, long exp){
 
 //This function sets F_mpz to an integer closest to mant*2^exp
-   printf("mant %f, exp %ld\n",mant, exp);
-
    if (exp >= 53){
       mpz_t temp;
       mpz_init(temp);
