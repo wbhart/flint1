@@ -1323,6 +1323,7 @@ int F_mpz_mat_column_compare(F_mpz_mat_t M, ulong a, ulong b)
 int F_mpz_mat_check_0_1(ulong *part, F_mpz_mat_t M)
 {
 //OK goal here is to make a partition of the columns which will be stored in an array part
+//the array part must have room for at least M->c ulongs...
 //The number of equivalence classes in M will be largest number in the array part
 //If the problem might be solved then part will be filled with the numbers 1 through M->r
 // and the number of partitions will be returned otherwise part should be ignored and 0 will be returned
