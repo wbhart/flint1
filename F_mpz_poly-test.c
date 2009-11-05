@@ -2457,6 +2457,95 @@ int test_F_mpz_poly_byte_pack_unsigned()
    return result;
 }
 
+int test_F_mpz_poly_factor()
+{
+   mpz_poly_t m_poly1, m_poly2, res1, res2;
+   F_mpz_poly_t F_poly1, F_poly2, res;
+   F_mpz_poly_factor_t F_factors;
+   F_mpz_t content;
+   int result = 1;
+   long num_facs;
+   ulong bits1, bits2, length1, length2;
+   
+   mpz_poly_init(m_poly1); 
+   mpz_poly_init(m_poly2); 
+   mpz_poly_init(res1); 
+   mpz_poly_init(res2); 
+
+   for (ulong count1 = 0; (count1 < 20*ITER) && (result == 1) ; count1++)
+   {
+      F_mpz_poly_init(F_poly1);
+      F_mpz_poly_init(F_poly2);
+      F_mpz_poly_init(res);
+      F_mpz_poly_factor_init(F_factors);
+      F_mpz_init(content);
+
+		bits1 = z_randint(50) + 1;
+      bits2 = z_randint(50) + 1;
+      length1 = z_randint(50);
+      length2 = z_randint(50);
+      mpz_randpoly(m_poly1, length1, bits1);
+		mpz_randpoly(m_poly2, length2, bits2);
+
+		mpz_poly_to_F_mpz_poly(F_poly1, m_poly1);
+      mpz_poly_to_F_mpz_poly(F_poly2, m_poly2);
+      
+//      printf(" floating not here\n");
+
+//      F_mpz_poly_print(F_poly1); printf(" poly1\n");
+//      F_mpz_poly_print(F_poly2); printf(" poly2\n");
+
+		F_mpz_poly_mul(res, F_poly1, F_poly2);			
+
+//      F_mpz_poly_print(res); printf(" res\n");
+
+      F_mpz_poly_factor(F_factors, content, res);
+
+		F_mpz_poly_to_mpz_poly(res2, res);
+
+//      printf(" floating not here\n");
+
+      F_mpz_poly_clear(res);
+      F_mpz_poly_init(res);
+
+      F_mpz_poly_set_coeff_ui(res, 0, 1);
+
+      for (num_facs = 0; num_facs < F_factors->num_factors; num_facs++){
+         for (ulong pow = 0; pow < F_factors->exponents[num_facs]; pow++){
+            F_mpz_poly_mul(res, res, F_factors->factors[num_facs]);
+         }
+      }
+
+      F_mpz_poly_scalar_mul( res, res, content);
+		F_mpz_poly_to_mpz_poly(res1, res);
+		    
+      result = mpz_poly_equal(res1, res2); 
+		if (!result) 
+		{
+			printf("Error2: length1 = %ld, bits1 = %ld, length2 = %ld, bits2 = %ld\n", length1, bits1, length2, bits2);
+         mpz_poly_print_pretty(m_poly1, "x"); printf("\n");
+         mpz_poly_print_pretty(m_poly2, "x"); printf("\n");
+         F_mpz_poly_factor_print(F_factors);
+         F_mpz_print(content); printf(" content \n");
+         mpz_poly_print_pretty(res1, "x"); printf("\n");
+         mpz_poly_print_pretty(res2, "x"); printf("\n");
+		}
+          
+      F_mpz_poly_clear(F_poly1);
+      F_mpz_poly_clear(F_poly2);
+      F_mpz_poly_clear(res);
+      F_mpz_poly_factor_clear(F_factors);
+      F_mpz_clear(content);
+   }
+
+	mpz_poly_clear(res1);
+   mpz_poly_clear(res2);
+   mpz_poly_clear(m_poly1);
+   mpz_poly_clear(m_poly2);
+   
+   return result;
+}
+
 int test_F_mpz_poly_byte_pack()
 {
    mpz_poly_t m_poly1, m_poly2;
@@ -2808,7 +2897,8 @@ void F_mpz_poly_test_all()
    RUN_TEST(F_mpz_poly_to_zmod_poly);
    RUN_TEST(F_mpz_poly_scalar_mul_ui); 
    RUN_TEST(F_mpz_poly_scalar_mul_si); 
-   RUN_TEST(F_mpz_poly_scalar_mul); 
+   RUN_TEST(F_mpz_poly_scalar_mul);
+   RUN_TEST(F_mpz_poly_factor);
    RUN_TEST(F_mpz_poly_mul_classical); 
    RUN_TEST(F_mpz_poly_mul_karatsuba); 
    RUN_TEST(F_mpz_poly_bit_pack);
@@ -2819,7 +2909,7 @@ void F_mpz_poly_test_all()
    RUN_TEST(F_mpz_poly_mul_KS); 
    RUN_TEST(F_mpz_poly_mul_KS2);
    RUN_TEST(F_mpz_poly_mul_SS); 
-   RUN_TEST(F_mpz_poly_pack_bytes); 
+   RUN_TEST(F_mpz_poly_pack_bytes);
 	
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");
