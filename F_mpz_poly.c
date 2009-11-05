@@ -5442,3 +5442,102 @@ int _F_mpz_mat_check_if_solved(F_mpz_mat_t M, ulong r, F_mpz_poly_factor_t final
    F_mpz_mat_clear(U);
    return trym;
 }
+
+int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, F_mpz_t P, ulong exp, F_mpz_mat_t M, int * cexpo)
+{
+   int return_me = 0;
+   ulong N = F->length - 1;
+   F_mpz_t lc;
+   F_mpz_init(lc);
+   F_mpz_set(lc, F->coeffs + N);
+
+   ulong r = lifted_fac->num_factors;
+   ulong s = r;
+   F_mpz_mat_t col;
+   F_mpz_mat_init(col, r, 1);
+   ulong cur_col = 0;
+   ulong worst_exp;
+
+   F_mpz_t B;
+   F_mpz_init(B);
+   F_mpz_set_ui(B, r + 1);
+//For the first run we'll only use 20 coeffs worth of data, should solve 99% of all 'random' polynomials
+   ulong num_coeffs = 10UL;
+   F_mpz_mat_t data;
+   F_mpz_mat_init(data, 0, 0);
+   _F_mpz_poly_factor_CLD_mat(data, F, lifted_fac, P, num_coeffs);
+
+   int all_coeffs = 0;
+   if (data->c >= F->length - 1)
+      all_coeffs = 1;
+//assume that cexpo is correct for the first M->c entries, zero out the potential new entries
+   for (ulong i = M->c; i < M->c + 2*(F->length - 1); i++)
+      cexpo[i] = 0;
+
+   F_mpz_t temp;
+   F_mpz_init(temp);
+   ulong sqN = (ulong) sqrt( (double) (N) );
+//   printf("%ld sqN, %f sqrt(N)\n", sqN, sqrt( (double) (N) ) );
+   int ok, newd, col_cnt, solved;
+   col_cnt = 0;
+   solved = 0;
+   while ((all_coeffs != 2) && (return_me == 0)){
+      for (cur_col = 0; cur_col < data->c; cur_col++){
+         F_mpz_mul_ui(temp, data->rows[r] + cur_col, sqN);
+         worst_exp = F_mpz_bits(temp);   
+         for( ulong i = 0; i < r; i++)
+            F_mpz_set(col->rows[i], data->rows[i] + cur_col);
+         ok = _F_mpz_mat_next_col(M, P, col, worst_exp);
+         if (ok != 0){
+            cexpo[r + col_cnt] = ok;
+//         F_mpz_mat_print_pretty(M);
+            newd = LLL_2exp_with_removal(M, cexpo, B);
+            F_mpz_mat_resize(M, newd, M->c);
+            col_cnt++;
+//         This next line is what makes it 'gradual'... could try to prove that doing the same column twice won't add another P
+//         But it's all the same
+            cur_col--;
+            if (newd == 1){
+               F_mpz_poly_factor_insert(final_fac, F, exp);
+               return_me = 1;
+               break;
+            }
+            solved =  _F_mpz_mat_check_if_solved(M, r, final_fac, lifted_fac, F, P, exp, lc);
+            if (solved == 1){
+               return_me = 1;
+               break;
+            }
+         }
+      }
+      if (solved == 0){
+//This is reached when the data wasn't large enough to need LLL, this means that you had a super easy or super hard factorization
+         solved =  _F_mpz_mat_check_if_solved(M, r, final_fac, lifted_fac, F, P, exp, lc);
+         if (solved == 1){
+//This is the easy case...
+            return_me = 1;
+         }
+         else{
+//This is the hard one...
+            if (all_coeffs == 1){
+               all_coeffs = 2;
+//This is the worst case, all coeffs have been used and we still haven't solved the problem so more Hensel lifting needed
+            }
+            else{
+               num_coeffs = num_coeffs * 2;
+               _F_mpz_poly_factor_CLD_mat(data, F, lifted_fac, P, num_coeffs);
+               if (data->c >= F->length - 1)
+                  all_coeffs = 1;
+            }
+         }
+      }
+   }
+//   F_mpz_mat_print_pretty(M);
+//   F_mpz_poly_factor_print(final_fac);
+   F_mpz_clear(B);
+   F_mpz_clear(lc);
+   F_mpz_clear(temp);
+   F_mpz_mat_clear(data);
+   F_mpz_mat_clear(col);
+   return return_me;
+}
+

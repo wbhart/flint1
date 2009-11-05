@@ -1131,6 +1131,14 @@ int _F_mpz_poly_try_to_solve(int num_facs, ulong * part, F_mpz_poly_factor_t fin
 */
 int _F_mpz_mat_check_if_solved(F_mpz_mat_t M, ulong r, F_mpz_poly_factor_t final_fac, F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, F_mpz_t P, ulong exp, F_mpz_t lc);
 
+/*
+   The actual factoring algorithm.  Set up to accept a prestarted matrix M (use the identity at first) and an array of exponents (0's at first).  
+   Attempts to factor the polynomial using all of the data that is available with the current level of Hensel Lifting.  Attempting with a spattering of 
+   data at first then using more if it fails.  Returns 1 if the problem has been solved and 0 if more Hensel Lifting is needed.  
+   Could be improved by not rechecking data and a partial Zassenhaus for some bizarre cases (which I've yet to find or test).
+*/
+int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, F_mpz_t P, ulong exp, F_mpz_mat_t M, int * cexpo);
+
 #ifdef __cplusplus
  }
 #endif
