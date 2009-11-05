@@ -1332,7 +1332,7 @@ int F_mpz_mat_check_0_1(ulong *part, F_mpz_mat_t M)
    ulong r,c;
    long strt;
    int ok;
-//set strt to first 0 np <= M->c
+//set strt to the index of first 0 in part
    for(np = 1; ; np++){
       strt = -1;
       for(c = 0; (c < M->c) && (strt == -1); c++){
@@ -1357,5 +1357,4 @@ int F_mpz_mat_check_0_1(ulong *part, F_mpz_mat_t M)
          }
       }
    }
-   return 0;
 }
