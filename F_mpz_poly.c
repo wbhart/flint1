@@ -5315,5 +5315,130 @@ void _F_mpz_poly_factor_CLD_mat(F_mpz_mat_t res, F_mpz_poly_t F, F_mpz_poly_fact
 
    for (long i = 0; i < n; i++)
       F_mpz_clear(temp[i]);
+}
 
+int _F_mpz_poly_try_to_solve(int num_facs, ulong * part, F_mpz_poly_factor_t final_fac, F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, F_mpz_t P, ulong exp, F_mpz_t lc)
+{
+   if (num_facs == 1){
+      F_mpz_poly_factor_insert(final_fac, F, exp);
+//      printf("Proved irreducibility\n");
+      return 1;
+   }
+//we know that there is a 0-1 potential basis, let's make the potential factors and sort them by degree
+   F_mpz_poly_factor_t trial_factors;
+   F_mpz_poly_factor_init(trial_factors);
+
+   F_mpz_poly_t tryme;
+   F_mpz_poly_init(tryme);
+   F_mpz_t temp_lc;
+   F_mpz_init(temp_lc);
+
+   ulong r = lifted_fac->num_factors;
+/*   ulong biggest, second;
+   biggest = 0;
+   second = 0;*/
+   for (int i = 1; i <= num_facs; i++){
+      F_mpz_poly_fit_length(tryme, 1UL);
+      tryme->length = 1UL;
+      F_mpz_set(tryme->coeffs + 0, lc);
+      for (int j = 0; j < r; j++){
+         if (part[j] == i)
+            F_mpz_poly_mul(tryme, tryme, lifted_fac->factors[j]);
+      }
+      F_mpz_poly_smod(tryme, tryme, P);
+      F_mpz_init(temp_lc);
+      F_mpz_poly_content(temp_lc, tryme);
+      F_mpz_poly_scalar_div_exact(tryme, tryme, temp_lc);
+      F_mpz_poly_factor_insert(trial_factors, tryme, 1UL);
+/*      if (tryme->length > biggest){
+         second = biggest;
+         biggest = tryme->length
+      }
+      else if (tryme-> length > second)
+         second = tryme->length;*/
+   }
+//OK this was not optimal but we now have num_facs potential factors stored in trial_factors
+//Would be more optimal if I did not multiply by lc yet, or if I trial divided along the way...
+//BUT with the early termination we want to attempt our trial divisions from the bottom up so that
+//if we find all but the largest factor and it matches our bound for the number of factors then 
+//we've proven the factorization is legit
+//maybe figure out what lengths I can prove this way and if I can prove biggest hooray go for it, if I can't then
+//maybe I can prove second, in which case sort, if neither then try, maybe Hensel lift again
+   for (int i = 0; i < num_facs - 1; i++){
+      for (int j = i+1; j <  num_facs; j++){
+         if( (trial_factors->factors[i])->length < (trial_factors->factors[j])->length )
+            F_mpz_poly_swap(trial_factors->factors[i], trial_factors->factors[j]);
+      }
+   }
+   F_mpz_poly_t f,Q,R;
+   F_mpz_poly_init(f);
+   F_mpz_poly_init(Q);
+   F_mpz_poly_init(R);
+   F_mpz_poly_set(f, F);
+   for (int i = 0; i < trial_factors->num_factors; i++){
+      if (num_facs == 1){
+         for (int j = 0; j < i; j++)
+            F_mpz_poly_factor_insert(final_fac, trial_factors->factors[j], exp);
+         F_mpz_poly_factor_insert(final_fac, f, exp);
+         return 1;
+      }
+      F_mpz_poly_divrem(Q, R, f, trial_factors->factors[i]);
+      if (R->length == 0){
+         //found one!!!! Don't insert just yet in case we find some but not all (which we handle suboptimally at the moment)
+//         F_mpz_poly_factor_insert(final_fac, trial_factors->factors[i], exp);
+         F_mpz_poly_set(f, Q);
+         num_facs--;
+      }
+      else{
+//Did not solve
+
+/**** 
+      Possibility of handling some things faster here by switching to Zassenhaus when we haven't solved but number of factors is small
+      also we are not keeping the potentially valuable info in part (although indirectly we are...)
+      Maybe it would be worth it to hand back the 0-1 version of U and start from scratch with new data (or recalculate old data)... 
+      Sorry for all the comments but I took away the part/zassenhaus section for the moment.  My reasoning is that we might not have tons of Hensel 
+      lifting in the final version in which case Zassenhaus could fail... which would suck to program that exception too or even figure out how to 
+      use what it did find.  So for now the 'easy' route is just going back to van Hoeij regardless of the number of proven factors. 
+ ****/
+
+//         if (num_facs > 10){
+// Still need van Hoeij and Hensel and stuff
+
+         return 0;
+//         }
+//         else{
+//Attempt part/zassenhaus.  We haven't found the right answers yet, but part could be used to help... maybe introduce a used array for keeping track of what's already been found
+//Nah simplest would be to just pass the trial factors rather than lifted factors... 
+//Isn't it concievable that we could reach this point with not enough Hensel Lifting?  In that case we'll need a check of landau bound...
+//            printf("Will have solved once I write the partZassenhaus\n");
+//            return 1;
+//         }
+      }
+   }
+   F_mpz_poly_clear(f);
+   F_mpz_poly_clear(Q);
+   F_mpz_poly_clear(R);
+
+   F_mpz_clear(temp_lc);
+   F_mpz_poly_clear(tryme);
+   F_mpz_poly_factor_clear(trial_factors);
+   return 0;
+}
+
+int _F_mpz_mat_check_if_solved(F_mpz_mat_t M, ulong r, F_mpz_poly_factor_t final_fac, F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, F_mpz_t P, ulong exp, F_mpz_t lc){
+   F_mpz_mat_t U;
+   F_mpz_mat_init(U,0,0);
+   F_mpz_mat_get_U(U, M, r);
+   ulong part[U->c];
+   for (ulong j = 0; j < U->c; j++)
+      part[j] = 0;
+   int ok = F_mpz_mat_check_0_1(part, U);
+   if (ok == 0){
+//not a 0-1 basis
+      F_mpz_mat_clear(U);
+      return 0;
+   }
+   int trym = _F_mpz_poly_try_to_solve(ok, part, final_fac, lifted_fac, F, P, exp, lc);
+   F_mpz_mat_clear(U);
+   return trym;
 }

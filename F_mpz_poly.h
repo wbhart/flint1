@@ -1119,6 +1119,18 @@ void F_mpz_poly_factor(F_mpz_poly_factor_t final_fac, F_mpz_t cong, F_mpz_poly_t
 */
 void _F_mpz_poly_factor_CLD_mat(F_mpz_mat_t res, F_mpz_poly_t F, F_mpz_poly_factor_t lifted_fac, F_mpz_t P, ulong N);
 
+/*
+   This function recieves the output of check_if_solved, which means that there is a partition of the factors out there which makes things small.  
+   This function does the trial divisions attempting to solve the problem.  Lots of comments in there, and would like to do some specific testing
+   with poorly behaving polynomials.
+*/
+int _F_mpz_poly_try_to_solve(int num_facs, ulong * part, F_mpz_poly_factor_t final_fac, F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, F_mpz_t P, ulong exp, F_mpz_t lc);
+
+/*
+   The compliment function to try_to_solve.  Run this first, it is a factorization specific wrapper around F_mpz_mat_check_0_1.
+*/
+int _F_mpz_mat_check_if_solved(F_mpz_mat_t M, ulong r, F_mpz_poly_factor_t final_fac, F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, F_mpz_t P, ulong exp, F_mpz_t lc);
+
 #ifdef __cplusplus
  }
 #endif
