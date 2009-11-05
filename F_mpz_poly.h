@@ -38,6 +38,7 @@
 #include "flint.h"
 #include "F_mpz.h"
 #include "F_mpz_mat.h"
+#include "F_mpz_LLL_fast_d.h"
 
 /*
    WARNING : 
