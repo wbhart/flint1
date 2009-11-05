@@ -534,6 +534,11 @@ int F_mpz_mat_check_0_1(ulong *part, F_mpz_mat_t M);
 */
 void F_mpz_mat_get_U(F_mpz_mat_t U, F_mpz_mat_t M, ulong d);
 
+/*
+   Uses F_mpz_smod to reduce each entry in M mod P taking the representative in (-P/2, P/2]
+*/
+void F_mpz_mat_smod(F_mpz_mat_t res, F_mpz_mat_t M, F_mpz_t P);
+
 #ifdef __cplusplus
  }
 #endif
