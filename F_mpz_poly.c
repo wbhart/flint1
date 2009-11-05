@@ -5531,6 +5531,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
             if (newd == 1){
                F_mpz_poly_factor_insert(final_fac, F, exp);
                return_me = 1;
+               solved = 1;
                break;
             }
             solved =  _F_mpz_mat_check_if_solved(M, r, final_fac, lifted_fac, F, P, exp, lc);
