@@ -5083,10 +5083,6 @@ void F_mpz_poly_factor_sq_fr_prim( F_mpz_poly_factor_t final_fac, ulong exp, F_m
       return;
    }
 
-   ulong a;
-   a = (long) ceil( (double) M_bits / log2( (double)p ) );
-   a = (long) pow( (double) 2, ceil( log2( (double) a ) ) );
-
    zmod_poly_factor_t fac;
    zmod_poly_factor_init(fac);
 
@@ -5096,14 +5092,22 @@ void F_mpz_poly_factor_sq_fr_prim( F_mpz_poly_factor_t final_fac, ulong exp, F_m
    long r;
    r = fac->num_factors;
 
+   int use_Hoeij_Novocin = 0;
+   int solved_yet = 0;
+   int mexpo[r + 2 * (f->length - 1)];
+   F_mpz_mat_t M;
+
+   if (r > 180){
+      printf("Too high for us right now... maybe later\n");
+      abort();
+   }
+
 //In the near future we should go back and try some more primes might deduce irreducibility or find smaller r
-   if (r > 20){
-//In the future this is where we will call hoeij/Novocin method
-      printf("r larger than 20, might take way too long, I'm stoping\n");
-      zmod_poly_clear(F);
-      zmod_poly_factor_clear(fac);
-      F_mpz_clear(lc);
-      return;
+   if (r > 10){
+      use_Hoeij_Novocin = 1;
+      F_mpz_mat_init_identity(M, r);
+      for (ulong i = 0; i < M->c; i++)
+         mexpo[i] = 0;
    }
    if (r == 0){
       printf("FLINT-exception: something broke\n");
@@ -5119,56 +5123,17 @@ void F_mpz_poly_factor_sq_fr_prim( F_mpz_poly_factor_t final_fac, ulong exp, F_m
       F_mpz_clear(lc);
       return;
    }
+
 //Begin Hensel Lifting phase, make the tree in v, w, and link
+// Later we'll do a check if use_Hoeij_Novocin (try for smaller a)
+   ulong a;
+   a = (long) ceil( (double) M_bits / log2( (double)p ) );
+   a = (long) pow( (double) 2, ceil( log2( (double) a ) ) );
+
    F_mpz_poly_t v[2*r-2];
    F_mpz_poly_t w[2*r-2];   
    long link[2*r-2];
 //P will be the F_mpz modulus
-   F_mpz_t P, big_P;
-   F_mpz_init(P);
-   F_mpz_init(big_P);
-   F_mpz_set_ui(P, p);
-   F_mpz_pow_ui(big_P, P, a);
-//Make a copy of f, f1, such that f1 monic and equiv to f mod p^a
-   F_mpz_poly_t f1;
-   F_mpz_poly_init(f1);
-   F_mpz_t lc_inv;
-   F_mpz_init( lc_inv );
-   if (F_mpz_is_one(lc)){
-      F_mpz_poly_set(f1, f);
-   }
-   else if (F_mpz_is_m1(lc)){
-      F_mpz_poly_neg(f1, f);
-   }
-   else{
-      F_mpz_mod(lc_inv, lc, big_P);
-      int OK = F_mpz_invert(lc_inv, lc_inv, big_P);
-      if (OK == 0){
-         printf(" some problem\n");
-         abort();
-      }
-      F_mpz_poly_scalar_mul(f1, f, lc_inv);
-      F_mpz_poly_smod(f1, f1, big_P);
-   }
-   for (i = 0; i < 2*r-2; i++)
-      F_mpz_poly_init(v[i]);
-
-   for (i = 0; i < 2*r-2; i++)
-      F_mpz_poly_init(w[i]);
-
-   _Build_Hensel_Tree(link, v, w, fac);
-//clearing fac early, don't need them anymore
-   zmod_poly_factor_clear(fac);
-   ulong e = 1;
-   while( (2 * e) <= a ){
-      _Tree_Hensel_Lift(link, v, w, e, 2*e, f1, 1, p, r, P);
-      e = 2*e;
-   }
-
-   F_mpz_poly_clear( f1 );
-   F_mpz_clear( lc_inv );
-//Have now Hensel lifted to p^a for the precalculated a, in the optimized version we will lift even less
-//Here let's make a list of Hensel lifted factors for grabbing information and trial testing.
    F_mpz_poly_factor_t lifted_fac;
    F_mpz_poly_factor_init(lifted_fac);
 //If r>5 then we'll need to allocate enough room for r factors
@@ -5180,18 +5145,81 @@ void F_mpz_poly_factor_sq_fr_prim( F_mpz_poly_factor_t final_fac, ulong exp, F_m
          F_mpz_poly_init(lifted_fac->factors[i]);
       lifted_fac->alloc = r;
    }
+
+   F_mpz_t P, big_P, Pt;
+   F_mpz_poly_t f1;
+   F_mpz_t lc_inv;
+   F_mpz_init(P);
+   F_mpz_set_ui(P, p);
+
+   for (i = 0; i < 2*r-2; i++)
+      F_mpz_poly_init(v[i]);
+
+   for (i = 0; i < 2*r-2; i++)
+      F_mpz_poly_init(w[i]);
+
+   _Build_Hensel_Tree(link, v, w, fac);
+//clearing fac early, don't need them anymore
+   zmod_poly_factor_clear(fac);
+
+   ulong e = 1;
+
+   while( solved_yet == 0 ){
+      F_mpz_init(Pt);
+      F_mpz_init(big_P);
+      F_mpz_set_ui(Pt, p);
+      F_mpz_pow_ui(big_P, Pt, a);
+//Make a copy of f, f1, such that f1 monic and equiv to f mod p^a
+      F_mpz_poly_init(f1);
+      F_mpz_init( lc_inv );
+      if (F_mpz_is_one(lc)){
+         F_mpz_poly_set(f1, f);
+      }
+      else if (F_mpz_is_m1(lc)){
+         F_mpz_poly_neg(f1, f);
+      }
+      else{
+         F_mpz_mod(lc_inv, lc, big_P);
+         int OK = F_mpz_invert(lc_inv, lc_inv, big_P);
+         if (OK == 0){
+            printf(" some problem\n");
+            abort();
+         }
+         F_mpz_poly_scalar_mul(f1, f, lc_inv);
+         F_mpz_poly_smod(f1, f1, big_P);
+      }
+      while( (2 * e) <= a ){
+         _Tree_Hensel_Lift(link, v, w, e, 2*e, f1, 1, p, r, P);
+         e = 2*e;
+      }
+      F_mpz_clear(Pt);
+      F_mpz_poly_clear( f1 );
+      F_mpz_clear( lc_inv );
+//Have now Hensel lifted to p^a for the precalculated a, in the optimized version we will lift even less
+//Here let's make a list of Hensel lifted factors for grabbing information and trial testing.
+
 //Now we should undo the mystical link part to find the original local factors in original order, see the long explanation in the Hensel code
-   for(i = 0; i < 2*r -2; i++){
-      if (link[i] < 0){
-         F_mpz_poly_smod(v[i], v[i], P); 
-         F_mpz_poly_set(lifted_fac->factors[-link[i]-1],v[i]);
-         lifted_fac->exponents[-link[i]-1] = 1L; 
+      for(i = 0; i < 2*r -2; i++){
+         if (link[i] < 0){
+            F_mpz_poly_smod(v[i], v[i], P); 
+            F_mpz_poly_set(lifted_fac->factors[-link[i]-1],v[i]);
+            lifted_fac->exponents[-link[i]-1] = 1L; 
+         }
+      }
+      lifted_fac->num_factors = r;
+//Now we are ready to to the Zassenhaus testing... later the r > 20 (or even 10) test could go here
+      if (use_Hoeij_Novocin == 1){
+         solved_yet = F_mpz_poly_factor_sq_fr_vHN(final_fac, lifted_fac, f, P, exp, M, mexpo);
+         if (solved_yet == 0){
+//This is where we increase the Hensel Accuracy and go back
+            a = 2*a;
+         }
+      }
+      else{
+         F_mpz_poly_zassenhaus_naive(final_fac, lifted_fac, f, P, exp, lc);
+         solved_yet = 1;
       }
    }
-   lifted_fac->num_factors = r;
-//Now we are ready to to the Zassenhaus testing... later the r > 20 (or even 10) test could go here
-   F_mpz_poly_zassenhaus_naive(final_fac, lifted_fac, f, P, exp, lc);
-
 //Done factoring, just gotta clean house
    for (i = 0; i < 2*r-2; i++){
       F_mpz_poly_clear(v[i]);
@@ -5202,6 +5230,9 @@ void F_mpz_poly_factor_sq_fr_prim( F_mpz_poly_factor_t final_fac, ulong exp, F_m
    F_mpz_clear(lc);
    F_mpz_clear(big_P);
    F_mpz_clear(P);
+   if (use_Hoeij_Novocin == 1){
+      F_mpz_mat_clear(M);
+   }
    return;
 }
 
