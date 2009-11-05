@@ -1399,3 +1399,82 @@ void F_mpz_mat_resize2(F_mpz_mat_t M, ulong r, ulong c)
       F_mpz_mat_row_swap(M,i + r - old_r, M, i, 0, M->c);
    }
 }
+
+int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp){
+//Goal here is to take a matrix M, get U, multiply U by col look at max bits of U*col and P subtract exp and decide if it's worth calling LLL
+//if is not return 0
+//if it is then return weight of last column (check that it should not be zero... ??) and augment M with the new column and new row
+//This new column should be truncated to the correct amount before re-multiplying by U
+//first make sure there are enough bits to even bother
+   ulong r = col->r;
+   ulong B = r + 1;
+   long ISD = F_mpz_bits(P) - 3*r;
+   if ( ISD < exp)
+      return 0;
+   F_mpz_mat_t U;
+   F_mpz_mat_init(U,0,0);
+   F_mpz_mat_get_U(U, M, r);
+   F_mpz_mat_t temp_col;
+   F_mpz_mat_init(temp_col, M->r, 1);
+//full precision column for deciding truncation levels
+   F_mpz_mat_mul_classical(temp_col, U, col);
+   F_mpz_mat_smod(temp_col, temp_col, P);
+   long mbts = FLINT_ABS(F_mpz_mat_max_bits(temp_col));
+//bare minimum of data above the bound
+   if (mbts < 2 * r + exp){
+      F_mpz_mat_clear(temp_col);
+      F_mpz_mat_clear(U);      
+      return 0;
+   }
+// This meant that this column is not worth calling LLL.
+// Now do a test to see if we can just skip the p^a vector
+//double version of no vector test:
+   double S = B * (2 * ldexp( 1.5, M->r - 1) - 2);
+   F_mpz_t temp;
+   F_mpz_init(temp);
+   F_mpz_set_d_2exp(temp, (double) B, ISD);
+   F_mpz_sub(temp, P, temp);
+//This is the bits version of K*B*(2*(3/2)^(s-1)-2) < P - B*2^ISD check
+   double no_vec_check = (double) F_mpz_bits(temp) - (1 + log2(S) + mbts); 
+   F_mpz_clear(temp);
+   int no_vec = (no_vec_check > 0.0);
+   ulong prec = M->r;
+   ulong take_away;
+//at the moment this is an int because cexpo in 'fast' LLL only allows ints, later it could be a long for heuristic LLL (but not really). 
+   int virt_exp;
+   if (no_vec){
+// rare for the first time, frequent for repeated scalings
+// In here we're going to scale to make the new entries use their 2*r bits
+// Now decide the scaling based on mbts
+      ISD = mbts - 2*r;
+   }
+   if (ISD - prec >= 0){
+      take_away = ISD - prec;
+      virt_exp = -prec;
+   }
+   else{
+      take_away = 0;
+      virt_exp = -ISD;
+   } 
+// Here we'll run with some extra bits with the new vector, just for complexity's sake
+// This means using ISD as the scale down.  Since we want to truncate we will take away ISD - s bits then return -s as the virtual exponent
+   F_mpz_mat_t trunc_col;
+   F_mpz_mat_init(trunc_col, r, 1);
+   F_mpz_mat_scalar_div_2exp(trunc_col, col, take_away);
+   F_mpz_mat_mul_classical(temp_col, U, trunc_col);
+   F_mpz_t trunc_P;
+   F_mpz_init(trunc_P);
+   F_mpz_div_2exp(trunc_P, P, take_away);
+   F_mpz_mat_smod(temp_col, temp_col, trunc_P);
+   F_mpz_mat_resize2(M, M->r + !(no_vec), M->c + 1);
+   if (!no_vec)
+      F_mpz_set(M->rows[0] + M->c - 1, trunc_P);
+   for( ulong j = !(no_vec); j < M->r; j++)
+      F_mpz_set(M->rows[j] + M->c - 1, temp_col->rows[j-!(no_vec)]);
+   F_mpz_clear(trunc_P);
+   F_mpz_mat_clear(trunc_col);
+   F_mpz_mat_clear(temp_col);
+   F_mpz_mat_clear(U);
+   return virt_exp;
+}
+

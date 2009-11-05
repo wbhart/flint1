@@ -544,6 +544,14 @@ void F_mpz_mat_smod(F_mpz_mat_t res, F_mpz_mat_t M, F_mpz_t P);
 */
 void F_mpz_mat_resize2(F_mpz_mat_t M, ulong r, ulong c);
 
+/*
+   This is the heart of the Novocin PhD algorithm.  Takes a column of data col, a large modulus P, and an upperbound for
+   the data in a good vector with exp.  Decides if it's worth calling LLL with this data, if not it returns 0, if so it adjusts 
+   M in place by truncating the data, augmenting M, and returning the virtual weight of the final column.  May or may not add a row
+   for P, based on a rough estimation.
+*/
+int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp);
+
 #ifdef __cplusplus
  }
 #endif
