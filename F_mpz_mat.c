@@ -1358,3 +1358,12 @@ int F_mpz_mat_check_0_1(ulong *part, F_mpz_mat_t M)
       }
    }
 }
+
+void F_mpz_mat_get_U(F_mpz_mat_t U, F_mpz_mat_t M, ulong d)
+{
+   ulong s = M->r;
+   F_mpz_mat_resize(U, s, d);
+   for (ulong i = 0; i < s; i++)
+      for (ulong j = 0; j < d; j++)
+         F_mpz_set(U->rows[i] + j, M->rows[i] + j);
+}

@@ -528,6 +528,12 @@ int F_mpz_mat_column_compare(F_mpz_mat_t M, ulong a, ulong b);
 */
 int F_mpz_mat_check_0_1(ulong *part, F_mpz_mat_t M);
 
+/*
+   Designed for the factoring applications.  Given matrix M takes the sub matrix of size M->r x d starting at M[0,0].
+   Used for getting the transformation matrix out of knapsack lattices.
+*/
+void F_mpz_mat_get_U(F_mpz_mat_t U, F_mpz_mat_t M, ulong d);
+
 #ifdef __cplusplus
  }
 #endif
