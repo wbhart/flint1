@@ -1387,3 +1387,15 @@ void F_mpz_mat_smod(F_mpz_mat_t res, F_mpz_mat_t M, F_mpz_t P)
          F_mpz_smod(res->rows[i] + j, M->rows[i] + j, P);
 }
 
+void F_mpz_mat_resize2(F_mpz_mat_t M, ulong r, ulong c)
+{
+   if (r <= M->r){
+      F_mpz_mat_resize(M, r, c);
+      return;
+   }
+   long old_r = M->r;
+   F_mpz_mat_resize(M, r, c); 
+   for (long i = old_r-1; i >= 0; i--){
+      F_mpz_mat_row_swap(M,i + r - old_r, M, i, 0, M->c);
+   }
+}

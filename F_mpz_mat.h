@@ -539,6 +539,11 @@ void F_mpz_mat_get_U(F_mpz_mat_t U, F_mpz_mat_t M, ulong d);
 */
 void F_mpz_mat_smod(F_mpz_mat_t res, F_mpz_mat_t M, F_mpz_t P);
 
+/*
+   Simple naive function, uses F_mpz_mat_resize then shifts the new zero rows to the top rather than bottom.
+*/
+void F_mpz_mat_resize2(F_mpz_mat_t M, ulong r, ulong c);
+
 #ifdef __cplusplus
  }
 #endif
