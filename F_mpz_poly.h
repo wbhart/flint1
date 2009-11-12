@@ -823,6 +823,9 @@ void F_mpz_poly_div_basecase(F_mpz_poly_t Q,
    F_mpz_poly_divrem_basecase(Q, NULL, A, B);
 }
 
+void F_mpz_poly_div_divconquer_recursive(F_mpz_poly_t Q, F_mpz_poly_t BQ, 
+                                         const F_mpz_poly_t A, const F_mpz_poly_t B);
+
 #ifdef __cplusplus
  }
 #endif
