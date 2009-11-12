@@ -344,7 +344,31 @@ void F_mpz_poly_to_mpz_poly(mpz_poly_t m_poly, const F_mpz_poly_t F_poly);
 
 ================================================================================*/
 
+/** 
+   \fn     int F_mpz_poly_from_string(F_mpz_poly_t poly, const char* s)
+   \brief  Read a polynomial from a string. Format is an integer
+           representing the length followed by 2 spaces, followed by a 
+           space separated list of coefficients, starting with the
+           constant term.
+*/
 int F_mpz_poly_from_string(F_mpz_poly_t poly, const char* s);
+
+/** 
+   \fn     void F_mpz_poly_print(F_mpz_poly_t poly)
+   \brief  Print a polynomial to stdout. Format is an integer
+           representing the length followed by 2 spaces, followed by 
+           a space separated list of coefficients, starting with the
+           constant term.
+*/
+static inline
+void F_mpz_poly_print(F_mpz_poly_t poly)
+{
+   mpz_poly_t m_poly;
+   mpz_poly_init(m_poly);
+   F_mpz_poly_to_mpz_poly(m_poly, poly);
+   mpz_poly_print(m_poly);
+   mpz_poly_clear(m_poly);
+}
 
 /*===============================================================================
 
@@ -527,7 +551,7 @@ void F_mpz_poly_scalar_mul_si(F_mpz_poly_t poly1, F_mpz_poly_t poly2, long x);
    \fn     void F_mpz_poly_scalar_mul(F_mpz_poly_t poly1, F_mpz_poly_t poly2, F_mpz_t x)
    \brief  Multiply poly2 by the F_mpz_t x and set poly1 to the result.
 */
-void F_mpz_poly_scalar_mul(F_mpz_poly_t poly1, F_mpz_poly_t poly2, F_mpz_t x);
+void F_mpz_poly_scalar_mul(F_mpz_poly_t poly1, const F_mpz_poly_t poly2, const F_mpz_t x);
 
 /*===============================================================================
 
@@ -748,32 +772,56 @@ void _F_mpz_poly_mul_kara_recursive(F_mpz_poly_t out, const F_mpz_poly_t in1, co
 void F_mpz_poly_mul_karatsuba(F_mpz_poly_t res, F_mpz_poly_t poly1, F_mpz_poly_t poly2);
 
 /** 
-   \fn     F_mpz_poly_mul_KS(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
+   \fn     void F_mpz_poly_mul_KS(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
 
    \brief  Multiply poly1 by poly2 using Kronecker segmentation and store the result in res.
 */
 void F_mpz_poly_mul_KS(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2);
 
 /** 
-   \fn     F_mpz_poly_mul_KS2(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
+   \fn     void F_mpz_poly_mul_KS2(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
 
    \brief  Multiply poly1 by poly2 using David Harvey's KS2 algorithm and store the result in res.
 */
 void F_mpz_poly_mul_KS2(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2);
 
 /** 
-   \fn     F_mpz_poly_mul_SS(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
+   \fn     void F_mpz_poly_mul_SS(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
    \brief  Multiply poly1 by poly2 and set res to the result, using the Schoenhage-Strassen 
 	        algorithm.
 */
 void F_mpz_poly_mul_SS(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2);
 
 /** 
-   \fn     F_mpz_poly_mul(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
+   \fn     void F_mpz_poly_mul(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
    \brief  Multiply poly1 by poly2 and set res to the result. An attempt is made to choose the 
 	        optimal algorithm.
 */
 void F_mpz_poly_mul(F_mpz_poly_t res, F_mpz_poly_t poly1, F_mpz_poly_t poly2);
+
+/*===============================================================================
+
+	Division
+
+================================================================================*/
+
+/** 
+   \fn     void F_mpz_poly_divrem_basecase(F_mpz_poly_t Q, F_mpz_poly_t R, const F_mpz_poly_t A, const F_mpz_poly_t B)
+   \brief  Divide A by B and set R to the remainder, i.e. A = B*Q + R.
+*/
+void F_mpz_poly_divrem_basecase(F_mpz_poly_t Q, F_mpz_poly_t R, 
+                                const F_mpz_poly_t A, const F_mpz_poly_t B);
+
+/** 
+   \fn     void F_mpz_poly_divrem_basecase(F_mpz_poly_t Q, F_mpz_poly_t R, const F_mpz_poly_t A, const F_mpz_poly_t B)
+   \brief  Divide A by B computing quotient only, i.e. notionally find A = B*Q + R.
+*/
+static inline
+void F_mpz_poly_div_basecase(F_mpz_poly_t Q, 
+                             const F_mpz_poly_t A, const F_mpz_poly_t B)
+{
+   F_mpz_poly_divrem_basecase(Q, NULL, A, B);
+}
 
 #ifdef __cplusplus
  }
