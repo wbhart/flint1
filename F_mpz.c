@@ -1471,8 +1471,11 @@ void F_mpz_cdiv_q(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
 		{
 			F_mpz q = c1 / c2; // compute C quotient
 			F_mpz r = c1 - c2*q; // compute remainder
-			if (r > 0L) q++; // q cannot overflow as remainder implies |c2| != 1
-			F_mpz_set_si(f, q);
+			
+         if ((c2 > 0L) && (r > 0L)) q++; // cannot overflow as r != 0 implies |c2| != 1
+         else if ((c2 < 0L) && (r < 0L)) q++;
+         
+         F_mpz_set_si(f, q);
 		} else // h is large and g is small
 		{
 			if (c1 == 0L) F_mpz_set_ui(f, 0L); // g is zero
@@ -1521,8 +1524,11 @@ void F_mpz_fdiv_q(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
 		{
 			F_mpz q = c1 / c2; // compute C quotient
 			F_mpz r = c1 - c2*q; // compute remainder
-			if (r < 0L) q--; // q cannot overflow as remainder implies |c2| != 1
-			F_mpz_set_si(f, q);
+			
+         if ((c2 > 0L) && (r < 0L)) q--; // q cannot overflow as remainder implies |c2| != 1
+			else if ((c2 < 0L) && (r > 0L)) q--;
+         
+         F_mpz_set_si(f, q);
 		} else // h is large and g is small
 		{
 			if (c1 == 0L) F_mpz_set_ui(f, 0L); // g is zero
