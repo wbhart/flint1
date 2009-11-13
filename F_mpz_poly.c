@@ -3673,7 +3673,7 @@ void F_mpz_poly_mul(F_mpz_poly_t res, F_mpz_poly_t poly1, F_mpz_poly_t poly2)
 
 /*===============================================================================
 
-	Division
+	Division with remainder
 
 ================================================================================*/
 
@@ -4067,4 +4067,81 @@ void F_mpz_poly_divrem_divconquer(F_mpz_poly_t Q, F_mpz_poly_t R, const F_mpz_po
    _F_mpz_poly_normalise(R);
    
    F_mpz_poly_clear(QB);
+}
+
+/*===============================================================================
+
+	Division without remainder
+
+================================================================================*/
+
+void F_mpz_poly_divrem_basecase_low(F_mpz_poly_t Q, F_mpz_poly_t R, const F_mpz_poly_t A, const F_mpz_poly_t B)
+{
+   if (B->length == 0)
+   {
+      printf("Exception : Divide by zero in F_mpz_poly_divrem_basecase_low.\n");
+      abort();
+   }
+   
+   ulong coeff = A->length;
+   ulong B_length = B->length;
+
+   F_mpz_poly_t qB;
+   
+   F_mpz * coeffs_A = A->coeffs;
+   F_mpz * coeffs_B = B->coeffs;
+   F_mpz * B_lead = coeffs_B + B_length - 1; 
+   F_mpz * coeff_Q;
+   F_mpz * coeffs_R;
+
+   while (coeff >= B_length)
+   {
+      if (F_mpz_cmpabs(coeffs_A + coeff - 1, B_lead) >= 0) break;
+      else coeff--;   
+   }
+   
+   F_mpz_poly_set(R, A);
+   
+   if (coeff >= B_length)
+   {
+      F_mpz_poly_fit_length(Q, coeff - B_length + 1);    
+      Q->length = coeff - B_length + 1;
+   } else 
+   {
+      F_mpz_poly_zero(Q);
+      F_mpz_poly_truncate(R, B_length - 1);
+      return;
+   }   
+   
+   coeffs_R = R->coeffs; 
+
+   F_mpz_poly_t Bsub;
+   _F_mpz_poly_attach_truncate(Bsub, B, B_length - 1);
+   
+   F_mpz_poly_init2(qB, Bsub->length);
+   while (coeff >= B_length)
+   {
+      coeff_Q = Q->coeffs + coeff - B_length;
+
+      if (F_mpz_cmpabs(coeffs_R + coeff - 1, B_lead) < 0) F_mpz_zero(coeff_Q);
+      else
+      {
+         F_mpz_fdiv_q(coeff_Q, coeffs_R + coeff - 1, B_lead);
+         
+         F_mpz_poly_scalar_mul(qB, Bsub, coeff_Q); 
+         
+         coeffs_R = R->coeffs;
+         
+         F_mpz_poly_t R_sub;
+         R_sub->coeffs = coeffs_R + coeff - B_length;
+         R_sub->length = Bsub->length;
+         _F_mpz_poly_sub(R_sub, R_sub, qB);
+      }
+      
+      coeff--;
+   }
+         
+   F_mpz_poly_clear(qB);
+   
+   F_mpz_poly_truncate(R, B_length - 1);
 }

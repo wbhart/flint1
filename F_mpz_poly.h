@@ -839,6 +839,23 @@ void F_mpz_poly_div_divconquer_recursive(F_mpz_poly_t Q, F_mpz_poly_t BQ,
 void F_mpz_poly_divrem_divconquer(F_mpz_poly_t Q, F_mpz_poly_t R, 
                                   const F_mpz_poly_t A, const F_mpz_poly_t B);
 
+/*===============================================================================
+
+	Division without remainder
+
+================================================================================*/
+
+/** 
+   \fn     void F_mpz_poly_div_divconquer_recursive(F_mpz_poly_t Q, F_mpz_poly_t BQ, 
+                                         const F_mpz_poly_t A, const F_mpz_poly_t B)
+   \brief  Divide A by B computing the quotient Q and remainder R such that A = BQ + R,
+           but R will be set to contain only the low B->length - 1 terms of the full
+           remainder.
+*/
+void F_mpz_poly_divrem_basecase_low(F_mpz_poly_t Q, F_mpz_poly_t R, 
+                                    const F_mpz_poly_t A, const F_mpz_poly_t B);
+
+
 #ifdef __cplusplus
  }
 #endif
