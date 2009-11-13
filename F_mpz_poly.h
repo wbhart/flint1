@@ -735,6 +735,14 @@ void F_mpz_poly_unpack_bytes(F_mpz_poly_t res, F_mpz_poly_t poly, ulong n, ulong
 void F_mpz_poly_mul_classical(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2);
 
 /** 
+   \fn     void F_mpz_poly_mul_classical_trunc_left(F_mpz_poly_t res, 
+                       const F_mpz_poly_t poly1, const F_mpz_poly_t poly2, ulong trunc)
+   \brief  Multiply poly1 by poly2 and set res to the result but with the bottom trunc
+           terms zeroed.
+*/
+void F_mpz_poly_mul_classical_trunc_left(F_mpz_poly_t res, 
+                       const F_mpz_poly_t poly1, const F_mpz_poly_t poly2, ulong trunc);
+/** 
    \fn     void _F_mpz_poly_mul_kara_odd_even_recursive(F_mpz * out, F_mpz * in1, ulong len1, 
 					               F_mpz * in2, ulong len2, F_mpz * scratch, ulong skip, ulong crossover)
    \brief  Recursive portion of odd/even karatsuba multiplication.

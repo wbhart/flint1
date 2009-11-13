@@ -929,6 +929,97 @@ void F_mpz_poly_mul_classical(F_mpz_poly_t res, const F_mpz_poly_t poly1, const 
 		_F_mpz_poly_mul_classical(res, poly1, poly2);
 }
 
+void _F_mpz_poly_mul_classical_trunc_left(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2, ulong trunc)
+{
+   ulong len1 = poly1->length;
+   ulong len2 = poly2->length;
+   ulong start;
+   long i;
+
+   if ((len1 == 0) || (len2 == 0) || (trunc >= len1 + len2 - 1))
+   {
+      res->length = 0;
+      return;
+   }
+   
+   if ((len1 == 1) && (len2 == 1)) // Special case if the length of both inputs is 1
+   {
+      F_mpz_mul2(res->coeffs, poly1->coeffs, poly2->coeffs);      
+   } else // Ordinary case
+   {
+      long j;
+      
+      // Set res[i] = poly1[i]*poly2[0] 
+      if (poly2->coeffs[0])
+			for (i = trunc; i < len1; i++)
+            F_mpz_mul2(res->coeffs + i, poly1->coeffs + i, poly2->coeffs);
+		else 
+			for (i = trunc; i < len1; i++)
+            F_mpz_zero(res->coeffs + i);
+
+      // Set res[i+len1-1] = in1[len1-1]*in2[i]
+      if (len1 > trunc) start = 1;
+      else start = trunc - len1 + 1;
+
+      if (poly1->coeffs[len1 - 1])
+		   for (i = start; i < len2; i++)
+            F_mpz_mul2(res->coeffs + i + len1 - 1, poly1->coeffs + len1 - 1, poly2->coeffs + i);  
+		else 
+         for (i = start; i < len2; i++)
+            F_mpz_zero(res->coeffs + i + len1 - 1);
+      
+      // out[i+j] += in1[i]*in2[j] 
+      for (i = 0; i < len1 - 1; i++)
+      {      
+         F_mpz c = poly1->coeffs[i];
+			if (c)
+			{
+				if (trunc > i) start = trunc - i;
+            else start = 1;
+            
+            if (!COEFF_IS_MPZ(c))
+				{
+					if (c < 0L) 
+						for (j = start; j < len2; j++)
+                     F_mpz_submul_ui(res->coeffs + i + j, poly2->coeffs + j, -c);
+					else
+                  for (j = start; j < len2; j++)
+						   F_mpz_addmul_ui(res->coeffs + i + j, poly2->coeffs + j, c);
+				} else
+					for (j = start; j < len2; j++)
+                  F_mpz_addmul(res->coeffs + i + j, poly1->coeffs + i, poly2->coeffs + j);
+			}
+      }
+   } 
+   
+   for (i = 0; i < FLINT_MIN(trunc, len1 + len2 - 1); i++)
+      F_mpz_zero(res->coeffs + i);
+   
+   _F_mpz_poly_set_length(res, len1 + len2 - 1);
+   if (trunc >= len1 + len2 - 1) _F_mpz_poly_normalise(res);
+}
+
+void F_mpz_poly_mul_classical_trunc_left(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2, ulong trunc)
+{
+	if ((poly1->length == 0) || (poly2->length == 0)) // special case if either poly is zero
+   {
+      F_mpz_poly_zero(res);
+      return;
+   }
+
+   F_mpz_poly_fit_length(res, poly1->length + poly2->length - 1);
+   
+	if ((poly1 == res) || (poly2 == res)) // aliased input and output
+	{
+		F_mpz_poly_t output; // create temporary
+		F_mpz_poly_init2(output, poly1->length + poly2->length - 1);
+		_F_mpz_poly_mul_classical_trunc_left(output, poly1, poly2, trunc);
+		F_mpz_poly_swap(output, res); // swap temporary with real output
+		F_mpz_poly_clear(output);
+	} else // ordinary case
+		_F_mpz_poly_mul_classical_trunc_left(res, poly1, poly2, trunc);
+}
+
 /*===============================================================================
 
 	Karatsuba multiplication
