@@ -2899,7 +2899,7 @@ int test_F_mpz_poly_div_divconquer_recursive()
 		F_mpz_poly_clear(R);
    }
 
-      // test inexact division
+   // test inexact division
    for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -3121,6 +3121,102 @@ int test_F_mpz_poly_divrem_basecase_low()
 	return result;
 }
 
+int test_F_mpz_poly_div_divconquer_recursive_low()
+{
+   F_mpz_poly_t F_poly1, F_poly2, F_poly3, Q, Q2, Qb, Qb2, R;
+   int result = 1;
+   ulong bits1, bits2, length1, length2;
+   
+   // test exact division
+   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
+   {
+      F_mpz_poly_init(F_poly1);
+      F_mpz_poly_init(F_poly2);
+      F_mpz_poly_init(F_poly3);
+      F_mpz_poly_init(Q);
+      F_mpz_poly_init(Q2);
+      F_mpz_poly_init(Qb);
+      F_mpz_poly_init(R);
+
+		bits1 = z_randint(200) + 1;
+      bits2 = z_randint(200);
+      length1 = z_randint(100) + 1;
+      length2 = z_randint(100);
+      
+      do F_mpz_randpoly(F_poly1, length1, bits1);
+      while (F_poly1->length == 0);
+      F_mpz_randpoly(F_poly2, length2, bits2);
+           
+		F_mpz_poly_mul(F_poly3, F_poly1, F_poly2);			
+		F_mpz_poly_div_divconquer_recursive_low(Q, Qb, F_poly3, F_poly1);
+      F_mpz_poly_div_basecase(Q2, F_poly3, F_poly1);
+      F_mpz_poly_truncate(F_poly3, F_poly1->length - 1);
+      
+      result = (F_mpz_poly_equal(Q, Q2) && F_mpz_poly_equal(Qb, F_poly3)); 
+		
+      if (!result) 
+		{
+			printf("Error: length1 = %ld, bits1 = %ld, length2 = %ld, bits2 = %ld\n", length1, bits1, length2, bits2);
+         F_mpz_poly_print(F_poly1); printf("\n");
+         F_mpz_poly_print(F_poly2); printf("\n");
+         F_mpz_poly_print(F_poly3); printf("\n");
+         F_mpz_poly_print(Q); printf("\n");
+         F_mpz_poly_print(Q2); printf("\n");
+         F_mpz_poly_print(Qb); printf("\n");
+		}
+          
+      F_mpz_poly_clear(F_poly1);
+		F_mpz_poly_clear(F_poly2);
+		F_mpz_poly_clear(F_poly3);
+		F_mpz_poly_clear(Q);
+		F_mpz_poly_clear(Q2);
+		F_mpz_poly_clear(Qb);
+		F_mpz_poly_clear(R);
+   }
+
+   // test inexact division
+   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
+   {
+      F_mpz_poly_init(F_poly1);
+      F_mpz_poly_init(F_poly2);
+      F_mpz_poly_init(Q);
+      F_mpz_poly_init(Qb);
+      F_mpz_poly_init(Qb2);
+
+		bits1 = z_randint(200) + 1;
+      bits2 = z_randint(200);
+      length1 = z_randint(100) + 1;
+      length2 = z_randint(100);
+      
+      do F_mpz_randpoly(F_poly1, length1, bits1);
+      while (F_poly1->length == 0);
+      F_mpz_randpoly(F_poly2, length2, bits2);
+           
+		F_mpz_poly_div_divconquer_recursive_low(Q, Qb, F_poly2, F_poly1);
+      F_mpz_poly_mul(Qb2, Q, F_poly1);
+      F_mpz_poly_truncate(Qb2, F_poly1->length - 1);
+
+      result = (F_mpz_poly_equal(Qb, Qb2)); 
+		
+      if (!result) 
+		{
+			printf("Error: length1 = %ld, bits1 = %ld, length2 = %ld, bits2 = %ld\n", length1, bits1, length2, bits2);
+         F_mpz_poly_print(F_poly1); printf("\n");
+         F_mpz_poly_print(F_poly2); printf("\n");
+         F_mpz_poly_print(Qb); printf("\n");
+         F_mpz_poly_print(Qb2); printf("\n");
+		}
+          
+      F_mpz_poly_clear(F_poly1);
+		F_mpz_poly_clear(F_poly2);
+		F_mpz_poly_clear(Q);
+		F_mpz_poly_clear(Qb);
+		F_mpz_poly_clear(Qb2);
+   }
+
+	return result;
+}
+
 void F_mpz_poly_test_all()
 {
    int success, all_success = 1;
@@ -3163,6 +3259,7 @@ void F_mpz_poly_test_all()
 	RUN_TEST(F_mpz_poly_div_divconquer_recursive); 
 	RUN_TEST(F_mpz_poly_divrem_divconquer); 
 	RUN_TEST(F_mpz_poly_divrem_basecase_low); 
+	RUN_TEST(F_mpz_poly_div_divconquer_recursive_low); 
 	
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");
