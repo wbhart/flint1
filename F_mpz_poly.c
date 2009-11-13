@@ -4053,3 +4053,18 @@ void F_mpz_poly_div_divconquer_recursive(F_mpz_poly_t Q, F_mpz_poly_t BQ, const 
    F_mpz_poly_clear(dq2);
    F_mpz_poly_clear(dq1);
 }
+
+void F_mpz_poly_divrem_divconquer(F_mpz_poly_t Q, F_mpz_poly_t R, const F_mpz_poly_t A, const F_mpz_poly_t B)
+{
+   F_mpz_poly_t QB;
+   
+   F_mpz_poly_init(QB);
+   
+   F_mpz_poly_div_divconquer_recursive(Q, QB, A, B);
+   
+   F_mpz_poly_fit_length(R, A->length);
+   _F_mpz_poly_sub(R, A, QB);
+   _F_mpz_poly_normalise(R);
+   
+   F_mpz_poly_clear(QB);
+}
