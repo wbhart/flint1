@@ -780,6 +780,14 @@ void _F_mpz_poly_mul_kara_recursive(F_mpz_poly_t out, const F_mpz_poly_t in1, co
 void F_mpz_poly_mul_karatsuba(F_mpz_poly_t res, F_mpz_poly_t poly1, F_mpz_poly_t poly2);
 
 /** 
+   \fn     void F_mpz_poly_mul_karatsuba_trunc_left(F_mpz_poly_t res, 
+                                           F_mpz_poly_t poly1, F_mpz_poly_t poly2)
+   \brief  Multiply poly1 by poly2 and set res to the result but with the bottom trunc
+           terms zeroed.
+*/
+void F_mpz_poly_mul_karatsuba_trunc_left(F_mpz_poly_t res, 
+                                            F_mpz_poly_t poly1, F_mpz_poly_t poly2, ulong trunc);
+/** 
    \fn     void F_mpz_poly_mul_KS(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
 
    \brief  Multiply poly1 by poly2 using Kronecker segmentation and store the result in res.
@@ -806,6 +814,16 @@ void F_mpz_poly_mul_SS(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_p
 	        optimal algorithm.
 */
 void F_mpz_poly_mul(F_mpz_poly_t res, F_mpz_poly_t poly1, F_mpz_poly_t poly2);
+
+/** 
+   \fn     void F_mpz_poly_mul_trunc_left(F_mpz_poly_t res, F_mpz_poly_t poly1, 
+                                                 F_mpz_poly_t poly2, ulong trunc)
+   \brief  Multiply poly1 by poly2 and set res to the result. An attempt is made to choose the 
+	        optimal algorithm. The lower trunc coefficients of res will either be correct or
+           set to 0.
+*/
+void F_mpz_poly_mul_trunc_left(F_mpz_poly_t res, F_mpz_poly_t poly1, 
+                                              F_mpz_poly_t poly2, ulong trunc);
 
 /*===============================================================================
 

@@ -991,12 +991,12 @@ void _F_mpz_poly_mul_classical_trunc_left(F_mpz_poly_t res, const F_mpz_poly_t p
 			}
       }
    } 
-   
+      
    for (i = 0; i < FLINT_MIN(trunc, len1 + len2 - 1); i++)
       F_mpz_zero(res->coeffs + i);
-   
-   _F_mpz_poly_set_length(res, len1 + len2 - 1);
-   if (trunc >= len1 + len2 - 1) _F_mpz_poly_normalise(res);
+      
+   res->length = len1 + len2 - 1;
+   if (trunc >= len1 + len2 - 1) _F_mpz_poly_normalise(res);   
 }
 
 void F_mpz_poly_mul_classical_trunc_left(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2, ulong trunc)
@@ -1346,7 +1346,7 @@ void _F_mpz_poly_mul_karatsuba_odd_even(F_mpz_poly_t res, F_mpz_poly_t poly1,
       _F_mpz_poly_mul_kara_odd_even_recursive(res->coeffs, poly1->coeffs, poly1->length,
             poly2->coeffs, poly2->length, scratch->coeffs, 1, crossover);
 
-		_F_mpz_poly_set_length(res, length);
+		res->length = length;
    }
    
    F_mpz_poly_clear(scratch);
@@ -1430,6 +1430,288 @@ void F_mpz_poly_mul_karatsuba(F_mpz_poly_t res, F_mpz_poly_t poly1,
       _F_mpz_poly_mul_karatsuba_odd_even(res, poly2, poly1);
 	else
 		_F_mpz_poly_mul_karatsuba(res, poly1, poly2);
+}
+
+void _F_mpz_poly_karatrunc_left_recursive(F_mpz_poly_t res, const F_mpz_poly_t a, const F_mpz_poly_t b, F_mpz_poly_t scratch, const ulong crossover, const ulong trunc)
+{
+   F_mpz_poly_t temp, temp2;
+   
+   long non_zero = a->length + b->length - trunc - 1;
+   
+   if (non_zero <= 0)
+   {
+      for (long i = 0; i < (long) (a->length + b->length - 1); i++)
+         F_mpz_zero(res->coeffs + i);
+      
+      res->length = 0;
+
+      return;
+   }
+   
+   if ((a->length <= 1) || (b->length <= 1) || (non_zero == 1)) 
+   {
+      _F_mpz_poly_mul_classical_trunc_left(res, a, b, trunc);
+      return;
+   }
+   
+   if ((a->length == 2 && b->length == 2) && (crossover < 4) && (!trunc)) 
+   {
+      F_mpz_mul2(res->coeffs, a->coeffs, b->coeffs); 
+         
+      F_mpz_add(scratch->coeffs, a->coeffs, a->coeffs + 1);
+      F_mpz_add(scratch->coeffs + 1, b->coeffs, b->coeffs + 1);
+         
+      F_mpz_mul2(res->coeffs + 2, a->coeffs + 1, b->coeffs + 1); 
+         
+      F_mpz_mul2(res->coeffs + 1, scratch->coeffs, scratch->coeffs + 1); 
+         
+      F_mpz_sub(res->coeffs + 1, res->coeffs + 1, res->coeffs);
+      F_mpz_sub(res->coeffs + 1, res->coeffs + 1, res->coeffs + 2);
+      
+            
+      res->length = a->length + b->length - 1;
+      
+      return;
+   }
+   
+   if ((a->length + b->length <= crossover) || ((a->length == 2) && (b->length == 2)))
+   {
+      _F_mpz_poly_mul_classical_trunc_left(res, a, b, trunc);
+      
+      return;
+   }   
+        
+   F_mpz_poly_t a1, a2, b1, b2;
+      
+   ulong l2 = 0;
+   ulong old_length;
+     
+   ulong m = (a->length + 1)/2;
+   _F_mpz_poly_attach_truncate(a1, a, m);
+   _F_mpz_poly_attach_shift(a2, a, m);
+   
+   if (m < b->length) //ordinary case
+   {
+      /*
+         (a1+a2*x)*(b1+b2*x) = a1*b1 + a2*b2*x^2 + (a1+a2)*(b1+b2)*x-a1*b1*x-a2*b2*x;
+      */
+      
+      _F_mpz_poly_attach_truncate(b1, b, m);
+      _F_mpz_poly_attach_shift(b2, b, m);
+   
+      /* 
+         from 0 for a1->length + b1->length - 1 will be directly written to, 
+         as will all coeffs from 2*m onwards.
+      */
+      ulong start = a1->length + b1->length - 1;
+      if (!a1->length || !b1->length) start = 0;
+      for (ulong i = start; i < 2*m; i++)
+         F_mpz_zero(res->coeffs + i);
+  
+      F_mpz_poly_t asum, bsum, prodsum, scratch2;
+     
+      asum->length = m;
+      asum->coeffs = scratch->coeffs;
+      
+      bsum->length = m;
+      bsum->coeffs = scratch->coeffs + m;
+      
+      prodsum->length = 2*m - 1;
+      prodsum->coeffs = scratch->coeffs + 2*m;    
+
+      /*
+         (a1+a2*x)*(b1+b2*x) = a1*b1 + a2*b2*x^2 + (a1+a2)*(b1+b2)*x-a1*b1*x-a2*b2*x;
+      */
+      
+      // res_lo = a1*b1
+      if (trunc > m) 
+      {
+         if (a1->length >= b1->length) _F_mpz_poly_karatrunc_left_recursive(res, a1, b1, scratch, crossover, trunc - m);
+         else _F_mpz_poly_karatrunc_left_recursive(res, b1, a1, scratch, crossover, trunc - m);
+      }
+      else 
+      {
+         if (a1->length >= b1->length) _F_mpz_poly_karatrunc_left_recursive(res, a1, b1, scratch, crossover, 0);
+         else _F_mpz_poly_karatrunc_left_recursive(res, b1, a1, scratch, crossover, 0);
+      }
+
+      // res_hi = a2*b2
+      temp->coeffs = res->coeffs + 2*m;
+      
+      if (trunc > 2*m) _F_mpz_poly_karatrunc_left_recursive(temp, a2, b2, scratch, crossover, trunc - 2*m);
+      else _F_mpz_poly_karatrunc_left_recursive(temp, a2, b2, scratch, crossover, 0);
+      
+      if (trunc < 3*m - 1)
+      {
+         // asum = a1+a2
+         _F_mpz_poly_add(asum, a1, a2);
+         // bsum = b1+b2
+         _F_mpz_poly_add(bsum, b1, b2);
+         // prodsum = asum*bsum
+         
+         scratch2->coeffs = scratch->coeffs + 4*m - 1;
+         
+         if (trunc > m) 
+         {
+            if (asum->length > bsum->length) _F_mpz_poly_karatrunc_left_recursive(prodsum, asum, bsum, scratch2, crossover, trunc - m);
+            else _F_mpz_poly_karatrunc_left_recursive(prodsum, bsum, asum, scratch2, crossover, trunc - m);
+         } else 
+         {
+            if (asum->length > bsum->length) _F_mpz_poly_karatrunc_left_recursive(prodsum, asum, bsum, scratch2, crossover, 0);
+            else _F_mpz_poly_karatrunc_left_recursive(prodsum, bsum, asum, scratch2, crossover, 0);
+         }
+
+         for (long i = prodsum->length; i < 2*m - 1; i++)
+            F_mpz_zero(prodsum->coeffs + i);
+               
+         // prodsum = prodsum - res_lo
+         temp->coeffs = res->coeffs;
+         temp->length = 2*m - 1;
+         _F_mpz_poly_sub(prodsum, prodsum, temp);
+       
+         // prodsum = prodsum - res_hi
+         temp->coeffs = res->coeffs + 2*m;
+         temp->length = a2->length + b2->length - 1;
+         _F_mpz_poly_sub(prodsum, prodsum, temp);
+      
+         // res_mid += prodsum
+         temp->coeffs = res->coeffs + m;
+         temp->length = prodsum->length;
+         _F_mpz_poly_add(temp, temp, prodsum);     
+      }
+      
+      res->length = a->length + b->length - 1;
+      
+   } else 
+   {
+      F_mpz_poly_t scratch2, temp1; 
+
+      while ((1<<l2) < m) l2++;
+      if ((1<<l2) < a->length) m = (1<<l2);
+      
+      _F_mpz_poly_attach_truncate(a1, a, m);
+      _F_mpz_poly_attach_shift(a2, a, m);
+      
+      /* 
+         from 0 for a1->length + b->length - 1 will be directly written to.
+      */
+      ulong start = a1->length + b->length - 1;
+      if (!a1->length) start = 0;
+      for (ulong i = start; i < a->length + b->length - 1; i++)
+         F_mpz_zero(res->coeffs + i);
+  
+      // res_lo = a1*b
+      if (trunc < a1->length + b->length - 1) 
+      {
+         if (a1->length >= b->length) _F_mpz_poly_karatrunc_left_recursive(res, a1, b, scratch, crossover, trunc);
+         else _F_mpz_poly_karatrunc_left_recursive(res, b, a1, scratch, crossover, trunc);
+      }
+
+      //temp = a2*b
+      temp->coeffs = scratch->coeffs;
+      temp->length = a2->length + b->length - 1;
+      
+      scratch2->coeffs = scratch->coeffs + temp->length;
+      
+      if (trunc > m)
+      {
+         if (b->length <= a2->length) _F_mpz_poly_karatrunc_left_recursive(temp, a2, b, scratch2, crossover, trunc - m);
+         else _F_mpz_poly_karatrunc_left_recursive(temp, b, a2, scratch2, crossover, trunc - m);
+      } else
+      {
+         if (b->length <= a2->length) _F_mpz_poly_karatrunc_left_recursive(temp, a2, b, scratch2, crossover, 0);
+         else _F_mpz_poly_karatrunc_left_recursive(temp, b, a2, scratch2, crossover, 0);
+      }
+      
+      // res_mid += temp
+      temp1->coeffs = res->coeffs + m;
+      temp1->length = temp->length;
+      
+      _F_mpz_poly_add(temp1, temp1, temp); 
+  
+      res->length = a->length + b->length - 1;
+   } 
+   
+   for (ulong i = 0; i < trunc; i++)
+      F_mpz_zero(res->coeffs + i);  
+}
+
+void _F_mpz_poly_mul_karatsuba_trunc_left(F_mpz_poly_t output, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2, ulong trunc)
+{
+   if ((poly1->length == 0) || (poly2->length == 0)) 
+   {
+      F_mpz_poly_zero(output);
+      return;
+   }
+   
+   if ((poly1->length <= 1) || (poly2->length <= 1)) // too short for karatsuba
+   {
+      F_mpz_poly_mul_classical_trunc_left(output, poly1, poly2, trunc);
+      
+      return;
+   }
+	
+	ulong crossover;
+
+   ulong limbs1 = F_mpz_poly_max_limbs(poly1);
+   ulong limbs2 = F_mpz_poly_max_limbs(poly2);
+
+   if (limbs1 + limbs2 >= 19) crossover = 0;
+   else crossover = 19 - limbs1 - limbs2;
+
+	if (poly1->length + poly2->length <= crossover) // too short for karatsuba
+   {
+      F_mpz_poly_mul_classical_trunc_left(output, poly1, poly2, trunc);
+      
+      return;
+   }
+   
+	F_mpz_poly_t scratch;
+   F_mpz_poly_init2(scratch, 5*poly1->length);
+   
+	if (output == poly1 || output == poly2)
+   {
+      // output is inplace, so need a temporary
+      F_mpz_poly_t temp;
+      F_mpz_poly_init2(temp, poly1->length + poly2->length - 1);
+      _F_mpz_poly_karatrunc_left_recursive(temp, poly1, poly2, scratch, crossover, trunc);
+
+      F_mpz_poly_swap(temp, output);
+      F_mpz_poly_clear(temp);
+   }
+   else
+   {
+      // output not inplace
+      
+      _F_mpz_poly_karatrunc_left_recursive(output, poly1, poly2, scratch, crossover, trunc);
+   }
+
+	F_mpz_poly_clear(scratch);
+}
+
+void F_mpz_poly_mul_karatsuba_trunc_left(F_mpz_poly_t res, F_mpz_poly_t poly1,
+                              F_mpz_poly_t poly2, ulong trunc)
+{
+   if (!poly1->length || !poly2->length)
+   {
+      // one of the polys is zero
+      F_mpz_poly_zero(res);
+      return;
+   }
+   
+   /*if (poly1 == poly2)
+   {
+      // polys are identical, call specialised squaring routine
+      F_mpz_poly_sqr_karatsuba_trunc_left(res, poly1, trunc);
+      return;
+   }*/
+
+   F_mpz_poly_fit_length(res, poly1->length + poly2->length - 1);
+	// rearrange parameters to make poly1 no longer than poly2
+   if (poly1->length >= poly2->length)
+      _F_mpz_poly_mul_karatsuba_trunc_left(res, poly1, poly2, trunc);
+	else 
+      _F_mpz_poly_mul_karatsuba_trunc_left(res, poly2, poly1, trunc);
 }
 
 /*===============================================================================
@@ -3093,7 +3375,7 @@ void _F_mpz_poly_mul_KS(F_mpz_poly_t output, const F_mpz_poly_t input1, const F_
       bits = FLINT_ABS(bits1) + FLINT_ABS(bits2) + log_length + sign; // total number of output bits
       if (bits - sign <= FLINT_BITS - 2) bitpack = 1; // we want output bits to fit into a small F_mpz for bitpacking
 	}
-
+   
 	ulong bytes = ((bits - 1)>>3) + 1; // otherwise we byte pack with this number of bytes per output coefficient
    
    mp_limb_t * int1, * int2, * int3;
@@ -3170,7 +3452,10 @@ void _F_mpz_poly_mul_KS(F_mpz_poly_t output, const F_mpz_poly_t input1, const F_
 	}
 	
    if (input1 == input2) // aliased inputs
+   {
       int2 = int1;
+      n2 = n1;
+   }
    
    int3 = (mp_limb_t *) flint_stack_alloc(n1 + n2); // allocate space for product large integer
 	        
@@ -3762,6 +4047,89 @@ void F_mpz_poly_mul(F_mpz_poly_t res, F_mpz_poly_t poly1, F_mpz_poly_t poly2)
 	}		
 }
 
+void _F_mpz_poly_mul_trunc_left(F_mpz_poly_t output, F_mpz_poly_t input1, F_mpz_poly_t input2, ulong trunc)
+{
+   if ((input1->length == 0) || (input2->length == 0) || (input1->length + input2->length <= trunc + 1)) // special case, length == 0
+   {
+      F_mpz_poly_zero(output);
+      return;
+   }
+
+   if ((input1->length <= 2) && (input2->length <= 2)) // karatsuba seems to be unconditionally faster
+   {
+      _F_mpz_poly_mul_karatsuba_trunc_left(output, input1, input2, trunc);
+      return;
+   }
+   
+	if (input1->length + input2->length <= 128) // we don't want to check max limbs or max bits more than once
+	{
+	   ulong limbs1 = F_mpz_poly_max_limbs(input1);
+      ulong limbs2 = F_mpz_poly_max_limbs(input2);
+
+      if (limbs1 + limbs2 <= 512/FLINT_BITS)
+      {
+         _F_mpz_poly_mul_KS(output, input1, input2, 0);
+         return;
+      }
+   
+      if (input1->length + input2->length <= 32) 
+      {
+         _F_mpz_poly_mul_karatsuba_trunc_left(output, input1, input2, trunc);
+         return;
+      }
+	}
+   
+   long bits2 = F_mpz_poly_max_bits(input2);
+   long bits1 = (input1 == input2) ? bits2 : F_mpz_poly_max_bits(input1);
+   
+   ulong sign = ((bits1 < 0) || (bits2 < 0)); // an extra bit if any coefficients are signed
+   ulong length = input2->length; // length of shortest poly
+   ulong log_length = 0L;
+   while ((1<<log_length) < length) log_length++;
+   ulong bits = FLINT_ABS(bits1) + FLINT_ABS(bits2) + log_length + sign; // total number of output bits
+   if (sign) bits = -bits; // coefficients are signed
+
+   bits1 = FLINT_ABS(bits1);
+   bits2 = FLINT_ABS(bits2);
+
+	if (bits1 + bits2 <= 470)
+   {
+      _F_mpz_poly_mul_KS(output, input1, input2, bits);
+      return;
+   }
+   
+   if (3*(bits1 + bits2) >= input1->length + input2->length) // the "diagonal"
+   {
+      _F_mpz_poly_mul_SS(output, input1, input2, bits);
+      return;
+   } 
+   
+   _F_mpz_poly_mul_KS(output, input1, input2, bits);     
+}
+
+void F_mpz_poly_mul_trunc_left(F_mpz_poly_t res, F_mpz_poly_t poly1, F_mpz_poly_t poly2, ulong trunc)
+{
+   if ((poly1->length == 0) || (poly2->length == 0) || (poly1->length + poly2->length <= trunc + 1)) // special case if either poly is zero
+   {
+      F_mpz_poly_zero(res);
+      return;
+   }
+
+	if ((poly1 == res) || (poly2 == res)) // aliased inputs
+	{
+		F_mpz_poly_t output; // create temporary
+		F_mpz_poly_init2(output, poly1->length + poly2->length - 1);
+		if (poly1->length >= poly2->length) _F_mpz_poly_mul_trunc_left(output, poly1, poly2, trunc);
+		else _F_mpz_poly_mul_trunc_left(output, poly2, poly1, trunc);
+		F_mpz_poly_swap(output, res); // swap temporary with real output
+		F_mpz_poly_clear(output);
+	} else // ordinary case
+	{
+		F_mpz_poly_fit_length(res, poly1->length + poly2->length - 1);
+      if (poly1->length >= poly2->length) _F_mpz_poly_mul_trunc_left(res, poly1, poly2, trunc);
+		else _F_mpz_poly_mul_trunc_left(res, poly2, poly1, trunc);
+	}		
+}
 /*===============================================================================
 
 	Division with remainder
