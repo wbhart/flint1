@@ -839,7 +839,7 @@ void F_mpz_poly_divrem_basecase(F_mpz_poly_t Q, F_mpz_poly_t R,
                                 const F_mpz_poly_t A, const F_mpz_poly_t B);
 
 /** 
-   \fn     void F_mpz_poly_divrem_basecase(F_mpz_poly_t Q, F_mpz_poly_t R, const F_mpz_poly_t A, const F_mpz_poly_t B)
+   \fn     void F_mpz_poly_div_basecase(F_mpz_poly_t Q, const F_mpz_poly_t A, const F_mpz_poly_t B)
    \brief  Divide A by B computing quotient only, i.e. notionally find A = B*Q + R.
 */
 static inline
@@ -890,7 +890,13 @@ void F_mpz_poly_divrem_basecase_low(F_mpz_poly_t Q, F_mpz_poly_t R,
 void F_mpz_poly_div_divconquer_recursive_low(F_mpz_poly_t Q, F_mpz_poly_t BQ, 
                                          const F_mpz_poly_t A, const F_mpz_poly_t B);
 
-
+/** 
+   \fn     void F_mpz_poly_div_divconquer(F_mpz_poly_t Q, const F_mpz_poly_t A, 
+                                                               const F_mpz_poly_t B)
+   \brief  Divide A by B computing quotient only, i.e. notionally find A = B*Q + R.
+*/
+void F_mpz_poly_div_divconquer(F_mpz_poly_t Q, const F_mpz_poly_t A, 
+                                                               const F_mpz_poly_t B);
 
 #ifdef __cplusplus
  }

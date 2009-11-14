@@ -4889,3 +4889,228 @@ void F_mpz_poly_div_divconquer_recursive_low(F_mpz_poly_t Q, F_mpz_poly_t BQ, co
    F_mpz_poly_clear(dq2);
    F_mpz_poly_clear(dq1);
 }
+
+void F_mpz_poly_div_divconquer(F_mpz_poly_t Q, const F_mpz_poly_t A, const F_mpz_poly_t B)
+{
+   if (B->length == 0)
+   {
+      printf("Exception : divide by zero in F_mpz_poly_div_divconquer\n");
+   }
+   
+   if (A->length < B->length)
+   {
+      F_mpz_poly_zero(Q);
+      
+      return;
+   }
+
+   // A->length is now >= B->length
+    
+   ulong crossover = 16;
+   
+   if (A->length - B->length + 1  <= crossover) 
+   {
+      F_mpz_poly_div_basecase(Q, A, B);
+      
+      return;
+   }
+   
+   F_mpz_poly_t d1, d2, d3, p1, q1, q2, dq1, dq2, d1q1, d2q1, d2q2, d1q2, t, temp;
+      
+   ulong n1 = (B->length + 1)/2;
+   ulong n2 = B->length - n1;
+   
+   /* We let B = d1*x^n2 + d2 
+      d1 is of length n1 and
+      d2 of length n2
+   */
+
+   _F_mpz_poly_attach_shift(d1, B, n2);
+   _F_mpz_poly_attach_truncate(d2, B, n2);
+   _F_mpz_poly_attach_shift(d3, B, n1);
+   
+   if (A->length <= n2 + B->length - 1)
+   {
+      /*
+         If A->length <= B->length + n2 - 1
+         then only a single quotient is needed
+         We do a division of at most 2*n2 - 1
+         terms by n2 terms yielding a quotient of
+         at most n2 terms 
+      */
+      
+      // Set p1 to be A without the last
+      // n1 coefficients
+      // 2*n2-1 >= p1->length > 0
+      
+      _F_mpz_poly_attach_shift(p1, A, n1);
+      
+      // Since A was normalised, then p1 will be
+      // d3 is the leading terms of B and so must be normalised
+      // d3 is length n2, so we get at most n2 terms in the quotient
+      
+      F_mpz_poly_div_divconquer(Q, p1, d3); 
+         
+      return;   
+   } 
+   
+   if (A->length > 2*B->length - 1)
+   {
+      // We shift A right until it is length 2*B->length -1
+      // We call this polynomial p1
+      
+      ulong shift = A->length - 2*B->length + 1;
+      _F_mpz_poly_attach_shift(p1, A, shift);
+      
+      /* 
+         Set q1 to p1 div B 
+         This is a 2*B->length-1 by B->length division so 
+         q1 ends up being at most length B->length
+         d1q1 = low(d1*q1) is length at most 2*B->length-1
+         We discard the lower B->length-1 terms
+      */
+      
+      F_mpz_poly_init(d1q1);
+      F_mpz_poly_init(q1);
+      
+      F_mpz_poly_div_divconquer_recursive_low(q1, d1q1, p1, B); 
+       
+      /* 
+         Compute dq1 = d1*q1*x^shift
+         dq1 is then of length at most A->length
+         dq1 is normalised since d1q1 was
+      */
+   
+      F_mpz_poly_init(dq1);
+      
+      F_mpz_poly_fit_length(dq1, d1q1->length + shift);
+      F_mpz_poly_left_shift(dq1, d1q1, shift);
+      F_mpz_poly_clear(d1q1); 
+      
+      /*
+         Compute t = A - dq1 
+         The first B->length coefficients cancel
+         if the division is exact, leaving
+          A->length - B->length significant terms
+         otherwise we truncate at this length 
+      */
+   
+      F_mpz_poly_init(t);
+      F_mpz_poly_sub(t, A, dq1);
+      F_mpz_poly_clear(dq1);
+      F_mpz_poly_truncate(t, A->length - B->length);
+      
+      /*
+         Compute q2 = t div B
+         It is a smaller division than the original 
+         since t->length <= A->length-B->length
+      */
+   
+      F_mpz_poly_init(q2);
+      F_mpz_poly_div_divconquer(q2, t, B); 
+      F_mpz_poly_clear(t);  
+      
+      /*
+         Write out Q = q1*x^shift + q2
+         Q has length at most B->length+shift
+         Note q2 has length at most shift since 
+         at most it is an A->length-B->length 
+         by B->length division
+      */
+   
+      F_mpz_poly_fit_length(Q, FLINT_MAX(q1->length + shift, q2->length));
+      
+      F_mpz_poly_left_shift(Q, q1, shift);
+      F_mpz_poly_clear(q1);
+      _F_mpz_poly_add(Q, Q, q2);
+      F_mpz_poly_clear(q2);
+      
+      return;
+   }
+   // We now have n2 + B->length - 1 < A->length <= 2*B->length - 1
+   
+   /* 
+      We let A = a1*x^(n1+2*n2-1) + a2*x^(n1+n2-1) + a3 
+      where a1 is length at most n1 and a2 is length n2 
+      and a3 is length n1+n2-1 
+   */
+      
+   // Set p1 to a1*x^(n1-1) + other terms
+   // It has length at most 2*n1-1 and is normalised
+   // A->length >= 2*n2
+      
+   _F_mpz_poly_attach_shift(p1, A, 2*n2);
+      
+   /* 
+      Set q1 to p1 div d1 
+      This is at most a 2*n1-1 by n1 division so 
+      q1 ends up being at most length n1
+      d1q1 = low(d1*q1) is length at most n1-1
+      Thus we have discarded the leading n1 terms (at most)
+   */
+      
+   F_mpz_poly_init(d1q1);
+   F_mpz_poly_init(q1);
+      
+   F_mpz_poly_div_divconquer_recursive_low(q1, d1q1, p1, d1); 
+      
+   /* 
+      Compute d2q1 = d2*q1 with low n1 - 1 terms zeroed
+      d2*q1 is length at most n1+n2-1 leaving at most
+      n2 non-zero terms to the left
+   */  
+   
+   F_mpz_poly_init(d2q1); 
+   F_mpz_poly_mul_trunc_left(d2q1, d2, q1, n1 - 1);
+   
+   /* 
+      Compute dq1 = d1*q1*x^n2 + d2*q1
+      dq1 is then of length at most 2*n1+n2-1
+      but may have any length below this        
+   */
+   
+   F_mpz_poly_init2(dq1, FLINT_MAX(d1q1->length + n2, d2q1->length));
+   F_mpz_poly_left_shift(dq1, d1q1, n2);
+   F_mpz_poly_clear(d1q1); 
+   _F_mpz_poly_add(dq1, dq1, d2q1);
+   
+   /*
+      Compute t = a1*x^(2*n2-1) + a2*x^(n2-1) - dq1 
+      after shifting dq1 to the right by (n1-n2)
+      which has length at most 2*n1+n2-1, but we 
+      discard up to n1 coefficients, so it has 
+      effective length 2*n2-1 with the last n2-1
+      coefficients ignored. Thus there are at most n2 
+      significant coefficients
+   */
+   
+   
+   F_mpz_poly_init2(t, n1 + 2*n2 - 1);
+   F_mpz_poly_right_shift(t, A, n1);
+   _F_mpz_poly_attach_shift(temp, dq1, n1 - n2);
+   _F_mpz_poly_sub(t, t, temp);
+   F_mpz_poly_truncate(t, 2*n2-1);
+     
+   /*
+      Compute q2 = t div d3
+      It is at most a 2*n2-1 by n2 division, so
+      the length of q2 will be n2 at most
+   */
+   
+   F_mpz_poly_init(q2);
+   F_mpz_poly_div_divconquer(q2, t, d3); 
+   F_mpz_poly_clear(t);  
+   F_mpz_poly_clear(dq1);
+   F_mpz_poly_clear(d2q1);
+   
+   /*
+      Write out Q = q1*x^n2 + q2
+      Q has length n1+n2
+   */
+   
+   F_mpz_poly_fit_length(Q, q1->length + n2);
+   F_mpz_poly_left_shift(Q, q1, n2);
+   F_mpz_poly_clear(q1);
+   _F_mpz_poly_add(Q, Q, q2);
+   F_mpz_poly_clear(q2);   
+}
