@@ -5126,7 +5126,7 @@ void F_mpz_poly_div_hensel(F_mpz_poly_t Q, const F_mpz_poly_t A, const ulong a_l
    F_mpz_poly_reverse(Q, Q, q);
 }
 
-void F_mpz_poly_div_exact(F_mpz_poly_t Q, const F_mpz_poly_t A, const F_mpz_poly_t B)
+void F_mpz_poly_divexact(F_mpz_poly_t Q, const F_mpz_poly_t A, const F_mpz_poly_t B)
 {
    if (B->length == 0)
    {

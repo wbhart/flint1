@@ -4026,7 +4026,7 @@ int test_F_mpz_poly_div_hensel()
 	return result;
 }
 
-int test_F_mpz_poly_div_exact()
+int test_F_mpz_poly_divexact()
 {
    F_mpz_poly_t F_poly1, F_poly2, F_poly3, Q, Q2, R;
    int result = 1;
@@ -4053,7 +4053,7 @@ int test_F_mpz_poly_div_exact()
            
 		F_mpz_poly_mul(F_poly3, F_poly1, F_poly2);			
 		F_mpz_poly_divrem_basecase(Q, R, F_poly3, F_poly1);
-      F_mpz_poly_div_exact(Q2, F_poly3, F_poly1);
+      F_mpz_poly_divexact(Q2, F_poly3, F_poly1);
 
       result = (F_mpz_poly_equal(Q, Q2)); 
 		
@@ -4126,7 +4126,7 @@ void F_mpz_poly_test_all()
 	RUN_TEST(F_mpz_poly_div_divconquer_recursive_low); 
 	RUN_TEST(F_mpz_poly_div_divconquer); 
 	RUN_TEST(F_mpz_poly_div_hensel); 
-	RUN_TEST(F_mpz_poly_div_exact); 
+	RUN_TEST(F_mpz_poly_divexact); 
 	
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");

@@ -926,12 +926,12 @@ void F_mpz_poly_div_hensel(F_mpz_poly_t Q, const F_mpz_poly_t A, const ulong a_l
                                             const F_mpz_poly_t B, const ulong b_len);
 
 /** 
-   \fn     void F_mpz_poly_div_exact(F_mpz_poly_t Q, const F_mpz_poly_t A, 
+   \fn     void F_mpz_poly_divexact(F_mpz_poly_t Q, const F_mpz_poly_t A, 
                                                                 const F_mpz_poly_t B)
    \brief  Divide A by B computing quotient Q only, i.e. notionally find A = B*Q + R,
            assuming that the division is exact.
 */
-void F_mpz_poly_div_exact(F_mpz_poly_t Q, const F_mpz_poly_t A, const F_mpz_poly_t B);
+void F_mpz_poly_divexact(F_mpz_poly_t Q, const F_mpz_poly_t A, const F_mpz_poly_t B);
 
 
 #ifdef __cplusplus
