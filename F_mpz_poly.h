@@ -893,10 +893,46 @@ void F_mpz_poly_div_divconquer_recursive_low(F_mpz_poly_t Q, F_mpz_poly_t BQ,
 /** 
    \fn     void F_mpz_poly_div_divconquer(F_mpz_poly_t Q, const F_mpz_poly_t A, 
                                                                const F_mpz_poly_t B)
-   \brief  Divide A by B computing quotient only, i.e. notionally find A = B*Q + R.
+   \brief  Divide A by B computing quotient Q only, i.e. notionally find A = B*Q + R.
 */
 void F_mpz_poly_div_divconquer(F_mpz_poly_t Q, const F_mpz_poly_t A, 
                                                                const F_mpz_poly_t B);
+
+/** 
+   \fn     void F_mpz_poly_div(F_mpz_poly_t Q, const F_mpz_poly_t A, 
+                                                               const F_mpz_poly_t B)
+   \brief  Divide A by B computing quotient Q only, i.e. notionally find A = B*Q + R.
+*/
+static inline
+void F_mpz_poly_div(F_mpz_poly_t Q, const F_mpz_poly_t A, const F_mpz_poly_t B)
+{
+   F_mpz_poly_div_divconquer(Q, A, B);
+}
+
+/*===============================================================================
+
+	Exact division
+
+================================================================================*/
+
+/** 
+   \fn     void F_mpz_poly_div(F_mpz_poly_t Q, const F_mpz_poly_t A, const ulong a_len, 
+                                              const F_mpz_poly_t B, const ulong b_len)
+   \brief  Divide A by B computing quotient Q only, i.e. notionally find A = B*Q + R,
+           assuming that the division is exact and treating A as a polynomial of length
+           a_len and B as a polynomial of length b_len.
+*/
+void F_mpz_poly_div_hensel(F_mpz_poly_t Q, const F_mpz_poly_t A, const ulong a_len, 
+                                            const F_mpz_poly_t B, const ulong b_len);
+
+/** 
+   \fn     void F_mpz_poly_div_exact(F_mpz_poly_t Q, const F_mpz_poly_t A, 
+                                                                const F_mpz_poly_t B)
+   \brief  Divide A by B computing quotient Q only, i.e. notionally find A = B*Q + R,
+           assuming that the division is exact.
+*/
+void F_mpz_poly_div_exact(F_mpz_poly_t Q, const F_mpz_poly_t A, const F_mpz_poly_t B);
+
 
 #ifdef __cplusplus
  }

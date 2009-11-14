@@ -5085,3 +5085,125 @@ void F_mpz_poly_div_divconquer(F_mpz_poly_t Q, const F_mpz_poly_t A, const F_mpz
    _F_mpz_poly_add(Q, Q, q2);
    F_mpz_poly_clear(q2);   
 }
+
+/*===============================================================================
+
+	Exact division
+
+================================================================================*/
+
+void F_mpz_poly_div_hensel(F_mpz_poly_t Q, const F_mpz_poly_t A, const ulong a_len, 
+                                    const F_mpz_poly_t B, const ulong b_len)
+{
+   F_mpz_poly_t A_rev, B_rev;
+
+   if (B->length == 0)
+   {
+      printf("Exception : divide by zero in F_mpz_poly_div_hensel\n");
+      abort();
+      return;
+   }
+   
+   if (A->length == 0)
+   {
+      F_mpz_poly_zero(Q);
+      return;
+   }
+   
+   F_mpz_poly_init(A_rev);
+   F_mpz_poly_init(B_rev);
+
+   ulong q = a_len - b_len + 1;
+
+   F_mpz_poly_reverse(B_rev, B, b_len);
+   F_mpz_poly_reverse(A_rev, A, a_len);
+   
+   F_mpz_poly_div(Q, A_rev, B_rev);
+   
+   F_mpz_poly_clear(A_rev);
+   F_mpz_poly_clear(B_rev);
+
+   F_mpz_poly_reverse(Q, Q, q);
+}
+
+void F_mpz_poly_div_exact(F_mpz_poly_t Q, const F_mpz_poly_t A, const F_mpz_poly_t B)
+{
+   if (B->length == 0)
+   {
+      printf("Exception : divide by zero in F_mpz_poly_div_hensel\n");
+      abort();
+      return;
+   }
+   
+   if (A->length < B->length)
+   {
+      F_mpz_poly_zero(Q);
+      return;
+   }
+
+   long q = A->length - B->length + 1;
+
+   F_mpz_poly_fit_length(Q, q);
+   Q->length = q;
+
+   ulong a_len = A->length;
+   ulong b_len = B->length;
+
+   ulong i;
+   
+   for (i = 0; ; i++)
+   {
+      if (!F_mpz_is_zero(B->coeffs + i)) break;
+   }
+
+   ulong i2 = i;
+   b_len -= i;
+
+   for ( ; ; i++)
+   {
+      if (!F_mpz_is_zero(A->coeffs + i)) break;
+      F_mpz_zero(Q->coeffs + i - i2);      
+   }
+
+   a_len -= i;
+
+   q = a_len - b_len + 1;
+
+   F_mpz_poly_t t_A, t_B, t_Q;
+
+   if (q <= 1)
+   {
+      _F_mpz_poly_attach_shift(t_Q, Q, i - i2);
+      _F_mpz_poly_attach_shift(t_A, A, i);
+      _F_mpz_poly_attach_shift(t_B, B, i2);
+      
+      t_Q->alloc = q;
+
+      F_mpz_poly_div(t_Q, t_A, t_B);
+      
+      return;
+   }
+
+   ulong q2 = (q + 1)/2;
+   
+   t_Q->alloc = q2;
+   
+   ulong q2b = FLINT_MIN(b_len, q2);
+   _F_mpz_poly_attach_shift(t_Q, Q, q + i - i2 - q2);
+   _F_mpz_poly_attach_shift(t_A, A, A->length - q2 - q2b + 1);
+   _F_mpz_poly_attach_shift(t_B, B, B->length - q2b);
+
+   F_mpz_poly_div(t_Q, t_A, t_B);
+   
+   q2 = q - q2;
+   q2b = FLINT_MIN(b_len, q2);
+   t_Q->coeffs = Q->coeffs + i - i2;
+   t_Q->length = q2;
+   t_A->coeffs = A->coeffs + i;
+   t_A->length = q2 + q2b - 1;
+   t_B->coeffs = B->coeffs + i2;
+   t_B->length = q2b;
+   
+   F_mpz_poly_div_hensel(t_Q, t_A, q2 + q2b - 1, t_B, q2b);
+}
+
