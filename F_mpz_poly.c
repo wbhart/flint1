@@ -4929,34 +4929,22 @@ void F_mpz_poly_div_divconquer(F_mpz_poly_t Q, const F_mpz_poly_t A, const F_mpz
    _F_mpz_poly_attach_truncate(d2, B, n2);
    _F_mpz_poly_attach_shift(d3, B, n1);
    
-   if (A->length <= n2 + B->length - 1)
+   if (A->length < 2*B->length - 1)
    {
-      /*
-         If A->length <= B->length + n2 - 1
-         then only a single quotient is needed
-         We do a division of at most 2*n2 - 1
-         terms by n2 terms yielding a quotient of
-         at most n2 terms 
-      */
+      ulong q = A->length - B->length + 1;
       
-      // Set p1 to be A without the last
-      // n1 coefficients
-      // 2*n2-1 >= p1->length > 0
-      
-      _F_mpz_poly_attach_shift(p1, A, n1);
-      
-      // Since A was normalised, then p1 will be
-      // d3 is the leading terms of B and so must be normalised
-      // d3 is length n2, so we get at most n2 terms in the quotient
-      
-      F_mpz_poly_div_divconquer(Q, p1, d3); 
-         
-      return;   
+      F_mpz_poly_t t_A, t_B;
+      _F_mpz_poly_attach_shift(t_B, B, B->length - q);
+      _F_mpz_poly_attach_shift(t_A, A, A->length - 2*q + 1);
+
+      F_mpz_poly_div_divconquer(Q, t_A, t_B);
+
+      return; 
    } 
    
    if (A->length > 2*B->length - 1)
    {
-      // We shift A right until it is length 2*B->length -1
+      // We shift A right until it is length 2*B->length - 1
       // We call this polynomial p1
       
       ulong shift = A->length - 2*B->length + 1;
@@ -5027,26 +5015,25 @@ void F_mpz_poly_div_divconquer(F_mpz_poly_t Q, const F_mpz_poly_t A, const F_mpz
       
       return;
    }
-   // We now have n2 + B->length - 1 < A->length <= 2*B->length - 1
+   // We now have A->length == 2*B->length - 1
    
    /* 
       We let A = a1*x^(n1+2*n2-1) + a2*x^(n1+n2-1) + a3 
-      where a1 is length at most n1 and a2 is length n2 
+      where a1 is length n1 and a2 is length n2 
       and a3 is length n1+n2-1 
    */
       
    // Set p1 to a1*x^(n1-1) + other terms
-   // It has length at most 2*n1-1 and is normalised
-   // A->length >= 2*n2
+   // It has length 2*n1-1 and is normalised
       
    _F_mpz_poly_attach_shift(p1, A, 2*n2);
       
    /* 
       Set q1 to p1 div d1 
-      This is at most a 2*n1-1 by n1 division so 
-      q1 ends up being at most length n1
-      d1q1 = low(d1*q1) is length at most n1-1
-      Thus we have discarded the leading n1 terms (at most)
+      This is a 2*n1-1 by n1 division so 
+      q1 ends up being length n1
+      d1q1 = low(d1*q1) is length n1-1
+      Thus we have discarded the leading n1 terms 
    */
       
    F_mpz_poly_init(d1q1);
@@ -5056,7 +5043,7 @@ void F_mpz_poly_div_divconquer(F_mpz_poly_t Q, const F_mpz_poly_t A, const F_mpz
       
    /* 
       Compute d2q1 = d2*q1 with low n1 - 1 terms zeroed
-      d2*q1 is length at most n1+n2-1 leaving at most
+      d2*q1 is length n1+n2-1 leaving
       n2 non-zero terms to the left
    */  
    
@@ -5065,8 +5052,7 @@ void F_mpz_poly_div_divconquer(F_mpz_poly_t Q, const F_mpz_poly_t A, const F_mpz
    
    /* 
       Compute dq1 = d1*q1*x^n2 + d2*q1
-      dq1 is then of length at most 2*n1+n2-1
-      but may have any length below this        
+      dq1 is then of length 2*n1+n2-1
    */
    
    F_mpz_poly_init2(dq1, FLINT_MAX(d1q1->length + n2, d2q1->length));
@@ -5077,10 +5063,10 @@ void F_mpz_poly_div_divconquer(F_mpz_poly_t Q, const F_mpz_poly_t A, const F_mpz
    /*
       Compute t = a1*x^(2*n2-1) + a2*x^(n2-1) - dq1 
       after shifting dq1 to the right by (n1-n2)
-      which has length at most 2*n1+n2-1, but we 
-      discard up to n1 coefficients, so it has 
+      which has length 2*n1+n2-1, but we 
+      n1 coefficients, so it has 
       effective length 2*n2-1 with the last n2-1
-      coefficients ignored. Thus there are at most n2 
+      coefficients ignored. Thus there are n2 
       significant coefficients
    */
    
@@ -5093,8 +5079,8 @@ void F_mpz_poly_div_divconquer(F_mpz_poly_t Q, const F_mpz_poly_t A, const F_mpz
      
    /*
       Compute q2 = t div d3
-      It is at most a 2*n2-1 by n2 division, so
-      the length of q2 will be n2 at most
+      It is a 2*n2-1 by n2 division, so
+      the length of q2 will be n2 
    */
    
    F_mpz_poly_init(q2);
