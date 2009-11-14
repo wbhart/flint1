@@ -4276,46 +4276,38 @@ void F_mpz_poly_div_divconquer_recursive(F_mpz_poly_t Q, F_mpz_poly_t BQ, const 
    _F_mpz_poly_attach_shift(d3, B, n1);
    _F_mpz_poly_attach_truncate(d4, B, n1);
    
-   if (A->length <= n2 + B->length - 1)
+   if (A->length < 2*B->length - 1)
    {
-      /*
-         If A->length <= B->length + n2 - 1
-         then only a single quotient is needed
-         We do a division of at most 2*n2 - 1
-         terms by n2 terms yielding a quotient of
-         at most n2 terms 
-      */
+      /* Convert unbalanced division into a 2*q - 1 by q division */
+      F_mpz_poly_t t_A, t_B, t_B2;
       
-      // Set p1 to be A without the last
-      // n1 coefficients
-      // 2*n2-1 >= p1->length > 0
-      
-      _F_mpz_poly_attach_shift(p1, A, n1);
-      
-      // Since A was normalised, then p1 will be
-      // d3 is the leading terms of B and so must be normalised
-      // d3 is length n2, so we get at most n2 terms in the quotient
+      ulong q = A->length - B->length + 1;
+      ulong q2 = B->length - q;
+
+      _F_mpz_poly_attach_shift(t_A, A, A->length - 2*q + 1);
+      _F_mpz_poly_attach_shift(t_B, B, q2);
+      _F_mpz_poly_attach_truncate(t_B2, B, q2);
       
       F_mpz_poly_init(d1q1);
-      F_mpz_poly_div_divconquer_recursive(Q, d1q1, p1, d3); 
+      F_mpz_poly_div_divconquer_recursive(Q, d1q1, t_A, t_B); 
       
       /*
-         Compute d2q1 = Q*d4
-         It is of length at most n1+n2-1 terms
+         Compute d2q1 = Q*t_B2
+         It is of length q2*q terms
       */
       
       F_mpz_poly_init(d2q1);
-      F_mpz_poly_mul(d2q1, Q, d4);
+      F_mpz_poly_mul(d2q1, Q, t_B2);
       
       /*
          Compute BQ = d1q1*x^n1 + d2q1
-         It has length at most n1+2*n2-1
+         It has length at most n1+n2-1
       */
       
-      F_mpz_poly_fit_length(BQ, FLINT_MAX(d1q1->length + n1, d2q1->length));
-      F_mpz_poly_left_shift(BQ, d1q1, n1);
+      F_mpz_poly_fit_length(BQ, FLINT_MAX(d1q1->length + B->length - q, d2q1->length));
+      F_mpz_poly_left_shift(BQ, d1q1, B->length - q);
       F_mpz_poly_clear(d1q1);
-      F_mpz_poly_add(BQ, BQ, d2q1);
+      _F_mpz_poly_add(BQ, BQ, d2q1);
       F_mpz_poly_clear(d2q1);
             
       return;   
@@ -4650,45 +4642,36 @@ void F_mpz_poly_div_divconquer_recursive_low(F_mpz_poly_t Q, F_mpz_poly_t BQ, co
    _F_mpz_poly_attach_shift(d3, B, n1);
    _F_mpz_poly_attach_truncate(d4, B, n1);
    
-   if (A->length <= n2 + B->length - 1)
+   if (A->length < 2*B->length - 1)
    {
-      /*
-         If A->length <= B->length + n2 - 1
-         then only a single quotient is needed
-         We do a division of at most 2*n2 - 1
-         terms by n2 terms yielding a quotient of
-         at most n2 terms 
-      */
+      /* Convert unbalanced division into a 2*q - 1 by q division */
+      F_mpz_poly_t t_A, t_B, t_B2;
       
-      // Set p1 to be A without the last
-      // n1 coefficients
-      // 2*n2-1 >= p1->length > 0
-      
-      _F_mpz_poly_attach_shift(p1, A, n1);
-      
-      // Since A was normalised, then p1 will be
-      // d3 is the leading terms of B and so must be normalised
-      // d3 is length n2, so we get at most n2 terms in the quotient
-      // We compute only the low n2-1 terms of the product d1q1
+      ulong q = A->length - B->length + 1;
+      ulong q2 = B->length - q;
+
+      _F_mpz_poly_attach_shift(t_A, A, A->length - 2*q + 1);
+      _F_mpz_poly_attach_shift(t_B, B, q2);
+      _F_mpz_poly_attach_truncate(t_B2, B, q2);
       
       F_mpz_poly_init(d1q1);
-      F_mpz_poly_div_divconquer_recursive_low(Q, d1q1, p1, d3); 
+      F_mpz_poly_div_divconquer_recursive_low(Q, d1q1, t_A, t_B); 
       
       /*
-         Compute d2q1 = Q*d4
-         It is of length at most n1+n2-1 terms
+         Compute d2q1 = Q*t_B2
+         It is of length q2*q terms
       */
       
       F_mpz_poly_init(d2q1);
-      F_mpz_poly_mul(d2q1, Q, d4);
+      F_mpz_poly_mul(d2q1, Q, t_B2);
       
       /*
          Compute BQ = d1q1*x^n1 + d2q1
          It has length at most n1+n2-1
       */
       
-      F_mpz_poly_fit_length(BQ, FLINT_MAX(d1q1->length + n1, d2q1->length));
-      F_mpz_poly_left_shift(BQ, d1q1, n1);
+      F_mpz_poly_fit_length(BQ, FLINT_MAX(d1q1->length + B->length - q, d2q1->length));
+      F_mpz_poly_left_shift(BQ, d1q1, B->length - q);
       F_mpz_poly_clear(d1q1);
       _F_mpz_poly_add(BQ, BQ, d2q1);
       F_mpz_poly_clear(d2q1);
@@ -4779,23 +4762,23 @@ void F_mpz_poly_div_divconquer_recursive_low(F_mpz_poly_t Q, F_mpz_poly_t BQ, co
       return;
    } 
    
-   // n2 + B->length - 1 < A->length <= n1 + n2 + B->length - 1
+   // A->length == 2*B->length - 1
     
    /* 
       We let A = a1*x^(n1+2*n2-1) + a2*x^(n1+n2-1) + a3 
-      where a1 is length at most n1 (and at least 1), 
+      where a1 is length n1, 
       a2 is length n2 and a3 is length n1+n2-1 
       We set p1 = a1*x^(n1-1)+ other terms, so it has 
-      length at most 2*n1-1 
+      length 2*n1-1 
    */
       
    _F_mpz_poly_attach_shift(p1, A, 2*n2);
       
    /* 
       Set q1 to p1 div d1 
-      This is at most a 2*n1-1 by n1 division so 
-      q1 ends up being at most length n1
-      d1q1 = d1*q1 is truncated to length at most n1-1
+      This is a 2*n1-1 by n1 division so 
+      q1 ends up being length n1
+      d1q1 = d1*q1 is truncated to length n1-1
    */
       
    F_mpz_poly_init(d1q1);
@@ -4804,7 +4787,7 @@ void F_mpz_poly_div_divconquer_recursive_low(F_mpz_poly_t Q, F_mpz_poly_t BQ, co
    
    /* 
       Compute d2q1 = d2*q1 
-      which ends up being at most length n1+n2-1
+      which ends up being length n1+n2-1
    */  
    
    F_mpz_poly_init(d2q1);
@@ -4812,7 +4795,7 @@ void F_mpz_poly_div_divconquer_recursive_low(F_mpz_poly_t Q, F_mpz_poly_t BQ, co
    
    /* 
       Compute dq1 = d1*q1*x^n2 + d2*q1
-      dq1 is then of length at most n1+n2-1
+      dq1 is then of length n1+n2-1
    */
    
    F_mpz_poly_init2(dq1, FLINT_MAX(d1q1->length + n2, d2q1->length));
@@ -4823,9 +4806,9 @@ void F_mpz_poly_div_divconquer_recursive_low(F_mpz_poly_t Q, F_mpz_poly_t BQ, co
    
    /*
       Compute t = a1*x^(n1+n2-1) + a2*x^(n1-1) - dq1
-      which has length at most 2*n1+n2-1, but we are not interested 
+      which has length 2*n1+n2-1, but we are not interested 
       in up to the first n1 coefficients, so it has 
-      effective length at most n1+n2-1
+      effective length n1+n2-1
    */
    
    F_mpz_poly_init2(t, FLINT_MAX(A->length - n2, dq1->length));
@@ -4835,9 +4818,9 @@ void F_mpz_poly_div_divconquer_recursive_low(F_mpz_poly_t Q, F_mpz_poly_t BQ, co
    
    /*
       Compute q2 = t div d1
-      It is at most an n1+n2-1 by n1 division, so
-      the length of q2 will be at most n2
-      Also compute d1q2 truncated to length at most n1-1
+      It is an n1+n2-1 by n1 division, so
+      the length of q2 will be n2
+      Also compute d1q2 truncated to length n1-1
    */
    
    F_mpz_poly_init(d1q2);
@@ -4847,7 +4830,7 @@ void F_mpz_poly_div_divconquer_recursive_low(F_mpz_poly_t Q, F_mpz_poly_t BQ, co
       
    /*
       Compute d2q2 = d2*q2 which is of length 
-      at most n1+n2-1
+      n1+n2-1
    */
    
    F_mpz_poly_init(d2q2);
@@ -4855,7 +4838,7 @@ void F_mpz_poly_div_divconquer_recursive_low(F_mpz_poly_t Q, F_mpz_poly_t BQ, co
    
    /*
       Compute dq2 = d1*q2*x^n2 + d2q2
-      which is of length at most n1+n2-1
+      which is of length n1+n2-1
    */
    
    F_mpz_poly_init2(dq2, FLINT_MAX(d1q2->length + n2, d2q2->length));
@@ -4866,7 +4849,7 @@ void F_mpz_poly_div_divconquer_recursive_low(F_mpz_poly_t Q, F_mpz_poly_t BQ, co
    
    /*
       Write out Q = q1*x^n2 + q2
-      Q has length at most n1+n2
+      Q has length n1+n2
    */
    
    F_mpz_poly_fit_length(Q, FLINT_MAX(q1->length + n2, q2->length));
@@ -4877,8 +4860,8 @@ void F_mpz_poly_div_divconquer_recursive_low(F_mpz_poly_t Q, F_mpz_poly_t BQ, co
    
    /*
       Write out BQ = dq1*x^n2 + dq2
-      BQ has length at most n1+2*n2-1
-      We truncate to at most length B->length - 1
+      BQ has length n1+2*n2-1
+      We truncate to length B->length - 1
    */
    
    F_mpz_poly_fit_length(BQ, FLINT_MAX(dq1->length + n2, dq2->length));
@@ -4931,6 +4914,8 @@ void F_mpz_poly_div_divconquer(F_mpz_poly_t Q, const F_mpz_poly_t A, const F_mpz
    
    if (A->length < 2*B->length - 1)
    {
+      /* We convert an unbalanced division into a 2*q by q division */
+      
       ulong q = A->length - B->length + 1;
       
       F_mpz_poly_t t_A, t_B;
