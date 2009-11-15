@@ -1566,6 +1566,85 @@ void F_mpz_fdiv_q(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
 	}
 }
 
+void F_mpz_fdiv_qr(F_mpz_t q, F_mpz_t r, const F_mpz_t g, const F_mpz_t h)
+{
+	F_mpz c1 = *g;
+	F_mpz c2 = *h;
+	
+   if (!COEFF_IS_MPZ(c1)) // g is small
+	{
+	   if (!COEFF_IS_MPZ(c2)) // h is also small
+		{
+			F_mpz cq = c1 / c2; // compute C quotient
+			F_mpz cr = c1 - c2*cq; // compute remainder
+			
+         if ((c2 > 0L) && (cr < 0L)) 
+         {
+            cq--; // q cannot overflow as remainder implies |c2| != 1
+            cr += c2;
+         } else if ((c2 < 0L) && (cr > 0L)) 
+         {
+            cq--;
+            cr += c2;
+         }
+         
+         F_mpz_set_si(q, cq);
+         F_mpz_set_si(r, cr);
+		} else // h is large and g is small
+		{
+			if (c1 == 0L) 
+         {
+            F_mpz_set_ui(q, 0UL); // g is zero
+            F_mpz_set_ui(r, 0UL);
+         } else if (((c1 < 0L) && (F_mpz_sgn(h) < 0)) || 
+				      ((c1 > 0L) && (F_mpz_sgn(h) > 0))) // signs are the same
+         {
+            F_mpz_zero(q); // quotient is positive, round down to zero
+            F_mpz_set_si(r, c1);
+         } else 
+         {
+            // g = -h + r, i.e. r = g + h
+            if (c1 >= 0L) F_mpz_add_ui(r, h, c1);
+            else F_mpz_sub_ui(r, h, -c1);
+            // must set q second in case aliased with h
+            F_mpz_set_si(q, -1L); // quotient is negative, round down to minus one
+         }  
+		}
+	} else // g is large
+	{
+  		mp_limb_t arr[1];
+      __mpz_struct * mpz_ptr = _F_mpz_promote(q);
+      __mpz_struct temp;
+      temp._mp_d = arr;
+      temp._mp_size = 0;
+      temp._mp_alloc = 1;
+      ulong cr;
+		
+		if (!COEFF_IS_MPZ(c2)) // h is small
+		{
+		   if (c2 > 0) // h > 0
+			{
+            cr = mpz_fdiv_qr_ui(mpz_ptr, &temp, F_mpz_arr + COEFF_TO_OFF(c1), c2);
+			   _F_mpz_demote_val(q); // division by h may result in small value
+				F_mpz_set_ui(r, cr);
+			} else
+			{
+            cr = mpz_cdiv_qr_ui(mpz_ptr, &temp, F_mpz_arr + COEFF_TO_OFF(c1), -c2);
+			   _F_mpz_demote_val(q); // division by h may result in small value
+				
+				F_mpz_neg(q, q);
+            F_mpz_set_si(r, -cr);
+			}
+		} else // both are large
+		{
+			__mpz_struct * mpz_ptr2 = _F_mpz_promote(r);
+         mpz_fdiv_qr(mpz_ptr, mpz_ptr2, F_mpz_arr + COEFF_TO_OFF(c1), F_mpz_arr + COEFF_TO_OFF(c2));
+			_F_mpz_demote_val(q); // division by h may result in small value
+			_F_mpz_demote_val(r); // r in fact may be a small value
+		}	
+	}
+}
+
 void F_mpz_rdiv_q(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
 {
 	F_mpz_t h2;  
