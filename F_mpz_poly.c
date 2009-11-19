@@ -5207,3 +5207,148 @@ void F_mpz_poly_divexact(F_mpz_poly_t Q, const F_mpz_poly_t A, const F_mpz_poly_
    F_mpz_poly_div_hensel(t_Q, t_A, q2 + q2b - 1, t_B, q2b);
 }
 
+/*===============================================================================
+
+	Pseudo division
+
+================================================================================*/
+
+void F_mpz_poly_pseudo_divrem_basecase(F_mpz_poly_t Q, F_mpz_poly_t R, 
+                            ulong * d, const F_mpz_poly_t A, const F_mpz_poly_t B)
+{
+   F_mpz_poly_t qB;
+   
+   if (B->length == 0)
+   {
+      printf("Exception : Divide by zero in F_mpz_poly_pseudo_divrem_basecase.\n");
+      abort();
+   }
+  
+   F_mpz * coeffs_A = A->coeffs;
+   F_mpz * coeffs_B = B->coeffs;
+   F_mpz * B_lead = coeffs_B + B->length - 1; 
+   F_mpz * coeff_Q;
+   F_mpz * coeff_R;
+   F_mpz * coeffs_R;
+   int scale;
+   
+   long m = A->length;
+   long n = B->length;
+   long q = m - n + 1;
+
+   ulong size_B_lead = F_mpz_size(B_lead);
+      
+   F_mpz_poly_struct Rs;
+   
+   int want_rem = 1;
+   if (R == NULL)
+   {
+      want_rem = 0;
+      R = &Rs;
+      F_mpz_poly_init(R);
+      
+   } else F_mpz_poly_set(R, A);
+
+   coeffs_R = R->coeffs;
+   
+   *d = 0;
+   
+   if ((long) R->length >= (long) B->length)
+   {
+      F_mpz_poly_fit_length(Q, R->length - B->length + 1);
+      
+      for (ulong i = 0; i < R->length - B->length + 1; i++) 
+         F_mpz_zero(Q->coeffs + i);
+
+      Q->length = R->length - B->length+1;
+   } else 
+   {
+      F_mpz_poly_zero(Q);
+      return;
+   }
+   
+   if (!want_rem) 
+   {
+      F_mpz_poly_fit_length(R, A->length);
+      for (ulong i = A->length - q; i < A->length; i++)
+          F_mpz_set(R->coeffs + i, A->coeffs + i);
+   }
+
+   F_mpz_poly_t Bm1;
+   ulong Bsub_length = B->length;
+   _F_mpz_poly_attach_truncate(Bm1, B, B->length - 1);
+
+   coeff_R = coeffs_R + R->length - 1;
+
+   F_mpz_t rem;
+   F_mpz_init(rem);
+   
+   while ((long) R->length >= (long) B->length)
+   {
+      coeff_Q = Q->coeffs + R->length - Bsub_length;
+          
+      if (F_mpz_cmpabs(coeff_R, B_lead) >= 0)
+      {
+         F_mpz_fdiv_qr(coeff_Q, rem, coeff_R, B_lead);
+
+      } else
+      {
+         F_mpz_zero(coeff_Q);
+         if (F_mpz_is_zero(coeff_R)) F_mpz_zero(rem);
+         else F_mpz_set_ui(rem, 1);
+      }
+      
+      if (F_mpz_is_zero(rem))
+      {
+         scale = 0; 
+      } else 
+      {   
+         F_mpz_poly_scalar_mul(Q, Q, B_lead);
+         coeff_Q = Q->coeffs + R->length - B->length;
+         F_mpz_set(coeff_Q, coeff_R);
+         scale = 1;
+         (*d)++;
+      }
+           
+      if (B->length > 1)
+      {
+         F_mpz_poly_init2(qB, Bsub_length - 1);
+         F_mpz_poly_scalar_mul(qB, Bm1, coeff_Q); 
+      } else F_mpz_poly_init(qB); 
+      
+      if (scale)
+      {
+         coeffs_R = R->coeffs;
+         F_mpz_poly_scalar_mul(R, R, B_lead);
+      } else if (B->length > 1)
+      {
+         coeffs_R = R->coeffs;
+      }
+      
+      F_mpz_poly_t R_sub;
+      R_sub->coeffs = coeffs_R + R->length - Bsub_length;
+      R_sub->length = Bsub_length - 1;
+      
+      if (B->length > 1)
+      {
+         _F_mpz_poly_sub(R_sub, R_sub, qB);
+      }
+      F_mpz_poly_clear(qB);
+      
+      ulong old_len = R->length;
+      F_mpz_zero(R_sub->coeffs + Bsub_length - 1);
+      
+      _F_mpz_poly_normalise(R);
+      coeff_R = coeffs_R + R->length - 1;
+
+      if ((!want_rem) && (Bsub_length + B->length >= R->length + 1))
+      {
+         ulong diff = old_len - R->length;
+         Bm1->coeffs += diff;
+         Bm1->length -= diff;
+         Bsub_length -= diff;
+      }
+   }
+  
+   F_mpz_clear(rem);
+}

@@ -933,6 +933,35 @@ void F_mpz_poly_div_hensel(F_mpz_poly_t Q, const F_mpz_poly_t A, const ulong a_l
 */
 void F_mpz_poly_divexact(F_mpz_poly_t Q, const F_mpz_poly_t A, const F_mpz_poly_t B);
 
+/*===============================================================================
+
+	Pseudo division
+
+================================================================================*/
+
+/** 
+   \fn     void F_mpz_poly_pseudo_divrem_basecase(F_mpz_poly_t Q, F_mpz_poly_t R, 
+                            ulong * d, const F_mpz_poly_t A, const F_mpz_poly_t B)
+   \brief  Pseudo division of A by B. Returns Q, R and d such that l^d A = QB + R 
+           for some R of length less than B, where l is the leading coefficient of 
+           B.
+*/
+void F_mpz_poly_pseudo_divrem_basecase(F_mpz_poly_t Q, F_mpz_poly_t R, 
+                            ulong * d, const F_mpz_poly_t A, const F_mpz_poly_t B);
+
+/** 
+   \fn     void F_mpz_poly_pseudo_div_basecase(F_mpz_poly_t Q, F_mpz_poly_t R, 
+                            ulong * d, const F_mpz_poly_t A, const F_mpz_poly_t B)
+   \brief  Pseudo division of A by B. Returns Q and d such that l^d A = QB + R 
+           for some R of length less than B, where l is the leading coefficient 
+           of B.
+*/
+static inline
+void F_mpz_poly_pseudo_div_basecase(F_mpz_poly_t Q,  
+                            ulong * d, const F_mpz_poly_t A, const F_mpz_poly_t B)
+{
+   F_mpz_poly_pseudo_divrem_basecase(Q, NULL, d, A, B);
+}
 
 #ifdef __cplusplus
  }
