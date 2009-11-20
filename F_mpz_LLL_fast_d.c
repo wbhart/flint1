@@ -93,6 +93,11 @@ void Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
    
    aa = (a > zeros) ? a : zeros + 1;
   
+   ctt = DELTA;
+   halfplus = ETA;
+   onedothalfplus = 1.0+halfplus;
+
+
    do
    {
       test = 0;
@@ -288,6 +293,10 @@ void LLL(F_mpz_mat_t B)
    
    n = B->c;
    d = B->r;
+
+   ctt = DELTA;
+   halfplus = ETA;
+   onedothalfplus = 1.0+halfplus;
 	
 	ulong shift = getShift(B);
 

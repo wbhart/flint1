@@ -263,7 +263,339 @@ void F_mpz_mat_resize(F_mpz_mat_t mat, const ulong r, const ulong c)
 
 ===============================================================================*/
 
+
+int mpz_mat_from_string(mpz_mat_t mat, const char *s)
+{
+
+   const char* whitespace = " \t\n\r";
+
+   //read mat->rows
+   unsigned long r;
+   if (!sscanf(s, "%ld", &r))
+      return 0;
+
+   // jump to next whitespace
+   s += strcspn(s, whitespace);
+
+   // skip whitespace
+   s += strspn(s, whitespace);
+
+   //read mat->columns
+   unsigned long c;
+   if (!sscanf(s, "%ld", &c))
+      return 0;
+
+   // jump to next whitespace
+   s += strcspn(s, whitespace);
+
+   // skip 1 whitespace
+   s += strspn(s, whitespace);
+
+
+   mpz_mat_clear(mat);
+   mpz_mat_init(mat,r,c);
+
+   for (unsigned long i = 0; i < r*c; i++)
+   {
+
+      // skip whitespace
+      s += strspn(s, whitespace);
+
+      if (!gmp_sscanf(s, "%Zd", mat->entries[i]))
+         return 0;
+
+      // jump to next whitespace
+      s += strcspn(s, whitespace);
+
+   }
+
+   return 1;
+}
+
+char* mpz_mat_to_string(mpz_mat_t mat)
+{
+   // estimate the size of the string
+   // 41 = enough room for null terminator and space and row and column info
+   unsigned long size = 41;
+   for (unsigned long i = 0; i < mat->r * mat->c; i++)
+      // +2 is for the sign and a space
+      size += mpz_sizeinbase(mat->entries[i], 10) + 2;
+
+   // write the string
+   char* buf = (char*) malloc(size);
+   char* ptr = buf + sprintf(buf, "%ld %ld  ", mat->r, mat->c);
+   for (unsigned long i = 0; i < mat->r * mat->c; i++)
+   {
+      mpz_get_str(ptr, 10, mat->entries[i]);
+      ptr += strlen(ptr);
+      *ptr = ' ';
+      ptr++;
+   }
+   
+   ptr--;
+   *ptr = 0;
+   
+   return buf;
+}
+
+int mpz_mat_from_string_pretty(mpz_mat_t mat, char *s)
+{
+
+   char* pnt;
+
+   unsigned long r = 0;
+   unsigned long c = 0;
+
+   pnt = s;
+//calculates the number of rows by counting the ']'s
+   while (pnt != NULL)
+   {
+      pnt++;
+      pnt = strchr(pnt, ']');
+      r++;
+   }
+
+   r = r - 2;
+//reset the pointer and count the number of columns by the number of numbers then later divides by r (not optimal)
+   pnt = s;
+
+   while ( pnt != NULL)
+   {
+      pnt += strspn(pnt,"-0123456789");
+      pnt = strpbrk(pnt, "-0123456789");
+      if ( pnt != NULL)
+         c++;
+   }
+
+   pnt = s + strcspn(s, "[")+1;
+
+
+   if (r == 0){
+      mpz_mat_clear(mat);
+      mpz_mat_init(mat,0,0);
+      return 1;
+   }
+
+   if (c == 0){
+      mpz_mat_clear(mat);
+      mpz_mat_init(mat,r,c);
+      return 1;
+   }
+
+   c = c/r;
+
+   mpz_mat_clear(mat);
+   mpz_mat_init(mat,r,c);
+
+
+   for(ulong i = 0; i < r*c; i++){
+//searches for the next digit of - then calls gmp's mpz scanner
+         pnt = strpbrk(pnt,"-0123456789");
+         if (!gmp_sscanf(pnt, "%Zd", mat->entries[i]))
+            return 0;
+//skips the big number
+         pnt += strspn(pnt,"-0123456789");
+   }
+   
+   return 1;
+
+}
+
+char* mpz_mat_to_string_pretty(mpz_mat_t mat)
+{
+
+   // estimate the size of the string
+   // 4 + 3*r = enough room for null terminator, [,],\n and []\n per row
+   unsigned long size = 4 + 3*mat->r;
+   for (unsigned long i = 0; i < mat->r * mat->c; i++)
+      // +2 is for the sign and a space
+      size += mpz_sizeinbase(mat->entries[i], 10) + 2;
+
+   // write the string
+   char* buf = (char*) malloc(size);
+   char* ptr = buf + sprintf(buf, "[");
+   for (unsigned long i = 0; i < mat->r; i++)
+   {
+      *ptr = '[';
+      ptr++;
+      for (unsigned long j = 0; j < mat->c; j++)
+      {
+         mpz_get_str(ptr, 10, mat->entries[i*mat->c + j]);
+         ptr += strlen(ptr);
+	      if (j < mat->c - 1)
+            {
+            *ptr = ' ';
+            ptr++;
+            }
+      }
+      if (i != mat->r - 1)
+         {
+            *ptr = ']';
+            ptr++;
+            *ptr = '\n';
+            ptr++;
+         }
+   }
+   *ptr = ']';
+   ptr++;
+   *ptr = ']';
+   ptr++;
+   *ptr = '\n';
+   ptr++;
+
+   
+   ptr--;
+   *ptr = 0;
+   
+   return buf;
+
+}
+
+void mpz_mat_fprint(mpz_mat_t mat, FILE* f)
+{
+   char* s = mpz_mat_to_string(mat);
+   fputs(s, f);
+   free(s);
+}
+
+void mpz_mat_fprint_pretty(mpz_mat_t mat, FILE* f)
+{
+   char* s = mpz_mat_to_string_pretty(mat);
+   fputs(s, f);
+   free(s);
+}
+
+int mpz_mat_fread(mpz_mat_t mat, FILE* f)
+{
+
+   //read mat->rows
+   unsigned long r;
+   unsigned long c;
+
+   if (!fscanf(f, "%ld %ld  ", &r, &c))
+      return 0;
+
+   mpz_mat_clear(mat);
+   mpz_mat_init(mat,r,c);
+
+   for (unsigned long i = 0; i < r*c; i++)
+   {
+      if (!mpz_inp_str(mat->entries[i], f, 10))
+         return 0;
+   }
+   return 1;
+}
+
+int mpz_mat_fread_pretty(mpz_mat_t mat, FILE* f)
+{
+
+   unsigned long f_size;
+   unsigned long lof=0;
+   int ok;
+   char* s;
+   char c = ' ';
+
+   fseek(f,0,SEEK_END);
+   f_size = ftell(f);
+   rewind(f);
+   s = (char *)malloc(sizeof(char)*f_size+5);   
+
+
+   c = fgetc(f);
+   while(!feof(f))
+   {
+      s[lof] = c;
+      c = fgetc(f);
+      lof++;
+   }
+   s[lof] = 0;
+
+   ok = mpz_mat_from_string_pretty(mat, s);
+
+   return ok;
+
+}
+
+int F_mpz_mat_from_string(F_mpz_mat_t mat, const char *s)
+{
+
+   int ok;
+   
+   mpz_mat_t m;
+   mpz_mat_init(m,0,0);
+   ok = mpz_mat_from_string(m, s);
+   if (ok)
+   {
+      F_mpz_mat_clear(mat);
+      F_mpz_mat_init(mat,m->r,m->c);
+      mpz_mat_to_F_mpz_mat(mat, m);
+   }
+   mpz_mat_clear(m);
+   
+   return ok;
+}
+
+char* F_mpz_mat_to_string(F_mpz_mat_t mat)
+{
+   char* buf;
+   mpz_mat_t m;
+   mpz_mat_init(m,mat->r,mat->c);
+   F_mpz_mat_to_mpz_mat(m, mat);
+   buf = mpz_mat_to_string(m);
+   mpz_mat_clear(m);
+   return buf;
+}
+
+int F_mpz_mat_from_string_pretty(F_mpz_mat_t mat, char *s)
+{
+
+   int ok;
+   
+   mpz_mat_t m;
+   mpz_mat_init(m,0,0);
+   ok = mpz_mat_from_string_pretty(m, s);
+   if (ok)
+   {
+      F_mpz_mat_clear(mat);
+      F_mpz_mat_init(mat,m->r,m->c);
+      mpz_mat_to_F_mpz_mat(mat, m);
+   }
+   mpz_mat_clear(m);
+   
+   return ok;
+}
+
+char* F_mpz_mat_to_string_pretty(F_mpz_mat_t mat)
+{
+   char* buf;
+   mpz_mat_t m;
+   mpz_mat_init(m, mat->r, mat->c);
+   F_mpz_mat_to_mpz_mat(m, mat);
+   buf = mpz_mat_to_string_pretty(m);
+   mpz_mat_clear(m);
+   return buf;
+}
+
 void F_mpz_mat_print(F_mpz_mat_t mat) 
+{
+   ulong i, j; 
+   ulong r = mat->r;
+   ulong c = mat->c;
+	
+   printf("%ld %ld  ", r, c);
+   for (i = 0; i < r; i++) 
+   {
+      for (j = 0; j < c; j++) 
+	   { 
+	      F_mpz_print(mat->rows[i] + j); 
+	      if (j < c - 1) printf(" "); 
+	   }
+      if (i != r - 1) printf(" "); 
+   }  
+   printf("\n"); 
+}
+
+void F_mpz_mat_print_pretty(F_mpz_mat_t mat) 
 {
    ulong i, j; 
    ulong r = mat->r;
@@ -281,6 +613,58 @@ void F_mpz_mat_print(F_mpz_mat_t mat)
       if (i != r - 1) printf("]\n"); 
    }  
    printf("]]\n"); 
+}
+
+void F_mpz_mat_fprint(F_mpz_mat_t mat, FILE* f)
+{
+   char* s = F_mpz_mat_to_string(mat);
+   fputs(s, f);
+   free(s);
+}
+
+void F_mpz_mat_fprint_pretty(F_mpz_mat_t mat, FILE* f)
+{
+   char* s = F_mpz_mat_to_string_pretty(mat);
+   fputs(s, f);
+   free(s);
+}
+
+int F_mpz_mat_fread(F_mpz_mat_t mat, FILE* f)
+{
+
+   int ok;
+
+   mpz_mat_t m;
+   mpz_mat_init(m,0,0);
+   
+   ok = mpz_mat_fread(m, f);
+
+   F_mpz_mat_clear(mat);
+   F_mpz_mat_init(mat,m->r,m->c);
+
+   mpz_mat_to_F_mpz_mat(mat,m);
+   mpz_mat_clear(m);
+
+   return ok;
+}
+
+int F_mpz_mat_fread_pretty(F_mpz_mat_t mat, FILE* f)
+{
+
+   int ok;
+
+   mpz_mat_t m;
+   mpz_mat_init(m,0,0);
+   
+   ok = mpz_mat_fread_pretty(m, f);
+
+   F_mpz_mat_clear(mat);
+   F_mpz_mat_init(mat,m->r,m->c);
+
+   mpz_mat_to_F_mpz_mat(mat,m);
+   mpz_mat_clear(m);
+
+   return ok;
 }
 
 /*===============================================================================
@@ -743,3 +1127,30 @@ void F_mpz_mat_row_neg(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2,
 	for (ulong i = start; i < start + n; i++)
 		F_mpz_neg(mat1->rows[r1] + i, mat2->rows[r2] + i);
 }
+/* ======================================================================================================
+
+ Classical Multiplication
+
+=========================================================================================================*/
+
+void _F_mpz_mat_mul_classical(F_mpz_mat_t res, const F_mpz_mat_t mat1, const F_mpz_mat_t mat2)
+{
+   //res=mat1*mat2
+
+   ulong r1 = mat1->r;
+   ulong c1 = mat1->c;
+   ulong r2 = mat2->r;
+   ulong c2 = mat2->c;
+
+   if (c1!=r2)
+      return; //dimensions don't match up
+
+   F_mpz_mat_init(res,r1,c2);
+
+   for (ulong i = 0; i < r1; i++) // add up to the length of the shorter mat
+      for (ulong j = 0; j < c2; j++)
+         for (ulong c=0; c<c1;c++)
+            F_mpz_addmul(res->rows[i] + j, mat1->rows[i]+c, mat2->rows[c]+j);   
+
+}
+
