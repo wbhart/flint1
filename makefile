@@ -68,6 +68,7 @@ HEADERS = \
 	zmod_mat.h \
 	mpz_mat.h \
 	d_mat.h \
+	F_mpz_mat.h \
 	mpfr_mat.h \
 	F_mpz.h \
 	F_mpz_poly.h \
@@ -112,6 +113,7 @@ FLINTOBJ = \
 	mpz_mat.o \
 	d_mat.o \
 	mpfr_mat.o \
+	F_mpz_mat.o \
 	F_mpz.o \
 	F_mpz_poly.o \
 	tinyQS.o \
@@ -125,7 +127,7 @@ QS: mpQS
 
 tune: ZmodF_mul-tune mpz_poly-tune 
 
-test: F_mpz-test mpn_extras-test fmpz_poly-test fmpz-test ZmodF-test ZmodF_poly-test mpz_poly-test ZmodF_mul-test long_extras-test zmod_poly-test zmod_mat-test
+test: F_mpz-test mpn_extras-test fmpz_poly-test fmpz-test ZmodF-test ZmodF_poly-test mpz_poly-test ZmodF_mul-test long_extras-test zmod_poly-test F_mpz_mat-test zmod_mat-test
 
 check: test
 	./F_mpz-test
@@ -139,6 +141,7 @@ check: test
 	./zmod_poly-test
 	./zmod_mat-test
 	./fmpz_poly-test
+        ./F_mpz_mat-test
 
 profile: ZmodF_poly-profile kara-profile fmpz_poly-profile mpz_poly-profile ZmodF_mul-profile 
 

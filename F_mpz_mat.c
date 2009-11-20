@@ -27,6 +27,7 @@
 #include <string.h>
 #include <math.h>
 #include <gmp.h>
+#include <mpfr.h>
 
 #include "flint.h"
 #include "mpn_extras.h"
@@ -324,6 +325,13 @@ long F_mpz_mat_set_line_d(double * appv, const F_mpz_mat_t mat, const ulong r, c
 
    free(exp);
    return maxexp;
+}
+
+void F_mpz_mat_set_line_mpfr(mpfr_t * appv, const F_mpz_mat_t mat, const ulong r, const int n)
+{
+   for (ulong i = 0; i < n; i++) F_mpz_get_mpfr(appv[i], mat->rows[r] + i);
+
+   return;
 }
 
 /*===============================================================================

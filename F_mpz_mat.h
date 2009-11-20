@@ -32,6 +32,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <gmp.h>
+#include <mpfr.h>
+
 #include "mpn_extras.h"
 #include "flint.h"
 #include "mpz_mat.h"
@@ -149,6 +151,12 @@ void F_mpz_mat_to_mpz_mat(mpz_mat_t m_mat, const F_mpz_mat_t F_mat);
 	        with respect to a single maximum exponent which is returned.
 */
 long F_mpz_mat_set_line_d(double * appv, const F_mpz_mat_t mat, const ulong r, const int n);
+
+/** 
+   \fn     void F_mpz_mat_set_line_mpfr(mpfr_t * appv, const F_mpz_mat_t mat, const ulong r, const int n)
+   \brief  Sets the entries of appv to the entries of the given row of mat.
+*/
+void F_mpz_mat_set_line_mpfr(mpfr_t * appv, const F_mpz_mat_t mat, const ulong r, const int n);
 
 /*===============================================================================
 
