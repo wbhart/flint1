@@ -2138,6 +2138,294 @@ int test_F_mpz_mod()
    return result;
 }
 
+int test_F_mpz_fdiv_qr()
+{
+   mpz_t m1, m2, m3, m4, m5, m6;
+   F_mpz_t f1, f2, f3, f4;
+   int result = 1;
+   ulong bits, bits2;
+   
+   mpz_init(m1); 
+   mpz_init(m2); 
+   mpz_init(m3); 
+   mpz_init(m4); 
+   mpz_init(m5); 
+   mpz_init(m6); 
+
+   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   {
+      F_mpz_init(f1);
+      F_mpz_init(f2);
+      F_mpz_init(f3);
+      F_mpz_init(f4);
+
+      bits = z_randint(200) + 1;
+      F_mpz_test_random(f1, bits);
+      bits2 = z_randint(200) + 1;
+      F_mpz_test_random(f2, bits2);
+      if (F_mpz_is_zero(f2)) 
+			F_mpz_set_ui(f2, 1L);
+           
+      F_mpz_get_mpz(m1, f1);
+      F_mpz_get_mpz(m2, f2);
+		
+		F_mpz_fdiv_qr(f3, f4, f1, f2);
+		F_mpz_get_mpz(m3, f3);
+      F_mpz_get_mpz(m4, f4);
+      mpz_fdiv_qr(m5, m6, m1, m2);
+          
+      result = (mpz_cmp(m5, m3) == 0) && (mpz_cmp(m6, m4) == 0); 
+		if (!result) 
+		{
+			gmp_printf("Error: bits = %ld, bits2 = %ld, m1 = %Zd, m2 = %Zd, m3 = %Zd, m4 = %Zd, m5 = %Zd, m6 = %Zd\n", bits, bits2, m1, m2, m3, m4, m5, m6);
+		}
+          
+      F_mpz_clear(f1);
+      F_mpz_clear(f2);
+      F_mpz_clear(f3);
+      F_mpz_clear(f4);
+   }
+
+   // alias f1 and f3
+   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   {
+      F_mpz_init(f1);
+      F_mpz_init(f2);
+      F_mpz_init(f3);
+      F_mpz_init(f4);
+
+      bits = z_randint(200) + 1;
+      F_mpz_test_random(f1, bits);
+      bits2 = z_randint(200) + 1;
+      F_mpz_test_random(f2, bits2);
+      if (F_mpz_is_zero(f2)) 
+			F_mpz_set_ui(f2, 1L);
+           
+      F_mpz_get_mpz(m1, f1);
+      F_mpz_get_mpz(m2, f2);
+		
+		F_mpz_fdiv_qr(f1, f4, f1, f2);
+		F_mpz_get_mpz(m3, f1);
+      F_mpz_get_mpz(m4, f4);
+      mpz_fdiv_qr(m5, m6, m1, m2);
+          
+      result = (mpz_cmp(m5, m3) == 0) && (mpz_cmp(m6, m4) == 0); 
+		if (!result) 
+		{
+			gmp_printf("Error: bits = %ld, bits2 = %ld, m1 = %Zd, m2 = %Zd, m3 = %Zd, m4 = %Zd, m5 = %Zd, m6 = %Zd\n", bits, bits2, m1, m2, m3, m4, m5, m6);
+		}
+          
+      F_mpz_clear(f1);
+      F_mpz_clear(f2);
+      F_mpz_clear(f3);
+      F_mpz_clear(f4);
+   }
+
+   //alias f1 and f4
+   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   {
+      F_mpz_init(f1);
+      F_mpz_init(f2);
+      F_mpz_init(f3);
+      F_mpz_init(f4);
+
+      bits = z_randint(200) + 1;
+      F_mpz_test_random(f1, bits);
+      bits2 = z_randint(200) + 1;
+      F_mpz_test_random(f2, bits2);
+      if (F_mpz_is_zero(f2)) 
+			F_mpz_set_ui(f2, 1L);
+           
+      F_mpz_get_mpz(m1, f1);
+      F_mpz_get_mpz(m2, f2);
+		
+		F_mpz_fdiv_qr(f3, f1, f1, f2);
+		F_mpz_get_mpz(m3, f3);
+      F_mpz_get_mpz(m4, f1);
+      mpz_fdiv_qr(m5, m6, m1, m2);
+          
+      result = (mpz_cmp(m5, m3) == 0) && (mpz_cmp(m6, m4) == 0); 
+		if (!result) 
+		{
+			gmp_printf("Error: bits = %ld, bits2 = %ld, m1 = %Zd, m2 = %Zd, m3 = %Zd, m4 = %Zd, m5 = %Zd, m6 = %Zd\n", bits, bits2, m1, m2, m3, m4, m5, m6);
+		}
+          
+      F_mpz_clear(f1);
+      F_mpz_clear(f2);
+      F_mpz_clear(f3);
+      F_mpz_clear(f4);
+   }
+
+   // alias f2 and f3
+   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   {
+      F_mpz_init(f1);
+      F_mpz_init(f2);
+      F_mpz_init(f3);
+      F_mpz_init(f4);
+
+      bits = z_randint(200) + 1;
+      F_mpz_test_random(f1, bits);
+      bits2 = z_randint(200) + 1;
+      F_mpz_test_random(f2, bits2);
+      if (F_mpz_is_zero(f2)) 
+			F_mpz_set_ui(f2, 1L);
+           
+      F_mpz_get_mpz(m1, f1);
+      F_mpz_get_mpz(m2, f2);
+		
+		F_mpz_fdiv_qr(f2, f4, f1, f2);
+		F_mpz_get_mpz(m3, f2);
+      F_mpz_get_mpz(m4, f4);
+      mpz_fdiv_qr(m5, m6, m1, m2);
+          
+      result = (mpz_cmp(m5, m3) == 0) && (mpz_cmp(m6, m4) == 0); 
+		if (!result) 
+		{
+			gmp_printf("Error: bits = %ld, bits2 = %ld, m1 = %Zd, m2 = %Zd, m3 = %Zd, m4 = %Zd, m5 = %Zd, m6 = %Zd\n", bits, bits2, m1, m2, m3, m4, m5, m6);
+		}
+          
+      F_mpz_clear(f1);
+      F_mpz_clear(f2);
+      F_mpz_clear(f3);
+      F_mpz_clear(f4);
+   }
+
+   // alias f2 and f4
+   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   {
+      F_mpz_init(f1);
+      F_mpz_init(f2);
+      F_mpz_init(f3);
+      F_mpz_init(f4);
+
+      bits = z_randint(200) + 1;
+      F_mpz_test_random(f1, bits);
+      bits2 = z_randint(200) + 1;
+      F_mpz_test_random(f2, bits2);
+      if (F_mpz_is_zero(f2)) 
+			F_mpz_set_ui(f2, 1L);
+           
+      F_mpz_get_mpz(m1, f1);
+      F_mpz_get_mpz(m2, f2);
+		
+		F_mpz_fdiv_qr(f3, f2, f1, f2);
+		F_mpz_get_mpz(m3, f3);
+      F_mpz_get_mpz(m4, f2);
+      mpz_fdiv_qr(m5, m6, m1, m2);
+          
+      result = (mpz_cmp(m5, m3) == 0) && (mpz_cmp(m6, m4) == 0); 
+		if (!result) 
+		{
+			gmp_printf("Error: bits = %ld, bits2 = %ld, m1 = %Zd, m2 = %Zd, m3 = %Zd, m4 = %Zd, m5 = %Zd, m6 = %Zd\n", bits, bits2, m1, m2, m3, m4, m5, m6);
+		}
+          
+      F_mpz_clear(f1);
+      F_mpz_clear(f2);
+      F_mpz_clear(f3);
+      F_mpz_clear(f4);
+   }
+
+   // alias f1 and f2
+   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   {
+      F_mpz_init(f2);
+      F_mpz_init(f3);
+      F_mpz_init(f4);
+
+      bits2 = z_randint(200) + 1;
+      F_mpz_test_random(f2, bits2);
+      if (F_mpz_is_zero(f2)) 
+			F_mpz_set_ui(f2, 1L);
+           
+      F_mpz_get_mpz(m2, f2);
+		
+		F_mpz_fdiv_qr(f3, f4, f2, f2);
+		F_mpz_get_mpz(m3, f3);
+      F_mpz_get_mpz(m4, f4);
+      mpz_fdiv_qr(m5, m6, m2, m2);
+          
+      result = (mpz_cmp(m5, m3) == 0) && (mpz_cmp(m6, m4) == 0); 
+		if (!result) 
+		{
+			gmp_printf("Error: bits = %ld, bits2 = %ld, m1 = %Zd, m2 = %Zd, m3 = %Zd, m4 = %Zd, m5 = %Zd, m6 = %Zd\n", bits, bits2, m1, m2, m3, m4, m5, m6);
+		}
+          
+      F_mpz_clear(f2);
+      F_mpz_clear(f3);
+      F_mpz_clear(f4);
+   }
+
+   // alias f1 and f2 and f3
+   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   {
+      F_mpz_init(f2);
+      F_mpz_init(f3);
+      F_mpz_init(f4);
+
+      bits2 = z_randint(200) + 1;
+      F_mpz_test_random(f2, bits2);
+      if (F_mpz_is_zero(f2)) 
+			F_mpz_set_ui(f2, 1L);
+           
+      F_mpz_get_mpz(m2, f2);
+		
+		F_mpz_fdiv_qr(f2, f4, f2, f2);
+		F_mpz_get_mpz(m3, f2);
+      F_mpz_get_mpz(m4, f4);
+      mpz_fdiv_qr(m5, m6, m2, m2);
+          
+      result = (mpz_cmp(m5, m3) == 0) && (mpz_cmp(m6, m4) == 0); 
+		if (!result) 
+		{
+			gmp_printf("Error: bits = %ld, bits2 = %ld, m1 = %Zd, m2 = %Zd, m3 = %Zd, m4 = %Zd, m5 = %Zd, m6 = %Zd\n", bits, bits2, m1, m2, m3, m4, m5, m6);
+		}
+          
+      F_mpz_clear(f2);
+      F_mpz_clear(f3);
+      F_mpz_clear(f4);
+   }
+
+   // alias f1 and f2 and f4
+   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   {
+      F_mpz_init(f2);
+      F_mpz_init(f3);
+      F_mpz_init(f4);
+
+      bits2 = z_randint(200) + 1;
+      F_mpz_test_random(f2, bits2);
+      if (F_mpz_is_zero(f2)) 
+			F_mpz_set_ui(f2, 1L);
+           
+      F_mpz_get_mpz(m2, f2);
+		
+		F_mpz_fdiv_qr(f3, f2, f2, f2);
+		F_mpz_get_mpz(m3, f3);
+      F_mpz_get_mpz(m4, f2);
+      mpz_fdiv_qr(m5, m6, m2, m2);
+          
+      result = (mpz_cmp(m5, m3) == 0) && (mpz_cmp(m6, m4) == 0); 
+		if (!result) 
+		{
+			gmp_printf("Error: bits = %ld, bits2 = %ld, m1 = %Zd, m2 = %Zd, m3 = %Zd, m4 = %Zd, m5 = %Zd, m6 = %Zd\n", bits, bits2, m1, m2, m3, m4, m5, m6);
+		}
+          
+      F_mpz_clear(f2);
+      F_mpz_clear(f3);
+      F_mpz_clear(f4);
+   }
+
+   mpz_clear(m1);
+   mpz_clear(m2);
+   mpz_clear(m3);
+   mpz_clear(m4);
+   mpz_clear(m5);
+   mpz_clear(m6);
+   
+   return result;
+}
+
 int test_F_mpz_gcd()
 {
    mpz_t m1, m2, m3, m4;
@@ -3043,6 +3331,7 @@ void F_mpz_poly_test_all()
    RUN_TEST(F_mpz_submul); 
    RUN_TEST(F_mpz_mod_ui); 
    RUN_TEST(F_mpz_mod); 
+   RUN_TEST(F_mpz_fdiv_qr); 
    RUN_TEST(F_mpz_pow_ui); 
    RUN_TEST(F_mpz_gcd); 
    RUN_TEST(F_mpz_invert); 
