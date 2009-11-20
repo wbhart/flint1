@@ -427,14 +427,30 @@ void F_mpz_set_mpfr(F_mpz_t f, const mpfr_t x)
       }
       
       return;
-   } else
+   } else // f is large
    {
-      __mpz_struct * mpz_ptr = _F_mpz_promote(f);
-      mpfr_get_z(mpz_ptr, x, GMP_RNDN);
+      mpfr_get_z(F_mpz_arr + COEFF_TO_OFF(d), x, GMP_RNDN);
 
-      _F_mpz_demote_val(f); // may fit actually be small
+      _F_mpz_demote_val(f); // may actually be small
       return;
    }
+}
+
+int F_mpz_set_mpfr_2exp(F_mpz_t f, const mpfr_t x)
+{
+   F_mpz d = *f;
+   int exp;
+
+   if (!COEFF_IS_MPZ(d)) // f is small
+   {
+      __mpz_struct * mpz_ptr = _F_mpz_promote(f);
+      exp = mpfr_get_z_exp(mpz_ptr, x);
+   } else
+      exp = mpfr_get_z_exp(F_mpz_arr + COEFF_TO_OFF(d), x);
+   
+   _F_mpz_demote_val(f); // x may have been small
+      
+   return exp;
 }
 
 void F_mpz_set_limbs(F_mpz_t f, const mp_limb_t * x, const ulong limbs)

@@ -278,10 +278,17 @@ void F_mpz_set_mpz(F_mpz_t f, const mpz_t x);
 void F_mpz_get_mpfr(mpfr_t x, const F_mpz_t f);
 
 /** 
-   \fn     void F_mpz_set_mpfr(const F_mpz_t f, mpfr_t x)
+   \fn     void F_mpz_set_mpfr(F_mpz_t f, const mpfr_t x)
    \brief  Set the f to the value of the mpfr_t x, rounded down.
 */
 void F_mpz_set_mpfr(F_mpz_t f, const mpfr_t x);
+
+/** 
+   \fn     int F_mpz_set_mpfr_2exp(const F_mpz_t f, const mpfr_t x)
+   \brief  Set the f to the stored mantissa of the mpfr_t x and return
+           an exponent exp so that x = f*2^exp.
+*/
+int F_mpz_set_mpfr_2exp(F_mpz_t f, const mpfr_t x);
 
 /** 
    \fn     void F_mpz_set_limbs(F_mpz_t f, const mp_limb_t * x, const ulong limbs)
