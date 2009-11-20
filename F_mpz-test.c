@@ -30,6 +30,7 @@ Copyright (C) 2009, Andy Novocin
 #include <stdio.h>
 #include <string.h>
 #include <gmp.h>
+#include <mpfr.h>
 #include <time.h>
 #include "flint.h"
 #include "memory-manager.h"
@@ -190,6 +191,44 @@ int test_F_mpz_getset_mpz()
    mpz_clear(val);
 	mpz_clear(val2);
 	return result; 
+}
+
+int test_F_mpz_getset_mpfr()
+{
+   F_mpz_t f, g;
+   mpfr_t m;
+   int result = 1;
+   ulong bits;
+   
+   mpfr_set_default_prec(200);
+   
+   for (ulong count1 = 0; (count1 < 1000000*ITER) && (result == 1); count1++)
+   {
+      bits = z_randint(200)+ 1;      
+      
+		F_mpz_init(f);
+		F_mpz_init(g);
+      mpfr_init(m);
+
+      F_mpz_test_random(f, bits); 
+		    
+      F_mpz_get_mpfr(m, f);
+      F_mpz_set_mpfr(g, m);
+         
+      result = (F_mpz_equal(f, g));
+	   
+      if (!result)
+	   {
+			printf("Error: val = "); F_mpz_print(f); 
+         printf(", val2 = "); F_mpz_print(g); printf("\n");
+		}
+
+      mpfr_clear(m);
+      F_mpz_clear(f);
+      F_mpz_clear(g);
+   }
+   
+   return result; 
 }
 
 int test_F_mpz_get_d_2exp()
@@ -3310,6 +3349,7 @@ void F_mpz_poly_test_all()
 	RUN_TEST(F_mpz_getset_ui); 
    RUN_TEST(F_mpz_getset_si); 
 	RUN_TEST(F_mpz_getset_mpz); 
+   RUN_TEST(F_mpz_getset_mpfr); 
    RUN_TEST(F_mpz_getset_limbs); 
    RUN_TEST(F_mpz_get_d_2exp); 
    RUN_TEST(F_mpz_set); 

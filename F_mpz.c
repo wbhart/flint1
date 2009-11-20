@@ -269,15 +269,13 @@ void F_mpz_randomm(F_mpz_t f, const mpz_t in)
 
 void F_mpz_set_si(F_mpz_t f, const long val)
 {
-   if (FLINT_ABS(val) > COEFF_MAX) // val is large
+   if (FLINT_ABS(val) > (ulong) COEFF_MAX) // val is large
 	{
-		
 		__mpz_struct * mpz_coeff = _F_mpz_promote(f);
 		mpz_set_si(mpz_coeff, val);
 		
 	} else 
 	{
-		
 		_F_mpz_demote(f);
 		
 		*f = val; // val is small
@@ -420,6 +418,7 @@ void F_mpz_set_mpfr(F_mpz_t f, const mpfr_t x)
       if (mpfr_fits_slong_p(x, GMP_RNDN)) // x fits in a long
       {
          long cx = mpfr_get_si(x, GMP_RNDN);
+         
          F_mpz_set_si(f, cx);
       } else // x is large
       {
@@ -430,10 +429,10 @@ void F_mpz_set_mpfr(F_mpz_t f, const mpfr_t x)
       return;
    } else
    {
-         __mpz_struct * mpz_ptr = _F_mpz_promote(f);
-         mpfr_get_z(mpz_ptr, x, GMP_RNDN);
+      __mpz_struct * mpz_ptr = _F_mpz_promote(f);
+      mpfr_get_z(mpz_ptr, x, GMP_RNDN);
 
-         _F_mpz_demote_val(f); // may fit actually be small
+      _F_mpz_demote_val(f); // may fit actually be small
       return;
    }
 }
