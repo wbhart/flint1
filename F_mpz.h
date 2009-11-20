@@ -556,6 +556,13 @@ void F_mpz_divexact(F_mpz_t f, const F_mpz_t g, const F_mpz_t h);
 void F_mpz_fdiv_q(F_mpz_t f, const F_mpz_t g, const F_mpz_t h);
 
 /** 
+   \fn     void F_mpz_fdiv_q(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
+   \brief  Set q to g divided by h, rounded down towards minus infinity and
+           r to be the remainder.
+*/
+void F_mpz_fdiv_qr(F_mpz_t q, F_mpz_t r, const F_mpz_t g, const F_mpz_t h);
+
+/** 
    \fn     void F_mpz_cdiv_q(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
    \brief  Set f to g divided by h, rounded up towards infinity.
 */

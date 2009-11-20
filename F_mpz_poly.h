@@ -338,13 +338,85 @@ void mpz_poly_to_F_mpz_poly(F_mpz_poly_t F_poly, const mpz_poly_t m_poly);
 */
 void F_mpz_poly_to_mpz_poly(mpz_poly_t m_poly, const F_mpz_poly_t F_poly);
 
+/** 
+   \fn     void F_mpz_poly_to_zmod_poly(zmod_poly_t zpol, const F_mpz_poly_t fpol)
+   \brief  Convert an F_mpz_poly_t to a reduced zmod_poly_t
+*/
+void F_mpz_poly_to_zmod_poly(zmod_poly_t zpol, const F_mpz_poly_t fpol);
+
+/** 
+   \fn     void zmod_poly_to_F_mpz_poly(F_mpz_poly_t fpol, const zmod_poly_t zpol)
+   \brief  Convert a zmod_poly_t to a F_mpz_poly_t
+*/
+void zmod_poly_to_F_mpz_poly(F_mpz_poly_t fpol, const zmod_poly_t zpol);
+
 /*===============================================================================
 
         Input/output 
 
 ================================================================================*/
 
+/** 
+   \fn     int F_mpz_poly_from_string(F_mpz_poly_t poly, const char* s)
+   \brief  Read a polynomial from a string. Format is an integer
+           representing the length followed by 2 spaces, followed by a 
+           space separated list of coefficients, starting with the
+           constant term.
+*/
 int F_mpz_poly_from_string(F_mpz_poly_t poly, const char* s);
+
+/** 
+   \fn     char* F_mpz_poly_to_string(const F_mpz_poly_t poly)
+   \brief  Return a char * in standard FLINT format from F_mpz_poly_t
+*/
+char* F_mpz_poly_to_string(const F_mpz_poly_t poly);
+
+/** 
+   \fn     char* F_mpz_poly_to_string_pretty(const F_mpz_poly_t poly, const char * x)
+   \brief  Return a formated char * from F_mpz_poly_t with variable named at x
+*/
+char* F_mpz_poly_to_string_pretty(const F_mpz_poly_t poly, const char * x);
+
+/** 
+   \fn     void F_mpz_poly_fprint(const F_mpz_poly_t poly, FILE* f)
+   \brief  Prints F_mpz_poly_t to a file stream f in standard FLINT format
+*/
+void F_mpz_poly_fprint(const F_mpz_poly_t poly, FILE* f);
+
+/** 
+   \fn     void F_mpz_poly_fprint_pretty(const F_mpz_poly_t poly, FILE* f, const char * x)
+   \brief  Prints F_mpz_poly_t to a file stream f in pretty format with variable names at x
+*/
+void F_mpz_poly_fprint_pretty(const F_mpz_poly_t poly, FILE* f, const char * x);
+
+/** 
+   \fn     void F_mpz_poly_print_pretty(const F_mpz_poly_t poly, const char * x)
+   \brief  Prints F_mpz_poly_t to screen in pretty format with variable named at x
+*/
+void F_mpz_poly_print_pretty(const F_mpz_poly_t poly, const char * x);
+
+/** 
+   \fn     int F_mpz_poly_fread(F_mpz_poly_t poly, FILE* f)
+   \brief  Reads F_mpz_poly_t from file stream f
+*/
+int F_mpz_poly_fread(F_mpz_poly_t poly, FILE* f);
+
+/**
+   \fn     void F_mpz_poly_print(F_mpz_poly_t poly)
+   \brief  Print a polynomial to stdout. Format is an integer
+           representing the length followed by 2 spaces, followed by 
+           a space separated list of coefficients, starting with the
+           constant term.
+*/
+static inline
+void F_mpz_poly_print(F_mpz_poly_t poly)
+{
+   mpz_poly_t m_poly;
+   mpz_poly_init(m_poly);
+   F_mpz_poly_to_mpz_poly(m_poly, poly);
+   mpz_poly_print(m_poly);
+   mpz_poly_clear(m_poly);
+}
 
 /*===============================================================================
 
@@ -527,7 +599,7 @@ void F_mpz_poly_scalar_mul_si(F_mpz_poly_t poly1, F_mpz_poly_t poly2, long x);
    \fn     void F_mpz_poly_scalar_mul(F_mpz_poly_t poly1, F_mpz_poly_t poly2, F_mpz_t x)
    \brief  Multiply poly2 by the F_mpz_t x and set poly1 to the result.
 */
-void F_mpz_poly_scalar_mul(F_mpz_poly_t poly1, F_mpz_poly_t poly2, F_mpz_t x);
+void F_mpz_poly_scalar_mul(F_mpz_poly_t poly1, const F_mpz_poly_t poly2, const F_mpz_t x);
 
 /*===============================================================================
 
@@ -711,6 +783,14 @@ void F_mpz_poly_unpack_bytes(F_mpz_poly_t res, F_mpz_poly_t poly, ulong n, ulong
 void F_mpz_poly_mul_classical(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2);
 
 /** 
+   \fn     void F_mpz_poly_mul_classical_trunc_left(F_mpz_poly_t res, 
+                       const F_mpz_poly_t poly1, const F_mpz_poly_t poly2, ulong trunc)
+   \brief  Multiply poly1 by poly2 and set res to the result but with the bottom trunc
+           terms zeroed.
+*/
+void F_mpz_poly_mul_classical_trunc_left(F_mpz_poly_t res, 
+                       const F_mpz_poly_t poly1, const F_mpz_poly_t poly2, ulong trunc);
+/** 
    \fn     void _F_mpz_poly_mul_kara_odd_even_recursive(F_mpz * out, F_mpz * in1, ulong len1, 
 					               F_mpz * in2, ulong len2, F_mpz * scratch, ulong skip, ulong crossover)
    \brief  Recursive portion of odd/even karatsuba multiplication.
@@ -748,32 +828,188 @@ void _F_mpz_poly_mul_kara_recursive(F_mpz_poly_t out, const F_mpz_poly_t in1, co
 void F_mpz_poly_mul_karatsuba(F_mpz_poly_t res, F_mpz_poly_t poly1, F_mpz_poly_t poly2);
 
 /** 
-   \fn     F_mpz_poly_mul_KS(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
+   \fn     void F_mpz_poly_mul_karatsuba_trunc_left(F_mpz_poly_t res, 
+                                           F_mpz_poly_t poly1, F_mpz_poly_t poly2)
+   \brief  Multiply poly1 by poly2 and set res to the result but with the bottom trunc
+           terms zeroed.
+*/
+void F_mpz_poly_mul_karatsuba_trunc_left(F_mpz_poly_t res, 
+                                            F_mpz_poly_t poly1, F_mpz_poly_t poly2, ulong trunc);
+/** 
+   \fn     void F_mpz_poly_mul_KS(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
 
    \brief  Multiply poly1 by poly2 using Kronecker segmentation and store the result in res.
 */
 void F_mpz_poly_mul_KS(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2);
 
 /** 
-   \fn     F_mpz_poly_mul_KS2(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
+   \fn     void F_mpz_poly_mul_KS2(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
 
    \brief  Multiply poly1 by poly2 using David Harvey's KS2 algorithm and store the result in res.
 */
 void F_mpz_poly_mul_KS2(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2);
 
 /** 
-   \fn     F_mpz_poly_mul_SS(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
+   \fn     void F_mpz_poly_mul_SS(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
    \brief  Multiply poly1 by poly2 and set res to the result, using the Schoenhage-Strassen 
 	        algorithm.
 */
 void F_mpz_poly_mul_SS(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2);
 
 /** 
-   \fn     F_mpz_poly_mul(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
+   \fn     void F_mpz_poly_mul(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
    \brief  Multiply poly1 by poly2 and set res to the result. An attempt is made to choose the 
 	        optimal algorithm.
 */
 void F_mpz_poly_mul(F_mpz_poly_t res, F_mpz_poly_t poly1, F_mpz_poly_t poly2);
+
+/** 
+   \fn     void F_mpz_poly_mul_trunc_left(F_mpz_poly_t res, F_mpz_poly_t poly1, 
+                                                 F_mpz_poly_t poly2, ulong trunc)
+   \brief  Multiply poly1 by poly2 and set res to the result. An attempt is made to choose the 
+	        optimal algorithm. The lower trunc coefficients of res will either be correct or
+           set to 0.
+*/
+void F_mpz_poly_mul_trunc_left(F_mpz_poly_t res, F_mpz_poly_t poly1, 
+                                              F_mpz_poly_t poly2, ulong trunc);
+
+/*===============================================================================
+
+	Division
+
+================================================================================*/
+
+/** 
+   \fn     void F_mpz_poly_divrem_basecase(F_mpz_poly_t Q, F_mpz_poly_t R, const F_mpz_poly_t A, const F_mpz_poly_t B)
+   \brief  Divide A by B and set R to the remainder, i.e. A = B*Q + R.
+*/
+void F_mpz_poly_divrem_basecase(F_mpz_poly_t Q, F_mpz_poly_t R, 
+                                const F_mpz_poly_t A, const F_mpz_poly_t B);
+
+/** 
+   \fn     void F_mpz_poly_div_basecase(F_mpz_poly_t Q, const F_mpz_poly_t A, const F_mpz_poly_t B)
+   \brief  Divide A by B computing quotient only, i.e. notionally find A = B*Q + R.
+*/
+static inline
+void F_mpz_poly_div_basecase(F_mpz_poly_t Q, 
+                             const F_mpz_poly_t A, const F_mpz_poly_t B)
+{
+   F_mpz_poly_divrem_basecase(Q, NULL, A, B);
+}
+
+/** 
+   \fn     void F_mpz_poly_div_divconquer_recursive(F_mpz_poly_t Q, F_mpz_poly_t BQ, 
+                                         const F_mpz_poly_t A, const F_mpz_poly_t B)
+   \brief  Divide A by B computing the quotient Q and product of B and Q.
+*/
+void F_mpz_poly_div_divconquer_recursive(F_mpz_poly_t Q, F_mpz_poly_t BQ, 
+                                         const F_mpz_poly_t A, const F_mpz_poly_t B);
+
+/** 
+   \fn     void F_mpz_poly_div_divconquer_recursive(F_mpz_poly_t Q, F_mpz_poly_t BQ, 
+                                         const F_mpz_poly_t A, const F_mpz_poly_t B)
+   \brief  Divide A by B computing the quotient Q and remainder R such that A = BQ + R.
+*/
+void F_mpz_poly_divrem_divconquer(F_mpz_poly_t Q, F_mpz_poly_t R, 
+                                  const F_mpz_poly_t A, const F_mpz_poly_t B);
+
+/*===============================================================================
+
+	Division without remainder
+
+================================================================================*/
+
+/** 
+   \fn     void F_mpz_poly_div_divconquer_recursive(F_mpz_poly_t Q, F_mpz_poly_t BQ, 
+                                         const F_mpz_poly_t A, const F_mpz_poly_t B)
+   \brief  Divide A by B computing the quotient Q and remainder R such that A = BQ + R,
+           but R will be set to contain only the low B->length - 1 terms of the full
+           remainder.
+*/
+void F_mpz_poly_divrem_basecase_low(F_mpz_poly_t Q, F_mpz_poly_t R, 
+                                    const F_mpz_poly_t A, const F_mpz_poly_t B);
+
+/** 
+   \fn     void F_mpz_poly_div_divconquer_recursive_low(F_mpz_poly_t Q, F_mpz_poly_t BQ, 
+                                         const F_mpz_poly_t A, const F_mpz_poly_t B)
+   \brief  Divide A by B computing the quotient Q and the low B->length - 1 limbs
+           of the product of B and Q.
+*/
+void F_mpz_poly_div_divconquer_recursive_low(F_mpz_poly_t Q, F_mpz_poly_t BQ, 
+                                         const F_mpz_poly_t A, const F_mpz_poly_t B);
+
+/** 
+   \fn     void F_mpz_poly_div_divconquer(F_mpz_poly_t Q, const F_mpz_poly_t A, 
+                                                               const F_mpz_poly_t B)
+   \brief  Divide A by B computing quotient Q only, i.e. notionally find A = B*Q + R.
+*/
+void F_mpz_poly_div_divconquer(F_mpz_poly_t Q, const F_mpz_poly_t A, 
+                                                               const F_mpz_poly_t B);
+
+/** 
+   \fn     void F_mpz_poly_div(F_mpz_poly_t Q, const F_mpz_poly_t A, 
+                                                               const F_mpz_poly_t B)
+   \brief  Divide A by B computing quotient Q only, i.e. notionally find A = B*Q + R.
+*/
+static inline
+void F_mpz_poly_div(F_mpz_poly_t Q, const F_mpz_poly_t A, const F_mpz_poly_t B)
+{
+   F_mpz_poly_div_divconquer(Q, A, B);
+}
+
+/*===============================================================================
+
+	Exact division
+
+================================================================================*/
+
+/** 
+   \fn     void F_mpz_poly_div(F_mpz_poly_t Q, const F_mpz_poly_t A, const ulong a_len, 
+                                              const F_mpz_poly_t B, const ulong b_len)
+   \brief  Divide A by B computing quotient Q only, i.e. notionally find A = B*Q + R,
+           assuming that the division is exact and treating A as a polynomial of length
+           a_len and B as a polynomial of length b_len.
+*/
+void F_mpz_poly_div_hensel(F_mpz_poly_t Q, const F_mpz_poly_t A, const ulong a_len, 
+                                            const F_mpz_poly_t B, const ulong b_len);
+
+/** 
+   \fn     void F_mpz_poly_divexact(F_mpz_poly_t Q, const F_mpz_poly_t A, 
+                                                                const F_mpz_poly_t B)
+   \brief  Divide A by B computing quotient Q only, i.e. notionally find A = B*Q + R,
+           assuming that the division is exact.
+*/
+void F_mpz_poly_divexact(F_mpz_poly_t Q, const F_mpz_poly_t A, const F_mpz_poly_t B);
+
+/*===============================================================================
+
+	Pseudo division
+
+================================================================================*/
+
+/** 
+   \fn     void F_mpz_poly_pseudo_divrem_basecase(F_mpz_poly_t Q, F_mpz_poly_t R, 
+                            ulong * d, const F_mpz_poly_t A, const F_mpz_poly_t B)
+   \brief  Pseudo division of A by B. Returns Q, R and d such that l^d A = QB + R 
+           for some R of length less than B, where l is the leading coefficient of 
+           B.
+*/
+void F_mpz_poly_pseudo_divrem_basecase(F_mpz_poly_t Q, F_mpz_poly_t R, 
+                            ulong * d, const F_mpz_poly_t A, const F_mpz_poly_t B);
+
+/** 
+   \fn     void F_mpz_poly_pseudo_div_basecase(F_mpz_poly_t Q, F_mpz_poly_t R, 
+                            ulong * d, const F_mpz_poly_t A, const F_mpz_poly_t B)
+   \brief  Pseudo division of A by B. Returns Q and d such that l^d A = QB + R 
+           for some R of length less than B, where l is the leading coefficient 
+           of B.
+*/
+static inline
+void F_mpz_poly_pseudo_div_basecase(F_mpz_poly_t Q,  
+                            ulong * d, const F_mpz_poly_t A, const F_mpz_poly_t B)
+{
+   F_mpz_poly_pseudo_divrem_basecase(Q, NULL, d, A, B);
+}
 
 #ifdef __cplusplus
  }
