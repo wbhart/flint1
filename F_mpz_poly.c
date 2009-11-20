@@ -403,11 +403,6 @@ void F_mpz_poly_fprint_pretty(const F_mpz_poly_t poly, FILE* f, const char * x)
    free(s);
 }
 
-void F_mpz_poly_print(const F_mpz_poly_t poly)
-{
-   F_mpz_poly_fprint(poly, stdout);
-}
-
 void F_mpz_poly_print_pretty(const F_mpz_poly_t poly, const char * x)
 {
    F_mpz_poly_fprint_pretty(poly, stdout, x);
@@ -917,7 +912,7 @@ void F_mpz_poly_scalar_mul_si(F_mpz_poly_t poly1, F_mpz_poly_t poly2, long x)
 	_F_mpz_poly_set_length(poly1, poly2->length);
 }
 
-void F_mpz_poly_scalar_mul(F_mpz_poly_t poly1, F_mpz_poly_t poly2, F_mpz_t x)
+void F_mpz_poly_scalar_mul(F_mpz_poly_t poly1, const F_mpz_poly_t poly2, const F_mpz_t x)
 {
 	// either scalar or input poly is zero
 	if ((*x == 0) || (poly2->length == 0)) 
@@ -1097,6 +1092,97 @@ void F_mpz_poly_mul_classical(F_mpz_poly_t res, const F_mpz_poly_t poly1, const 
 		F_mpz_poly_clear(output);
 	} else // ordinary case
 		_F_mpz_poly_mul_classical(res, poly1, poly2);
+}
+
+void _F_mpz_poly_mul_classical_trunc_left(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2, ulong trunc)
+{
+   ulong len1 = poly1->length;
+   ulong len2 = poly2->length;
+   ulong start;
+   long i;
+
+   if ((len1 == 0) || (len2 == 0) || (trunc >= len1 + len2 - 1))
+   {
+      res->length = 0;
+      return;
+   }
+   
+   if ((len1 == 1) && (len2 == 1)) // Special case if the length of both inputs is 1
+   {
+      F_mpz_mul2(res->coeffs, poly1->coeffs, poly2->coeffs);      
+   } else // Ordinary case
+   {
+      long j;
+      
+      // Set res[i] = poly1[i]*poly2[0] 
+      if (poly2->coeffs[0])
+			for (i = trunc; i < len1; i++)
+            F_mpz_mul2(res->coeffs + i, poly1->coeffs + i, poly2->coeffs);
+		else 
+			for (i = trunc; i < len1; i++)
+            F_mpz_zero(res->coeffs + i);
+
+      // Set res[i+len1-1] = in1[len1-1]*in2[i]
+      if (len1 > trunc) start = 1;
+      else start = trunc - len1 + 1;
+
+      if (poly1->coeffs[len1 - 1])
+		   for (i = start; i < len2; i++)
+            F_mpz_mul2(res->coeffs + i + len1 - 1, poly1->coeffs + len1 - 1, poly2->coeffs + i);  
+		else 
+         for (i = start; i < len2; i++)
+            F_mpz_zero(res->coeffs + i + len1 - 1);
+      
+      // out[i+j] += in1[i]*in2[j] 
+      for (i = 0; i < len1 - 1; i++)
+      {      
+         F_mpz c = poly1->coeffs[i];
+			if (c)
+			{
+				if (trunc > i) start = trunc - i;
+            else start = 1;
+            
+            if (!COEFF_IS_MPZ(c))
+				{
+					if (c < 0L) 
+						for (j = start; j < len2; j++)
+                     F_mpz_submul_ui(res->coeffs + i + j, poly2->coeffs + j, -c);
+					else
+                  for (j = start; j < len2; j++)
+						   F_mpz_addmul_ui(res->coeffs + i + j, poly2->coeffs + j, c);
+				} else
+					for (j = start; j < len2; j++)
+                  F_mpz_addmul(res->coeffs + i + j, poly1->coeffs + i, poly2->coeffs + j);
+			}
+      }
+   } 
+      
+   for (i = 0; i < FLINT_MIN(trunc, len1 + len2 - 1); i++)
+      F_mpz_zero(res->coeffs + i);
+      
+   res->length = len1 + len2 - 1;
+   if (trunc >= len1 + len2 - 1) _F_mpz_poly_normalise(res);   
+}
+
+void F_mpz_poly_mul_classical_trunc_left(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2, ulong trunc)
+{
+	if ((poly1->length == 0) || (poly2->length == 0)) // special case if either poly is zero
+   {
+      F_mpz_poly_zero(res);
+      return;
+   }
+
+   F_mpz_poly_fit_length(res, poly1->length + poly2->length - 1);
+   
+	if ((poly1 == res) || (poly2 == res)) // aliased input and output
+	{
+		F_mpz_poly_t output; // create temporary
+		F_mpz_poly_init2(output, poly1->length + poly2->length - 1);
+		_F_mpz_poly_mul_classical_trunc_left(output, poly1, poly2, trunc);
+		F_mpz_poly_swap(output, res); // swap temporary with real output
+		F_mpz_poly_clear(output);
+	} else // ordinary case
+		_F_mpz_poly_mul_classical_trunc_left(res, poly1, poly2, trunc);
 }
 
 /*===============================================================================
@@ -1425,7 +1511,7 @@ void _F_mpz_poly_mul_karatsuba_odd_even(F_mpz_poly_t res, F_mpz_poly_t poly1,
       _F_mpz_poly_mul_kara_odd_even_recursive(res->coeffs, poly1->coeffs, poly1->length,
             poly2->coeffs, poly2->length, scratch->coeffs, 1, crossover);
 
-		_F_mpz_poly_set_length(res, length);
+		res->length = length;
    }
    
    F_mpz_poly_clear(scratch);
@@ -1509,6 +1595,288 @@ void F_mpz_poly_mul_karatsuba(F_mpz_poly_t res, F_mpz_poly_t poly1,
       _F_mpz_poly_mul_karatsuba_odd_even(res, poly2, poly1);
 	else
 		_F_mpz_poly_mul_karatsuba(res, poly1, poly2);
+}
+
+void _F_mpz_poly_karatrunc_left_recursive(F_mpz_poly_t res, const F_mpz_poly_t a, const F_mpz_poly_t b, F_mpz_poly_t scratch, const ulong crossover, const ulong trunc)
+{
+   F_mpz_poly_t temp, temp2;
+   
+   long non_zero = a->length + b->length - trunc - 1;
+   
+   if (non_zero <= 0)
+   {
+      for (long i = 0; i < (long) (a->length + b->length - 1); i++)
+         F_mpz_zero(res->coeffs + i);
+      
+      res->length = 0;
+
+      return;
+   }
+   
+   if ((a->length <= 1) || (b->length <= 1) || (non_zero == 1)) 
+   {
+      _F_mpz_poly_mul_classical_trunc_left(res, a, b, trunc);
+      return;
+   }
+   
+   if ((a->length == 2 && b->length == 2) && (crossover < 4) && (!trunc)) 
+   {
+      F_mpz_mul2(res->coeffs, a->coeffs, b->coeffs); 
+         
+      F_mpz_add(scratch->coeffs, a->coeffs, a->coeffs + 1);
+      F_mpz_add(scratch->coeffs + 1, b->coeffs, b->coeffs + 1);
+         
+      F_mpz_mul2(res->coeffs + 2, a->coeffs + 1, b->coeffs + 1); 
+         
+      F_mpz_mul2(res->coeffs + 1, scratch->coeffs, scratch->coeffs + 1); 
+         
+      F_mpz_sub(res->coeffs + 1, res->coeffs + 1, res->coeffs);
+      F_mpz_sub(res->coeffs + 1, res->coeffs + 1, res->coeffs + 2);
+      
+            
+      res->length = a->length + b->length - 1;
+      
+      return;
+   }
+   
+   if ((a->length + b->length <= crossover) || ((a->length == 2) && (b->length == 2)))
+   {
+      _F_mpz_poly_mul_classical_trunc_left(res, a, b, trunc);
+      
+      return;
+   }   
+        
+   F_mpz_poly_t a1, a2, b1, b2;
+      
+   ulong l2 = 0;
+   ulong old_length;
+     
+   ulong m = (a->length + 1)/2;
+   _F_mpz_poly_attach_truncate(a1, a, m);
+   _F_mpz_poly_attach_shift(a2, a, m);
+   
+   if (m < b->length) //ordinary case
+   {
+      /*
+         (a1+a2*x)*(b1+b2*x) = a1*b1 + a2*b2*x^2 + (a1+a2)*(b1+b2)*x-a1*b1*x-a2*b2*x;
+      */
+      
+      _F_mpz_poly_attach_truncate(b1, b, m);
+      _F_mpz_poly_attach_shift(b2, b, m);
+   
+      /* 
+         from 0 for a1->length + b1->length - 1 will be directly written to, 
+         as will all coeffs from 2*m onwards.
+      */
+      ulong start = a1->length + b1->length - 1;
+      if (!a1->length || !b1->length) start = 0;
+      for (ulong i = start; i < 2*m; i++)
+         F_mpz_zero(res->coeffs + i);
+  
+      F_mpz_poly_t asum, bsum, prodsum, scratch2;
+     
+      asum->length = m;
+      asum->coeffs = scratch->coeffs;
+      
+      bsum->length = m;
+      bsum->coeffs = scratch->coeffs + m;
+      
+      prodsum->length = 2*m - 1;
+      prodsum->coeffs = scratch->coeffs + 2*m;    
+
+      /*
+         (a1+a2*x)*(b1+b2*x) = a1*b1 + a2*b2*x^2 + (a1+a2)*(b1+b2)*x-a1*b1*x-a2*b2*x;
+      */
+      
+      // res_lo = a1*b1
+      if (trunc > m) 
+      {
+         if (a1->length >= b1->length) _F_mpz_poly_karatrunc_left_recursive(res, a1, b1, scratch, crossover, trunc - m);
+         else _F_mpz_poly_karatrunc_left_recursive(res, b1, a1, scratch, crossover, trunc - m);
+      }
+      else 
+      {
+         if (a1->length >= b1->length) _F_mpz_poly_karatrunc_left_recursive(res, a1, b1, scratch, crossover, 0);
+         else _F_mpz_poly_karatrunc_left_recursive(res, b1, a1, scratch, crossover, 0);
+      }
+
+      // res_hi = a2*b2
+      temp->coeffs = res->coeffs + 2*m;
+      
+      if (trunc > 2*m) _F_mpz_poly_karatrunc_left_recursive(temp, a2, b2, scratch, crossover, trunc - 2*m);
+      else _F_mpz_poly_karatrunc_left_recursive(temp, a2, b2, scratch, crossover, 0);
+      
+      if (trunc < 3*m - 1)
+      {
+         // asum = a1+a2
+         _F_mpz_poly_add(asum, a1, a2);
+         // bsum = b1+b2
+         _F_mpz_poly_add(bsum, b1, b2);
+         // prodsum = asum*bsum
+         
+         scratch2->coeffs = scratch->coeffs + 4*m - 1;
+         
+         if (trunc > m) 
+         {
+            if (asum->length > bsum->length) _F_mpz_poly_karatrunc_left_recursive(prodsum, asum, bsum, scratch2, crossover, trunc - m);
+            else _F_mpz_poly_karatrunc_left_recursive(prodsum, bsum, asum, scratch2, crossover, trunc - m);
+         } else 
+         {
+            if (asum->length > bsum->length) _F_mpz_poly_karatrunc_left_recursive(prodsum, asum, bsum, scratch2, crossover, 0);
+            else _F_mpz_poly_karatrunc_left_recursive(prodsum, bsum, asum, scratch2, crossover, 0);
+         }
+
+         for (long i = prodsum->length; i < 2*m - 1; i++)
+            F_mpz_zero(prodsum->coeffs + i);
+               
+         // prodsum = prodsum - res_lo
+         temp->coeffs = res->coeffs;
+         temp->length = 2*m - 1;
+         _F_mpz_poly_sub(prodsum, prodsum, temp);
+       
+         // prodsum = prodsum - res_hi
+         temp->coeffs = res->coeffs + 2*m;
+         temp->length = a2->length + b2->length - 1;
+         _F_mpz_poly_sub(prodsum, prodsum, temp);
+      
+         // res_mid += prodsum
+         temp->coeffs = res->coeffs + m;
+         temp->length = prodsum->length;
+         _F_mpz_poly_add(temp, temp, prodsum);     
+      }
+      
+      res->length = a->length + b->length - 1;
+      
+   } else 
+   {
+      F_mpz_poly_t scratch2, temp1; 
+
+      while ((1<<l2) < m) l2++;
+      if ((1<<l2) < a->length) m = (1<<l2);
+      
+      _F_mpz_poly_attach_truncate(a1, a, m);
+      _F_mpz_poly_attach_shift(a2, a, m);
+      
+      /* 
+         from 0 for a1->length + b->length - 1 will be directly written to.
+      */
+      ulong start = a1->length + b->length - 1;
+      if (!a1->length) start = 0;
+      for (ulong i = start; i < a->length + b->length - 1; i++)
+         F_mpz_zero(res->coeffs + i);
+  
+      // res_lo = a1*b
+      if (trunc < a1->length + b->length - 1) 
+      {
+         if (a1->length >= b->length) _F_mpz_poly_karatrunc_left_recursive(res, a1, b, scratch, crossover, trunc);
+         else _F_mpz_poly_karatrunc_left_recursive(res, b, a1, scratch, crossover, trunc);
+      }
+
+      //temp = a2*b
+      temp->coeffs = scratch->coeffs;
+      temp->length = a2->length + b->length - 1;
+      
+      scratch2->coeffs = scratch->coeffs + temp->length;
+      
+      if (trunc > m)
+      {
+         if (b->length <= a2->length) _F_mpz_poly_karatrunc_left_recursive(temp, a2, b, scratch2, crossover, trunc - m);
+         else _F_mpz_poly_karatrunc_left_recursive(temp, b, a2, scratch2, crossover, trunc - m);
+      } else
+      {
+         if (b->length <= a2->length) _F_mpz_poly_karatrunc_left_recursive(temp, a2, b, scratch2, crossover, 0);
+         else _F_mpz_poly_karatrunc_left_recursive(temp, b, a2, scratch2, crossover, 0);
+      }
+      
+      // res_mid += temp
+      temp1->coeffs = res->coeffs + m;
+      temp1->length = temp->length;
+      
+      _F_mpz_poly_add(temp1, temp1, temp); 
+  
+      res->length = a->length + b->length - 1;
+   } 
+   
+   for (ulong i = 0; i < trunc; i++)
+      F_mpz_zero(res->coeffs + i);  
+}
+
+void _F_mpz_poly_mul_karatsuba_trunc_left(F_mpz_poly_t output, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2, ulong trunc)
+{
+   if ((poly1->length == 0) || (poly2->length == 0)) 
+   {
+      F_mpz_poly_zero(output);
+      return;
+   }
+   
+   if ((poly1->length <= 1) || (poly2->length <= 1)) // too short for karatsuba
+   {
+      F_mpz_poly_mul_classical_trunc_left(output, poly1, poly2, trunc);
+      
+      return;
+   }
+	
+	ulong crossover;
+
+   ulong limbs1 = F_mpz_poly_max_limbs(poly1);
+   ulong limbs2 = F_mpz_poly_max_limbs(poly2);
+
+   if (limbs1 + limbs2 >= 19) crossover = 0;
+   else crossover = 19 - limbs1 - limbs2;
+
+	if (poly1->length + poly2->length <= crossover) // too short for karatsuba
+   {
+      F_mpz_poly_mul_classical_trunc_left(output, poly1, poly2, trunc);
+      
+      return;
+   }
+   
+	F_mpz_poly_t scratch;
+   F_mpz_poly_init2(scratch, 5*poly1->length);
+   
+	if (output == poly1 || output == poly2)
+   {
+      // output is inplace, so need a temporary
+      F_mpz_poly_t temp;
+      F_mpz_poly_init2(temp, poly1->length + poly2->length - 1);
+      _F_mpz_poly_karatrunc_left_recursive(temp, poly1, poly2, scratch, crossover, trunc);
+
+      F_mpz_poly_swap(temp, output);
+      F_mpz_poly_clear(temp);
+   }
+   else
+   {
+      // output not inplace
+      
+      _F_mpz_poly_karatrunc_left_recursive(output, poly1, poly2, scratch, crossover, trunc);
+   }
+
+	F_mpz_poly_clear(scratch);
+}
+
+void F_mpz_poly_mul_karatsuba_trunc_left(F_mpz_poly_t res, F_mpz_poly_t poly1,
+                              F_mpz_poly_t poly2, ulong trunc)
+{
+   if (!poly1->length || !poly2->length)
+   {
+      // one of the polys is zero
+      F_mpz_poly_zero(res);
+      return;
+   }
+   
+   /*if (poly1 == poly2)
+   {
+      // polys are identical, call specialised squaring routine
+      F_mpz_poly_sqr_karatsuba_trunc_left(res, poly1, trunc);
+      return;
+   }*/
+
+   F_mpz_poly_fit_length(res, poly1->length + poly2->length - 1);
+	// rearrange parameters to make poly1 no longer than poly2
+   if (poly1->length >= poly2->length)
+      _F_mpz_poly_mul_karatsuba_trunc_left(res, poly1, poly2, trunc);
+	else 
+      _F_mpz_poly_mul_karatsuba_trunc_left(res, poly2, poly1, trunc);
 }
 
 /*===============================================================================
@@ -3172,7 +3540,7 @@ void _F_mpz_poly_mul_KS(F_mpz_poly_t output, const F_mpz_poly_t input1, const F_
       bits = FLINT_ABS(bits1) + FLINT_ABS(bits2) + log_length + sign; // total number of output bits
       if (bits - sign <= FLINT_BITS - 2) bitpack = 1; // we want output bits to fit into a small F_mpz for bitpacking
 	}
-
+   
 	ulong bytes = ((bits - 1)>>3) + 1; // otherwise we byte pack with this number of bytes per output coefficient
    
    mp_limb_t * int1, * int2, * int3;
@@ -3249,7 +3617,10 @@ void _F_mpz_poly_mul_KS(F_mpz_poly_t output, const F_mpz_poly_t input1, const F_
 	}
 	
    if (input1 == input2) // aliased inputs
+   {
       int2 = int1;
+      n2 = n1;
+   }
    
    int3 = (mp_limb_t *) flint_stack_alloc(n1 + n2); // allocate space for product large integer
 	        
@@ -3841,6 +4212,1312 @@ void F_mpz_poly_mul(F_mpz_poly_t res, F_mpz_poly_t poly1, F_mpz_poly_t poly2)
 	}		
 }
 
+void _F_mpz_poly_mul_trunc_left(F_mpz_poly_t output, F_mpz_poly_t input1, F_mpz_poly_t input2, ulong trunc)
+{
+   if ((input1->length == 0) || (input2->length == 0) || (input1->length + input2->length <= trunc + 1)) // special case, length == 0
+   {
+      F_mpz_poly_zero(output);
+      return;
+   }
+
+   if ((input1->length <= 2) && (input2->length <= 2)) // karatsuba seems to be unconditionally faster
+   {
+      _F_mpz_poly_mul_karatsuba_trunc_left(output, input1, input2, trunc);
+      return;
+   }
+   
+	if (input1->length + input2->length <= 128) // we don't want to check max limbs or max bits more than once
+	{
+	   ulong limbs1 = F_mpz_poly_max_limbs(input1);
+      ulong limbs2 = F_mpz_poly_max_limbs(input2);
+
+      if (limbs1 + limbs2 <= 512/FLINT_BITS)
+      {
+         _F_mpz_poly_mul_KS(output, input1, input2, 0);
+         return;
+      }
+   
+      if (input1->length + input2->length <= 32) 
+      {
+         _F_mpz_poly_mul_karatsuba_trunc_left(output, input1, input2, trunc);
+         return;
+      }
+	}
+   
+   long bits2 = F_mpz_poly_max_bits(input2);
+   long bits1 = (input1 == input2) ? bits2 : F_mpz_poly_max_bits(input1);
+   
+   ulong sign = ((bits1 < 0) || (bits2 < 0)); // an extra bit if any coefficients are signed
+   ulong length = input2->length; // length of shortest poly
+   ulong log_length = 0L;
+   while ((1<<log_length) < length) log_length++;
+   ulong bits = FLINT_ABS(bits1) + FLINT_ABS(bits2) + log_length + sign; // total number of output bits
+   if (sign) bits = -bits; // coefficients are signed
+
+   bits1 = FLINT_ABS(bits1);
+   bits2 = FLINT_ABS(bits2);
+
+	if (bits1 + bits2 <= 470)
+   {
+      _F_mpz_poly_mul_KS(output, input1, input2, bits);
+      return;
+   }
+   
+   if (3*(bits1 + bits2) >= input1->length + input2->length) // the "diagonal"
+   {
+      _F_mpz_poly_mul_SS(output, input1, input2, bits);
+      return;
+   } 
+   
+   _F_mpz_poly_mul_KS(output, input1, input2, bits);     
+}
+
+void F_mpz_poly_mul_trunc_left(F_mpz_poly_t res, F_mpz_poly_t poly1, F_mpz_poly_t poly2, ulong trunc)
+{
+   if ((poly1->length == 0) || (poly2->length == 0) || (poly1->length + poly2->length <= trunc + 1)) // special case if either poly is zero
+   {
+      F_mpz_poly_zero(res);
+      return;
+   }
+
+	if ((poly1 == res) || (poly2 == res)) // aliased inputs
+	{
+		F_mpz_poly_t output; // create temporary
+		F_mpz_poly_init2(output, poly1->length + poly2->length - 1);
+		if (poly1->length >= poly2->length) _F_mpz_poly_mul_trunc_left(output, poly1, poly2, trunc);
+		else _F_mpz_poly_mul_trunc_left(output, poly2, poly1, trunc);
+		F_mpz_poly_swap(output, res); // swap temporary with real output
+		F_mpz_poly_clear(output);
+	} else // ordinary case
+	{
+		F_mpz_poly_fit_length(res, poly1->length + poly2->length - 1);
+      if (poly1->length >= poly2->length) _F_mpz_poly_mul_trunc_left(res, poly1, poly2, trunc);
+		else _F_mpz_poly_mul_trunc_left(res, poly2, poly1, trunc);
+	}		
+}
+/*===============================================================================
+
+	Division with remainder
+
+================================================================================*/
+
+void F_mpz_poly_divrem_basecase(F_mpz_poly_t Q, F_mpz_poly_t R, const F_mpz_poly_t A, const F_mpz_poly_t B)
+{
+   if (B->length == 0)
+   {
+      printf("Exception : Divide by zero in F_mpz_poly_divrem_basecase.\n");
+      abort();
+   }
+   
+   ulong coeff = A->length;
+   ulong B_length = B->length;
+
+   F_mpz_poly_t qB;
+   
+   F_mpz * coeffs_A = A->coeffs;
+   F_mpz * coeffs_B = B->coeffs;
+   F_mpz * B_lead = coeffs_B + B_length - 1; 
+   F_mpz * coeff_Q;
+   F_mpz * coeffs_R;
+
+   int want_rem = 1;
+   F_mpz_poly_struct Rs;
+   if (R == NULL) 
+   {
+      want_rem = 0;
+      R = &Rs;
+      F_mpz_poly_init(R);
+   }
+
+   while (coeff >= B_length)
+   {
+      if (F_mpz_cmpabs(coeffs_A + coeff - 1, B_lead) >= 0) break;
+      else coeff--;   
+   }
+   
+   if (want_rem) F_mpz_poly_set(R, A);
+   
+   if (coeff >= B_length)
+   {
+      F_mpz_poly_fit_length(Q, coeff - B_length + 1);    
+      Q->length = coeff - B_length + 1;
+   } else 
+   {
+      F_mpz_poly_zero(Q);
+      return;
+   }
+    
+   if (!want_rem) 
+   {
+      F_mpz_poly_fit_length(R, coeff);
+      R->length = coeff;
+      for (ulong i = B_length - 1; i < coeff; i++)
+         F_mpz_set(R->coeffs + i, A->coeffs + i);
+   }
+   
+   coeffs_R = R->coeffs; 
+
+   F_mpz_poly_t Bsub;
+   if (want_rem) _F_mpz_poly_attach(Bsub, B);
+   else _F_mpz_poly_attach_truncate(Bsub, B, B_length - 1);
+   ulong Bsub_length = B_length;
+   
+   F_mpz_poly_init2(qB, B_length);
+   while (coeff >= B_length)
+   {
+      coeff_Q = Q->coeffs + coeff - B_length;
+
+      if (F_mpz_cmpabs(coeffs_R + coeff - 1, B_lead) < 0) F_mpz_zero(coeff_Q);
+      else
+      {
+         F_mpz_fdiv_q(coeff_Q, coeffs_R + coeff - 1, B_lead);
+         
+         F_mpz_poly_scalar_mul(qB, Bsub, coeff_Q); 
+         
+         coeffs_R = R->coeffs;
+         
+         F_mpz_poly_t R_sub;
+         R_sub->coeffs = coeffs_R + coeff - Bsub_length;
+         R_sub->length = Bsub->length;
+         _F_mpz_poly_sub(R_sub, R_sub, qB);
+      }
+      
+      if ((!want_rem) && (Bsub->length >= coeff - B_length + 1))
+      {
+         Bsub->coeffs++;
+         Bsub->length--;
+         Bsub_length--;
+      }
+      
+      coeff--;
+   }
+         
+   F_mpz_poly_clear(qB);
+   
+   if (want_rem) _F_mpz_poly_normalise(R);
+}
+
+void F_mpz_poly_div_divconquer_recursive(F_mpz_poly_t Q, F_mpz_poly_t BQ, const F_mpz_poly_t A, const F_mpz_poly_t B)
+{
+   if (A->length < B->length)
+   {
+      F_mpz_poly_zero(Q);
+      F_mpz_poly_zero(BQ);
+
+      return;
+   }
+   
+   // A->length is now >= B->length
+   
+   ulong crossover = 16;
+   ulong crossover2 = 128;
+   
+   if (A->length - B->length + 1 <= crossover) 
+   {
+      /*
+         Use the classical algorithm to compute the
+         quotient and remainder, then use A - R to compute BQ
+      */
+      
+      F_mpz_poly_t Rb;
+      F_mpz_poly_init(Rb);
+      F_mpz_poly_divrem_basecase(Q, Rb, A, B);
+      F_mpz_poly_fit_length(BQ, A->length);
+      F_mpz_poly_sub(BQ, A, Rb);
+      F_mpz_poly_clear(Rb);
+      
+      return;
+   }
+   
+   F_mpz_poly_t d1, d2, d3, d4, p1, q1, q2, dq1, dq2, d1q1, d2q1, d2q2, d1q2, t, temp;
+   
+   ulong n1 = (B->length + 1)/2;
+   ulong n2 = B->length - n1;
+   
+   /* We let B = d1*x^n2 + d2 */
+   
+   _F_mpz_poly_attach_shift(d1, B, n2);
+   _F_mpz_poly_attach_truncate(d2, B, n2);
+   _F_mpz_poly_attach_shift(d3, B, n1);
+   _F_mpz_poly_attach_truncate(d4, B, n1);
+   
+   if (A->length < 2*B->length - 1)
+   {
+      /* Convert unbalanced division into a 2*q - 1 by q division */
+      F_mpz_poly_t t_A, t_B, t_B2;
+      
+      ulong q = A->length - B->length + 1;
+      ulong q2 = B->length - q;
+
+      _F_mpz_poly_attach_shift(t_A, A, A->length - 2*q + 1);
+      _F_mpz_poly_attach_shift(t_B, B, q2);
+      _F_mpz_poly_attach_truncate(t_B2, B, q2);
+      
+      F_mpz_poly_init(d1q1);
+      F_mpz_poly_div_divconquer_recursive(Q, d1q1, t_A, t_B); 
+      
+      /*
+         Compute d2q1 = Q*t_B2
+         It is of length q2*q terms
+      */
+      
+      F_mpz_poly_init(d2q1);
+      F_mpz_poly_mul(d2q1, Q, t_B2);
+      
+      /*
+         Compute BQ = d1q1*x^n1 + d2q1
+         It has length at most n1+n2-1
+      */
+      
+      F_mpz_poly_fit_length(BQ, FLINT_MAX(d1q1->length + B->length - q, d2q1->length));
+      F_mpz_poly_left_shift(BQ, d1q1, B->length - q);
+      F_mpz_poly_clear(d1q1);
+      _F_mpz_poly_add(BQ, BQ, d2q1);
+      F_mpz_poly_clear(d2q1);
+            
+      return;   
+   } 
+   
+   if (A->length > 2*B->length - 1)
+   {
+      // We shift A right until it is length 2*B->length -1
+      // We call this polynomial p1
+      
+      ulong shift = A->length - 2*B->length + 1;
+      _F_mpz_poly_attach_shift(p1, A, shift);
+      
+      /* 
+         Set q1 to p1 div B 
+         This is a 2*B->length-1 by B->length division so 
+         q1 ends up being at most length B->length
+         d1q1 = d1*q1 is length at most 2*B->length-1
+      */
+      
+      F_mpz_poly_init(d1q1);
+      F_mpz_poly_init(q1);
+      
+      F_mpz_poly_div_divconquer_recursive(q1, d1q1, p1, B); 
+       
+      /* 
+         Compute dq1 = d1*q1*x^shift
+         dq1 is then of length at most A->length
+         dq1 is normalised since d1q1 was
+      */
+   
+      F_mpz_poly_init(dq1);
+      
+      F_mpz_poly_fit_length(dq1, d1q1->length + shift);
+      F_mpz_poly_left_shift(dq1, d1q1, shift);
+      F_mpz_poly_clear(d1q1);
+      
+      /*
+         Compute t = A - dq1 
+         The first B->length coefficients cancel
+         if the division is exact, leaving
+          A->length - B->length significant terms
+         otherwise we truncate at this length 
+      */
+   
+      F_mpz_poly_init(t);
+      F_mpz_poly_sub(t, A, dq1);
+      F_mpz_poly_truncate(t, A->length - B->length);
+      
+      /*
+         Compute q2 = t div B
+         It is a smaller division than the original 
+         since t->length <= A->length-B->length
+      */
+   
+      F_mpz_poly_init(q2);
+      F_mpz_poly_init(dq2);
+      F_mpz_poly_div_divconquer_recursive(q2, dq2, t, B); 
+      F_mpz_poly_clear(t);  
+      
+      /*
+         Write out Q = q1*x^shift + q2
+         Q has length at most B->length+shift
+         Note q2 has length at most shift since 
+         at most it is an A->length-B->length 
+         by B->length division
+      */
+   
+      F_mpz_poly_fit_length(Q, FLINT_MAX(q1->length + shift, q2->length));
+      
+      F_mpz_poly_left_shift(Q, q1, shift);
+      F_mpz_poly_clear(q1);
+      F_mpz_poly_add(Q, Q, q2);
+      F_mpz_poly_clear(q2);
+      
+      /*
+         Write out BQ = dq1 + dq2
+      */
+      
+      F_mpz_poly_fit_length(BQ, FLINT_MAX(dq1->length, dq2->length));
+      
+      F_mpz_poly_add(BQ, dq1, dq2);
+      F_mpz_poly_clear(dq1);
+      F_mpz_poly_clear(dq2);
+      
+      return;
+   } 
+   
+   // n2 + B->length - 1 < A->length <= n1 + n2 + B->length - 1
+    
+   /* 
+      We let A = a1*x^(n1+2*n2-1) + a2*x^(n1+n2-1) + a3 
+      where a1 is length at most n1 (and at least 1), 
+      a2 is length n2 and a3 is length n1+n2-1 
+      We set p1 = a1*x^(n1-1)+ other terms, so it has 
+      length at most 2*n1-1 
+   */
+      
+   _F_mpz_poly_attach_shift(p1, A, 2*n2);
+      
+   /* 
+      Set q1 to p1 div d1 
+      This is at most a 2*n1-1 by n1 division so 
+      q1 ends up being at most length n1
+      d1q1 = d1*q1 is length at most 2*n1-1
+   */
+      
+   F_mpz_poly_init(d1q1);
+   F_mpz_poly_init(q1);
+   F_mpz_poly_div_divconquer_recursive(q1, d1q1, p1, d1); 
+   
+   /* 
+      Compute d2q1 = d2*q1 
+      which ends up being at most length n1+n2-1
+   */  
+   
+   F_mpz_poly_init(d2q1);
+   F_mpz_poly_mul(d2q1, d2, q1);
+   
+   /* 
+      Compute dq1 = d1*q1*x^n2 + d2*q1
+      dq1 is then of length at most 2*n1+n2-1
+   */
+   
+   F_mpz_poly_init2(dq1, FLINT_MAX(d1q1->length + n2, d2q1->length));
+   F_mpz_poly_left_shift(dq1, d1q1, n2);
+   F_mpz_poly_clear(d1q1);
+   _F_mpz_poly_add(dq1, dq1, d2q1);
+   F_mpz_poly_clear(d2q1);
+   
+   /*
+      Compute t = p1*x^(n1+n2-1) + p2*x^(n1-1) - dq1
+      which has length at most 2*n1+n2-1, but we are not interested 
+      in up to the first n1 coefficients, so it has 
+      effective length at most n1+n2-1
+   */
+   
+   F_mpz_poly_init2(t, FLINT_MAX(A->length-n2, dq1->length));
+   F_mpz_poly_right_shift(t, A, n2);
+   _F_mpz_poly_sub(t, t, dq1);
+   F_mpz_poly_truncate(t, B->length - 1);
+   
+   /*
+      Compute q2 = t div d1
+      It is at most an n1+n2-1 by n1 division, so
+      the length of q2 will be at most n2
+      Also compute d1q2 of length at most n1+n2-1
+   */
+   
+   F_mpz_poly_init(d1q2);
+   F_mpz_poly_init(q2);
+   F_mpz_poly_div_divconquer_recursive(q2, d1q2, t, d1); 
+   F_mpz_poly_clear(t);
+      
+   /*
+      Compute d2q2 = d2*q2 which is of length 
+      at most n1+n2-1
+   */
+   
+   F_mpz_poly_init(d2q2);
+   F_mpz_poly_mul(d2q2, d2, q2);
+   
+   /*
+      Compute dq2 = d1*q2*x^n2 + d2q2
+      which is of length at most n1+2*n2-1
+   */
+   
+   F_mpz_poly_init2(dq2, FLINT_MAX(d1q2->length+n2, d2q2->length));
+   F_mpz_poly_left_shift(dq2, d1q2, n2);
+   F_mpz_poly_clear(d1q2);
+   _F_mpz_poly_add(dq2, dq2, d2q2);
+   F_mpz_poly_clear(d2q2);
+   
+   /*
+      Write out Q = q1*x^n2 + q2
+      Q has length at most n1+n2
+   */
+   
+   F_mpz_poly_fit_length(Q, FLINT_MAX(q1->length+n2, q2->length));
+   F_mpz_poly_left_shift(Q, q1, n2);
+   F_mpz_poly_clear(q1);
+   _F_mpz_poly_add(Q, Q, q2);
+   F_mpz_poly_clear(q2);
+   
+   /*
+      Write out BQ = dq1*x^n2 + dq2
+      BQ has length at most 2*(n1+n2)-1
+   */
+   
+   F_mpz_poly_fit_length(BQ, FLINT_MAX(n2 + dq1->length, dq2->length));
+   F_mpz_poly_left_shift(BQ, dq1, n2);
+   _F_mpz_poly_add(BQ, BQ, dq2);
+   
+   F_mpz_poly_clear(dq2);
+   F_mpz_poly_clear(dq1);
+}
+
+void F_mpz_poly_divrem_divconquer(F_mpz_poly_t Q, F_mpz_poly_t R, const F_mpz_poly_t A, const F_mpz_poly_t B)
+{
+   F_mpz_poly_t QB;
+   
+   F_mpz_poly_init(QB);
+   
+   F_mpz_poly_div_divconquer_recursive(Q, QB, A, B);
+   
+   F_mpz_poly_fit_length(R, A->length);
+   _F_mpz_poly_sub(R, A, QB);
+   _F_mpz_poly_normalise(R);
+   
+   F_mpz_poly_clear(QB);
+}
+
+/*===============================================================================
+
+	Division without remainder
+
+================================================================================*/
+
+void F_mpz_poly_divrem_basecase_low(F_mpz_poly_t Q, F_mpz_poly_t R, const F_mpz_poly_t A, const F_mpz_poly_t B)
+{
+   if (B->length == 0)
+   {
+      printf("Exception : Divide by zero in F_mpz_poly_divrem_basecase_low.\n");
+      abort();
+   }
+   
+   ulong coeff = A->length;
+   ulong B_length = B->length;
+
+   F_mpz_poly_t qB;
+   
+   F_mpz * coeffs_A = A->coeffs;
+   F_mpz * coeffs_B = B->coeffs;
+   F_mpz * B_lead = coeffs_B + B_length - 1; 
+   F_mpz * coeff_Q;
+   F_mpz * coeffs_R;
+
+   while (coeff >= B_length)
+   {
+      if (F_mpz_cmpabs(coeffs_A + coeff - 1, B_lead) >= 0) break;
+      else coeff--;   
+   }
+   
+   F_mpz_poly_set(R, A);
+   
+   if (coeff >= B_length)
+   {
+      F_mpz_poly_fit_length(Q, coeff - B_length + 1);    
+      Q->length = coeff - B_length + 1;
+   } else 
+   {
+      F_mpz_poly_zero(Q);
+      F_mpz_poly_truncate(R, B_length - 1);
+      return;
+   }   
+   
+   coeffs_R = R->coeffs; 
+
+   F_mpz_poly_t Bsub;
+   _F_mpz_poly_attach_truncate(Bsub, B, B_length - 1);
+   
+   F_mpz_poly_init2(qB, Bsub->length);
+   while (coeff >= B_length)
+   {
+      coeff_Q = Q->coeffs + coeff - B_length;
+
+      if (F_mpz_cmpabs(coeffs_R + coeff - 1, B_lead) < 0) F_mpz_zero(coeff_Q);
+      else
+      {
+         F_mpz_fdiv_q(coeff_Q, coeffs_R + coeff - 1, B_lead);
+         
+         F_mpz_poly_scalar_mul(qB, Bsub, coeff_Q); 
+         
+         coeffs_R = R->coeffs;
+         
+         F_mpz_poly_t R_sub;
+         R_sub->coeffs = coeffs_R + coeff - B_length;
+         R_sub->length = Bsub->length;
+         _F_mpz_poly_sub(R_sub, R_sub, qB);
+      }
+      
+      coeff--;
+   }
+         
+   F_mpz_poly_clear(qB);
+   
+   F_mpz_poly_truncate(R, B_length - 1);
+}
+
+void F_mpz_poly_div_divconquer_recursive_low(F_mpz_poly_t Q, F_mpz_poly_t BQ, const F_mpz_poly_t A, const F_mpz_poly_t B)
+{
+   if (A->length < B->length)
+   {
+      F_mpz_poly_zero(Q);
+      F_mpz_poly_zero(BQ);
+      
+      return;
+   }
+   
+   // A->length is now >= B->length
+   
+   ulong crossover = 16;
+   
+   if (A->length - B->length + 1 <= crossover) 
+   {
+      /*
+         Use the classical algorithm to compute the
+         quotient and low half of the remainder, then 
+         truncate A-R to compute BQ
+      */
+      
+      F_mpz_poly_t Rb;
+      F_mpz_poly_init(Rb);
+      F_mpz_poly_divrem_basecase_low(Q, Rb, A, B);
+      F_mpz_poly_fit_length(BQ, A->length);
+      _F_mpz_poly_sub(BQ, A, Rb);
+      F_mpz_poly_clear(Rb);
+      F_mpz_poly_truncate(BQ, B->length - 1);
+      
+      return;
+   }
+   
+   F_mpz_poly_t d1, d2, d3, d4, p1, q1, q2, dq1, dq2, d1q1, d2q1, d2q2, d1q2, t, temp;
+   
+   ulong n1 = (B->length + 1)/2;
+   ulong n2 = B->length - n1;
+   
+   /* We let B = d1*x^n2 + d2 */
+   
+   _F_mpz_poly_attach_shift(d1, B, n2);
+   _F_mpz_poly_attach_truncate(d2, B, n2);
+   _F_mpz_poly_attach_shift(d3, B, n1);
+   _F_mpz_poly_attach_truncate(d4, B, n1);
+   
+   if (A->length < 2*B->length - 1)
+   {
+      /* Convert unbalanced division into a 2*q - 1 by q division */
+      F_mpz_poly_t t_A, t_B, t_B2;
+      
+      ulong q = A->length - B->length + 1;
+      ulong q2 = B->length - q;
+
+      _F_mpz_poly_attach_shift(t_A, A, A->length - 2*q + 1);
+      _F_mpz_poly_attach_shift(t_B, B, q2);
+      _F_mpz_poly_attach_truncate(t_B2, B, q2);
+      
+      F_mpz_poly_init(d1q1);
+      F_mpz_poly_div_divconquer_recursive_low(Q, d1q1, t_A, t_B); 
+      
+      /*
+         Compute d2q1 = Q*t_B2
+         It is of length q2*q terms
+      */
+      
+      F_mpz_poly_init(d2q1);
+      F_mpz_poly_mul(d2q1, Q, t_B2);
+      
+      /*
+         Compute BQ = d1q1*x^n1 + d2q1
+         It has length at most n1+n2-1
+      */
+      
+      F_mpz_poly_fit_length(BQ, FLINT_MAX(d1q1->length + B->length - q, d2q1->length));
+      F_mpz_poly_left_shift(BQ, d1q1, B->length - q);
+      F_mpz_poly_clear(d1q1);
+      _F_mpz_poly_add(BQ, BQ, d2q1);
+      F_mpz_poly_clear(d2q1);
+            
+      return;   
+   } 
+   
+   if (A->length > 2*B->length - 1)
+   {
+      // We shift A right until it is length 2*B->length - 1
+      // We call this polynomial p1
+      
+      ulong shift = A->length - 2*B->length + 1;
+      _F_mpz_poly_attach_shift(p1, A, shift);
+      
+      /* 
+         Set q1 to p1 div B 
+         This is a 2*B->length-1 by B->length division so 
+         q1 ends up being at most length B->length
+         d1q1 = d1*q1 is truncated to length at most B->length-1
+      */
+      
+      F_mpz_poly_init(d1q1);
+      F_mpz_poly_init(q1);
+      
+      F_mpz_poly_div_divconquer_recursive_low(q1, d1q1, p1, B); 
+       
+      /* 
+         Compute dq1 = d1*q1*x^shift
+         dq1 is then of length at most A->length - B->length
+         dq1 is normalised since d1q1 was
+      */
+   
+      F_mpz_poly_init(dq1);
+      
+      F_mpz_poly_fit_length(dq1, d1q1->length + shift);
+      F_mpz_poly_left_shift(dq1, d1q1, shift);
+      F_mpz_poly_clear(d1q1);
+      
+      /*
+         Compute t = A - dq1 
+         We truncate, leaving at most A->length - B->length 
+         significant terms
+      */
+   
+      F_mpz_poly_init(t);
+      F_mpz_poly_sub(t, A, dq1);
+      F_mpz_poly_truncate(t, A->length - B->length);
+      
+      /*
+         Compute q2 = t div B
+         It is a smaller division than the original 
+         since t->length <= A->length-B->length
+         dq2 has length at most B->length - 1
+      */
+   
+      F_mpz_poly_init(q2);
+      F_mpz_poly_init(dq2);
+      F_mpz_poly_div_divconquer_recursive_low(q2, dq2, t, B); 
+      F_mpz_poly_clear(t);  
+      
+      /*
+         Write out Q = q1*x^shift + q2
+         Q has length at most B->length+shift
+         Note q2 has length at most shift since 
+         at most it is an A->length-B->length 
+         by B->length division
+      */
+   
+      F_mpz_poly_fit_length(Q, FLINT_MAX(q1->length+shift, q2->length));
+      
+      F_mpz_poly_left_shift(Q, q1, shift);
+      F_mpz_poly_clear(q1);
+      _F_mpz_poly_add(Q, Q, q2);
+      F_mpz_poly_clear(q2);
+      
+      /*
+         Write out BQ = dq1 + dq2
+      */
+      
+      F_mpz_poly_fit_length(BQ, FLINT_MAX(dq1->length, dq2->length));
+      
+      _F_mpz_poly_add(BQ, dq1, dq2);
+      F_mpz_poly_truncate(BQ, B->length - 1);
+      F_mpz_poly_clear(dq1);
+      F_mpz_poly_clear(dq2);
+      
+      return;
+   } 
+   
+   // A->length == 2*B->length - 1
+    
+   /* 
+      We let A = a1*x^(n1+2*n2-1) + a2*x^(n1+n2-1) + a3 
+      where a1 is length n1, 
+      a2 is length n2 and a3 is length n1+n2-1 
+      We set p1 = a1*x^(n1-1)+ other terms, so it has 
+      length 2*n1-1 
+   */
+      
+   _F_mpz_poly_attach_shift(p1, A, 2*n2);
+      
+   /* 
+      Set q1 to p1 div d1 
+      This is a 2*n1-1 by n1 division so 
+      q1 ends up being length n1
+      d1q1 = d1*q1 is truncated to length n1-1
+   */
+      
+   F_mpz_poly_init(d1q1);
+   F_mpz_poly_init(q1);
+   F_mpz_poly_div_divconquer_recursive_low(q1, d1q1, p1, d1); 
+   
+   /* 
+      Compute d2q1 = d2*q1 
+      which ends up being length n1+n2-1
+   */  
+   
+   F_mpz_poly_init(d2q1);
+   F_mpz_poly_mul(d2q1, d2, q1);
+   
+   /* 
+      Compute dq1 = d1*q1*x^n2 + d2*q1
+      dq1 is then of length n1+n2-1
+   */
+   
+   F_mpz_poly_init2(dq1, FLINT_MAX(d1q1->length + n2, d2q1->length));
+   F_mpz_poly_left_shift(dq1, d1q1, n2);
+   F_mpz_poly_clear(d1q1);
+   _F_mpz_poly_add(dq1, dq1, d2q1);
+   F_mpz_poly_clear(d2q1);
+   
+   /*
+      Compute t = a1*x^(n1+n2-1) + a2*x^(n1-1) - dq1
+      which has length 2*n1+n2-1, but we are not interested 
+      in up to the first n1 coefficients, so it has 
+      effective length n1+n2-1
+   */
+   
+   F_mpz_poly_init2(t, FLINT_MAX(A->length - n2, dq1->length));
+   F_mpz_poly_right_shift(t, A, n2);
+   _F_mpz_poly_sub(t, t, dq1);
+   F_mpz_poly_truncate(t, B->length - 1);
+   
+   /*
+      Compute q2 = t div d1
+      It is an n1+n2-1 by n1 division, so
+      the length of q2 will be n2
+      Also compute d1q2 truncated to length n1-1
+   */
+   
+   F_mpz_poly_init(d1q2);
+   F_mpz_poly_init(q2);
+   F_mpz_poly_div_divconquer_recursive_low(q2, d1q2, t, d1); 
+   F_mpz_poly_clear(t);
+      
+   /*
+      Compute d2q2 = d2*q2 which is of length 
+      n1+n2-1
+   */
+   
+   F_mpz_poly_init(d2q2);
+   F_mpz_poly_mul(d2q2, d2, q2);  
+   
+   /*
+      Compute dq2 = d1*q2*x^n2 + d2q2
+      which is of length n1+n2-1
+   */
+   
+   F_mpz_poly_init2(dq2, FLINT_MAX(d1q2->length + n2, d2q2->length));
+   F_mpz_poly_left_shift(dq2, d1q2, n2);
+   F_mpz_poly_clear(d1q2);
+   _F_mpz_poly_add(dq2, dq2, d2q2);
+   F_mpz_poly_clear(d2q2);
+   
+   /*
+      Write out Q = q1*x^n2 + q2
+      Q has length n1+n2
+   */
+   
+   F_mpz_poly_fit_length(Q, FLINT_MAX(q1->length + n2, q2->length));
+   F_mpz_poly_left_shift(Q, q1, n2);
+   F_mpz_poly_clear(q1);
+   _F_mpz_poly_add(Q, Q, q2);
+   F_mpz_poly_clear(q2);
+   
+   /*
+      Write out BQ = dq1*x^n2 + dq2
+      BQ has length n1+2*n2-1
+      We truncate to length B->length - 1
+   */
+   
+   F_mpz_poly_fit_length(BQ, FLINT_MAX(dq1->length + n2, dq2->length));
+   F_mpz_poly_left_shift(BQ, dq1, n2);
+   _F_mpz_poly_add(BQ, BQ, dq2);
+   F_mpz_poly_truncate(BQ, B->length - 1);
+   
+   F_mpz_poly_clear(dq2);
+   F_mpz_poly_clear(dq1);
+}
+
+void F_mpz_poly_div_divconquer(F_mpz_poly_t Q, const F_mpz_poly_t A, const F_mpz_poly_t B)
+{
+   if (B->length == 0)
+   {
+      printf("Exception : divide by zero in F_mpz_poly_div_divconquer\n");
+   }
+   
+   if (A->length < B->length)
+   {
+      F_mpz_poly_zero(Q);
+      
+      return;
+   }
+
+   // A->length is now >= B->length
+    
+   ulong crossover = 16;
+   
+   if (A->length - B->length + 1  <= crossover) 
+   {
+      F_mpz_poly_div_basecase(Q, A, B);
+      
+      return;
+   }
+   
+   F_mpz_poly_t d1, d2, d3, p1, q1, q2, dq1, dq2, d1q1, d2q1, d2q2, d1q2, t, temp;
+      
+   ulong n1 = (B->length + 1)/2;
+   ulong n2 = B->length - n1;
+   
+   /* We let B = d1*x^n2 + d2 
+      d1 is of length n1 and
+      d2 of length n2
+   */
+
+   _F_mpz_poly_attach_shift(d1, B, n2);
+   _F_mpz_poly_attach_truncate(d2, B, n2);
+   _F_mpz_poly_attach_shift(d3, B, n1);
+   
+   if (A->length < 2*B->length - 1)
+   {
+      /* We convert an unbalanced division into a 2*q by q division */
+      
+      ulong q = A->length - B->length + 1;
+      
+      F_mpz_poly_t t_A, t_B;
+      _F_mpz_poly_attach_shift(t_B, B, B->length - q);
+      _F_mpz_poly_attach_shift(t_A, A, A->length - 2*q + 1);
+
+      F_mpz_poly_div_divconquer(Q, t_A, t_B);
+
+      return; 
+   } 
+   
+   if (A->length > 2*B->length - 1)
+   {
+      // We shift A right until it is length 2*B->length - 1
+      // We call this polynomial p1
+      
+      ulong shift = A->length - 2*B->length + 1;
+      _F_mpz_poly_attach_shift(p1, A, shift);
+      
+      /* 
+         Set q1 to p1 div B 
+         This is a 2*B->length-1 by B->length division so 
+         q1 ends up being at most length B->length
+         d1q1 = low(d1*q1) is length at most 2*B->length-1
+         We discard the lower B->length-1 terms
+      */
+      
+      F_mpz_poly_init(d1q1);
+      F_mpz_poly_init(q1);
+      
+      F_mpz_poly_div_divconquer_recursive_low(q1, d1q1, p1, B); 
+       
+      /* 
+         Compute dq1 = d1*q1*x^shift
+         dq1 is then of length at most A->length
+         dq1 is normalised since d1q1 was
+      */
+   
+      F_mpz_poly_init(dq1);
+      
+      F_mpz_poly_fit_length(dq1, d1q1->length + shift);
+      F_mpz_poly_left_shift(dq1, d1q1, shift);
+      F_mpz_poly_clear(d1q1); 
+      
+      /*
+         Compute t = A - dq1 
+         The first B->length coefficients cancel
+         if the division is exact, leaving
+          A->length - B->length significant terms
+         otherwise we truncate at this length 
+      */
+   
+      F_mpz_poly_init(t);
+      F_mpz_poly_sub(t, A, dq1);
+      F_mpz_poly_clear(dq1);
+      F_mpz_poly_truncate(t, A->length - B->length);
+      
+      /*
+         Compute q2 = t div B
+         It is a smaller division than the original 
+         since t->length <= A->length-B->length
+      */
+   
+      F_mpz_poly_init(q2);
+      F_mpz_poly_div_divconquer(q2, t, B); 
+      F_mpz_poly_clear(t);  
+      
+      /*
+         Write out Q = q1*x^shift + q2
+         Q has length at most B->length+shift
+         Note q2 has length at most shift since 
+         at most it is an A->length-B->length 
+         by B->length division
+      */
+   
+      F_mpz_poly_fit_length(Q, FLINT_MAX(q1->length + shift, q2->length));
+      
+      F_mpz_poly_left_shift(Q, q1, shift);
+      F_mpz_poly_clear(q1);
+      _F_mpz_poly_add(Q, Q, q2);
+      F_mpz_poly_clear(q2);
+      
+      return;
+   }
+   // We now have A->length == 2*B->length - 1
+   
+   /* 
+      We let A = a1*x^(n1+2*n2-1) + a2*x^(n1+n2-1) + a3 
+      where a1 is length n1 and a2 is length n2 
+      and a3 is length n1+n2-1 
+   */
+      
+   // Set p1 to a1*x^(n1-1) + other terms
+   // It has length 2*n1-1 and is normalised
+      
+   _F_mpz_poly_attach_shift(p1, A, 2*n2);
+      
+   /* 
+      Set q1 to p1 div d1 
+      This is a 2*n1-1 by n1 division so 
+      q1 ends up being length n1
+      d1q1 = low(d1*q1) is length n1-1
+      Thus we have discarded the leading n1 terms 
+   */
+      
+   F_mpz_poly_init(d1q1);
+   F_mpz_poly_init(q1);
+      
+   F_mpz_poly_div_divconquer_recursive_low(q1, d1q1, p1, d1); 
+      
+   /* 
+      Compute d2q1 = d2*q1 with low n1 - 1 terms zeroed
+      d2*q1 is length n1+n2-1 leaving
+      n2 non-zero terms to the left
+   */  
+   
+   F_mpz_poly_init(d2q1); 
+   F_mpz_poly_mul_trunc_left(d2q1, d2, q1, n1 - 1);
+   
+   /* 
+      Compute dq1 = d1*q1*x^n2 + d2*q1
+      dq1 is then of length 2*n1+n2-1
+   */
+   
+   F_mpz_poly_init2(dq1, FLINT_MAX(d1q1->length + n2, d2q1->length));
+   F_mpz_poly_left_shift(dq1, d1q1, n2);
+   F_mpz_poly_clear(d1q1); 
+   _F_mpz_poly_add(dq1, dq1, d2q1);
+   
+   /*
+      Compute t = a1*x^(2*n2-1) + a2*x^(n2-1) - dq1 
+      after shifting dq1 to the right by (n1-n2)
+      which has length 2*n1+n2-1, but we 
+      n1 coefficients, so it has 
+      effective length 2*n2-1 with the last n2-1
+      coefficients ignored. Thus there are n2 
+      significant coefficients
+   */
+   
+   
+   F_mpz_poly_init2(t, n1 + 2*n2 - 1);
+   F_mpz_poly_right_shift(t, A, n1);
+   _F_mpz_poly_attach_shift(temp, dq1, n1 - n2);
+   _F_mpz_poly_sub(t, t, temp);
+   F_mpz_poly_truncate(t, 2*n2-1);
+     
+   /*
+      Compute q2 = t div d3
+      It is a 2*n2-1 by n2 division, so
+      the length of q2 will be n2 
+   */
+   
+   F_mpz_poly_init(q2);
+   F_mpz_poly_div_divconquer(q2, t, d3); 
+   F_mpz_poly_clear(t);  
+   F_mpz_poly_clear(dq1);
+   F_mpz_poly_clear(d2q1);
+   
+   /*
+      Write out Q = q1*x^n2 + q2
+      Q has length n1+n2
+   */
+   
+   F_mpz_poly_fit_length(Q, q1->length + n2);
+   F_mpz_poly_left_shift(Q, q1, n2);
+   F_mpz_poly_clear(q1);
+   _F_mpz_poly_add(Q, Q, q2);
+   F_mpz_poly_clear(q2);   
+}
+
+/*===============================================================================
+
+	Exact division
+
+================================================================================*/
+
+void F_mpz_poly_div_hensel(F_mpz_poly_t Q, const F_mpz_poly_t A, const ulong a_len, 
+                                    const F_mpz_poly_t B, const ulong b_len)
+{
+   F_mpz_poly_t A_rev, B_rev;
+
+   if (B->length == 0)
+   {
+      printf("Exception : divide by zero in F_mpz_poly_div_hensel\n");
+      abort();
+      return;
+   }
+   
+   if (A->length == 0)
+   {
+      F_mpz_poly_zero(Q);
+      return;
+   }
+   
+   F_mpz_poly_init(A_rev);
+   F_mpz_poly_init(B_rev);
+
+   ulong q = a_len - b_len + 1;
+
+   F_mpz_poly_reverse(B_rev, B, b_len);
+   F_mpz_poly_reverse(A_rev, A, a_len);
+   
+   F_mpz_poly_div(Q, A_rev, B_rev);
+   
+   F_mpz_poly_clear(A_rev);
+   F_mpz_poly_clear(B_rev);
+
+   F_mpz_poly_reverse(Q, Q, q);
+}
+
+void F_mpz_poly_divexact(F_mpz_poly_t Q, const F_mpz_poly_t A, const F_mpz_poly_t B)
+{
+   if (B->length == 0)
+   {
+      printf("Exception : divide by zero in F_mpz_poly_div_hensel\n");
+      abort();
+      return;
+   }
+   
+   if (A->length < B->length)
+   {
+      F_mpz_poly_zero(Q);
+      return;
+   }
+
+   long q = A->length - B->length + 1;
+
+   F_mpz_poly_fit_length(Q, q);
+   Q->length = q;
+
+   ulong a_len = A->length;
+   ulong b_len = B->length;
+
+   ulong i;
+   
+   for (i = 0; ; i++)
+   {
+      if (!F_mpz_is_zero(B->coeffs + i)) break;
+   }
+
+   ulong i2 = i;
+   b_len -= i;
+
+   for ( ; ; i++)
+   {
+      if (!F_mpz_is_zero(A->coeffs + i)) break;
+      F_mpz_zero(Q->coeffs + i - i2);      
+   }
+
+   a_len -= i;
+
+   q = a_len - b_len + 1;
+
+   F_mpz_poly_t t_A, t_B, t_Q;
+
+   if (q <= 1)
+   {
+      _F_mpz_poly_attach_shift(t_Q, Q, i - i2);
+      _F_mpz_poly_attach_shift(t_A, A, i);
+      _F_mpz_poly_attach_shift(t_B, B, i2);
+      
+      t_Q->alloc = q;
+
+      F_mpz_poly_div(t_Q, t_A, t_B);
+      
+      return;
+   }
+
+   ulong q2 = (q + 1)/2;
+   
+   t_Q->alloc = q2;
+   
+   ulong q2b = FLINT_MIN(b_len, q2);
+   _F_mpz_poly_attach_shift(t_Q, Q, q + i - i2 - q2);
+   _F_mpz_poly_attach_shift(t_A, A, A->length - q2 - q2b + 1);
+   _F_mpz_poly_attach_shift(t_B, B, B->length - q2b);
+
+   F_mpz_poly_div(t_Q, t_A, t_B);
+   
+   q2 = q - q2;
+   q2b = FLINT_MIN(b_len, q2);
+   t_Q->coeffs = Q->coeffs + i - i2;
+   t_Q->length = q2;
+   t_A->coeffs = A->coeffs + i;
+   t_A->length = q2 + q2b - 1;
+   t_B->coeffs = B->coeffs + i2;
+   t_B->length = q2b;
+   
+   F_mpz_poly_div_hensel(t_Q, t_A, q2 + q2b - 1, t_B, q2b);
+}
+
+/*===============================================================================
+
+	Pseudo division
+
+================================================================================*/
+
+void F_mpz_poly_pseudo_divrem_basecase(F_mpz_poly_t Q, F_mpz_poly_t R, 
+                            ulong * d, const F_mpz_poly_t A, const F_mpz_poly_t B)
+{
+   F_mpz_poly_t qB;
+   
+   if (B->length == 0)
+   {
+      printf("Exception : Divide by zero in F_mpz_poly_pseudo_divrem_basecase.\n");
+      abort();
+   }
+  
+   F_mpz * coeffs_A = A->coeffs;
+   F_mpz * coeffs_B = B->coeffs;
+   F_mpz * B_lead = coeffs_B + B->length - 1; 
+   F_mpz * coeff_Q;
+   F_mpz * coeff_R;
+   F_mpz * coeffs_R;
+   int scale;
+   
+   long m = A->length;
+   long n = B->length;
+   long q = m - n + 1;
+
+   ulong size_B_lead = F_mpz_size(B_lead);
+      
+   F_mpz_poly_struct Rs;
+   
+   int want_rem = 1;
+   if (R == NULL)
+   {
+      want_rem = 0;
+      R = &Rs;
+      F_mpz_poly_init(R);
+      
+   } else F_mpz_poly_set(R, A);
+
+   coeffs_R = R->coeffs;
+   
+   *d = 0;
+   
+   if ((long) R->length >= (long) B->length)
+   {
+      F_mpz_poly_fit_length(Q, R->length - B->length + 1);
+      
+      for (ulong i = 0; i < R->length - B->length + 1; i++) 
+         F_mpz_zero(Q->coeffs + i);
+
+      Q->length = R->length - B->length+1;
+   } else 
+   {
+      F_mpz_poly_zero(Q);
+      return;
+   }
+   
+   if (!want_rem) 
+   {
+      F_mpz_poly_fit_length(R, A->length);
+      for (ulong i = A->length - q; i < A->length; i++)
+          F_mpz_set(R->coeffs + i, A->coeffs + i);
+   }
+
+   F_mpz_poly_t Bm1;
+   ulong Bsub_length = B->length;
+   _F_mpz_poly_attach_truncate(Bm1, B, B->length - 1);
+
+   coeff_R = coeffs_R + R->length - 1;
+
+   F_mpz_t rem;
+   F_mpz_init(rem);
+   
+   while ((long) R->length >= (long) B->length)
+   {
+      coeff_Q = Q->coeffs + R->length - Bsub_length;
+          
+      if (F_mpz_cmpabs(coeff_R, B_lead) >= 0)
+      {
+         F_mpz_fdiv_qr(coeff_Q, rem, coeff_R, B_lead);
+
+      } else
+      {
+         F_mpz_zero(coeff_Q);
+         if (F_mpz_is_zero(coeff_R)) F_mpz_zero(rem);
+         else F_mpz_set_ui(rem, 1);
+      }
+      
+      if (F_mpz_is_zero(rem))
+      {
+         scale = 0; 
+      } else 
+      {   
+         F_mpz_poly_scalar_mul(Q, Q, B_lead);
+         coeff_Q = Q->coeffs + R->length - B->length;
+         F_mpz_set(coeff_Q, coeff_R);
+         scale = 1;
+         (*d)++;
+      }
+           
+      if (B->length > 1)
+      {
+         F_mpz_poly_init2(qB, Bsub_length - 1);
+         F_mpz_poly_scalar_mul(qB, Bm1, coeff_Q); 
+      } else F_mpz_poly_init(qB); 
+      
+      if (scale)
+      {
+         coeffs_R = R->coeffs;
+         F_mpz_poly_scalar_mul(R, R, B_lead);
+      } else if (B->length > 1)
+      {
+         coeffs_R = R->coeffs;
+      }
+      
+      F_mpz_poly_t R_sub;
+      R_sub->coeffs = coeffs_R + R->length - Bsub_length;
+      R_sub->length = Bsub_length - 1;
+      
+      if (B->length > 1)
+      {
+         _F_mpz_poly_sub(R_sub, R_sub, qB);
+      }
+      F_mpz_poly_clear(qB);
+      
+      ulong old_len = R->length;
+      F_mpz_zero(R_sub->coeffs + Bsub_length - 1);
+      
+      _F_mpz_poly_normalise(R);
+      coeff_R = coeffs_R + R->length - 1;
+
+      if ((!want_rem) && (Bsub_length + B->length >= R->length + 1))
+      {
+         ulong diff = old_len - R->length;
+         Bm1->coeffs += diff;
+         Bm1->length -= diff;
+         Bsub_length -= diff;
+      }
+   }
+  
+   F_mpz_clear(rem);
+}
+
 /*===============================================================================
 
    New Naive Standard Functions (without test code and written by Andy)
@@ -4103,81 +5780,14 @@ void F_mpz_poly_gcd(F_mpz_poly_t d, F_mpz_poly_t f, F_mpz_poly_t g){
    mpz_poly_clear(mpz_d);
    mpz_poly_clear(mpz_f);
    mpz_poly_clear(mpz_g);
-
 }
 
-void F_mpz_poly_div(F_mpz_poly_t d, F_mpz_poly_t f, F_mpz_poly_t g){
+/*===========================================================================
 
-   mpz_poly_t mpz_d, mpz_f, mpz_g;
-   mpz_poly_init(mpz_d);
-   mpz_poly_init(mpz_f);
-   mpz_poly_init(mpz_g);
+   New Material for FLINT, computing fast/tight bounds for CLDs
+      CLDs:= Coefficients of Logarithmic Derivatives.  f*g'/g
 
-   fmpz_poly_t fmpz_d, fmpz_f, fmpz_g;
-   fmpz_poly_init(fmpz_d);
-   fmpz_poly_init(fmpz_f);
-   fmpz_poly_init(fmpz_g);
-
-   F_mpz_poly_to_mpz_poly(mpz_f, f);
-   F_mpz_poly_to_mpz_poly(mpz_g, g);
-
-   mpz_poly_to_fmpz_poly(fmpz_f, mpz_f);
-   mpz_poly_to_fmpz_poly(fmpz_g, mpz_g);
-
-   fmpz_poly_div(fmpz_d, fmpz_f, fmpz_g);
-
-   fmpz_poly_to_mpz_poly(mpz_d, fmpz_d);
-
-   mpz_poly_to_F_mpz_poly(d, mpz_d);
-        
-   fmpz_poly_clear(fmpz_d);
-   fmpz_poly_clear(fmpz_f);
-   fmpz_poly_clear(fmpz_g);
-
-   mpz_poly_clear(mpz_d);
-   mpz_poly_clear(mpz_f);
-   mpz_poly_clear(mpz_g);
-}
-
-void F_mpz_poly_divrem(F_mpz_poly_t q, F_mpz_poly_t r, F_mpz_poly_t f, F_mpz_poly_t g){
-
-   mpz_poly_t mpz_q, mpz_r, mpz_f, mpz_g;
-   mpz_poly_init(mpz_q);
-   mpz_poly_init(mpz_r);
-   mpz_poly_init(mpz_f);
-   mpz_poly_init(mpz_g);
-
-   fmpz_poly_t fmpz_q, fmpz_r, fmpz_f, fmpz_g;
-   fmpz_poly_init(fmpz_q);
-   fmpz_poly_init(fmpz_r);
-   fmpz_poly_init(fmpz_f);
-   fmpz_poly_init(fmpz_g);
-
-   F_mpz_poly_to_mpz_poly(mpz_f, f);
-   F_mpz_poly_to_mpz_poly(mpz_g, g);
-
-   mpz_poly_to_fmpz_poly(fmpz_f, mpz_f);
-   mpz_poly_to_fmpz_poly(fmpz_g, mpz_g);
-
-   fmpz_poly_divrem(fmpz_q, fmpz_r, fmpz_f, fmpz_g);
-
-   fmpz_poly_to_mpz_poly(mpz_q, fmpz_q);
-   mpz_poly_to_F_mpz_poly(q, mpz_q);
-
-   fmpz_poly_to_mpz_poly(mpz_r, fmpz_r);
-   mpz_poly_to_F_mpz_poly(r, mpz_r);
-
-   fmpz_poly_clear(fmpz_r);        
-   fmpz_poly_clear(fmpz_q);
-   fmpz_poly_clear(fmpz_f);
-   fmpz_poly_clear(fmpz_g);
-
-   mpz_poly_clear(mpz_q);
-   mpz_poly_clear(mpz_r);
-   mpz_poly_clear(mpz_f);
-   mpz_poly_clear(mpz_g);
-
-}
+============================================================================*/
 
 int _d_2exp_comp(double a, long ap, double b, long bp){
 //assumes that if ap != 0 (or bp != 0) then a (or b) is in [1/2,1)
