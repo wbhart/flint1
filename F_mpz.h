@@ -556,6 +556,13 @@ void F_mpz_divexact(F_mpz_t f, const F_mpz_t g, const F_mpz_t h);
 void F_mpz_fdiv_q(F_mpz_t f, const F_mpz_t g, const F_mpz_t h);
 
 /** 
+   \fn     void F_mpz_fdiv_q(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
+   \brief  Set q to g divided by h, rounded down towards minus infinity and
+           r to be the remainder.
+*/
+void F_mpz_fdiv_qr(F_mpz_t q, F_mpz_t r, const F_mpz_t g, const F_mpz_t h);
+
+/** 
    \fn     void F_mpz_cdiv_q(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
    \brief  Set f to g divided by h, rounded up towards infinity.
 */
@@ -644,6 +651,26 @@ void F_mpz_multi_CRT_ui_unsigned(F_mpz_t output, ulong * residues,
 */
 void F_mpz_multi_CRT_ui(F_mpz_t output, ulong * residues, 
            F_mpz_comb_t comb, F_mpz ** comb_temp, F_mpz_t temp, F_mpz_t temp2);
+
+/*============================================================================
+
+   New and potentially Naive F_mpz functions (no tests)
+
+============================================================================*/
+
+/**
+   A function for finding the integer closest to mant*2^exp, might not be 
+      optimized... not sure in fact... needs testing, but will do for my rough
+      bounds.
+*/
+void F_mpz_set_d_2exp(F_mpz_t output, double mant, long exp);
+
+/**
+   Computes the number in (p/2, p/2] which is equivalent to f mod p.  
+      Calls F_mpz_mod then checks to see if it needs to subtract.  Might be sped up
+      by assuming already reduced mod p...
+*/
+void F_mpz_smod(F_mpz_t res, F_mpz_t f, F_mpz_t p);
 
 #ifdef __cplusplus
   }
