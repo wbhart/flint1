@@ -1877,6 +1877,64 @@ int test_fmpz_multi_CRT_ui_unsigned()
    return result;
 }
 
+int test_fmpz_multi_CRT()
+{
+   int result = 1;
+   
+   unsigned long * output, *input;
+   
+   ulong num_primes = 131072;
+
+   ulong * primes = (unsigned long *) flint_heap_alloc(num_primes);
+   ulong prime = 2;
+   
+   for (ulong j = 0; j < num_primes; j++)
+   {
+      primes[j] = prime;
+      prime = z_nextprime(prime, 0);
+   }
+
+   ulong limbs = 39239;
+	   
+   output = (ulong *) flint_heap_alloc(num_primes);
+   input = (ulong *) flint_heap_alloc(num_primes);
+      
+   fmpz_comb_t comb;
+   fmpz_comb_init(comb, primes, num_primes);
+   fmpz_t ** comb_temp = fmpz_comb_temp_init(comb);
+   
+   for (ulong j = 0; j < num_primes; j++)
+   {
+      output[j] = j + 1;
+   }
+      
+   fmpz_t temp = flint_heap_alloc(limbs + 1);
+      
+   fmpz_multi_CRT_ui_unsigned(temp, output, comb, comb_temp);
+   fmpz_multi_mod_ui(input, temp, comb, comb_temp);
+
+   for (ulong i = 0; i < num_primes; i++)
+   {
+      result &= (input[i] == i + 1);
+      if (!result)
+      {
+         printf("Error at input %ld\n", i);
+         printf("input[i] = %ld, output[i] = %ld\n", input[i], output[i]);
+         break;
+      }
+   }
+
+   flint_heap_free(temp);
+   fmpz_comb_temp_clear(comb_temp, comb);
+
+   fmpz_comb_clear(comb);
+      
+   flint_heap_free(output);
+   flint_heap_free(primes);
+         
+   return result;
+}
+
 int test_fmpz_multi_CRT_ui()
 {
    int result = 1;
@@ -2448,6 +2506,7 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_CRT_ui_precomp);
    RUN_TEST(fmpz_CRT_ui2_precomp);
    RUN_TEST(fmpz_comb_init_clear);
+   RUN_TEST(fmpz_multi_CRT);
    RUN_TEST(fmpz_multi_CRT_ui_unsigned);
    RUN_TEST(fmpz_multi_CRT_ui);
    RUN_TEST(fmpz_sqrtrem);
