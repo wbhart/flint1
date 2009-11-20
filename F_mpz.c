@@ -28,6 +28,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <gmp.h>
+#include <mpfr.h>
 
 #include "flint.h"
 #include "mpn_extras.h"
@@ -393,6 +394,21 @@ void F_mpz_set_mpz(F_mpz_t f, const mpz_t x)
 		mpz_set(mpz_ptr, x);
 		
 	}			
+}
+
+void F_mpz_get_mpfr(mpfr_t x, const F_mpz_t f)
+{
+   F_mpz d = *f;
+
+   if (!COEFF_IS_MPZ(d))
+   {
+      mpfr_set_si(x, d, GMP_RNDN);
+      return;
+   } else
+   {
+      mpfr_set_z(x, F_mpz_arr + COEFF_TO_OFF(d), GMP_RNDN);
+      return;
+   }
 }
 
 void F_mpz_set_limbs(F_mpz_t f, const mp_limb_t * x, const ulong limbs)

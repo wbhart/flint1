@@ -33,6 +33,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <gmp.h>
+#include <mpfr.h>
 #include "flint.h"
 #include "mpn_extras.h"
 #include "zn_poly/src/zn_poly.h"
@@ -268,6 +269,12 @@ double F_mpz_get_d_2exp(long * exp, const F_mpz_t f);
    \brief  Sets f to the given mpz_t.
 */
 void F_mpz_set_mpz(F_mpz_t f, const mpz_t x);
+
+/** 
+   \fn     void F_mpz_get_mpfr(mpfr_t x, const F_mpz_t f)
+   \brief  Returns f as an mpfr_t, rounding down.
+*/
+void F_mpz_get_mpfr(mpfr_t x, const F_mpz_t f);
 
 /** 
    \fn     void F_mpz_set_limbs(F_mpz_t f, const mp_limb_t * x, const ulong limbs)
