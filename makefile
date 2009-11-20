@@ -141,7 +141,7 @@ check: test
 	./zmod_poly-test
 	./zmod_mat-test
 	./fmpz_poly-test
-        ./F_mpz_mat-test
+	./F_mpz_mat-test
 
 profile: ZmodF_poly-profile kara-profile fmpz_poly-profile mpz_poly-profile ZmodF_mul-profile 
 
