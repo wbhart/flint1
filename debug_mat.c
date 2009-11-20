@@ -31,7 +31,7 @@ long F_mpz_mat_set_line_d_2exp(double * appv, const F_mpz_mat_t mat, const ulong
    for (i = 0; i < n; i++)
    {
       appv[i] = F_mpz_get_d_2exp(&exp[i], mat->rows[r] + i);
-      exp[i] = exp[i] + cexpo[i];
+      //exp[i] = exp[i] + cexpo[i];
       if (exp[i] > maxexp) maxexp = exp[i];
    }
 
@@ -61,7 +61,7 @@ void Babai_2exp (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
    double try_temp[kappa];
 
    printf("kappa = %d\n", kappa);
-
+   
    do
    {
       test = 0;
@@ -72,11 +72,15 @@ void Babai_2exp (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
       /* Step2: compute the GSO for stage kappa */
       /* ************************************** */
       
+      printf(" aa = %d\n", aa);
       for (j = aa; j < kappa; j++)
 	   {	  
-	      if (appSP[kappa][j] != appSP[kappa][j]) // if appSP[kappa][j] == NAN
+	      printf("appSP[kappa][j] = %le\n", appSP[kappa][j]);
+         if (appSP[kappa][j] != appSP[kappa][j]) // if appSP[kappa][j] == NAN
 	      {
 	         appSP[kappa][j] = d_vec_scalar_product(appB[kappa], appB[j], n);
+            printf("worked %le\n", appSP[kappa][j]);
+            
 	      }
 	  	  
          if (j > zeros + 2)
@@ -96,7 +100,8 @@ void Babai_2exp (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
 	         r[kappa][j] = appSP[kappa][j] - tmp;
 	      } else r[kappa][j] = appSP[kappa][j];
 
-	      mu[kappa][j] = r[kappa][j] / r[j][j];
+	      printf("r[kappa][j] = %le, r[j][j] = %le\n", r[kappa][j], r[j][j]);
+         mu[kappa][j] = r[kappa][j] / r[j][j];
       }
 
       d_mat_print(mu, expo, kappa, kappa);
@@ -111,16 +116,19 @@ void Babai_2exp (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
 
 	      /* test of the relaxed size-reduction condition */
 	      tmp = fabs(mu[kappa][j]);
-	      tmp = ldexp(tmp, expo[kappa] - expo[j]);
+	      printf("******************************** %lu, %lu\n", expo[kappa], expo[j]);
+         tmp = ldexp(tmp, expo[kappa] - expo[j]);
 
          if (count_trig > 0)
             printf("j=%d, fabs(mu)=%f150,exp=%d\n", j, fabs(mu[kappa][j]),expo[kappa]-expo[j]);
 
          try_temp[j] = tmp;
 	  
-	      if (tmp > halfplus) 
+	      printf("tmp = %lf, halfplus = %lf\n", tmp, halfplus);
+         if (tmp > halfplus) 
 	      {
-	         test = 1; 
+	         printf("j = %d\n", j);
+            test = 1; 
 	         exponent = expo[j] - expo[kappa];
 	      
 	         /* we consider separately the cases X = +-1 */     
@@ -128,7 +136,8 @@ void Babai_2exp (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
 		      {		  
 		         if (mu[kappa][j] >= 0)   /* in this case, X is 1 */
                {
-		            for (k = zeros + 1; k < j; k++)
+		            printf("X is 1 ...................................\n");
+                  for (k = zeros + 1; k < j; k++)
 			         {
 			            tmp = ldexp (mu[j][k], exponent);
 			            mu[kappa][k] =  mu[kappa][k] - tmp; 
@@ -138,6 +147,7 @@ void Babai_2exp (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
 		  
 		         } else          /* otherwise X is -1 */ 
                {
+                  printf("X is minus 1 ...................................\n");
                   for (k=zeros+1; k<j; k++)
 			         {
 			            tmp = ldexp (mu[j][k], exponent);
@@ -153,7 +163,8 @@ void Babai_2exp (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
 	            if ((tmp < (double) MAX_LONG) &&(tmp > (double) -MAX_LONG))  
 		         {
 
-		            tmp = rint (tmp); 
+		            printf("|X| is < MAX_LONG ...................................\n");
+                  tmp = rint (tmp); 
 		      
 		            for (k = zeros + 1; k < j; k++)
 			         {
@@ -173,19 +184,20 @@ void Babai_2exp (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
                   } 
                } else
 		         {
-		            tmp = frexp(mu[kappa][j], &exponent); 
+		            printf("mu[kappa][j] = %le\n", mu[kappa][j]);
+                  tmp = frexp(mu[kappa][j], &exponent);
+                  printf("exponent = %d, tmp = %le\n", exponent, tmp);
 		            tmp = tmp * MAX_LONG;
 		            xx = (long) tmp;
-		            exponent += expo[kappa] - expo[j] - CPU_SIZE_1;
+		            printf("xx = %ld, expo[kappa] = %ld, expo[j] = %ld\n", xx, expo[kappa], expo[j]);
+                  exponent += (expo[kappa] - expo[j] - CPU_SIZE_1);
 
 		            /* This case is extremely rare: never happened for me */
 		            if (exponent <= 0) 
 			         {
-
-
-
-
-			            xx = xx << -exponent;
+                     printf("X is in rare case ...................................\n");
+                  
+			            xx <<= -exponent;
 			            exponent = 0;
 			  
 			            if (xx > 0)
@@ -205,8 +217,7 @@ void Babai_2exp (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
 			         } else
 			         {
 
-                  if (count_trig > 0)
-                     printf("bigger than 2 notrare case xx=%ld\n", xx);
+                     printf("bigger than 2 notrare case xx=%ld, exp = %ld, %ld\n", xx, exponent, CPU_SIZE_1);
 
 			            if (xx > 0)
                      {
@@ -227,7 +238,7 @@ void Babai_2exp (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
 		   }
 	   }
 
-      if( loops > 10){
+      if( loops > 10000){
          printf("infinite loop at kappa = %d\n", kappa);
          F_mpz_mat_print_pretty(B);
          d_mat_print(appB, expo, B->r, B->c);
@@ -334,12 +345,6 @@ int LLL_2exp_with_removal(F_mpz_mat_t B, int *cexpo, F_mpz_t gs_B)
       /* ********************************** */
       /* Step3: Call to the Babai algorithm */
       /* ********************************** */   
-
-      FILE * f = fopen("pre_infinite", "w");               
-      F_mpz_mat_fprint(B, f);
-      fprintf(f,"\n");
-      int ok = fclose(f);
-
       
       Babai_2exp(kappa, B, mu, r, s, appB, expo, appSP, alpha[kappa], zeros, 
 			                        kappamax, FLINT_MIN(kappamax + 1 + shift, n), cexpo); 
