@@ -347,6 +347,15 @@ void F_mpz_mat_row_swap(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2,
 void F_mpz_mat_row_neg(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, 
 								                          ulong r2, ulong start, ulong n);
 
+/** 
+   \fn     void F_mpz_mat_row_scalar_product(F_mpz_t sp, F_mpz_mat_t mat1, ulong r1, 
+                                  F_mpz_mat_t mat2, ulong r2, ulong start, ulong n)
+
+	\brief  Set sp to the scalar product of row r1 of mat1 and row r2 of mat2.
+*/
+void F_mpz_mat_row_scalar_product(F_mpz_t sp, F_mpz_mat_t mat1, ulong r1, 
+                                  F_mpz_mat_t mat2, ulong r2, ulong start, ulong n);
+
 
 #ifdef __cplusplus
  }

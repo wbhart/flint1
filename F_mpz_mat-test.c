@@ -1405,6 +1405,106 @@ int test_F_mpz_mat_row_submul_2exp_ui()
    return result; 
 }
 
+int test_F_mpz_mat_row_scalar_mul()
+{
+   mpz_mat_t m_mat, m_mat2;
+   F_mpz_mat_t F_mat, F_mat2;
+   F_mpz_t F_sp;
+   int result = 1;
+   ulong bits, bits2, r, c, start, n, r1, r2;
+   mpz_t m_sp1, m_sp2;
+   mpz_init(m_sp1);
+   mpz_init(m_sp2);
+   
+   for (ulong count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+   {
+      bits = z_randint(200)+ 1;
+      bits2 = z_randint(200)+ 1;
+      r = z_randint(30)+1;  
+      c = z_randint(30)+1;
+		r1 = z_randint(r);
+      r2 = z_randint(r);
+      start = z_randint(c);
+		n = z_randint(c-start)+1;
+
+      F_mpz_init(F_sp);
+      mpz_mat_init(m_mat, r, c); 
+		mpz_mat_init(m_mat2, r, c); 
+		F_mpz_mat_init(F_mat, r, c);
+      F_mpz_mat_init(F_mat2, r, c);
+      
+      mpz_randmat_dense(m_mat, r, c, bits); 
+      mpz_mat_to_F_mpz_mat(F_mat, m_mat);
+      mpz_randmat_dense(m_mat2, r, c, bits2); 
+      mpz_mat_to_F_mpz_mat(F_mat2, m_mat2);
+          
+		F_mpz_mat_row_scalar_product(F_sp, F_mat2, r2, F_mat, r1, start, n);
+      F_mpz_get_mpz(m_sp1, F_sp);
+      
+      mpz_set_ui(m_sp2, 0);
+      for (ulong i = start; i < start + n; i++)
+      {
+         mpz_addmul(m_sp2, m_mat->entries[r1*c+i], m_mat2->entries[r2*c+i]);
+      }
+      
+      result = (mpz_cmp(m_sp1, m_sp2) == 0);
+
+		if (!result) 
+		{
+			printf("Error: r = %ld, c = %ld, bits = %ld, bits2 = %ld\n", r, c, bits, bits2);
+		}
+      
+      F_mpz_clear(F_sp);
+      mpz_mat_clear(m_mat); 
+		mpz_mat_clear(m_mat2); 
+		F_mpz_mat_clear(F_mat);
+      F_mpz_mat_clear(F_mat2);
+   }
+   
+   // alias rows
+   for (ulong count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+   {
+      bits = z_randint(200)+ 1;
+      r = z_randint(30)+1;  
+      c = z_randint(30)+1;
+		r1 = z_randint(r);
+      start = z_randint(c);
+		n = z_randint(c-start)+1;
+
+      F_mpz_init(F_sp);
+      mpz_mat_init(m_mat, r, c); 
+		F_mpz_mat_init(F_mat, r, c);
+      
+      mpz_randmat_dense(m_mat, r, c, bits); 
+      mpz_mat_to_F_mpz_mat(F_mat, m_mat);
+          
+		F_mpz_mat_row_scalar_product(F_sp, F_mat, r1, F_mat, r1, start, n);
+      F_mpz_get_mpz(m_sp1, F_sp);
+      
+      mpz_set_ui(m_sp2, 0);
+      for (ulong i = start; i < start + n; i++)
+      {
+         mpz_addmul(m_sp2, m_mat->entries[r1*c+i], m_mat->entries[r1*c+i]);
+      }
+      
+      result = (mpz_cmp(m_sp1, m_sp2) == 0);
+
+		if (!result) 
+		{
+			printf("Error: r = %ld, c = %ld, bits = %ld\n", r, c, bits);
+		}
+      
+      F_mpz_clear(F_sp);
+      mpz_mat_clear(m_mat); 
+		F_mpz_mat_clear(F_mat);
+   }
+       
+	mpz_clear(m_sp1);
+	mpz_clear(m_sp2);
+	
+   return result; 
+}
+
 void F_mpz_mat_test_all()
 {
    int success, all_success = 1;
@@ -1426,6 +1526,7 @@ void F_mpz_mat_test_all()
    RUN_TEST(F_mpz_mat_row_submul_ui); 
    RUN_TEST(F_mpz_mat_row_addmul_2exp_ui); 
    RUN_TEST(F_mpz_mat_row_submul_2exp_ui); 
+   RUN_TEST(F_mpz_mat_row_scalar_mul); 
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");

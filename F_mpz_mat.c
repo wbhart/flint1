@@ -751,3 +751,18 @@ void F_mpz_mat_row_neg(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2,
 	for (ulong i = start; i < start + n; i++)
 		F_mpz_neg(mat1->rows[r1] + i, mat2->rows[r2] + i);
 }
+
+void F_mpz_mat_row_scalar_product(F_mpz_t sp, F_mpz_mat_t mat1, ulong r1, 
+                                  F_mpz_mat_t mat2, ulong r2, ulong start, ulong n)
+{
+	ulong i = start;
+   
+   F_mpz_mul2(sp, mat1->rows[r1] + i, mat2->rows[r2] + i);
+   
+   for (i = start + 1; i < start + n; i++)
+   {
+      F_mpz_addmul(sp, mat1->rows[r1] + i, mat2->rows[r2] + i);
+   }
+
+   return;
+}
