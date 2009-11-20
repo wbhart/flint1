@@ -272,9 +272,16 @@ void F_mpz_set_mpz(F_mpz_t f, const mpz_t x);
 
 /** 
    \fn     void F_mpz_get_mpfr(mpfr_t x, const F_mpz_t f)
-   \brief  Returns f as an mpfr_t, rounding down.
+   \brief  Returns f as an mpfr_t to the current precision of x, 
+           rounded down if necessary.
 */
 void F_mpz_get_mpfr(mpfr_t x, const F_mpz_t f);
+
+/** 
+   \fn     void F_mpz_set_mpfr(const F_mpz_t f, mpfr_t x)
+   \brief  Set the f to the value of the mpfr_t x, rounded down.
+*/
+void F_mpz_set_mpfr(F_mpz_t f, const mpfr_t x);
 
 /** 
    \fn     void F_mpz_set_limbs(F_mpz_t f, const mp_limb_t * x, const ulong limbs)

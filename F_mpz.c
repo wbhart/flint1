@@ -411,6 +411,33 @@ void F_mpz_get_mpfr(mpfr_t x, const F_mpz_t f)
    }
 }
 
+void F_mpz_set_mpfr(F_mpz_t f, const mpfr_t x)
+{
+   F_mpz d = *f;
+
+   if (!COEFF_IS_MPZ(d)) // f is small
+   {
+      if (mpfr_fits_slong_p(x, GMP_RNDN)) // x fits in a long
+      {
+         long cx = mpfr_get_si(x, GMP_RNDN);
+         F_mpz_set_si(f, cx);
+      } else // x is large
+      {
+         __mpz_struct * mpz_ptr = _F_mpz_promote(f);
+         mpfr_get_z(mpz_ptr, x, GMP_RNDN);
+      }
+      
+      return;
+   } else
+   {
+         __mpz_struct * mpz_ptr = _F_mpz_promote(f);
+         mpfr_get_z(mpz_ptr, x, GMP_RNDN);
+
+         _F_mpz_demote_val(f); // may fit actually be small
+      return;
+   }
+}
+
 void F_mpz_set_limbs(F_mpz_t f, const mp_limb_t * x, const ulong limbs)
 {
 	if (limbs == 0L) // x is zero
