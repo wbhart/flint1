@@ -5786,6 +5786,13 @@ void F_mpz_poly_gcd(F_mpz_poly_t d, F_mpz_poly_t f, F_mpz_poly_t g){
    mpz_poly_clear(mpz_g);
 }
 
+/*===========================================================================
+
+   New Material for FLINT, computing fast/tight bounds for CLDs
+      CLDs:= Coefficients of Logarithmic Derivatives.  f*g'/g
+
+============================================================================*/
+
 int _d_2exp_comp(double a, long ap, double b, long bp){
 //assumes that if ap != 0 (or bp != 0) then a (or b) is in [1/2,1)
    if (ap == 0){
