@@ -727,6 +727,63 @@ void F_mpz_mat_row_submul_2exp_ui(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, 
 	F_mpz_clear(temp);
 }
 
+void F_mpz_mat_row_submul_2exp_F_mpz(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong r2, 
+								               ulong start, ulong n, F_mpz_t c, ulong exp)
+{
+	// scalar is zero, nothing to subtract
+	if (F_mpz_is_zero(c))
+	{
+	   return;
+	}
+	
+	// scalar is 1, just subtract 2^exp times the entry
+	if (F_mpz_is_one(c) || F_mpz_is_m1(c))
+	{
+	   F_mpz_t temp;
+		F_mpz_init(temp);
+		
+		if (F_mpz_sgn(c) > 0)
+      {
+         for (ulong i = start; i < start + n; i++)
+		   {
+			   F_mpz_mul_2exp(temp, mat2->rows[r2] + i, exp);
+            F_mpz_sub(mat1->rows[r1] + i, mat1->rows[r1] + i, temp);
+		   }
+      } else
+            {
+         for (ulong i = start; i < start + n; i++)
+		   {
+			   F_mpz_mul_2exp(temp, mat2->rows[r2] + i, exp);
+            F_mpz_add(mat1->rows[r1] + i, mat1->rows[r1] + i, temp);
+		   }
+      }
+
+		F_mpz_clear(temp);
+
+		return;
+	}
+	
+	// exp is 1, just do submul
+	if (exp == 0)
+	{
+	   for (ulong i = start; i < start + n; i++)
+		   F_mpz_submul(mat1->rows[r1] + i, mat2->rows[r2] + i, c);
+
+		return;
+	}
+	
+	F_mpz_t temp;
+   F_mpz_init(temp);
+		
+	for (ulong i = start; i < start + n; i++)
+	{
+		F_mpz_mul_2exp(temp, mat2->rows[r2] + i, exp);
+	   F_mpz_submul(mat1->rows[r1] + i, temp, c);
+	}
+
+	F_mpz_clear(temp);
+}
+
 void F_mpz_mat_row_swap(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, 
 								                 ulong r2, ulong start, ulong n)
 {
