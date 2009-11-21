@@ -853,12 +853,14 @@ void zmod_poly_factor_square_free(zmod_poly_factor_t res, zmod_poly_t f);
    Probabilistic equal degree factorisation of pol into irreducible factors
    of degree d. If it passes, a factor is placed in factor and 1 is returned,
    otherwise 0 is returned and the value of factor is undetermined.
+   Requires that pol be monic, non-constant and squarefree.
 */
 int zmod_poly_factor_equal_prob(zmod_poly_t factor, zmod_poly_t pol, ulong d);
 
 /* 
    Assuming pol is a product of irreducible factors all of degree d, finds
    all those factors and places them in factors.
+   Requires that pol be monic, non-constant and squarefree.
 */
 void zmod_poly_factor_equal_d(zmod_poly_factor_t factors, zmod_poly_t pol, ulong d);
 
