@@ -446,16 +446,6 @@ void LLL_heuristic(F_mpz_mat_t B)
 
 *********************************************/
 
-void F_mpz_mat_set_line_mpfr_2exp(mpfr_t * appv, const F_mpz_mat_t mat, const ulong r, const int n, int * cexpo)
-{
-   for (ulong i = 0; i < n; i++){
-      F_mpz_get_mpfr(appv[i], mat->rows[r] + i);
-      mpfr_mul_2si(appv[i], appv[i], cexpo[i], GMP_RNDN);
-   }
-
-   return;
-}
-
 long F_mpz_add_2exp(F_mpz_t res, F_mpz_t x1, long exp1, F_mpz_t x2, long exp2){
 
    long res_exp;

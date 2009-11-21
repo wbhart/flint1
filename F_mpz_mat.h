@@ -213,6 +213,12 @@ long F_mpz_mat_set_line_d(double * appv, const F_mpz_mat_t mat, const ulong r, c
 */
 void F_mpz_mat_set_line_mpfr(mpfr_t * appv, const F_mpz_mat_t mat, const ulong r, const int n);
 
+/**
+   \fn     void F_mpz_mat_set_line_mpfr_2exp(mpfr_t * appv, const F_mpz_mat_t mat, const ulong r, const int n, int * cexpo)
+   \brief  Sets the entries of appv to the entries of the given for of mat multiplied by 2^cexpo[i]
+*/
+void F_mpz_mat_set_line_mpfr_2exp(mpfr_t * appv, const F_mpz_mat_t mat, const ulong r, const int n, int * cexpo);
+
 /*===============================================================================
 
 	Assignment

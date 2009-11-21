@@ -465,6 +465,16 @@ void F_mpz_mat_set_line_mpfr(mpfr_t * appv, const F_mpz_mat_t mat, const ulong r
    return;
 }
 
+void F_mpz_mat_set_line_mpfr_2exp(mpfr_t * appv, const F_mpz_mat_t mat, const ulong r, const int n, int * cexpo)
+{
+   for (ulong i = 0; i < n; i++){
+      F_mpz_get_mpfr(appv[i], mat->rows[r] + i);
+      mpfr_mul_2si(appv[i], appv[i], cexpo[i], GMP_RNDN);
+   }
+
+   return;
+}
+
 /*===============================================================================
 
 	Assignment/swap
