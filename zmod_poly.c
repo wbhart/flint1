@@ -148,6 +148,22 @@ void zmod_poly_2x2_mat_clear(zmod_poly_2x2_mat_t mat)
 
 /****************************************************************************
 
+   Random
+
+****************************************************************************/
+
+void zmod_poly_random(zmod_poly_t pol, ulong length)
+{
+   ulong p = pol->p;
+
+   zmod_poly_fit_length(pol, length);
+   for (ulong i = 0; i < length; i++)
+      pol->coeffs[i] = z_randint(p);
+   __zmod_poly_normalise(pol);
+}
+
+/****************************************************************************
+
    Setting/retrieving coefficients
 
 ****************************************************************************/
@@ -6367,6 +6383,55 @@ void __zmod_poly_powmod(zmod_poly_t res, zmod_poly_t pol, long exp, zmod_poly_t 
    if (exp) zmod_poly_clear(y);   
 } 
 
+void zmod_poly_powmod_mpz(zmod_poly_t res, zmod_poly_t pol, mpz_t exp, zmod_poly_t f)
+{
+   zmod_poly_t y;
+   
+   ulong p = f->p;
+
+   if (pol->length == 0) 
+   {
+      if (exp <= 0L) 
+	   {
+         printf("FLINT Exception: Divide by zero\n");
+         abort();   
+	   }
+	   zmod_poly_zero(res);
+	   return;
+   }
+
+   mpz_t e;
+   mpz_init(e);
+
+   if (exp < 0L)
+      mpz_neg(e, exp);
+   else
+      mpz_set(e, exp);
+   
+   if (mpz_sgn(exp)) 
+   {
+	  zmod_poly_init(y, p);
+	  zmod_poly_set(y, pol);
+   }
+
+	zmod_poly_zero(res);
+	zmod_poly_set_coeff_ui(res, 0, 1L);
+   res->length = 1;
+
+   ulong bits = mpz_sizeinbase(e, 2);
+   
+   for (ulong i = 0; i < bits; i++) 
+   {
+      if (mpz_tstbit(e, i)) zmod_poly_mulmod(res, res, y, f);
+      if (i + 1 < bits) zmod_poly_mulmod(y, y, y, f);
+   }
+   
+   if (mpz_sgn(exp) < 0L) zmod_poly_gcd_invert(res, res, f);
+   if (mpz_sgn(exp)) zmod_poly_clear(y); 
+
+   mpz_clear(e);
+} 
+
 void zmod_poly_powpowmod(zmod_poly_t res, zmod_poly_t pol, ulong exp, ulong exp2, zmod_poly_t f)
 {
 	zmod_poly_t pow;
@@ -6534,6 +6599,76 @@ void zmod_poly_factor_pow(zmod_poly_factor_t fac, unsigned long exp)
 {
    for (unsigned long i = 0; i < fac->num_factors; i++)
       fac->exponents[i] *= exp;
+}
+
+int zmod_poly_factor_equal_prob(zmod_poly_t factor, zmod_poly_t pol, ulong d)
+{
+   if (pol->length <= 1)
+   {
+      printf("Attempt to factor linear poly in zmod_poly_factor_equal_prob\n");
+      abort();
+   }
+   
+   zmod_poly_t a, b;
+   zmod_poly_init(a, pol->p);
+   
+   do {zmod_poly_random(a, pol->length - 1);} 
+   while (a->length <= 1);
+
+   zmod_poly_gcd(factor, a, pol);
+   if (factor->length != 1)
+   {
+      zmod_poly_clear(a);
+      return 1;
+   }
+
+   zmod_poly_init(b, pol->p);
+   
+   mpz_t exp;
+   mpz_init(exp);
+
+   mpz_set_ui(exp, pol->p);
+   mpz_pow_ui(exp, exp, d);
+   mpz_sub_ui(exp, exp, 1);
+   mpz_tdiv_q_2exp(exp, exp, 1);
+   
+   zmod_poly_powmod_mpz(b, a, exp, pol);
+
+   mpz_clear(exp);
+
+   b->coeffs[0] = z_submod(b->coeffs[0], 1, pol->p);
+
+   zmod_poly_gcd(factor, b, pol);
+   
+   int res = 1;
+   if ((factor->length == 1) || (factor->length == pol->length)) res = 0;
+
+   zmod_poly_clear(a);
+   zmod_poly_clear(b);
+
+   return res;
+}
+
+void zmod_poly_factor_equal_d(zmod_poly_factor_t factors, zmod_poly_t pol, ulong d)
+{
+   if (pol->length == d + 1)
+   {
+      zmod_poly_factor_add(factors, pol);
+      return;
+   }
+
+   zmod_poly_t f, g;
+   zmod_poly_init(f, pol->p);
+   
+   while (!zmod_poly_factor_equal_prob(f, pol, d)) {};
+   
+   zmod_poly_init(g, pol->p);
+   zmod_poly_div(g, pol, f);
+
+   zmod_poly_factor_equal_d(factors, f, d);
+   zmod_poly_clear(f);
+   zmod_poly_factor_equal_d(factors, g, d);
+   zmod_poly_clear(g);  
 }
 
 /** 
