@@ -440,38 +440,6 @@ void LLL_heuristic(F_mpz_mat_t B)
    free(appSPtmp);
 }
 
-/*******************************************
-
-    LLL_heuristic_2exp functions
-
-*********************************************/
-
-long F_mpz_mat_row_scalar_product_2exp(F_mpz_t sp, F_mpz_mat_t mat1, ulong r1, 
-                                  F_mpz_mat_t mat2, ulong r2, ulong start, ulong n, int * cexpo)
-{
-	ulong i = start;
-   long exp, temp_exp;
-   
-   F_mpz_mul2(sp, mat1->rows[r1] + i, mat2->rows[r2] + i);
-   exp = cexpo[i]*2;
-
-   F_mpz_t temp_sp;
-
-   F_mpz_init(temp_sp);
-
-
-   for (i = start + 1; i < start + n; i++)
-   {
-      F_mpz_mul2(temp_sp, mat1->rows[r1] + i, mat2->rows[r2] + i);
-      temp_exp = cexpo[i]*2;
-      exp = _F_mpz_add_2exp(sp, sp, exp, temp_sp, temp_exp);
-   }
-
-   F_mpz_clear(temp_sp);
-
-   return exp;
-}
-
 
 /***********************************/
 /* Babai's Nearest Plane algorithm */

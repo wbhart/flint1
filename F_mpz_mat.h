@@ -535,6 +535,14 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp);
 void F_mpz_mat_row_scalar_product(F_mpz_t sp, F_mpz_mat_t mat1, ulong r1, 
                                   F_mpz_mat_t mat2, ulong r2, ulong start, ulong n);
 
+/**
+   \fn     long F_mpz_mat_row_scalar_product_2exp(F_mpz_t sp, F_mpz_mat_t mat1, ulong r1, 
+                                  F_mpz_mat_t mat2, ulong r2, ulong start, ulong n, int * cexpo)
+   \brief  Set sp*2^(returned long) to the scalar product of row r1 of mat1 and row r2 of mat2 with cexpo as an array of additional 2 power weights
+*/
+long F_mpz_mat_row_scalar_product_2exp(F_mpz_t sp, F_mpz_mat_t mat1, ulong r1, 
+                                  F_mpz_mat_t mat2, ulong r2, ulong start, ulong n, int * cexpo);
+
 #ifdef __cplusplus
  }
 #endif
