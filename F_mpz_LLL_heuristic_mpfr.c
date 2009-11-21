@@ -304,8 +304,6 @@ void LLL_heuristic(F_mpz_mat_t B)
 
    for (i = zeros + 1; i < d; i++)
       alpha[i] = 0;
-
-   long loops = 0;
     
    while (kappa < d)
    {      
@@ -335,15 +333,6 @@ void LLL_heuristic(F_mpz_mat_t B)
 	   } else
 	   {
 
-      loops++;
-      if (loops > 8100000){
-         F_mpz_mat_print(B);
-         printf("kappa = %d\n", kappa);
-         printf("LLL loops above 8100000\n");
-         abort();
-      }
-
-
 	      /* ******************************************* */
 	      /* Step5: Find the right insertion index kappa */
          /* kappa2 remains the initial kappa            */
@@ -368,11 +357,6 @@ void LLL_heuristic(F_mpz_mat_t B)
 	         if (kappa < alpha[i]) alpha[i] = kappa;
 	  
 	      alpha[kappa] = kappa;
-
-         if ((loops%1000) == 0){
-            printf("still kicking\n");
-            printf("switching kappa2 =%d and kappa=%d\n", kappa2, kappa);
-         }
 
 	      /* ****************************** */
 	      /* Step6: Update the mu's and r's */
@@ -771,8 +755,6 @@ void LLL_heuristic_2exp(F_mpz_mat_t B, int * cexpo)
 
    for (i = zeros + 1; i < d; i++)
       alpha[i] = 0;
-
-   long loops = 0;
     
    while (kappa < d)
    {      
@@ -802,15 +784,6 @@ void LLL_heuristic_2exp(F_mpz_mat_t B, int * cexpo)
 	   } else
 	   {
 
-      loops++;
-      if (loops > 8100000){
-         F_mpz_mat_print(B);
-         printf("kappa = %d\n", kappa);
-         printf("LLL loops above 8100000\n");
-         abort();
-      }
-
-
 	      /* ******************************************* */
 	      /* Step5: Find the right insertion index kappa */
          /* kappa2 remains the initial kappa            */
@@ -835,11 +808,6 @@ void LLL_heuristic_2exp(F_mpz_mat_t B, int * cexpo)
 	         if (kappa < alpha[i]) alpha[i] = kappa;
 	  
 	      alpha[kappa] = kappa;
-
-         if ((loops%1000) == 0){
-            printf("still kicking\n");
-            printf("switching kappa2 =%d and kappa=%d\n", kappa2, kappa);
-         }
 
 	      /* ****************************** */
 	      /* Step6: Update the mu's and r's */
@@ -998,8 +966,6 @@ long LLL_heuristic_2exp_with_removal(F_mpz_mat_t B, int * cexpo, F_mpz_t gs_B)
    for (i = zeros + 1; i < d; i++)
       alpha[i] = 0;
 
-   long loops = 0;
-    
    while (kappa < d)
    {      
 
@@ -1028,15 +994,6 @@ long LLL_heuristic_2exp_with_removal(F_mpz_mat_t B, int * cexpo, F_mpz_t gs_B)
 	   } else
 	   {
 
-      loops++;
-      if (loops > 8100000){
-         F_mpz_mat_print(B);
-         printf("kappa = %d\n", kappa);
-         printf("LLL loops above 8100000\n");
-         abort();
-      }
-
-
 	      /* ******************************************* */
 	      /* Step5: Find the right insertion index kappa */
          /* kappa2 remains the initial kappa            */
@@ -1061,11 +1018,6 @@ long LLL_heuristic_2exp_with_removal(F_mpz_mat_t B, int * cexpo, F_mpz_t gs_B)
 	         if (kappa < alpha[i]) alpha[i] = kappa;
 	  
 	      alpha[kappa] = kappa;
-
-         if ((loops%1000) == 0){
-            printf("still kicking\n");
-            printf("switching kappa2 =%d and kappa=%d\n", kappa2, kappa);
-         }
 
 	      /* ****************************** */
 	      /* Step6: Update the mu's and r's */
