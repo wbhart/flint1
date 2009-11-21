@@ -46,6 +46,27 @@ Copyright (C) 2008, William Hart
 #define DEBUG 0 // allows easy switching of debugging code on and off when debugging (if inserted)
 #define DEBUG2 1 
 
+void F_mpz_test_random(F_mpz_t f, ulong bits)
+{
+	if (bits == 0)
+	{
+		F_mpz_zero(f);
+      return;
+	}
+	
+	mpz_t temp;
+	mpz_init(temp);
+	
+	mpz_rrandomb(temp, randstate, bits);
+#if SIGNS
+	if (z_randint(2)) mpz_neg(temp, temp);
+#endif
+   
+	F_mpz_set_mpz(f, temp);
+
+   mpz_clear(temp);
+}
+
 // generate a random mpz_mat_t with the given number of rows and columns and number of bits per entry
 void mpz_randmat(mpz_mat_t mat, ulong r, ulong c, ulong maxbits)
 {
@@ -155,7 +176,6 @@ int test_F_mpz_mat_convert()
 		mpz_mat_clear(m_mat1);
       mpz_mat_clear(m_mat2);
    }
-   
    return result;
 }
 
@@ -596,96 +616,6 @@ int test_F_mpz_mat_resize()
 		mpz_mat_clear(m_mat1);
    }
    
-   return result;
-}
-
-int test_F_mpz_mat_tofromstring()
-{
-   mpz_mat_t test_mat;
-   F_mpz_mat_t test_F_mpz_mat, test_F_mpz_mat2;
-   int result = 1;
-   ulong bits;
-
-
-   for (ulong count1 = 0; (count1 < 2000*ITER) && (result == 1) ; count1++)
-   {
-      ulong r1 = z_randint(30);
-      ulong c1 = z_randint(30);
-      ulong r2 = z_randint(30);
-      ulong c2 = z_randint(30);
-      
-		F_mpz_mat_init(test_F_mpz_mat, r1, c1);
-      F_mpz_mat_init(test_F_mpz_mat2, r2, c2);
-
-      bits = z_randint(200) + 1;
-
-      mpz_mat_init(test_mat, r1, c1);
-      
-		mpz_randmat(test_mat, r1, c1, bits);
-           
-      mpz_mat_to_F_mpz_mat(test_F_mpz_mat, test_mat);
-
-      char *strbuf = F_mpz_mat_to_string(test_F_mpz_mat);      
-
-      int OK = F_mpz_mat_from_string(test_F_mpz_mat2, strbuf);
-
-      free(strbuf);
-
-      result = F_mpz_mat_equal(test_F_mpz_mat, test_F_mpz_mat2) && OK; 
-		if (!result) 
-		{
-			printf("Error: r1 = %ld, c1 = %ld, r2 = %ld, c2 = %ld\n", r1, c1, r2, c2);
-		}
-          
-		F_mpz_mat_clear(test_F_mpz_mat);
-      F_mpz_mat_clear(test_F_mpz_mat2);
-      mpz_mat_clear(test_mat); 
-
-   }
-
-   
-   return result;
-}
-
-int test_F_mpz_mat_tofromstringpretty()
-{
-   mpz_mat_t test_mat;
-   F_mpz_mat_t test_F_mpz_mat, test_F_mpz_mat2;
-   int result = 1;
-   ulong bits;
-
-   for (ulong count1 = 0; (count1 < 2000*ITER) && (result == 1) ; count1++)
-   {
-      ulong r1 = z_randint(30);
-      ulong c1 = z_randint(30);
-      ulong r2 = z_randint(30);
-      ulong c2 = z_randint(30);
-      
-		F_mpz_mat_init(test_F_mpz_mat, r1, c1);
-      F_mpz_mat_init(test_F_mpz_mat2, r2, c2);
-
-      bits = z_randint(200) + 1;
-
-      mpz_mat_init(test_mat, r1, c1);
-      
-		mpz_randmat(test_mat, r1, c1, bits);
-           
-      mpz_mat_to_F_mpz_mat(test_F_mpz_mat, test_mat);
-      char *strbuf = F_mpz_mat_to_string_pretty(test_F_mpz_mat);      
-
-      int OK = F_mpz_mat_from_string_pretty(test_F_mpz_mat2, strbuf);
-
-      free(strbuf);
-
-      result = F_mpz_mat_equal(test_F_mpz_mat, test_F_mpz_mat2) && OK; 
-		if (!result) 
-		{
-			printf("Error: r1 = %ld, c1 = %ld, r2 = %ld, c2 = %ld\n", r1, c1, r2, c2);
-		}
-		F_mpz_mat_clear(test_F_mpz_mat);
-      F_mpz_mat_clear(test_F_mpz_mat2);
-      mpz_mat_clear(test_mat); 
-   }  
    return result;
 }
 
@@ -1495,179 +1425,310 @@ int test_F_mpz_mat_row_submul_2exp_ui()
    return result; 
 }
 
-int test_F_mpz_mat_mul_classical()
+int test_F_mpz_mat_row_submul_2exp_F_mpz()
 {
-   mpz_mat_t m_mat1, m_mat2, m_mat3,res1,res2;
-   F_mpz_mat_t F_mat1, F_mat2, F_mat3, F_res1, F_res2, F_res3, F_temp;
+   mpz_mat_t m_mat, m_mat2, m_mat3;
+   F_mpz_mat_t F_mat, F_mat2;
+   F_mpz_t mult;
    int result = 1;
-   ulong bits1, bits2, bits3;
+   ulong bits, bits2, bits3, r, c, start, n, r1, r2, exp;
+   mpz_t temp, temp2, m_mult;
+   mpz_init(temp);
+   mpz_init(temp2);
+   mpz_init(m_mult);
    
-   for (ulong count1 = 0; (count1 < 2000*ITER) && (result == 1) ; count1++)
+   for (ulong count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
    {
-      ulong r1 = z_randint(30)+1;
-      ulong c1 = z_randint(30)+1;
-      ulong c2 = z_randint(30)+1;
+      bits = z_randint(200)+ 1;
+      bits2 = z_randint(200)+ 1;
+      r = z_randint(30)+1;  
+      c = z_randint(30)+1;
+		exp = z_randint(100);
+		r1 = z_randint(r);
+      r2 = z_randint(r);
+      start = z_randint(c);
+		n = z_randint(c-start)+1;
 
+      F_mpz_init(mult);
       
-      F_mpz_mat_init(F_mat1, r1, c1);
-      F_mpz_mat_init(F_mat2, c1, c2);
-      F_mpz_mat_init(F_mat3, c1, c2);
-      F_mpz_mat_init(F_temp, c1, c2);
-      F_mpz_mat_init(F_res1, r1, c2);
-      F_mpz_mat_init(F_res2, r1, c2);
-      F_mpz_mat_init(F_res3, r1, c2);
-
-      mpz_mat_init(m_mat1, r1, c1); 
-      mpz_mat_init(m_mat2, c1, c2); 
-      mpz_mat_init(m_mat3, c1, c2); 
-      mpz_mat_init(res1, r1, c2); 
-      mpz_mat_init(res2, r1, c2); 
-
-      bits1 = z_randint(200) + 1;
-      bits2 = z_randint(200) + 1;
-      bits3 = z_randint(200) + 1;
+      mpz_mat_init(m_mat, r, c); 
+		mpz_mat_init(m_mat2, r, c); 
+		mpz_mat_init(m_mat3, r, c); 
+		F_mpz_mat_init(F_mat, r, c);
+      F_mpz_mat_init(F_mat2, r, c);
       
-      mpz_randmat(m_mat1, r1, c1, bits1);
-      mpz_randmat(m_mat2, c1, c2, bits2);
-      mpz_randmat(m_mat3, c1, c2, bits2);
-           
-      mpz_mat_to_F_mpz_mat(F_mat1, m_mat1);
+      mpz_randmat_dense(m_mat, r, c, bits); 
+      mpz_mat_to_F_mpz_mat(F_mat, m_mat);
+      mpz_randmat_dense(m_mat2, r, c, bits2); 
       mpz_mat_to_F_mpz_mat(F_mat2, m_mat2);
-      mpz_mat_to_F_mpz_mat(F_mat3, m_mat3);
-
-      
-      F_mpz_mat_add(F_temp,F_mat2,F_mat3);     
-      F_mpz_mat_mul_classical(F_res1, F_mat1, F_temp);
-      F_mpz_mat_to_mpz_mat(res1, F_res1);
-
-
-      F_mpz_mat_mul_classical(F_res3,F_mat1,F_mat2);
-      F_mpz_mat_mul_classical(F_res2,F_mat1,F_mat3);
-      F_mpz_mat_add(F_res2,F_res2,F_res3);
-      F_mpz_mat_to_mpz_mat(res2, F_res2);
-
           
-      result = mpz_mat_equal(res1, res2); 
-      if (!result) 
+      bits3 = z_randint(200);
+		F_mpz_test_random(mult, bits3);
+      F_mpz_get_mpz(m_mult, mult);
+
+		F_mpz_mat_row_submul_2exp_F_mpz(F_mat2, r2, F_mat, r1, start, n, mult, exp);
+      F_mpz_mat_to_mpz_mat(m_mat3, F_mat2);
+      
+      for (ulong i = start; i < start + n; i++)
       {
-         printf("Error: bits1 = %ld, bits2 = %ld, bits3 = %ld, count1 = %ld\n", bits1, bits2, bits3, count1);
+         mpz_set(temp, m_mat2->entries[r2*c+i]);
+			mpz_mul_2exp(temp2, m_mat->entries[r1*c+i], exp);
+			mpz_submul(temp, temp2, m_mult);
+         result &= (mpz_cmp(temp, m_mat3->entries[r2*c+i]) == 0);
       }
-          
-      F_mpz_mat_clear(F_mat1);
+      
+		if (!result) 
+		{
+			gmp_printf("Error: r = %ld, c = %ld, bits = %ld, bits2 = %ld, m_mult = %Zd\n", r, c, bits, bits2, mult);
+		}
+      
+      F_mpz_clear(mult);
+      mpz_mat_clear(m_mat); 
+		mpz_mat_clear(m_mat2); 
+		mpz_mat_clear(m_mat3); 
+		F_mpz_mat_clear(F_mat);
       F_mpz_mat_clear(F_mat2);
-      F_mpz_mat_clear(F_mat3);
-      F_mpz_mat_clear(F_temp);
-      F_mpz_mat_clear(F_res1);
-      F_mpz_mat_clear(F_res2);
-      F_mpz_mat_clear(F_res3);
-      mpz_mat_clear(m_mat1); 
-      mpz_mat_clear(m_mat2);
-      mpz_mat_clear(m_mat3);  
-      mpz_mat_clear(res1); 
-      mpz_mat_clear(res2); 
    }
-
-//alias testing for the square case
-   for (ulong count1 = 0; (count1 < 2000*ITER) && (result == 1) ; count1++)
+   
+   // aliased multiply
+   for (ulong count1 = 0; (count1 < 10000) && (result == 1) ; count1++)
    {
-      ulong r = z_randint(30)+1;
-      
-      F_mpz_mat_init(F_mat1, r, r);
-      F_mpz_mat_init(F_mat2, r, r);
-      F_mpz_mat_init(F_mat3, r, r);
-      F_mpz_mat_init(F_temp, r, r);
-      F_mpz_mat_init(F_res1, r, r);
-      F_mpz_mat_init(F_res2, r, r);
-      F_mpz_mat_init(F_res3, r, r);
+      bits = z_randint(200)+ 1;
+      r = z_randint(30)+1;  
+      c = z_randint(30)+1;
+		r1 = z_randint(r);
+      r2 = z_randint(r);
+      exp = z_randint(100);
+		start = z_randint(c);
+		n = z_randint(c-start)+1;
 
-      mpz_mat_init(m_mat1, r, r); 
-      mpz_mat_init(m_mat2, r, r); 
-      mpz_mat_init(m_mat3, r, r); 
-      mpz_mat_init(res1, r, r); 
-      mpz_mat_init(res2, r, r); 
-
-      bits1 = z_randint(200) + 1;
-      bits2 = z_randint(200) + 1;
-      bits3 = z_randint(200) + 1;
+      F_mpz_init(mult);
+      mpz_mat_init(m_mat, r, c); 
+		mpz_mat_init(m_mat2, r, c); 
+		F_mpz_mat_init(F_mat, r, c);
       
-      mpz_randmat(m_mat1, r, r, bits1);
-      mpz_randmat(m_mat2, r, r, bits2);
-      mpz_randmat(m_mat3, r, r, bits2);
-           
-      mpz_mat_to_F_mpz_mat(F_res2, m_mat1);
+      mpz_randmat(m_mat, r, c, bits); 
+      mpz_mat_to_F_mpz_mat(F_mat, m_mat);
+          
+      bits3 = z_randint(200);
+		F_mpz_test_random(mult, bits3);
+      F_mpz_get_mpz(m_mult, mult);
+
+		F_mpz_mat_row_submul_2exp_F_mpz(F_mat, r2, F_mat, r1, start, n, mult, exp);
+      F_mpz_mat_to_mpz_mat(m_mat2, F_mat);
+
+      for (ulong i = start; i < start + n; i++)
+      {
+         mpz_set(temp, m_mat->entries[r2*c+i]);
+			mpz_mul_2exp(temp2, m_mat->entries[r1*c+i], exp);
+			mpz_submul(temp, temp2, m_mult);
+         result &= (mpz_cmp(temp, m_mat2->entries[r2*c+i]) == 0);
+      }
+
+		if (!result) 
+		{
+			gmp_printf("Error: r = %ld, c = %ld, bits = %ld, bits2 = %ld, mult = %Zd\n", r, c, bits, bits2, mult);
+		}
+
+      F_mpz_clear(mult);
+      mpz_mat_clear(m_mat); 
+		mpz_mat_clear(m_mat2); 
+		F_mpz_mat_clear(F_mat);
+   }
+    
+	mpz_clear(m_mult);
+	mpz_clear(temp);
+	mpz_clear(temp2);
+	
+   return result; 
+}
+
+int test_F_mpz_mat_row_scalar_mul()
+{
+   mpz_mat_t m_mat, m_mat2;
+   F_mpz_mat_t F_mat, F_mat2;
+   F_mpz_t F_sp;
+   int result = 1;
+   ulong bits, bits2, r, c, start, n, r1, r2;
+   mpz_t m_sp1, m_sp2;
+   mpz_init(m_sp1);
+   mpz_init(m_sp2);
+   
+   for (ulong count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+   {
+      bits = z_randint(200)+ 1;
+      bits2 = z_randint(200)+ 1;
+      r = z_randint(30)+1;  
+      c = z_randint(30)+1;
+		r1 = z_randint(r);
+      r2 = z_randint(r);
+      start = z_randint(c);
+		n = z_randint(c-start)+1;
+
+      F_mpz_init(F_sp);
+      mpz_mat_init(m_mat, r, c); 
+		mpz_mat_init(m_mat2, r, c); 
+		F_mpz_mat_init(F_mat, r, c);
+      F_mpz_mat_init(F_mat2, r, c);
+      
+      mpz_randmat_dense(m_mat, r, c, bits); 
+      mpz_mat_to_F_mpz_mat(F_mat, m_mat);
+      mpz_randmat_dense(m_mat2, r, c, bits2); 
       mpz_mat_to_F_mpz_mat(F_mat2, m_mat2);
-      mpz_mat_to_F_mpz_mat(F_res3, m_mat3);
-
-      F_mpz_mat_add(F_res1,F_mat2,F_res3);    
-      F_mpz_mat_mul_classical(F_res1, F_res2, F_res1);
-      F_mpz_mat_to_mpz_mat(res1, F_res1);
-
-      F_mpz_mat_mul_classical(F_res3,F_res2,F_res3);
-      F_mpz_mat_mul_classical(F_res2,F_res2,F_mat2);
-      F_mpz_mat_add(F_res2,F_res2,F_res3);
-      F_mpz_mat_to_mpz_mat(res2, F_res2);
           
-      result = mpz_mat_equal(res1, res2); 
-      if (!result) 
+		F_mpz_mat_row_scalar_product(F_sp, F_mat2, r2, F_mat, r1, start, n);
+      F_mpz_get_mpz(m_sp1, F_sp);
+      
+      mpz_set_ui(m_sp2, 0);
+      for (ulong i = start; i < start + n; i++)
       {
-         printf("Error: bits1 = %ld, bits2 = %ld, bits3 = %ld, count1 = %ld\n", bits1, bits2, bits3, count1);
+         mpz_addmul(m_sp2, m_mat->entries[r1*c+i], m_mat2->entries[r2*c+i]);
       }
-          
-      F_mpz_mat_clear(F_mat1);
-      F_mpz_mat_clear(F_mat2);
-      F_mpz_mat_clear(F_mat3);
-      F_mpz_mat_clear(F_temp);
-      F_mpz_mat_clear(F_res1);
-      F_mpz_mat_clear(F_res2);
-      F_mpz_mat_clear(F_res3);
-      mpz_mat_clear(m_mat1); 
-      mpz_mat_clear(m_mat2);
-      mpz_mat_clear(m_mat3);  
-      mpz_mat_clear(res1); 
-      mpz_mat_clear(res2); 
-   }
+      
+      result = (mpz_cmp(m_sp1, m_sp2) == 0);
 
-//aliasing square case two inputs the same and all inputs same
+		if (!result) 
+		{
+			printf("Error: r = %ld, c = %ld, bits = %ld, bits2 = %ld\n", r, c, bits, bits2);
+		}
+      
+      F_mpz_clear(F_sp);
+      mpz_mat_clear(m_mat); 
+		mpz_mat_clear(m_mat2); 
+		F_mpz_mat_clear(F_mat);
+      F_mpz_mat_clear(F_mat2);
+   }
+   
+   // alias rows
+   for (ulong count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+   {
+      bits = z_randint(200)+ 1;
+      r = z_randint(30)+1;  
+      c = z_randint(30)+1;
+		r1 = z_randint(r);
+      start = z_randint(c);
+		n = z_randint(c-start)+1;
+
+      F_mpz_init(F_sp);
+      mpz_mat_init(m_mat, r, c); 
+		F_mpz_mat_init(F_mat, r, c);
+      
+      mpz_randmat_dense(m_mat, r, c, bits); 
+      mpz_mat_to_F_mpz_mat(F_mat, m_mat);
+          
+		F_mpz_mat_row_scalar_product(F_sp, F_mat, r1, F_mat, r1, start, n);
+      F_mpz_get_mpz(m_sp1, F_sp);
+      
+      mpz_set_ui(m_sp2, 0);
+      for (ulong i = start; i < start + n; i++)
+      {
+         mpz_addmul(m_sp2, m_mat->entries[r1*c+i], m_mat->entries[r1*c+i]);
+      }
+      
+      result = (mpz_cmp(m_sp1, m_sp2) == 0);
+
+		if (!result) 
+		{
+			printf("Error: r = %ld, c = %ld, bits = %ld\n", r, c, bits);
+		}
+      
+      F_mpz_clear(F_sp);
+      mpz_mat_clear(m_mat); 
+		F_mpz_mat_clear(F_mat);
+   }
+       
+	mpz_clear(m_sp1);
+	mpz_clear(m_sp2);
+	
+   return result; 
+}
+
+int test_F_mpz_mat_tofromstring()
+{
+   mpz_mat_t test_mat;
+   F_mpz_mat_t test_F_mpz_mat, test_F_mpz_mat2;
+   int result = 1;
+   ulong bits;
+
+
    for (ulong count1 = 0; (count1 < 2000*ITER) && (result == 1) ; count1++)
    {
-      ulong r = z_randint(30)+1;
+      ulong r1 = z_randint(30);
+      ulong c1 = z_randint(30);
+      ulong r2 = z_randint(30);
+      ulong c2 = z_randint(30);
       
-      F_mpz_mat_init(F_mat1, r, r);
-      F_mpz_mat_init(F_temp, r, r);
-      F_mpz_mat_init(F_res1, r, r);
-      F_mpz_mat_init(F_res2, r, r);
-      mpz_mat_init(m_mat1, r, r); 
-      mpz_mat_init(res1, r, r); 
-      mpz_mat_init(res2, r, r); 
+		F_mpz_mat_init(test_F_mpz_mat, r1, c1);
+      F_mpz_mat_init(test_F_mpz_mat2, r2, c2);
 
-      bits1 = z_randint(200) + 1;
+      bits = z_randint(200) + 1;
+
+      mpz_mat_init(test_mat, r1, c1);
       
-      mpz_randmat(m_mat1, r, r, bits1);
+		mpz_randmat(test_mat, r1, c1, bits);
            
-      mpz_mat_to_F_mpz_mat(F_mat1, m_mat1);
+      mpz_mat_to_F_mpz_mat(test_F_mpz_mat, test_mat);
 
-      F_mpz_mat_add(F_temp,F_mat1,F_mat1);    
-      F_mpz_mat_mul_classical(F_res1, F_mat1, F_temp);
-      F_mpz_mat_to_mpz_mat(res1, F_res1);
+      char *strbuf = F_mpz_mat_to_string(test_F_mpz_mat);      
 
-      F_mpz_mat_mul_classical(F_mat1,F_mat1,F_mat1);
-      F_mpz_mat_add(F_res2,F_mat1,F_mat1);
-      F_mpz_mat_to_mpz_mat(res2, F_res2);
+      int OK = F_mpz_mat_from_string(test_F_mpz_mat2, strbuf);
+
+      free(strbuf);
+
+      result = F_mpz_mat_equal(test_F_mpz_mat, test_F_mpz_mat2) && OK; 
+		if (!result) 
+		{
+			printf("Error: r1 = %ld, c1 = %ld, r2 = %ld, c2 = %ld\n", r1, c1, r2, c2);
+		}
           
-      result = mpz_mat_equal(res1, res2); 
-      if (!result) 
-      {
-         printf("Error: bits1 = %ld, bits2 = %ld, bits3 = %ld, count1 = %ld\n", bits1, bits2, bits3, count1);
-      }
-          
-      F_mpz_mat_clear(F_mat1);
-      F_mpz_mat_clear(F_temp);
-      F_mpz_mat_clear(F_res1);
-      F_mpz_mat_clear(F_res2);
-      mpz_mat_clear(m_mat1); 
-      mpz_mat_clear(res1); 
-      mpz_mat_clear(res2); 
-   }
+		F_mpz_mat_clear(test_F_mpz_mat);
+      F_mpz_mat_clear(test_F_mpz_mat2);
+      mpz_mat_clear(test_mat); 
+
+   }   
+   return result;
+}
+
+
+int test_F_mpz_mat_tofromstringpretty()
+{
+   mpz_mat_t test_mat;
+   F_mpz_mat_t test_F_mpz_mat, test_F_mpz_mat2;
+   int result = 1;
+   ulong bits;
+
+   for (ulong count1 = 0; (count1 < 2000*ITER) && (result == 1) ; count1++)
+   {
+      ulong r1 = z_randint(30);
+      ulong c1 = z_randint(30);
+      ulong r2 = z_randint(30);
+      ulong c2 = z_randint(30);
+      
+		F_mpz_mat_init(test_F_mpz_mat, r1, c1);
+      F_mpz_mat_init(test_F_mpz_mat2, r2, c2);
+
+      bits = z_randint(200) + 1;
+
+      mpz_mat_init(test_mat, r1, c1);
+      
+		mpz_randmat(test_mat, r1, c1, bits);
+           
+      mpz_mat_to_F_mpz_mat(test_F_mpz_mat, test_mat);
+      char *strbuf = F_mpz_mat_to_string_pretty(test_F_mpz_mat);      
+
+      int OK = F_mpz_mat_from_string_pretty(test_F_mpz_mat2, strbuf);
+
+      free(strbuf);
+
+      result = F_mpz_mat_equal(test_F_mpz_mat, test_F_mpz_mat2) && OK; 
+		if (!result) 
+		{
+			printf("Error: r1 = %ld, c1 = %ld, r2 = %ld, c2 = %ld\n", r1, c1, r2, c2);
+		}
+		F_mpz_mat_clear(test_F_mpz_mat);
+      F_mpz_mat_clear(test_F_mpz_mat2);
+      mpz_mat_clear(test_mat); 
+   }  
    return result;
 }
 
@@ -1683,7 +1744,7 @@ void F_mpz_mat_test_all()
    RUN_TEST(F_mpz_mat_equal);  
    RUN_TEST(F_mpz_mat_resize);
    RUN_TEST(F_mpz_mat_tofromstring);
-   RUN_TEST(F_mpz_mat_tofromstringpretty);
+   RUN_TEST(F_mpz_mat_tofromstringpretty);  
    RUN_TEST(F_mpz_mat_neg); 
    RUN_TEST(F_mpz_mat_add); 
    RUN_TEST(F_mpz_mat_sub); 
@@ -1694,7 +1755,8 @@ void F_mpz_mat_test_all()
    RUN_TEST(F_mpz_mat_row_submul_ui); 
    RUN_TEST(F_mpz_mat_row_addmul_2exp_ui); 
    RUN_TEST(F_mpz_mat_row_submul_2exp_ui); 
-   RUN_TEST(F_mpz_mat_mul_classical);
+   RUN_TEST(F_mpz_mat_row_submul_2exp_F_mpz); 
+   RUN_TEST(F_mpz_mat_row_scalar_mul); 
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");
@@ -1710,5 +1772,4 @@ int main()
 
    return 0;
 }
-
 

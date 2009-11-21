@@ -28,6 +28,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <gmp.h>
+#include <mpfr.h>
 
 #include "flint.h"
 #include "mpn_extras.h"
@@ -268,15 +269,13 @@ void F_mpz_randomm(F_mpz_t f, const mpz_t in)
 
 void F_mpz_set_si(F_mpz_t f, const long val)
 {
-   if (FLINT_ABS(val) > COEFF_MAX) // val is large
+   if (FLINT_ABS(val) > (ulong) COEFF_MAX) // val is large
 	{
-		
 		__mpz_struct * mpz_coeff = _F_mpz_promote(f);
 		mpz_set_si(mpz_coeff, val);
 		
 	} else 
 	{
-		
 		_F_mpz_demote(f);
 		
 		*f = val; // val is small
@@ -393,6 +392,65 @@ void F_mpz_set_mpz(F_mpz_t f, const mpz_t x)
 		mpz_set(mpz_ptr, x);
 		
 	}			
+}
+
+void F_mpz_get_mpfr(mpfr_t x, const F_mpz_t f)
+{
+   F_mpz d = *f;
+
+   if (!COEFF_IS_MPZ(d))
+   {
+      mpfr_set_si(x, d, GMP_RNDN);
+      return;
+   } else
+   {
+      mpfr_set_z(x, F_mpz_arr + COEFF_TO_OFF(d), GMP_RNDN);
+      return;
+   }
+}
+
+void F_mpz_set_mpfr(F_mpz_t f, const mpfr_t x)
+{
+   F_mpz d = *f;
+
+   if (!COEFF_IS_MPZ(d)) // f is small
+   {
+      if (mpfr_fits_slong_p(x, GMP_RNDN)) // x fits in a long
+      {
+         long cx = mpfr_get_si(x, GMP_RNDN);
+         
+         F_mpz_set_si(f, cx);
+      } else // x is large
+      {
+         __mpz_struct * mpz_ptr = _F_mpz_promote(f);
+         mpfr_get_z(mpz_ptr, x, GMP_RNDN);
+      }
+      
+      return;
+   } else // f is large
+   {
+      mpfr_get_z(F_mpz_arr + COEFF_TO_OFF(d), x, GMP_RNDN);
+
+      _F_mpz_demote_val(f); // may actually be small
+      return;
+   }
+}
+
+int F_mpz_set_mpfr_2exp(F_mpz_t f, const mpfr_t x)
+{
+   F_mpz d = *f;
+   int exp;
+
+   if (!COEFF_IS_MPZ(d)) // f is small
+   {
+      __mpz_struct * mpz_ptr = _F_mpz_promote(f);
+      exp = mpfr_get_z_exp(mpz_ptr, x);
+   } else
+      exp = mpfr_get_z_exp(F_mpz_arr + COEFF_TO_OFF(d), x);
+   
+   _F_mpz_demote_val(f); // x may have been small
+      
+   return exp;
 }
 
 void F_mpz_set_limbs(F_mpz_t f, const mp_limb_t * x, const ulong limbs)

@@ -32,6 +32,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <gmp.h>
+#include <mpfr.h>
+
 #include "mpn_extras.h"
 #include "flint.h"
 #include "mpz_mat.h"
@@ -229,6 +231,7 @@ int F_mpz_mat_fread(F_mpz_mat_t mat, FILE* f);
 */
 int F_mpz_mat_fread_pretty(F_mpz_mat_t mat, FILE* f);
 
+
 /*===============================================================================
 
 	Conversions
@@ -253,6 +256,12 @@ void F_mpz_mat_to_mpz_mat(mpz_mat_t m_mat, const F_mpz_mat_t F_mat);
 	        with respect to a single maximum exponent which is returned.
 */
 long F_mpz_mat_set_line_d(double * appv, const F_mpz_mat_t mat, const ulong r, const int n);
+
+/** 
+   \fn     void F_mpz_mat_set_line_mpfr(mpfr_t * appv, const F_mpz_mat_t mat, const ulong r, const int n)
+   \brief  Sets the entries of appv to the entries of the given row of mat.
+*/
+void F_mpz_mat_set_line_mpfr(mpfr_t * appv, const F_mpz_mat_t mat, const ulong r, const int n);
 
 /*===============================================================================
 
@@ -419,10 +428,18 @@ void F_mpz_mat_row_addmul_2exp_ui(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, 
 	\brief  Multiply entry from row r2 of mat2 by c*2^exp and subtract from entry from row r1 of mat1.
 	        
 */
-
 void F_mpz_mat_row_submul_2exp_ui(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong r2, 
 								               ulong start, ulong n, ulong c, ulong exp);
 
+/** 
+   \fn     void F_mpz_mat_row_submul_2exp_F_mpz(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong r2, 
+								               ulong start, ulong n, F_mpz_t c, ulong exp)
+
+	\brief  Multiply entry from row r2 of mat2 by c*2^exp and subtract from entry from row r1 of mat1.
+	        
+*/
+void F_mpz_mat_row_submul_2exp_F_mpz(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong r2, 
+								               ulong start, ulong n, F_mpz_t c, ulong exp);
 
 /** 
    \fn     void F_mpz_mat_row_swap(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, 
@@ -443,44 +460,15 @@ void F_mpz_mat_row_swap(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2,
 void F_mpz_mat_row_neg(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, 
 								                          ulong r2, ulong start, ulong n);
 
-/* ======================================================================================================
-  Classical Multiplication for F_mpz_mat.h
-
-=========================================================================================================*/
-
 /** 
-   \fn     void _F_mpz_mat_mul_classical(F_mpz_mat_t res, const F_mpz_mat_t mat1,
-                                                  const F_mpz_mat_t mat2)
+   \fn     void F_mpz_mat_row_scalar_product(F_mpz_t sp, F_mpz_mat_t mat1, ulong r1, 
+                                  F_mpz_mat_t mat2, ulong r2, ulong start, ulong n)
 
-	\brief  Classical multiplication of F_mpz_mat_t's mat1 and mat2 set result to res
-                                                  not alias safe	        
+	\brief  Set sp to the scalar product of row r1 of mat1 and row r2 of mat2.
 */
-void _F_mpz_mat_mul_classical(F_mpz_mat_t res, const F_mpz_mat_t mat1,
-                                                  const F_mpz_mat_t mat2);
+void F_mpz_mat_row_scalar_product(F_mpz_t sp, F_mpz_mat_t mat1, ulong r1, 
+                                  F_mpz_mat_t mat2, ulong r2, ulong start, ulong n);
 
-/** 
-   \fn     static inline
-           void F_mpz_mat_mul_classical(F_mpz_mat_t P, const F_mpz_mat_t A,
-                                                  const F_mpz_mat_t B)
-
-	\brief  Classical multiplication of F_mpz_mat_t's mat1 and mat2 set result to res	        
-                                                  alias safe
-*/
-static inline
-void F_mpz_mat_mul_classical(F_mpz_mat_t P, const F_mpz_mat_t A,const F_mpz_mat_t B)
-{
-
-	if ((P == A) || (P == B))
-	{
-		F_mpz_mat_t Pa;
-		F_mpz_mat_init(Pa,P->r,P->c);
-      _F_mpz_mat_mul_classical(Pa, A, B);
-		F_mpz_mat_set(P, Pa);
-		F_mpz_mat_clear(Pa);
-		return;
-	} else
-	   return _F_mpz_mat_mul_classical(P, A, B);
-}
 
 /*===========================================================
 
@@ -552,10 +540,11 @@ void F_mpz_mat_resize2(F_mpz_mat_t M, ulong r, ulong c);
 */
 int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp);
 
+
 #ifdef __cplusplus
  }
 #endif
  
 #endif
 
- // *************** end of file
+// *************** end of file

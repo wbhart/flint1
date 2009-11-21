@@ -30,6 +30,7 @@ Copyright (C) 2009, Andy Novocin
 #include <stdio.h>
 #include <string.h>
 #include <gmp.h>
+#include <mpfr.h>
 #include <time.h>
 #include "flint.h"
 #include "memory-manager.h"
@@ -190,6 +191,99 @@ int test_F_mpz_getset_mpz()
    mpz_clear(val);
 	mpz_clear(val2);
 	return result; 
+}
+
+int test_F_mpz_getset_mpfr()
+{
+   F_mpz_t f, g;
+   mpfr_t m;
+   int result = 1;
+   ulong bits;
+   
+   mpfr_set_default_prec(200);
+   
+   mpfr_init(m);
+   
+   for (ulong count1 = 0; (count1 < 1000000*ITER) && (result == 1); count1++)
+   {
+      bits = z_randint(200)+ 1;      
+      
+		F_mpz_init(f);
+		F_mpz_init(g);
+
+      F_mpz_test_random(f, bits); 
+		    
+      F_mpz_get_mpfr(m, f);
+      F_mpz_set_mpfr(g, m);
+         
+      result = (F_mpz_equal(f, g));
+	   
+      if (!result)
+	   {
+			printf("Error: val = "); F_mpz_print(f); 
+         printf(", val2 = "); F_mpz_print(g); printf("\n");
+		}
+
+      F_mpz_clear(f);
+      F_mpz_clear(g);
+   }
+   
+   mpfr_clear(m);
+
+   return result; 
+}
+
+int test_F_mpz_set_mpfr_2exp()
+{
+   F_mpz_t f, g, h;
+   mpfr_t m;
+   mpz_t m1;
+   int result = 1;
+   ulong bits;
+   int exp1, exp2;
+   long shift;
+   mpz_init(m1);
+   
+   mpfr_set_default_prec(200);
+   
+   for (ulong count1 = 0; (count1 < 1000000*ITER) && (result == 1); count1++)
+   {
+      bits = z_randint(200)+ 1;      
+      
+		F_mpz_init(f);
+		F_mpz_init(g);
+      F_mpz_init(h);
+      
+      F_mpz_test_random(f, bits); 
+		    
+      mpfr_init(m);
+   
+      F_mpz_get_mpfr(m, f);
+      shift = -z_randint(200);
+      mpfr_mul_2si(m, m, shift, GMP_RNDN);
+      
+      exp1 = F_mpz_set_mpfr_2exp(g, m);
+      exp2 = mpfr_get_z_exp(m1, m);
+      F_mpz_set_mpz(h, m1);
+
+      result = (F_mpz_equal(g, h) && (exp1 == exp2));
+	   
+      if (!result)
+	   {
+			printf("Error: val1 = "); F_mpz_print(h); printf(" * 2^%d\n", exp2);  
+         printf("val2 = "); F_mpz_print(g); printf(" * 2^%d\n", exp1);
+		}
+
+      mpfr_clear(m);
+
+      F_mpz_clear(f);
+      F_mpz_clear(g);
+      F_mpz_clear(h);
+   }
+   
+   mpz_clear(m1);
+   
+   return result; 
 }
 
 int test_F_mpz_get_d_2exp()
@@ -3310,6 +3404,8 @@ void F_mpz_poly_test_all()
 	RUN_TEST(F_mpz_getset_ui); 
    RUN_TEST(F_mpz_getset_si); 
 	RUN_TEST(F_mpz_getset_mpz); 
+   RUN_TEST(F_mpz_getset_mpfr); 
+   RUN_TEST(F_mpz_set_mpfr_2exp); 
    RUN_TEST(F_mpz_getset_limbs); 
    RUN_TEST(F_mpz_get_d_2exp); 
    RUN_TEST(F_mpz_set); 

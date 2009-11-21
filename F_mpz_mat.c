@@ -27,6 +27,7 @@
 #include <string.h>
 #include <math.h>
 #include <gmp.h>
+#include <mpfr.h>
 
 #include "flint.h"
 #include "mpn_extras.h"
@@ -667,6 +668,7 @@ int F_mpz_mat_fread_pretty(F_mpz_mat_t mat, FILE* f)
    return ok;
 }
 
+
 /*===============================================================================
 
 	Conversions
@@ -708,6 +710,13 @@ long F_mpz_mat_set_line_d(double * appv, const F_mpz_mat_t mat, const ulong r, c
 
    free(exp);
    return maxexp;
+}
+
+void F_mpz_mat_set_line_mpfr(mpfr_t * appv, const F_mpz_mat_t mat, const ulong r, const int n)
+{
+   for (ulong i = 0; i < n; i++) F_mpz_get_mpfr(appv[i], mat->rows[r] + i);
+
+   return;
 }
 
 /*===============================================================================
@@ -1103,6 +1112,63 @@ void F_mpz_mat_row_submul_2exp_ui(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, 
 	F_mpz_clear(temp);
 }
 
+void F_mpz_mat_row_submul_2exp_F_mpz(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong r2, 
+								               ulong start, ulong n, F_mpz_t c, ulong exp)
+{
+	// scalar is zero, nothing to subtract
+	if (F_mpz_is_zero(c))
+	{
+	   return;
+	}
+	
+	// scalar is 1, just subtract 2^exp times the entry
+	if (F_mpz_is_one(c) || F_mpz_is_m1(c))
+	{
+	   F_mpz_t temp;
+		F_mpz_init(temp);
+		
+		if (F_mpz_sgn(c) > 0)
+      {
+         for (ulong i = start; i < start + n; i++)
+		   {
+			   F_mpz_mul_2exp(temp, mat2->rows[r2] + i, exp);
+            F_mpz_sub(mat1->rows[r1] + i, mat1->rows[r1] + i, temp);
+		   }
+      } else
+            {
+         for (ulong i = start; i < start + n; i++)
+		   {
+			   F_mpz_mul_2exp(temp, mat2->rows[r2] + i, exp);
+            F_mpz_add(mat1->rows[r1] + i, mat1->rows[r1] + i, temp);
+		   }
+      }
+
+		F_mpz_clear(temp);
+
+		return;
+	}
+	
+	// exp is 1, just do submul
+	if (exp == 0)
+	{
+	   for (ulong i = start; i < start + n; i++)
+		   F_mpz_submul(mat1->rows[r1] + i, mat2->rows[r2] + i, c);
+
+		return;
+	}
+	
+	F_mpz_t temp;
+   F_mpz_init(temp);
+		
+	for (ulong i = start; i < start + n; i++)
+	{
+		F_mpz_mul_2exp(temp, mat2->rows[r2] + i, exp);
+	   F_mpz_submul(mat1->rows[r1] + i, temp, c);
+	}
+
+	F_mpz_clear(temp);
+}
+
 void F_mpz_mat_row_swap(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, 
 								                 ulong r2, ulong start, ulong n)
 {
@@ -1127,31 +1193,20 @@ void F_mpz_mat_row_neg(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2,
 	for (ulong i = start; i < start + n; i++)
 		F_mpz_neg(mat1->rows[r1] + i, mat2->rows[r2] + i);
 }
-/* ======================================================================================================
 
- Classical Multiplication
-
-=========================================================================================================*/
-
-void _F_mpz_mat_mul_classical(F_mpz_mat_t res, const F_mpz_mat_t mat1, const F_mpz_mat_t mat2)
+void F_mpz_mat_row_scalar_product(F_mpz_t sp, F_mpz_mat_t mat1, ulong r1, 
+                                  F_mpz_mat_t mat2, ulong r2, ulong start, ulong n)
 {
-   //res=mat1*mat2
+	ulong i = start;
+   
+   F_mpz_mul2(sp, mat1->rows[r1] + i, mat2->rows[r2] + i);
+   
+   for (i = start + 1; i < start + n; i++)
+   {
+      F_mpz_addmul(sp, mat1->rows[r1] + i, mat2->rows[r2] + i);
+   }
 
-   ulong r1 = mat1->r;
-   ulong c1 = mat1->c;
-   ulong r2 = mat2->r;
-   ulong c2 = mat2->c;
-
-   if (c1!=r2)
-      return; //dimensions don't match up
-
-   F_mpz_mat_init(res,r1,c2);
-
-   for (ulong i = 0; i < r1; i++) // add up to the length of the shorter mat
-      for (ulong j = 0; j < c2; j++)
-         for (ulong c=0; c<c1;c++)
-            F_mpz_addmul(res->rows[i] + j, mat1->rows[i]+c, mat2->rows[c]+j);   
-
+   return;
 }
 
 /*============================================================================
