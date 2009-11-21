@@ -75,7 +75,7 @@ int mpz_mat_add(mpz_mat_t res, mpz_mat_t mat1, mpz_mat_t mat2);
 int mpz_mat_sub(mpz_mat_t res, mpz_mat_t mat1, mpz_mat_t mat2);
 
 // ------------------------------------------------------
-// I/O
+// I/O 
 
 /** 
    \fn     int mpz_mat_from_string(mpz_mat_t mat, const char *s)
