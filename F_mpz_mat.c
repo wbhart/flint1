@@ -750,7 +750,7 @@ void F_mpz_mat_row_submul_2exp_F_mpz(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat
             F_mpz_sub(mat1->rows[r1] + i, mat1->rows[r1] + i, temp);
 		   }
       } else
-            {
+      {
          for (ulong i = start; i < start + n; i++)
 		   {
 			   F_mpz_mul_2exp(temp, mat2->rows[r2] + i, exp);
