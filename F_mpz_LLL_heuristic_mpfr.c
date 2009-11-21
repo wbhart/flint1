@@ -472,11 +472,6 @@ long F_mpz_mat_row_scalar_product_2exp(F_mpz_t sp, F_mpz_mat_t mat1, ulong r1,
    return exp;
 }
 
-void F_mpz_2exp_get_mpfr(mpfr_t x, const F_mpz_t f, long exp)
-{
-      F_mpz_get_mpfr(x, f);
-      mpfr_mul_2si(x, x, exp, GMP_RNDN);
-}
 
 /***********************************/
 /* Babai's Nearest Plane algorithm */

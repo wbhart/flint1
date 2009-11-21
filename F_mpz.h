@@ -699,6 +699,12 @@ void F_mpz_smod(F_mpz_t res, F_mpz_t f, F_mpz_t p);
 */
 long _F_mpz_add_2exp(F_mpz_t res, F_mpz_t x1, long exp1, F_mpz_t x2, long exp2);
 
+/**
+   \fn     void F_mpz_2exp_get_mpfr(mpfr_t x, const F_mpz_t f, long exp)
+   \brief  returns an mpfr approx = f * 2^exp
+*/
+void F_mpz_2exp_get_mpfr(mpfr_t x, const F_mpz_t f, long exp);
+
 #ifdef __cplusplus
   }
 #endif

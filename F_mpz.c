@@ -2136,3 +2136,9 @@ long _F_mpz_add_2exp(F_mpz_t res, F_mpz_t x1, long exp1, F_mpz_t x2, long exp2){
    return res_exp;
 }
 
+void F_mpz_2exp_get_mpfr(mpfr_t x, const F_mpz_t f, long exp)
+{
+      F_mpz_get_mpfr(x, f);
+      mpfr_mul_2si(x, x, exp, GMP_RNDN);
+}
+
