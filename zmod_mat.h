@@ -72,6 +72,16 @@ void zmod_mat_clear(zmod_mat_t mat);
 
 /*******************************************************************************************
 
+   Matrix Windows
+
+*******************************************************************************************/
+
+void zmod_mat_window_init(zmod_mat_t out, zmod_mat_t mat, ulong r1, ulong c1, ulong r2, ulong c2);
+
+void zmod_mat_window_clear(zmod_mat_t mat);
+
+/*******************************************************************************************
+
    Conversions
 
 *******************************************************************************************/
@@ -169,13 +179,25 @@ void zmod_mat_print(zmod_mat_t mat);
 
 /*******************************************************************************************
 
-   Input/output
+   Addition/subtraction
+
+*******************************************************************************************/
+
+void zmod_mat_add(zmod_mat_t C, zmod_mat_t A, zmod_mat_t B);
+
+void zmod_mat_sub(zmod_mat_t C, zmod_mat_t A, zmod_mat_t B);
+
+/*******************************************************************************************
+
+   Multiplication
 
 *******************************************************************************************/
 
 ulong zmod_mat_scalar_mul(ulong * r, ulong ** arr, ulong c, ulong n, ulong p, double p_inv);
 
 void zmod_mat_mul_classical(zmod_mat_t prod, zmod_mat_t A, zmod_mat_t B);
+
+void zmod_mat_mul_strassen(zmod_mat_t prod, zmod_mat_t A, zmod_mat_t B);
 
 #ifdef __cplusplus
  }
