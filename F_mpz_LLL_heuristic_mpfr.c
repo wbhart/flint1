@@ -44,29 +44,14 @@
 #include <mpfr.h>
 #include "flint.h"
 #include "F_mpz_mat.h"
+#include "F_mpz_LLL_fast_d.h"
 #include "F_mpz_LLL_heuristic_mpfr.h"
 #include "mpfr_mat.h"
 #include "gmp.h"
 
 #define LOOPS_BABAI 10
 
-/* Computes the largest number of non-zero entries after the diagonal. */
 
-ulong getShift(F_mpz_mat_t B)
-{
-   ulong n = B->c;
-   ulong shift = 0;
-   for (ulong i = 0; i < B->r; i++)
-   {
-      ulong j;
-      for (j = n - 1; j >= i + shift + 1 && F_mpz_size(B->rows[i] + j) == 0L; j--);  
-      
-      if (shift < j - i) shift = j - i;
-      
-   }
-
-   return shift;
-}
 
 /***********************************/
 /* Babai's Nearest Plane algorithm */

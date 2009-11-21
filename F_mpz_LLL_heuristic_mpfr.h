@@ -32,8 +32,8 @@
 
 *****************************************************************************/
 
-#ifndef FLINT_FMPZ_LLL_FAST_D_H
-#define FLINT_FMPZ_LLL_FAST_D_H
+#ifndef FLINT_FMPZ_LLL_HEURISTIC_D_H
+#define FLINT_FMPZ_LLL_HEURISTIC_D_H
 
 #ifdef __cplusplus
  extern "C" {
@@ -42,7 +42,9 @@
 #include <gmp.h>
 #include <mpfr.h>
 #include "flint.h"
+#include "mpfr_mat.h"
 #include "F_mpz_mat.h"
+#include "F_mpz_LLL_fast_d.h"
 
 #ifndef NAN
 #define NAN (0.0/0.0)
@@ -70,7 +72,16 @@ void Babai_heuristic(int kappa, F_mpz_mat_t B, mpfr_t **mu, mpfr_t **r, mpfr_t *
        int n, mpfr_t tmp, mpfr_t rtmp);
                          
 void LLL_heuristic(F_mpz_mat_t B);
-       
+
+void Babai_heuristic_2exp(int kappa, F_mpz_mat_t B, mpfr_t **mu, mpfr_t **r, mpfr_t *s, 
+       mpfr_t **appB, mpfr_t **appSP, 
+       int a, int zeros, int kappamax, int n, mpfr_t tmp, mpfr_t rtmp, int * cexpo);
+
+void LLL_heuristic_2exp(F_mpz_mat_t B, int * cexpo);
+
+long LLL_heuristic_2exp_with_removal(F_mpz_mat_t B, int * cexpo, F_mpz_t gs_B);
+
+
 #ifdef __cplusplus
  }
 #endif

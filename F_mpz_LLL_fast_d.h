@@ -63,6 +63,8 @@ double halfplus, onedothalfplus, ctt;
 #define DELTA 0.99
 #endif
 
+ulong getShift(F_mpz_mat_t B);
+
 void Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s, 
                             double **appB, int *expo, double **appSP, 
                          int a, int zeros, int kappamax, int n);

@@ -45,6 +45,9 @@
 #include "ZmodF_poly.h"
 #include "long_extras.h"
 #include "zmod_poly.h"
+#include "F_mpz_mat.h"
+#include "F_mpz_LLL_fast_d.h"
+#include "F_mpz_LLL_heuristic_mpfr.h"
 
 /*===============================================================================
 
@@ -7119,7 +7122,8 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    F_mpz_init(temp);
    ulong sqN = (ulong) sqrt( (double) (N) );
 //   printf("%ld sqN, %f sqrt(N)\n", sqN, sqrt( (double) (N) ) );
-   int ok, newd, col_cnt, solved;
+   int ok, col_cnt, solved;
+   long newd;
    col_cnt = 0;
    solved = 0;
    while ((all_coeffs != 2) && (return_me == 0)){
@@ -7132,7 +7136,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
          if (ok != 0){
             cexpo[r + col_cnt] = ok;
 //         F_mpz_mat_print_pretty(M);
-            newd = LLL_2exp_with_removal(M, cexpo, B);
+            newd = LLL_heuristic_2exp_with_removal(M, cexpo, B);
             F_mpz_mat_resize(M, newd, M->c);
             col_cnt++;
 //         This next line is what makes it 'gradual'... could try to prove that doing the same column twice won't add another P
