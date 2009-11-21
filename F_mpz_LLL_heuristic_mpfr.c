@@ -446,27 +446,6 @@ void LLL_heuristic(F_mpz_mat_t B)
 
 *********************************************/
 
-long F_mpz_add_2exp(F_mpz_t res, F_mpz_t x1, long exp1, F_mpz_t x2, long exp2){
-
-   long res_exp;
-   F_mpz_t temp;
-   F_mpz_init(temp);
-
-   if (exp1 <= exp2){
-      res_exp = exp1;
-      F_mpz_mul_2exp(temp, x2, exp2 - exp1);
-      F_mpz_add(res, x1, temp);
-   }
-   else{
-      res_exp = exp2;
-      F_mpz_mul_2exp(temp, x1, exp1 - exp2);
-      F_mpz_add(res, x2, temp);
-   }
-
-   F_mpz_clear(temp);
-   return res_exp;
-}
-
 long F_mpz_mat_row_scalar_product_2exp(F_mpz_t sp, F_mpz_mat_t mat1, ulong r1, 
                                   F_mpz_mat_t mat2, ulong r2, ulong start, ulong n, int * cexpo)
 {
@@ -485,7 +464,7 @@ long F_mpz_mat_row_scalar_product_2exp(F_mpz_t sp, F_mpz_mat_t mat1, ulong r1,
    {
       F_mpz_mul2(temp_sp, mat1->rows[r1] + i, mat2->rows[r2] + i);
       temp_exp = cexpo[i]*2;
-      exp = F_mpz_add_2exp(sp, sp, exp, temp_sp, temp_exp);
+      exp = _F_mpz_add_2exp(sp, sp, exp, temp_sp, temp_exp);
    }
 
    F_mpz_clear(temp_sp);

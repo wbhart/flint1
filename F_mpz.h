@@ -601,6 +601,7 @@ void F_mpz_rdiv_q(F_mpz_t f, const F_mpz_t g, const F_mpz_t h);
 */
 void F_mpz_pow_ui(F_mpz_t f, const F_mpz_t g, const ulong exp);
 
+
 /*===============================================================================
 
 	Multimodular routines
@@ -691,6 +692,12 @@ void F_mpz_set_d_2exp(F_mpz_t output, double mant, long exp);
       by assuming already reduced mod p...
 */
 void F_mpz_smod(F_mpz_t res, F_mpz_t f, F_mpz_t p);
+
+/**
+   \fn     long _F_mpz_add_2exp(F_mpz_t res, F_mpz_t x1, long exp1, F_mpz_t x2, long exp2)
+   \brief  Adds x1*2^exp1 + x2*2^exp2 allowing negative exponents returns res*2^long where long = most negative power
+*/
+long _F_mpz_add_2exp(F_mpz_t res, F_mpz_t x1, long exp1, F_mpz_t x2, long exp2);
 
 #ifdef __cplusplus
   }
