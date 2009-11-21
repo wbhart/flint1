@@ -62,16 +62,27 @@ void mpz_mat_clear(mpz_mat_t mat)
 	mat->c = 0;
 }
 
-int mpz_mat_add(mpz_mat_t res, mpz_mat_t mat1, mpz_mat_t mat2)
+void mpz_mat_add(mpz_mat_t res, mpz_mat_t mat1, mpz_mat_t mat2)
 {
 	for (long i = 0; i < mat1->r*mat1->c; i++)
 	   mpz_add(res->entries[i], mat1->entries[i], mat2->entries[i]);
 }
 
-int mpz_mat_sub(mpz_mat_t res, mpz_mat_t mat1, mpz_mat_t mat2)
+void mpz_mat_sub(mpz_mat_t res, mpz_mat_t mat1, mpz_mat_t mat2)
 {
 	for (long i = 0; i < mat1->r*mat1->c; i++)
 	   mpz_sub(res->entries[i], mat1->entries[i], mat2->entries[i]);
+}
+
+void mpz_mat_mul_classical(mpz_mat_t res, mpz_mat_t mat1, mpz_mat_t mat2)
+{
+   for (ulong i = 0; i < mat1->r; i++)
+      for (ulong j = 0; j < mat2->c; j++)
+      {
+         mpz_set_ui(res->entries[i*res->c + j], 0);
+         for (ulong k = 0; k < mat1->c; k++)
+            mpz_addmul(res->entries[i*res->c + j], mat1->entries[i*mat1->c + k], mat2->entries[k*mat2->c + j]);
+      }
 }
 
 // *************** end of file
