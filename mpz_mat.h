@@ -74,6 +74,60 @@ int mpz_mat_add(mpz_mat_t res, mpz_mat_t mat1, mpz_mat_t mat2);
 
 int mpz_mat_sub(mpz_mat_t res, mpz_mat_t mat1, mpz_mat_t mat2);
 
+// ------------------------------------------------------
+// I/O
+
+/** 
+   \fn     int mpz_mat_from_string(mpz_mat_t mat, const char *s)
+	\brief  Read an mpz_mat_t from a string at s
+*/
+int mpz_mat_from_string(mpz_mat_t mat, const char *s);
+
+/** 
+   \fn     char* mpz_mat_to_string(mpz_mat_t mat)
+	\brief  Read a string from an mpz_mat_t
+*/
+char* mpz_mat_to_string(mpz_mat_t mat);
+
+/** 
+   \fn     int mpz_mat_from_string_pretty(mpz_mat_t mat, char *s)
+	\brief  Read an mpz_mat_t from a pretty string at s.  A pretty string
+                                             starts with [[
+*/
+int mpz_mat_from_string_pretty(mpz_mat_t mat, char *s);
+
+/** 
+   \fn     char* mpz_mat_to_string_pretty(mpz_mat_t mat)
+	\brief  Read a pretty string from an mpz_mat_t
+*/
+char* mpz_mat_to_string_pretty(mpz_mat_t mat);
+
+/** 
+   \fn     void mpz_mat_fprint(mpz_mat_t mat, FILE* f)
+	\brief  Print an mpz_mat_t to a file stream
+*/
+void mpz_mat_fprint(mpz_mat_t mat, FILE* f);
+
+/** 
+   \fn     void mpz_mat_fprint_pretty(mpz_mat_t mat, FILE* f)
+	\brief  Print a pretty format mpz_mat_t to a file stream 
+*/
+void mpz_mat_fprint_pretty(mpz_mat_t mat, FILE* f);
+
+/** 
+   \fn     int mpz_mat_fread(mpz_mat_t mat, FILE* f)
+	\brief  Read an mpz_mat_t from a file stream
+*/
+int mpz_mat_fread(mpz_mat_t mat, FILE* f);
+
+/** 
+   \fn     int mpz_mat_fread_pretty(mpz_mat_t mat, FILE* f)
+	\brief  Read a an mpz_mat_t from a file stream with pretty formatting
+*/
+int mpz_mat_fread_pretty(mpz_mat_t mat, FILE* f);
+
+
+
 // *************** end of file
 
 #ifdef __cplusplus

@@ -22,14 +22,14 @@ endif
 
 CPP = $(FLINT_CPP) 
 
-LIBS = -L$(FLINT_GMP_LIB_DIR) $(FLINT_LINK_OPTIONS) -lgmp -lpthread -lm
+LIBS = -L$(FLINT_GMP_LIB_DIR) $(FLINT_LINK_OPTIONS) -lgmp -lmpfr -lpthread -lm
 
-LIBS2 = -L$(FLINT_GMP_LIB_DIR) -L$(FLINT_NTL_LIB_DIR) $(FLINT_LINK_OPTIONS) -lgmp -lpthread -lntl -lm 
+LIBS2 = -L$(FLINT_GMP_LIB_DIR) -L$(FLINT_NTL_LIB_DIR) $(FLINT_LINK_OPTIONS) -lgmp -lmpfr -lpthread -lntl -lm 
 
 ifndef FLINT_NTL_INCLUDE_DIR
-	INCS = -I$(FLINT_GMP_INCLUDE_DIR) 
+	INCS = -I$(FLINT_GMP_INCLUDE_DIR) -I$(FLINT_MPFR_INCLUDE_DIR) 
 else
-	INCS = -I$(FLINT_GMP_INCLUDE_DIR) -I$(FLINT_NTL_INCLUDE_DIR)
+	INCS = -I$(FLINT_GMP_INCLUDE_DIR) -I$(FLINT_MPFR_INCLUDE_DIR) -I$(FLINT_NTL_INCLUDE_DIR)
 endif
 
 CFLAGS = $(INCS) $(FLINT_TUNE) -O2
@@ -68,6 +68,8 @@ HEADERS = \
 	zmod_mat.h \
 	mpz_mat.h \
 	d_mat.h \
+	F_mpz_mat.h \
+	mpfr_mat.h \
 	F_mpz.h \
    F_mpz_mat.h \
    F_mpz_LLL_fast_d.h \
@@ -112,6 +114,8 @@ FLINTOBJ = \
 	zmod_mat.o \
 	mpz_mat.o \
 	d_mat.o \
+	mpfr_mat.o \
+	F_mpz_mat.o \
 	F_mpz.o \
    F_mpz_mat.o \
    F_mpz_LLL_fast_d.o \
@@ -127,7 +131,7 @@ QS: mpQS
 
 tune: ZmodF_mul-tune mpz_poly-tune 
 
-test: F_mpz-test mpn_extras-test fmpz_poly-test fmpz-test ZmodF-test ZmodF_poly-test mpz_poly-test ZmodF_mul-test long_extras-test zmod_poly-test zmod_mat-test
+test: F_mpz-test mpn_extras-test fmpz_poly-test fmpz-test ZmodF-test ZmodF_poly-test mpz_poly-test ZmodF_mul-test long_extras-test zmod_poly-test F_mpz_mat-test zmod_mat-test
 
 check: test
 	./F_mpz-test
@@ -141,6 +145,7 @@ check: test
 	./zmod_poly-test
 	./zmod_mat-test
 	./fmpz_poly-test
+	./F_mpz_mat-test
 
 profile: ZmodF_poly-profile kara-profile fmpz_poly-profile mpz_poly-profile ZmodF_mul-profile 
 

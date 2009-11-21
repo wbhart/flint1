@@ -33,6 +33,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <gmp.h>
+#include <mpfr.h>
 #include "flint.h"
 #include "mpn_extras.h"
 #include "zn_poly/src/zn_poly.h"
@@ -270,6 +271,26 @@ double F_mpz_get_d_2exp(long * exp, const F_mpz_t f);
 void F_mpz_set_mpz(F_mpz_t f, const mpz_t x);
 
 /** 
+   \fn     void F_mpz_get_mpfr(mpfr_t x, const F_mpz_t f)
+   \brief  Returns f as an mpfr_t to the current precision of x, 
+           rounded down if necessary.
+*/
+void F_mpz_get_mpfr(mpfr_t x, const F_mpz_t f);
+
+/** 
+   \fn     void F_mpz_set_mpfr(F_mpz_t f, const mpfr_t x)
+   \brief  Set the f to the value of the mpfr_t x, rounded down.
+*/
+void F_mpz_set_mpfr(F_mpz_t f, const mpfr_t x);
+
+/** 
+   \fn     int F_mpz_set_mpfr_2exp(const F_mpz_t f, const mpfr_t x)
+   \brief  Set the f to the stored mantissa of the mpfr_t x and return
+           an exponent exp so that x = f*2^exp.
+*/
+int F_mpz_set_mpfr_2exp(F_mpz_t f, const mpfr_t x);
+
+/** 
    \fn     void F_mpz_set_limbs(F_mpz_t f, const mp_limb_t * x, const ulong limbs)
    \brief  Sets f to the array of limbs x which is the given number of 
 	        limbs in length and where the least significant limb is 
@@ -401,10 +422,8 @@ void F_mpz_print(F_mpz_t x)
 {
 	if (!COEFF_IS_MPZ(*x)) printf("%ld", *x);
 	else 
-	{
-		
-		gmp_printf("%Zd", F_mpz_ptr_mpz(*x));
-		
+	{		
+		gmp_printf("%Zd", F_mpz_ptr_mpz(*x));	
 	}
 }
 

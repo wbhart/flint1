@@ -32,6 +32,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <gmp.h>
+#include <mpfr.h>
+
 #include "mpn_extras.h"
 #include "flint.h"
 #include "mpz_mat.h"
@@ -120,55 +122,6 @@ void F_mpz_mat_resize(F_mpz_mat_t mat, const ulong r, const ulong c);
 ================================================================================*/
 
 /** 
-   \fn     int mpz_mat_from_string(mpz_mat_t mat, const char *s)
-	\brief  Read an mpz_mat_t from a string at s
-*/
-int mpz_mat_from_string(mpz_mat_t mat, const char *s);
-
-/** 
-   \fn     char* mpz_mat_to_string(mpz_mat_t mat)
-	\brief  Read a string from an mpz_mat_t
-*/
-char* mpz_mat_to_string(mpz_mat_t mat);
-
-/** 
-   \fn     int mpz_mat_from_string_pretty(mpz_mat_t mat, char *s)
-	\brief  Read an mpz_mat_t from a pretty string at s.  A pretty string
-                                             starts with [[
-*/
-int mpz_mat_from_string_pretty(mpz_mat_t mat, char *s);
-
-/** 
-   \fn     char* mpz_mat_to_string_pretty(mpz_mat_t mat)
-	\brief  Read a pretty string from an mpz_mat_t
-*/
-char* mpz_mat_to_string_pretty(mpz_mat_t mat);
-
-/** 
-   \fn     void mpz_mat_fprint(mpz_mat_t mat, FILE* f)
-	\brief  Print an mpz_mat_t to a file stream
-*/
-void mpz_mat_fprint(mpz_mat_t mat, FILE* f);
-
-/** 
-   \fn     void mpz_mat_fprint_pretty(mpz_mat_t mat, FILE* f)
-	\brief  Print a pretty format mpz_mat_t to a file stream 
-*/
-void mpz_mat_fprint_pretty(mpz_mat_t mat, FILE* f);
-
-/** 
-   \fn     int mpz_mat_fread(mpz_mat_t mat, FILE* f)
-	\brief  Read an mpz_mat_t from a file stream
-*/
-int mpz_mat_fread(mpz_mat_t mat, FILE* f);
-
-/** 
-   \fn     int mpz_mat_fread_pretty(mpz_mat_t mat, FILE* f)
-	\brief  Read a an mpz_mat_t from a file stream with pretty formatting
-*/
-int mpz_mat_fread_pretty(mpz_mat_t mat, FILE* f);
-
-/** 
    \fn     int F_mpz_mat_from_string(F_mpz_mat_t mat, const char *s)
 	\brief  Read an F_mpz_mat_t from a string
 */
@@ -253,6 +206,12 @@ void F_mpz_mat_to_mpz_mat(mpz_mat_t m_mat, const F_mpz_mat_t F_mat);
 	        with respect to a single maximum exponent which is returned.
 */
 long F_mpz_mat_set_line_d(double * appv, const F_mpz_mat_t mat, const ulong r, const int n);
+
+/** 
+   \fn     void F_mpz_mat_set_line_mpfr(mpfr_t * appv, const F_mpz_mat_t mat, const ulong r, const int n)
+   \brief  Sets the entries of appv to the entries of the given row of mat.
+*/
+void F_mpz_mat_set_line_mpfr(mpfr_t * appv, const F_mpz_mat_t mat, const ulong r, const int n);
 
 /*===============================================================================
 
@@ -423,6 +382,15 @@ void F_mpz_mat_row_addmul_2exp_ui(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, 
 void F_mpz_mat_row_submul_2exp_ui(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong r2, 
 								               ulong start, ulong n, ulong c, ulong exp);
 
+/** 
+   \fn     void F_mpz_mat_row_submul_2exp_F_mpz(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong r2, 
+								               ulong start, ulong n, F_mpz_t c, ulong exp)
+
+	\brief  Multiply entry from row r2 of mat2 by c*2^exp and subtract from entry from row r1 of mat1.
+	        
+*/
+void F_mpz_mat_row_submul_2exp_F_mpz(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong r2, 
+								               ulong start, ulong n, F_mpz_t c, ulong exp);
 
 /** 
    \fn     void F_mpz_mat_row_swap(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, 
@@ -551,6 +519,15 @@ void F_mpz_mat_resize2(F_mpz_mat_t M, ulong r, ulong c);
    for P, based on a rough estimation.
 */
 int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp);
+
+/** 
+   \fn     void F_mpz_mat_row_scalar_product(F_mpz_t sp, F_mpz_mat_t mat1, ulong r1, 
+                                  F_mpz_mat_t mat2, ulong r2, ulong start, ulong n)
+
+	\brief  Set sp to the scalar product of row r1 of mat1 and row r2 of mat2.
+*/
+void F_mpz_mat_row_scalar_product(F_mpz_t sp, F_mpz_mat_t mat1, ulong r1, 
+                                  F_mpz_mat_t mat2, ulong r2, ulong start, ulong n);
 
 #ifdef __cplusplus
  }
