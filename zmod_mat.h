@@ -21,7 +21,7 @@
 
    zmod_mat.h: Matrices over (unsigned) long mod p, for p prime.
    
-   Copyright (C) 2008, William Hart
+   Copyright (C) 2008, 2009 William Hart
    Copyright (C) 2008, Richard Howell-Peak
 
 *****************************************************************************/
@@ -158,6 +158,16 @@ ulong zmod_mat_row_reduce_gauss_jordan(zmod_mat_t mat);
 *******************************************************************************************/
 
 void zmod_mat_print(zmod_mat_t mat);
+
+/*******************************************************************************************
+
+   Input/output
+
+*******************************************************************************************/
+
+ulong zmod_mat_scalar_mul(ulong * r, ulong ** arr, ulong c, ulong n, ulong p, double p_inv)
+
+void zmod_mat_mul_classical(zmod_mat_t prod, zmod_mat_t A, zmod_mat_t B);
 
 #ifdef __cplusplus
  }

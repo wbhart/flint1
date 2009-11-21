@@ -21,7 +21,7 @@
 
    zmod_mat.c: Matrices over (unsigned) long mod p, for p prime.
    
-   Copyright (C) 2008, William Hart.
+   Copyright (C) 2008, 2009 William Hart.
    Copyright (C) 2008, Richard Howell-Peak
    
 *****************************************************************************/
@@ -335,6 +335,12 @@ void zmod_mat_print(zmod_mat_t mat)
    printf("%ld]]", ptr[mat->cols - 1]);
 }
 
+/*******************************************************************************************
+
+   Reduction
+
+*******************************************************************************************/
+
 /*
    Gaussian Elimination
    After the algorithm has run, A will be in upper-triangular form
@@ -461,3 +467,50 @@ ulong zmod_mat_row_reduce_gauss_jordan(zmod_mat_t mat)
 	return i;
 }
 
+/*******************************************************************************************
+
+   Multiplication
+
+*******************************************************************************************/
+
+ulong zmod_mat_scalar_mul(ulong * r, ulong ** arr, ulong c, ulong n, ulong p, double p_inv)
+{
+   ulong res = 0;
+
+#if FLINT_BITS == 64
+   ulong bits = FLINT_BIT_COUNT(p);
+
+   if (bits > FLINT_D_BITS)
+   {
+      for (ulong i = 0; i < n; i++)
+      {
+         res = z_addmod(res, z_mulmod2_precomp(r[i], arr[i][c], p, p_inv), p);
+      }
+   } else
+   {
+#endif
+      for (ulong i = 0; i < n; i++)
+      {
+         res = z_addmod(res, z_mulmod_precomp(r[i], arr[i][c], p, p_inv), p);
+      }
+#if FLINT_BITS == 64
+   }
+#endif
+
+   return res;
+}
+
+void zmod_mat_mul_classical(zmod_mat_t prod, zmod_mat_t A, zmod_mat_t B)
+{
+   ulong p = A->p;
+   double p_inv = A->p_inv;
+
+   ulong r1 = A->rows;
+   ulong c1 = A->cols;
+   ulong r2 = B->rows;
+   ulong c2 = B->cols;
+
+   for (ulong i = 0; i < r1; i++)
+      for (ulong j = 0; j < c2; j++)
+         prod->arr[i][j] = zmod_mat_scalar_mul(A->arr[i], B->arr, j, c1, p, p_inv);
+}
