@@ -1283,7 +1283,7 @@ int LLL_heuristic_d_2exp_with_removal(F_mpz_mat_t B, int *cexpo, F_mpz_t gs_B)
    for (i = d-1; (i >= 0) && (ok > 0); i--)
    {
       //tmp_gs is the G-S length of ith vector divided by 2 (we shouldn't make a mistake and remove something valuable)
-      F_mpz_set_d_2exp(tmp_gs, sqrt(r[i][i]), expo[i] - 1);
+      F_mpz_set_d_2exp(tmp_gs, appSP[i][i], 2*expo[i] - 1);
       ok = F_mpz_cmpabs(tmp_gs, gs_B);
       if (ok > 0) newd--;
    }
@@ -1501,7 +1501,7 @@ int LLL_heuristic_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    for (i = d-1; (i >= 0) && (ok > 0); i--)
    {
       //tmp_gs is the G-S length of ith vector divided by 2 (we shouldn't make a mistake and remove something valuable)
-      F_mpz_set_d_2exp(tmp_gs, sqrt(r[i][i]), expo[i] - 1);
+      F_mpz_set_d_2exp(tmp_gs, appSP[i][i], 2*expo[i] - 1);
       ok = F_mpz_cmpabs(tmp_gs, gs_B);
       if (ok > 0) newd--;
    }

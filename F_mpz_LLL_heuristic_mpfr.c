@@ -1015,14 +1015,19 @@ long LLL_heuristic_2exp_with_removal(F_mpz_mat_t B, int * cexpo, F_mpz_t gs_B)
  
    int ok = 1;
    long newd = d;
+
    F_mpz_get_mpfr(tmp, gs_B);
+
    for (i = d-1; (i >= 0) && (ok > 0); i--){
 //tmp_gs is the G-S length of ith vector divided by 2 (we shouldn't make a mistake and remove something valuable)
-      mpfr_sqrt(rtmp, r[i][i], GMP_RNDN);
-      mpfr_div_2ui(rtmp, rtmp, 1UL, GMP_RNDN);
-      mpfr_printf(" gs length[%d] = %.10Rf \n", i, rtmp);
+      mpfr_set(rtmp, appSP[i][i], GMP_RNDN);
+      mpfr_div_d(rtmp, rtmp, 2.0, GMP_RNDN);
+//      mpfr_div_2ui(rtmp, rtmp, 1UL, GMP_RNDN);
+      mpfr_printf(" gs length[%d] = %.10Rf, tmp = %.10Rf \n", i, rtmp, tmp);
       ok = mpfr_cmp(rtmp, tmp);
-      if (ok > 0) newd--;
+      if (ok > 0){
+         newd--;
+      }
    }
   
    free(alpha);
