@@ -6987,9 +6987,11 @@ int _F_mpz_poly_try_to_solve(int num_facs, ulong * part, F_mpz_poly_factor_t fin
       F_mpz_set(tryme->coeffs + 0, lc);
       for (int j = 0; j < r; j++){
          if (part[j] == i)
+         {
             F_mpz_poly_mul(tryme, tryme, lifted_fac->factors[j]);
+            F_mpz_poly_smod(tryme, tryme, P);
+         }
       }
-      F_mpz_poly_smod(tryme, tryme, P);
       F_mpz_init(temp_lc);
       F_mpz_poly_content(temp_lc, tryme);
       F_mpz_poly_scalar_div_exact(tryme, tryme, temp_lc);

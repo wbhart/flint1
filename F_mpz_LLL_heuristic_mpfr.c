@@ -1031,8 +1031,7 @@ long LLL_heuristic_2exp_with_removal(F_mpz_mat_t B, int * cexpo, F_mpz_t gs_B)
          newd--;
       }
    }
-   mpfr_clear(fgap);
-  
+   
    free(alpha);
 
    F_mpz_clear(ztmp);
