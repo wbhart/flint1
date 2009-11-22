@@ -1231,7 +1231,7 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp){
 //first make sure there are enough bits to even bother
    ulong r = col->r;
    ulong B = r + 1;
-   long ISD = F_mpz_bits(P) - 3*r;
+   long ISD = F_mpz_bits(P) - r - r/2;
    if ( ISD < exp)
       return 0;
    F_mpz_mat_t U;
@@ -1244,7 +1244,7 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp){
    F_mpz_mat_smod(temp_col, temp_col, P);
    long mbts = FLINT_ABS(F_mpz_mat_max_bits(temp_col));
 //bare minimum of data above the bound
-   if (mbts < 2 * r + exp){
+   if (mbts < r + r/2 + exp){
       F_mpz_mat_clear(temp_col);
       F_mpz_mat_clear(U);      
       return 0;
@@ -1261,7 +1261,7 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp){
    double no_vec_check = (double) F_mpz_bits(temp) - (1 + log2(S) + mbts); 
    F_mpz_clear(temp);
    int no_vec = (no_vec_check > 0.0);
-   ulong prec = M->r;
+   ulong prec = 4UL; // M->r;
    ulong take_away;
 //at the moment this is an int because cexpo in 'fast' LLL only allows ints, later it could be a long for heuristic LLL (but not really). 
    int virt_exp;
@@ -1269,9 +1269,10 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp){
 // rare for the first time, frequent for repeated scalings
 // In here we're going to scale to make the new entries use their 2*r bits
 // Now decide the scaling based on mbts
-      ISD = mbts - 2*r;
+      ISD = mbts - r - r/2;
    }
    if (ISD - prec >= 0){
+      printf("here we set prec = 1\n");
       take_away = ISD - prec;
       virt_exp = -prec;
    }
