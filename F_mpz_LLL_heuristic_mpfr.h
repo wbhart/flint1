@@ -32,8 +32,8 @@
 
 *****************************************************************************/
 
-#ifndef FLINT_FMPZ_LLL_HEURISTIC_D_H
-#define FLINT_FMPZ_LLL_HEURISTIC_D_H
+#ifndef FLINT_FMPZ_LLL_HEURISTIC_MPFR_H
+#define FLINT_FMPZ_LLL_HEURISTIC_MPFR_H
 
 #ifdef __cplusplus
  extern "C" {

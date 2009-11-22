@@ -293,9 +293,11 @@ void Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
 	The algorithm is the iterative Babai algorithm of the paper.
 */
 
-void Babai_2exp (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s, 
+//### This is different -------
+void Babai_heuristic_d_2exp (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s, 
        double **appB, int *expo, double **appSP, 
        int a, int zeros, int kappamax, int n, int *cexpo)
+//-----------------------------
 {
    int i, j, k, test, aa, exponent;
    signed long xx;
@@ -328,8 +330,10 @@ void Babai_2exp (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
 	   {	  
 	      if (appSP[kappa][j] != appSP[kappa][j]) // if appSP[kappa][j] == NAN
 	      {
-	         appSP[kappa][j] = d_2exp_vec_scalar_product(appB[kappa], appB[j], n, cexpo);
-	      }
+//### This is different -----
+            appSP[kappa][j] = d_2exp_vec_scalar_product(appB[kappa], appB[j], n, cexpo, B, kappa, j);
+//---------------------------
+         }
 	  	  
          if (j > zeros + 2)
 	      {
@@ -475,7 +479,9 @@ void Babai_2exp (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
 
    if (appSP[kappa][kappa] != appSP[kappa][kappa]) 
    {
+//### This is different -------
       appSP[kappa][kappa] = d_2exp_vec_norm(appB[kappa], n, cexpo);
+//-----------------------------
    }
    s[zeros + 1] = appSP[kappa][kappa];
   
@@ -687,7 +693,9 @@ void LLL(F_mpz_mat_t B)
    and cexpo = [2,0,...,0] will weigh the first column as 4 times the importance of the others
 */
 
-void LLL_2exp(F_mpz_mat_t B, int *cexpo)
+//### This is different ------
+void LLL_heuristic_d_2exp(F_mpz_mat_t B, int *cexpo)
+//----------------------------
 {
    int kappa, kappa2, d, n, i, j, zeros, kappamax;
    double ** mu, ** r, ** appB, ** appSP;
@@ -754,9 +762,11 @@ void LLL_2exp(F_mpz_mat_t B, int *cexpo)
       /* Step3: Call to the Babai algorithm */
       /* ********************************** */   
 
-      Babai_2exp(kappa, B, mu, r, s, appB, expo, appSP, alpha[kappa], zeros, 
+//### This is different -----
+      Babai_heuristic_d_2exp(kappa, B, mu, r, s, appB, expo, appSP, alpha[kappa], zeros, 
 			                        kappamax, FLINT_MIN(kappamax + 1 + shift, n), cexpo); 
-      
+//---------------------------
+
       /* ************************************ */
       /* Step4: Success of Lovasz's condition */
       /* ************************************ */  
@@ -857,8 +867,10 @@ void LLL_2exp(F_mpz_mat_t B, int *cexpo)
 	      {
 	         zeros++;
 	         kappa++;
-	         appSP[kappa][kappa] = d_2exp_vec_norm(appB[kappa], n, cexpo);
-	         r[kappa][kappa] = appSP[kappa][kappa];
+//### This is different ------
+            appSP[kappa][kappa] = d_2exp_vec_norm(appB[kappa], n, cexpo);
+//----------------------------
+            r[kappa][kappa] = appSP[kappa][kappa];
 	      }
 	  
 	      kappa++;
@@ -881,7 +893,9 @@ void LLL_2exp(F_mpz_mat_t B, int *cexpo)
    also returns the number of rows who's G-S lengths are guaranteed to be <= gs_B 
 */
 
-int LLL_2exp_with_removal(F_mpz_mat_t B, int *cexpo, F_mpz_t gs_B)
+//### This is different ------
+int LLL_heuristic_d_2exp_with_removal(F_mpz_mat_t B, int *cexpo, F_mpz_t gs_B)
+//----------------------------
 {
    int kappa, kappa2, d, n, i, j, zeros, kappamax;
    double ** mu, ** r, ** appB, ** appSP;
@@ -948,7 +962,7 @@ int LLL_2exp_with_removal(F_mpz_mat_t B, int *cexpo, F_mpz_t gs_B)
       /* Step3: Call to the Babai algorithm */
       /* ********************************** */   
 
-      Babai_2exp(kappa, B, mu, r, s, appB, expo, appSP, alpha[kappa], zeros, 
+      Babai_heuristic_d_2exp(kappa, B, mu, r, s, appB, expo, appSP, alpha[kappa], zeros, 
 			                        kappamax, FLINT_MIN(kappamax + 1 + shift, n), cexpo); 
       
       /* ************************************ */
@@ -1058,20 +1072,24 @@ int LLL_2exp_with_removal(F_mpz_mat_t B, int *cexpo, F_mpz_t gs_B)
 	      kappa++;
 	   }
    }
+
+//### This is different --------
    F_mpz_t tmp_gs;
    F_mpz_init(tmp_gs);
  
    int ok = 1;
    int newd = d;
-   for (i = d-1; (i >= 0) && (ok > 0); i--){
-//tmp_gs is the G-S length of ith vector divided by 2 (we shouldn't make a mistake and remove something valuable)
+   for (i = d-1; (i >= 0) && (ok > 0); i--)
+   {
+      //tmp_gs is the G-S length of ith vector divided by 2 (we shouldn't make a mistake and remove something valuable)
       F_mpz_set_d_2exp(tmp_gs, sqrt(r[i][i]), expo[i] - 1);
       ok = F_mpz_cmpabs(tmp_gs, gs_B);
       if (ok > 0) newd--;
    }
 
    F_mpz_clear(tmp_gs);
-   
+//-------------------------------
+
    free(alpha);
    free(expo);
    d_mat_clear(mu);

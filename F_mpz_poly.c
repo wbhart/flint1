@@ -7136,7 +7136,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
          if (ok != 0){
             cexpo[r + col_cnt] = ok;
 //         F_mpz_mat_print_pretty(M);
-            newd = LLL_heuristic_2exp_with_removal(M, cexpo, B);
+            newd = LLL_heuristic_d_2exp_with_removal(M, cexpo, B);
             F_mpz_mat_resize(M, newd, M->c);
             col_cnt++;
 //         This next line is what makes it 'gradual'... could try to prove that doing the same column twice won't add another P

@@ -17,6 +17,8 @@
   02111-1307, USA.
 */
 
+#include "F_mpz_mat.h"
+
 double ** d_mat_init(int d, int n);
 
 void d_mat_clear(double ** B);
@@ -27,7 +29,7 @@ double d_vec_scalar_product(double * vec1, double * vec2, int n);
 
 double d_vec_norm(double * vec, int n);
 
-double d_2exp_vec_scalar_product(double * vec1, double * vec2, int n, int *cexpo);
+double d_2exp_vec_scalar_product(double * vec1, double * vec2, int n, int *cexpo, F_mpz_mat_t B, ulong kappa, ulong j);
 
 double d_2exp_vec_norm(double * vec, int n, int *cexpo);
 
