@@ -7001,18 +7001,18 @@ unsigned long zmod_poly_factor(zmod_poly_factor_t result, zmod_poly_t input)
 {
    if (input->length == 0) return 0;
 	
-	zmod_poly_t monic_input;
-   zmod_poly_init(monic_input, zmod_poly_modulus(input));
-   
 	//Now we must make sure the input polynomial is monic. Get the highest coeff and store it then call make monic
-   unsigned long leading_coeff = zmod_poly_get_coeff_ui(input, zmod_poly_degree(input));
+   ulong leading_coeff = zmod_poly_get_coeff_ui(input, zmod_poly_degree(input));
    if (input->length == 1) 
 	{
-		zmod_poly_clear(monic_input);
 	   return leading_coeff;
 	}
 
-	zmod_poly_make_monic(monic_input, input);
+	/*
+   zmod_poly_t monic_input;
+   zmod_poly_init(monic_input, zmod_poly_modulus(input));
+   
+   zmod_poly_make_monic(monic_input, input);
 	
    //This will store all of the square-free factors
    zmod_poly_factor_t sqfree_factors;
@@ -7039,9 +7039,12 @@ unsigned long zmod_poly_factor(zmod_poly_factor_t result, zmod_poly_t input)
       //clean up the memory being used
       zmod_poly_factor_clear(factors);
    }
-   
+
    //clean up memory
-   zmod_poly_factor_clear(sqfree_factors);
+   //zmod_poly_factor_clear(sqfree_factors);*/
+
+   // Run Cantor-Zassenhaus
+   zmod_poly_factor_cantor_zassenhaus(result, input);
    	
    return leading_coeff;   
 }
