@@ -441,6 +441,235 @@ void LLL_heuristic(F_mpz_mat_t B)
 }
 
 
+/* ****************** */
+/* The LLL Algorithm  */
+/* ****************** */
+
+/* LLL-reduces the integer matrix B "in place" */
+
+long LLL_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
+{
+   int kappa, kappa2, d, n, i, j, zeros, kappamax;
+   mpfr_t ** mu, ** r, ** appB, ** appSP;
+   mpfr_t * s, * mutmp, * appBtmp, * appSPtmp;
+   mpfr_t tmp, rtmp;
+   F_mpz_t ztmp;
+   int * alpha;
+   mp_limb_t * Btmp;
+   
+   n = B->c;
+   d = B->r;
+
+   ctt = DELTA;
+   halfplus = ETA;
+   onedothalfplus = 1.0+halfplus;
+	
+	ulong shift = getShift(B);
+
+   alpha = (int *) malloc((d + 1) * sizeof(int)); 
+
+   F_mpz_init(ztmp);
+   mpfr_init(rtmp);
+   mpfr_init(tmp);
+
+   mu = mpfr_mat_init(d, d);
+   r = mpfr_mat_init(d, d);
+   appB = mpfr_mat_init(d, n);
+   appSP = mpfr_mat_init(d, d);
+
+   s = (mpfr_t *) malloc ((d + 1) * sizeof(mpfr_t));
+   appSPtmp = (mpfr_t *) malloc ((d + 1) * sizeof(mpfr_t));
+
+   for (i = 0; i < d+1; i++){
+      mpfr_init(s[i]);
+      mpfr_init(appSPtmp[i]);
+   }
+
+   for (i = 0; i < d; i++)
+      for (j = 0; j < d; j++)
+         mpfr_set_nan(appSP[i][j]);//0.0/0.0;
+  
+   /* ************************** */
+   /* Step1: Initialization Step */
+   /* ************************** */     
+    
+   for (i = 0; i < d; i++)
+      F_mpz_mat_set_line_mpfr(appB[i], B, i, n);  
+  
+   /* ********************************* */
+   /* Step2: Initializing the main loop */
+   /* ********************************* */   
+  
+   kappamax = 0;
+   i = 0; 
+  
+   do
+      mpfr_vec_norm(appSP[i][i], appB[i], n); 
+   while ( (mpfr_sgn(appSP[i][i]) == 0) && (++i < d));
+
+   zeros = i - 1; /* all vectors B[i] with i <= zeros are zero vectors */
+   kappa = i + 1;
+  
+   if (zeros < d - 1) mpfr_set(r[i][i], appSP[i][i], GMP_RNDN);
+
+   for (i = zeros + 1; i < d; i++)
+      alpha[i] = 0;
+    
+   while (kappa < d)
+   {      
+
+
+      if (kappa > kappamax) kappamax++; // Fixme : should this be kappamax = kappa instead of kappamax++
+
+      /* ********************************** */
+      /* Step3: Call to the Babai algorithm */
+      /* ********************************** */   
+
+      Babai_heuristic(kappa, B, mu, r, s, appB, appSP, alpha[kappa], zeros, 
+			                        kappamax, FLINT_MIN(kappamax + 1 + shift, n),  tmp, rtmp); 
+      
+      /* ************************************ */
+      /* Step4: Success of Lovasz's condition */
+      /* ************************************ */  
+      /* ctt * r.coeff[kappa-1][kappa-1] <= s[kappa-2] ?? */
+
+      mpfr_mul_d( tmp, r[kappa - 1][kappa - 1], ctt, GMP_RNDN);
+      if ( mpfr_cmp(tmp, s[kappa -1]) <= 0) 
+	   {
+	      alpha[kappa] = kappa;
+         mpfr_mul(tmp, mu[kappa][kappa-1], r[kappa][kappa-1], GMP_RNDN);
+         mpfr_sub(r[kappa][kappa], s[kappa - 1], tmp, GMP_RNDN);
+	      kappa++;
+	   } else
+	   {
+
+	      /* ******************************************* */
+	      /* Step5: Find the right insertion index kappa */
+         /* kappa2 remains the initial kappa            */
+	      /* ******************************************* */  
+
+	      kappa2 = kappa;
+	      do
+	      {
+	         kappa--;
+	         if (kappa > zeros + 1) 
+		      {
+               mpfr_mul_d(tmp, r[kappa-1][kappa-1], ctt, GMP_RNDN);
+	         }
+         } while ( (kappa >= zeros + 2) && (mpfr_cmp(s[kappa-1],tmp) <= 0) );
+
+         for (i = kappa; i < kappa2; i++)
+	         if (kappa <= alpha[i]) alpha[i] = kappa;
+
+	      for (i = kappa2; i > kappa; i--) alpha[i] = alpha[i-1];
+
+	      for (i = kappa2 + 1; i <= kappamax; i++)
+	         if (kappa < alpha[i]) alpha[i] = kappa;
+	  
+	      alpha[kappa] = kappa;
+
+	      /* ****************************** */
+	      /* Step6: Update the mu's and r's */
+	      /* ****************************** */  
+	  
+	      mutmp = mu[kappa2];
+	      for (i = kappa2; i > kappa; i--) mu[i] = mu[i-1];
+	      mu[kappa] = mutmp;
+	  
+	      mutmp = r[kappa2];
+	      for (i = kappa2; i > kappa; i--) r[i] = r[i-1];
+	      r[kappa] = mutmp;
+
+	      mpfr_set(r[kappa][kappa], s[kappa], GMP_RNDN);
+	  
+	      /* ************************ */
+	      /* Step7: Update B and appB */
+	      /* ************************ */  	  
+	  
+	      Btmp = B->rows[kappa2];
+         for (i = kappa2; i > kappa; i--) B->rows[i] = B->rows[i-1];
+         B->rows[kappa] = Btmp;
+      
+	      appBtmp = appB[kappa2];
+	      for (i = kappa2; i > kappa; i--) appB[i] = appB[i-1];
+	      appB[kappa] = appBtmp;
+
+
+	      /* *************************** */
+	      /* Step8: Update appSP: tricky */
+	      /* *************************** */  	 
+	  
+	      for (i = 0; i <= kappa2; i++) mpfr_set(appSPtmp[i], appSP[kappa2][i], GMP_RNDN);
+
+	      for (i = kappa2 + 1; i <= kappamax; i++) mpfr_set(appSPtmp[i], appSP[i][kappa2], GMP_RNDN);
+	  
+	      for (i = kappa2; i > kappa; i--)
+	      {
+	         for (j = 0; j < kappa; j++) mpfr_set(appSP[i][j], appSP[i-1][j], GMP_RNDN);	      
+	         mpfr_set(appSP[i][kappa], appSPtmp[i-1], GMP_RNDN);
+	      
+	         for (j = kappa + 1; j <= i; j++) mpfr_set(appSP[i][j], appSP[i-1][j-1], GMP_RNDN);
+
+	         for (j = kappa2 + 1; j <= kappamax; j++) mpfr_set(appSP[j][i], appSP[j][i-1], GMP_RNDN);     
+	      }
+	  
+	      for (i = 0; i < kappa; i++) mpfr_set(appSP[kappa][i], appSPtmp[i], GMP_RNDN);
+	      mpfr_set(appSP[kappa][kappa], appSPtmp[kappa2], GMP_RNDN);
+
+	      for (i = kappa2 + 1; i <= kappamax; i++) mpfr_set(appSP[i][kappa], appSPtmp[i], GMP_RNDN);
+	  
+	      if ( mpfr_sgn(r[kappa][kappa]) <= 0.0)
+	      {
+	         zeros++;
+	         kappa++;
+	         mpfr_vec_norm(appSP[kappa][kappa], appB[kappa], n);
+	         mpfr_set(r[kappa][kappa], appSP[kappa][kappa], GMP_RNDN);
+	      }
+	  
+	      kappa++;
+	   }
+   } 
+
+   int ok = 1;
+   long newd = d;
+
+   F_mpz_get_mpfr(tmp, gs_B);
+
+   for (i = d-1; (i >= 0) && (ok > 0); i--){
+//tmp_gs is the G-S length of ith vector divided by 2 (we shouldn't make a mistake and remove something valuable)
+      mpfr_set(rtmp, appSP[i][i], GMP_RNDN);
+      mpfr_div_d(rtmp, rtmp, 2.0, GMP_RNDN);
+//      mpfr_div_2ui(rtmp, rtmp, 1UL, GMP_RNDN);
+      mpfr_printf(" gs length[%d] = %.10Rf, tmp = %.10Rf \n", i, rtmp, tmp);
+      ok = mpfr_cmp(rtmp, tmp);
+      if (ok > 0){
+         newd--;
+      }
+   }
+  
+   free(alpha);
+
+   F_mpz_clear(ztmp);
+   mpfr_clear(rtmp);
+   mpfr_clear(tmp);
+
+   for (i = 0; i < d+1; i++){
+      mpfr_clear(s[i]);
+      mpfr_clear(appSPtmp[i]);
+   }
+
+
+   mpfr_mat_clear(mu, d, d);
+   mpfr_mat_clear(r, d, d);
+   mpfr_mat_clear(appB, d, n);
+   mpfr_mat_clear(appSP, d, d);
+   free(s);
+   free(appSPtmp);
+
+   return newd;
+}
+
+
 /***********************************/
 /* Babai's Nearest Plane algorithm */
 /***********************************/

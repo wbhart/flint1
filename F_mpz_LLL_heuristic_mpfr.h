@@ -73,6 +73,8 @@ void Babai_heuristic(int kappa, F_mpz_mat_t B, mpfr_t **mu, mpfr_t **r, mpfr_t *
                          
 void LLL_heuristic(F_mpz_mat_t B);
 
+long LLL_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B);
+
 void Babai_heuristic_2exp(int kappa, F_mpz_mat_t B, mpfr_t **mu, mpfr_t **r, mpfr_t *s, 
        mpfr_t **appB, mpfr_t **appSP, 
        int a, int zeros, int kappamax, int n, mpfr_t tmp, mpfr_t rtmp, int * cexpo);
