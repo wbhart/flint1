@@ -864,6 +864,16 @@ int zmod_poly_factor_equal_prob(zmod_poly_t factor, zmod_poly_t pol, ulong d);
 */
 void zmod_poly_factor_equal_d(zmod_poly_factor_t factors, zmod_poly_t pol, ulong d);
 
+/*
+   Removes the highest possible power of p from f and returns the exponent.
+*/
+ulong zmod_poly_remove(zmod_poly_t f, zmod_poly_t p);
+
+/* 
+   Factorises a non-constant polynomial f into monic irreducible factors.
+*/
+void zmod_poly_factor_cantor_zassenhaus(zmod_poly_factor_t res, zmod_poly_t f);
+
 /**
  * Computes the factorisation of the given polynomial.
  * @param f 		The polynomial to factorise.

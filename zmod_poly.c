@@ -6671,6 +6671,76 @@ void zmod_poly_factor_equal_d(zmod_poly_factor_t factors, zmod_poly_t pol, ulong
    zmod_poly_clear(g);  
 }
 
+ulong zmod_poly_remove(zmod_poly_t f, zmod_poly_t p)
+{
+   zmod_poly_t q, r;
+   zmod_poly_init(q, p->p);
+   zmod_poly_init(r, p->p);
+
+   ulong i = 0;
+   do
+   {
+      if (f->length < p->length) break;
+      zmod_poly_divrem(q, r, f, p);
+      if (r->length == 0) zmod_poly_swap(q, f);
+      else break;
+      i++;
+   } while (1);
+
+   zmod_poly_clear(q);
+   zmod_poly_clear(r);
+
+   return i;
+}
+
+/* 
+   Factor f using Cantor-Zassenhaus
+*/
+void zmod_poly_factor_cantor_zassenhaus(zmod_poly_factor_t res, zmod_poly_t f)
+{
+   zmod_poly_t h, v, g, x;
+
+   zmod_poly_init(h, f->p);
+   zmod_poly_init(g, f->p);
+   zmod_poly_init(v, f->p);
+   zmod_poly_init(x, f->p);
+   zmod_poly_set_coeff_ui(h, 1, 1);
+   zmod_poly_set_coeff_ui(x, 1, 1);
+
+   zmod_poly_make_monic(v, f);
+
+   ulong i = 0;
+
+   do
+   {
+      i++;
+      zmod_poly_powmod(h, h, f->p, v);
+      zmod_poly_sub(h, h, x);
+      zmod_poly_gcd(g, h, v);
+      zmod_poly_add(h, h, x);
+
+      if (g->length != 1)
+      {
+         zmod_poly_make_monic(g, g);
+         ulong num = res->num_factors;
+         zmod_poly_factor_equal_d(res, g, i);
+
+         for (ulong j = num; j < res->num_factors; j++)
+            res->exponents[j] = zmod_poly_remove(v, res->factors[j]);
+      }   
+   } while (v->length >= 2*i + 3);
+
+   if (v->length > 1)
+   {
+      zmod_poly_factor_add(res, v);
+   }
+
+   zmod_poly_clear(g);
+   zmod_poly_clear(h);
+   zmod_poly_clear(v);
+   zmod_poly_clear(x);
+}
+
 /** 
  * Square-Free Algorithm, takes an arbitary polynomial in F_p[X] and returns an array of square free factors 
  * LOW MULTIPLICITIES 
