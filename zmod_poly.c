@@ -159,6 +159,7 @@ void zmod_poly_random(zmod_poly_t pol, ulong length)
    zmod_poly_fit_length(pol, length);
    for (ulong i = 0; i < length; i++)
       pol->coeffs[i] = z_randint(p);
+   pol->length = length;
    __zmod_poly_normalise(pol);
 }
 
@@ -6614,7 +6615,7 @@ int zmod_poly_factor_equal_prob(zmod_poly_t factor, zmod_poly_t pol, ulong d)
    
    do {zmod_poly_random(a, pol->length - 1);} 
    while (a->length <= 1);
-
+   
    zmod_poly_gcd(factor, a, pol);
    if (factor->length != 1)
    {
@@ -6633,7 +6634,7 @@ int zmod_poly_factor_equal_prob(zmod_poly_t factor, zmod_poly_t pol, ulong d)
    mpz_tdiv_q_2exp(exp, exp, 1);
    
    zmod_poly_powmod_mpz(b, a, exp, pol);
-
+   
    mpz_clear(exp);
 
    b->coeffs[0] = z_submod(b->coeffs[0], 1, pol->p);
@@ -6724,7 +6725,7 @@ void zmod_poly_factor_cantor_zassenhaus(zmod_poly_factor_t res, zmod_poly_t f)
          zmod_poly_make_monic(g, g);
          ulong num = res->num_factors;
          zmod_poly_factor_equal_d(res, g, i);
-
+         
          for (ulong j = num; j < res->num_factors; j++)
             res->exponents[j] = zmod_poly_remove(v, res->factors[j]);
       }   
