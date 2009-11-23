@@ -124,6 +124,20 @@ void F_mpz_mod_poly_zero(F_mpz_mod_poly_t poly)
 
 void zmod_poly_to_F_mpz_mod_poly(F_mpz_mod_poly_t fpol, const zmod_poly_t zpol);
 
+/****************************************************************************
+
+   Attach
+
+****************************************************************************/
+
+static inline
+void _F_mpz_mod_poly_attach_F_mpz_poly(F_mpz_poly_t out, F_mpz_mod_poly_t in)
+{
+   out->coeffs = in->coeffs;
+   out->length = in->length;
+   out->alloc = in->alloc;
+}
+
 #ifdef __cplusplus
  }
 #endif
