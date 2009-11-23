@@ -196,6 +196,68 @@ void F_mpz_mod_poly_swap(F_mpz_mod_poly_t poly1, F_mpz_mod_poly_t poly2)
 
 /****************************************************************************
 
+   Add/sub
+
+****************************************************************************/
+
+void _F_mpz_mod_poly_add(F_mpz_mod_poly_t res, const F_mpz_mod_poly_t pol1, const F_mpz_mod_poly_t pol2)
+{
+   F_mpz_poly_t p1, p2, r;
+
+   _F_mpz_poly_attach_F_mpz_mod_poly(p1, pol1);
+   _F_mpz_poly_attach_F_mpz_mod_poly(p2, pol2);
+   _F_mpz_poly_attach_F_mpz_mod_poly(r, res);
+
+   _F_mpz_poly_add(r, p1, p2);
+   for (ulong i = 0; i < r->length; i++)
+   {
+      if (F_mpz_cmpabs(r->coeffs + i, res->P) >= 0)
+         F_mpz_sub(r->coeffs + i, r->coeffs + i, res->P);
+   }
+   
+   _F_mpz_mod_poly_attach_F_mpz_poly(res, r);
+   _F_mpz_mod_poly_normalise(res);
+}
+
+void _F_mpz_mod_poly_sub(F_mpz_mod_poly_t res, const F_mpz_mod_poly_t pol1, const F_mpz_mod_poly_t pol2)
+{
+   F_mpz_poly_t p1, p2, r;
+
+   _F_mpz_poly_attach_F_mpz_mod_poly(p1, pol1);
+   _F_mpz_poly_attach_F_mpz_mod_poly(p2, pol2);
+   _F_mpz_poly_attach_F_mpz_mod_poly(r, res);
+
+   _F_mpz_poly_sub(r, p1, p2);
+   for (ulong i = 0; i < r->length; i++)
+   {
+      if (F_mpz_sgn(r->coeffs + i) < 0)
+         F_mpz_add(r->coeffs + i, r->coeffs + i, res->P);
+   }
+   
+   _F_mpz_mod_poly_attach_F_mpz_poly(res, r);
+   _F_mpz_mod_poly_normalise(res);
+}
+
+void F_mpz_mod_poly_add(F_mpz_mod_poly_t res, const F_mpz_mod_poly_t poly1, const F_mpz_mod_poly_t poly2)
+{
+   ulong longer = FLINT_MAX(poly1->length, poly2->length);
+
+	F_mpz_mod_poly_fit_length(res, longer);
+	
+	_F_mpz_mod_poly_add(res, poly1, poly2);
+}
+
+void F_mpz_mod_poly_sub(F_mpz_mod_poly_t res, const F_mpz_mod_poly_t poly1, const F_mpz_mod_poly_t poly2)
+{
+   ulong longer = FLINT_MAX(poly1->length, poly2->length);
+
+	F_mpz_mod_poly_fit_length(res, longer);
+	
+	_F_mpz_mod_poly_sub(res, poly1, poly2);
+}
+
+/****************************************************************************
+
    Multiplication
 
 ****************************************************************************/
