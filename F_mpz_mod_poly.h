@@ -122,6 +122,10 @@ void F_mpz_mod_poly_zero(F_mpz_mod_poly_t poly)
 
 ****************************************************************************/
 
+void mpz_poly_to_F_mpz_mod_poly(F_mpz_mod_poly_t F_poly, const mpz_poly_t m_poly);
+
+void F_mpz_mod_poly_to_mpz_poly(mpz_poly_t m_poly, const F_mpz_mod_poly_t F_poly);
+
 void zmod_poly_to_F_mpz_mod_poly(F_mpz_mod_poly_t fpol, const zmod_poly_t zpol);
 
 /****************************************************************************
