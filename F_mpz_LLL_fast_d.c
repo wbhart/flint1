@@ -331,7 +331,7 @@ void Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, doubl
 	      if (appSP[kappa][j] != appSP[kappa][j]) // if appSP[kappa][j] == NAN
 	      {
 //### This is different -----
-            appSP[kappa][j] = d_vec_scalar_product_heuristic(appB[kappa], appB[j], n, B, kappa, j);
+            appSP[kappa][j] = d_vec_scalar_product_heuristic(appB[kappa], appB[j], n, B, kappa, j, expo[kappa]+expo[j]);
 //---------------------------
          }
 	  	  
@@ -690,7 +690,6 @@ void Babai_heuristic_d_2exp (int kappa, F_mpz_mat_t B, double **mu, double **r, 
       s[k+1] = s[k] - tmp;
    }
 }
-
 
 /* ****************** */
 /* The LLL Algorithm  */
@@ -1519,5 +1518,3 @@ int LLL_heuristic_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    free(appSPtmp);
    return newd;
 }
-
-

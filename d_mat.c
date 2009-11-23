@@ -76,7 +76,7 @@ double d_vec_scalar_product(double * vec1, double * vec2, int n)
   return sum;
 } 
 
-double d_vec_scalar_product_heuristic(double * vec1, double * vec2, int n, F_mpz_mat_t B, ulong kappa, ulong j)
+double d_vec_scalar_product_heuristic(double * vec1, double * vec2, int n, F_mpz_mat_t B, ulong kappa, ulong j, long exp_adj)
 {
   double sum;
 
@@ -97,7 +97,7 @@ double d_vec_scalar_product_heuristic(double * vec1, double * vec2, int n, F_mpz
      ulong exp;
      F_mpz_mat_row_scalar_product(sp, B, kappa, B, j, 0, n);
      sum = F_mpz_get_d_2exp(&exp, sp);
-     sum = ldexp(sum, exp);
+     sum = ldexp(sum, exp - exp_adj);
      F_mpz_clear(sp);
   }
 
