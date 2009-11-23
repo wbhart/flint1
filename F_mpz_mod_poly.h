@@ -74,6 +74,8 @@ void F_mpz_mod_poly_zero(F_mpz_mod_poly_t poly)
    poly->length = 0;
 }
 
+void zmod_poly_to_F_mpz_mod_poly( F_mpz_mod_poly_t fpol, zmod_poly_t zpol);
+
 #ifdef __cplusplus
  }
 #endif
