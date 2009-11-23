@@ -130,16 +130,72 @@ void zmod_poly_to_F_mpz_mod_poly(F_mpz_mod_poly_t fpol, const zmod_poly_t zpol);
 
 ****************************************************************************/
 
+/* 
+   Attach an F_mpz_mod_poly to an F_mpz_poly. Allows one to temporarily treat
+   an F_mpz_mod_poly as though it were an F_mpz_poly.
+*/
 static inline
-void _F_mpz_mod_poly_attach_F_mpz_poly(F_mpz_poly_t out, F_mpz_mod_poly_t in)
+void _F_mpz_poly_attach_F_mpz_mod_poly(F_mpz_poly_t out, const F_mpz_mod_poly_t in)
 {
    out->coeffs = in->coeffs;
    out->length = in->length;
    out->alloc = in->alloc;
 }
 
+/* 
+   Attach an F_mpz_poly to an F_mpz_mod_poly. Allows one to return an 
+   F_mpz_mod_poly, which is temporarily being treated as an F_mpz_poly,
+   to its original F_mpz_mod_poly object.
+*/
+static inline
+void _F_mpz_mod_poly_attach_F_mpz_poly(F_mpz_mod_poly_t out, const F_mpz_poly_t in)
+{
+   out->coeffs = in->coeffs;
+   out->length = in->length;
+   out->alloc = in->alloc;
+}
+
+
+/****************************************************************************
+
+   Reduce mod P
+
+****************************************************************************/
+
+void _F_mpz_mod_poly_reduce_coeffs(F_mpz_mod_poly_t poly)
+{
+   for (ulong i = 0; i < poly->length; i++)
+      F_mpz_mod(poly->coeffs + i, poly->coeffs + i, poly->P);
+   _F_mpz_mod_poly_normalise(poly);
+}
+
+void _F_mpz_poly_reduce_coeffs(F_mpz_poly_t poly, const F_mpz_t P)
+{
+   for (ulong i = 0; i < poly->length; i++)
+      F_mpz_mod(poly->coeffs + i, poly->coeffs + i, P);
+}
+
+/****************************************************************************
+
+   Assignment/swap
+
+****************************************************************************/
+
+void F_mpz_mod_poly_swap(F_mpz_mod_poly_t poly1, F_mpz_mod_poly_t poly2);
+
+/****************************************************************************
+
+   Multiplication
+
+****************************************************************************/
+
+void _F_mpz_mod_poly_mul(F_mpz_mod_poly_t res, const F_mpz_mod_poly_t pol1, const F_mpz_mod_poly_t pol2);
+
+void F_mpz_mod_poly_mul(F_mpz_mod_poly_t res, const F_mpz_mod_poly_t pol1, const F_mpz_mod_poly_t pol2);
+
 #ifdef __cplusplus
  }
 #endif
 
 #endif /* _F_MPZ_MOD_POLY_H_ */
+

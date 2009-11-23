@@ -4131,7 +4131,7 @@ void F_mpz_poly_mul_SS(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_p
 
 ================================================================================*/
 
-void _F_mpz_poly_mul(F_mpz_poly_t output, F_mpz_poly_t input1, F_mpz_poly_t input2)
+void _F_mpz_poly_mul(F_mpz_poly_t output, const F_mpz_poly_t input1, const F_mpz_poly_t input2)
 {
    if ((input1->length == 0) || (input2->length == 0)) // special case, length == 0
    {
@@ -4191,7 +4191,7 @@ void _F_mpz_poly_mul(F_mpz_poly_t output, F_mpz_poly_t input1, F_mpz_poly_t inpu
    _F_mpz_poly_mul_KS(output, input1, input2, bits);     
 }
 
-void F_mpz_poly_mul(F_mpz_poly_t res, F_mpz_poly_t poly1, F_mpz_poly_t poly2)
+void F_mpz_poly_mul(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
 {
 	if ((poly1->length == 0) || (poly2->length == 0)) // special case if either poly is zero
    {
@@ -4215,7 +4215,7 @@ void F_mpz_poly_mul(F_mpz_poly_t res, F_mpz_poly_t poly1, F_mpz_poly_t poly2)
 	}		
 }
 
-void _F_mpz_poly_mul_trunc_left(F_mpz_poly_t output, F_mpz_poly_t input1, F_mpz_poly_t input2, ulong trunc)
+void _F_mpz_poly_mul_trunc_left(F_mpz_poly_t output, const F_mpz_poly_t input1, const F_mpz_poly_t input2, ulong trunc)
 {
    if ((input1->length == 0) || (input2->length == 0) || (input1->length + input2->length <= trunc + 1)) // special case, length == 0
    {
@@ -4275,7 +4275,7 @@ void _F_mpz_poly_mul_trunc_left(F_mpz_poly_t output, F_mpz_poly_t input1, F_mpz_
    _F_mpz_poly_mul_KS(output, input1, input2, bits);     
 }
 
-void F_mpz_poly_mul_trunc_left(F_mpz_poly_t res, F_mpz_poly_t poly1, F_mpz_poly_t poly2, ulong trunc)
+void F_mpz_poly_mul_trunc_left(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2, ulong trunc)
 {
    if ((poly1->length == 0) || (poly2->length == 0) || (poly1->length + poly2->length <= trunc + 1)) // special case if either poly is zero
    {
