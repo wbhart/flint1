@@ -936,6 +936,8 @@ void F_mpz_poly_mul(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly
 	        optimal algorithm. The lower trunc coefficients of res will either be correct or
            set to 0.
 */
+void _F_mpz_poly_mul_trunc_left(F_mpz_poly_t res, const F_mpz_poly_t poly1, 
+                                              const F_mpz_poly_t poly2, const ulong trunc);
 void F_mpz_poly_mul_trunc_left(F_mpz_poly_t res, const F_mpz_poly_t poly1, 
                                               const F_mpz_poly_t poly2, const ulong trunc);
 

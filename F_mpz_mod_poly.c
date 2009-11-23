@@ -135,7 +135,11 @@ void mpz_poly_to_F_mpz_mod_poly(F_mpz_mod_poly_t F_poly, const mpz_poly_t m_poly
 	_F_mpz_mod_poly_set_length(F_poly, m_poly->length);
    
 	for (ulong i = 0; i < m_poly->length; i++)
-		F_mpz_set_mpz(F_poly->coeffs + i, m_poly->coeffs[i]);
+   {
+      F_mpz_set_mpz(F_poly->coeffs + i, m_poly->coeffs[i]);
+      F_mpz_mod(F_poly->coeffs + i, F_poly->coeffs + i, F_poly->P);
+   }
+   _F_mpz_mod_poly_normalise(F_poly);
 }
 
 void F_mpz_mod_poly_to_mpz_poly(mpz_poly_t m_poly, const F_mpz_mod_poly_t F_poly)
@@ -235,3 +239,44 @@ void F_mpz_mod_poly_mul(F_mpz_mod_poly_t res, const F_mpz_mod_poly_t pol1, const
 	}		
 }
 
+void _F_mpz_mod_poly_mul_trunc_left(F_mpz_mod_poly_t res, const F_mpz_mod_poly_t pol1, const F_mpz_mod_poly_t pol2, ulong trunc)
+{
+   F_mpz_poly_t p1, p2, r;
+
+   if (trunc + 1 > pol1->length + pol2->length) trunc = pol1->length + pol2->length - 1;
+   if (!pol1->length && !pol2->length) trunc = 0;
+
+   _F_mpz_poly_attach_F_mpz_mod_poly(p1, pol1);
+   _F_mpz_poly_attach_F_mpz_mod_poly(p2, pol2);
+   _F_mpz_poly_attach_F_mpz_mod_poly(r, res);
+
+   _F_mpz_poly_mul_trunc_left(r, p1, p2, trunc);
+   _F_mpz_poly_reduce_coeffs(r, res->P);
+
+   _F_mpz_mod_poly_attach_F_mpz_poly(res, r);
+   _F_mpz_mod_poly_normalise(res);
+}
+
+void F_mpz_mod_poly_mul_trunc_left(F_mpz_mod_poly_t res, const F_mpz_mod_poly_t poly1, const F_mpz_mod_poly_t poly2, ulong trunc)
+{
+   if ((poly1->length == 0) || (poly2->length == 0) || (poly1->length + poly2->length <= trunc + 1)) // special case if either poly is zero
+   {
+      F_mpz_mod_poly_zero(res);
+      return;
+   }
+
+	if ((poly1 == res) || (poly2 == res)) // aliased inputs
+	{
+		F_mpz_mod_poly_t output; // create temporary
+		F_mpz_mod_poly_init2(output, res->P, poly1->length + poly2->length - 1);
+		if (poly1->length >= poly2->length) _F_mpz_mod_poly_mul_trunc_left(output, poly1, poly2, trunc);
+		else _F_mpz_mod_poly_mul_trunc_left(output, poly2, poly1, trunc);
+		F_mpz_mod_poly_swap(output, res); // swap temporary with real output
+		F_mpz_mod_poly_clear(output);
+	} else // ordinary case
+	{
+		F_mpz_mod_poly_fit_length(res, poly1->length + poly2->length - 1);
+      if (poly1->length >= poly2->length) _F_mpz_mod_poly_mul_trunc_left(res, poly1, poly2, trunc);
+		else _F_mpz_mod_poly_mul_trunc_left(res, poly2, poly1, trunc);
+	}		
+}
