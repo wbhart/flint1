@@ -64,6 +64,7 @@ HEADERS = \
 	long_extras.h \
 	packed_vec.h \
 	zmod_poly.h \
+   F_mpz_mod_poly.h \
 	theta.h \
 	zmod_mat.h \
 	mpz_mat.h \
@@ -110,6 +111,7 @@ FLINTOBJ = \
 	long_extras.o \
 	packed_vec.o \
 	zmod_poly.o \
+   F_mpz_mod_poly.o \
 	theta.o \
 	zmod_mat.o \
 	mpz_mat.o \
@@ -287,6 +289,9 @@ packed_vec.o: packed_vec.c $(HEADERS)
 
 zmod_poly.o: zmod_poly.c $(HEADERS)
 	$(CC) $(CFLAGS) -c zmod_poly.c -o zmod_poly.o
+
+F_mpz_mod_poly.o: F_mpz_mod_poly.c $(HEADERS)
+	$(CC) $(CFLAGS) -c F_mpz_mod_poly.c -o F_mpz_mod_poly.o
 
 NTL-interface.o: NTL-interface.cpp $(HEADERS)
 	$(CPP) $(CFLAGS) -c NTL-interface.cpp -o NTL-interface.o
