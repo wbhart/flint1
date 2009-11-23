@@ -48,7 +48,7 @@
 
 typedef struct
 {
-   F_mpz_t *coeffs;
+   F_mpz *coeffs;
    unsigned long alloc;
    unsigned long length;
    F_mpz_t P;
@@ -67,6 +67,12 @@ void __F_mpz_mod_poly_fit_length(F_mpz_mod_poly_t poly, unsigned long alloc);
 void F_mpz_mod_poly_clear(F_mpz_mod_poly_t poly);
 
 void __F_mpz_mod_poly_normalise(F_mpz_mod_poly_t poly);
+
+static inline
+void F_mpz_mod_poly_zero(F_mpz_mod_poly_t poly)
+{
+   poly->length = 0;
+}
 
 #ifdef __cplusplus
  }

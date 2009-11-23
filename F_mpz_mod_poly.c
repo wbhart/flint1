@@ -39,16 +39,16 @@
 
 void F_mpz_mod_poly_init(F_mpz_mod_poly_t poly, F_mpz_t P)
 {
-   poly->coeffs = (F_mpz_t*) flint_heap_alloc(1);
+   poly->coeffs = NULL;
    F_mpz_set(poly->P, P);
-   poly->alloc = 1;
+   poly->alloc = 0;
    poly->length = 0;
 }
 
 void F_mpz_mod_poly_init2(F_mpz_mod_poly_t poly, F_mpz_t P, unsigned long alloc)
 {
    FLINT_ASSERT(alloc >= 1);
-   poly->coeffs = (F_mpz_t*) flint_heap_alloc(alloc);
+   poly->coeffs = (F_mpz *) flint_heap_alloc(alloc);
    F_mpz_set(poly->P, P);   
    poly->alloc = alloc;
    poly->length = 0;
@@ -67,7 +67,7 @@ void F_mpz_mod_poly_realloc(F_mpz_mod_poly_t poly, unsigned long alloc)
    // for (unsigned long i = alloc; i < poly->alloc; i++)
    //    mpz_clear(poly->coeffs[i]);
 
-   poly->coeffs = (F_mpz_t*) flint_heap_realloc(poly->coeffs,
+   poly->coeffs = (F_mpz *) flint_heap_realloc(poly->coeffs,
                                               alloc);
    
    // init any new mpz_t's required
@@ -98,3 +98,31 @@ void __F_mpz_mod_poly_normalise(F_mpz_mod_poly_t poly)
    while (poly->length && (poly->coeffs[poly->length-1] == 0L))
       poly->length--;
 }
+
+/****************************************************************************
+
+   Initialisation and memory management
+
+****************************************************************************/
+
+void zmod_poly_to_F_mpz_mod_poly( F_mpz_mod_poly_t fpol, zmod_poly_t zpol){
+
+   F_mpz_set_ui( fpol->P, zpol->p);
+
+   if( zpol->length == 0){
+      F_mpz_mod_poly_zero(fpol);
+      return;
+   }
+
+   __F_mpz_mod_poly_fit_length(fpol, zpol->length);
+   fpol->length = zpol->length;
+   
+   for (unsigned long i = 0; i < zpol->length; i++)
+   {
+      F_mpz_set_si(fpol->coeffs + i, zpol->coeffs[i]);
+   }
+
+   __F_mpz_mod_poly_normalise(fpol);
+
+}
+
