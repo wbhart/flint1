@@ -48,33 +48,81 @@
 
 typedef struct
 {
-   F_mpz *coeffs;
-   unsigned long alloc;
-   unsigned long length;
+   F_mpz * coeffs;
+   ulong alloc;
+   ulong length;
    F_mpz_t P;
 } F_mpz_mod_poly_struct;
 
 typedef F_mpz_mod_poly_struct F_mpz_mod_poly_t[1];
 
-void F_mpz_mod_poly_init(F_mpz_mod_poly_t poly, F_mpz_t P);
+/****************************************************************************
 
-void F_mpz_mod_poly_init2(F_mpz_mod_poly_t poly, F_mpz_t P, unsigned long alloc);
+   Initialisation and memory management
 
-void F_mpz_mod_poly_realloc(F_mpz_mod_poly_t poly, unsigned long alloc);
+****************************************************************************/
 
-void __F_mpz_mod_poly_fit_length(F_mpz_mod_poly_t poly, unsigned long alloc);
+void F_mpz_mod_poly_init(F_mpz_mod_poly_t poly, const F_mpz_t P);
+
+void F_mpz_mod_poly_init2(F_mpz_mod_poly_t poly, const F_mpz_t P, const ulong alloc);
 
 void F_mpz_mod_poly_clear(F_mpz_mod_poly_t poly);
 
-void __F_mpz_mod_poly_normalise(F_mpz_mod_poly_t poly);
+void F_mpz_mod_poly_realloc(F_mpz_mod_poly_t poly, const ulong alloc);
+
+void F_mpz_mod_poly_fit_length(F_mpz_mod_poly_t poly, const ulong length);
+
+/****************************************************************************
+
+   Normalisation/truncation
+
+****************************************************************************/
+
+void _F_mpz_mod_poly_normalise(F_mpz_mod_poly_t poly);
 
 static inline
-void F_mpz_mod_poly_zero(F_mpz_mod_poly_t poly)
+void _F_mpz_mod_poly_set_length(F_mpz_mod_poly_t poly, const ulong length)
 {
-   poly->length = 0;
+	if (poly->length > length) // demote coefficients beyond new length
+   {
+      for (ulong i = length; i < poly->length; i++)
+			_F_mpz_demote(poly->coeffs + i);	
+   } 
+
+	poly->length = length;
 }
 
-void zmod_poly_to_F_mpz_mod_poly( F_mpz_mod_poly_t fpol, zmod_poly_t zpol);
+static inline
+void F_mpz_mod_poly_truncate(F_mpz_mod_poly_t poly, const ulong length)
+{
+	if (poly->length > length) // only truncate if necessary
+   {
+      for (ulong i = length; i < poly->length; i++)
+			_F_mpz_demote(poly->coeffs + i);
+		poly->length = length;
+      _F_mpz_mod_poly_normalise(poly);
+   }  
+}
+
+/****************************************************************************
+
+   Zero
+
+****************************************************************************/
+
+static inline 
+void F_mpz_mod_poly_zero(F_mpz_mod_poly_t poly)
+{
+   _F_mpz_mod_poly_set_length(poly, 0);
+}
+
+/****************************************************************************
+
+   Conversion
+
+****************************************************************************/
+
+void zmod_poly_to_F_mpz_mod_poly(F_mpz_mod_poly_t fpol, const zmod_poly_t zpol);
 
 #ifdef __cplusplus
  }
