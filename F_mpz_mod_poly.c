@@ -37,11 +37,20 @@
 
 ****************************************************************************/
 
-void F_mpz_mod_poly_init(F_mpz_mod_poly_t poly, F_mpz_t p)
+void F_mpz_mod_poly_init(F_mpz_mod_poly_t poly, F_mpz_t P)
 {
    poly->coeffs = (unsigned long*) flint_heap_alloc(1);
    poly->P = P;
    poly->alloc = 1;
+   poly->length = 0;
+}
+
+void F_mpz_mod_poly_init2(F_mpz_mod_poly_t poly, F_mpz_t P, unsigned long alloc)
+{
+   FLINT_ASSERT(alloc >= 1);
+   poly->coeffs = (unsigned long*) flint_heap_alloc(alloc);
+   poly->P = P;   
+   poly->alloc = alloc;
    poly->length = 0;
 }
 
