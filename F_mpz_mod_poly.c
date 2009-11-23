@@ -40,7 +40,6 @@
 void F_mpz_mod_poly_init(F_mpz_mod_poly_t poly, F_mpz_t p)
 {
    poly->coeffs = (unsigned long*) flint_heap_alloc(1);
-   
    poly->P = P;
    poly->alloc = 1;
    poly->length = 0;

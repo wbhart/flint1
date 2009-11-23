@@ -58,6 +58,8 @@ typedef F_mpz_mod_poly_struct F_mpz_mod_poly_t[1];
 
 void F_mpz_mod_poly_init(F_mpz_mod_poly_t poly, F_mpz_t P);
 
+void F_mpz_mod_poly_init2(F_mpz_mod_poly_t poly, F_mpz_t P, unsigned long alloc);
+
 void F_mpz_mod_poly_clear(F_mpz_mod_poly_t poly);
 
 #ifdef __cplusplus
