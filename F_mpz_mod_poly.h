@@ -48,7 +48,7 @@
 
 typedef struct
 {
-   unsigned long *coeffs;
+   F_mpz_t *coeffs;
    unsigned long alloc;
    unsigned long length;
    F_mpz_t P;
