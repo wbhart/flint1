@@ -84,6 +84,15 @@ void F_mpz_mod_poly_realloc(F_mpz_mod_poly_t poly, unsigned long alloc)
    }
 }
 
+void __F_mpz_mod_poly_fit_length(F_mpz_mod_poly_t poly, unsigned long alloc)
+{
+   FLINT_ASSERT(alloc > poly->alloc);
+
+   if (alloc < 2*poly->alloc)
+      alloc = 2*poly->alloc;
+   F_mpz_mod_poly_realloc(poly, alloc);
+}
+
 void __F_mpz_mod_poly_normalise(F_mpz_mod_poly_t poly)
 {
    while (poly->length && (poly->coeffs[poly->length-1] == 0L))
