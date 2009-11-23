@@ -59,3 +59,33 @@ void F_mpz_mod_poly_clear(F_mpz_mod_poly_t poly)
    flint_heap_free(poly->coeffs);
 }
 
+void F_mpz_mod_poly_realloc(F_mpz_mod_poly_t poly, unsigned long alloc)
+{
+   FLINT_ASSERT(alloc >= 1);
+
+   // clear any mpz_t's beyond the new array length
+   // for (unsigned long i = alloc; i < poly->alloc; i++)
+   //    mpz_clear(poly->coeffs[i]);
+
+   poly->coeffs = (unsigned long*) flint_heap_realloc(poly->coeffs,
+                                              alloc);
+   
+   // init any new mpz_t's required
+   // for (unsigned long i = poly->alloc; i < alloc; i++)
+   //    mpz_init(poly->coeffs[i]);
+
+   poly->alloc = alloc;
+   
+   // truncate poly if necessary
+   if (poly->length > alloc)
+   {
+      poly->length = alloc;
+      __F_mpz_mod_poly_normalise(poly);
+   }
+}
+
+void __F_mpz_mod_poly_normalise(F_mpz_mod_poly_t poly)
+{
+   while (poly->length && (poly->coeffs[poly->length-1] == 0L))
+      poly->length--;
+}
