@@ -26,6 +26,7 @@
 *****************************************************************************/
 
 #include "F_mpz_mod_poly.h"
+#include "F_mpz_poly.h"
 #include "long_extras.h"
 #include "mpn_extras.h"
 #include "longlong_wrapper.h"
@@ -143,3 +144,74 @@ void zmod_poly_to_F_mpz_mod_poly(F_mpz_mod_poly_t fpol, const zmod_poly_t zpol)
    _F_mpz_mod_poly_set_length(fpol, zpol->length);
    _F_mpz_mod_poly_normalise(fpol);
 }
+
+/****************************************************************************
+
+   Assignment/swap
+
+****************************************************************************/
+
+void F_mpz_mod_poly_swap(F_mpz_mod_poly_t poly1, F_mpz_mod_poly_t poly2)
+{
+	if (poly1 == poly2) return;
+
+	ulong temp = poly1->length;
+	poly1->length = poly2->length;
+	poly2->length = temp;
+	
+	temp = poly1->alloc;
+	poly1->alloc = poly2->alloc;
+	poly2->alloc = temp;
+	
+	F_mpz * temp_c = poly1->coeffs;
+	poly1->coeffs = poly2->coeffs;
+	poly2->coeffs = temp_c;
+
+   return;
+}
+
+/****************************************************************************
+
+   Multiplication
+
+****************************************************************************/
+
+void _F_mpz_mod_poly_mul(F_mpz_mod_poly_t res, const F_mpz_mod_poly_t pol1, const F_mpz_mod_poly_t pol2)
+{
+   F_mpz_poly_t p1, p2, r;
+
+   _F_mpz_poly_attach_F_mpz_mod_poly(p1, pol1);
+   _F_mpz_poly_attach_F_mpz_mod_poly(p2, pol2);
+   _F_mpz_poly_attach_F_mpz_mod_poly(r, res);
+
+   _F_mpz_poly_mul(r, p1, p2);
+   _F_mpz_poly_reduce_coeffs(r, res->P);
+
+   _F_mpz_mod_poly_attach_F_mpz_poly(res, r);
+   _F_mpz_mod_poly_normalise(res);
+}
+
+void F_mpz_mod_poly_mul(F_mpz_mod_poly_t res, const F_mpz_mod_poly_t pol1, const F_mpz_mod_poly_t pol2)
+{
+	if ((pol1->length == 0) || (pol2->length == 0)) // special case if either poly is zero
+   {
+      F_mpz_mod_poly_zero(res);
+      return;
+   }
+
+	if ((pol1 == res) || (pol2 == res)) // aliased inputs
+	{
+		F_mpz_mod_poly_t output; // create temporary
+		F_mpz_mod_poly_init2(output, pol1->P, pol1->length + pol2->length - 1);
+		if (pol1->length >= pol2->length) _F_mpz_mod_poly_mul(output, pol1, pol2);
+		else _F_mpz_mod_poly_mul(output, pol2, pol1);
+		F_mpz_mod_poly_swap(output, res); // swap temporary with real output
+		F_mpz_mod_poly_clear(output);
+	} else // ordinary case
+	{
+		F_mpz_mod_poly_fit_length(res, pol1->length + pol2->length - 1);
+      if (pol1->length >= pol2->length) _F_mpz_mod_poly_mul(res, pol1, pol2);
+		else _F_mpz_mod_poly_mul(res, pol2, pol1);
+	}		
+}
+
