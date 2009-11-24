@@ -41,22 +41,6 @@
 #include "d_mat.h"
 
 
-ulong getShift(F_mpz_mat_t B)
-{
-   ulong n = B->c;
-   ulong shift = 0;
-   for (ulong i = 0; i < B->r; i++)
-   {
-      ulong j;
-      for (j = n - 1; j >= i + shift + 1 && F_mpz_size(B->rows[i] + j) == 0L; j--);  
-      
-      if (shift < j - i) shift = j - i;
-      
-   }
-
-   return shift;
-}
-
 /****************************************************************************
 
    The various Babai's: check_Babai, check_Babai_heuristic_d, check_Babai_heuristic
@@ -681,6 +665,7 @@ int LLL_d(F_mpz_mat_t B)
 
    int num_failed_fast = 0;
    int babai_ok = 0;
+   int heuristic_fail = 0;
     
    while (kappa < d)
    {      
@@ -701,7 +686,7 @@ int LLL_d(F_mpz_mat_t B)
       if (babai_ok == 1)
       {
          num_failed_fast++;
-         int heuristic_fail = check_Babai_heuristic_d(kappa, B, mu, r, s, appB, expo, appSP, alpha[kappa], zeros, 
+         heuristic_fail = check_Babai_heuristic_d(kappa, B, mu, r, s, appB, expo, appSP, alpha[kappa], zeros, 
 			                        kappamax, FLINT_MIN(kappamax + 1 + shift, n)); 
       }
 
@@ -901,9 +886,11 @@ int LLL_heuristic_d(F_mpz_mat_t B)
       /* Step3: Call to the Babai algorithm */
       /* ********************************** */   
 
-      Babai_heuristic_d(kappa, B, mu, r, s, appB, expo, appSP, alpha[kappa], zeros, 
+      int babai_fail = check_Babai_heuristic_d(kappa, B, mu, r, s, appB, expo, appSP, alpha[kappa], zeros, 
 			                        kappamax, FLINT_MIN(kappamax + 1 + shift, n)); 
-      
+      if (babai_fail == 1)
+         return 1;
+
       /* ************************************ */
       /* Step4: Success of Lovasz's condition */
       /* ************************************ */  
@@ -1106,8 +1093,8 @@ int LLL_mpfr2(F_mpz_mat_t B, mp_prec_t prec)
       /* Step3: Call to the Babai algorithm */
       /* ********************************** */   
 
-      babai_fail = Babai_heuristic(kappa, B, mu, r, s, appB, appSP, alpha[kappa], zeros, 
-			                        kappamax, FLINT_MIN(kappamax + 1 + shift, n),  tmp, rtmp);
+      babai_fail = check_Babai_heuristic(kappa, B, mu, r, s, appB, appSP, alpha[kappa], zeros, 
+			                        kappamax, FLINT_MIN(kappamax + 1 + shift, n),  tmp, rtmp, prec);
 
       if (babai_fail == 1)
          return 1;
