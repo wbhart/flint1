@@ -1150,6 +1150,55 @@ int test_F_mpz_mod_poly_divrem_basecase()
    return result;
 }
 
+int test_F_mpz_mod_poly_divrem_divconquer()
+{
+   F_mpz_mod_poly_t F_poly1, F_poly2, F_poly3, Q, R;
+   int result = 1;
+   ulong bits, length1, length2;
+   F_mpz_t P;
+   
+   F_mpz_init(P);
+     
+   // test exact division
+   for (ulong count1 = 0; (count1 < 500*ITER) && (result == 1) ; count1++)
+   {
+		bits = z_randint(200) + 2;
+      length1 = z_randint(500);
+		length2 = z_randint(500) + 1;
+     
+      F_mpz_random_prime_modulus(P, bits);
+      F_mpz_mod_poly_init(F_poly1, P);
+      F_mpz_mod_poly_init(F_poly2, P);
+      F_mpz_mod_poly_init(F_poly3, P);
+      F_mpz_mod_poly_init(Q, P);
+      F_mpz_mod_poly_init(R, P);
+
+      F_mpz_mod_randpoly(F_poly1, length1, bits);
+      do {F_mpz_mod_randpoly(F_poly2, length2, bits);} while (F_poly2->length == 0);
+      
+		F_mpz_mod_poly_mul(F_poly3, F_poly1, F_poly2);
+		F_mpz_mod_poly_divrem_divconquer(Q, R, F_poly3, F_poly2);
+      
+      result = F_mpz_mod_poly_equal(Q, F_poly1); 
+		if (!result) 
+		{
+			printf("Error: length1 = %ld, bits = %ld, length2 = %ld, bits\n", F_poly1->length, bits, F_poly2->length, bits);
+         F_mpz_mod_poly_print(Q); printf("\n");
+         F_mpz_mod_poly_print(F_poly1); printf("\n");
+		}
+          
+      F_mpz_mod_poly_clear(F_poly1);
+		F_mpz_mod_poly_clear(F_poly2);
+		F_mpz_mod_poly_clear(F_poly3);
+		F_mpz_mod_poly_clear(Q);
+		F_mpz_mod_poly_clear(R);
+   }
+      
+   F_mpz_clear(P);
+   
+   return result;
+}
+
 void F_mpz_mod_poly_test_all()
 {
    int success, all_success = 1;
@@ -1167,7 +1216,8 @@ void F_mpz_mod_poly_test_all()
    RUN_TEST(F_mpz_mod_poly_mul); 
    RUN_TEST(F_mpz_mod_poly_mul_trunc_left); 
    RUN_TEST(F_mpz_mod_poly_divrem_basecase); 
-
+   RUN_TEST(F_mpz_mod_poly_divrem_divconquer); 
+   
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");
 }

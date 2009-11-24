@@ -613,7 +613,7 @@ void F_mpz_pow_ui(F_mpz_t f, const F_mpz_t g, const ulong exp);
    \brief  Multiply g and h modulo p. Assumes f and p are not aliased.
 */
 static inline
-void F_mpz_mulmod2(F_mpz_t f, F_mpz_t g, F_mpz_t h, F_mpz_t p)
+void F_mpz_mulmod2(F_mpz_t f, const F_mpz_t g, const F_mpz_t h, const F_mpz_t p)
 {
    F_mpz_mul2(f, g, h);
    F_mpz_mod(f, f, p);
