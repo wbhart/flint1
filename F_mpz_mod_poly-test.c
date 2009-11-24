@@ -36,7 +36,6 @@ Copyright (C) 2009, William Hart
 #include "test-support.h"
 
 #define VARY_BITS 1 // random coefficients have random number of bits up to the limit given
-#define SIGNS 1 // random coefficients will be randomly signed
 #define SPARSE 1 // polynomials are spares (triggers more corner cases)
 #define ITER 1 // if you want all tests to run longer, increase this
 
@@ -47,41 +46,6 @@ Copyright (C) 2009, William Hart
 
 // generate a random mpz_poly_t with up to the given length and number of bits per coefficient
 void mpz_randpoly(mpz_poly_t pol, long length, ulong maxbits)
-{
-   ulong bits;
-   mpz_t temp;
-   mpz_init(temp);
-   
-   mpz_poly_ensure_alloc(pol, length);
-	mpz_poly_zero(pol);
-   
-   for (long i = 0; i < length; i++)
-   {
-#if VARY_BITS
-       bits = z_randint(maxbits+1);
-#else
-       bits = maxbits;
-#endif
-       if (bits == 0) mpz_set_ui(temp,0);
-       else 
-       {
-#if SPARSE
-          if (z_randint(10) == 1) mpz_rrandomb(temp, randstate, bits);
-          else mpz_set_ui(temp, 0);
-#else
-          mpz_rrandomb(temp, randstate, bits);
-#endif
-#if SIGNS
-          if (z_randint(2)) mpz_neg(temp,temp);
-#endif
-       }
-       mpz_poly_set_coeff(pol, i, temp);
-   }
-   mpz_clear(temp);
-} 
-
-// generate a random mpz_poly_t with up to the given length and number of bits per coefficient
-void mpz_randpoly_unsigned(mpz_poly_t pol, long length, ulong maxbits)
 {
    ulong bits;
    mpz_t temp;
@@ -133,9 +97,6 @@ void mpz_randpoly_dense(mpz_poly_t pol, long length, ulong maxbits)
        else 
        {
           mpz_rrandomb(temp, randstate, bits);
-#if SIGNS
-          if (z_randint(2)) mpz_neg(temp,temp);
-#endif
        }
        mpz_poly_set_coeff(pol, i, temp);
    }
@@ -150,6 +111,15 @@ void F_mpz_mod_randpoly(F_mpz_mod_poly_t poly, ulong length, ulong bits)
 	mpz_poly_init(m_poly);
 	mpz_randpoly(m_poly, length, bits);
 	mpz_poly_to_F_mpz_mod_poly(poly, m_poly);
+	mpz_poly_clear(m_poly);
+}
+
+void F_mpz_randpoly(F_mpz_poly_t poly, ulong length, ulong bits)
+{
+	mpz_poly_t m_poly;
+	mpz_poly_init(m_poly);
+	mpz_randpoly(m_poly, length, bits);
+	mpz_poly_to_F_mpz_poly(poly, m_poly);
 	mpz_poly_clear(m_poly);
 }
 
@@ -192,7 +162,14 @@ void mpz_poly_reduce(mpz_poly_t m_poly, F_mpz_t P)
    mpz_clear(mP);
 }
 
-int test_F_mpz_mod_poly_convert()
+void F_mpz_poly_reduce(F_mpz_poly_t m_poly, F_mpz_t P)
+{
+   for (ulong i = 0; i < m_poly->length; i++)
+      F_mpz_mod(m_poly->coeffs + i, m_poly->coeffs + i, P);
+   _F_mpz_poly_normalise(m_poly);
+}
+
+int test_F_mpz_mod_poly_to_mpz_poly()
 {
    mpz_poly_t m_poly1, m_poly2;
    F_mpz_mod_poly_t F_poly;
@@ -233,6 +210,51 @@ int test_F_mpz_mod_poly_convert()
    
    mpz_poly_clear(m_poly1);
    mpz_poly_clear(m_poly2);
+   
+   return result;
+}
+
+int test_F_mpz_mod_poly_to_F_mpz_poly()
+{
+   F_mpz_poly_t m_poly1, m_poly2;
+   F_mpz_mod_poly_t F_poly;
+   F_mpz_t P;
+   int result = 1;
+   ulong bits, length;
+   
+   F_mpz_poly_init(m_poly1); 
+   F_mpz_poly_init(m_poly2); 
+   
+   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1) ; count1++)
+   {
+      F_mpz_init(P);
+
+      bits = z_randint(200) + 1;
+      length = z_randint(100);
+      F_mpz_randpoly(m_poly1, length, bits);
+      
+      F_mpz_random(P, bits);
+      F_mpz_add_ui(P, P, 1);
+      F_mpz_mod_poly_init(F_poly, P);
+      
+      F_mpz_poly_to_F_mpz_mod_poly(F_poly, m_poly1);
+      F_mpz_mod_poly_to_F_mpz_poly(m_poly2, F_poly);
+      F_mpz_poly_reduce(m_poly1, P);
+          
+      result = F_mpz_poly_equal(m_poly1, m_poly2); 
+		if (!result) 
+		{
+			printf("Error: length = %ld, bits = %ld, length1 = %ld, length2 = %ld\n", length, bits, m_poly1->length, m_poly2->length);
+         F_mpz_poly_print_pretty(m_poly1, "x"); printf("\n");
+         F_mpz_poly_print_pretty(m_poly2, "x"); printf("\n");
+		}
+          
+      F_mpz_mod_poly_clear(F_poly);
+      F_mpz_clear(P);
+   }
+   
+   F_mpz_poly_clear(m_poly1);
+   F_mpz_poly_clear(m_poly2);
    
    return result;
 }
@@ -1136,7 +1158,8 @@ void F_mpz_mod_poly_test_all()
 #if TESTFILE
 #endif
 	
-   RUN_TEST(F_mpz_mod_poly_convert); 
+   RUN_TEST(F_mpz_mod_poly_to_mpz_poly); 
+   RUN_TEST(F_mpz_mod_poly_to_F_mpz_poly); 
    RUN_TEST(F_mpz_mod_poly_setequal); 
    RUN_TEST(F_mpz_mod_poly_add); 
    RUN_TEST(F_mpz_mod_poly_sub); 
