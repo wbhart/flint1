@@ -64,7 +64,7 @@ double halfplus, onedothalfplus, ctt;
 #define ETA 0.51
 #endif
 #ifndef DELTA
-#define DELTA 0.99
+#define DELTA 0.85
 #endif
 
 void Babai_heuristic(int kappa, F_mpz_mat_t B, mpfr_t **mu, mpfr_t **r, mpfr_t *s, 
