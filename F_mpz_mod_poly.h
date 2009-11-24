@@ -164,6 +164,19 @@ void _F_mpz_mod_poly_attach_F_mpz_poly(F_mpz_mod_poly_t out, const F_mpz_poly_t 
 }
 
 /* 
+   Attach poly1 to poly2.
+   Assumes the polynomial poly1 and its modulus P are not modified while attached.
+*/
+static inline
+void _F_mpz_mod_poly_attach(F_mpz_mod_poly_t poly1, const F_mpz_mod_poly_t poly2)
+{
+	poly1->coeffs = poly2->coeffs;
+	poly1->length = poly2->length;
+   
+   *(poly1->P) = *(poly2->P);
+}
+
+/* 
    Attach poly1 to poly2 as though poly2 had been shifted left by n first.
    Assumes the polynomial poly1 and its modulus P are not modified while attached.
 */
@@ -302,6 +315,10 @@ void F_mpz_mod_poly_mul_trunc_left(F_mpz_mod_poly_t res, const F_mpz_mod_poly_t 
 ****************************************************************************/
 
 void F_mpz_mod_poly_divrem_basecase(F_mpz_mod_poly_t Q, F_mpz_mod_poly_t R, const F_mpz_mod_poly_t A, const F_mpz_mod_poly_t B);
+
+void F_mpz_mod_poly_divrem_basecase_low(F_mpz_mod_poly_t Q, F_mpz_mod_poly_t R, const F_mpz_mod_poly_t A, const F_mpz_mod_poly_t B);
+
+void F_mpz_mod_poly_div_divconquer_recursive_low(F_mpz_mod_poly_t Q, F_mpz_mod_poly_t BQ, const F_mpz_mod_poly_t A, const F_mpz_mod_poly_t B);
 
 void F_mpz_mod_poly_div_divconquer_recursive(F_mpz_mod_poly_t Q, F_mpz_mod_poly_t BQ, const F_mpz_mod_poly_t A, const F_mpz_mod_poly_t B);
 
