@@ -255,6 +255,14 @@ void _F_mpz_mod_poly_mul_trunc_left(F_mpz_mod_poly_t res, const F_mpz_mod_poly_t
 
 void F_mpz_mod_poly_mul_trunc_left(F_mpz_mod_poly_t res, const F_mpz_mod_poly_t poly1, const F_mpz_mod_poly_t poly2, const ulong trunc);
 
+/****************************************************************************
+
+   Division
+
+****************************************************************************/
+
+void F_mpz_mod_poly_divrem_basecase(F_mpz_mod_poly_t Q, F_mpz_mod_poly_t R, F_mpz_mod_poly_t A, F_mpz_mod_poly_t B);
+
 #ifdef __cplusplus
  }
 #endif

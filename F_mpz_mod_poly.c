@@ -399,3 +399,78 @@ void F_mpz_mod_poly_mul_trunc_left(F_mpz_mod_poly_t res, const F_mpz_mod_poly_t 
 	}		
 }
 
+/****************************************************************************
+
+   Division
+
+****************************************************************************/
+
+void F_mpz_mod_poly_divrem_basecase(F_mpz_mod_poly_t Q, F_mpz_mod_poly_t R, F_mpz_mod_poly_t A, F_mpz_mod_poly_t B)
+{
+   if (B->length == 0)
+   {
+      printf("Error: Divide by zero\n");
+      abort();      
+   }
+   
+   if (A->length < B->length)
+   {
+      F_mpz_mod_poly_set(R, A);
+      F_mpz_mod_poly_zero(Q);
+      
+      return;
+   }
+
+   F_mpz_t lead_inv;
+   F_mpz_init(lead_inv);
+   F_mpz_invert(lead_inv, B->coeffs + B->length - 1, B->P);
+   
+   F_mpz * coeff_Q;
+   
+   F_mpz_mod_poly_t qB;
+   F_mpz_mod_poly_init2(qB, B->P, B->length);
+   
+   F_mpz_mod_poly_t Bm1;
+   _F_mpz_mod_poly_attach_truncate(Bm1, B, B->length - 1);
+   
+   long coeff = A->length - 1;
+   
+   F_mpz_mod_poly_set(R, A);
+   
+   if (A->length >= B->length)
+   {
+      F_mpz_mod_poly_fit_length(Q, A->length - B->length + 1);
+      _F_mpz_mod_poly_set_length(Q, A->length - B->length + 1);
+   } else F_mpz_mod_poly_zero(Q); 
+
+   coeff_Q = Q->coeffs - B->length + 1;
+   
+   while (coeff >= (long) B->length - 1)
+   {
+      while ((coeff >= (long) B->length - 1) && (F_mpz_is_zero(R->coeffs + coeff)))
+      {
+         F_mpz_zero(coeff_Q + coeff);
+         coeff--;
+      }
+      
+      if (coeff >= (long) B->length - 1)
+      {
+         F_mpz_mulmod2(coeff_Q + coeff, R->coeffs + coeff, lead_inv, B->P);
+         
+         F_mpz_mod_poly_scalar_mul(qB, Bm1, coeff_Q + coeff);
+         
+         F_mpz_mod_poly_t R_sub;
+         F_mpz_set(R_sub->P, B->P);
+         R_sub->coeffs = R->coeffs + coeff - B->length + 1;
+         R_sub->length = B->length - 1;
+         _F_mpz_mod_poly_sub(R_sub, R_sub, qB);
+         
+         coeff--;
+      }
+   }
+   
+   _F_mpz_mod_poly_set_length(R, B->length - 1);
+   _F_mpz_mod_poly_normalise(R);
+   F_mpz_mod_poly_clear(qB);
+   F_mpz_clear(lead_inv);
+}
