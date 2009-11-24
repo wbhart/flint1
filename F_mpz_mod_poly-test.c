@@ -36,7 +36,6 @@ Copyright (C) 2009, William Hart
 #include "test-support.h"
 
 #define VARY_BITS 1 // random coefficients have random number of bits up to the limit given
-#define SIGNS 1 // random coefficients will be randomly signed
 #define SPARSE 1 // polynomials are spares (triggers more corner cases)
 #define ITER 1 // if you want all tests to run longer, increase this
 
@@ -47,41 +46,6 @@ Copyright (C) 2009, William Hart
 
 // generate a random mpz_poly_t with up to the given length and number of bits per coefficient
 void mpz_randpoly(mpz_poly_t pol, long length, ulong maxbits)
-{
-   ulong bits;
-   mpz_t temp;
-   mpz_init(temp);
-   
-   mpz_poly_ensure_alloc(pol, length);
-	mpz_poly_zero(pol);
-   
-   for (long i = 0; i < length; i++)
-   {
-#if VARY_BITS
-       bits = z_randint(maxbits+1);
-#else
-       bits = maxbits;
-#endif
-       if (bits == 0) mpz_set_ui(temp,0);
-       else 
-       {
-#if SPARSE
-          if (z_randint(10) == 1) mpz_rrandomb(temp, randstate, bits);
-          else mpz_set_ui(temp, 0);
-#else
-          mpz_rrandomb(temp, randstate, bits);
-#endif
-#if SIGNS
-          if (z_randint(2)) mpz_neg(temp,temp);
-#endif
-       }
-       mpz_poly_set_coeff(pol, i, temp);
-   }
-   mpz_clear(temp);
-} 
-
-// generate a random mpz_poly_t with up to the given length and number of bits per coefficient
-void mpz_randpoly_unsigned(mpz_poly_t pol, long length, ulong maxbits)
 {
    ulong bits;
    mpz_t temp;
@@ -133,9 +97,6 @@ void mpz_randpoly_dense(mpz_poly_t pol, long length, ulong maxbits)
        else 
        {
           mpz_rrandomb(temp, randstate, bits);
-#if SIGNS
-          if (z_randint(2)) mpz_neg(temp,temp);
-#endif
        }
        mpz_poly_set_coeff(pol, i, temp);
    }
