@@ -219,6 +219,19 @@ void F_mpz_mod_poly_swap(F_mpz_mod_poly_t poly1, F_mpz_mod_poly_t poly2);
 
 int F_mpz_mod_poly_equal(const F_mpz_mod_poly_t poly1, const F_mpz_mod_poly_t poly2);
 
+static inline
+void F_mpz_mod_poly_print(F_mpz_mod_poly_t poly)
+{
+   mpz_poly_t m_poly;
+   mpz_poly_init(m_poly);
+   F_mpz_poly_t pol;
+   _F_mpz_poly_attach_F_mpz_mod_poly(pol, poly);
+   F_mpz_poly_to_mpz_poly(m_poly, pol);
+   mpz_poly_print(m_poly);
+   printf(" : P = "); F_mpz_print(poly->P);
+   mpz_poly_clear(m_poly);
+}
+
 /****************************************************************************
 
    Add/sub

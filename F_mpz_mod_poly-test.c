@@ -156,7 +156,27 @@ void F_mpz_mod_randpoly(F_mpz_mod_poly_t poly, ulong length, ulong bits)
 void F_mpz_random_modulus(F_mpz_t P, ulong bits)
 {
    F_mpz_random(P, bits);
+
    if (F_mpz_is_zero(P)) F_mpz_add_ui(P, P, 1);
+}
+
+void F_mpz_random_prime_modulus(F_mpz_t P, ulong bits)
+{
+   do
+   {
+      F_mpz_random(P, bits);
+      if (COEFF_IS_MPZ(*P))
+      {
+         __mpz_struct * mpz_ptr = F_mpz_ptr_mpz(*P);
+         mpz_nextprime(mpz_ptr, mpz_ptr);
+         if (mpz_sizeinbase(mpz_ptr, 2) > bits) *P = 0L;
+      } else
+      {
+         *P = z_nextprime(*P, 0);
+         if ((FLINT_BIT_COUNT(*P) > bits) || (FLINT_BIT_COUNT(*P) > FLINT_BITS - 2)) 
+            *P = 0L;
+      }
+   } while (*P == 0L);
 }
 
 void mpz_poly_reduce(mpz_poly_t m_poly, F_mpz_t P)
@@ -1059,6 +1079,55 @@ int test_F_mpz_mod_poly_sub()
    return result;
 }
 
+int test_F_mpz_mod_poly_divrem_basecase()
+{
+   F_mpz_mod_poly_t F_poly1, F_poly2, F_poly3, Q, R;
+   int result = 1;
+   ulong bits, length1, length2;
+   F_mpz_t P;
+   
+   F_mpz_init(P);
+     
+   // test exact division
+   for (ulong count1 = 0; (count1 < 500*ITER) && (result == 1) ; count1++)
+   {
+		bits = z_randint(200) + 2;
+      length1 = z_randint(500);
+		length2 = z_randint(500) + 1;
+     
+      F_mpz_random_prime_modulus(P, bits);
+      F_mpz_mod_poly_init(F_poly1, P);
+      F_mpz_mod_poly_init(F_poly2, P);
+      F_mpz_mod_poly_init(F_poly3, P);
+      F_mpz_mod_poly_init(Q, P);
+      F_mpz_mod_poly_init(R, P);
+
+      F_mpz_mod_randpoly(F_poly1, length1, bits);
+      do {F_mpz_mod_randpoly(F_poly2, length2, bits);} while (F_poly2->length == 0);
+      
+		F_mpz_mod_poly_mul(F_poly3, F_poly1, F_poly2);
+		F_mpz_mod_poly_divrem_basecase(Q, R, F_poly3, F_poly2);
+
+      result = F_mpz_mod_poly_equal(Q, F_poly1); 
+		if (!result) 
+		{
+			printf("Error: length1 = %ld, bits = %ld, length2 = %ld, bits\n", F_poly1->length, bits, F_poly2->length, bits);
+         F_mpz_mod_poly_print(Q); printf("\n");
+         F_mpz_mod_poly_print(F_poly1); printf("\n");
+		}
+          
+      F_mpz_mod_poly_clear(F_poly1);
+		F_mpz_mod_poly_clear(F_poly2);
+		F_mpz_mod_poly_clear(F_poly3);
+		F_mpz_mod_poly_clear(Q);
+		F_mpz_mod_poly_clear(R);
+   }
+      
+   F_mpz_clear(P);
+   
+   return result;
+}
+
 void F_mpz_mod_poly_test_all()
 {
    int success, all_success = 1;
@@ -1074,6 +1143,7 @@ void F_mpz_mod_poly_test_all()
    RUN_TEST(F_mpz_mod_poly_scalar_mul); 
    RUN_TEST(F_mpz_mod_poly_mul); 
    RUN_TEST(F_mpz_mod_poly_mul_trunc_left); 
+   RUN_TEST(F_mpz_mod_poly_divrem_basecase); 
 
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");
