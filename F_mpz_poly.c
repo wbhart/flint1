@@ -4413,7 +4413,6 @@ void F_mpz_poly_div_divconquer_recursive(F_mpz_poly_t Q, F_mpz_poly_t BQ, const 
    // A->length is now >= B->length
    
    ulong crossover = 16;
-   ulong crossover2 = 128;
    
    if (A->length - B->length + 1 <= crossover) 
    {

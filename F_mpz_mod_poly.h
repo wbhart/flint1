@@ -164,6 +164,21 @@ void _F_mpz_mod_poly_attach_F_mpz_poly(F_mpz_mod_poly_t out, const F_mpz_poly_t 
 }
 
 /* 
+   Attach poly1 to poly2 as though poly2 had been shifted left by n first.
+   Assumes the polynomial poly1 and its modulus P are not modified while attached.
+*/
+static inline
+void _F_mpz_mod_poly_attach_shift(F_mpz_mod_poly_t poly1, const F_mpz_mod_poly_t poly2, const ulong n)
+{
+	poly1->coeffs = poly2->coeffs + n; // set coeffs to start at coeff n
+
+	if (poly2->length >= n) poly1->length = poly2->length - n; // check n is not too large
+   else poly1->length = 0;
+
+   *(poly1->P) = *(poly2->P);
+}
+
+/* 
    Attach poly1 to poly2 as though poly2 had been truncated and normalised first.
    Assumes the polynomial poly1 and its modulus P are not modified while attached.
 */
@@ -236,6 +251,14 @@ void F_mpz_mod_poly_print(F_mpz_mod_poly_t poly)
    mpz_poly_clear(m_poly);
 }
 
+/*===============================================================================
+
+	Shifting
+
+================================================================================*/
+
+void F_mpz_mod_poly_left_shift(F_mpz_mod_poly_t res, const F_mpz_mod_poly_t poly, const ulong n);
+
 /****************************************************************************
 
    Add/sub
@@ -278,7 +301,11 @@ void F_mpz_mod_poly_mul_trunc_left(F_mpz_mod_poly_t res, const F_mpz_mod_poly_t 
 
 ****************************************************************************/
 
-void F_mpz_mod_poly_divrem_basecase(F_mpz_mod_poly_t Q, F_mpz_mod_poly_t R, F_mpz_mod_poly_t A, F_mpz_mod_poly_t B);
+void F_mpz_mod_poly_divrem_basecase(F_mpz_mod_poly_t Q, F_mpz_mod_poly_t R, const F_mpz_mod_poly_t A, const F_mpz_mod_poly_t B);
+
+void F_mpz_mod_poly_div_divconquer_recursive(F_mpz_mod_poly_t Q, F_mpz_mod_poly_t BQ, const F_mpz_mod_poly_t A, const F_mpz_mod_poly_t B);
+
+void F_mpz_mod_poly_divrem_divconquer(F_mpz_mod_poly_t Q, F_mpz_mod_poly_t R, const F_mpz_mod_poly_t A, const F_mpz_mod_poly_t B);
 
 #ifdef __cplusplus
  }

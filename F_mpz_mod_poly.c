@@ -252,6 +252,55 @@ int F_mpz_mod_poly_equal(const F_mpz_mod_poly_t poly1, const F_mpz_mod_poly_t po
 	return 1;
 }
 
+/*===============================================================================
+
+	Shifting
+
+================================================================================*/
+
+void F_mpz_mod_poly_left_shift(F_mpz_mod_poly_t res, const F_mpz_mod_poly_t poly, const ulong n)
+{
+   if (n == 0) // special case, no shift
+	{
+		if (res != poly) F_mpz_mod_poly_set(res, poly);
+		return;
+	}
+	
+	if (poly->length == 0) // nothing to shift
+	{
+		_F_mpz_mod_poly_set_length(res, 0);
+		return;
+	}
+	
+	F_mpz_mod_poly_fit_length(res, poly->length + n);
+	
+	// copy in reverse order to avoid writing over unshifted coeffs
+	for (long i = poly->length - 1; i >= 0; i--) 
+		F_mpz_set(res->coeffs + i + n, poly->coeffs + i);
+
+   // insert n zeroes
+	for (ulong i = 0; i < n; i++) F_mpz_zero(res->coeffs + i);
+   
+   _F_mpz_mod_poly_set_length(res, poly->length + n);
+}
+
+void F_mpz_mod_poly_right_shift(F_mpz_mod_poly_t res, const F_mpz_mod_poly_t poly, const ulong n)
+{
+   if (poly->length <= n) 
+   {
+      F_mpz_mod_poly_zero(res);
+      return;
+   }
+
+   F_mpz_mod_poly_fit_length(res, poly->length - n);
+	
+	// copy in forward order to avoid writing over unshifted coeffs
+	for (ulong i = 0; i < poly->length - n; i++) 
+		F_mpz_set(res->coeffs + i, poly->coeffs + i + n);
+	
+	_F_mpz_mod_poly_set_length(res, poly->length - n);
+}
+
 /****************************************************************************
 
    Add/sub
@@ -429,7 +478,7 @@ void F_mpz_mod_poly_mul_trunc_left(F_mpz_mod_poly_t res, const F_mpz_mod_poly_t 
 
 ****************************************************************************/
 
-void F_mpz_mod_poly_divrem_basecase(F_mpz_mod_poly_t Q, F_mpz_mod_poly_t R, F_mpz_mod_poly_t A, F_mpz_mod_poly_t B)
+void F_mpz_mod_poly_divrem_basecase(F_mpz_mod_poly_t Q, F_mpz_mod_poly_t R, const F_mpz_mod_poly_t A, const F_mpz_mod_poly_t B)
 {
    if (B->length == 0)
    {
@@ -484,10 +533,12 @@ void F_mpz_mod_poly_divrem_basecase(F_mpz_mod_poly_t Q, F_mpz_mod_poly_t R, F_mp
          F_mpz_mod_poly_scalar_mul(qB, Bm1, coeff_Q + coeff);
          
          F_mpz_mod_poly_t R_sub;
+         F_mpz_init(R_sub->P);
          F_mpz_set(R_sub->P, B->P);
          R_sub->coeffs = R->coeffs + coeff - B->length + 1;
          R_sub->length = B->length - 1;
          _F_mpz_mod_poly_sub(R_sub, R_sub, qB);
+         F_mpz_clear(R_sub->P);
          
          coeff--;
       }
@@ -497,4 +548,291 @@ void F_mpz_mod_poly_divrem_basecase(F_mpz_mod_poly_t Q, F_mpz_mod_poly_t R, F_mp
    _F_mpz_mod_poly_normalise(R);
    F_mpz_mod_poly_clear(qB);
    F_mpz_clear(lead_inv);
+}
+
+void F_mpz_mod_poly_div_divconquer_recursive(F_mpz_mod_poly_t Q, F_mpz_mod_poly_t BQ, const F_mpz_mod_poly_t A, const F_mpz_mod_poly_t B)
+{
+   if (A->length < B->length)
+   {
+      F_mpz_mod_poly_zero(Q);
+      F_mpz_mod_poly_zero(BQ);
+
+      return;
+   }
+   
+   // A->length is now >= B->length
+   
+   ulong crossover = 16;
+   
+   if (A->length - B->length + 1 <= crossover) 
+   {
+      /*
+         Use the classical algorithm to compute the
+         quotient and remainder, then use A - R to compute BQ
+      */
+      
+      F_mpz_mod_poly_t Rb;
+      F_mpz_mod_poly_init(Rb, B->P);
+      F_mpz_mod_poly_divrem_basecase(Q, Rb, A, B);
+      F_mpz_mod_poly_fit_length(BQ, A->length);
+      F_mpz_mod_poly_sub(BQ, A, Rb);
+      F_mpz_mod_poly_clear(Rb);
+      
+      return;
+   }
+   
+   F_mpz_mod_poly_t d1, d2, d3, d4, p1, q1, q2, dq1, dq2, d1q1, d2q1, d2q2, d1q2, t, temp;
+   
+   ulong n1 = (B->length + 1)/2;
+   ulong n2 = B->length - n1;
+   
+   /* We let B = d1*x^n2 + d2 */
+   
+   _F_mpz_mod_poly_attach_shift(d1, B, n2);
+   _F_mpz_mod_poly_attach_truncate(d2, B, n2);
+   _F_mpz_mod_poly_attach_shift(d3, B, n1);
+   _F_mpz_mod_poly_attach_truncate(d4, B, n1);
+   
+   if (A->length < 2*B->length - 1)
+   {
+      /* Convert unbalanced division into a 2*q - 1 by q division */
+      F_mpz_mod_poly_t t_A, t_B, t_B2;
+      
+      ulong q = A->length - B->length + 1;
+      ulong q2 = B->length - q;
+
+      _F_mpz_mod_poly_attach_shift(t_A, A, A->length - 2*q + 1);
+      _F_mpz_mod_poly_attach_shift(t_B, B, q2);
+      _F_mpz_mod_poly_attach_truncate(t_B2, B, q2);
+      
+      F_mpz_mod_poly_init(d1q1, B->P);
+      F_mpz_mod_poly_div_divconquer_recursive(Q, d1q1, t_A, t_B); 
+      
+      /*
+         Compute d2q1 = Q*t_B2
+         It is of length q2*q terms
+      */
+      
+      F_mpz_mod_poly_init(d2q1, B->P);
+      F_mpz_mod_poly_mul(d2q1, Q, t_B2);
+      
+      /*
+         Compute BQ = d1q1*x^n1 + d2q1
+         It has length at most n1+n2-1
+      */
+      
+      F_mpz_mod_poly_fit_length(BQ, FLINT_MAX(d1q1->length + B->length - q, d2q1->length));
+      F_mpz_mod_poly_left_shift(BQ, d1q1, B->length - q);
+      F_mpz_mod_poly_clear(d1q1);
+      _F_mpz_mod_poly_add(BQ, BQ, d2q1);
+      F_mpz_mod_poly_clear(d2q1);
+            
+      return;   
+   } 
+   
+   if (A->length > 2*B->length - 1)
+   {
+      // We shift A right until it is length 2*B->length -1
+      // We call this polynomial p1
+      
+      ulong shift = A->length - 2*B->length + 1;
+      _F_mpz_mod_poly_attach_shift(p1, A, shift);
+      
+      /* 
+         Set q1 to p1 div B 
+         This is a 2*B->length-1 by B->length division so 
+         q1 ends up being at most length B->length
+         d1q1 = d1*q1 is length at most 2*B->length-1
+      */
+      
+      F_mpz_mod_poly_init(d1q1, B->P);
+      F_mpz_mod_poly_init(q1, Q->P);
+      
+      F_mpz_mod_poly_div_divconquer_recursive(q1, d1q1, p1, B); 
+      
+      /* 
+         Compute dq1 = d1*q1*x^shift
+         dq1 is then of length at most A->length
+         dq1 is normalised since d1q1 was
+      */
+   
+      F_mpz_mod_poly_init(dq1, B->P);
+      
+      F_mpz_mod_poly_fit_length(dq1, d1q1->length + shift);
+      F_mpz_mod_poly_left_shift(dq1, d1q1, shift);
+      F_mpz_mod_poly_clear(d1q1);
+      
+      /*
+         Compute t = A - dq1 
+         The first B->length coefficients cancel
+         if the division is exact, leaving
+          A->length - B->length significant terms
+         otherwise we truncate at this length 
+      */
+   
+      F_mpz_mod_poly_init(t, A->P);
+      F_mpz_mod_poly_sub(t, A, dq1);
+      F_mpz_mod_poly_truncate(t, A->length - B->length);
+      
+      /*
+         Compute q2 = t div B
+         It is a smaller division than the original 
+         since t->length <= A->length-B->length
+      */
+   
+      F_mpz_mod_poly_init(q2, Q->P);
+      F_mpz_mod_poly_init(dq2, Q->P);
+      F_mpz_mod_poly_div_divconquer_recursive(q2, dq2, t, B); 
+      F_mpz_mod_poly_clear(t);  
+      
+      /*
+         Write out Q = q1*x^shift + q2
+         Q has length at most B->length+shift
+         Note q2 has length at most shift since 
+         at most it is an A->length-B->length 
+         by B->length division
+      */
+   
+      F_mpz_mod_poly_fit_length(Q, FLINT_MAX(q1->length + shift, q2->length));
+      
+      F_mpz_mod_poly_left_shift(Q, q1, shift);
+      F_mpz_mod_poly_clear(q1);
+      F_mpz_mod_poly_add(Q, Q, q2);
+      F_mpz_mod_poly_clear(q2);
+      
+      /*
+         Write out BQ = dq1 + dq2
+      */
+      
+      F_mpz_mod_poly_fit_length(BQ, FLINT_MAX(dq1->length, dq2->length));
+      
+      F_mpz_mod_poly_add(BQ, dq1, dq2);
+      F_mpz_mod_poly_clear(dq1);
+      F_mpz_mod_poly_clear(dq2);
+      
+      return;
+   } 
+   
+   // n2 + B->length - 1 < A->length <= n1 + n2 + B->length - 1
+    
+   /* 
+      We let A = a1*x^(n1+2*n2-1) + a2*x^(n1+n2-1) + a3 
+      where a1 is length at most n1 (and at least 1), 
+      a2 is length n2 and a3 is length n1+n2-1 
+      We set p1 = a1*x^(n1-1)+ other terms, so it has 
+      length at most 2*n1-1 
+   */
+      
+   _F_mpz_mod_poly_attach_shift(p1, A, 2*n2);
+      
+   /* 
+      Set q1 to p1 div d1 
+      This is at most a 2*n1-1 by n1 division so 
+      q1 ends up being at most length n1
+      d1q1 = d1*q1 is length at most 2*n1-1
+   */
+      
+   F_mpz_mod_poly_init(d1q1, B->P);
+   F_mpz_mod_poly_init(q1, B->P);
+   F_mpz_mod_poly_div_divconquer_recursive(q1, d1q1, p1, d1); 
+   
+   /* 
+      Compute d2q1 = d2*q1 
+      which ends up being at most length n1+n2-1
+   */  
+   
+   F_mpz_mod_poly_init(d2q1, B->P);
+   F_mpz_mod_poly_mul(d2q1, d2, q1);
+   
+   /* 
+      Compute dq1 = d1*q1*x^n2 + d2*q1
+      dq1 is then of length at most 2*n1+n2-1
+   */
+   
+   F_mpz_mod_poly_init2(dq1, B->P, FLINT_MAX(d1q1->length + n2, d2q1->length));
+   F_mpz_mod_poly_left_shift(dq1, d1q1, n2);
+   F_mpz_mod_poly_clear(d1q1);
+   _F_mpz_mod_poly_add(dq1, dq1, d2q1);
+   F_mpz_mod_poly_clear(d2q1);
+   
+   /*
+      Compute t = p1*x^(n1+n2-1) + p2*x^(n1-1) - dq1
+      which has length at most 2*n1+n2-1, but we are not interested 
+      in up to the first n1 coefficients, so it has 
+      effective length at most n1+n2-1
+   */
+   
+   F_mpz_mod_poly_init2(t, A->P, FLINT_MAX(A->length-n2, dq1->length));
+   F_mpz_mod_poly_right_shift(t, A, n2);
+   _F_mpz_mod_poly_sub(t, t, dq1);
+   F_mpz_mod_poly_truncate(t, B->length - 1);
+   
+   /*
+      Compute q2 = t div d1
+      It is at most an n1+n2-1 by n1 division, so
+      the length of q2 will be at most n2
+      Also compute d1q2 of length at most n1+n2-1
+   */
+   
+   F_mpz_mod_poly_init(d1q2, B->P);
+   F_mpz_mod_poly_init(q2, Q->P);
+   F_mpz_mod_poly_div_divconquer_recursive(q2, d1q2, t, d1); 
+   F_mpz_mod_poly_clear(t);
+      
+   /*
+      Compute d2q2 = d2*q2 which is of length 
+      at most n1+n2-1
+   */
+   
+   F_mpz_mod_poly_init(d2q2, A->P);
+   F_mpz_mod_poly_mul(d2q2, d2, q2);
+   
+   /*
+      Compute dq2 = d1*q2*x^n2 + d2q2
+      which is of length at most n1+2*n2-1
+   */
+   
+   F_mpz_mod_poly_init2(dq2, A->P, FLINT_MAX(d1q2->length+n2, d2q2->length));
+   F_mpz_mod_poly_left_shift(dq2, d1q2, n2);
+   F_mpz_mod_poly_clear(d1q2);
+   _F_mpz_mod_poly_add(dq2, dq2, d2q2);
+   F_mpz_mod_poly_clear(d2q2);
+   
+   /*
+      Write out Q = q1*x^n2 + q2
+      Q has length at most n1+n2
+   */
+   
+   F_mpz_mod_poly_fit_length(Q, FLINT_MAX(q1->length+n2, q2->length));
+   F_mpz_mod_poly_left_shift(Q, q1, n2);
+   F_mpz_mod_poly_clear(q1);
+   _F_mpz_mod_poly_add(Q, Q, q2);
+   F_mpz_mod_poly_clear(q2);
+   
+   /*
+      Write out BQ = dq1*x^n2 + dq2
+      BQ has length at most 2*(n1+n2)-1
+   */
+   
+   F_mpz_mod_poly_fit_length(BQ, FLINT_MAX(n2 + dq1->length, dq2->length));
+   F_mpz_mod_poly_left_shift(BQ, dq1, n2);
+   _F_mpz_mod_poly_add(BQ, BQ, dq2);
+   
+   F_mpz_mod_poly_clear(dq2);
+   F_mpz_mod_poly_clear(dq1);
+}
+
+void F_mpz_mod_poly_divrem_divconquer(F_mpz_mod_poly_t Q, F_mpz_mod_poly_t R, const F_mpz_mod_poly_t A, const F_mpz_mod_poly_t B)
+{
+   F_mpz_mod_poly_t QB;
+   
+   F_mpz_mod_poly_init(QB, Q->P);
+   
+   F_mpz_mod_poly_div_divconquer_recursive(Q, QB, A, B);
+   
+   F_mpz_mod_poly_fit_length(R, A->length);
+   _F_mpz_mod_poly_sub(R, A, QB);
+   _F_mpz_mod_poly_normalise(R);
+   
+   F_mpz_mod_poly_clear(QB);
 }
