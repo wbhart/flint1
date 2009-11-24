@@ -6445,8 +6445,13 @@ void _Hensel_Lift(F_mpz_poly_t Gout, F_mpz_poly_t Hout, F_mpz_poly_t Aout, F_mpz
 
 //When I make a precomputing function use GG, HH instead
 
-   F_mpz_poly_mulmod_modp_naive(h1, c, a, h, p1);
-   F_mpz_poly_mulmod_modp_naive(g1, c, b, g, p1);
+   F_mpz_poly_t R;
+   F_mpz_poly_init(R);
+
+   F_mpz_poly_rem_modp_naive(R, c, h, p1);
+   F_mpz_poly_mulmod_modp_naive(h1, R, a, h, p1);
+   F_mpz_poly_rem_modp_naive(R, c, g, p1);
+   F_mpz_poly_mulmod_modp_naive(g1, R, b, g, p1);
 //   F_mpz_poly_smod(g1, g1, p1);
 //   F_mpz_poly_smod(h1, h1, p1);
 
@@ -6477,8 +6482,11 @@ void _Hensel_Lift(F_mpz_poly_t Gout, F_mpz_poly_t Hout, F_mpz_poly_t Aout, F_mpz
    F_mpz_poly_scalar_div_exact(t1, t1, p);
 //Make a check that t1 is divisible by p
 
-   F_mpz_poly_mulmod_modp_naive(a1, t1, a, h, p1);
-   F_mpz_poly_mulmod_modp_naive(b1, t1, b, g, p1);
+   F_mpz_poly_rem_modp_naive(R, t1, h, p1);
+   F_mpz_poly_mulmod_modp_naive(a1, R, a, h, p1);
+   F_mpz_poly_rem_modp_naive(R, t1, g, p1);
+   F_mpz_poly_mulmod_modp_naive(b1, R, b, g, p1);
+   F_mpz_poly_clear(R);
 //   F_mpz_poly_smod(b1, b1, p1);
 //   F_mpz_poly_smod(a1, a1, p1);
 

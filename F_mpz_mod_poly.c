@@ -135,7 +135,11 @@ void mpz_poly_to_F_mpz_mod_poly(F_mpz_mod_poly_t F_poly, const mpz_poly_t m_poly
 	_F_mpz_mod_poly_set_length(F_poly, m_poly->length);
    
 	for (ulong i = 0; i < m_poly->length; i++)
-		F_mpz_set_mpz(F_poly->coeffs + i, m_poly->coeffs[i]);
+   {
+      F_mpz_set_mpz(F_poly->coeffs + i, m_poly->coeffs[i]);
+      F_mpz_mod(F_poly->coeffs + i, F_poly->coeffs + i, F_poly->P);
+   }
+   _F_mpz_mod_poly_normalise(F_poly);
 }
 
 void F_mpz_mod_poly_to_mpz_poly(mpz_poly_t m_poly, const F_mpz_mod_poly_t F_poly)
@@ -171,6 +175,21 @@ void zmod_poly_to_F_mpz_mod_poly(F_mpz_mod_poly_t fpol, const zmod_poly_t zpol)
 
 ****************************************************************************/
 
+void F_mpz_mod_poly_set(F_mpz_mod_poly_t poly1, const F_mpz_mod_poly_t poly2)
+{
+	if (poly1 != poly2) // aliasing is trivial
+	{
+		ulong length = poly2->length;
+	
+	   F_mpz_mod_poly_fit_length(poly1, poly2->length);
+
+		for (ulong i = 0; i < poly2->length; i++)
+			F_mpz_set(poly1->coeffs + i, poly2->coeffs + i);
+		
+		_F_mpz_mod_poly_set_length(poly1, poly2->length);
+	}
+}
+
 void F_mpz_mod_poly_swap(F_mpz_mod_poly_t poly1, F_mpz_mod_poly_t poly2)
 {
 	if (poly1 == poly2) return;
@@ -188,6 +207,109 @@ void F_mpz_mod_poly_swap(F_mpz_mod_poly_t poly1, F_mpz_mod_poly_t poly2)
 	poly2->coeffs = temp_c;
 
    return;
+}
+
+/****************************************************************************
+
+   Comparison
+
+****************************************************************************/
+
+int F_mpz_mod_poly_equal(const F_mpz_mod_poly_t poly1, const F_mpz_mod_poly_t poly2)
+{
+   if (poly1 == poly2) return 1; // same polynomial
+
+	if (poly1->length != poly2->length) return 0; // check if lengths the same
+
+	for (ulong i = 0; i < poly1->length; i++) // check if coefficients the same
+		if (!F_mpz_equal(poly1->coeffs + i, poly2->coeffs + i)) 
+		   return 0;
+
+	return 1;
+}
+
+/****************************************************************************
+
+   Add/sub
+
+****************************************************************************/
+
+void _F_mpz_mod_poly_add(F_mpz_mod_poly_t res, const F_mpz_mod_poly_t pol1, const F_mpz_mod_poly_t pol2)
+{
+   F_mpz_poly_t p1, p2, r;
+
+   _F_mpz_poly_attach_F_mpz_mod_poly(p1, pol1);
+   _F_mpz_poly_attach_F_mpz_mod_poly(p2, pol2);
+   _F_mpz_poly_attach_F_mpz_mod_poly(r, res);
+
+   _F_mpz_poly_add(r, p1, p2);
+   for (ulong i = 0; i < r->length; i++)
+   {
+      if (F_mpz_cmpabs(r->coeffs + i, res->P) >= 0)
+         F_mpz_sub(r->coeffs + i, r->coeffs + i, res->P);
+   }
+   
+   _F_mpz_mod_poly_attach_F_mpz_poly(res, r);
+   _F_mpz_mod_poly_normalise(res);
+}
+
+void _F_mpz_mod_poly_sub(F_mpz_mod_poly_t res, const F_mpz_mod_poly_t pol1, const F_mpz_mod_poly_t pol2)
+{
+   F_mpz_poly_t p1, p2, r;
+
+   _F_mpz_poly_attach_F_mpz_mod_poly(p1, pol1);
+   _F_mpz_poly_attach_F_mpz_mod_poly(p2, pol2);
+   _F_mpz_poly_attach_F_mpz_mod_poly(r, res);
+
+   _F_mpz_poly_sub(r, p1, p2);
+   for (ulong i = 0; i < r->length; i++)
+   {
+      if (F_mpz_sgn(r->coeffs + i) < 0)
+         F_mpz_add(r->coeffs + i, r->coeffs + i, res->P);
+   }
+   
+   _F_mpz_mod_poly_attach_F_mpz_poly(res, r);
+   _F_mpz_mod_poly_normalise(res);
+}
+
+void F_mpz_mod_poly_add(F_mpz_mod_poly_t res, const F_mpz_mod_poly_t poly1, const F_mpz_mod_poly_t poly2)
+{
+   ulong longer = FLINT_MAX(poly1->length, poly2->length);
+
+	F_mpz_mod_poly_fit_length(res, longer);
+	
+	_F_mpz_mod_poly_add(res, poly1, poly2);
+}
+
+void F_mpz_mod_poly_sub(F_mpz_mod_poly_t res, const F_mpz_mod_poly_t poly1, const F_mpz_mod_poly_t poly2)
+{
+   ulong longer = FLINT_MAX(poly1->length, poly2->length);
+
+	F_mpz_mod_poly_fit_length(res, longer);
+	
+	_F_mpz_mod_poly_sub(res, poly1, poly2);
+}
+
+/****************************************************************************
+
+   Scalar multiplication
+
+****************************************************************************/
+
+void F_mpz_mod_poly_scalar_mul(F_mpz_mod_poly_t res, const F_mpz_mod_poly_t pol1, const F_mpz_t x)
+{
+   F_mpz_poly_t p1, r;
+
+   F_mpz_mod_poly_fit_length(res, pol1->length);
+   
+   _F_mpz_poly_attach_F_mpz_mod_poly(p1, pol1);
+   _F_mpz_poly_attach_F_mpz_mod_poly(r, res);
+
+   F_mpz_poly_scalar_mul(r, p1, x);
+   _F_mpz_poly_reduce_coeffs(r, res->P);
+   
+   _F_mpz_mod_poly_attach_F_mpz_poly(res, r);
+   _F_mpz_mod_poly_normalise(res);
 }
 
 /****************************************************************************
@@ -235,3 +357,120 @@ void F_mpz_mod_poly_mul(F_mpz_mod_poly_t res, const F_mpz_mod_poly_t pol1, const
 	}		
 }
 
+void _F_mpz_mod_poly_mul_trunc_left(F_mpz_mod_poly_t res, const F_mpz_mod_poly_t pol1, const F_mpz_mod_poly_t pol2, ulong trunc)
+{
+   F_mpz_poly_t p1, p2, r;
+
+   if (trunc + 1 > pol1->length + pol2->length) trunc = pol1->length + pol2->length - 1;
+   if (!pol1->length && !pol2->length) trunc = 0;
+
+   _F_mpz_poly_attach_F_mpz_mod_poly(p1, pol1);
+   _F_mpz_poly_attach_F_mpz_mod_poly(p2, pol2);
+   _F_mpz_poly_attach_F_mpz_mod_poly(r, res);
+
+   _F_mpz_poly_mul_trunc_left(r, p1, p2, trunc);
+   _F_mpz_poly_reduce_coeffs(r, res->P);
+
+   _F_mpz_mod_poly_attach_F_mpz_poly(res, r);
+   _F_mpz_mod_poly_normalise(res);
+}
+
+void F_mpz_mod_poly_mul_trunc_left(F_mpz_mod_poly_t res, const F_mpz_mod_poly_t poly1, const F_mpz_mod_poly_t poly2, ulong trunc)
+{
+   if ((poly1->length == 0) || (poly2->length == 0) || (poly1->length + poly2->length <= trunc + 1)) // special case if either poly is zero
+   {
+      F_mpz_mod_poly_zero(res);
+      return;
+   }
+
+	if ((poly1 == res) || (poly2 == res)) // aliased inputs
+	{
+		F_mpz_mod_poly_t output; // create temporary
+		F_mpz_mod_poly_init2(output, res->P, poly1->length + poly2->length - 1);
+		if (poly1->length >= poly2->length) _F_mpz_mod_poly_mul_trunc_left(output, poly1, poly2, trunc);
+		else _F_mpz_mod_poly_mul_trunc_left(output, poly2, poly1, trunc);
+		F_mpz_mod_poly_swap(output, res); // swap temporary with real output
+		F_mpz_mod_poly_clear(output);
+	} else // ordinary case
+	{
+		F_mpz_mod_poly_fit_length(res, poly1->length + poly2->length - 1);
+      if (poly1->length >= poly2->length) _F_mpz_mod_poly_mul_trunc_left(res, poly1, poly2, trunc);
+		else _F_mpz_mod_poly_mul_trunc_left(res, poly2, poly1, trunc);
+	}		
+}
+
+/****************************************************************************
+
+   Division
+
+****************************************************************************/
+
+void F_mpz_mod_poly_divrem_basecase(F_mpz_mod_poly_t Q, F_mpz_mod_poly_t R, F_mpz_mod_poly_t A, F_mpz_mod_poly_t B)
+{
+   if (B->length == 0)
+   {
+      printf("Error: Divide by zero\n");
+      abort();      
+   }
+   
+   if (A->length < B->length)
+   {
+      F_mpz_mod_poly_set(R, A);
+      F_mpz_mod_poly_zero(Q);
+      
+      return;
+   }
+
+   F_mpz_t lead_inv;
+   F_mpz_init(lead_inv);
+   F_mpz_invert(lead_inv, B->coeffs + B->length - 1, B->P);
+   
+   F_mpz * coeff_Q;
+   
+   F_mpz_mod_poly_t qB;
+   F_mpz_mod_poly_init2(qB, B->P, B->length);
+   
+   F_mpz_mod_poly_t Bm1;
+   _F_mpz_mod_poly_attach_truncate(Bm1, B, B->length - 1);
+   
+   long coeff = A->length - 1;
+   
+   F_mpz_mod_poly_set(R, A);
+   
+   if (A->length >= B->length)
+   {
+      F_mpz_mod_poly_fit_length(Q, A->length - B->length + 1);
+      _F_mpz_mod_poly_set_length(Q, A->length - B->length + 1);
+   } else F_mpz_mod_poly_zero(Q); 
+
+   coeff_Q = Q->coeffs - B->length + 1;
+   
+   while (coeff >= (long) B->length - 1)
+   {
+      while ((coeff >= (long) B->length - 1) && (F_mpz_is_zero(R->coeffs + coeff)))
+      {
+         F_mpz_zero(coeff_Q + coeff);
+         coeff--;
+      }
+      
+      if (coeff >= (long) B->length - 1)
+      {
+         F_mpz_mulmod2(coeff_Q + coeff, R->coeffs + coeff, lead_inv, B->P);
+         
+         F_mpz_mod_poly_scalar_mul(qB, Bm1, coeff_Q + coeff);
+         
+         F_mpz_mod_poly_t R_sub;
+         F_mpz_set(R_sub->P, B->P);
+         R_sub->coeffs = R->coeffs + coeff - B->length + 1;
+         R_sub->length = B->length - 1;
+         _F_mpz_mod_poly_sub(R_sub, R_sub, qB);
+         
+         coeff--;
+      }
+   }
+   
+   _F_mpz_mod_poly_set_length(R, B->length - 1);
+   _F_mpz_mod_poly_normalise(R);
+   F_mpz_mod_poly_clear(qB);
+   F_mpz_clear(lead_inv);
+}
