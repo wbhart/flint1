@@ -292,6 +292,28 @@ void F_mpz_mod_poly_sub(F_mpz_mod_poly_t res, const F_mpz_mod_poly_t poly1, cons
 
 /****************************************************************************
 
+   Scalar multiplication
+
+****************************************************************************/
+
+void F_mpz_mod_poly_scalar_mul(F_mpz_mod_poly_t res, const F_mpz_mod_poly_t pol1, const F_mpz_t x)
+{
+   F_mpz_poly_t p1, r;
+
+   F_mpz_mod_poly_fit_length(res, pol1->length);
+   
+   _F_mpz_poly_attach_F_mpz_mod_poly(p1, pol1);
+   _F_mpz_poly_attach_F_mpz_mod_poly(r, res);
+
+   F_mpz_poly_scalar_mul(r, p1, x);
+   _F_mpz_poly_reduce_coeffs(r, res->P);
+   
+   _F_mpz_mod_poly_attach_F_mpz_poly(res, r);
+   _F_mpz_mod_poly_normalise(res);
+}
+
+/****************************************************************************
+
    Multiplication
 
 ****************************************************************************/
@@ -376,3 +398,4 @@ void F_mpz_mod_poly_mul_trunc_left(F_mpz_mod_poly_t res, const F_mpz_mod_poly_t 
 		else _F_mpz_mod_poly_mul_trunc_left(res, poly2, poly1, trunc);
 	}		
 }
+
