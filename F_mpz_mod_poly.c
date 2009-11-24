@@ -175,6 +175,21 @@ void zmod_poly_to_F_mpz_mod_poly(F_mpz_mod_poly_t fpol, const zmod_poly_t zpol)
 
 ****************************************************************************/
 
+void F_mpz_mod_poly_set(F_mpz_mod_poly_t poly1, const F_mpz_mod_poly_t poly2)
+{
+	if (poly1 != poly2) // aliasing is trivial
+	{
+		ulong length = poly2->length;
+	
+	   F_mpz_mod_poly_fit_length(poly1, poly2->length);
+
+		for (ulong i = 0; i < poly2->length; i++)
+			F_mpz_set(poly1->coeffs + i, poly2->coeffs + i);
+		
+		_F_mpz_mod_poly_set_length(poly1, poly2->length);
+	}
+}
+
 void F_mpz_mod_poly_swap(F_mpz_mod_poly_t poly1, F_mpz_mod_poly_t poly2)
 {
 	if (poly1 == poly2) return;
@@ -192,6 +207,25 @@ void F_mpz_mod_poly_swap(F_mpz_mod_poly_t poly1, F_mpz_mod_poly_t poly2)
 	poly2->coeffs = temp_c;
 
    return;
+}
+
+/****************************************************************************
+
+   Comparison
+
+****************************************************************************/
+
+int F_mpz_mod_poly_equal(const F_mpz_mod_poly_t poly1, const F_mpz_mod_poly_t poly2)
+{
+   if (poly1 == poly2) return 1; // same polynomial
+
+	if (poly1->length != poly2->length) return 0; // check if lengths the same
+
+	for (ulong i = 0; i < poly1->length; i++) // check if coefficients the same
+		if (!F_mpz_equal(poly1->coeffs + i, poly2->coeffs + i)) 
+		   return 0;
+
+	return 1;
 }
 
 /****************************************************************************

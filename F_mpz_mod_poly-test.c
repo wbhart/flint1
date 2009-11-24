@@ -217,6 +217,71 @@ int test_F_mpz_mod_poly_convert()
    return result;
 }
 
+int test_F_mpz_mod_poly_setequal()
+{
+   F_mpz_mod_poly_t F_poly1, F_poly2;
+   F_mpz_t P;
+   int result = 1;
+   ulong bits, length;
+
+   // check equal polys
+   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
+   {
+		bits = z_randint(200) + 1;
+      length = z_randint(100);
+     
+      F_mpz_random_modulus(P, bits);
+      F_mpz_mod_poly_init(F_poly1, P);
+      F_mpz_mod_poly_init(F_poly2, P);
+ 
+      F_mpz_mod_randpoly(F_poly1, length, bits);
+      F_mpz_mod_poly_set(F_poly2, F_poly1);
+          
+      result = F_mpz_mod_poly_equal(F_poly1, F_poly2); 
+		if (!result) 
+		{
+			printf("Error: length = %ld, bits = %ld, len1 = %ld, len2 = %ld\n", length, bits, F_poly1->length, F_poly2->length);
+		}
+          
+      F_mpz_mod_poly_clear(F_poly1);
+      F_mpz_mod_poly_clear(F_poly2);
+      F_mpz_clear(P);
+   }
+
+   // check unequal polys
+   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
+   {
+		bits = z_randint(200) + 1;
+      length = z_randint(100);
+     
+      F_mpz_random_modulus(P, bits);
+      F_mpz_mod_poly_init(F_poly1, P);
+      F_mpz_mod_poly_init(F_poly2, P);
+ 
+      F_mpz_mod_randpoly(F_poly1, length, bits);
+      F_mpz_mod_poly_set(F_poly2, F_poly1);
+      if (F_poly2->length == 0)
+      {
+         F_mpz_mod_poly_fit_length(F_poly2, 1);
+         F_mpz_set_ui(F_poly2->coeffs, 1);
+         F_poly2->length = 1;
+      } else
+         F_mpz_add_ui(F_poly2->coeffs, F_poly2->coeffs, 1);
+          
+      result = !F_mpz_mod_poly_equal(F_poly1, F_poly2); 
+		if (!result) 
+		{
+			printf("Error: length = %ld, bits = %ld, len1 = %ld, len2 = %ld\n", length, bits, F_poly1->length, F_poly2->length);
+		}
+          
+      F_mpz_mod_poly_clear(F_poly1);
+      F_mpz_mod_poly_clear(F_poly2);
+      F_mpz_clear(P);
+   }
+
+   return result;
+}
+
 int test_F_mpz_mod_poly_mul()
 {
    mpz_poly_t m_poly1, m_poly2, res1, res2;
@@ -910,6 +975,7 @@ void F_mpz_mod_poly_test_all()
 #endif
 	
    RUN_TEST(F_mpz_mod_poly_convert); 
+   RUN_TEST(F_mpz_mod_poly_setequal); 
    RUN_TEST(F_mpz_mod_poly_add); 
    RUN_TEST(F_mpz_mod_poly_sub); 
    RUN_TEST(F_mpz_mod_poly_mul); 

@@ -187,7 +187,17 @@ void _F_mpz_poly_reduce_coeffs(F_mpz_poly_t poly, const F_mpz_t P)
 
 ****************************************************************************/
 
+void F_mpz_mod_poly_set(F_mpz_mod_poly_t poly1, const F_mpz_mod_poly_t poly2);
+
 void F_mpz_mod_poly_swap(F_mpz_mod_poly_t poly1, F_mpz_mod_poly_t poly2);
+
+/****************************************************************************
+
+   Comparison
+
+****************************************************************************/
+
+int F_mpz_mod_poly_equal(const F_mpz_mod_poly_t poly1, const F_mpz_mod_poly_t poly2);
 
 /****************************************************************************
 
