@@ -1303,7 +1303,7 @@ int LLL_heuristic_d_2exp_with_removal(F_mpz_mat_t B, int *cexpo, F_mpz_t gs_B)
 
 /* 
    LLL-reduces the integer matrix B "in place"
-   uses a virtual weight for each column stored as a power of 2 in the array cexpo (0,...,0) would be normal LLL
+   uses a virtual weight for each column stored as a power of 2 in the array cexpo. (0,...,0) would be normal LLL
    also returns the number of rows who's G-S lengths are guaranteed to be <= gs_B 
 */
 
