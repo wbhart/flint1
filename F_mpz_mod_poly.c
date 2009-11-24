@@ -152,6 +152,30 @@ void F_mpz_mod_poly_to_mpz_poly(mpz_poly_t m_poly, const F_mpz_mod_poly_t F_poly
 	   F_mpz_get_mpz(m_poly->coeffs[i], F_poly->coeffs + i);
 }
 
+void F_mpz_poly_to_F_mpz_mod_poly(F_mpz_mod_poly_t F_poly, const F_mpz_poly_t poly)
+{
+	F_mpz_mod_poly_fit_length(F_poly, poly->length);
+
+	_F_mpz_mod_poly_set_length(F_poly, poly->length);
+   
+	for (ulong i = 0; i < poly->length; i++)
+   {
+      F_mpz_set(F_poly->coeffs + i, poly->coeffs + i);
+      F_mpz_mod(F_poly->coeffs + i, F_poly->coeffs + i, F_poly->P);
+   }
+   _F_mpz_mod_poly_normalise(F_poly);
+}
+
+void F_mpz_mod_poly_to_F_mpz_poly(F_mpz_poly_t poly, const F_mpz_mod_poly_t F_poly)
+{
+	F_mpz_poly_fit_length(poly, F_poly->length);
+
+   poly->length = F_poly->length;
+   
+   for (ulong i = 0; i < F_poly->length; i++)
+	   F_mpz_set(poly->coeffs + i, F_poly->coeffs + i);
+}
+
 void zmod_poly_to_F_mpz_mod_poly(F_mpz_mod_poly_t fpol, const zmod_poly_t zpol)
 {
    if (zpol->length == 0)
