@@ -170,7 +170,7 @@ void F_mpz_mod_poly_to_F_mpz_poly(F_mpz_poly_t poly, const F_mpz_mod_poly_t F_po
 {
 	F_mpz_poly_fit_length(poly, F_poly->length);
 
-   poly->length = F_poly->length;
+   _F_mpz_poly_set_length(poly, F_poly->length);
    
    for (ulong i = 0; i < F_poly->length; i++)
 	   F_mpz_set(poly->coeffs + i, F_poly->coeffs + i);
@@ -1107,8 +1107,10 @@ void F_mpz_mod_poly_div_divconquer_recursive_low(F_mpz_mod_poly_t Q, F_mpz_mod_p
       effective length n1+n2-1
    */
    
+   F_mpz_mod_poly_t A_t;
    F_mpz_mod_poly_init2(t, B->P, FLINT_MAX(A->length - n2, dq1->length));
-   F_mpz_mod_poly_right_shift(t, A, n2);
+   _F_mpz_mod_poly_attach_truncate(A_t, A, B->length + n2 - 1);
+   F_mpz_mod_poly_right_shift(t, A_t, n2);
    _F_mpz_mod_poly_sub(t, t, dq1);
    F_mpz_mod_poly_truncate(t, B->length - 1);
    
@@ -1171,6 +1173,23 @@ void F_mpz_mod_poly_div_divconquer_recursive_low(F_mpz_mod_poly_t Q, F_mpz_mod_p
 
 void F_mpz_mod_poly_divrem_divconquer(F_mpz_mod_poly_t Q, F_mpz_mod_poly_t R, const F_mpz_mod_poly_t A, const F_mpz_mod_poly_t B)
 {
+   if (!COEFF_IS_MPZ(*(A->P))) // prime is small, use zmod_poly
+   {
+      zmod_poly_t zA, zB, zR, zQ;
+
+      _zmod_poly_attach_F_mpz_mod_poly(zA, A);
+      _zmod_poly_attach_F_mpz_mod_poly(zB, B);
+      _zmod_poly_attach_F_mpz_mod_poly(zQ, Q);
+      _zmod_poly_attach_F_mpz_mod_poly(zR, R);
+
+      zmod_poly_divrem(zQ, zR, zA, zB);
+
+      _F_mpz_mod_poly_attach_zmod_poly(Q, zQ);
+      _F_mpz_mod_poly_attach_zmod_poly(R, zR);
+
+      return;
+   }
+      
    F_mpz_mod_poly_t QB, A_lo;
    
    F_mpz_mod_poly_init(QB, Q->P);

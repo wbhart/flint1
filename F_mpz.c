@@ -562,7 +562,7 @@ int F_mpz_equal(const F_mpz_t f, const F_mpz_t g)
 {
 	if (f == g) return 1; // aliased inputs
 	
-	if (!COEFF_IS_MPZ(*f)) return (*f == *g); // if f is large it can't be equal to g
+   if (!COEFF_IS_MPZ(*f)) return (*f == *g); // if f is large it can't be equal to g
 	else if (!COEFF_IS_MPZ(*g)) return 0; // f is large, so if g isn't....
 	else 
 	{
