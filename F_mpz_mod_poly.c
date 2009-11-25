@@ -393,6 +393,21 @@ void F_mpz_mod_poly_scalar_mul(F_mpz_mod_poly_t res, const F_mpz_mod_poly_t pol1
 
 void _F_mpz_mod_poly_mul(F_mpz_mod_poly_t res, const F_mpz_mod_poly_t pol1, const F_mpz_mod_poly_t pol2)
 {
+   if (!COEFF_IS_MPZ(*(pol1->P))) // prime is small, use zmod_poly
+   {
+      zmod_poly_t zp1, zp2, zr;
+
+      _zmod_poly_attach_F_mpz_mod_poly(zp1, pol1);
+      _zmod_poly_attach_F_mpz_mod_poly(zp2, pol2);
+      _zmod_poly_attach_F_mpz_mod_poly(zr, res);
+
+      zmod_poly_mul(zr, zp1, zp2);
+
+      _F_mpz_mod_poly_attach_zmod_poly(res, zr);
+
+      return;
+   }
+
    F_mpz_poly_t p1, p2, r;
 
    _F_mpz_poly_attach_F_mpz_mod_poly(p1, pol1);
