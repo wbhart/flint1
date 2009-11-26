@@ -1492,20 +1492,21 @@ int LLL_heuristic_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    }
 
 //### This is different --------
-   F_mpz_t tmp_gs;
-   F_mpz_init(tmp_gs);
- 
-   int ok = 1;
+    int ok = 1;
    int newd = d;
+   double d_rii;
+   double d_gs_B;
+   ulong exp;
+   d_gs_B = F_mpz_get_d_2exp(&exp, gs_B);
+   d_gs_B = ldexp( d_gs_B, exp);
    for (i = d-1; (i >= 0) && (ok > 0); i--)
    {
-      //tmp_gs is the G-S length of ith vector divided by 2 (we shouldn't make a mistake and remove something valuable)
-      F_mpz_set_d_2exp(tmp_gs, appSP[i][i], 2*expo[i] - 1);
-      ok = F_mpz_cmpabs(tmp_gs, gs_B);
-      if (ok > 0) newd--;
-   }
-
-   F_mpz_clear(tmp_gs);
+//tmp_gs is the G-S length of ith vector divided by 2 (we shouldn't make a mistake and remove something valuable)
+//F_mpz_set_d_2exp(tmp_gs, r[i][i], 2*expo[i] - 1);
+      d_rii = ldexp(r[i][i], 2*expo[i] - 4);
+      printf("%5f r[%d] and gs_B = %5f\n", d_rii, i, d_gs_B);
+      if (d_rii > d_gs_B) newd--;
+   } 
 //-------------------------------
 
    free(alpha);

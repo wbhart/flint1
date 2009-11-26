@@ -971,6 +971,12 @@ void F_mpz_mul_2exp(F_mpz_t f, const F_mpz_t g, const ulong exp)
 {
 	F_mpz d = *g;
 
+   if (d == 0L) 
+   {
+      F_mpz_zero(f);
+      return;
+   }
+
 	if (!COEFF_IS_MPZ(d)) // g is small
 	{
 		ulong dabs = FLINT_ABS(d);
