@@ -706,6 +706,13 @@ void F_mpz_read(F_mpz_t f)
 	mpz_clear(temp);
 }
 
+void F_mpz_sscanf(F_mpz_t f, const char * str)
+{
+   __mpz_struct * mpz_ptr = _F_mpz_promote(f);
+   gmp_sscanf(str, "%Zd", mpz_ptr);
+   _F_mpz_demote_val(f);
+}
+
 /*===============================================================================
 
 	Arithmetic

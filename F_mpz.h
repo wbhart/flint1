@@ -435,6 +435,13 @@ void F_mpz_print(F_mpz_t x)
 */
 void F_mpz_read(F_mpz_t f);
 
+/** 
+   \fn     void F_mpz_sscanf(F_mpz_t f, const char * str)
+   \brief  Read an F_mpz_t from a string. The integer can be a signed multiprecision
+	        integer in decimal format.
+*/
+void F_mpz_sscanf(F_mpz_t f, const char * str);
+
 /*===============================================================================
 
 	Arithmetic
