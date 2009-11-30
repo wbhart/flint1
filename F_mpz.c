@@ -558,10 +558,10 @@ void F_mpz_swap(F_mpz_t f, F_mpz_t g)
 
 ================================================================================*/
 
-int F_mpz_equal(const F_mpz_t f, const F_mpz_t g)
+int F_mpz_equal( F_mpz_t f,  F_mpz_t g)
 {
 	if (f == g) return 1; // aliased inputs
-	
+
 	if (!COEFF_IS_MPZ(*f)) return (*f == *g); // if f is large it can't be equal to g
 	else if (!COEFF_IS_MPZ(*g)) return 0; // f is large, so if g isn't....
 	else 
@@ -984,6 +984,7 @@ void F_mpz_mul_2exp(F_mpz_t f, const F_mpz_t g, const ulong exp)
 		   __mpz_struct * mpz_ptr = _F_mpz_promote(f); // g is saved
          mpz_set_si(mpz_ptr, d); 
 	      mpz_mul_2exp(mpz_ptr, mpz_ptr, exp);
+         _F_mpz_demote_val(f);
 			
 		}
 	} else // g is large

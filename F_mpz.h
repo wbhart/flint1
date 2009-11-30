@@ -329,7 +329,7 @@ void F_mpz_swap(F_mpz_t f, F_mpz_t g);
    \fn     int F_mpz_equal(const F_mpz_t f, const F_mpz_t g)
    \brief  Returns 1 if the two values are equal, otherwise returns 0.
 */
-int F_mpz_equal(const F_mpz_t f, const F_mpz_t g);
+int F_mpz_equal( F_mpz_t f,  F_mpz_t g);
 
 /** 
    \fn     int F_mpz_cmpabs(const F_mpz_t f, const F_mpz_t g)

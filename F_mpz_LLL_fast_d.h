@@ -60,7 +60,7 @@ double halfplus, onedothalfplus, ctt;
 #define ETA 0.51
 #endif
 #ifndef DELTA
-#define DELTA 0.85
+#define DELTA 0.99
 #endif
 
 ulong getShift(F_mpz_mat_t B);
