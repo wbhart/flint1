@@ -33,12 +33,17 @@ Copyright (C) 2007, William Hart and David Harvey
 #endif
  
 #include <gmp.h>
+#include "profiler.h"
 
 #define RUN_TEST(targetfunc) \
 { \
+   timeit_t t0; \
+   timeit_start(t0); \
    printf("Testing " #targetfunc "()... ");            \
    fflush(stdout);                                     \
    success = test_##targetfunc();  \
+   timeit_stop(t0); \
+   printf("Cpu = %ld ms  Wall = %ld ms ", t0->cpu, t0->wall); \
    printf(success ? "... ok\n" : "... FAIL!\n"); \
    all_success = all_success && success;               \
 } 

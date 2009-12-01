@@ -28,7 +28,9 @@
 
 #undef ulong // namespace pollution
 #include <time.h>
+#if ! defined (__TINYC__)
 #include <sys/time.h>
+#endif
 #undef ulong 
 #define ulong unsigned long
 
@@ -57,28 +59,38 @@
    printf("cpu = %ld ms  wall = %ld ms\n", t0->cpu, t0->wall);
 */
 
-
 typedef struct
 {
    long cpu;
    long wall;
-} timeit_t[1];
+} timeit_struct;
+
+typedef timeit_struct timeit_t[1];
 
 static inline
 void timeit_start(timeit_t t)
 {
+#ifndef __TINYC__
    struct timeval tv;
    gettimeofday(&tv, 0);
    t->wall = - tv.tv_sec * 1000 - tv.tv_usec / 1000;
+#else
+   t->wall = 0;
+#endif
    t->cpu = - clock() * 1000 / CLOCKS_PER_SEC;
 }
+
 
 static inline
 void timeit_stop(timeit_t t)
 {
+#ifndef __TINYC__
    struct timeval tv;
    gettimeofday(&tv, 0);
    t->wall += tv.tv_sec * 1000 + tv.tv_usec / 1000;
+#else
+   t->wall = 0;
+#endif
    t->cpu += clock() * 1000 / CLOCKS_PER_SEC;
 }
 

@@ -21,14 +21,11 @@ TESTS = mpn_extras-test.exe long_extras-test.exe ZmodF-test.exe \
 
 OBJS = $(patsubst %.c, %.o, $(SOURCES))
 
-test-support.o:
-	$(CC) -fPIC $(CFLAGS) $(INCS) -c test-support.c -o test-support.o
-
 .c.o:
 	$(CC) -fPIC $(CFLAGS) $(INCS) -c $< -o $@
 
-%.exe: %.c test-support.o
-	$(CC) $(CFLAGS) $(INCS) test-support.o $< flint.def mpir.def -o $@
+%.exe: %.c test-support.o profiler.o
+	$(CC) $(CFLAGS) $(INCS) profiler.o test-support.o $< flint.def mpir.def -o $@
 
 check: all $(TESTS)
 	$(foreach name, $(TESTS), $(name);)
