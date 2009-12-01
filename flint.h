@@ -35,7 +35,6 @@
 #include <math.h>
 #include <stdint.h>
 #include "longlong_wrapper.h"
-#include "longlong.h"
 
 #ifdef __TINYC__
 #define sqrtf(xxx) sqrt(xxx)
