@@ -37,6 +37,7 @@
 #include "longlong_wrapper.h"
 
 #ifdef __TINYC__
+#include "longlong.h"
 #define sqrtf(xxx) sqrt(xxx)
 #define floorf(xxx) floor(xxx)
 #endif
