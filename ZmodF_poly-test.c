@@ -361,7 +361,6 @@ int test__ZmodF_poly_FFT_iterative_case(
                             twist, n, f->scratch);
    ZmodF_poly_convert_out(poly2, f);
 
-   unsigned long i;
    for (i = 0; i < length; i++)
       if (mpz_cmp(poly1->coeffs[i], poly2->coeffs[i]))
          success = 0;
@@ -451,7 +450,6 @@ int test__ZmodF_poly_FFT_factor_case(
                          length, twist, n, f->scratch);
    ZmodF_poly_convert_out(poly2, f);
 
-   unsigned long i;
    for (i = 0; i < length; i++)
       if (mpz_cmp(poly1->coeffs[i], poly2->coeffs[i]))
          success = 0;
@@ -582,19 +580,16 @@ int test__ZmodF_poly_IFFT_recursive_case(
    unsigned long i;
    for (i = length; i < nonzero; i++)
       mpz_set(poly2->coeffs[i], poly1->coeffs[i]);
-   unsigned long i;
    for (i = nonzero; i < size; i++)
       mpz_set_ui(poly2->coeffs[i], 0);
    
    // run forward transform on proposed untransformed coefficients
    naive_FFT(poly2, depth, root, twist, n);
    // rescale
-   unsigned long i;
    for (i = 0; i < size; i++)
       naive_mul_sqrt2exp(poly2->coeffs[i], poly2->coeffs[i],
                          2*(2*n*FLINT_BITS - depth));
    // check the first few agree with input
-   unsigned long i;
    for (i = 0; i < length; i++)
       if (mpz_cmp(poly2->coeffs[i], poly1->coeffs[i]))
          success = 0;
@@ -809,19 +804,16 @@ int test__ZmodF_poly_IFFT()
             unsigned long i;
             for (i = length; i < nonzero; i++)
                mpz_set(poly2->coeffs[i], poly1->coeffs[i]);
-            unsigned long i;
             for (i = nonzero; i < size; i++)
                mpz_set_ui(poly2->coeffs[i], 0);
             
             // run forward transform on proposed untransformed coefficients
             naive_FFT(poly2, depth, root, twist, n);
             // rescale
-            unsigned long i;
             for (i = 0; i < size; i++)
                naive_mul_sqrt2exp(poly2->coeffs[i], poly2->coeffs[i],
                                   2*(2*n*FLINT_BITS - depth));
             // check the first few agree with input
-            unsigned long i;
             for (i = 0; i < length; i++)
                if (mpz_cmp(poly2->coeffs[i], poly1->coeffs[i]))
                   success = 0;
@@ -855,12 +847,11 @@ void really_naive_convolution(mpz_poly_t res, mpz_poly_t x, mpz_poly_t y,
    for (i = 0; i < size; i++)
       mpz_set_ui(res->coeffs[i], 0);
    
-   unsigned long i, j;
+   unsigned long j;
    for (i = 0; i < size; i++)
       for (j = 0; j < size; j++)
          mpz_addmul(res->coeffs[(i+j) % size], x->coeffs[i], y->coeffs[j]);
    
-   unsigned long i;
    for (i = 0; i < size; i++)
       mpz_mod(res->coeffs[i], res->coeffs[i], global_p);
 }
@@ -958,7 +949,6 @@ int test_ZmodF_poly_convolution()
             for (i = len1; i < size; i++)
                mpz_set_ui(poly1->coeffs[i], 0);
             ZmodF_poly_convert_out(poly2, f2);
-            unsigned long i;
             for (i = len2; i < size; i++)
                mpz_set_ui(poly2->coeffs[i], 0);
 
@@ -968,7 +958,6 @@ int test_ZmodF_poly_convolution()
             if (out_len > size)
                out_len = size;
             
-			unsigned long i;
 			for (i = out_len; i < size; i++)
 				ZmodF_zero(f3->coeffs[i], n);
 
@@ -978,7 +967,6 @@ int test_ZmodF_poly_convolution()
             else
                naive_convolution(poly4, poly1, poly2, depth, n);
             
-            unsigned long i;
             for (i = 0; i < out_len; i++)
                if (mpz_cmp(poly3->coeffs[i], poly4->coeffs[i]))
                   success = 0;
@@ -1065,13 +1053,11 @@ int test_ZmodF_poly_convolution_range()
             for (i = len1; i < size; i++)
                mpz_set_ui(poly1->coeffs[i], 0);
             ZmodF_poly_convert_out(poly2, f2);
-            unsigned long i;
             for (i = len2; i < size; i++)
                mpz_set_ui(poly2->coeffs[i], 0);
 
             ZmodF_poly_convolution_range(f3, f1, f2, 0, trunc);
 
-            unsigned long i;
             for (i = trunc; i < size; i++)
 				ZmodF_zero(f3->coeffs[i], n);
             ZmodF_poly_convert_out(poly3, f3);
@@ -1081,7 +1067,6 @@ int test_ZmodF_poly_convolution_range()
             else
                naive_convolution(poly4, poly1, poly2, depth, n);
             
-            unsigned long i;
             for (i = 0; i < trunc; i++)
                if (mpz_cmp(poly3->coeffs[i], poly4->coeffs[i]))
                   success = 0;
@@ -1114,7 +1099,7 @@ void really_naive_negacyclic_convolution(mpz_poly_t res, mpz_poly_t x, mpz_poly_
    for (i = 0; i < size; i++)
       mpz_set_ui(res->coeffs[i], 0);
    
-   unsigned long i, j;
+   unsigned long j;
    for (i = 0; i < size; i++)
       for (j = 0; j < size; j++)
       {
@@ -1125,7 +1110,6 @@ void really_naive_negacyclic_convolution(mpz_poly_t res, mpz_poly_t x, mpz_poly_
             mpz_submul(res->coeffs[k-size], x->coeffs[i], y->coeffs[j]);
       }
    
-   unsigned long i;
    for (i = 0; i < size; i++)
       mpz_mod(res->coeffs[i], res->coeffs[i], global_p);
 }
@@ -1154,7 +1138,6 @@ void naive_negacyclic_convolution(mpz_poly_t res, mpz_poly_t x, mpz_poly_t y,
    naive_FFT(yt, depth, (4*n*FLINT_BITS) >> depth, 0, n);
 
    mpz_poly_ensure_alloc(res, size);
-   unsigned long i;
    for (i = 0; i < (1 << depth); i++)
    {
       mpz_mul(res->coeffs[i], xt->coeffs[i], yt->coeffs[i]);
@@ -1165,7 +1148,6 @@ void naive_negacyclic_convolution(mpz_poly_t res, mpz_poly_t x, mpz_poly_t y,
    res->length = size;
    
    naive_IFFT(res, depth, (4*n*FLINT_BITS) >> depth, 0, n);
-   unsigned long i;
    for (i = 0; i < (1 << depth); i++)
    {
       naive_mul_sqrt2exp(res->coeffs[i], res->coeffs[i], (4*n*FLINT_BITS) - ((2*i*n*FLINT_BITS) >> depth));

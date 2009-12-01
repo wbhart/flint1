@@ -264,7 +264,6 @@ char * zmod_poly_to_string(zmod_poly_t poly)
    // write the string
    char* buf = (char*) malloc(size);
    char* ptr = buf + sprintf(buf, "%ld %ld  ", poly->length, poly->p);
-   unsigned long i;
    for (i = 0; i < poly->length; i++)
    {
       ptr += sprintf(ptr, "%ld ", poly->coeffs[i]);
@@ -679,7 +678,6 @@ void zmod_poly_left_shift(zmod_poly_t res, zmod_poly_t poly, unsigned long k)
          poly->coeffs[i+k] = poly->coeffs[i];
       }
       
-      unsigned long i;
       for (i = 0; i < k; i++)
          poly->coeffs[i] = 0L;
    }
@@ -690,7 +688,6 @@ void zmod_poly_left_shift(zmod_poly_t res, zmod_poly_t poly, unsigned long k)
       for (i = 0; i < k; i++)
          res->coeffs[i] = 0L;
       
-      unsigned long i;
       for (i = 0; i < poly->length; i++)
          res->coeffs[i + k] = poly->coeffs[i];
    }
@@ -899,9 +896,8 @@ void __zmod_poly_mul_classical_mod_throughout(zmod_poly_t res, zmod_poly_t poly1
 #if FLINT_BITS == 64
    if (bits <= FLINT_D_BITS)
    {
-      unsigned long i;
+      unsigned long i, j;
       for (i = 0; i < poly1->length; i++)
-         unsigned long j;
          for (j = 0; j < poly2->length; j++)
             res->coeffs[i+j] = z_addmod(res->coeffs[i+j], z_mulmod_precomp(poly1->coeffs[i], poly2->coeffs[j], poly1->p, poly1->p_inv), poly1->p);
    } else
@@ -985,9 +981,8 @@ void _zmod_poly_sqr_classical(zmod_poly_t res, zmod_poly_t poly)
 #if FLINT_BITS == 64
    if (bits <= FLINT_D_BITS)
    {
-      unsigned long i;
+      unsigned long i, j;
       for (i = 1; i < poly->length; i++)
-         unsigned long j;
          for (j = 0; j < i; j++)
             res->coeffs[i+j] = z_addmod(res->coeffs[i+j], z_mulmod_precomp(poly->coeffs[i], poly->coeffs[j], poly->p, poly->p_inv), poly->p);
    } else
@@ -1002,7 +997,6 @@ void _zmod_poly_sqr_classical(zmod_poly_t res, zmod_poly_t poly)
 #endif
    
    // double the off-diagonal products
-   unsigned long i;
    for (i = 1; i < res->length - 1; i++)
       res->coeffs[i] = z_addmod(res->coeffs[i], res->coeffs[i], poly->p);
 
@@ -1184,9 +1178,8 @@ void __zmod_poly_mul_classical_trunc_mod_throughout(zmod_poly_t res, zmod_poly_t
 #if FLINT_BITS == 64
    if (bits <= FLINT_D_BITS)
    {
-      unsigned long i;
+      unsigned long i, j;
       for (i = 0; i < poly1->length; i++)
-         unsigned long j;
          for (j = 0; j < poly2->length; j++)
             if (i + j < trunc)
                res->coeffs[i+j] = z_addmod(res->coeffs[i+j], z_mulmod_precomp(poly1->coeffs[i], poly2->coeffs[j], poly1->p, poly1->p_inv), poly1->p);
@@ -1347,9 +1340,8 @@ void __zmod_poly_mul_classical_trunc_left_mod_throughout(zmod_poly_t res, zmod_p
 #if FLINT_BITS == 64
    if (bits <= FLINT_D_BITS)
    {
-      unsigned long i;
+      unsigned long i, j;
       for (i = 0; i < poly1->length; i++)
-         unsigned long j;
          for (j = 0; j < poly2->length; j++)
             if (i + j >= trunc)
                res->coeffs[i+j] = z_addmod(res->coeffs[i+j], z_mulmod_precomp(poly1->coeffs[i], poly2->coeffs[j], poly1->p, poly1->p_inv), poly1->p);
@@ -5103,8 +5095,8 @@ long zmod_poly_resultant_half_gcd(zmod_poly_2x2_mat_t res, zmod_poly_t a_out, zm
 	else zmod_poly_sub(b_out, temp, b_out);
 
 	zmod_poly_fit_length(b_out, k + b3->length);
-	ulong i;
-	for (i = b_out->length; i < k + b3->length; i++) b_out->coeffs[i] = 0L;
+	ulong il;
+	for (il = b_out->length; il < k + b3->length; il++) b_out->coeffs[il] = 0L;
    zmod_poly_attach_shift(b4, b_out, k);
 	b4->alloc = FLINT_MAX(b4->length, b3->length);
 	zmod_poly_add(b4, b4, b3);
@@ -5118,8 +5110,7 @@ long zmod_poly_resultant_half_gcd(zmod_poly_2x2_mat_t res, zmod_poly_t a_out, zm
 	else zmod_poly_sub(a_out, a_out, temp);
 
    zmod_poly_fit_length(a_out, k + a3->length);
-   ulong i;
-   for (i = a_out->length; i < k + a3->length; i++) a_out->coeffs[i] = 0L;
+   for (il = a_out->length; il < k + a3->length; il++) a_out->coeffs[il] = 0L;
    zmod_poly_attach_shift(a4, a_out, k);
 	a4->alloc = FLINT_MAX(a4->length, a3->length);
 	zmod_poly_add(a4, a4, a3);
@@ -5264,8 +5255,8 @@ void zmod_poly_resultant_half_gcd_no_matrix(zmod_poly_t a_out, zmod_poly_t b_out
 	else zmod_poly_sub(b_out, temp, b_out);
 
 	zmod_poly_fit_length(b_out, k + b3->length);
-	ulong i;
-	for (i = b_out->length; i < k + b3->length; i++) b_out->coeffs[i] = 0L;
+	ulong il;
+	for (il = b_out->length; il < k + b3->length; il++) b_out->coeffs[il] = 0L;
    zmod_poly_attach_shift(b4, b_out, k);
 	b4->alloc = FLINT_MAX(b4->length, b3->length);
 	zmod_poly_add(b4, b4, b3);
@@ -5279,8 +5270,7 @@ void zmod_poly_resultant_half_gcd_no_matrix(zmod_poly_t a_out, zmod_poly_t b_out
 	else zmod_poly_sub(a_out, a_out, temp);
 
    zmod_poly_fit_length(a_out, k + a3->length);
-   ulong i;
-   for (i = a_out->length; i < k + a3->length; i++) a_out->coeffs[i] = 0L;
+   for (il = a_out->length; il < k + a3->length; il++) a_out->coeffs[il] = 0L;
    zmod_poly_attach_shift(a4, a_out, k);
 	a4->alloc = FLINT_MAX(a4->length, a3->length);
 	zmod_poly_add(a4, a4, a3);
@@ -5584,7 +5574,6 @@ long zmod_poly_half_gcd(zmod_poly_2x2_mat_t res, zmod_poly_t a_out, zmod_poly_t 
 	else zmod_poly_sub(a2, a2, temp);
 
    zmod_poly_fit_length(a2, m + a3->length);
-   ulong i;
    for (i = a2->length; i < m + a3->length; i++) a2->coeffs[i] = 0L;
    zmod_poly_attach_shift(a4, a2, m);
    a4->alloc = FLINT_MAX(a4->length, a3->length);
@@ -5633,7 +5622,6 @@ long zmod_poly_half_gcd(zmod_poly_2x2_mat_t res, zmod_poly_t a_out, zmod_poly_t 
 	else zmod_poly_sub(b_out, temp, b_out);
 
 	zmod_poly_fit_length(b_out, k + b3->length);
-	ulong i;
 	for (i = b_out->length; i < k + b3->length; i++) b_out->coeffs[i] = 0L;
    zmod_poly_attach_shift(b4, b_out, k);
 	b4->alloc = FLINT_MAX(b4->length, b3->length);
@@ -5648,7 +5636,6 @@ long zmod_poly_half_gcd(zmod_poly_2x2_mat_t res, zmod_poly_t a_out, zmod_poly_t 
 	else zmod_poly_sub(a_out, a_out, temp);
 
    zmod_poly_fit_length(a_out, k + a3->length);
-   ulong i;
    for (i = a_out->length; i < k + a3->length; i++) a_out->coeffs[i] = 0L;
    zmod_poly_attach_shift(a4, a_out, k);
 	a4->alloc = FLINT_MAX(a4->length, a3->length);
@@ -5736,7 +5723,6 @@ void zmod_poly_half_gcd_no_matrix(zmod_poly_t a_out, zmod_poly_t b_out, zmod_pol
 	else zmod_poly_sub(a2, a2, temp);
 
    zmod_poly_fit_length(a2, m + a3->length);
-   ulong i;
    for (i = a2->length; i < m + a3->length; i++) a2->coeffs[i] = 0L;
    zmod_poly_attach_shift(a4, a2, m);
    a4->alloc = FLINT_MAX(a4->length, a3->length);
@@ -5784,7 +5770,6 @@ void zmod_poly_half_gcd_no_matrix(zmod_poly_t a_out, zmod_poly_t b_out, zmod_pol
 	else zmod_poly_sub(b_out, temp, b_out);
 
 	zmod_poly_fit_length(b_out, k + b3->length);
-	ulong i;
 	for (i = b_out->length; i < k + b3->length; i++) b_out->coeffs[i] = 0L;
    zmod_poly_attach_shift(b4, b_out, k);
 	b4->alloc = FLINT_MAX(b4->length, b3->length);
@@ -5799,7 +5784,6 @@ void zmod_poly_half_gcd_no_matrix(zmod_poly_t a_out, zmod_poly_t b_out, zmod_pol
 	else zmod_poly_sub(a_out, a_out, temp);
 
    zmod_poly_fit_length(a_out, k + a3->length);
-   ulong i;
    for (i = a_out->length; i < k + a3->length; i++) a_out->coeffs[i] = 0L;
    zmod_poly_attach_shift(a4, a_out, k);
 	a4->alloc = FLINT_MAX(a4->length, a3->length);
@@ -6809,7 +6793,6 @@ void zmod_poly_factor_berlekamp(zmod_poly_factor_t factors, zmod_poly_t f)
 	ulong col = 1; // first column is always zero
 	ulong row = 0;
 	shift[0] = 1;
-	ulong i;
 	for (i = 1; i < nullity; i++)
 	{
 	   zmod_poly_init(basis[i], p);

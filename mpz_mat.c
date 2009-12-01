@@ -152,7 +152,6 @@ char* mpz_mat_to_string(mpz_mat_t mat)
    // write the string
    char* buf = (char*) malloc(size);
    char* ptr = buf + sprintf(buf, "%ld %ld  ", mat->r, mat->c);
-   unsigned long i;
    for (i = 0; i < mat->r * mat->c; i++)
    {
       mpz_get_str(ptr, 10, mat->entries[i]);
@@ -245,7 +244,6 @@ char* mpz_mat_to_string_pretty(mpz_mat_t mat)
    // write the string
    char* buf = (char*) malloc(size);
    char* ptr = buf + sprintf(buf, "[");
-   unsigned long i;
    for (i = 0; i < mat->r; i++)
    {
       *ptr = '[';

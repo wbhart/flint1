@@ -67,7 +67,7 @@ void tiny_linear_algebra_init(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly_in
    {
       mpz_init2(Y_arr[i], 128);
    }
-   unsigned long i;
+   
    for (i = 0; i < qs_inf->num_primes + EXTRA_RELS + 100; i++) 
    {
       matrix[i].weight = 0;
@@ -91,13 +91,11 @@ void tiny_linear_algebra_clear(linalg_t * la_inf, QS_t * qs_inf)
       mpz_clear(Y_arr[i]);
    }
    
-   unsigned long i;
    for (i = 0; i < la_inf->columns; i++) // Clear all used columns
    {
       free_col(matrix + i);
    }
    
-   unsigned long i;
    for (i = 0; i < la_inf->num_unmerged; i++) // Clear all used columns
    {
       free_col(unmerged + i);
@@ -296,7 +294,7 @@ unsigned long tiny_insert_relation(linalg_t * la_inf, poly_t * poly_inf, mpz_t Y
           fac_num++;
        }
    }
-   unsigned long i;
+   
    for (i = 0; i < num_factors; i++)
    {
        if (factor[i].exp & 1) insert_col_entry(unmerged + num_unmerged, factor[i].ind);

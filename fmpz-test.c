@@ -319,7 +319,6 @@ int test_fmpz_set_equal()
        fmpz_clear(fnum2);
    }
    
-   unsigned long i;
    for (i = 0; (i < 100000) && (result == 1); i++)
    {
        bits = random_ulong(1000);
@@ -1895,7 +1894,6 @@ int test_fmpz_multi_CRT_ui_unsigned()
 		fmpz_multi_mod_ui(output, input, comb, comb_temp);
       
       fmpz_t temp = flint_heap_alloc(limbs + 1);
-      unsigned long j;
       for (j = 0; j < 1; j++)
       {
          fmpz_multi_CRT_ui_unsigned(temp, output, comb, comb_temp);
@@ -1909,7 +1907,6 @@ int test_fmpz_multi_CRT_ui_unsigned()
       {
          output2[k] = fmpz_mod_ui(input, primes[k]);
       }
-      unsigned long k;
       for (k = 0; k < num_primes; k++)
       {
          if (output[k] != output2[k]) result = 0;
@@ -1952,7 +1949,6 @@ int test_fmpz_multi_CRT()
    fmpz_comb_init(comb, primes, num_primes);
    fmpz_t ** comb_temp = fmpz_comb_temp_init(comb);
    
-   ulong j;
    for (j = 0; j < num_primes; j++)
    {
       output[j] = j + 1;
@@ -2027,7 +2023,6 @@ int test_fmpz_multi_CRT_ui()
       fmpz_comb_t comb;
       fmpz_comb_init(comb, primes, num_primes);
       fmpz_t ** comb_temp = fmpz_comb_temp_init(comb);
-      unsigned long j;
       for (j = 0; j < 1; j++)
          fmpz_multi_mod_ui(output, input, comb, comb_temp);
       
@@ -2049,8 +2044,7 @@ int test_fmpz_multi_CRT_ui()
       {
          output2[k] = fmpz_mod_ui(input, primes[k]);
       }
-      unsigned long k;
-		for (k = 0; k < num_primes; k++)
+      for (k = 0; k < num_primes; k++)
       {
          if (output[k] != output2[k]) 
 			{
@@ -2456,7 +2450,6 @@ int test_fmpz_divides()
        fmpz_clear(fnum4);
    }
    
-   unsigned long i;
    for (i = 0; (i < 100000) && (result == 1); i++)
    {
        bits = random_ulong(1000)+2;

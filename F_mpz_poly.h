@@ -508,9 +508,9 @@ void F_mpz_poly_zero(F_mpz_poly_t poly)
 static inline
 void F_mpz_poly_zero_coeffs(F_mpz_poly_t poly, const ulong n)
 {
-	if (n >= poly->length) _F_mpz_poly_set_length(poly, 0);
+	ulong i;
+   if (n >= poly->length) _F_mpz_poly_set_length(poly, 0);
 	else 
-	   ulong i;
 	   for (i = 0; i < n; i++)
 		   F_mpz_zero(poly->coeffs + i);
 }

@@ -202,17 +202,14 @@ void setup_coeffs(unsigned long count, unsigned long n, unsigned long overflow_b
       coeffs[i] = coeffs[i-1] + (n+3);
       
    // add sentry limbs
-   int i;
    for (i = 0; i < count; i++)
       coeffs[i][-1] = coeffs[i][n+1] = SENTRY_LIMB;
       
    // generate random coefficients
-   int i;
    for (i = 0; i < count; i++)
       ZmodF_random(coeffs[i], n, overflow_bits);
       
    // convert coefficients to coeffs_mpz_in
-   int i;
    for (i = 0; i < count; i++)
       ZmodF_convert_out(coeffs_mpz_in[i], coeffs[i]);
 }
@@ -238,7 +235,6 @@ int check_coeffs(unsigned long count, unsigned long n)
    }
 
    // check pointers point to valid buffers
-   int i;
    for (i = 0; i < count; i++)
    {
       unsigned long offset = coeffs[i] - global_buf;
@@ -249,14 +245,13 @@ int check_coeffs(unsigned long count, unsigned long n)
    }
    
    // check pointers point to distinct buffers
-   int i, j;
+   int j;
    for (i = 0; i < count; i++)
       for (j = i+1; j < count; j++)
          if (coeffs[i] == coeffs[j])
             return 0;
 
    // convert coefficients to coeffs_mpz_out
-   int i;
    for (i = 0; i < count; i++)
       ZmodF_convert_out(coeffs_mpz_out[i], coeffs[i]);
    

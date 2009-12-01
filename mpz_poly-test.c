@@ -530,7 +530,6 @@ int test_mpz_poly_addsubneg()
    mpz_init(temp);
 
    mpz_poly_t poly[3];
-   unsigned long i;
    for (i = 0; i < 3; i++)
       mpz_poly_init(poly[i]);
 
@@ -838,7 +837,6 @@ int test__mpz_poly_mul_kara_recursive()
          mpz_urandomb(in1->coeffs[i], randstate, 300);
       in1->length = len1;
 
-      unsigned long i;
       for (i = 0; i < len2; i++)
          mpz_urandomb(in2->coeffs[i], randstate, 300);
       in2->length = len2;
@@ -892,7 +890,6 @@ int test_mpz_poly_mul_karatsuba()
          mpz_poly_set_coeff(in1, i, x);
       }
 
-      unsigned long i;
       for (i = 0; i < len2; i++)
       {
          mpz_urandomb(x, randstate, 300);

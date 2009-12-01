@@ -236,7 +236,6 @@ int test_F_mpz_mat_add()
    }
    
 	// test aliasing of res and mat1
-   ulong count1;
    for (count1 = 0; (count1 < 2000*ITER) && (result == 1) ; count1++)
    {
       ulong r = z_randint(30);
@@ -278,7 +277,6 @@ int test_F_mpz_mat_add()
    }
    
    // test aliasing of res and mat2
-   ulong count1;
    for (count1 = 0; (count1 < 2000*ITER) && (result == 1) ; count1++)
    {
       ulong r = z_randint(30);
@@ -373,7 +371,6 @@ int test_F_mpz_mat_sub()
    }
    
 	// test aliasing of res and mat1
-   ulong count1;
    for (count1 = 0; (count1 < 2000*ITER) && (result == 1) ; count1++)
    {
       ulong r = z_randint(30);
@@ -415,7 +412,6 @@ int test_F_mpz_mat_sub()
    }
    
    // test aliasing of res and mat2
-   ulong count1;
    for (count1 = 0; (count1 < 2000*ITER) && (result == 1) ; count1++)
    {
       ulong r = z_randint(30);
@@ -540,7 +536,6 @@ int test_F_mpz_mat_equal()
    }
 
 	// mats are equal
-	ulong count1;
 	for (count1 = 0; (count1 < 5000*ITER) && (result == 1); count1++)
    {
       ulong r = z_randint(30);
@@ -567,7 +562,6 @@ int test_F_mpz_mat_equal()
    }
 
 	// mats are aliased
-	ulong count1;
 	for (count1 = 0; (count1 < 5000*ITER) && (result == 1); count1++)
    {
       ulong r = z_randint(30);
@@ -760,7 +754,6 @@ int test_F_mpz_mat_neg()
    }
 
 	// sub equals negate and add, included aliased negation
-	ulong count1;
 	for (count1 = 0; (count1 < 5000*ITER) && (result == 1); count1++)
    {
       r = z_randint(30);
@@ -849,7 +842,6 @@ int test_F_mpz_mat_row_mul_ui()
    }
    
    // aliased multiply
-   ulong count1;
    for (count1 = 0; (count1 < 10000) && (result == 1) ; count1++)
    {
       bits = z_randint(200)+ 1;
@@ -956,7 +948,6 @@ int test_F_mpz_mat_row_mul_si()
    }
    
    // aliased multiply
-   ulong count1;
    for (count1 = 0; (count1 < 10000) && (result == 1) ; count1++)
    {
       bits = z_randint(200)+ 1;
@@ -1071,7 +1062,6 @@ int test_F_mpz_mat_row_mul_F_mpz()
    }
    
    // aliased multiply
-   ulong count1;
    for (count1 = 0; (count1 < 10000) && (result == 1) ; count1++)
    {
       bits = z_randint(200)+ 1;
@@ -1184,7 +1174,6 @@ int test_F_mpz_mat_row_addmul_ui()
    }
    
    // aliased multiply
-   ulong count1;
    for (count1 = 0; (count1 < 10000) && (result == 1) ; count1++)
    {
       bits = z_randint(200)+ 1;
@@ -1291,7 +1280,6 @@ int test_F_mpz_mat_row_submul_ui()
    }
    
    // aliased multiply
-   ulong count1;
    for (count1 = 0; (count1 < 10000) && (result == 1) ; count1++)
    {
       bits = z_randint(200)+ 1;
@@ -1401,7 +1389,6 @@ int test_F_mpz_mat_row_addmul_2exp_ui()
    }
    
    // aliased multiply
-   ulong count1;
    for (count1 = 0; (count1 < 10000) && (result == 1) ; count1++)
    {
       bits = z_randint(200)+ 1;
@@ -1514,7 +1501,6 @@ int test_F_mpz_mat_row_submul_2exp_ui()
    }
    
    // aliased multiply
-   ulong count1;
    for (count1 = 0; (count1 < 10000) && (result == 1) ; count1++)
    {
       bits = z_randint(200)+ 1;
@@ -1638,7 +1624,6 @@ int test_F_mpz_mat_mul_classical()
    }
 
 //alias testing for the square case
-   ulong count1;
    for (count1 = 0; (count1 < 2000*ITER) && (result == 1) ; count1++)
    {
       ulong r = z_randint(30)+1;
@@ -1699,7 +1684,6 @@ int test_F_mpz_mat_mul_classical()
    }
 
 //aliasing square case two inputs the same and all inputs same
-   ulong count1;
    for (count1 = 0; (count1 < 2000*ITER) && (result == 1) ; count1++)
    {
       ulong r = z_randint(30)+1;
@@ -1741,6 +1725,7 @@ int test_F_mpz_mat_mul_classical()
       mpz_mat_clear(res2); 
    }
    return result;
+}
 
 int test_F_mpz_mat_row_submul_2exp_F_mpz()
 {
@@ -1810,7 +1795,6 @@ int test_F_mpz_mat_row_submul_2exp_F_mpz()
    }
    
    // aliased multiply
-   ulong count1;
    for (count1 = 0; (count1 < 10000) && (result == 1) ; count1++)
    {
       bits = z_randint(200)+ 1;
@@ -1923,7 +1907,6 @@ int test_F_mpz_mat_row_scalar_mul()
    }
    
    // alias rows
-   ulong count1;
    for (count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
    {
       bits = z_randint(200)+ 1;
@@ -2009,5 +1992,3 @@ int main()
 
    return 0;
 }
-
-

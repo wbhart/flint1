@@ -1734,7 +1734,6 @@ void F_mpz_comb_init(F_mpz_comb_t comb, ulong * primes, ulong num_primes)
 
    // create zn_poly modulus information
 	comb->mod = (zn_mod_t *) flint_heap_alloc_bytes(sizeof(zn_mod_t)*num_primes);
-   ulong i;
    for (i = 0; i < num_primes; i++) 
       zn_mod_init(comb->mod[i], primes[i]);
 

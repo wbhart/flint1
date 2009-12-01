@@ -146,8 +146,8 @@ mp_limb_t F_mpn_addmul(mp_limb_t * rp, mp_limb_t * s1p, unsigned long s1n,
 static inline
 void F_mpn_printx(mp_limb_t * mpn, unsigned long count)
 {
+   unsigned long i;
    if (count) 
-      unsigned long i;
       for (i = 0; i < count; i++)
          printf("%lx ", mpn[i]);
 }

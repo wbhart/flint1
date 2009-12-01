@@ -691,12 +691,10 @@ void _F_mpz_poly_add(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_pol
       F_mpz_add(res->coeffs + i, poly1->coeffs + i, poly2->coeffs + i);   
    
    if (poly1 != res) // copy any remaining coefficients from poly1
-      ulong i;
       for (i = shorter; i < poly1->length; i++)
          F_mpz_set(res->coeffs + i, poly1->coeffs + i);
 
    if (poly2 != res) // copy any remaining coefficients from poly2
-      ulong i;
       for (i = shorter; i < poly2->length; i++)
          F_mpz_set(res->coeffs + i, poly2->coeffs + i);
    
@@ -727,12 +725,10 @@ void _F_mpz_poly_sub(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_pol
       F_mpz_sub(res->coeffs + i, poly1->coeffs + i, poly2->coeffs + i);   
    
    if (poly1 != res) // copy any remaining coefficients from poly1
-      ulong i;
       for (i = shorter; i < poly1->length; i++)
          F_mpz_set(res->coeffs + i, poly1->coeffs + i);
 
    // careful, it is *always* necessary to negate coeffs from poly2, even if this is already res
-	ulong i;
 	for (i = shorter; i < poly2->length; i++) 
       F_mpz_neg(res->coeffs + i, poly2->coeffs + i);
 
@@ -782,7 +778,6 @@ void F_mpz_poly_left_shift(F_mpz_poly_t res, const F_mpz_poly_t poly, const ulon
 		F_mpz_set(res->coeffs + i + n, poly->coeffs + i);
 
    // insert n zeroes
-	ulong i;
 	for (i = 0; i < n; i++) F_mpz_zero(res->coeffs + i);
    
    _F_mpz_poly_set_length(res, poly->length + n);
@@ -989,7 +984,6 @@ void _F_mpz_poly_sqr_classical(F_mpz_poly_t res, const F_mpz_poly_t poly)
       F_mpz_zero(res->coeffs + i);
    
    // off-diagonal products
-   ulong i;
    for (i = 1; i < poly->length; i++)
 	{
 		F_mpz c = poly->coeffs[i];
@@ -997,28 +991,27 @@ void _F_mpz_poly_sqr_classical(F_mpz_poly_t res, const F_mpz_poly_t poly)
 		{
 			if (!COEFF_IS_MPZ(c))
 			{
-				if (c < 0L) 
-					ulong j;
+				ulong j;
+			   if (c < 0L) 
 					for (j = 0; j < i; j++)
                   F_mpz_submul_ui(res->coeffs + i + j, poly->coeffs + j, -c);
 				else
-               ulong j;
                for (j = 0; j < i; j++)
                   F_mpz_addmul_ui(res->coeffs + i + j, poly->coeffs + j, c);
 			} else
-		      ulong j;
+         {
+            ulong j;
 		      for (j = 0; j < i; j++)
                F_mpz_addmul(res->coeffs + i+j, poly->coeffs + i, poly->coeffs + j);
+         }
 		}
 	}
 
    // double the off-diagonal products
-   ulong i;
    for (i = 1; i < res->length - 1; i++)
       F_mpz_add(res->coeffs + i, res->coeffs + i, res->coeffs + i);
       
    // add in diagonal products
-   ulong i;
    for (i = 0; i < poly->length; i++)
       F_mpz_addmul(res->coeffs + 2*i, poly->coeffs + i, poly->coeffs + i);
 }
@@ -1247,43 +1240,37 @@ void _F_mpz_poly_mul_kara_odd_even_recursive(F_mpz * out, F_mpz * in1,
    {
       // switch to naive multiplication
 
+		ulong i;
 		if (in2)
-			ulong i;
 			for (i = 0; i < len1; i++)
             F_mpz_mul2(out + i*skip, in1 + i*skip, in2);
 		else 
-			ulong i;
 			for (i = 0; i < len1; i++)
             F_mpz_zero(out + i*skip);
 
       // Set res[i+len1-1] = in1[len1-1]*in2[i]
       const ulong term = (len1 - 1)*skip;
 		if (in1[(len1 - 1)*skip])
-		   ulong i;
 		   for (i = 1; i < len2; i++)
             F_mpz_mul2(out + (i + len1 - 1)*skip, in1 + term, in2 + i*skip);  
 	 	else 
-         ulong i;
          for (i = 1; i < len2; i++)
             F_mpz_zero(out + (i + len1 - 1)*skip);
       
-      ulong i;
       for (i = 0; i < len1 - 1; i++)
 		{
 			F_mpz c = in1[i*skip];
 			const ulong term = i*skip;
+			ulong j;
 			if (!COEFF_IS_MPZ(c))
 			{
 				if (c < 0L) 
-					ulong j;
 					for (j = 1; j < len2; j++)
                   F_mpz_submul_ui(out + (i+j)*skip, in2 + j*skip, -c);
 				else
-               ulong j;
                for (j = 1; j < len2; j++)
                   F_mpz_addmul_ui(out + (i+j)*skip, in2 + j*skip, c);
 			} else
-				ulong j;
 				for (j = 1; j < len2; j++)
                F_mpz_addmul(out + (i+j)*skip, in1 + term, in2 + j*skip);
 		}    
@@ -1329,7 +1316,6 @@ void _F_mpz_poly_mul_kara_odd_even_recursive(F_mpz * out, F_mpz * in1,
                             
    // Subtract A1*A2 and B1*B2 from (A1+B1)*(A2+B2) to get (A1*B2 + A2*B1)
    // in odd slots of output
-   ulong i;
    for (i = 0; i < len1/2 + len2/2 - 1; i++)
    {
       F_mpz_sub(out + 2*i*skip + skip, out + 2*i*skip + skip, out + 2*(i+1)*skip);
@@ -1338,7 +1324,6 @@ void _F_mpz_poly_mul_kara_odd_even_recursive(F_mpz * out, F_mpz * in1,
       
    // Add A1*A2 to x^2*(B1*B2) into even slots of output
    F_mpz_set(out, scratch);
-   ulong i;
    for (i = 1; i < len1/2 + len2/2 - 1; i++)
       F_mpz_add(out + 2*i*skip, out + 2*i*skip, scratch + 2*i*skip);
    
@@ -1358,7 +1343,6 @@ void _F_mpz_poly_mul_kara_odd_even_recursive(F_mpz * out, F_mpz * in1,
          F_mpz_mul2(out + (len1+len2-3)*skip, in1 + term1, in2 + (len2-2)*skip);
 
          // terms from x^(len2-1)*C2 * (A1(x^2) + x*B1(x^2))
-         ulong i;
          for (i = 0; i < len1-1; i++)
             F_mpz_addmul(out + (i+len2-1)*skip, in2 + term2, in1 + i*skip);
             
@@ -3410,7 +3394,6 @@ void F_mpz_poly_pack_bytes(F_mpz_poly_t res, F_mpz_poly_t poly, ulong n, ulong b
 	
 	// pack coefficients
 
-	long i;
 	for (i = 0; i < short_length - 1; i++)
 	{
 		long j = i*n;
@@ -3505,7 +3488,6 @@ void F_mpz_poly_unpack_bytes(F_mpz_poly_t res, F_mpz_poly_t poly, ulong n, ulong
 
 	mp_limb_t * arr = flint_heap_alloc(limbs);
 	
-	long i;
 	for (i = 0; i < poly->length; i+=2)
 	{
 		long j;
@@ -3532,7 +3514,6 @@ void F_mpz_poly_unpack_bytes(F_mpz_poly_t res, F_mpz_poly_t poly, ulong n, ulong
 		   for (j = 0; j < 2*n; j++) F_mpz_neg(poly_r->coeffs + j, poly_r->coeffs + j);
 	}
 
-	long i;
 	for (i = 1; i < poly->length; i+=2)
 	{
 		long j;
@@ -6128,7 +6109,6 @@ void F_mpz_poly_rem_modp_naive(F_mpz_poly_t R, F_mpz_poly_t A, F_mpz_poly_t B, F
 
          F_mpz_poly_clear(qB);
 
-         long i;
          for (i = 0; i < R->length; i++){
             F_mpz_mod(R->coeffs + i, R->coeffs + i, p);
          }
@@ -6990,7 +6970,6 @@ void _F_mpz_poly_factor_CLD_mat(F_mpz_mat_t res, F_mpz_poly_t F, F_mpz_poly_fact
       for (i = 0; i < F->length - 1; i++)
          F_mpz_poly_CLD_bound(res->rows[d] + i, F, i);
 
-      long i;
       for (i = 0; i < d; i++){
          F_mpz_poly_init(gd);
          F_mpz_poly_init(gcld);
@@ -7016,11 +6995,9 @@ void _F_mpz_poly_factor_CLD_mat(F_mpz_mat_t res, F_mpz_poly_t F, F_mpz_poly_fact
       F_mpz_poly_CLD_bound(res->rows[d] + 2*n - 1 - i, F, F->length - 2 -i);
    }
    F_mpz_t temp[n];
-   long i;
    for (i = 0; i < n; i++)
       F_mpz_init(temp[i]);
 
-   long i;
    for (i = 0; i < d; i++){
       F_mpz_poly_init(gd);
       F_mpz_poly_init(gcld);
@@ -7034,14 +7011,12 @@ void _F_mpz_poly_factor_CLD_mat(F_mpz_mat_t res, F_mpz_poly_t F, F_mpz_poly_fact
       for (j = 0; j < n; j++)
          F_mpz_set(res->rows[i] + j, temp[j]);
       F_mpz_poly_div_upper_trunc_modp(temp, gcld, lifted_fac->factors[i], P, n);
-      long j;
       for (j = 0; j < n; j++)
          F_mpz_set(res->rows[i] + 2*n -1 - j, temp[j]);
       F_mpz_poly_clear(gd);
       F_mpz_poly_clear(gcld);
    }
 
-   long i;
    for (i = 0; i < n; i++)
       F_mpz_clear(temp[i]);
 }
@@ -7097,7 +7072,6 @@ int _F_mpz_poly_try_to_solve(int num_facs, ulong * part, F_mpz_poly_factor_t fin
 //we've proven the factorization is legit
 //maybe figure out what lengths I can prove this way and if I can prove biggest hooray go for it, if I can't then
 //maybe I can prove second, in which case sort, if neither then try, maybe Hensel lift again
-   int i;
    for (i = 0; i < num_facs - 1; i++){
       int j;
       for (j = i+1; j <  num_facs; j++){
@@ -7110,7 +7084,6 @@ int _F_mpz_poly_try_to_solve(int num_facs, ulong * part, F_mpz_poly_factor_t fin
    F_mpz_poly_init(Q);
    F_mpz_poly_init(R);
    F_mpz_poly_set(f, F);
-   int i;
    for (i = 0; i < trial_factors->num_factors; i++){
       if (num_facs == 1){
          int j;

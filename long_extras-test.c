@@ -32,6 +32,9 @@ Copyright (C) 2007, William Hart and David Harvey
 #include "long_extras.h"
 #include "test-support.h"
 #include "memory-manager.h"
+#ifndef __TINYC__
+#include "QS/tinyQS.h"
+#endif
 
 #define DEBUG 0 // prints debug information
 #define DEBUG2 1 
@@ -151,7 +154,6 @@ int test_z_intcuberoot()
       result = (res1 == n);
    } 
      
-   unsigned long count;
    for (count = 0; (count < 5000000) && (result == 1); count++)
    { 
       bits = z_randint(FLINT_BITS/3-1)+1;
@@ -199,7 +201,6 @@ int test_z_intfifthroot()
       result = (res1 == n);
    } 
      
-   unsigned long count;
    for (count = 0; (count < 5000000) && (result == 1); count++)
    { 
       bits = z_randint(FLINT_BITS/5-1)+1;
@@ -247,7 +248,6 @@ int test_z_factor_235power()
 		result = (res1 > 0);
    } 
      
-   unsigned long count;
    for (count = 0; (count < 1000000) && (result == 1); count++)
    { 
       bits = z_randint(FLINT_BITS/3-1)+1;
@@ -265,7 +265,6 @@ int test_z_factor_235power()
       result = (res1 > 0);
    } 
      
-   unsigned long count;
    for (count = 0; (count < 1000000) && (result == 1); count++)
    { 
       bits = z_randint(FLINT_BITS/5-1)+1;
@@ -283,7 +282,6 @@ int test_z_factor_235power()
       result = (res1 > 0);
    } 
      
-   unsigned long count;
    for (count = 0; (count < 1000000) && (result == 1); count++)
    { 
       bits = z_randint(FLINT_BITS-1)+1;
@@ -1480,7 +1478,6 @@ int test_z_ispseudoprime_fermat()
 #define FERMAT_COUNT 100000
 	
 	ulong comp = 0;
-	ulong count;
 	for (count = 0; count < FERMAT_COUNT; count++)
    { 
 		ulong bits = z_randint(FLINT_BITS/2 - 2) + 2;
@@ -1526,7 +1523,6 @@ int test_z_ispseudoprime_lucas()
 #define LUCAS_COUNT 100000
 	
 	ulong comp = 0;
-	ulong count;
 	for (count = 0; count < LUCAS_COUNT; count++)
    { 
 		ulong bits = z_randint(FLINT_BITS/2 - 2) + 2;
@@ -1572,7 +1568,6 @@ int test_z_ispseudoprime_lucas_ab()
 #define LUCAS2_COUNT 100000
 	
 	ulong comp = 0;
-	ulong count;
 	for (count = 0; count < LUCAS2_COUNT; count++)
    { 
 		ulong bits = z_randint(FLINT_BITS/2 - 2) + 2;
@@ -1621,7 +1616,6 @@ int test_z_isprobab_prime()
 #define TEST_PRIME_COUNT 100000
 	
 	ulong comp = 0;
-	ulong count;
 	for (count = 0; (count < TEST_PRIME_COUNT) && (result == 1); count++)
    { 
 		ulong bits = z_randint(FLINT_BITS/2 - 2) + 2;
@@ -1670,7 +1664,6 @@ int test_z_isprobab_prime_precomp()
 #define TEST_PRIME_COUNT1 100000
 	
 	ulong comp = 0;
-	ulong count;
 	for (count = 0; (count < TEST_PRIME_COUNT1) && (result == 1); count++)
    { 
 		ulong bits = z_randint(FLINT_BITS/2 - 2) + 2;
@@ -1722,7 +1715,6 @@ int test_z_ispseudoprime_fibonacci_precomp()
 #define TEST_PRIME_COUNT2 100000
 	
 	ulong pseudo = 0;
-	ulong count;
 	for (count = 0; (count < TEST_PRIME_COUNT2) && (result == 1); count++)
    { 
 		ulong bits = z_randint(FLINT_BITS/2 - 2) + 2;
@@ -1777,7 +1769,6 @@ int test_z_isprobab_prime_BPSW()
 #define PRIME_COUNT2 100000
 	
 	ulong comp = 0;
-	ulong count;
 	for (count = 0; (count < PRIME_COUNT2) && (result == 1); count++)
    { 
 		ulong bits = z_randint(FLINT_BITS/2 - 2) + 2;
@@ -1826,7 +1817,6 @@ int test_z_miller_rabin_precomp()
 #define TEST_PRIME_COUNT3 100000
 	
 	ulong comp = 0;
-	ulong count;
 	for (count = 0; (count < TEST_PRIME_COUNT3) && (result == 1); count++)
    { 
 		ulong bits = z_randint(FLINT_BITS/2 - 2) + 2;
@@ -1873,7 +1863,6 @@ int test_z_isprime()
       result = (z_isprime(res));
    }  
 
-	unsigned long count;
 	for (count = 0; (count < 10000) && (result == 1); count++)
    { 
 	  unsigned long bits = z_randint(FLINT_BITS-2)+2;
@@ -1893,7 +1882,6 @@ int test_z_isprime()
 #define TEST_PRIME_COUNT4 100000
 	
 	ulong comp = 0;
-	ulong count;
 	for (count = 0; (count < TEST_PRIME_COUNT4) && (result == 1); count++)
    { 
 		ulong bits = z_randint(FLINT_BITS/2 - 2) + 2;
@@ -1939,7 +1927,6 @@ int test_z_isprime_precomp()
 	   if (!result) printf("Error: %ld is reported composite!\n", res);
    }
    
-   unsigned long count;
    for (count = 0; (count < 10000) && (result == 1); count++)
    { 
 	  unsigned long bits = z_randint(FLINT_BITS-2)+2;
@@ -1961,7 +1948,6 @@ int test_z_isprime_precomp()
 #define TEST_PRIME_COUNT5 100000
 	
 	ulong comp = 0;
-	ulong count;
 	for (count = 0; (count < TEST_PRIME_COUNT5) && (result == 1); count++)
    { 
 		ulong bits = z_randint(FLINT_BITS/2 - 2) + 2;
@@ -2012,7 +1998,6 @@ int test_z_isprime_pocklington()
 		}
    }  
    
-	unsigned long count;
 	for (count = 0; (count < 100000L) && (result == 1); count++)
    { 
 	  unsigned long bits = z_randint((FLINT_BITS-1)/2 - 1)+1;
@@ -2087,7 +2072,6 @@ int test_z_isprime_nm1()
 		}
    }  
    
-	unsigned long count;
 	for (count = 0; (count < 100000L) && (result == 1); count++)
    { 
 	  unsigned long bits = z_randint((FLINT_BITS-1)/2 - 1)+1;
@@ -2159,7 +2143,6 @@ int test_z_remove()
       }
 
 		p = 2;
-	   unsigned long count;
 	   for (count = 0; (count < 200) && (result == 1); count++)
 		{
          result &= ((n % p) != 0);
@@ -2206,7 +2189,6 @@ int test_z_remove_precomp()
       }
 
 		p = 2;
-	   unsigned long count;
 	   for (count = 0; (count < 200) && (result == 1); count++)
 		{
          result &= ((n % p) != 0);
@@ -2287,7 +2269,6 @@ int test_z_issquarefree()
       result = !z_issquarefree(n, 1);
    }  
 
-   unsigned long count;
    for (count = 0; (count < 100000) && (result == 1); count++)
    { 
       n = 1;
@@ -2311,7 +2292,6 @@ int test_z_issquarefree()
       result = z_issquarefree(n, 1);
    }  
    
-   unsigned long count;
    for (count = 0; (count < 1000) && (result == 1); count++)
    { 
       n1 = z_randprime(FLINT_BITS/3, 0);
@@ -2372,7 +2352,8 @@ int test_z_factor_trial()
    return result;
 }
 
-/*int test_z_factor_tinyQS()
+#ifndef __TINYC__
+int test_z_factor_tinyQS()
 {
    unsigned long n, factor, bits;
 
@@ -2404,7 +2385,8 @@ int test_z_factor_trial()
    }  
    
    return result;
-}*/
+}
+#endif
 
 int test_z_factor_HOLF()
 {
@@ -2558,7 +2540,6 @@ int test_z_factor_partial()
 
    }  
    
-   int i;
    for (i = 0; (i < 10000) && (result == 1); i++)
    {
 	  do {

@@ -38,8 +38,9 @@
 #include "longlong_wrapper.h"
 #include "longlong.h"
 #include "memory-manager.h"
+#ifndef __TINYC__
 #include "QS/tinyQS.h"
-
+#endif
 
 #define MIN_HOLF 0xFFFFFUL
 #define MAX_HOLF 0x1FFFFFFFFFUL
@@ -1992,9 +1993,9 @@ void z_compute_extended_primes()
     unsigned int p,q,oldq = 0,n_found=0;
     unsigned int i, j;
 
-    ulong j;
-    for (j = 0; j < ETF_SIEVE_SIZE; j++)
-       sieve[j] = 1;
+    ulong k;
+    for (k = 0; k < ETF_SIEVE_SIZE; k++)
+       sieve[k] = 1;
 
     for (i = 1; z_primes[i]*z_primes[i] < 1000; i++) /* skip 2 */
     {
@@ -2029,7 +2030,7 @@ void z_compute_extended_primes()
             q+=p;
         }
     }
-    unsigned int j;
+    
     for (j = oldq; j < ETF_NUM_PRIMES; j++) 
     {
         if (sieve[j]) 
@@ -2461,7 +2462,8 @@ unsigned long z_factor_HOLF(unsigned long n,unsigned long iters)
 }
 
 
-/*unsigned long z_factor_tinyQS(unsigned long n) {
+#ifndef __TINYC__
+unsigned long z_factor_tinyQS(unsigned long n) {
     F_mpz_factor_t factors;
     mpz_t N;
     unsigned long factor;
@@ -2476,7 +2478,6 @@ unsigned long z_factor_HOLF(unsigned long n,unsigned long iters)
     if (factor == 1L)
         factor = mpz_get_ui(factors.fact[0]);
     
-    int i;
     for(i=0;i<64;i++)
         mpz_clear(factors.fact[i]);
     free(factors.fact);
@@ -2484,7 +2485,7 @@ unsigned long z_factor_HOLF(unsigned long n,unsigned long iters)
 	 
     return factor;
 }
-*/
+#endif
 
 
 /*
@@ -2554,8 +2555,8 @@ void z_factor(factor_t * factors, unsigned long n, int proved)
                     (cofactor = z_factor_HOLF(factor,HOLF_ITERS))
                  ) ||
                  (cofactor = z_factor_SQUFOF(factor)) ||
-#if FLINT_BITS == 64
-                 //( cofactor = z_factor_tinyQS(factor) ) ||
+#if FLINT_BITS == 64 && !defined (__TINYC__)
+                 ( cofactor = z_factor_tinyQS(factor) ) ||
 #endif
                  ( cofactor = z_factor_trial_extended(factor) ) 
               )

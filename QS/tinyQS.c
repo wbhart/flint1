@@ -87,7 +87,6 @@ static inline void tiny_square_root(mpz_t X, mpz_t Y, QS_t * qs_inf, linalg_t * 
       }
    }
 
-   unsigned long i;
    for (i = 0; i < num_primes; i++)
    {
       if (prime_count[i]) 

@@ -469,7 +469,6 @@ ulong zmod_mat_row_reduce_gauss_jordan(zmod_mat_t mat)
 			   coeff = zmod_mat_get_coeff_ui(mat, u, j);
 			   if (coeff) zmod_mat_row_scalar_submul_right(mat, u, i, coeff, j);
 			}
-			ulong u;
 			for (u = i + 1; u < rows; u++)
 			{
 			   coeff = zmod_mat_get_coeff_ui(mat, u, j);

@@ -41,9 +41,8 @@ mpfr_t ** mpfr_mat_init(int d, int n)
 	long i;
 	for (i = 1; i < d; i++) B[i] = B[i-1] + n;
 
-   long i;
+   long j;
    for (i = 0; i < d; i++)
-      long j;
       for (j = 0; j < n; j++)
          mpfr_init(B[i][j]);
 
@@ -52,9 +51,8 @@ mpfr_t ** mpfr_mat_init(int d, int n)
 
 void mpfr_mat_clear(mpfr_t ** B, int d, int n)
 {
-   long i;
+   long i, j;
    for (i = 0; i < d; i++)
-      long j;
       for (j = 0; j < n; j++)
          mpfr_clear(B[i][j]);
 

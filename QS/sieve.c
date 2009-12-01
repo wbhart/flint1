@@ -190,7 +190,7 @@ unsigned long tiny_evaluate_candidate(linalg_t * la_inf, QS_t * qs_inf, poly_t *
 #endif
    } else small[0] = 0;
    
-   unsigned long j;
+   
    for (j = 2; j < SMALL_PRIMES; j++) // pull out small primes
    {
       prime = factor_base[j].p;
