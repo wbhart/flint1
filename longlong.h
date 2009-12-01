@@ -205,7 +205,9 @@ MA 02110-1301, USA. */
 
 /* clz_tab is required in all configurations, since mpn/alpha/cntlz.asm
    always goes into libgmp.so, even when not actually used.  */
+#ifndef __TINYC__
 #define COUNT_LEADING_ZEROS_NEED_CLZ_TAB
+#endif
 
 #if defined (__GNUC__) && HAVE_HOST_CPU_alpha_CIX
 #define count_leading_zeros(COUNT,X) \
@@ -349,13 +351,15 @@ long __MPN(count_leading_zeros) _PROTO ((UDItype));
 
 /* We sometimes need to clobber "cc" with gcc2, but that would not be
    understood by gcc1.  Use cpp to avoid major code duplication.  */
-#if defined (__GNUC__) && __GNUC__ < 2
+#if defined (__GNUC__)
+#if __GNUC__ < 2
 #define __CLOBBER_CC
 #define __AND_CLOBBER_CC
 #else /* __GNUC__ >= 2 */
 #define __CLOBBER_CC : "cc"
 #define __AND_CLOBBER_CC , "cc"
 #endif /* __GNUC__ < 2 */
+#endif
 
 #if (defined (__a29k__) || defined (_AM29K)) && W_TYPE_SIZE == 32
 #define add_ssaaaa(sh, sl, ah, al, bh, bl) \
@@ -655,7 +659,8 @@ extern UWtype __MPN(udiv_qrnnd) _PROTO ((UWtype *, UWtype, UWtype, UWtype));
 #endif
 
 #if (defined (__i386__) || defined (__i486__)) && W_TYPE_SIZE == 32
-/*#define add_ssaaaa(sh, sl, ah, al, bh, bl) \
+#ifndef __TINYC__ // tcc can't assemble these two for some reason
+#define add_ssaaaa(sh, sl, ah, al, bh, bl) \
   __asm__ ("addl %5,%k1\n\tadcl %3,%k0"					\
 	   : "=r" (sh), "=&r" (sl)					\
 	   : "0"  ((USItype)(ah)), "g" ((USItype)(bh)),			\
@@ -665,13 +670,13 @@ extern UWtype __MPN(udiv_qrnnd) _PROTO ((UWtype *, UWtype, UWtype, UWtype));
 	   : "=r" (sh), "=&r" (sl)					\
 	   : "0" ((USItype)(ah)), "g" ((USItype)(bh)),			\
 	     "1" ((USItype)(al)), "g" ((USItype)(bl)))
-*/
+#endif // __TINYC__
 #define umul_ppmm(w1, w0, u, v) \
   __asm__ ("mull %3"							\
 	   : "=a" (w0), "=d" (w1)					\
 	   : "%0" ((USItype)(u)), "rm" ((USItype)(v)))
-#define udiv_qrnnd(q, r, n1, n0, dx) \
-  __asm__ ("divl %4"		     	\
+#define udiv_qrnnd(q, r, n1, n0, dx) /* d renamed to dx avoiding "=d" */\
+  __asm__ ("divl %4"		     /* stringification in K&R C */	\
 	   : "=a" (q), "=d" (r)						\
 	   : "0" ((USItype)(n0)), "1" ((USItype)(n1)), "rm" ((USItype)(dx)))
 
@@ -701,7 +706,22 @@ extern UWtype __MPN(udiv_qrnnd) _PROTO ((UWtype *, UWtype, UWtype, UWtype));
    constant could be folded into __clz_tab[], but it doesn't seem worth
    making a different table just for that.  */
 
-
+#define count_leading_zeros(c,n)					\
+  do {									\
+    USItype  __n = (n);							\
+    USItype  __shift;							\
+    __asm__ ("cmpl  $0x1000000, %1\n"					\
+	     "sbbl  %0, %0\n"						\
+	     "cmpl  $0x10000, %1\n"					\
+	     "sbbl  $0, %0\n"						\
+	     "cmpl  $0x100, %1\n"					\
+	     "sbbl  $0, %0\n"						\
+	     : "=&r" (__shift) : "r"  (__n));				\
+    __shift = __shift*8 + 24 + 1;					\
+    (c) = 32 + 1 - __shift - __clz_tab[__n >> __shift];			\
+  } while (0)
+#define COUNT_LEADING_ZEROS_NEED_CLZ_TAB
+#define COUNT_LEADING_ZEROS_0   31   /* n==0 indistinguishable from n==1 */
 #else /* ! pentiummmx || LONGLONG_STANDALONE */
 /* The following should be a fixed 14 cycles or so.  Some scheduling
    opportunities should be available between the float load/store too.  This
@@ -1772,6 +1792,34 @@ extern mp_limb_t __gmpn_udiv_w_sdiv(mp_limb_t * rp, mp_limb_t a1, mp_limb_t a0, 
 #if !defined (udiv_qrnnd)
 #define UDIV_NEEDS_NORMALIZATION 1
 #define udiv_qrnnd __udiv_qrnnd_c
+#endif
+
+#if !defined (count_leading_zeros) && !defined (__TINYC__)
+#define count_leading_zeros(count, x) \
+  do {									\
+    UWtype __xr = (x);							\
+    UWtype __a;								\
+									\
+    if (W_TYPE_SIZE == 32)						\
+      {									\
+	__a = __xr < ((UWtype) 1 << 2*__BITS4)				\
+	  ? (__xr < ((UWtype) 1 << __BITS4) ? 1 : __BITS4 + 1)		\
+	  : (__xr < ((UWtype) 1 << 3*__BITS4) ? 2*__BITS4 + 1		\
+	  : 3*__BITS4 + 1);						\
+      }									\
+    else								\
+      {									\
+	for (__a = W_TYPE_SIZE - 8; __a > 0; __a -= 8)			\
+	  if (((__xr >> __a) & 0xff) != 0)				\
+	    break;							\
+	++__a;								\
+      }									\
+									\
+    (count) = W_TYPE_SIZE + 1 - __a - __clz_tab[__xr >> __a];		\
+  } while (0)
+/* This version gives a well-defined value for zero. */
+#define COUNT_LEADING_ZEROS_0 (W_TYPE_SIZE - 1)
+#define COUNT_LEADING_ZEROS_NEED_CLZ_TAB
 #endif
 
 /* clz_tab needed by mpn/x86/pentium/mod_1.asm in a fat binary */

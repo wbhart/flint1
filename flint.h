@@ -158,6 +158,7 @@ Cache size in bytes.
    a = __builtin_ctzl(b);
 #endif
 #else
+#ifdef __TINYC__
 #define count_lead_zeros(c,n) \
   do { \
     union { \
@@ -169,6 +170,10 @@ Cache size in bytes.
     (c) = 0x3FF + 31 - (__u.a[1] >> 20); \
    } while (0)
 #define COUNT_LEADING_ZEROS_0   (0x3FF + 31)^M
+#else
+#define count_lead_zeros(a, b) \
+  count_leading_zeros(a, b)
+#endif // __TINYCC__
 #define count_trail_zeros(a, b) \
   count_trailing_zeros(a, b)
 #endif
