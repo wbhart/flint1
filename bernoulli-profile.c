@@ -511,7 +511,8 @@ This is a helper function used by the other sampler functions below.
 //    
 //    prof_start();
 // 
-//    for (unsigned long i = 0; i < count; i++)
+//    unsigned long i;
+    for (i = 0; i < count; i++)
 //       ZmodF_mul_info_mul(info, x3, x1, x2);
 // 
 //    prof_stop();
@@ -537,7 +538,8 @@ This is a helper function used by the other sampler functions below.
 //    
 //    prof_start();
 // 
-//    for (unsigned long i = 0; i < count; i++)
+//    unsigned long i;
+    for (i = 0; i < count; i++)
 //       ZmodF_mul_info_mul(info, x3, x1, x1);
 // 
 //    prof_stop();
@@ -588,7 +590,8 @@ void profDriver_bernoulli_mpz(char* params)
 
    prof1d_set_sampler(sample_bernoulli_mpz);
    
-   for (unsigned long i = 0; i < n; i++)
+   unsigned long i;
+   for (i = 0; i < n; i++)
    {
       p = z_nextprime(p);
       prof1d_sample(p, NULL);
@@ -637,7 +640,8 @@ void profDriver_bernoulli_fmpz(char* params)
 
    prof1d_set_sampler(sample_bernoulli_fmpz);
    
-   for (unsigned long i = 0; i < n; i++)
+   unsigned long i;
+   for (i = 0; i < n; i++)
    {
       p = z_nextprime(p);
       prof1d_sample(p, NULL);
@@ -686,7 +690,8 @@ void profDriver_bernoulli_zmod(char* params)
 
    prof1d_set_sampler(sample_bernoulli_zmod);
    
-   for (unsigned long i = 0; i < n; i++)
+   unsigned long i;
+   for (i = 0; i < n; i++)
    {
       p = z_nextprime(p);
       prof1d_sample(p, NULL);
@@ -732,7 +737,8 @@ void profDriver_bernoulli_zmod(char* params)
 //    while (n_min % 3)
 //       n_min++;
 //    
-//    for (unsigned long n = n_min; n <= n_max; n += n_skip)
+//    unsigned long n;
+    for (n = n_min; n <= n_max; n += n_skip)
 //    {
 //       if (n % 3 == 0)
 //          prof1d_sample(n, NULL);
@@ -773,7 +779,8 @@ void profDriver_bernoulli_zmod(char* params)
 // 
 //    prof1d_set_sampler(sample_ZmodF_mul_auto);
 //    
-//    for (unsigned long n = n_min; n <= n_max; n += n_skip)
+//    unsigned long n;
+    for (n = n_min; n <= n_max; n += n_skip)
 //       prof1d_sample(n, NULL);
 // }
 
@@ -811,7 +818,8 @@ void profDriver_bernoulli_zmod(char* params)
 // 
 //    prof1d_set_sampler(sample_ZmodF_sqr_plain);
 //    
-//    for (unsigned long n = n_min; n <= n_max; n += n_skip)
+//    unsigned long n;
+    for (n = n_min; n <= n_max; n += n_skip)
 //       prof1d_sample(n, NULL);
 // }
 
@@ -855,7 +863,8 @@ void profDriver_bernoulli_zmod(char* params)
 //    while (n_min % 3)
 //       n_min++;
 //    
-//    for (unsigned long n = n_min; n <= n_max; n += n_skip)
+//    unsigned long n;
+    for (n = n_min; n <= n_max; n += n_skip)
 //    {
 //       if (n % 3 == 0)
 //          prof1d_sample(n, NULL);
@@ -896,7 +905,8 @@ void profDriver_bernoulli_zmod(char* params)
 // 
 //    prof1d_set_sampler(sample_ZmodF_sqr_auto);
 //    
-//    for (unsigned long n = n_min; n <= n_max; n += n_skip)
+//    unsigned long n;
+    for (n = n_min; n <= n_max; n += n_skip)
 //       prof1d_sample(n, NULL);
 // }
 

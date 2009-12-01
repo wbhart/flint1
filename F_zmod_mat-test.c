@@ -60,10 +60,12 @@ void randmat(F_zmod_mat_t mat)
               
    pv_iter_s iter;
 	
-	for (long i = 0; i < rows; i++)
+	long i;
+	for (i = 0; i < rows; i++)
    {
 	  PV_ITER_INIT(iter, mat->arr, mat->rows[i]);
-	  for (ulong j = 0; j < cols; j++)
+	  ulong j;
+	  for (j = 0; j < cols; j++)
 		  PV_SET_NEXT(iter, z_randint(p));
    }
 } 
@@ -78,7 +80,8 @@ int test_F_zmod_mat_convert()
 	F_mpz mod[1];
 	F_mpz_init(mod);
 
-   for (unsigned long count1 = 0; (count1 < 1000) && (result == 1); count1++)
+   unsigned long count1;
+   for (count1 = 0; (count1 < 1000) && (result == 1); count1++)
    {
       bits = z_randint(FLINT_BITS - 2) + 2;
       
@@ -135,7 +138,8 @@ int test_F_zmod_mat_add()
    unsigned long bits;
    unsigned long modulus;
 
-   for (unsigned long count1 = 0; (count1 < 1000) && (result == 1); count1++)
+   unsigned long count1;
+   for (count1 = 0; (count1 < 1000) && (result == 1); count1++)
    {
       bits = z_randint(FLINT_BITS - 2) + 2;
       
@@ -189,7 +193,8 @@ int test_F_zmod_mat_sub()
    unsigned long bits;
    unsigned long modulus;
 
-   for (unsigned long count1 = 0; (count1 < 1000) && (result == 1); count1++)
+   unsigned long count1;
+   for (count1 = 0; (count1 < 1000) && (result == 1); count1++)
    {
       bits = z_randint(FLINT_BITS - 2) + 2;
       
@@ -244,7 +249,8 @@ int test_F_zmod_mat_neg()
    unsigned long bits;
    unsigned long modulus;
 
-   for (unsigned long count1 = 0; (count1 < 1000) && (result == 1); count1++)
+   unsigned long count1;
+   for (count1 = 0; (count1 < 1000) && (result == 1); count1++)
    {
       bits = z_randint(FLINT_BITS - 2) + 2;
       
@@ -297,7 +303,8 @@ int test_F_zmod_mat_mul_classical()
 	F_mpz mod[1];
 	F_mpz_init(mod);
 
-   for (unsigned long count1 = 0; (count1 < 1) && (result == 1); count1++)
+   unsigned long count1;
+   for (count1 = 0; (count1 < 1) && (result == 1); count1++)
    {
       bits = 8;//z_randint(FLINT_BITS - 2) + 2;
       
@@ -328,7 +335,8 @@ int test_F_zmod_mat_mul_classical()
 	   randmat(mat1);
 	   randmat(mat2);
 
-		for (ulong i = 0; i < 100; i++) F_zmod_mat_mul_classical(res, mat1, mat2);
+		ulong i;
+		for (i = 0; i < 100; i++) F_zmod_mat_mul_classical(res, mat1, mat2);
 
 		/*F_zmod_mat_to_F_mpzmod_mat(mmat1, mat1);
       F_zmod_mat_to_F_mpzmod_mat(mmat2, mat2);
@@ -381,7 +389,8 @@ int test_F_zmod_mat_mul_strassen()
 	F_mpz mod[1];
 	F_mpz_init(mod);
 
-   for (unsigned long count1 = 0; (count1 < 1) && (result == 1); count1++)
+   unsigned long count1;
+   for (count1 = 0; (count1 < 1) && (result == 1); count1++)
    {
       bits = 8;//z_randint(FLINT_BITS - 2) + 2;
       
@@ -411,7 +420,8 @@ int test_F_zmod_mat_mul_strassen()
 	   randmat(mat1);
 	   randmat(mat2);
 
-		for (ulong i = 0; i < 100; i++) F_zmod_mat_mul_strassen(res, mat1, mat2);
+		ulong i;
+		for (i = 0; i < 100; i++) F_zmod_mat_mul_strassen(res, mat1, mat2);
 
 		/*F_zmod_mat_to_F_mpzmod_mat(mmat1, mat1);
       F_zmod_mat_to_F_mpzmod_mat(mmat2, mat2);

@@ -633,7 +633,8 @@ unsigned long z_sqrtmod(unsigned long a, unsigned long p)
                bpow = z_mulmod2_precomp(bpow, bpow, p, pinv);
            }
            gpow = g;
-           for (int i = 1; i < r-m; i++)
+           int i;
+           for (i = 1; i < r-m; i++)
            {
                gpow = z_mulmod2_precomp(gpow, gpow, p, pinv);
            }
@@ -733,7 +734,8 @@ unsigned long z_pow(unsigned long a, unsigned long exp)
    
    unsigned long power = a;
 
-   for (unsigned long i = 1; i < exp; i++)
+   unsigned long i;
+   for (i = 1; i < exp; i++)
       power *= a;
 
    return power;
@@ -813,7 +815,8 @@ int z_miller_rabin_precomp(unsigned long n, double ninv, unsigned long reps)
       d>>=1UL; 
    } while ((d&1UL) == 0);
       
-   for (unsigned long i = 0; i < reps; i++)
+   unsigned long i;
+   for (i = 0; i < reps; i++)
    {
       a = z_randint(n-2)+1UL;
       t = d;
@@ -1756,7 +1759,8 @@ int z_issquarefree_trial(unsigned long n)
       if ((n&3) == 0) return 0;
       else n = (n>>1);
    }
-   for (unsigned long i = 1; (i < SQFREE_TF_PRIMES_LIMIT) && (z_primes[i]*z_primes[i] <= n); i++)
+   unsigned long i;
+   for (i = 1; (i < SQFREE_TF_PRIMES_LIMIT) && (z_primes[i]*z_primes[i] <= n); i++)
    {
       quot = n/z_primes[i];
       rem = n - quot*z_primes[i];
@@ -1783,7 +1787,8 @@ int z_issquarefree(unsigned long n, int proved)
 		factor_t factors;
 		
 		z_factor(&factors, n, proved);
-		for (ulong i = 0; i < factors.num; i++)
+		ulong i;
+		for (i = 0; i < factors.num; i++)
 		{
 			if ((factors.exp[i] & 1) == 0) return 0;
 		}
@@ -1930,7 +1935,8 @@ unsigned long _z_factor_trial(factor_t * factors, unsigned long n, unsigned long
     int num_factors = 0;
     int exp;
 
-    for (unsigned long i = 0; (i < cutoff) && (z_primes[i]*z_primes[i] <= n); i++)
+    unsigned long i;
+    for (i = 0; (i < cutoff) && (z_primes[i]*z_primes[i] <= n); i++)
     {
         exp = z_remove(&n, z_primes[i]);
         if (exp)
@@ -1984,7 +1990,8 @@ void z_compute_extended_primes()
     unsigned int p,q,oldq = 0,n_found=0;
     unsigned int i, j;
 
-    for (ulong j = 0; j < ETF_SIEVE_SIZE; j++)
+    ulong j;
+    for (j = 0; j < ETF_SIEVE_SIZE; j++)
        sieve[j] = 1;
 
     for (i = 1; z_primes[i]*z_primes[i] < 1000; i++) /* skip 2 */
@@ -2062,7 +2069,8 @@ unsigned long z_factor_trial_extended(unsigned long n)
 {
     z_initialize_extended_primes();
 
-    for (unsigned long i = 0; (i < ETF_NUM_PRIMES) && (z_extended_primes[i]*z_extended_primes[i] <= n); i++)
+    unsigned long i;
+    for (i = 0; (i < ETF_NUM_PRIMES) && (z_extended_primes[i]*z_extended_primes[i] <= n); i++)
     {
         if (n%z_extended_primes[i] == 0UL)
             return z_extended_primes[i];
@@ -2088,7 +2096,8 @@ unsigned long z_factor_partial_trial(factor_t * factors, unsigned long * prod, u
    int exp;
    *prod = 1;
    
-   for (unsigned long i = 0; (i < TF_CUTOFF) && ((z_primes[i]-1)*(z_primes[i]-1) <= n); i++)
+   unsigned long i;
+   for (i = 0; (i < TF_CUTOFF) && ((z_primes[i]-1)*(z_primes[i]-1) <= n); i++)
    {
       exp = z_remove(&n, z_primes[i]);
       if (exp)

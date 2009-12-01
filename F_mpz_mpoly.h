@@ -188,7 +188,8 @@ void _F_mpz_mpoly_truncate(F_mpz_mpoly_t poly, const ulong length)
 {
 	if (poly->length > length) // only truncate if necessary
    {
-      for (ulong i = length; i < poly->length; i++)
+      ulong i;
+      for (i = length; i < poly->length; i++)
 			_F_mpz_demote(poly->coeffs + i);
 		poly->length = length;
    }  

@@ -530,7 +530,8 @@ int test_mpz_poly_addsubneg()
    mpz_init(temp);
 
    mpz_poly_t poly[3];
-   for (unsigned long i = 0; i < 3; i++)
+   unsigned long i;
+   for (i = 0; i < 3; i++)
       mpz_poly_init(poly[i]);
 
    mpz_t coeffs[3][MAX];
@@ -557,7 +558,8 @@ int test_mpz_poly_addsubneg()
          for (i = 0; i < 3; i++)
          {
             poly[i]->length = 0;
-            for (unsigned long j = 0; j < MAX; j++)
+            unsigned long j;
+            for (j = 0; j < MAX; j++)
                mpz_poly_set_coeff(poly[i], j, coeffs[i][j]);
          }
 
@@ -820,21 +822,27 @@ int test__mpz_poly_mul_kara_recursive()
    mpz_poly_init(out);
    mpz_poly_init(scratch);
    
-   for (unsigned long len1 = 1; len1 <= 40 && success; len1++)
-   for (unsigned long len2 = len1; len2 <= 40 && success; len2++)
-   for (unsigned long crossover = 0; crossover <= 6; crossover++)
-   for (unsigned long trial = 0; trial < 3 && success; trial++)
+   unsigned long len1;
+   for (len1 = 1; len1 <= 40 && success; len1++)
+   unsigned long len2;
+   for (len2 = len1; len2 <= 40 && success; len2++)
+   unsigned long crossover;
+   for (crossover = 0; crossover <= 6; crossover++)
+   unsigned long trial;
+   for (trial = 0; trial < 3 && success; trial++)
    {
       mpz_poly_ensure_alloc(in1, len1);
       mpz_poly_ensure_alloc(in2, len2);
       mpz_poly_ensure_alloc(out, len1 + len2 - 1);
       mpz_poly_ensure_alloc(scratch, len1 + len2);
       
-      for (unsigned long i = 0; i < len1; i++)
+      unsigned long i;
+      for (i = 0; i < len1; i++)
          mpz_urandomb(in1->coeffs[i], randstate, 300);
       in1->length = len1;
 
-      for (unsigned long i = 0; i < len2; i++)
+      unsigned long i;
+      for (i = 0; i < len2; i++)
          mpz_urandomb(in2->coeffs[i], randstate, 300);
       in2->length = len2;
       
@@ -872,20 +880,25 @@ int test_mpz_poly_mul_karatsuba()
    mpz_poly_init(correct);
    mpz_poly_init(out);
 
-   for (unsigned long len1 = 0; len1 <= 32 && success; len1++)
-   for (unsigned long len2 = 0; len2 <= 32 && success; len2++)
-   for (unsigned long trial = 0; trial < 15 && success; trial++)
+   unsigned long len1;
+   for (len1 = 0; len1 <= 32 && success; len1++)
+   unsigned long len2;
+   for (len2 = 0; len2 <= 32 && success; len2++)
+   unsigned long trial;
+   for (trial = 0; trial < 15 && success; trial++)
    {
       mpz_poly_zero(in1);
       mpz_poly_zero(in2);
    
-      for (unsigned long i = 0; i < len1; i++)
+      unsigned long i;
+      for (i = 0; i < len1; i++)
       {
          mpz_urandomb(x, randstate, 300);
          mpz_poly_set_coeff(in1, i, x);
       }
 
-      for (unsigned long i = 0; i < len2; i++)
+      unsigned long i;
+      for (i = 0; i < len2; i++)
       {
          mpz_urandomb(x, randstate, 300);
          mpz_poly_set_coeff(in2, i, x);
@@ -926,7 +939,8 @@ int test_mpz_poly_mul_naive_KS()
    unsigned long max_degree = 10;
    unsigned long max_bitsize = 10;
    mpz_poly_t poly[4];
-   for (unsigned long i = 0; i < 4; i++)
+   unsigned long i;
+   for (i = 0; i < 4; i++)
       mpz_poly_init2(poly[i], max_degree*2 + 1);
    mpz_t temp;
    mpz_init(temp);
@@ -938,13 +952,16 @@ int test_mpz_poly_mul_naive_KS()
       for (degree[1] = 1; degree[1] <= max_degree; degree[1]++)
          for (bitsize[0] = 1; bitsize[0] <= max_bitsize; bitsize[0]++)
             for (bitsize[1] = 1; bitsize[1] <= max_bitsize; bitsize[1]++)
-               for (unsigned long trial = 0; trial < 10; trial++)
+               unsigned long trial;
+               for (trial = 0; trial < 10; trial++)
                {
                   // generate random polys
-                  for (unsigned long j = 0; j < 2; j++)
+                  unsigned long j;
+                  for (j = 0; j < 2; j++)
                   {
                      mpz_poly_zero(poly[j]);
-                     for (unsigned long i = 0; i < degree[j]; i++)
+                     unsigned long i;
+                     for (i = 0; i < degree[j]; i++)
                      {
                         unsigned long bits = gmp_urandomm_ui(
                                        randstate, bitsize[j]+1);
@@ -962,7 +979,8 @@ int test_mpz_poly_mul_naive_KS()
                   success = success && mpz_poly_equal(poly[2], poly[3]);
                }
 
-   for (unsigned long i = 0; i < 4; i++)
+   unsigned long i;
+   for (i = 0; i < 4; i++)
       mpz_poly_clear(poly[i]);
    mpz_clear(temp);
 
@@ -989,17 +1007,21 @@ int test_mpz_poly_monic_inverse()
    mpz_poly_init(poly1);
    mpz_poly_init(poly2);
 
-   for (unsigned long deg1 = 2; deg1 <= 10; deg1++)
+   unsigned long deg1;
+   for (deg1 = 2; deg1 <= 10; deg1++)
    {
-      for (unsigned long trial = 0; trial < 20; trial++)
+      unsigned long trial;
+      for (trial = 0; trial < 20; trial++)
       {
          // generate random input poly
          mpz_poly_set_coeff_ui(poly1, deg1, 1);
-         for (unsigned long i = 0; i < deg1; i++)
+         unsigned long i;
+         for (i = 0; i < deg1; i++)
             mpz_poly_set_coeff_si(poly1, i, gmp_urandomb_ui(randstate, 10) - 512);
       
          // try computing inverses to various lengths
-         for (unsigned long deg2 = deg1; deg2 <= 50; deg2++)
+         unsigned long deg2;
+         for (deg2 = deg1; deg2 <= 50; deg2++)
          {
             mpz_poly_t poly3;
             mpz_poly_init(poly3);
@@ -1012,7 +1034,8 @@ int test_mpz_poly_monic_inverse()
                // check correctness by multiplying back together
                mpz_poly_mul(poly2, poly1, poly3);
                success = success && !mpz_cmp_ui(poly2->coeffs[deg1+deg2], 1);
-               for (unsigned long i = 0; i < deg2; i++)
+               unsigned long i;
+               for (i = 0; i < deg2; i++)
                   success = success && !mpz_sgn(poly2->coeffs[deg1+i]);
             }
             

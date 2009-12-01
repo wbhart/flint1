@@ -51,7 +51,8 @@ int test_fmpz_convert()
    mpz_init(num1);
    mpz_init(num2);
    
-   for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+   unsigned long i;
+   for (i = 0; (i < 100000) && (result == 1); i++)
    {
        bits = random_ulong(1000);
 #if DEBUG
@@ -87,7 +88,8 @@ int test_fmpz_size()
    mpz_init(num1);
    mpz_init(num2);
    
-   for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+   unsigned long i;
+   for (i = 0; (i < 100000) && (result == 1); i++)
    {
        bits = random_ulong(1000);
        fnum1 = fmpz_init(FLINT_MAX((long)(bits-1)/FLINT_BITS,0)+1);
@@ -118,7 +120,8 @@ int test_fmpz_bits()
    mpz_init(num1);
    mpz_init(num2);
    
-   for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+   unsigned long i;
+   for (i = 0; (i < 100000) && (result == 1); i++)
    {
        bits = random_ulong(1000);
        fnum1 = fmpz_init(FLINT_MAX((long)(bits-1)/FLINT_BITS,0)+1);
@@ -158,7 +161,8 @@ int test_fmpz_sgn()
    mpz_init(num1);
    mpz_init(num2);
    
-   for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+   unsigned long i;
+   for (i = 0; (i < 100000) && (result == 1); i++)
    {
        bits = random_ulong(1000);
        fnum1 = fmpz_init(FLINT_MAX((long)(bits-1)/FLINT_BITS,0)+1);
@@ -209,7 +213,8 @@ int test_fmpz_set_si()
    
    fmpz_clear(fnum1);
    
-   for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+   unsigned long i;
+   for (i = 0; (i < 100000) && (result == 1); i++)
    {
        bits = random_ulong(FLINT_BITS-1)+1;
        x = random_ulong(1L<<bits);
@@ -255,7 +260,8 @@ int test_fmpz_set_ui()
    
    fmpz_clear(fnum1);
    
-   for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+   unsigned long i;
+   for (i = 0; (i < 100000) && (result == 1); i++)
    {
        bits = random_ulong(FLINT_BITS-1)+1;
        x = random_ulong(1L<<bits);
@@ -287,7 +293,8 @@ int test_fmpz_set_equal()
    mpz_init(num1);
    mpz_init(num2);
    
-   for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+   unsigned long i;
+   for (i = 0; (i < 100000) && (result == 1); i++)
    {
        bits = random_ulong(1000);
        fnum1 = fmpz_init(FLINT_MAX((long)(bits-1)/FLINT_BITS,0)+1);
@@ -312,7 +319,8 @@ int test_fmpz_set_equal()
        fmpz_clear(fnum2);
    }
    
-   for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+   unsigned long i;
+   for (i = 0; (i < 100000) && (result == 1); i++)
    {
        bits = random_ulong(1000);
 
@@ -363,7 +371,8 @@ int test_fmpz_add()
    mpz_init(num3);
    mpz_init(num4);
       
-   for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+   unsigned long i;
+   for (i = 0; (i < 100000) && (result == 1); i++)
    {
        bits = random_ulong(1000);
 
@@ -419,7 +428,8 @@ int test_fmpz_sub()
    mpz_init(num3);
    mpz_init(num4);
       
-   for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+   unsigned long i;
+   for (i = 0; (i < 100000) && (result == 1); i++)
    {
        bits = random_ulong(1000);
 
@@ -475,7 +485,8 @@ int test_fmpz_mul()
    mpz_init(num3);
    mpz_init(num4);
       
-   for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+   unsigned long i;
+   for (i = 0; (i < 100000) && (result == 1); i++)
    {
        bits = random_ulong(1000);
 
@@ -531,7 +542,8 @@ int test___fmpz_mul()
    mpz_init(num3);
    mpz_init(num4);
       
-   for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+   unsigned long i;
+   for (i = 0; (i < 100000) && (result == 1); i++)
    {
        bits = random_ulong(1000);
 
@@ -588,7 +600,8 @@ int test_fmpz_addmul()
    mpz_init(num4);
    mpz_init(num5);
       
-   for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+   unsigned long i;
+   for (i = 0; (i < 100000) && (result == 1); i++)
    {
        bits = random_ulong(1000);
 
@@ -657,7 +670,8 @@ int test_fmpz_tdiv()
    mpz_init(num3);
    mpz_init(num4);
       
-   for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+   unsigned long i;
+   for (i = 0; (i < 100000) && (result == 1); i++)
    {
        bits = random_ulong(1000);
 
@@ -716,7 +730,8 @@ int test_fmpz_fdiv()
    mpz_init(num3);
    mpz_init(num4);
       
-   for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+   unsigned long i;
+   for (i = 0; (i < 100000) && (result == 1); i++)
    {
        bits = random_ulong(1000);
 
@@ -773,7 +788,8 @@ int test_fmpz_mod()
    mpz_init(num1);
    mpz_init(num2);
       
-   for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+   unsigned long i;
+   for (i = 0; (i < 100000) && (result == 1); i++)
    {
        bits = random_ulong(1000);
 
@@ -835,7 +851,8 @@ int test_fmpz_add_ui_inplace()
    mpz_init(num1);
    mpz_init(num2);
    
-   for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+   unsigned long i;
+   for (i = 0; (i < 100000) && (result == 1); i++)
    {
        bits = random_ulong(FLINT_BITS-1)+1;
        x = random_ulong(1L<<bits);
@@ -875,7 +892,8 @@ int test_fmpz_add_ui()
    mpz_init(num1);
    mpz_init(num2);
    
-   for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+   unsigned long i;
+   for (i = 0; (i < 100000) && (result == 1); i++)
    {
        bits = random_ulong(FLINT_BITS-1)+1;
        x = random_ulong(1L<<bits);
@@ -919,7 +937,8 @@ int test___fmpz_add_ui_inplace()
    mpz_init(num1);
    mpz_init(num2);
    
-   for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+   unsigned long i;
+   for (i = 0; (i < 100000) && (result == 1); i++)
    {
        bits = random_ulong(FLINT_BITS-1)+1;
        x = random_ulong(1L<<bits);
@@ -956,7 +975,8 @@ int test_fmpz_sub_ui_inplace()
    mpz_init(num1);
    mpz_init(num2);
    
-   for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+   unsigned long i;
+   for (i = 0; (i < 100000) && (result == 1); i++)
    {
        bits = random_ulong(FLINT_BITS-1)+1;
        x = random_ulong(1L<<bits);
@@ -996,7 +1016,8 @@ int test_fmpz_sub_ui()
    mpz_init(num1);
    mpz_init(num2);
    
-   for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+   unsigned long i;
+   for (i = 0; (i < 100000) && (result == 1); i++)
    {
        bits = random_ulong(FLINT_BITS-1)+1;
        x = random_ulong(1L<<bits);
@@ -1040,7 +1061,8 @@ int test_fmpz_mul_ui()
    mpz_init(num1);
    mpz_init(num2);
    
-   for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+   unsigned long i;
+   for (i = 0; (i < 100000) && (result == 1); i++)
    {
        bits = random_ulong(FLINT_BITS-1)+1;
        x = random_ulong(1L<<bits);
@@ -1082,7 +1104,8 @@ int test_fmpz_tdiv_ui()
    mpz_init(num1);
    mpz_init(num2);
    
-   for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+   unsigned long i;
+   for (i = 0; (i < 100000) && (result == 1); i++)
    {
        do
        {
@@ -1127,7 +1150,8 @@ int test_fmpz_mod_ui()
    mpz_init(num1);
    mpz_init(num2);
    
-   for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+   unsigned long i;
+   for (i = 0; (i < 100000) && (result == 1); i++)
    {
        do
        {
@@ -1176,7 +1200,8 @@ int test_fmpz_pow_ui()
    mpz_init(num1);
    mpz_init(num2);
    
-   for (unsigned long i = 0; (i < 10000) && (result == 1); i++)
+   unsigned long i;
+   for (i = 0; (i < 10000) && (result == 1); i++)
    {
        bits = random_ulong(10)+1;
        x = random_ulong(1L<<bits);
@@ -1218,7 +1243,8 @@ int test_fmpz_is_one()
    
    mpz_init(num1);
    
-   for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+   unsigned long i;
+   for (i = 0; (i < 100000) && (result == 1); i++)
    {
        bits = random_ulong(random_ulong(1000)+1);
        fnum1 = fmpz_init(FLINT_MAX((long)(bits-1), 0)/FLINT_BITS+1);
@@ -1253,7 +1279,8 @@ int test_fmpz_is_m1()
    
    mpz_init(num1);
    
-   for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+   unsigned long i;
+   for (i = 0; (i < 100000) && (result == 1); i++)
    {
        bits = random_ulong(random_ulong(1000)+1);
        fnum1 = fmpz_init(FLINT_MAX((long)(bits-1), 0)/FLINT_BITS+1);
@@ -1288,7 +1315,8 @@ int test_fmpz_is_zero()
    
    mpz_init(num1);
    
-   for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+   unsigned long i;
+   for (i = 0; (i < 100000) && (result == 1); i++)
    {
        bits = random_ulong(random_ulong(1000)+1);
        fnum1 = fmpz_init(FLINT_MAX((long)(bits-1), 0)/FLINT_BITS+1);
@@ -1323,7 +1351,8 @@ int test_fmpz_cmpabs()
    mpz_init(num1);
    mpz_init(num2);
       
-   for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+   unsigned long i;
+   for (i = 0; (i < 100000) && (result == 1); i++)
    {
        bits = random_ulong(1000);
 
@@ -1371,7 +1400,8 @@ int test___fmpz_normalise()
    mpz_init(num1);
    mpz_init(num2);
    
-   for (unsigned long i = 0; (i < 50000) && (result == 1); i++)
+   unsigned long i;
+   for (i = 0; (i < 50000) && (result == 1); i++)
    {
        limbs = random_ulong(1000);
        limbs2 = random_ulong(1000);
@@ -1382,7 +1412,8 @@ int test___fmpz_normalise()
 #endif
        mpz_to_fmpz(fnum1, num1);
        
-       for (unsigned long j = FLINT_ABS(fnum1[0])+1; j < limbs + limbs2 + 1; j++)
+       unsigned long j;
+       for (j = FLINT_ABS(fnum1[0])+1; j < limbs + limbs2 + 1; j++)
        {
           fnum1[j] = 0L;
        }
@@ -1411,7 +1442,8 @@ int test___fmpz_binomial_next()
    mpz_init(num1);
    mpz_init(num2);
    
-   for (unsigned long i = 0; (i < 10000) && (result == 1); i++)
+   unsigned long i;
+   for (i = 0; (i < 10000) && (result == 1); i++)
    {
        n = random_ulong(1000);
        m = random_ulong(n+1);
@@ -1419,7 +1451,8 @@ int test___fmpz_binomial_next()
        fnum1 = fmpz_init((long) FLINT_MAX(n-1, 0)/FLINT_BITS+2);
        
        fmpz_set_ui(fnum1, 1L);
-       for (long j = 1; j <= m; j++)
+       long j;
+       for (j = 1; j <= m; j++)
        {
           __fmpz_binomial_next(fnum1, fnum1, n, j);
           fmpz_check_normalisation(fnum1);
@@ -1448,7 +1481,8 @@ int test_fmpz_muldiv_2exp()
    mpz_init(num1);
    mpz_init(num2);
       
-   for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+   unsigned long i;
+   for (i = 0; (i < 100000) && (result == 1); i++)
    {
        bits = random_ulong(1000);
 
@@ -1496,7 +1530,8 @@ int test_fmpz_gcd()
    mpz_init(num2);
    mpz_init(num3);
       
-   for (unsigned long i = 0; (i < 10000) && (result == 1); i++)
+   unsigned long i;
+   for (i = 0; (i < 10000) && (result == 1); i++)
    {
        bits = random_ulong(1000)+1;
 
@@ -1552,7 +1587,8 @@ int test_fmpz_invert()
    mpz_init(num1);
    mpz_init(num2);
       
-   for (unsigned long i = 0; (i < 10000) && (result == 1); i++)
+   unsigned long i;
+   for (i = 0; (i < 10000) && (result == 1); i++)
    {
        bits = random_ulong(1000)+1;
 
@@ -1602,7 +1638,8 @@ int test_fmpz_CRT_ui_precomp()
    
    mpz_init(num1);
    
-   for (unsigned long i = 0; (i < 4000) && (result == 1); i++)
+   unsigned long i;
+   for (i = 0; (i < 4000) && (result == 1); i++)
    {
        bits2 = random_ulong(1000);
        fnum1 = fmpz_init((long) FLINT_MAX(bits2-1, 0)/FLINT_BITS+1);
@@ -1636,7 +1673,8 @@ int test_fmpz_CRT_ui_precomp()
        unsigned long c, r2;
        double pre;
 
-       for (unsigned long i = 1; i < num_primes; i++)
+       unsigned long i;
+       for (i = 1; i < num_primes; i++)
        {
           c = fmpz_mod_ui(modulus, primes[i]);
           c = z_invert(c, primes[i]);
@@ -1677,7 +1715,8 @@ int test_fmpz_CRT_ui2_precomp()
    
    mpz_init(num1);
    
-   for (unsigned long i = 0; (i < 4000) && (result == 1); i++)
+   unsigned long i;
+   for (i = 0; (i < 4000) && (result == 1); i++)
    {
        bits2 = random_ulong(1000);
        fnum1 = fmpz_init((long) FLINT_MAX(bits2-1, 0)/FLINT_BITS+1);
@@ -1711,7 +1750,8 @@ int test_fmpz_CRT_ui2_precomp()
        unsigned long c, r2;
        double pre;
 
-       for (unsigned long i = 1; i < num_primes; i++)
+       unsigned long i;
+       for (i = 1; i < num_primes; i++)
        {
           c = fmpz_mod_ui(modulus, primes[i]);
           c = z_invert(c, primes[i]);
@@ -1752,7 +1792,8 @@ int test_fmpz_sqrtrem()
    
    mpz_init(num1);
    
-   for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+   unsigned long i;
+   for (i = 0; (i < 100000) && (result == 1); i++)
    {
        bits = random_ulong(1000);
        fnum1 = fmpz_init(FLINT_MAX((long)(bits-1)/FLINT_BITS,0)+1);
@@ -1788,13 +1829,15 @@ int test_fmpz_comb_init_clear()
 {
    int result = 1;
       
-   for (unsigned long i = 0; (i < 100) && (result == 1); i++)
+   unsigned long i;
+   for (i = 0; (i < 100) && (result == 1); i++)
    {
       unsigned long n = random_ulong(10);
       unsigned long num_primes = (1L<<n);
       unsigned long * primes = (unsigned long *) flint_heap_alloc(num_primes);
       unsigned long p = z_nextprime((1UL<<(FLINT_BITS-1))-10000000L, 0);
-      for (unsigned long i = 0; i < num_primes; i++)
+      unsigned long i;
+      for (i = 0; i < num_primes; i++)
       {
 	      primes[i] = p;
 	      p = z_nextprime(p, 0);
@@ -1819,7 +1862,8 @@ int test_fmpz_multi_CRT_ui_unsigned()
    unsigned long * output, * output2;
       
    mpz_init(num1);
-   for (unsigned long i = 0; (i < 1000) && (result == 1); i++)
+   unsigned long i;
+   for (i = 0; (i < 1000) && (result == 1); i++)
    {
       unsigned long bits = random_ulong(300)+1;
 #if FLINT_BITS == 32
@@ -1833,7 +1877,8 @@ int test_fmpz_multi_CRT_ui_unsigned()
 #endif
       unsigned long * primes = (unsigned long *) flint_heap_alloc(num_primes);
       unsigned long prime = z_nextprime((1UL<<(FLINT_BITS-1))-10000000L, 0);
-      for (unsigned long j = 0; j < num_primes; j++)
+      unsigned long j;
+      for (j = 0; j < num_primes; j++)
       {
          primes[j] = prime;
          prime = z_nextprime(prime, 0);
@@ -1858,11 +1903,13 @@ int test_fmpz_multi_CRT_ui_unsigned()
       flint_heap_free(temp);
       fmpz_comb_temp_clear(comb_temp, comb);
 
-      for (unsigned long k = 0; k < num_primes; k++)
+      unsigned long k;
+      for (k = 0; k < num_primes; k++)
       {
          output2[k] = fmpz_mod_ui(input, primes[k]);
       }
-      for (unsigned long k = 0; k < num_primes; k++)
+      unsigned long k;
+      for (k = 0; k < num_primes; k++)
       {
          if (output[k] != output2[k]) result = 0;
       }
@@ -1888,7 +1935,8 @@ int test_fmpz_multi_CRT()
    ulong * primes = (unsigned long *) flint_heap_alloc(num_primes);
    ulong prime = 2;
    
-   for (ulong j = 0; j < num_primes; j++)
+   ulong j;
+   for (j = 0; j < num_primes; j++)
    {
       primes[j] = prime;
       prime = z_nextprime(prime, 0);
@@ -1903,7 +1951,8 @@ int test_fmpz_multi_CRT()
    fmpz_comb_init(comb, primes, num_primes);
    fmpz_t ** comb_temp = fmpz_comb_temp_init(comb);
    
-   for (ulong j = 0; j < num_primes; j++)
+   ulong j;
+   for (j = 0; j < num_primes; j++)
    {
       output[j] = j + 1;
    }
@@ -1913,7 +1962,8 @@ int test_fmpz_multi_CRT()
    fmpz_multi_CRT_ui_unsigned(temp, output, comb, comb_temp);
    fmpz_multi_mod_ui(input, temp, comb, comb_temp);
 
-   for (ulong i = 0; i < num_primes; i++)
+   ulong i;
+   for (i = 0; i < num_primes; i++)
    {
       result &= (input[i] == i + 1);
       if (!result)
@@ -1943,7 +1993,8 @@ int test_fmpz_multi_CRT_ui()
    unsigned long * output, * output2;
       
    mpz_init(num1);
-   for (unsigned long i = 0; (i < 1000) && (result == 1); i++)
+   unsigned long i;
+   for (i = 0; (i < 1000) && (result == 1); i++)
    {
       unsigned long bits = random_ulong(300)+1;
 #if FLINT_BITS == 32
@@ -1957,7 +2008,8 @@ int test_fmpz_multi_CRT_ui()
 #endif
       unsigned long * primes = (unsigned long *) flint_heap_alloc(num_primes);
       unsigned long prime = z_nextprime((1UL<<(FLINT_BITS-1))-10000000L, 0);
-      for (unsigned long j = 0; j < num_primes; j++)
+      unsigned long j;
+      for (j = 0; j < num_primes; j++)
       {
          primes[j] = prime;
          prime = z_nextprime(prime, 0);
@@ -1990,7 +2042,8 @@ int test_fmpz_multi_CRT_ui()
 
       flint_heap_free(temp);
 
-      for (unsigned long k = 0; k < num_primes; k++)
+      unsigned long k;
+      for (k = 0; k < num_primes; k++)
       {
          output2[k] = fmpz_mod_ui(input, primes[k]);
       }
@@ -2038,7 +2091,8 @@ int test_fmpz_mulmod()
     mpz_init(num4);
     mpz_init(num5);
 
-    for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+    unsigned long i;
+    for (i = 0; (i < 100000) && (result == 1); i++)
     {
         // modulus
         bits = random_ulong(1000) + 1;
@@ -2095,7 +2149,8 @@ int test_fmpz_divmod()
     mpz_init(num4);
     mpz_init(num5);
 
-    for (unsigned long i = 0; (i < 10000) && (result == 1); i++)
+    unsigned long i;
+    for (i = 0; (i < 10000) && (result == 1); i++)
     {
         // m
         bits = random_ulong(1000) + 1;
@@ -2160,7 +2215,8 @@ int test_fmpz_mul_trunc()
     mpz_init(num4);
     mpz_init(num5);
 
-    for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+    unsigned long i;
+    for (i = 0; (i < 100000) && (result == 1); i++)
     {
         bits = random_ulong(1000);
         mpz_rrandomb(num1, state, bits);
@@ -2222,7 +2278,8 @@ int test_fmpz_abs()
     mpz_init(num2);
     mpz_init(num3);
 
-    for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+    unsigned long i;
+    for (i = 0; (i < 100000) && (result == 1); i++)
     {
         bits = random_ulong(1000);
         mpz_rrandomb(num1, state, bits);
@@ -2265,7 +2322,8 @@ int test_fmpz_neg()
     mpz_init(num2);
     mpz_init(num3);
 
-    for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+    unsigned long i;
+    for (i = 0; (i < 100000) && (result == 1); i++)
     {
         bits = random_ulong(1000);
         mpz_rrandomb(num1, state, bits);
@@ -2307,7 +2365,8 @@ int test_fmpz_get_d()
    mpz_init(num1);
    mpz_init(num2);
    
-   for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+   unsigned long i;
+   for (i = 0; (i < 100000) && (result == 1); i++)
    {
        bits = z_randint(1000)+1;
        fnum = fmpz_init((bits - 1)/FLINT_BITS + 1);
@@ -2346,7 +2405,8 @@ int test_fmpz_divides()
    mpz_init(num2);
    mpz_init(num3);
       
-   for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+   unsigned long i;
+   for (i = 0; (i < 100000) && (result == 1); i++)
    {
        bits = random_ulong(1000)+1;
 
@@ -2394,7 +2454,8 @@ int test_fmpz_divides()
        fmpz_clear(fnum4);
    }
    
-   for (unsigned long i = 0; (i < 100000) && (result == 1); i++)
+   unsigned long i;
+   for (i = 0; (i < 100000) && (result == 1); i++)
    {
        bits = random_ulong(1000)+2;
 

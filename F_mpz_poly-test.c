@@ -57,7 +57,8 @@ void mpz_randpoly(mpz_poly_t pol, long length, ulong maxbits)
    mpz_poly_ensure_alloc(pol, length);
 	mpz_poly_zero(pol);
    
-   for (long i = 0; i < length; i++)
+   long i;
+   for (i = 0; i < length; i++)
    {
 #if VARY_BITS
        bits = z_randint(maxbits+1);
@@ -92,7 +93,8 @@ void mpz_randpoly_unsigned(mpz_poly_t pol, long length, ulong maxbits)
    mpz_poly_ensure_alloc(pol, length);
 	mpz_poly_zero(pol);
    
-   for (long i = 0; i < length; i++)
+   long i;
+   for (i = 0; i < length; i++)
    {
 #if VARY_BITS
        bits = z_randint(maxbits+1);
@@ -124,7 +126,8 @@ void mpz_randpoly_dense(mpz_poly_t pol, long length, ulong maxbits)
    mpz_poly_ensure_alloc(pol, length);
 	mpz_poly_zero(pol);
    
-   for (long i = 0; i < length; i++)
+   long i;
+   for (i = 0; i < length; i++)
    {
 #if VARY_BITS
        bits = z_randint(maxbits+1);
@@ -165,7 +168,8 @@ int test_F_mpz_poly_convert()
    mpz_poly_init(m_poly1); 
    mpz_poly_init(m_poly2); 
 
-   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 100000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly);
 
@@ -205,7 +209,8 @@ int test_F_mpz_poly_add()
    mpz_poly_init(res1); 
    mpz_poly_init(res2); 
 
-   for (ulong count1 = 0; (count1 < 20000*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 20000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -239,7 +244,8 @@ int test_F_mpz_poly_add()
    }
    
 	// test aliasing of res and poly1
-	for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
+	ulong count1;
+	for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(res);
@@ -271,7 +277,8 @@ int test_F_mpz_poly_add()
    }
    
    // test aliasing of res and poly2
-	for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
+	ulong count1;
+	for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(res);
@@ -322,7 +329,8 @@ int test_F_mpz_poly_sub()
    mpz_poly_init(res1); 
    mpz_poly_init(res2); 
 
-   for (ulong count1 = 0; (count1 < 20000*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 20000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -356,7 +364,8 @@ int test_F_mpz_poly_sub()
    }
    
 	// test aliasing of res and poly1
-	for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
+	ulong count1;
+	for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(res);
@@ -388,7 +397,8 @@ int test_F_mpz_poly_sub()
    }
    
    // test aliasing of res and poly2
-	for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
+	ulong count1;
+	for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(res);
@@ -435,7 +445,8 @@ int test_F_mpz_poly_getset_coeff_si()
    long coeff, coeff2;
    ulong coeff_bits, coeff_num;
    
-   for (ulong count1 = 0; (count1 < 10000) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000) && (result == 1) ; count1++)
    {
       bits = z_randint(200)+ 1;
       
@@ -446,7 +457,8 @@ int test_F_mpz_poly_getset_coeff_si()
 		F_mpz_randpoly(F_poly, length, bits); 
 		    
       // set random coeffs in the poly
-		for (ulong count2 = 0; (count2 < 500) && result == 1; count2++)
+		ulong count2;
+		for (count2 = 0; (count2 < 500) && result == 1; count2++)
       {
           coeff_bits = z_randint(FLINT_BITS);
           coeff = z_randbits(coeff_bits);
@@ -481,7 +493,8 @@ int test_F_mpz_poly_getset_coeff_ui()
    ulong coeff, coeff2;
    ulong coeff_bits, coeff_num;
    
-   for (ulong count1 = 0; (count1 < 10000) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000) && (result == 1) ; count1++)
    {
       bits = z_randint(200)+ 1;
       
@@ -492,7 +505,8 @@ int test_F_mpz_poly_getset_coeff_ui()
 		F_mpz_randpoly(F_poly, length, bits); 
 		    
       // set random coeffs in the poly
-		for (ulong count2 = 0; (count2 < 500) && result == 1; count2++)
+		ulong count2;
+		for (count2 = 0; (count2 < 500) && result == 1; count2++)
       {
           coeff_bits = z_randint(FLINT_BITS+1);
           coeff = z_randbits(coeff_bits);
@@ -527,7 +541,8 @@ int test_F_mpz_poly_getset_coeff_mpz()
 	mpz_init(coeff);
 	mpz_init(coeff2);
    
-   for (ulong count1 = 0; (count1 < 5000) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 5000) && (result == 1) ; count1++)
    {
       bits = z_randint(200)+ 1;
       
@@ -538,7 +553,8 @@ int test_F_mpz_poly_getset_coeff_mpz()
 		F_mpz_randpoly(F_poly, length, bits); 
 		    
       // set random coeffs in the poly
-		for (ulong count2 = 0; (count2 < 300) && result == 1; count2++)
+		ulong count2;
+		for (count2 = 0; (count2 < 300) && result == 1; count2++)
       {
           coeff_bits = z_randint(200);
           mpz_rrandomb(coeff, randstate, coeff_bits);
@@ -577,7 +593,8 @@ int test_F_mpz_poly_set()
    mpz_poly_init(m_poly1); 
    mpz_poly_init(m_poly2); 
 
-   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 100000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -621,7 +638,8 @@ int test_F_mpz_poly_equal()
    mpz_poly_init(m_poly2); 
    
    // random polys unlikely to be equal, test against mpz_poly_equal
-	for (ulong count1 = 0; (count1 < 20000*ITER) && (result == 1); count1++)
+	ulong count1;
+	for (count1 = 0; (count1 < 20000*ITER) && (result == 1); count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -649,7 +667,8 @@ int test_F_mpz_poly_equal()
    }
 
 	// polys are equal
-	for (ulong count1 = 0; (count1 < 20000*ITER) && (result == 1); count1++)
+	ulong count1;
+	for (count1 = 0; (count1 < 20000*ITER) && (result == 1); count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -672,7 +691,8 @@ int test_F_mpz_poly_equal()
    }
 
 	// polys are aliased
-	for (ulong count1 = 0; (count1 < 20000*ITER) && (result == 1); count1++)
+	ulong count1;
+	for (count1 = 0; (count1 < 20000*ITER) && (result == 1); count1++)
    {
       F_mpz_poly_init(F_poly1);
       
@@ -704,7 +724,8 @@ int test_F_mpz_poly_swap()
    unsigned long bits, bits2, length, length2;
    
    // reverse and reverse back, second time aliased
-	for (unsigned long count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+	unsigned long count1;
+	for (count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
    {
       bits = z_randint(200)+ 1;
       bits2 = z_randint(200)+ 1;
@@ -753,7 +774,8 @@ int test_F_mpz_poly_max_bits()
    
    mpz_poly_init(m_poly1); 
    
-   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 100000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly);
 
@@ -765,7 +787,8 @@ int test_F_mpz_poly_max_bits()
       
 		mpz_bits = 0;
       sign = 1L;
-      for (ulong i = 0; i < m_poly1->length; i++)
+      ulong i;
+      for (i = 0; i < m_poly1->length; i++)
       {
          next_bits = mpz_sizeinbase(m_poly1->coeffs[i], 2);
          if (next_bits > mpz_bits) mpz_bits = next_bits;
@@ -800,7 +823,8 @@ int test_F_mpz_poly_max_bits1()
    
    mpz_poly_init(m_poly1); 
    
-   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 100000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly);
 
@@ -812,7 +836,8 @@ int test_F_mpz_poly_max_bits1()
       
 		mpz_bits = 0;
       sign = 1L;
-      for (ulong i = 0; i < m_poly1->length; i++)
+      ulong i;
+      for (i = 0; i < m_poly1->length; i++)
       {
          next_bits = mpz_sizeinbase(m_poly1->coeffs[i], 2);
          if (next_bits > mpz_bits) mpz_bits = next_bits;
@@ -847,7 +872,8 @@ int test_F_mpz_poly_max_limbs()
    
    mpz_poly_init(m_poly1); 
    
-   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 100000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly);
 
@@ -858,7 +884,8 @@ int test_F_mpz_poly_max_limbs()
       mpz_poly_to_F_mpz_poly(F_poly, m_poly1);
       
 		mpz_limbs = 0;
-      for (ulong i = 0; i < m_poly1->length; i++)
+      ulong i;
+      for (i = 0; i < m_poly1->length; i++)
       {
          next_limbs = mpz_size(m_poly1->coeffs[i]);
          if (next_limbs > mpz_limbs) mpz_limbs = next_limbs;
@@ -890,7 +917,8 @@ int test_F_mpz_poly_tofromstring()
    
    mpz_poly_init(test_poly); 
    
-   for (unsigned long count1 = 1; (count1 < 200) && (result == 1) ; count1++)
+   unsigned long count1;
+   for (count1 = 1; (count1 < 200) && (result == 1) ; count1++)
    {
       bits = z_randint(100)+ 1;
       
@@ -898,7 +926,8 @@ int test_F_mpz_poly_tofromstring()
       F_mpz_poly_init2(test_F_mpz_poly2, (bits-1)/FLINT_BITS+1+z_randint(30));
       FILE * testfile; 
       
-      for (unsigned long count2 = 0; (count2 < 10) && (result == 1); count2++)
+      unsigned long count2;
+      for (count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
           length = z_randint(100);        
 #if DEBUG
@@ -934,7 +963,8 @@ int test_F_mpz_poly_neg()
    ulong bits1, bits2, length1, length2;
    
    // negate and negate back
-	for (ulong count1 = 0; (count1 < 20000*ITER) && (result == 1); count1++)
+	ulong count1;
+	for (count1 = 0; (count1 < 20000*ITER) && (result == 1); count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -957,7 +987,8 @@ int test_F_mpz_poly_neg()
    }
 
 	// sub equals negate and add, included aliased negation
-	for (ulong count1 = 0; (count1 < 20000*ITER) && (result == 1); count1++)
+	ulong count1;
+	for (count1 = 0; (count1 < 20000*ITER) && (result == 1); count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -997,7 +1028,8 @@ int test_F_mpz_poly_reverse()
    unsigned long bits, length, length2;
    
    // reverse and reverse back, second time aliased
-	for (unsigned long count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+	unsigned long count1;
+	for (count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
    {
       bits = z_randint(200)+ 1;
       
@@ -1024,7 +1056,8 @@ int test_F_mpz_poly_reverse()
    }
    
    // completely aliased reverse and reverse back
-	for (unsigned long count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+	unsigned long count1;
+	for (count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
    {
       bits = z_randint(200)+ 1;
       
@@ -1066,7 +1099,8 @@ int test_F_mpz_poly_shift()
    F_mpz_poly_init(F_poly3);
       
 	// left shift followed by right shift
-	for (unsigned long count1 = 0; (count1 < 700) && (result == 1) ; count1++)
+	unsigned long count1;
+	for (count1 = 0; (count1 < 700) && (result == 1) ; count1++)
    {
       bits = z_randint(500)+ 1;
       length = z_randint(20);        
@@ -1086,7 +1120,8 @@ int test_F_mpz_poly_shift()
 	F_mpz_poly_clear(F_poly3);
 
    // left shift followed by right shift, completely aliased
-	for (unsigned long count1 = 0; (count1 < 700) && (result == 1) ; count1++)
+	unsigned long count1;
+	for (count1 = 0; (count1 < 700) && (result == 1) ; count1++)
    {
       bits = z_randint(500)+ 1;
       length = z_randint(500);        
@@ -1103,7 +1138,8 @@ int test_F_mpz_poly_shift()
    }
    
    // explicit check of right shift
-	for (unsigned long count2 = 0; (count2 < 1000) && (result == 1); count2++)
+	unsigned long count2;
+	for (count2 = 0; (count2 < 1000) && (result == 1); count2++)
    { 
        bits = z_randint(500)+ 1;
        length = z_randint(500);        
@@ -1139,14 +1175,16 @@ int test_F_mpz_poly_to_zmod_poly()
    
    mpz_poly_init(test_poly);
    F_mpz_init(temp); 
-   for (unsigned long count1 = 1; (count1 < 300) && (result == 1) ; count1++)
+   unsigned long count1;
+   for (count1 = 1; (count1 < 300) && (result == 1) ; count1++)
    {
       bits = z_randint(FLINT_BITS-3) + 1;
       
       F_mpz_poly_init(test_F_mpz_poly);
       F_mpz_poly_init(test_F_mpz_poly2);
 
-      for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
+      unsigned long count2;
+      for (count2 = 0; (count2 < 100) && (result == 1); count2++)
       { 
           length = z_randint(20);
 			 ulong p = z_nextprime(1L<<(bits+1), 0);
@@ -1168,7 +1206,8 @@ int test_F_mpz_poly_to_zmod_poly()
 			 zmod_poly_to_F_mpz_poly(test_F_mpz_poly2, test_zmod_poly);
 
 // Now reduce poly mod p
-          for (unsigned long c = 0; c < test_F_mpz_poly->length; c++){
+          unsigned long c;
+          for (c = 0; c < test_F_mpz_poly->length; c++){
              F_mpz_sub(temp, test_F_mpz_poly->coeffs + c, test_F_mpz_poly2->coeffs + c);
              result = (F_mpz_mod_ui(temp, temp, p) == 0L);
              if (!result)
@@ -1208,7 +1247,8 @@ int test_F_mpz_poly_scalar_mul_ui()
    mpz_poly_init(m_poly); 
    mpz_poly_init(m_poly2); 
    
-   for (ulong count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
    {
       bits = z_randint(200)+ 1;
       length = z_randint(200);  
@@ -1230,7 +1270,8 @@ int test_F_mpz_poly_scalar_mul_ui()
       if (mult == 0L) result = (F_poly2->length == 0);
 		else
 		{
-			for (ulong i = 0; i < m_poly->length; i++)
+			ulong i;
+			for (i = 0; i < m_poly->length; i++)
          {
             mpz_mul_ui(temp, m_poly->coeffs[i], mult);
             result &= (mpz_cmp(temp, m_poly2->coeffs[i]) == 0);
@@ -1249,7 +1290,8 @@ int test_F_mpz_poly_scalar_mul_ui()
    }
    
    // aliased multiply
-	for (ulong count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+	ulong count1;
+	for (count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
    {
       bits = z_randint(200)+ 1;
       length = z_randint(200);        
@@ -1268,7 +1310,8 @@ int test_F_mpz_poly_scalar_mul_ui()
       if (mult == 0L) result = (F_poly->length == 0);
 		else
 		{
-			for (ulong i = 0; i < m_poly->length; i++)
+			ulong i;
+			for (i = 0; i < m_poly->length; i++)
          {
             mpz_mul_ui(temp, m_poly->coeffs[i], mult);
             result &= (mpz_cmp(temp, m_poly2->coeffs[i]) == 0);
@@ -1305,7 +1348,8 @@ int test_F_mpz_poly_scalar_mul_si()
    mpz_poly_init(m_poly); 
    mpz_poly_init(m_poly2); 
    
-   for (ulong count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
    {
       bits = z_randint(200)+ 1;
       length = z_randint(200);  
@@ -1327,7 +1371,8 @@ int test_F_mpz_poly_scalar_mul_si()
       if (mult == 0L) result = (F_poly2->length == 0);
 		else
 		{
-			for (ulong i = 0; i < m_poly->length; i++)
+			ulong i;
+			for (i = 0; i < m_poly->length; i++)
          {
             if (mult < 0L) 
 			   {
@@ -1350,7 +1395,8 @@ int test_F_mpz_poly_scalar_mul_si()
    }
    
    // aliased multiply
-	for (ulong count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+	ulong count1;
+	for (count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
    {
       bits = z_randint(200)+ 1;
       length = z_randint(200);        
@@ -1369,7 +1415,8 @@ int test_F_mpz_poly_scalar_mul_si()
       if (mult == 0L) result = (F_poly->length == 0);
 		else
 		{
-			for (ulong i = 0; i < m_poly->length; i++)
+			ulong i;
+			for (i = 0; i < m_poly->length; i++)
          {
             if (mult < 0L) 
 			   {
@@ -1411,7 +1458,8 @@ int test_F_mpz_poly_scalar_mul()
    mpz_poly_init(m_poly); 
    mpz_poly_init(m_poly2); 
    
-   for (ulong count1 = 0; (count1 < 10000) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000) && (result == 1) ; count1++)
    {
       bits = z_randint(300)+ 1;
       length = z_randint(200);  
@@ -1437,7 +1485,8 @@ int test_F_mpz_poly_scalar_mul()
       if (mpz_sgn(mult) == 0) result = (F_poly2->length == 0);
 		else
 		{
-			for (ulong i = 0; i < m_poly->length; i++)
+			ulong i;
+			for (i = 0; i < m_poly->length; i++)
          {
             mpz_mul(temp, m_poly->coeffs[i], mult);
             result &= (mpz_cmp(temp, m_poly2->coeffs[i]) == 0);
@@ -1457,7 +1506,8 @@ int test_F_mpz_poly_scalar_mul()
    }
    
    // aliased multiply
-	for (ulong count1 = 0; (count1 < 10000) && (result == 1) ; count1++)
+	ulong count1;
+	for (count1 = 0; (count1 < 10000) && (result == 1) ; count1++)
    {
       bits = z_randint(300)+ 1;
       length = z_randint(200);        
@@ -1480,7 +1530,8 @@ int test_F_mpz_poly_scalar_mul()
       if (mpz_sgn(mult) == 0) result = (F_poly->length == 0);
 		else
 		{
-			for (ulong i = 0; i < m_poly->length; i++)
+			ulong i;
+			for (i = 0; i < m_poly->length; i++)
          {
             mpz_mul(temp, m_poly->coeffs[i], mult);
             result &= (mpz_cmp(temp, m_poly2->coeffs[i]) == 0);
@@ -1518,7 +1569,8 @@ int test_F_mpz_poly_mul_classical()
    mpz_poly_init(res1); 
    mpz_poly_init(res2); 
 
-   for (ulong count1 = 0; (count1 < 2500*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 2500*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -1552,7 +1604,8 @@ int test_F_mpz_poly_mul_classical()
    }
    
 	// test aliasing of res and poly1
-	for (ulong count1 = 0; (count1 < 2500*ITER) && (result == 1) ; count1++)
+	ulong count1;
+	for (count1 = 0; (count1 < 2500*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(res);
@@ -1584,7 +1637,8 @@ int test_F_mpz_poly_mul_classical()
    }
    
    // test aliasing of res and poly2
-	for (ulong count1 = 0; (count1 < 2500*ITER) && (result == 1) ; count1++)
+	ulong count1;
+	for (count1 = 0; (count1 < 2500*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(res);
@@ -1616,7 +1670,8 @@ int test_F_mpz_poly_mul_classical()
    }
    
 	// test aliasing of poly1 and poly2
-	for (ulong count1 = 0; (count1 < 2500*ITER) && (result == 1) ; count1++)
+	ulong count1;
+	for (count1 = 0; (count1 < 2500*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(res);
@@ -1664,7 +1719,8 @@ int test_F_mpz_poly_mul_classical_trunc_left()
    mpz_poly_init(res1); 
    mpz_poly_init(res2); 
 
-   for (ulong count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -1686,7 +1742,8 @@ int test_F_mpz_poly_mul_classical_trunc_left()
 		F_mpz_poly_mul_classical_trunc_left(res, F_poly1, F_poly2, trunc);
 		F_mpz_poly_to_mpz_poly(res2, res);
       mpz_poly_mul_classical(res1, m_poly1, m_poly2);
-      for (long i = 0; (i < len_out) && (i < trunc); i++)
+      long i;
+      for (i = 0; (i < len_out) && (i < trunc); i++)
          mpz_set_ui(res1->coeffs[i], 0);
       mpz_poly_normalise(res1);
 		    
@@ -1704,7 +1761,8 @@ int test_F_mpz_poly_mul_classical_trunc_left()
    }
    
 	// test aliasing of res and poly1
-	for (ulong count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
+	ulong count1;
+	for (count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(res);
@@ -1725,7 +1783,8 @@ int test_F_mpz_poly_mul_classical_trunc_left()
 		F_mpz_poly_mul_classical_trunc_left(res, res, F_poly1, trunc);
 		F_mpz_poly_to_mpz_poly(res2, res);
       mpz_poly_mul_classical(res1, m_poly1, m_poly2);		
-		for (long i = 0; (i < len_out) && (i < trunc); i++)
+		long i;
+		for (i = 0; (i < len_out) && (i < trunc); i++)
          mpz_set_ui(res1->coeffs[i], 0);
       mpz_poly_normalise(res1);
 		    
@@ -1742,7 +1801,8 @@ int test_F_mpz_poly_mul_classical_trunc_left()
    }
    
    // test aliasing of res and poly2
-	for (ulong count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
+	ulong count1;
+	for (count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(res);
@@ -1763,7 +1823,8 @@ int test_F_mpz_poly_mul_classical_trunc_left()
 		F_mpz_poly_mul_classical_trunc_left(res, F_poly1, res, trunc);
 		F_mpz_poly_to_mpz_poly(res2, res);
       mpz_poly_mul_classical(res1, m_poly1, m_poly2);		
-		for (long i = 0; (i < len_out) && (i < trunc); i++)
+		long i;
+		for (i = 0; (i < len_out) && (i < trunc); i++)
          mpz_set_ui(res1->coeffs[i], 0);
       mpz_poly_normalise(res1);
 		    
@@ -1780,7 +1841,8 @@ int test_F_mpz_poly_mul_classical_trunc_left()
    }
    
 	// test aliasing of poly1 and poly2
-	for (ulong count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
+	ulong count1;
+	for (count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(res);
@@ -1797,7 +1859,8 @@ int test_F_mpz_poly_mul_classical_trunc_left()
 		F_mpz_poly_mul_classical_trunc_left(res, F_poly1, F_poly1, trunc);
 		F_mpz_poly_to_mpz_poly(res2, res);
       mpz_poly_mul_classical(res1, m_poly1, m_poly1);		
-		for (long i = 0; (i < len_out) && (i < trunc); i++)
+		long i;
+		for (i = 0; (i < len_out) && (i < trunc); i++)
          mpz_set_ui(res1->coeffs[i], 0);
       mpz_poly_normalise(res1);
 		    
@@ -1833,7 +1896,8 @@ int test_F_mpz_poly_mul_karatsuba()
    mpz_poly_init(res1); 
    mpz_poly_init(res2); 
 
-   for (ulong count1 = 0; (count1 < 2500*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 2500*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -1869,7 +1933,8 @@ int test_F_mpz_poly_mul_karatsuba()
    }
    
 	// test aliasing of res and poly1
-	for (ulong count1 = 0; (count1 < 2500*ITER) && (result == 1) ; count1++)
+	ulong count1;
+	for (count1 = 0; (count1 < 2500*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(res);
@@ -1903,7 +1968,8 @@ int test_F_mpz_poly_mul_karatsuba()
    }
    
    // test aliasing of res and poly2
-	for (ulong count1 = 0; (count1 < 2500*ITER) && (result == 1) ; count1++)
+	ulong count1;
+	for (count1 = 0; (count1 < 2500*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(res);
@@ -1937,7 +2003,8 @@ int test_F_mpz_poly_mul_karatsuba()
    }
    
 	// test aliasing of poly1 and poly2
-	for (ulong count1 = 0; (count1 < 2500*ITER) && (result == 1) ; count1++)
+	ulong count1;
+	for (count1 = 0; (count1 < 2500*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(res);
@@ -1988,7 +2055,8 @@ int test_F_mpz_poly_mul_karatsuba_trunc_left()
    mpz_poly_init(res1); 
    mpz_poly_init(res2); 
 
-   for (ulong count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -2010,7 +2078,8 @@ int test_F_mpz_poly_mul_karatsuba_trunc_left()
 		F_mpz_poly_mul_karatsuba_trunc_left(res, F_poly1, F_poly2, trunc);
 		F_mpz_poly_to_mpz_poly(res2, res);
       mpz_poly_mul_classical(res1, m_poly1, m_poly2);
-      for (long i = 0; (i < len_out) && (i < trunc); i++)
+      long i;
+      for (i = 0; (i < len_out) && (i < trunc); i++)
          mpz_set_ui(res1->coeffs[i], 0);
       mpz_poly_normalise(res1);
 		    
@@ -2028,7 +2097,8 @@ int test_F_mpz_poly_mul_karatsuba_trunc_left()
    }
    
 	// test aliasing of res and poly1
-	for (ulong count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
+	ulong count1;
+	for (count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(res);
@@ -2049,7 +2119,8 @@ int test_F_mpz_poly_mul_karatsuba_trunc_left()
 		F_mpz_poly_mul_karatsuba_trunc_left(res, res, F_poly1, trunc);
 		F_mpz_poly_to_mpz_poly(res2, res);
       mpz_poly_mul_classical(res1, m_poly1, m_poly2);		
-		for (long i = 0; (i < len_out) && (i < trunc); i++)
+		long i;
+		for (i = 0; (i < len_out) && (i < trunc); i++)
          mpz_set_ui(res1->coeffs[i], 0);
       mpz_poly_normalise(res1);
 		    
@@ -2066,7 +2137,8 @@ int test_F_mpz_poly_mul_karatsuba_trunc_left()
    }
    
    // test aliasing of res and poly2
-	for (ulong count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
+	ulong count1;
+	for (count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(res);
@@ -2087,7 +2159,8 @@ int test_F_mpz_poly_mul_karatsuba_trunc_left()
 		F_mpz_poly_mul_karatsuba_trunc_left(res, F_poly1, res, trunc);
 		F_mpz_poly_to_mpz_poly(res2, res);
       mpz_poly_mul_classical(res1, m_poly1, m_poly2);		
-		for (long i = 0; (i < len_out) && (i < trunc); i++)
+		long i;
+		for (i = 0; (i < len_out) && (i < trunc); i++)
          mpz_set_ui(res1->coeffs[i], 0);
       mpz_poly_normalise(res1);
 		    
@@ -2104,7 +2177,8 @@ int test_F_mpz_poly_mul_karatsuba_trunc_left()
    }
    
 	// test aliasing of poly1 and poly2
-	for (ulong count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
+	ulong count1;
+	for (count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(res);
@@ -2121,7 +2195,8 @@ int test_F_mpz_poly_mul_karatsuba_trunc_left()
 		F_mpz_poly_mul_karatsuba_trunc_left(res, F_poly1, F_poly1, trunc);
 		F_mpz_poly_to_mpz_poly(res2, res);
       mpz_poly_mul_classical(res1, m_poly1, m_poly1);		
-		for (long i = 0; (i < len_out) && (i < trunc); i++)
+		long i;
+		for (i = 0; (i < len_out) && (i < trunc); i++)
          mpz_set_ui(res1->coeffs[i], 0);
       mpz_poly_normalise(res1);
 		    
@@ -2158,7 +2233,8 @@ int test_F_mpz_poly_mul()
    mpz_poly_init(res1); 
    mpz_poly_init(res2); 
 
-   for (ulong count1 = 0; (count1 < 500*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 500*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -2192,7 +2268,8 @@ int test_F_mpz_poly_mul()
    }
    
    // test aliasing of res and poly1
-	for (ulong count1 = 0; (count1 < 500*ITER) && (result == 1) ; count1++)
+	ulong count1;
+	for (count1 = 0; (count1 < 500*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(res);
@@ -2224,7 +2301,8 @@ int test_F_mpz_poly_mul()
    }
    
    // test aliasing of res and poly2
-	for (ulong count1 = 0; (count1 < 500*ITER) && (result == 1) ; count1++)
+	ulong count1;
+	for (count1 = 0; (count1 < 500*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(res);
@@ -2256,7 +2334,8 @@ int test_F_mpz_poly_mul()
    }
    
    // test aliasing of poly1 and poly2
-	for (ulong count1 = 0; (count1 < 500*ITER) && (result == 1) ; count1++)
+	ulong count1;
+	for (count1 = 0; (count1 < 500*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(res);
@@ -2304,7 +2383,8 @@ int test_F_mpz_poly_mul_trunc_left()
    mpz_poly_init(res1); 
    mpz_poly_init(res2); 
 
-   for (ulong count1 = 0; (count1 < 500*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 500*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -2326,7 +2406,8 @@ int test_F_mpz_poly_mul_trunc_left()
 		F_mpz_poly_mul_trunc_left(res, F_poly1, F_poly2, trunc);
 		F_mpz_poly_to_mpz_poly(res2, res);
       mpz_poly_mul(res1, m_poly1, m_poly2);
-      for (long i = 0; (i < len_out) && (i < trunc); i++)
+      long i;
+      for (i = 0; (i < len_out) && (i < trunc); i++)
       {
          mpz_set_ui(res1->coeffs[i], 0);
          mpz_set_ui(res2->coeffs[i], 0);
@@ -2347,7 +2428,8 @@ int test_F_mpz_poly_mul_trunc_left()
    }
    
 	// test aliasing of res and poly1
-	for (ulong count1 = 0; (count1 < 500*ITER) && (result == 1) ; count1++)
+	ulong count1;
+	for (count1 = 0; (count1 < 500*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(res);
@@ -2368,7 +2450,8 @@ int test_F_mpz_poly_mul_trunc_left()
 		F_mpz_poly_mul_trunc_left(res, res, F_poly1, trunc);
 		F_mpz_poly_to_mpz_poly(res2, res);
       mpz_poly_mul(res1, m_poly1, m_poly2);		
-		for (long i = 0; (i < len_out) && (i < trunc); i++)
+		long i;
+		for (i = 0; (i < len_out) && (i < trunc); i++)
       {
          mpz_set_ui(res1->coeffs[i], 0);
          mpz_set_ui(res2->coeffs[i], 0);
@@ -2388,7 +2471,8 @@ int test_F_mpz_poly_mul_trunc_left()
    }
    
    // test aliasing of res and poly2
-	for (ulong count1 = 0; (count1 < 500*ITER) && (result == 1) ; count1++)
+	ulong count1;
+	for (count1 = 0; (count1 < 500*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(res);
@@ -2409,7 +2493,8 @@ int test_F_mpz_poly_mul_trunc_left()
 		F_mpz_poly_mul_trunc_left(res, F_poly1, res, trunc);
 		F_mpz_poly_to_mpz_poly(res2, res);
       mpz_poly_mul(res1, m_poly1, m_poly2);		
-		for (long i = 0; (i < len_out) && (i < trunc); i++)
+		long i;
+		for (i = 0; (i < len_out) && (i < trunc); i++)
       {
          mpz_set_ui(res1->coeffs[i], 0);
          mpz_set_ui(res2->coeffs[i], 0);
@@ -2429,7 +2514,8 @@ int test_F_mpz_poly_mul_trunc_left()
    }
    
 	// test aliasing of poly1 and poly2
-	for (ulong count1 = 0; (count1 < 500*ITER) && (result == 1) ; count1++)
+	ulong count1;
+	for (count1 = 0; (count1 < 500*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(res);
@@ -2446,7 +2532,8 @@ int test_F_mpz_poly_mul_trunc_left()
 		F_mpz_poly_mul_trunc_left(res, F_poly1, F_poly1, trunc);
 		F_mpz_poly_to_mpz_poly(res2, res);
       mpz_poly_mul(res1, m_poly1, m_poly1);		
-		for (long i = 0; (i < len_out) && (i < trunc); i++)
+		long i;
+		for (i = 0; (i < len_out) && (i < trunc); i++)
       {
          mpz_set_ui(res1->coeffs[i], 0);
          mpz_set_ui(res2->coeffs[i], 0);
@@ -2484,7 +2571,8 @@ int test_F_mpz_poly_bit_pack()
    mpz_poly_init(m_poly); 
    mpz_poly_init(m_poly2); 
 
-   for (ulong count1 = 0; (count1 < 500) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 500) && (result == 1) ; count1++)
    {
       bits = z_randint(FLINT_BITS - 4) + 2;
       
@@ -2521,7 +2609,8 @@ int test_F_mpz_poly_bit_pack()
    }
    
    // try negating the coefficients
-	for (ulong count1 = 0; (count1 < 500) && (result == 1) ; count1++)
+	ulong count1;
+	for (count1 = 0; (count1 < 500) && (result == 1) ; count1++)
    {
       bits = z_randint(FLINT_BITS - 4) + 2;
       length = z_randint(1000)+1;
@@ -2578,7 +2667,8 @@ int test_F_mpz_poly_factor()
    mpz_poly_init(res1); 
    mpz_poly_init(res2); 
 
-   for (ulong count1 = 0; (count1 < 20*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 20*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -2617,7 +2707,8 @@ int test_F_mpz_poly_factor()
       F_mpz_poly_set_coeff_ui(res, 0, 1);
 
       for (num_facs = 0; num_facs < F_factors->num_factors; num_facs++){
-         for (ulong pow = 0; pow < F_factors->exponents[num_facs]; pow++){
+         ulong pow;
+         for (pow = 0; pow < F_factors->exponents[num_facs]; pow++){
             F_mpz_poly_mul(res, res, F_factors->factors[num_facs]);
          }
       }
@@ -2663,7 +2754,8 @@ int test_F_mpz_poly_bit_pack_unsigned()
    mpz_poly_init(m_poly); 
    mpz_poly_init(m_poly2); 
 
-   for (ulong count1 = 0; (count1 < 500) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 500) && (result == 1) ; count1++)
    {
       bits = z_randint(FLINT_BITS - 4) + 2;
       
@@ -2717,7 +2809,8 @@ int test_F_mpz_poly_bit_pack2()
    mpz_poly_init(m_poly2); 
    mpz_poly_init(m_poly3); 
    
-   for (ulong count1 = 0; (count1 < 500) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 500) && (result == 1) ; count1++)
    {
       bits = z_randint(FLINT_BITS-4)+ 2;
       
@@ -2748,7 +2841,8 @@ int test_F_mpz_poly_bit_pack2()
       F_mpz_poly_bit_unpack(F_poly3, array2, length, bits); 
       F_mpz_poly_to_mpz_poly(m_poly3, F_poly3);
 
-		for (ulong i = 0; i < m_poly3->length; i++)
+		ulong i;
+		for (i = 0; i < m_poly3->length; i++)
 			if (i%2 == 1) mpz_neg(m_poly3->coeffs[i], m_poly3->coeffs[i]);
           
       flint_heap_free(array1);          
@@ -2789,7 +2883,8 @@ int test_F_mpz_poly_mul_KS()
    mpz_poly_init(res1); 
    mpz_poly_init(res2); 
 
-   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -2824,7 +2919,8 @@ int test_F_mpz_poly_mul_KS()
    }
    
 	// try unsigned coefficients
-	for (ulong count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
+	ulong count1;
+	for (count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -2858,7 +2954,8 @@ int test_F_mpz_poly_mul_KS()
    }
    
 	// test aliasing of res and poly1
-	for (ulong count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
+	ulong count1;
+	for (count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(res);
@@ -2890,7 +2987,8 @@ int test_F_mpz_poly_mul_KS()
    }
    
    // test aliasing of res and poly2
-	for (ulong count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
+	ulong count1;
+	for (count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(res);
@@ -2922,7 +3020,8 @@ int test_F_mpz_poly_mul_KS()
    }
    
 	// test aliasing of poly1 and poly2
-	for (ulong count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
+	ulong count1;
+	for (count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(res);
@@ -2970,7 +3069,8 @@ int test_F_mpz_poly_mul_KS2()
    mpz_poly_init(res1); 
    mpz_poly_init(res2); 
 
-   for (ulong count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -3004,7 +3104,8 @@ int test_F_mpz_poly_mul_KS2()
    }
    
 	// try unsigned coefficients
-	for (ulong count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
+	ulong count1;
+	for (count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -3038,7 +3139,8 @@ int test_F_mpz_poly_mul_KS2()
    }
    
 	// test aliasing of res and poly1
-	for (ulong count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
+	ulong count1;
+	for (count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(res);
@@ -3070,7 +3172,8 @@ int test_F_mpz_poly_mul_KS2()
    }
    
    // test aliasing of res and poly2
-	for (ulong count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
+	ulong count1;
+	for (count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(res);
@@ -3102,7 +3205,8 @@ int test_F_mpz_poly_mul_KS2()
    }
 	
 	// test aliasing of poly1 and poly2
-	for (ulong count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
+	ulong count1;
+	for (count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(res);
@@ -3149,7 +3253,8 @@ int test_F_mpz_poly_byte_pack_unsigned()
    mpz_poly_init(m_poly1); 
    mpz_poly_init(m_poly2); 
 
-   for (ulong count1 = 1; (count1 < 200*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 1; (count1 < 200*ITER) && (result == 1) ; count1++)
    {
       bits = random_ulong(1000) + 2;
       bytes = ((bits - 1)>>3) + 1;
@@ -3157,7 +3262,8 @@ int test_F_mpz_poly_byte_pack_unsigned()
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
 
-      for (ulong count2 = 0; (count2 < 10) && (result == 1); count2++)
+      ulong count2;
+      for (count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
           length = z_randint(1000) + 1;
 #if DEBUG
@@ -3170,7 +3276,8 @@ int test_F_mpz_poly_byte_pack_unsigned()
           while (mpz_poly_length(m_poly1) < length);
 
 #if DEBUG
-          for (ulong j = 0; j < m_poly1->length; j++)
+          ulong j;
+          for (j = 0; j < m_poly1->length; j++)
              gmp_printf("%Zx, ", m_poly1->coeffs[j]);
           printf("\n\n");
 #endif
@@ -3191,7 +3298,8 @@ int test_F_mpz_poly_byte_pack_unsigned()
           flint_heap_free(array);
           
 #if DEBUG
-          for (ulong j = 0; j < m_poly2->length; j++)
+          ulong j;
+          for (j = 0; j < m_poly2->length; j++)
              gmp_printf("%Zx, ", m_poly2->coeffs[j]);
           printf("\n\n");
 #endif
@@ -3225,7 +3333,8 @@ int test_F_mpz_poly_byte_pack()
    mpz_poly_init(m_poly1); 
    mpz_poly_init(m_poly2); 
 
-   for (ulong count1 = 1; (count1 < 200*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 1; (count1 < 200*ITER) && (result == 1) ; count1++)
    {
       bits = random_ulong(1000) + 2;
       bytes = ((bits - 1)>>3) + 1;
@@ -3233,7 +3342,8 @@ int test_F_mpz_poly_byte_pack()
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
 
-      for (ulong count2 = 0; (count2 < 10) && (result == 1); count2++)
+      ulong count2;
+      for (count2 = 0; (count2 < 10) && (result == 1); count2++)
       { 
           length = z_randint(1000) + 1;
 #if DEBUG
@@ -3246,7 +3356,8 @@ int test_F_mpz_poly_byte_pack()
           while (mpz_poly_length(m_poly1) < length);
 
 #if DEBUG
-          for (ulong j = 0; j < m_poly1->length; j++)
+          ulong j;
+          for (j = 0; j < m_poly1->length; j++)
              gmp_printf("%Zx, ", m_poly1->coeffs[j]);
           printf("\n\n");
 #endif
@@ -3267,7 +3378,8 @@ int test_F_mpz_poly_byte_pack()
           flint_heap_free(array);
           
 #if DEBUG
-          for (ulong j = 0; j < m_poly2->length; j++)
+          ulong j;
+          for (j = 0; j < m_poly2->length; j++)
              gmp_printf("%Zx, ", m_poly2->coeffs[j]);
           printf("\n\n");
 #endif
@@ -3302,7 +3414,8 @@ int test_F_mpz_poly_mul_SS()
    mpz_poly_init(res1); 
    mpz_poly_init(res2); 
 
-   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -3337,7 +3450,8 @@ int test_F_mpz_poly_mul_SS()
    }
    
 	// try unsigned coefficients
-	for (ulong count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
+	ulong count1;
+	for (count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -3371,7 +3485,8 @@ int test_F_mpz_poly_mul_SS()
    }
    
 	// test aliasing of res and poly1
-	for (ulong count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
+	ulong count1;
+	for (count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(res);
@@ -3403,7 +3518,8 @@ int test_F_mpz_poly_mul_SS()
    }
    
    // test aliasing of res and poly2
-	for (ulong count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
+	ulong count1;
+	for (count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(res);
@@ -3435,7 +3551,8 @@ int test_F_mpz_poly_mul_SS()
    }
    
 	// test aliasing of poly1 and poly2
-	for (ulong count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
+	ulong count1;
+	for (count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(res);
@@ -3481,7 +3598,8 @@ int test_F_mpz_poly_pack_bytes()
    mpz_poly_init(m_poly); 
    mpz_poly_init(m_poly2); 
 
-   for (ulong count1 = 1; (count1 < 10*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 1; (count1 < 10*ITER) && (result == 1) ; count1++)
    {
       bits = z_randint(300)+ FLINT_BITS;
       bytes = ((bits-1)>>3)+1;
@@ -3545,7 +3663,8 @@ int test_F_mpz_poly_divrem_basecase()
    ulong bits1, bits2, length1, length2;
    
    // test exact division
-   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -3584,7 +3703,8 @@ int test_F_mpz_poly_divrem_basecase()
    }
 
    // test inexact division
-   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -3634,7 +3754,8 @@ int test_F_mpz_poly_div_basecase()
    ulong bits1, bits2, length1, length2;
    
    // test exact division
-   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -3676,7 +3797,8 @@ int test_F_mpz_poly_div_basecase()
    }
 
    // test inexact division
-   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -3724,7 +3846,8 @@ int test_F_mpz_poly_div_divconquer_recursive()
    ulong bits1, bits2, length1, length2;
    
    // test exact division
-   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -3770,7 +3893,8 @@ int test_F_mpz_poly_div_divconquer_recursive()
    }
 
    // test inexact division
-   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -3818,7 +3942,8 @@ int test_F_mpz_poly_divrem_divconquer()
    ulong bits1, bits2, length1, length2;
    
    // test exact division
-   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -3857,7 +3982,8 @@ int test_F_mpz_poly_divrem_divconquer()
    }
 
    // test inexact division
-   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -3907,7 +4033,8 @@ int test_F_mpz_poly_divrem_basecase_low()
    ulong bits1, bits2, length1, length2;
    
    // test exact division
-   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -3946,7 +4073,8 @@ int test_F_mpz_poly_divrem_basecase_low()
    }
 
    // test inexact division
-   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -3998,7 +4126,8 @@ int test_F_mpz_poly_div_divconquer_recursive_low()
    ulong bits1, bits2, length1, length2;
    
    // test exact division
-   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -4045,7 +4174,8 @@ int test_F_mpz_poly_div_divconquer_recursive_low()
    }
 
    // test inexact division
-   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -4094,7 +4224,8 @@ int test_F_mpz_poly_div_divconquer()
    ulong bits1, bits2, length1, length2;
    
    // test exact division
-   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -4136,7 +4267,8 @@ int test_F_mpz_poly_div_divconquer()
    }
    
    // test inexact division
-   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -4184,7 +4316,8 @@ int test_F_mpz_poly_div_hensel()
    ulong bits1, bits2, length1, length2;
    
    // test exact division
-   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -4235,7 +4368,8 @@ int test_F_mpz_poly_divexact()
    ulong bits1, bits2, length1, length2;
    
    // test exact division
-   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -4286,7 +4420,8 @@ int test_F_mpz_poly_pseudo_divrem_basecase()
    ulong bits1, bits2, length1, length2, d;
    
    // test exact division
-   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -4325,7 +4460,8 @@ int test_F_mpz_poly_pseudo_divrem_basecase()
    }
 
    // test inexact division
-   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -4382,7 +4518,8 @@ int test_F_mpz_poly_pseudo_div_basecase()
    ulong bits1, bits2, length1, length2, d;
    
    // test exact division
-   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -4418,7 +4555,8 @@ int test_F_mpz_poly_pseudo_div_basecase()
    }
 
    // test inexact division
-   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);

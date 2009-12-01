@@ -65,7 +65,8 @@ void randpoly(mpz_poly_t pol, unsigned long length, unsigned long maxbits)
    
    mpz_poly_zero(pol);
 
-   for (unsigned long i = 0; i < length; i++)
+   unsigned long i;
+   for (i = 0; i < length; i++)
    {
 #if VARY_BITS
        bits = randint(maxbits);
@@ -95,7 +96,8 @@ void randpoly_unsigned(mpz_poly_t pol, unsigned long length, unsigned long maxbi
 
    mpz_poly_zero(pol);
    
-   for (unsigned long i = 0; i < length; i++)
+   unsigned long i;
+   for (i = 0; i < length; i++)
    {
 #if VARY_BITS
        bits = randint(maxbits);
@@ -120,7 +122,8 @@ int test_F_mpn_splitcombine_bits()
     ZmodF_poly_t poly;
     int result = 1;
     
-    for (unsigned long count = 0; (count < 30000) && (result == 1); count++)
+    unsigned long count;
+    for (count = 0; (count < 30000) && (result == 1); count++)
     {
         unsigned long limbs = randint(300)+1;
         unsigned long bits = randint(500)+1;
@@ -144,12 +147,14 @@ int test_F_mpn_splitcombine_bits()
 
 #if DEBUG
         F_mpn_printx(int1, limbs); printf("\n\n");
-        for (unsigned long i = 0; i < length; i++) { F_mpn_printx(poly->coeffs[i], coeff_limbs); printf("\n");}
+        unsigned long i;
+        for (i = 0; i < length; i++) { F_mpn_printx(poly->coeffs[i], coeff_limbs); printf("\n");}
         printf("\n");
         F_mpn_printx(int2, limbs); printf("\n\n");
 #endif
 
-        for (unsigned long j = 0; j < limbs; j++)
+        unsigned long j;
+        for (j = 0; j < limbs; j++)
         {
            if (int1[j] != int2[j]) result = 0;
         }
@@ -169,7 +174,8 @@ int test_F_mpn_mul_precache()
    mp_limb_t msl;
    int result = 1;
    
-   for (unsigned long count = 0; (count < 30) && (result == 1); count++)
+   unsigned long count;
+   for (count = 0; (count < 30) && (result == 1); count++)
    {
       unsigned long limbs2 = randint(2*FLINT_FFT_LIMBS_CROSSOVER)+1;
       unsigned long limbs1 = randint(2*FLINT_FFT_LIMBS_CROSSOVER)+1;
@@ -180,7 +186,8 @@ int test_F_mpn_mul_precache()
    
       F_mpn_mul_precache_init(precache, int1, limbs1, limbs2);   
            
-      for (unsigned long count2 = 0; (count2 < 30) && (result == 1); count2++)
+      unsigned long count2;
+      for (count2 = 0; (count2 < 30) && (result == 1); count2++)
       {    
 #if DEBUG
          printf("%ld, %ld\n",limbs1, limbs2);
@@ -199,7 +206,8 @@ int test_F_mpn_mul_precache()
          if (limbs1 > limbs3) msl = mpn_mul(product2, int1, limbs1, int2, limbs3);
          else msl = mpn_mul(product2, int2, limbs3, int1, limbs1);
       
-         for (unsigned long j = 0; j < limbs1+limbs3 - (msl == 0); j++)
+         unsigned long j;
+         for (j = 0; j < limbs1+limbs3 - (msl == 0); j++)
          {
             if (product[j] != product2[j]) result = 0;
          }
@@ -224,7 +232,8 @@ int test_F_mpn_mul_precache_trunc()
    mp_limb_t msl;
    int result = 1;
    
-   for (unsigned long count = 0; (count < 30) && (result == 1); count++)
+   unsigned long count;
+   for (count = 0; (count < 30) && (result == 1); count++)
    {
       unsigned long limbs2 = randint(2*FLINT_FFT_LIMBS_CROSSOVER)+1;
       unsigned long limbs1 = randint(2*FLINT_FFT_LIMBS_CROSSOVER)+1;
@@ -235,7 +244,8 @@ int test_F_mpn_mul_precache_trunc()
    
       F_mpn_mul_precache_init(precache, int1, limbs1, limbs2);   
            
-      for (unsigned long count2 = 0; (count2 < 30) && (result == 1); count2++)
+      unsigned long count2;
+      for (count2 = 0; (count2 < 30) && (result == 1); count2++)
       {    
          unsigned long limbs3 = randint(limbs2)+1;
          unsigned long trunc = randint(2*(limbs1+limbs3));
@@ -254,7 +264,8 @@ int test_F_mpn_mul_precache_trunc()
          else F_mpn_mul_trunc(product2, int2, limbs3, int1, limbs1, trunc);
          F_mpn_mul_precache_trunc(product, int2, limbs3, precache, trunc);
       
-         for (unsigned long j = 0; j < FLINT_MIN(trunc, limbs1+limbs3); j++)
+         unsigned long j;
+         for (j = 0; j < FLINT_MIN(trunc, limbs1+limbs3); j++)
          {
             if (product[j] != product2[j]) 
             {
@@ -282,7 +293,8 @@ int test_F_mpn_mul()
    mp_limb_t msl, msl2;
    int result = 1;
    
-   for (unsigned long count = 0; (count < 30) && (result == 1); count++)
+   unsigned long count;
+   for (count = 0; (count < 30) && (result == 1); count++)
    {
       unsigned long limbs2 = randint(2*FLINT_FFT_LIMBS_CROSSOVER)+1;
       unsigned long limbs1 = limbs2 + randint(1000);
@@ -291,7 +303,8 @@ int test_F_mpn_mul()
 
       mpn_random2(int1, limbs1);
         
-      for (unsigned long count2 = 0; (count2 < 30) && (result == 1); count2++)
+      unsigned long count2;
+      for (count2 = 0; (count2 < 30) && (result == 1); count2++)
       {    
 #if DEBUG
          printf("%ld, %ld\n",limbs1, limbs2);
@@ -308,7 +321,8 @@ int test_F_mpn_mul()
          
          msl2 = mpn_mul(product2, int1, limbs1, int2, limbs2);
       
-         for (unsigned long j = 0; j < limbs1+limbs2 - (msl == 0); j++)
+         unsigned long j;
+         for (j = 0; j < limbs1+limbs2 - (msl == 0); j++)
          {
             if (product[j] != product2[j]) result = 0;
          }
@@ -332,7 +346,8 @@ int test_F_mpn_mul_trunc()
    mp_limb_t msl;
    int result = 1;
    
-   for (unsigned long count = 0; (count < 30) && (result == 1); count++)
+   unsigned long count;
+   for (count = 0; (count < 30) && (result == 1); count++)
    {
       unsigned long limbs2 = randint(2*FLINT_FFT_LIMBS_CROSSOVER)+1;
       unsigned long limbs1 = limbs2 + randint(1000);
@@ -341,7 +356,8 @@ int test_F_mpn_mul_trunc()
 
       mpn_random2(int1, limbs1);
         
-      for (unsigned long count2 = 0; (count2 < 30) && (result == 1); count2++)
+      unsigned long count2;
+      for (count2 = 0; (count2 < 30) && (result == 1); count2++)
       {    
 #if DEBUG
          printf("%ld, %ld\n",limbs1, limbs2);
@@ -359,7 +375,8 @@ int test_F_mpn_mul_trunc()
          
          mpn_mul(product2, int1, limbs1, int2, limbs2);
       
-         for (unsigned long j = 0; j < trunc; j++)
+         unsigned long j;
+         for (j = 0; j < trunc; j++)
          {
             if (product[j] != product2[j]) result = 0;
          }

@@ -56,13 +56,15 @@ void sample_mpz_poly_mul_karatsuba_mixlengths(
 
    mpz_t x;
    mpz_init(x);
-   for (unsigned long i = 0; i < len1; i++)
+   unsigned long i;
+   for (i = 0; i < len1; i++)
    {
       mpz_urandomb(x, randstate, bits);
       if (random_ulong(2)) mpz_neg(x, x);
       mpz_poly_set_coeff(poly1, i, x);
    }
-   for (unsigned long i = 0; i < len2; i++)
+   unsigned long i;
+   for (i = 0; i < len2; i++)
    {
       mpz_urandomb(x, randstate, bits);
       if (random_ulong(2)) mpz_neg(x, x);
@@ -72,7 +74,8 @@ void sample_mpz_poly_mul_karatsuba_mixlengths(
    
    prof_start();
 
-   for (unsigned long i = 0; i < count; i++)
+   unsigned long i;
+   for (i = 0; i < count; i++)
       mpz_poly_mul_karatsuba(poly3, poly1, poly2);
 
    prof_stop();
@@ -105,8 +108,10 @@ void profDriver_mpz_poly_mul_karatsuba_mixlengths(char* params)
 
    test_support_init();
 
-   for (unsigned long len1 = skip; len1 <= max_length; len1 += skip)
-      for (unsigned long len2 = skip; len2 <= len1; len2 += skip)
+   unsigned long len1;
+   for (len1 = skip; len1 <= max_length; len1 += skip)
+      unsigned long len2;
+      for (len2 = skip; len2 <= len1; len2 += skip)
          prof2d_sample(len1, len2, &bits);
 
    test_support_cleanup();
@@ -135,18 +140,21 @@ void sample__mpz_poly_mul_kara_recursive_mixlengths(
    // allocate scratch space
    unsigned long scratch_len = len1 + len2;
    mpz_t* scratch = (mpz_t*) malloc(scratch_len * sizeof(mpz_t));
-   for (unsigned long i = 0; i < scratch_len; i++)
+   unsigned long i;
+   for (i = 0; i < scratch_len; i++)
       mpz_init2(scratch[i], 2*bits + 100);
 
    mpz_t x;
    mpz_init(x);
-   for (unsigned long i = 0; i < len1; i++)
+   unsigned long i;
+   for (i = 0; i < len1; i++)
    {
       mpz_urandomb(x, randstate, bits);
       if (random_ulong(2)) mpz_neg(x, x);
       mpz_poly_set_coeff(poly1, i, x);
    }
-   for (unsigned long i = 0; i < len2; i++)
+   unsigned long i;
+   for (i = 0; i < len2; i++)
    {
       mpz_urandomb(x, randstate, bits);
       if (random_ulong(2)) mpz_neg(x, x);
@@ -159,13 +167,15 @@ void sample__mpz_poly_mul_kara_recursive_mixlengths(
    
    prof_start();
 
-   for (unsigned long i = 0; i < count; i++)
+   unsigned long i;
+   for (i = 0; i < count; i++)
       _mpz_poly_mul_kara_recursive(poly3->coeffs, poly1->coeffs, len1,
                                    poly2->coeffs, len2, scratch, 1, crossover);
 
    prof_stop();
 
-   for (unsigned long i = 0; i < scratch_len; i++)
+   unsigned long i;
+   for (i = 0; i < scratch_len; i++)
       mpz_clear(scratch[i]);
    free(scratch);
    
@@ -197,8 +207,10 @@ void profDriver__mpz_poly_mul_kara_recursive_mixlengths(char* params)
 
    test_support_init();
 
-   for (unsigned long len2 = skip; len2 <= max_length; len2 += skip)
-      for (unsigned long len1 = skip; len1 <= len2; len1 += skip)
+   unsigned long len2;
+   for (len2 = skip; len2 <= max_length; len2 += skip)
+      unsigned long len1;
+      for (len1 = skip; len1 <= len2; len1 += skip)
          prof2d_sample(len1, len2, &bits);
 
    test_support_cleanup();

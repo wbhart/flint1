@@ -58,7 +58,8 @@ mpz_t* F_mpz_alloc(void)
       {
          reservoir = (mpz_t**)malloc(RESALLOC*sizeof(mpz_t*)); //allocate space for the array of pointers
          reservoir[0] = (mpz_t*)malloc(RESALLOC*sizeof(mpz_t)); //allocate space for the mpz_t's
-         for (unsigned long i=0; i<RESALLOC-1; i++)
+         unsigned long i;
+         for (i=0; i<RESALLOC-1; i++)
          {
              reservoir[i+1]=reservoir[i]+1; //initialise the array
              mpz_init(*reservoir[i]); //initialise the mpz_t's
@@ -74,7 +75,8 @@ mpz_t* F_mpz_alloc(void)
          reservoir = (mpz_t**)malloc((currentalloc+RESALLOC)*sizeof(mpz_t*));
          reservoir[currentalloc] = (mpz_t*)malloc(RESALLOC*sizeof(mpz_t));  
          memcpy(reservoir,tempres,currentalloc*sizeof(mpz_t*)); 
-         for (unsigned long i=currentalloc; i<RESALLOC+currentalloc-1; i++)
+         unsigned long i;
+         for (i=currentalloc; i<RESALLOC+currentalloc-1; i++)
          {
              reservoir[i+1]=reservoir[i]+1; //initialise the array
              mpz_init(*reservoir[i]); //initialise the mpz_t's
@@ -211,7 +213,8 @@ int F_mpz_sqrtmod(mpz_t res, mpz_t a, mpz_t p)
                mpz_powm_ui(*bpow,*bpow,2,p);
            }
            mpz_set(*gpow,*g);
-           for (int i = 1;i<= r-m-1;i++)
+           int i;
+           for (i = 1;i<= r-m-1;i++)
            {
                mpz_powm_ui(*gpow,*gpow,2,p);
            };
@@ -272,7 +275,8 @@ void F_mpz_sqrtmodptopk(mpz_t res, mpz_t sqrt, mpz_t a, mpz_t p, int k)
      
      mpz_set(res,sqrt);
      mpz_set(*pk,p);
-     for (int i = 2; i<=k; i++)
+     int i;
+     for (i = 2; i<=k; i++)
      {
             mpz_mul(*pk,*pk,p);
             __sqrtmodpow(res,res,a,*pk, *tempsqpow, *inv);
@@ -402,7 +406,8 @@ void F_mpz_expmod_mont(mpz_t res, mpz_t a, mpz_t exp, mpz_t m)
    gmp_printf("powRED = %Zd\n", powRED);
 #endif
    
-   for (unsigned long i = 0; i < bits - 1; i++)
+   unsigned long i;
+   for (i = 0; i < bits - 1; i++)
    {
       if (mpz_tstbit(exp, i))
       {
@@ -598,7 +603,8 @@ void F_mpz_expmod_BZ(mpz_t res, mpz_t a, mpz_t exp, mpz_t m)
    gmp_printf("powRED = %Zd\n", powRED);
 #endif
    
-   for (unsigned long i = 0; i < bits - 1; i++)
+   unsigned long i;
+   for (i = 0; i < bits - 1; i++)
    {
       if (mpz_tstbit(exp, i))
       {

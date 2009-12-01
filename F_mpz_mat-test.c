@@ -74,9 +74,11 @@ void mpz_randmat(mpz_mat_t mat, ulong r, ulong c, ulong maxbits)
    mpz_t temp;
    mpz_init(temp);
    
-   for (long i = 0; i < r; i++)
+   long i;
+   for (i = 0; i < r; i++)
    {
-		for (long j = 0; j < c; j++)
+		long j;
+		for (j = 0; j < c; j++)
 		{
 #if VARY_BITS
          bits = z_randint(maxbits+1);
@@ -109,9 +111,11 @@ void mpz_randmat_dense(mpz_mat_t mat, ulong r, ulong c, ulong maxbits)
    mpz_t temp;
    mpz_init(temp);
    
-   for (long i = 0; i < r; i++)
+   long i;
+   for (i = 0; i < r; i++)
    {
-		for (long j = 0; j < c; j++)
+		long j;
+		for (j = 0; j < c; j++)
 		{
 #if VARY_BITS
          bits = z_randint(maxbits+1);
@@ -150,7 +154,8 @@ int test_F_mpz_mat_convert()
    int result = 1;
    ulong bits, r, c;
    
-   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       r = z_randint(30);
       c = z_randint(30);
@@ -187,7 +192,8 @@ int test_F_mpz_mat_add()
    int result = 1;
    ulong bits1, bits2, length1, length2;
    
-   for (ulong count1 = 0; (count1 < 2000*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 2000*ITER) && (result == 1) ; count1++)
    {
       ulong r = z_randint(30);
       ulong c = z_randint(30);
@@ -230,7 +236,8 @@ int test_F_mpz_mat_add()
    }
    
 	// test aliasing of res and mat1
-   for (ulong count1 = 0; (count1 < 2000*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 2000*ITER) && (result == 1) ; count1++)
    {
       ulong r = z_randint(30);
       ulong c = z_randint(30);
@@ -271,7 +278,8 @@ int test_F_mpz_mat_add()
    }
    
    // test aliasing of res and mat2
-   for (ulong count1 = 0; (count1 < 2000*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 2000*ITER) && (result == 1) ; count1++)
    {
       ulong r = z_randint(30);
       ulong c = z_randint(30);
@@ -321,7 +329,8 @@ int test_F_mpz_mat_sub()
    int result = 1;
    ulong bits1, bits2, length1, length2;
    
-   for (ulong count1 = 0; (count1 < 2000*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 2000*ITER) && (result == 1) ; count1++)
    {
       ulong r = z_randint(30);
       ulong c = z_randint(30);
@@ -364,7 +373,8 @@ int test_F_mpz_mat_sub()
    }
    
 	// test aliasing of res and mat1
-   for (ulong count1 = 0; (count1 < 2000*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 2000*ITER) && (result == 1) ; count1++)
    {
       ulong r = z_randint(30);
       ulong c = z_randint(30);
@@ -405,7 +415,8 @@ int test_F_mpz_mat_sub()
    }
    
    // test aliasing of res and mat2
-   for (ulong count1 = 0; (count1 < 2000*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 2000*ITER) && (result == 1) ; count1++)
    {
       ulong r = z_randint(30);
       ulong c = z_randint(30);
@@ -455,7 +466,8 @@ int test_F_mpz_mat_set()
    int result = 1;
    ulong bits, r, c;
    
-   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       bits = z_randint(200) + 1;
       r = z_randint(30);
@@ -497,7 +509,8 @@ int test_F_mpz_mat_equal()
    ulong bits1, bits2, length1, length2;
    
    // random mats unlikely to be equal, test against mpz_mat_equal
-	for (ulong count1 = 0; (count1 < 5000*ITER) && (result == 1); count1++)
+	ulong count1;
+	for (count1 = 0; (count1 < 5000*ITER) && (result == 1); count1++)
    {
       ulong r = z_randint(30);
 		ulong c = z_randint(30);
@@ -527,7 +540,8 @@ int test_F_mpz_mat_equal()
    }
 
 	// mats are equal
-	for (ulong count1 = 0; (count1 < 5000*ITER) && (result == 1); count1++)
+	ulong count1;
+	for (count1 = 0; (count1 < 5000*ITER) && (result == 1); count1++)
    {
       ulong r = z_randint(30);
 		ulong c = z_randint(30);
@@ -553,7 +567,8 @@ int test_F_mpz_mat_equal()
    }
 
 	// mats are aliased
-	for (ulong count1 = 0; (count1 < 5000*ITER) && (result == 1); count1++)
+	ulong count1;
+	for (count1 = 0; (count1 < 5000*ITER) && (result == 1); count1++)
    {
       ulong r = z_randint(30);
 		ulong c = z_randint(30);
@@ -585,7 +600,8 @@ int test_F_mpz_mat_resize()
    int result = 1;
    ulong bits, r, c, r_add, c_add;
    
-   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       bits = z_randint(200) + 1;
       r = z_randint(30);
@@ -628,7 +644,8 @@ int test_F_mpz_mat_tofromstring()
    ulong bits;
 
 
-   for (ulong count1 = 0; (count1 < 2000*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 2000*ITER) && (result == 1) ; count1++)
    {
       ulong r1 = z_randint(30);
       ulong c1 = z_randint(30);
@@ -675,7 +692,8 @@ int test_F_mpz_mat_tofromstringpretty()
    int result = 1;
    ulong bits;
 
-   for (ulong count1 = 0; (count1 < 2000*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 2000*ITER) && (result == 1) ; count1++)
    {
       ulong r1 = z_randint(30);
       ulong c1 = z_randint(30);
@@ -717,7 +735,8 @@ int test_F_mpz_mat_neg()
    ulong bits1, bits2, r, c;
    
    // negate and negate back
-	for (ulong count1 = 0; (count1 < 5000*ITER) && (result == 1); count1++)
+	ulong count1;
+	for (count1 = 0; (count1 < 5000*ITER) && (result == 1); count1++)
    {
       r = z_randint(30);
 		c = z_randint(30);
@@ -741,7 +760,8 @@ int test_F_mpz_mat_neg()
    }
 
 	// sub equals negate and add, included aliased negation
-	for (ulong count1 = 0; (count1 < 5000*ITER) && (result == 1); count1++)
+	ulong count1;
+	for (count1 = 0; (count1 < 5000*ITER) && (result == 1); count1++)
    {
       r = z_randint(30);
       c = z_randint(30);
@@ -785,7 +805,8 @@ int test_F_mpz_mat_row_mul_ui()
    mpz_t temp;
    mpz_init(temp);
    
-   for (ulong count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
    {
       bits = z_randint(200)+ 1;
       r = z_randint(30)+1;  
@@ -809,7 +830,8 @@ int test_F_mpz_mat_row_mul_ui()
 		F_mpz_mat_row_mul_ui(F_mat2, r2, F_mat, r1, start, n, mult);
       F_mpz_mat_to_mpz_mat(m_mat2, F_mat2);
 
-      for (ulong i = start; i < start + n; i++)
+      ulong i;
+      for (i = start; i < start + n; i++)
       {
          mpz_mul_ui(temp, m_mat->entries[r1*c+i], mult);
          result &= (mpz_cmp(temp, m_mat2->entries[r2*c+i]) == 0);
@@ -827,7 +849,8 @@ int test_F_mpz_mat_row_mul_ui()
    }
    
    // aliased multiply
-   for (ulong count1 = 0; (count1 < 10000) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000) && (result == 1) ; count1++)
    {
       bits = z_randint(200)+ 1;
       r = z_randint(30)+1;  
@@ -850,7 +873,8 @@ int test_F_mpz_mat_row_mul_ui()
 		F_mpz_mat_row_mul_ui(F_mat, r2, F_mat, r1, start, n, mult);
       F_mpz_mat_to_mpz_mat(m_mat2, F_mat);
 
-      for (ulong i = start; i < start + n; i++)
+      ulong i;
+      for (i = start; i < start + n; i++)
       {
          mpz_mul_ui(temp, m_mat->entries[r1*c+i], mult);
          result &= (mpz_cmp(temp, m_mat2->entries[r2*c+i]) == 0);
@@ -881,7 +905,8 @@ int test_F_mpz_mat_row_mul_si()
    mpz_t temp;
    mpz_init(temp);
    
-   for (ulong count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
    {
       bits = z_randint(200)+ 1;
       r = z_randint(30)+1;  
@@ -906,7 +931,8 @@ int test_F_mpz_mat_row_mul_si()
 		F_mpz_mat_row_mul_si(F_mat2, r2, F_mat, r1, start, n, mult);
       F_mpz_mat_to_mpz_mat(m_mat2, F_mat2);
 
-      for (ulong i = start; i < start + n; i++)
+      ulong i;
+      for (i = start; i < start + n; i++)
       {
          if (mult > 0L) mpz_mul_ui(temp, m_mat->entries[r1*c+i], mult);
 			else
@@ -930,7 +956,8 @@ int test_F_mpz_mat_row_mul_si()
    }
    
    // aliased multiply
-   for (ulong count1 = 0; (count1 < 10000) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000) && (result == 1) ; count1++)
    {
       bits = z_randint(200)+ 1;
       r = z_randint(30)+1;  
@@ -954,7 +981,8 @@ int test_F_mpz_mat_row_mul_si()
 		F_mpz_mat_row_mul_si(F_mat, r2, F_mat, r1, start, n, mult);
       F_mpz_mat_to_mpz_mat(m_mat2, F_mat);
 
-      for (ulong i = start; i < start + n; i++)
+      ulong i;
+      for (i = start; i < start + n; i++)
       {
          if (mult > 0L) mpz_mul_ui(temp, m_mat->entries[r1*c+i], mult);
 			else
@@ -994,7 +1022,8 @@ int test_F_mpz_mat_row_mul_F_mpz()
    F_mpz_t mult;
 	F_mpz_init(mult);
    
-   for (ulong count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
    {
       bits = z_randint(200)+ 1;
       r = z_randint(30)+1;  
@@ -1020,7 +1049,8 @@ int test_F_mpz_mat_row_mul_F_mpz()
 		F_mpz_mat_row_mul_F_mpz(F_mat2, r2, F_mat, r1, start, n, mult);
       F_mpz_mat_to_mpz_mat(m_mat2, F_mat2);
 
-      for (ulong i = start; i < start + n; i++)
+      ulong i;
+      for (i = start; i < start + n; i++)
       {
          mpz_mul(temp, m_mat->entries[r1*c+i], temp2);
 			
@@ -1041,7 +1071,8 @@ int test_F_mpz_mat_row_mul_F_mpz()
    }
    
    // aliased multiply
-   for (ulong count1 = 0; (count1 < 10000) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000) && (result == 1) ; count1++)
    {
       bits = z_randint(200)+ 1;
       r = z_randint(30)+1;  
@@ -1066,7 +1097,8 @@ int test_F_mpz_mat_row_mul_F_mpz()
 		F_mpz_mat_row_mul_F_mpz(F_mat, r2, F_mat, r1, start, n, mult);
       F_mpz_mat_to_mpz_mat(m_mat2, F_mat);
 
-      for (ulong i = start; i < start + n; i++)
+      ulong i;
+      for (i = start; i < start + n; i++)
       {
          mpz_mul(temp, m_mat->entries[r1*c+i], temp2);
 			
@@ -1102,7 +1134,8 @@ int test_F_mpz_mat_row_addmul_ui()
    mpz_t temp;
    mpz_init(temp);
    
-   for (ulong count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
    {
       bits = z_randint(200)+ 1;
       bits2 = z_randint(200)+ 1;
@@ -1130,7 +1163,8 @@ int test_F_mpz_mat_row_addmul_ui()
 		F_mpz_mat_row_addmul_ui(F_mat2, r2, F_mat, r1, start, n, mult);
       F_mpz_mat_to_mpz_mat(m_mat3, F_mat2);
 
-      for (ulong i = start; i < start + n; i++)
+      ulong i;
+      for (i = start; i < start + n; i++)
       {
          mpz_set(temp, m_mat2->entries[r2*c+i]);
 			mpz_addmul_ui(temp, m_mat->entries[r1*c+i], mult);
@@ -1150,7 +1184,8 @@ int test_F_mpz_mat_row_addmul_ui()
    }
    
    // aliased multiply
-   for (ulong count1 = 0; (count1 < 10000) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000) && (result == 1) ; count1++)
    {
       bits = z_randint(200)+ 1;
       r = z_randint(30)+1;  
@@ -1173,7 +1208,8 @@ int test_F_mpz_mat_row_addmul_ui()
 		F_mpz_mat_row_addmul_ui(F_mat, r2, F_mat, r1, start, n, mult);
       F_mpz_mat_to_mpz_mat(m_mat2, F_mat);
 
-      for (ulong i = start; i < start + n; i++)
+      ulong i;
+      for (i = start; i < start + n; i++)
       {
          mpz_set(temp, m_mat->entries[r2*c+i]);
 			mpz_addmul_ui(temp, m_mat->entries[r1*c+i], mult);
@@ -1205,7 +1241,8 @@ int test_F_mpz_mat_row_submul_ui()
    mpz_t temp;
    mpz_init(temp);
    
-   for (ulong count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
    {
       bits = z_randint(200)+ 1;
       bits2 = z_randint(200)+ 1;
@@ -1233,7 +1270,8 @@ int test_F_mpz_mat_row_submul_ui()
 		F_mpz_mat_row_submul_ui(F_mat2, r2, F_mat, r1, start, n, mult);
       F_mpz_mat_to_mpz_mat(m_mat3, F_mat2);
 
-      for (ulong i = start; i < start + n; i++)
+      ulong i;
+      for (i = start; i < start + n; i++)
       {
          mpz_set(temp, m_mat2->entries[r2*c+i]);
 			mpz_submul_ui(temp, m_mat->entries[r1*c+i], mult);
@@ -1253,7 +1291,8 @@ int test_F_mpz_mat_row_submul_ui()
    }
    
    // aliased multiply
-   for (ulong count1 = 0; (count1 < 10000) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000) && (result == 1) ; count1++)
    {
       bits = z_randint(200)+ 1;
       r = z_randint(30)+1;  
@@ -1276,7 +1315,8 @@ int test_F_mpz_mat_row_submul_ui()
 		F_mpz_mat_row_submul_ui(F_mat, r2, F_mat, r1, start, n, mult);
       F_mpz_mat_to_mpz_mat(m_mat2, F_mat);
 
-      for (ulong i = start; i < start + n; i++)
+      ulong i;
+      for (i = start; i < start + n; i++)
       {
          mpz_set(temp, m_mat->entries[r2*c+i]);
 			mpz_submul_ui(temp, m_mat->entries[r1*c+i], mult);
@@ -1309,7 +1349,8 @@ int test_F_mpz_mat_row_addmul_2exp_ui()
    mpz_init(temp);
    mpz_init(temp2);
    
-   for (ulong count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
    {
       bits = z_randint(200)+ 1;
       bits2 = z_randint(200)+ 1;
@@ -1338,7 +1379,8 @@ int test_F_mpz_mat_row_addmul_2exp_ui()
 		F_mpz_mat_row_addmul_2exp_ui(F_mat2, r2, F_mat, r1, start, n, mult, exp);
       F_mpz_mat_to_mpz_mat(m_mat3, F_mat2);
       
-      for (ulong i = start; i < start + n; i++)
+      ulong i;
+      for (i = start; i < start + n; i++)
       {
          mpz_set(temp, m_mat2->entries[r2*c+i]);
 			mpz_mul_2exp(temp2, m_mat->entries[r1*c+i], exp);
@@ -1359,7 +1401,8 @@ int test_F_mpz_mat_row_addmul_2exp_ui()
    }
    
    // aliased multiply
-   for (ulong count1 = 0; (count1 < 10000) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000) && (result == 1) ; count1++)
    {
       bits = z_randint(200)+ 1;
       r = z_randint(30)+1;  
@@ -1383,7 +1426,8 @@ int test_F_mpz_mat_row_addmul_2exp_ui()
 		F_mpz_mat_row_addmul_2exp_ui(F_mat, r2, F_mat, r1, start, n, mult, exp);
       F_mpz_mat_to_mpz_mat(m_mat2, F_mat);
 
-      for (ulong i = start; i < start + n; i++)
+      ulong i;
+      for (i = start; i < start + n; i++)
       {
          mpz_set(temp, m_mat->entries[r2*c+i]);
 			mpz_mul_2exp(temp2, m_mat->entries[r1*c+i], exp);
@@ -1418,7 +1462,8 @@ int test_F_mpz_mat_row_submul_2exp_ui()
    mpz_init(temp);
    mpz_init(temp2);
    
-   for (ulong count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
    {
       bits = z_randint(200)+ 1;
       bits2 = z_randint(200)+ 1;
@@ -1447,7 +1492,8 @@ int test_F_mpz_mat_row_submul_2exp_ui()
 		F_mpz_mat_row_submul_2exp_ui(F_mat2, r2, F_mat, r1, start, n, mult, exp);
       F_mpz_mat_to_mpz_mat(m_mat3, F_mat2);
       
-      for (ulong i = start; i < start + n; i++)
+      ulong i;
+      for (i = start; i < start + n; i++)
       {
          mpz_set(temp, m_mat2->entries[r2*c+i]);
 			mpz_mul_2exp(temp2, m_mat->entries[r1*c+i], exp);
@@ -1468,7 +1514,8 @@ int test_F_mpz_mat_row_submul_2exp_ui()
    }
    
    // aliased multiply
-   for (ulong count1 = 0; (count1 < 10000) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000) && (result == 1) ; count1++)
    {
       bits = z_randint(200)+ 1;
       r = z_randint(30)+1;  
@@ -1492,7 +1539,8 @@ int test_F_mpz_mat_row_submul_2exp_ui()
 		F_mpz_mat_row_submul_2exp_ui(F_mat, r2, F_mat, r1, start, n, mult, exp);
       F_mpz_mat_to_mpz_mat(m_mat2, F_mat);
 
-      for (ulong i = start; i < start + n; i++)
+      ulong i;
+      for (i = start; i < start + n; i++)
       {
          mpz_set(temp, m_mat->entries[r2*c+i]);
 			mpz_mul_2exp(temp2, m_mat->entries[r1*c+i], exp);
@@ -1523,7 +1571,8 @@ int test_F_mpz_mat_mul_classical()
    int result = 1;
    ulong bits1, bits2, bits3;
    
-   for (ulong count1 = 0; (count1 < 2000*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 2000*ITER) && (result == 1) ; count1++)
    {
       ulong r1 = z_randint(30)+1;
       ulong c1 = z_randint(30)+1;
@@ -1589,7 +1638,8 @@ int test_F_mpz_mat_mul_classical()
    }
 
 //alias testing for the square case
-   for (ulong count1 = 0; (count1 < 2000*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 2000*ITER) && (result == 1) ; count1++)
    {
       ulong r = z_randint(30)+1;
       
@@ -1649,7 +1699,8 @@ int test_F_mpz_mat_mul_classical()
    }
 
 //aliasing square case two inputs the same and all inputs same
-   for (ulong count1 = 0; (count1 < 2000*ITER) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 2000*ITER) && (result == 1) ; count1++)
    {
       ulong r = z_randint(30)+1;
       
@@ -1703,7 +1754,8 @@ int test_F_mpz_mat_row_submul_2exp_F_mpz()
    mpz_init(temp2);
    mpz_init(m_mult);
    
-   for (ulong count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
    {
       bits = z_randint(200)+ 1;
       bits2 = z_randint(200)+ 1;
@@ -1735,7 +1787,8 @@ int test_F_mpz_mat_row_submul_2exp_F_mpz()
 		F_mpz_mat_row_submul_2exp_F_mpz(F_mat2, r2, F_mat, r1, start, n, mult, exp);
       F_mpz_mat_to_mpz_mat(m_mat3, F_mat2);
       
-      for (ulong i = start; i < start + n; i++)
+      ulong i;
+      for (i = start; i < start + n; i++)
       {
          mpz_set(temp, m_mat2->entries[r2*c+i]);
 			mpz_mul_2exp(temp2, m_mat->entries[r1*c+i], exp);
@@ -1757,7 +1810,8 @@ int test_F_mpz_mat_row_submul_2exp_F_mpz()
    }
    
    // aliased multiply
-   for (ulong count1 = 0; (count1 < 10000) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000) && (result == 1) ; count1++)
    {
       bits = z_randint(200)+ 1;
       r = z_randint(30)+1;  
@@ -1783,7 +1837,8 @@ int test_F_mpz_mat_row_submul_2exp_F_mpz()
 		F_mpz_mat_row_submul_2exp_F_mpz(F_mat, r2, F_mat, r1, start, n, mult, exp);
       F_mpz_mat_to_mpz_mat(m_mat2, F_mat);
 
-      for (ulong i = start; i < start + n; i++)
+      ulong i;
+      for (i = start; i < start + n; i++)
       {
          mpz_set(temp, m_mat->entries[r2*c+i]);
 			mpz_mul_2exp(temp2, m_mat->entries[r1*c+i], exp);
@@ -1820,7 +1875,8 @@ int test_F_mpz_mat_row_scalar_mul()
    mpz_init(m_sp1);
    mpz_init(m_sp2);
    
-   for (ulong count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
    {
       bits = z_randint(200)+ 1;
       bits2 = z_randint(200)+ 1;
@@ -1846,7 +1902,8 @@ int test_F_mpz_mat_row_scalar_mul()
       F_mpz_get_mpz(m_sp1, F_sp);
       
       mpz_set_ui(m_sp2, 0);
-      for (ulong i = start; i < start + n; i++)
+      ulong i;
+      for (i = start; i < start + n; i++)
       {
          mpz_addmul(m_sp2, m_mat->entries[r1*c+i], m_mat2->entries[r2*c+i]);
       }
@@ -1866,7 +1923,8 @@ int test_F_mpz_mat_row_scalar_mul()
    }
    
    // alias rows
-   for (ulong count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
    {
       bits = z_randint(200)+ 1;
       r = z_randint(30)+1;  
@@ -1886,7 +1944,8 @@ int test_F_mpz_mat_row_scalar_mul()
       F_mpz_get_mpz(m_sp1, F_sp);
       
       mpz_set_ui(m_sp2, 0);
-      for (ulong i = start; i < start + n; i++)
+      ulong i;
+      for (i = start; i < start + n; i++)
       {
          mpz_addmul(m_sp2, m_mat->entries[r1*c+i], m_mat->entries[r1*c+i]);
       }

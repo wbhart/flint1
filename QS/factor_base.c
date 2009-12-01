@@ -112,7 +112,8 @@ void tiny_compute_sizes(QS_t * qs_inf)
      unsigned char * sizes = qs_inf->sizes;
      prime_t * factor_base = qs_inf->factor_base;
      
-     for (unsigned long i = 0; i < num_primes; i++)
+     unsigned long i;
+     for (i = 0; i < num_primes; i++)
      {
          sizes[i] = (unsigned char) round(log(factor_base[i].p)/log(2.0));
      }

@@ -98,7 +98,8 @@ int test_F_mpz_mpoly_add_inplace()
 	syms[3] = "y";
    syms[4] = "z";
 	
-	for (ulong i = 0; i < 100; i++)
+	ulong i;
+	for (i = 0; i < 100; i++)
 	{
 		F_mpz_mpoly_init2(poly, 10, 5, GRLEX);
       F_mpz_mpoly_init2(poly2, 10, 5, GRLEX);
@@ -188,7 +189,8 @@ int test__F_mpz_mpoly_mul_mxn()
 	printf("A = "); F_mpz_mpoly_print_pretty(poly, syms); printf("\n");
 	printf("B = "); F_mpz_mpoly_print_pretty(poly2, syms); printf("\n");
    
-	for (ulong i = 0; i < 1000000; i++) _F_mpz_mpoly_mul_small_mxn(res, poly, 0, poly2, 0);
+	ulong i;
+	for (i = 0; i < 1000000; i++) _F_mpz_mpoly_mul_small_mxn(res, poly, 0, poly2, 0);
 
 	printf("A * B = "); F_mpz_mpoly_print_pretty(res, syms); printf("\n\n");
 	

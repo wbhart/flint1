@@ -75,12 +75,14 @@ static inline void square_root(mpz_t X, mpz_t Y, QS_t * qs_inf, linalg_t * la_in
    mpz_set_ui(X, 1);
    mpz_set_ui(Y, 1);
    
-   for (unsigned long i = 0; i < ncols; i++)
+   unsigned long i;
+   for (i = 0; i < ncols; i++)
    {
       if (get_null_entry(nullrows, i, l)) 
       {
          position = la_inf->matrix[i].orig*2*MAX_FACS;
-         for (unsigned long j = 0; j < relation[position]; j++)
+         unsigned long j;
+         for (j = 0; j < relation[position]; j++)
          {
             prime_count[relation[position+2*j+1]] +=
                (relation[position+2*j+2]);
@@ -91,7 +93,8 @@ static inline void square_root(mpz_t X, mpz_t Y, QS_t * qs_inf, linalg_t * la_in
    }
    mpz_mod(Y, Y, N);
    
-   for (unsigned long i = 0; i < num_primes; i++)
+   unsigned long i;
+   for (i = 0; i < num_primes; i++)
    {
       if (prime_count[i]) 
       {
@@ -104,7 +107,8 @@ static inline void square_root(mpz_t X, mpz_t Y, QS_t * qs_inf, linalg_t * la_in
    mpz_mod(X, X, N);
    
 #if TEST
-   for (unsigned long i = 0; i < num_primes; i++)
+   unsigned long i;
+   for (i = 0; i < num_primes; i++)
    {
       if ((prime_count[i] %2) != 0) printf("Error %ld, %ld, %ld\n", l, i, prime_count[i]);
    }
@@ -194,7 +198,8 @@ unsigned long collect_relations(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly_
          *(sieve+sieve_size) = 255;
          
          do_sieving(qs_inf, poly_inf, sieve, small_primes, second_prime, SIEVE_BLOCK, 1, 0);
-         for (long i = 1; i < blocks - 1; i++, offset += SIEVE_BLOCK)
+         long i;
+         for (i = 1; i < blocks - 1; i++, offset += SIEVE_BLOCK)
             do_sieving(qs_inf, poly_inf, sieve, small_primes, second_prime, offset+SIEVE_BLOCK, 0, 0);
          do_sieving(qs_inf, poly_inf, sieve, small_primes, second_prime, sieve_size, 0, 1);
          
@@ -376,7 +381,8 @@ int F_mpz_factor_mpQS(F_mpz_factor_t * factors, mpz_t N)
    printf("FACTORS:\n");
 #endif
 
-   for (unsigned long l = 0; l < 64; l++)
+   unsigned long l;
+   for (l = 0; l < 64; l++)
    {
       if (mask & ((uint64_t)(1) << l))
       {

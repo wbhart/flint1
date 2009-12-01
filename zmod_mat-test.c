@@ -56,10 +56,12 @@ void randmat(zmod_mat_t mat)
    ulong p = mat->p;
    ulong * ptr;
               
-   for (long i = 0; i < rows; i++)
+   long i;
+   for (i = 0; i < rows; i++)
    {
 	  ptr = mat->arr[i];
-	  for (ulong j = 0; j < cols; j++)
+	  ulong j;
+	  for (j = 0; j < cols; j++)
 		  ptr[j] = z_randint(p);
    }
 } 
@@ -71,7 +73,8 @@ int test_zmod_mat_row_reduce_gauss()
    unsigned long bits;
    unsigned long modulus;
 
-   for (unsigned long count1 = 0; (count1 < 100) && (result == 1); count1++)
+   unsigned long count1;
+   for (count1 = 0; (count1 < 100) && (result == 1); count1++)
    {
       bits = z_randint(FLINT_BITS-2)+2;
       

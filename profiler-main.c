@@ -55,7 +55,8 @@ gmp_randstate_t profiler_main_randstate;
 
 void profiler_random_limbs(unsigned long* output, unsigned long count)
 {
-   for (unsigned long i = 0; i < count; i++)
+   unsigned long i;
+   for (i = 0; i < count; i++)
       output[i] = gmp_urandomb_ui(profiler_main_randstate,
                                   FLINT_BITS);
 }
@@ -191,7 +192,8 @@ int lookup_target_name(char* name)
    }
 
    // not an integer; look up the name in the list
-   for (int i = 0; i < prof_target_count; i++)
+   int i;
+   for (i = 0; i < prof_target_count; i++)
    {
       if (!strcmp(prof_target_name[i], name))
          return i;
@@ -219,7 +221,8 @@ void help()
    printf("              Overrides environment variable FLINT_PROFILE_PARAMS.\n");
    printf("\n");
    printf("Targets in this profiling module are:\n");
-   for (int i = 0; i < prof_target_count; i++)
+   int i;
+   for (i = 0; i < prof_target_count; i++)
       printf(" %2ld. %s\n", i+1, prof_target_name[i]);
 }
 
@@ -249,7 +252,8 @@ int main(int argc, char* argv[])
    char** args = NULL;
 
    // scan command line options
-   for (int n = 1; n < argc; n++)
+   int n;
+   for (n = 1; n < argc; n++)
    {
       if (!strcmp(argv[n], "-h"))
       {

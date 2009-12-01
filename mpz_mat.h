@@ -61,7 +61,8 @@ void mpz_mat_clear(mpz_mat_t mat);
 static inline
 int mpz_mat_equal(mpz_mat_t mat1, mpz_mat_t mat2)
 {
-	for (long i = 0; i < mat1->r*mat1->c; i++)
+	long i;
+	for (i = 0; i < mat1->r*mat1->c; i++)
 	   if (mpz_cmp(mat1->entries[i], mat2->entries[i])) return 0;
 
 	return 1;

@@ -360,7 +360,8 @@ void _F_mpz_poly_set_length(F_mpz_poly_t poly, const ulong length)
 {
 	if (poly->length > length) // demote coefficients beyond new length
    {
-      for (ulong i = length; i < poly->length; i++)
+      ulong i;
+      for (i = length; i < poly->length; i++)
 			_F_mpz_demote(poly->coeffs + i);	
    } 
 
@@ -378,7 +379,8 @@ void F_mpz_poly_truncate(F_mpz_poly_t poly, const ulong length)
 {
 	if (poly->length > length) // only truncate if necessary
    {
-      for (ulong i = length; i < poly->length; i++)
+      ulong i;
+      for (i = length; i < poly->length; i++)
 			_F_mpz_demote(poly->coeffs + i);
 		poly->length = length;
       _F_mpz_poly_normalise(poly);
@@ -508,7 +510,8 @@ void F_mpz_poly_zero_coeffs(F_mpz_poly_t poly, const ulong n)
 {
 	if (n >= poly->length) _F_mpz_poly_set_length(poly, 0);
 	else 
-	   for (ulong i = 0; i < n; i++)
+	   ulong i;
+	   for (i = 0; i < n; i++)
 		   F_mpz_zero(poly->coeffs + i);
 }
 

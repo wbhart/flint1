@@ -40,9 +40,11 @@
 */
 void F_mpz_mat_HNF_LLL_minus(F_mpz_mat_t L, ulong j)
 {
-   for (long i = 0; i < j - 1; i++)
+   long i;
+   for (i = 0; i < j - 1; i++)
 	   F_mpz_neg(L->rows[j] + i, L->rows[j] + i);
-	for (ulong r = j + 1; r < L->r; r++)
+	ulong r;
+	for (r = j + 1; r < L->r; r++)
 		F_mpz_neg(L->rows[r] + j, L->rows[r] + j);
 }
 
@@ -54,12 +56,14 @@ void F_mpz_mat_HNF_LLL_swap(F_mpz_mat_t A, F_mpz_mat_t B, F_mpz_mat_t L, F_mpz *
 	F_mpz_mat_row_swap(A, k, A, k - 1, 0, n);
    F_mpz_mat_row_swap(B, k, B, k - 1, 0, n);
    
-	for (ulong j = 0; j < k - 1; j++) F_mpz_swap(L->rows[k] + j, L->rows[k - 1] + j);
+	ulong j;
+	for (j = 0; j < k - 1; j++) F_mpz_swap(L->rows[k] + j, L->rows[k - 1] + j);
 
 	F_mpz_t t;
 	F_mpz_init(t);
 
-	for (ulong i = k + 1; i < m; i++)
+	ulong i;
+	for (i = k + 1; i < m; i++)
 	{
 		F_mpz_mul2(L->rows[i] + k - 1, L->rows[i] + k - 1, L->rows[k] + k - 1);
 		F_mpz_addmul(L->rows[i] + k - 1, L->rows[i] + k, D + k - 2);
@@ -128,7 +132,8 @@ void F_mpz_mat_HNF_LLL_reduce(F_mpz_mat_t A, F_mpz_mat_t B, F_mpz_mat_t L,
 		F_mpz_mat_row_submul(A, k, A, i, 0, n, q);
       F_mpz_mat_row_submul(B, k, B, i, 0, n, q);
       F_mpz_submul(L->rows[k] + i, q, D + i);
-		for (ulong j = 0; j < i - 1; j++)
+		ulong j;
+		for (j = 0; j < i - 1; j++)
 		{
          F_mpz_submul(L->rows[k] + j, L->rows[i] + j, q);
 		}
@@ -152,7 +157,8 @@ void F_mpz_mat_HNF_LLL(F_mpz_mat_t A, F_mpz_mat_t B, F_mpz_mat_t G)
 	F_mpz_mat_t L;
 
 	F_mpz * D = (F_mpz *) flint_heap_alloc(m*sizeof(F_mpz));
-   for (ulong i = 0; i < m; i++) F_mpz_init(D + i);
+   ulong i;
+   for (i = 0; i < m; i++) F_mpz_init(D + i);
 
 	F_mpz_mat_init_identity(B, m);
 	F_mpz_mat_init(L, m, m);
@@ -187,13 +193,15 @@ void F_mpz_mat_HNF_LLL(F_mpz_mat_t A, F_mpz_mat_t B, F_mpz_mat_t G)
 			}
 		} 
       
-		for (long i = k - 2; i >= 0; i--)
+		long i;
+		for (i = k - 2; i >= 0; i--)
 			F_mpz_mat_HNF_LLL_reduce(A, B, L, &col1, &col2, D, k, i);
 		k++;
 	}
 
 	F_mpz_clear(temp1);
 	F_mpz_clear(temp2);
-	for (ulong i = 0; i < m; i++) F_mpz_clear(D + i);
+	ulong i;
+	for (i = 0; i < m; i++) F_mpz_clear(D + i);
    flint_heap_free(D);
 }

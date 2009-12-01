@@ -51,7 +51,8 @@ void sample_ZmodF_mul_helper(ZmodF_mul_info_t info, unsigned long n,
    
    prof_start();
 
-   for (unsigned long i = 0; i < count; i++)
+   unsigned long i;
+   for (i = 0; i < count; i++)
       ZmodF_mul_info_mul(info, x3, x1, x2);
 
    prof_stop();
@@ -77,7 +78,8 @@ void sample_ZmodF_sqr_helper(ZmodF_mul_info_t info, unsigned long n,
    
    prof_start();
 
-   for (unsigned long i = 0; i < count; i++)
+   unsigned long i;
+   for (i = 0; i < count; i++)
       ZmodF_mul_info_mul(info, x3, x1, x1);
 
    prof_stop();
@@ -120,7 +122,8 @@ void profDriver_ZmodF_mul_plain(char* params)
 
    prof1d_set_sampler(sample_ZmodF_mul_plain);
    
-   for (unsigned long n = n_min; n <= n_max; n += n_skip)
+   unsigned long n;
+   for (n = n_min; n <= n_max; n += n_skip)
       prof1d_sample(n, NULL);
 }
 
@@ -164,7 +167,8 @@ void profDriver_ZmodF_mul_threeway(char* params)
    while (n_min % 3)
       n_min++;
    
-   for (unsigned long n = n_min; n <= n_max; n += n_skip)
+   unsigned long n;
+   for (n = n_min; n <= n_max; n += n_skip)
    {
       if (n % 3 == 0)
          prof1d_sample(n, NULL);
@@ -205,7 +209,8 @@ void profDriver_ZmodF_mul_auto(char* params)
 
    prof1d_set_sampler(sample_ZmodF_mul_auto);
    
-   for (unsigned long n = n_min; n <= n_max; n += n_skip)
+   unsigned long n;
+   for (n = n_min; n <= n_max; n += n_skip)
       prof1d_sample(n, NULL);
 }
 
@@ -243,7 +248,8 @@ void profDriver_ZmodF_sqr_plain(char* params)
 
    prof1d_set_sampler(sample_ZmodF_sqr_plain);
    
-   for (unsigned long n = n_min; n <= n_max; n += n_skip)
+   unsigned long n;
+   for (n = n_min; n <= n_max; n += n_skip)
       prof1d_sample(n, NULL);
 }
 
@@ -287,7 +293,8 @@ void profDriver_ZmodF_sqr_threeway(char* params)
    while (n_min % 3)
       n_min++;
    
-   for (unsigned long n = n_min; n <= n_max; n += n_skip)
+   unsigned long n;
+   for (n = n_min; n <= n_max; n += n_skip)
    {
       if (n % 3 == 0)
          prof1d_sample(n, NULL);
@@ -328,7 +335,8 @@ void profDriver_ZmodF_sqr_auto(char* params)
 
    prof1d_set_sampler(sample_ZmodF_sqr_auto);
    
-   for (unsigned long n = n_min; n <= n_max; n += n_skip)
+   unsigned long n;
+   for (n = n_min; n <= n_max; n += n_skip)
       prof1d_sample(n, NULL);
 }
 

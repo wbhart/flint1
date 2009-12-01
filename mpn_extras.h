@@ -72,7 +72,8 @@ todo: consider using GMP's mpn_com_n (undocumented)
 
 static inline void F_mpn_negate(mp_limb_t* dest, mp_limb_t* src, unsigned long count)
 {
-   for (long i = count - 1; i >= 0; i--)
+   long i;
+   for (i = count - 1; i >= 0; i--)
       dest[i] = ~src[i];
    mpn_add_1(dest, dest, count, 1);
 }
@@ -93,7 +94,8 @@ todo: GMP has code to do limb copying. Clearly memcpy wasn't good enough for
  */
 static inline void F_mpn_copy(mp_limb_t* dest, const mp_limb_t* src, unsigned long count)
 {
-   for (long i = count - 1; i >= 0; i--)
+   long i;
+   for (i = count - 1; i >= 0; i--)
    {
       dest[i] = src[i];
    }
@@ -101,7 +103,8 @@ static inline void F_mpn_copy(mp_limb_t* dest, const mp_limb_t* src, unsigned lo
 
 static inline void F_mpn_copy_forward(mp_limb_t* dest, const mp_limb_t* src, unsigned long count)
 {
-   for (long i = 0; i < count; i++)
+   long i;
+   for (i = 0; i < count; i++)
    {
       dest[i] = src[i];
    }
@@ -115,7 +118,8 @@ todo: why does memset have so much overhead????!!?
  */
 static inline void F_mpn_clear(mp_limb_t* dest, unsigned long count)
 {
-   for (long i = count - 1; i >= 0; i--)
+   long i;
+   for (i = count - 1; i >= 0; i--)
       dest[i] = 0;
 }
 
@@ -126,7 +130,8 @@ todo: why does memset have so much overhead????!!?
  */
 static inline void F_mpn_set(mp_limb_t* dest, unsigned long count)
 {
-   for (long i = count - 1; i >= 0; i--)
+   long i;
+   for (i = count - 1; i >= 0; i--)
       dest[i] = (mp_limb_t)(-1L);
 }
 
@@ -142,7 +147,8 @@ static inline
 void F_mpn_printx(mp_limb_t * mpn, unsigned long count)
 {
    if (count) 
-      for (unsigned long i = 0; i < count; i++)
+      unsigned long i;
+      for (i = 0; i < count; i++)
          printf("%lx ", mpn[i]);
 }
                                       

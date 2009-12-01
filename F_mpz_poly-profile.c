@@ -59,7 +59,8 @@ void randpoly(mpz_poly_t pol, unsigned long length, unsigned long maxbits)
    
    mpz_poly_zero(pol);
    
-   for (unsigned long i = 0; i < length; i++)
+   unsigned long i;
+   for (i = 0; i < length; i++)
    {
        bits = maxbits;
        if (bits == 0) mpz_set_ui(temp,0);
@@ -89,7 +90,8 @@ void run_triangle(unsigned long max_bits, double ratio)
    int max_iter = (int) ceil(log((double) max_bits) / log(ratio));
 
    unsigned long last_length = 0;
-   for (unsigned long i = 0; i <= max_iter; i++)
+   unsigned long i;
+   for (i = 0; i <= max_iter; i++)
    {
       unsigned long length = (unsigned long) floor(pow(ratio, i));
       if (length != last_length)
@@ -97,7 +99,8 @@ void run_triangle(unsigned long max_bits, double ratio)
          last_length = length;
 
          unsigned long last_bits = 0;
-         for (unsigned long j = 0; j <= max_iter; j++)
+         unsigned long j;
+         for (j = 0; j <= max_iter; j++)
          {
             unsigned long bits = (unsigned long) floor(pow(ratio, j));
             if (bits != last_bits)
@@ -123,7 +126,8 @@ void run_block(ulong max_length, double ratio)
 	int max_iter = (int) ceil(log((double) max_length) / log(ratio));
 	ulong last_length = 0;
 	
-	for (ulong i = 0; i <= max_iter; i++)
+	ulong i;
+	for (i = 0; i <= max_iter; i++)
 	{
 		ulong length = (ulong) floor(pow(ratio, i));
       if (length != last_length)
@@ -131,7 +135,8 @@ void run_block(ulong max_length, double ratio)
          last_length = length;
          ulong m = ceil_log2(length);
 	         
-         for (ulong bits = 1; bits <= 31; bits++)
+         ulong bits;
+         for (bits = 1; bits <= 31; bits++)
 	      {
 		      if (m + 2*bits <= FLINT_BITS - 2) prof2d_sample(length, bits, NULL);
 	      }
@@ -168,7 +173,8 @@ void sample_F_mpz_poly_mul_KS(ulong length, ulong bits,
    else if (count >= 8) r_count = 2;
    else r_count = 1;
    
-   for (ulong i = 0; i < count; i++)
+   ulong i;
+   for (i = 0; i < count; i++)
    {
       if (i%r_count == 0)
       {
@@ -246,7 +252,8 @@ void sample_F_mpz_poly_mul(ulong length, ulong bits,
    else if (count >= 8) r_count = 2;
    else r_count = 1;
    
-   for (ulong i = 0; i < count; i++)
+   ulong i;
+   for (i = 0; i < count; i++)
    {
       if (i%r_count == 0)
       {

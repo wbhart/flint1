@@ -163,7 +163,8 @@ static inline void init_clock(unsigned long n)
 
 static inline void init_all_clocks()
 {
-   for (unsigned long i = 0; i < FLINT_NUM_CLOCKS; i++)
+   unsigned long i;
+   for (i = 0; i < FLINT_NUM_CLOCKS; i++)
       clock_accum[i] = 0.0;
 }
 

@@ -541,7 +541,8 @@ void ZmodF_divby3(ZmodF_t b, ZmodF_t a, unsigned long n)
 
    // compute a "total" which is congruent to a mod 3
    unsigned long hi = 0, lo = 0;
-   for (unsigned long i = 0; i <= n; i++)
+   unsigned long i;
+   for (i = 0; i <= n; i++)
       add_ssaaaa(hi, lo, hi, lo, 0, a[i]);
 
    unsigned long total = lo & ((1UL << (FLINT_BITS/2)) - 1);

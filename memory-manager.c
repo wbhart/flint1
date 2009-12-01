@@ -65,7 +65,8 @@ void * flint_stack_alloc(unsigned long length)
    mempts[upto] = (void*) block;
    upto++;
    block[0] = length;
-   for (unsigned long i = 0; i < 100; i++)
+   unsigned long i;
+   for (i = 0; i < 100; i++)
       block[length+i+1] = 0;
    return (void*) (block+1);
 }
@@ -90,7 +91,8 @@ void * flint_stack_alloc_bytes(unsigned long bytes)
    mempts[upto] = (void*) block;
    upto++;
    block[0] = length;
-   for (unsigned long i = 0; i < 100; i++)
+   unsigned long i;
+   for (i = 0; i < 100; i++)
       block[length+i+1] = 0L;
    return (void*) (block+1);
 }
@@ -108,7 +110,8 @@ void flint_stack_release()
 #if DEBUG_PRINT
    printf("Releasing %ld limbs\n", length);
 #endif
-   for (unsigned long i = 0; i < 100; i++)
+   unsigned long i;
+   for (i = 0; i < 100; i++)
       if (block[length+i+1] != 0L) 
       {
          printf("Error: Block overrun detected by stack memory allocator!!\n");
@@ -437,7 +440,8 @@ void* flint_heap_alloc(unsigned long limbs)
    if (!buf)
       flint_memory_failure();
    buf[0] = limbs;
-   for (unsigned long i = 0; i < 100; i++)
+   unsigned long i;
+   for (i = 0; i < 100; i++)
       buf[limbs+i+1] = 0;
    return (void*) (buf+1);
 }
@@ -452,7 +456,8 @@ void* flint_heap_alloc_bytes(unsigned long bytes)
    if (!buf)
       flint_memory_failure();
    buf[0] = limbs;
-   for (unsigned long i = 0; i < 100; i++)
+   unsigned long i;
+   for (i = 0; i < 100; i++)
       buf[limbs+i+1] = 0;
    return (void*) (buf+1);
 }
@@ -462,7 +467,8 @@ void* flint_heap_realloc(void * block_void, unsigned long limbs)
    unsigned long * block = (unsigned long *) block_void;
    block--;
    unsigned long length = block[0];
-   for (unsigned long i = 0; i < 100; i++)
+   unsigned long i;
+   for (i = 0; i < 100; i++)
       if (block[length+i+1] != 0L) 
       {
          printf("Error: Block overrun detected by heap memory (re)allocator!!\n");
@@ -475,7 +481,8 @@ void* flint_heap_realloc(void * block_void, unsigned long limbs)
    if (!buf)
       flint_memory_failure();
    buf[0] = limbs;
-   for (unsigned long i = 0; i < 100; i++)
+   unsigned long i;
+   for (i = 0; i < 100; i++)
       buf[limbs+i+1] = 0;
    return (void*) (buf+1);
 }
@@ -491,7 +498,8 @@ void* flint_heap_realloc_bytes(void * block_void, unsigned long bytes)
    if (!buf)
       flint_memory_failure();
    buf[0] = limbs;
-   for (unsigned long i = 0; i < 100; i++)
+   unsigned long i;
+   for (i = 0; i < 100; i++)
       buf[limbs+i+1] = 0;
    return (void*) (buf+1);
 }
@@ -504,7 +512,8 @@ void flint_heap_free(void * block_void)
 #if DEBUG_PRINT
    printf("Releasing %ld limbs from heap\n", length);
 #endif
-   for (unsigned long i = 0; i < 100; i++)
+   unsigned long i;
+   for (i = 0; i < 100; i++)
       if (block[length+i+1] != 0L) 
       {
          printf("Error: Block overrun detected by heap memory allocator!!\n");

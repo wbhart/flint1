@@ -43,10 +43,12 @@ void F_mpzmod_mat_init(F_mpzmod_mat_t mat, F_mpz_t p, ulong rows, ulong cols)
 	mat->rows = (F_mpz **) flint_heap_alloc(rows);
    
    // Set up the rows
-   for (ulong i = 0; i < rows; i++)
+   ulong i;
+   for (i = 0; i < rows; i++)
       mat->rows[i] = mat->entries + i*cols;
 
-	for (ulong i = 0; i < rows*cols; i++)
+	ulong i;
+	for (i = 0; i < rows*cols; i++)
 		F_mpz_init(mat->entries + i);
 
    F_mpz_set(mat->p, p);
@@ -56,7 +58,8 @@ void F_mpzmod_mat_init(F_mpzmod_mat_t mat, F_mpz_t p, ulong rows, ulong cols)
 
 void F_mpzmod_mat_clear(F_mpzmod_mat_t mat)
 {
-   for (ulong i = 0; i < mat->r*mat->c; i++)
+   ulong i;
+   for (i = 0; i < mat->r*mat->c; i++)
 		F_mpz_clear(mat->entries + i);
 	flint_heap_free(mat->rows);
    flint_heap_free(mat->entries);
@@ -70,9 +73,11 @@ void F_mpzmod_mat_clear(F_mpzmod_mat_t mat)
 
 void F_mpzmod_mat_add(F_mpzmod_mat_t res, F_mpzmod_mat_t mat1, F_mpzmod_mat_t mat2)
 {
-	for (ulong i = 0; i < mat1->r; i++)
+	ulong i;
+	for (i = 0; i < mat1->r; i++)
 	{
-		for (ulong j = 0; j < mat1->c; j++)
+		ulong j;
+		for (j = 0; j < mat1->c; j++)
 		{
 			F_mpz_add(res->rows[i] + j, mat1->rows[i] + j, mat2->rows[i] + j);
 			if (F_mpz_cmpabs(res->rows[i] + j, mat1->p) >= 0)
@@ -83,9 +88,11 @@ void F_mpzmod_mat_add(F_mpzmod_mat_t res, F_mpzmod_mat_t mat1, F_mpzmod_mat_t ma
 
 void F_mpzmod_mat_sub(F_mpzmod_mat_t res, F_mpzmod_mat_t mat1, F_mpzmod_mat_t mat2)
 {
-	for (ulong i = 0; i < mat1->r; i++)
+	ulong i;
+	for (i = 0; i < mat1->r; i++)
 	{
-		for (ulong j = 0; j < mat1->c; j++)
+		ulong j;
+		for (j = 0; j < mat1->c; j++)
 		{
 			F_mpz_sub(res->rows[i] + j, mat1->rows[i] + j, mat2->rows[i] + j);
 			if (F_mpz_sgn(res->rows[i] + j) < 0)
@@ -96,9 +103,11 @@ void F_mpzmod_mat_sub(F_mpzmod_mat_t res, F_mpzmod_mat_t mat1, F_mpzmod_mat_t ma
 
 void F_mpzmod_mat_neg(F_mpzmod_mat_t res, F_mpzmod_mat_t mat1)
 {
-	for (ulong i = 0; i < mat1->r; i++)
+	ulong i;
+	for (i = 0; i < mat1->r; i++)
 	{
-		for (ulong j = 0; j < mat1->c; j++)
+		ulong j;
+		for (j = 0; j < mat1->c; j++)
 		{
 			if (F_mpz_sgn(mat1->rows[i] + j))
 			   F_mpz_sub(res->rows[i] + j, mat1->p, mat1->rows[i] + j);
@@ -109,9 +118,11 @@ void F_mpzmod_mat_neg(F_mpzmod_mat_t res, F_mpzmod_mat_t mat1)
 
 void F_mpzmod_mat_set(F_mpzmod_mat_t res, F_mpzmod_mat_t mat1)
 {
-	for (ulong i = 0; i < mat1->r; i++)
+	ulong i;
+	for (i = 0; i < mat1->r; i++)
 	{
-		for (ulong j = 0; j < mat1->c; j++)
+		ulong j;
+		for (j = 0; j < mat1->c; j++)
 			F_mpz_set(res->rows[i] + j, mat1->rows[i] + j);
 	}
 }
@@ -134,31 +145,38 @@ void F_mpzmod_mat_mul_classical(F_mpzmod_mat_t res, F_mpzmod_mat_t mat1, F_mpzmo
 
 	F_mpz * temp = (F_mpz *) flint_heap_alloc(c2);
 
-	for (ulong i = 0; i < c2; i++)
+	ulong i;
+	for (i = 0; i < c2; i++)
 		F_mpz_init(temp + i);
 	
-   for (ulong i = 0; i < r1; i++) // for each row of mat1
+   ulong i;
+   for (i = 0; i < r1; i++) // for each row of mat1
 	{
 		F_mpz * c = mat1->rows[i];
 
-		for (ulong k = 0; k < c2; k++) // do initial scalar product of row 1 of mat2 by c
+		ulong k;
+		for (k = 0; k < c2; k++) // do initial scalar product of row 1 of mat2 by c
 		   F_mpz_mul2(temp + k, mat2->rows[0] + k, c);
 
-		for (ulong j = 1; j < c1; j++) // compute scalar product for rows 1 to c1 of mat2
+		ulong j;
+		for (j = 1; j < c1; j++) // compute scalar product for rows 1 to c1 of mat2
 		{
-         for (ulong k = 0; k < c2; k++) // do scalar product of row j of mat2 by c
+         ulong k;
+         for (k = 0; k < c2; k++) // do scalar product of row j of mat2 by c
 		   {
             F_mpz_addmul(temp + k, mat2->rows[j] + k, c + j);
          }
 		}
 			   
-		for (ulong k = 0; k < c2; k++) // do reduction mod p and store in result
+		ulong k;
+		for (k = 0; k < c2; k++) // do reduction mod p and store in result
 	   {
 		   F_mpz_mod(res->rows[i] + k, temp + k, mat1->p);
 		}
 	}
 
-	for (ulong i = 0; i < c2; i++)
+	ulong i;
+	for (i = 0; i < c2; i++)
 		F_mpz_clear(temp + i);
 
 	flint_heap_free(temp);
