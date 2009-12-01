@@ -524,7 +524,7 @@ int test_mpz_poly_addsubneg()
 {
    int success = 1;
    unsigned long i, j, in1, in2, out, op, trial;
-   const unsigned long MAX = 4;
+#define MAX 4
    
    mpz_t temp;
    mpz_init(temp);
@@ -604,7 +604,7 @@ int test_mpz_poly_addsubneg()
    
    return success;
 }
-
+#undef MAX
 
 
 /****************************************************************************
@@ -822,13 +822,10 @@ int test__mpz_poly_mul_kara_recursive()
    mpz_poly_init(out);
    mpz_poly_init(scratch);
    
-   unsigned long len1;
+   unsigned long len1, len2, crossover, trial;
    for (len1 = 1; len1 <= 40 && success; len1++)
-   unsigned long len2;
-   for (len2 = len1; len2 <= 40 && success; len2++)
-   unsigned long crossover;
-   for (crossover = 0; crossover <= 6; crossover++)
-   unsigned long trial;
+     for (len2 = len1; len2 <= 40 && success; len2++)
+       for (crossover = 0; crossover <= 6; crossover++)
    for (trial = 0; trial < 3 && success; trial++)
    {
       mpz_poly_ensure_alloc(in1, len1);
@@ -880,11 +877,9 @@ int test_mpz_poly_mul_karatsuba()
    mpz_poly_init(correct);
    mpz_poly_init(out);
 
-   unsigned long len1;
+   unsigned long len1, len2, trial;
    for (len1 = 0; len1 <= 32 && success; len1++)
-   unsigned long len2;
    for (len2 = 0; len2 <= 32 && success; len2++)
-   unsigned long trial;
    for (trial = 0; trial < 15 && success; trial++)
    {
       mpz_poly_zero(in1);

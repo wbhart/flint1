@@ -176,8 +176,8 @@ void ZmodF_poly_random(ZmodF_poly_t x, unsigned long overflow_bits)
 
       // GMP has a "bug" where the top bit of the output of mpz_rrandomb
       // is always set. So we flip everything with probability 1/2.
+      unsigned long i;
       if (random_ulong(2))
-         unsigned long i;
          for (i = 0; i <= n; i++)
             y[i] = ~y[i];
 
@@ -219,8 +219,8 @@ void ZmodF_convert_out(mpz_t output, ZmodF_t input)
 {
    int negative = ((mp_limb_signed_t) input[global_n] < 0);
    
+   int i;
    if (negative)
-      int i;
       for (i = 0; i <= global_n; i++)
          input[i] = ~input[i];
          
@@ -468,9 +468,8 @@ int test__ZmodF_poly_FFT_factor()
 {
    int success = 1;
    
-   unsigned long depth;
+   unsigned long depth, depth1;
    for (depth = 2; depth <= 6 && success; depth++)
-      unsigned long depth1;
       for (depth1 = 1; depth1 < depth && success; depth1++)
       {
          unsigned long depth2 = depth - depth1;
@@ -485,9 +484,8 @@ int test__ZmodF_poly_FFT_factor()
          printf("depth1 = %d, depth2 = %d, n = %d\n", depth1, depth2, n);
 #endif
 
-         unsigned long length;
+         unsigned long length, nonzero;
          for (length = 1; length <= size; length++)
-            unsigned long nonzero;
             for (nonzero = 1; nonzero <= size; nonzero++)
             {
                unsigned long num_trials = 1000000 / (1 << (3*depth));
@@ -636,11 +634,10 @@ int test__ZmodF_poly_IFFT_recursive()
          printf("depth = %d, n = %d\n", depth, n);
 #endif
 
-         unsigned long nonzero;
+         unsigned long nonzero, length;
+         int extra;
          for (nonzero = 1; nonzero <= size; nonzero++)
-            int extra;
             for (extra = 0; extra < 2; extra++)
-               unsigned long length;
                for (length = 1-extra; length <= nonzero; length++)
                {
                   if (extra && length == size)
@@ -858,9 +855,8 @@ void really_naive_convolution(mpz_poly_t res, mpz_poly_t x, mpz_poly_t y,
    for (i = 0; i < size; i++)
       mpz_set_ui(res->coeffs[i], 0);
    
-   unsigned long i;
+   unsigned long i, j;
    for (i = 0; i < size; i++)
-      unsigned long j;
       for (j = 0; j < size; j++)
          mpz_addmul(res->coeffs[(i+j) % size], x->coeffs[i], y->coeffs[j]);
    
@@ -1118,9 +1114,8 @@ void really_naive_negacyclic_convolution(mpz_poly_t res, mpz_poly_t x, mpz_poly_
    for (i = 0; i < size; i++)
       mpz_set_ui(res->coeffs[i], 0);
    
-   unsigned long i;
+   unsigned long i, j;
    for (i = 0; i < size; i++)
-      unsigned long j;
       for (j = 0; j < size; j++)
       {
          unsigned long k = i + j;

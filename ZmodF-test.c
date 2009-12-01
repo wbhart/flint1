@@ -72,8 +72,8 @@ void ZmodF_random(ZmodF_t x, unsigned long n, unsigned long overflow_bits)
 
    // GMP has a "bug" where the top bit of the output of mpz_rrandomb
    // is always set. So we flip everything with probability 1/2.
+   ulong i;
    if (random_ulong(2))
-      unsigned long i;
       for (i = 0; i <= n; i++)
          x[i] = ~x[i];
 
@@ -112,8 +112,8 @@ void ZmodF_convert_out(mpz_t output, ZmodF_t input)
 {
    int negative = ((mp_limb_signed_t) input[global_n] < 0);
    
+   int i;
    if (negative)
-      int i;
       for (i = 0; i <= global_n; i++)
          input[i] = ~input[i];
          
@@ -249,9 +249,8 @@ int check_coeffs(unsigned long count, unsigned long n)
    }
    
    // check pointers point to distinct buffers
-   int i;
+   int i, j;
    for (i = 0; i < count; i++)
-      int j;
       for (j = i+1; j < count; j++)
          if (coeffs[i] == coeffs[j])
             return 0;
@@ -272,9 +271,8 @@ int check_coeffs(unsigned long count, unsigned long n)
 
 int test_ZmodF_normalise()
 {
-   unsigned long n;
+   unsigned long n, trial;
    for (n = 1; n <= 5; n++)
-      unsigned long trial;
       for (trial = 0; trial < 100000; trial++)
       {
          setup_coeffs(1, n, random_ulong(FLINT_BITS - 2));
@@ -306,9 +304,8 @@ int test_ZmodF_normalise()
 
 int test_ZmodF_fast_reduce()
 {
-   unsigned long n;
+   unsigned long n, trial;
    for (n = 1; n <= 5; n++)
-      unsigned long trial;
       for (trial = 0; trial < 100000; trial++)
       {
          setup_coeffs(1, n, random_ulong(FLINT_BITS - 2));
@@ -333,11 +330,10 @@ int test_ZmodF_fast_reduce()
 
 int test_ZmodF_neg()
 {
-   unsigned long n;
+   unsigned long n, trial;
+   int inplace;
    for (n = 1; n <= 5; n++)
-      unsigned long trial;
       for (trial = 0; trial < 50000; trial++)
-         int inplace;
          for (inplace = 0; inplace <= 1; inplace++)
          {
             setup_coeffs(2, n, random_ulong(FLINT_BITS - 2));
@@ -359,13 +355,11 @@ int test_ZmodF_neg()
 
 int test_ZmodF_short_div_2exp()
 {
-   unsigned long n;
+   unsigned long n, s, trial;
+   int inplace;
    for (n = 1; n <= 3; n++)
-      unsigned long trial;
       for (trial = 0; trial < 2000; trial++)
-         unsigned long s;
          for (s = 1; s < FLINT_BITS; s++)
-            int inplace;
             for (inplace = 0; inplace <= 1; inplace++)
             {
                setup_coeffs(2, n, random_ulong(FLINT_BITS - 2));
@@ -386,11 +380,9 @@ int test_ZmodF_short_div_2exp()
 
 int test_ZmodF_mul_Bexp()
 {
-   unsigned long n;
+   unsigned long n, s, trial;
    for (n = 1; n <= 6; n++)
-      unsigned long trial;
       for (trial = 0; trial < 20000; trial++)
-         unsigned long s;
          for (s = 1; s < n; s++)
          {
             setup_coeffs(2, n, random_ulong(FLINT_BITS - 2));
@@ -412,15 +404,12 @@ int test_ZmodF_mul_Bexp()
 
 int test_ZmodF_div_Bexp_sub()
 {
-   unsigned long n;
+   unsigned long n, trial, s;
+   int inbuf1, inbuf2;
    for (n = 1; n <= 6; n++)
-      unsigned long trial;
       for (trial = 0; trial < 4000; trial++)
-         unsigned long s;
          for (s = 1; s < n; s++)
-            int inbuf1;
             for (inbuf1 = 0; inbuf1 <= 2; inbuf1++)
-               int inbuf2;
                for (inbuf2 = 1; inbuf2 <= 2; inbuf2++)
                {
                   setup_coeffs(3, n, random_ulong(FLINT_BITS - 2));
@@ -445,15 +434,12 @@ int test_ZmodF_div_Bexp_sub()
 
 int test_ZmodF_div_Bexp_add()
 {
-   unsigned long n;
+   unsigned long n, s, trial;
+   int inbuf1, inbuf2;
    for (n = 1; n <= 6; n++)
-      unsigned long trial;
       for (trial = 0; trial < 4000; trial++)
-         unsigned long s;
          for (s = 1; s < n; s++)
-            int inbuf1;
             for (inbuf1 = 0; inbuf1 <= 2; inbuf1++)
-               int inbuf2;
                for (inbuf2 = 1; inbuf2 <= 2; inbuf2++)
                {
                   setup_coeffs(3, n, random_ulong(FLINT_BITS - 2));
@@ -478,15 +464,12 @@ int test_ZmodF_div_Bexp_add()
 
 int test_ZmodF_sub_mul_Bexp()
 {
-   unsigned long n;
+   unsigned long n, trial, s;
+   int inbuf1, inbuf2;
    for (n = 1; n <= 6; n++)
-      unsigned long trial;
       for (trial = 0; trial < 4000; trial++)
-         unsigned long s;
          for (s = 1; s < n; s++)
-            int inbuf1;
             for (inbuf1 = 1; inbuf1 <= 2; inbuf1++)
-               int inbuf2;
                for (inbuf2 = 1; inbuf2 <= 2; inbuf2++)
                {
                   setup_coeffs(3, n, random_ulong(FLINT_BITS - 2));
@@ -511,11 +494,9 @@ int test_ZmodF_sub_mul_Bexp()
 
 int test_ZmodF_mul_pseudosqrt2_n_odd()
 {
-   unsigned long n;
+   unsigned long n, trial, s;
    for (n = 1; n <= 9; n += 2)
-      unsigned long trial;
       for (trial = 0; trial < 8000; trial++)
-         unsigned long s;
          for (s = 0; s < 2*n; s++)
          {
             setup_coeffs(2, n, random_ulong(FLINT_BITS - 4));
@@ -539,11 +520,9 @@ int test_ZmodF_mul_pseudosqrt2_n_odd()
 
 int test_ZmodF_mul_pseudosqrt2_n_even()
 {
-   unsigned long n;
+   unsigned long n, trial, s;
    for (n = 2; n <= 10; n += 2)
-      unsigned long trial;
       for (trial = 0; trial < 8000; trial++)
-         unsigned long s;
          for (s = 0; s < 2*n; s++)
          {
             setup_coeffs(2, n, random_ulong(FLINT_BITS - 2));
@@ -567,11 +546,9 @@ int test_ZmodF_mul_pseudosqrt2_n_even()
 
 int test_ZmodF_mul_2exp()
 {
-   unsigned long n;
+   unsigned long n, trial, s;
    for (n = 1; n <= 6; n++)
-      unsigned long trial;
       for (trial = 0; trial < 500; trial++)
-         unsigned long s;
          for (s = 0; s < n*FLINT_BITS; s++)
          {
             setup_coeffs(2, n, random_ulong(FLINT_BITS - 3));
@@ -592,11 +569,9 @@ int test_ZmodF_mul_2exp()
 
 int test_ZmodF_mul_sqrt2exp()
 {
-   unsigned long n;
+   unsigned long n, trial, s;
    for (n = 1; n <= 6; n++)
-      unsigned long trial;
       for (trial = 0; trial < 500; trial++)
-         unsigned long s;
          for (s = 0; s < 2*n*FLINT_BITS; s++)
          {
             setup_coeffs(2, n, random_ulong(FLINT_BITS - 6));
@@ -617,15 +592,12 @@ int test_ZmodF_mul_sqrt2exp()
 
 int test_ZmodF_sub_mul_2exp()
 {
-   unsigned long n;
+   unsigned long n, trial, s;
+   int inbuf1, inbuf2;
    for (n = 1; n <= 6; n++)
-      unsigned long trial;
       for (trial = 0; trial < 100; trial++)
-         unsigned long s;
          for (s = 0; s < n*FLINT_BITS; s++)
-            int inbuf1;
             for (inbuf1 = 1; inbuf1 <= 2; inbuf1++)
-               int inbuf2;
                for (inbuf2 = 1; inbuf2 <= 2; inbuf2++)
                {
                   setup_coeffs(3, n, random_ulong(FLINT_BITS - 2));
@@ -649,11 +621,9 @@ int test_ZmodF_sub_mul_2exp()
 
 int test_ZmodF_forward_butterfly_Bexp()
 {
-   unsigned long n;
+   unsigned long n, trial, s;
    for (n = 1; n <= 6; n++)
-      unsigned long trial;
       for (trial = 0; trial < 25000; trial++)
-         unsigned long s;
          for (s = 1; s < n; s++)
          {
             setup_coeffs(3, n, random_ulong(FLINT_BITS - 2));
@@ -682,11 +652,9 @@ int test_ZmodF_forward_butterfly_Bexp()
 
 int test_ZmodF_forward_butterfly_2exp()
 {
-   unsigned long n;
+   unsigned long n, trial, s;
    for (n = 1; n <= 6; n++)
-      unsigned long trial;
       for (trial = 0; trial < 400; trial++)
-         unsigned long s;
          for (s = 0; s < n*FLINT_BITS; s++)
          {
             setup_coeffs(3, n, random_ulong(FLINT_BITS - 2));
@@ -714,11 +682,9 @@ int test_ZmodF_forward_butterfly_2exp()
 
 int test_ZmodF_forward_butterfly_sqrt2exp()
 {
-   unsigned long n;
+   unsigned long n, trial, s;
    for (n = 1; n <= 6; n++)
-      unsigned long trial;
       for (trial = 0; trial < 400; trial++)
-         unsigned long s;
          for (s = 0; s < 2*n*FLINT_BITS; s++)
          {
             setup_coeffs(3, n, random_ulong(FLINT_BITS - 2));
@@ -746,11 +712,9 @@ int test_ZmodF_forward_butterfly_sqrt2exp()
 
 int test_ZmodF_inverse_butterfly_Bexp()
 {
-   unsigned long n;
+   unsigned long n, trial, s;
    for (n = 1; n <= 6; n++)
-      unsigned long trial;
       for (trial = 0; trial < 25000; trial++)
-         unsigned long s;
          for (s = 1; s < n; s++)
          {
             setup_coeffs(3, n, random_ulong(FLINT_BITS - 2));
@@ -783,11 +747,9 @@ int test_ZmodF_inverse_butterfly_Bexp()
 
 int test_ZmodF_inverse_butterfly_2exp()
 {
-   unsigned long n;
+   unsigned long n, trial, s;
    for (n = 1; n <= 6; n++)
-      unsigned long trial;
       for (trial = 0; trial < 400; trial++)
-         unsigned long s;
          for (s = 0; s < n*FLINT_BITS; s++)
          {
             setup_coeffs(3, n, random_ulong(FLINT_BITS - 2));
@@ -817,11 +779,9 @@ int test_ZmodF_inverse_butterfly_2exp()
 
 int test_ZmodF_inverse_butterfly_sqrt2exp()
 {
-   unsigned long n;
+   unsigned long n, trial, s;
    for (n = 1; n <= 6; n++)
-      unsigned long trial;
       for (trial = 0; trial < 400; trial++)
-         unsigned long s;
          for (s = 0; s < 2*n*FLINT_BITS; s++)
          {
             setup_coeffs(3, n, random_ulong(FLINT_BITS - 2));
@@ -851,9 +811,8 @@ int test_ZmodF_inverse_butterfly_sqrt2exp()
 
 int test_ZmodF_simple_butterfly()
 {
-   unsigned long n;
+   unsigned long n, trial;
    for (n = 1; n <= 6; n++)
-      unsigned long trial;
       for (trial = 0; trial < 4000; trial++)
       {
          setup_coeffs(3, n, random_ulong(FLINT_BITS - 2));

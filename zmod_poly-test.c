@@ -7450,13 +7450,15 @@ void simple_derivative(zmod_poly_t x_primed, zmod_poly_t x)
 	mpz_poly_t f;
 	mpz_poly_init(f);
 	
-	for(unsigned long i = 0; i < length; ++i)
+	unsigned long i;
+        for(i = 0; i < length; ++i)
 	   mpz_poly_set_coeff_ui(f, i, zmod_poly_get_coeff_ui(x, i));
 	
 	//Now we take the derivative of that:
 	mpz_init(index);
 	mpz_init(num);
-	for(unsigned long i = 0; i < length; ++i)
+	unsigned long i;
+        for (i = 0; i < length; ++i)
 	{
 	   mpz_poly_get_coeff(num, f, i+1); // mpn_poly returns 0 if i+1 > length - 1 
 	   mpz_set_ui(index, i+1);		
@@ -8347,9 +8349,8 @@ int test_zmod_poly_factor()
 		zmod_poly_t product;
 		zmod_poly_init(product, pol1->p);
 		zmod_poly_set_coeff_ui(product, 0, 1);
-		ulong i;
+		ulong i, j;
 		for (i = 0; i < res->num_factors; i++)
-			ulong j;
 			for (j = 0; j < res->exponents[i]; j++)
 				zmod_poly_mul(product, product, res->factors[i]);
 		zmod_poly_scalar_mul(product, product, lead);
