@@ -13,11 +13,13 @@ SOURCES = zn_poly/src/zn_mod.c zn_poly/src/misc.o zn_poly/src/mul_ks.o \
           zn_poly/src/mul_fft_dft.o zn_poly/src/array.o zn_poly/src/invert.o \
           fmpz.c fmpz_poly.c long_extras.c memory-manager.c mpn_extras.c \
           mpz_extras.c mpz_mat.c mpz_poly.c mpz_poly-tuning.c zmod_mat.c \
-          zmod_poly.c ZmodF.c ZmodF_mul.c ZmodF_mul-tuning.c ZmodF_poly.c
+          zmod_poly.c ZmodF.c ZmodF_mul.c ZmodF_mul-tuning.c ZmodF_poly.c \
+          F_mpz.c
 
-TESTS = mpn_extras-test.exe long_extras-test.exe ZmodF-test.exe \
-	ZmodF_poly-test.exe ZmodF_mul-test.exe fmpz-test.exe mpz_poly-test.exe \
-	zmod_mat-test.exe zmod_poly-test.exe fmpz_poly-test.exe
+TESTS = F_mpz-test.exe mpn_extras-test.exe long_extras-test.exe \
+        ZmodF-test.exe ZmodF_poly-test.exe ZmodF_mul-test.exe fmpz-test.exe \
+	mpz_poly-test.exe zmod_mat-test.exe zmod_poly-test.exe \
+	fmpz_poly-test.exe
 
 OBJS = $(patsubst %.c, %.o, $(SOURCES))
 

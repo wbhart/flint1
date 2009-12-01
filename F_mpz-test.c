@@ -30,7 +30,9 @@ Copyright (C) 2009, Andy Novocin
 #include <stdio.h>
 #include <string.h>
 #include <gmp.h>
+#ifndef __TINYC__
 #include <mpfr.h>
+#endif
 #include <time.h>
 #include "flint.h"
 #include "memory-manager.h"
@@ -199,6 +201,7 @@ int test_F_mpz_getset_mpz()
 	return result; 
 }
 
+#ifndef __TINYC__
 int test_F_mpz_getset_mpfr()
 {
    F_mpz_t f, g;
@@ -293,6 +296,7 @@ int test_F_mpz_set_mpfr_2exp()
    
    return result; 
 }
+#endif
 
 int test_F_mpz_get_d_2exp()
 {
@@ -3525,8 +3529,10 @@ void F_mpz_poly_test_all()
 	RUN_TEST(F_mpz_getset_ui); 
    RUN_TEST(F_mpz_getset_si); 
 	RUN_TEST(F_mpz_getset_mpz); 
+#ifndef __TINYC__
    RUN_TEST(F_mpz_getset_mpfr); 
    RUN_TEST(F_mpz_set_mpfr_2exp); 
+#endif
    RUN_TEST(F_mpz_getset_limbs); 
    RUN_TEST(F_mpz_get_d_2exp); 
    RUN_TEST(F_mpz_set); 

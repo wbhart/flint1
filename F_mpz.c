@@ -28,7 +28,9 @@
 #include <math.h>
 #include <stdio.h>
 #include <gmp.h>
+#ifndef __TINYC__
 #include <mpfr.h>
+#endif
 
 #include "flint.h"
 #include "mpn_extras.h"
@@ -396,6 +398,7 @@ void F_mpz_set_mpz(F_mpz_t f, const mpz_t x)
 	}			
 }
 
+#ifndef __TINYC__
 void F_mpz_get_mpfr(mpfr_t x, const F_mpz_t f)
 {
    F_mpz d = *f;
@@ -454,6 +457,7 @@ int F_mpz_set_mpfr_2exp(F_mpz_t f, const mpfr_t x)
       
    return exp;
 }
+#endif
 
 void F_mpz_set_limbs(F_mpz_t f, const mp_limb_t * x, const ulong limbs)
 {
@@ -2147,9 +2151,10 @@ long _F_mpz_add_2exp(F_mpz_t res, F_mpz_t x1, long exp1, F_mpz_t x2, long exp2){
    return res_exp;
 }
 
+#ifndef __TINYC__
 void F_mpz_2exp_get_mpfr(mpfr_t x, const F_mpz_t f, long exp)
 {
       F_mpz_get_mpfr(x, f);
       mpfr_mul_2si(x, x, exp, GMP_RNDN);
 }
-
+#endif

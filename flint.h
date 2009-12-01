@@ -46,6 +46,14 @@
  extern "C" {
 #endif
 
+#ifndef mpz_div_2exp
+#define mpz_div_2exp mpz_tdiv_q_2exp
+#endif
+
+#ifndef mpz_div_ui
+#define mpz_div_ui mpz_tdiv_q_ui
+#endif
+
 #if 0
 #define FLINT_ASSERT assert
 #else
