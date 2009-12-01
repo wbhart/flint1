@@ -411,7 +411,6 @@ int test_F_mpz_set()
    }
    
 	// check aliasing
-	ulong count1;
 	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init2(f1, z_randint(10));
@@ -472,7 +471,6 @@ int test_F_mpz_equal()
    }
    
 	// Check in case when operands are not likely equal
-	ulong count1;
 	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init2(f1, z_randint(10));
@@ -498,7 +496,6 @@ int test_F_mpz_equal()
    }
    
 	// check aliasing
-	ulong count1;
 	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init2(f1, z_randint(10));
@@ -563,7 +560,6 @@ int test_F_mpz_swap()
    }
    
 	// check aliasing
-	ulong count1;
 	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init2(f1, z_randint(10));
@@ -627,7 +623,6 @@ int test_F_mpz_neg()
    }
    
 	// check aliasing
-	ulong count1;
 	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init2(f1, z_randint(10));
@@ -690,7 +685,6 @@ int test_F_mpz_abs()
    }
    
 	// check aliasing
-	ulong count1;
 	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init2(f1, z_randint(10));
@@ -760,7 +754,6 @@ int test_F_mpz_add()
    }
    
 	// check aliasing of operands 1 and 2
-	ulong count1;
 	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
@@ -789,7 +782,6 @@ int test_F_mpz_add()
    }
 
    // check aliasing of operands 1 and 3
-	ulong count1;
 	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
@@ -818,7 +810,6 @@ int test_F_mpz_add()
    }
 
    // check aliasing of all operands
-	ulong count1;
 	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
@@ -891,7 +882,6 @@ int test_F_mpz_sub()
    }
    
 	// check aliasing of operands 1 and 2
-	ulong count1;
 	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
@@ -920,7 +910,6 @@ int test_F_mpz_sub()
    }
 
    // check aliasing of operands 1 and 3
-	ulong count1;
 	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
@@ -949,7 +938,6 @@ int test_F_mpz_sub()
    }
 
    // check aliasing of all operands
-	ulong count1;
 	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
@@ -1028,7 +1016,6 @@ int test_F_mpz_mul_ui()
    }
    
    // Check aliasing
-	ulong count1;
 	for (count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
    {
       bits = z_randint(200)+ 1;
@@ -1119,7 +1106,6 @@ int test_F_mpz_mul_si()
    }
    
    // Check aliasing
-	ulong count1;
 	for (count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
    {
       bits = z_randint(200)+ 1;
@@ -1203,7 +1189,6 @@ int test_F_mpz_mul()
    }
    
 	// check aliasing of operands 1 and 2
-	ulong count1;
 	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
@@ -1232,7 +1217,6 @@ int test_F_mpz_mul()
    }
 
    // check aliasing of operands 1 and 3
-	ulong count1;
 	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
@@ -1261,7 +1245,6 @@ int test_F_mpz_mul()
    }
 
    // check aliasing of all operands
-	ulong count1;
 	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
@@ -1339,7 +1322,6 @@ int test_F_mpz_mul_2exp()
    }
    
    // Check aliasing
-	ulong count1;
 	for (count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
    {
       bits = z_randint(200)+ 1;
@@ -1430,7 +1412,6 @@ int test_F_mpz_add_ui()
    }
    
    // Check aliasing
-	ulong count1;
 	for (count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
    {
       bits = z_randint(200)+ 1;
@@ -1523,7 +1504,6 @@ int test_F_mpz_sub_ui()
    }
    
    // Check aliasing
-	ulong count1;
 	for (count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
    {
       bits = z_randint(200)+ 1;
@@ -1618,7 +1598,6 @@ int test_F_mpz_addmul_ui()
    }
    
    // Check aliasing
-	ulong count1;
 	for (count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
    {
       bits = z_randint(200)+ 1;
@@ -1712,7 +1691,6 @@ int test_F_mpz_submul_ui()
    }
    
    // Check aliasing
-	ulong count1;
 	for (count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
    {
       bits = z_randint(200)+ 1;
@@ -1808,7 +1786,6 @@ int test_F_mpz_addmul()
    }
    
 	// Check aliasing of arguments 1 and 2
-	ulong count1;
 	for (count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
    {
 
@@ -1845,7 +1822,6 @@ int test_F_mpz_addmul()
    }
    
    // Check aliasing of arguments 1 and 3
-	ulong count1;
 	for (count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
    {
 
@@ -1882,7 +1858,6 @@ int test_F_mpz_addmul()
    }
    
 	// Check aliasing of all arguments
-	ulong count1;
 	for (count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
    {
 
@@ -1975,7 +1950,6 @@ int test_F_mpz_submul()
    }
    
    // Check aliasing of arguments 1 and 2
-	ulong count1;
 	for (count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
    {
 
@@ -2012,7 +1986,6 @@ int test_F_mpz_submul()
    }
 
    // Check aliasing of arguments 1 and 3
-	ulong count1;
 	for (count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
    {
 
@@ -2049,7 +2022,6 @@ int test_F_mpz_submul()
    }
 
    // Check aliasing of all arguments
-	ulong count1;
 	for (count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
    {
 
@@ -2138,7 +2110,6 @@ int test_F_mpz_mod_ui()
    }
    
    // Check aliasing
-	ulong count1;
 	for (count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
    {
       bits = z_randint(200)+ 1;
@@ -2227,7 +2198,6 @@ int test_F_mpz_mod()
    }
    
 	// check aliasing of operands 1 and 2
-	ulong count1;
 	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
@@ -2258,7 +2228,6 @@ int test_F_mpz_mod()
    }
 
    // check aliasing of operands 1 and 3
-	ulong count1;
 	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
@@ -2289,7 +2258,6 @@ int test_F_mpz_mod()
    }
 
    // check aliasing of all operands
-	ulong count1;
 	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
@@ -2372,7 +2340,6 @@ int test_F_mpz_fdiv_qr()
    }
 
    // alias f1 and f3
-   ulong count1;
    for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
@@ -2408,7 +2375,6 @@ int test_F_mpz_fdiv_qr()
    }
 
    //alias f1 and f4
-   ulong count1;
    for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
@@ -2444,7 +2410,6 @@ int test_F_mpz_fdiv_qr()
    }
 
    // alias f2 and f3
-   ulong count1;
    for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
@@ -2480,7 +2445,6 @@ int test_F_mpz_fdiv_qr()
    }
 
    // alias f2 and f4
-   ulong count1;
    for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
@@ -2516,7 +2480,6 @@ int test_F_mpz_fdiv_qr()
    }
 
    // alias f1 and f2
-   ulong count1;
    for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f2);
@@ -2547,7 +2510,6 @@ int test_F_mpz_fdiv_qr()
    }
 
    // alias f1 and f2 and f3
-   ulong count1;
    for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f2);
@@ -2578,7 +2540,6 @@ int test_F_mpz_fdiv_qr()
    }
 
    // alias f1 and f2 and f4
-   ulong count1;
    for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f2);
@@ -2665,7 +2626,6 @@ int test_F_mpz_gcd()
    }
    
 	// check aliasing of operands 1 and 2
-	ulong count1;
 	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
@@ -2699,7 +2659,6 @@ int test_F_mpz_gcd()
    }
 
    // check aliasing of operands 1 and 3
-	ulong count1;
 	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
@@ -2733,7 +2692,6 @@ int test_F_mpz_gcd()
    }
 
    // check aliasing of all operands
-	ulong count1;
 	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
@@ -2810,7 +2768,6 @@ int test_F_mpz_invert()
       F_mpz_clear(f3);
    }
    // check aliasing of operands 1 and 2
-	ulong count1;
 	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
@@ -2844,7 +2801,6 @@ int test_F_mpz_invert()
    }
    
    // check aliasing of operands 1 and 3
-	ulong count1;
 	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
@@ -2877,7 +2833,6 @@ int test_F_mpz_invert()
    }
    
    // check aliasing of all operands
-	ulong count1;
 	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
@@ -3011,7 +2966,7 @@ int test_F_mpz_is_one()
    
    // Case where f1 is not necessarily 1
 	ulong count1;
-	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init2(f1, z_randint(10));
 
@@ -3060,7 +3015,7 @@ int test_F_mpz_is_m1()
    
    // Case where f1 is not necessarily 1
 	ulong count1;
-	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init2(f1, z_randint(10));
 
@@ -3478,7 +3433,6 @@ int test_F_mpz_pow_ui()
    }
    
    // Check aliasing
-	ulong count1;
 	for (count1 = 0; (count1 < 2500*ITER) && (result == 1); count1++)
    {
       bits = z_randint(200)+ 1;
