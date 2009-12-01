@@ -22,8 +22,7 @@
 #include <string.h>
 #include <math.h>
 #include <float.h>
-#include <sys/time.h>
-#include <sys/resource.h>
+#include <time.h>
 #include <ctype.h>
 #include <limits.h>
 #include <gmp.h>

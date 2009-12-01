@@ -1034,9 +1034,8 @@ void _mpz_poly_mul_classical(mpz_poly_t res, mpz_poly_t poly1, mpz_poly_t poly2)
    for (i = 0; i < res->length; i++)
       mpz_set_ui(res->coeffs[i], 0);
    
-   unsigned long i;
+   unsigned long i, j;
    for (i = 0; i < poly1->length; i++)
-      unsigned long j;
       for (j = 0; j < poly2->length; j++)
          mpz_addmul(res->coeffs[i+j], poly1->coeffs[i], poly2->coeffs[j]);
 }
@@ -1099,9 +1098,8 @@ void _mpz_poly_sqr_classical(mpz_poly_t res, mpz_poly_t poly)
       mpz_set_ui(res->coeffs[i], 0);
    
    // off-diagonal products
-   unsigned long i;
+   unsigned long i, j;
    for (i = 1; i < poly->length; i++)
-      unsigned long j;
       for (j = 0; j < i; j++)
          mpz_addmul(res->coeffs[i+j], poly->coeffs[i], poly->coeffs[j]);
          
@@ -1191,9 +1189,8 @@ void _mpz_poly_mul_kara_recursive(mpz_t* out,
       for (i = 0; i < len1 + len2 - 1; i++)
          mpz_set_ui(out[i*skip], 0);
    
-      unsigned long i;
+      unsigned long i, j;
       for (i = 0; i < len1; i++)
-         unsigned long j;
          for (j = 0; j < len2; j++)
             mpz_addmul(out[(i+j)*skip], in1[i*skip], in2[j*skip]);
             

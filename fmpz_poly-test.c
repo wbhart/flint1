@@ -27,7 +27,7 @@ Copyright (C) 2007, William Hart and David Harvey
 
 #include <stdio.h>
 #include <string.h>
-#include <gmp.h>
+#include "gmp.h" 
 #include <time.h>
 
 #include "flint.h"
@@ -61,7 +61,7 @@ Copyright (C) 2007, William Hart and David Harvey
 unsigned long randint(unsigned long randsup) 
 {
     if (randsup == 0) return 0;
-    static THREAD unsigned long randval = 4035456057U;
+    static unsigned long randval = 4035456057U;
     randval = ((unsigned long)randval*1025416097U+286824428U)%(unsigned long)4294967291U;
     
     return (unsigned long)randval%randsup;
@@ -11742,7 +11742,8 @@ int test_fmpz_poly_byte_pack()
           flint_heap_free(array);
           
 #if DEBUG
-          for (unsigned j = 0; j < test_poly2->length; j++)
+          unsigned long j;
+          for (j = 0; j < test_poly2->length; j++)
              gmp_printf("%Zx, ",test_poly2->coeffs[j]);
           printf("\n\n");
 #endif
@@ -11750,10 +11751,11 @@ int test_fmpz_poly_byte_pack()
           result = mpz_poly_equal(test_poly, test_poly2);
           if (!result) 
           {
-          for (unsigned j = 0; j < test_poly->length; j++)
+          unsigned long j;
+          for (j = 0; j < test_poly->length; j++)
              gmp_printf("%Zx, ",test_poly->coeffs[j]);
           printf("\n\n");
-          for (unsigned j = 0; j < test_poly2->length; j++)
+          for (j = 0; j < test_poly2->length; j++)
              gmp_printf("%Zx, ",test_poly2->coeffs[j]);
           printf("\n\n");
           }
@@ -15532,7 +15534,8 @@ int test_fmpz_poly_evaluate_mod()
 			mpz_poly_to_fmpz_poly(test_fmpz_poly, test_poly);
 
 
-			for (unsigned int j = 0; j < 10; ++j)
+			unsigned int j;
+                        for (j = 0; j < 10; ++j)
 			{ 
 				modulus_bits = randint(FLINT_BITS - 2) +2;
 
@@ -15609,7 +15612,8 @@ int test_fmpz_poly_translate_mod_horner()
 			mpz_poly_to_fmpz_poly(test_fmpz_poly, test_poly);
 
 
-			for (unsigned int j = 0; j < 10; ++j)
+			unsigned int j;
+                        for (j = 0; j < 10; ++j)
 			{ 
 				modulus_bits = randint(FLINT_BITS - 2) +2;
 				do {

@@ -30,6 +30,7 @@
 
 // todo: I think perhaps UDWtype is not quite right. It needs to be
 // twice the length. But how to do this on a 64-bit machine?
+#define HAVE_HOST_CPU_pentiummmx 1 
 
 #define UWtype mp_limb_t
 #define UHWtype mp_limb_t

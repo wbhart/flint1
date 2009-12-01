@@ -35,6 +35,12 @@
 #include <math.h>
 #include <stdint.h>
 #include "longlong_wrapper.h"
+#include "longlong.h"
+
+#ifdef __TINYC__
+#define sqrtf(xxx) sqrt(xxx)
+#define floorf(xxx) floor(xxx)
+#endif
 
 #ifdef __cplusplus
  extern "C" {
@@ -152,7 +158,19 @@ Cache size in bytes.
    a = __builtin_ctzl(b);
 #endif
 #else
-#error Currently FLINT only compiles with GCC
+#define count_lead_zeros(c,n) \
+  do { \
+    union { \
+      double    d; \
+      unsigned  a[2]; \
+    } __u; \
+    ASSERT ((n) != 0); \
+    __u.d = (UWtype) (n); \
+    (c) = 0x3FF + 31 - (__u.a[1] >> 20); \
+   } while (0)
+#define COUNT_LEADING_ZEROS_0   (0x3FF + 31)^M
+#define count_trail_zeros(a, b) \
+  count_trailing_zeros(a, b)
 #endif
 
 /* 

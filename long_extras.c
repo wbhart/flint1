@@ -1070,7 +1070,8 @@ unsigned long z_nextprime(unsigned long n, int proved)
     
    unsigned int * moduli = (unsigned int *) flint_stack_alloc_bytes(NEXTPRIME_PRIMES * sizeof(unsigned int));
 
-   for (unsigned int i = 3; i < NEXTPRIME_PRIMES; i++)
+   unsigned int i;
+   for (i = 3; i < NEXTPRIME_PRIMES; i++)
       moduli[i] = (n % z_primes[i]);
       
    while (1) 
@@ -1082,7 +1083,8 @@ unsigned long z_nextprime(unsigned long n, int proved)
       diff = nextmod30[index];
       
       /* First check residues */
-      for (unsigned int i = 3; i < NEXTPRIME_PRIMES; i++)
+      unsigned int i;
+      for (i = 3; i < NEXTPRIME_PRIMES; i++)
 	   {
 	      composite |= (moduli[i] == 0);
 	      acc = moduli[i] + diff;
@@ -2011,7 +2013,8 @@ void z_compute_extended_primes()
     {
         p = z_primes[i];
         q = (p*p)/2 - 500;   /* index of first multiple of p left in the sieve: p^2 */
-        for (unsigned int j = oldq; j < q; j++) 
+        unsigned int j;
+        for (j = oldq; j < q; j++) 
         {
             if (sieve[j]) 
             {
@@ -2026,7 +2029,8 @@ void z_compute_extended_primes()
             q+=p;
         }
     }
-    for (unsigned int j = oldq; j < ETF_NUM_PRIMES; j++) 
+    unsigned int j;
+    for (j = oldq; j < ETF_NUM_PRIMES; j++) 
     {
         if (sieve[j]) 
         {
@@ -2457,7 +2461,7 @@ unsigned long z_factor_HOLF(unsigned long n,unsigned long iters)
 }
 
 
-unsigned long z_factor_tinyQS(unsigned long n) {
+/*unsigned long z_factor_tinyQS(unsigned long n) {
     F_mpz_factor_t factors;
     mpz_t N;
     unsigned long factor;
@@ -2465,20 +2469,22 @@ unsigned long z_factor_tinyQS(unsigned long n) {
 	 mpz_set_ui(N,n);
     factors.fact = malloc(64*sizeof(mpz_t));
 	 factors.num = 0;
-    for(int i=0;i<64;i++)
+    int i;
+    for(i=0;i<64;i++)
         mpz_init(factors.fact[i]);
     factor = (unsigned long) F_mpz_factor_tinyQS_silent(&factors, N);
     if (factor == 1L)
         factor = mpz_get_ui(factors.fact[0]);
     
-    for(int i=0;i<64;i++)
+    int i;
+    for(i=0;i<64;i++)
         mpz_clear(factors.fact[i]);
     free(factors.fact);
     mpz_clear(N);
 	 
     return factor;
 }
-
+*/
 
 
 /*
@@ -2549,7 +2555,7 @@ void z_factor(factor_t * factors, unsigned long n, int proved)
                  ) ||
                  (cofactor = z_factor_SQUFOF(factor)) ||
 #if FLINT_BITS == 64
-                 ( cofactor = z_factor_tinyQS(factor) ) ||
+                 //( cofactor = z_factor_tinyQS(factor) ) ||
 #endif
                  ( cofactor = z_factor_trial_extended(factor) ) 
               )

@@ -1223,7 +1223,8 @@ void fmpz_comb_clear(fmpz_comb_t comb)
 {
    unsigned long n = comb->n;
 
-   for (unsigned i = 0; i < n; i++)
+   unsigned long i;
+   for (i = 0; i < n; i++)
    {
       flint_heap_free(comb->comb[i][0]);
       flint_heap_free(comb->comb[i]);

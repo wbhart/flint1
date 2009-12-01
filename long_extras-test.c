@@ -2372,7 +2372,7 @@ int test_z_factor_trial()
    return result;
 }
 
-int test_z_factor_tinyQS()
+/*int test_z_factor_tinyQS()
 {
    unsigned long n, factor, bits;
 
@@ -2404,7 +2404,7 @@ int test_z_factor_tinyQS()
    }  
    
    return result;
-}
+}*/
 
 int test_z_factor_HOLF()
 {
@@ -2601,7 +2601,8 @@ int test_z_primitive_root()
    unsigned long p = 2;
    unsigned long r;
    
-   for(int i = 0; i < 100000; i++) {
+   int i;
+   for (i = 0; i < 100000; i++) {
       p = z_nextprime(p, 0);
       r = z_primitive_root(p);
       if(r == 0) {
@@ -2620,7 +2621,7 @@ void fmpz_poly_test_all()
    int success, all_success = 1;
 
 #if FLINT_BITS == 64
-	RUN_TEST(z_mulmod32_precomp); 
+   RUN_TEST(z_mulmod32_precomp); 
 #endif
 	RUN_TEST(z_intsqrt);
    RUN_TEST(z_intcuberoot);

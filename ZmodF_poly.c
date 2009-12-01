@@ -135,8 +135,8 @@ void ZmodF_poly_pointwise_mul(ZmodF_poly_t res, ZmodF_poly_t x, ZmodF_poly_t y)
    ZmodF_mul_info_t info;
    ZmodF_mul_info_init(info, x->n, x == y);
    
+   ulong i;
    if (x != y)
-      unsigned long i;
       for (i = 0; i < x->length; i++)
       {
          if (i+8 < x->length)
@@ -147,6 +147,7 @@ void ZmodF_poly_pointwise_mul(ZmodF_poly_t res, ZmodF_poly_t x, ZmodF_poly_t y)
          ZmodF_mul_info_mul(info, res->coeffs[i], x->coeffs[i], y->coeffs[i]);
       }
    else
+   {
       unsigned long i;
       for (i = 0; i < x->length; i++)
       {
@@ -156,6 +157,7 @@ void ZmodF_poly_pointwise_mul(ZmodF_poly_t res, ZmodF_poly_t x, ZmodF_poly_t y)
          }
          ZmodF_mul_info_mul(info, res->coeffs[i], x->coeffs[i], x->coeffs[i]);
       }
+   }
 
    ZmodF_mul_info_clear(info);
 

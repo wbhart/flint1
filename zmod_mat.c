@@ -146,7 +146,7 @@ void zmod_mat_col_to_zmod_poly_shifted(zmod_poly_t poly, zmod_mat_t mat, ulong c
    ulong * ptr;
    
    zmod_poly_fit_length(poly, rows);
-   ulong i;
+   ulong i, j;
    for (i = 0, j = 0; j < rows; j++)
    {  
 	  if (shift[j]) poly->coeffs[j] = 0L;
@@ -382,7 +382,8 @@ ulong zmod_mat_row_reduce_gauss_small(zmod_mat_t mat)
 			for (lead = 1; lead < p; lead++)
 			{
 			   zmod_vec_scalar_mul_range(temp, mat->arr[i], lead, p, p_inv, j, cols);
-			   for(ulong u = i + 1; u < rows; u++)
+			   ulong u;
+                           for (u = i + 1; u < rows; u++)
 			   {
 			      if (zmod_mat_get_coeff_ui(mat, u, j) == lead)
 			          zmod_vec_sub_range(mat->arr[u], temp, p, j, cols);
@@ -425,7 +426,8 @@ ulong zmod_mat_row_reduce_gauss(zmod_mat_t mat)
 			ulong n = zmod_mat_get_coeff_ui(mat, i, j);
 			ulong n_inv = z_invert(n, p);
 			zmod_mat_row_scalar_mul_right(mat, i, n_inv, j);
-			for(ulong u = i + 1; u < rows; u++)
+			ulong u;
+                        for (u = i + 1; u < rows; u++)
 			{
 			   coeff = zmod_mat_get_coeff_ui(mat, u, j);
 			   if (coeff) zmod_mat_row_scalar_submul_right(mat, u, i, coeff, j);
@@ -461,12 +463,14 @@ ulong zmod_mat_row_reduce_gauss_jordan(zmod_mat_t mat)
 			ulong n = zmod_mat_get_coeff_ui(mat, i, j);
 			ulong n_inv = z_invert(n, p);
 			zmod_mat_row_scalar_mul_right(mat, i, n_inv, j);
-			for(ulong u = 0; u < i; u++)
+			ulong u;
+			for (u = 0; u < i; u++)
 			{
 			   coeff = zmod_mat_get_coeff_ui(mat, u, j);
 			   if (coeff) zmod_mat_row_scalar_submul_right(mat, u, i, coeff, j);
 			}
-			for(ulong u = i + 1; u < rows; u++)
+			ulong u;
+			for (u = i + 1; u < rows; u++)
 			{
 			   coeff = zmod_mat_get_coeff_ui(mat, u, j);
 			   if (coeff) zmod_mat_row_scalar_submul_right(mat, u, i, coeff, j);

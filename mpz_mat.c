@@ -217,7 +217,8 @@ int mpz_mat_from_string_pretty(mpz_mat_t mat, char *s)
    mpz_mat_init(mat,r,c);
 
 
-   for(ulong i = 0; i < r*c; i++){
+   ulong i;
+   for (i = 0; i < r*c; i++){
 //searches for the next digit of - then calls gmp's mpz scanner
          pnt = strpbrk(pnt,"-0123456789");
          if (!gmp_sscanf(pnt, "%Zd", mat->entries[i]))

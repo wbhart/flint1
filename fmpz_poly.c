@@ -75,7 +75,7 @@ long fmpz_poly_to_ZmodF_poly(ZmodF_poly_t poly_f, const fmpz_poly_t poly_fmpz,
    
    long size_j;
    
-   unsigned long i;
+   unsigned long i, j;
    for (i = 0, j = 0; i < length; i++, j += size_m)
    {
       size_j = coeffs_m[j];
@@ -127,7 +127,7 @@ void ZmodF_poly_to_fmpz_poly(fmpz_poly_t poly_fmpz, const ZmodF_poly_t poly_f, c
 
    if (sign)
    {
-      unsigned long i;
+      unsigned long i, j;
       for (i = 0, j = 0; i < poly_f->length; i++, j += size_m)
       {
          ZmodF_normalise(coeffs_f[i], n);
@@ -146,7 +146,7 @@ void ZmodF_poly_to_fmpz_poly(fmpz_poly_t poly_fmpz, const ZmodF_poly_t poly_f, c
       }
    } else 
    {
-      unsigned long i;
+      unsigned long i, j;
       for (i = 0, j = 0; i < poly_f->length; i++, j += size_m)
       {
          ZmodF_normalise(coeffs_f[i], n);
@@ -429,7 +429,7 @@ void fmpz_poly_limb_pack(mp_limb_t * array, const fmpz_poly_t poly_fmpz,
    fmpz_t coeffs_m = poly_fmpz->coeffs;
    long carry = 0;
    
-   unsigned long i;
+   unsigned long i, j, k;
    for (i = 0, j = 0, k = 0; i < length; i++, j += size_m, k += limbs)
    {
       size_j = (long) coeffs_m[j];
@@ -468,7 +468,7 @@ void fmpz_poly_limb_pack_neg(mp_limb_t * array, const fmpz_poly_t poly_fmpz,
    fmpz_t coeffs_m = poly_fmpz->coeffs;
    long carry = 0;
    
-   unsigned long i;
+   unsigned long i, j, k;
    for (i = 0, j = 0, k = 0; i < length; i++, j += size_m, k += limbs)
    {
       size_j = (long) coeffs_m[j];
@@ -559,7 +559,7 @@ void fmpz_poly_limb_pack_1(mp_limb_t * array, const fmpz_poly_t poly_fmpz)
 	unsigned long length = poly_fmpz->length;
    long carry = 0;
    
-   unsigned long i;
+   unsigned long i, j, k;
    for (i = 0, j = 0, k = 0; i < length; i++, j += size_m, k++)
    {
       size_j = (long) coeffs_m[j];
@@ -596,7 +596,7 @@ void fmpz_poly_limb_pack_neg_1(mp_limb_t * array, const fmpz_poly_t poly_fmpz)
 	unsigned long length = poly_fmpz->length;
    long carry = 0;
    
-   unsigned long i;
+   unsigned long i, j, k;
    for (i = 0, j = 0, k = 0; i < length; i++, j += size_m, k++)
    {
       size_j = (long) coeffs_m[j];
@@ -685,7 +685,7 @@ void fmpz_poly_limb_unpack_unsigned(fmpz_poly_t poly_fmpz, const mp_limb_t * arr
    unsigned long size_m = poly_fmpz->limbs + 1;
    fmpz_t coeffs_m = poly_fmpz->coeffs;
    
-   unsigned long i;
+   unsigned long i, j, k;
    for (i = 0, j = 0, k = 0; i < length; i++, j += size_m, k += limbs)
    {
          F_mpn_copy(coeffs_m + j + 1, array + k, limbs);
