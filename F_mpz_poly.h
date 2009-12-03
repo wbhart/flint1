@@ -315,6 +315,13 @@ void F_mpz_poly_set_coeff_mpz(F_mpz_poly_t poly, ulong n, const mpz_t x);
 */
 void F_mpz_poly_get_coeff_mpz(mpz_t x, const F_mpz_poly_t poly, const ulong n);
 
+/** 
+   \fn     void F_mpz_poly_set_coeff(F_mpz_poly_t poly, ulong n, const mpz_t x)
+   \brief  Set coefficient n to the F_mpz_t value x. Coefficients are numbered
+	        from the constant coefficient, starting at zero.
+*/
+void F_mpz_poly_set_coeff(F_mpz_poly_t poly, ulong n, const F_mpz_t x);
+
 /*===============================================================================
 
 	Attributes

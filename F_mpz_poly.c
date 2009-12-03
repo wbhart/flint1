@@ -252,6 +252,22 @@ void F_mpz_poly_set_coeff_mpz(F_mpz_poly_t poly, ulong n, const mpz_t x)
 	_F_mpz_poly_normalise(poly); // we may have set leading coefficient to zero
 }
 
+void F_mpz_poly_set_coeff_F_mpz(F_mpz_poly_t poly, ulong n, const F_mpz_t x)
+{
+   F_mpz_poly_fit_length(poly, n+1);
+
+   if (n + 1 > poly->length) // insert zeroes between end of poly and new coeff if needed
+   {
+      long i;
+      for (i = poly->length; i + 1 < n; i++)
+         F_mpz_zero(poly->coeffs + i); 
+      poly->length = n+1;
+   }
+
+   F_mpz_set(poly->coeffs + n, x);
+	_F_mpz_poly_normalise(poly); // we may have set leading coefficient to zero
+}
+
 long F_mpz_poly_get_coeff_si(const F_mpz_poly_t poly, const ulong n)
 {
    if (n + 1 > poly->length) // coefficient is beyond end of polynomial
