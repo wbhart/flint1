@@ -1517,7 +1517,7 @@ int test_z_ispseudoprime_lucas()
       res = mpz_get_ui(mpz_n);
 
       result = (z_ispseudoprime_lucas(res) == 1);
-		if (!result) printf("Error: prime not pseudoprime, n = %ld\n", n);
+		if (!result) printf("Error: prime not pseudoprime, n = %ld\n", res);
    } 
 
 #define LUCAS_COUNT 100000
@@ -1562,7 +1562,7 @@ int test_z_ispseudoprime_lucas_ab()
       int b = 1;
 
       result = (z_ispseudoprime_lucas_ab(res, a, b) == 1);
-		if (!result) printf("Error: prime not pseudoprime, n = %ld, a = %d, b = %d\n", n, a, b);
+		if (!result) printf("Error: prime not pseudoprime, n = %ld, a = %d, b = %d\n", res, a, b);
    } 
 
 #define LUCAS2_COUNT 100000
@@ -1611,6 +1611,11 @@ int test_z_isprobab_prime()
       res = mpz_get_ui(mpz_n);
 
       result = (z_isprobab_prime(res));
+      if (!result)
+      {
+          printf("Error : n = %ld\n", res);
+          return result;
+      }
    }  
 
 #define TEST_PRIME_COUNT 100000
@@ -1658,7 +1663,7 @@ int test_z_isprobab_prime_precomp()
 
       ninv = z_precompute_inverse(res);
 		result = (z_isprobab_prime_precomp(res, ninv));
-		if (!result) printf("Error: %ld is reported composite!\n", n, res);
+		if (!result) printf("Error: %ld is reported composite!\n", res);
    }  
 
 #define TEST_PRIME_COUNT1 100000
@@ -1709,7 +1714,7 @@ int test_z_ispseudoprime_fibonacci_precomp()
 
       ninv = z_precompute_inverse(res);
 		result = ((res == 5) || (z_ispseudoprime_fibonacci_precomp(res, ninv)));
-		if (!result) printf("Error: %ld is reported composite!\n", n, res);
+		if (!result) printf("Error: %ld is reported composite!\n", res);
    }  
 
 #define TEST_PRIME_COUNT2 100000
@@ -1812,7 +1817,7 @@ int test_z_miller_rabin_precomp()
 
       ninv = z_precompute_inverse(res);
 		result = (z_miller_rabin_precomp(res, ninv, 5));
-		if (!result) printf("Error: %ld is reported composite!\n", n, res);
+		if (!result) printf("Error: %ld is reported composite!\n", res);
    }  
 #define TEST_PRIME_COUNT3 100000
 	
@@ -1861,6 +1866,11 @@ int test_z_isprime()
       res = mpz_get_ui(mpz_n);
 
       result = (z_isprime(res));
+      if (!result)
+      {
+         printf("Error %ld declared composite\n", res);
+         return result;
+      }
    }  
 
 	for (count = 0; (count < 10000) && (result == 1); count++)
@@ -1877,6 +1887,11 @@ int test_z_isprime()
       res = mpz_get_ui(mpz_n);
 
       result = (z_isprime(res));
+      if (!result)
+      {
+         printf("Error %ld declared composite!\n", res);
+         return result;
+      }
    }  
 
 #define TEST_PRIME_COUNT4 100000
@@ -1993,7 +2008,7 @@ int test_z_isprime_pocklington()
       result = (z_isprime_pocklington(res, 100));
 		if (result != 1) 
 		{
-			printf("%d\n", result);
+			printf("res = %ld, %d\n", res, result);
 			result = 0;
 		}
    }  
