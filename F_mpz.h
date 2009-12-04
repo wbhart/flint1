@@ -443,6 +443,19 @@ void F_mpz_print(F_mpz_t x)
 */
 void F_mpz_read(F_mpz_t f);
 
+/** 
+   \fn     F_mpz_sscanf(F_mpz_t f, char * str)
+   \brief  Read an F_mpz_t from the given string. The integer can be a signed 
+           multiprecision integer in decimal format.
+*/
+static inline
+void F_mpz_sscanf(F_mpz_t f, char * str)
+{
+   __mpz_struct * mpz_ptr = _F_mpz_promote(f);
+   gmp_sscanf(str, "%Zd", mpz_ptr);
+   _F_mpz_demote_val(f);
+}
+
 /*===============================================================================
 
 	Arithmetic
