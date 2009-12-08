@@ -1062,7 +1062,7 @@ long F_mpz_mat_max_bits2(ulong * pos, const F_mpz_mat_t M)
 	      } else bits = FLINT_BIT_COUNT(c);
 	      if (bits > max) 
 	      {
-            pos = i;
+            (*pos) = i;
 		      max = bits;
 	         if (max == FLINT_BITS - 2) break; // coeff is at least FLINT_BITS - 2 bits
 	      }
@@ -1084,14 +1084,14 @@ long F_mpz_mat_max_bits2(ulong * pos, const F_mpz_mat_t M)
 	   			mp_limb_t * data = mpz_ptr->_mp_d;
 	   		   bits = FLINT_BIT_COUNT(data[max_limbs - 1]);
 	   			max = bits;
-               pos = i;
+               (*pos) = i;
 	   		} else if (size == max_limbs)
 	   		{
 	   			mp_limb_t * data = mpz_ptr->_mp_d;
 	   		   bits = FLINT_BIT_COUNT(data[max_limbs - 1]);
 	   		   if (bits > max)
                {
-                  pos = i;
+                  (*pos) = i;
                   max = bits;
                }
 	   		}
