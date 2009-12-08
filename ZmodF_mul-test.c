@@ -39,7 +39,8 @@ most significant limb (i.e. the overflow limb) first.
 */
 void ZmodF_print(ZmodF_t x, unsigned long n)
 {
-   for (long i = n; i >= 0; i--)
+   long i;
+   for (i = n; i >= 0; i--)
 #if FLINT_BITS == 64
       printf("%016lx ", x[i]);
 #else
@@ -54,7 +55,8 @@ Prints each coefficient of the polynomial on a separate line.
 */
 void ZmodF_poly_print(ZmodF_poly_t x)
 {
-   for (unsigned long k = 0; k < (1UL << x->depth); k++)
+   unsigned long k;
+   for (k = 0; k < (1UL << x->depth); k++)
    {
       ZmodF_print(x->coeffs[k], x->n);
       printf("\n");
@@ -73,9 +75,11 @@ int test__ZmodF_mul_fft_split()
    mpz_init(z);
    mp_limb_t buf[300];
 
-   for (unsigned long n = 1; n < 200 && success; n++)
+   unsigned long n;
+   for (n = 1; n < 200 && success; n++)
    {
-      for (unsigned long depth = 0;
+      unsigned long depth;
+      for (depth = 0;
            ((n*FLINT_BITS) % (1 << depth) == 0) && success; depth++)
       {
          unsigned long bits = (n*FLINT_BITS) >> depth;
@@ -88,7 +92,8 @@ int test__ZmodF_mul_fft_split()
          printf("n = %d, depth = %d, m = %d\n", n, depth, m);
 #endif
          
-         for (unsigned long trial = 0; trial < 120; trial++)
+         unsigned long trial;
+         for (trial = 0; trial < 120; trial++)
          {
             random_limbs(buf, n);
             buf[n] = 0;
@@ -96,7 +101,8 @@ int test__ZmodF_mul_fft_split()
             
             _ZmodF_mul_fft_split(poly, buf, n);
 
-            for (unsigned long i = 0; i < (1 << depth); i++)
+            unsigned long i;
+            for (i = 0; i < (1 << depth); i++)
             {
                mpz_tdiv_r_2exp(y, x, bits);
                mpz_tdiv_q_2exp(x, x, bits);
@@ -133,14 +139,18 @@ int test__ZmodF_mul_fft_combine()
 
    mp_limb_t buf[300];
 
-   for (unsigned long n = 1; n < 80 && success; n++)
+   unsigned long n;
+   for (n = 1; n < 80 && success; n++)
    {
-      for (unsigned long depth = 0;
+      unsigned long depth;
+      for (depth = 0;
            ((n*FLINT_BITS) % (1 << depth) == 0) && success; depth++)
       {
-         for (unsigned long m = 1; m < n/4 && success; m++)
+         unsigned long m;
+         for (m = 1; m < n/4 && success; m++)
          {
-            for (unsigned long k = 0; k < 5 && success; k++)
+            unsigned long k;
+            for (k = 0; k < 5 && success; k++)
             {
 #if DEBUG
                printf("n = %ld, depth = %ld, m = %ld, k = %ld\n", n, depth, m, k);
@@ -169,11 +179,13 @@ int test__ZmodF_mul_fft_combine()
                mpz_set_ui(s, 1);
                mpz_mul_2exp(s, s, (m+k)*FLINT_BITS - 1);
                   
-               for (unsigned long trial = 0; trial < 20 && success; trial++)
+               unsigned long trial;
+               for (trial = 0; trial < 20 && success; trial++)
                {
                   mpz_set_ui(total, 0);
                
-                  for (long i = (1 << depth) - 1; i >= 0; i--)
+                  long i;
+                  for (i = (1 << depth) - 1; i >= 0; i--)
                   {
                      // select random x in (0, B^(m+k))
                      mpz_set_ui(x, 0);
@@ -241,7 +253,8 @@ int test__ZmodF_mul_threeway_reduce()
    mpz_init(mod1);
    mpz_init(mod2);
 
-   for (unsigned long n = 3; n < 300 && success; n += 3)
+   unsigned long n;
+   for (n = 3; n < 300 && success; n += 3)
    {
 #if DEBUG
       printf("n = %d\n", n);
@@ -267,7 +280,8 @@ int test__ZmodF_mul_threeway_reduce()
       mpz_sub(mod2, mod2, mod1);
       mpz_add_ui(mod2, mod2, 3);
 
-      for (unsigned long trial = 0; trial < 250 && success; trial++)
+      unsigned long trial;
+      for (trial = 0; trial < 250 && success; trial++)
       {
          random_limbs(in, n);
          in[n] = 0;
@@ -326,7 +340,8 @@ int test_ZmodF_mul_info_mul_plain()
    mpz_init(z);
    mpz_init(p);
 
-   for (unsigned long n = 1; n < 100 && success; n++)
+   unsigned long n;
+   for (n = 1; n < 100 && success; n++)
    {
 #if DEBUG
       printf("n = %d\n", n);
@@ -340,7 +355,8 @@ int test_ZmodF_mul_info_mul_plain()
       ZmodF_mul_info_t info;
       ZmodF_mul_info_init_plain(info, n, 0);
 
-      for (unsigned long trial = 0; trial < 1000 && success; trial++)
+      unsigned long trial;
+      for (trial = 0; trial < 1000 && success; trial++)
       {
          if (random_ulong(4) == 0)
          {
@@ -418,7 +434,8 @@ int test_ZmodF_mul_info_mul_threeway()
    mpz_t x;
    mpz_init(x);
 
-   for (unsigned long n = 3; n < 100 && success; n += 3)
+   unsigned long n;
+   for (n = 3; n < 100 && success; n += 3)
    {
 #if DEBUG
       printf("n = %d\n", n);
@@ -428,7 +445,8 @@ int test_ZmodF_mul_info_mul_threeway()
       ZmodF_mul_info_init_threeway(info_threeway, n, 0);
       ZmodF_mul_info_init_plain(info_plain, n, 0);
 
-      for (unsigned long trial = 0; trial < 50000 && success; trial++)
+      unsigned long trial;
+      for (trial = 0; trial < 50000 && success; trial++)
       {
          if (random_ulong(4) == 0)
          {
@@ -500,9 +518,11 @@ int test_ZmodF_mul_info_mul_fft()
    mpz_t x;
    mpz_init(x);
 
-   for (unsigned long n = 1; n < 300 && success; n++)
+   unsigned long n;
+   for (n = 1; n < 300 && success; n++)
    {
-      for (unsigned long depth = 1;
+      unsigned long depth;
+      for (depth = 1;
            (n*FLINT_BITS) % (1 << depth) == 0
            && (depth <= FLINT_LG_BITS_PER_LIMB + 4)
            && success; depth++)
@@ -512,12 +532,14 @@ int test_ZmodF_mul_info_mul_fft()
          unsigned long target_m =
                             ((output_bits - 1) >> FLINT_LG_BITS_PER_LIMB) + 1;
       
-         for (unsigned long m = target_m - 2; m <= target_m + 3 && success; m++)
+         unsigned long m;
+         for (m = target_m - 2; m <= target_m + 3 && success; m++)
          {
             if ((m*FLINT_BITS) % (1 << depth) != 0)
                continue;
 
-            for (unsigned long k = 0; k <= 2 && success; k++)
+            unsigned long k;
+            for (k = 0; k <= 2 && success; k++)
             {
                if (m + k < target_m)
                   continue;
@@ -534,7 +556,8 @@ int test_ZmodF_mul_info_mul_fft()
                ZmodF_mul_info_init_plain(info_plain, n, 0);
                ZmodF_mul_info_init_fft(info_fft, n, depth, m, k, 0);
 
-               for (unsigned long trial = 0; trial < 10 && success; trial++)
+               unsigned long trial;
+               for (trial = 0; trial < 10 && success; trial++)
                {
                   if (random_ulong(4) == 0)
                   {

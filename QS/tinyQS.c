@@ -70,12 +70,14 @@ static inline void tiny_square_root(mpz_t X, mpz_t Y, QS_t * qs_inf, linalg_t * 
    mpz_set_ui(X, 1);
    mpz_set_ui(Y, 1);
    
-   for (unsigned long i = 0; i < ncols; i++)
+   unsigned long i;
+   for (i = 0; i < ncols; i++)
    {
       if (get_null_entry(nullrows, i, l)) 
       {
          position = la_inf->matrix[i].orig*2*MAX_FACS;
-         for (unsigned long j = 0; j < relation[position]; j++)
+         unsigned long j;
+         for (j = 0; j < relation[position]; j++)
          {
             prime_count[relation[position+2*j+1]] +=
                (relation[position+2*j+2]);
@@ -85,7 +87,7 @@ static inline void tiny_square_root(mpz_t X, mpz_t Y, QS_t * qs_inf, linalg_t * 
       }
    }
 
-   for (unsigned long i = 0; i < num_primes; i++)
+   for (i = 0; i < num_primes; i++)
    {
       if (prime_count[i]) 
       {
@@ -97,7 +99,8 @@ static inline void tiny_square_root(mpz_t X, mpz_t Y, QS_t * qs_inf, linalg_t * 
    }
 
 #if TEST
-   for (unsigned long i = 0; i < num_primes; i++)
+   unsigned long i;
+   for (i = 0; i < num_primes; i++)
    {
       if ((prime_count[i] %2) != 0) printf("Error %ld, %ld, %ld\n", l, i, prime_count[i]);
    }
@@ -336,7 +339,8 @@ int F_mpz_factor_tinyQS_silent(F_mpz_factor_t * factors, mpz_t N)
 #if DEBUG
    printf("Square root\n");
 #endif
-	for (unsigned long l = 0; l < 64; l++)
+	unsigned long l;
+	for (l = 0; l < 64; l++)
    {
       if (mask & ((uint64_t)(1) << l))
       {

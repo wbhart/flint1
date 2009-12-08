@@ -55,7 +55,8 @@ void mpz_poly_init2(mpz_poly_t poly, unsigned long alloc)
    if ((long) alloc <= 0) mpz_poly_init(poly);
    
    poly->coeffs = (mpz_t*) flint_heap_alloc_bytes(alloc * sizeof(mpz_t));
-   for (unsigned long i = 0; i < alloc; i++)
+   unsigned long i;
+   for (i = 0; i < alloc; i++)
       mpz_init(poly->coeffs[i]);
    
    poly->alloc = alloc;
@@ -68,7 +69,8 @@ void mpz_poly_init3(mpz_poly_t poly, unsigned long alloc, unsigned long bits)
    if ((long) alloc <= 0) mpz_poly_init(poly);
    
    poly->coeffs = (mpz_t*) flint_heap_alloc_bytes(alloc * sizeof(mpz_t));
-   for (unsigned long i = 0; i < alloc; i++)
+   unsigned long i;
+   for (i = 0; i < alloc; i++)
       mpz_init2(poly->coeffs[i], bits);
    
    poly->alloc = alloc;
@@ -78,7 +80,8 @@ void mpz_poly_init3(mpz_poly_t poly, unsigned long alloc, unsigned long bits)
 
 void mpz_poly_clear(mpz_poly_t poly)
 {
-   for (long i = 0; i < poly->alloc; i++)
+   long i;
+   for (i = 0; i < poly->alloc; i++)
       mpz_clear(poly->coeffs[i]);
 
    flint_heap_free(poly->coeffs);
@@ -90,14 +93,15 @@ void mpz_poly_realloc(mpz_poly_t poly, unsigned long alloc)
    if ((long) alloc <= 0) alloc = 1;
    
    // clear any mpz_t's beyond the new array length
-   for (unsigned long i = alloc; i < poly->alloc; i++)
+   unsigned long i;
+   for (i = alloc; i < poly->alloc; i++)
       mpz_clear(poly->coeffs[i]);
 
    poly->coeffs = (mpz_t*) flint_heap_realloc_bytes(poly->coeffs,
                                               alloc * sizeof(mpz_t));
    
    // init any new mpz_t's required
-   for (unsigned long i = poly->alloc; i < alloc; i++)
+   for (i = poly->alloc; i < alloc; i++)
       mpz_init(poly->coeffs[i]);
 
    poly->alloc = alloc;
@@ -117,14 +121,15 @@ void mpz_poly_realloc2(mpz_poly_t poly, unsigned long alloc,
    if ((long) alloc <= 0) alloc = 1;
    
    // clear any mpz_t's beyond the new array length
-   for (unsigned long i = alloc; i < poly->alloc; i++)
+   unsigned long i;
+   for (i = alloc; i < poly->alloc; i++)
       mpz_clear(poly->coeffs[i]);
 
    poly->coeffs = (mpz_t*) flint_heap_realloc_bytes(poly->coeffs,
                                               alloc * sizeof(mpz_t));
    
    // init any new mpz_t's required
-   for (unsigned long i = poly->alloc; i < alloc; i++)
+   for (i = poly->alloc; i < alloc; i++)
       mpz_init2(poly->coeffs[i], bits);
 
    poly->alloc = alloc;
@@ -183,7 +188,8 @@ void mpz_poly_set_coeff(mpz_poly_t poly, unsigned long n, mpz_t c)
       if (!mpz_sgn(c))
          return;
 
-      for (unsigned long i = poly->length; i < n; i++)
+      unsigned long i;
+      for (i = poly->length; i < n; i++)
          mpz_set_ui(poly->coeffs[i], 0);
          
       mpz_set(poly->coeffs[n], c);
@@ -219,7 +225,8 @@ void mpz_poly_set_coeff_ui(mpz_poly_t poly, unsigned long n, unsigned long c)
       if (!c)
          return;
       
-      for (unsigned long i = poly->length; i < n; i++)
+      unsigned long i;
+      for (i = poly->length; i < n; i++)
          mpz_set_ui(poly->coeffs[i], 0);
          
       mpz_set_ui(poly->coeffs[n], c);
@@ -255,7 +262,8 @@ void mpz_poly_set_coeff_si(mpz_poly_t poly, unsigned long n, long c)
       if (!c)
          return;
       
-      for (unsigned long i = poly->length; i < n; i++)
+      unsigned long i;
+      for (i = poly->length; i < n; i++)
          mpz_set_ui(poly->coeffs[i], 0);
          
       mpz_set_si(poly->coeffs[n], c);
@@ -287,7 +295,8 @@ int mpz_poly_from_string(mpz_poly_t poly, const char* s)
    poly->length = 0;
    mpz_poly_ensure_alloc(poly, length);
 
-   for (unsigned long i = 0; i < length; i++)
+   unsigned long i;
+   for (i = 0; i < length; i++)
    {
       // skip whitespace
       s += strspn(s, whitespace);
@@ -311,14 +320,15 @@ char* mpz_poly_to_string(mpz_poly_t poly)
    // estimate the size of the string
    // 20 = enough room for null terminator and length info
    unsigned long size = 20;
-   for (unsigned long i = 0; i < poly->length; i++)
+   unsigned long i;
+   for (i = 0; i < poly->length; i++)
       // +2 is for the sign and a space
       size += mpz_sizeinbase(poly->coeffs[i], 10) + 2;
 
    // write the string
    char* buf = (char*) malloc(size);
    char* ptr = buf + sprintf(buf, "%ld  ", poly->length);
-   for (unsigned long i = 0; i < poly->length; i++)
+   for (i = 0; i < poly->length; i++)
    {
       mpz_get_str(ptr, 10, poly->coeffs[i]);
       ptr += strlen(ptr);
@@ -530,7 +540,8 @@ int mpz_poly_fread(mpz_poly_t poly, FILE* f)
    mpz_poly_ensure_alloc(poly, length);
 
    // read coefficients
-   for (unsigned long i = 0; i < length; i++)
+   unsigned long i;
+   for (i = 0; i < length; i++)
    {
       if (!mpz_inp_str(poly->coeffs[i], f, 10))
          return 0;
@@ -575,7 +586,8 @@ void mpz_poly_pad(mpz_poly_t poly, unsigned long length)
 
    if (poly->length < length)
    {
-      for (unsigned long i = poly->length; i < length; i++)
+      unsigned long i;
+      for (i = poly->length; i < length; i++)
          mpz_set_ui(poly->coeffs[i], 0);
       poly->length = length;
    }
@@ -605,7 +617,8 @@ void mpz_poly_truncate(mpz_poly_t res, mpz_poly_t poly, unsigned long length)
       
       mpz_poly_ensure_alloc(res, length);
 
-      for (unsigned long i = 0; i < length; i++)
+      unsigned long i;
+      for (i = 0; i < length; i++)
          mpz_set(res->coeffs[i], poly->coeffs[i]);
          
       res->length = length;
@@ -632,7 +645,8 @@ void mpz_poly_set(mpz_poly_t res, mpz_poly_t poly)
 
    mpz_poly_ensure_alloc(res, poly->length);
    
-   for (unsigned long i = 0; i < poly->length; i++)
+   unsigned long i;
+   for (i = 0; i < poly->length; i++)
       mpz_set(res->coeffs[i], poly->coeffs[i]);
       
    res->length = poly->length;
@@ -655,7 +669,8 @@ void _mpz_poly_to_fmpz_poly(fmpz_poly_t res, mpz_poly_t poly)
    if (poly->length == 0)
       return;
 
-   for (unsigned long i = 0; i < poly->length; i++)
+   unsigned long i;
+   for (i = 0; i < poly->length; i++)
    {
       FLINT_ASSERT(res->limbs >= mpz_size(poly->coeffs[i]));
       mpz_to_fmpz(res->coeffs + i*(res->limbs+1), poly->coeffs[i]);
@@ -708,7 +723,8 @@ int mpz_poly_equal(mpz_poly_t poly1, mpz_poly_t poly2)
    if (poly1->length != poly2->length)
       return 0;
 
-   for (long i = 0; i < poly1->length; i++)
+   long i;
+   for (i = 0; i < poly1->length; i++)
       if (mpz_cmp(poly1->coeffs[i], poly2->coeffs[i]))
          return 0;
 
@@ -791,7 +807,8 @@ void mpz_poly_neg(mpz_poly_t res, mpz_poly_t poly)
 {
    mpz_poly_ensure_alloc(res, poly->length);
 
-   for (unsigned long i = 0; i < poly->length; i++)
+   unsigned long i;
+   for (i = 0; i < poly->length; i++)
       mpz_neg(res->coeffs[i], poly->coeffs[i]);
    
    res->length = poly->length;
@@ -813,19 +830,21 @@ void mpz_poly_lshift(mpz_poly_t res, mpz_poly_t poly, unsigned long k)
    if (poly == res)
    {
       // inplace; just shift the mpz_t's over
-      for (long i = poly->length - 1; i >= 0; i--)
+      long i;
+      for (i = poly->length - 1; i >= 0; i--)
          mpz_swap(poly->coeffs[i], poly->coeffs[i+k]);
       
-      for (unsigned long i = 0; i < k; i++)
+      for (i = 0; i < k; i++)
          mpz_set_ui(poly->coeffs[i], 0);
    }
    else
    {
       // not inplace; need to copy data
-      for (unsigned long i = 0; i < k; i++)
+      unsigned long i;
+      for (i = 0; i < k; i++)
          mpz_set_ui(res->coeffs[i], 0);
       
-      for (unsigned long i = 0; i < poly->length; i++)
+      for (i = 0; i < poly->length; i++)
          mpz_set(res->coeffs[i + k], poly->coeffs[i]);
    }
    
@@ -846,7 +865,8 @@ void mpz_poly_rshift(mpz_poly_t res, mpz_poly_t poly, unsigned long k)
    {
       // inplace; just shift the mpz_t's over
 
-      for (unsigned long i = k; i < poly->length; i++)
+      unsigned long i;
+      for (i = k; i < poly->length; i++)
          mpz_swap(poly->coeffs[i - k], poly->coeffs[i]);
    }
    else
@@ -854,7 +874,8 @@ void mpz_poly_rshift(mpz_poly_t res, mpz_poly_t poly, unsigned long k)
       // not inplace; need to copy data
       mpz_poly_ensure_alloc(res, poly->length - k);
 
-      for (unsigned long i = k; i < poly->length; i++)
+      unsigned long i;
+      for (i = k; i < poly->length; i++)
          mpz_set(res->coeffs[i - k], poly->coeffs[i]);
    }
    
@@ -880,7 +901,8 @@ void mpz_poly_2norm(mpz_t norm, mpz_poly_t poly)
    mpz_t sqr;
    mpz_init(sqr);
    
-   for (unsigned long i = 0; i < poly->length; i++)
+   unsigned long i;
+   for (i = 0; i < poly->length; i++)
    {
       mpz_mul(sqr, poly->coeffs[i], poly->coeffs[i]);
       mpz_add(norm, norm, sqr);
@@ -1003,11 +1025,13 @@ void _mpz_poly_mul_classical(mpz_poly_t res, mpz_poly_t poly1, mpz_poly_t poly2)
    res->length = poly1->length + poly2->length - 1;
    FLINT_ASSERT(res->alloc >= res->length);
 
-   for (unsigned long i = 0; i < res->length; i++)
+   unsigned long i;
+   for (i = 0; i < res->length; i++)
       mpz_set_ui(res->coeffs[i], 0);
    
-   for (unsigned long i = 0; i < poly1->length; i++)
-      for (unsigned long j = 0; j < poly2->length; j++)
+   unsigned long j;
+   for (i = 0; i < poly1->length; i++)
+      for (j = 0; j < poly2->length; j++)
          mpz_addmul(res->coeffs[i+j], poly1->coeffs[i], poly2->coeffs[j]);
 }
 
@@ -1064,20 +1088,22 @@ void _mpz_poly_sqr_classical(mpz_poly_t res, mpz_poly_t poly)
    res->length = 2*poly->length - 1;
    FLINT_ASSERT(res->alloc >= res->length);
 
-   for (unsigned long i = 0; i < res->length; i++)
+   unsigned long i;
+   for (i = 0; i < res->length; i++)
       mpz_set_ui(res->coeffs[i], 0);
    
    // off-diagonal products
-   for (unsigned long i = 1; i < poly->length; i++)
-      for (unsigned long j = 0; j < i; j++)
+   unsigned long j;
+   for (i = 1; i < poly->length; i++)
+      for (j = 0; j < i; j++)
          mpz_addmul(res->coeffs[i+j], poly->coeffs[i], poly->coeffs[j]);
          
    // double the off-diagonal products
-   for (unsigned long i = 1; i < res->length - 1; i++)
+   for (i = 1; i < res->length - 1; i++)
       mpz_add(res->coeffs[i], res->coeffs[i], res->coeffs[i]);
       
    // add in diagonal products
-   for (unsigned long i = 0; i < poly->length; i++)
+   for (i = 0; i < poly->length; i++)
       mpz_addmul(res->coeffs[2*i], poly->coeffs[i], poly->coeffs[i]);
 }
 
@@ -1143,7 +1169,8 @@ void _mpz_poly_mul_kara_recursive(mpz_t* out,
    if (len1 == 1)
    {
       // special case, just scalar multiplication
-      for (unsigned long i = 0; i < len2; i++)
+      unsigned long i;
+      for (i = 0; i < len2; i++)
          mpz_mul(out[i*skip], in1[0], in2[i*skip]);
       return;
    }
@@ -1151,11 +1178,13 @@ void _mpz_poly_mul_kara_recursive(mpz_t* out,
    if (len1 * len2 < crossover)
    {
       // switch to classical multiplication
-      for (unsigned long i = 0; i < len1 + len2 - 1; i++)
+      unsigned long i;
+      for (i = 0; i < len1 + len2 - 1; i++)
          mpz_set_ui(out[i*skip], 0);
    
-      for (unsigned long i = 0; i < len1; i++)
-         for (unsigned long j = 0; j < len2; j++)
+      unsigned long j;
+      for (i = 0; i < len1; i++)
+         for (j = 0; j < len2; j++)
             mpz_addmul(out[(i+j)*skip], in1[i*skip], in2[j*skip]);
             
       return;
@@ -1172,13 +1201,14 @@ void _mpz_poly_mul_kara_recursive(mpz_t* out,
    // Put A1 + B1 into even slots of scratch space
    // (uses len1/2 scratch slots)
    mpz_t* ptr = scratch;
-   for (unsigned long i = 0; i < len1/2; i++, ptr += 2*skip)
+   unsigned long i;
+   for (i = 0; i < len1/2; i++, ptr += 2*skip)
       mpz_add(*ptr, in1[2*i*skip], in1[2*i*skip + skip]);
 
    // Put A2 + B2 into remaining even slots of scratch space
    // (uses len2/2 slots of scratch)
    mpz_t* scratch2 = ptr;
-   for (unsigned long i = 0; i < len2/2; i++, ptr += 2*skip)
+   for (i = 0; i < len2/2; i++, ptr += 2*skip)
       mpz_add(*ptr, in2[2*i*skip], in2[2*i*skip + skip]);
 
    // The following three recursive calls all use the odd slots of the current
@@ -1199,7 +1229,7 @@ void _mpz_poly_mul_kara_recursive(mpz_t* out,
                             
    // Subtract A1*A2 and B1*B2 from (A1+B1)*(A2+B2) to get (A1*B2 + A2*B1)
    // in odd slots of output
-   for (unsigned long i = 0; i < len1/2 + len2/2 - 1; i++)
+   for (i = 0; i < len1/2 + len2/2 - 1; i++)
    {
       mpz_sub(out[2*i*skip + skip], out[2*i*skip + skip], out[2*(i+1)*skip]);
       mpz_sub(out[2*i*skip + skip], out[2*i*skip + skip], scratch[2*i*skip]);
@@ -1207,7 +1237,7 @@ void _mpz_poly_mul_kara_recursive(mpz_t* out,
       
    // Add A1*A2 to x^2*(B1*B2) into even slots of output
    mpz_set(out[0], scratch[0]);
-   for (unsigned long i = 1; i < len1/2 + len2/2 - 1; i++)
+   for (i = 1; i < len1/2 + len2/2 - 1; i++)
       mpz_add(out[2*i*skip], out[2*i*skip], scratch[2*i*skip]);
    
    // Now we have the product (A1(x^2) + x*B1(x^2)) * (A2(x^2) + x*B2(x^2))
@@ -1219,13 +1249,14 @@ void _mpz_poly_mul_kara_recursive(mpz_t* out,
       {
          // terms from x^(len1-1)*C1 * (A2(x^2) + x*B2(x^2))
          mpz_t* term1 = in1 + skip*(len1-1);
-         for (unsigned long i = 0; i < len2-2; i++)
+         unsigned long i;
+         for (i = 0; i < len2-2; i++)
             mpz_addmul(out[(i+len1-1)*skip], *term1, in2[i*skip]);
          mpz_mul(out[(len1+len2-3)*skip], *term1, in2[(len2-2)*skip]);
 
          // terms from x^(len2-1)*C2 * (A1(x^2) + x*B1(x^2))
          mpz_t* term2 = in2 + skip*(len2-1);
-         for (unsigned long i = 0; i < len1-1; i++)
+         for (i = 0; i < len1-1; i++)
             mpz_addmul(out[(i+len2-1)*skip], *term2, in1[i*skip]);
             
          // final C1*C2 term
@@ -1235,7 +1266,8 @@ void _mpz_poly_mul_kara_recursive(mpz_t* out,
       {
          // terms from x^(len1-1)*C1 * (A2(x^2) + x*B2(x^2))
          mpz_t* term = in1 + skip*(len1-1);
-         for (unsigned long i = 0; i < len2-1; i++)
+         unsigned long i;
+         for (i = 0; i < len2-1; i++)
             mpz_addmul(out[(i+len1-1)*skip], *term, in2[i*skip]);
          mpz_mul(out[(len1+len2-2)*skip], *term, in2[(len2-1)*skip]);
       }
@@ -1244,7 +1276,8 @@ void _mpz_poly_mul_kara_recursive(mpz_t* out,
    {
       // terms from x^(len2-1)*C2 * (A1(x^2) + x*B1(x^2))
       mpz_t* term = in2 + skip*(len2-1);
-      for (unsigned long i = 0; i < len1-1; i++)
+      unsigned long i;
+      for (i = 0; i < len1-1; i++)
          mpz_addmul(out[(i+len2-1)*skip], *term, in1[i*skip]);
       mpz_mul(out[(len1+len2-2)*skip], *term, in1[(len1-1)*skip]);
    }
@@ -1295,7 +1328,8 @@ void mpz_poly_mul_karatsuba(mpz_poly_t res, mpz_poly_t poly1,
    // allocate scratch space for lower-level karatsuba routine
    mpz_t* scratch = (mpz_t*)
                      flint_stack_alloc_bytes((length+1) * sizeof(mpz_t));
-   for (unsigned long i = 0; i <= length; i++)
+   unsigned long i;
+   for (i = 0; i <= length; i++)
       mpz_init2(scratch[i], limbs * FLINT_BITS);
 
    // look up crossover parameter (i.e. when to switch from classical to
@@ -1329,7 +1363,7 @@ void mpz_poly_mul_karatsuba(mpz_poly_t res, mpz_poly_t poly1,
    
    res->length = length;
    
-   for (unsigned long i = 0; i <= length; i++)
+   for (i = 0; i <= length; i++)
       mpz_clear(scratch[i]);
    flint_stack_release();
 }
@@ -1751,7 +1785,8 @@ unsigned long mpz_poly_max_limbs(mpz_poly_t poly)
    
    unsigned long temp, limbs = mpz_size(poly->coeffs[0]);
    
-   for (unsigned long i = 1; i < poly->length; i++)
+   unsigned long i;
+   for (i = 1; i < poly->length; i++)
    {
       temp = mpz_size(poly->coeffs[i]);
       if (temp > limbs)

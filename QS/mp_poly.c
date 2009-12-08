@@ -86,7 +86,8 @@ void poly_init(QS_t * qs_inf, poly_t * poly_inf, mpz_t N)
    mpz_init(poly_inf->B_mpz);
    mpz_init(poly_inf->C);
    
-   for (unsigned long i = 1; i < s; i++)
+   unsigned long i;
+   for (i = 1; i < s; i++)
    {
       A_inv2B[i] = A_inv2B[i-1] + num_primes;
    } 
@@ -397,14 +398,16 @@ void compute_off_adj(QS_t * qs_inf, poly_t * poly_inf)
    unsigned limbs = qs_inf->prec+1; 
    double pinv;
    
-   for (unsigned long i = 2; i < num_primes; i++) // skip k and 2
+   unsigned long i;
+   for (i = 2; i < num_primes; i++) // skip k and 2
    {
       p = factor_base[i].p;
       pinv = factor_base[i].pinv;
       
       A_inv[i] = z_invert(mpn_mod_1(A+1, A[0], p), p);
              
-      for (unsigned long j = 0; j < s; j++)
+      unsigned long j;
+      for (j = 0; j < s; j++)
       {
          temp = mpn_mod_1(B_terms + j*limbs + 1, B_terms[j*limbs], p);
          temp = z_mulmod_precomp(temp, A_inv[i], p, pinv);
@@ -456,7 +459,8 @@ void compute_A_factor_offsets(QS_t * qs_inf, poly_t * poly_inf)
    double * inv_p2 = poly_inf->inv_p2;
    double pinv;
    
-   for (unsigned long j = 0; j < s; j++)
+   unsigned long j;
+   for (j = 0; j < s; j++)
    {
       index = A_ind[j];
 /*      p = factor_base[index].p;

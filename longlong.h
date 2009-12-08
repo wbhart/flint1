@@ -205,7 +205,9 @@ MA 02110-1301, USA. */
 
 /* clz_tab is required in all configurations, since mpn/alpha/cntlz.asm
    always goes into libgmp.so, even when not actually used.  */
+#ifndef __TINYC__
 #define COUNT_LEADING_ZEROS_NEED_CLZ_TAB
+#endif
 
 #if defined (__GNUC__) && HAVE_HOST_CPU_alpha_CIX
 #define count_leading_zeros(COUNT,X) \
@@ -345,10 +347,11 @@ long __MPN(count_leading_zeros) _PROTO ((UDItype));
 #endif
 
 
-#if defined (__GNUC__)
+#if defined (__GNUC__) || defined (__TINYC__)
 
 /* We sometimes need to clobber "cc" with gcc2, but that would not be
    understood by gcc1.  Use cpp to avoid major code duplication.  */
+#if defined (__GNUC__)
 #if __GNUC__ < 2
 #define __CLOBBER_CC
 #define __AND_CLOBBER_CC
@@ -356,6 +359,7 @@ long __MPN(count_leading_zeros) _PROTO ((UDItype));
 #define __CLOBBER_CC : "cc"
 #define __AND_CLOBBER_CC , "cc"
 #endif /* __GNUC__ < 2 */
+#endif
 
 #if (defined (__a29k__) || defined (_AM29K)) && W_TYPE_SIZE == 32
 #define add_ssaaaa(sh, sl, ah, al, bh, bl) \
@@ -655,6 +659,7 @@ extern UWtype __MPN(udiv_qrnnd) _PROTO ((UWtype *, UWtype, UWtype, UWtype));
 #endif
 
 #if (defined (__i386__) || defined (__i486__)) && W_TYPE_SIZE == 32
+#ifndef __TINYC__ // tcc can't assemble these two for some reason
 #define add_ssaaaa(sh, sl, ah, al, bh, bl) \
   __asm__ ("addl %5,%k1\n\tadcl %3,%k0"					\
 	   : "=r" (sh), "=&r" (sl)					\
@@ -665,6 +670,7 @@ extern UWtype __MPN(udiv_qrnnd) _PROTO ((UWtype *, UWtype, UWtype, UWtype));
 	   : "=r" (sh), "=&r" (sl)					\
 	   : "0" ((USItype)(ah)), "g" ((USItype)(bh)),			\
 	     "1" ((USItype)(al)), "g" ((USItype)(bl)))
+#endif // __TINYC__
 #define umul_ppmm(w1, w0, u, v) \
   __asm__ ("mull %3"							\
 	   : "=a" (w0), "=d" (w1)					\
@@ -716,7 +722,6 @@ extern UWtype __MPN(udiv_qrnnd) _PROTO ((UWtype *, UWtype, UWtype, UWtype));
   } while (0)
 #define COUNT_LEADING_ZEROS_NEED_CLZ_TAB
 #define COUNT_LEADING_ZEROS_0   31   /* n==0 indistinguishable from n==1 */
-
 #else /* ! pentiummmx || LONGLONG_STANDALONE */
 /* The following should be a fixed 14 cycles or so.  Some scheduling
    opportunities should be available between the float load/store too.  This
@@ -1789,7 +1794,7 @@ extern mp_limb_t __gmpn_udiv_w_sdiv(mp_limb_t * rp, mp_limb_t a1, mp_limb_t a0, 
 #define udiv_qrnnd __udiv_qrnnd_c
 #endif
 
-#if !defined (count_leading_zeros)
+#if !defined (count_leading_zeros) && !defined (__TINYC__)
 #define count_leading_zeros(count, x) \
   do {									\
     UWtype __xr = (x);							\

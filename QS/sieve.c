@@ -58,7 +58,8 @@ void tiny_do_sieving(QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve)
    memset(sieve, 0, SIEVE_SIZE);
    *end = 255;
    
-   for (unsigned long prime = SMALL_PRIMES; prime < num_primes; prime++) 
+   unsigned long prime;
+   for (prime = SMALL_PRIMES; prime < num_primes; prime++) 
    {
       if (soln2[prime] == -1L) continue;
       
@@ -99,7 +100,8 @@ void tiny_update_offsets(unsigned long poly_add, unsigned long * poly_corr,
    prime_t * factor_base = qs_inf->factor_base;
    unsigned long p, correction;
 
-   for (unsigned long prime = 2; prime < num_primes; prime++) 
+   unsigned long prime;
+   for (prime = 2; prime < num_primes; prime++) 
    {
       p = factor_base[prime].p;
       correction = (poly_add ? p - poly_corr[prime] : poly_corr[prime]);
@@ -188,7 +190,8 @@ unsigned long tiny_evaluate_candidate(linalg_t * la_inf, QS_t * qs_inf, poly_t *
 #endif
    } else small[0] = 0;
    
-   for (unsigned long j = 2; j < SMALL_PRIMES; j++) // pull out small primes
+   
+   for (j = 2; j < SMALL_PRIMES; j++) // pull out small primes
    {
       prime = factor_base[j].p;
       pinv = factor_base[j].pinv;
@@ -243,7 +246,8 @@ unsigned long tiny_evaluate_candidate(linalg_t * la_inf, QS_t * qs_inf, poly_t *
       if (mpz_cmpabs_ui(res, 1) == 0) // We've found a relation
       {
          unsigned long * A_ind = poly_inf->A_ind;
-         for (unsigned long i = 0; i < poly_inf->s; i++) // Commit any outstanding A factors
+         unsigned long i;
+         for (i = 0; i < poly_inf->s; i++) // Commit any outstanding A factors
          {
             if (A_ind[i] >= j)
             {

@@ -49,7 +49,8 @@ void sample_ZmodF_poly_FFT(unsigned long length, unsigned long n, void* arg,
    
    prof_start();
 
-   for (unsigned long i = 0; i < count; i++)
+   unsigned long i;
+   for (i = 0; i < count; i++)
    {
       poly->length = length;
       ZmodF_poly_FFT(poly, 2*length);
@@ -84,7 +85,8 @@ void profDriver_ZmodF_poly_FFT(char* params)
 
    prof2d_set_sampler(sample_ZmodF_poly_FFT);
 
-   for (unsigned long length = length_min; length < length_max;
+   unsigned long length;
+   for (length = length_min; length < length_max;
         length = (int)(ceil(length_ratio * length)))
    {
       unsigned long m = ceil_log2(2*length);
@@ -95,7 +97,8 @@ void profDriver_ZmodF_poly_FFT(char* params)
       if (n_skip == 0)
          n_skip = 1;
 
-      for (unsigned long n = n_skip; n <= n_count * n_skip; n += n_skip)
+      unsigned long n;
+      for (n = n_skip; n <= n_count * n_skip; n += n_skip)
          prof2d_sample(length, n, NULL);
    }
 }
@@ -116,7 +119,8 @@ void sample_ZmodF_poly_IFFT(unsigned long length, unsigned long n, void* arg,
    
    prof_start();
 
-   for (unsigned long i = 0; i < count; i++)
+   unsigned long i;
+   for (i = 0; i < count; i++)
       ZmodF_poly_IFFT(poly);
 
    prof_stop();
@@ -148,7 +152,8 @@ void profDriver_ZmodF_poly_IFFT(char* params)
 
    prof2d_set_sampler(sample_ZmodF_poly_IFFT);
 
-   for (unsigned long length = length_min; length < length_max;
+   unsigned long length;
+   for (length = length_min; length < length_max;
         length = (int)(ceil(length_ratio * length)))
    {
       unsigned long m = ceil_log2(length);
@@ -159,7 +164,8 @@ void profDriver_ZmodF_poly_IFFT(char* params)
       if (n_skip == 0)
          n_skip = 1;
 
-      for (unsigned long n = n_skip; n <= n_count * n_skip; n += n_skip)
+      unsigned long n;
+      for (n = n_skip; n <= n_count * n_skip; n += n_skip)
          prof2d_sample(length, n, NULL);
    }
 }
@@ -177,7 +183,8 @@ void sample_ZmodF_poly_negacyclic_convolution(
    ZmodF_poly_init(poly3, depth, n, 1);
 
    unsigned long size = 1 << depth;
-   for (unsigned long i = 0; i < size; i++)
+   unsigned long i;
+   for (i = 0; i < size; i++)
    {
       profiler_random_limbs(poly1->coeffs[i], n+1);
       profiler_random_limbs(poly2->coeffs[i], n+1);
@@ -187,7 +194,8 @@ void sample_ZmodF_poly_negacyclic_convolution(
    
    prof_start();
 
-   for (unsigned long i = 0; i < count; i++)
+   unsigned long i;
+   for (i = 0; i < count; i++)
       ZmodF_poly_negacyclic_convolution(poly3, poly1, poly2);
 
    prof_stop();
@@ -219,9 +227,11 @@ void profDriver_ZmodF_poly_negacyclic_convolution(char* params)
 
    prof2d_set_sampler(sample_ZmodF_poly_negacyclic_convolution);
 
-   for (unsigned long depth = depth_min; depth <= depth_max; depth++)
+   unsigned long depth;
+   for (depth = depth_min; depth <= depth_max; depth++)
    {
-      for (unsigned long n = n_min; n <= n_max; n++)
+      unsigned long n;
+      for (n = n_min; n <= n_max; n++)
       {
          // restrict coefficient lengths so that appropriate roots of unity
          // are available

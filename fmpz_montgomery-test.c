@@ -39,7 +39,8 @@ int test_fmpz_montgomery_redc()
     mpz_init(num3);
     mpz_init(num4);
 
-    for (unsigned long i = 0; (i < 10000) && (result == 1); i++)
+    unsigned long i;
+    for (i = 0; (i < 10000) && (result == 1); i++)
     {
         // m
         bits = random_ulong(1000) + 1;
@@ -101,7 +102,8 @@ int test_fmpz_montgomery_mulmod()
     mpz_init(num4);
     mpz_init(num5);
 
-    for (unsigned long i = 0; (i < 10000) && (result == 1); i++)
+    unsigned long i;
+    for (i = 0; (i < 10000) && (result == 1); i++)
     {
         // modulus
         bits = random_ulong(1000) + 1;
@@ -162,7 +164,8 @@ int test_fmpz_montgomery_divmod()
     mpz_init(num4);
     mpz_init(num5);
 
-    for (unsigned long i = 0; (i < 10000) && (result == 1); i++)
+    unsigned long i;
+    for (i = 0; (i < 10000) && (result == 1); i++)
     {
         // m
         bits = random_ulong(1000) + 1;
@@ -230,7 +233,8 @@ int test_fmpz_montgomery_mod()
     mpz_init(num3);
     mpz_init(num4);
 
-    for (unsigned long i = 0; (i < 10000) && (result == 1); i++)
+    unsigned long i;
+    for (i = 0; (i < 10000) && (result == 1); i++)
     {
         // modulus
         bits = random_ulong(1000) + 1;

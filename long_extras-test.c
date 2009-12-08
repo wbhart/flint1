@@ -32,6 +32,9 @@ Copyright (C) 2007, William Hart and David Harvey
 #include "long_extras.h"
 #include "test-support.h"
 #include "memory-manager.h"
+#ifndef __TINYC__
+#include "QS/tinyQS.h"
+#endif
 
 #define DEBUG 0 // prints debug information
 #define DEBUG2 1 
@@ -51,14 +54,16 @@ int test_z_mulmod32_precomp()
    mpz_init(mpz_n);
    mpz_init(mpz_res); 
 
-   for (unsigned long count = 0; (count < 10000) && (result == 1); count++)
+   unsigned long count;
+   for (count = 0; (count < 10000) && (result == 1); count++)
    { 
       bits = z_randint(32)+1;
       n = z_randbits(bits)+1;
       
       ninv = z_precompute_inverse32(n);
       
-      for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
+      unsigned long count2;
+      for (count2 = 0; (count2 < 100) && (result == 1); count2++)
       {
          a = random_ulong2(n);
          b = random_ulong2(n);
@@ -99,14 +104,16 @@ int test_z_intsqrt()
    
    int result = 1;
    
-   for (unsigned long count = 0; (count < 20000) && (result == 1); count++)
+   unsigned long count;
+   for (count = 0; (count < 20000) && (result == 1); count++)
    { 
       bits = z_randint(FLINT_BITS/2-1)+1;
       n = random_ulong((1UL<<bits)-1)+1;
       
       a = n*n;
          
-      for (unsigned long i = 0; i < 100; i++)
+      unsigned long i;
+      for (i = 0; i < 100; i++)
 		 res1 = z_intsqrt(a);
          
 #if DEBUG2            
@@ -129,7 +136,8 @@ int test_z_intcuberoot()
    
    int result = 1;
    
-   for (unsigned long count = 0; (count < 5000000) && (result == 1); count++)
+   unsigned long count;
+   for (count = 0; (count < 5000000) && (result == 1); count++)
    { 
       bits = z_randint(FLINT_BITS/3-1)+1;
       n = random_ulong((1UL<<bits)-1)+1;
@@ -146,7 +154,7 @@ int test_z_intcuberoot()
       result = (res1 == n);
    } 
      
-   for (unsigned long count = 0; (count < 5000000) && (result == 1); count++)
+   for (count = 0; (count < 5000000) && (result == 1); count++)
    { 
       bits = z_randint(FLINT_BITS/3-1)+1;
       n = random_ulong((1UL<<bits)-1)+1;
@@ -175,7 +183,8 @@ int test_z_intfifthroot()
    
    int result = 1;
    
-   for (unsigned long count = 0; (count < 5000000) && (result == 1); count++)
+   unsigned long count;
+   for (count = 0; (count < 5000000) && (result == 1); count++)
    { 
       bits = z_randint(FLINT_BITS/5-1)+1;
       n = random_ulong((1UL<<bits)-1)+1;
@@ -192,7 +201,7 @@ int test_z_intfifthroot()
       result = (res1 == n);
    } 
      
-   for (unsigned long count = 0; (count < 5000000) && (result == 1); count++)
+   for (count = 0; (count < 5000000) && (result == 1); count++)
    { 
       bits = z_randint(FLINT_BITS/5-1)+1;
       n = random_ulong((1UL<<bits)-1)+1;
@@ -221,7 +230,8 @@ int test_z_factor_235power()
    
    int result = 1;
    
-   for (unsigned long count = 0; (count < 1000000) && (result == 1); count++)
+   unsigned long count;
+   for (count = 0; (count < 1000000) && (result == 1); count++)
    { 
       bits = z_randint(FLINT_BITS/2-1)+1;
       n = random_ulong((1UL<<bits)-1)+1;
@@ -238,7 +248,7 @@ int test_z_factor_235power()
 		result = (res1 > 0);
    } 
      
-   for (unsigned long count = 0; (count < 1000000) && (result == 1); count++)
+   for (count = 0; (count < 1000000) && (result == 1); count++)
    { 
       bits = z_randint(FLINT_BITS/3-1)+1;
       n = random_ulong((1UL<<bits)-1)+1;
@@ -255,7 +265,7 @@ int test_z_factor_235power()
       result = (res1 > 0);
    } 
      
-   for (unsigned long count = 0; (count < 1000000) && (result == 1); count++)
+   for (count = 0; (count < 1000000) && (result == 1); count++)
    { 
       bits = z_randint(FLINT_BITS/5-1)+1;
       n = random_ulong((1UL<<bits)-1)+1;
@@ -272,7 +282,7 @@ int test_z_factor_235power()
       result = (res1 > 0);
    } 
      
-   for (unsigned long count = 0; (count < 1000000) && (result == 1); count++)
+   for (count = 0; (count < 1000000) && (result == 1); count++)
    { 
       bits = z_randint(FLINT_BITS-1)+1;
       a = random_ulong((1UL<<bits)-1)+1;
@@ -311,7 +321,8 @@ int test_z_pow()
    
    int result = 1;
    
-   for (unsigned long count = 0; (count < 1000000) && (result == 1); count++)
+   unsigned long count;
+   for (count = 0; (count < 1000000) && (result == 1); count++)
    { 
       bits = z_randint(FLINT_BITS - 1) + 1;
       n = random_ulong((1UL<<bits) - 1) + 1;
@@ -353,7 +364,8 @@ int test_z_gcd()
    
    int result = 1;
    
-   for (unsigned long count = 0; (count < 100000) && (result == 1); count++)
+   unsigned long count;
+   for (count = 0; (count < 100000) && (result == 1); count++)
    { 
       bits1 = z_randint(FLINT_BITS - 2) + 1;
       bits2 = z_randint(FLINT_BITS - 2) + 1;
@@ -391,7 +403,8 @@ int test_z_invert()
 	mpz_t prod;
 	mpz_init(prod);
    
-   for (unsigned long count = 0; (count < 100000) && (result == 1); count++)
+   unsigned long count;
+   for (count = 0; (count < 100000) && (result == 1); count++)
    { 
       bits = z_randint(FLINT_BITS - 2) + 2;
       
@@ -431,7 +444,8 @@ int test_z_gcd_invert()
 	mpz_t prod;
 	mpz_init(prod);
    
-   for (unsigned long count = 0; (count < 100000) && (result == 1); count++)
+   unsigned long count;
+   for (count = 0; (count < 100000) && (result == 1); count++)
    { 
       bits = z_randint(FLINT_BITS - 3) + 2;
       
@@ -473,7 +487,8 @@ int test_z_xgcd()
    
    int result = 1;
    
-   for (unsigned long count = 0; (count < 100000) && (result == 1); count++)
+   unsigned long count;
+   for (count = 0; (count < 100000) && (result == 1); count++)
    { 
       bits1 = z_randint(FLINT_BITS - 2) + 1;
       bits2 = z_randint(FLINT_BITS - 2) + 1;
@@ -511,18 +526,21 @@ int test_z_mod_precomp()
    
    int result = 1;
    
-   for (unsigned long count = 0; (count < 20000) && (result == 1); count++)
+   unsigned long count;
+   for (count = 0; (count < 20000) && (result == 1); count++)
    { 
       bits = z_randint(FLINT_BITS/2)+1;
       n = random_ulong((1UL<<bits)-1)+1;
       
       ninv = z_precompute_inverse(n);
       
-      for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
+      unsigned long count2;
+      for (count2 = 0; (count2 < 100) && (result == 1); count2++)
       {
          a = random_ulong2(n*n);
          
-         for (unsigned long count = 0; count < 100; count++)   
+         unsigned long count;
+         for (count = 0; count < 100; count++)   
             res1 = z_mod_precomp(a, n, ninv);
                   
          res2 = a%n;
@@ -549,19 +567,22 @@ int test_z_div2_precomp()
    
    int result = 1;
    
-   for (unsigned long count = 0; (count < 20000) && (result == 1); count++)
+   unsigned long count;
+   for (count = 0; (count < 20000) && (result == 1); count++)
    { 
       bits = z_randint(FLINT_BITS-1)+1;
       n = random_ulong((1UL<<bits)-1)+1;
          
       ninv = z_precompute_inverse(n);
       
-      for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
+      unsigned long count2;
+      for (count2 = 0; (count2 < 100) && (result == 1); count2++)
       {
          bits = z_randint(FLINT_BITS-1)+1;
          a = random_ulong2((1UL<<bits)-1)+1;
          
-         for (unsigned long count = 0; count < 100; count++)   
+         unsigned long count;
+         for (count = 0; count < 100; count++)   
             res1 = z_div2_precomp(a, n, ninv);
                   
          res2 = a / n;
@@ -588,19 +609,22 @@ int test_z_mod2_precomp()
    
    int result = 1;
    
-   for (unsigned long count = 0; (count < 20000) && (result == 1); count++)
+   unsigned long count;
+   for (count = 0; (count < 20000) && (result == 1); count++)
    { 
       bits = z_randint(FLINT_BITS-1)+1;
       n = random_ulong((1UL<<bits)-1)+1;
          
       ninv = z_precompute_inverse(n);
       
-      for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
+      unsigned long count2;
+      for (count2 = 0; (count2 < 100) && (result == 1); count2++)
       {
          bits = z_randint(FLINT_BITS-1)+1;
          a = random_ulong2((1UL<<bits)-1)+1;
          
-         for (unsigned long count = 0; count < 100; count++)   
+         unsigned long count;
+         for (count = 0; count < 100; count++)   
             res1 = z_mod2_precomp(a, n, ninv);
                   
          res2 = a % n;
@@ -633,20 +657,23 @@ int test_z_ll_mod_precomp()
    mpz_init(mpz_n);
    mpz_init(mpz_res); 
 
-   for (unsigned long count = 0; (count < 1000) && (result == 1); count++)
+   unsigned long count;
+   for (count = 0; (count < 1000) && (result == 1); count++)
    { 
       bits = z_randint(FLINT_D_BITS-1)+1;
       n = random_ulong((1UL<<bits)-1)+1;
       
       ninv = z_precompute_inverse(n);
       
-      for (unsigned long count2 = 0; (count2 < 1000) && (result == 1); count2++)
+      unsigned long count2;
+      for (count2 = 0; (count2 < 1000) && (result == 1); count2++)
       {
          bits = z_randint(FLINT_D_BITS-1)+1;
          a = random_ulong2((1UL<<bits)-1)+1;
          b = random_ulong2(-1L);
          
-         for (unsigned long count = 0; count < 100; count++)   
+         unsigned long count;
+         for (count = 0; count < 100; count++)   
             res1 = z_ll_mod_precomp(a, b, n, ninv);
                   
          mpz_set_ui(mpz_a, a);
@@ -688,17 +715,20 @@ int test_z_addmod()
    mpz_init(mpz_n);
    mpz_init(mpz_res); 
 
-   for (unsigned long count = 0; (count < 1000) && (result == 1); count++)
+   unsigned long count;
+   for (count = 0; (count < 1000) && (result == 1); count++)
    { 
       bits = z_randint(FLINT_D_BITS-1)+1;
       n = random_ulong((1UL<<bits)-1)+1;
       
-      for (unsigned long count2 = 0; (count2 < 1000) && (result == 1); count2++)
+      unsigned long count2;
+      for (count2 = 0; (count2 < 1000) && (result == 1); count2++)
       {
          a = random_ulong2(n);
          b = random_ulong2(n);
          
-         for (unsigned long count = 0; count < 100; count++)   
+         unsigned long count;
+         for (count = 0; count < 100; count++)   
             res1 = z_addmod(a, b, n);
                   
          mpz_set_ui(mpz_a, a);
@@ -740,17 +770,20 @@ int test_z_submod()
    mpz_init(mpz_n);
    mpz_init(mpz_res); 
 
-   for (unsigned long count = 0; (count < 1000) && (result == 1); count++)
+   unsigned long count;
+   for (count = 0; (count < 1000) && (result == 1); count++)
    { 
       bits = z_randint(FLINT_D_BITS-1)+1;
       n = random_ulong((1UL<<bits)-1)+1;
       
-      for (unsigned long count2 = 0; (count2 < 1000) && (result == 1); count2++)
+      unsigned long count2;
+      for (count2 = 0; (count2 < 1000) && (result == 1); count2++)
       {
          a = random_ulong2(n);
          b = random_ulong2(n);
          
-         for (unsigned long count = 0; count < 100; count++)   
+         unsigned long count;
+         for (count = 0; count < 100; count++)   
             res1 = z_submod(a, b, n);
                   
          mpz_set_ui(mpz_a, a);
@@ -791,16 +824,19 @@ int test_z_negmod()
    mpz_init(mpz_n);
    mpz_init(mpz_res); 
 
-   for (unsigned long count = 0; (count < 1000) && (result == 1); count++)
+   unsigned long count;
+   for (count = 0; (count < 1000) && (result == 1); count++)
    { 
       bits = z_randint(FLINT_D_BITS-1)+1;
       n = random_ulong((1UL<<bits)-1)+1;
       
-      for (unsigned long count2 = 0; (count2 < 1000) && (result == 1); count2++)
+      unsigned long count2;
+      for (count2 = 0; (count2 < 1000) && (result == 1); count2++)
       {
          a = random_ulong2(n);
          
-         for (unsigned long count = 0; count < 100; count++)   
+         unsigned long count;
+         for (count = 0; count < 100; count++)   
             res1 = z_negmod(a, n);
                   
          mpz_set_ui(mpz_a, a);
@@ -841,19 +877,22 @@ int test_z_mulmod_precomp()
    mpz_init(mpz_n);
    mpz_init(mpz_res); 
 
-   for (unsigned long count = 0; (count < 1000) && (result == 1); count++)
+   unsigned long count;
+   for (count = 0; (count < 1000) && (result == 1); count++)
    { 
       bits = z_randint(FLINT_D_BITS-1)+1;
       n = random_ulong((1UL<<bits)-1)+1;
       
       ninv = z_precompute_inverse(n);
       
-      for (unsigned long count2 = 0; (count2 < 1000) && (result == 1); count2++)
+      unsigned long count2;
+      for (count2 = 0; (count2 < 1000) && (result == 1); count2++)
       {
          a = random_ulong2(n);
          b = random_ulong2(n);
          
-         for (unsigned long count = 0; count < 100; count++)   
+         unsigned long count;
+         for (count = 0; count < 100; count++)   
             res1 = z_mulmod_precomp(a, b, n, ninv);
                   
          mpz_set_ui(mpz_a, a);
@@ -896,19 +935,22 @@ int test_z_mulmod2_precomp()
    mpz_init(mpz_n);
    mpz_init(mpz_res); 
 
-   for (unsigned long count = 0; (count < 1000) && (result == 1); count++)
+   unsigned long count;
+   for (count = 0; (count < 1000) && (result == 1); count++)
    { 
       bits = z_randint(FLINT_BITS-1)+1;
       n = random_ulong((1UL<<bits)-1)+1;
       
       ninv = z_precompute_inverse(n);
       
-      for (unsigned long count2 = 0; (count2 < 1000) && (result == 1); count2++)
+      unsigned long count2;
+      for (count2 = 0; (count2 < 1000) && (result == 1); count2++)
       {
          a = random_ulong2(n);
          b = random_ulong2(n);
          
-         for (unsigned long count = 0; count < 100; count++)   
+         unsigned long count;
+         for (count = 0; count < 100; count++)   
             res1 = z_mulmod2_precomp(a, b, n, ninv);
                   
          mpz_set_ui(mpz_a, a);
@@ -949,18 +991,21 @@ int test_z_powmod()
        
    int result = 1;
    
-   for (unsigned long count = 0; (count < 100) && (result == 1); count++)
+   unsigned long count;
+   for (count = 0; (count < 100) && (result == 1); count++)
    { 
       bits = z_randint(FLINT_D_BITS-1)+1;
       n = random_ulong((1UL<<bits)-1UL)+1; 
       
-      for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
+      unsigned long count2;
+      for (count2 = 0; (count2 < 100) && (result == 1); count2++)
       {
          a = random_ulong2(n); 
          bits = z_randint(FLINT_BITS-1)+1;
          exp = random_ulong2((1UL<<bits)-1)+1;
          
-         for (unsigned long count = 0; count < 100; count++)   
+         unsigned long count;
+         for (count = 0; count < 100; count++)   
             res1 = z_powmod(a, exp, n);
          mpz_set_ui(mpz_a, a);
          mpz_set_ui(mpz_n, n);
@@ -997,18 +1042,21 @@ int test_z_powmod2()
        
    int result = 1;
    
-   for (unsigned long count = 0; (count < 100) && (result == 1); count++)
+   unsigned long count;
+   for (count = 0; (count < 100) && (result == 1); count++)
    { 
       bits = z_randint(FLINT_BITS-1)+1;
       n = random_ulong((1UL<<bits)-1UL)+1; 
       
-      for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
+      unsigned long count2;
+      for (count2 = 0; (count2 < 100) && (result == 1); count2++)
       {
          a = random_ulong2(n); 
          bits = z_randint(FLINT_BITS-1)+1;
          exp = random_ulong2((1UL<<bits)-1)+1;
          
-         for (unsigned long count = 0; count < 100; count++)   
+         unsigned long count;
+         for (count = 0; count < 100; count++)   
             res1 = z_powmod2(a, exp, n);
          mpz_set_ui(mpz_a, a);
          mpz_set_ui(mpz_n, n);
@@ -1046,20 +1094,23 @@ int test_z_powmod_precomp()
        
    int result = 1;
    
-   for (unsigned long count = 0; (count < 100) && (result == 1); count++)
+   unsigned long count;
+   for (count = 0; (count < 100) && (result == 1); count++)
    { 
       bits = z_randint(FLINT_D_BITS-1)+1;
       n = random_ulong((1UL<<bits)-1UL)+1; 
 
 		ninv = z_precompute_inverse(n);
       
-      for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
+      unsigned long count2;
+      for (count2 = 0; (count2 < 100) && (result == 1); count2++)
       {
          a = random_ulong2(n); 
          bits = z_randint(FLINT_BITS-1)+1;
          exp = random_ulong2((1UL<<bits)-1)+1;
          
-         for (unsigned long count = 0; count < 100; count++)   
+         unsigned long count;
+         for (count = 0; count < 100; count++)   
             res1 = z_powmod_precomp(a, exp, n, ninv);
          mpz_set_ui(mpz_a, a);
          mpz_set_ui(mpz_n, n);
@@ -1097,20 +1148,23 @@ int test_z_powmod2_precomp()
        
    int result = 1;
    
-   for (unsigned long count = 0; (count < 100) && (result == 1); count++)
+   unsigned long count;
+   for (count = 0; (count < 100) && (result == 1); count++)
    { 
       bits = z_randint(FLINT_BITS-1)+1;
       n = random_ulong((1UL<<bits)-1UL)+1; 
 
 		ninv = z_precompute_inverse(n);
       
-      for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
+      unsigned long count2;
+      for (count2 = 0; (count2 < 100) && (result == 1); count2++)
       {
          a = random_ulong2(n); 
          bits = z_randint(FLINT_BITS-1)+1;
          exp = random_ulong2((1UL<<bits)-1)+1;
          
-         for (unsigned long count = 0; count < 100; count++)   
+         unsigned long count;
+         for (count = 0; count < 100; count++)   
             res1 = z_powmod2_precomp(a, exp, n, ninv);
          mpz_set_ui(mpz_a, a);
          mpz_set_ui(mpz_n, n);
@@ -1147,17 +1201,20 @@ int test_z_sqrtmod()
           
    int result = 1;
    
-   for (unsigned long count = 0; (count < 10000) && (result == 1); count++)
+   unsigned long count;
+   for (count = 0; (count < 10000) && (result == 1); count++)
    { 
       bits = z_randint(FLINT_D_BITS-1)+1;
       p = random_ulong((1UL<<bits)-1UL)+1; 
       p = z_nextprime(p, 0);
       
-      for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
+      unsigned long count2;
+      for (count2 = 0; (count2 < 100) && (result == 1); count2++)
       {
          a = random_ulong2(p); 
          
-         for (unsigned long count3 = 0; count3 < 1; count3++)   
+         unsigned long count3;
+         for (count3 = 0; count3 < 1; count3++)   
             res1 = z_sqrtmod(a, p);
             
          if (res1)
@@ -1197,7 +1254,8 @@ int test_z_cuberootmod()
           
    int result = 1;
    
-   for (unsigned long count = 0; (count < 1000) && (result == 1); count++)
+   unsigned long count;
+   for (count = 0; (count < 1000) && (result == 1); count++)
    { 
 #if FLINT_BITS == 64
       bits = z_randint(38)+2;
@@ -1207,14 +1265,16 @@ int test_z_cuberootmod()
       p = random_ulong((1UL<<bits)-1)+3;
       p = z_nextprime(p, 0);
       
-      for (unsigned long count2 = 0; (count2 < 100) && (result == 1); count2++)
+      unsigned long count2;
+      for (count2 = 0; (count2 < 100) && (result == 1); count2++)
       {
          a = random_ulong2(p-1)+1; 
 #if DEBUG 
          printf("bits = %ld, p = %ld, a = %ld\n", bits, p, a);
 #endif
          
-         for (unsigned long count = 0; count < 10; count++)   
+         unsigned long count;
+         for (count = 0; count < 10; count++)   
             res1 = z_cuberootmod(&cuberoot1, a, p);
          if ((res1 == 0) && (p % 3 == 2) && (a != 0)) result == 0;
          else if (res1)
@@ -1355,7 +1415,8 @@ int test_z_nextprime()
        
    int result = 1;
    
-   for (unsigned long count = 0; (count < 100000) && (result == 1); count++)
+   unsigned long count;
+   for (count = 0; (count < 100000) && (result == 1); count++)
    { 
       unsigned long bits = z_randint(FLINT_D_BITS-1)+1;
       n = random_ulong((1UL<<bits)-1UL)+1; 
@@ -1365,7 +1426,8 @@ int test_z_nextprime()
       printf("n = %ld\n", n);
 #endif
 
-      for (unsigned long i = 0; i < 1; i++)
+      unsigned long i;
+      for (i = 0; i < 1; i++)
       {
          mpz_nextprime(mpz_n, mpz_n);
          n = z_nextprime(n, 0);
@@ -1393,7 +1455,8 @@ int test_z_ispseudoprime_fermat()
        
    int result = 1;
    
-   for (unsigned long count = 0; (count < 100000) && (result == 1); count++)
+   unsigned long count;
+   for (count = 0; (count < 100000) && (result == 1); count++)
    { 
 	  unsigned long bits = z_randint(FLINT_D_BITS-1)+1;
       n = random_ulong((1UL<<bits)-1UL)+1; 
@@ -1415,7 +1478,7 @@ int test_z_ispseudoprime_fermat()
 #define FERMAT_COUNT 100000
 	
 	ulong comp = 0;
-	for (ulong count = 0; count < FERMAT_COUNT; count++)
+	for (count = 0; count < FERMAT_COUNT; count++)
    { 
 		ulong bits = z_randint(FLINT_BITS/2 - 2) + 2;
       n = z_randprime(bits, 0); 
@@ -1443,7 +1506,8 @@ int test_z_ispseudoprime_lucas()
        
    int result = 1;
    
-   for (ulong count = 0; (count < 100000) && (result == 1); count++)
+   ulong count;
+   for (count = 0; (count < 100000) && (result == 1); count++)
    { 
 	   ulong bits = z_randint(FLINT_BITS - 1) + 1;
       n = random_ulong((1UL<<bits) - 1UL) + 256; 
@@ -1453,13 +1517,13 @@ int test_z_ispseudoprime_lucas()
       res = mpz_get_ui(mpz_n);
 
       result = (z_ispseudoprime_lucas(res) == 1);
-		if (!result) printf("Error: prime not pseudoprime, n = %ld\n", n);
+		if (!result) printf("Error: prime not pseudoprime, n = %ld\n", res);
    } 
 
 #define LUCAS_COUNT 100000
 	
 	ulong comp = 0;
-	for (ulong count = 0; count < LUCAS_COUNT; count++)
+	for (count = 0; count < LUCAS_COUNT; count++)
    { 
 		ulong bits = z_randint(FLINT_BITS/2 - 2) + 2;
       n = z_randprime(bits, 0); 
@@ -1485,7 +1549,8 @@ int test_z_ispseudoprime_lucas_ab()
        
    int result = 1;
    
-   for (ulong count = 0; (count < 100000) && (result == 1); count++)
+   ulong count;
+   for (count = 0; (count < 100000) && (result == 1); count++)
    { 
 	   ulong bits = z_randint(FLINT_BITS - 1) + 1;
       n = random_ulong((1UL<<bits) - 1UL) + 256; 
@@ -1497,13 +1562,13 @@ int test_z_ispseudoprime_lucas_ab()
       int b = 1;
 
       result = (z_ispseudoprime_lucas_ab(res, a, b) == 1);
-		if (!result) printf("Error: prime not pseudoprime, n = %ld, a = %d, b = %d\n", n, a, b);
+		if (!result) printf("Error: prime not pseudoprime, n = %ld, a = %d, b = %d\n", res, a, b);
    } 
 
 #define LUCAS2_COUNT 100000
 	
 	ulong comp = 0;
-	for (ulong count = 0; count < LUCAS2_COUNT; count++)
+	for (count = 0; count < LUCAS2_COUNT; count++)
    { 
 		ulong bits = z_randint(FLINT_BITS/2 - 2) + 2;
       n = z_randprime(bits, 0); 
@@ -1531,7 +1596,8 @@ int test_z_isprobab_prime()
        
    int result = 1;
    
-   for (unsigned long count = 0; (count < 100000) && (result == 1); count++)
+   unsigned long count;
+   for (count = 0; (count < 100000) && (result == 1); count++)
    { 
 	   unsigned long bits = z_randint(FLINT_BITS-2)+2;
 	   n = random_ulong((1UL<<bits)-2UL)+2; 
@@ -1545,12 +1611,17 @@ int test_z_isprobab_prime()
       res = mpz_get_ui(mpz_n);
 
       result = (z_isprobab_prime(res));
+      if (!result)
+      {
+          printf("Error : n = %ld\n", res);
+          return result;
+      }
    }  
 
 #define TEST_PRIME_COUNT 100000
 	
 	ulong comp = 0;
-	for (ulong count = 0; (count < TEST_PRIME_COUNT) && (result == 1); count++)
+	for (count = 0; (count < TEST_PRIME_COUNT) && (result == 1); count++)
    { 
 		ulong bits = z_randint(FLINT_BITS/2 - 2) + 2;
       n = z_randprime(bits, 0); 
@@ -1576,7 +1647,8 @@ int test_z_isprobab_prime_precomp()
        
    int result = 1;
    
-   for (unsigned long count = 0; (count < 100000) && (result == 1); count++)
+   unsigned long count;
+   for (count = 0; (count < 100000) && (result == 1); count++)
    { 
 	  unsigned long bits = z_randint(FLINT_BITS-2)+2;
 	  n = z_randint((1UL<<bits)-2UL)+2; 
@@ -1591,13 +1663,13 @@ int test_z_isprobab_prime_precomp()
 
       ninv = z_precompute_inverse(res);
 		result = (z_isprobab_prime_precomp(res, ninv));
-		if (!result) printf("Error: %ld is reported composite!\n", n, res);
+		if (!result) printf("Error: %ld is reported composite!\n", res);
    }  
 
 #define TEST_PRIME_COUNT1 100000
 	
 	ulong comp = 0;
-	for (ulong count = 0; (count < TEST_PRIME_COUNT1) && (result == 1); count++)
+	for (count = 0; (count < TEST_PRIME_COUNT1) && (result == 1); count++)
    { 
 		ulong bits = z_randint(FLINT_BITS/2 - 2) + 2;
       n = z_randprime(bits, 0); 
@@ -1626,7 +1698,8 @@ int test_z_ispseudoprime_fibonacci_precomp()
        
    int result = 1;
    
-   for (unsigned long count = 0; (count < 100000) && (result == 1); count++)
+   unsigned long count;
+   for (count = 0; (count < 100000) && (result == 1); count++)
    { 
 	  unsigned long bits = z_randint(FLINT_BITS-2)+2;
 	  n = z_randint((1UL<<bits)-3UL)+3; 
@@ -1641,13 +1714,13 @@ int test_z_ispseudoprime_fibonacci_precomp()
 
       ninv = z_precompute_inverse(res);
 		result = ((res == 5) || (z_ispseudoprime_fibonacci_precomp(res, ninv)));
-		if (!result) printf("Error: %ld is reported composite!\n", n, res);
+		if (!result) printf("Error: %ld is reported composite!\n", res);
    }  
 
 #define TEST_PRIME_COUNT2 100000
 	
 	ulong pseudo = 0;
-	for (ulong count = 0; (count < TEST_PRIME_COUNT2) && (result == 1); count++)
+	for (count = 0; (count < TEST_PRIME_COUNT2) && (result == 1); count++)
    { 
 		ulong bits = z_randint(FLINT_BITS/2 - 2) + 2;
       n = z_randprime(bits, 0); 
@@ -1679,7 +1752,8 @@ int test_z_isprobab_prime_BPSW()
        
    int result = 1;
    
-   for (unsigned long count = 0; (count < 100000) && (result == 1); count++)
+   unsigned long count;
+   for (count = 0; (count < 100000) && (result == 1); count++)
    { 
 	   unsigned long bits = z_randint(FLINT_BITS-2)+2;
 	   n = random_ulong((1UL<<bits)-2UL)+2; 
@@ -1700,7 +1774,7 @@ int test_z_isprobab_prime_BPSW()
 #define PRIME_COUNT2 100000
 	
 	ulong comp = 0;
-	for (ulong count = 0; (count < PRIME_COUNT2) && (result == 1); count++)
+	for (count = 0; (count < PRIME_COUNT2) && (result == 1); count++)
    { 
 		ulong bits = z_randint(FLINT_BITS/2 - 2) + 2;
       n = z_randprime(bits, 0); 
@@ -1727,7 +1801,8 @@ int test_z_miller_rabin_precomp()
        
    int result = 1;
    
-   for (unsigned long count = 0; (count < 100000) && (result == 1); count++)
+   unsigned long count;
+   for (count = 0; (count < 100000) && (result == 1); count++)
    { 
 	  unsigned long bits = z_randint(FLINT_BITS-2)+2;
 	  n = z_randint((1UL<<bits)-2UL)+2; 
@@ -1742,12 +1817,12 @@ int test_z_miller_rabin_precomp()
 
       ninv = z_precompute_inverse(res);
 		result = (z_miller_rabin_precomp(res, ninv, 5));
-		if (!result) printf("Error: %ld is reported composite!\n", n, res);
+		if (!result) printf("Error: %ld is reported composite!\n", res);
    }  
 #define TEST_PRIME_COUNT3 100000
 	
 	ulong comp = 0;
-	for (ulong count = 0; (count < TEST_PRIME_COUNT3) && (result == 1); count++)
+	for (count = 0; (count < TEST_PRIME_COUNT3) && (result == 1); count++)
    { 
 		ulong bits = z_randint(FLINT_BITS/2 - 2) + 2;
       n = z_randprime(bits, 0); 
@@ -1776,7 +1851,8 @@ int test_z_isprime()
        
    int result = 1;
    
-   for (unsigned long count = 0; (count < 10000) && (result == 1); count++)
+   unsigned long count;
+   for (count = 0; (count < 10000) && (result == 1); count++)
    { 
 	  unsigned long bits = z_randint(FLINT_BITS-1)+1;
 	  n = random_ulong((1UL<<bits)-1UL)+1; 
@@ -1790,9 +1866,14 @@ int test_z_isprime()
       res = mpz_get_ui(mpz_n);
 
       result = (z_isprime(res));
+      if (!result)
+      {
+         printf("Error %ld declared composite\n", res);
+         return result;
+      }
    }  
 
-	for (unsigned long count = 0; (count < 10000) && (result == 1); count++)
+	for (count = 0; (count < 10000) && (result == 1); count++)
    { 
 	  unsigned long bits = z_randint(FLINT_BITS-2)+2;
 	  n = random_ulong((1UL<<bits)-2UL)+2; 
@@ -1806,12 +1887,17 @@ int test_z_isprime()
       res = mpz_get_ui(mpz_n);
 
       result = (z_isprime(res));
+      if (!result)
+      {
+         printf("Error %ld declared composite!\n", res);
+         return result;
+      }
    }  
 
 #define TEST_PRIME_COUNT4 100000
 	
 	ulong comp = 0;
-	for (ulong count = 0; (count < TEST_PRIME_COUNT4) && (result == 1); count++)
+	for (count = 0; (count < TEST_PRIME_COUNT4) && (result == 1); count++)
    { 
 		ulong bits = z_randint(FLINT_BITS/2 - 2) + 2;
       n = z_randprime(bits, 0); 
@@ -1837,7 +1923,8 @@ int test_z_isprime_precomp()
        
    int result = 1;
    
-   for (unsigned long count = 0; (count < 10000) && (result == 1); count++)
+   unsigned long count;
+   for (count = 0; (count < 10000) && (result == 1); count++)
    { 
 	  unsigned long bits = z_randint(FLINT_BITS-2)+2;
       n = z_randint((1UL<<bits)-2UL)+2; 
@@ -1855,7 +1942,7 @@ int test_z_isprime_precomp()
 	   if (!result) printf("Error: %ld is reported composite!\n", res);
    }
    
-   for (unsigned long count = 0; (count < 10000) && (result == 1); count++)
+   for (count = 0; (count < 10000) && (result == 1); count++)
    { 
 	  unsigned long bits = z_randint(FLINT_BITS-2)+2;
 	  n = z_randint((1UL<<bits)-2UL)+2; 
@@ -1876,7 +1963,7 @@ int test_z_isprime_precomp()
 #define TEST_PRIME_COUNT5 100000
 	
 	ulong comp = 0;
-	for (ulong count = 0; (count < TEST_PRIME_COUNT5) && (result == 1); count++)
+	for (count = 0; (count < TEST_PRIME_COUNT5) && (result == 1); count++)
    { 
 		ulong bits = z_randint(FLINT_BITS/2 - 2) + 2;
       n = z_randprime(bits, 0); 
@@ -1904,7 +1991,8 @@ int test_z_isprime_pocklington()
        
    int result = 1;
    
-   for (unsigned long count = 0; (count < 10000L) && (result == 1); count++)
+   unsigned long count;
+   for (count = 0; (count < 10000L) && (result == 1); count++)
    { 
 	   unsigned long bits = z_randint(FLINT_BITS-2)+2;
 	   n = random_ulong((1UL<<bits)-2UL)+2; 
@@ -1920,12 +2008,12 @@ int test_z_isprime_pocklington()
       result = (z_isprime_pocklington(res, 100));
 		if (result != 1) 
 		{
-			printf("%d\n", result);
+			printf("res = %ld, %d\n", res, result);
 			result = 0;
 		}
    }  
    
-	for (unsigned long count = 0; (count < 100000L) && (result == 1); count++)
+	for (count = 0; (count < 100000L) && (result == 1); count++)
    { 
 	  unsigned long bits = z_randint((FLINT_BITS-1)/2 - 1)+1;
 	  n = random_ulong((1UL<<bits)-1UL)+1; 
@@ -1977,7 +2065,8 @@ int test_z_isprime_nm1()
        
    int result = 1;
    
-   for (unsigned long count = 0; (count < 10000L) && (result == 1); count++)
+   unsigned long count;
+   for (count = 0; (count < 10000L) && (result == 1); count++)
    { 
 	   unsigned long bits = z_randint(FLINT_BITS-2)+2;
 	   n = random_ulong((1UL<<bits)-2UL)+2; 
@@ -1998,7 +2087,7 @@ int test_z_isprime_nm1()
 		}
    }  
    
-	for (unsigned long count = 0; (count < 100000L) && (result == 1); count++)
+	for (count = 0; (count < 100000L) && (result == 1); count++)
    { 
 	  unsigned long bits = z_randint((FLINT_BITS-1)/2 - 1)+1;
 	  n = random_ulong((1UL<<bits)-1UL)+1; 
@@ -2047,13 +2136,15 @@ int test_z_remove()
    
    int result = 1;
    
-   for (unsigned long count = 0; (count < 5000) && (result == 1); count++)
+   unsigned long count;
+   for (count = 0; (count < 5000) && (result == 1); count++)
    { 
       bits = z_randint(FLINT_BITS - 1) + 1;
       n = random_ulong((1UL<<bits) - 1) + 1;
       
       ulong p = 2;
-		for (unsigned long count = 0; (count < 200) && (result == 1); count++)
+		unsigned long count;
+		for (count = 0; (count < 200) && (result == 1); count++)
 		{
          ulong oldn = n;
 		   int exp = z_remove(&n, p);
@@ -2067,7 +2158,7 @@ int test_z_remove()
       }
 
 		p = 2;
-	   for (unsigned long count = 0; (count < 200) && (result == 1); count++)
+	   for (count = 0; (count < 200) && (result == 1); count++)
 		{
          result &= ((n % p) != 0);
 		   p = z_nextprime(p, 0);
@@ -2090,13 +2181,15 @@ int test_z_remove_precomp()
    
    int result = 1;
    
-   for (unsigned long count = 0; (count < 5000) && (result == 1); count++)
+   unsigned long count;
+   for (count = 0; (count < 5000) && (result == 1); count++)
    { 
       bits = z_randint(FLINT_BITS - 1) + 1;
       n = random_ulong((1UL<<bits) - 1) + 1;
       
       ulong p = 2;
-	   for (unsigned long count = 0; (count < 200) && (result == 1); count++)
+	   unsigned long count;
+	   for (count = 0; (count < 200) && (result == 1); count++)
 		{
          ulong oldn = n;
 			pinv = z_precompute_inverse(p);
@@ -2111,7 +2204,7 @@ int test_z_remove_precomp()
       }
 
 		p = 2;
-	   for (unsigned long count = 0; (count < 200) && (result == 1); count++)
+	   for (count = 0; (count < 200) && (result == 1); count++)
 		{
          result &= ((n % p) != 0);
 			p = z_nextprime(p, 0);
@@ -2133,7 +2226,8 @@ int test_z_CRT()
    
    int result = 1;
    
-   for (unsigned long count = 0; (count < 500000) && (result == 1); count++)
+   unsigned long count;
+   for (count = 0; (count < 500000) && (result == 1); count++)
    { 
       unsigned long bits = z_randint(FLINT_BITS-2) + 2;
       unsigned long bits1 = z_randint(bits-1) + 1;
@@ -2150,7 +2244,8 @@ int test_z_CRT()
       printf("x1 = %ld, n1 = %ld, x2 = %ld, n2 = %ld\n", x1, n1, x2, n2);
 #endif
 
-      for (unsigned long i = 0; i < 10; i++)
+      unsigned long i;
+      for (i = 0; i < 10; i++)
       {
          res = z_CRT(x1, n1, x2, n2);
       }
@@ -2170,7 +2265,8 @@ int test_z_issquarefree()
 
    int result = 1;
    
-   for (unsigned long count = 0; (count < 1000) && (result == 1); count++)
+   unsigned long count;
+   for (count = 0; (count < 1000) && (result == 1); count++)
    { 
       do
       {
@@ -2188,7 +2284,7 @@ int test_z_issquarefree()
       result = !z_issquarefree(n, 1);
    }  
 
-   for (unsigned long count = 0; (count < 100000) && (result == 1); count++)
+   for (count = 0; (count < 100000) && (result == 1); count++)
    { 
       n = 1;
       n1 = 1;
@@ -2197,7 +2293,8 @@ int test_z_issquarefree()
       do
       {
          n = n*n1;
-         for (unsigned long i = 0; i < random_ulong(3)+1; i++)
+         unsigned long i;
+         for (i = 0; i < random_ulong(3)+1; i++)
          {
             n1 = z_nextprime(n1, 0);
          } 
@@ -2210,7 +2307,7 @@ int test_z_issquarefree()
       result = z_issquarefree(n, 1);
    }  
    
-   for (unsigned long count = 0; (count < 1000) && (result == 1); count++)
+   for (count = 0; (count < 1000) && (result == 1); count++)
    { 
       n1 = z_randprime(FLINT_BITS/3, 0);
 		do {n2 = z_randprime(FLINT_BITS/3, 0);} while (n2 == n1);
@@ -2236,7 +2333,8 @@ int test_z_factor_trial()
 
    int result = 1;
    
-   for (unsigned long count = 0; (count < 100000) && (result == 1); count++)
+   unsigned long count;
+   for (count = 0; (count < 100000) && (result == 1); count++)
    { 
       orig_n = random_ulong(1000000)+1;
            
@@ -2269,13 +2367,15 @@ int test_z_factor_trial()
    return result;
 }
 
+#ifndef __TINYC__
 int test_z_factor_tinyQS()
 {
    unsigned long n, factor, bits;
 
    int result = 1;
    
-   for (unsigned long count = 0; (count < 1000) && (result == 1); count++)
+   unsigned long count;
+   for (count = 0; (count < 1000) && (result == 1); count++)
    { 
       do 
       {
@@ -2301,6 +2401,7 @@ int test_z_factor_tinyQS()
    
    return result;
 }
+#endif
 
 int test_z_factor_HOLF()
 {
@@ -2308,7 +2409,8 @@ int test_z_factor_HOLF()
 
    int result = 1;
    
-   for (unsigned long count = 0; (count < 1000) && (result == 1); count++)
+   unsigned long count;
+   for (count = 0; (count < 1000) && (result == 1); count++)
    { 
       do 
       {
@@ -2341,7 +2443,8 @@ int test_z_factor_SQUFOF()
 
    int result = 1;
    
-   for (unsigned long count = 0; (count < 1000) && (result == 1); count++)
+   unsigned long count;
+   for (count = 0; (count < 1000) && (result == 1); count++)
    { 
       do 
       {
@@ -2376,7 +2479,8 @@ int test_z_factor()
 
    int result = 1;
    
-   for (unsigned long count = 0; (count < 5000) && (result == 1); count++)
+   unsigned long count;
+   for (count = 0; (count < 5000) && (result == 1); count++)
    { 
       bits = z_randint(FLINT_BITS-1)+1;
       orig_n = random_ulong((1UL<<bits)-1)+2;
@@ -2418,7 +2522,8 @@ int test_z_factor_partial()
 
    int result = 1;
    
-   for (unsigned long count = 0; (count < 100000) && (result == 1); )
+   unsigned long count;
+   for (count = 0; (count < 100000) && (result == 1); )
    { 
       orig_n = random_ulong(1000000)+2;
       limit = z_intsqrt(orig_n);
@@ -2450,7 +2555,7 @@ int test_z_factor_partial()
 
    }  
    
-   for (int i = 0; (i < 10000) && (result == 1); i++)
+   for (i = 0; (i < 10000) && (result == 1); i++)
    {
 	  do {
 #if FLINT_BITS == 64
@@ -2464,7 +2569,8 @@ int test_z_factor_partial()
 	  cofactor = z_factor_partial(&factors, n, limit, 1);
 	  out = 1;
 
-	  for (int j = 0; j < factors.num; j++)
+	  int j;
+	  for (j = 0; j < factors.num; j++)
 	  {
 		 out*=z_pow(factors.p[j], factors.exp[j]);
 	  }
@@ -2474,7 +2580,8 @@ int test_z_factor_partial()
 		 result = 0;
 #if DEBUG2
 		 printf("failed to factor %ld got to %ld, limit = %ld\n", n, out, limit);
-		 for (int j = 0; j < factors.num; j++)
+		 int j;
+		 for (j = 0; j < factors.num; j++)
 		 {
 			printf("%ld^%ld ", factors.p[j], factors.exp[j]);
 		 }
@@ -2490,7 +2597,8 @@ int test_z_primitive_root()
    unsigned long p = 2;
    unsigned long r;
    
-   for(int i = 0; i < 100000; i++) {
+   int i;
+   for (i = 0; i < 100000; i++) {
       p = z_nextprime(p, 0);
       r = z_primitive_root(p);
       if(r == 0) {
@@ -2509,7 +2617,7 @@ void fmpz_poly_test_all()
    int success, all_success = 1;
 
 #if FLINT_BITS == 64
-	RUN_TEST(z_mulmod32_precomp); 
+   RUN_TEST(z_mulmod32_precomp); 
 #endif
 	RUN_TEST(z_intsqrt);
    RUN_TEST(z_intcuberoot);

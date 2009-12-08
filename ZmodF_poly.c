@@ -61,7 +61,8 @@ void ZmodF_poly_init(ZmodF_poly_t poly, unsigned long depth, unsigned long n,
    poly->scratch = poly->coeffs + (1 << depth);
    
    poly->coeffs[0] = poly->storage;
-   for (unsigned long i = 1; i < bufs; i++)
+   unsigned long i;
+   for (i = 1; i < bufs; i++)
       poly->coeffs[i] = poly->coeffs[i-1] + (n+1);
 }
 
@@ -90,7 +91,8 @@ void ZmodF_poly_stack_init(ZmodF_poly_t poly, unsigned long depth, unsigned long
    poly->scratch = poly->coeffs + (1 << depth);
    
    poly->coeffs[0] = poly->storage;
-   for (unsigned long i = 1; i < bufs; i++)
+   unsigned long i;
+   for (i = 1; i < bufs; i++)
       poly->coeffs[i] = poly->coeffs[i-1] + (n+1);
 }
 
@@ -112,7 +114,8 @@ void ZmodF_poly_set(ZmodF_poly_t x, ZmodF_poly_t y)
    FLINT_ASSERT(x->depth == y->depth);
    FLINT_ASSERT(x->n == y->n);
 
-   for (unsigned long i = 0; i < y->length; i++)
+   unsigned long i;
+   for (i = 0; i < y->length; i++)
       ZmodF_set(x->coeffs[i], y->coeffs[i], x->n);
 
    x->length = y->length;
@@ -132,8 +135,9 @@ void ZmodF_poly_pointwise_mul(ZmodF_poly_t res, ZmodF_poly_t x, ZmodF_poly_t y)
    ZmodF_mul_info_t info;
    ZmodF_mul_info_init(info, x->n, x == y);
    
+   ulong i;
    if (x != y)
-      for (unsigned long i = 0; i < x->length; i++)
+      for (i = 0; i < x->length; i++)
       {
          if (i+8 < x->length)
          {
@@ -143,7 +147,9 @@ void ZmodF_poly_pointwise_mul(ZmodF_poly_t res, ZmodF_poly_t x, ZmodF_poly_t y)
          ZmodF_mul_info_mul(info, res->coeffs[i], x->coeffs[i], y->coeffs[i]);
       }
    else
-      for (unsigned long i = 0; i < x->length; i++)
+   {
+      unsigned long i;
+      for (i = 0; i < x->length; i++)
       {
          if (i+8 < x->length)
          {
@@ -151,6 +157,7 @@ void ZmodF_poly_pointwise_mul(ZmodF_poly_t res, ZmodF_poly_t x, ZmodF_poly_t y)
          }
          ZmodF_mul_info_mul(info, res->coeffs[i], x->coeffs[i], x->coeffs[i]);
       }
+   }
 
    ZmodF_mul_info_clear(info);
 
@@ -166,7 +173,8 @@ void ZmodF_poly_add(ZmodF_poly_t res, ZmodF_poly_t x, ZmodF_poly_t y)
    FLINT_ASSERT(x->n == res->n);
    FLINT_ASSERT(x->length == y->length);
    
-   for (unsigned long i = 0; i < x->length; i++)
+   unsigned long i;
+   for (i = 0; i < x->length; i++)
       ZmodF_add(res->coeffs[i], x->coeffs[i], y->coeffs[i], x->n);
 
    res->length = x->length;
@@ -181,7 +189,8 @@ void ZmodF_poly_sub(ZmodF_poly_t res, ZmodF_poly_t x, ZmodF_poly_t y)
    FLINT_ASSERT(x->n == res->n);
    FLINT_ASSERT(x->length == y->length);
    
-   for (unsigned long i = 0; i < x->length; i++)
+   unsigned long i;
+   for (i = 0; i < x->length; i++)
       ZmodF_sub(res->coeffs[i], x->coeffs[i], y->coeffs[i], x->n);
 
    res->length = x->length;
@@ -190,7 +199,8 @@ void ZmodF_poly_sub(ZmodF_poly_t res, ZmodF_poly_t x, ZmodF_poly_t y)
 
 void ZmodF_poly_normalise(ZmodF_poly_t poly)
 {
-   for (unsigned long i = 0; i < poly->length; i++)
+   unsigned long i;
+   for (i = 0; i < poly->length; i++)
       ZmodF_normalise(poly->coeffs[i], poly->n);
 }
 
@@ -200,7 +210,8 @@ void ZmodF_poly_rescale(ZmodF_poly_t poly)
    if (poly->depth == 0)
       return;
 
-   for (unsigned long i = 0; i < poly->length; i++)
+   unsigned long i;
+   for (i = 0; i < poly->length; i++)
       ZmodF_short_div_2exp(poly->coeffs[i], poly->coeffs[i],
                            poly->depth, poly->n);
 }
@@ -212,7 +223,8 @@ void ZmodF_poly_rescale_range(ZmodF_poly_t poly, unsigned long start, unsigned l
       
    unsigned long length = FLINT_MIN(n, poly->length);
    
-   for (unsigned long i = start; i < length; i++)
+   unsigned long i;
+   for (i = start; i < length; i++)
       ZmodF_short_div_2exp(poly->coeffs[i], poly->coeffs[i],
                            poly->depth, poly->n);
 }
@@ -1190,7 +1202,8 @@ void _ZmodF_poly_FFT_dual_recursive(
       bits = FLINT_BITS - bits;
       if (--limbs)
       {
-         for (unsigned long i = 0; i < half; i++)
+         unsigned long i;
+         for (i = 0; i < half; i++)
          {
             ZmodF_short_div_2exp(*scratch, y[i], bits, n);
             ZmodF_div_Bexp_add(y[i], x[i], *scratch, limbs, n);
@@ -1199,7 +1212,8 @@ void _ZmodF_poly_FFT_dual_recursive(
       }
       else
       {
-         for (unsigned long i = 0; i < half; i++)
+         unsigned long i;
+         for (i = 0; i < half; i++)
          {
             ZmodF_short_div_2exp(*scratch, y[i], bits, n);
             ZmodF_add(y[i], x[i], *scratch, n);
@@ -1210,7 +1224,8 @@ void _ZmodF_poly_FFT_dual_recursive(
    else
    {
       // all butterflies are limbshifts only
-      for (unsigned long i = 0; i < half; i++)
+      unsigned long i;
+      for (i = 0; i < half; i++)
       {
          ZmodF_div_Bexp_add(*scratch, x[i], y[i], limbs, n);
          ZmodF_swap(scratch, y+i);
@@ -1327,7 +1342,8 @@ void _ZmodF_poly_IFFT_dual_recursive(
       // each butterfly needs a bitshift
       if (limbs != n)
       {
-         for (unsigned long i = 0; i < half; i++)
+         unsigned long i;
+         for (i = 0; i < half; i++)
          {
             ZmodF_sub_mul_Bexp(*scratch, y[i], x[i], limbs, n);
             ZmodF_add(x[i], x[i], y[i], n);
@@ -1336,7 +1352,8 @@ void _ZmodF_poly_IFFT_dual_recursive(
       }
       else
       {
-         for (unsigned long i = 0; i < half; i++)
+         unsigned long i;
+         for (i = 0; i < half; i++)
          {
             ZmodF_sub(*scratch, x[i], y[i], n);
             ZmodF_add(x[i], x[i], y[i], n);
@@ -1347,7 +1364,8 @@ void _ZmodF_poly_IFFT_dual_recursive(
    else
    {
       // all butterflies are limbshifts only
-      for (unsigned long i = 0; i < half; i++)
+      unsigned long i;
+      for (i = 0; i < half; i++)
       {
          ZmodF_sub_mul_Bexp(*scratch, y[i], x[i], limbs, n);
          ZmodF_add(x[i], x[i], y[i], n);
@@ -1376,7 +1394,8 @@ void ZmodF_poly_FFT(ZmodF_poly_t poly, unsigned long length)
       if (poly->length == 0)
       {
          // input is zero, so output is zero too
-         for (unsigned long i = 0; i < length; i++)
+         unsigned long i;
+         for (i = 0; i < length; i++)
             ZmodF_zero(poly->coeffs[i], poly->n);
       }
       else

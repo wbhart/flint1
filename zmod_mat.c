@@ -50,7 +50,8 @@ void zmod_mat_init_precomp(zmod_mat_t mat, ulong p, double p_inv,
    
    // Set up the rows
    ulong * ptr = mat->ptr;
-   for (ulong i = 0; i < rows; i++, ptr += cols)
+   ulong i;
+   for (i = 0; i < rows; i++, ptr += cols)
       mat->arr[i] = ptr;
 
    mat->p = p;
@@ -124,7 +125,8 @@ void zmod_mat_col_to_zmod_poly(zmod_poly_t poly, zmod_mat_t mat, ulong col)
    ulong * ptr;
    
    zmod_poly_fit_length(poly, rows);
-   for (ulong i = 0; i < rows; i++)
+   ulong i;
+   for (i = 0; i < rows; i++)
    {  
 	  ptr = mat->arr[i];
       poly->coeffs[i] = ptr[col];
@@ -144,7 +146,8 @@ void zmod_mat_col_to_zmod_poly_shifted(zmod_poly_t poly, zmod_mat_t mat, ulong c
    ulong * ptr;
    
    zmod_poly_fit_length(poly, rows);
-   for (ulong i = 0, j = 0; j < rows; j++)
+   ulong i, j;
+   for (i = 0, j = 0; j < rows; j++)
    {  
 	  if (shift[j]) poly->coeffs[j] = 0L;
 	  else
@@ -182,7 +185,8 @@ void zmod_mat_row_scalar_addmul_right(zmod_mat_t mat, ulong row1, ulong row2, ul
 #if FLINT_BITS == 64
    if (FLINT_BIT_COUNT(p) >= FLINT_D_BITS)
    {
-	  for (ulong i = start; i < cols; i++)
+	  ulong i;
+	  for (i = start; i < cols; i++)
       {
 	     prod = z_mulmod2_precomp(r2[i], u, p, p_inv);
 	     r1[i] = z_addmod(r1[i], prod, p);
@@ -190,7 +194,8 @@ void zmod_mat_row_scalar_addmul_right(zmod_mat_t mat, ulong row1, ulong row2, ul
    } else
 #endif
    {
-	  for (ulong i = start; i < cols; i++)
+	  ulong i;
+	  for (i = start; i < cols; i++)
       {
 	     prod = z_mulmod_precomp(r2[i], u, p, p_inv);
 	     r1[i] = z_addmod(r1[i], prod, p);
@@ -215,7 +220,8 @@ void zmod_mat_row_scalar_submul_right(zmod_mat_t mat, ulong row1, ulong row2, ul
 #if FLINT_BITS == 64
    if (FLINT_BIT_COUNT(p) >= FLINT_D_BITS)
    {
-	  for (ulong i = start; i < cols; i++)
+	  ulong i;
+	  for (i = start; i < cols; i++)
       {
 	     prod = z_mulmod2_precomp(r2[i], u, p, p_inv);
 	     r1[i] = z_submod(r1[i], prod, p);
@@ -223,7 +229,8 @@ void zmod_mat_row_scalar_submul_right(zmod_mat_t mat, ulong row1, ulong row2, ul
    } else
 #endif
    {
-	  for (ulong i = start; i < cols; i++)
+	  ulong i;
+	  for (i = start; i < cols; i++)
       {
 	     prod = z_mulmod_precomp(r2[i], u, p, p_inv);
 	     r1[i] = z_submod(r1[i], prod, p);
@@ -246,12 +253,14 @@ void zmod_mat_row_scalar_mul_right(zmod_mat_t mat, ulong row, ulong u, ulong sta
 #if FLINT_BITS == 64
    if (FLINT_BIT_COUNT(p) >= FLINT_D_BITS)
    {
-	  for (ulong i = start; i < cols; i++)
+	  ulong i;
+	  for (i = start; i < cols; i++)
 	     r1[i] = z_mulmod2_precomp(r1[i], u, p, p_inv);
    } else
 #endif
    {
-	  for (ulong i = start; i < cols; i++)
+	  ulong i;
+	  for (i = start; i < cols; i++)
 	     r1[i] = z_mulmod_precomp(r1[i], u, p, p_inv);
    }
 }
@@ -267,12 +276,14 @@ void zmod_vec_scalar_mul_range(ulong * r1, ulong * r2, ulong u, ulong p, double 
 #if FLINT_BITS == 64
    if (FLINT_BIT_COUNT(p) >= FLINT_D_BITS)
    {
-	  for (ulong i = start; i < end; i++)
+	  ulong i;
+	  for (i = start; i < end; i++)
 	     r1[i] = z_mulmod2_precomp(r2[i], u, p, p_inv);
    } else
 #endif
    {
-	  for (ulong i = start; i < end; i++)
+	  ulong i;
+	  for (i = start; i < end; i++)
 	     r1[i] = z_mulmod_precomp(r2[i], u, p, p_inv);
    }
 }
@@ -283,7 +294,8 @@ void zmod_vec_scalar_mul_range(ulong * r1, ulong * r2, ulong u, ulong p, double 
 */
 void zmod_vec_sub_range(ulong * r1, ulong * r2, ulong p, ulong start, ulong end)
 {
-   for (ulong i = start; i < end; i++)
+   ulong i;
+   for (i = start; i < end; i++)
    {
       r1[i] = z_submod(r1[i], r2[i], p);
    }
@@ -306,7 +318,8 @@ void zmod_mat_print(zmod_mat_t mat)
    if (mat->cols == 0)
    {
       printf("[");
-	  for (ulong i = 0; i < mat->rows - 1; i++)
+	  ulong i;
+	  for (i = 0; i < mat->rows - 1; i++)
 	  {
 	     printf("[]\n");
 	  }
@@ -316,11 +329,13 @@ void zmod_mat_print(zmod_mat_t mat)
    
    ulong * ptr;
    printf("[");
-   for (ulong i = 0; i < mat->rows - 1; i++)
+   ulong i;
+   for (i = 0; i < mat->rows - 1; i++)
    {
       ptr = mat->arr[i];
 	  printf("[");
-	  for (ulong j = 0; j < mat->cols - 1; j++)
+	  ulong j;
+	  for (j = 0; j < mat->cols - 1; j++)
 	  {
 	     printf("%ld, ", ptr[j]);
 	  }
@@ -328,7 +343,8 @@ void zmod_mat_print(zmod_mat_t mat)
    }
    ptr = mat->arr[mat->rows - 1];
    printf("[");
-   for (ulong j = 0; j < mat->cols - 1; j++)
+   ulong j;
+   for (j = 0; j < mat->cols - 1; j++)
    {
 	  printf("%ld, ", ptr[j]);
    }
@@ -362,10 +378,12 @@ ulong zmod_mat_row_reduce_gauss_small(zmod_mat_t mat)
 			ulong n = zmod_mat_get_coeff_ui(mat, i, j);
 			ulong n_inv = z_invert(n, p);
 			zmod_mat_row_scalar_mul_right(mat, i, n_inv, j);
-			for (ulong lead = 1; lead < p; lead++)
+			ulong lead;
+			for (lead = 1; lead < p; lead++)
 			{
 			   zmod_vec_scalar_mul_range(temp, mat->arr[i], lead, p, p_inv, j, cols);
-			   for(ulong u = i + 1; u < rows; u++)
+			   ulong u;
+                           for (u = i + 1; u < rows; u++)
 			   {
 			      if (zmod_mat_get_coeff_ui(mat, u, j) == lead)
 			          zmod_vec_sub_range(mat->arr[u], temp, p, j, cols);
@@ -408,7 +426,8 @@ ulong zmod_mat_row_reduce_gauss(zmod_mat_t mat)
 			ulong n = zmod_mat_get_coeff_ui(mat, i, j);
 			ulong n_inv = z_invert(n, p);
 			zmod_mat_row_scalar_mul_right(mat, i, n_inv, j);
-			for(ulong u = i + 1; u < rows; u++)
+			ulong u;
+                        for (u = i + 1; u < rows; u++)
 			{
 			   coeff = zmod_mat_get_coeff_ui(mat, u, j);
 			   if (coeff) zmod_mat_row_scalar_submul_right(mat, u, i, coeff, j);
@@ -444,12 +463,13 @@ ulong zmod_mat_row_reduce_gauss_jordan(zmod_mat_t mat)
 			ulong n = zmod_mat_get_coeff_ui(mat, i, j);
 			ulong n_inv = z_invert(n, p);
 			zmod_mat_row_scalar_mul_right(mat, i, n_inv, j);
-			for(ulong u = 0; u < i; u++)
+			ulong u;
+			for (u = 0; u < i; u++)
 			{
 			   coeff = zmod_mat_get_coeff_ui(mat, u, j);
 			   if (coeff) zmod_mat_row_scalar_submul_right(mat, u, i, coeff, j);
 			}
-			for(ulong u = i + 1; u < rows; u++)
+			for (u = i + 1; u < rows; u++)
 			{
 			   coeff = zmod_mat_get_coeff_ui(mat, u, j);
 			   if (coeff) zmod_mat_row_scalar_submul_right(mat, u, i, coeff, j);

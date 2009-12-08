@@ -49,7 +49,8 @@ Copyright (C) 2008, William Hart
 
 void randarray(mp_limb_t * vec, long length, unsigned long bits)
 {
-   for (ulong i = 0; i < length; i++)
+   ulong i;
+   for (i = 0; i < length; i++)
       vec[i] = z_randbits(bits);
 } 
 
@@ -60,7 +61,8 @@ int test_PV_GET_SET_NEXT()
    mp_limb_t * vec;
 	ulong temp, i;
 
-   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
 	{
       ulong bits = z_randint(FLINT_BITS) + 1;
 		ulong length = z_randint(200);
@@ -104,7 +106,8 @@ int test_PV_GET_SET_PREV()
 	ulong temp;
 	long i;
 
-   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
 	{
       ulong bits = z_randint(FLINT_BITS) + 1;
 		ulong length = z_randint(200);
@@ -148,7 +151,8 @@ int test_PV_GET_SET_ENTRY()
 	ulong temp;
 	long i;
 
-   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
 	{
       ulong bits = z_randint(FLINT_BITS) + 1;
 		ulong length = z_randint(200)+1;
@@ -190,7 +194,8 @@ int test_pv_set_bits()
    mp_limb_t * vec;
 	ulong temp, i;
 
-   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
 	{
       ulong bits = z_randint(FLINT_BITS) + 1;
 		ulong length = z_randint(200) + 1;

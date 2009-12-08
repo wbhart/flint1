@@ -83,7 +83,8 @@ void do_sieving2(QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve)
    
    const unsigned long second_prime = FLINT_MIN(SECOND_PRIME, num_primes);
    
-   for (unsigned long prime = small_primes; prime < second_prime; prime++) 
+   unsigned long prime;
+   for (prime = small_primes; prime < second_prime; prime++) 
    {
       if (soln2[prime] == -1) continue;
       
@@ -111,7 +112,8 @@ void do_sieving2(QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve)
       }
    }
    
-   for (unsigned long prime = second_prime; prime < num_primes; prime++) 
+   unsigned long prime;
+   for (prime = second_prime; prime < num_primes; prime++) 
    {
       p = factor_base[prime].p;
       size = sizes[prime];
@@ -138,7 +140,8 @@ void update_offsets(unsigned long poly_add, uint32_t * poly_corr,
    prime_t * factor_base = qs_inf->factor_base;
    unsigned long p, correction;
    
-   for (unsigned long prime = 2; prime < num_primes; prime++) 
+   unsigned long prime;
+   for (prime = 2; prime < num_primes; prime++) 
    {
       if (soln2[prime] == -1) continue;
       p = factor_base[prime].p;
@@ -173,7 +176,8 @@ void do_sieving(QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve,
    unsigned long size;
    long diff;
    
-   for (unsigned long prime = first_prime; prime < second_prime; prime++) 
+   unsigned long prime;
+   for (prime = first_prime; prime < second_prime; prime++) 
    {
       if (soln2[prime] == -1) continue;
       
@@ -231,7 +235,8 @@ void do_sieving3(QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve,
    unsigned char * pos2;
    unsigned long size;
 	
-   for (unsigned long prime = first_prime; prime < second_prime; prime++) 
+   unsigned long prime;
+   for (prime = first_prime; prime < second_prime; prime++) 
    {
       if (soln2[prime] == -1) continue;
       
@@ -265,7 +270,8 @@ void do_sieving4(QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve,
 	const unsigned long num_blocks = M/SIEVE_BLOCK;
 	hash_entry * hash_tables = (hash_entry *) flint_heap_alloc_bytes(num_blocks*4096*sizeof(hash_entry));
 	unsigned long * counts = (unsigned long *) flint_heap_alloc(num_blocks);
-	for (ulong i = 0; i < num_blocks; i++) counts[i] = 0;
+	ulong i;
+	for (i = 0; i < num_blocks; i++) counts[i] = 0;
 
 	unsigned long off1;
    unsigned long off2;
@@ -273,11 +279,13 @@ void do_sieving4(QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve,
 	unsigned long index;
 	unsigned long ind;
    
-   for (unsigned long prime = first_prime; prime < second_prime; prime+=100) 
+   unsigned long prime;
+   for (prime = first_prime; prime < second_prime; prime+=100) 
    {
       unsigned long count = 100;
 		if (second_prime - prime < 100) count = second_prime - prime;
-		for (unsigned long i = 0; i < count; i++)
+		unsigned long i;
+		for (i = 0; i < count; i++)
 		{
 		   if (soln2[prime+i] == -1) continue;
       
@@ -311,7 +319,8 @@ void do_sieving4(QS_t * qs_inf, poly_t * poly_inf, unsigned char * sieve,
 	   {
 		   start = sieve + 65536*index;
 		   hash_entry * hash_start = hash_tables + (index << 12);
-		   for (unsigned long i = 0; i < counts[index]; i++)
+		   unsigned long i;
+		   for (i = 0; i < counts[index]; i++)
 		   {
 			   start[hash_start[i].offset] += hash_start[i].size;
 		   }
@@ -400,7 +409,8 @@ unsigned long evaluate_candidate(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly
 #endif
    } else small[0] = 0;
    
-   for (unsigned long j = 2; j < small_primes; j++) // pull out small primes
+   unsigned long j;
+   for (j = 2; j < small_primes; j++) // pull out small primes
    {
       prime = factor_base[j].p;
       pinv = factor_base[j].pinv;
@@ -467,7 +477,8 @@ unsigned long evaluate_candidate(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly
       if (mpz_cmpabs_ui(res, 1) == 0) // We've found a relation
       {
          unsigned long * A_ind = poly_inf->A_ind;
-         for (unsigned long i = 0; i < poly_inf->s; i++) // Commit any outstanding A factors
+         unsigned long i;
+         for (i = 0; i < poly_inf->s; i++) // Commit any outstanding A factors
          {
             if (A_ind[i] >= j)
             {
@@ -487,7 +498,8 @@ unsigned long evaluate_candidate(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly
       {
          if (mpz_sgn(res) < 0) mpz_neg(res, res);
          unsigned long * A_ind = poly_inf->A_ind;
-         for (unsigned long i = 0; i < poly_inf->s; i++) // Commit any outstanding A factors
+         unsigned long i;
+         for (i = 0; i < poly_inf->s; i++) // Commit any outstanding A factors
          {
             if (A_ind[i] >= j)
             {

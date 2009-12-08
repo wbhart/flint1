@@ -62,11 +62,13 @@ void tiny_linear_algebra_init(linalg_t * la_inf, QS_t * qs_inf, poly_t * poly_in
    la_inf->curr_rel = la_inf->relation = (unsigned long *) flint_stack_alloc(buffer_size*MAX_FACS*2);
    la_inf->qsort_arr = (la_col_t **) flint_stack_alloc(100);
    
-   for (unsigned long i = 0; i < buffer_size; i++) 
+   unsigned long i;
+   for (i = 0; i < buffer_size; i++) 
    {
       mpz_init2(Y_arr[i], 128);
    }
-   for (unsigned long i = 0; i < qs_inf->num_primes + EXTRA_RELS + 100; i++) 
+   
+   for (i = 0; i < qs_inf->num_primes + EXTRA_RELS + 100; i++) 
    {
       matrix[i].weight = 0;
    }
@@ -83,17 +85,18 @@ void tiny_linear_algebra_clear(linalg_t * la_inf, QS_t * qs_inf)
    mpz_t * Y_arr = la_inf->Y_arr;
    const unsigned long buffer_size = 2*(qs_inf->num_primes + EXTRA_RELS + 100);
    
-   for (unsigned long i = 0; i < buffer_size; i++) 
+   unsigned long i;
+   for (i = 0; i < buffer_size; i++) 
    {
       mpz_clear(Y_arr[i]);
    }
    
-   for (unsigned long i = 0; i < la_inf->columns; i++) // Clear all used columns
+   for (i = 0; i < la_inf->columns; i++) // Clear all used columns
    {
       free_col(matrix + i);
    }
    
-   for (unsigned long i = 0; i < la_inf->num_unmerged; i++) // Clear all used columns
+   for (i = 0; i < la_inf->num_unmerged; i++) // Clear all used columns
    {
       free_col(unmerged + i);
    }
@@ -171,7 +174,8 @@ unsigned long tiny_merge_sort(linalg_t * la_inf)
    long dups = 0;
    int comp;
    
-   for (long i = columns + num_unmerged - 1L; i >= dups; i--) 
+   long i;
+   for (i = columns + num_unmerged - 1L; i >= dups; i--) 
    {
       if (!columns) comp = -1;
       else if (!num_unmerged) comp = 1;
@@ -212,7 +216,8 @@ unsigned long tiny_merge_sort(linalg_t * la_inf)
    
    if (dups)
    {
-      for (unsigned long i = 0; i < columns; i++)
+      unsigned long i;
+      for (i = 0; i < columns; i++)
       {
          copy_col(matrix + i, matrix + i + dups);
       }
@@ -244,7 +249,8 @@ unsigned long tiny_merge_relations(linalg_t * la_inf)
    
    if (num_unmerged)
    {
-      for (unsigned long i = 0; i < num_unmerged; i++)
+      unsigned long i;
+      for (i = 0; i < num_unmerged; i++)
       {
          qsort_arr[i] = unmerged + i;
       }
@@ -277,7 +283,8 @@ unsigned long tiny_insert_relation(linalg_t * la_inf, poly_t * poly_inf, mpz_t Y
    unsigned long fac_num = 0; 
    clear_col(unmerged + num_unmerged);
    
-   for (unsigned long i = 0; i < SMALL_PRIMES; i++)
+   unsigned long i;
+   for (i = 0; i < SMALL_PRIMES; i++)
    {
        if (small[i] & 1) insert_col_entry(unmerged + num_unmerged, i);
        if (small[i]) 
@@ -287,7 +294,8 @@ unsigned long tiny_insert_relation(linalg_t * la_inf, poly_t * poly_inf, mpz_t Y
           fac_num++;
        }
    }
-   for (unsigned long i = 0; i < num_factors; i++)
+   
+   for (i = 0; i < num_factors; i++)
    {
        if (factor[i].exp & 1) insert_col_entry(unmerged + num_unmerged, factor[i].ind);
        curr_rel[2*fac_num + 1] = factor[i].ind;

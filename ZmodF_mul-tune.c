@@ -83,12 +83,14 @@ void sample_mul(void* arg, unsigned long count)
       in2 = in1;
    
    // warm up
-   for (unsigned long i = 0; i < count/4; i++)
+   unsigned long i;
+   for (i = 0; i < count/4; i++)
       ZmodF_mul_info_mul(info, out, in1, in2);
       
    // time it
    start_clock(0);
-   for (unsigned long i = 0; i < count; i++)
+   unsigned long i;
+   for (i = 0; i < count; i++)
       ZmodF_mul_info_mul(info, out, in1, in2);
    stop_clock(0);
    
@@ -262,7 +264,8 @@ int main(int argc, char* argv[])
    fprintf(fout, "\n");
    fflush(fout);
 
-   for (int squaring = 0; squaring <= 1; squaring++)
+   int squaring;
+   for (squaring = 0; squaring <= 1; squaring++)
    {
       char* type = squaring ? "sqr" : "mul";
       

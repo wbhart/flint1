@@ -112,7 +112,8 @@ void mul_modular_trunc_file(ulong len1, ulong len2,
 	 if (MUL_MOD_TRACE) printf("%ld/%ld primes...\n", i, numprimes);
 	 // in1 := poly1 % comb->primes[i]
 		
-	 for (ulong k = 0; k < FILES1; k++)
+	 ulong k;
+	 for (k = 0; k < FILES1; k++)
 	 {
 		 if (k == FILES1 - 1) blocklen = block1tail;
 		 else blocklen = block1block;
@@ -133,7 +134,8 @@ void mul_modular_trunc_file(ulong len1, ulong len2,
 #pragma omp for
           for(long j = 0; j < blocklen; j++) 
 	      {
-             for (ulong s = 0; s < 16; s++)
+             ulong s;
+             for (s = 0; s < 16; s++)
 				 {
 		          ulong l = k*block1block;
 					 in1[(j + l) + s*len1] = block1map[j + s*block1block];
@@ -150,7 +152,8 @@ void mul_modular_trunc_file(ulong len1, ulong len2,
 	   
 	   // in2 := poly2 % comb->primes[i]
 
-	 for (ulong k = 0; k < FILES1; k++)
+	 ulong k;
+	 for (k = 0; k < FILES1; k++)
 	 {
 		 if (k == FILES1 - 1) blocklen = block2tail;
 		 else blocklen = block2block;
@@ -171,7 +174,8 @@ void mul_modular_trunc_file(ulong len1, ulong len2,
 #pragma omp for
           for(long j = 0; j < blocklen; j++) 
 	      {
-             for (ulong s = 0; s < 16; s++)
+             ulong s;
+             for (s = 0; s < 16; s++)
 				 {
 		          ulong l = k*block2block;
 					 in2[(j + l) + s*len2] = block2map[j + s*block2block];
@@ -190,7 +194,8 @@ void mul_modular_trunc_file(ulong len1, ulong len2,
 #pragma omp parallel
 	   {		  
 #pragma omp for
-	      for (long s = 0; s < 16; s++)
+	      long s;
+	      for (s = 0; s < 16; s++)
 		  {
 		     if(len1 >= len2)
                 zn_array_mul(out + s*len_out, in1 + s*len1, len1, in2 + s*len2, len2, mod[i + s]);
@@ -204,7 +209,8 @@ void mul_modular_trunc_file(ulong len1, ulong len2,
       filesize3 = (block3block << n)*sizeof(ulong);
 		filesize3 = ((filesize3+page_size-1)/page_size)*page_size;
       
-	   for (ulong k = 0; k < FILES2; k++)
+	   ulong k;
+	   for (k = 0; k < FILES2; k++)
 	   {
 		   if (k == FILES2 - 1) blocklen = block3tail;
 		   else blocklen = block3block;
@@ -226,9 +232,11 @@ void mul_modular_trunc_file(ulong len1, ulong len2,
 #pragma omp parallel
 	   {		  
 #pragma omp for
-         for (long j = 0; j < blocklen; j++) 
+         long j;
+         for (j = 0; j < blocklen; j++) 
 		   {
-            for (ulong s = 0; s < 16; s++)
+            ulong s;
+            for (s = 0; s < 16; s++)
 			   block3map[j + s*block3block] = out[l + j + s*len_out];
          }
 	   }   
@@ -241,7 +249,8 @@ void mul_modular_trunc_file(ulong len1, ulong len2,
 
    }
 
-   for (ulong k = 0; k < FILES1; k++)
+   ulong k;
+   for (k = 0; k < FILES1; k++)
    {
       snprintf(suff, 20, "%ld", k);
 		strcpy(filename, "/storage/block2file");
@@ -288,7 +297,8 @@ int main(void)
 
    // compute primes
 	ulong p = p0;
-   for (ulong i = 0; i < numprimes; i++) 
+   ulong i;
+   for (i = 0; i < numprimes; i++) 
 	{
       primes[i] = p;
       p = z_nextprime(p, 0);
@@ -326,21 +336,24 @@ int main(void)
 
 	ulong blocklen;
 
-	for (ulong j = 0; j < FILES1; j++)
+	ulong j;
+	for (j = 0; j < FILES1; j++)
 	{
       theta_1->length = COEFF_BLOCK;
    
 #pragma omp parallel
 	{
 #pragma omp for
-	   for (long start = 0; start < COEFF_BLOCK*MOD; start += SCALE*BLOCK)
+	   long start;
+	   for (start = 0; start < COEFF_BLOCK*MOD; start += SCALE*BLOCK)
       {   
 	      ulong s = omp_get_thread_num();
 	      theta_2d_A2(array1 + s*BLOCK, (start + j*COEFF_BLOCK*MOD)/SCALE, BLOCK);
    
          ulong start2 = start/MOD;
 	  
-	      for (ulong i = 0; i < (SCALE*BLOCK)/MOD; i++)
+	      ulong i;
+	      for (i = 0; i < (SCALE*BLOCK)/MOD; i++)
          {
             fmpz_set_si(theta_1->coeffs + (start2 + i)*2, array1[s*BLOCK + (MOD*i+K)/SCALE]);
          }
@@ -357,7 +370,8 @@ int main(void)
       ulong size_p1 = p1->limbs + 1;
 
       fmpz_t ** comb_temp[16];
-      for (ulong i = 0; i < 16; i++)
+      ulong i;
+      for (i = 0; i < 16; i++)
       {
          comb_temp[i] = fmpz_comb_temp_init(comb);
       }
@@ -372,7 +386,8 @@ int main(void)
 		}
 	}
 
-      for (ulong i = 0; i < 16; i++)
+      ulong i;
+      for (i = 0; i < 16; i++)
       {
          fmpz_comb_temp_clear(comb_temp[i], comb);
       }
@@ -387,9 +402,11 @@ int main(void)
 #pragma omp parallel
 	{		  
 #pragma omp for
-      for (long i = 0; i < blocklen; i++)
+      long i;
+      for (i = 0; i < blocklen; i++)
 		{
-			for (ulong k = 0; k < numprimes; k++)
+			ulong k;
+			for (k = 0; k < numprimes; k++)
 				block1map[i + k*block1block] = block0map[k + (i<<comb->n)];
 		}
 	}
@@ -429,7 +446,8 @@ int main(void)
 
    block0map = flint_heap_alloc(block2block<<comb->n);
 	 
-	for (ulong j = 0; j < FILES1; j++)
+	ulong j;
+	for (j = 0; j < FILES1; j++)
 	{
 
       theta_2->length = COEFF_BLOCK;
@@ -437,14 +455,16 @@ int main(void)
 #pragma omp parallel
 	{
 #pragma omp for
-	   for (long start = 0; start < COEFF_BLOCK*MOD; start += SCALE*BLOCK)
+	   long start;
+	   for (start = 0; start < COEFF_BLOCK*MOD; start += SCALE*BLOCK)
       {   
 	      ulong s = omp_get_thread_num();
 	      theta_2d_B(array1 + s*BLOCK, (start + j*COEFF_BLOCK*MOD)/SCALE, BLOCK);
    
          ulong start2 = start/MOD;
 	  
-	      for (ulong i = 0; i < (SCALE*BLOCK)/MOD; i++)
+	      ulong i;
+	      for (i = 0; i < (SCALE*BLOCK)/MOD; i++)
          {
             fmpz_set_si(theta_2->coeffs + (start2 + i)*2, array1[s*BLOCK + (MOD*i)/SCALE]);
          }
@@ -462,7 +482,8 @@ int main(void)
       ulong size_p2 = p2->limbs + 1;
 
       fmpz_t ** comb_temp[16];
-      for (ulong i = 0; i < 16; i++)
+      ulong i;
+      for (i = 0; i < 16; i++)
       {
          comb_temp[i] = fmpz_comb_temp_init(comb);
       }
@@ -477,7 +498,8 @@ int main(void)
 		}
 	}
        
-	   for (ulong i = 0; i < 16; i++)
+	   ulong i;
+	   for (i = 0; i < 16; i++)
       {
          fmpz_comb_temp_clear(comb_temp[i], comb);
       }
@@ -492,9 +514,11 @@ int main(void)
 #pragma omp parallel
 	{		  
 #pragma omp for
-      for (long i = 0; i < blocklen; i++)
+      long i;
+      for (i = 0; i < blocklen; i++)
 		{
-			for (ulong k = 0; k < numprimes; k++)
+			ulong k;
+			for (k = 0; k < numprimes; k++)
 				block2map[i + k*block2block] = block0map[k + (i<<comb->n)];
 		}
 	}
@@ -576,7 +600,8 @@ int main(void)
    #define LEN (1L<<16)
 
 	// zero coeffs, as we will be adding to them
-	for (ulong i = 0; i < block3block*BUNDLE; i++)
+	ulong i;
+	for (i = 0; i < block3block*BUNDLE; i++)
 		theta_prod[i] = 0;
 
    ulong off_length;
@@ -603,9 +628,11 @@ int main(void)
 #pragma omp parallel
 	{		  
 #pragma omp for
-   for (long i = 0; i < blocklen; i++)
+   long i;
+   for (i = 0; i < blocklen; i++)
    {
-	   for (ulong j = 0; j < numprimes; j++)
+	   ulong j;
+	   for (j = 0; j < numprimes; j++)
 		   block4map[j + (i<<comb->n)] = block3map[i + j*block3block];
    }
 	}
@@ -623,7 +650,8 @@ int main(void)
    ulong size_out = limbs + 1;
 
    fmpz_t ** comb_temp[16];
-   for (ulong i = 0; i < 16; i++)
+   ulong i;
+   for (i = 0; i < 16; i++)
    {
       comb_temp[i] = fmpz_comb_temp_init(comb);
    }
@@ -654,7 +682,8 @@ int main(void)
    if (limbs2) F_mpn_copy(arr1, out->coeffs + 1, limbs2);
    if (fmpz_sgn(out->coeffs) < 0) neg1 = 1;
    if (limbs2 > limbs) printf("0 %ld, %ld\n", limbs, limbs2);
-	for (ulong i = 0; i < length_max; i+=BUNDLE)
+	ulong i;
+	for (i = 0; i < length_max; i+=BUNDLE)
 	{
 		ulong j;
 
@@ -760,9 +789,11 @@ int main(void)
 #pragma omp parallel
 	   {		  
 #pragma omp for
-            for (long i = 0; i < blocklen; i++)
+            long i;
+            for (i = 0; i < blocklen; i++)
 		      {
-			      for (ulong j = 0; j < numprimes; j++)
+			      ulong j;
+			      for (j = 0; j < numprimes; j++)
 				      block4map[j + (i<<comb->n)] = block3map[i + j*block3block];
 		      }
 		}
@@ -803,7 +834,8 @@ int main(void)
             while (!theta_orig[off_length - 1]) off_length--;
          }
          ulong endoff = startoff+off_length*MOD;
-         for (ulong ip = 0; ip < prime_num; ip++)
+         ulong ip;
+         for (ip = 0; ip < prime_num; ip++)
          {
             ulong p = prime_arr[ip];
             ulong p2 = p*p;
@@ -855,7 +887,8 @@ int main(void)
 
    flint_heap_free(block4map);
 
-   for (ulong i = 0; i < 16; i++)
+   ulong i;
+   for (i = 0; i < 16; i++)
    {
       fmpz_comb_temp_clear(comb_temp[i], comb);
    }

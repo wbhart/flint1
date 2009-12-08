@@ -116,7 +116,8 @@ int main (int argc, const char * argv[])
    unsigned long tweak;
    unsigned long bits;
    
-   for (unsigned long words = 1000UL; words < 500000000; words=floor(words*pow(2.0,1.0/32.0))+1) 
+   unsigned long words;
+   for (words = 1000UL; words < 500000000; words=floor(words*pow(2.0,1.0/32.0))+1) 
    {
        bits = 64*words;
 #ifdef TIMING
@@ -127,7 +128,8 @@ int main (int argc, const char * argv[])
        imax = 8;
        tweak = 8;
        
-       for (unsigned long i = 0; i < imax; i++)
+       unsigned long i;
+       for (i = 0; i < imax; i++)
        {
           init_clock(0);
           run_F_mpz_mul(TRIALS, bits, 1, tweak);

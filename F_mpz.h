@@ -33,7 +33,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <gmp.h>
+#ifndef __TINYC__
 #include <mpfr.h>
+#endif
 #include "flint.h"
 #include "mpn_extras.h"
 #include "zn_poly/src/zn_poly.h"
@@ -276,20 +278,26 @@ void F_mpz_set_mpz(F_mpz_t f, const mpz_t x);
    \brief  Returns f as an mpfr_t to the current precision of x, 
            rounded down if necessary.
 */
+#ifndef __TINYC__
 void F_mpz_get_mpfr(mpfr_t x, const F_mpz_t f);
+#endif
 
 /** 
    \fn     void F_mpz_set_mpfr(F_mpz_t f, const mpfr_t x)
    \brief  Set the f to the value of the mpfr_t x, rounded down.
 */
+#ifndef __TINYC__
 void F_mpz_set_mpfr(F_mpz_t f, const mpfr_t x);
+#endif
 
 /** 
    \fn     int F_mpz_set_mpfr_2exp(const F_mpz_t f, const mpfr_t x)
    \brief  Set the f to the stored mantissa of the mpfr_t x and return
            an exponent exp so that x = f*2^exp.
 */
+#ifndef __TINYC__
 int F_mpz_set_mpfr_2exp(F_mpz_t f, const mpfr_t x);
+#endif
 
 /** 
    \fn     void F_mpz_set_limbs(F_mpz_t f, const mp_limb_t * x, const ulong limbs)
@@ -716,11 +724,13 @@ void F_mpz_smod(F_mpz_t res, F_mpz_t f, F_mpz_t p);
 */
 long _F_mpz_add_2exp(F_mpz_t res, F_mpz_t x1, long exp1, F_mpz_t x2, long exp2);
 
+#ifndef __TINYC__
 /**
    \fn     void F_mpz_2exp_get_mpfr(mpfr_t x, const F_mpz_t f, long exp)
    \brief  returns an mpfr approx = f * 2^exp
 */
 void F_mpz_2exp_get_mpfr(mpfr_t x, const F_mpz_t f, long exp);
+#endif
 
 #ifdef __cplusplus
   }
