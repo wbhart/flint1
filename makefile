@@ -64,6 +64,7 @@ HEADERS = \
 	long_extras.h \
 	packed_vec.h \
 	zmod_poly.h \
+	F_mpz_mod_poly.h \
 	theta.h \
 	zmod_mat.h \
 	mpz_mat.h \
@@ -73,6 +74,7 @@ HEADERS = \
 	F_mpz.h \
 	F_mpz_LLL_fast_d.h \
 	F_mpz_LLL_heuristic_mpfr.h \
+	F_mpz_LLL_wrapper.h \
 	F_mpz_poly.h \
 	QS/tinyQS.h
 
@@ -110,6 +112,7 @@ FLINTOBJ = \
 	long_extras.o \
 	packed_vec.o \
 	zmod_poly.o \
+ 	F_mpz_mod_poly.o \
 	theta.o \
 	zmod_mat.o \
 	mpz_mat.o \
@@ -119,6 +122,7 @@ FLINTOBJ = \
 	F_mpz.o \
 	F_mpz_LLL_fast_d.o \
 	F_mpz_LLL_heuristic_mpfr.o \
+	F_mpz_LLL_wrapper.o \
 	F_mpz_poly.o \
 	tinyQS.o \
 	factor_base.o \
@@ -261,6 +265,9 @@ F_mpz_LLL_fast_d.o: F_mpz_LLL_fast_d.c $(HEADERS)
 F_mpz_LLL_heuristic_mpfr.o: F_mpz_LLL_heuristic_mpfr.c $(HEADERS)
 	$(CC) $(CFLAGS) -c F_mpz_LLL_heuristic_mpfr.c -o F_mpz_LLL_heuristic_mpfr.o
 
+F_mpz_LLL_wrapper.o: F_mpz_LLL_wrapper.c $(HEADERS)
+	$(CC) $(CFLAGS) -c F_mpz_LLL_wrapper.c -o F_mpz_LLL_wrapper.o
+
 F_mpz_LLL_HNF.o: F_mpz_LLL_HNF.c $(HEADERS)
 	$(CC) $(CFLAGS) -c F_mpz_LLL_HNF.c -o F_mpz_LLL_HNF.o
 	
@@ -287,6 +294,9 @@ packed_vec.o: packed_vec.c $(HEADERS)
 
 zmod_poly.o: zmod_poly.c $(HEADERS)
 	$(CC) $(CFLAGS) -c zmod_poly.c -o zmod_poly.o
+
+F_mpz_mod_poly.o: F_mpz_mod_poly.c $(HEADERS)
+	$(CC) $(CFLAGS) -c F_mpz_mod_poly.c -o F_mpz_mod_poly.o
 
 NTL-interface.o: NTL-interface.cpp $(HEADERS)
 	$(CPP) $(CFLAGS) -c NTL-interface.cpp -o NTL-interface.o
@@ -356,8 +366,11 @@ zmod_mat-test.o: zmod_mat-test.c
 F_zmod_mat-test.o: F_zmod_mat-test.c
 	$(CC) $(CFLAGS) -c F_zmod_mat-test.c -o F_zmod_mat-test.o
 
-f_mpz_poly-test.o: F_mpz_poly-test.c
+F_mpz_poly-test.o: F_mpz_poly-test.c
 	$(CC) $(CFLAGS) -c F_mpz_poly-test.c -o F_mpz_poly-test.o
+
+F_mpz_mod_poly-test.o: F_mpz_mod_poly-test.c
+	$(CC) $(CFLAGS) -c F_mpz_mod_poly-test.c -o F_mpz_mod_poly-test.o
 
 NTL-interface-test.o: NTL-interface-test.cpp
 	$(CPP) $(CFLAGS) -c NTL-interface-test.cpp -o NTL-interface-test.o
@@ -411,6 +424,9 @@ F_zmod_mat-test: F_zmod_mat-test.o test-support.o $(FLINTOBJ) $(HEADERS)
 
 F_mpz_poly-test: F_mpz_poly-test.o test-support.o $(FLINTOBJ) $(HEADERS)
 	$(CC) $(CFLAGS) F_mpz_poly-test.o test-support.o -o F_mpz_poly-test $(FLINTOBJ) $(LIBS)
+
+F_mpz_mod_poly-test: F_mpz_mod_poly-test.o test-support.o $(FLINTOBJ) $(HEADERS)
+	$(CC) $(CFLAGS) F_mpz_mod_poly-test.o test-support.o -o F_mpz_mod_poly-test $(FLINTOBJ) $(LIBS)
 
 NTL-interface-test: NTL-interface.o NTL-interface-test.o test-support.o $(FLINTOBJ) $(HEADERS)
 	$(CPP) $(CFLAGS) NTL-interface-test.o NTL-interface.o test-support.o $(FLINTOBJ) -o NTL-interface-test $(LIBS2)

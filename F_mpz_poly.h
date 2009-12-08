@@ -936,7 +936,8 @@ void F_mpz_poly_mul_SS(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_p
    \brief  Multiply poly1 by poly2 and set res to the result. An attempt is made to choose the 
 	        optimal algorithm.
 */
-void F_mpz_poly_mul(F_mpz_poly_t res, F_mpz_poly_t poly1, F_mpz_poly_t poly2);
+void _F_mpz_poly_mul(F_mpz_poly_t output, const F_mpz_poly_t input1, const F_mpz_poly_t input2);
+void F_mpz_poly_mul(F_mpz_poly_t res, const F_mpz_poly_t poly1, const F_mpz_poly_t poly2);
 
 /** 
    \fn     void F_mpz_poly_mul_trunc_left(F_mpz_poly_t res, F_mpz_poly_t poly1, 
@@ -945,8 +946,10 @@ void F_mpz_poly_mul(F_mpz_poly_t res, F_mpz_poly_t poly1, F_mpz_poly_t poly2);
 	        optimal algorithm. The lower trunc coefficients of res will either be correct or
            set to 0.
 */
-void F_mpz_poly_mul_trunc_left(F_mpz_poly_t res, F_mpz_poly_t poly1, 
-                                              F_mpz_poly_t poly2, ulong trunc);
+void _F_mpz_poly_mul_trunc_left(F_mpz_poly_t res, const F_mpz_poly_t poly1, 
+                                              const F_mpz_poly_t poly2, const ulong trunc);
+void F_mpz_poly_mul_trunc_left(F_mpz_poly_t res, const F_mpz_poly_t poly1, 
+                                              const F_mpz_poly_t poly2, const ulong trunc);
 
 /*===============================================================================
 

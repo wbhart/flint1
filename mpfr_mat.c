@@ -49,6 +49,21 @@ mpfr_t ** mpfr_mat_init(int d, int n)
 	return B;
 }
 
+mpfr_t ** mpfr_mat_init2(int d, int n, mp_prec_t prec)
+{
+   mpfr_t ** B;
+
+   B = (mpfr_t **) malloc (d*sizeof(mpfr_t *) + n*d*sizeof(mpfr_t));
+   B[0] = (mpfr_t *) (B + d);
+	for (long i = 1; i < d; i++) B[i] = B[i-1] + n;
+
+   for (long i = 0; i < d; i++)
+      for (long j = 0; j < n; j++)
+         mpfr_init2(B[i][j], prec);
+
+	return B;
+}
+
 void mpfr_mat_clear(mpfr_t ** B, int d, int n)
 {
    long i, j;
@@ -126,4 +141,53 @@ void mpfr_vec_norm(mpfr_t norm, mpfr_t * vec, int n)
   mpfr_clear(tmp);
 
   return;
+}
+
+int mpfr_vec_scalar_product2(mpfr_t sp, mpfr_t * vec1, mpfr_t * vec2, int n, mp_prec_t prec)
+{
+  mpfr_t tmp, tmp2;
+  mpfr_init2(tmp, prec);
+  mpfr_init2(tmp2, prec);
+  
+  int res;
+
+  mpfr_mul(sp, vec1[0], vec2[0], GMP_RNDN);
+  
+  for (long i = 1; i < n; i++)
+  {
+     mpfr_mul(tmp, vec1[i], vec2[i], GMP_RNDN);
+     mpfr_add(sp, sp, tmp, GMP_RNDN);
+  }
+
+  mpfr_vec_norm(tmp, vec1, n);
+  mpfr_vec_norm(tmp2, vec2, n);
+  mpfr_mul(tmp, tmp, tmp2, GMP_RNDN);
+  mpfr_div_2ui(tmp, tmp, 70, GMP_RNDN);
+  mpfr_mul(tmp2, sp, sp, GMP_RNDN);
+
+  if (mpfr_cmp(tmp2, tmp) <= 0) res = 0;
+  else res = 1;
+
+  mpfr_clear(tmp);
+  mpfr_clear(tmp2);
+
+  return res;
 } 
+
+void mpfr_vec_norm2(mpfr_t norm, mpfr_t * vec, int n, mp_prec_t prec)
+{
+  mpfr_t tmp;
+  mpfr_init2(tmp, prec);
+  
+  mpfr_mul(norm, vec[0], vec[0], GMP_RNDN);
+  
+  for (long i = 1 ; i < n ; i++)
+  {
+     mpfr_mul(tmp, vec[i], vec[i], GMP_RNDN);
+     mpfr_add(norm, norm, tmp, GMP_RNDN);
+  }
+
+  mpfr_clear(tmp);
+
+  return;
+}

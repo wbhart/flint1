@@ -23,6 +23,8 @@
 
 mpfr_t ** mpfr_mat_init(int d, int n);
 
+mpfr_t ** mpfr_mat_init2(int d, int n, mp_prec_t prec);
+
 void mpfr_mat_clear(mpfr_t ** B, int d, int n);
 
 void mpfr_mat_print(mpfr_t ** B, int d, int n);
@@ -31,5 +33,7 @@ int mpfr_vec_scalar_product(mpfr_t sp, mpfr_t * vec1, mpfr_t * vec2, int n);
 
 void mpfr_vec_norm(mpfr_t norm, mpfr_t * vec, int n);
 
+int mpfr_vec_scalar_product2(mpfr_t sp, mpfr_t * vec1, mpfr_t * vec2, int n, mp_prec_t prec);
 
+void mpfr_vec_norm2(mpfr_t norm, mpfr_t * vec, int n, mp_prec_t prec);
 

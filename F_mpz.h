@@ -337,7 +337,7 @@ void F_mpz_swap(F_mpz_t f, F_mpz_t g);
    \fn     int F_mpz_equal(const F_mpz_t f, const F_mpz_t g)
    \brief  Returns 1 if the two values are equal, otherwise returns 0.
 */
-int F_mpz_equal(const F_mpz_t f, const F_mpz_t g);
+int F_mpz_equal( F_mpz_t f,  F_mpz_t g);
 
 /** 
    \fn     int F_mpz_cmpabs(const F_mpz_t f, const F_mpz_t g)
@@ -622,6 +622,23 @@ void F_mpz_rdiv_q(F_mpz_t f, const F_mpz_t g, const F_mpz_t h);
 */
 void F_mpz_pow_ui(F_mpz_t f, const F_mpz_t g, const ulong exp);
 
+
+/*===============================================================================
+
+	Modular arithmetic
+
+================================================================================*/
+
+/** 
+   \fn     void F_mpz_mulmod2(F_mpz_t f, F_mpz_t g, F_mpz_t h, F_mpz_t p)
+   \brief  Multiply g and h modulo p. Assumes f and p are not aliased.
+*/
+static inline
+void F_mpz_mulmod2(F_mpz_t f, const F_mpz_t g, const F_mpz_t h, const F_mpz_t p)
+{
+   F_mpz_mul2(f, g, h);
+   F_mpz_mod(f, f, p);
+}
 
 /*===============================================================================
 

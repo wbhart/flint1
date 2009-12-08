@@ -877,7 +877,6 @@ void __zmod_poly_mul_classical_mod_last(zmod_poly_t res, zmod_poly_t poly1,
    } else 
    { 
 #endif
-      unsigned long i;
       for (i = 0; i < res->length; i++)
          res->coeffs[i] = z_mod2_precomp(res->coeffs[i], res->p, res->p_inv);
 #if FLINT_BITS == 64
@@ -988,7 +987,7 @@ void _zmod_poly_sqr_classical(zmod_poly_t res, zmod_poly_t poly)
    } else
    {
 #endif
-      unsigned long i, j;
+      unsigned long j;
       for (i = 1; i < poly->length; i++)
          for (j = 0; j < i; j++)
             res->coeffs[i+j] = z_addmod(res->coeffs[i+j], z_mulmod2_precomp(poly->coeffs[i], poly->coeffs[j], poly->p, poly->p_inv), poly->p);
@@ -1010,7 +1009,6 @@ void _zmod_poly_sqr_classical(zmod_poly_t res, zmod_poly_t poly)
    } else
    {
 #endif
-      unsigned long i;
       for (i = 0; i < poly->length; i++)
          res->coeffs[2*i] = z_addmod(res->coeffs[2*i], z_mulmod2_precomp(poly->coeffs[i], poly->coeffs[i], poly->p, poly->p_inv), poly->p);
 #if FLINT_BITS == 64
@@ -1154,7 +1152,6 @@ void __zmod_poly_mul_classical_trunc_mod_last(zmod_poly_t res, zmod_poly_t poly1
    } else 
    { 
 #endif
-      unsigned long i;
       for (i = 0; i < trunc; i++)
          res->coeffs[i] = z_mod2_precomp(res->coeffs[i], res->p, res->p_inv);
 #if FLINT_BITS == 64
@@ -1321,7 +1318,6 @@ void __zmod_poly_mul_classical_trunc_left_mod_last(zmod_poly_t res, zmod_poly_t 
    } else 
    { 
 #endif
-      unsigned long i;
       for (i = trunc; i < res->length; i++)
          res->coeffs[i] = z_mod2_precomp(res->coeffs[i], res->p, res->p_inv);
 #if FLINT_BITS == 64
