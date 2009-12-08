@@ -468,6 +468,11 @@ void F_mpz_mat_mul_classical(F_mpz_mat_t P, const F_mpz_mat_t A,const F_mpz_mat_
 long F_mpz_mat_max_bits(const F_mpz_mat_t M);
 
 /*
+   Same deal put also gives the position of the largest entry
+*/
+long F_mpz_mat_max_bits2(ulong * pos, const F_mpz_mat_t M);
+
+/*
    Divides M by the scalar 2^n and stores at res.  Truncates each entry with F_mpz_div_2exp.
 */
 void F_mpz_mat_scalar_div_2exp(F_mpz_mat_t res, F_mpz_mat_t M, ulong n);

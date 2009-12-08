@@ -74,15 +74,43 @@ int check_Babai_heuristic(int kappa, F_mpz_mat_t B, mpfr_t **mu, mpfr_t **r, mpf
        mpfr_t **appB, mpfr_t **appSP, 
        int a, int zeros, int kappamax, int n, mpfr_t tmp, mpfr_t rtmp);
 
+int check_Babai_heuristic_d_zero_vec (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s, 
+       double **appB, int *expo, double **appSP, 
+       int a, int zeros, int kappamax, int n);
+
 int LLL_d(F_mpz_mat_t B);
 
-int LLL_heuristic_d(F_mpz_mat_t B);
+int LLL_d_heuristic(F_mpz_mat_t B);
 
 int LLL_mpfr2(F_mpz_mat_t B, mp_prec_t prec);
 
 int LLL_mpfr(F_mpz_mat_t B);
 
 int LLL_wrapper(F_mpz_mat_t B);
+
+int LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B);
+
+int LLL_d_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B);
+
+int LLL_mpfr2_with_removal(F_mpz_mat_t B, mp_prec_t prec, F_mpz_t gs_B);
+
+int LLL_mpfr_with_removal(F_mpz_mat_t B, F_mpz_t gs_B);
+
+int LLL_wrapper_with_removal(F_mpz_mat_t B, F_mpz_t gs_B);
+
+int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B);
+
+int knapsack_LLL_d_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B);
+
+int knapsack_LLL_mpfr2_with_removal(F_mpz_mat_t B, mp_prec_t prec, F_mpz_t gs_B);
+
+int knapsack_LLL_mpfr_with_removal(F_mpz_mat_t B, F_mpz_t gs_B);
+
+int knapsack_LLL_with_removal(F_mpz_mat_t B, F_mpz_t gs_B);
+
+int LLL_d_zero_vec_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B);
+
+int LLL_wrapper_zero_vec_with_removal(F_mpz_mat_t B, F_mpz_t gs_B);
 
 #ifdef __cplusplus
  }

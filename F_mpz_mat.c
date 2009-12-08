@@ -1040,6 +1040,69 @@ long F_mpz_mat_max_bits(const F_mpz_mat_t M)
 	   else return max + FLINT_BITS*(max_limbs - 1);
 }
 
+long F_mpz_mat_max_bits2(ulong * pos, const F_mpz_mat_t M)
+{
+	int sign = 0;
+	ulong max = 0;
+   ulong bits = 0;
+   ulong max_limbs = 1;
+	ulong size;
+	ulong i;
+	F_mpz c;
+
+	// search until we find an mpz_t coefficient or one of at least FLINT_BITS - 2 bits
+	for (i = 0; i < (M->r)*(M->c); i++) 
+   {
+		   c = M->rows[i/M->c][i % M->c];
+		   if (COEFF_IS_MPZ(c)) break; // found an mpz_t coeff
+         if (c < 0L) 
+	      {
+		      sign = 1;
+            bits = FLINT_BIT_COUNT(-c);
+	      } else bits = FLINT_BIT_COUNT(c);
+	      if (bits > max) 
+	      {
+            (*pos) = i;
+		      max = bits;
+	         if (max == FLINT_BITS - 2) break; // coeff is at least FLINT_BITS - 2 bits
+	      }
+	}
+
+   // search through mpz coefficients for largest size in bits
+	
+	for ( ; i < (M->r)*(M->c); i++)
+   	{
+	   	c =  M->rows[i/M->c][i % M->c];
+         if (COEFF_IS_MPZ(c))
+	   	{
+	   		__mpz_struct * mpz_ptr = F_mpz_ptr_mpz(c);
+	   		if (mpz_sgn(mpz_ptr) < 0) sign = 1;
+	   		size = mpz_size(mpz_ptr);
+	   		if (size > max_limbs)
+	   		{
+	   		   max_limbs = size;
+	   			mp_limb_t * data = mpz_ptr->_mp_d;
+	   		   bits = FLINT_BIT_COUNT(data[max_limbs - 1]);
+	   			max = bits;
+               (*pos) = i;
+	   		} else if (size == max_limbs)
+	   		{
+	   			mp_limb_t * data = mpz_ptr->_mp_d;
+	   		   bits = FLINT_BIT_COUNT(data[max_limbs - 1]);
+	   		   if (bits > max)
+               {
+                  (*pos) = i;
+                  max = bits;
+               }
+	   		}
+	   	} else if ((long) c < 0L) sign = 1; // still need to check the sign of small coefficients
+	   }
+	
+
+	   if (sign) return -(max + FLINT_BITS*(max_limbs - 1));
+	   else return max + FLINT_BITS*(max_limbs - 1);
+}
+
 void F_mpz_mat_scalar_mul_2exp(F_mpz_mat_t res, F_mpz_mat_t M, ulong n)
 {
    if (res != M){
