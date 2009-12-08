@@ -1117,7 +1117,7 @@ void fmpz_comb_init(fmpz_comb_t comb, ulong * primes, ulong num_primes)
 	
    // create zn_poly modulus information
 	comb->mod = (zn_mod_t *) flint_heap_alloc_bytes(sizeof(zn_mod_t)*num_primes);
-   for (ulong i = 0; i < num_primes; i++) 
+   for (i = 0; i < num_primes; i++) 
       zn_mod_init(comb->mod[i], primes[i]);
 
 	if (n == 0) return; // nothing to do
@@ -1222,7 +1222,8 @@ void fmpz_comb_clear(fmpz_comb_t comb)
 {
    unsigned long n = comb->n;
 
-   for (unsigned i = 0; i < n; i++)
+   unsigned long i;
+   for (i = 0; i < n; i++)
    {
       flint_heap_free(comb->comb[i][0]);
       flint_heap_free(comb->comb[i]);
@@ -1241,7 +1242,8 @@ void fmpz_comb_clear(fmpz_comb_t comb)
 unsigned long fmpz_multi_mod_ui_basecase(unsigned long * out, fmpz_t in, 
                                unsigned long * primes, unsigned long num_primes)
 {
-   for (unsigned long i = 0; i < num_primes; i++)
+   unsigned long i;
+   for (i = 0; i < num_primes; i++)
    {
       out[i] = fmpz_mod_ui(in, primes[i]);
    }

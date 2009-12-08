@@ -30,7 +30,9 @@ Copyright (C) 2009, Andy Novocin
 #include <stdio.h>
 #include <string.h>
 #include <gmp.h>
+#ifndef __TINYC__
 #include <mpfr.h>
+#endif
 #include <time.h>
 #include "flint.h"
 #include "memory-manager.h"
@@ -81,14 +83,16 @@ int test_F_mpz_getset_si()
    ulong bits, val_bits;
 	long val, val2;
    
-   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
    {
       bits = z_randint(200)+ 1;
       
 		// Make f a random number of limbs in size to start with
 		F_mpz_init2(f, z_randint(10));
       
-		for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
+		ulong count2;
+		for (count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
 			F_mpz_test_random(f, bits); 
 
@@ -119,14 +123,16 @@ int test_F_mpz_getset_ui()
    int result = 1;
    ulong bits, val_bits, val, val2;
    
-   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
    {
       bits = z_randint(200)+ 1;
       
 		// Make f a random number of limbs in size to start with
 		F_mpz_init2(f, z_randint(10));
           
-      for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
+      ulong count2;
+      for (count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
 			F_mpz_test_random(f, bits); 
 
@@ -160,7 +166,8 @@ int test_F_mpz_getset_mpz()
 	mpz_init(val);
 	mpz_init(val2);
    
-   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
    {
       bits = z_randint(200)+ 1;      
       
@@ -168,7 +175,8 @@ int test_F_mpz_getset_mpz()
 
       F_mpz_test_random(f, bits); 
 		    
-      for (ulong count2 = 0; (count2 < 100) && result == 1; count2++)
+      ulong count2;
+      for (count2 = 0; (count2 < 100) && result == 1; count2++)
       {
          val_bits = z_randint(200);
          mpz_rrandomb(val, randstate, val_bits);
@@ -193,6 +201,7 @@ int test_F_mpz_getset_mpz()
 	return result; 
 }
 
+#ifndef __TINYC__
 int test_F_mpz_getset_mpfr()
 {
    F_mpz_t f, g;
@@ -204,7 +213,8 @@ int test_F_mpz_getset_mpfr()
    
    mpfr_init(m);
    
-   for (ulong count1 = 0; (count1 < 1000000*ITER) && (result == 1); count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 1000000*ITER) && (result == 1); count1++)
    {
       bits = z_randint(200)+ 1;      
       
@@ -246,7 +256,8 @@ int test_F_mpz_set_mpfr_2exp()
    
    mpfr_set_default_prec(200);
    
-   for (ulong count1 = 0; (count1 < 1000000*ITER) && (result == 1); count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 1000000*ITER) && (result == 1); count1++)
    {
       bits = z_randint(200)+ 1;      
       
@@ -285,6 +296,7 @@ int test_F_mpz_set_mpfr_2exp()
    
    return result; 
 }
+#endif
 
 int test_F_mpz_get_d_2exp()
 {
@@ -296,7 +308,8 @@ int test_F_mpz_get_d_2exp()
    
    mpz_init(m1); 
    
-   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init2(f1, z_randint(10));
       
@@ -329,7 +342,8 @@ int test_F_mpz_getset_limbs()
    ulong bits, limbs, limbs2;
 	mp_limb_t * arr;
    
-   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
    {
       bits = z_randint(1000)+ 1; 
       limbs = (bits - 1)/FLINT_BITS + 1;
@@ -338,7 +352,8 @@ int test_F_mpz_getset_limbs()
 		F_mpz_init2(f1, z_randint(10));
       F_mpz_init2(f2, z_randint(10));
 
-      for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
+      ulong count2;
+      for (count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
 			F_mpz_test_random(f1, bits); 
 		    
@@ -372,7 +387,8 @@ int test_F_mpz_set()
    mpz_init(m1); 
    mpz_init(m2); 
 
-   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init2(f1, z_randint(10));
       F_mpz_init2(f2, z_randint(10));
@@ -395,7 +411,7 @@ int test_F_mpz_set()
    }
    
 	// check aliasing
-	for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init2(f1, z_randint(10));
       
@@ -432,7 +448,8 @@ int test_F_mpz_equal()
    mpz_init(m2); 
 
    // Check in case when operands are equal
-	for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+	ulong count1;
+	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init2(f1, z_randint(10));
       F_mpz_init2(f2, z_randint(10));
@@ -454,7 +471,7 @@ int test_F_mpz_equal()
    }
    
 	// Check in case when operands are not likely equal
-	for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init2(f1, z_randint(10));
       F_mpz_init2(f2, z_randint(10));
@@ -479,7 +496,7 @@ int test_F_mpz_equal()
    }
    
 	// check aliasing
-	for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init2(f1, z_randint(10));
       
@@ -515,7 +532,8 @@ int test_F_mpz_swap()
    mpz_init(m3); 
    mpz_init(m4); 
 
-   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init2(f1, z_randint(10));
       F_mpz_init2(f2, z_randint(10));
@@ -542,7 +560,7 @@ int test_F_mpz_swap()
    }
    
 	// check aliasing
-	for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init2(f1, z_randint(10));
       
@@ -580,7 +598,8 @@ int test_F_mpz_neg()
    mpz_init(m1); 
    mpz_init(m2); 
 
-   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init2(f1, z_randint(10));
       F_mpz_init2(f2, z_randint(10));
@@ -604,7 +623,7 @@ int test_F_mpz_neg()
    }
    
 	// check aliasing
-	for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init2(f1, z_randint(10));
       
@@ -641,7 +660,8 @@ int test_F_mpz_abs()
    mpz_init(m1); 
    mpz_init(m2); 
 
-   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init2(f1, z_randint(10));
       F_mpz_init2(f2, z_randint(10));
@@ -665,7 +685,7 @@ int test_F_mpz_abs()
    }
    
 	// check aliasing
-	for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init2(f1, z_randint(10));
       
@@ -704,7 +724,8 @@ int test_F_mpz_add()
    mpz_init(m3); 
    mpz_init(m4); 
 
-   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
       F_mpz_init(f2);
@@ -733,7 +754,7 @@ int test_F_mpz_add()
    }
    
 	// check aliasing of operands 1 and 2
-	for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
       F_mpz_init(f2);
@@ -761,7 +782,7 @@ int test_F_mpz_add()
    }
 
    // check aliasing of operands 1 and 3
-	for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
       F_mpz_init(f2);
@@ -789,7 +810,7 @@ int test_F_mpz_add()
    }
 
    // check aliasing of all operands
-	for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
       
@@ -831,7 +852,8 @@ int test_F_mpz_sub()
    mpz_init(m3); 
    mpz_init(m4); 
 
-   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
       F_mpz_init(f2);
@@ -860,7 +882,7 @@ int test_F_mpz_sub()
    }
    
 	// check aliasing of operands 1 and 2
-	for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
       F_mpz_init(f2);
@@ -888,7 +910,7 @@ int test_F_mpz_sub()
    }
 
    // check aliasing of operands 1 and 3
-	for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
       F_mpz_init(f2);
@@ -916,7 +938,7 @@ int test_F_mpz_sub()
    }
 
    // check aliasing of all operands
-	for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
       
@@ -956,7 +978,8 @@ int test_F_mpz_mul_ui()
 	mpz_init(m1);
    mpz_init(m2);
    
-   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
    {
       bits = z_randint(200)+ 1;
       
@@ -964,7 +987,8 @@ int test_F_mpz_mul_ui()
 		F_mpz_init2(f, z_randint(10));
       F_mpz_init2(g, z_randint(10));
           
-      for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
+      ulong count2;
+      for (count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
 			F_mpz_test_random(g, bits); 
 
@@ -992,14 +1016,15 @@ int test_F_mpz_mul_ui()
    }
    
    // Check aliasing
-	for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
+	for (count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
    {
       bits = z_randint(200)+ 1;
       
 		// Make f a random number of limbs in size to start with
 		F_mpz_init2(f, z_randint(10));
           
-      for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
+      ulong count2;
+      for (count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
 			F_mpz_test_random(f, bits); 
 
@@ -1042,7 +1067,8 @@ int test_F_mpz_mul_si()
 	mpz_init(m1);
    mpz_init(m2);
    
-   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
    {
       bits = z_randint(200)+ 1;
       
@@ -1050,7 +1076,8 @@ int test_F_mpz_mul_si()
 		F_mpz_init2(f, z_randint(10));
       F_mpz_init2(g, z_randint(10));
           
-      for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
+      ulong count2;
+      for (count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
 			F_mpz_test_random(g, bits); 
 
@@ -1079,14 +1106,15 @@ int test_F_mpz_mul_si()
    }
    
    // Check aliasing
-	for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
+	for (count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
    {
       bits = z_randint(200)+ 1;
       
 		// Make f a random number of limbs in size to start with
 		F_mpz_init2(f, z_randint(10));
           
-      for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
+      ulong count2;
+      for (count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
 			F_mpz_test_random(f, bits); 
 
@@ -1131,7 +1159,8 @@ int test_F_mpz_mul()
    mpz_init(m3); 
    mpz_init(m4); 
 
-   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
       F_mpz_init(f2);
@@ -1160,7 +1189,7 @@ int test_F_mpz_mul()
    }
    
 	// check aliasing of operands 1 and 2
-	for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
       F_mpz_init(f2);
@@ -1188,7 +1217,7 @@ int test_F_mpz_mul()
    }
 
    // check aliasing of operands 1 and 3
-	for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
       F_mpz_init(f2);
@@ -1216,7 +1245,7 @@ int test_F_mpz_mul()
    }
 
    // check aliasing of all operands
-	for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
       
@@ -1256,7 +1285,8 @@ int test_F_mpz_mul_2exp()
 	mpz_init(m1);
    mpz_init(m2);
    
-   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
    {
       bits = z_randint(200)+ 1;
       
@@ -1264,7 +1294,8 @@ int test_F_mpz_mul_2exp()
 		F_mpz_init2(f, z_randint(10));
       F_mpz_init2(g, z_randint(10));
           
-      for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
+      ulong count2;
+      for (count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
 			F_mpz_test_random(g, bits); 
 
@@ -1291,14 +1322,15 @@ int test_F_mpz_mul_2exp()
    }
    
    // Check aliasing
-	for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
+	for (count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
    {
       bits = z_randint(200)+ 1;
       
 		// Make f a random number of limbs in size to start with
 		F_mpz_init2(f, z_randint(10));
           
-      for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
+      ulong count2;
+      for (count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
 			F_mpz_test_random(f, bits); 
 
@@ -1341,7 +1373,8 @@ int test_F_mpz_add_ui()
    mpz_init(m2);
    mpz_init(m3);
    
-   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
    {
       bits = z_randint(200)+ 1;
       
@@ -1349,7 +1382,8 @@ int test_F_mpz_add_ui()
 		F_mpz_init2(f, z_randint(10));
       F_mpz_init2(g, z_randint(10));
           
-      for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
+      ulong count2;
+      for (count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
 			F_mpz_test_random(g, bits); 
 
@@ -1378,14 +1412,15 @@ int test_F_mpz_add_ui()
    }
    
    // Check aliasing
-	for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
+	for (count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
    {
       bits = z_randint(200)+ 1;
       
 		// Make f a random number of limbs in size to start with
 		F_mpz_init2(f, z_randint(10));
           
-      for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
+      ulong count2;
+      for (count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
 			F_mpz_test_random(f, bits); 
 
@@ -1430,7 +1465,8 @@ int test_F_mpz_sub_ui()
    mpz_init(m2);
    mpz_init(m3);
    
-   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
    {
       bits = z_randint(200)+ 1;
       
@@ -1438,7 +1474,8 @@ int test_F_mpz_sub_ui()
 		F_mpz_init2(f, z_randint(10));
       F_mpz_init2(g, z_randint(10));
           
-      for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
+      ulong count2;
+      for (count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
 			F_mpz_test_random(g, bits); 
 
@@ -1467,14 +1504,15 @@ int test_F_mpz_sub_ui()
    }
    
    // Check aliasing
-	for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
+	for (count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
    {
       bits = z_randint(200)+ 1;
       
 		// Make f a random number of limbs in size to start with
 		F_mpz_init2(f, z_randint(10));
           
-      for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
+      ulong count2;
+      for (count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
 			F_mpz_test_random(f, bits); 
 
@@ -1519,14 +1557,16 @@ int test_F_mpz_addmul_ui()
    mpz_init(m2);
    mpz_init(m3);
    
-   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
    {
       
 		// Make f a random number of limbs in size to start with
 		F_mpz_init2(f, z_randint(10));
       F_mpz_init2(g, z_randint(10));
           
-      for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
+      ulong count2;
+      for (count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
 			bits = z_randint(200)+ 1;
          F_mpz_test_random(f, bits); 
@@ -1558,14 +1598,15 @@ int test_F_mpz_addmul_ui()
    }
    
    // Check aliasing
-	for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
+	for (count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
    {
       bits = z_randint(200)+ 1;
       
 		// Make f a random number of limbs in size to start with
 		F_mpz_init2(f, z_randint(10));
           
-      for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
+      ulong count2;
+      for (count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
 			F_mpz_test_random(f, bits); 
 
@@ -1609,14 +1650,16 @@ int test_F_mpz_submul_ui()
    mpz_init(m2);
    mpz_init(m3);
    
-   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
    {
       
 		// Make f a random number of limbs in size to start with
 		F_mpz_init2(f, z_randint(10));
       F_mpz_init2(g, z_randint(10));
           
-      for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
+      ulong count2;
+      for (count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
 			bits = z_randint(200)+ 1;
          F_mpz_test_random(f, bits); 
@@ -1648,14 +1691,15 @@ int test_F_mpz_submul_ui()
    }
    
    // Check aliasing
-	for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
+	for (count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
    {
       bits = z_randint(200)+ 1;
       
 		// Make f a random number of limbs in size to start with
 		F_mpz_init2(f, z_randint(10));
           
-      for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
+      ulong count2;
+      for (count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
 			F_mpz_test_random(f, bits); 
 
@@ -1700,7 +1744,8 @@ int test_F_mpz_addmul()
    mpz_init(m3);
    mpz_init(m4);
    
-   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
    {
 
 		// Make f a random number of limbs in size to start with
@@ -1708,7 +1753,8 @@ int test_F_mpz_addmul()
       F_mpz_init2(g, z_randint(10));
       F_mpz_init2(h, z_randint(10));
           
-      for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
+      ulong count2;
+      for (count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
 			bits = z_randint(200)+ 1;
          F_mpz_test_random(f, bits); 
@@ -1740,14 +1786,15 @@ int test_F_mpz_addmul()
    }
    
 	// Check aliasing of arguments 1 and 2
-	for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
+	for (count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
    {
 
 		// Make f a random number of limbs in size to start with
 		F_mpz_init2(f, z_randint(10));
       F_mpz_init2(g, z_randint(10));
           
-      for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
+      ulong count2;
+      for (count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
 			bits = z_randint(200)+ 1;
          F_mpz_test_random(f, bits); 
@@ -1775,14 +1822,15 @@ int test_F_mpz_addmul()
    }
    
    // Check aliasing of arguments 1 and 3
-	for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
+	for (count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
    {
 
 		// Make f a random number of limbs in size to start with
 		F_mpz_init2(f, z_randint(10));
       F_mpz_init2(g, z_randint(10));
           
-      for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
+      ulong count2;
+      for (count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
 			bits = z_randint(200)+ 1;
          F_mpz_test_random(f, bits); 
@@ -1810,13 +1858,14 @@ int test_F_mpz_addmul()
    }
    
 	// Check aliasing of all arguments
-	for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
+	for (count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
    {
 
 		// Make f a random number of limbs in size to start with
 		F_mpz_init2(f, z_randint(10));
           
-      for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
+      ulong count2;
+      for (count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
 			bits = z_randint(200)+ 1;
          F_mpz_test_random(f, bits); 
@@ -1859,7 +1908,8 @@ int test_F_mpz_submul()
    mpz_init(m3);
    mpz_init(m4);
    
-   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
    {
 
 		// Make f a random number of limbs in size to start with
@@ -1867,7 +1917,8 @@ int test_F_mpz_submul()
       F_mpz_init2(g, z_randint(10));
       F_mpz_init2(h, z_randint(10));
           
-      for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
+      ulong count2;
+      for (count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
 			bits = z_randint(200)+ 1;
          F_mpz_test_random(f, bits); 
@@ -1899,14 +1950,15 @@ int test_F_mpz_submul()
    }
    
    // Check aliasing of arguments 1 and 2
-	for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
+	for (count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
    {
 
 		// Make f a random number of limbs in size to start with
 		F_mpz_init2(f, z_randint(10));
       F_mpz_init2(g, z_randint(10));
           
-      for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
+      ulong count2;
+      for (count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
 			bits = z_randint(200)+ 1;
          F_mpz_test_random(f, bits); 
@@ -1934,14 +1986,15 @@ int test_F_mpz_submul()
    }
 
    // Check aliasing of arguments 1 and 3
-	for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
+	for (count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
    {
 
 		// Make f a random number of limbs in size to start with
 		F_mpz_init2(f, z_randint(10));
       F_mpz_init2(g, z_randint(10));
           
-      for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
+      ulong count2;
+      for (count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
 			bits = z_randint(200)+ 1;
          F_mpz_test_random(f, bits); 
@@ -1969,13 +2022,14 @@ int test_F_mpz_submul()
    }
 
    // Check aliasing of all arguments
-	for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
+	for (count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
    {
 
 		// Make f a random number of limbs in size to start with
 		F_mpz_init2(f, z_randint(10));
           
-      for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
+      ulong count2;
+      for (count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
 			bits = z_randint(200)+ 1;
          F_mpz_test_random(f, bits); 
@@ -2017,7 +2071,8 @@ int test_F_mpz_mod_ui()
    mpz_init(m2);
    mpz_init(m3);
    
-   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
    {
       bits = z_randint(200)+ 1;
       
@@ -2025,7 +2080,8 @@ int test_F_mpz_mod_ui()
 		F_mpz_init2(f, z_randint(10));
       F_mpz_init2(g, z_randint(10));
           
-      for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
+      ulong count2;
+      for (count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
 			F_mpz_test_random(g, bits); 
 
@@ -2054,14 +2110,15 @@ int test_F_mpz_mod_ui()
    }
    
    // Check aliasing
-	for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
+	for (count1 = 0; (count1 < 10000*ITER) && (result == 1); count1++)
    {
       bits = z_randint(200)+ 1;
       
 		// Make f a random number of limbs in size to start with
 		F_mpz_init2(f, z_randint(10));
           
-      for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
+      ulong count2;
+      for (count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
 			F_mpz_test_random(f, bits); 
 
@@ -2108,7 +2165,8 @@ int test_F_mpz_mod()
    mpz_init(m3); 
    mpz_init(m4); 
 
-   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
       F_mpz_init(f2);
@@ -2140,7 +2198,7 @@ int test_F_mpz_mod()
    }
    
 	// check aliasing of operands 1 and 2
-	for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
       F_mpz_init(f2);
@@ -2170,7 +2228,7 @@ int test_F_mpz_mod()
    }
 
    // check aliasing of operands 1 and 3
-	for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
       F_mpz_init(f2);
@@ -2200,7 +2258,7 @@ int test_F_mpz_mod()
    }
 
    // check aliasing of all operands
-	for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
       
@@ -2246,7 +2304,8 @@ int test_F_mpz_fdiv_qr()
    mpz_init(m5); 
    mpz_init(m6); 
 
-   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
       F_mpz_init(f2);
@@ -2281,7 +2340,7 @@ int test_F_mpz_fdiv_qr()
    }
 
    // alias f1 and f3
-   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
       F_mpz_init(f2);
@@ -2316,7 +2375,7 @@ int test_F_mpz_fdiv_qr()
    }
 
    //alias f1 and f4
-   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
       F_mpz_init(f2);
@@ -2351,7 +2410,7 @@ int test_F_mpz_fdiv_qr()
    }
 
    // alias f2 and f3
-   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
       F_mpz_init(f2);
@@ -2386,7 +2445,7 @@ int test_F_mpz_fdiv_qr()
    }
 
    // alias f2 and f4
-   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
       F_mpz_init(f2);
@@ -2421,7 +2480,7 @@ int test_F_mpz_fdiv_qr()
    }
 
    // alias f1 and f2
-   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f2);
       F_mpz_init(f3);
@@ -2451,7 +2510,7 @@ int test_F_mpz_fdiv_qr()
    }
 
    // alias f1 and f2 and f3
-   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f2);
       F_mpz_init(f3);
@@ -2481,7 +2540,7 @@ int test_F_mpz_fdiv_qr()
    }
 
    // alias f1 and f2 and f4
-   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f2);
       F_mpz_init(f3);
@@ -2532,7 +2591,8 @@ int test_F_mpz_gcd()
    mpz_init(m3); 
    mpz_init(m4); 
 
-   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
       F_mpz_init(f2);
@@ -2566,7 +2626,7 @@ int test_F_mpz_gcd()
    }
    
 	// check aliasing of operands 1 and 2
-	for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
       F_mpz_init(f2);
@@ -2599,7 +2659,7 @@ int test_F_mpz_gcd()
    }
 
    // check aliasing of operands 1 and 3
-	for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
       F_mpz_init(f2);
@@ -2632,7 +2692,7 @@ int test_F_mpz_gcd()
    }
 
    // check aliasing of all operands
-	for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
       
@@ -2675,7 +2735,8 @@ int test_F_mpz_invert()
    mpz_init(m3); 
    mpz_init(m4); 
 
-   for (ulong count1 = 0; (count1 < 100*ITER) && (result == 1); count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 100*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
       F_mpz_init(f2);
@@ -2707,7 +2768,7 @@ int test_F_mpz_invert()
       F_mpz_clear(f3);
    }
    // check aliasing of operands 1 and 2
-	for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
       F_mpz_init(f2);
@@ -2740,7 +2801,7 @@ int test_F_mpz_invert()
    }
    
    // check aliasing of operands 1 and 3
-	for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
       F_mpz_init(f2);
@@ -2772,7 +2833,7 @@ int test_F_mpz_invert()
    }
    
    // check aliasing of all operands
-	for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init(f1);
       
@@ -2816,7 +2877,8 @@ int test_F_mpz_size()
    
    mpz_init(m1); 
    
-   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init2(f1, z_randint(10));
 
@@ -2853,7 +2915,8 @@ int test_F_mpz_sgn()
    
    mpz_init(m1); 
    
-   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init2(f1, z_randint(10));
 
@@ -2902,7 +2965,8 @@ int test_F_mpz_is_one()
 	F_mpz_clear(f1);
    
    // Case where f1 is not necessarily 1
-	for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+	ulong count1;
+   for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init2(f1, z_randint(10));
 
@@ -2950,7 +3014,8 @@ int test_F_mpz_is_m1()
 	F_mpz_clear(f1);
    
    // Case where f1 is not necessarily 1
-	for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+	ulong count1;
+   for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init2(f1, z_randint(10));
 
@@ -2987,7 +3052,8 @@ int test_F_mpz_cmp()
    mpz_init(m1); 
    mpz_init(m2); 
    
-   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init2(f1, z_randint(10));
       F_mpz_init2(f2, z_randint(10));
@@ -3031,7 +3097,8 @@ int test_F_mpz_cmpabs()
    mpz_init(m1); 
    mpz_init(m2); 
    
-   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init2(f1, z_randint(10));
       F_mpz_init2(f2, z_randint(10));
@@ -3074,7 +3141,8 @@ int test_F_mpz_bits()
    
    mpz_init(m1); 
    
-   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
    {
       F_mpz_init2(f1, z_randint(10));
 
@@ -3105,14 +3173,16 @@ int test_F_mpz_comb_init_clear()
 {
    int result = 1;
       
-   for (ulong i = 0; (i < 100*ITER) && (result == 1); i++)
+   ulong i;
+   for (i = 0; (i < 100*ITER) && (result == 1); i++)
    {
       ulong n = random_ulong(10);
       ulong num_primes = (1L << n);
       ulong * primes = (ulong *) flint_heap_alloc(num_primes);
       ulong p = z_nextprime((1UL << (FLINT_BITS-1)) - 10000000L, 0);
       
-		for (ulong i = 0; i < num_primes; i++)
+		ulong i;
+		for (i = 0; i < num_primes; i++)
       {
 	      primes[i] = p;
 	      p = z_nextprime(p, 0);
@@ -3140,7 +3210,8 @@ int test_F_mpz_multi_CRT_ui_unsigned()
       
    mpz_init(num1);
 
-   for (ulong i = 0; (i < 10000*ITER) && (result == 1); i++)
+   ulong i;
+   for (i = 0; (i < 10000*ITER) && (result == 1); i++)
    {
       ulong bits = z_randint(300)+1;
 
@@ -3155,7 +3226,8 @@ int test_F_mpz_multi_CRT_ui_unsigned()
      ulong * primes = (ulong *) flint_heap_alloc(num_primes);
      ulong prime = z_nextprime((1UL << (FLINT_BITS-1)) - 10000000L, 0);
       
-	  for (ulong j = 0; j < num_primes; j++)
+	  ulong j;
+	  for (j = 0; j < num_primes; j++)
      {
         primes[j] = prime;
         prime = z_nextprime(prime, 0);
@@ -3190,7 +3262,8 @@ int test_F_mpz_multi_CRT_ui_unsigned()
      F_mpz_clear(temp1);
      F_mpz_clear(temp2);
 
-     for (ulong k = 0; k < num_primes; k++)
+     ulong k;
+     for (k = 0; k < num_primes; k++)
      {
         output2[k] = F_mpz_mod_ui(temp, input, primes[k]);
 		  result &= (output[k] == output2[k]);
@@ -3226,7 +3299,8 @@ int test_F_mpz_multi_CRT_ui()
       
    mpz_init(num1);
 
-   for (ulong i = 0; (i < 10000*ITER) && (result == 1); i++)
+   ulong i;
+   for (i = 0; (i < 10000*ITER) && (result == 1); i++)
    {
       ulong bits = z_randint(300)+1;
 
@@ -3241,7 +3315,8 @@ int test_F_mpz_multi_CRT_ui()
      ulong * primes = (ulong *) flint_heap_alloc(num_primes);
      ulong prime = z_nextprime((1UL << (FLINT_BITS-1)) - 10000000L, 0);
       
-	  for (ulong j = 0; j < num_primes; j++)
+	  ulong j;
+	  for (j = 0; j < num_primes; j++)
      {
         primes[j] = prime;
         prime = z_nextprime(prime, 0);
@@ -3283,7 +3358,8 @@ int test_F_mpz_multi_CRT_ui()
 		  F_mpz_print(input); printf("\n");
 	  }
 
-     for (ulong k = 0; (k < num_primes) && (result == 1); k++)
+     ulong k;
+     for (k = 0; (k < num_primes) && (result == 1); k++)
      {
         output2[k] = F_mpz_mod_ui(temp, input, primes[k]);
 		  result &= (output[k] == output2[k]);
@@ -3319,7 +3395,8 @@ int test_F_mpz_pow_ui()
 	mpz_init(m1);
    mpz_init(m2);
    
-   for (ulong count1 = 0; (count1 < 2500*ITER) && (result == 1); count1++)
+   ulong count1;
+   for (count1 = 0; (count1 < 2500*ITER) && (result == 1); count1++)
    {
       bits = z_randint(200)+ 1;
       
@@ -3327,7 +3404,8 @@ int test_F_mpz_pow_ui()
 		F_mpz_init2(f, z_randint(10));
       F_mpz_init2(g, z_randint(3));
           
-      for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
+      ulong count2;
+      for (count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
 			F_mpz_test_random(g, bits); 
 
@@ -3355,14 +3433,15 @@ int test_F_mpz_pow_ui()
    }
    
    // Check aliasing
-	for (ulong count1 = 0; (count1 < 2500*ITER) && (result == 1); count1++)
+	for (count1 = 0; (count1 < 2500*ITER) && (result == 1); count1++)
    {
       bits = z_randint(200)+ 1;
       
 		// Make f a random number of limbs in size to start with
 		F_mpz_init2(f, z_randint(3));
           
-      for (ulong count2 = 0; (count2 < 100) && (result == 1); count2++)
+      ulong count2;
+      for (count2 = 0; (count2 < 100) && (result == 1); count2++)
 		{
 			F_mpz_test_random(f, bits); 
 
@@ -3404,8 +3483,10 @@ void F_mpz_poly_test_all()
 	RUN_TEST(F_mpz_getset_ui); 
    RUN_TEST(F_mpz_getset_si); 
 	RUN_TEST(F_mpz_getset_mpz); 
+#ifndef __TINYC__
    RUN_TEST(F_mpz_getset_mpfr); 
    RUN_TEST(F_mpz_set_mpfr_2exp); 
+#endif
    RUN_TEST(F_mpz_getset_limbs); 
    RUN_TEST(F_mpz_get_d_2exp); 
    RUN_TEST(F_mpz_set); 

@@ -36,7 +36,7 @@
 #endif
  
 #include <stdlib.h>
-#include <gmp.h>
+#include "gmp.h"
 #include "mpn_extras.h"
 #include "ZmodF_poly.h"
 

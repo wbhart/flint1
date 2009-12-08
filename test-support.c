@@ -42,7 +42,8 @@ void test_support_init()
 {
    gmp_randinit_default(randstate);
    
-   for (unsigned long i = 0; i < TEST_MPZ_COUNT; i++)
+   unsigned long i;
+   for (i = 0; i < TEST_MPZ_COUNT; i++)
       mpz_init(test_mpz[i]);
 }
 
@@ -51,7 +52,8 @@ void test_support_cleanup()
 {
    gmp_randclear(randstate);
 
-   for (unsigned long i = 0; i < TEST_MPZ_COUNT; i++)
+   unsigned long i;
+   for (i = 0; i < TEST_MPZ_COUNT; i++)
       mpz_clear(test_mpz[i]);
 }
 
@@ -100,7 +102,8 @@ void urandom_limbs(mp_limb_t* dest, unsigned long limbs)
 		test_support_init();
 		rand_initialised = 1;
 	}
-	for (unsigned long i = 0; i < limbs; i++)
+	unsigned long i;
+	for (i = 0; i < limbs; i++)
       dest[i] = gmp_urandomb_ui(randstate, FLINT_BITS);
 }
 

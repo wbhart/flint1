@@ -22,8 +22,7 @@
 #include <string.h>
 #include <math.h>
 #include <float.h>
-#include <sys/time.h>
-#include <sys/resource.h>
+#include <time.h>
 #include <ctype.h>
 #include <limits.h>
 #include <gmp.h>
@@ -37,7 +36,8 @@ double ** d_mat_init(int d, int n)
 
    B = (double **) malloc (d*sizeof(double*) + n*d*sizeof(double));
    B[0] = (double *) (B + d);
-	for (long i = 1; i < d; i++) B[i] = B[i-1] + n;
+	long i;
+	for (i = 1; i < d; i++) B[i] = B[i-1] + n;
 
 	return B;
 }
@@ -70,7 +70,8 @@ double d_vec_scalar_product(double * vec1, double * vec2, int n)
   double sum;
 
   sum = vec1[0] * vec2[0];
-  for (long i = 1; i < n; i++)
+  long i;
+  for (i = 1; i < n; i++)
      sum += vec1[i] * vec2[i];
 
   return sum;
@@ -81,7 +82,8 @@ double d_vec_scalar_product_heuristic(double * vec1, double * vec2, int n, F_mpz
   double sum;
 
   sum = vec1[0] * vec2[0];
-  for (long i = 1; i < n; i++)
+  long i;
+  for (i = 1; i < n; i++)
      sum += vec1[i] * vec2[i];
 
   double tmp = d_vec_norm(vec1, n);
@@ -109,7 +111,8 @@ double d_2exp_vec_scalar_product(double * vec1, double * vec2, int n, int *cexpo
   double sum;
 
   sum = ldexp(vec1[0] * vec2[0], 2*cexpo[0]);
-  for (long i = 1; i < n; i++)
+  long i;
+  for (i = 1; i < n; i++)
      sum += ldexp(vec1[i] * vec2[i], 2*cexpo[i]);
 
   double tmp = d_2exp_vec_norm(vec1, n, cexpo);
@@ -137,7 +140,8 @@ double d_vec_norm(double * vec, int n)
   double sum;
 
   sum = vec[0] * vec[0];
-  for (long i = 1 ; i < n ; i++)
+  long i;
+  for (i = 1 ; i < n ; i++)
      sum += vec[i] * vec[i];
 
   return sum;
@@ -149,7 +153,8 @@ double d_2exp_vec_norm(double * vec, int n, int *cexpo)
   double sum;
 
   sum = ldexp(vec[0] * vec[0], 2*cexpo[0]);
-  for (long i = 1 ; i < n ; i++)
+  long i;
+  for (i = 1 ; i < n ; i++)
      sum += ldexp(vec[i] * vec[i], 2*cexpo[i]);
 
   return sum;

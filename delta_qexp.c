@@ -44,16 +44,19 @@ int main(int argc, char* argv[])
 
    // compute coefficients of F(q)^2
    long* values = malloc(sizeof(long) * N);
-   for (long i = 0; i < N; i++)
+   long i;
+   for (i = 0; i < N; i++)
       values[i] = 0;
 
    long stop = (long) ceil((-1.0 + sqrt(1.0 + 8.0*N)) / 2.0);
    
-   for (long i = 0; i <= stop; i++)
+   long i;
+   for (i = 0; i <= stop; i++)
    {
       long index1 = i*(i+1)/2;
       long value1 = (i & 1) ? (-2*i-1) : (2*i+1);
-      for (long j = 0; j <= stop; j++)
+      long j;
+      for (j = 0; j <= stop; j++)
       {
          long index2 = j*(j+1)/2;
          if (index1 + index2 >= N)
@@ -71,7 +74,8 @@ int main(int argc, char* argv[])
    
    fmpz_poly_fit_length(F2, N);
    
-   for (long i = 0; i < N; i++)
+   long i;
+   for (i = 0; i < N; i++)
       fmpz_poly_set_coeff_si(F2, i, values[i]);
 
    free(values);

@@ -73,7 +73,8 @@ void F_mpz_mpoly_init2(F_mpz_mpoly_t poly, const ulong alloc,
 	/*if (vars)
 	{
 		poly->exps = (pv_s *) flint_heap_alloc_bytes(vars*sizeof(pv_s));
-		for (ulong i = 0; i < vars; i++) pv_init(poly->exps + i, alloc, 0);
+		ulong i;
+		for (i = 0; i < vars; i++) pv_init(poly->exps + i, alloc, 0);
 	} else poly->exps = NULL;*/
    
    poly->alloc = alloc;
@@ -115,7 +116,8 @@ void F_mpz_mpoly_realloc(F_mpz_mpoly_t poly, const ulong alloc, const ulong vars
 	   }
 		
 		if (!poly->small) 
-			for (ulong i = 0; i < FLINT_MIN(vars, poly->vars); i++)
+			ulong i;
+			for (i = 0; i < FLINT_MIN(vars, poly->vars); i++)
 			   pv_realloc(poly->exps + i, alloc);
 	}
    
@@ -126,18 +128,21 @@ void F_mpz_mpoly_realloc(F_mpz_mpoly_t poly, const ulong alloc, const ulong vars
 		if (poly->vars) // realloc
 		{
 			if (vars < poly->vars)
-			   for (ulong i = vars; i < poly->vars; i++)
+			   ulong i;
+			   for (i = vars; i < poly->vars; i++)
 					pv_clear(poly->exps + i);
 
 			poly->exps = (pv_s *) flint_heap_realloc(poly->exps, vars*sizeof(pv_s));
 
 			if (vars > poly->vars)
-			   for (ulong i = poly->vars; i < vars; i++)
+			   ulong i;
+			   for (i = poly->vars; i < vars; i++)
 				   pv_init(poly->exps + i, alloc, 0);
 		} else // nothing allocated already so do it now
 		{
 			poly->exps = (pv_s *) flint_heap_alloc_bytes(vars*sizeof(pv_s));
-			for (ulong i = 0; i < vars; i++)
+			ulong i;
+			for (i = 0; i < vars; i++)
 				   pv_init(poly->exps, alloc, 0);
 		}  
 	}
@@ -159,14 +164,16 @@ void F_mpz_mpoly_fit_length(F_mpz_mpoly_t poly, const ulong length)
 
 void F_mpz_mpoly_clear(F_mpz_mpoly_t poly)
 {
-   for (ulong i = 0; i < poly->alloc; i++) // Clean up any mpz_t's
+   ulong i;
+   for (i = 0; i < poly->alloc; i++) // Clean up any mpz_t's
 		_F_mpz_demote(poly->coeffs + i);
 	if (poly->coeffs) flint_heap_free(poly->coeffs); // clean up coeffs
    if (poly->coeffs) flint_heap_free(poly->packed); // and packed
 
 	if (!poly->small)
 	{
-		for (ulong i = 0; i < poly->vars; i++) // and vars
+		ulong i;
+		for (i = 0; i < poly->vars; i++) // and vars
 		   pv_clear(poly->exps + i);
 	   if (poly->vars) flint_heap_free(poly->exps);
 	}
@@ -184,7 +191,8 @@ void F_mpz_mpoly_set_coeff_ui(F_mpz_mpoly_t poly, const ulong n, const ulong x)
 
    if (n + 1 > poly->length) // insert zeroes between end of poly and new coeff if needed
    {
-      for (long i = poly->length; i + 1 < n; i++)
+      long i;
+      for (i = poly->length; i + 1 < n; i++)
          F_mpz_zero(poly->coeffs + i); 
       poly->length = n+1;
    }
@@ -297,7 +305,8 @@ void F_mpz_mpoly_print_pretty(F_mpz_mpoly_t poly, char ** var_syms)
 		switch (poly->ordering)
 		{
 		   case GRLEX:
-				for (long i = poly->length - 1; i >= 0; i--)
+				long i;
+				for (i = poly->length - 1; i >= 0; i--)
 		      {
                if ((i != poly->length - 1) && (F_mpz_sgn(poly->coeffs + i) > 0)) 
 						printf("+");
@@ -313,7 +322,8 @@ void F_mpz_mpoly_print_pretty(F_mpz_mpoly_t poly, char ** var_syms)
 					}
 
 			      int first = 1;
-					for (ulong j = 0; j < poly->vars; j++)
+					ulong j;
+					for (j = 0; j < poly->vars; j++)
 			      {
 				      exp = ((poly->packed[i] >> (FLINT_BITS - (j+2)*bits)) & mask);
 				      if (exp) 
@@ -678,7 +688,8 @@ void _F_mpz_mpoly_mul_small_3x2(F_mpz_mpoly_t res, F_mpz_mpoly_t poly1,
 
 	_F_mpz_mpoly_add_inplace(res, 1, temp);
 
-	//for (ulong i = 0; i < temp->length; i++)
+	//ulong i;
+for (i = 0; i < temp->length; i++)
 	//	_F_mpz_demote(temp->coeffs + i);
 
 	flint_stack_release(); // coeffs
@@ -727,7 +738,8 @@ void _F_mpz_mpoly_mul_small_3x3(F_mpz_mpoly_t res, F_mpz_mpoly_t poly1,
 
 	_F_mpz_mpoly_add_inplace(res, 1, temp);
 
-	//for (ulong i = 0; i < temp->length; i++)
+	//ulong i;
+for (i = 0; i < temp->length; i++)
 	//	_F_mpz_demote(temp->coeffs + i);
 
 	//flint_stack_release_small(); // coeffs
@@ -777,7 +789,8 @@ void _F_mpz_mpoly_mul_small_4x2(F_mpz_mpoly_t res, F_mpz_mpoly_t poly1,
 
 	_F_mpz_mpoly_add_inplace(res, 1, temp);
 
-	//for (ulong i = 0; i < temp->length; i++)
+	//ulong i;
+for (i = 0; i < temp->length; i++)
 	//	_F_mpz_demote(temp->coeffs + i);
 
 	flint_stack_release(); // coeffs
@@ -836,7 +849,8 @@ void _F_mpz_mpoly_mul_small_4x3(F_mpz_mpoly_t res, F_mpz_mpoly_t poly1,
 	temp->small = 1;
 	printf("********-->length temp = %ld\n", temp->length);
 	F_mpz_mpoly_print_pretty(temp, syms);printf("\n");
-	for (ulong s = 0; s < res->length; s++)
+	ulong s;
+	for (s = 0; s < res->length; s++)
 	{
 		F_mpz_print(res_c + s);printf("\n");
 	}
@@ -845,7 +859,8 @@ void _F_mpz_mpoly_mul_small_4x3(F_mpz_mpoly_t res, F_mpz_mpoly_t poly1,
 
 	_F_mpz_mpoly_add_inplace(res, 1, temp);
 
-	//for (ulong i = 0; i < temp->length; i++)
+	//ulong i;
+for (i = 0; i < temp->length; i++)
 	//	_F_mpz_demote(temp->coeffs + i);
 
 	flint_stack_release(); // coeffs
@@ -900,7 +915,8 @@ void _F_mpz_mpoly_mul_small_4x4(F_mpz_mpoly_t res, F_mpz_mpoly_t poly1,
 
 	_F_mpz_mpoly_add_inplace(res, 1, temp);
 
-	//for (ulong i = 0; i < temp->length; i++)
+	//ulong i;
+for (i = 0; i < temp->length; i++)
 	//	_F_mpz_demote(temp->coeffs + i);
 
 	//flint_stack_release_small(); // coeffs
@@ -1104,7 +1120,8 @@ void _F_mpz_mpoly_mul_small_Mxn(F_mpz_mpoly_t res, F_mpz_mpoly_t poly1,
 	   temp2->small = 1;
 		temp2->length = n;
       
-		for (ulong j = 0; j < n; j++)
+		ulong j;
+		for (j = 0; j < n; j++)
 		{
 			temp2->coeffs[j] = poly2->coeffs[n2 + j];
 			temp2->packed[j] = poly2->packed[n2 + j];
@@ -1134,14 +1151,16 @@ void _F_mpz_mpoly_mul_small_Mxn(F_mpz_mpoly_t res, F_mpz_mpoly_t poly1,
    
 		_F_mpz_mpoly_add_inplace(res, ptr, temp);
 
-		//for (ulong i = 0; i < temp2->length; i++)
+		//ulong i;
+for (i = 0; i < temp2->length; i++)
    		//_F_mpz_demote(temp2->coeffs + i);
 
 		flint_stack_release(); // packed
 		flint_stack_release(); // coeffs
 	}
 
-	//for (ulong i = 0; i < temp->length; i++)
+	//ulong i;
+for (i = 0; i < temp->length; i++)
 	//	_F_mpz_demote(temp->coeffs + i);
 
 	flint_stack_release(); // packed
@@ -1562,7 +1581,8 @@ void F_mpz_mpoly_mul_small_heap(F_mpz_mpoly_t res,
 	ulong * heap = (ulong *) flint_heap_alloc(1L<<log_length);
    ulong heap_bottom = 1;//short_length;
 
-   for (ulong i = 0; i < short_length; i++)
+   ulong i;
+   for (i = 0; i < short_length; i++)
 	{
 		entries[i].j = 0;
 		entries[i].chain = -1L;
@@ -1667,7 +1687,8 @@ void F_mpz_mpoly_mul_small_heap(F_mpz_mpoly_t res,
 		} while (old_packed == packed);
  
 
-		for (long k = saved_num - 1; k >= 0L; k--)
+		long k;
+		for (k = saved_num - 1; k >= 0L; k--)
 		{
 		
 		i = saved[k];

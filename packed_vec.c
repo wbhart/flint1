@@ -117,7 +117,8 @@ void pv_set_bits(pv_s * vec, int bits)
 
 		mp_limb_t * temp = (mp_limb_t *) flint_heap_alloc(vec->alloc);
 
-		for (ulong i = 0; i < vec->length; i++)
+		ulong i;
+		for (i = 0; i < vec->length; i++)
 		   PV_GET_NEXT(temp[i], iter);
 
 		if (vec->entries) flint_heap_free(vec->entries);
@@ -148,7 +149,8 @@ void pv_set_bits(pv_s * vec, int bits)
 		pv_iter_s iter;
       PV_ITER_INIT(iter, *vec, 0);
 
-		for (ulong i = 0; i < vec->length; i++)
+		ulong i;
+		for (i = 0; i < vec->length; i++)
 		{
 			PV_SET_NEXT(iter, temp[i]);
 		}
@@ -173,7 +175,8 @@ void pv_set_bits(pv_s * vec, int bits)
      
       ulong temp;
 		
-		for (ulong i = 0; i < vec->length; i++)
+		ulong i;
+		for (i = 0; i < vec->length; i++)
 		{   
 			PV_GET_NEXT(temp, iter1);
 			PV_SET_NEXT(iter2, temp);

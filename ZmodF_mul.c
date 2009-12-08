@@ -684,7 +684,8 @@ void _ZmodF_mul_fft_convolve_modB2(unsigned long* out, unsigned long* in1,
 void _ZmodF_mul_fft_reduce_modB(unsigned long* out, ZmodF_t* in,
                                 unsigned long len)
 {
-   for (unsigned long i = 0; i < len; i++)
+   unsigned long i;
+   for (i = 0; i < len; i++)
       out[i] = in[i][0];
 }
 
@@ -696,7 +697,8 @@ void _ZmodF_mul_fft_reduce_modB(unsigned long* out, ZmodF_t* in,
 void _ZmodF_mul_fft_reduce_modB2(unsigned long* out, ZmodF_t* in,
                                  unsigned long len)
 {
-   for (unsigned long i = 0; i < len; i++)
+   unsigned long i;
+   for (i = 0; i < len; i++)
    {
       out[2*i] = in[i][0];
       out[2*i+1] = in[i][1];
@@ -790,13 +792,15 @@ void _ZmodF_mul_info_mul_fft(ZmodF_mul_info_t info, ZmodF_t res,
    // add a multiple of B^m + 1).
    if (k)
    {
-      for (unsigned long i = 0; i < len; i++)
+      unsigned long i;
+      for (i = 0; i < len; i++)
       {
          ZmodF_t coeff = info->polys[0]->coeffs[i];
          ZmodF_fast_reduce(coeff, m);
 
          // zero out the top limbs
-         for (unsigned long j = 0; j < k; j++)
+         unsigned long j;
+         for (j = 0; j < k; j++)
             coeff[m+1+j] = 0;
 
          // compute the amount we need to adjust by

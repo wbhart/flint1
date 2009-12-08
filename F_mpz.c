@@ -28,7 +28,9 @@
 #include <math.h>
 #include <stdio.h>
 #include <gmp.h>
+#ifndef __TINYC__
 #include <mpfr.h>
+#endif
 
 #include "flint.h"
 #include "mpn_extras.h"
@@ -75,7 +77,8 @@ F_mpz _F_mpz_new_mpz(void)
 		}
 		
 		// initialise the new mpz_t's and unused array
-		for (ulong i = 0; i < MPZ_BLOCK; i++)
+		ulong i;
+		for (i = 0; i < MPZ_BLOCK; i++)
 		{
 			mpz_init(F_mpz_arr + F_mpz_allocated + i);
 			F_mpz_unused_arr[F_mpz_num_unused] = OFF_TO_COEFF(F_mpz_allocated + i);
@@ -101,7 +104,8 @@ void _F_mpz_clear_mpz(F_mpz f)
 
 void _F_mpz_cleanup(void)
 {
-	for (long i = 0; i < F_mpz_num_unused; i++)
+	long i;
+	for (i = 0; i < F_mpz_num_unused; i++)
 	{
 		mpz_clear(F_mpz_arr + COEFF_TO_OFF(F_mpz_unused_arr[i]));
    }
@@ -394,6 +398,7 @@ void F_mpz_set_mpz(F_mpz_t f, const mpz_t x)
 	}			
 }
 
+#ifndef __TINYC__
 void F_mpz_get_mpfr(mpfr_t x, const F_mpz_t f)
 {
    F_mpz d = *f;
@@ -452,6 +457,7 @@ int F_mpz_set_mpfr_2exp(F_mpz_t f, const mpfr_t x)
       
    return exp;
 }
+#endif
 
 void F_mpz_set_limbs(F_mpz_t f, const mp_limb_t * x, const ulong limbs)
 {
@@ -1729,7 +1735,7 @@ void F_mpz_comb_init(F_mpz_comb_t comb, ulong * primes, ulong num_primes)
 
    // create zn_poly modulus information
 	comb->mod = (zn_mod_t *) flint_heap_alloc_bytes(sizeof(zn_mod_t)*num_primes);
-   for (ulong i = 0; i < num_primes; i++) 
+   for (i = 0; i < num_primes; i++) 
       zn_mod_init(comb->mod[i], primes[i]);
 
 	if (n == 0) return; // nothing to do
@@ -1745,7 +1751,8 @@ void F_mpz_comb_init(F_mpz_comb_t comb, ulong * primes, ulong num_primes)
       comb->comb[i] = (F_mpz *) flint_heap_alloc(j);
       comb->res[i] = (F_mpz *) flint_heap_alloc(j);
 		
-		for (ulong k = 0; k < j; k++)
+		ulong k;
+		for (k = 0; k < j; k++)
 		{
 			F_mpz_init(comb->comb[i] + k);
 		   F_mpz_init(comb->res[i] + k);
@@ -1821,9 +1828,11 @@ void F_mpz_comb_clear(F_mpz_comb_t comb)
 
    ulong j = (1L << (n - 1)); // size of top level
    
-	for (ulong i = 0; i < n; i++) // initialise arrays at each level
+	ulong i;
+	for (i = 0; i < n; i++) // initialise arrays at each level
    {
-      for (ulong k = 0; k < j; k++)
+      ulong k;
+      for (k = 0; k < j; k++)
 		{
 			F_mpz_clear(comb->comb[i] + k);
 		   F_mpz_clear(comb->res[i] + k);
@@ -1847,7 +1856,8 @@ void F_mpz_comb_clear(F_mpz_comb_t comb)
 void F_mpz_multi_mod_ui_basecase(ulong * out, F_mpz_t in, 
                                ulong * primes, ulong num_primes, F_mpz_t temp)
 {
-   for (ulong i = 0; i < num_primes; i++)
+   ulong i;
+   for (i = 0; i < num_primes; i++)
    {
       out[i] = F_mpz_mod_ui(temp, in, primes[i]);
    }
@@ -1941,11 +1951,13 @@ F_mpz ** F_mpz_comb_temp_init(F_mpz_comb_t comb)
    F_mpz ** comb_temp = (F_mpz **) flint_heap_alloc(n);
    ulong j = (1L << (n - 1));
    
-	for (ulong i = 0; i < n; i++)
+	ulong i;
+	for (i = 0; i < n; i++)
    {
       comb_temp[i] = (F_mpz *) flint_heap_alloc(j);
 
-      for (ulong k = 0; k < j; k++)
+      ulong k;
+      for (k = 0; k < j; k++)
       {
          F_mpz_init(comb_temp[i] + k);
       }
@@ -1962,9 +1974,11 @@ void F_mpz_comb_temp_free(F_mpz_comb_t comb, F_mpz ** comb_temp)
 	ulong n = comb->n;
    ulong j = (1L << (n - 1));
    
-	for (ulong i = 0; i < n; i++)
+	ulong i;
+	for (i = 0; i < n; i++)
    {
-      for (ulong k = 0; k < j; k++)
+      ulong k;
+      for (k = 0; k < j; k++)
       {
          F_mpz_clear(comb_temp[i] + k);
       }
@@ -2137,9 +2151,10 @@ long _F_mpz_add_2exp(F_mpz_t res, F_mpz_t x1, long exp1, F_mpz_t x2, long exp2){
    return res_exp;
 }
 
+#ifndef __TINYC__
 void F_mpz_2exp_get_mpfr(mpfr_t x, const F_mpz_t f, long exp)
 {
       F_mpz_get_mpfr(x, f);
       mpfr_mul_2si(x, x, exp, GMP_RNDN);
 }
-
+#endif

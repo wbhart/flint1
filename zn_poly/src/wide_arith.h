@@ -63,7 +63,7 @@
 #endif
 
 
-#if (defined (__GNUC__) && (__GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 7)))
+#if defined (__TINYC__) || (defined (__GNUC__) && (__GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 7)))
 
 //  To simplify things, we require gcc v2.7 or higher.
 
@@ -199,19 +199,13 @@
 #define ZNP_MUL_WIDE(hi, lo, a, b)                                            \
    __asm__ ("mull %3" : "=a" (lo), "=d" (hi) : "%0" (a), "rm" (b));
 
+/* we may need the C version of this in Windows as TCC doesn't like the assembler... */
 
-#define ZNP_ADD_WIDE(s1, s0, a1, a0, b1, b0)                                  \
-   __asm__ ("addl %5,%k1\n\tadcl %3,%k0"                                      \
-           : "=r" (s1), "=&r" (s0)                                            \
-           : "0"  ((unsigned long)(a1)), "g" ((unsigned long)(b1)),           \
-             "%1" ((unsigned long)(a0)), "g" ((unsigned long)(b0)))
+#define ZNP_ADD_WIDE(s1, s0, a1, a0, b1, b0) \
+   add_ssaaaa(s1, s0, a1, a0, b1, b0)
 
-
-#define ZNP_SUB_WIDE(s1, s0, a1, a0, b1, b0)                                  \
-   __asm__ ("subl %5,%k1\n\tsbbl %3,%k0"                                      \
-           : "=r" (s1), "=&r" (s0)                                            \
-           : "0" ((unsigned long)(a1)), "g" ((unsigned long)(b1)),            \
-             "1" ((unsigned long)(a0)), "g" ((unsigned long)(b0)))
+#define ZNP_SUB_WIDE(s1, s0, a1, a0, b1, b0) \
+   sub_ddmmss(s1, s0, a1, a0, b1, b0)
 
 #endif
 

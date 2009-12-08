@@ -73,7 +73,8 @@ void run_triangle(unsigned long max_bits, double ratio)
    int max_iter = (int) ceil(log((double) max_bits) / log(ratio));
 
    unsigned long last_length = 0;
-   for (unsigned long i = 0; i <= max_iter; i++)
+   unsigned long i;
+   for (i = 0; i <= max_iter; i++)
    {
       unsigned long length = (unsigned long) floor(powl(ratio, i));
       if (length != last_length)
@@ -81,7 +82,8 @@ void run_triangle(unsigned long max_bits, double ratio)
          last_length = length;
 
          unsigned long last_bits = 0;
-         for (unsigned long j = 0; j <= max_iter; j++)
+         unsigned long j;
+         for (j = 0; j <= max_iter; j++)
          {
             unsigned long bits = (unsigned long) floor(powl(ratio, j));
             if (bits != last_bits)
@@ -119,11 +121,13 @@ void sample_NTL_factor(unsigned long length, unsigned long bits,
    else if (count >= 8) r_count = 2;
    else r_count = 1;
    
-   for (unsigned long i = 0; i < count; i++)
+   unsigned long i;
+   for (i = 0; i < count; i++)
    {
       if (i%r_count == 0)
       {
-	    for (unsigned long j = 0; j<length; j++)
+	    unsigned long j;
+	    for (j = 0; j<length; j++)
 		{
 		RandomBits(a,bits);
 		SetCoeff(poly1,j,a);
@@ -191,11 +195,13 @@ void sample_NTL_poly_mul(unsigned long length, unsigned long bits,
    else if (count >= 8) r_count = 2;
    else r_count = 1;
    
-   for (unsigned long i = 0; i < count; i++)
+   unsigned long i;
+   for (i = 0; i < count; i++)
    {
       if (i%r_count == 0)
       {
-	    for (unsigned long j = 0; j<length; j++)
+	    unsigned long j;
+	    for (j = 0; j<length; j++)
 		{
 		RandomBits(a,bits);
 		SetCoeff(poly1,j,a);
@@ -266,19 +272,22 @@ void sample_NTL_poly_div1(unsigned long length, unsigned long bits,
    else if (count >= 8) r_count = 2;
    else r_count = 1;
    
-   for (unsigned long i = 0; i < count; i++)
+   unsigned long i;
+   for (i = 0; i < count; i++)
    {
       if (i%r_count == 0)
       {
 	    do
         {
-           for (unsigned long j = 0; j < length; j++)
+           unsigned long j;
+           for (j = 0; j < length; j++)
 		   {
 		      RandomBits(a,bits);
 		      SetCoeff(poly1,j,a);
 		   }
         } while (IsZero(poly1));
-        for (unsigned long j = 0; j < length; j++)
+        unsigned long j;
+        for (j = 0; j < length; j++)
 		{
            RandomBits(a,bits);
 		   SetCoeff(poly2,j,a);
@@ -287,7 +296,8 @@ void sample_NTL_poly_div1(unsigned long length, unsigned long bits,
       
       mul(poly3, poly1, poly2);
       prof_start();
-      for (unsigned long count2 = 0; count2 < r_count; count2++)
+      unsigned long count2;
+      for (count2 = 0; count2 < r_count; count2++)
       {
          divide(poly2, poly3, poly1);
       }
@@ -354,17 +364,20 @@ void sample_NTL_poly_div2(unsigned long length, unsigned long bits,
    else if (count >= 8) r_count = 2;
    else r_count = 1;
    
-   for (unsigned long i = 0; i < count; i++)
+   unsigned long i;
+   for (i = 0; i < count; i++)
    {
       if (i%r_count == 0)
       {
-	    for (unsigned long j = 0; j<length-1; j++)
+	    unsigned long j;
+	    for (j = 0; j<length-1; j++)
 		{
 		RandomBits(a,bits);
 		SetCoeff(poly1,j,a);
 		}
 		SetCoeff(poly1,length-1,1);
-	    for (unsigned long j = 0; j<2*length-1; j++)
+	    unsigned long j;
+	    for (j = 0; j<2*length-1; j++)
 		{
 		RandomBits(a,bits);
 		SetCoeff(poly3,j,a);

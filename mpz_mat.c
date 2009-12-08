@@ -43,7 +43,8 @@ void mpz_mat_init(mpz_mat_t mat, ulong r, ulong c)
    if ((r) && (c)) mat->entries = (mpz_t*) flint_heap_alloc_bytes(r*c*sizeof(mpz_t));
 	else mat->entries = NULL;
 
-   for (long i = 0; i < r*c; i++)
+   long i;
+   for (i = 0; i < r*c; i++)
 	{
 	   mpz_init(mat->entries[i]);
 	}
@@ -53,7 +54,8 @@ void mpz_mat_init(mpz_mat_t mat, ulong r, ulong c)
 
 void mpz_mat_clear(mpz_mat_t mat)
 {
-   for (long i = 0; i < mat->r*mat->c; i++)
+   long i;
+   for (i = 0; i < mat->r*mat->c; i++)
       mpz_clear(mat->entries[i]);
 
    if (mat->entries) flint_heap_free(mat->entries);
@@ -70,13 +72,15 @@ void mpz_mat_clear(mpz_mat_t mat)
 
 int mpz_mat_add(mpz_mat_t res, mpz_mat_t mat1, mpz_mat_t mat2)
 {
-	for (long i = 0; i < mat1->r*mat1->c; i++)
+	long i;
+	for (i = 0; i < mat1->r*mat1->c; i++)
 	   mpz_add(res->entries[i], mat1->entries[i], mat2->entries[i]);
 }
 
 int mpz_mat_sub(mpz_mat_t res, mpz_mat_t mat1, mpz_mat_t mat2)
 {
-	for (long i = 0; i < mat1->r*mat1->c; i++)
+	long i;
+	for (i = 0; i < mat1->r*mat1->c; i++)
 	   mpz_sub(res->entries[i], mat1->entries[i], mat2->entries[i]);
 }
 
@@ -117,7 +121,8 @@ int mpz_mat_from_string(mpz_mat_t mat, const char *s)
    mpz_mat_clear(mat);
    mpz_mat_init(mat,r,c);
 
-   for (unsigned long i = 0; i < r*c; i++)
+   unsigned long i;
+   for (i = 0; i < r*c; i++)
    {
 
       // skip whitespace
@@ -139,14 +144,15 @@ char* mpz_mat_to_string(mpz_mat_t mat)
    // estimate the size of the string
    // 41 = enough room for null terminator and space and row and column info
    unsigned long size = 41;
-   for (unsigned long i = 0; i < mat->r * mat->c; i++)
+   unsigned long i;
+   for (i = 0; i < mat->r * mat->c; i++)
       // +2 is for the sign and a space
       size += mpz_sizeinbase(mat->entries[i], 10) + 2;
 
    // write the string
    char* buf = (char*) malloc(size);
    char* ptr = buf + sprintf(buf, "%ld %ld  ", mat->r, mat->c);
-   for (unsigned long i = 0; i < mat->r * mat->c; i++)
+   for (i = 0; i < mat->r * mat->c; i++)
    {
       mpz_get_str(ptr, 10, mat->entries[i]);
       ptr += strlen(ptr);
@@ -210,7 +216,8 @@ int mpz_mat_from_string_pretty(mpz_mat_t mat, char *s)
    mpz_mat_init(mat,r,c);
 
 
-   for(ulong i = 0; i < r*c; i++){
+   ulong i;
+   for (i = 0; i < r*c; i++){
 //searches for the next digit of - then calls gmp's mpz scanner
          pnt = strpbrk(pnt,"-0123456789");
          if (!gmp_sscanf(pnt, "%Zd", mat->entries[i]))
@@ -229,18 +236,20 @@ char* mpz_mat_to_string_pretty(mpz_mat_t mat)
    // estimate the size of the string
    // 4 + 3*r = enough room for null terminator, [,],\n and []\n per row
    unsigned long size = 4 + 3*mat->r;
-   for (unsigned long i = 0; i < mat->r * mat->c; i++)
+   unsigned long i;
+   for (i = 0; i < mat->r * mat->c; i++)
       // +2 is for the sign and a space
       size += mpz_sizeinbase(mat->entries[i], 10) + 2;
 
    // write the string
    char* buf = (char*) malloc(size);
    char* ptr = buf + sprintf(buf, "[");
-   for (unsigned long i = 0; i < mat->r; i++)
+   for (i = 0; i < mat->r; i++)
    {
       *ptr = '[';
       ptr++;
-      for (unsigned long j = 0; j < mat->c; j++)
+      unsigned long j;
+      for (j = 0; j < mat->c; j++)
       {
          mpz_get_str(ptr, 10, mat->entries[i*mat->c + j]);
          ptr += strlen(ptr);
@@ -300,7 +309,8 @@ int mpz_mat_fread(mpz_mat_t mat, FILE* f)
    mpz_mat_clear(mat);
    mpz_mat_init(mat,r,c);
 
-   for (unsigned long i = 0; i < r*c; i++)
+   unsigned long i;
+   for (i = 0; i < r*c; i++)
    {
       if (!mpz_inp_str(mat->entries[i], f, 10))
          return 0;

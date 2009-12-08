@@ -60,14 +60,16 @@ void target(void* y, unsigned long count)
    _fmpz_poly_stack_init(outf, arg->length1 + arg->length2 - 1,
                          in1f->limbs + in2f->limbs + 1);
 
-   for (unsigned long i = 0; i < arg->length1; i++)
+   unsigned long i;
+   for (i = 0; i < arg->length1; i++)
    {
       mpz_urandomb(x, randstate, arg->bits1);
       mpz_poly_set_coeff(in1, i, x);
    }
    mpz_poly_to_fmpz_poly(in1f, in1);
 
-   for (unsigned long i = 0; i < arg->length2; i++)
+   unsigned long i;
+   for (i = 0; i < arg->length2; i++)
    {
       mpz_urandomb(x, randstate, arg->bits2);
       mpz_poly_set_coeff(in2, i, x);
@@ -78,12 +80,14 @@ void target(void* y, unsigned long count)
    
    if (arg->which)
    {
-      for (unsigned long i = 0; i < count; i++)
+      unsigned long i;
+      for (i = 0; i < count; i++)
          _fmpz_poly_mul_karatsuba(outf, in1f, in2f);
    }
    else
    {
-      for (unsigned long i = 0; i < count; i++)
+      unsigned long i;
+      for (i = 0; i < count; i++)
          mpz_poly_mul_karatsuba(out, in1, in2);
    }
    
@@ -124,7 +128,8 @@ int main(int argc, char* argv[])
    
    double min_time, max_time;
 
-   for (unsigned long i = 0; i < 3; i++)
+   unsigned long i;
+   for (i = 0; i < 3; i++)
    {
       arg.which = 0;
       prof_repeat(&min_time, &max_time, target, &arg);

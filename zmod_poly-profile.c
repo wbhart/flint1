@@ -78,7 +78,8 @@ void randpoly(zmod_poly_t poly, long length, unsigned long n)
               
    zmod_poly_fit_length(poly, length);
    
-   for (unsigned long i = 0; i < length; i++)
+   unsigned long i;
+   for (i = 0; i < length; i++)
       poly->coeffs[i] = randint(n);
    poly->length = length;
       
@@ -102,7 +103,8 @@ void sample_zmod_poly_mul(unsigned long length, unsigned long bits, void* arg, u
    else if (count >= 8) r_count = 2;
    else r_count = 1;
      
-   for (unsigned long count2 = 0; count2 < count; count2++)
+   unsigned long count2;
+   for (count2 = 0; count2 < count; count2++)
    {     
                 
       if (count2 % r_count == 0)
@@ -163,13 +165,15 @@ void profDriver_zmod_poly_mul(char* params)
    
    int max_iter = (int) ceil(log((double) n_max) / log(n_ratio));
       
-   for (unsigned long i = 0; i < max_iter; i++)
+   unsigned long i;
+   for (i = 0; i < max_iter; i++)
    {
       n = (unsigned long) floor(pow(n_ratio, i));
       if (n != last_n)
       {
          last_n = n;
-         for (ulong bits = 1, j = 0; bits < FLINT_BITS; j++)
+         ulong bits;
+         for (bits = 1, j = 0; bits < FLINT_BITS; j++)
          {      
 				 prof2d_sample(n, bits, NULL);
 				 old_bits = bits;
@@ -199,7 +203,8 @@ void sample_zmod_poly_mul_KS(unsigned long length, unsigned long bits, void* arg
    else if (count >= 8) r_count = 2;
    else r_count = 1;
      
-   for (unsigned long count2 = 0; count2 < count; count2++)
+   unsigned long count2;
+   for (count2 = 0; count2 < count; count2++)
    {     
                 
       if (count2 % r_count == 0)
@@ -260,13 +265,15 @@ void profDriver_zmod_poly_mul_KS(char* params)
    int max_iter = (int) ceil(log((double) n_max) / log(n_ratio));
    int min_iter = (int) ceil(log((double) n_min) / log(n_ratio));
       
-   for (unsigned long i = min_iter; i < max_iter; i++)
+   unsigned long i;
+   for (i = min_iter; i < max_iter; i++)
    {
       n = (unsigned long) floor(pow(n_ratio, i));
       if (n != last_n)
       {
          last_n = n;
-         for (unsigned long bits = 2; bits < 64; bits++)
+         unsigned long bits;
+         for (bits = 2; bits < 64; bits++)
          {
              unsigned long log_length = 0;
              while ((1L<<log_length)<n) log_length++;
@@ -296,7 +303,8 @@ void sample_zmod_poly_mul_KS_trunc(unsigned long length, unsigned long bits, voi
    else if (count >= 8) r_count = 2;
    else r_count = 1;
      
-   for (unsigned long count2 = 0; count2 < count; count2++)
+   unsigned long count2;
+   for (count2 = 0; count2 < count; count2++)
    {     
                 
       if (count2 % r_count == 0)
@@ -357,13 +365,15 @@ void profDriver_zmod_poly_mul_KS_trunc(char* params)
    int max_iter = (int) ceil(log((double) n_max) / log(n_ratio));
    int min_iter = (int) ceil(log((double) n_min) / log(n_ratio));
       
-   for (unsigned long i = min_iter; i < max_iter; i++)
+   unsigned long i;
+   for (i = min_iter; i < max_iter; i++)
    {
       n = (unsigned long) floor(pow(n_ratio, i));
       if (n != last_n)
       {
          last_n = n;
-         for (unsigned long bits = 2; bits < 64; bits++)
+         unsigned long bits;
+         for (bits = 2; bits < 64; bits++)
          {
              unsigned long log_length = 0;
              while ((1L<<log_length)<n) log_length++;
@@ -393,7 +403,8 @@ void sample_zmod_poly_mul_classical(unsigned long length, unsigned long bits, vo
    else if (count >= 8) r_count = 2;
    else r_count = 1;
      
-   for (unsigned long count2 = 0; count2 < count; count2++)
+   unsigned long count2;
+   for (count2 = 0; count2 < count; count2++)
    {     
                 
       if (count2 % r_count == 0)
@@ -454,13 +465,15 @@ void profDriver_zmod_poly_mul_classical(char* params)
    int max_iter = (int) ceil(log((double) n_max) / log(n_ratio));
    int min_iter = (int) ceil(log((double) n_min) / log(n_ratio));
       
-   for (unsigned long i = min_iter; i < max_iter; i++)
+   unsigned long i;
+   for (i = min_iter; i < max_iter; i++)
    {
       n = (unsigned long) floor(pow(n_ratio, i));
       if (n != last_n)
       {
          last_n = n;
-         for (unsigned long bits = 2; bits < 64; bits++)
+         unsigned long bits;
+         for (bits = 2; bits < 64; bits++)
          {
              unsigned long log_length = 0;
              while ((1L<<log_length)<n) log_length++;
@@ -490,7 +503,8 @@ void sample_zmod_poly_mul_classical_trunc(unsigned long length, unsigned long bi
    else if (count >= 8) r_count = 2;
    else r_count = 1;
      
-   for (unsigned long count2 = 0; count2 < count; count2++)
+   unsigned long count2;
+   for (count2 = 0; count2 < count; count2++)
    {     
                 
       if (count2 % r_count == 0)
@@ -551,13 +565,15 @@ void profDriver_zmod_poly_mul_classical_trunc(char* params)
    int max_iter = (int) ceil(log((double) n_max) / log(n_ratio));
    int min_iter = (int) ceil(log((double) n_min) / log(n_ratio));
       
-   for (unsigned long i = min_iter; i < max_iter; i++)
+   unsigned long i;
+   for (i = min_iter; i < max_iter; i++)
    {
       n = (unsigned long) floor(pow(n_ratio, i));
       if (n != last_n)
       {
          last_n = n;
-         for (unsigned long bits = 2; bits < 64; bits++)
+         unsigned long bits;
+         for (bits = 2; bits < 64; bits++)
          {
              unsigned long log_length = 0;
              while ((1L<<log_length)<n) log_length++;
@@ -587,7 +603,8 @@ void sample_zmod_poly_mul_classical_trunc_left(unsigned long length, unsigned lo
    else if (count >= 8) r_count = 2;
    else r_count = 1;
      
-   for (unsigned long count2 = 0; count2 < count; count2++)
+   unsigned long count2;
+   for (count2 = 0; count2 < count; count2++)
    {     
                 
       if (count2 % r_count == 0)
@@ -648,13 +665,15 @@ void profDriver_zmod_poly_mul_classical_trunc_left(char* params)
    int max_iter = (int) ceil(log((double) n_max) / log(n_ratio));
    int min_iter = (int) ceil(log((double) n_min) / log(n_ratio));
       
-   for (unsigned long i = min_iter; i < max_iter; i++)
+   unsigned long i;
+   for (i = min_iter; i < max_iter; i++)
    {
       n = (unsigned long) floor(pow(n_ratio, i));
       if (n != last_n)
       {
          last_n = n;
-         for (unsigned long bits = 2; bits < 64; bits++)
+         unsigned long bits;
+         for (bits = 2; bits < 64; bits++)
          {
              unsigned long log_length = 0;
              while ((1L<<log_length)<n) log_length++;
@@ -683,7 +702,8 @@ void sample_zmod_poly_sqr_KS(unsigned long length, unsigned long bits, void* arg
    else if (count >= 8) r_count = 2;
    else r_count = 1;
      
-   for (unsigned long count2 = 0; count2 < count; count2++)
+   unsigned long count2;
+   for (count2 = 0; count2 < count; count2++)
    {     
                 
       if (count2 % r_count == 0)
@@ -740,13 +760,15 @@ void profDriver_zmod_poly_sqr_KS(char* params)
    int max_iter = (int) ceil(log((double) n_max) / log(n_ratio));
    int min_iter = (int) ceil(log((double) n_min) / log(n_ratio));
       
-   for (unsigned long i = min_iter; i < max_iter; i++)
+   unsigned long i;
+   for (i = min_iter; i < max_iter; i++)
    {
       n = (unsigned long) floor(pow(n_ratio, i));
       if (n != last_n)
       {
          last_n = n;
-         for (unsigned long bits = 2; bits < 64; bits++)
+         unsigned long bits;
+         for (bits = 2; bits < 64; bits++)
          {
              unsigned long log_length = 0;
              while ((1L<<log_length)<n) log_length++;
@@ -775,7 +797,8 @@ void sample_zmod_poly_sqr_classical(unsigned long length, unsigned long bits, vo
    else if (count >= 8) r_count = 2;
    else r_count = 1;
      
-   for (unsigned long count2 = 0; count2 < count; count2++)
+   unsigned long count2;
+   for (count2 = 0; count2 < count; count2++)
    {     
                 
       if (count2 % r_count == 0)
@@ -832,13 +855,15 @@ void profDriver_zmod_poly_sqr_classical(char* params)
    int max_iter = (int) ceil(log((double) n_max) / log(n_ratio));
    int min_iter = (int) ceil(log((double) n_min) / log(n_ratio));
       
-   for (unsigned long i = min_iter; i < max_iter; i++)
+   unsigned long i;
+   for (i = min_iter; i < max_iter; i++)
    {
       n = (unsigned long) floor(pow(n_ratio, i));
       if (n != last_n)
       {
          last_n = n;
-         for (unsigned long bits = 2; bits < 64; bits++)
+         unsigned long bits;
+         for (bits = 2; bits < 64; bits++)
          {
              unsigned long log_length = 0;
              while ((1L<<log_length)<n) log_length++;
@@ -871,7 +896,8 @@ void sample_zmod_poly_factor(unsigned long length, unsigned long bits, void* arg
    else if (count >= 8) r_count = 2;
    else r_count = 1;
      
-   for (unsigned long count2 = 0; count2 < count; count2++)
+   unsigned long count2;
+   for (count2 = 0; count2 < count; count2++)
    {     
                 
       if (count2 % r_count == 0)
@@ -936,13 +962,15 @@ void profDriver_zmod_poly_factor(char* params)
    
    int max_iter = (int) ceil(log((double) n_max) / log(n_ratio));
       
-   for (unsigned long i = 0; i < max_iter; i++)
+   unsigned long i;
+   for (i = 0; i < max_iter; i++)
    {
       n = (unsigned long) floor(pow(n_ratio, i));
       if (n != last_n)
       {
          last_n = n;
-         for (ulong bits = 1, j = 0; bits < FLINT_BITS; j++)
+         ulong bits;
+         for (bits = 1, j = 0; bits < FLINT_BITS; j++)
          {      
 				 prof2d_sample(n, bits, NULL);
 				 old_bits = bits;
@@ -973,7 +1001,8 @@ void sample_zmod_poly_div(unsigned long length, unsigned long bits, void* arg, u
    else if (count >= 8) r_count = 2;
    else r_count = 1;
      
-   for (unsigned long count2 = 0; count2 < count; count2++)
+   unsigned long count2;
+   for (count2 = 0; count2 < count; count2++)
    {     
                 
       if (count2 % r_count == 0)
@@ -1035,13 +1064,15 @@ void profDriver_zmod_poly_div(char* params)
    
    int max_iter = (int) ceil(log((double) n_max) / log(n_ratio));
       
-   for (unsigned long i = 0; i < max_iter; i++)
+   unsigned long i;
+   for (i = 0; i < max_iter; i++)
    {
       n = (unsigned long) floor(pow(n_ratio, i));
       if (n != last_n)
       {
          last_n = n;
-         for (ulong bits = 1, j = 0; bits < FLINT_BITS; j++)
+         ulong bits;
+         for (bits = 1, j = 0; bits < FLINT_BITS; j++)
          {      
 				 prof2d_sample(n, bits, NULL);
 				 old_bits = bits;
@@ -1073,7 +1104,8 @@ void sample_zmod_poly_divrem(unsigned long length, unsigned long bits, void* arg
    else if (count >= 8) r_count = 2;
    else r_count = 1;
      
-   for (unsigned long count2 = 0; count2 < count; count2++)
+   unsigned long count2;
+   for (count2 = 0; count2 < count; count2++)
    {     
                 
       if (count2 % r_count == 0)
@@ -1136,13 +1168,15 @@ void profDriver_zmod_poly_divrem(char* params)
    
    int max_iter = (int) ceil(log((double) n_max) / log(n_ratio));
       
-   for (unsigned long i = 0; i < max_iter; i++)
+   unsigned long i;
+   for (i = 0; i < max_iter; i++)
    {
       n = (unsigned long) floor(pow(n_ratio, i));
       if (n != last_n)
       {
          last_n = n;
-         for (ulong bits = 1, j = 0; bits < FLINT_BITS; j++)
+         ulong bits;
+         for (bits = 1, j = 0; bits < FLINT_BITS; j++)
          {      
 				 prof2d_sample(n, bits, NULL);
 				 old_bits = bits;
@@ -1183,7 +1217,8 @@ void sample_zmod_poly_divrem_basecase(unsigned long length, unsigned long bits, 
    else if (count >= 8) r_count = 2;
    else r_count = 1;
      
-   for (unsigned long count2 = 0; count2 < count; count2++)
+   unsigned long count2;
+   for (count2 = 0; count2 < count; count2++)
    {     
                 
       if (count2 % r_count == 0)
@@ -1246,13 +1281,15 @@ void profDriver_zmod_poly_divrem_basecase(char* params)
    
    int max_iter = (int) ceil(log((double) n_max) / log(n_ratio));
       
-   for (unsigned long i = 0; i < max_iter; i++)
+   unsigned long i;
+   for (i = 0; i < max_iter; i++)
    {
       n = (unsigned long) floor(pow(n_ratio, i));
       if (n != last_n)
       {
          last_n = n;
-         for (ulong bits = 1, j = 0; bits < FLINT_BITS; j++)
+         ulong bits;
+         for (bits = 1, j = 0; bits < FLINT_BITS; j++)
          {      
 				 prof2d_sample(n, bits, NULL);
 				 old_bits = bits;
@@ -1293,7 +1330,8 @@ void sample_zmod_poly_divrem_divconquer(unsigned long length, unsigned long bits
    else if (count >= 8) r_count = 2;
    else r_count = 1;
      
-   for (unsigned long count2 = 0; count2 < count; count2++)
+   unsigned long count2;
+   for (count2 = 0; count2 < count; count2++)
    {     
                 
       if (count2 % r_count == 0)
@@ -1356,13 +1394,15 @@ void profDriver_zmod_poly_divrem_divconquer(char* params)
    
    int max_iter = (int) ceil(log((double) n_max) / log(n_ratio));
       
-   for (unsigned long i = 0; i < max_iter; i++)
+   unsigned long i;
+   for (i = 0; i < max_iter; i++)
    {
       n = (unsigned long) floor(pow(n_ratio, i));
       if (n != last_n)
       {
          last_n = n;
-         for (ulong bits = 1, j = 0; bits < FLINT_BITS; j++)
+         ulong bits;
+         for (bits = 1, j = 0; bits < FLINT_BITS; j++)
          {      
 				 prof2d_sample(n, bits, NULL);
 				 old_bits = bits;
@@ -1403,7 +1443,8 @@ void sample_zmod_poly_divrem_newton(unsigned long length, unsigned long bits, vo
    else if (count >= 8) r_count = 2;
    else r_count = 1;
      
-   for (unsigned long count2 = 0; count2 < count; count2++)
+   unsigned long count2;
+   for (count2 = 0; count2 < count; count2++)
    {     
                 
       if (count2 % r_count == 0)
@@ -1466,13 +1507,15 @@ void profDriver_zmod_poly_divrem_newton(char* params)
    
    int max_iter = (int) ceil(log((double) n_max) / log(n_ratio));
       
-   for (unsigned long i = 0; i < max_iter; i++)
+   unsigned long i;
+   for (i = 0; i < max_iter; i++)
    {
       n = (unsigned long) floor(pow(n_ratio, i));
       if (n != last_n)
       {
          last_n = n;
-         for (ulong bits = 1, j = 0; bits < FLINT_BITS; j++)
+         ulong bits;
+         for (bits = 1, j = 0; bits < FLINT_BITS; j++)
          {      
 				 prof2d_sample(n, bits, NULL);
 				 old_bits = bits;
@@ -1512,7 +1555,8 @@ void sample_zmod_poly_gcd(unsigned long length, unsigned long bits, void* arg, u
    else if (count >= 8) r_count = 2;
    else r_count = 1;
      
-   for (unsigned long count2 = 0; count2 < count; count2++)
+   unsigned long count2;
+   for (count2 = 0; count2 < count; count2++)
    {     
                 
       if (count2 % r_count == 0)
@@ -1577,13 +1621,15 @@ void profDriver_zmod_poly_gcd(char* params)
    
    int max_iter = (int) ceil(log((double) n_max) / log(n_ratio));
       
-   for (unsigned long i = 0; i < max_iter; i++)
+   unsigned long i;
+   for (i = 0; i < max_iter; i++)
    {
       n = (unsigned long) floor(pow(n_ratio, i));
       if (n != last_n)
       {
          last_n = n;
-         for (ulong bits = 1, j = 0; bits < FLINT_BITS; j++)
+         ulong bits;
+         for (bits = 1, j = 0; bits < FLINT_BITS; j++)
          {      
 				 prof2d_sample(n, bits, NULL);
 				 old_bits = bits;
@@ -1624,7 +1670,8 @@ void sample_zmod_poly_gcd_euclidean(unsigned long length, unsigned long bits, vo
    else if (count >= 8) r_count = 2;
    else r_count = 1;
      
-   for (unsigned long count2 = 0; count2 < count; count2++)
+   unsigned long count2;
+   for (count2 = 0; count2 < count; count2++)
    {     
                 
       if (count2 % r_count == 0)
@@ -1690,13 +1737,15 @@ void profDriver_zmod_poly_gcd_euclidean(char* params)
    
    int max_iter = (int) ceil(log((double) n_max) / log(n_ratio));
       
-   for (unsigned long i = 0; i < max_iter; i++)
+   unsigned long i;
+   for (i = 0; i < max_iter; i++)
    {
       n = (unsigned long) floor(pow(n_ratio, i));
       if (n != last_n)
       {
          last_n = n;
-         for (ulong bits = 1, j = 0; bits < FLINT_BITS; j++)
+         ulong bits;
+         for (bits = 1, j = 0; bits < FLINT_BITS; j++)
          {      
 				 prof2d_sample(n, bits, NULL);
 				 old_bits = bits;
@@ -1737,7 +1786,8 @@ void sample_zmod_poly_gcd_hgcd(unsigned long length, unsigned long bits, void* a
    else if (count >= 8) r_count = 2;
    else r_count = 1;
      
-   for (unsigned long count2 = 0; count2 < count; count2++)
+   unsigned long count2;
+   for (count2 = 0; count2 < count; count2++)
    {     
                 
       if (count2 % r_count == 0)
@@ -1803,13 +1853,15 @@ void profDriver_zmod_poly_gcd_hgcd(char* params)
    
    int max_iter = (int) ceil(log((double) n_max) / log(n_ratio));
       
-   for (unsigned long i = 0; i < max_iter; i++)
+   unsigned long i;
+   for (i = 0; i < max_iter; i++)
    {
       n = (unsigned long) floor(pow(n_ratio, i));
       if (n != last_n)
       {
          last_n = n;
-         for (ulong bits = 1, j = 0; bits < FLINT_BITS; j++)
+         ulong bits;
+         for (bits = 1, j = 0; bits < FLINT_BITS; j++)
          {      
 				 prof2d_sample(n, bits, NULL);
 				 old_bits = bits;

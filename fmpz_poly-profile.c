@@ -59,7 +59,8 @@ void randpoly(mpz_poly_t pol, unsigned long length, unsigned long maxbits)
    
    mpz_poly_zero(pol);
    
-   for (unsigned long i = 0; i < length; i++)
+   unsigned long i;
+   for (i = 0; i < length; i++)
    {
        bits = maxbits;
        if (bits == 0) mpz_set_ui(temp,0);
@@ -90,7 +91,8 @@ void run_triangle(unsigned long max_bits, double ratio)
    int max_iter = (int) ceil(log((double) max_bits) / log(ratio));
 
    unsigned long last_length = 0;
-   for (unsigned long i = 0; i <= max_iter; i++)
+   unsigned long i;
+   for (i = 0; i <= max_iter; i++)
    {
       unsigned long length = (unsigned long) floor(pow(ratio, i));
       if (length != last_length)
@@ -98,7 +100,8 @@ void run_triangle(unsigned long max_bits, double ratio)
          last_length = length;
 
          unsigned long last_bits = 0;
-         for (unsigned long j = 0; j <= max_iter; j++)
+         unsigned long j;
+         for (j = 0; j <= max_iter; j++)
          {
             unsigned long bits = (unsigned long) floor(pow(ratio, j));
             if (bits != last_bits)
@@ -143,7 +146,8 @@ void sample_fmpz_poly_mul_KS(unsigned long length, unsigned long bits,
    else if (count >= 8) r_count = 2;
    else r_count = 1;
    
-   for (unsigned long i = 0; i < count; i++)
+   unsigned long i;
+   for (i = 0; i < count; i++)
    {
       if (i%r_count == 0)
       {
@@ -221,7 +225,8 @@ void sample_fmpz_poly_mul_KS_trunc(unsigned long length, unsigned long bits,
    else if (count >= 8) r_count = 2;
    else r_count = 1;
    
-   for (unsigned long i = 0; i < count; i++)
+   unsigned long i;
+   for (i = 0; i < count; i++)
    {
       if (i%r_count == 0)
       {
@@ -299,7 +304,8 @@ void sample_fmpz_poly_mul_SS(unsigned long length, unsigned long bits,
    else if (count >= 8) r_count = 2;
    else r_count = 1;
    
-   for (unsigned long i = 0; i < count; i++)
+   unsigned long i;
+   for (i = 0; i < count; i++)
    {
       if (i%r_count == 0)
       {
@@ -375,7 +381,8 @@ void sample_fmpz_poly_mul_SS_trunc(unsigned long length, unsigned long bits,
    else if (count >= 8) r_count = 2;
    else r_count = 1;
    
-   for (unsigned long i = 0; i < count; i++)
+   unsigned long i;
+   for (i = 0; i < count; i++)
    {
       if (i%r_count == 0)
       {
@@ -453,7 +460,8 @@ void sample_fmpz_poly_mul_karatsuba(unsigned long length, unsigned long bits,
    else if (count >= 8) r_count = 2;
    else r_count = 1;
    
-   for (unsigned long i = 0; i < count; i++)
+   unsigned long i;
+   for (i = 0; i < count; i++)
    {
       if (i%r_count == 0)
       {
@@ -530,7 +538,8 @@ void sample_fmpz_poly_mul_karatsuba_trunc(unsigned long length, unsigned long bi
    else if (count >= 8) r_count = 2;
    else r_count = 1;
    
-   for (unsigned long i = 0; i < count; i++)
+   unsigned long i;
+   for (i = 0; i < count; i++)
    {
       if (i%r_count == 0)
       {
@@ -600,7 +609,8 @@ void profDriver_fmpz_poly_mul_karatsuba_len(char* params)
 
    test_support_init();
    prof2d_set_sampler(sample_fmpz_poly_mul_karatsuba);
-   for (unsigned long length = 1; length < 128; length++)
+   unsigned long length;
+   for (length = 1; length < 128; length++)
       prof2d_sample(length, 100, NULL);
  
    test_support_cleanup();
@@ -636,7 +646,8 @@ void sample_fmpz_poly_mul(unsigned long length, unsigned long bits,
    else if (count >= 8) r_count = 2;
    else r_count = 1;
    
-   for (unsigned long i = 0; i < count; i++)
+   unsigned long i;
+   for (i = 0; i < count; i++)
    {
       if (i%r_count == 0)
       {
@@ -737,13 +748,15 @@ void sample_fmpz_poly_mul_karatsuba_mixlengths(
 
    mpz_t x;
    mpz_init(x);
-   for (unsigned long i = 0; i < len1; i++)
+   unsigned long i;
+   for (i = 0; i < len1; i++)
    {
       mpz_urandomb(x, randstate, bits);
       if (random_ulong(2)) mpz_neg(x, x);
       mpz_poly_set_coeff(poly1, i, x);
    }
-   for (unsigned long i = 0; i < len2; i++)
+   unsigned long i;
+   for (i = 0; i < len2; i++)
    {
       mpz_urandomb(x, randstate, bits);
       if (random_ulong(2)) mpz_neg(x, x);
@@ -761,7 +774,8 @@ void sample_fmpz_poly_mul_karatsuba_mixlengths(
    
    prof_start();
 
-   for (unsigned long i = 0; i < count; i++)
+   unsigned long i;
+   for (i = 0; i < count; i++)
       _fmpz_poly_mul_karatsuba(fpoly3, fpoly1, fpoly2);
 
    prof_stop();
@@ -797,8 +811,10 @@ void profDriver_fmpz_poly_mul_karatsuba_mixlengths(char* params)
 
    test_support_init();
 
-   for (unsigned long len1 = skip; len1 <= max_length; len1 += skip)
-      for (unsigned long len2 = skip; len2 <= len1; len2 += skip)
+   unsigned long len1;
+   for (len1 = skip; len1 <= max_length; len1 += skip)
+      unsigned long len2;
+      for (len2 = skip; len2 <= len1; len2 += skip)
          prof2d_sample(len1, len2, &bits);
 
    test_support_cleanup();
@@ -826,13 +842,15 @@ void sample_fmpz_poly_mul_karatsuba_mixlengths2(
 
    mpz_t x;
    mpz_init(x);
-   for (unsigned long i = 0; i < len1; i++)
+   unsigned long i;
+   for (i = 0; i < len1; i++)
    {
       mpz_urandomb(x, randstate, bits);
       if (random_ulong(2)) mpz_neg(x, x);
       mpz_poly_set_coeff(poly1, i, x);
    }
-   for (unsigned long i = 0; i < len2; i++)
+   unsigned long i;
+   for (i = 0; i < len2; i++)
    {
       mpz_urandomb(x, randstate, bits);
       if (random_ulong(2)) mpz_neg(x, x);
@@ -863,14 +881,16 @@ void sample_fmpz_poly_mul_karatsuba_mixlengths2(
    if (fpoly1->length >= fpoly2->length)
    {
       prof_start();
-      for (unsigned long i = 0; i < count; i++)
+      unsigned long i;
+      for (i = 0; i < count; i++)
          __fmpz_poly_karamul_recursive(fpoly3, fpoly1, fpoly2, scratch, scratchb, crossover);
       prof_stop();
    }
    else
    {
       prof_start();
-      for (unsigned long i = 0; i < count; i++)
+      unsigned long i;
+      for (i = 0; i < count; i++)
         __fmpz_poly_karamul_recursive(fpoly3, fpoly2, fpoly1, scratch, scratchb, crossover);
       prof_stop();
    }
@@ -908,8 +928,10 @@ void profDriver_fmpz_poly_mul_karatsuba_mixlengths2(char* params)
 
    test_support_init();
 
-   for (unsigned long len1 = skip; len1 <= max_length; len1 += skip)
-      for (unsigned long len2 = skip; len2 <= len1; len2 += skip)
+   unsigned long len1;
+   for (len1 = skip; len1 <= max_length; len1 += skip)
+      unsigned long len2;
+      for (len2 = skip; len2 <= len1; len2 += skip)
          prof2d_sample(len1, len2, &bits);
 
    test_support_cleanup();
@@ -940,7 +962,8 @@ void sample_fmpz_poly_div_mulders(unsigned long length, unsigned long bits,
    length2 = length;
    bits2 = bits;
       
-   for (unsigned long count1 = 0; count1 < count ; count1++)
+   unsigned long count1;
+   for (count1 = 0; count1 < count ; count1++)
    {            
       if (count1 % r_count == 0)
       {
@@ -962,7 +985,8 @@ void sample_fmpz_poly_div_mulders(unsigned long length, unsigned long bits,
       fmpz_poly_init(test_mpn_poly4);
       
       prof_start();
-      for (unsigned long i = 0; i < r_count; i++)
+      unsigned long i;
+      for (i = 0; i < r_count; i++)
          fmpz_poly_div_mulders(test_mpn_poly4, test_mpn_poly3, test_mpn_poly);
       prof_stop();
       count1+=(r_count-1);
@@ -1030,7 +1054,8 @@ void sample_fmpz_poly_div(unsigned long length, unsigned long bits,
    length2 = length;
    bits2 = bits;
       
-   for (unsigned long count1 = 0; count1 < count ; count1++)
+   unsigned long count1;
+   for (count1 = 0; count1 < count ; count1++)
    {            
       if (count1 % r_count == 0)
       {
@@ -1114,7 +1139,8 @@ void sample_fmpz_poly_divexact(unsigned long length, unsigned long bits,
    length2 = length;
    bits2 = bits;
       
-   for (unsigned long count1 = 0; count1 < count ; count1++)
+   unsigned long count1;
+   for (count1 = 0; count1 < count ; count1++)
    {            
       if (count1 % r_count == 0)
       {
@@ -1202,7 +1228,8 @@ void sample_fmpz_poly_gcd_subresultant(unsigned long length, unsigned long bits,
    else if (count >= 8) r_count = 2;
    else r_count = 1;
    
-   for (unsigned long i = 0; i < count; i++)
+   unsigned long i;
+   for (i = 0; i < count; i++)
    {
       if (i%r_count == 0)
       {
@@ -1287,7 +1314,8 @@ void sample_fmpz_poly_gcd_modular(unsigned long length, unsigned long bits,
    else if (count >= 8) r_count = 2;
    else r_count = 1;
    
-   for (unsigned long i = 0; i < count; i++)
+   unsigned long i;
+   for (i = 0; i < count; i++)
    {
       if (i%r_count == 0)
       {
@@ -1371,7 +1399,8 @@ void sample_fmpz_poly_gcd_heuristic(unsigned long length, unsigned long bits,
    else if (count >= 8) r_count = 2;
    else r_count = 1;
    
-   for (unsigned long i = 0; i < count; i++)
+   unsigned long i;
+   for (i = 0; i < count; i++)
    {
       if (i%r_count == 0)
       {
@@ -1456,7 +1485,8 @@ void sample_fmpz_poly_gcd(unsigned long length, unsigned long bits,
    else if (count >= 8) r_count = 2;
    else r_count = 1;
    
-   for (unsigned long i = 0; i < count; i++)
+   unsigned long i;
+   for (i = 0; i < count; i++)
    {
       if (i%r_count == 0)
       {

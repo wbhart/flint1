@@ -108,12 +108,14 @@ int main()
    unsigned long * prime = (unsigned long *) malloc(NUMPRIMES*sizeof(unsigned long));
    
    s = 3;
-   for (unsigned long i = 0; i < NUMPRIMES; i++)
+   unsigned long i;
+   for (i = 0; i < NUMPRIMES; i++)
    {
       prime[i] = s;
       s = z_nextprime(s, 0);
    }
-   for (unsigned long i = 0; i < NUMPRIMES; i++)
+   unsigned long i;
+   for (i = 0; i < NUMPRIMES; i++)
    {
       s = (T%prime[i]);
       if (s == 0) s = prime[i];
@@ -130,9 +132,11 @@ int main()
    while (T < STOP)
    {
       memset(table, 0, TABLESIZE);
-      for (unsigned long offset = 0; offset < TABLESIZE; offset+=CACHEBLOCK)
+      unsigned long offset;
+      for (offset = 0; offset < TABLESIZE; offset+=CACHEBLOCK)
       {
-        for (unsigned long i = 0; i < NUMPRIMES; i++)
+        unsigned long i;
+        for (i = 0; i < NUMPRIMES; i++)
         {
           s = mod[i];
           p = prime[i];

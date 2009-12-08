@@ -54,7 +54,8 @@ ulong getShift(F_mpz_mat_t B)
 {
    ulong n = B->c;
    ulong shift = 0;
-   for (ulong i = 0; i < B->r; i++)
+   ulong i;
+   for (i = 0; i < B->r; i++)
    {
       ulong j;
       for (j = n - 1; j >= i + shift + 1 && F_mpz_size(B->rows[i] + j) == 0L; j--);  

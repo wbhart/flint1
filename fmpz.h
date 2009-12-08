@@ -179,7 +179,8 @@ int fmpz_equal(const fmpz_t op1, const fmpz_t op2)
       return 0;
 
    // compare actual limbs
-   for (long i = 0; i < fmpz_size(op1); i++)
+   long i;
+   for (i = 0; i < fmpz_size(op1); i++)
    {
       if (op1[i+1] != op2[i+1])
          return 0;

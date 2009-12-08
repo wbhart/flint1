@@ -21,7 +21,7 @@
 */
 
 #include "zn_poly_internal.h"
-
+#include "gmp.h"
 
 void
 zn_mod_init (zn_mod_t mod, ulong m)
