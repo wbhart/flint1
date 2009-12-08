@@ -7,9 +7,9 @@ ifndef FLINT_CC
 endif
 
 ifeq ($(MAKECMDGOALS),library)
-	CC = $(FLINT_CC) -fPIC
+	CC = $(FLINT_CC) -fPIC -std=c99
 else
-	CC = $(FLINT_CC)
+	CC = $(FLINT_CC) -std=c99
 endif
 
 ifndef FLINT_PY
