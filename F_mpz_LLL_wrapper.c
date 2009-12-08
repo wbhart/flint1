@@ -1496,7 +1496,7 @@ int LLL_d(F_mpz_mat_t B)
    halfplus = ETA;
    onedothalfplus = 1.0+halfplus;
 	
-//	ulong shift = getShift(B);
+	ulong shift = getShift(B);
 
    alpha = (int *) malloc(d * sizeof(int)); 
    expo = (int *) malloc(d * sizeof(int)); 
@@ -1554,7 +1554,7 @@ int LLL_d(F_mpz_mat_t B)
       if (num_failed_fast < 500)
       {
          babai_ok = check_Babai(kappa, B, mu, r, s, appB, expo, appSP, alpha[kappa], zeros, 
-			                        kappamax, n);//FLINT_MIN(kappamax + 1 + shift, n)); 
+			                        kappamax, FLINT_MIN(kappamax + 1 + shift, n)); 
       }
       else{
          babai_ok = -1;
@@ -1564,7 +1564,7 @@ int LLL_d(F_mpz_mat_t B)
       {
          num_failed_fast++;
          heuristic_fail = check_Babai_heuristic_d(kappa, B, mu, r, s, appB, expo, appSP, alpha[kappa], zeros, 
-			                        kappamax, n);   //FLINT_MIN(kappamax + 1 + shift, n)); 
+			                        kappamax, FLINT_MIN(kappamax + 1 + shift, n)); 
       }
 
       if (heuristic_fail == -1)
