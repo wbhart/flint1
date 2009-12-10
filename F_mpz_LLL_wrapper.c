@@ -2959,7 +2959,7 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
       {
 //In the first time we hit a new kappa we're going to size-reduce in advance...
          kappamax = kappa; // Fixme : should this be kappamax = kappa instead of kappamax++
-         //if (kappa == 5)
+//         if (kappa >= 5)
             new_kappa = 1;
       }
       /* ********************************** */
@@ -3032,7 +3032,7 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
          }
 */
          ulong temp_kap_bits = F_mpz_bits(B->rows[kappa] + B->c - 1);
-         for (copy_kappa = kappa + 1; copy_kappa < kappa + d; copy_kappa++)
+         for (copy_kappa = kappa + 1; copy_kappa <  d; copy_kappa++)
          {
             copy_kappamax = copy_kappa;
             if (F_mpz_bits(B->rows[copy_kappa] + B->c - 1) > 2 + temp_kap_bits ){
@@ -3041,7 +3041,7 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
               heuristic_fail = 0;
               if (babai_ok == -1)
               {
-                 printf("heur_fail_advance\n");
+//                 printf("heur_fail_advance\n");
                  heuristic_fail = advance_check_Babai_heuristic_d(kappa, copy_kappa, B, mu, r, copy_s, appB, expo, appSP, alpha[copy_kappa], zeros, copy_kappamax, n);
               }
               if ((babai_ok == -2) || (heuristic_fail == -2))
