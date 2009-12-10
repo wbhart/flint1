@@ -307,6 +307,10 @@ void F_mpz_mod_poly_div_divconquer_recursive(F_mpz_mod_poly_t Q, F_mpz_mod_poly_
 
 void F_mpz_mod_poly_divrem_divconquer(F_mpz_mod_poly_t Q, F_mpz_mod_poly_t R, const F_mpz_mod_poly_t A, const F_mpz_mod_poly_t B);
 
+void F_mpz_mod_poly_rem(F_mpz_mod_poly_t R, F_mpz_mod_poly_t A, F_mpz_mod_poly_t B);
+
+void F_mpz_mod_poly_mulmod( F_mpz_mod_poly_t res, F_mpz_mod_poly_t A, F_mpz_mod_poly_t B, F_mpz_mod_poly_t C);
+
 #ifdef __cplusplus
  }
 #endif

@@ -836,3 +836,33 @@ void F_mpz_mod_poly_divrem_divconquer(F_mpz_mod_poly_t Q, F_mpz_mod_poly_t R, co
    
    F_mpz_mod_poly_clear(QB);
 }
+
+/*****************************************************************
+
+   Wrappers to get this sheet working while Bill writes the full versions
+
+******************************************************************/
+
+void F_mpz_mod_poly_rem(F_mpz_mod_poly_t R, F_mpz_mod_poly_t A, F_mpz_mod_poly_t B)
+{
+   F_mpz_mod_poly_t Q;
+   F_mpz_mod_poly_init(Q, A->P);
+
+   F_mpz_mod_poly_divrem_divconquer(Q, R, A, B);
+
+   F_mpz_mod_poly_clear(Q);
+}
+
+void F_mpz_mod_poly_mulmod( F_mpz_mod_poly_t res, F_mpz_mod_poly_t A, F_mpz_mod_poly_t B, F_mpz_mod_poly_t C)
+{
+
+   F_mpz_mod_poly_t Q;
+   F_mpz_mod_poly_init(Q, A->P);
+
+   F_mpz_mod_poly_mul(Q, A, B);
+   F_mpz_mod_poly_rem(res, Q, C);
+
+   F_mpz_mod_poly_clear(Q);
+}
+
+
