@@ -2960,7 +2960,7 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 //In the first time we hit a new kappa we're going to size-reduce in advance...
          kappamax = kappa; // Fixme : should this be kappamax = kappa instead of kappamax++
          if (kappa == 10)
-            new_kappa = 1;
+            new_kappa = 0;
       }
       /* ********************************** */
       /* Step3: Call to the Babai algorithm */
