@@ -3035,7 +3035,7 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
          for (copy_kappa = kappa + 1; copy_kappa <  d; copy_kappa++)
          {
             copy_kappamax = copy_kappa;
-            if (F_mpz_bits(B->rows[copy_kappa] + B->c - 1) > 2 + temp_kap_bits ){
+            if (F_mpz_bits(B->rows[copy_kappa] + B->c - 1) > 10 + temp_kap_bits ){
                babai_ok = advance_check_Babai(kappa, copy_kappa, B, mu, r, copy_s, appB, expo, appSP, alpha[copy_kappa], zeros, copy_kappamax, n);
 
               heuristic_fail = 0;
