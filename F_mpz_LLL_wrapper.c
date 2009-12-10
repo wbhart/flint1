@@ -624,7 +624,7 @@ int advance_check_Babai (int cur_kappa, int kappa, F_mpz_mat_t B, double **mu, d
       test = 0;
 
       loops++;
-      if (loops > 1){
+      if (loops > 2){
          return -1;
       }
             
@@ -2959,7 +2959,7 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
       {
 //In the first time we hit a new kappa we're going to size-reduce in advance...
          kappamax = kappa; // Fixme : should this be kappamax = kappa instead of kappamax++
-         if (kappa%5 == 0)
+         if (kappa%20 == 0)
             new_kappa = 1;
       }
       /* ********************************** */
@@ -3031,7 +3031,7 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 //            copy_alpha[i] = alpha[i];
          }
 */
-         for (copy_kappa = kappa + 1; copy_kappa < kappa + 5; copy_kappa++)
+         for (copy_kappa = kappa + 1; copy_kappa < kappa + 20; copy_kappa++)
          {
             copy_kappamax = copy_kappa;
             babai_ok = advance_check_Babai(kappa, copy_kappa, B, mu, r, copy_s, appB, expo, appSP, alpha[copy_kappa], zeros, copy_kappamax, n);
