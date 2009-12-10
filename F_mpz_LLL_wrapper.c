@@ -614,7 +614,7 @@ int advance_check_Babai (int cur_kappa, int kappa, F_mpz_mat_t B, double **mu, d
    aa = (a > zeros) ? a : zeros + 1;
   
    ctt = .75;
-   halfplus = ETA;
+   halfplus = .65;
    onedothalfplus = 1.0+halfplus;
 
    long loops = 0;
@@ -862,7 +862,7 @@ int advance_check_Babai_heuristic_d (int cur_kappa, int kappa, F_mpz_mat_t B, do
    aa = (a > zeros) ? a : zeros + 1;
   
    ctt = .75;
-   halfplus = ETA;
+   halfplus = .65;
    onedothalfplus = 1.0+halfplus;
 
 
