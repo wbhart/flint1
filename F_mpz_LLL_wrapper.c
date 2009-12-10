@@ -2959,8 +2959,8 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
       {
 //In the first time we hit a new kappa we're going to size-reduce in advance...
          kappamax = kappa; // Fixme : should this be kappamax = kappa instead of kappamax++
-         if (kappa == 10)
-            new_kappa = 0;
+         if (kappa%10 == 0)
+            new_kappa = 1;
       }
       /* ********************************** */
       /* Step3: Call to the Babai algorithm */
@@ -3031,19 +3031,21 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 //            copy_alpha[i] = alpha[i];
          }
 */
+         ulong temp_kap_bits = F_mpz_bits(B->rows[kappa] + B->c - 1);
          for (copy_kappa = kappa + 1; copy_kappa < kappa + d; copy_kappa++)
          {
             copy_kappamax = copy_kappa;
-            babai_ok = advance_check_Babai(kappa, copy_kappa, B, mu, r, copy_s, appB, expo, appSP, alpha[copy_kappa], zeros, copy_kappamax, n);
+            if (F_mpz_bits(B->rows[copy_kappa] + B->c - 1) > 2 + temp_kap_bits ){
+               babai_ok = advance_check_Babai(kappa, copy_kappa, B, mu, r, copy_s, appB, expo, appSP, alpha[copy_kappa], zeros, copy_kappamax, n);
 
-            heuristic_fail = 0;
-            if (babai_ok == -1)
-            {
-               printf("heur_fail_advance\n");
-               heuristic_fail = advance_check_Babai_heuristic_d(kappa, copy_kappa, B, mu, r, copy_s, appB, expo, appSP, alpha[copy_kappa], zeros, copy_kappamax, n);
-            }
-            if ((babai_ok == -2) || (heuristic_fail == -2))
-            {
+              heuristic_fail = 0;
+              if (babai_ok == -1)
+              {
+                 printf("heur_fail_advance\n");
+                 heuristic_fail = advance_check_Babai_heuristic_d(kappa, copy_kappa, B, mu, r, copy_s, appB, expo, appSP, alpha[copy_kappa], zeros, copy_kappamax, n);
+              }
+              if ((babai_ok == -2) || (heuristic_fail == -2))
+              {
    free(alpha);
    free(expo);
    free(copy_alpha);
@@ -3059,9 +3061,10 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    free(s);
    free(copy_s);
    free(appSPtmp);
-               return -1;
+                  return -1;
                //wacky stuff going on in this lattice let's just switch to normal...
-            }
+               }
+         }
 /*
   This isn't stable...
             if ( (heuristic_fail >= 0) && (copy_kappa == d-1) )
