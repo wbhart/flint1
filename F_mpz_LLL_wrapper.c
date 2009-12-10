@@ -3031,7 +3031,7 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 //            copy_alpha[i] = alpha[i];
          }
 */
-         for (copy_kappa = kappa + 1; copy_kappa < kappa + 15; copy_kappa++)
+         for (copy_kappa = kappa + 1; copy_kappa < kappa + 5; copy_kappa++)
          {
             copy_kappamax = copy_kappa;
             babai_ok = advance_check_Babai(kappa, copy_kappa, B, mu, r, copy_s, appB, expo, appSP, alpha[copy_kappa], zeros, copy_kappamax, n);
@@ -3039,6 +3039,7 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
             heuristic_fail = 0;
             if (babai_ok == -1)
             {
+               printf("heur_fail_advance\n");
                heuristic_fail = advance_check_Babai_heuristic_d(kappa, copy_kappa, B, mu, r, copy_s, appB, expo, appSP, alpha[copy_kappa], zeros, copy_kappamax, n);
             }
             if ((babai_ok == -2) || (heuristic_fail == -2))
