@@ -211,7 +211,7 @@ void F_mpz_poly_set_coeff_si(F_mpz_poly_t poly, ulong n, const long x)
 	if (n + 1 > poly->length) // insert zeroes between end of poly and new coeff if needed
    {
       ulong i;
-      for (i = poly->length; i + 1 < n; i++)
+      for (i = poly->length; i < n; i++)
          F_mpz_zero(poly->coeffs + i);
       poly->length = n+1;
    }
@@ -227,7 +227,7 @@ void F_mpz_poly_set_coeff_ui(F_mpz_poly_t poly, ulong n, const ulong x)
    if (n + 1 > poly->length) // insert zeroes between end of poly and new coeff if needed
    {
       long i;
-      for (i = poly->length; i + 1 < n; i++)
+      for (i = poly->length; i < n; i++)
          F_mpz_zero(poly->coeffs + i); 
       poly->length = n+1;
    }
@@ -243,7 +243,7 @@ void F_mpz_poly_set_coeff_mpz(F_mpz_poly_t poly, ulong n, const mpz_t x)
    if (n + 1 > poly->length) // insert zeroes between end of poly and new coeff if needed
    {
       long i;
-      for (i = poly->length; i + 1 < n; i++)
+      for (i = poly->length; i < n; i++)
          F_mpz_zero(poly->coeffs + i); 
       poly->length = n+1;
    }
@@ -259,7 +259,7 @@ void F_mpz_poly_set_coeff_F_mpz(F_mpz_poly_t poly, ulong n, const F_mpz_t x)
    if (n + 1 > poly->length) // insert zeroes between end of poly and new coeff if needed
    {
       long i;
-      for (i = poly->length; i + 1 < n; i++)
+      for (i = poly->length; i < n; i++)
          F_mpz_zero(poly->coeffs + i); 
       poly->length = n+1;
    }
