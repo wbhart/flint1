@@ -25,8 +25,8 @@
 
 *****************************************************************************/
 
-#include "F_mpz_mod_poly.h"
 #include "F_mpz_poly.h"
+#include "F_mpz_mod_poly.h"
 #include "long_extras.h"
 #include "mpn_extras.h"
 #include "longlong_wrapper.h"

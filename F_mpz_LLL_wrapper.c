@@ -3956,3 +3956,167 @@ int LLL_wrapper_zero_vec_with_removal(F_mpz_mat_t B, F_mpz_t gs_B){
    else //we've got big problems if this is the exit...
       return -1;
 }
+
+/**
+
+   Stripped down LLL_d to just calculate G-S lengths.
+
+**/
+
+//### This is different -------
+void gs_Babai(int kappa, F_mpz_mat_t B, double **mu, double **r, double *s, 
+       double **appB, int *expo, double **appSP, 
+       int a, int zeros, int kappamax, int n)
+//-----------------------------
+{
+   int i, j, k, test, aa, exponent;
+   signed long xx;
+   double tmp, rtmp;
+   
+   aa = (a > zeros) ? a : zeros + 1;
+  
+      for (j = aa; j < kappa; j++)
+	   {	  
+	      if (appSP[kappa][j] != appSP[kappa][j]) // if appSP[kappa][j] == NAN
+	      {
+//### This is different -----
+            appSP[kappa][j] = d_vec_scalar_product_heuristic(appB[kappa], appB[j], n, B, kappa, j, expo[kappa]+expo[j]);
+//---------------------------
+         }
+	  	  
+         if (j > zeros + 2)
+	      {
+	         tmp = mu[j][zeros+1] * r[kappa][zeros+1];
+	         rtmp = appSP[kappa][j] - tmp;
+	         for (k = zeros + 2; k < j - 1; k++)
+		      {
+		         tmp = mu[j][k] * r[kappa][k];
+		         rtmp = rtmp - tmp;
+		      }
+	         tmp = mu[j][j-1] * r[kappa][j-1];
+	         r[kappa][j] = rtmp - tmp;
+         } else if (j == zeros+2)
+	      {
+	         tmp = mu[j][zeros+1] * r[kappa][zeros+1];
+	         r[kappa][j] = appSP[kappa][j] - tmp;
+	      } else r[kappa][j] = appSP[kappa][j];
+
+	      mu[kappa][j] = r[kappa][j] / r[j][j];
+      }
+
+      for (j = kappa - 1; j > zeros; j--)
+	   {
+	      /* test of the relaxed size-reduction condition */
+	      tmp = fabs(mu[kappa][j]);
+	      tmp = ldexp(tmp, expo[kappa] - expo[j]);
+
+      }
+      
+   if (appSP[kappa][kappa] != appSP[kappa][kappa]) 
+   {
+//### This is different -------
+      appSP[kappa][kappa] = d_vec_norm(appB[kappa], n);
+//-----------------------------
+   }
+   s[zeros + 1] = appSP[kappa][kappa];
+  
+   for (k = zeros + 1; k < kappa - 1; k++)
+   {
+      tmp = mu[kappa][k] * r[kappa][k];
+      s[k+1] = s[k] - tmp;
+   }
+}
+
+ulong F_mpz_mat_gs_d( F_mpz_mat_t B, F_mpz_t gs_B)
+{
+   int kappa, kappa2, d, n, i, j, zeros, kappamax;
+   double ** mu, ** r, ** appB, ** appSP;
+   double * s, * mutmp, * appBtmp, * appSPtmp;
+   double tmp = 0.0;
+   int * expo, * alpha;
+   mp_limb_t * Btmp;
+   
+   n = B->c;
+   d = B->r;
+	
+   alpha = (int *) malloc(d * sizeof(int)); 
+   expo = (int *) malloc(d * sizeof(int)); 
+
+   mu = d_mat_init(d, d);
+   r = d_mat_init(d, d);
+   appB = d_mat_init(d, n);
+   appSP = d_mat_init(d, d);
+
+   s = (double *) malloc (d * sizeof(double));
+   appSPtmp = (double *) malloc (d * sizeof(double));
+
+   for (i = 0; i < d; i++)
+      for (j = 0; j < d; j++)
+         appSP[i][j] = NAN;//0.0/0.0;
+  
+   /* ************************** */
+   /* Step1: Initialization Step */
+   /* ************************** */     
+    
+   for (i = 0; i < d; i++)
+      expo[i] = F_mpz_mat_set_line_d(appB[i], B, i, n);  
+  
+   /* ********************************* */
+   /* Step2: Initializing the main loop */
+   /* ********************************* */   
+  
+
+   i = 0; 
+  
+   do
+      appSP[i][i] = d_vec_norm(appB[i], n); 
+   while ((appSP[i][i] <= 0.0) && (++i < d)); // Fixme : should this be EPS not 0.0
+
+   zeros = i - 1; /* all vectors B[i] with i <= zeros are zero vectors */
+   kappa = i + 1;
+   kappamax = kappa;
+  
+   if (zeros < d - 1) r[i][i] = appSP[i][i];
+
+   for (i = zeros + 1; i < d; i++)
+      alpha[i] = 0;   
+
+   while (kappa < d)
+   {
+      if (kappa > kappamax) kappamax = kappa; // Fixme : should this be kappamax = kappa instead of kappamax++
+
+      gs_Babai(kappa, B, mu, r, s, appB, expo, appSP, alpha[kappa], zeros, 
+			                        kappamax, n); 
+	   alpha[kappa] = kappa;
+	   tmp = mu[kappa][kappa-1] * r[kappa][kappa-1];
+	   r[kappa][kappa] = s[kappa-1] - tmp;
+	   kappa++;
+   }
+
+   ulong ok, newd, exp;
+   double d_gs_B, d_rii; 
+   ok = 1;
+   newd = d;
+   d_gs_B = F_mpz_get_d_2exp(&exp, gs_B);
+   d_gs_B = ldexp( d_gs_B, exp);
+   for (i = d-1; (i >= 0) && (ok > 0); i--)
+   {
+//d_rii is the G-S length of ith vector divided by 2 (we shouldn't make a mistake and remove something valuable)
+      d_rii = ldexp(r[i][i], 2*expo[i] - 2);
+//      printf("%5f r[%d] and gs_B = %5f\n", d_rii, i, d_gs_B);
+      if (d_rii > d_gs_B) newd--;
+   }
+
+
+   free(alpha);
+   free(expo);
+   d_mat_clear(mu);
+   d_mat_clear(r);
+   d_mat_clear(appB);
+   d_mat_clear(appSP);
+   free(s);
+   free(appSPtmp);
+
+   return newd;
+}
+

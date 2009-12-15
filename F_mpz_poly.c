@@ -7193,7 +7193,9 @@ void F_mpz_poly_factor_sq_fr_prim( F_mpz_poly_factor_t final_fac, ulong exp, F_m
 
    int use_Hoeij_Novocin = 0;
    int solved_yet = 0;
-   int mexpo[r + 2 * (f->length - 1)];
+//doing away with mexpo for a while, might bring it back... don't forget intialization too
+   int mexpo[4];
+//   int mexpo[r + 2 * (f->length - 1)];
    F_mpz_mat_t M;
 
    if (r > 180){
@@ -7206,7 +7208,7 @@ void F_mpz_poly_factor_sq_fr_prim( F_mpz_poly_factor_t final_fac, ulong exp, F_m
       use_Hoeij_Novocin = 1;
       F_mpz_mat_init_identity(M, r);
       ulong i;
-      for (i = 0; i < M->c; i++)
+      for (i = 0; i < 4; i++)
          mexpo[i] = 0;
    }
    if (r == 0){
@@ -7229,6 +7231,12 @@ void F_mpz_poly_factor_sq_fr_prim( F_mpz_poly_factor_t final_fac, ulong exp, F_m
    ulong a;
    a = (long) ceil( (double) M_bits / log2( (double)p ) );
    a = (long) pow( (double) 2, ceil( log2( (double) a ) ) );
+
+   if (use_Hoeij_Novocin == 1)
+   {
+   //Here we can add the cool new part...
+      a = a;
+   }
 
    F_mpz_poly_t v[2*r-2];
    F_mpz_poly_t w[2*r-2];   
@@ -7530,6 +7538,12 @@ int _F_mpz_mat_check_if_solved(F_mpz_mat_t M, ulong r, F_mpz_poly_factor_t final
       F_mpz_mat_clear(U);
       return 0;
    }
+
+   if (ok > U->c){
+      F_mpz_mat_clear(U);
+      return 0;
+   }
+
    int trym = _F_mpz_poly_try_to_solve(ok, part, final_fac, lifted_fac, F, P, exp, lc);
    F_mpz_mat_clear(U);
    return trym;
@@ -7553,8 +7567,8 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    F_mpz_t B;
    F_mpz_init(B);
    F_mpz_set_ui(B, r + 1);
-//For the first run we'll only use 20 coeffs worth of data, should solve 99% of all 'random' polynomials
-   ulong num_coeffs = 10UL;
+//For the first run we'll only use 30 coeffs worth of data, should solve 99% of all 'random' polynomials
+   ulong num_coeffs = 15UL;
    F_mpz_mat_t data;
    F_mpz_mat_init(data, 0, 0);
    _F_mpz_poly_factor_CLD_mat(data, F, lifted_fac, P, num_coeffs);
@@ -7563,9 +7577,9 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    if (data->c >= F->length - 1)
       all_coeffs = 1;
 //assume that cexpo is correct for the first M->c entries, zero out the potential new entries
-   ulong i;
+/* no cexpo for the moment   ulong i;
    for (i = M->c; i < M->c + 2*(F->length - 1); i++)
-      cexpo[i] = 0;
+      cexpo[i] = 0;*/
 
    F_mpz_t temp;
    F_mpz_init(temp);
@@ -7583,14 +7597,20 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
             F_mpz_set(col->rows[i], data->rows[i] + cur_col);
          ok = _F_mpz_mat_next_col(M, P, col, worst_exp);
          if (ok != 0){
-            cexpo[r + col_cnt] = ok;
+//            cexpo[r + col_cnt] = 0;
 //         F_mpz_mat_print_pretty(M);
-            newd = LLL_heuristic_d_2exp_with_removal(M, cexpo, B);
+            newd = LLL_wrapper_with_removal(M, B);
             F_mpz_mat_resize(M, newd, M->c);
             col_cnt++;
 //         This next line is what makes it 'gradual'... could try to prove that doing the same column twice won't add another P
 //         But it's all the same
             cur_col--;
+            if (M->r > 20)
+            {
+               newd = F_mpz_mat_check_rest(M, P, col, worst_exp);
+               F_mpz_mat_resize(M, newd, M->c);               
+            }
+
             if (newd == 1){
                F_mpz_poly_factor_insert(final_fac, F, exp);
                return_me = 1;

@@ -531,6 +531,8 @@ void F_mpz_mat_resize2(F_mpz_mat_t M, ulong r, ulong c);
 */
 int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp);
 
+int F_mpz_mat_check_rest(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp);
+
 /** 
    \fn     void F_mpz_mat_row_scalar_product(F_mpz_t sp, F_mpz_mat_t mat1, ulong r1, 
                                   F_mpz_mat_t mat2, ulong r2, ulong start, ulong n)
