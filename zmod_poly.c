@@ -4856,7 +4856,8 @@ unsigned long zmod_poly_resultant_euclidean(zmod_poly_t a, zmod_poly_t b)
 	
 	if ((a->length == 0) || (b->length == 0)) return 0;
    
-   if ((a->length == 1) || (b->length == 1)) return 1;
+   if (a->length == 1) return z_powmod2_precomp(a->coeffs[0], b->length - 1, a->p, a->p_inv);
+   if (b->length == 1) return z_powmod2_precomp(b->coeffs[0], a->length - 1, a->p, a->p_inv);
 
    unsigned long p = a->p;
    double p_inv = a->p_inv;
