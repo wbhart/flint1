@@ -7558,15 +7558,16 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    F_mpz_set(lc, F->coeffs + N);
 
    ulong r = lifted_fac->num_factors;
-   ulong s = r;
+   ulong s = r; //M->r;
    F_mpz_mat_t col;
    F_mpz_mat_init(col, r, 1);
    ulong cur_col = 0;
    ulong worst_exp;
+   ulong num_entries = M->c - r;
 
    F_mpz_t B;
    F_mpz_init(B);
-   F_mpz_set_ui(B, r + 1);
+   F_mpz_set_ui(B, r + num_entries * r/2);
 //For the first run we'll only use 30 coeffs worth of data, should solve 99% of all 'random' polynomials
    ulong num_coeffs = 15UL;
    F_mpz_mat_t data;
@@ -7597,6 +7598,8 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
             F_mpz_set(col->rows[i], data->rows[i] + cur_col);
          ok = _F_mpz_mat_next_col(M, P, col, worst_exp);
          if (ok != 0){
+            num_entries++;
+            F_mpz_add_ui(B, B, r/2);
 //            cexpo[r + col_cnt] = 0;
 //         F_mpz_mat_print_pretty(M);
             newd = LLL_wrapper_with_removal(M, B);

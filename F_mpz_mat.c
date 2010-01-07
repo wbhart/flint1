@@ -1490,7 +1490,7 @@ int F_mpz_mat_check_rest(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp){
 
    F_mpz_t B;
    F_mpz_init(B);
-   F_mpz_set_ui(B, r + 1);
+   F_mpz_set_ui(B, r + r/2*(M->c - r));
 
    ulong newd;
 //Needs a stability check, at the moment this is only because of pre-running... shame
