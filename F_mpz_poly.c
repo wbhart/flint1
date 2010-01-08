@@ -7235,7 +7235,26 @@ void F_mpz_poly_factor_sq_fr_prim( F_mpz_poly_factor_t final_fac, ulong exp, F_m
    if (use_Hoeij_Novocin == 1)
    {
    //Here we can add the cool new part...
-      a = a;
+      F_mpz_t lead_b, trail_b, mid_b;
+      F_mpz_init(lead_b);
+      F_mpz_init(trail_b);
+      F_mpz_init(mid_b);
+      F_mpz_poly_CLD_bound(lead_b, f, len - 2);
+      F_mpz_poly_CLD_bound(mid_b, f, (len - 2)/2);
+      F_mpz_poly_CLD_bound(trail_b, f, 0);
+//reusing the lead_b to be the new average and trail_b to be 3 since there isn't an F_mpz_div_ui
+      F_mpz_add(lead_b, lead_b, mid_b);
+      F_mpz_add(lead_b, lead_b, trail_b);
+
+      F_mpz_set_ui(trail_b, 3);
+      F_mpz_cdiv_q(lead_b, lead_b, trail_b);
+      ulong avg_b = F_mpz_bits(lead_b);
+//Trying to get (a-b)log(p)*(len-2) = .12*r^2 where b = avg_b/log2(p)...
+      a = (ulong) (double)( 0.12 * r * r - avg_b * (len - 2) )/(double)( (len - 2) * log2((double) p) );
+
+      F_mpz_clear(lead_b);
+      F_mpz_clear(trail_b);
+      F_mpz_clear(mid_b);
    }
 
    F_mpz_poly_t v[2*r-2];
