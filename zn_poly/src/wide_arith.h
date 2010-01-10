@@ -52,8 +52,8 @@
 #define ZNP_WIDE_ARITH_H
 
 #include <limits.h>
-#include "longlong_wrapper.h"
-#include "longlong.h"
+#include "../../longlong_wrapper.h"
+#include "../../longlong.h"
 
 
 #if ULONG_MAX == 4294967295U
