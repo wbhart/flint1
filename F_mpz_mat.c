@@ -37,6 +37,7 @@
 #include "long_extras.h"
 #include "F_mpz.h"
 #include "F_mpz_mat.h"
+#include "F_mpz_LLL_wrapper.h"
 #include "mpz_mat.h"
 
 /*===============================================================================
@@ -1395,7 +1396,7 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp){
    double no_vec_check = (double) F_mpz_bits(temp) - (1 + log2(S) + mbts); 
    F_mpz_clear(temp);
    int no_vec = (no_vec_check > 0.0);
-   ulong prec = 4UL; // M->r;
+   ulong prec = 1UL; // M->r;
    ulong take_away;
 //at the moment this is an int because cexpo in 'fast' LLL only allows ints, later it could be a long for heuristic LLL (but not really). 
    int virt_exp;
@@ -1434,6 +1435,86 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp){
    F_mpz_mat_clear(temp_col);
    F_mpz_mat_clear(U);
    return virt_exp;
+}
+
+
+int F_mpz_mat_check_rest(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp){
+//Alright here we are given the same column we just ran with, last time we used col->r + col->r / 2 bits, here we want to toss in some more to see if we can get enough in there to make the later Gram-Schmidt lengths get large without upsetting the stability of the G-S computation... If we can do this cheaply its beter than running LLL at full size.  We'll return the new dimension with our findings or -1 which means that there's enough new here to just run with it... 
+   ulong r = col->r;
+   ulong extra = 25;
+   ulong i;
+   ulong pos;
+
+   F_mpz_mat_t U;
+   F_mpz_mat_init(U,0,0);
+   F_mpz_mat_get_U(U, M, r);
+
+   F_mpz_mat_t store_col, temp_col;
+   F_mpz_mat_init(temp_col, M->r, 1);
+   F_mpz_mat_init(store_col, M->r, 1);
+
+
+   F_mpz_mat_mul_classical(temp_col, U, col);
+   F_mpz_mat_smod(temp_col, temp_col, P);
+   long mbts = FLINT_ABS(F_mpz_mat_max_bits2( &pos, temp_col));
+
+   if (mbts < exp)
+   {
+      F_mpz_mat_clear(U);
+      F_mpz_mat_clear(temp_col);
+      F_mpz_mat_clear(store_col);
+      return M->r;      
+   }
+
+   ulong take_away;
+   take_away = FLINT_MAX(F_mpz_bits(P) - r - r/2 -extra, exp);
+//   take_away = exp;
+
+//Ok going to take the data minus the bottom exp (might change to be less if unstable) bits (so should be zero for true factors)
+//Making a new column we will temporarily replace the last column of M with this data and run G_S
+//Will need a G-S stability test, see if any NaNs popped up or something like that.
+
+   F_mpz_mat_t trunc_col;
+   F_mpz_mat_init(trunc_col, r, 1);
+   F_mpz_mat_scalar_div_2exp(trunc_col, col, take_away);
+   F_mpz_mat_mul_classical(temp_col, U, trunc_col);
+   F_mpz_t trunc_P;
+   F_mpz_init(trunc_P);
+   F_mpz_div_2exp(trunc_P, P, take_away);
+   F_mpz_mat_smod(temp_col, temp_col, trunc_P);
+   for( i = 0; i < M->r; i++)
+   {
+      F_mpz_set( store_col->rows[i],  M->rows[i] + M->c - 1);
+      F_mpz_set( M->rows[i] + M->c - 1 , temp_col->rows[i]);
+   }
+
+   F_mpz_t B;
+   F_mpz_init(B);
+   F_mpz_set_ui(B, r + r/2*(M->c - r));
+
+   ulong newd;
+//Needs a stability check, at the moment this is only because of pre-running... shame
+   newd = F_mpz_mat_gs_d(M, B);
+
+   F_mpz_clear(B);
+
+   for( i = 0; i < M->r; i++)
+   {
+      F_mpz_set(M->rows[i] + M->c - 1, store_col->rows[i]);
+   }
+
+   F_mpz_mat_clear(trunc_col);
+   F_mpz_clear(trunc_P);
+   F_mpz_mat_clear(U);
+   F_mpz_mat_clear(temp_col);
+   F_mpz_mat_clear(store_col);
+   if (newd > 4)
+   {
+      printf(" got rid of some extras! newd = %ld\n",newd);
+      return newd;
+   }
+   else
+      return M->r;
 }
 
 void F_mpz_mat_row_scalar_product(F_mpz_t sp, F_mpz_mat_t mat1, ulong r1, 

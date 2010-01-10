@@ -244,7 +244,6 @@ int test_F_mpz_poly_add()
    }
    
 	// test aliasing of res and poly1
-	ulong count1;
 	for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);

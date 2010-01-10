@@ -112,6 +112,13 @@ int LLL_d_zero_vec_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B);
 
 int LLL_wrapper_zero_vec_with_removal(F_mpz_mat_t B, F_mpz_t gs_B);
 
+ulong F_mpz_mat_gs_d( F_mpz_mat_t B, F_mpz_t gs_B);
+
+void gs_Babai(int kappa, F_mpz_mat_t B, double **mu, double **r, double *s, 
+       double **appB, int *expo, double **appSP, 
+       int a, int zeros, int kappamax, int n);
+
+
 #ifdef __cplusplus
  }
 #endif

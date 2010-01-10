@@ -45,9 +45,10 @@
 #include "ZmodF_poly.h"
 #include "long_extras.h"
 #include "zmod_poly.h"
+#include "F_mpz_mod_poly.h"
 #include "F_mpz_mat.h"
 #include "F_mpz_LLL_fast_d.h"
-#include "F_mpz_LLL_heuristic_mpfr.h"
+#include "F_mpz_LLL_wrapper.h"
 
 /*===============================================================================
 
@@ -6406,13 +6407,15 @@ void F_mpz_poly_squarefree(F_mpz_poly_factor_t fac, F_mpz_t content, F_mpz_poly_
    return;
 }
 
+
 /*****************************************************************************
 
-   NTL Hensel Lifting procedures
+   NTL based Hensel Lifting procedures using F_mpz_mod_polys
 
 *****************************************************************************/
 
-void _Build_Hensel_Tree(long *link, F_mpz_poly_t *v, F_mpz_poly_t *w, zmod_poly_factor_t fac){
+void F_mpz_poly_build_hensel_tree(long *link, F_mpz_poly_t *v, F_mpz_poly_t *w, zmod_poly_factor_t fac)
+{
 
    long r;
    unsigned long p;
@@ -6435,16 +6438,20 @@ void _Build_Hensel_Tree(long *link, F_mpz_poly_t *v, F_mpz_poly_t *w, zmod_poly_
 
 /* We will have five arrays: a v of fmpz_polys and a V of zmod_polys also a w and a W and link.  Here's the idea, we will sort each leaf and node of a factor tree by degree, in fact choosing to multiply the two smallest factors, then the next two smallest (factors or products) until a tree is made.  The tree will be stored in the v's.  The first two elements of v will be the smallest modular factors, the last two elements of v will multiply to form F itself.  Since v will be rearranging the original factors we will need to be able to recover the original order.  For this we use link which has nonnegative even numbers and negative numbers.  Link is an array of longs which aligns with V/v  if link has a negative number in spot j that means V[j] is an original modular factor which has been lifted, if link[j] is a nonnegative even number then V[j] stores a product of the two entries at V[ link[j] ] and V[ link[j]+1 ].  W/w plays the role of the extended GCD, at V[0], V[2], V[4], etc we have a new product, W[0], W[2], W[4], etc are the XGCD compliments of the V's.  So V[0]*W[0]+V[1]*W[1] = 1 mod p^(something)  these will be lifted along with the entries in V.  It's not enough to just lift each factor we have to lift the entire tree and the tree of XGCD inverses.*/
 
-   for (i = 0; i < r; i++){
+   for (i = 0; i < r; i++)
+   {
       zmod_poly_set(V[i], fac->factors[i]);
       link[i] = -(i+1);
    }
 
-   for (j = 0; j < 2*r - 4; j += 2){
+   for (j = 0; j < 2*r - 4; j += 2)
+   {
       minp = j;
       mind = zmod_poly_degree(V[j]);
-      for (s = j+1; s < i; s++){
-         if (zmod_poly_degree(V[s]) < mind){
+      for (s = j+1; s < i; s++)
+      {
+         if (zmod_poly_degree(V[s]) < mind)
+         {
             minp = s;
             mind = zmod_poly_degree(V[s]);
          }
@@ -6459,8 +6466,10 @@ void _Build_Hensel_Tree(long *link, F_mpz_poly_t *v, F_mpz_poly_t *w, zmod_poly_
       minp = j+1;
       mind = zmod_poly_degree(V[j+1]);
 
-      for ( s = j+2; s < i; s++){
-         if (zmod_poly_degree(V[s]) < mind ){
+      for ( s = j+2; s < i; s++)
+      {
+         if (zmod_poly_degree(V[s]) < mind )
+         {
             minp = s;
             mind = zmod_poly_degree(V[s]);
          }
@@ -6479,11 +6488,13 @@ void _Build_Hensel_Tree(long *link, F_mpz_poly_t *v, F_mpz_poly_t *w, zmod_poly_
    }
    zmod_poly_t d;
    zmod_poly_init(d, p);
-   for (j = 0; j < 2*r - 2; j += 2){
-      zmod_poly_xgcd_euclidean(d, W[j], W[j+1], V[j], V[j+1]);
+   for (j = 0; j < 2*r - 2; j += 2)
+   {
+      zmod_poly_xgcd(d, W[j], W[j+1], V[j], V[j+1]);
       //Make a check for d!=1
    }
-   for (j = 0; j < 2*r-2; j++){
+   for (j = 0; j < 2*r-2; j++)
+   {
       zmod_poly_to_F_mpz_poly(v[j], V[j]);
       zmod_poly_to_F_mpz_poly(w[j], W[j]);
    }
@@ -6494,7 +6505,8 @@ void _Build_Hensel_Tree(long *link, F_mpz_poly_t *v, F_mpz_poly_t *w, zmod_poly_
    zmod_poly_clear(d);
 }
 
-void _Hensel_Lift(F_mpz_poly_t Gout, F_mpz_poly_t Hout, F_mpz_poly_t Aout, F_mpz_poly_t Bout, F_mpz_poly_t f, F_mpz_poly_t g, F_mpz_poly_t h, F_mpz_poly_t a, F_mpz_poly_t b, F_mpz_t p, F_mpz_t p1){
+void F_mpz_poly_hensel_lift(F_mpz_poly_t Gout, F_mpz_poly_t Hout, F_mpz_poly_t Aout, F_mpz_poly_t Bout, F_mpz_poly_t f, F_mpz_poly_t g, F_mpz_poly_t h, F_mpz_poly_t a, F_mpz_poly_t b, F_mpz_t p, F_mpz_t p1, F_mpz_t big_P)
+{
 
    F_mpz_poly_t c, g1, h1, G, H, A, B;
    F_mpz_poly_init(c);
@@ -6506,25 +6518,38 @@ void _Hensel_Lift(F_mpz_poly_t Gout, F_mpz_poly_t Hout, F_mpz_poly_t Aout, F_mpz
    F_mpz_poly_init(B);
 
    F_mpz_poly_mul(c, g, h);
-
    F_mpz_poly_sub(c, f, c);
-
    F_mpz_poly_scalar_div_exact(c, c, p);
+
    //Make a check that c is divisible by p
+   F_mpz_mod_poly_t cc, gg, hh, aa, bb, tt, gg1, hh1;
+   F_mpz_mod_poly_init(cc, p1);
+   F_mpz_mod_poly_init(gg, p1);
+   F_mpz_mod_poly_init(hh, p1);
+   F_mpz_mod_poly_init(aa, p1);
+   F_mpz_mod_poly_init(bb, p1);
+   F_mpz_mod_poly_init(tt, p1);
+   F_mpz_mod_poly_init(gg1, p1);
+   F_mpz_mod_poly_init(hh1, p1);
+
+   F_mpz_poly_to_F_mpz_mod_poly(cc, c);
+   F_mpz_poly_to_F_mpz_mod_poly(gg, g);
+   F_mpz_poly_to_F_mpz_mod_poly(hh, h);
+   F_mpz_poly_to_F_mpz_mod_poly(aa, a);
+   F_mpz_poly_to_F_mpz_mod_poly(bb, b);
 
 //When I make a precomputing function use GG, HH instead
 
-   F_mpz_poly_t R;
-   F_mpz_poly_init(R);
+   F_mpz_mod_poly_rem(gg1, cc, gg);
+   F_mpz_mod_poly_mulmod(gg1, gg1, bb, gg);
 
-   F_mpz_poly_rem_modp_naive(R, c, h, p1);
-   F_mpz_poly_mulmod_modp_naive(h1, R, a, h, p1);
-   F_mpz_poly_rem_modp_naive(R, c, g, p1);
-   F_mpz_poly_mulmod_modp_naive(g1, R, b, g, p1);
-//   F_mpz_poly_smod(g1, g1, p1);
-//   F_mpz_poly_smod(h1, h1, p1);
+   F_mpz_mod_poly_rem(hh1, cc, hh);
+   F_mpz_mod_poly_mulmod(hh1, hh1, aa, hh);
 
+   F_mpz_mod_poly_to_F_mpz_poly(g1, gg1);
    F_mpz_poly_scalar_mul(g1, g1, p);
+
+   F_mpz_mod_poly_to_F_mpz_poly(h1, hh1);
    F_mpz_poly_scalar_mul(h1, h1, p);
 
    F_mpz_poly_add(G, g, g1);
@@ -6532,11 +6557,12 @@ void _Hensel_Lift(F_mpz_poly_t Gout, F_mpz_poly_t Hout, F_mpz_poly_t Aout, F_mpz
    
 //Lifting the inverses now
 
-   F_mpz_poly_t a1, b1, t1, t2, unity;
+   F_mpz_poly_t a1, b1, t1, t2, r, unity;
    F_mpz_poly_init(a1);
    F_mpz_poly_init(b1);
    F_mpz_poly_init(t1);
    F_mpz_poly_init(t2);
+   F_mpz_poly_init(r);
    F_mpz_poly_init(unity);
 
    F_mpz_poly_set_coeff_si(unity, 0, -1);
@@ -6548,20 +6574,26 @@ void _Hensel_Lift(F_mpz_poly_t Gout, F_mpz_poly_t Hout, F_mpz_poly_t Aout, F_mpz
    F_mpz_poly_add(t1, t1, unity);
    F_mpz_poly_neg(t1, t1);
 
-   F_mpz_poly_scalar_div_exact(t1, t1, p);
+   F_mpz_poly_scalar_div_exact(r, t1, p);
 //Make a check that t1 is divisible by p
+   F_mpz_mod_poly_t rr, aa1, bb1;
+   F_mpz_mod_poly_init(rr, p1);
+   F_mpz_mod_poly_init(aa1, p1);
+   F_mpz_mod_poly_init(bb1, p1);
 
-   F_mpz_poly_rem_modp_naive(R, t1, h, p1);
-   F_mpz_poly_mulmod_modp_naive(a1, R, a, h, p1);
-   F_mpz_poly_rem_modp_naive(R, t1, g, p1);
-   F_mpz_poly_mulmod_modp_naive(b1, R, b, g, p1);
-   F_mpz_poly_clear(R);
-//   F_mpz_poly_smod(b1, b1, p1);
-//   F_mpz_poly_smod(a1, a1, p1);
+   F_mpz_poly_to_F_mpz_mod_poly(rr, r);
 
+   F_mpz_mod_poly_rem(bb1, rr, gg);
+   F_mpz_mod_poly_mulmod(bb1, bb1, bb, gg);
+
+   F_mpz_mod_poly_rem(aa1, rr, hh);
+   F_mpz_mod_poly_mulmod(aa1, aa1, aa, hh);   
+
+   F_mpz_mod_poly_to_F_mpz_poly(a1, aa1);
    F_mpz_poly_scalar_mul(a1, a1, p);
    F_mpz_poly_add(A, a, a1);
 
+   F_mpz_mod_poly_to_F_mpz_poly(b1, bb1);
    F_mpz_poly_scalar_mul(b1, b1, p);
    F_mpz_poly_add(B, b, b1);
 
@@ -6570,11 +6602,25 @@ void _Hensel_Lift(F_mpz_poly_t Gout, F_mpz_poly_t Hout, F_mpz_poly_t Aout, F_mpz
    F_mpz_poly_set(Aout, A);
    F_mpz_poly_set(Bout, B);
 
+   F_mpz_mod_poly_clear(rr);
+   F_mpz_mod_poly_clear(aa1);
+   F_mpz_mod_poly_clear(bb1);
+
    F_mpz_poly_clear(a1);
    F_mpz_poly_clear(b1);
    F_mpz_poly_clear(t1);
    F_mpz_poly_clear(t2);
+   F_mpz_poly_clear(r);
    F_mpz_poly_clear(unity);
+
+   F_mpz_mod_poly_clear(cc);
+   F_mpz_mod_poly_clear(gg);
+   F_mpz_mod_poly_clear(hh);
+   F_mpz_mod_poly_clear(aa);
+   F_mpz_mod_poly_clear(bb);
+   F_mpz_mod_poly_clear(tt);
+   F_mpz_mod_poly_clear(gg1);
+   F_mpz_mod_poly_clear(hh1);
 
    F_mpz_poly_clear(c);
    F_mpz_poly_clear(g1);
@@ -6585,20 +6631,175 @@ void _Hensel_Lift(F_mpz_poly_t Gout, F_mpz_poly_t Hout, F_mpz_poly_t Aout, F_mpz
    F_mpz_poly_clear(B);
 }
 
-void _Rec_Tree_Hensel_Lift(long *link, F_mpz_poly_t *v, F_mpz_poly_t *w, F_mpz_t p, F_mpz_poly_t f, long j, long inv, F_mpz_t p1){
+void F_mpz_poly_hensel_lift_without_inverse(F_mpz_poly_t Gout, F_mpz_poly_t Hout, F_mpz_poly_t f, F_mpz_poly_t g, F_mpz_poly_t h, F_mpz_poly_t a, F_mpz_poly_t b, F_mpz_t p, F_mpz_t p1, F_mpz_t big_P)
+{
+
+   F_mpz_poly_t c, g1, h1, G, H;
+   F_mpz_poly_init(c);
+   F_mpz_poly_init(g1);
+   F_mpz_poly_init(h1);
+   F_mpz_poly_init(G);
+   F_mpz_poly_init(H);
+
+   F_mpz_poly_mul(c, g, h);
+   F_mpz_poly_sub(c, f, c);
+   F_mpz_poly_scalar_div_exact(c, c, p);
+
+   F_mpz_mod_poly_t cc, gg, hh, aa, bb, tt, gg1, hh1;
+   F_mpz_mod_poly_init(cc, p1);
+   F_mpz_mod_poly_init(gg, p1);
+   F_mpz_mod_poly_init(hh, p1);
+   F_mpz_mod_poly_init(aa, p1);
+   F_mpz_mod_poly_init(bb, p1);
+   F_mpz_mod_poly_init(tt, p1);
+   F_mpz_mod_poly_init(gg1, p1);
+   F_mpz_mod_poly_init(hh1, p1);
+
+   F_mpz_poly_to_F_mpz_mod_poly(cc, c);
+   F_mpz_poly_to_F_mpz_mod_poly(gg, g);
+   F_mpz_poly_to_F_mpz_mod_poly(hh, h);
+   F_mpz_poly_to_F_mpz_mod_poly(aa, a);
+   F_mpz_poly_to_F_mpz_mod_poly(bb, b);
+
+   F_mpz_mod_poly_rem(gg1, cc, gg);
+   F_mpz_mod_poly_mulmod(gg1, gg1, bb, gg);
+
+   F_mpz_mod_poly_rem(hh1, cc, hh);
+   F_mpz_mod_poly_mulmod(hh1, hh1, aa, hh);
+
+   F_mpz_mod_poly_to_F_mpz_poly(g1, gg1);
+   F_mpz_poly_scalar_mul(g1, g1, p);
+
+   F_mpz_mod_poly_to_F_mpz_poly(h1, hh1);
+   F_mpz_poly_scalar_mul(h1, h1, p);
+
+   F_mpz_poly_add(G, g, g1);
+   F_mpz_poly_add(H, h, h1);
+   
+   F_mpz_poly_set(Gout, G);
+   F_mpz_poly_set(Hout, H);
+
+   F_mpz_mod_poly_clear(cc);
+   F_mpz_mod_poly_clear(gg);
+   F_mpz_mod_poly_clear(hh);
+   F_mpz_mod_poly_clear(aa);
+   F_mpz_mod_poly_clear(bb);
+   F_mpz_mod_poly_clear(tt);
+   F_mpz_mod_poly_clear(gg1);
+   F_mpz_mod_poly_clear(hh1);
+
+   F_mpz_poly_clear(c);
+   F_mpz_poly_clear(g1);
+   F_mpz_poly_clear(h1);
+   F_mpz_poly_clear(G);
+   F_mpz_poly_clear(H);
+}
+
+void F_mpz_poly_hensel_lift_only_inverse(F_mpz_poly_t Aout, F_mpz_poly_t Bout, F_mpz_poly_t f, F_mpz_poly_t G, F_mpz_poly_t H, F_mpz_poly_t a, F_mpz_poly_t b, F_mpz_t p, F_mpz_t p1, F_mpz_t big_P)
+{
+
+   F_mpz_poly_t A, B;
+   F_mpz_poly_init(A);
+   F_mpz_poly_init(B);
+
+   F_mpz_poly_t a1, b1, t1, t2, r, unity;
+   F_mpz_poly_init(a1);
+   F_mpz_poly_init(b1);
+   F_mpz_poly_init(t1);
+   F_mpz_poly_init(t2);
+   F_mpz_poly_init(r);
+   F_mpz_poly_init(unity);
+
+   //Make a check that c is divisible by p
+   F_mpz_mod_poly_t gg, hh, aa, bb, g, h;
+   F_mpz_mod_poly_init(gg, p1);
+   F_mpz_mod_poly_init(hh, p1);
+   F_mpz_mod_poly_init(g, p);
+   F_mpz_mod_poly_init(h, p);
+   F_mpz_mod_poly_init(aa, p1);
+   F_mpz_mod_poly_init(bb, p1);
+
+   F_mpz_mod_poly_t rr, aa1, bb1;
+   F_mpz_mod_poly_init(rr, p1);
+   F_mpz_mod_poly_init(aa1, p1);
+   F_mpz_mod_poly_init(bb1, p1);
+
+   F_mpz_poly_to_F_mpz_mod_poly(g, G);//reduce mod p
+   F_mpz_poly_to_F_mpz_mod_poly(h, H);//reduce mod p
+   F_mpz_mod_poly_set(gg, g);//embed mod p1
+   F_mpz_mod_poly_set(hh, h);//embed mod p1
+   F_mpz_poly_to_F_mpz_mod_poly(aa, a);
+   F_mpz_poly_to_F_mpz_mod_poly(bb, b);
+//Lifting the inverses now
+   F_mpz_poly_set_coeff_si(unity, 0, -1);
+   F_mpz_poly_mul(t1, a, G);
+   F_mpz_poly_mul(t2, b, H);
+
+   F_mpz_poly_add(t1, t1, t2);
+   F_mpz_poly_add(t1, t1, unity);
+   F_mpz_poly_neg(t1, t1);
+
+   F_mpz_poly_scalar_div_exact(r, t1, p);
+   F_mpz_poly_to_F_mpz_mod_poly(rr, r);
+
+   F_mpz_mod_poly_rem(bb1, rr, gg);
+   F_mpz_mod_poly_mulmod(bb1, bb1, bb, gg);
+
+   F_mpz_mod_poly_rem(aa1, rr, hh);
+   F_mpz_mod_poly_mulmod(aa1, aa1, aa, hh);   
+
+   F_mpz_mod_poly_to_F_mpz_poly(a1, aa1);
+   F_mpz_poly_scalar_mul(a1, a1, p);
+   F_mpz_poly_add(A, a, a1);
+
+   F_mpz_mod_poly_to_F_mpz_poly(b1, bb1);
+   F_mpz_poly_scalar_mul(b1, b1, p);
+   F_mpz_poly_add(B, b, b1);
+
+   F_mpz_poly_set(Aout, A);
+   F_mpz_poly_set(Bout, B);
+
+   F_mpz_mod_poly_clear(rr);
+   F_mpz_mod_poly_clear(aa1);
+   F_mpz_mod_poly_clear(bb1);
+
+   F_mpz_poly_clear(a1);
+   F_mpz_poly_clear(b1);
+   F_mpz_poly_clear(t1);
+   F_mpz_poly_clear(t2);
+   F_mpz_poly_clear(r);
+   F_mpz_poly_clear(unity);
+
+   F_mpz_mod_poly_clear(gg);
+   F_mpz_mod_poly_clear(hh);
+   F_mpz_mod_poly_clear(aa);
+   F_mpz_mod_poly_clear(bb);
+   F_mpz_mod_poly_clear(g);
+   F_mpz_mod_poly_clear(h);
+
+   F_mpz_poly_clear(A);
+   F_mpz_poly_clear(B);
+}
+
+void F_mpz_poly_rec_tree_hensel_lift(long *link, F_mpz_poly_t *v, F_mpz_poly_t *w, F_mpz_t p, F_mpz_poly_t f, long j, long inv, F_mpz_t p1, F_mpz_t big_P)
+{
 
    if (j < 0) return;
 
-   if (inv)
-      _Hensel_Lift(v[j], v[j+1], w[j], w[j+1], f, v[j], v[j+1], w[j], w[j+1], p, p1);
-//   else
-//      _Hensel_Lift1(v[j], v[j+1], f, v[j], v[j+1], w[j], w[j+1], p, p1);
+   if (inv == 1)
+      F_mpz_poly_hensel_lift(v[j], v[j+1], w[j], w[j+1], f, v[j], v[j+1], w[j], w[j+1], p, p1, big_P);
+   else if (inv == -1)
+      F_mpz_poly_hensel_lift_only_inverse(w[j], w[j+1], f, v[j], v[j+1], w[j], w[j+1], p, p1, big_P);
+   else
+      F_mpz_poly_hensel_lift_without_inverse(v[j], v[j+1], f, v[j], v[j+1], w[j], w[j+1], p, p1, big_P);
+   
 //altered to check a bug, should be Hensel_Lift1
-   _Rec_Tree_Hensel_Lift(link, v, w, p, v[j],   link[j],   inv, p1);
-   _Rec_Tree_Hensel_Lift(link, v, w, p, v[j+1], link[j+1], inv, p1);
+   F_mpz_poly_rec_tree_hensel_lift(link, v, w, p, v[j],   link[j],   inv, p1, big_P);
+   F_mpz_poly_rec_tree_hensel_lift(link, v, w, p, v[j+1], link[j+1], inv, p1, big_P);
 }
 
-void _Tree_Hensel_Lift(long *link, F_mpz_poly_t *v, F_mpz_poly_t *w, long e0, long e1, F_mpz_poly_t f, long inv, long p, long r, F_mpz_t P){
+void F_mpz_poly_tree_hensel_lift(long *link, F_mpz_poly_t *v, F_mpz_poly_t *w, long e0, long e1, F_mpz_poly_t monic_f, long inv, long p, long r, F_mpz_t P)
+{
 
    F_mpz_t temp, p0, p1;
    F_mpz_init(p0);
@@ -6610,14 +6811,222 @@ void _Tree_Hensel_Lift(long *link, F_mpz_poly_t *v, F_mpz_poly_t *w, long e0, lo
    F_mpz_pow_ui(p0, temp, e0);
    F_mpz_pow_ui(p1, temp, e1 - e0);
 
-   _Rec_Tree_Hensel_Lift(link, v, w, p0, f, 2*r-4, inv, p1);
-
    F_mpz_mul2(P, p0, p1);
+
+   F_mpz_poly_rec_tree_hensel_lift(link, v, w, p0, monic_f, 2*r-4, inv, p1, P);
 
    F_mpz_clear(temp);
    F_mpz_clear(p0);
    F_mpz_clear(p1);
 
+}
+
+
+/*
+   This behemoth is going to take the local factors (in local_fac) and Hensel lift them until they are known mod p^target_exp.  These lifted factors will be stored (in the same ordering) in lifted_fac.  It is assumed that link, v, and w are initialized arrays of F_mpz_poly_t's with at least 2*r - 2 entries and that r >= 2. These are done outside of this function so that you can keep them for restarting Hensel lifting later.
+*/
+
+ulong _F_mpz_poly_start_hensel_lift(F_mpz_poly_factor_t lifted_fac, long * link, F_mpz_poly_t * v, F_mpz_poly_t * w, F_mpz_poly_t f, zmod_poly_factor_t local_fac, ulong target_exp)
+{
+   ulong r = local_fac->num_factors;
+   ulong p = (local_fac->factors[0])->p;
+   ulong i;
+   F_mpz_t P, big_P, temp;
+   F_mpz_init(temp);
+   F_mpz_init(P);
+   F_mpz_init(big_P);
+
+   F_mpz_set_ui(P, p);
+
+   F_mpz_poly_build_hensel_tree(link, v, w, local_fac);
+
+   ulong current_exp = 1;
+
+   F_mpz_poly_t monic_f;
+   F_mpz_poly_init(monic_f);
+   F_mpz_pow_ui(big_P, P, target_exp);
+
+   if (F_mpz_is_one(f->coeffs + f->length - 1))
+   {
+      F_mpz_poly_set(monic_f, f);
+   }
+   else if (F_mpz_is_m1(f->coeffs + f->length - 1))
+   {
+      F_mpz_poly_neg(monic_f, f);
+   }
+   else
+   {
+      F_mpz_mod(temp, f->coeffs + f->length - 1, big_P);
+      int OK = F_mpz_invert(temp, temp, big_P);
+      if (OK == 0)
+      {
+         printf(" some problem\n");
+         abort();
+      }
+      F_mpz_poly_scalar_mul(monic_f, f, temp);
+      F_mpz_poly_smod(monic_f, monic_f, big_P);
+   }
+//later we're going to fine tune this powering process, in the meantime I want to have an array of exponents which we walk through
+   ulong num_steps = 2 + (ulong) floor( log2( (double) (target_exp) ) );
+   ulong exponents[num_steps];
+   ulong pow = 1;
+   for (i = 0; (i < num_steps) && (pow < target_exp); i++)
+   { 
+      exponents[i] = pow;
+      pow = pow * 2;
+   }
+   num_steps = i;
+   if (exponents[num_steps - 1] != target_exp ){
+      exponents[num_steps] = target_exp;
+      num_steps++;
+   }
+//here num_steps is actually the number of meaningful numbers in the array exponent so num_steps-2 means that the final time in the loop has 1 and one last
+//time outside of the loop with 0
+
+   for (i = 0; i < num_steps - 2; i++){
+      F_mpz_poly_tree_hensel_lift(link, v, w, exponents[i], exponents[i+1], monic_f, 1, p, r, P);
+   }
+//Last run doesn't calculate the inverses
+   F_mpz_poly_tree_hensel_lift(link, v, w, exponents[i], exponents[i+1], monic_f, 0, p, r, P);
+
+   ulong prev_exp = exponents[i];
+
+   F_mpz_poly_clear(monic_f);
+//Now everything is lifted to p^target_exp just need to insert the factors into their correct places in lifted_fac.
+   if (r > lifted_fac->alloc)
+   {
+      lifted_fac->factors = (F_mpz_poly_t *) flint_heap_realloc_bytes(lifted_fac->factors, sizeof(F_mpz_poly_t)*r);
+      lifted_fac->exponents = (unsigned long *) flint_heap_realloc(lifted_fac->exponents, r);
+      for (unsigned long i = lifted_fac->alloc; i < r; i++)
+         F_mpz_poly_init(lifted_fac->factors[i]);
+      lifted_fac->alloc = r;
+   }
+
+   for(i = 0; i < 2*r -2; i++){ 
+      if (link[i] < 0){
+//        Want to get F_mpz_mod_poly and want it to be smodded by P 
+         F_mpz_poly_smod(lifted_fac->factors[-link[i]-1], v[i], P);
+         lifted_fac->exponents[-link[i]-1] = 1L; 
+      }
+   }
+   lifted_fac->num_factors = r;
+
+   F_mpz_clear(temp);
+   F_mpz_clear(big_P);
+   F_mpz_clear(P);
+
+   return prev_exp;
+}
+
+ulong _F_mpz_poly_continue_hensel_lift(F_mpz_poly_factor_t lifted_fac, long * link, F_mpz_poly_t * v, F_mpz_poly_t * w, F_mpz_poly_t f, ulong prev_exp, ulong current_exp, ulong target_exp, ulong p, ulong r)
+{
+   ulong i;
+   F_mpz_t P, big_P, temp;
+   F_mpz_init(temp);
+   F_mpz_init(P);
+   F_mpz_init(big_P);
+
+   F_mpz_set_ui(P, p);
+
+   F_mpz_poly_t monic_f;
+   F_mpz_poly_init(monic_f);
+   F_mpz_pow_ui(big_P, P, target_exp);
+
+   if (F_mpz_is_one(f->coeffs + f->length - 1))
+   {
+      F_mpz_poly_set(monic_f, f);
+   }
+   else if (F_mpz_is_m1(f->coeffs + f->length - 1))
+   {
+      F_mpz_poly_neg(monic_f, f);
+   }
+   else
+   {
+      F_mpz_mod(temp, f->coeffs + f->length - 1, big_P);
+      int OK = F_mpz_invert(temp, temp, big_P);
+      if (OK == 0)
+      {
+         printf(" some problem\n");
+         abort();
+      }
+      F_mpz_poly_scalar_mul(monic_f, f, temp);
+//Note that this and one other smod could really be mod or scalar_mod once one of those exists
+      F_mpz_poly_smod(monic_f, monic_f, big_P);
+   }
+//later we're going to fine tune this powering process, in the meantime I want to have an array of exponents which we walk through
+//NEEDS SOME CHECKING!!!
+   ulong num_steps = 2 + (ulong) floor( log2( (double) (target_exp) - (double) prev_exp ) );
+   ulong exponents[num_steps];
+   ulong pow = current_exp;
+   exponents[0] = prev_exp;
+   for (i = 1; (i < num_steps) && (pow < target_exp); i++)
+   { 
+      exponents[i] = pow;
+      pow = pow * 2;
+   }
+   num_steps = i;
+   if (exponents[num_steps - 1] != target_exp ){
+      exponents[num_steps] = target_exp;
+      num_steps++;
+   }
+//here num_steps is actually the number of meaningful numbers in the array exponent so num_steps-2 means that the final time in the loop has 1 and one last
+//time outside of the loop with 0
+
+   F_mpz_poly_tree_hensel_lift(link, v, w, exponents[0], exponents[1], monic_f, -1, p, r, P);
+   for (i = 1; i < num_steps - 2; i++){
+      F_mpz_poly_tree_hensel_lift(link, v, w, exponents[i], exponents[i+1], monic_f, 1, p, r, P);
+   }
+//Last run doesn't calculate the inverses
+   F_mpz_poly_tree_hensel_lift(link, v, w, exponents[i], exponents[i+1], monic_f, 0, p, r, P);
+
+   ulong new_prev_exp = exponents[i];
+
+   F_mpz_poly_clear(monic_f);
+//Now everything is lifted to p^target_exp just need to insert the factors into their correct places in lifted_fac.
+   if (r > lifted_fac->alloc)
+   {
+      lifted_fac->factors = (F_mpz_poly_t *) flint_heap_realloc_bytes(lifted_fac->factors, sizeof(F_mpz_poly_t)*r);
+      lifted_fac->exponents = (unsigned long *) flint_heap_realloc(lifted_fac->exponents, r);
+      for (unsigned long i = lifted_fac->alloc; i < r; i++)
+         F_mpz_poly_init(lifted_fac->factors[i]);
+      lifted_fac->alloc = r;
+   }
+
+   for(i = 0; i < 2*r -2; i++){ 
+      if (link[i] < 0){
+//        Want to get F_mpz_mod_poly and want it to be smodded by P 
+         F_mpz_poly_smod(lifted_fac->factors[-link[i]-1], v[i], P);
+         lifted_fac->exponents[-link[i]-1] = 1L; 
+      }
+   }
+   lifted_fac->num_factors = r;
+
+   F_mpz_clear(temp);
+   F_mpz_clear(big_P);
+   F_mpz_clear(P);
+   return new_prev_exp;
+}
+
+void F_mpz_poly_hensel_lift_once( F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, zmod_poly_factor_t local_fac, ulong target_exp)
+{
+   ulong r = local_fac->num_factors;
+
+   F_mpz_poly_t v[2*r-2];
+   F_mpz_poly_t w[2*r-2];   
+   long link[2*r-2];
+
+   for(long i = 0; i < 2*r - 2; i++)
+   {
+      F_mpz_poly_init(v[i]);
+      F_mpz_poly_init(w[i]);
+   }
+
+   ulong trash = _F_mpz_poly_start_hensel_lift(lifted_fac, link, v, w, F, local_fac, target_exp);
+
+   for (long i = 0; i < 2*r-2; i++){
+      F_mpz_poly_clear(v[i]);
+      F_mpz_poly_clear(w[i]);
+   }
 }
 
 /***************************************************
@@ -6784,7 +7193,9 @@ void F_mpz_poly_factor_sq_fr_prim( F_mpz_poly_factor_t final_fac, ulong exp, F_m
 
    int use_Hoeij_Novocin = 0;
    int solved_yet = 0;
-   int mexpo[r + 2 * (f->length - 1)];
+//doing away with mexpo for a while, might bring it back... don't forget intialization too
+   int mexpo[4];
+//   int mexpo[r + 2 * (f->length - 1)];
    F_mpz_mat_t M;
 
    if (r > 180){
@@ -6797,7 +7208,7 @@ void F_mpz_poly_factor_sq_fr_prim( F_mpz_poly_factor_t final_fac, ulong exp, F_m
       use_Hoeij_Novocin = 1;
       F_mpz_mat_init_identity(M, r);
       ulong i;
-      for (i = 0; i < M->c; i++)
+      for (i = 0; i < 4; i++)
          mexpo[i] = 0;
    }
    if (r == 0){
@@ -6821,28 +7232,41 @@ void F_mpz_poly_factor_sq_fr_prim( F_mpz_poly_factor_t final_fac, ulong exp, F_m
    a = (long) ceil( (double) M_bits / log2( (double)p ) );
    a = (long) pow( (double) 2, ceil( log2( (double) a ) ) );
 
+   if (use_Hoeij_Novocin == 1)
+   {
+   //Here we can add the cool new part...
+      F_mpz_t lead_b, trail_b, mid_b;
+      F_mpz_init(lead_b);
+      F_mpz_init(trail_b);
+      F_mpz_init(mid_b);
+      F_mpz_poly_CLD_bound(lead_b, f, len - 2);
+      F_mpz_poly_CLD_bound(mid_b, f, (len - 2)/2);
+      F_mpz_poly_CLD_bound(trail_b, f, 0);
+//reusing the lead_b to be the new average and trail_b to be 3 since there isn't an F_mpz_div_ui
+      F_mpz_add(lead_b, lead_b, mid_b);
+      F_mpz_add(lead_b, lead_b, trail_b);
+
+      F_mpz_set_ui(trail_b, 3);
+      F_mpz_cdiv_q(lead_b, lead_b, trail_b);
+      ulong avg_b = F_mpz_bits(lead_b);
+//Trying to get (a-b)log(p)*(len-2) = .12*r^2 where b = avg_b/log2(p)...
+      a = (ulong) (double)( 0.12 * r * r - avg_b * (len - 2) )/(double)( (len - 2) * log2((double) p) );
+
+      F_mpz_clear(lead_b);
+      F_mpz_clear(trail_b);
+      F_mpz_clear(mid_b);
+   }
+
    F_mpz_poly_t v[2*r-2];
    F_mpz_poly_t w[2*r-2];   
    long link[2*r-2];
 //P will be the F_mpz modulus
    F_mpz_poly_factor_t lifted_fac;
    F_mpz_poly_factor_init(lifted_fac);
-//If r>5 then we'll need to allocate enough room for r factors
-   if (r > lifted_fac->alloc)
-   {
-      lifted_fac->factors = (F_mpz_poly_t *) flint_heap_realloc_bytes(lifted_fac->factors, sizeof(F_mpz_poly_t)*r);
-      lifted_fac->exponents = (unsigned long *) flint_heap_realloc(lifted_fac->exponents, r);
-      unsigned long i;
-      for (i = lifted_fac->alloc; i < r; i++)
-         F_mpz_poly_init(lifted_fac->factors[i]);
-      lifted_fac->alloc = r;
-   }
 
-   F_mpz_t P, big_P, Pt;
-   F_mpz_poly_t f1;
-   F_mpz_t lc_inv;
+   F_mpz_t P;
    F_mpz_init(P);
-   F_mpz_set_ui(P, p);
+
 
    for (i = 0; i < 2*r-2; i++)
       F_mpz_poly_init(v[i]);
@@ -6850,60 +7274,23 @@ void F_mpz_poly_factor_sq_fr_prim( F_mpz_poly_factor_t final_fac, ulong exp, F_m
    for (i = 0; i < 2*r-2; i++)
       F_mpz_poly_init(w[i]);
 
-   _Build_Hensel_Tree(link, v, w, fac);
+   ulong prev_exp = _F_mpz_poly_start_hensel_lift(lifted_fac, link, v, w, f, fac, a);
 //clearing fac early, don't need them anymore
    zmod_poly_factor_clear(fac);
 
-   ulong e = 1;
-
    while( solved_yet == 0 ){
-      F_mpz_init(Pt);
-      F_mpz_init(big_P);
-      F_mpz_set_ui(Pt, p);
-      F_mpz_pow_ui(big_P, Pt, a);
-//Make a copy of f, f1, such that f1 monic and equiv to f mod p^a
-      F_mpz_poly_init(f1);
-      F_mpz_init( lc_inv );
-      if (F_mpz_is_one(lc)){
-         F_mpz_poly_set(f1, f);
-      }
-      else if (F_mpz_is_m1(lc)){
-         F_mpz_poly_neg(f1, f);
-      }
-      else{
-         F_mpz_mod(lc_inv, lc, big_P);
-         int OK = F_mpz_invert(lc_inv, lc_inv, big_P);
-         if (OK == 0){
-            printf(" some problem\n");
-            abort();
-         }
-         F_mpz_poly_scalar_mul(f1, f, lc_inv);
-         F_mpz_poly_smod(f1, f1, big_P);
-      }
-      while( (2 * e) <= a ){
-         _Tree_Hensel_Lift(link, v, w, e, 2*e, f1, 1, p, r, P);
-         e = 2*e;
-      }
-      F_mpz_clear(Pt);
-      F_mpz_poly_clear( f1 );
-      F_mpz_clear( lc_inv );
 //Have now Hensel lifted to p^a for the precalculated a, in the optimized version we will lift even less
 //Here let's make a list of Hensel lifted factors for grabbing information and trial testing.
 
 //Now we should undo the mystical link part to find the original local factors in original order, see the long explanation in the Hensel code
-      for(i = 0; i < 2*r -2; i++){
-         if (link[i] < 0){
-            F_mpz_poly_smod(v[i], v[i], P); 
-            F_mpz_poly_set(lifted_fac->factors[-link[i]-1],v[i]);
-            lifted_fac->exponents[-link[i]-1] = 1L; 
-         }
-      }
-      lifted_fac->num_factors = r;
 //Now we are ready to to the Zassenhaus testing... later the r > 20 (or even 10) test could go here
       if (use_Hoeij_Novocin == 1){
+         F_mpz_set_ui(P, p);
+         F_mpz_pow_ui(P, P, a);
          solved_yet = F_mpz_poly_factor_sq_fr_vHN(final_fac, lifted_fac, f, P, exp, M, mexpo);
          if (solved_yet == 0){
 //This is where we increase the Hensel Accuracy and go back
+            prev_exp = _F_mpz_poly_continue_hensel_lift(lifted_fac, link, v, w, f, prev_exp, a, 2*a, p, r);
             a = 2*a;
          }
       }
@@ -6919,8 +7306,6 @@ void F_mpz_poly_factor_sq_fr_prim( F_mpz_poly_factor_t final_fac, ulong exp, F_m
    }
    F_mpz_poly_factor_clear(lifted_fac);
    zmod_poly_clear(F);
-   F_mpz_clear(lc);
-   F_mpz_clear(big_P);
    F_mpz_clear(P);
    if (use_Hoeij_Novocin == 1){
       F_mpz_mat_clear(M);
@@ -7172,6 +7557,12 @@ int _F_mpz_mat_check_if_solved(F_mpz_mat_t M, ulong r, F_mpz_poly_factor_t final
       F_mpz_mat_clear(U);
       return 0;
    }
+
+   if (ok > U->c){
+      F_mpz_mat_clear(U);
+      return 0;
+   }
+
    int trym = _F_mpz_poly_try_to_solve(ok, part, final_fac, lifted_fac, F, P, exp, lc);
    F_mpz_mat_clear(U);
    return trym;
@@ -7186,17 +7577,18 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    F_mpz_set(lc, F->coeffs + N);
 
    ulong r = lifted_fac->num_factors;
-   ulong s = r;
+   ulong s = r; //M->r;
    F_mpz_mat_t col;
    F_mpz_mat_init(col, r, 1);
    ulong cur_col = 0;
    ulong worst_exp;
+   ulong num_entries = M->c - r;
 
    F_mpz_t B;
    F_mpz_init(B);
-   F_mpz_set_ui(B, r + 1);
-//For the first run we'll only use 20 coeffs worth of data, should solve 99% of all 'random' polynomials
-   ulong num_coeffs = 10UL;
+   F_mpz_set_ui(B, r + num_entries * r/2);
+//For the first run we'll only use 30 coeffs worth of data, should solve 99% of all 'random' polynomials
+   ulong num_coeffs = 15UL;
    F_mpz_mat_t data;
    F_mpz_mat_init(data, 0, 0);
    _F_mpz_poly_factor_CLD_mat(data, F, lifted_fac, P, num_coeffs);
@@ -7205,9 +7597,9 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    if (data->c >= F->length - 1)
       all_coeffs = 1;
 //assume that cexpo is correct for the first M->c entries, zero out the potential new entries
-   ulong i;
+/* no cexpo for the moment   ulong i;
    for (i = M->c; i < M->c + 2*(F->length - 1); i++)
-      cexpo[i] = 0;
+      cexpo[i] = 0;*/
 
    F_mpz_t temp;
    F_mpz_init(temp);
@@ -7225,14 +7617,22 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
             F_mpz_set(col->rows[i], data->rows[i] + cur_col);
          ok = _F_mpz_mat_next_col(M, P, col, worst_exp);
          if (ok != 0){
-            cexpo[r + col_cnt] = ok;
+            num_entries++;
+            F_mpz_add_ui(B, B, r/2);
+//            cexpo[r + col_cnt] = 0;
 //         F_mpz_mat_print_pretty(M);
-            newd = LLL_heuristic_d_2exp_with_removal(M, cexpo, B);
+            newd = LLL_wrapper_with_removal(M, B);
             F_mpz_mat_resize(M, newd, M->c);
             col_cnt++;
 //         This next line is what makes it 'gradual'... could try to prove that doing the same column twice won't add another P
 //         But it's all the same
             cur_col--;
+            if (M->r > 20)
+            {
+               newd = F_mpz_mat_check_rest(M, P, col, worst_exp);
+               F_mpz_mat_resize(M, newd, M->c);               
+            }
+
             if (newd == 1){
                F_mpz_poly_factor_insert(final_fac, F, exp);
                return_me = 1;

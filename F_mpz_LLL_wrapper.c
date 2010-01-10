@@ -68,7 +68,7 @@ int check_Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
       test = 0;
 
       loops++;
-      if (loops > 10){
+      if (loops > 3){
          return -1;
       }
             
@@ -264,7 +264,7 @@ int check_Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, 
       test = 0;
             
       loops++;
-      if (loops > 20)
+      if (loops > 10)
          return -1;
 
       /* ************************************** */
@@ -613,8 +613,8 @@ int advance_check_Babai (int cur_kappa, int kappa, F_mpz_mat_t B, double **mu, d
    
    aa = (a > zeros) ? a : zeros + 1;
   
-   ctt = DELTA;
-   halfplus = ETA;
+   ctt = .75;
+   halfplus = .51;
    onedothalfplus = 1.0+halfplus;
 
    long loops = 0;
@@ -624,7 +624,7 @@ int advance_check_Babai (int cur_kappa, int kappa, F_mpz_mat_t B, double **mu, d
       test = 0;
 
       loops++;
-      if (loops > 1){
+      if (loops > 2){
          return -1;
       }
             
@@ -861,8 +861,8 @@ int advance_check_Babai_heuristic_d (int cur_kappa, int kappa, F_mpz_mat_t B, do
    
    aa = (a > zeros) ? a : zeros + 1;
   
-   ctt = DELTA;
-   halfplus = ETA;
+   ctt = .75;
+   halfplus = .51;
    onedothalfplus = 1.0+halfplus;
 
 
@@ -1496,7 +1496,7 @@ int LLL_d(F_mpz_mat_t B)
    halfplus = ETA;
    onedothalfplus = 1.0+halfplus;
 	
-//	ulong shift = getShift(B);
+	ulong shift = getShift(B);
 
    alpha = (int *) malloc(d * sizeof(int)); 
    expo = (int *) malloc(d * sizeof(int)); 
@@ -1554,7 +1554,7 @@ int LLL_d(F_mpz_mat_t B)
       if (num_failed_fast < 500)
       {
          babai_ok = check_Babai(kappa, B, mu, r, s, appB, expo, appSP, alpha[kappa], zeros, 
-			                        kappamax, n);//FLINT_MIN(kappamax + 1 + shift, n)); 
+			                        kappamax, FLINT_MIN(kappamax + 1 + shift, n)); 
       }
       else{
          babai_ok = -1;
@@ -1564,7 +1564,7 @@ int LLL_d(F_mpz_mat_t B)
       {
          num_failed_fast++;
          heuristic_fail = check_Babai_heuristic_d(kappa, B, mu, r, s, appB, expo, appSP, alpha[kappa], zeros, 
-			                        kappamax, n);   //FLINT_MIN(kappamax + 1 + shift, n)); 
+			                        kappamax, FLINT_MIN(kappamax + 1 + shift, n)); 
       }
 
       if (heuristic_fail == -1)
@@ -2358,7 +2358,7 @@ int LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    for (i = d-1; (i >= 0) && (ok > 0); i--)
    {
 //d_rii is the G-S length of ith vector divided by 2 (we shouldn't make a mistake and remove something valuable)
-      d_rii = ldexp(r[i][i], 2*expo[i] - 3);
+      d_rii = ldexp(r[i][i], 2*expo[i] - 1);
 //      printf("%5f r[%d] and gs_B = %5f\n", d_rii, i, d_gs_B);
       if (d_rii > d_gs_B) newd--;
    }
@@ -2575,7 +2575,7 @@ int LLL_d_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    for (i = d-1; (i >= 0) && (ok > 0); i--)
    {
 //d_rii is the G-S length of ith vector divided by 2 (we shouldn't make a mistake and remove something valuable)
-      d_rii = ldexp(r[i][i], 2*expo[i] - 3);
+      d_rii = ldexp(r[i][i], 2*expo[i] - 1);
 //      printf("%5f r[%d] and gs_B = %5f\n", d_rii, i, d_gs_B);
       if (d_rii > d_gs_B) newd--;
    }
@@ -2959,7 +2959,7 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
       {
 //In the first time we hit a new kappa we're going to size-reduce in advance...
          kappamax = kappa; // Fixme : should this be kappamax = kappa instead of kappamax++
-         if (kappa > 5)
+//         if (kappa >= 5)
             new_kappa = 1;
       }
       /* ********************************** */
@@ -3031,18 +3031,22 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 //            copy_alpha[i] = alpha[i];
          }
 */
-         for (copy_kappa = kappa + 1; copy_kappa < d; copy_kappa++)
+         ulong temp_kap_bits = F_mpz_bits(B->rows[kappa] + B->c - 1);
+         for (copy_kappa = kappa + 1; copy_kappa <  d; copy_kappa++)
          {
             copy_kappamax = copy_kappa;
-            babai_ok = advance_check_Babai(kappa, copy_kappa, B, mu, r, copy_s, appB, expo, appSP, alpha[copy_kappa], zeros, copy_kappamax, n);
+            if (F_mpz_bits(B->rows[copy_kappa] + B->c - 1) > temp_kap_bits){
+               babai_ok = advance_check_Babai(kappa, copy_kappa, B, mu, r, copy_s, appB, expo, appSP, alpha[copy_kappa], zeros, copy_kappamax, n);
 
-            heuristic_fail = 0;
-            if (babai_ok == -1)
-            {
-               heuristic_fail = advance_check_Babai_heuristic_d(kappa, copy_kappa, B, mu, r, copy_s, appB, expo, appSP, alpha[copy_kappa], zeros, copy_kappamax, n);
-            }
-            if ((babai_ok == -2) || (heuristic_fail == -2))
-            {
+              heuristic_fail = 0;
+              if (babai_ok == -1)
+              {
+//                 printf("heur_fail_advance\n");
+                 heuristic_fail = advance_check_Babai_heuristic_d(kappa, copy_kappa, B, mu, r, copy_s, appB, expo, appSP, alpha[copy_kappa], zeros, copy_kappamax, n);
+              }
+              if ((babai_ok == -2) || (heuristic_fail == -2))
+              {
+   printf("uhoh\n");
    free(alpha);
    free(expo);
    free(copy_alpha);
@@ -3058,9 +3062,10 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    free(s);
    free(copy_s);
    free(appSPtmp);
-               return -1;
+                  return -1;
                //wacky stuff going on in this lattice let's just switch to normal...
-            }
+               }
+         }
 /*
   This isn't stable...
             if ( (heuristic_fail >= 0) && (copy_kappa == d-1) )
@@ -3199,7 +3204,7 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    for (i = d-1; (i >= 0) && (ok > 0); i--)
    {
 //d_rii is the G-S length of ith vector divided by 2 (we shouldn't make a mistake and remove something valuable)
-      d_rii = ldexp(r[i][i], 2*expo[i] - 3);
+      d_rii = ldexp(r[i][i], 2*expo[i] - 1);
 //      printf("%5f r[%d] and gs_B = %5f\n", d_rii, i, d_gs_B);
       if (d_rii > d_gs_B) newd--;
    }
@@ -3423,7 +3428,7 @@ int knapsack_LLL_d_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    for (i = d-1; (i >= 0) && (ok > 0); i--)
    {
 //d_rii is the G-S length of ith vector divided by 2 (we shouldn't make a mistake and remove something valuable)
-      d_rii = ldexp(r[i][i], 2*expo[i] - 3);
+      d_rii = ldexp(r[i][i], 2*expo[i] - 1);
 //      printf("%5f r[%d] and gs_B = %5f\n", d_rii, i, d_gs_B);
       if (d_rii > d_gs_B) newd--;
    }
@@ -3917,7 +3922,7 @@ int LLL_d_zero_vec_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    for (i = d-1; (i >= 0) && (ok > 0); i--)
    {
 //d_rii is the G-S length of ith vector divided by 2 (we shouldn't make a mistake and remove something valuable)
-      d_rii = ldexp(r[i][i], 2*expo[i] - 3);
+      d_rii = ldexp(r[i][i], 2*expo[i] - 1);
 //      printf("%5f r[%d] and gs_B = %5f\n", d_rii, i, d_gs_B);
       if (d_rii > d_gs_B) newd--;
    }
@@ -3951,3 +3956,167 @@ int LLL_wrapper_zero_vec_with_removal(F_mpz_mat_t B, F_mpz_t gs_B){
    else //we've got big problems if this is the exit...
       return -1;
 }
+
+/**
+
+   Stripped down LLL_d to just calculate G-S lengths.
+
+**/
+
+//### This is different -------
+void gs_Babai(int kappa, F_mpz_mat_t B, double **mu, double **r, double *s, 
+       double **appB, int *expo, double **appSP, 
+       int a, int zeros, int kappamax, int n)
+//-----------------------------
+{
+   int i, j, k, test, aa, exponent;
+   signed long xx;
+   double tmp, rtmp;
+   
+   aa = (a > zeros) ? a : zeros + 1;
+  
+      for (j = aa; j < kappa; j++)
+	   {	  
+	      if (appSP[kappa][j] != appSP[kappa][j]) // if appSP[kappa][j] == NAN
+	      {
+//### This is different -----
+            appSP[kappa][j] = d_vec_scalar_product_heuristic(appB[kappa], appB[j], n, B, kappa, j, expo[kappa]+expo[j]);
+//---------------------------
+         }
+	  	  
+         if (j > zeros + 2)
+	      {
+	         tmp = mu[j][zeros+1] * r[kappa][zeros+1];
+	         rtmp = appSP[kappa][j] - tmp;
+	         for (k = zeros + 2; k < j - 1; k++)
+		      {
+		         tmp = mu[j][k] * r[kappa][k];
+		         rtmp = rtmp - tmp;
+		      }
+	         tmp = mu[j][j-1] * r[kappa][j-1];
+	         r[kappa][j] = rtmp - tmp;
+         } else if (j == zeros+2)
+	      {
+	         tmp = mu[j][zeros+1] * r[kappa][zeros+1];
+	         r[kappa][j] = appSP[kappa][j] - tmp;
+	      } else r[kappa][j] = appSP[kappa][j];
+
+	      mu[kappa][j] = r[kappa][j] / r[j][j];
+      }
+
+      for (j = kappa - 1; j > zeros; j--)
+	   {
+	      /* test of the relaxed size-reduction condition */
+	      tmp = fabs(mu[kappa][j]);
+	      tmp = ldexp(tmp, expo[kappa] - expo[j]);
+
+      }
+      
+   if (appSP[kappa][kappa] != appSP[kappa][kappa]) 
+   {
+//### This is different -------
+      appSP[kappa][kappa] = d_vec_norm(appB[kappa], n);
+//-----------------------------
+   }
+   s[zeros + 1] = appSP[kappa][kappa];
+  
+   for (k = zeros + 1; k < kappa - 1; k++)
+   {
+      tmp = mu[kappa][k] * r[kappa][k];
+      s[k+1] = s[k] - tmp;
+   }
+}
+
+ulong F_mpz_mat_gs_d( F_mpz_mat_t B, F_mpz_t gs_B)
+{
+   int kappa, kappa2, d, n, i, j, zeros, kappamax;
+   double ** mu, ** r, ** appB, ** appSP;
+   double * s, * mutmp, * appBtmp, * appSPtmp;
+   double tmp = 0.0;
+   int * expo, * alpha;
+   mp_limb_t * Btmp;
+   
+   n = B->c;
+   d = B->r;
+	
+   alpha = (int *) malloc(d * sizeof(int)); 
+   expo = (int *) malloc(d * sizeof(int)); 
+
+   mu = d_mat_init(d, d);
+   r = d_mat_init(d, d);
+   appB = d_mat_init(d, n);
+   appSP = d_mat_init(d, d);
+
+   s = (double *) malloc (d * sizeof(double));
+   appSPtmp = (double *) malloc (d * sizeof(double));
+
+   for (i = 0; i < d; i++)
+      for (j = 0; j < d; j++)
+         appSP[i][j] = NAN;//0.0/0.0;
+  
+   /* ************************** */
+   /* Step1: Initialization Step */
+   /* ************************** */     
+    
+   for (i = 0; i < d; i++)
+      expo[i] = F_mpz_mat_set_line_d(appB[i], B, i, n);  
+  
+   /* ********************************* */
+   /* Step2: Initializing the main loop */
+   /* ********************************* */   
+  
+
+   i = 0; 
+  
+   do
+      appSP[i][i] = d_vec_norm(appB[i], n); 
+   while ((appSP[i][i] <= 0.0) && (++i < d)); // Fixme : should this be EPS not 0.0
+
+   zeros = i - 1; /* all vectors B[i] with i <= zeros are zero vectors */
+   kappa = i + 1;
+   kappamax = kappa;
+  
+   if (zeros < d - 1) r[i][i] = appSP[i][i];
+
+   for (i = zeros + 1; i < d; i++)
+      alpha[i] = 0;   
+
+   while (kappa < d)
+   {
+      if (kappa > kappamax) kappamax = kappa; // Fixme : should this be kappamax = kappa instead of kappamax++
+
+      gs_Babai(kappa, B, mu, r, s, appB, expo, appSP, alpha[kappa], zeros, 
+			                        kappamax, n); 
+	   alpha[kappa] = kappa;
+	   tmp = mu[kappa][kappa-1] * r[kappa][kappa-1];
+	   r[kappa][kappa] = s[kappa-1] - tmp;
+	   kappa++;
+   }
+
+   ulong ok, newd, exp;
+   double d_gs_B, d_rii; 
+   ok = 1;
+   newd = d;
+   d_gs_B = F_mpz_get_d_2exp(&exp, gs_B);
+   d_gs_B = ldexp( d_gs_B, exp);
+   for (i = d-1; (i >= 0) && (ok > 0); i--)
+   {
+//d_rii is the G-S length of ith vector divided by 2 (we shouldn't make a mistake and remove something valuable)
+      d_rii = ldexp(r[i][i], 2*expo[i] - 2);
+//      printf("%5f r[%d] and gs_B = %5f\n", d_rii, i, d_gs_B);
+      if (d_rii > d_gs_B) newd--;
+   }
+
+
+   free(alpha);
+   free(expo);
+   d_mat_clear(mu);
+   d_mat_clear(r);
+   d_mat_clear(appB);
+   d_mat_clear(appSP);
+   free(s);
+   free(appSPtmp);
+
+   return newd;
+}
+
