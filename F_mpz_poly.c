@@ -7225,7 +7225,6 @@ void F_mpz_poly_factor_sq_fr_prim( F_mpz_poly_factor_t final_fac, ulong exp, F_m
       F_mpz_clear(lc);
       return;
    }
-
 //Begin Hensel Lifting phase, make the tree in v, w, and link
 // Later we'll do a check if use_Hoeij_Novocin (try for smaller a)
    ulong a;
@@ -7234,6 +7233,7 @@ void F_mpz_poly_factor_sq_fr_prim( F_mpz_poly_factor_t final_fac, ulong exp, F_m
 
    if (use_Hoeij_Novocin == 1)
    {
+
    //Here we can add the cool new part...
       F_mpz_t lead_b, trail_b, mid_b;
       F_mpz_init(lead_b);
@@ -7284,9 +7284,11 @@ void F_mpz_poly_factor_sq_fr_prim( F_mpz_poly_factor_t final_fac, ulong exp, F_m
 
 //Now we should undo the mystical link part to find the original local factors in original order, see the long explanation in the Hensel code
 //Now we are ready to to the Zassenhaus testing... later the r > 20 (or even 10) test could go here
+      F_mpz_set_ui(P, p);
+      F_mpz_pow_ui(P, P, a);
+
       if (use_Hoeij_Novocin == 1){
-         F_mpz_set_ui(P, p);
-         F_mpz_pow_ui(P, P, a);
+
          solved_yet = F_mpz_poly_factor_sq_fr_vHN(final_fac, lifted_fac, f, P, exp, M, mexpo);
          if (solved_yet == 0){
 //This is where we increase the Hensel Accuracy and go back
