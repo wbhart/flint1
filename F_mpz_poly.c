@@ -7204,7 +7204,7 @@ void F_mpz_poly_factor_sq_fr_prim( F_mpz_poly_factor_t final_fac, ulong exp, F_m
    }
 
 //In the near future we should go back and try some more primes might deduce irreducibility or find smaller r
-   if (r > 10){
+   if (r > 2){
       use_Hoeij_Novocin = 1;
       F_mpz_mat_init_identity(M, r);
       ulong i;
@@ -7249,8 +7249,12 @@ void F_mpz_poly_factor_sq_fr_prim( F_mpz_poly_factor_t final_fac, ulong exp, F_m
       F_mpz_set_ui(trail_b, 3);
       F_mpz_cdiv_q(lead_b, lead_b, trail_b);
       ulong avg_b = F_mpz_bits(lead_b);
+
 //Trying to get (a-b)log(p)*(len-2) = .12*r^2 where b = avg_b/log2(p)...
-      a = (ulong) (double)( 0.12 * r * r - avg_b * (len - 2) )/(double)( (len - 2) * log2((double) p) );
+      long n_a = (long) (double)( 0.12 * r * r /(double)( (len - 2) ) + avg_b / log2( (double) p )  );
+      n_a = (long) pow( (double) 2, ceil( log2( (double) n_a ) ) );
+
+      a = FLINT_MIN(a, n_a);
 
       F_mpz_clear(lead_b);
       F_mpz_clear(trail_b);
