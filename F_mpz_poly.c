@@ -7204,7 +7204,7 @@ void F_mpz_poly_factor_sq_fr_prim( F_mpz_poly_factor_t final_fac, ulong exp, F_m
    }
 
 //In the near future we should go back and try some more primes might deduce irreducibility or find smaller r
-   if (r > 2){
+   if (r > 10){
       use_Hoeij_Novocin = 1;
       F_mpz_mat_init_identity(M, r);
       ulong i;
