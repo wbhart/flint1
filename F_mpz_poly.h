@@ -296,7 +296,7 @@ void F_mpz_poly_set_coeff_ui(F_mpz_poly_t poly, ulong n, const ulong x);
 
 /** 
    \fn     void F_mpz_poly_get_coeff_ui(F_mpz_poly_t poly, ulong n, const long x)
-   \brief  Return coefficient n of poly as an usigned long. If n is greater than the degree
+   \brief  Return coefficient n of poly as an unsigned long. If n is greater than the degree
 	        of poly, then zero is returned.
 */
 ulong F_mpz_poly_get_coeff_ui(const F_mpz_poly_t poly, const ulong n);
