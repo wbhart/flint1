@@ -816,8 +816,9 @@ void zmod_poly_factor_clear(zmod_poly_factor_t fac);
  * Adds a polynomial to the factor array. Automatically allocates new memory if needed. 
  * @param fac		Factor array to be augmented.
  * @param poly		Polynomial to be added to the array.
+ * @param add     Exponent of factor being added.
  */
-void zmod_poly_factor_add(zmod_poly_factor_t fac, zmod_poly_t poly);
+void zmod_poly_factor_add(zmod_poly_factor_t fac, zmod_poly_t poly, ulong exp);
 
 /**
  * Concatenates two polynomial factor structures together setting <code>res = {res, fac}</code>. 
