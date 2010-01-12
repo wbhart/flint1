@@ -567,8 +567,8 @@ void F_mpz_swap(F_mpz_t f, F_mpz_t g)
 int F_mpz_equal( F_mpz_t f,  F_mpz_t g)
 {
 	if (f == g) return 1; // aliased inputs
-
-	if (!COEFF_IS_MPZ(*f)) return (*f == *g); // if f is large it can't be equal to g
+	
+        if (!COEFF_IS_MPZ(*f)) return (*f == *g); // if f is large it can't be equal to g
 	else if (!COEFF_IS_MPZ(*g)) return 0; // f is large, so if g isn't....
 	else 
 	{
