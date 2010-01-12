@@ -7452,6 +7452,8 @@ int _F_mpz_poly_try_to_solve(int num_facs, ulong * part, F_mpz_poly_factor_t fin
    F_mpz_init(temp_lc);
 
    ulong r = lifted_fac->num_factors;
+
+   printf(" not yet r = %ld\n", r);
 /*   ulong biggest, second;
    biggest = 0;
    second = 0;*/
@@ -7486,6 +7488,7 @@ int _F_mpz_poly_try_to_solve(int num_facs, ulong * part, F_mpz_poly_factor_t fin
 //we've proven the factorization is legit
 //maybe figure out what lengths I can prove this way and if I can prove biggest hooray go for it, if I can't then
 //maybe I can prove second, in which case sort, if neither then try, maybe Hensel lift again
+printf(" maybe here\n");
    for (i = 0; i < num_facs - 1; i++){
       int j;
       for (j = i+1; j <  num_facs; j++){
@@ -7493,20 +7496,28 @@ int _F_mpz_poly_try_to_solve(int num_facs, ulong * part, F_mpz_poly_factor_t fin
             F_mpz_poly_swap(trial_factors->factors[i], trial_factors->factors[j]);
       }
    }
+printf("nope not there trial_factors->num_factors = %ld\n", trial_factors->num_factors);
    F_mpz_poly_t f,Q,R;
    F_mpz_poly_init(f);
    F_mpz_poly_init(Q);
    F_mpz_poly_init(R);
    F_mpz_poly_set(f, F);
+   int j;
    for (i = 0; i < trial_factors->num_factors; i++){
+   printf(" made it here for i = %d\n", i);
       if (num_facs == 1){
-         int j;
          for (j = 0; j < i; j++)
             F_mpz_poly_factor_insert(final_fac, trial_factors->factors[j], exp);
          F_mpz_poly_factor_insert(final_fac, f, exp);
          return 1;
       }
+printf("here?\n");
+
+F_mpz_poly_print(trial_factors->factors[i]); printf(" trial factors\n");
+printf("Q length = %ld, R length = %ld, f length = %ld\n", Q->length, R->length, f->length);
+
       F_mpz_poly_divrem(Q, R, f, trial_factors->factors[i]);
+printf("there...\n");
       if (R->length == 0){
          //found one!!!! Don't insert just yet in case we find some but not all (which we handle suboptimally at the moment)
 //         F_mpz_poly_factor_insert(final_fac, trial_factors->factors[i], exp);
@@ -7527,7 +7538,14 @@ int _F_mpz_poly_try_to_solve(int num_facs, ulong * part, F_mpz_poly_factor_t fin
 
 //         if (num_facs > 10){
 // Still need van Hoeij and Hensel and stuff
+printf("or thereere\n");
+   F_mpz_poly_clear(f);
+   F_mpz_poly_clear(Q);
+   F_mpz_poly_clear(R);
 
+   F_mpz_clear(temp_lc);
+   F_mpz_poly_clear(tryme);
+   F_mpz_poly_factor_clear(trial_factors);
          return 0;
 //         }
 //         else{
@@ -7539,6 +7557,7 @@ int _F_mpz_poly_try_to_solve(int num_facs, ulong * part, F_mpz_poly_factor_t fin
 //         }
       }
    }
+
    F_mpz_poly_clear(f);
    F_mpz_poly_clear(Q);
    F_mpz_poly_clear(R);
@@ -7558,6 +7577,13 @@ int _F_mpz_mat_check_if_solved(F_mpz_mat_t M, ulong r, F_mpz_poly_factor_t final
    for (j = 0; j < U->c; j++)
       part[j] = 0;
    int ok = F_mpz_mat_check_0_1(part, U);
+
+   printf("ok = %d part = [", ok);
+
+   for( j = 0; j < U->c; j++)
+      printf("%d,",part[j]);
+   printf("\n");
+
    if (ok == 0){
 //not a 0-1 basis
       F_mpz_mat_clear(U);
@@ -7633,19 +7659,21 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
 //         This next line is what makes it 'gradual'... could try to prove that doing the same column twice won't add another P
 //         But it's all the same
             cur_col--;
-            if (M->r > 20)
+/*            if (M->r > 20)
             {
                newd = F_mpz_mat_check_rest(M, P, col, worst_exp);
                F_mpz_mat_resize(M, newd, M->c);               
             }
-
+*/
             if (newd == 1){
                F_mpz_poly_factor_insert(final_fac, F, exp);
                return_me = 1;
                solved = 1;
                break;
             }
+            printf("before check solved\n");
             solved =  _F_mpz_mat_check_if_solved(M, r, final_fac, lifted_fac, F, P, exp, lc);
+            printf("after check solved\n");
             if (solved == 1){
                return_me = 1;
                break;
