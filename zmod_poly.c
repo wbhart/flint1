@@ -150,6 +150,23 @@ void zmod_poly_2x2_mat_clear(zmod_poly_2x2_mat_t mat)
 
 /****************************************************************************
 
+   Random
+
+****************************************************************************/
+
+void zmod_poly_random(zmod_poly_t pol, ulong length)
+{
+   ulong p = pol->p;
+
+   zmod_poly_fit_length(pol, length);
+   for (ulong i = 0; i < length; i++)
+      pol->coeffs[i] = z_randint(p);
+   pol->length = length;
+   __zmod_poly_normalise(pol);
+}
+
+/****************************************************************************
+
    Setting/retrieving coefficients
 
 ****************************************************************************/
@@ -6439,6 +6456,55 @@ void __zmod_poly_powmod(zmod_poly_t res, zmod_poly_t pol, long exp, zmod_poly_t 
    if (exp) zmod_poly_clear(y);   
 } 
 
+void zmod_poly_powmod_mpz(zmod_poly_t res, zmod_poly_t pol, mpz_t exp, zmod_poly_t f)
+{
+   zmod_poly_t y;
+   
+   ulong p = f->p;
+
+   if (pol->length == 0) 
+   {
+      if (exp <= 0L) 
+	   {
+         printf("FLINT Exception: Divide by zero\n");
+         abort();   
+	   }
+	   zmod_poly_zero(res);
+	   return;
+   }
+
+   mpz_t e;
+   mpz_init(e);
+
+   if (exp < 0L)
+      mpz_neg(e, exp);
+   else
+      mpz_set(e, exp);
+   
+   if (mpz_sgn(exp)) 
+   {
+	  zmod_poly_init(y, p);
+	  zmod_poly_set(y, pol);
+   }
+
+	zmod_poly_zero(res);
+	zmod_poly_set_coeff_ui(res, 0, 1L);
+   res->length = 1;
+
+   ulong bits = mpz_sizeinbase(e, 2);
+   
+   for (ulong i = 0; i < bits; i++) 
+   {
+      if (mpz_tstbit(e, i)) zmod_poly_mulmod(res, res, y, f);
+      if (i + 1 < bits) zmod_poly_mulmod(y, y, y, f);
+   }
+   
+   if (mpz_sgn(exp) < 0L) zmod_poly_gcd_invert(res, res, f);
+   if (mpz_sgn(exp)) zmod_poly_clear(y); 
+
+   mpz_clear(e);
+} 
+
 void zmod_poly_powpowmod(zmod_poly_t res, zmod_poly_t pol, ulong exp, ulong exp2, zmod_poly_t f)
 {
 	zmod_poly_t pow;
@@ -6614,6 +6680,146 @@ void zmod_poly_factor_pow(zmod_poly_factor_t fac, unsigned long exp)
    unsigned long i;
    for (i = 0; i < fac->num_factors; i++)
       fac->exponents[i] *= exp;
+}
+
+int zmod_poly_factor_equal_prob(zmod_poly_t factor, zmod_poly_t pol, ulong d)
+{
+   if (pol->length <= 1)
+   {
+      printf("Attempt to factor linear poly in zmod_poly_factor_equal_prob\n");
+      abort();
+   }
+   
+   zmod_poly_t a, b;
+   zmod_poly_init(a, pol->p);
+   
+   do {zmod_poly_random(a, pol->length - 1);} 
+   while (a->length <= 1);
+   
+   zmod_poly_gcd(factor, a, pol);
+   if (factor->length != 1)
+   {
+      zmod_poly_clear(a);
+      return 1;
+   }
+
+   zmod_poly_init(b, pol->p);
+   
+   mpz_t exp;
+   mpz_init(exp);
+
+   mpz_set_ui(exp, pol->p);
+   mpz_pow_ui(exp, exp, d);
+   mpz_sub_ui(exp, exp, 1);
+   mpz_tdiv_q_2exp(exp, exp, 1);
+   
+   zmod_poly_powmod_mpz(b, a, exp, pol);
+   
+   mpz_clear(exp);
+
+   b->coeffs[0] = z_submod(b->coeffs[0], 1, pol->p);
+
+   zmod_poly_gcd(factor, b, pol);
+   
+   int res = 1;
+   if ((factor->length == 1) || (factor->length == pol->length)) res = 0;
+
+   zmod_poly_clear(a);
+   zmod_poly_clear(b);
+
+   return res;
+}
+
+void zmod_poly_factor_equal_d(zmod_poly_factor_t factors, zmod_poly_t pol, ulong d)
+{
+   if (pol->length == d + 1)
+   {
+      zmod_poly_factor_add(factors, pol);
+      return;
+   }
+
+   zmod_poly_t f, g;
+   zmod_poly_init(f, pol->p);
+   
+   while (!zmod_poly_factor_equal_prob(f, pol, d)) {};
+   
+   zmod_poly_init(g, pol->p);
+   zmod_poly_div(g, pol, f);
+
+   zmod_poly_factor_equal_d(factors, f, d);
+   zmod_poly_clear(f);
+   zmod_poly_factor_equal_d(factors, g, d);
+   zmod_poly_clear(g);  
+}
+
+ulong zmod_poly_remove(zmod_poly_t f, zmod_poly_t p)
+{
+   zmod_poly_t q, r;
+   zmod_poly_init(q, p->p);
+   zmod_poly_init(r, p->p);
+
+   ulong i = 0;
+   do
+   {
+      if (f->length < p->length) break;
+      zmod_poly_divrem(q, r, f, p);
+      if (r->length == 0) zmod_poly_swap(q, f);
+      else break;
+      i++;
+   } while (1);
+
+   zmod_poly_clear(q);
+   zmod_poly_clear(r);
+
+   return i;
+}
+
+/* 
+   Factor f using Cantor-Zassenhaus
+*/
+void zmod_poly_factor_cantor_zassenhaus(zmod_poly_factor_t res, zmod_poly_t f)
+{
+   zmod_poly_t h, v, g, x;
+
+   zmod_poly_init(h, f->p);
+   zmod_poly_init(g, f->p);
+   zmod_poly_init(v, f->p);
+   zmod_poly_init(x, f->p);
+   zmod_poly_set_coeff_ui(h, 1, 1);
+   zmod_poly_set_coeff_ui(x, 1, 1);
+
+   zmod_poly_make_monic(v, f);
+
+   ulong i = 0;
+
+   do
+   {
+      i++;
+      zmod_poly_powmod(h, h, f->p, v);
+      zmod_poly_sub(h, h, x);
+      zmod_poly_gcd(g, h, v);
+      zmod_poly_add(h, h, x);
+
+      if (g->length != 1)
+      {
+         zmod_poly_make_monic(g, g);
+         ulong num = res->num_factors;
+         zmod_poly_factor_equal_d(res, g, i);
+         
+         for (ulong j = num; j < res->num_factors; j++)
+            res->exponents[j] = zmod_poly_remove(v, res->factors[j]);
+      }   
+   } while (v->length >= 2*i + 3);
+
+   if (v->length > 1)
+   {
+      zmod_poly_factor_add(res, v);
+   }
+
+   zmod_poly_clear(g);
+   zmod_poly_clear(h);
+   zmod_poly_clear(v);
+   zmod_poly_clear(x);
 }
 
 /** 
@@ -6880,18 +7086,18 @@ unsigned long zmod_poly_factor(zmod_poly_factor_t result, zmod_poly_t input)
 {
    if (input->length == 0) return 0;
 	
-	zmod_poly_t monic_input;
-   zmod_poly_init(monic_input, zmod_poly_modulus(input));
-   
 	//Now we must make sure the input polynomial is monic. Get the highest coeff and store it then call make monic
-   unsigned long leading_coeff = zmod_poly_get_coeff_ui(input, zmod_poly_degree(input));
+   ulong leading_coeff = zmod_poly_get_coeff_ui(input, zmod_poly_degree(input));
    if (input->length == 1) 
 	{
-		zmod_poly_clear(monic_input);
 	   return leading_coeff;
 	}
 
-	zmod_poly_make_monic(monic_input, input);
+	/*
+   zmod_poly_t monic_input;
+   zmod_poly_init(monic_input, zmod_poly_modulus(input));
+   
+   zmod_poly_make_monic(monic_input, input);
 	
    //This will store all of the square-free factors
    zmod_poly_factor_t sqfree_factors;
@@ -6919,9 +7125,12 @@ unsigned long zmod_poly_factor(zmod_poly_factor_t result, zmod_poly_t input)
       //clean up the memory being used
       zmod_poly_factor_clear(factors);
    }
-   
+
    //clean up memory
-   zmod_poly_factor_clear(sqfree_factors);
+   //zmod_poly_factor_clear(sqfree_factors);*/
+
+   // Run Cantor-Zassenhaus
+   zmod_poly_factor_cantor_zassenhaus(result, input);
    	
    return leading_coeff;   
 }

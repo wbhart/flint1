@@ -21,7 +21,7 @@
 
    zmod_mat.h: Matrices over (unsigned) long mod p, for p prime.
    
-   Copyright (C) 2008, William Hart
+   Copyright (C) 2008, 2009 William Hart
    Copyright (C) 2008, Richard Howell-Peak
 
 *****************************************************************************/
@@ -69,6 +69,16 @@ void zmod_mat_init(zmod_mat_t mat, ulong p, ulong rows, ulong cols);
 void zmod_mat_init_precomp(zmod_mat_t mat, ulong p, double p_inv, 
 						                              ulong rows, ulong cols);
 void zmod_mat_clear(zmod_mat_t mat);
+
+/*******************************************************************************************
+
+   Matrix Windows
+
+*******************************************************************************************/
+
+void zmod_mat_window_init(zmod_mat_t out, zmod_mat_t mat, ulong r1, ulong c1, ulong r2, ulong c2);
+
+void zmod_mat_window_clear(zmod_mat_t mat);
 
 /*******************************************************************************************
 
@@ -153,11 +163,41 @@ ulong zmod_mat_row_reduce_gauss_jordan(zmod_mat_t mat);
 
 /*******************************************************************************************
 
+   Comparison
+
+*******************************************************************************************/
+
+int zmod_mat_equal(zmod_mat_t mat1, zmod_mat_t mat2);
+
+/*******************************************************************************************
+
    Input/output
 
 *******************************************************************************************/
 
 void zmod_mat_print(zmod_mat_t mat);
+
+/*******************************************************************************************
+
+   Addition/subtraction
+
+*******************************************************************************************/
+
+void zmod_mat_add(zmod_mat_t C, zmod_mat_t A, zmod_mat_t B);
+
+void zmod_mat_sub(zmod_mat_t C, zmod_mat_t A, zmod_mat_t B);
+
+/*******************************************************************************************
+
+   Multiplication
+
+*******************************************************************************************/
+
+ulong zmod_mat_scalar_mul(ulong * r, ulong ** arr, ulong c, ulong n, ulong p, double p_inv);
+
+void zmod_mat_mul_classical(zmod_mat_t prod, zmod_mat_t A, zmod_mat_t B);
+
+void zmod_mat_mul_strassen(zmod_mat_t prod, zmod_mat_t A, zmod_mat_t B);
 
 #ifdef __cplusplus
  }

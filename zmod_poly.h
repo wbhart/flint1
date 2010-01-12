@@ -155,6 +155,11 @@ void zmod_poly_2x2_mat_clear(zmod_poly_2x2_mat_t mat);
 // ------------------------------------------------------
 // Setting/retrieving coefficients
 
+void zmod_poly_random(zmod_poly_t pol, ulong length);
+
+// ------------------------------------------------------
+// Setting/retrieving coefficients
+
 static inline
 unsigned long zmod_poly_get_coeff_ui(zmod_poly_t poly, unsigned long n)
 {
@@ -757,6 +762,8 @@ void zmod_poly_powmod(zmod_poly_t res, zmod_poly_t pol, long exp, zmod_poly_t f)
       __zmod_poly_powmod(res, pol, exp, f);
 }
 
+void zmod_poly_powmod_mpz(zmod_poly_t res, zmod_poly_t pol, mpz_t exp, zmod_poly_t f);
+
 /**************************************************************************************************
 
    Evalulation
@@ -841,6 +848,31 @@ void zmod_poly_factor_pow(zmod_poly_factor_t fac, unsigned long exp);
  * @param fac        The factorisation into monic square free factors of <code>f</code>.
  */
 void zmod_poly_factor_square_free(zmod_poly_factor_t res, zmod_poly_t f);
+
+/*
+   Probabilistic equal degree factorisation of pol into irreducible factors
+   of degree d. If it passes, a factor is placed in factor and 1 is returned,
+   otherwise 0 is returned and the value of factor is undetermined.
+   Requires that pol be monic, non-constant and squarefree.
+*/
+int zmod_poly_factor_equal_prob(zmod_poly_t factor, zmod_poly_t pol, ulong d);
+
+/* 
+   Assuming pol is a product of irreducible factors all of degree d, finds
+   all those factors and places them in factors.
+   Requires that pol be monic, non-constant and squarefree.
+*/
+void zmod_poly_factor_equal_d(zmod_poly_factor_t factors, zmod_poly_t pol, ulong d);
+
+/*
+   Removes the highest possible power of p from f and returns the exponent.
+*/
+ulong zmod_poly_remove(zmod_poly_t f, zmod_poly_t p);
+
+/* 
+   Factorises a non-constant polynomial f into monic irreducible factors.
+*/
+void zmod_poly_factor_cantor_zassenhaus(zmod_poly_factor_t res, zmod_poly_t f);
 
 /**
  * Computes the factorisation of the given polynomial.
