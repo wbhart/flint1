@@ -1297,7 +1297,7 @@ int F_mpz_mat_check_0_1(ulong *part, F_mpz_mat_t M)
       }
       if (strt == -1){
 //changed this from np > to np >=... hope it works
-         if (np >= M->r + 1)
+         if (np > M->r + 1)
             return 0;
          else
             return np-1;

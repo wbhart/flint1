@@ -969,7 +969,7 @@ void F_mpz_mul2(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
 	if (!COEFF_IS_MPZ(c2)) // g is large, h is small
 	   mpz_mul_si(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(c1), c2);
    else // c1 and c2 are large
-	   F_mpz_mul(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(c1), F_mpz_arr + COEFF_TO_OFF(c2));
+	   mpz_mul(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(c1), F_mpz_arr + COEFF_TO_OFF(c2));
 	
 }
 

@@ -980,7 +980,9 @@ void F_mpz_poly_scalar_mul(F_mpz_poly_t poly1, const F_mpz_poly_t poly2, const F
 	
 	ulong i;
 	for (i = 0; i < poly2->length; i++) 
+   {
 		F_mpz_mul2(poly1->coeffs + i, poly2->coeffs + i, x);
+   }
 
 	_F_mpz_poly_set_length(poly1, poly2->length);
 }
@@ -7198,11 +7200,6 @@ void F_mpz_poly_factor_sq_fr_prim( F_mpz_poly_factor_t final_fac, ulong exp, F_m
 //   int mexpo[r + 2 * (f->length - 1)];
    F_mpz_mat_t M;
 
-   if (r > 180){
-      printf("Too high for us right now... maybe later\n");
-      abort();
-   }
-
 //In the near future we should go back and try some more primes might deduce irreducibility or find smaller r
    if (r > 10){
       use_Hoeij_Novocin = 1;
@@ -7504,20 +7501,16 @@ printf("nope not there trial_factors->num_factors = %ld\n", trial_factors->num_f
    F_mpz_poly_set(f, F);
    int j;
    for (i = 0; i < trial_factors->num_factors; i++){
-   printf(" made it here for i = %d\n", i);
       if (num_facs == 1){
          for (j = 0; j < i; j++)
             F_mpz_poly_factor_insert(final_fac, trial_factors->factors[j], exp);
          F_mpz_poly_factor_insert(final_fac, f, exp);
          return 1;
       }
-printf("here?\n");
 
-F_mpz_poly_print(trial_factors->factors[i]); printf(" trial factors\n");
-printf("Q length = %ld, R length = %ld, f length = %ld\n", Q->length, R->length, f->length);
 
       F_mpz_poly_divrem(Q, R, f, trial_factors->factors[i]);
-printf("there...\n");
+
       if (R->length == 0){
          //found one!!!! Don't insert just yet in case we find some but not all (which we handle suboptimally at the moment)
 //         F_mpz_poly_factor_insert(final_fac, trial_factors->factors[i], exp);
@@ -7577,12 +7570,6 @@ int _F_mpz_mat_check_if_solved(F_mpz_mat_t M, ulong r, F_mpz_poly_factor_t final
    for (j = 0; j < U->c; j++)
       part[j] = 0;
    int ok = F_mpz_mat_check_0_1(part, U);
-
-   printf("ok = %d part = [", ok);
-
-   for( j = 0; j < U->c; j++)
-      printf("%d,",part[j]);
-   printf("\n");
 
    if (ok == 0){
 //not a 0-1 basis
