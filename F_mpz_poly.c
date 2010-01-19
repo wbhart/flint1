@@ -7151,8 +7151,19 @@ void F_mpz_poly_factor_sq_fr_prim( F_mpz_poly_factor_t final_fac, ulong exp, F_m
    zmod_poly_t F, F_d, F_sbo;
    int tryme = 1;
    ulong p = 2UL;
-   long i;
-   for (i = 0; (i < 200) && (tryme == 1); i++){
+   long i, num_primes;
+   zmod_poly_factor_t fac;
+   zmod_poly_factor_init(fac);
+
+   ulong min_p = p; 
+   unsigned long lead_coeff;
+   long r, min_r;
+   min_r = len;
+   i = 0;
+for(num_primes = 1; num_primes < 3; num_primes++)
+{
+
+   for (; (i < 200) && (tryme == 1); i++){
       zmod_poly_init(F, p);
       zmod_poly_init(F_d, p);
       zmod_poly_init(F_sbo, p);
@@ -7184,14 +7195,23 @@ void F_mpz_poly_factor_sq_fr_prim( F_mpz_poly_factor_t final_fac, ulong exp, F_m
       return;
    }
 
-   zmod_poly_factor_t fac;
-   zmod_poly_factor_init(fac);
-
-   unsigned long lead_coeff;
    lead_coeff = zmod_poly_factor(fac, F);
-
-   long r;
    r = fac->num_factors;
+
+   if (r <= min_r)
+   {
+      min_r = r;
+      min_p = p;
+   }
+}
+
+   p = min_p;
+   zmod_poly_clear(F);
+   zmod_poly_init(F, p);
+   F_mpz_poly_to_zmod_poly(F, f);
+   lead_coeff = zmod_poly_factor(fac, F);
+   r = fac->num_factors;
+
 
    int use_Hoeij_Novocin = 0;
    int solved_yet = 0;
