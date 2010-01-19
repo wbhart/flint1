@@ -1359,14 +1359,15 @@ void F_mpz_mat_resize2(F_mpz_mat_t M, ulong r, ulong c)
    }
 }
 
-int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp){
+int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, long U_exp){
 //Goal here is to take a matrix M, get U, multiply U by col look at max bits of U*col and P subtract exp and decide if it's worth calling LLL
 //if is not return 0
+//U_exp is the assumed power of the scalar multiple of U (so 2^U_exp is the scalar weight of U) this should match the virtual precision.
 //if it is then return weight of last column (check that it should not be zero... ??) and augment M with the new column and new row
 //This new column should be truncated to the correct amount before re-multiplying by U
 //first make sure there are enough bits to even bother
    ulong r = col->r;
-   ulong B = r + (M->c - r)*(r/2);
+   ulong B = r + 1;
    long ISD = F_mpz_bits(P) - r - r/2;
    if ( ISD < exp)
       return 0;
@@ -1378,7 +1379,7 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp){
 //full precision column for deciding truncation levels
    F_mpz_mat_mul_classical(temp_col, U, col);
    F_mpz_mat_smod(temp_col, temp_col, P);
-   long mbts = FLINT_ABS(F_mpz_mat_max_bits(temp_col));
+   long mbts = FLINT_ABS(F_mpz_mat_max_bits(temp_col)) - U_exp;
 //bare minimum of data above the bound
    if (mbts < r + r/2 + exp){
       F_mpz_mat_clear(temp_col);
@@ -1397,30 +1398,31 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp){
    double no_vec_check = (double) F_mpz_bits(temp) - (1 + log2(S) + mbts); 
    F_mpz_clear(temp);
    int no_vec = (no_vec_check > 0.0);
-   ulong prec = 1UL; // M->r;
-   ulong take_away;
+   ulong prec = U_exp; // taken as an argument to match the scaling on U;
+   long take_away;
 //at the moment this is an int because cexpo in 'fast' LLL only allows ints, later it could be a long for heuristic LLL (but not really). 
    int virt_exp;
+   F_mpz_mat_t trunc_col;
+   F_mpz_mat_init(trunc_col, r, 1);
+
+
    if (no_vec){
 // rare for the first time, frequent for repeated scalings
 // In here we're going to scale to make the new entries use their 2*r bits
 // Now decide the scaling based on mbts
       ISD = mbts - r - r/2;
    }
-   if (ISD - prec >= 0){
-      printf("here we set prec = 1\n");
-      take_away = ISD - prec;
-      virt_exp = -prec;
+   take_away = ISD - prec;
+   virt_exp = -prec;
+
+   if (take_away >= 0){
+      F_mpz_mat_scalar_div_2exp(trunc_col, col, (ulong) take_away);
    }
    else{
-      take_away = 0;
-      virt_exp = -ISD;
+      F_mpz_mat_scalar_mul_2exp(trunc_col, col, (ulong) (-1*take_away));
    } 
 // Here we'll run with some extra bits with the new vector, just for complexity's sake
 // This means using ISD as the scale down.  Since we want to truncate we will take away ISD - s bits then return -s as the virtual exponent
-   F_mpz_mat_t trunc_col;
-   F_mpz_mat_init(trunc_col, r, 1);
-   F_mpz_mat_scalar_div_2exp(trunc_col, col, take_away);
    F_mpz_mat_mul_classical(temp_col, U, trunc_col);
    F_mpz_t trunc_P;
    F_mpz_init(trunc_P);
@@ -1491,6 +1493,7 @@ int F_mpz_mat_check_rest(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp){
 
    F_mpz_t B;
    F_mpz_init(B);
+//FIXME
    F_mpz_set_ui(B, r + r/2*(M->c - r));
 
    ulong newd;

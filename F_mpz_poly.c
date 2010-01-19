@@ -7199,11 +7199,15 @@ void F_mpz_poly_factor_sq_fr_prim( F_mpz_poly_factor_t final_fac, ulong exp, F_m
    int mexpo[4];
 //   int mexpo[r + 2 * (f->length - 1)];
    F_mpz_mat_t M;
+   long U_exp = r;
 
 //In the near future we should go back and try some more primes might deduce irreducibility or find smaller r
    if (r > 10){
       use_Hoeij_Novocin = 1;
       F_mpz_mat_init_identity(M, r);
+
+//Experimentally we are adjusting U = I*2^r this needs to match the precision in vHN approach
+      F_mpz_mat_scalar_mul_2exp(M, M, U_exp);
       ulong i;
       for (i = 0; i < 4; i++)
          mexpo[i] = 0;
@@ -7290,7 +7294,7 @@ void F_mpz_poly_factor_sq_fr_prim( F_mpz_poly_factor_t final_fac, ulong exp, F_m
 
       if (use_Hoeij_Novocin == 1){
 
-         solved_yet = F_mpz_poly_factor_sq_fr_vHN(final_fac, lifted_fac, f, P, exp, M, mexpo);
+         solved_yet = F_mpz_poly_factor_sq_fr_vHN(final_fac, lifted_fac, f, P, exp, M, mexpo, U_exp);
          if (solved_yet == 0){
 //This is where we increase the Hensel Accuracy and go back
             prev_exp = _F_mpz_poly_continue_hensel_lift(lifted_fac, link, v, w, f, prev_exp, a, 2*a, p, r);
@@ -7587,7 +7591,7 @@ int _F_mpz_mat_check_if_solved(F_mpz_mat_t M, ulong r, F_mpz_poly_factor_t final
    return trym;
 }
 
-int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, F_mpz_t P, ulong exp, F_mpz_mat_t M, int * cexpo)
+int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, F_mpz_t P, ulong exp, F_mpz_mat_t M, int * cexpo, long U_exp)
 {
    int return_me = 0;
    ulong N = F->length - 1;
@@ -7605,7 +7609,13 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
 
    F_mpz_t B;
    F_mpz_init(B);
-   F_mpz_set_ui(B, r + num_entries * r/2);
+// With U_exp B should be switched from r+1 to r+1 * 2^(2*U_exp) 
+   F_mpz_set_ui(B, r + 1);
+   if (U_exp >= 0)
+      F_mpz_mul_2exp(B, B, (ulong) 2*U_exp);
+   else
+      F_mpz_div_2exp(B, B, (ulong) -2*U_exp);
+
 //For the first run we'll only use 30 coeffs worth of data, should solve 99% of all 'random' polynomials
    ulong num_coeffs = 15UL;
    F_mpz_mat_t data;
@@ -7622,7 +7632,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
 
    F_mpz_t temp;
    F_mpz_init(temp);
-   ulong sqN = (ulong) sqrt( (double) (N) );
+   ulong sqN;
 //   printf("%ld sqN, %f sqrt(N)\n", sqN, sqrt( (double) (N) ) );
    int ok, col_cnt, solved;
    long newd;
@@ -7630,14 +7640,17 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    solved = 0;
    while ((all_coeffs != 2) && (return_me == 0)){
       for (cur_col = 0; cur_col < data->c; cur_col++){
+         //Attempting a less conservative N term, so that if the number of terms were infinite r + 1 would still work 
+         //but the earliest terms need the least lifting
+         sqN = (ulong) sqrt( (double) (col_cnt + 2) );         
          F_mpz_mul_ui(temp, data->rows[r] + cur_col, sqN);
          worst_exp = F_mpz_bits(temp);   
          for( ulong i = 0; i < r; i++)
             F_mpz_set(col->rows[i], data->rows[i] + cur_col);
-         ok = _F_mpz_mat_next_col(M, P, col, worst_exp);
+         ok = _F_mpz_mat_next_col(M, P, col, worst_exp, U_exp);
          if (ok != 0){
             num_entries++;
-            F_mpz_add_ui(B, B, r/2);
+//            F_mpz_add_ui(B, B, r/2);
 //            cexpo[r + col_cnt] = 0;
 //         F_mpz_mat_print_pretty(M);
             newd = LLL_wrapper_with_removal(M, B);

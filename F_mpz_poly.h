@@ -1332,7 +1332,7 @@ int _F_mpz_mat_check_if_solved(F_mpz_mat_t M, ulong r, F_mpz_poly_factor_t final
    data at first then using more if it fails.  Returns 1 if the problem has been solved and 0 if more Hensel Lifting is needed.  
    Could be improved by not rechecking data and a partial Zassenhaus for some bizarre cases (which I've yet to find or test).
 */
-int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, F_mpz_t P, ulong exp, F_mpz_mat_t M, int * cexpo);
+int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, F_mpz_t P, ulong exp, F_mpz_mat_t M, int * cexpo, long U_exp);
 
 #ifdef __cplusplus
  }

@@ -529,7 +529,7 @@ void F_mpz_mat_resize2(F_mpz_mat_t M, ulong r, ulong c);
    M in place by truncating the data, augmenting M, and returning the virtual weight of the final column.  May or may not add a row
    for P, based on a rough estimation.
 */
-int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp);
+int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, long U_exp);
 
 int F_mpz_mat_check_rest(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp);
 
