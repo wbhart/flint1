@@ -1366,7 +1366,7 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp){
 //This new column should be truncated to the correct amount before re-multiplying by U
 //first make sure there are enough bits to even bother
    ulong r = col->r;
-   ulong B = r + 1;
+   ulong B = r + (M->c - r)*(r/2);
    long ISD = F_mpz_bits(P) - r - r/2;
    if ( ISD < exp)
       return 0;
