@@ -7642,7 +7642,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
       for (cur_col = 0; cur_col < data->c; cur_col++){
          //Attempting a less conservative N term, so that if the number of terms were infinite r + 1 would still work 
          //but the earliest terms need the least lifting
-         sqN = (ulong) sqrt( (double) (col_cnt + 2) );         
+         sqN = (ulong) sqrt( (double) ldexp(1, col_cnt + 1) );         
          F_mpz_mul_ui(temp, data->rows[r] + cur_col, sqN);
          worst_exp = F_mpz_bits(temp);   
          for( ulong i = 0; i < r; i++)
