@@ -7762,8 +7762,10 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
                else
                {
                   printf("maybe random would be nice but under estimated...\n");
-                  return_me = 5;
-               }
+                  num_coeffs = F->length - 1;
+                  _F_mpz_poly_factor_CLD_mat(data, F, lifted_fac, P, num_coeffs);
+                  if (data->c >= F->length - 1)
+                     all_coeffs = 1;               }
             }
          }
       }
