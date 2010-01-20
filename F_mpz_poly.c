@@ -7665,11 +7665,13 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    F_mpz_init(temp);
    ulong sqN;
 //   printf("%ld sqN, %f sqrt(N)\n", sqN, sqrt( (double) (N) ) );
-   int ok, col_cnt, solved;
+   int ok, col_cnt, solved, need_more, since_last;
    long newd;
    col_cnt = 0;
    solved = 0;
-   while ((all_coeffs != 2) && (return_me == 0)){
+   need_more = 0;
+   since_last = 0;
+   while ((all_coeffs != 2) && (return_me == 0) && (need_more == 0)){
       for (cur_col = 0; cur_col < data->c; cur_col++){
          //Attempting a less conservative N term, so that if the number of terms were infinite r + 1 would still work 
          //but the earliest terms need the least lifting
@@ -7679,7 +7681,9 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
          for( ulong i = 0; i < r; i++)
             F_mpz_set(col->rows[i], data->rows[i] + cur_col);
          ok = _F_mpz_mat_next_col(M, P, col, worst_exp, U_exp);
+         since_last++;
          if (ok != 0){
+            since_last = 0;
             num_entries++;
 //            F_mpz_add_ui(B, B, r/2);
 //            cexpo[r + col_cnt] = 0;
@@ -7725,10 +7729,18 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
 //This is the worst case, all coeffs have been used and we still haven't solved the problem so more Hensel lifting needed
             }
             else{
-               num_coeffs = num_coeffs * 2;
-               _F_mpz_poly_factor_CLD_mat(data, F, lifted_fac, P, num_coeffs);
-               if (data->c >= F->length - 1)
-                  all_coeffs = 1;
+//This condition should include a special case for when P is ridiculously large (for the sake of complexity proofs) although no example has ever needed it...
+               if (since_last < 20)
+               {
+                  num_coeffs = num_coeffs * 2;
+                  _F_mpz_poly_factor_CLD_mat(data, F, lifted_fac, P, num_coeffs);
+                  if (data->c >= F->length - 1)
+                     all_coeffs = 1;
+               }
+               else
+               {
+                  need_more = 1;
+               }
             }
          }
       }
