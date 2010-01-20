@@ -7230,7 +7230,7 @@ for(num_primes = 1; num_primes < 5; num_primes++)
    int mexpo[4];
 //   int mexpo[r + 2 * (f->length - 1)];
    F_mpz_mat_t M;
-   long U_exp = r/3;
+   long U_exp = r/4;
 
 //In the near future we should go back and try some more primes might deduce irreducibility or find smaller r
    if (r > 10){
@@ -7287,6 +7287,7 @@ for(num_primes = 1; num_primes < 5; num_primes++)
       n_a = (long) pow( (double) 2, ceil( log2( (double) n_a ) ) );
 
       a = FLINT_MIN(a, n_a);
+
 
       printf(" new a = %ld\n", a);
 
@@ -7484,7 +7485,7 @@ int _F_mpz_poly_try_to_solve(int num_facs, ulong * part, F_mpz_poly_factor_t fin
    }
 //we know that there is a 0-1 potential basis, let's make the potential factors and sort them by degree
    ulong r = lifted_fac->num_factors;
-   if (r >= num_facs)
+   if (r <= num_facs)
    {
       printf("highly likely not solved yet... \n");
       return 0;
@@ -7706,7 +7707,9 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
 //            F_mpz_add_ui(B, B, r/2);
 //            cexpo[r + col_cnt] = 0;
 //         F_mpz_mat_print_pretty(M);
+            printf("old d = %ld\n", M->r);
             newd = LLL_wrapper_with_removal(M, B);
+            printf("newd = %ld\n", newd);
             F_mpz_mat_resize(M, newd, M->c);
             col_cnt++;
 //         This next line is what makes it 'gradual'... could try to prove that doing the same column twice won't add another P
