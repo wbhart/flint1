@@ -1411,7 +1411,6 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
    F_mpz_mat_t trunc_col;
    F_mpz_mat_init(trunc_col, r, 1);
 
-
    if (no_vec){
 // rare for the first time, frequent for repeated scalings
 // In here we're going to scale to make the new entries use their 2*r bits
@@ -1425,8 +1424,10 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
       F_mpz_mat_scalar_div_2exp(trunc_col, col, (ulong) take_away);
    }
    else{
+      printf("take away was zero?\n");
       F_mpz_mat_scalar_mul_2exp(trunc_col, col, (ulong) (-1*take_away));
    } 
+   printf("after take away\n");
 // Here we'll run with some extra bits with the new vector, just for complexity's sake
 // This means using ISD as the scale down.  Since we want to truncate we will take away ISD - s bits then return -s as the virtual exponent
    F_mpz_mat_mul_classical(temp_col, U, trunc_col);
@@ -1441,8 +1442,13 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
    F_mpz_mat_resize2(M, M->r + !(no_vec), M->c + 1);
    if (!no_vec)
    {
-      F_mpz_div_2exp(trunc_P, P, take_away);
+      if (take_away >= 0)
+         F_mpz_div_2exp(trunc_P, P, (ulong) take_away);
+      else
+         F_mpz_mul_2exp(trunc_P, P, (ulong) (-1)*take_away);         
+      printf("possible trunc_P = 0 again...\n");
       F_mpz_mat_smod(temp_col, temp_col, trunc_P);
+      printf("nope something else\n");
       F_mpz_set(M->rows[0] + M->c - 1, trunc_P);
    }
    for( ulong j = !(no_vec); j < M->r; j++)

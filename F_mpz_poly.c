@@ -7288,6 +7288,8 @@ for(num_primes = 1; num_primes < 5; num_primes++)
 
       a = FLINT_MIN(a, n_a);
 
+      printf(" new a = %ld\n", a);
+
       F_mpz_clear(lead_b);
       F_mpz_clear(trail_b);
       F_mpz_clear(mid_b);
@@ -7330,6 +7332,12 @@ for(num_primes = 1; num_primes < 5; num_primes++)
 //This is where we increase the Hensel Accuracy and go back
             prev_exp = _F_mpz_poly_continue_hensel_lift(lifted_fac, link, v, w, f, prev_exp, a, 2*a, p, r);
             a = 2*a;
+         }
+         else if (solved_yet == 5){
+//This is where we increase the Hensel Accuracy and go back
+            prev_exp = _F_mpz_poly_continue_hensel_lift(lifted_fac, link, v, w, f, prev_exp, a, 4*a, p, r);
+            a = 4*a;
+            solved_yet = 0;
          }
       }
       else{
@@ -7677,9 +7685,8 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    long newd;
    col_cnt = 0;
    solved = 0;
-   need_more = 0;
    since_last = 0;
-   while ((all_coeffs != 2) && (return_me == 0) && (need_more == 0)){
+   while ((all_coeffs != 2) && (return_me == 0)){
       for (cur_col = 0; cur_col < data->c; cur_col++){
          //Attempting a less conservative N term, so that if the number of terms were infinite r + 1 would still work 
          //but the earliest terms need the least lifting
@@ -7688,7 +7695,9 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
          worst_exp = F_mpz_bits(temp);   
          for( ulong i = 0; i < r; i++)
             F_mpz_set(col->rows[i], data->rows[i] + cur_col);
+         printf("before next col\n");
          ok = _F_mpz_mat_next_col(M, P, col, worst_exp, U_exp);
+         printf("after next_col ok = %d\n", ok);
          since_last++;
          if (ok != 0){
             since_last = 0;
@@ -7738,7 +7747,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
             }
             else{
 //This condition should include a special case for when P is ridiculously large (for the sake of complexity proofs) although no example has ever needed it...
-               if (since_last < 20)
+               if (since_last < 90)
                {
                   num_coeffs = num_coeffs * 2;
                   _F_mpz_poly_factor_CLD_mat(data, F, lifted_fac, P, num_coeffs);
@@ -7747,8 +7756,8 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
                }
                else
                {
-                  printf("rare need more case\n");
-                  need_more = 1;
+                  printf("maybe random would be nice but under estimated...\n");
+                  return_me = 5;
                }
             }
          }
