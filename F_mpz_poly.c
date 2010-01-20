@@ -7160,7 +7160,7 @@ void F_mpz_poly_factor_sq_fr_prim( F_mpz_poly_factor_t final_fac, ulong exp, F_m
    min_r = len;
    i = 0;
 
-for(num_primes = 1; num_primes < 15; num_primes++)
+for(num_primes = 1; num_primes < 5; num_primes++)
 {
    tryme  = 1;
    for (; (i < 200) && (tryme == 1); i++){
@@ -7230,7 +7230,7 @@ for(num_primes = 1; num_primes < 15; num_primes++)
    int mexpo[4];
 //   int mexpo[r + 2 * (f->length - 1)];
    F_mpz_mat_t M;
-   long U_exp = r;
+   long U_exp = r/3;
 
 //In the near future we should go back and try some more primes might deduce irreducibility or find smaller r
    if (r > 10){
