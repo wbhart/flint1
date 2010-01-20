@@ -1378,8 +1378,14 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
    F_mpz_mat_init(temp_col, M->r, 1);
 //full precision column for deciding truncation levels
    F_mpz_mat_mul_classical(temp_col, U, col);
+   if (U_exp >= 0){
+      F_mpz_mat_scalar_div_2exp(temp_col, temp_col, (ulong) U_exp);
+   }
+   else{
+      F_mpz_mat_scalar_mul_2exp(temp_col, temp_col, (ulong) (-1*U_exp));
+   } 
    F_mpz_mat_smod(temp_col, temp_col, P);
-   long mbts = FLINT_ABS(F_mpz_mat_max_bits(temp_col)) - U_exp;
+   long mbts = FLINT_ABS(F_mpz_mat_max_bits(temp_col));
 //bare minimum of data above the bound
    if (mbts < r + r/2 + exp){
       F_mpz_mat_clear(temp_col);
@@ -1424,13 +1430,21 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
 // Here we'll run with some extra bits with the new vector, just for complexity's sake
 // This means using ISD as the scale down.  Since we want to truncate we will take away ISD - s bits then return -s as the virtual exponent
    F_mpz_mat_mul_classical(temp_col, U, trunc_col);
+   if (U_exp >= 0){
+      F_mpz_mat_scalar_div_2exp(temp_col, temp_col, (ulong) U_exp);
+   }
+   else{
+      F_mpz_mat_scalar_mul_2exp(temp_col, temp_col, (ulong) (-1*U_exp));
+   }
    F_mpz_t trunc_P;
    F_mpz_init(trunc_P);
-   F_mpz_div_2exp(trunc_P, P, take_away);
-   F_mpz_mat_smod(temp_col, temp_col, trunc_P);
    F_mpz_mat_resize2(M, M->r + !(no_vec), M->c + 1);
    if (!no_vec)
+   {
+      F_mpz_div_2exp(trunc_P, P, take_away);
+      F_mpz_mat_smod(temp_col, temp_col, trunc_P);
       F_mpz_set(M->rows[0] + M->c - 1, trunc_P);
+   }
    for( ulong j = !(no_vec); j < M->r; j++)
       F_mpz_set(M->rows[j] + M->c - 1, temp_col->rows[j-!(no_vec)]);
    F_mpz_clear(trunc_P);
