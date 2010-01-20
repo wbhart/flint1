@@ -7475,6 +7475,14 @@ int _F_mpz_poly_try_to_solve(int num_facs, ulong * part, F_mpz_poly_factor_t fin
       return 1;
    }
 //we know that there is a 0-1 potential basis, let's make the potential factors and sort them by degree
+   ulong r = lifted_fac->num_factors;
+   if (r >= num_facs)
+   {
+      printf("highly likely not solved yet... \n");
+      return 0;
+   }
+
+
    F_mpz_poly_factor_t trial_factors;
    F_mpz_poly_factor_init(trial_factors);
 
@@ -7483,7 +7491,7 @@ int _F_mpz_poly_try_to_solve(int num_facs, ulong * part, F_mpz_poly_factor_t fin
    F_mpz_t temp_lc;
    F_mpz_init(temp_lc);
 
-   ulong r = lifted_fac->num_factors;
+
 
    printf(" not yet r = %ld\n", r);
 /*   ulong biggest, second;
