@@ -7160,7 +7160,7 @@ void F_mpz_poly_factor_sq_fr_prim( F_mpz_poly_factor_t final_fac, ulong exp, F_m
    min_r = len;
    i = 0;
 
-for(num_primes = 1; num_primes < 3; num_primes++)
+for(num_primes = 1; num_primes < 12; num_primes++)
 {
    tryme  = 1;
    for (; (i < 200) && (tryme == 1); i++){
