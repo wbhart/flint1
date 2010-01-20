@@ -7681,16 +7681,17 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    F_mpz_init(temp);
    ulong sqN;
 //   printf("%ld sqN, %f sqrt(N)\n", sqN, sqrt( (double) (N) ) );
-   int ok, col_cnt, solved, need_more, since_last;
+   int ok, col_cnt, solved,  since_last;
+   ulong previously_checked;
    long newd;
    col_cnt = 0;
    solved = 0;
    since_last = 0;
+   previously_checked = 0;
    while ((all_coeffs != 2) && (return_me == 0)){
-      for (cur_col = 0; cur_col < data->c; cur_col++){
-         //Attempting a less conservative N term, so that if the number of terms were infinite r + 1 would still work 
-         //but the earliest terms need the least lifting
-         sqN = (ulong) sqrt( (double) ldexp(1, col_cnt + 1) );         
+      for (cur_col = previously_checked; cur_col < data->c - previously_checked; cur_col++){
+         //aborting attempt to adjust sqN back to normal
+         sqN = (ulong) sqrt( (double) N );         
          F_mpz_mul_ui(temp, data->rows[r] + cur_col, sqN);
          worst_exp = F_mpz_bits(temp);   
          for( ulong i = 0; i < r; i++)
@@ -7732,6 +7733,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
             }
          }
       }
+      previously_checked = num_coeffs;
       if (solved == 0){
 //This is reached when the data wasn't large enough to need LLL, this means that you had a super easy or super hard factorization
          solved =  _F_mpz_mat_check_if_solved(M, r, final_fac, lifted_fac, F, P, exp, lc);
@@ -7747,9 +7749,9 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
             }
             else{
 //This condition should include a special case for when P is ridiculously large (for the sake of complexity proofs) although no example has ever needed it...
-               if (since_last < 90)
+               if (since_last < N/2)
                {
-                  num_coeffs = num_coeffs * 2;
+                  num_coeffs = num_coeffs * 4;
                   _F_mpz_poly_factor_CLD_mat(data, F, lifted_fac, P, num_coeffs);
                   if (data->c >= F->length - 1)
                      all_coeffs = 1;
