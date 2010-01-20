@@ -7739,6 +7739,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
                }
                else
                {
+                  printf("rare need more case\n");
                   need_more = 1;
                }
             }
