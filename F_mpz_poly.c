@@ -5963,7 +5963,7 @@ void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong N){
    ulong prec;// =(vbits*n) + FLINT_ABS(size_p) + 1;
    int too_much = 0;
    printf("got here starting loop\n");
-   while (!good_enough){
+   while (good_enough != 0){
       printf("in loop\n");
       hn = up_f->length;
       vbits = round( abs( log2(r) ) );
@@ -6067,7 +6067,7 @@ void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong N){
          else{
             printf("what happened******************* test_me = %d test_me == 1 gives %d\n", test_me, (test_me == 1));
             good_enough = 1;
-            if ((test_me == 1)){
+            if ((test_me == 1L)){
 // F_mpz_set_d_2exp and adjust and stuff using top_eval, top_exp 
                ans = top_eval;
                ans = ans / pow(r, n);
