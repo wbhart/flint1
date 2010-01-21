@@ -7226,6 +7226,8 @@ for(num_primes = 1; num_primes < 5; num_primes++)
    zmod_poly_factor_init(fac);
       printf("after factor_init\n");
 
+   zmod_poly_print(F); printf(" was the F reduced by p\n");
+
    lead_coeff = zmod_poly_factor(fac, F);
       printf("after factor\n");
 

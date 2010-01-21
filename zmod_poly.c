@@ -7103,6 +7103,8 @@ unsigned long zmod_poly_factor(zmod_poly_factor_t result, zmod_poly_t input)
 	   return leading_coeff;
 	}
 
+printf(" before deflation\n");
+
    ulong deflation;
    ulong coeff = 1;
    while (!input->coeffs[coeff]) coeff++;
@@ -7117,6 +7119,8 @@ unsigned long zmod_poly_factor(zmod_poly_factor_t result, zmod_poly_t input)
       }
       coeff++;
    }
+printf(" after deflation\n");
+
 
    // Run Cantor-Zassenhaus
    if (deflation == 1) 
