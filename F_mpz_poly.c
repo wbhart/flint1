@@ -7853,9 +7853,9 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
             }
             else{
 //This condition should include a special case for when P is ridiculously large (for the sake of complexity proofs) although no example has ever needed it...
-               if (since_last < N/2)
+               if (since_last < 2*num_coeffs - 1)
                {
-                  num_coeffs = num_coeffs * 4;
+                  num_coeffs = num_coeffs * 2;
    cld_data_start = clock();
                   _F_mpz_poly_factor_CLD_mat(data, F, lifted_fac, P, num_coeffs);
    cld_data_stop = clock();
@@ -7876,7 +7876,10 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    cld_data_total = cld_data_total + cld_data_stop - cld_data_start;
    printf(" spend a total of %f seconds on CLD stuff so far\n", (double) cld_data_total / (double)CLOCKS_PER_SEC);
                   if (data->c >= F->length - 1)
-                     all_coeffs = 1;               }
+                     all_coeffs = 1;
+                  return_me = 5;
+                  all_coeffs = 2;
+               }
             }
          }
       }
