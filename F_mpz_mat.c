@@ -1442,14 +1442,15 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
    F_mpz_t trunc_P;
    F_mpz_init(trunc_P);
    F_mpz_mat_resize2(M, M->r + !(no_vec), M->c + 1);
-   if (!no_vec)
-   {
       if (take_away >= 0)
          F_mpz_div_2exp(trunc_P, P, (ulong) take_away);
       else
          F_mpz_mul_2exp(trunc_P, P, (ulong) (-1)*take_away);         
 //      F_mpz_print(trunc_P); printf(" possible trunc_P = 0 again...\n");
       F_mpz_mat_smod(temp_col, temp_col, trunc_P);
+   if (!no_vec)
+   {
+
 //      printf(" nope something else\n");
       F_mpz_set(M->rows[0] + M->c - 1, trunc_P);
    }
