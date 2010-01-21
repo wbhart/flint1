@@ -5961,12 +5961,15 @@ void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong N){
    ulong hn;// = poly->length;
    ulong vbits;// = round( abs( log(val) / log(2.0) ) );
    ulong prec;// =(vbits*n) + FLINT_ABS(size_p) + 1; 
+   printf("got here starting loop\n");
    while (!good_enough){
+      printf("in loop\n");
       hn = up_f->length;
       vbits = round( abs( log(r) / log(2.0) ) );
       prec = (vbits*hn) + FLINT_ABS(size_p) + 1;
+      printf("top of loop prec = %ld\n", prec);
       //this is a rough bound for the number of bits of the answer...
-      if (prec > 700){
+      if (prec > 950){
          top_eval = F_mpz_poly_eval_horner_d_2exp( &top_exp, up_f, r);
          // maybe I'll deal with this on it's own.  top_eval = top_eval*pow(2, top_exp);
       }      
@@ -5975,9 +5978,10 @@ void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong N){
          top_eval = F_mpz_poly_eval_horner_d( up_f, r);
          top_exp = 0;
       }
+      printf("passed ifelse\n");
       hn = low_f->length;
       prec = (vbits*hn) + FLINT_ABS(size_p) + 1;
-      if (prec > 700){
+      if (prec > 950){
          bottom_eval = F_mpz_poly_eval_horner_d_2exp( &bot_exp, low_f, r);
 //         bottom_eval = bottom_eval*pow(2, bot_exp);
       }      
@@ -5985,7 +5989,9 @@ void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong N){
          bottom_eval = F_mpz_poly_eval_horner_d(low_f, r);
          bot_exp = 0;
       }
+      printf("passed second ifelse\n");
       if ((top_exp == 0) && (bot_exp == 0)){
+         printf("this case\n");
          if ( 2*(bottom_eval) < (top_eval) ){
             if (dir == 1)
                rshift = rshift/2;
@@ -6007,19 +6013,27 @@ void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong N){
                ans = top_eval;
             else
                ans = bottom_eval;
+            printf("here? above /pow r = %f, n = %ld, pow(r,n) = %f, ans = %f\n", r, n, pow(r,n), ans);
             ans = ans / pow(r, n);
+            printf("yep\n");
             ans = ans*(f->length - 1);
+            printf(" how odd \n");
             mpz_t temp;
             mpz_init(temp);
+            printf("before set_d ans = %f\n", ans);
             mpz_set_d(temp, ans);
+            printf("before set_mpz\n");
             F_mpz_set_mpz(res, temp);
+            printf("before mpz_clear\n");
             mpz_clear(temp);
+            printf("after mpz_clear\n");
          }
 
       }
       else{
 //here is trouble land, coeffs too big for doubles to handle.
 // _d_2exp_comp should give 2 when 2*bottom < top and -2 when 2*top < bottom and 1 when bottom <= top and -1 when bottom > top
+         printf(" the other case\n");
          int test_me = _d_2exp_comp(top_eval, top_exp, bottom_eval, bot_exp);
 
          if ( test_me == 2 ){
