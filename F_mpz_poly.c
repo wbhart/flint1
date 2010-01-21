@@ -7350,12 +7350,12 @@ printf(" first two clds took %f seconds\n", (double) cld_data_total/ (double) CL
 
       //long n_a = (long) (double)( 0.12 * r * r /(double)( (len - 2) ) + avg_b / log2( (double) p )  );
 
-      long n_a = (long) (double)( (0.12)*r*r/(double)(len-2)  + (double) avg_b / log2( (double) p )  );
-      long n_a2 = (long) (double)( (1.5)*r  + (double) avg_b / log2( (double) p )  );
+      //long n_a = (long) (double)( (0.12)*r*r/(double)(len-2)  + (double) avg_b / log2( (double) p )  );
+      long n_a = (long) (double)( (1.5)*r  + (double) avg_b / log2( (double) p )  );
 
       //n_a = (long) pow( (double) 2, ceil( log2( (double) n_a ) ) );
 
-      n_a = FLINT_MIN(n_a, n_a2);
+     // n_a = FLINT_MIN(n_a, n_a2);
       a = FLINT_MIN(a, n_a);
 
 
