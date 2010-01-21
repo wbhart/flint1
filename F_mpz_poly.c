@@ -6017,11 +6017,16 @@ void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong N){
             ans = ans / pow(r, n);
             printf("yep\n");
             ans = ans*(f->length - 1);
+            printf(" how odd \n");
             mpz_t temp;
             mpz_init(temp);
+            printf("before set_d\n");
             mpz_set_d(temp, ans);
+            printf("before set_mpz\n");
             F_mpz_set_mpz(res, temp);
+            printf("before mpz_clear\n");
             mpz_clear(temp);
+            printf("after mpz_clear\n");
          }
 
       }
@@ -6064,10 +6069,8 @@ void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong N){
          }
       }
    }
-   printf("here? before final clear...\n");
    F_mpz_poly_clear(low_f);
    F_mpz_poly_clear(up_f);
-   printf(" duh\n");
    return;
 }
 
