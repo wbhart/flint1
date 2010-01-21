@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -5817,6 +5818,16 @@ void F_mpz_poly_scalar_abs(F_mpz_poly_t output, F_mpz_poly_t input){
    return;
 }
 
+/*===========================================
+
+   Some temporary global timing variables
+
+==========================================*/
+
+clock_t check_if_solve_start, check_if_solve_stop, check_if_solve_total;
+
+check_if_solve_total = 0;
+
 /*===========================================================================
 
    stupid F_mpz_poly functions which just wrap fmpz_poly functions
@@ -7654,7 +7665,11 @@ int _F_mpz_mat_check_if_solved(F_mpz_mat_t M, ulong r, F_mpz_poly_factor_t final
       return 0;
    }
 
+   check_if_solve_start = clock();
    int trym = _F_mpz_poly_try_to_solve(ok, part, final_fac, lifted_fac, F, P, exp, lc);
+   check_if_solve_stop = clock();
+   check_if_solve_total = check_if_solve_total + check_if_solve_stop - check_if_solve_start;
+   printf("So far total checking time = %f\n", double(check_if_solve_total)/(double) CLOCKS_PER_SEC );
    F_mpz_mat_clear(U);
    return trym;
 }
