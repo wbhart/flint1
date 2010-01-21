@@ -6079,6 +6079,9 @@ void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong N){
                ans = ans * f->length - 1;
                F_mpz_set_d_2exp(res, ans, bot_exp);
             }
+            F_mpz_poly_clear(low_f);
+            F_mpz_poly_clear(up_f);
+            return;
          }
       }
    }
