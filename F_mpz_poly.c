@@ -7344,7 +7344,7 @@ printf(" first two clds took %f seconds\n", (double) cld_data_total/ (double) CL
       if (cmp_b >= 0)
          avg_b = F_mpz_bits(lead_b);
       else
-         ang_b = F_mpz_bits(trail_b);
+         avg_b = F_mpz_bits(trail_b);
 
 //Trying to get (a-b)log(p)*(len-2) = .12*r^2 where b = avg_b/log2(p)...
       long n_a = (long) (double)( 0.12 * r * r /(double)( (len - 2) ) + avg_b / log2( (double) p )  );
