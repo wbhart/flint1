@@ -6048,6 +6048,7 @@ void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong N){
          int test_me = _d_2exp_comp(top_eval, top_exp, bottom_eval, bot_exp);
 
          if ( test_me == 2 ){
+            printf(" one way\n");
             if (dir == 1)
                rshift = rshift/2;
             dir = -1;
@@ -6055,6 +6056,7 @@ void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong N){
             r = pow(2, rpower);
          }
          else if ( test_me == -2 ){
+            printf(" the other\n");
             if (dir == -1)
                rshift = rshift/2;
             dir = 1;
