@@ -5824,9 +5824,10 @@ void F_mpz_poly_scalar_abs(F_mpz_poly_t output, F_mpz_poly_t input){
 
 ==========================================*/
 
-clock_t check_if_solve_start, check_if_solve_stop, check_if_solve_total;
+clock_t check_if_solve_start, check_if_solve_stop;
+clock_t check_if_solve_total = 0;
 
-check_if_solve_total = 0;
+
 
 /*===========================================================================
 
