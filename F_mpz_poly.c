@@ -7669,7 +7669,7 @@ int _F_mpz_mat_check_if_solved(F_mpz_mat_t M, ulong r, F_mpz_poly_factor_t final
    int trym = _F_mpz_poly_try_to_solve(ok, part, final_fac, lifted_fac, F, P, exp, lc);
    check_if_solve_stop = clock();
    check_if_solve_total = check_if_solve_total + check_if_solve_stop - check_if_solve_start;
-   printf("So far total checking time = %f\n", double(check_if_solve_total)/(double) CLOCKS_PER_SEC );
+   printf("So far total checking time = %f\n", (double) check_if_solve_total /(double) CLOCKS_PER_SEC );
    F_mpz_mat_clear(U);
    return trym;
 }
