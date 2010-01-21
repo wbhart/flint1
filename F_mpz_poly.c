@@ -5963,7 +5963,7 @@ void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong N){
    ulong prec;// =(vbits*n) + FLINT_ABS(size_p) + 1;
    int too_much = 0;
    printf("got here starting loop\n");
-   while (good_enough != 0){
+   while (!good_enough){
       printf("in loop\n");
       hn = up_f->length;
       vbits = round( abs( log2(r) ) );
