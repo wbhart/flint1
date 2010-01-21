@@ -6064,6 +6064,7 @@ void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong N){
             r = pow(2, rpower);
          }
          else{
+            printf("what happened*******************\n");
             good_enough = 1;
             if (test_me == 1){
 // F_mpz_set_d_2exp and adjust and stuff using top_eval, top_exp 
@@ -6079,9 +6080,6 @@ void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong N){
                ans = ans * f->length - 1;
                F_mpz_set_d_2exp(res, ans, bot_exp);
             }
-            F_mpz_poly_clear(low_f);
-            F_mpz_poly_clear(up_f);
-            return;
          }
       }
    }
