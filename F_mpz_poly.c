@@ -7704,13 +7704,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
             num_entries++;
 //            F_mpz_add_ui(B, B, r/2);
 //            cexpo[r + col_cnt] = 0;
-            printf("old d = %ld\n", M->r);
             newd = LLL_wrapper_with_removal(M, B);
-
-         F_mpz_mat_print_pretty(M);
-
-
-            printf(" newd = %ld\n", newd);
 
             F_mpz_mat_resize(M, newd, M->c);
             col_cnt++;
@@ -7729,9 +7723,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
                solved = 1;
                break;
             }
-            printf("before check solved\n");
             solved =  _F_mpz_mat_check_if_solved(M, r, final_fac, lifted_fac, F, P, exp, lc);
-            printf("after check solved\n");
             if (solved == 1){
                return_me = 1;
                break;

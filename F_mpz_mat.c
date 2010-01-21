@@ -1415,7 +1415,6 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
 // rare for the first time, frequent for repeated scalings
 // In here we're going to scale to make the new entries use their 2*r bits
 // Now decide the scaling based on mbts
-      printf("no vector case\n");
       ISD = mbts - r - r/2;
 //      printf("the no_vec case mbts = %ld, P_bits = %ld\n", mbts, F_mpz_bits(P));
    }
@@ -1426,7 +1425,6 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
       F_mpz_mat_scalar_div_2exp(trunc_col, col, (ulong) take_away);
    }
    else{
-      printf("take away was zero?\n");
       F_mpz_mat_scalar_mul_2exp(trunc_col, col, (ulong) (-1*take_away));
    } 
 //   printf("after take away\n");
@@ -1446,13 +1444,10 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
       F_mpz_div_2exp(trunc_P, P, (ulong) take_away);
    else
       F_mpz_mul_2exp(trunc_P, P, (ulong) (-1)*take_away);         
-//      F_mpz_print(trunc_P); printf(" possible trunc_P = 0 again...\n");
    if (!F_mpz_is_zero(trunc_P))
       F_mpz_mat_smod(temp_col, temp_col, trunc_P);
    if (!no_vec)
    {
-
-//      printf(" nope something else\n");
       F_mpz_set(M->rows[0] + M->c - 1, trunc_P);
    }
    for( ulong j = !(no_vec); j < M->r; j++)
