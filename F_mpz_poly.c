@@ -6067,7 +6067,7 @@ void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong N){
          else{
             printf("what happened******************* test_me = %d test_me == 1 gives %d\n", test_me, (test_me == 1));
             good_enough = 1;
-            if ((int) test_me == 1){
+            if ((test_me == 1)){
 // F_mpz_set_d_2exp and adjust and stuff using top_eval, top_exp 
                ans = top_eval;
                ans = ans / pow(r, n);
@@ -6075,6 +6075,7 @@ void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong N){
                F_mpz_set_d_2exp(res, ans, top_exp);
                F_mpz_poly_clear(low_f);
                F_mpz_poly_clear(up_f);
+               printf(" wtf dude\n");
                return;
             }
             else{
@@ -6085,6 +6086,7 @@ void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong N){
                F_mpz_set_d_2exp(res, ans, bot_exp);
                F_mpz_poly_clear(low_f);
                F_mpz_poly_clear(up_f);
+               printf(" why not!!!!!\n");
                return;
             }
          }
