@@ -1416,7 +1416,7 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
 // In here we're going to scale to make the new entries use their 2*r bits
 // Now decide the scaling based on mbts
       ISD = mbts - r - r/2;
-      printf("the no_vec case\n");
+      printf("the no_vec case mbts = %ld, P_bits = %ld\n", mbts, F_mpz_bits(P));
    }
    take_away = ISD - prec;
    virt_exp = -prec;
