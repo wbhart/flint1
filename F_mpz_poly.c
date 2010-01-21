@@ -6064,8 +6064,10 @@ void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong N){
          }
       }
    }
+   printf("here? before final clear...\n");
    F_mpz_poly_clear(low_f);
    F_mpz_poly_clear(up_f);
+   printf(" duh\n");
    return;
 }
 
