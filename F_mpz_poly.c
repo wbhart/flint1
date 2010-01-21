@@ -7262,6 +7262,7 @@ for(num_primes = 1; num_primes < 5; num_primes++)
    ulong a;
    a = (long) ceil( (double) M_bits / log2( (double)p ) );
    a = (long) pow( (double) 2, ceil( log2( (double) a ) ) );
+   printf("here or not\n");
 
    if (use_Hoeij_Novocin == 1)
    {
@@ -7282,9 +7283,11 @@ for(num_primes = 1; num_primes < 5; num_primes++)
       F_mpz_cdiv_q(lead_b, lead_b, trail_b);
       ulong avg_b = F_mpz_bits(lead_b);
 
+      printf("then here\n");
 //Trying to get (a-b)log(p)*(len-2) = .12*r^2 where b = avg_b/log2(p)...
       long n_a = (long) (double)( 0.12 * r * r /(double)( (len - 2) ) + avg_b / log2( (double) p )  );
       n_a = (long) pow( (double) 2, ceil( log2( (double) n_a ) ) );
+      printf(" yep there\n");
 
       a = FLINT_MIN(a, n_a);
 
