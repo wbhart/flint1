@@ -7709,7 +7709,8 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
 //         F_mpz_mat_print_pretty(M);
             printf("old d = %ld\n", M->r);
             newd = LLL_wrapper_with_removal(M, B);
-            printf("newd = %ld\n", newd);
+            F_mpz_mat_print_pretty(M);
+            printf(" newd = %ld\n", newd);
             F_mpz_mat_resize(M, newd, M->c);
             col_cnt++;
 //         This next line is what makes it 'gradual'... could try to prove that doing the same column twice won't add another P
