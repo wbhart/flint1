@@ -5966,7 +5966,7 @@ void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong N){
       vbits = round( abs( log(r) / log(2.0) ) );
       prec = (vbits*hn) + FLINT_ABS(size_p) + 1;
       //this is a rough bound for the number of bits of the answer...
-      if (prec > 950){
+      if (prec > 700){
          top_eval = F_mpz_poly_eval_horner_d_2exp( &top_exp, up_f, r);
          // maybe I'll deal with this on it's own.  top_eval = top_eval*pow(2, top_exp);
       }      
@@ -5977,7 +5977,7 @@ void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong N){
       }
       hn = low_f->length;
       prec = (vbits*hn) + FLINT_ABS(size_p) + 1;
-      if (prec > 950){
+      if (prec > 700){
          bottom_eval = F_mpz_poly_eval_horner_d_2exp( &bot_exp, low_f, r);
 //         bottom_eval = bottom_eval*pow(2, bot_exp);
       }      
