@@ -7202,7 +7202,7 @@ void F_mpz_poly_factor_sq_fr_prim( F_mpz_poly_factor_t final_fac, ulong exp, F_m
 
    local_factor_start = clock();
 
-for(num_primes = 1; num_primes < 5; num_primes++)
+for(num_primes = 1; num_primes < 3; num_primes++)
 {
    tryme  = 1;
    for (; (i < 200) && (tryme == 1); i++){
