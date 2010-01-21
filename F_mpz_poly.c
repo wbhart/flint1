@@ -5963,9 +5963,11 @@ void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong N){
    ulong prec;// =(vbits*n) + FLINT_ABS(size_p) + 1; 
    printf("got here starting loop\n");
    while (!good_enough){
+      printf("in loop\n");
       hn = up_f->length;
       vbits = round( abs( log(r) / log(2.0) ) );
       prec = (vbits*hn) + FLINT_ABS(size_p) + 1;
+      printf("top of loop prec = %ld\n", prec);
       //this is a rough bound for the number of bits of the answer...
       if (prec > 1021){
          top_eval = F_mpz_poly_eval_horner_d_2exp( &top_exp, up_f, r);
@@ -5976,6 +5978,7 @@ void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong N){
          top_eval = F_mpz_poly_eval_horner_d( up_f, r);
          top_exp = 0;
       }
+      printf("passed ifelse\n");
       hn = low_f->length;
       prec = (vbits*hn) + FLINT_ABS(size_p) + 1;
       if (prec > 1021){
@@ -5986,7 +5989,9 @@ void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong N){
          bottom_eval = F_mpz_poly_eval_horner_d(low_f, r);
          bot_exp = 0;
       }
+      printf("passed second ifelse\n");
       if ((top_exp == 0) && (bot_exp == 0)){
+         printf("this case\n");
          if ( 2*(bottom_eval) < (top_eval) ){
             if (dir == 1)
                rshift = rshift/2;
@@ -6022,6 +6027,7 @@ void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong N){
       else{
 //here is trouble land, coeffs too big for doubles to handle.
 // _d_2exp_comp should give 2 when 2*bottom < top and -2 when 2*top < bottom and 1 when bottom <= top and -1 when bottom > top
+         printf(" the other case\n");
          int test_me = _d_2exp_comp(top_eval, top_exp, bottom_eval, bot_exp);
 
          if ( test_me == 2 ){
