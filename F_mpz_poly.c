@@ -7230,7 +7230,7 @@ for(num_primes = 1; num_primes < 5; num_primes++)
    int mexpo[4];
 //   int mexpo[r + 2 * (f->length - 1)];
    F_mpz_mat_t M;
-   long U_exp = r/4;
+   long U_exp = r;
 
 //In the near future we should go back and try some more primes might deduce irreducibility or find smaller r
    if (r > 10){
