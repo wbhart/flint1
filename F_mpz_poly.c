@@ -5961,6 +5961,7 @@ void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong N){
    ulong hn;// = poly->length;
    ulong vbits;// = round( abs( log(val) / log(2.0) ) );
    ulong prec;// =(vbits*n) + FLINT_ABS(size_p) + 1; 
+   printf("got here starting loop\n");
    while (!good_enough){
       hn = up_f->length;
       vbits = round( abs( log(r) / log(2.0) ) );
@@ -7271,7 +7272,7 @@ for(num_primes = 1; num_primes < 5; num_primes++)
       F_mpz_init(lead_b);
       F_mpz_init(trail_b);
       F_mpz_init(mid_b);
-      printf("cld bound 1\n");
+      printf("cld bound 1 len = %ld\n", len);
       F_mpz_poly_CLD_bound(lead_b, f, len - 2);
       printf("cld bound 2\n");
       F_mpz_poly_CLD_bound(mid_b, f, (len - 2)/2);
