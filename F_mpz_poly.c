@@ -7697,9 +7697,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
          worst_exp = F_mpz_bits(temp);   
          for( ulong i = 0; i < r; i++)
             F_mpz_set(col->rows[i], data->rows[i] + cur_col);
-         printf("before next col\n");
          ok = _F_mpz_mat_next_col(M, P, col, worst_exp, U_exp);
-         printf("after next_col ok = %d cur_col = %d\n", ok, cur_col);
          since_last++;
          if (ok != 0){
             since_last = 0;
@@ -7709,7 +7707,6 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
 //         F_mpz_mat_print_pretty(M);
             printf("old d = %ld\n", M->r);
             newd = LLL_wrapper_with_removal(M, B);
-            F_mpz_mat_print_pretty(M);
             printf(" newd = %ld\n", newd);
             F_mpz_mat_resize(M, newd, M->c);
             col_cnt++;
