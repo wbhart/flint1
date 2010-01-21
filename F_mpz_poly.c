@@ -7341,7 +7341,7 @@ printf(" first two clds took %f seconds\n", (double) cld_data_total/ (double) CL
       int cmp_b = F_mpz_cmpabs(lead_b, trail_b);
 
       ulong avg_b;
-      if (cmp_b >= 0)
+      if (cmp_b <= 0)
          avg_b = F_mpz_bits(lead_b);
       else
          avg_b = F_mpz_bits(trail_b);
