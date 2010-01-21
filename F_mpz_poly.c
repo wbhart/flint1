@@ -7284,7 +7284,7 @@ for(num_primes = 1; num_primes < 3; num_primes++)
    long U_exp = r/4;
 
 //In the near future we should go back and try some more primes might deduce irreducibility or find smaller r
-   if (r > 10){
+   if (r > 6){
       use_Hoeij_Novocin = 1;
       F_mpz_mat_init_identity(M, r);
 
