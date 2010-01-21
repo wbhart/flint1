@@ -7356,6 +7356,7 @@ printf(" first two clds took %f seconds\n", (double) cld_data_total/ (double) CL
 
       a = FLINT_MIN(a, n_a);
 
+      a = 50;
 
       printf(" new a = %ld\n", a);
 
