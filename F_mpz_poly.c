@@ -5827,6 +5827,20 @@ void F_mpz_poly_scalar_abs(F_mpz_poly_t output, F_mpz_poly_t input){
 clock_t check_if_solve_start, check_if_solve_stop;
 clock_t check_if_solve_total = 0;
 
+clock_t local_factor_start, local_factor_stop;
+clock_t local_factor_total = 0;
+
+clock_t lll_start, lll_stop;
+clock_t lll_total = 0;
+
+clock_t hensel_start, hensel_stop;
+clock_t hensel_total = 0;
+
+clock_t linear_alg_start, linear_alg_stop;
+clock_t linear_alg_total = 0;
+
+clock_t cld_data_start, cld_data_stop;
+clock_t cld_data_total = 0;
 
 
 /*===========================================================================
@@ -7186,6 +7200,8 @@ void F_mpz_poly_factor_sq_fr_prim( F_mpz_poly_factor_t final_fac, ulong exp, F_m
    min_r = len;
    i = 0;
 
+   local_factor_start = clock();
+
 for(num_primes = 1; num_primes < 5; num_primes++)
 {
    tryme  = 1;
@@ -7252,7 +7268,11 @@ for(num_primes = 1; num_primes < 5; num_primes++)
    lead_coeff = zmod_poly_factor(fac, F);
    r = fac->num_factors;
 
-   printf("primes chosen r = %ld, p = %ld\n", r, p);
+   local_factor_stop = clock();
+   local_factor_total = local_factor_total + local_factor_stop - local_factor_start;
+
+   printf("primes chosen r = %ld, p = %ld total time = %f\n", r, p, (double) local_factor_total/(double) CLOCKS_PER_SEC);
+
 
 
    int use_Hoeij_Novocin = 0;
@@ -7302,9 +7322,14 @@ for(num_primes = 1; num_primes < 5; num_primes++)
       F_mpz_init(lead_b);
       F_mpz_init(trail_b);
       F_mpz_init(mid_b);
+cld_data_start = clock();
       F_mpz_poly_CLD_bound(lead_b, f, len - 2);
       F_mpz_poly_CLD_bound(mid_b, f, (len - 2)/2);
       F_mpz_poly_CLD_bound(trail_b, f, 0);
+cld_data_stop = clock();
+cld_data_total = cld_data_total + cld_data_stop - cld_data_start;
+
+printf(" first three clds took %f seconds\n", (double) cld_data_total/ (double) CLOCKS_PER_SEC );
 
 //reusing the lead_b to be the new average and trail_b to be 3 since there isn't an F_mpz_div_ui
       F_mpz_add(lead_b, lead_b, mid_b);
@@ -7344,8 +7369,12 @@ for(num_primes = 1; num_primes < 5; num_primes++)
 
    for (i = 0; i < 2*r-2; i++)
       F_mpz_poly_init(w[i]);
-
+   hensel_start = clock();
    ulong prev_exp = _F_mpz_poly_start_hensel_lift(lifted_fac, link, v, w, f, fac, a);
+   hensel_stop = clock();
+   hensel_total = hensel_total + hensel_stop - hensel_start;
+
+   printf("hensel lifted for %f seconds so far\n", (double) hensel_total / (double) CLOCKS_PER_SEC);
 //clearing fac early, don't need them anymore
    zmod_poly_factor_clear(fac);
 
@@ -7363,17 +7392,30 @@ for(num_primes = 1; num_primes < 5; num_primes++)
          solved_yet = F_mpz_poly_factor_sq_fr_vHN(final_fac, lifted_fac, f, P, exp, M, mexpo, U_exp);
          if (solved_yet == 0){
 //This is where we increase the Hensel Accuracy and go back
+            hensel_start = clock();
             prev_exp = _F_mpz_poly_continue_hensel_lift(lifted_fac, link, v, w, f, prev_exp, a, 2*a, p, r);
+            hensel_stop = clock();
+            hensel_total = hensel_total + hensel_stop - hensel_start;
+
+            printf("hensel lifted for %f seconds so far\n", (double) hensel_total / (double) CLOCKS_PER_SEC);
+
             a = 2*a;
          }
          else if (solved_yet == 5){
 //This is where we increase the Hensel Accuracy and go back
+            hensel_start = clock();
             prev_exp = _F_mpz_poly_continue_hensel_lift(lifted_fac, link, v, w, f, prev_exp, a, 4*a, p, r);
+            hensel_stop = clock();
+            hensel_total = hensel_total + hensel_stop - hensel_start;
+
+            printf("hensel lifted for %f seconds so far\n", (double) hensel_total / (double) CLOCKS_PER_SEC);
+
             a = 4*a;
             solved_yet = 0;
          }
       }
       else{
+         printf("called zassenhaus\n");
          F_mpz_poly_zassenhaus_naive(final_fac, lifted_fac, f, P, exp, lc);
          solved_yet = 1;
       }
@@ -7704,7 +7746,15 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    ulong num_coeffs = 15UL;
    F_mpz_mat_t data;
    F_mpz_mat_init(data, 0, 0);
+
+
+   cld_data_start = clock();
    _F_mpz_poly_factor_CLD_mat(data, F, lifted_fac, P, num_coeffs);
+   cld_data_stop = clock();
+   
+   cld_data_total = cld_data_total + cld_data_stop - cld_data_start;
+   printf(" spend a total of %f seconds on CLD stuff so far\n", (double) cld_data_total / (double)CLOCKS_PER_SEC);
+
 
    int all_coeffs = 0;
    if (data->c >= F->length - 1)
@@ -7733,14 +7783,24 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
          worst_exp = F_mpz_bits(temp);   
          for( ulong i = 0; i < r; i++)
             F_mpz_set(col->rows[i], data->rows[i] + cur_col);
+   linear_alg_start = clock();
          ok = _F_mpz_mat_next_col(M, P, col, worst_exp, U_exp);
+   linear_alg_stop = clock();
+   
+   linear_alg_total = linear_alg_total + linear_alg_stop - linear_alg_start;
          since_last++;
          if (ok != 0){
             since_last = 0;
+            printf(" spend a total of %f seconds on Linear alg stuff since the last entry\n", (double) linear_alg_total / (double)CLOCKS_PER_SEC);
             num_entries++;
 //            F_mpz_add_ui(B, B, r/2);
 //            cexpo[r + col_cnt] = 0;
+   lll_start = clock();
             newd = LLL_wrapper_with_removal(M, B);
+   lll_stop = clock();
+   
+   lll_total = lll_total + lll_stop - lll_start;
+   printf(" spend a total of %f seconds on LLL so far\n", (double) lll_total / (double)CLOCKS_PER_SEC);
 
             F_mpz_mat_resize(M, newd, M->c);
             col_cnt++;
@@ -7785,7 +7845,12 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
                if (since_last < N/2)
                {
                   num_coeffs = num_coeffs * 4;
+   cld_data_start = clock();
                   _F_mpz_poly_factor_CLD_mat(data, F, lifted_fac, P, num_coeffs);
+   cld_data_stop = clock();
+   
+   cld_data_total = cld_data_total + cld_data_stop - cld_data_start;
+   printf(" spend a total of %f seconds on CLD stuff so far\n", (double) cld_data_total / (double)CLOCKS_PER_SEC);
                   if (data->c >= F->length - 1)
                      all_coeffs = 1;
                }
@@ -7793,7 +7858,12 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
                {
                   printf("maybe random would be nice but under estimated...\n");
                   num_coeffs = F->length - 1;
+   cld_data_start = clock();
                   _F_mpz_poly_factor_CLD_mat(data, F, lifted_fac, P, num_coeffs);
+   cld_data_stop = clock();
+   
+   cld_data_total = cld_data_total + cld_data_stop - cld_data_start;
+   printf(" spend a total of %f seconds on CLD stuff so far\n", (double) cld_data_total / (double)CLOCKS_PER_SEC);
                   if (data->c >= F->length - 1)
                      all_coeffs = 1;               }
             }
