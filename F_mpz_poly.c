@@ -6010,7 +6010,7 @@ void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong N){
          else{
             good_enough = 1;
 
-            if ((top_eval == inf) || (bottom_eval == inf))
+            if (isinf(top_eval) || isinf(bottom_eval))
             {
                too_much = 1; 
                good_enough = 0;
