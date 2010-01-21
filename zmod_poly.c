@@ -6730,7 +6730,7 @@ int zmod_poly_factor_equal_prob(zmod_poly_t factor, zmod_poly_t pol, ulong d)
    zmod_poly_gcd(factor, b, pol);
    
    int res = 1;
-   if ((factor->length == 1) || (factor->length == pol->length)) res = 0;
+   if ((factor->length <= 1) || (factor->length == pol->length)) res = 0;
 
    zmod_poly_clear(a);
    zmod_poly_clear(b);
