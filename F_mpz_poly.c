@@ -6013,7 +6013,7 @@ void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong N){
                ans = top_eval;
             else
                ans = bottom_eval;
-            printf("here? above /pow\n")
+            printf("here? above /pow\n");
             ans = ans / pow(r, n);
             printf("yep\n");
             ans = ans*(f->length - 1);
