@@ -7956,22 +7956,10 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
                else
                {
                   printf("maybe random would be nice but under estimated...\n");
-<<<<<<< HEAD:F_mpz_poly.c
-                  num_coeffs = F->length - 1;
-   cld_data_start = clock();
-                  _F_mpz_poly_factor_CLD_mat(data, F, lifted_fac, P, num_coeffs);
-   cld_data_stop = clock();
-   
-   cld_data_total = cld_data_total + cld_data_stop - cld_data_start;
-   //printf(" spend a total of %f seconds on CLD stuff so far\n", (double) cld_data_total / (double)CLOCKS_PER_SEC);
-                  if (data->c >= F->length - 1)
-                     all_coeffs = 1;               }
-=======
 
                   return_me = 5;
                   all_coeffs = 2;
                }
->>>>>>> andy/deflation:F_mpz_poly.c
             }
          }
       }
