@@ -7323,7 +7323,7 @@ for(num_primes = 1; num_primes < 3; num_primes++)
       F_mpz_init(trail_b);
       F_mpz_init(mid_b);
 cld_data_start = clock();
-      F_mpz_poly_CLD_bound(lead_b, f, len - 2);
+      F_mpz_poly_CLD_bound(lead_b, f, len - 3);
 //      F_mpz_poly_CLD_bound(mid_b, f, (len - 2)/2);
       F_mpz_poly_CLD_bound(trail_b, f, 0);
 cld_data_stop = clock();
@@ -7350,7 +7350,7 @@ printf(" first two clds took %f seconds\n", (double) cld_data_total/ (double) CL
 
 //      long n_a = (long) (double)( 0.12 * r * r /(double)( (len - 2) ) + avg_b / log2( (double) p )  );
 
-      long n_a = (long) (double)( (1.5)*r  + (double) avg_b / log2( (double) p )  );
+      long n_a = (long) (double)( (1.5)*r /(double)( (len - 2) )  + (double) avg_b / log2( (double) p )  );
 
 //      n_a = (long) pow( (double) 2, ceil( log2( (double) n_a ) ) );
 
