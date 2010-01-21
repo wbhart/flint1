@@ -7262,7 +7262,6 @@ for(num_primes = 1; num_primes < 5; num_primes++)
    ulong a;
    a = (long) ceil( (double) M_bits / log2( (double)p ) );
    a = (long) pow( (double) 2, ceil( log2( (double) a ) ) );
-   printf("here or not\n");
 
    if (use_Hoeij_Novocin == 1)
    {
@@ -7272,9 +7271,14 @@ for(num_primes = 1; num_primes < 5; num_primes++)
       F_mpz_init(lead_b);
       F_mpz_init(trail_b);
       F_mpz_init(mid_b);
+      printf("cld bound 1\n");
       F_mpz_poly_CLD_bound(lead_b, f, len - 2);
+      printf("cld bound 2\n");
       F_mpz_poly_CLD_bound(mid_b, f, (len - 2)/2);
+      printf("cld bound 3\n");
       F_mpz_poly_CLD_bound(trail_b, f, 0);
+
+      printf("there?\n");
 //reusing the lead_b to be the new average and trail_b to be 3 since there isn't an F_mpz_div_ui
       F_mpz_add(lead_b, lead_b, mid_b);
       F_mpz_add(lead_b, lead_b, trail_b);
@@ -7287,7 +7291,6 @@ for(num_primes = 1; num_primes < 5; num_primes++)
 //Trying to get (a-b)log(p)*(len-2) = .12*r^2 where b = avg_b/log2(p)...
       long n_a = (long) (double)( 0.12 * r * r /(double)( (len - 2) ) + avg_b / log2( (double) p )  );
       n_a = (long) pow( (double) 2, ceil( log2( (double) n_a ) ) );
-      printf(" yep there\n");
 
       a = FLINT_MIN(a, n_a);
 
