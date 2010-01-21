@@ -7323,7 +7323,7 @@ for(num_primes = 1; num_primes < 3; num_primes++)
       F_mpz_init(trail_b);
       F_mpz_init(mid_b);
 cld_data_start = clock();
-      F_mpz_poly_CLD_bound(lead_b, f, len - 2);
+      F_mpz_poly_CLD_bound(lead_b, f, len - 3);
 //      F_mpz_poly_CLD_bound(mid_b, f, (len - 2)/2);
       F_mpz_poly_CLD_bound(trail_b, f, 0);
 cld_data_stop = clock();
@@ -7417,13 +7417,13 @@ printf(" first two clds took %f seconds\n", (double) cld_data_total/ (double) CL
          else if (solved_yet == 5){
 //This is where we increase the Hensel Accuracy and go back
             hensel_start = clock();
-            prev_exp = _F_mpz_poly_continue_hensel_lift(lifted_fac, link, v, w, f, prev_exp, a, 4*a, p, r);
+            prev_exp = _F_mpz_poly_continue_hensel_lift(lifted_fac, link, v, w, f, prev_exp, a, 2*a, p, r);
             hensel_stop = clock();
             hensel_total = hensel_total + hensel_stop - hensel_start;
 
             printf("hensel lifted for %f seconds so far\n", (double) hensel_total / (double) CLOCKS_PER_SEC);
 
-            a = 4*a;
+            a = 2*a;
             solved_yet = 0;
          }
       }
@@ -7941,9 +7941,9 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
             }
             else{
 //This condition should include a special case for when P is ridiculously large (for the sake of complexity proofs) although no example has ever needed it...
-               if (since_last < N/2)
+               if (since_last < 2*num_coeffs - 1)
                {
-                  num_coeffs = num_coeffs * 4;
+                  num_coeffs = num_coeffs * 2;
    cld_data_start = clock();
                   _F_mpz_poly_factor_CLD_mat(data, F, lifted_fac, P, num_coeffs);
    cld_data_stop = clock();
@@ -7956,6 +7956,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
                else
                {
                   printf("maybe random would be nice but under estimated...\n");
+<<<<<<< HEAD:F_mpz_poly.c
                   num_coeffs = F->length - 1;
    cld_data_start = clock();
                   _F_mpz_poly_factor_CLD_mat(data, F, lifted_fac, P, num_coeffs);
@@ -7965,6 +7966,12 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    //printf(" spend a total of %f seconds on CLD stuff so far\n", (double) cld_data_total / (double)CLOCKS_PER_SEC);
                   if (data->c >= F->length - 1)
                      all_coeffs = 1;               }
+=======
+
+                  return_me = 5;
+                  all_coeffs = 2;
+               }
+>>>>>>> andy/deflation:F_mpz_poly.c
             }
          }
       }
