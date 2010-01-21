@@ -5960,16 +5960,17 @@ void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong N){
    long size_p = F_mpz_poly_max_bits(f);
    ulong hn;// = poly->length;
    ulong vbits;// = round( abs( log(val) / log(2.0) ) );
-   ulong prec;// =(vbits*n) + FLINT_ABS(size_p) + 1; 
+   ulong prec;// =(vbits*n) + FLINT_ABS(size_p) + 1;
+   int too_much = 0;
    printf("got here starting loop\n");
    while (!good_enough){
       printf("in loop\n");
       hn = up_f->length;
-      vbits = round( abs( log(r) / log(2.0) ) );
+      vbits = round( abs( log2(r) ) );
       prec = (vbits*hn) + FLINT_ABS(size_p) + 1;
       printf("top of loop prec = %ld\n", prec);
       //this is a rough bound for the number of bits of the answer...
-      if (prec > 950){
+      if ((prec > 950) || (too_much = 1)){
          top_eval = F_mpz_poly_eval_horner_d_2exp( &top_exp, up_f, r);
          // maybe I'll deal with this on it's own.  top_eval = top_eval*pow(2, top_exp);
       }      
@@ -5981,7 +5982,7 @@ void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong N){
       printf("passed ifelse\n");
       hn = low_f->length;
       prec = (vbits*hn) + FLINT_ABS(size_p) + 1;
-      if (prec > 950){
+      if ((prec > 950) || (too_much = 1)){
          bottom_eval = F_mpz_poly_eval_horner_d_2exp( &bot_exp, low_f, r);
 //         bottom_eval = bottom_eval*pow(2, bot_exp);
       }      
@@ -6008,6 +6009,13 @@ void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong N){
          }
          else{
             good_enough = 1;
+
+            if ((top_eval == inf) || (bottom_eval == inf))
+            {
+               too_much = 1; 
+               good_enough = 0;
+               continue;
+            }
 
             if (top_eval > bottom_eval)
                ans = top_eval;
