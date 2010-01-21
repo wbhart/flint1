@@ -6020,7 +6020,7 @@ void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong N){
             printf(" how odd \n");
             mpz_t temp;
             mpz_init(temp);
-            printf("before set_d\n");
+            printf("before set_d ans = %f\n", ans);
             mpz_set_d(temp, ans);
             printf("before set_mpz\n");
             F_mpz_set_mpz(res, temp);
