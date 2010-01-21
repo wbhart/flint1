@@ -7348,12 +7348,14 @@ printf(" first two clds took %f seconds\n", (double) cld_data_total/ (double) CL
 
 //Trying to get (a-b)log(p)*(len-2) = .12*r^2 where b = avg_b/log2(p)...
 
-//      long n_a = (long) (double)( 0.12 * r * r /(double)( (len - 2) ) + avg_b / log2( (double) p )  );
+      //long n_a = (long) (double)( 0.12 * r * r /(double)( (len - 2) ) + avg_b / log2( (double) p )  );
 
-      long n_a = (long) (double)( (1.5)*r  + (double) avg_b / log2( (double) p )  );
+      long n_a = (long) (double)( (0.12)*r*r/(double)(len-2)  + (double) avg_b / log2( (double) p )  );
+      long n_a2 = (long) (double)( (1.5)*r  + (double) avg_b / log2( (double) p )  );
 
-//      n_a = (long) pow( (double) 2, ceil( log2( (double) n_a ) ) );
+      //n_a = (long) pow( (double) 2, ceil( log2( (double) n_a ) ) );
 
+      n_a = FLINT_MIN(n_a, n_a2);
       a = FLINT_MIN(a, n_a);
 
 
@@ -7445,7 +7447,7 @@ printf(" first two clds took %f seconds\n", (double) cld_data_total/ (double) CL
    return;
 }
 
-void F_mpz_poly_factor(F_mpz_poly_factor_t final_fac, F_mpz_t cong, F_mpz_poly_t G){
+void __F_mpz_poly_factor(F_mpz_poly_factor_t final_fac, F_mpz_t cong, F_mpz_poly_t G){
    if (G->length == 0){
       F_mpz_set_ui(cong, 0UL);
       return;
@@ -7487,6 +7489,92 @@ void F_mpz_poly_factor(F_mpz_poly_factor_t final_fac, F_mpz_t cong, F_mpz_poly_t
    }
    F_mpz_poly_factor_clear( sq_fr_fac );
    F_mpz_poly_clear(g);
+}
+
+void F_mpz_poly_factor(F_mpz_poly_factor_t final_fac, F_mpz_t cong, F_mpz_poly_t G)
+{
+   if (G->length == 0){
+      F_mpz_set_ui(cong, 0UL);
+      return;
+   }
+   if (G->length == 1){
+      F_mpz_set(cong, G->coeffs);
+      return;
+   }
+
+   ulong deflation;
+   ulong num_facs = 1;
+   ulong coeff = 1;
+   ulong i, j;
+   while (F_mpz_is_zero(G->coeffs + coeff)) coeff++;
+   deflation = z_gcd(G->length - 1, coeff);
+
+   while ((deflation > 1) && (coeff + deflation < G->length))
+   {
+      for (i = 0; i < deflation - 1; i++)
+      {
+         coeff++;
+         if (!F_mpz_is_zero(G->coeffs + coeff)) deflation = z_gcd(deflation, i + 1);
+      }
+      coeff++;
+   }
+   if (deflation > 1) printf("deflation of %ld\n", deflation);
+
+   if (deflation == 1)
+   {
+      __F_mpz_poly_factor(final_fac, cong, G);
+   } else
+   {
+      F_mpz_poly_t def;
+      F_mpz_poly_init(def);
+      F_mpz_poly_factor_t def_res;
+      F_mpz_poly_factor_init(def_res);
+
+      while (1) 
+      {
+         ulong def_length = (G->length - 1)/deflation + 1;
+      
+         F_mpz_poly_fit_length(def, def_length);
+         for (i = 0; i < def_length; i++)
+            F_mpz_set(def->coeffs + i, G->coeffs + i*deflation);
+         _F_mpz_poly_set_length(def, def_length);
+
+         __F_mpz_poly_factor(def_res, cong, def);
+         printf("deflated poly has %ld factors\n", def_res->num_factors);
+
+         if ((def_res->num_factors == 1) && (deflation % 2 == 0))
+         {
+            num_facs = def_res->num_factors;
+            F_mpz_poly_factor_clear(def_res);
+            F_mpz_poly_factor_init(def_res);
+            deflation /= 2;
+         } else
+            break;
+      }
+
+      F_mpz_poly_clear(def);
+
+      for (i = 0; i < def_res->num_factors; i++)
+      {
+         printf("inflating factor %ld\n", i + 1);
+         ulong def_length = def_res->factors[i]->length;
+
+          // inflate
+         F_mpz_poly_t pol;
+         F_mpz_poly_init(pol);
+         F_mpz_poly_fit_length(pol, (def_length - 1)*deflation + 1);
+         for (j = 0; j < def_length; j++)
+            F_mpz_poly_set_coeff_ui(pol, j*deflation, def_res->factors[i]->coeffs[j]);
+
+         // factor inflation
+         printf("factoring pol of length %ld\n", pol->length);
+         if (num_facs == 1) __F_mpz_poly_factor(final_fac, cong, pol);
+         else F_mpz_poly_factor(final_fac, cong, pol);
+         F_mpz_poly_clear(pol);
+      }
+
+      F_mpz_poly_factor_clear(def_res);
+   } 
 }
 
 /*============================================================================
@@ -7572,7 +7660,7 @@ int _F_mpz_poly_try_to_solve(int num_facs, ulong * part, F_mpz_poly_factor_t fin
    ulong r = lifted_fac->num_factors;
    if (r <= num_facs)
    {
-      printf("highly likely not solved yet... \n");
+      //printf("highly likely not solved yet... \n");
       return 0;
    }
 
@@ -7723,7 +7811,7 @@ int _F_mpz_mat_check_if_solved(F_mpz_mat_t M, ulong r, F_mpz_poly_factor_t final
    int trym = _F_mpz_poly_try_to_solve(ok, part, final_fac, lifted_fac, F, P, exp, lc);
    check_if_solve_stop = clock();
    check_if_solve_total = check_if_solve_total + check_if_solve_stop - check_if_solve_start;
-   printf("So far total checking time = %f\n", (double) check_if_solve_total /(double) CLOCKS_PER_SEC );
+   //printf("So far total checking time = %f\n", (double) check_if_solve_total /(double) CLOCKS_PER_SEC );
    F_mpz_mat_clear(U);
    return trym;
 }
@@ -7764,7 +7852,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    cld_data_stop = clock();
    
    cld_data_total = cld_data_total + cld_data_stop - cld_data_start;
-   printf(" spend a total of %f seconds on CLD stuff so far\n", (double) cld_data_total / (double)CLOCKS_PER_SEC);
+   //printf(" spend a total of %f seconds on CLD stuff so far\n", (double) cld_data_total / (double)CLOCKS_PER_SEC);
 
 
    int all_coeffs = 0;
@@ -7802,7 +7890,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
          since_last++;
          if (ok != 0){
             since_last = 0;
-            printf(" spend a total of %f seconds on Linear alg stuff since the last entry\n", (double) linear_alg_total / (double)CLOCKS_PER_SEC);
+            //printf(" spend a total of %f seconds on Linear alg stuff since the last entry\n", (double) linear_alg_total / (double)CLOCKS_PER_SEC);
             num_entries++;
 //            F_mpz_add_ui(B, B, r/2);
 //            cexpo[r + col_cnt] = 0;
@@ -7811,7 +7899,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    lll_stop = clock();
    
    lll_total = lll_total + lll_stop - lll_start;
-   printf(" spend a total of %f seconds on LLL so far\n", (double) lll_total / (double)CLOCKS_PER_SEC);
+   //printf(" spend a total of %f seconds on LLL so far\n", (double) lll_total / (double)CLOCKS_PER_SEC);
 
             F_mpz_mat_resize(M, newd, M->c);
             col_cnt++;
@@ -7861,7 +7949,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    cld_data_stop = clock();
    
    cld_data_total = cld_data_total + cld_data_stop - cld_data_start;
-   printf(" spend a total of %f seconds on CLD stuff so far\n", (double) cld_data_total / (double)CLOCKS_PER_SEC);
+   //printf(" spend a total of %f seconds on CLD stuff so far\n", (double) cld_data_total / (double)CLOCKS_PER_SEC);
                   if (data->c >= F->length - 1)
                      all_coeffs = 1;
                }
@@ -7874,7 +7962,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    cld_data_stop = clock();
    
    cld_data_total = cld_data_total + cld_data_stop - cld_data_start;
-   printf(" spend a total of %f seconds on CLD stuff so far\n", (double) cld_data_total / (double)CLOCKS_PER_SEC);
+   //printf(" spend a total of %f seconds on CLD stuff so far\n", (double) cld_data_total / (double)CLOCKS_PER_SEC);
                   if (data->c >= F->length - 1)
                      all_coeffs = 1;               }
             }
