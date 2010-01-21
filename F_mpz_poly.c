@@ -7176,11 +7176,16 @@ void F_mpz_poly_factor_sq_fr_prim( F_mpz_poly_factor_t final_fac, ulong exp, F_m
 
 for(num_primes = 1; num_primes < 5; num_primes++)
 {
+   printf(" in prime find loop\n");
    tryme  = 1;
    for (; (i < 200) && (tryme == 1); i++){
+   printf(" in smaller loop\n");
+
       zmod_poly_init(F, p);
       zmod_poly_init(F_d, p);
       zmod_poly_init(F_sbo, p);
+      printf(" after inits\n");
+
       F_mpz_poly_to_zmod_poly(F, f);
       if (F->length < f->length){
          p = z_nextprime( p, 0);
@@ -7189,9 +7194,14 @@ for(num_primes = 1; num_primes < 5; num_primes++)
          zmod_poly_clear(F);
          continue;
       }
+      printf(" after first if\n");
+
 //Maybe faster some other way... checking if squarefee mod p
       zmod_poly_derivative(F_d, F);
       zmod_poly_gcd(F_sbo, F, F_d);
+
+      printf(" after gcds\n");
+
 
       if (zmod_poly_is_one(F_sbo)){
          tryme = 0;
@@ -7202,6 +7212,8 @@ for(num_primes = 1; num_primes < 5; num_primes++)
       }
       zmod_poly_clear(F_d);
       zmod_poly_clear(F_sbo);
+      printf(" after clears\n");
+
    }
    if (i == 200){
       printf("wasn't square_free after 200 primes, maybe an error\n");
@@ -7209,12 +7221,18 @@ for(num_primes = 1; num_primes < 5; num_primes++)
       F_mpz_clear(lc);
       return;
    }
+      printf("outside of small loop\n");
 
    zmod_poly_factor_init(fac);
+      printf("after factor_init\n");
+
    lead_coeff = zmod_poly_factor(fac, F);
+      printf("after factor\n");
+
    r = fac->num_factors;
    zmod_poly_factor_clear(fac);
    zmod_poly_clear(F);
+      printf("after clears\n");
 
 
    printf("prime try r = %ld, p = %ld\n", r, p);
