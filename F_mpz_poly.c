@@ -7655,6 +7655,7 @@ printf("nope not there trial_factors->num_factors = %ld\n", trial_factors->num_f
       F_mpz_poly_divrem(Q, R, f, trial_factors->factors[i]);
 
       if (R->length == 0){
+      printf(" found one!\n");
          //found one!!!! Don't insert just yet in case we find some but not all (which we handle suboptimally at the moment)
 //         F_mpz_poly_factor_insert(final_fac, trial_factors->factors[i], exp);
          F_mpz_poly_set(f, Q);
