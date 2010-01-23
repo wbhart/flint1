@@ -7421,13 +7421,13 @@ printf(" first two clds took %f seconds\n", (double) cld_data_total/ (double) CL
          else if (solved_yet == 5){
 //This is where we increase the Hensel Accuracy and go back
             hensel_start = clock();
-            prev_exp = _F_mpz_poly_continue_hensel_lift(lifted_fac, link, v, w, f, prev_exp, a, 2*a, p, r);
+            prev_exp = _F_mpz_poly_continue_hensel_lift(lifted_fac, link, v, w, f, prev_exp, a, 4*a, p, r);
             hensel_stop = clock();
             hensel_total = hensel_total + hensel_stop - hensel_start;
 
             printf("hensel lifted for %f seconds so far\n", (double) hensel_total / (double) CLOCKS_PER_SEC);
 
-            a = 2*a;
+            a = 4*a;
             solved_yet = 0;
          }
       }
@@ -7860,9 +7860,9 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
             }
             else{
 //This condition should include a special case for when P is ridiculously large (for the sake of complexity proofs) although no example has ever needed it...
-               if (since_last < 20)
+               if (since_last < 2*num_coeffs - 5)
                {
-                  num_coeffs = num_coeffs * 2;
+                  num_coeffs = num_coeffs * 4;
    cld_data_start = clock();
                   _F_mpz_poly_factor_CLD_mat(data, F, lifted_fac, P, num_coeffs);
    cld_data_stop = clock();
