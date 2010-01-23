@@ -5969,10 +5969,8 @@ void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong N){
    F_mpz_poly_scalar_abs(low_f, low_f);
 
 //Going to change this a bit, used to diviode by r^n at the last step, now I want that included in the computation
-F_mpz_poly_print(low_f); printf(" low_f before\n");
 //adding following line now low_f should be evaluated at 1/r not r:
    F_mpz_poly_reverse(low_f, low_f, n + 1);
-F_mpz_poly_print(low_f); printf(" low_f after\n");
    F_mpz_poly_right_shift(up_f, f, n);
 //dropped this line   F_mpz_poly_left_shift(up_f, up_f, n);
    F_mpz_poly_scalar_abs(up_f, up_f);
