@@ -6080,7 +6080,7 @@ void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong N){
 // F_mpz_set_d_2exp and adjust and stuff using top_eval, top_exp 
                ans = top_eval;
 //dropped this line               ans = ans / pow(r, n);
-               ans = ans * f->length - 1;
+               ans = ans * (f->length - 1);
                F_mpz_set_d_2exp(res, ans, top_exp);
                F_mpz_poly_clear(low_f);
                F_mpz_poly_clear(up_f);
@@ -6090,7 +6090,7 @@ void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong N){
 // F_mpz_set_d_2exp and adjust and junk using bottom_eval, bot_exp
                ans = bottom_eval;
 //dropped this line               ans = ans / pow(r, n);
-               ans = ans * f->length - 1;
+               ans = ans * (f->length - 1);
                F_mpz_set_d_2exp(res, ans, bot_exp);
                F_mpz_poly_clear(low_f);
                F_mpz_poly_clear(up_f);
@@ -7356,7 +7356,7 @@ printf(" first two clds took %f seconds\n", (double) cld_data_total/ (double) CL
 
 //      long n_a = (long) (double)( 0.12 * r * r /(double)( (len - 2) ) + avg_b / log2( (double) p )  );
 
-      long n_a = (long) (double)(( (1.5)*r / log2((double) p)   + (double) avg_b / log2( (double) p )  ));
+      long n_a = (long) (double)(( (6)*r / log2((double) p)   + (double) avg_b / log2( (double) p )  ));
 
 //      n_a = (long) pow( (double) 2, ceil( log2( (double) n_a ) ) );
 
