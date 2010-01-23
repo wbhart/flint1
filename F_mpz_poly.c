@@ -7317,6 +7317,8 @@ for(num_primes = 1; num_primes < 3; num_primes++)
    a = (long) ceil( (double) M_bits / log2( (double)p ) );
    a = (long) pow( (double) 2, ceil( log2( (double) a ) ) );
 
+   printf(" zass a = %ld \n", a);
+
    if (use_Hoeij_Novocin == 1)
    {
 
