@@ -5968,8 +5968,13 @@ void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong N){
    F_mpz_poly_truncate(low_f, n);
    F_mpz_poly_scalar_abs(low_f, low_f);
 
+//Going to change this a bit, used to diviode by r^n at the last step, now I want that included in the computation
+
+//adding following line now low_f should be evaluated at 1/r not r:
+   F_mpz_poly_reverse(low_f, low_f, n);
+
    F_mpz_poly_right_shift(up_f, f, n);
-   F_mpz_poly_left_shift(up_f, up_f, n);
+//dropped this line   F_mpz_poly_left_shift(up_f, up_f, n);
    F_mpz_poly_scalar_abs(up_f, up_f);
 //Need to take scalar_abs of F_mpz_poly's here.
    double rpower = 0;
@@ -6005,11 +6010,11 @@ void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong N){
       hn = low_f->length;
       prec = (vbits*hn) + FLINT_ABS(size_p) + 1;
       if ((prec > 950) || (too_much = 1)){
-         bottom_eval = F_mpz_poly_eval_horner_d_2exp( &bot_exp, low_f, r);
+         bottom_eval = F_mpz_poly_eval_horner_d_2exp( &bot_exp, low_f, 1/r);
 //         bottom_eval = bottom_eval*pow(2, bot_exp);
       }      
       else{
-         bottom_eval = F_mpz_poly_eval_horner_d(low_f, r);
+         bottom_eval = F_mpz_poly_eval_horner_d(low_f, 1/r);
          bot_exp = 0;
       }
       if ((top_exp == 0) && (bot_exp == 0)){
@@ -6041,7 +6046,7 @@ void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong N){
                   ans = top_eval;
                else
                   ans = bottom_eval;
-               ans = ans / pow(r, n);
+//dropped this line               ans = ans / pow(r, n);
                ans = ans*(f->length - 1);
                mpz_t temp;
                mpz_init(temp);
@@ -6076,7 +6081,7 @@ void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong N){
             if ((test_me == 1L)){
 // F_mpz_set_d_2exp and adjust and stuff using top_eval, top_exp 
                ans = top_eval;
-               ans = ans / pow(r, n);
+//dropped this line               ans = ans / pow(r, n);
                ans = ans * f->length - 1;
                F_mpz_set_d_2exp(res, ans, top_exp);
                F_mpz_poly_clear(low_f);
@@ -6086,7 +6091,7 @@ void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong N){
             else{
 // F_mpz_set_d_2exp and adjust and junk using bottom_eval, bot_exp
                ans = bottom_eval;
-               ans = ans / pow(r, n);
+//dropped this line               ans = ans / pow(r, n);
                ans = ans * f->length - 1;
                F_mpz_set_d_2exp(res, ans, bot_exp);
                F_mpz_poly_clear(low_f);
@@ -7323,7 +7328,7 @@ for(num_primes = 1; num_primes < 3; num_primes++)
       F_mpz_init(trail_b);
       F_mpz_init(mid_b);
 cld_data_start = clock();
-      F_mpz_poly_CLD_bound(lead_b, f, len - 3);
+      F_mpz_poly_CLD_bound(lead_b, f, len - 2);
 //      F_mpz_poly_CLD_bound(mid_b, f, (len - 2)/2);
       F_mpz_poly_CLD_bound(trail_b, f, 0);
 cld_data_stop = clock();
@@ -7338,6 +7343,9 @@ printf(" first two clds took %f seconds\n", (double) cld_data_total/ (double) CL
       F_mpz_set_ui(trail_b, 3);
       F_mpz_cdiv_q(lead_b, lead_b, trail_b);
 */
+
+      F_mpz_print(lead_b); printf(" was lead_b\n");
+      F_mpz_print(f->coeffs + len - 2); printf(" was  the coeff of f\n");
       int cmp_b = F_mpz_cmpabs(lead_b, trail_b);
 
       ulong avg_b;
@@ -7350,7 +7358,7 @@ printf(" first two clds took %f seconds\n", (double) cld_data_total/ (double) CL
 
 //      long n_a = (long) (double)( 0.12 * r * r /(double)( (len - 2) ) + avg_b / log2( (double) p )  );
 
-      long n_a = (long) (double)(( (1.5)*r   + (double) avg_b / log2( (double) p )  ));
+      long n_a = (long) (double)(( (1.5)*r / log2((double) p)   + (double) avg_b / log2( (double) p )  ));
 
 //      n_a = (long) pow( (double) 2, ceil( log2( (double) n_a ) ) );
 
