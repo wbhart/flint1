@@ -7632,7 +7632,7 @@ printf(" maybe here\n");
    for (i = 0; i < num_facs - 1; i++){
       int j;
       for (j = i+1; j <  num_facs; j++){
-         if( (trial_factors->factors[i])->length < (trial_factors->factors[j])->length )
+         if( (trial_factors->factors[i])->length > (trial_factors->factors[j])->length )
             F_mpz_poly_swap(trial_factors->factors[i], trial_factors->factors[j]);
       }
    }
