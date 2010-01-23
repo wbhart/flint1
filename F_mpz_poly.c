@@ -7760,7 +7760,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
       F_mpz_div_2exp(B, B, (ulong) -2*U_exp);
 
 //For the first run we'll only use 30 coeffs worth of data, should solve 99% of all 'random' polynomials
-   ulong num_coeffs = 30UL;
+   ulong num_coeffs = 10UL;
    F_mpz_mat_t data;
    F_mpz_mat_init(data, 0, 0);
 
@@ -7859,7 +7859,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
             }
             else{
 //This condition should include a special case for when P is ridiculously large (for the sake of complexity proofs) although no example has ever needed it...
-               if (since_last < 100)
+               if (since_last < 20)
                {
                   num_coeffs = num_coeffs * 2;
    cld_data_start = clock();
