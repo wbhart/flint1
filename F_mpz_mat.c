@@ -1421,7 +1421,7 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
    take_away = ISD - prec;
    virt_exp = -prec;
 
-   F_mpz_mat_print_pretty(col); printf(" was col\n");
+   F_mpz_mat_print_pretty(col); printf(" was col and take_away = %ld\n", take_away);
 
    if (take_away >= 0){
       F_mpz_mat_scalar_div_2exp(trunc_col, col, (ulong) take_away);
