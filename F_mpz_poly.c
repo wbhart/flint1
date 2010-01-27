@@ -7251,7 +7251,7 @@ for(num_primes = 1; num_primes < 3; num_primes++)
    zmod_poly_factor_init(temp_fac);
    lead_coeff = zmod_poly_factor(temp_fac, F);
 
-   r = fac->num_factors;
+   r = temp_fac->num_factors;
    zmod_poly_clear(F);
 
    printf("prime try r = %ld, p = %ld\n", r, p);
