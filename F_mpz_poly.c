@@ -7218,7 +7218,7 @@ for(num_primes = 1; num_primes < 3; num_primes++)
       zmod_poly_init(F, p);
 
       F_mpz_poly_to_zmod_poly(F_tmp, f);
-      if (F->length < f->length){
+      if (F_tmp->length < f->length){
          p = z_nextprime( p, 0);
          zmod_poly_clear(F_d);
          zmod_poly_clear(F_sbo);
