@@ -1421,7 +1421,7 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
    take_away = ISD - prec;
    virt_exp = -prec;
 
-   F_mpz_mat_print_pretty(col); printf(" was col and take_away = %ld\n", take_away);
+//   F_mpz_mat_print_pretty(col); printf(" was col and take_away = %ld\n", take_away);
 
    if (take_away >= 0){
       F_mpz_mat_scalar_div_2exp(trunc_col, col, (ulong) take_away);
@@ -1430,7 +1430,7 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
       F_mpz_mat_scalar_mul_2exp(trunc_col, col, (ulong) (-1*take_away));
    } 
 
-   F_mpz_mat_print_pretty(trunc_col); printf(" was trunc_col\n");
+//   F_mpz_mat_print_pretty(trunc_col); printf(" was trunc_col\n");
 
 
 //   printf("after take away\n");
@@ -1444,7 +1444,7 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
       F_mpz_mat_scalar_mul_2exp(temp_col, temp_col, (ulong) (-1*U_exp));
    }
 
-   F_mpz_mat_print_pretty(temp_col); printf(" was temp_col before smod\n");
+//   F_mpz_mat_print_pretty(temp_col); printf(" was temp_col before smod\n");
 
    F_mpz_t trunc_P;
    F_mpz_init(trunc_P);
@@ -1456,7 +1456,7 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
    if (!F_mpz_is_zero(trunc_P))
       F_mpz_mat_smod(temp_col, temp_col, trunc_P);
 
-   F_mpz_mat_print_pretty(temp_col); printf(" was temp_col after smod\n");
+//   F_mpz_mat_print_pretty(temp_col); printf(" was temp_col after smod\n");
 
 
    if (!no_vec)
