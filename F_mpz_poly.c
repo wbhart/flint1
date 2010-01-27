@@ -7827,7 +7827,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    lll_stop = clock();
    
    lll_total = lll_total + lll_stop - lll_start;
-   printf(" spend a total of %f seconds on LLL so far\n", (double) lll_total / (double)CLOCKS_PER_SEC);
+   printf(" spend a total of %f seconds on LLL so far newd=%ld\n", (double) lll_total / (double)CLOCKS_PER_SEC, newd);
 
             F_mpz_mat_resize(M, newd, M->c);
             col_cnt++;
