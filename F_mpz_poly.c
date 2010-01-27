@@ -7191,7 +7191,7 @@ void F_mpz_poly_factor_sq_fr_prim( F_mpz_poly_factor_t final_fac, ulong exp, F_m
    F_mpz_set(lc, f->coeffs + len - 1);
    ulong M_bits = 0;
    M_bits = M_bits + F_mpz_bits(lc) + FLINT_ABS(F_mpz_poly_max_bits(f)) + len + (long)ceil(log2((double) len));
-   zmod_poly_t F, F_d, F_sbo;
+   zmod_poly_t F, F_d, F_sbo, F_tmp;
    int tryme = 1;
    ulong p = 2UL;
    long i, num_primes;
@@ -7212,22 +7212,24 @@ for(num_primes = 1; num_primes < 3; num_primes++)
    tryme  = 1;
    for (; (i < 200) && (tryme == 1); i++){
 
-      zmod_poly_init(F, p);
+      zmod_poly_init(F_tmp, p);
       zmod_poly_init(F_d, p);
       zmod_poly_init(F_sbo, p);
+      zmod_poly_init(F, p);
 
-      F_mpz_poly_to_zmod_poly(F, f);
+      F_mpz_poly_to_zmod_poly(F_tmp, f);
       if (F->length < f->length){
          p = z_nextprime( p, 0);
          zmod_poly_clear(F_d);
          zmod_poly_clear(F_sbo);
+         zmod_poly_clear(F_tmp);
          zmod_poly_clear(F);
          continue;
       }
 
 //Maybe faster some other way... checking if squarefee mod p
-      zmod_poly_derivative(F_d, F);
-      zmod_poly_gcd(F_sbo, F, F_d);
+      zmod_poly_derivative(F_d, F_tmp);
+      zmod_poly_gcd(F_sbo, F_tmp, F_d);
 
 
       if (zmod_poly_is_one(F_sbo)){
@@ -7235,24 +7237,25 @@ for(num_primes = 1; num_primes < 3; num_primes++)
       }
       else{
          p = z_nextprime( p, 0);
+         zmod_poly_clear(F_tmp);
          zmod_poly_clear(F);
       }
       zmod_poly_clear(F_d);
       zmod_poly_clear(F_sbo);
-
    }
    if (i == 200){
       printf("wasn't square_free after 200 primes, maybe an error\n");
+      zmod_poly_clear(F_tmp);
       zmod_poly_clear(F);
       F_mpz_clear(lc);
       return;
    }
 
    zmod_poly_factor_init(temp_fac);
-   lead_coeff = zmod_poly_factor(temp_fac, F);
+   lead_coeff = zmod_poly_factor(temp_fac, F_tmp);
 
    r = temp_fac->num_factors;
-   zmod_poly_clear(F);
+
 
    printf("prime try r = %ld, p = %ld\n", r, p);
 
@@ -7263,16 +7266,15 @@ for(num_primes = 1; num_primes < 3; num_primes++)
       zmod_poly_factor_clear(fac);
       zmod_poly_factor_init(fac);
       zmod_poly_factor_concat(fac, temp_fac);
+      zmod_poly_set(F, F_tmp);
       min_lead_coeff = lead_coeff;
    }
    p = z_nextprime( p, 0);
+   zmod_poly_clear(F_tmp);
    zmod_poly_factor_clear(temp_fac);
 }
 
    p = min_p;
-
-   zmod_poly_init(F, p);
-   F_mpz_poly_to_zmod_poly(F, f);
    r = fac->num_factors;
    lead_coeff = min_lead_coeff;
 
