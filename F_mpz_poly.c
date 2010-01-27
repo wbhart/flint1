@@ -7820,6 +7820,8 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
             since_last = 0;
             printf(" spend a total of %f seconds on Linear alg stuff since the last entry\n", (double) linear_alg_total / (double)CLOCKS_PER_SEC);
             num_entries++;
+
+            F_mpz_mat_print(M); printf(" was M before LLL\n");
 //            F_mpz_add_ui(B, B, r/2);
 //            cexpo[r + col_cnt] = 0;
    lll_start = clock();
@@ -7829,7 +7831,8 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    lll_total = lll_total + lll_stop - lll_start;
    printf(" spend a total of %f seconds on LLL so far newd=%ld\n", (double) lll_total / (double)CLOCKS_PER_SEC, newd);
 
-            F_mpz_mat_print(M); printf(" was M\n");
+            F_mpz_mat_print(M); printf(" was M after LLL\n");
+
 
             F_mpz_mat_resize(M, newd, M->c);
             col_cnt++;
