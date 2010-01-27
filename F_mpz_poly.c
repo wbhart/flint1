@@ -7195,13 +7195,15 @@ void F_mpz_poly_factor_sq_fr_prim( F_mpz_poly_factor_t final_fac, ulong exp, F_m
    int tryme = 1;
    ulong p = 2UL;
    long i, num_primes;
-   zmod_poly_factor_t fac;
+   zmod_poly_factor_t fac, temp_fac;
 
    ulong min_p = p; 
-   unsigned long lead_coeff;
+   unsigned long lead_coeff, min_lead_coeff;
    long r, min_r;
    min_r = len;
    i = 0;
+   zmod_poly_factor_init(fac);
+
 
    local_factor_start = clock();
 
@@ -7246,11 +7248,10 @@ for(num_primes = 1; num_primes < 3; num_primes++)
       return;
    }
 
-   zmod_poly_factor_init(fac);
-   lead_coeff = zmod_poly_factor(fac, F);
+   zmod_poly_factor_init(temp_fac);
+   lead_coeff = zmod_poly_factor(temp_fac, F);
 
    r = fac->num_factors;
-   zmod_poly_factor_clear(fac);
    zmod_poly_clear(F);
 
    printf("prime try r = %ld, p = %ld\n", r, p);
@@ -7259,17 +7260,21 @@ for(num_primes = 1; num_primes < 3; num_primes++)
    {
       min_r = r;
       min_p = p;
+      zmod_poly_factor_clear(fac);
+      zmod_poly_factor_init(fac);
+      zmod_poly_factor_concat(fac, temp_fac);
+      min_lead_coeff = lead_coeff;
    }
    p = z_nextprime( p, 0);
+   zmod_poly_factor_clear(temp_fac);
 }
 
    p = min_p;
 
    zmod_poly_init(F, p);
    F_mpz_poly_to_zmod_poly(F, f);
-   zmod_poly_factor_init(fac);
-   lead_coeff = zmod_poly_factor(fac, F);
    r = fac->num_factors;
+   lead_coeff = min_lead_coeff;
 
    local_factor_stop = clock();
    local_factor_total = local_factor_total + local_factor_stop - local_factor_start;
