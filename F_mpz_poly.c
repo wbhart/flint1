@@ -7782,6 +7782,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    cld_data_total = cld_data_total + cld_data_stop - cld_data_start;
    printf(" spend a total of %f seconds on CLD stuff so far\n", (double) cld_data_total / (double)CLOCKS_PER_SEC);
 
+   F_mpz_mat_print_pretty(data); printf(" was the data mat\n");
 
    int all_coeffs = 0;
    if (data->c >= F->length - 1)
