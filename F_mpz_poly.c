@@ -7549,28 +7549,82 @@ void _F_mpz_poly_factor_CLD_mat(F_mpz_mat_t res, F_mpz_poly_t F, F_mpz_poly_fact
       F_mpz_poly_CLD_bound(res->rows[d] + i, F, i);
       F_mpz_poly_CLD_bound(res->rows[d] + 2*n - 1 - i, F, F->length - 2 -i);
    }
+
+//We might not need some of the coeffs, this check will only pass if the next_col procedure passes so some columns will be zeros, but some time will be saved.
+
+   long upper_n = 0;
+   long lower_n = 0;
+   long worst_exp;
+   F_mpz_t cld_temp;
+   F_mpz_init(cld_temp);
+
+   int ok = 0;
+   ulong sqN = (ulong) sqrt( (double) N );   
+   long ISD = F_mpz_bits(P) - d - d/2;
+   for (i = 0; (i < n) && (ok == 0); i++)
+   {
+      F_mpz_mul_ui(cld_temp, res->rows[d] + i, sqN);
+      worst_exp = F_mpz_bits(cld_temp); 
+      if (worst_exp <= ISD)
+         lower_n = i;
+      else
+         ok = 1;
+   }
+//in case of bizarre behavior will need to justify the other zero columns (or not)
+   ok = 0;
+   for (i = 0; (i < n) && (ok == 0); i++)
+   {
+      F_mpz_mul_ui(cld_temp, res->rows[d] + 2*n -1 - i, sqN);
+      worst_exp = F_mpz_bits(cld_temp); 
+      if (worst_exp <= ISD)
+         upper_n = i;
+      else
+         ok = 1;
+   }
+
+   F_mpz_clear(cld_temp);
+
    F_mpz_t temp[n];
    for (i = 0; i < n; i++)
       F_mpz_init(temp[i]);
+//Lets do this separate start with the lower:
+   F_mpz_poly_t trunc_poly, trunc_F;
+   _F_mpz_poly_attach_truncate(trunc_F, F, lower_n + 3);
+   if (lower_n > 0)
+      for (i = 0; i < d; i++){
+         F_mpz_poly_init(gd);
+         F_mpz_poly_init(gcld);
 
-   for (i = 0; i < d; i++){
-      F_mpz_poly_init(gd);
-      F_mpz_poly_init(gcld);
+         _F_mpz_poly_attach_truncate(trunc_poly, lifted_fac->factors[i], lower_n + 3);
 
-      F_mpz_poly_derivative(gd, lifted_fac->factors[i]);
+         F_mpz_poly_derivative(gd, trunc_poly);
 //Should do upper and lower trunc multiplication soon, for speed sake
-      F_mpz_poly_mul(gcld, F, gd);
-      F_mpz_poly_div_trunc_modp(temp, gcld, lifted_fac->factors[i], P, n);
+         F_mpz_poly_mul(gcld, trunc_F, gd);
+         F_mpz_poly_div_trunc_modp(temp, gcld, lifted_fac->factors[i], P, lower_n + 1);
 
-      long j;
-      for (j = 0; j < n; j++)
-         F_mpz_set(res->rows[i] + j, temp[j]);
-      F_mpz_poly_div_upper_trunc_modp(temp, gcld, lifted_fac->factors[i], P, n);
-      for (j = 0; j < n; j++)
-         F_mpz_set(res->rows[i] + 2*n -1 - j, temp[j]);
-      F_mpz_poly_clear(gd);
-      F_mpz_poly_clear(gcld);
-   }
+         long j;
+         for (j = 0; j < lower_n; j++)
+            F_mpz_set(res->rows[i] + j, temp[j]);
+
+         F_mpz_poly_clear(gd);
+         F_mpz_poly_clear(gcld);
+      }
+
+   if (upper_n > 0)
+      for (i = 0; i < d; i++){
+         F_mpz_poly_init(gd);
+         F_mpz_poly_init(gcld);
+
+         F_mpz_poly_derivative(gd, lifted_fac->factors[i]);
+//Should do upper and lower trunc multiplication soon, for speed sake
+         F_mpz_poly_mul_trunc_left(gcld, F, gd, F->length + gd->length - 1 - upper_n - 1);
+         F_mpz_poly_div_upper_trunc_modp(temp, gcld, lifted_fac->factors[i], P, upper_n);
+         long j;
+         for (j = 0; j < upper_n; j++)
+            F_mpz_set(res->rows[i] + 2*n -1 - j, temp[j]);
+         F_mpz_poly_clear(gd);
+         F_mpz_poly_clear(gcld);
+      }
 
    for (i = 0; i < n; i++)
       F_mpz_clear(temp[i]);
