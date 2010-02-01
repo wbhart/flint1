@@ -7590,7 +7590,8 @@ void _F_mpz_poly_factor_CLD_mat(F_mpz_mat_t res, F_mpz_poly_t F, F_mpz_poly_fact
 //Lets do this separate start with the lower:
    F_mpz_poly_t trunc_poly, trunc_F;
    _F_mpz_poly_attach_truncate(trunc_F, F, lower_n + 3);
-   if (lower_n > 0)
+   if (lower_n > 0){
+      lower_n = n;
       for (i = 0; i < d; i++){
          F_mpz_poly_init(gd);
          F_mpz_poly_init(gcld);
@@ -7609,13 +7610,15 @@ void _F_mpz_poly_factor_CLD_mat(F_mpz_mat_t res, F_mpz_poly_t F, F_mpz_poly_fact
          F_mpz_poly_clear(gd);
          F_mpz_poly_clear(gcld);
       }
+   }
 
    for (i = 0; i < n; i++)
       F_mpz_clear(temp[i]);
    for (i = 0; i < n; i++)
       F_mpz_init(temp[i]);
 
-   if (upper_n > 0)
+   if (upper_n > 0){
+      upper_n = n;
       for (i = 0; i < d; i++){
          F_mpz_poly_init(gd);
          F_mpz_poly_init(gcld);
@@ -7630,6 +7633,7 @@ void _F_mpz_poly_factor_CLD_mat(F_mpz_mat_t res, F_mpz_poly_t F, F_mpz_poly_fact
          F_mpz_poly_clear(gd);
          F_mpz_poly_clear(gcld);
       }
+   }
 
    for (i = 0; i < n; i++)
       F_mpz_clear(temp[i]);
@@ -7877,6 +7881,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    linear_alg_total = linear_alg_total + linear_alg_stop - linear_alg_start;
          since_last++;
          if (ok != 0){
+//            F_mpz_mat_print_pretty(M);
             printf(" on column cur_col = %ld\n", cur_col);
             since_last = 0;
             printf(" spend a total of %f seconds on Linear alg stuff since the last entry\n", (double) linear_alg_total / (double)CLOCKS_PER_SEC);
