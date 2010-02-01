@@ -7832,7 +7832,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    else
       F_mpz_div_2exp(B, B, (ulong) -2*U_exp);
 
-            solved =  _F_mpz_mat_check_if_solved(M, r, final_fac, lifted_fac, F, P, exp, lc);
+          int solved =  _F_mpz_mat_check_if_solved(M, r, final_fac, lifted_fac, F, P, exp, lc);
             if (solved == 1){
                return_me = 1;
                break;
@@ -7865,7 +7865,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    F_mpz_init(temp);
    ulong sqN;
 //   printf("%ld sqN, %f sqrt(N)\n", sqN, sqrt( (double) (N) ) );
-   int ok, col_cnt, solved,  since_last;
+   int ok, col_cnt,  since_last;
    ulong previously_checked;
    long newd;
    col_cnt = 0;
