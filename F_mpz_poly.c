@@ -7610,6 +7610,11 @@ void _F_mpz_poly_factor_CLD_mat(F_mpz_mat_t res, F_mpz_poly_t F, F_mpz_poly_fact
          F_mpz_poly_clear(gcld);
       }
 
+   for (i = 0; i < n; i++)
+      F_mpz_clear(temp[i]);
+   for (i = 0; i < n; i++)
+      F_mpz_init(temp[i]);
+
    if (upper_n > 0)
       for (i = 0; i < d; i++){
          F_mpz_poly_init(gd);
@@ -7617,8 +7622,8 @@ void _F_mpz_poly_factor_CLD_mat(F_mpz_mat_t res, F_mpz_poly_t F, F_mpz_poly_fact
 
          F_mpz_poly_derivative(gd, lifted_fac->factors[i]);
 //Should do upper and lower trunc multiplication soon, for speed sake
-         F_mpz_poly_mul_trunc_left(gcld, F, gd, F->length + gd->length - 1 - upper_n - 1);
-         F_mpz_poly_div_upper_trunc_modp(temp, gcld, lifted_fac->factors[i], P, upper_n);
+         F_mpz_poly_mul_trunc_left(gcld, F, gd, F->length + gd->length - 1 - upper_n - 5);
+         F_mpz_poly_div_upper_trunc_modp(temp, gcld, lifted_fac->factors[i], P, upper_n + 1);
          long j;
          for (j = 0; j < upper_n; j++)
             F_mpz_set(res->rows[i] + 2*n -1 - j, temp[j]);
