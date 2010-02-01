@@ -7832,11 +7832,15 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    else
       F_mpz_div_2exp(B, B, (ulong) -2*U_exp);
 
-          int solved =  _F_mpz_mat_check_if_solved(M, r, final_fac, lifted_fac, F, P, exp, lc);
-            if (solved == 1){
-               return_me = 1;
-               break;
-            }
+   int solved =  _F_mpz_mat_check_if_solved(M, r, final_fac, lifted_fac, F, P, exp, lc);
+   if (solved == 1)
+   {
+      return_me = 1;
+      F_mpz_clear(B);
+      F_mpz_clear(lc);
+      F_mpz_mat_clear(col);
+      return return_me;
+   }
 
 //For the first run we'll only use 30 coeffs worth of data, should solve 99% of all 'random' polynomials
    ulong num_coeffs = 10UL;
