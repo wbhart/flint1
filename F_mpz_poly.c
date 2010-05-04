@@ -7365,7 +7365,7 @@ printf(" first two clds took %f seconds\n", (double) cld_data_total/ (double) CL
 
 //      long n_a = (long) (double)( 0.12 * r * r /(double)( (len - 2) ) + avg_b / log2( (double) p )  );
 
-      long n_a = (long) (double)(( (3.5)*r / log2((double) p)   + (double) avg_b / log2( (double) p )  ));
+      long n_a = (long) (double)(( (2.5)*r / log2((double) p)   + (double) avg_b / log2( (double) p )  ));
 
 //      n_a = (long) pow( (double) 2, ceil( log2( (double) n_a ) ) );
 
@@ -7559,7 +7559,7 @@ void _F_mpz_poly_factor_CLD_mat(F_mpz_mat_t res, F_mpz_poly_t F, F_mpz_poly_fact
    F_mpz_init(cld_temp);
 
    int ok = 0;
-   ulong sqN = (ulong) sqrt( (double) N );   
+   ulong sqN = (ulong) sqrt( 1.6 * ((double) r*r) );   
    long ISD = F_mpz_bits(P) - d - d/2;
    for (i = 0; (i < n) && (ok == 0); i++)
    {
