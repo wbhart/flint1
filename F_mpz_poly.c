@@ -7879,7 +7879,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    while ((all_coeffs != 2) && (return_me == 0)){
       for (cur_col = previously_checked; cur_col < data->c - previously_checked; cur_col++){
          //aborting attempt to adjust sqN back to normal
-         sqN = (ulong) sqrt( (double) N );         
+         sqN = (ulong) sqrt( 1.6 * ((double) r)^2 );         
          F_mpz_mul_ui(temp, data->rows[r] + cur_col, sqN);
          worst_exp = F_mpz_bits(temp);   
          for( ulong i = 0; i < r; i++)
