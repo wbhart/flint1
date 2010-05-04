@@ -7559,7 +7559,7 @@ void _F_mpz_poly_factor_CLD_mat(F_mpz_mat_t res, F_mpz_poly_t F, F_mpz_poly_fact
    F_mpz_init(cld_temp);
 
    int ok = 0;
-   ulong sqN = (ulong) sqrt( 1.6 * ((double) r*r) );   
+   ulong sqN = (ulong) sqrt( 1.6 * ((double) d*d) );   
    long ISD = F_mpz_bits(P) - d - d/2;
    for (i = 0; (i < n) && (ok == 0); i++)
    {
