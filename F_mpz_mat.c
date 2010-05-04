@@ -1387,7 +1387,7 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
    F_mpz_mat_smod(temp_col, temp_col, P);
    long mbts = FLINT_ABS(F_mpz_mat_max_bits(temp_col));
 //bare minimum of data above the bound
-   if (mbts < r + exp){
+   if (mbts < ( (long) (.973 * (double)r - .1 + (double) exp ) ){
       F_mpz_mat_clear(temp_col);
       F_mpz_mat_clear(U);      
       return 0;
@@ -1415,7 +1415,7 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
 // rare for the first time, frequent for repeated scalings
 // In here we're going to scale to make the new entries use their 2*r bits
 // Now decide the scaling based on mbts... should be mbits - .973r and maybe have mbits be more precise... 
-      ISD = mbts - r;
+      ISD = mbts - (long)( .973 * (double) r - .1);
 //      printf("the no_vec case mbts = %ld, P_bits = %ld\n", mbts, F_mpz_bits(P));
    }
    take_away = ISD - prec;
