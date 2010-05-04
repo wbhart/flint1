@@ -1367,7 +1367,7 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
 //This new column should be truncated to the correct amount before re-multiplying by U
 //first make sure there are enough bits to even bother
    ulong r = col->r;
-   ulong B = r + 1;
+   ulong B = r + 2;
    long ISD = F_mpz_bits(P) - r - r/2;
    if ( ISD < exp)
       return 0;
@@ -1387,7 +1387,7 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
    F_mpz_mat_smod(temp_col, temp_col, P);
    long mbts = FLINT_ABS(F_mpz_mat_max_bits(temp_col));
 //bare minimum of data above the bound
-   if (mbts < r + r/2 + exp){
+   if (mbts < r + exp){
       F_mpz_mat_clear(temp_col);
       F_mpz_mat_clear(U);      
       return 0;
@@ -1395,7 +1395,7 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
 // This meant that this column is not worth calling LLL.
 // Now do a test to see if we can just skip the p^a vector
 //double version of no vector test:
-   double S = B * (2 * ldexp( 1.5, M->r - 1) - 2);
+   double S = B * (ldexp( 1.51, M->r) * (1/.51) - (1/.51)- 1);
    F_mpz_t temp;
    F_mpz_init(temp);
    F_mpz_set_d_2exp(temp, (double) B, ISD);
@@ -1414,8 +1414,8 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
    if (no_vec){
 // rare for the first time, frequent for repeated scalings
 // In here we're going to scale to make the new entries use their 2*r bits
-// Now decide the scaling based on mbts
-      ISD = mbts - r - r/2;
+// Now decide the scaling based on mbts... should be mbits - .973r and maybe have mbits be more precise... 
+      ISD = mbts - r;
 //      printf("the no_vec case mbts = %ld, P_bits = %ld\n", mbts, F_mpz_bits(P));
    }
    take_away = ISD - prec;
