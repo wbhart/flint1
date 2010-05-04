@@ -1387,7 +1387,7 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
    F_mpz_mat_smod(temp_col, temp_col, P);
    long mbts = FLINT_ABS(F_mpz_mat_max_bits(temp_col));
 //bare minimum of data above the bound
-   if (mbts < ( (long) (.973 * (double)r - .1 + (double) exp ) ){
+   if (mbts <  (long) (.973 * (double)r - .1 + (double) exp ) ){
       F_mpz_mat_clear(temp_col);
       F_mpz_mat_clear(U);      
       return 0;
