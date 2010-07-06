@@ -37,6 +37,8 @@ Copyright (C) 2010 Andy Novocin, Max Flander
 #include <stdio.h>
 #include <gmp.h>
 #include "memory-manager.h"
+#include "mpz_mat.h"
+
 
 typedef struct
 {
@@ -46,7 +48,7 @@ typedef struct
 } mpq_mat_struct;
 
 
-// mpz_poly_t allows reference-like semantics for mpz_poly_struct:
+// mpq_mat_t allows reference-like semantics for mpq_mat_struct:
 typedef mpq_mat_struct mpq_mat_t[1];
 
 // ------------------------------------------------------

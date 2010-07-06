@@ -30,6 +30,7 @@ Copyright (C) 2010 Andy Novocin, Max Flander
 #include <stdio.h>
 #include "flint.h"
 #include "mpq_mat.h"
+#include "mpz_mat.h"
 
 /****************************************************************************
 
