@@ -27,7 +27,7 @@ export FLINT_LIB
 
 if [ -z "$FLINT_GMP_INCLUDE_DIR" ]
 then
-	FLINT_GMP_INCLUDE_DIR="/home/wbhart/mpir-b"
+	FLINT_GMP_INCLUDE_DIR="/home/wbhart/mpir-trunk"
 fi
 export FLINT_GMP_INCLUDE_DIR
 
@@ -39,7 +39,7 @@ export FLINT_GMP_INCLUDE_DIR
 
 if [ -z "$FLINT_GMP_LIB_DIR" ]
 then
-    FLINT_GMP_LIB_DIR="/home/wbhart/mpir-b/.libs"
+    FLINT_GMP_LIB_DIR="/home/wbhart/mpir-trunk/.libs"
 fi
 export FLINT_GMP_LIB_DIR
 
