@@ -68,6 +68,7 @@ HEADERS = \
 	theta.h \
 	zmod_mat.h \
 	mpz_mat.h \
+	mpq_mat.h \
 	d_mat.h \
 	F_mpz_mat.h \
 	mpfr_mat.h \
@@ -116,6 +117,7 @@ FLINTOBJ = \
 	theta.o \
 	zmod_mat.o \
 	mpz_mat.o \
+	mpq_mat.o \
 	d_mat.o \
 	mpfr_mat.o \
 	F_mpz_mat.o \
@@ -279,6 +281,9 @@ mpz_poly.o: mpz_poly.c $(HEADERS)
 
 mpz_mat.o: mpz_mat.c $(HEADERS)
 	$(CC) $(CFLAGS) -c mpz_mat.c -o mpz_mat.o
+
+mpq_mat.o: mpq_mat.c $(HEADERS)
+	$(CC) $(CFLAGS) -c mpq_mat.c -o mpq_mat.o
 
 mpz_poly-tuning.o: mpz_poly-tuning.c $(HEADERS)
 	$(CC) $(CFLAGS) -c mpz_poly-tuning.c -o mpz_poly-tuning.o
