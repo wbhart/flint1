@@ -19,9 +19,10 @@
 ===============================================================================*/
 /******************************************************************************
 
-mpz_poly.h: Matrices over Z, implemented as an array of mpz_t's
+mpz_mat.h: Matrices over Z, implemented as an array of mpz_t's
             Not intended to be efficient
 
+Copyright (C) 2009, Andy Novocin
 Copyright (C) 2008, William Hart
 
 ******************************************************************************/
