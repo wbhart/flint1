@@ -2358,7 +2358,7 @@ int LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    for (i = d-1; (i >= 0) && (ok > 0); i--)
    {
 //d_rii is the G-S length of ith vector divided by 2 (we shouldn't make a mistake and remove something valuable)
-      d_rii = ldexp(r[i][i],        2*expo[i] - 3);
+      d_rii = ldexp(r[i][i],        2*expo[i] - 1);
 //      printf("%5f r[%d] and gs_B = %5f\n", d_rii, i, d_gs_B);
       if (d_rii > d_gs_B) newd--;
       else (ok = 0);
@@ -2576,7 +2576,7 @@ int LLL_d_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    for (i = d-1; (i >= 0) && (ok > 0); i--)
    {
 //d_rii is the G-S length of ith vector divided by 2 (we shouldn't make a mistake and remove something valuable)
-      d_rii = ldexp(r[i][i],        2*expo[i] - 3);
+      d_rii = ldexp(r[i][i],        2*expo[i] - 1);
 //      printf("%5f r[%d] and gs_B = %5f\n", d_rii, i, d_gs_B);
       if (d_rii > d_gs_B) newd--;
       else (ok = 0);
@@ -3207,7 +3207,7 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    for (i = d-1; (i >= 0) && (ok > 0); i--)
    {
 //d_rii is the G-S length of ith vector divided by 2 (we shouldn't make a mistake and remove something valuable)
-      d_rii = ldexp(r[i][i],        2*expo[i] - 3);
+      d_rii = ldexp(r[i][i],        2*expo[i] - 1);
 //      printf("%5f r[%d] and gs_B = %5f\n", d_rii, i, d_gs_B);
       if (d_rii > d_gs_B) newd--;
       else (ok = 0);
@@ -3432,7 +3432,7 @@ int knapsack_LLL_d_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    for (i = d-1; (i >= 0) && (ok > 0); i--)
    {
 //d_rii is the G-S length of ith vector divided by 2 (we shouldn't make a mistake and remove something valuable)
-      d_rii = ldexp(r[i][i],        2*expo[i] - 3);
+      d_rii = ldexp(r[i][i],        2*expo[i] - 1);
 //      printf("%5f r[%d] and gs_B = %5f\n", d_rii, i, d_gs_B);
       if (d_rii > d_gs_B) newd--;
       else (ok = 0);
@@ -3927,7 +3927,7 @@ int LLL_d_zero_vec_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    for (i = d-1; (i >= 0) && (ok > 0); i--)
    {
 //d_rii is the G-S length of ith vector divided by 2 (we shouldn't make a mistake and remove something valuable)
-      d_rii = ldexp(r[i][i],        2*expo[i] - 3);
+      d_rii = ldexp(r[i][i],        2*expo[i] - 1);
 //      printf("%5f r[%d] and gs_B = %5f\n", d_rii, i, d_gs_B);
       if (d_rii > d_gs_B) newd--;
       else (ok = 0);
@@ -4108,7 +4108,7 @@ ulong F_mpz_mat_gs_d( F_mpz_mat_t B, F_mpz_t gs_B)
    for (i = d-1; (i >= 0) && (ok > 0); i--)
    {
 //d_rii is the G-S length of ith vector divided by 2 (we shouldn't make a mistake and remove something valuable)
-      d_rii = ldexp(r[i][i], 2*expo[i] - 2);
+      d_rii = ldexp(r[i][i], 2*expo[i] - 1);
 //      printf("%5f r[%d] and gs_B = %5f\n", d_rii, i, d_gs_B);
       if (d_rii > d_gs_B) newd--;
       else (ok = 0);

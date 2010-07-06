@@ -1008,7 +1008,10 @@ void F_mpz_div_2exp(F_mpz_t f, const F_mpz_t g, const ulong exp)
 
 	if (!COEFF_IS_MPZ(d)) // g is small
 	{
-		F_mpz_set_si(f, d>>exp);
+      if(exp >= FLINT_BITS - 2)
+         F_mpz_set_ui(f, 0UL);
+      else
+   		F_mpz_set_si(f, d>>exp);
 	} else // g is large
 	{
       
