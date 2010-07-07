@@ -8088,7 +8088,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
                }
                else
                {
-                  printf("maybe random would be nice but under estimated...\n");
+                  printf("maybe random would be nicer but under estimated...\n");
 
                   return_me = 5;
                   all_coeffs = 2;
