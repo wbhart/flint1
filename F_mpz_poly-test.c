@@ -276,7 +276,6 @@ int test_F_mpz_poly_add()
    }
    
    // test aliasing of res and poly2
-	ulong count1;
 	for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -363,7 +362,6 @@ int test_F_mpz_poly_sub()
    }
    
 	// test aliasing of res and poly1
-	ulong count1;
 	for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -396,7 +394,6 @@ int test_F_mpz_poly_sub()
    }
    
    // test aliasing of res and poly2
-	ulong count1;
 	for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -666,7 +663,6 @@ int test_F_mpz_poly_equal()
    }
 
 	// polys are equal
-	ulong count1;
 	for (count1 = 0; (count1 < 20000*ITER) && (result == 1); count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -690,7 +686,6 @@ int test_F_mpz_poly_equal()
    }
 
 	// polys are aliased
-	ulong count1;
 	for (count1 = 0; (count1 < 20000*ITER) && (result == 1); count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -986,7 +981,6 @@ int test_F_mpz_poly_neg()
    }
 
 	// sub equals negate and add, included aliased negation
-	ulong count1;
 	for (count1 = 0; (count1 < 20000*ITER) && (result == 1); count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -1055,8 +1049,7 @@ int test_F_mpz_poly_reverse()
    }
    
    // completely aliased reverse and reverse back
-	unsigned long count1;
-	for (count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+   for (count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
    {
       bits = z_randint(200)+ 1;
       
@@ -1098,7 +1091,7 @@ int test_F_mpz_poly_shift()
    F_mpz_poly_init(F_poly3);
       
 	// left shift followed by right shift
-	unsigned long count1;
+	unsigned long count1, count2;
 	for (count1 = 0; (count1 < 700) && (result == 1) ; count1++)
    {
       bits = z_randint(500)+ 1;
@@ -1119,7 +1112,6 @@ int test_F_mpz_poly_shift()
 	F_mpz_poly_clear(F_poly3);
 
    // left shift followed by right shift, completely aliased
-	unsigned long count1;
 	for (count1 = 0; (count1 < 700) && (result == 1) ; count1++)
    {
       bits = z_randint(500)+ 1;
@@ -1137,7 +1129,6 @@ int test_F_mpz_poly_shift()
    }
    
    // explicit check of right shift
-	unsigned long count2;
 	for (count2 = 0; (count2 < 1000) && (result == 1); count2++)
    { 
        bits = z_randint(500)+ 1;
@@ -1289,7 +1280,6 @@ int test_F_mpz_poly_scalar_mul_ui()
    }
    
    // aliased multiply
-	ulong count1;
 	for (count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
    {
       bits = z_randint(200)+ 1;
@@ -1394,7 +1384,6 @@ int test_F_mpz_poly_scalar_mul_si()
    }
    
    // aliased multiply
-	ulong count1;
 	for (count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
    {
       bits = z_randint(200)+ 1;
@@ -1505,7 +1494,6 @@ int test_F_mpz_poly_scalar_mul()
    }
    
    // aliased multiply
-	ulong count1;
 	for (count1 = 0; (count1 < 10000) && (result == 1) ; count1++)
    {
       bits = z_randint(300)+ 1;
@@ -1603,7 +1591,6 @@ int test_F_mpz_poly_mul_classical()
    }
    
 	// test aliasing of res and poly1
-	ulong count1;
 	for (count1 = 0; (count1 < 2500*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -1636,7 +1623,6 @@ int test_F_mpz_poly_mul_classical()
    }
    
    // test aliasing of res and poly2
-	ulong count1;
 	for (count1 = 0; (count1 < 2500*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -1669,7 +1655,6 @@ int test_F_mpz_poly_mul_classical()
    }
    
 	// test aliasing of poly1 and poly2
-	ulong count1;
 	for (count1 = 0; (count1 < 2500*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -1760,7 +1745,6 @@ int test_F_mpz_poly_mul_classical_trunc_left()
    }
    
 	// test aliasing of res and poly1
-	ulong count1;
 	for (count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -1800,7 +1784,6 @@ int test_F_mpz_poly_mul_classical_trunc_left()
    }
    
    // test aliasing of res and poly2
-	ulong count1;
 	for (count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -1840,7 +1823,6 @@ int test_F_mpz_poly_mul_classical_trunc_left()
    }
    
 	// test aliasing of poly1 and poly2
-	ulong count1;
 	for (count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -1932,7 +1914,6 @@ int test_F_mpz_poly_mul_karatsuba()
    }
    
 	// test aliasing of res and poly1
-	ulong count1;
 	for (count1 = 0; (count1 < 2500*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -1967,7 +1948,6 @@ int test_F_mpz_poly_mul_karatsuba()
    }
    
    // test aliasing of res and poly2
-	ulong count1;
 	for (count1 = 0; (count1 < 2500*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -2002,7 +1982,6 @@ int test_F_mpz_poly_mul_karatsuba()
    }
    
 	// test aliasing of poly1 and poly2
-	ulong count1;
 	for (count1 = 0; (count1 < 2500*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -2096,7 +2075,6 @@ int test_F_mpz_poly_mul_karatsuba_trunc_left()
    }
    
 	// test aliasing of res and poly1
-	ulong count1;
 	for (count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -2136,7 +2114,6 @@ int test_F_mpz_poly_mul_karatsuba_trunc_left()
    }
    
    // test aliasing of res and poly2
-	ulong count1;
 	for (count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -2176,7 +2153,6 @@ int test_F_mpz_poly_mul_karatsuba_trunc_left()
    }
    
 	// test aliasing of poly1 and poly2
-	ulong count1;
 	for (count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -2267,7 +2243,6 @@ int test_F_mpz_poly_mul()
    }
    
    // test aliasing of res and poly1
-	ulong count1;
 	for (count1 = 0; (count1 < 500*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -2300,7 +2275,6 @@ int test_F_mpz_poly_mul()
    }
    
    // test aliasing of res and poly2
-	ulong count1;
 	for (count1 = 0; (count1 < 500*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -2333,7 +2307,6 @@ int test_F_mpz_poly_mul()
    }
    
    // test aliasing of poly1 and poly2
-	ulong count1;
 	for (count1 = 0; (count1 < 500*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -2427,7 +2400,6 @@ int test_F_mpz_poly_mul_trunc_left()
    }
    
 	// test aliasing of res and poly1
-	ulong count1;
 	for (count1 = 0; (count1 < 500*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -2470,7 +2442,6 @@ int test_F_mpz_poly_mul_trunc_left()
    }
    
    // test aliasing of res and poly2
-	ulong count1;
 	for (count1 = 0; (count1 < 500*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -2513,7 +2484,6 @@ int test_F_mpz_poly_mul_trunc_left()
    }
    
 	// test aliasing of poly1 and poly2
-	ulong count1;
 	for (count1 = 0; (count1 < 500*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -2608,7 +2578,6 @@ int test_F_mpz_poly_bit_pack()
    }
    
    // try negating the coefficients
-	ulong count1;
 	for (count1 = 0; (count1 < 500) && (result == 1) ; count1++)
    {
       bits = z_randint(FLINT_BITS - 4) + 2;
@@ -2667,7 +2636,7 @@ int test_F_mpz_poly_factor()
    mpz_poly_init(res2); 
 
    ulong count1;
-   for (count1 = 0; (count1 < 20*ITER) && (result == 1) ; count1++)
+   for (count1 = 0; (count1 < 22*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -2918,7 +2887,6 @@ int test_F_mpz_poly_mul_KS()
    }
    
 	// try unsigned coefficients
-	ulong count1;
 	for (count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -2953,7 +2921,6 @@ int test_F_mpz_poly_mul_KS()
    }
    
 	// test aliasing of res and poly1
-	ulong count1;
 	for (count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -2986,7 +2953,6 @@ int test_F_mpz_poly_mul_KS()
    }
    
    // test aliasing of res and poly2
-	ulong count1;
 	for (count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -3019,7 +2985,6 @@ int test_F_mpz_poly_mul_KS()
    }
    
 	// test aliasing of poly1 and poly2
-	ulong count1;
 	for (count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -3103,7 +3068,6 @@ int test_F_mpz_poly_mul_KS2()
    }
    
 	// try unsigned coefficients
-	ulong count1;
 	for (count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -3138,7 +3102,6 @@ int test_F_mpz_poly_mul_KS2()
    }
    
 	// test aliasing of res and poly1
-	ulong count1;
 	for (count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -3171,7 +3134,6 @@ int test_F_mpz_poly_mul_KS2()
    }
    
    // test aliasing of res and poly2
-	ulong count1;
 	for (count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -3204,7 +3166,6 @@ int test_F_mpz_poly_mul_KS2()
    }
 	
 	// test aliasing of poly1 and poly2
-	ulong count1;
 	for (count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -3449,7 +3410,6 @@ int test_F_mpz_poly_mul_SS()
    }
    
 	// try unsigned coefficients
-	ulong count1;
 	for (count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -3484,7 +3444,6 @@ int test_F_mpz_poly_mul_SS()
    }
    
 	// test aliasing of res and poly1
-	ulong count1;
 	for (count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -3517,7 +3476,6 @@ int test_F_mpz_poly_mul_SS()
    }
    
    // test aliasing of res and poly2
-	ulong count1;
 	for (count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -3550,7 +3508,6 @@ int test_F_mpz_poly_mul_SS()
    }
    
 	// test aliasing of poly1 and poly2
-	ulong count1;
 	for (count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -3702,7 +3659,6 @@ int test_F_mpz_poly_divrem_basecase()
    }
 
    // test inexact division
-   ulong count1;
    for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -3796,7 +3752,6 @@ int test_F_mpz_poly_div_basecase()
    }
 
    // test inexact division
-   ulong count1;
    for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -3892,7 +3847,6 @@ int test_F_mpz_poly_div_divconquer_recursive()
    }
 
    // test inexact division
-   ulong count1;
    for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -3981,7 +3935,6 @@ int test_F_mpz_poly_divrem_divconquer()
    }
 
    // test inexact division
-   ulong count1;
    for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -4072,7 +4025,6 @@ int test_F_mpz_poly_divrem_basecase_low()
    }
 
    // test inexact division
-   ulong count1;
    for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -4173,7 +4125,6 @@ int test_F_mpz_poly_div_divconquer_recursive_low()
    }
 
    // test inexact division
-   ulong count1;
    for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -4266,7 +4217,6 @@ int test_F_mpz_poly_div_divconquer()
    }
    
    // test inexact division
-   ulong count1;
    for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -4459,7 +4409,6 @@ int test_F_mpz_poly_pseudo_divrem_basecase()
    }
 
    // test inexact division
-   ulong count1;
    for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -4554,7 +4503,6 @@ int test_F_mpz_poly_pseudo_div_basecase()
    }
 
    // test inexact division
-   ulong count1;
    for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);

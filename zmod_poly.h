@@ -841,6 +841,22 @@ void zmod_poly_factor_print(zmod_poly_factor_t fac);
  */
 void zmod_poly_factor_pow(zmod_poly_factor_t fac, unsigned long exp);
 
+/*
+   Returns the maximum positive integer s such that f(x) = g(x^s) for
+   some polynomial g(x).
+*/
+ulong zmod_poly_deflation(const zmod_poly_t f);
+
+/*
+   If f(x) = g(x^deflation), this function computes g(x).
+*/
+void zmod_poly_deflate(zmod_poly_t g, const zmod_poly_t f, ulong deflation);
+
+/*
+   Computes f(x) = f(x^deflation).
+*/
+void zmod_poly_inflate(zmod_poly_t g, const zmod_poly_t f, ulong deflation);
+
 /**
  * Computes the square free factorisation of the given polynomial. Input must be a monic 
  * polynomial. All the factors will be monic.

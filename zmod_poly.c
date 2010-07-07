@@ -6616,8 +6616,10 @@ void zmod_poly_factor_clear(zmod_poly_factor_t fac)
 /**
  * Adds an extra element to the array
  */
-void zmod_poly_factor_add_internal(zmod_poly_factor_t fac, zmod_poly_t poly, ulong exp)
+void zmod_poly_factor_add(zmod_poly_factor_t fac, zmod_poly_t poly, ulong exp)
 {
+   if (poly->length <= 1) return;
+
    // check if already there
    ulong i;
    for (i = 0; i < fac->num_factors; i++)
@@ -6653,13 +6655,6 @@ void zmod_poly_factor_add_internal(zmod_poly_factor_t fac, zmod_poly_t poly, ulo
 #endif
 	fac->exponents[fac->num_factors] = exp;
    fac->num_factors++;
-}
-
-void zmod_poly_factor_add(zmod_poly_factor_t fac, zmod_poly_t poly, ulong exp)
-{
-   if (poly->length <= 1) return;
-
-   zmod_poly_factor_add_internal(fac, poly, exp);
 }
 
 /**
@@ -7094,28 +7089,13 @@ void zmod_poly_factor_berlekamp(zmod_poly_factor_t factors, zmod_poly_t f)
 	}			
 }
 
-/**
- * This function takes an arbitary polynomial and factorises it. It first 
- * performs a square-free factorisation, then factorises all of the square 
- * free polynomails and returns the leading coefficient, all the factors will 
- * be monic. If the zero polynomial is passed, 0 is returned. If a constant is 
- * passed, that constant is returned (and no factors).
- */
-unsigned long zmod_poly_factor(zmod_poly_factor_t result, zmod_poly_t input)
+ulong zmod_poly_deflation(const zmod_poly_t input)
 {
-   ulong i, j;
-   
-   if (input->length == 0) return 0;
-	
-	//Now we must make sure the input polynomial is monic. Get the highest coeff and store it then call make monic
-   ulong leading_coeff = zmod_poly_get_coeff_ui(input, zmod_poly_degree(input));
-   if (input->length == 1) 
-	{
-	   return leading_coeff;
-	}
-
-   ulong deflation;
+   ulong deflation, i;
    ulong coeff = 1;
+   
+   if (input->length < 2) return 1;
+
    while (!input->coeffs[coeff]) coeff++;
    deflation = z_gcd(input->length - 1, coeff);
    
@@ -7128,6 +7108,55 @@ unsigned long zmod_poly_factor(zmod_poly_factor_t result, zmod_poly_t input)
       }
       if (i == deflation - 1) coeff++;
    }
+
+   return deflation;
+}
+
+void zmod_poly_deflate(zmod_poly_t result, const zmod_poly_t input, ulong deflation)
+{
+   ulong res_length = (input->length - 1)/deflation + 1;
+   ulong i;
+   
+   zmod_poly_fit_length(result, res_length);
+   for (i = 0; i < res_length; i++)
+       result->coeffs[i] = input->coeffs[i*deflation];
+
+   result->length = res_length;
+}
+
+void zmod_poly_inflate(zmod_poly_t result, const zmod_poly_t input, ulong deflation)
+{
+   ulong res_length = (input->length - 1)*deflation + 1;
+   ulong j;
+
+   zmod_poly_fit_length(result, res_length);
+   for (j = 0; j < input->length; j++)
+      zmod_poly_set_coeff_ui(result, j*deflation, input->coeffs[j]);  
+
+   result->length = res_length;
+}
+
+/**
+ * This function takes an arbitary polynomial and factorises it. It first 
+ * performs a square-free factorisation, then factorises all of the square 
+ * free polynomails and returns the leading coefficient, all the factors will 
+ * be monic. If the zero polynomial is passed, 0 is returned. If a constant is 
+ * passed, that constant is returned (and no factors).
+ */
+unsigned long zmod_poly_factor(zmod_poly_factor_t result, zmod_poly_t input)
+{
+   ulong i, deflation;
+   
+   if (input->length == 0) return 0;
+	
+	//Now we must make sure the input polynomial is monic. Get the highest coeff and store it then call make monic
+   ulong leading_coeff = zmod_poly_get_coeff_ui(input, zmod_poly_degree(input));
+   if (input->length == 1) 
+	{
+	   return leading_coeff;
+	}
+
+   deflation = zmod_poly_deflation(input);
    
    // Run Cantor-Zassenhaus
    if (deflation == 1) 
@@ -7136,11 +7165,9 @@ unsigned long zmod_poly_factor(zmod_poly_factor_t result, zmod_poly_t input)
    } else
    {
       zmod_poly_t def;
-      ulong def_length = (input->length - 1)/deflation + 1;
-      zmod_poly_init2(def, input->p, def_length);
-      for (i = 0; i < def_length; i++)
-         def->coeffs[i] = input->coeffs[i*deflation];
-      def->length = def_length;
+      zmod_poly_init_precomp(def, input->p, input->p_inv);
+
+	  zmod_poly_deflate(def, input, deflation);
 
       zmod_poly_factor_t def_res;
       zmod_poly_factor_init(def_res);
@@ -7151,15 +7178,11 @@ unsigned long zmod_poly_factor(zmod_poly_factor_t result, zmod_poly_t input)
 
       for (i = 0; i < def_res->num_factors; i++)
       {
-         ulong def_length = def_res->factors[i]->length;
-         
-          // inflate
+         // inflate
          zmod_poly_t pol;
          zmod_poly_init(pol, input->p);
-         zmod_poly_fit_length(pol, (def_length-1)*deflation+1);
-         for (j = 0; j < def_length; j++)
-            zmod_poly_set_coeff_ui(pol, j*deflation, def_res->factors[i]->coeffs[j]);
-       
+         zmod_poly_inflate(pol, def_res->factors[i], deflation);
+
          // factor inflation
          if (def_res->exponents[i] == 1)
 			zmod_poly_factor_cantor_zassenhaus(result, pol);

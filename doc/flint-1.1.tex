@@ -633,6 +633,7 @@ The parameter $n$ must be non-negative, but can be zero. Shifting right by great
 
 \begin{lstlisting}
 void fmpz_poly_2norm(fmpz_t norm, fmpz_poly_t pol)
+
 \end{lstlisting}
 \begin{quote}
 Sets \code{norm} to the euclidean norm of \code{pol}, i.e. the integer square root (discarding the remainder) of the sum of the squares of the coefficients of \code{pol}.
@@ -2603,6 +2604,27 @@ void zmod_poly_factor_pow(zmod_poly_factor_t fac,
 \end{lstlisting}
 \begin{quote}
 Raises each factor in the array \code{fac} to the power \code{exp}.
+\end{quote}
+
+\begin{lstlisting}
+ulong zmod_poly_deflation(const zmod_poly_t f)
+\end{lstlisting}
+\begin{quote}
+Returns the maximum positive integer $s$ such that $f(x) = g(x^s)$ for some polynomial $g(x)$.
+\end{quote}
+
+\begin{lstlisting}
+void zmod_poly_deflate(zmod_poly_t g, const zmod_poly_t f, ulong d)
+\end{lstlisting}
+\begin{quote}
+Computes $f(x) = f(x^d)$.
+\end{quote}
+
+\begin{lstlisting}
+void zmod_poly_inflate(zmod_poly_t g, const zmod_poly_t f, ulong d)
+\end{lstlisting}
+\begin{quote}
+Computes $f(x) = f(x^d)$.
 \end{quote}
 
 \begin{lstlisting}
