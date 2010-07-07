@@ -8244,7 +8244,6 @@ int test_zmod_poly_factor()
 		ulong prod1 = exponents[0];
 		ulong i;
 		for (i = 0; i < exponents[0]; i++) zmod_poly_mul(pol1, pol1, poly);
-		
 	   ulong num_factors = z_randint(5)+1;
 	   for (i = 1; i < num_factors; i++)
 	   {
@@ -8260,7 +8259,7 @@ int test_zmod_poly_factor()
 			prod1 *= exponents[i];
 		   ulong j;
 		   for (j = 0; j < exponents[i]; j++) zmod_poly_mul(pol1, pol1, poly);
-	   }
+		   }
 		zmod_poly_factor_init(res);
       ulong lead = zmod_poly_factor(res, pol1);
       result &= (res->num_factors == num_factors);

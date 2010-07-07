@@ -143,6 +143,12 @@ void F_mpz_poly_factor_clear(F_mpz_poly_factor_t fac)
 	free(fac->exponents);
 }
 
+void F_mpz_poly_factor_pow(F_mpz_poly_factor_t fac, ulong pow)
+{
+   ulong i;
+   for (i = 0; i < fac->num_factors; i++)
+      fac->exponents[i] *= pow;
+}
 /*===============================================================================
 
    F_mpz_poly_factor_t
@@ -5697,29 +5703,17 @@ void F_mpz_poly_content(F_mpz_t c, const F_mpz_poly_t poly)
    if (length == 1)
    {
       F_mpz_set(c, poly->coeffs);
-//      if ((long) c[0] < 0L) c[0] = -c[0];
       return;
    }
    
-   F_mpz_t coeff;
-   F_mpz_init(coeff);
-
-   F_mpz_set(coeff, poly->coeffs + length - 1);
-   F_mpz_set(c, coeff);
+   F_mpz_set(c, poly->coeffs + length - 1);
    
    long i;
    for (i = length - 2; (i >= 0L) && !F_mpz_is_one(c); i--)
    {
-      F_mpz_set(coeff, poly->coeffs + i);
-      if (!F_mpz_is_zero(coeff))
-         F_mpz_gcd(c, c, coeff);
+      if (!F_mpz_is_zero(poly->coeffs + i))
+         F_mpz_gcd(c, c, poly->coeffs + i);
    }
-
-//   if (F_mpz_sgn(poly->coeffs + length -1) == -1)
-//      F_mpz_neg(c, c);
-
-   F_mpz_clear(coeff);
-
 }
 
 double F_mpz_poly_eval_horner_d(F_mpz_poly_t poly, double val){
@@ -6382,6 +6376,8 @@ void F_mpz_poly_squarefree(F_mpz_poly_factor_t fac, F_mpz_t content, F_mpz_poly_
 {
 
    F_mpz_poly_content(content, F);
+   F_mpz_poly_print(F); printf("\n");
+   F_mpz_print(content); printf("\n\n");
 
    F_mpz_poly_t f;
    F_mpz_poly_init(f);
@@ -7504,6 +7500,53 @@ void __F_mpz_poly_factor(F_mpz_poly_factor_t final_fac, F_mpz_t cong, F_mpz_poly
    F_mpz_poly_clear(g);
 }
 
+ulong F_mpz_poly_deflation(F_mpz_poly_t input)
+{
+   ulong deflation, i;
+   ulong coeff = 1;
+   
+   if (input->length < 2) return 1;
+
+   while (F_mpz_is_zero(input->coeffs + coeff)) coeff++;
+   deflation = z_gcd(input->length - 1, coeff);
+   
+   while ((deflation > 1) && (coeff + deflation < input->length))
+   {
+      for (i = 0; i < deflation - 1; i++)
+      {
+         coeff++;
+         if (!F_mpz_is_zero(input->coeffs + coeff)) deflation = z_gcd(coeff, deflation);
+      }
+      if (i == deflation - 1) coeff++;
+   }
+
+   return deflation;
+}
+
+void F_mpz_poly_deflate(F_mpz_poly_t result, const F_mpz_poly_t input, ulong deflation)
+{
+   ulong res_length = (input->length - 1)/deflation + 1;
+   ulong i;
+   
+   F_mpz_poly_fit_length(result, res_length);
+   for (i = 0; i < res_length; i++)
+       F_mpz_set(result->coeffs + i, input->coeffs + i*deflation);
+
+   _F_mpz_poly_set_length(result, res_length);
+}
+
+void F_mpz_poly_inflate(F_mpz_poly_t result, const F_mpz_poly_t input, ulong deflation)
+{
+   ulong res_length = (input->length - 1)*deflation + 1;
+   ulong j;
+
+   F_mpz_poly_fit_length(result, res_length);
+   for (j = 0; j < input->length; j++)
+      F_mpz_poly_set_coeff_F_mpz(result, j*deflation, input->coeffs + j);  
+
+   _F_mpz_poly_set_length(result, res_length);
+}
+
 void F_mpz_poly_factor(F_mpz_poly_factor_t final_fac, F_mpz_t cong, F_mpz_poly_t G)
 {
    if (G->length == 0){
@@ -7515,22 +7558,10 @@ void F_mpz_poly_factor(F_mpz_poly_factor_t final_fac, F_mpz_t cong, F_mpz_poly_t
       return;
    }
 
-   ulong deflation;
    ulong num_facs = 1;
-   ulong coeff = 1;
    ulong i, j;
-   while (F_mpz_is_zero(G->coeffs + coeff)) coeff++;
-   deflation = z_gcd(G->length - 1, coeff);
-
-   while ((deflation > 1) && (coeff + deflation < G->length))
-   {
-      for (i = 0; i < deflation - 1; i++)
-      {
-         coeff++;
-         if (!F_mpz_is_zero(G->coeffs + coeff)) deflation = z_gcd(deflation, i + 1);
-      }
-      coeff++;
-   }
+   
+   ulong deflation = F_mpz_poly_deflation(G);
    if (deflation > 1) printf("deflation of %ld\n", deflation);
 
    if (deflation == 1)
@@ -7545,13 +7576,8 @@ void F_mpz_poly_factor(F_mpz_poly_factor_t final_fac, F_mpz_t cong, F_mpz_poly_t
 
       while (1) 
       {
-         ulong def_length = (G->length - 1)/deflation + 1;
-      
-         F_mpz_poly_fit_length(def, def_length);
-         for (i = 0; i < def_length; i++)
-            F_mpz_set(def->coeffs + i, G->coeffs + i*deflation);
-         _F_mpz_poly_set_length(def, def_length);
-
+         F_mpz_poly_deflate(def, G, deflation);
+		 
          __F_mpz_poly_factor(def_res, cong, def);
          printf("deflated poly has %ld factors\n", def_res->num_factors);
 
@@ -7567,25 +7593,37 @@ void F_mpz_poly_factor(F_mpz_poly_factor_t final_fac, F_mpz_t cong, F_mpz_poly_t
 
       F_mpz_poly_clear(def);
 
+	  F_mpz_t cong2;
+	  F_mpz_init(cong2);
+
       for (i = 0; i < def_res->num_factors; i++)
       {
-         printf("inflating factor %ld\n", i + 1);
-         ulong def_length = def_res->factors[i]->length;
-
-          // inflate
+         // inflate
+         printf("inflating factor %ld\n", i + 1); 
          F_mpz_poly_t pol;
          F_mpz_poly_init(pol);
-         F_mpz_poly_fit_length(pol, (def_length - 1)*deflation + 1);
-         for (j = 0; j < def_length; j++)
-            F_mpz_poly_set_coeff_ui(pol, j*deflation, def_res->factors[i]->coeffs[j]);
-
+         F_mpz_poly_inflate(pol, def_res->factors[i], deflation);
+		 
          // factor inflation
          printf("factoring pol of length %ld\n", pol->length);
-         if (num_facs == 1) __F_mpz_poly_factor(final_fac, cong, pol);
-         else F_mpz_poly_factor(final_fac, cong, pol);
-         F_mpz_poly_clear(pol);
+         if (def_res->exponents[i] > 1)
+		 {
+		    F_mpz_poly_factor_t facs;
+			F_mpz_poly_factor_init(facs);
+			if (num_facs == 1) __F_mpz_poly_factor(facs, cong2, pol);
+            else F_mpz_poly_factor(facs, cong, pol);
+			F_mpz_poly_factor_pow(facs, def_res->exponents[i]);
+			F_mpz_poly_factor_concat(final_fac, facs);
+			F_mpz_poly_factor_clear(facs);
+		 } else
+		 {
+			if (num_facs == 1) __F_mpz_poly_factor(final_fac, cong2, pol);
+            else F_mpz_poly_factor(final_fac, cong, pol);
+		 }
+		 F_mpz_poly_clear(pol);
       }
 
+	  F_mpz_clear(cong2);
       F_mpz_poly_factor_clear(def_res);
    } 
 }

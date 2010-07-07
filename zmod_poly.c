@@ -6789,6 +6789,12 @@ void zmod_poly_factor_cantor_zassenhaus(zmod_poly_factor_t res, zmod_poly_t f)
 {
    zmod_poly_t h, v, g, x;
 
+   if (f->p == 2)
+   {
+	   zmod_poly_factor_berlekamp(res, f);
+       return;
+   }
+   
    zmod_poly_init(h, f->p);
    zmod_poly_init(g, f->p);
    zmod_poly_init(v, f->p);
@@ -7083,6 +7089,53 @@ void zmod_poly_factor_berlekamp(zmod_poly_factor_t factors, zmod_poly_t f)
 	}			
 }
 
+ulong zmod_poly_deflation(const zmod_poly_t input)
+{
+   ulong deflation, i;
+   ulong coeff = 1;
+   
+   if (input->length < 2) return 1;
+
+   while (!input->coeffs[coeff]) coeff++;
+   deflation = z_gcd(input->length - 1, coeff);
+   
+   while ((deflation > 1) && (coeff + deflation < input->length))
+   {
+      for (i = 0; i < deflation - 1; i++)
+      {
+         coeff++;
+         if (input->coeffs[coeff]) deflation = z_gcd(coeff, deflation);
+      }
+      if (i == deflation - 1) coeff++;
+   }
+
+   return deflation;
+}
+
+void zmod_poly_deflate(zmod_poly_t result, const zmod_poly_t input, ulong deflation)
+{
+   ulong res_length = (input->length - 1)/deflation + 1;
+   ulong i;
+   
+   zmod_poly_fit_length(result, res_length);
+   for (i = 0; i < res_length; i++)
+       result->coeffs[i] = input->coeffs[i*deflation];
+
+   result->length = res_length;
+}
+
+void zmod_poly_inflate(zmod_poly_t result, const zmod_poly_t input, ulong deflation)
+{
+   ulong res_length = (input->length - 1)*deflation + 1;
+   ulong j;
+
+   zmod_poly_fit_length(result, res_length);
+   for (j = 0; j < input->length; j++)
+      zmod_poly_set_coeff_ui(result, j*deflation, input->coeffs[j]);  
+
+   result->length = res_length;
+}
+
 /**
  * This function takes an arbitary polynomial and factorises it. It first 
  * performs a square-free factorisation, then factorises all of the square 
@@ -7092,7 +7145,7 @@ void zmod_poly_factor_berlekamp(zmod_poly_factor_t factors, zmod_poly_t f)
  */
 unsigned long zmod_poly_factor(zmod_poly_factor_t result, zmod_poly_t input)
 {
-   ulong i, j;
+   ulong i, deflation;
    
    if (input->length == 0) return 0;
 	
@@ -7103,21 +7156,8 @@ unsigned long zmod_poly_factor(zmod_poly_factor_t result, zmod_poly_t input)
 	   return leading_coeff;
 	}
 
-   ulong deflation;
-   ulong coeff = 1;
-   while (!input->coeffs[coeff]) coeff++;
-   deflation = z_gcd(input->length - 1, coeff);
+   deflation = zmod_poly_deflation(input);
    
-   while ((deflation > 1) && (coeff + deflation < input->length))
-   {
-      for (i = 0; i < deflation - 1; i++)
-      {
-         coeff++;
-         if (input->coeffs[coeff]) deflation = z_gcd(deflation, i + 1);
-      }
-      coeff++;
-   }
-
    // Run Cantor-Zassenhaus
    if (deflation == 1) 
    {
@@ -7125,38 +7165,42 @@ unsigned long zmod_poly_factor(zmod_poly_factor_t result, zmod_poly_t input)
    } else
    {
       zmod_poly_t def;
-      ulong def_length = (input->length - 1)/deflation + 1;
-      zmod_poly_init(def, input->p);
-      zmod_poly_fit_length(def, def_length);
-      for (i = 0; i < def_length; i++)
-         def->coeffs[i] = input->coeffs[i*deflation];
-      def->length = def_length;
+      zmod_poly_init_precomp(def, input->p, input->p_inv);
+
+	  zmod_poly_deflate(def, input, deflation);
 
       zmod_poly_factor_t def_res;
       zmod_poly_factor_init(def_res);
 
       zmod_poly_factor_cantor_zassenhaus(def_res, def);
-      zmod_poly_clear(def);
+      
+	  zmod_poly_clear(def);
 
       for (i = 0; i < def_res->num_factors; i++)
       {
-         ulong def_length = def_res->factors[i]->length;
-         
-          // inflate
+         // inflate
          zmod_poly_t pol;
          zmod_poly_init(pol, input->p);
-         zmod_poly_fit_length(pol, (def_length - 1)*deflation + 1);
-         for (j = 0; j < def_length; j++)
-            zmod_poly_set_coeff_ui(pol, j*deflation, def_res->factors[i]->coeffs[j]);
-       
+         zmod_poly_inflate(pol, def_res->factors[i], deflation);
+
          // factor inflation
-         zmod_poly_factor_cantor_zassenhaus(result, pol);
-         zmod_poly_clear(pol);
+         if (def_res->exponents[i] == 1)
+			zmod_poly_factor_cantor_zassenhaus(result, pol);
+		 else
+		 {
+			zmod_poly_factor_t t;
+			zmod_poly_factor_init(t);
+		    zmod_poly_factor_cantor_zassenhaus(t, pol);
+			zmod_poly_factor_pow(t, def_res->exponents[i]);
+			zmod_poly_factor_concat(result, t);
+			zmod_poly_factor_clear(t);
+		 }  
+	     zmod_poly_clear(pol);
       }
             
-      zmod_poly_factor_clear(def_res);
+	  zmod_poly_factor_clear(def_res);
    }
-      
+   
    return leading_coeff;  
 }
 
