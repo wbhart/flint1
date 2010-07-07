@@ -2106,12 +2106,14 @@ int LLL_mpfr(F_mpz_mat_t B)
 {
 
    mp_prec_t prec;
+//prec was 53
    prec = 53;
 
    int result = -1;
    int num_loops = 1;
    while ((result == -1) && (prec < MPFR_PREC_MAX)){
       result = LLL_mpfr2(B, prec);
+      printf("called LLL_mpfr with prec = %ld\n", prec);
       if (result == -1){
          if (num_loops < 20)
             prec = prec + 53;
@@ -2129,16 +2131,24 @@ int LLL_mpfr(F_mpz_mat_t B)
 int LLL_wrapper(F_mpz_mat_t B){
 
    int res = LLL_d(B);
-   if (res >= 0) //hooray worked first time
+   if (res >= 0){ //hooray worked first time
+      printf("first time through, doubles are enough\n");
       return res;
-   else if (res == -1) //just in case the fast/heuristic switch has any impact
+   }
+   else if (res == -1){ //just in case the fast/heuristic switch has any impact
       res = LLL_d_heuristic(B);
+      printf("finished heuristic\n");
+   }
 
-   if (res == -1) //Now try the mpfr version
+   if (res == -1){ //Now try the mpfr version
+      printf("third time through, mpfr is called\n");
       res = LLL_mpfr(B);
+   }
 
-   if (res >= 0) //finally worked
+   if (res >= 0){ //finally worked
+      printf("second time through, doubles with heuristic was enough unless you saw mpfr\n");
       return res;
+   }
    else //we've got big problems if this is the exit...
       return -1;
 }
