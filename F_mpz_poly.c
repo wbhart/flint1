@@ -7322,6 +7322,8 @@ for(num_primes = 1; num_primes < 3; num_primes++)
 
    printf(" zass a = %ld \n", a);
 
+   ulong bit_r = FLINT_MAX(r, 20);
+
    if (use_Hoeij_Novocin == 1)
    {
 
@@ -7360,7 +7362,7 @@ printf(" first two clds took %f seconds\n", (double) cld_data_total/ (double) CL
 //Trying to get (a-b)log(p)*(len-2) = .12*r^2 where b = avg_b/log2(p)...
 
       //long n_a = (long) (double)( 0.12 * r * r /(double)( (len - 2) ) + avg_b / log2( (double) p )  );
-      long n_a = (long) (double)(( (3.5)*r / log2((double) p)   + (double) avg_b / log2( (double) p )  ));
+      long n_a = (long) (double)(( (3.5)*bit_r / log2((double) p)   + (double) avg_b / log2( (double) p )  ));
 
       //n_a = (long) pow( (double) 2, ceil( log2( (double) n_a ) ) );
 
@@ -7941,6 +7943,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    F_mpz_set(lc, F->coeffs + N);
 
    ulong r = lifted_fac->num_factors;
+
    ulong s = r; //M->r;
    F_mpz_mat_t col;
    F_mpz_mat_init(col, r, 1);
@@ -8022,7 +8025,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
             //printf(" spend a total of %f seconds on Linear alg stuff since the last entry\n", (double) linear_alg_total / (double)CLOCKS_PER_SEC);
             num_entries++;
 
-//            F_mpz_mat_print(M); printf(" was M before LLL\n");
+            F_mpz_mat_print(M); printf(" was M before LLL\n");
 //            F_mpz_add_ui(B, B, r/2);
 //            cexpo[r + col_cnt] = 0;
    lll_start = clock();
@@ -8033,7 +8036,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
 
    printf(" spend a total of %f seconds on LLL so far newd=%ld\n", (double) lll_total / (double)CLOCKS_PER_SEC, newd);
 
-//            F_mpz_mat_print(M); printf(" was M after LLL\n");
+            F_mpz_mat_print(M); printf(" was M after LLL\n");
 
             F_mpz_mat_resize(M, newd, M->c);
             col_cnt++;
