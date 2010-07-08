@@ -68,6 +68,7 @@ HEADERS = \
 	theta.h \
 	zmod_mat.h \
 	mpz_mat.h \
+	mpq_mat.h \
 	d_mat.h \
 	F_mpz_mat.h \
 	mpfr_mat.h \
@@ -116,6 +117,7 @@ FLINTOBJ = \
 	theta.o \
 	zmod_mat.o \
 	mpz_mat.o \
+	mpq_mat.o \
 	d_mat.o \
 	mpfr_mat.o \
 	F_mpz_mat.o \
@@ -135,7 +137,7 @@ QS: mpQS
 
 tune: ZmodF_mul-tune mpz_poly-tune 
 
-test: F_mpz-test mpn_extras-test fmpz_poly-test fmpz-test ZmodF-test ZmodF_poly-test mpz_poly-test ZmodF_mul-test long_extras-test zmod_poly-test F_mpz_mat-test zmod_mat-test d_mat-test
+test: F_mpz-test mpn_extras-test fmpz_poly-test fmpz-test ZmodF-test ZmodF_poly-test mpz_poly-test ZmodF_mul-test long_extras-test zmod_poly-test F_mpz_mat-test zmod_mat-test d_mat-test mpq_mat-test
 
 check: test
 	./F_mpz-test
@@ -151,6 +153,7 @@ check: test
 	./fmpz_poly-test
 	./F_mpz_mat-test
 	./d_mat-test
+	./mpq_mat-test
 
 profile: ZmodF_poly-profile kara-profile fmpz_poly-profile mpz_poly-profile ZmodF_mul-profile 
 
@@ -281,6 +284,9 @@ mpz_poly.o: mpz_poly.c $(HEADERS)
 mpz_mat.o: mpz_mat.c $(HEADERS)
 	$(CC) $(CFLAGS) -c mpz_mat.c -o mpz_mat.o
 
+mpq_mat.o: mpq_mat.c $(HEADERS)
+	$(CC) $(CFLAGS) -c mpq_mat.c -o mpq_mat.o
+
 mpz_poly-tuning.o: mpz_poly-tuning.c $(HEADERS)
 	$(CC) $(CFLAGS) -c mpz_poly-tuning.c -o mpz_poly-tuning.o
 
@@ -333,6 +339,9 @@ F_mpz-test.o: F_mpz-test.c $(HEADERS)
 
 F_mpz_mat-test.o: F_mpz_mat-test.c $(HEADERS)
 	$(CC) $(CFLAGS) -c F_mpz_mat-test.c -o F_mpz_mat-test.o
+
+mpq_mat-test.o: mpq_mat-test.c $(HEADERS)
+	$(CC) $(CFLAGS) -c mpq_mat-test.c -o mpq_mat-test.o
 
 F_mpz_LLL_fast_d-test.o: F_mpz_LLL_fast_d.c $(HEADERS)
 	$(CC) $(CFLAGS) -c F_mpz_LLL_fast_d-test.c -o F_mpz_LLL_fast_d-test.o
@@ -407,6 +416,9 @@ mpz_poly-test: mpz_poly-test.o test-support.o $(FLINTOBJ) $(HEADERS)
 
 F_mpz_mat-test: F_mpz_mat-test.o test-support.o $(FLINTOBJ) $(HEADERS)
 	$(CC) $(CFLAGS) F_mpz_mat-test.o test-support.o -o F_mpz_mat-test $(FLINTOBJ) $(LIBS)
+
+mpq_mat-test: mpq_mat-test.o test-support.o $(FLINTOBJ) $(HEADERS)
+	$(CC) $(CFLAGS) mpq_mat-test.o test-support.o -o mpq_mat-test $(FLINTOBJ) $(LIBS)
 
 F_mpz_LLL_fast_d-test: F_mpz_LLL_fast_d-test.o test-support.o $(FLINTOBJ) $(HEADERS)
 	$(CC) $(CFLAGS) F_mpz_LLL_fast_d-test.o test-support.o -o F_mpz_LLL_fast_d-test $(FLINTOBJ) $(LIBS)

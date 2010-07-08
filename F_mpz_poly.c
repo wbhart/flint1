@@ -7322,6 +7322,8 @@ for(num_primes = 1; num_primes < 3; num_primes++)
 
    printf(" zass a = %ld \n", a);
 
+   ulong bit_r = FLINT_MAX(r, 20);
+
    if (use_Hoeij_Novocin == 1)
    {
 
@@ -7360,7 +7362,7 @@ printf(" first two clds took %f seconds\n", (double) cld_data_total/ (double) CL
 //Trying to get (a-b)log(p)*(len-2) = .12*r^2 where b = avg_b/log2(p)...
 
       //long n_a = (long) (double)( 0.12 * r * r /(double)( (len - 2) ) + avg_b / log2( (double) p )  );
-      long n_a = (long) (double)(( (3.5)*r / log2((double) p)   + (double) avg_b / log2( (double) p )  ));
+      long n_a = (long) (double)(( (3.5)*bit_r / log2((double) p)   + (double) avg_b / log2( (double) p )  ));
 
       //n_a = (long) pow( (double) 2, ceil( log2( (double) n_a ) ) );
 
@@ -7562,6 +7564,7 @@ void F_mpz_poly_factor(F_mpz_poly_factor_t final_fac, F_mpz_t cong, F_mpz_poly_t
    ulong i, j;
    
    ulong deflation = F_mpz_poly_deflation(G);
+
    if (deflation > 1) printf("deflation of %ld\n", deflation);
 
    if (deflation == 1)
@@ -7642,6 +7645,8 @@ void _F_mpz_poly_factor_CLD_mat(F_mpz_mat_t res, F_mpz_poly_t F, F_mpz_poly_fact
    ulong d = lifted_fac->num_factors;
    F_mpz_poly_t gd,gcld;
 
+// turning full precision on
+
    if (2*N >= F->length - 1){
       F_mpz_mat_clear(res);
       F_mpz_mat_init(res, d+1, F->length - 1);
@@ -7683,16 +7688,22 @@ void _F_mpz_poly_factor_CLD_mat(F_mpz_mat_t res, F_mpz_poly_t F, F_mpz_poly_fact
    F_mpz_init(cld_temp);
 
    int ok = 0;
+   ulong bits_d = FLINT_MAX(d, 20);
    ulong sqN = (ulong) sqrt( 1.6 * ((double) d*d) );   
-   long ISD = F_mpz_bits(P) - d - d/2;
+   long ISD = F_mpz_bits(P) - bits_d - bits_d/2;
    for (i = 0; (i < n) && (ok == 0); i++)
    {
       F_mpz_mul_ui(cld_temp, res->rows[d] + i, sqN);
       worst_exp = F_mpz_bits(cld_temp); 
-      if (worst_exp <= ISD)
+      if (worst_exp <= ISD){
          lower_n = i;
-      else
+      }
+      else{
          ok = 1;
+      }
+      printf("lower_n = %ld \n", lower_n);
+      printf("ok = %d", ok);
+      printf(" i = %ld\n", i);
    }
 //in case of bizarre behavior will need to justify the other zero columns (or not)
    ok = 0;
@@ -7704,6 +7715,10 @@ void _F_mpz_poly_factor_CLD_mat(F_mpz_mat_t res, F_mpz_poly_t F, F_mpz_poly_fact
          upper_n = i;
       else
          ok = 1;
+      printf("upper_n = %ld \n", upper_n);
+      printf("ok = %d", ok);
+      printf(" i = %ld\n", i);
+
    }
 
    F_mpz_clear(cld_temp);
@@ -7715,6 +7730,7 @@ void _F_mpz_poly_factor_CLD_mat(F_mpz_mat_t res, F_mpz_poly_t F, F_mpz_poly_fact
    F_mpz_poly_t trunc_poly, trunc_F;
    _F_mpz_poly_attach_truncate(trunc_F, F, lower_n + 3);
    if (lower_n > 0){
+      printf(" lower exists n = %ld \n", n);
       lower_n = n;
       for (i = 0; i < d; i++){
          F_mpz_poly_init(gd);
@@ -7725,11 +7741,16 @@ void _F_mpz_poly_factor_CLD_mat(F_mpz_mat_t res, F_mpz_poly_t F, F_mpz_poly_fact
          F_mpz_poly_derivative(gd, trunc_poly);
 //Should do upper and lower trunc multiplication soon, for speed sake
          F_mpz_poly_mul(gcld, trunc_F, gd);
+
          F_mpz_poly_div_trunc_modp(temp, gcld, trunc_poly, P, lower_n);
 
+         printf(" the inputs to F_mpz_poly_div_trunc_modp are \n");
+         printf(" ");
+
          long j;
-         for (j = 0; j < lower_n; j++)
+         for (j = 0; j < lower_n; j++){
             F_mpz_set(res->rows[i] + j, temp[j]);
+         }
 
          F_mpz_poly_clear(gd);
          F_mpz_poly_clear(gcld);
@@ -7743,6 +7764,7 @@ void _F_mpz_poly_factor_CLD_mat(F_mpz_mat_t res, F_mpz_poly_t F, F_mpz_poly_fact
 
    if (upper_n > 0){
       upper_n = n;
+      printf("upper exists n = %ld \n", n);
       for (i = 0; i < d; i++){
          F_mpz_poly_init(gd);
          F_mpz_poly_init(gcld);
@@ -7931,6 +7953,47 @@ int _F_mpz_mat_check_if_solved(F_mpz_mat_t M, ulong r, F_mpz_poly_factor_t final
    return trym;
 }
 
+int hensel_checker(F_mpz_poly_t F, F_mpz_poly_factor_t lifted_fac, F_mpz_t P){
+
+   if (lifted_fac->num_factors == 0){
+      if (F->length > 0)
+         return 0;
+      else
+         return 1;
+   }
+
+   F_mpz_mod_poly_t product, temp;
+   F_mpz_mod_poly_init(product, P);
+   F_mpz_mod_poly_init(temp, P);
+
+   F_mpz_t lead_coeff;
+   F_mpz_init(lead_coeff);
+
+   F_mpz_poly_to_F_mpz_mod_poly(product, lifted_fac->factors[0]);
+
+   long i;
+   for (i = 1; i < lifted_fac->num_factors; i++){
+      F_mpz_poly_to_F_mpz_mod_poly(temp, lifted_fac->factors[i]);
+      F_mpz_mod_poly_mul(product, product, temp);
+   }
+
+   F_mpz_poly_to_F_mpz_mod_poly(temp, F);
+
+   F_mpz_set(lead_coeff, F->coeffs + F->length - 1);
+
+   F_mpz_mod_poly_scalar_mul(product, product, lead_coeff);
+
+   _F_mpz_mod_poly_reduce_coeffs(product);
+   _F_mpz_mod_poly_reduce_coeffs(temp);
+   
+   int res = F_mpz_mod_poly_equal(product, temp);
+   
+   F_mpz_clear(lead_coeff);
+   F_mpz_mod_poly_clear(temp);
+   F_mpz_mod_poly_clear(product);
+   return res;
+}
+
 int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, F_mpz_t P, ulong exp, F_mpz_mat_t M, int * cexpo, long U_exp)
 {
    int return_me = 0;
@@ -7940,6 +8003,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    F_mpz_set(lc, F->coeffs + N);
 
    ulong r = lifted_fac->num_factors;
+
    ulong s = r; //M->r;
    F_mpz_mat_t col;
    F_mpz_mat_init(col, r, 1);
@@ -7972,14 +8036,20 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    F_mpz_mat_init(data, 0, 0);
 
 
+//FIXME: inserting checks here: first Hensel checking
+
+   int res_hens = hensel_checker(F, lifted_fac, P);
+   printf(" 00000000000022  result of hensel check is %d\n", res_hens);
+
    cld_data_start = clock();
    _F_mpz_poly_factor_CLD_mat(data, F, lifted_fac, P, num_coeffs);
    cld_data_stop = clock();
-   
+
+
    cld_data_total = cld_data_total + cld_data_stop - cld_data_start;
    //printf(" spend a total of %f seconds on CLD stuff so far\n", (double) cld_data_total / (double)CLOCKS_PER_SEC);
 
-//   F_mpz_mat_print_pretty(data); printf(" was the data mat\n");
+   F_mpz_mat_print_pretty(data); printf(" was the data mat\n");
 
    int all_coeffs = 0;
    if (data->c >= F->length - 1)
@@ -8008,6 +8078,9 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
          worst_exp = F_mpz_bits(temp);   
          for( ulong i = 0; i < r; i++)
             F_mpz_set(col->rows[i], data->rows[i] + cur_col);
+
+         printf(" checking column cur_col = %ld\n", cur_col);
+
    linear_alg_start = clock();
          ok = _F_mpz_mat_next_col(M, P, col, worst_exp, U_exp);
    linear_alg_stop = clock();
@@ -8021,18 +8094,18 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
             //printf(" spend a total of %f seconds on Linear alg stuff since the last entry\n", (double) linear_alg_total / (double)CLOCKS_PER_SEC);
             num_entries++;
 
-//            F_mpz_mat_print(M); printf(" was M before LLL\n");
+            F_mpz_mat_print(M); printf(" was M before LLL\n");
 //            F_mpz_add_ui(B, B, r/2);
 //            cexpo[r + col_cnt] = 0;
    lll_start = clock();
-            newd = LLL_wrapper_with_removal(M, B);
+            newd = U_LLL_with_removal(M, 50L, B);
    lll_stop = clock();
    
    lll_total = lll_total + lll_stop - lll_start;
 
    printf(" spend a total of %f seconds on LLL so far newd=%ld\n", (double) lll_total / (double)CLOCKS_PER_SEC, newd);
 
-//            F_mpz_mat_print(M); printf(" was M after LLL\n");
+            F_mpz_mat_print(M); printf(" was M after LLL\n");
 
             F_mpz_mat_resize(M, newd, M->c);
             col_cnt++;
@@ -8088,7 +8161,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
                }
                else
                {
-                  printf("maybe random would be nice but under estimated...\n");
+                  printf("maybe random would be nicer but under estimated...\n");
 
                   return_me = 5;
                   all_coeffs = 2;
