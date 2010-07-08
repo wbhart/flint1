@@ -7749,6 +7749,7 @@ void _F_mpz_poly_factor_CLD_mat(F_mpz_mat_t res, F_mpz_poly_t F, F_mpz_poly_fact
 
          long j;
          for (j = 0; j < lower_n; j++){
+            F_mpz_print(temp[j]); printf(" was temp[%ld] j\n", j);
             F_mpz_set(res->rows[i] + j, temp[j]);
          }
 
