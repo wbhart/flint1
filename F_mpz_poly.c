@@ -7562,8 +7562,6 @@ void F_mpz_poly_factor(F_mpz_poly_factor_t final_fac, F_mpz_t cong, F_mpz_poly_t
    ulong i, j;
    
    ulong deflation = F_mpz_poly_deflation(G);
-//turning off deflation
-   deflation = 1;
 
    if (deflation > 1) printf("deflation of %ld\n", deflation);
 
