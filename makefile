@@ -137,7 +137,7 @@ QS: mpQS
 
 tune: ZmodF_mul-tune mpz_poly-tune 
 
-test: F_mpz-test mpn_extras-test fmpz_poly-test fmpz-test ZmodF-test ZmodF_poly-test mpz_poly-test ZmodF_mul-test long_extras-test zmod_poly-test F_mpz_mat-test zmod_mat-test mpq_mat-test
+test: F_mpz-test mpn_extras-test fmpz_poly-test fmpz-test ZmodF-test ZmodF_poly-test mpz_poly-test ZmodF_mul-test long_extras-test zmod_poly-test F_mpz_mat-test zmod_mat-test d_mat-test mpq_mat-test
 
 check: test
 	./F_mpz-test
@@ -152,6 +152,7 @@ check: test
 	./zmod_mat-test
 	./fmpz_poly-test
 	./F_mpz_mat-test
+	./d_mat-test
 	./mpq_mat-test
 
 profile: ZmodF_poly-profile kara-profile fmpz_poly-profile mpz_poly-profile ZmodF_mul-profile 
@@ -327,6 +328,9 @@ F_mpz_poly.o: F_mpz_poly.c $(HEADERS)
 test-support.o: test-support.c $(HEADERS)
 	$(CC) $(CFLAGS) -c test-support.c -o test-support.o
 
+d_mat-test.o: d_mat-test.c $(HEADERS)
+	$(CC) $(CFLAGS) -c d_mat-test.c -o d_mat-test.o
+
 fmpz_poly-test.o: fmpz_poly-test.c $(HEADERS)
 	$(CC) $(CFLAGS) -c fmpz_poly-test.c -o fmpz_poly-test.o
 
@@ -391,6 +395,9 @@ mpn_extras-test: mpn_extras-test.o test-support.o $(FLINTOBJ) $(HEADERS)
 
 fmpz_poly-test: fmpz_poly-test.o test-support.o $(FLINTOBJ) $(HEADERS)
 	$(CC) $(CFLAGS) fmpz_poly-test.o test-support.o -o fmpz_poly-test $(FLINTOBJ) $(LIBS)
+
+d_mat-test: d_mat-test.o test-support.o $(FLINTOBJ) $(HEADERS)
+	$(CC) $(CFLAGS) d_mat-test.o test-support.o -o d_mat-test $(FLINTOBJ) $(LIBS)
 
 fmpz-test: fmpz-test.o test-support.o $(FLINTOBJ) $(HEADERS)
 	$(CC) $(CFLAGS) fmpz-test.o test-support.o -o fmpz-test $(FLINTOBJ) $(LIBS)
