@@ -493,6 +493,7 @@ void Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, doubl
    }
 }
 
+#if 0
 //### This is different -------
 void Babai_heuristic_d_2exp (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s, 
        double **appB, int *expo, double **appSP, 
@@ -691,6 +692,7 @@ void Babai_heuristic_d_2exp (int kappa, F_mpz_mat_t B, double **mu, double **r, 
       s[k+1] = s[k] - tmp;
    }
 }
+#endif
 
 /* ****************** */
 /* The LLL Algorithm  */
@@ -892,6 +894,7 @@ void LLL(F_mpz_mat_t B)
    and cexpo = [2,0,...,0] will weigh the first column as 4 times the importance of the others
 */
 
+#if 0
 //### This is different ------
 void LLL_heuristic_d_2exp(F_mpz_mat_t B, int *cexpo)
 //----------------------------
@@ -1087,6 +1090,7 @@ void LLL_heuristic_d_2exp(F_mpz_mat_t B, int *cexpo)
    free(s);
    free(appSPtmp);
 }
+#endif
 
 /* 
    LLL-reduces the integer matrix B "in place"
@@ -1094,6 +1098,7 @@ void LLL_heuristic_d_2exp(F_mpz_mat_t B, int *cexpo)
    also returns the number of rows who's G-S lengths are guaranteed to be <= gs_B 
 */
 
+#if 0
 //### This is different ------
 int LLL_heuristic_d_2exp_with_removal(F_mpz_mat_t B, int *cexpo, F_mpz_t gs_B)
 //----------------------------
@@ -1301,6 +1306,7 @@ int LLL_heuristic_d_2exp_with_removal(F_mpz_mat_t B, int *cexpo, F_mpz_t gs_B)
    free(appSPtmp);
    return newd;
 }
+#endif
 
 /* 
    LLL-reduces the integer matrix B "in place"

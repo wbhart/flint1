@@ -40,7 +40,8 @@ Copyright (C) 2010, William Hart
 
 double random_d()
 {
-   return rand()/((double) RAND_MAX + 1);
+   if (z_randint(2)) return rand()/((double) RAND_MAX + 1);
+   else return -rand()/((double) RAND_MAX + 1);
 }
 
 void random_d_mat(double ** mat, ulong rows, ulong cols)
@@ -67,8 +68,8 @@ int test_d_mat_init_clear()
 
    for (count1 = 0; count1 < 10000; count1++)
    {
-	  ulong rows = z_randint(100) + 1;
-      ulong cols = z_randint(100) + 1;
+	  ulong rows = z_randint(50) + 1;
+      ulong cols = z_randint(50) + 1;
 
       mat = d_mat_init(rows, cols);
       random_d_mat(mat, rows, cols);
@@ -78,7 +79,78 @@ int test_d_mat_init_clear()
    return result;
 }
 
+int test_d_vec_scalar_product()
+{
+   int result = 1;
+   ulong count1, count2;
 
+   double ** mat;
+
+   for (count1 = 0; count1 < 1000; count1++)
+   {
+	  ulong rows = z_randint(100) + 1;
+      ulong cols = z_randint(100) + 2;
+
+      mat = d_mat_init(rows, cols);
+      random_d_mat(mat, rows, cols);
+     
+	  for (count2 = 0; count2 < 1000; count2++)
+	  {
+	     ulong r1 = z_randint(rows);
+		 ulong r2 = z_randint(rows);
+		 double s1 = d_vec_scalar_product(mat[r1], mat[r2], cols - 1);
+		 double s2 = d_vec_scalar_product(mat[r1] + cols - 1, mat[r2] + cols - 1, 1);
+		 double s3 = d_vec_scalar_product(mat[r1], mat[r2], cols);
+
+		 result = ((s1 + s2) == s3);
+		 if (!result)
+		 {
+			 printf("Error: %ld, %ld, %ld\n", s1, s2, s3);
+			 break;
+		 }
+	  }
+
+      d_mat_clear(mat);
+   }
+
+   return result;
+}
+
+int test_d_vec_norm()
+{
+   int result = 1;
+   ulong count1, count2;
+
+   double ** mat;
+
+   for (count1 = 0; count1 < 1000; count1++)
+   {
+	  ulong rows = z_randint(100) + 1;
+      ulong cols = z_randint(100) + 2;
+
+      mat = d_mat_init(rows, cols);
+      random_d_mat(mat, rows, cols);
+     
+	  for (count2 = 0; count2 < 1000; count2++)
+	  {
+	     ulong r1 = z_randint(rows);
+		 double s1 = d_vec_norm(mat[r1], cols - 1);
+		 double s2 = d_vec_norm(mat[r1] + cols - 1, 1);
+		 double s3 = d_vec_norm(mat[r1], cols);
+
+		 result = ((s1 + s2) == s3);
+		 if (!result)
+		 {
+			 printf("Error: %ld, %ld, %ld\n", s1, s2, s3);
+			 break;
+		 }
+	  }
+
+      d_mat_clear(mat);
+   }
+
+   return result;
+}
 
 /****************************************************************************
 
@@ -91,6 +163,8 @@ void d_mat_test_all()
    int success, all_success = 1;
 
    RUN_TEST(d_mat_init_clear);
+   RUN_TEST(d_vec_scalar_product);
+   RUN_TEST(d_vec_norm);
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");

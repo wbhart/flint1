@@ -27,13 +27,9 @@ void d_mat_print(double ** B, int * expo, int d, int n);
 
 double d_vec_scalar_product(double * vec1, double * vec2, int n);
 
-double d_vec_scalar_product_heuristic(double * vec1, double * vec2, int n, F_mpz_mat_t B, ulong kappa, ulong j, long exp_adj);
-
 double d_vec_norm(double * vec, int n);
 
-double d_2exp_vec_scalar_product(double * vec1, double * vec2, int n, int *cexpo, F_mpz_mat_t B, ulong kappa, ulong j);
-
-double d_2exp_vec_norm(double * vec, int n, int *cexpo);
+double d_vec_scalar_product_heuristic(double * vec1, double * vec2, int n, F_mpz_mat_t B, ulong kappa, ulong j, long exp_adj);
 
 
 
