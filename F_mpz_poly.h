@@ -1210,9 +1210,9 @@ void F_mpz_poly_mulmod_modp_naive(F_mpz_poly_t R, F_mpz_poly_t f,
                finds the lowest n coeffs of f/g assuming the remainder of f/g
                is 0 mod p. (Designed for padic CLDs) Right now if the trailing
                coeff of g is not invertible mod p then it resorts to a full
-                division.  Want to find a way around that.
+                division.  Want to find a way around that.  Returns 0 if problem
 */
-void F_mpz_poly_div_trunc_modp( F_mpz_t *res, F_mpz_poly_t f, 
+int F_mpz_poly_div_trunc_modp( F_mpz_t *res, F_mpz_poly_t f, 
                 F_mpz_poly_t g, F_mpz_t P, ulong n);
 
 /**
