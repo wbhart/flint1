@@ -6376,8 +6376,8 @@ void F_mpz_poly_squarefree(F_mpz_poly_factor_t fac, F_mpz_t content, F_mpz_poly_
 {
 
    F_mpz_poly_content(content, F);
-   F_mpz_poly_print(F); printf("\n");
-   F_mpz_print(content); printf("\n\n");
+//   F_mpz_poly_print(F); printf("\n");
+//   F_mpz_print(content); printf("\n\n");
 
    F_mpz_poly_t f;
    F_mpz_poly_init(f);
