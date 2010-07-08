@@ -7360,7 +7360,7 @@ printf(" first two clds took %f seconds\n", (double) cld_data_total/ (double) CL
 //Trying to get (a-b)log(p)*(len-2) = .12*r^2 where b = avg_b/log2(p)...
 
       //long n_a = (long) (double)( 0.12 * r * r /(double)( (len - 2) ) + avg_b / log2( (double) p )  );
-      long n_a = (long) (double)(( (3.5)*r / log2((double) p)   + (double) avg_b / log2( (double) p )  ));
+      long n_a = (long) (double)(( (7.5)*r / log2((double) p)   + (double) avg_b / log2( (double) p )  ));
 
       //n_a = (long) pow( (double) 2, ceil( log2( (double) n_a ) ) );
 
