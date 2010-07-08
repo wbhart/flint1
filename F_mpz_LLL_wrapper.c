@@ -2843,6 +2843,7 @@ int LLL_mpfr_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    int result = -1;
    int num_loops = 1;
    while ((result == -1) && (prec < MPFR_PREC_MAX)){
+      printf("mpfr LLL with prec = %ld\n", prec);
       result = LLL_mpfr2_with_removal(B, prec, gs_B);
       if (result == -1){
          if (num_loops < 20)
@@ -2861,13 +2862,16 @@ int LLL_mpfr_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 int LLL_wrapper_with_removal(F_mpz_mat_t B, F_mpz_t gs_B){
 
    int res = LLL_d_with_removal(B, gs_B);
-   if (res >= 0) //hooray worked first time
+   if (res >= 0){ //hooray worked first time
+      printf("first time through, doubles are enough\n");
       return res;
+   }
    else if (res == -1) //just in case the fast/heuristic switch has any impact
       res = LLL_d_heuristic_with_removal(B, gs_B);
 
-   if (res == -1) //Now try the mpfr version
+   if (res == -1){ //Now try the mpfr version
       res = LLL_mpfr_with_removal(B, gs_B);
+   }
 
    if (res >= 0) //finally worked
       return res;
