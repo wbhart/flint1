@@ -4552,7 +4552,7 @@ void F_mpz_poly_test_all()
 #if TESTFILE
 #endif
 	
-   RUN_TEST(F_mpz_poly_convert); 
+/*   RUN_TEST(F_mpz_poly_convert); 
    RUN_TEST(F_mpz_poly_getset_coeff_si); 
    RUN_TEST(F_mpz_poly_getset_coeff_ui); 
    RUN_TEST(F_mpz_poly_getset_coeff_mpz); 
@@ -4571,8 +4571,8 @@ void F_mpz_poly_test_all()
    RUN_TEST(F_mpz_poly_to_zmod_poly);
    RUN_TEST(F_mpz_poly_scalar_mul_ui); 
    RUN_TEST(F_mpz_poly_scalar_mul_si); 
-   RUN_TEST(F_mpz_poly_scalar_mul);
-   RUN_TEST(F_mpz_poly_factor);
+   RUN_TEST(F_mpz_poly_scalar_mul);*/
+   RUN_TEST(F_mpz_poly_factor);/*
    RUN_TEST(F_mpz_poly_mul_classical); 
    RUN_TEST(F_mpz_poly_mul_classical_trunc_left); 
    RUN_TEST(F_mpz_poly_mul_karatsuba); 
@@ -4599,7 +4599,7 @@ void F_mpz_poly_test_all()
 	RUN_TEST(F_mpz_poly_divexact); 
 	RUN_TEST(F_mpz_poly_pseudo_divrem_basecase); 
 	RUN_TEST(F_mpz_poly_pseudo_div_basecase); 
-
+*/
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");
 }
