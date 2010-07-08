@@ -6253,11 +6253,10 @@ void F_mpz_poly_div_trunc_modp( F_mpz_t *res, F_mpz_poly_t f, F_mpz_poly_t g, F_
 
    ulong quo_length = n;
 
-   if (n > f->length)
-      quo_length = f->length - g->length + 1;
-
-   for(ulong i = 0; (i < n) && (i < quo_length) ; i++){
+   for(ulong i = 0; (i < n); i++){
 //  This is a number which would cancel out the lowest term of f mod P
+
+      printf("here right... \n");
       F_mpz_mul2(temp, t_f->coeffs, tc_inv);
       F_mpz_smod(res[i], temp, P);
 
@@ -6337,25 +6336,33 @@ void F_mpz_poly_div_upper_trunc_modp( F_mpz_t *res, F_mpz_poly_t f, F_mpz_poly_t
    F_mpz_poly_init(tempg);
 
    ulong quo_length = n;
-   if (n > f->length)
+   if (n > f->length){
       quo_length = f->length - g->length + 1;
-   for(ulong i = 0; (i < n) && (i < quo_length); i++){
-      F_mpz_mul2(temp, t_f->coeffs + t_f->length - 1, lc_inv);
-      F_mpz_smod(res[i], temp, P);
+      printf(" did this happen?????????????????????????????????????\n");
+   }
+   ulong i;
+   long top_length = t_f->length;
+   for(i = 0; (i < n) && (i < quo_length); i++){
+      if (top_length -i <= t_f->length){
+         F_mpz_mul2(temp, t_f->coeffs + top_length -i - 1, lc_inv);
+         F_mpz_smod(res[i], temp, P);
 
-      long fg_diff;
-      fg_diff = t_f->length - t_g->length;
+         long fg_diff;
+         fg_diff = t_f->length - t_g->length;
 
-      if (fg_diff>=0)
-         F_mpz_poly_left_shift(tempg, t_g, fg_diff);
+         if (fg_diff>=0)
+            F_mpz_poly_left_shift(tempg, t_g, fg_diff);
+         else
+            F_mpz_poly_right_shift(tempg, t_g, -fg_diff);
+
+         F_mpz_poly_truncate(t_f, t_f->length - 1);
+         F_mpz_poly_truncate(tempg, tempg->length - 1);
+         F_mpz_poly_scalar_mul(tempg, tempg, res[i]);
+         F_mpz_poly_sub(t_f, t_f, tempg);
+         F_mpz_poly_smod(t_f, t_f, P);
+      }
       else
-         F_mpz_poly_right_shift(tempg, t_g, -fg_diff);
-
-      F_mpz_poly_truncate(t_f, t_f->length - 1);
-      F_mpz_poly_truncate(tempg, tempg->length - 1);
-      F_mpz_poly_scalar_mul(tempg, tempg, res[i]);
-      F_mpz_poly_sub(t_f, t_f, tempg);
-      F_mpz_poly_smod(t_f, t_f, P);
+         F_mpz_set_ui(res[i], 0L);
    }
    F_mpz_poly_clear(tempg);
    F_mpz_poly_clear(t_f);
@@ -7643,7 +7650,7 @@ void _F_mpz_poly_factor_CLD_mat(F_mpz_mat_t res, F_mpz_poly_t F, F_mpz_poly_fact
 //bottom N coeffs of each local Log Derivative.  Store the results in res with an extra row at the bottom for the bounds for that column
    ulong n;
    ulong d = lifted_fac->num_factors;
-   F_mpz_poly_t gd,gcld;
+   F_mpz_poly_t gd,gcld, check_gd, check_gcld;
 
 // turning full precision on
 
@@ -7741,17 +7748,30 @@ void _F_mpz_poly_factor_CLD_mat(F_mpz_mat_t res, F_mpz_poly_t F, F_mpz_poly_fact
          F_mpz_poly_derivative(gd, trunc_poly);
 //Should do upper and lower trunc multiplication soon, for speed sake
          F_mpz_poly_mul(gcld, trunc_F, gd);
-
+         
          F_mpz_poly_div_trunc_modp(temp, gcld, trunc_poly, P, lower_n);
 
          printf(" the inputs to F_mpz_poly_div_trunc_modp are \n");
-         printf(" ");
+
+         //FIXME: doing a complete computation for checking purpose
+         F_mpz_poly_init(check_gd);
+         F_mpz_poly_init(check_gcld);
+         F_mpz_poly_derivative(check_gd, lifted_fac->factors[i]);
+         F_mpz_poly_mul(check_gcld, F, check_gd);
+         F_mpz_poly_div(check_gcld, check_gcld, lifted_fac->factors[i]);
+         F_mpz_poly_smod(check_gcld, check_gcld, P);
+
 
          long j;
          for (j = 0; j < lower_n; j++){
-            F_mpz_print(temp[j]); printf(" was temp[%ld] j\n", j);
+            F_mpz_print(temp[j]); printf(" was temp[%ld] j should be: ", j);
+            F_mpz_print(check_gcld->coeffs + j); printf(" was actual one\n", j);
             F_mpz_set(res->rows[i] + j, temp[j]);
          }
+//FIXME: these too
+         F_mpz_poly_clear(check_gd);
+         F_mpz_poly_clear(check_gcld);
+
 
          F_mpz_poly_clear(gd);
          F_mpz_poly_clear(gcld);
@@ -7774,9 +7794,28 @@ void _F_mpz_poly_factor_CLD_mat(F_mpz_mat_t res, F_mpz_poly_t F, F_mpz_poly_fact
 //Should do upper and lower trunc multiplication soon, for speed sake
          F_mpz_poly_mul_trunc_left(gcld, F, gd, F->length + gd->length - 1 - upper_n - 5);
          F_mpz_poly_div_upper_trunc_modp(temp, gcld, lifted_fac->factors[i], P, upper_n);
+
+         F_mpz_poly_print(gcld); printf(" was upper gcld\n");
+
+//FIXME: doing a complete computation for checking purpose
+         F_mpz_poly_init(check_gd);
+         F_mpz_poly_init(check_gcld);
+         F_mpz_poly_derivative(check_gd, lifted_fac->factors[i]);
+         F_mpz_poly_mul(check_gcld, F, check_gd);
+         F_mpz_poly_div(check_gcld, check_gcld, lifted_fac->factors[i]);
+         F_mpz_poly_smod(check_gcld, check_gcld, P);
+
          long j;
-         for (j = 0; j < upper_n; j++)
+         for (j = 0; j < upper_n; j++){
+            F_mpz_print(temp[j]); printf(" was temp[%ld] j should be: ", j);
+            F_mpz_print(check_gcld->coeffs + check_gcld->length - 1 - j); printf(" was actual one\n", j);
             F_mpz_set(res->rows[i] + 2*n -1 - j, temp[j]);
+         }
+
+//FIXME: these too
+         F_mpz_poly_clear(check_gd);
+         F_mpz_poly_clear(check_gcld);
+
          F_mpz_poly_clear(gd);
          F_mpz_poly_clear(gcld);
       }
@@ -8050,7 +8089,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    cld_data_total = cld_data_total + cld_data_stop - cld_data_start;
    //printf(" spend a total of %f seconds on CLD stuff so far\n", (double) cld_data_total / (double)CLOCKS_PER_SEC);
 
-   F_mpz_mat_print_pretty(data); printf(" was the data mat\n");
+//   F_mpz_mat_print_pretty(data); printf(" was the data mat\n");
 
    int all_coeffs = 0;
    if (data->c >= F->length - 1)
