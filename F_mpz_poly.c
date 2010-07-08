@@ -6376,8 +6376,8 @@ void F_mpz_poly_squarefree(F_mpz_poly_factor_t fac, F_mpz_t content, F_mpz_poly_
 {
 
    F_mpz_poly_content(content, F);
-//   F_mpz_poly_print(F); printf("\n");
-//   F_mpz_print(content); printf("\n\n");
+   F_mpz_poly_print(F); printf("\n");
+   F_mpz_print(content); printf("\n\n");
 
    F_mpz_poly_t f;
    F_mpz_poly_init(f);
@@ -7562,8 +7562,6 @@ void F_mpz_poly_factor(F_mpz_poly_factor_t final_fac, F_mpz_t cong, F_mpz_poly_t
    ulong i, j;
    
    ulong deflation = F_mpz_poly_deflation(G);
-//turning off deflation
-   deflation = 1;
 
    if (deflation > 1) printf("deflation of %ld\n", deflation);
 
