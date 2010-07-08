@@ -2636,7 +2636,7 @@ int test_F_mpz_poly_factor()
    mpz_poly_init(res2); 
 
    ulong count1;
-   for (count1 = 0; (count1 < 22*ITER) && (result == 1) ; count1++)
+   for (count1 = 0; (count1 < 25*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -2644,15 +2644,16 @@ int test_F_mpz_poly_factor()
       F_mpz_poly_factor_init(F_factors);
       F_mpz_init(content);
 
-		bits1 = z_randint(50) + 1;
-      bits2 = z_randint(50) + 1;
-      length1 = z_randint(50);
-      length2 = z_randint(50);
-      mpz_randpoly(m_poly1, length1, bits1);
+	  do {
+	    bits1 = z_randint(50) + 1;
+        bits2 = z_randint(50) + 1;
+        length1 = z_randint(50);
+        length2 = z_randint(50);
+        mpz_randpoly(m_poly1, length1, bits1);
 		mpz_randpoly(m_poly2, length2, bits2);
 
 		mpz_poly_to_F_mpz_poly(F_poly1, m_poly1);
-      mpz_poly_to_F_mpz_poly(F_poly2, m_poly2);
+        mpz_poly_to_F_mpz_poly(F_poly2, m_poly2);
       
 //      printf(" floating not here\n");
 
@@ -2660,8 +2661,9 @@ int test_F_mpz_poly_factor()
 //      F_mpz_poly_print(F_poly2); printf(" poly2\n");
 
 		F_mpz_poly_mul(res, F_poly1, F_poly2);			
+	  } while (res->length == 0);
 
-//      F_mpz_poly_print(res); printf(" res\n");
+      F_mpz_poly_print(res); printf(" res\n");
 
       F_mpz_poly_factor(F_factors, content, res);
 
