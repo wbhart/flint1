@@ -6222,16 +6222,28 @@ void F_mpz_poly_div_trunc_modp( F_mpz_t *res, F_mpz_poly_t f, F_mpz_poly_t g, F_
    F_mpz_poly_init(t_g);
 
    F_mpz_poly_set(t_f, f);
-      F_mpz_poly_print(t_f); printf(" was t_f\n");
    F_mpz_poly_set(t_g, g);
    F_mpz_poly_truncate(t_f, n);
-      F_mpz_poly_print(t_f); printf(" was t_f\n");
+
+F_mpz_poly_print(t_f); printf(" was t_f\n");
+
    F_mpz_poly_truncate(t_g, n);
+
+F_mpz_poly_print(t_g); printf(" was t_g\n");
+
 //now we have t_f, t_g truncated to the bottom n terms for speed reasons.
    F_mpz_set(temp, t_g->coeffs);
    F_mpz_invert(tc_inv, temp, P);
 
-   if (F_mpz_is_zero(tc_inv)){
+F_mpz_print(temp); printf(" was temp\n");
+
+F_mpz_print(tc_inv); printf(" was tc_inv\n");
+
+F_mpz_print(P); printf(" was P\n");
+
+   F_mpz_gcd(temp, t_g->coeffs, P);
+
+   if (!F_mpz_is_one(temp)){
       printf("zero tc_inv\n");
 //Potential math problem here so we'll just get the answers the old fashioned way, hope this is rare, I should talk to somebody...
       F_mpz_poly_div(t_f, f, g);
@@ -6261,8 +6273,6 @@ void F_mpz_poly_div_trunc_modp( F_mpz_t *res, F_mpz_poly_t f, F_mpz_poly_t g, F_
 //  This is a number which would cancel out the lowest term of f mod P
 
       printf("here right... \n");
-      F_mpz_poly_print(t_f); printf(" was t_f\n");
-      F_mpz_print(t_f->coeffs); printf(" was t_f->coeffs\n");
       F_mpz_mul2(temp, t_f->coeffs, tc_inv);
       printf("before res[i]\n");
       F_mpz_smod(res[i], temp, P);
