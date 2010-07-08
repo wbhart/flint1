@@ -1359,6 +1359,28 @@ void F_mpz_mat_resize2(F_mpz_mat_t M, ulong r, ulong c)
    }
 }
 
+int _trunc_col_test(F_mpz_mat_t temp_col, F_mpz_t trunc_P, long max_bits){
+   F_mpz_t sum;
+   F_mpz_init(sum);
+
+   F_mpz_set_ui(sum, 0L);
+
+   long i;
+   for (i = 0; i < temp_col->r; i++){
+      F_mpz_add(sum, sum, temp_col->rows[i]);
+   }
+
+   F_mpz_smod(sum, sum, trunc_P);
+
+   if ( F_mpz_bits(sum) > max_bits){
+      F_mpz_clear(sum);
+      return 0;
+   }
+
+   return 1;
+
+}
+
 int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, long U_exp){
 //Goal here is to take a matrix M, get U, multiply U by col look at max bits of U*col and P subtract exp and decide if it's worth calling LLL
 //if is not return 0
@@ -1459,6 +1481,13 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
 
 //   F_mpz_mat_print_pretty(temp_col); printf(" was temp_col after smod\n");
 
+//FIXME: I'm creating an internal test, perhaps this should be hash defined with a flag
+       int work = _trunc_col_test(col, P, exp);
+      printf("************ work = %d \n", work);
+   if (work == 0){
+      printf(" problem!\n");
+      abort();
+   }
 
    if (!no_vec)
    {
