@@ -4137,3 +4137,152 @@ ulong F_mpz_mat_gs_d( F_mpz_mat_t B, F_mpz_t gs_B)
    return newd;
 }
 
+int U_LLL_with_removal(F_mpz_mat_t FM, long new_size, F_mpz_t gs_B){
+
+   long r, c, bits, i, j;
+   int full_prec = 1;
+   int done = 0;
+   clock_t lll_start, lll_stop, lll_total, sum_start, sum_stop;
+   int is_U_I;
+
+   lll_total = 0;
+   sum_start = clock();
+
+   r = FM->r;
+   c = FM->c;
+   bits = FLINT_ABS(F_mpz_mat_max_bits(FM));
+
+   F_mpz_mat_t U;
+   F_mpz_mat_init_identity(U, r);
+
+   F_mpz_mat_t I;
+   F_mpz_mat_init_identity(I, r);
+
+   F_mpz_mat_t full_U;
+   F_mpz_mat_init_identity(full_U, r);
+
+   F_mpz_mat_t big_FM;
+   F_mpz_mat_init(big_FM, r, c + r);
+
+   F_mpz_mat_t full_data;
+   F_mpz_mat_init(full_data, r, c);
+
+   F_mpz_mat_t trunc_data;
+   F_mpz_mat_init(trunc_data, r, c);
+
+   long mbits;
+
+   int k = 1;
+
+   int newd;
+
+   if (bits > new_size){
+      full_prec = 0;
+//do some truncating
+      for ( i = 0; i < r; i++)
+         for ( j = 0; j < c; j++)
+            F_mpz_set(full_data->rows[i]+j, FM->rows[i]+j);
+
+      mbits = FLINT_ABS(F_mpz_mat_max_bits(full_data));
+
+      if ((mbits - new_size) > 0){
+         F_mpz_mat_scalar_div_2exp(trunc_data, full_data, (ulong) (mbits - new_size));
+//Make this iterate over i and j, make a LARGE lattice which has identity in one corner and FM in the other
+         for ( i = 0; i < r; i++){
+            for (j = 0; j < i; j++)
+               F_mpz_set_ui(big_FM->rows[i]+j, 0L);
+            F_mpz_set_ui(big_FM->rows[i]+i, 1L);
+            for (j = i+1; j < r; j++)
+               F_mpz_set_ui(big_FM->rows[i]+j, 0L);
+            for (j = r; j < r+c; j++)
+               F_mpz_set(big_FM->rows[i]+j, trunc_data->rows[i] + j-r);
+         }
+      }
+      else{
+         printf("something odd here\n");
+         full_prec = 1;
+      }
+   }
+
+
+   while( done == 0){
+      k++;
+      if (full_prec == 0){
+         lll_start = clock();
+         LLL_wrapper(big_FM);
+         lll_stop = clock();
+         printf("was big_FM\n");
+      }
+      else{
+         lll_start = clock();
+         newd = LLL_wrapper_with_removal(FM, gs_B);
+         lll_stop = clock();
+         printf("was FM\n");
+      }
+
+      lll_total = lll_total + lll_stop - lll_start;
+
+      if (full_prec == 1)
+         done = 1;
+      else {
+//add more bits
+
+         F_mpz_mat_get_U(U, big_FM, r);
+
+         F_mpz_mat_mul_classical(full_U, U, full_U);
+
+         is_U_I = F_mpz_mat_equal(U, I);
+
+         printf("is_U_I = %d\n", is_U_I);
+
+//do some truncating
+         F_mpz_mat_mul_classical(trunc_data, full_U, full_data);
+
+         mbits = FLINT_ABS(F_mpz_mat_max_bits(trunc_data));
+//make this condition better?
+         if ( ( (mbits - new_size) > 0) &&  ( mbits <= bits - (k-2)*new_size ) && (is_U_I == 0)){
+            F_mpz_mat_scalar_div_2exp(trunc_data, trunc_data, (ulong) (mbits - new_size));
+         }
+         else{
+            full_prec = 1;
+         }
+
+         if (full_prec == 1){
+//can switch to FM, no need for a new identity
+            for ( i = 0; i < r; i++){
+               for (j = 0; j < c; j++)
+                  F_mpz_set(FM->rows[i]+j, trunc_data->rows[i] + j);
+            }
+         }
+         else{
+//keep with the big_FM concept
+            for ( i = 0; i < r; i++){
+               for (j = 0; j < i; j++)
+                  F_mpz_set_ui(big_FM->rows[i]+j, 0L);
+               F_mpz_set_ui(big_FM->rows[i]+i, 1L);
+               for (j = i+1; j < r; j++)
+                  F_mpz_set_ui(big_FM->rows[i]+j, 0L);
+               for (j = r; j < r+c; j++)
+                  F_mpz_set(big_FM->rows[i]+j, trunc_data->rows[i] + j-r);
+            }
+         }
+      }
+
+   }
+
+   sum_stop = clock();
+
+   printf(" spent a total of %f seconds on LLL\n", (double) lll_total / (double)CLOCKS_PER_SEC);
+
+   printf(" spent a total of %f seconds\n", (double) (sum_stop - sum_start) / (double)CLOCKS_PER_SEC);
+
+   F_mpz_mat_clear(full_data);
+   F_mpz_mat_clear(trunc_data);
+   F_mpz_mat_clear(big_FM);
+   F_mpz_mat_clear(U);
+   F_mpz_mat_clear(I);
+   F_mpz_mat_clear(full_U);
+
+   return newd;
+}
+
