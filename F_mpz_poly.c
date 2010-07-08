@@ -6200,7 +6200,8 @@ void F_mpz_poly_mulmod_modp_naive(F_mpz_poly_t R, F_mpz_poly_t f, F_mpz_poly_t g
 
 void F_mpz_poly_div_trunc_modp( F_mpz_t *res, F_mpz_poly_t f, F_mpz_poly_t g, F_mpz_t P, ulong n){
 //assuming that g divides f mod P find the bottom n coeffs of f/g mod P.  (truncate now or no?) 
-   if (g->length > f->length){
+/*   if (g->length > f->length){
+      printf("g > f\n");
       if (n < f->length){
          for(ulong i = 0; i < n; i++)
             F_mpz_smod(res[i], f->coeffs + i, P);
@@ -6211,7 +6212,7 @@ void F_mpz_poly_div_trunc_modp( F_mpz_t *res, F_mpz_poly_t f, F_mpz_poly_t g, F_
             F_mpz_smod(res[i], f->coeffs + i, P);
          return;
       }
-   }
+   }*/
    F_mpz_t temp, tc_inv;
    F_mpz_init(temp);
    F_mpz_init(tc_inv);
@@ -6221,14 +6222,17 @@ void F_mpz_poly_div_trunc_modp( F_mpz_t *res, F_mpz_poly_t f, F_mpz_poly_t g, F_
    F_mpz_poly_init(t_g);
 
    F_mpz_poly_set(t_f, f);
+      F_mpz_poly_print(t_f); printf(" was t_f\n");
    F_mpz_poly_set(t_g, g);
    F_mpz_poly_truncate(t_f, n);
+      F_mpz_poly_print(t_f); printf(" was t_f\n");
    F_mpz_poly_truncate(t_g, n);
 //now we have t_f, t_g truncated to the bottom n terms for speed reasons.
    F_mpz_set(temp, t_g->coeffs);
    F_mpz_invert(tc_inv, temp, P);
 
    if (F_mpz_is_zero(tc_inv)){
+      printf("zero tc_inv\n");
 //Potential math problem here so we'll just get the answers the old fashioned way, hope this is rare, I should talk to somebody...
       F_mpz_poly_div(t_f, f, g);
       F_mpz_poly_smod(t_f, t_f, P);      
@@ -6257,7 +6261,10 @@ void F_mpz_poly_div_trunc_modp( F_mpz_t *res, F_mpz_poly_t f, F_mpz_poly_t g, F_
 //  This is a number which would cancel out the lowest term of f mod P
 
       printf("here right... \n");
+      F_mpz_poly_print(t_f); printf(" was t_f\n");
+      F_mpz_print(t_f->coeffs); printf(" was t_f->coeffs\n");
       F_mpz_mul2(temp, t_f->coeffs, tc_inv);
+      printf("before res[i]\n");
       F_mpz_smod(res[i], temp, P);
 
       F_mpz_poly_right_shift(tempg, t_g, 1UL);
@@ -7748,8 +7755,14 @@ void _F_mpz_poly_factor_CLD_mat(F_mpz_mat_t res, F_mpz_poly_t F, F_mpz_poly_fact
          F_mpz_poly_derivative(gd, trunc_poly);
 //Should do upper and lower trunc multiplication soon, for speed sake
          F_mpz_poly_mul(gcld, trunc_F, gd);
-         
-         F_mpz_poly_div_trunc_modp(temp, gcld, trunc_poly, P, lower_n);
+
+         long j;
+         if (gcld->length != 0)
+            F_mpz_poly_div_trunc_modp(temp, gcld, trunc_poly, P, lower_n);
+         else{
+            for(j = 0; j < lower_n; j++)
+               F_mpz_set_ui(temp[j], 0L);
+         }
 
          printf(" the inputs to F_mpz_poly_div_trunc_modp are \n");
 
@@ -7761,8 +7774,6 @@ void _F_mpz_poly_factor_CLD_mat(F_mpz_mat_t res, F_mpz_poly_t F, F_mpz_poly_fact
          F_mpz_poly_div(check_gcld, check_gcld, lifted_fac->factors[i]);
          F_mpz_poly_smod(check_gcld, check_gcld, P);
 
-
-         long j;
          for (j = 0; j < lower_n; j++){
             F_mpz_print(temp[j]); printf(" was temp[%ld] j should be: ", j);
             F_mpz_print(check_gcld->coeffs + j); printf(" was actual one\n", j);
@@ -7794,8 +7805,6 @@ void _F_mpz_poly_factor_CLD_mat(F_mpz_mat_t res, F_mpz_poly_t F, F_mpz_poly_fact
 //Should do upper and lower trunc multiplication soon, for speed sake
          F_mpz_poly_mul_trunc_left(gcld, F, gd, F->length + gd->length - 1 - upper_n - 5);
          F_mpz_poly_div_upper_trunc_modp(temp, gcld, lifted_fac->factors[i], P, upper_n);
-
-         F_mpz_poly_print(gcld); printf(" was upper gcld\n");
 
 //FIXME: doing a complete computation for checking purpose
          F_mpz_poly_init(check_gd);
