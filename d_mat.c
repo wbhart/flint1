@@ -72,6 +72,13 @@ void d_mat_row_add(double * r1, double * r2, double * r3, ulong start, ulong n)
 	  r1[i] = r2[i] + r3[i];
 }
 
+void d_mat_row_sub(double * r1, double * r2, double * r3, ulong start, ulong n)
+{
+   ulong i;
+   for (i = start; i < start + n; i++)
+	  r1[i] = r2[i] - r3[i];
+}
+
 double d_vec_scalar_product(double * vec1, double * vec2, int n)
 {
   double sum;

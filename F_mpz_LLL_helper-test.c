@@ -174,11 +174,11 @@ int test_heuristic_scalar_product()
 
 		 expo[r2] = F_mpz_mat_set_line_d(mat[r2], B, r2, cols);
 
-		 result == (fabs(d4 - d3 - d2 - 2*d1) < 1.0E-13);
+		 result = (fabs(d4 - d3 - d2 - 2*d1) < 1.0E-12);
 
 		 if (!result)
 		 {
-		    printf("d1 = %lf, d2 = %lf, d3 = %lf, d4 = %lf\n", d1, d2, d3, d4);
+		    printf("Failed d1 = %lf, d2 = %lf, d3 = %lf, d4 = %lf\n", d1, d2, d3, d4);
 		 }
 
 	  }

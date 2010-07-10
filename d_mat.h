@@ -23,7 +23,24 @@ double ** d_mat_init(int d, int n);
 
 void d_mat_clear(double ** B);
 
+/* 
+   Determines if the entries in r1 are equal to r2 to within about 2^-exp
+*/
+static inline 
+int d_mat_row_equal(double * r1, double * r2, ulong start, ulong n, ulong exp)
+{
+   ulong i;
+   double eps = ldexp(1.0, -exp);
+
+   for (i = start; i < start + n; i++)
+      if (fabs(r1[i] - r2[i]) > eps) return 0;
+
+   return 1;
+}
+
 void d_mat_row_add(double * r1, double * r2, double * r3, ulong start, ulong n);
+
+void d_mat_row_sub(double * r1, double * r2, double * r3, ulong start, ulong n);
 
 void d_mat_print(double ** B, int * expo, int d, int n);
 
