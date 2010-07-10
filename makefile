@@ -73,6 +73,7 @@ HEADERS = \
 	F_mpz_mat.h \
 	mpfr_mat.h \
 	F_mpz.h \
+	F_mpz_LLL_helper.h \
 	F_mpz_LLL_fast_d.h \
 	F_mpz_LLL_heuristic_mpfr.h \
 	F_mpz_LLL_wrapper.h \
@@ -122,6 +123,7 @@ FLINTOBJ = \
 	mpfr_mat.o \
 	F_mpz_mat.o \
 	F_mpz.o \
+	F_mpz_LLL_helper.o \
 	F_mpz_LLL_fast_d.o \
 	F_mpz_LLL_heuristic_mpfr.o \
 	F_mpz_LLL_wrapper.o \
@@ -137,7 +139,7 @@ QS: mpQS
 
 tune: ZmodF_mul-tune mpz_poly-tune 
 
-test: F_mpz-test mpn_extras-test fmpz_poly-test fmpz-test ZmodF-test ZmodF_poly-test mpz_poly-test ZmodF_mul-test long_extras-test zmod_poly-test F_mpz_mat-test zmod_mat-test d_mat-test mpq_mat-test
+test: F_mpz-test mpn_extras-test fmpz_poly-test fmpz-test ZmodF-test ZmodF_poly-test mpz_poly-test ZmodF_mul-test long_extras-test zmod_poly-test F_mpz_mat-test zmod_mat-test d_mat-test F_mpz_LLL_helper mpq_mat-test
 
 check: test
 	./F_mpz-test
@@ -262,6 +264,9 @@ F_mpz.o: F_mpz.c $(HEADERS)
 
 F_mpz_mat.o: F_mpz_mat.c $(HEADERS)
 	$(CC) $(CFLAGS) -c F_mpz_mat.c -o F_mpz_mat.o
+
+F_mpz_LLL_helper.o: F_mpz_LLL_helper.c $(HEADERS)
+	$(CC) $(CFLAGS) -c F_mpz_LLL_helper.c -o F_mpz_LLL_helper.o
 
 F_mpz_LLL_fast_d.o: F_mpz_LLL_fast_d.c $(HEADERS)
 	$(CC) $(CFLAGS) -c F_mpz_LLL_fast_d.c -o F_mpz_LLL_fast_d.o

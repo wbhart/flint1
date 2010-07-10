@@ -43,6 +43,7 @@
 #include "gmp.h"
 #include "flint.h"
 #include "F_mpz_mat.h"
+#include "F_mpz_LLL_helper.h"
 #include "F_mpz_LLL_fast_d.h"
 #include "d_mat.h"
 
@@ -332,7 +333,7 @@ void Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, doubl
 	      if (appSP[kappa][j] != appSP[kappa][j]) // if appSP[kappa][j] == NAN
 	      {
 //### This is different -----
-            appSP[kappa][j] = d_vec_scalar_product_heuristic(appB[kappa], appB[j], n, B, kappa, j, expo[kappa]+expo[j]);
+            appSP[kappa][j] = heuristic_scalar_product(appB[kappa], appB[j], n, B, kappa, j, expo[kappa]+expo[j]);
 //---------------------------
          }
 	  	  
