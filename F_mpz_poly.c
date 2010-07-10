@@ -7454,7 +7454,7 @@ printf(" first two clds took %f seconds\n", (double) cld_data_total/ (double) CL
 
             a = 2*a;
             printf(" new a = %ld\n", a);
-            abort();
+            //abort();
             //FIXME: added an abort
 
          }
