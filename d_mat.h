@@ -23,6 +23,8 @@ double ** d_mat_init(int d, int n);
 
 void d_mat_clear(double ** B);
 
+void d_mat_row_add(double * r1, double * r2, double * r3, ulong start, ulong n);
+
 void d_mat_print(double ** B, int * expo, int d, int n);
 
 double d_vec_scalar_product(double * vec1, double * vec2, int n);
