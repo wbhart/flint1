@@ -1319,12 +1319,12 @@ void _F_mpz_poly_factor_CLD_mat(F_mpz_mat_t res, F_mpz_poly_t F, F_mpz_poly_fact
    This function does the trial divisions attempting to solve the problem.  Lots of comments in there, and would like to do some specific testing
    with poorly behaving polynomials.
 */
-int _F_mpz_poly_try_to_solve(int num_facs, ulong * part, F_mpz_poly_factor_t final_fac, F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, F_mpz_t P, ulong exp, F_mpz_t lc);
+int _F_mpz_poly_try_to_solve(int num_facs, ulong * part, F_mpz_poly_factor_t final_fac, F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, F_mpz_t P, ulong exp, F_mpz_t lc, int safe);
 
 /*
    The compliment function to try_to_solve.  Run this first, it is a factorization specific wrapper around F_mpz_mat_check_0_1.
 */
-int _F_mpz_mat_check_if_solved(F_mpz_mat_t M, ulong r, F_mpz_poly_factor_t final_fac, F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, F_mpz_t P, ulong exp, F_mpz_t lc);
+int _F_mpz_mat_check_if_solved(F_mpz_mat_t M, ulong r, F_mpz_poly_factor_t final_fac, F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, F_mpz_t P, ulong exp, F_mpz_t lc, int safe);
 
 /*
    The actual factoring algorithm.  Set up to accept a prestarted matrix M (use the identity at first) and an array of exponents (0's at first).  
