@@ -7570,7 +7570,7 @@ void F_mpz_poly_deflate(F_mpz_poly_t result, const F_mpz_poly_t input, ulong def
 
    _F_mpz_poly_set_length(result, res_length);
 
-   printf("not here\n");
+//   printf("not here\n");
 //FIXME: added comments
 }
 
