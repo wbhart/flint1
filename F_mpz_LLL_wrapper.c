@@ -164,10 +164,10 @@ int check_Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
 		      
                   if (xx > 0L)
                   { 
-                     F_mpz_mat_row_submul_ui(B, kappa, B, j, 0, n, (ulong) xx);  
+                     _F_mpz_vec_scalar_submul_ui(B->rows[kappa], B->rows[j], n, (ulong) xx);  
                   } else
                   {
-                     F_mpz_mat_row_addmul_ui(B, kappa, B, j, 0, n, (ulong) -xx);  
+                     _F_mpz_vec_scalar_addmul_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx);  
                   } 
                } else
 		         {
@@ -185,10 +185,10 @@ int check_Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
 			  
 			            if (xx > 0)
                      {
-                        F_mpz_mat_row_submul_ui(B, kappa, B, j, 0, n, xx);  
+                        _F_mpz_vec_scalar_submul_ui(B->rows[kappa], B->rows[j], n, xx);  
                      } else
                      {
-                        F_mpz_mat_row_addmul_ui(B, kappa, B, j, 0, n, -xx);  
+                        _F_mpz_vec_scalar_addmul_ui(B->rows[kappa], B->rows[j], n, -xx);  
                      }
               			    
 			            for (k = zeros + 1; k < j; k++)
@@ -201,10 +201,10 @@ int check_Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
 			         {
 			            if (xx > 0)
                      {
-                        F_mpz_mat_row_submul_2exp_ui(B, kappa, B, j, 0, n, (ulong) xx, exponent);  
+                        _F_mpz_vec_scalar_submul_2exp_ui(B->rows[kappa], B->rows[j], n, (ulong) xx, exponent);  
                      } else
                      {
-                        F_mpz_mat_row_addmul_2exp_ui(B, kappa, B, j, 0, n, (ulong) -xx, exponent);  
+                        _F_mpz_vec_scalar_addmul_2exp_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx, exponent);  
                      }
 			            for (k = zeros + 1; k < j; k++)
 			            {
@@ -361,10 +361,10 @@ int check_Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, 
 		      
                   if (xx > 0L)
                   { 
-                     F_mpz_mat_row_submul_ui(B, kappa, B, j, 0, n, (ulong) xx);  
+                     _F_mpz_vec_scalar_submul_ui(B->rows[kappa], B->rows[j], n, (ulong) xx);  
                   } else
                   {
-                     F_mpz_mat_row_addmul_ui(B, kappa, B, j, 0, n, (ulong) -xx);  
+                     _F_mpz_vec_scalar_addmul_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx);  
                   } 
                } else
 		         {
@@ -381,10 +381,10 @@ int check_Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, 
 			  
 			            if (xx > 0)
                      {
-                        F_mpz_mat_row_submul_ui(B, kappa, B, j, 0, n, xx);  
+                        _F_mpz_vec_scalar_submul_ui(B->rows[kappa], B->rows[j], n, xx);  
                      } else
                      {
-                        F_mpz_mat_row_addmul_ui(B, kappa, B, j, 0, n, -xx);  
+                        _F_mpz_vec_scalar_addmul_ui(B->rows[kappa], B->rows[j], n, -xx);  
                      }
               			    
 			            for (k = zeros + 1; k < j; k++)
@@ -397,10 +397,10 @@ int check_Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, 
 			         {
 			            if (xx > 0)
                      {
-                        F_mpz_mat_row_submul_2exp_ui(B, kappa, B, j, 0, n, (ulong) xx, exponent);  
+                        _F_mpz_vec_scalar_submul_2exp_ui(B->rows[kappa], B->rows[j], n, (ulong) xx, exponent);  
                      } else
                      {
-                        F_mpz_mat_row_addmul_2exp_ui(B, kappa, B, j, 0, n, (ulong) -xx, exponent);  
+                        _F_mpz_vec_scalar_addmul_2exp_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx, exponent);  
                      }
 			            for (k = zeros + 1; k < j; k++)
 			            {
@@ -477,7 +477,7 @@ int check_Babai_heuristic(int kappa, F_mpz_mat_t B, mpfr_t **mu, mpfr_t **r, mpf
 	      {
             if (!(mpfr_vec_scalar_product2(appSP[kappa][j], appB[kappa], appB[j], n, prec) ) ){
 //In this case a heuristic told us that some cancelation probably happened so we just compute the scalar product at full precision
-               F_mpz_mat_row_scalar_product(ztmp, B, kappa, B, j, 0, n);
+               _F_mpz_vec_scalar_product(ztmp, B->rows[kappa], B->rows[j], n);
                F_mpz_get_mpfr(appSP[kappa][j], ztmp);
             }
 	      }
@@ -551,20 +551,20 @@ int check_Babai_heuristic(int kappa, F_mpz_mat_t B, mpfr_t **mu, mpfr_t **r, mpf
                   xx = mpfr_get_si(tmp, GMP_RNDN);		      
                   if (xx > 0L)
                   { 
-                     F_mpz_mat_row_submul_ui(B, kappa, B, j, 0, n, (ulong) xx);  
+                     _F_mpz_vec_scalar_submul_ui(B->rows[kappa], B->rows[j], n, (ulong) xx);  
                   } else
                   {
-                     F_mpz_mat_row_addmul_ui(B, kappa, B, j, 0, n, (ulong) -xx);  
+                     _F_mpz_vec_scalar_addmul_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx);  
                   } 
                } else
 		         {
                   exponent = F_mpz_set_mpfr_2exp(ztmp, tmp);
                   if (exponent <= 0){
                      F_mpz_div_2exp(ztmp, ztmp, -exponent);
-                     F_mpz_mat_row_submul(B, kappa, B, j, 0, n, ztmp);
+                     _F_mpz_vec_scalar_submul_F_mpz(B->rows[kappa], B->rows[j], n, ztmp);
                   }
                   else{
-                     F_mpz_mat_row_submul_2exp_F_mpz(B, kappa, B, j, 0, n, ztmp, exponent);
+                     _F_mpz_vec_scalar_submul_2exp_F_mpz(B->rows[kappa], B->rows[j], n, ztmp, exponent);
                   }
 			      }
 		      }
@@ -715,10 +715,10 @@ int advance_check_Babai (int cur_kappa, int kappa, F_mpz_mat_t B, double **mu, d
 		      
                   if (xx > 0L)
                   { 
-                     F_mpz_mat_row_submul_ui(B, kappa, B, j, 0, n, (ulong) xx);  
+                     _F_mpz_vec_scalar_submul_ui(B->rows[kappa], B->rows[j], n, (ulong) xx);  
                   } else
                   {
-                     F_mpz_mat_row_addmul_ui(B, kappa, B, j, 0, n, (ulong) -xx);  
+                     _F_mpz_vec_scalar_addmul_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx);  
                   }
             	   expo[kappa] = _F_mpz_vec_ldexp(appB[kappa], B->rows[kappa], n);
 //STOPPED HERE...
@@ -726,10 +726,10 @@ int advance_check_Babai (int cur_kappa, int kappa, F_mpz_mat_t B, double **mu, d
                   {
                      if (xx > 0L)
                      { 
-                        F_mpz_mat_row_addmul_ui(B, kappa, B, j, 0, n, (ulong) xx);  
+                        _F_mpz_vec_scalar_addmul_ui(B->rows[kappa], B->rows[j], n, (ulong) xx);  
                      } else
                      {
-                        F_mpz_mat_row_submul_ui(B, kappa, B, j, 0, n, (ulong) -xx);  
+                        _F_mpz_vec_scalar_submul_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx);  
                      }
                	   expo[kappa] = _F_mpz_vec_ldexp(appB[kappa], B->rows[kappa], n);
                      test = 10;
@@ -760,20 +760,20 @@ int advance_check_Babai (int cur_kappa, int kappa, F_mpz_mat_t B, double **mu, d
                      temp_expo = expo[kappa];
 			            if (xx > 0)
                      {
-                        F_mpz_mat_row_submul_ui(B, kappa, B, j, 0, n, (ulong) xx);  
+                        _F_mpz_vec_scalar_submul_ui(B->rows[kappa], B->rows[j], n, (ulong) xx);  
                      } else
                      {
-                        F_mpz_mat_row_addmul_ui(B, kappa, B, j, 0, n, (ulong) -xx);  
+						 _F_mpz_vec_scalar_addmul_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx);  
                      }
             	      expo[kappa] = _F_mpz_vec_ldexp(appB[kappa], B->rows[kappa], n);
                      if (expo[kappa] > temp_expo )
                      {			  
 			               if (xx > 0)
                         {
-                           F_mpz_mat_row_addmul_ui(B, kappa, B, j, 0, n, (ulong) xx);  
+                           _F_mpz_vec_scalar_addmul_ui(B->rows[kappa], B->rows[j], n, (ulong) xx);  
                         } else
                         {
-                           F_mpz_mat_row_submul_ui(B, kappa, B, j, 0, n, (ulong) -xx);  
+                           _F_mpz_vec_scalar_submul_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx);  
                         }
                	      expo[kappa] = _F_mpz_vec_ldexp(appB[kappa], B->rows[kappa], n);
                         test = 10;
@@ -791,20 +791,20 @@ int advance_check_Babai (int cur_kappa, int kappa, F_mpz_mat_t B, double **mu, d
                      temp_expo = expo[kappa];
 			            if (xx > 0)
                      {
-                        F_mpz_mat_row_submul_2exp_ui(B, kappa, B, j, 0, n, (ulong) xx, exponent);  
+                        _F_mpz_vec_scalar_submul_2exp_ui(B->rows[kappa], B->rows[j], n, (ulong) xx, exponent);  
                      } else
                      {
-                        F_mpz_mat_row_addmul_2exp_ui(B, kappa, B, j, 0, n, (ulong) -xx, exponent);  
+                        _F_mpz_vec_scalar_addmul_2exp_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx, exponent);  
                      }
             	      expo[kappa] = _F_mpz_vec_ldexp(appB[kappa], B->rows[kappa], n);
                      if (expo[kappa] > temp_expo )
                      {
    			            if (xx > 0)
                         {
-                           F_mpz_mat_row_addmul_2exp_ui(B, kappa, B, j, 0, n, (ulong) xx, exponent);  
+                           _F_mpz_vec_scalar_addmul_2exp_ui(B->rows[kappa], B->rows[j], n, (ulong) xx, exponent);  
                         } else
                         {
-                           F_mpz_mat_row_submul_2exp_ui(B, kappa, B, j, 0, n, (ulong) -xx, exponent);  
+                           _F_mpz_vec_scalar_submul_2exp_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx, exponent);  
                         }
                	      expo[kappa] = _F_mpz_vec_ldexp(appB[kappa], B->rows[kappa], n);
                         test = 10;
@@ -965,10 +965,10 @@ int advance_check_Babai_heuristic_d (int cur_kappa, int kappa, F_mpz_mat_t B, do
 		      
                   if (xx > 0L)
                   { 
-                     F_mpz_mat_row_submul_ui(B, kappa, B, j, 0, n, (ulong) xx);  
+                     _F_mpz_vec_scalar_submul_ui(B->rows[kappa], B->rows[j], n, (ulong) xx);  
                   } else
                   {
-                     F_mpz_mat_row_addmul_ui(B, kappa, B, j, 0, n, (ulong) -xx);  
+                     _F_mpz_vec_scalar_addmul_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx);  
                   }
             	   expo[kappa] = _F_mpz_vec_ldexp(appB[kappa], B->rows[kappa], n);
 //STOPPED HERE...
@@ -976,10 +976,10 @@ int advance_check_Babai_heuristic_d (int cur_kappa, int kappa, F_mpz_mat_t B, do
                   {
                      if (xx > 0L)
                      { 
-                        F_mpz_mat_row_addmul_ui(B, kappa, B, j, 0, n, (ulong) xx);  
+                        _F_mpz_vec_scalar_addmul_ui(B->rows[kappa], B->rows[j], n, (ulong) xx);  
                      } else
                      {
-                        F_mpz_mat_row_submul_ui(B, kappa, B, j, 0, n, (ulong) -xx);  
+                        _F_mpz_vec_scalar_submul_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx);  
                      }
                	   expo[kappa] = _F_mpz_vec_ldexp(appB[kappa], B->rows[kappa], n);
                      test = 10;
@@ -1010,20 +1010,20 @@ int advance_check_Babai_heuristic_d (int cur_kappa, int kappa, F_mpz_mat_t B, do
                      temp_expo = expo[kappa];
 			            if (xx > 0)
                      {
-                        F_mpz_mat_row_submul_ui(B, kappa, B, j, 0, n, (ulong) xx);  
+                        _F_mpz_vec_scalar_submul_ui(B->rows[kappa], B->rows[j], n, (ulong) xx);  
                      } else
                      {
-                        F_mpz_mat_row_addmul_ui(B, kappa, B, j, 0, n, (ulong) -xx);  
+                        _F_mpz_vec_scalar_addmul_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx);  
                      }
             	      expo[kappa] = _F_mpz_vec_ldexp(appB[kappa], B->rows[kappa], n);
                      if (expo[kappa] > temp_expo )
                      {			  
 			               if (xx > 0)
                         {
-                           F_mpz_mat_row_addmul_ui(B, kappa, B, j, 0, n, (ulong) xx);  
+                           _F_mpz_vec_scalar_addmul_ui(B->rows[kappa], B->rows[j], n, (ulong) xx);  
                         } else
                         {
-                           F_mpz_mat_row_submul_ui(B, kappa, B, j, 0, n, (ulong) -xx);  
+                           _F_mpz_vec_scalar_submul_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx);  
                         }
                	      expo[kappa] = _F_mpz_vec_ldexp(appB[kappa], B->rows[kappa], n);
                         test = 10;
@@ -1041,20 +1041,20 @@ int advance_check_Babai_heuristic_d (int cur_kappa, int kappa, F_mpz_mat_t B, do
                      temp_expo = expo[kappa];
 			            if (xx > 0)
                      {
-                        F_mpz_mat_row_submul_2exp_ui(B, kappa, B, j, 0, n, (ulong) xx, exponent);  
+                        _F_mpz_vec_scalar_submul_2exp_ui(B->rows[kappa], B->rows[j], n, (ulong) xx, exponent);  
                      } else
                      {
-                        F_mpz_mat_row_addmul_2exp_ui(B, kappa, B, j, 0, n, (ulong) -xx, exponent);  
+                        _F_mpz_vec_scalar_addmul_2exp_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx, exponent);  
                      }
             	      expo[kappa] = _F_mpz_vec_ldexp(appB[kappa], B->rows[kappa], n);
                      if (expo[kappa] > temp_expo)
                      {
    			            if (xx > 0)
                         {
-                           F_mpz_mat_row_addmul_2exp_ui(B, kappa, B, j, 0, n, (ulong) xx, exponent);  
+                           _F_mpz_vec_scalar_addmul_2exp_ui(B->rows[kappa], B->rows[j], n, (ulong) xx, exponent);  
                         } else
                         {
-                           F_mpz_mat_row_submul_2exp_ui(B, kappa, B, j, 0, n, (ulong) -xx, exponent);  
+                           _F_mpz_vec_scalar_submul_2exp_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx, exponent);  
                         }
                	      expo[kappa] = _F_mpz_vec_ldexp(appB[kappa], B->rows[kappa], n);
  //                       printf("tried to make bigger at kappa =  %d and j = %d\n", kappa, j);
@@ -1141,7 +1141,7 @@ int advance_check_Babai_heuristic(int cur_kappa, int kappa, F_mpz_mat_t B, mpfr_
 	      {
             if (!(mpfr_vec_scalar_product2(appSP[kappa][j], appB[kappa], appB[j], n, prec) ) ){
 //In this case a heuristic told us that some cancelation probably happened so we just compute the scalar product at full precision
-               F_mpz_mat_row_scalar_product(ztmp, B, kappa, B, j, 0, n);
+               _F_mpz_vec_scalar_product(ztmp, B->rows[kappa], B->rows[j], n);
                F_mpz_get_mpfr(appSP[kappa][j], ztmp);
             }
 	      }
@@ -1215,20 +1215,20 @@ int advance_check_Babai_heuristic(int cur_kappa, int kappa, F_mpz_mat_t B, mpfr_
                   xx = mpfr_get_si(tmp, GMP_RNDN);		      
                   if (xx > 0L)
                   { 
-                     F_mpz_mat_row_submul_ui(B, kappa, B, j, 0, n, (ulong) xx);  
+                     _F_mpz_vec_scalar_submul_ui(B->rows[kappa], B->rows[j], n, (ulong) xx);  
                   } else
                   {
-                     F_mpz_mat_row_addmul_ui(B, kappa, B, j, 0, n, (ulong) -xx);  
+                     _F_mpz_vec_scalar_addmul_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx);  
                   } 
                } else
 		         {
                   exponent = F_mpz_set_mpfr_2exp(ztmp, tmp);
                   if (exponent <= 0){
                      F_mpz_div_2exp(ztmp, ztmp, -exponent);
-                     F_mpz_mat_row_submul(B, kappa, B, j, 0, n, ztmp);
+                     _F_mpz_vec_scalar_submul_F_mpz(B->rows[kappa], B->rows[j], n, ztmp);
                   }
                   else{
-                     F_mpz_mat_row_submul_2exp_F_mpz(B, kappa, B, j, 0, n, ztmp, exponent);
+                     _F_mpz_vec_scalar_submul_2exp_F_mpz(B->rows[kappa], B->rows[j], n, ztmp, exponent);
                   }
 			      }
 		      }
@@ -1391,10 +1391,10 @@ int check_Babai_heuristic_d_zero_vec (int kappa, F_mpz_mat_t B, double **mu, dou
 		      
                   if (xx > 0L)
                   { 
-                     F_mpz_mat_row_submul_ui(B, kappa, B, j, 0, n, (ulong) xx);  
+                     _F_mpz_vec_scalar_submul_ui(B->rows[kappa], B->rows[j], n, (ulong) xx);  
                   } else
                   {
-                     F_mpz_mat_row_addmul_ui(B, kappa, B, j, 0, n, (ulong) -xx);  
+                     _F_mpz_vec_scalar_addmul_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx);  
                   } 
                } else
 		         {
@@ -1411,10 +1411,10 @@ int check_Babai_heuristic_d_zero_vec (int kappa, F_mpz_mat_t B, double **mu, dou
 			  
 			            if (xx > 0)
                      {
-                        F_mpz_mat_row_submul_ui(B, kappa, B, j, 0, n, xx);  
+                        _F_mpz_vec_scalar_submul_ui(B->rows[kappa], B->rows[j], n, xx);  
                      } else
                      {
-                        F_mpz_mat_row_addmul_ui(B, kappa, B, j, 0, n, -xx);  
+                        _F_mpz_vec_scalar_addmul_ui(B->rows[kappa], B->rows[j], n, -xx);  
                      }
               			    
 			            for (k = zeros + 1; k < j; k++)
@@ -1427,10 +1427,10 @@ int check_Babai_heuristic_d_zero_vec (int kappa, F_mpz_mat_t B, double **mu, dou
 			         {
 			            if (xx > 0)
                      {
-                        F_mpz_mat_row_submul_2exp_ui(B, kappa, B, j, 0, n, (ulong) xx, exponent);  
+                        _F_mpz_vec_scalar_submul_2exp_ui(B->rows[kappa], B->rows[j], n, (ulong) xx, exponent);  
                      } else
                      {
-                        F_mpz_mat_row_addmul_2exp_ui(B, kappa, B, j, 0, n, (ulong) -xx, exponent);  
+                        _F_mpz_vec_scalar_addmul_2exp_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx, exponent);  
                      }
 			            for (k = zeros + 1; k < j; k++)
 			            {

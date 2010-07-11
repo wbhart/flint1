@@ -73,7 +73,7 @@ double heuristic_scalar_product(double * vec1, double * vec2, ulong n,
      F_mpz_t sp;
      F_mpz_init(sp);
      ulong exp;
-     F_mpz_mat_row_scalar_product(sp, B, k, B, j, 0, n);
+     _F_mpz_vec_scalar_product(sp, B->rows[k], B->rows[j], n);
      sum = F_mpz_get_d_2exp(&exp, sp);
      sum = ldexp(sum, exp - exp_adj);
      F_mpz_clear(sp);
