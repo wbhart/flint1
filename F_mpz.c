@@ -1395,7 +1395,7 @@ void F_mpz_gcd(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
 {
    F_mpz c1 = *g;
 	F_mpz c2 = *h;
-   F_mpz temp;
+   F_mpz temp = 0L;
 
    if (!COEFF_IS_MPZ(c1)) // g is small
 	{
