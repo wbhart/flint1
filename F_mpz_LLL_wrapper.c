@@ -83,7 +83,7 @@ int check_Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
 	   {	  
 	      if (appSP[kappa][j] != appSP[kappa][j]) // if appSP[kappa][j] == NAN
 	      {
-	         appSP[kappa][j] = d_vec_scalar_product(appB[kappa], appB[j], n);
+	         appSP[kappa][j] = _d_vec_scalar_product(appB[kappa], appB[j], n);
 	      }
 	  	  
          if (j > zeros + 2)
@@ -231,7 +231,7 @@ int check_Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
 
    if (appSP[kappa][kappa] != appSP[kappa][kappa]) 
    {
-      appSP[kappa][kappa] = d_vec_norm(appB[kappa], n);
+      appSP[kappa][kappa] = _d_vec_norm(appB[kappa], n);
    }
    s[zeros + 1] = appSP[kappa][kappa];
   
@@ -428,7 +428,7 @@ int check_Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, 
    if (appSP[kappa][kappa] != appSP[kappa][kappa]) 
    {
 //### This is different -------
-      appSP[kappa][kappa] = d_vec_norm(appB[kappa], n);
+      appSP[kappa][kappa] = _d_vec_norm(appB[kappa], n);
 //-----------------------------
    }
    s[zeros + 1] = appSP[kappa][kappa];
@@ -639,7 +639,7 @@ int advance_check_Babai (int cur_kappa, int kappa, F_mpz_mat_t B, double **mu, d
 	   {	  
 	      if (appSP[kappa][j] != appSP[kappa][j]) // if appSP[kappa][j] == NAN
 	      {
-	         appSP[kappa][j] = d_vec_scalar_product(appB[kappa], appB[j], n);
+	         appSP[kappa][j] = _d_vec_scalar_product(appB[kappa], appB[j], n);
 	      }
 	  	  
          if (j > zeros + 2)
@@ -837,7 +837,7 @@ int advance_check_Babai (int cur_kappa, int kappa, F_mpz_mat_t B, double **mu, d
 
    if (appSP[kappa][kappa] != appSP[kappa][kappa]) 
    {
-      appSP[kappa][kappa] = d_vec_norm(appB[kappa], n);
+      appSP[kappa][kappa] = _d_vec_norm(appB[kappa], n);
    }
 //   s[zeros + 1] = appSP[kappa][kappa];
   
@@ -1089,7 +1089,7 @@ int advance_check_Babai_heuristic_d (int cur_kappa, int kappa, F_mpz_mat_t B, do
    if (appSP[kappa][kappa] != appSP[kappa][kappa]) 
    {
 //### This is different -------
-      appSP[kappa][kappa] = d_vec_norm(appB[kappa], n);
+      appSP[kappa][kappa] = _d_vec_norm(appB[kappa], n);
 //-----------------------------
    }
 /*   s[zeros + 1] = appSP[kappa][kappa];
@@ -1463,7 +1463,7 @@ int check_Babai_heuristic_d_zero_vec (int kappa, F_mpz_mat_t B, double **mu, dou
    if (appSP[kappa][kappa] != appSP[kappa][kappa]) 
    {
 //### This is different -------
-      appSP[kappa][kappa] = d_vec_norm(appB[kappa], n);
+      appSP[kappa][kappa] = _d_vec_norm(appB[kappa], n);
 //-----------------------------
    }
    s[zeros + 1] = appSP[kappa][kappa];
@@ -1531,7 +1531,7 @@ int LLL_d(F_mpz_mat_t B)
    i = 0; 
   
    do
-      appSP[i][i] = d_vec_norm(appB[i], n); 
+      appSP[i][i] = _d_vec_norm(appB[i], n); 
    while ((appSP[i][i] <= 0.0) && (++i < d)); // Fixme : should this be EPS not 0.0
 
    zeros = i - 1; /* all vectors B[i] with i <= zeros are zero vectors */
@@ -1676,7 +1676,7 @@ int LLL_d(F_mpz_mat_t B)
 	      {
 	         zeros++;
 	         kappa++;
-	         appSP[kappa][kappa] = d_vec_norm(appB[kappa], n);
+	         appSP[kappa][kappa] = _d_vec_norm(appB[kappa], n);
 	         r[kappa][kappa] = appSP[kappa][kappa];
 	      }
 	  
@@ -1745,7 +1745,7 @@ int LLL_d_heuristic(F_mpz_mat_t B)
   
    do
 //### This is different -----
-   appSP[i][i] = d_vec_norm(appB[i], n); 
+   appSP[i][i] = _d_vec_norm(appB[i], n); 
 //---------------------------
    while ((appSP[i][i] <= 0.0) && (++i < d)); // Fixme : should this be EPS not 0.0
 
@@ -1873,7 +1873,7 @@ int LLL_d_heuristic(F_mpz_mat_t B)
 	         zeros++;
 	         kappa++;
 //### This is different -----
-	         appSP[kappa][kappa] = d_vec_norm(appB[kappa], n);
+	         appSP[kappa][kappa] = _d_vec_norm(appB[kappa], n);
 //---------------------------
             r[kappa][kappa] = appSP[kappa][kappa];
 	      }
@@ -2207,7 +2207,7 @@ int LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    i = 0; 
   
    do
-      appSP[i][i] = d_vec_norm(appB[i], n); 
+      appSP[i][i] = _d_vec_norm(appB[i], n); 
    while ((appSP[i][i] <= 0.0) && (++i < d)); // Fixme : should this be EPS not 0.0
 
    zeros = i - 1; /* all vectors B[i] with i <= zeros are zero vectors */
@@ -2351,7 +2351,7 @@ int LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 	      {
 	         zeros++;
 	         kappa++;
-	         appSP[kappa][kappa] = d_vec_norm(appB[kappa], n);
+	         appSP[kappa][kappa] = _d_vec_norm(appB[kappa], n);
 	         r[kappa][kappa] = appSP[kappa][kappa];
 	      }
 	  
@@ -2440,7 +2440,7 @@ int LLL_d_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
   
    do
 //### This is different -----
-   appSP[i][i] = d_vec_norm(appB[i], n); 
+   appSP[i][i] = _d_vec_norm(appB[i], n); 
 //---------------------------
    while ((appSP[i][i] <= 0.0) && (++i < d)); // Fixme : should this be EPS not 0.0
 
@@ -2567,7 +2567,7 @@ int LLL_d_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 	         zeros++;
 	         kappa++;
 //### This is different -----
-	         appSP[kappa][kappa] = d_vec_norm(appB[kappa], n);
+	         appSP[kappa][kappa] = _d_vec_norm(appB[kappa], n);
 //---------------------------
             r[kappa][kappa] = appSP[kappa][kappa];
 	      }
@@ -2954,7 +2954,7 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    i = 0; 
   
    do
-      appSP[i][i] = d_vec_norm(appB[i], n); 
+      appSP[i][i] = _d_vec_norm(appB[i], n); 
    while ((appSP[i][i] <= 0.0) && (++i < d)); // Fixme : should this be EPS not 0.0
 
    zeros = i - 1; /* all vectors B[i] with i <= zeros are zero vectors */
@@ -3207,7 +3207,7 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 	      {
 	         zeros++;
 	         kappa++;
-	         appSP[kappa][kappa] = d_vec_norm(appB[kappa], n);
+	         appSP[kappa][kappa] = _d_vec_norm(appB[kappa], n);
 	         r[kappa][kappa] = appSP[kappa][kappa];
 	      }
 	  
@@ -3300,7 +3300,7 @@ int knapsack_LLL_d_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
   
    do
 //### This is different -----
-   appSP[i][i] = d_vec_norm(appB[i], n); 
+   appSP[i][i] = _d_vec_norm(appB[i], n); 
 //---------------------------
    while ((appSP[i][i] <= 0.0) && (++i < d)); // Fixme : should this be EPS not 0.0
 
@@ -3427,7 +3427,7 @@ int knapsack_LLL_d_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 	         zeros++;
 	         kappa++;
 //### This is different -----
-	         appSP[kappa][kappa] = d_vec_norm(appB[kappa], n);
+	         appSP[kappa][kappa] = _d_vec_norm(appB[kappa], n);
 //---------------------------
             r[kappa][kappa] = appSP[kappa][kappa];
 	      }
@@ -3787,7 +3787,7 @@ int LLL_d_zero_vec_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
   
    do
 //### This is different -----
-   appSP[i][i] = d_vec_norm(appB[i], n); 
+   appSP[i][i] = _d_vec_norm(appB[i], n); 
 //---------------------------
    while ((appSP[i][i] <= 0.0) && (++i < d)); // Fixme : should this be EPS not 0.0
 
@@ -3922,7 +3922,7 @@ int LLL_d_zero_vec_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 	         zeros++;
 	         kappa++;
 //### This is different -----
-	         appSP[kappa][kappa] = d_vec_norm(appB[kappa], n);
+	         appSP[kappa][kappa] = _d_vec_norm(appB[kappa], n);
 //---------------------------
             r[kappa][kappa] = appSP[kappa][kappa];
 	      }
@@ -4038,7 +4038,7 @@ void gs_Babai(int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
    if (appSP[kappa][kappa] != appSP[kappa][kappa]) 
    {
 //### This is different -------
-      appSP[kappa][kappa] = d_vec_norm(appB[kappa], n);
+      appSP[kappa][kappa] = _d_vec_norm(appB[kappa], n);
 //-----------------------------
    }
    s[zeros + 1] = appSP[kappa][kappa];
@@ -4092,7 +4092,7 @@ ulong F_mpz_mat_gs_d( F_mpz_mat_t B, F_mpz_t gs_B)
    i = 0; 
   
    do
-      appSP[i][i] = d_vec_norm(appB[i], n); 
+      appSP[i][i] = _d_vec_norm(appB[i], n); 
    while ((appSP[i][i] <= 0.0) && (++i < d)); // Fixme : should this be EPS not 0.0
 
    zeros = i - 1; /* all vectors B[i] with i <= zeros are zero vectors */

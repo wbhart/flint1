@@ -1,6 +1,6 @@
 /*
    Copyright 2005, 2006 Damien Stehlé.
-   Copyright 2010 William Hart, Andy Novocin
+   Copyright 2009, 2010 William Hart, Andy Novocin
 
    This program is free software; you can redistribute it and/or modify it
    under the terms of the GNU General Public License as published by the
@@ -58,12 +58,12 @@
    The final scalar product computed by this function is then notionally the return
    value times 2^exp_adj.
 */
-double heuristic_scalar_product(double * vec1, double * vec2, int n, 
+double heuristic_scalar_product(double * vec1, double * vec2, ulong n, 
 								F_mpz_mat_t B, ulong k, ulong j, long exp_adj)
 {
-  double sum = d_vec_scalar_product(vec1, vec2, n);
-  double tmp = d_vec_norm(vec1, n);
-  double tmp2 = d_vec_norm(vec2, n);
+  double sum = _d_vec_scalar_product(vec1, vec2, n);
+  double tmp = _d_vec_norm(vec1, n);
+  double tmp2 = _d_vec_norm(vec2, n);
 
   tmp = ldexp(tmp*tmp2, -70);
   tmp2 = sum*sum;

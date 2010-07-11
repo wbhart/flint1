@@ -1,6 +1,6 @@
 /*
    Copyright 2005, 2006 Damien Stehlé.
-   Copyright 2009 William Hart, Andy Novocin
+   Copyright 2009, 2010 William Hart, Andy Novocin
 
    This program is free software; you can redistribute it and/or modify it
    under the terms of the GNU General Public License as published by the
@@ -41,7 +41,7 @@
 #include "flint.h"
 #include "F_mpz_mat.h"
 
-double heuristic_scalar_product(double * vec1, double * vec2, int n, 
+double heuristic_scalar_product(double * vec1, double * vec2, ulong n, 
 								F_mpz_mat_t B, ulong k, ulong j, long exp_adj);
 
 
