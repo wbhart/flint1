@@ -166,7 +166,7 @@ int test_heuristic_scalar_product()
 		 double d3 = heuristic_scalar_product(mat[r2], mat[r2], cols, 
 								B, r2, r2, expo[r2] + expo[r2]);
 
-		 F_mpz_mat_row_add(B, r2, B, r1, B, r2, 0, cols);
+		 _F_mpz_vec_add(B->rows[r2], B->rows[r1], B->rows[r2], cols);
          _d_vec_add(mat[r2], mat[r1], mat[r2], cols);
 
 		 double d4 = heuristic_scalar_product(mat[r2], mat[r2], cols, 

@@ -563,22 +563,20 @@ void F_mpz_mat_neg(F_mpz_mat_t mat1, const F_mpz_mat_t mat2)
 
 ================================================================================*/
 
-void F_mpz_mat_row_add(F_mpz_mat_t res, const ulong r3, const F_mpz_mat_t mat1, 
-							  const ulong r1, const F_mpz_mat_t mat2, const ulong r2, 
-							                         const ulong start, const ulong n)
+void _F_mpz_vec_add(F_mpz * res, const F_mpz * vec1, 
+					                     const F_mpz * vec2, const ulong n)
 {
    ulong i;
-   for (i = start; i < start + n; i++) 
-		F_mpz_add(res->rows[r3] + i, mat1->rows[r1] + i, mat2->rows[r2] + i);   
+   for (i = 0; i < n; i++) 
+		F_mpz_add(res + i, vec1 + i, vec2 + i);   
 }
 
-void F_mpz_mat_row_sub(F_mpz_mat_t res, const ulong r3, const F_mpz_mat_t mat1, 
-							  const ulong r1, const F_mpz_mat_t mat2, const ulong r2, 
-							                          const ulong start, const ulong n)
+void _F_mpz_vec_sub(F_mpz * res, const F_mpz * vec1, 
+					                     const F_mpz * vec2, const ulong n)
 {
    ulong i;
-   for (i = start; i < start + n; i++) 
-		F_mpz_sub(res->rows[r3] + i, mat1->rows[r1] + i, mat2->rows[r2] + i);   
+   for (i = 0; i < n; i++) 
+		F_mpz_sub(res + i, vec1 + i, vec2 + i);   
 }
 
 void F_mpz_mat_add(F_mpz_mat_t res, const F_mpz_mat_t mat1, const F_mpz_mat_t mat2)
@@ -609,15 +607,14 @@ void F_mpz_mat_sub(F_mpz_mat_t res, const F_mpz_mat_t mat1, const F_mpz_mat_t ma
 
 ================================================================================*/
 
-void F_mpz_mat_row_mul_ui(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong r2, 
-								                               ulong start, ulong n, ulong x)
+void _F_mpz_vec_scalar_mul_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong x)
 {
 	// either scalar of input mat is zero
 	if (x == 0L)
 	{
 	   ulong i;
-	   for (i = start; i < start + n; i++)
-		   F_mpz_zero(mat1->rows[r1] + i);
+	   for (i = 0; i < n; i++)
+		   F_mpz_zero(vec1 + i);
 
 		return;
 	}
@@ -626,26 +623,25 @@ void F_mpz_mat_row_mul_ui(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong r2
 	if (x == 1L) 
 	{
 	   ulong i;
-	   for (i = start; i < start + n; i++)
-		   F_mpz_set(mat1->rows[r1] + i, mat2->rows[r2] + i);
+	   for (i = 0; i < n; i++)
+		   F_mpz_set(vec1 + i, vec2 + i);
 
 		return;
 	}
 	
 	ulong i;
-	for (i = start; i < start + n; i++)
-		F_mpz_mul_ui(mat1->rows[r1] + i, mat2->rows[r2] + i, x);
+	for (i = 0; i < n; i++)
+		F_mpz_mul_ui(vec1 + i, vec2 + i, x);
 }
 
-void F_mpz_mat_row_mul_si(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong r2, 
-								                               ulong start, ulong n, long x)
+void _F_mpz_vec_scalar_mul_si(F_mpz * vec1, F_mpz * vec2, ulong n, long x)
 {
 	// either scalar of input mat is zero
 	if (x == 0L)
 	{
 	   ulong i;
-	   for (i = start; i < start + n; i++)
-		   F_mpz_zero(mat1->rows[r1] + i);
+	   for (i = 0; i < n; i++)
+		   F_mpz_zero(vec1 + i);
 
 		return;
 	}
@@ -654,8 +650,8 @@ void F_mpz_mat_row_mul_si(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong r2
 	if (x == 1L) 
 	{
 	   ulong i;
-	   for (i = start; i < start + n; i++)
-		   F_mpz_set(mat1->rows[r1] + i, mat2->rows[r2] + i);
+	   for (i = 0; i < n; i++)
+		   F_mpz_set(vec1 + i, vec2 + i);
 
 		return;
 	}
@@ -663,26 +659,25 @@ void F_mpz_mat_row_mul_si(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong r2
 	if (x == -1L) 
 	{
 	   ulong i;
-	   for (i = start; i < start + n; i++)
-		   F_mpz_neg(mat1->rows[r1] + i, mat2->rows[r2] + i);
+	   for (i = 0; i < n; i++)
+		   F_mpz_neg(vec1 + i, vec2 + i);
 
 		return;
 	}
 	
 	ulong i;
-	for (i = start; i < start + n; i++)
-		F_mpz_mul_si(mat1->rows[r1] + i, mat2->rows[r2] + i, x);
+	for (i = 0; i < n; i++)
+		F_mpz_mul_si(vec1 + i, vec2 + i, x);
 }
 
-void F_mpz_mat_row_mul_F_mpz(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong r2, 
-								                               ulong start, ulong n, F_mpz_t x)
+void _F_mpz_vec_scalar_mul_F_mpz(F_mpz * vec1, F_mpz * vec2, ulong n, F_mpz_t x)
 {
 	// either scalar or input mat is zero
 	if (*x == 0)
 	{
 	   ulong i;
-	   for (i = start; i < start + n; i++)
-		   F_mpz_zero(mat1->rows[r1] + i);
+	   for (i = 0; i < n; i++)
+		   F_mpz_zero(vec1 + i);
 
 		return;
 	}
@@ -691,8 +686,8 @@ void F_mpz_mat_row_mul_F_mpz(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong
 	if (*x == -1L)
 	{
 	   ulong i;
-	   for (i = start; i < start + n; i++)
-		   F_mpz_neg(mat1->rows[r1] + i, mat2->rows[r2] + i);
+	   for (i = 0; i < n; i++)
+		   F_mpz_neg(vec1 + i, vec2 + i);
 
 		return;
 	}
@@ -700,15 +695,15 @@ void F_mpz_mat_row_mul_F_mpz(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong
 	if (*x == 1L)
 	{
 		ulong i;
-		for (i = start; i < start + n; i++)
-		   F_mpz_set(mat1->rows[r1] + i, mat2->rows[r2] + i);
+		for (i = 0; i < n; i++)
+		   F_mpz_set(vec1 + i, vec2 + i);
 
 		return;
 	}
 	
 	ulong i;
-	for (i = start; i < start + n; i++)
-		F_mpz_mul2(mat1->rows[r1] + i, mat2->rows[r2] + i, x);
+	for (i = 0; i < n; i++)
+		F_mpz_mul2(vec1 + i, vec2 + i, x);
 }
 
 /*===============================================================================

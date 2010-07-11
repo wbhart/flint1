@@ -269,13 +269,10 @@ void F_mpz_mat_neg(F_mpz_mat_t mat1, const F_mpz_mat_t mat2);
 void F_mpz_mat_add(F_mpz_mat_t res, const F_mpz_mat_t mat1, const F_mpz_mat_t mat2);
 
 /** 
-   \fn     void F_mpz_mat_row_add(F_mpz_mat_t res, const ulong r3, const F_mpz_mat_t mat1, 
-	                                 const ulong r1, const F_mpz_mat_t mat2, const ulong r1, 
-												                       const ulong start, const ulong n)
-   \brief  Sets the given row of res to the sum of the given rows of mat1 and mat2.
+   \fn     _F_mpz_vec_add(F_mpz * res, const F_mpz * vec1, const F_mpz * vec2, ulong n)
+   \brief  Sets the res to the sum of the given vectors.
 */
-void F_mpz_mat_row_add(F_mpz_mat_t res, const ulong r3, const F_mpz_mat_t mat1, const ulong r1, 
-							  const F_mpz_mat_t mat2, const ulong r2, const ulong start, const ulong n);
+void _F_mpz_vec_add(F_mpz * res, const F_mpz * vec1, const F_mpz * vec2, ulong n);
 
 /** 
    \fn     void F_mpz_mat_sub(F_mpz_mat_t res, const F_mpz_mat_t mat1, const F_mpz_mat_t mat2)
@@ -284,13 +281,10 @@ void F_mpz_mat_row_add(F_mpz_mat_t res, const ulong r3, const F_mpz_mat_t mat1, 
 void F_mpz_mat_sub(F_mpz_mat_t res, const F_mpz_mat_t mat1, const F_mpz_mat_t mat2);
 
 /** 
-   \fn     void F_mpz_mat_row_sub(F_mpz_mat_t res, const ulong r3, const F_mpz_mat_t mat1, 
-	                                 const ulong r1, const F_mpz_mat_t mat2, const ulong r1, 
-												                       const ulong start, const ulong n)
-   \brief  Sets the given row of res to the difference of the given rows of mat1 and mat2.
+   \fn     _F_mpz_vec_sub(F_mpz * res, const F_mpz * vec1, const F_mpz * vec2, ulong n)
+   \brief  Sets tres to the difference of the given vectors.
 */
-void F_mpz_mat_row_sub(F_mpz_mat_t res, const ulong r3, const F_mpz_mat_t mat1, const ulong r1, 
-							  const F_mpz_mat_t mat2, const ulong r2, const ulong start, const ulong n);
+void _F_mpz_vec_sub(F_mpz * res, const F_mpz * vec1, const F_mpz * vec2, ulong n);
 
 /*===============================================================================
 
@@ -302,27 +296,23 @@ void F_mpz_mat_row_sub(F_mpz_mat_t res, const ulong r3, const F_mpz_mat_t mat1, 
    \fn     void F_mpz_mat_row_mul_ui(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong r2, 
 								                               ulong start, ulong n, ulong x)
 
-   \brief  Multiply mat2 by the unsigned long x and set mat1 to the result.
+   \brief  Multiply vec2 by the unsigned long x and set vec1 to the result..
 */
-void F_mpz_mat_row_mul_ui(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong r2, 
-								                               ulong start, ulong n, ulong x);
+void _F_mpz_vec_scalar_mul_ui(F_mpz * vec1, F_mpz* vec2, ulong n, ulong x);
 
 /** 
    \fn     void F_mpz_mat_row_mul_si(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong r2, 
 								                               ulong start, ulong n, long x)
 
-   \brief  Multiply mat2 by the signed long x and set mat1 to the result.
+   \brief  Multiply vec2 by the signed long x and set vec1 to the result.
 */
-void F_mpz_mat_row_mul_si(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong r2, 
-								                               ulong start, ulong n, long x);
+void _F_mpz_vec_scalar_mul_si(F_mpz * vec1, F_mpz* vec2, ulong n, long x);
 /** 
-   \fn     void F_mpz_mat_row_mul_F_mpz(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong r2, 
-								                               ulong start, ulong n, F_mpz_t x)
+   \fn     _F_mpz_vec_scalar_mul_F_mpz(F_mpz * vec1, F_mpz* vec2, ulong n, F_mpz_t x)
 
-   \brief  Multiply row r2 of mat2 by the mpz_t x and set row r1 of mat1 to the result.
+   \brief  Multiply vec2 by the mpz_t x and set vec1 to the result.
 */
-void F_mpz_mat_row_mul_F_mpz(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong r2, 
-								                               ulong start, ulong n, F_mpz_t x);
+void _F_mpz_vec_scalar_mul_F_mpz(F_mpz * vec1, F_mpz* vec2, ulong n, F_mpz_t x);
 
 /*===============================================================================
 

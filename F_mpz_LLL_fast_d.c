@@ -170,7 +170,7 @@ void Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
 			            mu[kappa][k] =  mu[kappa][k] - tmp; 
 			         }
 		      
-		            F_mpz_mat_row_sub(B, kappa, B, kappa, B, j, 0, n);
+		            _F_mpz_vec_sub(B->rows[kappa], B->rows[kappa], B->rows[j], n);
 		  
 		         } else          /* otherwise X is -1 */ 
                {
@@ -180,7 +180,7 @@ void Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
 			            mu[kappa][k] = mu[kappa][k] + tmp;
 			         }
 		      
-                  F_mpz_mat_row_add(B, kappa, B, kappa, B, j, 0, n); 
+                  _F_mpz_vec_add(B->rows[kappa], B->rows[kappa], B->rows[j], n); 
                }
 		      } else   /* we must have |X| >= 2 */
 		      {
@@ -384,7 +384,7 @@ void Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, doubl
 			            mu[kappa][k] =  mu[kappa][k] - tmp; 
 			         }
 		      
-		            F_mpz_mat_row_sub(B, kappa, B, kappa, B, j, 0, n);
+		            _F_mpz_vec_sub(B->rows[kappa], B->rows[kappa], B->rows[j], n);
 		  
 		         } else          /* otherwise X is -1 */ 
                {
@@ -394,7 +394,7 @@ void Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, doubl
 			            mu[kappa][k] = mu[kappa][k] + tmp;
 			         }
 		      
-                  F_mpz_mat_row_add(B, kappa, B, kappa, B, j, 0, n); 
+                  _F_mpz_vec_add(B->rows[kappa], B->rows[kappa], B->rows[j], n); 
                }
 		      } else   /* we must have |X| >= 2 */
 		      {
@@ -584,7 +584,7 @@ void Babai_heuristic_d_2exp (int kappa, F_mpz_mat_t B, double **mu, double **r, 
 			            mu[kappa][k] =  mu[kappa][k] - tmp; 
 			         }
 		      
-		            F_mpz_mat_row_sub(B, kappa, B, kappa, B, j, 0, n);
+		            _F_mpz_vec_sub(B->rows[kappa], B->rows[kappa], B->rows[j], n);
 		  
 		         } else          /* otherwise X is -1 */ 
                {
@@ -594,7 +594,7 @@ void Babai_heuristic_d_2exp (int kappa, F_mpz_mat_t B, double **mu, double **r, 
 			            mu[kappa][k] = mu[kappa][k] + tmp;
 			         }
 		      
-                  F_mpz_mat_row_add(B, kappa, B, kappa, B, j, 0, n); 
+                  _F_mpz_vec_add(B->rows[kappa], B->rows[kappa], B->rows[j], n); 
                }
 		      } else   /* we must have |X| >= 2 */
 		      {

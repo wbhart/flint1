@@ -133,7 +133,7 @@ int check_Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
 			            mu[kappa][k] =  mu[kappa][k] - tmp; 
 			         }
 		      
-		            F_mpz_mat_row_sub(B, kappa, B, kappa, B, j, 0, n);
+		            _F_mpz_vec_sub(B->rows[kappa], B->rows[kappa], B->rows[j], n);
 		  
 		         } else          /* otherwise X is -1 */ 
                {
@@ -143,7 +143,7 @@ int check_Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
 			            mu[kappa][k] = mu[kappa][k] + tmp;
 			         }
 		      
-                  F_mpz_mat_row_add(B, kappa, B, kappa, B, j, 0, n); 
+                  _F_mpz_vec_add(B->rows[kappa], B->rows[kappa], B->rows[j], n); 
                }
 		      } else   /* we must have |X| >= 2 */
 		      {
@@ -330,7 +330,7 @@ int check_Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, 
 			            mu[kappa][k] =  mu[kappa][k] - tmp; 
 			         }
 		      
-		            F_mpz_mat_row_sub(B, kappa, B, kappa, B, j, 0, n);
+		            _F_mpz_vec_sub(B->rows[kappa], B->rows[kappa], B->rows[j], n);
 		  
 		         } else          /* otherwise X is -1 */ 
                {
@@ -340,7 +340,7 @@ int check_Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, 
 			            mu[kappa][k] = mu[kappa][k] + tmp;
 			         }
 		      
-                  F_mpz_mat_row_add(B, kappa, B, kappa, B, j, 0, n); 
+                  _F_mpz_vec_add(B->rows[kappa], B->rows[kappa], B->rows[j], n); 
                }
 		      } else   /* we must have |X| >= 2 */
 		      {
@@ -525,7 +525,7 @@ int check_Babai_heuristic(int kappa, F_mpz_mat_t B, mpfr_t **mu, mpfr_t **r, mpf
                      mpfr_sub(mu[kappa][k], mu[kappa][k], mu[j][k], GMP_RNDN);
 			         }
 		      
-		            F_mpz_mat_row_sub(B, kappa, B, kappa, B, j, 0, n);
+		            _F_mpz_vec_sub(B->rows[kappa], B->rows[kappa], B->rows[j], n);
 		  
 		         } else          /* otherwise X is -1 */ 
                {
@@ -534,7 +534,7 @@ int check_Babai_heuristic(int kappa, F_mpz_mat_t B, mpfr_t **mu, mpfr_t **r, mpf
 			            mpfr_add(mu[kappa][k], mu[kappa][k], mu[j][k], GMP_RNDN);
 			         }
 		      
-                  F_mpz_mat_row_add(B, kappa, B, kappa, B, j, 0, n); 
+                  _F_mpz_vec_add(B->rows[kappa], B->rows[kappa], B->rows[j], n); 
                }
 		      } else   /* we must have |X| >= 2 */
 		      {
@@ -689,7 +689,7 @@ int advance_check_Babai (int cur_kappa, int kappa, F_mpz_mat_t B, double **mu, d
 			            mu[kappa][k] =  mu[kappa][k] - tmp; 
 			         }
 		      
-		            F_mpz_mat_row_sub(B, kappa, B, kappa, B, j, 0, n);
+		            _F_mpz_vec_sub(B->rows[kappa], B->rows[kappa], B->rows[j], n);
 		  
 		         } else          /* otherwise X is -1 */ 
                {
@@ -699,7 +699,7 @@ int advance_check_Babai (int cur_kappa, int kappa, F_mpz_mat_t B, double **mu, d
 			            mu[kappa][k] = mu[kappa][k] + tmp;
 			         }
 		      
-                  F_mpz_mat_row_add(B, kappa, B, kappa, B, j, 0, n); 
+                  _F_mpz_vec_add(B->rows[kappa], B->rows[kappa], B->rows[j], n); 
                }
 		      } else   /* we must have |X| >= 2 */
 		      {
@@ -939,7 +939,7 @@ int advance_check_Babai_heuristic_d (int cur_kappa, int kappa, F_mpz_mat_t B, do
 			            mu[kappa][k] =  mu[kappa][k] - tmp; 
 			         }
 		      
-		            F_mpz_mat_row_sub(B, kappa, B, kappa, B, j, 0, n);
+		            _F_mpz_vec_sub(B->rows[kappa], B->rows[kappa], B->rows[j], n);
 		  
 		         } else          /* otherwise X is -1 */ 
                {
@@ -949,7 +949,7 @@ int advance_check_Babai_heuristic_d (int cur_kappa, int kappa, F_mpz_mat_t B, do
 			            mu[kappa][k] = mu[kappa][k] + tmp;
 			         }
 		      
-                  F_mpz_mat_row_add(B, kappa, B, kappa, B, j, 0, n); 
+                  _F_mpz_vec_add(B->rows[kappa], B->rows[kappa], B->rows[j], n); 
                }
 		      } else   /* we must have |X| >= 2 */
 		      {
@@ -1189,7 +1189,7 @@ int advance_check_Babai_heuristic(int cur_kappa, int kappa, F_mpz_mat_t B, mpfr_
                      mpfr_sub(mu[kappa][k], mu[kappa][k], mu[j][k], GMP_RNDN);
 			         }
 		      
-		            F_mpz_mat_row_sub(B, kappa, B, kappa, B, j, 0, n);
+		            _F_mpz_vec_sub(B->rows[kappa], B->rows[kappa], B->rows[j], n);
 		  
 		         } else          /* otherwise X is -1 */ 
                {
@@ -1198,7 +1198,7 @@ int advance_check_Babai_heuristic(int cur_kappa, int kappa, F_mpz_mat_t B, mpfr_
 			            mpfr_add(mu[kappa][k], mu[kappa][k], mu[j][k], GMP_RNDN);
 			         }
 		      
-                  F_mpz_mat_row_add(B, kappa, B, kappa, B, j, 0, n); 
+                  _F_mpz_vec_add(B->rows[kappa], B->rows[kappa], B->rows[j], n); 
                }
 		      } else   /* we must have |X| >= 2 */
 		      {
@@ -1360,7 +1360,7 @@ int check_Babai_heuristic_d_zero_vec (int kappa, F_mpz_mat_t B, double **mu, dou
 			            mu[kappa][k] =  mu[kappa][k] - tmp; 
 			         }
 		      
-		            F_mpz_mat_row_sub(B, kappa, B, kappa, B, j, 0, n);
+		            _F_mpz_vec_sub(B->rows[kappa], B->rows[kappa], B->rows[j], n);
 		  
 		         } else          /* otherwise X is -1 */ 
                {
@@ -1370,7 +1370,7 @@ int check_Babai_heuristic_d_zero_vec (int kappa, F_mpz_mat_t B, double **mu, dou
 			            mu[kappa][k] = mu[kappa][k] + tmp;
 			         }
 		      
-                  F_mpz_mat_row_add(B, kappa, B, kappa, B, j, 0, n); 
+                  _F_mpz_vec_add(B->rows[kappa], B->rows[kappa], B->rows[j], n); 
                }
 		      } else   /* we must have |X| >= 2 */
 		      {

@@ -823,7 +823,7 @@ void F_mpz_add_mpz(F_mpz_t f, const F_mpz_t g, mpz_t h)
 	}
 }
 
-void F_mpz_sub(F_mpz_t f, const F_mpz_t g, F_mpz_t h)
+void F_mpz_sub(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
 {
 	F_mpz c1 = *g;
 	F_mpz c2 = *h;
