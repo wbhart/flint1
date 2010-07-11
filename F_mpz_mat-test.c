@@ -590,6 +590,43 @@ int test_F_mpz_mat_equal()
    return result;
 }
 
+int test_F_mpz_mat_swap()
+{
+   mpz_mat_t m_mat1, m_mat2;
+   F_mpz_mat_t F_mat1, F_mat2, F_mat3;
+   int result = 1;
+   ulong bits1, bits2, length1, length2;
+
+   ulong count1;
+   for (count1 = 0; (count1 < 5000*ITER) && (result == 1); count1++)
+   {
+      ulong r = z_randint(30);
+	  ulong c = z_randint(30);
+	  F_mpz_mat_init(F_mat1, r, c);
+      F_mpz_mat_init(F_mat2, r, c);
+      F_mpz_mat_init(F_mat3, r, c);
+      
+	  bits1 = z_randint(200) + 1;
+      F_mpz_randmat(F_mat1, r, c, bits1);
+      F_mpz_randmat(F_mat2, r, c, bits1);
+           
+      F_mpz_mat_set(F_mat3, F_mat1);
+      F_mpz_mat_swap(F_mat2, F_mat1);
+          
+      result = (F_mpz_mat_equal(F_mat2, F_mat3)); 
+	  if (!result) 
+	  {
+		 printf("Error: r = %ld, c = %ld, bits = %ld\n", r, c, bits1);
+	  }
+          
+      F_mpz_mat_clear(F_mat1);
+	  F_mpz_mat_clear(F_mat2);
+	  F_mpz_mat_clear(F_mat3);
+   }
+
+   return result;
+}
+
 int test_F_mpz_mat_resize()
 {
    mpz_mat_t m_mat1, m_mat2;
@@ -2115,6 +2152,7 @@ void F_mpz_mat_test_all()
    RUN_TEST(F_mpz_mat_convert); 
    RUN_TEST(F_mpz_mat_set); 
    RUN_TEST(F_mpz_mat_equal);  
+   RUN_TEST(F_mpz_mat_swap);  
    RUN_TEST(F_mpz_mat_resize);
    RUN_TEST(F_mpz_mat_tofromstring);
    RUN_TEST(F_mpz_mat_tofromstringpretty);

@@ -250,6 +250,12 @@ void F_mpz_mat_swap(F_mpz_mat_t mat1, F_mpz_mat_t mat2)
    t = mat1->c_alloc;
    mat1->c_alloc = mat2->c_alloc;
    mat2->c_alloc = t;
+   t = mat1->r;
+   mat1->r = mat2->r;
+   mat2->r = t;
+   t = mat1->c;
+   mat1->c = mat2->c;
+   mat2->c = t;
 }
 
 
