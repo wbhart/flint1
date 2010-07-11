@@ -479,7 +479,7 @@ long _F_mpz_vec_ldexp(double * appv, const F_mpz * vec, const ulong n)
    return maxexp;
 }
 
-void _F_mpz_vec_ldexp_mpfr(mpfr_t * appv, const F_mpz * vec, const ulong n)
+void _F_mpz_vec_to_mpfr_vec(mpfr_t * appv, const F_mpz * vec, const ulong n)
 {
    ulong i;
    for (i = 0; i < n; i++) F_mpz_get_mpfr(appv[i], vec + i);
@@ -487,7 +487,7 @@ void _F_mpz_vec_ldexp_mpfr(mpfr_t * appv, const F_mpz * vec, const ulong n)
    return;
 }
 
-void _F_mpz_vec_ldexp_mpfr_2exp(mpfr_t * appv, const F_mpz * vec, const ulong n, int * cexpo)
+void _F_mpz_vec_2exp_to_mpfr_vec(mpfr_t * appv, const F_mpz * vec, const ulong n, int * cexpo)
 {
    ulong i;
    for (i = 0; i < n; i++){

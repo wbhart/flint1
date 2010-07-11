@@ -201,7 +201,7 @@ void Babai_heuristic(int kappa, F_mpz_mat_t B, mpfr_t **mu, mpfr_t **r, mpfr_t *
 
       if (test)   /* Anything happened? */
 	   {
-	      _F_mpz_vec_ldexp_mpfr(appB[kappa], B->rows[kappa], n);
+	      _F_mpz_vec_to_mpfr_vec(appB[kappa], B->rows[kappa], n);
 	      aa = zeros + 1;
 	      for (i = zeros + 1; i <= kappa; i++) 
 	         mpfr_set_nan(appSP[kappa][i]);//0.0/0.0;
@@ -284,7 +284,7 @@ void LLL_heuristic(F_mpz_mat_t B)
    /* ************************** */     
     
    for (i = 0; i < d; i++)
-      _F_mpz_vec_ldexp_mpfr(appB[i], B->rows[i], n);  
+      _F_mpz_vec_to_mpfr_vec(appB[i], B->rows[i], n);  
   
    /* ********************************* */
    /* Step2: Initializing the main loop */
@@ -494,7 +494,7 @@ long LLL_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    /* ************************** */     
     
    for (i = 0; i < d; i++)
-      _F_mpz_vec_ldexp_mpfr(appB[i], B->rows[i], n);  
+      _F_mpz_vec_to_mpfr_vec(appB[i], B->rows[i], n);  
   
    /* ********************************* */
    /* Step2: Initializing the main loop */
@@ -813,7 +813,7 @@ void Babai_heuristic_2exp(int kappa, F_mpz_mat_t B, mpfr_t **mu, mpfr_t **r, mpf
 
       if (test)   /* Anything happened? */
 	   {
-	      _F_mpz_vec_ldexp_mpfr_2exp(appB[kappa], B->rows[kappa], n, cexpo);
+	      _F_mpz_vec_2exp_to_mpfr_vec(appB[kappa], B->rows[kappa], n, cexpo);
 	      aa = zeros + 1;
 	      for (i = zeros + 1; i <= kappa; i++) 
 	         mpfr_set_nan(appSP[kappa][i]);//0.0/0.0;
@@ -896,7 +896,7 @@ void LLL_heuristic_2exp(F_mpz_mat_t B, int * cexpo)
    /* ************************** */     
     
    for (i = 0; i < d; i++)
-      _F_mpz_vec_ldexp_mpfr_2exp(appB[i], B->rows[i], n, cexpo);  
+      _F_mpz_vec_2exp_to_mpfr_vec(appB[i], B->rows[i], n, cexpo);  
   
    /* ********************************* */
    /* Step2: Initializing the main loop */
@@ -1106,7 +1106,7 @@ long LLL_heuristic_2exp_with_removal(F_mpz_mat_t B, int * cexpo, F_mpz_t gs_B)
    /* ************************** */     
     
    for (i = 0; i < d; i++)
-      _F_mpz_vec_ldexp_mpfr_2exp(appB[i], B->rows[i], n, cexpo);  
+      _F_mpz_vec_2exp_to_mpfr_vec(appB[i], B->rows[i], n, cexpo);  
   
    /* ********************************* */
    /* Step2: Initializing the main loop */

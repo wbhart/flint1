@@ -573,7 +573,7 @@ int check_Babai_heuristic(int kappa, F_mpz_mat_t B, mpfr_t **mu, mpfr_t **r, mpf
 
       if (test)   /* Anything happened? */
 	   {
-	      _F_mpz_vec_ldexp_mpfr(appB[kappa], B->rows[kappa], n);
+	      _F_mpz_vec_to_mpfr_vec(appB[kappa], B->rows[kappa], n);
 	      aa = zeros + 1;
 	      for (i = zeros + 1; i <= kappa; i++) 
 	         mpfr_set_nan(appSP[kappa][i]);//0.0/0.0;
@@ -1237,7 +1237,7 @@ int advance_check_Babai_heuristic(int cur_kappa, int kappa, F_mpz_mat_t B, mpfr_
 
       if (test)   /* Anything happened? */
 	   {
-	      _F_mpz_vec_ldexp_mpfr(appB[kappa], B->rows[kappa], n);
+	      _F_mpz_vec_to_mpfr_vec(appB[kappa], B->rows[kappa], n);
 	      aa = zeros + 1;
 	      for (i = zeros + 1; i <= kappa; i++) 
 	         mpfr_set_nan(appSP[kappa][i]);//0.0/0.0;
@@ -1941,7 +1941,7 @@ int LLL_mpfr2(F_mpz_mat_t B, mp_prec_t prec)
    /* ************************** */     
     
    for (i = 0; i < d; i++)
-      _F_mpz_vec_ldexp_mpfr(appB[i], B->rows[i], n);  
+      _F_mpz_vec_to_mpfr_vec(appB[i], B->rows[i], n);  
   
    /* ********************************* */
    /* Step2: Initializing the main loop */
@@ -2655,7 +2655,7 @@ int LLL_mpfr2_with_removal(F_mpz_mat_t B, mp_prec_t prec, F_mpz_t gs_B)
    /* ************************** */     
     
    for (i = 0; i < d; i++)
-      _F_mpz_vec_ldexp_mpfr(appB[i], B->rows[i], n);  
+      _F_mpz_vec_to_mpfr_vec(appB[i], B->rows[i], n);  
   
    /* ********************************* */
    /* Step2: Initializing the main loop */
@@ -3515,7 +3515,7 @@ int knapsack_LLL_mpfr2_with_removal(F_mpz_mat_t B, mp_prec_t prec, F_mpz_t gs_B)
    /* ************************** */     
     
    for (i = 0; i < d; i++)
-	   _F_mpz_vec_ldexp_mpfr(appB[i], B->rows[i], n);  
+	   _F_mpz_vec_to_mpfr_vec(appB[i], B->rows[i], n);  
   
    /* ********************************* */
    /* Step2: Initializing the main loop */
