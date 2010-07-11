@@ -5714,6 +5714,11 @@ void F_mpz_poly_content(F_mpz_t c, const F_mpz_poly_t poly)
       if (!F_mpz_is_zero(poly->coeffs + i))
          F_mpz_gcd(c, c, poly->coeffs + i);
    }
+
+   int c_sgn = F_mpz_sgn(c);
+
+   if (c_sgn != F_mpz_sgn(poly->coeffs + length - 1))
+      F_mpz_neg(c, c);
 }
 
 double F_mpz_poly_eval_horner_d(F_mpz_poly_t poly, double val){
@@ -6225,11 +6230,11 @@ int F_mpz_poly_div_trunc_modp( F_mpz_t *res, F_mpz_poly_t f, F_mpz_poly_t g, F_m
    F_mpz_poly_set(t_g, g);
    F_mpz_poly_truncate(t_f, n);
 
-F_mpz_poly_print(t_f); printf(" was t_f\n");
+//F_mpz_poly_print(t_f); printf(" was t_f\n");
 
    F_mpz_poly_truncate(t_g, n);
 
-F_mpz_poly_print(t_g); printf(" was t_g\n");
+//F_mpz_poly_print(t_g); printf(" was t_g\n");
 
 //now we have t_f, t_g truncated to the bottom n terms for speed reasons.
    F_mpz_set(temp, t_g->coeffs);
@@ -6272,9 +6277,9 @@ F_mpz_print(P); printf(" was P\n");
    for(ulong i = 0; (i < n); i++){
 //  This is a number which would cancel out the lowest term of f mod P
 
-      printf("here right... \n");
+//      printf("here right... \n");
       F_mpz_mul2(temp, t_f->coeffs, tc_inv);
-      printf("before res[i]\n");
+//      printf("before res[i]\n");
       F_mpz_smod(res[i], temp, P);
 
       F_mpz_poly_right_shift(tempg, t_g, 1UL);
@@ -7448,6 +7453,10 @@ printf(" first two clds took %f seconds\n", (double) cld_data_total/ (double) CL
             printf("hensel lifted for %f seconds so far\n", (double) hensel_total / (double) CLOCKS_PER_SEC);
 
             a = 2*a;
+            printf(" new a = %ld\n", a);
+            //abort();
+            //FIXME: added an abort
+
          }
          else if (solved_yet == 5){
 //This is where we increase the Hensel Accuracy and go back
@@ -7460,6 +7469,7 @@ printf(" first two clds took %f seconds\n", (double) cld_data_total/ (double) CL
 
             a = 4*a;
             solved_yet = 0;
+            printf(" solved_yet == 5?\n");
          }
       }
       else{
@@ -7559,6 +7569,9 @@ void F_mpz_poly_deflate(F_mpz_poly_t result, const F_mpz_poly_t input, ulong def
        F_mpz_set(result->coeffs + i, input->coeffs + i*deflation);
 
    _F_mpz_poly_set_length(result, res_length);
+
+   printf("not here\n");
+//FIXME: added comments
 }
 
 void F_mpz_poly_inflate(F_mpz_poly_t result, const F_mpz_poly_t input, ulong deflation)
@@ -7725,9 +7738,9 @@ void _F_mpz_poly_factor_CLD_mat(F_mpz_mat_t res, F_mpz_poly_t F, F_mpz_poly_fact
       else{
          ok = 1;
       }
-      printf("lower_n = %ld \n", lower_n);
-      printf("ok = %d", ok);
-      printf(" i = %ld\n", i);
+  //    printf("lower_n = %ld \n", lower_n);
+    //  printf("ok = %d", ok);
+      //printf(" i = %ld\n", i);
    }
 //in case of bizarre behavior will need to justify the other zero columns (or not)
    ok = 0;
@@ -7739,9 +7752,9 @@ void _F_mpz_poly_factor_CLD_mat(F_mpz_mat_t res, F_mpz_poly_t F, F_mpz_poly_fact
          upper_n = i;
       else
          ok = 1;
-      printf("upper_n = %ld \n", upper_n);
-      printf("ok = %d", ok);
-      printf(" i = %ld\n", i);
+//      printf("upper_n = %ld \n", upper_n);
+//      printf("ok = %d", ok);
+//      printf(" i = %ld\n", i);
 
    }
 
@@ -7754,7 +7767,7 @@ void _F_mpz_poly_factor_CLD_mat(F_mpz_mat_t res, F_mpz_poly_t F, F_mpz_poly_fact
    F_mpz_poly_t trunc_poly, trunc_F;
    _F_mpz_poly_attach_truncate(trunc_F, F, lower_n + 3);
    if (lower_n > 0){
-      printf(" lower exists n = %ld \n", n);
+//      printf(" lower exists n = %ld \n", n);
       lower_n = n;
       for (i = 0; i < d; i++){
          F_mpz_poly_init(gd);
@@ -7775,16 +7788,16 @@ void _F_mpz_poly_factor_CLD_mat(F_mpz_mat_t res, F_mpz_poly_t F, F_mpz_poly_fact
                F_mpz_set_ui(temp[j], 0L);
          }
 
-         printf(" the inputs to F_mpz_poly_div_trunc_modp are \n");
+//         printf(" the inputs to F_mpz_poly_div_trunc_modp are \n");
 
 //FIXME: doing a complete computation for checking purpose
-         F_mpz_poly_init(check_gd);
+/*         F_mpz_poly_init(check_gd);
          F_mpz_poly_init(check_gcld);
          F_mpz_poly_derivative(check_gd, lifted_fac->factors[i]);
          F_mpz_poly_mul(check_gcld, F, check_gd);
          F_mpz_poly_div(check_gcld, check_gcld, lifted_fac->factors[i]);
          F_mpz_poly_smod(check_gcld, check_gcld, P);
-
+*/
          if (trunk_ok == 0){
 
             F_mpz_poly_init(check_gd);
@@ -7801,15 +7814,15 @@ void _F_mpz_poly_factor_CLD_mat(F_mpz_mat_t res, F_mpz_poly_t F, F_mpz_poly_fact
          }
          else{
             for (j = 0; j < lower_n; j++){
-               F_mpz_print(temp[j]); printf(" was temp[%ld] j should be: ", j);
-               F_mpz_print(check_gcld->coeffs + j); printf(" was actual one\n", j);
+//               F_mpz_print(temp[j]); printf(" was temp[%ld] j should be: ", j);
+//               F_mpz_print(check_gcld->coeffs + j); printf(" was actual one\n", j);
                F_mpz_set(res->rows[i] + j, temp[j]);
             }
          }
 //FIXME: these too
 
-         F_mpz_poly_clear(gd);
-         F_mpz_poly_clear(gcld);
+/*         F_mpz_poly_clear(gd);
+         F_mpz_poly_clear(gcld);*/
       }
    }
 
@@ -7820,7 +7833,7 @@ void _F_mpz_poly_factor_CLD_mat(F_mpz_mat_t res, F_mpz_poly_t F, F_mpz_poly_fact
 
    if (upper_n > 0){
       upper_n = n;
-      printf("upper exists n = %ld \n", n);
+//      printf("upper exists n = %ld \n", n);
       for (i = 0; i < d; i++){
          F_mpz_poly_init(gd);
          F_mpz_poly_init(gcld);
@@ -7831,24 +7844,24 @@ void _F_mpz_poly_factor_CLD_mat(F_mpz_mat_t res, F_mpz_poly_t F, F_mpz_poly_fact
          F_mpz_poly_div_upper_trunc_modp(temp, gcld, lifted_fac->factors[i], P, upper_n);
 
 //FIXME: doing a complete computation for checking purpose
-         F_mpz_poly_init(check_gd);
+/*         F_mpz_poly_init(check_gd);
          F_mpz_poly_init(check_gcld);
          F_mpz_poly_derivative(check_gd, lifted_fac->factors[i]);
          F_mpz_poly_mul(check_gcld, F, check_gd);
          F_mpz_poly_div(check_gcld, check_gcld, lifted_fac->factors[i]);
          F_mpz_poly_smod(check_gcld, check_gcld, P);
-
+*/
          long j;
          for (j = 0; j < upper_n; j++){
-            F_mpz_print(temp[j]); printf(" was temp[%ld] j should be: ", j);
-            F_mpz_print(check_gcld->coeffs + check_gcld->length - 1 - j); printf(" was actual one\n", j);
+//            F_mpz_print(temp[j]); printf(" was temp[%ld] j should be: ", j);
+//            F_mpz_print(check_gcld->coeffs + check_gcld->length - 1 - j); printf(" was actual one\n", j);
             F_mpz_set(res->rows[i] + 2*n -1 - j, temp[j]);
          }
 
 //FIXME: these too
-         F_mpz_poly_clear(check_gd);
+/*         F_mpz_poly_clear(check_gd);
          F_mpz_poly_clear(check_gcld);
-
+*/
          F_mpz_poly_clear(gd);
          F_mpz_poly_clear(gcld);
       }
@@ -7858,7 +7871,7 @@ void _F_mpz_poly_factor_CLD_mat(F_mpz_mat_t res, F_mpz_poly_t F, F_mpz_poly_fact
       F_mpz_clear(temp[i]);
 }
 
-int _F_mpz_poly_try_to_solve(int num_facs, ulong * part, F_mpz_poly_factor_t final_fac, F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, F_mpz_t P, ulong exp, F_mpz_t lc)
+int _F_mpz_poly_try_to_solve(int num_facs, ulong * part, F_mpz_poly_factor_t final_fac, F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, F_mpz_t P, ulong exp, F_mpz_t lc, int safe)
 {
    if (num_facs == 1){
       F_mpz_poly_factor_insert(final_fac, F, exp);
@@ -7867,12 +7880,13 @@ int _F_mpz_poly_try_to_solve(int num_facs, ulong * part, F_mpz_poly_factor_t fin
    }
 //we know that there is a 0-1 potential basis, let's make the potential factors and sort them by degree
    ulong r = lifted_fac->num_factors;
-   if (r <= num_facs)
-   {
+   if (safe == 0){
+      if (r <= num_facs)
+      {
       //printf("highly likely not solved yet... \n");
-      return 0;
+         return 0;
+      }
    }
-
 
    F_mpz_poly_factor_t trial_factors;
    F_mpz_poly_factor_init(trial_factors);
@@ -7996,7 +8010,7 @@ printf("or thereere\n");
    return 0;
 }
 
-int _F_mpz_mat_check_if_solved(F_mpz_mat_t M, ulong r, F_mpz_poly_factor_t final_fac, F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, F_mpz_t P, ulong exp, F_mpz_t lc){
+int _F_mpz_mat_check_if_solved(F_mpz_mat_t M, ulong r, F_mpz_poly_factor_t final_fac, F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, F_mpz_t P, ulong exp, F_mpz_t lc, int safe){
    F_mpz_mat_t U;
    F_mpz_mat_init(U,0,0);
    F_mpz_mat_get_U(U, M, r);
@@ -8018,7 +8032,7 @@ int _F_mpz_mat_check_if_solved(F_mpz_mat_t M, ulong r, F_mpz_poly_factor_t final
    }
 
    check_if_solve_start = clock();
-   int trym = _F_mpz_poly_try_to_solve(ok, part, final_fac, lifted_fac, F, P, exp, lc);
+   int trym = _F_mpz_poly_try_to_solve(ok, part, final_fac, lifted_fac, F, P, exp, lc, safe);
    check_if_solve_stop = clock();
    check_if_solve_total = check_if_solve_total + check_if_solve_stop - check_if_solve_start;
    //printf("So far total checking time = %f\n", (double) check_if_solve_total /(double) CLOCKS_PER_SEC );
@@ -8093,7 +8107,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    else
       F_mpz_div_2exp(B, B, (ulong) -2*U_exp);
 
-   int solved =  _F_mpz_mat_check_if_solved(M, r, final_fac, lifted_fac, F, P, exp, lc);
+   int solved =  _F_mpz_mat_check_if_solved(M, r, final_fac, lifted_fac, F, P, exp, lc, 0);
    if (solved == 1)
    {
       return_me = 1;
@@ -8111,8 +8125,8 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
 
 //FIXME: inserting checks here: first Hensel checking
 
-   int res_hens = hensel_checker(F, lifted_fac, P);
-   printf(" 00000000000022  result of hensel check is %d\n", res_hens);
+/*   int res_hens = hensel_checker(F, lifted_fac, P);
+   printf(" 00000000000022  result of hensel check is %d\n", res_hens);*/
 
    cld_data_start = clock();
    _F_mpz_poly_factor_CLD_mat(data, F, lifted_fac, P, num_coeffs);
@@ -8143,6 +8157,9 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    solved = 0;
    since_last = 0;
    previously_checked = 0;
+
+   F_mpz_mat_print_pretty(M);
+
    while ((all_coeffs != 2) && (return_me == 0)){
       for (cur_col = previously_checked; cur_col < data->c - previously_checked; cur_col++){
          //aborting attempt to adjust sqN back to normal
@@ -8167,7 +8184,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
             //printf(" spend a total of %f seconds on Linear alg stuff since the last entry\n", (double) linear_alg_total / (double)CLOCKS_PER_SEC);
             num_entries++;
 
-            F_mpz_mat_print(M); printf(" was M before LLL\n");
+//            F_mpz_mat_print(M); printf(" was M before LLL\n");
 //            F_mpz_add_ui(B, B, r/2);
 //            cexpo[r + col_cnt] = 0;
    lll_start = clock();
@@ -8178,7 +8195,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
 
    printf(" spend a total of %f seconds on LLL so far newd=%ld\n", (double) lll_total / (double)CLOCKS_PER_SEC, newd);
 
-            F_mpz_mat_print(M); printf(" was M after LLL\n");
+//            F_mpz_mat_print(M); printf(" was M after LLL\n");
 
             F_mpz_mat_resize(M, newd, M->c);
             col_cnt++;
@@ -8197,7 +8214,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
                solved = 1;
                break;
             }
-            solved =  _F_mpz_mat_check_if_solved(M, r, final_fac, lifted_fac, F, P, exp, lc);
+            solved =  _F_mpz_mat_check_if_solved(M, r, final_fac, lifted_fac, F, P, exp, lc, 0);
             if (solved == 1){
                return_me = 1;
                break;
@@ -8207,7 +8224,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
       previously_checked = num_coeffs;
       if (solved == 0){
 //This is reached when the data wasn't large enough to need LLL, this means that you had a super easy or super hard factorization
-         solved =  _F_mpz_mat_check_if_solved(M, r, final_fac, lifted_fac, F, P, exp, lc);
+         solved =  _F_mpz_mat_check_if_solved(M, r, final_fac, lifted_fac, F, P, exp, lc, 1);
          if (solved == 1){
 //This is the easy case...
             return_me = 1;
