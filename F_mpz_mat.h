@@ -201,23 +201,23 @@ void mpz_mat_to_F_mpz_mat(F_mpz_mat_t F_mat, const mpz_mat_t m_mat);
 void F_mpz_mat_to_mpz_mat(mpz_mat_t m_mat, const F_mpz_mat_t F_mat);
 
 /** 
-   \fn     long F_mpz_mat_set_line_d(double * appv, const F_mpz_mat_t mat, const ulong r, const int n)
+   \fn     long _F_mpz_vec_ldexp(double * appv, const F_mpz * vec, const ulong n)
    \brief  Sets the entries of appv to the double mantissa of the entries of the given row of mat
 	        with respect to a single maximum exponent which is returned.
 */
-long F_mpz_mat_set_line_d(double * appv, const F_mpz_mat_t mat, const ulong r, const int n);
+long _F_mpz_vec_ldexp(double * appv, const F_mpz * vec, const ulong n);
 
 /** 
-   \fn     void F_mpz_mat_set_line_mpfr(mpfr_t * appv, const F_mpz_mat_t mat, const ulong r, const int n)
+   \fn     void _F_mpz_vec_ldexp_mpfr(mpfr_t * appv, const F_mpz * vec, const ulong n)
    \brief  Sets the entries of appv to the entries of the given row of mat.
 */
-void F_mpz_mat_set_line_mpfr(mpfr_t * appv, const F_mpz_mat_t mat, const ulong r, const int n);
+void _F_mpz_vec_ldexp_mpfr(mpfr_t * appv, const F_mpz * vec, const ulong n);
 
 /**
-   \fn     void F_mpz_mat_set_line_mpfr_2exp(mpfr_t * appv, const F_mpz_mat_t mat, const ulong r, const int n, int * cexpo)
+   \fn     void _F_mpz_vec_ldexp_mpfr_2exp(mpfr_t * appv, const F_mpz * vec, const ulong n, int * cexpo)
    \brief  Sets the entries of appv to the entries of the given for of mat multiplied by 2^cexpo[i]
 */
-void F_mpz_mat_set_line_mpfr_2exp(mpfr_t * appv, const F_mpz_mat_t mat, const ulong r, const int n, int * cexpo);
+void _F_mpz_vec_ldexp_mpfr_2exp(mpfr_t * appv, const F_mpz * vec, const ulong n, int * cexpo);
 
 /*===============================================================================
 

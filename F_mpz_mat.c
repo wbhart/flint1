@@ -462,14 +462,14 @@ void F_mpz_mat_to_mpz_mat(mpz_mat_t m_mat, const F_mpz_mat_t F_mat)
 	}
 }
 
-long F_mpz_mat_set_line_d(double * appv, const F_mpz_mat_t mat, const ulong r, const int n)
+long _F_mpz_vec_ldexp(double * appv, const F_mpz * vec, const ulong n)
 {
    long * exp, i, maxexp = 0L;
    exp = (long *) malloc(n * sizeof(long)); 
   
    for (i = 0; i < n; i++)
    {
-      appv[i] = F_mpz_get_d_2exp(&exp[i], mat->rows[r] + i);
+      appv[i] = F_mpz_get_d_2exp(&exp[i], vec + i);
       if (exp[i] > maxexp) maxexp = exp[i];
    }
 
@@ -479,19 +479,19 @@ long F_mpz_mat_set_line_d(double * appv, const F_mpz_mat_t mat, const ulong r, c
    return maxexp;
 }
 
-void F_mpz_mat_set_line_mpfr(mpfr_t * appv, const F_mpz_mat_t mat, const ulong r, const int n)
+void _F_mpz_vec_ldexp_mpfr(mpfr_t * appv, const F_mpz * vec, const ulong n)
 {
    ulong i;
-   for (i = 0; i < n; i++) F_mpz_get_mpfr(appv[i], mat->rows[r] + i);
+   for (i = 0; i < n; i++) F_mpz_get_mpfr(appv[i], vec + i);
 
    return;
 }
 
-void F_mpz_mat_set_line_mpfr_2exp(mpfr_t * appv, const F_mpz_mat_t mat, const ulong r, const int n, int * cexpo)
+void _F_mpz_vec_ldexp_mpfr_2exp(mpfr_t * appv, const F_mpz * vec, const ulong n, int * cexpo)
 {
    ulong i;
    for (i = 0; i < n; i++){
-      F_mpz_get_mpfr(appv[i], mat->rows[r] + i);
+      F_mpz_get_mpfr(appv[i], vec + i);
       mpfr_mul_2si(appv[i], appv[i], cexpo[i], GMP_RNDN);
    }
 
