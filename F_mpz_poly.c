@@ -7217,6 +7217,7 @@ void F_mpz_poly_factor_sq_fr_prim( F_mpz_poly_factor_t final_fac, ulong exp, F_m
    ulong M_bits = 0;
    M_bits = M_bits + F_mpz_bits(lc) + FLINT_ABS(F_mpz_poly_max_bits(f)) + len + (long)ceil(log2((double) len));
    zmod_poly_t F, F_d, F_sbo, F_tmp;
+
    int tryme = 1;
    ulong p = 2UL;
    long i, num_primes;
@@ -7228,6 +7229,7 @@ void F_mpz_poly_factor_sq_fr_prim( F_mpz_poly_factor_t final_fac, ulong exp, F_m
    min_r = len;
    i = 0;
    zmod_poly_factor_init(fac);
+   zmod_poly_init(F, p);
 
 
    local_factor_start = clock();
@@ -7240,6 +7242,7 @@ for(num_primes = 1; num_primes < 3; num_primes++)
       zmod_poly_init(F_tmp, p);
       zmod_poly_init(F_d, p);
       zmod_poly_init(F_sbo, p);
+      zmod_poly_clear(F);
       zmod_poly_init(F, p);
 
       F_mpz_poly_to_zmod_poly(F_tmp, f);
@@ -7248,7 +7251,6 @@ for(num_primes = 1; num_primes < 3; num_primes++)
          zmod_poly_clear(F_d);
          zmod_poly_clear(F_sbo);
          zmod_poly_clear(F_tmp);
-         zmod_poly_clear(F);
          continue;
       }
 
@@ -7263,7 +7265,6 @@ for(num_primes = 1; num_primes < 3; num_primes++)
       else{
          p = z_nextprime( p, 0);
          zmod_poly_clear(F_tmp);
-         zmod_poly_clear(F);
       }
       zmod_poly_clear(F_d);
       zmod_poly_clear(F_sbo);
@@ -7430,6 +7431,7 @@ printf(" first two clds took %f seconds\n", (double) cld_data_total/ (double) CL
    printf("hensel lifted for %f seconds so far\n", (double) hensel_total / (double) CLOCKS_PER_SEC);
 //clearing fac early, don't need them anymore
    zmod_poly_factor_clear(fac);
+   zmod_poly_clear(F);
 
    while( solved_yet == 0 ){
 //Have now Hensel lifted to p^a for the precalculated a, in the optimized version we will lift even less
@@ -7484,7 +7486,7 @@ printf(" first two clds took %f seconds\n", (double) cld_data_total/ (double) CL
       F_mpz_poly_clear(w[i]);
    }
    F_mpz_poly_factor_clear(lifted_fac);
-   zmod_poly_clear(F);
+
    F_mpz_clear(P);
    if (use_Hoeij_Novocin == 1){
       F_mpz_mat_clear(M);
