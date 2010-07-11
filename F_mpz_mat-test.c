@@ -1992,7 +1992,7 @@ int test__F_mpz_vec_scalar_mul()
    return result; 
 }
 
-int test__F_mpz_vec_ldexp()
+int test__F_mpz_vec_to_d_vec_2exp()
 {
    double * d1, * d2;
    F_mpz_mat_t F_mat;
@@ -2013,9 +2013,9 @@ int test__F_mpz_vec_ldexp()
 	  F_mpz_randmat(F_mat, r, c, bits);
        
 	  i = z_randint(r);
-	  ulong l1 = _F_mpz_vec_ldexp(d1, F_mat->rows[i], c/2);
-      ulong l2 = _F_mpz_vec_ldexp(d1 + c/2, F_mat->rows[i] + c/2, (c + 1)/2);
-      ulong l3 = _F_mpz_vec_ldexp(d2, F_mat->rows[i], c);
+	  ulong l1 = _F_mpz_vec_to_d_vec_2exp(d1, F_mat->rows[i], c/2);
+      ulong l2 = _F_mpz_vec_to_d_vec_2exp(d1 + c/2, F_mat->rows[i] + c/2, (c + 1)/2);
+      ulong l3 = _F_mpz_vec_to_d_vec_2exp(d2, F_mat->rows[i], c);
 
 	  if (l1 < l2)
 	     for (j = 0; j < c/2; j++)
@@ -2169,7 +2169,7 @@ void F_mpz_mat_test_all()
    RUN_TEST(F_mpz_mat_mul_classical);
    RUN_TEST(_F_mpz_vec_scalar_submul_2exp_F_mpz); 
    RUN_TEST(_F_mpz_vec_scalar_mul); 
-   RUN_TEST(_F_mpz_vec_ldexp); 
+   RUN_TEST(_F_mpz_vec_to_d_vec_2exp); 
    RUN_TEST(_F_mpz_vec_to_mpfr_vec); 
    RUN_TEST(_F_mpz_vec_2exp_to_mpfr_vec); 
    

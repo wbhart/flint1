@@ -256,7 +256,7 @@ void Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
 
       if (test)   /* Anything happened? */
 	   {
-	      expo[kappa] = _F_mpz_vec_ldexp(appB[kappa], B->rows[kappa], n);
+	      expo[kappa] = _F_mpz_vec_to_d_vec_2exp(appB[kappa], B->rows[kappa], n);
 	      aa = zeros + 1;
 	      for (i = zeros + 1; i <= kappa; i++) 
 	         appSP[kappa][i] = NAN;//0.0/0.0;
@@ -470,7 +470,7 @@ void Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, doubl
 
       if (test)   /* Anything happened? */
 	   {
-	      expo[kappa] = _F_mpz_vec_ldexp(appB[kappa], B->rows[kappa], n);
+	      expo[kappa] = _F_mpz_vec_to_d_vec_2exp(appB[kappa], B->rows[kappa], n);
 	      aa = zeros + 1;
 	      for (i = zeros + 1; i <= kappa; i++) 
 	         appSP[kappa][i] = NAN;//0.0/0.0;
@@ -670,7 +670,7 @@ void Babai_heuristic_d_2exp (int kappa, F_mpz_mat_t B, double **mu, double **r, 
 
       if (test)   /* Anything happened? */
 	   {
-	      expo[kappa] = _F_mpz_vec_ldexp(appB[kappa], B->rows[kappa], n);
+	      expo[kappa] = _F_mpz_vec_to_d_vec_2exp(appB[kappa], B->rows[kappa], n);
 	      aa = zeros + 1;
 	      for (i = zeros + 1; i <= kappa; i++) 
 	         appSP[kappa][i] = NAN;//0.0/0.0;
@@ -739,7 +739,7 @@ void LLL(F_mpz_mat_t B)
    /* ************************** */     
     
    for (i = 0; i < d; i++)
-      expo[i] = _F_mpz_vec_ldexp(appB[i], B->rows[i], n);  
+      expo[i] = _F_mpz_vec_to_d_vec_2exp(appB[i], B->rows[i], n);  
   
    /* ********************************* */
    /* Step2: Initializing the main loop */
@@ -936,7 +936,7 @@ void LLL_heuristic_d_2exp(F_mpz_mat_t B, int *cexpo)
    /* ************************** */     
     
    for (i = 0; i < d; i++)
-      expo[i] = _F_mpz_vec_ldexp(appB[i], B->rows[i], n);  
+      expo[i] = _F_mpz_vec_to_d_vec_2exp(appB[i], B->rows[i], n);  
   
    /* ********************************* */
    /* Step2: Initializing the main loop */
@@ -1140,7 +1140,7 @@ int LLL_heuristic_d_2exp_with_removal(F_mpz_mat_t B, int *cexpo, F_mpz_t gs_B)
    /* ************************** */     
     
    for (i = 0; i < d; i++)
-      expo[i] = _F_mpz_vec_ldexp(appB[i], B->rows[i], n);  
+      expo[i] = _F_mpz_vec_to_d_vec_2exp(appB[i], B->rows[i], n);  
   
    /* ********************************* */
    /* Step2: Initializing the main loop */
@@ -1355,7 +1355,7 @@ int LLL_heuristic_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    /* ************************** */     
     
    for (i = 0; i < d; i++)
-      expo[i] = _F_mpz_vec_ldexp(appB[i], B->rows[i], n);  
+      expo[i] = _F_mpz_vec_to_d_vec_2exp(appB[i], B->rows[i], n);  
   
    /* ********************************* */
    /* Step2: Initializing the main loop */

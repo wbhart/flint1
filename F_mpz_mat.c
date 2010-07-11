@@ -462,7 +462,7 @@ void F_mpz_mat_to_mpz_mat(mpz_mat_t m_mat, const F_mpz_mat_t F_mat)
 	}
 }
 
-long _F_mpz_vec_ldexp(double * appv, const F_mpz * vec, const ulong n)
+long _F_mpz_vec_to_d_vec_2exp(double * appv, const F_mpz * vec, const ulong n)
 {
    long * exp, i, maxexp = 0L;
    exp = (long *) malloc(n * sizeof(long)); 
