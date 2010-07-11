@@ -231,6 +231,28 @@ void _F_mpz_vec_ldexp_mpfr_2exp(mpfr_t * appv, const F_mpz * vec, const ulong n,
 */
 void F_mpz_mat_set(F_mpz_mat_t mat1, const F_mpz_mat_t mat2);
 
+/** 
+   \fn     void F_mpz_mat_swap(fmpz_mat_t mat1, const fmpz_mat_t mat2)
+   \brief  Efficiently swap mat1 with mat2
+*/
+static inline
+void F_mpz_mat_swap(F_mpz_mat_t mat1, F_mpz_mat_t mat2)
+{
+   F_mpz * pt = mat1->entries;
+   mat1->entries = mat2->entries;
+   mat2->entries = pt;
+   F_mpz ** ppt = mat1->rows;
+   mat1->rows = mat2->rows;
+   mat2->rows = ppt;
+   ulong t = mat1->r_alloc;
+   mat1->r_alloc = mat2->r_alloc;
+   mat2->r_alloc = t;
+   t = mat1->c_alloc;
+   mat1->c_alloc = mat2->c_alloc;
+   mat2->c_alloc = t;
+}
+
+
 /*===============================================================================
 
 	Comparison
@@ -417,15 +439,15 @@ void _F_mpz_mat_mul_classical(F_mpz_mat_t res, const F_mpz_mat_t mat1,
                                                   alias safe
 */
 static inline
-void F_mpz_mat_mul_classical(F_mpz_mat_t P, const F_mpz_mat_t A,const F_mpz_mat_t B)
+void F_mpz_mat_mul_classical(F_mpz_mat_t P, const F_mpz_mat_t A, const F_mpz_mat_t B)
 {
 
 	if ((P == A) || (P == B))
 	{
 		F_mpz_mat_t Pa;
 		F_mpz_mat_init(Pa,P->r,P->c);
-      _F_mpz_mat_mul_classical(Pa, A, B);
-		F_mpz_mat_set(P, Pa);
+        _F_mpz_mat_mul_classical(Pa, A, B);
+		F_mpz_mat_swap(P, Pa);
 		F_mpz_mat_clear(Pa);
 		return;
 	} else
