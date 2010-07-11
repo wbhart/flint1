@@ -73,6 +73,7 @@ HEADERS = \
 	F_mpz_mat.h \
 	mpfr_mat.h \
 	F_mpz.h \
+	F_mpz_LLL_helper.h \
 	F_mpz_LLL_fast_d.h \
 	F_mpz_LLL_heuristic_mpfr.h \
 	F_mpz_LLL_wrapper.h \
@@ -122,6 +123,7 @@ FLINTOBJ = \
 	mpfr_mat.o \
 	F_mpz_mat.o \
 	F_mpz.o \
+	F_mpz_LLL_helper.o \
 	F_mpz_LLL_fast_d.o \
 	F_mpz_LLL_heuristic_mpfr.o \
 	F_mpz_LLL_wrapper.o \
@@ -137,7 +139,7 @@ QS: mpQS
 
 tune: ZmodF_mul-tune mpz_poly-tune 
 
-test: F_mpz-test mpn_extras-test fmpz_poly-test fmpz-test ZmodF-test ZmodF_poly-test mpz_poly-test ZmodF_mul-test long_extras-test zmod_poly-test F_mpz_mat-test zmod_mat-test d_mat-test mpq_mat-test
+test: F_mpz-test mpn_extras-test fmpz_poly-test fmpz-test ZmodF-test ZmodF_poly-test mpz_poly-test ZmodF_mul-test long_extras-test zmod_poly-test F_mpz_mat-test zmod_mat-test d_mat-test F_mpz_LLL_helper-test mpq_mat-test
 
 check: test
 	./F_mpz-test
@@ -154,6 +156,7 @@ check: test
 	./F_mpz_mat-test
 	./d_mat-test
 	./mpq_mat-test
+	./F_mpz_LLL_helper-test
 
 profile: ZmodF_poly-profile kara-profile fmpz_poly-profile mpz_poly-profile ZmodF_mul-profile 
 
@@ -263,6 +266,9 @@ F_mpz.o: F_mpz.c $(HEADERS)
 F_mpz_mat.o: F_mpz_mat.c $(HEADERS)
 	$(CC) $(CFLAGS) -c F_mpz_mat.c -o F_mpz_mat.o
 
+F_mpz_LLL_helper.o: F_mpz_LLL_helper.c $(HEADERS)
+	$(CC) $(CFLAGS) -c F_mpz_LLL_helper.c -o F_mpz_LLL_helper.o
+
 F_mpz_LLL_fast_d.o: F_mpz_LLL_fast_d.c $(HEADERS)
 	$(CC) $(CFLAGS) -c F_mpz_LLL_fast_d.c -o F_mpz_LLL_fast_d.o
 
@@ -336,6 +342,9 @@ fmpz_poly-test.o: fmpz_poly-test.c $(HEADERS)
 
 F_mpz-test.o: F_mpz-test.c $(HEADERS)
 	$(CC) $(CFLAGS) -c F_mpz-test.c -o F_mpz-test.o
+
+F_mpz_LLL_helper-test.o: F_mpz_LLL_helper-test.c $(HEADERS)
+	$(CC) $(CFLAGS) -c F_mpz_LLL_helper-test.c -o F_mpz_LLL_helper-test.o
 
 F_mpz_mat-test.o: F_mpz_mat-test.c $(HEADERS)
 	$(CC) $(CFLAGS) -c F_mpz_mat-test.c -o F_mpz_mat-test.o
@@ -413,6 +422,9 @@ ZmodF_poly-test: ZmodF_poly-test.o test-support.o $(FLINTOBJ) $(HEADERS)
 
 mpz_poly-test: mpz_poly-test.o test-support.o $(FLINTOBJ) $(HEADERS)
 	$(CC) $(CFLAGS) mpz_poly-test.o test-support.o -o mpz_poly-test $(FLINTOBJ) $(LIBS)
+
+F_mpz_LLL_helper-test: F_mpz_LLL_helper-test.o test-support.o $(FLINTOBJ) $(HEADERS)
+	$(CC) $(CFLAGS) F_mpz_LLL_helper-test.o test-support.o -o F_mpz_LLL_helper-test $(FLINTOBJ) $(LIBS)
 
 F_mpz_mat-test: F_mpz_mat-test.o test-support.o $(FLINTOBJ) $(HEADERS)
 	$(CC) $(CFLAGS) F_mpz_mat-test.o test-support.o -o F_mpz_mat-test $(FLINTOBJ) $(LIBS)

@@ -43,6 +43,7 @@
 #include "gmp.h"
 #include "flint.h"
 #include "F_mpz_mat.h"
+#include "F_mpz_LLL_helper.h"
 #include "F_mpz_LLL_fast_d.h"
 #include "d_mat.h"
 
@@ -119,7 +120,7 @@ void Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
 	   {	  
 	      if (appSP[kappa][j] != appSP[kappa][j]) // if appSP[kappa][j] == NAN
 	      {
-	         appSP[kappa][j] = d_vec_scalar_product(appB[kappa], appB[j], n);
+	         appSP[kappa][j] = _d_vec_scalar_product(appB[kappa], appB[j], n);
 	      }
 	  	  
          if (j > zeros + 2)
@@ -169,7 +170,7 @@ void Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
 			            mu[kappa][k] =  mu[kappa][k] - tmp; 
 			         }
 		      
-		            F_mpz_mat_row_sub(B, kappa, B, kappa, B, j, 0, n);
+		            _F_mpz_vec_sub(B->rows[kappa], B->rows[kappa], B->rows[j], n);
 		  
 		         } else          /* otherwise X is -1 */ 
                {
@@ -179,7 +180,7 @@ void Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
 			            mu[kappa][k] = mu[kappa][k] + tmp;
 			         }
 		      
-                  F_mpz_mat_row_add(B, kappa, B, kappa, B, j, 0, n); 
+                  _F_mpz_vec_add(B->rows[kappa], B->rows[kappa], B->rows[j], n); 
                }
 		      } else   /* we must have |X| >= 2 */
 		      {
@@ -200,10 +201,10 @@ void Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
 		      
                   if (xx > 0L)
                   { 
-                     F_mpz_mat_row_submul_ui(B, kappa, B, j, 0, n, (ulong) xx);  
+                     _F_mpz_vec_scalar_submul_ui(B->rows[kappa], B->rows[j], n, (ulong) xx);  
                   } else
                   {
-                     F_mpz_mat_row_addmul_ui(B, kappa, B, j, 0, n, (ulong) -xx);  
+                     _F_mpz_vec_scalar_addmul_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx);  
                   } 
                } else
 		         {
@@ -220,10 +221,10 @@ void Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
 			  
 			            if (xx > 0)
                      {
-                        F_mpz_mat_row_submul_ui(B, kappa, B, j, 0, n, xx);  
+                        _F_mpz_vec_scalar_submul_ui(B->rows[kappa], B->rows[j], n, xx);  
                      } else
                      {
-                        F_mpz_mat_row_addmul_ui(B, kappa, B, j, 0, n, -xx);  
+                        _F_mpz_vec_scalar_addmul_ui(B->rows[kappa], B->rows[j], n, -xx);  
                      }
               			    
 			            for (k = zeros + 1; k < j; k++)
@@ -236,10 +237,10 @@ void Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
 			         {
 			            if (xx > 0)
                      {
-                        F_mpz_mat_row_submul_2exp_ui(B, kappa, B, j, 0, n, (ulong) xx, exponent);  
+                        _F_mpz_vec_scalar_submul_2exp_ui(B->rows[kappa], B->rows[j], n, (ulong) xx, exponent);  
                      } else
                      {
-                        F_mpz_mat_row_addmul_2exp_ui(B, kappa, B, j, 0, n, (ulong) -xx, exponent);  
+                        _F_mpz_vec_scalar_addmul_2exp_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx, exponent);  
                      }
 			            for (k = zeros + 1; k < j; k++)
 			            {
@@ -255,7 +256,7 @@ void Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
 
       if (test)   /* Anything happened? */
 	   {
-	      expo[kappa] = F_mpz_mat_set_line_d(appB[kappa], B, kappa, n);
+	      expo[kappa] = _F_mpz_vec_ldexp(appB[kappa], B->rows[kappa], n);
 	      aa = zeros + 1;
 	      for (i = zeros + 1; i <= kappa; i++) 
 	         appSP[kappa][i] = NAN;//0.0/0.0;
@@ -266,7 +267,7 @@ void Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
 
    if (appSP[kappa][kappa] != appSP[kappa][kappa]) 
    {
-      appSP[kappa][kappa] = d_vec_norm(appB[kappa], n);
+      appSP[kappa][kappa] = _d_vec_norm(appB[kappa], n);
    }
    s[zeros + 1] = appSP[kappa][kappa];
   
@@ -332,7 +333,7 @@ void Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, doubl
 	      if (appSP[kappa][j] != appSP[kappa][j]) // if appSP[kappa][j] == NAN
 	      {
 //### This is different -----
-            appSP[kappa][j] = d_vec_scalar_product_heuristic(appB[kappa], appB[j], n, B, kappa, j, expo[kappa]+expo[j]);
+            appSP[kappa][j] = heuristic_scalar_product(appB[kappa], appB[j], n, B, kappa, j, expo[kappa]+expo[j]);
 //---------------------------
          }
 	  	  
@@ -383,7 +384,7 @@ void Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, doubl
 			            mu[kappa][k] =  mu[kappa][k] - tmp; 
 			         }
 		      
-		            F_mpz_mat_row_sub(B, kappa, B, kappa, B, j, 0, n);
+		            _F_mpz_vec_sub(B->rows[kappa], B->rows[kappa], B->rows[j], n);
 		  
 		         } else          /* otherwise X is -1 */ 
                {
@@ -393,7 +394,7 @@ void Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, doubl
 			            mu[kappa][k] = mu[kappa][k] + tmp;
 			         }
 		      
-                  F_mpz_mat_row_add(B, kappa, B, kappa, B, j, 0, n); 
+                  _F_mpz_vec_add(B->rows[kappa], B->rows[kappa], B->rows[j], n); 
                }
 		      } else   /* we must have |X| >= 2 */
 		      {
@@ -414,10 +415,10 @@ void Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, doubl
 		      
                   if (xx > 0L)
                   { 
-                     F_mpz_mat_row_submul_ui(B, kappa, B, j, 0, n, (ulong) xx);  
+                     _F_mpz_vec_scalar_submul_ui(B->rows[kappa], B->rows[j], n, (ulong) xx);  
                   } else
                   {
-                     F_mpz_mat_row_addmul_ui(B, kappa, B, j, 0, n, (ulong) -xx);  
+                     _F_mpz_vec_scalar_addmul_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx);  
                   } 
                } else
 		         {
@@ -434,10 +435,10 @@ void Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, doubl
 			  
 			            if (xx > 0)
                      {
-                        F_mpz_mat_row_submul_ui(B, kappa, B, j, 0, n, xx);  
+                        _F_mpz_vec_scalar_submul_ui(B->rows[kappa], B->rows[j], n, xx);  
                      } else
                      {
-                        F_mpz_mat_row_addmul_ui(B, kappa, B, j, 0, n, -xx);  
+                        _F_mpz_vec_scalar_addmul_ui(B->rows[kappa], B->rows[j], n, -xx);  
                      }
               			    
 			            for (k = zeros + 1; k < j; k++)
@@ -450,10 +451,10 @@ void Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, doubl
 			         {
 			            if (xx > 0)
                      {
-                        F_mpz_mat_row_submul_2exp_ui(B, kappa, B, j, 0, n, (ulong) xx, exponent);  
+                        _F_mpz_vec_scalar_submul_2exp_ui(B->rows[kappa], B->rows[j], n, (ulong) xx, exponent);  
                      } else
                      {
-                        F_mpz_mat_row_addmul_2exp_ui(B, kappa, B, j, 0, n, (ulong) -xx, exponent);  
+                        _F_mpz_vec_scalar_addmul_2exp_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx, exponent);  
                      }
 			            for (k = zeros + 1; k < j; k++)
 			            {
@@ -469,7 +470,7 @@ void Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, doubl
 
       if (test)   /* Anything happened? */
 	   {
-	      expo[kappa] = F_mpz_mat_set_line_d(appB[kappa], B, kappa, n);
+	      expo[kappa] = _F_mpz_vec_ldexp(appB[kappa], B->rows[kappa], n);
 	      aa = zeros + 1;
 	      for (i = zeros + 1; i <= kappa; i++) 
 	         appSP[kappa][i] = NAN;//0.0/0.0;
@@ -481,7 +482,7 @@ void Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, doubl
    if (appSP[kappa][kappa] != appSP[kappa][kappa]) 
    {
 //### This is different -------
-      appSP[kappa][kappa] = d_vec_norm(appB[kappa], n);
+      appSP[kappa][kappa] = _d_vec_norm(appB[kappa], n);
 //-----------------------------
    }
    s[zeros + 1] = appSP[kappa][kappa];
@@ -583,7 +584,7 @@ void Babai_heuristic_d_2exp (int kappa, F_mpz_mat_t B, double **mu, double **r, 
 			            mu[kappa][k] =  mu[kappa][k] - tmp; 
 			         }
 		      
-		            F_mpz_mat_row_sub(B, kappa, B, kappa, B, j, 0, n);
+		            _F_mpz_vec_sub(B->rows[kappa], B->rows[kappa], B->rows[j], n);
 		  
 		         } else          /* otherwise X is -1 */ 
                {
@@ -593,7 +594,7 @@ void Babai_heuristic_d_2exp (int kappa, F_mpz_mat_t B, double **mu, double **r, 
 			            mu[kappa][k] = mu[kappa][k] + tmp;
 			         }
 		      
-                  F_mpz_mat_row_add(B, kappa, B, kappa, B, j, 0, n); 
+                  _F_mpz_vec_add(B->rows[kappa], B->rows[kappa], B->rows[j], n); 
                }
 		      } else   /* we must have |X| >= 2 */
 		      {
@@ -614,10 +615,10 @@ void Babai_heuristic_d_2exp (int kappa, F_mpz_mat_t B, double **mu, double **r, 
 		      
                   if (xx > 0L)
                   { 
-                     F_mpz_mat_row_submul_ui(B, kappa, B, j, 0, n, (ulong) xx);  
+                     _F_mpz_vec_scalar_submul_ui(B->rows[kappa], B->rows[j], n, (ulong) xx);  
                   } else
                   {
-                     F_mpz_mat_row_addmul_ui(B, kappa, B, j, 0, n, (ulong) -xx);  
+                     _F_mpz_vec_scalar_addmul_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx);  
                   } 
                } else
 		         {
@@ -634,10 +635,10 @@ void Babai_heuristic_d_2exp (int kappa, F_mpz_mat_t B, double **mu, double **r, 
 			  
 			            if (xx > 0)
                      {
-                        F_mpz_mat_row_submul_ui(B, kappa, B, j, 0, n, xx);  
+                        _F_mpz_vec_scalar_submul_ui(B->rows[kappa], B->rows[j], n, xx);  
                      } else
                      {
-                        F_mpz_mat_row_addmul_ui(B, kappa, B, j, 0, n, -xx);  
+                        _F_mpz_vec_scalar_addmul_ui(B->rows[kappa], B->rows[j], n, -xx);  
                      }
               			    
 			            for (k = zeros + 1; k < j; k++)
@@ -650,10 +651,10 @@ void Babai_heuristic_d_2exp (int kappa, F_mpz_mat_t B, double **mu, double **r, 
 			         {
 			            if (xx > 0)
                      {
-                        F_mpz_mat_row_submul_2exp_ui(B, kappa, B, j, 0, n, (ulong) xx, exponent);  
+                        _F_mpz_vec_scalar_submul_2exp_ui(B->rows[kappa], B->rows[j], n, (ulong) xx, exponent);  
                      } else
                      {
-                        F_mpz_mat_row_addmul_2exp_ui(B, kappa, B, j, 0, n, (ulong) -xx, exponent);  
+                        _F_mpz_vec_scalar_addmul_2exp_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx, exponent);  
                      }
 			            for (k = zeros + 1; k < j; k++)
 			            {
@@ -669,7 +670,7 @@ void Babai_heuristic_d_2exp (int kappa, F_mpz_mat_t B, double **mu, double **r, 
 
       if (test)   /* Anything happened? */
 	   {
-	      expo[kappa] = F_mpz_mat_set_line_d(appB[kappa], B, kappa, n);
+	      expo[kappa] = _F_mpz_vec_ldexp(appB[kappa], B->rows[kappa], n);
 	      aa = zeros + 1;
 	      for (i = zeros + 1; i <= kappa; i++) 
 	         appSP[kappa][i] = NAN;//0.0/0.0;
@@ -738,7 +739,7 @@ void LLL(F_mpz_mat_t B)
    /* ************************** */     
     
    for (i = 0; i < d; i++)
-      expo[i] = F_mpz_mat_set_line_d(appB[i], B, i, n);  
+      expo[i] = _F_mpz_vec_ldexp(appB[i], B->rows[i], n);  
   
    /* ********************************* */
    /* Step2: Initializing the main loop */
@@ -748,7 +749,7 @@ void LLL(F_mpz_mat_t B)
    i = 0; 
   
    do
-      appSP[i][i] = d_vec_norm(appB[i], n); 
+      appSP[i][i] = _d_vec_norm(appB[i], n); 
    while ((appSP[i][i] <= 0.0) && (++i < d)); // Fixme : should this be EPS not 0.0
 
    zeros = i - 1; /* all vectors B[i] with i <= zeros are zero vectors */
@@ -870,7 +871,7 @@ void LLL(F_mpz_mat_t B)
 	      {
 	         zeros++;
 	         kappa++;
-	         appSP[kappa][kappa] = d_vec_norm(appB[kappa], n);
+	         appSP[kappa][kappa] = _d_vec_norm(appB[kappa], n);
 	         r[kappa][kappa] = appSP[kappa][kappa];
 	      }
 	  
@@ -935,7 +936,7 @@ void LLL_heuristic_d_2exp(F_mpz_mat_t B, int *cexpo)
    /* ************************** */     
     
    for (i = 0; i < d; i++)
-      expo[i] = F_mpz_mat_set_line_d(appB[i], B, i, n);  
+      expo[i] = _F_mpz_vec_ldexp(appB[i], B->rows[i], n);  
   
    /* ********************************* */
    /* Step2: Initializing the main loop */
@@ -1139,7 +1140,7 @@ int LLL_heuristic_d_2exp_with_removal(F_mpz_mat_t B, int *cexpo, F_mpz_t gs_B)
    /* ************************** */     
     
    for (i = 0; i < d; i++)
-      expo[i] = F_mpz_mat_set_line_d(appB[i], B, i, n);  
+      expo[i] = _F_mpz_vec_ldexp(appB[i], B->rows[i], n);  
   
    /* ********************************* */
    /* Step2: Initializing the main loop */
@@ -1354,7 +1355,7 @@ int LLL_heuristic_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    /* ************************** */     
     
    for (i = 0; i < d; i++)
-      expo[i] = F_mpz_mat_set_line_d(appB[i], B, i, n);  
+      expo[i] = _F_mpz_vec_ldexp(appB[i], B->rows[i], n);  
   
    /* ********************************* */
    /* Step2: Initializing the main loop */
@@ -1365,7 +1366,7 @@ int LLL_heuristic_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
   
    do
 //### This is different -----
-   appSP[i][i] = d_vec_norm(appB[i], n); 
+   appSP[i][i] = _d_vec_norm(appB[i], n); 
 //---------------------------
    while ((appSP[i][i] <= 0.0) && (++i < d)); // Fixme : should this be EPS not 0.0
 
@@ -1489,7 +1490,7 @@ int LLL_heuristic_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 	         zeros++;
 	         kappa++;
 //### This is different -----
-	         appSP[kappa][kappa] = d_vec_norm(appB[kappa], n);
+	         appSP[kappa][kappa] = _d_vec_norm(appB[kappa], n);
 //---------------------------
             r[kappa][kappa] = appSP[kappa][kappa];
 	      }

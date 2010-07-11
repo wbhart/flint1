@@ -1,5 +1,6 @@
 /*
   Copyright 2005, 2006 Damien Stehlé.
+  Copyright 2010 William Hart.
 
   This program is free software; you can redistribute it and/or modify it
   under the terms of the GNU General Public License as published by the
@@ -17,19 +18,57 @@
   02111-1307, USA.
 */
 
-#include "F_mpz_mat.h"
+/****************************************************************************
 
-double ** d_mat_init(int d, int n);
+   d_mat.h: Vectors and matrices with double precision floating point entries.
+
+*****************************************************************************/
+
+#ifndef FLINT_D_MAT_H
+#define FLINT_D_MAT_H
+
+#ifdef __cplusplus
+ extern "C" {
+#endif
+ 
+#include "flint.h"
+#include "d_mat.h"
+
+double ** d_mat_init(ulong r, ulong c);
 
 void d_mat_clear(double ** B);
 
-void d_mat_print(double ** B, int * expo, int d, int n);
+/* 
+   Determines if the entries in r1 are equal to r2 to within about 2^-exp
+*/
+static inline 
+int _d_vec_equal(double * r1, double * r2, ulong n, ulong exp)
+{
+   ulong i;
+   double eps = ldexp(1.0, -exp);
 
-double d_vec_scalar_product(double * vec1, double * vec2, int n);
+   for (i = 0; i < n; i++)
+      if (fabs(r1[i] - r2[i]) > eps) return 0;
 
-double d_vec_norm(double * vec, int n);
+   return 1;
+}
 
-double d_vec_scalar_product_heuristic(double * vec1, double * vec2, int n, F_mpz_mat_t B, ulong kappa, ulong j, long exp_adj);
+void _d_vec_add(double * r1, double * r2, double * r3, ulong n);
 
+void _d_vec_sub(double * r1, double * r2, double * r3, ulong n);
+
+void d_mat_print(double ** B, int * expo, ulong r, ulong c);
+
+double _d_vec_scalar_product(double * vec1, double * vec2, ulong n);
+
+double _d_vec_norm(double * vec, ulong n);
+
+#ifdef __cplusplus
+ }
+#endif
+ 
+#endif
+
+// *************** end of file
 
 

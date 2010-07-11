@@ -490,7 +490,7 @@ void F_mpz_add(F_mpz_t f, const F_mpz_t g, const F_mpz_t h);
    \fn     void F_mpz_sub(F_mpz_t f, const F_mpz_t g, F_mpz_t h)
    \brief  Set f to g minus h. 
 */
-void F_mpz_sub(F_mpz_t f, const F_mpz_t g, F_mpz_t h);
+void F_mpz_sub(F_mpz_t f, const F_mpz_t g, const F_mpz_t h);
 
 /** 
    \fn     void F_mpz_mul_ui(F_mpz_t f, const F_mpz_t g, const ulong x)

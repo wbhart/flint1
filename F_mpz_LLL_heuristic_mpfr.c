@@ -105,7 +105,7 @@ void Babai_heuristic(int kappa, F_mpz_mat_t B, mpfr_t **mu, mpfr_t **r, mpfr_t *
 	      {
             if (!(mpfr_vec_scalar_product(appSP[kappa][j], appB[kappa], appB[j], n) ) ){
 //In this case a heuristic told us that some cancelation probably happened so we just compute the scalar product at full precision
-               F_mpz_mat_row_scalar_product(ztmp, B, kappa, B, j, 0, n);
+               _F_mpz_vec_scalar_product(ztmp, B->rows[kappa], B->rows[j], n);
                F_mpz_get_mpfr(appSP[kappa][j], ztmp);
             }
 	      }
@@ -153,7 +153,7 @@ void Babai_heuristic(int kappa, F_mpz_mat_t B, mpfr_t **mu, mpfr_t **r, mpfr_t *
                      mpfr_sub(mu[kappa][k], mu[kappa][k], mu[j][k], GMP_RNDN);
 			         }
 		      
-		            F_mpz_mat_row_sub(B, kappa, B, kappa, B, j, 0, n);
+		            _F_mpz_vec_sub(B->rows[kappa], B->rows[kappa], B->rows[j], n);
 		  
 		         } else          /* otherwise X is -1 */ 
                {
@@ -162,7 +162,7 @@ void Babai_heuristic(int kappa, F_mpz_mat_t B, mpfr_t **mu, mpfr_t **r, mpfr_t *
 			            mpfr_add(mu[kappa][k], mu[kappa][k], mu[j][k], GMP_RNDN);
 			         }
 		      
-                  F_mpz_mat_row_add(B, kappa, B, kappa, B, j, 0, n); 
+                  _F_mpz_vec_add(B->rows[kappa], B->rows[kappa], B->rows[j], n); 
                }
 		      } else   /* we must have |X| >= 2 */
 		      {
@@ -179,20 +179,20 @@ void Babai_heuristic(int kappa, F_mpz_mat_t B, mpfr_t **mu, mpfr_t **r, mpfr_t *
                   xx = mpfr_get_si(tmp, GMP_RNDN);		      
                   if (xx > 0L)
                   { 
-                     F_mpz_mat_row_submul_ui(B, kappa, B, j, 0, n, (ulong) xx);  
+                     _F_mpz_vec_scalar_submul_ui(B->rows[kappa], B->rows[j], n, (ulong) xx);  
                   } else
                   {
-                     F_mpz_mat_row_addmul_ui(B, kappa, B, j, 0, n, (ulong) -xx);  
+                     _F_mpz_vec_scalar_addmul_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx);  
                   } 
                } else
 		         {
                   exponent = F_mpz_set_mpfr_2exp(ztmp, tmp);
                   if (exponent <= 0){
                      F_mpz_div_2exp(ztmp, ztmp, -exponent);
-                     F_mpz_mat_row_submul(B, kappa, B, j, 0, n, ztmp);
+                     _F_mpz_vec_scalar_submul_F_mpz(B->rows[kappa], B->rows[j], n, ztmp);
                   }
                   else{
-                     F_mpz_mat_row_submul_2exp_F_mpz(B, kappa, B, j, 0, n, ztmp, exponent);
+                     _F_mpz_vec_scalar_submul_2exp_F_mpz(B->rows[kappa], B->rows[j], n, ztmp, exponent);
                   }
 			      }
 		      }
@@ -201,7 +201,7 @@ void Babai_heuristic(int kappa, F_mpz_mat_t B, mpfr_t **mu, mpfr_t **r, mpfr_t *
 
       if (test)   /* Anything happened? */
 	   {
-	      F_mpz_mat_set_line_mpfr(appB[kappa], B, kappa, n);
+	      _F_mpz_vec_ldexp_mpfr(appB[kappa], B->rows[kappa], n);
 	      aa = zeros + 1;
 	      for (i = zeros + 1; i <= kappa; i++) 
 	         mpfr_set_nan(appSP[kappa][i]);//0.0/0.0;
@@ -284,7 +284,7 @@ void LLL_heuristic(F_mpz_mat_t B)
    /* ************************** */     
     
    for (i = 0; i < d; i++)
-      F_mpz_mat_set_line_mpfr(appB[i], B, i, n);  
+      _F_mpz_vec_ldexp_mpfr(appB[i], B->rows[i], n);  
   
    /* ********************************* */
    /* Step2: Initializing the main loop */
@@ -494,7 +494,7 @@ long LLL_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    /* ************************** */     
     
    for (i = 0; i < d; i++)
-      F_mpz_mat_set_line_mpfr(appB[i], B, i, n);  
+      _F_mpz_vec_ldexp_mpfr(appB[i], B->rows[i], n);  
   
    /* ********************************* */
    /* Step2: Initializing the main loop */
@@ -717,7 +717,7 @@ void Babai_heuristic_2exp(int kappa, F_mpz_mat_t B, mpfr_t **mu, mpfr_t **r, mpf
 	      {
             if (!(mpfr_vec_scalar_product(appSP[kappa][j], appB[kappa], appB[j], n) ) ){
 //In this case a heuristic told us that some cancelation probably happened so we just compute the scalar product at full precision
-               long exp = F_mpz_mat_row_scalar_product_2exp(ztmp, B, kappa, B, j, 0, n, cexpo);
+               long exp = _F_mpz_vec_scalar_product_2exp(ztmp, B->rows[kappa], B->rows[j], n, cexpo);
                F_mpz_2exp_get_mpfr(appSP[kappa][j], ztmp, exp);
             }
 	      }
@@ -765,7 +765,7 @@ void Babai_heuristic_2exp(int kappa, F_mpz_mat_t B, mpfr_t **mu, mpfr_t **r, mpf
                      mpfr_sub(mu[kappa][k], mu[kappa][k], mu[j][k], GMP_RNDN);
 			         }
 		      
-		            F_mpz_mat_row_sub(B, kappa, B, kappa, B, j, 0, n);
+		            _F_mpz_vec_sub(B->rows[kappa], B->rows[kappa], B->rows[j], n);
 		  
 		         } else          /* otherwise X is -1 */ 
                {
@@ -774,7 +774,7 @@ void Babai_heuristic_2exp(int kappa, F_mpz_mat_t B, mpfr_t **mu, mpfr_t **r, mpf
 			            mpfr_add(mu[kappa][k], mu[kappa][k], mu[j][k], GMP_RNDN);
 			         }
 		      
-                  F_mpz_mat_row_add(B, kappa, B, kappa, B, j, 0, n); 
+                  _F_mpz_vec_add(B->rows[kappa], B->rows[kappa], B->rows[j], n); 
                }
 		      } else   /* we must have |X| >= 2 */
 		      {
@@ -791,20 +791,20 @@ void Babai_heuristic_2exp(int kappa, F_mpz_mat_t B, mpfr_t **mu, mpfr_t **r, mpf
                   xx = mpfr_get_si(tmp, GMP_RNDN);		      
                   if (xx > 0L)
                   { 
-                     F_mpz_mat_row_submul_ui(B, kappa, B, j, 0, n, (ulong) xx);  
+                     _F_mpz_vec_scalar_submul_ui(B->rows[kappa], B->rows[j], n, (ulong) xx);  
                   } else
                   {
-                     F_mpz_mat_row_addmul_ui(B, kappa, B, j, 0, n, (ulong) -xx);  
+                     _F_mpz_vec_scalar_addmul_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx);  
                   } 
                } else
 		         {
                   exponent = F_mpz_set_mpfr_2exp(ztmp, tmp);
                   if (exponent <= 0){
                      F_mpz_div_2exp(ztmp, ztmp, -exponent);
-                     F_mpz_mat_row_submul(B, kappa, B, j, 0, n, ztmp);
+                     _F_mpz_vec_scalar_submul_F_mpz(B->rows[kappa], B->rows[j], n, ztmp);
                   }
                   else{
-                     F_mpz_mat_row_submul_2exp_F_mpz(B, kappa, B, j, 0, n, ztmp, exponent);
+                     _F_mpz_vec_scalar_submul_2exp_F_mpz(B->rows[kappa], B->rows[j], n, ztmp, exponent);
                   }
 			      }
 		      }
@@ -813,7 +813,7 @@ void Babai_heuristic_2exp(int kappa, F_mpz_mat_t B, mpfr_t **mu, mpfr_t **r, mpf
 
       if (test)   /* Anything happened? */
 	   {
-	      F_mpz_mat_set_line_mpfr_2exp(appB[kappa], B, kappa, n, cexpo);
+	      _F_mpz_vec_ldexp_mpfr_2exp(appB[kappa], B->rows[kappa], n, cexpo);
 	      aa = zeros + 1;
 	      for (i = zeros + 1; i <= kappa; i++) 
 	         mpfr_set_nan(appSP[kappa][i]);//0.0/0.0;
@@ -896,7 +896,7 @@ void LLL_heuristic_2exp(F_mpz_mat_t B, int * cexpo)
    /* ************************** */     
     
    for (i = 0; i < d; i++)
-      F_mpz_mat_set_line_mpfr_2exp(appB[i], B, i, n, cexpo);  
+      _F_mpz_vec_ldexp_mpfr_2exp(appB[i], B->rows[i], n, cexpo);  
   
    /* ********************************* */
    /* Step2: Initializing the main loop */
@@ -1106,7 +1106,7 @@ long LLL_heuristic_2exp_with_removal(F_mpz_mat_t B, int * cexpo, F_mpz_t gs_B)
    /* ************************** */     
     
    for (i = 0; i < d; i++)
-      F_mpz_mat_set_line_mpfr_2exp(appB[i], B, i, n, cexpo);  
+      _F_mpz_vec_ldexp_mpfr_2exp(appB[i], B->rows[i], n, cexpo);  
   
    /* ********************************* */
    /* Step2: Initializing the main loop */
