@@ -516,7 +516,7 @@ int test_F_mpz_poly_getset_coeff_ui()
 				  result = (coeff2 == coeff);
 				  if (!result)
 				  {
-					  printf("Error: length = %ld, coeff_num = %ld, coeff = %u, coeff2 = %u\n", length, coeff_num, coeff, coeff2);
+					  printf("Error: length = %ld, coeff_num = %ld, coeff = %ld, coeff2 = %ld\n", length, coeff_num, coeff, coeff2);
 				  }
           }
       }
@@ -2636,7 +2636,7 @@ int test_F_mpz_poly_factor()
    mpz_poly_init(res2); 
 
    ulong count1;
-   for (count1 = 0; (count1 < 1*ITER) && (result == 1) ; count1++)
+   for (count1 = 0; (count1 < 15*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -4549,7 +4549,7 @@ int test_F_mpz_poly_pseudo_div_basecase()
 void F_mpz_poly_test_all()
 {
    int success, all_success = 1;
-   printf("FLINT_BITS = %ld\n", FLINT_BITS);
+   printf("FLINT_BITS = %d\n", FLINT_BITS);
 
 #if TESTFILE
 #endif

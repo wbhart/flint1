@@ -6416,8 +6416,10 @@ void F_mpz_poly_squarefree(F_mpz_poly_factor_t fac, F_mpz_t content, F_mpz_poly_
    F_mpz_poly_factor_clear(fac);
    F_mpz_poly_factor_init(fac);
 
-   if (f->length == 1)
+   if (f->length == 1){
+      F_mpz_poly_clear(f);
       return;
+   }
 
    F_mpz_poly_t d, v, w, s, t1;
    F_mpz_poly_init(d);
@@ -7955,6 +7957,13 @@ printf("nope not there trial_factors->num_factors = %ld\n", trial_factors->num_f
          for (j = 0; j < i; j++)
             F_mpz_poly_factor_insert(final_fac, trial_factors->factors[j], exp);
          F_mpz_poly_factor_insert(final_fac, f, exp);
+         F_mpz_poly_clear(f);
+         F_mpz_poly_clear(Q);
+         F_mpz_poly_clear(R);
+
+         F_mpz_clear(temp_lc);
+         F_mpz_poly_clear(tryme);
+         F_mpz_poly_factor_clear(trial_factors);
          return 1;
       }
 
