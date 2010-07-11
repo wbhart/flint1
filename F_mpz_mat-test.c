@@ -28,11 +28,14 @@ Copyright (C) 2008, William Hart
 #include <stdio.h>
 #include <string.h>
 #include <gmp.h>
+#include <mpfr.h>
 #include <time.h>
 #include "flint.h"
 #include "long_extras.h"
+#include "d_mat.h"
 #include "mpz_mat.h"
 #include "F_mpz_mat.h"
+#include "mpfr_mat.h"
 #include "memory-manager.h"
 #include "test-support.h"
 
@@ -1952,6 +1955,102 @@ int test__F_mpz_vec_scalar_mul()
    return result; 
 }
 
+int test__F_mpz_vec_ldexp()
+{
+   double * d1, * d2;
+   F_mpz_mat_t F_mat;
+   int result = 1;
+   ulong bits, r, c, i, j;
+   
+   ulong count1;
+   for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
+   {
+      r = z_randint(30) + 1;
+      c = z_randint(30) + 2;
+      bits = z_randint(200) + 1;
+      
+	  F_mpz_mat_init(F_mat, r, c);
+      d1 = (double *) malloc(c*sizeof(double));
+      d2 = (double *) malloc(c*sizeof(double));
+      	  
+	  F_mpz_randmat(F_mat, r, c, bits);
+       
+	  i = z_randint(r);
+	  ulong l1 = _F_mpz_vec_ldexp(d1, F_mat->rows[i], c/2);
+      ulong l2 = _F_mpz_vec_ldexp(d1 + c/2, F_mat->rows[i] + c/2, (c + 1)/2);
+      ulong l3 = _F_mpz_vec_ldexp(d2, F_mat->rows[i], c);
+
+	  if (l1 < l2)
+	     for (j = 0; j < c/2; j++)
+		    d1[j] = ldexp(d1[j], l1 - l2);
+      
+      if (l2 < l1)
+	     for (j = c/2; j < c; j++)
+		    d1[j] = ldexp(d1[j], l2 - l1);
+      
+      result = (l3 == FLINT_MAX(l1, l2) && _d_vec_equal(d1, d2, c, FLINT_D_BITS - 1)); 
+		if (!result) 
+		{
+			printf("Error: bits = %ld, r = %ld, c = %ld\n", bits, r, c);
+		}
+          
+      F_mpz_mat_clear(F_mat);
+	  free(d1);
+	  free(d2);
+   }
+   
+   return result;
+}
+
+int test__F_mpz_vec_to_mpfr_vec()
+{
+   __mpfr_struct * d1, * d2;
+   F_mpz_mat_t F_mat;
+   int result = 1;
+   ulong bits, r, c, i, j;
+   
+   ulong count1;
+   for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
+   {
+      r = z_randint(30) + 1;
+      c = z_randint(30) + 2;
+      bits = z_randint(200) + 1;
+      
+	  F_mpz_mat_init(F_mat, r, c);
+      d1 = (__mpfr_struct *) malloc(c*sizeof(__mpfr_struct));
+      d2 = (__mpfr_struct *) malloc(c*sizeof(__mpfr_struct));
+      for (i = 0; i < c; i++)
+	  {
+		  mpfr_init2(d1 + i, 200);
+		  mpfr_init2(d2 + i, 200);
+	  }
+
+	  F_mpz_randmat(F_mat, r, c, bits);
+       
+	  i = z_randint(r);
+	  _F_mpz_vec_to_mpfr_vec(d1, F_mat->rows[i], c/2);
+      _F_mpz_vec_to_mpfr_vec(d1 + c/2, F_mat->rows[i] + c/2, (c + 1)/2);
+      _F_mpz_vec_to_mpfr_vec(d2, F_mat->rows[i], c);
+
+	  result = (_mpfr_vec_equal(d1, d2, c)); 
+		if (!result) 
+		{
+			printf("Error: bits = %ld, r = %ld, c = %ld\n", bits, r, c);
+		}
+          
+      F_mpz_mat_clear(F_mat);
+	  for (i = 0; i < c; i++)
+	  {
+		  mpfr_clear(d1 + i);
+		  mpfr_clear(d2 + i);
+	  }
+      free(d1);
+	  free(d2);
+   }
+   
+   return result;
+}
+
 void F_mpz_mat_test_all()
 {
    int success, all_success = 1;
@@ -1978,6 +2077,8 @@ void F_mpz_mat_test_all()
    RUN_TEST(F_mpz_mat_mul_classical);
    RUN_TEST(_F_mpz_vec_scalar_submul_2exp_F_mpz); 
    RUN_TEST(_F_mpz_vec_scalar_mul); 
+   RUN_TEST(_F_mpz_vec_ldexp); 
+   RUN_TEST(_F_mpz_vec_to_mpfr_vec); 
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");

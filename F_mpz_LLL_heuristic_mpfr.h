@@ -67,16 +67,16 @@ double halfplus, onedothalfplus, ctt;
 #define DELTA 0.99
 #endif
 
-void Babai_heuristic(int kappa, F_mpz_mat_t B, mpfr_t **mu, mpfr_t **r, mpfr_t *s, 
-       mpfr_t **appB, mpfr_t **appSP, int a, int zeros, int kappamax, 
+void Babai_heuristic(int kappa, F_mpz_mat_t B, __mpfr_struct **mu, __mpfr_struct **r, __mpfr_struct *s, 
+       __mpfr_struct **appB, __mpfr_struct **appSP, int a, int zeros, int kappamax, 
        int n, mpfr_t tmp, mpfr_t rtmp);
                          
 void LLL_heuristic(F_mpz_mat_t B);
 
 long LLL_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B);
 
-void Babai_heuristic_2exp(int kappa, F_mpz_mat_t B, mpfr_t **mu, mpfr_t **r, mpfr_t *s, 
-       mpfr_t **appB, mpfr_t **appSP, 
+void Babai_heuristic_2exp(int kappa, F_mpz_mat_t B, __mpfr_struct **mu, __mpfr_struct **r, __mpfr_struct *s, 
+       __mpfr_struct **appB, __mpfr_struct **appSP, 
        int a, int zeros, int kappamax, int n, mpfr_t tmp, mpfr_t rtmp, int * cexpo);
 
 void LLL_heuristic_2exp(F_mpz_mat_t B, int * cexpo);

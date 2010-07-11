@@ -58,7 +58,7 @@
 /***********************************/
 
 /* 
-   Computes mu[kappa][j] and r[kappa][j] for j < kappa.
+   Computes mu[kappa] + j and r[kappa] + j for j < kappa.
 	
 	Size-reduces b_kappa using r[i][j] for j <= i < kappa
    and mu[i][j] for j < i < kappa.
@@ -70,8 +70,8 @@
 	The algorithm is the iterative Babai algorithm of the paper.
 */
 
-void Babai_heuristic(int kappa, F_mpz_mat_t B, mpfr_t **mu, mpfr_t **r, mpfr_t *s, 
-       mpfr_t **appB, mpfr_t **appSP, 
+void Babai_heuristic(int kappa, F_mpz_mat_t B, __mpfr_struct **mu, __mpfr_struct **r, __mpfr_struct *s, 
+       __mpfr_struct **appB, __mpfr_struct **appSP, 
        int a, int zeros, int kappamax, int n, mpfr_t tmp, mpfr_t rtmp)
 {
    int i, j, k, test, aa, exponent;
@@ -101,32 +101,32 @@ void Babai_heuristic(int kappa, F_mpz_mat_t B, mpfr_t **mu, mpfr_t **r, mpfr_t *
       
       for (j = aa; j < kappa; j++)
 	   {	  
-	      if ( mpfr_nan_p(appSP[kappa][j]) ) // if appSP[kappa][j] == NAN
+	      if ( mpfr_nan_p(appSP[kappa] + j) ) // if appSP[kappa] + j == NAN
 	      {
-            if (!(mpfr_vec_scalar_product(appSP[kappa][j], appB[kappa], appB[j], n) ) ){
+            if (!(mpfr_vec_scalar_product(appSP[kappa] + j, appB[kappa], appB[j], n) ) ){
 //In this case a heuristic told us that some cancelation probably happened so we just compute the scalar product at full precision
                _F_mpz_vec_scalar_product(ztmp, B->rows[kappa], B->rows[j], n);
-               F_mpz_get_mpfr(appSP[kappa][j], ztmp);
+               F_mpz_get_mpfr(appSP[kappa] + j, ztmp);
             }
 	      }
          if (j > zeros + 2)
 	      {
-	         mpfr_mul(tmp, mu[j][zeros+1], r[kappa][zeros+1], GMP_RNDN);
-	         mpfr_sub(rtmp, appSP[kappa][j], tmp, GMP_RNDN);
+	         mpfr_mul(tmp, mu[j] + zeros + 1, r[kappa] + zeros + 1, GMP_RNDN);
+	         mpfr_sub(rtmp, appSP[kappa] + j, tmp, GMP_RNDN);
 	         for (k = zeros + 2; k < j - 1; k++)
 		      {
-		         mpfr_mul(tmp, mu[j][k], r[kappa][k], GMP_RNDN);
+		         mpfr_mul(tmp, mu[j] + k, r[kappa] + kappa, GMP_RNDN);
 		         mpfr_sub(rtmp, rtmp, tmp, GMP_RNDN);
 		      }
-	         mpfr_mul(tmp, mu[j][j-1], r[kappa][j-1], GMP_RNDN);
-	         mpfr_sub(r[kappa][j], rtmp, tmp, GMP_RNDN);
+	         mpfr_mul(tmp, mu[j] + j - 1, r[kappa] + j - 1, GMP_RNDN);
+	         mpfr_sub(r[kappa] + j, rtmp, tmp, GMP_RNDN);
          } else if (j == zeros+2)
 	      {
-	         mpfr_mul(tmp, mu[j][zeros+1], r[kappa][zeros+1], GMP_RNDN);
-	         mpfr_sub(r[kappa][j], appSP[kappa][j], tmp, GMP_RNDN);
-	      } else mpfr_set(r[kappa][j], appSP[kappa][j], GMP_RNDN);
+	         mpfr_mul(tmp, mu[j] + zeros + 1, r[kappa] + zeros + 1, GMP_RNDN);
+	         mpfr_sub(r[kappa] + j, appSP[kappa] + j, tmp, GMP_RNDN);
+	      } else mpfr_set(r[kappa] + j, appSP[kappa] + j, GMP_RNDN);
 
-	      mpfr_div(mu[kappa][j], r[kappa][j], r[j][j], GMP_RNDN);
+	      mpfr_div(mu[kappa] + j, r[kappa] + j, r[j] + j, GMP_RNDN);
       }
       
       /* **************************** */
@@ -136,7 +136,7 @@ void Babai_heuristic(int kappa, F_mpz_mat_t B, mpfr_t **mu, mpfr_t **r, mpfr_t *
       for (j = kappa - 1; j > zeros; j--)
 	   {
 	      /* test of the relaxed size-reduction condition */
-         mpfr_abs(tmp, mu[kappa][j], GMP_RNDN); 
+         mpfr_abs(tmp, mu[kappa] + j, GMP_RNDN); 
 	  
 	      if ( mpfr_cmp_d(tmp, halfplus) > 0) 
 	      {
@@ -145,12 +145,12 @@ void Babai_heuristic(int kappa, F_mpz_mat_t B, mpfr_t **mu, mpfr_t **r, mpfr_t *
 	         /* we consider separately the cases X = +-1 */     
 	         if (mpfr_cmp_d(tmp, onedothalfplus) <= 0)   
 		      {
-               int sgn = mpfr_sgn(mu[kappa][j]);		  
+               int sgn = mpfr_sgn(mu[kappa] + j);		  
 		         if (sgn >= 0)   /* in this case, X is 1 */
                {
 		            for (k = zeros + 1; k < j; k++)
 			         {
-                     mpfr_sub(mu[kappa][k], mu[kappa][k], mu[j][k], GMP_RNDN);
+                     mpfr_sub(mu[kappa] + k, mu[kappa] + k, mu[j] + k, GMP_RNDN);
 			         }
 		      
 		            _F_mpz_vec_sub(B->rows[kappa], B->rows[kappa], B->rows[j], n);
@@ -159,18 +159,18 @@ void Babai_heuristic(int kappa, F_mpz_mat_t B, mpfr_t **mu, mpfr_t **r, mpfr_t *
                {
                   for (k=zeros+1; k<j; k++)
 			         {
-			            mpfr_add(mu[kappa][k], mu[kappa][k], mu[j][k], GMP_RNDN);
+			            mpfr_add(mu[kappa] + k, mu[kappa] + k, mu[j] + k, GMP_RNDN);
 			         }
 		      
                   _F_mpz_vec_add(B->rows[kappa], B->rows[kappa], B->rows[j], n); 
                }
 		      } else   /* we must have |X| >= 2 */
 		      {
-               mpfr_round(tmp, mu[kappa][j]);
+               mpfr_round(tmp, mu[kappa] + j);
 		         for (k = zeros + 1; k < j; k++)
 			      {
-			         mpfr_mul(rtmp, tmp, mu[j][k], GMP_RNDN);
-			         mpfr_sub(mu[kappa][k], mu[kappa][k], rtmp, GMP_RNDN);
+			         mpfr_mul(rtmp, tmp, mu[j] + k, GMP_RNDN);
+			         mpfr_sub(mu[kappa] + k, mu[kappa] + k, rtmp, GMP_RNDN);
 			      }
 
 	            if (mpfr_get_exp(tmp) < CPU_SIZE_1 - 2)  
@@ -204,28 +204,28 @@ void Babai_heuristic(int kappa, F_mpz_mat_t B, mpfr_t **mu, mpfr_t **r, mpfr_t *
 	      _F_mpz_vec_to_mpfr_vec(appB[kappa], B->rows[kappa], n);
 	      aa = zeros + 1;
 	      for (i = zeros + 1; i <= kappa; i++) 
-	         mpfr_set_nan(appSP[kappa][i]);//0.0/0.0;
+	         mpfr_set_nan(appSP[kappa] + i);//0.0/0.0;
 	      for (i = kappa + 1; i <= kappamax; i++) 
-	         mpfr_set_nan(appSP[i][kappa]);//0.0/0.0;
+	         mpfr_set_nan(appSP[i] + kappa);//0.0/0.0;
 	   }
    } while (test);
 
 
 
 
-   if (mpfr_nan_p(appSP[kappa][kappa])) 
+   if (mpfr_nan_p(appSP[kappa] + kappa)) 
    {
-      mpfr_vec_norm(appSP[kappa][kappa], appB[kappa], n);
+      mpfr_vec_norm(appSP[kappa] + kappa, appB[kappa], n);
    }
 
-   mpfr_set(s[zeros + 1], appSP[kappa][kappa], GMP_RNDN);
+   mpfr_set(s + zeros + 1, appSP[kappa] + kappa, GMP_RNDN);
 
    for (k = zeros + 1; k < kappa - 1; k++)
    {
-      mpfr_mul( tmp, mu[kappa][k], r[kappa][k], GMP_RNDN);
-      mpfr_sub( s[k+1], s[k], tmp, GMP_RNDN);
+      mpfr_mul( tmp, mu[kappa] + k, r[kappa] + kappa, GMP_RNDN);
+      mpfr_sub( s + k + 1, s + k, tmp, GMP_RNDN);
    }
-   mpfr_set(r[kappa][kappa], s[kappa - 1], GMP_RNDN);
+   mpfr_set(r[kappa] + kappa, s + kappa - 1, GMP_RNDN);
 
    F_mpz_clear(ztmp);
    F_mpz_clear(X);
@@ -240,8 +240,8 @@ void Babai_heuristic(int kappa, F_mpz_mat_t B, mpfr_t **mu, mpfr_t **r, mpfr_t *
 void LLL_heuristic(F_mpz_mat_t B)
 {
    int kappa, kappa2, d, n, i, j, zeros, kappamax;
-   mpfr_t ** mu, ** r, ** appB, ** appSP;
-   mpfr_t * s, * mutmp, * appBtmp, * appSPtmp;
+   __mpfr_struct ** mu, ** r, ** appB, ** appSP;
+   __mpfr_struct * s, * mutmp, * appBtmp, * appSPtmp;
    mpfr_t tmp, rtmp;
    F_mpz_t ztmp;
    int * alpha;
@@ -267,17 +267,17 @@ void LLL_heuristic(F_mpz_mat_t B)
    appB = mpfr_mat_init(d, n);
    appSP = mpfr_mat_init(d, d);
 
-   s = (mpfr_t *) malloc ((d + 1) * sizeof(mpfr_t));
-   appSPtmp = (mpfr_t *) malloc ((d + 1) * sizeof(mpfr_t));
+   s = (__mpfr_struct *) malloc ((d + 1) * sizeof(__mpfr_struct));
+   appSPtmp = (__mpfr_struct *) malloc ((d + 1) * sizeof(__mpfr_struct));
 
    for (i = 0; i < d+1; i++){
-      mpfr_init(s[i]);
-      mpfr_init(appSPtmp[i]);
+      mpfr_init(s + i);
+      mpfr_init(appSPtmp + i);
    }
 
    for (i = 0; i < d; i++)
       for (j = 0; j < d; j++)
-         mpfr_set_nan(appSP[i][j]);//0.0/0.0;
+         mpfr_set_nan(appSP[i] + j);//0.0/0.0;
   
    /* ************************** */
    /* Step1: Initialization Step */
@@ -294,13 +294,13 @@ void LLL_heuristic(F_mpz_mat_t B)
    i = 0; 
   
    do
-      mpfr_vec_norm(appSP[i][i], appB[i], n); 
-   while ( (mpfr_sgn(appSP[i][i]) == 0) && (++i < d));
+      mpfr_vec_norm(appSP[i] + i, appB[i], n); 
+   while ( (mpfr_sgn(appSP[i] + i) == 0) && (++i < d));
 
    zeros = i - 1; /* all vectors B[i] with i <= zeros are zero vectors */
    kappa = i + 1;
   
-   if (zeros < d - 1) mpfr_set(r[i][i], appSP[i][i], GMP_RNDN);
+   if (zeros < d - 1) mpfr_set(r[i] + i, appSP[i] + i, GMP_RNDN);
 
    for (i = zeros + 1; i < d; i++)
       alpha[i] = 0;
@@ -323,12 +323,12 @@ void LLL_heuristic(F_mpz_mat_t B)
       /* ************************************ */  
       /* ctt * r.coeff[kappa-1][kappa-1] <= s[kappa-2] ?? */
 
-      mpfr_mul_d( tmp, r[kappa - 1][kappa - 1], ctt, GMP_RNDN);
-      if ( mpfr_cmp(tmp, s[kappa -1]) <= 0) 
+      mpfr_mul_d( tmp, r[kappa - 1] + kappa - 1, ctt, GMP_RNDN);
+      if ( mpfr_cmp(tmp, s + kappa - 1) <= 0) 
 	   {
 	      alpha[kappa] = kappa;
-         mpfr_mul(tmp, mu[kappa][kappa-1], r[kappa][kappa-1], GMP_RNDN);
-         mpfr_sub(r[kappa][kappa], s[kappa - 1], tmp, GMP_RNDN);
+         mpfr_mul(tmp, mu[kappa] + kappa - 1, r[kappa] + kappa - 1, GMP_RNDN);
+         mpfr_sub(r[kappa] + kappa, s + kappa - 1, tmp, GMP_RNDN);
 	      kappa++;
 	   } else
 	   {
@@ -344,9 +344,9 @@ void LLL_heuristic(F_mpz_mat_t B)
 	         kappa--;
 	         if (kappa > zeros + 1) 
 		      {
-               mpfr_mul_d(tmp, r[kappa-1][kappa-1], ctt, GMP_RNDN);
+               mpfr_mul_d(tmp, r[kappa-1] + kappa - 1, ctt, GMP_RNDN);
 	         }
-         } while ( (kappa >= zeros + 2) && (mpfr_cmp(s[kappa-1],tmp) <= 0) );
+         } while ( (kappa >= zeros + 2) && (mpfr_cmp(s + kappa - 1,tmp) <= 0) );
 
          for (i = kappa; i < kappa2; i++)
 	         if (kappa <= alpha[i]) alpha[i] = kappa;
@@ -370,7 +370,7 @@ void LLL_heuristic(F_mpz_mat_t B)
 	      for (i = kappa2; i > kappa; i--) r[i] = r[i-1];
 	      r[kappa] = mutmp;
 
-	      mpfr_set(r[kappa][kappa], s[kappa], GMP_RNDN);
+	      mpfr_set(r[kappa] + kappa, s + kappa, GMP_RNDN);
 	  
 	      /* ************************ */
 	      /* Step7: Update B and appB */
@@ -389,31 +389,31 @@ void LLL_heuristic(F_mpz_mat_t B)
 	      /* Step8: Update appSP: tricky */
 	      /* *************************** */  	 
 	  
-	      for (i = 0; i <= kappa2; i++) mpfr_set(appSPtmp[i], appSP[kappa2][i], GMP_RNDN);
+	      for (i = 0; i <= kappa2; i++) mpfr_set(appSPtmp + i, appSP[kappa2] + i, GMP_RNDN);
 
-	      for (i = kappa2 + 1; i <= kappamax; i++) mpfr_set(appSPtmp[i], appSP[i][kappa2], GMP_RNDN);
+	      for (i = kappa2 + 1; i <= kappamax; i++) mpfr_set(appSPtmp + i, appSP[i] + kappa2, GMP_RNDN);
 	  
 	      for (i = kappa2; i > kappa; i--)
 	      {
-	         for (j = 0; j < kappa; j++) mpfr_set(appSP[i][j], appSP[i-1][j], GMP_RNDN);	      
-	         mpfr_set(appSP[i][kappa], appSPtmp[i-1], GMP_RNDN);
+	         for (j = 0; j < kappa; j++) mpfr_set(appSP[i] + j, appSP[i-1] + j, GMP_RNDN);	      
+	         mpfr_set(appSP[i] + kappa, appSPtmp + i - 1, GMP_RNDN);
 	      
-	         for (j = kappa + 1; j <= i; j++) mpfr_set(appSP[i][j], appSP[i-1][j-1], GMP_RNDN);
+	         for (j = kappa + 1; j <= i; j++) mpfr_set(appSP[i] + j, appSP[i-1] + j - 1, GMP_RNDN);
 
-	         for (j = kappa2 + 1; j <= kappamax; j++) mpfr_set(appSP[j][i], appSP[j][i-1], GMP_RNDN);     
+	         for (j = kappa2 + 1; j <= kappamax; j++) mpfr_set(appSP[j] + i, appSP[j] + i - 1, GMP_RNDN);     
 	      }
 	  
-	      for (i = 0; i < kappa; i++) mpfr_set(appSP[kappa][i], appSPtmp[i], GMP_RNDN);
-	      mpfr_set(appSP[kappa][kappa], appSPtmp[kappa2], GMP_RNDN);
+	      for (i = 0; i < kappa; i++) mpfr_set(appSP[kappa] + i, appSPtmp + i, GMP_RNDN);
+	      mpfr_set(appSP[kappa] + kappa, appSPtmp + kappa2, GMP_RNDN);
 
-	      for (i = kappa2 + 1; i <= kappamax; i++) mpfr_set(appSP[i][kappa], appSPtmp[i], GMP_RNDN);
+	      for (i = kappa2 + 1; i <= kappamax; i++) mpfr_set(appSP[i] + kappa, appSPtmp + i, GMP_RNDN);
 	  
-	      if ( mpfr_sgn(r[kappa][kappa]) <= 0.0)
+	      if ( mpfr_sgn(r[kappa] + kappa) <= 0.0)
 	      {
 	         zeros++;
 	         kappa++;
-	         mpfr_vec_norm(appSP[kappa][kappa], appB[kappa], n);
-	         mpfr_set(r[kappa][kappa], appSP[kappa][kappa], GMP_RNDN);
+	         mpfr_vec_norm(appSP[kappa] + kappa, appB[kappa], n);
+	         mpfr_set(r[kappa] + kappa, appSP[kappa] + kappa, GMP_RNDN);
 	      }
 	  
 	      kappa++;
@@ -427,8 +427,8 @@ void LLL_heuristic(F_mpz_mat_t B)
    mpfr_clear(tmp);
 
    for (i = 0; i < d+1; i++){
-      mpfr_clear(s[i]);
-      mpfr_clear(appSPtmp[i]);
+      mpfr_clear(s + i);
+      mpfr_clear(appSPtmp + i);
    }
 
 
@@ -450,8 +450,8 @@ void LLL_heuristic(F_mpz_mat_t B)
 long LLL_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 {
    int kappa, kappa2, d, n, i, j, zeros, kappamax;
-   mpfr_t ** mu, ** r, ** appB, ** appSP;
-   mpfr_t * s, * mutmp, * appBtmp, * appSPtmp;
+   __mpfr_struct ** mu, ** r, ** appB, ** appSP;
+   __mpfr_struct * s, * mutmp, * appBtmp, * appSPtmp;
    mpfr_t tmp, rtmp;
    F_mpz_t ztmp;
    int * alpha;
@@ -477,17 +477,17 @@ long LLL_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    appB = mpfr_mat_init(d, n);
    appSP = mpfr_mat_init(d, d);
 
-   s = (mpfr_t *) malloc ((d + 1) * sizeof(mpfr_t));
-   appSPtmp = (mpfr_t *) malloc ((d + 1) * sizeof(mpfr_t));
+   s = (__mpfr_struct *) malloc ((d + 1) * sizeof(__mpfr_struct));
+   appSPtmp = (__mpfr_struct *) malloc ((d + 1) * sizeof(__mpfr_struct));
 
    for (i = 0; i < d+1; i++){
-      mpfr_init(s[i]);
-      mpfr_init(appSPtmp[i]);
+      mpfr_init(s + i);
+      mpfr_init(appSPtmp + i);
    }
 
    for (i = 0; i < d; i++)
       for (j = 0; j < d; j++)
-         mpfr_set_nan(appSP[i][j]);//0.0/0.0;
+         mpfr_set_nan(appSP[i] + j);//0.0/0.0;
   
    /* ************************** */
    /* Step1: Initialization Step */
@@ -504,13 +504,13 @@ long LLL_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    i = 0; 
   
    do
-      mpfr_vec_norm(appSP[i][i], appB[i], n); 
-   while ( (mpfr_sgn(appSP[i][i]) == 0) && (++i < d));
+      mpfr_vec_norm(appSP[i] + i, appB[i], n); 
+   while ( (mpfr_sgn(appSP[i] + i) == 0) && (++i < d));
 
    zeros = i - 1; /* all vectors B[i] with i <= zeros are zero vectors */
    kappa = i + 1;
   
-   if (zeros < d - 1) mpfr_set(r[i][i], appSP[i][i], GMP_RNDN);
+   if (zeros < d - 1) mpfr_set(r[i] + i, appSP[i] + i, GMP_RNDN);
 
    for (i = zeros + 1; i < d; i++)
       alpha[i] = 0;
@@ -533,12 +533,12 @@ long LLL_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
       /* ************************************ */  
       /* ctt * r.coeff[kappa-1][kappa-1] <= s[kappa-2] ?? */
 
-      mpfr_mul_d( tmp, r[kappa - 1][kappa - 1], ctt, GMP_RNDN);
-      if ( mpfr_cmp(tmp, s[kappa -1]) <= 0) 
+      mpfr_mul_d( tmp, r[kappa - 1] + kappa - 1, ctt, GMP_RNDN);
+      if ( mpfr_cmp(tmp, s + kappa - 1) <= 0) 
 	   {
 	      alpha[kappa] = kappa;
-         mpfr_mul(tmp, mu[kappa][kappa-1], r[kappa][kappa-1], GMP_RNDN);
-         mpfr_sub(r[kappa][kappa], s[kappa - 1], tmp, GMP_RNDN);
+         mpfr_mul(tmp, mu[kappa] + kappa - 1, r[kappa] + kappa - 1, GMP_RNDN);
+         mpfr_sub(r[kappa] + kappa, s + kappa - 1, tmp, GMP_RNDN);
 	      kappa++;
 	   } else
 	   {
@@ -554,9 +554,9 @@ long LLL_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 	         kappa--;
 	         if (kappa > zeros + 1) 
 		      {
-               mpfr_mul_d(tmp, r[kappa-1][kappa-1], ctt, GMP_RNDN);
+               mpfr_mul_d(tmp, r[kappa-1] + kappa - 1, ctt, GMP_RNDN);
 	         }
-         } while ( (kappa >= zeros + 2) && (mpfr_cmp(s[kappa-1],tmp) <= 0) );
+         } while ( (kappa >= zeros + 2) && (mpfr_cmp(s + kappa - 1,tmp) <= 0) );
 
          for (i = kappa; i < kappa2; i++)
 	         if (kappa <= alpha[i]) alpha[i] = kappa;
@@ -580,7 +580,7 @@ long LLL_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 	      for (i = kappa2; i > kappa; i--) r[i] = r[i-1];
 	      r[kappa] = mutmp;
 
-	      mpfr_set(r[kappa][kappa], s[kappa], GMP_RNDN);
+	      mpfr_set(r[kappa] + kappa, s + kappa, GMP_RNDN);
 	  
 	      /* ************************ */
 	      /* Step7: Update B and appB */
@@ -599,31 +599,31 @@ long LLL_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 	      /* Step8: Update appSP: tricky */
 	      /* *************************** */  	 
 	  
-	      for (i = 0; i <= kappa2; i++) mpfr_set(appSPtmp[i], appSP[kappa2][i], GMP_RNDN);
+	      for (i = 0; i <= kappa2; i++) mpfr_set(appSPtmp + i, appSP[kappa2] + i, GMP_RNDN);
 
-	      for (i = kappa2 + 1; i <= kappamax; i++) mpfr_set(appSPtmp[i], appSP[i][kappa2], GMP_RNDN);
+	      for (i = kappa2 + 1; i <= kappamax; i++) mpfr_set(appSPtmp + i, appSP[i] + kappa2, GMP_RNDN);
 	  
 	      for (i = kappa2; i > kappa; i--)
 	      {
-	         for (j = 0; j < kappa; j++) mpfr_set(appSP[i][j], appSP[i-1][j], GMP_RNDN);	      
-	         mpfr_set(appSP[i][kappa], appSPtmp[i-1], GMP_RNDN);
+	         for (j = 0; j < kappa; j++) mpfr_set(appSP[i] + j, appSP[i-1] + j, GMP_RNDN);	      
+	         mpfr_set(appSP[i] + kappa, appSPtmp + i - 1, GMP_RNDN);
 	      
-	         for (j = kappa + 1; j <= i; j++) mpfr_set(appSP[i][j], appSP[i-1][j-1], GMP_RNDN);
+	         for (j = kappa + 1; j <= i; j++) mpfr_set(appSP[i] + j, appSP[i-1] + j - 1, GMP_RNDN);
 
-	         for (j = kappa2 + 1; j <= kappamax; j++) mpfr_set(appSP[j][i], appSP[j][i-1], GMP_RNDN);     
+	         for (j = kappa2 + 1; j <= kappamax; j++) mpfr_set(appSP[j] + i, appSP[j] + i - 1, GMP_RNDN);     
 	      }
 	  
-	      for (i = 0; i < kappa; i++) mpfr_set(appSP[kappa][i], appSPtmp[i], GMP_RNDN);
-	      mpfr_set(appSP[kappa][kappa], appSPtmp[kappa2], GMP_RNDN);
+	      for (i = 0; i < kappa; i++) mpfr_set(appSP[kappa] + i, appSPtmp + i, GMP_RNDN);
+	      mpfr_set(appSP[kappa] + kappa, appSPtmp + kappa2, GMP_RNDN);
 
-	      for (i = kappa2 + 1; i <= kappamax; i++) mpfr_set(appSP[i][kappa], appSPtmp[i], GMP_RNDN);
+	      for (i = kappa2 + 1; i <= kappamax; i++) mpfr_set(appSP[i] + kappa, appSPtmp + i, GMP_RNDN);
 	  
-	      if ( mpfr_sgn(r[kappa][kappa]) <= 0.0)
+	      if ( mpfr_sgn(r[kappa] + kappa) <= 0.0)
 	      {
 	         zeros++;
 	         kappa++;
-	         mpfr_vec_norm(appSP[kappa][kappa], appB[kappa], n);
-	         mpfr_set(r[kappa][kappa], appSP[kappa][kappa], GMP_RNDN);
+	         mpfr_vec_norm(appSP[kappa] + kappa, appB[kappa], n);
+	         mpfr_set(r[kappa] + kappa, appSP[kappa] + kappa, GMP_RNDN);
 	      }
 	  
 	      kappa++;
@@ -637,7 +637,7 @@ long LLL_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 
    for (i = d-1; (i >= 0) && (ok > 0); i--){
 //tmp_gs is the G-S length of ith vector divided by 2 (we shouldn't make a mistake and remove something valuable)
-      mpfr_set(rtmp, appSP[i][i], GMP_RNDN);
+      mpfr_set(rtmp, appSP[i] + i, GMP_RNDN);
       mpfr_div_d(rtmp, rtmp, 2.0, GMP_RNDN);
 //      mpfr_div_2ui(rtmp, rtmp, 1UL, GMP_RNDN);
       mpfr_printf(" gs length[%d] = %.10Rf, tmp = %.10Rf \n", i, rtmp, tmp);
@@ -654,8 +654,8 @@ long LLL_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    mpfr_clear(tmp);
 
    for (i = 0; i < d+1; i++){
-      mpfr_clear(s[i]);
-      mpfr_clear(appSPtmp[i]);
+      mpfr_clear(s + i);
+      mpfr_clear(appSPtmp + i);
    }
 
 
@@ -675,7 +675,7 @@ long LLL_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 /***********************************/
 
 /* 
-   Computes mu[kappa][j] and r[kappa][j] for j < kappa.
+   Computes mu[kappa] + j and r[kappa] + j for j < kappa.
 	
 	Size-reduces b_kappa using r[i][j] for j <= i < kappa
    and mu[i][j] for j < i < kappa.
@@ -687,8 +687,8 @@ long LLL_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 	The algorithm is the iterative Babai algorithm of the paper.
 */
 
-void Babai_heuristic_2exp(int kappa, F_mpz_mat_t B, mpfr_t **mu, mpfr_t **r, mpfr_t *s, 
-       mpfr_t **appB, mpfr_t **appSP, 
+void Babai_heuristic_2exp(int kappa, F_mpz_mat_t B, __mpfr_struct **mu, __mpfr_struct **r, __mpfr_struct *s, 
+       __mpfr_struct **appB, __mpfr_struct **appSP, 
        int a, int zeros, int kappamax, int n, mpfr_t tmp, mpfr_t rtmp, int * cexpo)
 {
    int i, j, k, test, aa, exponent;
@@ -713,32 +713,32 @@ void Babai_heuristic_2exp(int kappa, F_mpz_mat_t B, mpfr_t **mu, mpfr_t **r, mpf
       
       for (j = aa; j < kappa; j++)
 	   {	  
-	      if ( mpfr_nan_p(appSP[kappa][j]) ) // if appSP[kappa][j] == NAN
+	      if ( mpfr_nan_p(appSP[kappa] + j) ) // if appSP[kappa] + j == NAN
 	      {
-            if (!(mpfr_vec_scalar_product(appSP[kappa][j], appB[kappa], appB[j], n) ) ){
+            if (!(mpfr_vec_scalar_product(appSP[kappa] + j, appB[kappa], appB[j], n) ) ){
 //In this case a heuristic told us that some cancelation probably happened so we just compute the scalar product at full precision
                long exp = _F_mpz_vec_scalar_product_2exp(ztmp, B->rows[kappa], B->rows[j], n, cexpo);
-               F_mpz_2exp_get_mpfr(appSP[kappa][j], ztmp, exp);
+               F_mpz_2exp_get_mpfr(appSP[kappa] + j, ztmp, exp);
             }
 	      }
          if (j > zeros + 2)
 	      {
-	         mpfr_mul(tmp, mu[j][zeros+1], r[kappa][zeros+1], GMP_RNDN);
-	         mpfr_sub(rtmp, appSP[kappa][j], tmp, GMP_RNDN);
+	         mpfr_mul(tmp, mu[j] + zeros + 1, r[kappa] + zeros + 1, GMP_RNDN);
+	         mpfr_sub(rtmp, appSP[kappa] + j, tmp, GMP_RNDN);
 	         for (k = zeros + 2; k < j - 1; k++)
 		      {
-		         mpfr_mul(tmp, mu[j][k], r[kappa][k], GMP_RNDN);
+		         mpfr_mul(tmp, mu[j] + k, r[kappa] + kappa, GMP_RNDN);
 		         mpfr_sub(rtmp, rtmp, tmp, GMP_RNDN);
 		      }
-	         mpfr_mul(tmp, mu[j][j-1], r[kappa][j-1], GMP_RNDN);
-	         mpfr_sub(r[kappa][j], rtmp, tmp, GMP_RNDN);
+	         mpfr_mul(tmp, mu[j] + j - 1, r[kappa] + j - 1, GMP_RNDN);
+	         mpfr_sub(r[kappa] + j, rtmp, tmp, GMP_RNDN);
          } else if (j == zeros+2)
 	      {
-	         mpfr_mul(tmp, mu[j][zeros+1], r[kappa][zeros+1], GMP_RNDN);
-	         mpfr_sub(r[kappa][j], appSP[kappa][j], tmp, GMP_RNDN);
-	      } else mpfr_set(r[kappa][j], appSP[kappa][j], GMP_RNDN);
+	         mpfr_mul(tmp, mu[j] + zeros + 1, r[kappa] + zeros + 1, GMP_RNDN);
+	         mpfr_sub(r[kappa] + j, appSP[kappa] + j, tmp, GMP_RNDN);
+	      } else mpfr_set(r[kappa] + j, appSP[kappa] + j, GMP_RNDN);
 
-	      mpfr_div(mu[kappa][j], r[kappa][j], r[j][j], GMP_RNDN);
+	      mpfr_div(mu[kappa] + j, r[kappa] + j, r[j] + j, GMP_RNDN);
       }
       
       /* **************************** */
@@ -748,7 +748,7 @@ void Babai_heuristic_2exp(int kappa, F_mpz_mat_t B, mpfr_t **mu, mpfr_t **r, mpf
       for (j = kappa - 1; j > zeros; j--)
 	   {
 	      /* test of the relaxed size-reduction condition */
-         mpfr_abs(tmp, mu[kappa][j], GMP_RNDN); 
+         mpfr_abs(tmp, mu[kappa] + j, GMP_RNDN); 
 	  
 	      if ( mpfr_cmp_d(tmp, halfplus) > 0) 
 	      {
@@ -757,12 +757,12 @@ void Babai_heuristic_2exp(int kappa, F_mpz_mat_t B, mpfr_t **mu, mpfr_t **r, mpf
 	         /* we consider separately the cases X = +-1 */     
 	         if (mpfr_cmp_d(tmp, onedothalfplus) <= 0)   
 		      {
-               int sgn = mpfr_sgn(mu[kappa][j]);		  
+               int sgn = mpfr_sgn(mu[kappa] + j);		  
 		         if (sgn >= 0)   /* in this case, X is 1 */
                {
 		            for (k = zeros + 1; k < j; k++)
 			         {
-                     mpfr_sub(mu[kappa][k], mu[kappa][k], mu[j][k], GMP_RNDN);
+                     mpfr_sub(mu[kappa] + k, mu[kappa] + k, mu[j] + k, GMP_RNDN);
 			         }
 		      
 		            _F_mpz_vec_sub(B->rows[kappa], B->rows[kappa], B->rows[j], n);
@@ -771,18 +771,18 @@ void Babai_heuristic_2exp(int kappa, F_mpz_mat_t B, mpfr_t **mu, mpfr_t **r, mpf
                {
                   for (k=zeros+1; k<j; k++)
 			         {
-			            mpfr_add(mu[kappa][k], mu[kappa][k], mu[j][k], GMP_RNDN);
+			            mpfr_add(mu[kappa] + k, mu[kappa] + k, mu[j] + k, GMP_RNDN);
 			         }
 		      
                   _F_mpz_vec_add(B->rows[kappa], B->rows[kappa], B->rows[j], n); 
                }
 		      } else   /* we must have |X| >= 2 */
 		      {
-               mpfr_round(tmp, mu[kappa][j]);
+               mpfr_round(tmp, mu[kappa] + j);
 		         for (k = zeros + 1; k < j; k++)
 			      {
-			         mpfr_mul(rtmp, tmp, mu[j][k], GMP_RNDN);
-			         mpfr_sub(mu[kappa][k], mu[kappa][k], rtmp, GMP_RNDN);
+			         mpfr_mul(rtmp, tmp, mu[j] + k, GMP_RNDN);
+			         mpfr_sub(mu[kappa] + k, mu[kappa] + k, rtmp, GMP_RNDN);
 			      }
 
 	            if (mpfr_get_exp(tmp) < CPU_SIZE_1 - 2)  
@@ -816,28 +816,25 @@ void Babai_heuristic_2exp(int kappa, F_mpz_mat_t B, mpfr_t **mu, mpfr_t **r, mpf
 	      _F_mpz_vec_2exp_to_mpfr_vec(appB[kappa], B->rows[kappa], n, cexpo);
 	      aa = zeros + 1;
 	      for (i = zeros + 1; i <= kappa; i++) 
-	         mpfr_set_nan(appSP[kappa][i]);//0.0/0.0;
+	         mpfr_set_nan(appSP[kappa] + i);//0.0/0.0;
 	      for (i = kappa + 1; i <= kappamax; i++) 
-	         mpfr_set_nan(appSP[i][kappa]);//0.0/0.0;
+	         mpfr_set_nan(appSP[i] + kappa);//0.0/0.0;
 	   }
    } while (test);
 
-
-
-
-   if (mpfr_nan_p(appSP[kappa][kappa])) 
+   if (mpfr_nan_p(appSP[kappa] + kappa)) 
    {
-      mpfr_vec_norm(appSP[kappa][kappa], appB[kappa], n);
+      mpfr_vec_norm(appSP[kappa] + kappa, appB[kappa], n);
    }
 
-   mpfr_set(s[zeros + 1], appSP[kappa][kappa], GMP_RNDN);
+   mpfr_set(s + zeros + 1, appSP[kappa] + kappa, GMP_RNDN);
 
    for (k = zeros + 1; k < kappa - 1; k++)
    {
-      mpfr_mul( tmp, mu[kappa][k], r[kappa][k], GMP_RNDN);
-      mpfr_sub( s[k+1], s[k], tmp, GMP_RNDN);
+      mpfr_mul( tmp, mu[kappa] + k, r[kappa] + kappa, GMP_RNDN);
+      mpfr_sub( s + k + 1, s + k, tmp, GMP_RNDN);
    }
-   mpfr_set(r[kappa][kappa], s[kappa - 1], GMP_RNDN);
+   mpfr_set(r[kappa] + kappa, s + kappa - 1, GMP_RNDN);
 
    F_mpz_clear(ztmp);
    F_mpz_clear(X);
@@ -852,8 +849,8 @@ void Babai_heuristic_2exp(int kappa, F_mpz_mat_t B, mpfr_t **mu, mpfr_t **r, mpf
 void LLL_heuristic_2exp(F_mpz_mat_t B, int * cexpo)
 {
    int kappa, kappa2, d, n, i, j, zeros, kappamax;
-   mpfr_t ** mu, ** r, ** appB, ** appSP;
-   mpfr_t * s, * mutmp, * appBtmp, * appSPtmp;
+   __mpfr_struct ** mu, ** r, ** appB, ** appSP;
+   __mpfr_struct * s, * mutmp, * appBtmp, * appSPtmp;
    mpfr_t tmp, rtmp;
    F_mpz_t ztmp;
    int * alpha;
@@ -879,17 +876,17 @@ void LLL_heuristic_2exp(F_mpz_mat_t B, int * cexpo)
    appB = mpfr_mat_init(d, n);
    appSP = mpfr_mat_init(d, d);
 
-   s = (mpfr_t *) malloc ((d + 1) * sizeof(mpfr_t));
-   appSPtmp = (mpfr_t *) malloc ((d + 1) * sizeof(mpfr_t));
+   s = (__mpfr_struct *) malloc ((d + 1) * sizeof(__mpfr_struct));
+   appSPtmp = (__mpfr_struct *) malloc ((d + 1) * sizeof(__mpfr_struct));
 
    for (i = 0; i < d+1; i++){
-      mpfr_init(s[i]);
-      mpfr_init(appSPtmp[i]);
+      mpfr_init(s + i);
+      mpfr_init(appSPtmp + i);
    }
 
    for (i = 0; i < d; i++)
       for (j = 0; j < d; j++)
-         mpfr_set_nan(appSP[i][j]);//0.0/0.0;
+         mpfr_set_nan(appSP[i] + j);//0.0/0.0;
   
    /* ************************** */
    /* Step1: Initialization Step */
@@ -906,13 +903,13 @@ void LLL_heuristic_2exp(F_mpz_mat_t B, int * cexpo)
    i = 0; 
   
    do
-      mpfr_vec_norm(appSP[i][i], appB[i], n); 
-   while ( (mpfr_sgn(appSP[i][i]) == 0) && (++i < d));
+      mpfr_vec_norm(appSP[i] + i, appB[i], n); 
+   while ( (mpfr_sgn(appSP[i] + i) == 0) && (++i < d));
 
    zeros = i - 1; /* all vectors B[i] with i <= zeros are zero vectors */
    kappa = i + 1;
   
-   if (zeros < d - 1) mpfr_set(r[i][i], appSP[i][i], GMP_RNDN);
+   if (zeros < d - 1) mpfr_set(r[i] + i, appSP[i] + i, GMP_RNDN);
 
    for (i = zeros + 1; i < d; i++)
       alpha[i] = 0;
@@ -935,12 +932,12 @@ void LLL_heuristic_2exp(F_mpz_mat_t B, int * cexpo)
       /* ************************************ */  
       /* ctt * r.coeff[kappa-1][kappa-1] <= s[kappa-2] ?? */
 
-      mpfr_mul_d( tmp, r[kappa - 1][kappa - 1], ctt, GMP_RNDN);
-      if ( mpfr_cmp(tmp, s[kappa -1]) <= 0) 
+      mpfr_mul_d( tmp, r[kappa - 1] + kappa - 1, ctt, GMP_RNDN);
+      if ( mpfr_cmp(tmp, s + kappa - 1) <= 0) 
 	   {
 	      alpha[kappa] = kappa;
-         mpfr_mul(tmp, mu[kappa][kappa-1], r[kappa][kappa-1], GMP_RNDN);
-         mpfr_sub(r[kappa][kappa], s[kappa - 1], tmp, GMP_RNDN);
+         mpfr_mul(tmp, mu[kappa] + kappa - 1, r[kappa] + kappa - 1, GMP_RNDN);
+         mpfr_sub(r[kappa] + kappa, s + kappa - 1, tmp, GMP_RNDN);
 	      kappa++;
 	   } else
 	   {
@@ -956,9 +953,9 @@ void LLL_heuristic_2exp(F_mpz_mat_t B, int * cexpo)
 	         kappa--;
 	         if (kappa > zeros + 1) 
 		      {
-               mpfr_mul_d(tmp, r[kappa-1][kappa-1], ctt, GMP_RNDN);
+               mpfr_mul_d(tmp, r[kappa-1] + kappa - 1, ctt, GMP_RNDN);
 	         }
-         } while ( (kappa >= zeros + 2) && (mpfr_cmp(s[kappa-1],tmp) <= 0) );
+         } while ( (kappa >= zeros + 2) && (mpfr_cmp(s + kappa - 1,tmp) <= 0) );
 
          for (i = kappa; i < kappa2; i++)
 	         if (kappa <= alpha[i]) alpha[i] = kappa;
@@ -982,7 +979,7 @@ void LLL_heuristic_2exp(F_mpz_mat_t B, int * cexpo)
 	      for (i = kappa2; i > kappa; i--) r[i] = r[i-1];
 	      r[kappa] = mutmp;
 
-	      mpfr_set(r[kappa][kappa], s[kappa], GMP_RNDN);
+	      mpfr_set(r[kappa] + kappa, s + kappa, GMP_RNDN);
 	  
 	      /* ************************ */
 	      /* Step7: Update B and appB */
@@ -1001,31 +998,31 @@ void LLL_heuristic_2exp(F_mpz_mat_t B, int * cexpo)
 	      /* Step8: Update appSP: tricky */
 	      /* *************************** */  	 
 	  
-	      for (i = 0; i <= kappa2; i++) mpfr_set(appSPtmp[i], appSP[kappa2][i], GMP_RNDN);
+	      for (i = 0; i <= kappa2; i++) mpfr_set(appSPtmp + i, appSP[kappa2] + i, GMP_RNDN);
 
-	      for (i = kappa2 + 1; i <= kappamax; i++) mpfr_set(appSPtmp[i], appSP[i][kappa2], GMP_RNDN);
+	      for (i = kappa2 + 1; i <= kappamax; i++) mpfr_set(appSPtmp + i, appSP[i] + kappa2, GMP_RNDN);
 	  
 	      for (i = kappa2; i > kappa; i--)
 	      {
-	         for (j = 0; j < kappa; j++) mpfr_set(appSP[i][j], appSP[i-1][j], GMP_RNDN);	      
-	         mpfr_set(appSP[i][kappa], appSPtmp[i-1], GMP_RNDN);
+	         for (j = 0; j < kappa; j++) mpfr_set(appSP[i] + j, appSP[i-1] + j, GMP_RNDN);	      
+	         mpfr_set(appSP[i] + kappa, appSPtmp + i - 1, GMP_RNDN);
 	      
-	         for (j = kappa + 1; j <= i; j++) mpfr_set(appSP[i][j], appSP[i-1][j-1], GMP_RNDN);
+	         for (j = kappa + 1; j <= i; j++) mpfr_set(appSP[i] + j, appSP[i-1] + j - 1, GMP_RNDN);
 
-	         for (j = kappa2 + 1; j <= kappamax; j++) mpfr_set(appSP[j][i], appSP[j][i-1], GMP_RNDN);     
+	         for (j = kappa2 + 1; j <= kappamax; j++) mpfr_set(appSP[j] + i, appSP[j] + i - 1, GMP_RNDN);     
 	      }
 	  
-	      for (i = 0; i < kappa; i++) mpfr_set(appSP[kappa][i], appSPtmp[i], GMP_RNDN);
-	      mpfr_set(appSP[kappa][kappa], appSPtmp[kappa2], GMP_RNDN);
+	      for (i = 0; i < kappa; i++) mpfr_set(appSP[kappa] + i, appSPtmp + i, GMP_RNDN);
+	      mpfr_set(appSP[kappa] + kappa, appSPtmp + kappa2, GMP_RNDN);
 
-	      for (i = kappa2 + 1; i <= kappamax; i++) mpfr_set(appSP[i][kappa], appSPtmp[i], GMP_RNDN);
+	      for (i = kappa2 + 1; i <= kappamax; i++) mpfr_set(appSP[i] + kappa, appSPtmp + i, GMP_RNDN);
 	  
-	      if ( mpfr_sgn(r[kappa][kappa]) <= 0.0)
+	      if ( mpfr_sgn(r[kappa] + kappa) <= 0.0)
 	      {
 	         zeros++;
 	         kappa++;
-	         mpfr_vec_norm(appSP[kappa][kappa], appB[kappa], n);
-	         mpfr_set(r[kappa][kappa], appSP[kappa][kappa], GMP_RNDN);
+	         mpfr_vec_norm(appSP[kappa] + kappa, appB[kappa], n);
+	         mpfr_set(r[kappa] + kappa, appSP[kappa] + kappa, GMP_RNDN);
 	      }
 	  
 	      kappa++;
@@ -1039,8 +1036,8 @@ void LLL_heuristic_2exp(F_mpz_mat_t B, int * cexpo)
    mpfr_clear(tmp);
 
    for (i = 0; i < d+1; i++){
-      mpfr_clear(s[i]);
-      mpfr_clear(appSPtmp[i]);
+      mpfr_clear(s + i);
+      mpfr_clear(appSPtmp + i);
    }
 
 
@@ -1062,8 +1059,8 @@ void LLL_heuristic_2exp(F_mpz_mat_t B, int * cexpo)
 long LLL_heuristic_2exp_with_removal(F_mpz_mat_t B, int * cexpo, F_mpz_t gs_B)
 {
    int kappa, kappa2, d, n, i, j, zeros, kappamax;
-   mpfr_t ** mu, ** r, ** appB, ** appSP;
-   mpfr_t * s, * mutmp, * appBtmp, * appSPtmp;
+   __mpfr_struct ** mu, ** r, ** appB, ** appSP;
+   __mpfr_struct * s, * mutmp, * appBtmp, * appSPtmp;
    mpfr_t tmp, rtmp;
    F_mpz_t ztmp;
    int * alpha;
@@ -1089,17 +1086,17 @@ long LLL_heuristic_2exp_with_removal(F_mpz_mat_t B, int * cexpo, F_mpz_t gs_B)
    appB = mpfr_mat_init(d, n);
    appSP = mpfr_mat_init(d, d);
 
-   s = (mpfr_t *) malloc ((d + 1) * sizeof(mpfr_t));
-   appSPtmp = (mpfr_t *) malloc ((d + 1) * sizeof(mpfr_t));
+   s = (__mpfr_struct *) malloc ((d + 1) * sizeof(__mpfr_struct));
+   appSPtmp = (__mpfr_struct *) malloc ((d + 1) * sizeof(__mpfr_struct));
 
    for (i = 0; i < d+1; i++){
-      mpfr_init(s[i]);
-      mpfr_init(appSPtmp[i]);
+      mpfr_init(s + i);
+      mpfr_init(appSPtmp + i);
    }
 
    for (i = 0; i < d; i++)
       for (j = 0; j < d; j++)
-         mpfr_set_nan(appSP[i][j]);//0.0/0.0;
+         mpfr_set_nan(appSP[i] + j);//0.0/0.0;
   
    /* ************************** */
    /* Step1: Initialization Step */
@@ -1116,13 +1113,13 @@ long LLL_heuristic_2exp_with_removal(F_mpz_mat_t B, int * cexpo, F_mpz_t gs_B)
    i = 0; 
   
    do
-      mpfr_vec_norm(appSP[i][i], appB[i], n); 
-   while ( (mpfr_sgn(appSP[i][i]) == 0) && (++i < d));
+      mpfr_vec_norm(appSP[i] + i, appB[i], n); 
+   while ( (mpfr_sgn(appSP[i] + i) == 0) && (++i < d));
 
    zeros = i - 1; /* all vectors B[i] with i <= zeros are zero vectors */
    kappa = i + 1;
   
-   if (zeros < d - 1) mpfr_set(r[i][i], appSP[i][i], GMP_RNDN);
+   if (zeros < d - 1) mpfr_set(r[i] + i, appSP[i] + i, GMP_RNDN);
 
    for (i = zeros + 1; i < d; i++)
       alpha[i] = 0;
@@ -1145,12 +1142,12 @@ long LLL_heuristic_2exp_with_removal(F_mpz_mat_t B, int * cexpo, F_mpz_t gs_B)
       /* ************************************ */  
       /* ctt * r.coeff[kappa-1][kappa-1] <= s[kappa-2] ?? */
 
-      mpfr_mul_d( tmp, r[kappa - 1][kappa - 1], ctt, GMP_RNDN);
-      if ( mpfr_cmp(tmp, s[kappa -1]) <= 0) 
+      mpfr_mul_d( tmp, r[kappa - 1] + kappa - 1, ctt, GMP_RNDN);
+      if ( mpfr_cmp(tmp, s + kappa - 1) <= 0) 
 	   {
 	      alpha[kappa] = kappa;
-         mpfr_mul(tmp, mu[kappa][kappa-1], r[kappa][kappa-1], GMP_RNDN);
-         mpfr_sub(r[kappa][kappa], s[kappa - 1], tmp, GMP_RNDN);
+         mpfr_mul(tmp, mu[kappa] + kappa - 1, r[kappa] + kappa - 1, GMP_RNDN);
+         mpfr_sub(r[kappa] + kappa, s + kappa - 1, tmp, GMP_RNDN);
 	      kappa++;
 	   } else
 	   {
@@ -1166,9 +1163,9 @@ long LLL_heuristic_2exp_with_removal(F_mpz_mat_t B, int * cexpo, F_mpz_t gs_B)
 	         kappa--;
 	         if (kappa > zeros + 1) 
 		      {
-               mpfr_mul_d(tmp, r[kappa-1][kappa-1], ctt, GMP_RNDN);
+               mpfr_mul_d(tmp, r[kappa-1] + kappa - 1, ctt, GMP_RNDN);
 	         }
-         } while ( (kappa >= zeros + 2) && (mpfr_cmp(s[kappa-1],tmp) <= 0) );
+         } while ( (kappa >= zeros + 2) && (mpfr_cmp(s + kappa - 1,tmp) <= 0) );
 
          for (i = kappa; i < kappa2; i++)
 	         if (kappa <= alpha[i]) alpha[i] = kappa;
@@ -1192,7 +1189,7 @@ long LLL_heuristic_2exp_with_removal(F_mpz_mat_t B, int * cexpo, F_mpz_t gs_B)
 	      for (i = kappa2; i > kappa; i--) r[i] = r[i-1];
 	      r[kappa] = mutmp;
 
-	      mpfr_set(r[kappa][kappa], s[kappa], GMP_RNDN);
+	      mpfr_set(r[kappa] + kappa, s + kappa, GMP_RNDN);
 	  
 	      /* ************************ */
 	      /* Step7: Update B and appB */
@@ -1211,31 +1208,31 @@ long LLL_heuristic_2exp_with_removal(F_mpz_mat_t B, int * cexpo, F_mpz_t gs_B)
 	      /* Step8: Update appSP: tricky */
 	      /* *************************** */  	 
 	  
-	      for (i = 0; i <= kappa2; i++) mpfr_set(appSPtmp[i], appSP[kappa2][i], GMP_RNDN);
+	      for (i = 0; i <= kappa2; i++) mpfr_set(appSPtmp + i, appSP[kappa2] + i, GMP_RNDN);
 
-	      for (i = kappa2 + 1; i <= kappamax; i++) mpfr_set(appSPtmp[i], appSP[i][kappa2], GMP_RNDN);
+	      for (i = kappa2 + 1; i <= kappamax; i++) mpfr_set(appSPtmp + i, appSP[i] + kappa2, GMP_RNDN);
 	  
 	      for (i = kappa2; i > kappa; i--)
 	      {
-	         for (j = 0; j < kappa; j++) mpfr_set(appSP[i][j], appSP[i-1][j], GMP_RNDN);	      
-	         mpfr_set(appSP[i][kappa], appSPtmp[i-1], GMP_RNDN);
+	         for (j = 0; j < kappa; j++) mpfr_set(appSP[i] + j, appSP[i-1] + j, GMP_RNDN);	      
+	         mpfr_set(appSP[i] + kappa, appSPtmp + i - 1, GMP_RNDN);
 	      
-	         for (j = kappa + 1; j <= i; j++) mpfr_set(appSP[i][j], appSP[i-1][j-1], GMP_RNDN);
+	         for (j = kappa + 1; j <= i; j++) mpfr_set(appSP[i] + j, appSP[i-1] + j - 1, GMP_RNDN);
 
-	         for (j = kappa2 + 1; j <= kappamax; j++) mpfr_set(appSP[j][i], appSP[j][i-1], GMP_RNDN);     
+	         for (j = kappa2 + 1; j <= kappamax; j++) mpfr_set(appSP[j] + i, appSP[j] + i - 1, GMP_RNDN);     
 	      }
 	  
-	      for (i = 0; i < kappa; i++) mpfr_set(appSP[kappa][i], appSPtmp[i], GMP_RNDN);
-	      mpfr_set(appSP[kappa][kappa], appSPtmp[kappa2], GMP_RNDN);
+	      for (i = 0; i < kappa; i++) mpfr_set(appSP[kappa] + i, appSPtmp + i, GMP_RNDN);
+	      mpfr_set(appSP[kappa] + kappa, appSPtmp + kappa2, GMP_RNDN);
 
-	      for (i = kappa2 + 1; i <= kappamax; i++) mpfr_set(appSP[i][kappa], appSPtmp[i], GMP_RNDN);
+	      for (i = kappa2 + 1; i <= kappamax; i++) mpfr_set(appSP[i] + kappa, appSPtmp + i, GMP_RNDN);
 	  
-	      if ( mpfr_sgn(r[kappa][kappa]) <= 0.0)
+	      if ( mpfr_sgn(r[kappa] + kappa) <= 0.0)
 	      {
 	         zeros++;
 	         kappa++;
-	         mpfr_vec_norm(appSP[kappa][kappa], appB[kappa], n);
-	         mpfr_set(r[kappa][kappa], appSP[kappa][kappa], GMP_RNDN);
+	         mpfr_vec_norm(appSP[kappa] + kappa, appB[kappa], n);
+	         mpfr_set(r[kappa] + kappa, appSP[kappa] + kappa, GMP_RNDN);
 	      }
 	  
 	      kappa++;
@@ -1251,7 +1248,7 @@ long LLL_heuristic_2exp_with_removal(F_mpz_mat_t B, int * cexpo, F_mpz_t gs_B)
 
    for (i = d-1; (i >= 0) && (ok > 0); i--){
 //tmp_gs is the G-S length of ith vector divided by 2 (we shouldn't make a mistake and remove something valuable)
-      mpfr_set(rtmp, appSP[i][i], GMP_RNDN);
+      mpfr_set(rtmp, appSP[i] + i, GMP_RNDN);
       mpfr_div_d(rtmp, rtmp, 2.0, GMP_RNDN);
 //mpfr_div_2ui(rtmp, rtmp, 1UL, GMP_RNDN);
       mpfr_printf(" gs length[%d] = %.10Rf, tmp = %.10Rf \n", i, rtmp, tmp);
@@ -1268,8 +1265,8 @@ long LLL_heuristic_2exp_with_removal(F_mpz_mat_t B, int * cexpo, F_mpz_t gs_B)
    mpfr_clear(tmp);
 
    for (i = 0; i < d+1; i++){
-      mpfr_clear(s[i]);
-      mpfr_clear(appSPtmp[i]);
+      mpfr_clear(s + i);
+      mpfr_clear(appSPtmp + i);
    }
 
 
