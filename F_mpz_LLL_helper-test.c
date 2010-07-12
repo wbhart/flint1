@@ -152,7 +152,7 @@ int test_heuristic_scalar_product()
       mat = d_mat_init(rows, cols);
 
 	  for (i = 0; i < rows; i++)
-	     expo[i] = _F_mpz_vec_ldexp(mat[i], B->rows[i], cols);
+	     expo[i] = _F_mpz_vec_to_d_vec_2exp(mat[i], B->rows[i], cols);
 
       for (count2 = 0; count2 < 1000; count2++)
 	  {
@@ -172,7 +172,7 @@ int test_heuristic_scalar_product()
 		 double d4 = heuristic_scalar_product(mat[r2], mat[r2], cols, 
 								B, r2, r2, expo[r2] + expo[r2]);
 
-		 expo[r2] = _F_mpz_vec_ldexp(mat[r2], B->rows[r2], cols);
+		 expo[r2] = _F_mpz_vec_to_d_vec_2exp(mat[r2], B->rows[r2], cols);
 
 		 result = (fabs(d4 - d3 - d2 - 2*d1) < 1.0E-12);
 

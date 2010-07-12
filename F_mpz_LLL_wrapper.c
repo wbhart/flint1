@@ -220,7 +220,7 @@ int check_Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
 
       if (test)   /* Anything happened? */
 	   {
-	      expo[kappa] = _F_mpz_vec_ldexp(appB[kappa], B->rows[kappa], n);
+	      expo[kappa] = _F_mpz_vec_to_d_vec_2exp(appB[kappa], B->rows[kappa], n);
 	      aa = zeros + 1;
 	      for (i = zeros + 1; i <= kappa; i++) 
 	         appSP[kappa][i] = NAN;//0.0/0.0;
@@ -416,7 +416,7 @@ int check_Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, 
 
       if (test)   /* Anything happened? */
 	   {
-	      expo[kappa] = _F_mpz_vec_ldexp(appB[kappa], B->rows[kappa], n);
+	      expo[kappa] = _F_mpz_vec_to_d_vec_2exp(appB[kappa], B->rows[kappa], n);
 	      aa = zeros + 1;
 	      for (i = zeros + 1; i <= kappa; i++) 
 	         appSP[kappa][i] = NAN;//0.0/0.0;
@@ -442,8 +442,8 @@ int check_Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, 
    return 0;
 }
 
-int check_Babai_heuristic(int kappa, F_mpz_mat_t B, mpfr_t **mu, mpfr_t **r, mpfr_t *s, 
-       mpfr_t **appB, mpfr_t **appSP, 
+int check_Babai_heuristic(int kappa, F_mpz_mat_t B, __mpfr_struct **mu, __mpfr_struct **r, __mpfr_struct *s, 
+       __mpfr_struct **appB, __mpfr_struct **appSP, 
        int a, int zeros, int kappamax, int n, mpfr_t tmp, mpfr_t rtmp, mp_prec_t prec)
 {
    int i, j, k, test, aa, exponent;
@@ -473,32 +473,32 @@ int check_Babai_heuristic(int kappa, F_mpz_mat_t B, mpfr_t **mu, mpfr_t **r, mpf
       
       for (j = aa; j < kappa; j++)
 	   {	  
-	      if ( mpfr_nan_p(appSP[kappa][j]) ) // if appSP[kappa][j] == NAN
+	      if ( mpfr_nan_p(appSP[kappa] + j) ) // if appSP[kappa] + j == NAN
 	      {
-            if (!(mpfr_vec_scalar_product2(appSP[kappa][j], appB[kappa], appB[j], n, prec) ) ){
+            if (!(mpfr_vec_scalar_product2(appSP[kappa] + j, appB[kappa], appB[j], n, prec) ) ){
 //In this case a heuristic told us that some cancelation probably happened so we just compute the scalar product at full precision
                _F_mpz_vec_scalar_product(ztmp, B->rows[kappa], B->rows[j], n);
-               F_mpz_get_mpfr(appSP[kappa][j], ztmp);
+               F_mpz_get_mpfr(appSP[kappa] + j, ztmp);
             }
 	      }
          if (j > zeros + 2)
 	      {
-	         mpfr_mul(tmp, mu[j][zeros+1], r[kappa][zeros+1], GMP_RNDN);
-	         mpfr_sub(rtmp, appSP[kappa][j], tmp, GMP_RNDN);
+	         mpfr_mul(tmp, mu[j] + zeros + 1, r[kappa] + zeros + 1, GMP_RNDN);
+	         mpfr_sub(rtmp, appSP[kappa] + j, tmp, GMP_RNDN);
 	         for (k = zeros + 2; k < j - 1; k++)
 		      {
-		         mpfr_mul(tmp, mu[j][k], r[kappa][k], GMP_RNDN);
+		         mpfr_mul(tmp, mu[j] + k, r[kappa] + k, GMP_RNDN);
 		         mpfr_sub(rtmp, rtmp, tmp, GMP_RNDN);
 		      }
-	         mpfr_mul(tmp, mu[j][j-1], r[kappa][j-1], GMP_RNDN);
-	         mpfr_sub(r[kappa][j], rtmp, tmp, GMP_RNDN);
+	         mpfr_mul(tmp, mu[j] + j - 1, r[kappa] + j - 1, GMP_RNDN);
+	         mpfr_sub(r[kappa] + j, rtmp, tmp, GMP_RNDN);
          } else if (j == zeros+2)
 	      {
-	         mpfr_mul(tmp, mu[j][zeros+1], r[kappa][zeros+1], GMP_RNDN);
-	         mpfr_sub(r[kappa][j], appSP[kappa][j], tmp, GMP_RNDN);
-	      } else mpfr_set(r[kappa][j], appSP[kappa][j], GMP_RNDN);
+	         mpfr_mul(tmp, mu[j] + zeros + 1, r[kappa] + zeros + 1, GMP_RNDN);
+	         mpfr_sub(r[kappa] + j, appSP[kappa] + j, tmp, GMP_RNDN);
+	      } else mpfr_set(r[kappa] + j, appSP[kappa] + j, GMP_RNDN);
 
-	      mpfr_div(mu[kappa][j], r[kappa][j], r[j][j], GMP_RNDN);
+	      mpfr_div(mu[kappa] + j, r[kappa] + j, r[j] + j, GMP_RNDN);
       }
       
       /* **************************** */
@@ -508,7 +508,7 @@ int check_Babai_heuristic(int kappa, F_mpz_mat_t B, mpfr_t **mu, mpfr_t **r, mpf
       for (j = kappa - 1; j > zeros; j--)
 	   {
 	      /* test of the relaxed size-reduction condition */
-         mpfr_abs(tmp, mu[kappa][j], GMP_RNDN); 
+         mpfr_abs(tmp, mu[kappa] + j, GMP_RNDN); 
 	  
 	      if ( mpfr_cmp_d(tmp, halfplus) > 0) 
 	      {
@@ -517,12 +517,12 @@ int check_Babai_heuristic(int kappa, F_mpz_mat_t B, mpfr_t **mu, mpfr_t **r, mpf
 	         /* we consider separately the cases X = +-1 */     
 	         if (mpfr_cmp_d(tmp, onedothalfplus) <= 0)   
 		      {
-               int sgn = mpfr_sgn(mu[kappa][j]);		  
+               int sgn = mpfr_sgn(mu[kappa] + j);		  
 		         if (sgn >= 0)   /* in this case, X is 1 */
                {
 		            for (k = zeros + 1; k < j; k++)
 			         {
-                     mpfr_sub(mu[kappa][k], mu[kappa][k], mu[j][k], GMP_RNDN);
+                     mpfr_sub(mu[kappa] + k, mu[kappa] + k, mu[j] + k, GMP_RNDN);
 			         }
 		      
 		            _F_mpz_vec_sub(B->rows[kappa], B->rows[kappa], B->rows[j], n);
@@ -531,18 +531,18 @@ int check_Babai_heuristic(int kappa, F_mpz_mat_t B, mpfr_t **mu, mpfr_t **r, mpf
                {
                   for (k=zeros+1; k<j; k++)
 			         {
-			            mpfr_add(mu[kappa][k], mu[kappa][k], mu[j][k], GMP_RNDN);
+			            mpfr_add(mu[kappa] + k, mu[kappa] + k, mu[j] + k, GMP_RNDN);
 			         }
 		      
                   _F_mpz_vec_add(B->rows[kappa], B->rows[kappa], B->rows[j], n); 
                }
 		      } else   /* we must have |X| >= 2 */
 		      {
-               mpfr_round(tmp, mu[kappa][j]);
+               mpfr_round(tmp, mu[kappa] + j);
 		         for (k = zeros + 1; k < j; k++)
 			      {
-			         mpfr_mul(rtmp, tmp, mu[j][k], GMP_RNDN);
-			         mpfr_sub(mu[kappa][k], mu[kappa][k], rtmp, GMP_RNDN);
+			         mpfr_mul(rtmp, tmp, mu[j] + k, GMP_RNDN);
+			         mpfr_sub(mu[kappa] + k, mu[kappa] + k, rtmp, GMP_RNDN);
 			      }
 
 	            if (mpfr_get_exp(tmp) < CPU_SIZE_1 - 2)  
@@ -573,31 +573,31 @@ int check_Babai_heuristic(int kappa, F_mpz_mat_t B, mpfr_t **mu, mpfr_t **r, mpf
 
       if (test)   /* Anything happened? */
 	   {
-	      _F_mpz_vec_ldexp_mpfr(appB[kappa], B->rows[kappa], n);
+	      _F_mpz_vec_to_mpfr_vec(appB[kappa], B->rows[kappa], n);
 	      aa = zeros + 1;
 	      for (i = zeros + 1; i <= kappa; i++) 
-	         mpfr_set_nan(appSP[kappa][i]);//0.0/0.0;
+	         mpfr_set_nan(appSP[kappa] + i);//0.0/0.0;
 	      for (i = kappa + 1; i <= kappamax; i++) 
-	         mpfr_set_nan(appSP[i][kappa]);//0.0/0.0;
+	         mpfr_set_nan(appSP[i] + kappa);//0.0/0.0;
 	   }
    } while (test);
 
 
 
 
-   if (mpfr_nan_p(appSP[kappa][kappa])) 
+   if (mpfr_nan_p(appSP[kappa] + kappa)) 
    {
-      mpfr_vec_norm2(appSP[kappa][kappa], appB[kappa], n, prec);
+      mpfr_vec_norm2(appSP[kappa] + kappa, appB[kappa], n, prec);
    }
 
-   mpfr_set(s[zeros + 1], appSP[kappa][kappa], GMP_RNDN);
+   mpfr_set(s + zeros + 1, appSP[kappa] + kappa, GMP_RNDN);
 
    for (k = zeros + 1; k < kappa - 1; k++)
    {
-      mpfr_mul( tmp, mu[kappa][k], r[kappa][k], GMP_RNDN);
-      mpfr_sub( s[k+1], s[k], tmp, GMP_RNDN);
+      mpfr_mul( tmp, mu[kappa] + k, r[kappa] + k, GMP_RNDN);
+      mpfr_sub( s + k + 1, s + k, tmp, GMP_RNDN);
    }
-   mpfr_set(r[kappa][kappa], s[kappa - 1], GMP_RNDN);
+   mpfr_set(r[kappa] + kappa, s + kappa - 1, GMP_RNDN);
 
    F_mpz_clear(ztmp);
    F_mpz_clear(X);
@@ -720,7 +720,7 @@ int advance_check_Babai (int cur_kappa, int kappa, F_mpz_mat_t B, double **mu, d
                   {
                      _F_mpz_vec_scalar_addmul_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx);  
                   }
-            	   expo[kappa] = _F_mpz_vec_ldexp(appB[kappa], B->rows[kappa], n);
+            	   expo[kappa] = _F_mpz_vec_to_d_vec_2exp(appB[kappa], B->rows[kappa], n);
 //STOPPED HERE...
                   if (expo[kappa] > temp_expo)
                   {
@@ -731,7 +731,7 @@ int advance_check_Babai (int cur_kappa, int kappa, F_mpz_mat_t B, double **mu, d
                      {
                         _F_mpz_vec_scalar_submul_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx);  
                      }
-               	   expo[kappa] = _F_mpz_vec_ldexp(appB[kappa], B->rows[kappa], n);
+               	   expo[kappa] = _F_mpz_vec_to_d_vec_2exp(appB[kappa], B->rows[kappa], n);
                      test = 10;
 //                     printf("tried to make bigger at kappa =  %d and j = %d\n", kappa, j);
                   } else
@@ -765,7 +765,7 @@ int advance_check_Babai (int cur_kappa, int kappa, F_mpz_mat_t B, double **mu, d
                      {
 						 _F_mpz_vec_scalar_addmul_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx);  
                      }
-            	      expo[kappa] = _F_mpz_vec_ldexp(appB[kappa], B->rows[kappa], n);
+            	      expo[kappa] = _F_mpz_vec_to_d_vec_2exp(appB[kappa], B->rows[kappa], n);
                      if (expo[kappa] > temp_expo )
                      {			  
 			               if (xx > 0)
@@ -775,7 +775,7 @@ int advance_check_Babai (int cur_kappa, int kappa, F_mpz_mat_t B, double **mu, d
                         {
                            _F_mpz_vec_scalar_submul_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx);  
                         }
-               	      expo[kappa] = _F_mpz_vec_ldexp(appB[kappa], B->rows[kappa], n);
+               	      expo[kappa] = _F_mpz_vec_to_d_vec_2exp(appB[kappa], B->rows[kappa], n);
                         test = 10;
               			}else
                      {    
@@ -796,7 +796,7 @@ int advance_check_Babai (int cur_kappa, int kappa, F_mpz_mat_t B, double **mu, d
                      {
                         _F_mpz_vec_scalar_addmul_2exp_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx, exponent);  
                      }
-            	      expo[kappa] = _F_mpz_vec_ldexp(appB[kappa], B->rows[kappa], n);
+            	      expo[kappa] = _F_mpz_vec_to_d_vec_2exp(appB[kappa], B->rows[kappa], n);
                      if (expo[kappa] > temp_expo )
                      {
    			            if (xx > 0)
@@ -806,7 +806,7 @@ int advance_check_Babai (int cur_kappa, int kappa, F_mpz_mat_t B, double **mu, d
                         {
                            _F_mpz_vec_scalar_submul_2exp_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx, exponent);  
                         }
-               	      expo[kappa] = _F_mpz_vec_ldexp(appB[kappa], B->rows[kappa], n);
+               	      expo[kappa] = _F_mpz_vec_to_d_vec_2exp(appB[kappa], B->rows[kappa], n);
                         test = 10;
 //                        printf("tried to make bigger at kappa =  %d and j = %d\n", kappa, j);
                      }
@@ -826,7 +826,7 @@ int advance_check_Babai (int cur_kappa, int kappa, F_mpz_mat_t B, double **mu, d
 	   }
       if (test == 1)   /* Anything happened? */
 	   {
-	      expo[kappa] = _F_mpz_vec_ldexp(appB[kappa], B->rows[kappa], n);
+	      expo[kappa] = _F_mpz_vec_to_d_vec_2exp(appB[kappa], B->rows[kappa], n);
 	      aa = zeros + 1;
 	      for (i = zeros + 1; i <= kappa; i++) 
 	         appSP[kappa][i] = NAN;//0.0/0.0;
@@ -970,7 +970,7 @@ int advance_check_Babai_heuristic_d (int cur_kappa, int kappa, F_mpz_mat_t B, do
                   {
                      _F_mpz_vec_scalar_addmul_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx);  
                   }
-            	   expo[kappa] = _F_mpz_vec_ldexp(appB[kappa], B->rows[kappa], n);
+            	   expo[kappa] = _F_mpz_vec_to_d_vec_2exp(appB[kappa], B->rows[kappa], n);
 //STOPPED HERE...
                   if (expo[kappa] > temp_expo)
                   {
@@ -981,7 +981,7 @@ int advance_check_Babai_heuristic_d (int cur_kappa, int kappa, F_mpz_mat_t B, do
                      {
                         _F_mpz_vec_scalar_submul_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx);  
                      }
-               	   expo[kappa] = _F_mpz_vec_ldexp(appB[kappa], B->rows[kappa], n);
+               	   expo[kappa] = _F_mpz_vec_to_d_vec_2exp(appB[kappa], B->rows[kappa], n);
                      test = 10;
 //                     printf("tried to make bigger at kappa =  %d and j = %d\n", kappa, j);
                   } else
@@ -1015,7 +1015,7 @@ int advance_check_Babai_heuristic_d (int cur_kappa, int kappa, F_mpz_mat_t B, do
                      {
                         _F_mpz_vec_scalar_addmul_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx);  
                      }
-            	      expo[kappa] = _F_mpz_vec_ldexp(appB[kappa], B->rows[kappa], n);
+            	      expo[kappa] = _F_mpz_vec_to_d_vec_2exp(appB[kappa], B->rows[kappa], n);
                      if (expo[kappa] > temp_expo )
                      {			  
 			               if (xx > 0)
@@ -1025,7 +1025,7 @@ int advance_check_Babai_heuristic_d (int cur_kappa, int kappa, F_mpz_mat_t B, do
                         {
                            _F_mpz_vec_scalar_submul_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx);  
                         }
-               	      expo[kappa] = _F_mpz_vec_ldexp(appB[kappa], B->rows[kappa], n);
+               	      expo[kappa] = _F_mpz_vec_to_d_vec_2exp(appB[kappa], B->rows[kappa], n);
                         test = 10;
               			}else
                      {    
@@ -1046,7 +1046,7 @@ int advance_check_Babai_heuristic_d (int cur_kappa, int kappa, F_mpz_mat_t B, do
                      {
                         _F_mpz_vec_scalar_addmul_2exp_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx, exponent);  
                      }
-            	      expo[kappa] = _F_mpz_vec_ldexp(appB[kappa], B->rows[kappa], n);
+            	      expo[kappa] = _F_mpz_vec_to_d_vec_2exp(appB[kappa], B->rows[kappa], n);
                      if (expo[kappa] > temp_expo)
                      {
    			            if (xx > 0)
@@ -1056,7 +1056,7 @@ int advance_check_Babai_heuristic_d (int cur_kappa, int kappa, F_mpz_mat_t B, do
                         {
                            _F_mpz_vec_scalar_submul_2exp_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx, exponent);  
                         }
-               	      expo[kappa] = _F_mpz_vec_ldexp(appB[kappa], B->rows[kappa], n);
+               	      expo[kappa] = _F_mpz_vec_to_d_vec_2exp(appB[kappa], B->rows[kappa], n);
  //                       printf("tried to make bigger at kappa =  %d and j = %d\n", kappa, j);
                         test = 10;
                      }
@@ -1077,7 +1077,7 @@ int advance_check_Babai_heuristic_d (int cur_kappa, int kappa, F_mpz_mat_t B, do
 
       if (test == 1)   /* Anything happened? */
 	   {
-	      expo[kappa] = _F_mpz_vec_ldexp(appB[kappa], B->rows[kappa], n);
+	      expo[kappa] = _F_mpz_vec_to_d_vec_2exp(appB[kappa], B->rows[kappa], n);
 	      aa = zeros + 1;
 	      for (i = zeros + 1; i <= kappa; i++) 
 	         appSP[kappa][i] = NAN;//0.0/0.0;
@@ -1106,8 +1106,8 @@ int advance_check_Babai_heuristic_d (int cur_kappa, int kappa, F_mpz_mat_t B, do
       return -2;
 }
 
-int advance_check_Babai_heuristic(int cur_kappa, int kappa, F_mpz_mat_t B, mpfr_t **mu, mpfr_t **r, mpfr_t *s, 
-       mpfr_t **appB, mpfr_t **appSP, 
+int advance_check_Babai_heuristic(int cur_kappa, int kappa, F_mpz_mat_t B, __mpfr_struct **mu, __mpfr_struct **r, __mpfr_struct *s, 
+       __mpfr_struct **appB, __mpfr_struct **appSP, 
        int a, int zeros, int kappamax, int n, mpfr_t tmp, mpfr_t rtmp, mp_prec_t prec)
 {
    int i, j, k, test, aa, exponent;
@@ -1137,32 +1137,32 @@ int advance_check_Babai_heuristic(int cur_kappa, int kappa, F_mpz_mat_t B, mpfr_
       
       for (j = aa; j < cur_kappa; j++)
 	   {	  
-	      if ( mpfr_nan_p(appSP[kappa][j]) ) // if appSP[kappa][j] == NAN
+	      if ( mpfr_nan_p(appSP[kappa] + j) ) // if appSP[kappa] + j == NAN
 	      {
-            if (!(mpfr_vec_scalar_product2(appSP[kappa][j], appB[kappa], appB[j], n, prec) ) ){
+            if (!(mpfr_vec_scalar_product2(appSP[kappa] + j, appB[kappa], appB[j], n, prec) ) ){
 //In this case a heuristic told us that some cancelation probably happened so we just compute the scalar product at full precision
                _F_mpz_vec_scalar_product(ztmp, B->rows[kappa], B->rows[j], n);
-               F_mpz_get_mpfr(appSP[kappa][j], ztmp);
+               F_mpz_get_mpfr(appSP[kappa] + j, ztmp);
             }
 	      }
          if (j > zeros + 2)
 	      {
-	         mpfr_mul(tmp, mu[j][zeros+1], r[kappa][zeros+1], GMP_RNDN);
-	         mpfr_sub(rtmp, appSP[kappa][j], tmp, GMP_RNDN);
+	         mpfr_mul(tmp, mu[j] + zeros + 1, r[kappa] + zeros + 1, GMP_RNDN);
+	         mpfr_sub(rtmp, appSP[kappa] + j, tmp, GMP_RNDN);
 	         for (k = zeros + 2; k < j - 1; k++)
 		      {
-		         mpfr_mul(tmp, mu[j][k], r[kappa][k], GMP_RNDN);
+		         mpfr_mul(tmp, mu[j] + k, r[kappa] + k, GMP_RNDN);
 		         mpfr_sub(rtmp, rtmp, tmp, GMP_RNDN);
 		      }
-	         mpfr_mul(tmp, mu[j][j-1], r[kappa][j-1], GMP_RNDN);
-	         mpfr_sub(r[kappa][j], rtmp, tmp, GMP_RNDN);
+	         mpfr_mul(tmp, mu[j] + j - 1, r[kappa] + j - 1, GMP_RNDN);
+	         mpfr_sub(r[kappa] + j, rtmp, tmp, GMP_RNDN);
          } else if (j == zeros+2)
 	      {
-	         mpfr_mul(tmp, mu[j][zeros+1], r[kappa][zeros+1], GMP_RNDN);
-	         mpfr_sub(r[kappa][j], appSP[kappa][j], tmp, GMP_RNDN);
-	      } else mpfr_set(r[kappa][j], appSP[kappa][j], GMP_RNDN);
+	         mpfr_mul(tmp, mu[j] + zeros + 1, r[kappa] + zeros + 1, GMP_RNDN);
+	         mpfr_sub(r[kappa] + j, appSP[kappa] + j, tmp, GMP_RNDN);
+	      } else mpfr_set(r[kappa] + j, appSP[kappa] + j, GMP_RNDN);
 
-	      mpfr_div(mu[kappa][j], r[kappa][j], r[j][j], GMP_RNDN);
+	      mpfr_div(mu[kappa] + j, r[kappa] + j, r[j] + j, GMP_RNDN);
       }
       
       /* **************************** */
@@ -1172,7 +1172,7 @@ int advance_check_Babai_heuristic(int cur_kappa, int kappa, F_mpz_mat_t B, mpfr_
       for (j = cur_kappa - 1; j > zeros; j--)
 	   {
 	      /* test of the relaxed size-reduction condition */
-         mpfr_abs(tmp, mu[kappa][j], GMP_RNDN); 
+         mpfr_abs(tmp, mu[kappa] + j, GMP_RNDN); 
 	  
 	      if ( mpfr_cmp_d(tmp, halfplus) > 0) 
 	      {
@@ -1181,12 +1181,12 @@ int advance_check_Babai_heuristic(int cur_kappa, int kappa, F_mpz_mat_t B, mpfr_
 	         /* we consider separately the cases X = +-1 */     
 	         if (mpfr_cmp_d(tmp, onedothalfplus) <= 0)   
 		      {
-               int sgn = mpfr_sgn(mu[kappa][j]);		  
+               int sgn = mpfr_sgn(mu[kappa] + j);		  
 		         if (sgn >= 0)   /* in this case, X is 1 */
                {
 		            for (k = zeros + 1; k < j; k++)
 			         {
-                     mpfr_sub(mu[kappa][k], mu[kappa][k], mu[j][k], GMP_RNDN);
+                     mpfr_sub(mu[kappa] + k, mu[kappa] + k, mu[j] + k, GMP_RNDN);
 			         }
 		      
 		            _F_mpz_vec_sub(B->rows[kappa], B->rows[kappa], B->rows[j], n);
@@ -1195,18 +1195,18 @@ int advance_check_Babai_heuristic(int cur_kappa, int kappa, F_mpz_mat_t B, mpfr_
                {
                   for (k=zeros+1; k<j; k++)
 			         {
-			            mpfr_add(mu[kappa][k], mu[kappa][k], mu[j][k], GMP_RNDN);
+			            mpfr_add(mu[kappa] + k, mu[kappa] + k, mu[j] + k, GMP_RNDN);
 			         }
 		      
                   _F_mpz_vec_add(B->rows[kappa], B->rows[kappa], B->rows[j], n); 
                }
 		      } else   /* we must have |X| >= 2 */
 		      {
-               mpfr_round(tmp, mu[kappa][j]);
+               mpfr_round(tmp, mu[kappa] + j);
 		         for (k = zeros + 1; k < j; k++)
 			      {
-			         mpfr_mul(rtmp, tmp, mu[j][k], GMP_RNDN);
-			         mpfr_sub(mu[kappa][k], mu[kappa][k], rtmp, GMP_RNDN);
+			         mpfr_mul(rtmp, tmp, mu[j] + k, GMP_RNDN);
+			         mpfr_sub(mu[kappa] + k, mu[kappa] + k, rtmp, GMP_RNDN);
 			      }
 
 	            if (mpfr_get_exp(tmp) < CPU_SIZE_1 - 2)  
@@ -1237,31 +1237,31 @@ int advance_check_Babai_heuristic(int cur_kappa, int kappa, F_mpz_mat_t B, mpfr_
 
       if (test)   /* Anything happened? */
 	   {
-	      _F_mpz_vec_ldexp_mpfr(appB[kappa], B->rows[kappa], n);
+	      _F_mpz_vec_to_mpfr_vec(appB[kappa], B->rows[kappa], n);
 	      aa = zeros + 1;
 	      for (i = zeros + 1; i <= kappa; i++) 
-	         mpfr_set_nan(appSP[kappa][i]);//0.0/0.0;
+	         mpfr_set_nan(appSP[kappa] + i);//0.0/0.0;
 	      for (i = kappa + 1; i <= kappamax; i++) 
-	         mpfr_set_nan(appSP[i][kappa]);//0.0/0.0;
+	         mpfr_set_nan(appSP[i] + kappa);//0.0/0.0;
 	   }
    } while (test);
 
 
 
 
-   if (mpfr_nan_p(appSP[kappa][kappa])) 
+   if (mpfr_nan_p(appSP[kappa] + kappa)) 
    {
-      mpfr_vec_norm2(appSP[kappa][kappa], appB[kappa], n, prec);
+      mpfr_vec_norm2(appSP[kappa] + kappa, appB[kappa], n, prec);
    }
 
-/*   mpfr_set(s[zeros + 1], appSP[kappa][kappa], GMP_RNDN);
+/*   mpfr_set(s + zeros + 1, appSP[kappa] + kappa, GMP_RNDN);
 
    for (k = zeros + 1; k < kappa - 1; k++)
    {
-      mpfr_mul( tmp, mu[kappa][k], r[kappa][k], GMP_RNDN);
-      mpfr_sub( s[k+1], s[k], tmp, GMP_RNDN);
+      mpfr_mul( tmp, mu[kappa] + k, r[kappa] + k, GMP_RNDN);
+      mpfr_sub( s + k + 1, s + k, tmp, GMP_RNDN);
    }
-   mpfr_set(r[kappa][kappa], s[kappa - 1], GMP_RNDN);
+   mpfr_set(r[kappa] + kappa, s + kappa - 1, GMP_RNDN);
 */
    F_mpz_clear(ztmp);
    F_mpz_clear(X);
@@ -1446,7 +1446,7 @@ int check_Babai_heuristic_d_zero_vec (int kappa, F_mpz_mat_t B, double **mu, dou
 
       if (test == 1)   /* Anything happened? */
 	   {
-	      expo[kappa] = _F_mpz_vec_ldexp(appB[kappa], B->rows[kappa], n);
+	      expo[kappa] = _F_mpz_vec_to_d_vec_2exp(appB[kappa], B->rows[kappa], n);
          if (expo[kappa] != 0)
          {
    	      aa = zeros + 1;
@@ -1521,7 +1521,7 @@ int LLL_d(F_mpz_mat_t B)
    /* ************************** */     
     
    for (i = 0; i < d; i++)
-      expo[i] = _F_mpz_vec_ldexp(appB[i], B->rows[i], n);  
+      expo[i] = _F_mpz_vec_to_d_vec_2exp(appB[i], B->rows[i], n);  
   
    /* ********************************* */
    /* Step2: Initializing the main loop */
@@ -1734,7 +1734,7 @@ int LLL_d_heuristic(F_mpz_mat_t B)
    /* ************************** */     
     
    for (i = 0; i < d; i++)
-      expo[i] = _F_mpz_vec_ldexp(appB[i], B->rows[i], n);  
+      expo[i] = _F_mpz_vec_to_d_vec_2exp(appB[i], B->rows[i], n);  
   
    /* ********************************* */
    /* Step2: Initializing the main loop */
@@ -1897,8 +1897,8 @@ int LLL_d_heuristic(F_mpz_mat_t B)
 int LLL_mpfr2(F_mpz_mat_t B, mp_prec_t prec)
 {
    int kappa, kappa2, d, n, i, j, zeros, kappamax;
-   mpfr_t ** mu, ** r, ** appB, ** appSP;
-   mpfr_t * s, * mutmp, * appBtmp, * appSPtmp;
+   __mpfr_struct ** mu, ** r, ** appB, ** appSP;
+   __mpfr_struct * s, * mutmp, * appBtmp, * appSPtmp;
    mpfr_t tmp, rtmp;
    F_mpz_t ztmp;
    int * alpha;
@@ -1924,24 +1924,24 @@ int LLL_mpfr2(F_mpz_mat_t B, mp_prec_t prec)
    appB = mpfr_mat_init2(d, n, prec);
    appSP = mpfr_mat_init2(d, d, prec);
 
-   s = (mpfr_t *) malloc ((d + 1) * sizeof(mpfr_t));
-   appSPtmp = (mpfr_t *) malloc ((d + 1) * sizeof(mpfr_t));
+   s = (__mpfr_struct *) malloc ((d + 1) * sizeof(__mpfr_struct));
+   appSPtmp = (__mpfr_struct *) malloc ((d + 1) * sizeof(__mpfr_struct));
 
    for (i = 0; i < d+1; i++){
-      mpfr_init2(s[i], prec);
-      mpfr_init2(appSPtmp[i], prec);
+      mpfr_init2(s + i, prec);
+      mpfr_init2(appSPtmp + i, prec);
    }
 
    for (i = 0; i < d; i++)
       for (j = 0; j < d; j++)
-         mpfr_set_nan(appSP[i][j]);//0.0/0.0;
+         mpfr_set_nan(appSP[i] + j);//0.0/0.0;
   
    /* ************************** */
    /* Step1: Initialization Step */
    /* ************************** */     
     
    for (i = 0; i < d; i++)
-      _F_mpz_vec_ldexp_mpfr(appB[i], B->rows[i], n);  
+      _F_mpz_vec_to_mpfr_vec(appB[i], B->rows[i], n);  
   
    /* ********************************* */
    /* Step2: Initializing the main loop */
@@ -1951,14 +1951,14 @@ int LLL_mpfr2(F_mpz_mat_t B, mp_prec_t prec)
    i = 0; 
   
    do
-      mpfr_vec_norm2(appSP[i][i], appB[i], n, prec); 
-   while ( (mpfr_sgn(appSP[i][i]) == 0) && (++i < d));
+      mpfr_vec_norm2(appSP[i] + i, appB[i], n, prec); 
+   while ( (mpfr_sgn(appSP[i] + i) == 0) && (++i < d));
 
    zeros = i - 1; /* all vectors B[i] with i <= zeros are zero vectors */
    kappa = i + 1;
    kappamax = kappa;
   
-   if (zeros < d - 1) mpfr_set(r[i][i], appSP[i][i], GMP_RNDN);
+   if (zeros < d - 1) mpfr_set(r[i] + i, appSP[i] + i, GMP_RNDN);
 
    for (i = zeros + 1; i < d; i++)
       alpha[i] = 0;
@@ -1986,12 +1986,12 @@ int LLL_mpfr2(F_mpz_mat_t B, mp_prec_t prec)
       /* ************************************ */  
       /* ctt * r.coeff[kappa-1][kappa-1] <= s[kappa-2] ?? */
 
-      mpfr_mul_d( tmp, r[kappa - 1][kappa - 1], ctt, GMP_RNDN);
-      if ( mpfr_cmp(tmp, s[kappa -1]) <= 0) 
+      mpfr_mul_d( tmp, r[kappa - 1] + kappa - 1, ctt, GMP_RNDN);
+      if ( mpfr_cmp(tmp, s + kappa - 1) <= 0) 
 	   {
 	      alpha[kappa] = kappa;
-         mpfr_mul(tmp, mu[kappa][kappa-1], r[kappa][kappa-1], GMP_RNDN);
-         mpfr_sub(r[kappa][kappa], s[kappa - 1], tmp, GMP_RNDN);
+         mpfr_mul(tmp, mu[kappa] + kappa - 1, r[kappa] + kappa - 1, GMP_RNDN);
+         mpfr_sub(r[kappa] + kappa, s + kappa - 1, tmp, GMP_RNDN);
 	      kappa++;
 	   } else
 	   {
@@ -2007,9 +2007,9 @@ int LLL_mpfr2(F_mpz_mat_t B, mp_prec_t prec)
 	         kappa--;
 	         if (kappa > zeros + 1) 
 		      {
-               mpfr_mul_d(tmp, r[kappa-1][kappa-1], ctt, GMP_RNDN);
+               mpfr_mul_d(tmp, r[kappa-1] + kappa - 1, ctt, GMP_RNDN);
 	         }
-         } while ( (kappa >= zeros + 2) && (mpfr_cmp(s[kappa-1],tmp) <= 0) );
+         } while ( (kappa >= zeros + 2) && (mpfr_cmp(s + kappa - 1,tmp) <= 0) );
 
          for (i = kappa; i < kappa2; i++)
 	         if (kappa <= alpha[i]) alpha[i] = kappa;
@@ -2033,7 +2033,7 @@ int LLL_mpfr2(F_mpz_mat_t B, mp_prec_t prec)
 	      for (i = kappa2; i > kappa; i--) r[i] = r[i-1];
 	      r[kappa] = mutmp;
 
-	      mpfr_set(r[kappa][kappa], s[kappa], GMP_RNDN);
+	      mpfr_set(r[kappa] + kappa, s + kappa, GMP_RNDN);
 	  
 	      /* ************************ */
 	      /* Step7: Update B and appB */
@@ -2052,31 +2052,31 @@ int LLL_mpfr2(F_mpz_mat_t B, mp_prec_t prec)
 	      /* Step8: Update appSP: tricky */
 	      /* *************************** */  	 
 	  
-	      for (i = 0; i <= kappa2; i++) mpfr_set(appSPtmp[i], appSP[kappa2][i], GMP_RNDN);
+	      for (i = 0; i <= kappa2; i++) mpfr_set(appSPtmp + i, appSP[kappa2] + i, GMP_RNDN);
 
-	      for (i = kappa2 + 1; i <= kappamax; i++) mpfr_set(appSPtmp[i], appSP[i][kappa2], GMP_RNDN);
+	      for (i = kappa2 + 1; i <= kappamax; i++) mpfr_set(appSPtmp + i, appSP[i] + kappa2, GMP_RNDN);
 	  
 	      for (i = kappa2; i > kappa; i--)
 	      {
-	         for (j = 0; j < kappa; j++) mpfr_set(appSP[i][j], appSP[i-1][j], GMP_RNDN);	      
-	         mpfr_set(appSP[i][kappa], appSPtmp[i-1], GMP_RNDN);
+	         for (j = 0; j < kappa; j++) mpfr_set(appSP[i] + j, appSP[i-1] + j, GMP_RNDN);	      
+	         mpfr_set(appSP[i] + kappa, appSPtmp + i - 1, GMP_RNDN);
 	      
-	         for (j = kappa + 1; j <= i; j++) mpfr_set(appSP[i][j], appSP[i-1][j-1], GMP_RNDN);
+	         for (j = kappa + 1; j <= i; j++) mpfr_set(appSP[i] + j, appSP[i-1] + j - 1, GMP_RNDN);
 
-	         for (j = kappa2 + 1; j <= kappamax; j++) mpfr_set(appSP[j][i], appSP[j][i-1], GMP_RNDN);     
+	         for (j = kappa2 + 1; j <= kappamax; j++) mpfr_set(appSP[j] + i, appSP[j] + i - 1, GMP_RNDN);     
 	      }
 	  
-	      for (i = 0; i < kappa; i++) mpfr_set(appSP[kappa][i], appSPtmp[i], GMP_RNDN);
-	      mpfr_set(appSP[kappa][kappa], appSPtmp[kappa2], GMP_RNDN);
+	      for (i = 0; i < kappa; i++) mpfr_set(appSP[kappa] + i, appSPtmp + i, GMP_RNDN);
+	      mpfr_set(appSP[kappa] + kappa, appSPtmp + kappa2, GMP_RNDN);
 
-	      for (i = kappa2 + 1; i <= kappamax; i++) mpfr_set(appSP[i][kappa], appSPtmp[i], GMP_RNDN);
+	      for (i = kappa2 + 1; i <= kappamax; i++) mpfr_set(appSP[i] + kappa, appSPtmp + i, GMP_RNDN);
 	  
-	      if ( mpfr_sgn(r[kappa][kappa]) <= 0.0)
+	      if ( mpfr_sgn(r[kappa] + kappa) <= 0.0)
 	      {
 	         zeros++;
 	         kappa++;
-	         mpfr_vec_norm2(appSP[kappa][kappa], appB[kappa], n, prec);
-	         mpfr_set(r[kappa][kappa], appSP[kappa][kappa], GMP_RNDN);
+	         mpfr_vec_norm2(appSP[kappa] + kappa, appB[kappa], n, prec);
+	         mpfr_set(r[kappa] + kappa, appSP[kappa] + kappa, GMP_RNDN);
 	      }
 	  
 	      kappa++;
@@ -2090,8 +2090,8 @@ int LLL_mpfr2(F_mpz_mat_t B, mp_prec_t prec)
    mpfr_clear(tmp);
 
    for (i = 0; i < d+1; i++){
-      mpfr_clear(s[i]);
-      mpfr_clear(appSPtmp[i]);
+      mpfr_clear(s + i);
+      mpfr_clear(appSPtmp + i);
    }
 
 
@@ -2197,7 +2197,7 @@ int LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    /* ************************** */     
     
    for (i = 0; i < d; i++)
-	   expo[i] = _F_mpz_vec_ldexp(appB[i], B->rows[i], n);  
+	   expo[i] = _F_mpz_vec_to_d_vec_2exp(appB[i], B->rows[i], n);  
   
    /* ********************************* */
    /* Step2: Initializing the main loop */
@@ -2429,7 +2429,7 @@ int LLL_d_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    /* ************************** */     
     
    for (i = 0; i < d; i++)
-      expo[i] = _F_mpz_vec_ldexp(appB[i], B->rows[i], n);  
+      expo[i] = _F_mpz_vec_to_d_vec_2exp(appB[i], B->rows[i], n);  
   
    /* ********************************* */
    /* Step2: Initializing the main loop */
@@ -2610,8 +2610,8 @@ int LLL_d_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 int LLL_mpfr2_with_removal(F_mpz_mat_t B, mp_prec_t prec, F_mpz_t gs_B)
 {
    int kappa, kappa2, d, D, n, i, j, zeros, kappamax;
-   mpfr_t ** mu, ** r, ** appB, ** appSP;
-   mpfr_t * s, * mutmp, * appBtmp, * appSPtmp;
+   __mpfr_struct ** mu, ** r, ** appB, ** appSP;
+   __mpfr_struct * s, * mutmp, * appBtmp, * appSPtmp;
    mpfr_t tmp, rtmp;
    F_mpz_t ztmp;
    int * alpha;
@@ -2638,24 +2638,24 @@ int LLL_mpfr2_with_removal(F_mpz_mat_t B, mp_prec_t prec, F_mpz_t gs_B)
    appB = mpfr_mat_init2(d, n, prec);
    appSP = mpfr_mat_init2(d, d, prec);
 
-   s = (mpfr_t *) malloc ((d + 1) * sizeof(mpfr_t));
-   appSPtmp = (mpfr_t *) malloc ((d + 1) * sizeof(mpfr_t));
+   s = (__mpfr_struct *) malloc ((d + 1) * sizeof(__mpfr_struct));
+   appSPtmp = (__mpfr_struct *) malloc ((d + 1) * sizeof(__mpfr_struct));
 
    for (i = 0; i < d+1; i++){
-      mpfr_init2(s[i], prec);
-      mpfr_init2(appSPtmp[i], prec);
+      mpfr_init2(s + i, prec);
+      mpfr_init2(appSPtmp + i, prec);
    }
 
    for (i = 0; i < d; i++)
       for (j = 0; j < d; j++)
-         mpfr_set_nan(appSP[i][j]);//0.0/0.0;
+         mpfr_set_nan(appSP[i] + j);//0.0/0.0;
   
    /* ************************** */
    /* Step1: Initialization Step */
    /* ************************** */     
     
    for (i = 0; i < d; i++)
-      _F_mpz_vec_ldexp_mpfr(appB[i], B->rows[i], n);  
+      _F_mpz_vec_to_mpfr_vec(appB[i], B->rows[i], n);  
   
    /* ********************************* */
    /* Step2: Initializing the main loop */
@@ -2665,14 +2665,14 @@ int LLL_mpfr2_with_removal(F_mpz_mat_t B, mp_prec_t prec, F_mpz_t gs_B)
    i = 0; 
   
    do
-      mpfr_vec_norm2(appSP[i][i], appB[i], n, prec); 
-   while ( (mpfr_sgn(appSP[i][i]) == 0) && (++i < d));
+      mpfr_vec_norm2(appSP[i] + i, appB[i], n, prec); 
+   while ( (mpfr_sgn(appSP[i] + i) == 0) && (++i < d));
 
    zeros = i - 1; /* all vectors B[i] with i <= zeros are zero vectors */
    kappa = i + 1;
    kappamax = kappa;
 
-   if (zeros < d - 1) mpfr_set(r[i][i], appSP[i][i], GMP_RNDN);
+   if (zeros < d - 1) mpfr_set(r[i] + i, appSP[i] + i, GMP_RNDN);
 
    for (i = zeros + 1; i < d; i++)
       alpha[i] = 0;
@@ -2700,12 +2700,12 @@ int LLL_mpfr2_with_removal(F_mpz_mat_t B, mp_prec_t prec, F_mpz_t gs_B)
       /* ************************************ */  
       /* ctt * r.coeff[kappa-1][kappa-1] <= s[kappa-2] ?? */
 
-      mpfr_mul_d( tmp, r[kappa - 1][kappa - 1], ctt, GMP_RNDN);
-      if ( mpfr_cmp(tmp, s[kappa -1]) <= 0) 
+      mpfr_mul_d( tmp, r[kappa - 1] + kappa - 1, ctt, GMP_RNDN);
+      if ( mpfr_cmp(tmp, s + kappa - 1) <= 0) 
 	   {
 	      alpha[kappa] = kappa;
-         mpfr_mul(tmp, mu[kappa][kappa-1], r[kappa][kappa-1], GMP_RNDN);
-         mpfr_sub(r[kappa][kappa], s[kappa - 1], tmp, GMP_RNDN);
+         mpfr_mul(tmp, mu[kappa] + kappa - 1, r[kappa] + kappa - 1, GMP_RNDN);
+         mpfr_sub(r[kappa] + kappa, s + kappa - 1, tmp, GMP_RNDN);
 	      kappa++;
 	   } else
 	   {
@@ -2721,9 +2721,9 @@ int LLL_mpfr2_with_removal(F_mpz_mat_t B, mp_prec_t prec, F_mpz_t gs_B)
 	         kappa--;
 	         if (kappa > zeros + 1) 
 		      {
-               mpfr_mul_d(tmp, r[kappa-1][kappa-1], ctt, GMP_RNDN);
+               mpfr_mul_d(tmp, r[kappa-1] + kappa - 1, ctt, GMP_RNDN);
 	         }
-         } while ( (kappa >= zeros + 2) && (mpfr_cmp(s[kappa-1],tmp) <= 0) );
+         } while ( (kappa >= zeros + 2) && (mpfr_cmp(s + kappa - 1,tmp) <= 0) );
 
          for (i = kappa; i < kappa2; i++)
 	         if (kappa <= alpha[i]) alpha[i] = kappa;
@@ -2747,7 +2747,7 @@ int LLL_mpfr2_with_removal(F_mpz_mat_t B, mp_prec_t prec, F_mpz_t gs_B)
 	      for (i = kappa2; i > kappa; i--) r[i] = r[i-1];
 	      r[kappa] = mutmp;
 
-	      mpfr_set(r[kappa][kappa], s[kappa], GMP_RNDN);
+	      mpfr_set(r[kappa] + kappa, s + kappa, GMP_RNDN);
 	  
 	      /* ************************ */
 	      /* Step7: Update B and appB */
@@ -2766,31 +2766,31 @@ int LLL_mpfr2_with_removal(F_mpz_mat_t B, mp_prec_t prec, F_mpz_t gs_B)
 	      /* Step8: Update appSP: tricky */
 	      /* *************************** */  	 
 	  
-	      for (i = 0; i <= kappa2; i++) mpfr_set(appSPtmp[i], appSP[kappa2][i], GMP_RNDN);
+	      for (i = 0; i <= kappa2; i++) mpfr_set(appSPtmp + i, appSP[kappa2] + i, GMP_RNDN);
 
-	      for (i = kappa2 + 1; i <= kappamax; i++) mpfr_set(appSPtmp[i], appSP[i][kappa2], GMP_RNDN);
+	      for (i = kappa2 + 1; i <= kappamax; i++) mpfr_set(appSPtmp + i, appSP[i] + kappa2, GMP_RNDN);
 	  
 	      for (i = kappa2; i > kappa; i--)
 	      {
-	         for (j = 0; j < kappa; j++) mpfr_set(appSP[i][j], appSP[i-1][j], GMP_RNDN);	      
-	         mpfr_set(appSP[i][kappa], appSPtmp[i-1], GMP_RNDN);
+	         for (j = 0; j < kappa; j++) mpfr_set(appSP[i] + j, appSP[i-1] + j, GMP_RNDN);	      
+	         mpfr_set(appSP[i] + kappa, appSPtmp + i - 1, GMP_RNDN);
 	      
-	         for (j = kappa + 1; j <= i; j++) mpfr_set(appSP[i][j], appSP[i-1][j-1], GMP_RNDN);
+	         for (j = kappa + 1; j <= i; j++) mpfr_set(appSP[i] + j, appSP[i-1] + j - 1, GMP_RNDN);
 
-	         for (j = kappa2 + 1; j <= kappamax; j++) mpfr_set(appSP[j][i], appSP[j][i-1], GMP_RNDN);     
+	         for (j = kappa2 + 1; j <= kappamax; j++) mpfr_set(appSP[j] + i, appSP[j] + i - 1, GMP_RNDN);     
 	      }
 	  
-	      for (i = 0; i < kappa; i++) mpfr_set(appSP[kappa][i], appSPtmp[i], GMP_RNDN);
-	      mpfr_set(appSP[kappa][kappa], appSPtmp[kappa2], GMP_RNDN);
+	      for (i = 0; i < kappa; i++) mpfr_set(appSP[kappa] + i, appSPtmp + i, GMP_RNDN);
+	      mpfr_set(appSP[kappa] + kappa, appSPtmp + kappa2, GMP_RNDN);
 
-	      for (i = kappa2 + 1; i <= kappamax; i++) mpfr_set(appSP[i][kappa], appSPtmp[i], GMP_RNDN);
+	      for (i = kappa2 + 1; i <= kappamax; i++) mpfr_set(appSP[i] + kappa, appSPtmp + i, GMP_RNDN);
 	  
-	      if ( mpfr_sgn(r[kappa][kappa]) <= 0.0)
+	      if ( mpfr_sgn(r[kappa] + kappa) <= 0.0)
 	      {
 	         zeros++;
 	         kappa++;
-	         mpfr_vec_norm2(appSP[kappa][kappa], appB[kappa], n, prec);
-	         mpfr_set(r[kappa][kappa], appSP[kappa][kappa], GMP_RNDN);
+	         mpfr_vec_norm2(appSP[kappa] + kappa, appB[kappa], n, prec);
+	         mpfr_set(r[kappa] + kappa, appSP[kappa] + kappa, GMP_RNDN);
 	      }
 	  
 	      kappa++;
@@ -2805,7 +2805,7 @@ int LLL_mpfr2_with_removal(F_mpz_mat_t B, mp_prec_t prec, F_mpz_t gs_B)
 
    for (i = d-1; (i >= 0) && (ok > 0); i--){
 //tmp_gs is the G-S length of ith vector divided by 2 (we shouldn't make a mistake and remove something valuable)
-      mpfr_set(rtmp, r[i][i], GMP_RNDN);
+      mpfr_set(rtmp, r[i] + i, GMP_RNDN);
       mpfr_div_d(rtmp, rtmp, 8.0, GMP_RNDN);
 //      mpfr_div_2ui(rtmp, rtmp, 1UL, GMP_RNDN);
       ok = mpfr_cmp(rtmp, tmp);
@@ -2821,8 +2821,8 @@ int LLL_mpfr2_with_removal(F_mpz_mat_t B, mp_prec_t prec, F_mpz_t gs_B)
    mpfr_clear(tmp);
 
    for (i = 0; i < D+1; i++){
-      mpfr_clear(s[i]);
-      mpfr_clear(appSPtmp[i]);
+      mpfr_clear(s + i);
+      mpfr_clear(appSPtmp + i);
    }
 
 
@@ -2944,7 +2944,7 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    /* ************************** */     
     
    for (i = 0; i < d; i++)
-      expo[i] = _F_mpz_vec_ldexp(appB[i], B->rows[i], n);  
+      expo[i] = _F_mpz_vec_to_d_vec_2exp(appB[i], B->rows[i], n);  
   
    /* ********************************* */
    /* Step2: Initializing the main loop */
@@ -3289,7 +3289,7 @@ int knapsack_LLL_d_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    /* ************************** */     
     
    for (i = 0; i < d; i++)
-      expo[i] = _F_mpz_vec_ldexp(appB[i], B->rows[i], n);  
+      expo[i] = _F_mpz_vec_to_d_vec_2exp(appB[i], B->rows[i], n);  
   
    /* ********************************* */
    /* Step2: Initializing the main loop */
@@ -3470,8 +3470,8 @@ int knapsack_LLL_d_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 int knapsack_LLL_mpfr2_with_removal(F_mpz_mat_t B, mp_prec_t prec, F_mpz_t gs_B)
 {
    int kappa, kappa2, d, D, n, i, j, zeros, kappamax;
-   mpfr_t ** mu, ** r, ** appB, ** appSP;
-   mpfr_t * s, * mutmp, * appBtmp, * appSPtmp;
+   __mpfr_struct ** mu, ** r, ** appB, ** appSP;
+   __mpfr_struct * s, * mutmp, * appBtmp, * appSPtmp;
    mpfr_t tmp, rtmp;
    F_mpz_t ztmp;
    int * alpha;
@@ -3498,24 +3498,24 @@ int knapsack_LLL_mpfr2_with_removal(F_mpz_mat_t B, mp_prec_t prec, F_mpz_t gs_B)
    appB = mpfr_mat_init2(d, n, prec);
    appSP = mpfr_mat_init2(d, d, prec);
 
-   s = (mpfr_t *) malloc ((d + 1) * sizeof(mpfr_t));
-   appSPtmp = (mpfr_t *) malloc ((d + 1) * sizeof(mpfr_t));
+   s = (__mpfr_struct *) malloc ((d + 1) * sizeof(__mpfr_struct));
+   appSPtmp = (__mpfr_struct *) malloc ((d + 1) * sizeof(__mpfr_struct));
 
    for (i = 0; i < d+1; i++){
-      mpfr_init2(s[i], prec);
-      mpfr_init2(appSPtmp[i], prec);
+      mpfr_init2(s + i, prec);
+      mpfr_init2(appSPtmp + i, prec);
    }
 
    for (i = 0; i < d; i++)
       for (j = 0; j < d; j++)
-         mpfr_set_nan(appSP[i][j]);//0.0/0.0;
+         mpfr_set_nan(appSP[i] + j);//0.0/0.0;
   
    /* ************************** */
    /* Step1: Initialization Step */
    /* ************************** */     
     
    for (i = 0; i < d; i++)
-	   _F_mpz_vec_ldexp_mpfr(appB[i], B->rows[i], n);  
+	   _F_mpz_vec_to_mpfr_vec(appB[i], B->rows[i], n);  
   
    /* ********************************* */
    /* Step2: Initializing the main loop */
@@ -3525,14 +3525,14 @@ int knapsack_LLL_mpfr2_with_removal(F_mpz_mat_t B, mp_prec_t prec, F_mpz_t gs_B)
    i = 0; 
   
    do
-      mpfr_vec_norm2(appSP[i][i], appB[i], n, prec); 
-   while ( (mpfr_sgn(appSP[i][i]) == 0) && (++i < d));
+      mpfr_vec_norm2(appSP[i] + i, appB[i], n, prec); 
+   while ( (mpfr_sgn(appSP[i] + i) == 0) && (++i < d));
 
    zeros = i - 1; /* all vectors B[i] with i <= zeros are zero vectors */
    kappa = i + 1;
    kappamax = kappa;
   
-   if (zeros < d - 1) mpfr_set(r[i][i], appSP[i][i], GMP_RNDN);
+   if (zeros < d - 1) mpfr_set(r[i] + i, appSP[i] + i, GMP_RNDN);
 
    for (i = zeros + 1; i < d; i++)
       alpha[i] = 0;
@@ -3560,12 +3560,12 @@ int knapsack_LLL_mpfr2_with_removal(F_mpz_mat_t B, mp_prec_t prec, F_mpz_t gs_B)
       /* ************************************ */  
       /* ctt * r.coeff[kappa-1][kappa-1] <= s[kappa-2] ?? */
 
-      mpfr_mul_d( tmp, r[kappa - 1][kappa - 1], ctt, GMP_RNDN);
-      if ( mpfr_cmp(tmp, s[kappa -1]) <= 0) 
+      mpfr_mul_d( tmp, r[kappa - 1] + kappa - 1, ctt, GMP_RNDN);
+      if ( mpfr_cmp(tmp, s + kappa - 1) <= 0) 
 	   {
 	      alpha[kappa] = kappa;
-         mpfr_mul(tmp, mu[kappa][kappa-1], r[kappa][kappa-1], GMP_RNDN);
-         mpfr_sub(r[kappa][kappa], s[kappa - 1], tmp, GMP_RNDN);
+         mpfr_mul(tmp, mu[kappa] + kappa - 1, r[kappa] + kappa - 1, GMP_RNDN);
+         mpfr_sub(r[kappa] + kappa, s + kappa - 1, tmp, GMP_RNDN);
 	      kappa++;
 	   } else
 	   {
@@ -3581,9 +3581,9 @@ int knapsack_LLL_mpfr2_with_removal(F_mpz_mat_t B, mp_prec_t prec, F_mpz_t gs_B)
 	         kappa--;
 	         if (kappa > zeros + 1) 
 		      {
-               mpfr_mul_d(tmp, r[kappa-1][kappa-1], ctt, GMP_RNDN);
+               mpfr_mul_d(tmp, r[kappa-1] + kappa - 1, ctt, GMP_RNDN);
 	         }
-         } while ( (kappa >= zeros + 2) && (mpfr_cmp(s[kappa-1],tmp) <= 0) );
+         } while ( (kappa >= zeros + 2) && (mpfr_cmp(s + kappa - 1,tmp) <= 0) );
 
          for (i = kappa; i < kappa2; i++)
 	         if (kappa <= alpha[i]) alpha[i] = kappa;
@@ -3607,7 +3607,7 @@ int knapsack_LLL_mpfr2_with_removal(F_mpz_mat_t B, mp_prec_t prec, F_mpz_t gs_B)
 	      for (i = kappa2; i > kappa; i--) r[i] = r[i-1];
 	      r[kappa] = mutmp;
 
-	      mpfr_set(r[kappa][kappa], s[kappa], GMP_RNDN);
+	      mpfr_set(r[kappa] + kappa, s + kappa, GMP_RNDN);
 	  
 	      /* ************************ */
 	      /* Step7: Update B and appB */
@@ -3626,31 +3626,31 @@ int knapsack_LLL_mpfr2_with_removal(F_mpz_mat_t B, mp_prec_t prec, F_mpz_t gs_B)
 	      /* Step8: Update appSP: tricky */
 	      /* *************************** */  	 
 	  
-	      for (i = 0; i <= kappa2; i++) mpfr_set(appSPtmp[i], appSP[kappa2][i], GMP_RNDN);
+	      for (i = 0; i <= kappa2; i++) mpfr_set(appSPtmp + i, appSP[kappa2] + i, GMP_RNDN);
 
-	      for (i = kappa2 + 1; i <= kappamax; i++) mpfr_set(appSPtmp[i], appSP[i][kappa2], GMP_RNDN);
+	      for (i = kappa2 + 1; i <= kappamax; i++) mpfr_set(appSPtmp + i, appSP[i] + kappa2, GMP_RNDN);
 	  
 	      for (i = kappa2; i > kappa; i--)
 	      {
-	         for (j = 0; j < kappa; j++) mpfr_set(appSP[i][j], appSP[i-1][j], GMP_RNDN);	      
-	         mpfr_set(appSP[i][kappa], appSPtmp[i-1], GMP_RNDN);
+	         for (j = 0; j < kappa; j++) mpfr_set(appSP[i] + j, appSP[i-1] + j, GMP_RNDN);	      
+	         mpfr_set(appSP[i] + kappa, appSPtmp + i - 1, GMP_RNDN);
 	      
-	         for (j = kappa + 1; j <= i; j++) mpfr_set(appSP[i][j], appSP[i-1][j-1], GMP_RNDN);
+	         for (j = kappa + 1; j <= i; j++) mpfr_set(appSP[i] + j, appSP[i-1] + j - 1, GMP_RNDN);
 
-	         for (j = kappa2 + 1; j <= kappamax; j++) mpfr_set(appSP[j][i], appSP[j][i-1], GMP_RNDN);     
+	         for (j = kappa2 + 1; j <= kappamax; j++) mpfr_set(appSP[j] + i, appSP[j] + i - 1, GMP_RNDN);     
 	      }
 	  
-	      for (i = 0; i < kappa; i++) mpfr_set(appSP[kappa][i], appSPtmp[i], GMP_RNDN);
-	      mpfr_set(appSP[kappa][kappa], appSPtmp[kappa2], GMP_RNDN);
+	      for (i = 0; i < kappa; i++) mpfr_set(appSP[kappa] + i, appSPtmp + i, GMP_RNDN);
+	      mpfr_set(appSP[kappa] + kappa, appSPtmp + kappa2, GMP_RNDN);
 
-	      for (i = kappa2 + 1; i <= kappamax; i++) mpfr_set(appSP[i][kappa], appSPtmp[i], GMP_RNDN);
+	      for (i = kappa2 + 1; i <= kappamax; i++) mpfr_set(appSP[i] + kappa, appSPtmp + i, GMP_RNDN);
 	  
-	      if ( mpfr_sgn(r[kappa][kappa]) <= 0.0)
+	      if ( mpfr_sgn(r[kappa] + kappa) <= 0.0)
 	      {
 	         zeros++;
 	         kappa++;
-	         mpfr_vec_norm2(appSP[kappa][kappa], appB[kappa], n, prec);
-	         mpfr_set(r[kappa][kappa], appSP[kappa][kappa], GMP_RNDN);
+	         mpfr_vec_norm2(appSP[kappa] + kappa, appB[kappa], n, prec);
+	         mpfr_set(r[kappa] + kappa, appSP[kappa] + kappa, GMP_RNDN);
 	      }
 	  
 	      kappa++;
@@ -3665,7 +3665,7 @@ int knapsack_LLL_mpfr2_with_removal(F_mpz_mat_t B, mp_prec_t prec, F_mpz_t gs_B)
 
    for (i = d-1; (i >= 0) && (ok > 0); i--){
 //tmp_gs is the G-S length of ith vector divided by 2 (we shouldn't make a mistake and remove something valuable)
-      mpfr_set(rtmp, r[i][i], GMP_RNDN);
+      mpfr_set(rtmp, r[i] + i, GMP_RNDN);
       mpfr_div_d(rtmp, rtmp, 8.0, GMP_RNDN);
 //      mpfr_div_2ui(rtmp, rtmp, 1UL, GMP_RNDN);
       ok = mpfr_cmp(rtmp, tmp);
@@ -3681,8 +3681,8 @@ int knapsack_LLL_mpfr2_with_removal(F_mpz_mat_t B, mp_prec_t prec, F_mpz_t gs_B)
    mpfr_clear(tmp);
 
    for (i = 0; i < D+1; i++){
-      mpfr_clear(s[i]);
-      mpfr_clear(appSPtmp[i]);
+      mpfr_clear(s + i);
+      mpfr_clear(appSPtmp + i);
    }
 
 
@@ -3776,7 +3776,7 @@ int LLL_d_zero_vec_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    /* ************************** */     
     
    for (i = 0; i < d; i++)
-      expo[i] = _F_mpz_vec_ldexp(appB[i], B->rows[i], n);  
+      expo[i] = _F_mpz_vec_to_d_vec_2exp(appB[i], B->rows[i], n);  
   
    /* ********************************* */
    /* Step2: Initializing the main loop */
@@ -4082,7 +4082,7 @@ ulong F_mpz_mat_gs_d( F_mpz_mat_t B, F_mpz_t gs_B)
    /* ************************** */     
     
    for (i = 0; i < d; i++)
-      expo[i] = _F_mpz_vec_ldexp(appB[i], B->rows[i], n);  
+      expo[i] = _F_mpz_vec_to_d_vec_2exp(appB[i], B->rows[i], n);  
   
    /* ********************************* */
    /* Step2: Initializing the main loop */

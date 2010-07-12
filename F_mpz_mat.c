@@ -462,7 +462,7 @@ void F_mpz_mat_to_mpz_mat(mpz_mat_t m_mat, const F_mpz_mat_t F_mat)
 	}
 }
 
-long _F_mpz_vec_ldexp(double * appv, const F_mpz * vec, const ulong n)
+long _F_mpz_vec_to_d_vec_2exp(double * appv, const F_mpz * vec, const ulong n)
 {
    long * exp, i, maxexp = 0L;
    exp = (long *) malloc(n * sizeof(long)); 
@@ -479,20 +479,22 @@ long _F_mpz_vec_ldexp(double * appv, const F_mpz * vec, const ulong n)
    return maxexp;
 }
 
-void _F_mpz_vec_ldexp_mpfr(mpfr_t * appv, const F_mpz * vec, const ulong n)
+void _F_mpz_vec_to_mpfr_vec(__mpfr_struct * appv, const F_mpz * vec, const ulong n)
 {
    ulong i;
-   for (i = 0; i < n; i++) F_mpz_get_mpfr(appv[i], vec + i);
+   for (i = 0; i < n; i++)
+	  F_mpz_get_mpfr(appv + i, vec + i);
 
    return;
 }
 
-void _F_mpz_vec_ldexp_mpfr_2exp(mpfr_t * appv, const F_mpz * vec, const ulong n, int * cexpo)
+void _F_mpz_vec_2exp_to_mpfr_vec(__mpfr_struct * appv, const F_mpz * vec, const ulong n, int * cexpo)
 {
    ulong i;
-   for (i = 0; i < n; i++){
-      F_mpz_get_mpfr(appv[i], vec + i);
-      mpfr_mul_2si(appv[i], appv[i], cexpo[i], GMP_RNDN);
+   for (i = 0; i < n; i++)
+   {
+      F_mpz_get_mpfr(appv + i, vec + i);
+      mpfr_mul_2si(appv + i, appv + i, cexpo[i], GMP_RNDN);
    }
 
    return;

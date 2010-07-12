@@ -201,23 +201,23 @@ void mpz_mat_to_F_mpz_mat(F_mpz_mat_t F_mat, const mpz_mat_t m_mat);
 void F_mpz_mat_to_mpz_mat(mpz_mat_t m_mat, const F_mpz_mat_t F_mat);
 
 /** 
-   \fn     long _F_mpz_vec_ldexp(double * appv, const F_mpz * vec, const ulong n)
-   \brief  Sets the entries of appv to the double mantissa of the entries of the given row of mat
+   \fn     long _F_mpz_vec_to_d_vec_2exp(double * appv, const F_mpz * vec, const ulong n)
+   \brief  Sets the entries of appv to the double mantissa of the entries of the given vec
 	        with respect to a single maximum exponent which is returned.
 */
-long _F_mpz_vec_ldexp(double * appv, const F_mpz * vec, const ulong n);
+long _F_mpz_vec_to_d_vec_2exp(double * appv, const F_mpz * vec, const ulong n);
 
 /** 
-   \fn     void _F_mpz_vec_ldexp_mpfr(mpfr_t * appv, const F_mpz * vec, const ulong n)
-   \brief  Sets the entries of appv to the entries of the given row of mat.
+   \fn     void _F_mpz_vec_to_mpfr_vec(mpfr_t * appv, const F_mpz * vec, const ulong n)
+   \brief  Sets the entries of appv to the entries of the given vec.
 */
-void _F_mpz_vec_ldexp_mpfr(mpfr_t * appv, const F_mpz * vec, const ulong n);
+void _F_mpz_vec_to_mpfr_vec(__mpfr_struct * appv, const F_mpz * vec, const ulong n);
 
 /**
-   \fn     void _F_mpz_vec_ldexp_mpfr_2exp(mpfr_t * appv, const F_mpz * vec, const ulong n, int * cexpo)
-   \brief  Sets the entries of appv to the entries of the given for of mat multiplied by 2^cexpo[i]
+   \fn     void _F_mpz_vec_2exp_to_mpfr_vec(mpfr_t * appv, const F_mpz * vec, const ulong n, int * cexpo)
+   \brief  Sets the entries of appv to the entries of the given vec multiplied by 2^cexpo[i]
 */
-void _F_mpz_vec_ldexp_mpfr_2exp(mpfr_t * appv, const F_mpz * vec, const ulong n, int * cexpo);
+void _F_mpz_vec_2exp_to_mpfr_vec(__mpfr_struct * appv, const F_mpz * vec, const ulong n, int * cexpo);
 
 /*===============================================================================
 
@@ -250,6 +250,12 @@ void F_mpz_mat_swap(F_mpz_mat_t mat1, F_mpz_mat_t mat2)
    t = mat1->c_alloc;
    mat1->c_alloc = mat2->c_alloc;
    mat2->c_alloc = t;
+   t = mat1->r;
+   mat1->r = mat2->r;
+   mat2->r = t;
+   t = mat1->c;
+   mat1->c = mat2->c;
+   mat2->c = t;
 }
 
 
@@ -445,7 +451,7 @@ void F_mpz_mat_mul_classical(F_mpz_mat_t P, const F_mpz_mat_t A, const F_mpz_mat
 	if ((P == A) || (P == B))
 	{
 		F_mpz_mat_t Pa;
-		F_mpz_mat_init(Pa,P->r,P->c);
+		F_mpz_mat_init(Pa, P->r, P->c);
         _F_mpz_mat_mul_classical(Pa, A, B);
 		F_mpz_mat_swap(P, Pa);
 		F_mpz_mat_clear(Pa);
@@ -498,34 +504,41 @@ void F_mpz_mat_lower_trunc_n(F_mpz_mat_t res, F_mpz_mat_t M, ulong n);
 int F_mpz_mat_column_compare(F_mpz_mat_t M, ulong a, ulong b);
 
 /*
-   A fast test for a basis of M using only 0's and a single 1 per column, if it's possible the function returns np
-   the number of needed rows (in the case of factoring this is a proven bound on the number of factors) and part
-   will be filled with the numbers 1 through np and all numbers of value i will be one's in row i of the special basis.
+   A fast test for a basis of M using only 0's and a single 1 per column, 
+   if it's possible the function returns np the number of needed rows (in 
+   the case of factoring this is a proven bound on the number of factors) 
+   and part will be filled with the numbers 1 through np and all numbers 
+   of value i will be one's in row i of the special basis.
    If it is not possible then the function returns 0.
 */
 int F_mpz_mat_check_0_1(ulong *part, F_mpz_mat_t M);
 
 /*
-   Designed for the factoring applications.  Given matrix M takes the sub matrix of size M->r x d starting at M[0,0].
+   Designed for the factoring applications.  Given matrix M takes the sub 
+   matrix of size M->r x d starting at M[0,0].
    Used for getting the transformation matrix out of knapsack lattices.
 */
 void F_mpz_mat_get_U(F_mpz_mat_t U, F_mpz_mat_t M, ulong d);
 
 /*
-   Uses F_mpz_smod to reduce each entry in M mod P taking the representative in (-P/2, P/2]
+   Uses F_mpz_smod to reduce each entry in M mod P taking the representative 
+   in (-P/2, P/2]
 */
 void F_mpz_mat_smod(F_mpz_mat_t res, F_mpz_mat_t M, F_mpz_t P);
 
 /*
-   Simple naive function, uses F_mpz_mat_resize then shifts the new zero rows to the top rather than bottom.
+   Simple naive function, uses F_mpz_mat_resize then shifts the new zero rows 
+   to the top rather than bottom.
 */
 void F_mpz_mat_resize2(F_mpz_mat_t M, ulong r, ulong c);
 
 /*
-   This is the heart of the Novocin PhD algorithm.  Takes a column of data col, a large modulus P, and an upperbound for
-   the data in a good vector with exp.  Decides if it's worth calling LLL with this data, if not it returns 0, if so it adjusts 
-   M in place by truncating the data, augmenting M, and returning the virtual weight of the final column.  May or may not add a row
-   for P, based on a rough estimation.
+   This is the heart of the Novocin PhD algorithm.  Takes a column of data, col, 
+   a large modulus P, and an upperbound for the data in a good vector with exp.  
+   Decides if it's worth calling LLL with this data, if not it returns 0, if so 
+   it adjusts M in place by truncating the data, augmenting M, and returning the 
+   virtual weight of the final column.  May or may not add a row for P, based on 
+   a rough estimation.
 */
 int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, long U_exp);
 

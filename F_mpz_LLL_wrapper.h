@@ -70,8 +70,8 @@ int check_Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, 
        double **appB, int *expo, double **appSP, 
        int a, int zeros, int kappamax, int n);
 
-int check_Babai_heuristic(int kappa, F_mpz_mat_t B, mpfr_t **mu, mpfr_t **r, mpfr_t *s, 
-       mpfr_t **appB, mpfr_t **appSP, 
+int check_Babai_heuristic(int kappa, F_mpz_mat_t B, __mpfr_struct **mu, __mpfr_struct **r, __mpfr_struct *s, 
+       __mpfr_struct **appB, __mpfr_struct **appSP, 
        int a, int zeros, int kappamax, int n, mpfr_t tmp, mpfr_t rtmp, mp_prec_t prec);
 
 int check_Babai_heuristic_d_zero_vec (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s, 

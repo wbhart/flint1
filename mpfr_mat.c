@@ -32,49 +32,49 @@
 
 #include "mpfr_mat.h"
 
-mpfr_t ** mpfr_mat_init(int d, int n)
+__mpfr_struct ** mpfr_mat_init(int d, int n)
 {
-   mpfr_t ** B;
+   __mpfr_struct ** B;
 
-   B = (mpfr_t **) malloc (d*sizeof(mpfr_t *) + n*d*sizeof(mpfr_t));
-   B[0] = (mpfr_t *) (B + d);
+   B = (__mpfr_struct **) malloc (d*sizeof(__mpfr_struct *) + n*d*sizeof(__mpfr_struct));
+   B[0] = (__mpfr_struct *) (B + d);
 	long i;
 	for (i = 1; i < d; i++) B[i] = B[i-1] + n;
 
    long j;
    for (i = 0; i < d; i++)
       for (j = 0; j < n; j++)
-         mpfr_init(B[i][j]);
+         mpfr_init(B[i] + j);
 
 	return B;
 }
 
-mpfr_t ** mpfr_mat_init2(int d, int n, mp_prec_t prec)
+__mpfr_struct ** mpfr_mat_init2(int d, int n, mp_prec_t prec)
 {
-   mpfr_t ** B;
+   __mpfr_struct ** B;
 
-   B = (mpfr_t **) malloc (d*sizeof(mpfr_t *) + n*d*sizeof(mpfr_t));
-   B[0] = (mpfr_t *) (B + d);
+   B = (__mpfr_struct **) malloc (d*sizeof(__mpfr_struct *) + n*d*sizeof(__mpfr_struct));
+   B[0] = (__mpfr_struct *) (B + d);
 	for (long i = 1; i < d; i++) B[i] = B[i-1] + n;
 
    for (long i = 0; i < d; i++)
       for (long j = 0; j < n; j++)
-         mpfr_init2(B[i][j], prec);
+         mpfr_init2(B[i] + j, prec);
 
 	return B;
 }
 
-void mpfr_mat_clear(mpfr_t ** B, int d, int n)
+void mpfr_mat_clear(__mpfr_struct ** B, int d, int n)
 {
    long i, j;
    for (i = 0; i < d; i++)
       for (j = 0; j < n; j++)
-         mpfr_clear(B[i][j]);
+         mpfr_clear(B[i] + j);
 
    free(B);
 }
 
-void mpfr_mat_print(mpfr_t ** B, int d, int n) 
+void mpfr_mat_print(__mpfr_struct ** B, int d, int n) 
 {
    long i, j; 
 
@@ -84,15 +84,15 @@ void mpfr_mat_print(mpfr_t ** B, int d, int n)
       printf("[");
       for (j = 0; j < n; j++) 
       { 
-         mpfr_printf("%.128Rf", B[i][j]); 
-         if (j < n-1) printf(" "); 
+         mpfr_printf("%.128Rf", B[i] + j); 
+         if (j < n-1) printf(" ");  
       }
       printf("]"); 
    }  
    printf("]\n"); 
 }
 
-int mpfr_vec_scalar_product(mpfr_t sp, mpfr_t * vec1, mpfr_t * vec2, int n)
+int mpfr_vec_scalar_product(mpfr_t sp, __mpfr_struct * vec1, __mpfr_struct * vec2, int n)
 {
   mpfr_t tmp, tmp2;
   mpfr_init(tmp);
@@ -100,12 +100,12 @@ int mpfr_vec_scalar_product(mpfr_t sp, mpfr_t * vec1, mpfr_t * vec2, int n)
   
   int res;
 
-  mpfr_mul(sp, vec1[0], vec2[0], GMP_RNDN);
+  mpfr_mul(sp, vec1, vec2, GMP_RNDN);
   
   long i;
   for (i = 1; i < n; i++)
   {
-     mpfr_mul(tmp, vec1[i], vec2[i], GMP_RNDN);
+     mpfr_mul(tmp, vec1 + i, vec2 + i, GMP_RNDN);
      mpfr_add(sp, sp, tmp, GMP_RNDN);
   }
 
@@ -124,17 +124,17 @@ int mpfr_vec_scalar_product(mpfr_t sp, mpfr_t * vec1, mpfr_t * vec2, int n)
   return res;
 } 
 
-void mpfr_vec_norm(mpfr_t norm, mpfr_t * vec, int n)
+void mpfr_vec_norm(mpfr_t norm, __mpfr_struct * vec, int n)
 {
   mpfr_t tmp;
   mpfr_init(tmp);
   
-  mpfr_mul(norm, vec[0], vec[0], GMP_RNDN);
+  mpfr_mul(norm, vec, vec, GMP_RNDN);
   
   long i;
   for (i = 1 ; i < n ; i++)
   {
-     mpfr_mul(tmp, vec[i], vec[i], GMP_RNDN);
+     mpfr_mul(tmp, vec + i, vec + i, GMP_RNDN);
      mpfr_add(norm, norm, tmp, GMP_RNDN);
   }
 
@@ -143,7 +143,7 @@ void mpfr_vec_norm(mpfr_t norm, mpfr_t * vec, int n)
   return;
 }
 
-int mpfr_vec_scalar_product2(mpfr_t sp, mpfr_t * vec1, mpfr_t * vec2, int n, mp_prec_t prec)
+int mpfr_vec_scalar_product2(mpfr_t sp, __mpfr_struct * vec1, __mpfr_struct * vec2, int n, mp_prec_t prec)
 {
   mpfr_t tmp, tmp2;
   mpfr_init2(tmp, prec);
@@ -151,11 +151,11 @@ int mpfr_vec_scalar_product2(mpfr_t sp, mpfr_t * vec1, mpfr_t * vec2, int n, mp_
   
   int res;
 
-  mpfr_mul(sp, vec1[0], vec2[0], GMP_RNDN);
+  mpfr_mul(sp, vec1, vec2, GMP_RNDN);
   
   for (long i = 1; i < n; i++)
   {
-     mpfr_mul(tmp, vec1[i], vec2[i], GMP_RNDN);
+     mpfr_mul(tmp, vec1 + i, vec2 + i, GMP_RNDN);
      mpfr_add(sp, sp, tmp, GMP_RNDN);
   }
 
@@ -174,16 +174,16 @@ int mpfr_vec_scalar_product2(mpfr_t sp, mpfr_t * vec1, mpfr_t * vec2, int n, mp_
   return res;
 } 
 
-void mpfr_vec_norm2(mpfr_t norm, mpfr_t * vec, int n, mp_prec_t prec)
+void mpfr_vec_norm2(mpfr_t norm, __mpfr_struct * vec, int n, mp_prec_t prec)
 {
   mpfr_t tmp;
   mpfr_init2(tmp, prec);
   
-  mpfr_mul(norm, vec[0], vec[0], GMP_RNDN);
+  mpfr_mul(norm, vec, vec, GMP_RNDN);
   
   for (long i = 1 ; i < n ; i++)
   {
-     mpfr_mul(tmp, vec[i], vec[i], GMP_RNDN);
+     mpfr_mul(tmp, vec + i, vec + i, GMP_RNDN);
      mpfr_add(norm, norm, tmp, GMP_RNDN);
   }
 
