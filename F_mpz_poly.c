@@ -7152,6 +7152,8 @@ void F_mpz_poly_zassenhaus_naive(F_mpz_poly_factor_t final_fac, F_mpz_poly_facto
                   break;
             }
 //Need to involve lc, perhaps set coeff 0 to lc and do lc * rest and check if under M_bits... here I'm using a trial division... hmm
+            F_mpz_poly_clear(tryme);
+            F_mpz_poly_init(tryme);
             F_mpz_poly_fit_length(tryme, 1UL);
             tryme->length = 1UL;
             F_mpz_set(tryme->coeffs + 0, lc);
@@ -7163,6 +7165,7 @@ void F_mpz_poly_zassenhaus_naive(F_mpz_poly_factor_t final_fac, F_mpz_poly_facto
             F_mpz_poly_content(temp_lc, tryme);
             F_mpz_poly_scalar_div_exact(tryme, tryme, temp_lc);
             F_mpz_poly_divrem(Q, R, f, tryme);
+
             if (R->length == 0){
 //        FOUND ONE!!!!!
                F_mpz_poly_factor_insert(final_fac, tryme, exp);
@@ -7512,6 +7515,7 @@ void __F_mpz_poly_factor(F_mpz_poly_factor_t final_fac, F_mpz_t cong, F_mpz_poly
       F_mpz_poly_content(cong, G);
       F_mpz_poly_scalar_div_exact(g, G, cong);
       F_mpz_poly_factor_insert( final_fac, g, 1UL);
+      F_mpz_poly_clear(g);
       return;
    }
 //Does a presearch for a factor of form x^(x_pow)
