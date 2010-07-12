@@ -1019,6 +1019,7 @@ void _F_mpz_mat_mul_classical(F_mpz_mat_t res, const F_mpz_mat_t mat1, const F_m
    if (c1!=r2)
       return; //dimensions don't match up
 
+   F_mpz_mat_clear(res);
    F_mpz_mat_init(res,r1,c2);
 
    ulong i, j, c;
@@ -1387,6 +1388,7 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
    F_mpz_mat_get_U(U, M, r);
    F_mpz_mat_t temp_col;
    F_mpz_mat_init(temp_col, M->r, 1);
+   printf("temp_col initialized the pointer is %ld\n", temp_col->entries);
 //full precision column for deciding truncation levels
    F_mpz_mat_mul_classical(temp_col, U, col);
    if (U_exp >= 0){
@@ -1447,7 +1449,9 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
 //   printf("after take away\n");
 // Here we'll run with some extra bits with the new vector, just for complexity's sake
 // This means using ISD as the scale down.  Since we want to truncate we will take away ISD - s bits then return -s as the virtual exponent
+   printf("temp_col before mat_mul = %ld\n", temp_col->entries);
    F_mpz_mat_mul_classical(temp_col, U, trunc_col);
+   printf("temp_col after mat_mul = %ld\n", temp_col->entries);
    if (U_exp >= 0){
       F_mpz_mat_scalar_div_2exp(temp_col, temp_col, (ulong) U_exp);
    }
@@ -1474,6 +1478,10 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
       printf("************ work = %d \n", work);
    if (work == 0){
       printf(" problem!\n");
+      F_mpz_clear(trunc_P);
+      F_mpz_mat_clear(trunc_col);
+      F_mpz_mat_clear(temp_col);
+      F_mpz_mat_clear(U);
       abort();
    }
 
@@ -1485,6 +1493,7 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
       F_mpz_set(M->rows[j] + M->c - 1, temp_col->rows[j-!(no_vec)]);
    F_mpz_clear(trunc_P);
    F_mpz_mat_clear(trunc_col);
+   printf("temp_col being cleared the pointer is %ld\n", temp_col->entries);
    F_mpz_mat_clear(temp_col);
    F_mpz_mat_clear(U);
    return virt_exp;

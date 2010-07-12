@@ -7823,10 +7823,9 @@ void _F_mpz_poly_factor_CLD_mat(F_mpz_mat_t res, F_mpz_poly_t F, F_mpz_poly_fact
                F_mpz_set(res->rows[i] + j, temp[j]);
             }
          }
-//FIXME: these too
 
-/*         F_mpz_poly_clear(gd);
-         F_mpz_poly_clear(gcld);*/
+         F_mpz_poly_clear(gd);
+         F_mpz_poly_clear(gcld);
       }
    }
 
