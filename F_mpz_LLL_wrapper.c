@@ -2788,6 +2788,26 @@ int LLL_wrapper_with_removal(F_mpz_mat_t B, F_mpz_t gs_B){
       return -1;
 }
 
+int knapsack_LLL_wrapper_with_removal(F_mpz_mat_t B, F_mpz_t gs_B){
+
+   int res = knapsack_LLL_d_with_removal(B, gs_B);
+   if (res >= 0){ //hooray worked first time
+      printf("first time through, doubles are enough\n");
+      return res;
+   }
+   else if (res == -1) //just in case the fast/heuristic switch has any impact
+      res = LLL_d_heuristic_with_removal(B, gs_B);
+
+   if (res == -1){ //Now try the mpfr version
+      res = LLL_mpfr_with_removal(B, gs_B);
+   }
+
+   if (res >= 0) //finally worked
+      return res;
+   else //we've got big problems if this is the exit...
+      return -1;
+}
+
 // This is a mildly greedy version, tries the fast version unless that fails then 
 // switches to heuristic version for only one loop and right back to fast... 
 
@@ -4110,13 +4130,13 @@ int U_LLL_with_removal(F_mpz_mat_t FM, long new_size, F_mpz_t gs_B){
       k++;
       if (full_prec == 0){
          lll_start = clock();
-         LLL_wrapper(big_FM);
+         knapsack_LLL_wrapper_with_removal(big_FM, gs_B);
          lll_stop = clock();
          printf("was big_FM\n");
       }
       else{
          lll_start = clock();
-         newd = LLL_wrapper_with_removal(FM, gs_B);
+         newd = knapsack_LLL_wrapper_with_removal(FM, gs_B);
          lll_stop = clock();
          printf("was FM\n");
       }

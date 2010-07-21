@@ -98,6 +98,8 @@ int LLL_mpfr_with_removal(F_mpz_mat_t B, F_mpz_t gs_B);
 
 int LLL_wrapper_with_removal(F_mpz_mat_t B, F_mpz_t gs_B);
 
+int knapsack_LLL_wrapper_with_removal(F_mpz_mat_t B, F_mpz_t gs_B);
+
 int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B);
 
 int knapsack_LLL_d_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B);
