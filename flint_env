@@ -13,7 +13,7 @@ elif [ "`uname -m`" = "ia64" ]; then
    # Kate Minola.
    FLINT_TUNE=" "
 else
-   FLINT_TUNE="-g -funroll-loops "
+   FLINT_TUNE="-O2 -funroll-loops "
 fi
 
 if [ "`uname`" = "Darwin" ]; then
