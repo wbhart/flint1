@@ -1476,7 +1476,7 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
 //   F_mpz_mat_print_pretty(temp_col); printf(" was temp_col after smod\n");
 
 //FIXME: I'm creating an internal test, perhaps this should be hash defined with a flag
-       int work = _trunc_col_test(col, P, exp);
+/*       int work = _trunc_col_test(col, P, exp);
       printf("************ work = %d \n", work);
    if (work == 0){
       printf(" problem!\n");
@@ -1486,6 +1486,7 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
       F_mpz_mat_clear(U);
       abort();
    }
+*/
 
    if (!no_vec)
    {
