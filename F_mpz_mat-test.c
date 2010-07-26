@@ -1247,7 +1247,7 @@ int test__F_mpz_vec_neg()
    return result; 
 }
 
-int test__F_mpz_vec_scalar_mul_ui()
+int test__F_mpz_vec_mul_ui()
 {
    mpz_mat_t m_mat, m_mat2;
    F_mpz_mat_t F_mat, F_mat2;
@@ -1279,7 +1279,7 @@ int test__F_mpz_vec_scalar_mul_ui()
       bits2 = z_randint(FLINT_BITS+1);
 		mult = z_randbits(bits2);
       
-		_F_mpz_vec_scalar_mul_ui(F_mat2->rows[r2] + start, F_mat->rows[r1] + start, n, mult);
+		_F_mpz_vec_mul_ui(F_mat2->rows[r2] + start, F_mat->rows[r1] + start, n, mult);
       F_mpz_mat_to_mpz_mat(m_mat2, F_mat2);
 
       ulong i;
@@ -1321,7 +1321,7 @@ int test__F_mpz_vec_scalar_mul_ui()
       bits2 = z_randint(FLINT_BITS+1);
 		mult = z_randbits(bits2);
       
-		_F_mpz_vec_scalar_mul_ui(F_mat->rows[r2] + start, F_mat->rows[r1] + start, n, mult);
+		_F_mpz_vec_mul_ui(F_mat->rows[r2] + start, F_mat->rows[r1] + start, n, mult);
       ;
       F_mpz_mat_to_mpz_mat(m_mat2, F_mat);
 
@@ -1347,7 +1347,7 @@ int test__F_mpz_vec_scalar_mul_ui()
    return result; 
 }
 
-int test__F_mpz_vec_scalar_mul_si()
+int test__F_mpz_vec_mul_si()
 {
    mpz_mat_t m_mat, m_mat2;
    F_mpz_mat_t F_mat, F_mat2;
@@ -1380,7 +1380,7 @@ int test__F_mpz_vec_scalar_mul_si()
 		mult = z_randbits(bits2);
 		if (z_randint(2)) mult = -mult;
       
-		_F_mpz_vec_scalar_mul_si(F_mat2->rows[r2] + start, F_mat->rows[r1] + start, n, mult);
+		_F_mpz_vec_mul_si(F_mat2->rows[r2] + start, F_mat->rows[r1] + start, n, mult);
       F_mpz_mat_to_mpz_mat(m_mat2, F_mat2);
 
       ulong i;
@@ -1429,7 +1429,7 @@ int test__F_mpz_vec_scalar_mul_si()
 		mult = z_randbits(bits2);
       if (z_randint(2)) mult = -mult;
       
-		_F_mpz_vec_scalar_mul_si(F_mat->rows[r2] + start, F_mat->rows[r1] + start, n, mult);
+		_F_mpz_vec_mul_si(F_mat->rows[r2] + start, F_mat->rows[r1] + start, n, mult);
       F_mpz_mat_to_mpz_mat(m_mat2, F_mat);
 
       ulong i;
@@ -1460,7 +1460,7 @@ int test__F_mpz_vec_scalar_mul_si()
 	return result; 
 }
       
-int test__F_mpz_vec_scalar_mul_F_mpz()
+int test__F_mpz_vec_mul_F_mpz()
 {
    mpz_mat_t m_mat, m_mat2;
    F_mpz_mat_t F_mat, F_mat2;
@@ -1497,7 +1497,7 @@ int test__F_mpz_vec_scalar_mul_F_mpz()
 		if (z_randint(2)) mpz_neg(temp2, temp2);
 		F_mpz_set_mpz(mult, temp2);
 
-		_F_mpz_vec_scalar_mul_F_mpz(F_mat2->rows[r2] + start, F_mat->rows[r1] + start, n, mult);
+		_F_mpz_vec_mul_F_mpz(F_mat2->rows[r2] + start, F_mat->rows[r1] + start, n, mult);
       F_mpz_mat_to_mpz_mat(m_mat2, F_mat2);
 
       ulong i;
@@ -1544,7 +1544,7 @@ int test__F_mpz_vec_scalar_mul_F_mpz()
 		if (z_randint(2)) mpz_neg(temp2, temp2);
       F_mpz_set_mpz(mult, temp2);
 
-		_F_mpz_vec_scalar_mul_F_mpz(F_mat->rows[r2] + start, F_mat->rows[r1] + start, n, mult);
+		_F_mpz_vec_mul_F_mpz(F_mat->rows[r2] + start, F_mat->rows[r1] + start, n, mult);
       F_mpz_mat_to_mpz_mat(m_mat2, F_mat);
 
       ulong i;
@@ -1574,7 +1574,7 @@ int test__F_mpz_vec_scalar_mul_F_mpz()
    return result; 
 }
 
-int test__F_mpz_vec_scalar_addmul_ui()
+int test__F_mpz_vec_addmul_ui()
 {
    mpz_mat_t m_mat, m_mat2, m_mat3;
    F_mpz_mat_t F_mat, F_mat2;
@@ -1610,7 +1610,7 @@ int test__F_mpz_vec_scalar_addmul_ui()
       bits3 = z_randint(FLINT_BITS+1);
 		mult = z_randbits(bits3);
       
-		_F_mpz_vec_scalar_addmul_ui(F_mat2->rows[r2] + start, F_mat->rows[r1] + start, n, mult);
+		_F_mpz_vec_addmul_ui(F_mat2->rows[r2] + start, F_mat->rows[r1] + start, n, mult);
       F_mpz_mat_to_mpz_mat(m_mat3, F_mat2);
 
       ulong i;
@@ -1654,7 +1654,7 @@ int test__F_mpz_vec_scalar_addmul_ui()
       bits2 = z_randint(FLINT_BITS+1);
 		mult = z_randbits(bits2);
       
-		_F_mpz_vec_scalar_addmul_ui(F_mat->rows[r2] + start, F_mat->rows[r1] + start, n, mult);
+		_F_mpz_vec_addmul_ui(F_mat->rows[r2] + start, F_mat->rows[r1] + start, n, mult);
       F_mpz_mat_to_mpz_mat(m_mat2, F_mat);
 
       ulong i;
@@ -1680,7 +1680,7 @@ int test__F_mpz_vec_scalar_addmul_ui()
    return result; 
 }
 
-int test__F_mpz_vec_scalar_addmul_F_mpz()
+int test__F_mpz_vec_addmul_F_mpz()
 {
    F_mpz_mat_t F_mat, F_mat2;
    F_mpz * vec, * vec1, * vec2;
@@ -1710,7 +1710,7 @@ int test__F_mpz_vec_scalar_addmul_F_mpz()
 
 	  vec = _F_mpz_vec_init(c);
 	  _F_mpz_vec_copy(vec, F_mat2->rows[r2], c);
-	  _F_mpz_vec_scalar_addmul_F_mpz(F_mat2->rows[r2], F_mat->rows[r1], c, mult);
+	  _F_mpz_vec_addmul_F_mpz(F_mat2->rows[r2], F_mat->rows[r1], c, mult);
       
       ulong i;
       for (i = 0; i < c; i++)
@@ -1755,7 +1755,7 @@ int test__F_mpz_vec_scalar_addmul_F_mpz()
 	  vec2 = _F_mpz_vec_init(c);
 	  _F_mpz_vec_copy(vec2, F_mat2->rows[r2], c);
 	  _F_mpz_vec_copy(vec1, F_mat2->rows[r1], c);
-	  _F_mpz_vec_scalar_addmul_F_mpz(F_mat2->rows[r2], F_mat2->rows[r1], c, mult);
+	  _F_mpz_vec_addmul_F_mpz(F_mat2->rows[r2], F_mat2->rows[r1], c, mult);
       
       ulong i;
       for (i = 0; i < c; i++)
@@ -1785,7 +1785,7 @@ int test__F_mpz_vec_scalar_addmul_F_mpz()
    return result; 
 }
 
-int test__F_mpz_vec_scalar_submul_ui()
+int test__F_mpz_vec_submul_ui()
 {
    mpz_mat_t m_mat, m_mat2, m_mat3;
    F_mpz_mat_t F_mat, F_mat2;
@@ -1821,7 +1821,7 @@ int test__F_mpz_vec_scalar_submul_ui()
       bits3 = z_randint(FLINT_BITS+1);
 		mult = z_randbits(bits3);
       
-		_F_mpz_vec_scalar_submul_ui(F_mat2->rows[r2] + start, F_mat->rows[r1] + start, n, mult);
+		_F_mpz_vec_submul_ui(F_mat2->rows[r2] + start, F_mat->rows[r1] + start, n, mult);
       F_mpz_mat_to_mpz_mat(m_mat3, F_mat2);
 
       ulong i;
@@ -1865,7 +1865,7 @@ int test__F_mpz_vec_scalar_submul_ui()
       bits2 = z_randint(FLINT_BITS+1);
 		mult = z_randbits(bits2);
       
-		_F_mpz_vec_scalar_submul_ui(F_mat->rows[r2] + start, F_mat->rows[r1] + start, n, mult);
+		_F_mpz_vec_submul_ui(F_mat->rows[r2] + start, F_mat->rows[r1] + start, n, mult);
       F_mpz_mat_to_mpz_mat(m_mat2, F_mat);
 
       ulong i;
@@ -1891,7 +1891,7 @@ int test__F_mpz_vec_scalar_submul_ui()
    return result; 
 }
 
-int test__F_mpz_vec_scalar_submul_F_mpz()
+int test__F_mpz_vec_submul_F_mpz()
 {
    F_mpz_mat_t F_mat, F_mat2;
    F_mpz * vec, * vec1, * vec2;
@@ -1921,7 +1921,7 @@ int test__F_mpz_vec_scalar_submul_F_mpz()
 
 	  vec = _F_mpz_vec_init(c);
 	  _F_mpz_vec_copy(vec, F_mat2->rows[r2], c);
-	  _F_mpz_vec_scalar_submul_F_mpz(F_mat2->rows[r2], F_mat->rows[r1], c, mult);
+	  _F_mpz_vec_submul_F_mpz(F_mat2->rows[r2], F_mat->rows[r1], c, mult);
       
       ulong i;
       for (i = 0; i < c; i++)
@@ -1966,7 +1966,7 @@ int test__F_mpz_vec_scalar_submul_F_mpz()
 	  vec2 = _F_mpz_vec_init(c);
 	  _F_mpz_vec_copy(vec2, F_mat2->rows[r2], c);
 	  _F_mpz_vec_copy(vec1, F_mat2->rows[r1], c);
-	  _F_mpz_vec_scalar_submul_F_mpz(F_mat2->rows[r2], F_mat2->rows[r1], c, mult);
+	  _F_mpz_vec_submul_F_mpz(F_mat2->rows[r2], F_mat2->rows[r1], c, mult);
       
       ulong i;
       for (i = 0; i < c; i++)
@@ -1996,7 +1996,7 @@ int test__F_mpz_vec_scalar_submul_F_mpz()
    return result; 
 }
 
-int test__F_mpz_vec_scalar_addmul_2exp_ui()
+int test__F_mpz_vec_addmul_2exp_ui()
 {
    mpz_mat_t m_mat, m_mat2, m_mat3;
    F_mpz_mat_t F_mat, F_mat2;
@@ -2034,7 +2034,7 @@ int test__F_mpz_vec_scalar_addmul_2exp_ui()
       bits3 = z_randint(FLINT_BITS+1);
 		mult = z_randbits(bits3);
       
-		_F_mpz_vec_scalar_addmul_2exp_ui(F_mat2->rows[r2] + start, F_mat->rows[r1] + start, n, mult, exp);
+		_F_mpz_vec_addmul_2exp_ui(F_mat2->rows[r2] + start, F_mat->rows[r1] + start, n, mult, exp);
       F_mpz_mat_to_mpz_mat(m_mat3, F_mat2);
       
       ulong i;
@@ -2080,7 +2080,7 @@ int test__F_mpz_vec_scalar_addmul_2exp_ui()
       bits2 = z_randint(FLINT_BITS+1);
 		mult = z_randbits(bits2);
       
-		_F_mpz_vec_scalar_addmul_2exp_ui(F_mat->rows[r2] + start, F_mat->rows[r1] + start, n, mult, exp);
+		_F_mpz_vec_addmul_2exp_ui(F_mat->rows[r2] + start, F_mat->rows[r1] + start, n, mult, exp);
       F_mpz_mat_to_mpz_mat(m_mat2, F_mat);
 
       ulong i;
@@ -2108,7 +2108,7 @@ int test__F_mpz_vec_scalar_addmul_2exp_ui()
    return result; 
 }
 
-int test__F_mpz_vec_scalar_submul_2exp_ui()
+int test__F_mpz_vec_submul_2exp_ui()
 {
    mpz_mat_t m_mat, m_mat2, m_mat3;
    F_mpz_mat_t F_mat, F_mat2;
@@ -2146,7 +2146,7 @@ int test__F_mpz_vec_scalar_submul_2exp_ui()
       bits3 = z_randint(FLINT_BITS+1);
 		mult = z_randbits(bits3);
       
-		_F_mpz_vec_scalar_submul_2exp_ui(F_mat2->rows[r2] + start, F_mat->rows[r1] + start, n, mult, exp);
+		_F_mpz_vec_submul_2exp_ui(F_mat2->rows[r2] + start, F_mat->rows[r1] + start, n, mult, exp);
       F_mpz_mat_to_mpz_mat(m_mat3, F_mat2);
       
       ulong i;
@@ -2192,7 +2192,7 @@ int test__F_mpz_vec_scalar_submul_2exp_ui()
       bits2 = z_randint(FLINT_BITS+1);
 		mult = z_randbits(bits2);
       
-		_F_mpz_vec_scalar_submul_2exp_ui(F_mat->rows[r2] + start, F_mat->rows[r1] + start, n, mult, exp);
+		_F_mpz_vec_submul_2exp_ui(F_mat->rows[r2] + start, F_mat->rows[r1] + start, n, mult, exp);
       F_mpz_mat_to_mpz_mat(m_mat2, F_mat);
 
       ulong i;
@@ -2397,7 +2397,7 @@ int test_F_mpz_mat_mul_classical()
    return result;
 }
 
-int test__F_mpz_vec_scalar_submul_2exp_F_mpz()
+int test__F_mpz_vec_submul_2exp_F_mpz()
 {
    mpz_mat_t m_mat, m_mat2, m_mat3;
    F_mpz_mat_t F_mat, F_mat2;
@@ -2439,7 +2439,7 @@ int test__F_mpz_vec_scalar_submul_2exp_F_mpz()
 		F_mpz_test_random(mult, bits3);
       F_mpz_get_mpz(m_mult, mult);
 
-		_F_mpz_vec_scalar_submul_2exp_F_mpz(F_mat2->rows[r2] + start, F_mat->rows[r1] + start, n, mult, exp);
+		_F_mpz_vec_submul_2exp_F_mpz(F_mat2->rows[r2] + start, F_mat->rows[r1] + start, n, mult, exp);
       F_mpz_mat_to_mpz_mat(m_mat3, F_mat2);
       
       ulong i;
@@ -2488,7 +2488,7 @@ int test__F_mpz_vec_scalar_submul_2exp_F_mpz()
 		F_mpz_test_random(mult, bits3);
       F_mpz_get_mpz(m_mult, mult);
 
-		_F_mpz_vec_scalar_submul_2exp_F_mpz(F_mat->rows[r2] + start, F_mat->rows[r1] + start, n, mult, exp);
+		_F_mpz_vec_submul_2exp_F_mpz(F_mat->rows[r2] + start, F_mat->rows[r1] + start, n, mult, exp);
       F_mpz_mat_to_mpz_mat(m_mat2, F_mat);
 
       ulong i;
@@ -2518,7 +2518,7 @@ int test__F_mpz_vec_scalar_submul_2exp_F_mpz()
    return result; 
 }
 
-int test__F_mpz_vec_scalar_mul()
+int test__F_mpz_vec_scalar_product()
 {
    mpz_mat_t m_mat, m_mat2;
    F_mpz_mat_t F_mat, F_mat2;
@@ -2782,17 +2782,17 @@ void F_mpz_mat_test_all()
    RUN_TEST(_F_mpz_vec_copy_equal); 
    RUN_TEST(_F_mpz_vec_neg); 
    RUN_TEST(_F_mpz_vec_add_sub); 
-   RUN_TEST(_F_mpz_vec_scalar_mul_ui); 
-   RUN_TEST(_F_mpz_vec_scalar_mul_si); 
-   RUN_TEST(_F_mpz_vec_scalar_mul_F_mpz); 
-   RUN_TEST(_F_mpz_vec_scalar_addmul_ui); 
-   RUN_TEST(_F_mpz_vec_scalar_addmul_F_mpz); 
-   RUN_TEST(_F_mpz_vec_scalar_submul_ui); 
-   RUN_TEST(_F_mpz_vec_scalar_submul_F_mpz); 
-   RUN_TEST(_F_mpz_vec_scalar_addmul_2exp_ui); 
-   RUN_TEST(_F_mpz_vec_scalar_submul_2exp_ui); 
-   RUN_TEST(_F_mpz_vec_scalar_submul_2exp_F_mpz); 
-   RUN_TEST(_F_mpz_vec_scalar_mul); 
+   RUN_TEST(_F_mpz_vec_mul_ui); 
+   RUN_TEST(_F_mpz_vec_mul_si); 
+   RUN_TEST(_F_mpz_vec_mul_F_mpz); 
+   RUN_TEST(_F_mpz_vec_addmul_ui); 
+   RUN_TEST(_F_mpz_vec_addmul_F_mpz); 
+   RUN_TEST(_F_mpz_vec_submul_ui); 
+   RUN_TEST(_F_mpz_vec_submul_F_mpz); 
+   RUN_TEST(_F_mpz_vec_addmul_2exp_ui); 
+   RUN_TEST(_F_mpz_vec_submul_2exp_ui); 
+   RUN_TEST(_F_mpz_vec_submul_2exp_F_mpz); 
+   RUN_TEST(_F_mpz_vec_scalar_product); 
    RUN_TEST(_F_mpz_vec_to_d_vec_2exp); 
    RUN_TEST(_F_mpz_vec_to_mpfr_vec); 
    RUN_TEST(_F_mpz_vec_2exp_to_mpfr_vec); 

@@ -609,7 +609,7 @@ void F_mpz_mat_sub(F_mpz_mat_t res, const F_mpz_mat_t mat1, const F_mpz_mat_t ma
 
 ================================================================================*/
 
-void _F_mpz_vec_scalar_mul_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong x)
+void _F_mpz_vec_mul_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong x)
 {
 	// either scalar of input mat is zero
 	if (x == 0L)
@@ -636,7 +636,7 @@ void _F_mpz_vec_scalar_mul_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong x)
 		F_mpz_mul_ui(vec1 + i, vec2 + i, x);
 }
 
-void _F_mpz_vec_scalar_mul_si(F_mpz * vec1, F_mpz * vec2, ulong n, long x)
+void _F_mpz_vec_mul_si(F_mpz * vec1, F_mpz * vec2, ulong n, long x)
 {
 	// either scalar of input mat is zero
 	if (x == 0L)
@@ -672,7 +672,7 @@ void _F_mpz_vec_scalar_mul_si(F_mpz * vec1, F_mpz * vec2, ulong n, long x)
 		F_mpz_mul_si(vec1 + i, vec2 + i, x);
 }
 
-void _F_mpz_vec_scalar_mul_F_mpz(F_mpz * vec1, F_mpz * vec2, ulong n, F_mpz_t x)
+void _F_mpz_vec_mul_F_mpz(F_mpz * vec1, F_mpz * vec2, ulong n, F_mpz_t x)
 {
 	// either scalar or input mat is zero
 	if (*x == 0)
@@ -714,7 +714,7 @@ void _F_mpz_vec_scalar_mul_F_mpz(F_mpz * vec1, F_mpz * vec2, ulong n, F_mpz_t x)
 
 ================================================================================*/
 
-void _F_mpz_vec_scalar_addmul_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong x)
+void _F_mpz_vec_addmul_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong x)
 {
 	// scalar is zero
 	if (x == 0L)
@@ -735,7 +735,7 @@ void _F_mpz_vec_scalar_addmul_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong x)
 		F_mpz_addmul_ui(vec1 + i, vec2 + i, x);
 }
 
-void _F_mpz_vec_scalar_addmul_F_mpz(F_mpz * vec1, F_mpz * vec2, ulong n, F_mpz_t x)
+void _F_mpz_vec_addmul_F_mpz(F_mpz * vec1, F_mpz * vec2, ulong n, F_mpz_t x)
 {
 	// scalar is zero
 	if ((*x) == 0L)
@@ -766,7 +766,7 @@ void _F_mpz_vec_scalar_addmul_F_mpz(F_mpz * vec1, F_mpz * vec2, ulong n, F_mpz_t
 		F_mpz_addmul(vec1 + i, vec2 + i, x);
 }
 
-void _F_mpz_vec_scalar_submul_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong x)
+void _F_mpz_vec_submul_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong x)
 {
 	// scalar is zero
 	if (x == 0L)
@@ -787,7 +787,7 @@ void _F_mpz_vec_scalar_submul_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong x)
 		F_mpz_submul_ui(vec1 + i, vec2 + i, x);
 }
 
-void _F_mpz_vec_scalar_submul_F_mpz(F_mpz * vec1, F_mpz * vec2, ulong n, F_mpz_t x)
+void _F_mpz_vec_submul_F_mpz(F_mpz * vec1, F_mpz * vec2, ulong n, F_mpz_t x)
 {
 	// scalar is zero
 	if ((*x) == 0L)
@@ -818,7 +818,7 @@ void _F_mpz_vec_scalar_submul_F_mpz(F_mpz * vec1, F_mpz * vec2, ulong n, F_mpz_t
 		F_mpz_submul(vec1 + i, vec2 + i, x);
 }
 
-void _F_mpz_vec_scalar_addmul_2exp_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong c, ulong exp)
+void _F_mpz_vec_addmul_2exp_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong c, ulong exp)
 {
 	// scalar is zero, nothing to add
 	if (c == 0)
@@ -867,7 +867,7 @@ void _F_mpz_vec_scalar_addmul_2exp_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong
 	F_mpz_clear(temp);
 }
 
-void _F_mpz_vec_scalar_submul_2exp_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong c, ulong exp)
+void _F_mpz_vec_submul_2exp_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong c, ulong exp)
 {
 	// scalar is zero, nothing to subtract
 	if (c == 0)
@@ -916,7 +916,7 @@ void _F_mpz_vec_scalar_submul_2exp_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong
 	F_mpz_clear(temp);
 }
 
-void _F_mpz_vec_scalar_submul_2exp_F_mpz(F_mpz * vec1, F_mpz * vec2, ulong n, F_mpz_t c, ulong exp)
+void _F_mpz_vec_submul_2exp_F_mpz(F_mpz * vec1, F_mpz * vec2, ulong n, F_mpz_t c, ulong exp)
 {
 	// scalar is zero, nothing to subtract
 	if (F_mpz_is_zero(c))

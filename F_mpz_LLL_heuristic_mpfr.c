@@ -179,20 +179,20 @@ void Babai_heuristic(int kappa, F_mpz_mat_t B, __mpfr_struct **mu, __mpfr_struct
                   xx = mpfr_get_si(tmp, GMP_RNDN);		      
                   if (xx > 0L)
                   { 
-                     _F_mpz_vec_scalar_submul_ui(B->rows[kappa], B->rows[j], n, (ulong) xx);  
+                     _F_mpz_vec_submul_ui(B->rows[kappa], B->rows[j], n, (ulong) xx);  
                   } else
                   {
-                     _F_mpz_vec_scalar_addmul_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx);  
+                     _F_mpz_vec_addmul_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx);  
                   } 
                } else
 		         {
                   exponent = F_mpz_set_mpfr_2exp(ztmp, tmp);
                   if (exponent <= 0){
                      F_mpz_div_2exp(ztmp, ztmp, -exponent);
-                     _F_mpz_vec_scalar_submul_F_mpz(B->rows[kappa], B->rows[j], n, ztmp);
+                     _F_mpz_vec_submul_F_mpz(B->rows[kappa], B->rows[j], n, ztmp);
                   }
                   else{
-                     _F_mpz_vec_scalar_submul_2exp_F_mpz(B->rows[kappa], B->rows[j], n, ztmp, exponent);
+                     _F_mpz_vec_submul_2exp_F_mpz(B->rows[kappa], B->rows[j], n, ztmp, exponent);
                   }
 			      }
 		      }
@@ -791,20 +791,20 @@ void Babai_heuristic_2exp(int kappa, F_mpz_mat_t B, __mpfr_struct **mu, __mpfr_s
                   xx = mpfr_get_si(tmp, GMP_RNDN);		      
                   if (xx > 0L)
                   { 
-                     _F_mpz_vec_scalar_submul_ui(B->rows[kappa], B->rows[j], n, (ulong) xx);  
+                     _F_mpz_vec_submul_ui(B->rows[kappa], B->rows[j], n, (ulong) xx);  
                   } else
                   {
-                     _F_mpz_vec_scalar_addmul_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx);  
+                     _F_mpz_vec_addmul_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx);  
                   } 
                } else
 		         {
                   exponent = F_mpz_set_mpfr_2exp(ztmp, tmp);
                   if (exponent <= 0){
                      F_mpz_div_2exp(ztmp, ztmp, -exponent);
-                     _F_mpz_vec_scalar_submul_F_mpz(B->rows[kappa], B->rows[j], n, ztmp);
+                     _F_mpz_vec_submul_F_mpz(B->rows[kappa], B->rows[j], n, ztmp);
                   }
                   else{
-                     _F_mpz_vec_scalar_submul_2exp_F_mpz(B->rows[kappa], B->rows[j], n, ztmp, exponent);
+                     _F_mpz_vec_submul_2exp_F_mpz(B->rows[kappa], B->rows[j], n, ztmp, exponent);
                   }
 			      }
 		      }

@@ -392,7 +392,7 @@ void _F_mpz_vec_sub(F_mpz * res, const F_mpz * vec1, const F_mpz * vec2, ulong n
 
    \brief  Multiply vec2 by the unsigned long x and set vec1 to the result..
 */
-void _F_mpz_vec_scalar_mul_ui(F_mpz * vec1, F_mpz* vec2, ulong n, ulong x);
+void _F_mpz_vec_mul_ui(F_mpz * vec1, F_mpz* vec2, ulong n, ulong x);
 
 /** 
    \fn     void F_mpz_mat_row_mul_si(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong r2, 
@@ -400,13 +400,13 @@ void _F_mpz_vec_scalar_mul_ui(F_mpz * vec1, F_mpz* vec2, ulong n, ulong x);
 
    \brief  Multiply vec2 by the signed long x and set vec1 to the result.
 */
-void _F_mpz_vec_scalar_mul_si(F_mpz * vec1, F_mpz* vec2, ulong n, long x);
+void _F_mpz_vec_mul_si(F_mpz * vec1, F_mpz* vec2, ulong n, long x);
 /** 
-   \fn     _F_mpz_vec_scalar_mul_F_mpz(F_mpz * vec1, F_mpz* vec2, ulong n, F_mpz_t x)
+   \fn     _F_mpz_vec_mul_F_mpz(F_mpz * vec1, F_mpz* vec2, ulong n, F_mpz_t x)
 
    \brief  Multiply vec2 by the mpz_t x and set vec1 to the result.
 */
-void _F_mpz_vec_scalar_mul_F_mpz(F_mpz * vec1, F_mpz* vec2, ulong n, F_mpz_t x);
+void _F_mpz_vec_mul_F_mpz(F_mpz * vec1, F_mpz* vec2, ulong n, F_mpz_t x);
 
 /*===============================================================================
 
@@ -415,57 +415,57 @@ void _F_mpz_vec_scalar_mul_F_mpz(F_mpz * vec1, F_mpz* vec2, ulong n, F_mpz_t x);
 ================================================================================*/
 
 /** 
-   \fn     _F_mpz_vec_scalar_addmul_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong x)
+   \fn     _F_mpz_vec_addmul_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong x)
 
    \brief  Multiply vec2 by the unsigned long x and add the result to vec1.
 */
-void _F_mpz_vec_scalar_addmul_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong x);
+void _F_mpz_vec_addmul_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong x);
 
 /** 
-   \fn     _F_mpz_vec_scalar_addmul_F_mpz(F_mpz * vec1, F_mpz * vec2, ulong n, F_mpz_t x)
+   \fn     _F_mpz_vec_addmul_F_mpz(F_mpz * vec1, F_mpz * vec2, ulong n, F_mpz_t x)
 
    \brief  Multiply vec2 by the F_mpz_t x and add the result to vec1.
 */
-void _F_mpz_vec_scalar_addmul_F_mpz(F_mpz * vec1, F_mpz * vec2, ulong n, F_mpz_t x);
+void _F_mpz_vec_addmul_F_mpz(F_mpz * vec1, F_mpz * vec2, ulong n, F_mpz_t x);
 
 /** 
-   \fn     _F_mpz_vec_scalar_submul_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong x)
+   \fn     _F_mpz_vec_submul_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong x)
 
    \brief  Multiply vec2 by the unsigned long x and subtract the result from vec1.
 */
-void _F_mpz_vec_scalar_submul_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong x);
+void _F_mpz_vec_submul_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong x);
 
 /** 
-   \fn     _F_mpz_vec_scalar_submul_F_mpz(F_mpz * vec1, F_mpz * vec2, ulong n, F_mpz_t x)
+   \fn     _F_mpz_vec_submul_F_mpz(F_mpz * vec1, F_mpz * vec2, ulong n, F_mpz_t x)
 
    \brief  Multiply vec2 by the F_mpz_t x and subtract the result from vec1.
 */
-void _F_mpz_vec_scalar_submul_F_mpz(F_mpz * vec1, F_mpz * vec2, ulong n, F_mpz_t x);
+void _F_mpz_vec_submul_F_mpz(F_mpz * vec1, F_mpz * vec2, ulong n, F_mpz_t x);
 
 /** 
-   \fn     _F_mpz_vec_scalar_addmul_2exp_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong c, ulong exp)
+   \fn     _F_mpz_vec_addmul_2exp_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong c, ulong exp)
 
 	\brief  Multiply entry from row r2 of mat2 by c*2^exp and add to entry from row r1 of mat1.	        
 */
 
-void _F_mpz_vec_scalar_addmul_2exp_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong c, ulong exp);
+void _F_mpz_vec_addmul_2exp_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong c, ulong exp);
 
 /** 
-   \fn     _F_mpz_vec_scalar_submul_2exp_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong c, ulong exp)
+   \fn     _F_mpz_vec_submul_2exp_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong c, ulong exp)
 
 	\brief  Multiply entries from vec2 by c*2^exp and add to entries in vec1.
 	        
 */
 
-void _F_mpz_vec_scalar_submul_2exp_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong c, ulong exp);
+void _F_mpz_vec_submul_2exp_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong c, ulong exp);
 
 /** 
-   \fn     _F_mpz_vec_scalar_submul_2exp_F_mpz(F_mpz* vec1, F_mpz * vec2, ulong n, F_mpz_t c, ulong exp)
+   \fn     _F_mpz_vec_submul_2exp_F_mpz(F_mpz* vec1, F_mpz * vec2, ulong n, F_mpz_t c, ulong exp)
 
 	\brief  Multiply entries from vec2 by c*2^exp and subtract from entries in vec1.
 	        
 */
-void _F_mpz_vec_scalar_submul_2exp_F_mpz(F_mpz * vec1, F_mpz * vec2, ulong n, F_mpz_t c, ulong exp);
+void _F_mpz_vec_submul_2exp_F_mpz(F_mpz * vec1, F_mpz * vec2, ulong n, F_mpz_t c, ulong exp);
 
 /** 
    \fn     void F_mpz_mat_swap_rows(F_mpz_mat_t mat, ulong r1, ulong r2)
