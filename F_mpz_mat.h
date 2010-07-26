@@ -484,13 +484,17 @@ void F_mpz_mat_swap_rows(F_mpz_mat_t mat, ulong r1, ulong r2)
 }
 
 /** 
-   \fn     void F_mpz_mat_row_neg(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, 
-	                                                ulong r2, ulong start, ulong n)
+   \fn     void _F_mpz_vec_neg(F_mpz * vec1, F_mpz * vec2, ulong n)
 
-	\brief  Set row r1 of mat1 to minus row r2 of mat2.
+	\brief  Set vec1 of length n to minus vec2.
 */
-void F_mpz_mat_row_neg(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, 
-								                          ulong r2, ulong start, ulong n);
+static inline
+void _F_mpz_vec_neg(F_mpz * vec1, F_mpz * vec2, ulong n)
+{
+	ulong i;
+	for (i = 0; i < n; i++)
+		F_mpz_neg(vec1 + i, vec2 + i);
+}
 
 /* ======================================================================================================
 

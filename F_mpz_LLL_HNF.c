@@ -94,8 +94,8 @@ void F_mpz_mat_HNF_LLL_reduce(F_mpz_mat_t A, F_mpz_mat_t B, F_mpz_mat_t L,
 
 	if (F_mpz_sgn(A->rows[i] + (*col1)) < 0)
 	{
-      F_mpz_mat_HNF_LLL_minus(L, i);
-		F_mpz_mat_row_neg(B, i, B, i, 0, n);
+        F_mpz_mat_HNF_LLL_minus(L, i);
+		_F_mpz_vec_neg(B->rows[i], B->rows[i], n);
 	} else
 	   (*col1) = n;
 
@@ -107,7 +107,7 @@ void F_mpz_mat_HNF_LLL_reduce(F_mpz_mat_t A, F_mpz_mat_t B, F_mpz_mat_t L,
    if (F_mpz_sgn(A->rows[k] + (*col2)) < 0)
 	{
       F_mpz_mat_HNF_LLL_minus(L, k);
-		F_mpz_mat_row_neg(B, k, B, k, 0, n);
+		_F_mpz_vec_neg(B->rows[k], B->rows[k], n);
 	} else
 	   (*col2) = n;
 

@@ -1137,6 +1137,80 @@ int test__F_mpz_vec_add_sub()
    return result; 
 }
 
+int test__F_mpz_vec_neg()
+{
+   F_mpz_mat_t F_mat, F_mat2;
+   F_mpz * vec;
+   int result = 1;
+   ulong bits, r, c, r1, r2;
+   
+   ulong count1;
+   for (count1 = 0; (count1 < 2000) && (result == 1) ; count1++)
+   {
+      bits = z_randint(200) + 1;
+      r = z_randint(30) + 1;  
+      c = z_randint(30) + 1;
+	  r1 = z_randint(r);
+      r2 = z_randint(r);
+      
+      F_mpz_mat_init(F_mat, r, c);
+      F_mpz_mat_init(F_mat2, r, c);
+      
+      F_mpz_randmat(F_mat, r, c, bits); 
+      F_mpz_randmat(F_mat2, r, c, bits); 
+              
+	  vec = _F_mpz_vec_init(c);
+	  _F_mpz_vec_copy(vec, F_mat2->rows[r2], c);
+	  _F_mpz_vec_neg(F_mat->rows[r1], F_mat2->rows[r2], c);
+	  _F_mpz_vec_neg(vec, F_mat->rows[r1], c);
+	  
+      ulong i;
+      result = _F_mpz_vec_equal(vec, F_mat2->rows[r2], c);
+
+	  if (!result) 
+	  {
+		 printf("Error: r = %ld, r1 = %ld, r2 = %ld, c = %ld, bits = %ld\n", r, r1, r2, c, bits);
+	  }
+
+      _F_mpz_vec_clear(vec, c);
+	  
+	  F_mpz_mat_clear(F_mat);
+      F_mpz_mat_clear(F_mat2);
+   }
+
+   // alias rows
+   for (count1 = 0; (count1 < 2000) && (result == 1) ; count1++)
+   {
+      bits = z_randint(200) + 1;
+      r = z_randint(30) + 1;  
+      c = z_randint(30) + 1;
+	  r1 = z_randint(r);
+      
+	  F_mpz_mat_init(F_mat, r, c);
+      
+      F_mpz_randmat(F_mat, r, c, bits); 
+              
+	  vec = _F_mpz_vec_init(c);
+	  _F_mpz_vec_copy(vec, F_mat->rows[r1], c);
+	  _F_mpz_vec_neg(F_mat->rows[r1], F_mat->rows[r1], c);
+	  _F_mpz_vec_neg(F_mat->rows[r1], F_mat->rows[r1], c);
+	  
+      ulong i;
+      result = _F_mpz_vec_equal(vec, F_mat->rows[r1], c);
+
+	  if (!result) 
+	  {
+		 printf("Error: r = %ld, r1 = %ld, c = %ld, bits = %ld\n", r, r1, c, bits);
+	  }
+
+      _F_mpz_vec_clear(vec, c);
+	  
+	  F_mpz_mat_clear(F_mat);
+   }
+
+   return result; 
+}
+
 int test__F_mpz_vec_scalar_mul_ui()
 {
    mpz_mat_t m_mat, m_mat2;
@@ -2670,6 +2744,7 @@ void F_mpz_mat_test_all()
 #endif
    RUN_TEST(_F_mpz_vec_init_clear); 
    RUN_TEST(_F_mpz_vec_copy_equal); 
+   RUN_TEST(_F_mpz_vec_neg); 
    RUN_TEST(_F_mpz_vec_add_sub); 
    RUN_TEST(_F_mpz_vec_scalar_mul_ui); 
    RUN_TEST(_F_mpz_vec_scalar_mul_si); 

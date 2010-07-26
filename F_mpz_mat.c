@@ -976,14 +976,6 @@ void _F_mpz_vec_scalar_submul_2exp_F_mpz(F_mpz * vec1, F_mpz * vec2, ulong n, F_
 	F_mpz_clear(temp);
 }
 
-void F_mpz_mat_row_neg(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, 
-								                 ulong r2, ulong start, ulong n)
-{
-	ulong i;
-	for (i = start; i < start + n; i++)
-		F_mpz_neg(mat1->rows[r1] + i, mat2->rows[r2] + i);
-}
-
 /* ======================================================================================================
 
  Classical Multiplication
