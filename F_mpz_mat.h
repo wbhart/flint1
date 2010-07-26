@@ -290,6 +290,10 @@ void F_mpz_mat_neg(F_mpz_mat_t mat1, const F_mpz_mat_t mat2);
 
 ================================================================================*/
 
+/** 
+   \fn     F_mpz * _F_mpz_vec_init(ulong n)
+   \brief  Allocate and initialise a vector of length n.
+*/
 static inline
 F_mpz * _F_mpz_vec_init(ulong n)
 {
@@ -300,6 +304,11 @@ F_mpz * _F_mpz_vec_init(ulong n)
    return vec;
 }
 
+/** 
+   \fn     void _F_mpz_vec_clear(F_mpz * vec, ulong n)
+   \brief  Clear the given vector which is assumed to have been allocated
+           at length n.
+*/
 static inline
 void _F_mpz_vec_clear(F_mpz * vec, ulong n)
 {
@@ -315,6 +324,10 @@ void _F_mpz_vec_clear(F_mpz * vec, ulong n)
 
 ================================================================================*/
 
+/** 
+   \fn     void _F_mpz_vec_copy(F_mpz * vec1, const F_mpz * vec2, ulong n)
+   \brief  Copy the contents of vec2 of length n into vec1.
+*/
 static inline
 void _F_mpz_vec_copy(F_mpz * vec1, const F_mpz * vec2, ulong n)
 {
@@ -323,6 +336,10 @@ void _F_mpz_vec_copy(F_mpz * vec1, const F_mpz * vec2, ulong n)
       F_mpz_set(vec1 + i, vec2 + i);
 }
 
+/** 
+   \fn     int _F_mpz_vec_equal(F_mpz * vec1, const F_mpz * vec2, ulong n)
+   \brief  Return 1 if vec1 and vec2 of length n are equal, otherwise return 0.
+*/
 static inline
 int _F_mpz_vec_equal(F_mpz * vec1, const F_mpz * vec2, ulong n)
 {

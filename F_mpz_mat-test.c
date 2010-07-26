@@ -182,8 +182,8 @@ int test__F_mpz_vec_copy_equal()
    for (count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
    {
       ulong i;
-	  bits = z_randint(200)+ 1;
-      c = z_randint(30)+1;
+	  bits = z_randint(200) + 1;
+      c = z_randint(30) + 1;
 	  
       vec1 = _F_mpz_vec_init(c);
 	  vec2 = _F_mpz_vec_init(c);
@@ -202,8 +202,8 @@ int test__F_mpz_vec_copy_equal()
    for (count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
    {
       ulong i;
-	  bits = z_randint(200)+ 1;
-      c = z_randint(30)+1;
+	  bits = z_randint(200) + 1;
+      c = z_randint(30) + 1;
 	  
       vec1 = _F_mpz_vec_init(c);
 	  vec2 = _F_mpz_vec_init(c);
