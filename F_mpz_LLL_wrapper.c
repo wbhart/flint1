@@ -4106,7 +4106,8 @@ int U_LLL_with_removal(F_mpz_mat_t FM, long new_size, F_mpz_t gs_B){
       mbits = FLINT_ABS(F_mpz_mat_max_bits(full_data));
 
       if ((mbits - new_size) > 0){
-         F_mpz_mat_scalar_div_2exp(trunc_data, full_data, (ulong) (mbits - new_size));
+         F_mpz_mat_resize(trunc_data, full_data->r, full_data->c);
+		 F_mpz_mat_div_2exp(trunc_data, full_data, (ulong) (mbits - new_size));
 //Make this iterate over i and j, make a LARGE lattice which has identity in one corner and FM in the other
          for ( i = 0; i < r; i++){
             for (j = 0; j < i; j++)
@@ -4157,8 +4158,10 @@ int U_LLL_with_removal(F_mpz_mat_t FM, long new_size, F_mpz_t gs_B){
 
          mbits = FLINT_ABS(F_mpz_mat_max_bits(full_data));
 //make this condition better?
-         if ( ( (mbits - new_size) > 0) &&  ( mbits <= prev_mbits - (long)(new_size/4) ) && (is_U_I == 0)){
-            F_mpz_mat_scalar_div_2exp(trunc_data, full_data, (ulong) (mbits - new_size));
+         if ( ( (mbits - new_size) > 0) &&  ( mbits <= prev_mbits - (long)(new_size/4) ) && (is_U_I == 0))
+		 {
+            F_mpz_mat_resize(trunc_data, full_data->r, full_data->c);
+			F_mpz_mat_div_2exp(trunc_data, full_data, (ulong) (mbits - new_size));
          }
          else{
             full_prec = 1;

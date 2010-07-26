@@ -1052,7 +1052,7 @@ long F_mpz_mat_max_bits2(ulong * row, ulong * col, const F_mpz_mat_t M)
 	     {
 		    max = bits;
 			MAT_POS_UPDATE;
-	        if (max == FLINT_BITS - 2) goto check_mpzs; // coeff is at least FLINT_BITS - 2 bits
+	        if (max >= FLINT_BITS - 2) goto check_mpzs; // coeff is at least FLINT_BITS - 2 bits
 	     }
 	  }
 	}
@@ -1090,50 +1090,46 @@ check_mpzs:
 	   		 }
 	   	  } else if ((long) c < 0L) sign = 1; // still need to check the sign of small coefficients
 	   }
+	   j = 0;
 	}
 	
 	if (sign) return -(max + FLINT_BITS*(max_limbs - 1));
 	else return max + FLINT_BITS*(max_limbs - 1);
 }
 
-void F_mpz_mat_scalar_mul_2exp(F_mpz_mat_t res, F_mpz_mat_t M, ulong n)
+void F_mpz_mat_mul_2exp(F_mpz_mat_t res, F_mpz_mat_t M, ulong n)
 {
-   if (res != M){
-      F_mpz_mat_resize(res, M->r, M->c);
-   }
-   if (n == 0){
+   if (n == 0)
+   {
       F_mpz_mat_set(res, M);
       return;
    }
-   if (n == 1){
+
+   if (n == 1)
+   {
       F_mpz_mat_add(res, M, M);
       return;
    }
+
    ulong i, j;
    for (i = 0; i < M->r; i++)
       for (j = 0; j < M->c; j++)
          F_mpz_mul_2exp(res->rows[i] + j, M->rows[i] + j, n);   
 }
 
-void F_mpz_mat_scalar_div_2exp(F_mpz_mat_t res, F_mpz_mat_t M, ulong n)
+void F_mpz_mat_div_2exp(F_mpz_mat_t res, F_mpz_mat_t M, ulong n)
 {
-   if (res != M){
-      F_mpz_mat_resize(res, M->r, M->c);
+   if (n == 0)
+   {
+      F_mpz_mat_set(res, M);
+      return;
    }
-   F_mpz_t temp;
-   F_mpz_init(temp);
 
    ulong i, j;
    for (i = 0; i < M->r; i++)
       for (j = 0; j < M->c; j++)
-         if (F_mpz_sgn(M->rows[i]+j) >= 0)
-            F_mpz_div_2exp(res->rows[i] + j, M->rows[i] + j, n);
-         else{
-            F_mpz_abs(temp, M->rows[i]+j);
-            F_mpz_div_2exp(res->rows[i] + j, temp, n);
-            F_mpz_neg(res->rows[i] + j, res->rows[i] + j);
-         }
-   F_mpz_clear(temp);
+         F_mpz_div_2exp(res->rows[i] + j, M->rows[i] + j, n);
+
    return;
 }
 
@@ -1332,10 +1328,10 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
 //full precision column for deciding truncation levels
    F_mpz_mat_mul_classical(temp_col, U, col);
    if (U_exp >= 0){
-      F_mpz_mat_scalar_div_2exp(temp_col, temp_col, (ulong) U_exp);
+      F_mpz_mat_div_2exp(temp_col, temp_col, (ulong) U_exp);
    }
    else{
-      F_mpz_mat_scalar_mul_2exp(temp_col, temp_col, (ulong) (-1*U_exp));
+      F_mpz_mat_mul_2exp(temp_col, temp_col, (ulong) (-1*U_exp));
    } 
    F_mpz_mat_smod(temp_col, temp_col, P);
    long mbts = FLINT_ABS(F_mpz_mat_max_bits(temp_col));
@@ -1377,10 +1373,12 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
 //   F_mpz_mat_print_pretty(col); printf(" was col and take_away = %ld\n", take_away);
 
    if (take_away >= 0){
-      F_mpz_mat_scalar_div_2exp(trunc_col, col, (ulong) take_away);
+      F_mpz_mat_resize(trunc_col, col->r, col->c);
+	  F_mpz_mat_div_2exp(trunc_col, col, (ulong) take_away);
    }
    else{
-      F_mpz_mat_scalar_mul_2exp(trunc_col, col, (ulong) (-1*take_away));
+      F_mpz_mat_resize(trunc_col, col->r, col->c);
+	  F_mpz_mat_mul_2exp(trunc_col, col, (ulong) (-1*take_away));
    } 
 
 //   F_mpz_mat_print_pretty(trunc_col); printf(" was trunc_col\n");
@@ -1393,10 +1391,10 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
    F_mpz_mat_mul_classical(temp_col, U, trunc_col);
 //   printf("temp_col after mat_mul = %ld\n", temp_col->entries);
    if (U_exp >= 0){
-      F_mpz_mat_scalar_div_2exp(temp_col, temp_col, (ulong) U_exp);
+      F_mpz_mat_div_2exp(temp_col, temp_col, (ulong) U_exp);
    }
    else{
-      F_mpz_mat_scalar_mul_2exp(temp_col, temp_col, (ulong) (-1*U_exp));
+      F_mpz_mat_mul_2exp(temp_col, temp_col, (ulong) (-1*U_exp));
    }
 
 //   F_mpz_mat_print_pretty(temp_col); printf(" was temp_col before smod\n");
@@ -1477,8 +1475,8 @@ int F_mpz_mat_check_rest(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp){
 //Will need a G-S stability test, see if any NaNs popped up or something like that.
 
    F_mpz_mat_t trunc_col;
-   F_mpz_mat_init(trunc_col, r, 1);
-   F_mpz_mat_scalar_div_2exp(trunc_col, col, take_away);
+   F_mpz_mat_init(trunc_col, col->r, col->c);
+   F_mpz_mat_div_2exp(trunc_col, col, take_away);
    F_mpz_mat_mul_classical(temp_col, U, trunc_col);
    F_mpz_t trunc_P;
    F_mpz_init(trunc_P);

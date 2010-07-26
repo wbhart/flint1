@@ -569,12 +569,12 @@ long F_mpz_mat_max_bits(const F_mpz_mat_t M)
 /*
    Divides M by the scalar 2^n and stores at res.  Truncates each entry with F_mpz_div_2exp.
 */
-void F_mpz_mat_scalar_div_2exp(F_mpz_mat_t res, F_mpz_mat_t M, ulong n);
+void F_mpz_mat_div_2exp(F_mpz_mat_t res, F_mpz_mat_t M, ulong n);
 
 /*
    Scalar multiplication by a power of 2.  res = M * 2^n.
 */
-void F_mpz_mat_scalar_mul_2exp(F_mpz_mat_t res, F_mpz_mat_t M, ulong n);
+void F_mpz_mat_mul_2exp(F_mpz_mat_t res, F_mpz_mat_t M, ulong n);
 
 /*
    Sets res to the top n bits of each entry of M.  Returns a ulong exp such that

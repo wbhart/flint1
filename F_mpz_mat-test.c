@@ -695,6 +695,76 @@ int test_F_mpz_mat_set()
    return result;
 }
 
+int test_F_mpz_mat_mul_div_2exp()
+{
+   F_mpz_mat_t F_mat1, F_mat2, F_mat3;
+   int result = 1;
+   ulong bits, exp, r, c;
+   
+   ulong count1;
+   for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
+   {
+      bits = z_randint(200) + 1;
+      exp = z_randint(200) + 1;
+      r = z_randint(30);
+      c = z_randint(30);
+      
+	  F_mpz_mat_init(F_mat1, r, c);
+      F_mpz_mat_init(F_mat2, r, c);
+      F_mpz_mat_init(F_mat3, r, c);
+      
+      F_mpz_randmat(F_mat1, r, c, bits);
+           
+      F_mpz_mat_mul_2exp(F_mat2, F_mat1, exp);
+	  F_mpz_mat_div_2exp(F_mat3, F_mat2, exp);
+          
+      result = (F_mpz_mat_equal(F_mat1, F_mat3)
+		   && ((FLINT_ABS(F_mpz_mat_max_bits(F_mat2)) == FLINT_ABS(F_mpz_mat_max_bits(F_mat1)) + exp) 
+		      || (F_mpz_mat_max_bits(F_mat1) == 0))); 
+	  if (!result) 
+	  {
+		 printf("Error: r = %ld, c = %ld, bits = %ld, exp = %ld\n", r, c, bits, exp);
+		 printf("m1 bits = %ld, m2 bits = %ld\n", FLINT_ABS(F_mpz_mat_max_bits(F_mat1)), FLINT_ABS(F_mpz_mat_max_bits(F_mat2)));
+	  }
+          
+      F_mpz_mat_clear(F_mat1);
+      F_mpz_mat_clear(F_mat2);
+      F_mpz_mat_clear(F_mat3);
+   }
+   
+   // aliasing 
+   for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
+   {
+      bits = z_randint(200) + 1;
+      exp = z_randint(200) + 1;
+      r = z_randint(30);
+      c = z_randint(30);
+      
+	  F_mpz_mat_init(F_mat1, r, c);
+      F_mpz_mat_init(F_mat2, r, c);
+      F_mpz_mat_init(F_mat3, r, c);
+      
+      F_mpz_randmat(F_mat1, r, c, bits);
+           
+      F_mpz_mat_mul_2exp(F_mat2, F_mat1, exp);
+	  F_mpz_mat_div_2exp(F_mat3, F_mat2, exp);
+      F_mpz_mat_mul_2exp(F_mat1, F_mat1, exp);
+	  F_mpz_mat_div_2exp(F_mat1, F_mat1, exp);
+          
+      result = (F_mpz_mat_equal(F_mat1, F_mat3)); 
+	  if (!result) 
+	  {
+		 printf("Error: r = %ld, c = %ld, bits = %ld, exp = %ld\n", r, c, bits, exp);
+	  }
+          
+      F_mpz_mat_clear(F_mat1);
+      F_mpz_mat_clear(F_mat2);
+      F_mpz_mat_clear(F_mat3);
+   }
+
+   return result;
+}
+
 int test_F_mpz_mat_equal()
 {
    mpz_mat_t m_mat1, m_mat2;
@@ -2808,6 +2878,7 @@ void F_mpz_mat_test_all()
    RUN_TEST(F_mpz_mat_neg); 
    RUN_TEST(F_mpz_mat_add); 
    RUN_TEST(F_mpz_mat_sub); 
+   RUN_TEST(F_mpz_mat_mul_div_2exp); 
    RUN_TEST(F_mpz_mat_mul_classical);
    
    printf(all_success ? "\nAll tests passed\n" :

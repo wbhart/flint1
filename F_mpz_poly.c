@@ -7330,7 +7330,7 @@ for(num_primes = 1; num_primes < 3; num_primes++)
       F_mpz_mat_init_identity(M, r);
 
 //Experimentally we are adjusting U = I*2^r this needs to match the precision in vHN approach
-      F_mpz_mat_scalar_mul_2exp(M, M, U_exp);
+      F_mpz_mat_mul_2exp(M, M, U_exp);
       ulong i;
       for (i = 0; i < 4; i++)
          mexpo[i] = 0;
