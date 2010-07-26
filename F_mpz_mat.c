@@ -976,23 +976,13 @@ void _F_mpz_vec_scalar_submul_2exp_F_mpz(F_mpz * vec1, F_mpz * vec2, ulong n, F_
 	F_mpz_clear(temp);
 }
 
-void F_mpz_mat_row_swap(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, 
-								                 ulong r2, ulong start, ulong n)
+void F_mpz_mat_swap_rows(F_mpz_mat_t mat, ulong r1, ulong r2)
 {
-	if ((mat1 == mat2) && (n == mat1->c)) // matrices are the same, 
-		                                   // just swap row pointers
-	{
-		if (r1 == r2) return; // rows are the same, nothing to do
+	if (r1 == r2) return; // rows are the same, nothing to do
 
-		F_mpz * temp = mat1->rows[r1]; // swap rows via temporary
-		mat1->rows[r1] = mat1->rows[r2];
-		mat2->rows[r2] = temp;
-	} else // swap entries in rows
-	{
-		ulong i;
-		for (i = start; i < start + n; i++)
-			F_mpz_swap(mat1->rows[r1] + i, mat2->rows[r2] + i);
-	}
+    F_mpz * temp = mat->rows[r1]; // swap rows via temporary
+    mat->rows[r1] = mat->rows[r2];
+    mat->rows[r2] = temp;
 }
 
 void F_mpz_mat_row_neg(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, 
@@ -1346,7 +1336,7 @@ void F_mpz_mat_resize2(F_mpz_mat_t M, ulong r, ulong c)
    F_mpz_mat_resize(M, r, c); 
    long i;
    for (i = old_r-1; i >= 0; i--){
-      F_mpz_mat_row_swap(M,i + r - old_r, M, i, 0, M->c);
+      F_mpz_mat_swap_rows(M, i + r - old_r, i);
    }
 }
 

@@ -225,6 +225,90 @@ int test__F_mpz_vec_copy_equal()
    return result; 
 }
 
+int test_F_mpz_mat_swap_rows()
+{
+   F_mpz_mat_t F_mat;
+   F_mpz * vec;
+   int result = 1;
+   ulong bits, r, c, r1, r2;
+   
+   F_mpz_t mult;
+   F_mpz_init(mult);
+   
+   ulong count1;
+   for (count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+   {
+      bits = z_randint(200) + 1;
+      r = z_randint(30) + 1;  
+      c = z_randint(30) + 1;
+	  r1 = z_randint(r);
+      r2 = z_randint(r);
+      
+      F_mpz_mat_init(F_mat, r, c);
+      
+      F_mpz_randmat(F_mat, r, c, bits); 
+          
+	  vec = _F_mpz_vec_init(c);
+	  _F_mpz_vec_copy(vec, F_mat->rows[r2], c);
+	  F_mpz_mat_swap_rows(F_mat, r1, r2);
+      
+      ulong i;
+      for (i = 0; i < c; i++)
+      {
+         result &= (F_mpz_cmp(vec + i, F_mat->rows[r1] + i) == 0);
+			
+		 if (!result) 
+		 {
+			 printf("Error: r = %ld, c = %ld, bits = %ld\n", r, c, bits);
+			 F_mpz_print(vec + i);
+			 F_mpz_print(F_mat->rows[r1] + i);
+			 break;
+		 }
+      }
+
+      _F_mpz_vec_clear(vec, c);
+
+      F_mpz_mat_clear(F_mat);
+   }
+   
+   // alias rows
+   for (count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+   {
+      bits = z_randint(200) + 1;
+      r = z_randint(30) + 1;  
+      c = z_randint(30) + 1;
+	  r1 = z_randint(r);
+      
+      F_mpz_mat_init(F_mat, r, c);
+      
+      F_mpz_randmat(F_mat, r, c, bits); 
+          
+	  vec = _F_mpz_vec_init(c);
+	  _F_mpz_vec_copy(vec, F_mat->rows[r1], c);
+	  F_mpz_mat_swap_rows(F_mat, r1, r1);
+      
+      ulong i;
+      for (i = 0; i < c; i++)
+      {
+         result &= (F_mpz_cmp(vec + i, F_mat->rows[r1] + i) == 0);
+			
+		 if (!result) 
+		 {
+			 printf("Error: r = %ld, c = %ld, bits = %ld\n", r, c, bits);
+			 F_mpz_print(vec + i);
+			 F_mpz_print(F_mat->rows[r1] + i);
+			 break;
+		 }
+      }
+
+      _F_mpz_vec_clear(vec, c);
+
+      F_mpz_mat_clear(F_mat);
+   }
+
+   return result; 
+}
+
 int test_F_mpz_mat_convert()
 {
    mpz_mat_t m_mat1, m_mat2;
@@ -2605,6 +2689,7 @@ void F_mpz_mat_test_all()
    RUN_TEST(F_mpz_mat_set); 
    RUN_TEST(F_mpz_mat_equal);  
    RUN_TEST(F_mpz_mat_swap);  
+   RUN_TEST(F_mpz_mat_swap_rows);  
    RUN_TEST(F_mpz_mat_resize);
    RUN_TEST(F_mpz_mat_tofromstring);
    RUN_TEST(F_mpz_mat_tofromstringpretty);

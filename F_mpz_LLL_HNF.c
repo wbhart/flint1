@@ -53,8 +53,8 @@ void F_mpz_mat_HNF_LLL_swap(F_mpz_mat_t A, F_mpz_mat_t B, F_mpz_mat_t L, F_mpz *
 	ulong m = A->r;
 	ulong n = A->c;
 	
-	F_mpz_mat_row_swap(A, k, A, k - 1, 0, n);
-   F_mpz_mat_row_swap(B, k, B, k - 1, 0, n);
+	F_mpz_mat_swap_rows(A, k, k - 1);
+   F_mpz_mat_swap_rows(B, k, k - 1);
    
 	ulong j;
 	for (j = 0; j < k - 1; j++) F_mpz_swap(L->rows[k] + j, L->rows[k - 1] + j);

@@ -468,14 +468,12 @@ void _F_mpz_vec_scalar_submul_2exp_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong
 void _F_mpz_vec_scalar_submul_2exp_F_mpz(F_mpz * vec1, F_mpz * vec2, ulong n, F_mpz_t c, ulong exp);
 
 /** 
-   \fn     void F_mpz_mat_row_swap(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, 
-	                                                ulong r2, ulong start, ulong n)
+   \fn     void F_mpz_mat_swap_rows(F_mpz_mat_t mat, ulong r1, ulong r2)
 
-	\brief  Swap row r1 of mat1 with row r2 of mat2. If mat1 aliases mat2 this is 
-	        done efficiently by swapping row pointers.	        
+	\brief  Swap rows r1 and r2 of mat. This is done efficiently by swapping 
+	        row pointers.	        
 */
-void F_mpz_mat_row_swap(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, 
-								                          ulong r2, ulong start, ulong n);
+void F_mpz_mat_swap_rows(F_mpz_mat_t mat, ulong r1, ulong r2);
 
 /** 
    \fn     void F_mpz_mat_row_neg(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, 
