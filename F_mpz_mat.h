@@ -286,6 +286,55 @@ void F_mpz_mat_neg(F_mpz_mat_t mat1, const F_mpz_mat_t mat2);
 
 /*===============================================================================
 
+	Vector memory management
+
+================================================================================*/
+
+static inline
+F_mpz * _F_mpz_vec_init(ulong n)
+{
+   ulong i;
+   F_mpz * vec = (F_mpz *) flint_heap_alloc(n);
+   for (i = 0; i < n; i++)
+      F_mpz_init(vec + i);
+   return vec;
+}
+
+static inline
+void _F_mpz_vec_clear(F_mpz * vec, ulong n)
+{
+   ulong i;
+   for (i = 0; i < n; i++)
+	  F_mpz_clear(vec + i);
+   flint_heap_free(vec);
+}
+
+/*===============================================================================
+
+	Vector copy and comparison
+
+================================================================================*/
+
+static inline
+void _F_mpz_vec_copy(F_mpz * vec1, const F_mpz * vec2, ulong n)
+{
+   ulong i;
+   for (i = 0; i < n; i++)
+      F_mpz_set(vec1 + i, vec2 + i);
+}
+
+static inline
+int _F_mpz_vec_equal(F_mpz * vec1, const F_mpz * vec2, ulong n)
+{
+   ulong i;
+   for (i = 0; i < n; i++)
+      if (!F_mpz_cmp(vec1 + i, vec2 + i)) 
+		 return 0;
+   return 1;
+}
+
+/*===============================================================================
+
 	Addition/subtraction
 
 ================================================================================*/
