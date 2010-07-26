@@ -976,15 +976,6 @@ void _F_mpz_vec_scalar_submul_2exp_F_mpz(F_mpz * vec1, F_mpz * vec2, ulong n, F_
 	F_mpz_clear(temp);
 }
 
-void F_mpz_mat_swap_rows(F_mpz_mat_t mat, ulong r1, ulong r2)
-{
-	if (r1 == r2) return; // rows are the same, nothing to do
-
-    F_mpz * temp = mat->rows[r1]; // swap rows via temporary
-    mat->rows[r1] = mat->rows[r2];
-    mat->rows[r2] = temp;
-}
-
 void F_mpz_mat_row_neg(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, 
 								                 ulong r2, ulong start, ulong n)
 {
