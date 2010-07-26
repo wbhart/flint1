@@ -543,14 +543,28 @@ void F_mpz_mat_mul_classical(F_mpz_mat_t P, const F_mpz_mat_t A, const F_mpz_mat
 ===========================================================*/
 
 /*
-   A duplicate of the F_mpz_poly version but uses ghetto math in the middle 
+   Determine the maximum number of bits b required to store the absolute
+   value of the largest coefficient of M. If M has signed coefficients, 
+   return -b, else return b. Return the row and column that such an 
+   entry was found. WARNING: this need not return the maximum coefficient
+   only one of the ones which requires the maximum number of bits.
 */
-long F_mpz_mat_max_bits(const F_mpz_mat_t M);
+long F_mpz_mat_max_bits2(ulong * row, ulong * col, const F_mpz_mat_t M);
 
 /*
-   Same deal put also gives the position of the largest entry
+   Determine the maximum number of bits b required to store the absolute
+   value of the largest coefficient of M. If M has signed coefficients, 
+   return -b, else return b.
 */
-long F_mpz_mat_max_bits2(ulong * pos, const F_mpz_mat_t M);
+static inline
+long F_mpz_mat_max_bits(const F_mpz_mat_t M)
+{
+   return F_mpz_mat_max_bits2(NULL, NULL, M);
+}
+
+/*
+   
+*/
 
 /*
    Divides M by the scalar 2^n and stores at res.  Truncates each entry with F_mpz_div_2exp.
