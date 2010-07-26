@@ -150,6 +150,81 @@ void F_mpz_randmat(F_mpz_mat_t mat, ulong r, ulong c, ulong bits)
 	mpz_mat_clear(m_mat);
 }
 
+int test__F_mpz_vec_init_clear()
+{
+   F_mpz * vec;
+   int result = 1;
+   ulong bits, c;
+   
+   ulong count1;
+   for (count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+   {
+      ulong i;
+	  bits = z_randint(200)+ 1;
+      c = z_randint(30)+1;
+	  
+      vec = _F_mpz_vec_init(c);
+	  for (i = 0; i < c; i++)
+		 F_mpz_test_random(vec + i, bits);
+	  _F_mpz_vec_clear(vec, c);
+   }
+
+   return result; 
+}
+
+int test__F_mpz_vec_copy_equal()
+{
+   F_mpz * vec1, * vec2;
+   int result = 1;
+   ulong bits, c, c1;
+   
+   ulong count1;
+   for (count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+   {
+      ulong i;
+	  bits = z_randint(200)+ 1;
+      c = z_randint(30)+1;
+	  
+      vec1 = _F_mpz_vec_init(c);
+	  vec2 = _F_mpz_vec_init(c);
+
+	  for (i = 0; i < c; i++)
+		 F_mpz_test_random(vec1 + i, bits);
+
+	  _F_mpz_vec_copy(vec2, vec1, c);
+	  
+	  result = _F_mpz_vec_equal(vec1, vec2, c);
+
+	  _F_mpz_vec_clear(vec1, c);
+	  _F_mpz_vec_clear(vec2, c);
+   }
+
+   for (count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+   {
+      ulong i;
+	  bits = z_randint(200)+ 1;
+      c = z_randint(30)+1;
+	  
+      vec1 = _F_mpz_vec_init(c);
+	  vec2 = _F_mpz_vec_init(c);
+
+	  for (i = 0; i < c; i++)
+		 F_mpz_test_random(vec1 + i, bits);
+
+	  _F_mpz_vec_copy(vec2, vec1, c);
+
+	  c1 = z_randint(c);
+	  F_mpz_add_ui(vec2 + c1, vec2 + c1, 1);
+
+	  result = (!_F_mpz_vec_equal(vec1, vec2, c));
+
+	  _F_mpz_vec_clear(vec1, c);
+	  _F_mpz_vec_clear(vec2, c);
+   }
+
+   return result; 
+}
+
 int test_F_mpz_mat_convert()
 {
    mpz_mat_t m_mat1, m_mat2;
@@ -2509,16 +2584,8 @@ void F_mpz_mat_test_all()
 
 #if TESTFILE
 #endif
-   RUN_TEST(F_mpz_mat_convert); 
-   RUN_TEST(F_mpz_mat_set); 
-   RUN_TEST(F_mpz_mat_equal);  
-   RUN_TEST(F_mpz_mat_swap);  
-   RUN_TEST(F_mpz_mat_resize);
-   RUN_TEST(F_mpz_mat_tofromstring);
-   RUN_TEST(F_mpz_mat_tofromstringpretty);
-   RUN_TEST(F_mpz_mat_neg); 
-   RUN_TEST(F_mpz_mat_add); 
-   RUN_TEST(F_mpz_mat_sub); 
+   RUN_TEST(_F_mpz_vec_init_clear); 
+   RUN_TEST(_F_mpz_vec_copy_equal); 
    RUN_TEST(_F_mpz_vec_add_sub); 
    RUN_TEST(_F_mpz_vec_scalar_mul_ui); 
    RUN_TEST(_F_mpz_vec_scalar_mul_si); 
@@ -2529,12 +2596,22 @@ void F_mpz_mat_test_all()
    RUN_TEST(_F_mpz_vec_scalar_submul_F_mpz); 
    RUN_TEST(_F_mpz_vec_scalar_addmul_2exp_ui); 
    RUN_TEST(_F_mpz_vec_scalar_submul_2exp_ui); 
-   RUN_TEST(F_mpz_mat_mul_classical);
    RUN_TEST(_F_mpz_vec_scalar_submul_2exp_F_mpz); 
    RUN_TEST(_F_mpz_vec_scalar_mul); 
    RUN_TEST(_F_mpz_vec_to_d_vec_2exp); 
    RUN_TEST(_F_mpz_vec_to_mpfr_vec); 
    RUN_TEST(_F_mpz_vec_2exp_to_mpfr_vec); 
+   RUN_TEST(F_mpz_mat_convert); 
+   RUN_TEST(F_mpz_mat_set); 
+   RUN_TEST(F_mpz_mat_equal);  
+   RUN_TEST(F_mpz_mat_swap);  
+   RUN_TEST(F_mpz_mat_resize);
+   RUN_TEST(F_mpz_mat_tofromstring);
+   RUN_TEST(F_mpz_mat_tofromstringpretty);
+   RUN_TEST(F_mpz_mat_neg); 
+   RUN_TEST(F_mpz_mat_add); 
+   RUN_TEST(F_mpz_mat_sub); 
+   RUN_TEST(F_mpz_mat_mul_classical);
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");

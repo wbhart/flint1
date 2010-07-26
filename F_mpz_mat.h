@@ -328,7 +328,7 @@ int _F_mpz_vec_equal(F_mpz * vec1, const F_mpz * vec2, ulong n)
 {
    ulong i;
    for (i = 0; i < n; i++)
-      if (!F_mpz_cmp(vec1 + i, vec2 + i)) 
+      if (F_mpz_cmp(vec1 + i, vec2 + i) != 0) 
 		 return 0;
    return 1;
 }
