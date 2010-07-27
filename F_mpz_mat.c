@@ -1145,59 +1145,6 @@ void _F_mpz_vec_scalar_product(F_mpz_t sp, F_mpz * vec1, F_mpz * vec2, ulong n)
    return;
 }
 
-ulong F_mpz_mat_upper_trunc_n(F_mpz_mat_t res, F_mpz_mat_t M, ulong n)
-{
-   if (res != M){
-      F_mpz_mat_resize(res, M->r, M->c);
-   }
-
-   long bits = F_mpz_mat_max_bits(M);
-   bits = FLINT_ABS(bits);
-   if ( n >= bits){
-      F_mpz_mat_set(res, M);
-      return 0UL;
-   }
-
-   ulong exp = bits - n;
-   F_mpz_t temp;
-   F_mpz_init(temp);
-
-   ulong i, j;
-   for (i = 0; i < M->r; i++)
-      for (j = 0; j < M->c; j++)
-         if (F_mpz_sgn(M->rows[i]+j) >= 0)
-            F_mpz_div_2exp(res->rows[i] + j, M->rows[i] + j, exp);
-         else{
-            F_mpz_abs(temp, M->rows[i]+j);
-            F_mpz_div_2exp(res->rows[i] + j, temp, exp);
-            F_mpz_neg(res->rows[i] + j, res->rows[i] + j);
-         }
-
-   F_mpz_clear(temp);
-
-   return exp;
-}
-
-void F_mpz_mat_lower_trunc_n(F_mpz_mat_t res, F_mpz_mat_t M, ulong n)
-{
-   if (res != M){
-      F_mpz_mat_resize(res, M->r, M->c);
-   }
-
-   mpz_t temp;
-   mpz_init(temp);
-
-   ulong i, j;
-   for (i = 0; i < M->r; i++)
-      for (j = 0; j < M->c; j++){
-         F_mpz_get_mpz(temp, M->rows[i] + j);
-         mpz_tdiv_r_2exp(temp, temp, n);
-         F_mpz_set_mpz(res->rows[i] + j, temp);
-      }
-   mpz_clear(temp);
-   return;
-}
-
 int F_mpz_mat_column_compare(F_mpz_mat_t M, ulong a, ulong b)
 {
 // want to look at column a and column b, give 0 if they are different and 1 if they are the same

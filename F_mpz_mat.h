@@ -598,18 +598,6 @@ void _F_mpz_vec_scalar_product(F_mpz_t sp, F_mpz * vec1, F_mpz * vec2, ulong n);
 ===========================================================*/
 
 /*
-   Sets res to the top n bits of each entry of M.  Returns a ulong exp such that
-   res = round_to_zero(M/2^exp)
-*/
-ulong F_mpz_mat_upper_trunc_n(F_mpz_mat_t res, F_mpz_mat_t M, ulong n);
-
-/*
-   Sets res to the bottom n bits of each entry of M.  Designed to work with F_mpz_mat_upper_trunc_n
-   so that one can split a matrix M into two halfs so M = upper_M*2^exp + lower_M
-*/
-void F_mpz_mat_lower_trunc_n(F_mpz_mat_t res, F_mpz_mat_t M, ulong n);
-
-/*
    Compares column a and column b of M returns 1 if they are the same and 0 otherwise
 */
 int F_mpz_mat_column_compare(F_mpz_mat_t M, ulong a, ulong b);
