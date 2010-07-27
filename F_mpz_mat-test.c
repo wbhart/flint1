@@ -150,6 +150,165 @@ void F_mpz_randmat(F_mpz_mat_t mat, ulong r, ulong c, ulong bits)
 	mpz_mat_clear(m_mat);
 }
 
+int test__F_mpz_vec_init_clear()
+{
+   F_mpz * vec;
+   int result = 1;
+   ulong bits, c;
+   
+   ulong count1;
+   for (count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+   {
+      ulong i;
+	  bits = z_randint(200)+ 1;
+      c = z_randint(30)+1;
+	  
+      vec = _F_mpz_vec_init(c);
+	  for (i = 0; i < c; i++)
+		 F_mpz_test_random(vec + i, bits);
+	  _F_mpz_vec_clear(vec, c);
+   }
+
+   return result; 
+}
+
+int test__F_mpz_vec_copy_equal()
+{
+   F_mpz * vec1, * vec2;
+   int result = 1;
+   ulong bits, c, c1;
+   
+   ulong count1;
+   for (count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+   {
+      ulong i;
+	  bits = z_randint(200) + 1;
+      c = z_randint(30) + 1;
+	  
+      vec1 = _F_mpz_vec_init(c);
+	  vec2 = _F_mpz_vec_init(c);
+
+	  for (i = 0; i < c; i++)
+		 F_mpz_test_random(vec1 + i, bits);
+
+	  _F_mpz_vec_copy(vec2, vec1, c);
+	  
+	  result = _F_mpz_vec_equal(vec1, vec2, c);
+
+	  _F_mpz_vec_clear(vec1, c);
+	  _F_mpz_vec_clear(vec2, c);
+   }
+
+   for (count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+   {
+      ulong i;
+	  bits = z_randint(200) + 1;
+      c = z_randint(30) + 1;
+	  
+      vec1 = _F_mpz_vec_init(c);
+	  vec2 = _F_mpz_vec_init(c);
+
+	  for (i = 0; i < c; i++)
+		 F_mpz_test_random(vec1 + i, bits);
+
+	  _F_mpz_vec_copy(vec2, vec1, c);
+
+	  c1 = z_randint(c);
+	  F_mpz_add_ui(vec2 + c1, vec2 + c1, 1);
+
+	  result = (!_F_mpz_vec_equal(vec1, vec2, c));
+
+	  _F_mpz_vec_clear(vec1, c);
+	  _F_mpz_vec_clear(vec2, c);
+   }
+
+   return result; 
+}
+
+int test_F_mpz_mat_swap_rows()
+{
+   F_mpz_mat_t F_mat;
+   F_mpz * vec;
+   int result = 1;
+   ulong bits, r, c, r1, r2;
+   
+   F_mpz_t mult;
+   F_mpz_init(mult);
+   
+   ulong count1;
+   for (count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+   {
+      bits = z_randint(200) + 1;
+      r = z_randint(30) + 1;  
+      c = z_randint(30) + 1;
+	  r1 = z_randint(r);
+      r2 = z_randint(r);
+      
+      F_mpz_mat_init(F_mat, r, c);
+      
+      F_mpz_randmat(F_mat, r, c, bits); 
+          
+	  vec = _F_mpz_vec_init(c);
+	  _F_mpz_vec_copy(vec, F_mat->rows[r2], c);
+	  F_mpz_mat_swap_rows(F_mat, r1, r2);
+      
+      ulong i;
+      for (i = 0; i < c; i++)
+      {
+         result &= (F_mpz_cmp(vec + i, F_mat->rows[r1] + i) == 0);
+			
+		 if (!result) 
+		 {
+			 printf("Error: r = %ld, c = %ld, bits = %ld\n", r, c, bits);
+			 F_mpz_print(vec + i);
+			 F_mpz_print(F_mat->rows[r1] + i);
+			 break;
+		 }
+      }
+
+      _F_mpz_vec_clear(vec, c);
+
+      F_mpz_mat_clear(F_mat);
+   }
+   
+   // alias rows
+   for (count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+   {
+      bits = z_randint(200) + 1;
+      r = z_randint(30) + 1;  
+      c = z_randint(30) + 1;
+	  r1 = z_randint(r);
+      
+      F_mpz_mat_init(F_mat, r, c);
+      
+      F_mpz_randmat(F_mat, r, c, bits); 
+          
+	  vec = _F_mpz_vec_init(c);
+	  _F_mpz_vec_copy(vec, F_mat->rows[r1], c);
+	  F_mpz_mat_swap_rows(F_mat, r1, r1);
+      
+      ulong i;
+      for (i = 0; i < c; i++)
+      {
+         result &= (F_mpz_cmp(vec + i, F_mat->rows[r1] + i) == 0);
+			
+		 if (!result) 
+		 {
+			 printf("Error: r = %ld, c = %ld, bits = %ld\n", r, c, bits);
+			 F_mpz_print(vec + i);
+			 F_mpz_print(F_mat->rows[r1] + i);
+			 break;
+		 }
+      }
+
+      _F_mpz_vec_clear(vec, c);
+
+      F_mpz_mat_clear(F_mat);
+   }
+
+   return result; 
+}
+
 int test_F_mpz_mat_convert()
 {
    mpz_mat_t m_mat1, m_mat2;
@@ -185,6 +344,42 @@ int test_F_mpz_mat_convert()
       mpz_mat_clear(m_mat2);
    }
    
+   return result;
+}
+
+int test_F_mpz_mat_max_bits()
+{
+   F_mpz_mat_t F_mat;
+   int result = 1;
+   ulong bits1, bits2, bits3, row, col;
+   
+   ulong count1;
+   for (count1 = 0; (count1 < 2000*ITER) && (result == 1) ; count1++)
+   {
+      ulong r = z_randint(30) + 1;
+      ulong c = z_randint(30) + 1;
+      
+	  F_mpz_mat_init(F_mat, r, c);
+      
+      bits1 = z_randint(200) + 1;
+      
+      F_mpz_randmat(F_mat, r, c, bits1);
+           
+      bits2 = F_mpz_mat_max_bits(F_mat);
+	  bits3 = F_mpz_mat_max_bits2(&row, &col, F_mat);
+		    
+      result = ((bits2 == bits3) && (FLINT_ABS(bits2) <= bits1) 
+		     && (F_mpz_bits(F_mat->rows[row] + col) == FLINT_ABS(bits3))); 
+	  if (!result) 
+	  {
+			printf("Error: r = %ld, bits1 = %ld, c = %ld, bits2 = %ld, bits3 = %ld\n", r, bits1, c, bits2, bits3);
+			printf("row = %ld, col = %ld\n", row, col);
+			F_mpz_print(F_mat->rows[row] + col); printf("\n");
+	  }
+          
+	  F_mpz_mat_clear(F_mat);
+   }
+      
    return result;
 }
 
@@ -496,6 +691,76 @@ int test_F_mpz_mat_set()
    }
    
 	// aliasing is trivial for set and doesn't need testing
+
+   return result;
+}
+
+int test_F_mpz_mat_mul_div_2exp()
+{
+   F_mpz_mat_t F_mat1, F_mat2, F_mat3;
+   int result = 1;
+   ulong bits, exp, r, c;
+   
+   ulong count1;
+   for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
+   {
+      bits = z_randint(200) + 1;
+      exp = z_randint(200) + 1;
+      r = z_randint(30);
+      c = z_randint(30);
+      
+	  F_mpz_mat_init(F_mat1, r, c);
+      F_mpz_mat_init(F_mat2, r, c);
+      F_mpz_mat_init(F_mat3, r, c);
+      
+      F_mpz_randmat(F_mat1, r, c, bits);
+           
+      F_mpz_mat_mul_2exp(F_mat2, F_mat1, exp);
+	  F_mpz_mat_div_2exp(F_mat3, F_mat2, exp);
+          
+      result = (F_mpz_mat_equal(F_mat1, F_mat3)
+		   && ((FLINT_ABS(F_mpz_mat_max_bits(F_mat2)) == FLINT_ABS(F_mpz_mat_max_bits(F_mat1)) + exp) 
+		      || (F_mpz_mat_max_bits(F_mat1) == 0))); 
+	  if (!result) 
+	  {
+		 printf("Error: r = %ld, c = %ld, bits = %ld, exp = %ld\n", r, c, bits, exp);
+		 printf("m1 bits = %ld, m2 bits = %ld\n", FLINT_ABS(F_mpz_mat_max_bits(F_mat1)), FLINT_ABS(F_mpz_mat_max_bits(F_mat2)));
+	  }
+          
+      F_mpz_mat_clear(F_mat1);
+      F_mpz_mat_clear(F_mat2);
+      F_mpz_mat_clear(F_mat3);
+   }
+   
+   // aliasing 
+   for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
+   {
+      bits = z_randint(200) + 1;
+      exp = z_randint(200) + 1;
+      r = z_randint(30);
+      c = z_randint(30);
+      
+	  F_mpz_mat_init(F_mat1, r, c);
+      F_mpz_mat_init(F_mat2, r, c);
+      F_mpz_mat_init(F_mat3, r, c);
+      
+      F_mpz_randmat(F_mat1, r, c, bits);
+           
+      F_mpz_mat_mul_2exp(F_mat2, F_mat1, exp);
+	  F_mpz_mat_div_2exp(F_mat3, F_mat2, exp);
+      F_mpz_mat_mul_2exp(F_mat1, F_mat1, exp);
+	  F_mpz_mat_div_2exp(F_mat1, F_mat1, exp);
+          
+      result = (F_mpz_mat_equal(F_mat1, F_mat3)); 
+	  if (!result) 
+	  {
+		 printf("Error: r = %ld, c = %ld, bits = %ld, exp = %ld\n", r, c, bits, exp);
+	  }
+          
+      F_mpz_mat_clear(F_mat1);
+      F_mpz_mat_clear(F_mat2);
+      F_mpz_mat_clear(F_mat3);
+   }
 
    return result;
 }
@@ -828,7 +1093,231 @@ int test_F_mpz_mat_neg()
    return result;
 }
 
-int test__F_mpz_vec_scalar_mul_ui()
+int test__F_mpz_vec_add_sub()
+{
+   F_mpz_mat_t F_mat, F_mat2, F_mat3;
+   int result = 1;
+   ulong bits, r, c, r1, r2;
+   
+   ulong count1;
+   // alias sub mat1-mat2
+   for (count1 = 0; (count1 < 2000) && (result == 1) ; count1++)
+   {
+      bits = z_randint(200) + 1;
+      r = z_randint(30) + 1;  
+      c = z_randint(30) + 1;
+	  r1 = z_randint(r);
+      r2 = z_randint(r);
+      
+      F_mpz_mat_init(F_mat, r, c);
+      F_mpz_mat_init(F_mat2, r, c);
+      F_mpz_mat_init(F_mat3, r, c);
+      
+      F_mpz_randmat(F_mat2, r, c, bits); 
+      F_mpz_randmat(F_mat3, r, c, bits); 
+              
+	  _F_mpz_vec_add(F_mat->rows[r2], F_mat2->rows[r2], F_mat3->rows[r1], c);
+	  _F_mpz_vec_sub(F_mat->rows[r2], F_mat->rows[r2], F_mat3->rows[r1], c);
+      
+      ulong i;
+      for (i = 0; i < c; i++)
+      {
+         result &= (F_mpz_cmp(F_mat->rows[r2] + i, F_mat2->rows[r2] + i) == 0);
+      }
+
+	  if (!result) 
+	  {
+		 printf("Error: r = %ld, r1 = %ld, r2 = %ld, c = %ld, bits = %ld\n", r, r1, r2, c, bits);
+	  }
+
+      F_mpz_mat_clear(F_mat);
+      F_mpz_mat_clear(F_mat2);
+      F_mpz_mat_clear(F_mat3);
+   }
+   
+   // alias sub mat1-mat3
+   for (count1 = 0; (count1 < 2000) && (result == 1) ; count1++)
+   {
+      bits = z_randint(200) + 1;
+      r = z_randint(30) + 1;  
+      c = z_randint(30) + 1;
+	  r1 = z_randint(r);
+      r2 = z_randint(r);
+      
+      F_mpz_mat_init(F_mat, r, c);
+      F_mpz_mat_init(F_mat2, r, c);
+      F_mpz_mat_init(F_mat3, r, c);
+      
+      F_mpz_randmat(F_mat2, r, c, bits); 
+      F_mpz_randmat(F_mat3, r, c, bits); 
+              
+	  _F_mpz_vec_add(F_mat->rows[r2], F_mat2->rows[r2], F_mat3->rows[r1], c);
+	  _F_mpz_vec_sub(F_mat3->rows[r1], F_mat->rows[r2], F_mat3->rows[r1], c);
+      
+      ulong i;
+      for (i = 0; i < c; i++)
+      {
+         result &= (F_mpz_cmp(F_mat2->rows[r2] + i, F_mat3->rows[r1] + i) == 0);
+      }
+
+	  if (!result) 
+	  {
+		 printf("Error: r = %ld, r1 = %ld, r2 = %ld, c = %ld, bits = %ld\n", r, r1, r2, c, bits);
+	  }
+
+      F_mpz_mat_clear(F_mat);
+      F_mpz_mat_clear(F_mat2);
+      F_mpz_mat_clear(F_mat3);
+   }
+	
+   // alias add mat1-mat2
+   for (count1 = 0; (count1 < 2000) && (result == 1) ; count1++)
+   {
+      bits = z_randint(200) + 1;
+      r = z_randint(30) + 1;  
+      c = z_randint(30) + 1;
+	  r1 = z_randint(r);
+      r2 = z_randint(r);
+      
+      F_mpz_mat_init(F_mat, r, c);
+      F_mpz_mat_init(F_mat2, r, c);
+      F_mpz_mat_init(F_mat3, r, c);
+      
+      F_mpz_randmat(F_mat2, r, c, bits); 
+      F_mpz_randmat(F_mat3, r, c, bits); 
+              
+	  _F_mpz_vec_sub(F_mat->rows[r2], F_mat2->rows[r2], F_mat3->rows[r1], c);
+	  _F_mpz_vec_add(F_mat->rows[r2], F_mat->rows[r2], F_mat3->rows[r1], c);
+      
+      ulong i;
+      for (i = 0; i < c; i++)
+      {
+         result &= (F_mpz_cmp(F_mat->rows[r2] + i, F_mat2->rows[r2] + i) == 0);
+      }
+
+	  if (!result) 
+	  {
+		 printf("Error: r = %ld, r1 = %ld, r2 = %ld, c = %ld, bits = %ld\n", r, r1, r2, c, bits);
+	  }
+
+      F_mpz_mat_clear(F_mat);
+      F_mpz_mat_clear(F_mat2);
+      F_mpz_mat_clear(F_mat3);
+   }
+   
+   // alias add mat1-mat3
+   for (count1 = 0; (count1 < 2000) && (result == 1) ; count1++)
+   {
+      bits = z_randint(200) + 1;
+      r = z_randint(30) + 1;  
+      c = z_randint(30) + 1;
+	  r1 = z_randint(r);
+      r2 = z_randint(r);
+      
+      F_mpz_mat_init(F_mat, r, c);
+      F_mpz_mat_init(F_mat2, r, c);
+      F_mpz_mat_init(F_mat3, r, c);
+      
+      F_mpz_randmat(F_mat2, r, c, bits); 
+      F_mpz_randmat(F_mat3, r, c, bits); 
+              
+	  _F_mpz_vec_sub(F_mat->rows[r2], F_mat2->rows[r2], F_mat3->rows[r1], c);
+	  _F_mpz_vec_add(F_mat3->rows[r1], F_mat->rows[r2], F_mat3->rows[r1], c);
+      
+      ulong i;
+      for (i = 0; i < c; i++)
+      {
+         result &= (F_mpz_cmp(F_mat2->rows[r2] + i, F_mat3->rows[r1] + i) == 0);
+      }
+
+	  if (!result) 
+	  {
+		 printf("Error: r = %ld, r1 = %ld, r2 = %ld, c = %ld, bits = %ld\n", r, r1, r2, c, bits);
+	  }
+
+      F_mpz_mat_clear(F_mat);
+      F_mpz_mat_clear(F_mat2);
+      F_mpz_mat_clear(F_mat3);
+   }
+	
+   return result; 
+}
+
+int test__F_mpz_vec_neg()
+{
+   F_mpz_mat_t F_mat, F_mat2;
+   F_mpz * vec;
+   int result = 1;
+   ulong bits, r, c, r1, r2;
+   
+   ulong count1;
+   for (count1 = 0; (count1 < 2000) && (result == 1) ; count1++)
+   {
+      bits = z_randint(200) + 1;
+      r = z_randint(30) + 1;  
+      c = z_randint(30) + 1;
+	  r1 = z_randint(r);
+      r2 = z_randint(r);
+      
+      F_mpz_mat_init(F_mat, r, c);
+      F_mpz_mat_init(F_mat2, r, c);
+      
+      F_mpz_randmat(F_mat, r, c, bits); 
+      F_mpz_randmat(F_mat2, r, c, bits); 
+              
+	  vec = _F_mpz_vec_init(c);
+	  _F_mpz_vec_copy(vec, F_mat2->rows[r2], c);
+	  _F_mpz_vec_neg(F_mat->rows[r1], F_mat2->rows[r2], c);
+	  _F_mpz_vec_neg(vec, F_mat->rows[r1], c);
+	  
+      ulong i;
+      result = _F_mpz_vec_equal(vec, F_mat2->rows[r2], c);
+
+	  if (!result) 
+	  {
+		 printf("Error: r = %ld, r1 = %ld, r2 = %ld, c = %ld, bits = %ld\n", r, r1, r2, c, bits);
+	  }
+
+      _F_mpz_vec_clear(vec, c);
+	  
+	  F_mpz_mat_clear(F_mat);
+      F_mpz_mat_clear(F_mat2);
+   }
+
+   // alias rows
+   for (count1 = 0; (count1 < 2000) && (result == 1) ; count1++)
+   {
+      bits = z_randint(200) + 1;
+      r = z_randint(30) + 1;  
+      c = z_randint(30) + 1;
+	  r1 = z_randint(r);
+      
+	  F_mpz_mat_init(F_mat, r, c);
+      
+      F_mpz_randmat(F_mat, r, c, bits); 
+              
+	  vec = _F_mpz_vec_init(c);
+	  _F_mpz_vec_copy(vec, F_mat->rows[r1], c);
+	  _F_mpz_vec_neg(F_mat->rows[r1], F_mat->rows[r1], c);
+	  _F_mpz_vec_neg(F_mat->rows[r1], F_mat->rows[r1], c);
+	  
+      ulong i;
+      result = _F_mpz_vec_equal(vec, F_mat->rows[r1], c);
+
+	  if (!result) 
+	  {
+		 printf("Error: r = %ld, r1 = %ld, c = %ld, bits = %ld\n", r, r1, c, bits);
+	  }
+
+      _F_mpz_vec_clear(vec, c);
+	  
+	  F_mpz_mat_clear(F_mat);
+   }
+
+   return result; 
+}
+
+int test__F_mpz_vec_mul_ui()
 {
    mpz_mat_t m_mat, m_mat2;
    F_mpz_mat_t F_mat, F_mat2;
@@ -860,7 +1349,7 @@ int test__F_mpz_vec_scalar_mul_ui()
       bits2 = z_randint(FLINT_BITS+1);
 		mult = z_randbits(bits2);
       
-		_F_mpz_vec_scalar_mul_ui(F_mat2->rows[r2] + start, F_mat->rows[r1] + start, n, mult);
+		_F_mpz_vec_mul_ui(F_mat2->rows[r2] + start, F_mat->rows[r1] + start, n, mult);
       F_mpz_mat_to_mpz_mat(m_mat2, F_mat2);
 
       ulong i;
@@ -902,7 +1391,7 @@ int test__F_mpz_vec_scalar_mul_ui()
       bits2 = z_randint(FLINT_BITS+1);
 		mult = z_randbits(bits2);
       
-		_F_mpz_vec_scalar_mul_ui(F_mat->rows[r2] + start, F_mat->rows[r1] + start, n, mult);
+		_F_mpz_vec_mul_ui(F_mat->rows[r2] + start, F_mat->rows[r1] + start, n, mult);
       ;
       F_mpz_mat_to_mpz_mat(m_mat2, F_mat);
 
@@ -928,7 +1417,7 @@ int test__F_mpz_vec_scalar_mul_ui()
    return result; 
 }
 
-int test__F_mpz_vec_scalar_mul_si()
+int test__F_mpz_vec_mul_si()
 {
    mpz_mat_t m_mat, m_mat2;
    F_mpz_mat_t F_mat, F_mat2;
@@ -961,7 +1450,7 @@ int test__F_mpz_vec_scalar_mul_si()
 		mult = z_randbits(bits2);
 		if (z_randint(2)) mult = -mult;
       
-		_F_mpz_vec_scalar_mul_si(F_mat2->rows[r2] + start, F_mat->rows[r1] + start, n, mult);
+		_F_mpz_vec_mul_si(F_mat2->rows[r2] + start, F_mat->rows[r1] + start, n, mult);
       F_mpz_mat_to_mpz_mat(m_mat2, F_mat2);
 
       ulong i;
@@ -1010,7 +1499,7 @@ int test__F_mpz_vec_scalar_mul_si()
 		mult = z_randbits(bits2);
       if (z_randint(2)) mult = -mult;
       
-		_F_mpz_vec_scalar_mul_si(F_mat->rows[r2] + start, F_mat->rows[r1] + start, n, mult);
+		_F_mpz_vec_mul_si(F_mat->rows[r2] + start, F_mat->rows[r1] + start, n, mult);
       F_mpz_mat_to_mpz_mat(m_mat2, F_mat);
 
       ulong i;
@@ -1041,7 +1530,7 @@ int test__F_mpz_vec_scalar_mul_si()
 	return result; 
 }
       
-int test__F_mpz_vec_scalar_mul_F_mpz()
+int test__F_mpz_vec_mul_F_mpz()
 {
    mpz_mat_t m_mat, m_mat2;
    F_mpz_mat_t F_mat, F_mat2;
@@ -1078,7 +1567,7 @@ int test__F_mpz_vec_scalar_mul_F_mpz()
 		if (z_randint(2)) mpz_neg(temp2, temp2);
 		F_mpz_set_mpz(mult, temp2);
 
-		_F_mpz_vec_scalar_mul_F_mpz(F_mat2->rows[r2] + start, F_mat->rows[r1] + start, n, mult);
+		_F_mpz_vec_mul_F_mpz(F_mat2->rows[r2] + start, F_mat->rows[r1] + start, n, mult);
       F_mpz_mat_to_mpz_mat(m_mat2, F_mat2);
 
       ulong i;
@@ -1125,7 +1614,7 @@ int test__F_mpz_vec_scalar_mul_F_mpz()
 		if (z_randint(2)) mpz_neg(temp2, temp2);
       F_mpz_set_mpz(mult, temp2);
 
-		_F_mpz_vec_scalar_mul_F_mpz(F_mat->rows[r2] + start, F_mat->rows[r1] + start, n, mult);
+		_F_mpz_vec_mul_F_mpz(F_mat->rows[r2] + start, F_mat->rows[r1] + start, n, mult);
       F_mpz_mat_to_mpz_mat(m_mat2, F_mat);
 
       ulong i;
@@ -1155,7 +1644,7 @@ int test__F_mpz_vec_scalar_mul_F_mpz()
    return result; 
 }
 
-int test__F_mpz_vec_scalar_addmul_ui()
+int test__F_mpz_vec_addmul_ui()
 {
    mpz_mat_t m_mat, m_mat2, m_mat3;
    F_mpz_mat_t F_mat, F_mat2;
@@ -1191,7 +1680,7 @@ int test__F_mpz_vec_scalar_addmul_ui()
       bits3 = z_randint(FLINT_BITS+1);
 		mult = z_randbits(bits3);
       
-		_F_mpz_vec_scalar_addmul_ui(F_mat2->rows[r2] + start, F_mat->rows[r1] + start, n, mult);
+		_F_mpz_vec_addmul_ui(F_mat2->rows[r2] + start, F_mat->rows[r1] + start, n, mult);
       F_mpz_mat_to_mpz_mat(m_mat3, F_mat2);
 
       ulong i;
@@ -1235,7 +1724,7 @@ int test__F_mpz_vec_scalar_addmul_ui()
       bits2 = z_randint(FLINT_BITS+1);
 		mult = z_randbits(bits2);
       
-		_F_mpz_vec_scalar_addmul_ui(F_mat->rows[r2] + start, F_mat->rows[r1] + start, n, mult);
+		_F_mpz_vec_addmul_ui(F_mat->rows[r2] + start, F_mat->rows[r1] + start, n, mult);
       F_mpz_mat_to_mpz_mat(m_mat2, F_mat);
 
       ulong i;
@@ -1261,7 +1750,112 @@ int test__F_mpz_vec_scalar_addmul_ui()
    return result; 
 }
 
-int test__F_mpz_vec_scalar_submul_ui()
+int test__F_mpz_vec_addmul_F_mpz()
+{
+   F_mpz_mat_t F_mat, F_mat2;
+   F_mpz * vec, * vec1, * vec2;
+   int result = 1;
+   ulong bits, bits2, r, c, r1, r2;
+   
+   F_mpz_t mult;
+   F_mpz_init(mult);
+   
+   ulong count1;
+   for (count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+   {
+      bits = z_randint(200)+ 1;
+      r = z_randint(30)+1;  
+      c = z_randint(30)+1;
+	  r1 = z_randint(r);
+      r2 = z_randint(r);
+      
+      F_mpz_mat_init(F_mat, r, c);
+      F_mpz_mat_init(F_mat2, r, c);
+      
+      F_mpz_randmat(F_mat, r, c, bits); 
+      F_mpz_randmat(F_mat2, r, c, bits); 
+          
+      bits2 = z_randint(200);
+      F_mpz_test_random(mult, bits2);
+
+	  vec = _F_mpz_vec_init(c);
+	  _F_mpz_vec_copy(vec, F_mat2->rows[r2], c);
+	  _F_mpz_vec_addmul_F_mpz(F_mat2->rows[r2], F_mat->rows[r1], c, mult);
+      
+      ulong i;
+      for (i = 0; i < c; i++)
+      {
+         F_mpz_addmul(vec + i, F_mat->rows[r1] + i, mult);
+			
+         result &= (F_mpz_cmp(vec + i, F_mat2->rows[r2] + i) == 0);
+			
+		 if (!result) 
+		 {
+			 printf("Error: r = %ld, c = %ld, bits = %ld, bits2 = %ld, ", r, c, bits, bits2);
+			 printf("mult = "); F_mpz_print(mult); printf("\n");
+			 F_mpz_print(vec + i);
+			 F_mpz_print(F_mat2->rows[r2] + i);
+			 break;
+		 }
+      }
+
+      _F_mpz_vec_clear(vec, c);
+
+      F_mpz_mat_clear(F_mat);
+      F_mpz_mat_clear(F_mat2);
+   }
+   
+   // alias mats
+   for (count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+   {
+      bits = z_randint(200)+ 1;
+      r = z_randint(30)+1;  
+      c = z_randint(30)+1;
+	  r1 = z_randint(r);
+      r2 = z_randint(r);
+      
+      F_mpz_mat_init(F_mat2, r, c);
+      
+      F_mpz_randmat(F_mat2, r, c, bits); 
+          
+      bits2 = z_randint(200);
+      F_mpz_test_random(mult, bits2);
+
+	  vec1 = _F_mpz_vec_init(c);
+	  vec2 = _F_mpz_vec_init(c);
+	  _F_mpz_vec_copy(vec2, F_mat2->rows[r2], c);
+	  _F_mpz_vec_copy(vec1, F_mat2->rows[r1], c);
+	  _F_mpz_vec_addmul_F_mpz(F_mat2->rows[r2], F_mat2->rows[r1], c, mult);
+      
+      ulong i;
+      for (i = 0; i < c; i++)
+      {
+         F_mpz_addmul(vec2 + i, vec1 + i, mult);
+			
+         result &= (F_mpz_cmp(vec2 + i, F_mat2->rows[r2] + i) == 0);
+			
+		 if (!result) 
+		 {
+			 printf("Error: r = %ld, c = %ld, bits = %ld, bits2 = %ld, ", r, c, bits, bits2);
+			 printf("mult = "); F_mpz_print(mult); printf("\n");
+			 F_mpz_print(vec2 + i);
+			 F_mpz_print(F_mat2->rows[r2] + i);
+			 break;
+		 }
+      }
+
+      _F_mpz_vec_clear(vec1, c);
+      _F_mpz_vec_clear(vec2, c);
+
+      F_mpz_mat_clear(F_mat2);
+   }
+	
+   F_mpz_clear(mult);
+	
+   return result; 
+}
+
+int test__F_mpz_vec_submul_ui()
 {
    mpz_mat_t m_mat, m_mat2, m_mat3;
    F_mpz_mat_t F_mat, F_mat2;
@@ -1297,7 +1891,7 @@ int test__F_mpz_vec_scalar_submul_ui()
       bits3 = z_randint(FLINT_BITS+1);
 		mult = z_randbits(bits3);
       
-		_F_mpz_vec_scalar_submul_ui(F_mat2->rows[r2] + start, F_mat->rows[r1] + start, n, mult);
+		_F_mpz_vec_submul_ui(F_mat2->rows[r2] + start, F_mat->rows[r1] + start, n, mult);
       F_mpz_mat_to_mpz_mat(m_mat3, F_mat2);
 
       ulong i;
@@ -1341,7 +1935,7 @@ int test__F_mpz_vec_scalar_submul_ui()
       bits2 = z_randint(FLINT_BITS+1);
 		mult = z_randbits(bits2);
       
-		_F_mpz_vec_scalar_submul_ui(F_mat->rows[r2] + start, F_mat->rows[r1] + start, n, mult);
+		_F_mpz_vec_submul_ui(F_mat->rows[r2] + start, F_mat->rows[r1] + start, n, mult);
       F_mpz_mat_to_mpz_mat(m_mat2, F_mat);
 
       ulong i;
@@ -1367,7 +1961,112 @@ int test__F_mpz_vec_scalar_submul_ui()
    return result; 
 }
 
-int test__F_mpz_vec_scalar_addmul_2exp_ui()
+int test__F_mpz_vec_submul_F_mpz()
+{
+   F_mpz_mat_t F_mat, F_mat2;
+   F_mpz * vec, * vec1, * vec2;
+   int result = 1;
+   ulong bits, bits2, r, c, r1, r2;
+   
+   F_mpz_t mult;
+   F_mpz_init(mult);
+   
+   ulong count1;
+   for (count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+   {
+      bits = z_randint(200)+ 1;
+      r = z_randint(30)+1;  
+      c = z_randint(30)+1;
+	  r1 = z_randint(r);
+      r2 = z_randint(r);
+      
+      F_mpz_mat_init(F_mat, r, c);
+      F_mpz_mat_init(F_mat2, r, c);
+      
+      F_mpz_randmat(F_mat, r, c, bits); 
+      F_mpz_randmat(F_mat2, r, c, bits); 
+          
+      bits2 = z_randint(200);
+      F_mpz_test_random(mult, bits2);
+
+	  vec = _F_mpz_vec_init(c);
+	  _F_mpz_vec_copy(vec, F_mat2->rows[r2], c);
+	  _F_mpz_vec_submul_F_mpz(F_mat2->rows[r2], F_mat->rows[r1], c, mult);
+      
+      ulong i;
+      for (i = 0; i < c; i++)
+      {
+         F_mpz_submul(vec + i, F_mat->rows[r1] + i, mult);
+			
+         result &= (F_mpz_cmp(vec + i, F_mat2->rows[r2] + i) == 0);
+			
+		 if (!result) 
+		 {
+			 printf("Error: r = %ld, c = %ld, bits = %ld, bits2 = %ld, ", r, c, bits, bits2);
+			 printf("mult = "); F_mpz_print(mult); printf("\n");
+			 F_mpz_print(vec + i);
+			 F_mpz_print(F_mat2->rows[r2] + i);
+			 break;
+		 }
+      }
+
+      _F_mpz_vec_clear(vec, c);
+
+      F_mpz_mat_clear(F_mat);
+      F_mpz_mat_clear(F_mat2);
+   }
+   
+   // alias mats
+   for (count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+   {
+      bits = z_randint(200)+ 1;
+      r = z_randint(30)+1;  
+      c = z_randint(30)+1;
+	  r1 = z_randint(r);
+      r2 = z_randint(r);
+      
+      F_mpz_mat_init(F_mat2, r, c);
+      
+      F_mpz_randmat(F_mat2, r, c, bits); 
+          
+      bits2 = z_randint(200);
+      F_mpz_test_random(mult, bits2);
+
+	  vec1 = _F_mpz_vec_init(c);
+	  vec2 = _F_mpz_vec_init(c);
+	  _F_mpz_vec_copy(vec2, F_mat2->rows[r2], c);
+	  _F_mpz_vec_copy(vec1, F_mat2->rows[r1], c);
+	  _F_mpz_vec_submul_F_mpz(F_mat2->rows[r2], F_mat2->rows[r1], c, mult);
+      
+      ulong i;
+      for (i = 0; i < c; i++)
+      {
+         F_mpz_submul(vec2 + i, vec1 + i, mult);
+			
+         result &= (F_mpz_cmp(vec2 + i, F_mat2->rows[r2] + i) == 0);
+			
+		 if (!result) 
+		 {
+			 printf("Error: r = %ld, c = %ld, bits = %ld, bits2 = %ld, ", r, c, bits, bits2);
+			 printf("mult = "); F_mpz_print(mult); printf("\n");
+			 F_mpz_print(vec2 + i);
+			 F_mpz_print(F_mat2->rows[r2] + i);
+			 break;
+		 }
+      }
+
+      _F_mpz_vec_clear(vec1, c);
+      _F_mpz_vec_clear(vec2, c);
+
+      F_mpz_mat_clear(F_mat2);
+   }
+	
+   F_mpz_clear(mult);
+	
+   return result; 
+}
+
+int test__F_mpz_vec_addmul_2exp_ui()
 {
    mpz_mat_t m_mat, m_mat2, m_mat3;
    F_mpz_mat_t F_mat, F_mat2;
@@ -1405,7 +2104,7 @@ int test__F_mpz_vec_scalar_addmul_2exp_ui()
       bits3 = z_randint(FLINT_BITS+1);
 		mult = z_randbits(bits3);
       
-		_F_mpz_vec_scalar_addmul_2exp_ui(F_mat2->rows[r2] + start, F_mat->rows[r1] + start, n, mult, exp);
+		_F_mpz_vec_addmul_2exp_ui(F_mat2->rows[r2] + start, F_mat->rows[r1] + start, n, mult, exp);
       F_mpz_mat_to_mpz_mat(m_mat3, F_mat2);
       
       ulong i;
@@ -1451,7 +2150,7 @@ int test__F_mpz_vec_scalar_addmul_2exp_ui()
       bits2 = z_randint(FLINT_BITS+1);
 		mult = z_randbits(bits2);
       
-		_F_mpz_vec_scalar_addmul_2exp_ui(F_mat->rows[r2] + start, F_mat->rows[r1] + start, n, mult, exp);
+		_F_mpz_vec_addmul_2exp_ui(F_mat->rows[r2] + start, F_mat->rows[r1] + start, n, mult, exp);
       F_mpz_mat_to_mpz_mat(m_mat2, F_mat);
 
       ulong i;
@@ -1479,7 +2178,7 @@ int test__F_mpz_vec_scalar_addmul_2exp_ui()
    return result; 
 }
 
-int test__F_mpz_vec_scalar_submul_2exp_ui()
+int test__F_mpz_vec_submul_2exp_ui()
 {
    mpz_mat_t m_mat, m_mat2, m_mat3;
    F_mpz_mat_t F_mat, F_mat2;
@@ -1517,7 +2216,7 @@ int test__F_mpz_vec_scalar_submul_2exp_ui()
       bits3 = z_randint(FLINT_BITS+1);
 		mult = z_randbits(bits3);
       
-		_F_mpz_vec_scalar_submul_2exp_ui(F_mat2->rows[r2] + start, F_mat->rows[r1] + start, n, mult, exp);
+		_F_mpz_vec_submul_2exp_ui(F_mat2->rows[r2] + start, F_mat->rows[r1] + start, n, mult, exp);
       F_mpz_mat_to_mpz_mat(m_mat3, F_mat2);
       
       ulong i;
@@ -1563,7 +2262,7 @@ int test__F_mpz_vec_scalar_submul_2exp_ui()
       bits2 = z_randint(FLINT_BITS+1);
 		mult = z_randbits(bits2);
       
-		_F_mpz_vec_scalar_submul_2exp_ui(F_mat->rows[r2] + start, F_mat->rows[r1] + start, n, mult, exp);
+		_F_mpz_vec_submul_2exp_ui(F_mat->rows[r2] + start, F_mat->rows[r1] + start, n, mult, exp);
       F_mpz_mat_to_mpz_mat(m_mat2, F_mat);
 
       ulong i;
@@ -1768,7 +2467,7 @@ int test_F_mpz_mat_mul_classical()
    return result;
 }
 
-int test__F_mpz_vec_scalar_submul_2exp_F_mpz()
+int test__F_mpz_vec_submul_2exp_F_mpz()
 {
    mpz_mat_t m_mat, m_mat2, m_mat3;
    F_mpz_mat_t F_mat, F_mat2;
@@ -1810,7 +2509,7 @@ int test__F_mpz_vec_scalar_submul_2exp_F_mpz()
 		F_mpz_test_random(mult, bits3);
       F_mpz_get_mpz(m_mult, mult);
 
-		_F_mpz_vec_scalar_submul_2exp_F_mpz(F_mat2->rows[r2] + start, F_mat->rows[r1] + start, n, mult, exp);
+		_F_mpz_vec_submul_2exp_F_mpz(F_mat2->rows[r2] + start, F_mat->rows[r1] + start, n, mult, exp);
       F_mpz_mat_to_mpz_mat(m_mat3, F_mat2);
       
       ulong i;
@@ -1859,7 +2558,7 @@ int test__F_mpz_vec_scalar_submul_2exp_F_mpz()
 		F_mpz_test_random(mult, bits3);
       F_mpz_get_mpz(m_mult, mult);
 
-		_F_mpz_vec_scalar_submul_2exp_F_mpz(F_mat->rows[r2] + start, F_mat->rows[r1] + start, n, mult, exp);
+		_F_mpz_vec_submul_2exp_F_mpz(F_mat->rows[r2] + start, F_mat->rows[r1] + start, n, mult, exp);
       F_mpz_mat_to_mpz_mat(m_mat2, F_mat);
 
       ulong i;
@@ -1889,7 +2588,7 @@ int test__F_mpz_vec_scalar_submul_2exp_F_mpz()
    return result; 
 }
 
-int test__F_mpz_vec_scalar_mul()
+int test__F_mpz_vec_scalar_product()
 {
    mpz_mat_t m_mat, m_mat2;
    F_mpz_mat_t F_mat, F_mat2;
@@ -2149,29 +2848,38 @@ void F_mpz_mat_test_all()
 
 #if TESTFILE
 #endif
+   RUN_TEST(_F_mpz_vec_init_clear); 
+   RUN_TEST(_F_mpz_vec_copy_equal); 
+   RUN_TEST(_F_mpz_vec_neg); 
+   RUN_TEST(_F_mpz_vec_add_sub); 
+   RUN_TEST(_F_mpz_vec_mul_ui); 
+   RUN_TEST(_F_mpz_vec_mul_si); 
+   RUN_TEST(_F_mpz_vec_mul_F_mpz); 
+   RUN_TEST(_F_mpz_vec_addmul_ui); 
+   RUN_TEST(_F_mpz_vec_addmul_F_mpz); 
+   RUN_TEST(_F_mpz_vec_submul_ui); 
+   RUN_TEST(_F_mpz_vec_submul_F_mpz); 
+   RUN_TEST(_F_mpz_vec_addmul_2exp_ui); 
+   RUN_TEST(_F_mpz_vec_submul_2exp_ui); 
+   RUN_TEST(_F_mpz_vec_submul_2exp_F_mpz); 
+   RUN_TEST(_F_mpz_vec_scalar_product); 
+   RUN_TEST(_F_mpz_vec_to_d_vec_2exp); 
+   RUN_TEST(_F_mpz_vec_to_mpfr_vec); 
+   RUN_TEST(_F_mpz_vec_2exp_to_mpfr_vec); 
    RUN_TEST(F_mpz_mat_convert); 
    RUN_TEST(F_mpz_mat_set); 
    RUN_TEST(F_mpz_mat_equal);  
+   RUN_TEST(F_mpz_mat_max_bits);  
    RUN_TEST(F_mpz_mat_swap);  
+   RUN_TEST(F_mpz_mat_swap_rows);  
    RUN_TEST(F_mpz_mat_resize);
    RUN_TEST(F_mpz_mat_tofromstring);
    RUN_TEST(F_mpz_mat_tofromstringpretty);
    RUN_TEST(F_mpz_mat_neg); 
    RUN_TEST(F_mpz_mat_add); 
    RUN_TEST(F_mpz_mat_sub); 
-   RUN_TEST(_F_mpz_vec_scalar_mul_ui); 
-   RUN_TEST(_F_mpz_vec_scalar_mul_si); 
-   RUN_TEST(_F_mpz_vec_scalar_mul_F_mpz); 
-   RUN_TEST(_F_mpz_vec_scalar_addmul_ui); 
-   RUN_TEST(_F_mpz_vec_scalar_submul_ui); 
-   RUN_TEST(_F_mpz_vec_scalar_addmul_2exp_ui); 
-   RUN_TEST(_F_mpz_vec_scalar_submul_2exp_ui); 
+   RUN_TEST(F_mpz_mat_mul_div_2exp); 
    RUN_TEST(F_mpz_mat_mul_classical);
-   RUN_TEST(_F_mpz_vec_scalar_submul_2exp_F_mpz); 
-   RUN_TEST(_F_mpz_vec_scalar_mul); 
-   RUN_TEST(_F_mpz_vec_to_d_vec_2exp); 
-   RUN_TEST(_F_mpz_vec_to_mpfr_vec); 
-   RUN_TEST(_F_mpz_vec_2exp_to_mpfr_vec); 
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");

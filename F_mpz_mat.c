@@ -609,7 +609,7 @@ void F_mpz_mat_sub(F_mpz_mat_t res, const F_mpz_mat_t mat1, const F_mpz_mat_t ma
 
 ================================================================================*/
 
-void _F_mpz_vec_scalar_mul_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong x)
+void _F_mpz_vec_mul_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong x)
 {
 	// either scalar of input mat is zero
 	if (x == 0L)
@@ -636,7 +636,7 @@ void _F_mpz_vec_scalar_mul_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong x)
 		F_mpz_mul_ui(vec1 + i, vec2 + i, x);
 }
 
-void _F_mpz_vec_scalar_mul_si(F_mpz * vec1, F_mpz * vec2, ulong n, long x)
+void _F_mpz_vec_mul_si(F_mpz * vec1, F_mpz * vec2, ulong n, long x)
 {
 	// either scalar of input mat is zero
 	if (x == 0L)
@@ -672,7 +672,7 @@ void _F_mpz_vec_scalar_mul_si(F_mpz * vec1, F_mpz * vec2, ulong n, long x)
 		F_mpz_mul_si(vec1 + i, vec2 + i, x);
 }
 
-void _F_mpz_vec_scalar_mul_F_mpz(F_mpz * vec1, F_mpz * vec2, ulong n, F_mpz_t x)
+void _F_mpz_vec_mul_F_mpz(F_mpz * vec1, F_mpz * vec2, ulong n, F_mpz_t x)
 {
 	// either scalar or input mat is zero
 	if (*x == 0)
@@ -714,7 +714,7 @@ void _F_mpz_vec_scalar_mul_F_mpz(F_mpz * vec1, F_mpz * vec2, ulong n, F_mpz_t x)
 
 ================================================================================*/
 
-void _F_mpz_vec_scalar_addmul_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong x)
+void _F_mpz_vec_addmul_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong x)
 {
 	// scalar is zero
 	if (x == 0L)
@@ -735,7 +735,7 @@ void _F_mpz_vec_scalar_addmul_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong x)
 		F_mpz_addmul_ui(vec1 + i, vec2 + i, x);
 }
 
-void _F_mpz_vec_scalar_addmul_F_mpz(F_mpz * vec1, F_mpz * vec2, ulong n, F_mpz_t x)
+void _F_mpz_vec_addmul_F_mpz(F_mpz * vec1, F_mpz * vec2, ulong n, F_mpz_t x)
 {
 	// scalar is zero
 	if ((*x) == 0L)
@@ -766,7 +766,7 @@ void _F_mpz_vec_scalar_addmul_F_mpz(F_mpz * vec1, F_mpz * vec2, ulong n, F_mpz_t
 		F_mpz_addmul(vec1 + i, vec2 + i, x);
 }
 
-void _F_mpz_vec_scalar_submul_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong x)
+void _F_mpz_vec_submul_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong x)
 {
 	// scalar is zero
 	if (x == 0L)
@@ -787,7 +787,7 @@ void _F_mpz_vec_scalar_submul_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong x)
 		F_mpz_submul_ui(vec1 + i, vec2 + i, x);
 }
 
-void _F_mpz_vec_scalar_submul_F_mpz(F_mpz * vec1, F_mpz * vec2, ulong n, F_mpz_t x)
+void _F_mpz_vec_submul_F_mpz(F_mpz * vec1, F_mpz * vec2, ulong n, F_mpz_t x)
 {
 	// scalar is zero
 	if ((*x) == 0L)
@@ -818,7 +818,7 @@ void _F_mpz_vec_scalar_submul_F_mpz(F_mpz * vec1, F_mpz * vec2, ulong n, F_mpz_t
 		F_mpz_submul(vec1 + i, vec2 + i, x);
 }
 
-void _F_mpz_vec_scalar_addmul_2exp_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong c, ulong exp)
+void _F_mpz_vec_addmul_2exp_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong c, ulong exp)
 {
 	// scalar is zero, nothing to add
 	if (c == 0)
@@ -867,7 +867,7 @@ void _F_mpz_vec_scalar_addmul_2exp_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong
 	F_mpz_clear(temp);
 }
 
-void _F_mpz_vec_scalar_submul_2exp_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong c, ulong exp)
+void _F_mpz_vec_submul_2exp_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong c, ulong exp)
 {
 	// scalar is zero, nothing to subtract
 	if (c == 0)
@@ -916,7 +916,7 @@ void _F_mpz_vec_scalar_submul_2exp_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong
 	F_mpz_clear(temp);
 }
 
-void _F_mpz_vec_scalar_submul_2exp_F_mpz(F_mpz * vec1, F_mpz * vec2, ulong n, F_mpz_t c, ulong exp)
+void _F_mpz_vec_submul_2exp_F_mpz(F_mpz * vec1, F_mpz * vec2, ulong n, F_mpz_t c, ulong exp)
 {
 	// scalar is zero, nothing to subtract
 	if (F_mpz_is_zero(c))
@@ -976,33 +976,6 @@ void _F_mpz_vec_scalar_submul_2exp_F_mpz(F_mpz * vec1, F_mpz * vec2, ulong n, F_
 	F_mpz_clear(temp);
 }
 
-void F_mpz_mat_row_swap(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, 
-								                 ulong r2, ulong start, ulong n)
-{
-	if ((mat1 == mat2) && (n == mat1->c)) // matrices are the same, 
-		                                   // just swap row pointers
-	{
-		if (r1 == r2) return; // rows are the same, nothing to do
-
-		F_mpz * temp = mat1->rows[r1]; // swap rows via temporary
-		mat1->rows[r1] = mat1->rows[r2];
-		mat2->rows[r2] = temp;
-	} else // swap entries in rows
-	{
-		ulong i;
-		for (i = start; i < start + n; i++)
-			F_mpz_swap(mat1->rows[r1] + i, mat2->rows[r2] + i);
-	}
-}
-
-void F_mpz_mat_row_neg(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, 
-								                 ulong r2, ulong start, ulong n)
-{
-	ulong i;
-	for (i = start; i < start + n; i++)
-		F_mpz_neg(mat1->rows[r1] + i, mat2->rows[r2] + i);
-}
-
 /* ======================================================================================================
 
  Classical Multiplication
@@ -1038,164 +1011,125 @@ void _F_mpz_mat_mul_classical(F_mpz_mat_t res, const F_mpz_mat_t mat1, const F_m
 
 =============================================================================*/
 
-long F_mpz_mat_max_bits(const F_mpz_mat_t M)
+#define MAT_POS_UPDATE \
+   do { \
+      if (row != NULL) \
+      { \
+         (*row) = i; \
+		 (*col) = j; \
+      } \
+   } while (0)
+
+long F_mpz_mat_max_bits2(ulong * row, ulong * col, const F_mpz_mat_t M)
 {
-	int sign = 0;
-	ulong max = 0;
+   int sign = 0;
+   ulong max = 0;
    ulong bits = 0;
    ulong max_limbs = 1;
-	ulong size;
-	ulong i;
-	F_mpz c;
+   ulong size;
+   ulong i, j;
+   F_mpz c;
 
-	// search until we find an mpz_t coefficient or one of at least FLINT_BITS - 2 bits
-	for (i = 0; i < (M->r)*(M->c); i++) 
+   if (row != NULL)
    {
-		   c = M->rows[i/M->c][i % M->c];
-		   if (COEFF_IS_MPZ(c)) break; // found an mpz_t coeff
-         if (c < 0L) 
-	      {
-		      sign = 1;
-            bits = FLINT_BIT_COUNT(-c);
-	      } else bits = FLINT_BIT_COUNT(c);
-	      if (bits > max) 
-	      {
-		      max = bits;
-	         if (max == FLINT_BITS - 2) break; // coeff is at least FLINT_BITS - 2 bits
-	      }
-	}
-
-   // search through mpz coefficients for largest size in bits
-	
-	for ( ; i < (M->r)*(M->c); i++)
-   	{
-	   	c =  M->rows[i/M->c][i % M->c];
-         if (COEFF_IS_MPZ(c))
-	   	{
-	   		__mpz_struct * mpz_ptr = F_mpz_ptr_mpz(c);
-	   		if (mpz_sgn(mpz_ptr) < 0) sign = 1;
-	   		size = mpz_size(mpz_ptr);
-	   		if (size > max_limbs)
-	   		{
-	   		   max_limbs = size;
-	   			mp_limb_t * data = mpz_ptr->_mp_d;
-	   		   bits = FLINT_BIT_COUNT(data[max_limbs - 1]);
-	   			max = bits;
-	   		} else if (size == max_limbs)
-	   		{
-	   			mp_limb_t * data = mpz_ptr->_mp_d;
-	   		   bits = FLINT_BIT_COUNT(data[max_limbs - 1]);
-	   		   if (bits > max) max = bits;
-	   		}
-	   	} else if ((long) c < 0L) sign = 1; // still need to check the sign of small coefficients
-	   }
-	
-
-	   if (sign) return -(max + FLINT_BITS*(max_limbs - 1));
-	   else return max + FLINT_BITS*(max_limbs - 1);
-}
-
-long F_mpz_mat_max_bits2(ulong * pos, const F_mpz_mat_t M)
-{
-	int sign = 0;
-	ulong max = 0;
-   ulong bits = 0;
-   ulong max_limbs = 1;
-	ulong size;
-	ulong i;
-	F_mpz c;
-
-	// search until we find an mpz_t coefficient or one of at least FLINT_BITS - 2 bits
-	for (i = 0; i < (M->r)*(M->c); i++) 
-   {
-		   c = M->rows[i/M->c][i % M->c];
-		   if (COEFF_IS_MPZ(c)) break; // found an mpz_t coeff
-         if (c < 0L) 
-	      {
-		      sign = 1;
-            bits = FLINT_BIT_COUNT(-c);
-	      } else bits = FLINT_BIT_COUNT(c);
-	      if (bits > max) 
-	      {
-            (*pos) = i;
-		      max = bits;
-	         if (max == FLINT_BITS - 2) break; // coeff is at least FLINT_BITS - 2 bits
-	      }
-	}
-
-   // search through mpz coefficients for largest size in bits
-	
-	for ( ; i < (M->r)*(M->c); i++)
-   	{
-	   	c =  M->rows[i/M->c][i % M->c];
-         if (COEFF_IS_MPZ(c))
-	   	{
-	   		__mpz_struct * mpz_ptr = F_mpz_ptr_mpz(c);
-	   		if (mpz_sgn(mpz_ptr) < 0) sign = 1;
-	   		size = mpz_size(mpz_ptr);
-	   		if (size > max_limbs)
-	   		{
-	   		   max_limbs = size;
-	   			mp_limb_t * data = mpz_ptr->_mp_d;
-	   		   bits = FLINT_BIT_COUNT(data[max_limbs - 1]);
-	   			max = bits;
-               (*pos) = i;
-	   		} else if (size == max_limbs)
-	   		{
-	   			mp_limb_t * data = mpz_ptr->_mp_d;
-	   		   bits = FLINT_BIT_COUNT(data[max_limbs - 1]);
-	   		   if (bits > max)
-               {
-                  (*pos) = i;
-                  max = bits;
-               }
-	   		}
-	   	} else if ((long) c < 0L) sign = 1; // still need to check the sign of small coefficients
-	   }
-	
-
-	   if (sign) return -(max + FLINT_BITS*(max_limbs - 1));
-	   else return max + FLINT_BITS*(max_limbs - 1);
-}
-
-void F_mpz_mat_scalar_mul_2exp(F_mpz_mat_t res, F_mpz_mat_t M, ulong n)
-{
-   if (res != M){
-      F_mpz_mat_resize(res, M->r, M->c);
+      *row = 0;
+	  *col = 0;
    }
-   if (n == 0){
+
+   // search until we find an mpz_t coefficient or one of at least FLINT_BITS - 2 bits
+   for (i = 0; i < M->r; i++) 
+   {
+      for (j = 0; j < M->c; j++)
+	  {
+		 c = M->rows[i][j];
+		 if (COEFF_IS_MPZ(c)) goto check_mpzs; // found an mpz_t coeff
+         if (c < 0L) 
+	     {
+		    sign = 1;
+            bits = FLINT_BIT_COUNT(-c);
+	     } else bits = FLINT_BIT_COUNT(c);
+	     if (bits > max) 
+	     {
+		    max = bits;
+			MAT_POS_UPDATE;
+	        if (max >= FLINT_BITS - 2) goto check_mpzs; // coeff is at least FLINT_BITS - 2 bits
+	     }
+	  }
+	}
+
+check_mpzs:
+
+    // search through mpz coefficients for largest size in bits
+	
+	for ( ; i < M->r; i++)
+   	{
+	   for ( ; j < M->c; j++)
+   	   {
+		  c =  M->rows[i][j];
+          if (COEFF_IS_MPZ(c))
+	   	  {
+	   		 __mpz_struct * mpz_ptr = F_mpz_ptr_mpz(c);
+	   		 if (mpz_sgn(mpz_ptr) < 0) sign = 1;
+	   		 size = mpz_size(mpz_ptr);
+	   		 if (size > max_limbs)
+	   		 {
+	   		    max_limbs = size;
+	   			mp_limb_t * data = mpz_ptr->_mp_d;
+	   		    bits = FLINT_BIT_COUNT(data[max_limbs - 1]);
+				MAT_POS_UPDATE;
+	   			max = bits;
+	   		 } else if (size == max_limbs)
+	   		 {
+	   			mp_limb_t * data = mpz_ptr->_mp_d;
+	   		    bits = FLINT_BIT_COUNT(data[max_limbs - 1]);
+	   		    if (bits > max) 
+				{
+				   max = bits;
+				   MAT_POS_UPDATE;
+				}
+	   		 }
+	   	  } else if ((long) c < 0L) sign = 1; // still need to check the sign of small coefficients
+	   }
+	   j = 0;
+	}
+	
+	if (sign) return -(max + FLINT_BITS*(max_limbs - 1));
+	else return max + FLINT_BITS*(max_limbs - 1);
+}
+
+void F_mpz_mat_mul_2exp(F_mpz_mat_t res, F_mpz_mat_t M, ulong n)
+{
+   if (n == 0)
+   {
       F_mpz_mat_set(res, M);
       return;
    }
-   if (n == 1){
+
+   if (n == 1)
+   {
       F_mpz_mat_add(res, M, M);
       return;
    }
+
    ulong i, j;
    for (i = 0; i < M->r; i++)
       for (j = 0; j < M->c; j++)
          F_mpz_mul_2exp(res->rows[i] + j, M->rows[i] + j, n);   
 }
 
-void F_mpz_mat_scalar_div_2exp(F_mpz_mat_t res, F_mpz_mat_t M, ulong n)
+void F_mpz_mat_div_2exp(F_mpz_mat_t res, F_mpz_mat_t M, ulong n)
 {
-   if (res != M){
-      F_mpz_mat_resize(res, M->r, M->c);
+   if (n == 0)
+   {
+      F_mpz_mat_set(res, M);
+      return;
    }
-   F_mpz_t temp;
-   F_mpz_init(temp);
 
    ulong i, j;
    for (i = 0; i < M->r; i++)
       for (j = 0; j < M->c; j++)
-         if (F_mpz_sgn(M->rows[i]+j) >= 0)
-            F_mpz_div_2exp(res->rows[i] + j, M->rows[i] + j, n);
-         else{
-            F_mpz_abs(temp, M->rows[i]+j);
-            F_mpz_div_2exp(res->rows[i] + j, temp, n);
-            F_mpz_neg(res->rows[i] + j, res->rows[i] + j);
-         }
-   F_mpz_clear(temp);
+         F_mpz_div_2exp(res->rows[i] + j, M->rows[i] + j, n);
+
    return;
 }
 
@@ -1346,7 +1280,7 @@ void F_mpz_mat_resize2(F_mpz_mat_t M, ulong r, ulong c)
    F_mpz_mat_resize(M, r, c); 
    long i;
    for (i = old_r-1; i >= 0; i--){
-      F_mpz_mat_row_swap(M,i + r - old_r, M, i, 0, M->c);
+      F_mpz_mat_swap_rows(M, i + r - old_r, i);
    }
 }
 
@@ -1394,10 +1328,10 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
 //full precision column for deciding truncation levels
    F_mpz_mat_mul_classical(temp_col, U, col);
    if (U_exp >= 0){
-      F_mpz_mat_scalar_div_2exp(temp_col, temp_col, (ulong) U_exp);
+      F_mpz_mat_div_2exp(temp_col, temp_col, (ulong) U_exp);
    }
    else{
-      F_mpz_mat_scalar_mul_2exp(temp_col, temp_col, (ulong) (-1*U_exp));
+      F_mpz_mat_mul_2exp(temp_col, temp_col, (ulong) (-1*U_exp));
    } 
    F_mpz_mat_smod(temp_col, temp_col, P);
    long mbts = FLINT_ABS(F_mpz_mat_max_bits(temp_col));
@@ -1439,10 +1373,12 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
 //   F_mpz_mat_print_pretty(col); printf(" was col and take_away = %ld\n", take_away);
 
    if (take_away >= 0){
-      F_mpz_mat_scalar_div_2exp(trunc_col, col, (ulong) take_away);
+      F_mpz_mat_resize(trunc_col, col->r, col->c);
+	  F_mpz_mat_div_2exp(trunc_col, col, (ulong) take_away);
    }
    else{
-      F_mpz_mat_scalar_mul_2exp(trunc_col, col, (ulong) (-1*take_away));
+      F_mpz_mat_resize(trunc_col, col->r, col->c);
+	  F_mpz_mat_mul_2exp(trunc_col, col, (ulong) (-1*take_away));
    } 
 
 //   F_mpz_mat_print_pretty(trunc_col); printf(" was trunc_col\n");
@@ -1455,10 +1391,10 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
    F_mpz_mat_mul_classical(temp_col, U, trunc_col);
 //   printf("temp_col after mat_mul = %ld\n", temp_col->entries);
    if (U_exp >= 0){
-      F_mpz_mat_scalar_div_2exp(temp_col, temp_col, (ulong) U_exp);
+      F_mpz_mat_div_2exp(temp_col, temp_col, (ulong) U_exp);
    }
    else{
-      F_mpz_mat_scalar_mul_2exp(temp_col, temp_col, (ulong) (-1*U_exp));
+      F_mpz_mat_mul_2exp(temp_col, temp_col, (ulong) (-1*U_exp));
    }
 
 //   F_mpz_mat_print_pretty(temp_col); printf(" was temp_col before smod\n");
@@ -1508,8 +1444,7 @@ int F_mpz_mat_check_rest(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp){
    ulong r = col->r;
    ulong extra = 25;
    ulong i;
-   ulong pos;
-
+   
    F_mpz_mat_t U;
    F_mpz_mat_init(U,0,0);
    F_mpz_mat_get_U(U, M, r);
@@ -1521,7 +1456,7 @@ int F_mpz_mat_check_rest(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp){
 
    F_mpz_mat_mul_classical(temp_col, U, col);
    F_mpz_mat_smod(temp_col, temp_col, P);
-   long mbts = FLINT_ABS(F_mpz_mat_max_bits2( &pos, temp_col));
+   long mbts = FLINT_ABS(F_mpz_mat_max_bits(temp_col));
 
    if (mbts < exp)
    {
@@ -1540,8 +1475,8 @@ int F_mpz_mat_check_rest(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp){
 //Will need a G-S stability test, see if any NaNs popped up or something like that.
 
    F_mpz_mat_t trunc_col;
-   F_mpz_mat_init(trunc_col, r, 1);
-   F_mpz_mat_scalar_div_2exp(trunc_col, col, take_away);
+   F_mpz_mat_init(trunc_col, col->r, col->c);
+   F_mpz_mat_div_2exp(trunc_col, col, take_away);
    F_mpz_mat_mul_classical(temp_col, U, trunc_col);
    F_mpz_t trunc_P;
    F_mpz_init(trunc_P);

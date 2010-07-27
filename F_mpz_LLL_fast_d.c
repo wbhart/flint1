@@ -201,10 +201,10 @@ void Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
 		      
                   if (xx > 0L)
                   { 
-                     _F_mpz_vec_scalar_submul_ui(B->rows[kappa], B->rows[j], n, (ulong) xx);  
+                     _F_mpz_vec_submul_ui(B->rows[kappa], B->rows[j], n, (ulong) xx);  
                   } else
                   {
-                     _F_mpz_vec_scalar_addmul_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx);  
+                     _F_mpz_vec_addmul_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx);  
                   } 
                } else
 		         {
@@ -221,10 +221,10 @@ void Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
 			  
 			            if (xx > 0)
                      {
-                        _F_mpz_vec_scalar_submul_ui(B->rows[kappa], B->rows[j], n, xx);  
+                        _F_mpz_vec_submul_ui(B->rows[kappa], B->rows[j], n, xx);  
                      } else
                      {
-                        _F_mpz_vec_scalar_addmul_ui(B->rows[kappa], B->rows[j], n, -xx);  
+                        _F_mpz_vec_addmul_ui(B->rows[kappa], B->rows[j], n, -xx);  
                      }
               			    
 			            for (k = zeros + 1; k < j; k++)
@@ -237,10 +237,10 @@ void Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
 			         {
 			            if (xx > 0)
                      {
-                        _F_mpz_vec_scalar_submul_2exp_ui(B->rows[kappa], B->rows[j], n, (ulong) xx, exponent);  
+                        _F_mpz_vec_submul_2exp_ui(B->rows[kappa], B->rows[j], n, (ulong) xx, exponent);  
                      } else
                      {
-                        _F_mpz_vec_scalar_addmul_2exp_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx, exponent);  
+                        _F_mpz_vec_addmul_2exp_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx, exponent);  
                      }
 			            for (k = zeros + 1; k < j; k++)
 			            {
@@ -415,10 +415,10 @@ void Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, doubl
 		      
                   if (xx > 0L)
                   { 
-                     _F_mpz_vec_scalar_submul_ui(B->rows[kappa], B->rows[j], n, (ulong) xx);  
+                     _F_mpz_vec_submul_ui(B->rows[kappa], B->rows[j], n, (ulong) xx);  
                   } else
                   {
-                     _F_mpz_vec_scalar_addmul_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx);  
+                     _F_mpz_vec_addmul_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx);  
                   } 
                } else
 		         {
@@ -435,10 +435,10 @@ void Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, doubl
 			  
 			            if (xx > 0)
                      {
-                        _F_mpz_vec_scalar_submul_ui(B->rows[kappa], B->rows[j], n, xx);  
+                        _F_mpz_vec_submul_ui(B->rows[kappa], B->rows[j], n, xx);  
                      } else
                      {
-                        _F_mpz_vec_scalar_addmul_ui(B->rows[kappa], B->rows[j], n, -xx);  
+                        _F_mpz_vec_addmul_ui(B->rows[kappa], B->rows[j], n, -xx);  
                      }
               			    
 			            for (k = zeros + 1; k < j; k++)
@@ -451,10 +451,10 @@ void Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, doubl
 			         {
 			            if (xx > 0)
                      {
-                        _F_mpz_vec_scalar_submul_2exp_ui(B->rows[kappa], B->rows[j], n, (ulong) xx, exponent);  
+                        _F_mpz_vec_submul_2exp_ui(B->rows[kappa], B->rows[j], n, (ulong) xx, exponent);  
                      } else
                      {
-                        _F_mpz_vec_scalar_addmul_2exp_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx, exponent);  
+                        _F_mpz_vec_addmul_2exp_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx, exponent);  
                      }
 			            for (k = zeros + 1; k < j; k++)
 			            {
@@ -615,10 +615,10 @@ void Babai_heuristic_d_2exp (int kappa, F_mpz_mat_t B, double **mu, double **r, 
 		      
                   if (xx > 0L)
                   { 
-                     _F_mpz_vec_scalar_submul_ui(B->rows[kappa], B->rows[j], n, (ulong) xx);  
+                     _F_mpz_vec_submul_ui(B->rows[kappa], B->rows[j], n, (ulong) xx);  
                   } else
                   {
-                     _F_mpz_vec_scalar_addmul_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx);  
+                     _F_mpz_vec_addmul_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx);  
                   } 
                } else
 		         {
@@ -635,10 +635,10 @@ void Babai_heuristic_d_2exp (int kappa, F_mpz_mat_t B, double **mu, double **r, 
 			  
 			            if (xx > 0)
                      {
-                        _F_mpz_vec_scalar_submul_ui(B->rows[kappa], B->rows[j], n, xx);  
+                        _F_mpz_vec_submul_ui(B->rows[kappa], B->rows[j], n, xx);  
                      } else
                      {
-                        _F_mpz_vec_scalar_addmul_ui(B->rows[kappa], B->rows[j], n, -xx);  
+                        _F_mpz_vec_addmul_ui(B->rows[kappa], B->rows[j], n, -xx);  
                      }
               			    
 			            for (k = zeros + 1; k < j; k++)
@@ -651,10 +651,10 @@ void Babai_heuristic_d_2exp (int kappa, F_mpz_mat_t B, double **mu, double **r, 
 			         {
 			            if (xx > 0)
                      {
-                        _F_mpz_vec_scalar_submul_2exp_ui(B->rows[kappa], B->rows[j], n, (ulong) xx, exponent);  
+                        _F_mpz_vec_submul_2exp_ui(B->rows[kappa], B->rows[j], n, (ulong) xx, exponent);  
                      } else
                      {
-                        _F_mpz_vec_scalar_addmul_2exp_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx, exponent);  
+                        _F_mpz_vec_addmul_2exp_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx, exponent);  
                      }
 			            for (k = zeros + 1; k < j; k++)
 			            {

@@ -985,20 +985,16 @@ void F_mpz_mul_2exp(F_mpz_t f, const F_mpz_t g, const ulong exp)
 		{
 			F_mpz_set_si(f, d<<exp);
 		} else // result is large
-		{
-			
-		   __mpz_struct * mpz_ptr = _F_mpz_promote(f); // g is saved
-         mpz_set_si(mpz_ptr, d); 
+		{			
+		  __mpz_struct * mpz_ptr = _F_mpz_promote(f); // g is saved
+          mpz_set_si(mpz_ptr, d); 
 	      mpz_mul_2exp(mpz_ptr, mpz_ptr, exp);
-         _F_mpz_demote_val(f);
-			
+          _F_mpz_demote_val(f);		
 		}
 	} else // g is large
-	{
-      
-		__mpz_struct * mpz_ptr = _F_mpz_promote(f); // g is already large
-      mpz_mul_2exp(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(d), exp);   
-		
+	{  
+	   __mpz_struct * mpz_ptr = _F_mpz_promote(f); // g is already large
+       mpz_mul_2exp(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(d), exp);  	
 	}
 }
 
@@ -1008,17 +1004,15 @@ void F_mpz_div_2exp(F_mpz_t f, const F_mpz_t g, const ulong exp)
 
 	if (!COEFF_IS_MPZ(d)) // g is small
 	{
-      if(exp >= FLINT_BITS - 2)
+      if (exp >= FLINT_BITS - 2)
          F_mpz_set_ui(f, 0UL);
       else
-   		F_mpz_set_si(f, d>>exp);
+   		 F_mpz_set_si(f, d>>exp);
 	} else // g is large
-	{
-      
+	{     
 		__mpz_struct * mpz_ptr = _F_mpz_promote(f); // g is already large
-		mpz_div_2exp(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(d), exp);   
-		_F_mpz_demote_val(f); // division may make value small
-		
+		mpz_tdiv_q_2exp(mpz_ptr, F_mpz_arr + COEFF_TO_OFF(d), exp);   
+		_F_mpz_demote_val(f); // division may make value small		
 	}
 }
 

@@ -286,6 +286,72 @@ void F_mpz_mat_neg(F_mpz_mat_t mat1, const F_mpz_mat_t mat2);
 
 /*===============================================================================
 
+	Vector memory management
+
+================================================================================*/
+
+/** 
+   \fn     F_mpz * _F_mpz_vec_init(ulong n)
+   \brief  Allocate and initialise a vector of length n.
+*/
+static inline
+F_mpz * _F_mpz_vec_init(ulong n)
+{
+   ulong i;
+   F_mpz * vec = (F_mpz *) flint_heap_alloc(n);
+   for (i = 0; i < n; i++)
+      F_mpz_init(vec + i);
+   return vec;
+}
+
+/** 
+   \fn     void _F_mpz_vec_clear(F_mpz * vec, ulong n)
+   \brief  Clear the given vector which is assumed to have been allocated
+           at length n.
+*/
+static inline
+void _F_mpz_vec_clear(F_mpz * vec, ulong n)
+{
+   ulong i;
+   for (i = 0; i < n; i++)
+	  F_mpz_clear(vec + i);
+   flint_heap_free(vec);
+}
+
+/*===============================================================================
+
+	Vector copy and comparison
+
+================================================================================*/
+
+/** 
+   \fn     void _F_mpz_vec_copy(F_mpz * vec1, const F_mpz * vec2, ulong n)
+   \brief  Copy the contents of vec2 of length n into vec1.
+*/
+static inline
+void _F_mpz_vec_copy(F_mpz * vec1, const F_mpz * vec2, ulong n)
+{
+   ulong i;
+   for (i = 0; i < n; i++)
+      F_mpz_set(vec1 + i, vec2 + i);
+}
+
+/** 
+   \fn     int _F_mpz_vec_equal(F_mpz * vec1, const F_mpz * vec2, ulong n)
+   \brief  Return 1 if vec1 and vec2 of length n are equal, otherwise return 0.
+*/
+static inline
+int _F_mpz_vec_equal(F_mpz * vec1, const F_mpz * vec2, ulong n)
+{
+   ulong i;
+   for (i = 0; i < n; i++)
+      if (F_mpz_cmp(vec1 + i, vec2 + i) != 0) 
+		 return 0;
+   return 1;
+}
+
+/*===============================================================================
+
 	Addition/subtraction
 
 ================================================================================*/
@@ -326,7 +392,7 @@ void _F_mpz_vec_sub(F_mpz * res, const F_mpz * vec1, const F_mpz * vec2, ulong n
 
    \brief  Multiply vec2 by the unsigned long x and set vec1 to the result..
 */
-void _F_mpz_vec_scalar_mul_ui(F_mpz * vec1, F_mpz* vec2, ulong n, ulong x);
+void _F_mpz_vec_mul_ui(F_mpz * vec1, F_mpz* vec2, ulong n, ulong x);
 
 /** 
    \fn     void F_mpz_mat_row_mul_si(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong r2, 
@@ -334,13 +400,13 @@ void _F_mpz_vec_scalar_mul_ui(F_mpz * vec1, F_mpz* vec2, ulong n, ulong x);
 
    \brief  Multiply vec2 by the signed long x and set vec1 to the result.
 */
-void _F_mpz_vec_scalar_mul_si(F_mpz * vec1, F_mpz* vec2, ulong n, long x);
+void _F_mpz_vec_mul_si(F_mpz * vec1, F_mpz* vec2, ulong n, long x);
 /** 
-   \fn     _F_mpz_vec_scalar_mul_F_mpz(F_mpz * vec1, F_mpz* vec2, ulong n, F_mpz_t x)
+   \fn     _F_mpz_vec_mul_F_mpz(F_mpz * vec1, F_mpz* vec2, ulong n, F_mpz_t x)
 
    \brief  Multiply vec2 by the mpz_t x and set vec1 to the result.
 */
-void _F_mpz_vec_scalar_mul_F_mpz(F_mpz * vec1, F_mpz* vec2, ulong n, F_mpz_t x);
+void _F_mpz_vec_mul_F_mpz(F_mpz * vec1, F_mpz* vec2, ulong n, F_mpz_t x);
 
 /*===============================================================================
 
@@ -349,76 +415,86 @@ void _F_mpz_vec_scalar_mul_F_mpz(F_mpz * vec1, F_mpz* vec2, ulong n, F_mpz_t x);
 ================================================================================*/
 
 /** 
-   \fn     _F_mpz_vec_scalar_addmul_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong x)
+   \fn     _F_mpz_vec_addmul_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong x)
 
    \brief  Multiply vec2 by the unsigned long x and add the result to vec1.
 */
-void _F_mpz_vec_scalar_addmul_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong x);
+void _F_mpz_vec_addmul_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong x);
 
 /** 
-   \fn     _F_mpz_vec_scalar_addmul_F_mpz(F_mpz * vec1, F_mpz * vec2, ulong n, F_mpz_t x)
+   \fn     _F_mpz_vec_addmul_F_mpz(F_mpz * vec1, F_mpz * vec2, ulong n, F_mpz_t x)
 
    \brief  Multiply vec2 by the F_mpz_t x and add the result to vec1.
 */
-void _F_mpz_vec_scalar_addmul_F_mpz(F_mpz * vec1, F_mpz * vec2, ulong n, F_mpz_t x);
+void _F_mpz_vec_addmul_F_mpz(F_mpz * vec1, F_mpz * vec2, ulong n, F_mpz_t x);
 
 /** 
-   \fn     _F_mpz_vec_scalar_submul_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong x)
+   \fn     _F_mpz_vec_submul_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong x)
 
    \brief  Multiply vec2 by the unsigned long x and subtract the result from vec1.
 */
-void _F_mpz_vec_scalar_submul_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong x);
+void _F_mpz_vec_submul_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong x);
 
 /** 
-   \fn     _F_mpz_vec_scalar_submul_F_mpz(F_mpz * vec1, F_mpz * vec2, ulong n, F_mpz_t x)
+   \fn     _F_mpz_vec_submul_F_mpz(F_mpz * vec1, F_mpz * vec2, ulong n, F_mpz_t x)
 
    \brief  Multiply vec2 by the F_mpz_t x and subtract the result from vec1.
 */
-void _F_mpz_vec_scalar_submul_F_mpz(F_mpz * vec1, F_mpz * vec2, ulong n, F_mpz_t x);
+void _F_mpz_vec_submul_F_mpz(F_mpz * vec1, F_mpz * vec2, ulong n, F_mpz_t x);
 
 /** 
-   \fn     _F_mpz_vec_scalar_addmul_2exp_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong c, ulong exp)
+   \fn     _F_mpz_vec_addmul_2exp_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong c, ulong exp)
 
 	\brief  Multiply entry from row r2 of mat2 by c*2^exp and add to entry from row r1 of mat1.	        
 */
 
-void _F_mpz_vec_scalar_addmul_2exp_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong c, ulong exp);
+void _F_mpz_vec_addmul_2exp_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong c, ulong exp);
 
 /** 
-   \fn     _F_mpz_vec_scalar_submul_2exp_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong c, ulong exp)
+   \fn     _F_mpz_vec_submul_2exp_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong c, ulong exp)
 
 	\brief  Multiply entries from vec2 by c*2^exp and add to entries in vec1.
 	        
 */
 
-void _F_mpz_vec_scalar_submul_2exp_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong c, ulong exp);
+void _F_mpz_vec_submul_2exp_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong c, ulong exp);
 
 /** 
-   \fn     _F_mpz_vec_scalar_submul_2exp_F_mpz(F_mpz* vec1, F_mpz * vec2, ulong n, F_mpz_t c, ulong exp)
+   \fn     _F_mpz_vec_submul_2exp_F_mpz(F_mpz* vec1, F_mpz * vec2, ulong n, F_mpz_t c, ulong exp)
 
 	\brief  Multiply entries from vec2 by c*2^exp and subtract from entries in vec1.
 	        
 */
-void _F_mpz_vec_scalar_submul_2exp_F_mpz(F_mpz * vec1, F_mpz * vec2, ulong n, F_mpz_t c, ulong exp);
+void _F_mpz_vec_submul_2exp_F_mpz(F_mpz * vec1, F_mpz * vec2, ulong n, F_mpz_t c, ulong exp);
 
 /** 
-   \fn     void F_mpz_mat_row_swap(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, 
-	                                                ulong r2, ulong start, ulong n)
+   \fn     void F_mpz_mat_swap_rows(F_mpz_mat_t mat, ulong r1, ulong r2)
 
-	\brief  Swap row r1 of mat1 with row r2 of mat2. If mat1 aliases mat2 this is 
-	        done efficiently by swapping row pointers.	        
+	\brief  Swap rows r1 and r2 of mat. This is done efficiently by swapping 
+	        row pointers.	        
 */
-void F_mpz_mat_row_swap(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, 
-								                          ulong r2, ulong start, ulong n);
+static inline
+void F_mpz_mat_swap_rows(F_mpz_mat_t mat, ulong r1, ulong r2)
+{
+	if (r1 == r2) return; // rows are the same, nothing to do
+
+    F_mpz * temp = mat->rows[r1]; // swap rows via temporary
+    mat->rows[r1] = mat->rows[r2];
+    mat->rows[r2] = temp;
+}
 
 /** 
-   \fn     void F_mpz_mat_row_neg(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, 
-	                                                ulong r2, ulong start, ulong n)
+   \fn     void _F_mpz_vec_neg(F_mpz * vec1, F_mpz * vec2, ulong n)
 
-	\brief  Set row r1 of mat1 to minus row r2 of mat2.
+	\brief  Set vec1 of length n to minus vec2.
 */
-void F_mpz_mat_row_neg(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, 
-								                          ulong r2, ulong start, ulong n);
+static inline
+void _F_mpz_vec_neg(F_mpz * vec1, F_mpz * vec2, ulong n)
+{
+	ulong i;
+	for (i = 0; i < n; i++)
+		F_mpz_neg(vec1 + i, vec2 + i);
+}
 
 /* ======================================================================================================
 
@@ -467,24 +543,38 @@ void F_mpz_mat_mul_classical(F_mpz_mat_t P, const F_mpz_mat_t A, const F_mpz_mat
 ===========================================================*/
 
 /*
-   A duplicate of the F_mpz_poly version but uses ghetto math in the middle 
+   Determine the maximum number of bits b required to store the absolute
+   value of the largest coefficient of M. If M has signed coefficients, 
+   return -b, else return b. Return the row and column that such an 
+   entry was found. WARNING: this need not return the maximum coefficient
+   only one of the ones which requires the maximum number of bits.
 */
-long F_mpz_mat_max_bits(const F_mpz_mat_t M);
+long F_mpz_mat_max_bits2(ulong * row, ulong * col, const F_mpz_mat_t M);
 
 /*
-   Same deal put also gives the position of the largest entry
+   Determine the maximum number of bits b required to store the absolute
+   value of the largest coefficient of M. If M has signed coefficients, 
+   return -b, else return b.
 */
-long F_mpz_mat_max_bits2(ulong * pos, const F_mpz_mat_t M);
+static inline
+long F_mpz_mat_max_bits(const F_mpz_mat_t M)
+{
+   return F_mpz_mat_max_bits2(NULL, NULL, M);
+}
+
+/*
+   
+*/
 
 /*
    Divides M by the scalar 2^n and stores at res.  Truncates each entry with F_mpz_div_2exp.
 */
-void F_mpz_mat_scalar_div_2exp(F_mpz_mat_t res, F_mpz_mat_t M, ulong n);
+void F_mpz_mat_div_2exp(F_mpz_mat_t res, F_mpz_mat_t M, ulong n);
 
 /*
    Scalar multiplication by a power of 2.  res = M * 2^n.
 */
-void F_mpz_mat_scalar_mul_2exp(F_mpz_mat_t res, F_mpz_mat_t M, ulong n);
+void F_mpz_mat_mul_2exp(F_mpz_mat_t res, F_mpz_mat_t M, ulong n);
 
 /*
    Sets res to the top n bits of each entry of M.  Returns a ulong exp such that

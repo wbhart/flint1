@@ -53,8 +53,8 @@ void F_mpz_mat_HNF_LLL_swap(F_mpz_mat_t A, F_mpz_mat_t B, F_mpz_mat_t L, F_mpz *
 	ulong m = A->r;
 	ulong n = A->c;
 	
-	F_mpz_mat_row_swap(A, k, A, k - 1, 0, n);
-   F_mpz_mat_row_swap(B, k, B, k - 1, 0, n);
+	F_mpz_mat_swap_rows(A, k, k - 1);
+   F_mpz_mat_swap_rows(B, k, k - 1);
    
 	ulong j;
 	for (j = 0; j < k - 1; j++) F_mpz_swap(L->rows[k] + j, L->rows[k - 1] + j);
@@ -94,8 +94,8 @@ void F_mpz_mat_HNF_LLL_reduce(F_mpz_mat_t A, F_mpz_mat_t B, F_mpz_mat_t L,
 
 	if (F_mpz_sgn(A->rows[i] + (*col1)) < 0)
 	{
-      F_mpz_mat_HNF_LLL_minus(L, i);
-		F_mpz_mat_row_neg(B, i, B, i, 0, n);
+        F_mpz_mat_HNF_LLL_minus(L, i);
+		_F_mpz_vec_neg(B->rows[i], B->rows[i], n);
 	} else
 	   (*col1) = n;
 
@@ -107,7 +107,7 @@ void F_mpz_mat_HNF_LLL_reduce(F_mpz_mat_t A, F_mpz_mat_t B, F_mpz_mat_t L,
    if (F_mpz_sgn(A->rows[k] + (*col2)) < 0)
 	{
       F_mpz_mat_HNF_LLL_minus(L, k);
-		F_mpz_mat_row_neg(B, k, B, k, 0, n);
+		_F_mpz_vec_neg(B->rows[k], B->rows[k], n);
 	} else
 	   (*col2) = n;
 
