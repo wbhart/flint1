@@ -1201,7 +1201,7 @@ void F_mpz_mat_scalar_div_2exp(F_mpz_mat_t res, F_mpz_mat_t M, ulong n)
 
 ulong F_mpz_mat_upper_trunc_n(F_mpz_mat_t res, F_mpz_mat_t M, ulong n)
 {
-   if (res != M){
+   if ((res->r != M->r) || (res->c != M->c)){
       F_mpz_mat_resize(res, M->r, M->c);
    }
 
@@ -1234,7 +1234,7 @@ ulong F_mpz_mat_upper_trunc_n(F_mpz_mat_t res, F_mpz_mat_t M, ulong n)
 
 void F_mpz_mat_lower_trunc_n(F_mpz_mat_t res, F_mpz_mat_t M, ulong n)
 {
-   if (res != M){
+   if ((res->r != M->r) || (res->c != M->c)){
       F_mpz_mat_resize(res, M->r, M->c);
    }
 

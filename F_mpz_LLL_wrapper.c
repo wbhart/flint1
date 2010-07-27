@@ -2997,7 +2997,7 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
             heuristic_fail = 0;
             if (babai_ok == -1)
             {
-               printf("heur_fail_advance ");printf("copy_kappa == %d\n", copy_kappa);
+//               printf("heur_fail_advance ");printf("copy_kappa == %d\n", copy_kappa);
                heuristic_fail = advance_check_Babai_heuristic_d(kappa, copy_kappa, B, mu, r, copy_s, appB, expo, appSP, alpha[copy_kappa], zeros, copy_kappamax, n);
             }
          }

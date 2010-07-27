@@ -7612,6 +7612,9 @@ void F_mpz_poly_factor(F_mpz_poly_factor_t final_fac, F_mpz_t cong, F_mpz_poly_t
 
    if (deflation > 1) printf("deflation of %ld\n", deflation);
 
+//FIXME: turning off deflation
+deflation = 1;
+
    if (deflation == 1)
    {
       __F_mpz_poly_factor(final_fac, cong, G);
@@ -8172,7 +8175,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    since_last = 0;
    previously_checked = 0;
 
-   F_mpz_mat_print_pretty(M);
+//   F_mpz_mat_print_pretty(M);
 
    while ((all_coeffs != 2) && (return_me == 0)){
       for (cur_col = previously_checked; cur_col < data->c - previously_checked; cur_col++){
