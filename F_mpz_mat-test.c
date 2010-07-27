@@ -855,6 +855,64 @@ int test_F_mpz_mat_equal()
    return result;
 }
 
+int test_F_mpz_mat_col_copy_equal()
+{
+   F_mpz_mat_t F_mat;
+   int result = 1;
+   ulong bits;
+
+   // cols are equal
+   ulong count1;
+   for (count1 = 0; (count1 < 5000*ITER) && (result == 1); count1++)
+   {
+      ulong r = z_randint(30) + 1;
+	  ulong c = z_randint(30) + 1;
+	  ulong c1 = z_randint(c);
+	  ulong c2 = z_randint(c);
+	  F_mpz_mat_init(F_mat, r, c);
+      
+	  bits = z_randint(200) + 1;
+      F_mpz_randmat(F_mat, r, c, bits);
+           
+      F_mpz_mat_col_copy(F_mat, c1, c2);
+          
+      result = (F_mpz_mat_col_equal(F_mat, c1, c2)); 
+	  if (!result) 
+	  {
+		 printf("Error: r = %ld, c = %ld, bits = %ld\n", r, c, bits);
+	  }
+          
+      F_mpz_mat_clear(F_mat);
+   }
+   
+   // cols are not equal
+   for (count1 = 0; (count1 < 5000*ITER) && (result == 1); count1++)
+   {
+      ulong r = z_randint(30) + 1;
+	  ulong c = z_randint(30) + 1;
+	  ulong c1 = z_randint(c);
+	  ulong c2 = z_randint(c);
+	  ulong rx = z_randint(r);
+	  F_mpz_mat_init(F_mat, r, c);
+      
+	  bits = z_randint(200) + 1;
+      F_mpz_randmat(F_mat, r, c, bits);
+           
+      F_mpz_mat_col_copy(F_mat, c1, c2);
+      F_mpz_add_ui(F_mat->rows[rx] + c1, F_mat->rows[rx] + c1, 1);
+
+      result = ((!F_mpz_mat_col_equal(F_mat, c1, c2)) || (c1 == c2)); 
+	  if (!result) 
+	  {
+		 printf("Error: r = %ld, c = %ld, bits = %ld\n", r, c, bits);
+	  }
+          
+      F_mpz_mat_clear(F_mat);
+   }
+
+   return result;
+}
+
 int test_F_mpz_mat_swap()
 {
    mpz_mat_t m_mat1, m_mat2;
@@ -2872,6 +2930,7 @@ void F_mpz_mat_test_all()
    RUN_TEST(F_mpz_mat_max_bits);  
    RUN_TEST(F_mpz_mat_swap);  
    RUN_TEST(F_mpz_mat_swap_rows);  
+   RUN_TEST(F_mpz_mat_col_copy_equal);  
    RUN_TEST(F_mpz_mat_resize);
    RUN_TEST(F_mpz_mat_tofromstring);
    RUN_TEST(F_mpz_mat_tofromstringpretty);

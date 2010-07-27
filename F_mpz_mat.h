@@ -598,9 +598,15 @@ void _F_mpz_vec_scalar_product(F_mpz_t sp, F_mpz * vec1, F_mpz * vec2, ulong n);
 ===========================================================*/
 
 /*
-   Compares column a and column b of M returns 1 if they are the same and 0 otherwise
+   Compares column a and column b of M returns 1 if they are the same 
+   and 0 otherwise.
 */
-int F_mpz_mat_column_compare(F_mpz_mat_t M, ulong a, ulong b);
+int F_mpz_mat_col_equal(F_mpz_mat_t M, ulong a, ulong b);
+
+/*
+   Set column a of M to be equal to column b
+*/
+void F_mpz_mat_col_copy(F_mpz_mat_t M, ulong a, ulong b);
 
 /*
    A fast test for a basis of M using only 0's and a single 1 per column, 

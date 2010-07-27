@@ -1145,18 +1145,23 @@ void _F_mpz_vec_scalar_product(F_mpz_t sp, F_mpz * vec1, F_mpz * vec2, ulong n)
    return;
 }
 
-int F_mpz_mat_column_compare(F_mpz_mat_t M, ulong a, ulong b)
+int F_mpz_mat_col_equal(F_mpz_mat_t M, ulong a, ulong b)
 {
-// want to look at column a and column b, give 0 if they are different and 1 if they are the same
-// stop as soon as you can
-   int ok;
    ulong i;
-   for (i = 0; i < M->r; i++){
-      ok = F_mpz_equal(M->rows[i] + a, M->rows[i] + b);
-      if (ok == 0)
-         return 0;
-   }
+   
+   for (i = 0; i < M->r; i++)
+      if (!F_mpz_equal(M->rows[i] + a, M->rows[i] + b))
+	     return 0;
+
    return 1;
+}
+
+void F_mpz_mat_col_copy(F_mpz_mat_t M, ulong a, ulong b)
+{
+   ulong i;
+
+   for (i = 0; i < M->r; i++)
+      F_mpz_set(M->rows[i] + a, M->rows[i] + b);
 }
 
 int F_mpz_mat_check_0_1(ulong *part, F_mpz_mat_t M)
@@ -1191,7 +1196,7 @@ int F_mpz_mat_check_0_1(ulong *part, F_mpz_mat_t M)
       part[strt] = np;
       for( ;(c < M->c); c++){
          if (part[c] == 0){
-            ok = F_mpz_mat_column_compare(M, strt, c);
+            ok = F_mpz_mat_col_equal(M, strt, c);
             if (ok)
                part[c] = np;
          }
