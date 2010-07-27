@@ -1007,7 +1007,7 @@ void F_mpz_div_2exp(F_mpz_t f, const F_mpz_t g, const ulong exp)
       if (exp >= FLINT_BITS - 2)
          F_mpz_set_ui(f, 0UL);
       else
-   		 F_mpz_set_si(f, d>>exp);
+		 F_mpz_set_si(f, d >= 0L ? d>>exp : -((-d)>>exp));
 	} else // g is large
 	{     
 		__mpz_struct * mpz_ptr = _F_mpz_promote(f); // g is already large
