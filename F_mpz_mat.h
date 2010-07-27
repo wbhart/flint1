@@ -538,7 +538,7 @@ void F_mpz_mat_mul_classical(F_mpz_mat_t P, const F_mpz_mat_t A, const F_mpz_mat
 
 /*===========================================================
 
-   assorted new functions
+   Properties
 
 ===========================================================*/
 
@@ -562,9 +562,11 @@ long F_mpz_mat_max_bits(const F_mpz_mat_t M)
    return F_mpz_mat_max_bits2(NULL, NULL, M);
 }
 
-/*
-   
-*/
+/*===========================================================
+
+   Matrix by Scalar Operations
+
+===========================================================*/
 
 /*
    Divides M by the scalar 2^n and stores at res.  Truncates each entry with F_mpz_div_2exp.
@@ -575,6 +577,25 @@ void F_mpz_mat_div_2exp(F_mpz_mat_t res, F_mpz_mat_t M, ulong n);
    Scalar multiplication by a power of 2.  res = M * 2^n.
 */
 void F_mpz_mat_mul_2exp(F_mpz_mat_t res, F_mpz_mat_t M, ulong n);
+
+/*===========================================================
+
+   Scalar Product
+
+===========================================================*/
+
+/** 
+   \fn     void _F_mpz_vec_scalar_product(F_mpz_t sp, F_mpz * vec1, F_mpz * vec2, ulong n)
+
+	\brief  Set sp to the scalar product of vec1 and vec2.
+*/
+void _F_mpz_vec_scalar_product(F_mpz_t sp, F_mpz * vec1, F_mpz * vec2, ulong n);
+
+/*===========================================================
+
+   Support functions for Z[x] factoring
+
+===========================================================*/
 
 /*
    Sets res to the top n bits of each entry of M.  Returns a ulong exp such that
@@ -633,22 +654,6 @@ void F_mpz_mat_resize2(F_mpz_mat_t M, ulong r, ulong c);
 int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, long U_exp);
 
 int F_mpz_mat_check_rest(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp);
-
-/** 
-   \fn     void _F_mpz_vec_scalar_product(F_mpz_t sp, F_mpz * vec1, F_mpz * vec2, ulong n)
-
-	\brief  Set sp to the scalar product of vec1 and vec2.
-*/
-void _F_mpz_vec_scalar_product(F_mpz_t sp, F_mpz * vec1, F_mpz * vec2, ulong n);
-
-/**
-   \fn     _F_mpz_vec_scalar_product_2exp(F_mpz_t sp, F_mpz * vec1, 
-                                  F_mpz * vec2, ulong n, int * cexpo)
-   \brief  Set sp*2^(returned long) to the scalar product of vec1 and vec2 with cexpo as an 
-           array of additional 2 power weights. Return the adjusted 2 power weight.
-*/
-long _F_mpz_vec_scalar_product_2exp(F_mpz_t sp, F_mpz * vec1, 
-                                  F_mpz * vec2, ulong n, int * cexpo);
 
 #ifdef __cplusplus
  }

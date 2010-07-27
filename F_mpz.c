@@ -2127,27 +2127,6 @@ void F_mpz_smod(F_mpz_t res, F_mpz_t f, F_mpz_t p){
    F_mpz_clear(pdiv2);
 }
 
-long _F_mpz_add_2exp(F_mpz_t res, F_mpz_t x1, long exp1, F_mpz_t x2, long exp2){
-
-   long res_exp;
-   F_mpz_t temp;
-   F_mpz_init(temp);
-
-   if (exp1 <= exp2){
-      res_exp = exp1;
-      F_mpz_mul_2exp(temp, x2, exp2 - exp1);
-      F_mpz_add(res, x1, temp);
-   }
-   else{
-      res_exp = exp2;
-      F_mpz_mul_2exp(temp, x1, exp1 - exp2);
-      F_mpz_add(res, x2, temp);
-   }
-
-   F_mpz_clear(temp);
-   return res_exp;
-}
-
 #ifndef __TINYC__
 void F_mpz_2exp_get_mpfr(mpfr_t x, const F_mpz_t f, long exp)
 {

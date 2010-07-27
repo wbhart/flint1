@@ -1133,6 +1133,18 @@ void F_mpz_mat_div_2exp(F_mpz_mat_t res, F_mpz_mat_t M, ulong n)
    return;
 }
 
+void _F_mpz_vec_scalar_product(F_mpz_t sp, F_mpz * vec1, F_mpz * vec2, ulong n)
+{
+	ulong i;
+   
+   F_mpz_mul2(sp, vec1, vec2);
+   
+   for (i = 1; i < n; i++)
+      F_mpz_addmul(sp, vec1 + i, vec2 + i);
+
+   return;
+}
+
 ulong F_mpz_mat_upper_trunc_n(F_mpz_mat_t res, F_mpz_mat_t M, ulong n)
 {
    if (res != M){
@@ -1516,45 +1528,5 @@ int F_mpz_mat_check_rest(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp){
    }
    else
       return M->r;
-}
-
-void _F_mpz_vec_scalar_product(F_mpz_t sp, F_mpz * vec1, F_mpz * vec2, ulong n)
-{
-	ulong i;
-   
-   F_mpz_mul2(sp, vec1, vec2);
-   
-   for (i = 1; i < n; i++)
-   {
-      F_mpz_addmul(sp, vec1 + i, vec2 + i);
-   }
-
-   return;
-}
-
-long _F_mpz_vec_scalar_product_2exp(F_mpz_t sp, F_mpz * vec1, 
-                                  F_mpz * vec2, ulong n, int * cexpo)
-{
-   ulong i;
-   long exp, temp_exp;
-   
-   F_mpz_mul2(sp, vec1, vec2);
-   exp = cexpo[i]*2;
-
-   F_mpz_t temp_sp;
-
-   F_mpz_init(temp_sp);
-
-
-   for (i = 1; i < n; i++)
-   {
-      F_mpz_mul2(temp_sp, vec1 + i, vec2 + i);
-      temp_exp = cexpo[i]*2;
-      exp = _F_mpz_add_2exp(sp, sp, exp, temp_sp, temp_exp);
-   }
-
-   F_mpz_clear(temp_sp);
-
-   return exp;
 }
 
