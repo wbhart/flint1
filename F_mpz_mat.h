@@ -609,14 +609,15 @@ int F_mpz_mat_col_equal(F_mpz_mat_t M, ulong a, ulong b);
 void F_mpz_mat_col_copy(F_mpz_mat_t M, ulong a, ulong b);
 
 /*
-   A fast test for a basis of M using only 0's and a single 1 per column, 
-   if it's possible the function returns np the number of needed rows (in 
-   the case of factoring this is a proven bound on the number of factors) 
-   and part will be filled with the numbers 1 through np and all numbers 
-   of value i will be one's in row i of the special basis.
-   If it is not possible then the function returns 0.
+   The array _part_ must have room for at least M->c ulongs
+   which must initially be set to 0.
+   The matrix is then partitioned into equivalence classes of equal 
+   columns. The equivalence classes are numbered 1..s say. Upon
+   termination, part contains the number of the equivalence class
+   for each column. If it is not possible for the RREF of
+   the matrix to be a basis, zero is returned.
 */
-int F_mpz_mat_check_0_1(ulong *part, F_mpz_mat_t M);
+int F_mpz_mat_check_0_1(ulong * part, F_mpz_mat_t M);
 
 /*
    Designed for the factoring applications.  Given matrix M takes the sub 
