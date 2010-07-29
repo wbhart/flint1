@@ -1205,7 +1205,7 @@ void F_mpz_mat_hash_bubble_sort(col_hash_t * colh, ulong cols)
    } while (swapped);
 }
 
-int F_mpz_mat_check_0_1(ulong * part, F_mpz_mat_t M)
+int F_mpz_mat_col_partition(ulong * part, F_mpz_mat_t M)
 {
    ulong start = 0, upto = 1, p = 0;
    

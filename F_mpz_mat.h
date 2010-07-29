@@ -617,7 +617,7 @@ void F_mpz_mat_col_copy(F_mpz_mat_t M, ulong a, ulong b);
    for each column. If it is not possible for the RREF of
    the matrix to be a basis, zero is returned.
 */
-int F_mpz_mat_check_0_1(ulong * part, F_mpz_mat_t M);
+int F_mpz_mat_col_partition(ulong * part, F_mpz_mat_t M);
 
 /*
    Designed for the factoring applications.  Given matrix M takes the sub 
