@@ -1133,111 +1133,103 @@ void F_mpz_mat_div_2exp(F_mpz_mat_t res, F_mpz_mat_t M, ulong n)
    return;
 }
 
-ulong F_mpz_mat_upper_trunc_n(F_mpz_mat_t res, F_mpz_mat_t M, ulong n)
+void _F_mpz_vec_scalar_product(F_mpz_t sp, F_mpz * vec1, F_mpz * vec2, ulong n)
 {
-   if ((res->r != M->r) || (res->c != M->c)){
-      F_mpz_mat_resize(res, M->r, M->c);
-   }
+	ulong i;
+   
+   F_mpz_mul2(sp, vec1, vec2);
+   
+   for (i = 1; i < n; i++)
+      F_mpz_addmul(sp, vec1 + i, vec2 + i);
 
-   long bits = F_mpz_mat_max_bits(M);
-   bits = FLINT_ABS(bits);
-   if ( n >= bits){
-      F_mpz_mat_set(res, M);
-      return 0UL;
-   }
-
-   ulong exp = bits - n;
-   F_mpz_t temp;
-   F_mpz_init(temp);
-
-   ulong i, j;
-   for (i = 0; i < M->r; i++)
-      for (j = 0; j < M->c; j++)
-         if (F_mpz_sgn(M->rows[i]+j) >= 0)
-            F_mpz_div_2exp(res->rows[i] + j, M->rows[i] + j, exp);
-         else{
-            F_mpz_abs(temp, M->rows[i]+j);
-            F_mpz_div_2exp(res->rows[i] + j, temp, exp);
-            F_mpz_neg(res->rows[i] + j, res->rows[i] + j);
-         }
-
-   F_mpz_clear(temp);
-
-   return exp;
-}
-
-void F_mpz_mat_lower_trunc_n(F_mpz_mat_t res, F_mpz_mat_t M, ulong n)
-{
-   if ((res->r != M->r) || (res->c != M->c)){
-      F_mpz_mat_resize(res, M->r, M->c);
-   }
-
-   mpz_t temp;
-   mpz_init(temp);
-
-   ulong i, j;
-   for (i = 0; i < M->r; i++)
-      for (j = 0; j < M->c; j++){
-         F_mpz_get_mpz(temp, M->rows[i] + j);
-         mpz_tdiv_r_2exp(temp, temp, n);
-         F_mpz_set_mpz(res->rows[i] + j, temp);
-      }
-   mpz_clear(temp);
    return;
 }
 
-int F_mpz_mat_column_compare(F_mpz_mat_t M, ulong a, ulong b)
+int F_mpz_mat_col_equal(F_mpz_mat_t M, ulong a, ulong b)
 {
-// want to look at column a and column b, give 0 if they are different and 1 if they are the same
-// stop as soon as you can
-   int ok;
    ulong i;
-   for (i = 0; i < M->r; i++){
-      ok = F_mpz_equal(M->rows[i] + a, M->rows[i] + b);
-      if (ok == 0)
-         return 0;
-   }
+   
+   for (i = 0; i < M->r; i++)
+      if (!F_mpz_equal(M->rows[i] + a, M->rows[i] + b))
+	     return 0;
+
    return 1;
 }
 
-int F_mpz_mat_check_0_1(ulong *part, F_mpz_mat_t M)
+void F_mpz_mat_col_copy(F_mpz_mat_t M, ulong a, ulong b)
 {
-//OK goal here is to make a partition of the columns which will be stored in an array part
-//the array part must have room for at least M->c ulongs...
-//The number of equivalence classes in M will be largest number in the array part
-//If the problem might be solved then part will be filled with the numbers 1 through M->r
-// and the number of partitions will be returned otherwise part should be ignored and 0 will be returned
-// problem stops once the number of distinct columns is larger than the number of rows in M
-   ulong np = 1;
-   ulong r,c;
-   long strt;
-   int ok;
-//set strt to the index of first 0 in part
-   for(np = 1; ; np++){
-      strt = -1;
-      for(c = 0; (c < M->c) && (strt == -1); c++){
-         if(part[c] == 0){
-            strt = c;
-         }
-      }
-      if (strt == -1){
-//changed this from np > to np >=... hope it works
-         if (np > M->r + 1)
-            return 0;
-         else
-            return np-1;
-      }
-      if (np >= M->r + 1)
-         return 0;
-      part[strt] = np;
-      for( ;(c < M->c); c++){
-         if (part[c] == 0){
-            ok = F_mpz_mat_column_compare(M, strt, c);
-            if (ok)
-               part[c] = np;
-         }
-      }
+   ulong i;
+
+   for (i = 0; i < M->r; i++)
+      F_mpz_set(M->rows[i] + a, M->rows[i] + b);
+}
+
+typedef struct
+{
+   ulong col;
+   ulong hash;
+} col_hash_t;
+
+void F_mpz_mat_col_hash(col_hash_t * colh, F_mpz_mat_t M)
+{
+   ulong i, j, hash;
+   for (i = 0; i < M->c; i++)
+   {
+      colh[i].col = i;
+      hash = 0;
+	  for (j = 0; j < M->r; j++)
+	     hash += (j*F_mpz_get_ui(M->rows[j] + i));
+	  colh[i].hash = hash;
    }
+}
+
+void F_mpz_mat_hash_bubble_sort(col_hash_t * colh, ulong cols)
+{
+   int swapped;
+   ulong i;
+   col_hash_t t;
+
+   do
+   {
+      swapped = 0;
+      for (i = 1; i < cols; i++)
+	  {
+	     if (colh[i-1].hash < colh[i].hash) // need to swap
+		 {
+		    t = colh[i-1]; // swap
+			colh[i-1] = colh[i];
+			colh[i] = t;
+			swapped = 1;
+		 }
+	  }
+   } while (swapped);
+}
+
+int F_mpz_mat_col_partition(ulong * part, F_mpz_mat_t M)
+{
+   ulong start = 0, upto = 1, p = 0;
+   
+   col_hash_t * colh = malloc(sizeof(col_hash_t)*M->c);
+   F_mpz_mat_col_hash(colh, M);
+   F_mpz_mat_hash_bubble_sort(colh, M->c);
+   
+   while (start < M->c)
+   {
+	  p++;
+	  if (p > M->r) return 0; // already too many partitions
+
+      part[colh[start].col] = p;
+	  for (upto = start + 1; upto < M->c; upto++)
+	  {
+		  if (!F_mpz_mat_col_equal(M, colh[start].col, colh[upto].col)) break;
+		  part[colh[upto].col] = p;
+	  }
+
+      start = upto;
+   }
+
+   free(colh);
+   return p;
 }
 
 void F_mpz_mat_get_U(F_mpz_mat_t U, F_mpz_mat_t M, ulong d)
@@ -1516,45 +1508,5 @@ int F_mpz_mat_check_rest(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp){
    }
    else
       return M->r;
-}
-
-void _F_mpz_vec_scalar_product(F_mpz_t sp, F_mpz * vec1, F_mpz * vec2, ulong n)
-{
-	ulong i;
-   
-   F_mpz_mul2(sp, vec1, vec2);
-   
-   for (i = 1; i < n; i++)
-   {
-      F_mpz_addmul(sp, vec1 + i, vec2 + i);
-   }
-
-   return;
-}
-
-long _F_mpz_vec_scalar_product_2exp(F_mpz_t sp, F_mpz * vec1, 
-                                  F_mpz * vec2, ulong n, int * cexpo)
-{
-   ulong i;
-   long exp, temp_exp;
-   
-   F_mpz_mul2(sp, vec1, vec2);
-   exp = cexpo[i]*2;
-
-   F_mpz_t temp_sp;
-
-   F_mpz_init(temp_sp);
-
-
-   for (i = 1; i < n; i++)
-   {
-      F_mpz_mul2(temp_sp, vec1 + i, vec2 + i);
-      temp_exp = cexpo[i]*2;
-      exp = _F_mpz_add_2exp(sp, sp, exp, temp_sp, temp_exp);
-   }
-
-   F_mpz_clear(temp_sp);
-
-   return exp;
 }
 

@@ -538,7 +538,7 @@ void F_mpz_mat_mul_classical(F_mpz_mat_t P, const F_mpz_mat_t A, const F_mpz_mat
 
 /*===========================================================
 
-   assorted new functions
+   Properties
 
 ===========================================================*/
 
@@ -562,9 +562,11 @@ long F_mpz_mat_max_bits(const F_mpz_mat_t M)
    return F_mpz_mat_max_bits2(NULL, NULL, M);
 }
 
-/*
-   
-*/
+/*===========================================================
+
+   Matrix by Scalar Operations
+
+===========================================================*/
 
 /*
    Divides M by the scalar 2^n and stores at res.  Truncates each entry with F_mpz_div_2exp.
@@ -576,32 +578,46 @@ void F_mpz_mat_div_2exp(F_mpz_mat_t res, F_mpz_mat_t M, ulong n);
 */
 void F_mpz_mat_mul_2exp(F_mpz_mat_t res, F_mpz_mat_t M, ulong n);
 
-/*
-   Sets res to the top n bits of each entry of M.  Returns a ulong exp such that
-   res = round_to_zero(M/2^exp)
+/*===========================================================
+
+   Scalar Product
+
+===========================================================*/
+
+/** 
+   \fn     void _F_mpz_vec_scalar_product(F_mpz_t sp, F_mpz * vec1, F_mpz * vec2, ulong n)
+
+	\brief  Set sp to the scalar product of vec1 and vec2.
 */
-ulong F_mpz_mat_upper_trunc_n(F_mpz_mat_t res, F_mpz_mat_t M, ulong n);
+void _F_mpz_vec_scalar_product(F_mpz_t sp, F_mpz * vec1, F_mpz * vec2, ulong n);
+
+/*===========================================================
+
+   Support functions for Z[x] factoring
+
+===========================================================*/
 
 /*
-   Sets res to the bottom n bits of each entry of M.  Designed to work with F_mpz_mat_upper_trunc_n
-   so that one can split a matrix M into two halfs so M = upper_M*2^exp + lower_M
+   Compares column a and column b of M returns 1 if they are the same 
+   and 0 otherwise.
 */
-void F_mpz_mat_lower_trunc_n(F_mpz_mat_t res, F_mpz_mat_t M, ulong n);
+int F_mpz_mat_col_equal(F_mpz_mat_t M, ulong a, ulong b);
 
 /*
-   Compares column a and column b of M returns 1 if they are the same and 0 otherwise
+   Set column a of M to be equal to column b
 */
-int F_mpz_mat_column_compare(F_mpz_mat_t M, ulong a, ulong b);
+void F_mpz_mat_col_copy(F_mpz_mat_t M, ulong a, ulong b);
 
 /*
-   A fast test for a basis of M using only 0's and a single 1 per column, 
-   if it's possible the function returns np the number of needed rows (in 
-   the case of factoring this is a proven bound on the number of factors) 
-   and part will be filled with the numbers 1 through np and all numbers 
-   of value i will be one's in row i of the special basis.
-   If it is not possible then the function returns 0.
+   The array _part_ must have room for at least M->c ulongs
+   which must initially be set to 0.
+   The matrix is then partitioned into equivalence classes of equal 
+   columns. The equivalence classes are numbered 1..s say. Upon
+   termination, part contains the number of the equivalence class
+   for each column. If it is not possible for the RREF of
+   the matrix to be a basis, zero is returned.
 */
-int F_mpz_mat_check_0_1(ulong *part, F_mpz_mat_t M);
+int F_mpz_mat_col_partition(ulong * part, F_mpz_mat_t M);
 
 /*
    Designed for the factoring applications.  Given matrix M takes the sub 
@@ -633,22 +649,6 @@ void F_mpz_mat_resize2(F_mpz_mat_t M, ulong r, ulong c);
 int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, long U_exp);
 
 int F_mpz_mat_check_rest(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp);
-
-/** 
-   \fn     void _F_mpz_vec_scalar_product(F_mpz_t sp, F_mpz * vec1, F_mpz * vec2, ulong n)
-
-	\brief  Set sp to the scalar product of vec1 and vec2.
-*/
-void _F_mpz_vec_scalar_product(F_mpz_t sp, F_mpz * vec1, F_mpz * vec2, ulong n);
-
-/**
-   \fn     _F_mpz_vec_scalar_product_2exp(F_mpz_t sp, F_mpz * vec1, 
-                                  F_mpz * vec2, ulong n, int * cexpo)
-   \brief  Set sp*2^(returned long) to the scalar product of vec1 and vec2 with cexpo as an 
-           array of additional 2 power weights. Return the adjusted 2 power weight.
-*/
-long _F_mpz_vec_scalar_product_2exp(F_mpz_t sp, F_mpz * vec1, 
-                                  F_mpz * vec2, ulong n, int * cexpo);
 
 #ifdef __cplusplus
  }

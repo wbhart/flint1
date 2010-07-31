@@ -1322,7 +1322,7 @@ void _F_mpz_poly_factor_CLD_mat(F_mpz_mat_t res, F_mpz_poly_t F, F_mpz_poly_fact
 int _F_mpz_poly_try_to_solve(int num_facs, ulong * part, F_mpz_poly_factor_t final_fac, F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, F_mpz_t P, ulong exp, F_mpz_t lc, int safe);
 
 /*
-   The compliment function to try_to_solve.  Run this first, it is a factorization specific wrapper around F_mpz_mat_check_0_1.
+   The complement function to try_to_solve.  Run this first, it is a factorization specific wrapper around F_mpz_mat_col_partition.
 */
 int _F_mpz_mat_check_if_solved(F_mpz_mat_t M, ulong r, F_mpz_poly_factor_t final_fac, F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, F_mpz_t P, ulong exp, F_mpz_t lc, int safe);
 

@@ -8035,7 +8035,7 @@ int _F_mpz_mat_check_if_solved(F_mpz_mat_t M, ulong r, F_mpz_poly_factor_t final
    ulong j;
    for (j = 0; j < U->c; j++)
       part[j] = 0;
-   int ok = F_mpz_mat_check_0_1(part, U);
+   int ok = F_mpz_mat_col_partition(part, U);
 
    if (ok == 0){
 //not a 0-1 basis
