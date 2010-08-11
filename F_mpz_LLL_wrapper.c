@@ -4073,7 +4073,7 @@ int U_LLL_with_removal(F_mpz_mat_t FM, long new_size, F_mpz_t gs_B){
    bits = FLINT_ABS(F_mpz_mat_max_bits(FM));
 
    F_mpz_mat_t U;
-   F_mpz_mat_init_identity(U, r);
+   //F_mpz_mat_init(U, r, r);
 
    F_mpz_mat_t I;
    F_mpz_mat_init_identity(I, r);
@@ -4149,7 +4149,7 @@ int U_LLL_with_removal(F_mpz_mat_t FM, long new_size, F_mpz_t gs_B){
       else {
 //add more bits
 
-         F_mpz_mat_get_U(U, big_FM, r);
+         F_mpz_mat_window_init(U, big_FM, 0, 0, big_FM->r, r);
 
          is_U_I = F_mpz_mat_equal(U, I);
 
@@ -4188,6 +4188,7 @@ int U_LLL_with_removal(F_mpz_mat_t FM, long new_size, F_mpz_t gs_B){
                   F_mpz_set(big_FM->rows[i]+j, trunc_data->rows[i] + j-r);
             }
          }
+         F_mpz_mat_window_clear(U);
       }
 
    }
@@ -4201,7 +4202,6 @@ int U_LLL_with_removal(F_mpz_mat_t FM, long new_size, F_mpz_t gs_B){
    F_mpz_mat_clear(full_data);
    F_mpz_mat_clear(trunc_data);
    F_mpz_mat_clear(big_FM);
-   F_mpz_mat_clear(U);
    F_mpz_mat_clear(I);
    F_mpz_mat_clear(full_U);
 

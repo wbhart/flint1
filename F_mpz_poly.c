@@ -8026,8 +8026,7 @@ printf("or thereere\n");
 
 int _F_mpz_mat_check_if_solved(F_mpz_mat_t M, ulong r, F_mpz_poly_factor_t final_fac, F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, F_mpz_t P, ulong exp, F_mpz_t lc, int safe){
    F_mpz_mat_t U;
-   F_mpz_mat_init(U,0,0);
-   F_mpz_mat_get_U(U, M, r);
+   F_mpz_mat_window_init(U, M, 0, 0, M->r, r);
    ulong part[U->c];
    ulong j;
    for (j = 0; j < U->c; j++)
@@ -8036,12 +8035,12 @@ int _F_mpz_mat_check_if_solved(F_mpz_mat_t M, ulong r, F_mpz_poly_factor_t final
 
    if (ok == 0){
 //not a 0-1 basis
-      F_mpz_mat_clear(U);
+      F_mpz_mat_window_clear(U);
       return 0;
    }
 
    if (ok > U->c){
-      F_mpz_mat_clear(U);
+      F_mpz_mat_window_clear(U);
       return 0;
    }
 
@@ -8050,7 +8049,7 @@ int _F_mpz_mat_check_if_solved(F_mpz_mat_t M, ulong r, F_mpz_poly_factor_t final
    check_if_solve_stop = clock();
    check_if_solve_total = check_if_solve_total + check_if_solve_stop - check_if_solve_start;
    //printf("So far total checking time = %f\n", (double) check_if_solve_total /(double) CLOCKS_PER_SEC );
-   F_mpz_mat_clear(U);
+   F_mpz_mat_window_clear(U);
    return trym;
 }
 

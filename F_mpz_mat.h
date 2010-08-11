@@ -620,11 +620,18 @@ void F_mpz_mat_col_copy(F_mpz_mat_t M, ulong a, ulong b);
 int F_mpz_mat_col_partition(ulong * part, F_mpz_mat_t M);
 
 /*
-   Designed for the factoring applications.  Given matrix M takes the sub 
-   matrix of size M->r x d starting at M[0,0].
-   Used for getting the transformation matrix out of knapsack lattices.
+   U is set to a readonly window starting at row r0 and col c0 of M
+   and consisting of the given number of rows and cols.
 */
-void F_mpz_mat_get_U(F_mpz_mat_t U, F_mpz_mat_t M, ulong d);
+void F_mpz_mat_window_init(F_mpz_mat_t U, F_mpz_mat_t M, 
+                      ulong r0, ulong c0, ulong rows, ulong cols);
+
+static inline
+void F_mpz_mat_window_clear(F_mpz_mat_t U)
+{
+   if (U->r)
+      free(U->rows);
+}
 
 /*
    Uses F_mpz_smod to reduce each entry in M mod P taking the representative 

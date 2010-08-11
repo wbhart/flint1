@@ -1232,14 +1232,18 @@ int F_mpz_mat_col_partition(ulong * part, F_mpz_mat_t M)
    return p;
 }
 
-void F_mpz_mat_get_U(F_mpz_mat_t U, F_mpz_mat_t M, ulong d)
+void F_mpz_mat_window_init(F_mpz_mat_t U, F_mpz_mat_t M, 
+                           ulong r0, ulong c0, ulong rows, ulong cols)
 {
-   ulong s = M->r;
-   F_mpz_mat_resize(U, s, d);
-   ulong i, j;
-   for (i = 0; i < s; i++)
-      for (j = 0; j < d; j++)
-         F_mpz_set(U->rows[i] + j, M->rows[i] + j);
+   ulong i;
+
+   U->r = rows;
+   U->c = cols;
+   if (rows)
+      U->rows = malloc(sizeof(F_mpz *)*rows);
+   if(!rows) abort();
+   for (i = 0; i < rows; i++)
+      U->rows[i] = M->rows[r0 + i] + c0;
 }
 
 void F_mpz_mat_smod(F_mpz_mat_t res, F_mpz_mat_t M, F_mpz_t P)
@@ -1312,8 +1316,7 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
    if ( ISD < exp)
       return 0;
    F_mpz_mat_t U;
-   F_mpz_mat_init(U,0,0);
-   F_mpz_mat_get_U(U, M, r);
+   F_mpz_mat_window_init(U, M, 0, 0, M->r, r);
    F_mpz_mat_t temp_col;
    F_mpz_mat_init(temp_col, M->r, 1);
 //   printf("temp_col initialized the pointer is %ld\n", temp_col->entries);
@@ -1330,7 +1333,7 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
 //bare minimum of data above the bound
    if (mbts <  (long) (.973 * (double)bit_r - .1 + (double) exp ) ){
       F_mpz_mat_clear(temp_col);
-      F_mpz_mat_clear(U);      
+      F_mpz_mat_window_clear(U);      
       return 0;
    }
 // This meant that this column is not worth calling LLL.
@@ -1411,7 +1414,7 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
       F_mpz_clear(trunc_P);
       F_mpz_mat_clear(trunc_col);
       F_mpz_mat_clear(temp_col);
-      F_mpz_mat_clear(U);
+      F_mpz_mat_window_clear(U);
       abort();
    }
 */
@@ -1426,7 +1429,7 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
    F_mpz_mat_clear(trunc_col);
 //   printf("temp_col being cleared the pointer is %ld\n", temp_col->entries);
    F_mpz_mat_clear(temp_col);
-   F_mpz_mat_clear(U);
+   F_mpz_mat_window_clear(U);
    return virt_exp;
 }
 
@@ -1438,8 +1441,7 @@ int F_mpz_mat_check_rest(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp){
    ulong i;
    
    F_mpz_mat_t U;
-   F_mpz_mat_init(U,0,0);
-   F_mpz_mat_get_U(U, M, r);
+   F_mpz_mat_window_init(U, M, 0, 0, M->r, r);
 
    F_mpz_mat_t store_col, temp_col;
    F_mpz_mat_init(temp_col, M->r, 1);
@@ -1452,7 +1454,7 @@ int F_mpz_mat_check_rest(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp){
 
    if (mbts < exp)
    {
-      F_mpz_mat_clear(U);
+      F_mpz_mat_window_clear(U);
       F_mpz_mat_clear(temp_col);
       F_mpz_mat_clear(store_col);
       return M->r;      
@@ -1498,7 +1500,7 @@ int F_mpz_mat_check_rest(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp){
 
    F_mpz_mat_clear(trunc_col);
    F_mpz_clear(trunc_P);
-   F_mpz_mat_clear(U);
+   F_mpz_mat_window_clear(U);
    F_mpz_mat_clear(temp_col);
    F_mpz_mat_clear(store_col);
    if (newd > 4)
