@@ -2998,6 +2998,43 @@ int test_F_mpz_mat_col_partition()
    return result;
 }
 
+int test_F_mpz_mat_window_init_clear()
+{
+   F_mpz_mat_t F_mat, F_mat2;
+   int result = 1;
+   ulong bits, r, c, i, j;
+   ulong r0, c0, rows, cols;
+
+   ulong count1;
+	for (count1 = 0; (count1 < 5000*ITER) && (result == 1); count1++)
+   {
+      r = z_randint(30) + 1;
+		c = z_randint(30) + 1;
+      F_mpz_mat_init(F_mat, r, c);
+      
+      bits = z_randint(200) + 1;
+      F_mpz_randmat(F_mat, r, c, bits);
+      
+      rows = z_randint(r + 1);
+      cols = z_randint(c + 1);
+
+      if (r - rows) r0 = z_randint(r - rows);
+      else r0 = 0;
+      if (c - cols) c0 = z_randint(c - cols);
+      else c0 = 0;
+
+      F_mpz_mat_window_init(F_mat2, F_mat, r0, c0, rows, cols);
+
+      for (i = 0; i < rows; i++)
+         for (j = 0; j < cols; j++)
+            F_mpz_zero(F_mat2->rows[i] + j);
+
+      F_mpz_mat_clear(F_mat);
+   }
+
+   return result;
+}
+
 void F_mpz_mat_test_all()
 {
    int success, all_success = 1;
@@ -3039,6 +3076,7 @@ void F_mpz_mat_test_all()
    RUN_TEST(F_mpz_mat_mul_div_2exp); 
    RUN_TEST(F_mpz_mat_mul_classical);
    RUN_TEST(F_mpz_mat_col_partition);
+   RUN_TEST(F_mpz_mat_window_init_clear);
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");

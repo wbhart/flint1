@@ -1241,7 +1241,7 @@ void F_mpz_mat_window_init(F_mpz_mat_t U, F_mpz_mat_t M,
    U->c = cols;
    if (rows)
       U->rows = malloc(sizeof(F_mpz *)*rows);
-   if(!rows) abort();
+   
    for (i = 0; i < rows; i++)
       U->rows[i] = M->rows[r0 + i] + c0;
 }
