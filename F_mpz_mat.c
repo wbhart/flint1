@@ -1178,7 +1178,7 @@ void F_mpz_mat_col_hash(col_hash_t * colh, F_mpz_mat_t M)
       colh[i].col = i;
       hash = 0;
 	  for (j = 0; j < M->r; j++)
-	     hash += (j*F_mpz_get_ui(M->rows[j] + i));
+	     hash += ((j+1)*F_mpz_get_ui(M->rows[j] + i));
 	  colh[i].hash = hash;
    }
 }

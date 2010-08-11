@@ -15562,6 +15562,47 @@ int test_fmpz_poly_translate_mod_horner()
 	return 1;
 }
 
+int test_fmpz_poly_mul_fateman()
+{
+   fmpz_poly_t poly1, poly2, poly3;
+   int result = 1;
+   ulong length2 = 512, length1 = length2, i;
+
+   fmpz_poly_init(poly1);
+   fmpz_poly_init(poly2);
+   fmpz_poly_init(poly3);
+
+   fmpz_poly_fit_length(poly1, length1);
+   fmpz_poly_fit_length(poly2, length2);
+   fmpz_poly_fit_length(poly3, length1 + length2 - 1);
+   fmpz_poly_fit_limbs(poly1, 6);
+   fmpz_poly_fit_limbs(poly2, 6);
+   fmpz_poly_fit_limbs(poly3, 12);
+
+   for (ulong i = 0; i < length1; i++)
+   {
+      fmpz_poly_set_coeff_ui(poly1, i, 1);
+	  fmpz_mul_2exp(fmpz_poly_get_coeff_ptr(poly1, i), fmpz_poly_get_coeff_ptr(poly1, i), 331);
+   }
+   
+   for (ulong i = 0; i < length2; i++)
+   {
+      fmpz_poly_set_coeff_ui(poly2, i, 1);
+	  fmpz_mul_2exp(fmpz_poly_get_coeff_ptr(poly2, i), fmpz_poly_get_coeff_ptr(poly2, i), 331);
+   }
+
+   long count1;
+   for (count1 = 0; count1 < 1000; count1++)
+   {
+      _fmpz_poly_mul_KS(poly3, poly1, poly2, 2*332 + FLINT_BIT_COUNT(length2));
+   }
+
+   fmpz_poly_print(poly3); printf("\n");
+
+   return result;
+}
+
+
 void fmpz_poly_test_all()
 {
    int success, all_success = 1;
@@ -15571,7 +15612,8 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_poly_freadprint); 
 #endif
 		
-	RUN_TEST(fmpz_poly_tofromstring); 
+	RUN_TEST(fmpz_poly_mul_fateman); 
+  /* RUN_TEST(fmpz_poly_tofromstring); 
    RUN_TEST(fmpz_poly_to_ZmodF_poly); 
    RUN_TEST(fmpz_poly_to_zmod_poly_no_red);   
    RUN_TEST(fmpz_poly_bit_pack); 
@@ -15704,7 +15746,7 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_poly_xgcd_modular);
    RUN_TEST(fmpz_poly_xgcd);
 	RUN_TEST(fmpz_poly_is_squarefree);
-   RUN_TEST(fmpz_poly_signature);
+   RUN_TEST(fmpz_poly_signature);*/
 
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");
