@@ -586,7 +586,7 @@ mp_ptr F_mpz_precompute_inverse(F_mpz_t p);
 void F_mpz_mod_preinv(F_mpz_t res, F_mpz_t f, F_mpz_t p, mp_srcptr pinv);
 
 /** 
-   \fn     oid F_mpz_preinv_clear(mpptr pinv)
+   \fn     void F_mpz_preinv_clear(mp_ptr pinv)
    \brief  Free the memory allocated for a precomputed inverse.
 */
 static inline
@@ -594,6 +594,21 @@ void F_mpz_preinv_clear(mp_ptr pinv)
 {
    free(pinv);
 }
+
+/**
+   \fn     void F_mpz_smod(F_mpz_t res, F_mpz_t f, F_mpz_t p)
+   \brief  Computes res in (-p/2, p/2] which is equivalent to f mod p.
+           We require that p is positive.
+*/
+void F_mpz_smod(F_mpz_t res, F_mpz_t f, F_mpz_t p);
+
+/** 
+   \fn     void F_mpz_smod_preinv(F_mpz_t res, F_mpz_t f, 
+                                               F_mpz_t p, mp_srcptr pinv)
+   \brief  Given a precomputed inverse pinv of p, computes f smod p.
+           We require that p is positive.
+*/
+void F_mpz_smod_preinv(F_mpz_t res, F_mpz_t f, F_mpz_t p, mp_srcptr pinv);
 
 /** 
    \fn     void F_mpz_gcd(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
@@ -747,13 +762,6 @@ void F_mpz_multi_CRT_ui(F_mpz_t output, ulong * residues,
       bounds.
 */
 void F_mpz_set_d_2exp(F_mpz_t output, double mant, long exp);
-
-/**
-   Computes the number in (p/2, p/2] which is equivalent to f mod p.  
-      Calls F_mpz_mod then checks to see if it needs to subtract.  Might be sped up
-      by assuming already reduced mod p...
-*/
-void F_mpz_smod(F_mpz_t res, F_mpz_t f, F_mpz_t p);
 
 #ifndef __TINYC__
 /**
