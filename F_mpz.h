@@ -572,6 +572,30 @@ ulong F_mpz_mod_ui(F_mpz_t f, const F_mpz_t g, const ulong h);
 void F_mpz_mod(F_mpz_t f, const F_mpz_t g, const F_mpz_t h);
 
 /** 
+   \fn     mp_limb_t * F_mpz_precompute_inverse(F_mpz_t p)
+   \brief  Returns a precomputed inverse of p (which must be positive)
+           for use with preinv functions.
+*/
+mp_ptr F_mpz_precompute_inverse(F_mpz_t p);
+
+/** 
+   \fn     void F_mpz_mod_preinv(F_mpz_t res, F_mpz_t f, 
+                                             F_mpz_t p, mp_srcptr pinv)
+   \brief  Given a precomputed inverse pinv of p, computes f mod p.
+*/
+void F_mpz_mod_preinv(F_mpz_t res, F_mpz_t f, F_mpz_t p, mp_srcptr pinv);
+
+/** 
+   \fn     oid F_mpz_preinv_clear(mpptr pinv)
+   \brief  Free the memory allocated for a precomputed inverse.
+*/
+static inline
+void F_mpz_preinv_clear(mp_ptr pinv)
+{
+   free(pinv);
+}
+
+/** 
    \fn     void F_mpz_gcd(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
    \brief  Set f to the greatest common divisor of g and h.
 */

@@ -2099,6 +2099,155 @@ void F_mpz_set_d_2exp(F_mpz_t output, double mant, long exp){
 
 }
 
+mp_ptr F_mpz_precompute_inverse(F_mpz_t p)
+{
+   if (!COEFF_IS_MPZ(*p)) // FIXME: deal with this important case
+      return malloc(sizeof(mp_limb_t)); // currently we don't use the inverse
+
+   ulong ps = F_mpz_size(p);
+   mp_limb_t * pm = F_mpz_ptr_mpz(*p)->_mp_d;
+  
+   ulong pnorm = FLINT_BITS - FLINT_BIT_COUNT(pm[ps - 1]);
+
+   mp_ptr res = malloc(sizeof(mp_limb_t)*(ps+1));
+   mp_ptr rem = malloc(sizeof(mp_limb_t)*2*ps);
+   mp_ptr t = malloc(sizeof(mp_limb_t)*2*ps);
+   mp_ptr pn = malloc(sizeof(mp_limb_t)*ps);
+   
+   if (pnorm)
+      mpn_lshift(pn, pm, ps, pnorm);
+   else
+      mpn_copyi(pn, pm, ps);
+
+   mpn_store(t, 2*ps, ~(mp_limb_t) 0);
+   mpn_tdiv_qr(res, rem, 0, t, 2*ps, pn, ps);
+   mpn_sub_1(res + ps, res + ps, ps, 1);
+
+   free(t);
+   free(pn);
+   free(rem);
+
+   return res;
+}
+
+void F_mpz_mod_preinv(F_mpz_t res, F_mpz_t f, F_mpz_t p, mp_srcptr pinv)
+{
+   ulong norm1, norm2, ps, fs, us;
+   F_mpz_t r, u, pnorm;
+   mp_limb_t cy;
+ 
+   if (!COEFF_IS_MPZ(*p)) // FIXME: deal with this important case
+   {
+      F_mpz_mod(res, f, p);
+      return;
+   }
+
+   if (!COEFF_IS_MPZ(*f) || (F_mpz_cmpabs(f, p) < 0)) // |f| < p already
+   {
+      if (F_mpz_sgn(f) < 0)
+         F_mpz_add(res, f, p);
+      else
+         F_mpz_set(res, f);
+      return;
+   }
+
+   __mpz_struct * f_ptr = F_mpz_ptr_mpz(*f);
+   __mpz_struct * p_ptr = F_mpz_ptr_mpz(*p);
+
+   mp_ptr fm = f_ptr->_mp_d;
+   mp_ptr pm = p_ptr->_mp_d;
+
+   ps = p_ptr->_mp_size;
+   fs = FLINT_ABS(f_ptr->_mp_size);
+
+   norm1 = (FLINT_BITS - FLINT_BIT_COUNT(pm[ps - 1]));
+   norm2 = (FLINT_BITS - FLINT_BIT_COUNT(fm[fs - 1]));
+
+   us = fs + (norm1 > norm2);
+   if (us > 2*ps) // FIXME: too large to handle with preinv
+   {
+      F_mpz_mod(res, f, p);
+      return;
+   }
+
+   F_mpz_init(u);
+   F_mpz_init(pnorm);
+   if (norm1)
+   {
+      F_mpz_mul_2exp(u, f, norm1);
+      F_mpz_mul_2exp(pnorm, p, norm1);
+   } else
+   {
+      F_mpz_set(u, f);
+      F_mpz_set(pnorm, p);
+   }
+   
+   __mpz_struct * u_ptr = F_mpz_ptr_mpz(*u);
+   mp_ptr um = u_ptr->_mp_d;
+   __mpz_struct * pn_ptr = F_mpz_ptr_mpz(*pnorm);
+   mp_ptr pnm = pn_ptr->_mp_d;
+
+   if ((us == 2*ps) && (mpn_cmp(um + ps, pnm, ps) >= 0)) // also to big to deal with
+   {
+      F_mpz_mod(res, f, p);
+      F_mpz_clear(u);
+      F_mpz_clear(pnorm);
+      return;
+   }
+ 
+   mp_ptr qm = malloc(sizeof(mp_limb_t)*2*ps);
+   mp_ptr q1p = malloc(sizeof(mp_limb_t)*2*ps);
+
+   if (us != ps)
+   {
+      mpn_mul(qm, pinv, ps, um + ps, us - ps);
+      if (us != 2*ps)
+         mpn_store(qm + us, 2*ps - us, 0);
+   } else
+      mpn_store(qm, 2*ps, 0);
+
+   cy = mpn_add_n(qm, qm, um, us);
+   if (us != 2*ps)
+      mpn_add_1(qm + us, qm + us, 2*ps - us, cy);
+
+   mpn_add_1(qm + ps, qm + ps, ps, 1);
+
+   mpn_mul_n(q1p, qm + ps, pnm, ps);
+   
+   F_mpz_init2(r, ps);
+   __mpz_struct * r_ptr = F_mpz_ptr_mpz(*r);
+   mp_ptr rm = r_ptr->_mp_d;
+
+   mpn_sub_n(rm, um, q1p, ps);
+   
+   if (mpn_cmp(rm, qm, ps) >= 0)
+      mpn_add_n(rm, rm, pnm, ps);
+
+   if (mpn_cmp(rm, pnm, ps) >= 0)
+      mpn_sub_n(rm, rm, pnm, ps);
+
+   r_ptr->_mp_size = ps;
+   while ((r_ptr->_mp_size) && (!rm[r_ptr->_mp_size - 1])) r_ptr->_mp_size--;
+   _F_mpz_demote_val(r);
+
+   F_mpz_div_2exp(r, r, norm1);
+
+   if ((F_mpz_sgn(f) < 0) && (!F_mpz_is_zero(r)))
+   {
+      F_mpz_neg(r, r);
+      F_mpz_add(r, r, p);
+   }
+
+   F_mpz_swap(res, r);
+
+   F_mpz_clear(u);
+   F_mpz_clear(pnorm);
+   F_mpz_clear(r);
+
+   free(qm);
+   free(q1p);
+}
+
 void F_mpz_smod(F_mpz_t res, F_mpz_t f, F_mpz_t p){
 
    if (F_mpz_is_zero(p)){

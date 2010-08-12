@@ -1248,19 +1248,23 @@ void F_mpz_mat_window_init(F_mpz_mat_t U, F_mpz_mat_t M,
 
 void F_mpz_mat_smod(F_mpz_mat_t res, F_mpz_mat_t M, F_mpz_t P)
 {
+   ulong i, j;
+   
    if (res != M){
       F_mpz_mat_resize(res, M->r, M->c);
    }
+
    if (F_mpz_is_zero(P)){
       printf("FLINT Exception: Division by zero\n");
       abort();
    }
+
    if (F_mpz_is_one(P)){
       F_mpz_mat_clear(res);
       F_mpz_mat_init(res, M->r, M->c);
       return;
    }
-   ulong i, j;
+
    for (i = 0; i < M->r; i++)
       for (j = 0; j < M->c; j++)
          F_mpz_smod(res->rows[i] + j, M->rows[i] + j, P);
