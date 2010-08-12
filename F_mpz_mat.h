@@ -640,12 +640,6 @@ void F_mpz_mat_window_clear(F_mpz_mat_t U)
 void F_mpz_mat_smod(F_mpz_mat_t res, F_mpz_mat_t M, F_mpz_t P);
 
 /*
-   Simple naive function, uses F_mpz_mat_resize then shifts the new zero rows 
-   to the top rather than bottom.
-*/
-void F_mpz_mat_resize2(F_mpz_mat_t M, ulong r, ulong c);
-
-/*
    This is the heart of the Novocin PhD algorithm.  Takes a column of data, col, 
    a large modulus P, and an upperbound for the data in a good vector with exp.  
    Decides if it's worth calling LLL with this data, if not it returns 0, if so 

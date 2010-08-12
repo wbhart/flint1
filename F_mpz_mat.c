@@ -1272,20 +1272,6 @@ void F_mpz_mat_smod(F_mpz_mat_t res, F_mpz_mat_t M, F_mpz_t P)
    F_mpz_preinv_clear(Pinv);
 }
 
-void F_mpz_mat_resize2(F_mpz_mat_t M, ulong r, ulong c)
-{
-   if (r <= M->r){
-      F_mpz_mat_resize(M, r, c);
-      return;
-   }
-   long old_r = M->r;
-   F_mpz_mat_resize(M, r, c); 
-   long i;
-   for (i = old_r-1; i >= 0; i--){
-      F_mpz_mat_swap_rows(M, i + r - old_r, i);
-   }
-}
-
 int _trunc_col_test(F_mpz_mat_t temp_col, F_mpz_t trunc_P, long max_bits){
    F_mpz_t sum;
    F_mpz_init(sum);
@@ -1402,7 +1388,15 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
 
    F_mpz_t trunc_P;
    F_mpz_init(trunc_P);
-   F_mpz_mat_resize2(M, M->r + !(no_vec), M->c + 1);
+      
+   ulong new_r = M->r + !(no_vec);
+   ulong old_r = M->r;
+   long i;
+   
+   F_mpz_mat_resize(M, new_r, M->c + 1); 
+   for (i = old_r - 1; i >= 0; i--)
+      F_mpz_mat_swap_rows(M, i + new_r - old_r, i);
+
    if (take_away >= 0)
       F_mpz_div_2exp(trunc_P, P, (ulong) take_away);
    else
