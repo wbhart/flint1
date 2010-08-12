@@ -1250,9 +1250,6 @@ void F_mpz_mat_smod(F_mpz_mat_t res, F_mpz_mat_t M, F_mpz_t P)
 {
    ulong i, j;
    
-   if (res != M)
-      F_mpz_mat_resize(res, M->r, M->c);
-
    if (F_mpz_is_zero(P))
    {
       printf("FLINT Exception: Division by zero\n");
