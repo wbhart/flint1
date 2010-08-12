@@ -1272,119 +1272,124 @@ void F_mpz_mat_smod(F_mpz_mat_t res, F_mpz_mat_t M, F_mpz_t P)
    F_mpz_preinv_clear(Pinv);
 }
 
-int _trunc_col_test(F_mpz_mat_t temp_col, F_mpz_t trunc_P, long max_bits){
+int _trunc_col_test(F_mpz_mat_t temp_col, F_mpz_t trunc_P, long max_bits)
+{
    F_mpz_t sum;
    F_mpz_init(sum);
 
    F_mpz_set_ui(sum, 0L);
 
    long i;
-   for (i = 0; i < temp_col->r; i++){
+   for (i = 0; i < temp_col->r; i++)
       F_mpz_add(sum, sum, temp_col->rows[i]);
-   }
 
    F_mpz_smod(sum, sum, trunc_P);
 
-   if ( F_mpz_bits(sum) > max_bits){
+   if (F_mpz_bits(sum) > max_bits)
+   {
       F_mpz_clear(sum);
       return 0;
    }
 
    return 1;
-
 }
 
-int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, long U_exp){
-//Goal here is to take a matrix M, get U, multiply U by col look at max bits of U*col and P subtract exp and decide if it's worth calling LLL
-//if is not return 0
-//U_exp is the assumed power of the scalar multiple of U (so 2^U_exp is the scalar weight of U) this should match the virtual precision.
-//if it is then return weight of last column (check that it should not be zero... ??) and augment M with the new column and new row
-//This new column should be truncated to the correct amount before re-multiplying by U
-//first make sure there are enough bits to even bother
+/*
+   Goal here is to take a matrix M, get U, multiply U by col look at max bits of U*col and P 
+   subtract exp and decide if it's worth calling LLL
+   if is not return 0
+   U_exp is the assumed power of the scalar multiple of U (so 2^U_exp is the scalar weight of U) 
+   this should match the virtual precision.
+   if it is then return weight of last column (check that it should not be zero... ??) and 
+   augment M with the new column and new row
+   This new column should be truncated to the correct amount before re-multiplying by U
+   first make sure there are enough bits to even bother
+*/
+int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, long U_exp)
+{   
    ulong r = col->r;
-   ulong bit_r = FLINT_MAX(r, 20);
    ulong B = r + 2;
+   ulong bit_r = FLINT_MAX(r, 20);
+   
    long ISD = F_mpz_bits(P) - bit_r - bit_r/2;
-   if ( ISD < exp)
+   if (ISD < exp)
       return 0;
+
    F_mpz_mat_t U;
    F_mpz_mat_window_init(U, M, 0, 0, M->r, r);
+   
    F_mpz_mat_t temp_col;
    F_mpz_mat_init(temp_col, M->r, 1);
-//   printf("temp_col initialized the pointer is %ld\n", temp_col->entries);
-//full precision column for deciding truncation levels
+
+   // full precision column for deciding truncation levels
    F_mpz_mat_mul_classical(temp_col, U, col);
-   if (U_exp >= 0){
+
+   if (U_exp >= 0)
       F_mpz_mat_div_2exp(temp_col, temp_col, (ulong) U_exp);
-   }
-   else{
+   else
       F_mpz_mat_mul_2exp(temp_col, temp_col, (ulong) (-1*U_exp));
-   } 
+    
    F_mpz_mat_smod(temp_col, temp_col, P);
+
    long mbts = FLINT_ABS(F_mpz_mat_max_bits(temp_col));
-//bare minimum of data above the bound
-   if (mbts <  (long) (.973 * (double)bit_r - .1 + (double) exp ) ){
+
+   // bare minimum of data above the bound
+   if (mbts < (long) (0.973 * (double) bit_r - 0.1 + (double) exp))
+   {
       F_mpz_mat_clear(temp_col);
       F_mpz_mat_window_clear(U);      
       return 0;
    }
-// This meant that this column is not worth calling LLL.
-// Now do a test to see if we can just skip the p^a vector
-//double version of no vector test:
-   double S = B * (ldexp( 1.51, M->r) * (1/.51) - (1/.51)- 1);
+
+   // Now do a test to see if we can just skip the p^a vector
+   // double version of no vector test:
+   double S = B * (ldexp(1.51, M->r) * (1/0.51) - (1/0.51)- 1);
+   
    F_mpz_t temp;
    F_mpz_init(temp);
+   
    F_mpz_set_d_2exp(temp, (double) B, ISD);
    F_mpz_sub(temp, P, temp);
-//This is the bits version of K*B*(2*(3/2)^(s-1)-2) < P - B*2^ISD check
+
+   // this is the bits version of K*B*(2*(3/2)^(s-1)-2) < P - B*2^ISD check
    double no_vec_check = (double) F_mpz_bits(temp) - (1 + log2(S) + mbts); 
    F_mpz_clear(temp);
+   
    int no_vec = (no_vec_check > 0.0);
+   
    ulong prec = U_exp; // taken as an argument to match the scaling on U;
+   
    long take_away;
-//at the moment this is an int because cexpo in 'fast' LLL only allows ints, later it could be a long for heuristic LLL (but not really). 
    int virt_exp;
+   
    F_mpz_mat_t trunc_col;
-   F_mpz_mat_init(trunc_col, r, 1);
+   F_mpz_mat_init(trunc_col, col->r, col->c);
 
-   if (no_vec){
-// rare for the first time, frequent for repeated scalings
-// In here we're going to scale to make the new entries use their 2*r bits
-// Now decide the scaling based on mbts... should be mbits - .973r and maybe have mbits be more precise... 
+   // rare for the first time, frequent for repeated scalings
+   // In here we're going to scale to make the new entries use their 2*r bits
+   // Now decide the scaling based on mbts... should be mbits - 0.973r
+   // maybe have mbits be more precise... 
+   if (no_vec)
       ISD = mbts - (long)( .973 * (double) bit_r - .1);
-//      printf("the no_vec case mbts = %ld, P_bits = %ld\n", mbts, F_mpz_bits(P));
-   }
+
    take_away = ISD - prec;
    virt_exp = -prec;
 
-//   F_mpz_mat_print_pretty(col); printf(" was col and take_away = %ld\n", take_away);
+   if (take_away >= 0)
+      F_mpz_mat_div_2exp(trunc_col, col, (ulong) take_away);
+   else
+      F_mpz_mat_mul_2exp(trunc_col, col, (ulong) (-1*take_away)); 
 
-   if (take_away >= 0){
-      F_mpz_mat_resize(trunc_col, col->r, col->c);
-	  F_mpz_mat_div_2exp(trunc_col, col, (ulong) take_away);
-   }
-   else{
-      F_mpz_mat_resize(trunc_col, col->r, col->c);
-	  F_mpz_mat_mul_2exp(trunc_col, col, (ulong) (-1*take_away));
-   } 
-
-//   F_mpz_mat_print_pretty(trunc_col); printf(" was trunc_col\n");
-
-
-//   printf("after take away\n");
-// Here we'll run with some extra bits with the new vector, just for complexity's sake
-// This means using ISD as the scale down.  Since we want to truncate we will take away ISD - s bits then return -s as the virtual exponent
-//   printf("temp_col before mat_mul = %ld\n", temp_col->entries);
+   // Here we'll run with some extra bits with the new vector, 
+   // just for complexity's sake
+   // This means using ISD as the scale down.  Since we want to truncate we will 
+   // take away ISD - s bits then return -s as the virtual exponent
    F_mpz_mat_mul_classical(temp_col, U, trunc_col);
-//   printf("temp_col after mat_mul = %ld\n", temp_col->entries);
-   if (U_exp >= 0){
-      F_mpz_mat_div_2exp(temp_col, temp_col, (ulong) U_exp);
-   }
-   else{
-      F_mpz_mat_mul_2exp(temp_col, temp_col, (ulong) (-1*U_exp));
-   }
 
-//   F_mpz_mat_print_pretty(temp_col); printf(" was temp_col before smod\n");
+   if (U_exp >= 0)
+      F_mpz_mat_div_2exp(temp_col, temp_col, (ulong) U_exp);
+   else
+      F_mpz_mat_mul_2exp(temp_col, temp_col, (ulong) (-1*U_exp));
 
    F_mpz_t trunc_P;
    F_mpz_init(trunc_P);
@@ -1401,41 +1406,39 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
       F_mpz_div_2exp(trunc_P, P, (ulong) take_away);
    else
       F_mpz_mul_2exp(trunc_P, P, (ulong) (-1)*take_away);         
+   
    if (!F_mpz_is_zero(trunc_P))
       F_mpz_mat_smod(temp_col, temp_col, trunc_P);
 
-//   F_mpz_mat_print_pretty(temp_col); printf(" was temp_col after smod\n");
-
-//FIXME: I'm creating an internal test, perhaps this should be hash defined with a flag
-/*       int work = _trunc_col_test(col, P, exp);
-      printf("************ work = %d \n", work);
-   if (work == 0){
-      printf(" problem!\n");
-      F_mpz_clear(trunc_P);
-      F_mpz_mat_clear(trunc_col);
-      F_mpz_mat_clear(temp_col);
-      F_mpz_mat_window_clear(U);
-      abort();
-   }
-*/
+   FLINT_ASSERT(_trunc_col_test(col, P, exp));
 
    if (!no_vec)
-   {
       F_mpz_set(M->rows[0] + M->c - 1, trunc_P);
-   }
-   for( ulong j = !(no_vec); j < M->r; j++)
-      F_mpz_set(M->rows[j] + M->c - 1, temp_col->rows[j-!(no_vec)]);
+
+   for (ulong j = !(no_vec); j < M->r; j++)
+      F_mpz_set(M->rows[j] + M->c - 1, temp_col->rows[j - !(no_vec)]);
+   
    F_mpz_clear(trunc_P);
    F_mpz_mat_clear(trunc_col);
-//   printf("temp_col being cleared the pointer is %ld\n", temp_col->entries);
    F_mpz_mat_clear(temp_col);
    F_mpz_mat_window_clear(U);
+
    return virt_exp;
 }
 
 
-int F_mpz_mat_check_rest(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp){
-//Alright here we are given the same column we just ran with, last time we used col->r + col->r / 2 bits, here we want to toss in some more to see if we can get enough in there to make the later Gram-Schmidt lengths get large without upsetting the stability of the G-S computation... If we can do this cheaply its beter than running LLL at full size.  We'll return the new dimension with our findings or -1 which means that there's enough new here to just run with it... 
+/*
+   We are given the same column we just ran with.
+   Last time we used 1.5*col->r bits. 
+   Here we want to add more data to see if we can get enough to make 
+   the later Gram-Schmidt lengths large without upsetting the stability 
+   of the G-S computation.
+   If we can do this cheaply its beter than running LLL at full size.  
+   We'll return the new dimension with our findings, or -1 which means 
+   that there's enough new data.
+*/
+int F_mpz_mat_check_rest(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp)
+{
    ulong r = col->r;
    ulong extra = 25;
    ulong i;
@@ -1447,9 +1450,9 @@ int F_mpz_mat_check_rest(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp){
    F_mpz_mat_init(temp_col, M->r, 1);
    F_mpz_mat_init(store_col, M->r, 1);
 
-
    F_mpz_mat_mul_classical(temp_col, U, col);
    F_mpz_mat_smod(temp_col, temp_col, P);
+
    long mbts = FLINT_ABS(F_mpz_mat_max_bits(temp_col));
 
    if (mbts < exp)
@@ -1461,54 +1464,58 @@ int F_mpz_mat_check_rest(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp){
    }
 
    ulong take_away;
-   take_away = FLINT_MAX(F_mpz_bits(P) - r - r/2 -extra, exp);
-//   take_away = exp;
+   take_away = FLINT_MAX(F_mpz_bits(P) - r - r/2 - extra, exp);
 
-//Ok going to take the data minus the bottom exp (might change to be less if unstable) bits (so should be zero for true factors)
-//Making a new column we will temporarily replace the last column of M with this data and run G_S
-//Will need a G-S stability test, see if any NaNs popped up or something like that.
+   // We take the data minus the bottom exp bits which should be zero for 
+   // true factors
+   // Making a new column we temporarily replace the last column of M with 
+   // this data and run G_S
+   // FIXME: Need a G-S stability test to see if any NaNs appeared
 
    F_mpz_mat_t trunc_col;
    F_mpz_mat_init(trunc_col, col->r, col->c);
+
    F_mpz_mat_div_2exp(trunc_col, col, take_away);
+
    F_mpz_mat_mul_classical(temp_col, U, trunc_col);
+
    F_mpz_t trunc_P;
    F_mpz_init(trunc_P);
    F_mpz_div_2exp(trunc_P, P, take_away);
+
    F_mpz_mat_smod(temp_col, temp_col, trunc_P);
+
    for( i = 0; i < M->r; i++)
    {
-      F_mpz_set( store_col->rows[i],  M->rows[i] + M->c - 1);
-      F_mpz_set( M->rows[i] + M->c - 1 , temp_col->rows[i]);
+      F_mpz_set(store_col->rows[i],  M->rows[i] + M->c - 1);
+      F_mpz_set(M->rows[i] + M->c - 1, temp_col->rows[i]);
    }
 
    F_mpz_t B;
    F_mpz_init(B);
-//FIXME
-   F_mpz_set_ui(B, r + r/2*(M->c - r));
 
+   F_mpz_set_ui(B, r + r/2*(M->c - r)); //FIXME
+
+   //Needs a stability check, at the moment this is only because of pre-running... shame
    ulong newd;
-//Needs a stability check, at the moment this is only because of pre-running... shame
    newd = F_mpz_mat_gs_d(M, B);
 
    F_mpz_clear(B);
 
-   for( i = 0; i < M->r; i++)
-   {
+   for (i = 0; i < M->r; i++)
       F_mpz_set(M->rows[i] + M->c - 1, store_col->rows[i]);
-   }
 
-   F_mpz_mat_clear(trunc_col);
    F_mpz_clear(trunc_P);
    F_mpz_mat_window_clear(U);
+   F_mpz_mat_clear(trunc_col);
    F_mpz_mat_clear(temp_col);
    F_mpz_mat_clear(store_col);
+
    if (newd > 4)
    {
       printf(" got rid of some extras! newd = %ld\n",newd);
       return newd;
-   }
-   else
+   } else
       return M->r;
 }
 
