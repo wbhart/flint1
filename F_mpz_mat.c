@@ -1264,7 +1264,7 @@ void F_mpz_mat_smod(F_mpz_mat_t res, F_mpz_mat_t M, F_mpz_t P)
    }
 
    mp_ptr Pinv = F_mpz_precompute_inverse(P);
-
+   
    for (i = 0; i < M->r; i++)
       for (j = 0; j < M->c; j++)
          F_mpz_smod_preinv(res->rows[i] + j, M->rows[i] + j, P, Pinv);
