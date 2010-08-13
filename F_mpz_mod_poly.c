@@ -839,7 +839,7 @@ void F_mpz_mod_poly_divrem_divconquer(F_mpz_mod_poly_t Q, F_mpz_mod_poly_t R, co
 
 /*****************************************************************
 
-   Wrappers to get this sheet working while Bill writes the full versions
+   Wrappers to get this working while Bill writes the full versions
 
 ******************************************************************/
 
