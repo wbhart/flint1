@@ -7546,6 +7546,9 @@ void __F_mpz_poly_factor(F_mpz_poly_factor_t final_fac, F_mpz_t cong, F_mpz_poly
 
 ulong F_mpz_poly_deflation(F_mpz_poly_t input)
 {
+   if (input->length == 0)
+      return 0;
+   
    ulong deflation, i;
    ulong coeff = 1;
    
@@ -7569,6 +7572,12 @@ ulong F_mpz_poly_deflation(F_mpz_poly_t input)
 
 void F_mpz_poly_deflate(F_mpz_poly_t result, const F_mpz_poly_t input, ulong deflation)
 {
+   if (input->length == 0)
+   {
+      F_mpz_poly_zero(result);
+      return;
+   }
+   
    ulong res_length = (input->length - 1)/deflation + 1;
    ulong i;
    
@@ -7577,17 +7586,21 @@ void F_mpz_poly_deflate(F_mpz_poly_t result, const F_mpz_poly_t input, ulong def
        F_mpz_set(result->coeffs + i, input->coeffs + i*deflation);
 
    _F_mpz_poly_set_length(result, res_length);
-
-//   printf("not here\n");
-//FIXME: added comments
 }
 
 void F_mpz_poly_inflate(F_mpz_poly_t result, const F_mpz_poly_t input, ulong deflation)
 {
+   if (input->length == 0)
+   {
+      F_mpz_poly_zero(result);
+      return;
+   }
+   
    ulong res_length = (input->length - 1)*deflation + 1;
    ulong j;
 
    F_mpz_poly_fit_length(result, res_length);
+   F_mpz_poly_zero(result);
    for (j = 0; j < input->length; j++)
       F_mpz_poly_set_coeff_F_mpz(result, j*deflation, input->coeffs + j);  
 

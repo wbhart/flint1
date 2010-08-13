@@ -747,6 +747,55 @@ int test_zmod_poly_neg()
    return result;
 }
 
+int test_zmod_poly_inflate_deflate()
+{
+   int result = 1;
+   zmod_poly_t pol1, pol2, res1;
+   unsigned long bits;
+   
+   unsigned long count1;
+   for (count1 = 0; (count1 < 100) && (result == 1); count1++)
+   {
+      bits = randint(FLINT_BITS-1)+2;
+      unsigned long modulus;
+      
+      do {modulus = randbits(bits);} while (modulus < 2);
+      
+      zmod_poly_init(pol1, modulus);
+      zmod_poly_init(pol2, modulus);
+      zmod_poly_init(res1, modulus);
+      
+      unsigned long count2;
+      for (count2 = 0; (count2 < 100) && (result == 1); count2++)
+      {
+         unsigned long length1 = randint(100);
+         unsigned long length2 = randint(100);
+         unsigned long inflate = randint(64) + 1;
+
+         randpoly(pol1, length1, modulus);
+         
+         zmod_poly_inflate(pol2, pol1, inflate);
+         zmod_poly_deflate(res1, pol2, inflate);
+         
+         result &= (zmod_poly_equal(res1, pol1) && ((zmod_poly_deflation(pol2) % inflate == 0) || (pol1->length == 1)));
+         
+         if (!result)
+         {
+            zmod_poly_print(pol1); printf("\n\n");
+            zmod_poly_print(pol2); printf("\n\n");
+            zmod_poly_print(res1); printf("\n\n");
+            printf("length1 = %ld, length2 = %ld, modulus = %ld\n", length1, length2, modulus);
+            printf("deflation = %ld, inflate = %ld\n", zmod_poly_deflation(pol2), inflate);
+         }
+     }
+      
+      zmod_poly_clear(pol1);
+      zmod_poly_clear(pol2);
+      zmod_poly_clear(res1); 
+   }   
+   return result;
+}
+
 int test_zmod_poly_bits()
 {
    int result = 1;
@@ -9496,6 +9545,7 @@ void zmod_poly_test_all()
    RUN_TEST(zmod_poly_add_no_red); 
    RUN_TEST(zmod_poly_addsub); 
    RUN_TEST(zmod_poly_neg); 
+   RUN_TEST(zmod_poly_inflate_deflate); 
    RUN_TEST(zmod_poly_bits); 
    RUN_TEST(zmod_poly_shift); 
    RUN_TEST(zmod_poly_swap); 
