@@ -335,6 +335,38 @@ int test_F_mpz_get_d_2exp()
    return result;
 }
 
+int test_F_mpz_set_d_2exp()
+{
+   double fd;
+   F_mpz_t f1, f2;
+   int result = 1;
+   ulong bits, expf;
+  
+   ulong count1;
+   for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   {
+      F_mpz_init2(f1, z_randint(10));
+      F_mpz_init2(f2, z_randint(10));
+      
+      bits = z_randint(FLINT_D_BITS - 1) + 1;
+      F_mpz_test_random(f1, bits);
+           
+		fd = F_mpz_get_d_2exp(&expf, f1);
+		F_mpz_set_d_2exp(f2, fd, expf);
+
+      result = (F_mpz_equal(f1, f2)); 
+		if (!result) 
+		{
+			printf("Error: bits = %ld, fd = %f, expf = %ld\n", bits, fd, expf);
+		}
+          
+      F_mpz_clear(f1);
+      F_mpz_clear(f2);
+   }
+      
+   return result;
+}
+
 int test_F_mpz_getset_limbs()
 {
    F_mpz_t f1, f2;
@@ -3876,6 +3908,7 @@ void F_mpz_poly_test_all()
 #endif
    RUN_TEST(F_mpz_getset_limbs); 
    RUN_TEST(F_mpz_get_d_2exp); 
+   RUN_TEST(F_mpz_set_d_2exp); 
    RUN_TEST(F_mpz_set); 
    RUN_TEST(F_mpz_equal); 
    RUN_TEST(F_mpz_swap); 

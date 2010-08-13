@@ -267,6 +267,12 @@ void F_mpz_get_mpz(mpz_t x, const F_mpz_t f);
 */
 double F_mpz_get_d_2exp(long * exp, const F_mpz_t f);
 
+/**
+   \fn     void F_mpz_set_d_2exp(F_mpz_t output, double mant, long exp)
+   \brief  Set output to the integer closest to mant*2^exp.
+*/
+void F_mpz_set_d_2exp(F_mpz_t output, double mant, long exp);
+
 /** 
    \fn     void F_mpz_set_mpz(F_mpz_t f, const mpz_t x)
    \brief  Sets f to the given mpz_t.
@@ -749,27 +755,6 @@ void F_mpz_multi_CRT_ui_unsigned(F_mpz_t output, ulong * residues,
 */
 void F_mpz_multi_CRT_ui(F_mpz_t output, ulong * residues, 
            F_mpz_comb_t comb, F_mpz ** comb_temp, F_mpz_t temp, F_mpz_t temp2);
-
-/*============================================================================
-
-   New and potentially Naive F_mpz functions (no tests)
-
-============================================================================*/
-
-/**
-   A function for finding the integer closest to mant*2^exp, might not be 
-      optimized... not sure in fact... needs testing, but will do for my rough
-      bounds.
-*/
-void F_mpz_set_d_2exp(F_mpz_t output, double mant, long exp);
-
-#ifndef __TINYC__
-/**
-   \fn     void F_mpz_2exp_get_mpfr(mpfr_t x, const F_mpz_t f, long exp)
-   \brief  returns an mpfr approx = f * 2^exp
-*/
-void F_mpz_2exp_get_mpfr(mpfr_t x, const F_mpz_t f, long exp);
-#endif
 
 #ifdef __cplusplus
   }

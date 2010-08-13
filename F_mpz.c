@@ -362,6 +362,27 @@ double F_mpz_get_d_2exp(long * exp, const F_mpz_t f)
 	}
 }
 
+/* 
+   Sets F_mpz to the integer closest to mant*2^exp
+*/
+void F_mpz_set_d_2exp(F_mpz_t output, double mant, long exp)
+{
+   double x;
+  
+   if (exp >= 53L)
+   {
+      x = ldexp(mant, 53);
+      F_mpz_set_si(output, x >= 0 ? (long)(x + 0.5) : (long)(x - 0.5));
+      F_mpz_mul_2exp(output, output, (ulong) exp - 53UL);
+      return;
+   } else
+   {
+      x = ldexp(mant, exp);
+      F_mpz_set_si(output, x >= 0 ? (long)(x + 0.5) : (long)(x - 0.5));
+      return;
+   }
+}
+
 void F_mpz_set_mpz(F_mpz_t f, const mpz_t x)
 {
    long size = (long) x->_mp_size;
@@ -2286,40 +2307,3 @@ void F_mpz_multi_CRT_ui(F_mpz_t output, ulong * residues,
 {
 	__F_mpz_multi_CRT_ui(output, residues, comb, 1, comb_temp, temp, temp2);
 }
-
-/*============================================================================
-
-   New and potentially Naive F_mpz functions (no test)
-
-============================================================================*/
-
-void F_mpz_set_d_2exp(F_mpz_t output, double mant, long exp){
-
-//This function sets F_mpz to an integer closest to mant*2^exp
-   if (exp >= 53){
-      mpz_t temp;
-      mpz_init(temp);
-      mpz_set_d(temp, mant * pow(2, 53));
-      F_mpz_set_mpz(output, temp);
-      mpz_clear(temp);
-      F_mpz_mul_2exp(output, output, (ulong)exp - 53UL);
-      return;
-   }
-   else{
-      mpz_t temp;
-      mpz_init(temp);
-      mpz_set_d(temp, mant * pow(2, (double) exp));
-      F_mpz_set_mpz(output, temp);
-      mpz_clear(temp);
-      return;
-   }
-
-}
-
-#ifndef __TINYC__
-void F_mpz_2exp_get_mpfr(mpfr_t x, const F_mpz_t f, long exp)
-{
-      F_mpz_get_mpfr(x, f);
-      mpfr_mul_2si(x, x, exp, GMP_RNDN);
-}
-#endif
