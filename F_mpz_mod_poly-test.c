@@ -107,7 +107,13 @@ void mpz_randpoly_dense(mpz_poly_t pol, long length, ulong maxbits)
 // WARNING: do not use for testing of conversion between the two formats
 void F_mpz_mod_randpoly(F_mpz_mod_poly_t poly, ulong length, ulong bits)
 {
-	mpz_poly_t m_poly;
+	if (length == 0) 
+   {
+      F_mpz_mod_poly_zero(poly);
+      return;
+   }
+   
+   mpz_poly_t m_poly;
 	mpz_poly_init(m_poly);
 	mpz_randpoly(m_poly, length, bits);
 	mpz_poly_to_F_mpz_mod_poly(poly, m_poly);
@@ -167,6 +173,37 @@ void F_mpz_poly_reduce(F_mpz_poly_t m_poly, F_mpz_t P)
    for (ulong i = 0; i < m_poly->length; i++)
       F_mpz_mod(m_poly->coeffs + i, m_poly->coeffs + i, P);
    _F_mpz_poly_normalise(m_poly);
+}
+
+int test_F_mpz_mod_poly_init_realloc_clear()
+{
+   F_mpz_mod_poly_t F_poly;
+   F_mpz_t P;
+   int result = 1;
+   ulong bits, length;
+      
+   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
+   {
+      F_mpz_init(P);
+
+      bits = z_randint(200) + 1;
+      length = z_randint(100);
+      
+      F_mpz_random(P, bits);
+      F_mpz_add_ui(P, P, 1);
+      F_mpz_mod_poly_init(F_poly, P);
+      
+      F_mpz_mod_randpoly(F_poly, length, bits);
+      length = z_randint(100);
+      F_mpz_mod_poly_realloc(F_poly, length);
+      bits = z_randint(200) + 1;
+      F_mpz_mod_randpoly(F_poly, length, bits);
+           
+      F_mpz_mod_poly_clear(F_poly);
+      F_mpz_clear(P);
+   }
+   
+   return result;
 }
 
 int test_F_mpz_mod_poly_to_mpz_poly()
@@ -256,6 +293,49 @@ int test_F_mpz_mod_poly_to_F_mpz_poly()
    F_mpz_poly_clear(m_poly1);
    F_mpz_poly_clear(m_poly2);
    
+   return result;
+}
+
+int test_F_mpz_mod_poly_to_zmod_poly()
+{
+   zmod_poly_t m_poly;
+   F_mpz_mod_poly_t F_poly1, F_poly2;
+   F_mpz_t P;
+   int result = 1;
+   ulong bits, length;
+     
+   for (ulong count1 = 0; (count1 < 100000*ITER) && (result == 1) ; count1++)
+   {
+      F_mpz_init(P);
+
+      bits = z_randint(FLINT_BITS) + 1;
+      length = z_randint(100);
+      
+      F_mpz_random(P, bits);
+      F_mpz_add_ui(P, P, 1);
+      F_mpz_mod_poly_init(F_poly1, P);
+      F_mpz_mod_poly_init(F_poly2, P);
+      
+      zmod_poly_init(m_poly, F_mpz_get_ui(P)); 
+
+      F_mpz_mod_randpoly(F_poly1, length, bits);
+      
+      F_mpz_mod_poly_to_zmod_poly(m_poly, F_poly1);
+      zmod_poly_to_F_mpz_mod_poly(F_poly2, m_poly);
+          
+      result = F_mpz_mod_poly_equal(F_poly1, F_poly2); 
+		if (!result) 
+		{
+			printf("Error: length = %ld, bits = %ld, length1 = %ld, length2 = %ld\n", length, bits, F_poly1->length, F_poly2->length);
+         zmod_poly_print(m_poly); printf("\n");
+ 		}
+          
+      zmod_poly_clear(m_poly);
+      F_mpz_mod_poly_clear(F_poly1);
+      F_mpz_mod_poly_clear(F_poly2);
+      F_mpz_clear(P);
+   }
+    
    return result;
 }
 
@@ -411,6 +491,44 @@ int test_F_mpz_mod_poly_setequal()
           
       F_mpz_mod_poly_clear(F_poly1);
       F_mpz_mod_poly_clear(F_poly2);
+      F_mpz_clear(P);
+   }
+
+   return result;
+}
+
+int test_F_mpz_mod_poly_swap()
+{
+   F_mpz_mod_poly_t F_poly1, F_poly2, F_poly3;
+   F_mpz_t P;
+   int result = 1;
+   ulong bits, length;
+
+   // check equal polys
+   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
+   {
+		bits = z_randint(200) + 1;
+      length = z_randint(100);
+     
+      F_mpz_random_modulus(P, bits);
+      F_mpz_mod_poly_init(F_poly1, P);
+      F_mpz_mod_poly_init(F_poly2, P);
+      F_mpz_mod_poly_init(F_poly3, P);
+ 
+      F_mpz_mod_randpoly(F_poly1, length, bits);
+      F_mpz_mod_randpoly(F_poly2, length, bits);
+      F_mpz_mod_poly_set(F_poly3, F_poly1);
+      F_mpz_mod_poly_swap(F_poly2, F_poly1);
+          
+      result = F_mpz_mod_poly_equal(F_poly3, F_poly2); 
+		if (!result) 
+		{
+			printf("Error: length = %ld, bits = %ld, len3 = %ld, len2 = %ld\n", length, bits, F_poly3->length, F_poly2->length);
+		}
+          
+      F_mpz_mod_poly_clear(F_poly1);
+      F_mpz_mod_poly_clear(F_poly2);
+      F_mpz_mod_poly_clear(F_poly3);
       F_mpz_clear(P);
    }
 
@@ -1207,9 +1325,12 @@ void F_mpz_mod_poly_test_all()
 #if TESTFILE
 #endif
 	
+   RUN_TEST(F_mpz_mod_poly_init_realloc_clear); 
    RUN_TEST(F_mpz_mod_poly_to_mpz_poly); 
    RUN_TEST(F_mpz_mod_poly_to_F_mpz_poly); 
+   RUN_TEST(F_mpz_mod_poly_to_zmod_poly); 
    RUN_TEST(F_mpz_mod_poly_setequal); 
+   RUN_TEST(F_mpz_mod_poly_swap); 
    RUN_TEST(F_mpz_mod_poly_add); 
    RUN_TEST(F_mpz_mod_poly_sub); 
    RUN_TEST(F_mpz_mod_poly_scalar_mul); 

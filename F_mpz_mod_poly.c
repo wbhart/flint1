@@ -67,7 +67,8 @@ void F_mpz_mod_poly_clear(F_mpz_mod_poly_t poly)
 {
    for (ulong i = 0; i < poly->alloc; i++) // Clean up any mpz_t's
 		_F_mpz_demote(poly->coeffs + i);
-	if (poly->coeffs) flint_heap_free(poly->coeffs); // clean up ordinary coeffs
+	if (poly->coeffs) 
+      flint_heap_free(poly->coeffs); // clean up ordinary coeffs
    F_mpz_clear(poly->P);
 }
 
@@ -76,6 +77,10 @@ void F_mpz_mod_poly_realloc(F_mpz_mod_poly_t poly, const ulong alloc)
    if (!alloc) // alloc == 0, clear up
    {
          F_mpz_mod_poly_clear(poly);
+         poly->coeffs = NULL;
+         poly->alloc = 0;
+         poly->length = 0;
+
 			return;
    }  
    
@@ -191,6 +196,23 @@ void zmod_poly_to_F_mpz_mod_poly(F_mpz_mod_poly_t fpol, const zmod_poly_t zpol)
 
    _F_mpz_mod_poly_set_length(fpol, zpol->length);
    _F_mpz_mod_poly_normalise(fpol);
+}
+
+void F_mpz_mod_poly_to_zmod_poly(zmod_poly_t zpol, const F_mpz_mod_poly_t fpol)
+{
+   if (fpol->length == 0)
+   {
+      zmod_poly_zero(zpol);
+      return;
+   }
+
+   zmod_poly_fit_length(zpol, fpol->length);
+
+   for (ulong i = 0; i < fpol->length; i++)
+      zpol->coeffs[i] = F_mpz_get_ui(fpol->coeffs + i);
+
+   zpol->length = fpol->length;
+   __zmod_poly_normalise(zpol);
 }
 
 /****************************************************************************

@@ -132,6 +132,8 @@ void F_mpz_mod_poly_to_F_mpz_poly(F_mpz_poly_t poly, const F_mpz_mod_poly_t F_po
 
 void zmod_poly_to_F_mpz_mod_poly(F_mpz_mod_poly_t fpol, const zmod_poly_t zpol);
 
+void F_mpz_mod_poly_to_zmod_poly(zmod_poly_t zpol, const F_mpz_mod_poly_t fpol);
+
 /****************************************************************************
 
    Attach
