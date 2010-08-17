@@ -221,6 +221,7 @@ void F_mpz_random(F_mpz_t f, const ulong bits)
 {
 	if (bits <= FLINT_BITS - 2)
    {
+      _F_mpz_demote(f);
       ulong temp;
       mpn_random(&temp, 1L);
       ulong mask = ((1L<<bits)-1L);
