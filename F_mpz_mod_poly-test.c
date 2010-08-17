@@ -395,6 +395,7 @@ int test_F_mpz_mod_poly_scalar_mul()
    for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_init(P);
+      F_mpz_init(x);
 
       bits = z_randint(200) + 1;
       length = z_randint(100);
@@ -424,6 +425,7 @@ int test_F_mpz_mod_poly_scalar_mul()
 		}
           
       F_mpz_mod_poly_clear(F_poly);
+      F_mpz_clear(x);
       F_mpz_clear(P);
    }
 
@@ -556,6 +558,8 @@ int test_F_mpz_mod_poly_left_right_shift()
       length = z_randint(100);
       shift = z_randint(100);
 
+      F_mpz_init(P);
+
       F_mpz_random_modulus(P, bits);
       F_mpz_mod_poly_init(F_poly1, P);
       F_mpz_mod_poly_init(F_poly2, P);
@@ -565,6 +569,36 @@ int test_F_mpz_mod_poly_left_right_shift()
       F_mpz_mod_poly_set(F_poly3, F_poly1);
       F_mpz_mod_poly_left_shift(F_poly2, F_poly1, shift);
       F_mpz_mod_poly_right_shift(F_poly2, F_poly2, shift);
+          
+      result = F_mpz_mod_poly_equal(F_poly3, F_poly2); 
+		if (!result) 
+		{
+			printf("Error: length = %ld, bits = %ld, len3 = %ld, len2 = %ld\n", length, bits, F_poly3->length, F_poly2->length);
+		}
+          
+      F_mpz_mod_poly_clear(F_poly1);
+      F_mpz_mod_poly_clear(F_poly2);
+      F_mpz_mod_poly_clear(F_poly3);
+      F_mpz_clear(P);
+   }
+
+   for (ulong count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
+   {
+		bits = z_randint(200) + 1;
+      length = z_randint(100);
+      shift = z_randint(100);
+
+      F_mpz_init(P);
+
+      F_mpz_random_modulus(P, bits);
+      F_mpz_mod_poly_init(F_poly1, P);
+      F_mpz_mod_poly_init(F_poly2, P);
+      F_mpz_mod_poly_init(F_poly3, P);
+ 
+      F_mpz_mod_randpoly(F_poly1, length, bits);
+      F_mpz_mod_poly_set(F_poly3, F_poly1);
+      F_mpz_mod_poly_left_shift(F_poly1, F_poly1, shift);
+      F_mpz_mod_poly_right_shift(F_poly2, F_poly1, shift);
           
       result = F_mpz_mod_poly_equal(F_poly3, F_poly2); 
 		if (!result) 
@@ -1383,7 +1417,7 @@ void F_mpz_mod_poly_test_all()
    RUN_TEST(F_mpz_mod_poly_mul); 
    RUN_TEST(F_mpz_mod_poly_mul_trunc_left); 
    RUN_TEST(F_mpz_mod_poly_divrem_basecase); 
-   RUN_TEST(F_mpz_mod_poly_divrem_divconquer); 
+   RUN_TEST(F_mpz_mod_poly_divrem_divconquer);
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");
