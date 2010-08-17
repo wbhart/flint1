@@ -261,6 +261,8 @@ void F_mpz_mod_poly_print(F_mpz_mod_poly_t poly)
 
 void F_mpz_mod_poly_left_shift(F_mpz_mod_poly_t res, const F_mpz_mod_poly_t poly, const ulong n);
 
+void F_mpz_mod_poly_right_shift(F_mpz_mod_poly_t res, const F_mpz_mod_poly_t poly, const ulong n);
+
 /****************************************************************************
 
    Add/sub
