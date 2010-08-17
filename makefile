@@ -139,7 +139,7 @@ QS: mpQS
 
 tune: ZmodF_mul-tune mpz_poly-tune 
 
-test: F_mpz-test mpn_extras-test fmpz_poly-test fmpz-test ZmodF-test ZmodF_poly-test mpz_poly-test ZmodF_mul-test long_extras-test zmod_poly-test F_mpz_mat-test zmod_mat-test d_mat-test F_mpz_LLL_helper-test mpq_mat-test
+test: F_mpz-test mpn_extras-test fmpz_poly-test fmpz-test ZmodF-test ZmodF_poly-test mpz_poly-test ZmodF_mul-test long_extras-test zmod_poly-test F_mpz_mat-test zmod_mat-test d_mat-test mpfr_mat-test F_mpz_LLL_helper-test mpq_mat-test
 
 check: test
 	./F_mpz-test
@@ -155,6 +155,7 @@ check: test
 	./fmpz_poly-test
 	./F_mpz_mat-test
 	./d_mat-test
+	./mpfr_mat-test
 	./mpq_mat-test
 	./F_mpz_LLL_helper-test
 
@@ -337,6 +338,9 @@ test-support.o: test-support.c $(HEADERS)
 d_mat-test.o: d_mat-test.c $(HEADERS)
 	$(CC) $(CFLAGS) -c d_mat-test.c -o d_mat-test.o
 
+mpfr_mat-test.o: mpfr_mat-test.c $(HEADERS)
+	$(CC) $(CFLAGS) -c mpfr_mat-test.c -o mpfr_mat-test.o
+
 fmpz_poly-test.o: fmpz_poly-test.c $(HEADERS)
 	$(CC) $(CFLAGS) -c fmpz_poly-test.c -o fmpz_poly-test.o
 
@@ -407,6 +411,9 @@ fmpz_poly-test: fmpz_poly-test.o test-support.o $(FLINTOBJ) $(HEADERS)
 
 d_mat-test: d_mat-test.o test-support.o $(FLINTOBJ) $(HEADERS)
 	$(CC) $(CFLAGS) d_mat-test.o test-support.o -o d_mat-test $(FLINTOBJ) $(LIBS)
+
+mpfr_mat-test: mpfr_mat-test.o test-support.o $(FLINTOBJ) $(HEADERS)
+	$(CC) $(CFLAGS) mpfr_mat-test.o test-support.o -o mpfr_mat-test $(FLINTOBJ) $(LIBS)
 
 fmpz-test: fmpz-test.o test-support.o $(FLINTOBJ) $(HEADERS)
 	$(CC) $(CFLAGS) fmpz-test.o test-support.o -o fmpz-test $(FLINTOBJ) $(LIBS)

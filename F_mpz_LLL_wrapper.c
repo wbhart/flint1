@@ -475,7 +475,7 @@ int check_Babai_heuristic(int kappa, F_mpz_mat_t B, __mpfr_struct **mu, __mpfr_s
 	   {	  
 	      if ( mpfr_nan_p(appSP[kappa] + j) ) // if appSP[kappa] + j == NAN
 	      {
-            if (!(mpfr_vec_scalar_product2(appSP[kappa] + j, appB[kappa], appB[j], n, prec) ) ){
+            if (!(_mpfr_vec_scalar_product2(appSP[kappa] + j, appB[kappa], appB[j], n, prec) ) ){
 //In this case a heuristic told us that some cancelation probably happened so we just compute the scalar product at full precision
                _F_mpz_vec_scalar_product(ztmp, B->rows[kappa], B->rows[j], n);
                F_mpz_get_mpfr(appSP[kappa] + j, ztmp);
@@ -587,7 +587,7 @@ int check_Babai_heuristic(int kappa, F_mpz_mat_t B, __mpfr_struct **mu, __mpfr_s
 
    if (mpfr_nan_p(appSP[kappa] + kappa)) 
    {
-      mpfr_vec_norm2(appSP[kappa] + kappa, appB[kappa], n, prec);
+      _mpfr_vec_norm2(appSP[kappa] + kappa, appB[kappa], n, prec);
    }
 
    mpfr_set(s + zeros + 1, appSP[kappa] + kappa, GMP_RNDN);
@@ -1046,7 +1046,7 @@ int advance_check_Babai_heuristic(int cur_kappa, int kappa, F_mpz_mat_t B, __mpf
 	   {	  
 	      if ( mpfr_nan_p(appSP[kappa] + j) ) // if appSP[kappa] + j == NAN
 	      {
-            if (!(mpfr_vec_scalar_product2(appSP[kappa] + j, appB[kappa], appB[j], n, prec) ) ){
+            if (!(_mpfr_vec_scalar_product2(appSP[kappa] + j, appB[kappa], appB[j], n, prec) ) ){
 //In this case a heuristic told us that some cancelation probably happened so we just compute the scalar product at full precision
                _F_mpz_vec_scalar_product(ztmp, B->rows[kappa], B->rows[j], n);
                F_mpz_get_mpfr(appSP[kappa] + j, ztmp);
@@ -1158,7 +1158,7 @@ int advance_check_Babai_heuristic(int cur_kappa, int kappa, F_mpz_mat_t B, __mpf
 
    if (mpfr_nan_p(appSP[kappa] + kappa)) 
    {
-      mpfr_vec_norm2(appSP[kappa] + kappa, appB[kappa], n, prec);
+      _mpfr_vec_norm2(appSP[kappa] + kappa, appB[kappa], n, prec);
    }
 
 /*   mpfr_set(s + zeros + 1, appSP[kappa] + kappa, GMP_RNDN);
@@ -1858,7 +1858,7 @@ int LLL_mpfr2(F_mpz_mat_t B, mp_prec_t prec)
    i = 0; 
   
    do
-      mpfr_vec_norm2(appSP[i] + i, appB[i], n, prec); 
+      _mpfr_vec_norm2(appSP[i] + i, appB[i], n, prec); 
    while ( (mpfr_sgn(appSP[i] + i) == 0) && (++i < d));
 
    zeros = i - 1; /* all vectors B[i] with i <= zeros are zero vectors */
@@ -1982,7 +1982,7 @@ int LLL_mpfr2(F_mpz_mat_t B, mp_prec_t prec)
 	      {
 	         zeros++;
 	         kappa++;
-	         mpfr_vec_norm2(appSP[kappa] + kappa, appB[kappa], n, prec);
+	         _mpfr_vec_norm2(appSP[kappa] + kappa, appB[kappa], n, prec);
 	         mpfr_set(r[kappa] + kappa, appSP[kappa] + kappa, GMP_RNDN);
 	      }
 	  
@@ -2572,7 +2572,7 @@ int LLL_mpfr2_with_removal(F_mpz_mat_t B, mp_prec_t prec, F_mpz_t gs_B)
    i = 0; 
   
    do
-      mpfr_vec_norm2(appSP[i] + i, appB[i], n, prec); 
+      _mpfr_vec_norm2(appSP[i] + i, appB[i], n, prec); 
    while ( (mpfr_sgn(appSP[i] + i) == 0) && (++i < d));
 
    zeros = i - 1; /* all vectors B[i] with i <= zeros are zero vectors */
@@ -2696,7 +2696,7 @@ int LLL_mpfr2_with_removal(F_mpz_mat_t B, mp_prec_t prec, F_mpz_t gs_B)
 	      {
 	         zeros++;
 	         kappa++;
-	         mpfr_vec_norm2(appSP[kappa] + kappa, appB[kappa], n, prec);
+	         _mpfr_vec_norm2(appSP[kappa] + kappa, appB[kappa], n, prec);
 	         mpfr_set(r[kappa] + kappa, appSP[kappa] + kappa, GMP_RNDN);
 	      }
 	  
@@ -3438,7 +3438,7 @@ int knapsack_LLL_mpfr2_with_removal(F_mpz_mat_t B, mp_prec_t prec, F_mpz_t gs_B)
    i = 0; 
   
    do
-      mpfr_vec_norm2(appSP[i] + i, appB[i], n, prec); 
+      _mpfr_vec_norm2(appSP[i] + i, appB[i], n, prec); 
    while ( (mpfr_sgn(appSP[i] + i) == 0) && (++i < d));
 
    zeros = i - 1; /* all vectors B[i] with i <= zeros are zero vectors */
@@ -3562,7 +3562,7 @@ int knapsack_LLL_mpfr2_with_removal(F_mpz_mat_t B, mp_prec_t prec, F_mpz_t gs_B)
 	      {
 	         zeros++;
 	         kappa++;
-	         mpfr_vec_norm2(appSP[kappa] + kappa, appB[kappa], n, prec);
+	         _mpfr_vec_norm2(appSP[kappa] + kappa, appB[kappa], n, prec);
 	         mpfr_set(r[kappa] + kappa, appSP[kappa] + kappa, GMP_RNDN);
 	      }
 	  
