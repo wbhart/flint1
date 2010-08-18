@@ -47,6 +47,27 @@ Copyright (C) 2008, William Hart
 #define DEBUG 0 // allows easy switching of debugging code on and off when debugging (if inserted)
 #define DEBUG2 1 
 
+void F_mpz_test_random(F_mpz_t f, ulong bits)
+{
+	if (bits == 0)
+	{
+		F_mpz_zero(f);
+      return;
+	}
+	
+	mpz_t temp;
+	mpz_init(temp);
+	
+	mpz_rrandomb(temp, randstate, bits);
+#if SIGNS
+	if (z_randint(2)) mpz_neg(temp, temp);
+#endif
+   
+	F_mpz_set_mpz(f, temp);
+
+   mpz_clear(temp);
+}
+
 // generate a random mpz_poly_t with up to the given length and number of bits per coefficient
 void mpz_randpoly(mpz_poly_t pol, long length, ulong maxbits)
 {
@@ -1544,6 +1565,82 @@ int test_F_mpz_poly_scalar_mul()
    return result; 
 }
 
+int test_F_mpz_poly_scalar_divexact()
+{
+   F_mpz_poly_t F_poly, F_poly2, F_poly3;
+	F_mpz_t x;
+   int result = 1;
+   ulong bits, bits2, length;
+   
+   ulong count1;
+   for (count1 = 0; (count1 < 10000) && (result == 1) ; count1++)
+   {
+      bits = z_randint(300)+ 1;
+      length = z_randint(200);  
+
+      F_mpz_poly_init(F_poly);
+      F_mpz_poly_init(F_poly2);
+      F_mpz_poly_init(F_poly3);
+		F_mpz_init(x);
+      
+      F_mpz_randpoly(F_poly, length, bits); 
+          
+      F_mpz_test_random(x, 200);
+     
+		F_mpz_poly_scalar_mul(F_poly2, F_poly, x);
+		F_mpz_poly_scalar_divexact(F_poly3, F_poly2, x);
+          
+      result = (F_mpz_poly_equal(F_poly, F_poly3));
+
+		if (!result) 
+		{
+			printf("Error: length = %ld, bits = %ld\n", length, bits);
+         F_mpz_print(x); printf("\n");
+         F_mpz_poly_print_pretty(F_poly, "x"); printf("\n");
+         F_mpz_poly_print_pretty(F_poly3, "x"); printf("\n");
+		}
+
+      F_mpz_clear(x);
+		F_mpz_poly_clear(F_poly3);
+		F_mpz_poly_clear(F_poly2);
+      F_mpz_poly_clear(F_poly);
+   }
+   
+   // aliased 
+   for (count1 = 0; (count1 < 10000) && (result == 1) ; count1++)
+   {
+      bits = z_randint(300)+ 1;
+      length = z_randint(200);  
+
+      F_mpz_poly_init(F_poly);
+      F_mpz_poly_init(F_poly2);
+		F_mpz_init(x);
+      
+      F_mpz_randpoly(F_poly, length, bits); 
+          
+      F_mpz_test_random(x, 200);
+     
+		F_mpz_poly_scalar_mul(F_poly2, F_poly, x);
+		F_mpz_poly_scalar_divexact(F_poly2, F_poly2, x);
+          
+      result = (F_mpz_poly_equal(F_poly, F_poly2));
+
+		if (!result) 
+		{
+			printf("Error: length = %ld, bits = %ld\n", length, bits);
+         F_mpz_print(x); printf("\n");
+         F_mpz_poly_print_pretty(F_poly, "x"); printf("\n");
+         F_mpz_poly_print_pretty(F_poly2, "x"); printf("\n");
+		}
+
+      F_mpz_clear(x);
+		F_mpz_poly_clear(F_poly2);
+      F_mpz_poly_clear(F_poly);
+   }
+      
+   return result; 
+}
+
 int test_F_mpz_poly_mul_classical()
 {
    mpz_poly_t m_poly1, m_poly2, res1, res2;
@@ -1727,7 +1824,7 @@ int test_F_mpz_poly_mul_classical_trunc_left()
 		F_mpz_poly_to_mpz_poly(res2, res);
       mpz_poly_mul_classical(res1, m_poly1, m_poly2);
       long i;
-      for (i = 0; (i < len_out) && (i < trunc); i++)
+      for (i = 0; (i < len_out) && (i < trunc) && (i < res1->length); i++)
          mpz_set_ui(res1->coeffs[i], 0);
       mpz_poly_normalise(res1);
 		    
@@ -1767,7 +1864,7 @@ int test_F_mpz_poly_mul_classical_trunc_left()
 		F_mpz_poly_to_mpz_poly(res2, res);
       mpz_poly_mul_classical(res1, m_poly1, m_poly2);		
 		long i;
-		for (i = 0; (i < len_out) && (i < trunc); i++)
+		for (i = 0; (i < len_out) && (i < trunc) && (i < res1->length); i++)
          mpz_set_ui(res1->coeffs[i], 0);
       mpz_poly_normalise(res1);
 		    
@@ -1806,7 +1903,7 @@ int test_F_mpz_poly_mul_classical_trunc_left()
 		F_mpz_poly_to_mpz_poly(res2, res);
       mpz_poly_mul_classical(res1, m_poly1, m_poly2);		
 		long i;
-		for (i = 0; (i < len_out) && (i < trunc); i++)
+		for (i = 0; (i < len_out) && (i < trunc) && (i < res1->length); i++)
          mpz_set_ui(res1->coeffs[i], 0);
       mpz_poly_normalise(res1);
 		    
@@ -1841,7 +1938,7 @@ int test_F_mpz_poly_mul_classical_trunc_left()
 		F_mpz_poly_to_mpz_poly(res2, res);
       mpz_poly_mul_classical(res1, m_poly1, m_poly1);		
 		long i;
-		for (i = 0; (i < len_out) && (i < trunc); i++)
+		for (i = 0; (i < len_out) && (i < trunc) && (i < res1->length); i++)
          mpz_set_ui(res1->coeffs[i], 0);
       mpz_poly_normalise(res1);
 		    
@@ -2057,7 +2154,7 @@ int test_F_mpz_poly_mul_karatsuba_trunc_left()
 		F_mpz_poly_to_mpz_poly(res2, res);
       mpz_poly_mul_classical(res1, m_poly1, m_poly2);
       long i;
-      for (i = 0; (i < len_out) && (i < trunc); i++)
+      for (i = 0; (i < len_out) && (i < trunc) && (i < res1->length); i++)
          mpz_set_ui(res1->coeffs[i], 0);
       mpz_poly_normalise(res1);
 		    
@@ -2097,7 +2194,7 @@ int test_F_mpz_poly_mul_karatsuba_trunc_left()
 		F_mpz_poly_to_mpz_poly(res2, res);
       mpz_poly_mul_classical(res1, m_poly1, m_poly2);		
 		long i;
-		for (i = 0; (i < len_out) && (i < trunc); i++)
+		for (i = 0; (i < len_out) && (i < trunc) && (i < res1->length); i++)
          mpz_set_ui(res1->coeffs[i], 0);
       mpz_poly_normalise(res1);
 		    
@@ -2136,7 +2233,7 @@ int test_F_mpz_poly_mul_karatsuba_trunc_left()
 		F_mpz_poly_to_mpz_poly(res2, res);
       mpz_poly_mul_classical(res1, m_poly1, m_poly2);		
 		long i;
-		for (i = 0; (i < len_out) && (i < trunc); i++)
+		for (i = 0; (i < len_out) && (i < trunc) && (i < res1->length); i++)
          mpz_set_ui(res1->coeffs[i], 0);
       mpz_poly_normalise(res1);
 		    
@@ -2171,7 +2268,7 @@ int test_F_mpz_poly_mul_karatsuba_trunc_left()
 		F_mpz_poly_to_mpz_poly(res2, res);
       mpz_poly_mul_classical(res1, m_poly1, m_poly1);		
 		long i;
-		for (i = 0; (i < len_out) && (i < trunc); i++)
+		for (i = 0; (i < len_out) && (i < trunc) && (i < res1->length); i++)
          mpz_set_ui(res1->coeffs[i], 0);
       mpz_poly_normalise(res1);
 		    
@@ -2379,7 +2476,7 @@ int test_F_mpz_poly_mul_trunc_left()
 		F_mpz_poly_to_mpz_poly(res2, res);
       mpz_poly_mul(res1, m_poly1, m_poly2);
       long i;
-      for (i = 0; (i < len_out) && (i < trunc); i++)
+      for (i = 0; (i < len_out) && (i < trunc) && (i < res1->length); i++)
       {
          mpz_set_ui(res1->coeffs[i], 0);
          mpz_set_ui(res2->coeffs[i], 0);
@@ -2422,7 +2519,7 @@ int test_F_mpz_poly_mul_trunc_left()
 		F_mpz_poly_to_mpz_poly(res2, res);
       mpz_poly_mul(res1, m_poly1, m_poly2);		
 		long i;
-		for (i = 0; (i < len_out) && (i < trunc); i++)
+		for (i = 0; (i < len_out) && (i < trunc) && (i < res1->length); i++)
       {
          mpz_set_ui(res1->coeffs[i], 0);
          mpz_set_ui(res2->coeffs[i], 0);
@@ -2464,7 +2561,7 @@ int test_F_mpz_poly_mul_trunc_left()
 		F_mpz_poly_to_mpz_poly(res2, res);
       mpz_poly_mul(res1, m_poly1, m_poly2);		
 		long i;
-		for (i = 0; (i < len_out) && (i < trunc); i++)
+		for (i = 0; (i < len_out) && (i < trunc) && (i < res1->length); i++)
       {
          mpz_set_ui(res1->coeffs[i], 0);
          mpz_set_ui(res2->coeffs[i], 0);
@@ -2502,7 +2599,7 @@ int test_F_mpz_poly_mul_trunc_left()
 		F_mpz_poly_to_mpz_poly(res2, res);
       mpz_poly_mul(res1, m_poly1, m_poly1);		
 		long i;
-		for (i = 0; (i < len_out) && (i < trunc); i++)
+		for (i = 0; (i < len_out) && (i < trunc) && (i < res1->length); i++)
       {
          mpz_set_ui(res1->coeffs[i], 0);
          mpz_set_ui(res2->coeffs[i], 0);
@@ -4503,7 +4600,7 @@ int test_F_mpz_poly_pseudo_div_basecase()
 		F_mpz_poly_clear(F_poly3);
 		F_mpz_poly_clear(Q);
    }
-
+   
    // test inexact division
    for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
@@ -4554,7 +4651,7 @@ void F_mpz_poly_test_all()
 #if TESTFILE
 #endif
 	
-/*   RUN_TEST(F_mpz_poly_convert); 
+   RUN_TEST(F_mpz_poly_convert); 
    RUN_TEST(F_mpz_poly_getset_coeff_si); 
    RUN_TEST(F_mpz_poly_getset_coeff_ui); 
    RUN_TEST(F_mpz_poly_getset_coeff_mpz); 
@@ -4573,8 +4670,8 @@ void F_mpz_poly_test_all()
    RUN_TEST(F_mpz_poly_to_zmod_poly);
    RUN_TEST(F_mpz_poly_scalar_mul_ui); 
    RUN_TEST(F_mpz_poly_scalar_mul_si); 
-   RUN_TEST(F_mpz_poly_scalar_mul);*/
-   RUN_TEST(F_mpz_poly_factor);/*
+   RUN_TEST(F_mpz_poly_scalar_mul);
+   RUN_TEST(F_mpz_poly_scalar_divexact);
    RUN_TEST(F_mpz_poly_mul_classical); 
    RUN_TEST(F_mpz_poly_mul_classical_trunc_left); 
    RUN_TEST(F_mpz_poly_mul_karatsuba); 
@@ -4601,7 +4698,8 @@ void F_mpz_poly_test_all()
 	RUN_TEST(F_mpz_poly_divexact); 
 	RUN_TEST(F_mpz_poly_pseudo_divrem_basecase); 
 	RUN_TEST(F_mpz_poly_pseudo_div_basecase); 
-*/
+   //RUN_TEST(F_mpz_poly_factor);
+   
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");
 }

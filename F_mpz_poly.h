@@ -678,6 +678,18 @@ void F_mpz_poly_scalar_mul(F_mpz_poly_t poly1, const F_mpz_poly_t poly2, const F
 
 /*===============================================================================
 
+	Scalar division
+
+================================================================================*/
+
+/**
+   \fn     void F_mpz_poly_scalar_divexact(F_mpz_poly_t res, F_mpz_poly_t f, F_mpz_t d)
+   \brief  Divides polynomial f by the scalar d, assuming division is exact.
+*/
+void F_mpz_poly_scalar_divexact(F_mpz_poly_t res, F_mpz_poly_t f, F_mpz_t d);
+
+/*===============================================================================
+
 	Bit packing
 
 ================================================================================*/
@@ -1100,11 +1112,6 @@ void F_mpz_poly_pseudo_div_basecase(F_mpz_poly_t Q,
    New Naive Standard Functions
 
 ================================================================================*/
-
-/**
-   Should be decently fast, but I'ld like someone else to confirm.
-*/
-void F_mpz_poly_scalar_div_exact(F_mpz_poly_t res, F_mpz_poly_t f, F_mpz_t d);
 
 /**
    Might not be what we want in the end, it calls F_mpz_mod on each coeff then 
