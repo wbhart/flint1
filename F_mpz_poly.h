@@ -688,6 +688,14 @@ void F_mpz_poly_scalar_mul(F_mpz_poly_t poly1, const F_mpz_poly_t poly2, const F
 */
 void F_mpz_poly_scalar_divexact(F_mpz_poly_t res, F_mpz_poly_t f, F_mpz_t d);
 
+/**
+   \fn     void F_mpz_poly_scalar_smod(F_mpz_poly_t res, F_mpz_poly_t f, F_mpz_t p)
+   \brief  Reduce each coefficient of f modulo p, but normalise to be in the
+           range (-p/2, p/2].
+*/
+void F_mpz_poly_scalar_smod(F_mpz_poly_t res, F_mpz_poly_t f, F_mpz_t p);
+
+
 /*===============================================================================
 
 	Bit packing
@@ -1112,12 +1120,6 @@ void F_mpz_poly_pseudo_div_basecase(F_mpz_poly_t Q,
    New Naive Standard Functions
 
 ================================================================================*/
-
-/**
-   Might not be what we want in the end, it calls F_mpz_mod on each coeff then 
-      compares to p/2 and subtracts if needed, might be faster to expect pre-mod
-*/
-void F_mpz_poly_smod(F_mpz_poly_t res, F_mpz_poly_t f, F_mpz_t p);
 
 /**
    Probably fine as is, it's a derivative I mean come on...

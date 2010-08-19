@@ -1939,6 +1939,7 @@ void F_mpz_fdiv_qr(F_mpz_t q, F_mpz_t r, const F_mpz_t g, const F_mpz_t h)
 		} else // both are large
 		{
 			__mpz_struct * mpz_ptr2 = _F_mpz_promote(r);
+         mpz_ptr = F_mpz_arr + COEFF_TO_OFF(*q); // previous promotion of r may realloc F_mpz_arr
          mpz_fdiv_qr(mpz_ptr, mpz_ptr2, F_mpz_arr + COEFF_TO_OFF(c1), F_mpz_arr + COEFF_TO_OFF(c2));
 			_F_mpz_demote_val(q); // division by h may result in small value
 			_F_mpz_demote_val(r); // r in fact may be a small value

@@ -1275,7 +1275,6 @@ int test_F_mpz_poly_scalar_mul_ui()
       
 		F_mpz_poly_scalar_mul_ui(F_poly2, F_poly, mult);
           
-      mpz_poly_init(m_poly2);
       F_mpz_poly_to_mpz_poly(m_poly2, F_poly2); 
           
       if (mult == 0L) result = (F_poly2->length == 0);
@@ -1375,7 +1374,6 @@ int test_F_mpz_poly_scalar_mul_si()
       
 		F_mpz_poly_scalar_mul_si(F_poly2, F_poly, mult);
           
-      mpz_poly_init(m_poly2);
       F_mpz_poly_to_mpz_poly(m_poly2, F_poly2); 
           
       if (mult == 0L) result = (F_poly2->length == 0);
@@ -1488,7 +1486,6 @@ int test_F_mpz_poly_scalar_mul()
       
 		F_mpz_poly_scalar_mul(F_poly2, F_poly, x);
           
-      mpz_poly_init(m_poly2);
       F_mpz_poly_to_mpz_poly(m_poly2, F_poly2); 
           
       if (mpz_sgn(mult) == 0) result = (F_poly2->length == 0);
@@ -1634,6 +1631,97 @@ int test_F_mpz_poly_scalar_divexact()
 		}
 
       F_mpz_clear(x);
+		F_mpz_poly_clear(F_poly2);
+      F_mpz_poly_clear(F_poly);
+   }
+      
+   return result; 
+}
+
+int test_F_mpz_poly_scalar_smod()
+{
+   F_mpz_poly_t F_poly, F_poly2, F_poly3;
+	F_mpz_t x, y;
+   int result = 1;
+   ulong bits, bits2, length, i;
+   
+   ulong count1;
+   for (count1 = 0; (count1 < 10000) && (result == 1) ; count1++)
+   {
+      bits = z_randint(300)+ 1;
+      bits2 = z_randint(300)+ 1;
+      length = z_randint(200);  
+
+      F_mpz_poly_init(F_poly);
+      F_mpz_poly_init(F_poly2);
+      F_mpz_init(x);
+      F_mpz_init(y);
+      
+      F_mpz_randpoly(F_poly, length, bits); 
+          
+      do { F_mpz_test_random(x, bits2); }
+      while (F_mpz_is_zero(x));
+
+		F_mpz_poly_scalar_smod(F_poly2, F_poly, x);
+		
+      for (i = 0; i < F_poly2->length; i++)
+      {
+         F_mpz_smod(y, F_poly->coeffs + i, x);
+         result &= (F_mpz_equal(y, F_poly2->coeffs + i));
+      }
+
+      for ( ; i < F_poly->length; i++)
+      {
+         F_mpz_smod(y, F_poly->coeffs + i, x);
+         result &= F_mpz_is_zero(y);
+      }
+
+      if (!result) 
+		{
+			printf("Error: length = %ld, bits = %ld\n", length, bits);
+         F_mpz_print(x); printf("\n");
+         F_mpz_poly_print_pretty(F_poly, "x"); printf("\n");
+         F_mpz_poly_print_pretty(F_poly2, "x"); printf("\n");
+		}
+
+      F_mpz_clear(x);
+		F_mpz_clear(y);
+		F_mpz_poly_clear(F_poly2);
+      F_mpz_poly_clear(F_poly);
+   }
+   
+   // aliased 
+   for (count1 = 0; (count1 < 10000) && (result == 1) ; count1++)
+   {
+      bits = z_randint(300)+ 1;
+      bits2 = z_randint(300)+ 1;
+      length = z_randint(200);  
+
+      F_mpz_poly_init(F_poly);
+      F_mpz_poly_init(F_poly2);
+      F_mpz_init(x);
+      F_mpz_init(y);
+      
+      F_mpz_randpoly(F_poly, length, bits); 
+          
+      do { F_mpz_test_random(x, bits2); }
+      while (F_mpz_is_zero(x));
+
+		F_mpz_poly_scalar_smod(F_poly2, F_poly, x);
+		F_mpz_poly_scalar_smod(F_poly, F_poly, x);
+		
+      result = (F_mpz_poly_equal(F_poly, F_poly2));
+
+      if (!result) 
+		{
+			printf("Error: length = %ld, bits = %ld\n", length, bits);
+         F_mpz_print(x); printf("\n");
+         F_mpz_poly_print_pretty(F_poly, "x"); printf("\n");
+         F_mpz_poly_print_pretty(F_poly2, "x"); printf("\n");
+		}
+
+      F_mpz_clear(x);
+		F_mpz_clear(y);
 		F_mpz_poly_clear(F_poly2);
       F_mpz_poly_clear(F_poly);
    }
@@ -3654,7 +3742,7 @@ int test_F_mpz_poly_pack_bytes()
    mpz_poly_init(m_poly2); 
 
    ulong count1;
-   for (count1 = 1; (count1 < 10*ITER) && (result == 1) ; count1++)
+   for (count1 = 1; (count1 < 1000*ITER) && (result == 1) ; count1++)
    {
       bits = z_randint(300)+ FLINT_BITS;
       bytes = ((bits-1)>>3)+1;
@@ -4672,6 +4760,7 @@ void F_mpz_poly_test_all()
    RUN_TEST(F_mpz_poly_scalar_mul_si); 
    RUN_TEST(F_mpz_poly_scalar_mul);
    RUN_TEST(F_mpz_poly_scalar_divexact);
+   RUN_TEST(F_mpz_poly_scalar_smod);
    RUN_TEST(F_mpz_poly_mul_classical); 
    RUN_TEST(F_mpz_poly_mul_classical_trunc_left); 
    RUN_TEST(F_mpz_poly_mul_karatsuba); 
