@@ -475,7 +475,7 @@ int check_Babai_heuristic(int kappa, F_mpz_mat_t B, __mpfr_struct **mu, __mpfr_s
 	   {	  
 	      if ( mpfr_nan_p(appSP[kappa] + j) ) // if appSP[kappa] + j == NAN
 	      {
-            if (!(mpfr_vec_scalar_product2(appSP[kappa] + j, appB[kappa], appB[j], n, prec) ) ){
+            if (!(_mpfr_vec_scalar_product2(appSP[kappa] + j, appB[kappa], appB[j], n, prec) ) ){
 //In this case a heuristic told us that some cancelation probably happened so we just compute the scalar product at full precision
                _F_mpz_vec_scalar_product(ztmp, B->rows[kappa], B->rows[j], n);
                F_mpz_get_mpfr(appSP[kappa] + j, ztmp);
@@ -587,7 +587,7 @@ int check_Babai_heuristic(int kappa, F_mpz_mat_t B, __mpfr_struct **mu, __mpfr_s
 
    if (mpfr_nan_p(appSP[kappa] + kappa)) 
    {
-      mpfr_vec_norm2(appSP[kappa] + kappa, appB[kappa], n, prec);
+      _mpfr_vec_norm2(appSP[kappa] + kappa, appB[kappa], n, prec);
    }
 
    mpfr_set(s + zeros + 1, appSP[kappa] + kappa, GMP_RNDN);
@@ -1046,7 +1046,7 @@ int advance_check_Babai_heuristic(int cur_kappa, int kappa, F_mpz_mat_t B, __mpf
 	   {	  
 	      if ( mpfr_nan_p(appSP[kappa] + j) ) // if appSP[kappa] + j == NAN
 	      {
-            if (!(mpfr_vec_scalar_product2(appSP[kappa] + j, appB[kappa], appB[j], n, prec) ) ){
+            if (!(_mpfr_vec_scalar_product2(appSP[kappa] + j, appB[kappa], appB[j], n, prec) ) ){
 //In this case a heuristic told us that some cancelation probably happened so we just compute the scalar product at full precision
                _F_mpz_vec_scalar_product(ztmp, B->rows[kappa], B->rows[j], n);
                F_mpz_get_mpfr(appSP[kappa] + j, ztmp);
@@ -1158,7 +1158,7 @@ int advance_check_Babai_heuristic(int cur_kappa, int kappa, F_mpz_mat_t B, __mpf
 
    if (mpfr_nan_p(appSP[kappa] + kappa)) 
    {
-      mpfr_vec_norm2(appSP[kappa] + kappa, appB[kappa], n, prec);
+      _mpfr_vec_norm2(appSP[kappa] + kappa, appB[kappa], n, prec);
    }
 
 /*   mpfr_set(s + zeros + 1, appSP[kappa] + kappa, GMP_RNDN);
@@ -1858,7 +1858,7 @@ int LLL_mpfr2(F_mpz_mat_t B, mp_prec_t prec)
    i = 0; 
   
    do
-      mpfr_vec_norm2(appSP[i] + i, appB[i], n, prec); 
+      _mpfr_vec_norm2(appSP[i] + i, appB[i], n, prec); 
    while ( (mpfr_sgn(appSP[i] + i) == 0) && (++i < d));
 
    zeros = i - 1; /* all vectors B[i] with i <= zeros are zero vectors */
@@ -1982,7 +1982,7 @@ int LLL_mpfr2(F_mpz_mat_t B, mp_prec_t prec)
 	      {
 	         zeros++;
 	         kappa++;
-	         mpfr_vec_norm2(appSP[kappa] + kappa, appB[kappa], n, prec);
+	         _mpfr_vec_norm2(appSP[kappa] + kappa, appB[kappa], n, prec);
 	         mpfr_set(r[kappa] + kappa, appSP[kappa] + kappa, GMP_RNDN);
 	      }
 	  
@@ -2572,7 +2572,7 @@ int LLL_mpfr2_with_removal(F_mpz_mat_t B, mp_prec_t prec, F_mpz_t gs_B)
    i = 0; 
   
    do
-      mpfr_vec_norm2(appSP[i] + i, appB[i], n, prec); 
+      _mpfr_vec_norm2(appSP[i] + i, appB[i], n, prec); 
    while ( (mpfr_sgn(appSP[i] + i) == 0) && (++i < d));
 
    zeros = i - 1; /* all vectors B[i] with i <= zeros are zero vectors */
@@ -2696,7 +2696,7 @@ int LLL_mpfr2_with_removal(F_mpz_mat_t B, mp_prec_t prec, F_mpz_t gs_B)
 	      {
 	         zeros++;
 	         kappa++;
-	         mpfr_vec_norm2(appSP[kappa] + kappa, appB[kappa], n, prec);
+	         _mpfr_vec_norm2(appSP[kappa] + kappa, appB[kappa], n, prec);
 	         mpfr_set(r[kappa] + kappa, appSP[kappa] + kappa, GMP_RNDN);
 	      }
 	  
@@ -3438,7 +3438,7 @@ int knapsack_LLL_mpfr2_with_removal(F_mpz_mat_t B, mp_prec_t prec, F_mpz_t gs_B)
    i = 0; 
   
    do
-      mpfr_vec_norm2(appSP[i] + i, appB[i], n, prec); 
+      _mpfr_vec_norm2(appSP[i] + i, appB[i], n, prec); 
    while ( (mpfr_sgn(appSP[i] + i) == 0) && (++i < d));
 
    zeros = i - 1; /* all vectors B[i] with i <= zeros are zero vectors */
@@ -3562,7 +3562,7 @@ int knapsack_LLL_mpfr2_with_removal(F_mpz_mat_t B, mp_prec_t prec, F_mpz_t gs_B)
 	      {
 	         zeros++;
 	         kappa++;
-	         mpfr_vec_norm2(appSP[kappa] + kappa, appB[kappa], n, prec);
+	         _mpfr_vec_norm2(appSP[kappa] + kappa, appB[kappa], n, prec);
 	         mpfr_set(r[kappa] + kappa, appSP[kappa] + kappa, GMP_RNDN);
 	      }
 	  
@@ -4073,7 +4073,7 @@ int U_LLL_with_removal(F_mpz_mat_t FM, long new_size, F_mpz_t gs_B){
    bits = FLINT_ABS(F_mpz_mat_max_bits(FM));
 
    F_mpz_mat_t U;
-   F_mpz_mat_init_identity(U, r);
+   //F_mpz_mat_init(U, r, r);
 
    F_mpz_mat_t I;
    F_mpz_mat_init_identity(I, r);
@@ -4125,8 +4125,6 @@ int U_LLL_with_removal(F_mpz_mat_t FM, long new_size, F_mpz_t gs_B){
       }
    }
 
-   long prev_mbits = bits;
-
    while( done == 0){
       k++;
       if (full_prec == 0){
@@ -4149,16 +4147,18 @@ int U_LLL_with_removal(F_mpz_mat_t FM, long new_size, F_mpz_t gs_B){
       else {
 //add more bits
 
-         F_mpz_mat_get_U(U, big_FM, r);
+         F_mpz_mat_window_init(U, big_FM, 0, 0, big_FM->r, r);
+
+         F_mpz_mat_mul_classical(full_U, U, full_U);
 
          is_U_I = F_mpz_mat_equal(U, I);
 
 //do some truncating
-         F_mpz_mat_mul_classical(full_data, U, full_data);
+         F_mpz_mat_mul_classical(trunc_data, full_U, full_data);
 
-         mbits = FLINT_ABS(F_mpz_mat_max_bits(full_data));
+         mbits = FLINT_ABS(F_mpz_mat_max_bits(trunc_data));
 //make this condition better?
-         if ( ( (mbits - new_size) > 0) &&  ( mbits <= prev_mbits - (long)(new_size/4) ) && (is_U_I == 0))
+         if ( ( (mbits - new_size) > 0) &&  ( mbits <= bits - (k-2)*new_size ) && (is_U_I == 0))
 		 {
             F_mpz_mat_resize(trunc_data, full_data->r, full_data->c);
 			F_mpz_mat_div_2exp(trunc_data, full_data, (ulong) (mbits - new_size));
@@ -4166,8 +4166,6 @@ int U_LLL_with_removal(F_mpz_mat_t FM, long new_size, F_mpz_t gs_B){
          else{
             full_prec = 1;
          }
-
-         prev_mbits = mbits;
 
          if (full_prec == 1){
 //can switch to FM, no need for a new identity
@@ -4188,6 +4186,7 @@ int U_LLL_with_removal(F_mpz_mat_t FM, long new_size, F_mpz_t gs_B){
                   F_mpz_set(big_FM->rows[i]+j, trunc_data->rows[i] + j-r);
             }
          }
+         F_mpz_mat_window_clear(U);
       }
 
    }
@@ -4201,7 +4200,6 @@ int U_LLL_with_removal(F_mpz_mat_t FM, long new_size, F_mpz_t gs_B){
    F_mpz_mat_clear(full_data);
    F_mpz_mat_clear(trunc_data);
    F_mpz_mat_clear(big_FM);
-   F_mpz_mat_clear(U);
    F_mpz_mat_clear(I);
    F_mpz_mat_clear(full_U);
 

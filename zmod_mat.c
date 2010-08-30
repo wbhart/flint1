@@ -98,24 +98,6 @@ void zmod_mat_window_clear(zmod_mat_t mat)
 *******************************************************************************************/
 
 /*
-   Set a row to the coefficients of a polynomial, starting with the constant coefficient
-   Assumes that poly->length <= mat->cols
-*/
-void zmod_poly_to_zmod_mat_row(zmod_mat_t mat, ulong row, zmod_poly_t poly)
-{
-   ulong * r1 = mat->arr[row];
-   ulong * coeffs = poly->coeffs;
-   ulong cols = mat->cols;
-
-   long i;
-   
-   for (i = 0; i < poly->length; i++)
-      r1[i] = coeffs[i];
-   
-   for ( ; i < cols; i++)
-      r1[i] = 0L;
-}
-/*
    Set a column to the coefficients of a polynomial, starting with the constant coefficient
    Assumes that poly->length <= mat->rows
 */

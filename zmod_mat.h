@@ -86,8 +86,6 @@ void zmod_mat_window_clear(zmod_mat_t mat);
 
 *******************************************************************************************/
 
-void zmod_poly_to_zmod_mat_row(zmod_mat_t mat, ulong row, zmod_poly_t poly);
-
 void zmod_poly_to_zmod_mat_col(zmod_mat_t mat, ulong col, zmod_poly_t poly);
 
 void zmod_mat_col_to_zmod_poly(zmod_poly_t poly, zmod_mat_t mat, ulong col);

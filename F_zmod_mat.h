@@ -104,8 +104,6 @@ void F_zmod_mat_mul_strassen(F_zmod_mat_t res, F_zmod_mat_t mat1, F_zmod_mat_t m
 
 *******************************************************************************************/
 
-void F_zmod_poly_to_zmod_mat_row(F_zmod_mat_t mat, ulong row, zmod_poly_t poly);
-
 void F_zmod_poly_to_zmod_mat_col(F_zmod_mat_t mat, ulong col, zmod_poly_t poly);
 
 void F_zmod_mat_col_to_zmod_poly(zmod_poly_t poly, F_zmod_mat_t mat, ulong col);
