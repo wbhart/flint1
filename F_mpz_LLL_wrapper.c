@@ -4095,6 +4095,7 @@ int U_LLL_with_removal(F_mpz_mat_t FM, long new_size, F_mpz_t gs_B){
    int k = 1;
 
    int newd;
+   long prev_mbits = bits;
 
    if (bits > new_size){
       full_prec = 0;
@@ -4149,23 +4150,23 @@ int U_LLL_with_removal(F_mpz_mat_t FM, long new_size, F_mpz_t gs_B){
 
          F_mpz_mat_window_init(U, big_FM, 0, 0, big_FM->r, r);
 
-         F_mpz_mat_mul_classical(full_U, U, full_U);
-
          is_U_I = F_mpz_mat_equal(U, I);
 
 //do some truncating
-         F_mpz_mat_mul_classical(trunc_data, full_U, full_data);
+         F_mpz_mat_mul_classical(full_data, U, full_data);
 
-         mbits = FLINT_ABS(F_mpz_mat_max_bits(trunc_data));
+         mbits = FLINT_ABS(F_mpz_mat_max_bits(full_data));
 //make this condition better?
-         if ( ( (mbits - new_size) > 0) &&  ( mbits <= bits - (k-2)*new_size ) && (is_U_I == 0))
-		 {
-            F_mpz_mat_resize(trunc_data, full_data->r, full_data->c);
-			F_mpz_mat_div_2exp(trunc_data, full_data, (ulong) (mbits - new_size));
+         if ( ( (mbits - new_size) > 0) &&  ( mbits <= prev_mbits - (long)(new_size/4) ) && (is_U_I == 0)){
+            F_mpz_mat_div_2exp(trunc_data, full_data, (ulong) (mbits - new_size));
+          //  F_mpz_mat_mul_2exp(trunc_data, trunc_data, (ulong) (new_size*2));
          }
          else{
+     //       printf(" the mbits business == %d\n", ( mbits <= prev_mbits - (long)(new_size/4)));
             full_prec = 1;
          }
+
+         prev_mbits = mbits;
 
          if (full_prec == 1){
 //can switch to FM, no need for a new identity
