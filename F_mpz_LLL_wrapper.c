@@ -4173,7 +4173,7 @@ int U_LLL_with_removal(F_mpz_mat_t FM, long new_size, F_mpz_t gs_B){
 //can switch to FM, no need for a new identity
             for ( i = 0; i < r; i++){
                for (j = 0; j < c; j++)
-                  F_mpz_set(FM->rows[i]+j, trunc_data->rows[i] + j);
+                  F_mpz_set(FM->rows[i]+j, full_data->rows[i] + j);
             }
          }
          else{
