@@ -7967,6 +7967,8 @@ printf(" maybe here\n");
       }
    }
 printf("nope not there trial_factors->num_factors = %ld\n", trial_factors->num_factors);
+
+F_mpz_poly_factor_print(trial_factors); printf(" was trial_factors\n");
    F_mpz_poly_t f,Q,R;
    F_mpz_poly_init(f);
    F_mpz_poly_init(Q);
