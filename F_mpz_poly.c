@@ -7628,7 +7628,7 @@ void F_mpz_poly_factor(F_mpz_poly_factor_t final_fac, F_mpz_t cong, F_mpz_poly_t
    if (deflation > 1) printf("deflation of %ld\n", deflation);
 
 //FIXME: turning off deflation
-//deflation = 1;
+deflation = 1;
 
    if (deflation == 1)
    {
