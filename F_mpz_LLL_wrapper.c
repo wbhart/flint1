@@ -2799,6 +2799,7 @@ int knapsack_LLL_wrapper_with_removal(F_mpz_mat_t B, F_mpz_t gs_B){
       res = LLL_d_heuristic_with_removal(B, gs_B);
 
    if (res == -1){ //Now try the mpfr version
+      printf("called mpfr!!\n");
       res = LLL_mpfr_with_removal(B, gs_B);
    }
 
