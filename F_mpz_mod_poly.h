@@ -132,6 +132,8 @@ void F_mpz_mod_poly_to_F_mpz_poly(F_mpz_poly_t poly, const F_mpz_mod_poly_t F_po
 
 void zmod_poly_to_F_mpz_mod_poly(F_mpz_mod_poly_t fpol, const zmod_poly_t zpol);
 
+void F_mpz_mod_poly_to_zmod_poly(zmod_poly_t zpol, const F_mpz_mod_poly_t fpol);
+
 /****************************************************************************
 
    Attach
@@ -259,6 +261,8 @@ void F_mpz_mod_poly_print(F_mpz_mod_poly_t poly)
 
 void F_mpz_mod_poly_left_shift(F_mpz_mod_poly_t res, const F_mpz_mod_poly_t poly, const ulong n);
 
+void F_mpz_mod_poly_right_shift(F_mpz_mod_poly_t res, const F_mpz_mod_poly_t poly, const ulong n);
+
 /****************************************************************************
 
    Add/sub
@@ -307,9 +311,36 @@ void F_mpz_mod_poly_div_divconquer_recursive(F_mpz_mod_poly_t Q, F_mpz_mod_poly_
 
 void F_mpz_mod_poly_divrem_divconquer(F_mpz_mod_poly_t Q, F_mpz_mod_poly_t R, const F_mpz_mod_poly_t A, const F_mpz_mod_poly_t B);
 
-void F_mpz_mod_poly_rem(F_mpz_mod_poly_t R, F_mpz_mod_poly_t A, F_mpz_mod_poly_t B);
+static inline
+void F_mpz_mod_poly_divrem(F_mpz_mod_poly_t Q, F_mpz_mod_poly_t R, const F_mpz_mod_poly_t A, const F_mpz_mod_poly_t B)
+{
+   F_mpz_mod_poly_divrem_divconquer(Q, R, A, B);
+}
 
-void F_mpz_mod_poly_mulmod( F_mpz_mod_poly_t res, F_mpz_mod_poly_t A, F_mpz_mod_poly_t B, F_mpz_mod_poly_t C);
+static inline
+void F_mpz_mod_poly_rem(F_mpz_mod_poly_t R, F_mpz_mod_poly_t A, F_mpz_mod_poly_t B)
+{
+   F_mpz_mod_poly_t Q;
+   F_mpz_mod_poly_init(Q, A->P);
+
+   F_mpz_mod_poly_divrem(Q, R, A, B);
+
+   F_mpz_mod_poly_clear(Q);
+}
+
+static inline
+void F_mpz_mod_poly_mulmod( F_mpz_mod_poly_t res, F_mpz_mod_poly_t A, F_mpz_mod_poly_t B, F_mpz_mod_poly_t C)
+{
+
+   F_mpz_mod_poly_t Q;
+   F_mpz_mod_poly_init(Q, A->P);
+
+   F_mpz_mod_poly_mul(Q, A, B);
+   F_mpz_mod_poly_rem(res, Q, C);
+
+   F_mpz_mod_poly_clear(Q);
+}
+
 
 #ifdef __cplusplus
  }

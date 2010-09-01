@@ -335,6 +335,38 @@ int test_F_mpz_get_d_2exp()
    return result;
 }
 
+int test_F_mpz_set_d_2exp()
+{
+   double fd;
+   F_mpz_t f1, f2;
+   int result = 1;
+   ulong bits, expf;
+  
+   ulong count1;
+   for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   {
+      F_mpz_init2(f1, z_randint(10));
+      F_mpz_init2(f2, z_randint(10));
+      
+      bits = z_randint(FLINT_D_BITS - 1) + 1;
+      F_mpz_test_random(f1, bits);
+           
+		fd = F_mpz_get_d_2exp(&expf, f1);
+		F_mpz_set_d_2exp(f2, fd, expf);
+
+      result = (F_mpz_equal(f1, f2)); 
+		if (!result) 
+		{
+			printf("Error: bits = %ld, fd = %f, expf = %ld\n", bits, fd, expf);
+		}
+          
+      F_mpz_clear(f1);
+      F_mpz_clear(f2);
+   }
+      
+   return result;
+}
+
 int test_F_mpz_getset_limbs()
 {
    F_mpz_t f1, f2;
@@ -2290,6 +2322,393 @@ int test_F_mpz_mod()
    return result;
 }
 
+int test_F_mpz_smod()
+{
+   mpz_t m1, m2, m3, m4;
+   F_mpz_t f1, f2, f3;
+   int result = 1;
+   ulong bits, bits2;
+   
+   mpz_init(m1); 
+   mpz_init(m2); 
+   mpz_init(m3); 
+   mpz_init(m4); 
+
+   ulong count1;
+   for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   {
+      F_mpz_init(f1);
+      F_mpz_init(f2);
+      F_mpz_init(f3);
+
+      bits = z_randint(200) + 1;
+      F_mpz_test_random(f1, bits);
+      bits2 = z_randint(200) + 1;
+      F_mpz_test_random(f2, bits2);
+      F_mpz_abs(f2, f2);
+      if (F_mpz_is_zero(f2)) 
+			F_mpz_set_ui(f2, 1L);
+           
+      F_mpz_get_mpz(m1, f1);
+      F_mpz_get_mpz(m2, f2);
+		
+		F_mpz_smod(f3, f1, f2);
+		if (F_mpz_sgn(f3) < 0)
+         F_mpz_add(f3, f3, f2);
+      F_mpz_get_mpz(m3, f3);
+      mpz_mod(m4, m1, m2);
+          
+      result = (mpz_cmp(m4, m3) == 0); 
+		if (!result) 
+		{
+			gmp_printf("Error: bits = %ld, bits2 = %ld, m1 = %Zd, m2 = %Zd, m3 = %Zd, m4 = %Zd\n", bits, bits2, m1, m2, m3, m4);
+		}
+          
+      F_mpz_clear(f1);
+      F_mpz_clear(f2);
+      F_mpz_clear(f3);
+   }
+   
+   // check aliasing of operands 1 and 2
+	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   {
+      F_mpz_init(f1);
+      F_mpz_init(f2);
+      
+		bits = z_randint(200) + 1;
+      F_mpz_test_random(f1, bits);
+      bits2 = z_randint(200) + 1;
+      F_mpz_test_random(f2, bits2);
+      F_mpz_abs(f2, f2);
+      if (F_mpz_is_zero(f2)) 
+			F_mpz_set_ui(f2, 1L);
+           
+      F_mpz_get_mpz(m1, f1);
+      F_mpz_get_mpz(m2, f2);
+      
+		F_mpz_smod(f1, f1, f2);
+		if (F_mpz_sgn(f1) < 0)
+         F_mpz_add(f1, f1, f2);
+      F_mpz_get_mpz(m3, f1);
+      mpz_mod(m4, m1, m2);
+
+      result = (mpz_cmp(m3, m4) == 0); 
+		if (!result) 
+		{
+			gmp_printf("Error: bits = %ld, bits2 = %ld, m1 = %Zd, m2 = %Zd, m3 = %Zd, m4 = %Zd\n", bits, bits2, m1, m2, m3, m4);
+		}
+          
+      F_mpz_clear(f1);
+      F_mpz_clear(f2);
+   }
+
+   // check aliasing of operands 1 and 3
+	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   {
+      F_mpz_init(f1);
+      F_mpz_init(f2);
+      F_mpz_init(f3);
+      
+		bits = z_randint(200) + 1;
+      F_mpz_test_random(f1, bits);
+      bits2 = z_randint(200) + 1;
+      F_mpz_test_random(f2, bits2);
+      F_mpz_abs(f2, f2);
+      if (F_mpz_is_zero(f2)) 
+			F_mpz_set_ui(f2, 1L);
+           
+      F_mpz_get_mpz(m1, f1);
+      F_mpz_get_mpz(m2, f2);
+      
+		F_mpz_set(f3, f2);
+      F_mpz_smod(f2, f1, f2);
+		if (F_mpz_sgn(f2) < 0)
+         F_mpz_add(f2, f2, f3);
+      F_mpz_get_mpz(m3, f2);
+      mpz_mod(m4, m1, m2);
+
+      result = (mpz_cmp(m3, m4) == 0); 
+		if (!result) 
+		{
+			gmp_printf("Error: bits = %ld, bits2 = %ld, m1 = %Zd, m2 = %Zd, m3 = %Zd, m4 = %Zd\n", bits, bits2, m1, m2, m3, m4);
+		}
+          
+      F_mpz_clear(f1);
+      F_mpz_clear(f2);
+      F_mpz_clear(f3);
+   }
+
+   mpz_clear(m1);
+   mpz_clear(m2);
+   mpz_clear(m3);
+   mpz_clear(m4);
+   
+   return result;
+}
+
+int test_F_mpz_mod_preinv()
+{
+   mpz_t m1, m2, m3, m4;
+   F_mpz_t f1, f2, f3;
+   int result = 1;
+   ulong bits, bits2;
+   
+   mpz_init(m1); 
+   mpz_init(m2); 
+   mpz_init(m3); 
+   mpz_init(m4); 
+
+   ulong count1;
+   for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   {
+      F_mpz_init(f1);
+      F_mpz_init(f2);
+      F_mpz_init(f3);
+
+      bits = z_randint(200) + 1;
+      F_mpz_test_random(f1, bits);
+      bits2 = z_randint(200) + 1;
+      F_mpz_test_random(f2, bits2);
+      F_mpz_abs(f2, f2);
+      if (F_mpz_is_zero(f2)) 
+			F_mpz_set_ui(f2, 1L);
+           
+      F_mpz_get_mpz(m1, f1);
+      F_mpz_get_mpz(m2, f2);
+
+      mp_ptr finv = F_mpz_precompute_inverse(f2);
+		
+		F_mpz_mod_preinv(f3, f1, f2, finv);
+		F_mpz_get_mpz(m3, f3);
+      mpz_mod(m4, m1, m2);
+          
+      result = (mpz_cmp(m4, m3) == 0); 
+		if (!result) 
+		{
+			gmp_printf("Error: bits = %ld, bits2 = %ld, m1 = %Zd, m2 = %Zd, m3 = %Zd, m4 = %Zd\n", bits, bits2, m1, m2, m3, m4);
+		}
+      
+      F_mpz_preinv_clear(finv);
+
+      F_mpz_clear(f1);
+      F_mpz_clear(f2);
+      F_mpz_clear(f3);
+   }
+   
+	// check aliasing of operands 1 and 2
+	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   {
+      F_mpz_init(f1);
+      F_mpz_init(f2);
+      
+		bits = z_randint(200) + 1;
+      F_mpz_test_random(f1, bits);
+      bits2 = z_randint(200) + 1;
+      F_mpz_test_random(f2, bits2);
+      F_mpz_abs(f2, f2);
+      if (F_mpz_is_zero(f2)) 
+			F_mpz_set_ui(f2, 1L);
+           
+      F_mpz_get_mpz(m1, f1);
+      F_mpz_get_mpz(m2, f2);
+      
+		mp_ptr finv = F_mpz_precompute_inverse(f2);
+		
+		F_mpz_mod_preinv(f1, f1, f2, finv);
+		F_mpz_get_mpz(m3, f1);
+      mpz_mod(m4, m1, m2);
+
+      result = (mpz_cmp(m3, m4) == 0); 
+		if (!result) 
+		{
+			gmp_printf("Error: bits = %ld, bits2 = %ld, m1 = %Zd, m2 = %Zd, m3 = %Zd, m4 = %Zd\n", bits, bits2, m1, m2, m3, m4);
+		}
+      
+      F_mpz_preinv_clear(finv);
+
+      F_mpz_clear(f1);
+      F_mpz_clear(f2);
+   }
+
+   // check aliasing of operands 1 and 3
+	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   {
+      F_mpz_init(f1);
+      F_mpz_init(f2);
+      
+		bits = z_randint(200) + 1;
+      F_mpz_test_random(f1, bits);
+      bits2 = z_randint(200) + 1;
+      F_mpz_test_random(f2, bits2);
+      F_mpz_abs(f2, f2);
+      if (F_mpz_is_zero(f2)) 
+			F_mpz_set_ui(f2, 1L);
+           
+      F_mpz_get_mpz(m1, f1);
+      F_mpz_get_mpz(m2, f2);
+      
+		mp_ptr finv = F_mpz_precompute_inverse(f2);
+		
+		F_mpz_mod_preinv(f2, f1, f2, finv);
+		F_mpz_get_mpz(m3, f2);
+      mpz_mod(m4, m1, m2);
+
+      result = (mpz_cmp(m3, m4) == 0); 
+		if (!result) 
+		{
+			gmp_printf("Error: bits = %ld, bits2 = %ld, m1 = %Zd, m2 = %Zd, m3 = %Zd, m4 = %Zd\n", bits, bits2, m1, m2, m3, m4);
+		}
+          
+      F_mpz_preinv_clear(finv);
+      
+      F_mpz_clear(f1);
+      F_mpz_clear(f2);
+   }
+
+   mpz_clear(m1);
+   mpz_clear(m2);
+   mpz_clear(m3);
+   mpz_clear(m4);
+   
+   return result;
+}
+
+int test_F_mpz_smod_preinv()
+{
+   mpz_t m1, m2, m3, m4;
+   F_mpz_t f1, f2, f3;
+   int result = 1;
+   ulong bits, bits2;
+   
+   mpz_init(m1); 
+   mpz_init(m2); 
+   mpz_init(m3); 
+   mpz_init(m4); 
+
+   ulong count1;
+   for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   {
+      F_mpz_init(f1);
+      F_mpz_init(f2);
+      F_mpz_init(f3);
+
+      bits = z_randint(200) + 1;
+      F_mpz_test_random(f1, bits);
+      bits2 = z_randint(200) + 1;
+      F_mpz_test_random(f2, bits2);
+      F_mpz_abs(f2, f2);
+      if (F_mpz_is_zero(f2)) 
+			F_mpz_set_ui(f2, 1L);
+           
+      F_mpz_get_mpz(m1, f1);
+      F_mpz_get_mpz(m2, f2);
+
+      mp_ptr finv = F_mpz_precompute_inverse(f2);
+		
+		F_mpz_smod_preinv(f3, f1, f2, finv);
+		if (F_mpz_sgn(f3) < 0)
+         F_mpz_add(f3, f3, f2);
+      F_mpz_get_mpz(m3, f3);
+      mpz_mod(m4, m1, m2);
+          
+      result = (mpz_cmp(m4, m3) == 0); 
+		if (!result) 
+		{
+			gmp_printf("Error: bits = %ld, bits2 = %ld, m1 = %Zd, m2 = %Zd, m3 = %Zd, m4 = %Zd\n", bits, bits2, m1, m2, m3, m4);
+		}
+      
+      F_mpz_preinv_clear(finv);
+
+      F_mpz_clear(f1);
+      F_mpz_clear(f2);
+      F_mpz_clear(f3);
+   }
+   
+	// check aliasing of operands 1 and 2
+	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   {
+      F_mpz_init(f1);
+      F_mpz_init(f2);
+      
+		bits = z_randint(200) + 1;
+      F_mpz_test_random(f1, bits);
+      bits2 = z_randint(200) + 1;
+      F_mpz_test_random(f2, bits2);
+      F_mpz_abs(f2, f2);
+      if (F_mpz_is_zero(f2)) 
+			F_mpz_set_ui(f2, 1L);
+           
+      F_mpz_get_mpz(m1, f1);
+      F_mpz_get_mpz(m2, f2);
+      
+		mp_ptr finv = F_mpz_precompute_inverse(f2);
+		
+		F_mpz_smod_preinv(f1, f1, f2, finv);
+		if (F_mpz_sgn(f1) < 0)
+         F_mpz_add(f1, f1, f2);
+      F_mpz_get_mpz(m3, f1);
+      mpz_mod(m4, m1, m2);
+
+      result = (mpz_cmp(m3, m4) == 0); 
+		if (!result) 
+		{
+			gmp_printf("Error: bits = %ld, bits2 = %ld, m1 = %Zd, m2 = %Zd, m3 = %Zd, m4 = %Zd\n", bits, bits2, m1, m2, m3, m4);
+		}
+      
+      F_mpz_preinv_clear(finv);
+
+      F_mpz_clear(f1);
+      F_mpz_clear(f2);
+   }
+
+   // check aliasing of operands 1 and 3
+	for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   {
+      F_mpz_init(f1);
+      F_mpz_init(f2);
+      F_mpz_init(f3);
+      
+		bits = z_randint(200) + 1;
+      F_mpz_test_random(f1, bits);
+      bits2 = z_randint(200) + 1;
+      F_mpz_test_random(f2, bits2);
+      F_mpz_abs(f2, f2);
+      if (F_mpz_is_zero(f2)) 
+			F_mpz_set_ui(f2, 1L);
+           
+      F_mpz_get_mpz(m1, f1);
+      F_mpz_get_mpz(m2, f2);
+      
+		mp_ptr finv = F_mpz_precompute_inverse(f2);
+		
+		F_mpz_set(f3, f2);
+      F_mpz_smod_preinv(f2, f1, f2, finv);
+		if (F_mpz_sgn(f2) < 0)
+         F_mpz_add(f2, f2, f3);
+      F_mpz_get_mpz(m3, f2);
+      mpz_mod(m4, m1, m2);
+
+      result = (mpz_cmp(m3, m4) == 0); 
+		if (!result) 
+		{
+			gmp_printf("Error: bits = %ld, bits2 = %ld, m1 = %Zd, m2 = %Zd, m3 = %Zd, m4 = %Zd\n", bits, bits2, m1, m2, m3, m4);
+		}
+          
+      F_mpz_preinv_clear(finv);
+      
+      F_mpz_clear(f1);
+      F_mpz_clear(f2);
+      F_mpz_clear(f3);
+   }
+
+   mpz_clear(m1);
+   mpz_clear(m2);
+   mpz_clear(m3);
+   mpz_clear(m4);
+   
+   return result;
+}
+
 int test_F_mpz_fdiv_qr()
 {
    mpz_t m1, m2, m3, m4, m5, m6;
@@ -3489,6 +3908,7 @@ void F_mpz_poly_test_all()
 #endif
    RUN_TEST(F_mpz_getset_limbs); 
    RUN_TEST(F_mpz_get_d_2exp); 
+   RUN_TEST(F_mpz_set_d_2exp); 
    RUN_TEST(F_mpz_set); 
    RUN_TEST(F_mpz_equal); 
    RUN_TEST(F_mpz_swap); 
@@ -3508,6 +3928,9 @@ void F_mpz_poly_test_all()
    RUN_TEST(F_mpz_submul); 
    RUN_TEST(F_mpz_mod_ui); 
    RUN_TEST(F_mpz_mod); 
+   RUN_TEST(F_mpz_smod); 
+   RUN_TEST(F_mpz_mod_preinv); 
+   RUN_TEST(F_mpz_smod_preinv); 
    RUN_TEST(F_mpz_fdiv_qr); 
    RUN_TEST(F_mpz_pow_ui); 
    RUN_TEST(F_mpz_gcd); 

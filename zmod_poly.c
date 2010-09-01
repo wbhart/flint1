@@ -7091,6 +7091,9 @@ void zmod_poly_factor_berlekamp(zmod_poly_factor_t factors, zmod_poly_t f)
 
 ulong zmod_poly_deflation(const zmod_poly_t input)
 {
+   if (input->length == 0)
+      return 0;
+   
    ulong deflation, i;
    ulong coeff = 1;
    
@@ -7114,6 +7117,12 @@ ulong zmod_poly_deflation(const zmod_poly_t input)
 
 void zmod_poly_deflate(zmod_poly_t result, const zmod_poly_t input, ulong deflation)
 {
+   if (input->length == 0) 
+   {
+      zmod_poly_zero(result);
+      return;
+   }
+   
    ulong res_length = (input->length - 1)/deflation + 1;
    ulong i;
    
@@ -7126,10 +7135,18 @@ void zmod_poly_deflate(zmod_poly_t result, const zmod_poly_t input, ulong deflat
 
 void zmod_poly_inflate(zmod_poly_t result, const zmod_poly_t input, ulong deflation)
 {
+   if (input->length == 0) 
+   {
+      zmod_poly_zero(result);
+      return;
+   }
+ 
    ulong res_length = (input->length - 1)*deflation + 1;
    ulong j;
 
    zmod_poly_fit_length(result, res_length);
+   result->length = 0;
+   
    for (j = 0; j < input->length; j++)
       zmod_poly_set_coeff_ui(result, j*deflation, input->coeffs[j]);  
 

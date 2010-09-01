@@ -92,7 +92,7 @@ void mpfr_mat_print(__mpfr_struct ** B, int d, int n)
    printf("]\n"); 
 }
 
-int mpfr_vec_scalar_product(mpfr_t sp, __mpfr_struct * vec1, __mpfr_struct * vec2, int n)
+int _mpfr_vec_scalar_product(mpfr_t sp, __mpfr_struct * vec1, __mpfr_struct * vec2, int n)
 {
   mpfr_t tmp, tmp2;
   mpfr_init(tmp);
@@ -109,8 +109,8 @@ int mpfr_vec_scalar_product(mpfr_t sp, __mpfr_struct * vec1, __mpfr_struct * vec
      mpfr_add(sp, sp, tmp, GMP_RNDN);
   }
 
-  mpfr_vec_norm(tmp, vec1, n);
-  mpfr_vec_norm(tmp2, vec2, n);
+  _mpfr_vec_norm(tmp, vec1, n);
+  _mpfr_vec_norm(tmp2, vec2, n);
   mpfr_mul(tmp, tmp, tmp2, GMP_RNDN);
   mpfr_div_2ui(tmp, tmp, 70, GMP_RNDN);
   mpfr_mul(tmp2, sp, sp, GMP_RNDN);
@@ -124,7 +124,7 @@ int mpfr_vec_scalar_product(mpfr_t sp, __mpfr_struct * vec1, __mpfr_struct * vec
   return res;
 } 
 
-void mpfr_vec_norm(mpfr_t norm, __mpfr_struct * vec, int n)
+void _mpfr_vec_norm(mpfr_t norm, __mpfr_struct * vec, int n)
 {
   mpfr_t tmp;
   mpfr_init(tmp);
@@ -143,7 +143,7 @@ void mpfr_vec_norm(mpfr_t norm, __mpfr_struct * vec, int n)
   return;
 }
 
-int mpfr_vec_scalar_product2(mpfr_t sp, __mpfr_struct * vec1, __mpfr_struct * vec2, int n, mp_prec_t prec)
+int _mpfr_vec_scalar_product2(mpfr_t sp, __mpfr_struct * vec1, __mpfr_struct * vec2, int n, mp_prec_t prec)
 {
   mpfr_t tmp, tmp2;
   mpfr_init2(tmp, prec);
@@ -159,8 +159,8 @@ int mpfr_vec_scalar_product2(mpfr_t sp, __mpfr_struct * vec1, __mpfr_struct * ve
      mpfr_add(sp, sp, tmp, GMP_RNDN);
   }
 
-  mpfr_vec_norm(tmp, vec1, n);
-  mpfr_vec_norm(tmp2, vec2, n);
+  _mpfr_vec_norm(tmp, vec1, n);
+  _mpfr_vec_norm(tmp2, vec2, n);
   mpfr_mul(tmp, tmp, tmp2, GMP_RNDN);
   mpfr_div_2ui(tmp, tmp, 70, GMP_RNDN);
   mpfr_mul(tmp2, sp, sp, GMP_RNDN);
@@ -174,7 +174,7 @@ int mpfr_vec_scalar_product2(mpfr_t sp, __mpfr_struct * vec1, __mpfr_struct * ve
   return res;
 } 
 
-void mpfr_vec_norm2(mpfr_t norm, __mpfr_struct * vec, int n, mp_prec_t prec)
+void _mpfr_vec_norm2(mpfr_t norm, __mpfr_struct * vec, int n, mp_prec_t prec)
 {
   mpfr_t tmp;
   mpfr_init2(tmp, prec);

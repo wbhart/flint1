@@ -267,6 +267,12 @@ void F_mpz_get_mpz(mpz_t x, const F_mpz_t f);
 */
 double F_mpz_get_d_2exp(long * exp, const F_mpz_t f);
 
+/**
+   \fn     void F_mpz_set_d_2exp(F_mpz_t output, double mant, long exp)
+   \brief  Set output to the integer closest to mant*2^exp.
+*/
+void F_mpz_set_d_2exp(F_mpz_t output, double mant, long exp);
+
 /** 
    \fn     void F_mpz_set_mpz(F_mpz_t f, const mpz_t x)
    \brief  Sets f to the given mpz_t.
@@ -572,6 +578,45 @@ ulong F_mpz_mod_ui(F_mpz_t f, const F_mpz_t g, const ulong h);
 void F_mpz_mod(F_mpz_t f, const F_mpz_t g, const F_mpz_t h);
 
 /** 
+   \fn     mp_limb_t * F_mpz_precompute_inverse(F_mpz_t p)
+   \brief  Returns a precomputed inverse of p (which must be positive)
+           for use with preinv functions.
+*/
+mp_ptr F_mpz_precompute_inverse(F_mpz_t p);
+
+/** 
+   \fn     void F_mpz_mod_preinv(F_mpz_t res, F_mpz_t f, 
+                                             F_mpz_t p, mp_srcptr pinv)
+   \brief  Given a precomputed inverse pinv of p, computes f mod p.
+*/
+void F_mpz_mod_preinv(F_mpz_t res, F_mpz_t f, F_mpz_t p, mp_srcptr pinv);
+
+/** 
+   \fn     void F_mpz_preinv_clear(mp_ptr pinv)
+   \brief  Free the memory allocated for a precomputed inverse.
+*/
+static inline
+void F_mpz_preinv_clear(mp_ptr pinv)
+{
+   free(pinv);
+}
+
+/**
+   \fn     void F_mpz_smod(F_mpz_t res, F_mpz_t f, F_mpz_t p)
+   \brief  Computes res in (-p/2, p/2] which is equivalent to f mod p.
+           We require that p is positive.
+*/
+void F_mpz_smod(F_mpz_t res, F_mpz_t f, F_mpz_t p);
+
+/** 
+   \fn     void F_mpz_smod_preinv(F_mpz_t res, F_mpz_t f, 
+                                               F_mpz_t p, mp_srcptr pinv)
+   \brief  Given a precomputed inverse pinv of p, computes f smod p.
+           We require that p is positive.
+*/
+void F_mpz_smod_preinv(F_mpz_t res, F_mpz_t f, F_mpz_t p, mp_srcptr pinv);
+
+/** 
    \fn     void F_mpz_gcd(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
    \brief  Set f to the greatest common divisor of g and h.
 */
@@ -710,34 +755,6 @@ void F_mpz_multi_CRT_ui_unsigned(F_mpz_t output, ulong * residues,
 */
 void F_mpz_multi_CRT_ui(F_mpz_t output, ulong * residues, 
            F_mpz_comb_t comb, F_mpz ** comb_temp, F_mpz_t temp, F_mpz_t temp2);
-
-/*============================================================================
-
-   New and potentially Naive F_mpz functions (no tests)
-
-============================================================================*/
-
-/**
-   A function for finding the integer closest to mant*2^exp, might not be 
-      optimized... not sure in fact... needs testing, but will do for my rough
-      bounds.
-*/
-void F_mpz_set_d_2exp(F_mpz_t output, double mant, long exp);
-
-/**
-   Computes the number in (p/2, p/2] which is equivalent to f mod p.  
-      Calls F_mpz_mod then checks to see if it needs to subtract.  Might be sped up
-      by assuming already reduced mod p...
-*/
-void F_mpz_smod(F_mpz_t res, F_mpz_t f, F_mpz_t p);
-
-#ifndef __TINYC__
-/**
-   \fn     void F_mpz_2exp_get_mpfr(mpfr_t x, const F_mpz_t f, long exp)
-   \brief  returns an mpfr approx = f * 2^exp
-*/
-void F_mpz_2exp_get_mpfr(mpfr_t x, const F_mpz_t f, long exp);
-#endif
 
 #ifdef __cplusplus
   }

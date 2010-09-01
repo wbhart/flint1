@@ -48,13 +48,13 @@ void mpfr_mat_clear(__mpfr_struct ** B, int d, int n);
 
 void mpfr_mat_print(__mpfr_struct ** B, int d, int n);
 
-int mpfr_vec_scalar_product(mpfr_t sp, __mpfr_struct * vec1, __mpfr_struct * vec2, int n);
+int _mpfr_vec_scalar_product(mpfr_t sp, __mpfr_struct * vec1, __mpfr_struct * vec2, int n);
 
-void mpfr_vec_norm(mpfr_t norm, __mpfr_struct * vec, int n);
+void _mpfr_vec_norm(mpfr_t norm, __mpfr_struct * vec, int n);
 
-int mpfr_vec_scalar_product2(mpfr_t sp, __mpfr_struct * vec1, __mpfr_struct * vec2, int n, mp_prec_t prec);
+int _mpfr_vec_scalar_product2(mpfr_t sp, __mpfr_struct * vec1, __mpfr_struct * vec2, int n, mp_prec_t prec);
 
-void mpfr_vec_norm2(mpfr_t norm, __mpfr_struct * vec, int n, mp_prec_t prec);
+void _mpfr_vec_norm2(mpfr_t norm, __mpfr_struct * vec, int n, mp_prec_t prec);
 
 #ifdef __cplusplus
  }

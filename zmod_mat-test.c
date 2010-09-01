@@ -297,7 +297,7 @@ int test_zmod_mat_add()
       mpz_mat_add(m_mat3, m_mat1, m_mat2);
       mpz_mat_to_zmod_mat(z_mat4, m_mat3);
       zmod_mat_add(z_mat3, z_mat1, z_mat2);
-
+      
       result = (zmod_mat_equal(z_mat3, z_mat4));
 
       if (!result)
@@ -315,7 +315,7 @@ int test_zmod_mat_add()
       mpz_mat_clear(m_mat2);
       mpz_mat_clear(m_mat3);
    }
-
+   
    // alias 1 and 2
    for (ulong count1 = 0; count1 < 1000; count1++)
    {
@@ -363,7 +363,7 @@ int test_zmod_mat_add()
       mpz_mat_clear(m_mat2);
       mpz_mat_clear(m_mat3);
    }
-
+   
    // alias 1 and 3
    for (ulong count1 = 0; count1 < 1000; count1++)
    {
@@ -411,7 +411,7 @@ int test_zmod_mat_add()
       mpz_mat_clear(m_mat2);
       mpz_mat_clear(m_mat3);
    }
-
+   
    // alias 2 and 3
    for (ulong count1 = 0; count1 < 1000; count1++)
    {
