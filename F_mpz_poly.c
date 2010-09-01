@@ -7470,13 +7470,13 @@ printf(" first two clds took %f seconds\n", (double) cld_data_total/ (double) CL
          else if (solved_yet == 5){
 //This is where we increase the Hensel Accuracy and go back
             hensel_start = clock();
-            prev_exp = _F_mpz_poly_continue_hensel_lift(lifted_fac, link, v, w, f, prev_exp, a, 4*a, p, r);
+            prev_exp = _F_mpz_poly_continue_hensel_lift(lifted_fac, link, v, w, f, prev_exp, a, 2*a, p, r);
             hensel_stop = clock();
             hensel_total = hensel_total + hensel_stop - hensel_start;
 
             printf("hensel lifted for %f seconds so far\n", (double) hensel_total / (double) CLOCKS_PER_SEC);
 
-            a = 4*a;
+            a = 2*a;
             solved_yet = 0;
             printf(" solved_yet == 5?\n");
          }
