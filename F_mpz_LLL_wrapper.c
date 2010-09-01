@@ -4150,6 +4150,8 @@ int U_LLL_with_removal(F_mpz_mat_t FM, long new_size, F_mpz_t gs_B){
 
          F_mpz_mat_window_init(U, big_FM, 0, 0, big_FM->r, r);
 
+         printf("U bits == %ld\n", FLINT_ABS(F_mpz_mat_max_bits(U)));
+
          is_U_I = F_mpz_mat_equal(U, I);
 
 //do some truncating
