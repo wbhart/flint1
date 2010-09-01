@@ -8220,7 +8220,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
 //            F_mpz_add_ui(B, B, r/2);
 //            cexpo[r + col_cnt] = 0;
    lll_start = clock();
-            newd = U_LLL_with_removal(M, 50L, B);
+            newd = U_LLL_with_removal(M, 250L, B);
    lll_stop = clock();
    
    lll_total = lll_total + lll_stop - lll_start;
