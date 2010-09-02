@@ -66,6 +66,9 @@
 
    double convert_start, convert_stop;
    double convert_total = 0.0;
+
+   double inner_start, inner_stop;
+   double inner_total = 0.0;
 #endif
 
 
@@ -102,7 +105,14 @@ int check_Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
 	   {	  
 	      if (appSP[kappa][j] != appSP[kappa][j]) // if appSP[kappa][j] == NAN
 	      {
+#if PROFILE
+   inner_start = get_cycle_counter();
+#endif
 	         appSP[kappa][j] = _d_vec_scalar_product(appB[kappa], appB[j], n);
+#if PROFILE
+   inner_stop = get_cycle_counter();
+   inner_total = inner_total + inner_stop - inner_start;
+#endif
 	      }
 	  	  
          if (j > zeros + 2)
@@ -312,7 +322,14 @@ int check_Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
 
    if (appSP[kappa][kappa] != appSP[kappa][kappa]) 
    {
+#if PROFILE
+   inner_start = get_cycle_counter();
+#endif
       appSP[kappa][kappa] = _d_vec_norm(appB[kappa], n);
+#if PROFILE
+   inner_stop = get_cycle_counter();
+   inner_total = inner_total + inner_stop - inner_start;
+#endif
    }
    s[zeros + 1] = appSP[kappa][kappa];
   
@@ -359,9 +376,16 @@ int check_Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, 
 	   {	  
 	      if (appSP[kappa][j] != appSP[kappa][j]) // if appSP[kappa][j] == NAN
 	      {
+#if PROFILE
+   inner_start = get_cycle_counter();
+#endif
 //### This is different -----
             appSP[kappa][j] = heuristic_scalar_product(appB[kappa], appB[j], n, B, kappa, j, expo[kappa]+expo[j]);
 //---------------------------
+#if PROFILE
+   inner_stop = get_cycle_counter();
+   inner_total = inner_total + inner_stop - inner_start;
+#endif
          }
 	  	  
          if (j > zeros + 2)
@@ -570,7 +594,14 @@ int check_Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, 
    if (appSP[kappa][kappa] != appSP[kappa][kappa]) 
    {
 //### This is different -------
+#if PROFILE
+   inner_start = get_cycle_counter();
+#endif
       appSP[kappa][kappa] = _d_vec_norm(appB[kappa], n);
+#if PROFILE
+   inner_stop = get_cycle_counter();
+   inner_total = inner_total + inner_stop - inner_start;
+#endif
 //-----------------------------
    }
    s[zeros + 1] = appSP[kappa][kappa];
@@ -4361,6 +4392,7 @@ int U_LLL_with_removal(F_mpz_mat_t FM, long new_size, F_mpz_t gs_B){
    printf(" spent a total of %f seconds on regular Babai\n", (double) babai_total);
    printf(" of which %f cycles spent updating full precision B\n", (double) update_total);
    printf(" of which %f cycles spent converting full precision B\n", (double) convert_total);
+   printf(" of which %f cycles spent computing inner products\n", (double) inner_total);
    printf(" spent a total of %f seconds on advanced Babai\n", (double) adv_babai_total);
 #endif
 
