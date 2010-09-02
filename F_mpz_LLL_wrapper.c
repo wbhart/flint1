@@ -3041,8 +3041,7 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
          if (newvec > newvec_max){
             newvec_max = newvec_max * 2;
             newvec = 0;
-//turning of the advance reduction by setting new_kappa = 2 and not 1
-            new_kappa = 2;
+            new_kappa = 1;
          }
       }
       /* ********************************** */
