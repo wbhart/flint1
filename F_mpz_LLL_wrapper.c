@@ -148,7 +148,7 @@ int check_Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
 	      /* test of the relaxed size-reduction condition */
 	      tmp = fabs(mu[kappa][j]);
 #if PROFILE
-   ldexp_stop = get_cycle_counter();
+   ldexp_start = get_cycle_counter();
 #endif
 	      tmp = ldexp(tmp, expo[kappa] - expo[j]);
 #if PROFILE
