@@ -1310,8 +1310,8 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
    ulong r = col->r;
    ulong B = r + 2;
    ulong bit_r = FLINT_MAX(r, 20);
-//FINDME attempting a slightly larger step   
-   long ISD = F_mpz_bits(P) - bit_r - bit_r;
+   
+   long ISD = F_mpz_bits(P) - bit_r - bit_r/2;
    if (ISD < exp)
       return 0;
 
