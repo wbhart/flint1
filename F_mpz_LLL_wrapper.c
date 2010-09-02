@@ -60,8 +60,8 @@
    clock_t adv_babai_start, adv_babai_stop;
    clock_t adv_babai_total = 0;
 
-   clock_t update_start, update_stop;
-   clock_t update_total = 0;
+   double update_start, update_stop;
+   double update_total = 0.0;
 #endif
 
 
@@ -148,11 +148,11 @@ int check_Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
 			            mu[kappa][k] =  mu[kappa][k] - tmp; 
 			         }
 #if PROFILE
-   update_start = clock();
+   update_start = get_cycle_counter();
 #endif
 		            _F_mpz_vec_sub(B->rows[kappa], B->rows[kappa], B->rows[j], n);
 #if PROFILE
-   update_stop = clock();
+   update_stop = get_cycle_counter();
    update_total = update_total + update_stop - update_start;
 #endif
 		  
@@ -165,11 +165,11 @@ int check_Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
 			         }
 		      
 #if PROFILE
-   update_start = clock();
+   update_start = get_cycle_counter();
 #endif
                   _F_mpz_vec_add(B->rows[kappa], B->rows[kappa], B->rows[j], n); 
 #if PROFILE
-   update_stop = clock();
+   update_stop = get_cycle_counter();
    update_total = update_total + update_stop - update_start;
 #endif
                }
@@ -193,21 +193,21 @@ int check_Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
                   if (xx > 0L)
                   { 
 #if PROFILE
-   update_start = clock();
+   update_start = get_cycle_counter();
 #endif
                      _F_mpz_vec_submul_ui(B->rows[kappa], B->rows[j], n, (ulong) xx);  
 #if PROFILE
-   update_stop = clock();
+   update_stop = get_cycle_counter();
    update_total = update_total + update_stop - update_start;
 #endif
                   } else
                   {
 #if PROFILE
-   update_start = clock();
+   update_start = get_cycle_counter();
 #endif
                      _F_mpz_vec_addmul_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx);  
 #if PROFILE
-   update_stop = clock();
+   update_stop = get_cycle_counter();
    update_total = update_total + update_stop - update_start;
 #endif
                   } 
@@ -228,21 +228,21 @@ int check_Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
 			            if (xx > 0)
                      {
 #if PROFILE
-   update_start = clock();
+   update_start = get_cycle_counter();
 #endif
                         _F_mpz_vec_submul_ui(B->rows[kappa], B->rows[j], n, xx);  
 #if PROFILE
-   update_stop = clock();
+   update_stop = get_cycle_counter();
    update_total = update_total + update_stop - update_start;
 #endif
                      } else
                      {
 #if PROFILE
-   update_start = clock();
+   update_start = get_cycle_counter();
 #endif
                         _F_mpz_vec_addmul_ui(B->rows[kappa], B->rows[j], n, -xx);  
 #if PROFILE
-   update_stop = clock();
+   update_stop = get_cycle_counter();
    update_total = update_total + update_stop - update_start;
 #endif
                      }
@@ -258,21 +258,21 @@ int check_Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
 			            if (xx > 0)
                      {
 #if PROFILE
-   update_start = clock();
+   update_start = get_cycle_counter();
 #endif
                         _F_mpz_vec_submul_2exp_ui(B->rows[kappa], B->rows[j], n, (ulong) xx, exponent);  
 #if PROFILE
-   update_stop = clock();
+   update_stop = get_cycle_counter();
    update_total = update_total + update_stop - update_start;
 #endif
                      } else
                      {
 #if PROFILE
-   update_start = clock();
+   update_start = get_cycle_counter();
 #endif
                         _F_mpz_vec_addmul_2exp_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx, exponent);  
 #if PROFILE
-   update_stop = clock();
+   update_stop = get_cycle_counter();
    update_total = update_total + update_stop - update_start;
 #endif
                      }
@@ -400,11 +400,11 @@ int check_Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, 
 			            mu[kappa][k] =  mu[kappa][k] - tmp; 
 			         }
 #if PROFILE
-   update_start = clock();
+   update_start = get_cycle_counter();
 #endif		      
 		            _F_mpz_vec_sub(B->rows[kappa], B->rows[kappa], B->rows[j], n);
 #if PROFILE
-   update_stop = clock();
+   update_stup = get_cycle_counter();
    update_total = update_total + update_stop - update_start;
 #endif		  
 		         } else          /* otherwise X is -1 */ 
@@ -416,11 +416,11 @@ int check_Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, 
 			         }
 
 #if PROFILE
-   update_start = clock();
+   update_start = get_cycle_counter();
 #endif		      
                   _F_mpz_vec_add(B->rows[kappa], B->rows[kappa], B->rows[j], n); 
 #if PROFILE
-   update_stop = clock();
+   update_stup = get_cycle_counter();
    update_total = update_total + update_stop - update_start;
 #endif
                }
@@ -444,21 +444,21 @@ int check_Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, 
                   if (xx > 0L)
                   { 
 #if PROFILE
-   update_start = clock();
+   update_start = get_cycle_counter();
 #endif
                      _F_mpz_vec_submul_ui(B->rows[kappa], B->rows[j], n, (ulong) xx);  
 #if PROFILE
-   update_stop = clock();
+   update_stup = get_cycle_counter();
    update_total = update_total + update_stop - update_start;
 #endif
                   } else
                   {
 #if PROFILE
-   update_start = clock();
+   update_start = get_cycle_counter();
 #endif
                      _F_mpz_vec_addmul_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx);  
 #if PROFILE
-   update_stop = clock();
+   update_stup = get_cycle_counter();
    update_total = update_total + update_stop - update_start;
 #endif
                   } 
@@ -478,21 +478,21 @@ int check_Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, 
 			            if (xx > 0)
                      {
 #if PROFILE
-   update_start = clock();
+   update_start = get_cycle_counter();
 #endif
                         _F_mpz_vec_submul_ui(B->rows[kappa], B->rows[j], n, xx);  
 #if PROFILE
-   update_stop = clock();
+   update_stup = get_cycle_counter();
    update_total = update_total + update_stop - update_start;
 #endif
                      } else
                      {
 #if PROFILE
-   update_start = clock();
+   update_start = get_cycle_counter();
 #endif
                         _F_mpz_vec_addmul_ui(B->rows[kappa], B->rows[j], n, -xx);  
 #if PROFILE
-   update_stop = clock();
+   update_stup = get_cycle_counter();
    update_total = update_total + update_stop - update_start;
 #endif
                      }
@@ -508,21 +508,21 @@ int check_Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, 
 			            if (xx > 0)
                      {
 #if PROFILE
-   update_start = clock();
+   update_start = get_cycle_counter();
 #endif
                         _F_mpz_vec_submul_2exp_ui(B->rows[kappa], B->rows[j], n, (ulong) xx, exponent);  
 #if PROFILE
-   update_stop = clock();
+   update_stup = get_cycle_counter();
    update_total = update_total + update_stop - update_start;
 #endif
                      } else
                      {
 #if PROFILE
-   update_start = clock();
+   update_start = get_cycle_counter();
 #endif
                         _F_mpz_vec_addmul_2exp_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx, exponent);  
 #if PROFILE
-   update_stop = clock();
+   update_stup = get_cycle_counter();
    update_total = update_total + update_stop - update_start;
 #endif
                      }
@@ -4341,7 +4341,7 @@ int U_LLL_with_removal(F_mpz_mat_t FM, long new_size, F_mpz_t gs_B){
 
 #if PROFILE
    printf(" spent a total of %f seconds on regular Babai\n", (double) babai_total / (double)CLOCKS_PER_SEC);
-   printf(" of which %f seconds spent updating full precision B\n", (double) update_total / (double)CLOCKS_PER_SEC);
+   printf(" of which %f cycles spent updating full precision B\n", (double) update_total);
    printf(" spent a total of %f seconds on advanced Babai\n", (double) adv_babai_total / (double)CLOCKS_PER_SEC);
 #endif
 
