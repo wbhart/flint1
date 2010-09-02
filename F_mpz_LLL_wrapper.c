@@ -427,7 +427,7 @@ int check_Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, 
       test = 0;
             
       loops++;
-      if (loops > 10)
+      if (loops > 3)
          return -1;
 
       /* ************************************** */
