@@ -55,11 +55,11 @@
 
 #if PROFILE
 //LLL profiles are on, checking babai total, time spent updating B-- but not including the time in advanced babai which is totaled
-   clock_t babai_start, babai_stop;
-   clock_t babai_total = 0;
+   double babai_start, babai_stop;
+   double babai_total = 0;
 
-   clock_t adv_babai_start, adv_babai_stop;
-   clock_t adv_babai_total = 0;
+   double adv_babai_start, adv_babai_stop;
+   double adv_babai_total = 0;
 
    double update_start, update_stop;
    double update_total = 0.0;
@@ -3049,7 +3049,7 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
       /* Step3: Call to the Babai algorithm */
       /* ********************************** */ 
 #if PROFILE
-   babai_start = clock();
+   babai_start = get_cycle_counter();
 #endif
   
       if (num_failed_fast < 50)
@@ -3069,7 +3069,7 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
       }
 
 #if PROFILE
-   babai_stop = clock();
+   babai_stop = get_cycle_counter();
    babai_total = babai_total + babai_stop - babai_start;
 #endif
 
@@ -3125,7 +3125,7 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 */
 
 #if PROFILE
-   adv_babai_start = clock();
+   adv_babai_start = get_cycle_counter();
 #endif
          for (copy_kappa = d-1; copy_kappa >  kappa; copy_kappa--)
          {
@@ -3141,7 +3141,7 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
          }
 
 #if PROFILE
-   adv_babai_stop = clock();
+   adv_babai_stop = get_cycle_counter();
    adv_babai_total = adv_babai_total + adv_babai_stop - adv_babai_start;
 #endif
 
