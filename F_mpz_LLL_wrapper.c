@@ -53,7 +53,7 @@
 #define PROFILE 1
 
 #if PROFILE
-   printf("LLL profiles are on, checking babai total, time spent updating B\n but not including the time in advanced babai which is totaled\n");
+//LLL profiles are on, checking babai total, time spent updating B-- but not including the time in advanced babai which is totaled
    clock_t babai_start, babai_stop;
    clock_t babai_total = 0;
 
