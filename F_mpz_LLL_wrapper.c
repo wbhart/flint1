@@ -34,6 +34,7 @@
 #include <limits.h>
 #include "gmp.h"
 #include "flint.h"
+#include "profiler.h"
 #include "F_mpz_mat.h"
 #include "F_mpz_LLL_helper.h"
 #include "F_mpz_LLL_wrapper.h"
@@ -404,7 +405,7 @@ int check_Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, 
 #endif		      
 		            _F_mpz_vec_sub(B->rows[kappa], B->rows[kappa], B->rows[j], n);
 #if PROFILE
-   update_stup = get_cycle_counter();
+   update_stop = get_cycle_counter();
    update_total = update_total + update_stop - update_start;
 #endif		  
 		         } else          /* otherwise X is -1 */ 
@@ -420,7 +421,7 @@ int check_Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, 
 #endif		      
                   _F_mpz_vec_add(B->rows[kappa], B->rows[kappa], B->rows[j], n); 
 #if PROFILE
-   update_stup = get_cycle_counter();
+   update_stop = get_cycle_counter();
    update_total = update_total + update_stop - update_start;
 #endif
                }
@@ -448,7 +449,7 @@ int check_Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, 
 #endif
                      _F_mpz_vec_submul_ui(B->rows[kappa], B->rows[j], n, (ulong) xx);  
 #if PROFILE
-   update_stup = get_cycle_counter();
+   update_stop = get_cycle_counter();
    update_total = update_total + update_stop - update_start;
 #endif
                   } else
@@ -458,7 +459,7 @@ int check_Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, 
 #endif
                      _F_mpz_vec_addmul_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx);  
 #if PROFILE
-   update_stup = get_cycle_counter();
+   update_stop = get_cycle_counter();
    update_total = update_total + update_stop - update_start;
 #endif
                   } 
@@ -482,7 +483,7 @@ int check_Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, 
 #endif
                         _F_mpz_vec_submul_ui(B->rows[kappa], B->rows[j], n, xx);  
 #if PROFILE
-   update_stup = get_cycle_counter();
+   update_stop = get_cycle_counter();
    update_total = update_total + update_stop - update_start;
 #endif
                      } else
@@ -492,7 +493,7 @@ int check_Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, 
 #endif
                         _F_mpz_vec_addmul_ui(B->rows[kappa], B->rows[j], n, -xx);  
 #if PROFILE
-   update_stup = get_cycle_counter();
+   update_stop = get_cycle_counter();
    update_total = update_total + update_stop - update_start;
 #endif
                      }
@@ -512,7 +513,7 @@ int check_Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, 
 #endif
                         _F_mpz_vec_submul_2exp_ui(B->rows[kappa], B->rows[j], n, (ulong) xx, exponent);  
 #if PROFILE
-   update_stup = get_cycle_counter();
+   update_stop = get_cycle_counter();
    update_total = update_total + update_stop - update_start;
 #endif
                      } else
@@ -522,7 +523,7 @@ int check_Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, 
 #endif
                         _F_mpz_vec_addmul_2exp_ui(B->rows[kappa], B->rows[j], n, (ulong) -xx, exponent);  
 #if PROFILE
-   update_stup = get_cycle_counter();
+   update_stop = get_cycle_counter();
    update_total = update_total + update_stop - update_start;
 #endif
                      }
