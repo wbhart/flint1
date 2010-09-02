@@ -63,6 +63,9 @@
 
    double update_start, update_stop;
    double update_total = 0.0;
+
+   double convert_start, convert_stop;
+   double convert_total = 0.0;
 #endif
 
 
@@ -291,7 +294,14 @@ int check_Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
 
       if (test)   /* Anything happened? */
 	   {
+#if PROFILE
+   convert_start = get_cycle_counter();
+#endif
 	      expo[kappa] = _F_mpz_vec_to_d_vec_2exp(appB[kappa], B->rows[kappa], n);
+#if PROFILE
+   convert_stop = get_cycle_counter();
+   convert_total = convert_total + convert_stop - convert_start;
+#endif
 	      aa = zeros + 1;
 	      for (i = zeros + 1; i <= kappa; i++) 
 	         appSP[kappa][i] = NAN;//0.0/0.0;
@@ -541,7 +551,14 @@ int check_Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, 
 
       if (test)   /* Anything happened? */
 	   {
+#if PROFILE
+   convert_start = get_cycle_counter();
+#endif
 	      expo[kappa] = _F_mpz_vec_to_d_vec_2exp(appB[kappa], B->rows[kappa], n);
+#if PROFILE
+   convert_stop = get_cycle_counter();
+   convert_total = convert_total + convert_stop - convert_start;
+#endif
 	      aa = zeros + 1;
 	      for (i = zeros + 1; i <= kappa; i++) 
 	         appSP[kappa][i] = NAN;//0.0/0.0;
@@ -4343,6 +4360,7 @@ int U_LLL_with_removal(F_mpz_mat_t FM, long new_size, F_mpz_t gs_B){
 #if PROFILE
    printf(" spent a total of %f seconds on regular Babai\n", (double) babai_total);
    printf(" of which %f cycles spent updating full precision B\n", (double) update_total);
+   printf(" of which %f cycles spent converting full precision B\n", (double) convert_total);
    printf(" spent a total of %f seconds on advanced Babai\n", (double) adv_babai_total);
 #endif
 
