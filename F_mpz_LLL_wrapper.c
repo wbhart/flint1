@@ -115,7 +115,7 @@ int check_Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
       test = 0;
 
       loops++;
-      if (loops > 1){
+      if (loops > 2){
          return -1;
       }
             
