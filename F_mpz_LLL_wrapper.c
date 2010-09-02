@@ -69,6 +69,9 @@
 
    double inner_start, inner_stop;
    double inner_total = 0.0;
+
+   double ldexp_start, ldexp_stop;
+   double ldexp_total = 0.0;
 #endif
 
 
@@ -144,8 +147,14 @@ int check_Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
 
 	      /* test of the relaxed size-reduction condition */
 	      tmp = fabs(mu[kappa][j]);
+#if PROFILE
+   ldexp_stop = get_cycle_counter();
+#endif
 	      tmp = ldexp(tmp, expo[kappa] - expo[j]);
-	  
+#if PROFILE
+   ldexp_stop = get_cycle_counter();
+   ldexp_total = ldexp_total + ldexp_stop - ldexp_start;
+#endif	  
 	      if (tmp > halfplus) 
 	      {
 	         test = 1; 
@@ -189,8 +198,14 @@ int check_Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
                }
 		      } else   /* we must have |X| >= 2 */
 		      {
+#if PROFILE
+   ldexp_start = get_cycle_counter();
+#endif
 		         tmp = ldexp (mu[kappa][j] , -exponent);
-
+#if PROFILE
+   ldexp_stop = get_cycle_counter();
+   ldexp_total = ldexp_total + ldexp_stop - ldexp_start;
+#endif
 	            if ((tmp < (double) MAX_LONG) &&(tmp > (double) -MAX_LONG))  
 		         {
 		            tmp = rint (tmp); 
@@ -198,7 +213,14 @@ int check_Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
 		            for (k = zeros + 1; k < j; k++)
 			         {
 			            rtmp = tmp * mu[j][k];
+#if PROFILE
+   ldexp_start = get_cycle_counter();
+#endif
 			            rtmp = ldexp (rtmp, exponent);
+#if PROFILE
+   ldexp_stop = get_cycle_counter();
+   ldexp_total = ldexp_total + ldexp_stop - ldexp_start;
+#endif
 			            mu[kappa][k] = mu[kappa][k] - rtmp;
 			         }
 
@@ -227,7 +249,14 @@ int check_Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
                   } 
                } else
 		         {
+#if PROFILE
+   ldexp_start = get_cycle_counter();
+#endif
 		            tmp = frexp(mu[kappa][j], &exponent); 
+#if PROFILE
+   ldexp_stop = get_cycle_counter();
+   ldexp_total = ldexp_total + ldexp_stop - ldexp_start;
+#endif
 		            tmp = tmp * MAX_LONG;
 		            xx = (long) tmp;
 		            exponent += expo[kappa] - expo[j] - CPU_SIZE_1;
@@ -264,7 +293,14 @@ int check_Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
 			            for (k = zeros + 1; k < j; k++)
 			            {
                         rtmp = ((double) xx) * mu[j][k];
+#if PROFILE
+   ldexp_start = get_cycle_counter();
+#endif
 			               rtmp = ldexp (rtmp, expo[j] - expo[kappa]);
+#if PROFILE
+   ldexp_stop = get_cycle_counter();
+   ldexp_total = ldexp_total + ldexp_stop - ldexp_start;
+#endif
 			               mu[kappa][k] = mu[kappa][k] - rtmp;
 			            }
 			         } else
@@ -293,7 +329,14 @@ int check_Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
 			            for (k = zeros + 1; k < j; k++)
 			            {
 			               rtmp = ((double) xx) * mu[j][k];
+#if PROFILE
+   ldexp_start = get_cycle_counter();
+#endif
 			               rtmp = ldexp (rtmp, exponent + expo[j] - expo[kappa]);
+#if PROFILE
+   ldexp_stop = get_cycle_counter();
+   ldexp_total = ldexp_total + ldexp_stop - ldexp_start;
+#endif
 			               mu[kappa][k] = mu[kappa][k] - rtmp;
 					      }
 				      }	    
@@ -417,7 +460,14 @@ int check_Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, 
 
 	      /* test of the relaxed size-reduction condition */
 	      tmp = fabs(mu[kappa][j]);
+#if PROFILE
+   ldexp_start = get_cycle_counter();
+#endif
 	      tmp = ldexp(tmp, expo[kappa] - expo[j]);
+#if PROFILE
+   ldexp_stop = get_cycle_counter();
+   ldexp_total = ldexp_total + ldexp_stop - ldexp_start;
+#endif
 	  
 	      if (tmp > halfplus) 
 	      {
@@ -431,7 +481,14 @@ int check_Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, 
                {
 		            for (k = zeros + 1; k < j; k++)
 			         {
+#if PROFILE
+   ldexp_start = get_cycle_counter();
+#endif
 			            tmp = ldexp (mu[j][k], exponent);
+#if PROFILE
+   ldexp_stop = get_cycle_counter();
+   ldexp_total = ldexp_total + ldexp_stop - ldexp_start;
+#endif
 			            mu[kappa][k] =  mu[kappa][k] - tmp; 
 			         }
 #if PROFILE
@@ -446,7 +503,14 @@ int check_Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, 
                {
                   for (k=zeros+1; k<j; k++)
 			         {
+#if PROFILE
+   ldexp_start = get_cycle_counter();
+#endif
 			            tmp = ldexp (mu[j][k], exponent);
+#if PROFILE
+   ldexp_stop = get_cycle_counter();
+   ldexp_total = ldexp_total + ldexp_stop - ldexp_start;
+#endif
 			            mu[kappa][k] = mu[kappa][k] + tmp;
 			         }
 
@@ -461,7 +525,14 @@ int check_Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, 
                }
 		      } else   /* we must have |X| >= 2 */
 		      {
+#if PROFILE
+   ldexp_start = get_cycle_counter();
+#endif
 		         tmp = ldexp (mu[kappa][j] , -exponent);
+#if PROFILE
+   ldexp_stop = get_cycle_counter();
+   ldexp_total = ldexp_total + ldexp_stop - ldexp_start;
+#endif
 
 	            if ((tmp < (double) MAX_LONG) &&(tmp > (double) -MAX_LONG))  
 		         {
@@ -470,7 +541,14 @@ int check_Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, 
 		            for (k = zeros + 1; k < j; k++)
 			         {
 			            rtmp = tmp * mu[j][k];
+#if PROFILE
+   ldexp_start = get_cycle_counter();
+#endif
 			            rtmp = ldexp (rtmp, exponent);
+#if PROFILE
+   ldexp_stop = get_cycle_counter();
+   ldexp_total = ldexp_total + ldexp_stop - ldexp_start;
+#endif
 			            mu[kappa][k] = mu[kappa][k] - rtmp;
 			         }
 
@@ -499,7 +577,14 @@ int check_Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, 
                   } 
                } else
 		         {
+#if PROFILE
+   ldexp_start = get_cycle_counter();
+#endif
 		            tmp = frexp(mu[kappa][j], &exponent); 
+#if PROFILE
+   ldexp_stop = get_cycle_counter();
+   ldexp_total = ldexp_total + ldexp_stop - ldexp_start;
+#endif
 		            tmp = tmp * MAX_LONG;
 		            xx = (long) tmp;
 		            exponent += expo[kappa] - expo[j] - CPU_SIZE_1;
@@ -535,7 +620,14 @@ int check_Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, 
 			            for (k = zeros + 1; k < j; k++)
 			            {
                         rtmp = ((double) xx) * mu[j][k];
+#if PROFILE
+   ldexp_start = get_cycle_counter();
+#endif
 			               rtmp = ldexp (rtmp, expo[j] - expo[kappa]);
+#if PROFILE
+   ldexp_stop = get_cycle_counter();
+   ldexp_total = ldexp_total + ldexp_stop - ldexp_start;
+#endif
 			               mu[kappa][k] = mu[kappa][k] - rtmp;
 			            }
 			         } else
@@ -564,7 +656,14 @@ int check_Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, 
 			            for (k = zeros + 1; k < j; k++)
 			            {
 			               rtmp = ((double) xx) * mu[j][k];
+#if PROFILE
+   ldexp_start = get_cycle_counter();
+#endif
 			               rtmp = ldexp (rtmp, exponent + expo[j] - expo[kappa]);
+#if PROFILE
+   ldexp_stop = get_cycle_counter();
+   ldexp_total = ldexp_total + ldexp_stop - ldexp_start;
+#endif
 			               mu[kappa][k] = mu[kappa][k] - rtmp;
 					      }
 				      }	    
@@ -4390,6 +4489,7 @@ int U_LLL_with_removal(F_mpz_mat_t FM, long new_size, F_mpz_t gs_B){
 
 #if PROFILE
    printf(" spent a total of %3f seconds on regular Babai\n", (double) babai_total / 2.4E9);
+   printf(" of which %3f cycles spent doing ldexps\n", (double) ldexp_total / 2.4E9);
    printf(" of which %3f cycles spent updating full precision B\n", (double) update_total / 2.4E9);
    printf(" of which %3f cycles spent converting full precision B\n", (double) convert_total / 2.4E9);
    printf(" of which %3f cycles spent computing inner products\n", (double) inner_total /2.4E9);
