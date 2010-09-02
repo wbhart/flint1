@@ -4341,9 +4341,9 @@ int U_LLL_with_removal(F_mpz_mat_t FM, long new_size, F_mpz_t gs_B){
    sum_stop = clock();
 
 #if PROFILE
-   printf(" spent a total of %f seconds on regular Babai\n", (double) babai_total / (double)CLOCKS_PER_SEC);
+   printf(" spent a total of %f seconds on regular Babai\n", (double) babai_total);
    printf(" of which %f cycles spent updating full precision B\n", (double) update_total);
-   printf(" spent a total of %f seconds on advanced Babai\n", (double) adv_babai_total / (double)CLOCKS_PER_SEC);
+   printf(" spent a total of %f seconds on advanced Babai\n", (double) adv_babai_total);
 #endif
 
    printf(" spent a total of %f seconds on inner LLL\n", (double) lll_total / (double)CLOCKS_PER_SEC);
