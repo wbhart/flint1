@@ -3364,8 +3364,8 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 	      r[kappa][kappa] = s[kappa-1] - tmp;
 	      kappa++;
 
-         if (kappa2 >= newd - 2){
-            printf("kappa2 = %ld, newd = %ld \n", kappa2, newd);
+         if (kappa >= newd - 1){
+            printf("kappa2 = %ld, newd = %ld \n", kappa, newd);
             ok = 1;
             newnewd = newd;
             d_gs_B = F_mpz_get_d_2exp(&exp, gs_B);
