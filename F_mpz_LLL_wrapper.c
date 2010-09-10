@@ -3197,6 +3197,9 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 
    while (kappa < d)
    {
+      if (kappa == d-1)
+         printf("kappa = d-1\n");
+
       new_kappa = 0;
       if (kappa > kappamax)
       {
