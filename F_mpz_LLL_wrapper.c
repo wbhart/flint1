@@ -3194,7 +3194,7 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 
       newvec = 0;
       newvec_max = 1;
-      loop_count = 0;
+      long loop_count = 0;
 
    while (kappa < d)
    {
