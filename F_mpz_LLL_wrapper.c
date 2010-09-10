@@ -3456,7 +3456,7 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
          if (kappa2 >= newd - 1){
             printf("kappa2 = %ld, newd = %ld \n", kappa2, newd);
             ok = 1;
-            newnewd = newd
+            newnewd = newd;
             d_gs_B = F_mpz_get_d_2exp(&exp, gs_B);
             d_gs_B = ldexp( d_gs_B, exp);
             for (i = newd-1; (i >= 0) && (ok > 0); i--)
@@ -3477,7 +3477,7 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 //Use the newd stuff here...
 //ldexp might not be the right choice as we move on... should make a straight d_2exp comparison
    ok = 1;
-   newnewd = newd
+   newnewd = newd;
    d_gs_B = F_mpz_get_d_2exp(&exp, gs_B);
    d_gs_B = ldexp( d_gs_B, exp);
    for (i = newd-1; (i >= 0) && (ok > 0); i--)
