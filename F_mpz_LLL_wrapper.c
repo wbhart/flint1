@@ -755,7 +755,7 @@ int check_Babai_heuristic(int kappa, F_mpz_mat_t B, __mpfr_struct **mu, __mpfr_s
    {
       test = 0;
       loops++;
-      if (loops > 3)
+      if (loops > 20)
          return -1;
 
       /* ************************************** */
@@ -3119,7 +3119,6 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 
    int ok = 1;
    int newd = d;
-   int newnewd;
    double d_rii;
    double d_gs_B;
    ulong exp;
@@ -3150,7 +3149,6 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    copy_appB = d_mat_init(d, n);
    copy_appSP = d_mat_init(d, d);
 
-   printf("just making sure\n");
 
    s = (double *) malloc (d * sizeof(double));
    copy_s = (double *) malloc (d * sizeof(double));
@@ -3193,16 +3191,15 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    long new_kappa, newvec, newvec_max;
 
 
+
       newvec = 0;
       newvec_max = 1;
 
-   while (kappa < newd)
+   while (kappa < d)
    {
-
       new_kappa = 0;
       if (kappa > kappamax)
       {
-
 //In the first time we hit a new kappa we're going to size-reduce in advance...
          kappamax = kappa; // Fixme : should this be kappamax = kappa instead of kappamax++
 //         if (kappa >= 5)
@@ -3300,7 +3297,7 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
          }
 */
 
-         for (copy_kappa = newd-1; copy_kappa >  kappa; copy_kappa--)
+         for (copy_kappa = d-1; copy_kappa >  kappa; copy_kappa--)
          {
 #if PROFILE
    adv_babai_start = get_cycle_counter();
@@ -3364,26 +3361,6 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 	      tmp = mu[kappa][kappa-1] * r[kappa][kappa-1];
 	      r[kappa][kappa] = s[kappa-1] - tmp;
 	      kappa++;
-
-         if (kappa >= newd - 1){
-            printf("kappa2 = %ld, newd = %ld \n", kappa, newd);
-            ok = 1;
-            newnewd = newd;
-            d_gs_B = F_mpz_get_d_2exp(&exp, gs_B);
-            d_gs_B = ldexp( d_gs_B, exp);
-            for (i = newd-1; (i >= 0) && (ok > 0); i--)
-            {
-//d_rii is the G-S length of ith vector divided by 2 (we shouldn't make a mistake and remove something valuable)
-               d_rii = ldexp(r[i][i],        2*expo[i] - 1);
-//      printf("%5f r[%d] and gs_B = %5f\n", d_rii, i, d_gs_B);
-               if (d_rii > d_gs_B) newnewd--;
-               else (ok = 0);
-            }
-            if (newnewd < newd)
-               printf(" ooh something could be done %ld\n", newnewd);
-
-         }
-
 	   } else
 	   {
       /* ******************************************* */
@@ -3474,22 +3451,21 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 	      }
 	  
 	      kappa++;
-
 	   }
    } 
 
 //Use the newd stuff here...
 //ldexp might not be the right choice as we move on... should make a straight d_2exp comparison
    ok = 1;
-   newnewd = newd;
+   newd = d;
    d_gs_B = F_mpz_get_d_2exp(&exp, gs_B);
    d_gs_B = ldexp( d_gs_B, exp);
-   for (i = newd-1; (i >= 0) && (ok > 0); i--)
+   for (i = d-1; (i >= 0) && (ok > 0); i--)
    {
 //d_rii is the G-S length of ith vector divided by 2 (we shouldn't make a mistake and remove something valuable)
       d_rii = ldexp(r[i][i],        2*expo[i] - 1);
 //      printf("%5f r[%d] and gs_B = %5f\n", d_rii, i, d_gs_B);
-      if (d_rii > d_gs_B) newnewd--;
+      if (d_rii > d_gs_B) newd--;
       else (ok = 0);
    }
   
@@ -3509,7 +3485,7 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    free(copy_s);
    free(appSPtmp);
 
-   return newnewd;
+   return newd;
 }
 
 int knapsack_LLL_d_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
