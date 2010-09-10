@@ -427,7 +427,7 @@ int check_Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, 
       test = 0;
             
       loops++;
-      if (loops > 10)
+      if (loops > 3)
          return -1;
 
       /* ************************************** */
@@ -755,7 +755,7 @@ int check_Babai_heuristic(int kappa, F_mpz_mat_t B, __mpfr_struct **mu, __mpfr_s
    {
       test = 0;
       loops++;
-      if (loops > 20)
+      if (loops > 3)
          return -1;
 
       /* ************************************** */
@@ -3038,7 +3038,7 @@ int LLL_mpfr_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 {
 
    mp_prec_t prec;
-   prec = 53;
+   prec = FLINT_MAX(53, 2*B->r);
 
    int result = -1;
    int num_loops = 1;
