@@ -3150,6 +3150,7 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    copy_appB = d_mat_init(d, n);
    copy_appSP = d_mat_init(d, d);
 
+   printf("just making sure\n");
 
    s = (double *) malloc (d * sizeof(double));
    copy_s = (double *) malloc (d * sizeof(double));
