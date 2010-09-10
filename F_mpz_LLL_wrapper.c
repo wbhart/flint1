@@ -3363,6 +3363,26 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 	      tmp = mu[kappa][kappa-1] * r[kappa][kappa-1];
 	      r[kappa][kappa] = s[kappa-1] - tmp;
 	      kappa++;
+
+         if (kappa2 >= newd - 2){
+            printf("kappa2 = %ld, newd = %ld \n", kappa2, newd);
+            ok = 1;
+            newnewd = newd;
+            d_gs_B = F_mpz_get_d_2exp(&exp, gs_B);
+            d_gs_B = ldexp( d_gs_B, exp);
+            for (i = newd-1; (i >= 0) && (ok > 0); i--)
+            {
+//d_rii is the G-S length of ith vector divided by 2 (we shouldn't make a mistake and remove something valuable)
+               d_rii = ldexp(r[i][i],        2*expo[i] - 1);
+//      printf("%5f r[%d] and gs_B = %5f\n", d_rii, i, d_gs_B);
+               if (d_rii > d_gs_B) newnewd--;
+               else (ok = 0);
+            }
+            if (newnewd < newd)
+               printf(" ooh something could be done %ld\n", newnewd);
+
+         }
+
 	   } else
 	   {
       /* ******************************************* */
@@ -3454,24 +3474,6 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 	  
 	      kappa++;
 
-         if (kappa2 >= newd - 2){
-            printf("kappa2 = %ld, newd = %ld \n", kappa2, newd);
-            ok = 1;
-            newnewd = newd;
-            d_gs_B = F_mpz_get_d_2exp(&exp, gs_B);
-            d_gs_B = ldexp( d_gs_B, exp);
-            for (i = newd-1; (i >= 0) && (ok > 0); i--)
-            {
-//d_rii is the G-S length of ith vector divided by 2 (we shouldn't make a mistake and remove something valuable)
-               d_rii = ldexp(r[i][i],        2*expo[i] - 1);
-//      printf("%5f r[%d] and gs_B = %5f\n", d_rii, i, d_gs_B);
-               if (d_rii > d_gs_B) newnewd--;
-               else (ok = 0);
-            }
-            if (newnewd < newd)
-               printf(" ooh something could be done %ld\n", newnewd);
-
-         }
 	   }
    } 
 
