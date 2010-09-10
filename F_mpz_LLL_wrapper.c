@@ -3197,11 +3197,6 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    while (kappa < d)
    {
       if (kappa == d-1){
-         printf("kappa = d-1\n");
-         d_gs_B = F_mpz_get_d_2exp(&exp, gs_B);
-         d_gs_B = ldexp( d_gs_B, exp);
-         d_rii = ldexp(r[kappa][kappa],        2*expo[kappa] - 1);
-         printf("%5f r[%d] and gs_B = %5f\n", d_rii, kappa, d_gs_B);
          last_vec = 1;
       }
 
@@ -3359,7 +3354,14 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
       /* Step4: Success of Lovasz's condition */
       /* ************************************ */  
       /* ctt * r.coeff[kappa-1][kappa-1] <= s[kappa-2] ?? */
-      
+      if (last_vec == 1){
+         printf("kappa = d-1\n");
+         d_gs_B = F_mpz_get_d_2exp(&exp, gs_B);
+         d_gs_B = ldexp( d_gs_B, exp);
+         d_rii = ldexp(r[d-1][d-1],        2*expo[d-1] - 1);
+         printf("%5f r[%d] and gs_B = %5f\n", d_rii, d-1, d_gs_B);
+      }
+
       tmp = r[kappa-1][kappa-1] * ctt;
       tmp = ldexp (tmp, 2*(expo[kappa-1] - expo[kappa]));
 
