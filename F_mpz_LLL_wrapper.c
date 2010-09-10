@@ -3454,7 +3454,7 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 	  
 	      kappa++;
 
-         if (kappa2 >= newd - 1){
+         if (kappa2 >= newd - 2){
             printf("kappa2 = %ld, newd = %ld \n", kappa2, newd);
             ok = 1;
             newnewd = newd;
