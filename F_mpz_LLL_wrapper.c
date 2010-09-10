@@ -3119,6 +3119,7 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 
    int ok = 1;
    int newd = d;
+   int newnewd;
    double d_rii;
    double d_gs_B;
    ulong exp;
