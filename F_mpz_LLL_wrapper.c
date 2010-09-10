@@ -427,7 +427,7 @@ int check_Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, 
       test = 0;
             
       loops++;
-      if (loops > 7)
+      if (loops > 3)
          return -1;
 
       /* ************************************** */
@@ -3215,7 +3215,7 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
       /* Step3: Call to the Babai algorithm */
       /* ********************************** */ 
   
-      if (num_failed_fast < 150)
+      if (num_failed_fast < 500)
       {
 #if PROFILE
    babai_start = get_cycle_counter();
