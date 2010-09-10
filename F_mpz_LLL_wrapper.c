@@ -3194,12 +3194,18 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 
       newvec = 0;
       newvec_max = 1;
+      loop_count = 0;
 
    while (kappa < d)
    {
+      loop_count++;
+      printf("%ld kappa in loop %ld; ", kappa, loop_count);
+      if (loop_count%30 == 0)
+         printf("\n");
       new_kappa = 0;
       if (kappa > kappamax)
       {
+
 //In the first time we hit a new kappa we're going to size-reduce in advance...
          kappamax = kappa; // Fixme : should this be kappamax = kappa instead of kappamax++
 //         if (kappa >= 5)
