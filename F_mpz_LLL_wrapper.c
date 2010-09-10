@@ -3190,15 +3190,20 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    int heuristic_fail = 0;
    long new_kappa, newvec, newvec_max;
 
-
-
+   int last_vec = 0;
       newvec = 0;
       newvec_max = 1;
 
    while (kappa < d)
    {
-      if (kappa == d-1)
+      if (kappa == d-1){
          printf("kappa = d-1\n");
+         d_gs_B = F_mpz_get_d_2exp(&exp, gs_B);
+         d_gs_B = ldexp( d_gs_B, exp);
+         d_rii = ldexp(r[kappa][kappa],        2*expo[kappa] - 1);
+         printf("%5f r[%d] and gs_B = %5f\n", d_rii, kappa, d_gs_B);
+         last_vec = 1;
+      }
 
       new_kappa = 0;
       if (kappa > kappamax)
