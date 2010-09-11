@@ -3270,7 +3270,8 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
          return -1;
       }
 //End of the real Babai part...
-      if (new_kappa == 1)
+//FIXME: turning off advanced reduction
+      if (new_kappa == 2)
       {
 //Perhaps a bit naive but just making a copy of everything but B, running ahead
 //to kappa = d, without upsetting LLL... we'll see what happens.
@@ -3358,7 +3359,7 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 
       if (last_vec == 1){
 	      tmp = mu[kappa][kappa-1] * r[kappa][kappa-1];
-         printf("kappa = d-1\n");
+         printf("kappa = d-1 kappa = %ld\n", kappa);
          d_gs_B = F_mpz_get_d_2exp(&exp, gs_B);
          d_gs_B = ldexp( d_gs_B, exp);
          d_rii = ldexp(s[kappa-1] - tmp,        2*expo[kappa] - 1);
