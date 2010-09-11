@@ -3488,7 +3488,7 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    newd = d;
    d_gs_B = F_mpz_get_d_2exp(&exp, gs_B);
    d_gs_B = ldexp( d_gs_B, exp);
-   for (i = d-1; (i >= 0) && (ok > 0); i--)
+   for (i = d-1; (i >= 0); i--)
    {
 //d_rii is the G-S length of ith vector divided by 2 (we shouldn't make a mistake and remove something valuable)
       d_rii = ldexp(r[i][i],        2*expo[i] - 1);
