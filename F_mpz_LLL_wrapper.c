@@ -3363,6 +3363,8 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
          d_gs_B = ldexp( d_gs_B, exp);
          d_rii = ldexp(s[kappa-1] - tmp,        2*expo[d-1] - 1);
          printf("%5f r[%d] and gs_B = %5f\n", d_rii, d-1, d_gs_B);
+         if (d_rii > d_gs_B)
+            break;
       }
 
       tmp = r[kappa-1][kappa-1] * ctt;
