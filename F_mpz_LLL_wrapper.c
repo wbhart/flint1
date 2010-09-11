@@ -3356,7 +3356,7 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
       /* ctt * r.coeff[kappa-1][kappa-1] <= s[kappa-2] ?? */
 
 
-      if (last_vec == 1){
+      if (last_vec == 2){
 	      tmp = mu[kappa][kappa-1] * r[kappa][kappa-1];
          printf("kappa = d-1 kappa = %ld\n", kappa);
          d_gs_B = F_mpz_get_d_2exp(&exp, gs_B);
@@ -3372,7 +3372,6 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
                printf("%5f r[%d] and gs_B = %5f\n", d_rii, i, d_gs_B);
                if (d_rii < 1)
                   printf("r[i][i] = %5f and expo = %ld\n", r[i][i], 2*expo[i] - 1);
-
                if (d_rii > d_gs_B)
                   printf("big... \n"); 
             }
@@ -3493,7 +3492,7 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    {
 //d_rii is the G-S length of ith vector divided by 2 (we shouldn't make a mistake and remove something valuable)
       d_rii = ldexp(r[i][i],        2*expo[i] - 1);
-//      printf("%5f r[%d] and gs_B = %5f\n", d_rii, i, d_gs_B);
+      printf("%5f r[%d] and gs_B = %5f\n", d_rii, i, d_gs_B);
       if (d_rii > d_gs_B) newd--;
       else (ok = 0);
    }
