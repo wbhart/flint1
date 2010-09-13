@@ -1435,87 +1435,69 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
    of the G-S computation.
    If we can do this cheaply its beter than running LLL at full size.  
    We'll return the new dimension with our findings, or -1 which means 
-   that there's enough new data.
+   that there's not enough new data.
 */
-int F_mpz_mat_check_rest(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp)
+int F_mpz_mat_check_rest(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, long U_exp, F_mpz_t B)
 {
+
    ulong r = col->r;
-   ulong extra = 25;
-   ulong i;
+   ulong bit_r = FLINT_MAX(r, 20);
    
    F_mpz_mat_t U;
    F_mpz_mat_window_init(U, M, 0, 0, M->r, r);
-
-   F_mpz_mat_t store_col, temp_col;
+   
+   F_mpz_mat_t temp_col;
    F_mpz_mat_init(temp_col, M->r, 1);
-   F_mpz_mat_init(store_col, M->r, 1);
 
+   // full precision column for deciding truncation levels
    F_mpz_mat_mul_classical(temp_col, U, col);
+
+/*   if (U_exp >= 0)
+      F_mpz_mat_div_2exp(temp_col, temp_col, (ulong) U_exp);
+   else
+      F_mpz_mat_mul_2exp(temp_col, temp_col, (ulong) (-1*U_exp));
+*/    
    F_mpz_mat_smod(temp_col, temp_col, P);
 
    long mbts = FLINT_ABS(F_mpz_mat_max_bits(temp_col));
 
+   // bare minimum of data above the bound
    if (mbts < exp)
    {
-      F_mpz_mat_window_clear(U);
       F_mpz_mat_clear(temp_col);
-      F_mpz_mat_clear(store_col);
-      return M->r;      
+      F_mpz_mat_window_clear(U);      
+      return -1;
    }
 
-   ulong take_away;
-   take_away = FLINT_MAX(F_mpz_bits(P) - r - r/2 - extra, exp);
+   F_mpz_mat_t new_col;
+   F_mpz_mat_init(new_col, M->r, 1);
 
-   // We take the data minus the bottom exp bits which should be zero for 
-   // true factors
-   // Making a new column we temporarily replace the last column of M with 
-   // this data and run G_S
-   // FIXME: Need a G-S stability test to see if any NaNs appeared
+   long i;
+   for( i = 0; i < M->r; i++)
+   {
+      F_mpz_set(temp_col->rows[i],  M->rows[i] + M->c - 1);
+   }
 
-   F_mpz_mat_t trunc_col;
-   F_mpz_mat_init(trunc_col, col->r, col->c);
-
-   F_mpz_mat_div_2exp(trunc_col, col, take_away);
-
-   F_mpz_mat_mul_classical(temp_col, U, trunc_col);
-
-   F_mpz_t trunc_P;
-   F_mpz_init(trunc_P);
-   F_mpz_div_2exp(trunc_P, P, take_away);
-
-   F_mpz_mat_smod(temp_col, temp_col, trunc_P);
+   if (U_exp >= 0)
+      F_mpz_mat_mul_2exp(new_col, temp_col, (ulong) U_exp);
+   else
+      F_mpz_mat_div_2exp(new_col, temp_col, (ulong) (-1*U_exp));
 
    for( i = 0; i < M->r; i++)
    {
-      F_mpz_set(store_col->rows[i],  M->rows[i] + M->c - 1);
-      F_mpz_set(M->rows[i] + M->c - 1, temp_col->rows[i]);
+      F_mpz_set(M->rows[i] + M->c - 1, new_col->rows[i]);
    }
 
-   F_mpz_t B;
-   F_mpz_init(B);
-
-   F_mpz_set_ui(B, r + r/2*(M->c - r)); //FIXME
-
-   //Needs a stability check, at the moment this is only because of pre-running... shame
    ulong newd;
    newd = F_mpz_mat_gs_d(M, B);
 
-   F_mpz_clear(B);
-
    for (i = 0; i < M->r; i++)
-      F_mpz_set(M->rows[i] + M->c - 1, store_col->rows[i]);
+      F_mpz_set(M->rows[i] + M->c - 1, temp_col->rows[i]);
 
-   F_mpz_clear(trunc_P);
-   F_mpz_mat_window_clear(U);
-   F_mpz_mat_clear(trunc_col);
+   F_mpz_mat_clear(new_col);
    F_mpz_mat_clear(temp_col);
-   F_mpz_mat_clear(store_col);
+   F_mpz_mat_window_clear(U); 
 
-   if (newd > 4)
-   {
-      printf(" got rid of some extras! newd = %ld\n",newd);
-      return newd;
-   } else
-      return M->r;
+   return newd;
 }
 
