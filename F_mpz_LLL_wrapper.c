@@ -3200,7 +3200,7 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
       num_loops++;
       last_vec = 0;
       if (kappa == d-1){
-         last_vec = 10;
+         last_vec = 1;
       }
 
       new_kappa = 0;
