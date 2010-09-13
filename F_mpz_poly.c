@@ -8231,6 +8231,8 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
 
             temp_newd = F_mpz_mat_check_rest(M, P, col, worst_exp, U_exp, B);
 
+            F_mpz_mat_resize(M, newd, M->c);
+
             if (temp_newd > 0){
                printf("might have saved time\n");
                newd = temp_newd;
