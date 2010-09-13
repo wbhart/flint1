@@ -3193,9 +3193,11 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    int last_vec = 0;
       newvec = 0;
       newvec_max = 1;
+   long num_loops = 0;
 
    while (kappa < d)
    {
+      num_loops++;
       last_vec = 0;
       if (kappa == d-1){
          last_vec = 1;
@@ -3483,6 +3485,7 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 	   }
    } 
 
+   printf(" num iterations = %ld \n", num_loops);
 //Use the newd stuff here...
 //ldexp might not be the right choice as we move on... should make a straight d_2exp comparison
    ok = 1;
@@ -3492,7 +3495,7 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    for (i = d-1; (i >= 0) && (ok > 0); i--)
    {
 //d_rii is the G-S length of ith vector divided by 2 (we shouldn't make a mistake and remove something valuable)
-      d_rii = ldexp(r[i][i],        2*expo[i] - 1);
+      d_rii = ldexp(r[i][i],        2*expo[i] );
 //      printf("%5f r[%d] and gs_B = %5f\n", d_rii, i, d_gs_B);
       if (d_rii > d_gs_B) newd--;
       else (ok = 0);
