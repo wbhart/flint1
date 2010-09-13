@@ -4396,7 +4396,7 @@ ulong F_mpz_mat_gs_d( F_mpz_mat_t B, F_mpz_t gs_B)
 //d_rii is the G-S length of ith vector divided by 2 (we shouldn't make a mistake and remove something valuable)
       d_rii = ldexp(r[i][i], 2*expo[i] - 1);
       printf("%5f r[%d] and gs_B = %5f\n", d_rii, i, d_gs_B);
-      if (d_rii > d_gs_B) newd--;
+      if ((d_rii > d_gs_B) && (d_rii == d_rii)) newd--;
       else (ok = 0);
    }
 
