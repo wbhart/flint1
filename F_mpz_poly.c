@@ -8229,16 +8229,15 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
 
 //            F_mpz_mat_print(M); printf(" was M after LLL\n");
 
-            temp_newd = F_mpz_mat_check_rest(M, P, col, worst_exp, U_exp, B);
+//            temp_newd = F_mpz_mat_check_rest(M, P, col, worst_exp, U_exp, B);
 
             F_mpz_mat_resize(M, newd, M->c);
 
-            if (temp_newd > 0){
+/*            if (temp_newd > 0){
                printf("might have saved time\n");
                newd = temp_newd;
-            }
+            }*/
 
-            F_mpz_mat_resize(M, newd, M->c);
             col_cnt++;
 //         This next line is what makes it 'gradual'... could try to prove that doing the same column twice won't add another P
 //         But it's all the same
