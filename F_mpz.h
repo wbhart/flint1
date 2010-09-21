@@ -267,6 +267,19 @@ void F_mpz_get_mpz(mpz_t x, const F_mpz_t f);
 */
 double F_mpz_get_d_2exp(long * exp, const F_mpz_t f);
 
+/** 
+   \fn     double F_mpz_get_d(const F_mpz_t f)
+   \brief  Return f as a signed double. The usual exponent limits for
+           doubles apply.
+*/
+double F_mpz_get_d(const F_mpz_t f);
+
+/** 
+   \fn     void F_mpz_get_mpf(mpf_t m, const F_mpz_t f)
+   \brief  Sets m to the mpf_t value of f.
+*/
+void F_mpz_get_mpf(mpf_t m, const F_mpz_t f);
+
 /**
    \fn     void F_mpz_set_d_2exp(F_mpz_t output, double mant, long exp)
    \brief  Set output to the integer closest to mant*2^exp.

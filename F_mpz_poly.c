@@ -5723,79 +5723,70 @@ void F_mpz_poly_content(F_mpz_t c, const F_mpz_poly_t poly)
       F_mpz_neg(c, c);
 }
 
-double F_mpz_poly_eval_horner_d(F_mpz_poly_t poly, double val){
+/*===============================================================================
 
+   Evaluation
+
+================================================================================*/
+
+double F_mpz_poly_eval_horner_d(F_mpz_poly_t poly, double val)
+{
    ulong n = poly->length;
-
-   long exp;
-   double temp;
-
-   temp = F_mpz_get_d_2exp(&exp, poly->coeffs + n - 1);
-   temp = temp*pow(2, exp);
-
-   double ans = temp;
-
    long i;
+   double ans;
+
+   if (n == 0)
+      return 0.0;
+
+   ans = F_mpz_get_d(poly->coeffs + n - 1);
+   
    for (i = n - 2; i >= 0L; i--)
    {
-      ans = ans * val;
-
-      temp = F_mpz_get_d_2exp(&exp, poly->coeffs + i);
-      temp = temp*pow(2, exp);
-
-      ans = ans + temp;
+      ans *= val;
+      ans += F_mpz_get_d(poly->coeffs + i);
    }
+
    return ans;
 }
 
-double F_mpz_poly_eval_horner_d_2exp(long * exp, F_mpz_poly_t poly, double val){
-
-   ulong vbits = round( abs( log(val) / log(2.0) ) );
-   long size_p = F_mpz_poly_max_bits(poly);
+double F_mpz_poly_eval_horner_d_2exp(long * exp, F_mpz_poly_t poly, double val)
+{
    ulong n = poly->length;
-   ulong prec=(vbits*n) + FLINT_ABS(size_p) + 1;  
+   long i, size_p = FLINT_ABS(F_mpz_poly_max_bits(poly));
+   double res;
+   
+   ulong vbits = ceil(fabs(log(fabs(val)) / log(2.0)));
+   ulong prec = (vbits*(n - 1)) + FLINT_ABS(size_p) + FLINT_BIT_COUNT(n);
    mpf_set_default_prec(prec);
+   
+   if (n == 0)
+      return 0.0;
 
-   mpz_t z_coeff_p;
-   mpf_t f_coeff_p;
-   mpf_t fval, output;
+   mpf_t fval, output, f_coeff_p;
 
-   mpf_init(output); 
-   mpz_init(z_coeff_p);
+   mpf_init(f_coeff_p);   
 
-   F_mpz_t coeff_p;
-   F_mpz_init(coeff_p);
-   F_mpz_set(coeff_p, poly->coeffs + n - 1);
-   F_mpz_get_mpz(z_coeff_p,coeff_p);
-   mpf_set_z(output,z_coeff_p); //Set output to top coeff
+   if (val == 0)
+      return F_mpz_get_d(poly->coeffs);
 
-   mpz_clear(z_coeff_p);
-
+   mpf_init(output);   
+   F_mpz_get_mpf(output, poly->coeffs + n - 1);
+   
    mpf_init(fval);
-
-   mpf_set_d(fval,val);//set fval to mpf from the double val
-
-   long i;
+   mpf_set_d(fval, val); //set fval to mpf from the double val
+   
    for (i = n - 2; i >= 0L; i--)
    {
-
-      mpf_mul(output,output,fval);
-
-      F_mpz_set(coeff_p, poly->coeffs + i);
-
-      mpz_init(z_coeff_p);
-      mpf_init(f_coeff_p);
-
-      F_mpz_get_mpz(z_coeff_p,coeff_p);//convert coeff from fmpz to mpz to mpf
-      mpf_set_z(f_coeff_p,z_coeff_p);
-
-      mpf_add(output,output,f_coeff_p);//add coeff to output then repeat
-
-      mpf_clear(f_coeff_p);
-      mpz_clear(z_coeff_p);
+      mpf_mul(output, output, fval);
+      F_mpz_get_mpf(f_coeff_p, poly->coeffs + i);    
+      mpf_add(output, output, f_coeff_p);
    }
-   double res = mpf_get_d_2exp( exp, output);
 
+   res = mpf_get_d_2exp(exp, output);
+   
+   if (mpf_sgn(output) < 0) res = -res; // work around bug in GMP/MPIR
+
+   mpf_clear(f_coeff_p);
    mpf_clear(output);
    mpf_clear(fval);
 
