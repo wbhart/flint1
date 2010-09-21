@@ -28,9 +28,11 @@ Copyright (C) 2007, William Hart
 #include <cstdio>
 #include <cstring>
 
+#undef ulong
 #include <NTL/ZZ.h>
 #include <NTL/ZZX.h>
 #include <NTL/mat_ZZ.h>
+#define ulong unsigned long
 #include <gmp.h>
 
 #include "NTL-interface.h"

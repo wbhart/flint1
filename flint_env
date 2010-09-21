@@ -27,19 +27,19 @@ export FLINT_LIB
 
 if [ -z "$FLINT_GMP_INCLUDE_DIR" ]
 then
-	FLINT_GMP_INCLUDE_DIR="/home/wbhart/mpir-trunk"
+	FLINT_GMP_INCLUDE_DIR="/home/wbhart/mpir-2.1.1"
 fi
 export FLINT_GMP_INCLUDE_DIR
 
 if [ -z "$FLINT_MPFR_INCLUDE_DIR" ]
 then
-        FLINT_MPFR_INCLUDE_DIR="/home/wbhart/mpfr-2.4.1"
+        FLINT_MPFR_INCLUDE_DIR="/home/wbhart/mpfr-2.4.1/"
 fi
 export FLINT_GMP_INCLUDE_DIR
 
 if [ -z "$FLINT_GMP_LIB_DIR" ]
 then
-    FLINT_GMP_LIB_DIR="/home/wbhart/mpir-trunk/.libs"
+    FLINT_GMP_LIB_DIR="/home/wbhart/mpir-2.1.1/.libs"
 fi
 export FLINT_GMP_LIB_DIR
 
@@ -63,12 +63,12 @@ export LD_LIBRARY_PATH
 
 if [ -z "$FLINT_NTL_INCLUDE_DIR" ]
 then
-        FLINT_NTL_INCLUDE_DIR="/usr/local/include"
+        FLINT_NTL_INCLUDE_DIR="/usr/local/sage/sage-4.5.2/local/include"
 fi
 export FLINT_NTL_INCLUDE_DIR
 
 if [ -z "$FLINT_NTL_LIB_DIR" ]
 then
-        FLINT_NTL_LIB_DIR="/usr/local/lib"
+        FLINT_NTL_LIB_DIR="/usr/local/sage/sage-4.5.2/local/lib"
 fi
 export FLINT_NTL_LIB_DIR
