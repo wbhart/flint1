@@ -4731,6 +4731,98 @@ int test_F_mpz_poly_pseudo_div_basecase()
 	return result;
 }
 
+int test_F_mpz_poly_derivative()
+{
+   F_mpz_poly_t F_poly1, F_poly2;
+   int result = 1;
+   ulong bits1, bits2, length1, length2;
+   
+   F_mpz_t t;
+   F_mpz_init(t);
+            
+   // check coeffs of derivative
+	for (ulong count1 = 0; (count1 < 20000*ITER) && (result == 1); count1++)
+   {
+      F_mpz_poly_init(F_poly1);
+      F_mpz_poly_init(F_poly2);
+      
+		bits1 = z_randint(200) + 1;
+      length1 = z_randint(100);
+      F_mpz_randpoly(F_poly1, length1, bits1);
+      
+		F_mpz_poly_derivative(F_poly2, F_poly1);
+      
+      if (F_poly1->length <= 1)
+         result = (F_poly2->length == 0);
+      else
+      {
+         long j, coeff;
+
+         for (j = 0; j < 100; j++)
+         {
+            coeff = z_randint(F_poly1->length - 1) + 1;
+            F_mpz_mul_ui(t, F_poly1->coeffs + coeff, coeff);
+            result &= F_mpz_equal(t, F_poly2->coeffs + coeff - 1);
+         }
+      } 
+		if (!result) 
+		{
+			printf("Error: length1 = %ld, bits1 = %ld\n", length1, bits1);
+		}
+          
+      F_mpz_poly_clear(F_poly1);
+		F_mpz_poly_clear(F_poly2);
+   }
+
+   F_mpz_clear(t);
+
+   return result;
+}
+
+int test_F_mpz_poly_content()
+{
+   F_mpz_poly_t F_poly1, F_poly2;
+   int result = 1;
+   ulong bits1, bits2, length1, length2;
+   
+   F_mpz_t c1, c2;
+   F_mpz_init(c1);
+   F_mpz_init(c2);
+            
+   // check giving a content to a content free polynomial yields the correct content
+	for (ulong count1 = 0; (count1 < 20000*ITER) && (result == 1); count1++)
+   {
+      F_mpz_poly_init(F_poly1);
+      
+		bits1 = z_randint(200) + 1;
+      length1 = z_randint(100) + 1;
+      
+      do {
+         F_mpz_randpoly(F_poly1, length1, bits1);
+         F_mpz_poly_content(c1, F_poly1);
+      } while (!F_mpz_is_one(c1));
+
+      F_mpz_test_random(c1, 100);
+      F_mpz_poly_scalar_mul(F_poly1, F_poly1, c1);
+
+      F_mpz_poly_content(c2, F_poly1);
+
+		result = F_mpz_equal(c1, c2);
+
+		if (!result) 
+		{
+			printf("Error: length1 = %ld, bits1 = %ld\n", length1, bits1);
+		}
+          
+      F_mpz_poly_clear(F_poly1);
+   }
+
+   F_mpz_clear(c1);
+   F_mpz_clear(c2);
+
+   return result;
+}
+
 void F_mpz_poly_test_all()
 {
    int success, all_success = 1;
@@ -4739,6 +4831,8 @@ void F_mpz_poly_test_all()
 #if TESTFILE
 #endif
 	
+   RUN_TEST(F_mpz_poly_derivative); 
+   RUN_TEST(F_mpz_poly_content); 
    RUN_TEST(F_mpz_poly_convert); 
    RUN_TEST(F_mpz_poly_getset_coeff_si); 
    RUN_TEST(F_mpz_poly_getset_coeff_ui); 

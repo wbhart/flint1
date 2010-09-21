@@ -5667,35 +5667,38 @@ void F_mpz_poly_pseudo_divrem_basecase(F_mpz_poly_t Q, F_mpz_poly_t R,
 
 /*===============================================================================
 
-   New Naive Standard Functions (without test code and written by Andy)
+   Derivative
 
 ================================================================================*/
 
 void F_mpz_poly_derivative(F_mpz_poly_t der, F_mpz_poly_t poly)
 {
-	if (poly->length <= 1)
+	long i;
+   
+   if (poly->length <= 1)
 	{
 		F_mpz_poly_zero(der);
 		return;
 	}
 	
-
    F_mpz_poly_fit_length(der, poly->length - 1);
+   _F_mpz_poly_set_length(der, poly->length - 1);
 
-	der->length = poly->length - 1;
-
-   ulong i;
-   for (i = 0; i < poly->length - 1; i++)
-	{
+	for (i = 0; i < poly->length - 1; i++)
 		F_mpz_mul_ui(der->coeffs + i, poly->coeffs + i + 1, i + 1);
-	}
-
 }
+
+/*===============================================================================
+
+   Content
+
+================================================================================*/
 
 void F_mpz_poly_content(F_mpz_t c, const F_mpz_poly_t poly)
 {
-   unsigned long length = poly->length;
-
+   long i;
+   ulong length = poly->length;
+   
    if (length == 0) 
    {
       F_mpz_set_ui(c, 0L);
@@ -5710,16 +5713,13 @@ void F_mpz_poly_content(F_mpz_t c, const F_mpz_poly_t poly)
    
    F_mpz_set(c, poly->coeffs + length - 1);
    
-   long i;
    for (i = length - 2; (i >= 0L) && !F_mpz_is_one(c); i--)
    {
       if (!F_mpz_is_zero(poly->coeffs + i))
          F_mpz_gcd(c, c, poly->coeffs + i);
    }
 
-   int c_sgn = F_mpz_sgn(c);
-
-   if (c_sgn != F_mpz_sgn(poly->coeffs + length - 1))
+   if (F_mpz_sgn(c) != F_mpz_sgn(poly->coeffs + length - 1))
       F_mpz_neg(c, c);
 }
 
