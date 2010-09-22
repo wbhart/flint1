@@ -364,6 +364,32 @@ double F_mpz_get_d_2exp(long * exp, const F_mpz_t f)
 }
 
 /* 
+   Gets f as a double.
+*/
+double F_mpz_get_d(const F_mpz_t f)
+{
+   F_mpz d = *f;
+
+	if (!COEFF_IS_MPZ(d))
+      return (double) d;
+   else 
+      return mpz_get_d(F_mpz_arr + COEFF_TO_OFF(d));
+}
+
+/* 
+   Gets f as an mpf.
+*/
+void F_mpz_get_mpf(mpf_t m, const F_mpz_t f)
+{
+   F_mpz d = *f;
+
+	if (!COEFF_IS_MPZ(d))
+      mpf_set_si(m, d);
+   else 
+      mpf_set_z(m, F_mpz_arr + COEFF_TO_OFF(d));
+}
+
+/* 
    Sets F_mpz to the integer closest to mant*2^exp
 */
 void F_mpz_set_d_2exp(F_mpz_t output, double mant, long exp)

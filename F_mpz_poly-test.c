@@ -47,6 +47,12 @@ Copyright (C) 2008, William Hart
 #define DEBUG 0 // allows easy switching of debugging code on and off when debugging (if inserted)
 #define DEBUG2 1 
 
+double random_d()
+{
+   if (z_randint(2)) return rand()/((double) RAND_MAX + 1);
+   else return -rand()/((double) RAND_MAX + 1);
+}
+
 void F_mpz_test_random(F_mpz_t f, ulong bits)
 {
 	if (bits == 0)
@@ -4731,6 +4737,215 @@ int test_F_mpz_poly_pseudo_div_basecase()
 	return result;
 }
 
+int test_F_mpz_poly_derivative()
+{
+   F_mpz_poly_t F_poly1, F_poly2;
+   int result = 1;
+   ulong bits1, bits2, length1, length2;
+   
+   F_mpz_t t;
+   F_mpz_init(t);
+            
+   // check coeffs of derivative
+	for (ulong count1 = 0; (count1 < 20000*ITER) && (result == 1); count1++)
+   {
+      F_mpz_poly_init(F_poly1);
+      F_mpz_poly_init(F_poly2);
+      
+		bits1 = z_randint(200) + 1;
+      length1 = z_randint(100);
+      F_mpz_randpoly(F_poly1, length1, bits1);
+      
+		F_mpz_poly_derivative(F_poly2, F_poly1);
+      
+      if (F_poly1->length <= 1)
+         result = (F_poly2->length == 0);
+      else
+      {
+         long j, coeff;
+
+         for (j = 0; j < 100; j++)
+         {
+            coeff = z_randint(F_poly1->length - 1) + 1;
+            F_mpz_mul_ui(t, F_poly1->coeffs + coeff, coeff);
+            result &= F_mpz_equal(t, F_poly2->coeffs + coeff - 1);
+         }
+      } 
+		if (!result) 
+		{
+			printf("Error: length1 = %ld, bits1 = %ld\n", length1, bits1);
+		}
+          
+      F_mpz_poly_clear(F_poly1);
+		F_mpz_poly_clear(F_poly2);
+   }
+
+   F_mpz_clear(t);
+
+   return result;
+}
+
+int test_F_mpz_poly_content()
+{
+   F_mpz_poly_t F_poly1, F_poly2;
+   int result = 1;
+   ulong bits1, bits2, length1, length2;
+   
+   F_mpz_t c1, c2;
+   F_mpz_init(c1);
+   F_mpz_init(c2);
+            
+   // check giving a content to a content free polynomial yields the correct content
+	for (ulong count1 = 0; (count1 < 20000*ITER) && (result == 1); count1++)
+   {
+      F_mpz_poly_init(F_poly1);
+      
+		bits1 = z_randint(200) + 1;
+      length1 = z_randint(100) + 1;
+      
+      do {
+         F_mpz_randpoly(F_poly1, length1, bits1);
+         F_mpz_poly_content(c1, F_poly1);
+      } while (!F_mpz_is_one(c1));
+
+      F_mpz_test_random(c1, 100);
+      F_mpz_poly_scalar_mul(F_poly1, F_poly1, c1);
+
+      F_mpz_poly_content(c2, F_poly1);
+
+		result = F_mpz_equal(c1, c2);
+
+		if (!result) 
+		{
+			printf("Error: length1 = %ld, bits1 = %ld\n", length1, bits1);
+		}
+          
+      F_mpz_poly_clear(F_poly1);
+   }
+
+   F_mpz_clear(c1);
+   F_mpz_clear(c2);
+
+   return result;
+}
+
+int test_F_mpz_poly_eval_horner_d()
+{
+   F_mpz_poly_t F_poly1, F_poly2;
+   int result = 1;
+   ulong bits1, bits2, length1, length2;
+   double d1, d2, val;
+   
+   // check giving a content to a content free polynomial yields the correct content
+	for (ulong count1 = 0; (count1 < 20000*ITER) && (result == 1); count1++)
+   {
+      F_mpz_poly_init(F_poly1);
+      
+		bits1 = z_randint(200) + 1;
+      length1 = z_randint(100) + 1;
+      
+      do {
+         F_mpz_randpoly(F_poly1, length1, bits1);
+      } while (F_poly1->length < 1);
+
+      val = random_d();
+
+      F_poly1->coeffs++;
+      F_poly1->length--;
+
+      d1 = F_mpz_poly_eval_horner_d(F_poly1, val);
+      
+      F_poly1->coeffs--;
+      F_poly1->length++;
+
+      d1 *= val;
+      d1 += F_mpz_get_d(F_poly1->coeffs);
+
+      d2 = F_mpz_poly_eval_horner_d(F_poly1, val);
+      
+      result = (d1 == d2);
+
+		if (!result) 
+		{
+			printf("Error: length1 = %ld, bits1 = %ld, d1 = %lf, d2 = %lf\n", 
+                                                    length1, bits1, d1, d2);
+		}
+          
+      F_mpz_poly_clear(F_poly1);
+   }
+
+   return result;
+}
+
+int test_F_mpz_poly_eval_horner_d_2exp()
+{
+   F_mpz_poly_t F_poly1, F_poly2;
+   int result = 1;
+   ulong bits1, bits2, length1, length2;
+   double d1, d2, val;
+   long exp1, exp2, exp;
+   
+   // check that negating a poly returns minus the evaluation
+	for (ulong count1 = 0; (count1 < 20000*ITER) && (result == 1); count1++)
+   {
+      F_mpz_poly_init(F_poly1);
+      
+		bits1 = z_randint(200) + 1;
+      length1 = z_randint(100) + 1;
+      
+      F_mpz_randpoly(F_poly1, length1, bits1);
+      
+      val = random_d();
+
+      d1 = F_mpz_poly_eval_horner_d_2exp(&exp1, F_poly1, val);
+      
+      F_mpz_poly_neg(F_poly1, F_poly1); 
+      d2 = F_mpz_poly_eval_horner_d_2exp(&exp2, F_poly1, val);
+      
+      result = ((d1 == -d2) && (exp1 == exp2));
+
+		if (!result) 
+		{
+			printf("Error: length1 = %ld, bits1 = %ld, d1 = %lf, d2 = %lf, "
+            "exp1 = %ld, exp2 = %ld\n", length1, bits1, d1, d2, exp1, exp2);
+		}
+          
+      F_mpz_poly_clear(F_poly1);
+   }
+
+   // check that multiplying by a power of 2 works
+	for (ulong count1 = 0; (count1 < 20000*ITER) && (result == 1); count1++)
+   {
+      F_mpz_poly_init(F_poly1);
+      
+		bits1 = z_randint(200) + 1;
+      length1 = z_randint(100) + 1;
+      
+      F_mpz_randpoly(F_poly1, length1, bits1);
+      
+      val = random_d();
+
+      d1 = F_mpz_poly_eval_horner_d_2exp(&exp1, F_poly1, val);
+      
+      exp = z_randint(FLINT_BITS);
+      F_mpz_poly_scalar_mul_ui(F_poly1, F_poly1, 1UL<<exp); 
+      d2 = F_mpz_poly_eval_horner_d_2exp(&exp2, F_poly1, val);
+      
+      result = ((fabs(d1 - d2) < 0.000000000000001f) && ((d1 == 0) || (exp1 + exp == exp2)));
+
+		if (!result) 
+		{
+			printf("Error: length1 = %ld, bits1 = %ld, d1 = %lf, d2 = %lf, "
+            "exp1 = %ld, exp2 = %ld, exp = %ld\n", length1, bits1, d1, 
+            d2, exp1, exp2, exp);
+		}
+          
+      F_mpz_poly_clear(F_poly1);
+   }
+
+   return result;
+}
+
 void F_mpz_poly_test_all()
 {
    int success, all_success = 1;
@@ -4739,6 +4954,10 @@ void F_mpz_poly_test_all()
 #if TESTFILE
 #endif
 	
+   RUN_TEST(F_mpz_poly_derivative); 
+   RUN_TEST(F_mpz_poly_content); 
+   RUN_TEST(F_mpz_poly_eval_horner_d); 
+   RUN_TEST(F_mpz_poly_eval_horner_d_2exp); 
    RUN_TEST(F_mpz_poly_convert); 
    RUN_TEST(F_mpz_poly_getset_coeff_si); 
    RUN_TEST(F_mpz_poly_getset_coeff_ui); 
