@@ -4953,7 +4953,7 @@ void F_mpz_poly_test_all()
 
 #if TESTFILE
 #endif
-	
+	/*
    RUN_TEST(F_mpz_poly_derivative); 
    RUN_TEST(F_mpz_poly_content); 
    RUN_TEST(F_mpz_poly_eval_horner_d); 
@@ -5006,7 +5006,7 @@ void F_mpz_poly_test_all()
 	RUN_TEST(F_mpz_poly_divexact); 
 	RUN_TEST(F_mpz_poly_pseudo_divrem_basecase); 
 	RUN_TEST(F_mpz_poly_pseudo_div_basecase); 
-   //RUN_TEST(F_mpz_poly_factor);
+   */RUN_TEST(F_mpz_poly_factor);
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");
