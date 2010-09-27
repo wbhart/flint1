@@ -8212,17 +8212,17 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
 //            cexpo[r + col_cnt] = 0;
             if (M->r > 500){
                lll_start = clock();
-               newd = U_LLL_with_removal(M, 10L, B);
+               newd = U_LLL_with_removal(M, 350L, B);
                lll_stop = clock();
             }
             else if (M->r > 300){
                lll_start = clock();
-               newd = U_LLL_with_removal(M, 50L, B);
+               newd = U_LLL_with_removal(M, 350L, B);
                lll_stop = clock();
             }
             else if (M->r > 100){
                lll_start = clock();
-               newd = U_LLL_with_removal(M, 250L, B);
+               newd = U_LLL_with_removal(M, 350L, B);
                lll_stop = clock();
             }
             else{
