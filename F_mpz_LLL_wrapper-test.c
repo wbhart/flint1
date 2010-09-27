@@ -242,6 +242,54 @@ void F_mpz_mat_RQ_factor(F_mpz_mat_t B, __mpfr_struct ** R, __mpfr_struct ** Q, 
    return;
 }
 
+int mpfr_mat_R_reduced(__mpfr_struct ** R, long d, double delta, double eta, mp_prec_t prec)
+{
+
+   if (d == 1)
+      return 1;
+
+   mpfr_t tmp1;
+   mpfr_t tmp2;
+   mpfr_init2(tmp1, prec);
+   mpfr_init2(tmp2, prec);
+   int reduced = 1;
+
+   long i;
+   for (i = 0; (i < d - 1) && (reduced == 1); i++)
+   {
+      mpfr_pow_ui(tmp1, R[i+1] + i, 2L, GMP_RNDN);
+      mpfr_pow_ui(tmp2, R[i+1] + i + 1, 2L, GMP_RNDN);
+      mpfr_add(tmp1, tmp1, tmp2, GMP_RNDN);
+
+      mpfr_pow_ui(tmp2, R[i] + i, 2L, GMP_RNDN);
+      mpfr_mul_d(tmp2, tmp2, (double) delta, GMP_RNDN);
+
+      mpfr_sub(tmp1, tmp1, tmp2, GMP_RNDN);
+      mpfr_add_d(tmp1, tmp1, .001, GMP_RNDN);
+      if (mpfr_sgn(tmp1) < 0) 
+      {
+         reduced = 0;
+         printf(" happened at index i = %ld\n", i);
+         break;
+      }
+      long j;
+      for (j = 0; (j < i) && (reduced == 1); j++)
+      {
+         mpfr_mul_d(tmp2, R[i + 1] + i + 1, (double) eta, GMP_RNDN);
+         if (mpfr_cmpabs(R[j] + i, tmp2) > 0)
+         {
+            reduced = 0;
+            printf(" size red problem at index i = %ld, j = %ld\n", i, j);
+            break;
+         }
+      }
+   }
+
+   mpfr_clear(tmp1);
+   mpfr_clear(tmp2);
+   return reduced;
+}
+
 
 int test_F_mpz_LLL_randintrel()
 {
@@ -253,9 +301,10 @@ int test_F_mpz_LLL_randintrel()
    F_mpz_init(fzero);
    
    ulong count1;
-   for (count1 = 0; (count1 < 10*ITER) && (result == 1) ; count1++)
+   for (count1 = 0; (count1 < 1000*ITER) && (result == 1) ; count1++)
    {
-      ulong r = z_randint(10)+1;
+      printf("count1 == %ld\n", count1);
+      ulong r = z_randint(200)+1;
       ulong c = r + 1;
 
       F_mpz_mat_init(F_mat, r, c);
@@ -271,15 +320,10 @@ int test_F_mpz_LLL_randintrel()
       F_mpz_set_d_2exp(fzero, 2.0, bits);
 // good stuff here
 
-      printf("bits = %ld\n", bits); 
-      F_mpz_mat_print_pretty(F_mat);
-
       knapsack_LLL_wrapper_with_removal(F_mat, fzero);
 
-      F_mpz_mat_print_pretty(F_mat);
-
       mp_prec_t prec;
-      prec = 10;
+      prec = 20;
 
       __mpfr_struct ** Q, ** R;
 
@@ -290,18 +334,25 @@ int test_F_mpz_LLL_randintrel()
 
 // should be that RQ = FM_copy
       long j;
-      for (j = 0; j < r; j++)
-      { 
-         mpfr_printf("%.12Rf was R[i][i] for i = %ld\n", R[j] + j, j); 
+      if (count1 == 29){
+         mpfr_printf("%.12Rf was R[i][i] for i = %ld\n", R[0] + 0, 0); 
+         for (j = 1; j < r; j++)
+         { 
+            mpfr_printf("%.12Rf was R[i][i+1] for i = %ld\n", R[j] + j - 1, j); 
+            mpfr_printf("%.12Rf was R[i+1][i+1] for i = %ld\n", R[j] + j, j); 
+         }
       }
+
+      result = mpfr_mat_R_reduced(R, r, (double) DELTA, (double) ETA, prec);
 
       mpfr_mat_clear(Q, r, c);
       mpfr_mat_clear(R, r, r);
           
 //result here       result = mpz_mat_equal(res1, res2); 
-      result = 1; 
       if (!result) 
       {
+
+         F_mpz_mat_print_pretty(F_mat);
          printf("Error: bits = %ld, count1 = %ld\n", bits, count1);
       }
           
