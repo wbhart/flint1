@@ -3975,6 +3975,7 @@ int knapsack_LLL_mpfr2_with_removal(F_mpz_mat_t B, mp_prec_t prec, F_mpz_t gs_B)
 int knapsack_LLL_mpfr_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 {
 
+   printf("******************warning mpfr**************\n");
    mp_prec_t prec;
    prec = 53;
 
