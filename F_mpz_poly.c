@@ -8210,19 +8210,19 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
 //            F_mpz_mat_print(M); printf(" was M before LLL\n");
 //            F_mpz_add_ui(B, B, r/2);
 //            cexpo[r + col_cnt] = 0;
-            if (M->r > 300){
+            if (M->r > 500){
                lll_start = clock();
                newd = U_LLL_with_removal(M, 10L, B);
                lll_stop = clock();
             }
-            else if (M->r > 100){
+            else if (M->r > 300){
                lll_start = clock();
                newd = U_LLL_with_removal(M, 50L, B);
                lll_stop = clock();
             }
-            else if (M->r > 50){
+            else if (M->r > 100){
                lll_start = clock();
-               newd = U_LLL_with_removal(M, 150L, B);
+               newd = U_LLL_with_removal(M, 250L, B);
                lll_stop = clock();
             }
             else{
