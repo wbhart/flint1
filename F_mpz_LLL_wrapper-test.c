@@ -186,6 +186,43 @@ void mpz_mat_randintrel(mpz_mat_t mat, ulong r, ulong c, ulong maxbits)
 
 }
 
+void mpz_mat_randajtai(mpz_mat_t mat, ulong r, ulong c, double alpha)
+{
+   ulong i, j, d, bits;
+   mpz_t tmp;
+
+   r = mat->r;
+   c = mat->c;
+   d = r;
+
+   if (c != r)
+   {
+      printf("Exception: mpz_mat_ajtai called on an ill-formed matrix\n");
+      abort();
+   }
+
+   mpz_init(tmp);
+
+   for (i = 0; i < d; i++)
+   {
+      bits = (ulong) pow((double) (2*d - i), alpha);
+
+      mpz_rrandomb(mat->entries[i*c + i], randstate, bits);
+      mpz_add_ui(mat->entries[i*c + i], mat->entries[i*c + i], 2);
+      mpz_fdiv_q_2exp(mat->entries[i*c + i], mat->entries[i*c + i], 1);
+
+	   for (j = i + 1; j < d; j++)
+      {
+         mpz_rrandomb(mat->entries[j*c + i], randstate, bits);
+         if (z_randint(2))
+            mpz_neg(mat->entries[j*c + i], mat->entries[j*c + i]);
+         mpz_set_ui(mat->entries[i*c + j], 0L);
+      }
+   }
+
+   mpz_clear(tmp);
+}
+
 void F_mpz_mat_randintrel(F_mpz_mat_t mat, ulong r, ulong c, ulong bits)
 {
    mpz_mat_t m_mat;
@@ -265,7 +302,7 @@ int mpfr_mat_R_reduced(__mpfr_struct ** R, long d, double delta, double eta, mp_
       mpfr_mul_d(tmp2, tmp2, (double) delta, GMP_RNDN);
 
       mpfr_sub(tmp1, tmp1, tmp2, GMP_RNDN);
-      mpfr_add_d(tmp1, tmp1, .001, GMP_RNDN);
+//      mpfr_add_d(tmp1, tmp1, .001, GMP_RNDN);
       if (mpfr_sgn(tmp1) < 0) 
       {
          reduced = 0;
@@ -311,7 +348,7 @@ int test_F_mpz_LLL_randintrel()
 
       mpz_mat_init(m_mat, r, c);
 
-      bits = z_randint(200) + 1;
+      bits = z_randint(2000) + 1;
       
       mpz_mat_randintrel(m_mat, r, c, bits);
            
@@ -320,7 +357,7 @@ int test_F_mpz_LLL_randintrel()
       F_mpz_set_d_2exp(fzero, 2.0, bits);
 // good stuff here
 
-      knapsack_LLL_wrapper_with_removal(F_mat, fzero);
+      U_LLL_with_removal(F_mat, 350, fzero);
 
       mp_prec_t prec;
       prec = 20;
@@ -364,6 +401,77 @@ int test_F_mpz_LLL_randintrel()
    return result;
 }
 
+int test_F_mpz_LLL_randajtai()
+{
+   mpz_mat_t m_mat;
+   F_mpz_mat_t F_mat;
+   int result = 1;
+   ulong bits;
+   F_mpz_t fzero;
+   F_mpz_init(fzero);
+   
+   ulong count1;
+   for (count1 = 0; (count1 < 10*ITER) && (result == 1) ; count1++)
+   {
+      printf("count1 == %ld\n", count1);
+      ulong r = z_randint(100)+1;
+      ulong c = r;
+
+      F_mpz_mat_init(F_mat, r, c);
+
+      mpz_mat_init(m_mat, r, c);
+
+      bits = z_randint(200) + 1;
+      
+      mpz_mat_randajtai(m_mat, r, c, 1);
+           
+      mpz_mat_to_F_mpz_mat(F_mat, m_mat);
+      
+      F_mpz_set_d_2exp(fzero, (double) 2*r, 1);
+// good stuff here
+      //F_mpz_mat_print_pretty(F_mat);
+
+      long newd = U_LLL_with_removal(F_mat, 350, fzero);
+
+      mp_prec_t prec;
+      prec = 50;
+
+      __mpfr_struct ** Q, ** R;
+
+      Q = mpfr_mat_init2(r, c, prec);
+      R = mpfr_mat_init2(r, r, prec);
+
+      F_mpz_mat_RQ_factor(F_mat, R, Q, r, c, prec); 
+
+// should be that RQ = FM_copy
+      long j;
+      if (count1 == 30){
+         mpfr_printf("%.12Rf was R[i][i] for i = %ld\n", R[0] + 0, 0); 
+         for (j = 1; j < r; j++)
+         { 
+            mpfr_printf("%.12Rf was R[i][i+1] for i = %ld\n", R[j] + j - 1, j); 
+            mpfr_printf("%.12Rf was R[i+1][i+1] for i = %ld\n", R[j] + j, j); 
+         }
+      }
+
+      result = mpfr_mat_R_reduced(R, r, (double) DELTA-.01, (double) ETA+.01, prec);
+
+      mpfr_mat_clear(Q, r, c);
+      mpfr_mat_clear(R, r, r);
+          
+//result here       result = mpz_mat_equal(res1, res2); 
+      if (!result) 
+      {
+         printf("Error: bits = %ld, count1 = %ld, newd = %ld\n", bits, count1, newd);
+      }
+          
+      F_mpz_mat_clear(F_mat);
+      mpz_mat_clear(m_mat);
+   }
+
+   F_mpz_clear(fzero);
+   return result;
+}
 
 void F_mpz_mat_test_all()
 {
@@ -372,7 +480,8 @@ void F_mpz_mat_test_all()
 
 #if TESTFILE
 #endif
-   RUN_TEST(F_mpz_LLL_randintrel); 
+   RUN_TEST(F_mpz_LLL_randajtai);
+   RUN_TEST(F_mpz_LLL_randintrel);
 
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");
