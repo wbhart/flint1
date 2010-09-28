@@ -7391,6 +7391,10 @@ printf(" first two clds took %f seconds\n", (double) cld_data_total/ (double) CL
      // n_a = FLINT_MIN(n_a, n_a2);
       a = FLINT_MIN(a, n_a);
 
+//Attempting a bit more Hensel lifting when tough poly predicted
+      if ( r*3 > f->length)
+         a = a*2; 
+
 
       printf(" new a = %ld\n", a);
 
