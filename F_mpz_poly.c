@@ -6233,12 +6233,6 @@ int F_mpz_poly_div_trunc_modp( F_mpz_t *res, F_mpz_poly_t f, F_mpz_poly_t g, F_m
    F_mpz_set(temp, t_g->coeffs);
    F_mpz_invert(tc_inv, temp, P);
 
-F_mpz_print(temp); printf(" was temp\n");
-
-F_mpz_print(tc_inv); printf(" was tc_inv\n");
-
-F_mpz_print(P); printf(" was P\n");
-
    F_mpz_gcd(temp, t_g->coeffs, P);
 
    if (!F_mpz_is_one(temp)){
@@ -8144,7 +8138,10 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    ulong num_coeffs = 10UL;
    F_mpz_mat_t data;
    F_mpz_mat_init(data, 0, 0);
-
+   F_mpz_mat_t M_copy;
+   F_mpz_mat_init(M_copy, 0, 0);
+   F_mpz_mat_t col_copy;
+   F_mpz_mat_init(col_copy, r, 1);
 
 //FIXME: inserting checks here: first Hensel checking
 
@@ -8171,45 +8168,137 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
 
    F_mpz_t temp;
    F_mpz_init(temp);
+   F_mpz_t bound_sum;
+   F_mpz_init(bound_sum);
    ulong sqN;
 //   printf("%ld sqN, %f sqrt(N)\n", sqN, sqrt( (double) (N) ) );
-   int ok, col_cnt,  since_last;
+   int ok, col_cnt,  since_last, LLL_ready, n_cols_per_LLL, max_cols_per_LLL;
    ulong previously_checked;
    long newd, temp_newd;
    col_cnt = 0;
    solved = 0;
    since_last = 0;
    previously_checked = 0;
+   LLL_ready = 0;
+   n_cols_per_LLL = 0;
+   max_cols_per_LLL = 2;
 
 //   F_mpz_mat_print_pretty(M);
 
    while ((all_coeffs != 2) && (return_me == 0)){
-      for (cur_col = previously_checked; cur_col < data->c - previously_checked; cur_col++){
-         //aborting attempt to adjust sqN back to normal
-         sqN = (ulong) sqrt( 1.6 * ((double) r*r) );         
-         F_mpz_mul_ui(temp, data->rows[r] + cur_col, sqN);
-         worst_exp = F_mpz_bits(temp);   
-         for( ulong i = 0; i < r; i++)
-            F_mpz_set(col->rows[i], data->rows[i] + cur_col);
+      for (cur_col = previously_checked; cur_col < data->c - previously_checked;){
+/* Going to use LLL_ready to distinguish the situations, 
+   value -1 means check col for a second try,
+   value 0 means overwrite col,
+   value 1 means add to col,
+   value 2 means call LLL then set value to -1
 
-         printf(" checking column cur_col = %ld\n", cur_col);
+   in value -1 failure means set LLL_ready = 0 (cur_col++ or not, unsure?), success means set LLL_ready = 2
 
-   linear_alg_start = clock();
-         ok = _F_mpz_mat_next_col(M, P, col, worst_exp, U_exp);
-   linear_alg_stop = clock();
+   in value 0 failure means cur_col++ and set LLL_ready = 0 success means:
+       set LLL_ready = 1 and cur_col++ or if cur_col is data->c - previously_checked -1 then LLL_ready = 2 directly 
+          (would rather do single run then more Hensel)
+
+   in value 1 success means LLL_ready = 2, failure means cur_col++ and LLL_ready = 1 or if cur_col is data->c - previously_checked -1 then LLL_ready = 2
+
+   in value 2 call LLL then set value = -1
+*/
+         if (LLL_ready == -1)
+         {
+            linear_alg_start = clock();
+            ok = _F_mpz_mat_next_col(M, P, col, worst_exp, U_exp);
+            linear_alg_stop = clock();
    
-   linear_alg_total = linear_alg_total + linear_alg_stop - linear_alg_start;
-         since_last++;
-         if (ok != 0){
-//            F_mpz_mat_print_pretty(M);
+            linear_alg_total = linear_alg_total + linear_alg_stop - linear_alg_start;
+            since_last++;
+            if (ok == 0){
+               LLL_ready = 0;
+               cur_col++;
+            }
+            else{
+               LLL_ready = 2;
+            }
+         } else if (LLL_ready == 0)
+         {
+            sqN = (ulong) sqrt( 1.6 * ((double) r*r) );         
+            F_mpz_mul_ui(bound_sum, data->rows[r] + cur_col, sqN);
+            worst_exp = F_mpz_bits(bound_sum);   
+            for( ulong i = 0; i < r; i++)
+               F_mpz_set(col->rows[i], data->rows[i] + cur_col);
+
+            printf(" checking column cur_col = %ld\n", cur_col);
+
+            F_mpz_mat_resize(M_copy, M->r, M->c);
+            F_mpz_mat_set(M_copy, M);
+
+            linear_alg_start = clock();
+            ok = _F_mpz_mat_next_col(M, P, col, worst_exp, U_exp);
+            linear_alg_stop = clock();
+   
+            linear_alg_total = linear_alg_total + linear_alg_stop - linear_alg_start;
+            since_last++;
+            if (ok == 0){
+               cur_col++;
+            }
+            else{
+               if (cur_col < data->c - previously_checked -1){
+                  LLL_ready = 1;
+                  F_mpz_mat_set(col_copy, col);
+                  n_cols_per_LLL = 1;
+                  cur_col++;
+               }
+               else{
+                  LLL_ready = 2;
+               }
+            }
+         } else if (LLL_ready == 1)
+         {
+            if (n_cols_per_LLL == max_cols_per_LLL){
+               LLL_ready = 2;
+            }
+            else{
+               F_mpz_mul_ui(temp, data->rows[r] + cur_col, sqN);
+               F_mpz_add(temp, bound_sum, temp);
+               worst_exp = F_mpz_bits(temp);   
+               for( ulong i = 0; i < r; i++)
+                  F_mpz_add(col->rows[i], col_copy->rows[i], data->rows[i] + cur_col);
+               F_mpz_mat_smod(col, col, P);
+
+               printf("new checking column cur_col = %ld\n", cur_col);
+
+               F_mpz_mat_resize(M, M_copy->r, M_copy->c);
+               F_mpz_mat_set(M, M_copy);
+
+               printf("yeah thought so\n");
+
+               linear_alg_start = clock();
+               ok = _F_mpz_mat_next_col(M, P, col, worst_exp, U_exp);
+               linear_alg_stop = clock();
+   
+               linear_alg_total = linear_alg_total + linear_alg_stop - linear_alg_start;
+               since_last++;
+
+               if (ok == 0){
+                  if (cur_col < data->c - previously_checked -1){
+                     LLL_ready = 1;
+                     cur_col++;
+                  }
+                  else{
+                     F_mpz_mat_set(col, col_copy);
+                     LLL_ready = 2;
+                  }
+               }
+               else{
+                  F_mpz_set(bound_sum, temp);
+                  F_mpz_mat_set(col_copy, col);
+                  n_cols_per_LLL++;
+               }
+            }
+         } else if (LLL_ready == 2)
+         {
             printf(" on column cur_col = %ld\n", cur_col);
             since_last = 0;
-            //printf(" spend a total of %f seconds on Linear alg stuff since the last entry\n", (double) linear_alg_total / (double)CLOCKS_PER_SEC);
             num_entries++;
-
-//            F_mpz_mat_print(M); printf(" was M before LLL\n");
-//            F_mpz_add_ui(B, B, r/2);
-//            cexpo[r + col_cnt] = 0;
             if (M->r > 500){
                lll_start = clock();
                newd = U_LLL_with_removal(M, 50L, B);
@@ -8230,33 +8319,19 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
                newd = U_LLL_with_removal(M, 350L, B);
                lll_stop = clock();
             }
-   
-   lll_total = lll_total + lll_stop - lll_start;
+            lll_total = lll_total + lll_stop - lll_start;
+            printf(" spend a total of %f seconds on LLL so far newd=%ld\n", (double) lll_total / (double)CLOCKS_PER_SEC, newd);
 
-   printf(" spend a total of %f seconds on LLL so far newd=%ld\n", (double) lll_total / (double)CLOCKS_PER_SEC, newd);
+            if (newd == 0){
+               printf("FLINT: error not sure what\n");
+               F_mpz_mat_print_pretty(M);
+               abort();
+            }
 
-//            F_mpz_mat_print(M); printf(" was M after LLL\n");
-
-//            temp_newd = F_mpz_mat_check_rest(M, P, col, worst_exp, U_exp, B);
 
             F_mpz_mat_resize(M, newd, M->c);
-
-/*            if (temp_newd > 0){
-               printf("might have saved time\n");
-               newd = temp_newd;
-            }*/
-
             col_cnt++;
-//         This next line is what makes it 'gradual'... could try to prove that doing the same column twice won't add another P
-//         But it's all the same
-            cur_col--;
-
-/*            if (M->r > 20)
-            {
-               newd = F_mpz_mat_check_rest(M, P, col, worst_exp, U_exp, B);
-               F_mpz_mat_resize(M, newd, M->c);               
-            }
-*/
+            LLL_ready = -1;
             if (newd == 1){
                F_mpz_poly_factor_insert(final_fac, F, exp);
                return_me = 1;
@@ -8314,8 +8389,11 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    F_mpz_clear(B);
    F_mpz_clear(lc);
    F_mpz_clear(temp);
+   F_mpz_clear(bound_sum);
+   F_mpz_mat_clear(M_copy);
    F_mpz_mat_clear(data);
    F_mpz_mat_clear(col);
+   F_mpz_mat_clear(col_copy);
    return return_me;
 }
 
