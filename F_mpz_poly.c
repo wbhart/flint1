@@ -8181,7 +8181,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    previously_checked = 0;
    LLL_ready = 0;
    n_cols_per_LLL = 0;
-   max_cols_per_LLL = 2;
+   max_cols_per_LLL = 3;
 
 //   F_mpz_mat_print_pretty(M);
 
