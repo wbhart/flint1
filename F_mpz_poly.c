@@ -8120,7 +8120,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
 
    ulong r = lifted_fac->num_factors;
 
-   ulong s = r; //M->r;
+   ulong old_s = M->r;
    F_mpz_mat_t col;
    F_mpz_mat_init(col, r, 1);
    ulong cur_col = 0;
@@ -8187,6 +8187,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    int ok, col_cnt,  since_last, LLL_ready, n_cols_per_LLL, max_cols_per_LLL;
    ulong previously_checked;
    long newd, temp_newd;
+   long old_since_last = 0;
    col_cnt = 0;
    solved = 0;
    since_last = 0;
@@ -8380,17 +8381,26 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
             }
             else{
 //This condition should include a special case for when P is ridiculously large (for the sake of complexity proofs) although no example has ever needed it...
-               if ((since_last < data->c - 5) && (M->r > r - 2))
+               if ((since_last >= data->c - 5) && (M->r > old_s - 2))
                {
-                  num_coeffs = num_coeffs * 2;
-   cld_data_start = clock();
-                  _F_mpz_poly_factor_CLD_mat(data, F, lifted_fac, P, num_coeffs);
-   cld_data_stop = clock();
+                  if (old_since_last == 0)
+                     old_since_last = since_last;
+                  if (since_last > old_since_last){
+                     return_me = 5;
+                     all_coeffs = 2;
+                  }
+                  else{
+                     old_s = M->r;
+                     num_coeffs = num_coeffs * 4;
+                     cld_data_start = clock();
+                     _F_mpz_poly_factor_CLD_mat(data, F, lifted_fac, P, num_coeffs);
+                     cld_data_stop = clock();
    
-   cld_data_total = cld_data_total + cld_data_stop - cld_data_start;
+                     cld_data_total = cld_data_total + cld_data_stop - cld_data_start;
    //printf(" spend a total of %f seconds on CLD stuff so far\n", (double) cld_data_total / (double)CLOCKS_PER_SEC);
-                  if (data->c >= F->length - 1)
-                     all_coeffs = 1;
+                     if (data->c >= F->length - 1)
+                        all_coeffs = 1;
+                  }
                }
                else
                {
