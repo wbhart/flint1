@@ -1370,7 +1370,7 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
    // Now decide the scaling based on mbts... should be mbits - 0.973r
    // maybe have mbits be more precise... 
    if (no_vec)
-      ISD = mbts - (long)( .973 * (double) bit_r - .1);
+      ISD = mbts - (long)(0.973 * (double) bit_r - 0.1);
 
    take_away = ISD - prec;
    virt_exp = -prec;
