@@ -8223,15 +8223,19 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
 */
          if (LLL_ready == -1)
          {
-            linear_alg_start = clock();
-            ok = _F_mpz_mat_next_col(M, P, col, worst_exp, U_exp);
-            linear_alg_stop = clock();
+            if (M->r * 3 < F->length){
+               linear_alg_start = clock();
+               ok = _F_mpz_mat_next_col(M, P, col, worst_exp, U_exp);
+               linear_alg_stop = clock();
    
-            linear_alg_total = linear_alg_total + linear_alg_stop - linear_alg_start;
+               linear_alg_total = linear_alg_total + linear_alg_stop - linear_alg_start;
+            }
+            else
+               ok = 0;
+
             since_last++;
             if (ok == 0){
                LLL_ready = 0;
-               since_last++;
                cur_col++;
             }
             else{
