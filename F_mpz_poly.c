@@ -7473,7 +7473,7 @@ printf(" first two clds took %f seconds\n", (double) cld_data_total/ (double) CL
 
             printf("hensel lifted for %f seconds so far\n", (double) hensel_total / (double) CLOCKS_PER_SEC);
 
-            a = 4*a;
+            a = 2*a;
             solved_yet = 0;
             printf(" solved_yet == 5?\n");
          }
