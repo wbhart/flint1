@@ -8402,7 +8402,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
                   }
                   else{
                      old_s = M->r;
-                     num_coeffs = num_coeffs * 4;
+                     num_coeffs = num_coeffs * 2;
                      cld_data_start = clock();
                      _F_mpz_poly_factor_CLD_mat(data, F, lifted_fac, P, num_coeffs);
                      cld_data_stop = clock();
