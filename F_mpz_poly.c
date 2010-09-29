@@ -8147,7 +8147,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    }
 
 //For the first run we'll only use 30 coeffs worth of data, should solve 99% of all 'random' polynomials
-   ulong num_coeffs = 15UL;
+   ulong num_coeffs = 10UL;
    F_mpz_mat_t data;
    F_mpz_mat_init(data, 0, 0);
    F_mpz_mat_t M_copy;
