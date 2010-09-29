@@ -395,19 +395,24 @@ void F_mpz_get_mpf(mpf_t m, const F_mpz_t f)
 void F_mpz_set_d_2exp(F_mpz_t output, double mant, long exp)
 {
    double x;
-  
-   if (exp >= 53L)
+   mpz_t temp;
+   mpz_init(temp);
+
+   if (exp >= 53)
    {
       x = ldexp(mant, 53);
-      F_mpz_set_si(output, x >= 0 ? (long)(x + 0.5) : (long)(x - 0.5));
-      F_mpz_mul_2exp(output, output, (ulong) exp - 53UL);
-      return;
+      mpz_set_d(temp, x);    
+      F_mpz_set_mpz(output, temp);
+      F_mpz_mul_2exp(output, output, (ulong) exp - FLINT_D_BITS);
    } else
    {
       x = ldexp(mant, exp);
-      F_mpz_set_si(output, x >= 0 ? (long)(x + 0.5) : (long)(x - 0.5));
-      return;
+      mpz_set_d(temp, x);    
+      F_mpz_set_mpz(output, temp);
    }
+
+   mpz_clear(temp);
+   return;
 }
 
 void F_mpz_set_mpz(F_mpz_t f, const mpz_t x)

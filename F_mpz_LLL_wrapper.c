@@ -51,7 +51,7 @@
 
 ****************************************************************************/
 
-#define PROFILE 1
+#define PROFILE 0
 
 #if PROFILE
 //LLL profiles are on, checking babai total, time spent updating B-- but not including the time in advanced babai which is totaled

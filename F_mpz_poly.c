@@ -7318,8 +7318,7 @@ for(num_primes = 1; num_primes < 3; num_primes++)
    int mexpo[4];
 //   int mexpo[r + 2 * (f->length - 1)];
    F_mpz_mat_t M;
-   ulong bit_r = FLINT_MAX(r, 20);
-   long U_exp = (bit_r/4);
+   long U_exp = r/4;
 
 //In the near future we should go back and try some more primes might deduce irreducibility or find smaller r
    if (r > 6){
@@ -7354,7 +7353,7 @@ for(num_primes = 1; num_primes < 3; num_primes++)
 
    printf(" zass a = %ld \n", a);
 
-
+   ulong bit_r = FLINT_MAX(r, 20);
 
    if (use_Hoeij_Novocin == 1)
    {
@@ -8132,7 +8131,6 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    F_mpz_init(B);
 // With U_exp B should be switched from r+1 to r+1 * 2^(2*U_exp) 
    F_mpz_set_ui(B, r + 1);
-   printf("U_exp = %ld\n", U_exp);
    if (U_exp >= 0)
       F_mpz_mul_2exp(B, B, (ulong) 2*U_exp);
    else
@@ -8170,7 +8168,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    cld_data_total = cld_data_total + cld_data_stop - cld_data_start;
    //printf(" spend a total of %f seconds on CLD stuff so far\n", (double) cld_data_total / (double)CLOCKS_PER_SEC);
 
-   F_mpz_mat_print_pretty(data); printf(" was the data mat\n");
+//   F_mpz_mat_print_pretty(data); printf(" was the data mat\n");
 
    int all_coeffs = 0;
    if (data->c >= F->length - 1)
@@ -8246,19 +8244,12 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
                real_col = cur_col;
             else
                real_col = high + low - cur_col;
-
-            printf("upcoming CLD bound is "); F_mpz_print(data->rows[r] + real_col); printf("\n");
             F_mpz_mul_ui(bound_sum, data->rows[r] + real_col, sqN);
-            F_mpz_abs(bound_sum, bound_sum);
             worst_exp = F_mpz_bits(bound_sum);   
-            for( ulong i = 0; i < r; i++){
+            for( ulong i = 0; i < r; i++)
                F_mpz_set(col->rows[i], data->rows[i] + real_col);
-               printf("col[%ld] = ",i); F_mpz_print(data->rows[i] + real_col); printf("\n");
-            }
 
-            printf(" checking column real_col = %ld with worst_exp = %ld\n", real_col, worst_exp);
-
-            printf("P is "); F_mpz_print(P); printf("\n");
+            printf(" checking column real_col = %ld\n", real_col);
 
             F_mpz_mat_resize(M_copy, M->r, M->c);
             F_mpz_mat_set(M_copy, M);
@@ -8298,7 +8289,6 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
                else
                   real_col = high + low - cur_col;
                F_mpz_mul_ui(temp, data->rows[r] + real_col, sqN);
-               F_mpz_abs(temp, temp);
                F_mpz_add(temp, bound_sum, temp);
                worst_exp = F_mpz_bits(temp);   
                for( ulong i = 0; i < r; i++)
@@ -8337,8 +8327,6 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
             }
          } else if (LLL_ready == 2)
          {
-            F_mpz_mat_print_pretty(M);
-            printf(" B is "); F_mpz_print(B); printf("\n");
             printf(" on column cur_col = %ld, real_col = %ld\n", cur_col, real_col);
             since_last = 0;
             num_entries++;
