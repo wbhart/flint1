@@ -8198,6 +8198,8 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
 //   F_mpz_mat_print_pretty(M);
 
    while ((all_coeffs != 2) && (return_me == 0)){
+      LLL_ready = 0;
+      n_cols_per_LLL = 0;
       for (cur_col = previously_checked; cur_col < data->c - previously_checked;){
 /* Going to use LLL_ready to distinguish the situations, 
    value -1 means check col for a second try,
@@ -8225,6 +8227,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
             since_last++;
             if (ok == 0){
                LLL_ready = 0;
+               since_last++;
                cur_col++;
             }
             else{
