@@ -7320,6 +7320,9 @@ for(num_primes = 1; num_primes < 3; num_primes++)
    F_mpz_mat_t M;
    long U_exp = r/4;
 
+   if (r *3 > f->length)
+      U_exp = 4;
+
 //In the near future we should go back and try some more primes might deduce irreducibility or find smaller r
    if (r > 6){
       use_Hoeij_Novocin = 1;
@@ -8223,19 +8226,15 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
 */
          if (LLL_ready == -1)
          {
-            if (M->r * 3 < F->length){
-               linear_alg_start = clock();
-               ok = _F_mpz_mat_next_col(M, P, col, worst_exp, U_exp);
-               linear_alg_stop = clock();
+            linear_alg_start = clock();
+            ok = _F_mpz_mat_next_col(M, P, col, worst_exp, U_exp);
+            linear_alg_stop = clock();
    
-               linear_alg_total = linear_alg_total + linear_alg_stop - linear_alg_start;
-            }
-            else
-               ok = 0;
-
+            linear_alg_total = linear_alg_total + linear_alg_stop - linear_alg_start;
             since_last++;
             if (ok == 0){
                LLL_ready = 0;
+               since_last++;
                cur_col++;
             }
             else{
