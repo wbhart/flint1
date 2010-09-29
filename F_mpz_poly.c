@@ -8380,9 +8380,9 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
             }
             else{
 //This condition should include a special case for when P is ridiculously large (for the sake of complexity proofs) although no example has ever needed it...
-               if (since_last < data->c - 5)
+               if ((since_last < data->c - 5) && (M->r > r - 2))
                {
-                  num_coeffs = num_coeffs * 4;
+                  num_coeffs = num_coeffs * 2;
    cld_data_start = clock();
                   _F_mpz_poly_factor_CLD_mat(data, F, lifted_fac, P, num_coeffs);
    cld_data_stop = clock();
