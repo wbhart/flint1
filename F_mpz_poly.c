@@ -8241,9 +8241,9 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
          {
             sqN = (ulong) sqrt( 1.6 * ((double) r*r) );         
             if ( ( ( cur_col - low) % 2) == 0)
-               real_col = (cur_col - low)/2 + low;
+               real_col = cur_col;
             else
-               real_col = high - (cur_col - low + 1)/2;
+               real_col = high + low - cur_col;
             F_mpz_mul_ui(bound_sum, data->rows[r] + real_col, sqN);
             worst_exp = F_mpz_bits(bound_sum);   
             for( ulong i = 0; i < r; i++)
@@ -8285,9 +8285,9 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
             }
             else{
                if ( ( ( cur_col - low) % 2) == 0)
-                  real_col = (cur_col - low)/2 + low;
+                  real_col = cur_col;
                else
-                  real_col = high - (cur_col - low + 1)/2;
+                  real_col = high + low - cur_col;
                F_mpz_mul_ui(temp, data->rows[r] + real_col, sqN);
                F_mpz_add(temp, bound_sum, temp);
                worst_exp = F_mpz_bits(temp);   
