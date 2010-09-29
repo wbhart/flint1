@@ -6925,20 +6925,29 @@ ulong _F_mpz_poly_start_hensel_lift(F_mpz_poly_factor_t lifted_fac, long * link,
       F_mpz_poly_scalar_mul(monic_f, f, temp);
       F_mpz_poly_scalar_smod(monic_f, monic_f, big_P);
    }
-//later we're going to fine tune this powering process, in the meantime I want to have an array of exponents which we walk through
-   ulong num_steps = 2 + (ulong) floor( log2( (double) (target_exp) ) );
-   ulong exponents[num_steps];
-   ulong pow = 1;
-   for (i = 0; (i < num_steps) && (pow < target_exp); i++)
+
+   ulong num_steps = 5 + (ulong) floor( log2( (double) (target_exp) ) );
+   long copy_exponents[num_steps];
+   long exponents[num_steps];
+   long pow = target_exp;
+   ulong max_steps;
+   for (i = 0; (i < num_steps) && (pow > 1); i++)
    { 
-      exponents[i] = pow;
-      pow = pow * 2;
+      copy_exponents[i] = pow;
+      pow = (long) ((pow + 1)/2);
+//      printf("copy_exponents[%ld] is %ld and next pow is %ld\n", i, copy_exponents[i], pow);
    }
-   num_steps = i;
-   if (exponents[num_steps - 1] != target_exp ){
-      exponents[num_steps] = target_exp;
-      num_steps++;
-   }
+   max_steps = i;
+   exponents[0] = 1;
+   for (i = 1; (i <= max_steps); i++)
+      exponents[i] = copy_exponents[max_steps - i];
+
+/*   if (exponents[max_steps - 1] != target_exp ){
+      exponents[max_steps] = target_exp;
+      max_steps++;
+   }*/
+   num_steps = max_steps + 1;
+
 //here num_steps is actually the number of meaningful numbers in the array exponent so num_steps-2 means that the final time in the loop has 1 and one last
 //time outside of the loop with 0
 
@@ -7394,9 +7403,6 @@ printf(" first two clds took %f seconds\n", (double) cld_data_total/ (double) CL
 //Attempting a bit more Hensel lifting when tough poly predicted
       if ( r*3 > f->length)
          a = a*2;
-      else
-         a = a + 5;
-
 
       printf(" new a = %ld\n", a);
 
@@ -8248,10 +8254,14 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
             }
             else{
                if (cur_col < data->c - previously_checked -1){
-                  LLL_ready = 1;
                   F_mpz_mat_set(col_copy, col);
                   n_cols_per_LLL = 1;
-                  cur_col++;
+                  if (max_cols_per_LLL > 1){
+                     cur_col++;
+                     LLL_ready = 1;
+                  }
+                  else
+                     LLL_ready = 2;
                }
                else{
                   LLL_ready = 2;
