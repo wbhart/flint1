@@ -8241,7 +8241,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
          {
             sqN = (ulong) sqrt( 1.6 * ((double) r*r) );         
             if ( ( ( cur_col - low) % 2) == 0)
-               real_col = high + low - cur_col;
+               real_col = cur_col;
             else
                real_col = high + low - cur_col;
             F_mpz_mul_ui(bound_sum, data->rows[r] + real_col, sqN);
@@ -8285,7 +8285,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
             }
             else{
                if ( ( ( cur_col - low) % 2) == 0)
-                  real_col = high + low - cur_col;
+                  real_col = cur_col;
                else
                   real_col = high + low - cur_col;
                F_mpz_mul_ui(temp, data->rows[r] + real_col, sqN);
