@@ -8201,7 +8201,10 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    while ((all_coeffs != 2) && (return_me == 0)){
       LLL_ready = 0;
       n_cols_per_LLL = 0;
-      for (cur_col = previously_checked; cur_col < data->c - previously_checked;){
+      long low = previously_checked;
+      long high = data->c - previously_checked;
+      long real_col;
+      for (cur_col = low; cur_col < high;){
 /* Going to use LLL_ready to distinguish the situations, 
    value -1 means check col for a second try,
    value 0 means overwrite col,
@@ -8237,12 +8240,16 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
          } else if (LLL_ready == 0)
          {
             sqN = (ulong) sqrt( 1.6 * ((double) r*r) );         
-            F_mpz_mul_ui(bound_sum, data->rows[r] + cur_col, sqN);
+            if ( ( ( cur_col - low) % 2) == 0)
+               real_col = cur_col;
+            else
+               real_col = high + low - cur_col;
+            F_mpz_mul_ui(bound_sum, data->rows[r] + real_col, sqN);
             worst_exp = F_mpz_bits(bound_sum);   
             for( ulong i = 0; i < r; i++)
-               F_mpz_set(col->rows[i], data->rows[i] + cur_col);
+               F_mpz_set(col->rows[i], data->rows[i] + real_col);
 
-            printf(" checking column cur_col = %ld\n", cur_col);
+            printf(" checking column real_col = %ld\n", real_col);
 
             F_mpz_mat_resize(M_copy, M->r, M->c);
             F_mpz_mat_set(M_copy, M);
@@ -8257,7 +8264,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
                cur_col++;
             }
             else{
-               if (cur_col < data->c - previously_checked -1){
+               if (cur_col < high -1){
                   F_mpz_mat_set(col_copy, col);
                   n_cols_per_LLL = 1;
                   if (max_cols_per_LLL > 1){
@@ -8277,14 +8284,18 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
                LLL_ready = 2;
             }
             else{
-               F_mpz_mul_ui(temp, data->rows[r] + cur_col, sqN);
+               if ( ( ( cur_col - low) % 2) == 0)
+                  real_col = cur_col;
+               else
+                  real_col = high + low - cur_col;
+               F_mpz_mul_ui(temp, data->rows[r] + real_col, sqN);
                F_mpz_add(temp, bound_sum, temp);
                worst_exp = F_mpz_bits(temp);   
                for( ulong i = 0; i < r; i++)
-                  F_mpz_add(col->rows[i], col_copy->rows[i], data->rows[i] + cur_col);
+                  F_mpz_add(col->rows[i], col_copy->rows[i], data->rows[i] + real_col);
                F_mpz_mat_smod(col, col, P);
 
-               printf("new checking column cur_col = %ld\n", cur_col);
+               printf("new checking column real_col = %ld\n", real_col);
 
                F_mpz_mat_resize(M, M_copy->r, M_copy->c);
                F_mpz_mat_set(M, M_copy);
@@ -8299,7 +8310,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
                since_last++;
 
                if (ok == 0){
-                  if (cur_col < data->c - previously_checked -1){
+                  if (cur_col < high -1){
                      LLL_ready = 1;
                      cur_col++;
                   }
@@ -8316,7 +8327,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
             }
          } else if (LLL_ready == 2)
          {
-            printf(" on column cur_col = %ld\n", cur_col);
+            printf(" on column cur_col = %ld, real_col\n", cur_col, real_col);
             since_last = 0;
             num_entries++;
             if (M->r > 500){
