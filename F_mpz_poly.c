@@ -7393,7 +7393,9 @@ printf(" first two clds took %f seconds\n", (double) cld_data_total/ (double) CL
 
 //Attempting a bit more Hensel lifting when tough poly predicted
       if ( r*3 > f->length)
-         a = a*2; 
+         a = a*2;
+      else
+         a = a + 5;
 
 
       printf(" new a = %ld\n", a);
