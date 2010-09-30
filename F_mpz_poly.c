@@ -7405,7 +7405,7 @@ printf(" first two clds took %f seconds\n", (double) cld_data_total/ (double) CL
 
 //Attempting a bit more Hensel lifting when tough poly predicted
       if ( r*3 > f->length)
-         a = a*2;
+         a = a;
 
       printf(" new a = %ld\n", a);
 
@@ -8118,6 +8118,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
 {
    int return_me = 0;
    ulong N = F->length - 1;
+   ulong i,j;
    F_mpz_t lc;
    F_mpz_init(lc);
    F_mpz_set(lc, F->coeffs + N);
@@ -8130,6 +8131,8 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    ulong cur_col = 0;
    ulong worst_exp;
    ulong num_entries = M->c - r;
+
+   ulong mix_data = 0;
 
    F_mpz_t B;
    F_mpz_init(B);
@@ -8155,8 +8158,11 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
       return return_me;
    }
 
-//For the first run we'll only use 30 coeffs worth of data, should solve 99% of all 'random' polynomials
-   ulong num_coeffs = 10UL;
+   ulong num_coeffs;
+   if ((hensel_loops < 3) && (3*r > F->length))
+      num_coeffs = 30;
+   else
+      num_coeffs = 10;
    F_mpz_mat_t data;
    F_mpz_mat_init(data, 0, 0);
    F_mpz_mat_t M_copy;
@@ -8164,35 +8170,63 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    F_mpz_mat_t col_copy;
    F_mpz_mat_init(col_copy, r, 1);
 
-//FIXME: inserting checks here: first Hensel checking
-
-/*   int res_hens = hensel_checker(F, lifted_fac, P);
-   printf(" 00000000000022  result of hensel check is %d\n", res_hens);*/
-
    cld_data_start = clock();
    _F_mpz_poly_factor_CLD_mat(data, F, lifted_fac, P, num_coeffs);
    cld_data_stop = clock();
 
 
    cld_data_total = cld_data_total + cld_data_stop - cld_data_start;
-   //printf(" spend a total of %f seconds on CLD stuff so far\n", (double) cld_data_total / (double)CLOCKS_PER_SEC);
-
 //   F_mpz_mat_print_pretty(data); printf(" was the data mat\n");
 
    int all_coeffs = 0;
    if (data->c >= F->length - 1)
       all_coeffs = 1;
-//assume that cexpo is correct for the first M->c entries, zero out the potential new entries
-/* no cexpo for the moment   ulong i;
-   for (i = M->c; i < M->c + 2*(F->length - 1); i++)
-      cexpo[i] = 0;*/
+
+   long data_avail = data->c;
+
+   F_mpz_mat_t A;
+   F_mpz_mat_init(A, data_avail, data_avail);
+
+   F_mpz_mat_t abs_A;
+   F_mpz_mat_init(abs_A, data_avail, data_avail);
+
+   F_mpz_mat_t mixed_data;
+   F_mpz_mat_init(mixed_data, data->r, data->c);
+
+   F_mpz_mat_t mixed_data_bounds;
+   F_mpz_mat_init(mixed_data_bounds, 1L, data->c);
+
+   if (mix_data){
+      printf("here\n");
+      F_mpz_mat_rand_unimodular(A, 1L);
+      printf("not here\n");
+
+      F_mpz_mat_transpose(abs_A, A);
+      F_mpz_mat_set(A, abs_A);
+
+      for (i = 0; i < data_avail; i++)
+         for (j = 0; j < data_avail; j++)
+            F_mpz_abs(abs_A->rows[i] + j, A->rows[i] + j);
+
+      for (j = 0; j < data_avail; j++)
+         F_mpz_set(mixed_data_bounds->rows[0] + j, data->rows[r] + j);
+
+      F_mpz_mat_mul_classical(mixed_data, data, A);
+
+      F_mpz_mat_mul_classical(mixed_data_bounds, mixed_data_bounds, abs_A);
+
+      for (j = 0; j < data_avail; j++)
+         F_mpz_set(mixed_data->rows[r] + j, mixed_data_bounds->rows[0] + j);
+
+      F_mpz_mat_set(data, mixed_data);
+   }
 
    F_mpz_t temp;
    F_mpz_init(temp);
    F_mpz_t bound_sum;
    F_mpz_init(bound_sum);
    ulong sqN;
-//   printf("%ld sqN, %f sqrt(N)\n", sqN, sqrt( (double) (N) ) );
+
    int ok, col_cnt,  since_last, LLL_ready, n_cols_per_LLL, max_cols_per_LLL;
    ulong previously_checked;
    long newd, temp_newd;
@@ -8206,8 +8240,6 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    max_cols_per_LLL = 1;
    int multi_col = 0;
    int old_cur_col;
-
-//   F_mpz_mat_print_pretty(M);
 
    while ((all_coeffs != 2) && (return_me == 0)){
       LLL_ready = 0;
@@ -8471,6 +8503,10 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    F_mpz_mat_clear(M_copy);
    F_mpz_mat_clear(data);
    F_mpz_mat_clear(col);
+   F_mpz_mat_clear(A);
+   F_mpz_mat_clear(abs_A);
+   F_mpz_mat_clear(mixed_data);
+   F_mpz_mat_clear(mixed_data_bounds);
    F_mpz_mat_clear(col_copy);
    return return_me;
 }
