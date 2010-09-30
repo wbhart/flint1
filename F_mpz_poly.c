@@ -8467,7 +8467,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
                abort();
             }
 
-            if ((col_cnt > 4) && (mix_data == 1))
+            if ((col_cnt > 2) && (mix_data == 1))
                mix_data = 0;
 
             F_mpz_mat_resize(M, newd, M->c);
