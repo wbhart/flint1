@@ -51,7 +51,7 @@
 #include "F_mpz_LLL_fast_d.h"
 #include "F_mpz_LLL_wrapper.h"
 
-#define POLYPROFILE 0
+#define POLYPROFILE 1
 
 /*===============================================================================
 
@@ -7320,9 +7320,10 @@ for(num_primes = 1; num_primes < 3; num_primes++)
    int mexpo[4];
 //   int mexpo[r + 2 * (f->length - 1)];
    F_mpz_mat_t M;
-   long U_exp = r/4;
+   ulong bit_r = FLINT_MAX(r, 20);
+   long U_exp = bit_r/4;
    if (r*3 > f->length)
-      U_exp = r/8;
+      U_exp = bit_r/8;
 
 //In the near future we should go back and try some more primes might deduce irreducibility or find smaller r
    if (r > 6){
@@ -7356,8 +7357,6 @@ for(num_primes = 1; num_primes < 3; num_primes++)
    a = (long) pow( (double) 2, ceil( log2( (double) a ) ) );
 
    printf(" zass a = %ld \n", a);
-
-   ulong bit_r = FLINT_MAX(r, 20);
 
    if (use_Hoeij_Novocin == 1)
    {
@@ -7441,6 +7440,7 @@ printf(" first two clds took %f seconds\n", (double) cld_data_total/ (double) CL
    zmod_poly_factor_clear(fac);
    zmod_poly_clear(F);
 
+   int hensel_loops = 0;
    while( solved_yet == 0 ){
 //Have now Hensel lifted to p^a for the precalculated a, in the optimized version we will lift even less
 //Here let's make a list of Hensel lifted factors for grabbing information and trial testing.
@@ -7449,10 +7449,10 @@ printf(" first two clds took %f seconds\n", (double) cld_data_total/ (double) CL
 //Now we are ready to to the Zassenhaus testing... later the r > 20 (or even 10) test could go here
       F_mpz_set_ui(P, p);
       F_mpz_pow_ui(P, P, a);
-
+      hensel_loops++;
       if (use_Hoeij_Novocin == 1){
 
-         solved_yet = F_mpz_poly_factor_sq_fr_vHN(final_fac, lifted_fac, f, P, exp, M, mexpo, U_exp);
+         solved_yet = F_mpz_poly_factor_sq_fr_vHN(final_fac, lifted_fac, f, P, exp, M, mexpo, U_exp, hensel_loops);
          if (solved_yet == 0){
 //This is where we increase the Hensel Accuracy and go back
             hensel_start = clock();
@@ -8114,7 +8114,7 @@ int hensel_checker(F_mpz_poly_t F, F_mpz_poly_factor_t lifted_fac, F_mpz_t P){
    return res;
 }
 
-int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, F_mpz_t P, ulong exp, F_mpz_mat_t M, int * cexpo, long U_exp)
+int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, F_mpz_t P, ulong exp, F_mpz_mat_t M, int * cexpo, long U_exp, int hensel_loops)
 {
    int return_me = 0;
    ulong N = F->length - 1;
@@ -8427,11 +8427,14 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
             }
             else{
 //This condition should include a special case for when P is ridiculously large (for the sake of complexity proofs) although no example has ever needed it...
-               if ((since_last >= data->c - 5) && (M->r > old_s - 2))
+#if POLYPROFILE
+               printf("since_last == %d, data->c=%ld, M->r = %ld, old_s = %ld\n", since_last, data->c, M->r, old_s);
+#endif
+               if (((since_last >= data->c - 5) && (M->r > old_s - 2)) || (hensel_loops > 2))
                {
                   if (old_since_last == 0)
                      old_since_last = since_last;
-                  if (since_last > old_since_last){
+                  if ((since_last > old_since_last) && (hensel_loops < 3)){
                      return_me = 5;
                      all_coeffs = 2;
                   }
