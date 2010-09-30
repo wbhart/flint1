@@ -1309,6 +1309,8 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
 {   
    ulong r = col->r;
    ulong B = r + 2;
+   if (U_exp == 0)
+      B = r + 20*r*r;
    ulong bit_r = FLINT_MAX(r, 20);
    
    long ISD = F_mpz_bits(P) - bit_r - bit_r/2;
@@ -1332,6 +1334,8 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
    F_mpz_mat_smod(temp_col, temp_col, P);
 
    long mbts = FLINT_ABS(F_mpz_mat_max_bits(temp_col));
+
+   printf("mbts == %ld\n", mbts);
 
    // bare minimum of data above the bound
    if (mbts < (long) (0.973 * (double) bit_r - 0.1 + (double) exp))
@@ -1423,7 +1427,7 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
    F_mpz_mat_clear(temp_col);
    F_mpz_mat_window_clear(U);
 
-   return virt_exp;
+   return FLINT_MAX(virt_exp,1);
 }
 
 

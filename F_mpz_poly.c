@@ -7321,6 +7321,8 @@ for(num_primes = 1; num_primes < 3; num_primes++)
 //   int mexpo[r + 2 * (f->length - 1)];
    F_mpz_mat_t M;
    long U_exp = r/4;
+   if (r*3 > f->length)
+      U_exp = 0;
 
 //In the near future we should go back and try some more primes might deduce irreducibility or find smaller r
    if (r > 6){
@@ -8132,11 +8134,16 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    F_mpz_t B;
    F_mpz_init(B);
 // With U_exp B should be switched from r+1 to r+1 * 2^(2*U_exp) 
-   F_mpz_set_ui(B, r + 1);
-   if (U_exp >= 0)
-      F_mpz_mul_2exp(B, B, (ulong) 2*U_exp);
-   else
-      F_mpz_div_2exp(B, B, (ulong) -2*U_exp);
+   if (U_exp != 0){
+      F_mpz_set_ui(B, r + 1);
+      if (U_exp >= 0)
+         F_mpz_mul_2exp(B, B, (ulong) 2*U_exp);
+      else
+         F_mpz_div_2exp(B, B, (ulong) -2*U_exp);
+   }
+   else{
+      F_mpz_set_ui(B, r + 20*r*r);
+   }
 
    int solved =  _F_mpz_mat_check_if_solved(M, r, final_fac, lifted_fac, F, P, exp, lc, 0);
    if (solved == 1)
@@ -8196,8 +8203,8 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    previously_checked = 0;
    LLL_ready = 0;
    n_cols_per_LLL = 0;
-   max_cols_per_LLL = 2;
-   int multi_col = 1;
+   max_cols_per_LLL = 1;
+   int multi_col = 0;
    int old_cur_col;
 
 //   F_mpz_mat_print_pretty(M);
@@ -8255,7 +8262,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
             for( ulong i = 0; i < r; i++)
                F_mpz_set(col->rows[i], data->rows[i] + real_col);
 
-            printf(" checking column real_col = %ld\n", real_col);
+            printf(" checking column real_col = %ld with worst_exp = %ld\n", real_col, worst_exp);
 
             F_mpz_mat_resize(M_copy, M->r, M->c);
             F_mpz_mat_set(M_copy, M);
@@ -8354,7 +8361,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
             num_entries++;
             if (M->r > 500){
                lll_start = clock();
-               newd = U_LLL_with_removal(M, 350L, B);
+               newd = U_LLL_with_removal(M, 50L, B);
                lll_stop = clock();
             }
             else if (M->r > 200){
