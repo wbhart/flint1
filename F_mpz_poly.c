@@ -8160,7 +8160,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
 
    ulong num_coeffs;
    if ((hensel_loops < 3) && (3*r > F->length))
-      num_coeffs = 30;
+      num_coeffs = 50;
    else
       num_coeffs = 10;
    F_mpz_mat_t data;
