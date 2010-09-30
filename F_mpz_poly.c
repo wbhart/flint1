@@ -8277,6 +8277,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    int old_cur_col;
    long old_d;
    int num_drops = 0;
+   int num_ups = 0;
 
    while ((all_coeffs != 2) && (return_me == 0)){
       LLL_ready = 0;
@@ -8475,13 +8476,17 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
             if (mix_data == 1){
                if (newd < old_d)
                   num_drops++;
-               else
-                  mix_data = 0;
+               else{
+                  num_ups++;
+                  mix_data = 1;
+                  if (num_ups > 2)
+                     mix_data = 0;
+               }
             }
 
             F_mpz_mat_resize(M, newd, M->c);
             col_cnt++;
-            if ((n_cols_per_LLL > 1) && (multi_col!= 0)){
+            if (((n_cols_per_LLL > 1) && (multi_col!= 0)) || (mix_data = 1)){
                LLL_ready = 0;
             }
             else{
