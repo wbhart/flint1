@@ -8326,7 +8326,11 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
                   real_col = high - 1 + low - cur_col;
             }
             else
-               real_col = high + low -1 - cur_col;
+               if (mix_data == 0)
+                  real_col = high + low - cur_col;
+               else
+                  real_col = high + low -1 - cur_col;
+
 
             F_mpz_mul_ui(bound_sum, data->rows[r] + real_col, sqN);
             worst_exp = F_mpz_bits(bound_sum);   
