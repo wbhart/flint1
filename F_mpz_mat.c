@@ -1335,8 +1335,6 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
 
    long mbts = FLINT_ABS(F_mpz_mat_max_bits(temp_col));
 
-   printf("mbts == %ld\n", mbts);
-
    // bare minimum of data above the bound
    if (mbts < (long) (0.973 * (double) bit_r - 0.1 + (double) exp))
    {

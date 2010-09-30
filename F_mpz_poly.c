@@ -51,7 +51,7 @@
 #include "F_mpz_LLL_fast_d.h"
 #include "F_mpz_LLL_wrapper.h"
 
-#define POLYPROFILE 1
+#define POLYPROFILE 0
 
 /*===============================================================================
 
