@@ -1552,7 +1552,7 @@ void F_mpz_mat_transpose(F_mpz_mat_t res, F_mpz_mat_t M){
 
 }
 
-void F_mpz_mat_reverse_cols(F_mpz_mat_t res, F_mpz_mat_t M){
+void F_mpz_mat_block_reverse_cols(F_mpz_mat_t res, ulong n, F_mpz_mat_t M){
 
    ulong r, c, i, j;
    r = M->r;
@@ -1565,7 +1565,10 @@ void F_mpz_mat_reverse_cols(F_mpz_mat_t res, F_mpz_mat_t M){
    }
 
    for (i = 0; i < r; i++)
-      for (j = 0; j < c; j++)
-         F_mpz_set(res->rows[i] + c - j - 1, M->rows[i] + j);
-
+      for (j = 0; j < c; j++){
+         if (j < n)
+            F_mpz_set(res->rows[i] + j, M->rows[i] + c - n + j);
+         else
+            F_mpz_set(res->rows[i] + j, M->rows[i] + j - n);
+      }
 }

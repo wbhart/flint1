@@ -660,7 +660,7 @@ void F_mpz_mat_rand_unimodular_little_big(F_mpz_mat_t U, ulong n, ulong bits1, u
 
 void F_mpz_mat_transpose(F_mpz_mat_t res, F_mpz_mat_t M);
 
-void F_mpz_mat_reverse_cols(F_mpz_mat_t res, F_mpz_mat_t M);
+void F_mpz_mat_block_reverse_cols(F_mpz_mat_t res, ulong n, F_mpz_mat_t M);
 
 #ifdef __cplusplus
  }

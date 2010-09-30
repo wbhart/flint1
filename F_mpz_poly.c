@@ -8239,28 +8239,18 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
       F_mpz_mat_rand_unimodular_little_big(A, (long) (data_avail/2), 2, 0);
 
       F_mpz_mat_transpose(abs_A, A);
-      F_mpz_mat_reverse_cols(A, abs_A);
+      F_mpz_mat_block_reverse_cols(A, (long) (data_avail/2), abs_A);
+
+      F_mpz_mat_print_pretty(A);
 
       for (i = 0; i < data_avail; i++)
          for (j = 0; j < data_avail; j++)
             F_mpz_abs(abs_A->rows[i] + j, A->rows[i] + j);
 
-      for (j = 0; j < data_avail; j++){
-         F_mpz_mul_ui(bound_sum, data->rows[r] + j, sqN);
-         worst_exp = F_mpz_bits(bound_sum);
-         if (worst_exp > max_worst_exp)
-            max_worst_exp = worst_exp;
-      }
-//pre scale... 
-      for (j = 0; j < data_avail; j++){
-         for (i = 0; i < r; i++)
-            F_mpz_div_2exp(mixed_data->rows[i] + j, data->rows[i] + j, (ulong) max_worst_exp);
-         F_mpz_set_ui(mixed_data_bounds->rows[0] + j, 8);
-      }
+      for (j = 0; j < data_avail; j++)
+         F_mpz_set(mixed_data_bounds->rows[0] + j, data->rows[r] + j);
 
-      F_mpz_div_2exp(P, P, max_worst_exp);
-
-      F_mpz_mat_mul_classical(mixed_data, mixed_data, A);
+      F_mpz_mat_mul_classical(mixed_data, data, A);
 
       F_mpz_mat_smod(mixed_data, mixed_data, P);
 
@@ -8474,7 +8464,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
                abort();
             }
 
-            if ((newd < old_s - 2) && (mix_data == 1))
+            if ((col_cnt > 3) && (mix_data == 1))
                mix_data = 0;
 
             F_mpz_mat_resize(M, newd, M->c);
