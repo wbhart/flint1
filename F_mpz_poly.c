@@ -8275,6 +8275,8 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    max_cols_per_LLL = 1;
    int multi_col = 0;
    int old_cur_col;
+   long old_d;
+   int num_drops = 0;
 
    while ((all_coeffs != 2) && (return_me == 0)){
       LLL_ready = 0;
@@ -8438,14 +8440,17 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
 #endif
             since_last = 0;
             num_entries++;
+
+            old_d = M->r;
+
             if (M->r > 300){
                lll_start = clock();
-               newd = U_LLL_with_removal(M, 5000L, B);
+               newd = U_LLL_with_removal(M, 50L, B);
                lll_stop = clock();
             }
             else if (M->r > 200){
                lll_start = clock();
-               newd = U_LLL_with_removal(M, 5000L, B);
+               newd = U_LLL_with_removal(M, 50L, B);
                lll_stop = clock();
             }
             else if (M->r > 100){
@@ -8467,8 +8472,12 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
                abort();
             }
 
-            if ((col_cnt > 3) && (mix_data == 1))
-               mix_data = 0;
+            if (mix_data == 1){
+               if (newd < old_d)
+                  num_drops++;
+               else
+                  mix_data = 0;
+            }
 
             F_mpz_mat_resize(M, newd, M->c);
             col_cnt++;
