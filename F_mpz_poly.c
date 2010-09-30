@@ -7322,7 +7322,7 @@ for(num_primes = 1; num_primes < 3; num_primes++)
    F_mpz_mat_t M;
    long U_exp = r/4;
    if (r*3 > f->length)
-      U_exp = 0;
+      U_exp = r/8;
 
 //In the near future we should go back and try some more primes might deduce irreducibility or find smaller r
    if (r > 6){
@@ -8361,17 +8361,17 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
             num_entries++;
             if (M->r > 500){
                lll_start = clock();
-               newd = U_LLL_with_removal(M, 50L, B);
+               newd = U_LLL_with_removal(M, 350L, B);
                lll_stop = clock();
             }
             else if (M->r > 200){
                lll_start = clock();
-               newd = U_LLL_with_removal(M, 75L, B);
+               newd = U_LLL_with_removal(M, 350L, B);
                lll_stop = clock();
             }
             else if (M->r > 100){
                lll_start = clock();
-               newd = U_LLL_with_removal(M, 150L, B);
+               newd = U_LLL_with_removal(M, 350L, B);
                lll_stop = clock();
             }
             else{
