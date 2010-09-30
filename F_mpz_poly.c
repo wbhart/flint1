@@ -7321,9 +7321,9 @@ for(num_primes = 1; num_primes < 3; num_primes++)
 //   int mexpo[r + 2 * (f->length - 1)];
    F_mpz_mat_t M;
    ulong bit_r = FLINT_MAX(r, 20);
-   long U_exp = bit_r/4;
+   long U_exp = (long) ceil(log2((double) bit_r));;
    if (r*3 > f->length)
-      U_exp = bit_r/8;
+      U_exp = (long) ceil(log2((double) bit_r));
 
 //In the near future we should go back and try some more primes might deduce irreducibility or find smaller r
    if (r > 6){
