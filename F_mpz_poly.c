@@ -7896,7 +7896,7 @@ void _F_mpz_poly_factor_CLD_mat(F_mpz_mat_t res, F_mpz_poly_t F, F_mpz_poly_fact
       F_mpz_clear(temp[i]);
 
    F_mpz_mat_t res_copy;
-   F_mpz_mat_init(res_copy, d+1, lower_n + upper_n);
+   F_mpz_mat_init(res_copy, d+1, n);
 
    if ((lower_n != 0) && (upper_n != 0)){
       F_mpz_mat_clear(res_copy);
@@ -8206,7 +8206,6 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
 
 
    cld_data_total = cld_data_total + cld_data_stop - cld_data_start;
-//   F_mpz_mat_print_pretty(data); printf(" was the data mat\n");
 
    int all_coeffs = 0;
    if (data->c >= F->length - 1)
@@ -8241,8 +8240,6 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
       F_mpz_mat_transpose(abs_A, A);
       F_mpz_mat_block_reverse_cols(A, (long) (data_avail/2), abs_A);
 
-      F_mpz_mat_print_pretty(A);
-
       for (i = 0; i < data_avail; i++)
          for (j = 0; j < data_avail; j++)
             F_mpz_abs(abs_A->rows[i] + j, A->rows[i] + j);
@@ -8256,8 +8253,9 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
 
       F_mpz_mat_mul_classical(mixed_data_bounds, mixed_data_bounds, abs_A);
 
-      for (j = 0; j < data_avail; j++)
+      for (j = 0; j < data_avail; j++){
          F_mpz_set(mixed_data->rows[r] + j, mixed_data_bounds->rows[0] + j);
+      }
 
       F_mpz_mat_set(data, mixed_data);
    }
@@ -8325,10 +8323,11 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
                if (mix_data == 0)
                   real_col = cur_col;
                else
-                  real_col = high + low - cur_col;
+                  real_col = high - 1 + low - cur_col;
             }
             else
-               real_col = high + low - cur_col;
+               real_col = high + low -1 - cur_col;
+
             F_mpz_mul_ui(bound_sum, data->rows[r] + real_col, sqN);
             worst_exp = F_mpz_bits(bound_sum);   
             for( ulong i = 0; i < r; i++)
