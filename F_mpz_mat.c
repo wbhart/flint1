@@ -1453,6 +1453,31 @@ void F_mpz_mat_randintrel(F_mpz_mat_t mat, ulong bits)
    }
 }
 
+void F_mpz_mat_randintrel_little_big(F_mpz_mat_t mat, ulong n, ulong bits1, ulong bits)
+{
+   ulong r, c, i, j;
+
+   r = mat->r;
+   c = mat->c;
+
+   if (c != r + 1)
+   {
+     printf("Exception: F_mpz_mat_randintrel called on an ill-formed matrix\n");
+      abort();
+   }
+   
+   for (i = 0; i < r; i++)
+   {
+      if (i < n) F_mpz_random(mat->rows[i] + c - 1, bits1);
+      else F_mpz_random(mat->rows[i] + c - 1, bits);
+      for (j = 0; j < i; j++)
+   	   F_mpz_zero(mat->rows[i] + j);
+      F_mpz_set_ui(mat->rows[i] + i, 1);
+      for (j = i + 1; j < c - 1; j++)
+   	   F_mpz_zero(mat->rows[i] + j);
+   }
+}
+
 void F_mpz_mat_rand_unimodular(F_mpz_mat_t U, ulong bits){
 
    ulong r,c,i,j;
@@ -1481,6 +1506,34 @@ void F_mpz_mat_rand_unimodular(F_mpz_mat_t U, ulong bits){
    F_mpz_mat_clear(X);
 }
 
+void F_mpz_mat_rand_unimodular_little_big(F_mpz_mat_t U, ulong n, ulong bits1, ulong bits2){
+
+   ulong r,c,i,j;
+
+   r = U->r;
+   c = U->c;
+
+   if (c != r)
+   {
+     printf("Exception: F_mpz_mat_rand_unimodular called on an ill-formed matrix\n");
+      abort();
+   }
+
+   c = r + 1;
+   F_mpz_mat_t X;
+   F_mpz_mat_init(X, r, c);
+
+   F_mpz_mat_randintrel_little_big(X, n, bits1*r, bits2*r);
+
+   LLL_wrapper(X);
+
+   for (i = 0; i < r; i++)
+      for (j = 0; j < r; j++)
+         F_mpz_set(U->rows[i] + j, X->rows[i] + j);
+
+   F_mpz_mat_clear(X);
+}
+
 void F_mpz_mat_transpose(F_mpz_mat_t res, F_mpz_mat_t M){
 
    ulong r, c, i, j;
@@ -1496,5 +1549,23 @@ void F_mpz_mat_transpose(F_mpz_mat_t res, F_mpz_mat_t M){
    for (i = 0; i < r; i++)
       for (j = 0; j < c; j++)
          F_mpz_set(res->rows[j] + i, M->rows[i] + j);
+
+}
+
+void F_mpz_mat_reverse_cols(F_mpz_mat_t res, F_mpz_mat_t M){
+
+   ulong r, c, i, j;
+   r = M->r;
+   c = M->c;
+
+   if ( (c != res->c) || (r != res->r))
+   {
+     printf("Exception: F_mpz_mat_transpose called on an ill-formed matrix\n");
+      abort();
+   }
+
+   for (i = 0; i < r; i++)
+      for (j = 0; j < c; j++)
+         F_mpz_set(res->rows[i] + c - j - 1, M->rows[i] + j);
 
 }

@@ -7750,7 +7750,7 @@ void _F_mpz_poly_factor_CLD_mat(F_mpz_mat_t res, F_mpz_poly_t F, F_mpz_poly_fact
    long worst_exp;
    F_mpz_t cld_temp;
    F_mpz_init(cld_temp);
-
+   long j;
    int ok = 0;
    ulong bits_d = FLINT_MAX(d, 20);
    ulong sqN = (ulong) sqrt( 1.6 * ((double) d*d) );   
@@ -7806,7 +7806,6 @@ void _F_mpz_poly_factor_CLD_mat(F_mpz_mat_t res, F_mpz_poly_t F, F_mpz_poly_fact
 //Should do upper and lower trunc multiplication soon, for speed sake
          F_mpz_poly_mul(gcld, trunc_F, gd);
 
-         long j;
          int trunk_ok = 1;
          if (gcld->length != 0)
             trunk_ok = F_mpz_poly_div_trunc_modp(temp, gcld, trunc_poly, P, lower_n);
@@ -7895,6 +7894,29 @@ void _F_mpz_poly_factor_CLD_mat(F_mpz_mat_t res, F_mpz_poly_t F, F_mpz_poly_fact
 
    for (i = 0; i < n; i++)
       F_mpz_clear(temp[i]);
+
+   F_mpz_mat_t res_copy;
+   F_mpz_mat_init(res_copy, d+1, lower_n + upper_n);
+
+   if ((lower_n != 0) && (upper_n != 0)){
+      F_mpz_mat_clear(res_copy);
+      return;
+   }
+   else if (lower_n != 0){
+      for (i = 0; i < d+1; i++)
+         for (j = 0; j < lower_n; j++)
+            F_mpz_set(res_copy->rows[i] + j, res->rows[i] + j);
+   }
+   else if (upper_n != 0){
+      for (i = 0; i < d+1; i++)
+         for (j = 0; j < upper_n; j++)
+            F_mpz_set(res_copy->rows[i] + j, res->rows[i] + j + n);
+   }
+
+   F_mpz_mat_resize(res, res_copy->r, res_copy->c);
+   F_mpz_mat_set(res, res_copy);
+   F_mpz_mat_clear(res_copy);
+   return;
 }
 
 int _F_mpz_poly_try_to_solve(int num_facs, ulong * part, F_mpz_poly_factor_t final_fac, F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, F_mpz_t P, ulong exp, F_mpz_t lc, int safe)
@@ -8114,7 +8136,7 @@ int hensel_checker(F_mpz_poly_t F, F_mpz_poly_factor_t lifted_fac, F_mpz_t P){
    return res;
 }
 
-int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, F_mpz_t P, ulong exp, F_mpz_mat_t M, int * cexpo, long U_exp, int hensel_loops)
+int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, F_mpz_t P_in, ulong exp, F_mpz_mat_t M, int * cexpo, long U_exp, int hensel_loops)
 {
    int return_me = 0;
    ulong N = F->length - 1;
@@ -8134,6 +8156,9 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
 
    ulong mix_data = 0;
 
+   F_mpz_t P;
+   F_mpz_init(P);
+   F_mpz_set(P, P_in);
    F_mpz_t B;
    F_mpz_init(B);
 // With U_exp B should be switched from r+1 to r+1 * 2^(2*U_exp) 
@@ -8159,11 +8184,13 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    }
 
    ulong num_coeffs;
-   if ((hensel_loops < 3) && (3*r > F->length))
+   if ((hensel_loops < 3) && (3*r > F->length)){
+      mix_data = 1;
       if (r > 200)
          num_coeffs = 50;
       else
          num_coeffs = 30;
+   }
    else
       num_coeffs = 10;
    F_mpz_mat_t data;
@@ -8187,6 +8214,13 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
 
    long data_avail = data->c;
 
+   F_mpz_t temp;
+   F_mpz_init(temp);
+   F_mpz_t bound_sum;
+   F_mpz_init(bound_sum);
+   ulong sqN;
+   sqN = (ulong) sqrt( 1.6 * ((double) r*r) );         
+
    F_mpz_mat_t A;
    F_mpz_mat_init(A, data_avail, data_avail);
 
@@ -8199,22 +8233,36 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    F_mpz_mat_t mixed_data_bounds;
    F_mpz_mat_init(mixed_data_bounds, 1L, data->c);
 
+   long max_worst_exp = 0;
+
    if (mix_data){
-      printf("here\n");
-      F_mpz_mat_rand_unimodular(A, 1L);
-      printf("not here\n");
+      F_mpz_mat_rand_unimodular_little_big(A, (long) (data_avail/2), 2, 0);
 
       F_mpz_mat_transpose(abs_A, A);
-      F_mpz_mat_set(A, abs_A);
+      F_mpz_mat_reverse_cols(A, abs_A);
 
       for (i = 0; i < data_avail; i++)
          for (j = 0; j < data_avail; j++)
             F_mpz_abs(abs_A->rows[i] + j, A->rows[i] + j);
 
-      for (j = 0; j < data_avail; j++)
-         F_mpz_set(mixed_data_bounds->rows[0] + j, data->rows[r] + j);
+      for (j = 0; j < data_avail; j++){
+         F_mpz_mul_ui(bound_sum, data->rows[r] + j, sqN);
+         worst_exp = F_mpz_bits(bound_sum);
+         if (worst_exp > max_worst_exp)
+            max_worst_exp = worst_exp;
+      }
+//pre scale... 
+      for (j = 0; j < data_avail; j++){
+         for (i = 0; i < r; i++)
+            F_mpz_div_2exp(mixed_data->rows[i] + j, data->rows[i] + j, (ulong) max_worst_exp);
+         F_mpz_set_ui(mixed_data_bounds->rows[0] + j, 8);
+      }
 
-      F_mpz_mat_mul_classical(mixed_data, data, A);
+      F_mpz_div_2exp(P, P, max_worst_exp);
+
+      F_mpz_mat_mul_classical(mixed_data, mixed_data, A);
+
+      F_mpz_mat_smod(mixed_data, mixed_data, P);
 
       F_mpz_mat_mul_classical(mixed_data_bounds, mixed_data_bounds, abs_A);
 
@@ -8224,11 +8272,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
       F_mpz_mat_set(data, mixed_data);
    }
 
-   F_mpz_t temp;
-   F_mpz_init(temp);
-   F_mpz_t bound_sum;
-   F_mpz_init(bound_sum);
-   ulong sqN;
+
 
    int ok, col_cnt,  since_last, LLL_ready, n_cols_per_LLL, max_cols_per_LLL;
    ulong previously_checked;
@@ -8287,9 +8331,12 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
          {
             if (n_cols_per_LLL == 0)
                old_cur_col = cur_col;
-            sqN = (ulong) sqrt( 1.6 * ((double) r*r) );         
-            if ( ( ( cur_col - low) % 2) == 0)
-               real_col = cur_col;
+            if ( ( ( cur_col - low) % 2) == 0){
+               if (mix_data == 0)
+                  real_col = cur_col;
+               else
+                  real_col = high + low - cur_col;
+            }
             else
                real_col = high + low - cur_col;
             F_mpz_mul_ui(bound_sum, data->rows[r] + real_col, sqN);
@@ -8344,8 +8391,12 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
                LLL_ready = 2;
             }
             else{
-               if ( ( ( cur_col - low) % 2) == 0)
-                  real_col = cur_col;
+               if ( ( ( cur_col - low) % 2) == 0){
+                  if (mix_data == 0)
+                     real_col = cur_col;
+                  else
+                     real_col = high + low - cur_col;
+               }
                else
                   real_col = high + low - cur_col;
                F_mpz_mul_ui(temp, data->rows[r] + real_col, sqN);
@@ -8423,6 +8474,8 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
                abort();
             }
 
+            if ((newd < old_s - 2) && (mix_data == 1))
+               mix_data = 0;
 
             F_mpz_mat_resize(M, newd, M->c);
             col_cnt++;
@@ -8507,6 +8560,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    F_mpz_mat_clear(data);
    F_mpz_mat_clear(col);
    F_mpz_mat_clear(A);
+   F_mpz_clear(P);
    F_mpz_mat_clear(abs_A);
    F_mpz_mat_clear(mixed_data);
    F_mpz_mat_clear(mixed_data_bounds);

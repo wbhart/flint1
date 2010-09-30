@@ -652,9 +652,15 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
 
 void F_mpz_mat_randintrel(F_mpz_mat_t mat, ulong bits);
 
+void F_mpz_mat_randintrel_little_big(F_mpz_mat_t mat, ulong n, ulong bits1, ulong bits);
+
 void F_mpz_mat_rand_unimodular(F_mpz_mat_t U, ulong bits);
 
+void F_mpz_mat_rand_unimodular_little_big(F_mpz_mat_t U, ulong n, ulong bits1, ulong bits2);
+
 void F_mpz_mat_transpose(F_mpz_mat_t res, F_mpz_mat_t M);
+
+void F_mpz_mat_reverse_cols(F_mpz_mat_t res, F_mpz_mat_t M);
 
 #ifdef __cplusplus
  }
