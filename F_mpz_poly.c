@@ -51,6 +51,8 @@
 #include "F_mpz_LLL_fast_d.h"
 #include "F_mpz_LLL_wrapper.h"
 
+#define POLYPROFILE 0
+
 /*===============================================================================
 
 	Memory management
@@ -8194,7 +8196,9 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    previously_checked = 0;
    LLL_ready = 0;
    n_cols_per_LLL = 0;
-   max_cols_per_LLL = 1;
+   max_cols_per_LLL = 2;
+   int multi_col = 1;
+   int old_cur_col;
 
 //   F_mpz_mat_print_pretty(M);
 
@@ -8239,6 +8243,8 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
             }
          } else if (LLL_ready == 0)
          {
+            if (n_cols_per_LLL == 0)
+               old_cur_col = cur_col;
             sqN = (ulong) sqrt( 1.6 * ((double) r*r) );         
             if ( ( ( cur_col - low) % 2) == 0)
                real_col = cur_col;
@@ -8261,18 +8267,30 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
             linear_alg_total = linear_alg_total + linear_alg_stop - linear_alg_start;
             since_last++;
             if (ok == 0){
-               cur_col++;
+               if ((cur_col < high -1) || (multi_col == 0) || (n_cols_per_LLL == 0) ){
+                  cur_col++;
+               }
+               else{
+                  cur_col = old_cur_col;
+                  LLL_ready = 2;
+               }
             }
             else{
                if (cur_col < high -1){
                   F_mpz_mat_set(col_copy, col);
-                  n_cols_per_LLL = 1;
-                  if (max_cols_per_LLL > 1){
+                  n_cols_per_LLL++;
+                  if (max_cols_per_LLL > n_cols_per_LLL){
                      cur_col++;
-                     LLL_ready = 1;
+                     if (multi_col == 0)
+                        LLL_ready = 1;
+                     else
+                        LLL_ready = 0;
                   }
-                  else
+                  else{
+                     if ((n_cols_per_LLL > 1) && (multi_col!= 0))
+                        cur_col = old_cur_col;
                      LLL_ready = 2;
+                  }
                }
                else{
                   LLL_ready = 2;
@@ -8328,6 +8346,10 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
          } else if (LLL_ready == 2)
          {
             printf(" on column cur_col = %ld, real_col = %ld\n", cur_col, real_col);
+#if POLYPROFILE
+            F_mpz_mat_print_pretty(M);
+            printf(" and B is "); F_mpz_print(B); printf("\n");
+#endif
             since_last = 0;
             num_entries++;
             if (M->r > 500){
@@ -8362,7 +8384,13 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
 
             F_mpz_mat_resize(M, newd, M->c);
             col_cnt++;
-            LLL_ready = -1;
+            if ((n_cols_per_LLL > 1) && (multi_col!= 0)){
+               LLL_ready = 0;
+            }
+            else{
+               LLL_ready = -1;
+            }
+            n_cols_per_LLL = 0;
             if (newd == 1){
                F_mpz_poly_factor_insert(final_fac, F, exp);
                return_me = 1;
