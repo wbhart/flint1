@@ -8480,7 +8480,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
                   num_ups++;
                   mix_data = 1;
                   if (num_ups > 2)
-                     mix_data = 0;
+                     mix_data = 1;
                }
             }
 
