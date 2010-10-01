@@ -39,6 +39,7 @@
 #include "flint.h"
 #include "F_mpz.h"
 #include "F_mpz_poly.h"
+#include "fmpz_poly.h"
 #include "mpn_extras.h"
 #include "longlong_wrapper.h"
 #include "longlong.h"
@@ -52,6 +53,30 @@
 #include "F_mpz_LLL_wrapper.h"
 
 #define POLYPROFILE 0
+
+/*===========================================
+
+   Some global timing variables
+
+==========================================*/
+
+clock_t check_if_solve_start, check_if_solve_stop;
+clock_t check_if_solve_total = 0;
+
+clock_t local_factor_start, local_factor_stop;
+clock_t local_factor_total = 0;
+
+clock_t lll_start, lll_stop;
+clock_t lll_total = 0;
+
+clock_t hensel_start, hensel_stop;
+clock_t hensel_total = 0;
+
+clock_t linear_alg_start, linear_alg_stop;
+clock_t linear_alg_total = 0;
+
+clock_t cld_data_start, cld_data_stop;
+clock_t cld_data_total = 0;
 
 /*===============================================================================
 
@@ -160,8 +185,9 @@ void F_mpz_poly_factor_pow(F_mpz_poly_factor_t fac, ulong pow)
 void F_mpz_poly_factor_insert(F_mpz_poly_factor_t fac, F_mpz_poly_t poly, unsigned long exp)
 {
    if (poly->length <= 1) return;   
-// how much space left in the array?, 
-// if none make a new one twice as big (for efficiency) and copy contents across
+   
+   // if no space left in array, make a new one twice as big (for efficiency) 
+   // and copy contents across
    if(fac->alloc == fac->num_factors)
    {
       fac->factors = (F_mpz_poly_t *) flint_heap_realloc_bytes(fac->factors, sizeof(F_mpz_poly_t)*2*fac->alloc);
@@ -333,6 +359,47 @@ void F_mpz_poly_to_mpz_poly(mpz_poly_t m_poly, const F_mpz_poly_t F_poly)
    ulong i;
    for (i = 0; i < F_poly->length; i++)
 	   F_mpz_get_mpz(m_poly->coeffs[i], F_poly->coeffs + i);
+}
+
+void fmpz_poly_to_F_mpz_poly(F_mpz_poly_t F_poly, const fmpz_poly_t m_poly)
+{
+	F_mpz_poly_fit_length(F_poly, m_poly->length);
+
+	_F_mpz_poly_set_length(F_poly, m_poly->length);
+   
+	ulong i;
+   mpz_t m; // does *not* need to be initialised
+	for (i = 0; i < m_poly->length; i++)
+   {
+      _fmpz_poly_get_coeff_mpz_read_only(m, m_poly, i); 
+      F_mpz_set_mpz(F_poly->coeffs + i, m);
+   }
+}
+
+void F_mpz_poly_to_fmpz_poly(fmpz_poly_t m_poly, const F_mpz_poly_t F_poly)
+{
+	ulong limbs = F_mpz_poly_max_limbs(F_poly);
+   fmpz_poly_fit_length(m_poly, F_poly->length);
+   fmpz_poly_fit_limbs(m_poly, limbs);
+   mp_limb_t * ptr;
+
+   m_poly->length = F_poly->length;
+   
+   ulong i;
+   for (i = 0; i < F_poly->length; i++)
+   {
+      F_mpz d = F_poly->coeffs[i];
+
+      if (!COEFF_IS_MPZ(d))
+         _fmpz_poly_set_coeff_si(m_poly, i, d);
+      else
+      {
+         ptr = m_poly->coeffs + i*(limbs + 1);
+         __mpz_struct * mpz_ptr = F_mpz_ptr_mpz(d);
+         ptr[0] = mpz_ptr->_mp_size;
+         mpn_copyi(ptr + 1, mpz_ptr->_mp_d, FLINT_ABS(ptr[0]));
+      }
+   }
 }
 
 void F_mpz_poly_to_zmod_poly(zmod_poly_t zpol, const F_mpz_poly_t fpol)
@@ -5812,36 +5879,11 @@ void F_mpz_poly_scalar_abs(F_mpz_poly_t output, F_mpz_poly_t input)
       F_mpz_abs(output->coeffs + i, input->coeffs + i);
 }
 
-/*===========================================
-
-   Some temporary global timing variables
-
-==========================================*/
-
-clock_t check_if_solve_start, check_if_solve_stop;
-clock_t check_if_solve_total = 0;
-
-clock_t local_factor_start, local_factor_stop;
-clock_t local_factor_total = 0;
-
-clock_t lll_start, lll_stop;
-clock_t lll_total = 0;
-
-clock_t hensel_start, hensel_stop;
-clock_t hensel_total = 0;
-
-clock_t linear_alg_start, linear_alg_stop;
-clock_t linear_alg_total = 0;
-
-clock_t cld_data_start, cld_data_stop;
-clock_t cld_data_total = 0;
-
-
-/*===========================================================================
+/*===============================================================================
 
    Wrappers for fmpz_poly functions which are not implemented in F_mpz_poly yet
 
-============================================================================*/
+================================================================================*/
 
 void F_mpz_poly_gcd(F_mpz_poly_t d, F_mpz_poly_t f, F_mpz_poly_t g)
 {

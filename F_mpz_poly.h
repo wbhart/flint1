@@ -413,6 +413,18 @@ void mpz_poly_to_F_mpz_poly(F_mpz_poly_t F_poly, const mpz_poly_t m_poly);
 void F_mpz_poly_to_mpz_poly(mpz_poly_t m_poly, const F_mpz_poly_t F_poly);
 
 /** 
+   \fn     void F_mpz_poly_to_fmpz_poly(fmpz_poly_t m_poly, const F_mpz_poly_t F_poly)
+   \brief  Convert an F_mpz_poly_t to an fmpz_poly_t
+*/
+void F_mpz_poly_to_fmpz_poly(fmpz_poly_t m_poly, const F_mpz_poly_t F_poly);
+
+/** 
+   \fn     void fmpz_poly_to_F_mpz_poly(F_mpz_poly_t F_poly, const fmpz_poly_t m_poly)
+   \brief  Convert an fmpz_poly_t to an F_mpz_poly_t
+*/
+void fmpz_poly_to_F_mpz_poly(F_mpz_poly_t F_poly, const fmpz_poly_t m_poly);
+
+/** 
    \fn     void F_mpz_poly_to_zmod_poly(zmod_poly_t zpol, const F_mpz_poly_t fpol)
    \brief  Convert an F_mpz_poly_t to a reduced zmod_poly_t
 */
