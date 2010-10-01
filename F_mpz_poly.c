@@ -6084,11 +6084,7 @@ void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong n)
                   ans = bottom_eval;
 
                ans = ans*(f->length - 1);
-               mpz_t temp;
-               mpz_init(temp);
-               mpz_set_d(temp, ans);
-               F_mpz_set_mpz(res, temp);
-               mpz_clear(temp);
+               F_mpz_set_d(res, ans);
             }
          }
       } else
