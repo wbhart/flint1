@@ -5793,21 +5793,20 @@ double F_mpz_poly_eval_horner_d_2exp(long * exp, F_mpz_poly_t poly, double val)
    return res;
 }
 
-void F_mpz_poly_scalar_abs(F_mpz_poly_t output, F_mpz_poly_t input){
+/*===============================================================================
 
-   if (input == output){
-      for( long i = 0; i < input->length; i++){
-         F_mpz_abs(output->coeffs + i, input->coeffs + i);
-      }
-   }
-   else{
-      F_mpz_poly_fit_length(output, input->length);
-      for( long i = 0; i < input->length; i++){
-         F_mpz_abs(output->coeffs + i, input->coeffs + i);
-      }
-      output-> length = input-> length;      
-   }
-   return;
+   Miscellaneous functions
+
+================================================================================*/
+
+void F_mpz_poly_scalar_abs(F_mpz_poly_t output, F_mpz_poly_t input)
+{
+   long i;
+   F_mpz_poly_fit_length(output, input->length);
+   _F_mpz_poly_set_length(output, input->length);
+
+   for (i = 0; i < input->length; i++)
+      F_mpz_abs(output->coeffs + i, input->coeffs + i);
 }
 
 /*===========================================
@@ -5837,18 +5836,19 @@ clock_t cld_data_total = 0;
 
 /*===========================================================================
 
-   stupid F_mpz_poly functions which just wrap fmpz_poly functions
+   Wrappers for fmpz_poly functions which are not implemented in F_mpz_poly yet
 
 ============================================================================*/
 
-void F_mpz_poly_gcd(F_mpz_poly_t d, F_mpz_poly_t f, F_mpz_poly_t g){
-
+void F_mpz_poly_gcd(F_mpz_poly_t d, F_mpz_poly_t f, F_mpz_poly_t g)
+{
    mpz_poly_t mpz_d, mpz_f, mpz_g;
+   fmpz_poly_t fmpz_d, fmpz_f, fmpz_g;
+   
    mpz_poly_init(mpz_d);
    mpz_poly_init(mpz_f);
    mpz_poly_init(mpz_g);
 
-   fmpz_poly_t fmpz_d, fmpz_f, fmpz_g;
    fmpz_poly_init(fmpz_d);
    fmpz_poly_init(fmpz_f);
    fmpz_poly_init(fmpz_g);
