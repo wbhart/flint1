@@ -1117,37 +1117,52 @@ void F_mpz_poly_pseudo_div_basecase(F_mpz_poly_t Q,
 
 /*===============================================================================
 
-   New Naive Standard Functions
+   Derivative
 
 ================================================================================*/
 
 /**
-   Probably fine as is, it's a derivative I mean come on...
+   Sets der to the derivative of poly.
 */
 void F_mpz_poly_derivative(F_mpz_poly_t der, F_mpz_poly_t poly);
 
 /**
-   Copied from fmpz_poly_content, but allows negative contents which might 
-      not be math-correct, but I wanted the factors of a poly * content = poly
+   Computes the Gaussian content c of poly. If all the coefficients are
+   negative, the content will be negative also. 
 */
 void F_mpz_poly_content(F_mpz_t c, const F_mpz_poly_t poly);
 
+/*===============================================================================
+
+   Evaluation
+
+================================================================================*/
+
 /**
-   No overflow checks, just does horners method with doubles
+   Evaluate poly at the double val and return the result. No cancellation
+   checks are done. The routine is naive and will return an approximate
+   result which will not be anywhere near correct unless there has been no 
+   cancellation.
 */
 double F_mpz_poly_eval_horner_d(F_mpz_poly_t poly, double val);
 
 /**
-   Uses mpfs in the middle so theres not saved time by the double exp format
-      could use dpe's in the middle for arithmetic or mpfr or something, but 
-      this should always work for polynomials no matter how large assuming you 
-      don't need the exact output...
+   Computes the evaluation of poly at the double val, returning the result
+   as a normalised mantissa and an exponent. The result should be extremely
+   close to the correct value, regardless of cancellations, etc. However, it
+   does not guarantee exact rounding (it uses mpfs, not mpfrs internally).
 */
 double F_mpz_poly_eval_horner_d_2exp(long * exp, F_mpz_poly_t poly, double val);
 
+/*===============================================================================
+
+   Miscellaneous Functions
+
+================================================================================*/
+
 /**
-   Needs a test function, it should be fine, but if the input weren't normalized
-      or something like that... maybe...
+   Sets output to the same as input but with each coefficient the absolute
+   value of the corresponding coefficient of input.
 */
 void F_mpz_poly_scalar_abs(F_mpz_poly_t output, F_mpz_poly_t input);
 

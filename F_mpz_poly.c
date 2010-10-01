@@ -5786,7 +5786,8 @@ double F_mpz_poly_eval_horner_d_2exp(long * exp, F_mpz_poly_t poly, double val)
 
    res = mpf_get_d_2exp(exp, output);
    
-   if (mpf_sgn(output) < 0) res = -res; // work around bug in GMP/MPIR
+   if ((mpf_sgn(output) < 0) && (res >= 0.0))
+      res = -res; // work around bug in earlier versions of GMP/MPIR
 
    mpf_clear(f_coeff_p);
    mpf_clear(output);
