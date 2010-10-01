@@ -8446,17 +8446,17 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
 
             if (M->r > 300){
                lll_start = clock();
-               newd = U_LLL_with_removal(M, 150L, B);
+               newd = U_LLL_with_removal(M, 350L, B);
                lll_stop = clock();
             }
             else if (M->r > 200){
                lll_start = clock();
-               newd = U_LLL_with_removal(M, 150L, B);
+               newd = U_LLL_with_removal(M, 350L, B);
                lll_stop = clock();
             }
             else if (M->r > 100){
                lll_start = clock();
-               newd = U_LLL_with_removal(M, 150L, B);
+               newd = U_LLL_with_removal(M, 350L, B);
                lll_stop = clock();
             }
             else{
