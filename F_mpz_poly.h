@@ -1222,25 +1222,6 @@ void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong N);
 ============================================================================*/
 
 /**
-   \fn     void F_mpz_poly_rem_modp_naive(F_mpz_poly_t R, F_mpz_poly_t A,
-               F_mpz_poly_t B, F_mpz_t p)
-   \brief  Finds (A modulo B) modulo p and sets this to R.  Uses mod not smod.
-               I call it Naive because it doesn't have special code for the 
-               fast cases, namely deg(A) == deg(B) or deg(B) + 1 
-               lead coeff of B should be invertible mod p
-*/
-void F_mpz_poly_rem_modp_naive(F_mpz_poly_t R, F_mpz_poly_t A, F_mpz_poly_t B,
-               F_mpz_t p);
-
-/**
-   \fn      void F_mpz_poly_mulmod_modp_naive(F_mpz_poly_t R, F_mpz_poly_t f,
-                F_mpz_poly_t g, F_mpz_poly_t B, F_mpz_t p)
-   \brief   Finds (f*g modulo B) modulo p, just does f*g then rem_modp.
-*/
-void F_mpz_poly_mulmod_modp_naive(F_mpz_poly_t R, F_mpz_poly_t f, 
-                F_mpz_poly_t g, F_mpz_poly_t B, F_mpz_t p);
-
-/**
    \fn      void F_mpz_poly_div_trunc_modp( F_mpz_t *res, F_mpz_poly_t f, 
                 F_mpz_poly_t g, F_mpz_t P, ulong n)
    \brief   A power series modp division.  Using only n coeffs of f and g
