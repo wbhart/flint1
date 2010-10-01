@@ -8474,11 +8474,11 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
             }
 
             if (mix_data == 1){
-               if (newd < old_d)
+               if (newd == old_d)
                   num_drops++;
                else{
                   num_ups++;
-                  mix_data = 1;
+                  mix_data = 0;
                   if (num_ups > 2)
                      mix_data = 0;
                }
