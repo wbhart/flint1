@@ -5908,15 +5908,22 @@ void F_mpz_poly_gcd(F_mpz_poly_t d, F_mpz_poly_t f, F_mpz_poly_t g)
 
 /*===========================================================================
 
-   New Material for FLINT, computing fast/tight bounds for CLDs
-      CLDs:= Coefficients of Logarithmic Derivatives.  f*g'/g
+   Computing fast/tight bounds for CLDs
+      CLDs := Coefficients of Logarithmic Derivatives.  f*g'/g
 
 ============================================================================*/
 
-int _d_2exp_comp(double a, long ap, double b, long bp){
-//assumes that if ap != 0 (or bp != 0) then a (or b) is in [1/2,1)
-   if (ap == 0){
-      if (bp == 0){
+/* 
+   No test code for this as it is internal and used only in the function 
+   for computing CLD bounds.
+*/
+int _d_2exp_comp(double a, long ap, double b, long bp)
+{
+   //assumes that if ap != 0 (or bp != 0) then a (or b) is in [1/2,1)
+   if (ap == 0)
+   {
+      if (bp == 0)
+      {
          if (a > 2*b)
             return 2;
          else if (b > 2*a)
@@ -5926,21 +5933,24 @@ int _d_2exp_comp(double a, long ap, double b, long bp){
          else
             return -1;
       }
-// now we know that a is the number but b is in 1/2,1 with power bp
-      long temp_ap = 1L + (long)log2(a);
+
+      // now we know that a is the number but b is in [1/2, 1) with power bp
+      long temp_ap = 1L + (long) log2(a);
       if (temp_ap >= bp + 2)
          return 2;
       else if (bp >= temp_ap + 2)
          return -2;
-      else{
+      else
+      {
          double ta,tb;
          ta = a/4;
-         tb = b*pow(2, (double)bp - 2);
+         tb = b*pow(2, (double) bp - 2);
          return _d_2exp_comp(ta, 0, tb, 0);
       }
-   }
-   else if (bp == 0){
-      if (ap == 0){
+   } else if (bp == 0)
+   {
+      if (ap == 0)
+      {
          if (a > 2*b)
             return 2;
          else if (b > 2*a)
@@ -5950,125 +5960,129 @@ int _d_2exp_comp(double a, long ap, double b, long bp){
          else
             return -1;
       }
-// now we know that b is the number but a is in 1/2,1 with power ap
-      long temp_bp = 1L + (long)log2(b);
+      
+      // now we know that b is the number but a is in [1/2, 1) with power ap
+      long temp_bp = 1L + (long) log2(b);
       if (ap >= temp_bp + 2)
          return 2;
       else if (temp_bp >= ap + 2)
          return -2;
-      else{
+      else
+      {
          double ta,tb;
-         ta = a*pow(2, (double)ap - 2);
+         ta = a*pow(2, (double) ap - 2);
          tb = b/4;
          return _d_2exp_comp(ta, 0, tb, 0);
       }
-   }
-   else{
-// now we know that both are in 1/2, 1 with powers
+   } else // neither ap nor bp is zero
+   {
+      // now we know that both are in [1/2, 1) with given powers
       if (ap >= bp + 2)
          return 2;
       else if (bp >= ap + 2)
          return -2;
-      else{
+      else
+      {
          double ta,tb;
-         ta = a*pow(2, (double)ap - (double)bp);
+         ta = a*pow(2, (double) ap - (double) bp);
          tb = b;
          return _d_2exp_comp(ta, 0, tb, 0);
       }
    }
 }
 
-void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong N){
-   if ((N < 0) || (N >= f->length - 1)){
-      printf("bad input\n");
-      return;
-   }
-//Coded with n = c+1 and decided that the user would rather give 0,1,2,3 instead of 1,2,3,4
-   ulong n = N + 1;
+void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong n)
+{
+   FLINT_ASSERT(N >= 0);
+   FLINT_ASSERT(N < f->length - 1);
+   
    F_mpz_poly_t low_f, up_f;
    F_mpz_poly_init(low_f);
    F_mpz_poly_init(up_f);
    F_mpz_poly_set(low_f, f);
-   F_mpz_poly_truncate(low_f, n);
+   F_mpz_poly_truncate(low_f, n + 1);
    F_mpz_poly_scalar_abs(low_f, low_f);
 
-//Going to change this a bit, used to diviode by r^n at the last step, now I want that included in the computation
-//adding following line now low_f should be evaluated at 1/r not r:
-   F_mpz_poly_reverse(low_f, low_f, n + 1);
-   F_mpz_poly_right_shift(up_f, f, n);
-//dropped this line   F_mpz_poly_left_shift(up_f, up_f, n);
+   F_mpz_poly_reverse(low_f, low_f, n + 2);
+   F_mpz_poly_right_shift(up_f, f, n + 1);
+
    F_mpz_poly_scalar_abs(up_f, up_f);
-//Need to take scalar_abs of F_mpz_poly's here.
+   
    double rpower = 0;
    double rshift = 1;
    double r = pow(2,rpower);
    double top_eval;
    double bottom_eval;
-//OK right now we have a fast and loose double version, which suffices for the moment.  It is completely forseeable that a large polynomial input will require an F_mpz_t bound... I don't need a super precise output so I want to do the exponent trick to allow large numbers with only double bits of precision.  So need to make an F_mpz_poly_eval_horner_fast_d_2exp and some kind of an exponent size check on the flip side.  The eval program can use doubles and just track the exponents... in the meantime for small input polys this function works.
+   
    long top_exp;
    long bot_exp;
    int dir = 1;
    double ans;
    int good_enough = 0;
    long size_p = F_mpz_poly_max_bits(f);
-   ulong hn;// = poly->length;
-   ulong vbits;// = round( abs( log(val) / log(2.0) ) );
-   ulong prec;// =(vbits*n) + FLINT_ABS(size_p) + 1;
+   ulong hn;
+   ulong vbits;
+   ulong prec;
    int too_much = 0;
-   while (good_enough == 0L){
+
+   while (good_enough == 0L)
+   {
       hn = up_f->length;
-      vbits = round( abs( log2(r) ) );
-      prec = (vbits*hn) + FLINT_ABS(size_p) + 1;
+      vbits = round(abs(log2(r)));
+      
       //this is a rough bound for the number of bits of the answer...
-      if ((prec > 950) || (too_much = 1)){
-         top_eval = F_mpz_poly_eval_horner_d_2exp( &top_exp, up_f, r);
-         // maybe I'll deal with this on it's own.  top_eval = top_eval*pow(2, top_exp);
-      }      
-      else{
-         //Here we knew all along that doubles were good enough
-         top_eval = F_mpz_poly_eval_horner_d( up_f, r);
+      prec = (vbits*hn) + FLINT_ABS(size_p) + 1;
+      
+      if ((prec > 950) || (too_much = 1))
+         top_eval = F_mpz_poly_eval_horner_d_2exp(&top_exp, up_f, r);
+      else
+      {
+         // Here we knew all along that doubles were good enough
+         top_eval = F_mpz_poly_eval_horner_d(up_f, r);
          top_exp = 0;
       }
+
       hn = low_f->length;
       prec = (vbits*hn) + FLINT_ABS(size_p) + 1;
-      if ((prec > 950) || (too_much = 1)){
+      if ((prec > 950) || (too_much = 1))
          bottom_eval = F_mpz_poly_eval_horner_d_2exp( &bot_exp, low_f, 1/r);
-//         bottom_eval = bottom_eval*pow(2, bot_exp);
-      }      
-      else{
+      else
+      {
          bottom_eval = F_mpz_poly_eval_horner_d(low_f, 1/r);
          bot_exp = 0;
       }
-      if ((top_exp == 0) && (bot_exp == 0)){
-         if ( 2*(bottom_eval) < (top_eval) ){
+      
+      if ((top_exp == 0) && (bot_exp == 0))
+      {
+         if (2*(bottom_eval) < top_eval)
+         {
             if (dir == 1)
                rshift = rshift/2;
             dir = -1;
             rpower = rpower - rshift;
             r = pow(2, rpower);
-         }
-         else if (  (bottom_eval) > 2*(top_eval) ){
+         } else if (bottom_eval > 2*(top_eval))
+         {
             if (dir == -1)
                rshift = rshift/2;
             dir = 1;
             rpower = rpower + rshift;
             r = pow(2, rpower);
-         }
-         else{
+         } else
+         {
             good_enough = 1;
 
             if (isinf(top_eval) || isinf(bottom_eval))
             {
                too_much = 1; 
                good_enough = 0;
-            }
-            else
+            } else
             {
                if (top_eval > bottom_eval)
                   ans = top_eval;
                else
                   ans = bottom_eval;
-//dropped this line               ans = ans / pow(r, n);
+
                ans = ans*(f->length - 1);
                mpz_t temp;
                mpz_init(temp);
@@ -6077,54 +6091,51 @@ void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong N){
                mpz_clear(temp);
             }
          }
-
-      }
-      else{
-//here is trouble land, coeffs too big for doubles to handle.
-// _d_2exp_comp should give 2 when 2*bottom < top and -2 when 2*top < bottom and 1 when bottom <= top and -1 when bottom > top
+      } else
+      {
+         // this is the difficult case, coeffs too big for doubles to handle.
+         // _d_2exp_comp should give 2 when 2*bottom < top and -2 when 
+         // 2*top < bottom and 1 when bottom <= top and -1 when bottom > top
          int test_me = _d_2exp_comp(top_eval, top_exp, bottom_eval, bot_exp);
 
-         if ( test_me == 2 ){
+         if (test_me == 2)
+         {
             if (dir == 1)
                rshift = rshift/2;
             dir = -1;
             rpower = rpower - rshift;
             r = pow(2, rpower);
-         }
-         else if ( test_me == -2 ){
+         } else if (test_me == -2)
+         {
             if (dir == -1)
                rshift = rshift/2;
             dir = 1;
             rpower = rpower + rshift;
             r = pow(2, rpower);
-         }
-         else{
+         } else
+         {
             good_enough = 1;
-            if ((test_me == 1L)){
-// F_mpz_set_d_2exp and adjust and stuff using top_eval, top_exp 
+            
+            if (test_me == 1L)
+            {
                ans = top_eval;
-//dropped this line               ans = ans / pow(r, n);
-               ans = ans * (f->length - 1);
+               ans = ans*(f->length - 1);
                F_mpz_set_d_2exp(res, ans, top_exp);
-               F_mpz_poly_clear(low_f);
-               F_mpz_poly_clear(up_f);
-               return;
-            }
-            else{
-// F_mpz_set_d_2exp and adjust and junk using bottom_eval, bot_exp
+               break;
+            } else
+            {
                ans = bottom_eval;
-//dropped this line               ans = ans / pow(r, n);
-               ans = ans * (f->length - 1);
+               ans = ans*(f->length - 1);
                F_mpz_set_d_2exp(res, ans, bot_exp);
-               F_mpz_poly_clear(low_f);
-               F_mpz_poly_clear(up_f);
-               return;
+               break;
             }
          }
       }
    }
+
    F_mpz_poly_clear(low_f);
    F_mpz_poly_clear(up_f);
+
    return;
 }
 

@@ -1193,24 +1193,25 @@ void F_mpz_poly_gcd(F_mpz_poly_t d, F_mpz_poly_t f, F_mpz_poly_t g);
 
 /*===========================================================================
 
-   New Material for FLINT, computing fast/tight bounds for CLDs
+   Computing fast/tight bounds for CLDs
       CLDs:= Coefficients of Logarithmic Derivatives.  f*g'/g
 
 ============================================================================*/
 
 /**
    \fn      int _d_2exp_comp(double a, long ap, double b, long bp)
-   \brief   A customized comparison function for a*2^ap vs. b*2^bp, outputs
-               -2,-1,1, or 2 for the b pair being two times larger, 
-               larger, smaller or =, two times smaller than the a pair
+   \brief   An internal comparison function for a*2^ap vs. b*2^bp, outputs
+            -2,-1,1, or 2 for the b pair being more than two times larger, 
+            >, <=, or less than two times smaller, respectively than the a
+            pair. Assumes that a and b are normalised.
 */
 int _d_2exp_comp(double a, long ap, double b, long bp);
 
 /**
-   \fn      void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong N)
-   \brief   A new approach for quickly, tightly, finding a bound on the size of
-               the Nth coefficient of f*g'/g for any integer factor of f.  
-               A good benchmark for comparison is just f'.
+   \fn      void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong n)
+   \brief   A new approach for quickly, tightly, finding a bound on the size 
+            of the coefficient n of f*g'/g for any integer factor of f.  
+            A good benchmark for comparison is just f'.
 */
 void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong N);
 
