@@ -7461,13 +7461,13 @@ printf(" first two clds took %f seconds\n", (double) cld_data_total/ (double) CL
          else if (solved_yet == 5){
 //This is where we increase the Hensel Accuracy and go back
             hensel_start = clock();
-            prev_exp = _F_mpz_poly_continue_hensel_lift(lifted_fac, link, v, w, f, prev_exp, a, 4*a, p, r);
+            prev_exp = _F_mpz_poly_continue_hensel_lift(lifted_fac, link, v, w, f, prev_exp, a, 2*a, p, r);
             hensel_stop = clock();
             hensel_total = hensel_total + hensel_stop - hensel_start;
 
             printf("hensel lifted for %f seconds so far\n", (double) hensel_total / (double) CLOCKS_PER_SEC);
 
-            a = 4*a;
+            a = 2*a;
             solved_yet = 0;
             printf(" solved_yet == 5?\n");
          }
@@ -7958,6 +7958,7 @@ printf(" maybe here\n");
       }
    }
 printf("nope not there trial_factors->num_factors = %ld\n", trial_factors->num_factors);
+
    F_mpz_poly_t f,Q,R;
    F_mpz_poly_init(f);
    F_mpz_poly_init(Q);
@@ -8174,7 +8175,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
 //   printf("%ld sqN, %f sqrt(N)\n", sqN, sqrt( (double) (N) ) );
    int ok, col_cnt,  since_last;
    ulong previously_checked;
-   long newd;
+   long newd, temp_newd;
    col_cnt = 0;
    solved = 0;
    since_last = 0;
@@ -8210,7 +8211,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
 //            F_mpz_add_ui(B, B, r/2);
 //            cexpo[r + col_cnt] = 0;
    lll_start = clock();
-            newd = U_LLL_with_removal(M, 50L, B);
+            newd = U_LLL_with_removal(M, 350L, B);
    lll_stop = clock();
    
    lll_total = lll_total + lll_stop - lll_start;
@@ -8219,14 +8220,23 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
 
 //            F_mpz_mat_print(M); printf(" was M after LLL\n");
 
+//            temp_newd = F_mpz_mat_check_rest(M, P, col, worst_exp, U_exp, B);
+
             F_mpz_mat_resize(M, newd, M->c);
+
+/*            if (temp_newd > 0){
+               printf("might have saved time\n");
+               newd = temp_newd;
+            }*/
+
             col_cnt++;
 //         This next line is what makes it 'gradual'... could try to prove that doing the same column twice won't add another P
 //         But it's all the same
             cur_col--;
+
 /*            if (M->r > 20)
             {
-               newd = F_mpz_mat_check_rest(M, P, col, worst_exp);
+               newd = F_mpz_mat_check_rest(M, P, col, worst_exp, U_exp, B);
                F_mpz_mat_resize(M, newd, M->c);               
             }
 */

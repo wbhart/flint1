@@ -186,6 +186,27 @@ Cache size in bytes.
   count_trailing_zeros(a, b)
 #endif
 
+
+#if !defined(mpn_zero)
+#define mpn_zero(xxx, nnn) \
+   do \
+   { \
+       ulong ixxx; \
+       for (ixxx = 0; ixxx < nnn; ixxx++) \
+           (xxx)[ixxx] = 0UL; \
+   } while (0)
+#endif
+
+#if !defined(mpn_store)
+#define mpn_store(xxx, nnn, yyy) \
+  do \
+  { \
+     ulong ixxx; \
+     for (ixxx = 0; ixxx < nnn; ixxx++) \
+        (xxx)[ixxx] = yyy; \
+  } while (0)
+#endif
+
 /* 
    On some platforms arithmetic shifts by FLINT_BITS don't yield all zeros 
    So we define these macros for use in situations where this would be a problem
