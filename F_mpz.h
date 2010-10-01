@@ -270,9 +270,15 @@ double F_mpz_get_d_2exp(long * exp, const F_mpz_t f);
 /** 
    \fn     double F_mpz_get_d(const F_mpz_t f)
    \brief  Return f as a signed double. The usual exponent limits for
-           doubles apply.
+           doubles apply. The value is truncated (rounded towards zero).
 */
 double F_mpz_get_d(const F_mpz_t f);
+
+/** 
+   \fn     void F_mpz_set_d(F_mpz_t f, double d)
+   \brief  Set f to the integer part of the double d. 
+*/
+void F_mpz_set_d(F_mpz_t f, double d);
 
 /** 
    \fn     void F_mpz_get_mpf(mpf_t m, const F_mpz_t f)

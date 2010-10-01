@@ -369,11 +369,42 @@ double F_mpz_get_d_2exp(long * exp, const F_mpz_t f)
 double F_mpz_get_d(const F_mpz_t f)
 {
    F_mpz d = *f;
+   long bits;
 
 	if (!COEFF_IS_MPZ(d))
+   {
+      if (d >= 0L) 
+      {
+         bits = FLINT_BIT_COUNT(d) - 53;
+         if (bits > 0L) return (double) ((d>>bits)<<bits);
+      } else
+      {
+         bits = FLINT_BIT_COUNT(-d) - 53;
+         if (bits > 0L) return (double) -(((-d)>>bits)<<bits);
+      }
+      
       return (double) d;
-   else 
+   } else 
       return mpz_get_d(F_mpz_arr + COEFF_TO_OFF(d));
+}
+
+/*
+   Set f to the double d.
+*/
+void F_mpz_set_d(F_mpz_t f, double d)
+{
+   int exp;
+   double s = frexp(d, &exp);
+
+   if (exp <= FLINT_BITS - 2)
+   {
+      _F_mpz_demote(f);
+      (*f) = (long) d;
+   } else
+   {
+      __mpz_struct * mpz_ptr = _F_mpz_promote(f);
+      mpz_set_d(mpz_ptr, d);
+   }
 }
 
 /* 

@@ -335,6 +335,43 @@ int test_F_mpz_get_d_2exp()
    return result;
 }
 
+int test_F_mpz_get_d()
+{
+   mpz_t m1;
+	double fd, md;
+   F_mpz_t f1;
+   int result = 1;
+   ulong bits;
+   
+   mpz_init(m1); 
+   
+   ulong count1;
+   for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   {
+      F_mpz_init2(f1, z_randint(10));
+      
+      bits = z_randint(200) + 1;
+      F_mpz_test_random(f1, bits);
+           
+      F_mpz_get_mpz(m1, f1);
+      
+		fd = F_mpz_get_d(f1);
+		md = mpz_get_d(m1);
+
+      result = (fd == md); 
+		if (!result) 
+		{
+			gmp_printf("Error: bits = %ld, m1 = %Zd, md = %f, fd = %f\n", bits, m1, md, fd);
+		}
+          
+      F_mpz_clear(f1);
+   }
+   
+   mpz_clear(m1);
+   
+   return result;
+}
+
 int test_F_mpz_set_d_2exp()
 {
    double fd;
@@ -363,6 +400,73 @@ int test_F_mpz_set_d_2exp()
       F_mpz_clear(f1);
       F_mpz_clear(f2);
    }
+      
+   return result;
+}
+
+int test_F_mpz_set_d()
+{
+   double fd, fd2;
+   F_mpz_t f1, f2;
+   int result = 1;
+   ulong bits, exp;
+   mpz_t m1, m2;
+  
+   mpz_init(m1);
+   mpz_init(m2);
+
+   ulong count1;
+   for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   {
+      F_mpz_init2(f1, z_randint(10));
+      F_mpz_init2(f2, z_randint(10));
+      
+      bits = z_randint(FLINT_D_BITS - 1) + 1;
+      F_mpz_test_random(f1, bits);
+           
+		fd = F_mpz_get_d(f1);
+
+		F_mpz_set_d(f2, fd);
+      fd2 = F_mpz_get_d(f2);
+		
+      result = (fd == fd2); 
+		if (!result) 
+		{
+			printf("Error: bits = %ld, fd = %f, fd2 = %f\n", bits, fd, fd2);
+		}
+          
+      F_mpz_clear(f1);
+      F_mpz_clear(f2);
+   }
+      
+   for (count1 = 0; (count1 < 100000*ITER) && (result == 1); count1++)
+   {
+      F_mpz_init2(f1, z_randint(10));
+      F_mpz_init2(f2, z_randint(10));
+      
+      bits = z_randint(FLINT_D_BITS - 1) + 1;
+      F_mpz_test_random(f1, bits);
+           
+		exp = z_randint(100);
+      fd = F_mpz_get_d(f1)/pow(2.0, exp);
+
+		F_mpz_set_d(f2, fd);
+      F_mpz_get_mpz(m2, f2);
+      
+      mpz_set_d(m1, fd);
+		
+      result = (mpz_cmp(m1, m2) == 0); 
+		if (!result) 
+		{
+			gmp_printf("Error: bits = %ld, fd = %f, m1 = %Zd, m2 = %Zd\n", bits, fd, m1, m2);
+		}
+          
+      F_mpz_clear(f1);
+      F_mpz_clear(f2);
+   }
+
+   mpz_clear(m1);
+   mpz_clear(m2);
       
    return result;
 }
@@ -3907,6 +4011,8 @@ void F_mpz_poly_test_all()
    RUN_TEST(F_mpz_set_mpfr_2exp); 
 #endif
    RUN_TEST(F_mpz_getset_limbs); 
+   RUN_TEST(F_mpz_get_d); 
+   RUN_TEST(F_mpz_set_d); 
    RUN_TEST(F_mpz_get_d_2exp); 
    RUN_TEST(F_mpz_set_d_2exp); 
    RUN_TEST(F_mpz_set); 
