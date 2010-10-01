@@ -1309,6 +1309,8 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
 {   
    ulong r = col->r;
    ulong B = r + 2;
+   if (U_exp == 0)
+      B = r + 20*r*r;
    ulong bit_r = FLINT_MAX(r, 20);
    
    long ISD = F_mpz_bits(P) - bit_r - bit_r/2;
@@ -1370,7 +1372,7 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
    // Now decide the scaling based on mbts... should be mbits - 0.973r
    // maybe have mbits be more precise... 
    if (no_vec)
-      ISD = mbts - (long)( .973 * (double) bit_r - .1);
+      ISD = mbts - (long)(0.973 * (double) bit_r - 0.1);
 
    take_away = ISD - prec;
    virt_exp = -prec;
@@ -1423,81 +1425,150 @@ int _F_mpz_mat_next_col(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, lon
    F_mpz_mat_clear(temp_col);
    F_mpz_mat_window_clear(U);
 
-   return virt_exp;
+   return FLINT_MAX(virt_exp,1);
 }
 
 
-/*
-   We are given the same column we just ran with.
-   Last time we used 1.5*col->r bits. 
-   Here we want to add more data to see if we can get enough to make 
-   the later Gram-Schmidt lengths large without upsetting the stability 
-   of the G-S computation.
-   If we can do this cheaply its beter than running LLL at full size.  
-   We'll return the new dimension with our findings, or -1 which means 
-   that there's not enough new data.
-*/
-int F_mpz_mat_check_rest(F_mpz_mat_t M, F_mpz_t P, F_mpz_mat_t col, long exp, long U_exp, F_mpz_t B)
+void F_mpz_mat_randintrel(F_mpz_mat_t mat, ulong bits)
 {
+   ulong r, c, i, j;
 
-   ulong r = col->r;
-   ulong bit_r = FLINT_MAX(r, 20);
+   r = mat->r;
+   c = mat->c;
+
+   if (c != r + 1)
+   {
+     printf("Exception: F_mpz_mat_randintrel called on an ill-formed matrix\n");
+      abort();
+   }
    
-   F_mpz_mat_t U;
-   F_mpz_mat_window_init(U, M, 0, 0, M->r, r);
-   
-   F_mpz_mat_t temp_col;
-   F_mpz_mat_init(temp_col, M->r, 1);
-
-   // full precision column for deciding truncation levels
-   F_mpz_mat_mul_classical(temp_col, U, col);
-
-/*   if (U_exp >= 0)
-      F_mpz_mat_div_2exp(temp_col, temp_col, (ulong) U_exp);
-   else
-      F_mpz_mat_mul_2exp(temp_col, temp_col, (ulong) (-1*U_exp));
-*/    
-   F_mpz_mat_smod(temp_col, temp_col, P);
-
-   long mbts = FLINT_ABS(F_mpz_mat_max_bits(temp_col));
-
-   // bare minimum of data above the bound
-   if (mbts < exp)
+   for (i = 0; i < r; i++)
    {
-      F_mpz_mat_clear(temp_col);
-      F_mpz_mat_window_clear(U);      
-      return -1;
+      F_mpz_random(mat->rows[i] + c - 1, bits);
+      for (j = 0; j < i; j++)
+   	   F_mpz_zero(mat->rows[i] + j);
+      F_mpz_set_ui(mat->rows[i] + i, 1);
+      for (j = i + 1; j < c - 1; j++)
+   	   F_mpz_zero(mat->rows[i] + j);
    }
-
-   F_mpz_mat_t new_col;
-   F_mpz_mat_init(new_col, M->r, 1);
-
-   long i;
-   for( i = 0; i < M->r; i++)
-   {
-      F_mpz_set(temp_col->rows[i],  M->rows[i] + M->c - 1);
-   }
-
-   if (U_exp >= 0)
-      F_mpz_mat_mul_2exp(new_col, temp_col, (ulong) U_exp);
-   else
-      F_mpz_mat_div_2exp(new_col, temp_col, (ulong) (-1*U_exp));
-
-   for( i = 0; i < M->r; i++)
-   {
-      F_mpz_set(M->rows[i] + M->c - 1, new_col->rows[i]);
-   }
-
-   ulong newd;
-   newd = F_mpz_mat_gs_d(M, B);
-
-   for (i = 0; i < M->r; i++)
-      F_mpz_set(M->rows[i] + M->c - 1, temp_col->rows[i]);
-
-   F_mpz_mat_clear(new_col);
-   F_mpz_mat_clear(temp_col);
-   F_mpz_mat_window_clear(U); 
-
-   return newd;
 }
 
+void F_mpz_mat_randintrel_little_big(F_mpz_mat_t mat, ulong n, ulong bits1, ulong bits)
+{
+   ulong r, c, i, j;
+
+   r = mat->r;
+   c = mat->c;
+
+   if (c != r + 1)
+   {
+     printf("Exception: F_mpz_mat_randintrel called on an ill-formed matrix\n");
+      abort();
+   }
+   
+   for (i = 0; i < r; i++)
+   {
+      if (i < n) F_mpz_random(mat->rows[i] + c - 1, bits1);
+      else F_mpz_random(mat->rows[i] + c - 1, bits);
+      for (j = 0; j < i; j++)
+   	   F_mpz_zero(mat->rows[i] + j);
+      F_mpz_set_ui(mat->rows[i] + i, 1);
+      for (j = i + 1; j < c - 1; j++)
+   	   F_mpz_zero(mat->rows[i] + j);
+   }
+}
+
+void F_mpz_mat_rand_unimodular(F_mpz_mat_t U, ulong bits){
+
+   ulong r,c,i,j;
+
+   r = U->r;
+   c = U->c;
+
+   if (c != r)
+   {
+     printf("Exception: F_mpz_mat_rand_unimodular called on an ill-formed matrix\n");
+      abort();
+   }
+
+   c = r + 1;
+   F_mpz_mat_t X;
+   F_mpz_mat_init(X, r, c);
+
+   F_mpz_mat_randintrel(X, bits*r);
+
+   LLL_wrapper(X);
+
+   for (i = 0; i < r; i++)
+      for (j = 0; j < r; j++)
+         F_mpz_set(U->rows[i] + j, X->rows[i] + j);
+
+   F_mpz_mat_clear(X);
+}
+
+void F_mpz_mat_rand_unimodular_little_big(F_mpz_mat_t U, ulong n, ulong bits1, ulong bits2){
+
+   ulong r,c,i,j;
+
+   r = U->r;
+   c = U->c;
+
+   if (c != r)
+   {
+     printf("Exception: F_mpz_mat_rand_unimodular called on an ill-formed matrix\n");
+      abort();
+   }
+
+   c = r + 1;
+   F_mpz_mat_t X;
+   F_mpz_mat_init(X, r, c);
+
+   F_mpz_mat_randintrel_little_big(X, n, bits1*r, bits2*r);
+
+   LLL_wrapper(X);
+
+   for (i = 0; i < r; i++)
+      for (j = 0; j < r; j++)
+         F_mpz_set(U->rows[i] + j, X->rows[i] + j);
+
+   F_mpz_mat_clear(X);
+}
+
+void F_mpz_mat_transpose(F_mpz_mat_t res, F_mpz_mat_t M){
+
+   ulong r, c, i, j;
+   r = M->r;
+   c = M->c;
+
+   if ( (c != res->r) || (r != res->c))
+   {
+     printf("Exception: F_mpz_mat_transpose called on an ill-formed matrix\n");
+      abort();
+   }
+
+   for (i = 0; i < r; i++)
+      for (j = 0; j < c; j++)
+         F_mpz_set(res->rows[j] + i, M->rows[i] + j);
+
+}
+
+void F_mpz_mat_block_reverse_cols(F_mpz_mat_t res, ulong n, F_mpz_mat_t M){
+
+   ulong r, c, i, j;
+   r = M->r;
+   c = M->c;
+
+   if ( (c != res->c) || (r != res->r))
+   {
+     printf("Exception: F_mpz_mat_transpose called on an ill-formed matrix\n");
+      abort();
+   }
+
+   for (i = 0; i < r; i++)
+      for (j = 0; j < c; j++){
+         if (j < n)
+            F_mpz_set(res->rows[i] + j, M->rows[i] + c - n + j);
+         else
+            F_mpz_set(res->rows[i] + j, M->rows[i] + j - n);
+      }
+}

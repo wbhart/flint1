@@ -56,10 +56,10 @@ double halfplus, onedothalfplus, ctt;
 #endif
 
 #ifndef ETA
-#define ETA 0.51
+#define ETA 0.81
 #endif
 #ifndef DELTA
-#define DELTA 0.99
+#define DELTA 0.75
 #endif
 
 int check_Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s, 

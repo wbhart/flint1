@@ -89,6 +89,7 @@ void ZZX_to_fmpz_poly(fmpz_poly_t output, const ZZX& poly);
 /*
    Convert an NTL mat_ZZ to an F_mpz_mat_t
 */
+
 void mat_ZZ_to_F_mpz_mat(F_mpz_mat_t output, const mat_ZZ& mat);
 
 /*

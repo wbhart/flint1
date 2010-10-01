@@ -51,7 +51,7 @@
 
 ****************************************************************************/
 
-#define PROFILE 1
+#define PROFILE 0
 
 #if PROFILE
 //LLL profiles are on, checking babai total, time spent updating B-- but not including the time in advanced babai which is totaled
@@ -104,8 +104,8 @@ int check_Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
    
    aa = (a > zeros) ? a : zeros + 1;
   
-   ctt = DELTA;
-   halfplus = ETA;
+   ctt = (4*DELTA + 1)/5;
+   halfplus = (4*ETA + .5)/5 ;
    onedothalfplus = 1.0+halfplus;
 
    long loops = 0;
@@ -415,8 +415,8 @@ int check_Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, 
    
    aa = (a > zeros) ? a : zeros + 1;
   
-   ctt = DELTA;
-   halfplus = ETA;
+   ctt = (4*DELTA + 1)/5;
+   halfplus = (4*ETA + .5)/5 ;
    onedothalfplus = 1.0+halfplus;
 
 
@@ -745,8 +745,8 @@ int check_Babai_heuristic(int kappa, F_mpz_mat_t B, __mpfr_struct **mu, __mpfr_s
    
    aa = (a > zeros) ? a : zeros + 1;
   
-   ctt = DELTA;
-   halfplus = ETA;
+   ctt = (4*DELTA + 1)/5;
+   halfplus = (4*ETA + .5)/5 ;
    onedothalfplus = 1.0+halfplus;
 
    long loops = 0;
@@ -907,8 +907,8 @@ int advance_check_Babai (int cur_kappa, int kappa, F_mpz_mat_t B, double **mu, d
    
    aa = (a > zeros) ? a : zeros + 1;
   
-   ctt = DELTA;
-   halfplus = ETA;
+   ctt = (4*DELTA + 1)/5;
+   halfplus = (4*ETA + .5)/5 ;
    onedothalfplus = 1.0+halfplus;
 
    long loops = 0;
@@ -1109,8 +1109,8 @@ int advance_check_Babai_heuristic_d (int cur_kappa, int kappa, F_mpz_mat_t B, do
    
    aa = (a > zeros) ? a : zeros + 1;
 
-   ctt = DELTA;
-   halfplus = ETA;
+   ctt = (4*DELTA + 1)/5;
+   halfplus = (4*ETA + .5)/5 ;
    onedothalfplus = 1.0+halfplus;
 
 
@@ -1316,8 +1316,8 @@ int advance_check_Babai_heuristic(int cur_kappa, int kappa, F_mpz_mat_t B, __mpf
    
    aa = (a > zeros) ? a : zeros + 1;
   
-   ctt = DELTA;
-   halfplus = ETA;
+   ctt = (4*DELTA + 1)/5;
+   halfplus = (4*ETA + .5)/5 ;
    onedothalfplus = 1.0+halfplus;
 
    long loops = 0;
@@ -1478,8 +1478,8 @@ int check_Babai_heuristic_d_zero_vec (int kappa, F_mpz_mat_t B, double **mu, dou
    
    aa = (a > zeros) ? a : zeros + 1;
   
-   ctt = DELTA;
-   halfplus = ETA;
+   ctt = (4*DELTA + 1)/5;
+   halfplus = (4*ETA + .5)/5 ;
    onedothalfplus = 1.0+halfplus;
 
 
@@ -1693,8 +1693,8 @@ int LLL_d(F_mpz_mat_t B)
    n = B->c;
    d = B->r;
 
-   ctt = DELTA;
-   halfplus = ETA;
+   ctt = (4*DELTA + 1)/5;
+   halfplus = (4*ETA + .5)/5 ;
    onedothalfplus = 1.0+halfplus;
 	
 	ulong shift = getShift(B);
@@ -1906,8 +1906,8 @@ int LLL_d_heuristic(F_mpz_mat_t B)
    n = B->c;
    d = B->r;
 
-   ctt = DELTA;
-   halfplus = ETA;
+   ctt = (4*DELTA + 1)/5;
+   halfplus = (4*ETA + .5)/5 ;
    onedothalfplus = 1.0+halfplus;
 	
 //	ulong shift = getShift(B);
@@ -2105,8 +2105,8 @@ int LLL_mpfr2(F_mpz_mat_t B, mp_prec_t prec)
    n = B->c;
    d = B->r;
 
-   ctt = DELTA;
-   halfplus = ETA;
+   ctt = (4*DELTA + 1)/5;
+   halfplus = (4*ETA + .5)/5 ;
    onedothalfplus = 1.0+halfplus;
 	
 //	ulong shift = getShift(B);
@@ -2333,21 +2333,20 @@ int LLL_wrapper(F_mpz_mat_t B){
 
    int res = LLL_d(B);
    if (res >= 0){ //hooray worked first time
-      printf("first time through, doubles are enough\n");
       return res;
    }
    else if (res == -1){ //just in case the fast/heuristic switch has any impact
       res = LLL_d_heuristic(B);
-      printf("finished heuristic\n");
    }
 
    if (res == -1){ //Now try the mpfr version
-      printf("third time through, mpfr is called\n");
+#if PROFILE
+      printf("mpfr called\n");
+#endif
       res = LLL_mpfr(B);
    }
 
    if (res >= 0){ //finally worked
-      printf("second time through, doubles with heuristic was enough unless you saw mpfr\n");
       return res;
    }
    else //we've got big problems if this is the exit...
@@ -2369,8 +2368,8 @@ int LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    n = B->c;
    d = B->r;
 
-   ctt = DELTA;
-   halfplus = ETA;
+   ctt = (4*DELTA + 1)/5;
+   halfplus = (4*ETA + .5)/5 ;
    onedothalfplus = 1.0+halfplus;
 	
 //	ulong shift = getShift(B);
@@ -2601,8 +2600,8 @@ int LLL_d_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    n = B->c;
    d = B->r;
 
-   ctt = DELTA;
-   halfplus = ETA;
+   ctt = (4*DELTA + 1)/5;
+   halfplus = (4*ETA + .5)/5 ;
    onedothalfplus = 1.0+halfplus;
 	
 //	ulong shift = getShift(B);
@@ -2819,8 +2818,8 @@ int LLL_mpfr2_with_removal(F_mpz_mat_t B, mp_prec_t prec, F_mpz_t gs_B)
    d = B->r;
    D = d;
 
-   ctt = DELTA;
-   halfplus = ETA;
+   ctt = (4*DELTA + 1)/5;
+   halfplus = (4*ETA + .5)/5 ;
    onedothalfplus = 1.0+halfplus;
 	
 //	ulong shift = getShift(B);
@@ -3043,7 +3042,9 @@ int LLL_mpfr_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    int result = -1;
    int num_loops = 1;
    while ((result == -1) && (prec < MPFR_PREC_MAX)){
+#if PROFILE
       printf("mpfr LLL with prec = %ld\n", prec);
+#endif
       result = LLL_mpfr2_with_removal(B, prec, gs_B);
       if (result == -1){
          if (num_loops < 20)
@@ -3063,13 +3064,15 @@ int LLL_wrapper_with_removal(F_mpz_mat_t B, F_mpz_t gs_B){
 
    int res = LLL_d_with_removal(B, gs_B);
    if (res >= 0){ //hooray worked first time
-      printf("first time through, doubles are enough\n");
       return res;
    }
    else if (res == -1) //just in case the fast/heuristic switch has any impact
       res = LLL_d_heuristic_with_removal(B, gs_B);
 
    if (res == -1){ //Now try the mpfr version
+#if PROFILE
+      printf("using mpfr\n");
+#endif
       res = LLL_mpfr_with_removal(B, gs_B);
    }
 
@@ -3083,14 +3086,15 @@ int knapsack_LLL_wrapper_with_removal(F_mpz_mat_t B, F_mpz_t gs_B){
 
    int res = knapsack_LLL_d_with_removal(B, gs_B);
    if (res >= 0){ //hooray worked first time
-      printf("first time through, doubles are enough\n");
       return res;
    }
    else if (res == -1) //just in case the fast/heuristic switch has any impact
       res = LLL_d_heuristic_with_removal(B, gs_B);
 
    if (res == -1){ //Now try the mpfr version
+#if PROFILE
       printf("called mpfr!!\n");
+#endif
       res = LLL_mpfr_with_removal(B, gs_B);
    }
 
@@ -3127,8 +3131,8 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    d = B->r;
    D = d;
 
-   ctt = DELTA;
-   halfplus = ETA;
+   ctt = (4*DELTA + 1)/5;
+   halfplus = (4*ETA + .5)/5 ;
    onedothalfplus = 1.0+halfplus;
 	
 //	ulong shift = getShift(B);
@@ -3199,7 +3203,7 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    {
       num_loops++;
       last_vec = 0;
-      if (kappa == d-1){
+      if (kappa == d - 1){
          last_vec = 1;
       }
 
@@ -3359,26 +3363,27 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
       /* ctt * r.coeff[kappa-1][kappa-1] <= s[kappa-2] ?? */
 
 
-      if (last_vec == 1){
+      if (last_vec == 12){
 	      tmp = mu[kappa][kappa-1] * r[kappa][kappa-1];
-         printf("kappa = d-1 kappa = %ld\n", kappa);
          d_gs_B = F_mpz_get_d_2exp(&exp, gs_B);
          d_gs_B = ldexp( d_gs_B, exp);
          d_rii = ldexp(s[kappa-1] - tmp,        2*expo[kappa] - 1);
+#if PROFILE
+         printf("last vector reached\n kappa = d-1 kappa = %ld\n", kappa);
          printf("%5f r[%d] and gs_B = %5f\n", d_rii, d-1, d_gs_B);
+#endif
          if (d_rii > d_gs_B){
+#if PROFILE
             r[kappa][kappa] = s[kappa-1] - tmp;
             for (i = d-1; (i >= 0); i--)
             {
 //d_rii is the G-S length of ith vector divided by 2 (we shouldn't make a mistake and remove something valuable)
                d_rii = ldexp(r[i][i],        2*expo[i] - 1);
                printf("%5f r[%d] and gs_B = %5f\n", d_rii, i, d_gs_B);
-               if (d_rii < 1)
-                  printf("r[i][i] = %5f and expo = %ld\n", r[i][i], 2*expo[i] - 1);
-               if (d_rii > d_gs_B)
-                  printf("big... \n"); 
+               if (d_rii < 1) printf("r[i][i] = %5f and expo = %ld\n", r[i][i], 2*expo[i] - 1);
+               if (d_rii > d_gs_B) printf("big... \n"); 
             }
-
+#endif
             break;
          }
       }
@@ -3485,7 +3490,9 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 	   }
    } 
 
-   printf(" num iterations = %ld \n", num_loops);
+#if PROFILE
+   printf(" num loops = %ld \n", num_loops);
+#endif
 //Use the newd stuff here...
 //ldexp might not be the right choice as we move on... should make a straight d_2exp comparison
    ok = 1;
@@ -3496,7 +3503,9 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    {
 //d_rii is the G-S length of ith vector divided by 2 (we shouldn't make a mistake and remove something valuable)
       d_rii = ldexp(r[i][i],        2*expo[i] - 1);
-//      printf("%5f r[%d] and gs_B = %5f\n", d_rii, i, d_gs_B);
+#if PROFILE
+      printf("%5f r[%d] and gs_B = %5f\n", d_rii, i, d_gs_B);
+#endif
       if (d_rii > d_gs_B) newd--;
       else (ok = 0);
    }
@@ -3532,8 +3541,8 @@ int knapsack_LLL_d_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    n = B->c;
    d = B->r;
 
-   ctt = DELTA;
-   halfplus = ETA;
+   ctt = (4*DELTA + 1)/5;
+   halfplus = (4*ETA + .5)/5 ;
    onedothalfplus = 1.0+halfplus;
 	
 //	ulong shift = getShift(B);
@@ -3719,7 +3728,9 @@ int knapsack_LLL_d_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    {
 //d_rii is the G-S length of ith vector divided by 2 (we shouldn't make a mistake and remove something valuable)
       d_rii = ldexp(r[i][i],        2*expo[i] - 1);
-//      printf("%5f r[%d] and gs_B = %5f\n", d_rii, i, d_gs_B);
+#if PROFILE
+      printf("%5f r[%d] and gs_B = %5f\n", d_rii, i, d_gs_B);
+#endif
       if (d_rii > d_gs_B) newd--;
       else (ok = 0);
    }
@@ -3750,8 +3761,8 @@ int knapsack_LLL_mpfr2_with_removal(F_mpz_mat_t B, mp_prec_t prec, F_mpz_t gs_B)
    d = B->r;
    D = d;
 
-   ctt = DELTA;
-   halfplus = ETA;
+   ctt = (4*DELTA + 1)/5;
+   halfplus = (4*ETA + .5)/5 ;
    onedothalfplus = 1.0+halfplus;
 	
 //	ulong shift = getShift(B);
@@ -3968,6 +3979,7 @@ int knapsack_LLL_mpfr2_with_removal(F_mpz_mat_t B, mp_prec_t prec, F_mpz_t gs_B)
 int knapsack_LLL_mpfr_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 {
 
+   printf("******************warning mpfr**************\n");
    mp_prec_t prec;
    prec = 53;
 
@@ -4019,8 +4031,8 @@ int LLL_d_zero_vec_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    n = B->c;
    d = B->r;
 
-   ctt = DELTA;
-   halfplus = ETA;
+   ctt = (4*DELTA + 1)/5;
+   halfplus = (4*ETA + .5)/5;
    onedothalfplus = 1.0+halfplus;
 	
 //	ulong shift = getShift(B);
@@ -4064,7 +4076,7 @@ int LLL_d_zero_vec_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    kappa = i + 1;
    kappamax = kappa;
 
-   printf("zeros = %d \n", zeros);
+   //printf("zeros = %d \n", zeros);
   
    if (zeros < d - 1) r[i][i] = appSP[i][i];
 
@@ -4086,7 +4098,7 @@ int LLL_d_zero_vec_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
       if (babai_fail == 10)
       {
 //This means that the kappa^th vector is a 0-vector... 
-         printf(" found a 0 vector!\n");
+         //printf(" found a 0 vector!\n");
 
       }
 
@@ -4238,7 +4250,7 @@ int LLL_wrapper_zero_vec_with_removal(F_mpz_mat_t B, F_mpz_t gs_B){
 
    if (res == -1)
    { //Now try the mpfr version
-      printf("trying mpfr version... bad\n");
+      //printf("trying mpfr version... bad\n");
       abort();
       res = LLL_mpfr_with_removal(B, gs_B);
    }
@@ -4395,7 +4407,7 @@ ulong F_mpz_mat_gs_d( F_mpz_mat_t B, F_mpz_t gs_B)
    {
 //d_rii is the G-S length of ith vector divided by 2 (we shouldn't make a mistake and remove something valuable)
       d_rii = ldexp(r[i][i], 2*expo[i] - 1);
-      printf("%5f r[%d] and gs_B = %5f\n", d_rii, i, d_gs_B);
+      //printf("%5f r[%d] and gs_B = %5f\n", d_rii, i, d_gs_B);
       if (d_rii != NAN){
          if (d_rii > d_gs_B) newd--;
          else (ok = 0);
@@ -4480,7 +4492,7 @@ int U_LLL_with_removal(F_mpz_mat_t FM, long new_size, F_mpz_t gs_B){
          }
       }
       else{
-         printf("something odd here\n");
+         //printf("something odd here\n");
          full_prec = 1;
       }
    }
@@ -4491,13 +4503,13 @@ int U_LLL_with_removal(F_mpz_mat_t FM, long new_size, F_mpz_t gs_B){
          lll_start = clock();
          knapsack_LLL_wrapper_with_removal(big_FM, gs_B);
          lll_stop = clock();
-         printf("was big_FM\n");
+         //printf("was big_FM\n");
       }
       else{
          lll_start = clock();
          newd = knapsack_LLL_wrapper_with_removal(FM, gs_B);
          lll_stop = clock();
-         printf("was FM\n");
+         //printf("was FM\n");
       }
 
       lll_total = lll_total + lll_stop - lll_start;
@@ -4508,9 +4520,9 @@ int U_LLL_with_removal(F_mpz_mat_t FM, long new_size, F_mpz_t gs_B){
 //add more bits
 
          F_mpz_mat_window_init(U, big_FM, 0, 0, big_FM->r, r);
-
+#if PROFILE
          printf("U bits == %ld\n", FLINT_ABS(F_mpz_mat_max_bits(U)));
-
+#endif
          is_U_I = F_mpz_mat_equal(U, I);
 
 //do some truncating
@@ -4569,11 +4581,12 @@ int U_LLL_with_removal(F_mpz_mat_t FM, long new_size, F_mpz_t gs_B){
    printf(" of which %3f cycles spent converting h full precision B\n", (double) hconvert_total / 2.4E9);
    printf(" of which %3f cycles spent computing h inner products\n", (double) hinner_total /2.4E9);
    printf(" spent a total of %3f seconds on h advanced Babai\n", (double) hadv_babai_total /2.4E9);
-#endif
 
    printf(" spent a total of %f seconds on inner LLL\n", (double) lll_total / (double)CLOCKS_PER_SEC);
 
-   printf(" spent a total of %f seconds in ULLL\n", (double) (sum_stop - sum_start) / (double)CLOCKS_PER_SEC);
+   printf(" spent a total of %f seconds in ULLL\n", (double) (sum_stop - sum_start) / (double) CLOCKS_PER_SEC);
+#endif
+
 
    F_mpz_mat_clear(full_data);
    F_mpz_mat_clear(trunc_data);
