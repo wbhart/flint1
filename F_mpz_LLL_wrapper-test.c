@@ -493,7 +493,7 @@ int test_F_mpz_LLL_randintrel()
    F_mpz_init(fzero);
    
    ulong count1;
-   for (count1 = 0; (count1 < 1000*ITER) && (result == 1) ; count1++)
+   for (count1 = 0; (count1 < 100*ITER) && (result == 1) ; count1++)
    {
       printf("count1 == %ld\n", count1);
       ulong r = z_randint(20)+1;
@@ -566,7 +566,7 @@ int test_F_mpz_LLL_randajtai()
    F_mpz_init(fzero);
    
    ulong count1;
-   for (count1 = 0; (count1 < 10*ITER) && (result == 1) ; count1++)
+   for (count1 = 0; (count1 < 100*ITER) && (result == 1) ; count1++)
    {
       printf("count1 == %ld\n", count1);
       ulong r = z_randint(10)+1;
@@ -638,7 +638,7 @@ int test_F_mpz_LLL_randsimdioph()
    F_mpz_init(fzero);
    
    ulong count1;
-   for (count1 = 0; (count1 < 2000*ITER) && (result == 1) ; count1++)
+   for (count1 = 0; (count1 < 100*ITER) && (result == 1) ; count1++)
    {
       printf("count1 == %ld\n", count1);
       ulong r = z_randint(200) + 1;
@@ -710,10 +710,10 @@ void F_mpz_mat_test_all()
 
 #if TESTFILE
 #endif
-//   RUN_TEST(F_mpz_LLL_randajtai);
-//   RUN_TEST(F_mpz_LLL_randintrel);
-//   RUN_TEST(F_mpz_LLL_randsimdioph);
-   RUN_TEST(F_mpz_LLL_randntrulike);
+     RUN_TEST(F_mpz_LLL_randajtai);
+     RUN_TEST(F_mpz_LLL_randintrel);
+     RUN_TEST(F_mpz_LLL_randsimdioph);
+     RUN_TEST(F_mpz_LLL_randntrulike);
 
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");
