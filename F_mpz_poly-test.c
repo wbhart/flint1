@@ -5076,7 +5076,7 @@ int test_F_mpz_poly_scalar_abs()
 
 int test_F_mpz_poly_CLD_bound()
 {
-   F_mpz_poly_t F_poly, F_poly2;
+   F_mpz_poly_t F_poly, F_poly2, G;
    int result = 1;
    ulong bits, length, i;
    F_mpz_t sum, bound;
@@ -5087,24 +5087,32 @@ int test_F_mpz_poly_CLD_bound()
    for (count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
    {
       bits = z_randint(20)+ 1;
-      length = z_randint(20);  
       
       printf("bits = %ld, length = %ld\n", bits, length);
 
       F_mpz_poly_init(F_poly);
       F_mpz_poly_init(F_poly2);
+      F_mpz_poly_init(G);
       
       F_mpz_init(sum);
       F_mpz_init(bound);
       
-      F_mpz_randpoly(F_poly, length, bits); 
+      do
+      {
+         length = z_randint(20);  
+      
+         F_mpz_randpoly(F_poly, length, bits); 
           
-      F_mpz_poly_derivative(F_poly2, F_poly);
+         F_mpz_poly_derivative(F_poly2, F_poly);
+         F_mpz_poly_gcd(G, F_poly, F_poly2); 
+      } while (G->length != 1 || !F_mpz_is_one(G->coeffs));
+
       F_mpz_poly_scalar_abs(F_poly2, F_poly2);
                
       for (i = 0; i < F_poly2->length; i++)
          F_mpz_add(sum, sum, F_poly2->coeffs + i);
       printf("bits = %ld, length = %ld\n", bits, length);
+      F_mpz_add(sum, sum, sum);
 
       for (i = 0; i < F_poly2->length && result == 1; i++)
       {
@@ -5119,15 +5127,16 @@ int test_F_mpz_poly_CLD_bound()
   
 		if (!result) 
 		{
-			printf("Error: length = %ld, bits = %ld, i = %ld\n", length, bits, i);
-         F_mpz_print(sum);
-         F_mpz_print(F_poly2->coeffs + i);
-         F_mpz_print(bound);   
+			printf("Error: length = %ld, bits = %ld, i = %ld\n", length, bits, i - 1);
+         F_mpz_print(sum); printf("\n");
+         F_mpz_print(F_poly2->coeffs + i - 1); printf("\n");
+         F_mpz_print(bound); printf("\n");
 		}
 
       F_mpz_clear(sum);
       F_mpz_clear(bound);
 
+      F_mpz_poly_clear(G);
       F_mpz_poly_clear(F_poly2);
       F_mpz_poly_clear(F_poly);
    }
