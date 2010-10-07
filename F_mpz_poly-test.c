@@ -5068,7 +5068,70 @@ int test_F_mpz_poly_scalar_abs()
    
    mpz_poly_clear(m_poly);
    mpz_poly_clear(m_poly2);
+
+   mpz_clear(temp);
    
+   return result; 
+}
+
+int test_F_mpz_poly_CLD_bound()
+{
+   F_mpz_poly_t F_poly, F_poly2;
+   int result = 1;
+   ulong bits, length, i;
+   F_mpz_t sum, bound;
+   
+   /* We check that CLD_bound is between the absolutely value of the n-th 
+   coeff of f' and the sum of the absolute values of the coeffs of f' */
+   ulong count1;
+   for (count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+   {
+      bits = z_randint(20)+ 1;
+      length = z_randint(20);  
+      
+      printf("bits = %ld, length = %ld\n", bits, length);
+
+      F_mpz_poly_init(F_poly);
+      F_mpz_poly_init(F_poly2);
+      
+      F_mpz_init(sum);
+      F_mpz_init(bound);
+      
+      F_mpz_randpoly(F_poly, length, bits); 
+          
+      F_mpz_poly_derivative(F_poly2, F_poly);
+      F_mpz_poly_scalar_abs(F_poly2, F_poly2);
+               
+      for (i = 0; i < F_poly2->length; i++)
+         F_mpz_add(sum, sum, F_poly2->coeffs + i);
+      printf("bits = %ld, length = %ld\n", bits, length);
+
+      for (i = 0; i < F_poly2->length && result == 1; i++)
+      {
+         printf("i = %ld, len = %ld\n", i, F_poly->length);
+         F_mpz_poly_print(F_poly); printf("\n");
+         F_mpz_poly_CLD_bound(bound, F_poly, i);
+         printf("done = %ld\n", i);
+         result &= (F_mpz_cmp(F_poly2->coeffs + i, bound) <= 0);
+         result &= (F_mpz_cmp(sum, bound) >= 0);
+      }
+       printf("bits = %ld, length = %ld\n", bits, length);
+  
+		if (!result) 
+		{
+			printf("Error: length = %ld, bits = %ld, i = %ld\n", length, bits, i);
+         F_mpz_print(sum);
+         F_mpz_print(F_poly2->coeffs + i);
+         F_mpz_print(bound);   
+		}
+
+      F_mpz_clear(sum);
+      F_mpz_clear(bound);
+
+      F_mpz_poly_clear(F_poly2);
+      F_mpz_poly_clear(F_poly);
+   }
+       
    return result; 
 }
 
@@ -5086,6 +5149,7 @@ void F_mpz_poly_test_all()
    RUN_TEST(F_mpz_poly_scalar_abs); 
    RUN_TEST(F_mpz_poly_to_mpz_poly); 
    RUN_TEST(F_mpz_poly_to_fmpz_poly); 
+   RUN_TEST(F_mpz_poly_CLD_bound); 
    RUN_TEST(F_mpz_poly_getset_coeff_si); 
    RUN_TEST(F_mpz_poly_getset_coeff_ui); 
    RUN_TEST(F_mpz_poly_getset_coeff_mpz); 
