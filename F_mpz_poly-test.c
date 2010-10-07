@@ -4881,7 +4881,7 @@ int test_F_mpz_poly_eval_horner_d()
    ulong bits1, bits2, length1, length2;
    double d1, d2, val;
    
-   // 
+   // eval n-1 terms then deal with final term separately
    for (ulong count1 = 0; (count1 < 20000*ITER) && (result == 1); count1++)
    {
       F_mpz_poly_init(F_poly1);
@@ -4908,6 +4908,7 @@ int test_F_mpz_poly_eval_horner_d()
 
       d2 = F_mpz_poly_eval_horner_d(F_poly1, val);
       
+      /* this comparison shouldn't be needed, prolly a bug outside of flint */
       result = (fabs((d1-d2)/d2) < 0.000000000000001);
 
 		if (!result) 
@@ -5094,7 +5095,6 @@ int test_F_mpz_poly_CLD_bound()
       F_mpz_poly_init(G);
 
       F_mpz_init(sum);
-//      F_mpz_init(bound);
       
       do
       {
@@ -5115,31 +5115,19 @@ int test_F_mpz_poly_CLD_bound()
 
       F_mpz_poly_scalar_abs(F_poly2, F_poly2);
 
-/*      F_mpz_abs(sum, F_poly->coeffs);
-      for (i = 0; i < F_poly2->length; i++)
-         F_mpz_add(sum, sum, F_poly2->coeffs + i);
-      F_mpz_add(sum, sum, sum);
-      F_mpz_add(sum, sum, sum);
-      F_mpz_add(sum, sum, sum);
-      F_mpz_add(sum, sum, sum);
-      F_mpz_add(sum, sum, sum);
-*/               
       for (i = 0; i < F_poly2->length && result == 1; i++)
       {
          F_mpz_poly_CLD_bound(bound, F_poly, i);
          result &= (F_mpz_cmp(F_poly2->coeffs + i, bound) <= 0);
-//         result &= (F_mpz_cmp(sum, bound) >= 0);
       }
   
 		if (!result) 
 		{
 			printf("Error: length = %ld, bits = %ld, i = %ld\n", length, bits, i - 1);
-//         F_mpz_print(sum); printf("\n");
          F_mpz_print(F_poly2->coeffs + i - 1); printf("\n");
          F_mpz_print(bound); printf("\n");
 		}
 
-//      F_mpz_clear(sum);
       F_mpz_clear(bound);
 
       F_mpz_poly_clear(G);
