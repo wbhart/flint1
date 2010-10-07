@@ -223,14 +223,96 @@ void mpz_mat_randajtai(mpz_mat_t mat, ulong r, ulong c, double alpha)
    mpz_clear(tmp);
 }
 
-void F_mpz_mat_randintrel(F_mpz_mat_t mat, ulong r, ulong c, ulong bits)
+void mpz_mat_randsimdioph(mpz_mat_t mat, ulong r, ulong c, mp_bitcnt_t bits, mp_bitcnt_t bits2)
+{
+   ulong i, j;
+
+   if (c != r)
+   {
+	  printf("Exception: fmpz_mat_randsimdioph called on an ill-formed matrix\n");
+     abort();
+   }
+   
+   mpz_set_ui(mat->entries[0], 1);
+   mpz_mul_2exp(mat->entries[0], mat->entries[0], bits2);
+   for (j = 1; j < c; j++)
+      mpz_urandomb(mat->entries[j], randstate, bits);
+   for (i = 1; i < r; i++)
+   {
+      for (j = 0; j < i; j++)
+		   mpz_set_ui(mat->entries[i*c + j], 0L);
+	   mpz_set_ui(mat->entries[i*c + i], 1);
+	   mpz_mul_2exp(mat->entries[i*c + i], mat->entries[i*c + i], bits);
+      for (j = i + 1; j < c; j++)
+		   mpz_set_ui(mat->entries[i*c + j], 0L);
+   }
+}
+
+void mpz_mat_randntrulike(mpz_mat_t mat, ulong r, ulong c, mp_bitcnt_t bits, ulong q)
+{
+   ulong d, i, j, k;
+
+   r = mat->r;
+   c = mat->c;
+   d = r/2;
+   mpz_t h[d];
+
+   if ((c != r) || (c != 2*d))
+   {
+	  printf("Exception: mpz_mat_randntrulike called on an ill-formed matrix\n");
+      abort();
+   }
+   
+   for (i = 0; i < d; i++){
+      mpz_init(h[i]);
+      mpz_urandomb(h[i], randstate, bits);
+   }
+
+   for (i = 0; i < d; i++)
+   {
+      for (j = 0; j < i; j++)
+		   mpz_set_ui(mat->entries[i*c + j], 0L);
+	   mpz_set_ui(mat->entries[i*c + i], 1L);
+	   for (j = i + 1; j < d; j++)
+		   mpz_set_ui(mat->entries[i*c + j], 0L);
+   }
+
+   for (i = d; i < r; i++)
+      for (j = 0; j < d; j++)
+	      mpz_set_ui(mat->entries[i*c + j], 0L);
+
+   for (i = d; i < r; i++)
+   {
+      for (j = d; j < i; j++)
+		   mpz_set_ui(mat->entries[i*c + j], 0L);
+      mpz_set_ui(mat->entries[i*c + i], q);
+      for (j = i + 1; j < c; j++)
+         mpz_set_ui(mat->entries[i*c + j], 0L);
+   }
+
+   for (i = 0; i < d; i++)
+   {
+      for (j = d; j < c; j++)
+      {
+         k = j + i;
+         while (k >= d) k -= d;
+         mpz_set(mat->entries[i*c + j], h[k]);
+      }
+   }
+
+   for (i = 0; i < d; i++){
+      mpz_clear(h[i]);
+   }
+}
+
+/*void F_mpz_mat_randintrel(F_mpz_mat_t mat, ulong r, ulong c, ulong bits)
 {
    mpz_mat_t m_mat;
    mpz_mat_init(m_mat, r, c);
    mpz_mat_randintrel(m_mat, r, c, bits);
    mpz_mat_to_F_mpz_mat(mat, m_mat);
    mpz_mat_clear(m_mat);
-}
+}*/
 
 void _mpfr_vec_clean_scalar_product2(mpfr_t sp, __mpfr_struct * vec1, __mpfr_struct * vec2, int n, mp_prec_t prec)
 {
@@ -327,6 +409,79 @@ int mpfr_mat_R_reduced(__mpfr_struct ** R, long d, double delta, double eta, mp_
    return reduced;
 }
 
+int test_F_mpz_LLL_randntrulike()
+{
+   mpz_mat_t m_mat;
+   F_mpz_mat_t F_mat;
+   int result = 1;
+   ulong bits, q;
+   F_mpz_t fzero;
+   F_mpz_init(fzero);
+   
+   ulong count1;
+   for (count1 = 0; (count1 < 100*ITER) && (result == 1) ; count1++)
+   {
+      printf("count1 == %ld\n", count1);
+      ulong r = 2*(z_randint(50)+1);
+      ulong c = r;
+
+      F_mpz_mat_init(F_mat, r, c);
+
+      mpz_mat_init(m_mat, r, c);
+
+      bits = z_randint(20) + 1;
+      q = z_randint(200) + 1;
+
+      mpz_mat_randntrulike(m_mat, r, c, bits, q);
+           
+      mpz_mat_to_F_mpz_mat(F_mat, m_mat);
+      
+      F_mpz_set_d_2exp(fzero, 2.0, bits);
+// good stuff here
+      U_LLL_with_removal(F_mat, 350, fzero);
+
+      mp_prec_t prec;
+      prec = 30;
+
+      __mpfr_struct ** Q, ** R;
+
+      Q = mpfr_mat_init2(r, c, prec);
+      R = mpfr_mat_init2(r, r, prec);
+
+      F_mpz_mat_RQ_factor(F_mat, R, Q, r, c, prec); 
+
+// should be that RQ = FM_copy
+      long j;
+      if (count1 == 345){
+         mpfr_printf("%.12Rf was R[i][i] for i = %ld\n", R[0] + 0, 0); 
+         for (j = 1; j < r; j++)
+         { 
+            mpfr_printf("%.12Rf was R[i][i+1] for i = %ld\n", R[j] + j - 1, j); 
+            mpfr_printf("%.12Rf was R[i+1][i+1] for i = %ld\n", R[j] + j, j); 
+         }
+      }
+
+
+      result = mpfr_mat_R_reduced(R, r, (double) DELTA, (double) ETA, prec);
+
+      mpfr_mat_clear(Q, r, c);
+      mpfr_mat_clear(R, r, r);
+          
+//result here       result = mpz_mat_equal(res1, res2); 
+      if (!result) 
+      {
+
+         F_mpz_mat_print_pretty(F_mat);
+         printf("Error: bits = %ld, count1 = %ld\n", bits, count1);
+      }
+          
+      F_mpz_mat_clear(F_mat);
+      mpz_mat_clear(m_mat);
+   }
+
+   F_mpz_clear(fzero);
+   return result;
+}
 
 int test_F_mpz_LLL_randintrel()
 {
@@ -338,17 +493,17 @@ int test_F_mpz_LLL_randintrel()
    F_mpz_init(fzero);
    
    ulong count1;
-   for (count1 = 0; (count1 < 1000*ITER) && (result == 1) ; count1++)
+   for (count1 = 0; (count1 < 100*ITER) && (result == 1) ; count1++)
    {
       printf("count1 == %ld\n", count1);
-      ulong r = z_randint(200)+1;
+      ulong r = z_randint(20)+1;
       ulong c = r + 1;
 
       F_mpz_mat_init(F_mat, r, c);
 
       mpz_mat_init(m_mat, r, c);
 
-      bits = z_randint(2000) + 1;
+      bits = z_randint(200) + 1;
       
       mpz_mat_randintrel(m_mat, r, c, bits);
            
@@ -411,10 +566,10 @@ int test_F_mpz_LLL_randajtai()
    F_mpz_init(fzero);
    
    ulong count1;
-   for (count1 = 0; (count1 < 10*ITER) && (result == 1) ; count1++)
+   for (count1 = 0; (count1 < 100*ITER) && (result == 1) ; count1++)
    {
       printf("count1 == %ld\n", count1);
-      ulong r = z_randint(100)+1;
+      ulong r = z_randint(10)+1;
       ulong c = r;
 
       F_mpz_mat_init(F_mat, r, c);
@@ -423,7 +578,7 @@ int test_F_mpz_LLL_randajtai()
 
       bits = z_randint(200) + 1;
       
-      mpz_mat_randajtai(m_mat, r, c, 1);
+      mpz_mat_randajtai(m_mat, r, c, .5);
            
       mpz_mat_to_F_mpz_mat(F_mat, m_mat);
       
@@ -473,6 +628,81 @@ int test_F_mpz_LLL_randajtai()
    return result;
 }
 
+int test_F_mpz_LLL_randsimdioph()
+{
+   mpz_mat_t m_mat;
+   F_mpz_mat_t F_mat;
+   int result = 1;
+   ulong bits1, bits2;
+   F_mpz_t fzero;
+   F_mpz_init(fzero);
+   
+   ulong count1;
+   for (count1 = 0; (count1 < 100*ITER) && (result == 1) ; count1++)
+   {
+      printf("count1 == %ld\n", count1);
+      ulong r = z_randint(200) + 1;
+      ulong c = r;
+
+      F_mpz_mat_init(F_mat, r, c);
+
+      mpz_mat_init(m_mat, r, c);
+
+      bits1 = z_randint(200) + 1;
+      bits2 = z_randint(5) + 1;
+      
+      mpz_mat_randsimdioph(m_mat, r, c, bits1, bits2);
+           
+      mpz_mat_to_F_mpz_mat(F_mat, m_mat);
+      
+      F_mpz_set_d_2exp(fzero, 2.0, bits2);
+// good stuff here
+
+      U_LLL_with_removal(F_mat, 350, fzero);
+
+      mp_prec_t prec;
+      prec = 20;
+
+      __mpfr_struct ** Q, ** R;
+
+      Q = mpfr_mat_init2(r, c, prec);
+      R = mpfr_mat_init2(r, r, prec);
+
+      F_mpz_mat_RQ_factor(F_mat, R, Q, r, c, prec); 
+
+// should be that RQ = FM_copy
+/*      long j;
+      if (count1 == 29){
+         mpfr_printf("%.12Rf was R[i][i] for i = %ld\n", R[0] + 0, 0); 
+         for (j = 1; j < r; j++)
+         { 
+            mpfr_printf("%.12Rf was R[i][i+1] for i = %ld\n", R[j] + j - 1, j); 
+            mpfr_printf("%.12Rf was R[i+1][i+1] for i = %ld\n", R[j] + j, j); 
+         }
+      }
+*/
+
+      result = mpfr_mat_R_reduced(R, r, (double) DELTA, (double) ETA, prec);
+
+      mpfr_mat_clear(Q, r, c);
+      mpfr_mat_clear(R, r, r);
+          
+//result here       result = mpz_mat_equal(res1, res2); 
+      if (!result) 
+      {
+
+         F_mpz_mat_print_pretty(F_mat);
+         printf("Error: bits1 = %ld, count1 = %ld\n", bits1, count1);
+      }
+          
+      F_mpz_mat_clear(F_mat);
+      mpz_mat_clear(m_mat);
+   }
+
+   F_mpz_clear(fzero);
+   return result;
+}
+
 void F_mpz_mat_test_all()
 {
    int success, all_success = 1;
@@ -480,8 +710,10 @@ void F_mpz_mat_test_all()
 
 #if TESTFILE
 #endif
-   RUN_TEST(F_mpz_LLL_randajtai);
-   RUN_TEST(F_mpz_LLL_randintrel);
+     RUN_TEST(F_mpz_LLL_randajtai);
+     RUN_TEST(F_mpz_LLL_randintrel);
+     RUN_TEST(F_mpz_LLL_randsimdioph);
+     RUN_TEST(F_mpz_LLL_randntrulike);
 
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");
