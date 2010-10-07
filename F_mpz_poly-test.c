@@ -5086,7 +5086,7 @@ int test_F_mpz_poly_CLD_bound()
    /* We check that CLD_bound is between the absolutely value of the n-th 
    coeff of f' and the sum of the absolute values of the coeffs of f' */
    ulong count1, x_pow;
-   for (count1 = 0; (count1 < 2000) && (result == 1) ; count1++)
+   for (count1 = 0; (count1 < 1000) && (result == 1) ; count1++)
    {
       bits = z_randint(200)+ 1;
       
@@ -5135,12 +5135,12 @@ int test_F_mpz_poly_CLD_bound()
       F_mpz_poly_clear(F_poly2);
       F_mpz_poly_clear(F_poly);
    }
-   printf("here\n");    
+   
    /* We ensure f has a factor g (by setting f = g*h) then check that
    the bounds for f*g'/g are valid */
-   for (count1 = 0; (count1 < 2000) && (result == 1) ; count1++)
+   for (count1 = 0; (count1 < 1000) && (result == 1) ; count1++)
    {
-      bits = z_randint(20)+ 1;
+      bits = z_randint(100)+ 1;
       
       F_mpz_poly_init(F_poly);
       F_mpz_poly_init(F_poly2);
@@ -5152,14 +5152,14 @@ int test_F_mpz_poly_CLD_bound()
 
       do
       {
-         length = z_randint(200) + 2;  
+         length = z_randint(100) + 2;  
       
          do {F_mpz_randpoly(F_poly, length, bits); } while (F_poly->length < 2);
          
          while (F_mpz_is_zero(F_poly->coeffs))
             F_mpz_test_random(F_poly->coeffs, bits);
          
-         length = z_randint(200) + 1;  
+         length = z_randint(100) + 1;  
       
          do {F_mpz_randpoly(F_poly2, length, bits); } while (F_poly2->length == 0);
          
