@@ -1223,7 +1223,22 @@ int _d_2exp_comp(double a, long ap, double b, long bp);
             The algorithm implemented is described in Algorithm 6 of
             "Practical polynomial factoring in polynomial time" by Mark van
             Hoeij, Andy Novocin and William Hart, see:
-            http://andy.novocin.com/issac/ISSAC_rewrite_mar_31.pdf           
+            http://andy.novocin.com/issac/ISSAC_rewrite_mar_31.pdf      
+            Concept is based on the fact that h = sum over all roots of g 
+            (alpha_i) of (f / (x-alpha_i))  Every root alpha_i has some 
+            abs_val in R.For every possible value of r either 
+            B1 = 1/r^(n+1)(a_0 + a_1 r + ... + a_n r^n) or 
+            B2 = 1/r^(n+1)(a_{n+1} r^(n+1) + ... + a_(N) r^N) 
+            is an upper bound for the coefficient of x^n in f/(x - alpha) 
+            where N is the degree of f, a_i is the absolute value of the 
+            i'th coeff of f. So we begin with r = 2^0 evaluate B1 and B2 
+            and either make r = 2^(-1) or 2^(1) and continue to increase 
+            of decrease r until they flip-flop then we refine the severity 
+            of our power adjustment (now adjust by 1/2, 1/4, etc) until B1 
+            and B2 are relatively close (within a factor 1.5 of each other).  
+            This bound must then be multiplied by N the largest possible 
+            degree of a factor of f.
+
 */
 void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong n);
 

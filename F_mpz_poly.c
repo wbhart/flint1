@@ -5994,18 +5994,17 @@ int _d_2exp_comp(double a, long ap, double b, long bp)
 
 void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong n)
 {
-/*
-Objective is to provide res such that for any possible factor, g, of f that the length (f->length - 1 ) polynomial h = f*g'/g has abs(h->coeffs[n]) <= res, thus n must be < f->length - 1.
-
-Algorithm will not work if f->coeffs[0] = 0, if f has leading coefficient = 0 (not normalized), or if gcd(f, f') = 1.
-
-Concept is based on the fact that h = sum over all roots of g (alpha_i) of (f / (x-alpha_i))  Every root alpha_i has some abs_val in R.  
-
-for every possible value of r either B1 = 1/r^(n+1)(a_0 + a_1 r + ... + a_n r^n) or B2 = 1/r^(n+1)(a_{n+1} r^(n+1) + ... + a_(N) r^N) is an upper bound for the coefficient of x^n in f/(x - alpha) where N is the degree of f, a_i is the absolute value of the i'th coeff of f. So we begin with r = 2^0 evaluate B1 and B2 and either make r = 2^(-1) or 2^(1) and continue to increase of decrease r until they flip-flop then we refine the severity of our power adjustment (now adjust by 1/2, 1/4, etc) until B1 and B2 are relatively close (within a factor 1.5 of each other).  This bound must then be multiplied by N the largest possible degree of a factor of f.
-*/
-
    FLINT_ASSERT(n >= 0);
    FLINT_ASSERT(n < f->length - 1);
+   
+   /* up_f is the top half of coefficients of f, shifted down so
+   up_f(r) is 1/r^(n + 1) * (a_{n+1}*r^(n+1) + ... + a_N *r^N) = 
+   a_{n+1} + ... + a_N*r^(N-n-1)
+   
+   similarly low_f is the bottom half of coeffs of f, inverted 
+   so that low_f(1/r) = a_{n}/r + ... + a_0 / r^{n + 1} so low_f 
+   should be a_n * x + ... + a_0 * x^(n+1) and always evaluated at 
+   1/r. */
    
    F_mpz_poly_t low_f, up_f;
    F_mpz_poly_init(low_f);
@@ -6018,13 +6017,6 @@ for every possible value of r either B1 = 1/r^(n+1)(a_0 + a_1 r + ... + a_n r^n)
    F_mpz_poly_right_shift(up_f, f, n + 1);
 
    F_mpz_poly_scalar_abs(up_f, up_f);
-/*up_f is the top half of coefficients of f, shifted down so up_f(r)
- is 1/r^(n + 1) * (a_{n+1}*r^(n+1) + ... + a_N *r^N) = a_{n+1} + ... + a_N*r^(N-n-1)*/
-
-/* similarly low_f is the bottom half of coeffs of f, inverted so that 
-  low_f(1/r) = a_{n}/r + ... + a_0 / r^{n + 1} so low_f should be a_n * x + ... + a_0 * x^(n+1) and always evaluated at 1/r.
-*/
-
    
    double rpower = 0;
    double rshift = 1;
@@ -6052,9 +6044,9 @@ for every possible value of r either B1 = 1/r^(n+1)(a_0 + a_1 r + ... + a_n r^n)
       hn = up_f->length;
       vbits = round(abs(log2(r)));
       
-      //this is a rough bound for the number of bits of the answer...
-      //we attempt to predict whether doubles will suffice
-      //variable too_much means that doubles do not suffice any more
+      /* this is a rough bound for the number of bits of the answer...
+      we attempt to predict whether doubles will suffice
+      variable too_much means that doubles do not suffice any more */
       prec = (vbits*hn) + FLINT_ABS(size_p) + 1;
 
 #if CLDPROF
@@ -6084,9 +6076,10 @@ for every possible value of r either B1 = 1/r^(n+1)(a_0 + a_1 r + ... + a_n r^n)
          bot_exp = 0;
       }
 
-//at this point bottom_eval * 2^(bot_exp) = low_f(1/r) and
-// top_eval * 2^(top_exp) = up_f(r)
-//we have set both exponents to 0 if double precision will be enough for us
+      /* at this point bottom_eval * 2^(bot_exp) = low_f(1/r) and
+      top_eval * 2^(top_exp) = up_f(r)
+      we have set both exponents to 0 if double precision will be 
+      enough for us */
       
       if ((top_exp == 0) && (bot_exp == 0))
       {
@@ -6095,8 +6088,8 @@ for every possible value of r either B1 = 1/r^(n+1)(a_0 + a_1 r + ... + a_n r^n)
 #endif
          if ((1.5)*(bottom_eval) < top_eval)
          {
-//this means bottom_eval is too small, if the 
-//last iteration had top too small then we refine our search
+            // this means bottom_eval is too small, if the last 
+            // iteration had top too small then we refine our search
             if (dir == 1)
                rshift = rshift/2;
             dir = -1;
@@ -6111,7 +6104,8 @@ for every possible value of r either B1 = 1/r^(n+1)(a_0 + a_1 r + ... + a_n r^n)
             r = pow(2, rpower);
          } else
          {
-//this means that the two are close enough or something odd happened with doubles
+            // this means that the two are close enough or something 
+            // odd happened with doubles
             good_enough = 1;
 
             if (isinf(top_eval) || isinf(bottom_eval))
@@ -6124,11 +6118,10 @@ for every possible value of r either B1 = 1/r^(n+1)(a_0 + a_1 r + ... + a_n r^n)
                   ans = top_eval;
                else
                   ans = bottom_eval;
-
                //Since we are dealing with bounds and doubles
                // we want some insurance same below
                ans = ans*(1 + ldexp(2.0, -51));
-//must multiply as we only have a single root, see above
+               // must multiply as we only have a single root, see above
                ans = ans*(f->length - 1);
                F_mpz_set_d(res, ans);
             }
