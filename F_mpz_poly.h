@@ -1211,7 +1211,9 @@ int _d_2exp_comp(double a, long ap, double b, long bp);
    \fn      void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong n)
    \brief   A new approach for quickly, tightly, finding a bound on the size 
             of the coefficient n of f*g'/g for any integer polynomial factor 
-            g of f. (If f is irreducible then this becomes f*f'/f = f. So any
+            g of f. This function requires that the polynomial f be 
+            squarefree. 
+            If f is irreducible then the bound becomes f*f'/f = f. So any
             bound smaller than the coeff of x^c of f' can't be correct. 
             One can show that one has an upper bound equal to the 
             sum of the coefficients of f'. So it is not unreasonable to 
