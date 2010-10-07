@@ -1210,10 +1210,19 @@ int _d_2exp_comp(double a, long ap, double b, long bp);
 /**
    \fn      void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong n)
    \brief   A new approach for quickly, tightly, finding a bound on the size 
-            of the coefficient n of f*g'/g for any integer factor of f.  
-            A good benchmark for comparison is just f'.
+            of the coefficient n of f*g'/g for any integer polynomial factor 
+            g of f. (If f is irreducible then this becomes f*f'/f = f. So any
+            bound smaller than the coeff of x^c of f' can't be correct. 
+            One can show that one has an upper bound equal to the 
+            sum of the coefficients of f'. So it is not unreasonable to 
+            expect the bound from this function to be close to the one we 
+            would get by taking the largest coefficient of f'.)
+            The algorithm implemented is described in Algorithm 6 of
+            "Practical polynomial factoring in polynomial time" by Mark van
+            Hoeij, Andy Novocin and William Hart, see:
+            http://andy.novocin.com/issac/ISSAC_rewrite_mar_31.pdf           
 */
-void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong N);
+void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong n);
 
 /*============================================================================
 
