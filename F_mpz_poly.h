@@ -1212,13 +1212,14 @@ int _d_2exp_comp(double a, long ap, double b, long bp);
    \brief   A new approach for quickly, tightly, finding a bound on the size 
             of the coefficient n of f*g'/g for any integer polynomial factor 
             g of f. This function requires that the polynomial f be 
-            squarefree. 
-            If f is irreducible then the bound becomes f*f'/f = f. So any
+            squarefree and that f is not divisible by x. 
+            If f is irreducible then the bound becomes f*f'/f = f'. So any
             bound smaller than the coeff of x^c of f' can't be correct. 
-            One can show that one has an upper bound equal to the 
-            sum of the coefficients of f'. So it is not unreasonable to 
-            expect the bound from this function to be close to the one we 
-            would get by taking the largest coefficient of f'.)
+            (It is not unreasonable to expect the bound from this function to 
+            be close to the one we would get by taking the coefficient of 
+            f'. We don't test for this in the test code though, as we don't
+            have an explicit proven upper bound we can use. An eyeball test
+            does confirm that the bound being computed is reasonable though.)
             The algorithm implemented is described in Algorithm 6 of
             "Practical polynomial factoring in polynomial time" by Mark van
             Hoeij, Andy Novocin and William Hart, see:

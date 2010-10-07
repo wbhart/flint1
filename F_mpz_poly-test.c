@@ -5078,7 +5078,7 @@ int test_F_mpz_poly_scalar_abs()
 
 int test_F_mpz_poly_CLD_bound()
 {
-   F_mpz_poly_t F_poly, F_poly2, G;
+   F_mpz_poly_t F_poly, F_poly2, F_poly3, F_poly4, G;
    int result = 1;
    ulong bits, length, i;
    F_mpz_t sum, bound;
@@ -5095,6 +5095,7 @@ int test_F_mpz_poly_CLD_bound()
       F_mpz_poly_init(G);
 
       F_mpz_init(sum);
+      F_mpz_init(bound);
       
       do
       {
@@ -5131,6 +5132,68 @@ int test_F_mpz_poly_CLD_bound()
       F_mpz_clear(bound);
 
       F_mpz_poly_clear(G);
+      F_mpz_poly_clear(F_poly2);
+      F_mpz_poly_clear(F_poly);
+   }
+       
+   /* We ensure f has a factor g (by setting f = g*h) then check that
+   the bounds for f*g'/g are valid */
+   for (count1 = 0; (count1 < 20000) && (result == 1) ; count1++)
+   {
+      bits = z_randint(20)+ 1;
+      
+      F_mpz_poly_init(F_poly);
+      F_mpz_poly_init(F_poly2);
+      F_mpz_poly_init(F_poly3);
+      F_mpz_poly_init(F_poly4);
+      F_mpz_poly_init(G);
+
+      F_mpz_init(bound);
+
+      do
+      {
+         length = z_randint(20) + 2;  
+      
+         do {F_mpz_randpoly(F_poly, length, bits); } while (F_poly->length < 2);
+         
+         while (F_mpz_is_zero(F_poly->coeffs))
+            F_mpz_test_random(F_poly->coeffs, bits);
+         
+         length = z_randint(20) + 1;  
+      
+         do {F_mpz_randpoly(F_poly2, length, bits); } while (F_poly2->length == 0);
+         
+         while (F_mpz_is_zero(F_poly2->coeffs))
+            F_mpz_test_random(F_poly2->coeffs, bits);
+         
+         F_mpz_poly_mul(F_poly3, F_poly, F_poly2);
+         
+         /* Ensure the poly f is squarefree */
+         F_mpz_poly_derivative(F_poly4, F_poly3);
+         F_mpz_poly_gcd(G, F_poly4, F_poly3);
+      } while (G->length != 1 || !F_mpz_is_one(G->coeffs));
+
+      F_mpz_poly_derivative(G, F_poly);
+      F_mpz_poly_mul(F_poly2, F_poly2, G);
+
+      for (i = 0; i < F_poly2->length && result == 1; i++)
+      {
+         F_mpz_poly_CLD_bound(bound, F_poly3, i);
+         result &= (F_mpz_cmp(F_poly2->coeffs + i, bound) <= 0);
+      }
+  
+		if (!result) 
+		{
+			printf("Error: length = %ld, bits = %ld, i = %ld\n", length, bits, i - 1);
+         F_mpz_print(F_poly2->coeffs + i - 1); printf("\n");
+         F_mpz_print(bound); printf("\n");
+		}
+
+      F_mpz_clear(bound);
+
+      F_mpz_poly_clear(G);
+      F_mpz_poly_clear(F_poly4);
+      F_mpz_poly_clear(F_poly3);
       F_mpz_poly_clear(F_poly2);
       F_mpz_poly_clear(F_poly);
    }
