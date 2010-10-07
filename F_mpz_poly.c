@@ -6124,6 +6124,10 @@ for every possible value of r either B1 = 1/r^(n+1)(a_0 + a_1 r + ... + a_n r^n)
                   ans = top_eval;
                else
                   ans = bottom_eval;
+
+               //Since we are dealing with bounds and doubles
+               // we want some insurance same below
+               ans = ans*(1 + ldexp(2.0, -51));
 //must multiply as we only have a single root, see above
                ans = ans*(f->length - 1);
                F_mpz_set_d(res, ans);
@@ -6135,6 +6139,10 @@ for every possible value of r either B1 = 1/r^(n+1)(a_0 + a_1 r + ... + a_n r^n)
          // _d_2exp_comp should give 2 when 2*bottom < top and -2 when 
          // 2*top < bottom and 1 when bottom <= top and -1 when bottom > top
          int test_me = _d_2exp_comp(top_eval, top_exp, bottom_eval, bot_exp);
+
+#if CLDPROF
+   printf("here we are tough and top_eval == %.5f, top_exp = %ld, bottom_eval = %.5f, bot_exp = %ld r = %.5f\n", top_eval, top_exp, bottom_eval, bot_exp, r); 
+#endif
 
          if (test_me == 2)
          {
@@ -6157,13 +6165,17 @@ for every possible value of r either B1 = 1/r^(n+1)(a_0 + a_1 r + ... + a_n r^n)
             if (test_me == 1L)
             {
                ans = top_eval;
+               ans = ans*(1 + ldexp(2.0, -51));
                ans = ans*(f->length - 1);
+               ans = ans;
                F_mpz_set_d_2exp(res, ans, top_exp);
                break;
             } else
             {
                ans = bottom_eval;
+               ans = ans*(1 + ldexp(2.0, -51));
                ans = ans*(f->length - 1);
+               ans = ans;
                F_mpz_set_d_2exp(res, ans, bot_exp);
                break;
             }
