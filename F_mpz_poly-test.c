@@ -4881,8 +4881,8 @@ int test_F_mpz_poly_eval_horner_d()
    ulong bits1, bits2, length1, length2;
    double d1, d2, val;
    
-   // check giving a content to a content free polynomial yields the correct content
-	for (ulong count1 = 0; (count1 < 20000*ITER) && (result == 1); count1++)
+   // 
+   for (ulong count1 = 0; (count1 < 20000*ITER) && (result == 1); count1++)
    {
       F_mpz_poly_init(F_poly1);
       
