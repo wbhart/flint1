@@ -53,6 +53,7 @@
 #include "F_mpz_LLL_wrapper.h"
 
 #define POLYPROFILE 0
+#define CLDPROF 0
 
 /*===========================================
 
@@ -5924,9 +5925,9 @@ int _d_2exp_comp(double a, long ap, double b, long bp)
    {
       if (bp == 0)
       {
-         if (a > 2*b)
+         if (a > (1.5)*b)
             return 2;
-         else if (b > 2*a)
+         else if (b > (1.5)*a)
             return -2;
          else if (a >= b)
             return 1;
@@ -5951,9 +5952,9 @@ int _d_2exp_comp(double a, long ap, double b, long bp)
    {
       if (ap == 0)
       {
-         if (a > 2*b)
+         if (a > (1.5)*b)
             return 2;
-         else if (b > 2*a)
+         else if (b > (1.5)*a)
             return -2;
          else if (a >= b)
             return 1;
@@ -5993,8 +5994,8 @@ int _d_2exp_comp(double a, long ap, double b, long bp)
 
 void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong n)
 {
-   FLINT_ASSERT(N >= 0);
-   FLINT_ASSERT(N < f->length - 1);
+   FLINT_ASSERT(n >= 0);
+   FLINT_ASSERT(n < f->length - 1);
    
    F_mpz_poly_t low_f, up_f;
    F_mpz_poly_init(low_f);
@@ -6025,6 +6026,10 @@ void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong n)
    ulong prec;
    int too_much = 0;
 
+#if CLDPROF
+   printf("size_p = %ld\n", size_p); 
+#endif
+
    while (good_enough == 0L)
    {
       hn = up_f->length;
@@ -6032,8 +6037,12 @@ void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong n)
       
       //this is a rough bound for the number of bits of the answer...
       prec = (vbits*hn) + FLINT_ABS(size_p) + 1;
+
+#if CLDPROF
+   printf("top prec = %ld, too_much = %d\n", prec, too_much); 
+#endif
       
-      if ((prec > 950) || (too_much = 1))
+      if ((prec > 950) || (too_much == 1))
          top_eval = F_mpz_poly_eval_horner_d_2exp(&top_exp, up_f, r);
       else
       {
@@ -6044,7 +6053,11 @@ void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong n)
 
       hn = low_f->length;
       prec = (vbits*hn) + FLINT_ABS(size_p) + 1;
-      if ((prec > 950) || (too_much = 1))
+#if CLDPROF
+   printf("bottom prec = %ld, too_much = %d\n", prec, too_much); 
+#endif
+
+      if ((prec > 950) || (too_much == 1))
          bottom_eval = F_mpz_poly_eval_horner_d_2exp( &bot_exp, low_f, 1/r);
       else
       {
@@ -6054,14 +6067,17 @@ void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong n)
       
       if ((top_exp == 0) && (bot_exp == 0))
       {
-         if (2*(bottom_eval) < top_eval)
+#if CLDPROF
+   printf("here we are and top_eval == %.5f bottom_eval = %.5f, r = %.5f\n", top_eval, bottom_eval, r); 
+#endif
+         if ((1.5)*(bottom_eval) < top_eval)
          {
             if (dir == 1)
                rshift = rshift/2;
             dir = -1;
             rpower = rpower - rshift;
             r = pow(2, rpower);
-         } else if (bottom_eval > 2*(top_eval))
+         } else if (bottom_eval > (1.5)*(top_eval))
          {
             if (dir == -1)
                rshift = rshift/2;
