@@ -2592,7 +2592,7 @@ int test_F_mpz_poly_mul_trunc_left()
    mpz_poly_init(res2); 
 
    ulong count1;
-   for (count1 = 0; (count1 < 500*ITER) && (result == 1) ; count1++)
+   for (count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
