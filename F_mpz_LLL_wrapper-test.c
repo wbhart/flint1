@@ -421,7 +421,9 @@ int test_F_mpz_LLL_randntrulike()
    ulong count1;
    for (count1 = 0; (count1 < 100*ITER) && (result == 1) ; count1++)
    {
+#if TRACE
       printf("count1 == %ld\n", count1);
+#endif
       ulong r = 2*(z_randint(50)+1);
       ulong c = r;
 
@@ -452,6 +454,7 @@ int test_F_mpz_LLL_randntrulike()
 
 // should be that RQ = FM_copy
       long j;
+#if TRACE
       if (count1 == 345){
          mpfr_printf("%.12Rf was R[i][i] for i = %ld\n", R[0] + 0, 0); 
          for (j = 1; j < r; j++)
@@ -460,7 +463,7 @@ int test_F_mpz_LLL_randntrulike()
             mpfr_printf("%.12Rf was R[i+1][i+1] for i = %ld\n", R[j] + j, j); 
          }
       }
-
+#endif
 
       result = mpfr_mat_R_reduced(R, r, (double) DELTA, (double) ETA, prec);
 
@@ -495,7 +498,9 @@ int test_F_mpz_LLL_randintrel()
    ulong count1;
    for (count1 = 0; (count1 < 100*ITER) && (result == 1) ; count1++)
    {
+#if TRACE
       printf("count1 == %ld\n", count1);
+#endif
       ulong r = z_randint(20)+1;
       ulong c = r + 1;
 
@@ -526,7 +531,8 @@ int test_F_mpz_LLL_randintrel()
 
 // should be that RQ = FM_copy
       long j;
-      if (count1 == 29){
+#if TRACE
+       if (count1 == 29){
          mpfr_printf("%.12Rf was R[i][i] for i = %ld\n", R[0] + 0, 0); 
          for (j = 1; j < r; j++)
          { 
@@ -534,6 +540,7 @@ int test_F_mpz_LLL_randintrel()
             mpfr_printf("%.12Rf was R[i+1][i+1] for i = %ld\n", R[j] + j, j); 
          }
       }
+#endif
 
       result = mpfr_mat_R_reduced(R, r, (double) DELTA, (double) ETA, prec);
 
@@ -568,7 +575,9 @@ int test_F_mpz_LLL_randajtai()
    ulong count1;
    for (count1 = 0; (count1 < 100*ITER) && (result == 1) ; count1++)
    {
-      printf("count1 == %ld\n", count1);
+#if TRACE
+       printf("count1 == %ld\n", count1);
+#endif
       ulong r = z_randint(10)+1;
       ulong c = r;
 
@@ -600,7 +609,8 @@ int test_F_mpz_LLL_randajtai()
 
 // should be that RQ = FM_copy
       long j;
-      if (count1 == 30){
+#if TRACE
+       if (count1 == 30){
          mpfr_printf("%.12Rf was R[i][i] for i = %ld\n", R[0] + 0, 0); 
          for (j = 1; j < r; j++)
          { 
@@ -608,6 +618,7 @@ int test_F_mpz_LLL_randajtai()
             mpfr_printf("%.12Rf was R[i+1][i+1] for i = %ld\n", R[j] + j, j); 
          }
       }
+#endif
 
       result = mpfr_mat_R_reduced(R, r, (double) DELTA-.01, (double) ETA+.01, prec);
 
@@ -640,7 +651,9 @@ int test_F_mpz_LLL_randsimdioph()
    ulong count1;
    for (count1 = 0; (count1 < 100*ITER) && (result == 1) ; count1++)
    {
-      printf("count1 == %ld\n", count1);
+#if TRACE
+       printf("count1 == %ld\n", count1);
+#endif
       ulong r = z_randint(200) + 1;
       ulong c = r;
 
@@ -710,7 +723,7 @@ void F_mpz_mat_test_all()
 
 #if TESTFILE
 #endif
-    // RUN_TEST(F_mpz_LLL_randajtai); // disabled due to probs with mpfr sqrt
+     RUN_TEST(F_mpz_LLL_randajtai);
      RUN_TEST(F_mpz_LLL_randintrel);
      RUN_TEST(F_mpz_LLL_randsimdioph);
      RUN_TEST(F_mpz_LLL_randntrulike);
