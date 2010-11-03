@@ -1492,10 +1492,14 @@ int check_Babai_heuristic_d_zero_vec (int kappa, F_mpz_mat_t B, double **mu, dou
       loops++;
       if (loops > 20)
       {
+#if TRACE
          F_mpz_mat_print_pretty(B);
          d_mat_print(mu, expo, kappa+1, kappa+1);
+#endif
+#if TRACE
          printf("kappa = %d \n", kappa);
-         return -1;
+#endif
+		 return -1;
       }
 
       /* ************************************** */
@@ -2314,8 +2318,10 @@ int LLL_mpfr(F_mpz_mat_t B)
    int num_loops = 1;
    while ((result == -1) && (prec < MPFR_PREC_MAX)){
       result = LLL_mpfr2(B, prec);
+#if TRACE
       printf("called LLL_mpfr with prec = %ld\n", prec);
-      if (result == -1){
+#endif
+	  if (result == -1){
          if (num_loops < 20)
             prec = prec + 53;
          else
@@ -3979,7 +3985,9 @@ int knapsack_LLL_mpfr2_with_removal(F_mpz_mat_t B, mp_prec_t prec, F_mpz_t gs_B)
 int knapsack_LLL_mpfr_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 {
 
+#if TRACE
    printf("******************warning mpfr**************\n");
+#endif
    mp_prec_t prec;
    prec = 53;
 

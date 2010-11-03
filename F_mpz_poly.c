@@ -6215,7 +6215,9 @@ int F_mpz_poly_div_trunc_modp( F_mpz_t *res, F_mpz_poly_t f, F_mpz_poly_t g, F_m
    F_mpz_gcd(temp, t_g->coeffs, P);
 
    if (!F_mpz_is_one(temp)){
-      printf("zero tc_inv\n");
+#if TRACE
+	   printf("zero tc_inv\n");
+#endif
 //Potential math problem here so we'll just get the answers the old fashioned way, hope this is rare, I should talk to somebody...
       F_mpz_poly_clear(t_f);
       F_mpz_poly_clear(t_g);
@@ -6315,7 +6317,9 @@ void F_mpz_poly_div_upper_trunc_modp( F_mpz_t *res, F_mpz_poly_t f, F_mpz_poly_t
    ulong quo_length = n;
    if (n > f->length){
       quo_length = f->length - g->length + 1;
+#if TRACE
       printf(" did this happen?????????????????????????????????????\n");
+#endif
    }
    ulong i;
    long top_length = t_f->length;
@@ -7252,7 +7256,9 @@ for(num_primes = 1; num_primes < 3; num_primes++)
    r = temp_fac->num_factors;
 
 
+#if TRACE
    printf("prime try r = %ld, p = %ld\n", r, p);
+#endif
 
    if (r <= min_r)
    {
@@ -7276,8 +7282,9 @@ for(num_primes = 1; num_primes < 3; num_primes++)
    local_factor_stop = clock();
    local_factor_total = local_factor_total + local_factor_stop - local_factor_start;
 
+#if TRACE
    printf("primes chosen r = %ld, p = %ld total time = %f\n", r, p, (double) local_factor_total/(double) CLOCKS_PER_SEC);
-
+#endif
 
 
    int use_Hoeij_Novocin = 0;
@@ -7322,7 +7329,9 @@ for(num_primes = 1; num_primes < 3; num_primes++)
    a = (long) ceil( (double) M_bits / log2( (double)p ) );
    a = (long) pow( (double) 2, ceil( log2( (double) a ) ) );
 
+#if TRACE
    printf(" zass a = %ld \n", a);
+#endif
 
    if (use_Hoeij_Novocin == 1)
    {
@@ -7339,8 +7348,9 @@ cld_data_start = clock();
 cld_data_stop = clock();
 cld_data_total = cld_data_total + cld_data_stop - cld_data_start;
 
-printf(" first two clds took %f seconds\n", (double) cld_data_total/ (double) CLOCKS_PER_SEC );
-
+#if TRACE
+   printf(" first two clds took %f seconds\n", (double) cld_data_total/ (double) CLOCKS_PER_SEC );
+#endif
 //reusing the lead_b to be the new average and trail_b to be 3 since there isn't an F_mpz_div_ui
 /*      F_mpz_add(lead_b, lead_b, mid_b);
       F_mpz_add(lead_b, lead_b, trail_b);
@@ -7349,9 +7359,11 @@ printf(" first two clds took %f seconds\n", (double) cld_data_total/ (double) CL
       F_mpz_cdiv_q(lead_b, lead_b, trail_b);
 */
 
+#if TRACE
       F_mpz_print(lead_b); printf(" was lead_b\n");
       F_mpz_print(f->coeffs + len - 2); printf(" was  the coeff of f\n");
-      int cmp_b = F_mpz_cmpabs(lead_b, trail_b);
+#endif
+	  int cmp_b = F_mpz_cmpabs(lead_b, trail_b);
 
       ulong avg_b;
       if (cmp_b <= 0)
@@ -7373,7 +7385,9 @@ printf(" first two clds took %f seconds\n", (double) cld_data_total/ (double) CL
       if ( r*3 > f->length)
          a = a;
 
+#if TRACE
       printf(" new a = %ld\n", a);
+#endif
 
       F_mpz_clear(lead_b);
       F_mpz_clear(trail_b);
@@ -7401,8 +7415,10 @@ printf(" first two clds took %f seconds\n", (double) cld_data_total/ (double) CL
    hensel_stop = clock();
    hensel_total = hensel_total + hensel_stop - hensel_start;
 
+#if TRACE
    printf("hensel lifted for %f seconds so far\n", (double) hensel_total / (double) CLOCKS_PER_SEC);
-//clearing fac early, don't need them anymore
+#endif
+   //clearing fac early, don't need them anymore
    zmod_poly_factor_clear(fac);
    zmod_poly_clear(F);
 
@@ -7426,11 +7442,14 @@ printf(" first two clds took %f seconds\n", (double) cld_data_total/ (double) CL
             hensel_stop = clock();
             hensel_total = hensel_total + hensel_stop - hensel_start;
 
+#if TRACE
             printf("hensel lifted for %f seconds so far\n", (double) hensel_total / (double) CLOCKS_PER_SEC);
-
+#endif
             a = 2*a;
+#if TRACE
             printf(" new a = %ld\n", a);
-            //abort();
+#endif
+			//abort();
             //FIXME: added an abort
 
          }
@@ -7441,16 +7460,21 @@ printf(" first two clds took %f seconds\n", (double) cld_data_total/ (double) CL
             hensel_stop = clock();
             hensel_total = hensel_total + hensel_stop - hensel_start;
 
+#if TRACE
             printf("hensel lifted for %f seconds so far\n", (double) hensel_total / (double) CLOCKS_PER_SEC);
-
+#endif
             a = 2*a;
             solved_yet = 0;
-            printf(" solved_yet == 5?\n");
-         }
+ #if TRACE
+           printf(" solved_yet == 5?\n");
+#endif
+		 }
       }
       else{
+#if TRACE
          printf("called zassenhaus\n");
-         F_mpz_poly_zassenhaus_naive(final_fac, lifted_fac, f, P, exp, lc);
+#endif
+		 F_mpz_poly_zassenhaus_naive(final_fac, lifted_fac, f, P, exp, lc);
          solved_yet = 1;
       }
    }
@@ -7592,7 +7616,9 @@ void F_mpz_poly_factor(F_mpz_poly_factor_t final_fac, F_mpz_t cong, F_mpz_poly_t
    
    ulong deflation = F_mpz_poly_deflation(G);
 
+#if TRACE
    if (deflation > 1) printf("deflation of %ld\n", deflation);
+#endif
 
 //FIXME: turning off deflation
 deflation = 1;
@@ -7612,8 +7638,9 @@ deflation = 1;
          F_mpz_poly_deflate(def, G, deflation);
 		 
          __F_mpz_poly_factor(def_res, cong, def);
+#if TRACE
          printf("deflated poly has %ld factors\n", def_res->num_factors);
-
+#endif
          if ((def_res->num_factors == 1) && (deflation % 2 == 0))
          {
             num_facs = def_res->num_factors;
@@ -7632,14 +7659,18 @@ deflation = 1;
       for (i = 0; i < def_res->num_factors; i++)
       {
          // inflate
-         printf("inflating factor %ld\n", i + 1); 
-         F_mpz_poly_t pol;
+#if TRACE
+		 printf("inflating factor %ld\n", i + 1); 
+#endif
+		 F_mpz_poly_t pol;
          F_mpz_poly_init(pol);
          F_mpz_poly_inflate(pol, def_res->factors[i], deflation);
 		 
          // factor inflation
+#if TRACE
          printf("factoring pol of length %ld\n", pol->length);
-         if (def_res->exponents[i] > 1)
+#endif
+		 if (def_res->exponents[i] > 1)
 		 {
 		    F_mpz_poly_factor_t facs;
 			F_mpz_poly_factor_init(facs);
@@ -7912,8 +7943,10 @@ int _F_mpz_poly_try_to_solve(int num_facs, ulong * part, F_mpz_poly_factor_t fin
 
 
 
+#if TRACE
    printf(" not yet r = %ld\n", r);
-/*   ulong biggest, second;
+#endif
+   /*   ulong biggest, second;
    biggest = 0;
    second = 0;*/
    int i;
@@ -7947,7 +7980,9 @@ int _F_mpz_poly_try_to_solve(int num_facs, ulong * part, F_mpz_poly_factor_t fin
 //we've proven the factorization is legit
 //maybe figure out what lengths I can prove this way and if I can prove biggest hooray go for it, if I can't then
 //maybe I can prove second, in which case sort, if neither then try, maybe Hensel lift again
-printf(" maybe here\n");
+#if TRACE
+   printf(" maybe here\n");
+#endif
    for (i = 0; i < num_facs - 1; i++){
       int j;
       for (j = i+1; j <  num_facs; j++){
@@ -7955,7 +7990,9 @@ printf(" maybe here\n");
             F_mpz_poly_swap(trial_factors->factors[i], trial_factors->factors[j]);
       }
    }
-printf("nope not there trial_factors->num_factors = %ld\n", trial_factors->num_factors);
+#if TRACE
+   printf("nope not there trial_factors->num_factors = %ld\n", trial_factors->num_factors);
+#endif
 
    F_mpz_poly_t f,Q,R;
    F_mpz_poly_init(f);
@@ -7982,8 +8019,10 @@ printf("nope not there trial_factors->num_factors = %ld\n", trial_factors->num_f
       F_mpz_poly_divrem(Q, R, f, trial_factors->factors[i]);
 
       if (R->length == 0){
+#if TRACE
       printf(" found one!\n");
-         //found one!!!! Don't insert just yet in case we find some but not all (which we handle suboptimally at the moment)
+#endif
+	  //found one!!!! Don't insert just yet in case we find some but not all (which we handle suboptimally at the moment)
 //         F_mpz_poly_factor_insert(final_fac, trial_factors->factors[i], exp);
          F_mpz_poly_set(f, Q);
          num_facs--;
@@ -8002,7 +8041,9 @@ printf("nope not there trial_factors->num_factors = %ld\n", trial_factors->num_f
 
 //         if (num_facs > 10){
 // Still need van Hoeij and Hensel and stuff
-printf("or thereere\n");
+#if TRACE
+   printf("or thereere\n");
+#endif
    F_mpz_poly_clear(f);
    F_mpz_poly_clear(Q);
    F_mpz_poly_clear(R);
@@ -8306,8 +8347,9 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
             for( ulong i = 0; i < r; i++)
                F_mpz_set(col->rows[i], data->rows[i] + real_col);
 
+#if TRACE
             printf(" checking column real_col = %ld with worst_exp = %ld\n", real_col, worst_exp);
-
+#endif
             F_mpz_mat_resize(M_copy, M->r, M->c);
             F_mpz_mat_set(M_copy, M);
 
@@ -8368,13 +8410,15 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
                   F_mpz_add(col->rows[i], col_copy->rows[i], data->rows[i] + real_col);
                F_mpz_mat_smod(col, col, P);
 
+#if TRACE
                printf("new checking column real_col = %ld\n", real_col);
-
+#endif
                F_mpz_mat_resize(M, M_copy->r, M_copy->c);
                F_mpz_mat_set(M, M_copy);
 
+#if TRACE
                printf("yeah thought so\n");
-
+#endif
                linear_alg_start = clock();
                ok = _F_mpz_mat_next_col(M, P, col, worst_exp, U_exp);
                linear_alg_stop = clock();
@@ -8400,7 +8444,9 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
             }
          } else if (LLL_ready == 2)
          {
+#if TRACE
             printf(" on column cur_col = %ld, real_col = %ld\n", cur_col, real_col);
+#endif
 #if POLYPROFILE
             F_mpz_mat_print_pretty(M);
             printf(" and B is "); F_mpz_print(B); printf("\n");
@@ -8431,8 +8477,9 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
                lll_stop = clock();
             }
             lll_total = lll_total + lll_stop - lll_start;
-            printf(" spend a total of %f seconds on LLL so far newd=%ld\n", (double) lll_total / (double)CLOCKS_PER_SEC, newd);
-
+#if TRACE
+           printf(" spend a total of %f seconds on LLL so far newd=%ld\n", (double) lll_total / (double)CLOCKS_PER_SEC, newd);
+#endif
             if (newd == 0){
                printf("FLINT: error not sure what\n");
                F_mpz_mat_print_pretty(M);
@@ -8514,8 +8561,9 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
                }
                else
                {
-                  printf("maybe random would be nicer but under estimated...\n");
-
+#if TRACE
+                 printf("maybe random would be nicer but under estimated...\n");
+#endif
                   return_me = 5;
                   all_coeffs = 2;
                }

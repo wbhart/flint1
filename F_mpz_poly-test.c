@@ -2899,8 +2899,9 @@ int test_F_mpz_poly_factor()
 		F_mpz_poly_mul(res, F_poly1, F_poly2);			
 	  } while (res->length == 0);
 
+#if TRACE
       F_mpz_poly_print(res); printf(" res\n");
-
+#endif
       F_mpz_poly_factor(F_factors, content, res);
 
 		F_mpz_poly_to_mpz_poly(res2, res);
