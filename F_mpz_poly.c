@@ -7076,7 +7076,7 @@ ulong _F_mpz_poly_continue_hensel_lift(F_mpz_poly_factor_t lifted_fac, long * li
    }
 
    num_steps = i;
-   if (exponents[num_steps - 1] != target_exp )
+   if (exponents[num_steps - 1] != target_exp)
    {
       exponents[num_steps] = target_exp;
       num_steps++;
