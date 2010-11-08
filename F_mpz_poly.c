@@ -54,7 +54,7 @@
 
 #define POLYPROFILE 0 // whether POLYPROFILE of factor related poly routines is needed
 #define CLDPROF 0 // whether POLYPROFILE of CLD computation is wanted
-#define WANT_DEFLATION 1 // whether the power hack should be used in factoring
+#define WANT_DEFLATION 0 // whether the power hack should be used in factoring
 #define TRACE 0 // whether debugging trace should be printed for factoring and related fns
 
 /*===========================================
