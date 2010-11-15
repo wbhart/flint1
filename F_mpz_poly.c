@@ -6473,6 +6473,13 @@ void F_mpz_poly_squarefree(F_mpz_poly_factor_t fac, F_mpz_t content, F_mpz_poly_
 
    Hensel Lifting using F_mpz_mod_polys (inspired by Victor Shoup's NTL)
 
+   TODO: 1) Add a smarter continued lift path (instead of double prec
+            each time. Makes little difference to factoring but useful
+			for general Hensel lifting by users.
+		 2) Replace fixed length arrays v[2*r - 2] and the like with 
+		    arrays on the heap (with malloc).
+		 3) Use precomputed inverses (see notes below).
+
 *****************************************************************************/
 /* 
    Initialises and builds a Hensel tree consisting of an array of polynomials
