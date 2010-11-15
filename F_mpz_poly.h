@@ -1272,11 +1272,11 @@ int F_mpz_poly_div_trunc_modp( F_mpz_t *res, F_mpz_poly_t f,
 void F_mpz_poly_div_upper_trunc_modp( F_mpz_t *res, F_mpz_poly_t f, 
                F_mpz_poly_t g, F_mpz_t P, ulong n);
 
-/*============================================================================
+/*****************************************************************************
 
    Square-Free Factorization
 
-============================================================================*/
+*****************************************************************************/
 
 /**
    \fn      void F_mpz_poly_squarefree(F_mpz_poly_factor_t fac, 
@@ -1295,89 +1295,118 @@ void F_mpz_poly_squarefree(F_mpz_poly_factor_t fac,
 
 void F_mpz_poly_build_hensel_tree(long *link, F_mpz_poly_t *v, F_mpz_poly_t *w, zmod_poly_factor_t fac);
 
-void F_mpz_poly_hensel_lift(F_mpz_poly_t Gout, F_mpz_poly_t Hout, F_mpz_poly_t Aout, F_mpz_poly_t Bout, F_mpz_poly_t f, F_mpz_poly_t g, F_mpz_poly_t h, F_mpz_poly_t a, F_mpz_poly_t b, F_mpz_t p, F_mpz_t p1, F_mpz_t big_P);
+void F_mpz_poly_hensel_lift(F_mpz_poly_t Gout, F_mpz_poly_t Hout, F_mpz_poly_t Aout, 
+	     F_mpz_poly_t Bout, F_mpz_poly_t f, F_mpz_poly_t g, F_mpz_poly_t h, F_mpz_poly_t a, 
+		                    F_mpz_poly_t b, F_mpz_t p, F_mpz_t p1, F_mpz_t big_P);
 
-void F_mpz_poly_hensel_lift_without_inverse(F_mpz_poly_t Gout, F_mpz_poly_t Hout, F_mpz_poly_t f, F_mpz_poly_t g, F_mpz_poly_t h, F_mpz_poly_t a, F_mpz_poly_t b, F_mpz_t p, F_mpz_t p1, F_mpz_t big_P);
+void F_mpz_poly_hensel_lift_without_inverse(F_mpz_poly_t Gout, F_mpz_poly_t Hout, 
+	     F_mpz_poly_t f, F_mpz_poly_t g, F_mpz_poly_t h, F_mpz_poly_t a, F_mpz_poly_t b, 
+		                    F_mpz_t p, F_mpz_t p1, F_mpz_t big_P);
 
-void F_mpz_poly_hensel_lift_only_inverse(F_mpz_poly_t Aout, F_mpz_poly_t Bout, F_mpz_poly_t f, F_mpz_poly_t G, F_mpz_poly_t H, F_mpz_poly_t a, F_mpz_poly_t b, F_mpz_t p, F_mpz_t p1, F_mpz_t big_P);
+void F_mpz_poly_hensel_lift_only_inverse(F_mpz_poly_t Aout, F_mpz_poly_t Bout, F_mpz_poly_t f, 
+	     F_mpz_poly_t G, F_mpz_poly_t H, F_mpz_poly_t a, F_mpz_poly_t b, 
+		                    F_mpz_t p, F_mpz_t p1, F_mpz_t big_P);
 
-void F_mpz_poly_rec_tree_hensel_lift(long *link, F_mpz_poly_t *v, F_mpz_poly_t *w, F_mpz_t p, F_mpz_poly_t f, long j, long inv, F_mpz_t p1, F_mpz_t big_P);
+void F_mpz_poly_rec_tree_hensel_lift(long *link, F_mpz_poly_t *v, F_mpz_poly_t *w, 
+	        F_mpz_t p, F_mpz_poly_t f, long j, long inv, F_mpz_t p1, F_mpz_t big_P);
 
-void F_mpz_poly_tree_hensel_lift(long *link, F_mpz_poly_t *v, F_mpz_poly_t *w, long e0, long e1, F_mpz_poly_t monic_f, long inv, long p, long r, F_mpz_t P);
+void F_mpz_poly_tree_hensel_lift(long *link, F_mpz_poly_t *v, F_mpz_poly_t *w, long e0, 
+	            long e1, F_mpz_poly_t monic_f, long inv, long p, long r, F_mpz_t P);
 
-ulong _F_mpz_poly_start_hensel_lift(F_mpz_poly_factor_t lifted_fac, long * link, F_mpz_poly_t * v, F_mpz_poly_t * w, F_mpz_poly_t f, zmod_poly_factor_t local_fac, ulong target_exp);
+ulong _F_mpz_poly_start_hensel_lift(F_mpz_poly_factor_t lifted_fac, long * link, 
+	                   F_mpz_poly_t * v, F_mpz_poly_t * w, F_mpz_poly_t f, 
+		                 zmod_poly_factor_t local_fac, ulong target_exp);
 
-ulong _F_mpz_poly_continue_hensel_lift(F_mpz_poly_factor_t lifted_fac, long * link, F_mpz_poly_t * v, F_mpz_poly_t * w, F_mpz_poly_t f, ulong prev_exp, ulong current_exp, ulong target_exp, ulong p, ulong r);
+ulong _F_mpz_poly_continue_hensel_lift(F_mpz_poly_factor_t lifted_fac, long * link, 
+	              F_mpz_poly_t * v, F_mpz_poly_t * w, F_mpz_poly_t f, ulong prev_exp, 
+					     ulong current_exp, ulong target_exp, ulong p, ulong r);
 
-void F_mpz_poly_hensel_lift_once( F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, zmod_poly_factor_t local_fac, ulong target_exp);
+void F_mpz_poly_hensel_lift_once( F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, 
+	                     zmod_poly_factor_t local_fac, ulong target_exp);
 
-/***************************************************
+/****************************************************************************
 
    Naive Zassenhaus
 
-***************************/
+*****************************************************************************/
 
 /**
-   This guy is unoptimized.  Takes Hensel lifted factors to power P, the original polynomial F (and it's squarefree exponent),
-    and for some reason a leading coeff which might not be needed... I'll check later, this is devel stuff here.
+   This function is unoptimized.  Takes Hensel lifted factors to power P = p^n, 
+   the original polynomial F (and it's squarefree exponent),
+   and a leading coeff (which might not be needed) ... 
 */
-void F_mpz_poly_zassenhaus_naive(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, F_mpz_t P, ulong exp, F_mpz_t lc);
+void F_mpz_poly_zassenhaus_naive(F_mpz_poly_factor_t final_fac, 
+	F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, F_mpz_t P, ulong exp, F_mpz_t lc);
 
-/*********
+/****************************************************************************
 
    Factoring wrapper after square free part
 
-*********/
+*****************************************************************************/
 
 /*
-   This is a wrapper which makes some choices about primes, Hensel lifting, Zassenhaus, this is the wrapper which does the real
-   stuff.  Call it after squarefree factoring with your square free f and it's eventual exponent.
+   This is a wrapper which makes some choices about primes, Hensel lifting, 
+   Zassenhaus, this is the wrapper which does the real stuff.  Call it after 
+   squarefree factoring with your square free f and it's eventual exponent.
 */
 
-void F_mpz_poly_factor_sq_fr_prim( F_mpz_poly_factor_t final_fac, ulong exp, F_mpz_poly_t f );
+void F_mpz_poly_factor_sq_fr_prim( F_mpz_poly_factor_t final_fac, ulong exp, F_mpz_poly_t f);
 
-/*==================================
+/****************************************************************************
+
    Finally the real F_mpz_poly_factor
-==================================*/
 
-/**
-   Doesn't do much, just does some simple pretests squarefree factors and calls the wrapper.
+*****************************************************************************/
+
+/*
+   Does some simple pretests squarefree factors and calls the wrapper.
 */
 void F_mpz_poly_factor(F_mpz_poly_factor_t final_fac, F_mpz_t cong, F_mpz_poly_t G);
 
-/*===========
+/****************************************************************************
 
    Hoeij/Novocin approach
 
-=========*/
+*****************************************************************************/
 
 /*
-   Has one sub-optimal part, namely we need F_mpz_poly_mul_trunc and left_trunc.  This computes bounds for and the CLDs themselves.
-   Stores them in a matrix res which comes out with r + 1 rows and 2*N or length-1 columns
-   (if 2N is smaller then length -1 then just top N and bottom N).  Takes F, Hensel Lifted factors, P and N, in the case we don't choose N large enough 
-   we 'could' adapt for restarting... maybe...
+   Has one sub-optimal part, namely we need F_mpz_poly_mul_trunc and left_trunc.  
+   This computes bounds for and the CLDs themselves. Stores them in a matrix res 
+   which comes out with r + 1 rows and 2*N or length-1 columns (if 2N is smaller 
+   then length -1 then just top N and bottom N).  Takes F, Hensel Lifted factors, 
+   P and N, in the case we don't choose N large enough we 'could' adapt for 
+   restarting... maybe...
 */
-void _F_mpz_poly_factor_CLD_mat(F_mpz_mat_t res, F_mpz_poly_t F, F_mpz_poly_factor_t lifted_fac, F_mpz_t P, ulong N);
+void _F_mpz_poly_factor_CLD_mat(F_mpz_mat_t res, F_mpz_poly_t F, 
+	                             F_mpz_poly_factor_t lifted_fac, F_mpz_t P, ulong N);
 
 /*
-   This function recieves the output of check_if_solved, which means that there is a partition of the factors out there which makes things small.  
-   This function does the trial divisions attempting to solve the problem.  Lots of comments in there, and would like to do some specific testing
-   with poorly behaving polynomials.
+   This function recieves the output of check_if_solved, which means that there is 
+   a partition of the factors out there which makes things small. This function does 
+   the trial divisions attempting to solve the problem.  Lots of comments in there, 
+   and would like to do some specific testing with poorly behaving polynomials.
 */
-int _F_mpz_poly_try_to_solve(int num_facs, ulong * part, F_mpz_poly_factor_t final_fac, F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, F_mpz_t P, ulong exp, F_mpz_t lc, int safe);
+int _F_mpz_poly_try_to_solve(int num_facs, ulong * part, F_mpz_poly_factor_t final_fac, 
+	F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, F_mpz_t P, ulong exp, F_mpz_t lc, int safe);
 
 /*
-   The complement function to try_to_solve.  Run this first, it is a factorization specific wrapper around F_mpz_mat_col_partition.
+   The complement function to try_to_solve.  Run this first, it is a factorization 
+   specific wrapper around F_mpz_mat_col_partition.
 */
-int _F_mpz_mat_check_if_solved(F_mpz_mat_t M, ulong r, F_mpz_poly_factor_t final_fac, F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, F_mpz_t P, ulong exp, F_mpz_t lc, int safe);
+int _F_mpz_mat_check_if_solved(F_mpz_mat_t M, ulong r, F_mpz_poly_factor_t final_fac, 
+	F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, F_mpz_t P, ulong exp, F_mpz_t lc, int safe);
 
 /*
-   The actual factoring algorithm.  Set up to accept a prestarted matrix M (use the identity at first) and an array of exponents (0's at first).  
-   Attempts to factor the polynomial using all of the data that is available with the current level of Hensel Lifting.  Attempting with a spattering of 
-   data at first then using more if it fails.  Returns 1 if the problem has been solved and 0 if more Hensel Lifting is needed.  
-   Could be improved by not rechecking data and a partial Zassenhaus for some bizarre cases (which I've yet to find or test).
+   The actual factoring algorithm.  Set up to accept a prestarted matrix M (use the 
+   identity at first) and an array of exponents (0's at first). Attempts to factor the 
+   polynomial using all of the data that is available with the current level of Hensel 
+   Lifting.  Attempting with a spattering of data at first then using more if it fails.  
+   Returns 1 if the problem has been solved and 0 if more Hensel Lifting is needed.  
+   Could be improved by not rechecking data and a partial Zassenhaus for some bizarre 
+   cases (which I've yet to find or test).
 */
-int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, F_mpz_t P, ulong exp, F_mpz_mat_t M, int * cexpo, long U_exp, int hensel_loops);
+int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor_t lifted_fac, 
+	F_mpz_poly_t F, F_mpz_t P, ulong exp, F_mpz_mat_t M, int * cexpo, long U_exp, int hensel_loops);
 
 #ifdef __cplusplus
  }

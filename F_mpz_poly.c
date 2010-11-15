@@ -6488,7 +6488,7 @@ void F_mpz_poly_squarefree(F_mpz_poly_factor_t fac, F_mpz_t content, F_mpz_poly_
    modular factor which has been lifted, if link[j] is a nonnegative even number 
    then V[j] stores a product of the two entries at V[link[j]] and V[link[j]+1].  
    W/w plays the role of the extended GCD, at V[0], V[2], V[4], etc we have a 
-   new product, W[0], W[2], W[4], etc are the XGCD compliments of the V's. So 
+   new product, W[0], W[2], W[4], etc are the XGCD complements of the V's. So 
    V[0]*W[0]+V[1]*W[1] = 1 mod p^(something)  these will be lifted along with 
    the entries in V.  It's not enough to just lift each factor we have to lift 
    the entire tree and the tree of XGCD inverses.
@@ -6589,7 +6589,9 @@ void F_mpz_poly_build_hensel_tree(long * link, F_mpz_poly_t * v, F_mpz_poly_t * 
    zmod_poly_clear(d);
 }
 
-void F_mpz_poly_hensel_lift(F_mpz_poly_t Gout, F_mpz_poly_t Hout, F_mpz_poly_t Aout, F_mpz_poly_t Bout, F_mpz_poly_t f, F_mpz_poly_t g, F_mpz_poly_t h, F_mpz_poly_t a, F_mpz_poly_t b, F_mpz_t p, F_mpz_t p1, F_mpz_t big_P)
+void F_mpz_poly_hensel_lift(F_mpz_poly_t Gout, F_mpz_poly_t Hout, F_mpz_poly_t Aout, 
+	           F_mpz_poly_t Bout, F_mpz_poly_t f, F_mpz_poly_t g, F_mpz_poly_t h, F_mpz_poly_t a, 
+			                F_mpz_poly_t b, F_mpz_t p, F_mpz_t p1, F_mpz_t big_P)
 {
    F_mpz_poly_t c, g1, h1, G, H, A, B;
    F_mpz_poly_init(c);
