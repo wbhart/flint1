@@ -6475,6 +6475,14 @@ void F_mpz_poly_squarefree(F_mpz_poly_factor_t fac, F_mpz_t content, F_mpz_poly_
 
 *****************************************************************************/
 /* 
+   Initialises and builds a Hensel tree consisting of an array of polynomials
+   v, another called w and an array of "links", called link.
+
+   The caller supplies a set of local factors (in the factor struct fac) of 
+   some polynomial F over ZZ. They also supply two initialised arrays of polys
+   v and w (2*r - 2 of them in each case) and an initialised array (link), also
+   of length 2*r - 2.
+
    We will have five arrays: a v of fmpz_polys and a V of zmod_polys also a w 
    and a W and link.  Here's the idea: we sort each leaf and node of a factor 
    tree by degree, in fact choosing to multiply the two smallest factors, then 
@@ -6589,6 +6597,14 @@ void F_mpz_poly_build_hensel_tree(long * link, F_mpz_poly_t * v, F_mpz_poly_t * 
    zmod_poly_clear(d);
 }
 
+/*
+   This is the main Hensel lifting routine, which performs a Hensel step
+   from polynomials mod p to polynomials mod big_P = p*p1. One starts with 
+   polynomials f, g, h such that f = gh mod p. The polynomials a, b 
+   satisfy a*g + b*h = 1 mod p. 
+   Upon return we have Aout*Gout + Bout*Hout = 1 mod big_P and f = Gout*Hout 
+   mod big_P, where g = Gout mod p, etc.
+*/
 void F_mpz_poly_hensel_lift(F_mpz_poly_t Gout, F_mpz_poly_t Hout, F_mpz_poly_t Aout, 
 	           F_mpz_poly_t Bout, F_mpz_poly_t f, F_mpz_poly_t g, F_mpz_poly_t h, F_mpz_poly_t a, 
 			                F_mpz_poly_t b, F_mpz_t p, F_mpz_t p1, F_mpz_t big_P)
@@ -6623,6 +6639,8 @@ void F_mpz_poly_hensel_lift(F_mpz_poly_t Gout, F_mpz_poly_t Hout, F_mpz_poly_t A
    F_mpz_poly_to_F_mpz_mod_poly(aa, a);
    F_mpz_poly_to_F_mpz_mod_poly(bb, b);
 
+   // TODO: Can save some non-trivial time here by precomputing 
+   // inverses for gg and hh
    // When I make a precomputing function use GG, HH instead
 
    F_mpz_mod_poly_rem(gg1, cc, gg);
@@ -6670,6 +6688,7 @@ void F_mpz_poly_hensel_lift(F_mpz_poly_t Gout, F_mpz_poly_t Hout, F_mpz_poly_t A
 
    F_mpz_poly_to_F_mpz_mod_poly(rr, r);
 
+   // TODO: precomputed inverses could be used here too
    F_mpz_mod_poly_rem(bb1, rr, gg);
    F_mpz_mod_poly_mulmod(bb1, bb1, bb, gg);
 
@@ -6718,6 +6737,16 @@ void F_mpz_poly_hensel_lift(F_mpz_poly_t Gout, F_mpz_poly_t Hout, F_mpz_poly_t A
    F_mpz_poly_clear(B);
 }
 
+/*
+   As per the main Hensel lifting routine above. Performs a Hensel step
+   from polynomials mod p to polynomials mod big_P = p*p1. One starts with 
+   polynomials f, g, h such that f = gh mod p. The polynomials a, b 
+   satisfy a*g + b*h = 1 mod p. 
+   Upon return we have Aout*Gout + Bout*Hout = 1 mod big_P and f = Gout*Hout 
+   mod big_P, where g = Gout mod p, etc., for some Aout and Bout which are 
+   *not* computed. (This is used as a final step where the inverses are not 
+   needed.)
+*/
 void F_mpz_poly_hensel_lift_without_inverse(F_mpz_poly_t Gout, F_mpz_poly_t Hout, 
 	F_mpz_poly_t f, F_mpz_poly_t g, F_mpz_poly_t h, F_mpz_poly_t a, F_mpz_poly_t b, 
 	                 F_mpz_t p, F_mpz_t p1, F_mpz_t big_P)
@@ -6783,6 +6812,19 @@ void F_mpz_poly_hensel_lift_without_inverse(F_mpz_poly_t Gout, F_mpz_poly_t Hout
    F_mpz_poly_clear(H);
 }
 
+/*
+   As per the main Hensel lifting routine above. Performs a Hensel step
+   from polynomials mod p to polynomials mod big_P = p*p1. One notionally 
+   starts with polynomials f, g, h such that f = gh mod p. The polynomials 
+   a, b satisfy a*g + b*h = 1 mod p. 
+   Upon return we have Aout*Gout + Bout*Hout = 1 mod big_P and f = Gout*Hout 
+   mod big_P, where g = Gout mod p, etc., for some Aout and Bout which are 
+   computed. The polys g, h are not supplied and Gout and Hout are not 
+   computed.
+   This function is used to restart Hensel lifting without any loss after
+   not computing inverses in the previous function. This function allows
+   us to compute those inverses without any loss and continue on.
+*/
 void F_mpz_poly_hensel_lift_only_inverse(F_mpz_poly_t Aout, F_mpz_poly_t Bout, 
 	F_mpz_poly_t f, F_mpz_poly_t G, F_mpz_poly_t H, F_mpz_poly_t a, F_mpz_poly_t b, 
 	                     F_mpz_t p, F_mpz_t p1, F_mpz_t big_P)
@@ -6872,6 +6914,13 @@ void F_mpz_poly_hensel_lift_only_inverse(F_mpz_poly_t Aout, F_mpz_poly_t Bout,
    F_mpz_poly_clear(B);
 }
 
+/*
+   Takes a current Hensel tree {link, v, w} and a binary pair {j, j+1} of entries 
+   in the tree and lifts the tree from mod p to mod big_P = p*p1. Set inv to -1 if 
+   restarting Hensel lifting, 0 if stopping and 1 otherwise. Here f = gh is the 
+   polynomial whose factors we are trying to lift. We will have that v[j] is the 
+   product of v[link[j]] and v[link[j] + 1] as described above.
+*/
 void F_mpz_poly_rec_tree_hensel_lift(long * link, F_mpz_poly_t * v, F_mpz_poly_t * w, 
 	             F_mpz_t p, F_mpz_poly_t f, long j, long inv, F_mpz_t p1, F_mpz_t big_P)
 {
@@ -6887,11 +6936,20 @@ void F_mpz_poly_rec_tree_hensel_lift(long * link, F_mpz_poly_t * v, F_mpz_poly_t
       F_mpz_poly_hensel_lift_without_inverse(v[j], v[j + 1], f, v[j],
 	                               v[j + 1], w[j], w[j + 1], p, p1, big_P);
    
-   // altered to check a bug, should be Hensel_Lift1
    F_mpz_poly_rec_tree_hensel_lift(link, v, w, p, v[j],   link[j],   inv, p1, big_P);
    F_mpz_poly_rec_tree_hensel_lift(link, v, w, p, v[j + 1], link[j + 1], inv, p1, big_P);
 }
 
+/*
+   Computes p0 = p^e0 and p1 = p^(e1 - e0) for a small prime p and P = p^e1. 
+   If we aim to lift to p^b then monic_f is the poly whose factors we wish to 
+   lift, made monic mod p^b. As usual, {link, v, w} is an initialised tree.
+   This starts the recursion on lifting the *product tree* for lifting from
+   p^e0 to p^e1. The value of inv corresponds to that given for the function 
+   F_mpz_poly_rec_tree_hensel_lift. We set r to the number of local factors of 
+   monic_f. (In terms of the notation above big_P -> p^e1, p -> p^e0 and p1
+   -> p^(e1 - e0).)
+*/
 void F_mpz_poly_tree_hensel_lift(long * link, F_mpz_poly_t * v, F_mpz_poly_t * w, 
 	         long e0, long e1, F_mpz_poly_t monic_f, long inv, long p, long r, F_mpz_t P)
 {
@@ -7027,6 +7085,13 @@ ulong _F_mpz_poly_start_hensel_lift(F_mpz_poly_factor_t lifted_fac, long * link,
    return prev_exp;
 }
 
+/*
+   This function restarts a stopped Hensel lift. It lifts from a current_exp to a new
+   target_exp. It also requires the *previous* exp, prev_exp (to lift the inverses).
+   The current lifted factors are supplied in lifted_fac and upon return are updated
+   there. As usual link, v, and w is the current Hensel tree, r is the number of local
+   factors and p is the small prime modulo whose power we are lifting to.
+*/
 ulong _F_mpz_poly_continue_hensel_lift(F_mpz_poly_factor_t lifted_fac, long * link, 
 	F_mpz_poly_t * v, F_mpz_poly_t * w, F_mpz_poly_t f, ulong prev_exp, ulong current_exp, 
 	                              ulong target_exp, ulong p, ulong r)
@@ -7130,6 +7195,11 @@ ulong _F_mpz_poly_continue_hensel_lift(F_mpz_poly_factor_t lifted_fac, long * li
    return new_prev_exp;
 }
 
+/*
+   This function does a Hensel lift. It lifts local factors (stored in local_fac) of
+   F to a target_exp. The lifted factors will be stored in lifted_fac. This lift can't
+   be restarted. This function is a convenience function intended for end users.
+*/
 void F_mpz_poly_hensel_lift_once(F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, 
 	                                  zmod_poly_factor_t local_fac, ulong target_exp)
 {
