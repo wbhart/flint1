@@ -5216,7 +5216,7 @@ int test_F_mpz_poly_hensel_lift_once()
    {
       bits = z_randint(200) + 1;
       nbits = z_randint(10 - 2) + 2;
-      exp = bits/nbits + 1;
+      exp = bits/(nbits - 1) + 1;
 
       F_mpz_poly_init(F_poly);
       F_mpz_poly_init(F_poly2);
