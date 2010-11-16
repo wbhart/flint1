@@ -6966,14 +6966,14 @@ void F_mpz_poly_tree_hensel_lift(long * link, F_mpz_poly_t * v, F_mpz_poly_t * w
    F_mpz_init(temp);
 
    F_mpz_set_ui(temp, p);
-
+   
    F_mpz_pow_ui(p0, temp, e0);
    F_mpz_pow_ui(p1, temp, e1 - e0);
-
+   
    F_mpz_mul2(P, p0, p1);
-
+   
    F_mpz_poly_rec_tree_hensel_lift(link, v, w, p0, monic_f, 2*r - 4, inv, p1, P);
-
+   
    F_mpz_clear(temp);
    F_mpz_clear(p0);
    F_mpz_clear(p1);
@@ -6993,8 +6993,9 @@ ulong _F_mpz_poly_start_hensel_lift(F_mpz_poly_factor_t lifted_fac, long * link,
 {
    ulong r = local_fac->num_factors;
    ulong p = (local_fac->factors[0])->p;
-   ulong i;
-   F_mpz_t P, big_P, temp;
+   long i;
+   F_mpz_t P, big_P, temp;  
+   
    F_mpz_init(temp);
    F_mpz_init(P);
    F_mpz_init(big_P);
@@ -7002,7 +7003,7 @@ ulong _F_mpz_poly_start_hensel_lift(F_mpz_poly_factor_t lifted_fac, long * link,
    F_mpz_set_ui(P, p);
 
    F_mpz_poly_build_hensel_tree(link, v, w, local_fac);
-
+   
    ulong current_exp = 1;
 
    F_mpz_poly_t monic_f;
@@ -7027,8 +7028,8 @@ ulong _F_mpz_poly_start_hensel_lift(F_mpz_poly_factor_t lifted_fac, long * link,
       F_mpz_poly_scalar_mul(monic_f, f, temp);
       F_mpz_poly_scalar_smod(monic_f, monic_f, big_P);
    }
-
-   ulong num_steps = 5 + (ulong) floor(log2((double) (target_exp)));
+   
+   long num_steps = FLINT_MIN(target_exp, 5 + (long) floor(log2((double) (target_exp))));
    long copy_exponents[num_steps];
    long exponents[num_steps];
    long pow = target_exp;
@@ -7037,7 +7038,7 @@ ulong _F_mpz_poly_start_hensel_lift(F_mpz_poly_factor_t lifted_fac, long * link,
    for (i = 0; i < num_steps && pow > 1; i++)
    { 
       copy_exponents[i] = pow;
-      pow = (long) ((pow + 1)/2);
+      pow = (pow + 1)/2;
    }
 
    max_steps = i;
@@ -7053,12 +7054,13 @@ ulong _F_mpz_poly_start_hensel_lift(F_mpz_poly_factor_t lifted_fac, long * link,
 
    for (i = 0; i < num_steps - 2; i++)
       F_mpz_poly_tree_hensel_lift(link, v, w, exponents[i], exponents[i + 1], monic_f, 1, p, r, P);
- 
-   //Last run doesn't calculate the inverses
-   F_mpz_poly_tree_hensel_lift(link, v, w, exponents[i], exponents[i + 1], monic_f, 0, p, r, P);
-
+   
+   // Last run doesn't calculate the inverses
+   if (num_steps > 1)
+	  F_mpz_poly_tree_hensel_lift(link, v, w, exponents[i], exponents[i + 1], monic_f, 0, p, r, P);
+   
    ulong prev_exp = exponents[i];
-
+   printf("hereee\n");
    F_mpz_poly_clear(monic_f);
 
    // Now everything is lifted to p^target_exp just need to insert the factors into 
@@ -7073,7 +7075,7 @@ ulong _F_mpz_poly_start_hensel_lift(F_mpz_poly_factor_t lifted_fac, long * link,
       
 	  lifted_fac->alloc = r;
    }
-
+   
    for (i = 0; i < 2*r - 2; i++)
    { 
       if (link[i] < 0)
@@ -7222,8 +7224,8 @@ void F_mpz_poly_hensel_lift_once(F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F,
       F_mpz_poly_init(w[i]);
    }
 
-   ulong trash = _F_mpz_poly_start_hensel_lift(lifted_fac, link, v, w, F, local_fac, target_exp);
-
+   _F_mpz_poly_start_hensel_lift(lifted_fac, link, v, w, F, local_fac, target_exp);
+   
    for (long i = 0; i < 2*r - 2; i++)
    {
       F_mpz_poly_clear(v[i]);
@@ -7345,6 +7347,7 @@ void F_mpz_poly_zassenhaus_naive(F_mpz_poly_factor_t final_fac,
    F_mpz_poly_clear(tryme);
    F_mpz_poly_clear(Q);
    F_mpz_poly_clear(R);
+
    return;
 }
 
@@ -7523,7 +7526,7 @@ void F_mpz_poly_factor_sq_fr_prim(F_mpz_poly_factor_t final_fac, ulong exp, F_mp
 	  return;
    }
 
-   //Begin Hensel Lifting phase, make the tree in v, w, and link
+   // Begin Hensel Lifting phase, make the tree in v, w, and link
    // Later we'll do a check if use_Hoeij_Novocin (try for smaller a)
    ulong a;
    a = (long) ceil((double) M_bits / log2((double) p));
@@ -8351,8 +8354,8 @@ int _F_mpz_mat_check_if_solved(F_mpz_mat_t M, ulong r, F_mpz_poly_factor_t final
    return trym;
 }
 
-int hensel_checker(F_mpz_poly_t F, F_mpz_poly_factor_t lifted_fac, F_mpz_t P){
-
+int hensel_checker(F_mpz_poly_t F, F_mpz_poly_factor_t lifted_fac, F_mpz_t P)
+{
    if (lifted_fac->num_factors == 0)
    {
       if (F->length > 0)

@@ -5202,6 +5202,90 @@ int test_F_mpz_poly_CLD_bound()
    return result; 
 }
 
+int test_F_mpz_poly_hensel_lift_once()
+{
+   F_mpz_poly_t F_poly, F_poly2, F_poly3, Q, R;
+   zmod_poly_t fac;
+   zmod_poly_factor_t f_fac;
+   F_mpz_poly_factor_t F_fac;
+   int result = 1;
+   ulong bits, length, nbits, n, exp, i, count1;
+   
+   /* We check that lifting local factors of F_poly yields factors */
+   for (count1 = 0; (count1 < 1000) && (result == 1) ; count1++)
+   {
+      bits = z_randint(200) + 1;
+      nbits = z_randint(10 - 2) + 2;
+      exp = bits/nbits + 1;
+
+      F_mpz_poly_init(F_poly);
+      F_mpz_poly_init(F_poly2);
+      F_mpz_poly_init(F_poly3);
+
+	  F_mpz_poly_init(Q);
+      F_mpz_poly_init(R);
+
+      do
+	  {
+		 length = z_randint(200) + 2;  
+         F_mpz_randpoly(F_poly2, length, bits);
+	  } while (F_poly2->length < 2);
+	  F_mpz_set_ui(F_poly2->coeffs + F_poly2->length - 1, 1); /* make monic */
+
+	  do
+	  {
+		 length = z_randint(200) + 2;  
+         F_mpz_randpoly(F_poly3, length, bits);
+	  } while (F_poly3->length < 2);
+	  F_mpz_set_ui(F_poly3->coeffs + F_poly3->length - 1, 1); /* make monic */
+
+	  F_mpz_poly_mul(F_poly, F_poly2, F_poly3);
+
+	  zmod_poly_factor_init(f_fac);
+      F_mpz_poly_factor_init(F_fac);
+  
+	  n = z_randprime(nbits, 0);
+	  zmod_poly_init(fac, n);
+
+	  F_mpz_poly_to_zmod_poly(fac, F_poly2);
+	  zmod_poly_factor_add(f_fac, fac, 1);
+      F_mpz_poly_to_zmod_poly(fac, F_poly3);
+	  zmod_poly_factor_add(f_fac, fac, 1);
+
+	  zmod_poly_clear(fac);
+
+	  F_mpz_poly_hensel_lift_once(F_fac, F_poly, f_fac, exp);
+
+	  for (i = 0; i < F_fac->num_factors; i++)
+	  {
+		  F_mpz_poly_divrem(Q, R, F_poly, F_fac->factors[i]);
+		  result &= (R->length == 0);
+	  }
+
+	  if (!result) 
+	  {
+		 printf("Error: length = %ld, bits = %ld, n = %ld, exp = %ld\n", length, bits, n, exp);
+         F_mpz_poly_print(F_poly); printf("\n");
+		 F_mpz_poly_print(F_poly2); printf("\n");
+		 F_mpz_poly_print(F_poly3); printf("\n");
+		 F_mpz_poly_factor_print(F_fac); printf("\n");
+	  } else 
+		 printf("pass1\n");
+
+	  zmod_poly_factor_clear(f_fac);
+      F_mpz_poly_factor_clear(F_fac);
+  
+      F_mpz_poly_clear(Q);
+      F_mpz_poly_clear(R);
+      
+	  F_mpz_poly_clear(F_poly3);
+      F_mpz_poly_clear(F_poly2);
+      F_mpz_poly_clear(F_poly);
+   }
+       
+   return result; 
+}
+
 void F_mpz_poly_test_all()
 {
    int success, all_success = 1;
@@ -5209,6 +5293,7 @@ void F_mpz_poly_test_all()
 
 #if TESTFILE
 #endif
+   RUN_TEST(F_mpz_poly_hensel_lift_once);
    RUN_TEST(F_mpz_poly_derivative); 
    RUN_TEST(F_mpz_poly_content); 
    RUN_TEST(F_mpz_poly_eval_horner_d); 
