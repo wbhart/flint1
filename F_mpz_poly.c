@@ -3962,7 +3962,8 @@ void _F_mpz_poly_mul_KS2(F_mpz_poly_t output, const F_mpz_poly_t input1, const F
    
 	msl = F_mpn_mul(int3b, int1b, n1, int2b, n2);	
 	int3b[n1 + n2 - 1] = msl;
-   
+   _F_mpz_poly_set_length(output, 0);
+
 	if ((length1 ^ length2) & 1)
 	{
 	   mpn_add_n(int4, int3, int3b, n1 + n2);
