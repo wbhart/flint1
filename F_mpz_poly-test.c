@@ -5227,7 +5227,7 @@ int test_F_mpz_poly_hensel_lift_once()
       zmod_poly_factor_init(f_fac);
       F_mpz_poly_factor_init(F_fac);
       
-	  n = z_randprime(nbits, 0);
+	  n = z_randprime(nbits, 0); 
 	  exp = bits/(FLINT_BIT_COUNT(n) - 1) + 1;
       
 	  zmod_poly_init(fac, n);
@@ -5245,7 +5245,8 @@ int test_F_mpz_poly_hensel_lift_once()
 	     F_mpz_set_ui(F_poly3->coeffs + F_poly3->length - 1, 1); /* make monic */
 		 
 		 F_mpz_poly_mul(F_poly, F_poly2, F_poly3);
-         F_mpz_poly_to_zmod_poly(fac, F_poly);
+         
+		 F_mpz_poly_to_zmod_poly(fac, F_poly);
       } while (!zmod_poly_is_squarefree(fac));
 	  
 	  F_mpz_poly_to_zmod_poly(fac, F_poly2);

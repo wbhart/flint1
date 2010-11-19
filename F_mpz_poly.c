@@ -3737,7 +3737,7 @@ void _F_mpz_poly_mul_KS(F_mpz_poly_t output, const F_mpz_poly_t input1, const F_
    
    ulong final_length = length1 + length2 - 1;
    
-	F_mpz_poly_fit_length(output, final_length);
+   F_mpz_poly_fit_length(output, final_length);
 
    long bits1, bits2;
    int bitpack = 0;
@@ -3847,7 +3847,8 @@ void _F_mpz_poly_mul_KS(F_mpz_poly_t output, const F_mpz_poly_t input1, const F_
    mp_limb_t msl = F_mpn_mul(int3, int1, n1, int2, n2); // multiply large integers
    
    int3[n1 + n2 - 1] = msl;
-   
+   _F_mpz_poly_set_length(output, 0);
+
    if (bitpack)
    {
       if (sign) F_mpz_poly_bit_unpack(output, int3, length1 + length2 - 1, bits);  // signed coeffs
