@@ -6385,6 +6385,34 @@ void F_mpz_poly_div_upper_trunc_modp(F_mpz_t * res, F_mpz_poly_t f, F_mpz_poly_t
 
 ============================================================================*/
 
+int F_mpz_poly_is_squarefree(F_mpz_poly_t F)
+{
+   F_mpz_poly_t Fd, G;
+   int res;
+
+   if (F->length == 0)
+      return 0;
+
+   if (F->length <= 2)
+      return 1;
+
+   if (F_mpz_is_zero(F->coeffs) && F_mpz_is_zero(F->coeffs + 1))
+      return 0;
+
+   F_mpz_poly_init(Fd);
+   F_mpz_poly_init(G);
+   
+   F_mpz_poly_derivative(Fd, F);
+   F_mpz_poly_gcd(G, F, Fd);
+   
+   res = (G->length == 1 && F_mpz_is_one(G->coeffs));
+   
+   F_mpz_poly_clear(Fd);
+   F_mpz_poly_clear(G);
+
+   return res;
+}
+
 void F_mpz_poly_squarefree(F_mpz_poly_factor_t fac, F_mpz_t content, F_mpz_poly_t F)
 {
    F_mpz_poly_content(content, F);
@@ -7060,7 +7088,7 @@ ulong _F_mpz_poly_start_hensel_lift(F_mpz_poly_factor_t lifted_fac, long * link,
 	  F_mpz_poly_tree_hensel_lift(link, v, w, exponents[i], exponents[i + 1], monic_f, 0, p, r, P);
    
    ulong prev_exp = exponents[i];
-   printf("hereee\n");
+   
    F_mpz_poly_clear(monic_f);
 
    // Now everything is lifted to p^target_exp just need to insert the factors into 

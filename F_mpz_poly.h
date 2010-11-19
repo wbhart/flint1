@@ -1279,6 +1279,12 @@ void F_mpz_poly_div_upper_trunc_modp( F_mpz_t *res, F_mpz_poly_t f,
 *****************************************************************************/
 
 /**
+   \fn      int F_mpz_poly_is_squarefree(F_mpz_poly_t F)
+   \brief   Return 1 if F is squarefree, otherwise return 0.
+*/
+int F_mpz_poly_is_squarefree(F_mpz_poly_t F);
+
+/**
    \fn      void F_mpz_poly_squarefree(F_mpz_poly_factor_t fac, 
                F_mpz_t content, F_mpz_poly_t F)
    \brief   Given poly F, finds the content of F which is stores at content,

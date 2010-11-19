@@ -858,6 +858,12 @@ void zmod_poly_deflate(zmod_poly_t g, const zmod_poly_t f, ulong deflation);
 void zmod_poly_inflate(zmod_poly_t g, const zmod_poly_t f, ulong deflation);
 
 /**
+ * Returns 1 if f is squarefree, otherwise returns 0.
+ * @param f          The polynomial to check for saquarefreeness.
+ */
+int zmod_poly_is_squarefree(zmod_poly_t f);
+
+/**
  * Computes the square free factorisation of the given polynomial. Input must be a monic 
  * polynomial. All the factors will be monic.
  * The algorithm used is efficient when the multiplicities of factors is relatively low.

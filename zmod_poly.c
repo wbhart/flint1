@@ -6836,6 +6836,31 @@ void zmod_poly_factor_cantor_zassenhaus(zmod_poly_factor_t res, zmod_poly_t f)
    zmod_poly_clear(x);
 }
 
+int zmod_poly_is_squarefree(zmod_poly_t f)
+{
+   zmod_poly_t fd, g;
+   int res;
+
+   if (f->length == 0)
+      return 0;
+   
+   if (f->length <= 2)
+      return 1;
+
+   zmod_poly_init(fd, f->p);
+   zmod_poly_init(g, f->p);
+
+   zmod_poly_derivative(fd, f);
+   zmod_poly_gcd(g, f, fd);
+
+   res = (g->length == 1);
+
+   zmod_poly_clear(fd);
+   zmod_poly_clear(g);
+
+   return res;
+}
+
 /** 
  * Square-Free Algorithm, takes an arbitary polynomial in F_p[X] and returns an array of square free factors 
  * LOW MULTIPLICITIES 

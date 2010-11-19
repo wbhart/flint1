@@ -5215,9 +5215,8 @@ int test_F_mpz_poly_hensel_lift_once()
    for (count1 = 0; (count1 < 1000) && (result == 1) ; count1++)
    {
       bits = z_randint(200) + 1;
-      nbits = z_randint(10 - 2) + 2;
-      exp = bits/(nbits - 1) + 1;
-
+      nbits = z_randint(FLINT_BITS - 6) + 6;
+      
       F_mpz_poly_init(F_poly);
       F_mpz_poly_init(F_poly2);
       F_mpz_poly_init(F_poly3);
@@ -5225,37 +5224,39 @@ int test_F_mpz_poly_hensel_lift_once()
 	  F_mpz_poly_init(Q);
       F_mpz_poly_init(R);
 
-      do
-	  {
-		 length = z_randint(200) + 2;  
-         F_mpz_randpoly(F_poly2, length, bits);
-	  } while (F_poly2->length < 2);
-	  F_mpz_set_ui(F_poly2->coeffs + F_poly2->length - 1, 1); /* make monic */
-
+      zmod_poly_factor_init(f_fac);
+      F_mpz_poly_factor_init(F_fac);
+      
+	  n = z_randprime(nbits, 0);
+	  exp = bits/(FLINT_BIT_COUNT(n) - 1) + 1;
+      
+	  zmod_poly_init(fac, n);
+      
 	  do
 	  {
 		 length = z_randint(200) + 2;  
-         F_mpz_randpoly(F_poly3, length, bits);
-	  } while (F_poly3->length < 2);
-	  F_mpz_set_ui(F_poly3->coeffs + F_poly3->length - 1, 1); /* make monic */
-
-	  F_mpz_poly_mul(F_poly, F_poly2, F_poly3);
-
-	  zmod_poly_factor_init(f_fac);
-      F_mpz_poly_factor_init(F_fac);
-  
-	  n = z_randprime(nbits, 0);
-	  zmod_poly_init(fac, n);
-
+		 do { F_mpz_randpoly(F_poly2, length, bits); } while (F_poly2->length < 2);
+		 F_mpz_set_ui(F_poly2->coeffs, z_randbits(FLINT_MIN(bits, FLINT_BITS - 2))); /* don't want zero constant coeff */
+	     F_mpz_set_ui(F_poly2->coeffs + F_poly2->length - 1, 1); /* make monic */
+		 
+	  	 length = z_randint(200) + 2;  
+         do { F_mpz_randpoly(F_poly3, length, bits); } while (F_poly3->length < 2);
+		 F_mpz_set_ui(F_poly3->coeffs, z_randbits(FLINT_MIN(bits, FLINT_BITS - 2))); /* don't want zero constant coeff */
+	     F_mpz_set_ui(F_poly3->coeffs + F_poly3->length - 1, 1); /* make monic */
+		 
+		 F_mpz_poly_mul(F_poly, F_poly2, F_poly3);
+         F_mpz_poly_to_zmod_poly(fac, F_poly);
+      } while (!zmod_poly_is_squarefree(fac));
+	  
 	  F_mpz_poly_to_zmod_poly(fac, F_poly2);
-	  zmod_poly_factor_add(f_fac, fac, 1);
-      F_mpz_poly_to_zmod_poly(fac, F_poly3);
-	  zmod_poly_factor_add(f_fac, fac, 1);
-
-	  zmod_poly_clear(fac);
-
+      zmod_poly_factor_add(f_fac, fac, 1);
+      
+	  F_mpz_poly_to_zmod_poly(fac, F_poly3);
+      zmod_poly_factor_add(f_fac, fac, 1);
+      zmod_poly_clear(fac);
+  
 	  F_mpz_poly_hensel_lift_once(F_fac, F_poly, f_fac, exp);
-
+      
 	  for (i = 0; i < F_fac->num_factors; i++)
 	  {
 		  F_mpz_poly_divrem(Q, R, F_poly, F_fac->factors[i]);
@@ -5265,12 +5266,11 @@ int test_F_mpz_poly_hensel_lift_once()
 	  if (!result) 
 	  {
 		 printf("Error: length = %ld, bits = %ld, n = %ld, exp = %ld\n", length, bits, n, exp);
-         F_mpz_poly_print(F_poly); printf("\n");
-		 F_mpz_poly_print(F_poly2); printf("\n");
-		 F_mpz_poly_print(F_poly3); printf("\n");
-		 F_mpz_poly_factor_print(F_fac); printf("\n");
-	  } else 
-		 printf("pass1\n");
+         F_mpz_poly_print(F_poly); printf("\n\n");
+		 F_mpz_poly_print(F_poly2); printf("\n\n");
+		 F_mpz_poly_print(F_poly3); printf("\n\n");
+		 F_mpz_poly_factor_print(F_fac); printf("\n\n");
+	  } 
 
 	  zmod_poly_factor_clear(f_fac);
       F_mpz_poly_factor_clear(F_fac);
