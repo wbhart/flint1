@@ -6539,7 +6539,8 @@ void F_mpz_poly_squarefree(F_mpz_poly_factor_t fac, F_mpz_t content, F_mpz_poly_
    the entire tree and the tree of XGCD inverses.
 */
 
-void F_mpz_poly_build_hensel_tree(long * link, F_mpz_poly_t * v, F_mpz_poly_t * w, zmod_poly_factor_t fac)
+void F_mpz_poly_build_hensel_tree(long * link, F_mpz_poly_t * v, 
+								  F_mpz_poly_t * w, zmod_poly_factor_t fac)
 {
    long r;
    unsigned long p;
@@ -6615,7 +6616,7 @@ void F_mpz_poly_build_hensel_tree(long * link, F_mpz_poly_t * v, F_mpz_poly_t * 
    
    for (j = 0; j < 2*r - 2; j += 2)
    {
-      //Make a check for d!=1
+      // Make a check for d!=1
 	   zmod_poly_xgcd(d, W[j], W[j+1], V[j], V[j+1]);
    }
 
@@ -6643,7 +6644,7 @@ void F_mpz_poly_build_hensel_tree(long * link, F_mpz_poly_t * v, F_mpz_poly_t * 
    mod big_P, where g = Gout mod p, etc.
 */
 void F_mpz_poly_hensel_lift(F_mpz_poly_t Gout, F_mpz_poly_t Hout, F_mpz_poly_t Aout, 
-	           F_mpz_poly_t Bout, F_mpz_poly_t f, F_mpz_poly_t g, F_mpz_poly_t h, F_mpz_poly_t a, 
+   F_mpz_poly_t Bout, F_mpz_poly_t f, F_mpz_poly_t g, F_mpz_poly_t h, F_mpz_poly_t a, 
 			                F_mpz_poly_t b, F_mpz_t p, F_mpz_t p1, F_mpz_t big_P)
 {
    F_mpz_poly_t c, g1, h1, G, H, A, B;
@@ -6959,7 +6960,8 @@ void F_mpz_poly_hensel_lift_only_inverse(F_mpz_poly_t Aout, F_mpz_poly_t Bout,
    product of v[link[j]] and v[link[j] + 1] as described above.
 */
 void F_mpz_poly_rec_tree_hensel_lift(long * link, F_mpz_poly_t * v, F_mpz_poly_t * w, 
-	             F_mpz_t p, F_mpz_poly_t f, long j, long inv, F_mpz_t p1, F_mpz_t big_P)
+	             F_mpz_t p, F_mpz_poly_t f, long j, long inv, F_mpz_t p1, 
+				       F_mpz_t big_P)
 {
    if (j < 0) return;
 
@@ -6988,7 +6990,8 @@ void F_mpz_poly_rec_tree_hensel_lift(long * link, F_mpz_poly_t * v, F_mpz_poly_t
    -> p^(e1 - e0).)
 */
 void F_mpz_poly_tree_hensel_lift(long * link, F_mpz_poly_t * v, F_mpz_poly_t * w, 
-	         long e0, long e1, F_mpz_poly_t monic_f, long inv, long p, long r, F_mpz_t P)
+	         long e0, long e1, F_mpz_poly_t monic_f, long inv, long p, long r, 
+			       F_mpz_t P)
 {
    F_mpz_t temp, p0, p1;
    F_mpz_init(p0);
@@ -7009,17 +7012,19 @@ void F_mpz_poly_tree_hensel_lift(long * link, F_mpz_poly_t * v, F_mpz_poly_t * w
    F_mpz_clear(p1);
 }
 
-
 /*
    This function take the local factors (in local_fac) and Hensel lifts them until 
    they are known mod p^target_exp. These lifted factors will be stored (in the same 
    ordering) in lifted_fac. It is assumed that link, v, and w are initialized arrays 
    of F_mpz_poly_t's with at least 2*r - 2 entries and that r >= 2. These are done 
    outside of this function so that you can keep them for restarting Hensel lifting 
-   later.
+   later. The product of local factors must be squarefree. The return value is an
+   exponent which must be passed to _F_mpz_poly_continue_hensel_lift as prev_exp if 
+   the Hensel lifting is to be resumed. It is required that target_exp > 0.
 */
 ulong _F_mpz_poly_start_hensel_lift(F_mpz_poly_factor_t lifted_fac, long * link, 
-	F_mpz_poly_t * v, F_mpz_poly_t * w, F_mpz_poly_t f, zmod_poly_factor_t local_fac, ulong target_exp)
+	F_mpz_poly_t * v, F_mpz_poly_t * w, F_mpz_poly_t f, zmod_poly_factor_t local_fac,
+	    ulong target_exp)
 {
    ulong r = local_fac->num_factors;
    ulong p = (local_fac->factors[0])->p;
@@ -7125,15 +7130,17 @@ ulong _F_mpz_poly_start_hensel_lift(F_mpz_poly_factor_t lifted_fac, long * link,
 }
 
 /*
-   This function restarts a stopped Hensel lift. It lifts from a current_exp to a new
-   target_exp. It also requires the *previous* exp, prev_exp (to lift the inverses).
+   This function restarts a stopped Hensel lift. It lifts from current_exp to 
+   target_exp. It also requires prev_exp (to lift the inverses) given as the return 
+   value of _F_mpz_poly_start_hensel_lift or _F_mpz_poly_continue_hensel_lift.
    The current lifted factors are supplied in lifted_fac and upon return are updated
-   there. As usual link, v, and w is the current Hensel tree, r is the number of local
-   factors and p is the small prime modulo whose power we are lifting to.
+   there. As usual link, v, and w is the current Hensel tree, r is the number of 
+   local factors and p is the small prime modulo whose power we are lifting to. It 
+   is required that current_exp be at least 1 and that target_exp > current_exp.
 */
 ulong _F_mpz_poly_continue_hensel_lift(F_mpz_poly_factor_t lifted_fac, long * link, 
-	F_mpz_poly_t * v, F_mpz_poly_t * w, F_mpz_poly_t f, ulong prev_exp, ulong current_exp, 
-	                              ulong target_exp, ulong p, ulong r)
+	F_mpz_poly_t * v, F_mpz_poly_t * w, F_mpz_poly_t f, ulong prev_exp, 
+	        ulong current_exp, ulong target_exp, ulong p, ulong r)
 {
    ulong i;
    F_mpz_t P, big_P, temp;
@@ -7188,7 +7195,7 @@ ulong _F_mpz_poly_continue_hensel_lift(F_mpz_poly_factor_t lifted_fac, long * li
       num_steps++;
    }
    
-   //here num_steps is actually the number of meaningful numbers in the 
+   // here num_steps is actually the number of meaningful numbers in the 
    // array exponent so num_steps-2 means that the final time in the loop 
    // has 1 and one last time outside of the loop with 0
 
