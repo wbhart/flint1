@@ -7235,9 +7235,10 @@ ulong _F_mpz_poly_continue_hensel_lift(F_mpz_poly_factor_t lifted_fac, long * li
 }
 
 /*
-   This function does a Hensel lift. It lifts local factors (stored in local_fac) of
-   F to a target_exp. The lifted factors will be stored in lifted_fac. This lift can't
-   be restarted. This function is a convenience function intended for end users.
+   This function does a Hensel lift. It lifts local factors (stored in local_fac) 
+   of F to a target_exp. The lifted factors will be stored in lifted_fac. This lift 
+   can't be restarted. This function is a convenience function intended for end 
+   users. The product of local factors must be squarefree.
 */
 void F_mpz_poly_hensel_lift_once(F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, 
 	                                  zmod_poly_factor_t local_fac, ulong target_exp)
