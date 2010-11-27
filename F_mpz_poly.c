@@ -6616,7 +6616,7 @@ void F_mpz_poly_build_hensel_tree(long * link, F_mpz_poly_t * v,
    
    for (j = 0; j < 2*r - 2; j += 2)
    {
-      // Make a check for d!=1
+       // Make a check for d!=1
 	   zmod_poly_xgcd(d, W[j], W[j+1], V[j], V[j+1]);
    }
 
@@ -6642,12 +6642,24 @@ void F_mpz_poly_build_hensel_tree(long * link, F_mpz_poly_t * v,
    satisfy a*g + b*h = 1 mod p. 
    Upon return we have Aout*Gout + Bout*Hout = 1 mod big_P and f = Gout*Hout 
    mod big_P, where g = Gout mod p, etc.
+   We require p1 <= p.
 */
 void F_mpz_poly_hensel_lift(F_mpz_poly_t Gout, F_mpz_poly_t Hout, F_mpz_poly_t Aout, 
    F_mpz_poly_t Bout, F_mpz_poly_t f, F_mpz_poly_t g, F_mpz_poly_t h, F_mpz_poly_t a, 
 			                F_mpz_poly_t b, F_mpz_t p, F_mpz_t p1, F_mpz_t big_P)
 {
    F_mpz_poly_t c, g1, h1, G, H, A, B;
+
+   if (F_mpz_is_one(p1))
+   {
+      F_mpz_poly_set(Gout, g);
+      F_mpz_poly_set(Hout, h);
+      F_mpz_poly_set(Aout, a);
+      F_mpz_poly_set(Bout, b);
+
+	  return;
+   }
+
    F_mpz_poly_init(c);
    F_mpz_poly_init(g1);
    F_mpz_poly_init(h1);
@@ -6783,13 +6795,22 @@ void F_mpz_poly_hensel_lift(F_mpz_poly_t Gout, F_mpz_poly_t Hout, F_mpz_poly_t A
    Upon return we have Aout*Gout + Bout*Hout = 1 mod big_P and f = Gout*Hout 
    mod big_P, where g = Gout mod p, etc., for some Aout and Bout which are 
    *not* computed. (This is used as a final step where the inverses are not 
-   needed.)
+   needed.) We require p1 <= p.
 */
 void F_mpz_poly_hensel_lift_without_inverse(F_mpz_poly_t Gout, F_mpz_poly_t Hout, 
 	F_mpz_poly_t f, F_mpz_poly_t g, F_mpz_poly_t h, F_mpz_poly_t a, F_mpz_poly_t b, 
 	                 F_mpz_t p, F_mpz_t p1, F_mpz_t big_P)
 {
    F_mpz_poly_t c, g1, h1, G, H;
+   
+   if (F_mpz_is_one(p1))
+   {
+      F_mpz_poly_set(Gout, g);
+      F_mpz_poly_set(Hout, h);
+
+	  return;
+   }
+
    F_mpz_poly_init(c);
    F_mpz_poly_init(g1);
    F_mpz_poly_init(h1);
@@ -6854,20 +6875,30 @@ void F_mpz_poly_hensel_lift_without_inverse(F_mpz_poly_t Gout, F_mpz_poly_t Hout
    As per the main Hensel lifting routine above. Performs a Hensel step
    from polynomials mod p to polynomials mod big_P = p*p1. One notionally 
    starts with polynomials f, g, h such that f = gh mod p. The polynomials 
-   a, b satisfy a*g + b*h = 1 mod p. 
-   Upon return we have Aout*Gout + Bout*Hout = 1 mod big_P and f = Gout*Hout 
-   mod big_P, where g = Gout mod p, etc., for some Aout and Bout which are 
-   computed. The polys g, h are not supplied and Gout and Hout are not 
-   computed.
+   a, b satisfy a*g + b*h = 1 mod p. We are looking for Aout, Bout, G, H 
+   such that Aout*G + Bout*H = 1 mod big_P and f = G*H. We assume that G,
+   H have already been computed (e.g. by a call to F_mpz_poly_hensel_lift
+   _without_inverse) and we return Aout and Bout. Here g = Gout mod p, et.
+   The polys g, h are not supplied.
    This function is used to restart Hensel lifting without any loss after
    not computing inverses in the previous function. This function allows
    us to compute those inverses without any loss and continue on.
+   We require p1 <= p.
 */
 void F_mpz_poly_hensel_lift_only_inverse(F_mpz_poly_t Aout, F_mpz_poly_t Bout, 
 	F_mpz_poly_t f, F_mpz_poly_t G, F_mpz_poly_t H, F_mpz_poly_t a, F_mpz_poly_t b, 
 	                     F_mpz_t p, F_mpz_t p1, F_mpz_t big_P)
 {
    F_mpz_poly_t A, B;
+
+   if (F_mpz_is_one(p1))
+   {
+      F_mpz_poly_set(Aout, a);
+      F_mpz_poly_set(Bout, b);
+
+	  return;
+   }
+
    F_mpz_poly_init(A);
    F_mpz_poly_init(B);
 
@@ -7170,7 +7201,7 @@ ulong _F_mpz_poly_continue_hensel_lift(F_mpz_poly_factor_t lifted_fac, long * li
 
       F_mpz_poly_scalar_mul(monic_f, f, temp);
 
-      // Note that this and one other smod could really be mod or scalar_mod once one of those exists
+      // TODO: this and one other could really be scalar_mod once it exists
       F_mpz_poly_scalar_smod(monic_f, monic_f, big_P);
    }
 
