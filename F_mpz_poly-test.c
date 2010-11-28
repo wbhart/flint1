@@ -5720,6 +5720,191 @@ int test_F_mpz_poly_hensel_lift_without_only_inverse()
    return result; 
 }
 
+int test_F_mpz_poly_div_trunc_modp()
+{
+   F_mpz_poly_t F_poly, F_poly2, F_poly3;
+   F_mpz_t * D;
+   F_mpz_t P;
+   int result = 1;
+   ulong bits, length, nbits, n, exp, i, count1, part_exp, coeffs;
+   
+   /* We check that lifting local factors of F_poly yields factors */
+   for (count1 = 0; (count1 < 1000) && (result == 1) ; count1++)
+   {
+      bits = z_randint(200) + 1;
+      nbits = z_randint(FLINT_BITS - 6) + 6;
+      
+	  F_mpz_init(P);
+      
+	  F_mpz_poly_init(F_poly);
+      F_mpz_poly_init(F_poly2);
+      F_mpz_poly_init(F_poly3);
+
+	  n = z_randprime(nbits, 0); 
+	  exp = bits/(FLINT_BIT_COUNT(n) - 1) + 1;
+	  part_exp = z_randint(exp) + 1;
+      
+	  length = z_randint(200) + 1;  
+	  do { F_mpz_randpoly(F_poly2, length, bits); } while (F_poly2->length == 0);
+	  if (F_mpz_is_zero(F_poly2->coeffs))
+	     F_mpz_set_ui(F_poly2->coeffs, z_randbits(bits));
+		 
+	  length = z_randint(200) + 1;  
+      do { F_mpz_randpoly(F_poly3, length, bits); } while (F_poly3->length == 0);
+
+      F_mpz_poly_mul(F_poly, F_poly2, F_poly3);
+         
+	  coeffs = z_randint(F_poly3->length + 1);
+
+	  F_mpz_set_ui(P, n);
+	  F_mpz_pow_ui(P, P, part_exp);
+	  
+	  F_mpz_poly_scalar_smod(F_poly, F_poly, P);
+	  F_mpz_poly_scalar_smod(F_poly2, F_poly2, P);
+	  F_mpz_poly_scalar_smod(F_poly3, F_poly3, P);
+
+	  D = malloc(coeffs*sizeof(F_mpz_t));
+
+	  for (i = 0; i < coeffs; i++)
+	     F_mpz_init(D[i]);
+
+	  if (F_poly2->length)
+	  {
+		 int ret = F_mpz_poly_div_trunc_modp(D, F_poly, F_poly2, P, coeffs);
+         
+		 if (ret)
+		 {
+			F_mpz_poly_truncate(F_poly3, coeffs);
+         
+	        for (i = 0; i < FLINT_MIN(F_poly3->length, coeffs); i++)
+			   if (!F_mpz_equal(D[i], F_poly3->coeffs + i))
+			      result = 0;
+		 }
+	  }
+
+	  if (!result) 
+	  {
+		 printf("Error: length = %ld, bits = %ld, n = %ld, exp = %ld, coeffs = %ld\n", length, bits, n, exp, coeffs);
+         F_mpz_poly_print(F_poly); printf("\n\n");
+		 F_mpz_poly_print(F_poly2); printf("\n\n");
+		 F_mpz_poly_print(F_poly3); printf("\n\n");
+		 printf("%ld  ", coeffs);
+		 for (i = 0; i < coeffs; i++)
+		 {
+			F_mpz_print(D[i]);
+		    printf(" ");
+	     }
+		 printf("\n\n");
+	  } 
+
+	  F_mpz_clear(P);
+	  
+	  for (i = 0; i < coeffs; i++)
+	     F_mpz_clear(D[i]);
+      
+	  free(D);
+
+      F_mpz_poly_clear(F_poly3);
+      F_mpz_poly_clear(F_poly2);
+      F_mpz_poly_clear(F_poly);
+   }
+       
+   return result; 
+}
+
+int test_F_mpz_poly_div_upper_trunc_modp()
+{
+   F_mpz_poly_t F_poly, F_poly2, F_poly3;
+   F_mpz_t * D;
+   F_mpz_t P;
+   int result = 1;
+   ulong bits, length, nbits, n, exp, i, count1, part_exp, coeffs;
+   
+   /* We check that lifting local factors of F_poly yields factors */
+   for (count1 = 0; (count1 < 1000) && (result == 1) ; count1++)
+   {
+      bits = z_randint(200) + 1;
+      nbits = z_randint(FLINT_BITS - 6) + 6;
+      
+	  F_mpz_init(P);
+      
+	  F_mpz_poly_init(F_poly);
+      F_mpz_poly_init(F_poly2);
+      F_mpz_poly_init(F_poly3);
+
+	  n = z_randprime(nbits, 0); 
+	  exp = bits/(FLINT_BIT_COUNT(n) - 1) + 1;
+	  part_exp = z_randint(exp) + 1;
+      
+	  length = z_randint(200) + 1;  
+	  do { F_mpz_randpoly(F_poly2, length, bits); } while (F_poly2->length == 0);
+	  if (F_mpz_is_zero(F_poly2->coeffs))
+	     F_mpz_set_ui(F_poly2->coeffs, z_randbits(bits));
+		 
+	  length = z_randint(200) + 1;  
+      do { F_mpz_randpoly(F_poly3, length, bits); } while (F_poly3->length == 0);
+
+      F_mpz_poly_mul(F_poly, F_poly2, F_poly3);
+         
+	  coeffs = z_randint(F_poly3->length + 1);
+
+	  F_mpz_set_ui(P, n);
+	  F_mpz_pow_ui(P, P, part_exp);
+	  
+	  F_mpz_poly_scalar_smod(F_poly, F_poly, P);
+	  F_mpz_poly_scalar_smod(F_poly2, F_poly2, P);
+	  F_mpz_poly_scalar_smod(F_poly3, F_poly3, P);
+
+	  D = malloc(coeffs*sizeof(F_mpz_t));
+
+	  for (i = 0; i < coeffs; i++)
+	     F_mpz_init(D[i]);
+
+	  if (F_poly2->length)
+	  {
+		 int ret = F_mpz_poly_div_upper_trunc_modp(D, F_poly, F_poly2, P, coeffs);
+         
+		 if (ret)
+		 {
+			if (F_poly3->length - coeffs != 0)
+			   F_mpz_poly_right_shift(F_poly3, F_poly3, F_poly3->length - coeffs);
+         
+	        for (i = 0; i < FLINT_MIN(F_poly3->length, coeffs); i++)
+			   if (!F_mpz_equal(D[coeffs - i - 1], F_poly3->coeffs + i))
+			      result = 0;
+		 }
+	  }
+     
+	  if (!result) 
+	  {
+		 printf("Error: length = %ld, bits = %ld, n = %ld, exp = %ld, coeffs = %ld\n", length, bits, n, exp, coeffs);
+         F_mpz_poly_print(F_poly); printf("\n\n");
+		 F_mpz_poly_print(F_poly2); printf("\n\n");
+		 F_mpz_poly_print(F_poly3); printf("\n\n");
+		 printf("%ld  ", coeffs);
+		 for (i = 0; i < coeffs; i++)
+		 {
+			F_mpz_print(D[i]);
+		    printf(" ");
+	     }
+		 printf("\n\n");
+	  } 
+
+	  F_mpz_clear(P);
+	  
+	  for (i = 0; i < coeffs; i++)
+	     F_mpz_clear(D[i]);
+      
+	  free(D);
+
+      F_mpz_poly_clear(F_poly3);
+      F_mpz_poly_clear(F_poly2);
+      F_mpz_poly_clear(F_poly);
+   }
+       
+   return result; 
+}
+
 void F_mpz_poly_test_all()
 {
    int success, all_success = 1;
@@ -5727,6 +5912,8 @@ void F_mpz_poly_test_all()
 
 #if TESTFILE
 #endif
+   RUN_TEST(F_mpz_poly_div_trunc_modp); 
+   RUN_TEST(F_mpz_poly_div_upper_trunc_modp); 
    RUN_TEST(F_mpz_poly_derivative); 
    RUN_TEST(F_mpz_poly_content); 
    RUN_TEST(F_mpz_poly_eval_horner_d); 

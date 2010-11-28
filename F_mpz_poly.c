@@ -6192,37 +6192,41 @@ void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong n)
 
 /*============================================================================
 
-   Naive '_modp' ( := Large moduli ) F_mpz_poly functions
+   Naive large moduli _modp F_mpz_poly functions
 
 ============================================================================*/
 
 /*
-      assuming that g divides f mod P find the bottom 
-	  n coeffs of f/g mod P.
+   Assuming that g divides f mod P find the bottom n coeffs of 
+   f/g mod P. Note that the least significant coefficient of g
+   must be invertible mod P otherwise the function returns 0.
+   If the function is successful, it returns 1. Note res is an
+   array of F_mpz_t's not a polynomial.
 */
-int F_mpz_poly_div_trunc_modp(F_mpz_t * res, F_mpz_poly_t f, F_mpz_poly_t g, F_mpz_t P, ulong n)
+int F_mpz_poly_div_trunc_modp(F_mpz_t * res, F_mpz_poly_t f, 
+							  F_mpz_poly_t g, F_mpz_t P, ulong n)
 {
    F_mpz_t temp, tc_inv;
    F_mpz_init(temp);
    F_mpz_init(tc_inv);
-
+   
    F_mpz_poly_t t_f, t_g;
    F_mpz_poly_init(t_f);
    F_mpz_poly_init(t_g);
-
+   
    F_mpz_poly_set(t_f, f);
    F_mpz_poly_set(t_g, g);
    F_mpz_poly_truncate(t_f, n);
-
    F_mpz_poly_truncate(t_g, n);
-
-   //now we have t_f, t_g truncated to the bottom n terms for speed reasons.
+   
+   // now we have t_f, t_g truncated to the bottom n terms for speed reasons.
    F_mpz_set(temp, t_g->coeffs);
    F_mpz_invert(tc_inv, temp, P);
-
-   F_mpz_gcd(temp, t_g->coeffs, P);
-
-   if (!F_mpz_is_one(temp))
+   
+   if (!F_mpz_is_zero(t_g->coeffs))
+      F_mpz_gcd(temp, t_g->coeffs, P);
+   
+   if (!F_mpz_is_one(temp) || F_mpz_is_zero(t_g->coeffs))
    {
 #if TRACE
 	  printf("zero tc_inv\n");
@@ -6235,7 +6239,7 @@ int F_mpz_poly_div_trunc_modp(F_mpz_t * res, F_mpz_poly_t f, F_mpz_poly_t g, F_m
       F_mpz_clear(temp);
       return 0;
    }
-
+   
    F_mpz_poly_t tempg;
    F_mpz_poly_init(tempg);
 
@@ -6265,15 +6269,24 @@ int F_mpz_poly_div_trunc_modp(F_mpz_t * res, F_mpz_poly_t f, F_mpz_poly_t g, F_m
 
    F_mpz_clear(tc_inv);
    F_mpz_clear(temp);
+
    return 1;
 }
 
 /*
    Assuming that g divides f mod P find the top n coeffs of f/g mod P 
-   using only the top n coeffs of f and g.
+   using only the top n coeffs of f and g. Note that res is not a 
+   polynomial and that the coefficients are in the reverse order that
+   they would appear in the polynomial quotient f/g mod P. Return 0
+   if the leading coefficient of g is not coprime with P (in which 
+   case the division has failed). Otherwise return 1.
 */
-void F_mpz_poly_div_upper_trunc_modp(F_mpz_t * res, F_mpz_poly_t f, F_mpz_poly_t g, F_mpz_t P, ulong n)
+int F_mpz_poly_div_upper_trunc_modp(F_mpz_t * res, F_mpz_poly_t f, 
+									 F_mpz_poly_t g, F_mpz_t P, ulong n)
 {
+   int inv_exists;
+   long i;
+
    if (g->length > f->length)
    {
       if (n < f->length)
@@ -6281,13 +6294,13 @@ void F_mpz_poly_div_upper_trunc_modp(F_mpz_t * res, F_mpz_poly_t f, F_mpz_poly_t
          for(ulong i = 0; i < n; i++)
             F_mpz_smod(res[i], f->coeffs + i, P);
          
-		 return;
+		 return 1;
       } else
 	  {
          for(ulong i = 0; i < f->length; i++)
             F_mpz_smod(res[i], f->coeffs + i, P);
          
-		 return;
+		 return 1;
       }
    }
 
@@ -6299,39 +6312,22 @@ void F_mpz_poly_div_upper_trunc_modp(F_mpz_t * res, F_mpz_poly_t f, F_mpz_poly_t
    F_mpz_poly_init(t_f);
    F_mpz_poly_init(t_g);
 
-   F_mpz_poly_set(t_f, f);
-   F_mpz_poly_set(t_g, g);
-
    if (n < t_f->length)
-      F_mpz_poly_right_shift(t_f, t_f, t_f->length - n);
-
+      F_mpz_poly_right_shift(t_f, f, t_f->length - n);
+   else
+      F_mpz_poly_set(t_f, f);
+   
    if (n < t_g->length)
-      F_mpz_poly_right_shift(t_g, t_g, t_g->length - n);
+      F_mpz_poly_right_shift(t_g, g, t_g->length - n);
+   else
+	  F_mpz_poly_set(t_g, g);
 
-   // now we have t_f, t_g truncated to the bottom n terms.
+   // now we have t_f, t_g truncated to the top n terms.
    F_mpz_set(temp, t_g->coeffs + t_g->length - 1);
-   F_mpz_invert(lc_inv, temp, P);
+   inv_exists = F_mpz_invert(lc_inv, temp, P);
 
-   if (F_mpz_is_zero(lc_inv))
-   {
-      // This case should be rare, so we do a naive computation
-      F_mpz_poly_div(t_f, f, g);
-      F_mpz_poly_scalar_smod(t_f, t_f, P);      
-
-      if (n < t_f->length)
-         for(ulong i = 0; i < n; i++)
-            F_mpz_set(res[i], t_f->coeffs + t_f->length - 1 - i);
-      else
-         for(ulong i = 0; i < t_f->length; i++)
-            F_mpz_set(res[i], t_f->coeffs + t_f->length -1 - i);
-
-      F_mpz_poly_clear(t_f);
-      F_mpz_poly_clear(t_g);   
-      F_mpz_clear(lc_inv);
-      F_mpz_clear(temp);
-      
-	  return;
-   }
+   if (!inv_exists)
+      return 0;
 
    F_mpz_poly_t tempg;
    F_mpz_poly_init(tempg);
@@ -6345,19 +6341,18 @@ void F_mpz_poly_div_upper_trunc_modp(F_mpz_t * res, F_mpz_poly_t f, F_mpz_poly_t
 #endif
    }
 
-   ulong i;
    long top_length = t_f->length;
    
    for (i = 0; i < n && i < quo_length; i++)
    {
-      if (top_length -i <= t_f->length)
+      if (top_length - i <= t_f->length)
 	  {
          F_mpz_mul2(temp, t_f->coeffs + top_length - i - 1, lc_inv);
          F_mpz_smod(res[i], temp, P);
 
          long fg_diff = t_f->length - t_g->length;
 
-         if (fg_diff >= 0)
+         if (fg_diff >= 0L)
             F_mpz_poly_left_shift(tempg, t_g, fg_diff);
          else
             F_mpz_poly_right_shift(tempg, t_g, -fg_diff);
@@ -6378,7 +6373,7 @@ void F_mpz_poly_div_upper_trunc_modp(F_mpz_t * res, F_mpz_poly_t f, F_mpz_poly_t
    F_mpz_clear(lc_inv);
    F_mpz_clear(temp);
    
-   return;
+   return 1;
 }
 
 /*============================================================================
