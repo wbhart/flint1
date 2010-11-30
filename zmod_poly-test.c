@@ -9531,6 +9531,50 @@ int test_zmod_poly_compose_horner()
    return result;
 }
 
+int test_zmod_poly_is_squarefree()
+{
+   zmod_poly_t pol1, pol2, pol3;
+   int result = 1;
+   ulong bits, length1, length2;
+   
+   // check that polys with a square factor are not reported squarefree
+   for (ulong count1 = 0; (count1 < 2000) && (result == 1); count1++)
+   {
+      bits = randint(FLINT_BITS-2)+2;
+      unsigned long modulus;
+      
+      do {modulus = randprime(bits);} while (modulus < 2);
+      
+	  zmod_poly_init(pol1, modulus);
+      zmod_poly_init(pol2, modulus);
+      zmod_poly_init(pol3, modulus);
+      
+	  length1 = z_randint(100) + 2;
+	  length2 = z_randint(100) + 1;
+      
+	  do { randpoly(pol1, length1, modulus); } while (pol1->length < 2);
+      randpoly(pol2, length2, modulus);
+
+	  zmod_poly_mul(pol1, pol1, pol1);
+	  zmod_poly_mul(pol3, pol1, pol2);
+
+      result = !zmod_poly_is_squarefree(pol3);
+
+	  if (!result) 
+	  {
+	     printf("Error: length1 = %ld, bits = %ld, length2 = %ld\n", length1, bits, length2);
+		 zmod_poly_print(pol3); printf("\n\n");
+	  }
+          
+      zmod_poly_clear(pol1);
+      zmod_poly_clear(pol2);
+      zmod_poly_clear(pol3);
+   }
+
+   return result;
+}
+
+
 void zmod_poly_test_all()
 {
    int success, all_success = 1;
@@ -9613,6 +9657,7 @@ void zmod_poly_test_all()
    RUN_TEST(zmod_poly_isirreducible); 
    RUN_TEST(zmod_poly_factor_berlekamp); 
    RUN_TEST(zmod_poly_factor_cantor_zassenhaus); 
+   RUN_TEST(zmod_poly_is_squarefree); 
    RUN_TEST(zmod_poly_factor_square_free); 
    RUN_TEST(zmod_poly_factor); 
    RUN_TEST(zmod_poly_2x2_mat_mul_classical_strassen); 
