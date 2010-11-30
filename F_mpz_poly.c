@@ -3,7 +3,8 @@
     F_mpz_poly.c: Polynomials over Z (FLINT 2.0 polynomials)
 
     Copyright (C) 2007, David Harvey (Odd/even Karatsuba) 
-    Copyright (C) 2008, William Hart 
+    Copyright (C) 2008, 2009, 2010 William Hart 
+    Copyright (C) 2010, Andy Novocin
 
 	 This file is part of FLINT.
 
@@ -6410,7 +6411,7 @@ int F_mpz_poly_is_squarefree(F_mpz_poly_t F)
    return res;
 }
 
-void F_mpz_poly_squarefree(F_mpz_poly_factor_t fac, F_mpz_t content, F_mpz_poly_t F)
+void F_mpz_poly_factor_squarefree(F_mpz_poly_factor_t fac, F_mpz_t content, F_mpz_poly_t F)
 {
    F_mpz_poly_content(content, F);
 
@@ -7824,7 +7825,7 @@ void __F_mpz_poly_factor(F_mpz_poly_factor_t final_fac, F_mpz_t cong, F_mpz_poly
    // Could make other tests for x-1 or simple things 
    // maybe take advantage of the composition algorithm
    F_mpz_poly_factor_init( sq_fr_fac );
-   F_mpz_poly_squarefree(sq_fr_fac, cong, g);
+   F_mpz_poly_factor_squarefree(sq_fr_fac, cong, g);
 
    // Now we can go through and factor each square free one and add it to final factors.
    for (ulong j = 0; j < sq_fr_fac->num_factors; j++)

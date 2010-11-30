@@ -2,7 +2,8 @@
 
     F_mpz_poly.h: Polynomials over Z (FLINT 2.0 polynomials)
 
-    Copyright (C) 2008, William Hart 
+    Copyright (C) 2008, 2009, 2010 William Hart 
+    Copyright (C) 2010 Andy Novocin.
 
     This file is part of FLINT.
 
@@ -1285,12 +1286,12 @@ int F_mpz_poly_div_upper_trunc_modp( F_mpz_t *res, F_mpz_poly_t f,
 int F_mpz_poly_is_squarefree(F_mpz_poly_t F);
 
 /**
-   \fn      void F_mpz_poly_squarefree(F_mpz_poly_factor_t fac, 
+   \fn      void F_mpz_poly_factor_squarefree(F_mpz_poly_factor_t fac, 
                F_mpz_t content, F_mpz_poly_t F)
    \brief   Given poly F, finds the content of F which is stores at content,
                then finds a squarefree factorization stored at fac with exponents
 */
-void F_mpz_poly_squarefree(F_mpz_poly_factor_t fac, 
+void F_mpz_poly_factor_squarefree(F_mpz_poly_factor_t fac, 
                F_mpz_t content, F_mpz_poly_t F);
 
 /*****************************************************************************
