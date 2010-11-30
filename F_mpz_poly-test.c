@@ -5905,6 +5905,46 @@ int test_F_mpz_poly_div_upper_trunc_modp()
    return result; 
 }
 
+int test_F_mpz_poly_is_squarefree()
+{
+   F_mpz_poly_t F_poly1, F_poly2, F_poly;
+   int result = 1;
+   ulong bits1, bits2, length1, length2;
+   
+   // check that polys with a square factor are not reported squarefree
+   for (ulong count1 = 0; (count1 < 20000*ITER) && (result == 1); count1++)
+   {
+      F_mpz_poly_init(F_poly);
+      F_mpz_poly_init(F_poly1);
+      F_mpz_poly_init(F_poly2);
+      
+	  bits1 = z_randint(200) + 1;
+      length1 = z_randint(100) + 2;
+	  bits2 = z_randint(200) + 1;
+      length2 = z_randint(100) + 1;
+      
+	  do { F_mpz_randpoly(F_poly1, length1, bits1); } while (F_poly1->length < 2);
+      F_mpz_randpoly(F_poly2, length2, bits2);      
+
+	  F_mpz_poly_mul(F_poly1, F_poly1, F_poly1);
+	  F_mpz_poly_mul(F_poly, F_poly1, F_poly2);
+
+      result = !F_mpz_poly_is_squarefree(F_poly);
+
+	  if (!result) 
+	  {
+	     printf("Error: length1 = %ld, bits1 = %ld, length2 = %ld, bits2 = %ld\n", length1, bits1, length2, bits2);
+		 F_mpz_poly_print(F_poly); printf("\n\n");
+	  }
+          
+      F_mpz_poly_clear(F_poly);
+      F_mpz_poly_clear(F_poly1);
+      F_mpz_poly_clear(F_poly2);
+   }
+
+   return result;
+}
+
 void F_mpz_poly_test_all()
 {
    int success, all_success = 1;
@@ -5912,8 +5952,6 @@ void F_mpz_poly_test_all()
 
 #if TESTFILE
 #endif
-   RUN_TEST(F_mpz_poly_div_trunc_modp); 
-   RUN_TEST(F_mpz_poly_div_upper_trunc_modp); 
    RUN_TEST(F_mpz_poly_derivative); 
    RUN_TEST(F_mpz_poly_content); 
    RUN_TEST(F_mpz_poly_eval_horner_d); 
@@ -5958,21 +5996,24 @@ void F_mpz_poly_test_all()
    RUN_TEST(F_mpz_poly_mul); 
    RUN_TEST(F_mpz_poly_mul_trunc_left); 
    RUN_TEST(F_mpz_poly_pack_bytes); 
-	RUN_TEST(F_mpz_poly_divrem_basecase); 
-	RUN_TEST(F_mpz_poly_div_basecase); 
-	RUN_TEST(F_mpz_poly_div_divconquer_recursive); 
-	RUN_TEST(F_mpz_poly_divrem_divconquer); 
-	RUN_TEST(F_mpz_poly_divrem_basecase_low); 
-	RUN_TEST(F_mpz_poly_div_divconquer_recursive_low); 
-	RUN_TEST(F_mpz_poly_div_divconquer); 
-	RUN_TEST(F_mpz_poly_div_hensel); 
-	RUN_TEST(F_mpz_poly_divexact); 
-	RUN_TEST(F_mpz_poly_pseudo_divrem_basecase); 
-	RUN_TEST(F_mpz_poly_pseudo_div_basecase); 
+   RUN_TEST(F_mpz_poly_divrem_basecase); 
+   RUN_TEST(F_mpz_poly_div_basecase); 
+   RUN_TEST(F_mpz_poly_div_divconquer_recursive); 
+   RUN_TEST(F_mpz_poly_divrem_divconquer); 
+   RUN_TEST(F_mpz_poly_divrem_basecase_low); 
+   RUN_TEST(F_mpz_poly_div_divconquer_recursive_low); 
+   RUN_TEST(F_mpz_poly_div_divconquer); 
+   RUN_TEST(F_mpz_poly_div_hensel); 
+   RUN_TEST(F_mpz_poly_divexact); 
+   RUN_TEST(F_mpz_poly_div_trunc_modp); 
+   RUN_TEST(F_mpz_poly_div_upper_trunc_modp); 
+   RUN_TEST(F_mpz_poly_pseudo_divrem_basecase); 
+   RUN_TEST(F_mpz_poly_pseudo_div_basecase); 
    RUN_TEST(F_mpz_poly_hensel_lift_without_only_inverse);
    RUN_TEST(F_mpz_poly_hensel_lift);
    RUN_TEST(F_mpz_poly_start_continue_hensel_lift);
    RUN_TEST(F_mpz_poly_hensel_lift_once);
+   RUN_TEST(F_mpz_poly_is_squarefree); 
    RUN_TEST(F_mpz_poly_factor);
    
    printf(all_success ? "\nAll tests passed\n" :
