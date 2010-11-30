@@ -2891,11 +2891,6 @@ int test_F_mpz_poly_factor()
 		mpz_poly_to_F_mpz_poly(F_poly1, m_poly1);
         mpz_poly_to_F_mpz_poly(F_poly2, m_poly2);
       
-//      printf(" floating not here\n");
-
-//      F_mpz_poly_print(F_poly1); printf(" poly1\n");
-//      F_mpz_poly_print(F_poly2); printf(" poly2\n");
-
 		F_mpz_poly_mul(res, F_poly1, F_poly2);			
 	  } while (res->length == 0);
 
@@ -2905,8 +2900,6 @@ int test_F_mpz_poly_factor()
       F_mpz_poly_factor(F_factors, content, res);
 
 		F_mpz_poly_to_mpz_poly(res2, res);
-
-//      printf(" floating not here\n");
 
       F_mpz_poly_clear(res);
       F_mpz_poly_init(res);
@@ -6025,6 +6018,79 @@ int test_F_mpz_poly_factor_squarefree()
    return result;
 }
 
+int test_F_mpz_poly_factor_zassenhaus()
+{
+   F_mpz_poly_t F_poly1, F_poly;
+   F_mpz_poly_factor_t F_fac, fac_final, fac_final2;
+   F_mpz_t c;
+   int result = 1;
+   long i;
+   ulong bits, length, factors;
+   
+   // check Zassenhaus against vHN approach
+   for (ulong count1 = 0; (count1 < 300*ITER) && (result == 1); count1++)
+   {
+      F_mpz_poly_init(F_poly);
+      F_mpz_poly_init(F_poly1);
+      
+	  F_mpz_poly_factor_init(F_fac);
+      F_mpz_poly_factor_init(fac_final);
+      F_mpz_poly_factor_init(fac_final2);
+
+	  F_mpz_init(c);
+
+	  factors = z_randint(8) + 2;
+
+	  F_mpz_poly_zero(F_poly);
+	  F_mpz_poly_set_coeff_ui(F_poly, 0, 1);
+
+	  for (i = 0; i < factors; i++)
+	  {
+		 do { 
+		    bits = z_randint(80) + 1;
+            length = z_randint(5) + 2;
+	        F_mpz_randpoly(F_poly1, length, bits); 
+		    if (F_poly1->length < 2) continue;
+		    F_mpz_set_ui(F_poly1->coeffs, z_randbits(FLINT_MIN(bits, FLINT_BITS - 2))); /* don't want zero constant coeff */
+	     } while (!F_mpz_poly_is_squarefree(F_poly1) || (F_poly1->length < 2) || F_mpz_is_zero(F_poly1->coeffs));
+         
+		 F_mpz_poly_mul(F_poly, F_poly, F_poly1);
+	  }
+      
+	  F_mpz_poly_mul(F_poly, F_poly, F_poly1);
+	  
+      F_mpz_poly_factor_squarefree(F_fac, c, F_poly);
+      for (i = 0; i < F_fac->num_factors; i++)
+	  {
+		 F_mpz_poly_factor_sq_fr_prim_internal(fac_final2, 
+								          F_fac->exponents[i], F_fac->factors[i], 2);
+		 F_mpz_poly_factor_sq_fr_prim_internal(fac_final, 
+								          F_fac->exponents[i], F_fac->factors[i], ~0L);
+	  }
+
+	  result = (fac_final->num_factors == fac_final2->num_factors);
+
+	  if (!result) 
+	  {
+	     printf("Error: length = %ld, bits = %ld, factors = %ld\n", length, bits, factors);
+		 F_mpz_poly_print(F_poly); printf("\n\n");
+		 F_mpz_poly_factor_print(fac_final); printf("\n\n");
+		 F_mpz_poly_factor_print(fac_final2); printf("\n\n");
+	  }
+          
+      F_mpz_clear(c);
+	  
+	  F_mpz_poly_factor_clear(F_fac);
+	  F_mpz_poly_factor_clear(fac_final);
+	  F_mpz_poly_factor_clear(fac_final2);
+	  
+	  F_mpz_poly_clear(F_poly);
+      F_mpz_poly_clear(F_poly1);
+   }
+
+   return result;
+}
+
 void F_mpz_poly_test_all()
 {
    int success, all_success = 1;
@@ -6095,6 +6161,7 @@ void F_mpz_poly_test_all()
    RUN_TEST(F_mpz_poly_hensel_lift_once);
    RUN_TEST(F_mpz_poly_is_squarefree); 
    RUN_TEST(F_mpz_poly_factor_squarefree);
+   RUN_TEST(F_mpz_poly_factor_zassenhaus);
    RUN_TEST(F_mpz_poly_factor);
    
    printf(all_success ? "\nAll tests passed\n" :

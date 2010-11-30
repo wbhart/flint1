@@ -1373,8 +1373,8 @@ void F_mpz_poly_hensel_lift_once( F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F
 *****************************************************************************/
 
 /**
-   This function is unoptimized.  Takes Hensel lifted factors to power P = p^n, 
-   the original polynomial F (and it's squarefree exponent),
+   This function is unoptimized.  Takes Hensel lifted factors to power 
+   P = p^n, the original polynomial F (and it's squarefree exponent),
    and a leading coeff (which might not be needed) ... and inserts the 
    factorisation into final_fac. The end user will not tend to use this 
    function.
@@ -1403,7 +1403,7 @@ void F_mpz_poly_factor_zassenhaus(F_mpz_poly_factor_t final_fac,
    squarefree factoring with your square free f and it's eventual exponent.
    The factors of f will be inserted into final_fac then raised to the given 
    exponent. The factors are merged into final_fac rather than replacing what 
-   is there already.
+   is there already. It is assumed that f has no pure powers of x as factors. 
 */
 
 void F_mpz_poly_factor_sq_fr_prim(F_mpz_poly_factor_t final_fac,
@@ -1411,7 +1411,8 @@ void F_mpz_poly_factor_sq_fr_prim(F_mpz_poly_factor_t final_fac,
 
 /*
    An internal version of the above which takes a cutoff (for the number of
-   local factors) above which vHN should be used for factoring.
+   local factors) above which vHN should be used for factoring. Requires
+   that f have no power of x factos.
 */
 void F_mpz_poly_factor_sq_fr_prim_internal(F_mpz_poly_factor_t final_fac, 
 								    ulong exp, F_mpz_poly_t f, ulong cutoff);

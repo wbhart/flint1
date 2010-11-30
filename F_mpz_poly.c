@@ -7819,7 +7819,7 @@ void __F_mpz_poly_factor(F_mpz_poly_factor_t final_fac, F_mpz_t cong, F_mpz_poly
    {
       F_mpz_poly_content(cong, G);
       F_mpz_poly_scalar_divexact(g, G, cong);
-      F_mpz_poly_factor_insert( final_fac, g, 1UL);
+      F_mpz_poly_factor_insert(final_fac, g, 1UL);
       F_mpz_poly_clear(g);
       
 	  return;
