@@ -7416,13 +7416,24 @@ void F_mpz_poly_zassenhaus_naive(F_mpz_poly_factor_t final_fac,
    return;
 }
 
+void F_mpz_poly_factor_zassenhaus(F_mpz_poly_factor_t final_fac, 
+								               ulong exp, F_mpz_poly_t f)
+{
+   F_mpz_poly_factor_sq_fr_prim_internal(final_fac, exp, f, ~0L);
+}
+
 /***************************************************************************************
 
    Factoring wrapper after square free factoring has been done
 
 *****************************************************************************************/
 
-void F_mpz_poly_factor_sq_fr_prim(F_mpz_poly_factor_t final_fac, ulong exp, F_mpz_poly_t f)
+/* 
+   Cutoff determines the the number of local factors at which vHN factoring 
+   may be used. 
+*/
+void F_mpz_poly_factor_sq_fr_prim_internal(F_mpz_poly_factor_t final_fac, 
+								          ulong exp, F_mpz_poly_t f, ulong cutoff)
 {
    if (f->length <= 1)
       return;
@@ -7559,7 +7570,7 @@ void F_mpz_poly_factor_sq_fr_prim(F_mpz_poly_factor_t final_fac, ulong exp, F_mp
       U_exp = (long) ceil(log2((double) bit_r));
 
    // TODO: try more primes might deduce irreducibility or find smaller r
-   if (r > 6)
+   if (r > cutoff)
    {
       use_Hoeij_Novocin = 1;
       F_mpz_mat_init_identity(M, r);
@@ -7774,6 +7785,15 @@ void F_mpz_poly_factor_sq_fr_prim(F_mpz_poly_factor_t final_fac, ulong exp, F_mp
       F_mpz_mat_clear(M);
    
    return;
+}
+
+/*
+   Use a "tuned" cutoff of 6 local factors before switching to vHN.
+*/
+void F_mpz_poly_factor_sq_fr_prim(F_mpz_poly_factor_t final_fac, 
+								                  ulong exp, F_mpz_poly_t f)
+{
+   F_mpz_poly_factor_sq_fr_prim_internal(final_fac, exp, f, 6);
 }
 
 void __F_mpz_poly_factor(F_mpz_poly_factor_t final_fac, F_mpz_t cong, F_mpz_poly_t G)
