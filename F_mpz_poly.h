@@ -1386,7 +1386,9 @@ void F_mpz_poly_zassenhaus_naive(F_mpz_poly_factor_t final_fac,
 /*
    Given a squarefree polynomial f and an exponent, this function will
    factor f using the Zassenhaus algorithm and merge the factors into
-   final_fac with the given exponents.
+   final_fac with the given exponents. The Zassenhaus implementation is
+   not highly optimised and will struggle with more than about 10 actual
+   factors, and not too many more local factors.
 */
 void F_mpz_poly_factor_zassenhaus(F_mpz_poly_factor_t final_fac, 
 								               ulong exp, F_mpz_poly_t f);
@@ -1412,7 +1414,8 @@ void F_mpz_poly_factor_sq_fr_prim(F_mpz_poly_factor_t final_fac,
 /*
    An internal version of the above which takes a cutoff (for the number of
    local factors) above which vHN should be used for factoring. Requires
-   that f have no power of x factos.
+   that f have no power of x factors. A cutoff larger than 10 will likely 
+   result in very high times for factoring.
 */
 void F_mpz_poly_factor_sq_fr_prim_internal(F_mpz_poly_factor_t final_fac, 
 								    ulong exp, F_mpz_poly_t f, ulong cutoff);
