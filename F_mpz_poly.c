@@ -4521,6 +4521,76 @@ void F_mpz_poly_mul_trunc_left(F_mpz_poly_t res, const F_mpz_poly_t poly1, const
 		else _F_mpz_poly_mul_trunc_left(res, poly2, poly1, trunc);
 	}		
 }
+
+/*
+   TODO: Implement binomial expansion in quadratic case.
+*/
+void F_mpz_poly_pow_ui(F_mpz_poly_t output, const F_mpz_poly_t poly_in, const ulong exp)
+{
+   if (exp == 0) 
+   {
+      F_mpz_poly_fit_length(output, 1);
+      F_mpz_poly_set_coeff_ui(output, 0, 1);
+      
+	  return;
+   }
+
+   if (poly_in->length == 0)
+   {
+      F_mpz_poly_zero(output);
+      
+	  return;      
+   }
+   
+   F_mpz_poly_t poly;
+   ulong trailing = 0L;
+   while (F_mpz_is_zero(poly_in->coeffs + trailing)) trailing++;
+	
+   _F_mpz_poly_attach_shift(poly, poly_in, trailing);
+	
+   if (poly->length == 1)
+   {
+      ulong j;
+      F_mpz_poly_fit_length(output, 1 + trailing*exp);
+      _F_mpz_poly_set_length(output, 1 + trailing*exp);
+	  F_mpz_pow_ui(output->coeffs + trailing*exp, poly->coeffs, exp);
+      
+	  for (j = 0; j < trailing*exp; j++)
+	     F_mpz_zero(output->coeffs + j);
+      
+	  return;
+   }
+   
+   /* General case */
+
+   F_mpz_poly_t temp, polycopy;
+   F_mpz_poly_init(temp);
+   
+   ulong bits = FLINT_BIT_COUNT(exp);
+   
+   if (poly_in == output)
+   {
+      F_mpz_poly_init(polycopy);
+      F_mpz_poly_set(polycopy, poly);
+   } else _F_mpz_poly_attach(polycopy, poly);
+   
+   F_mpz_poly_set(output, polycopy);
+   
+   while (bits > 1)
+   {
+      F_mpz_poly_mul(output, output, output);
+      if ((1L<<(bits - 2)) & exp)
+      {
+         F_mpz_poly_mul(output, output, polycopy);
+      }
+      bits--;
+   } 
+   
+   if (poly_in == output) F_mpz_poly_clear(polycopy);
+
+   F_mpz_poly_left_shift(output, output, trailing*exp);
+}
+
 /*===============================================================================
 
 	Division with remainder

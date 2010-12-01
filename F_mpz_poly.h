@@ -996,23 +996,7 @@ void F_mpz_poly_mul_trunc_left(F_mpz_poly_t res, const F_mpz_poly_t poly1,
 
    \brief  Set res to poly1^exp.
 */
-static inline
-void F_mpz_poly_pow_ui(F_mpz_poly_t res, const F_mpz_poly_t poly1, const ulong exp)
-{
-   ulong i;
-
-   if (exp == 0)
-   {
-      F_mpz_poly_zero(res);
-	  if (poly1->length)
-		 F_mpz_poly_set_coeff_ui(res, 0, 1);
-	  return;
-   }
-
-   F_mpz_poly_set(res, poly1);
-   for (i = 1; i < exp; i++)
-      F_mpz_poly_mul(res, res, poly1);
-}
+void F_mpz_poly_pow_ui(F_mpz_poly_t res, const F_mpz_poly_t poly1, const ulong exp);
 
 /*===============================================================================
 

@@ -5938,6 +5938,50 @@ int test_F_mpz_poly_is_squarefree()
    return result;
 }
 
+int test_F_mpz_poly_pow_ui()
+{
+   F_mpz_poly_t F_poly1, F_poly2, F_poly;
+   int result = 1;
+   ulong bits, length, exp, i;
+   
+   // check that polys with a square factor are not reported squarefree
+   for (ulong count1 = 0; (count1 < 2000*ITER) && (result == 1); count1++)
+   {
+      F_mpz_poly_init(F_poly);
+      F_mpz_poly_init(F_poly1);
+      F_mpz_poly_init(F_poly2);
+      
+	  exp = z_randint(33);
+	  bits = z_randint(100) + 1;
+      length = z_randint(20) + 2;
+	  
+	  F_mpz_randpoly(F_poly, length, bits); 
+      
+	  F_mpz_poly_pow_ui(F_poly1, F_poly, exp);
+	  
+	  F_mpz_poly_zero(F_poly2);
+	  F_mpz_poly_set_coeff_ui(F_poly2, 0, 1);
+	  
+	  for (i = 0; i < exp; i++)
+	     F_mpz_poly_mul(F_poly2, F_poly2, F_poly);
+
+      result = F_mpz_poly_equal(F_poly1, F_poly2);
+
+	  if (!result) 
+	  {
+	     printf("Error: length = %ld, bits = %ld, exp = %ld\n", length, bits, exp);
+		 F_mpz_poly_print(F_poly1); printf("\n\n");
+		 F_mpz_poly_print(F_poly2); printf("\n\n");
+	  }
+          
+      F_mpz_poly_clear(F_poly);
+      F_mpz_poly_clear(F_poly1);
+      F_mpz_poly_clear(F_poly2);
+   }
+
+   return result;
+}
+
 int test_F_mpz_poly_factor_squarefree()
 {
    F_mpz_poly_t F_poly1, F_poly2, F_poly;
@@ -6141,6 +6185,7 @@ void F_mpz_poly_test_all()
    RUN_TEST(F_mpz_poly_mul_SS); 
    RUN_TEST(F_mpz_poly_mul); 
    RUN_TEST(F_mpz_poly_mul_trunc_left); 
+   RUN_TEST(F_mpz_poly_pow_ui); 
    RUN_TEST(F_mpz_poly_pack_bytes); 
    RUN_TEST(F_mpz_poly_divrem_basecase); 
    RUN_TEST(F_mpz_poly_div_basecase); 
