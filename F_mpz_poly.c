@@ -295,7 +295,7 @@ void F_mpz_poly_set_coeff_mpz(F_mpz_poly_t poly, ulong n, const mpz_t x)
 	_F_mpz_poly_normalise(poly); // we may have set leading coefficient to zero
 }
 
-void F_mpz_poly_set_coeff_F_mpz(F_mpz_poly_t poly, ulong n, const F_mpz_t x)
+void F_mpz_poly_set_coeff(F_mpz_poly_t poly, ulong n, const F_mpz_t x)
 {
    F_mpz_poly_fit_length(poly, n+1);
 
@@ -7858,7 +7858,7 @@ void F_mpz_poly_inflate(F_mpz_poly_t result, const F_mpz_poly_t input, ulong def
    F_mpz_poly_fit_length(result, res_length);
    F_mpz_poly_zero(result);
    for (j = 0; j < input->length; j++)
-      F_mpz_poly_set_coeff_F_mpz(result, j*deflation, input->coeffs + j);  
+      F_mpz_poly_set_coeff(result, j*deflation, input->coeffs + j);  
 
    _F_mpz_poly_set_length(result, res_length);
 }
