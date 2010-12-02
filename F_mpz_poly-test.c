@@ -5287,6 +5287,624 @@ int test_F_mpz_poly_hensel_lift_once()
    return result; 
 }
 
+int test_F_mpz_poly_start_continue_hensel_lift()
+{
+   F_mpz_poly_t F_poly, F_poly2, F_poly3, Q, R;
+   zmod_poly_t fac;
+   zmod_poly_factor_t f_fac;
+   F_mpz_poly_factor_t F_fac;
+   int result = 1;
+   ulong bits, length, nbits, n, exp, i, count1, part_exp;
+   
+   /* We check that lifting local factors of F_poly yields factors */
+   for (count1 = 0; (count1 < 1000) && (result == 1) ; count1++)
+   {
+      bits = z_randint(200) + 1;
+      nbits = z_randint(FLINT_BITS - 6) + 6;
+      
+      F_mpz_poly_init(F_poly);
+      F_mpz_poly_init(F_poly2);
+      F_mpz_poly_init(F_poly3);
+
+	  F_mpz_poly_init(Q);
+      F_mpz_poly_init(R);
+
+      zmod_poly_factor_init(f_fac);
+      F_mpz_poly_factor_init(F_fac);
+      
+	  n = z_randprime(nbits, 0); 
+	  exp = bits/(FLINT_BIT_COUNT(n) - 1) + 1;
+	  part_exp = z_randint(exp);
+      
+	  zmod_poly_init(fac, n);
+      
+	  do
+	  {
+		 length = z_randint(200) + 2;  
+		 do { F_mpz_randpoly(F_poly2, length, bits); } while (F_poly2->length < 2);
+		 F_mpz_set_ui(F_poly2->coeffs, z_randbits(FLINT_MIN(bits, FLINT_BITS - 2))); /* don't want zero constant coeff */
+	     F_mpz_set_ui(F_poly2->coeffs + F_poly2->length - 1, 1); /* make monic */
+		 
+	  	 length = z_randint(200) + 2;  
+         do { F_mpz_randpoly(F_poly3, length, bits); } while (F_poly3->length < 2);
+		 F_mpz_set_ui(F_poly3->coeffs, z_randbits(FLINT_MIN(bits, FLINT_BITS - 2))); /* don't want zero constant coeff */
+	     F_mpz_set_ui(F_poly3->coeffs + F_poly3->length - 1, 1); /* make monic */
+		 
+		 F_mpz_poly_mul(F_poly, F_poly2, F_poly3);
+         
+		 F_mpz_poly_to_zmod_poly(fac, F_poly);
+      } while (!zmod_poly_is_squarefree(fac));
+	  
+	  F_mpz_poly_to_zmod_poly(fac, F_poly2);
+      zmod_poly_factor_add(f_fac, fac, 1);
+      
+	  F_mpz_poly_to_zmod_poly(fac, F_poly3);
+      zmod_poly_factor_add(f_fac, fac, 1);
+      zmod_poly_clear(fac);
+  
+	  ulong r = f_fac->num_factors;
+	  F_mpz_poly_t * v = malloc((2*r - 2)*sizeof(F_mpz_poly_t));
+      F_mpz_poly_t * w = malloc((2*r - 2)*sizeof(F_mpz_poly_t));
+      ulong * link = malloc((2*r - 2)*sizeof(ulong));
+      ulong prev_exp;
+
+	  for(long i = 0; i < 2*r - 2; i++)
+      {
+         F_mpz_poly_init(v[i]);
+         F_mpz_poly_init(w[i]);
+      }
+
+	  if (part_exp < 1)
+	  {
+         _F_mpz_poly_start_hensel_lift(F_fac, link, v, w, F_poly, f_fac, exp);
+	  } else
+	  {
+		 prev_exp = _F_mpz_poly_start_hensel_lift(F_fac, link, v, w, F_poly, f_fac, part_exp);
+         _F_mpz_poly_continue_hensel_lift(F_fac, link, v, w, F_poly, prev_exp, part_exp, exp, n, r);
+	  }
+
+	  for (i = 0; i < F_fac->num_factors; i++)
+	  {
+		  F_mpz_poly_divrem(Q, R, F_poly, F_fac->factors[i]);
+		  result &= (R->length == 0);
+	  }
+
+	  for (long i = 0; i < 2*r - 2; i++)
+      {
+         F_mpz_poly_clear(v[i]);
+         F_mpz_poly_clear(w[i]);
+      }
+
+	  if (!result) 
+	  {
+		 printf("Error: length = %ld, bits = %ld, n = %ld, exp = %ld\n", length, bits, n, exp);
+         F_mpz_poly_print(F_poly); printf("\n\n");
+		 F_mpz_poly_print(F_poly2); printf("\n\n");
+		 F_mpz_poly_print(F_poly3); printf("\n\n");
+		 F_mpz_poly_factor_print(F_fac); printf("\n\n");
+	  } 
+
+	  zmod_poly_factor_clear(f_fac);
+      F_mpz_poly_factor_clear(F_fac);
+  
+      F_mpz_poly_clear(Q);
+      F_mpz_poly_clear(R);
+      
+	  F_mpz_poly_clear(F_poly3);
+      F_mpz_poly_clear(F_poly2);
+      F_mpz_poly_clear(F_poly);
+   }
+       
+   return result; 
+}
+
+int test_F_mpz_poly_hensel_lift()
+{
+   F_mpz_poly_t F_poly, F_poly2, F_poly3, A, B, G, H, 
+	   A_out, B_out, G_out, H_out, Prod_1, Prod_2;
+   zmod_poly_t a, b, d, g, h, prod;
+   F_mpz_t p, p1, big_P, p1_2, big_P_2;
+   int result = 1;
+   ulong bits, length, nbits, n, exp, i, count1, part_exp;
+   
+   /* We check that lifting local factors of F_poly yields factors */
+   for (count1 = 0; (count1 < 1000) && (result == 1) ; count1++)
+   {
+      bits = z_randint(200) + 1;
+      nbits = z_randint(FLINT_BITS - 6) + 6;
+      
+      F_mpz_init(p);
+      F_mpz_init(p1);
+      F_mpz_init(big_P);
+      F_mpz_init(p1_2);
+      F_mpz_init(big_P_2);
+	  
+	  F_mpz_poly_init(F_poly);
+      F_mpz_poly_init(F_poly2);
+      F_mpz_poly_init(F_poly3);
+
+	  F_mpz_poly_init(Prod_1);
+      F_mpz_poly_init(Prod_2);
+     
+	  F_mpz_poly_init(A);
+	  F_mpz_poly_init(B);
+      F_mpz_poly_init(G);
+      F_mpz_poly_init(H);
+	  F_mpz_poly_init(A_out);
+      F_mpz_poly_init(B_out);
+      F_mpz_poly_init(G_out);
+      F_mpz_poly_init(H_out);
+
+      n = z_randprime(nbits, 0); 
+	  exp = bits/(FLINT_BIT_COUNT(n) - 1) + 1;
+	  part_exp = z_randint(exp);
+      
+	  zmod_poly_init(g, n);
+      zmod_poly_init(h, n);
+      zmod_poly_init(a, n);
+      zmod_poly_init(b, n);
+      zmod_poly_init(d, n);
+      zmod_poly_init(prod, n);
+      
+	  do
+	  {
+		 length = z_randint(200) + 2;  
+		 do { F_mpz_randpoly(F_poly2, length, bits); } while (F_poly2->length < 2);
+		 F_mpz_set_ui(F_poly2->coeffs, z_randbits(FLINT_MIN(bits, FLINT_BITS - 2))); /* don't want zero constant coeff */
+	     F_mpz_set_ui(F_poly2->coeffs + F_poly2->length - 1, 1); /* make monic */
+		 
+	  	 length = z_randint(200) + 2;  
+         do { F_mpz_randpoly(F_poly3, length, bits); } while (F_poly3->length < 2);
+		 F_mpz_set_ui(F_poly3->coeffs, z_randbits(FLINT_MIN(bits, FLINT_BITS - 2))); /* don't want zero constant coeff */
+	     F_mpz_set_ui(F_poly3->coeffs + F_poly3->length - 1, 1); /* make monic */
+		 
+		 F_mpz_poly_mul(F_poly, F_poly2, F_poly3);
+         
+		 F_mpz_poly_to_zmod_poly(prod, F_poly);
+      } while (!zmod_poly_is_squarefree(prod));
+	  
+	  F_mpz_poly_to_zmod_poly(g, F_poly2);
+	  F_mpz_poly_to_zmod_poly(h, F_poly3);
+      
+	  zmod_poly_xgcd(d, a, b, g, h);
+      zmod_poly_clear(prod);
+      zmod_poly_clear(d);
+
+	  zmod_poly_to_F_mpz_poly(A, a);
+      zmod_poly_to_F_mpz_poly(B, b);
+      zmod_poly_to_F_mpz_poly(G, g);
+      zmod_poly_to_F_mpz_poly(H, h);
+	 
+	  F_mpz_set_ui(p, n);
+	  F_mpz_set_ui(p1, n);
+	  F_mpz_set_ui(big_P, n);
+	  F_mpz_set_ui(p1_2, n);
+	  F_mpz_set_ui(big_P_2, n);
+	  
+	  part_exp = 1;
+
+	  while (part_exp < exp)
+	  {
+         F_mpz_set(p, big_P);	
+		 F_mpz_set_ui(p1, n);
+	     F_mpz_set_ui(big_P, n);
+	  	
+	     if (exp - part_exp <= part_exp)
+		 {
+			F_mpz_pow_ui(p1, p1, exp - part_exp);
+	        F_mpz_pow_ui(big_P, big_P, exp);
+			part_exp = exp;
+		 } else
+		 {
+			F_mpz_set(p1, p);
+	        F_mpz_pow_ui(big_P, big_P, 2*part_exp);
+			part_exp = 2*part_exp;
+		 }
+
+		 F_mpz_poly_hensel_lift(G_out, H_out, A_out, B_out, F_poly,
+			 G, H, A, B, p, p1, big_P);
+
+		 F_mpz_poly_set(G, G_out);
+		 F_mpz_poly_set(H, H_out);
+		 F_mpz_poly_set(A, A_out);
+		 F_mpz_poly_set(B, B_out);
+	  }
+
+	  F_mpz_poly_mul(Prod_1, A, G);
+	  F_mpz_poly_mul(Prod_2, B, H);
+      F_mpz_poly_add(Prod_1, Prod_1, Prod_2);
+
+	  F_mpz_poly_scalar_smod(Prod_1, Prod_1, big_P);
+      
+	  result = (Prod_1->length == 1 && F_mpz_is_one(Prod_1->coeffs));
+
+	  if (!result) 
+	  {
+		 printf("Error: length = %ld, bits = %ld, n = %ld, exp = %ld\n", length, bits, n, exp);
+         F_mpz_poly_print(F_poly); printf("\n\n");
+		 F_mpz_poly_print(F_poly2); printf("\n\n");
+		 F_mpz_poly_print(F_poly3); printf("\n\n");
+		 F_mpz_poly_print(Prod_1); printf("\n\n");
+	  } 
+
+	  zmod_poly_clear(g);
+      zmod_poly_clear(h);
+      zmod_poly_clear(a);
+      zmod_poly_clear(b);
+      
+      F_mpz_poly_clear(Prod_1);
+      F_mpz_poly_clear(Prod_2);
+      
+	  F_mpz_poly_clear(A);
+      F_mpz_poly_clear(B);
+      F_mpz_poly_clear(G);
+      F_mpz_poly_clear(H);
+      F_mpz_poly_clear(A_out);
+      F_mpz_poly_clear(B_out);
+      F_mpz_poly_clear(G_out);
+      F_mpz_poly_clear(H_out);
+      
+      F_mpz_clear(p);
+      F_mpz_clear(p1);
+      F_mpz_clear(big_P);
+      F_mpz_clear(p1_2);
+      F_mpz_clear(big_P_2);
+
+	  F_mpz_poly_clear(F_poly3);
+      F_mpz_poly_clear(F_poly2);
+      F_mpz_poly_clear(F_poly);
+   }
+       
+   return result; 
+}
+
+int test_F_mpz_poly_hensel_lift_without_only_inverse()
+{
+   F_mpz_poly_t F_poly, F_poly2, F_poly3, A, B, G, H, 
+	   A_out, B_out, G_out, H_out, Prod_1, Prod_2;
+   zmod_poly_t a, b, d, g, h, prod;
+   F_mpz_t p, p1, big_P, p1_2, big_P_2;
+   int result = 1;
+   ulong bits, length, nbits, n, exp, i, count1, part_exp;
+   
+   /* We check that lifting local factors of F_poly yields factors */
+   for (count1 = 0; (count1 < 1000) && (result == 1) ; count1++)
+   {
+      bits = z_randint(200) + 1;
+      nbits = z_randint(FLINT_BITS - 6) + 6;
+      
+      F_mpz_init(p);
+      F_mpz_init(p1);
+      F_mpz_init(big_P);
+      F_mpz_init(p1_2);
+      F_mpz_init(big_P_2);
+	  
+	  F_mpz_poly_init(F_poly);
+      F_mpz_poly_init(F_poly2);
+      F_mpz_poly_init(F_poly3);
+
+	  F_mpz_poly_init(Prod_1);
+      F_mpz_poly_init(Prod_2);
+     
+	  F_mpz_poly_init(A);
+	  F_mpz_poly_init(B);
+      F_mpz_poly_init(G);
+      F_mpz_poly_init(H);
+	  F_mpz_poly_init(A_out);
+      F_mpz_poly_init(B_out);
+      F_mpz_poly_init(G_out);
+      F_mpz_poly_init(H_out);
+
+      n = z_randprime(nbits, 0); 
+	  exp = bits/(FLINT_BIT_COUNT(n) - 1) + 1;
+	  part_exp = z_randint(exp);
+      
+	  zmod_poly_init(g, n);
+      zmod_poly_init(h, n);
+      zmod_poly_init(a, n);
+      zmod_poly_init(b, n);
+      zmod_poly_init(d, n);
+      zmod_poly_init(prod, n);
+      
+	  do
+	  {
+		 length = z_randint(200) + 2;  
+		 do { F_mpz_randpoly(F_poly2, length, bits); } while (F_poly2->length < 2);
+		 F_mpz_set_ui(F_poly2->coeffs, z_randbits(FLINT_MIN(bits, FLINT_BITS - 2))); /* don't want zero constant coeff */
+	     F_mpz_set_ui(F_poly2->coeffs + F_poly2->length - 1, 1); /* make monic */
+		 
+	  	 length = z_randint(200) + 2;  
+         do { F_mpz_randpoly(F_poly3, length, bits); } while (F_poly3->length < 2);
+		 F_mpz_set_ui(F_poly3->coeffs, z_randbits(FLINT_MIN(bits, FLINT_BITS - 2))); /* don't want zero constant coeff */
+	     F_mpz_set_ui(F_poly3->coeffs + F_poly3->length - 1, 1); /* make monic */
+		 
+		 F_mpz_poly_mul(F_poly, F_poly2, F_poly3);
+         
+		 F_mpz_poly_to_zmod_poly(prod, F_poly);
+      } while (!zmod_poly_is_squarefree(prod));
+	  
+	  F_mpz_poly_to_zmod_poly(g, F_poly2);
+	  F_mpz_poly_to_zmod_poly(h, F_poly3);
+      
+	  zmod_poly_xgcd(d, a, b, g, h);
+      zmod_poly_clear(prod);
+      zmod_poly_clear(d);
+
+	  zmod_poly_to_F_mpz_poly(A, a);
+      zmod_poly_to_F_mpz_poly(B, b);
+      zmod_poly_to_F_mpz_poly(G, g);
+      zmod_poly_to_F_mpz_poly(H, h);
+	 
+	  F_mpz_set_ui(p, n);
+	  F_mpz_set_ui(p1, n);
+	  F_mpz_set_ui(big_P, n);
+	  F_mpz_set_ui(p1_2, n);
+	  F_mpz_set_ui(big_P_2, n);
+	  
+	  part_exp = 1;
+
+	  while (part_exp < exp)
+	  {
+         F_mpz_set(p, big_P);	
+		 F_mpz_set_ui(p1, n);
+	     F_mpz_set_ui(big_P, n);
+	  	
+	     if (exp - part_exp <= part_exp)
+		 {
+			F_mpz_pow_ui(p1, p1, exp - part_exp);
+	        F_mpz_pow_ui(big_P, big_P, exp);
+			part_exp = exp;
+		 } else
+		 {
+			F_mpz_set(p1, p);
+	        F_mpz_pow_ui(big_P, big_P, 2*part_exp);
+			part_exp = 2*part_exp;
+		 }
+
+		 F_mpz_poly_hensel_lift_without_inverse(G_out, H_out, F_poly,
+			 G, H, A, B, p, p1, big_P);
+		 F_mpz_poly_hensel_lift_only_inverse(A_out, B_out, F_poly,
+			 G_out, H_out, A, B, p, p1, big_P);
+
+		 F_mpz_poly_set(G, G_out);
+		 F_mpz_poly_set(H, H_out);
+		 F_mpz_poly_set(A, A_out);
+		 F_mpz_poly_set(B, B_out);
+	  }
+
+	  F_mpz_poly_mul(Prod_1, A, G);
+	  F_mpz_poly_mul(Prod_2, B, H);
+      F_mpz_poly_add(Prod_1, Prod_1, Prod_2);
+
+	  F_mpz_poly_scalar_smod(Prod_1, Prod_1, big_P);
+      
+	  result = (Prod_1->length == 1 && F_mpz_is_one(Prod_1->coeffs));
+
+	  if (!result) 
+	  {
+		 printf("Error: length = %ld, bits = %ld, n = %ld, exp = %ld\n", length, bits, n, exp);
+         F_mpz_poly_print(F_poly); printf("\n\n");
+		 F_mpz_poly_print(F_poly2); printf("\n\n");
+		 F_mpz_poly_print(F_poly3); printf("\n\n");
+		 F_mpz_poly_print(Prod_1); printf("\n\n");
+	  } 
+
+	  zmod_poly_clear(g);
+      zmod_poly_clear(h);
+      zmod_poly_clear(a);
+      zmod_poly_clear(b);
+      
+      F_mpz_poly_clear(Prod_1);
+      F_mpz_poly_clear(Prod_2);
+      
+	  F_mpz_poly_clear(A);
+      F_mpz_poly_clear(B);
+      F_mpz_poly_clear(G);
+      F_mpz_poly_clear(H);
+      F_mpz_poly_clear(A_out);
+      F_mpz_poly_clear(B_out);
+      F_mpz_poly_clear(G_out);
+      F_mpz_poly_clear(H_out);
+      
+      F_mpz_clear(p);
+      F_mpz_clear(p1);
+      F_mpz_clear(big_P);
+      F_mpz_clear(p1_2);
+      F_mpz_clear(big_P_2);
+
+	  F_mpz_poly_clear(F_poly3);
+      F_mpz_poly_clear(F_poly2);
+      F_mpz_poly_clear(F_poly);
+   }
+       
+   return result; 
+}
+
+int test_F_mpz_poly_div_trunc_modp()
+{
+   F_mpz_poly_t F_poly, F_poly2, F_poly3;
+   F_mpz_t * D;
+   F_mpz_t P;
+   int result = 1;
+   ulong bits, length, nbits, n, exp, i, count1, part_exp, coeffs;
+   
+   /* We check that lifting local factors of F_poly yields factors */
+   for (count1 = 0; (count1 < 1000) && (result == 1) ; count1++)
+   {
+      bits = z_randint(200) + 1;
+      nbits = z_randint(FLINT_BITS - 6) + 6;
+      
+	  F_mpz_init(P);
+      
+	  F_mpz_poly_init(F_poly);
+      F_mpz_poly_init(F_poly2);
+      F_mpz_poly_init(F_poly3);
+
+	  n = z_randprime(nbits, 0); 
+	  exp = bits/(FLINT_BIT_COUNT(n) - 1) + 1;
+	  part_exp = z_randint(exp) + 1;
+      
+	  length = z_randint(200) + 1;  
+	  do { F_mpz_randpoly(F_poly2, length, bits); } while (F_poly2->length == 0);
+	  if (F_mpz_is_zero(F_poly2->coeffs))
+	     F_mpz_set_ui(F_poly2->coeffs, z_randbits(bits));
+		 
+	  length = z_randint(200) + 1;  
+      do { F_mpz_randpoly(F_poly3, length, bits); } while (F_poly3->length == 0);
+
+      F_mpz_poly_mul(F_poly, F_poly2, F_poly3);
+         
+	  coeffs = z_randint(F_poly3->length + 1);
+
+	  F_mpz_set_ui(P, n);
+	  F_mpz_pow_ui(P, P, part_exp);
+	  
+	  F_mpz_poly_scalar_smod(F_poly, F_poly, P);
+	  F_mpz_poly_scalar_smod(F_poly2, F_poly2, P);
+	  F_mpz_poly_scalar_smod(F_poly3, F_poly3, P);
+
+	  D = malloc(coeffs*sizeof(F_mpz_t));
+
+	  for (i = 0; i < coeffs; i++)
+	     F_mpz_init(D[i]);
+
+	  if (F_poly2->length)
+	  {
+		 int ret = F_mpz_poly_div_trunc_modp(D, F_poly, F_poly2, P, coeffs);
+         
+		 if (ret)
+		 {
+			F_mpz_poly_truncate(F_poly3, coeffs);
+         
+	        for (i = 0; i < FLINT_MIN(F_poly3->length, coeffs); i++)
+			   if (!F_mpz_equal(D[i], F_poly3->coeffs + i))
+			      result = 0;
+		 }
+	  }
+
+	  if (!result) 
+	  {
+		 printf("Error: length = %ld, bits = %ld, n = %ld, exp = %ld, coeffs = %ld\n", length, bits, n, exp, coeffs);
+         F_mpz_poly_print(F_poly); printf("\n\n");
+		 F_mpz_poly_print(F_poly2); printf("\n\n");
+		 F_mpz_poly_print(F_poly3); printf("\n\n");
+		 printf("%ld  ", coeffs);
+		 for (i = 0; i < coeffs; i++)
+		 {
+			F_mpz_print(D[i]);
+		    printf(" ");
+	     }
+		 printf("\n\n");
+	  } 
+
+	  F_mpz_clear(P);
+	  
+	  for (i = 0; i < coeffs; i++)
+	     F_mpz_clear(D[i]);
+      
+	  free(D);
+
+      F_mpz_poly_clear(F_poly3);
+      F_mpz_poly_clear(F_poly2);
+      F_mpz_poly_clear(F_poly);
+   }
+       
+   return result; 
+}
+
+int test_F_mpz_poly_div_upper_trunc_modp()
+{
+   F_mpz_poly_t F_poly, F_poly2, F_poly3;
+   F_mpz_t * D;
+   F_mpz_t P;
+   int result = 1;
+   ulong bits, length, nbits, n, exp, i, count1, part_exp, coeffs;
+   
+   /* We check that lifting local factors of F_poly yields factors */
+   for (count1 = 0; (count1 < 1000) && (result == 1) ; count1++)
+   {
+      bits = z_randint(200) + 1;
+      nbits = z_randint(FLINT_BITS - 6) + 6;
+      
+	  F_mpz_init(P);
+      
+	  F_mpz_poly_init(F_poly);
+      F_mpz_poly_init(F_poly2);
+      F_mpz_poly_init(F_poly3);
+
+	  n = z_randprime(nbits, 0); 
+	  exp = bits/(FLINT_BIT_COUNT(n) - 1) + 1;
+	  part_exp = z_randint(exp) + 1;
+      
+	  length = z_randint(200) + 1;  
+	  do { F_mpz_randpoly(F_poly2, length, bits); } while (F_poly2->length == 0);
+	  if (F_mpz_is_zero(F_poly2->coeffs))
+	     F_mpz_set_ui(F_poly2->coeffs, z_randbits(bits));
+		 
+	  length = z_randint(200) + 1;  
+      do { F_mpz_randpoly(F_poly3, length, bits); } while (F_poly3->length == 0);
+
+      F_mpz_poly_mul(F_poly, F_poly2, F_poly3);
+         
+	  coeffs = z_randint(F_poly3->length + 1);
+
+	  F_mpz_set_ui(P, n);
+	  F_mpz_pow_ui(P, P, part_exp);
+	  
+	  F_mpz_poly_scalar_smod(F_poly, F_poly, P);
+	  F_mpz_poly_scalar_smod(F_poly2, F_poly2, P);
+	  F_mpz_poly_scalar_smod(F_poly3, F_poly3, P);
+
+	  D = malloc(coeffs*sizeof(F_mpz_t));
+
+	  for (i = 0; i < coeffs; i++)
+	     F_mpz_init(D[i]);
+
+	  if (F_poly2->length)
+	  {
+		 int ret = F_mpz_poly_div_upper_trunc_modp(D, F_poly, F_poly2, P, coeffs);
+         
+		 if (ret)
+		 {
+			if (F_poly3->length - coeffs != 0)
+			   F_mpz_poly_right_shift(F_poly3, F_poly3, F_poly3->length - coeffs);
+         
+	        for (i = 0; i < FLINT_MIN(F_poly3->length, coeffs); i++)
+			   if (!F_mpz_equal(D[coeffs - i - 1], F_poly3->coeffs + i))
+			      result = 0;
+		 }
+	  }
+     
+	  if (!result) 
+	  {
+		 printf("Error: length = %ld, bits = %ld, n = %ld, exp = %ld, coeffs = %ld\n", length, bits, n, exp, coeffs);
+         F_mpz_poly_print(F_poly); printf("\n\n");
+		 F_mpz_poly_print(F_poly2); printf("\n\n");
+		 F_mpz_poly_print(F_poly3); printf("\n\n");
+		 printf("%ld  ", coeffs);
+		 for (i = 0; i < coeffs; i++)
+		 {
+			F_mpz_print(D[i]);
+		    printf(" ");
+	     }
+		 printf("\n\n");
+	  } 
+
+	  F_mpz_clear(P);
+	  
+	  for (i = 0; i < coeffs; i++)
+	     F_mpz_clear(D[i]);
+      
+	  free(D);
+
+      F_mpz_poly_clear(F_poly3);
+      F_mpz_poly_clear(F_poly2);
+      F_mpz_poly_clear(F_poly);
+   }
+       
+   return result; 
+}
+
 void F_mpz_poly_test_all()
 {
    int success, all_success = 1;
@@ -5294,7 +5912,8 @@ void F_mpz_poly_test_all()
 
 #if TESTFILE
 #endif
-   RUN_TEST(F_mpz_poly_hensel_lift_once);
+   RUN_TEST(F_mpz_poly_div_trunc_modp); 
+   RUN_TEST(F_mpz_poly_div_upper_trunc_modp); 
    RUN_TEST(F_mpz_poly_derivative); 
    RUN_TEST(F_mpz_poly_content); 
    RUN_TEST(F_mpz_poly_eval_horner_d); 
@@ -5350,6 +5969,10 @@ void F_mpz_poly_test_all()
 	RUN_TEST(F_mpz_poly_divexact); 
 	RUN_TEST(F_mpz_poly_pseudo_divrem_basecase); 
 	RUN_TEST(F_mpz_poly_pseudo_div_basecase); 
+   RUN_TEST(F_mpz_poly_hensel_lift_without_only_inverse);
+   RUN_TEST(F_mpz_poly_hensel_lift);
+   RUN_TEST(F_mpz_poly_start_continue_hensel_lift);
+   RUN_TEST(F_mpz_poly_hensel_lift_once);
    RUN_TEST(F_mpz_poly_factor);
    
    printf(all_success ? "\nAll tests passed\n" :

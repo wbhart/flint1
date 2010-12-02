@@ -6192,37 +6192,41 @@ void F_mpz_poly_CLD_bound(F_mpz_t res, F_mpz_poly_t f, ulong n)
 
 /*============================================================================
 
-   Naive '_modp' ( := Large moduli ) F_mpz_poly functions
+   Naive large moduli _modp F_mpz_poly functions
 
 ============================================================================*/
 
 /*
-      assuming that g divides f mod P find the bottom 
-	  n coeffs of f/g mod P.
+   Assuming that g divides f mod P find the bottom n coeffs of 
+   f/g mod P. Note that the least significant coefficient of g
+   must be invertible mod P otherwise the function returns 0.
+   If the function is successful, it returns 1. Note res is an
+   array of F_mpz_t's not a polynomial.
 */
-int F_mpz_poly_div_trunc_modp(F_mpz_t * res, F_mpz_poly_t f, F_mpz_poly_t g, F_mpz_t P, ulong n)
+int F_mpz_poly_div_trunc_modp(F_mpz_t * res, F_mpz_poly_t f, 
+							  F_mpz_poly_t g, F_mpz_t P, ulong n)
 {
    F_mpz_t temp, tc_inv;
    F_mpz_init(temp);
    F_mpz_init(tc_inv);
-
+   
    F_mpz_poly_t t_f, t_g;
    F_mpz_poly_init(t_f);
    F_mpz_poly_init(t_g);
-
+   
    F_mpz_poly_set(t_f, f);
    F_mpz_poly_set(t_g, g);
    F_mpz_poly_truncate(t_f, n);
-
    F_mpz_poly_truncate(t_g, n);
-
-   //now we have t_f, t_g truncated to the bottom n terms for speed reasons.
+   
+   // now we have t_f, t_g truncated to the bottom n terms for speed reasons.
    F_mpz_set(temp, t_g->coeffs);
    F_mpz_invert(tc_inv, temp, P);
-
-   F_mpz_gcd(temp, t_g->coeffs, P);
-
-   if (!F_mpz_is_one(temp))
+   
+   if (!F_mpz_is_zero(t_g->coeffs))
+      F_mpz_gcd(temp, t_g->coeffs, P);
+   
+   if (!F_mpz_is_one(temp) || F_mpz_is_zero(t_g->coeffs))
    {
 #if TRACE
 	  printf("zero tc_inv\n");
@@ -6235,7 +6239,7 @@ int F_mpz_poly_div_trunc_modp(F_mpz_t * res, F_mpz_poly_t f, F_mpz_poly_t g, F_m
       F_mpz_clear(temp);
       return 0;
    }
-
+   
    F_mpz_poly_t tempg;
    F_mpz_poly_init(tempg);
 
@@ -6265,15 +6269,24 @@ int F_mpz_poly_div_trunc_modp(F_mpz_t * res, F_mpz_poly_t f, F_mpz_poly_t g, F_m
 
    F_mpz_clear(tc_inv);
    F_mpz_clear(temp);
+
    return 1;
 }
 
 /*
    Assuming that g divides f mod P find the top n coeffs of f/g mod P 
-   using only the top n coeffs of f and g.
+   using only the top n coeffs of f and g. Note that res is not a 
+   polynomial and that the coefficients are in the reverse order that
+   they would appear in the polynomial quotient f/g mod P. Return 0
+   if the leading coefficient of g is not coprime with P (in which 
+   case the division has failed). Otherwise return 1.
 */
-void F_mpz_poly_div_upper_trunc_modp(F_mpz_t * res, F_mpz_poly_t f, F_mpz_poly_t g, F_mpz_t P, ulong n)
+int F_mpz_poly_div_upper_trunc_modp(F_mpz_t * res, F_mpz_poly_t f, 
+									 F_mpz_poly_t g, F_mpz_t P, ulong n)
 {
+   int inv_exists;
+   long i;
+
    if (g->length > f->length)
    {
       if (n < f->length)
@@ -6281,13 +6294,13 @@ void F_mpz_poly_div_upper_trunc_modp(F_mpz_t * res, F_mpz_poly_t f, F_mpz_poly_t
          for(ulong i = 0; i < n; i++)
             F_mpz_smod(res[i], f->coeffs + i, P);
          
-		 return;
+		 return 1;
       } else
 	  {
          for(ulong i = 0; i < f->length; i++)
             F_mpz_smod(res[i], f->coeffs + i, P);
          
-		 return;
+		 return 1;
       }
    }
 
@@ -6299,39 +6312,22 @@ void F_mpz_poly_div_upper_trunc_modp(F_mpz_t * res, F_mpz_poly_t f, F_mpz_poly_t
    F_mpz_poly_init(t_f);
    F_mpz_poly_init(t_g);
 
-   F_mpz_poly_set(t_f, f);
-   F_mpz_poly_set(t_g, g);
-
    if (n < t_f->length)
-      F_mpz_poly_right_shift(t_f, t_f, t_f->length - n);
-
+      F_mpz_poly_right_shift(t_f, f, t_f->length - n);
+   else
+      F_mpz_poly_set(t_f, f);
+   
    if (n < t_g->length)
-      F_mpz_poly_right_shift(t_g, t_g, t_g->length - n);
+      F_mpz_poly_right_shift(t_g, g, t_g->length - n);
+   else
+	  F_mpz_poly_set(t_g, g);
 
-   // now we have t_f, t_g truncated to the bottom n terms.
+   // now we have t_f, t_g truncated to the top n terms.
    F_mpz_set(temp, t_g->coeffs + t_g->length - 1);
-   F_mpz_invert(lc_inv, temp, P);
+   inv_exists = F_mpz_invert(lc_inv, temp, P);
 
-   if (F_mpz_is_zero(lc_inv))
-   {
-      // This case should be rare, so we do a naive computation
-      F_mpz_poly_div(t_f, f, g);
-      F_mpz_poly_scalar_smod(t_f, t_f, P);      
-
-      if (n < t_f->length)
-         for(ulong i = 0; i < n; i++)
-            F_mpz_set(res[i], t_f->coeffs + t_f->length - 1 - i);
-      else
-         for(ulong i = 0; i < t_f->length; i++)
-            F_mpz_set(res[i], t_f->coeffs + t_f->length -1 - i);
-
-      F_mpz_poly_clear(t_f);
-      F_mpz_poly_clear(t_g);   
-      F_mpz_clear(lc_inv);
-      F_mpz_clear(temp);
-      
-	  return;
-   }
+   if (!inv_exists)
+      return 0;
 
    F_mpz_poly_t tempg;
    F_mpz_poly_init(tempg);
@@ -6345,19 +6341,18 @@ void F_mpz_poly_div_upper_trunc_modp(F_mpz_t * res, F_mpz_poly_t f, F_mpz_poly_t
 #endif
    }
 
-   ulong i;
    long top_length = t_f->length;
    
    for (i = 0; i < n && i < quo_length; i++)
    {
-      if (top_length -i <= t_f->length)
+      if (top_length - i <= t_f->length)
 	  {
          F_mpz_mul2(temp, t_f->coeffs + top_length - i - 1, lc_inv);
          F_mpz_smod(res[i], temp, P);
 
          long fg_diff = t_f->length - t_g->length;
 
-         if (fg_diff >= 0)
+         if (fg_diff >= 0L)
             F_mpz_poly_left_shift(tempg, t_g, fg_diff);
          else
             F_mpz_poly_right_shift(tempg, t_g, -fg_diff);
@@ -6378,7 +6373,7 @@ void F_mpz_poly_div_upper_trunc_modp(F_mpz_t * res, F_mpz_poly_t f, F_mpz_poly_t
    F_mpz_clear(lc_inv);
    F_mpz_clear(temp);
    
-   return;
+   return 1;
 }
 
 /*============================================================================
@@ -6539,7 +6534,8 @@ void F_mpz_poly_squarefree(F_mpz_poly_factor_t fac, F_mpz_t content, F_mpz_poly_
    the entire tree and the tree of XGCD inverses.
 */
 
-void F_mpz_poly_build_hensel_tree(long * link, F_mpz_poly_t * v, F_mpz_poly_t * w, zmod_poly_factor_t fac)
+void F_mpz_poly_build_hensel_tree(long * link, F_mpz_poly_t * v, 
+								  F_mpz_poly_t * w, zmod_poly_factor_t fac)
 {
    long r;
    unsigned long p;
@@ -6615,7 +6611,7 @@ void F_mpz_poly_build_hensel_tree(long * link, F_mpz_poly_t * v, F_mpz_poly_t * 
    
    for (j = 0; j < 2*r - 2; j += 2)
    {
-      //Make a check for d!=1
+       // Make a check for d!=1
 	   zmod_poly_xgcd(d, W[j], W[j+1], V[j], V[j+1]);
    }
 
@@ -6641,12 +6637,24 @@ void F_mpz_poly_build_hensel_tree(long * link, F_mpz_poly_t * v, F_mpz_poly_t * 
    satisfy a*g + b*h = 1 mod p. 
    Upon return we have Aout*Gout + Bout*Hout = 1 mod big_P and f = Gout*Hout 
    mod big_P, where g = Gout mod p, etc.
+   We require p1 <= p.
 */
 void F_mpz_poly_hensel_lift(F_mpz_poly_t Gout, F_mpz_poly_t Hout, F_mpz_poly_t Aout, 
-	           F_mpz_poly_t Bout, F_mpz_poly_t f, F_mpz_poly_t g, F_mpz_poly_t h, F_mpz_poly_t a, 
+   F_mpz_poly_t Bout, F_mpz_poly_t f, F_mpz_poly_t g, F_mpz_poly_t h, F_mpz_poly_t a, 
 			                F_mpz_poly_t b, F_mpz_t p, F_mpz_t p1, F_mpz_t big_P)
 {
    F_mpz_poly_t c, g1, h1, G, H, A, B;
+
+   if (F_mpz_is_one(p1))
+   {
+      F_mpz_poly_set(Gout, g);
+      F_mpz_poly_set(Hout, h);
+      F_mpz_poly_set(Aout, a);
+      F_mpz_poly_set(Bout, b);
+
+	  return;
+   }
+
    F_mpz_poly_init(c);
    F_mpz_poly_init(g1);
    F_mpz_poly_init(h1);
@@ -6782,13 +6790,22 @@ void F_mpz_poly_hensel_lift(F_mpz_poly_t Gout, F_mpz_poly_t Hout, F_mpz_poly_t A
    Upon return we have Aout*Gout + Bout*Hout = 1 mod big_P and f = Gout*Hout 
    mod big_P, where g = Gout mod p, etc., for some Aout and Bout which are 
    *not* computed. (This is used as a final step where the inverses are not 
-   needed.)
+   needed.) We require p1 <= p.
 */
 void F_mpz_poly_hensel_lift_without_inverse(F_mpz_poly_t Gout, F_mpz_poly_t Hout, 
 	F_mpz_poly_t f, F_mpz_poly_t g, F_mpz_poly_t h, F_mpz_poly_t a, F_mpz_poly_t b, 
 	                 F_mpz_t p, F_mpz_t p1, F_mpz_t big_P)
 {
    F_mpz_poly_t c, g1, h1, G, H;
+   
+   if (F_mpz_is_one(p1))
+   {
+      F_mpz_poly_set(Gout, g);
+      F_mpz_poly_set(Hout, h);
+
+	  return;
+   }
+
    F_mpz_poly_init(c);
    F_mpz_poly_init(g1);
    F_mpz_poly_init(h1);
@@ -6853,20 +6870,30 @@ void F_mpz_poly_hensel_lift_without_inverse(F_mpz_poly_t Gout, F_mpz_poly_t Hout
    As per the main Hensel lifting routine above. Performs a Hensel step
    from polynomials mod p to polynomials mod big_P = p*p1. One notionally 
    starts with polynomials f, g, h such that f = gh mod p. The polynomials 
-   a, b satisfy a*g + b*h = 1 mod p. 
-   Upon return we have Aout*Gout + Bout*Hout = 1 mod big_P and f = Gout*Hout 
-   mod big_P, where g = Gout mod p, etc., for some Aout and Bout which are 
-   computed. The polys g, h are not supplied and Gout and Hout are not 
-   computed.
+   a, b satisfy a*g + b*h = 1 mod p. We are looking for Aout, Bout, G, H 
+   such that Aout*G + Bout*H = 1 mod big_P and f = G*H. We assume that G,
+   H have already been computed (e.g. by a call to F_mpz_poly_hensel_lift
+   _without_inverse) and we return Aout and Bout. Here g = Gout mod p, et.
+   The polys g, h are not supplied.
    This function is used to restart Hensel lifting without any loss after
    not computing inverses in the previous function. This function allows
    us to compute those inverses without any loss and continue on.
+   We require p1 <= p.
 */
 void F_mpz_poly_hensel_lift_only_inverse(F_mpz_poly_t Aout, F_mpz_poly_t Bout, 
 	F_mpz_poly_t f, F_mpz_poly_t G, F_mpz_poly_t H, F_mpz_poly_t a, F_mpz_poly_t b, 
 	                     F_mpz_t p, F_mpz_t p1, F_mpz_t big_P)
 {
    F_mpz_poly_t A, B;
+
+   if (F_mpz_is_one(p1))
+   {
+      F_mpz_poly_set(Aout, a);
+      F_mpz_poly_set(Bout, b);
+
+	  return;
+   }
+
    F_mpz_poly_init(A);
    F_mpz_poly_init(B);
 
@@ -6959,7 +6986,8 @@ void F_mpz_poly_hensel_lift_only_inverse(F_mpz_poly_t Aout, F_mpz_poly_t Bout,
    product of v[link[j]] and v[link[j] + 1] as described above.
 */
 void F_mpz_poly_rec_tree_hensel_lift(long * link, F_mpz_poly_t * v, F_mpz_poly_t * w, 
-	             F_mpz_t p, F_mpz_poly_t f, long j, long inv, F_mpz_t p1, F_mpz_t big_P)
+	             F_mpz_t p, F_mpz_poly_t f, long j, long inv, F_mpz_t p1, 
+				       F_mpz_t big_P)
 {
    if (j < 0) return;
 
@@ -6988,7 +7016,8 @@ void F_mpz_poly_rec_tree_hensel_lift(long * link, F_mpz_poly_t * v, F_mpz_poly_t
    -> p^(e1 - e0).)
 */
 void F_mpz_poly_tree_hensel_lift(long * link, F_mpz_poly_t * v, F_mpz_poly_t * w, 
-	         long e0, long e1, F_mpz_poly_t monic_f, long inv, long p, long r, F_mpz_t P)
+	         long e0, long e1, F_mpz_poly_t monic_f, long inv, long p, long r, 
+			       F_mpz_t P)
 {
    F_mpz_t temp, p0, p1;
    F_mpz_init(p0);
@@ -7009,17 +7038,19 @@ void F_mpz_poly_tree_hensel_lift(long * link, F_mpz_poly_t * v, F_mpz_poly_t * w
    F_mpz_clear(p1);
 }
 
-
 /*
    This function take the local factors (in local_fac) and Hensel lifts them until 
    they are known mod p^target_exp. These lifted factors will be stored (in the same 
    ordering) in lifted_fac. It is assumed that link, v, and w are initialized arrays 
    of F_mpz_poly_t's with at least 2*r - 2 entries and that r >= 2. These are done 
    outside of this function so that you can keep them for restarting Hensel lifting 
-   later.
+   later. The product of local factors must be squarefree. The return value is an
+   exponent which must be passed to _F_mpz_poly_continue_hensel_lift as prev_exp if 
+   the Hensel lifting is to be resumed. It is required that target_exp > 0.
 */
 ulong _F_mpz_poly_start_hensel_lift(F_mpz_poly_factor_t lifted_fac, long * link, 
-	F_mpz_poly_t * v, F_mpz_poly_t * w, F_mpz_poly_t f, zmod_poly_factor_t local_fac, ulong target_exp)
+	F_mpz_poly_t * v, F_mpz_poly_t * w, F_mpz_poly_t f, zmod_poly_factor_t local_fac,
+	    ulong target_exp)
 {
    ulong r = local_fac->num_factors;
    ulong p = (local_fac->factors[0])->p;
@@ -7125,15 +7156,17 @@ ulong _F_mpz_poly_start_hensel_lift(F_mpz_poly_factor_t lifted_fac, long * link,
 }
 
 /*
-   This function restarts a stopped Hensel lift. It lifts from a current_exp to a new
-   target_exp. It also requires the *previous* exp, prev_exp (to lift the inverses).
+   This function restarts a stopped Hensel lift. It lifts from current_exp to 
+   target_exp. It also requires prev_exp (to lift the inverses) given as the return 
+   value of _F_mpz_poly_start_hensel_lift or _F_mpz_poly_continue_hensel_lift.
    The current lifted factors are supplied in lifted_fac and upon return are updated
-   there. As usual link, v, and w is the current Hensel tree, r is the number of local
-   factors and p is the small prime modulo whose power we are lifting to.
+   there. As usual link, v, and w is the current Hensel tree, r is the number of 
+   local factors and p is the small prime modulo whose power we are lifting to. It 
+   is required that current_exp be at least 1 and that target_exp > current_exp.
 */
 ulong _F_mpz_poly_continue_hensel_lift(F_mpz_poly_factor_t lifted_fac, long * link, 
-	F_mpz_poly_t * v, F_mpz_poly_t * w, F_mpz_poly_t f, ulong prev_exp, ulong current_exp, 
-	                              ulong target_exp, ulong p, ulong r)
+	F_mpz_poly_t * v, F_mpz_poly_t * w, F_mpz_poly_t f, ulong prev_exp, 
+	        ulong current_exp, ulong target_exp, ulong p, ulong r)
 {
    ulong i;
    F_mpz_t P, big_P, temp;
@@ -7163,7 +7196,7 @@ ulong _F_mpz_poly_continue_hensel_lift(F_mpz_poly_factor_t lifted_fac, long * li
 
       F_mpz_poly_scalar_mul(monic_f, f, temp);
 
-      // Note that this and one other smod could really be mod or scalar_mod once one of those exists
+      // TODO: this and one other could really be scalar_mod once it exists
       F_mpz_poly_scalar_smod(monic_f, monic_f, big_P);
    }
 
@@ -7188,7 +7221,7 @@ ulong _F_mpz_poly_continue_hensel_lift(F_mpz_poly_factor_t lifted_fac, long * li
       num_steps++;
    }
    
-   //here num_steps is actually the number of meaningful numbers in the 
+   // here num_steps is actually the number of meaningful numbers in the 
    // array exponent so num_steps-2 means that the final time in the loop 
    // has 1 and one last time outside of the loop with 0
 
@@ -7235,9 +7268,10 @@ ulong _F_mpz_poly_continue_hensel_lift(F_mpz_poly_factor_t lifted_fac, long * li
 }
 
 /*
-   This function does a Hensel lift. It lifts local factors (stored in local_fac) of
-   F to a target_exp. The lifted factors will be stored in lifted_fac. This lift can't
-   be restarted. This function is a convenience function intended for end users.
+   This function does a Hensel lift. It lifts local factors (stored in local_fac) 
+   of F to a target_exp. The lifted factors will be stored in lifted_fac. This lift 
+   can't be restarted. This function is a convenience function intended for end 
+   users. The product of local factors must be squarefree.
 */
 void F_mpz_poly_hensel_lift_once(F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, 
 	                                  zmod_poly_factor_t local_fac, ulong target_exp)
