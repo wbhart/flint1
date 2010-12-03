@@ -73,7 +73,6 @@ HEADERS = \
 	F_mpz_mat.h \
 	mpfr_mat.h \
 	F_mpz.h \
-	F_mpz_LLL_fast_d.h \
 	F_mpz_LLL_wrapper.h \
 	F_mpz_poly.h \
 	QS/tinyQS.h
@@ -121,7 +120,6 @@ FLINTOBJ = \
 	mpfr_mat.o \
 	F_mpz_mat.o \
 	F_mpz.o \
-	F_mpz_LLL_fast_d.o \
 	F_mpz_LLL_wrapper.o \
 	F_mpz_poly.o \
 	tinyQS.o \
@@ -263,9 +261,6 @@ F_mpz.o: F_mpz.c $(HEADERS)
 F_mpz_mat.o: F_mpz_mat.c $(HEADERS)
 	$(CC) $(CFLAGS) -c F_mpz_mat.c -o F_mpz_mat.o
 
-F_mpz_LLL_fast_d.o: F_mpz_LLL_fast_d.c $(HEADERS)
-	$(CC) $(CFLAGS) -c F_mpz_LLL_fast_d.c -o F_mpz_LLL_fast_d.o
-
 F_mpz_LLL_wrapper.o: F_mpz_LLL_wrapper.c $(HEADERS)
 	$(CC) $(CFLAGS) -c F_mpz_LLL_wrapper.c -o F_mpz_LLL_wrapper.o
 	
@@ -342,9 +337,6 @@ F_mpz_mat-test.o: F_mpz_mat-test.c $(HEADERS)
 
 mpq_mat-test.o: mpq_mat-test.c $(HEADERS)
 	$(CC) $(CFLAGS) -c mpq_mat-test.c -o mpq_mat-test.o
-
-F_mpz_LLL_fast_d-test.o: F_mpz_LLL_fast_d.c $(HEADERS)
-	$(CC) $(CFLAGS) -c F_mpz_LLL_fast_d-test.c -o F_mpz_LLL_fast_d-test.o
 	
 fmpz-test.o: fmpz-test.c $(HEADERS)
 	$(CC) $(CFLAGS) -c fmpz-test.c -o fmpz-test.o
@@ -425,9 +417,6 @@ F_mpz_mat-test: F_mpz_mat-test.o test-support.o $(FLINTOBJ) $(HEADERS)
 
 mpq_mat-test: mpq_mat-test.o test-support.o $(FLINTOBJ) $(HEADERS)
 	$(CC) $(CFLAGS) mpq_mat-test.o test-support.o -o mpq_mat-test $(FLINTOBJ) $(LIBS)
-
-F_mpz_LLL_fast_d-test: F_mpz_LLL_fast_d-test.o test-support.o $(FLINTOBJ) $(HEADERS)
-	$(CC) $(CFLAGS) F_mpz_LLL_fast_d-test.o test-support.o -o F_mpz_LLL_fast_d-test $(FLINTOBJ) $(LIBS)
 	
 ZmodF_mul-test: ZmodF_mul-test.o test-support.o $(FLINTOBJ) $(HEADERS)
 	$(CC) $(CFLAGS) ZmodF_mul-test.o test-support.o -o ZmodF_mul-test $(FLINTOBJ) $(LIBS)
