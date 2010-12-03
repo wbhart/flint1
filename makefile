@@ -273,9 +273,6 @@ F_mpz_LLL_heuristic_mpfr.o: F_mpz_LLL_heuristic_mpfr.c $(HEADERS)
 
 F_mpz_LLL_wrapper.o: F_mpz_LLL_wrapper.c $(HEADERS)
 	$(CC) $(CFLAGS) -c F_mpz_LLL_wrapper.c -o F_mpz_LLL_wrapper.o
-
-F_mpz_LLL_HNF.o: F_mpz_LLL_HNF.c $(HEADERS)
-	$(CC) $(CFLAGS) -c F_mpz_LLL_HNF.c -o F_mpz_LLL_HNF.o
 	
 d_mat.o: d_mat.c $(HEADERS)
 	$(CC) $(CFLAGS) -c d_mat.c -o d_mat.o
