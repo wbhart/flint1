@@ -117,25 +117,25 @@
 double heuristic_scalar_product(double * vec1, double * vec2, ulong n, 
 								F_mpz_mat_t B, ulong k, ulong j, long exp_adj)
 {
-  double sum = _d_vec_scalar_product(vec1, vec2, n);
-  double tmp = _d_vec_norm(vec1, n);
-  double tmp2 = _d_vec_norm(vec2, n);
+   double sum = _d_vec_scalar_product(vec1, vec2, n);
+   double tmp = _d_vec_norm(vec1, n);
+   double tmp2 = _d_vec_norm(vec2, n);
 
-  tmp = ldexp(tmp*tmp2, -70);
-  tmp2 = sum*sum;
+   tmp = ldexp(tmp*tmp2, -70);
+   tmp2 = sum*sum;
 
-  if (tmp2 <= tmp)
-  {
-     F_mpz_t sp;
-     F_mpz_init(sp);
-     ulong exp;
-     _F_mpz_vec_scalar_product(sp, B->rows[k], B->rows[j], n);
-     sum = F_mpz_get_d_2exp(&exp, sp);
-     sum = ldexp(sum, exp - exp_adj);
-     F_mpz_clear(sp);
-  }
+   if (tmp2 <= tmp)
+   {
+      F_mpz_t sp;
+      F_mpz_init(sp);
+      ulong exp;
+      _F_mpz_vec_scalar_product(sp, B->rows[k], B->rows[j], n);
+      sum = F_mpz_get_d_2exp(&exp, sp);
+      sum = ldexp(sum, exp - exp_adj);
+      F_mpz_clear(sp);
+   }
 
-  return sum;
+   return sum;
 } 
 
 
