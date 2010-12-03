@@ -74,7 +74,6 @@ HEADERS = \
 	mpfr_mat.h \
 	F_mpz.h \
 	F_mpz_LLL_fast_d.h \
-	F_mpz_LLL_heuristic_mpfr.h \
 	F_mpz_LLL_wrapper.h \
 	F_mpz_poly.h \
 	QS/tinyQS.h
@@ -123,7 +122,6 @@ FLINTOBJ = \
 	F_mpz_mat.o \
 	F_mpz.o \
 	F_mpz_LLL_fast_d.o \
-	F_mpz_LLL_heuristic_mpfr.o \
 	F_mpz_LLL_wrapper.o \
 	F_mpz_poly.o \
 	tinyQS.o \
@@ -267,9 +265,6 @@ F_mpz_mat.o: F_mpz_mat.c $(HEADERS)
 
 F_mpz_LLL_fast_d.o: F_mpz_LLL_fast_d.c $(HEADERS)
 	$(CC) $(CFLAGS) -c F_mpz_LLL_fast_d.c -o F_mpz_LLL_fast_d.o
-
-F_mpz_LLL_heuristic_mpfr.o: F_mpz_LLL_heuristic_mpfr.c $(HEADERS)
-	$(CC) $(CFLAGS) -c F_mpz_LLL_heuristic_mpfr.c -o F_mpz_LLL_heuristic_mpfr.o
 
 F_mpz_LLL_wrapper.o: F_mpz_LLL_wrapper.c $(HEADERS)
 	$(CC) $(CFLAGS) -c F_mpz_LLL_wrapper.c -o F_mpz_LLL_wrapper.o
