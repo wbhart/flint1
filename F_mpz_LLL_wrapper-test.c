@@ -409,6 +409,64 @@ int mpfr_mat_R_reduced(__mpfr_struct ** R, long d, double delta, double eta, mp_
    return reduced;
 }
 
+int test_heuristic_scalar_product()
+{
+   int result = 1;
+   ulong count1, count2, i;
+
+   double ** mat;
+   F_mpz_mat_t B;
+   int expo[50];
+
+   for (count1 = 0; count1 < 100; count1++)
+   {
+	  ulong rows = z_randint(50) + 1;
+      ulong cols = z_randint(50) + 2;
+
+	  F_mpz_mat_init(B, rows, cols);
+      F_mpz_randmat(B, rows, cols, 1000);
+
+      mat = d_mat_init(rows, cols);
+
+	  for (i = 0; i < rows; i++)
+	     expo[i] = _F_mpz_vec_to_d_vec_2exp(mat[i], B->rows[i], cols);
+
+      for (count2 = 0; count2 < 1000; count2++)
+	  {
+	     ulong r1 = z_randint(rows);
+		 ulong r2 = z_randint(rows);
+
+		 double d1 = heuristic_scalar_product(mat[r1], mat[r2], cols, 
+								B, r1, r2, expo[r1] + expo[r2]);
+		 double d2 = heuristic_scalar_product(mat[r1], mat[r1], cols, 
+								B, r1, r1, expo[r1] + expo[r1]);
+		 double d3 = heuristic_scalar_product(mat[r2], mat[r2], cols, 
+								B, r2, r2, expo[r2] + expo[r2]);
+
+		 _F_mpz_vec_add(B->rows[r2], B->rows[r1], B->rows[r2], cols);
+         _d_vec_add(mat[r2], mat[r1], mat[r2], cols);
+
+		 double d4 = heuristic_scalar_product(mat[r2], mat[r2], cols, 
+								B, r2, r2, expo[r2] + expo[r2]);
+
+		 expo[r2] = _F_mpz_vec_to_d_vec_2exp(mat[r2], B->rows[r2], cols);
+
+		 result = (fabs(d4 - d3 - d2 - 2*d1) < 1.0E-12);
+
+		 if (!result)
+		 {
+		    printf("Failed d1 = %lf, d2 = %lf, d3 = %lf, d4 = %lf\n", d1, d2, d3, d4);
+		 }
+
+	  }
+
+      F_mpz_mat_clear(B);
+      d_mat_clear(mat);
+   }
+
+   return result;
+}
+
 int test_F_mpz_LLL_randntrulike()
 {
    mpz_mat_t m_mat;
@@ -723,10 +781,11 @@ void F_mpz_mat_test_all()
 
 #if TESTFILE
 #endif
-     RUN_TEST(F_mpz_LLL_randajtai);
-     RUN_TEST(F_mpz_LLL_randintrel);
-     RUN_TEST(F_mpz_LLL_randsimdioph);
-     RUN_TEST(F_mpz_LLL_randntrulike);
+   RUN_TEST(heuristic_scalar_product);
+   RUN_TEST(F_mpz_LLL_randajtai);
+   RUN_TEST(F_mpz_LLL_randintrel);
+   RUN_TEST(F_mpz_LLL_randsimdioph);
+   RUN_TEST(F_mpz_LLL_randntrulike);
 
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");
