@@ -101,6 +101,43 @@
 
 #endif
 
+/*
+   Computes the scalar product of two vectors of doubles vec1 and vec2, which are 
+   respectively double approximations (up to scaling by a power of 2) to rows k and
+   j in the exact integer matrix B. If massive cancellation is detected an exact
+   computation is made.
+
+   The exact computation is scaled by 2^-exp_adj, where exp_adj = r2 + r1 where
+   r2 is the exponent for row j and r1 is the exponent for row k (i.e. row j is 
+   notionally thought of as being multiplied by 2^r2, etc).
+
+   The final scalar product computed by this function is then notionally the return
+   value times 2^exp_adj.
+*/
+double heuristic_scalar_product(double * vec1, double * vec2, ulong n, 
+								F_mpz_mat_t B, ulong k, ulong j, long exp_adj)
+{
+  double sum = _d_vec_scalar_product(vec1, vec2, n);
+  double tmp = _d_vec_norm(vec1, n);
+  double tmp2 = _d_vec_norm(vec2, n);
+
+  tmp = ldexp(tmp*tmp2, -70);
+  tmp2 = sum*sum;
+
+  if (tmp2 <= tmp)
+  {
+     F_mpz_t sp;
+     F_mpz_init(sp);
+     ulong exp;
+     _F_mpz_vec_scalar_product(sp, B->rows[k], B->rows[j], n);
+     sum = F_mpz_get_d_2exp(&exp, sp);
+     sum = ldexp(sum, exp - exp_adj);
+     F_mpz_clear(sp);
+  }
+
+  return sum;
+} 
+
 
 int check_Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s, 
        double **appB, int *expo, double **appSP, 

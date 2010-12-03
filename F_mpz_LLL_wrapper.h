@@ -62,6 +62,9 @@ double halfplus, onedothalfplus, ctt;
 #define DELTA 0.75
 #endif
 
+double heuristic_scalar_product(double * vec1, double * vec2, ulong n, 
+								F_mpz_mat_t B, ulong k, ulong j, long exp_adj);
+
 int check_Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s, 
        double **appB, int *expo, double **appSP, 
        int a, int zeros, int kappamax, int n);
