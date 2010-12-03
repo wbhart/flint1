@@ -2856,7 +2856,7 @@ int test_F_mpz_poly_bit_pack()
    return result;
 }
 
-int test_F_mpz_poly_factor()
+int test_F_mpz_poly_factor_test1()
 {
    mpz_poly_t m_poly1, m_poly2, res1, res2;
    F_mpz_poly_t F_poly1, F_poly2, res;
@@ -2872,7 +2872,7 @@ int test_F_mpz_poly_factor()
    mpz_poly_init(res2); 
 
    ulong count1;
-   for (count1 = 0; (count1 < 5000*ITER) && (result == 1) ; count1++)
+   for (count1 = 0; (count1 < 1000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -2891,11 +2891,6 @@ int test_F_mpz_poly_factor()
 		mpz_poly_to_F_mpz_poly(F_poly1, m_poly1);
         mpz_poly_to_F_mpz_poly(F_poly2, m_poly2);
       
-//      printf(" floating not here\n");
-
-//      F_mpz_poly_print(F_poly1); printf(" poly1\n");
-//      F_mpz_poly_print(F_poly2); printf(" poly2\n");
-
 		F_mpz_poly_mul(res, F_poly1, F_poly2);			
 	  } while (res->length == 0);
 
@@ -2905,8 +2900,6 @@ int test_F_mpz_poly_factor()
       F_mpz_poly_factor(F_factors, content, res);
 
 		F_mpz_poly_to_mpz_poly(res2, res);
-
-//      printf(" floating not here\n");
 
       F_mpz_poly_clear(res);
       F_mpz_poly_init(res);
@@ -4950,11 +4943,11 @@ int test_F_mpz_poly_eval_horner_d_2exp()
       F_mpz_poly_neg(F_poly1, F_poly1); 
       d2 = F_mpz_poly_eval_horner_d_2exp(&exp2, F_poly1, val);
       
-      result = ((d1 == -d2) && (exp1 == exp2));
+      result = ((d1 == -d2) && (exp1 == exp2 || d1 == 0.0));
 
 		if (!result) 
 		{
-			printf("Error: length1 = %ld, bits1 = %ld, d1 = %lf, d2 = %lf, "
+			printf("Error: length1 = %ld, bits1 = %ld, d1 = %f, d2 = %f, "
             "exp1 = %ld, exp2 = %ld\n", length1, bits1, d1, d2, exp1, exp2);
 		}
           
@@ -5905,6 +5898,346 @@ int test_F_mpz_poly_div_upper_trunc_modp()
    return result; 
 }
 
+int test_F_mpz_poly_is_squarefree()
+{
+   F_mpz_poly_t F_poly1, F_poly2, F_poly;
+   int result = 1;
+   ulong bits1, bits2, length1, length2;
+   
+   // check that polys with a square factor are not reported squarefree
+   for (ulong count1 = 0; (count1 < 20000*ITER) && (result == 1); count1++)
+   {
+      F_mpz_poly_init(F_poly);
+      F_mpz_poly_init(F_poly1);
+      F_mpz_poly_init(F_poly2);
+      
+	  bits1 = z_randint(200) + 1;
+      length1 = z_randint(100) + 2;
+	  bits2 = z_randint(200) + 1;
+      length2 = z_randint(100) + 1;
+      
+	  do { F_mpz_randpoly(F_poly1, length1, bits1); } while (F_poly1->length < 2);
+      F_mpz_randpoly(F_poly2, length2, bits2);      
+
+	  F_mpz_poly_mul(F_poly1, F_poly1, F_poly1);
+	  F_mpz_poly_mul(F_poly, F_poly1, F_poly2);
+
+      result = !F_mpz_poly_is_squarefree(F_poly);
+
+	  if (!result) 
+	  {
+	     printf("Error: length1 = %ld, bits1 = %ld, length2 = %ld, bits2 = %ld\n", length1, bits1, length2, bits2);
+		 F_mpz_poly_print(F_poly); printf("\n\n");
+	  }
+          
+      F_mpz_poly_clear(F_poly);
+      F_mpz_poly_clear(F_poly1);
+      F_mpz_poly_clear(F_poly2);
+   }
+
+   return result;
+}
+
+int test_F_mpz_poly_pow_ui()
+{
+   F_mpz_poly_t F_poly1, F_poly2, F_poly;
+   int result = 1;
+   ulong bits, length, exp, i;
+   
+   // check that polys with a square factor are not reported squarefree
+   for (ulong count1 = 0; (count1 < 2000*ITER) && (result == 1); count1++)
+   {
+      F_mpz_poly_init(F_poly);
+      F_mpz_poly_init(F_poly1);
+      F_mpz_poly_init(F_poly2);
+      
+	  exp = z_randint(33);
+	  bits = z_randint(100) + 1;
+      length = z_randint(20) + 2;
+	  
+	  F_mpz_randpoly(F_poly, length, bits); 
+      
+	  F_mpz_poly_pow_ui(F_poly1, F_poly, exp);
+	  
+	  F_mpz_poly_zero(F_poly2);
+	  F_mpz_poly_set_coeff_ui(F_poly2, 0, 1);
+	  
+	  for (i = 0; i < exp; i++)
+	     F_mpz_poly_mul(F_poly2, F_poly2, F_poly);
+
+      result = F_mpz_poly_equal(F_poly1, F_poly2);
+
+	  if (!result) 
+	  {
+	     printf("Error: length = %ld, bits = %ld, exp = %ld\n", length, bits, exp);
+		 F_mpz_poly_print(F_poly1); printf("\n\n");
+		 F_mpz_poly_print(F_poly2); printf("\n\n");
+	  }
+          
+      F_mpz_poly_clear(F_poly);
+      F_mpz_poly_clear(F_poly1);
+      F_mpz_poly_clear(F_poly2);
+   }
+
+   return result;
+}
+
+int test_F_mpz_poly_factor_squarefree()
+{
+   F_mpz_poly_t F_poly1, F_poly2, F_poly;
+   F_mpz_poly_factor_t F_fac;
+   F_mpz_t c;
+   int result = 1;
+   long i;
+   ulong bits1, bits2, length1, length2;
+   
+   // check that factor_squarefree produces square free factors which multiply
+   // to give the original poly
+   for (ulong count1 = 0; (count1 < 1000*ITER) && (result == 1); count1++)
+   {
+      F_mpz_poly_init(F_poly);
+      F_mpz_poly_init(F_poly1);
+      F_mpz_poly_init(F_poly2);
+      
+	  F_mpz_poly_factor_init(F_fac);
+
+	  F_mpz_init(c);
+
+	  bits1 = z_randint(200) + 1;
+      length1 = z_randint(100) + 2;
+	  bits2 = z_randint(200) + 1;
+      length2 = z_randint(100) + 1;
+      
+	  do { 
+		 F_mpz_randpoly(F_poly1, length1, bits1); 
+		 if (F_poly1->length < 2) continue;
+		 F_mpz_set_ui(F_poly1->coeffs, z_randbits(FLINT_MIN(bits1, FLINT_BITS - 2))); /* don't want zero constant coeff */
+	  } while (!F_mpz_poly_is_squarefree(F_poly1) || (F_poly1->length < 2));
+      
+      do { 
+		 F_mpz_randpoly(F_poly2, length1, bits1); 
+	  } while (F_poly2->length < 1);
+      
+	  F_mpz_poly_mul(F_poly1, F_poly1, F_poly1);
+	  F_mpz_poly_mul(F_poly, F_poly1, F_poly2);
+
+      F_mpz_poly_factor_squarefree(F_fac, c, F_poly);
+      
+	  F_mpz_poly_pow_ui(F_poly1, F_fac->factors[0], F_fac->exponents[0]);
+	  if (!F_mpz_poly_is_squarefree(F_fac->factors[0]))
+	  {
+	     result = 0;
+		 printf("Factor 0 is not squarefree\n");
+	  }
+	  for (i = 1; i < F_fac->num_factors; i++)
+	  {
+		 F_mpz_poly_pow_ui(F_poly2, F_fac->factors[i], F_fac->exponents[i]);
+		 F_mpz_poly_mul(F_poly1, F_poly1, F_poly2);
+		 if (!F_mpz_poly_is_squarefree(F_fac->factors[i]))
+	     {
+	        result = 0;
+		    printf("Factor %ld is not squarefree\n", i);
+	     }
+	  }
+	  F_mpz_poly_scalar_mul(F_poly1, F_poly1, c);
+
+	  result = F_mpz_poly_equal(F_poly1, F_poly);
+
+	  if (!result) 
+	  {
+	     printf("Error: length1 = %ld, bits1 = %ld, length2 = %ld, bits2 = %ld\n", length1, bits1, length2, bits2);
+		 F_mpz_poly_print(F_poly); printf("\n\n");
+		 F_mpz_poly_print(F_poly1); printf("\n\n");
+	  }
+          
+      F_mpz_clear(c);
+	  
+	  F_mpz_poly_factor_clear(F_fac);
+	  
+	  F_mpz_poly_clear(F_poly);
+      F_mpz_poly_clear(F_poly1);
+      F_mpz_poly_clear(F_poly2);
+   }
+
+   return result;
+}
+
+int test_F_mpz_poly_factor_zassenhaus()
+{
+   F_mpz_poly_t F_poly1, F_poly;
+   F_mpz_poly_factor_t F_fac, fac_final, fac_final2;
+   F_mpz_t c;
+   int result = 1;
+   long i;
+   ulong bits, length, factors;
+   
+   // check Zassenhaus against vHN approach
+   for (ulong count1 = 0; (count1 < 300*ITER) && (result == 1); count1++)
+   {
+      F_mpz_poly_init(F_poly);
+      F_mpz_poly_init(F_poly1);
+      
+	  F_mpz_poly_factor_init(F_fac);
+      F_mpz_poly_factor_init(fac_final);
+      F_mpz_poly_factor_init(fac_final2);
+
+	  F_mpz_init(c);
+
+	  factors = z_randint(8) + 2;
+
+	  F_mpz_poly_zero(F_poly);
+	  F_mpz_poly_set_coeff_ui(F_poly, 0, 1);
+
+	  for (i = 0; i < factors; i++)
+	  {
+		 do { 
+		    bits = z_randint(80) + 1;
+            length = z_randint(5) + 2;
+	        F_mpz_randpoly(F_poly1, length, bits); 
+		    if (F_poly1->length < 2) continue;
+		    F_mpz_set_ui(F_poly1->coeffs, z_randbits(FLINT_MIN(bits, FLINT_BITS - 2))); /* don't want zero constant coeff */
+	     } while (!F_mpz_poly_is_squarefree(F_poly1) || (F_poly1->length < 2) || F_mpz_is_zero(F_poly1->coeffs));
+         
+		 F_mpz_poly_mul(F_poly, F_poly, F_poly1);
+	  }
+      
+	  F_mpz_poly_mul(F_poly, F_poly, F_poly1);
+	  
+      F_mpz_poly_factor_squarefree(F_fac, c, F_poly);
+      for (i = 0; i < F_fac->num_factors; i++)
+	  {
+		 F_mpz_poly_factor_sq_fr_prim_internal(fac_final2, 
+								          F_fac->exponents[i], F_fac->factors[i], 2);
+		 F_mpz_poly_factor_sq_fr_prim_internal(fac_final, 
+								          F_fac->exponents[i], F_fac->factors[i], ~0L);
+	  }
+
+	  result = (fac_final->num_factors == fac_final2->num_factors);
+
+	  if (!result) 
+	  {
+	     printf("Error: length = %ld, bits = %ld, factors = %ld\n", length, bits, factors);
+		 F_mpz_poly_print(F_poly); printf("\n\n");
+		 F_mpz_poly_factor_print(fac_final); printf("\n\n");
+		 F_mpz_poly_factor_print(fac_final2); printf("\n\n");
+	  }
+          
+      F_mpz_clear(c);
+	  
+	  F_mpz_poly_factor_clear(F_fac);
+	  F_mpz_poly_factor_clear(fac_final);
+	  F_mpz_poly_factor_clear(fac_final2);
+	  
+	  F_mpz_poly_clear(F_poly);
+      F_mpz_poly_clear(F_poly1);
+   }
+
+   return result;
+}
+
+typedef struct
+{
+   char * file;
+   int factors;
+} load_poly_t;
+
+#define NUM_POLYS_SMALL 8
+#define NUM_POLYS_MEDIUM 7
+#define NUM_POLYS_LARGE 3
+#define NUM_POLYS_TOTAL (NUM_POLYS_SMALL + NUM_POLYS_MEDIUM + NUM_POLYS_LARGE)
+
+load_poly_t poly_arr[NUM_POLYS_TOTAL] = 
+{
+	{ "P1", 36 }, { "P2", 12 }, { "P3", 16 }, { "P4", 2 }, { "P5", 1 }, 
+	{ "P6", 6  }, { "S7", 1 }, 
+	{ "T1", 2  },
+
+	{ "M12_5", 1 }, { "M12_6", 2 }, { "S8", 1 }, { "H1", 28 }, 
+	{ "P7", 1  }, { "P8", 1  }, { "T2", 2  }, 
+
+	{ "S9", 1 }, { "S10", 1 }, { "H2", 6 } 
+};
+
+int test_F_mpz_poly_factor_test2()
+{
+   F_mpz_poly_t F_poly1, F_poly2, F_poly;
+   F_mpz_poly_factor_t F_factors;
+   F_mpz_t content;
+   int result = 1;
+   long num_facs, p1, p2;
+   
+   const char * path = "testpolys/";
+   const char * ext = "_flint";
+   char filename[25];
+
+   ulong count1;
+   for (count1 = 0; (count1 < 30*ITER) && (result == 1) ; count1++)
+   {
+      F_mpz_poly_init(F_poly1);
+      F_mpz_poly_init(F_poly2);
+      F_mpz_poly_init(F_poly);
+
+      F_mpz_poly_factor_init(F_factors);
+
+      F_mpz_init(content);
+
+	  p1 = z_randint(NUM_POLYS_SMALL);
+	  do {p2 = z_randint(NUM_POLYS_SMALL); } while (p1 == p2);
+
+	  filename[0] = '\0';
+	  strcat(filename, path);
+	  strcat(filename, poly_arr[p1].file);
+      strcat(filename, ext);
+	  printf("%s\n", filename);
+	  FILE * polyfile1 = fopen(filename, "r");
+      
+	  filename[0] = '\0';
+	  strcat(filename, path);
+	  strcat(filename, poly_arr[p2].file);
+      strcat(filename, ext);
+	  printf("%s", filename);
+	  FILE * polyfile2 = fopen(filename, "r");
+   
+	  F_mpz_poly_fread(F_poly1, polyfile1);
+	  F_mpz_poly_fread(F_poly2, polyfile2);
+   
+	  if (z_randint(2))
+	  {
+		 F_mpz_poly_reverse(F_poly2, F_poly2, F_poly2->length);
+		 printf(" - reverse");
+	  }
+
+	  printf("\n\n");
+
+	  F_mpz_poly_mul(F_poly, F_poly1, F_poly2);
+	  num_facs = poly_arr[p1].factors + poly_arr[p2].factors;
+
+	  F_mpz_poly_factor(F_factors, content, F_poly);
+
+	  fclose(polyfile1);
+	  fclose(polyfile2);
+		    
+      result = (F_factors->num_factors == num_facs); 
+	  if (!result) 
+	  {
+		 printf("Error2: p1 = %ld, p2 = %ld, num_facs = %ld, factors = %ld\n", 
+			p1, p2, num_facs, F_factors->num_factors);
+		 F_mpz_poly_factor_print(F_factors); printf("\n\n");
+         F_mpz_print(content); printf(" content \n");
+	  }
+          
+      F_mpz_poly_clear(F_poly1);
+      F_mpz_poly_clear(F_poly2);
+      F_mpz_poly_clear(F_poly);
+
+      F_mpz_poly_factor_clear(F_factors);
+      
+	  F_mpz_clear(content);
+   }
+
+	return result;
+}
+
 void F_mpz_poly_test_all()
 {
    int success, all_success = 1;
@@ -5912,8 +6245,7 @@ void F_mpz_poly_test_all()
 
 #if TESTFILE
 #endif
-   RUN_TEST(F_mpz_poly_div_trunc_modp); 
-   RUN_TEST(F_mpz_poly_div_upper_trunc_modp); 
+   RUN_TEST(F_mpz_poly_factor_test2);
    RUN_TEST(F_mpz_poly_derivative); 
    RUN_TEST(F_mpz_poly_content); 
    RUN_TEST(F_mpz_poly_eval_horner_d); 
@@ -5957,23 +6289,29 @@ void F_mpz_poly_test_all()
    RUN_TEST(F_mpz_poly_mul_SS); 
    RUN_TEST(F_mpz_poly_mul); 
    RUN_TEST(F_mpz_poly_mul_trunc_left); 
+   RUN_TEST(F_mpz_poly_pow_ui); 
    RUN_TEST(F_mpz_poly_pack_bytes); 
-	RUN_TEST(F_mpz_poly_divrem_basecase); 
-	RUN_TEST(F_mpz_poly_div_basecase); 
-	RUN_TEST(F_mpz_poly_div_divconquer_recursive); 
-	RUN_TEST(F_mpz_poly_divrem_divconquer); 
-	RUN_TEST(F_mpz_poly_divrem_basecase_low); 
-	RUN_TEST(F_mpz_poly_div_divconquer_recursive_low); 
-	RUN_TEST(F_mpz_poly_div_divconquer); 
-	RUN_TEST(F_mpz_poly_div_hensel); 
-	RUN_TEST(F_mpz_poly_divexact); 
-	RUN_TEST(F_mpz_poly_pseudo_divrem_basecase); 
-	RUN_TEST(F_mpz_poly_pseudo_div_basecase); 
+   RUN_TEST(F_mpz_poly_divrem_basecase); 
+   RUN_TEST(F_mpz_poly_div_basecase); 
+   RUN_TEST(F_mpz_poly_div_divconquer_recursive); 
+   RUN_TEST(F_mpz_poly_divrem_divconquer); 
+   RUN_TEST(F_mpz_poly_divrem_basecase_low); 
+   RUN_TEST(F_mpz_poly_div_divconquer_recursive_low); 
+   RUN_TEST(F_mpz_poly_div_divconquer); 
+   RUN_TEST(F_mpz_poly_div_hensel); 
+   RUN_TEST(F_mpz_poly_divexact); 
+   RUN_TEST(F_mpz_poly_div_trunc_modp); 
+   RUN_TEST(F_mpz_poly_div_upper_trunc_modp); 
+   RUN_TEST(F_mpz_poly_pseudo_divrem_basecase); 
+   RUN_TEST(F_mpz_poly_pseudo_div_basecase); 
    RUN_TEST(F_mpz_poly_hensel_lift_without_only_inverse);
    RUN_TEST(F_mpz_poly_hensel_lift);
    RUN_TEST(F_mpz_poly_start_continue_hensel_lift);
    RUN_TEST(F_mpz_poly_hensel_lift_once);
-   RUN_TEST(F_mpz_poly_factor);
+   RUN_TEST(F_mpz_poly_is_squarefree); 
+   RUN_TEST(F_mpz_poly_factor_squarefree);
+   RUN_TEST(F_mpz_poly_factor_zassenhaus);
+   RUN_TEST(F_mpz_poly_factor_test1);
    
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");

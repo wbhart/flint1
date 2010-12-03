@@ -3,7 +3,8 @@
     F_mpz_poly.c: Polynomials over Z (FLINT 2.0 polynomials)
 
     Copyright (C) 2007, David Harvey (Odd/even Karatsuba) 
-    Copyright (C) 2008, William Hart 
+    Copyright (C) 2008, 2009, 2010 William Hart 
+    Copyright (C) 2010, Andy Novocin
 
 	 This file is part of FLINT.
 
@@ -54,7 +55,7 @@
 
 #define POLYPROFILE 0 // whether POLYPROFILE of factor related poly routines is needed
 #define CLDPROF 0 // whether POLYPROFILE of CLD computation is wanted
-#define WANT_DEFLATION 0 // whether the power hack should be used in factoring
+#define WANT_DEFLATION 1 // whether the power hack should be used in factoring
 #define TRACE 0 // whether debugging trace should be printed for factoring and related fns
 
 /*===========================================
@@ -4520,6 +4521,76 @@ void F_mpz_poly_mul_trunc_left(F_mpz_poly_t res, const F_mpz_poly_t poly1, const
 		else _F_mpz_poly_mul_trunc_left(res, poly2, poly1, trunc);
 	}		
 }
+
+/*
+   TODO: Implement binomial expansion in quadratic case.
+*/
+void F_mpz_poly_pow_ui(F_mpz_poly_t output, const F_mpz_poly_t poly_in, const ulong exp)
+{
+   if (exp == 0) 
+   {
+      F_mpz_poly_fit_length(output, 1);
+      F_mpz_poly_set_coeff_ui(output, 0, 1);
+      
+	  return;
+   }
+
+   if (poly_in->length == 0)
+   {
+      F_mpz_poly_zero(output);
+      
+	  return;      
+   }
+   
+   F_mpz_poly_t poly;
+   ulong trailing = 0L;
+   while (F_mpz_is_zero(poly_in->coeffs + trailing)) trailing++;
+	
+   _F_mpz_poly_attach_shift(poly, poly_in, trailing);
+	
+   if (poly->length == 1)
+   {
+      ulong j;
+      F_mpz_poly_fit_length(output, 1 + trailing*exp);
+      _F_mpz_poly_set_length(output, 1 + trailing*exp);
+	  F_mpz_pow_ui(output->coeffs + trailing*exp, poly->coeffs, exp);
+      
+	  for (j = 0; j < trailing*exp; j++)
+	     F_mpz_zero(output->coeffs + j);
+      
+	  return;
+   }
+   
+   /* General case */
+
+   F_mpz_poly_t temp, polycopy;
+   F_mpz_poly_init(temp);
+   
+   ulong bits = FLINT_BIT_COUNT(exp);
+   
+   if (poly_in == output)
+   {
+      F_mpz_poly_init(polycopy);
+      F_mpz_poly_set(polycopy, poly);
+   } else _F_mpz_poly_attach(polycopy, poly);
+   
+   F_mpz_poly_set(output, polycopy);
+   
+   while (bits > 1)
+   {
+      F_mpz_poly_mul(output, output, output);
+      if ((1L<<(bits - 2)) & exp)
+      {
+         F_mpz_poly_mul(output, output, polycopy);
+      }
+      bits--;
+   } 
+   
+   if (poly_in == output) F_mpz_poly_clear(polycopy);
+
+   F_mpz_poly_left_shift(output, output, trailing*exp);
+}
+
 /*===============================================================================
 
 	Division with remainder
@@ -6410,7 +6481,7 @@ int F_mpz_poly_is_squarefree(F_mpz_poly_t F)
    return res;
 }
 
-void F_mpz_poly_squarefree(F_mpz_poly_factor_t fac, F_mpz_t content, F_mpz_poly_t F)
+void F_mpz_poly_factor_squarefree(F_mpz_poly_factor_t fac, F_mpz_t content, F_mpz_poly_t F)
 {
    F_mpz_poly_content(content, F);
 
@@ -7415,13 +7486,24 @@ void F_mpz_poly_zassenhaus_naive(F_mpz_poly_factor_t final_fac,
    return;
 }
 
+void F_mpz_poly_factor_zassenhaus(F_mpz_poly_factor_t final_fac, 
+								               ulong exp, F_mpz_poly_t f)
+{
+   F_mpz_poly_factor_sq_fr_prim_internal(final_fac, exp, f, ~0L);
+}
+
 /***************************************************************************************
 
    Factoring wrapper after square free factoring has been done
 
 *****************************************************************************************/
 
-void F_mpz_poly_factor_sq_fr_prim(F_mpz_poly_factor_t final_fac, ulong exp, F_mpz_poly_t f)
+/* 
+   Cutoff determines the the number of local factors at which vHN factoring 
+   may be used. 
+*/
+void F_mpz_poly_factor_sq_fr_prim_internal(F_mpz_poly_factor_t final_fac, 
+								          ulong exp, F_mpz_poly_t f, ulong cutoff)
 {
    if (f->length <= 1)
       return;
@@ -7558,7 +7640,7 @@ void F_mpz_poly_factor_sq_fr_prim(F_mpz_poly_factor_t final_fac, ulong exp, F_mp
       U_exp = (long) ceil(log2((double) bit_r));
 
    // TODO: try more primes might deduce irreducibility or find smaller r
-   if (r > 6)
+   if (r > cutoff)
    {
       use_Hoeij_Novocin = 1;
       F_mpz_mat_init_identity(M, r);
@@ -7775,6 +7857,15 @@ void F_mpz_poly_factor_sq_fr_prim(F_mpz_poly_factor_t final_fac, ulong exp, F_mp
    return;
 }
 
+/*
+   Use a "tuned" cutoff of 6 local factors before switching to vHN.
+*/
+void F_mpz_poly_factor_sq_fr_prim(F_mpz_poly_factor_t final_fac, 
+								                  ulong exp, F_mpz_poly_t f)
+{
+   F_mpz_poly_factor_sq_fr_prim_internal(final_fac, exp, f, 6);
+}
+
 void __F_mpz_poly_factor(F_mpz_poly_factor_t final_fac, F_mpz_t cong, F_mpz_poly_t G)
 {
    if (G->length == 0)
@@ -7798,7 +7889,7 @@ void __F_mpz_poly_factor(F_mpz_poly_factor_t final_fac, F_mpz_t cong, F_mpz_poly
    {
       F_mpz_poly_content(cong, G);
       F_mpz_poly_scalar_divexact(g, G, cong);
-      F_mpz_poly_factor_insert( final_fac, g, 1UL);
+      F_mpz_poly_factor_insert(final_fac, g, 1UL);
       F_mpz_poly_clear(g);
       
 	  return;
@@ -7824,7 +7915,7 @@ void __F_mpz_poly_factor(F_mpz_poly_factor_t final_fac, F_mpz_t cong, F_mpz_poly
    // Could make other tests for x-1 or simple things 
    // maybe take advantage of the composition algorithm
    F_mpz_poly_factor_init( sq_fr_fac );
-   F_mpz_poly_squarefree(sq_fr_fac, cong, g);
+   F_mpz_poly_factor_squarefree(sq_fr_fac, cong, g);
 
    // Now we can go through and factor each square free one and add it to final factors.
    for (ulong j = 0; j < sq_fr_fac->num_factors; j++)

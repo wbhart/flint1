@@ -2,7 +2,8 @@
 
     F_mpz_poly.h: Polynomials over Z (FLINT 2.0 polynomials)
 
-    Copyright (C) 2008, William Hart 
+    Copyright (C) 2008, 2009, 2010 William Hart 
+    Copyright (C) 2010 Andy Novocin.
 
     This file is part of FLINT.
 
@@ -985,6 +986,20 @@ void F_mpz_poly_mul_trunc_left(F_mpz_poly_t res, const F_mpz_poly_t poly1,
 
 /*===============================================================================
 
+	Powering
+
+================================================================================*/
+
+/** 
+   \fn     void F_mpz_poly_pow_ui(F_mpz_poly_t res, 
+                                const F_mpz_poly_t poly1, const ulong exp)
+
+   \brief  Set res to poly1^exp.
+*/
+void F_mpz_poly_pow_ui(F_mpz_poly_t res, const F_mpz_poly_t poly1, const ulong exp);
+
+/*===============================================================================
+
 	Division
 
 ================================================================================*/
@@ -1163,6 +1178,8 @@ double F_mpz_poly_eval_horner_d(F_mpz_poly_t poly, double val);
    as a normalised mantissa and an exponent. The result should be extremely
    close to the correct value, regardless of cancellations, etc. However, it
    does not guarantee exact rounding (it uses mpfs, not mpfrs internally).
+   If d is the return value of the function, the evaluation is given by
+   d*2^exp. If d == 0 then exp is undefined.
 */
 double F_mpz_poly_eval_horner_d_2exp(long * exp, F_mpz_poly_t poly, double val);
 
@@ -1285,12 +1302,15 @@ int F_mpz_poly_div_upper_trunc_modp( F_mpz_t *res, F_mpz_poly_t f,
 int F_mpz_poly_is_squarefree(F_mpz_poly_t F);
 
 /**
-   \fn      void F_mpz_poly_squarefree(F_mpz_poly_factor_t fac, 
+   \fn      void F_mpz_poly_factor_squarefree(F_mpz_poly_factor_t fac, 
                F_mpz_t content, F_mpz_poly_t F)
    \brief   Given poly F, finds the content of F which is stores at content,
-               then finds a squarefree factorization stored at fac with exponents
+               then finds a squarefree factorization stored at fac with 
+			   exponents specified in fac. If F has length zero an exception
+			   will be raised. If F has length 1 only the content will be set,
+			   the contents of fac being undefined.
 */
-void F_mpz_poly_squarefree(F_mpz_poly_factor_t fac, 
+void F_mpz_poly_factor_squarefree(F_mpz_poly_factor_t fac, 
                F_mpz_t content, F_mpz_poly_t F);
 
 /*****************************************************************************
@@ -1337,12 +1357,25 @@ void F_mpz_poly_hensel_lift_once( F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F
 *****************************************************************************/
 
 /**
-   This function is unoptimized.  Takes Hensel lifted factors to power P = p^n, 
-   the original polynomial F (and it's squarefree exponent),
-   and a leading coeff (which might not be needed) ... 
+   This function is unoptimized.  Takes Hensel lifted factors to power 
+   P = p^n, the original polynomial F (and it's squarefree exponent),
+   and a leading coeff (which might not be needed) ... and inserts the 
+   factorisation into final_fac. The end user will not tend to use this 
+   function.
 */
 void F_mpz_poly_zassenhaus_naive(F_mpz_poly_factor_t final_fac, 
-	F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, F_mpz_t P, ulong exp, F_mpz_t lc);
+	              F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, 
+	                      F_mpz_t P, ulong exp, F_mpz_t lc);
+
+/*
+   Given a squarefree polynomial f and an exponent, this function will
+   factor f using the Zassenhaus algorithm and merge the factors into
+   final_fac with the given exponents. The Zassenhaus implementation is
+   not highly optimised and will struggle with more than about 10 actual
+   factors, and not too many more local factors.
+*/
+void F_mpz_poly_factor_zassenhaus(F_mpz_poly_factor_t final_fac, 
+								               ulong exp, F_mpz_poly_t f);
 
 /****************************************************************************
 
@@ -1354,9 +1387,22 @@ void F_mpz_poly_zassenhaus_naive(F_mpz_poly_factor_t final_fac,
    This is a wrapper which makes some choices about primes, Hensel lifting, 
    Zassenhaus, this is the wrapper which does the real stuff.  Call it after 
    squarefree factoring with your square free f and it's eventual exponent.
+   The factors of f will be inserted into final_fac then raised to the given 
+   exponent. The factors are merged into final_fac rather than replacing what 
+   is there already. It is assumed that f has no pure powers of x as factors. 
 */
 
-void F_mpz_poly_factor_sq_fr_prim( F_mpz_poly_factor_t final_fac, ulong exp, F_mpz_poly_t f);
+void F_mpz_poly_factor_sq_fr_prim(F_mpz_poly_factor_t final_fac,
+								                  ulong exp, F_mpz_poly_t f);
+
+/*
+   An internal version of the above which takes a cutoff (for the number of
+   local factors) above which vHN should be used for factoring. Requires
+   that f have no power of x factors. A cutoff larger than 10 will likely 
+   result in very high times for factoring.
+*/
+void F_mpz_poly_factor_sq_fr_prim_internal(F_mpz_poly_factor_t final_fac, 
+								    ulong exp, F_mpz_poly_t f, ulong cutoff);
 
 /****************************************************************************
 
@@ -1365,9 +1411,10 @@ void F_mpz_poly_factor_sq_fr_prim( F_mpz_poly_factor_t final_fac, ulong exp, F_m
 *****************************************************************************/
 
 /*
-   Does some simple pretests squarefree factors and calls the wrapper.
+   Does some simple pretests, finds squarefree factors and calls the wrapper.
 */
-void F_mpz_poly_factor(F_mpz_poly_factor_t final_fac, F_mpz_t cong, F_mpz_poly_t G);
+void F_mpz_poly_factor(F_mpz_poly_factor_t final_fac, 
+					                           F_mpz_t cong, F_mpz_poly_t G);
 
 /****************************************************************************
 
@@ -1384,7 +1431,7 @@ void F_mpz_poly_factor(F_mpz_poly_factor_t final_fac, F_mpz_t cong, F_mpz_poly_t
    restarting... maybe...
 */
 void _F_mpz_poly_factor_CLD_mat(F_mpz_mat_t res, F_mpz_poly_t F, 
-	                             F_mpz_poly_factor_t lifted_fac, F_mpz_t P, ulong N);
+	                         F_mpz_poly_factor_t lifted_fac, F_mpz_t P, ulong N);
 
 /*
    This function recieves the output of check_if_solved, which means that there is 
@@ -1392,15 +1439,17 @@ void _F_mpz_poly_factor_CLD_mat(F_mpz_mat_t res, F_mpz_poly_t F,
    the trial divisions attempting to solve the problem.  Lots of comments in there, 
    and would like to do some specific testing with poorly behaving polynomials.
 */
-int _F_mpz_poly_try_to_solve(int num_facs, ulong * part, F_mpz_poly_factor_t final_fac, 
-	F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, F_mpz_t P, ulong exp, F_mpz_t lc, int safe);
+int _F_mpz_poly_try_to_solve(int num_facs, ulong * part, 
+	     F_mpz_poly_factor_t final_fac, F_mpz_poly_factor_t lifted_fac, 
+		             F_mpz_poly_t F, F_mpz_t P, ulong exp, F_mpz_t lc, int safe);
 
 /*
    The complement function to try_to_solve.  Run this first, it is a factorization 
    specific wrapper around F_mpz_mat_col_partition.
 */
-int _F_mpz_mat_check_if_solved(F_mpz_mat_t M, ulong r, F_mpz_poly_factor_t final_fac, 
-	F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, F_mpz_t P, ulong exp, F_mpz_t lc, int safe);
+int _F_mpz_mat_check_if_solved(F_mpz_mat_t M, ulong r, 
+		 F_mpz_poly_factor_t final_fac, F_mpz_poly_factor_t lifted_fac, 
+		             F_mpz_poly_t F, F_mpz_t P, ulong exp, F_mpz_t lc, int safe);
 
 /*
    The actual factoring algorithm.  Set up to accept a prestarted matrix M (use the 
@@ -1411,8 +1460,9 @@ int _F_mpz_mat_check_if_solved(F_mpz_mat_t M, ulong r, F_mpz_poly_factor_t final
    Could be improved by not rechecking data and a partial Zassenhaus for some bizarre 
    cases (which I've yet to find or test).
 */
-int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor_t lifted_fac, 
-	F_mpz_poly_t F, F_mpz_t P, ulong exp, F_mpz_mat_t M, int * cexpo, long U_exp, int hensel_loops);
+int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, 
+			 F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, F_mpz_t P, 
+		ulong exp, F_mpz_mat_t M, int * cexpo, long U_exp, int hensel_loops);
 
 #ifdef __cplusplus
  }
