@@ -6246,7 +6246,7 @@ void F_mpz_poly_test_all()
 #if TESTFILE
 #endif
    RUN_TEST(F_mpz_poly_factor_test2);
-   RUN_TEST(F_mpz_poly_derivative); 
+/*   RUN_TEST(F_mpz_poly_derivative); 
    RUN_TEST(F_mpz_poly_content); 
    RUN_TEST(F_mpz_poly_eval_horner_d); 
    RUN_TEST(F_mpz_poly_eval_horner_d_2exp); 
@@ -6312,7 +6312,7 @@ void F_mpz_poly_test_all()
    RUN_TEST(F_mpz_poly_factor_squarefree);
    RUN_TEST(F_mpz_poly_factor_zassenhaus);
    RUN_TEST(F_mpz_poly_factor_test1);
-   
+*/   
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");
 }
