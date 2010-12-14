@@ -50,7 +50,6 @@
 #include "zmod_poly.h"
 #include "F_mpz_mod_poly.h"
 #include "F_mpz_mat.h"
-#include "F_mpz_LLL_fast_d.h"
 #include "F_mpz_LLL_wrapper.h"
 
 #define POLYPROFILE 0 // whether POLYPROFILE of factor related poly routines is needed
