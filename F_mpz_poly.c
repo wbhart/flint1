@@ -7453,9 +7453,9 @@ void F_mpz_poly_zassenhaus_naive(F_mpz_poly_factor_t final_fac,
 			// check if under M_bits... here I'm using a trial division...
             F_mpz_poly_clear(tryme);
             F_mpz_poly_init(tryme);
-            F_mpz_poly_fit_length(tryme, 1UL);
-            tryme->length = 1UL;
-            F_mpz_set(tryme->coeffs + 0, lc);
+            F_mpz_poly_fit_length(tryme, 1);
+            _F_mpz_poly_set_length(tryme, 1);
+			F_mpz_set(tryme->coeffs + 0, lc);
 
             for(l = 0; l < k; l++)
                F_mpz_poly_mul(tryme, tryme, lifted_fac->factors[sub_arr[l]]);
@@ -8358,8 +8358,8 @@ int _F_mpz_poly_try_to_solve(int num_facs, ulong * part,
    int i;
    for (i = 1; i <= num_facs; i++)
    {
-      F_mpz_poly_fit_length(tryme, 1UL);
-      tryme->length = 1UL;
+      F_mpz_poly_fit_length(tryme, 1);
+      _F_mpz_poly_set_length(tryme, 1);;
       F_mpz_set(tryme->coeffs + 0, lc);
       
 	  int j;
@@ -8372,8 +8372,7 @@ int _F_mpz_poly_try_to_solve(int num_facs, ulong * part,
          }
       }
    
-	  F_mpz_init(temp_lc);
-      F_mpz_poly_content(temp_lc, tryme);
+	  F_mpz_poly_content(temp_lc, tryme);
       F_mpz_poly_scalar_divexact(tryme, tryme, temp_lc);
       F_mpz_poly_factor_insert(trial_factors, tryme, 1UL);
    }
