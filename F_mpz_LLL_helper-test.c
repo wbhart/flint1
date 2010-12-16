@@ -213,6 +213,7 @@ int main()
    test_support_cleanup();
    
    flint_stack_cleanup();
+   _F_mpz_cleanup();
 
    return 0;
 }
