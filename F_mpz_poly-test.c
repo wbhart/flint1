@@ -5367,6 +5367,10 @@ int test_F_mpz_poly_start_continue_hensel_lift()
          F_mpz_poly_clear(v[i]);
          F_mpz_poly_clear(w[i]);
       }
+      
+	  free(link);
+      free(v);
+	  free(w);
 
 	  if (!result) 
 	  {
@@ -6255,7 +6259,7 @@ int test_F_mpz_poly_factor_test3()
    char filename[25];
 
    ulong count1;
-   for (count1 = 0; (count1 < 100*ITER) && (result == 1) ; count1++)
+   for (count1 = 0; (count1 < 30*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly);
       
@@ -6318,10 +6322,10 @@ void F_mpz_poly_test_all()
 
 #if TESTFILE
 #endif
-   //RUN_TEST(F_mpz_poly_factor_test3);
+   RUN_TEST(F_mpz_poly_factor_test3);
    RUN_TEST(F_mpz_poly_factor_test2);
-   /*RUN_TEST(F_mpz_poly_factor_test1);
-   RUN_TEST(F_mpz_poly_derivative); 
+   RUN_TEST(F_mpz_poly_factor_test1);
+   /*RUN_TEST(F_mpz_poly_derivative); 
    RUN_TEST(F_mpz_poly_content); 
    RUN_TEST(F_mpz_poly_eval_horner_d); 
    RUN_TEST(F_mpz_poly_eval_horner_d_2exp); 
@@ -6365,7 +6369,7 @@ void F_mpz_poly_test_all()
    RUN_TEST(F_mpz_poly_mul); 
    RUN_TEST(F_mpz_poly_mul_trunc_left); 
    RUN_TEST(F_mpz_poly_pow_ui); 
-   RUN_TEST(F_mpz_poly_pack_bytes); 
+   RUN_TEST(F_mpz_poly_pack_bytes); */
    RUN_TEST(F_mpz_poly_divrem_basecase); 
    RUN_TEST(F_mpz_poly_div_basecase); 
    RUN_TEST(F_mpz_poly_div_divconquer_recursive); 
@@ -6379,11 +6383,11 @@ void F_mpz_poly_test_all()
    RUN_TEST(F_mpz_poly_div_upper_trunc_modp); 
    RUN_TEST(F_mpz_poly_pseudo_divrem_basecase); 
    RUN_TEST(F_mpz_poly_pseudo_div_basecase); 
-   RUN_TEST(F_mpz_poly_hensel_lift_without_only_inverse);
+   /*RUN_TEST(F_mpz_poly_hensel_lift_without_only_inverse);
    RUN_TEST(F_mpz_poly_hensel_lift);
    RUN_TEST(F_mpz_poly_start_continue_hensel_lift);
    RUN_TEST(F_mpz_poly_hensel_lift_once);
-   RUN_TEST(F_mpz_poly_is_squarefree); 
+   RUN_TEST(F_mpz_poly_is_squarefree);
    RUN_TEST(F_mpz_poly_factor_squarefree);
    RUN_TEST(F_mpz_poly_factor_zassenhaus);*/
    
