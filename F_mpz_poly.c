@@ -23,7 +23,8 @@
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 
 ===============================================================================*/
-
+extern int clear_tag;
+   
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -55,7 +56,7 @@
 
 #define POLYPROFILE 0 // whether POLYPROFILE of factor related poly routines is needed
 #define CLDPROF 0 // whether POLYPROFILE of CLD computation is wanted
-#define WANT_DEFLATION 1 // whether the power hack should be used in factoring
+#define WANT_DEFLATION 0 // whether the power hack should be used in factoring
 #define TRACE 0 // whether debugging trace should be printed for factoring and related fns
 
 /*===========================================
@@ -1043,30 +1044,30 @@ void F_mpz_poly_scalar_mul(F_mpz_poly_t poly1, const F_mpz_poly_t poly2, const F
 	if ((*x == 0) || (poly2->length == 0)) 
 	{
 	   F_mpz_poly_zero(poly1);
-		return;
+	   return;
 	}
 	
 	// special case, muliply by 1
 	if (*x == 1L)
 	{
 	   F_mpz_poly_set(poly1, poly2);
-		return;
+	   return;
 	}
 	
 	// special case, muliply by -1
 	if (*x == -1L)
 	{
 	   F_mpz_poly_neg(poly1, poly2);
-		return;
+	   return;
 	}
 	
 	F_mpz_poly_fit_length(poly1, poly2->length);
 	
 	ulong i;
 	for (i = 0; i < poly2->length; i++) 
-   {
+    {
 		F_mpz_mul2(poly1->coeffs + i, poly2->coeffs + i, x);
-   }
+    }
 
 	_F_mpz_poly_set_length(poly1, poly2->length);
 }
@@ -6308,7 +6309,8 @@ int F_mpz_poly_div_trunc_modp(F_mpz_t * res, F_mpz_poly_t f,
    
       F_mpz_clear(tc_inv);
       F_mpz_clear(temp);
-      return 0;
+
+	  return 0;
    }
    
    F_mpz_poly_t tempg;
@@ -6378,7 +6380,7 @@ int F_mpz_poly_div_upper_trunc_modp(F_mpz_t * res, F_mpz_poly_t f,
    F_mpz_t temp, lc_inv;
    F_mpz_init(temp);
    F_mpz_init(lc_inv);
-
+   
    F_mpz_poly_t t_f, t_g;
    F_mpz_poly_init(t_f);
    F_mpz_poly_init(t_g);
@@ -6398,7 +6400,14 @@ int F_mpz_poly_div_upper_trunc_modp(F_mpz_t * res, F_mpz_poly_t f,
    inv_exists = F_mpz_invert(lc_inv, temp, P);
 
    if (!inv_exists)
-      return 0;
+   {
+	  F_mpz_clear(temp);
+	  F_mpz_clear(lc_inv);
+	  F_mpz_poly_clear(t_f);
+	  F_mpz_poly_clear(t_g);
+	  
+	  return 0;
+   }
 
    F_mpz_poly_t tempg;
    F_mpz_poly_init(tempg);
@@ -6440,7 +6449,7 @@ int F_mpz_poly_div_upper_trunc_modp(F_mpz_t * res, F_mpz_poly_t f,
    F_mpz_poly_clear(tempg);
    F_mpz_poly_clear(t_f);
    F_mpz_poly_clear(t_g);
-
+   
    F_mpz_clear(lc_inv);
    F_mpz_clear(temp);
    
@@ -6618,8 +6627,8 @@ void F_mpz_poly_build_hensel_tree(long * link, F_mpz_poly_t * v,
    long minp, mind;
    long tmp;
 
-   zmod_poly_t V[2*r - 2];
-   zmod_poly_t W[2*r - 2];
+   zmod_poly_t * V = malloc((2*r - 2)*sizeof(zmod_poly_t));
+   zmod_poly_t * W = malloc((2*r - 2)*sizeof(zmod_poly_t));
 
    for (i = 0; i < 2*r - 2; i++)
       zmod_poly_init(V[i], p);
@@ -6699,6 +6708,9 @@ void F_mpz_poly_build_hensel_tree(long * link, F_mpz_poly_t * v,
       zmod_poly_clear(W[i]);
 
    zmod_poly_clear(d);
+
+   free(V);
+   free(W);
 }
 
 /*
@@ -7134,6 +7146,10 @@ ulong _F_mpz_poly_start_hensel_lift(F_mpz_poly_factor_t lifted_fac, long * link,
 
    F_mpz_set_ui(P, p);
 
+#if TRACE
+   printf("building hensel tree\n");
+#endif
+
    F_mpz_poly_build_hensel_tree(link, v, w, local_fac);
    
    ulong current_exp = 1;
@@ -7184,13 +7200,21 @@ ulong _F_mpz_poly_start_hensel_lift(F_mpz_poly_factor_t lifted_fac, long * link,
    // exponent so num_steps - 2 means that the final time in the loop has 1 and 
    // one last time outside of the loop with 0
 
+#if TRACE
+   printf("doing lift\n");
+#endif
+
    for (i = 0; i < num_steps - 2; i++)
       F_mpz_poly_tree_hensel_lift(link, v, w, exponents[i], exponents[i + 1], monic_f, 1, p, r, P);
-   
+
    // Last run doesn't calculate the inverses
    if (num_steps > 1)
 	  F_mpz_poly_tree_hensel_lift(link, v, w, exponents[i], exponents[i + 1], monic_f, 0, p, r, P);
-   
+ 
+#if TRACE
+   printf("done lifts\n");
+#endif
+
    ulong prev_exp = exponents[i];
    
    F_mpz_poly_clear(monic_f);
@@ -7570,7 +7594,7 @@ void F_mpz_poly_factor_sq_fr_prim_internal(F_mpz_poly_factor_t final_fac,
             tryme = 0;
          else
 		 {
-            p = z_nextprime( p, 0);
+            p = z_nextprime(p, 0);
             zmod_poly_clear(F_tmp);
          }
          
@@ -7582,9 +7606,9 @@ void F_mpz_poly_factor_sq_fr_prim_internal(F_mpz_poly_factor_t final_fac,
 	  {
          printf("FLINT Warning: wasn't square_free after 200 primes, maybe an error\n");
          
-		 zmod_poly_clear(F_tmp);
-         zmod_poly_clear(F);
-         F_mpz_clear(lc);
+		 zmod_poly_clear(F);
+         zmod_poly_factor_clear(fac);
+		 F_mpz_clear(lc);
          
 		 return;
       }
@@ -7609,7 +7633,7 @@ void F_mpz_poly_factor_sq_fr_prim_internal(F_mpz_poly_factor_t final_fac,
          min_lead_coeff = lead_coeff;
       }
 
-      p = z_nextprime( p, 0);
+      p = z_nextprime(p, 0);
       zmod_poly_clear(F_tmp);
       zmod_poly_factor_clear(temp_fac);
    }
@@ -7761,6 +7785,10 @@ void F_mpz_poly_factor_sq_fr_prim_internal(F_mpz_poly_factor_t final_fac,
    hensel_start = clock();
 #endif
 
+#if TRACE
+   printf("Started hensel lift\n");
+#endif
+
    ulong prev_exp = _F_mpz_poly_start_hensel_lift(lifted_fac, link, v, w, f, fac, a);
 
 #if POLYPROFILE
@@ -7850,6 +7878,7 @@ void F_mpz_poly_factor_sq_fr_prim_internal(F_mpz_poly_factor_t final_fac,
    F_mpz_poly_factor_clear(lifted_fac);
 
    F_mpz_clear(P);
+   F_mpz_clear(lc);
    
    if (use_Hoeij_Novocin == 1)
       F_mpz_mat_clear(M);
@@ -7914,7 +7943,7 @@ void __F_mpz_poly_factor(F_mpz_poly_factor_t final_fac, F_mpz_t cong, F_mpz_poly
 
    // Could make other tests for x-1 or simple things 
    // maybe take advantage of the composition algorithm
-   F_mpz_poly_factor_init( sq_fr_fac );
+   F_mpz_poly_factor_init(sq_fr_fac);
    F_mpz_poly_factor_squarefree(sq_fr_fac, cong, g);
 
    // Now we can go through and factor each square free one and add it to final factors.
@@ -8600,6 +8629,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
       return_me = 1;
       F_mpz_clear(B);
       F_mpz_clear(lc);
+	  F_mpz_clear(P);
       F_mpz_mat_clear(col);
       
 	  return return_me;
@@ -8963,7 +8993,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
 
 		    printf(" spend a total of %f seconds on LLL so far newd=%ld\n", (double) lll_total / (double)CLOCKS_PER_SEC, newd);
 #endif
-            if (newd == 0)
+           if (newd == 0)
 			{
                printf("FLINT: Exception: newd == 0\n");
             

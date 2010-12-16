@@ -96,10 +96,19 @@ F_mpz _F_mpz_new_mpz(void)
 	return ret;
 }
 
+int clear_tag = 0;
+
 void _F_mpz_clear_mpz(F_mpz f)
 {
-   F_mpz_unused_arr[F_mpz_num_unused] = f;
-   F_mpz_num_unused++;	
+   if (clear_tag == 0)
+   {
+	  F_mpz_unused_arr[F_mpz_num_unused] = f;
+      F_mpz_num_unused++;
+   } else
+   {
+	 if (COEFF_IS_MPZ(f))
+	  mpz_clear(F_mpz_arr + COEFF_TO_OFF(f));
+   }
 }
 
 void _F_mpz_cleanup(void)

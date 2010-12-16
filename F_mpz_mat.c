@@ -89,9 +89,10 @@ void F_mpz_mat_clear(F_mpz_mat_t mat)
 {
    if (mat->entries) 
 	{
-		ulong i;
-		for (i = 0; i < mat->r * mat->c; i++) 
-			F_mpz_clear(mat->entries + i); // Clear all coefficients
+		ulong i, j;
+		for (i = 0; i < mat->r; i++)
+		   for (j = 0; j < mat->c; j++) 
+			  F_mpz_clear(mat->rows[i] + j); // Clear all coefficients
 		flint_heap_free(mat->entries); // clean up array of entries
 		flint_heap_free(mat->rows); // clean up row array
 	}
@@ -127,7 +128,7 @@ void F_mpz_mat_resize(F_mpz_mat_t mat, const ulong r, const ulong c)
 		{
 			ulong i, j;
 			for (i = 0; i < mat->r; i++)
-            for (j = c; j < mat->c; j++)
+               for (j = c; j < mat->c; j++)
 				   F_mpz_zero(mat->rows[i] + j);
 		} 
 
@@ -168,7 +169,7 @@ void F_mpz_mat_resize(F_mpz_mat_t mat, const ulong r, const ulong c)
 		   } 			
 		} else // need to alloc new rows
 		{
-         F_mpz * old_entries = mat->entries; // save pointer to old entries
+			F_mpz * old_entries = mat->entries; // save pointer to old entries
 
 			mat->entries = (mp_limb_t *) flint_heap_realloc(mat->entries, r*mat->c_alloc);
 			if (r > mat->r_alloc) mat->rows = (F_mpz **) flint_heap_realloc(mat->rows, r);
@@ -1216,7 +1217,11 @@ int F_mpz_mat_col_partition(ulong * part, F_mpz_mat_t M)
    while (start < M->c)
    {
 	  p++;
-	  if (p > M->r) return 0; // already too many partitions
+	  if (p > M->r) 
+	  {
+		 free(colh);
+		 return 0; // already too many partitions
+	  }
 
       part[colh[start].col] = p;
 	  for (upto = start + 1; upto < M->c; upto++)
