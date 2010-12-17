@@ -4903,14 +4903,17 @@ int test_F_mpz_poly_eval_horner_d()
       d2 = F_mpz_poly_eval_horner_d(F_poly1, val);
       
       /* this comparison shouldn't be needed, prolly a bug outside of flint */
-      result = (fabs((d1-d2)/d2) < 0.000000000000001);
+      if (fabs(d2) > 1.0e-14) /* don't divide by zero */
+	  {
+		 result = (fabs((d1-d2)/d2) < 1.0e-14);
 
-		if (!result) 
-		{
+		 if (!result) 
+		 {
 			printf("Error: length1 = %ld, bits1 = %ld, d1 = %.16f, d2 = %.16f, d1-d2 = %.128f\n", 
                                                     length1, bits1, d1, d2, d1-d2);
-         abort();
-		}
+            abort();
+		 }
+	  }
           
       F_mpz_poly_clear(F_poly1);
    }

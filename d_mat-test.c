@@ -127,7 +127,7 @@ int test__d_vec_scalar_product()
 
    double ** mat;
 
-   for (count1 = 0; count1 < 1000; count1++)
+   for (count1 = 0; count1 < 1000 && result; count1++)
    {
 	  ulong rows = z_randint(100) + 1;
       ulong cols = z_randint(100) + 2;
@@ -135,7 +135,7 @@ int test__d_vec_scalar_product()
       mat = d_mat_init(rows, cols);
       random_d_mat(mat, rows, cols);
      
-	  for (count2 = 0; count2 < 1000; count2++)
+	  for (count2 = 0; count2 < 1000 && result; count2++)
 	  {
 	     ulong r1 = z_randint(rows);
 		 ulong r2 = z_randint(rows);
@@ -143,10 +143,10 @@ int test__d_vec_scalar_product()
 		 double s2 = _d_vec_scalar_product(mat[r1] + cols - 1, mat[r2] + cols - 1, 1);
 		 double s3 = _d_vec_scalar_product(mat[r1], mat[r2], cols);
 
-		 result = ((s1 + s2) == s3);
+		 result = (fabs(s1 + s2 - s3) < 1.0e-14);
 		 if (!result)
 		 {
-			 printf("Error: %ld, %ld, %ld\n", s1, s2, s3);
+			 printf("Error: %lf, %lf, %lf, %lf\n", s1, s2, s3, (s1 + s2) - s3);
 			 break;
 		 }
 	  }
@@ -164,7 +164,7 @@ int test__d_vec_norm()
 
    double ** mat;
 
-   for (count1 = 0; count1 < 1000; count1++)
+   for (count1 = 0; count1 < 1000 && result; count1++)
    {
 	  ulong rows = z_randint(100) + 1;
       ulong cols = z_randint(100) + 2;
@@ -172,17 +172,17 @@ int test__d_vec_norm()
       mat = d_mat_init(rows, cols);
       random_d_mat(mat, rows, cols);
      
-	  for (count2 = 0; count2 < 1000; count2++)
+	  for (count2 = 0; count2 < 1000 && result; count2++)
 	  {
 	     ulong r1 = z_randint(rows);
 		 double s1 = _d_vec_norm(mat[r1], cols - 1);
 		 double s2 = _d_vec_norm(mat[r1] + cols - 1, 1);
 		 double s3 = _d_vec_norm(mat[r1], cols);
 
-		 result = ((s1 + s2) == s3);
+		 result = (fabs(s1 + s2 - s3) < 1.0e-14);
 		 if (!result)
 		 {
-			 printf("Error: %ld, %ld, %ld\n", s1, s2, s3);
+			 printf("Error: %lf, %lf, %lf\n", s1, s2, s3);
 			 break;
 		 }
 	  }
