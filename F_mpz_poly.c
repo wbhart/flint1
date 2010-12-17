@@ -53,7 +53,7 @@
 #include "F_mpz_LLL_wrapper.h"
 
 #define POLYPROFILE 1 // whether POLYPROFILE of factor related poly routines is needed
-#define CLDPROF 1 // whether POLYPROFILE of CLD computation is wanted
+#define CLDPROF 0 // whether POLYPROFILE of CLD computation is wanted
 #define WANT_DEFLATION 0 // whether the power hack should be used in factoring
 #define TRACE 1 // whether debugging trace should be printed for factoring and related fns
 
@@ -8907,7 +8907,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
             printf(" on column cur_col = %ld, real_col = %ld\n", cur_col, real_col);
 #endif
 #if POLYPROFILE
-            F_mpz_mat_print_pretty(M);
+//            F_mpz_mat_print_pretty(M);
             printf(" and B is "); F_mpz_print(B); printf("\n");
 #endif
             since_last = 0;
