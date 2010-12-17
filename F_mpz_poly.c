@@ -8376,7 +8376,7 @@ int _F_mpz_poly_try_to_solve(int num_facs, ulong * part,
       F_mpz_poly_content(temp_lc, tryme);
 #if TRACE
       F_mpz_print(temp_lc);
-      printf("the leftover from trial_factor %ld\n", i);
+      printf(" the leftover from trial_factor %ld\n", i);
 #endif
       F_mpz_poly_scalar_divexact(tryme, tryme, temp_lc);
       F_mpz_poly_factor_insert(trial_factors, tryme, 1UL);
@@ -8421,6 +8421,7 @@ int _F_mpz_poly_try_to_solve(int num_facs, ulong * part,
    F_mpz_poly_print(tryme); printf(" should be 1  lc\n");
 
    for (i = 0; i < trial_factors->num_factors; i++){
+      printf("ith factor has length == %ld\n", (trial_factors->factors[i])->length);
       F_mpz_poly_mul(tryme, tryme, trial_factors->factors[i]);
    }
 
