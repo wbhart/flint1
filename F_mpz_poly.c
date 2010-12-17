@@ -8363,7 +8363,7 @@ int _F_mpz_poly_try_to_solve(int num_facs, ulong * part,
    {
       F_mpz_poly_fit_length(tryme, 1);
       _F_mpz_poly_set_length(tryme, 1);
-      F_mpz_set(tryme->coeffs + 0, temp_lc);
+      F_mpz_set(tryme->coeffs + 0, lc);
       
 	  int j;
       for (j = 0; j < r; j++)
