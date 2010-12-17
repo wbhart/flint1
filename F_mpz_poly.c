@@ -7636,7 +7636,7 @@ void F_mpz_poly_factor_sq_fr_prim_internal(F_mpz_poly_factor_t final_fac,
    long U_exp = (long) ceil(log2((double) bit_r));;
    
    if (r*3 > f->length)
-      U_exp = (long) ceil(log2((double) bit_r));
+      U_exp = (long) 2;
 
    // TODO: try more primes might deduce irreducibility or find smaller r
    if (r > cutoff)
