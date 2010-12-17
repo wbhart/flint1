@@ -8357,11 +8357,12 @@ int _F_mpz_poly_try_to_solve(int num_facs, ulong * part,
    printf(" was lc\n");
 #endif
 
+   F_mpz_set(temp_lc, lc);
    for (i = 1; i <= num_facs; i++)
    {
       F_mpz_poly_fit_length(tryme, 1);
       _F_mpz_poly_set_length(tryme, 1);
-      F_mpz_set(tryme->coeffs + 0, lc);
+      F_mpz_set(tryme->coeffs + 0, temp_lc);
       
 	  int j;
       for (j = 0; j < r; j++)
