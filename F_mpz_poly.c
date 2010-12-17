@@ -54,7 +54,7 @@
 
 #define POLYPROFILE 0 // whether POLYPROFILE of factor related poly routines is needed
 #define CLDPROF 0 // whether POLYPROFILE of CLD computation is wanted
-#define WANT_DEFLATION 0 // whether the power hack should be used in factoring
+#define WANT_DEFLATION 1 // whether the power hack should be used in factoring
 #define TRACE 0 // whether debugging trace should be printed for factoring and related fns
 
 /*===========================================
@@ -7636,7 +7636,7 @@ void F_mpz_poly_factor_sq_fr_prim_internal(F_mpz_poly_factor_t final_fac,
    long U_exp = (long) ceil(log2((double) bit_r));;
    
    if (r*3 > f->length)
-      U_exp = (long) 2;
+      U_exp = (long) ceil(log2((double) bit_r));
 
    // TODO: try more primes might deduce irreducibility or find smaller r
    if (r > cutoff)
