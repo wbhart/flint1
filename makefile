@@ -32,7 +32,7 @@ else
 	INCS = -I$(FLINT_GMP_INCLUDE_DIR) -I$(FLINT_MPFR_INCLUDE_DIR) -I$(FLINT_NTL_INCLUDE_DIR)
 endif
 
-CFLAGS = $(INCS) $(FLINT_TUNE) -O2
+CFLAGS = $(INCS) $(FLINT_TUNE) -g -O2
 CFLAGS2 = $(INCS) $(FLINT_TUNE) -fopenmp -O2
 
 RM = rm -f
@@ -152,6 +152,8 @@ check: test
 	./mpfr_mat-test
 	./mpq_mat-test
 	./F_mpz_LLL_wrapper-test
+	./F_mpz_mod_poly-test
+	./F_mpz_poly-test
 
 profile: ZmodF_poly-profile kara-profile fmpz_poly-profile mpz_poly-profile ZmodF_mul-profile 
 

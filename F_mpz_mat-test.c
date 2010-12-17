@@ -3118,6 +3118,7 @@ int test_F_mpz_mat_window_init_clear()
          for (j = 0; j < cols; j++)
             F_mpz_zero(F_mat2->rows[i] + j);
 
+      F_mpz_mat_window_clear(F_mat2);
       F_mpz_mat_clear(F_mat);
    }
 
@@ -3179,6 +3180,7 @@ int main()
    test_support_cleanup();
    
    flint_stack_cleanup();
+   _F_mpz_cleanup();
 
    return 0;
 }

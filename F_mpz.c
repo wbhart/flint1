@@ -99,7 +99,7 @@ F_mpz _F_mpz_new_mpz(void)
 void _F_mpz_clear_mpz(F_mpz f)
 {
    F_mpz_unused_arr[F_mpz_num_unused] = f;
-   F_mpz_num_unused++;	
+   F_mpz_num_unused++;
 }
 
 void _F_mpz_cleanup(void)

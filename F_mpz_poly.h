@@ -367,11 +367,11 @@ static inline
 void _F_mpz_poly_set_length(F_mpz_poly_t poly, const ulong length)
 {
 	if (poly->length > length) // demote coefficients beyond new length
-   {
+    {
       ulong i;
       for (i = length; i < poly->length; i++)
 			_F_mpz_demote(poly->coeffs + i);	
-   } 
+    } 
 
 	poly->length = length;
 }
@@ -386,13 +386,13 @@ static inline
 void F_mpz_poly_truncate(F_mpz_poly_t poly, const ulong length)
 {
 	if (poly->length > length) // only truncate if necessary
-   {
-      ulong i;
-      for (i = length; i < poly->length; i++)
+    {
+       ulong i;
+       for (i = length; i < poly->length; i++)
 			_F_mpz_demote(poly->coeffs + i);
-		poly->length = length;
-      _F_mpz_poly_normalise(poly);
-   }  
+	   poly->length = length;
+       _F_mpz_poly_normalise(poly);
+    }  
 }
 
 /*===============================================================================
