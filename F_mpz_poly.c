@@ -8349,6 +8349,7 @@ int _F_mpz_poly_try_to_solve(int num_facs, ulong * part,
    F_mpz_poly_init(tryme);
    F_mpz_t temp_lc;
    F_mpz_init(temp_lc);
+   int i;
 
 #if TRACE
    printf(" not yet r = %ld\n", r);
@@ -8371,8 +8372,7 @@ int _F_mpz_poly_try_to_solve(int num_facs, ulong * part,
 
    F_mpz_poly_print(tryme); printf("if not 0 we have problems\n");
 #endif
- 
-   int i;
+
    for (i = 1; i <= num_facs; i++)
    {
       F_mpz_poly_fit_length(tryme, 1);
