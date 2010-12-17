@@ -8460,7 +8460,7 @@ int _F_mpz_poly_try_to_solve(int num_facs, ulong * part,
 		 return 1;
       }
 
-      F_mpz_poly_divrem_basecase(Q, R, f, trial_factors->factors[i]);
+      F_mpz_poly_divrem(Q, R, f, trial_factors->factors[i]);
 
       if (R->length == 0)
 	  {
