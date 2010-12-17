@@ -8358,7 +8358,7 @@ int _F_mpz_poly_try_to_solve(int num_facs, ulong * part,
    for (i = 1; i <= num_facs; i++)
    {
       F_mpz_poly_fit_length(tryme, 1);
-      _F_mpz_poly_set_length(tryme, 1);;
+      _F_mpz_poly_set_length(tryme, 1);
       F_mpz_set(tryme->coeffs + 0, lc);
       
 	  int j;
@@ -8405,6 +8405,24 @@ int _F_mpz_poly_try_to_solve(int num_facs, ulong * part,
 
 #if TRACE
    printf("nope not there trial_factors->num_factors = %ld\n", trial_factors->num_factors);
+
+   printf("extra checks\n");
+
+   F_mpz_poly_fit_length(tryme, 1);
+   _F_mpz_poly_set_length(tryme, 1);
+   F_mpz_set_ui(tryme->coeffs + 0, 1);
+
+   F_mpz_poly_print(tryme); printf(" should be 1  1\n");
+
+   for (i = 0; i < trial_factors->num_factors; i++){
+      F_mpz_poly_mul(tryme, tryme, trial_factors->factors[i]);
+   }
+
+   F_mpz_poly_scalar_smod(tryme, tryme, P);
+
+   F_mpz_poly_sub(tryme, tryme, f);
+
+   F_mpz_poly_print(tryme); printf("if not 0 we have problems\n");
 #endif
 
    F_mpz_poly_t f,Q,R;
