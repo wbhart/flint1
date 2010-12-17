@@ -8630,6 +8630,8 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    cld_data_start = clock();
 #endif
 
+   _F_mpz_poly_factor_CLD_mat(data, F, lifted_fac, P, num_coeffs);
+
 #if POLYPROFILE
    cld_data_stop = clock();
    cld_data_total = cld_data_total + cld_data_stop - cld_data_start;
