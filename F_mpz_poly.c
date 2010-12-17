@@ -8461,6 +8461,15 @@ int _F_mpz_poly_try_to_solve(int num_facs, ulong * part,
       }
 
       F_mpz_poly_divrem(Q, R, f, trial_factors->factors[i]);
+#if TRACE
+      printf(" testing the division\n");
+      F_mpz_poly_mul(tryme, Q, trial_factors->factors[i]);
+      F_mpz_poly_add(tryme, tryme, R);
+      F_mpz_poly_sub(tryme, tryme, f);
+
+      printf("length of tryme=%ld, length of R=%ld\n",tryme->length, R->length);
+
+#endif      
 
       if (R->length == 0)
 	  {
