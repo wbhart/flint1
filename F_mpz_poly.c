@@ -8370,7 +8370,7 @@ int _F_mpz_poly_try_to_solve(int num_facs, ulong * part,
 
    F_mpz_poly_sub(tryme, tryme, F);
 
-   F_mpz_poly_print(tryme); printf("if not 0 we have problems\n");
+   printf("length of tryme == %ld if not 0 we have problems\n", tryme->length);
 #endif
 
    for (i = 1; i <= num_facs; i++)
