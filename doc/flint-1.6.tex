@@ -72,23 +72,38 @@
 
 \section{Introduction}
 
-FLINT is a C library of functions for doing number theory. It is highly optimised and can be compiled on numerous platforms. FLINT also has the aim of providing support for multicore and multiprocessor computer architectures, though we do not yet provide this facility.
+FLINT is a C library of functions for doing number theory. It is highly optimised and can be compiled on
+numerous platforms. FLINT also has the aim of providing support for multicore and multiprocessor computer 
+architectures, though we do not yet provide this facility.
 
 FLINT is currently maintained by William Hart of Warwick University in the UK.
 
-As of version 1.1.0 FLINT supports 32 and 64 bit processors including x86, PPC, Alpha and Itanium processors, though in theory it compiles on any machine with GCC version 3.4 or later and with GMP version 4.2.1 or MPIR 0.9.0 or later.
+As of version 1.1.0 FLINT supports 32 and 64 bit processors including x86, PPC, Alpha and Itanium processors, 
+though in theory it compiles on any machine with GCC version 3.4 or later and with GMP version 5.0 or 
+MPIR 2.0 or later and with MPFR 3.0 or later.
 
-FLINT is supplied as a set of modules, \code{fmpz}, \code{fmpz_poly}, etc., each of which can be linked to a C program making use of their functionality. 
+FLINT is supplied as a set of modules, \code{fmpz}, \code{fmpz_poly}, etc., each of which can be linked to 
+a C program making use of their functionality. 
 
-All of the functions in FLINT have a corresponding test function provided in an appropriately named test file, e.g: all the functions in the file \code{fmpz_poly.c} have test functions in the file \code{fmpz_poly-test.c}.
+All of the functions in FLINT have a corresponding test function provided in an appropriately named test 
+file, e.g: all the functions in the file \code{fmpz_poly.c} have test functions in the file 
+\code{fmpz_poly-test.c}.
 
 \section{Building and using FLINT}
 
-The easiest way to use FLINT is to build a shared library. Simply download the FLINT tarball and untar it on your system.
+The easiest way to use FLINT is to build a shared library. Simply download the FLINT tarball and untar it
+on your system.
 
-FLINT requires GMP version 4.2.1 or later or MPIR version 0.9.0 or later (in GMP compatibility mode). Set the environment variables \code{FLINT_GMP_LIB_DIR} and \code{FLINT_GMP_INCLUDE_DIR} to point to your GMP or MPIR library and include directories respectively. Alternatively you can set default values for these environment variables in the \code{flint_env} file.
+FLINT requires GMP version 5.0 or later or MPIR version 2.0 or later (in GMP compatibility mode). Set the 
+environment variables \code{FLINT_GMP_LIB_DIR} and \code{FLINT_GMP_INCLUDE_DIR} to point to your GMP or 
+MPIR library and include directories respectively and \code{FLINT_MPFR_LIB_DIR} and 
+\code{FLINT_MPFR_INCLUDE_DIR} to point to your MPFR library and include directories respectively. 
+Alternatively you can set default values for these environment variables in the \code{flint_env} file.
 
-The \code{NTL-interface} module of FLINT requires NTL version 5.4.1 or later. However NTL is not required to build FLINT if this interface module is not required. To build with NTL set the environment variables \code{FLINT_NTL_LIB_DIR} and \code{FLINT_NTL_INCLUDE_DIR} to point to your NTL library and include directories respectively.
+The \code{NTL-interface} module of FLINT requires NTL version 5.4.1 or later. However NTL is not required 
+to build FLINT if this interface module is not required. To build with NTL set the environment variables 
+\code{FLINT_NTL_LIB_DIR} and \code{FLINT_NTL_INCLUDE_DIR} to point to your NTL library and include 
+directories respectively.
 
 Once the environment variables are set or defaults are set in \code{flint_env} simply type:
 
@@ -100,14 +115,20 @@ Finally type:
 
 \code{make library}
 
-Move the library file \code{libflint.so}, \code{libflint.dll} or \code{libflint.dylib} (depending on your platform) into your library path and move all the .h files in the main directory of FLINT into your include path.
+Move the library file \code{libflint.so}, \code{libflint.dll} or \code{libflint.dylib} (depending on 
+your platform) into your library path and move all the .h files in the main directory of FLINT into 
+your include path.
 
-Now to use FLINT, simply include the appropriate header files for the FLINT modules you wish to use in your C program. Then compile your program, linking against the FLINT library and GMP/MPIR with the options \code{-lflint -lgmp}.
+Now to use FLINT, simply include the appropriate header files for the FLINT modules you wish to use in 
+your C program. Then compile your program, linking against the FLINT library and GMP/MPIR and MPFR with the 
+options \code{-lflint -lmpfr -lgmp}.
 
-If you are using the \code{NTL-interface}, you will also need to link against NTL with the \code{-lntl} linker option.
+If you are using the \code{NTL-interface}, you will also need to link against NTL with the \code{-lntl}
+linker option.
 
 \section{Test code}
-Each module of FLINT has an extensive associated test module. We strongly recommend running the test programs before relying on results from FLINT on your system. 
+Each module of FLINT has an extensive associated test module. We strongly recommend running the test 
+programs before relying on results from FLINT on your system. 
 
 To make and run the test programs, simply type:
 
@@ -122,31 +143,51 @@ To test the \code{NTL-interface} module simply:
 \code{./NTL-interface-test}
 
 \section{Reporting bugs}
-The maintainer wishes to be made aware of any and all bugs. Please send an email with your bug report to hart\_wb@yahoo.com.
+The maintainer wishes to be made aware of any and all bugs. Please send an email with your bug report to 
+hart\_wb@yahoo.com.
 
-If possible please include details of your system, version of gcc, version of GMP/MPIR and precise details of how to replicate the bug.
+If possible please include details of your system, version of gcc, version of GMP/MPIR and MPFR and precise 
+details of how to replicate the bug.
 
-Note that FLINT needs to be linked against version 4.2.1 or later of GMP or version 0.9.0 or later of MPIR (in GMP compatibility mode) and must be compiled with gcc version 3.4 or later. In particular the compiler must be fully C99 compatible.
+Note that FLINT needs to be linked against version 5.0 or later of GMP or version 2.0 or later of MPIR 
+(in GMP compatibility mode) and version 3.0 or later of MPFR and must be compiled with gcc version 3.4 
+or later. In particular the compiler must be fully C99 compatible.
 
 \section{Example programs}
 
-FLINT comes with a number of example programs to demonstrate current and future FLINT features. To make the example programs, type:
+FLINT comes with a number of example programs to demonstrate current and future FLINT features. To make the
+example programs, type:
 
 \code{make examples}
 
 The current example programs are:
 
-\code{delta_qexp} Compute the first $n$ terms of the delta function, e.g. \code{delta_qexp 1000000} will compute the first one million terms of the $q$-expansion of delta.
+\code{delta_qexp} Compute the first $n$ terms of the delta function, e.g. \code{delta_qexp 1000000} 
+will compute the first one million terms of the $q$-expansion of delta.
 
-\code{BPTJCubes} Implements the algorithm of Beck, Pine, Tarrant and Jensen for finding solutions to the equation $x^3+y^3+z^3 = k$. This program outputs a file output.log containing parameters for reconstructing the first solution it finds, and then aborts.
+\code{BPTJCubes} Implements the algorithm of Beck, Pine, Tarrant and Jensen for finding solutions to 
+the equation $x^3+y^3+z^3 = k$. This program outputs a file output.log containing parameters for
+reconstructing the first solution it finds, and then aborts.
 
-\code{bernoulli_zmod} Compute many bernoulli numbers modulo a prime. If no command line input is supplied it merely checks that the bernoulli\_zmod function works for the first 2000 primes. If you specify an integer argument \code{n} on the command line, it computes the Bernoulli numbers $B_0, B_2, ..., B_{p-1}$ modulo \code{p}, where \code{p} is the next prime from \code{n}.
+\code{bernoulli_zmod} Compute many bernoulli numbers modulo a prime. If no command line input is 
+supplied it merely checks that the bernoulli\_zmod function works for the first 2000 primes. If 
+you specify an integer argument \code{n} on the command line, it computes the Bernoulli numbers 
+$B_0, B_2, ..., B_{p-1}$ modulo \code{p}, where \code{p} is the next prime from \code{n}.
 
 \code{expmod} Computes a very large modular exponentiation. This is actually a basic pseudo primality test.
 
 \code{Zmul} Compares the output of the FLINT FFT with that of GMP for ever larger operands.
 
-\code{thetaproduct} Computes the congruent number theta function. To run this you need to have openmp on your machine, you need a recent version of gcc (e.g. 4.3.x or 4.4.x) and you need to export OMP\_NUM\_THREADS=16 or some factor of 16, depending on how many cores your machine has. The code also expects a directory /storage with PLENTY of space where temporary files will be created. Be warned that this code multiplies HUGE integers which do not fit into memory and much disk space is used. You also need a significant amount of memory on your machine, which must also be a 64 bit linux platform. Parameters can be changed at the top of the file thetaproduct.c. Primitive (squarefree) zeroes of the congruent number theta function curve will be computed up to MOD$*$LIMIT in the class K $\pmod{\mbox{MOD}}$. At present FILES1 and FILES2 must be equal. LIMIT must also be divisible by BLOCK and by BUNDLE$*$FILES1. The code is not currently designed to correctly handle small problems.  
+\code{thetaproduct} Computes the congruent number theta function. To run this you need to have OpenMP 
+on your machine, you need a recent version of gcc (4.4.2 or later) and you need to export 
+OMP\_NUM\_THREADS=16 or some factor of 16, depending on how many cores your machine has. The code also 
+expects a directory /storage with PLENTY of space where temporary files will be created. Be warned that 
+this code multiplies HUGE integers which do not fit into memory and much disk space is used. You also 
+need a significant amount of memory on your machine, which must also be a 64 bit linux platform. 
+Parameters can be changed at the top of the file thetaproduct.c. Primitive (squarefree) zeroes of the 
+congruent number theta function curve will be computed up to MOD$*$LIMIT in the class K $\pmod{\mbox{MOD}}$. 
+At present FILES1 and FILES2 must be equal. LIMIT must also be divisible by BLOCK and by BUNDLE$*$FILES1. 
+The code is not currently designed to correctly handle small problems.  
 
 \section{FLINT macros}
 In the file flint.h are various useful macros.
@@ -162,6 +203,8 @@ The macro constant \code{FLINT_D_BITS} is set at compile time to be the number o
 \code{FLINT_MAX(x, y)} returns the maximum of two \code{long} or two \code{unsigned long} values \code{x} and \code{y}.
 
 \code{FLINT_BIT_COUNT(x)} returns the number of binary bits required to represent an \code{unsigned long x}.
+
+\code{ulong} is a synonym for \code{unsigned long}.
 
 \section{The fmpz\_poly module}
 
@@ -1081,6 +1124,717 @@ void _fmpz_poly_attach_truncate(fmpz_poly_t output,
 Attach the \code{fmpz_poly_t} object \code{output} to the first $n$ coefficients of the polynomial \code{poly}. This is equivalent to notionally truncating the original polynomial to $n$ coefficients then attaching to the result without affecting the original polynomial.
 \end{quote}
 
+\section{The F\_mpz\_poly module}
+
+The \code{F_mpz_poly} module is a new FLINT polynomial module, based on the new \code{F_mpz_t} integer type
+(see below). Thus the new \code{F_mpz_poly_t} data type represents elements of $\Z[x]$. The \code{F_mpz_poly} 
+module provides routines for memory management, basic arithmetic, and conversions to/from other types.
+
+Each coefficient of an \code{F_mpz_poly_t} is an integer of the FLINT \code{F_mpz_t} type. There are two
+advantages to this model. Firstly, the \code{F_mpz_t} type is memory managed, so the user can manipulate
+individual coefficients of a polynomial without having to deal with tedious memory management. Secondly,
+a coefficient of an \code{F_mpz_poly_t} can be changed without changing the size of any of the other
+coefficients. 
+
+The \code{F_mpz_poly_t} type will become the main polynomial type in FLINT 2.0 and the \code{fmpz_poly_t}
+type will be unavailable. In most cases changing from one module to the other simply means renaming the
+functions from \code{fmpz_poly} to \code{F_mpz_poly}. To ease the transition, FLINT 2.0 will call the 
+new \code{F_mpz_poly} functions \code{fmpz_poly}, though there will be some minor differences in naming
+of some functions in comparison with both the old \code{fmpz_poly} and \code{F_mpz_poly} modules. Of 
+course the \code{F_mpz} functions will also be named \code{fmpz} in FLINT 2.0 to match.
+
+Unless otherwise specified, all functions in this section permit aliasing between their input arguments 
+and between their input and output arguments. 
+
+\subsection{Simple example}
+
+The following example computes the square of the polynomial $5x^3 - 1$. Note the extreme similarity to
+the example for the \code{fmpz_poly} module (above).
+
+\begin{lstlisting}
+#include "F_mpz_poly.h"
+ ....
+F_mpz_poly_t x, y;
+F_mpz_poly_init(x);
+F_mpz_poly_init(y);
+F_mpz_poly_set_coeff_ui(x, 3, 5);
+F_mpz_poly_set_coeff_si(x, 0, -1);
+F_mpz_poly_mul(y, x, x);
+F_mpz_poly_print(x); printf("\n");
+F_mpz_poly_print(y); printf("\n");
+F_mpz_poly_clear(x);
+F_mpz_poly_clear(y);
+\end{lstlisting}
+
+The output is:
+
+\begin{lstlisting}
+4  -1 0 0 5
+7  1 0 0 -10 0 0 25
+\end{lstlisting}
+
+\subsection{Definition of the F\_mpz\_poly\_t polynomial type}
+
+The \code{F_mpz_poly_t} type is a typedef for an array of length 1 of \code{F_mpz_poly_struct}'s. This 
+permits passing parameters of type \code{F_mpz_poly_t} `by reference' in a manner similar to the way 
+GMP integers of type \code{mpz_t} can be passed by reference. 
+
+In reality one never deals directly with the struct and simply deals with objects of type 
+\code{F_mpz_poly_t}. For simplicity we will think of an \code{F_mpz_poly_t} as a struct, though in
+ practice to access fields of this struct, one needs to dereference first, e.g. to access the 
+\code{length} field of an \code{F_mpz_poly_t} called \code{poly1} one writes \code{poly1->length}. 
+
+An \code{F_mpz_poly_t} is said to be \emph{normalised} if either \code{length == 0}, or if the 
+leading coefficient of the polynomial is nonzero. All \code{F_mpz_poly} functions expect their inputs 
+to be normalised, and unless otherwise specified they produce output that is normalised. 
+
+It is recommended that users do not access the fields of an \code{F_mpz_poly_t} or its coefficient 
+data directly, but make use of the functions designed for this purpose (detailed below).
+
+Functions in \code{F_mpz_poly} do all the memory management for the user. One does not need to specify 
+the maximum length or any coefficient sizes in advance before using a polynomial object. FLINT 
+reallocates space automatically as the computation proceeds, if more space is required. Each coefficient
+is also managed separately, being resized as needed, independently of the other coefficients.
+
+We now describe the functions available in \code{F_mpz_poly}.
+
+\subsection{Memory management}
+
+\begin{lstlisting}
+void F_mpz_poly_init(F_mpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Initialise a polynomial of length zero with zero allocated coefficients.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_poly_init2(F_mpz_poly_t poly, const ulong alloc)
+\end{lstlisting}
+\begin{quote}
+Initialise a polynomial of length zero with the given number of allocated coefficients. It is not 
+generally necessary to use this function, however it may be faster if the maximum number of coefficients
+a polynomial will have is known in advance.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_poly_realloc(F_mpz_poly_t poly, const ulong alloc)
+\end{lstlisting}
+\begin{quote}
+Reallocates \code{poly} to have space for precisely the given number of coefficients. If \code{alloc = 0}, 
+then the polynomial is cleared. If \code{alloc} is smaller than the current length of the polynomial
+the polynomial is truncated and normalised. It is generally not necessary to use this function, however
+it may be faster if the maximum number of coefficients is known in advance, and memory may be saved
+if a polynomial can be reallocated to a shorter length. 
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_poly_fit_length(F_mpz_poly_t poly, const ulong length)
+\end{lstlisting}
+\begin{quote}
+Expands \code{poly}, if necessary, so that it has space for the given number of coefficients. This function
+never shrinks the polynomial, only expands it. It is not generally necessary to use this function, but
+if the maximum length of a polynomial is known in advance, this can save some time in allocations.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_poly_clear(F_mpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Clear the polynomial \code{poly}, releasing any memory it was using. The polynomial may not be used again 
+until it is reinitialised.
+\end{quote}
+
+\subsection{Normalisation}
+
+\begin{lstlisting}
+void _F_mpz_poly_normalise(F_mpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Normalise \code{poly} so that the leading coefficient is nonzero or the polynomial has length zero. This 
+function is mainly used internally and should only be used by the user when manually modifying the
+internals of a \code{F_mpz_poly_t}.
+\end{quote}
+
+\subsection{Subpolynomials}
+
+\begin{lstlisting}
+void _F_mpz_poly_attach(F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
+\end{lstlisting}
+\begin{quote}
+Make \code{poly1} an alias for \code{poly2}. Note \code{poly1} must not be reallocated whilst \code{poly2} 
+is attached to it. Thus \code{poly1} may not be used as the output of an \code{F_mpz_poly} function.
+\end{quote}
+
+\begin{lstlisting}
+void _F_mpz_poly_attach_shift(F_mpz_poly_t poly1, 
+                             const F_mpz_poly_t poly2, const ulong n)
+\end{lstlisting}
+\begin{quote}
+Make \code{poly1} an alias for \code{poly2}, but starting at the given coefficient, i.e. as though 
+\code{poly2} had been shifted right by \code{n}. Note \code{poly1} must not be reallocated whilst 
+\code{poly2} is attached to it. Thus \code{poly1} may not be used as the output of an \code{F_mpz_poly} 
+function. If \code{n > poly2->length} then \code{poly1} will have length zero.
+\end{quote}
+
+\begin{lstlisting}
+void _F_mpz_poly_attach_truncate(F_mpz_poly_t poly1, 
+                            const F_mpz_poly_t poly2, const ulong n)
+\end{lstlisting}
+\begin{quote}
+Make \code{poly1} an alias for \code{poly2}, but as though \code{poly2} had been truncated to the given 
+number of coefficients \code{n}. Note \code{poly1} must not be reallocated whilst \code{poly2} is 
+attached to it. Thus \code{poly1} may not be used as the output of an \code{F_mpz_poly} function. If 
+\code{n > poly2->length} then \code{poly1->length} is set to \code{poly2->length}. The polynomial 
+\code{poly1} is normalised after truncation.
+\end{quote}
+
+\subsection{Coefficient operations}
+
+\begin{lstlisting}
+void F_mpz_poly_set_coeff_si(F_mpz_poly_t poly, 
+                                        ulong n, const long x)
+\end{lstlisting}
+\begin{quote}
+Set coefficient \code{n} of \code{poly} to the signed \code{long} value \code{x}. Coefficients are 
+numbered from the constant coefficient, starting at zero.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_poly_set_coeff_ui(F_mpz_poly_t poly, 
+                                       ulong n, const ulong x)
+\end{lstlisting}
+\begin{quote}
+Set coefficient \code{n} of \code{poly} to the \code{ulong} value \code{x}. Coefficients are 
+numbered from the constant coefficient, starting at zero.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_poly_set_coeff_mpz(F_mpz_poly_t poly, 
+                                       ulong n, const mpz_t x)
+\end{lstlisting}
+\begin{quote}
+Set coefficient \code{n} of \code{poly} to the \code{mpz_t} value \code{x}. Coefficients are 
+numbered from the constant coefficient, starting at zero.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_poly_set_coeff(F_mpz_poly_t poly, 
+                                     ulong n, const F_mpz_t x)
+\end{lstlisting}
+\begin{quote}
+Set coefficient \code{n} of \code{poly} to the \code{F_mpz_t} value \code{x}. Coefficients are 
+numbered from the constant coefficient, starting at zero.
+\end{quote}
+
+\begin{lstlisting}
+long F_mpz_poly_get_coeff_si(const F_mpz_poly_t poly, 
+                                                const ulong n)
+\end{lstlisting}
+\begin{quote}
+Return coefficient \code{n} of \code{poly} as a signed \code{long}. If \code{n} is greater than 
+the degree of poly, then zero is returned. The return value is undefined if the coefficient does
+not fit in a \code{long}.
+\end{quote}
+
+\begin{lstlisting}
+long F_mpz_poly_get_coeff_ui(const F_mpz_poly_t poly, 
+                                                const ulong n)
+\end{lstlisting}
+\begin{quote}
+Return coefficient \code{n} of \code{poly} as a \code{ulong}. If \code{n} is greater than 
+the degree of poly, then zero is returned. The return value is undefined if the coefficient does
+not fit in a \code{ulong}.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_poly_get_coeff_mpz(mpz_t x, 
+                       const F_mpz_poly_t poly, const ulong n)
+\end{lstlisting}
+\begin{quote}
+Return coefficient \code{n} of \code{poly} as an \code{mpz_t}. If \code{n} is greater than 
+the degree of poly, then zero is returned. 
+\end{quote}
+
+\begin{lstlisting}
+F_mpz * F_mpz_poly_get_coeff_ptr(F_mpz_poly_t poly, ulong n)
+\end{lstlisting}
+\begin{quote}
+Return a pointer to coefficient \code{n} of \code{poly}. Coefficients are numbered from the constant 
+coefficient, starting at zero. No check is made to verify that \code{n} is in range. The returned 
+pointer can be used in any function which accepts an \code{F_mpz_t} as the latter is merely a pointer
+to an \code{F_mpz}. Thus coefficients of an \code{F_mpz_poly_t} can be modified in situ. Note that
+modifying a coefficient of \code{poly} may leave the polynomial unnormalised. One should call 
+\code{_F_mpz_poly_normalise} in this case.
+\end{quote}
+
+\subsection{Attributes}
+
+\begin{lstlisting}
+long F_mpz_poly_degree(const F_mpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Returns the degree of the polynomial \code{poly}. If the polynomial is zero, then minus one is returned 
+for the degree.
+\end{quote}
+
+\begin{lstlisting}
+ulong F_mpz_poly_length(const F_mpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Returns the length of the polynomial \code{poly}. If the polynomial is zero, then zero is returned 
+for the length.
+\end{quote}
+
+\begin{lstlisting}
+long F_mpz_poly_max_bits1(const F_mpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Returns zero if any of the coefficients of \code{poly} are \code{mpz_t}'s. Otherwise, computes the 
+largest number of bits \code{n} that any coefficient has and returns \code{-n} if a negative coefficient 
+exists in \code{poly}, else it returns \code{n}. Zero is returned for the zero polynomial.
+\end{quote}
+
+\begin{lstlisting}
+long F_mpz_poly_max_bits(const F_mpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Computes the largest number of bits \code{n} that any coefficient of \code{poly} has and returns 
+\code{-n} if a negative coefficient exists in \code{poly}, else it returns \code{n}. Zero is 
+returned for the zero polynomial.
+\end{quote}
+
+\begin{lstlisting}
+ulong F_mpz_poly_max_limbs(const F_mpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Returns the largest number of limbs required to store the absolute value of coefficients of \code{poly}. 
+Zero is returned for the zero polynomial.
+\end{quote}
+
+\subsection{Truncation}
+
+\begin{lstlisting}
+void _F_mpz_poly_set_length(F_mpz_poly_t poly, const ulong length)
+\end{lstlisting}
+\begin{quote}
+In general it is unsafe to set the length of a polynomial by modifying its \code{length} attribute. 
+However, assuming that it is being set to a length which does not exceed its allocated length (e.g.
+\code{F_mpz_poly_fit_length} has been called first), this function will safely set the length of 
+poly to the given length. This function does not normalise the \code{poly} if truncation occurs. If
+that functionality is required, call \code{F_mpz_poly_truncate}, which is always safe.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_poly_truncate(F_mpz_poly_t poly, const ulong length)
+\end{lstlisting}
+\begin{quote}
+Truncate \code{poly} to the given length and normalise. If \code{length} is greater than or equal to
+the current length of \code{poly} nothing will happen.
+\end{quote}
+
+\subsection{Conversions}
+
+\begin{lstlisting}
+void F_mpz_poly_to_fmpz_poly(fmpz_poly_t f_poly, 
+                                   const F_mpz_poly_t F_poly)
+\end{lstlisting}
+\begin{quote}
+Convert an \code{F_mpz_poly_t F_poly} to an \code{fmpz_poly_t f_poly}.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_poly_to_F_mpz_poly(F_mpz_poly_t F_poly, 
+                                    const fmpz_poly_t f_poly)
+\end{lstlisting}
+\begin{quote}
+Convert an \code{fmpz_poly_t f_poly} to an \code{F_mpz_poly_t F_poly}.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_poly_to_zmod_poly(zmod_poly_t z_poly, 
+                                   const F_mpz_poly_t F_poly)
+\end{lstlisting}
+\begin{quote}
+Convert an \code{F_mpz_poly_t F_poly} to a \code{zmod_poly_t z_poly} by reducing modulo the modulus 
+of \code{z_poly}.
+\end{quote}
+
+\begin{lstlisting}
+void zmod_poly_to_F_mpz_poly(F_mpz_poly_t F_poly, 
+                                    const zmod_poly_t z_poly)
+\end{lstlisting}
+\begin{quote}
+Convert a \code{zmod_poly_t z_poly} to an \code{F_mpz_poly_t F_poly} by lifting the coefficients 
+from $\Z/n\Z$ to $\Z$, where \code{n} is the modulus of \code{z_poly}.
+\end{quote}
+
+\subsection{String conversions and I/O}
+
+The various string formats for polynomials in the \code{F_mpz_poly} module are identical to those
+of the \code{fmpz_poly} module (see the previous section for a description).
+
+\begin{lstlisting}
+int F_mpz_poly_from_string(F_mpz_poly_t poly, const char * s)
+\end{lstlisting}
+\begin{quote}
+Read a polynomial from a string. The return value will be one if a validly formatted string was
+read, otherwise zero will be returned.
+\end{quote}
+
+\begin{lstlisting}
+char * F_mpz_poly_to_string(const F_mpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Return a string representing \code{poly} in standard FLINT format.
+\end{quote}
+
+\begin{lstlisting}
+char * F_mpz_poly_to_string_pretty(const F_mpz_poly_t poly, 
+                                              const char * x)
+\end{lstlisting}
+\begin{quote}
+Return a string representing \code{poly} in pretty format (see the \code{fmpz_poly} module for
+details of the pretty format. The function takes a string representing the variable symbol 
+used to print the polynomial.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_poly_fprint(const F_mpz_poly_t poly, FILE * f)
+\end{lstlisting}
+\begin{quote}
+Prints the \code{F_mpz_poly_t poly} to a file stream \code{f} in standard FLINT format.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_poly_fprint_pretty(const F_mpz_poly_t poly, 
+                                    FILE * f, const char * x)
+\end{lstlisting}
+\begin{quote}
+Prints the \code{F_mpz_poly_t poly} to a file stream \code{f} in pretty format (see the 
+\code{fmpz_poly} module for details of the pretty format. The function takes a string representing 
+the variable symbol used to print the polynomial.
+\end{quote}
+
+\begin{lstlisting}
+int F_mpz_poly_fread(F_mpz_poly_t poly, FILE * f)
+\end{lstlisting}
+\begin{quote}
+Reads an \code{F_mpz_poly_t poly} from a file stream \code{f} in standard FLINT format. If a validly
+formatted polynomial string is read the function will return one, otherwise it will return zero.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_poly_print(F_mpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Prints the \code{F_mpz_poly_t poly} to \code{stdout} in standard FLINT format. No carriage return
+or line feed is issued by the function.
+\end{quote}
+
+\subsection{Assignment}
+
+\begin{lstlisting}
+void F_mpz_poly_zero(F_mpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Set \code{poly} to the zero polynomial.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_poly_zero_coeffs(F_mpz_poly_t poly, const ulong n)
+\end{lstlisting}
+\begin{quote}
+Zero the first \code{n} coefficient of \code{poly}. If \code{n} is greater than or equal to the 
+current length of \code{poly}, the polynomial is set to the zero polynomial.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_poly_set(F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
+\end{lstlisting}
+\begin{quote}
+Set \code{poly1} to equal \code{poly2}. Unless \code{poly1} and \code{poly2} are the same polynomial
+this function makes a copy of the data.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_poly_swap(F_mpz_poly_t poly1, F_mpz_poly_t poly2)
+\end{lstlisting}
+\begin{quote}
+Swap \code{poly1} and \code{poly2}. Note that this function efficiently swaps pointers and does
+not copy any actual data when performing the swap.
+\end{quote}
+
+\subsection{Comparison}
+
+\begin{lstlisting}
+int F_mpz_poly_equal(const F_mpz_poly_t poly1, 
+                                  const F_mpz_poly_t poly2)
+\end{lstlisting}
+\begin{quote}
+Return one if \code{poly1} and \code{poly2} are equal (arithmetically), otherwise returns zero.
+\end{quote}
+
+\subsection{Reverse}
+
+\begin{lstlisting}
+void F_mpz_poly_reverse(F_mpz_poly_t res, 
+               const F_mpz_poly_t poly, const ulong length)
+\end{lstlisting}
+\begin{quote}
+Treats \code{poly} as though it were the given length (with leading zeroes if necessary) and sets 
+\code{res} to the reverse polynomial, i.e. the polynomial of the given length with coefficients in
+the reverse order to \code{poly}.
+\end{quote}
+
+\subsection{Negation}
+
+\begin{lstlisting}
+void F_mpz_poly_neg(F_mpz_poly_t res, const F_mpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Set \code{res} to the negative of \code{poly}. The zero polynomial remains unchanged.
+\end{quote}
+
+\subsection{Addition/subtraction}
+
+\begin{lstlisting}
+void F_mpz_poly_add(F_mpz_poly_t res, 
+           const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
+\end{lstlisting}
+\begin{quote}
+Set \code{res} to the sum of \code{poly1} and \code{poly2}.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_poly_sub(F_mpz_poly_t res, 
+           const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
+\end{lstlisting}
+\begin{quote}
+Set \code{res} to the difference of \code{poly1} and \code{poly2}.
+\end{quote}
+
+\subsection{Shifting}
+
+\begin{lstlisting}
+void F_mpz_poly_left_shift(F_mpz_poly_t res,
+                       const F_mpz_poly_t poly, const ulong n)
+\end{lstlisting}
+\begin{quote}
+Multiplies \code{poly} by $x^n$ and sets \code{res} to the result.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_poly_right_shift(F_mpz_poly_t res,
+                       const F_mpz_poly_t poly, const ulong n)
+\end{lstlisting}
+\begin{quote}
+Divides \code{poly} by $x^n$, discards any remainder and sets \code{res} to the result.
+\end{quote}
+
+\subsection{Scalar multiplication}
+
+\begin{lstlisting}
+void F_mpz_poly_scalar_mul_ui(F_mpz_poly_t poly1,
+                                  F_mpz_poly_t poly2, ulong x)
+\end{lstlisting}
+\begin{quote}
+Multiply \code{poly2} by the \code{ulong x} and set \code{poly1} to the result.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_poly_scalar_mul_ui(F_mpz_poly_t poly1,
+                                  F_mpz_poly_t poly2, long x)
+\end{lstlisting}
+\begin{quote}
+Multiply \code{poly2} by the signed \code{long x} and set \code{poly1} to the result.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_poly_scalar_mul(F_mpz_poly_t poly1, 
+                   const F_mpz_poly_t poly2, const F_mpz_t x)
+\end{lstlisting}
+\begin{quote}
+Multiply \code{poly2} by the \code{F_mpz_t x} and set \code{poly1} to the result.
+\end{quote}
+
+\subsection{Scalar division}
+
+\begin{lstlisting}
+void F_mpz_poly_scalar_divexact(F_mpz_poly_t res,
+                                   F_mpz_poly_t f, F_mpz_t d)
+\end{lstlisting}
+\begin{quote}
+Divides polynomial \code{f} by the scalar \code{fmpz_t d}, assuming the division is exact and sets 
+\code{res} to the resulting quotient.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_poly_scalar_smod(F_mpz_poly_t res, 
+                                   F_mpz_poly_t f, F_mpz_t p)
+\end{lstlisting}
+\begin{quote}
+Reduce each coefficient of \code{f} modulo \code{p} and set \code{res} to the result, but normalise 
+each coefficient to be in the range \code{(-p/2, p/2]}, i.e. perform a symmetric modular reduction 
+of the coefficients.
+\end{quote}
+
+\subsection{Polynomial multiplication}
+
+\begin{lstlisting}
+void F_mpz_poly_mul(F_mpz_poly_t res, 
+          const F_mpz_poly_t poly1, const F_mpz_poly_t poly2)
+\end{lstlisting}
+\begin{quote}
+Multiply \code{poly1} by \code{poly2} and set \code{res} to the result. An attempt is made to choose 
+an optimal algorithm.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_poly_mul_trunc_left(F_mpz_poly_t res, 
+   const F_mpz_poly_t poly1, const F_mpz_poly_t poly2, 
+                                           const ulong trunc)
+\end{lstlisting}
+\begin{quote}
+Multiply \code{poly1} by \code{poly2} and set \code{res} to the result. An attempt is made to choose 
+the optimal algorithm. The lower \code{trunc} coefficients of \code{res} will either be correct or
+set to zero.
+\end{quote}
+
+\subsection{Powering}
+
+\begin{lstlisting}
+void F_mpz_poly_pow_ui(F_mpz_poly_t res, 
+                   const F_mpz_poly_t poly1, const ulong exp)
+\end{lstlisting}
+\begin{quote}
+Set \code{res} to \code{poly1}$^exp$.
+\end{quote}
+
+\subsection{Polynomial division}
+
+\begin{lstlisting}
+void F_mpz_poly_divrem(F_mpz_poly_t Q, F_mpz_poly_t R, 
+                   const F_mpz_poly_t A, const F_mpz_poly_t B)
+\end{lstlisting}
+\begin{quote}
+Return polynomials \code{Q} and \code{R} such that $B\times Q + R = A$, where each of the coefficients
+of $R$ beyond coefficient \code{B->length - 1} are reduced modulo the leading coefficient of \code{B}.
+If the division is exact or the leading coefficient of \code{B} is plus or minus one, the division is
+as per division over $\Q$ and the length of \code{R} will be at most \code{B->length - 1}.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_poly_div(F_mpz_poly_t Q, 
+                   const F_mpz_poly_t A, const F_mpz_poly_t B)
+\end{lstlisting}
+\begin{quote}
+Return a polynomial \code{Q} such that $B\times Q + R = A$ for some polynomial \code{R} which is not
+computed and where each of the coefficients of $R$ beyond coefficient \code{B->length - 1} would be
+reduced modulo the leading coefficient of \code{B}. If the division is exact or the leading coefficient 
+of \code{B} is plus or minus one, the division is as per division over $\Q$ and the length of \code{R} 
+would be at most \code{B->length - 1}.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_poly_divexact(F_mpz_poly_t Q, 
+                   const F_mpz_poly_t A, const F_mpz_poly_t B)
+\end{lstlisting}
+\begin{quote}
+Return \code{Q} assuming \code{A = B\times Q}, i.e. perform a division assuming that it is exact. The
+result is undefined if the division is not exact.
+\end{quote}
+
+\subsection{Derivative}
+
+\begin{lstlisting}
+void F_mpz_poly_derivative(F_mpz_poly_t der, F_mpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Set \code{der} to the derivative of \code{poly}.
+\end{quote}
+
+\subsection{Content}
+
+\begin{lstlisting}
+void F_mpz_poly_content(F_mpz_t c, const F_mpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Set \code{c} to the content of \code{poly}.
+\end{quote}
+
+\subsection{Evaluation}
+
+\begin{lstlisting}
+double F_mpz_poly_eval_horner_d(F_mpz_poly_t poly, double val)
+\end{lstlisting}
+\begin{quote}
+Evaluate \code{poly} at the \code{double val} and return the result. No cancellation checks are done. 
+The routine is naive and will return an approximate result which will not be anywhere near correct 
+unless there has been no cancellation.
+\end{quote}
+
+\begin{lstlisting}
+double F_mpz_poly_eval_horner_d_2exp(long * exp, 
+                                F_mpz_poly_t poly, double val)
+\end{lstlisting}
+\begin{quote}
+Computes the evaluation of \code{poly} at the \code{double val}, returning the result as a normalised 
+mantissa and an exponent. The result should be extremely close to the correct value, regardless of 
+cancellations, etc. However, it does not guarantee exact rounding (it uses \code{mpf_t}'s, not 
+\code{mpfr_t}'s internally). If \code{d} is the return value of the function, the evaluation is given 
+by $d*2^exp$. If \code{d == 0} then \code{exp} is undefined.
+\end{quote}
+
+\subsection{GCD}
+
+\begin{lstlisting}
+void F_mpz_poly_gcd(F_mpz_poly_t res, 
+                               F_mpz_poly_t f, F_mpz_poly_t g)
+\end{lstlisting}
+\begin{quote}
+Set \code{res} to the polynomial GCD of \code{f} and \code{g}. At the present moment this is merely
+a wrapper around the \code{fmpz_poly} GCD function for convenience.
+\end{quote}
+
+\subsection{Factoring}
+
+\begin{lstlisting}
+int F_mpz_poly_is_squarefree(F_mpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Return one if \code{poly} is squarefree, otherwise return zero.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_poly_factor_squarefree(F_mpz_poly_factor_t fac, 
+                           F_mpz_t content, F_mpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Factor \code{poly} into a product of squarefree factors with Gaussian content one and return the Gaussian
+content of \code{poly}.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_poly_factor_zassenhaus(F_mpz_poly_factor_t fac,
+                                   ulong exp, F_mpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Given a squarefree polynomial \code{poly} and an exponent \code{exp}, this function will factor \code{poly}
+using the Zassenhaus algorithm and merge the factors into \code{fac} raised to the exponent \code{exp}. The 
+Zassenhaus implementation is not highly optimised and will struggle with more than about ten actual factors, 
+and not too many more local factors.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_poly_factor(F_mpz_poly_factor_t fac, 
+		              F_mpz_t content, F_mpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Factor \code{poly} into irreducible factors with Gaussian content one and return the content of \code{poly}.
+No assumptions are made about \code{poly} and the algorithm is extremely efficient when there are a large
+number of local factors. It uses an algorithm due to Mark van Hoeij and Andy Novocin.
+\end{quote}
+
 \section{The fmpz module}
 The \code{fmpz} module is designed for manipulation of the FLINT flat multiprecision integer format \code{fmpz_t}. 
 
@@ -1498,7 +2252,7 @@ Clears temporary space \code{temp} used by multimodular and CRT functions using 
 void fmpz_multi_mod_ui(unsigned long * out, fmpz_t in, fmpz_comb_t comb, fmpz_t ** temp)
 \end{lstlisting}
 \begin{quote}
-Reduces the multiprecision integer \code{in} modulo each of the primes stored in the comb structure. The array \code{out} will be filled with the residues modulo these primes. The array temp is temporary space which must be provided by \code{fmpz\_comb\_temp\_init} and cleared by \code{fmpz\_comb\_temp\_clear}.
+Reduces the multiprecision integer \code{in} modulo each of the primes stored in the comb structure. The array \code{out} will be filled with the residues modulo these primes. The array temp is temporary space which must be provided by \code{fmpz_comb_temp_init} and cleared by \code{fmpz_comb_temp_clear}.
 \end{quote}
 
 \begin{lstlisting}
@@ -1506,14 +2260,14 @@ void fmpz_multi_CRT_ui_unsigned(fmpz_t output, unsigned long * residues,
                              fmpz_comb_t comb, fmpz_t ** comb_temp)
 \end{lstlisting}
 \begin{quote}
-This function takes a set of residues modulo the list of primes contained in the comb structure and reconstructs the unique unsigned multiprecision integer modulo the product of the primes which has these residues modulo the corresponding primes. The array temp is temporary space which must be provided by \code{fmpz\_comb\_temp\_init} and cleared by \code{fmpz\_comb\_temp\_clear}. 
+This function takes a set of residues modulo the list of primes contained in the comb structure and reconstructs the unique unsigned multiprecision integer modulo the product of the primes which has these residues modulo the corresponding primes. The array temp is temporary space which must be provided by \code{fmpz_comb_temp_init} and cleared by \code{fmpz_comb_temp_clear}. 
 \end{quote}
 
 \begin{lstlisting}
 void fmpz_multi_CRT_ui(fmpz_t output, unsigned long * residues, fmpz_comb_t comb, fmpz_t ** comb_temp)
 \end{lstlisting}
 \begin{quote}
-This function takes a set of residues modulo the list of primes contained in the comb structure and reconstructs a signed multiprecision integer modulo the product of the primes which has these residues modulo the corresponding primes. If $N$ is the product of all the primes then \code{output} is normalised to be in the range $[-(N-1)/2, N/2]$. The array temp is temporary space which must be provided by \code{fmpz\_comb\_temp\_init} and cleared by \code{fmpz\_comb\_temp\_clear}.
+This function takes a set of residues modulo the list of primes contained in the comb structure and reconstructs a signed multiprecision integer modulo the product of the primes which has these residues modulo the corresponding primes. If $N$ is the product of all the primes then \code{output} is normalised to be in the range $[-(N-1)/2, N/2]$. The array temp is temporary space which must be provided by \code{fmpz_comb_temp_init} and cleared by \code{fmpz_comb_temp_clear}.
 \end{quote}
 
 \subsection{Montgomery format}
@@ -2113,14 +2867,16 @@ Returns a pointer to a precomputed inverse of \code{p} for use with preinv funct
 \end{quote}
 
 \begin{lstlisting}
-void F_mpz_mod_preinv(F_mpz_t f, const F_mpz_t g, const F_mpz_t p, mp_srcptr pinv)
+void F_mpz_mod_preinv(F_mpz_t f, 
+       const F_mpz_t g, const F_mpz_t p, mp_srcptr pinv)
 \end{lstlisting}
 \begin{quote}
 Set \code{f} to \code{g} modulo \code{p} given a precomputed inverse \code{pinv}.
 \end{quote}
 
 \begin{lstlisting}
-void F_mpz_smod_preinv(F_mpz_t f, const F_mpz_t g, const F_mpz_t h, mp_srcptr pinv)
+void F_mpz_smod_preinv(F_mpz_t f, 
+        const F_mpz_t g, const F_mpz_t h, mp_srcptr pinv)
 \end{lstlisting}
 \begin{quote}
 Set \code{f} to the symmetric modulus of \code{g} modulo \code{h} given a precomputed inverse \code{pinv}, i.e. \code{f} modulo \code{g} with values chosen in the range \code{(-g/2, g/2]}..
@@ -2190,7 +2946,7 @@ Free temporary space allocated for use with a comb.
 
 \begin{lstlisting}
 void F_mpz_multi_mod_ui(ulong * out, F_mpz_t f, 
-                      F_mpz_comb_t comb, F_mpz ** comb_temp, F_mpz_t temp)
+                  F_mpz_comb_t comb, F_mpz ** comb_temp, F_mpz_t temp)
 \end{lstlisting}
 \begin{quote}
 Reduce the \code{F_mpz_t f} modulo each of the primes associated with the comb and output the residues in an array. Requires a comb, temporary space allocated by the function above and a temporary \code{F_mpz_t} to be passed in.
@@ -2198,7 +2954,7 @@ Reduce the \code{F_mpz_t f} modulo each of the primes associated with the comb a
 
 \begin{lstlisting}
 void F_mpz_multi_CRT_ui_unsigned(F_mpz_t output, ulong * residues, 
-        F_mpz_comb_t comb, F_mpz ** comb_temp, F_mpz_t temp, F_mpz_t temp2)
+    F_mpz_comb_t comb, F_mpz ** comb_temp, F_mpz_t temp, F_mpz_t temp2)
 \end{lstlisting}
 \begin{quote}
 Given an array of residues mod primes associated with a comb, compute an integer which has those residues mod those primes. Requires a comb, temporary space for a comb, as allocated by the function above, and two temporary \code{F_mpz_t}'s. The output integer is assumed to be unsigned.
@@ -2206,7 +2962,7 @@ Given an array of residues mod primes associated with a comb, compute an integer
 
 \begin{lstlisting}
 void F_mpz_multi_CRT_ui(F_mpz_t output, ulong * residues, 
-        F_mpz_comb_t comb, F_mpz ** comb_temp, F_mpz_t temp, F_mpz_t temp2)
+    F_mpz_comb_t comb, F_mpz ** comb_temp, F_mpz_t temp, F_mpz_t temp2)
 \end{lstlisting}
 \begin{quote}
 Given an array of residues mod primes associated with a comb, compute an integer which has those residues mod those primes. Requires a comb, temporary space for a comb, as allocated by the function above, and two temporary \code{F_mpz_t}'s. The output integer is assumed to be signed.
@@ -3309,7 +4065,7 @@ One must then include \code{NTL-interface.o} in the list of files to link when c
 
 \begin{lstlisting}
 g++ myprog.cpp NTL-interface.o -o myprog -O2 -I$FLINT_GMP_INCLUDE_DIR \
--I$FLINT_NTL_INCLUDE_DIR -L$FLINT_GMP_LIB_DIR -L$FLINT_NTL_LIB_FIR \
+-I$FLINT_NTL_INCLUDE_DIR -L$FLINT_GMP_LIB_DIR -L$FLINT_NTL_LIB_DIR \
 -lflint -lntl -lgmp
 \end{lstlisting}
 
