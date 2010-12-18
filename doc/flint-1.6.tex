@@ -23,7 +23,7 @@
 \usepackage{url}
 \usepackage{hyperref}
 \usepackage{listings}
-\usepackage{wrapfig}
+%\usepackage{wrapfig}
 \urlstyle{sf}
 
 \addtolength{\oddsidemargin}{-0.75in}
@@ -59,7 +59,7 @@
 %\email{w.b.hart@maths.warwick.ac.uk}
 
 \title{FLINT 1.6: Fast Library for Number Theory}
-\author{William B. Hart and David Harvey}
+\author{William B. Hart and Andy Novocin}
 
 \begin{document}
 \maketitle
@@ -1664,6 +1664,13 @@ void F_mpz_clear(F_mpz_t f)
 Clear the given \code{F_mpz_t}.
 \end{quote}
 
+\begin{lstlisting}
+void _F_mpz_cleanup()
+\end{lstlisting}
+\begin{quote}
+The \code{F_mpz} module creates a global cache of \code{F_mpz}'s which get saved by the memory manager for resuse. In order to clean up the cache (say at the end of a program) one calls this function with no arguments. All memory used to allocate such \code{F_mpz}'s will be freed.
+\end{quote}
+
 \subsection{Random generation}
 
 At the present moment the following random generation functions are provided for convenience only. They are not intended to be efficient and their prototypes may change in a later version of FLINT.
@@ -1689,13 +1696,6 @@ void F_mpz_zero(F_mpz_t f)
 \end{lstlisting}
 \begin{quote}
 Set the given \code{F_mpz_t} to zero.
-\end{quote}
-
-\begin{lstlisting}
-void F_mpz_neg(F_mpz_t f, F_mpz_t g)
-\end{lstlisting}
-\begin{quote}
-Set \code{f} to minus \code{g}. 
 \end{quote}
 
 \begin{lstlisting}
@@ -1741,10 +1741,59 @@ Return \code{f} as a signed normalised double and a long exponent.
 \end{quote}
 
 \begin{lstlisting}
+double F_mpz_get_d(const F_mpz_t f)
+\end{lstlisting}
+\begin{quote}
+Return \code{f} as a signed double precision floating point number. The value is truncated (rounded towards zero). The exponent of the double is limited to the range -1023 to 1023 inclusive as usual.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_get_mpf(mpf_t m, const F_mpz_t f)
+\end{lstlisting}
+\begin{quote}
+Sets \code{m} to the \code{mpf_t} value of \code{f}.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_get_mpfr(mpfr_t m, const F_mpz_t f)
+\end{lstlisting}
+\begin{quote}
+Sets \code{m} to the \code{mpfr_t} value of \code{f} to the current precision of \code{m}.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_set_d(F_mpz_t f, double d)
+\end{lstlisting}
+\begin{quote}
+Sets \code{f} to the integer part of the double \code{d}.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_set_d_2exp(F_mpz_t f, double d, long exp)
+\end{lstlisting}
+\begin{quote}
+Sets \code{f} to the integer part of \code{d}$\times 2^{exp}$.
+\end{quote}
+
+\begin{lstlisting}
 void F_mpz_set_mpz(F_mpz_t f, const mpz_t x)
 \end{lstlisting}
 \begin{quote}
 Sets \code{f} to the given \code{mpz_t}.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_set_mpfr(F_mpz_t f, const mpfr_t x)
+\end{lstlisting}
+\begin{quote}
+Sets \code{f} to the value of the \code{mpfr_t x} rounded down.
+\end{quote}
+
+\begin{lstlisting}
+int F_mpz_set_mpfr_2exp(F_mpz_t f, const mpfr_t x)
+\end{lstlisting}
+\begin{quote}
+Sets \code{f} to the stored mantissa of the \code{mpfr_t x} and return an exponent \code{exp} so that $x = f\times 2^{exp}$.
 \end{quote}
 
 \begin{lstlisting}
@@ -1755,7 +1804,7 @@ Sets \code{f} to the array of limbs \code{x} which is the given number of limbs 
 \end{quote}
 
 \begin{lstlisting}
-ulong F_mpz_set_limbs(const mp_limb_t * x, F_mpz_t f)
+ulong F_mpz_get_limbs(const mp_limb_t * x, F_mpz_t f)
 \end{lstlisting}
 \begin{quote}
 Sets the array of limbs \code{x} to the absolute value of \code{f}. The array is assumed to be stored with least significant limb first. The number of limbs written is returned.
@@ -1798,6 +1847,27 @@ int F_mpz_cmp(const F_mpz_t f, const F_mpz_t g)
 Returns a negative value if \code{f < g}, positive if \code{f > g} and returns 0 if the two values are equal.
 \end{quote}
 
+\begin{lstlisting}
+int F_mpz_is_zero(const F_mpz_t f)
+\end{lstlisting}
+\begin{quote}
+Returns 1 if \code{f} is zero, 0 otherwise.
+\end{quote}
+
+\begin{lstlisting}
+int F_mpz_is_one(const F_mpz_t f)
+\end{lstlisting}
+\begin{quote}
+Returns 1 if \code{f} is one, 0 otherwise.
+\end{quote}
+
+\begin{lstlisting}
+int F_mpz_is_m1(const F_mpz_t f)
+\end{lstlisting}
+\begin{quote}
+Returns 1 if \code{f} is minus one, 0 otherwise.
+\end{quote}
+
 \subsection{Properties of integers}
 
 \begin{lstlisting}
@@ -1812,13 +1882,6 @@ int F_mpz_sgn(const F_mpz_t f)
 \end{lstlisting}
 \begin{quote}
 Returns 1 if \code{f} is positive, -1 if it is negative and 0 if \code{f} is zero.
-\end{quote}
-
-\begin{lstlisting}
-int F_mpz_is_zero(const F_mpz_t f)
-\end{lstlisting}
-\begin{quote}
-Returns 1 if \code{f} is zero, 0 otherwise.
 \end{quote}
 
 \begin{lstlisting}
@@ -1855,6 +1918,29 @@ void F_mpz_read(F_mpz_t x)
 \end{lstlisting}
 \begin{quote}
 Read an \code{F_mpz_t} from stdin. The integer can be a signed multiprecision integer in decimal format.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_sscanf(F_mpz_t x, char * str)
+\end{lstlisting}
+\begin{quote}
+Read an \code{F_mpz_t} from the given string. The integer can be a signed multiprecision integer in decimal format.
+\end{quote}
+
+\subsection{Basic arithmetic}
+
+\begin{lstlisting}
+void F_mpz_neg(F_mpz_t f, F_mpz_t g)
+\end{lstlisting}
+\begin{quote}
+Set \code{f} to minus \code{g}. 
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_abs(F_mpz_t f, F_mpz_t g)
+\end{lstlisting}
+\begin{quote}
+Set \code{f} to the absolute value of \code{g}. 
 \end{quote}
 
 \subsection{Addition/subtraction}
@@ -1962,10 +2048,24 @@ Divide \code{g} by \code{2^exp} and set \code{f} to the result. Rounding is towa
 \end{quote}
 
 \begin{lstlisting}
+void F_mpz_mod_ui(F_mpz_t f, const F_mpz_t g, const ulong h)
+\end{lstlisting}
+\begin{quote}
+Set \code{f} to \code{g} modulo \code{h}.
+\end{quote}
+
+\begin{lstlisting}
 void F_mpz_mod(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
 \end{lstlisting}
 \begin{quote}
 Set \code{f} to \code{g} modulo \code{h}.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_smod(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
+\end{lstlisting}
+\begin{quote}
+Set \code{f} to the symmetric modulus of \code{g} modulo \code{h}, i.e. \code{f} modulo \code{g} with values chosen in the range \code{(-g/2, g/2]}..
 \end{quote}
 
 \begin{lstlisting}
@@ -1983,6 +2083,13 @@ Set \code{f} to \code{g} divided by \code{h}, rounded down towards minus infinit
 \end{quote}
 
 \begin{lstlisting}
+void F_mpz_fdiv_qr(F_mpz_t q, F_mpz_t r, const F_mpz_t g, const F_mpz_t h)
+\end{lstlisting}
+\begin{quote}
+Set \code{q} to \code{g} divided by \code{h}, rounded down towards minus infinity and set \code{r} to the remainder.
+\end{quote}
+
+\begin{lstlisting}
 void F_mpz_cdiv_q(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
 \end{lstlisting}
 \begin{quote}
@@ -1996,6 +2103,36 @@ void F_mpz_rdiv_q(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
 Set \code{f} to \code{g} divided by \code{h}, rounded to nearest, ties rounded towards positive infinity.
 \end{quote}
 
+\subsection{Precomputed inverse}
+
+\begin{lstlisting}
+mp_ptr F_mpz_precompute_inverse(F_mpz_t p)
+\end{lstlisting}
+\begin{quote}
+Returns a pointer to a precomputed inverse of \code{p} for use with preinv functions. The value \code{p} must be positive.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_mod_preinv(F_mpz_t f, const F_mpz_t g, const F_mpz_t p, mp_srcptr pinv)
+\end{lstlisting}
+\begin{quote}
+Set \code{f} to \code{g} modulo \code{p} given a precomputed inverse \code{pinv}.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_smod_preinv(F_mpz_t f, const F_mpz_t g, const F_mpz_t h, mp_srcptr pinv)
+\end{lstlisting}
+\begin{quote}
+Set \code{f} to the symmetric modulus of \code{g} modulo \code{h} given a precomputed inverse \code{pinv}, i.e. \code{f} modulo \code{g} with values chosen in the range \code{(-g/2, g/2]}..
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_preinv_clear(mp_ptr pinv)
+\end{lstlisting}
+\begin{quote}
+Free the memory allocated for a precomputed inverse.
+\end{quote}
+
 \subsection{Powering}
 
 \begin{lstlisting}
@@ -2003,6 +2140,76 @@ void F_mpz_pow_ui(F_mpz_t f, const F_mpz_t g, const ulong exp)
 \end{lstlisting}
 \begin{quote}
 Set \code{f} to \code{g} to the power \code{exp}. If 0 is raised to the power 0, the result will be 1.
+\end{quote}
+
+\subsection{GCD and inverse}
+
+\begin{lstlisting}
+void F_mpz_gcd(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
+\end{lstlisting}
+\begin{quote}
+Set \code{f} to the greatest common divisor of \code{g} and \code{h}. If both inputs are negative, the output will be negative.
+\end{quote}
+
+\begin{lstlisting}
+int F_mpz_invert(F_mpz_t f, const F_mpz_t g, const F_mpz_t h)
+\end{lstlisting}
+\begin{quote}
+Set \code{f} to the inverse of \code{g} modulo \code{|h|} if it exists and return 1. If the inverse does not exist, return 0. We normalise with $0 \leq f < |h|$.
+\end{quote}
+
+\subsection{Multimodular reduction and CRT}
+
+\begin{lstlisting}
+void F_mpz_comb_init(F_mpz_comb_t comb, ulong * primes, ulong num_primes)
+\end{lstlisting}
+\begin{quote}
+Initialise a comb for use with multimodular reduction and CRT. The array \code{primes} is a list of \code{num_primes} primes which will be used in the multimodular reduction and CRT.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_comb_clear(F_mpz_comb_t comb)
+\end{lstlisting}
+\begin{quote}
+Free a comb, releasing any memory allocated for it.
+\end{quote}
+
+\begin{lstlisting}
+F_mpz ** F_mpz_comb_temp_init(F_mpz_comb_t comb)
+\end{lstlisting}
+\begin{quote}
+Allocate and initialise temporary space for use with a comb, required by the multimodular reduction and CRT routines.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_comb_temp_free(F_mpz_comb_t comb, F_mpz ** comb_temp)
+\end{lstlisting}
+\begin{quote}
+Free temporary space allocated for use with a comb.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_multi_mod_ui(ulong * out, F_mpz_t f, 
+                      F_mpz_comb_t comb, F_mpz ** comb_temp, F_mpz_t temp)
+\end{lstlisting}
+\begin{quote}
+Reduce the \code{F_mpz_t f} modulo each of the primes associated with the comb and output the residues in an array. Requires a comb, temporary space allocated by the function above and a temporary \code{F_mpz_t} to be passed in.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_multi_CRT_ui_unsigned(F_mpz_t output, ulong * residues, 
+        F_mpz_comb_t comb, F_mpz ** comb_temp, F_mpz_t temp, F_mpz_t temp2)
+\end{lstlisting}
+\begin{quote}
+Given an array of residues mod primes associated with a comb, compute an integer which has those residues mod those primes. Requires a comb, temporary space for a comb, as allocated by the function above, and two temporary \code{F_mpz_t}'s. The output integer is assumed to be unsigned.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_multi_CRT_ui(F_mpz_t output, ulong * residues, 
+        F_mpz_comb_t comb, F_mpz ** comb_temp, F_mpz_t temp, F_mpz_t temp2)
+\end{lstlisting}
+\begin{quote}
+Given an array of residues mod primes associated with a comb, compute an integer which has those residues mod those primes. Requires a comb, temporary space for a comb, as allocated by the function above, and two temporary \code{F_mpz_t}'s. The output integer is assumed to be signed.
 \end{quote}
 
 \section{The zmod\_poly module}
@@ -2669,6 +2876,8 @@ The functions which begin \code{z_ll_} generally take a parameter consisting of 
 
 Many of the functions in this module can be used to manipulate the individual coefficients of polynomials of type \code{zmod_poly_t}.
 
+\subsection{Precomputed inverses}
+
 \begin{lstlisting}
 pre_inv_t z_precompute_inverse(unsigned long n)
 
@@ -2679,6 +2888,18 @@ pre_inv_ll_t z_ll_precompute_inverse2(unsigned long n)
 \begin{quote}
 Return a precomputed inverse of the integer \code{n}. The first version returns a \code{pre_inv_t}, which is used with functions taking parameters up to \code{FLINT_D_BITS}. The second version returns a \code{pre_inv2_t} for use with function with second versions of functions taking a precomputed inverse, which support parameters up to \code{FLINT_BITS - 1} bits. The third version returns an inverse suitable for use with \code{z_ll_} functions which support an operand consisting of two \code{unsigned long}'s for twice the normal integer precision.
 \end{quote}
+
+\subsection{Fast division}
+
+\begin{lstlisting}
+unsigned long z_div2_precomp(unsigned long a, unsigned long n, 
+                                                  pre_inv2_t ninv)
+\end{lstlisting}
+\begin{quote}
+Return the floor of the quotient of \code{a} by \code{n}. There are no restrictions on the size of \code{a}.
+\end{quote}
+
+\subsection{Modulo arithmetic}
 
 \begin{lstlisting}
 unsigned long z_addmod(unsigned long a, unsigned long b, 
@@ -2701,14 +2922,6 @@ unsigned long z_negmod(unsigned long a, unsigned long p)
 \end{lstlisting}
 \begin{quote}
 Return minus \code{a} modulo \code{p}. The value \code{a} is assumed to be reduced modulo \code{p} when calling this function. 
-\end{quote}
-
-\begin{lstlisting}
-unsigned long z_div2_precomp(unsigned long a, unsigned long n, 
-                                                  pre_inv2_t ninv)
-\end{lstlisting}
-\begin{quote}
-Return the floor of the quotient of \code{a} by \code{n}. There are no restrictions on the size of \code{a}.
 \end{quote}
 
 \begin{lstlisting}
@@ -2735,7 +2948,16 @@ unsigned long z_mulmod2_precomp(unsigned long a, unsigned long b,
 \begin{quote}
 Return \code{a} times \code{b} modulo \code{n}. The first version assumes that \code{a} and \code{b} have been reduced modulo \code{n} before calling the function. The second version places no restrictions on \code{a} and \code{b}, i.e. their product may be up to two full limbs.
 \end{quote}
-                                         
+      
+\subsection{Powering}
+       
+\begin{lstlisting}
+unsigned long z_pow(unsigned long a, unsigned long exp)
+\end{lstlisting}
+\begin{quote}
+Computes \code{a} to the power \code{exp} which must be non-negative. Assumes that the result will fit in an \code{unsigned long}.
+\end{quote}
+                            
 \begin{lstlisting}
 unsigned long z_powmod(unsigned long a, long exp, unsigned long n)
 
@@ -2751,6 +2973,8 @@ unsigned long z_powmod2_precomp(unsigned long a, long exp,
 Raise \code{a} to the power \code{exp} modulo \code{n}. All versions assume \code{a} is reduced modulo \code{n}, but there are no restrictions on \code{exp}, which may be negative (assuming \code{a} is invertible modulo \code{n}) or zero. 
 \end{quote}                              
 
+\subsection{Legendre and Jacobi symbols}
+
 \begin{lstlisting}
 int z_legendre_precomp(unsigned long a, unsigned long p, 
                                                    pre_inv_t pinv)
@@ -2765,6 +2989,8 @@ int z_jacobi(long x, unsigned long y)
 \begin{quote}
 Calculates the Jacobi symbol of \code{x} mod \code{y}. Assumes that gcd(\code{x},\code{y}) = 1 and \code{y} is odd.  
 \end{quote}
+
+\subsection{Primality testing}
 
 \begin{lstlisting}
 int z_ispseudoprime_fermat(unsigned long const n,
@@ -2821,12 +3047,7 @@ int z_ispseudoprime_lucas(unsigned long const n)
 Tests if $n$ is a Lucas pseudoprime as per the algorithm of Baillie and Wagstaff (see Math. Comp. vol 35, no. 152, 1980, pp. 1391--1417).  Assumes \code{n} has been checked for primality using trial factoring up to 256. 
 \end{quote}
 
-\begin{lstlisting}
-unsigned long z_pow(unsigned long a, unsigned long exp)
-\end{lstlisting}
-\begin{quote}
-Computes \code{a} to the power \code{exp} which must be non-negative. Assumes that the result will fit in an \code{unsigned long}.
-\end{quote}
+\subsection{Roots}
 
 \begin{lstlisting}
 unsigned long z_sqrtmod(unsigned long a, unsigned long p)
@@ -2842,6 +3063,22 @@ unsigned long z_cuberootmod(unsigned long * cuberoot1,
 \begin{quote}
 Returns a cube root of \code{a} modulo a prime \code{p}. Assumes \code{a} is reduced modulo \code{p}. If \code{a} is not 0, the function also sets \code{cuberoot1} to a cube root of unity modulo \code{p} if the cube roots of \code{a} are distinct, otherwise \code{cuberoot1} is set to 1. If \code{a} is not a cubic residue modulo \code{p} the function returns 0.
 \end{quote}
+
+\begin{lstlisting}
+unsigned long z_intsqrt(unsigned long r)
+\end{lstlisting}
+\begin{quote}
+Returns the integer part of the square root of \code{r}. 
+\end{quote}
+
+\begin{lstlisting}
+int z_issquare(long n)
+\end{lstlisting}
+\begin{quote}
+Returns 1 if n is a square, otherwise returns 0. There are no restrictions on n, which may be signed and negative numbers will not be declared square. 
+\end{quote}
+
+\subsection{GCD and inverses}
 
 \begin{lstlisting}
 unsigned long z_gcd(long x, long y)
@@ -2871,19 +3108,7 @@ long z_xgcd(long * a, long * b, long x, long y)
 Returns the greatest common divisor \code{d} of \code{x} and \code{y} (which may be signed) and sets \code{a} and \code{b} such that \code{d = a*x + b*y}. 
 \end{quote}
 
-\begin{lstlisting}
-unsigned long z_intsqrt(unsigned long r)
-\end{lstlisting}
-\begin{quote}
-Returns the integer part of the square root of \code{r}. 
-\end{quote}
-
-\begin{lstlisting}
-int z_issquare(long x)
-\end{lstlisting}
-\begin{quote}
-The function returns 0 if \code{x} is not a perfect square and 1 otherwise. 
-\end{quote}
+\subsection{CRT}
 
 \begin{lstlisting}
 unsigned long z_CRT(unsigned long x1, unsigned long n1, 
@@ -2892,6 +3117,8 @@ unsigned long z_CRT(unsigned long x1, unsigned long n1,
 \begin{quote}
 Returns the unique integer \code{d} reduced modulo \code{n1*n2} which is \code{x1} modulo \code{n1} and \code{x2} modulo \code{n2}. Assumes \code{x1} is reduced modulo \code{n1} and \code{x2} is reduced modulo \code{n2}. Also assumes \code{n1*n2} is no more than \code{FLINT_BITS - 1} bits and that \code{n1} and \code{n2} are coprime.
 \end{quote}
+
+\subsection{Factoring}
 
 \begin{lstlisting}
 int z_remove(unsigned long * n, 
@@ -2928,12 +3155,7 @@ int z_issquarefree(unsigned long n, int proved)
 Returns 1 if n is squarefree, otherwise returns 0. If \code{proved} is set to 1 then the result is guaranteed, and if set to 0 then internal factoring may declare some composites prime. Note that \code{n} must be at most \code{FLINT_BITS - 1} bits.
 \end{quote}
 
-\begin{lstlisting}
-int z_issquare(long n)
-\end{lstlisting}
-\begin{quote}
-Returns 1 if n is a square, otherwise returns 0. There are no restrictions on n, which may be signed and negative numbers will not be declared square. 
-\end{quote}
+\subsection{Random numbers}
 
 \begin{lstlisting}
 unsigned long z_randint(unsigned long limit)
@@ -2950,7 +3172,7 @@ Returns a random uniformly distributed integer with up to the given number of bi
 \end{quote}
 
 \begin{lstlisting}
-unsigned long  (unsigned long bits, int proved)
+unsigned long z_randprime(unsigned long bits, int proved)
 \end{lstlisting}
 \begin{quote}
 Returns a random prime integer with up to the given number of bits.  Assumes \code{bits} $> 1$. If \code{proved} is 0 then the prime is not proven prime, otherwise it is.

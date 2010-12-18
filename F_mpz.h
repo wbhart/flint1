@@ -288,7 +288,7 @@ void F_mpz_get_mpf(mpf_t m, const F_mpz_t f);
 
 /**
    \fn     void F_mpz_set_d_2exp(F_mpz_t output, double mant, long exp)
-   \brief  Set output to the integer closest to mant*2^exp.
+   \brief  Set output to the integer part of mant*2^exp.
 */
 void F_mpz_set_d_2exp(F_mpz_t output, double mant, long exp);
 
@@ -379,6 +379,16 @@ int F_mpz_cmpabs(const F_mpz_t f, const F_mpz_t g);
 int F_mpz_cmp(const F_mpz_t f, const F_mpz_t g);
 
 /** 
+   \fn     int F_mpz_is_zero(const F_mpz_t f)
+   \brief  Returns 1 if f is zero, 0 otherwise.
+*/
+static inline
+int F_mpz_is_zero(const F_mpz_t f)
+{
+	return ((*f) == 0L);
+}
+
+/** 
    \fn     int F_mpz_is_one(const F_mpz_t f)
    \brief  Returns 1 if f equals 1, otherwise returns 0.
 */
@@ -416,16 +426,6 @@ ulong F_mpz_size(const F_mpz_t f);
    \brief  Returns 1 if f is positive, -1 if it is negative and 0 if f is zero.
 */
 int F_mpz_sgn(const F_mpz_t f);
-
-/** 
-   \fn     int F_mpz_is_zero(const F_mpz_t f)
-   \brief  Returns 1 if f is zero, 0 otherwise.
-*/
-static inline
-int F_mpz_is_zero(const F_mpz_t f)
-{
-	return ((*f) == 0L);
-}
 
 /** 
    \fn     ulong F_mpz_bits(F_mpz_t f)
@@ -748,7 +748,7 @@ void F_mpz_multi_mod_ui_basecase(ulong * out, F_mpz_t in,
 
 /** 
    \fn     void F_mpz_multi_mod_ui(ulong * out, F_mpz_t in, 
-           ulong * primes, ulong num_primes, F_mpz ** comb_temp, F_mpz_t temp)
+           F_mpz_comb_t comb, F_mpz ** comb_temp, F_mpz_t temp)
    \brief  Reduce the F_mpz_t in modulo each of the num_primes primes in
 	        the comb and output the residues in the array out.
 */
