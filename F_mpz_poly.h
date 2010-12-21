@@ -1337,7 +1337,7 @@ void F_mpz_poly_factor_squarefree(F_mpz_poly_factor_t fac,
 
 *****************************************************************************/
 
-void F_mpz_poly_build_hensel_tree(long *link, F_mpz_poly_t *v, F_mpz_poly_t *w, zmod_poly_factor_t fac);
+void F_mpz_poly_build_hensel_tree(long * link, F_mpz_poly_t * v, F_mpz_poly_t * w, zmod_poly_factor_t fac);
 
 void F_mpz_poly_hensel_lift(F_mpz_poly_t Gout, F_mpz_poly_t Hout, F_mpz_poly_t Aout, 
 	     F_mpz_poly_t Bout, F_mpz_poly_t f, F_mpz_poly_t g, F_mpz_poly_t h, F_mpz_poly_t a, 
@@ -1351,10 +1351,10 @@ void F_mpz_poly_hensel_lift_only_inverse(F_mpz_poly_t Aout, F_mpz_poly_t Bout, F
 	     F_mpz_poly_t G, F_mpz_poly_t H, F_mpz_poly_t a, F_mpz_poly_t b, 
 		                    F_mpz_t p, F_mpz_t p1, F_mpz_t big_P);
 
-void F_mpz_poly_rec_tree_hensel_lift(long *link, F_mpz_poly_t *v, F_mpz_poly_t *w, 
+void F_mpz_poly_rec_tree_hensel_lift(long * link, F_mpz_poly_t * v, F_mpz_poly_t * w, 
 	        F_mpz_t p, F_mpz_poly_t f, long j, long inv, F_mpz_t p1, F_mpz_t big_P);
 
-void F_mpz_poly_tree_hensel_lift(long *link, F_mpz_poly_t *v, F_mpz_poly_t *w, long e0, 
+void F_mpz_poly_tree_hensel_lift(long * link, F_mpz_poly_t * v, F_mpz_poly_t * w, long e0, 
 	            long e1, F_mpz_poly_t monic_f, long inv, long p, long r, F_mpz_t P);
 
 ulong _F_mpz_poly_start_hensel_lift(F_mpz_poly_factor_t lifted_fac, long * link, 
@@ -1365,7 +1365,7 @@ ulong _F_mpz_poly_continue_hensel_lift(F_mpz_poly_factor_t lifted_fac, long * li
 	              F_mpz_poly_t * v, F_mpz_poly_t * w, F_mpz_poly_t f, ulong prev_exp, 
 					     ulong current_exp, ulong target_exp, ulong p, ulong r);
 
-void F_mpz_poly_hensel_lift_once( F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, 
+void F_mpz_poly_hensel_lift_once(F_mpz_poly_factor_t lifted_fac, F_mpz_poly_t F, 
 	                     zmod_poly_factor_t local_fac, ulong target_exp);
 
 /****************************************************************************

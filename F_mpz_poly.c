@@ -7257,6 +7257,7 @@ ulong _F_mpz_poly_start_hensel_lift(F_mpz_poly_factor_t lifted_fac, long * link,
    there. As usual link, v, and w is the current Hensel tree, r is the number of 
    local factors and p is the small prime modulo whose power we are lifting to. It 
    is required that current_exp be at least 1 and that target_exp > current_exp.
+   TODO: r is not needed. It is the same as the number of factors in lifted_fac.
 */
 ulong _F_mpz_poly_continue_hensel_lift(F_mpz_poly_factor_t lifted_fac, long * link, 
 	F_mpz_poly_t * v, F_mpz_poly_t * w, F_mpz_poly_t f, ulong prev_exp, 

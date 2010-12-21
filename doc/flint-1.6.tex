@@ -59,7 +59,7 @@
 %\email{w.b.hart@maths.warwick.ac.uk}
 
 \title{FLINT 1.6: Fast Library for Number Theory}
-\author{William B. Hart and Andy Novocin}
+\author{William B. Hart and Andy Novocin \\ and previously David Harvey}
 
 \begin{document}
 \maketitle
@@ -1794,6 +1794,148 @@ void F_mpz_poly_gcd(F_mpz_poly_t res,
 \begin{quote}
 Set \code{res} to the polynomial GCD of \code{f} and \code{g}. At the present moment this is merely
 a wrapper around the \code{fmpz_poly} GCD function for convenience.
+\end{quote}
+
+\subsection{Hensel lifting}
+
+Let's suppose we have polynomials $F, G, H$ such that $F = GH$. But let's suppose we only know
+$F, f = F \pmod{p^k} and g = G \pmod{p^k_0}$ for some $k_0$. We'd like to ``lift'' this to a solution
+$\pmod{p^k}$ for some ultimate $k > k_0$, (in the hope that we can actually recover the factors $F$ 
+and $G$).
+
+FLINT has restartable Hensel lifting, meaning that one can lift something $\pmod{p^k_0}$ to something
+$\pmod{p^k_1}$ for some $k_1 > k_0$, then at a later stage lift it even further from the polynomials
+$\pmod{p^k_1}$ up to an even higher power, e.g. to polynomials $\pmod{p^k}$. This can all be done with
+essentially no loss in time, i.e. as though we had lifted all the way to polynomials $\pmod{p^k}$ in 
+the first place. (There may be some loss, depending on what the powers happen to be, but it is not 
+considered significant compared to lifting again all the way from the start.)
+
+The easiest function to use for Hensel lifting just does all the Hensel lifting in one go, without the
+option to restart:
+
+\begin{lstlisting}
+void F_mpz_poly_hensel_lift_once(F_mpz_poly_factor_t fac, 
+   F_mpz_poly_t F, zmod_poly_factor_t local_fac, ulong exp)
+\end{lstlisting}
+\begin{quote}
+Let \code{F} be a polynomial whose factors are known modulo a small prime \code{p} (supplied in 
+\code{local_fac}). We refer to these factors modulo \code{p} as ``local factors'' and require that the 
+product of local factors is squarefree. 
+
+This function lifts the local factors all the way up to a specified limit $\pmod{p^{exp}}$ and returns
+them as polynomials whose coefficients are symmetric mods modulo $p^{exp}$, i.e. with coefficients in 
+the range $(-p^{exp}/2, p^{exp}/2]$. It is required that \code{exp > 0}.
+
+The resulting factors are placed in \code{fac}. We assume \code{F} has Gaussian content 1. 
+\end{quote}
+
+If one requires restartable Hensel lifting then a ``state'' needs to be retained. This is a Hensel 
+``tree'' and currently it consists of three parts, (i) an array holding permutations, called \code{link},
+(ii) an array of polynomials called \code{v} and (iii) an array of polynomials called \code{w}. In 
+future versions of FLINT, these three pieces of state may be encapsulated in a single custom type. For
+now they need to all be passed separately to the Hensel lifting functions.
+
+In all cases we assume that the number of local factors, \code{r >= 2}. We also assume \code{link}, 
+\code{v} and code{w} are array with $2r - 2$ entries, and that in the case of the polynomial entries,
+these have been initialised.
+
+\begin{lstlisting}
+ulong _F_mpz_poly_start_hensel_lift(F_mpz_poly_factor_t fac, 
+        long * link, F_mpz_poly_t * v, F_mpz_poly_t * w, 
+     F_mpz_poly_t F, zmod_poly_factor_t local_fac, ulong exp)
+\end{lstlisting}
+\begin{quote}
+Let \code{F} be a polynomial whose factors are known modulo a small prime \code{p} (supplied in 
+\code{local_fac}). We refer to these factors modulo \code{p} as ``local factors'' and require that the 
+product of local factors is squarefree. 
+
+This function lifts the local factors up to a specified limit $\pmod{p^{exp}}$ and returns them as 
+polynomials whose coefficients are symmetric mods modulo $p^{exp}$, i.e. with coefficients in the range 
+$(-p^{exp}/2, p^{exp}/2]$. It is required that \code{exp > 0}.
+
+The resulting factors are placed in \code{fac}. We assume \code{F} has Gaussian content 1.
+
+A Hensel tree \code{[link, v, w]} is constructed, for restarting this Hensel lift. In addition, an
+exponent is returned (it gives details about how far Hensel lifting has really been taken internally)
+and should be passed as \code{prev_exp} if the Hensel lifting is continued.
+\end{quote}
+
+\begin{lstlisting}
+ulong _F_mpz_poly_continue_hensel_lift(F_mpz_poly_factor_t fac, 
+ long * link, F_mpz_poly_t * v, F_mpz_poly_t * w, F_mpz_poly_t F, 
+    ulong prev_exp, ulong current_exp, ulong exp, ulong p, ulong r)
+\end{lstlisting}
+\begin{quote}
+This function continues a Hensel lift which has been started by the previous function, or indeed by a
+previous call to this function at a lower exponent. Three exponents are supplied. The new exponent we'd
+like to lift to is given by \code{exp}. The exponent we last lifted to is given by \code{current_exp},
+(this would have been \code{exp} in the last Hensel lift we did) and \code{prev_exp} is the exponent
+returned by the previous Hensel lift we did that we are now continuing.
+
+This function returns a new exponent and an updated Hensel tree \code{[link, v, w]} in case the current
+Hensel lift is again restarted.
+
+Note that this function also requires \code{r}, the number of local factors and \code{p}, the small 
+prime whose powers we are lifting mod (note that this information is given in lieu of \code{local_fac}). 
+
+The factors at the current exponent are supplied in \code{fac} and once they have been lifted to the
+requested \code{exp}, they are again returned in \code{fac}.
+
+Note that a Hensel lift can be resumed as many times as one likes, however we always require that
+\code{exp > current_exp}.
+\end{quote}
+
+The Hensel lifting machinery can all be accessed more directly if one requires. The main component of
+the machinery is a routine which lifts from polynomials $\pmod{p^k_1}$ to at most $p^{2k_1}$. 
+
+\begin{lstlisting}
+void F_mpz_poly_hensel_lift(F_mpz_poly_t G, F_mpz_poly_t H, 
+     F_mpz_poly_t A, F_mpz_poly_t B, F_mpz_poly_t F, 
+        F_mpz_poly_t g, F_mpz_poly_t h, F_mpz_poly_t a, 
+           F_mpz_poly_t b, F_mpz_t p1, F_mpz_t p2, F_mpz_t P)
+\end{lstlisting}
+\begin{quote}
+We suppose that $F = gh \pmod{p_1}$ where $p_1 = p^{k_1}$ and that we'd like to lift this to 
+$F = GH \pmod{P}$ where $P = p_1p_2$ where $p_2 = p^{k_2}$ for some $k_2 <= k_1$ (so that $P = p^k$
+for some $k <= 2k_1$). In order for this to work, we need to provide polynomials $a, b$ such that
+$ag + bh = 1 \pmod{p_1}$. 
+
+Upon return, $A, B$ will be supplied such that $AG + BH = 1 \pmod{P}$, where $g = G \pmod{p_1}$ 
+and $h = H \pmod{p_1}$. 
+
+Note that the powers of the primes, not the exponents are supplied to this and the following two 
+functions.
+
+Under normal circumstances, one would lift all the way from a $p_1 = p$ for a small prime $p$. Then
+the same function can be called over and over to get to the final precision. The polynomials $a, b$
+can then be initially computed using \code{zmod_poly_xgcd} and simply converted to \code{F_mpz_poly}'s,
+using \code{zmod_poly_to_F_mpz_poly} for example. Subsequent lifts will then simply use the values
+of \code{A, B} supplied by the previous iteration. 
+\end{quote}
+
+As the final lift in a series of lifts will take some time to compute a new $G, H$, the final lift 
+can be done without this step:
+
+\begin{lstlisting}
+void F_mpz_poly_hensel_lift_without_inverse(F_mpz_poly_t G, 
+ F_mpz_poly_t H, F_mpz_poly_t F, F_mpz_poly_t g, F_mpz_poly_t h, 
+  F_mpz_poly_t a, F_mpz_poly_t b, F_mpz_t p1, F_mpz_t p2, F_mpz_t P)
+\end{lstlisting}
+\begin{quote}
+As per \code{F_mpz_poly_hensel_lift}, but \code{A, B} are not computed.
+\end{quote}
+
+If it is decided that a Hensel lift needs to be continued, but no suitable \code{A, B} has been 
+computed, the following function computed just \code{A, B} (usually without significant loss of
+time versus doing the computation from the start).
+
+\begin{lstlisting}
+void F_mpz_poly_hensel_lift_only_inverse(F_mpz_poly_t A, 
+ F_mpz_poly_t B, F_mpz_poly_t F, F_mpz_poly_t G, F_mpz_poly_t H, 
+  F_mpz_poly_t a, F_mpz_poly_t b, F_mpz_t p1, F_mpz_t p2, F_mpz_t P)
+\end{lstlisting}
+\begin{quote}
+As per \code{F_mpz_poly_hensel_lift}, but only \code{A, B} are computed.
 \end{quote}
 
 \subsection{Factoring}
