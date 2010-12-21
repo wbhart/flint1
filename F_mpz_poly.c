@@ -8375,6 +8375,7 @@ int _F_mpz_poly_try_to_solve(int num_facs, ulong * part,
       }
    
       F_mpz_poly_content(temp_lc, tryme);
+      F_mpz_abs(temp_lc, temp_lc);
 #if TRACE
       F_mpz_print(temp_lc);
       printf(" the leftover from trial_factor %d\n", i);
