@@ -42,10 +42,7 @@
 #include "flint.h"
 #include "profiler.h"
 #include "F_mpz_mat.h"
-#include "F_mpz_LLL_helper.h"
 #include "F_mpz_LLL_wrapper.h"
-#include "F_mpz_LLL_fast_d.h"
-#include "F_mpz_LLL_heuristic_mpfr.h"
 #include "mpfr.h"
 #include "mpfr_mat.h"
 #include "d_mat.h"
@@ -100,6 +97,43 @@
    double hldexp_total = 0.0;
 
 #endif
+
+/*
+   Computes the scalar product of two vectors of doubles vec1 and vec2, which are 
+   respectively double approximations (up to scaling by a power of 2) to rows k and
+   j in the exact integer matrix B. If massive cancellation is detected an exact
+   computation is made.
+
+   The exact computation is scaled by 2^-exp_adj, where exp_adj = r2 + r1 where
+   r2 is the exponent for row j and r1 is the exponent for row k (i.e. row j is 
+   notionally thought of as being multiplied by 2^r2, etc).
+
+   The final scalar product computed by this function is then notionally the return
+   value times 2^exp_adj.
+*/
+double heuristic_scalar_product(double * vec1, double * vec2, ulong n, 
+								F_mpz_mat_t B, ulong k, ulong j, long exp_adj)
+{
+   double sum = _d_vec_scalar_product(vec1, vec2, n);
+   double tmp = _d_vec_norm(vec1, n);
+   double tmp2 = _d_vec_norm(vec2, n);
+
+   tmp = ldexp(tmp*tmp2, -70);
+   tmp2 = sum*sum;
+
+   if (tmp2 <= tmp)
+   {
+      F_mpz_t sp;
+      F_mpz_init(sp);
+      ulong exp;
+      _F_mpz_vec_scalar_product(sp, B->rows[k], B->rows[j], n);
+      sum = F_mpz_get_d_2exp(&exp, sp);
+      sum = ldexp(sum, exp - exp_adj);
+      F_mpz_clear(sp);
+   }
+
+   return sum;
+} 
 
 
 int check_Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s, 
@@ -914,6 +948,47 @@ int check_Babai_heuristic(int kappa, F_mpz_mat_t B, __mpfr_struct **mu, __mpfr_s
    F_mpz_clear(X);
 
    return 0;
+}
+
+double d_2exp_vec_scalar_product(double * vec1, double * vec2, int n, int *cexpo)
+{
+  double sum;
+
+  sum = vec1[0] * vec2[0];
+  for (long i = 1; i < n; i++)
+     sum += ldexp(vec1[i] * vec2[i], 2*cexpo[i]);
+
+  return sum;
+} 
+
+double d_2exp_vec_norm(double * vec, int n, int *cexpo)
+{
+  double sum;
+
+  sum = vec[0] * vec[0];
+  for (long i = 1 ; i < n ; i++)
+     sum += ldexp(vec[i] * vec[i], 2*cexpo[i]);
+
+  return sum;
+
+} 
+
+/* Computes the largest number of non-zero entries after the diagonal. */
+
+ulong getShift(F_mpz_mat_t B)
+{
+   ulong n = B->c;
+   ulong shift = 0;
+   for (ulong i = 0; i < B->r; i++)
+   {
+      ulong j;
+      for (j = n - 1; j >= i + shift + 1 && F_mpz_size(B->rows[i] + j) == 0L; j--);  
+      
+      if (shift < j - i) shift = j - i;
+      
+   }
+
+   return shift;
 }
 
 int advance_check_Babai (int cur_kappa, int kappa, F_mpz_mat_t B, double **mu, double **r, double *s, 
@@ -4614,3 +4689,14 @@ int U_LLL_with_removal(F_mpz_mat_t FM, long new_size, F_mpz_t gs_B)
    return newd;
 }
 
+
+void LLL(F_mpz_mat_t B){
+
+   F_mpz_t temp;
+   F_mpz_init(temp);
+
+   U_LLL_with_removal(B, 250L, temp);
+
+   F_mpz_clear(temp);
+
+}

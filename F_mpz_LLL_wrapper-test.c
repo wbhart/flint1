@@ -41,7 +41,7 @@ Copyright (C) 2008, William Hart
 #include "test-support.h"
 
 #define VARY_BITS 1 // random entries have random number of bits up to the limit given
-#define SIGNS 1 // random entries will be randomly signed
+#define SIGNS 0 // random entries will be randomly signed
 #define SPARSE 1 // matrices are sparse (triggers more corner cases)
 #define ITER 1 // if you want all tests to run longer, increase this
 
@@ -409,6 +409,64 @@ int mpfr_mat_R_reduced(__mpfr_struct ** R, long d, double delta, double eta, mp_
    return reduced;
 }
 
+int test_heuristic_scalar_product()
+{
+   int result = 1;
+   ulong count1, count2, i;
+
+   double ** mat;
+   F_mpz_mat_t B;
+   int expo[50];
+
+   for (count1 = 0; count1 < 1000; count1++)
+   {
+	   ulong rows = z_randint(50) + 1;
+      ulong cols = z_randint(50) + 2;
+
+	   F_mpz_mat_init(B, rows, cols);
+      F_mpz_randmat(B, rows, cols, 900);
+
+      mat = d_mat_init(rows, cols);
+
+	   for (i = 0; i < rows; i++)
+	      expo[i] = _F_mpz_vec_to_d_vec_2exp(mat[i], B->rows[i], cols);
+
+      for (count2 = 0; (count2 < 100); count2++)
+      {
+	      ulong r1 = z_randint(rows);
+		   ulong r2 = z_randint(rows);
+
+		   double d1 = heuristic_scalar_product(mat[r1], mat[r2], cols, 
+								B, r1, r2, expo[r1] + expo[r2]);
+		   double d2 = heuristic_scalar_product(mat[r1], mat[r1], cols, 
+								B, r1, r1, expo[r1] + expo[r1]);
+		   double d3 = heuristic_scalar_product(mat[r2], mat[r2], cols, 
+								B, r2, r2, expo[r2] + expo[r2]);
+
+         _d_vec_add(mat[r2], mat[r1], mat[r2], cols);
+		   _F_mpz_vec_add(B->rows[r2], B->rows[r1], B->rows[r2], cols);
+
+		   double d4 = heuristic_scalar_product(mat[r2], mat[r2], cols, 
+								B, r2, r2, expo[r2] + expo[r2]);
+
+		   result = (fabs(d4 - d3 - d2 - 2*d1) < 1.0E-12);
+
+		   if (!result)
+		   {
+		      printf("count2 = %ld Failed expo[r1] = %d expo[r2] = %d,  d1 = %lf, d2 = %lf, d3 = %lf, d4 = %f\n", count2, expo[r1], expo[r2], d1, d2, d3, d4);
+		   }
+
+         expo[r2] = _F_mpz_vec_to_d_vec_2exp(mat[r2], B->rows[r2], cols);
+
+      }
+
+      F_mpz_mat_clear(B);
+      d_mat_clear(mat);
+   }
+
+   return result;
+}
+
 int test_F_mpz_LLL_randntrulike()
 {
    mpz_mat_t m_mat;
@@ -419,7 +477,7 @@ int test_F_mpz_LLL_randntrulike()
    F_mpz_init(fzero);
    
    ulong count1;
-   for (count1 = 0; (count1 < 100*ITER) && (result == 1) ; count1++)
+   for (count1 = 0; (count1 < 10*ITER) && (result == 1) ; count1++)
    {
 #if TRACE
       printf("count1 == %ld\n", count1);
@@ -649,7 +707,7 @@ int test_F_mpz_LLL_randsimdioph()
    F_mpz_init(fzero);
    
    ulong count1;
-   for (count1 = 0; (count1 < 100*ITER) && (result == 1) ; count1++)
+   for (count1 = 0; (count1 < 10*ITER) && (result == 1) ; count1++)
    {
 #if TRACE
        printf("count1 == %ld\n", count1);
@@ -723,10 +781,11 @@ void F_mpz_mat_test_all()
 
 #if TESTFILE
 #endif
-     RUN_TEST(F_mpz_LLL_randajtai);
-     RUN_TEST(F_mpz_LLL_randintrel);
-     RUN_TEST(F_mpz_LLL_randsimdioph);
-     RUN_TEST(F_mpz_LLL_randntrulike);
+   RUN_TEST(heuristic_scalar_product);
+   RUN_TEST(F_mpz_LLL_randajtai);
+   RUN_TEST(F_mpz_LLL_randintrel);
+   RUN_TEST(F_mpz_LLL_randsimdioph);
+   RUN_TEST(F_mpz_LLL_randntrulike);
 
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");

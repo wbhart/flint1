@@ -50,12 +50,11 @@
 #include "zmod_poly.h"
 #include "F_mpz_mod_poly.h"
 #include "F_mpz_mat.h"
-#include "F_mpz_LLL_fast_d.h"
 #include "F_mpz_LLL_wrapper.h"
 
 #define POLYPROFILE 0 // whether POLYPROFILE of factor related poly routines is needed
 #define CLDPROF 0 // whether POLYPROFILE of CLD computation is wanted
-#define WANT_DEFLATION 0 // whether the power hack should be used in factoring
+#define WANT_DEFLATION 1 // whether the power hack should be used in factoring
 #define TRACE 0 // whether debugging trace should be printed for factoring and related fns
 
 /*===========================================
@@ -296,7 +295,7 @@ void F_mpz_poly_set_coeff_mpz(F_mpz_poly_t poly, ulong n, const mpz_t x)
 	_F_mpz_poly_normalise(poly); // we may have set leading coefficient to zero
 }
 
-void F_mpz_poly_set_coeff_F_mpz(F_mpz_poly_t poly, ulong n, const F_mpz_t x)
+void F_mpz_poly_set_coeff(F_mpz_poly_t poly, ulong n, const F_mpz_t x)
 {
    F_mpz_poly_fit_length(poly, n+1);
 
@@ -7455,7 +7454,7 @@ void F_mpz_poly_zassenhaus_naive(F_mpz_poly_factor_t final_fac,
             F_mpz_poly_init(tryme);
             F_mpz_poly_fit_length(tryme, 1);
             _F_mpz_poly_set_length(tryme, 1);
-			F_mpz_set(tryme->coeffs + 0, lc);
+			   F_mpz_set(tryme->coeffs + 0, lc);
 
             for(l = 0; l < k; l++)
                F_mpz_poly_mul(tryme, tryme, lifted_fac->factors[sub_arr[l]]);
@@ -7467,11 +7466,11 @@ void F_mpz_poly_zassenhaus_naive(F_mpz_poly_factor_t final_fac,
             F_mpz_poly_divrem(Q, R, f, tryme);
 
             if (R->length == 0)
-			{
+			   {
                // found one
-			   F_mpz_poly_factor_insert(final_fac, tryme, exp);
+			      F_mpz_poly_factor_insert(final_fac, tryme, exp);
                
-			   for(l = 0; l < k; l++){
+			      for(l = 0; l < k; l++){
                   used_arr[sub_arr[l]] = 1;
                   count++;
                }
@@ -7702,6 +7701,7 @@ void F_mpz_poly_factor_sq_fr_prim_internal(F_mpz_poly_factor_t final_fac,
    a = (long) ceil((double) M_bits / log2((double) p));
    a = (long) pow((double) 2, ceil(log2( (double) a)));
 
+   ulong zass_a = a;
 #if TRACE
    printf("zass a = %ld \n", a);
 #endif
@@ -7817,7 +7817,11 @@ void F_mpz_poly_factor_sq_fr_prim_internal(F_mpz_poly_factor_t final_fac,
 	  // (or even 10) test could go here
       F_mpz_set_ui(P, p);
       F_mpz_pow_ui(P, P, a);
-      hensel_loops++;
+      if (a < zass_a)
+         hensel_loops++;
+      else if (a >= zass_a)
+         hensel_loops = -13;
+
       if (use_Hoeij_Novocin == 1)
 	  {
          solved_yet = F_mpz_poly_factor_sq_fr_vHN(final_fac, lifted_fac, f, P, exp, M, mexpo, U_exp, hensel_loops);
@@ -8012,7 +8016,7 @@ void F_mpz_poly_inflate(F_mpz_poly_t result, const F_mpz_poly_t input, ulong def
    F_mpz_poly_fit_length(result, res_length);
    F_mpz_poly_zero(result);
    for (j = 0; j < input->length; j++)
-      F_mpz_poly_set_coeff_F_mpz(result, j*deflation, input->coeffs + j);  
+      F_mpz_poly_set_coeff(result, j*deflation, input->coeffs + j);  
 
    _F_mpz_poly_set_length(result, res_length);
 }
@@ -8350,17 +8354,20 @@ int _F_mpz_poly_try_to_solve(int num_facs, ulong * part,
    F_mpz_poly_init(tryme);
    F_mpz_t temp_lc;
    F_mpz_init(temp_lc);
+   int i;
 
 #if TRACE
    printf(" not yet r = %ld\n", r);
+   F_mpz_print(lc);
+   printf(" was lc\n");
 #endif
- 
-   int i;
+
+   F_mpz_set(temp_lc, lc);
    for (i = 1; i <= num_facs; i++)
    {
       F_mpz_poly_fit_length(tryme, 1);
-      _F_mpz_poly_set_length(tryme, 1);;
-      F_mpz_set(tryme->coeffs + 0, lc);
+      _F_mpz_poly_set_length(tryme, 1);
+      F_mpz_set(tryme->coeffs + 0, temp_lc);
       
 	  int j;
       for (j = 0; j < r; j++)
@@ -8372,7 +8379,12 @@ int _F_mpz_poly_try_to_solve(int num_facs, ulong * part,
          }
       }
    
-	  F_mpz_poly_content(temp_lc, tryme);
+      F_mpz_poly_content(temp_lc, tryme);
+      F_mpz_abs(temp_lc, temp_lc);
+#if TRACE
+      F_mpz_print(temp_lc);
+      printf(" the leftover from trial_factor %d\n", i);
+#endif
       F_mpz_poly_scalar_divexact(tryme, tryme, temp_lc);
       F_mpz_poly_factor_insert(trial_factors, tryme, 1UL);
    }
@@ -8408,10 +8420,37 @@ int _F_mpz_poly_try_to_solve(int num_facs, ulong * part,
    printf("nope not there trial_factors->num_factors = %ld\n", trial_factors->num_factors);
 #endif
 
+#if WANT_ASSERT
+   printf("extra checks\n");
+
+   F_mpz_poly_fit_length(tryme, 1);
+   _F_mpz_poly_set_length(tryme, 1);
+   F_mpz_set_ui(tryme->coeffs + 0, 1);
+
+   F_mpz_poly_print(tryme); printf(" should be 1  lc\n");
+
+   for (i = 0; i < trial_factors->num_factors; i++){
+      printf("ith factor has length == %ld\n", (trial_factors->factors[i])->length);
+      F_mpz_poly_mul(tryme, tryme, trial_factors->factors[i]);
+   }
+
+   F_mpz_poly_sub(tryme, tryme, F);
+   F_mpz_poly_scalar_smod(tryme, tryme, P);
+
+   printf("length of tryme == %ld if not 0 we have problems\n", tryme->length);
+#endif
+
    F_mpz_poly_t f,Q,R;
    F_mpz_poly_init(f);
    F_mpz_poly_init(Q);
    F_mpz_poly_init(R);
+
+   zmod_poly_t fp,Qp,Rp, temp_p;
+   zmod_poly_init(fp, 2);
+   zmod_poly_init(Qp, 2);
+   zmod_poly_init(Rp, 2);
+   zmod_poly_init(temp_p, 2);
+
    F_mpz_poly_set(f, F);
 
    int j;
@@ -8435,9 +8474,17 @@ int _F_mpz_poly_try_to_solve(int num_facs, ulong * part,
 		 return 1;
       }
 
-      F_mpz_poly_divrem(Q, R, f, trial_factors->factors[i]);
+      int found_it = 0;
+      F_mpz_poly_to_zmod_poly(fp, f);
+      F_mpz_poly_to_zmod_poly(temp_p, trial_factors->factors[i]);
+      zmod_poly_divrem_divconquer(Qp, Rp, fp, temp_p);
+      if (Rp->length == 0){
+         F_mpz_poly_divrem(Q, R, f, trial_factors->factors[i]);
+         if (R->length == 0)
+            found_it = 1;
+      }
 
-      if (R->length == 0)
+      if (found_it == 1)
 	  {
 #if TRACE
          printf(" found one!\n");
@@ -8476,6 +8523,10 @@ int _F_mpz_poly_try_to_solve(int num_facs, ulong * part,
          F_mpz_poly_clear(f);
          F_mpz_poly_clear(Q);
          F_mpz_poly_clear(R);
+         zmod_poly_clear(fp);
+         zmod_poly_clear(Qp);
+         zmod_poly_clear(Rp);
+         zmod_poly_clear(temp_p);
 
          F_mpz_clear(temp_lc);
          F_mpz_poly_clear(tryme);
@@ -8635,7 +8686,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    }
 
    ulong num_coeffs;
-   if ((hensel_loops < 3) && (3*r > F->length))
+   if ((FLINT_ABS(hensel_loops) < 3) && (3*r > F->length))
    {
       mix_data = 1;
    
@@ -8934,7 +8985,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
             printf(" on column cur_col = %ld, real_col = %ld\n", cur_col, real_col);
 #endif
 #if POLYPROFILE
-            F_mpz_mat_print_pretty(M);
+//            F_mpz_mat_print_pretty(M);
             printf(" and B is "); F_mpz_print(B); printf("\n");
 #endif
             since_last = 0;
@@ -9069,33 +9120,34 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
 		       // no example has ever needed it...
 
 #if POLYPROFILE
-               printf("since_last == %d, data->c=%ld, M->r = %ld, old_s = %ld\n", since_last, data->c, M->r, old_s);
+               printf("since_last == %d, data->c=%ld, M->r = %ld, old_s = %ld, old_since_last = %ld, since_last = %d\n", since_last, data->c, M->r, old_s, old_since_last, since_last);
 #endif
-               if ((since_last >= data->c - 5 && M->r > old_s - 2) || hensel_loops > 2)
+               if ((since_last >= data->c - 5 && M->r > old_s - 2) || (hensel_loops > 2) || (hensel_loops == -13))
                {
                   if (old_since_last == 0)
                      old_since_last = since_last;
 
-                  if (since_last > old_since_last && hensel_loops < 3)
-				  {
+                  if ((since_last >= old_since_last) && (hensel_loops != -13))
+				      {
                      return_me = 5;
                      all_coeffs = 2;
                   } else
-				  {
+				      {
                      old_s = M->r;
                      num_coeffs = num_coeffs * 2;
 #if POLYPROFILE
-					 cld_data_start = clock();
+                     printf(" in the extra coeffs stage\n");
+					      cld_data_start = clock();
 #endif
-					 _F_mpz_poly_factor_CLD_mat(data, F, lifted_fac, P, num_coeffs);
+					      _F_mpz_poly_factor_CLD_mat(data, F, lifted_fac, P, num_coeffs);
 #if POLYPROFILE
-					 cld_data_stop = clock();
+					      cld_data_stop = clock();
                      cld_data_total = cld_data_total + cld_data_stop - cld_data_start;
 #endif   
 
-					 if (data->c >= F->length - 1)
+					      if (data->c >= F->length - 1)
                         all_coeffs = 1;
-                  }
+                     }
                } else
                {
 #if TRACE
