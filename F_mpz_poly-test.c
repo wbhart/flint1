@@ -6177,7 +6177,7 @@ int test_F_mpz_poly_factor_test2()
    char filename[25];
 
    ulong count1;
-   for (count1 = 0; (count1 < 300*ITER) && (result == 1) ; count1++)
+   for (count1 = 0; (count1 < 30*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -6187,8 +6187,8 @@ int test_F_mpz_poly_factor_test2()
 
       F_mpz_init(content);
 
-	  p1 = z_randint(NUM_POLYS_SMALL + NUM_POLYS_MEDIUM);
-	  do {p2 = z_randint(NUM_POLYS_SMALL + NUM_POLYS_MEDIUM); } while (p1 == p2);
+	  p1 = z_randint(NUM_POLYS_SMALL);
+	  do {p2 = z_randint(NUM_POLYS_SMALL); } while (p1 == p2);
 
 	  filename[0] = '\0';
 	  strcat(filename, path);
@@ -6262,7 +6262,7 @@ int test_F_mpz_poly_factor_test3()
    char filename[25];
 
    ulong count1;
-   for (count1 = 0; (count1 < 100*ITER) && (result == 1) ; count1++)
+   for (count1 = 0; (count1 < 30*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly);
       
