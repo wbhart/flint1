@@ -323,6 +323,18 @@ void F_mpz_poly_get_coeff_mpz(mpz_t x, const F_mpz_poly_t poly, const ulong n);
 */
 void F_mpz_poly_set_coeff(F_mpz_poly_t poly, ulong n, const F_mpz_t x);
 
+/** 
+   \fn     F_mpz * F_mpz_poly_get_coeff_ptr(F_mpz_poly_t poly, ulong n)
+   \brief  Return a pointer to coefficient n of poly. Coefficients are numbered
+           from the constant coefficient, starting at zero. No check is made
+		   to verify that n is in range.
+*/
+static inline
+F_mpz * F_mpz_poly_get_coeff_ptr(F_mpz_poly_t poly, ulong n)
+{
+   return poly->coeffs + n;
+}
+
 /*===============================================================================
 
 	Attributes
@@ -345,7 +357,7 @@ long F_mpz_poly_degree(const F_mpz_poly_t poly)
    \brief  Returns the length of the polynomial. The zero polynomial has length zero.
 */
 static inline 
-unsigned long F_mpz_poly_length(const F_mpz_poly_t poly)
+ulong F_mpz_poly_length(const F_mpz_poly_t poly)
 {
    return poly->length;
 }
@@ -450,31 +462,31 @@ void zmod_poly_to_F_mpz_poly(F_mpz_poly_t fpol, const zmod_poly_t zpol);
            space separated list of coefficients, starting with the
            constant term.
 */
-int F_mpz_poly_from_string(F_mpz_poly_t poly, const char* s);
+int F_mpz_poly_from_string(F_mpz_poly_t poly, const char * s);
 
 /** 
    \fn     char* F_mpz_poly_to_string(const F_mpz_poly_t poly)
    \brief  Return a char * in standard FLINT format from F_mpz_poly_t
 */
-char* F_mpz_poly_to_string(const F_mpz_poly_t poly);
+char * F_mpz_poly_to_string(const F_mpz_poly_t poly);
 
 /** 
    \fn     char* F_mpz_poly_to_string_pretty(const F_mpz_poly_t poly, const char * x)
    \brief  Return a formated char * from F_mpz_poly_t with variable named at x
 */
-char* F_mpz_poly_to_string_pretty(const F_mpz_poly_t poly, const char * x);
+char * F_mpz_poly_to_string_pretty(const F_mpz_poly_t poly, const char * x);
 
 /** 
    \fn     void F_mpz_poly_fprint(const F_mpz_poly_t poly, FILE* f)
    \brief  Prints F_mpz_poly_t to a file stream f in standard FLINT format
 */
-void F_mpz_poly_fprint(const F_mpz_poly_t poly, FILE* f);
+void F_mpz_poly_fprint(const F_mpz_poly_t poly, FILE * f);
 
 /** 
    \fn     void F_mpz_poly_fprint_pretty(const F_mpz_poly_t poly, FILE* f, const char * x)
    \brief  Prints F_mpz_poly_t to a file stream f in pretty format with variable names at x
 */
-void F_mpz_poly_fprint_pretty(const F_mpz_poly_t poly, FILE* f, const char * x);
+void F_mpz_poly_fprint_pretty(const F_mpz_poly_t poly, FILE * f, const char * x);
 
 /** 
    \fn     void F_mpz_poly_print_pretty(const F_mpz_poly_t poly, const char * x)
@@ -486,7 +498,7 @@ void F_mpz_poly_print_pretty(const F_mpz_poly_t poly, const char * x);
    \fn     int F_mpz_poly_fread(F_mpz_poly_t poly, FILE* f)
    \brief  Reads F_mpz_poly_t from file stream f
 */
-int F_mpz_poly_fread(F_mpz_poly_t poly, FILE* f);
+int F_mpz_poly_fread(F_mpz_poly_t poly, FILE * f);
 
 /**
    \fn     void F_mpz_poly_print(F_mpz_poly_t poly)
@@ -1038,9 +1050,15 @@ void F_mpz_poly_div_divconquer_recursive(F_mpz_poly_t Q, F_mpz_poly_t BQ,
 void F_mpz_poly_divrem_divconquer(F_mpz_poly_t Q, F_mpz_poly_t R, 
                                   const F_mpz_poly_t A, const F_mpz_poly_t B);
 
+/** 
+   \fn     void F_mpz_poly_divrem(F_mpz_poly_t Q, F_mpz_poly_t R, 
+                                  const F_mpz_poly_t A, const F_mpz_poly_t B)
+   \brief  Divide A by B computing the quotient Q and remainder R such that A = BQ + R.
+*/
 static inline
 void F_mpz_poly_divrem(F_mpz_poly_t Q, F_mpz_poly_t R, 
-                                  const F_mpz_poly_t A, const F_mpz_poly_t B){
+                                  const F_mpz_poly_t A, const F_mpz_poly_t B)
+{
    F_mpz_poly_divrem_divconquer(Q, R, A, B);
 }
 
@@ -1108,7 +1126,7 @@ void F_mpz_poly_div_hensel(F_mpz_poly_t Q, const F_mpz_poly_t A, const ulong a_l
    \fn     void F_mpz_poly_divexact(F_mpz_poly_t Q, const F_mpz_poly_t A, 
                                                                 const F_mpz_poly_t B)
    \brief  Divide A by B computing quotient Q only, i.e. notionally find A = B*Q + R,
-           assuming that the division is exact.
+           assuming that the division is exact, i.e. R = 0.
 */
 void F_mpz_poly_divexact(F_mpz_poly_t Q, const F_mpz_poly_t A, const F_mpz_poly_t B);
 
