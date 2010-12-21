@@ -7746,7 +7746,7 @@ void F_mpz_poly_factor_sq_fr_prim_internal(F_mpz_poly_factor_t final_fac,
       long n_a = (long) (double)((3.5*bit_r / log2((double) p) + (double) avg_b / log2((double) p)));
 
 // FIXME: temporarily setting Hensel lifting higher to test something
-      a = FLINT_MAX(a, n_a);
+      a = FLINT_MIN(a, n_a);
 
       // TODO: Attempt a bit more Hensel lifting when tough poly predicted
       /* 
@@ -8363,7 +8363,7 @@ int _F_mpz_poly_try_to_solve(int num_facs, ulong * part,
    {
       F_mpz_poly_fit_length(tryme, 1);
       _F_mpz_poly_set_length(tryme, 1);
-      F_mpz_set(tryme->coeffs + 0, lc);
+      F_mpz_set(tryme->coeffs + 0, temp_lc);
       
 	  int j;
       for (j = 0; j < r; j++)
