@@ -7700,6 +7700,7 @@ void F_mpz_poly_factor_sq_fr_prim_internal(F_mpz_poly_factor_t final_fac,
    a = (long) ceil((double) M_bits / log2((double) p));
    a = (long) pow((double) 2, ceil(log2( (double) a)));
 
+   ulong zass_a = a;
 #if TRACE
    printf("zass a = %ld \n", a);
 #endif
@@ -7815,7 +7816,11 @@ void F_mpz_poly_factor_sq_fr_prim_internal(F_mpz_poly_factor_t final_fac,
 	  // (or even 10) test could go here
       F_mpz_set_ui(P, p);
       F_mpz_pow_ui(P, P, a);
-      hensel_loops++;
+      if (a < zass_a)
+         hensel_loops++;
+      else if (a >= zass_a)
+         hensel_loops = -13;
+
       if (use_Hoeij_Novocin == 1)
 	  {
          printf("trying vHN\n");
@@ -8682,7 +8687,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    }
 
    ulong num_coeffs;
-   if ((hensel_loops < 3) && (3*r > F->length))
+   if ((FLINT_ABS(hensel_loops) < 3) && (3*r > F->length))
    {
       mix_data = 1;
    
@@ -9118,12 +9123,12 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
 #if POLYPROFILE
                printf("since_last == %d, data->c=%ld, M->r = %ld, old_s = %ld, old_since_last = %ld, since_last = %ld\n", since_last, data->c, M->r, old_s, old_since_last, since_last);
 #endif
-               if ((since_last >= data->c - 5 && M->r > old_s - 2) || hensel_loops > 2)
+               if ((since_last >= data->c - 5 && M->r > old_s - 2) || (hensel_loops > 2) || (hensel_loops == -13))
                {
                   if (old_since_last == 0)
                      old_since_last = since_last;
 
-                  if ((since_last >= old_since_last) && (hensel_loops < 10))
+                  if ((since_last >= old_since_last) && (hensel_loops != -13))
 				      {
                      return_me = 5;
                      all_coeffs = 2;
