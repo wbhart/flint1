@@ -9115,34 +9115,34 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
 		       // no example has ever needed it...
 
 #if POLYPROFILE
-               printf("since_last == %d, data->c=%ld, M->r = %ld, old_s = %ld\n", since_last, data->c, M->r, old_s);
+               printf("since_last == %d, data->c=%ld, M->r = %ld, old_s = %ld, old_since_last = %ld, since_last = %ld\n", since_last, data->c, M->r, old_s, old_since_last, since_last);
 #endif
                if ((since_last >= data->c - 5 && M->r > old_s - 2) || hensel_loops > 2)
                {
                   if (old_since_last == 0)
                      old_since_last = since_last;
 
-                  if (since_last > old_since_last && hensel_loops < 10)
-				  {
+                  if (since_last > old_since_last && hensel_loops < 3)
+				      {
                      return_me = 5;
                      all_coeffs = 2;
                   } else
-				  {
+				      {
                      old_s = M->r;
                      num_coeffs = num_coeffs * 2;
 #if POLYPROFILE
-                printf(" in the extra coeffs stage\n");
-					 cld_data_start = clock();
+                     printf(" in the extra coeffs stage\n");
+					      cld_data_start = clock();
 #endif
-					 _F_mpz_poly_factor_CLD_mat(data, F, lifted_fac, P, num_coeffs);
+					      _F_mpz_poly_factor_CLD_mat(data, F, lifted_fac, P, num_coeffs);
 #if POLYPROFILE
-					 cld_data_stop = clock();
+					      cld_data_stop = clock();
                      cld_data_total = cld_data_total + cld_data_stop - cld_data_start;
 #endif   
 
-					 if (data->c >= F->length - 1)
+					      if (data->c >= F->length - 1)
                         all_coeffs = 1;
-                  }
+                     }
                } else
                {
 #if TRACE
