@@ -6187,8 +6187,8 @@ int test_F_mpz_poly_factor_test2()
 
       F_mpz_init(content);
 
-	  p1 = z_randint(NUM_POLYS_SMALL);
-	  do {p2 = z_randint(NUM_POLYS_SMALL); } while (p1 == p2);
+	  p1 = z_randint(NUM_POLYS_SMALL + NUM_POLYS_MEDIUM);
+	  do {p2 = z_randint(NUM_POLYS_SMALL + NUM_POLYS_MEDIUM); } while (p1 == p2);
 
 	  filename[0] = '\0';
 	  strcat(filename, path);
