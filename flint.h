@@ -69,6 +69,7 @@
 #define FLINT_MIN(zzz1, zzz2) ((zzz1) > (zzz2) ? (zzz2) : (zzz1))
 #define FLINT_ABS(zzz) ((long)(zzz) < 0 ? (-zzz) : (zzz))
 
+#define WANT_ASSERT 0
 
 /*
  FLINT_BITS is the number of bits per limb.

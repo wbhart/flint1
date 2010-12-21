@@ -7453,7 +7453,7 @@ void F_mpz_poly_zassenhaus_naive(F_mpz_poly_factor_t final_fac,
             F_mpz_poly_init(tryme);
             F_mpz_poly_fit_length(tryme, 1);
             _F_mpz_poly_set_length(tryme, 1);
-			F_mpz_set(tryme->coeffs + 0, lc);
+			   F_mpz_set(tryme->coeffs + 0, lc);
 
             for(l = 0; l < k; l++)
                F_mpz_poly_mul(tryme, tryme, lifted_fac->factors[sub_arr[l]]);
@@ -7465,11 +7465,11 @@ void F_mpz_poly_zassenhaus_naive(F_mpz_poly_factor_t final_fac,
             F_mpz_poly_divrem(Q, R, f, tryme);
 
             if (R->length == 0)
-			{
+			   {
                // found one
-			   F_mpz_poly_factor_insert(final_fac, tryme, exp);
+			      F_mpz_poly_factor_insert(final_fac, tryme, exp);
                
-			   for(l = 0; l < k; l++){
+			      for(l = 0; l < k; l++){
                   used_arr[sub_arr[l]] = 1;
                   count++;
                }
@@ -8418,7 +8418,9 @@ int _F_mpz_poly_try_to_solve(int num_facs, ulong * part,
 
 #if TRACE
    printf("nope not there trial_factors->num_factors = %ld\n", trial_factors->num_factors);
+#endif
 
+#if WANT_ASSERT
    printf("extra checks\n");
 
    F_mpz_poly_fit_length(tryme, 1);
@@ -8436,7 +8438,6 @@ int _F_mpz_poly_try_to_solve(int num_facs, ulong * part,
    F_mpz_poly_scalar_smod(tryme, tryme, P);
 
    printf("length of tryme == %ld if not 0 we have problems\n", tryme->length);
-
 #endif
 
    F_mpz_poly_t f,Q,R;
