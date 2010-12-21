@@ -9122,7 +9122,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
                   if (old_since_last == 0)
                      old_since_last = since_last;
 
-                  if (since_last > old_since_last && hensel_loops < 3)
+                  if ((since_last >= old_since_last) && (hensel_loops < 10))
 				      {
                      return_me = 5;
                      all_coeffs = 2;
