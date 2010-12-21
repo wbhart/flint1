@@ -7823,7 +7823,6 @@ void F_mpz_poly_factor_sq_fr_prim_internal(F_mpz_poly_factor_t final_fac,
 
       if (use_Hoeij_Novocin == 1)
 	  {
-         printf("trying vHN\n");
          solved_yet = F_mpz_poly_factor_sq_fr_vHN(final_fac, lifted_fac, f, P, exp, M, mexpo, U_exp, hensel_loops);
          if (solved_yet == 0)
 		 {
