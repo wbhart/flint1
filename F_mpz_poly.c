@@ -9122,7 +9122,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
                   if (old_since_last == 0)
                      old_since_last = since_last;
 
-                  if (since_last > old_since_last && hensel_loops < 6)
+                  if (since_last > old_since_last && hensel_loops < 10)
 				  {
                      return_me = 5;
                      all_coeffs = 2;
@@ -9131,6 +9131,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
                      old_s = M->r;
                      num_coeffs = num_coeffs * 2;
 #if POLYPROFILE
+                printf(" in the extra coeffs stage\n");
 					 cld_data_start = clock();
 #endif
 					 _F_mpz_poly_factor_CLD_mat(data, F, lifted_fac, P, num_coeffs);
