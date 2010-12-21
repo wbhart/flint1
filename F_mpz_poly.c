@@ -9121,7 +9121,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
 		       // no example has ever needed it...
 
 #if POLYPROFILE
-               printf("since_last == %d, data->c=%ld, M->r = %ld, old_s = %ld, old_since_last = %ld, since_last = %ld\n", since_last, data->c, M->r, old_s, old_since_last, since_last);
+               printf("since_last == %d, data->c=%ld, M->r = %ld, old_s = %ld, old_since_last = %ld, since_last = %d\n", since_last, data->c, M->r, old_s, old_since_last, since_last);
 #endif
                if ((since_last >= data->c - 5 && M->r > old_s - 2) || (hensel_loops > 2) || (hensel_loops == -13))
                {
