@@ -7745,8 +7745,7 @@ void F_mpz_poly_factor_sq_fr_prim_internal(F_mpz_poly_factor_t final_fac,
 
       long n_a = (long) (double)((3.5*bit_r / log2((double) p) + (double) avg_b / log2((double) p)));
 
-      //FIXME: temp setting
-      a = FLINT_MAX(a, n_a);
+      a = FLINT_MIN(a, n_a);
 
       // TODO: Attempt a bit more Hensel lifting when tough poly predicted
       /* 
@@ -9123,7 +9122,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
                   if (old_since_last == 0)
                      old_since_last = since_last;
 
-                  if (since_last > old_since_last && hensel_loops < 3)
+                  if (since_last > old_since_last && hensel_loops < 6)
 				  {
                      return_me = 5;
                      all_coeffs = 2;
