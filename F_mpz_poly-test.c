@@ -2872,7 +2872,7 @@ int test_F_mpz_poly_factor_test1()
    mpz_poly_init(res2); 
 
    ulong count1;
-   for (count1 = 0; (count1 < 1000*ITER) && (result == 1) ; count1++)
+   for (count1 = 0; (count1 < 500000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -6177,7 +6177,7 @@ int test_F_mpz_poly_factor_test2()
    char filename[25];
 
    ulong count1;
-   for (count1 = 0; (count1 < 30*ITER) && (result == 1) ; count1++)
+   for (count1 = 0; (count1 < 3000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -6262,7 +6262,7 @@ int test_F_mpz_poly_factor_test3()
    char filename[25];
 
    ulong count1;
-   for (count1 = 0; (count1 < 30*ITER) && (result == 1) ; count1++)
+   for (count1 = 0; (count1 < 3000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly);
       
