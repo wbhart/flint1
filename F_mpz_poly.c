@@ -7745,7 +7745,6 @@ void F_mpz_poly_factor_sq_fr_prim_internal(F_mpz_poly_factor_t final_fac,
 
       long n_a = (long) (double)((3.5*bit_r / log2((double) p) + (double) avg_b / log2((double) p)));
 
-// FIXME: temporarily setting Hensel lifting higher to test something
       a = FLINT_MIN(a, n_a);
 
       // TODO: Attempt a bit more Hensel lifting when tough poly predicted
@@ -8378,7 +8377,7 @@ int _F_mpz_poly_try_to_solve(int num_facs, ulong * part,
       F_mpz_poly_content(temp_lc, tryme);
 #if TRACE
       F_mpz_print(temp_lc);
-      printf(" the leftover from trial_factor %ld\n", i);
+      printf(" the leftover from trial_factor %d\n", i);
 #endif
       F_mpz_poly_scalar_divexact(tryme, tryme, temp_lc);
       F_mpz_poly_factor_insert(trial_factors, tryme, 1UL);
@@ -8438,6 +8437,13 @@ int _F_mpz_poly_try_to_solve(int num_facs, ulong * part,
    F_mpz_poly_init(f);
    F_mpz_poly_init(Q);
    F_mpz_poly_init(R);
+
+   zmod_poly_t fp,Qp,Rp, temp_p;
+   zmod_poly_init(fp, 2);
+   zmod_poly_init(Qp, 2);
+   zmod_poly_init(Rp, 2);
+   zmod_poly_init(temp_p, 2);
+
    F_mpz_poly_set(f, F);
 
    int j;
@@ -8461,18 +8467,17 @@ int _F_mpz_poly_try_to_solve(int num_facs, ulong * part,
 		 return 1;
       }
 
-      F_mpz_poly_divrem(Q, R, f, trial_factors->factors[i]);
-#if TRACE
-      printf(" testing the division\n");
-      F_mpz_poly_mul(tryme, Q, trial_factors->factors[i]);
-      F_mpz_poly_add(tryme, tryme, R);
-      F_mpz_poly_sub(tryme, tryme, f);
+      int found_it = 0;
+      F_mpz_poly_to_zmod_poly(fp, f);
+      F_mpz_poly_to_zmod_poly(temp_p, trial_factors->factors[i]);
+      zmod_poly_divrem_divconquer(Qp, Rp, fp, temp_p);
+      if (Rp->length == 0){
+         F_mpz_poly_divrem(Q, R, f, trial_factors->factors[i]);
+         if (R->length == 0)
+            found_it = 1;
+      }
 
-      printf("length of tryme=%ld, length of R=%ld\n",tryme->length, R->length);
-
-#endif      
-
-      if (R->length == 0)
+      if (found_it == 1)
 	  {
 #if TRACE
          printf(" found one!\n");
@@ -8511,6 +8516,10 @@ int _F_mpz_poly_try_to_solve(int num_facs, ulong * part,
          F_mpz_poly_clear(f);
          F_mpz_poly_clear(Q);
          F_mpz_poly_clear(R);
+         zmod_poly_clear(fp);
+         zmod_poly_clear(Qp);
+         zmod_poly_clear(Rp);
+         zmod_poly_clear(temp_p);
 
          F_mpz_clear(temp_lc);
          F_mpz_poly_clear(tryme);
