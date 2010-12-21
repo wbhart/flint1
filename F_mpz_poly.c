@@ -8672,8 +8672,6 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    } else
       F_mpz_set_ui(B, r + 20*r*r);
 
-   printf("checking if solved\n");
-
    int solved = _F_mpz_mat_check_if_solved(M, r, final_fac, lifted_fac, F, P, exp, lc, 0);
    
    if (solved == 1)
