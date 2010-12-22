@@ -136,11 +136,19 @@ double heuristic_scalar_product(double * vec1, double * vec2, ulong n,
 } 
 
 /*
-   Performs floating point size reductions of the kappa-th row of B by all of the previous rows, uses d_mats mu and r for storing the GSO data.
-   While the double array s will contain the size of the kappa-th row if it were moved into position i.  The d_mat appB is an approximation of 
-   B which gets populated only when needed.  The d_mat appSP is an approximation of the Gram matrix.  
-
-
+   Performs floating point size reductions of the kappa-th row of B by all of 
+   the previous rows, uses d_mats mu and r for storing the GSO data.
+   While the double array s will contain the size of the kappa-th row if it 
+   were moved into position i.  The d_mat appB is an approximation of 
+   B with each row receiving an exponent stored in expo which gets populated 
+   only when needed.  The d_mat appSP is an approximation of the Gram matrix 
+   whose entries are scalar products of the rows of B.  The index a is the 
+   smallest row index which will be reduced from the kappa-th row.  Index zeros 
+   is the number of zero rows in the matrix.  Kappamax is the highest index 
+   which has been size-reduced so far, and n is the number of columns you want to 
+   consider.  The output is the value -1 if the process fails (usually do to 
+   insufficient precision) or 0 if everything was successful.  These descriptions 
+   will be true for the future Babai procedures as well.
 */
 
 int check_Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s, 
@@ -458,6 +466,12 @@ int check_Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
 
    return 0;
 }
+
+/* 
+   Same as check_Babai but using the heuristic inner product rather than a purely 
+   floating point inner product.  The heuristic will compute at full precision 
+   when there is cancellation.
+*/
 
 int check_Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s, 
        double **appB, int *expo, double **appSP, 
@@ -790,6 +804,8 @@ int check_Babai_heuristic_d (int kappa, F_mpz_mat_t B, double **mu, double **r, 
    return 0;
 }
 
+/* The mpfr version of check_Babai_heuristic_d, also inherits some temp variables.*/
+
 int check_Babai_heuristic(int kappa, F_mpz_mat_t B, __mpfr_struct **mu, __mpfr_struct **r, __mpfr_struct *s, 
        __mpfr_struct **appB, __mpfr_struct **appSP, 
        int a, int zeros, int kappamax, int n, mpfr_t tmp, mpfr_t rtmp, mp_prec_t prec)
@@ -957,6 +973,12 @@ int check_Babai_heuristic(int kappa, F_mpz_mat_t B, __mpfr_struct **mu, __mpfr_s
    return 0;
 }
 
+/* 
+   takes the scalar product of two dpe vectors with the same exponents by entry,
+   mantissas in vec1 and vec2, n entries to be considered, while cexpo holds the
+   exponents.
+*/
+
 double d_2exp_vec_scalar_product(double * vec1, double * vec2, int n, int *cexpo)
 {
   double sum;
@@ -967,6 +989,8 @@ double d_2exp_vec_scalar_product(double * vec1, double * vec2, int n, int *cexpo
 
   return sum;
 } 
+
+/*  same as above but returning the square of the l_2 norm of a single vector */
 
 double d_2exp_vec_norm(double * vec, int n, int *cexpo)
 {
@@ -997,6 +1021,14 @@ ulong getShift(F_mpz_mat_t B)
 
    return shift;
 }
+
+/* 
+   This is a Babai which is used when size reducing a vector beyond an index which 
+   LLL has reached.  cur_kappa is the index behind which we can assume is LLL 
+   reduced, while kappa is the vector to be reduced.  This procedure only size reduces
+   kappa by vectors up to cur_kappa NOT kappa-1.
+
+*/
 
 int advance_check_Babai (int cur_kappa, int kappa, F_mpz_mat_t B, double **mu, double **r, double *s, 
        double **appB, int *expo, double **appSP, 
@@ -1193,6 +1225,10 @@ int advance_check_Babai (int cur_kappa, int kappa, F_mpz_mat_t B, double **mu, d
       return -2;
 }
 
+/*
+   Same as above but using the heuristic scalar product.
+*/
+
 int advance_check_Babai_heuristic_d (int cur_kappa, int kappa, F_mpz_mat_t B, double **mu, double **r, double *s, 
        double **appB, int *expo, double **appSP, 
        int a, int zeros, int kappamax, int n)
@@ -1388,6 +1424,10 @@ int advance_check_Babai_heuristic_d (int cur_kappa, int kappa, F_mpz_mat_t B, do
       return -2;
 }
 
+/*
+   Same as above but for mpfr and not doubles.
+*/
+
 int advance_check_Babai_heuristic(int cur_kappa, int kappa, F_mpz_mat_t B, __mpfr_struct **mu, __mpfr_struct **r, __mpfr_struct *s, 
        __mpfr_struct **appB, __mpfr_struct **appSP, 
        int a, int zeros, int kappamax, int n, mpfr_t tmp, mpfr_t rtmp, mp_prec_t prec)
@@ -1545,6 +1585,10 @@ int advance_check_Babai_heuristic(int cur_kappa, int kappa, F_mpz_mat_t B, __mpf
 
    return 0;
 }
+
+/* 
+   Similar to above with a check for zero vectors after each size reduction.
+*/
 
 int check_Babai_heuristic_d_zero_vec (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s, 
        double **appB, int *expo, double **appSP, 
@@ -1764,8 +1808,8 @@ int check_Babai_heuristic_d_zero_vec (int kappa, F_mpz_mat_t B, double **mu, dou
       return 10;
 }
 
-// This is a mildly greedy version, tries the fast version unless that fails then 
-// switches to heuristic version for only one loop and right back to fast... 
+// This is a mildly greedy version, tries the fast version (doubles only) unless that fails then 
+// switches to heuristic version for only one loop and right back to fast... reduces B in place!
 
 int LLL_d(F_mpz_mat_t B)
 {
@@ -1979,6 +2023,11 @@ int LLL_d(F_mpz_mat_t B)
    return 0;
 }
 
+/* 
+   This LLL reduces B in place and only uses the heuristic inner products 
+   which attempt to detect cancellations and otherwise use doubles.
+*/
+
 int LLL_d_heuristic(F_mpz_mat_t B)
 {
    int kappa, kappa2, d, n, i, j, zeros, kappamax;
@@ -2175,7 +2224,9 @@ int LLL_d_heuristic(F_mpz_mat_t B)
 }
 
 /*
-   mpfr_init2 not mpfr_init and set_prec not set_default_prec
+   This is LLL using mpfr with the given precision for the underlying GSO,
+   reduces B in place.  The mpfr2 refers to the way the mpfr_t's are 
+   initialized.
 */
 int LLL_mpfr2(F_mpz_mat_t B, mp_prec_t prec)
 {
@@ -2385,6 +2436,13 @@ int LLL_mpfr2(F_mpz_mat_t B, mp_prec_t prec)
    return 0;
 }
 
+/* 
+   A wrapper of LLL_mpfr2.  This currently begins with prec == 53, 
+   then for the first 20 loops increases the precision one limb at a time.
+   After 20 loops it doubles the precision each time.  There is a proof that
+   this will eventually work.
+*/
+
 int LLL_mpfr(F_mpz_mat_t B)
 {
 
@@ -2416,6 +2474,11 @@ int LLL_mpfr(F_mpz_mat_t B)
    else
       return -1;
 }
+
+/* 
+   A wrapper of the above procedures.  Begins with the greediest version, then 
+   adapts to heuristic inner products only, then finally to mpfr if needed.
+*/
 
 int LLL_wrapper(F_mpz_mat_t B){
 
