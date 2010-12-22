@@ -8736,7 +8736,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    ulong sqN = (ulong) sqrt( 1.6 * ((double) r*r) );         
 
    F_mpz_mat_t A;
-   F_mpz_mat_init_identity(A, data_avail);
+   F_mpz_mat_init(A, data_avail, data_avail);
 
    F_mpz_mat_t abs_A;
    F_mpz_mat_init(abs_A, data_avail, data_avail);
@@ -8751,9 +8751,8 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
 
    if (mix_data)
    {
-// ADJUSTMENT OF PHILOSOPHY uncomment this line to make rand linear combinations
-//      F_mpz_mat_rand_unimodular_little_big(A, (long) (data_avail/2), 2, 0);
-      F_mpz_mat_rand_unimodular_little_big(A, (long) (data_avail/2), 0, 0);
+// ADJUSTMENT OF PHILOSOPHY
+      F_mpz_mat_rand_unimodular_little_big(A, (long) (data_avail/2), 2, 0);
 
       F_mpz_mat_transpose(abs_A, A);
       F_mpz_mat_block_reverse_cols(A, (long) (data_avail/2), abs_A);
