@@ -8461,17 +8461,20 @@ int _F_mpz_poly_try_to_solve(int num_facs, ulong * part,
          for (j = 0; j < i; j++)
             F_mpz_poly_factor_insert(final_fac, trial_factors->factors[j], exp);
          
-		 F_mpz_poly_factor_insert(final_fac, f, exp);
+		   F_mpz_poly_factor_insert(final_fac, f, exp);
          
-		 F_mpz_poly_clear(f);
+		   F_mpz_poly_clear(f);
          F_mpz_poly_clear(Q);
          F_mpz_poly_clear(R);
 
          F_mpz_clear(temp_lc);
          F_mpz_poly_clear(tryme);
          F_mpz_poly_factor_clear(trial_factors);
-         
-		 return 1;
+         zmod_poly_clear(fp);
+         zmod_poly_clear(Qp);
+         zmod_poly_clear(Rp);
+         zmod_poly_clear(temp_p);         
+		   return 1;
       }
 
       int found_it = 0;
@@ -8539,6 +8542,10 @@ int _F_mpz_poly_try_to_solve(int num_facs, ulong * part,
    F_mpz_poly_clear(f);
    F_mpz_poly_clear(Q);
    F_mpz_poly_clear(R);
+   zmod_poly_clear(fp);
+   zmod_poly_clear(Qp);
+   zmod_poly_clear(Rp);
+   zmod_poly_clear(temp_p);
 
    F_mpz_clear(temp_lc);
    F_mpz_poly_clear(tryme);
