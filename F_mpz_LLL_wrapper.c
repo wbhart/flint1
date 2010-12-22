@@ -2510,8 +2510,20 @@ int LLL_wrapper(F_mpz_mat_t B){
       return -1;
 }
 
-// This is a mildly greedy version, tries the fast version unless that fails then 
-// switches to heuristic version for only one loop and right back to fast... 
+/**************************
+
+    LLL_with_removals
+
+    The following procedures are similar to the above but they accept an a priori bound for the 
+    square length of any vector of interest.  That is to say, if the user is NOT interested in vectors
+    with squared l_2 norm > B then use these procedures instead of full LLL.
+
+***************************/
+
+
+
+// Same as LLL_d but with the removal bound.  Output is the new dimension of 
+// B if removals are desired.
 
 int LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 {
@@ -2744,6 +2756,10 @@ int LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    return newd;
 }
 
+/*
+   Same as LLL_d_heuristic but with the removal bound
+*/
+
 int LLL_d_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 {
    int kappa, kappa2, d, n, i, j, zeros, kappamax;
@@ -2959,9 +2975,12 @@ int LLL_d_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    
    return newd;
 }
+
 /*
+   same as LLL_mpfr2 but with the removal bound
    mpfr_init2 not mpfr_init and set_prec not set_default_prec
 */
+
 int LLL_mpfr2_with_removal(F_mpz_mat_t B, mp_prec_t prec, F_mpz_t gs_B)
 {
    int kappa, kappa2, d, D, n, i, j, zeros, kappamax;
@@ -3189,6 +3208,10 @@ int LLL_mpfr2_with_removal(F_mpz_mat_t B, mp_prec_t prec, F_mpz_t gs_B)
    return newd;
 }
 
+/* 
+   wrapper of the mpfr-based LLL with removal of vectors activated
+*/
+
 int LLL_mpfr_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 {
 
@@ -3218,6 +3241,10 @@ int LLL_mpfr_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
       return -1;
 }
 
+/* 
+   Wrapper of the base case LLL with the addition of the removal boundary.
+*/
+
 int LLL_wrapper_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 {
    int res = LLL_d_with_removal(B, gs_B);
@@ -3242,6 +3269,12 @@ int LLL_wrapper_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    else //we've got big problems if this is the exit...
       return -1;
 }
+
+/* 
+   LLL specialized to knapsack-type lattices, it performs early size reductions 
+   occasionally which makes things faster in the knapsack case, also uses the 
+   removal bounds.
+*/
 
 int knapsack_LLL_wrapper_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 {
@@ -3268,7 +3301,8 @@ int knapsack_LLL_wrapper_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
       return -1;
 }
 
-// This is a mildly greedy version, tries the fast version unless that fails then 
+// Engine of the knapsack_LLL This is a mildly greedy version, 
+// tries the fast version unless that fails then 
 // switches to heuristic version for only one loop and right back to fast... 
 
 int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
@@ -3651,6 +3685,8 @@ int knapsack_LLL_d_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    return newd;
 }
 
+//  Same as previous LLL_d_heuristic_with_removal but with advanced size-reduction
+
 int knapsack_LLL_d_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 {
    int kappa, kappa2, d, n, i, j, zeros, kappamax;
@@ -3871,7 +3907,7 @@ int knapsack_LLL_d_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 }
 
 /*
-   mpfr_init2 not mpfr_init and set_prec not set_default_prec
+   Same as LLL_mpfr2_with_removal but with advanced size-reduction
 */
 int knapsack_LLL_mpfr2_with_removal(F_mpz_mat_t B, mp_prec_t prec, F_mpz_t gs_B)
 {
@@ -4103,6 +4139,10 @@ int knapsack_LLL_mpfr2_with_removal(F_mpz_mat_t B, mp_prec_t prec, F_mpz_t gs_B)
    return newd;
 }
 
+/*
+   A wrapper of LLL with mpfr GSO and removal and advanced size-reduction
+*/
+
 int knapsack_LLL_mpfr_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 {
 #if TRACE
@@ -4132,6 +4172,10 @@ int knapsack_LLL_mpfr_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
       return -1;
 }
 
+/*
+   A wrapper of the various knapsack_LLL's starts with fastest moves to heuristic and finally mpfr
+*/
+
 int knapsack_LLL_with_removal(F_mpz_mat_t B, F_mpz_t gs_B){
 
    int res = knapsack_LLL_d_with_removal(B, gs_B);
@@ -4148,6 +4192,10 @@ int knapsack_LLL_with_removal(F_mpz_mat_t B, F_mpz_t gs_B){
    else //we've got big problems if this is the exit...
       return -1;
 }
+
+/*
+   An LLL adapted to searching for zero vectors when not full rank.
+*/
 
 
 int LLL_d_zero_vec_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
@@ -4376,6 +4424,10 @@ int LLL_d_zero_vec_heuristic_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
    return newd;
 }
 
+/*
+   A wrapper of the zero vector hunting LLL for B of not full rank
+*/
+
 int LLL_wrapper_zero_vec_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 {
    int res;
@@ -4397,11 +4449,10 @@ int LLL_wrapper_zero_vec_with_removal(F_mpz_mat_t B, F_mpz_t gs_B)
 
 /**
 
-   Stripped down LLL_d to just calculate G-S lengths.
+   Stripped down LLL_d to just calculate G-S lengths.  This only computes GSOs.
 
 **/
 
-// ### This is different -------
 void gs_Babai(int kappa, F_mpz_mat_t B, double **mu, double **r, double *s, 
        double **appB, int *expo, double **appSP, 
        int a, int zeros, int kappamax, int n)
@@ -4463,6 +4514,8 @@ void gs_Babai(int kappa, F_mpz_mat_t B, double **mu, double **r, double *s,
       s[k + 1] = s[k] - tmp;
    }
 }
+
+//A fast and dirty approximation algorithm for the gs vectors of B.
 
 ulong F_mpz_mat_gs_d( F_mpz_mat_t B, F_mpz_t gs_B)
 {
@@ -4561,6 +4614,16 @@ ulong F_mpz_mat_gs_d( F_mpz_mat_t B, F_mpz_t gs_B)
 
    return newd;
 }
+
+/***************************************
+
+   U_LLL is a new style of LLL which does adjoins an identity matrix to the input 
+   lattice then scales the lattice down to new_size bits and reduces this augmented
+   lattice.  This tends to be more stable numerically than traditional LLL which means
+   higher dimensions can be attacked using doubles.  In each iteration a new identity matrix is adjoined
+   is used.  Optimized for factoring polynomials.
+
+****************************************/
 
 int U_LLL_with_removal(F_mpz_mat_t FM, long new_size, F_mpz_t gs_B)
 {
@@ -4758,6 +4821,11 @@ int U_LLL_with_removal(F_mpz_mat_t FM, long new_size, F_mpz_t gs_B)
 
    return newd;
 }
+
+/* 
+   A wrapper of U_LLL_with_removal the most numerically stable LLL.  This is the default LLL
+   which reduced B in place.
+*/
 
 
 void LLL(F_mpz_mat_t B)
