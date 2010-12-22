@@ -346,6 +346,40 @@ void F_mpz_poly_get_coeff_mpz(mpz_t x, const F_mpz_poly_t poly, const ulong n)
 
 ================================================================================*/
 
+void fmpz_poly_factor_to_F_mpz_poly_factor(F_mpz_poly_factor_t F_fac, fmpz_poly_factor_t f_fac)
+{
+   ulong i;
+   F_mpz_poly_t temp;
+   F_mpz_poly_init(temp);
+   F_mpz_poly_set_coeff_ui(temp, 1, 1UL); /* must be at least length 2 to make it in */
+
+   for (i = 0; i < f_fac->num_factors; i++)
+   {
+	   F_mpz_poly_factor_insert(F_fac, temp, f_fac->exponents[i]);
+	   fmpz_poly_to_F_mpz_poly(temp, f_fac->factors[i]);
+       F_mpz_poly_swap(F_fac->factors[i], temp);
+   }
+
+   F_mpz_poly_clear(temp);  
+}
+
+void F_mpz_poly_factor_to_fmpz_poly_factor(fmpz_poly_factor_t f_fac, F_mpz_poly_factor_t F_fac)
+{
+   ulong i;
+   fmpz_poly_t temp;
+   fmpz_poly_init(temp);
+   fmpz_poly_set_coeff_ui(temp, 1, 1UL); /* must be at least length 2 to make it in */
+
+   for (i = 0; i < F_fac->num_factors; i++)
+   {
+	   fmpz_poly_factor_insert(f_fac, temp, F_fac->exponents[i]);
+	   F_mpz_poly_to_fmpz_poly(temp, F_fac->factors[i]);
+       fmpz_poly_swap(f_fac->factors[i], temp);
+   }
+
+   fmpz_poly_clear(temp);  
+}
+
 void mpz_poly_to_F_mpz_poly(F_mpz_poly_t F_poly, const mpz_poly_t m_poly)
 {
 	F_mpz_poly_fit_length(F_poly, m_poly->length);

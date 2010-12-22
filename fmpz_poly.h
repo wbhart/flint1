@@ -22,6 +22,7 @@
 fmpz_poly.h: Polynomials over Z, implemented as contiguous block of fmpz_t's
 
 Copyright (C) 2007, William Hart and David Harvey
+Copyright (C) 2010, William Hart
 
 *****************************************************************************/
 
@@ -91,6 +92,22 @@ typedef struct
 // fmpz_poly_t allows reference-like semantics for fmpz_poly_struct:
 typedef fmpz_poly_struct fmpz_poly_t[1];
 typedef fmpz_poly_struct * fmpz_poly_p;
+
+/*
+   This struct encapsulates an array of factors with the given exponents.
+   The current number of allocated slots in the struct is given by alloc.
+   The number of slots occupied is given by num_factors.
+*/
+typedef struct
+{
+	fmpz_poly_t * factors;
+	unsigned long * exponents;
+	unsigned long alloc;
+	unsigned long num_factors;
+} fmpz_poly_factor_struct;
+
+// allows call by reference-like semantics for fmpz_poly_factor_struct
+typedef fmpz_poly_factor_struct fmpz_poly_factor_t[1];
 
 #define SWAP(x_dummy, y_dummy) \
 do { \
@@ -618,6 +635,17 @@ void fmpz_poly_clear(fmpz_poly_t poly);
 void fmpz_poly_check(const fmpz_poly_t poly);
 
 void fmpz_poly_check_normalisation(const fmpz_poly_t poly);
+
+void fmpz_poly_factor_init(fmpz_poly_factor_t fac);
+
+void fmpz_poly_factor_clear(fmpz_poly_factor_t fac);
+
+// ------------------------------------------------------
+// fmpz_poly_factor_t
+
+void fmpz_poly_factor_insert(fmpz_poly_factor_t fac, fmpz_poly_t poly, ulong exp);
+
+void fmpz_poly_factor_print(fmpz_poly_factor_t fac);
 
 // ------------------------------------------------------
 // String conversions and I/O

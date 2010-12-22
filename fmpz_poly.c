@@ -24,6 +24,7 @@ fmpz_poly.c: Polynomials over Z, implemented as contiguous block of fmpz_t's
 Copyright (C) 2007, William Hart and David Harvey
 Copyright (C) 2008, William Hart
 Copyright (C) 2009, William Hart and Burcin Erocal
+Copyright (C) 2010, William Hart
 
 *****************************************************************************/
 
@@ -4942,6 +4943,26 @@ void fmpz_poly_clear(fmpz_poly_t poly)
    if (poly->coeffs) flint_heap_free(poly->coeffs);
 }
 
+void fmpz_poly_factor_init(fmpz_poly_factor_t fac)
+{
+   fac->alloc = 5;
+   fac->num_factors = 0;
+   fac->factors = (fmpz_poly_t *) flint_heap_alloc_bytes(sizeof(fmpz_poly_t)*5);
+   fac->exponents = (ulong *) flint_heap_alloc(5);
+   ulong i;
+   for (i = 0; i < 5; i++)
+	   fmpz_poly_init(fac->factors[i]);
+}
+
+void fmpz_poly_factor_clear(fmpz_poly_factor_t fac)
+{
+	ulong i;
+	for (i = 0; i < fac->alloc; i++)
+	   fmpz_poly_clear(fac->factors[i]);
+	free(fac->factors);
+	free(fac->exponents);
+}
+
 /****************************************************************************
 
    Polynomial Checking
@@ -5029,6 +5050,42 @@ void fmpz_poly_check_normalisation(const fmpz_poly_t poly)
          abort();
       }
    }
+}
+
+/****************************************************************************
+
+   fmpz_poly_factor_t
+
+****************************************************************************/
+
+void fmpz_poly_factor_insert(fmpz_poly_factor_t fac, fmpz_poly_t poly, ulong exp)
+{
+   if (poly->length <= 1) return;   
+   
+   // if no space left in array, make a new one twice as big (for efficiency) 
+   // and copy contents across
+   if (fac->alloc == fac->num_factors)
+   {
+      fac->factors = (fmpz_poly_t *) flint_heap_realloc_bytes(fac->factors, sizeof(fmpz_poly_t)*2*fac->alloc);
+      fac->exponents = (ulong *) flint_heap_realloc(fac->exponents, 2*fac->alloc);
+      ulong i;
+      for (i = fac->alloc; i < 2*fac->alloc; i++)
+         fmpz_poly_init(fac->factors[i]);
+      fac->alloc = 2*fac->alloc;
+   } 
+
+   fmpz_poly_set(fac->factors[fac->num_factors], poly);
+   fac->exponents[fac->num_factors] = exp;
+   fac->num_factors++;
+}
+
+void fmpz_poly_factor_print(fmpz_poly_factor_t fac)
+{
+   for (ulong i = 0; i < fac->num_factors; i++)
+   {
+      fmpz_poly_print(fac->factors[i]); 
+      printf(" ^ %ld\n", fac->exponents[i]);
+   }	
 }
 
 /****************************************************************************

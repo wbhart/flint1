@@ -413,6 +413,16 @@ void F_mpz_poly_truncate(F_mpz_poly_t poly, const ulong length)
 
 ================================================================================*/
 
+/**
+   Convert from an F_mpz_poly_factor_t to an fmpz_poly_factor_t.
+*/
+void fmpz_poly_factor_to_F_mpz_poly_factor(F_mpz_poly_factor_t F_fac, fmpz_poly_factor_t f_fac);
+
+/**
+   Convert from an fmpz_poly_factor_t to an F_mpz_poly_factor_t.
+*/
+void F_mpz_poly_factor_to_fmpz_poly_factor(fmpz_poly_factor_t f_fac, F_mpz_poly_factor_t F_fac);
+
 /** 
    \fn     void mpz_poly_to_F_mpz_poly(F_mpz_poly_t F_poly, const mpz_poly_t m_poly)
    \brief  Convert an mpz_poly_t to an F_mpz_poly_t
