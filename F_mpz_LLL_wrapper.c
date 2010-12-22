@@ -135,6 +135,13 @@ double heuristic_scalar_product(double * vec1, double * vec2, ulong n,
    return sum;
 } 
 
+/*
+   Performs floating point size reductions of the kappa-th row of B by all of the previous rows, uses d_mats mu and r for storing the GSO data.
+   While the double array s will contain the size of the kappa-th row if it were moved into position i.  The d_mat appB is an approximation of 
+   B which gets populated only when needed.  The d_mat appSP is an approximation of the Gram matrix.  
+
+
+*/
 
 int check_Babai (int kappa, F_mpz_mat_t B, double **mu, double **r, double *s, 
        double **appB, int *expo, double **appSP, 
