@@ -34,6 +34,8 @@ Copyright (C) 2007, William Hart
 
 #include <NTL/ZZ.h>
 #include <NTL/ZZX.h>
+#include <NTL/vec_ZZ.h>
+#include <NTL/mat_ZZ.h>
 
 #include "flint.h"
 #include "F_mpz.h"

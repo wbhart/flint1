@@ -2872,7 +2872,7 @@ int test_F_mpz_poly_factor_test1()
    mpz_poly_init(res2); 
 
    ulong count1;
-   for (count1 = 0; (count1 < 500000*ITER) && (result == 1) ; count1++)
+   for (count1 = 0; (count1 < 10000*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -2896,7 +2896,14 @@ int test_F_mpz_poly_factor_test1()
 
 #if TRACE
       F_mpz_poly_print(res); printf(" res\n");
+#else
+	  if ((count1 % 1000) == 0) 
+	  { 
+		 printf(".");
+		 fflush(stdout);
+	  }
 #endif
+
       F_mpz_poly_factor(F_factors, content, res);
 
 		F_mpz_poly_to_mpz_poly(res2, res);
@@ -6148,18 +6155,18 @@ typedef struct
    int factors;
 } load_poly_t;
 
-#define NUM_POLYS_SMALL 11
-#define NUM_POLYS_MEDIUM 4
+#define NUM_POLYS_SMALL 9
+#define NUM_POLYS_MEDIUM 6
 #define NUM_POLYS_LARGE 3
 #define NUM_POLYS_TOTAL (NUM_POLYS_SMALL + NUM_POLYS_MEDIUM + NUM_POLYS_LARGE)
 
 load_poly_t poly_arr[NUM_POLYS_TOTAL] = 
 {
 	{ "P1", 36 }, { "P2", 12 }, { "P3", 16 }, { "P4", 2 }, { "P5", 1 }, 
-	{ "P6", 6  }, { "P7", 1  }, { "P8", 1  }, { "S7", 1 },
-	{ "T1", 2  }, { "T2", 2  },
+	{ "P6", 6  }, { "P7", 1  }, { "S7", 1 },
+	{ "T2", 2  },
 
-	{ "M12_5", 1 }, { "M12_6", 2 }, { "S8", 1 }, { "H1", 28 }, 
+	{ "T1", 2  }, { "P8", 1  }, { "M12_5", 1 }, { "M12_6", 2 }, { "S8", 1 }, { "H1", 28 }, 
 
 	{ "S9", 1 }, { "S10", 1 }, { "H2", 6 } 
 };
@@ -6169,7 +6176,7 @@ int test_F_mpz_poly_factor_test2()
    F_mpz_poly_t F_poly1, F_poly2, F_poly;
    F_mpz_poly_factor_t F_factors;
    F_mpz_t content;
-   int result = 1, xfactor;
+   int result = 1, xfactor, rev;
    long num_facs, p1, p2;
    
    const char * path = "testpolys/";
@@ -6177,7 +6184,7 @@ int test_F_mpz_poly_factor_test2()
    char filename[25];
 
    ulong count1;
-   for (count1 = 0; (count1 < 300*ITER) && (result == 1) ; count1++)
+   for (count1 = 0; (count1 < 10*ITER) && (result == 1) ; count1++)
    {
       F_mpz_poly_init(F_poly1);
       F_mpz_poly_init(F_poly2);
@@ -6187,21 +6194,49 @@ int test_F_mpz_poly_factor_test2()
 
       F_mpz_init(content);
 
-	  p1 = z_randint(NUM_POLYS_SMALL + NUM_POLYS_MEDIUM);
-	  do {p2 = z_randint(NUM_POLYS_SMALL + NUM_POLYS_MEDIUM); } while (p1 == p2);
+	  int redo;
+
+	  do
+	  {
+		 redo = 0;
+
+		 p1 = z_randint(NUM_POLYS_SMALL);
+	     p2 = z_randint(NUM_POLYS_SMALL); 
+         
+		 if (p1 == p2) 
+            redo = 1;
+
+	     rev = (p2 > p1);
+	    
+         if ((p1 == 3 && p2 == 0 && rev == 1) /* P4 * P1(rev) */
+			|| (p1 == 3 && p2 == 8 && rev == 1) /* P4 * T2(rev) */
+			|| (p1 == 3 && p2 == 2 && rev == 1) /* P4 * P3(rev) */
+			|| (p1 == 2 && p2 == 6 && rev == 1) /* P3 * P7(rev) */
+			|| (p1 == 8 && p2 == 1 && rev == 1) /* T2 * P2(rev) */
+			|| (p1 == 8 && p2 == 6 && rev == 1) /* T2 * P7(rev) */
+			|| (p1 == 3 && p2 == 6) /* P4 * P7 (and reversals) */
+			|| (p1 == 6 && p2 == 3) /* P7 * P4 */
+			|| (p1 == 3 && p2 == 6 && rev == 0)
+			|| (p1 == 8 && p2 == 3 && rev == 0) /* T2 * P4 */
+			|| (p1 == 3 && p2 == 8 && rev == 0)) redo = 1;
+	  } while (redo == 1);
 
 	  filename[0] = '\0';
 	  strcat(filename, path);
 	  strcat(filename, poly_arr[p1].file);
       strcat(filename, ext);
+#if TRACE
 	  printf("%s\n", filename);
+#endif
 	  FILE * polyfile1 = fopen(filename, "r");
       
 	  filename[0] = '\0';
 	  strcat(filename, path);
 	  strcat(filename, poly_arr[p2].file);
       strcat(filename, ext);
-	  printf("%s", filename);
+#if TRACE
+	  printf("%s\n", filename);
+#endif
 	  FILE * polyfile2 = fopen(filename, "r");
    
 	  F_mpz_poly_fread(F_poly1, polyfile1);
@@ -6211,14 +6246,21 @@ int test_F_mpz_poly_factor_test2()
 	  int xf2 = F_mpz_is_zero(F_poly2->coeffs);
       xfactor = (xf1 && xf2);
 
-	  if (z_randint(2))
+	  if (rev)
 	  {
 		 F_mpz_poly_reverse(F_poly2, F_poly2, F_poly2->length);
 		 if (xf2) xfactor = 1;
+#if TRACE
 		 printf(" - reverse");
+#endif
 	  }
 
+#if TRACE
 	  printf("\n\n");
+#else
+	  printf(".");
+	  fflush(stdout);
+#endif
 
 	  F_mpz_poly_mul(F_poly, F_poly1, F_poly2);
 	  num_facs = poly_arr[p1].factors + poly_arr[p2].factors;
@@ -6276,7 +6318,9 @@ int test_F_mpz_poly_factor_test3()
 	  strcat(filename, path);
 	  strcat(filename, poly_arr[p1].file);
       strcat(filename, ext);
+#if TRACE
 	  printf("%s", filename);
+#endif
 	  FILE * polyfile1 = fopen(filename, "r");
       
 	  F_mpz_poly_fread(F_poly, polyfile1);
@@ -6288,10 +6332,17 @@ int test_F_mpz_poly_factor_test3()
 	  {
 		 F_mpz_poly_reverse(F_poly, F_poly, F_poly->length);
 		 if (xf1) xfactor = 1;
+#if TRACE
 		 printf(" - reverse");
+#endif
 	  } 
 
+#if TRACE
 	  printf("\n\n");
+#else
+	  printf(".");
+	  fflush(stdout);
+#endif
 
 	  num_facs = poly_arr[p1].factors;
 
@@ -6325,9 +6376,6 @@ void F_mpz_poly_test_all()
 
 #if TESTFILE
 #endif
-   RUN_TEST(F_mpz_poly_factor_test3);
-/*   RUN_TEST(F_mpz_poly_factor_test2);
-   RUN_TEST(F_mpz_poly_factor_test1);
    RUN_TEST(F_mpz_poly_derivative); 
    RUN_TEST(F_mpz_poly_content); 
    RUN_TEST(F_mpz_poly_eval_horner_d); 
@@ -6392,7 +6440,10 @@ void F_mpz_poly_test_all()
    RUN_TEST(F_mpz_poly_hensel_lift_once);
    RUN_TEST(F_mpz_poly_is_squarefree);
    RUN_TEST(F_mpz_poly_factor_squarefree);
-   RUN_TEST(F_mpz_poly_factor_zassenhaus);*/
+   RUN_TEST(F_mpz_poly_factor_zassenhaus);
+   RUN_TEST(F_mpz_poly_factor_test3);
+   RUN_TEST(F_mpz_poly_factor_test2);
+   RUN_TEST(F_mpz_poly_factor_test1);
 
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");
