@@ -8695,7 +8695,7 @@ int F_mpz_poly_factor_sq_fr_vHN(F_mpz_poly_factor_t final_fac, F_mpz_poly_factor
    ulong num_coeffs;
    if ((FLINT_ABS(hensel_loops) < 3) && (3*r > F->length))
    {
-      mix_data = 0;
+      mix_data = 1;
    
 	  if (r > 200)
          num_coeffs = 50;
