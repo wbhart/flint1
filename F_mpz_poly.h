@@ -39,7 +39,7 @@
 #include "flint.h"
 #include "F_mpz.h"
 #include "F_mpz_mat.h"
-#include "F_mpz_LLL_wrapper.h"
+#include "F_mpz_LLL.h"
 
 /*
    WARNING : 

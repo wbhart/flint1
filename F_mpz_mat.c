@@ -37,7 +37,7 @@
 #include "long_extras.h"
 #include "F_mpz.h"
 #include "F_mpz_mat.h"
-#include "F_mpz_LLL_wrapper.h"
+#include "F_mpz_LLL.h"
 #include "mpz_mat.h"
 
 /*===============================================================================
