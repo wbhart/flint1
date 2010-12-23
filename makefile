@@ -20,9 +20,9 @@ ifndef CXX
 	CXX = g++
 endif
 
-LIBS = -L$(FLINT_GMP_LIB_DIR) $(FLINT_LINK_OPTIONS) -lmpir -lmpfr -lpthread -lm
+LIBS = -L$(FLINT_GMP_LIB_DIR) $(FLINT_LINK_OPTIONS) -lmpfr -lmpir -lpthread -lm
 
-LIBS2 = -L$(FLINT_GMP_LIB_DIR) -L$(FLINT_NTL_LIB_DIR) $(FLINT_LINK_OPTIONS) -lmpir -lmpfr -lpthread -lntl -lm 
+LIBS2 = -L$(FLINT_GMP_LIB_DIR) -L$(FLINT_NTL_LIB_DIR) $(FLINT_LINK_OPTIONS) -lntl -lmpfr -lmpir -lpthread -lm 
 
 ifndef FLINT_NTL_INCLUDE_DIR
 	INCS = -I$(FLINT_GMP_INCLUDE_DIR) -I$(FLINT_MPFR_INCLUDE_DIR) 
