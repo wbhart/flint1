@@ -208,6 +208,15 @@ Cache size in bytes.
   } while (0)
 #endif
 
+#if !defined(mpn_copyi)
+#define mpn_copyi(xxx, yyy, nnn) \
+   do { \
+      ulong ixxx; \
+      for (ixxx = 0; ixxx < nnn; ixxx++) \
+         (xxx)[ixxx] = (yyy)[ixxx]; \
+   } while (0)
+#endif
+
 /* 
    On some platforms arithmetic shifts by FLINT_BITS don't yield all zeros 
    So we define these macros for use in situations where this would be a problem
