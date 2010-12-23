@@ -112,6 +112,9 @@ void _F_mpz_cleanup(void)
 	
    if (F_mpz_num_unused) free(F_mpz_unused_arr);
 	if (F_mpz_allocated) free(F_mpz_arr);
+
+	F_mpz_num_unused = 0;
+	F_mpz_allocated = 0;
 }
 
 /*===============================================================================

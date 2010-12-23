@@ -1092,6 +1092,61 @@ void fmpz_poly_is_squarefree(ulong * r1, ulong * r2, fmpz_poly_t poly)
 Returns 1 if \code{poly} is squarefree, otherwise returns 0.
 \end{quote}
 
+\subsection{Factorisation}
+
+The \code{fmpz_poly} module has a factorisation function. This is a wrapper of the very sophisticated
+\code{F_mpz_poly_factor} function (see below). 
+
+A factorisation is returned in an \code{fmpz_poly_factor_t}. This is a simple structure to hold an array 
+of irreducible factors and their exponents.
+
+The structure itself contains three user accessible fields, (i) a \code{num_factors} field contains the
+number of irreducible factors, (ii) \code{factors}, an array of \code{num_factors} irreducible factors,
+each of which is an \code{fmpz_poly_t} and (iii) \code{exponents}, an array of corresponding exponents
+for each irreducible factor. Whilst the user may access these fields, they should not be modified except
+via the provided functions.
+
+\begin{lstlisting}
+void fmpz_poly_factor_init(fmpz_poly_factor_t fac)
+\end{lstlisting}
+\begin{quote}
+Initialise an \code{fmpz_poly_factor_t} for use.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_poly_factor_clear(fmpz_poly_factor_t fac)
+\end{lstlisting}
+\begin{quote}
+Clear an \code{fmpz_poly_factor_t} after use. This releases any memory used by the structure and clears
+any polynomials it contains.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_poly_factor_insert(fmpz_poly_factor_t fac, 
+                         fmpz_poly_t poly, ulong exp)
+\end{lstlisting}
+\begin{quote}
+Copy the polynomial \code{poly} into the factor structure \code{fac}, with the given exponent \code{exp}.
+No attempt is made to merge factors with existing factors. A new slot is created. 
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_poly_factor_print(fmpz_poly_factor_t fac)
+\end{lstlisting}
+\begin{quote}
+This convenience function prints all the polynomial factors, with their exponents, that are contained in
+the factor structure.
+\end{quote}
+
+\begin{lstlisting}
+void fmpz_poly_factor(fmpz_poly_factor_t fac, fmpz_poly_t pol)
+\end{lstlisting}
+\begin{quote}
+Removes any Gaussian content from \code{pol} and discards it (including any factor of $-1$) and factors
+the polynomial into irreducible factors, placing the factors with their corresponding exponents into the
+initialised factor structure. The polynomial being factored may not have length zero.
+\end{quote}
+
 \subsection{Subpolynomials}
 A number of functions are provided for attaching an \code{fmpz_poly_t} object to an existing polynomial or to a range of coefficients of an existing polynomial providing an alias for the original polynomial or part thereof. 
 
@@ -1973,8 +2028,9 @@ void F_mpz_poly_factor(F_mpz_poly_factor_t fac,
 \end{lstlisting}
 \begin{quote}
 Factor \code{poly} into irreducible factors with Gaussian content one and return the content of \code{poly}.
-No assumptions are made about \code{poly} and the algorithm is extremely efficient when there are a large
-number of local factors. It uses an algorithm due to Mark van Hoeij and Andy Novocin.
+No assumptions are made about \code{poly} except that it be nonzero, and the algorithm is extremely 
+efficient when there are a large number of local factors. It uses an algorithm due to Mark van Hoeij and 
+Andy Novocin.
 \end{quote}
 
 \section{The fmpz module}

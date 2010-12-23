@@ -269,6 +269,64 @@ int test_F_mpz_poly_to_fmpz_poly()
    return result;
 }
 
+int test_F_mpz_poly_factor_to_fmpz_poly_factor()
+{
+   fmpz_poly_factor_t test_f;
+   F_mpz_poly_factor_t test_F1, test_F2;
+   F_mpz_poly_t temp;
+
+   int result = 1;
+   unsigned long bits, length, facs;
+
+   long count1;
+   for (count1 = 1; count1 < 1000; count1++)
+   {
+      bits = random_ulong(300) + 2;
+      F_mpz_poly_init(temp);
+
+	  length = z_randint(100) + 2;
+      facs = z_randint(11) + 1;
+
+	  F_mpz_poly_factor_init(test_F1);
+      F_mpz_poly_factor_init(test_F2);
+      fmpz_poly_factor_init(test_f);
+      
+      ulong i;
+      for (i = 0; i < facs; i++)
+	  {
+		  do { F_mpz_randpoly(temp, length, bits); } while (temp->length <= 1);
+          
+		  F_mpz_poly_factor_insert(test_F1, temp, z_randint(100));
+	  }
+
+      F_mpz_poly_factor_to_fmpz_poly_factor(test_f, test_F1);
+      fmpz_poly_factor_to_F_mpz_poly_factor(test_F2, test_f);
+
+      result &= (test_F2->num_factors == facs);
+		  
+	  for (i = 0; i < facs; i++)
+	  {
+	     result &= F_mpz_poly_equal(test_F1->factors[i], test_F2->factors[i]);
+	     result &= (test_F1->exponents[i] == test_F2->exponents[i]);
+	  }
+
+	  if (!result)
+	  {
+	     printf("facs1 = %ld, facs2 = %ld\n", test_F1->num_factors, test_F2->num_factors);
+		 F_mpz_poly_factor_print(test_F1); printf("\n\n");
+	     F_mpz_poly_factor_print(test_F2); printf("\n\n");
+	  }
+
+	  F_mpz_poly_factor_clear(test_F1);
+	  F_mpz_poly_factor_clear(test_F2);
+	  fmpz_poly_factor_clear(test_f); 
+
+      F_mpz_poly_clear(temp);
+   }
+   
+   return result;
+}
+
 int test_F_mpz_poly_add()
 {
    mpz_poly_t m_poly1, m_poly2, res1, res2;
@@ -6383,6 +6441,7 @@ void F_mpz_poly_test_all()
    RUN_TEST(F_mpz_poly_scalar_abs); 
    RUN_TEST(F_mpz_poly_to_mpz_poly); 
    RUN_TEST(F_mpz_poly_to_fmpz_poly); 
+   RUN_TEST(F_mpz_poly_factor_to_fmpz_poly_factor); 
    RUN_TEST(F_mpz_poly_CLD_bound); 
    RUN_TEST(F_mpz_poly_getset_coeff_si); 
    RUN_TEST(F_mpz_poly_getset_coeff_ui); 
