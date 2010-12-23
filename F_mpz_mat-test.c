@@ -3074,7 +3074,7 @@ int test_F_mpz_mat_col_partition()
 		if (!result) 
 		{
 			printf("Error: r = %ld, c = %ld, bits = %ld\n", r, c, bits);
-         printf("noparts = %ld, check = %ld, noparts2 = %ld\n",
+         printf("noparts = %d, check = %d, noparts2 = %d\n",
             noparts, __check_part(part1, part2, c), noparts2);
 		}
           
@@ -3128,7 +3128,7 @@ int test_F_mpz_mat_window_init_clear()
 void F_mpz_mat_test_all()
 {
    int success, all_success = 1;
-   printf("FLINT_BITS = %ld\n", FLINT_BITS);
+   printf("FLINT_BITS = %d\n", FLINT_BITS);
 
 #if TESTFILE
 #endif

@@ -181,7 +181,7 @@ int test_mpq_mat_inner_product()
       result = (mpq_cmp(res1, res2) == 0);
 		if (!result) 
 		{
-			printf("Error: bits = %ld, r = %ld, c = %ld\n", bits, r, c);
+			printf("Error: bits = %ld, r = %d, c = %ld\n", bits, r, c);
 		}
 
       mpq_clear(res1);
@@ -252,7 +252,7 @@ int test_mpq_mat_GS()
 void mpq_mat_test_all()
 {
    int success, all_success = 1;
-   printf("FLINT_BITS = %ld\n", FLINT_BITS);
+   printf("FLINT_BITS = %d\n", FLINT_BITS);
 
 #if TESTFILE
 #endif

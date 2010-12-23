@@ -80,7 +80,7 @@ int test_z_mulmod32_precomp()
 #if DEBUG2              
          if (res1 != res2)
          {
-            printf("a = %ld, b = %ld, n = %ld, ninv = %ld, res1 = %ld, res2 = %ld\n", a, b, n, ninv, res1, res2);
+            printf("a = %ld, b = %ld, n = %ld, ninv = %lu, res1 = %ld, res2 = %ld\n", a, b, n, (ulong) ninv, res1, res2);
          }
 #endif
          
@@ -2670,7 +2670,7 @@ int test_z_primitive_root()
       p = z_nextprime(p, 0);
       r = z_primitive_root(p);
       if(r == 0) {
-         printf("Fails on p=%d\n", p);
+         printf("Fails on p=%ld\n", p);
          return 0;
       }
 #if DEBUG

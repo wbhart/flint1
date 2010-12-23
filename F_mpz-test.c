@@ -146,7 +146,7 @@ int test_F_mpz_getset_ui()
 		   result = (val2 == val);
 		   if (!result)
 	      {
-			   printf("Error: val = %u, val2 = %u\n", val, val2);
+			   printf("Error: val = %lu, val2 = %lu\n", val, val2);
 		   }
 		}
 
@@ -3315,7 +3315,7 @@ int test_F_mpz_invert()
       result = (((val1 == 0) && (val2 == 0)) || (mpz_cmp(m4, m3) == 0)); 
 		if (!result) 
 		{
-			printf("val1 = %ld, val2 = %ld\n", val1, val2);
+			printf("val1 = %d, val2 = %d\n", val1, val2);
 			gmp_printf("Error: bits = %ld, bits2 = %ld, m1 = %Zd, m2 = %Zd, m3 = %Zd, m4 = %Zd\n", bits, bits2, m1, m2, m3, m4);
 		}
           
@@ -3503,7 +3503,7 @@ int test_F_mpz_is_one()
          result = (!F_mpz_is_one(f1)); 
 		   if (!result) 
 		   {
-			   printf("Error: bits = %ld = %d\n", bits);
+			   printf("Error: bits = %ld\n", bits);
 		   }
 		}
 
@@ -3552,7 +3552,7 @@ int test_F_mpz_is_m1()
          result = (!F_mpz_is_m1(f1)); 
 		   if (!result) 
 		   {
-			   printf("Error: bits = %ld = %d\n", bits);
+			   printf("Error: bits = %ld\n", bits);
 		   }
 		}
 
@@ -3999,7 +3999,7 @@ int test_F_mpz_pow_ui()
 void F_mpz_poly_test_all()
 {
    int success, all_success = 1;
-   printf("FLINT_BITS = %ld\n", FLINT_BITS);
+   printf("FLINT_BITS = %d\n", FLINT_BITS);
    
 #if TESTFILE
 #endif

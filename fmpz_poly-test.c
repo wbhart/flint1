@@ -15651,7 +15651,7 @@ int test_fmpz_poly_factor()
 void fmpz_poly_test_all()
 {
    int success, all_success = 1;
-   printf("FLINT_BITS = %ld\n", FLINT_BITS);
+   printf("FLINT_BITS = %d\n", FLINT_BITS);
 
 #if TESTFILE
    RUN_TEST(fmpz_poly_freadprint); 
