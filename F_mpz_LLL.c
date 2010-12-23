@@ -24,7 +24,7 @@
 */
 /****************************************************************************
 
-   F_mpz_LLL_wrapper.c: A program for navigating the various versions of LLL
+   F_mpz_LLL.c: LLL reduction on the rows of an F_mpz_mat_t
 
 *****************************************************************************/
 
