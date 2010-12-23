@@ -141,7 +141,7 @@ void F_mpz_mod_poly_to_zmod_poly(zmod_poly_t zpol, const F_mpz_mod_poly_t fpol);
 ****************************************************************************/
 
 /* 
-   Attach an F_mpz_mod_poly to an F_mpz_poly. Allows one to temporarily treat
+   Attach an F_mpz_poly to an F_mpz_mod_poly. Allows one to temporarily treat
    an F_mpz_mod_poly as though it were an F_mpz_poly.
 */
 static inline
@@ -153,9 +153,8 @@ void _F_mpz_poly_attach_F_mpz_mod_poly(F_mpz_poly_t out, const F_mpz_mod_poly_t 
 }
 
 /* 
-   Attach an F_mpz_poly to an F_mpz_mod_poly. Allows one to return an 
-   F_mpz_mod_poly, which is temporarily being treated as an F_mpz_poly,
-   to its original F_mpz_mod_poly object.
+   Attach an F_mpz_mod_poly to an F_mpz_poly. Allows one to temporarily treat 
+   an F_mpz_poly as an F_mpz_mod_poly.
 */
 static inline
 void _F_mpz_mod_poly_attach_F_mpz_poly(F_mpz_mod_poly_t out, const F_mpz_poly_t in)
@@ -239,6 +238,12 @@ void F_mpz_mod_poly_swap(F_mpz_mod_poly_t poly1, F_mpz_mod_poly_t poly2);
 ****************************************************************************/
 
 int F_mpz_mod_poly_equal(const F_mpz_mod_poly_t poly1, const F_mpz_mod_poly_t poly2);
+
+/****************************************************************************
+
+   Input/output
+
+****************************************************************************/
 
 static inline
 void F_mpz_mod_poly_print(F_mpz_mod_poly_t poly)
