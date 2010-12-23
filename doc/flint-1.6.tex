@@ -1,4 +1,5 @@
 % (C) 2007, William Hart, David Harvey
+% (C) 2010, William Hart, Andy Novocin
 %   This file is part of FLINT.
 
 %   FLINT is free software; you can redistribute it and/or modify
@@ -3942,6 +3943,279 @@ known in advance, it may be possible to save some time on memory allocation. Thi
 shrink a polynomial, so data cannot be lost.
 \end{quote}
 
+\subsection{Normalisation and truncation}
+
+\begin{lstlisting}
+void _F_mpz_mod_poly_normalise(F_mpz_mod_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+By definition an \code{F_mpz_mod_poly_t poly} is normalised if it is length zero or if the coefficient at 
+index \code{poly->length - 1} is nonzero. This function normalises a polynomial. All functions in the 
+\code{F_mpz_mod_poly} module normalise their outputs, so this function is mainly used internally and if
+the user modifies the internals of an \code{F_mpz_mod_poly_t} directly.
+\end{quote}
+
+\begin{lstlisting}
+void _F_mpz_mod_poly_set_length(F_mpz_mod_poly_t poly, 
+                                     const ulong length)
+\end{lstlisting}
+\begin{quote}
+This function provides a safe way to set the length of a polynomial. If the current polynomial length
+is greater than \code{length} the additional coefficients are released and set to zero. Note that this
+function does not normalise the result and assumes that the polynomial already has space allocated for
+at least \code{length} coefficients. This function is mainly used internally.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_mod_poly_truncate(F_mpz_mod_poly_t poly, 
+                                  const ulong length)
+\end{lstlisting}
+\begin{quote}
+This function truncates \code{poly} to the given length and normalises the result. If \code{length} is 
+greater than or equal to the current polynomial length, nothing happens.
+\end{quote}
+
+\subsection{Conversions}
+
+\begin{lstlisting}
+void F_mpz_poly_to_F_mpz_mod_poly(F_mpz_mod_poly_t F_poly, 
+                                   const F_mpz_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Convert from an \code{F_mpz_poly_t poly} to an \code{F_mpz_mod_poly_t F_poly}. This function does not 
+attempt to reduce the coefficients modulo the modulus \code{F_poly->P}. This can be achieved with the
+function \code{_F_mpz_mod_poly_reduce_coeffs} (see below).
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_mod_poly_to_F_mpz_poly(F_mpz_poly_t poly, 
+                            const F_mpz_mod_poly_t F_poly)
+\end{lstlisting}
+\begin{quote}
+Convert from an \code{F_mpz_mod_poly_t F_poly} to an \code{F_mpz_poly_t poly}. 
+\end{quote}
+
+\begin{lstlisting}
+void zmod_poly_to_F_mpz_mod_poly(F_mpz_mod_poly_t fpol,
+                                   const zmod_poly_t zpol)
+\end{lstlisting}
+\begin{quote}
+Convert from a \code{zmod_poly_t zpol} to an \code{F_mpz_mod_poly_t fpol}. This function does not
+check that the modulus \code{zpol->p} matches the modulus \code{fpol->P}.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_mod_poly_to_zmod_poly(zmod_poly_t zpol, 
+                             const F_mpz_mod_poly_t fpol)
+\end{lstlisting}
+\begin{quote}
+Convert from an \code{F_mpz_mod_poly_t fpol} to a \code{zmod_poly_t zpol}. This function does not
+check that the modulus \code{zpol->p} matches the modulus \code{fpol->P}.
+\end{quote}
+
+\subsection{Subpolynomials}
+
+\begin{lstlisting}
+void _F_mpz_poly_attach_F_mpz_mod_poly(F_mpz_poly_t out, 
+                               const F_mpz_mod_poly_t in)
+\end{lstlisting}
+\begin{quote}
+Attach a temporary \code{F_mpz_poly_t} object to an existing \code{F_mpz_mod_poly_t} object. The 
+\code{F_mpz_mod_poly_t} can then be treated as though it were an \code{F_mpz_poly_t}, e.g. by 
+passing it to \code{F_mpz_poly} functions. Note that such manipulation should not change the contents
+of the polynomial, i.e. the alias should be passed only as the input to \code{F_mpz_poly} functions.
+\end{quote}
+
+\begin{lstlisting}
+void _F_mpz_mod_poly_attach_F_mpz_poly(F_mpz_mod_poly_t out, 
+                                    const F_mpz_poly_t in)
+\end{lstlisting}
+\begin{quote}
+Attach a temporary \code{F_mpz_mod_poly_t} object to an existing \code{F_mpz_poly_t} object. The 
+\code{F_mpz_poly_t} can then be treated as though it were an \code{F_mpz_mod_poly_t}, e.g. by 
+passing it to \code{F_mpz_mod_poly} functions. Note that such manipulation should not change the contents
+of the polynomial, i.e. the alias should be passed only as the input to \code{F_mpz_mod_poly} functions.
+Note that the \code{F_mpz_mod_poly_t} must be initialised with \code{F_mpz_mod_poly_init} (but subsequently
+unusued) to set the modulus and must not be cleared after use. 
+\end{quote}
+
+\begin{lstlisting}
+void _F_mpz_mod_poly_attach_shift(F_mpz_mod_poly_t poly1, 
+              const F_mpz_mod_poly_t poly2, const ulong n)
+\end{lstlisting}
+\begin{quote}
+Attach a temporary \code{F_mpz_mod_poly_t poly1} to an existing \code{F_mpz_mod_poly_t poly2} object, but
+ignore the first \code{n} coefficients, i.e. notionally equivalent to first shifting \code{poly2} to the
+right by \code{n} coefficients and then attaching \code{poly1}.
+\end{quote}
+
+\begin{lstlisting}
+void _F_mpz_mod_poly_attach_truncate(F_mpz_mod_poly_t poly1, 
+               const F_mpz_mod_poly_t poly2, const ulong n)
+\end{lstlisting}
+\begin{quote}
+Attach a temporary \code{F_mpz_mod_poly_t poly1} to an existing \code{F_mpz_mod_poly_t poly2} object, but
+notionally truncate \code{poly2} to length \code{n} before attaching \code{poly1}. The result is then
+normalised.
+\end{quote}
+
+\subsection{Reduction}
+
+\begin{lstlisting}
+void _F_mpz_mod_poly_reduce_coeffs(F_mpz_mod_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Reduce all the coefficients of an \code{F_mpz_mod_poly_t poly} modulo the modulus \code{poly->P}. This 
+function is mainly used internally, as all functions in this module automatically reduce their output
+unless explicitly stated.
+\end{quote}
+
+\begin{lstlisting}
+void _F_mpz_poly_reduce_coeffs(F_mpz_poly_t poly, 
+                                         const F_mpz_t P)
+\end{lstlisting}
+\begin{quote}
+Reduce all the coefficients of an \code{F_mpz_poly_t poly} modulo the modulus \code{P}. This 
+function might be used before converting an \code{F_mpz_poly_t} to an \code{F_mpz_mod_poly_t} with the
+modulus \code{P}.
+\end{quote}
+
+\subsection{Assignment and swap}
+
+\begin{lstlisting}
+void F_mpz_mod_poly_set(F_mpz_mod_poly_t poly1, 
+                             const F_mpz_mod_poly_t poly2)
+\end{lstlisting}
+\begin{quote}
+Set \code{poly1} to equal \code{poly2}. No check is made to ensure both polynomials have the same modulus.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_mod_poly_swap(F_mpz_mod_poly_t poly1, 
+                                   F_mpz_mod_poly_t poly2)
+\end{lstlisting}
+\begin{quote}
+Efficiently swap the contents of \code{poly1} and \code{poly2} by swapping pointers. No check is made to
+ensure both polynomials have the same modulus, and the moduli are not swapped.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_mod_poly_zero(F_mpz_mod_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Set \code{poly} to the zero polynomial.
+\end{quote}
+
+\subsection{Comparison}
+
+\begin{lstlisting}
+int F_mpz_mod_poly_equal(const F_mpz_mod_poly_t poly1, 
+                            const F_mpz_mod_poly_t poly2)
+\end{lstlisting}
+\begin{quote}
+Return 1 if \code{poly1} and \code{poly2} are (arithmetically) equal, otherwise return 0.
+\end{quote}
+
+\subsection{Input/output}
+
+\begin{lstlisting}
+void F_mpz_mod_poly_print(F_mpz_mod_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Print the given polynomial to \code{stdout}. The format is as per the \code{F_mpz_poly} module, except that
+a space and then ``: P ='' is appended, followed by a space, then the integer modulus \code{poly->P}.
+\end{quote}
+
+\subsection{Shifting}
+
+\begin{lstlisting}
+void F_mpz_mod_poly_left_shift(F_mpz_mod_poly_t res, 
+             const F_mpz_mod_poly_t poly, const ulong n)
+\end{lstlisting}
+\begin{quote}
+Shift the polynomial \code{poly} to the left by \code{n} coefficients, i.e. multiply by $x^n$.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_mod_poly_right_shift(F_mpz_mod_poly_t res, 
+             const F_mpz_mod_poly_t poly, const ulong n)
+\end{lstlisting}
+\begin{quote}
+Shift the polynomial \code{poly} to the right by \code{n} coefficients, i.e. divide by $x^n$ and discard
+any remainder. If \code{n} is greater than the current length of \code{poly} the result is the zero 
+polynomial.
+\end{quote}
+
+\subsection{Addition/subtraction}
+
+\begin{lstlisting}
+void F_mpz_mod_poly_add(F_mpz_mod_poly_t res, 
+ const F_mpz_mod_poly_t poly1, const F_mpz_mod_poly_t poly2)
+\end{lstlisting}
+\begin{quote}
+Set \code{res} to the sum of \code{poly1} and \code{poly2}.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_mod_poly_sub(F_mpz_mod_poly_t res, 
+ const F_mpz_mod_poly_t poly1, const F_mpz_mod_poly_t poly2)
+\end{lstlisting}
+\begin{quote}
+Set \code{res} to the difference of \code{poly1} and \code{poly2}.
+\end{quote}
+
+\subsection{Scalar multiplication}
+
+\begin{lstlisting}
+void F_mpz_mod_poly_scalar_mul(F_mpz_mod_poly_t res, 
+            const F_mpz_mod_poly_t poly1, const F_mpz_t x)
+\end{lstlisting}
+\begin{quote}
+Set \code{res} to the sum of \code{poly1} multiplied by the scalar \code{x}.
+\end{quote}
+
+\subsection{Multiplication}
+
+\begin{lstlisting}
+void F_mpz_mod_poly_mul(F_mpz_mod_poly_t res, 
+ const F_mpz_mod_poly_t poly1, const F_mpz_mod_poly_t poly2)
+\end{lstlisting}
+\begin{quote}
+Set \code{res} to the product of \code{poly1} and \code{poly2}.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_mod_poly_mul_trunc_left(F_mpz_mod_poly_t res, 
+ const F_mpz_mod_poly_t poly1, const F_mpz_mod_poly_t poly2, 
+                                      const ulong trunc)
+\end{lstlisting}
+\begin{quote}
+Set \code{res} to the product of \code{poly1} and \code{poly2} where only the most significant \code{trunc}
+coefficients are necessarily computed. The remaining coefficients will either be zero or correct.
+\end{quote}
+
+\subsection{Division}
+
+\begin{lstlisting}
+void F_mpz_mod_poly_divrem(F_mpz_mod_poly_t Q, 
+    F_mpz_mod_poly_t R, const F_mpz_mod_poly_t A, 
+                           const F_mpz_mod_poly_t B)
+\end{lstlisting}
+\begin{quote}
+Set \code{Q} and \code{R} to the quotient and remainder of \code{A} divided by \code{B}. This function 
+requires that the leading coefficient of \code{B} be coprime to the modulus \code{A->P}, e.g. the
+modulus is prime. 
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_mod_poly_rem(F_mpz_mod_poly_t R, 
+             F_mpz_mod_poly_t A, F_mpz_mod_poly_t B)
+\end{lstlisting}
+\begin{quote}
+Set \code{R} to the remainder of \code{A} divide \code{B}. This function is for convenience only, it is
+not faster than \code{F_mpz_mod_poly_divrem} at the current time. This function requires that the leading 
+coefficient of \code{B} be coprime to the modulus \code{A->P}, e.g. the modulus is prime. 
+\end{quote}
 
 \section{The F\_mpz\_LLL module}
 
