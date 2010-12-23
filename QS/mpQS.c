@@ -447,7 +447,7 @@ int main(int argc, char *argv[])
         mpz_init(factors.fact[i]);
     factors.num = 0;
 
-    printf("Input number to factor [ >= 27 bits ] : "); 
+    printf("Input number to factor [ >= 40 bits ] : "); 
     gmp_scanf("%Zd", N); getchar();
     
     F_mpz_factor_mpQS(&factors, N);

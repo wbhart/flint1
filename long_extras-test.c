@@ -1588,7 +1588,7 @@ int test_z_ispseudoprime_lucas_ab()
 
 int test_z_isprobab_prime()
 {
-   unsigned long n;
+   unsigned long n, bits, orig_n;
    unsigned long res;
    
    mpz_t mpz_n;
@@ -1617,6 +1617,25 @@ int test_z_isprobab_prime()
           return result;
       }
    }  
+
+   for (count = 0; (count < 5000) && (result == 1); count++)
+   { 
+      bits = z_randint(FLINT_BITS/3-1)+2;
+      orig_n = random_ulong((1UL<<bits)-2)+2;
+      n = orig_n*orig_n*orig_n;
+
+#if DEBUG
+      printf("Factoring n = %ld....\n", orig_n);
+#endif
+           
+      result = !z_isprime(n);
+      
+      if (!result)
+      {
+         printf("n = %ld\n", n);
+      }
+   }  
+
 
 #define TEST_PRIME_COUNT 100000
 	
@@ -1843,7 +1862,7 @@ int test_z_miller_rabin_precomp()
 
 int test_z_isprime()
 {
-   unsigned long n;
+   unsigned long n, orig_n, bits;
    unsigned long res;
    
    mpz_t mpz_n;
@@ -1891,6 +1910,24 @@ int test_z_isprime()
       {
          printf("Error %ld declared composite!\n", res);
          return result;
+      }
+   }  
+
+   for (count = 0; (count < 5000) && (result == 1); count++)
+   { 
+      bits = z_randint(FLINT_BITS/3-1)+2;
+      orig_n = random_ulong((1UL<<bits)-2)+2;
+      n = orig_n*orig_n*orig_n;
+
+#if DEBUG
+      printf("Factoring n = %ld....\n", orig_n);
+#endif
+           
+      result = !z_isprime(n);
+      
+      if (!result)
+      {
+         printf("n = %ld\n", n);
       }
    }  
 
@@ -2529,7 +2566,7 @@ int test_z_factor()
          prod *= z_pow(factors.p[i], factors.exp[i]);
       }
       
-      result = ((prod == n) && (factors.num == 1));
+      result = (prod == n && (factors.exp[0] % 3) == 0);
  
       if (!result)
       {

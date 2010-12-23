@@ -221,7 +221,7 @@ int F_mpz_factor_tinyQS_silent(F_mpz_factor_t * factors, mpz_t N)
    
    qs_inf.bits = mpz_sizeinbase(N,2);
    if (qs_inf.bits > MAXBITS) return 0; // Number too big for tinyQS 
-   if (qs_inf.bits < 27) return 0; // Number too small for tinyQS 
+   if (qs_inf.bits < 40) return 0; // Number too small for tinyQS 
    
    mpz_init(qs_inf.mpz_n);
    qs_inf.n = (fmpz_t) flint_stack_alloc(3);
