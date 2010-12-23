@@ -3819,6 +3819,129 @@ int zmod_poly_isirreducible(zmod_poly_t f)
 Returns 1 if the polynomial $f$ is irreducible, otherwise it returns 0.
 \end{quote}
 
+\section{The F\_mpz\_mod\_poly module}
+
+The \code{F_mpz_mod_poly} module is a new FLINT polynomial module, based on the new \code{F_mpz_t} integer 
+type for polynomials over $\Z/P\Z$ for a multiprecision modulus \code{P}. Thus the new 
+\code{F_mpz_mod_poly_t} data type represents elements of $\Z/P\Z[x]$. 
+
+Each coefficient of an \code{F_mpz_mod_poly_t} is an integer of the FLINT \code{F_mpz_t} type, which is
+reduced modulo \code{P}. 
+
+Unless otherwise specified, all functions in this section permit aliasing between their input arguments 
+and between their input and output arguments. 
+
+\subsection{Simple example}
+
+The following example computes the square of the polynomial $5x^3 + 1 \pmod{7}$. 
+
+\begin{lstlisting}
+#include "F_mpz_poly.h"
+#include "F_mpz_mod_poly.h"
+ ....
+F_mpz_t P;
+F_mpz_mod_poly_t x, y;
+F_mpz_poly u, v;
+F_mpz_init(P);
+F_mpz_poly_init(u);
+F_mpz_set_ui(P, 7);
+F_mpz_mod_poly_init(x, P);
+F_mpz_mod_poly_init(y, P);
+F_mpz_poly_set_coeff_ui(u, 3, 5);
+F_mpz_poly_set_coeff_ui(u, 0, 1);
+F_mpz_poly_to_F_mpz_mod_poly(x, u);
+F_mpz_mod_poly_mul(y, x, x);
+F_mpz_mod_poly_print(x); printf("\n");
+F_mpz_mod_poly_print(y); printf("\n");
+F_mpz_clear(P);
+F_mpz_poly_clear(u);
+F_mpz_mod_poly_clear(x);
+F_mpz_mod_poly_clear(y);
+\end{lstlisting}
+
+The output is:
+
+\begin{lstlisting}
+4  1 0 0 5
+7  1 0 0 3 0 0 4
+\end{lstlisting}
+
+\subsection{Definition of the F\_mpz\_mod\_poly\_t polynomial type}
+
+The \code{F_mpz_mod_poly_t} type is a typedef for an array of length 1 of \code{F_mpz_mod_poly_struct}'s. 
+This permits passing parameters of type \code{F_mpz_mod_poly_t} `by reference' in a manner similar to the 
+way GMP integers of type \code{mpz_t} can be passed by reference. 
+
+In reality one never deals directly with the struct and simply deals with objects of type 
+\code{F_mpz_mod_poly_t}. For simplicity we will think of an \code{F_mpz_mod_poly_t} as a struct, though 
+in practice to access fields of this struct, one needs to dereference first, e.g. to access the 
+\code{length} field of an \code{F_mpz_mod_poly_t} called \code{poly1} one writes \code{poly1->length}. 
+
+An \code{F_mpz_mod_poly_t} is said to be \emph{normalised} if either \code{length == 0}, or if the 
+leading coefficient of the polynomial is nonzero. All \code{F_mpz_mod_poly} functions expect their inputs 
+to be normalised, and unless otherwise specified they produce output that is normalised. 
+
+It is recommended that users do not access the fields of an \code{F_mpz_mod_poly_t} or its coefficient 
+data directly, but make use of the functions designed for this purpose. At present, this is most easily
+achieved by converting to and from \code{F_mpz_poly_t}'s.
+
+Functions in \code{F_mpz_mod_poly} do all the memory management for the user. One does not need to specify 
+the maximum length or any coefficient sizes in advance before using a polynomial object. FLINT 
+reallocates space automatically as the computation proceeds, if more space is required. Each coefficient
+is also managed separately, being resized as needed, independently of the other coefficients.
+
+We now describe the functions available in \code{F_mpz_mod_poly}.
+
+\subsection{Memory management}
+
+\begin{lstlisting}
+void F_mpz_mod_poly_init(F_mpz_mod_poly_t poly, 
+                                     const F_mpz_t P)
+\end{lstlisting}
+\begin{quote}
+Given a positive modulus \code{P}, initialises an \code{F_mpz_mod_poly_t} object for use.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_mod_poly_init2(F_mpz_mod_poly_t poly, 
+                        const F_mpz_t P, ulong alloc)
+\end{lstlisting}
+\begin{quote}
+Given a positive modulus \code{P}, initialises an \code{F_mpz_mod_poly_t} object for use, ensuring that it
+has space for at least \code{alloc} coefficients. It is not necessary to use this function in practice, as
+\code{F_npz_mod_poly} functions automatically resize their outputs as required. However, if the maximum
+length of a polynomial is known in advance, it may be possible to save some time on memory allocation.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_mod_poly_clear(F_mpz_mod_poly_t poly)
+\end{lstlisting}
+\begin{quote}
+Clear an \code{F_mpz_mod_poly_t} object, releasing any memory it was using.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_mod_poly_realloc(F_mpz_mod_poly_t poly, 
+                                   const ulong alloc)
+\end{lstlisting}
+\begin{quote}
+Reallocate an \code{F_mpz_mod_poly_t poly} so that it has space for \code{alloc} coefficients. It is not 
+necessary to use this function in practice, however, if the maximum length of a polynomial is known in 
+advance, it may be possible to save some time on memory allocation. If the current length of \code{poly}
+is greater than \code{alloc} the extra data will be lost.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_mod_poly_fit_length(F_mpz_mod_poly_t poly, 
+                                   const ulong length)
+\end{lstlisting}
+\begin{quote}
+Reallocate an \code{F_mpz_mod_poly_t poly} so that it has space for at least \code{alloc} coefficients. 
+It is not necessary to use this function in practice, however, if the maximum length of a polynomial is 
+known in advance, it may be possible to save some time on memory allocation. This function will never 
+shrink a polynomial, so data cannot be lost.
+\end{quote}
+
 \section{The long\_extras module}
 The \code{long_extras} module contains functions for doing arithmetic with integers which will fit into an \code{unsigned long}, including functions for modular arithmetic.
 
