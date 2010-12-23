@@ -2,25 +2,23 @@ LIBDIR=$(PREFIX)/lib
 INCLUDEDIR=$(PREFIX)/include
 DOCDIR=$(PREFIX)/doc
 
-ifndef FLINT_CC
-	FLINT_CC = gcc
+ifndef CC
+	CC = gcc
 endif
 
 ifeq ($(MAKECMDGOALS),library)
-	CC = $(FLINT_CC) -fPIC -std=c99
+	CC += -fPIC -std=c99
 else
-	CC = $(FLINT_CC) -std=c99
+	CC += -std=c99
 endif
 
 ifndef FLINT_PY
 	FLINT_PY = python
 endif
 
-ifndef FLINT_CPP
-	FLINT_CPP = g++
+ifndef CXX 
+	CXX = g++
 endif
-
-CPP = $(FLINT_CPP) 
 
 LIBS = -L$(FLINT_GMP_LIB_DIR) $(FLINT_LINK_OPTIONS) -lmpir -lmpfr -lpthread -lm
 
@@ -297,7 +295,7 @@ F_mpz_mod_poly.o: F_mpz_mod_poly.c $(HEADERS)
 	$(CC) $(CFLAGS) -c F_mpz_mod_poly.c -o F_mpz_mod_poly.o
 
 NTL-interface.o: NTL-interface.cpp $(HEADERS)
-	$(CPP) $(CFLAGS) -c NTL-interface.cpp -o NTL-interface.o
+	$(CXX) $(CFLAGS) -c NTL-interface.cpp -o NTL-interface.o
 
 theta.o: theta.c $(HEADERS)
 	$(CC) $(CFLAGS) -c theta.c -o theta.o
@@ -380,7 +378,7 @@ F_mpz_mod_poly-test.o: F_mpz_mod_poly-test.c
 	$(CC) $(CFLAGS) -c F_mpz_mod_poly-test.c -o F_mpz_mod_poly-test.o
 
 NTL-interface-test.o: NTL-interface-test.cpp
-	$(CPP) $(CFLAGS) -c NTL-interface-test.cpp -o NTL-interface-test.o
+	$(CXX) $(CFLAGS) -c NTL-interface-test.cpp -o NTL-interface-test.o
 
 ####### test program targets
 
@@ -445,7 +443,7 @@ F_mpz_mod_poly-test: F_mpz_mod_poly-test.o test-support.o $(FLINTOBJ) $(HEADERS)
 	$(CC) $(CFLAGS) F_mpz_mod_poly-test.o test-support.o -o F_mpz_mod_poly-test $(FLINTOBJ) $(LIBS)
 
 NTL-interface-test: NTL-interface.o NTL-interface-test.o test-support.o $(FLINTOBJ) $(HEADERS)
-	$(CPP) $(CFLAGS) NTL-interface-test.o NTL-interface.o test-support.o $(FLINTOBJ) -o NTL-interface-test $(LIBS2)
+	$(CXX) $(CFLAGS) NTL-interface-test.o NTL-interface.o test-support.o $(FLINTOBJ) -o NTL-interface-test $(LIBS2)
 
 ####### tuning program object files
 
@@ -518,7 +516,7 @@ ZmodF_mul-profile.o: ZmodF_mul-profile.c $(HEADERS)
 
 NTL-profile-tables.o: NTL-profile.c $(HEADERS)
 	$(FLINT_PY) make-profile-tables.py NTL
-	$(CPP) $(CFLAGS) -c NTL-profile-tables.c -o NTL-profile-tables.o
+	$(CXX) $(CFLAGS) -c NTL-profile-tables.c -o NTL-profile-tables.o
 
 zmod_poly-profile-tables.o: zmod_poly-profile.c $(HEADERS)
 	$(FLINT_PY) make-profile-tables.py zmod_poly
@@ -560,7 +558,7 @@ kara-profile: kara-profile.c profiler.o test-support.o $(FLINTOBJ)
 	$(CC) $(CFLAGS) -o kara-profile kara-profile.c profiler.o test-support.o $(FLINTOBJ) $(LIBS)
 
 NTL-profile: NTL-profile.c test-support.o NTL-profile-tables.o $(PROFOBJ)
-	$(CPP) $(CFLAGS) -o NTL-profile NTL-profile.c NTL-profile-tables.o test-support.o $(PROFOBJ) $(LIB) -lntl
+	$(CXX) $(CFLAGS) -o NTL-profile NTL-profile.c NTL-profile-tables.o test-support.o $(PROFOBJ) $(LIB) -lntl
 
 zmod_poly-profile: zmod_poly-profile.o zmod_poly-profile-tables.o $(PROFOBJ)
 	$(CC) $(CFLAGS) -o zmod_poly-profile zmod_poly-profile.o zmod_poly-profile-tables.o $(PROFOBJ) $(LIBS)
