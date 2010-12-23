@@ -2510,7 +2510,38 @@ int test_z_factor()
          printf("%ld, %ld]\n", factors.p[i], factors.exp[i]);
       }
    }  
-   
+
+   for (count = 0; (count < 5000) && (result == 1); count++)
+   { 
+      bits = z_randint(FLINT_BITS/3-1)+2;
+      orig_n = random_ulong((1UL<<bits)-2)+2;
+      n = orig_n*orig_n*orig_n;
+
+#if DEBUG
+      printf("Factoring n = %ld....\n", orig_n);
+#endif
+           
+      z_factor(&factors, n, 1);
+      
+      prod = 1;
+      for (i = 0; i < factors.num; i++)
+      {
+         prod *= z_pow(factors.p[i], factors.exp[i]);
+      }
+      
+      result = ((prod == n) && (factors.num == 1));
+ 
+      if (!result)
+      {
+         printf("n = %ld: [", n);
+         for (i = 0; i < factors.num - 1; i++)
+         {
+            printf("%ld, %ld; ", factors.p[i], factors.exp[i]);
+         }
+         printf("%ld, %ld]\n", factors.p[i], factors.exp[i]);
+      }
+   }  
+
    return result;
 }
 
