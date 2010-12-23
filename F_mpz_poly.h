@@ -1439,6 +1439,7 @@ void F_mpz_poly_factor_sq_fr_prim_internal(F_mpz_poly_factor_t final_fac,
 *****************************************************************************/
 
 /*
+   Returns the factorisation of G in final_fac and the content in cong.
    Does some simple pretests, finds squarefree factors and calls the wrapper.
 */
 void F_mpz_poly_factor(F_mpz_poly_factor_t final_fac, 

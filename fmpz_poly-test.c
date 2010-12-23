@@ -15562,6 +15562,92 @@ int test_fmpz_poly_translate_mod_horner()
 	return 1;
 }
 
+int test_fmpz_poly_factor()
+{
+   mpz_poly_t m_poly1, m_poly2, res1, res2;
+   fmpz_poly_t F_poly1, F_poly2, res;
+   fmpz_poly_factor_t F_factors;
+   
+   int result = 1;
+   long num_facs;
+   ulong bits1, bits2, length1, length2;
+   
+   mpz_poly_init(m_poly1); 
+   mpz_poly_init(m_poly2); 
+   mpz_poly_init(res1); 
+   mpz_poly_init(res2); 
+
+   ulong count1;
+   for (count1 = 0; (count1 < 1000) && (result == 1) ; count1++)
+   {
+      fmpz_poly_init(F_poly1);
+      fmpz_poly_init(F_poly2);
+      fmpz_poly_init(res);
+      fmpz_poly_factor_init(F_factors);
+      
+	  do {
+	    bits1 = z_randint(50) + 1;
+        bits2 = z_randint(50) + 1;
+        length1 = z_randint(50);
+        length2 = z_randint(50);
+        randpoly(m_poly1, length1, bits1);
+		randpoly(m_poly2, length2, bits2);
+
+		mpz_poly_to_fmpz_poly(F_poly1, m_poly1);
+        mpz_poly_to_fmpz_poly(F_poly2, m_poly2);
+      
+		fmpz_poly_mul(res, F_poly1, F_poly2);			
+	  } while (res->length == 0);
+
+	  fmpz_poly_primitive_part(res, res);
+	  if (fmpz_sgn(fmpz_poly_get_coeff_ptr(res, res->length - 1)) < 0)
+	     fmpz_poly_neg(res, res);
+
+      fmpz_poly_factor(F_factors, res);
+      
+	  fmpz_poly_to_mpz_poly(res2, res);
+
+      fmpz_poly_clear(res);
+      fmpz_poly_init(res);
+
+      fmpz_poly_set_coeff_ui(res, 0, 1);
+
+      for (num_facs = 0; num_facs < F_factors->num_factors; num_facs++)
+	  {
+         ulong pow;
+         for (pow = 0; pow < F_factors->exponents[num_facs]; pow++)
+            fmpz_poly_mul(res, res, F_factors->factors[num_facs]);
+      }
+
+      fmpz_poly_to_mpz_poly(res1, res);
+		    
+      result = mpz_poly_equal(res1, res2); 
+
+      if (!result) 
+	  {
+		 printf("Error2: length1 = %ld, bits1 = %ld, length2 = %ld, bits2 = %ld\n", length1, bits1, length2, bits2);
+         mpz_poly_print_pretty(m_poly1, "x"); printf("\n");
+         mpz_poly_print_pretty(m_poly2, "x"); printf("\n");
+         fmpz_poly_factor_print(F_factors);
+         mpz_poly_print_pretty(res1, "x"); printf("\n");
+         mpz_poly_print_pretty(res2, "x"); printf("\n");
+	  }
+          
+      fmpz_poly_clear(F_poly1);
+      fmpz_poly_clear(F_poly2);
+      fmpz_poly_clear(res);
+      fmpz_poly_factor_clear(F_factors);
+   }
+
+   mpz_poly_clear(res1);
+   mpz_poly_clear(res2);
+   mpz_poly_clear(m_poly1);
+   mpz_poly_clear(m_poly2);
+   
+   return result;
+}
+
+
 void fmpz_poly_test_all()
 {
    int success, all_success = 1;
@@ -15705,6 +15791,7 @@ void fmpz_poly_test_all()
    RUN_TEST(fmpz_poly_xgcd);
 	RUN_TEST(fmpz_poly_is_squarefree);
    RUN_TEST(fmpz_poly_signature);
+   RUN_TEST(fmpz_poly_factor); 
 
    printf(all_success ? "\nAll tests passed\n" :
                         "\nAt least one test FAILED!\n");

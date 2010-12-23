@@ -1587,6 +1587,18 @@ void zmod_poly_translate_horner(zmod_poly_t res,
 void fmpz_poly_translate_mod_horner(zmod_poly_t res, 
 							    fmpz_poly_t f, zmod_poly_t g);
 
+/****************************************************************************
+
+   Factorisation
+
+****************************************************************************/
+
+/*
+   Factorise pol and return the factors in fac. Any Gaussian content is
+   ignored and discarded.
+*/
+void fmpz_poly_factor(fmpz_poly_factor_t fac, fmpz_poly_t pol);
+
 // *************** end of file
 
 #ifdef __cplusplus

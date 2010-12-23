@@ -45,6 +45,8 @@ Copyright (C) 2010, William Hart
 #include "long_extras.h"
 #include "zmod_poly.h"
 #include "zn_poly/src/zn_poly.h"
+#include "F_mpz.h"
+#include "F_mpz_poly.h"
 
 /****************************************************************************
 
@@ -11263,4 +11265,32 @@ void fmpz_poly_translate_mod_horner(zmod_poly_t res,
 	 }
 
     zmod_poly_clear(t);
+}
+
+/****************************************************************************
+
+   Factorisation
+
+****************************************************************************/
+
+void fmpz_poly_factor(fmpz_poly_factor_t fac, fmpz_poly_t pol)
+{
+   F_mpz_t con;
+   F_mpz_poly_t F_pol;
+   F_mpz_poly_factor_t F_fac;
+   
+   F_mpz_init(con);
+   F_mpz_poly_init(F_pol);
+   F_mpz_poly_factor_init(F_fac);
+   
+   fmpz_poly_to_F_mpz_poly(F_pol, pol);
+
+   F_mpz_poly_factor(F_fac, con, F_pol);
+
+   F_mpz_poly_factor_to_fmpz_poly_factor(fac, F_fac);
+
+   F_mpz_poly_factor_clear(F_fac);
+   F_mpz_poly_clear(F_pol);
+   F_mpz_clear(con);
+   _F_mpz_cleanup();
 }
