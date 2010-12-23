@@ -63,12 +63,12 @@ export LD_LIBRARY_PATH
 
 if [ -z "$FLINT_NTL_INCLUDE_DIR" ]
 then
-        FLINT_NTL_INCLUDE_DIR="/usr/local/sage/sage-4.5.2/local/include"
+        FLINT_NTL_INCLUDE_DIR="/usr/local/sage/sage-4.5.3/local/include"
 fi
 export FLINT_NTL_INCLUDE_DIR
 
 if [ -z "$FLINT_NTL_LIB_DIR" ]
 then
-        FLINT_NTL_LIB_DIR="/usr/local/sage/sage-4.5.2/local/lib"
+        FLINT_NTL_LIB_DIR="/usr/local/sage/sage-4.5.3/local/lib"
 fi
 export FLINT_NTL_LIB_DIR
