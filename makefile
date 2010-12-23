@@ -152,7 +152,6 @@ check: test
 	./F_mpz_LLL-test
 	./F_mpz_mod_poly-test
 	./F_mpz_poly-test
-	./F_mpz_mod_poly-test
 
 profile: ZmodF_poly-profile kara-profile fmpz_poly-profile mpz_poly-profile ZmodF_mul-profile 
 
