@@ -2028,8 +2028,9 @@ void F_mpz_poly_factor(F_mpz_poly_factor_t fac,
 \end{lstlisting}
 \begin{quote}
 Factor \code{poly} into irreducible factors with Gaussian content one and return the content of \code{poly}.
-No assumptions are made about \code{poly} and the algorithm is extremely efficient when there are a large
-number of local factors. It uses an algorithm due to Mark van Hoeij and Andy Novocin.
+No assumptions are made about \code{poly} except that it be nonzero, and the algorithm is extremely 
+efficient when there are a large number of local factors. It uses an algorithm due to Mark van Hoeij and 
+Andy Novocin.
 \end{quote}
 
 \section{The fmpz module}
