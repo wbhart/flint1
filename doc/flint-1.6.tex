@@ -3942,6 +3942,43 @@ known in advance, it may be possible to save some time on memory allocation. Thi
 shrink a polynomial, so data cannot be lost.
 \end{quote}
 
+
+\section{The F\_mpz\_LLL module}
+
+The \code{F_mpz_LLL} module introduces lattice reduction functionality to the FLINT \code{F_mpz_mat_t} type for matrices with \code{F_mpz_t} entries.  The rows of the $n \times m$ \code{F_mpz_mat_t} are treated as a basis of a lattice, a $\Z$-module in $\R^{m}$.  Integer combinations of the rows are found which remain a basis of the same lattice while having better properties such as near orthogonality and 
+generally shorter length.
+
+\subsection{Simple example}
+
+The following example computes a reduced basis from the rows of 
+\begin{lstlisting}
+[[1 0 2412]
+[0 1 954]]
+\end{lstlisting} 
+
+\begin{lstlisting}
+#include "F_mpz_mat.h"
+#include "F_mpz_LLL.h"
+ ....
+F_mpz_mat_t L;
+F_mpz_mat_init(L, 2, 3);
+F_mpz_set_ui(L->rows[0] + 0, 1);
+F_mpz_set_ui(L->rows[1] + 1, 1);
+F_mpz_set_ui(L->rows[0] + 2, 2412);
+F_mpz_set_ui(L->rows[1] + 2, 954);
+LLL(L);
+F_mpz_mat_print_pretty(L);
+F_mpz_mat_clear(L);
+\end{lstlisting}
+
+The output is:
+
+\begin{lstlisting}
+[[2 -5 54]
+[17 -43 -18]]
+\end{lstlisting}
+
+
 \section{The long\_extras module}
 The \code{long_extras} module contains functions for doing arithmetic with integers which will fit into an \code{unsigned long}, including functions for modular arithmetic.
 
