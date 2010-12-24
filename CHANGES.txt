@@ -291,3 +291,109 @@ v 1.5.0 -- 22-Sep-09
    * Fixed a severe bug in the FFT reported by William Stein and Mariah Lennox (fix contributed by David Harvey)
    * Removed some memory leaks from F_mpz test code
    * Fixed bug in zmod_poly_evaluate test code
+
+v 1.6.0 -- 24-Dec-10
+
+   Bugs:
+   ====
+
+   * Fixed a memory leak in mpz_poly_to_string_pretty
+   * Fixed a bug inherited from an old version of fpLLL 
+   * Makefile to respect CC and CXX
+   * Fixed bug in F_mpz_set_si
+   * Fixed bug in F_mpz_equal
+   * Most for loops to C90 standard (for easier MSVC porting)
+   * Better Cygwin support
+   * Fixed a bug in zmod_poly_resultant
+   * Fixed bug in F_mpz_mul_KS/2
+   * Fixed bug in tinyQS
+   * Worked around some known bugs in older GMP/MPIR's
+
+   Major new functionality
+   =======================
+   * F_mpz_poly_factor_zassenhaus 
+   * F_mpz_poly_factor (incl. fmpz_poly_factor wrapper) using new vH-N approach
+    (see the paper of van Hoeij and Novocin and the paper of van Hoeij, Novocin 
+     and Hart)
+   * Implementation of new CLD bounds function for polynomial factors
+     (see the paper of van Hoeij, Novocin and Hart
+   * Restartable Hensel lifting
+   * Heuristic LLL implementations using doubles and mpfr
+   * LLL implementations optimised for knapsack lattices
+   * New (probably subquadratic) LLL implementation (ULLL)
+   * zmod_poly_factor_cantor_zassenhaus
+   * New F_mpz_mod_poly module for polynomials over Z/pZ for multiprec. p
+
+   Some of the other new functions added
+   =====================================
+
+   F_mpz:
+
+   * F_mpz_gcd
+   * F_mpz_smod
+   * F_mpz_mod_preinv
+   * F_mpz_fdiv_qr
+   * F_mpz_get/set_mpfr/2exp
+   * F_mpz_sscanf
+   * F_mpz_set_d
+
+   F_mpz_poly:
+
+   * read F_mpz_poly to_string/from_string/fprint/print/fread/pretty
+   * F_mpz_poly_to/from_zmod_poly
+   * F_mpz_poly_scalar_div_exact
+   * F_mpz_poly_smod
+   * F_mpz_poly_derivative, F_mpz_poly_content, F_mpz_poly_eval_horner_d/2exp
+   * F_mpz_poly_scalar_abs
+   * F_mpz_poly_set_d_2exp
+   * F_mpz_poly_div/divrem
+   * F_mpz_poly_gcd
+   * F_mpz_poly_is_squarefree
+   * F_mpz_poly_factor_squarefree
+   * F_mpz_poly_mul_trunc_left
+   * F_mpz_poly_pseudo_div
+   * F_mpz_poly_set_coeff
+   * F_mpz_poly_pow_ui
+   * Inflation/deflation trick for factorisation
+
+   zmod_poly:
+
+   * Inflation/deflation trick for factorisation
+
+   mpz_mat:
+
+   * mpz_mat_from_string/to_string/fprint/fread/pretty
+
+   mpq_mat:
+
+   * mpq_mat_init/clear
+   * Gramm-schmidt Orthogonalisation
+
+   F_mpz_mat:
+
+   * F_mpz_mat_print/fprint/fread/pretty
+   * F_mpz_mat_mul_classical
+   * F_mpz_mat_max_bits/2
+   * F_mpz_mat_scalar_mul/div_2exp
+   * F_mpz_mat_col_equal
+   * F_mpz_mat_smod
+   * F_mpz_vec_scalar_product/norm
+   * F_mpz_vec_add/submul_ui/si/F_mpz/2exp
+
+   zmod_mat:
+
+   * classical multiplication
+   * strassen multiplication
+   * scalar multiplication
+   * zmod_mat_equal
+   * zmod_mat_add/sub
+   * zmod_mat_addmul_classical
+
+   d_mat:
+
+   * d_vec_norm, d_vec_scalar_product
+
+   mpfr_mat:
+
+   * mpfr_vec_scalar_product/norm
+
