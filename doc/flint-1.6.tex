@@ -4255,6 +4255,28 @@ The output is:
 
 \subsection{Definition of the F\_mpz\_mat\_t matrix type}
 
+
+The \code{F_mpz_mat_t} type is a typedef for an array of length 1 of \code{F_mpz_mat_struct}'s. 
+This permits passing parameters of type \code{F_mpz_mat_t} `by reference' in a manner similar to the 
+way GMP integers of type \code{mpz_t} can be passed by reference. 
+
+In reality one never deals directly with the struct and simply deals with objects of type 
+\code{F_mpz_mat_t}. For simplicity we will think of an \code{F_mpz_mat_t} as a struct, though 
+in practice to access fields of this struct, one needs to dereference first, e.g. to access the 
+\code{r} field of an \code{F_mpz_mat_t} called \code{A} one writes \code{A->r} (this is the 
+number of rows of \code{A}).
+
+The entries of an \code{F_mpz_mat_t} are stored as an array of arrays of \code{F_mpz_t}'s, thus 
+to access the \code{F_mpz_t} in the $i^{\rm th}$ row and $j^{\rm th}$ column of the \code{F_mpz_mat_t} \code{A}
+use \code{A->rows[i] + j}.
+
+Functions in \code{F_mpz_mat} do all the memory management for the user. One does not need to specify 
+the maximum length or any coefficient sizes in advance before using a polynomial object. FLINT 
+reallocates space automatically as the computation proceeds, if more space is required. Each coefficient
+is also managed separately, being resized as needed, independently of the other coefficients.
+
+We now describe the functions available in \code{F_mpz_mat}.
+
 \subsection{Memory management}
 
 \begin{lstlisting}
@@ -4752,8 +4774,8 @@ generally shorter length.
 
 The following example computes a reduced basis from the rows of 
 \begin{lstlisting}
-[[1 0 2412]
-[0 1 954]]
+[[1 0 16884]
+[0 1 714]]
 \end{lstlisting} 
 
 \begin{lstlisting}
@@ -4764,8 +4786,8 @@ F_mpz_mat_t L;
 F_mpz_mat_init(L, 2, 3);
 F_mpz_set_ui(L->rows[0] + 0, 1);
 F_mpz_set_ui(L->rows[1] + 1, 1);
-F_mpz_set_ui(L->rows[0] + 2, 2412);
-F_mpz_set_ui(L->rows[1] + 2, 954);
+F_mpz_set_ui(L->rows[0] + 2, 16884);
+F_mpz_set_ui(L->rows[1] + 2, 714);
 LLL(L);
 F_mpz_mat_print_pretty(L);
 F_mpz_mat_clear(L);
@@ -4774,8 +4796,8 @@ F_mpz_mat_clear(L);
 The output is:
 
 \begin{lstlisting}
-[[2 -5 54]
-[17 -43 -18]]
+[[3 -71 -42]
+[-5 118 -168]]
 \end{lstlisting}
 
 \subsection{Two varieties of LLL}
@@ -4807,6 +4829,41 @@ the squared $\ell_2$ norm of targeted vector or group of vectors in the lattice,
 an index, call it \code{d}, such that all targeted vectors are within the span of the first \code{d} rows of the output \code{FM}.  
 The computation of \code{d} is proven and performed after all other computations so there is no speed-up from using any value 
 of \code{gs_B}.
+\end{quote}
+
+\subsection{Some special randomized matrices}
+
+\begin{lstlisting}
+void F_mpz_mat_randintrel(F_mpz_mat_t mat, ulong bits)
+\end{lstlisting}
+\begin{quote}
+Given an \code{F_mpz_mat_t} \code{mat} with \code{r} rows and \code{r+1} columns we populate \code{mat} with the 
+identity matrix in the first \code{r} columns and random \code{bits}-bit integers in the final column.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_mat_randintrel_little_big(F_mpz_mat_t mat, ulong n, ulong bits1, ulong bits)
+\end{lstlisting}
+\begin{quote}
+Given an \code{F_mpz_mat_t} \code{mat} with \code{r} rows and \code{r+1} columns we populate \code{mat} with the 
+identity matrix in the first \code{r} columns and random \code{bits1}-bit integers in the first \code{n} entries 
+of the final column and random \code{bits}-bit integers in the remaining entries of the final column.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_mat_rand_unimodular(F_mpz_mat_t U, ulong bits)
+\end{lstlisting}
+\begin{quote}
+Given a square \code{F_mpz_mat_t} \code{U} this procedure populates it with a randomized unimodular matrix (determinant 1)
+whose entries are \code{bits}-bit \code{F_mpz_t}'s.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_mat_rand_unimodular_little_big(F_mpz_mat_t U, ulong n, ulong bits1, ulong bits2)
+\end{lstlisting}
+\begin{quote}
+Given a square \code{F_mpz_mat_t} \code{U} this procedure populates it with a randomized unimodular matrix (determinant 1)
+where the first \code{n} rows have \code{bits1}-bit \code{F_mpz_t} entries and the remaining rows have \code{bits2}-bit entries.
 \end{quote}
 
 \section{The long\_extras module}
