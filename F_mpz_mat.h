@@ -122,28 +122,28 @@ void F_mpz_mat_resize(F_mpz_mat_t mat, const ulong r, const ulong c);
 ================================================================================*/
 
 /** 
-   \fn     int F_mpz_mat_from_string(F_mpz_mat_t mat, const char *s)
+   \fn     int F_mpz_mat_from_string(F_mpz_mat_t mat, const char * s)
 	\brief  Read an F_mpz_mat_t from a string
 */
-int F_mpz_mat_from_string(F_mpz_mat_t mat, const char *s);
+int F_mpz_mat_from_string(F_mpz_mat_t mat, const char * s);
 
 /** 
-   \fn     char* F_mpz_mat_to_string(F_mpz_mat_t mat)
+   \fn     char * F_mpz_mat_to_string(F_mpz_mat_t mat)
 	\brief  Write an F_mpz_mat_t to a string
 */
-char* F_mpz_mat_to_string(F_mpz_mat_t mat);
+char * F_mpz_mat_to_string(F_mpz_mat_t mat);
 
 /** 
-   \fn     int F_mpz_mat_from_string_pretty(F_mpz_mat_t mat, char *s)
+   \fn     int F_mpz_mat_from_string_pretty(F_mpz_mat_t mat, char * s)
 	\brief  Read an F_mpz_mat_t from a string in pretty format
 */
-int F_mpz_mat_from_string_pretty(F_mpz_mat_t mat, char *s);
+int F_mpz_mat_from_string_pretty(F_mpz_mat_t mat, char * s);
 
 /** 
-   \fn     char* F_mpz_mat_to_string_pretty(F_mpz_mat_t mat)
+   \fn     char * F_mpz_mat_to_string_pretty(F_mpz_mat_t mat)
 	\brief  Write an F_mpz_mat_t to a string in pretty format
 */
-char* F_mpz_mat_to_string_pretty(F_mpz_mat_t mat);
+char * F_mpz_mat_to_string_pretty(F_mpz_mat_t mat);
 
 /** 
    \fn     void F_mpz_mat_print(F_mpz_mat_t mat)
@@ -161,26 +161,26 @@ void F_mpz_mat_print_pretty(F_mpz_mat_t mat);
    \fn     void F_mpz_mat_fprint(F_mpz_mat_t mat, FILE* f)
 	\brief  Prints an F_mpz_mat_t to a file stream
 */
-void F_mpz_mat_fprint(F_mpz_mat_t mat, FILE* f);
+void F_mpz_mat_fprint(F_mpz_mat_t mat, FILE * f);
 
 /** 
    \fn     void F_mpz_mat_fprint_pretty(F_mpz_mat_t mat, FILE* f)
 	\brief  Prints an F_mpz_mat_t to a file stream in pretty format
 */
-void F_mpz_mat_fprint_pretty(F_mpz_mat_t mat, FILE* f);
+void F_mpz_mat_fprint_pretty(F_mpz_mat_t mat, FILE * f);
 
 /** 
    \fn     int F_mpz_mat_fread(F_mpz_mat_t mat, FILE* f)
 	\brief  Read an F_mpz_mat_t from a file stream
 */
-int F_mpz_mat_fread(F_mpz_mat_t mat, FILE* f);
+int F_mpz_mat_fread(F_mpz_mat_t mat, FILE * f);
 
 /** 
    \fn     int F_mpz_mat_fread_pretty(F_mpz_mat_t mat, FILE* f)
 	\brief  Read a F_mpz_mat_t from a file stream in pretty format
                                        useful with fpLLL's generate function
 */
-int F_mpz_mat_fread_pretty(F_mpz_mat_t mat, FILE* f);
+int F_mpz_mat_fread_pretty(F_mpz_mat_t mat, FILE * f);
 
 /*===============================================================================
 
@@ -212,12 +212,6 @@ long _F_mpz_vec_to_d_vec_2exp(double * appv, const F_mpz * vec, const ulong n);
    \brief  Sets the entries of appv to the entries of the given vec.
 */
 void _F_mpz_vec_to_mpfr_vec(__mpfr_struct * appv, const F_mpz * vec, const ulong n);
-
-/**
-   \fn     void _F_mpz_vec_2exp_to_mpfr_vec(mpfr_t * appv, const F_mpz * vec, const ulong n, int * cexpo)
-   \brief  Sets the entries of appv to the entries of the given vec multiplied by 2^cexpo[i]
-*/
-void _F_mpz_vec_2exp_to_mpfr_vec(__mpfr_struct * appv, const F_mpz * vec, const ulong n, int * cexpo);
 
 /*===============================================================================
 

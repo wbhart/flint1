@@ -4227,7 +4227,491 @@ coefficient of \code{B} be coprime to the modulus \code{A->P}, e.g. the modulus 
 
 \subsection{Memory management}
 
+\begin{lstlisting}
+void F_mpz_mat_init(F_mpz_mat_t mat, ulong r, ulong c)
+\end{lstlisting}
+\begin{quote}
+Initialise a matrix \code{mat} with \code{r} rows and \code{c} columns, for use.
+\end{quote}
 
+\begin{lstlisting}
+void F_mpz_mat_init_identity(F_mpz_mat_t mat, ulong n)
+\end{lstlisting}
+\begin{quote}
+Initialise an \code{n x n} matrix and set it to the \code{n x n} identity matrix.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_mat_clear(F_mpz_mat_t mat)
+\end{lstlisting}
+\begin{quote}
+Clear a matrix after use, clearing any entries and releasing the memory used by it. The matrix cannot
+be used again until it is initialised afresh.
+\end{quote}
+
+\subsection{Input/output}
+
+\begin{lstlisting}
+int F_mpz_mat_from_string(F_mpz_mat_t mat, 
+                                      const char * s)
+\end{lstlisting}
+\begin{quote}
+Reads a matrix from a string \code{s}. The format is a number of rows followed by a whitespace (space, tab or
+new line), followed by a number of columns, followed by a whitespace, followed by the entries of the matrix
+given row by row, each entry separated by a space. If a valid matrix is read, 1 is returned, otherwise 0 is
+returned.
+\end{quote}
+
+\begin{lstlisting}
+char * F_mpz_mat_to_string(F_mpz_mat_t mat)
+\end{lstlisting}
+\begin{quote}
+Reads a matrix \code{mat} and stores its string representation (as described by the previous function) in 
+a string. To free the string one must use \code{free}.
+\end{quote}
+
+\begin{lstlisting}
+int F_mpz_mat_from_string_pretty(F_mpz_mat_t mat, 
+                                          char * s)
+\end{lstlisting}
+\begin{quote}
+Reads a matrix from a string \code{s}. The format is a left square bracket followed by a set of rows 
+(delimited in any manner desired, except by numerals or the minus sign), followed by a closing right
+square bracket. The format of each row is an opening square bracket followed by a list of entries, which
+may be signed multiprecision integers (delimited in whatever manner desired, except with numerals or 
+minus signs), followed by a closing square bracket. 
+\end{quote}
+
+\begin{lstlisting}
+char * F_mpz_mat_to_string_pretty(F_mpz_mat_t mat)
+\end{lstlisting}
+\begin{quote}
+Reads a matrix \code{mat} and stores its pretty string representation (as described by the previous function) 
+in a string. To free the string one must use \code{free}.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_mat_print(F_mpz_mat_t mat)
+\end{lstlisting}
+\begin{quote}
+Print the standard string representation of \code{mat} (as described above) to \code{stdout}.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_mat_print_pretty(F_mpz_mat_t mat)
+\end{lstlisting}
+\begin{quote}
+Print the pretty string representation of \code{mat} (as described above) to \code{stdout}.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_mat_fprint(F_mpz_mat_t mat, FILE * f)
+\end{lstlisting}
+\begin{quote}
+Print the standard string representation of \code{mat} (as described above) to the given file stream.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_mat_fprint_pretty(F_mpz_mat_t mat, 
+                                       FILE * f)
+\end{lstlisting}
+\begin{quote}
+Print the pretty string representation of \code{mat} (as described above) to the given file stream.
+\end{quote}
+
+\begin{lstlisting}
+int F_mpz_mat_fread(F_mpz_mat_t mat, FILE * f)
+\end{lstlisting}
+\begin{quote}
+Read from the given file stream, a string representation of a matrix, in standard form (as described
+above) and store it in \code{mat}. If a valid matrix is read, 1 is returned, otherwise 0 is returned.
+\end{quote}
+
+\begin{lstlisting}
+int F_mpz_mat_fread_pretty(F_mpz_mat_t mat, 
+                                      FILE * f)
+\end{lstlisting}
+\begin{quote}
+Read from the given file stream, a string representation of a matrix, in pretty form (as described
+above) and store it in \code{mat}. If a valid matrix is read, 1 is returned, otherwise 0 is returned.
+\end{quote}
+
+\subsection{Row export}
+
+As each row of an \code{F_mpz_mat} is an array of \code{F_mpz}'s, the rows can be accessed separately,
+e.g. given a matrix \code{mat}, the first row would be \code{mat->rows[0]}. Various functions are 
+provided to export such a row (or part thereof) to an array of a different kind.
+
+\begin{lstlisting}
+long _F_mpz_vec_to_d_vec_2exp(double * appv, 
+             const F_mpz * vec, const ulong n)
+\end{lstlisting}
+\begin{quote}
+Export the array of \code{n} entries starting at the pointer \code{vec} to an array of doubles \code{appv},
+each entry of which is notionally multiplied by a single returned exponent to give the original entry. The
+returned exponent is set to be the maximum exponent of all the original entries so that all the doubles
+in the returned array have a maximum absolute value of 1.0.
+\end{quote}
+
+\begin{lstlisting}
+void _F_mpz_vec_to_mpfr_vec(__mpfr_struct * appv, 
+              const F_mpz * vec, const ulong n)
+\end{lstlisting}
+\begin{quote}
+Export the array of \code{n} entries starting at the pointer \code{vec} to an array of \code{mpfr}'s. Note
+that an array of \code{__mpfr_struct}'s is returned, instead of an array of \code{mpfr_t}'s. This means
+that \code{appv + i} for some integer \code{i} can be used in lieu of an \code{mpfr_t} as an input or output
+of an \code{mpfr} function. This makes access to entries in arrays of \code{mpfr}'s similar in syntax to 
+access to entries in arrays of \code{fmpz}'s.
+\end{quote}
+
+\subsection{Assignment}
+
+\begin{lstlisting}
+void F_mpz_mat_set(F_mpz_mat_t mat1, 
+                        const F_mpz_mat_t mat2)
+\end{lstlisting}
+\begin{quote}
+Set \code{mat1} equal to \code{mat2}. It is required that the number of rows of both matrices is the same
+and similarly for the number of columns.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_mat_swap(F_mpz_mat_t mat1, 
+                              F_mpz_mat_t mat2)
+\end{lstlisting}
+\begin{quote}
+Efficiently swap \code{mat1} and \code{mat2} by swapping pointers.
+\end{quote}
+
+\subsection{Comparison}
+
+\begin{lstlisting}
+int F_mpz_mat_equal(const F_mpz_mat_t mat1, 
+                        const F_mpz_mat_t mat2)
+\end{lstlisting}
+\begin{quote}
+Return 1 if \code{mat1} and \code{mat2} are (arithmetically) equal. No check is made that the matrices have
+the same numbers of rows or columns. It is therefore assumed that they are the same size.
+\end{quote}
+
+\subsection{Negation}
+
+\begin{lstlisting}
+void F_mpz_mat_neg(F_mpz_mat_t mat1, 
+                        const F_mpz_mat_t mat2)
+\end{lstlisting}
+\begin{quote}
+Set \code{mat1} to the matrix whose entries are the negation of those in \code{mat2}.
+\end{quote}
+
+\subsection{Vector memory management}
+
+It is sometimes necessary to create vectors independently of matrices and manipulate them directly. As rows
+of \code{F_mpz_mat_t}'s are arrays of \code{F_mpz}'s, this is also the natural format for independent vectors.
+
+\begin{lstlisting}
+F_mpz * _F_mpz_vec_init(ulong n)
+\end{lstlisting}
+\begin{quote}
+Create and initialise a vector of length \code{n} of \code{fmpz}'s. If \code{vec} is the return value, then
+\code{vec + i} can be used in lieu of an \code{F_mpz_t} in an \code{F_mpz} function and thus the entry at 
+that index can be individually manipulated.
+\end{quote}
+
+\begin{lstlisting}
+void _F_mpz_vec_clear(F_mpz * vec, ulong n)
+\end{lstlisting}
+\begin{quote}
+Clear a previously allocated vector of length \code{n}. It is necessary to pass the length as each 
+individual entry is cleared and the memory it used is freed.
+\end{quote}
+
+\subsection{Vector copy and comparison}
+
+\begin{lstlisting}
+void _F_mpz_vec_copy(F_mpz * vec1, 
+               const F_mpz * vec2, ulong n)
+\end{lstlisting}
+\begin{quote}
+Copies the vector of length \code{n} at \code{vec2} to the vector at \code{vec1}. Note that operations of
+this type can be used to copy partial vectors by simply offsetting the start of each vector by pointer
+arithmetic and using a lesser length \code{n}.
+\end{quote}
+
+\begin{lstlisting}
+int _F_mpz_vec_equal(F_mpz * vec1, 
+                const F_mpz * vec2, ulong n)
+\end{lstlisting}
+\begin{quote}
+Return 1 if the vector at \code{vec2} of length \code{n} is (arithmetically) equal to the vector of the 
+same length at \code{vec1}, otherwise return 0.
+\end{quote}
+
+\subsection{Addition and subtraction}
+
+\begin{lstlisting}
+void F_mpz_mat_add(F_mpz_mat_t res, 
+ const F_mpz_mat_t mat1, const F_mpz_mat_t mat2)
+\end{lstlisting}
+\begin{quote}
+Set the matrix \code{res} to the sum of the matrices \code{mat1} and \code{mat2}. It is assumed all three
+matrices have the same dimensions.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_mat_sub(F_mpz_mat_t res, 
+ const F_mpz_mat_t mat1, const F_mpz_mat_t mat2)
+\end{lstlisting}
+\begin{quote}
+Set the matrix \code{res} to the difference of the matrices \code{mat1} and \code{mat2}. It is assumed all 
+three matrices have the same dimensions.
+\end{quote}
+
+\begin{lstlisting}
+void _F_mpz_vec_add(F_mpz * res, 
+ const F_mpz * vec1, const F_mpz * vec2, ulong n)
+\end{lstlisting}
+\begin{quote}
+Set the vector \code{res} of length \code{n} to the sum of the vectors \code{vec1} and \code{vec2} of the
+same length.
+\end{quote}
+
+\begin{lstlisting}
+void _F_mpz_vec_sub(F_mpz * res, 
+ const F_mpz * vec1, const F_mpz * vec2, ulong n)
+\end{lstlisting}
+\begin{quote}
+Set the vector \code{res} of length \code{n} to the difference of the vectors \code{vec1} and \code{vec2} 
+of the same length.
+\end{quote}
+
+\subsection{Scalar multiplication}
+
+\begin{lstlisting}
+void _F_mpz_vec_mul_ui(F_mpz * vec1, 
+                  F_mpz * vec2, ulong n, ulong x)
+\end{lstlisting}
+\begin{quote}
+Multiply the vector \code{vec2} of length \code{n} by the scalar \code{ulong x} and set the vector 
+\code{vec1}, of the same length, to the result.
+\end{quote}
+
+\begin{lstlisting}
+void _F_mpz_vec_mul_si(F_mpz * vec1, 
+                   F_mpz * vec2, ulong n, long x)
+\end{lstlisting}
+\begin{quote}
+Multiply the vector \code{vec2} of length \code{n} by the scalar \code{long x} and set the vector 
+\code{vec1}, of the same length, to the result.
+\end{quote}
+
+\begin{lstlisting}
+void _F_mpz_vec_mul_F_mpz(F_mpz * vec1, 
+                 F_mpz* vec2, ulong n, F_mpz_t x)
+\end{lstlisting}
+\begin{quote}
+Multiply the vector \code{vec2} of length \code{n} by the scalar \code{F_mpz_t x} and set the vector 
+\code{vec1}, of the same length, to the result.
+\end{quote}
+
+\subsection{Scalar addmul/submul}
+
+\begin{lstlisting}
+void _F_mpz_vec_addmul_ui(F_mpz * vec1, 
+                  F_mpz * vec2, ulong n, ulong x)
+\end{lstlisting}
+\begin{quote}
+Multiply the vector \code{vec2} of length \code{n} by the scalar \code{ulong x} and add the result
+in-place to the vector \code{vec1} of the same length.
+\end{quote}
+
+\begin{lstlisting}
+void _F_mpz_vec_addmul_F_mpz(F_mpz * vec1, 
+                F_mpz * vec2, ulong n, F_mpz_t x)
+\end{lstlisting}
+\begin{quote}
+Multiply the vector \code{vec2} of length \code{n} by the scalar \code{F_mpz_t x} and add the result
+in-place to the vector \code{vec1} of the same length.
+\end{quote}
+
+\begin{lstlisting}
+void _F_mpz_vec_submul_ui(F_mpz * vec1, 
+                  F_mpz * vec2, ulong n, ulong x)
+\end{lstlisting}
+\begin{quote}
+Multiply the vector \code{vec2} of length \code{n} by the scalar \code{ulong x} and subtract the result
+in-place from the vector \code{vec1} of the same length.
+\end{quote}
+
+\begin{lstlisting}
+void _F_mpz_vec_submul_F_mpz(F_mpz * vec1, 
+                F_mpz * vec2, ulong n, F_mpz_t x)
+\end{lstlisting}
+\begin{quote}
+Multiply the vector \code{vec2} of length \code{n} by the scalar \code{F_mpz_t x} and subtract the result
+in-place from the vector \code{vec1} of the same length.
+\end{quote}
+
+\begin{lstlisting}
+void _F_mpz_vec_addmul_2exp_ui(F_mpz * vec1, 
+       F_mpz * vec2, ulong n, ulong c, ulong exp)
+\end{lstlisting}
+\begin{quote}
+Multiply the vector \code{vec2} of length \code{n} by the scalar $c \times 2^{exp}$ and add the result
+in-place to the vector \code{vec1} of the same length, where \code{c} is a \code{ulong}.
+\end{quote}
+
+\begin{lstlisting}
+void _F_mpz_vec_submul_2exp_ui(F_mpz * vec1, 
+       F_mpz * vec2, ulong n, ulong c, ulong exp)
+\end{lstlisting}
+\begin{quote}
+Multiply the vector \code{vec2} of length \code{n} by the scalar $c \times 2^{exp}$ and subtract the result
+in-place from the vector \code{vec1} of the same length, where \code{c} is a \code{ulong}.
+\end{quote}
+
+\begin{lstlisting}
+void _F_mpz_vec_submul_2exp_F_mpz(F_mpz * vec1, 
+     F_mpz * vec2, ulong n, F_mpz_t c, ulong exp)
+\end{lstlisting}
+\begin{quote}
+Multiply the vector \code{vec2} of length \code{n} by the scalar $c \times 2^{exp}$ and subtract the result
+in-place from the vector \code{vec1} of the same length, where \code{c} is an \code{F_mpz_t}.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_mat_swap_rows(F_mpz_mat_t mat, 
+                              ulong r1, ulong r2)
+\end{lstlisting}
+\begin{quote}
+Efficiently swap rows \code{r1} and \code{r2} of the matrix \code{mat} by swapping pointers.
+\end{quote}
+
+\begin{lstlisting}
+void _F_mpz_vec_neg(F_mpz * vec1, 
+                           F_mpz * vec2, ulong n)
+\end{lstlisting}
+\begin{quote}
+Set the vector \code{vec1} of length \code{n} to the vector of the same length whose entries are the negative
+of the entries in the vector \code{vec2}.
+\end{quote}
+
+\subsection{Basic properties}
+
+\begin{lstlisting}
+long F_mpz_mat_max_bits(const F_mpz_mat_t M)
+\end{lstlisting}
+\begin{quote}
+Determine the maximum number of bits \code{b} required to store the absolute value of the largest 
+coefficient of the matrix \code{M}. If \code{M} has signed coefficients, return \code{-b}, else return 
+\code{b}.
+\end{quote}
+
+\begin{lstlisting}
+long F_mpz_mat_max_bits2(ulong * row, 
+           ulong * col, const F_mpz_mat_t M)
+\end{lstlisting}
+\begin{quote}
+Determine the maximum number of bits \code{b} required to store the absolute value of the largest 
+coefficient of the matrix \code{M}. If \code{M} has signed coefficients, return \code{-b}, else return 
+\code{b}. Set \code{row} and \code{col} to the row and column of an entry which consumes this many bits.
+Note that the function need not return the largest such element, just one such.
+\end{quote}
+
+\subsection{Matrix by scalar operations}
+
+\begin{lstlisting}
+void F_mpz_mat_mul_2exp(F_mpz_mat_t res, 
+                     F_mpz_mat_t M, ulong n)
+\end{lstlisting}
+\begin{quote}
+Set the matrix \code{res} to the matrix \code{M}, of the same dimensions, multiplied by $2^n$. 
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_mat_div_2exp(F_mpz_mat_t res, 
+                     F_mpz_mat_t M, ulong n)
+\end{lstlisting}
+\begin{quote}
+Set the matrix \code{res} to the matrix \code{M}, of the same dimensions, divided by $2^n$. Each entry
+is truncated towards zero and the remainder is discarded.
+\end{quote}
+
+\subsection{Scalar product}
+
+\begin{lstlisting}
+void _F_mpz_vec_scalar_product(F_mpz_t sp, 
+        F_mpz * vec1, F_mpz * vec2, ulong n)
+\end{lstlisting}
+\begin{quote}
+Set \code{sp} to the vector scalar product of the vectors \code{vec1} and \code{vec2} of length \code{n}.
+\end{quote}
+
+\subsection{Column operations}
+
+\begin{lstlisting}
+int F_mpz_mat_col_equal(F_mpz_mat_t M, 
+                         ulong c1, ulong c2)
+\end{lstlisting}
+\begin{quote}
+Return 1 if columns \code{c1} and \code{c2} of the matrix \code{M} are (arithmetically) equal, otherwise
+return 0.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_mat_col_copy(F_mpz_mat_t M, 
+                         ulong c1, ulong c2)
+\end{lstlisting}
+\begin{quote}
+Set column \code{c1} of the matrix \code{M} to be equal to column \code{c2}.
+\end{quote}
+
+\subsection{Matrix windows}
+
+\begin{lstlisting}
+void F_mpz_mat_window_init(F_mpz_mat_t U, 
+         F_mpz_mat_t M, ulong r0, ulong c0, 
+                      ulong rows, ulong cols)
+\end{lstlisting}
+\begin{quote}
+Attach an \code{F_mpz_mat_t} structure \code{U} to an existing matrix \code{M} starting at the position
+given by row \code{r0} and column \code{c0} and extending over a block with the given number of rows and
+columns. The window alias \code{U} may only be used as the input of \code{F_mpz_mat} functions (including
+vector functions). The matrix structure \code{U} must not be initialised before being set up as a window.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_mat_window_clear(F_mpz_mat_t U)
+\end{lstlisting}
+\begin{quote}
+Free any memory allocated to set up a matrix window \code{U}. The matrix \code{U} cannot be used again 
+unless it it initialised or set up as a matrix window afresh.
+\end{quote}
+
+\subsection{Symmetric modulus}
+
+\begin{lstlisting}
+void F_mpz_mat_smod(F_mpz_mat_t res, 
+                   F_mpz_mat_t M, F_mpz_t P)
+\end{lstlisting}
+\begin{quote}
+Set matrix \code{res} of the same dimensions as matrix \code{M} to be the matrix whose entries are the
+symmetric mod modulo \code{P} of the entries in \code{M}, i.e. to the values mod \code{P} that are in
+the range \code{(-P/2, P/2]}.
+\end{quote}
+
+\subsection{Matrix transpose}
+
+\begin{lstlisting}
+void F_mpz_mat_transpose(F_mpz_mat_t res, 
+                              F_mpz_mat_t M)
+\end{lstlisting}
+\begin{quote}
+Set the matrix \code{res} with \code{c} rows and \code{r} columns to the transpose of the matrix \code{M}
+with \code{r} rows and \code{c} columns. Currently this operation is performed naively in a cache 
+inefficient manner and is provided for convenience.
+\end{quote}
 
 The \code{F_mpz_LLL} module introduces lattice reduction functionality to the FLINT \code{F_mpz_mat_t} type for matrices with \code{F_mpz_t} entries.  The rows of the $n \times m$ \code{F_mpz_mat_t} are treated as a basis of a lattice, a $\Z$-module in $\R^{m}$.  Integer combinations of the rows are found which remain a basis of the same lattice while having better properties such as near orthogonality and 
 generally shorter length.

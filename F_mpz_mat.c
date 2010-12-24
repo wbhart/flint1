@@ -489,18 +489,6 @@ void _F_mpz_vec_to_mpfr_vec(__mpfr_struct * appv, const F_mpz * vec, const ulong
    return;
 }
 
-void _F_mpz_vec_2exp_to_mpfr_vec(__mpfr_struct * appv, const F_mpz * vec, const ulong n, int * cexpo)
-{
-   ulong i;
-   for (i = 0; i < n; i++)
-   {
-      F_mpz_get_mpfr(appv + i, vec + i);
-      mpfr_mul_2si(appv + i, appv + i, cexpo[i], GMP_RNDN);
-   }
-
-   return;
-}
-
 /*===============================================================================
 
 	Assignment/swap
