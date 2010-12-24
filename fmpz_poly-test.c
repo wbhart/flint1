@@ -22,6 +22,7 @@
 fmpz_poly-test.c: Test code for fmpz_poly.c and fmpz_poly.h
 
 Copyright (C) 2007, William Hart and David Harvey
+Copyright (C) 2008, 2009, 2010 William Hart
 
 *****************************************************************************/
 

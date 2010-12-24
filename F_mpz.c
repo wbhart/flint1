@@ -2,8 +2,8 @@
 
     F_mpz.c: The FLINT integer format (FLINT 2.0)
 
-    Copyright (C) 2008, 2009, William Hart 
-    Copyright (C) 2009, Andy Novocin
+    Copyright (C) 2008, 2009, 2010 William Hart 
+    Copyright (C) 2009, 2010 Andy Novocin
 
 	 This file is part of FLINT.
 
