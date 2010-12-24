@@ -180,7 +180,7 @@ $B_0, B_2, ..., B_{p-1}$ modulo \code{p}, where \code{p} is the next prime from 
 \code{Zmul} Compares the output of the FLINT FFT with that of GMP for ever larger operands.
 
 \code{thetaproduct} Computes the congruent number theta function. To run this you need to have OpenMP 
-on your machine, you need a recent version of gcc (4.4.2 or later) and you need to export 
+on your machine, you need a recent version of gcc (4.4.2 or later) and you need to export the environment declaration
 OMP\_NUM\_THREADS=16 or some factor of 16, depending on how many cores your machine has. The code also 
 expects a directory /storage with PLENTY of space where temporary files will be created. Be warned that 
 this code multiplies HUGE integers which do not fit into memory and much disk space is used. You also 
@@ -2441,29 +2441,33 @@ Creates temporary space to be used by multimodular and CRT functions based on an
 \end{quote}
 
 \begin{lstlisting}
-void fmpz_comb_temp_clear(fmpz_t ** temp, fmpz_comb_t comb);
+void fmpz_comb_temp_clear(fmpz_t ** temp, fmpz_comb_t comb)
 \end{lstlisting}
 \begin{quote}
 Clears temporary space \code{temp} used by multimodular and CRT functions using the given comb.
 \end{quote}
 
 \begin{lstlisting}
-void fmpz_multi_mod_ui(unsigned long * out, fmpz_t in, fmpz_comb_t comb, fmpz_t ** temp)
+void fmpz_multi_mod_ui(unsigned long * out, 
+               fmpz_t in, fmpz_comb_t comb, fmpz_t ** temp)
 \end{lstlisting}
 \begin{quote}
 Reduces the multiprecision integer \code{in} modulo each of the primes stored in the comb structure. The array \code{out} will be filled with the residues modulo these primes. The array temp is temporary space which must be provided by \code{fmpz_comb_temp_init} and cleared by \code{fmpz_comb_temp_clear}.
 \end{quote}
 
 \begin{lstlisting}
-void fmpz_multi_CRT_ui_unsigned(fmpz_t output, unsigned long * residues, 
-                             fmpz_comb_t comb, fmpz_t ** comb_temp)
+void fmpz_multi_CRT_ui_unsigned(fmpz_t output, 
+        unsigned long * residues, fmpz_comb_t comb, 
+                                    fmpz_t ** comb_temp)
 \end{lstlisting}
 \begin{quote}
 This function takes a set of residues modulo the list of primes contained in the comb structure and reconstructs the unique unsigned multiprecision integer modulo the product of the primes which has these residues modulo the corresponding primes. The array temp is temporary space which must be provided by \code{fmpz_comb_temp_init} and cleared by \code{fmpz_comb_temp_clear}. 
 \end{quote}
 
 \begin{lstlisting}
-void fmpz_multi_CRT_ui(fmpz_t output, unsigned long * residues, fmpz_comb_t comb, fmpz_t ** comb_temp)
+void fmpz_multi_CRT_ui(fmpz_t output, 
+    unsigned long * residues, fmpz_comb_t comb, 
+                                     fmpz_t ** comb_temp)
 \end{lstlisting}
 \begin{quote}
 This function takes a set of residues modulo the list of primes contained in the comb structure and reconstructs a signed multiprecision integer modulo the product of the primes which has these residues modulo the corresponding primes. If $N$ is the product of all the primes then \code{output} is normalised to be in the range $[-(N-1)/2, N/2]$. The array temp is temporary space which must be provided by \code{fmpz_comb_temp_init} and cleared by \code{fmpz_comb_temp_clear}.
@@ -3036,7 +3040,8 @@ Set \code{f} to \code{g} divided by \code{h}, rounded down towards minus infinit
 \end{quote}
 
 \begin{lstlisting}
-void F_mpz_fdiv_qr(F_mpz_t q, F_mpz_t r, const F_mpz_t g, const F_mpz_t h)
+void F_mpz_fdiv_qr(F_mpz_t q, F_mpz_t r, 
+                             const F_mpz_t g, const F_mpz_t h)
 \end{lstlisting}
 \begin{quote}
 Set \code{q} to \code{g} divided by \code{h}, rounded down towards minus infinity and set \code{r} to the remainder.
@@ -4814,7 +4819,8 @@ $\mbox{DELTA} \in (1/4, 1]$ and $\mbox{ETA} \in (1/2, \sqrt{\mbox{DELTA}}]$.  Fo
 \end{quote}
 
 \begin{lstlisting}
-int U_LLL_with_removal(F_mpz_mat_t FM, long new_size, F_mpz_t gs_B)
+int U_LLL_with_removal(F_mpz_mat_t FM, 
+                            long new_size, F_mpz_t gs_B)
 \end{lstlisting}
 
 \begin{quote}
@@ -4842,7 +4848,8 @@ identity matrix in the first \code{r} columns and random \code{bits}-bit integer
 \end{quote}
 
 \begin{lstlisting}
-void F_mpz_mat_randintrel_little_big(F_mpz_mat_t mat, ulong n, ulong bits1, ulong bits)
+void F_mpz_mat_randintrel_little_big(F_mpz_mat_t mat, 
+                        ulong n, ulong bits1, ulong bits)
 \end{lstlisting}
 \begin{quote}
 Given an \code{F_mpz_mat_t} \code{mat} with \code{r} rows and \code{r+1} columns we populate \code{mat} with the 
@@ -4859,7 +4866,8 @@ whose entries are \code{bits}-bit \code{F_mpz_t}'s.
 \end{quote}
 
 \begin{lstlisting}
-void F_mpz_mat_rand_unimodular_little_big(F_mpz_mat_t U, ulong n, ulong bits1, ulong bits2)
+void F_mpz_mat_rand_unimodular_little_big(F_mpz_mat_t U, 
+                       ulong n, ulong bits1, ulong bits2)
 \end{lstlisting}
 \begin{quote}
 Given a square \code{F_mpz_mat_t} \code{U} this procedure populates it with a randomized unimodular matrix (determinant 1)
