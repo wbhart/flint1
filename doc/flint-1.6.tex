@@ -4752,8 +4752,8 @@ generally shorter length.
 
 The following example computes a reduced basis from the rows of 
 \begin{lstlisting}
-[[1 0 2412]
-[0 1 954]]
+[[1 0 16884]
+[0 1 714]]
 \end{lstlisting} 
 
 \begin{lstlisting}
@@ -4764,8 +4764,8 @@ F_mpz_mat_t L;
 F_mpz_mat_init(L, 2, 3);
 F_mpz_set_ui(L->rows[0] + 0, 1);
 F_mpz_set_ui(L->rows[1] + 1, 1);
-F_mpz_set_ui(L->rows[0] + 2, 2412);
-F_mpz_set_ui(L->rows[1] + 2, 954);
+F_mpz_set_ui(L->rows[0] + 2, 16884);
+F_mpz_set_ui(L->rows[1] + 2, 714);
 LLL(L);
 F_mpz_mat_print_pretty(L);
 F_mpz_mat_clear(L);
@@ -4774,8 +4774,8 @@ F_mpz_mat_clear(L);
 The output is:
 
 \begin{lstlisting}
-[[2 -5 54]
-[17 -43 -18]]
+[[3 -71 -42]
+[-5 118 -168]]
 \end{lstlisting}
 
 \subsection{Two varieties of LLL}
