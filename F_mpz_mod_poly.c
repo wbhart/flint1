@@ -21,7 +21,8 @@
 
    F_mpz_mod_poly.c: Polynomials over F_mpz mod p.
    
-   Copyright (C) 2009, William Hart, Andy Novocin
+   Copyright (C) 2009, 2010 William Hart
+   Copyright (C) 2009, 2010 Andy Novocin
 
 *****************************************************************************/
 

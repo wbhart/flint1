@@ -1,6 +1,7 @@
 /*
    Copyright 2005, 2006 Damien Stehlé.
-   Copyright 2009 William Hart, Andy Novocin
+   Copyright 2009, 2010 William Hart
+   Copyright 2009, 2010 Andy Novocin
 
    This program is free software; you can redistribute it and/or modify it
    under the terms of the GNU General Public License as published by the
@@ -26,7 +27,7 @@
 
 /****************************************************************************
 
-   F_mpz_LLL_wrapper.h: A program for navigating the various versions of LLL
+   F_mpz_LLL.h: LLL reduction for F_mpz_mat_t's 
 
 *****************************************************************************/
 

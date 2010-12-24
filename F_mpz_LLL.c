@@ -1,6 +1,7 @@
 /*
    Copyright 2005, 2006 Damien Stehlé.
-   Copyright 2009, 2010 William Hart, Andy Novocin
+   Copyright 2009, 2010 William Hart
+   Copyright 2009, 2010 Andy Novocin
 
    This program implements ideas from the paper "Floating-point LLL Revisited", 
    by Phong Nguyen and Damien Stehlé, in the Proceedings of Eurocrypt'2005, 

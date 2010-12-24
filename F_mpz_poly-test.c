@@ -21,7 +21,8 @@
 
 F_mpz_poly-test.c: Test code for F_mpz_poly.c and F_mpz_poly.h
 
-Copyright (C) 2008, William Hart
+Copyright (C) 2008, 2009, 2010 William Hart
+Copyright (C) 2009, 2010 Andy Novocin
 
 *****************************************************************************/
 
