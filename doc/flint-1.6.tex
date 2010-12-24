@@ -4255,6 +4255,28 @@ The output is:
 
 \subsection{Definition of the F\_mpz\_mat\_t matrix type}
 
+
+The \code{F_mpz_mat_t} type is a typedef for an array of length 1 of \code{F_mpz_mat_struct}'s. 
+This permits passing parameters of type \code{F_mpz_mat_t} `by reference' in a manner similar to the 
+way GMP integers of type \code{mpz_t} can be passed by reference. 
+
+In reality one never deals directly with the struct and simply deals with objects of type 
+\code{F_mpz_mat_t}. For simplicity we will think of an \code{F_mpz_mat_t} as a struct, though 
+in practice to access fields of this struct, one needs to dereference first, e.g. to access the 
+\code{r} field of an \code{F_mpz_mat_t} called \code{A} one writes \code{A->r} (this is the 
+number of rows of \code{A}).
+
+The entries of an \code{F_mpz_mat_t} are stored as an array of arrays of \code{F_mpz_t}'s, thus 
+to access the \code{F_mpz_t} in the $i^{\rm th}$ row and $j^{\rm th}$ column of the \code{F_mpz_mat_t} \code{A}
+use \code{A->rows[i] + j}.
+
+Functions in \code{F_mpz_mat} do all the memory management for the user. One does not need to specify 
+the maximum length or any coefficient sizes in advance before using a polynomial object. FLINT 
+reallocates space automatically as the computation proceeds, if more space is required. Each coefficient
+is also managed separately, being resized as needed, independently of the other coefficients.
+
+We now describe the functions available in \code{F_mpz_mat}.
+
 \subsection{Memory management}
 
 \begin{lstlisting}
