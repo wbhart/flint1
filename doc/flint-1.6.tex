@@ -4831,6 +4831,41 @@ The computation of \code{d} is proven and performed after all other computations
 of \code{gs_B}.
 \end{quote}
 
+\subsection{Some special randomized matrices}
+
+\begin{lstlisting}
+void F_mpz_mat_randintrel(F_mpz_mat_t mat, ulong bits)
+\end{lstlisting}
+\begin{quote}
+Given an \code{F_mpz_mat_t} \code{mat} with \code{r} rows and \code{r+1} columns we populate \code{mat} with the 
+identity matrix in the first \code{r} columns and random \code{bits}-bit integers in the final column.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_mat_randintrel_little_big(F_mpz_mat_t mat, ulong n, ulong bits1, ulong bits)
+\end{lstlisting}
+\begin{quote}
+Given an \code{F_mpz_mat_t} \code{mat} with \code{r} rows and \code{r+1} columns we populate \code{mat} with the 
+identity matrix in the first \code{r} columns and random \code{bits1}-bit integers in the first \code{n} entries 
+of the final column and random \code{bits}-bit integers in the remaining entries of the final column.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_mat_rand_unimodular(F_mpz_mat_t U, ulong bits)
+\end{lstlisting}
+\begin{quote}
+Given a square \code{F_mpz_mat_t} \code{U} this procedure populates it with a randomized unimodular matrix (determinant 1)
+whose entries are \code{bits}-bit \code{F_mpz_t}'s.
+\end{quote}
+
+\begin{lstlisting}
+void F_mpz_mat_rand_unimodular_little_big(F_mpz_mat_t U, ulong n, ulong bits1, ulong bits2)
+\end{lstlisting}
+\begin{quote}
+Given a square \code{F_mpz_mat_t} \code{U} this procedure populates it with a randomized unimodular matrix (determinant 1)
+where the first \code{n} rows have \code{bits1}-bit \code{F_mpz_t} entries and the remaining rows have \code{bits2}-bit entries.
+\end{quote}
+
 \section{The long\_extras module}
 The \code{long_extras} module contains functions for doing arithmetic with integers which will fit into an \code{unsigned long}, including functions for modular arithmetic.
 
