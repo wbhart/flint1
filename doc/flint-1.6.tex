@@ -4217,17 +4217,47 @@ not faster than \code{F_mpz_mod_poly_divrem} at the current time. This function 
 coefficient of \code{B} be coprime to the modulus \code{A->P}, e.g. the modulus is prime. 
 \end{quote}
 
-\section{The F\_mpz\_LLL module}
-
 \section{The F\_mpz\_mat module}
 
+The \code{F_mpz_mat} module is for matrices whose entries are the new \code{F_mpz_t} integer type.  The data type 
+\code{F_mpz_mat_t} represents a matrix in $\Z^{n \times m}$.    
+
+Unless otherwise specified or if there is dimension mismatch, all functions in this section permit aliasing between their input arguments and between their input and output arguments. 
+
 \subsection{Simple example}
+
+The following example computes the square of 
+\begin{lstlisting}
+[[10 21]
+[16 3]]
+\end{lstlisting} 
+
+\begin{lstlisting}
+#include F_mpz_mat.h
+....
+F_mpz_mat_t A;
+F_mpz_mat_init(A, 2, 2);
+F_mpz_set_ui(A->rows[0] + 0, 10);
+F_mpz_set_ui(A->rows[0] + 1, 21);
+F_mpz_set_ui(A->rows[1] + 0, 16);
+F_mpz_set_ui(A->rows[1] + 1, 3);
+F_mpz_mat_mul_classical(A, A, A);
+F_mpz_mat_print_pretty(A);
+F_mpz_mat_clear(A);
+\end{lstlisting}
+
+The output is:
+
+\begin{lstlisting}
+[[436 273]
+[208 345]]
+\end{lstlisting}
 
 \subsection{Definition of the F\_mpz\_mat\_t matrix type}
 
 \subsection{Memory management}
 
-
+\section{The F\_mpz\_LLL module}
 
 The \code{F_mpz_LLL} module introduces lattice reduction functionality to the FLINT \code{F_mpz_mat_t} type for matrices with \code{F_mpz_t} entries.  The rows of the $n \times m$ \code{F_mpz_mat_t} are treated as a basis of a lattice, a $\Z$-module in $\R^{m}$.  Integer combinations of the rows are found which remain a basis of the same lattice while having better properties such as near orthogonality and 
 generally shorter length.
