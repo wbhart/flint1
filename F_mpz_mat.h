@@ -386,7 +386,7 @@ void _F_mpz_vec_sub(F_mpz * res, const F_mpz * vec1, const F_mpz * vec2, ulong n
 
    \brief  Multiply vec2 by the unsigned long x and set vec1 to the result..
 */
-void _F_mpz_vec_mul_ui(F_mpz * vec1, F_mpz* vec2, ulong n, ulong x);
+void _F_mpz_vec_mul_ui(F_mpz * vec1, F_mpz * vec2, ulong n, ulong x);
 
 /** 
    \fn     void F_mpz_mat_row_mul_si(F_mpz_mat_t mat1, ulong r1, F_mpz_mat_t mat2, ulong r2, 
