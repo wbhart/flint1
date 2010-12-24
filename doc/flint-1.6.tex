@@ -4778,6 +4778,37 @@ The output is:
 [17 -43 -18]]
 \end{lstlisting}
 
+\subsection{Two varieties of LLL}
+
+\begin{lstlisting}
+void LLL (F_mpz_mat_t B)
+\end{lstlisting}
+
+\begin{quote}
+Given a matrix \code{B}, LLL-reduces the rows of \code{B}, in place.  The strength of the reduction is 
+determined by the macros \code{DELTA} and \code{ETA} defined in \code{F_mpz_LLL.h}.  It is assumed that 
+$\mbox{DELTA} \in (1/4, 1]$ and $\mbox{ETA} \in (1/2, \sqrt{\mbox{DELTA}}]$.  For details on these parameters
+ see the paper ``An LLL algorithm with quadratic complexity'' by Nguyen and Stehl\'e.
+\end{quote}
+
+\begin{lstlisting}
+int U_LLL_with_removal(F_mpz_mat_t FM, long new_size, F_mpz_t gs_B)
+\end{lstlisting}
+
+\begin{quote}
+A new type of LLL which tends to be numerically stable.  The given matrix \code{FM} is shifted down by a power of 2
+and truncated until the \code{new_size} most significant bits of \code{FM} are found.  An identity matrix is augmented to this 
+truncation and the augmented matrix is reduced.  This gives a unimodular transformation, \code{U}, which is then applied to 
+\code{FM}.  If the bit size of \code{FM} decreases after multiplication by \code{U} then the algorithm repeats, 
+otherwise standard floating-point LLL is performed.
+
+The parameter \code{gs_B} is used when searching for only short vectors in the lattice.  Let \code{gs_B} be an upper bound for 
+the squared $\ell_2$ norm of targeted vector or group of vectors in the lattice, then the output of \code{U_LLL_with_removal} is 
+an index, call it \code{d}, such that all targeted vectors are within the span of the first \code{d} rows of the output \code{FM}.  
+The computation of \code{d} is proven and performed after all other computations so there is no speed-up from using any value 
+of \code{gs_B}.
+\end{quote}
+
 \section{The long\_extras module}
 The \code{long_extras} module contains functions for doing arithmetic with integers which will fit into an \code{unsigned long}, including functions for modular arithmetic.
 
