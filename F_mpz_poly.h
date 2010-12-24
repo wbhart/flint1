@@ -3,7 +3,7 @@
     F_mpz_poly.h: Polynomials over Z (FLINT 2.0 polynomials)
 
     Copyright (C) 2008, 2009, 2010 William Hart 
-    Copyright (C) 2010 Andy Novocin.
+    Copyright (C) 2009, 2010 Andy Novocin
 
     This file is part of FLINT.
 

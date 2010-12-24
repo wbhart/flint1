@@ -1,6 +1,7 @@
 /*
    Copyright 2005, 2006 Damien Stehlé.
-   Copyright 2009, William Hart
+   Copyright 2009, 2010 William Hart
+   Copyright 2009, 2010 Andy Novocin
 
    This program is free software; you can redistribute it and/or modify it
    under the terms of the GNU General Public License as published by the

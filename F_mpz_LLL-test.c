@@ -19,9 +19,10 @@
 ===============================================================================*/
 /****************************************************************************
 
-F_mpz_LLL-wrapper_test.c: Test code for F_mpz_LLL_wrapper.c and F_mpz_LLL_wrapper.h
+F_mpz_LLL-test.c: Test code for F_mpz_LLL.c and F_mpz_LLL.h
 
-Copyright (C) 2008, William Hart
+Copyright (C) 2008, 2009, 2010 William Hart
+Copyright (C) 2009, 2010 Andy Novocin
 
 *****************************************************************************/
 

@@ -21,8 +21,8 @@
 
 F_mpz-test.c: Test code for F_mpz.c and F_mpz.h
 
-Copyright (C) 2008, 2009, William Hart
-Copyright (C) 2009, Andy Novocin
+Copyright (C) 2008, 2009, 2010 William Hart
+Copyright (C) 2009, 2010 Andy Novocin
 
 
 *****************************************************************************/
